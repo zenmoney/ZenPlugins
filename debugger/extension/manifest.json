@@ -1,0 +1,11 @@
+{
+    "manifest_version": 2,
+    "name": "ZenmoneyPlugin Debugger",
+    "description": "Provides needed API for ZenMoney object",
+    "version": "1.0",
+    "permissions": ["webRequest", "webRequestBlocking", "cookies", "http://*/*", "https://*/*", "storage"],
+    "background": {
+        "scripts": ["main.js"],
+        "persistent": true
+    }
+}
