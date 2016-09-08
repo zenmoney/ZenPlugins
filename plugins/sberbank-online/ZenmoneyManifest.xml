@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
-    <id>tinkoff</id>
-    <version>1.0</version>
+    <id>sberbank-online</id>
+    <version>1.1</version>
     <build>23</build>
-    <company>4902</company>
+    <company>4624</company>
     <files>
-        <js>md5.min.js</js>
+        <js>md5.js</js>
+        <js>library.js</js>
         <js>main.js</js>
         <preferences>preferences.xml</preferences>
     </files>

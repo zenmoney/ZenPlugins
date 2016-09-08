@@ -93,14 +93,14 @@ function processAccounts() {
 
 		// дебетовые карты ------------------------------------
 		if (a.accountType == 'Current' && a.status == 'NORM') {
-			ZenMoney.trace("Добавляем дебетовую карту: "+ a.name);
+			ZenMoney.trace('Добавляем дебетовую карту: '+ a.name +' (#'+ a.id +')');
 			var acc1 = {
 				id:				a.id,
 				title:			a.name,
 				type:			'ccard',
 				syncID:			[],
-				instrument:		a.accountBalance.currency.name,
-				balance:		a.accountBalance.value
+				instrument:		a.moneyAmount.currency.name,
+				balance:		a.moneyAmount.value
 			};
 
 			// номера карт
@@ -120,7 +120,7 @@ function processAccounts() {
 		}
 		// кредитные карты ----------------------------------------
 		else if (a.accountType == 'Credit' && a.status == 'NORM') {
-			ZenMoney.trace("Добавляем кредитную карту: "+ a.name);
+			ZenMoney.trace("Добавляем кредитную карту: "+ a.name +' (#'+ a.id +')');
 
 			var creditLimit = a.creditLimit.value;
 			var acc2 = {
@@ -134,7 +134,7 @@ function processAccounts() {
 			};
 
 			// номера карт
-			for (var k2 = 0; k1 < a.cardNumbers.length; k1++) {
+			for (var k2 = 0; k2 < a.cardNumbers.length; k2++) {
 				var card2 =  a.cardNumbers[k2];
 				if (card2.activated)
 					acc2.syncID.push(card2.value.substring(card2.value.length-4))
@@ -150,14 +150,14 @@ function processAccounts() {
 		}
 		// накопительные счета ------------------------------------
 		else if (a.accountType == 'Saving' && a.status == 'NORM') {
-			ZenMoney.trace("Добавляем накопительный счёт: "+a.name);
+			ZenMoney.trace("Добавляем накопительный счёт: "+a.name +' (#'+ a.id +')');
 			accDict.push({
 				id:				a.id,
 				title:			a.name,
 				type:			'deposit', //'checking'
 				syncID:			a.id.substring(a.id.length-4),
-				instrument:		a.accountBalance.currency.name,
-				balance:		a.accountBalance.value,
+				instrument:		a.moneyAmount.currency.name,
+				balance:		a.moneyAmount.value,
 				// пока создаём накопительные счета как вклады
 				percent:		0,
 				capitalization:	true,
@@ -171,7 +171,7 @@ function processAccounts() {
 		}
 		// депозиты --------------------------------------------------
 		else if (a.accountType == 'Deposit' && a.status == 'ACTIVE') {
-			ZenMoney.trace("Добавляем депозит: "+a.name);
+			ZenMoney.trace("Добавляем депозит: "+a.name +' (#'+ a.id +')');
 			accDict.push({
 				id:				a.id,
 				title:			a.name,
@@ -206,7 +206,7 @@ function processTransactions(data) {
 		// по умолчанию загружаем операции за неделю
 		var period = !g_preferences.hasOwnProperty('period') || isNaN(period = parseInt(g_preferences.period)) ? 7 : period;
 
-		if (period > 100) period = 100;	// на всякий случай, ограничим лимит? а то слишком долго будет
+		if (period > 100) period = 100;	// на всякий случай, ограничим лимит, а то слишком долго будет
 
 		lastSyncTime = Date.now() - period*24*60*60*1000;
 	}
@@ -218,13 +218,14 @@ function processTransactions(data) {
 
 	var transactions = requestJson("operations", null, {
 		"start": 	lastSyncTime
-		//"start":    Date.parse('2016-04-29T00:00'),
-		//"end":      Date.parse('2016-04-29T23:00')
+		//"start":    Date.parse('2016-06-29T00:00'),
+		//"end":      Date.parse('2016-06-29T23:00')
 	});
 	ZenMoney.trace('Получено операций: '+transactions.payload.length);
 	ZenMoney.trace('JSON: '+JSON.stringify(transactions.payload));
 
 	var tranDict = {};
+
 	for (var i = 0; i < transactions.payload.length; i++) {
 		var t = transactions.payload[i];
 
@@ -232,23 +233,29 @@ function processTransactions(data) {
 		if (!in_array(t.account, g_accounts))
 			continue;
 
-		var tran = {};
+		// учитываем только успешные операции
+		if (t.status && t.status == 'FAILED')
+			continue;
 
-		ZenMoney.trace('Добавляем операцию #'+i+': '+t.description);
+		var tran = {};
+		ZenMoney.trace('Добавляем операцию #'+i+': '+new Date(t.operationTime.milliseconds).toLocaleString()+' - '+t.description);
 		//ZenMoney.trace('JSON: '+JSON.stringify(t));
+
+		var dt = new Date(t.operationTime.milliseconds);
+		tran.date = n2(dt.getDate())+'.'+n2(dt.getMonth()+1)+'.'+dt.getFullYear();
 
 		// доход ------------------------------------------------------------------
 		if (t.type == "Credit") {
-			tran.id = t.payment ? t.payment.paymentId : t.id;
-			tran.date = t.operationTime.milliseconds;
 			tran.income = t.accountAmount.value;
 			tran.incomeAccount = t.account;
 			tran.outcome = 0;
 			tran.outcomeAccount = tran.incomeAccount;
 
-			// пополнение наличными (исключая С2 - перевод card2card, C9 - компенсация пополнения вклада)
-			if (t.subgroup && t.subgroup.id == "C1"){
-				tran.outcomeAccount = "cash#"+ t.amount.currency.name
+			// пополнение наличными
+			if (t.subgroup && t.subgroup.id == "C1"
+				|| (!t.hasOwnProperty('subgroup') && t.group && t.group == "CASH")){
+				tran.outcomeAccount = "cash#"+ t.amount.currency.name;
+				tran.outcome = t.accountAmount.value;
 			}
 
 			// операция в валюте
@@ -265,8 +272,6 @@ function processTransactions(data) {
 		}
 		// расход -----------------------------------------------------------------
 		else if (t.type == "Debit") {
-			tran.id = t.payment ? t.payment.paymentId : t.id;
-			tran.date = t.operationTime.milliseconds;
 			tran.outcome = t.accountAmount.value;
 			tran.outcomeAccount = t.account;
 			tran.income = 0;
@@ -274,7 +279,7 @@ function processTransactions(data) {
 
 			// снятие наличных
 			if ((t.subgroup && t.subgroup.id.charAt(0) == "B")
-				||(t.group && t.group == "CASH")){
+				|| (!t.hasOwnProperty('subgroup') && t.group && t.group == "CASH")){
 				tran.incomeAccount = "cash#"+ t.amount.currency.name;
 				tran.income = t.accountAmount.value;
 			}
@@ -308,27 +313,48 @@ function processTransactions(data) {
 				tran.comment = t.description;
 		}
 
+		// старый формат идентификатора
+		tran.id = t.payment ? t.payment.paymentId : t.id;
+
+		// патч на новый расчёт идентификатора операции
+		var today = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate());
+		var dayX = Date.UTC(2016, 8, 2); // со 2 сентября новый порядок идентификации операций перевода: outcomeID~~incomeID
+		var transferPatch = today >= dayX;
+
+		if (transferPatch)
+			tran.id = t.id;
+
 		// склеим переводы ------------------------------------------------------------------
-		if (tranDict[tran.id] && tranDict[tran.id].income == 0 && tran.income > 0) {
-			tranDict[tran.id].income = tran.income;
-			tranDict[tran.id].incomeAccount = tran.incomeAccount;
+		var tranId = tran.id;
+		if (transferPatch)
+			tranId = t.payment ? t.payment.paymentId : t.id;
+
+		if (tranDict[tranId] && tranDict[tranId].income == 0 && tran.income > 0) {
+			tranDict[tranId].income = tran.income;
+			tranDict[tranId].incomeAccount = tran.incomeAccount;
 
 			if (tran.opIncome) {
-				tranDict[tran.id].opIncome = tran.opIncome;
-				tranDict[tran.id].opIncomeInstrument = tran.opIncomeInstrument;
+				tranDict[tranId].opIncome = tran.opIncome;
+				tranDict[tranId].opIncomeInstrument = tran.opIncomeInstrument;
 			}
+
+			if (transferPatch)
+				tranDict[tranId].id = tranDict[tranId].id + '~~' + tran.id;
 		}
-		else if (tranDict[tran.id] && tranDict[tran.id].outcome == 0 && tran.outcome > 0) {
-			tranDict[tran.id].outcome = tran.outcome;
-			tranDict[tran.id].outcomeAccount = tran.outcomeAccount;
+		else if (tranDict[tranId] && tranDict[tranId].outcome == 0 && tran.outcome > 0) {
+			tranDict[tranId].outcome = tran.outcome;
+			tranDict[tranId].outcomeAccount = tran.outcomeAccount;
 
 			if (tran.opOutcome) {
-				tranDict[tran.id].opOutcome = tran.opOutcome;
-				tranDict[tran.id].opOutcomeInstrument = tran.opOutcomeInstrument;
+				tranDict[tranId].opOutcome = tran.opOutcome;
+				tranDict[tranId].opOutcomeInstrument = tran.opOutcomeInstrument;
 			}
+
+			if (transferPatch)
+				tranDict[tranId].id = tran.id + '~~' + tranDict[tranId].id;
 		}
 		else
-			tranDict[tran.id] = tran;
+			tranDict[tranId] = tran;
 
 		if (tran.date > lastSyncTime)
 			lastSyncTime = tran.date;
@@ -390,4 +416,8 @@ function in_array(needle, haystack) {
 
 function is_array(arr) {
 	return Object.prototype.toString.call(arr) === '[object Array]';
+}
+
+function n2(n) {
+	return n < 10 ? '0' + n : '' + n;
 }

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+	<EditTextPreference
+		title="Логин"
+		positiveButtonText="ОК"
+		summary="|ID пользователя или логин|{@s}"
+		dialogTitle="Логин"
+		negativeButtonText="Отмена"
+		dialogMessage="Введите идентификатор пользователя или логин для входа в систему Сбербанк Онлайн."
+		obligatory="true"
+		key="login">
+	</EditTextPreference>
+	<EditTextPreference
+		positiveButtonText="ОК"
+		key="password"
+		dialogTitle="Пароль"
+		negativeButtonText="Отмена"
+		title="Пароль"
+		summary="||***********"
+		obligatory="true"
+		dialogMessage="Введите пароль, используемый для входа в систему Сбербанк Онлайн."
+		inputType="textPassword">
+	</EditTextPreference>
+	<EditTextPreference
+		positiveButtonText="ОК"
+		key="pin"
+		dialogTitle="ПИН-код мобильного приложения"
+		negativeButtonText="Отмена"
+		title="Пин-код"
+		summary="||***********"
+		obligatory="true"
+		dialogMessage="Введите ПИН-код мобильного приложения Сбербанк Онлайн (5 цифр)."
+		inputType="numberPassword">
+	</EditTextPreference>
+</PreferenceScreen>

@@ -1,7 +1,7 @@
 #!/bin/bash
 TMP_DIR="/tmp/zp_debugger"
 CUR_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-FLAGS="--disable-web-security --allow-file-access-from-files --user-data-dir=$TMP_DIR --load-extension=$CUR_DIR/extension file://$CUR_DIR/zp_debugger.html"
+FLAGS="--disable-web-security --allow-file-access-from-files --no-default-browser-check --user-data-dir=$TMP_DIR --load-extension=$CUR_DIR/extension file://$CUR_DIR/zp_debugger.html"
 
 function cleanTmpDir {
     rm -rf $TMP_DIR > /dev/null

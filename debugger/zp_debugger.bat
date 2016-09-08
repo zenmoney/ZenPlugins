@@ -10,4 +10,4 @@ SET tmp_dir=%TEMP%\zp_debugger
 rmdir %tmp_dir% /s /q
 mkdir %tmp_dir%
 
-start chrome /disable-web-security /allow-file-access-from-files /user-data-dir=%tmp_dir% /load-extension=%cur_dir%extension %cur_dir%zp_debugger.html
+start chrome /disable-web-security /allow-file-access-from-files /no-default-browser-check /user-data-dir=%tmp_dir% /load-extension=%cur_dir%extension %cur_dir%zp_debugger.html
