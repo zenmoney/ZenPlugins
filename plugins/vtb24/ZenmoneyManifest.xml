@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>vtb24</id>
+    <version>1.0</version>
+    <build>1</build>
+    <company>4637</company>
+    <files>
+        <js>library.js</js>
+        <js>main.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+</provider>
