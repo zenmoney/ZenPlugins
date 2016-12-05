@@ -238,11 +238,11 @@ function processTransactions(data) {
 			continue;
 
 		var tran = {};
-		ZenMoney.trace('Добавляем операцию #'+i+': '+new Date(t.operationTime.milliseconds).toLocaleString()+' - '+t.description);
-		//ZenMoney.trace('JSON: '+JSON.stringify(t));
-
 		var dt = new Date(t.operationTime.milliseconds);
 		tran.date = n2(dt.getDate())+'.'+n2(dt.getMonth()+1)+'.'+dt.getFullYear();
+
+		ZenMoney.trace('Добавляем операцию #'+i+': '+ dt.toLocaleString() +' - '+ t.description+ ' ('+ tran.date +')');
+		//ZenMoney.trace('JSON: '+JSON.stringify(t));
 
 		// доход ------------------------------------------------------------------
 		if (t.type == "Credit") {
@@ -287,7 +287,7 @@ function processTransactions(data) {
 				// получатель
 				if (t.merchant)
 					tran.payee = t.merchant.name;
-				else if (t.payment)
+				else if (t.payment && t.payment.fieldsValues && t.payment.fieldsValues.addressee)
 					tran.payee = t.payment.fieldsValues.addressee;
 
 				// MCC
@@ -316,10 +316,13 @@ function processTransactions(data) {
 		// старый формат идентификатора
 		tran.id = t.payment ? t.payment.paymentId : t.id;
 
-		// патч на новый расчёт идентификатора операции
-		var today = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate());
-		var dayX = Date.UTC(2016, 8, 2); // со 2 сентября новый порядок идентификации операций перевода: outcomeID~~incomeID
-		var transferPatch = today >= dayX;
+		// с 10 ноября новый порядок идентификации операций - берём не id, а ucid, если есть (чтобы холды метчились корректно)
+		var idPatch = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) >= Date.UTC(2016, 10, 10);
+		if (idPatch)
+			tran.id = t.payment ? t.payment.paymentId : (t.ucid ? t.ucid : t.id);
+
+		// со 2 сентября новый порядок идентификации операций перевода: outcomeID~~incomeID
+		var transferPatch = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) >= Date.UTC(2016, 8, 2);
 
 		if (transferPatch)
 			tran.id = t.id;
@@ -391,10 +394,21 @@ function requestJson(requestCode, data, parameters) {
 	g_deviceid && params.push(encodeURIComponent("deviceId") + "=" + encodeURIComponent(g_deviceid));
 
 	if (parameters.post)
-		data = ZenMoney.requestPost(g_baseurl + requestCode + "?" + params.join("&"), parameters.post, g_headers)
+		data = ZenMoney.requestPost(g_baseurl + requestCode + "?" + params.join("&"), parameters.post, g_headers);
 	else {
 		if (parameters) for (var k in parameters) params.push(encodeURIComponent(k) + "=" + encodeURIComponent(parameters[k]));
 		data = ZenMoney.requestGet(g_baseurl + requestCode + "?" + params.join("&"), g_headers);
+	}
+
+	if (!data) {
+		ZenMoney.trace('Пришёл пустой ответ во время запроса по адресу "'+ g_baseurl + requestCode + '". Попытаемся ещё раз...');
+
+		if (parameters.post)
+			data = ZenMoney.requestPost(g_baseurl + requestCode + "?" + params.join("&"), parameters.post, g_headers);
+		else {
+			if (parameters) for (var k2 in parameters) params.push(encodeURIComponent(k2) + "=" + encodeURIComponent(parameters[k2]));
+			data = ZenMoney.requestGet(g_baseurl + requestCode + "?" + params.join("&"), g_headers);
+		}
 	}
 
 	data = getJson(data);

@@ -6,7 +6,7 @@
 		summary="|ID пользователя или логин|{@s}"
 		dialogTitle="Логин"
 		negativeButtonText="Отмена"
-		dialogMessage="Введите идентификатор пользователя или логин для входа в систему Тинькофф банк."
+		dialogMessage="Введите идентификатор пользователя или логин для входа в систему ВТБ24-Онлайн."
 		obligatory="true"
 		key="login">
 	</EditTextPreference>
@@ -18,7 +18,7 @@
 		title="Пароль"
 		summary="||***********"
 		obligatory="true"
-		dialogMessage="Введите пароль, используемый для входа в систему Тинькофф банк."
+		dialogMessage="Введите пароль, используемый для входа в систему ВТБ24-Онлайн."
 		inputType="textPassword">
 	</EditTextPreference>
 	<ListPreference

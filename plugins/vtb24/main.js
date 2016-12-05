@@ -14,7 +14,7 @@ var g_baseurl =  'https://mobile.vtb24.ru/', //"https://online.vtb24.ru/"
 		'X-Requested-With': 'XMLHttpRequest'
 		//'Referer': g_baseurl + 'content/telebank-client/ru/login.html'
 	},
-	g_preferences, g_pageToken, g_pageSecurityID;
+	g_preferences, g_pageToken, g_pageSecurityID, g_browserSessionUid;
 
 function main() {
 	g_preferences = ZenMoney.getPreferences();
@@ -26,16 +26,19 @@ function main() {
 
 	processAccounts(json);
 
-	ZenMoney.trace('Запрашиваем данные по последним операциям...');
-	for(var accId in g_accounts)
-		processTransactions(accId);
+	ZenMoney.trace('Запрашиваем данные по операциям...');
+	processTransactions();
+
+	ZenMoney.setResult({success: true});
 }
 
 function login(){
 	//var html = ZenMoney.requestGet(g_baseurl + 'content/telebank-client/ru/login.html', g_headers);
 	var html = ZenMoney.requestGet(g_url_login, g_headers);
 	g_pageSecurityID = getParam(html, /page-security-id="([^"]*)/i, null, html_entity_decode);
-	ZenMoney.trace('pageSecurityId: '+g_pageSecurityID);
+	//ZenMoney.trace('pageSecurityId: '+g_pageSecurityID);
+
+	g_browserSessionUid = guid();
 
 	var isAlreadyAuthorized = getParamByName(html, 'isMinervaUserAuthenticated');
 	//ZenMoney.trace('isAlreadyAuthorized: '+ isAlreadyAuthorized);
@@ -49,10 +52,6 @@ function login(){
 			isMobile: true,
 			_charset_: 'utf-8',
 			dateTime: dtStr
-			//logParams: {ScreenResolution: '1920x1080' },
-			//callId: 2,
-			//pageSecurityID: g_pageSecurityID,
-			//timezone: -(new Date).getTimezoneOffset()
 		},
 		noException: true
 	}, addHeaders({Referer: g_baseurl + 'content/telebank-client/ru/login.html'}));
@@ -79,16 +78,10 @@ function login(){
 		}
 
 		if (json.authConfirmation) {
-			//throw new ZenMoney.Error('Телебанк требует ввести одноразовый смс-код. Для использования данного провайдера, проверку кода необходимо отключить. Если это' +
-			//' невозможно, поставьте в настройках провайдера источник данных Мобильное приложение, код будет запрашиваться.');
 			ZenMoney.trace('Необходимо ввести SMS-код для входа. Запрашиваем новый код...');
 			json = requestJson("services/signin", null, {
 				post: {
 					action: 'challenge'
-					// _charset_: 'utf-8',
-					// callId: 3,
-					// pageSecurityID: g_pageSecurityID,
-					// pageToken: g_pageToken
 				},
 				noException: true
 			});
@@ -105,9 +98,6 @@ function login(){
 					action: 'completeLogon',
 					isMobile: true,
 					challengeResponse: smsCode
-					// callId: 4,
-					// pageSecurityID: g_pageSecurityID,
-					// pageToken: g_pageToken
 				},
 				noException: true
 			});
@@ -134,9 +124,32 @@ function login(){
 
 var g_accounts = []; // линки активных счетов, по ним фильтруем обработку операций
 
-function processAccounts(json){
+function processAccounts(json) {
 	ZenMoney.trace('Инициализация...');
 
+	// открываем список счетов
+	json = requestJson('processor/process/minerva/action', null, {
+		post: {
+			components: JSON.stringify([{
+				componentId: "MobileAccountsAndCardsHomepage",
+				actions: [{
+					actionId: "PORTFOLIOS",
+					params: {
+						portfolioId: "AccountsAndCards",
+						isMobile: "true"
+					},
+					partialResult: true,
+					requestId:"8"
+				}]
+			}]),
+			pageInstanceUid: g_browserSessionUid+'.1',
+			callId: 2,
+			pageSecurityID: g_pageSecurityID,
+			pageToken: g_pageToken
+		}
+	}, addHeaders({Referer: g_url_login}));
+
+	// загружаем список счетов
 	json = requestJson('processor/process/minerva/operation', null, {
 		post: {
 			action: 'checkAvailability',
@@ -146,304 +159,147 @@ function processAccounts(json){
 			pageToken: g_pageToken
 		}
 	}, addHeaders({ Referer: g_url_login }));
-	ZenMoney.trace('1. JSON checkAvailability: '+ JSON.stringify(json));
+	//ZenMoney.trace('1. JSON checkAvailability: '+ JSON.stringify(json));
 
-	var pageToken = json.pageToken;
-
-	json = requestJson('services/news/unreaded', null, {
-		post: {
-			callId: 2,
-			pageSecurityID: g_pageSecurityID,
-			pageToken: g_pageToken
-		}
-	}, addHeaders({ Referer: g_url_login }));
-	ZenMoney.trace('2. JSON unreaded: '+ JSON.stringify(json));
+	g_pageToken = json.pageToken;
 
 	json = requestJson('processor/process/minerva/action', null, {
 		post: {
-			components: JSON.stringify([{
-					"componentId" : "SIDEMENUCOMPONENT",
+			components: JSON.stringify([
+				{
+					"componentId" : "SideMenuComponent",
 					"actions" : [{
 						"actionId" : "REGISTERED_CALLBACK_REQUEST",
-						"callbacks" : {},
-						"params" : {},
-						"requestId" : "3938"
+						"requestId" : "1"
 					}
 					]
 				}, {
 					"componentId" : "MOBILENOTIFICATIONS",
 					"actions" : [{
 						"actionId" : "NOTIFICATIONS",
-						"callbacks" : {},
 						"params" : {
 							"allNotificationsRequired" : true
 						},
-						"requestId" : "-1308964054"
+						"permanent" : true,
+						"requestId" : "2"
 					}, {
 						"actionId" : "PERSONAL_OFFERS",
-						"callbacks" : {},
 						"params" : {
 							"getIncomeParams" : {
 								"isPdaNotifications" : true
 							}
 						},
-						"requestId" : "-618543480"
+						"requestId" : "3"
 					}
 					]
 				}, {
-					"componentId" : "CRMHomepage",
+					"componentId" : "COMPLEX_SERVICE_CONTRACT_TOPIC",
 					"actions" : [{
-						"actionId" : "PERSONAL_OFFERS",
-						"requestId" : "0"
+						"actionId" : "COMPLEX_SERVICE_CONTRACT",
+						"params" : {},
+						"requestId" : "4"
 					}
 					]
 				}, {
-					"componentId" : "MobileTemplatesHomepage",
+					"componentId" : "PRODUCT_LIST",
 					"actions" : [{
-						"actionId" : "USER_TEMPLATES",
+						"actionId" : "PORTFOLIOS",
 						"params" : {
-							"showOnMainPage" : "true"
+							"portfolioId" : "AccountsAndCards",
+							"forProductPage" : "true"
 						},
-						"requestId" : "1943761352"
+						"requestId" : "5"
 					}
 					]
 				}, {
-					"componentId" : "recurringPayments",
+					"componentId" : "mobileHomePageTransactions",
 					"actions" : [{
-						"actionId" : "REGULAR_OPERATION_OCCURRENCES",
+						"actionId" : "TRANSACTIONS",
 						"params" : {
-							"occurrenceStatuses" : [{
-								"status" : "Planned"
-							}, {
-								"status" : "InProgressAtPlannedDate"
-							}, {
-								"status" : "InProgressAtNotPlannedDate"
-							}
-							],
-							"count" : "3"
+							"numberOfTransactions" : "5"
 						},
-						"requestId" : "747569390"
+						"requestId" : "6"
 					}
 					]
 				}, {
-					"componentId" : "CACHETOKENCOMPONENT",
+					"componentId" : "CacheTokenComponent",
 					"actions" : [{
 						"actionId" : "CACHE_TOKENS",
-						"callbacks" : {},
-						"params" : {},
-						"requestId" : "3938"
+						"permanent" : true,
+						"requestId" : "7"
 					}
 					]
 				}
 				]
 			),
-			ignoreCache: false,
-			callId: 3,
+			pageInstanceUid: g_browserSessionUid+'.1',
+			callId: 2,
 			pageSecurityID: g_pageSecurityID,
-			pageToken: pageToken
+			pageToken: g_pageToken
 		}
 	}, addHeaders({ Referer: g_url_login }));
-	ZenMoney.trace('3. JSON action: '+ JSON.stringify(json));
-
-	json = requestJson('processor/process/minerva/action', null, {
-		post: {
-			components: JSON.stringify([{
-					"componentId" : "SIDEMENUCOMPONENT",
-					"actions" : [{
-						"actionId" : "REGISTERED_CALLBACK_REQUEST",
-						"callbacks" : {},
-						"params" : {},
-						"requestId" : getJsonObjectById(json, 'SIDEMENUCOMPONENT', 'REGISTERED_CALLBACK_REQUEST').executeId, //json.components[0].results[0].executeId,
-						"executeId" : getJsonObjectById(json, 'SIDEMENUCOMPONENT', 'REGISTERED_CALLBACK_REQUEST').executeId
-					}]
-				}, {
-					"componentId" : "MOBILENOTIFICATIONS",
-					"actions" : [{
-						"actionId" : "NOTIFICATIONS",
-						"callbacks" : {},
-						"params" : { "allNotificationsRequired" : false },
-						"requestId" : "-1308964054"
-					}, {
-						"actionId" : "PERSONAL_OFFERS",
-						"callbacks" : {},
-						"params" : {
-							"getIncomeParams" : { "isPdaNotifications" : true }
-						},
-						"requestId" : getJsonObjectById(json, 'MOBILENOTIFICATIONS', 'PERSONAL_OFFERS').executeId, //json.components[1].results[1].executeId,
-						"executeId" : getJsonObjectById(json, 'MOBILENOTIFICATIONS', 'PERSONAL_OFFERS').executeId
-					}]
-				}, {
-					"componentId" : "CRMHomepage",
-					"actions" : [{
-						"actionId" : "PERSONAL_OFFERS",
-						"requestId" : getJsonObjectById(json, 'CRMHomepage', 'PERSONAL_OFFERS').executeId, //json.components[2].results[0].executeId,
-						"executeId" : getJsonObjectById(json, 'CRMHomepage', 'PERSONAL_OFFERS').executeId
-					}]
-				},
-				{
-					"componentId" : "MobileTemplatesHomepage",
-					"actions" : [{
-						"actionId" : "USER_TEMPLATES",
-						"params" : {
-							"showOnMainPage" : "true"
-						},
-						"requestId" : getJsonObjectById(json, 'MobileTemplatesHomepage', 'USER_TEMPLATES').executeId,
-						"executeId" : getJsonObjectById(json, 'MobileTemplatesHomepage', 'USER_TEMPLATES').executeId
-					}
-					]
-				}, {
-					"componentId" : "recurringPayments",
-					"actions" : [{
-						"actionId" : "REGULAR_OPERATION_OCCURRENCES",
-						"params" : {
-							"occurrenceStatuses" : [{
-								"status" : "Planned"
-							}, {
-								"status" : "InProgressAtPlannedDate"
-							}, {
-								"status" : "InProgressAtNotPlannedDate"
-							}
-							],
-							"count" : "3"
-						},
-						"requestId" : getJsonObjectById(json, 'recurringPayments', 'REGULAR_OPERATION_OCCURRENCES').executeId,
-						"executeId" : getJsonObjectById(json, 'recurringPayments', 'REGULAR_OPERATION_OCCURRENCES').executeId
-					}
-					]
-				}, {
-					"componentId" : "CACHETOKENCOMPONENT",
-					"actions" : [{
-						"actionId" : "CACHE_TOKENS",
-						"callbacks" : {},
-						"params" : {},
-						"requestId" : "3938"
-					}]
-				}
-			]),
-			ignoreCache: false,
-			callId: 4,
-			pageSecurityID: g_pageSecurityID,
-			pageToken: pageToken
-		}
-	}, addHeaders({ Referer: g_url_login }));
-	ZenMoney.trace('4. JSON action: '+ JSON.stringify(json));
-
-	// открываем список счетов, отмеченных для показа на главной
-	ZenMoney.trace('Открываем список счетов..');
-	pageToken = json.pageToken;
-	json = requestJson('processor/process/minerva/action', null, {
-		post: {
-			components: JSON.stringify([{
-					"componentId" : "MOBILENOTIFICATIONS",
-					"actions" : [{
-						"actionId" : "NOTIFICATIONS",
-						"callbacks" : {},
-						"params" : {
-							"allNotificationsRequired" : false
-						},
-						"requestId" : "-1308964054"
-					}
-					]
-				}, {
-					"componentId" : "CACHETOKENCOMPONENT",
-					"actions" : [{
-						"actionId" : "CACHE_TOKENS",
-						"callbacks" : {},
-						"params" : {},
-						"requestId" : "3938"
-					}
-					]
-				}, {
-					"componentId" : "MobileAccountsAndCardsHomepage",
-					"actions" : [{
-						"actionId" : "PORTFOLIOS",
-						"params" : {
-							"portfolioId" : "AccountsAndCards",
-							"isMobile" : "true"
-						},
-						"partialResult" : true,
-						"requestId" : "426051343"
-					}
-					]
-				}
-			]),
-			ignoreCache: false,
-			callId: 5,
-			pageSecurityID: g_pageSecurityID,
-			pageToken: pageToken
-		}
-	}, addHeaders({ Referer: g_url_login }));
-	ZenMoney.trace('5. JSON action: '+ JSON.stringify(json));
-
-	json = requestJson('processor/process/minerva/action', null, {
-		post: {
-			components: JSON.stringify([{
-					"componentId" : "MOBILENOTIFICATIONS",
-					"actions" : [{
-						"actionId" : "NOTIFICATIONS",
-						"callbacks" : {},
-						"params" : {
-							"allNotificationsRequired" : false
-						},
-						"requestId" : "-1308964054"
-					}
-					]
-				}, {
-					"componentId" : "CACHETOKENCOMPONENT",
-					"actions" : [{
-						"actionId" : "CACHE_TOKENS",
-						"callbacks" : {},
-						"params" : {},
-						"requestId" : "3938"
-					}
-					]
-				}, {
-					"componentId" : "MobileAccountsAndCardsHomepage",
-					"actions" : [{
-						"actionId" : "PORTFOLIOS",
-						"params" : {
-							"portfolioId" : "AccountsAndCards",
-							"isMobile" : "true"
-						},
-						"partialResult" : true,
-						"requestId" : getJsonObjectById(json, 'MobileAccountsAndCardsHomepage', 'PORTFOLIOS').executeId, //json.components[2].results[0].executeId,
-						"executeId" : getJsonObjectById(json, 'MobileAccountsAndCardsHomepage', 'PORTFOLIOS').executeId
-					}
-					]
-				}
-			]),
-			ignoreCache: false,
-			callId: 6,
-			pageSecurityID: g_pageSecurityID,
-			pageToken: pageToken
-		}
-	}, addHeaders({ Referer: g_url_login }));
-	ZenMoney.trace('6. JSON action: '+ JSON.stringify(json));
-
-	g_pageToken = json.pageToken;
+	ZenMoney.trace('JSON списка счетов: '+ JSON.stringify(json));
 
 	var accounts = getJsonObjectById(json, 'MobileAccountsAndCardsHomepage', 'PORTFOLIOS').result.items[0].products;
-	ZenMoney.trace('Получено счетов (JSON): '+JSON.stringify(accounts));
 	var accDict = [];
 	for(var a=0; a<accounts.length; a++){
 		var account = accounts[a];
-		switch (account.id){
-			case 'CreditCardProduct':
-				// кредитные карты
-				for(var iGr=0; iGr<account.groups.length; iGr++){
-					var group = account.groups[iGr];
 
-					for(var iItem=0; iItem<group.items.length; iItem++) {
-						var item = group.items[iItem];
+		switch (account.id)
+		{
+			case 'MasterAccountProduct':
+				for(iGr=0; iGr<account.groups.length; iGr++){
+					group = account.groups[iGr];
 
-						var acc = {
+					for(iItem=0; iItem<group.items.length; iItem++) {
+						item = group.items[iItem];
+						if (!item.hasOwnProperty('number')) continue;
+
+						acc = {
 							id: item.id,
-							title: item.name,
+							title: item.displayName,
 							type: 'ccard',
-							syncID: item.number.substring(item.number.length - 4),
+							syncID: [ item.number.substr(5, 3) + item.number.substr(-3) ], // в синнкайди добавляем и код валюты, чтобы исключить повторения
 							instrument: getInstrument(item.amount.currency),
 							balance: item.amount.sum
 						};
+
+						ZenMoney.trace('Добавляем мастер счёт: '+ acc.title +' (#'+ acc.id +')');
+
+						// проверим нет ли карт, прикреплённых к мастер счёту
+						if (item.hasOwnProperty('items'))
+							for(var i=0; i<item.items.length; i++)
+								acc.syncID.push(item.items[i].number.substr(-4));
+
+						accDict.push(acc);
+						g_accounts[acc.id] = {
+							id: acc.id,
+							title: acc.title,
+							type: 'MasterAccount'
+						};
+					}
+				}
+				break;
+
+			case 'DebitCardProduct':
+			case 'CreditCardProduct':
+				for(iGr=0; iGr<account.groups.length; iGr++){
+					group = account.groups[iGr];
+
+					for(iItem=0; iItem<group.items.length; iItem++) {
+						item = group.items[iItem];
+						if (!item.hasOwnProperty('number')) continue;
+
+						acc = {
+							id: item.id,
+							title: item.displayName,
+							type: 'ccard',
+							syncID: item.number.substr(-4),
+							instrument: getInstrument(item.amount.currency),
+							balance: item.amount.sum
+						};
+
+						ZenMoney.trace('Добавляем карту: '+ acc.title +' (#'+ acc.id +')');
 
 						accDict.push(acc);
 						g_accounts[acc.id] = {
@@ -462,343 +318,226 @@ function processAccounts(json){
 	ZenMoney.addAccount(accDict);
 }
 
-function processTransactions(accId){
-	var acc = g_accounts[accId];
+function processTransactions() {
+	var browserId = 2;
+	for(var accId in g_accounts) {
+		var acc = g_accounts[accId];
+		browserId++;
 
-	ZenMoney.trace('Загружаем "'+acc.title+'" (#'+accId+')');
+		ZenMoney.trace('Загружаем "' + acc.title + '" (#' + accId + ')');
 
-	var lastSyncTime = ZenMoney.getData('last_sync_'+accId, 0);
+		var lastSyncTime = ZenMoney.getData('last_sync_' + accId, 0);
 
-	// первоначальная инициализация
-	if (lastSyncTime == 0) {
-		// по умолчанию загружаем операции за неделю
-		var period = !g_preferences.hasOwnProperty('period') || isNaN(period = parseInt(g_preferences.period)) ? 7 : period;
+		// первоначальная инициализация
+		if (lastSyncTime == 0) {
+			// по умолчанию загружаем операции за неделю
+			var period = !g_preferences.hasOwnProperty('period') || isNaN(period = parseInt(g_preferences.period)) ? 7 : period;
 
-		if (period > 100) period = 100;	// на всякий случай, ограничим лимит, а то слишком долго будет
+			if (period > 100) period = 100;	// на всякий случай, ограничим лимит, а то слишком долго будет
 
-		lastSyncTime = Date.now() - period*24*60*60*1000;
-	}
-
-	// всегда захватываем одну неделю минимум
-	lastSyncTime = Math.min(lastSyncTime, Date.now() - 7*24*60*60*1000);
-	var lastSyncDate = new Date(lastSyncTime);
-	var nowSyncDate = new Date();
-	var startDate = n2(lastSyncDate.getDate())+'.'+n2(lastSyncDate.getMonth()+1)+'.'+lastSyncDate.getFullYear();
-	var endDate = n2(nowSyncDate.getDate())+'.'+n2(nowSyncDate.getMonth()+1)+'.'+nowSyncDate.getFullYear();
-
-	ZenMoney.trace('Запрашиваем операции с '+ lastSyncDate.toLocaleString());
-	
-	ZenMoney.requestPost(g_baseurl + g_url_product_select, {
-		portfolioId: "AccountsAndCards",
-		_charset_: "UTF-8",
-		productId: acc.id,
-		productClass: acc.type,
-		productTitle: acc.title
-	}, g_headers);
-
-	html = ZenMoney.requestGet(g_url_product_details, g_headers);
-	g_pageSecurityID = getParam(html, /page-security-id="([^"]*)/i, null, html_entity_decode);
-
-	json = requestJson('processor/process/minerva/operation', null, {
-		post: {
-			action: 'checkAvailability',
-			serviceData: 'telebank|RequestCallbackInitData|RequestCallbackScenario',
-			callId: 1,
-			pageSecurityID: g_pageSecurityID,
-			pageToken: g_pageToken
+			lastSyncTime = Date.now() - period * 24 * 60 * 60 * 1000;
 		}
-	}, addHeaders({ Referer: g_url_login }));
-	ZenMoney.trace('1. JSON checkAvailability: '+ JSON.stringify(json));
 
-	var pageToken = json.pageToken;
+		// всегда захватываем одну неделю минимум
+		lastSyncTime = Math.min(lastSyncTime, Date.now() - 7 * 24 * 60 * 60 * 1000);
+		var lastSyncDate = new Date(lastSyncTime);
+		var nowSyncDate = new Date();
+		var startDate = n2(lastSyncDate.getDate()) + '.' + n2(lastSyncDate.getMonth() + 1) + '.' + lastSyncDate.getFullYear();
+		var endDate = n2(nowSyncDate.getDate()) + '.' + n2(nowSyncDate.getMonth() + 1) + '.' + nowSyncDate.getFullYear();
 
-	json = requestJson('services/news/unreaded', null, {
-		post: {
-			callId: 2,
-			pageSecurityID: g_pageSecurityID,
-			pageToken: g_pageToken
-		}
-	}, addHeaders({ Referer: g_url_login }));
-	ZenMoney.trace('2. JSON unreaded: '+ JSON.stringify(json));
+		ZenMoney.trace('Запрашиваем операции с ' + lastSyncDate.toLocaleString());
 
-	json = requestJson('processor/process/minerva/action', null, {
-		post: {
-			components: JSON.stringify([{
-					"componentId" : "SIDEMENUCOMPONENT",
-					"actions" : [{
-						"actionId" : "REGISTERED_CALLBACK_REQUEST",
-						"callbacks" : {},
-						"params" : {},
-						"requestId" : "3938"
-					}
-					]
-				}, {
-					"componentId" : "MOBILENOTIFICATIONS",
-					"actions" : [{
-						"actionId" : "NOTIFICATIONS",
-						"callbacks" : {},
-						"params" : {
-							"allNotificationsRequired" : true
-						},
-						"requestId" : "-1308964054"
+		json = requestJson('processor/process/minerva/operation', null, {
+			post: {
+				action: 'checkAvailability',
+				serviceData: 'telebank|RequestCallbackInitData|RequestCallbackScenario',
+				callId: 1,
+				pageSecurityID: g_pageSecurityID,
+				pageToken: g_pageToken
+			}
+		}, addHeaders({Referer: g_url_login}));
+
+		g_pageToken = json.pageToken;
+
+		json = requestJson('processor/process/minerva/action', null, {
+			post: {
+				components: JSON.stringify([
+					{
+						"componentId": "SideMenuComponent",
+						"actions": [{
+							"actionId": "REGISTERED_CALLBACK_REQUEST",
+							"requestId": "1"
+						}
+						]
 					}, {
-						"actionId" : "PERSONAL_OFFERS",
-						"callbacks" : {},
-						"params" : {
-							"getIncomeParams" : {
-								"isPdaNotifications" : true
-							}
-						},
-						"requestId" : "-618543480"
-					}
-					]
-				}, {
-					"componentId" : "productsStatement",
-					"actions" : [{
-						"actionId" : "STATEMENT",
-						"params" : {
-							"products" : [{
-								"id" : acc.id,
-								"className" : acc.type,
-								"number" : "",
-								"dateCreation" : ""
-							}
-							],
-							"startDate" : startDate,
-							"endDate" : endDate
-						},
-						"requestId" : "1604044926"
-					}
-					]
-				}, {
-					"componentId" : "CACHETOKENCOMPONENT",
-					"actions" : [{
-						"actionId" : "CACHE_TOKENS",
-						"callbacks" : {},
-						"params" : {},
-						"requestId" : "3938"
-					}
-					]
-				}
-				]
-			),
-			ignoreCache: false,
-			callId: 3,
-			pageSecurityID: g_pageSecurityID,
-			pageToken: pageToken
-		}
-	}, addHeaders({ Referer: g_url_login }));
-	ZenMoney.trace('3. JSON action: '+ JSON.stringify(json));
-
-	var pageToken2 = json.pageToken;
-
-	var prodStat = getJsonObjectById(json, 'productsStatement', 'STATEMENT').executeId;
-	json = requestJson('processor/process/minerva/action', null, {
-		post: {
-			components: JSON.stringify([{
-					"componentId" : "SIDEMENUCOMPONENT",
-					"actions" : [{
-						"actionId" : "REGISTERED_CALLBACK_REQUEST",
-						"callbacks" : {},
-						"params" : {},
-						"requestId" : getJsonObjectById(json, 'SIDEMENUCOMPONENT', 'REGISTERED_CALLBACK_REQUEST').executeId,
-						"executeId" : getJsonObjectById(json, 'SIDEMENUCOMPONENT', 'REGISTERED_CALLBACK_REQUEST').executeId
-					}
-					]
-				}, {
-					"componentId" : "MOBILENOTIFICATIONS",
-					"actions" : [{
-						"actionId" : "NOTIFICATIONS",
-						"callbacks" : {},
-						"params" : {
-							"allNotificationsRequired" : false
-						},
-						"requestId" : "-1308964054"
+						"componentId": "MOBILENOTIFICATIONS",
+						"actions": [{
+							"actionId": "NOTIFICATIONS",
+							"params": {
+								"allNotificationsRequired": true
+							},
+							"permanent": true,
+							"requestId": "2"
+						}, {
+							"actionId": "PERSONAL_OFFERS",
+							"params": {
+								"getIncomeParams": {
+									"isPdaNotifications": true
+								}
+							},
+							"requestId": "3"
+						}
+						]
 					}, {
-						"actionId" : "PERSONAL_OFFERS",
-						"callbacks" : {},
-						"params" : {
-							"getIncomeParams" : {
-								"isPdaNotifications" : true
-							}
-						},
-						"requestId" : getJsonObjectById(json, 'MOBILENOTIFICATIONS', 'PERSONAL_OFFERS').executeId,
-						"executeId" : getJsonObjectById(json, 'MOBILENOTIFICATIONS', 'PERSONAL_OFFERS').executeId
+						"componentId": "productsStatement",
+						"actions": [{
+							"actionId": "STATEMENT",
+							"params": {
+								"products": [{
+									"id": accId,
+									"className": acc.type,
+									"number": "",
+									"dateCreation": ""
+								}
+								],
+								"startDate": startDate,
+								"endDate": endDate
+							},
+							"requestId": "4"
+						}
+						]
+					}, {
+						"componentId": "CacheTokenComponent",
+						"actions": [{
+							"actionId": "CACHE_TOKENS",
+							"permanent": true,
+							"requestId": "5"
+						}
+						]
 					}
-					]
-				}, {
-					"componentId" : "productsStatement",
-					"actions" : [{
-						"actionId" : "STATEMENT",
-						"params" : {
-							"products" : [{
-								"id" : "120DE36346D142A2B632CC74F9298889",
-								"className" : "CreditCard",
-								"number" : "",
-								"dateCreation" : ""
-							}
-							],
-							"startDate" : "06.08.2016",
-							"endDate" : "06.09.2016"
-						},
-						"requestId" : prodStat,
-						"executeId" : prodStat
+				]),
+				pageInstanceUid: g_browserSessionUid + '.' + browserId,
+				callId: 2,
+				pageSecurityID: g_pageSecurityID,
+				pageToken: g_pageToken
+			}
+		}, addHeaders({Referer: g_url_login}));
+		ZenMoney.trace('1. JSON списка операций: ' + JSON.stringify(json));
+
+		pageToken = json.pageToken;
+
+		json = requestJson('processor/process/minerva/action', null, {
+			post: {
+				components: '[]',
+				pageInstanceUid: g_browserSessionUid + '.' + browserId,
+				callId: 3,
+				pageSecurityID: g_pageSecurityID,
+				pageToken: g_pageToken
+			}
+		}, addHeaders({Referer: g_url_login}));
+		ZenMoney.trace('2. JSON списка операций: ' + JSON.stringify(json));
+
+		g_pageToken = pageToken;
+
+		var tranDict = [];
+		var transactionItems = [];
+		var prodStat = getJsonObjectById(json, 'productsStatement', 'STATEMENT');
+
+		// ждём ответа по транзакциям, если не пришли сразу
+		if (!prodStat)
+			for (var k=0; k<5; k++) {
+				json = requestJson('processor/process/minerva/action', null, {
+					post: {
+						components: '[]',
+						pageInstanceUid: g_browserSessionUid + '.' + browserId,
+						callId: 4+k,
+						pageSecurityID: g_pageSecurityID,
+						pageToken: pageToken
 					}
-					]
-				}, {
-					"componentId" : "CACHETOKENCOMPONENT",
-					"actions" : [{
-						"actionId" : "CACHE_TOKENS",
-						"callbacks" : {},
-						"params" : {},
-						"requestId" : "3938"
-					}
-					]
-				}
-				]
-			),
-			ignoreCache: false,
-			callId: 4,
-			pageSecurityID: g_pageSecurityID,
-			pageToken: pageToken
-		}
-	}, addHeaders({ Referer: g_url_login }));
-	ZenMoney.trace('4. JSON action: '+ JSON.stringify(json));
+				}, addHeaders({Referer: g_url_login}));
+				ZenMoney.trace((3+k)+'. JSON списка операций: ' + JSON.stringify(json));
 
-
-	// запрашиваем операции по счёту
-	json = requestJson('processor/process/minerva/action', null, {
-		post: {
-			components: JSON.stringify([{
-					"componentId" : "MOBILENOTIFICATIONS",
-					"actions" : [{
-						"actionId" : "NOTIFICATIONS",
-						"callbacks" : {},
-						"params" : {
-							"allNotificationsRequired" : false
-						},
-						"requestId" : "-1308964054"
-					}
-					]
-				}, {
-					"componentId" : "productsStatement",
-					"actions" : [{
-						"actionId" : "STATEMENT",
-						"params" : {
-							"products" : [{
-								"id" : acc.id,
-								"className" : acc.type,
-								"number" : "",
-								"dateCreation" : ""
-							}
-							],
-							"startDate" : startDate,
-							"endDate" : endDate
-						},
-						"requestId" : prodStat,
-						"executeId" : prodStat
-					}
-					]
-				}, {
-					"componentId" : "CACHETOKENCOMPONENT",
-					"actions" : [{
-						"actionId" : "CACHE_TOKENS",
-						"callbacks" : {},
-						"params" : {},
-						"requestId" : "3938"
-					}
-					]
-				}
-				]
-			),
-			ignoreCache: false,
-			callId: 5,
-			pageSecurityID: g_pageSecurityID,
-			pageToken: pageToken2
-		}
-	}, addHeaders({ Referer: g_url_login }));
-	ZenMoney.trace('5. JSON action: '+ JSON.stringify(json));
-
-	// обрабатываем и добавляем операции
-	var tranDict = [];
-	var transactionItems = getJsonObjectById(json, 'productsStatement', 'STATEMENT').result.items;
-	if (transactionItems.length > 0){
-		var transactions = transactionItems[0].transactions;
-		ZenMoney.trace('JSON transactions: '+ JSON.stringify(transactions));
-
-		for(var iTran=0; iTran<transactions.length; iTran++){
-			var t = transactions[iTran];
-
-			// учитываем только успешные операции
-			if (t.failed == "false")
-				continue;
-
-			var tran = {};
-			ZenMoney.trace('Добавляем операцию #'+iTran+': '+ t.displayedDate +' - '+ t.details);
-
-			tran.date = n2(t.date.day)+'.'+n2(t.date.monthAsInt)+'.'+t.date.year;
-
-			var sum = t.amount.sum;
-			if (sum > -0.01 && sum < 0.01) continue; // предохранитель
-
-			if (sum < 0){
-				tran.income = 0;
-				tran.incomeAccount = acc.id;
-				tran.outcome = -sum;
-				tran.outcomeAccount = acc.id;
-			} else {
-				tran.income = sum;
-				tran.incomeAccount = acc.id;
-				tran.outcome = 0;
-				tran.outcomeAccount = acc.id;
+				prodStat = getJsonObjectById(json, 'productsStatement', 'STATEMENT');
+				if (prodStat)
+					break;
 			}
 
-			tran.comment = t.details;
+		if (prodStat && prodStat.hasOwnProperty('result') && prodStat.result.hasOwnProperty('items'))
+			transactionItems = prodStat.result.items;
 
-			tranDict.push(tran);
-		}
-	}
+		// обрабатываем и добавляем операции
+		if (transactionItems.length > 0) {
+			var transactions = transactionItems[0].transactions;
+			ZenMoney.trace('JSON transactions: ' + JSON.stringify(transactions));
 
-	ZenMoney.trace('Всего операций добавлено: '+ tranDict.length);
-	ZenMoney.trace('JSON: '+ JSON.stringify(tranDict));
-	ZenMoney.addTransaction(tranDict);
+			for (var iTran = 0; iTran < transactions.length; iTran++) {
+				var t = transactions[iTran];
 
-	// в этом блоке нет необходимости
-	/*json = requestJson('processor/process/minerva/action', null, {
-		post: {
-			components: JSON.stringify([{
-					"componentId" : "MOBILENOTIFICATIONS",
-					"actions" : [{
-						"actionId" : "NOTIFICATIONS",
-						"callbacks" : {},
-						"params" : {
-							"allNotificationsRequired" : false
-						},
-						"requestId" : "-1308964054"
-					}
-					]
-				}, {
-					"componentId" : "CACHETOKENCOMPONENT",
-					"actions" : [{
-						"actionId" : "CACHE_TOKENS",
-						"callbacks" : {},
-						"params" : {},
-						"requestId" : "3938"
-					}
-					]
+				// учитываем только успешные операции
+				if (t.failed == "false")
+					continue;
+
+				var tran = {};
+				ZenMoney.trace('Добавляем операцию #' + iTran + ': ' + t.displayedDate + ' - ' + t.details);
+
+				tran.id = t.id;
+				tran.date = t.transactionDate;
+				
+				var sum = t.amount.sum;
+				var curr = getInstrument(t.amount.currency);
+				if (sum > -0.01 && sum < 0.01) continue; // предохранитель
+
+				if (sum < 0) {
+					tran.income = 0;
+					tran.incomeAccount = acc.id;
+					tran.outcome = -sum;
+					tran.outcomeAccount = acc.id;
+				} else {
+					tran.income = sum;
+					tran.incomeAccount = acc.id;
+					tran.outcome = 0;
+					tran.outcomeAccount = acc.id;
 				}
-				]
-			),
-			ignoreCache: false,
-			callId: 6,
-			pageSecurityID: g_pageSecurityID,
-			pageToken: pageToken2
+
+				if (t.details.indexOf("нятие в ") > 0 || t.details.indexOf("ополнение в ") > 0){
+					// операции наличными
+					if (sum > 0) {
+						tran.outcome = sum;
+						tran.outcomeAccount = "cash#"+curr;
+					} else {
+						tran.income = -sum;
+						tran.incomeAccount = "cash#"+curr;
+					}
+
+					tran.comment = t.details;
+				}
+				else
+				{
+					switch (acc.type){
+						case 'MasterAccount':
+							if (retail = /^Операция п.*?\d+\.\s+(.+?)(?:\s+[а-яА-Я].*)?$/.exec(t.details))
+								tran.payee = retail[1];
+							break;
+
+						case 'CreditCard':
+							if (retail = /^[\dX]+\s+Retail\s+(.+)/.exec(t.details))
+								tran.payee = retail[1];
+							break;
+					}
+
+					if (!tran.hasOwnProperty('payee') || !tran.payee)
+						tran.comment = t.order && t.order.description ? t.order.description.trim() : t.details.trim();
+				}
+
+				tranDict.push(tran);
+			}
 		}
-	}, addHeaders({ Referer: g_url_login }));
-	ZenMoney.trace('6. JSON action: '+ JSON.stringify(json));*/
+
+		ZenMoney.trace('Всего операций добавлено: ' + tranDict.length);
+		ZenMoney.trace('JSON: ' + JSON.stringify(tranDict));
+		ZenMoney.addTransaction(tranDict);
+	}
 }
-
-
 
 function clearHtml(html) {
 	if (!html)
@@ -823,6 +562,8 @@ function getInstrument(currency){
 		case '₽': return 'RUB';
 		case '$': return 'USD';
 		case '€': return 'EUR';
+		default:
+			throw new ZenMoney.Error("Обнаружена не обрабатываемая валюта '"+currency+"'");
 	}
 	return currency;
 }
@@ -831,8 +572,10 @@ function getJsonObjectById(json, componentId, resultActionId){
 	if (!componentId)
 		return json;
 
-	if (!json.components)
-		return null;
+	if (!json.components) {
+		ZenMoney.trace("В ответе банка не найден компонент " + componentId + ": " + JSON.stringify(json));
+		throw new ZenMoney.Error("Ошибка распознавания ответа от банка. Возможно, изменилась структура интернет-банка. Обратитесь к разработчикам.");
+	}
 
 	var components = json.components;
 	for(var i=0; i<components.length; i++){
@@ -847,7 +590,8 @@ function getJsonObjectById(json, componentId, resultActionId){
 			return result;
 		}
 
-		return null;
+		ZenMoney.trace("В ответе банка не найден объект "+componentId+"."+resultActionId+" : "+ JSON.stringify(json));
+		throw new ZenMoney.Error("Ошибка распознавания ответа от банка. Возможно, изменилась структура интернет-банка. Обратитесь к разработчикам.");
 	}
 }
 
@@ -901,4 +645,14 @@ function in_array(needle, haystack) {
 		if(haystack[i] == needle) return true;
 	}
 	return false;
+}
+
+function guid() {
+	function s4() {
+		return Math.floor((1 + Math.random()) * 0x10000)
+			.toString(16)
+			.substring(1);
+	}
+	return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+		s4() + '-' + s4() + s4() + s4();
 }

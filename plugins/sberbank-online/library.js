@@ -636,7 +636,7 @@ function getParams(html, regexp, replaces, parser) {
 	}
 
 	var regexps = isArray(regexp) ? regexp : [regexp], value = [];
-	for (var i = 0; i < regexps.length; ++i) { //Если массив регэкспов, то возвращаем первый заматченный
+	for (var i = 0; i < regexps.length; ++i) { // Если массив регэкспов, то возвращаем первый заматченный
 		regexp = regexps[i];
 		var matches = regexp ? html.match(regexp) : [, html];
 		if (matches) {
@@ -677,4 +677,11 @@ function addHeaders(newHeaders, oldHeaders) {
 			headers.push([i, newHeaders[i]]);
 		return headers;
 	}
+}
+
+Array.prototype.remove = function(value) {
+	var idx = this.indexOf(value);
+	if (idx != -1)
+		return this.splice(idx, 1);
+	return false;
 }
