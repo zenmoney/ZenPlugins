@@ -2,18 +2,29 @@
  * Начинаем синхронизацию
  */
 function main() {
-    var preferences = ZenMoney.getPreferences();
+    var lastSyncTime = ZenMoney.getData('last_sync', 0);
+
+    // первоначальная инициализация
+    if (lastSyncTime == 0) {
+        var preferences = ZenMoney.getPreferences();
+        // по умолчанию загружаем операции за неделю
+        var period = !preferences.hasOwnProperty('period') || isNaN(period = parseInt(preferences.period)) ? 7 : period;
+        if (period > 100) period = 100;	// на всякий случай, ограничим лимит, а то слишком долго будет
+        lastSyncTime = Math.floor(Date.now() / 1000) - period * 24 * 60 * 60;
+    }
+
+    ZenMoney.trace(lastSyncTime);
     var rocketBank = new RocketBank(
         ZenMoney.getData,
         ZenMoney.setData,
-        ZenMoney.saveData,
         ZenMoney.request,
         ZenMoney.retrieveCode,
         ZenMoney.Error,
         ZenMoney.trace
     );
-    rocketBank.processAccounts();
-    rocketBank.processTransactions();
+    rocketBank.processTransactions(lastSyncTime);
+    ZenMoney.setData('last_sync', lastSyncTime);
+    ZenMoney.saveData();
 
     ZenMoney.setResult({success: true});
 }
@@ -22,37 +33,52 @@ function main() {
 /**
  * @param get
  * @param set
- * @param save
  * @param request
  * @param prompt
  * @param error
  * @param log
  * @constructor
  */
-function RocketBank(get, set, save, request, prompt, error, log) {
+function RocketBank(get, set, request, prompt, error, log) {
 
     var baseUrl = "https://rocketbank.ru/api/v5";
 
     /**
-     * Обрабатываем счета
+     * Обрабатываем транзакции
+     *
+     * @param {Number} timestamp
      */
-    this.processAccounts = function () {
-        log('Запрашиваем данные по счетам...');
+    this.processTransactions = function (timestamp) {
+        log('Запрашиваем данные по транзакциям с ' + timestamp);
     };
 
     /**
-     * Обрабатываем транзакции
+     *
+     * @param {String} device_id
+     * @param {String} token_id
+     * @param {Number} page
+     * @param {Number} limit
+     * @returns {*}
      */
-    this.processTransactions = function () {
-        log('Запрашиваем данные по транзакциям...');
-    };
+    function getOperations(device_id, token_id, page, limit) {
+        var data = getJson(
+            request("GET", "/operations", {page: page, per_page: limit}, getHeaders(device_id, token_id))
+        );
+        if (data.response.status == 200) {
+            return data;
+        } else if (data.response.status == 401) {
+            return getOperations(device_id, getToken(device_id, true), page, limit);
+        } else {
+            throw new error('Не удалось загрузить список операций: ' + data.response.description);
+        }
+    }
 
     /**
      * Возвращает ID устройства
      *
      * @returns {string}
      */
-    var getDevice = function () {
+    function getDevice() {
         var deviceId = get('device_id');
         if (!deviceId) {
             log("Необходимо привязать устройство...");
@@ -64,7 +90,7 @@ function RocketBank(get, set, save, request, prompt, error, log) {
             log("Устройство привязано");
         }
         return deviceId;
-    }.bind(this);
+    }
 
     /**
      * Получить токен для запросов
@@ -73,7 +99,7 @@ function RocketBank(get, set, save, request, prompt, error, log) {
      * @param {Boolean} force_new
      * @returns {string}
      */
-    var getToken = function (device_id, force_new) {
+    function getToken(device_id, force_new) {
         var token = get('token');
         if (!token || force_new) {
             var password = prompt(
@@ -100,10 +126,9 @@ function RocketBank(get, set, save, request, prompt, error, log) {
             token = data.token;
             set("email", data.user.login_token);
             set("token", token);
-            save();
         }
         return token;
-    }.bind(this);
+    }
 
     /**
      * Регистрируем новое устройтво
@@ -111,7 +136,7 @@ function RocketBank(get, set, save, request, prompt, error, log) {
      * @param {String} phone
      * @returns {String}
      */
-    var registerDevice = function (phone) {
+    function registerDevice(phone) {
         var device_id = "zenmoney_" + hex_md5(Math.random().toString() + "_" + phone + "_" + Date.now());
         var data = getJson(
             request(
@@ -147,23 +172,22 @@ function RocketBank(get, set, save, request, prompt, error, log) {
         set("device_id", deviceId);
         set("email", data.user.login_token);
         set("token", data.token);
-        save();
         return device_id;
-    }.bind(this);
+    }
 
     /**
      * Разбираем строку ответа
      *
      * @param {String} data
      */
-    var getJson = function (data) {
+    function getJson(data) {
         try {
             return JSON.parse(data);
         } catch (e) {
             log('Bad json (' + e.message + '): ' + data);
             throw new error('Сервер вернул ошибочные данные: ' + e.message);
         }
-    }.bind(this);
+    }
 
     /**
      * Формируем объект заголовков
@@ -172,7 +196,7 @@ function RocketBank(get, set, save, request, prompt, error, log) {
      * @param {String} token
      * @returns {Object}
      */
-    var getHeaders = function (device_id, token) {
+    function getHeaders(device_id, token) {
         var date = Math.floor(Date.now() / 1000);
         var headers = {
             "X-Device-ID": device_id,
@@ -183,5 +207,5 @@ function RocketBank(get, set, save, request, prompt, error, log) {
             headers["Authorization"] = "Token token=" + token;
         }
         return headers;
-    }.bind(this);
+    }
 }
