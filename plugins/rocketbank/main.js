@@ -13,11 +13,28 @@ function main() {
         lastSyncTime = Math.floor(Date.now() / 1000) - period * 24 * 60 * 60;
     }
 
+    var debug = true;
+    var prompt;
+    if (debug) {
+        var responses = ['code'];
+        prompt = function (message, unused, options) {
+            var response = responses.shift();
+            if (typeof response == 'string') {
+                return response;
+            } else {
+                return response(message, unused, options);
+            }
+        };
+    } else {
+        prompt = ZenMoney.retrieveCode;
+    }
+
+
     var rocketBank = new RocketBank(
         ZenMoney.getData,
         ZenMoney.setData,
         ZenMoney.request,
-        ZenMoney.retrieveCode,
+        prompt,
         ZenMoney.Error,
         ZenMoney.trace
     );
@@ -48,7 +65,6 @@ function RocketBank(get, set, request, prompt, error, log) {
      * @return {Number}
      */
     this.processTransactions = function (timestamp) {
-        log('Запрашиваем данные по транзакциям с ' + timestamp);
         var device = getDevice();
         var operations = getOperations(device, getToken(device, false), 1, 30);
         log(operations);
@@ -64,17 +80,30 @@ function RocketBank(get, set, request, prompt, error, log) {
      * @returns {*}
      */
     function getOperations(device_id, token_id, page, limit) {
-        log("Запрашиваем список операций");
+        log("Запрашиваем список операций: страница " + page);
         var data = getJson(
-            request("GET", "/operations", {page: page, per_page: limit}, getHeaders(device_id, token_id))
+            request(
+                "GET",
+                baseUrl + "/operations?page=" + page + "&per_page=" + limit,
+                null,
+                getHeaders(device_id, token_id))
         );
-        if (data.response.status == 200) {
-            return data;
-        } else if (data.response.status == 401) {
-            return getOperations(device_id, getToken(device_id, true), page, limit);
-        } else {
-            throw new error('Не удалось загрузить список операций: ' + data.response.description);
+        if (data.hasOwnProperty("response")) {
+            if (data.response.status == 401) {
+                return getOperations(device_id, getToken(device_id, true), page, limit);
+            } else {
+                throw new error('Не удалось загрузить список операций: ' + data.response.description);
+            }
         }
+        log("Загрузили страницу " + data.pagination.current_page + " из " + data.pagination.total_pages);
+        if (data.hasOwnProperty("operations")) {
+            data.operations.forEach(function (operation) {
+                log(operation);
+            });
+        } else {
+            log("Операции не найдены (всего операций " + data.pagination.total_count + ")");
+        }
+        return data;
     }
 
     /**
@@ -119,18 +148,15 @@ function RocketBank(get, set, request, prompt, error, log) {
             var data = getJson(
                 request(
                     'GET',
-                    baseUrl + "/login",
-                    JSON.stringify({email: get('email'), password: password}),
+                    baseUrl + "/login?email=" + get('email') + "&password=" + password,
+                    null,
                     getHeaders(device_id, null)
                 )
             );
-            if (data.response.status == 200) {
-                log(data.response.description);
-            } else {
+            if (!data.hasOwnProperty('token')) {
                 throw new error('Не удалось подтвердить телефон: ' + data.response.description);
             }
             token = data.token;
-            set("email", data.user.login_token);
             set("token", token);
         }
         return token;
@@ -176,9 +202,9 @@ function RocketBank(get, set, request, prompt, error, log) {
         } else {
             throw new error('Не удалось подтвердить телефон: ' + data.response.description);
         }
-        set("device_id", deviceId);
-        set("email", data.user.login_token);
-        set("token", data.token);
+        set("device_id", device_id);
+        set("email", data.user.email);
+
         return device_id;
     }
 
@@ -208,7 +234,8 @@ function RocketBank(get, set, request, prompt, error, log) {
         var headers = {
             "X-Device-ID": device_id,
             "X-Time": date,
-            "X-Sig": hex_md5("0Jk211uvxyyYAFcSSsBK3+etfkDPKMz6asDqrzr+f7c=_" + date + "_dossantos")
+            "X-Sig": hex_md5("0Jk211uvxyyYAFcSSsBK3+etfkDPKMz6asDqrzr+f7c=_" + date + "_dossantos"),
+            "Content-Type": "application/json"
         };
         if (token) {
             headers["Authorization"] = "Token token=" + token;
