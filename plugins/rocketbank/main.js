@@ -147,7 +147,7 @@ function RocketBank(get, set, request, prompt, error, log) {
         log("Отправляем запрос на регистрацию утсройства");
         var data = getJson(
             request(
-                'GET',
+                'POST',
                 baseUrl + "/devices/register",
                 JSON.stringify({phone: phone}),
                 getHeaders(device_id, null)
