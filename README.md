@@ -37,7 +37,7 @@
 **description** - Краткое описание работы с плагином
 
 ## Файл настроек
-Обычно это preferences.xml. Структура файла повторяет структуру [Preferences в Android](https://developer.android.com/guide/topics/ui/settings.html?hl=ru) только с пропущенным указанием пространства имен android:
+Обычно это preferences.xml. Структура файла повторяет структуру [Preferences в Android](https://developer.android.com/guide/topics/ui/settings.html?hl=ru) только без использования пространства имен `android:`
 Пример файла настроек:
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -82,7 +82,7 @@
 
 ##Принцип работы
 Плагин запускается в Java Script песочнице и выполняется синхронно. Это означает, что в плагине недоступны объекты и функции DOM наподобие setTimeout, XMLHTTPRequest и т.п. Для сетевого взаимодействия нужно использовать функции ZenPlugin API.
-JS-файлы плагина исполняются в порядке перечисления файлов в манифесте. После загрузки файлов в интерпретатор вызывается функция main(), которая должна присутствовать в коде плагина.
+JS-файлы плагина исполняются в порядке перечисления файлов в манифесте. После загрузки файлов в интерпретатор вызывается функция `main()`, которая обязана присутствовать в коде плагина.
 Всё взаимодействие с API плагина идет через глобальный объект ZenMoney.
 
 Пример простого плагина с постоянным набором операций но обновляемым балансом счета:
@@ -150,11 +150,14 @@ function main() {
 ##Описание ZenPlugin API
 Для описания вида функций используется псевдоязык похожий на Swift. Знак ? после типа переменной означает ее опциональность и возможность быть опущенной или быть null.
 
+####ZenMoney.trace(msg: String, tag: String?)
+Вывод в лог сообщение: `[tag] msg`
+
 ####ZenMoney.getPreferences() -> {String: String}
-Возвращает настройки плагина. Ключами являются ключи из preferences.xml.
+Возвращает настройки плагина. Ключи те же, что и в файле настроек preferences.xml.
 
 ####constructor ZenMoney.Error(message: String?, allowRetry: Bool?, fatal: Bool?) -> ZenMoney.Error
-Исключение, которое нужно использовать при необходимости исключения. Так же некоторые функции ZenPlugin API могут кидать исключения. В случае если плагин не может продолжить работу без изменения настроек, нужно бросать фатальное исключение с fatal = true.
+Исключение, которое нужно использовать при необходимости такового. Так же некоторые функции ZenPlugin API могут бросать исключения. В случае если плагин не может продолжить работу без изменения настроек, нужно бросать фатальное исключение с fatal = true.
 
 ####ZenMoney.setDefaultCharset(charset: String) 
 Задает кодировку по умолчанию, которая используется при сетевом взаимодействии.
@@ -163,29 +166,35 @@ function main() {
 ####ZenMoney.requestPost(url: String, data: Any?, headers: {String: String}?) -> String? throws
 ####ZenMoney.request(method: String, url: String, data: Any?, headers: {String: String}?) -> String? throws
 
-Выполняют HTTP-запрос и возвращают в виде строки тело ответа. Если в ответе нет указания кодировки, то используется кодировка по умолчанию. При запросе, если в headers нет заголовка Content-Type с указанием типа данных и кодировки, то данные кодируются с использованием кодировки по умолчанию.
-При ошибках в соединении кидают исключение ZenMoney.Error
+Выполняют HTTP-запрос и возвращают тело ответа в виде строки. Если в заголовках ответа нет указания кодировки, то используется кодировка по умолчанию. При запросе так же, если среди заголовков нет 'Content-Type' с указанием типа данных и кодировки, то используется кодировка по умолчанию.
+При ошибках в выполнении запроса бросают исключение ZenMoney.Error
 
+####ZenMoney.getLastUrl() -> Int?
+Для последнего успешного HTTP-запроса возвращает его URL после всех переадресаций 
 ####ZenMoney.getLastStatusCode() -> Int?
 Возвращает статус код последнего HTTP-ответа
 ####ZenMoney.getLastResponseHeaders() -> [['header1', 'value1'], ['header2', 'value2'], ...]?
 Возвращает массив заголовков последнего HTTP-ответа
 ####ZenMoney.getLastResponseHeader(header: String) -> String?
-Возвращает значение данного заголовка последнего HTTP-ответа
+Возвращает значение отдельного заголовка последнего HTTP-ответа
 
-####ZenMoney.retrieveCode(comment: String, imageUrl: String?, options: {String: Any}?) -> String?
-Просит пользователя ввести строковый ответ на вопрос comment с показом картинки imageUrl.
+####ZenMoney.retrieveCode(question: String, imageUrl: String?, options: {String: Any}?) -> String?
+Просит пользователя ввести строковый ответ на вопрос question с показом картинки imageUrl.
 `options.time: Int?` - время ввода в мс
-`options.inputType: String?` - тип ввода. Возможные варианты: 'text', 'textPassword', 'number', 'numberDecimal', 'numberPassword', 'phone', 'textEmailAddress'
+
+`options.inputType: ('text' | 'textPassword' | 'number' | 'numberDecimal' | 'numberPassword' | 'phone' | 'textEmailAddress')?` - тип ввода. Совпадает по значениям с типом ввода EditTextPreference в настройках.
 
 ####ZenMoney.setData(key: String, value: Any?)
 ####ZenMoney.getData(key: String, defaultValue: Any?) -> Any?
 ####ZenMoney.saveData()
 ####ZenMoney.clearData()
-Функции работы с хранилищем данных плагина. Позволяют сохранять данные между запусками плагина. Для удаление значения по ключу используйте `ZenMoney.setData(key, null)`
+Функции работы с хранилищем данных плагина. Позволяют сохранять данные между запусками плагина. Физически данные сохраняются или очищаются только после вызова `ZenMoney.saveData()`. Удалить значение по ключу можно при помощи вызова `ZenMoney.setData(key, null)`
+
+####ZenMoney.isAccountSkipped(id: String) -> Bool
+Возвращает true, если данные по этому счёту не нужно обрабатывать. Это значит, что плагин может пропустить этот счёт и не добавлять его и операции по нему.
 
 ####ZenMoney.addAccount(account: (Account | [Account])) throws
-Добавляет в систему счет.
+Добавляет счет.
  
 ```
 Account {
@@ -211,7 +220,7 @@ Account {
 ```
 
 ####ZenMoney.addTransaction(transaction: (Transaction | [Transaction])) throws
-Добавляет операцию
+Добавляет операцию.
 ```
 Transaction {
 	id: String? //допускаются временные id вида '[tmp]-...'
@@ -237,6 +246,4 @@ Transaction {
 ```
 
 ####ZenMoney.setResult({success: Bool, message: String?, account: [Account]?, transaction: [Transaction]?})
-При вызове добавляет счета account и операции transaction и завершает работу плагина. Если `success == null || success == undefined`, то это равносильно вызову исключения `ZenMoney.Error(message)`.
-
-
+При вызове добавляет счета account и операции transaction и завершает работу плагина. Если `!success`, то это равносильно завершению работы с исключением `ZenMoney.Error(message)`.
