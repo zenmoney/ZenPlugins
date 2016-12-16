@@ -122,7 +122,7 @@ function RocketBank(get, set, request, prompt, addTransaction, error, log) {
                     continue;
                 }
                 if (operation.happened_at > last_operation) {
-                    log("Следующие операции будут только после " + dt.toLocaleString());
+                    log("Устаналиваем время последней синхронизации на " + dt.toLocaleString());
                     last_operation = operation.happened_at;
                 }
                 var sum = Math.abs(operation.money.amount);
