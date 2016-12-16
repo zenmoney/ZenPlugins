@@ -121,6 +121,7 @@ function RocketBank(get, set, request, prompt, addTransaction, error, log) {
                     log('Пропускаем операцию со статусом ' + operation.status);
                     continue;
                 }
+                log("Обрабатываем транзакцию: " + JSON.stringify(operation)); // Приходит довольно много данных
                 if (operation.happened_at > last_operation) {
                     log("Устаналиваем время последней синхронизации на " + dt.toLocaleString());
                     last_operation = operation.happened_at;
@@ -177,6 +178,7 @@ function RocketBank(get, set, request, prompt, addTransaction, error, log) {
                     transaction.comment = operation.details + ': ' + operation.comment;
                 }
                 transactions.unshift(transaction);
+                log("Добавляем новую транзакцию: " + JSON.stringify(transaction));
             }
             if (data.pagination.current_page < data.pagination.total_pages) {
                 return loadOperations(device_id, token_id, timestamp, page + 1, limit);
