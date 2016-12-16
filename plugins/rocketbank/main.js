@@ -108,7 +108,7 @@ function RocketBank(get, set, request, prompt, addTransaction, error, log) {
                     return;
                 }
                 if (operation.happened_at <= timestamp) {
-                    log('Пропускаем операцию обработанную ранее операцию ' + operation.id);
+                    log('Пропускаем обработанную ранее операцию ' + operation.id);
                     return;
                 }
                 var sum = Math.abs(operation.money.amount);
