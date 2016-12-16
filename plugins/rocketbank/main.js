@@ -14,9 +14,9 @@ function main() {
     }
 
     var debug = true;
-    var prompt;
+    var prompt = ZenMoney.retrieveCode;
     if (debug) {
-        var responses = ['code'];
+        var responses = [];
         prompt = function (message, unused, options) {
             var response = responses.shift();
             if (typeof response == 'string') {
@@ -25,16 +25,21 @@ function main() {
                 return response(message, unused, options);
             }
         };
-    } else {
-        prompt = ZenMoney.retrieveCode;
     }
-
+    ZenMoney.addAccount({
+        id: '123',
+        title: 'Рублевая карта',
+        type: 'ccard',
+        instrument: 'RUB',
+        syncID: [5007]
+    });
 
     var rocketBank = new RocketBank(
         ZenMoney.getData,
         ZenMoney.setData,
         ZenMoney.request,
         prompt,
+        ZenMoney.addTransaction,
         ZenMoney.Error,
         ZenMoney.trace
     );
@@ -50,11 +55,12 @@ function main() {
  * @param set
  * @param request
  * @param prompt
+ * @param addTransaction
  * @param error
  * @param log
  * @constructor
  */
-function RocketBank(get, set, request, prompt, error, log) {
+function RocketBank(get, set, request, prompt, addTransaction, error, log) {
 
     var baseUrl = "https://rocketbank.ru/api/v5";
 
@@ -62,24 +68,22 @@ function RocketBank(get, set, request, prompt, error, log) {
      * Обрабатываем транзакции
      *
      * @param {Number} timestamp
-     * @return {Number}
+     * @return {Number} New timestamp
      */
     this.processTransactions = function (timestamp) {
         var device = getDevice();
-        var operations = getOperations(device, getToken(device, false), 1, 30);
-        log(operations);
-        return timestamp;
+        return getOperations(device, getToken(device, false), timestamp, 1, 30);
     };
 
     /**
      *
      * @param {String} device_id
      * @param {String} token_id
+     * @param {Number} timestamp
      * @param {Number} page
      * @param {Number} limit
-     * @returns {*}
      */
-    function getOperations(device_id, token_id, page, limit) {
+    function getOperations(device_id, token_id, timestamp, page, limit) {
         log("Запрашиваем список операций: страница " + page);
         var data = getJson(
             request(
@@ -96,14 +100,75 @@ function RocketBank(get, set, request, prompt, error, log) {
             }
         }
         log("Загрузили страницу " + data.pagination.current_page + " из " + data.pagination.total_pages);
+        var last_operation = timestamp;
         if (data.hasOwnProperty("operations")) {
             data.operations.forEach(function (operation) {
-                log(operation);
+                if (operation.status != 'confirmed' && operation.status != 'hold') {
+                    log('Пропускаем операцию со статусом ' + operation.status);
+                    return;
+                }
+                if (operation.happened_at <= timestamp) {
+                    log('Пропускаем операцию обработанную ранее операцию ' + operation.id);
+                    return;
+                }
+                var sum = Math.abs(operation.money.amount);
+                var tran = {
+                    id: operation.id,
+                    date: operation.happened_at,
+                    comment: operation.comment,
+                    outcome: 0,
+                    outcomeAccount: '123', // ??
+                    income: 0,
+                    incomeAccount: '123', // ??
+                    payee: null
+                };
+                if (operation.location.latitude != null && operation.location.longitude != null) {
+                    tran.latitude = operation.location.latitude;
+                    tran.longitude = operation.location.longitude;
+                }
+                if (operation.context_type == 'pos_spending') { // Расход
+                    if (operation.money.amount < 0) {
+                        tran.outcome = sum;
+                    } else {
+                        tran.income = sum;
+                    }
+                    tran.payee = operation.merchant.name;
+                } else if (operation.context_type == 'atm_cash_out') { // Снятие наличных
+                    tran.income = sum;
+                    tran.incomeAccount = 'cash#' + operation.money.currency_code;
+                    tran.outcome = sum;
+                    if (tran.comment == null) {
+                        tran.comment = operation.details;
+                    }
+                } else if (operation.context_type == 'remittance') { // Перевод (исходящий)
+                    tran.outcome = sum;
+                    tran.payee = operation.merchant.name;
+                } else if (operation.context_type == 'card2card_cash_in') { // Перевод с карты (входящий)
+                    tran.income = sum;
+                    if (tran.comment == null) {
+                        tran.comment = operation.details;
+                    }
+                } else if (operation.context_type == 'rocket_fee') { // Услуги банка
+                    tran.outcome = sum;
+                    if (tran.comment == null) {
+                        tran.comment = operation.details;
+                    }
+                } else if (operation.context_type == 'card2card_cash_out_other') { // Исходящий перевод внутри банка
+                    tran.outcome = sum;
+                } else if (operation.context_type == 'internal_cash_in') { // Входящий перевод внутри банка
+                    tran.income = sum;
+                    tran.comment = operation.details + ': ' + operation.comment;
+                } else if (operation.context_type == 'transfer_cash_in') { // Начисление процентов
+                    tran.income = sum;
+                    tran.comment = operation.details + ': ' + operation.comment;
+                }
+                addTransaction(tran);
+                last_operation = tran.date;
             });
         } else {
             log("Операции не найдены (всего операций " + data.pagination.total_count + ")");
         }
-        return data;
+        return last_operation;
     }
 
     /**
@@ -116,7 +181,7 @@ function RocketBank(get, set, request, prompt, error, log) {
         if (!deviceId) {
             log("Необходимо привязать устройство...");
             var phone = prompt("Введите свой номер телефона в формате +79211234567", null, {
-                inputType: "string",
+                inputType: "phone",
                 time: 18E4
             });
             deviceId = registerDevice(phone);
@@ -140,7 +205,7 @@ function RocketBank(get, set, request, prompt, error, log) {
                 "Введите пароль, используемый для входа в официальные приложения",
                 null,
                 {
-                    inputType: "number",
+                    inputType: "numberPassword",
                     time: 18E4
                 }
             );
@@ -185,7 +250,7 @@ function RocketBank(get, set, request, prompt, error, log) {
             throw new error('Не удалось отправить код подтверждения: ' + data.response.description);
         }
         var code = prompt("Введите код подтверждения из смс для авторизации приложения в интернет-банке", null, {
-            inputType: "number",
+            inputType: "numberDecimal",
             time: 18E4
         });
         log("Получили код");
