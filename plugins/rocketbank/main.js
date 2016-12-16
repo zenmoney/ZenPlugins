@@ -27,11 +27,11 @@ function main() {
         };
     }
     ZenMoney.addAccount({
-        id: '123',
+        id: '1',
         title: 'Рублевая карта',
         type: 'ccard',
         instrument: 'RUB',
-        syncID: [5007]
+        syncID: [0]
     });
 
     var rocketBank = new RocketBank(
@@ -63,6 +63,8 @@ function main() {
 function RocketBank(get, set, request, prompt, addTransaction, error, log) {
 
     var baseUrl = "https://rocketbank.ru/api/v5";
+    var transactions = [];
+    var last_operation = 0;
 
     /**
      * Обрабатываем транзакции
@@ -71,8 +73,14 @@ function RocketBank(get, set, request, prompt, addTransaction, error, log) {
      * @return {Number} New timestamp
      */
     this.processTransactions = function (timestamp) {
+        log("Начинаем синхронизацию с даты " + new Date(timestamp * 1000).toLocaleString());
         var device = getDevice();
-        return getOperations(device, getToken(device, false), timestamp, 1, 30);
+        transactions = [];
+        last_operation = timestamp;
+        loadOperations(device, getToken(device, false), timestamp, 1, 20).forEach(function (transaction) {
+            addTransaction(transaction);
+        });
+        return last_operation;
     };
 
     /**
@@ -83,92 +91,100 @@ function RocketBank(get, set, request, prompt, addTransaction, error, log) {
      * @param {Number} page
      * @param {Number} limit
      */
-    function getOperations(device_id, token_id, timestamp, page, limit) {
+    function loadOperations(device_id, token_id, timestamp, page, limit) {
         log("Запрашиваем список операций: страница " + page);
         var data = getJson(
             request(
                 "GET",
                 baseUrl + "/operations?page=" + page + "&per_page=" + limit,
                 null,
-                getHeaders(device_id, token_id))
+                getHeaders(device_id, token_id)
+            )
         );
         if (data.hasOwnProperty("response")) {
             if (data.response.status == 401) {
-                return getOperations(device_id, getToken(device_id, true), page, limit);
+                return loadOperations(device_id, getToken(device_id, true), timestamp, page, limit);
             } else {
                 throw new error('Не удалось загрузить список операций: ' + data.response.description);
             }
         }
         log("Загрузили страницу " + data.pagination.current_page + " из " + data.pagination.total_pages);
-        var last_operation = timestamp;
         if (data.hasOwnProperty("operations")) {
-            data.operations.forEach(function (operation) {
+            for (var i = 0; i < data.operations.length; i++) {
+                var operation = data.operations[i];
+                var dt = new Date(operation.happened_at * 1000);
+                if (operation.happened_at <= timestamp) {
+                    log("Транзакция #" + operation.id + " уже была ранее обработана (" + dt.toLocaleString() + ")");
+                    return transactions;
+                }
                 if (operation.status != 'confirmed' && operation.status != 'hold') {
                     log('Пропускаем операцию со статусом ' + operation.status);
-                    return;
+                    continue;
                 }
-                if (operation.happened_at <= timestamp) {
-                    log('Пропускаем обработанную ранее операцию ' + operation.id);
-                    return;
+                if (operation.happened_at > last_operation) {
+                    log("Следующие операции будут только после " + dt.toLocaleString());
+                    last_operation = operation.happened_at;
                 }
                 var sum = Math.abs(operation.money.amount);
-                var tran = {
+                var transaction = {
                     id: operation.id,
                     date: operation.happened_at,
                     comment: operation.comment,
                     outcome: 0,
-                    outcomeAccount: '123', // ??
+                    outcomeAccount: '1',
                     income: 0,
-                    incomeAccount: '123', // ??
+                    incomeAccount: '1',
                     payee: null
                 };
                 if (operation.location.latitude != null && operation.location.longitude != null) {
-                    tran.latitude = operation.location.latitude;
-                    tran.longitude = operation.location.longitude;
+                    transaction.latitude = operation.location.latitude;
+                    transaction.longitude = operation.location.longitude;
                 }
                 if (operation.context_type == 'pos_spending') { // Расход
                     if (operation.money.amount < 0) {
-                        tran.outcome = sum;
+                        transaction.outcome = sum;
                     } else {
-                        tran.income = sum;
+                        transaction.income = sum;
                     }
-                    tran.payee = operation.merchant.name;
+                    transaction.payee = operation.merchant.name;
                 } else if (operation.context_type == 'atm_cash_out') { // Снятие наличных
-                    tran.income = sum;
-                    tran.incomeAccount = 'cash#' + operation.money.currency_code;
-                    tran.outcome = sum;
-                    if (tran.comment == null) {
-                        tran.comment = operation.details;
+                    transaction.income = sum;
+                    transaction.incomeAccount = 'cash#' + operation.money.currency_code;
+                    transaction.outcome = sum;
+                    if (transaction.comment == null) {
+                        transaction.comment = operation.details;
                     }
                 } else if (operation.context_type == 'remittance') { // Перевод (исходящий)
-                    tran.outcome = sum;
-                    tran.payee = operation.merchant.name;
+                    transaction.outcome = sum;
+                    transaction.payee = operation.merchant.name;
                 } else if (operation.context_type == 'card2card_cash_in') { // Перевод с карты (входящий)
-                    tran.income = sum;
-                    if (tran.comment == null) {
-                        tran.comment = operation.details;
+                    transaction.income = sum;
+                    if (transaction.comment == null) {
+                        transaction.comment = operation.details;
                     }
                 } else if (operation.context_type == 'rocket_fee') { // Услуги банка
-                    tran.outcome = sum;
-                    if (tran.comment == null) {
-                        tran.comment = operation.details;
+                    transaction.outcome = sum;
+                    if (transaction.comment == null) {
+                        transaction.comment = operation.details;
                     }
                 } else if (operation.context_type == 'card2card_cash_out_other') { // Исходящий перевод внутри банка
-                    tran.outcome = sum;
+                    transaction.outcome = sum;
                 } else if (operation.context_type == 'internal_cash_in') { // Входящий перевод внутри банка
-                    tran.income = sum;
-                    tran.comment = operation.details + ': ' + operation.comment;
+                    transaction.income = sum;
+                    transaction.comment = operation.details + ': ' + operation.comment;
                 } else if (operation.context_type == 'transfer_cash_in') { // Начисление процентов
-                    tran.income = sum;
-                    tran.comment = operation.details + ': ' + operation.comment;
+                    transaction.income = sum;
+                    transaction.comment = operation.details + ': ' + operation.comment;
                 }
-                addTransaction(tran);
-                last_operation = tran.date;
-            });
+                transactions.unshift(transaction);
+            }
+            if (data.pagination.current_page < data.pagination.total_pages) {
+                return loadOperations(device_id, token_id, timestamp, page + 1, limit);
+            }
         } else {
             log("Операции не найдены (всего операций " + data.pagination.total_count + ")");
         }
-        return last_operation;
+        return transactions;
     }
 
     /**
