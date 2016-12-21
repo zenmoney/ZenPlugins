@@ -14,7 +14,7 @@ function main() {
     }
 
     var debug = false;
-    var prompt = ZenMoney.retrieveCode;
+    var prompt = ZenMoney.retrieveCode.bind(ZenMoney);
     if (debug) {
         var responses = [];
         prompt = function (message, unused, options) {
@@ -35,13 +35,13 @@ function main() {
     });
 
     var rocketBank = new RocketBank(
-        ZenMoney.getData,
-        ZenMoney.setData,
-        ZenMoney.request,
+        ZenMoney.getData.bind(ZenMoney),
+        ZenMoney.setData.bind(ZenMoney),
+        ZenMoney.request.bind(ZenMoney),
         prompt,
-        ZenMoney.addTransaction,
+        ZenMoney.addTransaction.bind(ZenMoney),
         ZenMoney.Error,
-        ZenMoney.trace
+        ZenMoney.trace.bind(ZenMoney)
     );
     ZenMoney.setData('last_sync', rocketBank.processTransactions(lastSyncTime));
     ZenMoney.saveData();
@@ -316,7 +316,7 @@ function RocketBank(get, set, request, prompt, addTransaction, error, log) {
         var date = Math.floor(Date.now() / 1000);
         var headers = {
             "X-Device-ID": device_id,
-            "X-Time": date,
+            "X-Time": date.toString(),
             "X-Sig": hex_md5("0Jk211uvxyyYAFcSSsBK3+etfkDPKMz6asDqrzr+f7c=_" + date + "_dossantos"),
             "Content-Type": "application/json"
         };
