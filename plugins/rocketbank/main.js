@@ -13,7 +13,7 @@ function main() {
         lastSyncTime = Math.floor(Date.now() / 1000) - period * 24 * 60 * 60;
     }
 
-    var debug = true;
+    var debug = false;
     var prompt = ZenMoney.retrieveCode;
     if (debug) {
         var responses = [];
