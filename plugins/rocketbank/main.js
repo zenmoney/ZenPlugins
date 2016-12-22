@@ -66,14 +66,7 @@ function RocketBank(ZenMoney) {
      */
     function loadOperations(device_id, token_id, timestamp, page, limit) {
         ZenMoney.trace("Запрашиваем список операций: страница " + page);
-        var data = getJson(
-            ZenMoney.request(
-                "GET",
-                baseUrl + "/operations?page=" + page + "&per_page=" + limit,
-                null,
-                getHeaders(device_id, token_id)
-            )
-        );
+        var data = request("GET", "/operations?page=" + page + "&per_page=" + limit, null, device_id, token_id);
         if (data.hasOwnProperty("response")) {
             if (data.response.status == 401) {
                 return loadOperations(device_id, getToken(device_id, true), timestamp, page, limit);
@@ -205,13 +198,12 @@ function RocketBank(ZenMoney) {
                 }
             );
             ZenMoney.trace("Пароль получен, отправляем запрос");
-            var data = getJson(
-                ZenMoney.request(
-                    'GET',
-                    baseUrl + "/login?email=" + ZenMoney.getData('email') + "&password=" + password,
-                    null,
-                    getHeaders(device_id, null)
-                )
+            var data = request(
+                "GET",
+                "/login?email=" + ZenMoney.getData('email') + "&password=" + password,
+                null,
+                device_id,
+                null
             );
             if (!data.hasOwnProperty('token')) {
                 throw new ZenMoney.Error('Не удалось подтвердить телефон: ' + data.response.description);
@@ -230,15 +222,8 @@ function RocketBank(ZenMoney) {
      */
     function registerDevice(phone) {
         var device_id = "zenmoney_" + hex_md5(Math.random().toString() + "_" + phone + "_" + Date.now());
-        ZenMoney.trace("Отправляем запрос на регистрацию утсройства");
-        var data = getJson(
-            ZenMoney.request(
-                'POST',
-                baseUrl + "/devices/register",
-                JSON.stringify({phone: phone}),
-                getHeaders(device_id, null)
-            )
-        );
+        ZenMoney.trace("Отправляем запрос на регистрацию утсройства " + device_id + " (" + phone + ")");
+        var data = request("POST", "/devices/register", {phone: phone}, device_id, null);
         if (data.response.status == 200) {
             ZenMoney.trace(data.response.description);
         } else {
@@ -253,13 +238,12 @@ function RocketBank(ZenMoney) {
             }
         );
         ZenMoney.trace("Получили код");
-        data = getJson(
-            ZenMoney.request(
-                'PATCH',
-                baseUrl + "/sms_verifications/" + data.sms_verification.id + "/verify",
-                JSON.stringify({code: code}),
-                getHeaders(device_id, null)
-            )
+        data = request(
+            "PATCH",
+            "/sms_verifications/" + data.sms_verification.id + "/verify",
+            {code: code},
+            device_id,
+            null
         );
         if (data.response.status == 200) {
             ZenMoney.trace(data.response.description);
@@ -270,6 +254,27 @@ function RocketBank(ZenMoney) {
         ZenMoney.setData("email", data.user.email);
 
         return device_id;
+    }
+
+    /**
+     * Делаем запрос на сервер
+     *
+     * @param {String} method
+     * @param {String} url
+     * @param {Object} data
+     * @param {String} device_id
+     * @param {String} token
+     * @return {Object}
+     */
+    function request(method, url, data, device_id, token) {
+        var response = ZenMoney.request(method, baseUrl + url, JSON.stringify(data), getHeaders(device_id, token));
+        if (!response) {
+            ZenMoney.trace(
+                'Пришёл пустой ответ во время ' + method + ' запроса по адресу "' + baseUrl + url + '"'
+            );
+            throw new ZenMoney.Error('Неверный ответ с сервера');
+        }
+        return getJson(response);
     }
 
     /**
