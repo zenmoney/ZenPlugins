@@ -8,6 +8,9 @@ var g_headers = {
 	g_nodeurl = '',
 	g_preferences;
 
+/**
+ * Основной метод
+ */
 function main(){
 	g_preferences = ZenMoney.getPreferences();
 
@@ -19,16 +22,11 @@ function main(){
 
 	processApiAccounts();
 	processApiTransactions();
-	
+
 	ZenMoney.trace('------------------------------------');
 	ZenMoney.trace('Добавлем счета и операции.');
 	for(var iAcc in g_accounts) {
 		var acc = g_accounts[iAcc];
-
-		/*if (!acc.hasOwnProperty('transactions') || !acc.transactions || acc.transactions.length == 0){
-			ZenMoney.trace('Пропускаем счёт "'+ acc.account.title +'" из-за отсутствия операций.');
-			continue;
-		}*/
 
 		if (acc.hasOwnProperty('mainCard') && acc.mainCard) {
 			ZenMoney.trace('Счёт дополнительной карты "'+ acc.account.title +'" пропускаем. Операции сажаем на основной счёт.');
@@ -44,6 +42,9 @@ function main(){
 	ZenMoney.setResult({success: true});
 }
 
+/**
+ * Вход через API
+ */
 function loginAPI() {
 	ZenMoney.trace('Входим через API мобильного приложения...');
 
@@ -134,13 +135,81 @@ function loginAPI() {
 	return token;
 }
 
+/**
+ * Запрос на вход через API
+ * @param action
+ * @param params
+ * @param ignoreErrors
+ */
+function requestApiLogin(action, params, ignoreErrors) {
+	var baseurl = 'https://online.sberbank.ru:4477/CSAMAPI/';
+	return requestApiInner(baseurl + action, params, false, ignoreErrors);
+}
+
+/**
+ * Запрос метода API
+ * @param action
+ * @param params
+ * @param ignoreErrors
+ */
+function requestApi(action, params, ignoreErrors) {
+	var baseurl = 'https://node1.online.sberbank.ru:4477/mobile9/';
+	return requestApiInner(baseurl + action, params, true, ignoreErrors);
+}
+
+/**
+ * Базовый вызов метода API
+ * @param url
+ * @param params
+ * @param no_default_params
+ * @param ignoreErrors
+ */
+function requestApiInner(url, params, no_default_params, ignoreErrors) {
+	var m_headers = {
+		'Connection': 'keep-alive',
+		'User-Agent': 'Mobile Device'
+	}, newParams;
+
+	if(no_default_params) {
+		newParams = params;
+	} else {
+		newParams = joinObjects(params, {
+			'version':'9.10',
+			'appType':'android',
+			'appVersion':'7.1.0',
+			'deviceName':'ZenMoneyAPI'
+		});
+	}
+	// регистрируем девайс
+	var html = ZenMoney.requestPost(url, newParams, m_headers);
+	// Проверим на правильность
+
+	var code = getParam(html, /<status>\s*<code>\s*(-?\d+)\s*<\/code>/i, null, parseBalance);
+
+	if(!/<status>\s*<code>\s*0\s*<\/code>/i.test(html)) {
+		ZenMoney.trace('Ответ с ошибкой от '+url+': '+ clearHtml(html));
+		if(!ignoreErrors){
+			var error = getParam(html, /<text>\s*(?:<!\[CDATA\[)?\s*(.*?)\s*(?:\]\]>)?\s*<\/text>/i);
+			ZenMoney.trace('error: '+error);
+			var ex = new ZenMoney.Error(error || "Ошибка при обработке запроса к "+url, null, /не может быть|неправильный идентификатор|неправильный пароль/i.test(error));
+			ex.code = code;
+			throw ex;
+		}
+	}
+	return html;
+}
+
 var g_accounts = {};		// список добавленных счетов, по которым будем обрабатывать операции
+/**
+ * Обработка счетов через API
+ */
 function processApiAccounts(){
-	var xml = requestApi('private/products/list.do', {showProductsType: 'cards,accounts,imaccounts,loans,deposits'});
+	var xml = requestApi('private/products/list.do', {showProductType: 'cards,accounts,imaccounts,loans'});
 	ZenMoney.trace('Запрашиваем данные по всем счетам...');
 	ZenMoney.trace('list.do: '+xml);
 	var accDict = [];
 
+	//--- карты ------------------------------
 	var cards = getElementsByTag(xml, 'card');
 	ZenMoney.trace('Получено карт: '+ cards.length);
 	for(var i = 0; i < cards.length; i++){
@@ -152,6 +221,10 @@ function processApiAccounts(){
 			continue;
 
 		id = getElementByTag(card, 'id', replaceTagsAndSpaces);
+
+		if (isAccountSkipped('card:'+id))
+			continue;
+
 		balance = getElementByTag(card, 'availableLimit');
 
 		//ZenMoney.trace('id: '+id);
@@ -162,7 +235,7 @@ function processApiAccounts(){
 			syncID: 	[],
 			instrument: getElementByTag(balance, 'code', replaceTagsAndSpaces),
 			balance: 	getElementByTag(balance, 'amount', replaceFloat, parseToFloat),
-			mainCard: 	0	// идентификатор основной карты, если эта - дополнительная
+			mainCard: 	''	// идентификатор основной карты, если эта - дополнительная
 		};
 
 		cardNum = getAccNumber(card);
@@ -170,6 +243,8 @@ function processApiAccounts(){
 		// отдельно обрабатываем доп.карты
 		var mainCardId = getElementByTag(card, 'mainCardId');
 		if (mainCardId) {
+			mainCardId = 'card:'+ mainCardId;
+
 			// сохраним номер доп.карты у родителя
 			for(var j=0; j<accDict.length; j++) {
 				var cardMain = accDict[j];
@@ -192,9 +267,12 @@ function processApiAccounts(){
 
 			if (getElementByTag(card, 'type', replaceTagsAndSpaces) == 'credit') {
 				// обработаем свойства кредитных карт
-				var xml2 = requestApi('private/cards/info.do', {id: id});
-				acc.creditLimit = getElementByTag(xml2, ['limit', 'amount'], replaceTagsAndSpaces, parseToFloat);
-				acc.balance = Math.round((acc.balance - acc.creditLimit) * 100) / 100;
+				var xml2 = requestApi('private/cards/info.do', { id: id }, true);
+				var creditLimits = getElementByTag(xml2, ['limit', 'amount'], replaceTagsAndSpaces, parseToFloat);
+				if (creditLimits > 0) {
+					acc.creditLimit = creditLimits;
+					acc.balance = Math.round((acc.balance - acc.creditLimit) * 100) / 100;
+				}
 
 				ZenMoney.trace('Добавляем кредитную карту: ' + acc.title + ' (#' + id + ')');
 			}
@@ -211,11 +289,13 @@ function processApiAccounts(){
 		}
 
 		if (acc.syncID.length > 0) {
+			acc.id = 'card:'+ acc.id; // для переводов необходим тип счёта
 			g_accounts[id] = { account: acc };
 			accDict.push(acc);
 		}
 	}
 
+	//--- счета ------------------------------
 	var accounts = getElementsByTag(xml, 'account');
 	ZenMoney.trace('Получено счетов: '+ accounts.length);
 	for(var k = 0; k < accounts.length; k++){
@@ -224,8 +304,12 @@ function processApiAccounts(){
 		if (state != 'OPENED')
 			continue;
 
-		balance = getElementByTag(account, 'balance');
 		id = getElementByTag(account, 'id', replaceTagsAndSpaces);
+
+		if (isAccountSkipped('account:'+id))
+			continue;
+
+		balance = getElementByTag(account, 'balance');
 
 		acc = {
 			id: 		id,
@@ -258,6 +342,60 @@ function processApiAccounts(){
 
 		ZenMoney.trace('Добавляем сберегательный счёт: '+ acc.title +' (#'+ id +')');
 
+		acc.id = 'account:'+ acc.id; // для переводов необходим тип счёта
+		g_accounts[id] = { account: acc };
+		accDict.push(acc);
+	}
+
+	//--- кредиты ------------------------------
+	var loans = getElementsByTag(xml, 'loan');
+	ZenMoney.trace('Получено кредитов: '+ loans.length);
+	for(var l = 0; l < loans.length; l++){
+		var loan = loans[l];
+
+		// у кредитов статус 'undefined'
+		/*state = getElementByTag(loan, 'state');
+		if (state != 'OPENED')
+			continue;*/
+
+		id = getElementByTag(loan, 'id', replaceTagsAndSpaces);
+
+		if (isAccountSkipped('loan:'+id))
+			continue;
+
+		acc = {
+			id: 		id,
+			title: 		getElementByTag(loan, 'name', replaceTagsAndSpaces),
+			type:		'loan',
+			instrument: getElementByTag(loan, 'code', replaceTagsAndSpaces),
+		};
+
+		// дополнительная информация по кредиту
+		var xml4 = requestApi('private/loans/info.do', { id: id }, true);
+		ZenMoney.trace('info.do по кредиту: '+xml4);
+
+		acc.type = 'loan';
+		acc.syncID = getElementByTag(xml4, 'accountNumber', replaceTagsAndSpaces).substr(-4);
+		acc.percent = getElementByTag(xml4, 'creditingRate', replaceTagsAndSpaces, parseToFloat);
+		acc.capitalization = getElementByTag(xml4, 'repaymentMethod', replaceTagsAndSpaces).toLowerCase().indexOf('аннуитетный') >= 0;
+		acc.startBalance = getElementByTag(xml4, ['origianlAmount', 'amount'], replaceTagsAndSpaces, parseToFloat);
+		acc.balance = -getElementByTag(xml4, ['balanceAmount', 'amount'], replaceTagsAndSpaces, parseToFloat);
+
+		var start = getElementByTag(xml4, 'termStart', replaceTagsAndSpaces).substr(0, 10);
+		var end = getElementByTag(xml4, 'termEnd', replaceTagsAndSpaces).substr(0, 10);
+		var dt1 = new Date (start.substr(6, 4), start.substr(3, 2)-1, start.substr(0, 2));
+		var dt2 = new Date (end.substr(6, 4), end.substr(3, 2)-1, end.substr(0, 2));
+		var days = Math.floor((dt2.getTime() - dt1.getTime())/(1000*60*60*24));
+		acc.startDate = start;
+		acc.endDateOffsetInterval = 'day';
+		acc.endDateOffset =	days;
+		acc.payoffInterval = 'month';
+		acc.payoffStep = 1;
+
+		ZenMoney.trace('Добавляем счёт кредита: '+ acc.title +' (#'+ id +')');
+		ZenMoney.trace('info.do: '+xml4);
+
+		acc.id = 'loan:'+ acc.id; // а для переводов, чтобы они не выделялись на фоне остальных
 		g_accounts[id] = { account: acc };
 		accDict.push(acc);
 	}
@@ -265,6 +403,11 @@ function processApiAccounts(){
 	ZenMoney.trace('Всего счетов найдено: '+ accDict.length);
 }
 
+/**
+ * Получить код счёта (4 последние цифры)
+ * @param card
+ * @returns {*}
+ */
 function getAccNumber(card){
 	cardNum = getElementByTag(card, 'smsName', replaceTagsAndSpaces);
 	if (cardNum && cardNum != '')
@@ -280,30 +423,38 @@ function getAccNumber(card){
 	return null;
 }
 
+/**
+ * Обработка транзакций через API
+ */
 function processApiTransactions(){
+	ZenMoney.trace('------------------------------------------------');
 	ZenMoney.trace('Запрашиваем данные API по последним операциям...');
 
 	var tranDict = [];
-	for(var kAcc in g_accounts) {
-		var acc = g_accounts[kAcc].account, xml, operations, tran, sum, description, tranInstrument = false;
+	for(var g_accID in g_accounts) {
+		var acc = g_accounts[g_accID].account, xml, operations, tran, sum, description, tranInstrument = false;
+		ZenMoney.trace(acc.title +': '+ g_accID);
+
 		switch (acc.type) {
+			//--- карты ----------------------
 			case 'ccard':
 				ZenMoney.trace('Запрашиваем последние 10 операций по карте "' + acc.title + '"');
 				xml = requestApi('private/cards/abstract.do', {
-					id: acc.id,
+					id: g_accID,
 					count: 100,
 					paginationSize: 100
 				}, true);
 				ZenMoney.trace('XML: ' + xml);
 
 				// Если доступа в API нет, пытаемся загрузить из веба
-				if (xml.indexOf("АБС временно недоступна") > 0) {
+				if (xml.indexOf("АБС временно недоступна") >= 0) {
 					ZenMoney.trace('Информация из АБС временно недоступна. Попытаемся загрузить с сайта веб-версии..');
 					tranInstrument = true;
 					xml = '';
 				}
 
 				operations = getElementsByTag(xml, 'operation');
+
 				for(var i = 0; i < operations.length; i++) {
 					var operation = operations[i];
 					//ZenMoney.trace('Operation: '+ operation);
@@ -315,7 +466,7 @@ function processApiTransactions(){
 					sumElem = getElementByTag(operation, 'sum');
 					instrument = getElementByTag(sumElem, ['currency', 'code'], replaceTagsAndSpaces);
 
-					// ToDO: DEBUG
+					//if (true) // ToDO: DEBUG
 					if (instrument.toLocaleLowerCase() != acc.instrument.toLocaleLowerCase())
 					{
 						if (!tranInstrument)
@@ -326,10 +477,10 @@ function processApiTransactions(){
 					}
 
 					sum = getElementByTag(sumElem, 'amount', replaceTagsAndSpaces, parseToFloat);
-					if (sum == 0)
+                    if (!sum || Math.abs(sum) < 0.01)
 						continue;
 					else {
-						var accId = acc.mainCard > 0 ? acc.mainCard : acc.id;
+						var accId = acc.mainCard != '' ? acc.mainCard : acc.id;
 
 						if (sum > 0) {
 							tran.income = sum;
@@ -366,19 +517,20 @@ function processApiTransactions(){
 						}
 					}
 
-					if (!g_accounts[kAcc].transactions) g_accounts[kAcc].transactions = [];
-					g_accounts[kAcc].transactions.push(tran);
+					if (!g_accounts[g_accID].transactions) g_accounts[g_accID].transactions = [];
+					g_accounts[g_accID].transactions.push(tran);
 				}
 
 				break;
 
-			case 'checking':
+			//--- счета ----------------------
+			case 'deposit':
 				var dt = new Date();
 				var dtFrom = new Date(Date.now() - 31*24*60*60*1000);
 				ZenMoney.trace('Запрашиваем операции по счёту "'+ acc.title +'" с ' + dtFrom.toLocaleString());
 
 				xml = requestApi('private/accounts/abstract.do', {
-					id: acc.id,
+					id: g_accID,
 					from: fmtDate(dtFrom),
 					to: fmtDate(dt),
 					paginationSize: 1000,
@@ -394,7 +546,7 @@ function processApiTransactions(){
 					};
 
 					sum = getElementByTag(operation, ['sum', 'amount'], replaceTagsAndSpaces, parseToFloat);
-					if (sum == 0)
+					if (!sum || Math.abs(sum) < 0.01)
 						continue;
 					else if (sum > 0) {
 						tran.income = sum;
@@ -430,9 +582,21 @@ function processApiTransactions(){
 						}
 					}
 
-					if (!g_accounts[kAcc].transactions) g_accounts[kAcc].transactions = [];
-					g_accounts[kAcc].transactions.push(tran);
+					if (!g_accounts[g_accID].transactions) g_accounts[g_accID].transactions = [];
+					g_accounts[g_accID].transactions.push(tran);
 				}
+				break;
+
+			//--- кредиты ----------------------
+			case 'loan':
+				// похоже, по кредитам операций нет
+				ZenMoney.trace('Запрашиваем операции по кредиту "' + acc.title + '"');
+				xml = requestApi('private/loans/abstract.do', {
+					id: g_accID,
+					count: 100,
+					paginationSize: 100
+				}, true);
+				ZenMoney.trace('abstract.do: ' + xml);
 
 				break;
 		}
@@ -441,63 +605,85 @@ function processApiTransactions(){
 		if (tranInstrument) {
 			html = loginWeb();
 
-			var trans = processWebTransactions(acc);
+			var trans = processWebTransactions(g_accID, acc);
 			if (trans && trans.length > 0)
-				g_accounts[kAcc].transactions = trans;
+				g_accounts[g_accID].transactions = trans;
 		}
 
-		if (g_accounts[kAcc].transactions)
-			ZenMoney.trace('Операций по счёту найдено: '+ g_accounts[kAcc].transactions.length);
+		if (g_accounts[g_accID].transactions)
+			ZenMoney.trace('Операций по счёту найдено: '+ g_accounts[g_accID].transactions.length);
 		else
 			ZenMoney.trace('Операций по счёту не найдено.');
 	}
 }
 
-function requestApiLogin(action, params, ignoreErrors) {
-	var baseurl = 'https://online.sberbank.ru:4477/CSAMAPI/';
-	return requestApiInner(baseurl + action, params, false, ignoreErrors);
+/**
+ * Перевод свободных денег в сбережения
+ * @param fromAcc
+ * @param toAcc
+ * @param sum
+ */
+function makeTransfer(fromAcc, toAcc, sum) {
+	g_preferences = ZenMoney.getPreferences();
+	if (!g_preferences.login) throw new ZenMoney.Error("Введите логин в интернет-банк!", null, true);
+	if (!g_preferences.password) throw new ZenMoney.Error("Введите пароль в интернет-банк!", null, true);
+	if (!g_preferences.pin) throw new ZenMoney.Error("Введите ПИН-код мобильного приложения Сбербанк Онлайн!", null, true);
+
+	ZenMoney.trace('Перевод ' + sum + ' со счёта ' + fromAcc + ' на счёт ' + toAcc);
+
+	// совершаем перевод между счетами через API
+	var token = loginAPI();
+	doTransferAPI(token, fromAcc, toAcc, sum);
+
+	//loginWeb();
+	//doTransferWeb(fromAcc, toAcc, sum);
 }
 
-function requestApi(action, params, ignoreErrors) {
-	var baseurl = 'https://node1.online.sberbank.ru:4477/mobile9/';
-	return requestApiInner(baseurl + action, params, true, ignoreErrors);
-}
+/**
+ * Перевод между своими счетами через API
+ * @param token - токен соединения
+ * @param fromAcc = 'card:12345678' (со счёта карты)
+ * @param toAcc = 'account:12345678' (на счёт вклада)
+ * @param sum - сумма перевода
+ */
+function doTransferAPI(token, fromAcc, toAcc, sum) {
+	var xml = requestApi('private/payments/payment.do', {
+		'transactionToken': token,
+		'form': 'InternalPayment',
+		'fromResource': fromAcc,
+		'toResource': toAcc,
+		'sellAmount': sum,
+		'exactAmount': 'charge-off-field-exact',
+		'operation': 'save'
+	}, true);
+	//ZenMoney.trace('Реквизиты перевода: '+ xml);
 
-function requestApiInner(url, params, no_default_params, ignoreErrors) {
-	var m_headers = {
-		'Connection': 'keep-alive',
-		'User-Agent': 'Mobile Device'
-	}, newParams;
+	if(!/<status>\s*<code>\s*0\s*<\/code>/i.test(xml))
+		throw new ZenMoney.Error('Не удалось создать перевод.');
 
-	if(no_default_params) {
-		newParams = params;
-	} else {
-		newParams = joinObjects(params, {
-			'version':'9.10',
-			'appType':'android',
-			'appVersion':'7.1.0',
-			'deviceName':'ZenMoneyAPI'
+	token = getElementByTag(xml, 'transactionToken');
+	//ZenMoney.trace('Токен: '+ token);
+
+	var docNum = getElementByTag(xml, 'id');
+	ZenMoney.trace('Номер документа: '+ docNum);
+
+	if (docNum < 0) { // новый документа
+		xml = requestApi('private/payments/confirm.do', {
+			'mobileSdkData': JSON.stringify(createSdkData()),
+			'transactionToken': token,
+			'id': docNum,
+			'operation': 'confirm'
 		});
-	}
-	// регистрируем девайс
-	var html = ZenMoney.requestPost(url, newParams, m_headers);
-	// Проверим на правильность
 
-	var code = getParam(html, /<status>\s*<code>\s*(-?\d+)\s*<\/code>/i, null, parseBalance);
-
-	if(!/<status>\s*<code>\s*0\s*<\/code>/i.test(html)) {
-		ZenMoney.trace('Ответ с ошибкой: '+ clearHtml(html));
-		if(!ignoreErrors){
-			var error = getParam(html, /<text>\s*(?:<!\[CDATA\[)?\s*(.*?)\s*(?:\]\]>)?\s*<\/text>/i);
-			ZenMoney.trace('error: '+error);
-			var ex = new ZenMoney.Error(error || "Ошибка при обработке запроса!", null, /не может быть|неправильный идентификатор|неправильный пароль/i.test(error));
-			ex.code = code;
-			throw ex;
-		}
+		//ZenMoney.trace('Запуск перевода: '+ xml);
+		ZenMoney.trace('Перевод осуществлён.')
 	}
-	return html;
 }
 
+
+/**
+ * Вход через web-интерфейс
+ */
 function loginWeb(){
 	var baseurl = "https://online.sberbank.ru/CSAFront/login.do";
 
@@ -547,6 +733,10 @@ function loginWeb(){
 	return html;
 }
 
+/**
+ * Регистрация для входа через web-интерфейс
+ * @param page
+ */
 function loginWebAccount(page) {
 	var baseurl = getParam(page, /^(https?:\/\/.*?)\//i);
 	var html = ZenMoney.requestGet(page, addHeaders({Referer: baseurl}));
@@ -644,16 +834,15 @@ function loginWebAccount(page) {
 	return html;
 }
 
-function processWebTransactions(acc){
-	id = acc.id;
+function processWebTransactions(id, acc){
 	if (!g_accounts[id])
 		throw new ZenMoney.Error('Ошибка загрузки данных по счёту '+id+': нет такого счёта');
 
 	if (acc.type == 'ccard') {
-		ZenMoney.trace('Запрашиваем данные Web по последним операциям на карте "'+ g_accounts[id].account.title + '" (#'+id+')');
+		ZenMoney.trace('Запрашиваем данные Web по последним операциям на карте "'+ acc.title + '" (#'+id+')');
 		html = ZenMoney.requestGet(g_nodeurl + '/PhizIC/private/cards/info.do?id=' + id);	}
 	else {
-		ZenMoney.trace('Запрашиваем данные Web по последним операциям на счету "'+ g_accounts[id].account.title + '" (#'+id+')');
+		ZenMoney.trace('Запрашиваем данные Web по последним операциям на счету "'+ acc.title + '" (#'+id+')');
 		html = ZenMoney.requestGet(g_nodeurl + '/PhizIC/private/accounts/operations.do?id=' + id);
 	}
 
@@ -666,7 +855,7 @@ function processWebTransactions(acc){
 	else {
 		var message = getParam(html, /<div[^>]*class="message"[\s\S]*?\/div>/i);
 		if (message) {
-			if (message.indexOf("несуществующ") > 0) {
+			if (message.indexOf("несуществующ") >= 0) {
 				// Если ID счёта из API не подошёл для веба, попытаемся определить ID по имени и номеру счёта
 				ZenMoney.trace('Счёт API не существует. Пытаемся определить счёт в списке web-версии..');
 
@@ -756,14 +945,14 @@ function processWebTransactions(acc){
 			continue;
 		else if (sum.summa > 0) {
 			tran.income = sum.summa;
-			tran.incomeAccount = id;
+			tran.incomeAccount = acc.id;
 			tran.outcome = 0;
-			tran.outcomeAccount = id;
+			tran.outcomeAccount = acc.id;
 		} else {
 			tran.income = 0;
-			tran.incomeAccount = id;
+			tran.incomeAccount = acc.id;
 			tran.outcome = -sum.summa;
-			tran.outcomeAccount = id;
+			tran.outcomeAccount = acc.id;
 		}
 
 		if (sum.opSumma){
@@ -801,6 +990,80 @@ function processWebTransactions(acc){
 	return tranDict;
 }
 
+/**
+ * Перевод между своими счетами через web-интерфейс
+ * @param fromAcc = 'card:12345678' (со счёта карты)
+ * @param toAcc = 'account:12345678' (на счёт вклада)
+ * @param sum - сумма перевода
+ */
+function doTransferWeb(fromAcc, toAcc, sum) {
+	ZenMoney.trace('Загружаем форму перевода...');
+	html = ZenMoney.requestGet(g_nodeurl + '/PhizIC/private/payments/payment.do?form=InternalPayment');
+	//ZenMoney.trace('html: '+html);
+
+	// инициализация формы
+	var apacheToken = getParamByName(html, 'org.apache.struts.taglib.html.TOKEN');
+	var docNum = getParamByName2(html, 'documentNumber');
+	var pageToken = getParamByName(html, 'PAGE_TOKEN');
+	//ZenMoney.trace('apacheToken: '+apacheToken);
+	ZenMoney.trace('docNum: '+docNum);
+	//ZenMoney.trace('pageToken: '+pageToken);
+
+	// заполняем поля перевода
+	ZenMoney.trace('Заполняем форму...');
+	html = ZenMoney.requestPost(g_nodeurl + '/PhizIC/private/payments/payment.do?form=InternalPayment', {
+		'org.apache.struts.taglib.html.TOKEN': apacheToken,
+		'form': 'InternalPayment',
+		'exactAmount': 'charge-off-field-exact',
+		'documentNumber': docNum,
+		'fromResource': fromAcc,
+		'toResource': toAcc,
+		'sellAmount': sum,
+		'PAGE_TOKEN': pageToken,
+		'operation': 'button.save'
+	}, addHeaders({Referer: g_nodeurl, 'X-Requested-With': 'XMLHttpRequest'}));
+	ZenMoney.trace('Отослали форму.');
+
+	var url = ZenMoney.getLastUrl();
+	var locPos = url.indexOf('confirm.do');
+	if (locPos < 0)
+		throw new ZenMoney.Error('Не удалось совершить перевод между счетами');
+
+	var paymentId = url.substr(locPos+14);
+	if (!paymentId)
+		throw new ZenMoney.Error('Не удалось определить идентификатор платежа');
+	ZenMoney.trace('paymentId: '+paymentId);
+
+	apacheToken = getParamByName(html, 'org.apache.struts.taglib.html.TOKEN');
+	if (!apacheToken)
+		throw new ZenMoney.Error('Не удалось определить токен');
+	//ZenMoney.trace('apacheToken: '+apacheToken);
+
+	// подтверждение перевода
+	ZenMoney.trace('Подтвердите перевод...');
+	html = ZenMoney.requestPost(g_nodeurl + '/PhizIC/private/payments/confirm.do?id='+paymentId, {
+		'org.apache.struts.taglib.html.TOKEN': apacheToken,
+		'documentNumber': docNum,
+		'PAGE_TOKEN': pageToken,
+		'operation': 'button.dispatch'
+	}, addHeaders({Referer: g_nodeurl, 'X-Requested-With': 'XMLHttpRequest'}));
+	ZenMoney.trace('Перевод отправлен.');
+}
+
+
+/**
+ * Проверить не игнорируемый ли это счёт
+ * @param id
+ */
+function isAccountSkipped(id) {
+	return ZenMoney.getLevel() >= 13 && ZenMoney.isAccountSkipped(id);
+}
+
+/**
+ * Получить токен страницы web-интерфейса
+ * @param html
+ * @returns {*}
+ */
 function getToken(html) {
 	var token = getParam(html, /<token>([^<]+)<\/token>/i);
 	if(!token) {
@@ -810,6 +1073,12 @@ function getToken(html) {
 	return token;
 }
 
+/**
+ * Сгенерировать HEX
+ * @param mask
+ * @param digits
+ * @returns {string|void|XML}
+ */
 function generateHex(mask, digits){
 	var i=0;
 	return mask.replace(/x/ig, function(){
@@ -817,6 +1086,10 @@ function generateHex(mask, digits){
 	});
 }
 
+/**
+ * Сгенерировать параметры устройства
+ * @returns {{TIMESTAMP: string, HardwareID: string, SIM_ID: string, PhoneNumber: string, GeoLocationInfo: *[], DeviceModel: string, MultitaskingSupported: boolean, DeviceName: string, DeviceSystemName: string, DeviceSystemVersion: string, Languages: string, WiFiMacAddress: (string|void|XML), WiFiNetworksData: {BBSID: (string|void|XML), SignalStrength: string, Channel: string, SSID: string}, CellTowerId: string, LocationAreaCode: string, ScreenSize: string, RSA_ApplicationKey: string, MCC: string, MNC: string, OS_ID: string, SDK_VERSION: string, Compromised: number, Emulator: number}}
+ */
 function createSdkData(){
 	var dt = new Date(), prefs = ZenMoney.getPreferences();
 	var hex = hex_md5(prefs.login + 'sdk_data');
@@ -879,6 +1152,12 @@ function createSdkData(){
 	return obj;
 }
 
+/**
+ * Сгенерировать IMEI-устроства
+ * @param val
+ * @param mask
+ * @returns {string|XML|*}
+ */
 function generateImei(val, mask) {
 	var g_imei_default = '35374906******L'; //Samsung
 	var serial = (Math.abs(crc32(val) % 1000000)) + '';
@@ -892,6 +1171,12 @@ function generateImei(val, mask) {
 	return mask;
 }
 
+/**
+ * Сгенерировать серийный номер SIM
+ * @param val
+ * @param mask
+ * @returns {string|XML|*}
+ */
 function generateSimSN(val, mask) {
 	var g_simsn_default = '897010266********L'; //билайн
 	var serial = (Math.abs(crc32(val + 'simSN') % 100000000)) + '';
@@ -905,15 +1190,32 @@ function generateSimSN(val, mask) {
 	return mask;
 }
 
+/**
+ * Проверить залогинены ли в web-интерфейсе
+ */
 function getLoggedInHtml(){
 	var nurl = (g_nodeurl || 'https://node1.online.sberbank.ru');
 	var html = ZenMoney.requestGet(nurl + '/PhizIC/private/userprofile/userSettings.do', g_headers);
-	if(/accountSecurity.do/i.test(html)){
+	if(isLoggedIn(html)){
 		g_nodeurl = nurl;
 		return html;
 	}
 }
 
+/**
+ * Проверить авторизацию в web-интерфейсе
+ * @param html
+ * @returns {boolean}
+ */
+function isLoggedIn(html){
+	return /accountSecurity.do/i.test(html);
+}
+
+/**
+ * Проверить наличие вопросво в web-интерфейсе, чтобы пропустить их
+ * @param html
+ * @param baseurl
+ */
 function checkAdditionalQuestions(html, baseurl){
 	if (/internetSecurity/.test(html)) {
 		ZenMoney.trace('Требуется принять соглашение о безопасности... Принимаем...');
@@ -938,10 +1240,11 @@ function checkAdditionalQuestions(html, baseurl){
 	html = checkNext(html);
 }
 
-function isLoggedIn(html){
-	return /accountSecurity.do/i.test(html);
-}
-
+/**
+ * Проверить наличие запроса на переход к следующему шагу в web-интерфейсе
+ * @param html
+ * @returns {*}
+ */
 function checkNext(html){
 	if((html || '').trim() == 'next'){
 		ZenMoney.trace('У нас next, обновляем страницу.');
@@ -950,6 +1253,11 @@ function checkNext(html){
 	return html;
 }
 
+/**
+ * Получить удобочитаемый HTML без лишних шапок и мусора
+ * @param html
+ * @returns {*}
+ */
 function clearHtml(html) {
 	if (!html)
 		return '--- undefined ---';
@@ -966,6 +1274,11 @@ function clearHtml(html) {
 		]);
 }
 
+/**
+ * Получить дату в формате ДД.ММ.ГГГГ
+ * @param str
+ * @returns {*}
+ */
 function getWebDate(str){
 	if (str.toLowerCase().indexOf("сегодня") >= 0)
 		return getFormattedDate();
@@ -982,9 +1295,14 @@ function getWebDate(str){
 		return str + '.' + year;
 	}
 
-	throw new ZenMoney.error('Не корректная дата операции в web-версии');
+	throw new ZenMoney.Error('Не корректная дата операции в web-версии');
 }
 
+/**
+ * Получить сумму операции в web-интерфейсе
+ * @param str - строка
+ * @returns {{}}
+ */
 function getWebSum(str){
 	str = str.replace('&minus;', '-');
 

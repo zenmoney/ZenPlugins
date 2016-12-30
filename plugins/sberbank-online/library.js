@@ -591,8 +591,8 @@ function getElementsByTag(html, tag, replaces, parseFunc) {
 	while(pos >= 0) {
 		var pos2 = html.indexOf(t2, pos+t1.length), elem;
 
-		if (pos2 > 0)
-			elem = html.substring(pos+t1.length-1, pos2);
+		if (pos2 >= 0)
+			elem = html.substring(pos+t1.length, pos2);
 		else
 			break;
 
@@ -603,7 +603,7 @@ function getElementsByTag(html, tag, replaces, parseFunc) {
 			elem = parseFunc(elem);
 
 		res.push(elem);
-		pos = html.indexOf(tag, pos2+t2.length);
+		pos = html.indexOf(t1, pos2+t2.length);
 	}
 
 	return res;
@@ -654,6 +654,10 @@ function getParams(html, regexp, replaces, parser) {
 
 function getParamByName(html, name) {
 	return getParam(html, new RegExp('name=["\']' + name + '["\'][^>]*value=["\']([^"\']+)["\']', 'i'));
+}
+
+function getParamByName2(html, name) {
+	return getParam(html, new RegExp('value=["\']([^"\']+)["\'][^>]*name=["\']' + name + '["\']', 'i'));
 }
 
 function addHeaders(newHeaders, oldHeaders) {

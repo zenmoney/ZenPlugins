@@ -329,7 +329,7 @@ function processTransactions() {
 		var lastSyncTime = ZenMoney.getData('last_sync_' + accId, 0);
 
 		// первоначальная инициализация
-		if (lastSyncTime == 0) {
+		if (!lastSyncTime || lastSyncTime == 0) {
 			// по умолчанию загружаем операции за неделю
 			var period = !g_preferences.hasOwnProperty('period') || isNaN(period = parseInt(g_preferences.period)) ? 7 : period;
 

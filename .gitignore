@@ -2,6 +2,11 @@
 /.cache/
 /.npm/
 
+# ZenPlugin debugger files
+zp_data.txt
+zp_pipe.txt
+zp_preferences.json
+
 # JetBrains IDE files
 *.iml
 .idea

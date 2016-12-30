@@ -67,10 +67,8 @@ function RocketBank(ZenMoney) {
     function loadOperations(device_id, token_id, timestamp, page, limit) {
         ZenMoney.trace("Запрашиваем список операций: страница " + page);
         var data = getJson(
-            ZenMoney.request(
-                "GET",
+            ZenMoney.requestGet(
                 baseUrl + "/operations?page=" + page + "&per_page=" + limit,
-                null,
                 getHeaders(device_id, token_id)
             )
         );
@@ -206,10 +204,8 @@ function RocketBank(ZenMoney) {
             );
             ZenMoney.trace("Пароль получен, отправляем запрос");
             var data = getJson(
-                ZenMoney.request(
-                    'GET',
+                ZenMoney.requestGet(
                     baseUrl + "/login?email=" + ZenMoney.getData('email') + "&password=" + password,
-                    null,
                     getHeaders(device_id, null)
                 )
             );
@@ -235,7 +231,7 @@ function RocketBank(ZenMoney) {
             ZenMoney.request(
                 'POST',
                 baseUrl + "/devices/register",
-                JSON.stringify({phone: phone}),
+                {phone: phone},
                 getHeaders(device_id, null)
             )
         );
@@ -257,7 +253,7 @@ function RocketBank(ZenMoney) {
             ZenMoney.request(
                 'PATCH',
                 baseUrl + "/sms_verifications/" + data.sms_verification.id + "/verify",
-                JSON.stringify({code: code}),
+                {code: code},
                 getHeaders(device_id, null)
             )
         );

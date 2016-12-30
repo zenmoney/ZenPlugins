@@ -7,14 +7,22 @@ var g_headers = {
 	g_sessionid,
 	g_preferences;
 
+/**
+ * Основной метод
+ */
 function main(){
 	g_preferences = ZenMoney.getPreferences();
 	login();
+
 	processAccounts();
 	processTransactions();
 	ZenMoney.setResult({success: true});
 }
 
+/**
+ * Авторизация
+ * @returns {*}
+ */
 function login() {
 	if (!g_preferences.login) throw new ZenMoney.Error("Введите логин в интернет-банк!", null, true);
 	if (!g_preferences.password) throw new ZenMoney.Error("Введите пароль в интернет-банк!", null, true);
@@ -51,7 +59,7 @@ function login() {
 		if ("DEVICE_LINK_NEEDED" == json.resultCode) {
 			ZenMoney.trace("Необходимо привязать устройство...");
 			var sessionId = json.payload.sessionid;
-			var smsCode = ZenMoney.retrieveCode("Введите код подтверждения из смс для авторизации приложения в интернет-банке", null, {
+			var smsCode = ZenMoney.retrieveCode("Введите код подтверждения из смс для авторизации приложения в интернет-банке Тинькофф", null, {
 				inputType: "number",
 				time: 18E4
 			});
@@ -81,6 +89,9 @@ function login() {
 }
 
 var g_accounts = []; // линки активных счетов, по ним фильтруем обработку операций
+/**
+ * Обработка счетов
+ */
 function processAccounts() {
 	ZenMoney.trace('Запрашиваем данные по счетам...');
 	var accounts = requestJson("accounts_flat");
@@ -90,6 +101,10 @@ function processAccounts() {
 	var accDict = [];
 	for (var i = 0; i < accounts.payload.length; i++) {
 		var a = accounts.payload[i];
+		if (isAccountSkipped(a.id)) {
+			ZenMoney.trace('Пропускаем карту/счёт: '+ a.name +' (#'+ a.id +')');
+			continue;
+		}
 
 		// дебетовые карты ------------------------------------
 		if (a.accountType == 'Current' && a.status == 'NORM') {
@@ -196,6 +211,10 @@ function processAccounts() {
 	ZenMoney.addAccount(accDict);
 }
 
+/**
+ * Обработка операций
+ * @param data
+ */
 function processTransactions(data) {
 	ZenMoney.trace('Запрашиваем данные по последним операциям...');
 
@@ -241,7 +260,7 @@ function processTransactions(data) {
 		var dt = new Date(t.operationTime.milliseconds);
 		tran.date = n2(dt.getDate())+'.'+n2(dt.getMonth()+1)+'.'+dt.getFullYear();
 
-		ZenMoney.trace('Добавляем операцию #'+i+': '+ dt.toLocaleString() +' - '+ t.description+ ' ('+ tran.date +')');
+		ZenMoney.trace('Добавляем операцию #'+i+': '+ dt.toLocaleString() +' - '+ t.description+ ' ('+ tran.date +') '+ (t.type == "Credit" ? '+' : (t.type == "Debit" ? '-' : '')) + t.accountAmount.value);
 		//ZenMoney.trace('JSON: '+JSON.stringify(t));
 
 		// доход ------------------------------------------------------------------
@@ -372,6 +391,72 @@ function processTransactions(data) {
 	ZenMoney.saveData();
 }
 
+/**
+ * Перевод с карты на счёт
+ */
+function makeTransfer(fromAcc, toAcc, sum){
+	g_preferences = ZenMoney.getPreferences();
+	login();
+
+	ZenMoney.trace('Перевод ' + sum + ' со счёта ' + fromAcc + ' на счёт ' + toAcc);
+
+	// определим валюту счёта-источника
+	var fromCurr = ZenMoney.getData('accCurrency'+fromAcc, '');
+	if (!fromCurr) {
+		// определим валюту счёта
+		ZenMoney.trace('Запрашиваем данные по счетам...');
+
+		var accounts = requestJson("accounts_flat");
+		//ZenMoney.trace('JSON счетов: '+JSON.stringify(accounts.payload));
+
+		for (var iAcc = 0; iAcc < accounts.payload.length; iAcc++) {
+			var acc = accounts.payload[iAcc];
+			if (acc.id != fromAcc)
+				continue;
+
+			fromCurr = acc.moneyAmount.currency.name;
+
+			ZenMoney.trace('Нашли счёт '+ fromAcc +' и определили валюту как '+ fromCurr);
+
+			ZenMoney.setData('accCurrency'+ fromAcc, fromCurr);
+			ZenMoney.saveData();
+
+			break;
+		}
+	}
+
+	if (!fromCurr)
+		throw new ZenMoney.Error('Не удалось определить валюту счёта-источника');
+
+	// если во время перевода произойдёт ошибка, будет выброшен эксепшен
+	var payment = requestJson("pay", null, {
+		"payParameters": JSON.stringify({
+			"account": fromAcc,
+			"provider": "transfer-inner",
+			"currency": fromCurr,
+			"moneyAmount": sum,
+			"moneyCommission": sum,
+			"providerFields": {
+				"bankContract": toAcc
+			}
+		})
+	});
+
+	//ZenMoney.trace('JSON перевода: '+ JSON.stringify(payment));
+}
+
+/**
+ * Проверить не игнорируемый ли это счёт
+ * @param id
+ */
+function isAccountSkipped(id) {
+	return ZenMoney.getLevel() >= 13 && ZenMoney.isAccountSkipped(id);
+}
+
+/**
+ * Обработка JSON-строки в объект
+ * @param html
+ */
 function getJson(html) {
 	try {
 		return JSON.parse(html);
@@ -381,6 +466,13 @@ function getJson(html) {
 	}
 }
 
+/**
+ * Выполнение запроса с получением JSON-результата
+ * @param requestCode
+ * @param data
+ * @param parameters
+ * @returns {*}
+ */
 function requestJson(requestCode, data, parameters) {
 	var params = [];
 	parameters || (parameters = {});
