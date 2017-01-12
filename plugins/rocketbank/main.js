@@ -136,6 +136,11 @@ function RocketBank(ZenMoney) {
                     if (transaction.comment == null) {
                         transaction.comment = operation.details;
                     }
+                } else if (operation.context_type == 'commission') { // Комиссия за операцию
+                    transaction.outcome = sum;
+                    if (transaction.comment == null) {
+                        transaction.comment = operation.details;
+                    }
                 } else if (operation.context_type == 'card2card_cash_out_other') { // Исходящий перевод внутри банка
                     transaction.outcome = sum;
                 } else if (operation.context_type == 'card2card_cash_out') { // Исходящий перевод на карту
