@@ -43,7 +43,7 @@ function RocketBank(ZenMoney) {
     this.processTransactions = function (timestamp) {
         ZenMoney.trace("Начинаем синхронизацию с даты " + new Date(timestamp * 1000).toLocaleString());
         var device = getDevice();
-        var success = loadOperations(device, getToken(device, false), timestamp).every(function (transaction) {
+        var success = loadOperations(device, getToken(device, false), timestamp).reverse().every(function (transaction) {
             try {
                 timestamp = Math.max(timestamp, transaction.date);
                 ZenMoney.addTransaction(transaction);
