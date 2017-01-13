@@ -34,11 +34,6 @@ function main() {
  * @constructor
  */
 function RocketBank(ZenMoney) {
-
-    var baseUrl = "https://rocketbank.ru/api/v5";
-    var transactions = [];
-    var last_operation = 0;
-
     /**
      * Обрабатываем транзакции
      *
@@ -48,12 +43,20 @@ function RocketBank(ZenMoney) {
     this.processTransactions = function (timestamp) {
         ZenMoney.trace("Начинаем синхронизацию с даты " + new Date(timestamp * 1000).toLocaleString());
         var device = getDevice();
-        transactions = [];
-        last_operation = timestamp;
-        loadOperations(device, getToken(device, false), timestamp, 1, 20).forEach(function (transaction) {
-            ZenMoney.addTransaction(transaction);
+        var success = loadOperations(device, getToken(device, false), timestamp).reverse().every(function (transaction) {
+            try {
+                timestamp = Math.max(timestamp, transaction.date);
+                ZenMoney.addTransaction(transaction);
+                return true;
+            } catch (exception) {
+                ZenMoney.trace('Не удалось добавить транзакцию: ' + JSON.stringify(transaction));
+                return false;
+            }
         });
-        return last_operation;
+        if (!success) {
+            ZenMoney.trace('Не все транзакции были обработаны');
+        }
+        return timestamp;
     };
 
     /**
@@ -61,20 +64,19 @@ function RocketBank(ZenMoney) {
      * @param {String} device_id
      * @param {String} token_id
      * @param {Number} timestamp
-     * @param {Number} page
-     * @param {Number} limit
+     * @param {Number} [page]
+     * @param {Number} [limit]
+     * @param {Object[]} [transactions]
      */
-    function loadOperations(device_id, token_id, timestamp, page, limit) {
+    function loadOperations(device_id, token_id, timestamp, page, limit, transactions) {
+        page = page || 1;
+        limit = limit || 20;
+        transactions = transactions || [];
         ZenMoney.trace("Запрашиваем список операций: страница " + page);
-        var data = getJson(
-            ZenMoney.requestGet(
-                baseUrl + "/operations?page=" + page + "&per_page=" + limit,
-                getHeaders(device_id, token_id)
-            )
-        );
+        var data = request("GET", "/operations?page=" + page + "&per_page=" + limit, null, device_id, token_id);
         if (data.hasOwnProperty("response")) {
             if (data.response.status == 401) {
-                return loadOperations(device_id, getToken(device_id, true), timestamp, page, limit);
+                return loadOperations(device_id, getToken(device_id, true), timestamp, page, limit, transactions);
             } else {
                 throw new ZenMoney.Error('Не удалось загрузить список операций: ' + data.response.description);
             }
@@ -92,11 +94,6 @@ function RocketBank(ZenMoney) {
                     ZenMoney.trace('Пропускаем операцию со статусом ' + operation.status);
                     continue;
                 }
-                ZenMoney.trace("Обрабатываем транзакцию: " + JSON.stringify(operation)); // Приходит довольно много данных
-                if (operation.happened_at > last_operation) {
-                    ZenMoney.trace("Устаналиваем время последней синхронизации на " + dt.toLocaleString());
-                    last_operation = operation.happened_at;
-                }
                 var sum = Math.abs(operation.money.amount);
                 var transaction = {
                     id: operation.id,
@@ -106,53 +103,63 @@ function RocketBank(ZenMoney) {
                     outcomeAccount: '1',
                     income: 0,
                     incomeAccount: '1',
-                    payee: null
+                    payee: operation.merchant.name
                 };
+                switch (operation.context_type) {
+                    case 'pos_spending': // Расход
+                        if (operation.money.amount < 0) {
+                            transaction.outcome = sum;
+                        } else {
+                            transaction.income = sum;
+                        }
+                        break;
+                    case 'atm_cash_out': // Снятие наличных
+                        transaction.income = sum;
+                        transaction.incomeAccount = 'cash#' + operation.money.currency_code;
+                        transaction.outcome = sum;
+                        transaction.payee = null;
+                        if (transaction.comment == null) {
+                            transaction.comment = operation.details;
+                        }
+                        break;
+                    case 'remittance': // Перевод (исходящий)
+                        transaction.outcome = sum;
+                        break;
+                    case 'card2card_cash_in': // Перевод с карты (входящий)
+                        transaction.income = sum;
+                        break;
+                    case 'card2card_cash_out': // Исходящий перевод на карту
+                        transaction.outcome = sum;
+                        break;
+                    case 'card2card_cash_out_other': // Исходящий перевод внутри банка
+                        transaction.outcome = sum;
+                        break;
+                    case 'commission': // Комиссия за операцию
+                    case 'rocket_fee': // Услуги банка
+                        transaction.outcome = sum;
+                        transaction.payee = 'Рокетбанк';
+                        if (transaction.comment == null) {
+                            transaction.comment = operation.details;
+                        }
+                        break;
+                    case 'internal_cash_in': // Входящий перевод внутри банка
+                    case 'transfer_cash_in': // Начисление процентов
+                        transaction.income = sum;
+                        transaction.comment = operation.details + ': ' + operation.comment;
+                        break;
+                    default:
+                        ZenMoney.trace('Неизвестный тип транзакции: ' + JSON.stringify(operation));
+                        throw new ZenMoney.Error('Неизвестный тип транзакции');
+                }
                 if (operation.location.latitude != null && operation.location.longitude != null) {
                     transaction.latitude = operation.location.latitude;
                     transaction.longitude = operation.location.longitude;
                 }
-                if (operation.context_type == 'pos_spending') { // Расход
-                    if (operation.money.amount < 0) {
-                        transaction.outcome = sum;
-                    } else {
-                        transaction.income = sum;
-                    }
-                    transaction.payee = operation.merchant.name;
-                } else if (operation.context_type == 'atm_cash_out') { // Снятие наличных
-                    transaction.income = sum;
-                    transaction.incomeAccount = 'cash#' + operation.money.currency_code;
-                    transaction.outcome = sum;
-                    if (transaction.comment == null) {
-                        transaction.comment = operation.details;
-                    }
-                } else if (operation.context_type == 'remittance') { // Перевод (исходящий)
-                    transaction.outcome = sum;
-                    transaction.payee = operation.merchant.name;
-                } else if (operation.context_type == 'card2card_cash_in') { // Перевод с карты (входящий)
-                    transaction.income = sum;
-                    if (transaction.comment == null) {
-                        transaction.comment = operation.details;
-                    }
-                } else if (operation.context_type == 'rocket_fee') { // Услуги банка
-                    transaction.outcome = sum;
-                    if (transaction.comment == null) {
-                        transaction.comment = operation.details;
-                    }
-                } else if (operation.context_type == 'card2card_cash_out_other') { // Исходящий перевод внутри банка
-                    transaction.outcome = sum;
-                } else if (operation.context_type == 'internal_cash_in') { // Входящий перевод внутри банка
-                    transaction.income = sum;
-                    transaction.comment = operation.details + ': ' + operation.comment;
-                } else if (operation.context_type == 'transfer_cash_in') { // Начисление процентов
-                    transaction.income = sum;
-                    transaction.comment = operation.details + ': ' + operation.comment;
-                }
-                transactions.unshift(transaction);
-                ZenMoney.trace("Добавляем новую транзакцию: " + JSON.stringify(transaction));
+                transactions.push(transaction);
+                ZenMoney.trace("Обрабатываем новую транзакцию: " + JSON.stringify(transaction));
             }
             if (data.pagination.current_page < data.pagination.total_pages) {
-                return loadOperations(device_id, token_id, timestamp, page + 1, limit);
+                return loadOperations(device_id, token_id, timestamp, page + 1, limit, transactions);
             }
         } else {
             ZenMoney.trace("Операции не найдены (всего операций " + data.pagination.total_count + ")");
@@ -203,11 +210,12 @@ function RocketBank(ZenMoney) {
                 }
             );
             ZenMoney.trace("Пароль получен, отправляем запрос");
-            var data = getJson(
-                ZenMoney.requestGet(
-                    baseUrl + "/login?email=" + ZenMoney.getData('email') + "&password=" + password,
-                    getHeaders(device_id, null)
-                )
+            var data = request(
+                "GET",
+                "/login?email=" + ZenMoney.getData('email') + "&password=" + password,
+                null,
+                device_id,
+                null
             );
             if (!data.hasOwnProperty('token')) {
                 throw new ZenMoney.Error('Не удалось подтвердить телефон: ' + data.response.description);
@@ -226,15 +234,8 @@ function RocketBank(ZenMoney) {
      */
     function registerDevice(phone) {
         var device_id = "zenmoney_" + hex_md5(Math.random().toString() + "_" + phone + "_" + Date.now());
-        ZenMoney.trace("Отправляем запрос на регистрацию утсройства");
-        var data = getJson(
-            ZenMoney.request(
-                'POST',
-                baseUrl + "/devices/register",
-                {phone: phone},
-                getHeaders(device_id, null)
-            )
-        );
+        ZenMoney.trace("Отправляем запрос на регистрацию утсройства " + device_id + " (" + phone + ")");
+        var data = request("POST", "/devices/register", {phone: phone}, device_id, null);
         if (data.response.status == 200) {
             ZenMoney.trace(data.response.description);
         } else {
@@ -249,13 +250,12 @@ function RocketBank(ZenMoney) {
             }
         );
         ZenMoney.trace("Получили код");
-        data = getJson(
-            ZenMoney.request(
-                'PATCH',
-                baseUrl + "/sms_verifications/" + data.sms_verification.id + "/verify",
-                {code: code},
-                getHeaders(device_id, null)
-            )
+        data = request(
+            "PATCH",
+            "/sms_verifications/" + data.sms_verification.id + "/verify",
+            {code: code},
+            device_id,
+            null
         );
         if (data.response.status == 200) {
             ZenMoney.trace(data.response.description);
@@ -266,6 +266,28 @@ function RocketBank(ZenMoney) {
         ZenMoney.setData("email", data.user.email);
 
         return device_id;
+    }
+
+    /**
+     * Делаем запрос на сервер
+     *
+     * @param {String} method
+     * @param {String} url
+     * @param {Object} data
+     * @param {String} device_id
+     * @param {String} token
+     * @return {Object}
+     */
+    function request(method, url, data, device_id, token) {
+        var baseUrl = "https://rocketbank.ru/api/v5";
+        var response = ZenMoney.request(method, baseUrl + url, JSON.stringify(data), getHeaders(device_id, token));
+        if (!response) {
+            ZenMoney.trace(
+                'Пришёл пустой ответ во время ' + method + ' запроса по адресу "' + baseUrl + url + '"'
+            );
+            throw new ZenMoney.Error('Неверный ответ с сервера');
+        }
+        return getJson(response);
     }
 
     /**
