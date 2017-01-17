@@ -130,6 +130,10 @@ function RocketBank(ZenMoney) {
                         break;
                     case 'card2card_cash_out': // Исходящий перевод на карту
                         transaction.outcome = sum;
+                        transaction.payee = null;
+                        if (transaction.comment == null) {
+                            transaction.comment = operation.details;
+                        }
                         break;
                     case 'card2card_cash_out_other': // Исходящий перевод внутри банка
                         transaction.outcome = sum;
