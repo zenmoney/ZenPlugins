@@ -130,6 +130,10 @@ function RocketBank(ZenMoney) {
                         break;
                     case 'card2card_cash_out': // Исходящий перевод на карту
                         transaction.outcome = sum;
+                        transaction.payee = null;
+                        if (transaction.comment == null) {
+                            transaction.comment = operation.details;
+                        }
                         break;
                     case 'card2card_cash_out_other': // Исходящий перевод внутри банка
                         transaction.outcome = sum;
@@ -146,6 +150,13 @@ function RocketBank(ZenMoney) {
                     case 'transfer_cash_in': // Начисление процентов
                         transaction.income = sum;
                         transaction.comment = operation.details + ': ' + operation.comment;
+                        break;
+                    case 'miles_cash_back': // Возврат за рокетрубли
+                        transaction.income = sum;
+                        transaction.payee = 'Рокетбанк';
+                        if (transaction.comment == null) {
+                            transaction.comment = operation.details;
+                        }
                         break;
                     default:
                         ZenMoney.trace('Неизвестный тип транзакции: ' + JSON.stringify(operation));
