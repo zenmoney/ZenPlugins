@@ -147,6 +147,13 @@ function RocketBank(ZenMoney) {
                         transaction.income = sum;
                         transaction.comment = operation.details + ': ' + operation.comment;
                         break;
+                    case 'miles_cash_back': // Возврат за рокетрубли
+                        transaction.income = sum;
+                        transaction.payee = 'Рокетбанк';
+                        if (transaction.comment == null) {
+                            transaction.comment = operation.details;
+                        }
+                        break;
                     default:
                         ZenMoney.trace('Неизвестный тип транзакции: ' + JSON.stringify(operation));
                         throw new ZenMoney.Error('Неизвестный тип транзакции');
