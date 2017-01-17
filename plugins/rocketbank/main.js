@@ -280,7 +280,12 @@ function RocketBank(ZenMoney) {
      */
     function request(method, url, data, device_id, token) {
         var baseUrl = "https://rocketbank.ru/api/v5";
-        var response = ZenMoney.request(method, baseUrl + url, JSON.stringify(data), getHeaders(device_id, token));
+        var response;
+        if (!method || method.toUpperCase() === 'GET') {
+            response = ZenMoney.requestGet(baseUrl + url, getHeaders(device_id, token));
+        } else {
+            response = ZenMoney.request(method, baseUrl + url, data, getHeaders(device_id, token));
+        }
         if (!response) {
             ZenMoney.trace(
                 'Пришёл пустой ответ во время ' + method + ' запроса по адресу "' + baseUrl + url + '"'
