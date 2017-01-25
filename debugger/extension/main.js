@@ -9,7 +9,7 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
         var rewrite = false;
         var accessControlHeader = null;
 
-        details.requestHeaders.forEach(function (header) {
+        details.requestHeaders.forEach(function (header, i) {
             if (header.name === 'Access-Control-Request-Headers') {
                 accessControlHeader = header;
             }
@@ -20,11 +20,21 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
                     if (header.name.length === ZP_HEADER_PREFIX.length) {
                         return;
                     }
-                    header.name = header.name.substring(ZP_HEADER_PREFIX.length);
+                } else if (details.requestHeaders.find(function (h) {
+                    return h.name === ZP_HEADER_PREFIX + header.name;
+                })) {
+                    return;
                 }
                 headers.push(header);
             }
         });
+        if (rewrite) {
+            headers.forEach(function (header) {
+                if (header.name.indexOf(ZP_HEADER_PREFIX) === 0) {
+                    header.name = header.name.substring(ZP_HEADER_PREFIX.length);
+                }
+            });
+        }
 
         if (accessControlHeader && (rewrite ||
                 (accessControlHeader.value &&
