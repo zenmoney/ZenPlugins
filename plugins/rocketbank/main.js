@@ -2,30 +2,10 @@
  * Начинаем синхронизацию
  */
 function main() {
-    var lastSyncTime = ZenMoney.getData('last_sync', 0);
-
-    // первоначальная инициализация
-    if (lastSyncTime == 0) {
-        var preferences = ZenMoney.getPreferences();
-        // по умолчанию загружаем операции за неделю
-        var period = !preferences.hasOwnProperty('period') || isNaN(period = parseInt(preferences.period)) ? 7 : period;
-        if (period > 100) period = 100;	// на всякий случай, ограничим лимит, а то слишком долго будет
-        lastSyncTime = Math.floor(Date.now() / 1000) - period * 24 * 60 * 60;
-    }
-
-    ZenMoney.addAccount({
-        id: '1',
-        title: 'Рублевая карта',
-        type: 'ccard',
-        instrument: 'RUB',
-        syncID: [0]
-    });
-
     var rocketBank = new RocketBank(ZenMoney);
-    ZenMoney.setData('last_sync', rocketBank.processTransactions(lastSyncTime));
+    var success = rocketBank.processAccounts().every(rocketBank.processAccount);
     ZenMoney.saveData();
-
-    ZenMoney.setResult({success: true});
+    ZenMoney.setResult({success: success});
 }
 
 
@@ -35,56 +15,123 @@ function main() {
  */
 function RocketBank(ZenMoney) {
     /**
-     * Обрабатываем транзакции
+     * Обрабатываем аккаунты
      *
-     * @param {Number} timestamp
-     * @return {Number} New timestamp
+     * @return {String[]}
      */
-    this.processTransactions = function (timestamp) {
-        ZenMoney.trace("Начинаем синхронизацию с даты " + new Date(timestamp * 1000).toLocaleString());
+    this.processAccounts = function () {
+        ZenMoney.trace("Загружаем список аккаунтов");
+        return loadAccounts().map(function (account) {
+            ZenMoney.trace("Обрабатываем аккаунт: " + JSON.stringify(account));
+            ZenMoney.addAccount({
+                id: account.id,
+                title: account.title,
+                type: 'ccard',
+                instrument: account.currency,
+                balance: account.balance,
+                syncID: [parseInt(account.pan.substr(-4))]
+            });
+            return account.id;
+        });
+    };
+
+    /**
+     * @param {String} account
+     * @return {boolean}
+     */
+    this.processAccount = function (account) {
+        var lastSync = getLastSyncTime(account);
+        var dt = new Date(lastSync * 1000);
+        ZenMoney.trace('Начинаем синхронизацию аккаунта ' + account + ' с даты ' + dt.toLocaleString());
         var device = getDevice();
-        var success = loadOperations(device, getToken(device, false), timestamp).reverse().every(function (transaction) {
+        return loadOperations(device, getToken(device, false), account, lastSync).reverse().every(function (transaction) {
+            ZenMoney.trace("Обрабатываем новую транзакцию: " + JSON.stringify(transaction));
             try {
-                timestamp = Math.max(timestamp, transaction.date);
+                lastSync = Math.max(lastSync, transaction.date);
                 ZenMoney.addTransaction(transaction);
+                ZenMoney.setData('last_sync_' + account, lastSync);
                 return true;
             } catch (exception) {
                 ZenMoney.trace('Не удалось добавить транзакцию: ' + JSON.stringify(transaction));
                 return false;
             }
         });
-        if (!success) {
-            ZenMoney.trace('Не все транзакции были обработаны');
-        }
-        return timestamp;
     };
 
     /**
+     * @param {String} account
+     * @return {Number}
+     */
+    function getLastSyncTime(account) {
+        var lastSyncTime = parseInt(ZenMoney.getData('last_sync_' + account, 0));
+
+        // первоначальная инициализация
+        if (lastSyncTime == 0) {
+            var preferences = ZenMoney.getPreferences();
+            // по умолчанию загружаем операции за неделю
+            var period = !preferences.hasOwnProperty('period') || isNaN(period = parseInt(preferences.period)) ? 7 : period;
+            if (period > 100) period = 100;	// на всякий случай, ограничим лимит, а то слишком долго будет
+            lastSyncTime = Math.floor(Date.now() / 1000) - period * 24 * 60 * 60;
+        }
+
+        return lastSyncTime;
+    }
+
+    /**
+     * Загружаем список существующих аккаунтов
      *
-     * @param {String} device_id
-     * @param {String} token_id
+     * @return {{id: String, pan: String, balance: Number, currency: String, title: String}[]}
+     */
+    function loadAccounts() {
+        var device = getDevice();
+        var profile = request("GET", "/profile", null, device, getToken(device, false));
+        if (!profile.hasOwnProperty("user")) {
+            ZenMoney.trace('Не удалось загрузить список аккаунтов:' + JSON.stringify(profile));
+            throw new ZenMoney.Error('Не удалось загрузить список аккаунтов');
+        }
+        var accountsNumber = profile.user.accounts.length;
+        ZenMoney.trace('Найдено аккаунтов: ' + accountsNumber);
+        var accounts = [];
+        for (var i = 0; i < accountsNumber; i++) {
+            var account = profile.user.accounts[i];
+            accounts.push({
+                id: account.token,
+                pan: account.pan,
+                balance: account.balance,
+                currency: account.currency,
+                title: account.title
+            });
+        }
+        return accounts;
+    }
+
+    /**
+     *
+     * @param {String} device
+     * @param {String} token
+     * @param {String} account
      * @param {Number} timestamp
      * @param {Number} [page]
      * @param {Number} [limit]
      * @param {Object[]} [transactions]
      */
-    function loadOperations(device_id, token_id, timestamp, page, limit, transactions) {
+    function loadOperations(device, token, account, timestamp, page, limit, transactions) {
         page = page || 1;
-        limit = limit || 20;
+        limit = limit || 10;
         transactions = transactions || [];
         ZenMoney.trace("Запрашиваем список операций: страница " + page);
-        var data = request("GET", "/operations?page=" + page + "&per_page=" + limit, null, device_id, token_id);
+        var data = request("GET", "/accounts/" + account + "/feed?page=" + page + "&per_page=" + limit, null, device, token);
         if (data.hasOwnProperty("response")) {
             if (data.response.status == 401) {
-                return loadOperations(device_id, getToken(device_id, true), timestamp, page, limit, transactions);
+                return loadOperations(device, getToken(device, true), account, timestamp, page, limit, transactions);
             } else {
                 throw new ZenMoney.Error('Не удалось загрузить список операций: ' + data.response.description);
             }
         }
         ZenMoney.trace("Загрузили страницу " + data.pagination.current_page + " из " + data.pagination.total_pages);
-        if (data.hasOwnProperty("operations")) {
-            for (var i = 0; i < data.operations.length; i++) {
-                var operation = data.operations[i];
+        if (data.hasOwnProperty("feed")) {
+            for (var i = 0; i < data.feed.length; i++) {
+                var operation = data.feed[i][1];
                 var dt = new Date(operation.happened_at * 1000);
                 if (operation.happened_at <= timestamp) {
                     ZenMoney.trace("Транзакция #" + operation.id + " уже была ранее обработана (" + dt.toLocaleString() + ")");
@@ -100,9 +147,9 @@ function RocketBank(ZenMoney) {
                     date: operation.happened_at,
                     comment: operation.comment,
                     outcome: 0,
-                    outcomeAccount: '1',
+                    outcomeAccount: account,
                     income: 0,
-                    incomeAccount: '1',
+                    incomeAccount: account,
                     payee: operation.merchant.name
                 };
                 switch (operation.context_type) {
@@ -149,6 +196,7 @@ function RocketBank(ZenMoney) {
                     case 'internal_cash_in': // Входящий перевод внутри банка
                     case 'transfer_cash_in': // Начисление процентов
                         transaction.income = sum;
+                        transaction.payee = 'Рокетбанк';
                         transaction.comment = operation.details + ': ' + operation.comment;
                         break;
                     case 'miles_cash_back': // Возврат за рокетрубли
@@ -167,10 +215,9 @@ function RocketBank(ZenMoney) {
                     transaction.longitude = operation.location.longitude;
                 }
                 transactions.push(transaction);
-                ZenMoney.trace("Обрабатываем новую транзакцию: " + JSON.stringify(transaction));
             }
             if (data.pagination.current_page < data.pagination.total_pages) {
-                return loadOperations(device_id, token_id, timestamp, page + 1, limit, transactions);
+                return loadOperations(device, token, account, timestamp, page + 1, limit, transactions);
             }
         } else {
             ZenMoney.trace("Операции не найдены (всего операций " + data.pagination.total_count + ")");
@@ -310,6 +357,7 @@ function RocketBank(ZenMoney) {
      * Разбираем строку ответа
      *
      * @param {String} data
+     * @return {Object}
      */
     function getJson(data) {
         try {
