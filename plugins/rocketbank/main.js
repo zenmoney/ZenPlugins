@@ -21,7 +21,9 @@ function RocketBank(ZenMoney) {
      */
     this.processAccounts = function () {
         ZenMoney.trace("Загружаем список аккаунтов");
-        return loadAccounts().map(function (account) {
+        var device = getDevice();
+        var token = getToken(device, false);
+        return loadAccounts(device, token).map(function (account) {
             ZenMoney.trace("Обрабатываем аккаунт: " + JSON.stringify(account));
             ZenMoney.addAccount({
                 id: account.id,
@@ -80,11 +82,21 @@ function RocketBank(ZenMoney) {
     /**
      * Загружаем список существующих аккаунтов
      *
+     * @param {String} device
+     * @param {String} token
+     *
      * @return {{id: String, pan: String, balance: Number, currency: String, title: String}[]}
      */
-    function loadAccounts() {
-        var device = getDevice();
-        var profile = request("GET", "/profile", null, device, getToken(device, false));
+    function loadAccounts(device, token) {
+        var profile = request("GET", "/profile", null, device, token);
+        if (profile.hasOwnProperty("response")) {
+            if (profile.response.status == 401) {
+                return loadAccounts(device, getToken(device, true));
+            } else {
+                ZenMoney.trace('Не удалось загрузить список аккаунтов: ' + profile.response.description);
+                throw new ZenMoney.Error('Не удалось загрузить список аккаунтов');
+            }
+        }
         if (!profile.hasOwnProperty("user")) {
             ZenMoney.trace('Не удалось загрузить список аккаунтов:' + JSON.stringify(profile));
             throw new ZenMoney.Error('Не удалось загрузить список аккаунтов');
@@ -106,6 +118,7 @@ function RocketBank(ZenMoney) {
     }
 
     /**
+     * Загружаем список операций
      *
      * @param {String} device
      * @param {String} token
@@ -125,7 +138,8 @@ function RocketBank(ZenMoney) {
             if (data.response.status == 401) {
                 return loadOperations(device, getToken(device, true), account, timestamp, page, limit, transactions);
             } else {
-                throw new ZenMoney.Error('Не удалось загрузить список операций: ' + data.response.description);
+                ZenMoney.trace('Не удалось загрузить список операций: ' + data.response.description);
+                throw new ZenMoney.Error('Не удалось загрузить список операций');
             }
         }
         ZenMoney.trace("Загрузили страницу " + data.pagination.current_page + " из " + data.pagination.total_pages);
