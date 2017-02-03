@@ -3,7 +3,7 @@
  */
 function main() {
     var rocketBank = new RocketBank(ZenMoney);
-    var success = rocketBank.processAccounts().every(rocketBank.processAccount);
+    var success = rocketBank.fetchAccounts().every(rocketBank.processAccount);
     ZenMoney.saveData();
     ZenMoney.setResult({success: success});
 }
@@ -19,7 +19,7 @@ function RocketBank(ZenMoney) {
      *
      * @return {String[]}
      */
-    this.processAccounts = function () {
+    this.fetchAccounts = function () {
         ZenMoney.trace("Загружаем список аккаунтов");
         var device = getDevice();
         var token = getToken(device, false);
@@ -220,7 +220,17 @@ function RocketBank(ZenMoney) {
                             transaction.comment = operation.details;
                         }
                         break;
+                    case 'open_deposit':
+                        transaction.income = sum;
+                        transaction.incomeAccount = 'deposit#' + operation.money.currency_code;
+                        transaction.outcome = sum;
+                        transaction.payee = 'Рокетбанк';
+                        if (transaction.comment == null) {
+                            transaction.comment = operation.details;
+                        }
+                        break;
                     default:
+                        delete operation['receipt_url']; // Do not log private info
                         ZenMoney.trace('Неизвестный тип транзакции: ' + JSON.stringify(operation));
                         throw new ZenMoney.Error('Неизвестный тип транзакции');
                 }
@@ -306,7 +316,9 @@ function RocketBank(ZenMoney) {
      */
     function registerDevice(phone) {
         var device_id = "zenmoney_" + hex_md5(Math.random().toString() + "_" + phone + "_" + Date.now());
-        ZenMoney.trace("Отправляем запрос на регистрацию утсройства " + device_id + " (" + phone + ")");
+        ZenMoney.trace(
+            "Отправляем запрос на регистрацию утсройства " + depersonalize(device_id) + " (" + depersonalize(phone) + ")"
+        );
         var data = request("POST", "/devices/register", {phone: phone}, device_id, null);
         if (data.response.status == 200) {
             ZenMoney.trace(data.response.description);
@@ -338,6 +350,25 @@ function RocketBank(ZenMoney) {
         ZenMoney.setData("email", data.user.email);
 
         return device_id;
+    }
+
+    /**
+     * Depersonalize user data
+     *
+     * @param {String} original
+     * @param {Number} [percent]
+     *
+     * @return {String}
+     */
+    function depersonalize(original, percent) {
+        percent = percent || 0.25;
+        var length = Math.floor(original.length * percent);
+        var part = original.slice(0, length * -1);
+        for (var i = 0; i < length; i++) {
+            part += '*';
+        }
+
+        return part;
     }
 
     /**
