@@ -179,22 +179,17 @@ function RocketBank(ZenMoney) {
                         transaction.incomeAccount = 'cash#' + operation.money.currency_code;
                         transaction.outcome = sum;
                         transaction.payee = null;
-                        if (transaction.comment == null) {
-                            transaction.comment = operation.details;
-                        }
                         break;
                     case 'remittance': // Перевод (исходящий)
                         transaction.outcome = sum;
                         break;
                     case 'card2card_cash_in': // Перевод с карты (входящий)
+                    case 'internal_p2p_in': // Пополнение по номеру карты
                         transaction.income = sum;
                         break;
                     case 'card2card_cash_out': // Исходящий перевод на карту
                         transaction.outcome = sum;
                         transaction.payee = null;
-                        if (transaction.comment == null) {
-                            transaction.comment = operation.details;
-                        }
                         break;
                     case 'card2card_cash_out_other': // Исходящий перевод внутри банка
                         transaction.outcome = sum;
@@ -203,9 +198,6 @@ function RocketBank(ZenMoney) {
                     case 'rocket_fee': // Услуги банка
                         transaction.outcome = sum;
                         transaction.payee = 'Рокетбанк';
-                        if (transaction.comment == null) {
-                            transaction.comment = operation.details;
-                        }
                         break;
                     case 'internal_cash_in': // Входящий перевод внутри банка
                     case 'transfer_cash_in': // Начисление процентов
@@ -216,24 +208,22 @@ function RocketBank(ZenMoney) {
                     case 'miles_cash_back': // Возврат за рокетрубли
                         transaction.income = sum;
                         transaction.payee = 'Рокетбанк';
-                        if (transaction.comment == null) {
-                            transaction.comment = operation.details;
-                        }
                         break;
-                    case 'open_deposit':
+                    case 'open_deposit': // Открытие вклада
                         transaction.income = sum;
                         transaction.incomeAccount = 'deposit#' + operation.money.currency_code;
                         transaction.outcome = sum;
-                        transaction.payee = 'Рокетбанк';
-                        if (transaction.comment == null) {
-                            transaction.comment = operation.details;
-                        }
                         break;
                     default:
                         delete operation['receipt_url']; // Do not log private info
                         ZenMoney.trace('Неизвестный тип транзакции: ' + JSON.stringify(operation));
                         throw new ZenMoney.Error('Неизвестный тип транзакции');
                 }
+
+                if (transaction.comment == null) {
+                    transaction.comment = operation.details;
+                }
+
                 if (operation.location.latitude != null && operation.location.longitude != null) {
                     transaction.latitude = operation.location.latitude;
                     transaction.longitude = operation.location.longitude;
