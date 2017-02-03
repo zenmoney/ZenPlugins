@@ -230,6 +230,7 @@ function RocketBank(ZenMoney) {
                         }
                         break;
                     default:
+                        delete operation['receipt_url']; // Do not log private info
                         ZenMoney.trace('Неизвестный тип транзакции: ' + JSON.stringify(operation));
                         throw new ZenMoney.Error('Неизвестный тип транзакции');
                 }
