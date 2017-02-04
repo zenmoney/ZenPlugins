@@ -3,7 +3,7 @@
 /.npm/
 
 # ZenPlugin debugger files
-zp_data.txt
+zp_data.json
 zp_pipe.txt
 zp_preferences.json
 
