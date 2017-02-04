@@ -264,7 +264,7 @@
 
                 this.saveData = function () {
                     self.trace('saveData:\n' + JSON.stringify(_data) + '\n\n' +
-                        'Для того, чтобы плагин мог использовать эти данные при следующем запуске, сохраните их в файл zp_data.txt\n');
+                        'Для того, чтобы плагин мог использовать эти данные при следующем запуске, сохраните их в файл zp_data.json\n');
                 };
 
                 this.saveCookies = function () {
@@ -750,7 +750,7 @@
                             }
                             if (_preferences.zp_plugin_directory) {
                                 _preferences.zp_pipe = _location + '/zp_pipe.txt';
-                                _preferences.zp_data = _location + '/zp_data.txt';
+                                _preferences.zp_data = _location + '/zp_data.json';
                                 return resolve(_preferences.zp_plugin_directory);
                             } else {
                                 return reject('zp_preferences.json ' + _preferencesPath + ' should contain \'zp_plugin_directory\' field');
