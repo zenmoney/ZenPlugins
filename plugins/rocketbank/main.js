@@ -200,10 +200,13 @@ function RocketBank(ZenMoney) {
                         transaction.payee = 'Рокетбанк';
                         break;
                     case 'internal_cash_in': // Входящий перевод внутри банка
-                    case 'transfer_cash_in': // Начисление процентов
+                    case 'transfer_cash_in': // Зачисление межбанка || Начисление процентов
                         transaction.income = sum;
-                        transaction.payee = 'Рокетбанк';
                         transaction.comment = operation.details + ': ' + operation.comment;
+
+                        if (operation.merchant.id == 333) { // Начисление процентов
+                            transaction.payee = 'Рокетбанк';
+                        }
                         break;
                     case 'miles_cash_back': // Возврат за рокетрубли
                         transaction.income = sum;
