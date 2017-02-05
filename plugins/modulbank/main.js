@@ -273,7 +273,7 @@ function processTransactions(data) {
 			tran.payee = transaction.contragentName ? transaction.contragentName : transaction.contragentBankAccountNumber;
 
 			// операция в валюте
-			if (transaction.currency != transaction.currency) {
+			if (account.currency != transaction.currency) {
 				tran.opIncome = transaction.amountWithCommission;
 				tran.opIncomeInstrument = transaction.currency;
 			}
