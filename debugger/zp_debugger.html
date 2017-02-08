@@ -360,7 +360,7 @@
                                 value = value.toString();
                             }
                             if (!header || !header.length || !value || !value.length) {
-                                handleException('[NHE] Wrong header ' + header);
+                                handleException('[NHE] Wrong header "' + header + '" value "' + value + '"');
                                 return null;
                             }
                             if (body && header.toLowerCase().indexOf('content-type') >= 0) {
@@ -631,7 +631,8 @@
                     if (transaction.date !== undefined && castDate(transaction.date) === null) {
                         return handleException('[TDA] Wrong transaction ' + id + '. Wrong date format');
                     }
-                    if (transaction.mcc !== undefined && (typeof transaction.mcc !== 'number' ||
+                    if (transaction.mcc !== undefined &&
+                        transaction.mcc !== null && (typeof transaction.mcc !== 'number' ||
                             Math.floor(transaction.mcc) !== transaction.mcc)) {
                         return handleException('[TMC] Wrong transaction ' + id + '. MCC should be null or integer');
                     }
