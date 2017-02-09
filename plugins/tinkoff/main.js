@@ -21,7 +21,7 @@ function main(){
 
 /**
  * Авторизация
- * @returns {*}
+ * @returns {String} Идентификатор сессии
  */
 function login() {
 	if (!g_preferences.login) throw new ZenMoney.Error("Введите логин в интернет-банк!", null, true);
@@ -243,7 +243,8 @@ function processTransactions(data) {
 	ZenMoney.trace('Получено операций: '+transactions.payload.length);
 	ZenMoney.trace('JSON: '+JSON.stringify(transactions.payload));
 
-	var tranDict = {};
+	var tranDict = {};      // список найденных оперций
+	var paymentsDict = {};  // список идентификаторов переводов
 
 	for (var i = 0; i < transactions.payload.length; i++) {
 		var t = transactions.payload[i];
@@ -255,6 +256,11 @@ function processTransactions(data) {
 		// учитываем только успешные операции
 		if (t.status && t.status == 'FAILED')
 			continue;
+
+		if (t.accountAmount.value == 0) {
+            ZenMoney.trace('Пропускаем пустую операцию #'+i+': '+ dt.toLocaleString() +' - '+ t.description+ ' ('+ tran.date +') '+ (t.type == "Credit" ? '+' : (t.type == "Debit" ? '-' : '')) + t.accountAmount.value);
+			continue;
+        }
 
 		var tran = {};
 		var dt = new Date(t.operationTime.milliseconds);
@@ -271,8 +277,7 @@ function processTransactions(data) {
 			tran.outcomeAccount = tran.incomeAccount;
 
 			// пополнение наличными
-			if (t.subgroup && t.subgroup.id == "C1"
-				|| (!t.hasOwnProperty('subgroup') && t.group && t.group == "CASH")){
+			if (t.group && t.group == "CASH"){
 				tran.outcomeAccount = "cash#"+ t.amount.currency.name;
 				tran.outcome = t.accountAmount.value;
 			}
@@ -297,8 +302,7 @@ function processTransactions(data) {
 			tran.incomeAccount = tran.outcomeAccount;
 
 			// снятие наличных
-			if ((t.subgroup && t.subgroup.id.charAt(0) == "B")
-				|| (!t.hasOwnProperty('subgroup') && t.group && t.group == "CASH")){
+			if (t.group && t.group == "CASH"){
 				tran.incomeAccount = "cash#"+ t.amount.currency.name;
 				tran.income = t.accountAmount.value;
 			}
@@ -335,22 +339,34 @@ function processTransactions(data) {
 		// старый формат идентификатора
 		tran.id = t.payment ? t.payment.paymentId : t.id;
 
-		// с 10 ноября новый порядок идентификации операций - берём не id, а ucid, если есть (чтобы холды метчились корректно)
-		var idPatch = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) >= Date.UTC(2016, 10, 10);
-		if (idPatch)
-			tran.id = t.payment ? t.payment.paymentId : (t.ucid ? t.ucid : t.id);
-
 		// со 2 сентября новый порядок идентификации операций перевода: outcomeID~~incomeID
 		var transferPatch = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) >= Date.UTC(2016, 8, 2);
-
 		if (transferPatch)
 			tran.id = t.id;
+
+		// с 10 ноября новый порядок идентификации операций - берём не id, а ucid, если есть (чтобы холды метчились корректно)
+		// с 3 февраля исправление не верного порядка патчей
+		var idPatch = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) >= Date.UTC(2017, 1, 3);
+		if (idPatch)
+			tran.id = t.ucid ? t.ucid : t.id;
+
+		// ИТОГИ АНАЛИЗА:
+		//   id - уникальный идентификатор операции (технический идетификатор)
+		//   paymentId - идентификатор финансового документа/проводки
+		//   ucid - уникальный идентификатор операции
 
 		// склеим переводы ------------------------------------------------------------------
 		var tranId = tran.id;
 		if (transferPatch)
 			tranId = t.payment ? t.payment.paymentId : t.id;
+		if (idPatch)
+			tranId = t.payment ? t.payment.paymentId : (t.ucid ? t.ucid : t.id);
 
+		// с 3 февраля новый алгоритм поиска переводов - теперь по paymentId, как и нужно было
+		if (idPatch && paymentsDict.hasOwnProperty(tranId))
+			tranId = paymentsDict[tranId];
+
+		// если ранее операция с таким идентификатором уже встречалась, значит это перевод
 		if (tranDict[tranId] && tranDict[tranId].income == 0 && tran.income > 0) {
 			tranDict[tranId].income = tran.income;
 			tranDict[tranId].incomeAccount = tran.incomeAccount;
@@ -375,8 +391,14 @@ function processTransactions(data) {
 			if (transferPatch)
 				tranDict[tranId].id = tran.id + '~~' + tranDict[tranId].id;
 		}
-		else
+		else {
 			tranDict[tranId] = tran;
+
+			// если идентификатор операции не совпадает с id платежа,
+			// сохраним привязку для будущего анализа на предмет переводов
+			if (tranId != tran.id)
+				paymentsDict[tranId] = tran.id;
+		}
 
 		if (tran.date > lastSyncTime)
 			lastSyncTime = tran.date;
@@ -392,7 +414,10 @@ function processTransactions(data) {
 }
 
 /**
- * Перевод с карты на счёт
+ * Перевод между счетами
+ * @param {String} accFrom Идентификатор счёта-источника
+ * @param {String} accTo Идентификатор счёта-назначения
+ * @param {Number} sum Сумма перевода
  */
 function makeTransfer(fromAcc, toAcc, sum){
 	g_preferences = ZenMoney.getPreferences();

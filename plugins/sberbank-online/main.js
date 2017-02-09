@@ -379,7 +379,8 @@ function processApiAccounts(){
 		acc.percent = getElementByTag(xml4, 'creditingRate', replaceTagsAndSpaces, parseToFloat);
 		acc.capitalization = getElementByTag(xml4, 'repaymentMethod', replaceTagsAndSpaces).toLowerCase().indexOf('аннуитетный') >= 0;
 		acc.startBalance = getElementByTag(xml4, ['origianlAmount', 'amount'], replaceTagsAndSpaces, parseToFloat);
-		acc.balance = -getElementByTag(xml4, ['balanceAmount', 'amount'], replaceTagsAndSpaces, parseToFloat);
+		acc.balance = -(getElementByTag(xml4, ['mainDeptAmount', 'amount'], replaceTagsAndSpaces, parseToFloat) +
+				getElementByTag(xml4, ['interestsAmount', 'amount'], replaceTagsAndSpaces, parseToFloat));
 
 		var start = getElementByTag(xml4, 'termStart', replaceTagsAndSpaces).substr(0, 10);
 		var end = getElementByTag(xml4, 'termEnd', replaceTagsAndSpaces).substr(0, 10);
@@ -1293,9 +1294,10 @@ function getWebDate(str){
 		if (month > dt.getMonth())
 			year -= 1;
 		return str + '.' + year;
-	}
+	} else if (str.length == 10 && str[2] == '.' && str[5] == '.')
+		return str;
 
-	throw new ZenMoney.Error('Не корректная дата операции в web-версии');
+	throw new ZenMoney.Error('Некорректная дата операции в web-версии: '+ str);
 }
 
 /**
