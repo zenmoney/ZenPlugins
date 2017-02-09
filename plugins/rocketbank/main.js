@@ -16,10 +16,10 @@ function main() {
  * @constructor
  */
 function RocketBank(ZenMoney) {
-    this._safe_accounts             = {};
-    this._accounts                  = {};
+    this._safe_accounts = {};
+    this._accounts = {};
     this._deposites_init_operations = [];
-    this._deposites_percent         = [];
+    this._deposites_percent = [];
 
     /**
      * @returns {boolean}
@@ -29,9 +29,9 @@ function RocketBank(ZenMoney) {
 
         var profile = that.loadProfile();
 
-        var deposites     = that.fetchDeposites(profile);
+        var deposites = that.fetchDeposites(profile);
         var safe_accounts = that.fetchSafeAccounts(profile);
-        var accounts      = that.fetchAccounts(profile);
+        var accounts = that.fetchAccounts(profile);
 
         var p1 = safe_accounts.every(that.processAccount, that);
         var p2 = accounts.every(that.processAccount, that);
@@ -60,12 +60,12 @@ function RocketBank(ZenMoney) {
             ZenMoney.trace("Обрабатываем аккаунт: " + JSON.stringify(account));
 
             ZenMoney.addAccount({
-                id:         account.id,
-                title:      account.title,
-                type:       'ccard',
+                id: account.id,
+                title: account.title,
+                type: 'ccard',
                 instrument: account.currency,
-                balance:    account.balance,
-                syncID:     [parseInt(account.pan.substr(-4))]
+                balance: account.balance,
+                syncID: [parseInt(account.pan.substr(-4))]
             });
 
             return account.id;
@@ -92,12 +92,12 @@ function RocketBank(ZenMoney) {
             ZenMoney.trace("Обрабатываем счет: " + JSON.stringify(account));
 
             ZenMoney.addAccount({
-                id:         account.id,
-                title:      account.title,
-                type:       'checking',
+                id: account.id,
+                title: account.title,
+                type: 'checking',
                 instrument: account.currency,
-                balance:    account.balance,
-                syncID:     [parseInt(account.pan.substr(-4))]
+                balance: account.balance,
+                syncID: [parseInt(account.pan.substr(-4))]
             });
 
             return account.id;
@@ -120,19 +120,19 @@ function RocketBank(ZenMoney) {
             var account_id = hex_md5(account.id.toString());
 
             var deposite = {
-                id:                    account_id,
-                title:                 account.title,
-                type:                  'deposit',
-                syncID:                [parseInt(account.id.toString().substr(-4))],
-                instrument:            account.rocket_deposit.currency,
-                balance:               account.balance + account.percent,
-                percent:               account.rocket_deposit.rate,
-                capitalization:        true,
-                startDate:             account.start_date,
+                id: account_id,
+                title: account.title,
+                type: 'deposit',
+                syncID: [parseInt(account.id.toString().substr(-4))],
+                instrument: account.rocket_deposit.currency,
+                balance: account.balance + account.percent,
+                percent: account.rocket_deposit.rate,
+                capitalization: true,
+                startDate: account.start_date,
                 endDateOffsetInterval: 'month',
-                endDateOffset:         account.rocket_deposit.period,
-                payoffInterval:        'month',
-                payoffStep:            1
+                endDateOffset: account.rocket_deposit.period,
+                payoffInterval: 'month',
+                payoffStep: 1
             };
             try {
                 ZenMoney.trace("Обрабатываем вклад: " + JSON.stringify(deposite));
@@ -155,15 +155,15 @@ function RocketBank(ZenMoney) {
                     return operations;
                 }
 
-                var sum         = Math.abs(operation.amount);
+                var sum = Math.abs(operation.amount);
                 var transaction = {
-                    id:             hex_md5(operation.date + '|' + operation.sum),
-                    date:           operation.date,
-                    comment:        operation.description,
-                    outcome:        0,
+                    id: hex_md5(operation.date + '|' + operation.sum),
+                    date: operation.date,
+                    comment: operation.description,
+                    outcome: 0,
                     outcomeAccount: account_id,
-                    income:         0,
-                    incomeAccount:  account_id
+                    income: 0,
+                    incomeAccount: account_id
                 };
                 switch (operation.kind) {
                     case 'first_refill': // Первичное пополнение
@@ -171,7 +171,7 @@ function RocketBank(ZenMoney) {
                         break;
                     case 'percent': // Проценты
                         transaction.income = sum;
-                        transaction.payee  = 'Рокетбанк';
+                        transaction.payee = 'Рокетбанк';
                         break;
                     default:
                         ZenMoney.trace('Неизвестный тип транзакции депозита: ' + JSON.stringify(operation));
@@ -200,11 +200,11 @@ function RocketBank(ZenMoney) {
         var that = this;
 
         var lastSync = getLastSyncTime(account);
-        var dt       = new Date(lastSync * 1000);
+        var dt = new Date(lastSync * 1000);
 
         ZenMoney.trace('Начинаем синхронизацию аккаунта ' + account + ' с даты ' + dt.toLocaleString());
 
-        var device     = getDevice();
+        var device = getDevice();
         var operations = that.loadOperations(device, getToken(device, false), account, lastSync);
 
         return operations.reverse().every(function (transaction) {
@@ -223,7 +223,6 @@ function RocketBank(ZenMoney) {
     };
 
     /**
-     * @param {String} account
      * @return {boolean}
      */
     this.processDeposite = function () {
@@ -245,7 +244,7 @@ function RocketBank(ZenMoney) {
         return data.reverse().every(function (transaction) {
             ZenMoney.trace("Обрабатываем новую транзакцию: " + JSON.stringify(transaction));
 
-            var account  = transaction.incomeAccount;
+            var account = transaction.incomeAccount;
             var lastSync = getLastSyncTime(account);
 
             try {
@@ -265,8 +264,8 @@ function RocketBank(ZenMoney) {
      * @return {Object}
      */
     this.loadProfile = function () {
-        var device  = getDevice();
-        var token   = getToken(device, false);
+        var device = getDevice();
+        var token = getToken(device, false);
         var profile = requestProfile(device, token);
 
         if (!profile.hasOwnProperty("user")) {
@@ -331,11 +330,11 @@ function RocketBank(ZenMoney) {
         for (var i = 0; i < accountsNumber; i++) {
             var account = profile.user.accounts[i];
             accounts.push({
-                id:       account.token,
-                pan:      account.pan,
-                balance:  account.balance,
+                id: account.token,
+                pan: account.pan,
+                balance: account.balance,
                 currency: account.currency,
-                title:    account.title
+                title: account.title
             });
         }
 
@@ -357,11 +356,11 @@ function RocketBank(ZenMoney) {
         for (var i = 0; i < accountsNumber; i++) {
             var account = profile.user.safe_accounts[i];
             accounts.push({
-                id:       account.token,
-                pan:      account.account_details.account,
-                balance:  account.balance,
+                id: account.token,
+                pan: account.account_details.account,
+                balance: account.balance,
                 currency: account.currency,
-                title:    account.title
+                title: account.title
             });
         }
 
@@ -379,7 +378,7 @@ function RocketBank(ZenMoney) {
      * @param {Number} [limit]
      * @param {Object[]} [transactions]
      */
-     this.loadOperations = function (device, token, account, timestamp, page, limit, transactions) {
+    this.loadOperations = function (device, token, account, timestamp, page, limit, transactions) {
         var that = this;
         page = page || 1;
         limit = limit || 10;
@@ -415,8 +414,8 @@ function RocketBank(ZenMoney) {
                     outcome: 0,
                     outcomeAccount: account,
                     income: 0,
-                    incomeAccount: account
-                    //payee: operation.merchant.name
+                    incomeAccount: account,
+                    payee: operation.merchant.name
                 };
                 switch (operation.context_type) {
                     case 'pos_spending': // Расход
@@ -433,9 +432,11 @@ function RocketBank(ZenMoney) {
                         transaction.payee = null;
                         break;
                     case 'remittance': // Перевод (исходящий)
+                    case 'internal_cash_out': // Исходящий перевод внутри банка
                         transaction.outcome = sum;
                         break;
                     case 'card2card_cash_in': // Перевод с карты (входящий)
+                    case 'card2card_cash_in_other':
                     case 'internal_p2p_in': // Пополнение по номеру карты
                         transaction.income = sum;
                         break;
@@ -460,14 +461,14 @@ function RocketBank(ZenMoney) {
 
                         var _pattern = ' → ';
                         if (operation.details.match("/" + _pattern + "/")) {
-                            var _accounts = peration.details.split(_pattern);
+                            var _accounts = operation.details.split(_pattern);
 
                             if (that._accounts.hasOwnProperty(_accounts[0])) {
-                                transaction.outcome        = sum;
+                                transaction.outcome = sum;
                                 transaction.outcomeAccount = that._accounts[_accounts[0]];
                             }
                             if (that._safe_accounts.hasOwnProperty(_accounts[0])) {
-                                transaction.outcome        = sum;
+                                transaction.outcome = sum;
                                 transaction.outcomeAccount = that._safe_accounts[_accounts[0]];
                             }
                         }
@@ -494,7 +495,7 @@ function RocketBank(ZenMoney) {
                             if (depo_transaction.outcome == 0 && depo_transaction.income == sum) {
 
                                 if (dateFromTimestamp(depo_transaction.date) == dateFromTimestamp(transaction.date)) {
-                                    depo_transaction.outcome        = sum;
+                                    depo_transaction.outcome = sum;
                                     depo_transaction.outcomeAccount = account;
                                     if (transaction.comment != null) {
                                         depo_transaction.comment += ': ' + transaction.comment;
@@ -544,7 +545,7 @@ function RocketBank(ZenMoney) {
     function dateFromTimestamp(timestamp) {
         var d = new Date(timestamp * 1000);
 
-        var curr_date  = d.getDate();
+        var curr_date = d.getDate();
         var curr_month = d.getMonth();
         curr_month++;
         var curr_year = d.getFullYear();
