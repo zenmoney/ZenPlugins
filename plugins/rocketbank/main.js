@@ -431,6 +431,16 @@ function RocketBank(ZenMoney) {
                         transaction.outcome = sum;
                         transaction.payee = null;
                         break;
+                    case 'atm_cash_in': // Пополнение наличными
+                        transaction.income = sum;
+                        transaction.outcome = sum;
+                        transaction.outcomeAccount = 'cash#' + operation.money.currency_code;
+                        transaction.payee = null;
+                        transaction.comment = operation.details;
+                        if (operation.comment != null) {
+                            transaction.comment += ': ' + operation.comment;
+                        }
+                        break;
                     case 'remittance': // Перевод (исходящий)
                     case 'internal_cash_out': // Исходящий перевод внутри банка
                         transaction.outcome = sum;
