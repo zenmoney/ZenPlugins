@@ -444,6 +444,7 @@ function RocketBank(ZenMoney) {
                     case 'remittance': // Перевод (исходящий)
                     case 'internal_cash_out': // Исходящий перевод внутри банка
                         transaction.outcome = sum;
+                        transaction.payee = operation.friend.first_name + ' ' + operation.friend.last_name;
                         break;
                     case 'card2card_cash_in': // Перевод с карты (входящий)
                     case 'card2card_cash_in_other':
