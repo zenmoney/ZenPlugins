@@ -8,38 +8,26 @@ function Request(cardNumber, password) {
 
     this.baseURI = 'https://mybank.oplata.kykyryza.ru/api/v0001/';
 
-    this.getCookies = function() {
-        if (!cookies) {
-            var url = this.baseURI + 'authentication/authenticate?rid=' + generateHash();
+    this.auth = function() {
+        var url = this.baseURI + 'authentication/authenticate?rid=' + generateHash();
 
-            var data    = {
-                principal: cardNumber,
-                secret: password,
-                type: "AUTO"
-            };
-            var headers = {
-                'content-type': 'application/json;charset=UTF-8'
-            };
+        var data    = {
+            principal: cardNumber,
+            secret: password,
+            type: "AUTO"
+        };
 
-            var requestData = getJson(ZenMoney.requestPost(url, data, headers));
-            if (requestData.status != 'OK') { // AUTH_WRONG || AUTH_LOCKED_TEMPORARY
-                ZenMoney.trace('Bad auth: ' +  + requestData.status, 'warning');
-                throw new ZenMoney.Error('Не удалось авторизоваться');
-            }
-
-            cookies = ZenMoney.getLastResponseHeader('Set-Cookie');
+        var requestData = getJson(ZenMoney.requestPost(url, data, defaultHeaders()));
+        if (requestData.status != 'OK') { // AUTH_WRONG || AUTH_LOCKED_TEMPORARY
+            ZenMoney.trace('Bad auth: ' +  + requestData.status, 'warning');
+            throw new ZenMoney.Error('Не удалось авторизоваться');
         }
-
-        return cookies;
     };
 
     this.getAccounts = function () {
         var url = this.baseURI + 'cards?rid=' + generateHash();
 
-        var headers = {'content-type': 'application/json;charset=UTF-8'};
-        headers['cookie'] = this.getCookies();
-
-        var request = ZenMoney.requestGet(url, headers);
+        var request = ZenMoney.requestGet(url, defaultHeaders());
 
         return getJson(request).data;
     };
@@ -87,14 +75,22 @@ function Request(cardNumber, password) {
     this.requestOperations = function (limit, offset) {
         var url = this.baseURI + 'hst?limit=' + limit + '&offset=' + offset + '&rid=' + generateHash();
 
-        var headers = {'content-type': 'application/json;charset=UTF-8'};
-        headers['cookie'] = this.getCookies();
-
-        return ZenMoney.requestGet(url, headers);
+        return ZenMoney.requestGet(url, defaultHeaders());
     };
 
+    /**
+     * @returns {string}
+     */
     function generateHash() {
         return hex_md5(Math.random()).substring(0,13);
+    }
+
+    /**
+     *
+     * @returns {{content-type: string}}
+     */
+    function defaultHeaders() {
+        return {'content-type': 'application/json;charset=UTF-8'};
     }
 
     /**

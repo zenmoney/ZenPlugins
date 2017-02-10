@@ -1,54 +1,6 @@
 function BankKykyryza() {
     var contractToAccount = {};
 
-    /**
-     * Get card number
-     *
-     * @returns {string}
-     */
-    this.getCardNumber = function() {
-        var cardNumber = ZenMoney.getData('card_number');
-        if (!cardNumber) {
-            ZenMoney.trace("Штрих-код карты");
-            cardNumber = ZenMoney.retrieveCode(
-                "Номер штрих-кода карты",
-                null,
-                {
-                    inputType: "number",
-                    time: 18E4
-                }
-            );
-
-            ZenMoney.setData("card_number", cardNumber);
-        }
-
-        return cardNumber;
-    };
-
-    /**
-     * Get password
-     *
-     * @returns {*}
-     */
-    this.getPassword = function() {
-        var password = ZenMoney.getData('password');
-        if (!password) {
-            ZenMoney.trace("Пароль");
-            password = ZenMoney.retrieveCode(
-                "Пароль",
-                null,
-                {
-                    inputType: "textPassword",
-                    time: 18E4
-                }
-            );
-
-            ZenMoney.setData("password", password);
-        }
-
-        return password;
-    };
-
     this.prepareAccountsData = function(rawData) {
         return rawData.map(function (account) {
             var _instrument = null;
@@ -115,7 +67,7 @@ function BankKykyryza() {
                 operations.push(item);
             } catch (e) {
 //                console.log(e);
-                ZenMoney.trace('Не удалось обработать данные для транзакции: ' + e.message + ' / ' + JSON.stringify(operation), 'error');
+                ZenMoney.trace('Не удалось обработать данные для транзакции: ' + e.message + ' / ' + JSON.stringify(operation), 'error-operation-prepare');
             }
         });
 
