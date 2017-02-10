@@ -460,7 +460,7 @@ function RocketBank(ZenMoney) {
                         }
 
                         var _pattern = ' → ';
-                        if (operation.details.match("/" + _pattern + "/")) {
+                        if (operation.details.match(new RegExp(_pattern, "gu"))) {
                             var _accounts = operation.details.split(_pattern);
 
                             if (that._accounts.hasOwnProperty(_accounts[0])) {
