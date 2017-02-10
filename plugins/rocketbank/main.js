@@ -472,6 +472,22 @@ function RocketBank(ZenMoney) {
                             transaction.comment += ': ' + operation.comment;
                         }
                         break;
+                    case 'internal_cash_in_request':
+                        transaction.income = sum;
+                        transaction.payee = operation.friend.first_name + ' ' + operation.friend.last_name;
+                        transaction.comment = operation.details;
+                        if (operation.comment != null) {
+                            transaction.comment += ': ' + operation.comment;
+                        }
+                        break;
+                    case 'internal_cash_out_request':
+                        transaction.outcome = sum;
+                        transaction.payee = operation.friend.first_name + ' ' + operation.friend.last_name;
+                        transaction.comment = operation.details;
+                        if (operation.comment != null) {
+                            transaction.comment += ': ' + operation.comment;
+                        }
+                        break;
                     case 'internal_cash_in': // Входящий перевод внутри банка
                         transaction.income = sum;
                         transaction.comment = operation.details;
