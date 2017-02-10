@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <ListPreference
+            key="period"
+            title="Начальный период загрузки данных"
+            dialogTitle="Период загрузки"
+            positiveButtonText="ОК"
+            negativeButtonText="Отмена"
+            entries="Квартал|Месяц|Неделя" entryValues="92|31|7"
+            defaultValue="31"
+            summary="|31|{@s}"
+            dialogMessage="Укажите начальный период, за который нужно загрузить данные.">
+    </ListPreference>
+</PreferenceScreen>
