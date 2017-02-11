@@ -1,3 +1,7 @@
+/**
+ * @author Ryadnov Andrey <me@ryadnov.ru>
+ */
+
 function main() {
     var bank     = new Bank();
     var kykyruza = new BankKykyryza();
@@ -16,7 +20,7 @@ function main() {
     var walletsData = request.getWallets();
     bank.addAccounts(kykyruza.prepareWalletsData(walletsData));
 
-    var operationsData = request.getAllOperations();
+    var operationsData = request.getOperations();
     bank.addOperations(kykyruza.prepareOperationsData(operationsData));
 
     ZenMoney.saveData();

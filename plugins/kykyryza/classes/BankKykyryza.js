@@ -1,4 +1,8 @@
 /**
+ * @author Ryadnov Andrey <me@ryadnov.ru>
+ */
+
+/**
  * @constructor
  */
 function BankKykyryza() {
@@ -50,7 +54,7 @@ function BankKykyryza() {
             return {
                 id:           accountId,
                 title:        dataItem.name,
-                type:         'ccard', //'checking',
+                type:         'checking',
                 instrument:   resolveInstrument(dataItem.currencyCode),
                 balance:      dataItem.amount * 1,
                 startBalance: 0,

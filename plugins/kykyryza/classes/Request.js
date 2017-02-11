@@ -1,25 +1,36 @@
 /**
+ * @author Ryadnov Andrey <me@ryadnov.ru>
+ */
+
+/**
  * @constructor
  */
 function Request() {
     this.baseURI = 'https://mybank.oplata.kykyryza.ru/api/v0001/';
 
-    this.auth = function(cardNumber, password) {
+    /**
+     * @param cardNumber
+     * @param password
+     */
+    this.auth = function (cardNumber, password) {
         var url = this.baseURI + 'authentication/authenticate?rid=' + generateHash();
 
-        var data    = {
+        var data = {
             principal: cardNumber,
-            secret: password,
-            type: "AUTO"
+            secret:    password,
+            type:      "AUTO"
         };
 
         var requestData = getJson(ZenMoney.requestPost(url, data, defaultHeaders()));
         if (requestData.status != 'OK') { // AUTH_WRONG || AUTH_LOCKED_TEMPORARY
-            ZenMoney.trace('Bad auth: ' +  + requestData.status, 'warning');
+            ZenMoney.trace('Bad auth: ' + +requestData.status, 'warning');
             throw new ZenMoney.Error('Не удалось авторизоваться');
         }
     };
 
+    /**
+     * @returns {Object[]}
+     */
     this.getWallets = function () {
         var url = this.baseURI + 'wallets?rid=' + generateHash();
 
@@ -28,6 +39,9 @@ function Request() {
         return getJson(request).data.wallets;
     };
 
+    /**
+     * @returns {Object[]}
+     */
     this.getAccounts = function () {
         var url = this.baseURI + 'cards?rid=' + generateHash();
 
@@ -36,40 +50,52 @@ function Request() {
         return getJson(request).data;
     };
 
-    this.getAllOperations = function () {
-        var limit      = 150;
-        var offset     = 0;
-        var total      = null;
+    /**
+     * @returns {Object[]}
+     */
+    this.getOperations = function () {
+        var request, requestData, loadNextPage;
+        var paginationLimit  = 20;
+        var paginationOffset = 0;
+        var paginationTotal  = null;
+        var isFirstPage      = true;
+        var operations       = [];
+        var lastSyncTime     = getLastSyncTime();
 
-        var operations = [];
+        var date = new Date(lastSyncTime);
+        ZenMoney.trace('Дата последней синхронизации: ' + date.toUTCString());
 
-        if (null === total) {
-            var request      = this.requestOperations(limit, offset);
-            var requestData = getJson(request);
-
-            total = requestData.part.totalCount;
-
-            operations = operations.concat(requestData.data);
-
-            offset += limit;
-        }
-
-        while (offset < total) {
-            request      = this.requestOperations(limit, offset);
+        while (isFirstPage || paginationOffset < paginationTotal) {
+            request     = this.requestOperations(paginationLimit, paginationOffset);
             requestData = getJson(request);
 
-            if (requestData.part.offset != offset) { // кукуруза ограничивает выборку
+            if (requestData.part.offset != paginationOffset) { // кукуруза ограничивает выборку
                 break;
             }
 
-            operations = operations.concat(requestData.data);
+            loadNextPage = requestData.data.every(function (operation) {
+                if (operation.date > lastSyncTime) {
+                    if (operation.itemType == 'OPERATION') {
+                        operations.push(operation);
+                    }
 
-            offset += limit;
+                    return true;
+                }
+                return false;
+            });
+
+            if (loadNextPage) {
+                paginationOffset += paginationLimit;
+            } else {
+                break;
+            }
         }
 
-        return operations.filter(function(operation) {
-            return operation.itemType == 'OPERATION';
-        });
+        if (operations.length > 0) {
+            setLastSyncTime(operations[0].date);
+        }
+
+        return operations;
     };
 
     /**
@@ -86,11 +112,10 @@ function Request() {
      * @returns {string}
      */
     function generateHash() {
-        return hex_md5(Math.random()).substring(0,13);
+        return hex_md5(Math.random()).substring(0, 13);
     }
 
     /**
-     *
      * @returns {{content-type: string}}
      */
     function defaultHeaders() {
@@ -110,5 +135,28 @@ function Request() {
             ZenMoney.trace('Bad json (' + e.message + '): ' + data, 'error');
             throw new ZenMoney.Error('Сервер вернул ошибочные данные: ' + e.message);
         }
+    }
+
+    /**
+     * @returns {Number}
+     */
+    function getLastSyncTime() {
+        var time = parseInt(ZenMoney.getData('last_sync_time', 0));
+
+        if (time == 0) {
+            var preferences = ZenMoney.getPreferences();
+            var period      = !preferences.hasOwnProperty('period') || isNaN(period = parseInt(preferences.period)) ? 31 : period;
+
+            time = Math.floor(Date.now() - period * 86400000);
+        }
+
+        return time;
+    }
+
+    /**
+     * @param time
+     */
+    function setLastSyncTime(time) {
+        ZenMoney.setData('last_sync_time', time);
     }
 }
