@@ -1,14 +1,10 @@
 /**
- * @param cardNumber
- * @param password
  * @constructor
  */
-function Request(cardNumber, password) {
-    var cookies;
-
+function Request() {
     this.baseURI = 'https://mybank.oplata.kykyryza.ru/api/v0001/';
 
-    this.auth = function() {
+    this.auth = function(cardNumber, password) {
         var url = this.baseURI + 'authentication/authenticate?rid=' + generateHash();
 
         var data    = {
@@ -22,6 +18,14 @@ function Request(cardNumber, password) {
             ZenMoney.trace('Bad auth: ' +  + requestData.status, 'warning');
             throw new ZenMoney.Error('Не удалось авторизоваться');
         }
+    };
+
+    this.getWallets = function () {
+        var url = this.baseURI + 'wallets?rid=' + generateHash();
+
+        var request = ZenMoney.requestGet(url, defaultHeaders());
+
+        return getJson(request).data.wallets;
     };
 
     this.getAccounts = function () {
