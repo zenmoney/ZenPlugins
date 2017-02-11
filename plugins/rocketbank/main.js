@@ -431,9 +431,20 @@ function RocketBank(ZenMoney) {
                         transaction.outcome = sum;
                         transaction.payee = null;
                         break;
+                    case 'atm_cash_in': // Пополнение наличными
+                        transaction.income = sum;
+                        transaction.outcome = sum;
+                        transaction.outcomeAccount = 'cash#' + operation.money.currency_code;
+                        transaction.payee = null;
+                        transaction.comment = operation.details;
+                        if (operation.comment != null) {
+                            transaction.comment += ': ' + operation.comment;
+                        }
+                        break;
                     case 'remittance': // Перевод (исходящий)
                     case 'internal_cash_out': // Исходящий перевод внутри банка
                         transaction.outcome = sum;
+                        transaction.payee = operation.friend.first_name + ' ' + operation.friend.last_name;
                         break;
                     case 'card2card_cash_in': // Перевод с карты (входящий)
                     case 'card2card_cash_in_other':
@@ -456,6 +467,22 @@ function RocketBank(ZenMoney) {
                     case 'rocket_fee': // Услуги банка
                         transaction.outcome = sum;
                         transaction.payee = 'Рокетбанк';
+                        transaction.comment = operation.details;
+                        if (operation.comment != null) {
+                            transaction.comment += ': ' + operation.comment;
+                        }
+                        break;
+                    case 'internal_cash_in_request':
+                        transaction.income = sum;
+                        transaction.payee = operation.friend.first_name + ' ' + operation.friend.last_name;
+                        transaction.comment = operation.details;
+                        if (operation.comment != null) {
+                            transaction.comment += ': ' + operation.comment;
+                        }
+                        break;
+                    case 'internal_cash_out_request':
+                        transaction.outcome = sum;
+                        transaction.payee = operation.friend.first_name + ' ' + operation.friend.last_name;
                         transaction.comment = operation.details;
                         if (operation.comment != null) {
                             transaction.comment += ': ' + operation.comment;
