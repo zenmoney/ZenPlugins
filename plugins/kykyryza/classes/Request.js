@@ -96,10 +96,6 @@ function Request() {
             }
         }
 
-        if (operations.length > 0) {
-            setLastSyncTime(operations[0].date);
-        }
-
         return operations;
     };
 
@@ -111,6 +107,13 @@ function Request() {
         var url = this.baseURI + 'hst?limit=' + limit + '&offset=' + offset + '&rid=' + generateHash();
 
         return ZenMoney.requestGet(url, defaultHeaders());
+    };
+
+    /**
+     * @param time
+     */
+    this.setLastSyncTime = function (time) {
+        ZenMoney.setData('last_sync_time', time);
     };
 
     /**
@@ -156,12 +159,5 @@ function Request() {
         }
 
         return time;
-    }
-
-    /**
-     * @param time
-     */
-    function setLastSyncTime(time) {
-        ZenMoney.setData('last_sync_time', time);
     }
 }
