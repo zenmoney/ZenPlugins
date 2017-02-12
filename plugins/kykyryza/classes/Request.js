@@ -73,6 +73,11 @@ function Request() {
                 break;
             }
 
+            if (isFirstPage) {
+                paginationTotal = requestData.part.totalCount;
+                isFirstPage     = false;
+            }
+
             loadNextPage = requestData.data.every(function (operation) {
                 if (operation.date > lastSyncTime) {
                     if (operation.itemType == 'OPERATION') {
