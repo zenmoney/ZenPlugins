@@ -27,11 +27,11 @@ function RocketBank(ZenMoney) {
     this.sync = function () {
         var that = this;
 
-        var profile = that.loadProfile();
+        var profile = this.loadProfile();
 
-        var deposites = that.fetchDeposites(profile);
-        var safe_accounts = that.fetchSafeAccounts(profile);
-        var accounts = that.fetchAccounts(profile);
+        var deposites = this.fetchDeposites(profile);
+        var safe_accounts = this.fetchSafeAccounts(profile);
+        var accounts = this.fetchAccounts(profile);
 
         var p1 = safe_accounts.every(that.processAccount, that);
         var p2 = accounts.every(that.processAccount, that);
@@ -204,7 +204,7 @@ function RocketBank(ZenMoney) {
         ZenMoney.trace('Начинаем синхронизацию аккаунта ' + account + ' с даты ' + dt.toLocaleString());
 
         var device = getDevice();
-        var operations = that.loadOperations(device, getToken(device, false), account, lastSync);
+        var operations = that.loadOperations(device, getToken(device), account, lastSync);
 
         return operations.reverse().every(function (transaction) {
             ZenMoney.trace("Обрабатываем новую транзакцию: " + JSON.stringify(transaction));
@@ -264,8 +264,7 @@ function RocketBank(ZenMoney) {
      */
     this.loadProfile = function () {
         var device = getDevice();
-        var token = getToken(device, false);
-        var profile = requestProfile(device, token);
+        var profile = requestProfile(device, getToken(device));
 
         if (!profile.hasOwnProperty("user")) {
             error('Не удалось загрузить список аккаунтов', JSON.stringify(profile));
@@ -585,11 +584,12 @@ function RocketBank(ZenMoney) {
     /**
      * Получить токен для запросов
      *
-     * @param {String} device_id
-     * @param {Boolean} force_new
+     * @param {String} device
+     * @param {Boolean} [force_new=false]
      * @returns {string}
      */
-    function getToken(device_id, force_new) {
+    function getToken(device, force_new) {
+        force_new = force_new || false;
         var token = ZenMoney.getData('token');
         if (!token || force_new) {
             ZenMoney.trace("Требуется создать новый токен");
@@ -601,12 +601,15 @@ function RocketBank(ZenMoney) {
                     time: 18E4
                 }
             );
+            if (!password) {
+                error('Пароль не указан');
+            }
             ZenMoney.trace("Пароль получен, отправляем запрос");
             var data = request(
                 "GET",
                 "/login?email=" + ZenMoney.getData('email') + "&password=" + password,
                 null,
-                device_id,
+                device,
                 null
             );
             if (!data.hasOwnProperty('token')) {
@@ -730,7 +733,7 @@ function RocketBank(ZenMoney) {
      * @param {String} url
      * @param {Object} data
      * @param {String} device_id
-     * @param {String} token
+     * @param {String} [token]
      * @return {Object}
      */
     function request(method, url, data, device_id, token) {
@@ -765,7 +768,7 @@ function RocketBank(ZenMoney) {
      * Формируем объект заголовков
      *
      * @param {String} device_id
-     * @param {String} token
+     * @param {String} [token]
      * @returns {Object}
      */
     function getHeaders(device_id, token) {
@@ -786,10 +789,13 @@ function RocketBank(ZenMoney) {
      * Гененируем ошибку
      *
      * @param {String} message
-     * @param {String} description
+     * @param {String} [description]
      */
     function error(message, description) {
-        ZenMoney.trace(message + ': ' + description);
+        if (description) {
+            description = ': ' + description;
+        }
+        ZenMoney.trace(message + description);
         throw new ZenMoney.Error(message);
     }
 }
