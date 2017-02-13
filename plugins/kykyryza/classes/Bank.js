@@ -1,4 +1,8 @@
 /**
+ * @author Ryadnov Andrey <me@ryadnov.ru>
+ */
+
+/**
  * @constructor
  */
 function Bank() {
