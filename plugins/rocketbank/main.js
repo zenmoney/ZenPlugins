@@ -443,6 +443,7 @@ function RocketBank(ZenMoney) {
                         break;
                     case 'remittance': // Перевод (исходящий)
                     case 'internal_cash_out': // Исходящий перевод внутри банка
+                    case 'internal_cash_out_request':
                         transaction.outcome = sum;
                         transaction.payee = getFriendName(operation.friend);
                         if (!transaction.payee) {
@@ -480,16 +481,6 @@ function RocketBank(ZenMoney) {
                         break;
                     case 'internal_cash_in_request':
                         transaction.income = sum;
-                        transaction.payee = getFriendName(operation.friend);
-                        if (!transaction.payee) {
-                            transaction.comment = operation.details;
-                            if (operation.comment != null) {
-                                transaction.comment += ': ' + operation.comment;
-                            }
-                        }
-                        break;
-                    case 'internal_cash_out_request':
-                        transaction.outcome = sum;
                         transaction.payee = getFriendName(operation.friend);
                         if (!transaction.payee) {
                             transaction.comment = operation.details;
