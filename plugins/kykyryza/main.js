@@ -21,7 +21,12 @@ function main() {
     bank.addAccounts(kykyruza.prepareWalletsData(walletsData));
 
     var operationsData = request.getOperations();
-    bank.addOperations(kykyruza.prepareOperationsData(operationsData));
+    var operations     = kykyruza.prepareOperationsData(operationsData);
+    bank.addOperations(operations);
+
+    if (operations.length > 0) {
+        request.setLastSyncTime(operations[0].date);
+    }
 
     ZenMoney.saveData();
     ZenMoney.setResult({success: true});
