@@ -3,7 +3,7 @@
     <id>epayments</id>
     <version>0.1</version>
     <build>1</build>
-    <company>???</company>
+    <company>15584</company>
     <files>
         <js>classes/Bank.js</js>
         <js>classes/BankEpayments.js</js>
