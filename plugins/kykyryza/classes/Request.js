@@ -73,6 +73,11 @@ function Request() {
                 break;
             }
 
+            if (isFirstPage) {
+                paginationTotal = requestData.part.totalCount;
+                isFirstPage     = false;
+            }
+
             loadNextPage = requestData.data.every(function (operation) {
                 if (operation.date > lastSyncTime) {
                     if (operation.itemType == 'OPERATION') {
@@ -91,10 +96,6 @@ function Request() {
             }
         }
 
-        if (operations.length > 0) {
-            setLastSyncTime(operations[0].date);
-        }
-
         return operations;
     };
 
@@ -106,6 +107,13 @@ function Request() {
         var url = this.baseURI + 'hst?limit=' + limit + '&offset=' + offset + '&rid=' + generateHash();
 
         return ZenMoney.requestGet(url, defaultHeaders());
+    };
+
+    /**
+     * @param time
+     */
+    this.setLastSyncTime = function (time) {
+        ZenMoney.setData('last_sync_time', time);
     };
 
     /**
@@ -151,12 +159,5 @@ function Request() {
         }
 
         return time;
-    }
-
-    /**
-     * @param time
-     */
-    function setLastSyncTime(time) {
-        ZenMoney.setData('last_sync_time', time);
     }
 }

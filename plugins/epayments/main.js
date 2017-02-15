@@ -4,20 +4,22 @@
 
 function main() {
     var bank     = new Bank();
-    var kykyruza = new BankKykyryza();
+    var kykyruza = new BankEpayments();
     var request  = new Request();
 
     var preferences = ZenMoney.getPreferences();
 
-    if (!preferences.card_number) throw new ZenMoney.Error("Введите штрих-код карты!", false, true);
+    if (!preferences.login) throw new ZenMoney.Error("Введите номер телефона / e-mail!", false, true);
     if (!preferences.password) throw new ZenMoney.Error("Введите пароль в интернет-банк!", false, true);
 
-    request.auth(preferences.card_number, preferences.password);
+    request.auth(preferences.login, preferences.password);
 
-    var accountsData = request.getAccounts();
+    var userData = request.getUser();
+
+    var accountsData = userData.cards;
     bank.addAccounts(kykyruza.prepareAccountsData(accountsData));
 
-    var walletsData = request.getWallets();
+    var walletsData = userData.ewallets;
     bank.addAccounts(kykyruza.prepareWalletsData(walletsData));
 
     var operationsData = request.getOperations();

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+            key="login"
+            summary="|Номер телефона / e-mail|{@s}"
+            title="Номер телефона / e-mail"
+            dialogTitle="Номер телефона / e-mail"
+            dialogMessage="Введите номер телефона или e-mail используемый для входа в интернет-банк"
+            negativeButtonText="Отмена"
+            positiveButtonText="ОК"
+            obligatory="true">
+    </EditTextPreference>
+    <EditTextPreference
+            key="password"
+            summary="||***********"
+            title="Пароль"
+            dialogTitle="Пароль"
+            dialogMessage="Введите пароль, используемый для входа в интернет-банк"
+            negativeButtonText="Отмена"
+            positiveButtonText="ОК"
+            inputType="textPassword"
+            obligatory="true">
+    </EditTextPreference>
+    <ListPreference
+            key="period"
+            summary="|31|{@s}"
+            title="Начальный период загрузки данных"
+            dialogTitle="Период загрузки"
+            dialogMessage="Укажите начальный период, за который нужно загрузить данные."
+            positiveButtonText="ОК"
+            negativeButtonText="Отмена"
+            entries="Квартал|Месяц|Неделя|Не загружать"
+            entryValues="92|31|7|0"
+            defaultValue="31">
+    </ListPreference>
+</PreferenceScreen>

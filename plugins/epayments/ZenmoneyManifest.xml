@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>epayments</id>
+    <version>0.1</version>
+    <build>1</build>
+    <company>15584</company>
+    <files>
+        <js>classes/Bank.js</js>
+        <js>classes/BankEpayments.js</js>
+        <js>classes/Request.js</js>
+        <js>main.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+    <description>
+        Для подключения импорта укажите ваш номер телефона или e-mail и пароль от интернет-банка и выберите период, за который будут загружены операции при первой синхронизации.
+
+        Номер телефона, e-mail и пароль хранятся в приложении в зашифрованном виде и не передаются на сторонние серверы, включая серверы Дзен-мани.
+    </description>
+</provider>
