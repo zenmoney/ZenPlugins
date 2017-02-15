@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>belswissbank</id>
+    <version>1.0.0</version>
+    <build>1</build>
+    <company>78786</company>
+    <files>
+        <js>underscore.js</js>
+        <js>errors.js</js>
+        <js>utils.js</js>
+        <js>codeToCurrencyLookup.js</js>
+        <js>BSB.js</js>
+        <js>main.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+    <description>Для подключения импорта укажите ваш логин и пароль от интернет-банка.</description>
+</provider>
+
