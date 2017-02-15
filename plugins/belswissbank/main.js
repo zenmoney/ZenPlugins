@@ -134,14 +134,13 @@ var main = (function (_, utils, BSB, ZenMoney, errors) {
                     var transactionCurrency = transaction.transactionCurrency;
                     var isCurrencyConversion = transactionCurrency !== accountCurrency;
 
+                    var previousTransaction = index === 0 ? lastSeenBsbTransaction : transactions[index - 1];
                     if (transaction.accountRest === null) {
                         if (isCurrencyConversion) {
-                            throw errors.fatal('cannot figure out transaction delta: ' + utils.toReadableJson(transaction));
+                            throw errors.fatal('cannot determine missing accountRest for currency conversion: ' + utils.toReadableJson(transaction));
                         }
-                        transaction.accountRest = transactionDelta;
+                        transaction.accountRest = previousTransaction.accountRest + transactionDelta;
                     }
-
-                    var previousTransaction = index === 0 ? lastSeenBsbTransaction : transactions[index - 1];
                     var accountDelta = transaction.accountRest - previousTransaction.accountRest;
 
                     var zenMoneyTransaction = {
