@@ -56,11 +56,17 @@ var utils = (function (ZenMoney, _) {
             };
             ZenMoney.trace(request.method + ' ' + request.url, 'request');
             var hasData = 'body' in request;
-            var requestData = hasData ? JSON.stringify(request.body) : undefined;
             if (hasData) {
                 ZenMoney.trace(utils.toReadableJson(request.body, request.bodyLogSanitizer), 'requestData');
             }
-            var responseBody = ZenMoney.request(request.method, request.url, requestData, headers);
+            var responseBody;
+            if (!request.method || request.method.toUpperCase() === 'GET') {
+                responseBody = ZenMoney.requestGet(request.url, headers);
+            } else if (request.method.toUpperCase() === 'POST') {
+                responseBody = ZenMoney.requestPost(request.url, request.body, headers);
+            } else {
+                responseBody = ZenMoney.request(request.method, request.url, request.body, headers);
+            }
             var response = {
                 status: ZenMoney.getLastStatusCode(),
                 body: responseBody,

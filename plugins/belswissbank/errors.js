@@ -4,7 +4,7 @@ var errors = (function (ZenMoney) {
             return ZenMoney.Error(message, false, true);
         },
         temporal: function (message) {
-            return ZenMoney.Error(message, true, false);
+            return ZenMoney.Error(message, false, false);
         }
     };
 })(ZenMoney);

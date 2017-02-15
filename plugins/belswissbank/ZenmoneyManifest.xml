@@ -2,8 +2,8 @@
 <provider>
     <id>belswissbank</id>
     <version>1.0.0</version>
-    <build>1</build>
-    <company>78786</company>
+    <build>5</build>
+    <company>15408</company>
     <files>
         <js>underscore.js</js>
         <js>errors.js</js>
