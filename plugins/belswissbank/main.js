@@ -122,6 +122,7 @@ var main = (function (_, utils, BSB, ZenMoney, errors) {
             var bsbTransactions = _.chain(BSB.getTransactions(card.cardId, syncFrom, syncTo))
                 .filter(function (transaction) {
                     return transaction.transactionType !== 'Otkaz' &&
+                        transaction.transactionAmount > 0 &&
                         transaction.cardTransactionId > lastSeenBsbTransaction.cardTransactionId;
                 })
                 .sortBy(_.property('cardTransactionId'))
