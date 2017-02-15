@@ -53,30 +53,36 @@ var main = (function (_, utils, BSB, ZenMoney, errors) {
     }
 
     function mergeTransferTransactions(transactionsForAccounts) {
-        return _.chain(transactionsForAccounts)
+        var transactionReplacements = _.chain(transactionsForAccounts)
             .pluck('transfers')
             .flatten()
             .groupBy(_.property('transferId'))
-            .reduce(function (memo, items, transferId) {
+            .reduce(function (transactionReplacements, items, transferId) {
                 var transactions = items.map(_.property('transaction'));
                 var isNonAmbiguousPair = transactions.length === 2;
                 if (isNonAmbiguousPair) {
                     var sorted = _.sortBy(transactions, _.property('income'));
                     var outcomeTransaction = _.omit(sorted[0], 'income', 'incomeAccount');
                     var incomeTransaction = _.omit(sorted[1], 'outcome', 'outcomeAccount');
-                    var mergedTransaction = _.defaults.apply(_, [
+                    transactionReplacements[outcomeTransaction.id] = _.defaults.apply(_, [
                         {id: outcomeTransaction.id + '+' + incomeTransaction.id},
                         incomeTransaction,
                         outcomeTransaction
                     ]);
-                    memo.mergedTransferTransactions.push(mergedTransaction);
-                    memo.transactionsToEvict.push.apply(memo.transactionsToEvict, transactions);
+                    transactionReplacements[incomeTransaction.id] = null;
                 } else {
                     ZenMoney.trace('cannot merge non-pair transfer #' + transferId + ', groupSize=' + items.length);
                 }
-                return memo;
-            }, {mergedTransferTransactions: [], transactionsToEvict: []})
+                return transactionReplacements;
+            }, {})
             .value();
+        return transactionsForAccounts.map(function (accountTransactions) {
+            var transactions = _.compact(accountTransactions.transactions.map(function (transaction) {
+                var replacement = transactionReplacements[transaction.id];
+                return _.isUndefined(replacement) ? transaction : replacement;
+            }));
+            return _.defaults({transactions: transactions}, accountTransactions);
+        });
     }
 
     return function main() {
@@ -212,13 +218,11 @@ var main = (function (_, utils, BSB, ZenMoney, errors) {
             }
         });
 
-        var memo = mergeTransferTransactions(transactionsForAccounts);
-        var transactionsToEvict = memo.transactionsToEvict;
-        var mergedTransferTransactions = memo.mergedTransferTransactions;
+        transactionsForAccounts = mergeTransferTransactions(transactionsForAccounts);
 
         transactionsForAccounts.forEach(function (accountTransactions) {
             var account = accountTransactions.account;
-            var transactions = _.difference(accountTransactions.transactions, transactionsToEvict);
+            var transactions = accountTransactions.transactions;
             var onBeforeSave = accountTransactions.onBeforeSave;
 
             ZenMoney.addAccount(account);
@@ -228,11 +232,6 @@ var main = (function (_, utils, BSB, ZenMoney, errors) {
             }
             onBeforeSave();
         });
-        ZenMoney.addTransaction(mergedTransferTransactions);
-        if (mergedTransferTransactions.length) {
-            ZenMoney.trace('added ' + mergedTransferTransactions.length + ' merged transfer(s) instead of ' +
-                transactionsToEvict.length + ' separate transaction(s)');
-        }
 
         ZenMoney.setResult({success: true});
     }
