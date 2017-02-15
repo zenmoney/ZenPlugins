@@ -23,4 +23,10 @@
             summary="||***********"
     >
     </EditTextPreference>
+    <CheckBoxPreference
+            key="verboseLogging"
+            defaultValue="false"
+            title="Подробное логирование (для разработчиков)"
+    >
+    </CheckBoxPreference>
 </PreferenceScreen>

@@ -15,26 +15,6 @@ var BSB = (function (codeToCurrencyLookup, utils, errors) {
         'Bankomat': -1
     };
 
-    function retry(options) {
-        for (var attempt = 1; attempt <= options.maxAttempts; ++attempt) {
-            var value = options.getValue();
-            var isSatisfied = options.isSatisfied(value);
-            if (attempt > 1) {
-                ZenMoney.trace(
-                    'retry ' +
-                    utils.toReadableJson({
-                        attempt: attempt,
-                        maxAttempts: options.maxAttempts,
-                        isSatisfied: isSatisfied
-                    }));
-            }
-            if (isSatisfied) {
-                return value;
-            }
-        }
-        throw errors.temporal('could not satisfy condition in ' + options.maxAttempts + ' get attempts');
-    }
-
     return {
         bankBirthday: new Date(1033977600000),
 
@@ -45,7 +25,7 @@ var BSB = (function (codeToCurrencyLookup, utils, errors) {
                 url: BSB_AUTH_URL,
                 method: 'DELETE'
             });
-            var authStatusResponse = retry({
+            var authStatusResponse = utils.retry({
                 getValue: function () {
                     return utils.requestJson({
                         bodyLogSanitizer: utils.sanitize,
