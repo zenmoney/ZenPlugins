@@ -104,6 +104,7 @@ var main = (function (_, utils, BSB, ZenMoney, errors) {
             }
 
             var lastSeenBsbTransaction = ZenMoney.getData('lastSeenBsbTransactionFor' + account.id, {
+                cardTransactionId: 0,
                 accountRest: 0,
                 transactionDate: BSB.bankBirthday.valueOf()
             });
@@ -119,12 +120,12 @@ var main = (function (_, utils, BSB, ZenMoney, errors) {
                 }));
 
             var bsbTransactions = _.chain(BSB.getTransactions(card.cardId, syncFrom, syncTo))
-                .filter(function (x) {
-                    return x.transactionType !== 'Otkaz' && x.transactionDate > syncFrom;
+                .filter(function (transaction) {
+                    return transaction.transactionType !== 'Otkaz' &&
+                        transaction.cardTransactionId > lastSeenBsbTransaction.cardTransactionId;
                 })
-                .sortBy(_.property('transactionDate'))
+                .sortBy(_.property('cardTransactionId'))
                 .value();
-
             var memo = bsbTransactions
                 .reduce(function (memo, transaction, index, transactions) {
                     var factor = BSB.getFactor(transaction);
@@ -201,7 +202,7 @@ var main = (function (_, utils, BSB, ZenMoney, errors) {
                 transfers: memo.transfers,
                 onBeforeSave: newLastSeenBsbTransaction
                     ? function () {
-                        var data = _.pick(newLastSeenBsbTransaction, 'accountRest', 'transactionDate');
+                        var data = _.pick(newLastSeenBsbTransaction, 'accountRest', 'transactionDate', 'cardTransactionId');
                         ZenMoney.setData('lastSeenBsbTransactionFor' + account.id, data);
                         ZenMoney.saveData();
                     }
