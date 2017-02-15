@@ -141,7 +141,9 @@ var main = (function (_, utils, BSB, ZenMoney, errors) {
                         }
                         transaction.accountRest = previousTransaction.accountRest + transactionDelta;
                     }
-                    var accountDelta = transaction.accountRest - previousTransaction.accountRest;
+                    var accountDelta = isCurrencyConversion ?
+                        transaction.accountRest - previousTransaction.accountRest :
+                        transactionDelta;
 
                     var zenMoneyTransaction = {
                         id: transaction.cardTransactionId.toString(),
