@@ -23,10 +23,15 @@
             summary="||***********"
     >
     </EditTextPreference>
-    <CheckBoxPreference
-            key="verboseLogging"
-            defaultValue="false"
-            title="Подробное логирование (для разработчиков)"
+    <EditTextPreference
+            key="categoriesToLog"
+            title="Что логировать"
+            defaultValue="info,warn"
+            dialogTitle="Что логировать"
+            dialogMessage="Введите через запятую типы событий для логирования. Допустимые значения: info,warn,retry,request,requestData,response,responseData,*."
+            positiveButtonText="ОК"
+            negativeButtonText="Отмена"
+            summary="|Категории для логирования|{@s}"
     >
-    </CheckBoxPreference>
+    </EditTextPreference>
 </PreferenceScreen>

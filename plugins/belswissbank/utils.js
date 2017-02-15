@@ -16,9 +16,27 @@ var utils = (function (ZenMoney, _) {
         return response.status === 200;
     }
 
-    var logVerbose = ZenMoney.getPreferences().verboseLogging ? ZenMoney.trace.bind(ZenMoney) : _.noop;
+    var categoriesToLog = (ZenMoney.getPreferences().categoriesToLog || 'info,warn').split(',');
+    var logEverything = categoriesToLog.indexOf('*') !== -1;
+
+    function log(message, category) {
+        if (logEverything || categoriesToLog.indexOf(category) !== -1) {
+            ZenMoney.trace(message, category);
+        }
+    }
+
+    function toReadableJson(x, sanitize) {
+        if (x === undefined) {
+            return 'undefined';
+        }
+        return JSON.stringify(x, sanitize, 4);
+    }
+
+    log('logging categories: ' + JSON.stringify(categoriesToLog), 'info');
 
     return {
+        log: log,
+
         generateUUID: function () {
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (char) {
                 var seed = Math.random() * 16 | 0;
@@ -27,12 +45,7 @@ var utils = (function (ZenMoney, _) {
             });
         },
 
-        toReadableJson: function (x, sanitize) {
-            if (x === undefined) {
-                return 'undefined';
-            }
-            return JSON.stringify(x, sanitize, 4);
-        },
+        toReadableJson: toReadableJson,
 
         toAtLeastTwoDigitsString: function (x) {
             return padLeft(x, 2, '0');
@@ -43,13 +56,11 @@ var utils = (function (ZenMoney, _) {
                 var value = options.getValue();
                 var isSatisfied = options.isSatisfied(value);
                 if (attempt > 1) {
-                    logVerbose(
-                        'retry ' +
-                        utils.toReadableJson({
-                            attempt: attempt,
-                            maxAttempts: options.maxAttempts,
-                            isSatisfied: isSatisfied
-                        }));
+                    log(toReadableJson({
+                        attempt: attempt,
+                        maxAttempts: options.maxAttempts,
+                        isSatisfied: isSatisfied
+                    }), 'retry');
                 }
                 if (isSatisfied) {
                     return value;
@@ -76,10 +87,10 @@ var utils = (function (ZenMoney, _) {
                 'Accept': 'application/json, text/plain, */*',
                 'Content-Type': 'application/json;charset=UTF-8'
             };
-            logVerbose(request.method + ' ' + request.url, 'request');
+            log(request.method + ' ' + request.url, 'request');
             var hasData = 'body' in request;
             if (hasData) {
-                logVerbose(utils.toReadableJson(request.body, request.bodyLogSanitizer), 'requestData');
+                log(toReadableJson(request.body, request.bodyLogSanitizer), 'requestData');
             }
             var responseBody;
             if (!request.method || request.method.toUpperCase() === 'GET') {
@@ -98,16 +109,16 @@ var utils = (function (ZenMoney, _) {
             try {
                 response.body = JSON.parse(response.body);
             } catch (e) {
-                ZenMoney.trace('unable to parse response body as json: ' + utils.toReadableJson(response.body) + '\nerror: ' + e.message);
+                log('unable to parse response body as json: ' + toReadableJson(response.body) + '\nerror: ' + e.message, 'warn');
             }
-            logVerbose(response.status + ' ' + response.method + ' ' + response.url, 'response');
-            logVerbose(utils.toReadableJson(response.body, request.bodyLogSanitizer), 'responseData');
+            log(response.status + ' ' + response.method + ' ' + response.url, 'response');
+            log(toReadableJson(response.body, request.bodyLogSanitizer), 'responseData');
             return response;
         },
 
         assertSuccessfulResponse: function (response, createError) {
             if (!isSuccessfulResponse(response)) {
-                throw createError('non-successful response: ' + this.toReadableJson(response));
+                throw createError('non-successful response: ' + toReadableJson(response));
             }
         }
     };
