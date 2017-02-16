@@ -166,29 +166,31 @@ var main = (function (_, utils, BSB, ZenMoney, errors) {
                     zenMoneyTransaction.comment += '\n' + absTransactionDelta.toFixed(2) + ' ' + transactionCurrency;
                 }
                 var isIncome = factor >= 0;
-                if (transaction.transactionType === 'Bankomat') { // cash
+                var isAtmCashTransaction = transaction.transactionType === 'Bankomat';
+                if (isAtmCashTransaction) {
                     if (isIncome) {
-                        throw errors.fatal('income via Bankomat is not supported: ' + utils.toReadableJson(transaction));
+                        throw errors.fatal('not implemented: ' + utils.toReadableJson(transaction));
                     }
                     zenMoneyTransaction.income = absTransactionDelta;
                     zenMoneyTransaction.outcome = absAccountDelta;
                     zenMoneyTransaction.incomeAccount = 'cash#' + transactionCurrency;
                     zenMoneyTransaction.outcomeAccount = account.id;
-                } else if (isIncome) { // income
+                } else if (isIncome) {
                     zenMoneyTransaction.income = absAccountDelta;
                     zenMoneyTransaction.outcome = 0;
                     zenMoneyTransaction.incomeAccount = account.id;
                     zenMoneyTransaction.outcomeAccount = account.id;
-                    if (isCurrencyConversion) {
-                        zenMoneyTransaction.opIncome = absTransactionDelta;
-                        zenMoneyTransaction.opIncomeInstrument = transactionCurrency;
-                    }
-                } else { // outcome
+                } else {
                     zenMoneyTransaction.income = 0;
                     zenMoneyTransaction.outcome = absAccountDelta;
                     zenMoneyTransaction.incomeAccount = account.id;
                     zenMoneyTransaction.outcomeAccount = account.id;
-                    if (isCurrencyConversion) {
+                }
+                if (isCurrencyConversion) {
+                    if (isIncome) {
+                        zenMoneyTransaction.opIncome = absTransactionDelta;
+                        zenMoneyTransaction.opIncomeInstrument = transactionCurrency;
+                    } else {
                         zenMoneyTransaction.opOutcome = absTransactionDelta;
                         zenMoneyTransaction.opOutcomeInstrument = transactionCurrency;
                     }
