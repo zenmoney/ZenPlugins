@@ -432,6 +432,7 @@ function RocketBank(ZenMoney) {
                         transaction.payee = null;
                         break;
                     case 'atm_cash_in': // Пополнение наличными
+                    case 'office_cash_in':
                         transaction.income = sum;
                         transaction.outcome = sum;
                         transaction.outcomeAccount = 'cash#' + operation.money.currency_code;
@@ -674,10 +675,10 @@ function RocketBank(ZenMoney) {
      */
     function getFriendName(friend) {
         var parts = [];
-        if (friend.first_name) {
+        if (friend.hasOwnProperty('first_name')) {
             parts.push(friend.first_name);
         }
-        if (friend.last_name) {
+        if (friend.hasOwnProperty('last_name')) {
             parts.push(friend.last_name);
         }
         return parts.length == 0 ? null : parts.join(' ');
