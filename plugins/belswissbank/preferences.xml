@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+            key="username"
+            obligatory="true"
+            title="Имя пользователя"
+            dialogTitle="Имя пользователя"
+            dialogMessage="Введите имя пользователя для входа в интернет-банк BelSwissBank."
+            positiveButtonText="ОК"
+            negativeButtonText="Отмена"
+            summary="|Имя пользователя|{@s}"
+    >
+    </EditTextPreference>
+    <EditTextPreference
+            key="password"
+            inputType="textPassword"
+            obligatory="true"
+            title="Пароль"
+            dialogTitle="Пароль"
+            dialogMessage="Введите пароль от интернет-банка BelSwissBank."
+            positiveButtonText="ОК"
+            negativeButtonText="Отмена"
+            summary="||***********"
+    >
+    </EditTextPreference>
+    <EditTextPreference
+            key="categoriesToLog"
+            title="Что логировать"
+            defaultValue="info,warn"
+            dialogTitle="Что логировать"
+            dialogMessage="Введите через запятую типы событий для логирования. Допустимые значения: info,warn,retry,request,requestData,response,responseData,*."
+            positiveButtonText="ОК"
+            negativeButtonText="Отмена"
+            summary="|Категории для логирования|{@s}"
+    >
+    </EditTextPreference>
+</PreferenceScreen>
