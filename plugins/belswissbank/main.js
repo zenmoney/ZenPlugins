@@ -75,7 +75,7 @@ var main = (function (_, utils, BSB, ZenMoney, errors) {
                     ]);
                     transactionReplacements[incomeTransaction.id] = null;
                 } else {
-                    ZenMoney.trace('cannot merge non-pair transfer #' + transferId + ', groupSize=' + items.length);
+                    utils.log('cannot merge non-pair transfer #' + transferId + ', groupSize=' + items.length, 'warn');
                 }
                 return transactionReplacements;
             }, {})
@@ -116,12 +116,12 @@ var main = (function (_, utils, BSB, ZenMoney, errors) {
         var syncFrom = new Date(lastSeenBsbTransaction.transactionDate);
         var syncTo = new Date();
 
-        ZenMoney.trace(
+        utils.log(
             'fetching transactions for ' + utils.toReadableJson({
                 accountId: account.id,
                 from: formatDetailsDateTime(syncFrom),
                 to: formatDetailsDateTime(syncTo)
-            }));
+            }), 'info');
 
         var bsbTransactions = _.chain(BSB.getTransactions(card.cardId, syncFrom, syncTo))
             .filter(function (transaction) {
@@ -215,7 +215,7 @@ var main = (function (_, utils, BSB, ZenMoney, errors) {
     }
 
     return function main() {
-        ZenMoney.trace('alive @' + Date.now());
+        utils.log('alive @' + Date.now(), 'info');
 
         login();
 
@@ -227,7 +227,7 @@ var main = (function (_, utils, BSB, ZenMoney, errors) {
             ZenMoney.addAccount(account);
             if (transactions.length) {
                 ZenMoney.addTransaction(transactions);
-                ZenMoney.trace('added ' + transactions.length + ' transaction(s) for account ' + account.id);
+                utils.log('added ' + transactions.length + ' transaction(s) for account ' + account.id, 'info');
             }
             onBeforeSave();
         });
