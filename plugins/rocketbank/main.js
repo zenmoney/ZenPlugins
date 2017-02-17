@@ -687,7 +687,7 @@ function RocketBank(ZenMoney) {
      * @param {Object} operation
      */
     function fillPayee(transaction, operation) {
-        transaction.payee = getFriendName(operation.friend);
+        transaction.payee = operation.hasOwnProperty('friend') ? getFriendName(operation.friend) : null;
         if (!transaction.payee) {
             transaction.comment = getComment(operation);
         }
