@@ -564,7 +564,7 @@ function RocketBank(ZenMoney) {
      * @returns {string}
      */
     function getDevice() {
-        var deviceId = ZenMoney.getData('device_id');
+        var deviceId = ZenMoney.getData("device_id");
         if (!deviceId) {
             ZenMoney.trace("Необходимо привязать устройство...");
             var phone = ZenMoney.retrieveCode(
@@ -590,7 +590,7 @@ function RocketBank(ZenMoney) {
      */
     function getToken(device, force_new) {
         force_new = force_new || false;
-        var token = ZenMoney.getData('token');
+        var token = ZenMoney.getData("token");
         if (!token || force_new) {
             ZenMoney.trace("Требуется создать новый токен");
             var password = ZenMoney.retrieveCode(
@@ -602,18 +602,18 @@ function RocketBank(ZenMoney) {
                 }
             );
             if (!password) {
-                error('Пароль не указан');
+                error("Пароль не указан");
             }
             ZenMoney.trace("Пароль получен, отправляем запрос");
             var data = request(
                 "GET",
-                "/login?email=" + ZenMoney.getData('email') + "&password=" + password,
+                "/login?email=" + ZenMoney.getData("email") + "&password=" + password,
                 null,
                 device,
                 null
             );
-            if (!data.hasOwnProperty('token')) {
-                error('Не удалось подтвердить телефон', data.response.description);
+            if (!data.hasOwnProperty("token")) {
+                error("Не удалось подтвердить телефон", data.response.description);
             }
             token = data.token;
             ZenMoney.setData("token", token);
@@ -636,7 +636,7 @@ function RocketBank(ZenMoney) {
         if (data.response.status == 200) {
             ZenMoney.trace(data.response.description);
         } else {
-            error('Не удалось отправить код подтверждения', data.response.description);
+            error("Не удалось отправить код подтверждения", data.response.description);
         }
         var code = ZenMoney.retrieveCode(
             "Введите код подтверждения из смс для авторизации приложения в интернет-банке",
@@ -657,7 +657,7 @@ function RocketBank(ZenMoney) {
         if (data.response.status == 200) {
             ZenMoney.trace(data.response.description);
         } else {
-            error('Не удалось подтвердить телефон', data.response.description);
+            error("Не удалось подтвердить телефон", data.response.description);
         }
         ZenMoney.setData("device_id", device_id);
         ZenMoney.setData("email", data.user.email);
@@ -673,13 +673,13 @@ function RocketBank(ZenMoney) {
      */
     function getFriendName(friend) {
         var parts = [];
-        if (friend.hasOwnProperty('first_name')) {
+        if (friend.hasOwnProperty("first_name")) {
             parts.push(friend.first_name);
         }
-        if (friend.hasOwnProperty('last_name')) {
+        if (friend.hasOwnProperty("last_name")) {
             parts.push(friend.last_name);
         }
-        return parts.length == 0 ? null : parts.join(' ');
+        return parts.length == 0 ? null : parts.join(" ");
     }
 
     /**
@@ -687,7 +687,7 @@ function RocketBank(ZenMoney) {
      * @param {Object} operation
      */
     function fillPayee(transaction, operation) {
-        transaction.payee = operation.hasOwnProperty('friend') ? getFriendName(operation.friend) : null;
+        transaction.payee = operation.hasOwnProperty("friend") ? getFriendName(operation.friend) : null;
         if (!transaction.payee) {
             transaction.comment = getComment(operation);
         }
@@ -702,7 +702,7 @@ function RocketBank(ZenMoney) {
     function getComment(operation) {
         var comment = operation.details;
         if (operation.comment != null) {
-            comment += ': ' + operation.comment;
+            comment += ": " + operation.comment;
         }
         return comment;
     }
@@ -720,7 +720,7 @@ function RocketBank(ZenMoney) {
         var length = Math.floor(original.length * percent);
         var part = original.slice(0, length * -1);
         for (var i = 0; i < length; i++) {
-            part += '*';
+            part += "*";
         }
 
         return part;
@@ -739,13 +739,13 @@ function RocketBank(ZenMoney) {
     function request(method, url, data, device_id, token) {
         var baseUrl = "https://rocketbank.ru/api/v5";
         var response;
-        if (!method || method.toUpperCase() === 'GET') {
+        if (!method || method.toUpperCase() === "GET") {
             response = ZenMoney.requestGet(baseUrl + url, getHeaders(device_id, token));
         } else {
             response = ZenMoney.request(method, baseUrl + url, data, getHeaders(device_id, token));
         }
         if (!response) {
-            error('Неверный ответ с сервера', '[' + method + '] ' + url);
+            error("Неверный ответ с сервера", "[" + method + "] " + url);
         }
         return getJson(response);
     }
@@ -760,7 +760,7 @@ function RocketBank(ZenMoney) {
         try {
             return JSON.parse(data);
         } catch (e) {
-            error('Сервер вернул ошибочные данные', e.message + ': ' + data);
+            error("Сервер вернул ошибочные данные", e.message + ": " + data);
         }
     }
 
@@ -793,7 +793,7 @@ function RocketBank(ZenMoney) {
      */
     function error(message, description) {
         if (description) {
-            description = ': ' + description;
+            description = ": " + description;
         }
         ZenMoney.trace(message + description);
         throw new ZenMoney.Error(message);
