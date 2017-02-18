@@ -6,6 +6,9 @@ var g_headers = {},
 	g_sessionid,
 	g_preferences;
 
+var g_clientId     = "";
+var g_clientSecret = "";
+
 /**
  * Основной метод
  */
@@ -44,7 +47,7 @@ function login() {
 	var code = ZenMoney.requestPost(g_authurl, {
 		"CellPhone":g_preferences.login,
 		"Password":g_preferences.password,
-		"ClientId":g_preferences.clientId,
+		"ClientId":g_clientId,
 		"Scope":"operation-history account-info",
 		"RedirectUri":"https://zenmoney.ru"
 	});
@@ -71,8 +74,8 @@ function login() {
 	ZenMoney.trace(g_baseurl + "oauth/token?"+code);
 	
 	g_sessionid = getJson(ZenMoney.requestPost(g_baseurl + "oauth/token", {
-		"ClientId":g_preferences.clientId,
-		"clientSecret":g_preferences.clientSecret,
+		"ClientId":g_clientId,
+		"clientSecret":g_clientSecret,
 		"redirectUri":"https://zenmoney.ru",
     	"code":code
 	}))["accessToken"];

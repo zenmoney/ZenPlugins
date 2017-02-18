@@ -55,7 +55,7 @@ var BSB = (function (codeToCurrencyLookup, utils, errors) {
                 bodyLogSanitizer: utils.sanitize,
                 url: 'https://24.bsb.by/mobile/api/devices/' + deviceId + '?lang=ru',
                 method: 'POST',
-                body: confirmationCode
+                body: confirmationCode.toString()
             });
             if (response.body.deviceStatus !== 'CONFIRMED') {
                 throw errors.temporal('confirmation failed: ' + utils.toReadableJson(response));

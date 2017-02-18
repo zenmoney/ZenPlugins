@@ -2,7 +2,7 @@
 <provider>
     <id>modulbank</id>
     <version>1.0</version>
-    <build>33</build>
+    <build>34</build>
     <company>15523</company>
     <files>
         <js>main.js</js>
