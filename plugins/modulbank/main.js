@@ -103,8 +103,6 @@ function processAccounts() {
 		company.bankAccounts.forEach(function(account) { accounts.push(account); });
 	});
 	
-	companies.remove();
-
 	ZenMoney.trace('Получено счетов: '+ accounts.length);
 
 	for (var i = 0; i < accounts.length; i++) {
