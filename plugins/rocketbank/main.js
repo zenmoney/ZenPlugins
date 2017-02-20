@@ -29,7 +29,7 @@ function RocketBank(ZenMoney) {
 
         var profile = this.loadProfile();
 
-        var deposites = this.fetchDeposites(profile);
+        var deposites = this.fetchDeposits(profile.user.deposits);
         var safe_accounts = this.fetchSafeAccounts(profile);
         var accounts = this.fetchAccounts(profile);
 
@@ -107,16 +107,17 @@ function RocketBank(ZenMoney) {
     /**
      * Обрабатываем вклады
      *
+     * @param {Object[]} deposits
+     *
      * @return {String[]}
      */
-    this.fetchDeposites = function (profile) {
+    this.fetchDeposits = function (deposits) {
         var that = this;
 
-        ZenMoney.trace("Загружаем список вкладов");
-        ZenMoney.trace("Найдено вкладов: " + profile.user.deposits.length);
+        ZenMoney.trace("Найдено вкладов: " + deposits.length);
 
         var accounts = [];
-        profile.user.deposits.forEach(function (account) {
+        deposits.forEach(function (account) {
             var account_id = hex_md5(account.id.toString());
 
             var deposite = {
@@ -168,22 +169,15 @@ function RocketBank(ZenMoney) {
                 switch (operation.kind) {
                     case "first_refill": // Первичное пополнение
                         transaction.income = sum;
+                        that._deposites_init_operations.push(transaction);
                         break;
                     case "percent": // Проценты
                         transaction.income = sum;
                         transaction.payee = "Рокетбанк";
+                        that._deposites_percent.push(transaction);
                         break;
                     default:
                         error("Неизвестный тип транзакции депозита", JSON.stringify(operation));
-                }
-
-                switch (operation.kind) {
-                    case "first_refill":
-                        that._deposites_init_operations.push(transaction);
-                        break;
-                    case "percent":
-                        that._deposites_percent.push(transaction);
-                        break;
                 }
             });
         });
@@ -264,6 +258,7 @@ function RocketBank(ZenMoney) {
      */
     this.loadProfile = function () {
         var device = getDevice();
+        ZenMoney.trace("Загружаем профиль пользователя");
         var profile = requestProfile(device, getToken(device));
 
         if (!profile.hasOwnProperty("user")) {
