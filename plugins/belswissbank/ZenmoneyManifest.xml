@@ -2,7 +2,7 @@
 <provider>
     <id>belswissbank</id>
     <version>1.0.0</version>
-    <build>5</build>
+    <build>9</build>
     <company>15408</company>
     <files>
         <js>underscore.js</js>
