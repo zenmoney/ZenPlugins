@@ -226,7 +226,18 @@ function processTransactions(data) {
 
 	ZenMoney.trace('Запрашиваем операции с '+ new Date(lastSyncTime).toLocaleString());
 
-	var transactions = requestJson("operation-history/" + accDict[0].id, null, {"from": lastSyncTime});
+	var accounts = [];
+
+	var companies = requestJson("account-info");
+
+	ZenMoney.trace('Получено компаний: '+ companies.length);
+
+	companies.forEach(function(company) {
+
+		company.bankAccounts.forEach(function(account) { accounts.push(account); });
+	});
+
+	var transactions = requestJson("operation-history/" + accounts[0].id, null, {"from": lastSyncTime});
 
 	// работаем только по активным счетам
 	for (var i = accDict.length - 1; i >= 1; i--) {
