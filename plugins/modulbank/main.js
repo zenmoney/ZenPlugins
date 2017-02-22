@@ -83,7 +83,7 @@ function login() {
 	ZenMoney.trace('Создали новую сессию. ' + g_sessionid);
 }
 
-var accDict = []; // линки активных счетов, по ним фильтруем обработку операций
+var g_accounts = []; // линки активных счетов, по ним фильтруем обработку операций
 
 /**
  * Обработка счетов
@@ -93,6 +93,8 @@ function processAccounts() {
 	ZenMoney.trace('Запрашиваем данные по счетам...');
 	
 	var accounts = [];
+
+	var accDict = []; 
 
 	var companies = requestJson("account-info");
 
@@ -130,6 +132,7 @@ function processAccounts() {
 				creditLimit: 	0
 
 			});
+			g_accounts.push(account.id);
 		}
 		// депозитный счет ------------------------------------
 		else if (account.category == 'DepositAccount') {
@@ -152,6 +155,7 @@ function processAccounts() {
 				payoffStep:				1,
 				creditLimit: 			0
 			});
+			g_accounts.push(account.id);
 		}
 		// дебетовые карты ------------------------------------
 		else if (account.category == 'CardAccount') {
@@ -165,6 +169,7 @@ function processAccounts() {
 				balance:		account.balance,
 				syncID: 		[account.bankCorrespondentAccount]
 			});
+			g_accounts.push(account.id);
 		}
 		// счет для процентов по депозиту ------------------------------------
 		else if (account.category == 'DepositRateAccount') {
@@ -179,6 +184,7 @@ function processAccounts() {
 				syncID: 		[account.bankCorrespondentAccount],
 				creditLimit: 	0
 			});
+			g_accounts.push(account.id);
 		}
 		// счет учета резервов ------------------------------------
 		else if (account.category == 'ReservationAccounting') {
@@ -193,7 +199,7 @@ function processAccounts() {
 				syncID: 		[account.bankCorrespondentAccount],
 				creditLimit: 	0
 			});
-
+			g_accounts.push(account.id);
 		}
 	}
 
@@ -226,12 +232,27 @@ function processTransactions(data) {
 
 	ZenMoney.trace('Запрашиваем операции с '+ new Date(lastSyncTime).toLocaleString());
 
-	var transactions = requestJson("operation-history/" + accDict[0].id, null, {"from": lastSyncTime});
+	var accounts = [];
 
-	// работаем только по активным счетам
-	for (var i = accDict.length - 1; i >= 1; i--) {
+	var companies = requestJson("account-info");
+
+	ZenMoney.trace('Получено компаний: '+ companies.length);
+
+	companies.forEach(function(company) {
+
+		company.bankAccounts.forEach(function(account) { 
+			// работаем только по активным счетам
+			if (!in_array(accounts[i].id, g_accounts)) 
+
+				accounts.push(account); 
+		});
+	});
+
+	var transactions = requestJson("operation-history/" + accounts[0].id, null, {"from": lastSyncTime});
+
+	for (var i = accounts.length - 1; i >= 1; i--) {
 		
-		transactions = transactions.concat(requestJson("operation-history/"+accDict[i].id, null, {"from": lastSyncTime}));
+		transactions = transactions.concat(requestJson("operation-history/"+accounts[i].id, null, {"from": lastSyncTime}));
 	}
 
 	ZenMoney.trace('Получено операций: ' + transactions.length);
@@ -244,13 +265,13 @@ function processTransactions(data) {
 
 		var account = null;
 
-		for (var x = 0; x < accDict.length; x++) {
+		for (var x = 0; x < accounts.length; x++) {
 			
-			for (var accountNumber = accDict[x].syncID.length - 1; i >= 0; i--) {
+			for (var accountNumber = accounts[x].syncID.length - 1; i >= 0; i--) {
 
-				if (accDict[x].syncID[accountNumber] == transaction.bankAccountNumber){
+				if (accounts[x].syncID[accountNumber] == transaction.bankAccountNumber){
 
-					account = accDict[accountNumber];
+					account = accounts[accountNumber];
 					break;
 				}
 			}
@@ -391,6 +412,14 @@ function requestJson(requestCode, getparams, postbody) {
 	}
 
 	return getJson(data);
+}
+
+function in_array(needle, haystack) {
+	var length = haystack.length;
+	for(var i = 0; i < length; i++) {
+		if(haystack[i] == needle) return true;
+	}
+	return false;
 }
 
 function n2(n) {
