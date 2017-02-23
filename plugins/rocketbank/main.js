@@ -1,5 +1,7 @@
 /**
  * Начинаем синхронизацию
+ *
+ * @typedef {Object} ZenMoney
  */
 function main() {
     var rocketBank = new RocketBank(ZenMoney);
@@ -18,10 +20,22 @@ function main() {
  * @author Andrey Kolchenko <andrey@kolchenko.me>
  */
 function RocketBank(ZenMoney) {
-    this._safe_accounts = {};
-    this._accounts = {};
-    this._deposits_init_operations = [];
-    this._deposits_percent = [];
+    /**
+     * @type {Object.<String, String>}
+     */
+    this.accounts = {};
+    /**
+     * @type {Object.<String, String>}
+     */
+    this.cards = {};
+    /**
+     * @type {DepositTransaction[]}
+     */
+    this.deposits_operations = [];
+    /**
+     * @type {DepositTransaction[]}
+     */
+    this.deposits_percent = [];
 
     /**
      * Синхронизировать данные из Рокетбанка
@@ -60,7 +74,7 @@ function RocketBank(ZenMoney) {
                 syncID: [card.pan.substr(-4)]
             };
             ZenMoney.trace("Обрабатываем карту: " + JSON.stringify(record));
-            this._accounts[card.title] = card.token;
+            this.cards[card.title] = card.token;
 
             ZenMoney.addAccount(record);
 
@@ -88,7 +102,7 @@ function RocketBank(ZenMoney) {
                 syncID: [account.account_details.account.substr(-4)]
             };
             ZenMoney.trace("Обрабатываем счет: " + JSON.stringify(record));
-            this._safe_accounts[account.title] = account.token;
+            this.accounts[account.title] = account.token;
 
             ZenMoney.addAccount(record);
 
@@ -147,6 +161,9 @@ function RocketBank(ZenMoney) {
                 }
 
                 var sum = Math.abs(operation.amount);
+                /**
+                 * @class DepositTransaction
+                 */
                 var transaction = {
                     id: hex_md5(operation.date + "|" + operation.sum),
                     date: operation.date,
@@ -159,12 +176,12 @@ function RocketBank(ZenMoney) {
                 switch (operation.kind) {
                     case "first_refill": // Первичное пополнение
                         transaction.income = sum;
-                        this._deposits_init_operations.push(transaction);
+                        this.deposits_operations.push(transaction);
                         break;
                     case "percent": // Проценты
                         transaction.income = sum;
                         transaction.payee = "Рокетбанк";
-                        this._deposits_percent.push(transaction);
+                        this.deposits_percent.push(transaction);
                         break;
                     default:
                         error("Неизвестный тип транзакции депозита", JSON.stringify(operation));
@@ -209,18 +226,18 @@ function RocketBank(ZenMoney) {
     this.processDeposit = function () {
         ZenMoney.trace("Начинаем синхронизацию депозитов");
 
-        var init = this.processDepositInternal(this._deposits_init_operations);
-        var percent = this.processDepositInternal(this._deposits_percent);
+        var init = this.processDepositInternal(this.deposits_operations);
+        var percent = this.processDepositInternal(this.deposits_percent);
 
         return init && percent;
     };
 
     /**
-     * @param data
+     * @param {DepositTransaction[]} transactions
      * @returns {boolean}
      */
-    this.processDepositInternal = function (data) {
-        return data.reverse().every(function (transaction) {
+    this.processDepositInternal = function (transactions) {
+        return transactions.reverse().every(function (transaction) {
             ZenMoney.trace("Обрабатываем новую транзакцию: " + JSON.stringify(transaction));
 
             var account = transaction.incomeAccount;
@@ -414,17 +431,17 @@ function RocketBank(ZenMoney) {
                         transaction.income = sum;
                         transaction.comment = getComment(operation);
 
-                        var _pattern = " → ";
-                        if (operation.details.indexOf(_pattern) >= 0) {
-                            var _accounts = operation.details.split(_pattern);
+                        var pattern = " → ";
+                        if (operation.details.indexOf(pattern) >= 0) {
+                            var accounts = operation.details.split(pattern);
 
-                            if (this._accounts.hasOwnProperty(_accounts[0])) {
+                            if (this.cards.hasOwnProperty(accounts[0])) {
                                 transaction.outcome = sum;
-                                transaction.outcomeAccount = this._accounts[_accounts[0]];
+                                transaction.outcomeAccount = this.cards[accounts[0]];
                             }
-                            if (this._safe_accounts.hasOwnProperty(_accounts[0])) {
+                            if (this.accounts.hasOwnProperty(accounts[0])) {
                                 transaction.outcome = sum;
-                                transaction.outcomeAccount = this._safe_accounts[_accounts[0]];
+                                transaction.outcomeAccount = this.accounts[accounts[0]];
                             }
                         }
                         break;
@@ -443,9 +460,9 @@ function RocketBank(ZenMoney) {
                         transaction.payee = "Рокетбанк";
                         break;
                     case "open_deposit": // Открытие вклада
-                        var _operation_found = false;
+                        var operation_found = false;
 
-                        this._deposits_init_operations.map(function (transaction) {
+                        this.deposits_operations.map(function (transaction) {
                             if (transaction.outcome == 0 && transaction.income == sum) {
 
                                 if (dateFromTimestamp(transaction.date) == dateFromTimestamp(transaction.date)) {
@@ -455,14 +472,14 @@ function RocketBank(ZenMoney) {
                                         transaction.comment += ": " + transaction.comment;
                                     }
 
-                                    _operation_found = true;
+                                    operation_found = true;
                                 }
                             }
 
                             return transaction;
                         });
 
-                        if (_operation_found) {
+                        if (operation_found) {
                             continue;
                         } else {
                             transaction.income = sum;
