@@ -628,8 +628,8 @@ function RocketBank(ZenMoney) {
     /**
      * Получаем имя пользователя из объекта
      *
-     * @param {{first_name: String, last_name: String}} friend
-     * @return {string|null}
+     * @param {Friend|null} friend
+     * @return {String|null}
      */
     function getFriendName(friend) {
         var parts = [];
@@ -643,8 +643,10 @@ function RocketBank(ZenMoney) {
     }
 
     /**
+     * Заполняем информацию о плательщике
+     *
      * @param {Object} transaction
-     * @param {Object} operation
+     * @param {Operation} operation
      */
     function fillPayee(transaction, operation) {
         transaction.payee = operation.hasOwnProperty("friend") ? getFriendName(operation.friend) : null;

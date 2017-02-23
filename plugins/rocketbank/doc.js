@@ -82,6 +82,14 @@
  */
 
 /**
+ * Информация о "друге"
+ *
+ * @typedef {Object} Friend
+ * @property {String} [first_name]
+ * @property {String} [last_name]
+ */
+
+/**
  * Объект с информацией об операциях
  *
  * @typedef {Object} Operation
@@ -93,6 +101,7 @@
  * @property {String} context_type
  * @property {Money} money
  * @property {Merchant} merchant
+ * @property {Friend} [friend]
  */
 
 /**
