@@ -32,7 +32,7 @@ function RocketBank(ZenMoney) {
         this.fetchDeposits(profile.user.deposits);
 
         var accountsProcessed = this.fetchAccounts(profile.user.safe_accounts).every(this.processAccount, this);
-        var cardsProcessed = this.fetchCards(profile).every(this.processAccount, this);
+        var cardsProcessed = this.fetchCards(profile.user.accounts).every(this.processAccount, this);
         var depositsProcessed = this.processDeposite();
 
         return accountsProcessed && cardsProcessed && depositsProcessed;
@@ -43,18 +43,12 @@ function RocketBank(ZenMoney) {
      *
      * @return {String[]}
      */
-    this.fetchCards = function (profile) {
-        ZenMoney.trace("Загружаем список карт");
+    this.fetchCards = function (accounts) {
+        ZenMoney.trace("Загружаем список карт. Найдено карт: " + accounts.length);
 
-        var accounts = transformCards(profile.user.accounts);
-        ZenMoney.trace("Найдено карт: " + accounts.length);
-
-        accounts.forEach(function (account) {
-            this._accounts[account.title] = account.id
-        }, this);
-
-        return accounts.map(function (account) {
-            ZenMoney.trace("Обрабатываем аккаунт: " + JSON.stringify(account));
+        return transformCards(accounts).map(function (account) {
+            ZenMoney.trace("Обрабатываем карту: " + JSON.stringify(account));
+            this._accounts[account.title] = account.id;
 
             ZenMoney.addAccount({
                 id: account.id,
@@ -66,7 +60,7 @@ function RocketBank(ZenMoney) {
             });
 
             return account.id;
-        });
+        }, this);
     };
 
     /**
@@ -242,7 +236,7 @@ function RocketBank(ZenMoney) {
     /**
      * Загружаем профиль пользователя
      *
-     * @return {{user: {deposits: Object[], safe_accounts: Object[]}}}
+     * @return {{user: {deposits: Object[], safe_accounts: Object[], accounts: Object[]}}}
      */
     this.loadProfile = function () {
         var device = getDevice();
