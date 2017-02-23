@@ -270,7 +270,10 @@ function RocketBank(ZenMoney) {
     }
 
     /**
+     * Получаем время последней синхронизации аккаунта
+     *
      * @param {String} account
+     *
      * @return {Number}
      */
     function getLastSyncTime(account) {
@@ -279,9 +282,15 @@ function RocketBank(ZenMoney) {
         // первоначальная инициализация
         if (lastSyncTime == 0) {
             var preferences = ZenMoney.getPreferences();
+            var period = 7;
             // по умолчанию загружаем операции за неделю
-            var period = !preferences.hasOwnProperty("period") || isNaN(period = parseInt(preferences.period)) ? 7 : period;
-            if (period > 100) period = 100;	// на всякий случай, ограничим лимит, а то слишком долго будет
+            if (preferences.hasOwnProperty("period")) {
+                period = parseInt(preferences.period) || period;
+                // на всякий случай, ограничим лимит, а то слишком долго будет
+                if (period > 100) {
+                    period = 100;
+                }
+            }
             lastSyncTime = Math.floor(Date.now() / 1000) - period * 24 * 60 * 60;
         }
 
