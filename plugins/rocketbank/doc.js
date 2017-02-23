@@ -66,7 +66,7 @@
 /**
  * Постраничная навигация
  *
- * @typedef {Object} Pagination
+ * @typedef {Object} Response.Pagination
  * @memberOf Response
  * @property {Number} current_page
  * @property {Number} total_pages
@@ -77,14 +77,14 @@
 /**
  * Данные о деньгах
  *
- * @typedef {Object} Money
+ * @typedef {Object} Response.Money
  * @memberOf Response
  * @property {Number} amount
  * @property {String} currency_code
  */
 
 /**
- * @typedef {Object} Merchant
+ * @typedef {Object} Response.Merchant
  * @memberOf Response
  * @property {Number} id
  * @property {String} name
@@ -93,7 +93,7 @@
 /**
  * Объект с информацией об операциях
  *
- * @typedef {Object} Operation
+ * @typedef {Object} Response.Operation
  * @memberOf Response
  * @property {Number} id
  * @property {String} details
@@ -101,8 +101,26 @@
  * @property {Number} happened_at
  * @property {String} status
  * @property {String} context_type
- * @property {Money} money
- * @property {Merchant} merchant
+ * @property {Response.Money} money
+ * @property {Response.Merchant} merchant
+ */
+
+/**
+ * Ответ на регистрацию устройства
+ *
+ * @typedef {Object} Response.Register
+ * @memberOf Response
+ * @property {Response.Response} [response]
+ * @property {{id: String}} sms_verification
+ */
+
+/**
+ * Ответ на верификацию устройства
+ *
+ * @typedef {Object} Response.Verification
+ * @memberOf Response
+ * @property {Response.Response} [response]
+ * @property {{email: String}} user
  */
 
 /**
@@ -111,6 +129,6 @@
  * @typedef {Object} Response.Account
  * @memberOf Response
  * @property {Response.Response} [response]
- * @property {Pagination} pagination
- * @property {["operation", Operation][]} feed
+ * @property {Response.Pagination} pagination
+ * @property {["operation", Response.Operation][]} feed
  */

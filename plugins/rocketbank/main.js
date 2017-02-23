@@ -575,16 +575,31 @@ function RocketBank(ZenMoney) {
      * @returns {String}
      */
     function registerDevice(phone) {
-        var device_id = "zenmoney_" + hex_md5(Math.random().toString() + "_" + phone + "_" + Date.now());
+        var device = "zenmoney_" + hex_md5(Math.random().toString() + "_" + phone + "_" + Date.now());
         ZenMoney.trace(
-            "Отправляем запрос на регистрацию устройства " + depersonalize(device_id) + " (" + depersonalize(phone) + ")"
+            "Отправляем запрос на регистрацию устройства " + depersonalize(device) + " (" + depersonalize(phone) + ")"
         );
-        var data = request("POST", "/devices/register", {phone: phone}, device_id, null);
+        /**
+         * @type {Response.Register}
+         */
+        var data = request("POST", "/devices/register", {phone: phone}, device, null);
         if (data.response.status == 200) {
             ZenMoney.trace(data.response.description);
         } else {
             error("Не удалось отправить код подтверждения", data.response.description);
         }
+        verifyDevice(data.sms_verification.id, device);
+
+        return device;
+    }
+
+    /**
+     * Подтверждаем регистрацию устройства
+     *
+     * @param {String} verificationToken
+     * @param {String} device
+     */
+    function verifyDevice(verificationToken, device) {
         var code = ZenMoney.retrieveCode(
             "Введите код подтверждения из смс для авторизации приложения в интернет-банке",
             null,
@@ -594,22 +609,17 @@ function RocketBank(ZenMoney) {
             }
         );
         ZenMoney.trace("Получили код");
-        data = request(
-            "PATCH",
-            "/sms_verifications/" + data.sms_verification.id + "/verify",
-            {code: code},
-            device_id,
-            null
-        );
+        /**
+         * @type {Response.Verification}
+         */
+        var data = request("PATCH", "/sms_verifications/" + verificationToken + "/verify", {code: code}, device, null);
         if (data.response.status == 200) {
             ZenMoney.trace(data.response.description);
         } else {
             error("Не удалось подтвердить телефон", data.response.description);
         }
-        ZenMoney.setData("device_id", device_id);
+        ZenMoney.setData("device_id", device);
         ZenMoney.setData("email", data.user.email);
-
-        return device_id;
     }
 
     /**
@@ -643,7 +653,7 @@ function RocketBank(ZenMoney) {
     /**
      * Комментарий к операции
      *
-     * @param {Operation} operation
+     * @param {Response.Operation} operation
      * @return {String}
      */
     function getComment(operation) {
