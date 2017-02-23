@@ -265,6 +265,9 @@ function RocketBank(ZenMoney) {
      * @return {Object}
      */
     function requestProfile(device, token) {
+        /**
+         * @type {Profile}
+         */
         var profile = request("GET", "/profile", null, device, token);
         if (profile.hasOwnProperty("response")) {
             if (profile.response.status == 401) {
@@ -322,7 +325,7 @@ function RocketBank(ZenMoney) {
         transactions = transactions || [];
         ZenMoney.trace("Запрашиваем список операций: страница " + page);
         /**
-         * @type {Response.Account}
+         * @type {Feed}
          */
         var data = request("GET", "/accounts/" + account + "/feed?page=" + page + "&per_page=" + limit, null, device, token);
         if (data.hasOwnProperty("response")) {
@@ -580,7 +583,7 @@ function RocketBank(ZenMoney) {
             "Отправляем запрос на регистрацию устройства " + depersonalize(device) + " (" + depersonalize(phone) + ")"
         );
         /**
-         * @type {Response.Register}
+         * @type {Register}
          */
         var data = request("POST", "/devices/register", {phone: phone}, device, null);
         if (data.response.status == 200) {
@@ -610,7 +613,7 @@ function RocketBank(ZenMoney) {
         );
         ZenMoney.trace("Получили код");
         /**
-         * @type {Response.Verification}
+         * @type {Verification}
          */
         var data = request("PATCH", "/sms_verifications/" + verificationToken + "/verify", {code: code}, device, null);
         if (data.response.status == 200) {
@@ -653,7 +656,7 @@ function RocketBank(ZenMoney) {
     /**
      * Комментарий к операции
      *
-     * @param {Response.Operation} operation
+     * @param {Operation} operation
      * @return {String}
      */
     function getComment(operation) {

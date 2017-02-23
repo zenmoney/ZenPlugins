@@ -3,6 +3,7 @@
  *
  * @typedef {Object} Profile
  * @property {User} user
+ * @property {Response} [response]
  */
 
 /**
@@ -49,16 +50,9 @@
  */
 
 /**
- * Ответы сервера
- *
- * @namespace Response
- */
-
-/**
  * Информация об ошибке
  *
- * @typedef {Object} Response.Response
- * @memberOf Response
+ * @typedef {Object} Response
  * @property {Number} status
  * @property {String} description
  */
@@ -66,8 +60,7 @@
 /**
  * Постраничная навигация
  *
- * @typedef {Object} Response.Pagination
- * @memberOf Response
+ * @typedef {Object} Pagination
  * @property {Number} current_page
  * @property {Number} total_pages
  * @property {Number} total_count
@@ -77,15 +70,13 @@
 /**
  * Данные о деньгах
  *
- * @typedef {Object} Response.Money
- * @memberOf Response
+ * @typedef {Object} Money
  * @property {Number} amount
  * @property {String} currency_code
  */
 
 /**
- * @typedef {Object} Response.Merchant
- * @memberOf Response
+ * @typedef {Object} Merchant
  * @property {Number} id
  * @property {String} name
  */
@@ -93,42 +84,38 @@
 /**
  * Объект с информацией об операциях
  *
- * @typedef {Object} Response.Operation
- * @memberOf Response
+ * @typedef {Object} Operation
  * @property {Number} id
  * @property {String} details
  * @property {String} comment
  * @property {Number} happened_at
  * @property {String} status
  * @property {String} context_type
- * @property {Response.Money} money
- * @property {Response.Merchant} merchant
+ * @property {Money} money
+ * @property {Merchant} merchant
  */
 
 /**
  * Ответ на регистрацию устройства
  *
- * @typedef {Object} Response.Register
- * @memberOf Response
- * @property {Response.Response} [response]
+ * @typedef {Object} Register
+ * @property {Response} [response]
  * @property {{id: String}} sms_verification
  */
 
 /**
  * Ответ на верификацию устройства
  *
- * @typedef {Object} Response.Verification
- * @memberOf Response
- * @property {Response.Response} [response]
+ * @typedef {Object} Verification
+ * @property {Response} [response]
  * @property {{email: String}} user
  */
 
 /**
  * Ответ с данными об аккаунте
  *
- * @typedef {Object} Response.Account
- * @memberOf Response
- * @property {Response.Response} [response]
- * @property {Response.Pagination} pagination
- * @property {["operation", Response.Operation][]} feed
+ * @typedef {Object} Feed
+ * @property {Response} [response]
+ * @property {Pagination} pagination
+ * @property {["operation", Operation][]} feed
  */
