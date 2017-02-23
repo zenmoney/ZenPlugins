@@ -242,7 +242,7 @@ function processTransactions(data) {
 
 		company.bankAccounts.forEach(function(account) { 
 			// работаем только по активным счетам
-			if (!in_array(accounts[i].id, g_accounts)) 
+			if (!in_array(account.id, g_accounts)) 
 
 				accounts.push(account); 
 		});
