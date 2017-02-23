@@ -47,3 +47,70 @@
  * @property {String} currency
  * @property {String} title
  */
+
+/**
+ * Ответы сервера
+ *
+ * @namespace Response
+ */
+
+/**
+ * Информация об ошибке
+ *
+ * @typedef {Object} Response.Response
+ * @memberOf Response
+ * @property {Number} status
+ * @property {String} description
+ */
+
+/**
+ * Постраничная навигация
+ *
+ * @typedef {Object} Pagination
+ * @memberOf Response
+ * @property {Number} current_page
+ * @property {Number} total_pages
+ * @property {Number} total_count
+ * @property {Number} per_page
+ */
+
+/**
+ * Данные о деньгах
+ *
+ * @typedef {Object} Money
+ * @memberOf Response
+ * @property {Number} amount
+ * @property {String} currency_code
+ */
+
+/**
+ * @typedef {Object} Merchant
+ * @memberOf Response
+ * @property {Number} id
+ * @property {String} name
+ */
+
+/**
+ * Объект с информацией об операциях
+ *
+ * @typedef {Object} Operation
+ * @memberOf Response
+ * @property {Number} id
+ * @property {String} details
+ * @property {String} comment
+ * @property {Number} happened_at
+ * @property {String} status
+ * @property {String} context_type
+ * @property {Money} money
+ * @property {Merchant} merchant
+ */
+
+/**
+ * Ответ с данными об аккаунте
+ *
+ * @typedef {Object} Response.Account
+ * @memberOf Response
+ * @property {Response.Response} [response]
+ * @property {Pagination} pagination
+ * @property {["operation", Operation][]} feed
+ */

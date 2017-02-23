@@ -306,25 +306,6 @@ function RocketBank(ZenMoney) {
     }
 
     /**
-     * Преобразуем счета в нужный формат
-     *
-     * @param {{token: String, account_details: {account: String}, balance: Number, currency: String, title: String}[]} accounts
-     *
-     * @return {{id: String, pan: String, balance: Number, currency: String, title: String}[]}
-     */
-    function transformAccounts(accounts) {
-        return accounts.map(function (account) {
-            return {
-                id: account.token,
-                pan: account.account_details.account,
-                balance: account.balance,
-                currency: account.currency,
-                title: account.title
-            };
-        });
-    }
-
-    /**
      * Загружаем список операций
      *
      * @param {String} device
@@ -340,6 +321,9 @@ function RocketBank(ZenMoney) {
         limit = limit || 10;
         transactions = transactions || [];
         ZenMoney.trace("Запрашиваем список операций: страница " + page);
+        /**
+         * @type {Response.Account}
+         */
         var data = request("GET", "/accounts/" + account + "/feed?page=" + page + "&per_page=" + limit, null, device, token);
         if (data.hasOwnProperty("response")) {
             if (data.response.status == 401) {
@@ -459,21 +443,21 @@ function RocketBank(ZenMoney) {
                     case "open_deposit": // Открытие вклада
                         var _operation_found = false;
 
-                        this._deposits_init_operations.map(function (depo_transaction) {
-                            if (depo_transaction.outcome == 0 && depo_transaction.income == sum) {
+                        this._deposits_init_operations.map(function (transaction) {
+                            if (transaction.outcome == 0 && transaction.income == sum) {
 
-                                if (dateFromTimestamp(depo_transaction.date) == dateFromTimestamp(transaction.date)) {
-                                    depo_transaction.outcome = sum;
-                                    depo_transaction.outcomeAccount = account;
+                                if (dateFromTimestamp(transaction.date) == dateFromTimestamp(transaction.date)) {
+                                    transaction.outcome = sum;
+                                    transaction.outcomeAccount = account;
                                     if (transaction.comment != null) {
-                                        depo_transaction.comment += ": " + transaction.comment;
+                                        transaction.comment += ": " + transaction.comment;
                                     }
 
                                     _operation_found = true;
                                 }
                             }
 
-                            return depo_transaction;
+                            return transaction;
                         });
 
                         if (_operation_found) {
@@ -659,7 +643,7 @@ function RocketBank(ZenMoney) {
     /**
      * Комментарий к операции
      *
-     * @param {{details: String, comment: String}} operation
+     * @param {Operation} operation
      * @return {String}
      */
     function getComment(operation) {
