@@ -32,10 +32,10 @@ function RocketBank(ZenMoney) {
         this.fetchDeposits(profile.user.deposits);
 
         var safeAccountsProcessed = this.fetchSafeAccounts(profile).every(this.processAccount, this);
-        var accountsProcessed = this.fetchAccounts(profile).every(this.processAccount, this);
+        var cardsProcessed = this.fetchCards(profile).every(this.processAccount, this);
         var depositsProcessed = this.processDeposite();
 
-        return safeAccountsProcessed && accountsProcessed && depositsProcessed;
+        return safeAccountsProcessed && cardsProcessed && depositsProcessed;
     };
 
     /**
@@ -43,10 +43,11 @@ function RocketBank(ZenMoney) {
      *
      * @return {String[]}
      */
-    this.fetchAccounts = function (profile) {
+    this.fetchCards = function (profile) {
         ZenMoney.trace("Загружаем список карт");
 
-        var accounts = loadAccounts(profile);
+        var accounts = transformAccounts(profile.user.accounts);
+        ZenMoney.trace("Найдено карт: " + accounts.length);
 
         accounts.forEach(function (account) {
             this._accounts[account.title] = account.id
@@ -295,29 +296,22 @@ function RocketBank(ZenMoney) {
     }
 
     /**
-     * Загружаем список существующих карт
+     * Преобразуем объект в нужный формат
      *
-     * @param {Object} profile
+     * @param {{id: String, pan: String, balance: Number, currency: String, title: String}[]} accounts
      *
      * @return {{id: String, pan: String, balance: Number, currency: String, title: String}[]}
      */
-    function loadAccounts(profile) {
-        var accountsNumber = profile.user.accounts.length;
-        ZenMoney.trace("Найдено аккаунтов: " + accountsNumber);
-
-        var accounts = [];
-        for (var i = 0; i < accountsNumber; i++) {
-            var account = profile.user.accounts[i];
-            accounts.push({
+    function transformAccounts(accounts) {
+        return accounts.map(function (account) {
+            return {
                 id: account.token,
                 pan: account.pan,
                 balance: account.balance,
                 currency: account.currency,
                 title: account.title
-            });
-        }
-
-        return accounts;
+            };
+        });
     }
 
     /**
