@@ -516,17 +516,20 @@ function RocketBank(ZenMoney) {
         return transactions;
     };
 
+    /**
+     * Преобразуем timestamp в дату
+     *
+     * @param {Number} timestamp
+     * @return {string}
+     */
     function dateFromTimestamp(timestamp) {
-        var d = new Date(timestamp * 1000);
+        var date = new Date(timestamp * 1000);
 
-        var curr_date = d.getDate();
-        var curr_month = d.getMonth();
+        var curr_month = date.getMonth();
+        // WTF??
         curr_month++;
-        var curr_year = d.getFullYear();
 
-        var formated_date = curr_year + "-" + curr_month + "-" + curr_date;
-
-        return formated_date
+        return date.getFullYear() + "-" + curr_month + "-" + date.getDate();
     }
 
     /**
