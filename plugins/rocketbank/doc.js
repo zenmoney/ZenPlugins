@@ -25,6 +25,7 @@
  * @property {Number} percent
  * @property {Number} start_date
  * @property {{currency: String, rate: Number, period: Number}} rocket_deposit
+ * @property {DepositStatement[]} statements
  */
 
 /**
@@ -121,10 +122,21 @@
  */
 
 /**
+ * Операция по депозиту
+ *
+ * @typedef {Object} DepositStatement
+ * @property {Number} date
+ * @property {Number} amount
+ * @property {Number} sum
+ * @property {String} description
+ * @property {String} kind
+ */
+
+/**
  * Ответ с данными об аккаунте
  *
  * @typedef {Object} Feed
  * @property {Response} [response]
  * @property {Pagination} pagination
- * @property {["operation", Operation][]} feed
+ * @property {["operation", Operation][]} [feed]
  */

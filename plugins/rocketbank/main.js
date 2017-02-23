@@ -137,7 +137,7 @@ function RocketBank(ZenMoney) {
 
             var operations = [];
 
-            var lastSync = getLastSyncTime(account.id);
+            var lastSync = getLastSyncTime(account.id.toString());
 
             account.statements.reverse().forEach(function (operation) {
                 if (operation.date <= lastSync) {
