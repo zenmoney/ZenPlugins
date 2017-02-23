@@ -18,8 +18,8 @@ function main() {
 function RocketBank(ZenMoney) {
     this._safe_accounts = {};
     this._accounts = {};
-    this._deposites_init_operations = [];
-    this._deposites_percent = [];
+    this._deposits_init_operations = [];
+    this._deposits_percent = [];
 
     /**
      * Синхронизировать данные из Рокетбанка
@@ -33,7 +33,7 @@ function RocketBank(ZenMoney) {
 
         var accountsProcessed = this.fetchAccounts(profile.user.safe_accounts).every(this.processAccount, this);
         var cardsProcessed = this.fetchCards(profile.user.accounts).every(this.processAccount, this);
-        var depositsProcessed = this.processDeposite();
+        var depositsProcessed = this.processDeposit();
 
         return accountsProcessed && cardsProcessed && depositsProcessed;
     };
@@ -153,12 +153,12 @@ function RocketBank(ZenMoney) {
                 switch (operation.kind) {
                     case "first_refill": // Первичное пополнение
                         transaction.income = sum;
-                        this._deposites_init_operations.push(transaction);
+                        this._deposits_init_operations.push(transaction);
                         break;
                     case "percent": // Проценты
                         transaction.income = sum;
                         transaction.payee = "Рокетбанк";
-                        this._deposites_percent.push(transaction);
+                        this._deposits_percent.push(transaction);
                         break;
                     default:
                         error("Неизвестный тип транзакции депозита", JSON.stringify(operation));
@@ -200,20 +200,20 @@ function RocketBank(ZenMoney) {
     /**
      * @return {boolean}
      */
-    this.processDeposite = function () {
+    this.processDeposit = function () {
         ZenMoney.trace("Начинаем синхронизацию депозитов");
 
-        var _init = this.processDepositeInternal(this._deposites_init_operations);
-        var _perc = this.processDepositeInternal(this._deposites_percent);
+        var init = this.processDepositInternal(this._deposits_init_operations);
+        var percent = this.processDepositInternal(this._deposits_percent);
 
-        return _init && _perc;
+        return init && percent;
     };
 
     /**
      * @param data
      * @returns {boolean}
      */
-    this.processDepositeInternal = function (data) {
+    this.processDepositInternal = function (data) {
         return data.reverse().every(function (transaction) {
             ZenMoney.trace("Обрабатываем новую транзакцию: " + JSON.stringify(transaction));
 
@@ -461,7 +461,7 @@ function RocketBank(ZenMoney) {
                     case "open_deposit": // Открытие вклада
                         var _operation_found = false;
 
-                        this._deposites_init_operations.map(function (depo_transaction) {
+                        this._deposits_init_operations.map(function (depo_transaction) {
                             if (depo_transaction.outcome == 0 && depo_transaction.income == sum) {
 
                                 if (dateFromTimestamp(depo_transaction.date) == dateFromTimestamp(transaction.date)) {
