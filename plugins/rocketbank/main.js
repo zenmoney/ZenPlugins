@@ -419,6 +419,7 @@ function RocketBank(ZenMoney) {
                         break;
                     case "commission": // Комиссия за операцию
                     case "rocket_fee": // Услуги банка
+                    case "card_commission":
                         transaction.outcome = sum;
                         transaction.payee = "Рокетбанк";
                         transaction.comment = getComment(operation);
