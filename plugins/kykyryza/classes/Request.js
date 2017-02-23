@@ -69,7 +69,7 @@ function Request() {
             request     = this.requestOperations(paginationLimit, paginationOffset);
             requestData = getJson(request);
 
-            if (requestData.part.offset != paginationOffset) { // кукуруза ограничивает выборку
+            if (requestData.part.offset != paginationOffset) { // банк ограничивает выборку
                 break;
             }
 
