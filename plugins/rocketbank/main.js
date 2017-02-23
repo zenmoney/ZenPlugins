@@ -79,7 +79,6 @@ function RocketBank(ZenMoney) {
         ZenMoney.trace("Обрабатываем список счетов. Найдено счетов: " + accounts.length);
 
         return accounts.map(function (account) {
-            console.log(JSON.stringify(account));
             var record = {
                 id: account.token,
                 title: account.title,
