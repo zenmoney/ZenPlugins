@@ -31,11 +31,11 @@ function RocketBank(ZenMoney) {
 
         this.fetchDeposits(profile.user.deposits);
 
-        var safeAccountsProcessed = this.fetchSafeAccounts(profile).every(this.processAccount, this);
+        var accountsProcessed = this.fetchAccounts(profile.user.safe_accounts).every(this.processAccount, this);
         var cardsProcessed = this.fetchCards(profile).every(this.processAccount, this);
         var depositsProcessed = this.processDeposite();
 
-        return safeAccountsProcessed && cardsProcessed && depositsProcessed;
+        return accountsProcessed && cardsProcessed && depositsProcessed;
     };
 
     /**
@@ -46,7 +46,7 @@ function RocketBank(ZenMoney) {
     this.fetchCards = function (profile) {
         ZenMoney.trace("Загружаем список карт");
 
-        var accounts = transformAccounts(profile.user.accounts);
+        var accounts = transformCards(profile.user.accounts);
         ZenMoney.trace("Найдено карт: " + accounts.length);
 
         accounts.forEach(function (account) {
@@ -72,19 +72,16 @@ function RocketBank(ZenMoney) {
     /**
      * Обрабатываем счета
      *
+     * @param {Object[]} accounts
+     *
      * @return {String[]}
      */
-    this.fetchSafeAccounts = function (profile) {
-        ZenMoney.trace("Загружаем список счетов");
+    this.fetchAccounts = function (accounts) {
+        ZenMoney.trace("Обрабатываем список счетов. Найдено счетов: " + accounts.length);
 
-        var accounts = loadSafeAccounts(profile);
-
-        accounts.forEach(function (account) {
-            this._safe_accounts[account.title] = account.id
-        }, this);
-
-        return accounts.map(function (account) {
+        return transformAccounts(accounts).map(function (account) {
             ZenMoney.trace("Обрабатываем счет: " + JSON.stringify(account));
+            this._safe_accounts[account.title] = account.id;
 
             ZenMoney.addAccount({
                 id: account.id,
@@ -96,7 +93,7 @@ function RocketBank(ZenMoney) {
             });
 
             return account.id;
-        });
+        }, this);
     };
 
     /**
@@ -243,7 +240,9 @@ function RocketBank(ZenMoney) {
     };
 
     /**
-     * @return {Object}
+     * Загружаем профиль пользователя
+     *
+     * @return {{user: {deposits: Object[], safe_accounts: Object[]}}}
      */
     this.loadProfile = function () {
         var device = getDevice();
@@ -296,9 +295,28 @@ function RocketBank(ZenMoney) {
     }
 
     /**
-     * Преобразуем объект в нужный формат
+     * Преобразуем карты в нужный формат
      *
-     * @param {{id: String, pan: String, balance: Number, currency: String, title: String}[]} accounts
+     * @param {{token: String, pan: String, balance: Number, currency: String, title: String}[]} cards
+     *
+     * @return {{id: String, pan: String, balance: Number, currency: String, title: String}[]}
+     */
+    function transformCards(cards) {
+        return cards.map(function (card) {
+            return {
+                id: card.token,
+                pan: card.pan,
+                balance: card.balance,
+                currency: card.currency,
+                title: card.title
+            };
+        });
+    }
+
+    /**
+     * Преобразуем счета в нужный формат
+     *
+     * @param {{token: String, account_details: {account: String}, balance: Number, currency: String, title: String}[]} accounts
      *
      * @return {{id: String, pan: String, balance: Number, currency: String, title: String}[]}
      */
@@ -306,38 +324,12 @@ function RocketBank(ZenMoney) {
         return accounts.map(function (account) {
             return {
                 id: account.token,
-                pan: account.pan,
+                pan: account.account_details.account,
                 balance: account.balance,
                 currency: account.currency,
                 title: account.title
             };
         });
-    }
-
-    /**
-     * Загружаем список существующих счетов
-     *
-     * @param {Object} profile
-     *
-     * @return {{id: String, pan: String, balance: Number, currency: String, title: String}[]}
-     */
-    function loadSafeAccounts(profile) {
-        var accountsNumber = profile.user.safe_accounts.length;
-        ZenMoney.trace("Найдено аккаунтов: " + accountsNumber);
-
-        var accounts = [];
-        for (var i = 0; i < accountsNumber; i++) {
-            var account = profile.user.safe_accounts[i];
-            accounts.push({
-                id: account.token,
-                pan: account.account_details.account,
-                balance: account.balance,
-                currency: account.currency,
-                title: account.title
-            });
-        }
-
-        return accounts;
     }
 
     /**
