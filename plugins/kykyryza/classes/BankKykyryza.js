@@ -82,7 +82,7 @@ function BankKykyryza() {
                 var operation = {
                     id:      dataItem.id.toString(),
                     date:    dataItem.date,
-                    comment: dataItem.title
+                    comment: (dataItem.hasOwnProperty("typeName") ? dataItem.typeName + ': ' : '') + dataItem.title
                 };
 
                 var accountId = null;
@@ -94,29 +94,44 @@ function BankKykyryza() {
                     }
                 }
 
-                if (dataItem.props.indexOf('WALLET') == 1) {
-                    // Операции с валютными кошельками рассматриваются со стороны кошелька, а не карты
-                    var isWalletIncome = !isIncome;
-
-                    dataItem.movements.forEach(function (movement) {
-                        if (movement.income) {
-                            operation.income        = movement.amount;
-                            operation.incomeAccount = isWalletIncome ? accountId : uniqueWalletId(movement.walletId);
-                        } else {
-                            operation.outcome        = movement.amount;
-                            operation.outcomeAccount = isWalletIncome ? uniqueWalletId(movement.walletId) : accountId;
-                        }
-                    });
+//                TYPES: "TRANSFER","WALLET","RECHARGE","ZKDP","DEPOSIT_PROC","CASH","FDT_RBS_COMMISSION","PAYMENT","PURCHASE"
+                if (dataItem.type == 'WALLET') {
+                    if (isIncome) {
+                        operation.income        = _m.amount;
+                        operation.incomeAccount = uniqueWalletId(dataItem.walletId);
+                        operation.outcome        = _m.accountAmount.amount;
+                        operation.outcomeAccount =  accountId;
+                    } else {
+                        operation.income        = _m.accountAmount.amount;
+                        operation.incomeAccount =  accountId;
+                        operation.outcome        = _m.amount;
+                        operation.outcomeAccount = uniqueWalletId(dataItem.walletId);
+                    }
+                } else if (dataItem.type == 'ZKDP') { // Перевод «Золотая Корона»
+                    operation.outcomeAccount = uniqueWalletId(dataItem.walletId);
+                    operation.incomeAccount  = 'cash#' + resolveInstrument(_m.currency);
+                    operation.outcome        = _m.amount;
+                    operation.income         = _m.amount;
                 } else {
+                    var _amount   = _m.amount;
+                    var _currency = _m.currency;
+                    if (_m.hasOwnProperty('amountDetail')) {
+                        _amount = _m.amountDetail.amount;
+                    }
+                    if (_m.hasOwnProperty('accountAmount')) {
+                        _amount   = _m.accountAmount.amount;
+                        _currency = _m.accountAmount.currency;
+                    }
+
                     operation.outcomeAccount = accountId;
                     operation.incomeAccount  = accountId;
-                    operation.outcome        = isIncome ? 0 : _m.accountAmount.amount;
-                    operation.income         = isIncome ? _m.accountAmount.amount : 0;
+                    operation.outcome        = isIncome ? 0 : _amount;
+                    operation.income         = isIncome ? _amount : 0;
 
                     /**
                      * Операция совершена в валюте отличной от валюты карты
                      */
-                    if (!dataItem.props.indexOf('WALLET') && _m.accountAmount.currency != _m.currency) {
+                    if (_currency != _m.currency) {
                         if (isIncome) {
                             operation.opIncome           = _m.amount;
                             operation.opIncomeInstrument = resolveInstrument(_m.currency);
@@ -124,10 +139,6 @@ function BankKykyryza() {
                             operation.opOutcome           = _m.amount;
                             operation.opOutcomeInstrument = resolveInstrument(_m.currency);
                         }
-                    }
-
-                    if (dataItem.hasOwnProperty("mcc")) {
-                        operation.mcc = dataItem.mcc.code * 1;
                     }
 
                     if (dataItem.hasOwnProperty("description")) {
@@ -138,21 +149,29 @@ function BankKykyryza() {
                         operation.payee = dataItem.paymentDetail.depositBankName;
                     }
 
-                    if (isIncome) {
-                        if (dataItem.props.indexOf('RECHARGE') == 1) { // пополнение
-                            operation.outcome = operation.income;
-                            if (dataItem.props.indexOf('TRANSFER')) {
-                                operation.outcomeAccount = 'cash#' + resolveInstrument(_m.accountAmount.currency);
-                            } else {
-                                operation.outcomeAccount = 'checking#' + resolveInstrument(_m.accountAmount.currency);
-                            }
-                        }
-                    } else {
-                        if (dataItem.props.indexOf('CASH') == 1) { // снятие нала
-                            operation.income        = operation.outcome;
-                            operation.incomeAccount = 'cash#' + resolveInstrument(_m.accountAmount.currency);
-                        }
+                    if (dataItem.type == 'RECHARGE' && isIncome) {
+                        operation.outcome        = operation.income;
+                        operation.outcomeAccount = 'cash#' + resolveInstrument(_currency);
                     }
+
+                    if (dataItem.type == 'CASH' && !isIncome) { // снятие наличных
+                        operation.income        = operation.outcome;
+                        operation.incomeAccount = 'cash#' + resolveInstrument(_currency);
+                    }
+
+//                    if (dataItem.type == 'TRANSFER') {
+//                        if (isIncome) {
+//                            operation.outcome        = operation.income;
+//                            operation.outcomeAccount = 'checking#' + resolveInstrument(_currency);
+//                        } else {
+//                            operation.income        = operation.outcome;
+//                            operation.incomeAccount = 'checking#' + resolveInstrument(_currency);
+//                        }
+//                    }
+                }
+
+                if (dataItem.hasOwnProperty("mcc")) {
+                    operation.mcc = dataItem.mcc.code * 1;
                 }
 
                 operations.push(operation);

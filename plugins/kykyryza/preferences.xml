@@ -8,6 +8,7 @@
             dialogMessage="Введите штрих-код карты, используемый для входа в интернет-банк"
             negativeButtonText="Отмена"
             positiveButtonText="ОК"
+            inputType="number"
             obligatory="true">
     </EditTextPreference>
     <EditTextPreference
