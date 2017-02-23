@@ -22,20 +22,20 @@ function RocketBank(ZenMoney) {
     this._deposites_percent = [];
 
     /**
+     * Синхронизировать данные из Рокетбанка
+     *
      * @returns {boolean}
      */
     this.sync = function () {
         var profile = this.loadProfile();
 
-        var deposites = this.fetchDeposits(profile.user.deposits);
-        var safe_accounts = this.fetchSafeAccounts(profile);
-        var accounts = this.fetchAccounts(profile);
+        this.fetchDeposits(profile.user.deposits);
 
-        var p1 = safe_accounts.every(this.processAccount, this);
-        var p2 = accounts.every(this.processAccount, this);
-        var p3 = this.processDeposite();
+        var safeAccountsProcessed = this.fetchSafeAccounts(profile).every(this.processAccount, this);
+        var accountsProcessed = this.fetchAccounts(profile).every(this.processAccount, this);
+        var depositsProcessed = this.processDeposite();
 
-        return p1 && p2 && p3;
+        return safeAccountsProcessed && accountsProcessed && depositsProcessed;
     };
 
     /**
