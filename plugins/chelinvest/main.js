@@ -1,6 +1,17 @@
 //
 
-var g_headers = {},
+var g_headers = {
+      "Accept": "application/json, text/javascript, */*; q=0.01",
+      "Accept-Encoding":"gzip, deflate, br",
+      "Accept-Language":"ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4",
+      "Cache-Control":"no-cache",
+      "Connection":"keep-alive",
+      "Content-Type":"application/x-www-form-urlencoded; charset=UTF-8",
+      "DNT":"1",
+      "Pragma":"no-cache",
+      "User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36",
+      "X-Requested-With":"XMLHttpRequest"
+    },
   g_baseurl =  "https://investpay.ru",
   g_login_url = g_baseurl + "/session",
   g_logincheck_url = g_baseurl + "/front/users/current",
@@ -30,7 +41,8 @@ function main(){
   var accList = processAccounts();
   processTransactions(accList);
 
-  // ZenMoney.setResult({success: true});
+  ZenMoney.setResult({success: true});
+  // ZenMoney.request("DELETE", g_login_url, g_headers)  // Выход
 }
 
 
@@ -49,7 +61,7 @@ function login() {
 
     throw new ZenMoney.Error("Введите начальный период для синхронизации.", false, true);
 
-  ZenMoney.requestGet(g_logincheck_url);
+  ZenMoney.requestGet(g_logincheck_url, g_headers);
   if (ZenMoney.getLastStatusCode() == 200) {
     ZenMoney.trace("Уже авторизованы.", "auth");
     return;
@@ -60,7 +72,7 @@ function login() {
     "email": g_preferences.login,
     "password": g_preferences.password,
     "confirmation_type": g_preferences.confirmation_type,
-  });
+  }, g_headers);
 
   if (ZenMoney.getLastStatusCode() != 200) {
     throw new ZenMoney.Error("Неверное имя пользователя или пароль.", false, true);
@@ -78,7 +90,7 @@ function login() {
     getJson(ZenMoney.requestPost(g_login_url, {
       "login_confirmation": smsCode,
       "email": "undefined",
-    }))
+    }, g_headers))
 
     if (ZenMoney.getLastStatusCode() != 200) {
       throw new ZenMoney.Error("Неверный код подтверждения.", "auth");
@@ -95,9 +107,9 @@ function processAccounts() {
 
   var accList = [];
 
-  var accounts = getJson(ZenMoney.requestGet(g_cards_url)).accounts;
-  var deposits = getJson(ZenMoney.requestGet(g_deposits_url)).deposits;
-  var credits = getJson(ZenMoney.requestGet(g_credits_url)).singleCredits;
+  var accounts = getJson(ZenMoney.requestGet(g_cards_url, g_headers)).accounts;
+  var deposits = getJson(ZenMoney.requestGet(g_deposits_url, g_headers)).deposits;
+  var credits = getJson(ZenMoney.requestGet(g_credits_url, g_headers)).singleCredits;
 
   ZenMoney.trace("Всего счетов " + accounts.length, "account");
 
@@ -237,7 +249,7 @@ function processTransactions(accList) {
     var account = accList[i];
     var trans_url = g_trans_pref + account.id + g_trans_suf + g_tran_time
 
-    var trans = getJson(ZenMoney.requestGet(trans_url)).transactions;
+    var trans = getJson(ZenMoney.requestGet(trans_url, g_headers)).transactions;
 
     ZenMoney.trace("Обрабатываем операции по аккаунту: '" + account.title + "', всего " + trans.length, "transac")
     var count = trans.length;
