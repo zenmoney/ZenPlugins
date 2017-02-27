@@ -32,6 +32,8 @@ function login() {
 
 	g_sessionid = ZenMoney.getData('mb_session', undefined);
 	
+	requestJson("account-info");
+	
 	if (g_sessionid) return;
 	
 	if (!g_preferences.login) 
@@ -395,7 +397,16 @@ function requestJson(requestCode, getparams, postbody) {
 	var url = g_baseurl + requestCode + "?" + params.join("&");
 
 	var data = ZenMoney.requestPost(url, postbody, g_headers);
-	
+
+	if (ZenMoney.getLastStatusCode() == 401) {
+
+    	g_sessionid = undefined;
+
+        ZenMoney.setData("mb_session", null);
+        ZenMoney.saveData();
+        return;
+    }
+
 	if (!data) {
 
 		ZenMoney.trace('Пустой ответ с url "' + url + '". Попытаемся ещё раз...');
