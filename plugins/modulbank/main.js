@@ -85,6 +85,8 @@ function login() {
 
 	ZenMoney.setData('mb_session', g_sessionid);
 	ZenMoney.saveData();
+
+	ZenMoney.trace('Сессия установлена.');
 }
 
 /**
@@ -364,6 +366,8 @@ function isAccountSkipped(id) { return ZenMoney.getLevel() >= 13 && ZenMoney.isA
  */
 function getJson(html) {
 
+	ZenMoney.trace("Парсим строку в JSON \n" + html);
+
 	try { return JSON.parse(html); } catch (e) {
 
 		ZenMoney.trace('Bad json (' + e.message + '): ' + html);
@@ -400,10 +404,12 @@ function requestJson(requestCode, getparams, postbody) {
 
 	if (ZenMoney.getLastStatusCode() == 401) {
 
+		ZenMoney.trace("Токен не актуален, статус 401");
     	g_sessionid = undefined;
 
         ZenMoney.setData("mb_session", null);
         ZenMoney.saveData();
+		ZenMoney.trace("Токен очищен в хранидеще данных модуля");
         return;
     }
 
