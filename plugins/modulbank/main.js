@@ -58,12 +58,16 @@ function login() {
 
 	code = getJson(ZenMoney.requestPost(g_authurl + "entersmscode", 
 		{"CellPhone":g_preferences.login}, 
-		{"MB-SMS-VALIDATION":smsCode}))
-	["Token"];
+		{"MB-SMS-VALIDATION":smsCode}));
 	
+	if (code["exceptionType"] == "SmsWrongCode"){
+
+		throw new ZenMoney.Error("Не верный код смс!", null, true);
+	}
+
 	code = ZenMoney.requestPost(g_authurl + "accept", 
 	{	
-		"Token":code,
+		"Token":code["Token"],
 		"RedirectUri":"https://zenmoney.ru"
 	})
 	.split('=')[1];
