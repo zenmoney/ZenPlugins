@@ -32,6 +32,8 @@ function login() {
 
 	g_sessionid = ZenMoney.getData('mb_session', undefined);
 	
+	requestJson("account-info");
+	
 	if (g_sessionid) return;
 	
 	if (!g_preferences.login) 
@@ -58,12 +60,16 @@ function login() {
 
 	code = getJson(ZenMoney.requestPost(g_authurl + "entersmscode", 
 		{"CellPhone":g_preferences.login}, 
-		{"MB-SMS-VALIDATION":smsCode}))
-	["Token"];
+		{"MB-SMS-VALIDATION":smsCode}));
 	
+	if (code["exceptionType"] == "SmsWrongCode"){
+
+		throw new ZenMoney.Error("Не верный код смс!", null, true);
+	}
+
 	code = ZenMoney.requestPost(g_authurl + "accept", 
 	{	
-		"Token":code,
+		"Token":code["Token"],
 		"RedirectUri":"https://zenmoney.ru"
 	})
 	.split('=')[1];
@@ -79,6 +85,8 @@ function login() {
 
 	ZenMoney.setData('mb_session', g_sessionid);
 	ZenMoney.saveData();
+
+	ZenMoney.trace('Сессия установлена.');
 }
 
 /**
@@ -358,6 +366,8 @@ function isAccountSkipped(id) { return ZenMoney.getLevel() >= 13 && ZenMoney.isA
  */
 function getJson(html) {
 
+	ZenMoney.trace("Парсим строку в JSON \n" + html);
+
 	try { return JSON.parse(html); } catch (e) {
 
 		ZenMoney.trace('Bad json (' + e.message + '): ' + html);
@@ -391,7 +401,18 @@ function requestJson(requestCode, getparams, postbody) {
 	var url = g_baseurl + requestCode + "?" + params.join("&");
 
 	var data = ZenMoney.requestPost(url, postbody, g_headers);
-	
+
+	if (ZenMoney.getLastStatusCode() == 401) {
+
+		ZenMoney.trace("Токен не актуален, статус 401");
+    	g_sessionid = undefined;
+
+        ZenMoney.setData("mb_session", null);
+        ZenMoney.saveData();
+		ZenMoney.trace("Токен очищен в хранидеще данных модуля");
+        return;
+    }
+
 	if (!data) {
 
 		ZenMoney.trace('Пустой ответ с url "' + url + '". Попытаемся ещё раз...');
