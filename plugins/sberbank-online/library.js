@@ -387,7 +387,12 @@ function parseBalance(text) {
 
 function parseCurrency(text) {
 	var val = getParam(text.replace(/\s+/g, ''), /-?\d[\d.,]*(\S*)/);
-	return val;
+	switch (val) {
+		case 'руб':
+		case 'руб.':
+			return 'RUB';
+		default:    return val;
+	}
 }
 
 function getRecursiveMatch(html, reStart, reEnd, replaces, parseFunc) {
