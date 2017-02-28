@@ -286,7 +286,7 @@ function processTransactions(data) {
         }
     }
 
-    ZenMoney.trace('Всего операций добавлено: ' + Object.getOwnPropertyNames(tranDict).length);
+    ZenMoney.trace('Всего операций добавлено: ' + tranDict.length);
     ZenMoney.trace('JSON: ' + JSON.stringify(tranDict));
     for (var k in tranDict)
         ZenMoney.addTransaction(tranDict[k]);
@@ -357,8 +357,8 @@ function requestJson(requestCode, urlparams, postBody) {
         if (error)
             throw new ZenMoney.Error(error);
 
-        AnyBalance.trace(html);
-        throw new AnyBalance.Error('Неизвестная ошибка вызова API. Сайт изменен?');
+        ZenMoney.trace(html);
+        throw new ZenMoney.Error('Неизвестная ошибка вызова API. Сайт изменен?');
     }
     return json;
 }
