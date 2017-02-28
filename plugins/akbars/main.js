@@ -180,6 +180,8 @@ function processTransactions(data) {
 
     for (var i = 0; i < transactions.length; i++) {
         var t = transactions[i];
+        var tran = {};
+        var dt = new Date(t.operationTime);
 
         // работаем только по активным счетам
         if (!inArray(t.contractId, g_accounts))
@@ -195,8 +197,6 @@ function processTransactions(data) {
             continue;
         }
 
-        var tran = {};
-        var dt = new Date(t.operationTime);
         tran.date = getFormattedDate('DD.MM.YYYY', dt);
 
         ZenMoney.trace('Добавляем операцию #' + i + ': ' + dt.toLocaleString() + ' - '
@@ -281,8 +281,8 @@ function processTransactions(data) {
             tranDict[tranId] = tran;
         }
 
-        if (dt.getMilliseconds() < lastSyncTime) {
-            lastSyncTime = dt.getMilliseconds();
+        if (dt.getTime() > lastSyncTime) {
+            lastSyncTime = dt.getTime();
         }
     }
 
