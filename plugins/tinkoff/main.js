@@ -269,6 +269,9 @@ function processTransactions(data) {
 		ZenMoney.trace('Добавляем операцию #'+i+': '+ dt.toLocaleString() +' - '+ t.description+ ' ('+ tran.date +') '+ (t.type == "Credit" ? '+' : (t.type == "Debit" ? '-' : '')) + t.accountAmount.value);
 		//ZenMoney.trace('JSON: '+JSON.stringify(t));
 
+		// с 23 февраля валютные снятия/пополнения исправлены
+		var currencyTransferPatch = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) >= Date.UTC(2017, 1, 23);
+
 		// доход ------------------------------------------------------------------
 		if (t.type == "Credit") {
 			tran.income = t.accountAmount.value;
@@ -284,6 +287,9 @@ function processTransactions(data) {
 
 			// операция в валюте
 			if (t.accountAmount.currency.name != t.amount.currency.name) {
+				if (currencyTransferPatch && tran.outcome > 0)
+					tran.outcome = t.amount.value;
+
 				tran.opIncome = t.amount.value;
 				tran.opIncomeInstrument = t.amount.currency.name;
 			}
@@ -320,6 +326,9 @@ function processTransactions(data) {
 
 			// операция в валюте
 			if (t.accountAmount.currency.name != t.amount.currency.name) {
+				if (currencyTransferPatch && tran.income > 0)
+					tran.income = t.amount.value;
+
 				tran.opOutcome = t.amount.value;
 				tran.opOutcomeInstrument = t.amount.currency.name;
 			}
@@ -336,6 +345,7 @@ function processTransactions(data) {
 				tran.comment = t.description;
 		}
 
+
 		// старый формат идентификатора
 		tran.id = t.payment ? t.payment.paymentId : t.id;
 
@@ -344,27 +354,37 @@ function processTransactions(data) {
 		if (transferPatch)
 			tran.id = t.id;
 
+		// со 5 февраля новый идентификатор переводов (incomeBankID и outcomeBankID)
+		// передвигаем дату патча на 3 февраля
+		var transferPatch2 = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) >= Date.UTC(2017, 1, 3);
+
 		// с 10 ноября новый порядок идентификации операций - берём не id, а ucid, если есть (чтобы холды метчились корректно)
 		// с 3 февраля исправление не верного порядка патчей
-		var idPatch = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) >= Date.UTC(2017, 1, 3);
+		/*var idPatch = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) >= Date.UTC(2017, 1, 3);
 		if (idPatch)
-			tran.id = t.ucid ? t.ucid : t.id;
+			tran.id = t.ucid ? t.ucid : t.id;*/
 
 		// ИТОГИ АНАЛИЗА:
 		//   id - уникальный идентификатор операции (технический идетификатор)
 		//   paymentId - идентификатор финансового документа/проводки
-		//   ucid - уникальный идентификатор операции
+		//   ucid - не понятная и не уникальная фигня :(
+
+		// с 5 февраля избавляемся от ucid, а не акцептированные операции имеют временный id
+		// передвигаем дату патча на 3 февраля
+		var idPatch2 = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) >= Date.UTC(2017, 1, 3);
+		if (idPatch2)
+			tran.id = t.debitingTime ? t.id : '[tmp]#'+t.id;
 
 		// склеим переводы ------------------------------------------------------------------
 		var tranId = tran.id;
 		if (transferPatch)
-			tranId = t.payment ? t.payment.paymentId : t.id;
+			tranId = t.payment ? t.payment.paymentId : tran.id ;
+		/* избавляемся от ucid
 		if (idPatch)
-			tranId = t.payment ? t.payment.paymentId : (t.ucid ? t.ucid : t.id);
-
-		// с 3 февраля новый алгоритм поиска переводов - теперь по paymentId, как и нужно было
-		if (idPatch && paymentsDict.hasOwnProperty(tranId))
-			tranId = paymentsDict[tranId];
+			tranId = t.payment ? t.payment.paymentId : (t.ucid ? t.ucid : t.id);*/
+		if (idPatch2)
+			// для переводов добавляем 'p', чтобы не пересекаться с id
+			tranId = t.payment ? 'p'+t.payment.paymentId : tran.id;
 
 		// если ранее операция с таким идентификатором уже встречалась, значит это перевод
 		if (tranDict[tranId] && tranDict[tranId].income == 0 && tran.income > 0) {
@@ -376,8 +396,13 @@ function processTransactions(data) {
 				tranDict[tranId].opIncomeInstrument = tran.opIncomeInstrument;
 			}
 
-			if (transferPatch)
+			if (transferPatch && !transferPatch2)
 				tranDict[tranId].id = tranDict[tranId].id + '~~' + tran.id;
+			if (transferPatch2){
+				tranDict[tranId].incomeBankID = tran.id;
+				tranDict[tranId].outcomeBankID = tranDict[tranId].id;
+				delete tranDict[tranId].id;
+			}
 		}
 		else if (tranDict[tranId] && tranDict[tranId].outcome == 0 && tran.outcome > 0) {
 			tranDict[tranId].outcome = tran.outcome;
@@ -388,18 +413,18 @@ function processTransactions(data) {
 				tranDict[tranId].opOutcomeInstrument = tran.opOutcomeInstrument;
 			}
 
-			if (transferPatch)
+			if (transferPatch && !transferPatch2)
 				tranDict[tranId].id = tran.id + '~~' + tranDict[tranId].id;
+			if (transferPatch2){
+				tranDict[tranId].incomeBankID = tranDict[tranId].id;
+				tranDict[tranId].outcomeBankID = tran.id;
+				delete tranDict[tranId].id;
+			}
 		}
 		else {
-			tranDict[tranId] = tran;
-
-			// если идентификатор операции не совпадает с id платежа,
-			// сохраним привязку для будущего анализа на предмет переводов
-			if (tranId != tran.id)
-				paymentsDict[tranId] = tran.id;
-		}
-
+        	ZenMoney.trace('Операция!!! ' + tranId);
+            tranDict[tranId] = tran;
+        }
 		if (tran.date > lastSyncTime)
 			lastSyncTime = tran.date;
 	}
@@ -415,8 +440,8 @@ function processTransactions(data) {
 
 /**
  * Перевод между счетами
- * @param {String} accFrom Идентификатор счёта-источника
- * @param {String} accTo Идентификатор счёта-назначения
+ * @param {String} fromAcc Идентификатор счёта-источника
+ * @param {String} toAcc Идентификатор счёта-назначения
  * @param {Number} sum Сумма перевода
  */
 function makeTransfer(fromAcc, toAcc, sum){

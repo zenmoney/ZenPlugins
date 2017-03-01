@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>raiffeisen-web</id>
+    <version>1.0</version>
+    <build>1</build>
+    <company>5156</company>
+    <files>
+        <js>main.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+	<description>Плагин синхронизации с Райффайзен Банк.
+
+Для подключения импорта укажите ваш логин и пароль от интернет-банка и выберите период, за который будут загружены операции при первой синхронизации.
+
+Логин и пароль хранятся в приложении в зашифрованном виде и не передаются на сторонние серверы, включая серверы Дзен-мани.</description>
+</provider>

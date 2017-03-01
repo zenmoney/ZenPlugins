@@ -1,35 +1,24 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen>
 	<EditTextPreference
+		key="login"
 		title="Логин"
-		positiveButtonText="ОК"
-		summary="|Логин|{@s}"
 		dialogTitle="Логин"
+		dialogMessage="Введите идентификатор пользователя или логин для входа в систему Raiffeisen R-Connect."
+		summary="|ID пользователя или логин|{@s}"
+		positiveButtonText="ОК"
 		negativeButtonText="Отмена"
-		dialogMessage="Введите логин, используемый для входа в личный кабинет Райффайзен Банк."
-		obligatory="true"
-		key="login">
+		obligatory="true">
 	</EditTextPreference>
 	<EditTextPreference
-		positiveButtonText="ОК"
 		key="password"
-		dialogTitle="Пароль"
-		negativeButtonText="Отмена"
 		title="Пароль"
+		dialogTitle="Пароль"
+		dialogMessage="Введите пароль, используемый для входа в систему Raiffeisen R-Connect."
+		inputType="textPassword"
 		summary="||***********"
-		obligatory="true"
-		dialogMessage="Введите пароль, используемый для входа в личный кабинет Райффайзен Банк."
-		inputType="textPassword">
-	</EditTextPreference>
-	<ListPreference
 		positiveButtonText="ОК"
-		key="period"
-		dialogTitle="Период загрузки"
 		negativeButtonText="Отмена"
-		title="Начальный период загрузки данных"
-		entries="Квартал|Месяц|Неделя" entryValues="92|31|7"
-        defaultValue="31"
-		summary="|31|{@s}"
-		dialogMessage="Укажите начальный период, за который нужно загрузить данные.">
-	</ListPreference>
+		obligatory="true">
+	</EditTextPreference>
 </PreferenceScreen>

@@ -95,7 +95,8 @@ function parseAccounts(json) {
                     title: account.name,
                     type: 'ccard',
                     balance: parseFloat(account.ownfunds),
-                    syncID: [account.id]
+                    syncID: [account.id],
+                    instrument: account.iso
                 });
             }
             else if (node.name == "account") {
@@ -104,7 +105,8 @@ function parseAccounts(json) {
                     title: account.name,
                     type: 'checking',
                     balance: parseFloat(account.rest),
-                    syncID: [account.number.substring(account.number.length - 4)]
+                    syncID: [account.number.substring(account.number.length - 4)],
+                    instrument: account.iso
                 });
             }
         }
@@ -167,36 +169,38 @@ function parseTransactions(accounts, json) {
             if (!account)
                 continue;
 
-            var floatAmount = parseFloat(item.amount);
+            var operationAmount = parseFloat(item.amount);
+            var accountAmount = parseFloat(item.cardAmount);
 
-            tran = {};
+            tran = {};            
             tran.id = `${accountId}_${item.date}_${item.amount}`;
+
             tran.date = item.date;
-            if (floatAmount > 0) {
-                tran.income = parseFloat(item.amount);
+            if (operationAmount > 0) {
+                tran.income = accountAmount,
                 tran.incomeAccount = accountId;
                 tran.outcome = 0;
                 tran.outcomeAccount = accountId;
                 tran.payee = item.name;
 
                 // операция в валюте
-                if (account.currency != item.CUR) {
-                    tran.opIncome = floatAmount;
-                    tran.opIncomeInstrument = item.CUR;
+                if (account.instrument != item.iso) {
+                    tran.opIncome = operationAmount;
+                    tran.opIncomeInstrument = item.iso;
                 }
             }
             else {
-                tran.outcome = -floatAmount;
+                tran.outcome = -accountAmount;
                 tran.outcomeAccount = accountId;
                 tran.income = 0;
                 tran.incomeAccount = accountId;
                 tran.comment = item.paymentPurpose;
                 tran.payee = item.contragentName;
-                tran.opOutcomeInstrument = item.CUR;
+                tran.opOutcomeInstrument = item.iso;
 
                 // операция в валюте
-                if (account.currency != item.CUR) {
-                    tran.opOutcome = -floatAmount;
+                if (account.instrument != item.iso) {
+                    tran.opOutcome = -operationAmount;
                 }
             }
 
