@@ -54,8 +54,10 @@ function main() {
     timesync = new Date(timesync);
     // Выводим в трейс информацию о начальном времени синхронизации
     ZenMoney.trace("Синхронизация со следующей даты: " + timesync.toLocaleString(), "INFO");
+    // Получаем текущее время
+    var timenow = new Date();
     // Записываем время синхронизации на будущее
-    ZenMoney.setData("timesync", timesync);
+    ZenMoney.setData("timesync", timenow);
     // Сохраняем переменные
     ZenMoney.saveData();
     
@@ -641,15 +643,15 @@ function main() {
         if (id == "" || type == "") {
             throw new ZenMoney.Error("Ошибка синхронизации: Не переданы данные.", null, true);
         }
-        var currentdate = new Date();
+        
         switch (type) {
             case "ccard":
                 // Получение транзакций по карточным счетам
-                var result = query("GET", options.url + "/api/cards/accounts/" + id + "/statement?StartDate=" + timesync.toISOString() + "&EndDate=" + currentdate.toISOString() + "&Income=true&Outcome=true&ProcessedOnly=false&SortDirection=2&PageSize=10000&PageNumber=1", null, options.headers, "OBJECT");
+                var result = query("GET", options.url + "/api/cards/accounts/" + id + "/statement?StartDate=" + timesync.toISOString() + "&EndDate=" + timenow.toISOString() + "&Income=true&Outcome=true&ProcessedOnly=false&SortDirection=2&PageSize=10000&PageNumber=1", null, options.headers, "OBJECT");
                 break;
             case "checking":
                 // Получение транзакций по счетам
-                var result = query("GET", options.url + "/api/accounts/" + id + "/statement?StartDate=" + timesync.toISOString() + "&EndDate=" + currentdate.toISOString() + "&Income=true&Outcome=true&ProcessedOnly=false&SortDirection=2&PageSize=10000&PageNumber=1", null, options.headers, "OBJECT");
+                var result = query("GET", options.url + "/api/accounts/" + id + "/statement?StartDate=" + timesync.toISOString() + "&EndDate=" + timenow.toISOString() + "&Income=true&Outcome=true&ProcessedOnly=false&SortDirection=2&PageSize=10000&PageNumber=1", null, options.headers, "OBJECT");
                 break;
             case "loan":
                 // Планируется в скором будущем
