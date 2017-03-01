@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
-    <id>qiwi</id>
-    <version>1.0</version>
+    <id>raiffeisen-web2</id>
+    <version>0.1</version>
     <build>1</build>
-    <company>13605</company>
+    <company>5156</company>
     <files>
         <js>main.js</js>
-        <js>library.js</js>
         <preferences>preferences.xml</preferences>
     </files>
-	<description>Плагин синхронизации с Qiwi-wallet.
+	<description>Плагин синхронизации с АО «Райффайзенбанк».
 
 Для подключения импорта укажите ваш логин и пароль от интернет-банка и выберите период, за который будут загружены операции при первой синхронизации.
 
