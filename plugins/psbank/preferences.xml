@@ -45,10 +45,4 @@
         entryValues="92|31|7"
         defaultValue="31">
     </ListPreference>
-    <CheckBoxPreference
-        title="Только активные счета, карты, вклады и кредиты"
-        defaultValue="true"
-        key="onlyActive"
-        summary="Получать данные только по активным счетам, картам, вкладам и кредитам. Иначе, дополнительно получать данные по закрытым счетам, картам, вкладам и кредитам и помечать их как закрытые.">
-    </CheckBoxPreference>
 </PreferenceScreen>
