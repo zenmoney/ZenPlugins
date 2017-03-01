@@ -32,9 +32,6 @@ function main() {
         options.url = "https://ib.psbank.ru/";
         // Добавляем переменную для заголовков
         options.headers = {};
-        
-        // На время тестирования, добавляем параметр onlyActive
-        options.onlyActive = "true";
     };
     
     // Получаем значение переменной timesync, в ней хранится время последней синхронизации в формате TIMESTAMP
@@ -54,11 +51,6 @@ function main() {
     timesync = new Date(timesync);
     // Выводим в трейс информацию о начальном времени синхронизации
     ZenMoney.trace("Синхронизация со следующей даты: " + timesync.toLocaleString(), "INFO");
-    // Записываем время синхронизации на будущее
-    ZenMoney.setData("timesync", timesync);
-    // Сохраняем переменные
-    ZenMoney.saveData();
-    
     
     //
     //  Экшен!
