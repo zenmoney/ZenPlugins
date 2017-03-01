@@ -23,7 +23,7 @@ var g_headers = {
     g_isSuccessful = true;
 
 /**
-* РћСЃРЅРѕРІРЅРѕР№ РјРµС‚РѕРґ
+* Основной метод
 */
 function main() {
     g_preferences = ZenMoney.getPreferences();
@@ -46,20 +46,20 @@ function main() {
 }
 
 /**
-* РћС‚РєСЂС‹РІР°РµС‚ СЂР°Р±РѕС‡СѓСЋ СЃРµСЃСЃРёСЋ СЃ СЃРµСЂРІРµСЂРѕРј
+* Открывает рабочую сессию с сервером
 */
 function openSession() {
-    ZenMoney.trace('РћС‚РєСЂС‹РІР°РµРј СЃРµСЃСЃРёСЋ');
-    if (!g_preferences.login) throw new ZenMoney.Error("Р’РІРµРґРёС‚Рµ Р»РѕРіРёРЅ РІ РёРЅС‚РµСЂРЅРµС‚-Р±Р°РЅРє!", null, true);
-    if (!g_preferences.password) throw new ZenMoney.Error("Р’РІРµРґРёС‚Рµ РїР°СЂРѕР»СЊ РІ РёРЅС‚РµСЂРЅРµС‚-Р±Р°РЅРє!", null, true);
+    ZenMoney.trace('Открываем сессию');
+    if (!g_preferences.login) throw new ZenMoney.Error("Введите логин в интернет-банк!", null, true);
+    if (!g_preferences.password) throw new ZenMoney.Error("Введите пароль в интернет-банк!", null, true);
     requestSession(g_preferences.login, g_preferences.password);
 }
 
 /**
-* Р—Р°РєСЂС‹РІР°РµС‚ СЃРµСЃСЃРёСЋ
+* Закрывает сессию
 */
 function closeSession() {
-    ZenMoney.trace('Р—Р°РєСЂС‹РІР°РµРј СЃРµСЃСЃРёСЋ');
+    ZenMoney.trace('Закрываем сессию');
     var nodeCloseSession = new marknote.Element('ser:CloseSession');
 
     var converter = new marknote.Parser();
@@ -71,10 +71,10 @@ function closeSession() {
 }
 
 /**
-* РђРІС‚РѕСЂРёР·Р°С†РёСЏ
+* Авторизация
 */
 function requestSession(login, password) {
-    ZenMoney.trace('РђРІС‚РѕСЂРёР·СѓРµРјСЃСЏ РЅР° СЃРµСЂРІРµСЂРµ...');
+    ZenMoney.trace('Авторизуемся на сервере...');
     var nodeLogin = new marknote.Element('login');
     nodeLogin.setText(login);
     var nodePassword = new marknote.Element('password');
@@ -90,21 +90,27 @@ function requestSession(login, password) {
 
     var response = ZenMoney.requestPost(g_baseUrl + g_authSer, doc.toString(), g_headers);
     var docResponse = converter.parse(response);
-    //ZenMoney.trace(docResponse.toString());
     var nodeReply = docResponse.getRootElement().getChildElement('soap:Body');
-    var nodeFault = nodeReply.getChildElement('faultstring');
+    var nodeFault = nodeReply.getChildElement('soap:Fault');
     if (nodeFault != null) {
-        
-      essful = false;
-        if (nodeFault.getText() == 'logins.password.incorrect')
-            throw 'РќРµРІРµСЂРЅС‹Р№ Р»РѕРіРёРЅ РёР»Рё РїР°СЂРѕР»СЊ';
-        else
-            throw nodeFault.getText();
+        g_isSuccessful = false;
+        var faultString = nodeFault.getChildElement('faultstring').getText();
+        if (faultString == 'logins.password.incorrect') {
+            throw '?aeooaecaiaaie: Iaaa?iue eiaei eee ia?ieu';
+        }
+        var faultDetails = nodeFault.getChildElement('detail').getChildElement('ns1:mobileServiceFault');
+        if (faultDetails != null) {
+            var faultMessage = faultDetails.getChildElement('userMessage').getText();
+            throw '?aeooaecaiaaie: ' + faultMessage;
+        }
+        else {
+            throw '?aeooaecaiaaie: ' + faultString;
+        }
     }
 }
 
 /**
-* РћР±СЂР°Р±РѕС‚РєР° СЃС‡РµС‚РѕРІ
+* Обработка счетов
 */
 function processAccounts() {
     requestCards();
@@ -114,10 +120,10 @@ function processAccounts() {
 }
 
 /**
-* Р—Р°РїСЂРѕСЃ Рё РѕР±СЂР°Р±РѕС‚РєР° РєР°СЂС‚
+* Запрос и обработка карт
 */
 function requestCards() {
-    ZenMoney.trace('Р—Р°РїСЂР°С€РёРІР°РµРј РґР°РЅРЅС‹Рµ РїРѕ РєР°СЂС‚Р°Рј...');
+    ZenMoney.trace('Запрашиваем данные по картам...');
     var nodeGetCards = new marknote.Element('ser:GetCards');
     var converter = new marknote.Parser();
     var doc = converter.parse(g_envelope);
@@ -128,7 +134,7 @@ function requestCards() {
 
     var docCards = converter.parse(cards);
     var nodeCards = docCards.getRootElement().getChildElement('soap:Body').getChildElement('ns2:GetCardsResponse').getChildElements();
-    ZenMoney.trace('РџРѕР»СѓС‡РµРЅРѕ РєР°СЂС‚: ' + nodeCards.length);
+    ZenMoney.trace('Получено карт: ' + nodeCards.length);
 
     for (var i = 0; i < nodeCards.length; i++) {
         var nodeCard = nodeCards[i];
@@ -136,7 +142,7 @@ function requestCards() {
         var cardNum = nodeCard.getChildElement('number').getText();
         cardNum = cardNum.substr(cardNum.length - 4, 4);
         if (isAccountSkipped(cardNum)) {
-            ZenMoney.trace('РџСЂРѕРїСѓСЃРєР°РµРј РєР°СЂС‚Сѓ: ' + cardNum);
+            ZenMoney.trace('Пропускаем карту: ' + cardNum);
             continue;
         }
 
@@ -161,15 +167,15 @@ function requestCards() {
         zenAccount.syncID.push(accNum);
 
         ZenMoney.addAccount(zenAccount);
-        ZenMoney.trace('Р”РѕР±Р°РІР»РµРЅР° РєР°СЂС‚Р°: ' + JSON.stringify(zenAccount));
+        ZenMoney.trace('Добавлена карта: ' + JSON.stringify(zenAccount));
     }
 }
 
 /**
-* Р—Р°РїСЂРѕСЃ Рё РѕР±СЂР°Р±РѕС‚РєР° СЃС‡РµС‚РѕРІ
+* Запрос и обработка счетов
 */
 function requestAccounts() {
-    ZenMoney.trace('Р—Р°РїСЂР°С€РёРІР°РµРј РґР°РЅРЅС‹Рµ РїРѕ СЃС‡РµС‚Р°Рј...');
+    ZenMoney.trace('Запрашиваем данные по счетам...');
     var nodeGetAccounts = new marknote.Element('ser:GetAccounts');
     var converter = new marknote.Parser();
     var doc = converter.parse(g_envelope);
@@ -180,7 +186,7 @@ function requestAccounts() {
 
     var docAccounts = converter.parse(accounts);
     var nodeAccount = docAccounts.getRootElement().getChildElement('soap:Body').getChildElement('ns2:GetAccountsResponse').getChildElements();
-    ZenMoney.trace('РџРѕР»СѓС‡РµРЅРѕ СЃС‡РµС‚РѕРІ: ' + nodeAccount.length);
+    ZenMoney.trace('Получено счетов: ' + nodeAccount.length);
 
     for (var i = 0; i < nodeAccount.length; i++) {
         var nodeAcc = nodeAccount[i];
@@ -193,7 +199,7 @@ function requestAccounts() {
                 isClosed = true;
 
         if (isClosed || isAccountSkipped(accNum)) {
-            ZenMoney.trace('РџСЂРѕРїСѓСЃРєР°РµРј СЃС‡С‘С‚: ' + accNum);
+            ZenMoney.trace('Пропускаем счёт: ' + accNum);
             continue;
         }
 
@@ -215,17 +221,17 @@ function requestAccounts() {
         };
 
         ZenMoney.addAccount(zenAccount);
-        ZenMoney.trace('Р”РѕР±Р°РІР»РµРЅ СЃС‡С‘С‚: ' + JSON.stringify(zenAccount));
+        ZenMoney.trace('Добавлен счёт: ' + JSON.stringify(zenAccount));
 
         g_accounts.push(nodeAcc);
     }
 }
 
 /**
-* Р—Р°РїСЂРѕСЃ Рё РѕР±СЂР°Р±РѕС‚РєР° РєСЂРµРґРёС‚РѕРІ
+* Запрос и обработка кредитов
 */
 function requestLoans() {
-    ZenMoney.trace('Р—Р°РїСЂР°С€РёРІР°РµРј РґР°РЅРЅС‹Рµ РїРѕ РєСЂРµРґРёС‚Р°Рј...');
+    ZenMoney.trace('Запрашиваем данные по кредитам...');
     var nodeGetLoans = new marknote.Element('ser:GetLoans');
     var converter = new marknote.Parser();
     var doc = converter.parse(g_envelope);
@@ -236,7 +242,7 @@ function requestLoans() {
 
     var docLoans = converter.parse(loans);
     var nodeLoans = docLoans.getRootElement().getChildElement('soap:Body').getChildElement('ns2:GetLoansResponse').getChildElements();
-    ZenMoney.trace('РџРѕР»СѓС‡РµРЅРѕ РєСЂРµРґРёС‚РѕРІ: ' + nodeLoans.length);
+    ZenMoney.trace('Получено кредитов: ' + nodeLoans.length);
 
     for (var i = 0; i < nodeLoans.length; i++) {
         var nodeLoan = nodeLoans[i];
@@ -272,17 +278,17 @@ function requestLoans() {
         };
 
         ZenMoney.addAccount(zenAccount);
-        ZenMoney.trace('Р”РѕР±Р°РІР»РµРЅ РєСЂРµРґРёС‚: ' + JSON.stringify(zenAccount));
+        ZenMoney.trace('Добавлен кредит: ' + JSON.stringify(zenAccount));
 
         g_loans.push(nodeLoan);
     }
 }
 
 /**
-* Р—Р°РїСЂРѕСЃ Рё РѕР±СЂР°Р±РѕС‚РєР° РІРєР»Р°РґРѕРІ
+* Запрос и обработка вкладов
 */
 function requestDeposits() {
-    ZenMoney.trace('Р—Р°РїСЂР°С€РёРІР°РµРј РґР°РЅРЅС‹Рµ РїРѕ РІРєР»Р°РґР°Рј...');
+    ZenMoney.trace('Запрашиваем данные по вкладам...');
     var nodeGetDeposits = new marknote.Element('ser:GetDeposits');
     var converter = new marknote.Parser();
     var doc = converter.parse(g_envelope);
@@ -293,7 +299,7 @@ function requestDeposits() {
 
     var docDeposits = converter.parse(deposits);
     var nodeDeposits = docDeposits.getRootElement().getChildElement('soap:Body').getChildElement('ns2:GetDepositsResponse').getChildElements();
-    ZenMoney.trace('РџРѕР»СѓС‡РµРЅРѕ РІРєР»Р°РґРѕРІ: ' + nodeDeposits.length);
+    ZenMoney.trace('Получено вкладов: ' + nodeDeposits.length);
 
     for (var i = 0; i < nodeDeposits.length; i++) {
         var nodeDep = nodeDeposits[i];
@@ -332,32 +338,32 @@ function requestDeposits() {
         };
 
         ZenMoney.addAccount(zenAccount);
-        ZenMoney.trace('Р”РѕР±Р°РІР»РµРЅ РІРєР»Р°Рґ: ' + JSON.stringify(zenAccount));
+        ZenMoney.trace('Добавлен вклад: ' + JSON.stringify(zenAccount));
     }
 }
 
 ///**
-// * РћР±СЂР°Р±РѕС‚РєР° РѕРїРµСЂР°С†РёР№ РїРѕ СЃС‡РµС‚Р°Рј
+// * Обработка операций по счетам
 // */
 function processTransactions() {
-    ZenMoney.trace('Р—Р°РїСЂР°С€РёРІР°РµРј РґР°РЅРЅС‹Рµ РїРѕ РїРѕСЃР»РµРґРЅРёРј РѕРїРµСЂР°С†РёСЏРј РїРѕ СЃС‡РµС‚Р°Рј...');
+    ZenMoney.trace('Запрашиваем данные по последним операциям по счетам...');
 
     var lastSyncTime = ZenMoney.getData('last_sync', 0);
 
-    // РїРµСЂРІРѕРЅР°С‡Р°Р»СЊРЅР°СЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ
+    // первоначальная инициализация
     if (lastSyncTime == 0) {
-        // РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Р·Р°РіСЂСѓР¶Р°РµРј РѕРїРµСЂР°С†РёРё Р·Р° РЅРµРґРµР»СЋ
+        // по умолчанию загружаем операции за неделю
         var period = !g_preferences.hasOwnProperty('period') || isNaN(period = parseInt(g_preferences.period)) ? 7 : period;
 
-        if (period > 100) period = 100;	// РЅР° РІСЃСЏРєРёР№ СЃР»СѓС‡Р°Р№, РѕРіСЂР°РЅРёС‡РёРј Р»РёРјРёС‚, Р° С‚Рѕ СЃР»РёС€РєРѕРј РґРѕР»РіРѕ Р±СѓРґРµС‚
+        if (period > 100) period = 100;	// на всякий случай ограничим лимит, а то слишком долго будет
 
         lastSyncTime = Date.now() - period * 24 * 60 * 60 * 1000;
     }
 
-    // РІСЃРµРіРґР° Р·Р°С…РІР°С‚С‹РІР°РµРј РѕРґРЅСѓ РЅРµРґРµР»СЋ РјРёРЅРёРјСѓРј
+    // всегда захватываем одну неделю минимум
     lastSyncTime = Math.min(lastSyncTime, Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-    ZenMoney.trace('Р—Р°РїСЂР°С€РёРІР°РµРј РѕРїРµСЂР°С†РёРё СЃ ' + new Date(lastSyncTime).toLocaleString());
+    ZenMoney.trace('Запрашиваем операции с ' + new Date(lastSyncTime).toLocaleString());
 
     var mapTransactions = new Map();
 
@@ -387,7 +393,7 @@ function processTransactions() {
 
         var docMovements = converter.parse(movements);
         var nodeReturns = docMovements.getRootElement().getChildElement('soap:Body').getChildElement('ns2:GetAccountMovementsResponse').getChildElements();
-        ZenMoney.trace('РџРѕР»СѓС‡РµРЅРѕ РѕРїРµСЂР°С†РёР№ РїРѕ СЃС‡РµС‚Р°Рј: ' + nodeReturns.length);
+        ZenMoney.trace('Получено операций по счетам: ' + nodeReturns.length);
          
         for (var j = 0; j < nodeReturns.length; j++) {
             var nodeRet = nodeReturns[j];
@@ -438,7 +444,6 @@ function processTransactions() {
             // and skip current transaction
             if (mapTransactions.has(transId)) {
                 var zenSameTrans = mapTransactions[transId];
-                ZenMoney.trace('zenSameTrans: ' + zenSameTrans);
 
                 if (isOutcome && (zenSameTrans.income > 0)) {
                     zenSameTrans.outcome = zenTrans.outcome;
@@ -458,9 +463,7 @@ function processTransactions() {
                 }
             }
             else {
-                ZenMoney.trace('zenSameTrans: none');
                 mapTransactions.set(transId, zenTrans);
-                ZenMoney.trace('trans added to map: ' + JSON.stringify(mapTransactions.get(transId)));
             }            
 
             if (zenTrans.date > lastSyncTime)
@@ -471,20 +474,20 @@ function processTransactions() {
     var sum = 0;
     for (var trans of mapTransactions.values()) {
         ZenMoney.addTransaction(trans);
-        ZenMoney.trace('Р”РѕР±Р°РІР»РµРЅР° РѕРїРµСЂР°С†РёСЏ: ' + JSON.stringify(trans));
+        ZenMoney.trace('Добавлена операция: ' + JSON.stringify(trans));
         sum++;
     }
-    ZenMoney.trace('Р’СЃРµРіРѕ РѕРїРµСЂР°С†РёР№ РґРѕР±Р°РІР»РµРЅРѕ: ' + sum);
+    ZenMoney.trace('Всего операций добавлено: ' + transIds.length);
 
     ZenMoney.setData('last_sync', lastSyncTime);
     ZenMoney.saveData();
 }
 
 /**
-* РћР±СЂР°Р±РѕС‚РєР° РїР»Р°С‚РµР¶РµР№ РїРѕ РєСЂРµРґРёС‚Р°Рј
+* Обработка платежей по кредитам
 */
 function processLoanPayments() {
-    ZenMoney.trace('Р—Р°РїСЂР°С€РёРІР°РµРј РґР°РЅРЅС‹Рµ Рѕ СЃРѕРІРµСЂС€С‘РЅРЅС‹С… РїР»Р°С‚РµР¶Р°С… РїРѕ РєСЂРµРґРёС‚Р°Рј...');
+    ZenMoney.trace('Запрашиваем данные о совершённых платежах по кредитам...');
     for (var i = 0; i < g_loans.length; i++) {
         var nodeLoanInfo = g_loans[i].getChildElements();
 
@@ -504,7 +507,7 @@ function processLoanPayments() {
 
         var docPayments = converter.parse(payments);
         var nodeReturns = docPayments.getRootElement().getChildElement('soap:Body').getChildElement('ns2:GetLoanPaymentsResponse').getChildElements();
-        ZenMoney.trace('РџРѕР»СѓС‡РµРЅРѕ РїР»Р°С‚РµР¶РµР№ РїРѕ РєСЂРµРґРёС‚Сѓ: ' + nodeReturns.length);
+        ZenMoney.trace('Получено платежей по кредиту: ' + nodeReturns.length);
          
         for (var j = 0; j < nodeReturns.length; j++) {
             var nodeRet = nodeReturns[j];
@@ -524,13 +527,13 @@ function processLoanPayments() {
                 incomeAccount: 'loan:' + nodeLoan.getChildElement('id').getText()
             };
             ZenMoney.addTransaction(zenTrans);
-            ZenMoney.trace('Р”РѕР±Р°РІР»РµРЅ РїР»Р°С‚С‘Р¶: ' + JSON.stringify(zenTrans));
+            ZenMoney.trace('Добавлен платёж: ' + JSON.stringify(zenTrans));
         }
     }
 }
 
 /**
-* РџСЂРѕРІРµСЂРёС‚СЊ РЅРµ РёРіРЅРѕСЂРёСЂСѓРµРјС‹Р№ Р»Рё СЌС‚Рѕ СЃС‡С‘С‚
+* Проверить не игнорируемый ли это счёт
 * @param id
 */
 function isAccountSkipped(id) {
