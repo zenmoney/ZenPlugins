@@ -51,6 +51,11 @@ function main() {
     timesync = new Date(timesync);
     // Выводим в трейс информацию о начальном времени синхронизации
     ZenMoney.trace("Синхронизация со следующей даты: " + timesync.toLocaleString(), "INFO");
+    // Записываем время синхронизации на будущее
+    ZenMoney.setData("timesync", timesync);
+    // Сохраняем переменные
+    ZenMoney.saveData();
+
     
     //
     //  Экшен!
