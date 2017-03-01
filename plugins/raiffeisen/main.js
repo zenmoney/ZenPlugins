@@ -41,8 +41,6 @@ function main() {
     }
     closeSession();
 
-    lalala.getAccount(nanana);
-
     ZenMoney.setResult({ success: isSuccessful });
 }
 
