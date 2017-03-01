@@ -32,6 +32,9 @@ function main() {
         options.url = "https://ib.psbank.ru/";
         // Добавляем переменную для заголовков
         options.headers = {};
+        
+        // На время тестирования, добавляем параметр onlyActive
+        options.onlyActive = "true";
     };
     
     // Получаем значение переменной timesync, в ней хранится время последней синхронизации в формате TIMESTAMP
