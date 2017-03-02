@@ -118,6 +118,8 @@ function RocketBank(ZenMoney) {
      * @return {String[]}
      */
     this.fetchDeposits = function (deposits) {
+        var that = this;
+
         ZenMoney.trace("Найдено вкладов: " + deposits.length);
 
         var accounts = [];
@@ -176,12 +178,12 @@ function RocketBank(ZenMoney) {
                 switch (operation.kind) {
                     case "first_refill": // Первичное пополнение
                         transaction.income = sum;
-                        this.deposits_operations.push(transaction);
+                        that.deposits_operations.push(transaction);
                         break;
                     case "percent": // Проценты
                         transaction.income = sum;
                         transaction.payee = "Рокетбанк";
-                        this.deposits_percent.push(transaction);
+                        that.deposits_percent.push(transaction);
                         break;
                     default:
                         error("Неизвестный тип транзакции депозита", JSON.stringify(operation));
