@@ -1,10 +1,6 @@
 // Главная функция в которой и будет происходить вся магия =)
 function main() {
     
-    //
-    //  Конфигурирование
-    //
-    
     // Выводим в трейс информацию о запуске плагина
     ZenMoney.trace("Запуск синхронизации с интернет-банком Промсвязьбанк", "INFO");
     // Получаем настройки плагина
@@ -32,35 +28,31 @@ function main() {
         options.url = "https://ib.psbank.ru/";
         // Добавляем переменную для заголовков
         options.headers = {};
-        
-        // На время тестирования, добавляем параметр onlyActive
-        options.onlyActive = "true";
     };
     
     // Получаем значение переменной timesync, в ней хранится время последней синхронизации в формате TIMESTAMP
     var timesync = ZenMoney.getData("timesync", 0);
+    // Получаем текущее вермя
+    var timenow = new Date();
     // Проверяем значение переменной timesync
     if (timesync === 0) {
         // Если значение переменной не установлено
         // Получаем время в формате TIMESTAMP с которой будет начата синхронизация
         // Для этого получаем текущее время в формате TIMESTAMP
-        timesync_s = Math.floor(Date.now() / 1000);
         // Затем мы делим полученное значение на 86400, чтобы определить количество полных дней
-        timesync_d = Math.floor(timesync_s / 86400);
         // Теперь умножаем количество полных дней за вычетом периода на 86400 и на 1000, получаем время в милисекундах с которого начнется синхронизация
-        timesync = (timesync_d - options.period) * 86400 * 1000;
+        //timesync = Date.getTime() - (options.period * 86400);
+        //timesync = (Math.floor(Date.now() / 86400000) - options.period) * 86400 * 1000;
+        timesync = timenow.getTime() - (options.period * 86400000) - (timenow.getHours() * 3600000) - (timenow.getMinutes() * 60000) - (timenow.getSeconds() * 1000);
     };
     // Переводим полученное значение в Date
     timesync = new Date(timesync);
     // Выводим в трейс информацию о начальном времени синхронизации
     ZenMoney.trace("Синхронизация со следующей даты: " + timesync.toLocaleString(), "INFO");
-    // Получаем текущее время
-    var timenow = new Date();
     // Записываем время синхронизации на будущее
-    ZenMoney.setData("timesync", timenow);
-    // Сохраняем переменные
+    ZenMoney.setData("timesync", timenow.getTime());
     ZenMoney.saveData();
-    
+    //return;
     
     //
     //  Экшен!
@@ -331,8 +323,6 @@ function main() {
             // Вываливаемся с ошибкой 
             throw new ZenMoney.Error("Ошибка авторизации: Не получены данные при проверке авторизации.", null, true);
         };
-        // Выводим информацию в трейс об успешной авторизации
-        ZenMoney.trace("Успешная авторизация под пользователем: " + result.clientProfile.lastName + " " + result.clientProfile.firstName + " " + result.clientProfile.middleName, "INFO");
         
         // Возвращаемся
         return;
