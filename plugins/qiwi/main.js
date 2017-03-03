@@ -3,24 +3,18 @@
  */
 
 var g_headers = {
-    'Accept': 'application/vnd.qiwi.sso-v1+json',
-    'Origin': 'https://qiwi.com',
-    'Accept-Language': 'ru;q=0.8,en-US;q=0.6,en;q=0.4',
-    'User-Agent':'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.132 Safari/537.36',
-    'Content-Type': 'application/json',
-},
-    g_baseurl = 'https://online.raiffeisen.ru/',
+        'Accept': 'application/vnd.qiwi.sso-v1+json',
+        'Content-Type': 'application/json',
+        'Accept-Encoding' : 'gzip, deflate, br',
+        'Origin': 'https://qiwi.com',
+        'Accept-Language': 'ru;q=0.8,en-US;q=0.6,en;q=0.4',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.132 Safari/537.36'
+    },
+    baseurlAuth = 'https://sso.qiwi.com/',
+    baseurl = 'https://qiwi.com/',
     g_prefs;
 
 var g_accounts = []; // линки активных счетов, по ним фильтруем обработку операций
-
-var g_currency = {
-    RUB: 'р',
-    USD: '$',
-    EUR: '€',
-    KZT: '〒',
-    UAH: '₴'
-};
 
 /**
  * Основной метод
@@ -47,14 +41,14 @@ function login() {
 
     var login = g_prefs.login;
     // Только для России
-    if(/^\d{10}$/i.test(g_prefs.login)) {
+    if (/^\d{10}$/i.test(g_prefs.login)) {
         login = '+7' + g_prefs.login;
-    } else if(!/^\s*\+/.test(g_prefs.login)) {
+    } else if (!/^\s*\+/.test(g_prefs.login)) {
         login = '+' + g_prefs.login;
     }
 
     var response;
-    try{
+    try {
         response = requestAPI({
             action: 'cas/tgts',
             isAuth: true
@@ -62,18 +56,12 @@ function login() {
             login: login,
             password: g_prefs.password
         });
-    }catch(e){
-        if(!e.fatal && /робот|robot/i.test(e.message)){
-            ZenMoney.trace('Киви затребовало капчу...');
-            response = requestAPI({
-                action: 'cas/tgts',
-                isAuth: true
-            }, {
-                login: login,
-                password: prefs.password,
-                captcha: solveCaptcha('Пожалуйста, докажите, что вы не робот.', baseurl + "6LfjX_4SAAAAAFfINkDklY_r2Q5BRiEqmLjs4UAC")
-            });
-        }else{
+    } catch (e) {
+        if (/робот|robot/i.test(e.message)) {
+            // функционал ввода reCaptcha пока не поддерживается
+            ZenMoney.trace('Киви затребовало капчу... Попробуйте сначала зайти в QIWI-кошелек ' + login + ' через браузер, ' +
+                'потом снова проведите синхронизацию в Zenmoney');
+        } else {
             throw e;
         }
     }
@@ -88,19 +76,13 @@ function login() {
 
     var html = ZenMoney.requestGet(baseurl + 'j_spring_cas_security_check?ticket=' + response.entity.ticket, addHeaders({'Referer': baseurl}));
 
-    if(/Внимание! Срок действия вашего пароля истек/i.test(html)) {
+    if (/Внимание! Срок действия вашего пароля истек/i.test(html)) {
         throw new ZenMoney.Error('Внимание! Срок действия вашего пароля истек. Зайдите в кошелек через браузер и следуйте инструкции.', null, true);
     }
 
-    ZenMoney.trace ('Успешно вошли...');
+    ZenMoney.trace('Успешно вошли...');
 
     return html;
-}
-
-
-function solveCaptcha(text, url){
-        var grc_response = ZenMoney.retrieveCode(text, url);
-        return grc_response;
 }
 
 /**
@@ -109,8 +91,10 @@ function solveCaptcha(text, url){
 function processAccounts() {
     var response = requestAPI({action: 'person/state.action'},
         {},
-        {   'Accept': 'application/json, text/javascript',
-            'X-Requested-With':'XMLHttpRequest'});
+        {
+            'Accept': 'application/json, text/javascript',
+            'X-Requested-With': 'XMLHttpRequest'
+        });
 
     var accDict = [];
 
@@ -162,7 +146,7 @@ function processAccountTransactions() {
 
     var table = getElement(html, /<div class="reports">/i);
 
-    if(!table) {
+    if (!table) {
         ZenMoney.trace(html);
         ZenMoney.trace('Не удалось найти таблицу операций!');
         return;
@@ -179,7 +163,7 @@ function processAccountTransactions() {
     };
 
     var tranDict = [];      // список найденных оперций
-    for(var i=0; i < ops.length; ++i) {
+    for (var i = 0; i < ops.length; ++i) {
         var tran = {};
 
         var sum = getElements(ops[i], /<div[^>]*class="[^"]*cash"/ig);
@@ -187,7 +171,7 @@ function processAccountTransactions() {
         for (var j = 0; j < g_accounts.length; j++) {
             var account = g_accounts[j];
 
-            if(new RegExp(currencys[account.instrument]).test(sum)) {
+            if (new RegExp(currencys[account.instrument]).test(sum)) {
                 tran.amount = parseBalance(sum);
                 tran.date = getElement(ops[i], /DateWithTransaction[^>]*>((?:[\s\S]*?<\/span){2})/i, null, parseDate);
                 tran.id = getElement(ops[i], /<div[^>]+class="transaction"[^>]*>/i, null, parseBalance);
@@ -199,7 +183,7 @@ function processAccountTransactions() {
                     tran.incomeAccount = account.id;
                     tran.outcome = 0;
                     tran.outcomeAccount = tran.incomeAccount;
-                } else if(isExpense) {
+                } else if (isExpense) {
                     tran.outcome = Math.abs(tran.amount);
                     tran.outcomeAccount = account.id;
                     tran.income = 0;
@@ -231,8 +215,7 @@ function isAccountSkipped(id) {
     return ZenMoney.getLevel() >= 13 && ZenMoney.isAccountSkipped(id);
 }
 
-var baseurlAuth = 'https://sso.qiwi.com/';
-var baseurl = 'https://qiwi.com/';
+
 
 /**
  actionObj - объект с полями:
@@ -241,16 +224,16 @@ var baseurl = 'https://qiwi.com/';
  */
 function requestAPI(actionObj, params, addOnHeaders) {
     var info = ZenMoney.requestPost(actionObj.isAuth ? baseurlAuth + actionObj.action : baseurl + actionObj.action, JSON.stringify(params), addOnHeaders ? addHeaders(g_headers, addOnHeaders) : g_headers);
-    ZenMoney.trace ('Request result: ' + info);
+    ZenMoney.trace('Request result: ' + info);
 
     var response = getJson(info);
 
     // Проверка ошибки входа
-    if(actionObj.isAuth) {
+    if (actionObj.isAuth) {
         if (!response.entity || !response.entity.ticket) {
-            if(response.entity){
+            if (response.entity) {
                 var error = response.entity.error.message;
-                if(error)
+                if (error)
                     throw new ZenMoney.Error(error, null, true);
             }
             ZenMoney.trace(info);
@@ -260,7 +243,7 @@ function requestAPI(actionObj, params, addOnHeaders) {
     } else {
         if (!response.data) {
             var error = response.message;
-            if(error)
+            if (error)
                 throw new ZenMoney.Error('Сайт qiwi.ru сообщает: ' + error + '. Попробуйте обновить данные позже.');
 
             ZenMoney.trace(info);

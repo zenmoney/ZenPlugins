@@ -282,7 +282,7 @@ function processTransactions() {
 
     }
 
-    ZenMoney.trace('Всего операций добавлено: ' + Object.getOwnPropertyNames(tranDict).length);
+    ZenMoney.trace('Всего операций добавлено: ' + tranDict.length);
     ZenMoney.trace('JSON: ' + JSON.stringify(tranDict));
     ZenMoney.addTransaction(tranDict);
 
@@ -401,8 +401,8 @@ function requestJson(requestCode, urlparams, postBody) {
         if (error)
             throw new ZenMoney.Error(error);
 
-        AnyBalance.trace(html);
-        throw new AnyBalance.Error('Неизвестная ошибка вызова API. Сайт изменен?');
+        ZenMoney.trace(html);
+        throw new ZenMoney.Error('Неизвестная ошибка вызова API. Сайт изменен?');
     }
     return json;
 }
