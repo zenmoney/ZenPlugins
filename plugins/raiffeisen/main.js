@@ -26,6 +26,8 @@ var g_headers = {
 * Основной метод
 */
 function main() {
+
+
     g_preferences = ZenMoney.getPreferences();
 
     openSession();
@@ -35,14 +37,16 @@ function main() {
         processLoanPayments();
     }
     catch (exception) {
-        ZenMoney.trace('Р§С‚Рѕ-С‚Рѕ РїРѕС€Р»Рѕ РЅРµ С‚Р°Рє:');
+        ZenMoney.trace('Что-то пошло не так:');
         ZenMoney.trace(exception.message);
         closeSession();
         throw exception;
     }
     closeSession();
 
-    ZenMoney.setResult({ success: g_isSuccessful });
+    lalala.net()
+
+    ZenMoney.setResult({ success: isSuccessful });
 }
 
 /**
@@ -90,22 +94,15 @@ function requestSession(login, password) {
 
     var response = ZenMoney.requestPost(g_baseUrl + g_authSer, doc.toString(), g_headers);
     var docResponse = converter.parse(response);
+    //ZenMoney.trace(docResponse.toString());
     var nodeReply = docResponse.getRootElement().getChildElement('soap:Body');
-    var nodeFault = nodeReply.getChildElement('soap:Fault');
+    var nodeFault = nodeReply.getChildElement('faultstring');
     if (nodeFault != null) {
         g_isSuccessful = false;
-        var faultString = nodeFault.getChildElement('faultstring').getText();
-        if (faultString == 'logins.password.incorrect') {
-            throw '?aeooaecaiaaie: Iaaa?iue eiaei eee ia?ieu';
-        }
-        var faultDetails = nodeFault.getChildElement('detail').getChildElement('ns1:mobileServiceFault');
-        if (faultDetails != null) {
-            var faultMessage = faultDetails.getChildElement('userMessage').getText();
-            throw '?aeooaecaiaaie: ' + faultMessage;
-        }
-        else {
-            throw '?aeooaecaiaaie: ' + faultString;
-        }
+        if (nodeFault.getText() == 'logins.password.incorrect')
+            throw 'Неверный логин или пароль';
+        else
+            throw nodeFault.getText();
     }
 }
 
@@ -355,7 +352,7 @@ function processTransactions() {
         // по умолчанию загружаем операции за неделю
         var period = !g_preferences.hasOwnProperty('period') || isNaN(period = parseInt(g_preferences.period)) ? 7 : period;
 
-        if (period > 100) period = 100;	// на всякий случай ограничим лимит, а то слишком долго будет
+        if (period > 100) period = 100;	// на всякий случай, ограничим лимит, а то слишком долго будет
 
         lastSyncTime = Date.now() - period * 24 * 60 * 60 * 1000;
     }
@@ -444,6 +441,7 @@ function processTransactions() {
             // and skip current transaction
             if (mapTransactions.has(transId)) {
                 var zenSameTrans = mapTransactions[transId];
+                ZenMoney.trace('zenSameTrans: ' + zenSameTrans);
 
                 if (isOutcome && (zenSameTrans.income > 0)) {
                     zenSameTrans.outcome = zenTrans.outcome;
@@ -463,7 +461,9 @@ function processTransactions() {
                 }
             }
             else {
+                ZenMoney.trace('zenSameTrans: none');
                 mapTransactions.set(transId, zenTrans);
+                ZenMoney.trace('trans added to map: ' + JSON.stringify(mapTransactions.get(transId)));
             }            
 
             if (zenTrans.date > lastSyncTime)
@@ -477,7 +477,7 @@ function processTransactions() {
         ZenMoney.trace('Добавлена операция: ' + JSON.stringify(trans));
         sum++;
     }
-    ZenMoney.trace('Всего операций добавлено: ' + transIds.length);
+    ZenMoney.trace('Всего операций добавлено: ' + sum);
 
     ZenMoney.setData('last_sync', lastSyncTime);
     ZenMoney.saveData();
