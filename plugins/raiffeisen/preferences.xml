@@ -21,4 +21,15 @@
 		negativeButtonText="Отмена"
 		obligatory="true">
 	</EditTextPreference>
+	<ListPreference
+		positiveButtonText="ОК"
+		key="period"
+		dialogTitle="Период загрузки"
+		negativeButtonText="Отмена"
+		title="Начальный период загрузки данных"
+		entries="Квартал|Месяц|Неделя" entryValues="92|31|7"
+        defaultValue="31"
+		summary="|31|{@s}"
+		dialogMessage="Укажите начальный период, за который нужно загрузить данные.">
+</ListPreference>
 </PreferenceScreen>
