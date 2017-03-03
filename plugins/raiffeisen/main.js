@@ -26,8 +26,6 @@
 * Основной метод
 */
 function main() {
-
-
     g_preferences = ZenMoney.getPreferences();
 
     openSession();
@@ -44,9 +42,7 @@ function main() {
     }
     closeSession();
 
-    lalala.net()
-
-    ZenMoney.setResult({ success: isSuccessful });
+    ZenMoney.setResult({ success: g_isSuccessful });
 }
 
 /**
