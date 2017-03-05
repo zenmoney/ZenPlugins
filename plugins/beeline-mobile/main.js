@@ -299,7 +299,7 @@ function BeelineBank(ZenMoney) {
             id: profile.auxInfo.panTail,
             type: 'ccard',
             instrument: DEFAULT_CURRENCY,
-            balance: profile.money.availableBalance,
+            balance: profile.money.availableBalance / 100,
             syncID: [parseInt(profile.auxInfo.panTail)]
         }
         ZenMoney.addAccount(beelineAccount);
