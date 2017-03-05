@@ -162,7 +162,8 @@ function BeelineBank(ZenMoney) {
                         /* Возврат кода об ошибке */
                         return false;
                     }
-                    ZenMoney.trace("Транзакция добавлена: " + transaction.comment + " " + transaction.payee);
+                    ZenMoney.trace("Транзакция #" + transaction.id + " добавлена: " +
+                        transaction.date + ": " + transaction.payee + " | " + sum);
                 }
             }
 
