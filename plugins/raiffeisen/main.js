@@ -90,15 +90,22 @@ function requestSession(login, password) {
 
     var response = ZenMoney.requestPost(g_baseUrl + g_authSer, doc.toString(), g_headers);
     var docResponse = converter.parse(response);
-    //ZenMoney.trace(docResponse.toString());
     var nodeReply = docResponse.getRootElement().getChildElement('soap:Body');
-    var nodeFault = nodeReply.getChildElement('faultstring');
+    var nodeFault = nodeReply.getChildElement('soap:Fault');
     if (nodeFault != null) {
         g_isSuccessful = false;
-        if (nodeFault.getText() == 'logins.password.incorrect')
-            throw 'Неверный логин или пароль';
-        else
-            throw nodeFault.getText();
+        var faultString = nodeFault.getChildElement('faultstring').getText();
+        if (faultString == 'logins.password.incorrect') {
+            throw 'Райффайзенбанк: Неверный логин или пароль';
+        }
+        var faultDetails = nodeFault.getChildElement('detail').getChildElement('ns1:mobileServiceFault');
+        if (faultDetails != null) {
+            var faultMessage = faultDetails.getChildElement('userMessage').getText();
+            throw 'Райффайзенбанк: ' + faultMessage;
+        }
+        else {
+            throw 'Райффайзенбанк: ' + faultString;
+        }
     }
 }
 
