@@ -3,10 +3,10 @@
     <EditTextPreference
             title="Логин"
             positiveButtonText="ОК"
-            summary="|Штрих-код карты или номер телефона|{@s}"
+            summary="|Штрих-код карты|{@s}"
             dialogTitle="Логин"
             negativeButtonText="Отмена"
-            dialogMessage="Введите штрих-код карты или номер телефона для входа в Интернет-банк &quot;Билайн&quot;."
+            dialogMessage="Введите штрих-код карты &quot;Билайн&quot;."
             obligatory="true"
             key="login">
     </EditTextPreference>
