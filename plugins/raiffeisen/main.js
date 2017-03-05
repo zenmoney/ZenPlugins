@@ -1,4 +1,4 @@
-﻿var g_headers = {
+var g_headers = {
     "Connection": "close",
     "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 5.1; m2 Build/LMY47D) Android/3.16.0(443)",
     "Content-Type": "text/xml;charset=UTF-8",
@@ -94,7 +94,8 @@ function requestSession(login, password) {
     var nodeReply = docResponse.getRootElement().getChildElement('soap:Body');
     var nodeFault = nodeReply.getChildElement('faultstring');
     if (nodeFault != null) {
-        g_isSuccessful = false;
+        
+      essful = false;
         if (nodeFault.getText() == 'logins.password.incorrect')
             throw 'Неверный логин или пароль';
         else
