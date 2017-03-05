@@ -183,14 +183,15 @@ function BeelineBank(ZenMoney) {
      * @returns {number}
      */
     function getDateOfLastSavedTransaction(account) {
-        var lastProcessedTransactionDate = ZenMoney.getData('latest_processed_date_' + account, 0);
-        if (lastProcessedTransactionDate == 0) {
-            var prefs = ZenMoney.getPreferences();
-            var defaultPeriodInDays = 7;
-            var period = !prefs.hasOwnProperty('period') || isNaN(period = parseInt(prefs.period)) ? defaultPeriodInDays : period;
-            lastProcessedTransactionDate = getCurrentDate() - period * 24 * 60 * 60 * 1000;
+        var lastProcessedDate = ZenMoney.getData('latest_processed_date_' + account, 0);
+        var prefs = ZenMoney.getPreferences();
+        var period = !prefs.hasOwnProperty('period') || isNaN(period = parseInt(prefs.period)) ? 7 : period;
+        var syncedPeriod = ZenMoney.getData('period_to_sync_' + account, 0);
+        if (lastProcessedDate == 0 || period != syncedPeriod) {
+            lastProcessedDate = getCurrentDate() - period * 24 * 60 * 60 * 1000;
+            ZenMoney.setData('period_to_sync_' + account, period);
         }
-        return lastProcessedTransactionDate;
+        return lastProcessedDate;
     }
 
     /**

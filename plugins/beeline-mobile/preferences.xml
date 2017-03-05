@@ -30,6 +30,6 @@
             entries="Квартал|Месяц|Неделя" entryValues="92|31|7"
             defaultValue="31"
             summary="|31|{@s}"
-            dialogMessage="Укажите начальный период, за который нужно загрузить данные.">
+            dialogMessage="Укажите период, за который нужно загрузить данные.">
     </ListPreference>
 </PreferenceScreen>
