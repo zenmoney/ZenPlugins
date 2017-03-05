@@ -66,11 +66,11 @@ function BeelineBank(ZenMoney) {
      */
     function syncTransactions(account) {
         /* Дата, до которой нужно загрузить данные о транзакциях */
-        var lastSavedTransactionDate = getDateOfLastSavedTransaction(account);
+        var dateOfLastProcessedTransaction = getDateOfLastProcessedTransaction(account);
 
         /* Вычисление примерного количества транзакций, которое необходимо загрузить */
         var transactionsPerDayCount = 10;
-        var daysToSyncCount = parseInt((getCurrentDate() - lastSavedTransactionDate) / 24 / 60 / 60 / 1000);
+        var daysToSyncCount = parseInt((getCurrentDate() - dateOfLastProcessedTransaction) / 24 / 60 / 60 / 1000);
         var transactionsToSyncCount = ZenMoney.getData('transactions_sync_limit') || transactionsPerDayCount * daysToSyncCount;
 
         /* Отправка данных на сервер, получение от него ответа */
@@ -88,8 +88,8 @@ function BeelineBank(ZenMoney) {
 
             /* Проверка, что все транзакции до нужной даты были загружены.
              * Если нет, увеличение количества загружаемых транзакций и повторение загрузки. */
-            var lastLoadedOperationDate = getLastLoadedOperationDate(data.operationList);
-            if (lastSavedTransactionDate <= lastLoadedOperationDate) {
+            var dateOfLastTransactionFromServer = getDateOfLastTransactionFromServer(data.operationList);
+            if (dateOfLastProcessedTransaction <= dateOfLastTransactionFromServer) {
                 ZenMoney.trace("Увеличение лимита загружаемых данных.");
                 ZenMoney.setData('transactions_sync_limit', parseInt(transactionsToSyncCount * 3 / 2));
                 syncTransactions(account);
@@ -102,7 +102,7 @@ function BeelineBank(ZenMoney) {
 
                     /* Завершение обработки, если транзакция уже была обработана в предыдущей синхронизации
                      * или не попадает в заданный период загрузки данных */
-                    if (dt < lastSavedTransactionDate) {
+                    if (dt < dateOfLastProcessedTransaction) {
                         ZenMoney.trace("Транзакция #" + operation.id +
                             " уже обработана ранее или не попадает в период загрузки данных.");
                         break;
@@ -182,7 +182,7 @@ function BeelineBank(ZenMoney) {
      *
      * @returns {number}
      */
-    function getDateOfLastSavedTransaction(account) {
+    function getDateOfLastProcessedTransaction(account) {
         var lastProcessedDate = ZenMoney.getData('latest_processed_date_' + account, 0);
         var prefs = ZenMoney.getPreferences();
         var period = !prefs.hasOwnProperty('period') || isNaN(period = parseInt(prefs.period)) ? 7 : period;
@@ -208,7 +208,7 @@ function BeelineBank(ZenMoney) {
      *
      * @returns {number}
      */
-    function getLastLoadedOperationDate(operationList) {
+    function getDateOfLastTransactionFromServer(operationList) {
         var lastOperation = operationList[operationList.length-1];
         return Date.parse(lastOperation.dateTime);
     }
