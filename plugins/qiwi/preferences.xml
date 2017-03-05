@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen>
 	<EditTextPreference
-		key="login"
 		title="Логин"
-		dialogTitle="Логин"
-		dialogMessage="Введите идентификатор пользователя или логин для входа в систему Raiffeisen R-Connect."
-		summary="|ID пользователя или логин|{@s}"
 		positiveButtonText="ОК"
+		summary="|Логин|{@s}"
+		dialogTitle="Логин"
 		negativeButtonText="Отмена"
-		obligatory="true">
+		dialogMessage="Введите логин(номер телефона), используемый для входа в Qiwi-кошелек."
+		obligatory="true"
+		key="login">
 	</EditTextPreference>
 	<EditTextPreference
-		key="password"
-		title="Пароль"
-		dialogTitle="Пароль"
-		dialogMessage="Введите пароль, используемый для входа в систему Raiffeisen R-Connect."
-		inputType="textPassword"
-		summary="||***********"
 		positiveButtonText="ОК"
+		key="password"
+		dialogTitle="Пароль"
 		negativeButtonText="Отмена"
-		obligatory="true">
+		title="Пароль"
+		summary="||***********"
+		obligatory="true"
+		dialogMessage="Введите пароль, используемый для входа в Qiwi-кошелек."
+		inputType="textPassword">
 	</EditTextPreference>
 	<ListPreference
 		positiveButtonText="ОК"
@@ -31,5 +31,5 @@
         defaultValue="31"
 		summary="|31|{@s}"
 		dialogMessage="Укажите начальный период, за который нужно загрузить данные.">
-</ListPreference>
+	</ListPreference>
 </PreferenceScreen>

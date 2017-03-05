@@ -614,6 +614,7 @@ function getElementsByTag(html, tag, replaces, parseFunc) {
 	return res;
 }
 
+
 function getParam(html, regexp, replaces, parser) {
 	if (!isset(html)) {
 		ZenMoney.trace('getParam по пустому тексту! ' + new Error().stack);
@@ -663,6 +664,53 @@ function getParamByName(html, name) {
 
 function getParamByName2(html, name) {
 	return getParam(html, new RegExp('value=["\']([^"\']+)["\'][^>]*name=["\']' + name + '["\']', 'i'));
+}
+/**
+ Ищет все элементы в указанном html, тэг которых совпадает с указанным регулярным выражением
+ Возвращает все элементы целиком, учитывая вложенные элементы с тем же тегом
+ ВНИМАНИЕ! Чтобы вернулись все элементы, надо указывать регулярное выражение с флагом g
+ Например,
+ getElements(html, /<div[^>]+id="somediv"[^>]*>/ig)
+
+ //Найти див somediv, содержащий <div class="title"
+ getElements(html, [/<div[^>]+id="somediv"[^>]*>/ig, /<div[^>]+class="title"/i])
+
+ @returns {Array}
+ */
+function getElements(html, re, replaces, parseFunc) {
+    var results = [];
+    var regexp = isArray(re) ? re[0] : re;
+    var add_re = isArray(re) ? (re.shift(), re) : null;
+    do {
+        var res = getElement(html, regexp, replaces, parseFunc);
+
+        var good_res = res && !add_re;
+        if (add_re && res) {
+            for (var i = 0; i < add_re.length; ++i) {
+                good_res = good_res || add_re[i].test(res);
+                if (good_res)
+                    break;
+            }
+        }
+        if (good_res)
+            results.push(res);
+
+        if (!regexp.global)
+            break; //Экспрешн только на один матч
+    } while (isset(res));
+    return results;
+}
+
+/** Получает дату из строки 23.02.13*/
+function parseDate(str) {
+    var matches = /(?:(\d+)[^\d])?(\d+)[^\d](\d{2,4})(?:[^\d](\d+):(\d+)(?::(\d+))?)?/.exec(str);
+    if (matches) {
+        var year = +matches[3];
+        var date = new Date(year < 1000 ? 2000 + year : year, matches[2] - 1, +(matches[1] || 1), matches[4] || 0, matches[5] || 0, matches[6] || 0);
+        var time = date.getTime();
+        //ZenMoney.trace('Parsing date ' + date + ' from value: ' + str);
+        return time;
+    }
 }
 
 function addHeaders(newHeaders, oldHeaders) {
