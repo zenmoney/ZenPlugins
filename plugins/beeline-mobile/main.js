@@ -79,7 +79,7 @@ function BeelineBank(ZenMoney) {
 
         /* Проверка, что ответ от сервера не содержит ошибки */
         if (data.hasOwnProperty("response")) {
-            ZenMoney.trace('Произошла ошибка при получении данных о транзакциях: ' + data.response.description);
+            ZenMoney.trace('Произошла ошибка при получении данных о транзакциях: ' + data.error.message);
             throw new ZenMoney.Error('Не удалось загрузить данные о транзакциях.');
         }
 
@@ -236,7 +236,7 @@ function BeelineBank(ZenMoney) {
     function authorize() {
         var data = doRequest(REQUESTS.AUTHORIZE, null);
         if (!data.hasOwnProperty('jsessionid')) {
-            throw new ZenMoney.Error('Ошибка авторизации: ' + data.response);
+            throw new ZenMoney.Error('Ошибка авторизации: ' + data.error.message);
         }
         ZenMoney.setData('jsessionid', data.jsessionid);
     };
