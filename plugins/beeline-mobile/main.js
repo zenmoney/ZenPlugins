@@ -111,7 +111,7 @@ function BeelineBank(ZenMoney) {
                     /* Подготовка транзакции к импорту в базу ZenMoney. */
                     var transaction = {
                         id: operation.id,
-                        date: operation.dateTime,
+                        date: operation.dateTime.split(' ')[0],
                         comment: operation.userComment,
                         outcome: 0,
                         outcomeAccount: account,
