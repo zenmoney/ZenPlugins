@@ -180,6 +180,8 @@ function processTransactions(data) {
 
     for (var i = 0; i < transactions.length; i++) {
         var t = transactions[i];
+        var tran = {};
+        var dt = new Date(t.operationTime);
 
         // работаем только по активным счетам
         if (!inArray(t.contractId, g_accounts))
@@ -195,8 +197,6 @@ function processTransactions(data) {
             continue;
         }
 
-        var tran = {};
-        var dt = new Date(t.operationTime);
         tran.date = getFormattedDate('DD.MM.YYYY', dt);
 
         ZenMoney.trace('Добавляем операцию #' + i + ': ' + dt.toLocaleString() + ' - '
@@ -281,12 +281,12 @@ function processTransactions(data) {
             tranDict[tranId] = tran;
         }
 
-        if (dt.getMilliseconds() < lastSyncTime) {
-            lastSyncTime = dt.getMilliseconds();
+        if (dt.getTime() > lastSyncTime) {
+            lastSyncTime = dt.getTime();
         }
     }
 
-    ZenMoney.trace('Всего операций добавлено: ' + Object.getOwnPropertyNames(tranDict).length);
+    ZenMoney.trace('Всего операций добавлено: ' + tranDict.length);
     ZenMoney.trace('JSON: ' + JSON.stringify(tranDict));
     for (var k in tranDict)
         ZenMoney.addTransaction(tranDict[k]);
@@ -357,8 +357,8 @@ function requestJson(requestCode, urlparams, postBody) {
         if (error)
             throw new ZenMoney.Error(error);
 
-        AnyBalance.trace(html);
-        throw new AnyBalance.Error('Неизвестная ошибка вызова API. Сайт изменен?');
+        ZenMoney.trace(html);
+        throw new ZenMoney.Error('Неизвестная ошибка вызова API. Сайт изменен?');
     }
     return json;
 }
