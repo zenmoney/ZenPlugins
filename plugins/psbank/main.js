@@ -28,6 +28,9 @@ function main() {
         options.url = "https://ib.psbank.ru/";
         // Добавляем переменную для заголовков
         options.headers = {};
+        
+        // Только активные счета
+        options.onlyActive = "true";
     };
     
     // Получаем значение переменной timesync, в ней хранится время последней синхронизации в формате TIMESTAMP

@@ -41,9 +41,4 @@
         entries="Квартал|Месяц|Неделя"
         entryValues="92|31|7"
         defaultValue="31" />
-    <CheckBoxPreference
-        title="Обрабатывать только открытые счета"
-        defaultValue="true"
-        key="onlyActive"
-        summary="Получать данные только по открытым счетам, картам, вкладам и кредитам." />
 </PreferenceScreen>
