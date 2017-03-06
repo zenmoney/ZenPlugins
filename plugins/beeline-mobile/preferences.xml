@@ -3,10 +3,10 @@
     <EditTextPreference
             title="Логин"
             positiveButtonText="ОК"
-            summary="|Штрих-код карты или номер телефона|{@s}"
+            summary="|Штрих-код карты|{@s}"
             dialogTitle="Логин"
             negativeButtonText="Отмена"
-            dialogMessage="Введите штрих-код карты или номер телефона для входа в Интернет-банк &quot;Билайн&quot;."
+            dialogMessage="Введите штрих-код карты &quot;Билайн&quot;."
             obligatory="true"
             key="login">
     </EditTextPreference>
@@ -27,9 +27,10 @@
             dialogTitle="Период загрузки"
             negativeButtonText="Отмена"
             title="Начальный период загрузки данных"
-            entries="Квартал|Месяц|Неделя" entryValues="92|31|7"
+            entries="Квартал|Месяц|Неделя"
+            entryValues="92|31|7"
             defaultValue="31"
             summary="|31|{@s}"
-            dialogMessage="Укажите начальный период, за который нужно загрузить данные.">
+            dialogMessage="Укажите период, за который нужно загрузить данные.">
     </ListPreference>
 </PreferenceScreen>
