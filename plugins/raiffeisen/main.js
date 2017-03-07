@@ -1,4 +1,4 @@
-var g_headers = {
+﻿var g_headers = {
     "Connection": "close",
     "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 5.1; m2 Build/LMY47D) Android/3.16.0(443)",
     "Content-Type": "text/xml;charset=UTF-8",
@@ -90,16 +90,22 @@ function requestSession(login, password) {
 
     var response = ZenMoney.requestPost(g_baseUrl + g_authSer, doc.toString(), g_headers);
     var docResponse = converter.parse(response);
-    //ZenMoney.trace(docResponse.toString());
     var nodeReply = docResponse.getRootElement().getChildElement('soap:Body');
-    var nodeFault = nodeReply.getChildElement('faultstring');
+    var nodeFault = nodeReply.getChildElement('soap:Fault');
     if (nodeFault != null) {
-        
-      essful = false;
-        if (nodeFault.getText() == 'logins.password.incorrect')
-            throw 'Неверный логин или пароль';
-        else
-            throw nodeFault.getText();
+        g_isSuccessful = false;
+        var faultString = nodeFault.getChildElement('faultstring').getText();
+        if (faultString == 'logins.password.incorrect') {
+            throw 'Райффайзенбанк: Неверный логин или пароль';
+        }
+        var faultDetails = nodeFault.getChildElement('detail').getChildElement('ns1:mobileServiceFault');
+        if (faultDetails != null) {
+            var faultMessage = faultDetails.getChildElement('userMessage').getText();
+            throw 'Райффайзенбанк: ' + faultMessage;
+        }
+        else {
+            throw 'Райффайзенбанк: ' + faultString;
+        }
     }
 }
 
@@ -349,7 +355,7 @@ function processTransactions() {
         // по умолчанию загружаем операции за неделю
         var period = !g_preferences.hasOwnProperty('period') || isNaN(period = parseInt(g_preferences.period)) ? 7 : period;
 
-        if (period > 100) period = 100;	// на всякий случай, ограничим лимит, а то слишком долго будет
+        if (period > 100) period = 100;	// на всякий случай ограничим лимит, а то слишком долго будет
 
         lastSyncTime = Date.now() - period * 24 * 60 * 60 * 1000;
     }
@@ -438,7 +444,6 @@ function processTransactions() {
             // and skip current transaction
             if (mapTransactions.has(transId)) {
                 var zenSameTrans = mapTransactions[transId];
-                ZenMoney.trace('zenSameTrans: ' + zenSameTrans);
 
                 if (isOutcome && (zenSameTrans.income > 0)) {
                     zenSameTrans.outcome = zenTrans.outcome;
@@ -458,9 +463,7 @@ function processTransactions() {
                 }
             }
             else {
-                ZenMoney.trace('zenSameTrans: none');
                 mapTransactions.set(transId, zenTrans);
-                ZenMoney.trace('trans added to map: ' + JSON.stringify(mapTransactions.get(transId)));
             }            
 
             if (zenTrans.date > lastSyncTime)
