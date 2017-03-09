@@ -315,7 +315,7 @@ function processTransactions(accList) {
 
         if (exch) {
           t.opIncome = Number((amount * exch[1] / exch[3]).toFixed(2));
-          t.opInccomeInstrument = exch[2];
+          t.opIncomeInstrument = exch[2];
         }
 
         // Перевод между счетами?
