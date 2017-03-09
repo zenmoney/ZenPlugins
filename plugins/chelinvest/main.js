@@ -241,6 +241,8 @@ function processTransactions(accList) {
     start = lastSyncTime;
   }
 
+  start = start - 7 * 86400000; // всегда захватываем ещё 7 дней для обработки холдов
+
   g_tran_time = "&start=" + dateFormat(start) + "&finish=" + dateFormat(finish);
 
   ZenMoney.trace("Запрашиваем транзакции с " + dateFormat(start) + " по " + dateFormat(finish), "transac")
@@ -266,14 +268,20 @@ function processTransactions(accList) {
       t.incomeBankID = t.id;
       t.outcomeBankID = t.id;
 
-      if (lastSyncTime / 1000 > t.date) {
+      /* if (lastSyncTime / 1000 > t.date) {
         ZenMoney.trace("Пропускаем транзакцию: #" + t.id, "skip")
         count = count - 1
         continue;
-      }
+      } */  // Защита от дублирования транзакций не нужна
 
-      var re = /(\d+|\d+\.\d+) (USD|EUR|RUB) = (\d+|\d+\.\d+) (USD|EUR|RUB)/;
+      var re = /(\d+|\d+\.\d+) (USD|EUR|RUB|GBP) = (\d+|\d+\.\d+) (USD|EUR|RUB|GBP)/;
       var exch = tran.event.description.match(re);  // Конвертация валют
+
+      re = /Пополнение(.|[\r\n])+Пункт/m;
+      var cashIn = tran.event.description.match(re);  // Пополнение наличными
+
+      re = /ВЫДАЧА НАЛИЧНЫХ/;
+      var cashOut = tran.event.description.match(re);  // Выдача наличных
 
       if (amount < 0) {
         amount = Math.abs(amount);
@@ -287,6 +295,10 @@ function processTransactions(accList) {
         if (tran.event.destinationCardOrAccount) {
           t.incomeAccount = String(tran.event.destinationCardOrAccount.id)
           t.income = t.opOutcome ? t.opOutcome : amount
+        }
+        else if (cashOut) {  // Снятие наличных?
+          t.incomeAccount = 'cash#' + (exch ? t.opOutcomeInstrument : currency[tran.account.currencyIsoCode])
+          t.income = amount
         }
         else {
           t.incomeAccount = account.id;
@@ -303,13 +315,17 @@ function processTransactions(accList) {
 
         if (exch) {
           t.opIncome = Number((amount * exch[1] / exch[3]).toFixed(2));
-          t.opInccomeInstrument = exch[2];
+          t.opIncomeInstrument = exch[2];
         }
 
         // Перевод между счетами?
         if (tran.event.destinationCardOrAccount) {
           t.outcomeAccount = String(tran.event.destinationCardOrAccount.id)
           t.outcome = t.opIncome ? t.opIncome : amount;
+        }
+        else if (cashIn) { // Пополнение наличными?
+          t.outcomeAccount = 'cash#' + (exch ? t.opIncomeInstrument : currency[tran.account.currencyIsoCode])
+          t.outcome = amount
         }
         else {
           t.outcomeAccount = account.id;
