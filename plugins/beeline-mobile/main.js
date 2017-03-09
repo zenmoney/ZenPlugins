@@ -108,6 +108,11 @@ function BeelineBank(ZenMoney) {
                         break;
                     }
 
+                    /* Пропуск транзакции, если она относится к использованию бонусов */
+                    if (operation.operationType == 2) {
+                        continue;
+                    }
+                  
                     /* Подготовка транзакции к импорту в базу ZenMoney. */
                     var transaction = {
                         id: operation.id,
@@ -291,7 +296,7 @@ function BeelineBank(ZenMoney) {
      */
     function syncAccount() {
         var profile = doRequest(REQUESTS.GET_ACCOUNT, null);
-        if (profile.hasOwnProperty("response") || !profile.hasOwnProperty("auxInfo")) {
+        if (profile.hasOwnProperty("error") || !profile.hasOwnProperty("auxInfo")) {
             ZenMoney.trace('Ошибка при получении списка аккаунтов: ' + JSON.stringify(profile));
             throw new ZenMoney.Error('Не удалось загрузить список аккаунтов');
         }
