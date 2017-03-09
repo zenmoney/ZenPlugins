@@ -1,8 +1,6 @@
 // Главная функция в которой и будет происходить вся магия =)
 function main() {
     
-    // Выводим в трейс информацию о запуске плагина
-    ZenMoney.trace("Запуск синхронизации с интернет-банком Промсвязьбанк", "INFO");
     // Получаем настройки плагина
     var options = ZenMoney.getPreferences();
     // Проверяем, что настройки успешно получены
@@ -50,8 +48,6 @@ function main() {
     };
     // Переводим полученное значение в Date
     timesync = new Date(timesync);
-    // Выводим в трейс информацию о начальном времени синхронизации
-    ZenMoney.trace("Синхронизация со следующей даты: " + timesync.toLocaleString(), "INFO");
     // Записываем время синхронизации на будущее
     ZenMoney.setData("timesync", timenow.getTime());
     ZenMoney.saveData();
@@ -80,15 +76,10 @@ function main() {
         for (var i1 = 0; i1 < ccards.length; ++i1) {
             // Получаем id карточного счета и заносим в переменную
             var id = ccards[i1].substr(2);
-            // Выведем в трейс инфу
-            ZenMoney.trace("Получение транзакций по карточному счету: " + id, "INFO");
             // Запускаем процесс синхронизации транзакций
             syncTransactions(id,"ccard");
         };
-    } else {
-        // Выведем в трейс инфу, о том что нету карточных счетов
-        ZenMoney.trace("Невозможно провести синхронизацию по карточным счетам, т.к. нет ниодного карточного счета.", "INFO");
-    };
+    }
     
     // Следующие идут счета
     if (checkings.length > 0) {
@@ -96,15 +87,10 @@ function main() {
         for (var i1 = 0; i1 < checkings.length; ++i1) {
             // Получаем id счета и заносим в переменную
             var id = checkings[i1].substr(2);
-            // Выведем в трейс инфу
-            ZenMoney.trace("Получение транзакций по счету: " + id, "INFO");
             // Запускаем процесс синхронизации транзакций
             syncTransactions(id,"checking");
         };
-    } else {
-        // Выведем в трейс инфу, о том что нету счетов
-        ZenMoney.trace("Невозможно провести синхронизацию по счетам, т.к. нет ниодного счета.", "INFO");
-    };
+    }
     
     // Теперь по кредитам
     if (loans.length > 0) {
@@ -112,15 +98,10 @@ function main() {
         for (var i1 = 0; i1 < loans.length; ++i1) {
             // Получаем id счета и заносим в переменную
             var id = loans[i1].substr(2);
-            // Выведем в трейс инфу
-            ZenMoney.trace("Получение транзакций по кредиту: " + id, "INFO");
             // Запускаем процесс синхронизации транзакций
             syncTransactions(id,"loan");
         };
-    } else {
-        // Выведем в трейс инфу, о том что нету кредитов
-        ZenMoney.trace("Невозможно провести синхронизацию по кредитам, т.к. нет ниодного кредита. Вы молодец =)", "INFO");
-    };
+    }
     
     // И закончим вкладами
     if (deposits.length > 0) {
@@ -128,15 +109,10 @@ function main() {
         for (var i1 = 0; i1 < deposits.length; ++i1) {
             // Получаем id счета и заносим в переменную
             var id = deposits[i1].substr(2);
-            // Выведем в трейс инфу
-            ZenMoney.trace("Получение транзакций по вкладу: " + id, "INFO");
             // Запускаем процесс синхронизации транзакций
             syncTransactions(id, "deposit");
         };
-    } else {
-        // Выведем в трейс инфу, о том что нету вкладов
-        ZenMoney.trace("Невозможно провести синхронизацию по вкладам, т.к. нет ниодного вклада.", "INFO");
-    };
+    }
     
     //
     // Если выполнение дошло до сюда
@@ -249,8 +225,6 @@ function main() {
         };
         // Проверяем включение двухэтапной авторизации
         if(result.isSecondStepAuthRequired === "true") {
-            // выводим в трейс информацию по поводу включенной двухэтапной авторизации
-            ZenMoney.trace("Включена двухэтапная авторизация", "INFO");
             // Получаем информацию по возможным подтверждением авторизации (SMS, PUSH)
             var auth = query("GET", options.url + "/api/authentication/secondStepAuthRequest", null, options.headers, "OBJECT");
             // Если запрос не выполнился
@@ -342,8 +316,6 @@ function main() {
             // Вываливаемся с ошибкой 
             throw new ZenMoney.Error("Ошибка синхронизации: Не получены данные по карточным счетам.", null, true);
         };
-        // Выводим в трейс информацию по количеству карточных счетов
-        ZenMoney.trace("Количество карточных счетов: " + result.cardAccounts.length, "INFO");
         // Проверяем количество полученных карточных счетов
         if (result.cardAccounts.length === 0) {
             // Если их количество равно 0, завершаем работу функции без ошибки
@@ -353,10 +325,6 @@ function main() {
         for (var i1 = 0; i1 < result.cardAccounts.length; ++i1) {
             // Передаем переменной account значение из массива по индексу
             var account = result.cardAccounts[i1];
-            // Проверяем на игнорируемость
-            if (isAccountSkipped("id" + account.cardAccountId)) {
-                ZenMoney.trace("Пропускаем: id" + account.cardAccountId, "INFO");
-            }
             // Создаем массив с данными
             // В номера карт, добавляем еще номер счета
             var account_info = {
@@ -390,12 +358,9 @@ function main() {
                     var card = account.cards[i2];
                     // Обрезаем номер карты до последних 4 цифр и добавляем в массив со значениями
                     account_info.syncID.push(card.cardNumber.substring(card.cardNumber.length - 4))
-                    //ZenMoney.trace("Карта " + card.cardNumber.length - 4 + " добавлена");
                 };
                 
             };
-             // Выводим в трейс id обрабатываемого карточного счета
-            ZenMoney.trace("Обработка карточного счета: " + account_info.title + " (#" + account_info.id + ")", "INFO");
             // Добавляем аккаунт
             ZenMoney.addAccount(account_info);
             cards.push(account_info.id);
@@ -415,8 +380,6 @@ function main() {
             // Вываливаемся с ошибкой
             throw new ZenMoney.Error("Ошибка синхронизации счетов: Не получены данные.", null, true);
         };
-        // Выводим в трейс информацию по количеству счетов
-        ZenMoney.trace("Количество счетов: " + result.length, "INFO");
         // Проверяем количество полученных счетов
         if (result.length === 0) {
             // Если их количество равно 0, завершаем работу функции без ошибки
@@ -426,10 +389,7 @@ function main() {
         for (var i1 = 0; i1 < result.length; ++i1) {
             // Передаем переменной account значение из массива по индексу
             var account = result[i1];
-                        // Проверяем на игнорируемость
-            if (isAccountSkipped("id" + account.AccountId)) {
-                ZenMoney.trace("Пропускаем: id" + account.AccountId, "INFO");
-            }
+
             // Создаем массив с данными
             // В номера карт, добавляем еще номер счета
             var account_info = {
@@ -453,8 +413,6 @@ function main() {
                 // Указываем его архивным
                 account_info.archive = true;
             };
-            // Выводим в трейс название и id обрабатываемого счета
-            ZenMoney.trace("Обработка счета: " + account_info.title + " (#" + account_info.id + ")", "INFO");
             // Добавляем аккаунт
             ZenMoney.addAccount(account_info);
             checkings.push(account_info.id);
@@ -474,8 +432,6 @@ function main() {
             // Вываливаемся с ошибкой 
             throw new ZenMoney.Error("Ошибка синхронизации: Не получены данные по кредитам.", null, true);
         };
-        // Выводим в трейс информацию по количеству кредитов
-        ZenMoney.trace("Количество кредитов: " + result.loans.length, "INFO");
         // Проверяем количество полученных кредитов
         if (result.loans.length === 0) {
             // Если их количество равно 0, завершаем работу функции без ошибки
@@ -520,8 +476,6 @@ function main() {
                 // Указываем его архивным
                 account_info.archive = true;
             };
-            // Выводим в трейс название и id обрабатываемого кредита
-            ZenMoney.trace("Обработка кредита: " + account_info.title + " (#" + account_info.id + ")", "INFO");
             // Добавляем аккаунт
             ZenMoney.addAccount(account_info);
             loans.push(account_info.id);
@@ -541,8 +495,7 @@ function main() {
             // Вываливаемся с ошибкой 
             throw new ZenMoney.Error("Ошибка синхронизации: Не получены данные по вкладам.", null, true);
         };
-        // Выводим в трейс информацию по количеству вкладов
-        ZenMoney.trace("Количество вкладов: " + result.length, "INFO");
+
         // Проверяем количество полученных вкладов
         if (result.length === 0) {
             // Если их количество равно 0, завершаем работу функции без ошибки
@@ -610,19 +563,10 @@ function main() {
                         };
                     };
                 };
-                
-                // Проверяем установлено ли значение
-                if (account_info.percent === 0) {
-                    // Значение не установлено, предполагается что не удалось определить.
-                    // Выведем информация в трейс, о том что не определили процент для вклада
-                    ZenMoney.trace("Не удалось определить процент для вклада: " + account_info.title + " (#" + account_info.id + ")", "WARN");
-                };
             } else {
                 // Добавляем значение в массив
                 account_info.percent = account.incarnations[0].contractDetails[0].interestRate * 100;
             };
-            // Выводим в трейс название и id обрабатываемого вклада
-            ZenMoney.trace("Обработка вклада: " + account_info.title + " (#" + account_info.id + ")", "INFO");
             // Добавляем аккаунт
             ZenMoney.addAccount(account_info);
             deposits.push(account_info.id);
@@ -702,10 +646,6 @@ function main() {
                 
                 ZenMoney.addTransaction(transaction_info);
             }
-            ZenMoney.trace("Добавлено транзакций: " + i1 + " из " + result.transactions.length, "INFO");
-        } else {
-            // Напишем о том, что нет транзакций
-            ZenMoney.trace("Транзакций по счету не найдено.", "INFO");
         }
         
         return true;
