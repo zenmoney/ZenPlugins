@@ -112,7 +112,7 @@ function BeelineBank(ZenMoney) {
                     if (operation.operationType == 2) {
                         continue;
                     }
-
+                  
                     /* Подготовка транзакции к импорту в базу ZenMoney. */
                     var transaction = {
                         id: operation.id,

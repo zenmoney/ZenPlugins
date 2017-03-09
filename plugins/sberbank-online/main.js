@@ -3,7 +3,7 @@ var g_headers = {
 		'Accept-Charset': 'windows-1251,utf-8;q=0.7,*;q=0.3',
 		'Accept-Language': 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
 		'Connection': 'keep-alive',
-		'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.76 Safari/537.36',
+		'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.76 Safari/537.36'
 	},
 	g_nodeurl = '',
 	g_preferences;
@@ -35,7 +35,7 @@ function main(){
 			ZenMoney.addAccount(acc.account);
 		}
 
-		ZenMoney.trace('JSON операции: ' + JSON.stringify(acc.transactions));
+		ZenMoney.trace(acc.transactions ? 'JSON операции: ' + JSON.stringify(acc.transactions) : 'Операций нет.');
 		ZenMoney.addTransaction(acc.transactions);
 
 	}
@@ -103,7 +103,11 @@ function loginAPI() {
 			time: 120000,
 			inputType: 'number'
 		});
-		ZenMoney.trace('Код авторизации получен.');
+
+		if (!code || code == 0 || String(code).trim() == '')
+			throw new ZenMoney.Error('Получен пустой код авторизации устройства', true);
+		else
+			ZenMoney.trace('Код авторизации получен.');
 
 		html = requestApiLogin('registerApp.do', {
 			'operation':'confirm',
@@ -436,6 +440,7 @@ function processApiTransactions(){
 		var acc = g_accounts[g_accID].account, xml, operations, tran, sum, description, tranInstrument = false;
 		ZenMoney.trace(acc.title +': '+ g_accID);
 
+		var dtPatch, parsingPatch, instrument;
 		switch (acc.type) {
 			//--- карты ----------------------
 			case 'ccard':
@@ -501,20 +506,32 @@ function processApiTransactions(){
 						if (description.substr(0, 9) == '<![CDATA[')
 							description = description.substring(9, description.length - 3);
 
-						if (/^Note\s+acceptance\s+/i.test(description) && sum > 0) {
-							tran.outcome = sum;
-							tran.outcomeAccount = 'cash#' + getElementByTag(operation, ['currency', 'code'], replaceTagsAndSpaces);
-						}
-						else if (/^(?:ATM|ITT)\s+/i.test(description) && sum < 0) {
-							tran.income = -sum;
-							tran.incomeAccount = 'cash#' + getElementByTag(operation, ['currency', 'code'], replaceTagsAndSpaces);
-						}
+						dtPatch = getWebDate(tran.date, true);
+						//ZenMoney.trace("dtPatch: "+ dtPatch);
+
+						// с 16 февраля анализ получателей в вебе по Retail
+						parsingPatch = Date.UTC(dtPatch.getFullYear(), dtPatch.getMonth(), dtPatch.getDate()) >= Date.UTC(2017, 1, 16);
+						instrument = getElementByTag(operation, ['currency', 'code'], replaceTagsAndSpaces);
+						if (parsingPatch)
+							// новая схема обработки описания (после 16 февраля)
+							parseTransactionDescription(description, sum, instrument, tran);
+
 						else {
-							description = description.replace(/^Retail\s+/i, '');
-							if (retail = /^Retail\s+(.*)/i.exec(description))
-								tran.payee = retail[1];
-							else
-								tran.comment = description;
+							if (/^Note\s+acceptance\s+/i.test(description) && sum > 0) {
+								tran.outcome = sum;
+								tran.outcomeAccount = 'cash#' + instrument;
+							}
+							else if (/^(?:ATM|ITT)\s+/i.test(description) && sum < 0) {
+								tran.income = -sum;
+								tran.incomeAccount = 'cash#' + instrument;
+							}
+							else {
+								description = description.replace(/^Retail\s+/i, '');
+								if (retail = /^Retail\s+(.*)/i.exec(description))
+									tran.payee = retail[1];
+								else
+									tran.comment = description;
+							}
 						}
 					}
 
@@ -566,20 +583,32 @@ function processApiTransactions(){
 						if (description.substr(0, 9) == '<![CDATA[')
 							description = description.substring(9, description.length - 3);
 
-						if (/^Note\s+acceptance\s+/i.test(description) && sum > 0) {
-							tran.outcome = sum;
-							tran.outcomeAccount = 'cash#' + getElementByTag(operation, ['currency', 'code'], replaceTagsAndSpaces);
-						}
-						else if (/^(?:ATM|ITT)\s+/i.test(description) && sum < 0) {
-							tran.income = -sum;
-							tran.incomeAccount = 'cash#' + getElementByTag(operation, ['currency', 'code'], replaceTagsAndSpaces);
-						}
+						dtPatch = getWebDate(tran.date, true);
+						//ZenMoney.trace("dtPatch: "+ dtPatch);
+
+						// с 16 февраля анализ получателей в вебе по Retail
+						parsingPatch = Date.UTC(dtPatch.getFullYear(), dtPatch.getMonth(), dtPatch.getDate()) >= Date.UTC(2017, 1, 16);
+						instrument = getElementByTag(operation, ['currency', 'code'], replaceTagsAndSpaces);
+						if (parsingPatch)
+							// новая схема обработки описания (после 16 февраля)
+							parseTransactionDescription(description, sum, instrument, tran);
+
 						else {
-							description = description.replace(/^Retail\s+/i, '');
-							if (retail = /^Retail\s+(.*)/i.exec(description))
-								tran.payee = retail[1];
-							else
-								tran.comment = description;
+							if (/^Note\s+acceptance\s+/i.test(description) && sum > 0) {
+								tran.outcome = sum;
+								tran.outcomeAccount = 'cash#' + instrument;
+							}
+							else if (/^(?:ATM|ITT)\s+/i.test(description) && sum < 0) {
+								tran.income = -sum;
+								tran.incomeAccount = 'cash#' + instrument;
+							}
+							else {
+								description = description.replace(/^Retail\s+/i, '');
+								if (retail = /^Retail\s+(.*)/i.exec(description))
+									tran.payee = retail[1];
+								else
+									tran.comment = description;
+							}
 						}
 					}
 
@@ -611,9 +640,10 @@ function processApiTransactions(){
 				g_accounts[g_accID].transactions = trans;
 		}
 
-		if (g_accounts[g_accID].transactions)
-			ZenMoney.trace('Операций по счёту найдено: '+ g_accounts[g_accID].transactions.length);
-		else
+		if (g_accounts[g_accID].transactions) {
+			ZenMoney.trace('Операций по счёту найдено: ' + g_accounts[g_accID].transactions.length);
+			ZenMoney.trace('JSON: '+ JSON.stringify(g_accounts[g_accID].transactions));
+		} else
 			ZenMoney.trace('Операций по счёту не найдено.');
 	}
 }
@@ -790,6 +820,9 @@ function loginWebAccount(page) {
 					inputType: 'number'
 			});
 
+			if (!pass || pass == 0 || String(pass).trim() == '')
+				throw new ZenMoney.Error('Получен пустой код для входа в веб-версию Сбербанк Онлайн', true);
+
 			html = ZenMoney.requestPost(baseurl + '/PhizIC/async/confirm.do', {
 				'receiptNo': '',
 				'passwordsLeft': '',
@@ -931,6 +964,7 @@ function processWebTransactions(id, acc){
 
 	var operations = getParams(tableElem, /<tr[^>]*class="ListLine\d+">[\s\S]*?<\/tr>/ig), tranDict = [];
 	ZenMoney.trace('Получено '+operations.length+' операций');
+
 	for(var i = 0; i < operations.length; i++) {
 		var operation = operations[i];
 		//ZenMoney.trace('Operation: '+ operation);
@@ -968,27 +1002,102 @@ function processWebTransactions(id, acc){
 
 		description = td[0];
 		if (description) {
-			if (/^Note\s+acceptance\s+/i.test(description) && sum > 0) {
-				tran.outcome = sum;
-				tran.outcomeAccount = 'cash#' + (tran.opOutcomeInstrument || tran.outcomeInstrument);
-			}
-			else if (/^(?:ATM|ITT)\s+/i.test(description) && sum < 0) {
-				tran.income = -sum;
-				tran.incomeAccount = 'cash#' + (tran.opOutcomeInstrument || tran.outcomeInstrument);
-			}
+			var dt = getWebDate(tran.date, true);
+			//ZenMoney.trace("dt: "+ dt);
+
+			// с 16 февраля анализ получателей в вебе по Retail
+			var parsingPatch = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) >= Date.UTC(2017, 1, 16);
+
+			if (parsingPatch)
+				// новая схема обработки описания (после 16 февраля)
+				parseTransactionDescription(description, sum.summa, sum.instrument, tran);
+
 			else {
-				description = description.replace(/^Retail\s+/i, '');
-				if (retail = /^Retail\s+(.*)/i.exec(description))
-					tran.payee = retail[1];
-				else
-					tran.comment = description;
+				// старая ОЩИБОЧНАЯ схема обработки (до 16 февраля)
+
+				// взнос наличными
+				if (/^Note\s+acceptance\s+/i.test(description) && sum > 0) {
+					tran.outcome = sum;
+					tran.outcomeAccount = 'cash#' + (tran.opOutcomeInstrument || tran.outcomeInstrument);
+				}
+				// снятие наличных
+				else if (/^(?:ATM|ITT)\s+/i.test(description) && sum < 0) {
+					tran.income = -sum;
+					tran.incomeAccount = 'cash#' + (tran.opOutcomeInstrument || tran.outcomeInstrument);
+				}
+				else {
+					// ошибочный алгоритм
+					dt = new Date(tran.date);
+					var payeePatch = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) >= Date.UTC(2017, 1, 3);
+					if (payeePatch) {
+						if (retail = /\bRetail\s+(.*)/i.exec(description))
+							tran.payee = retail[1];
+					} else
+						tran.comment = description;
+				}
 			}
 		}
 
 		tranDict.push(tran);
 	}
 
+	//ZenMoney.trace('JSON: '+ JSON.stringify(tranDict));
 	return tranDict;
+}
+
+/**
+ * Обработать описание операции
+ * @param {string} description Описание операции
+ * @param {number} sum Сумма операции
+ * @param {string} instrument Код валюты
+ * @param {object} tran Транзакция
+ * @returns {object} tran
+ */
+function parseTransactionDescription(description, sum, instrument, tran) {
+
+	// оплата по карте
+	var str = null;
+	if (str = getWebDescriptionValue(description, 'Retail'))
+		tran.payee = str;
+
+	// оплата в кредит
+	else if (str = getWebDescriptionValue(description, 'Credit'))
+		tran.comment = str;
+
+	// поступление
+	else if (str = getWebDescriptionValue(description, 'CH Debit'))
+		tran.comment = str;
+
+	// списание
+	else if (str = getWebDescriptionValue(description, 'CH Payment'))
+		tran.comment = str;
+
+	// платёж в Сбербанк Онлайн
+	else if (str = getWebDescriptionValue(description, 'BP Billing Transfer'))
+		tran.comment = str;
+
+	// unique
+	else if (str = getWebDescriptionValue(description, 'Unique'))
+		tran.payee = str;
+
+	// взнос наличными
+	else if (str = getWebDescriptionValue(description, 'Note Acceptance') && sum > 0) {
+		ZenMoney.trace('Перевод на сумму: '+ sum);
+		tran.outcome = sum;
+		tran.outcomeAccount = 'cash#' + instrument;
+	}
+
+	// снятие наличных
+	else if (str = getWebDescriptionValue(description, 'ATM', 'ITT') && sum < 0) {
+		tran.income = -sum;
+		tran.incomeAccount = 'cash#' + instrument;
+	}
+
+	// значение по умолчанию - оставляем описание как есть
+	else
+		tran.comment = description;
+
+	return tran;
 }
 
 /**
@@ -1277,10 +1386,13 @@ function clearHtml(html) {
 
 /**
  * Получить дату в формате ДД.ММ.ГГГГ
- * @param str
+ * @param {string} str Дата из веб-версии Сбербанк Онлайн
+ * @param {boolean} dtFormat Возвращать ли дату в формате Date или строкой (по умолчанию)
  * @returns {*}
  */
-function getWebDate(str){
+function getWebDate(str, dtFormat){
+	dtFormat = dtFormat || false;
+
 	if (str.toLowerCase().indexOf("сегодня") >= 0)
 		return getFormattedDate();
 	
@@ -1293,16 +1405,25 @@ function getWebDate(str){
 		var year = dt.getFullYear();
 		if (month > dt.getMonth())
 			year -= 1;
+		if (dtFormat) {
+			var day = parseInt(str.substr(0, 2));
+			dt.setFullYear(year, month, day);
+			return dt;
+		}
 		return str + '.' + year;
-	} else if (str.length == 10 && str[2] == '.' && str[5] == '.')
+	}
+	else if (str.length == 10 && str[2] == '.' && str[5] == '.') {
+		if (dtFormat)
+			return new Date(parseInt(str.substr(6, 4)), parseInt(str.substr(3, 2))-1, parseInt(str.substr(0, 2)))
 		return str;
+	}
 
 	throw new ZenMoney.Error('Некорректная дата операции в web-версии: '+ str);
 }
 
 /**
  * Получить сумму операции в web-интерфейсе
- * @param str - строка
+ * @param {string} str Сумма из веб-версии Сбербанк Онлайн
  * @returns {{}}
  */
 function getWebSum(str){
@@ -1323,4 +1444,19 @@ function getWebSum(str){
 		result.instrument = parseCurrency(str);
 	}
 	return result;
+}
+
+/**
+ * Получить значение описания операции
+ * @param {string} description ОПисание
+ * @param {string} str Искомая строка
+ * @param {string} str2 Вторая искомая строка
+ * @returns {string}
+ */
+function getWebDescriptionValue(description, str, str2) {
+	var pos = description.lastIndexOf(str);
+	var pos2 = !str2 ? -1 : description.lastIndexOf(str2);
+	if (pos >= 0 || pos2 >= 0)
+		return description.substr(pos >= 0 ? pos + str.length : pos2 + str2.length).trim();
+	return null;
 }

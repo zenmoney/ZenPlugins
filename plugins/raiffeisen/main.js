@@ -5,21 +5,22 @@
     "Host": "connect.raiffeisen.ru",
     "Accept-Encoding": "gzip"
 },
-g_envelope = "\
-    <soapenv:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://entry.rconnect/xsd\" xmlns:ser=\"http://service.rconnect\" xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:soapenc=\"http://schemas.xmlsoap.org/soap/encoding/\">\
-    <soapenv:Header />\
-    <soapenv:Body>\
-    </soapenv:Body>\
-    </soapenv:Envelope>",
-g_baseUrl = 'https://connect.raiffeisen.ru/Mobile-WS/services/',
-g_authSer = 'RCAuthorizationService',
-g_cardSer = 'RCCardService',
-g_accSer = 'RCAccountService',
-g_loanSer = 'RCLoanService',
-g_depositSer = 'RCDepositService',
-g_accounts = [],
-g_loans = [],
-g_preferences;
+    g_envelope = "\
+        <soapenv:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://entry.rconnect/xsd\" xmlns:ser=\"http://service.rconnect\" xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:soapenc=\"http://schemas.xmlsoap.org/soap/encoding/\">\
+        <soapenv:Header />\
+        <soapenv:Body>\
+        </soapenv:Body>\
+        </soapenv:Envelope>",
+    g_baseUrl = 'https://connect.raiffeisen.ru/Mobile-WS/services/',
+    g_authSer = 'RCAuthorizationService',
+    g_cardSer = 'RCCardService',
+    g_accSer = 'RCAccountService',
+    g_loanSer = 'RCLoanService',
+    g_depositSer = 'RCDepositService',
+    g_accounts = [],
+    g_loans = [],
+    g_preferences,
+    g_isSuccessful = true;
 
 /**
 * Основной метод
@@ -28,22 +29,20 @@ function main() {
     g_preferences = ZenMoney.getPreferences();
 
     openSession();
-    var isSuccessful = true;
     try {
         processAccounts();
         processTransactions();
         processLoanPayments();
     }
     catch (exception) {
+        ZenMoney.trace('Что-то пошло не так:');
         ZenMoney.trace(exception.message);
-        ZenMoney.trace('Что-то пошло не так, закрываем сессию.');
-        isSuccessful = false;
+        closeSession();
+        throw exception;
     }
     closeSession();
 
-    lalala.getAccount(nanana);
-
-    ZenMoney.setResult({ success: isSuccessful });
+    ZenMoney.setResult({ success: g_isSuccessful });
 }
 
 /**
@@ -89,7 +88,25 @@ function requestSession(login, password) {
     var nodeBody = doc.getRootElement().getChildElement('soapenv:Body');
     nodeBody.addChildElement(nodeCredentials);
 
-    ZenMoney.requestPost(g_baseUrl + g_authSer, doc.toString(), g_headers);
+    var response = ZenMoney.requestPost(g_baseUrl + g_authSer, doc.toString(), g_headers);
+    var docResponse = converter.parse(response);
+    var nodeReply = docResponse.getRootElement().getChildElement('soap:Body');
+    var nodeFault = nodeReply.getChildElement('soap:Fault');
+    if (nodeFault != null) {
+        g_isSuccessful = false;
+        var faultString = nodeFault.getChildElement('faultstring').getText();
+        if (faultString == 'logins.password.incorrect') {
+            throw 'Райффайзенбанк: Неверный логин или пароль';
+        }
+        var faultDetails = nodeFault.getChildElement('detail').getChildElement('ns1:mobileServiceFault');
+        if (faultDetails != null) {
+            var faultMessage = faultDetails.getChildElement('userMessage').getText();
+            throw 'Райффайзенбанк: ' + faultMessage;
+        }
+        else {
+            throw 'Райффайзенбанк: ' + faultString;
+        }
+    }
 }
 
 /**
@@ -338,7 +355,7 @@ function processTransactions() {
         // по умолчанию загружаем операции за неделю
         var period = !g_preferences.hasOwnProperty('period') || isNaN(period = parseInt(g_preferences.period)) ? 7 : period;
 
-        if (period > 100) period = 100;	// на всякий случай, ограничим лимит, а то слишком долго будет
+        if (period > 100) period = 100;	// на всякий случай ограничим лимит, а то слишком долго будет
 
         lastSyncTime = Date.now() - period * 24 * 60 * 60 * 1000;
     }
@@ -390,7 +407,7 @@ function processTransactions() {
 
             var zenTrans = {
                 id: transId.toString(),
-                date: n2(date.getDay()) + '.' + n2(date.getMonth() + 1) + '.' + date.getFullYear(),
+                date: n2(date.getDate()) + '.' + n2(date.getMonth() + 1) + '.' + date.getFullYear(),
                 outcome: 0,
                 outcomeAccount: '',
                 income: 0,
@@ -446,7 +463,7 @@ function processTransactions() {
                 }
             }
             else {
-                mapTransactions[transId] = zenTrans;
+                mapTransactions.set(transId, zenTrans);
             }            
 
             if (zenTrans.date > lastSyncTime)
@@ -454,14 +471,13 @@ function processTransactions() {
         }
     }
 
-    var transIds = mapTransactions.keys();
-    for (var i = 0; i < transIds.length; i++) {
-        var transId = transIds[i];
-        var zenTrans = mapTransactions[transId];
-        ZenMoney.addTransaction(zenTrans);
-        ZenMoney.trace('Добавлена операция: ' + JSON.stringify(zenTrans));
+    var sum = 0;
+    for (var trans of mapTransactions.values()) {
+        ZenMoney.addTransaction(trans);
+        ZenMoney.trace('Добавлена операция: ' + JSON.stringify(trans));
+        sum++;
     }
-    ZenMoney.trace('Всего операций добавлено: ' + transIds.length);
+    ZenMoney.trace('Всего операций добавлено: ' + sum);
 
     ZenMoney.setData('last_sync', lastSyncTime);
     ZenMoney.saveData();
