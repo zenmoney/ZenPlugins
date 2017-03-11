@@ -327,7 +327,8 @@ function BeelineBank(ZenMoney) {
         }
         if (param) {
             finalUrl += param;
-        }if (!data.method || data.method.toUpperCase() === 'GET') {
+        }
+        if (!data.method || data.method.toUpperCase() === 'GET') {
             response = ZenMoney.requestGet(finalUrl, getHeaders());
         } else {
             response = ZenMoney.request(data.method, finalUrl, data.body, getHeaders());
@@ -336,7 +337,7 @@ function BeelineBank(ZenMoney) {
             ZenMoney.trace('Получен пустой ответ при совершении ' + data.method + '-запроса по адресу "' + finalUrl + '".');
             throw new ZenMoney.Error('Неверный ответ с сервера');
         }
-        if (response.status == 401) {
+        if (ZenMoney.getLastStatusCode() == 401) {
             getSessionId(true);
             return doRequest(data, param);
         }
