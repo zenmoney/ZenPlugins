@@ -93,7 +93,7 @@ function requestSession(login, password) {
     var nodeReply = docResponse.getRootElement().getChildElement('soap:Body');
 	if (nodeReply == null) {
 		ZenMoney.trace('docResponse: ' + docResponse.toString());
-		throw 'Райффайзенбанк: получен некорректный ответ от сервера';
+		throw new ZenMoney.Error('Райффайзенбанк: получен некорректный ответ от сервера');
 	}
 		
     var nodeFault = nodeReply.getChildElement('soap:Fault');
@@ -101,15 +101,15 @@ function requestSession(login, password) {
         g_isSuccessful = false;
         var faultString = nodeFault.getChildElement('faultstring').getText();
         if (faultString == 'logins.password.incorrect') {
-            throw 'Райффайзенбанк: Неверный логин или пароль';
+            throw new ZenMoney.Error('Райффайзенбанк: Неверный логин или пароль', true);
         }
         var faultDetails = nodeFault.getChildElement('detail').getChildElement('ns1:mobileServiceFault');
         if (faultDetails != null) {
             var faultMessage = faultDetails.getChildElement('userMessage').getText();
-            throw 'Райффайзенбанк: ' + faultMessage;
+            throw new ZenMoney.Error('Райффайзенбанк: ' + faultMessage);
         }
         else {
-            throw 'Райффайзенбанк: ' + faultString;
+            throw new ZenMoney.Error('Райффайзенбанк: ' + faultString);
         }
     }
 }
@@ -141,7 +141,7 @@ function requestCards() {
     var nodeReply = docCards.getRootElement().getChildElement('soap:Body');
 	if (nodeReply == null) {
 		ZenMoney.trace('docCards: ' + docCards.toString());
-		throw 'Райффайзенбанк: получен некорректный ответ от сервера';
+		throw new ZenMoney.Error('Райффайзенбанк: получен некорректный ответ от сервера');
 	}
     var nodeCards = nodeReply.getChildElement('ns2:GetCardsResponse').getChildElements();
     ZenMoney.trace('Получено карт: ' + nodeCards.length);
@@ -198,7 +198,7 @@ function requestAccounts() {
     var nodeReply = docAccounts.getRootElement().getChildElement('soap:Body');
 	if (nodeReply == null) {
 		ZenMoney.trace('docAccounts: ' + docAccounts.toString());
-		throw 'Райффайзенбанк: получен некорректный ответ от сервера';
+		throw new ZenMoney.Error('Райффайзенбанк: получен некорректный ответ от сервера');
 	}
     var nodeAccount = nodeReply.getChildElement('ns2:GetAccountsResponse').getChildElements();
     ZenMoney.trace('Получено счетов: ' + nodeAccount.length);
@@ -259,7 +259,7 @@ function requestLoans() {
     var nodeReply = docLoans.getRootElement().getChildElement('soap:Body');
 	if (nodeReply == null) {
 		ZenMoney.trace('docLoans: ' + docLoans.toString());
-		throw 'Райффайзенбанк: получен некорректный ответ от сервера';
+		throw new ZenMoney.Error('Райффайзенбанк: получен некорректный ответ от сервера');
 	}
     var nodeLoans = nodeReply.getChildElement('ns2:GetLoansResponse').getChildElements();
     ZenMoney.trace('Получено кредитов: ' + nodeLoans.length);
@@ -321,7 +321,7 @@ function requestDeposits() {
     var nodeReply = docDeposits.getRootElement().getChildElement('soap:Body');
 	if (nodeReply == null) {
 		ZenMoney.trace('docDeposits: ' + docDeposits.toString());
-		throw 'Райффайзенбанк: получен некорректный ответ от сервера';
+		throw new ZenMoney.Error('Райффайзенбанк: получен некорректный ответ от сервера');
 	}
     var nodeDeposits = nodeReply.getChildElement('ns2:GetDepositsResponse').getChildElements();
     ZenMoney.trace('Получено вкладов: ' + nodeDeposits.length);
@@ -420,7 +420,7 @@ function processTransactions() {
         var nodeReply = docMovements.getRootElement().getChildElement('soap:Body');
 		if (nodeReply == null) {
 			ZenMoney.trace('docMovements: ' + docMovements.toString());
-			throw 'Райффайзенбанк: получен некорректный ответ от сервера';
+			throw new ZenMoney.Error('Райффайзенбанк: получен некорректный ответ от сервера');
 		}
         var nodeReturns = nodeReply.getChildElement('ns2:GetAccountMovementsResponse').getChildElements();
         ZenMoney.trace('Получено операций по счетам: ' + nodeReturns.length);
@@ -539,7 +539,7 @@ function processLoanPayments() {
         var nodeReply = docPayments.getRootElement().getChildElement('soap:Body');
 		if (nodeReply == null) {
 			ZenMoney.trace('docPayments: ' + docPayments.toString());
-			throw 'Райффайзенбанк: получен некорректный ответ от сервера';
+			throw new ZenMoney.Error('Райффайзенбанк: получен некорректный ответ от сервера');
 		}
         var nodeReturns = nodeReply.getChildElement('ns2:GetLoanPaymentsResponse').getChildElements();
         ZenMoney.trace('Получено платежей по кредиту: ' + nodeReturns.length);

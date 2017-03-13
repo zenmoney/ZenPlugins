@@ -108,6 +108,11 @@ function BeelineBank(ZenMoney) {
                         break;
                     }
 
+                    /* Пропуск транзакции, если она относится к использованию бонусов */
+                    if (operation.operationType == 2) {
+                        continue;
+                    }
+
                     /* Подготовка транзакции к импорту в базу ZenMoney. */
                     var transaction = {
                         id: operation.id,
@@ -291,7 +296,7 @@ function BeelineBank(ZenMoney) {
      */
     function syncAccount() {
         var profile = doRequest(REQUESTS.GET_ACCOUNT, null);
-        if (profile.hasOwnProperty("response") || !profile.hasOwnProperty("auxInfo")) {
+        if (profile.hasOwnProperty("error") || !profile.hasOwnProperty("auxInfo")) {
             ZenMoney.trace('Ошибка при получении списка аккаунтов: ' + JSON.stringify(profile));
             throw new ZenMoney.Error('Не удалось загрузить список аккаунтов');
         }
@@ -322,7 +327,8 @@ function BeelineBank(ZenMoney) {
         }
         if (param) {
             finalUrl += param;
-        }if (!data.method || data.method.toUpperCase() === 'GET') {
+        }
+        if (!data.method || data.method.toUpperCase() === 'GET') {
             response = ZenMoney.requestGet(finalUrl, getHeaders());
         } else {
             response = ZenMoney.request(data.method, finalUrl, data.body, getHeaders());
@@ -331,7 +337,7 @@ function BeelineBank(ZenMoney) {
             ZenMoney.trace('Получен пустой ответ при совершении ' + data.method + '-запроса по адресу "' + finalUrl + '".');
             throw new ZenMoney.Error('Неверный ответ с сервера');
         }
-        if (response.status == 401) {
+        if (ZenMoney.getLastStatusCode() == 401) {
             getSessionId(true);
             return doRequest(data, param);
         }
