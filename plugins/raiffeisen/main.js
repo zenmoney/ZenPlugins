@@ -353,7 +353,7 @@ function requestDeposits() {
             type: 'deposit',
             balance: Number(nodeDep.getChildElement('currentAmount').getText()),
             startBalance: Number(nodeDep.getChildElement('initialAmount').getText()),
-            percent: nodeDep.getChildElement('intrestRate').getText(),
+            percent: nodeDep.getChildElement('interestRate').getText(),
             capitalization: Bool(nodeDep.getChildElement('capitalization').getText()),
             startDate: startDate,
             endDateOffset: dateOffset,
@@ -367,9 +367,9 @@ function requestDeposits() {
     }
 }
 
-///**
-// * Обработка операций по счетам
-// */
+/**
+ * Обработка операций по счетам
+ */
 function processTransactions() {
     ZenMoney.trace('Запрашиваем данные по последним операциям по счетам...');
 
