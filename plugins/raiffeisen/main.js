@@ -344,6 +344,7 @@ function requestDeposits() {
         var endDate = new Date(Date.now() + endDateShift * (24 * 60 * 60 * 1000));
 
         var dateOffset = Math.round(Number((endDate - startDate) / (24 * 60 * 60 * 1000)));
+		var isCapitalized = (nodeDep.getChildElement('capitalization').getText() == 'true');
 
         var zenAccount = {
             id: 'deposit:' + nodeDep.getChildElement('id').getText(),
@@ -354,7 +355,7 @@ function requestDeposits() {
             balance: Number(nodeDep.getChildElement('currentAmount').getText()),
             startBalance: Number(nodeDep.getChildElement('initialAmount').getText()),
             percent: nodeDep.getChildElement('interestRate').getText(),
-            capitalization: Bool(nodeDep.getChildElement('capitalization').getText()),
+            capitalization: isCapitalized,
             startDate: startDate,
             endDateOffset: dateOffset,
             endDateOffsetInterval: 'day',
