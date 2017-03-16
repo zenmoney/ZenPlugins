@@ -334,6 +334,7 @@ function requestDeposits() {
         var startDate = new Date(Date.now() - startDateShift * (24 * 60 * 60 * 1000));
 
 		var isCapitalized = (nodeDep.getChildElement('capitalization').getText() == 'true');
+		var isCapitalized = (nodeDep.getChildElement('capitalization').getText() == 'true');
 
         var zenAccount = {
             id: 'deposit:' + nodeDep.getChildElement('id').getText(),
