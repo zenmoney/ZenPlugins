@@ -333,11 +333,6 @@ function requestDeposits() {
         startDateShift = startDateShift.substr(1, startDateShift.length - 2);
         var startDate = new Date(Date.now() - startDateShift * (24 * 60 * 60 * 1000));
 
-        var endDateShift = nodeDep.getChildElement('closeDate').getText();
-        endDateShift = endDateShift.substr(1, endDateShift.length - 2);
-        var endDate = new Date(Date.now() + endDateShift * (24 * 60 * 60 * 1000));
-
-        var dateOffset = Math.round(Number((endDate - startDate) / (24 * 60 * 60 * 1000)));
 		var isCapitalized = (nodeDep.getChildElement('capitalization').getText() == 'true');
 
         var zenAccount = {
@@ -348,10 +343,10 @@ function requestDeposits() {
             type: 'deposit',
             balance: Number(nodeDep.getChildElement('currentAmount').getText()),
             startBalance: Number(nodeDep.getChildElement('initialAmount').getText()),
-            percent: nodeDep.getChildElement('interestRate').getText(),
+            percent: Number(nodeDep.getChildElement('interestRate').getText()),
             capitalization: isCapitalized,
             startDate: startDate,
-            endDateOffset: dateOffset,
+            endDateOffset: Number(nodeDep.getChildElement('daysQuantity').getText()),
             endDateOffsetInterval: 'day',
             payoffStep: 1,
             payoffInterval: 'month'
