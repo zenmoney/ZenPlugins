@@ -61,6 +61,8 @@ function login() {
 
     throw new ZenMoney.Error("Введите начальный период для синхронизации.", false, true);
 
+  g_headers['Cookie'] = ZenMoney.getData("sessionid", "x")
+
   ZenMoney.requestGet(g_logincheck_url, g_headers);
   if (ZenMoney.getLastStatusCode() == 200) {
     ZenMoney.trace("Уже авторизованы.", "auth");
@@ -78,9 +80,24 @@ function login() {
     throw new ZenMoney.Error("Неверное имя пользователя или пароль.", false, true);
   }
 
+  // Сохраняем куки удачной авторизации
+  var cookies = ZenMoney.getLastResponseHeader('Set-Cookie').split(';');
+
+  for (var i = 0; i < cookies.length; i++) {
+    if (cookies[i].startsWith('_session_id')) {
+      g_sessionid = cookies[i];
+      g_headers['Cookie'] = g_sessionid;
+
+      ZenMoney.setData("sessionid", g_sessionid)
+      ZenMoney.saveData();
+
+      break;
+    }
+  }
+
   if (g_preferences.confirmation_type != "none"){
     ZenMoney.trace("Вводим код")
-    var smsCode = ZenMoney.retrieveCode("Введите код подтверждения из смс для авторизации приложения в Инвестпей.", null, {
+    var smsCode = ZenMoney.retrieveCode("Введите код подтверждения для авторизации приложения в Инвестпей.", null, {
       inputType: "number",
       time: 60000
     });
