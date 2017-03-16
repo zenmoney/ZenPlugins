@@ -305,6 +305,13 @@ function processTransactions(accList) {
       re = /ВЫДАЧА НАЛИЧНЫХ/;
       var cashOut = tran.event.description.match(re);  // Выдача наличных
 
+      re = /Место совершения транзакции: .+?\S+\\\S+\\(.+\\\S+)/;
+      var payee = tran.event.description.match(re);  // Место совершения транзацкии
+
+      if (payee) {
+        t.payee = payee[1].replace("\\", ", ");
+      }
+
       if (amount < 0) {
         amount = Math.abs(amount);
 

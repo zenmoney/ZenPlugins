@@ -2,7 +2,7 @@
 <provider>
   <id>chelinvest</id>
   <version>1.1</version>
-  <build>6</build>
+  <build>7</build>
   <company>4443</company>
   <files>
     <js>main.js</js>
