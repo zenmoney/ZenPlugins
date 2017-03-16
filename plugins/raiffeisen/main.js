@@ -277,7 +277,7 @@ function requestLoans() {
 
         var zenAccount = {
             id: 'loan:' + nodeLoan.getChildElement('id').getText(),
-            title: 'loan:' + nodeLoan.getChildElement('id').getText(),
+            title: nodeLoan.getChildElement('id').getText(),
             syncID: loanNum,
             instrument: currency,
             type: 'loan',
@@ -342,7 +342,7 @@ function requestDeposits() {
 
         var zenAccount = {
             id: 'deposit:' + nodeDep.getChildElement('id').getText(),
-            title: 'deposit:' + nodeDep.getChildElement('id').getText(),
+            title: nodeDep.getChildElement('names').getText(),
             syncID: depNum,
             instrument: currency,
             type: 'deposit',
