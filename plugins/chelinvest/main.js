@@ -244,6 +244,11 @@ function processAccounts() {
 // Обработка операций
 function processTransactions(accList) {
 
+  if (g_preferences.period == 0) {
+    ZenMoney.trace("Пропускаем синхронизацию транзакций", "transac");
+    return;
+  }
+
   var tranList = [];
   var lastSyncTime = ZenMoney.getData("lastSync", 0);
   var g_tran_time = "";
