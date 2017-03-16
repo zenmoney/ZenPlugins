@@ -1,7 +1,5 @@
 ﻿var g_headers = {
     "Connection": "close",
-    "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 5.1; m2 Build/LMY47D) Android/3.16.0(443)",
-    "Content-Type": "text/xml;charset=UTF-8",
     "Host": "connect.raiffeisen.ru",
     "Accept-Encoding": "gzip"
 },
@@ -17,6 +15,7 @@
     g_accSer = 'RCAccountService',
     g_loanSer = 'RCLoanService',
     g_depositSer = 'RCDepositService',
+    g_accountCards = {},
     g_accounts = [],
     g_loans = [],
     g_preferences,
@@ -93,6 +92,33 @@ function requestSession(login, password) {
     var nodeReply = docResponse.getRootElement().getChildElement('soap:Body');
 	if (nodeReply == null) {
 		ZenMoney.trace('docResponse: ' + docResponse.toString());
+
+
+        // DEBUG //
+	    if (docResponse.toString() == "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\" />") {
+		    var response1 = ZenMoney.requestPost(g_baseUrl + g_authSer, doc.toString(), g_headers);
+		    var docResponse1 = converter.parse(response1);
+		    ZenMoney.trace('docResponse1: ' + docResponse1.toString());
+
+	        var nodeAuthType = new marknote.Element('getAuthenticationType');
+	        var doc2 = converter.parse(g_envelope);
+	        var nodeBody2 = doc2.getRootElement().getChildElement('soapenv:Body');
+	        nodeBody2.addChildElement(nodeAuthType);
+	        var response2 = ZenMoney.requestPost(g_baseUrl + g_authSer, doc2.toString(), g_headers);
+	        var docResponse2 = converter.parse(response2);
+	        ZenMoney.trace('docResponse2: ' + docResponse2.toString());
+            	        
+	        var nodeActiveMethods = new marknote.Element('getActiveConfirmationMethods');
+	        var doc3 = converter.parse(g_envelope);
+	        var nodeBody3 = doc3.getRootElement().getChildElement('soapenv:Body');
+	        nodeBody3.addChildElement(nodeActiveMethods);
+	        var response3 = ZenMoney.requestPost(g_baseUrl + g_authSer, doc3.toString(), g_headers);
+	        var docResponse3 = converter.parse(response3);
+	        ZenMoney.trace('docResponse3: ' + docResponse3.toString());
+	    }
+	    // DEBUG //
+
+
 		throw new ZenMoney.Error('Райффайзенбанк: получен некорректный ответ от сервера');
 	}
 		
@@ -155,29 +181,12 @@ function requestCards() {
             ZenMoney.trace('Пропускаем карту: ' + cardNum);
             continue;
         }
+        ZenMoney.trace('Найдена карта: ' + cardNum);
 
         var accNum = nodeCard.getChildElement('accountNumber').getText();
-        accNum = accNum.substr(accNum.length - 4, 4);
-
-        // for now requesting credit limit is unclear,
-        // so both credit and debet cards are processed the same way
-        var isCreditCard = false;
-        if (nodeCard.getChildElement('accountType').getText() == '3')
-            isCreditCard = true;
-
-        var zenAccount = {
-            id: 'card:' + nodeCard.getChildElement('id').getText(),
-            title: 'card:' + nodeCard.getChildElement('id').getText(),
-            syncID: [],
-            instrument: nodeCard.getChildElement('currency').getText(),
-            type: 'ccard',
-            balance: Number(nodeCard.getChildElement('balance').getText()),
-        };
-        zenAccount.syncID.push(cardNum);
-        zenAccount.syncID.push(accNum);
-
-        ZenMoney.addAccount(zenAccount);
-        ZenMoney.trace('Добавлена карта: ' + JSON.stringify(zenAccount));
+        if (g_accountCards[accNum] == undefined)
+            g_accountCards[accNum] = [];
+        g_accountCards[accNum].push(cardNum);
     }
 }
 
@@ -205,8 +214,8 @@ function requestAccounts() {
 
     for (var i = 0; i < nodeAccount.length; i++) {
         var nodeAcc = nodeAccount[i];
-        var accNum = nodeAcc.getChildElement('number').getText();
-        accNum = accNum.substr(accNum.length - 4, 4);
+        var accNumber = nodeAcc.getChildElement('number').getText();
+        var accNum = accNumber.substr(accNumber.length - 4, 4);
 
         var isClosed = false;
         if (nodeAcc.getChildElement('closeDate') != undefined)
@@ -219,21 +228,31 @@ function requestAccounts() {
         }
 
         var isSaving = false;
-        try {
+        if (nodeAcc.getChildElement('accountSubtype') != undefined)
             if (nodeAcc.getChildElement('accountSubtype').getText() == 'SAVING')
                 isSaving = true;
-        }
-        catch (exception) { }
 
         var zenAccount = {
             id: 'account:' + nodeAcc.getChildElement('id').getText(),
-            title: 'account:' + nodeAcc.getChildElement('id').getText(),
-            syncID: accNum,
+            syncID: [],
             instrument: nodeAcc.getChildElement('currency').getText(),
-            type: 'checking',
             balance: Number(nodeAcc.getChildElement('balance').getText()),
-            savings: isSaving
         };
+        zenAccount.syncID.push(accNum);
+
+        // if no card is binded then import it as an account
+        if (g_accountCards[accNumber] == undefined) {
+            zenAccount.type = 'checking';
+            zenAccount.title = nodeAcc.getChildElement('number').getText();
+            zenAccount.savings = isSaving;
+        }
+        // else import it as a card
+        else {
+            zenAccount.type = 'ccard';
+            zenAccount.title = g_accountCards[accNumber][0];
+            for (var card = 0; card < g_accountCards[accNumber].length; card++)
+                zenAccount.syncID.push(g_accountCards[accNumber][card]);
+        }
 
         ZenMoney.addAccount(zenAccount);
         ZenMoney.trace('Добавлен счёт: ' + JSON.stringify(zenAccount));
@@ -283,7 +302,7 @@ function requestLoans() {
 
         var zenAccount = {
             id: 'loan:' + nodeLoan.getChildElement('id').getText(),
-            title: 'loan:' + nodeLoan.getChildElement('id').getText(),
+            title: nodeLoan.getChildElement('id').getText(),
             syncID: loanNum,
             instrument: currency,
             type: 'loan',
@@ -339,25 +358,21 @@ function requestDeposits() {
         startDateShift = startDateShift.substr(1, startDateShift.length - 2);
         var startDate = new Date(Date.now() - startDateShift * (24 * 60 * 60 * 1000));
 
-        var endDateShift = nodeDep.getChildElement('closeDate').getText();
-        endDateShift = endDateShift.substr(1, endDateShift.length - 2);
-        var endDate = new Date(Date.now() + endDateShift * (24 * 60 * 60 * 1000));
-
-        var dateOffset = Math.round(Number((endDate - startDate) / (24 * 60 * 60 * 1000)));
+		var isCapitalized = (nodeDep.getChildElement('capitalization').getText() == 'true');
 		var isCapitalized = (nodeDep.getChildElement('capitalization').getText() == 'true');
 
         var zenAccount = {
             id: 'deposit:' + nodeDep.getChildElement('id').getText(),
-            title: 'deposit:' + nodeDep.getChildElement('id').getText(),
+            title: nodeDep.getChildElement('names').getText(),
             syncID: depNum,
             instrument: currency,
             type: 'deposit',
             balance: Number(nodeDep.getChildElement('currentAmount').getText()),
             startBalance: Number(nodeDep.getChildElement('initialAmount').getText()),
-            percent: nodeDep.getChildElement('interestRate').getText(),
+            percent: Number(nodeDep.getChildElement('interestRate').getText()),
             capitalization: isCapitalized,
             startDate: startDate,
-            endDateOffset: dateOffset,
+            endDateOffset: Number(nodeDep.getChildElement('daysQuantity').getText()),
             endDateOffsetInterval: 'day',
             payoffStep: 1,
             payoffInterval: 'month'
