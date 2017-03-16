@@ -17,6 +17,7 @@
     g_accSer = 'RCAccountService',
     g_loanSer = 'RCLoanService',
     g_depositSer = 'RCDepositService',
+    g_accountCards = {},
     g_accounts = [],
     g_loans = [],
     g_preferences,
@@ -155,29 +156,12 @@ function requestCards() {
             ZenMoney.trace('Пропускаем карту: ' + cardNum);
             continue;
         }
+        ZenMoney.trace('Найдена карта: ' + cardNum);
 
         var accNum = nodeCard.getChildElement('accountNumber').getText();
-        accNum = accNum.substr(accNum.length - 4, 4);
-
-        // for now requesting credit limit is unclear,
-        // so both credit and debet cards are processed the same way
-        var isCreditCard = false;
-        if (nodeCard.getChildElement('accountType').getText() == '3')
-            isCreditCard = true;
-
-        var zenAccount = {
-            id: 'card:' + nodeCard.getChildElement('id').getText(),
-            title: 'card:' + nodeCard.getChildElement('id').getText(),
-            syncID: [],
-            instrument: nodeCard.getChildElement('currency').getText(),
-            type: 'ccard',
-            balance: Number(nodeCard.getChildElement('balance').getText()),
-        };
-        zenAccount.syncID.push(cardNum);
-        zenAccount.syncID.push(accNum);
-
-        ZenMoney.addAccount(zenAccount);
-        ZenMoney.trace('Добавлена карта: ' + JSON.stringify(zenAccount));
+        if (g_accountCards[accNum] == undefined)
+            g_accountCards[accNum] = [];
+        g_accountCards[accNum].push(cardNum);
     }
 }
 
@@ -205,8 +189,8 @@ function requestAccounts() {
 
     for (var i = 0; i < nodeAccount.length; i++) {
         var nodeAcc = nodeAccount[i];
-        var accNum = nodeAcc.getChildElement('number').getText();
-        accNum = accNum.substr(accNum.length - 4, 4);
+        var accNumber = nodeAcc.getChildElement('number').getText();
+        var accNum = accNumber.substr(accNumber.length - 4, 4);
 
         var isClosed = false;
         if (nodeAcc.getChildElement('closeDate') != undefined)
@@ -219,21 +203,31 @@ function requestAccounts() {
         }
 
         var isSaving = false;
-        try {
+        if (nodeAcc.getChildElement('accountSubtype') != undefined)
             if (nodeAcc.getChildElement('accountSubtype').getText() == 'SAVING')
                 isSaving = true;
-        }
-        catch (exception) { }
 
         var zenAccount = {
             id: 'account:' + nodeAcc.getChildElement('id').getText(),
-            title: 'account:' + nodeAcc.getChildElement('id').getText(),
-            syncID: accNum,
+            syncID: [],
             instrument: nodeAcc.getChildElement('currency').getText(),
-            type: 'checking',
             balance: Number(nodeAcc.getChildElement('balance').getText()),
-            savings: isSaving
         };
+        zenAccount.syncID.push(accNum);
+
+        // if no card is binded then import it as an account
+        if (g_accountCards[accNumber] == undefined) {
+            zenAccount.type = 'checking';
+            zenAccount.title = nodeAcc.getChildElement('number').getText();
+            zenAccount.savings = isSaving;
+        }
+        // else import it as a card
+        else {
+            zenAccount.type = 'ccard';
+            zenAccount.title = g_accountCards[accNumber][0];
+            for (var card = 0; card < g_accountCards[accNumber].length; card++)
+                zenAccount.syncID.push(g_accountCards[accNumber][card]);
+        }
 
         ZenMoney.addAccount(zenAccount);
         ZenMoney.trace('Добавлен счёт: ' + JSON.stringify(zenAccount));
