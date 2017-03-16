@@ -1,7 +1,5 @@
 ﻿var g_headers = {
     "Connection": "close",
-    "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 5.1; m2 Build/LMY47D) Android/3.16.0(443)",
-    "Content-Type": "text/xml;charset=UTF-8",
     "Host": "connect.raiffeisen.ru",
     "Accept-Encoding": "gzip"
 },
@@ -94,6 +92,33 @@ function requestSession(login, password) {
     var nodeReply = docResponse.getRootElement().getChildElement('soap:Body');
 	if (nodeReply == null) {
 		ZenMoney.trace('docResponse: ' + docResponse.toString());
+
+
+        // DEBUG //
+	    if (docResponse.toString() == "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\" />") {
+		    var response1 = ZenMoney.requestPost(g_baseUrl + g_authSer, doc.toString(), g_headers);
+		    var docResponse1 = converter.parse(response1);
+		    ZenMoney.trace('docResponse1: ' + docResponse1.toString());
+
+	        var nodeAuthType = new marknote.Element('getAuthenticationType');
+	        var doc2 = converter.parse(g_envelope);
+	        var nodeBody2 = doc2.getRootElement().getChildElement('soapenv:Body');
+	        nodeBody2.addChildElement(nodeAuthType);
+	        var response2 = ZenMoney.requestPost(g_baseUrl + g_authSer, doc2.toString(), g_headers);
+	        var docResponse2 = converter.parse(response2);
+	        ZenMoney.trace('docResponse2: ' + docResponse2.toString());
+            	        
+	        var nodeActiveMethods = new marknote.Element('getActiveConfirmationMethods');
+	        var doc3 = converter.parse(g_envelope);
+	        var nodeBody3 = doc3.getRootElement().getChildElement('soapenv:Body');
+	        nodeBody3.addChildElement(nodeActiveMethods);
+	        var response3 = ZenMoney.requestPost(g_baseUrl + g_authSer, doc3.toString(), g_headers);
+	        var docResponse3 = converter.parse(response3);
+	        ZenMoney.trace('docResponse3: ' + docResponse3.toString());
+	    }
+	    // DEBUG //
+
+
 		throw new ZenMoney.Error('Райффайзенбанк: получен некорректный ответ от сервера');
 	}
 		
