@@ -144,7 +144,7 @@ function processAccounts() {
         syncID: cardPan(account),
         instrument: currency[account.currencyIsoCode],
         type: "ccard",
-        balance: parseFloat(account.balance),
+        balance: parseFloat(account.creditAmount) > 0 ? parseFloat(account.creditAmount) * (-1) : parseFloat(account.balance),
         creditLimit: parseFloat(account.loanAmount),
       });
     }
