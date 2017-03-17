@@ -2,11 +2,46 @@
 Описание API работы с данными Дзен-мани.
 
 ## Авторизация
-Происходит через протокол [OAuth 2.0](https://habrahabr.ru/company/mailru/blog/115163/). Основные URL:
-https://api.zenmoney.ru/oauth2/token/
+Происходит через протокол [OAuth 2.0](https://habrahabr.ru/company/mailru/blog/115163/). 
+Основные URL:
+
 https://api.zenmoney.ru/oauth2/authorize/
 
+https://api.zenmoney.ru/oauth2/token/
+
 #### Пример:
+```HTTP
+GET /oauth2/authorize/?response_type=code&client_id=464119&redirect_uri=http%3A%2F%2Fexample.com%2Fcb%2F123 HTTP/1.1
+Host: api.zenmoney.ru
+```
+
+После этого пользователь подтверждает выдачу прав клиенту, и происходит переадресация:
+
+```HTTP
+HTTP/1.1 302 Found
+Location: http://example.com/cb/123?code=FD0485FC
+```
+
+Используем полученный code для получения access_token, выполняя запрос:
+
+```HTTP
+POST /oauth2/token/ HTTP/1.1
+Host: api.zenmoney.ru
+Content-Type: application/x-www-form-urlencoded
+
+
+grant_type=authorization_code&client_id=464119&client_secret=deadbeef&code=FD0485FC&redirect_uri=http%3A%2F%2Fexample.com%2Fcb%2F123
+
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+    "access_token":"RQJpVwPJie7wr9SEzYNi5nVWVdKRTP",
+    "token_type":"bearer",
+    "expires_in":86400,
+    "refresh_token":"jHCAqb9A1WGIkuk34SJm2VTg6PZY5K"
+}
+```
 
 ## Сущности
 
@@ -395,8 +430,19 @@ Reminder с такими параметрами означает, что нуж�
     outcomeLock: Bool
 }
 ```
-`tag` - категория бюджета
+`date` - дата начала месяца.
+`tag` - категория бюджета. Если null, то это бюджет по операциям без категории. Если '00000000-0000-0000-0000-000000000000', то это бюджет совокупный за месяц.
+`incomeLock` - если true, то сумма `income` задает точный доходный бюджет по данной категории. Если false, то в качестве бюджета по данной категории берется сумма `income` и всех доходов по планируемым операциям в этом месяце по данной категории.
+`income` - доходный бюджет
+`outcomeLock` - то же самое, что для `incomeLock`
+`outcome` - расходный бюджет
+Удалить бюджет за данный месяц можно, если убрать lock и поставить 0 в соответствующую сумму.
+
+## Принцип работы
 
 Основные URL:
-https://api.zenmoney.ru/v8/diff/     - Diff
+
+https://api.zenmoney.ru/v8/diff/			- Diff
+
 https://api.zenmoney.ru/v8/suggest/  - Suggest
+
