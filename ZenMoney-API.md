@@ -25,13 +25,13 @@ https://api.zenmoney.ru/oauth2/authorize/
 #### Instrument
 ```
 {
-	id:         Int
-	changed:    Int // Unix timestamp 
-	title:      String
-	shortTitle: String
-	symbol:     String
-	rate:       Double
- }
+    id:         Int
+    changed:    Int // Unix timestamp 
+    title:      String
+    shortTitle: String
+    symbol:     String
+    rate:       Double
+}
 ```
 `shortTitle` - это трехбуквенный код данной валюты
 `symbol` - символ валюты
@@ -40,25 +40,25 @@ https://api.zenmoney.ru/oauth2/authorize/
 #### Company
 ```
 {
-	id:         Int
-	changed:    Int // Unix timestamp 
-	title:      String
-	fullTitle:  String
-	www:        String
-	country:    String
- }
+    id:         Int
+    changed:    Int // Unix timestamp 
+    title:      String
+    fullTitle:  String
+    www:        String
+    country:    String
+}
 ```
 Company - это банк либо другая платежная организация, в которой могут существовать счета.
 
 #### User
 ```
 {
-	id:         Int
-	changed:    Int // Unix timestamp 
-	login:      String?
-	currency:   Int  -> Instrument.id
-	parent:     Int? -> User.id
- }
+    id:         Int
+    changed:    Int // Unix timestamp 
+    login:      String?
+    currency:   Int  -> Instrument.id
+    parent:     Int? -> User.id
+}
 ```
 `currency` - основная валюта пользователя. В ней система считает балансы и показывает пользователю отчеты.
 `parent` - родительский пользователь семейного учета. Он является администратором и может удалять дочерних пользователей. Для родительского пользователя `parent == null`
@@ -66,35 +66,35 @@ Company - это банк либо другая платежная органи�
 #### Account
 ```
 {
-	id:         String // UUID
-	changed:    Int    // Unix timestamp 
-	user:       Int  -> User.id
-	role:       Int? -> User.id?
-	instrument: Int? -> Instrument.id
-	company:    Int? -> Company.id
-	type: ('cash' | 'ccard' | 'checking' | 'loan' | 'deposit' | 'emoney' | 'debt')
-	title:   String
-	syncID: [String]?
+    id:         String // UUID
+    changed:    Int    // Unix timestamp 
+    user:       Int  -> User.id
+    role:       Int? -> User.id?
+    instrument: Int? -> Instrument.id
+    company:    Int? -> Company.id
+    type: ('cash' | 'ccard' | 'checking' | 'loan' | 'deposit' | 'emoney' | 'debt')
+    title:   String
+    syncID: [String]?
 	
-	balance:      Double?
-	startBalance: Double?
-	creditLimit:  Double? >= 0
+    balance:      Double?
+    startBalance: Double?
+    creditLimit:  Double? >= 0
 	
-	inBalance:        Bool
-	savings:          Bool?
-	enableCorrection: Bool
-	enableSMS:        Bool
-	archive:          Bool
+    inBalance:        Bool
+    savings:          Bool?
+    enableCorrection: Bool
+    enableSMS:        Bool
+    archive:          Bool
 	
-	//Для счетов с типом отличных от 'loan' и 'deposit' в  этих полях можно ставить null
-	capitalization: Bool
-	percent: Double >= 0 && < 100
-	startDate: 'yyyy-MM-dd'
-	endDateOffset: Int
-	endDateOffsetInterval: ('day' | 'week' | 'month' | 'year')
-	payoffStep: Int?
-	payoffInterval: ('month' | 'year')?
- }
+    //Для счетов с типом отличных от 'loan' и 'deposit' в  этих полях можно ставить null
+    capitalization: Bool
+    percent: Double >= 0 && < 100
+    startDate: 'yyyy-MM-dd'
+    endDateOffset: Int
+    endDateOffsetInterval: ('day' | 'week' | 'month' | 'year')
+    payoffStep: Int?
+    payoffInterval: ('month' | 'year')?
+}
 ```
 Account - счёт пользователя.
 
@@ -122,20 +122,20 @@ Account - счёт пользователя.
 #### Tag
 ```
 {
-	id:         String // UUID
-	changed:    Int    // Unix timestamp 
-	user:       Int  -> User.id
+    id:         String // UUID
+    changed:    Int    // Unix timestamp 
+    user:       Int  -> User.id
 	
-	title:   String
-	parent:  String? -> Tag.id
-	icon:    String?
+    title:   String
+    parent:  String? -> Tag.id
+    icon:    String?
 	
-	showIncome:    Bool
-	showOutcome:   Bool
-	budgetIncome:  Bool
-	budgetOutcome: Bool	
-	required:      Bool?
- }
+    showIncome:    Bool
+    showOutcome:   Bool
+    budgetIncome:  Bool
+    budgetOutcome: Bool	
+    required:      Bool?
+}
 ```
 `parent` - родительская категория. Допускается степень вложенности не больше 1, т.е. у категории может быть родительская категория, а у родительской категории уже не может быть своего родителя.
 `showIncome` - является ли категория доходной
@@ -147,39 +147,39 @@ Account - счёт пользователя.
 #### Merchant
 ```
 {
-	id:         String // UUID
-	changed:    Int    // Unix timestamp 
-	user:       Int  -> User.id
-	title:      String
- }
+    id:         String // UUID
+    changed:    Int    // Unix timestamp 
+    user:       Int  -> User.id
+    title:      String
+}
 ```
 Контрагент операции. В отличие от строкового payee в операциях, Merchant отображается в списке плательщиков и получателей в приложении и по ним приложение делает подсказки.
 
 #### Reminder
 ```
 {
-	id:      String // UUID
-	changed: Int    // Unix timestamp
-	user:    Int -> User.id
+    id:      String // UUID
+    changed: Int    // Unix timestamp
+    user:    Int -> User.id
 	
-	incomeInstrument:  Int    -> Instrument.id
-	incomeAccount:     String -> Account.id
-	income:            Double >= 0
-	outcomeInstrument: Int    -> Instrument.id
-	outcomeAccount:    String -> Account.id
-	outcome:           Double >= 0
+    incomeInstrument:  Int    -> Instrument.id
+    incomeAccount:     String -> Account.id
+    income:            Double >= 0
+    outcomeInstrument: Int    -> Instrument.id
+    outcomeAccount:    String -> Account.id
+    outcome:           Double >= 0
 
-	tag:      [String  -> Tag.id]?
-	merchant:  String? -> Merchant.id
-	payee:         String?
-	comment:       String?
+    tag:      [String  -> Tag.id]?
+    merchant:  String? -> Merchant.id
+    payee:         String?
+    comment:       String?
 
-	interval: ('day' | 'week' | 'month' | 'year')?
-	step:    Int >= 0
-	points: [Int >= 0 && < step]
-	startDate: 'yyyy-MM-dd'
-	endDate:   'yyyy-MM-dd'?
-	notify: Bool
+    interval: ('day' | 'week' | 'month' | 'year')?
+    step:    Int >= 0
+    points: [Int >= 0 && < step]
+    startDate: 'yyyy-MM-dd'
+    endDate:   'yyyy-MM-dd'?
+    notify: Bool
 }
 ```
 Объект описывающий принцип создания планируемых операций.
@@ -192,13 +192,13 @@ Account - счёт пользователя.
 Пример:
 ```javascript
 {
-	//...
-	interval: 'day',
-	step: 7,
-	points: [0, 2, 4],
-	startDate: '2017-03-08',
-	endDate: null
-	//...
+    //...
+    interval: 'day',
+    step: 7,
+    points: [0, 2, 4],
+    startDate: '2017-03-08',
+    endDate: null
+    //...
 }
 ```
 Reminder с такими параметрами означает, что нужно повторять операции каждую неделю, начиная с 2017-03-08 по средам, пятницам и воскресеньям. Потому что 2017-03-08 - среда, значит точка 0 - среда, точка 2 - пятница, точка 4 - воскресенье. Каждую неделю - потому как шаг 7 дней.
@@ -206,28 +206,28 @@ Reminder с такими параметрами означает, что нуж�
 #### ReminderMarker
 ```
 {
-	id:      String // UUID
-	changed: Int    // Unix timestamp
-	user:    Int -> User.id
+    id:      String // UUID
+    changed: Int    // Unix timestamp
+    user:    Int -> User.id
 	
-	incomeInstrument:  Int    -> Instrument.id
-	incomeAccount:     String -> Account.id
-	income:            Double >= 0
-	outcomeInstrument: Int    -> Instrument.id
-	outcomeAccount:    String -> Account.id
-	outcome:           Double >= 0
+    incomeInstrument:  Int    -> Instrument.id
+    incomeAccount:     String -> Account.id
+    income:            Double >= 0
+    outcomeInstrument: Int    -> Instrument.id
+    outcomeAccount:    String -> Account.id
+    outcome:           Double >= 0
 
-	tag:      [String  -> Tag.id]?
-	merchant:  String? -> Merchant.id
-	payee:         String?
-	comment:       String?
+    tag:      [String  -> Tag.id]?
+    merchant:  String? -> Merchant.id
+    payee:         String?
+    comment:       String?
 	
-	date: 'yyyy-MM-dd'
+    date: 'yyyy-MM-dd'
 
-	reminder: String -> Reminder.id
-	state: ('planned' | 'processed' | 'deleted')
+    reminder: String -> Reminder.id
+    state: ('planned' | 'processed' | 'deleted')
 	
-	notify: Bool
+    notify: Bool
 }
 ```
 Планируемая операция. Поля те же, что и в Reminder, только есть еще дата операции и ее состояние.
@@ -236,38 +236,38 @@ Reminder с такими параметрами означает, что нуж�
 #### Transaction
 ```
 {
-	id:      String // UUID
-	changed: Int    // Unix timestamp
-	created: Int    // Unix timestamp
-	user:    Int -> User.id
-	deleted: Bool
+    id:      String // UUID
+    changed: Int    // Unix timestamp
+    created: Int    // Unix timestamp
+    user:    Int -> User.id
+    deleted: Bool
 	
-	incomeInstrument:  Int    -> Instrument.id
-	incomeAccount:     String -> Account.id
-	income:            Double >= 0
-	outcomeInstrument: Int    -> Instrument.id
-	outcomeAccount:    String -> Account.id
-	outcome:           Double >= 0
+    incomeInstrument:  Int    -> Instrument.id
+    incomeAccount:     String -> Account.id
+    income:            Double >= 0
+    outcomeInstrument: Int    -> Instrument.id
+    outcomeAccount:    String -> Account.id
+    outcome:           Double >= 0
 
-	tag:      [String  -> Tag.id]?
-	merchant:  String? -> Merchant.id
-	payee:         String?
-	originalPayee: String?
-	comment:       String?
+    tag:      [String  -> Tag.id]?
+    merchant:  String? -> Merchant.id
+    payee:         String?
+    originalPayee: String?
+    comment:       String?
 	
-	date: 'yyyy-MM-dd'
+    date: 'yyyy-MM-dd'
 	
-	mcc: Int?
+    mcc: Int?
 	
-	reminderMarker: String? -> ReminderMarker.id
+    reminderMarker: String? -> ReminderMarker.id
 	
-	opIncome:            Double? >= 0
-	opIncomeInstrument:  Int? -> Instrument.id
-	opOutcome:           Double? >= 0
-	opOutcomeInstrument: Int? -> Instrument.id
+    opIncome:            Double? >= 0
+    opIncomeInstrument:  Int? -> Instrument.id
+    opOutcome:           Double? >= 0
+    opOutcomeInstrument: Int? -> Instrument.id
 
-	latitude:  Double? >= -90  && <= 90
-	longitude: Double? >= -180 && <= 180
+    latitude:  Double? >= -90  && <= 90
+    longitude: Double? >= -180 && <= 180
 }
 ```
 Денежная операция. `outcome` снято со счета `outcomeAccount` и `income` зачислено на счёт `incomeAccount`. `incomeInstrument` - то же самое, что и `incomeAccount.instrument` и `outcomeInstrument` - то же самое, что и `outcomeAccount.instrument` за исключением случая, когда этот счёт - долговой. В случае долговой операции сумма операции всегда пишется в валюте недолгового счёта, а в поле instrument стоит значение instrument недолгового счёта. Валюта же долгового счёта всегда равна `user.currency` - основной валюте пользователя.
@@ -281,14 +281,14 @@ Reminder с такими параметрами означает, что нуж�
 - расход 500 рублей (instrument 2)
 ```javascript
 {
-	//...
-	incomeInstrument: 2,
-	incomeAccount: '574DA4BC-9598-4124-8749-E9DF7B240AE7',
-	income: 0,
-	outcomeInstrument: 2,
-	outcomeAccount: '574DA4BC-9598-4124-8749-E9DF7B240AE7',
-	outcome: 500
-	//...
+    //...
+    incomeInstrument: 2,
+    incomeAccount: '574DA4BC-9598-4124-8749-E9DF7B240AE7',
+    income: 0,
+    outcomeInstrument: 2,
+    outcomeAccount: '574DA4BC-9598-4124-8749-E9DF7B240AE7',
+    outcome: 500
+    //...
 }
 ```
 '574DA4BC-9598-4124-8749-E9DF7B240AE7' - рублевый счёт
@@ -296,16 +296,16 @@ Reminder с такими параметрами означает, что нуж�
 - расход 10 $ с рублевого счёта по курсу 50 рублей за доллар
 ```javascript
 {
-	//...
-	incomeInstrument: 2,
-	incomeAccount: '574DA4BC-9598-4124-8749-E9DF7B240AE7',
-	income: 0,
-	outcomeInstrument: 2,
-	outcomeAccount: '574DA4BC-9598-4124-8749-E9DF7B240AE7',
-	outcome: 500,
-	opOutcome: 10,
-	opOutcomeInstrument: 1
-	//...
+    //...
+    incomeInstrument: 2,
+    incomeAccount: '574DA4BC-9598-4124-8749-E9DF7B240AE7',
+    income: 0,
+    outcomeInstrument: 2,
+    outcomeAccount: '574DA4BC-9598-4124-8749-E9DF7B240AE7',
+    outcome: 500,
+    opOutcome: 10,
+    opOutcomeInstrument: 1
+    //...
 }
 ```
 '574DA4BC-9598-4124-8749-E9DF7B240AE7' - рублевый счёт
@@ -313,14 +313,14 @@ Reminder с такими параметрами означает, что нуж�
 - доход 10 $ (instrument 1)
 ```javascript
 {
-	//...
-	incomeInstrument: 1,
-	incomeAccount: 'B8D2C203-60E7-4AFE-839E-4CFCEC3AFF3B',
-	income: 10,
-	outcomeInstrument: 1,
-	outcomeAccount: 'B8D2C203-60E7-4AFE-839E-4CFCEC3AFF3B',
-	outcome: 0
-	//...
+    //...
+    incomeInstrument: 1,
+    incomeAccount: 'B8D2C203-60E7-4AFE-839E-4CFCEC3AFF3B',
+    income: 10,
+    outcomeInstrument: 1,
+    outcomeAccount: 'B8D2C203-60E7-4AFE-839E-4CFCEC3AFF3B',
+    outcome: 0
+    //...
 }
 ```
 'B8D2C203-60E7-4AFE-839E-4CFCEC3AFF3B' - долларовый счёт
@@ -328,30 +328,30 @@ Reminder с такими параметрами означает, что нуж�
 - перевод 500 рублей на долларовый счет по курсу 50 рублей за доллар
 ```javascript
 {
-	//...
-	incomeInstrument: 1,
-	incomeAccount: 'B8D2C203-60E7-4AFE-839E-4CFCEC3AFF3B',
-	income: 10,
-	outcomeInstrument: 2,
-	outcomeAccount: '574DA4BC-9598-4124-8749-E9DF7B240AE7',
-	outcome: 500
-	//...
+    //...
+    incomeInstrument: 1,
+    incomeAccount: 'B8D2C203-60E7-4AFE-839E-4CFCEC3AFF3B',
+    income: 10,
+    outcomeInstrument: 2,
+    outcomeAccount: '574DA4BC-9598-4124-8749-E9DF7B240AE7',
+    outcome: 500
+    //...
 }
 ```
 
 - дал в долг Маше 500 рублей
 ```javascript
 {
-	//...
-	incomeInstrument: 2,
-	incomeAccount: 'E40F1B61-F1FC-4197-81BA-2C23DF5E71AA',
-	income: 500,
-	outcomeInstrument: 2,
-	outcomeAccount: '574DA4BC-9598-4124-8749-E9DF7B240AE7',
-	outcome: 500,
-	payee: 'Маша',
-	merchant: 'D8733A65-F61D-4E5D-A39D-5AB1C6983F2A'
-	//...
+    //...
+    incomeInstrument: 2,
+    incomeAccount: 'E40F1B61-F1FC-4197-81BA-2C23DF5E71AA',
+    income: 500,
+    outcomeInstrument: 2,
+    outcomeAccount: '574DA4BC-9598-4124-8749-E9DF7B240AE7',
+    outcome: 500,
+    payee: 'Маша',
+    merchant: 'D8733A65-F61D-4E5D-A39D-5AB1C6983F2A'
+    //...
 }
 ```
 '574DA4BC-9598-4124-8749-E9DF7B240AE7' - рублёвый счёт.
@@ -362,16 +362,16 @@ Reminder с такими параметрами означает, что нуж�
 - взял в долг у Маши 30 $
 ```javascript
 {
-	//...
-	incomeInstrument: 1,
-	incomeAccount: 'B8D2C203-60E7-4AFE-839E-4CFCEC3AFF3B',
-	income: 30,
-	outcomeInstrument: 1,
-	outcomeAccount: 'E40F1B61-F1FC-4197-81BA-2C23DF5E71AA',
-	outcome: 30,
-	payee: 'Маша',
-	merchant: 'D8733A65-F61D-4E5D-A39D-5AB1C6983F2A'
-	//...
+    //...
+    incomeInstrument: 1,
+    incomeAccount: 'B8D2C203-60E7-4AFE-839E-4CFCEC3AFF3B',
+    income: 30,
+    outcomeInstrument: 1,
+    outcomeAccount: 'E40F1B61-F1FC-4197-81BA-2C23DF5E71AA',
+    outcome: 30,
+    payee: 'Маша',
+    merchant: 'D8733A65-F61D-4E5D-A39D-5AB1C6983F2A'
+    //...
 }
 ```
 'E40F1B61-F1FC-4197-81BA-2C23DF5E71AA' - долговой счёт. Обратите внимание, что его валютой совсем не обязательно являются доллары.
@@ -382,21 +382,21 @@ Reminder с такими параметрами означает, что нуж�
 #### Budget
 ```
 {
-	id:      String // UUID
-	changed: Int    // Unix timestamp 
-	user:    Int  -> User.id
+    id:      String // UUID
+    changed: Int    // Unix timestamp 
+    user:    Int  -> User.id
 	
-	tag:  String? -> Tag.id | '00000000-0000-0000-0000-000000000000'
-	date: 'yyyy-MM-dd'
+    tag:  String? -> Tag.id | '00000000-0000-0000-0000-000000000000'
+    date: 'yyyy-MM-dd'
 	
-	income:      Double
-	incomeLock:  Bool
-	outcome:     Double
-	outcomeLock: Bool
- }
+    income:      Double
+    incomeLock:  Bool
+    outcome:     Double
+    outcomeLock: Bool
+}
 ```
 `tag` - категория бюджета
 
 Основные URL:
-https://api.zenmoney.ru/v8/diff/			- Diff
+https://api.zenmoney.ru/v8/diff/     - Diff
 https://api.zenmoney.ru/v8/suggest/  - Suggest
