@@ -676,7 +676,7 @@ https://api.zenmoney.ru/v8/suggest/  - Suggest
         }
     ],
     reminder: [
-	    {
+        {
             id: 'EB80C872-D9E1-48E7-B021-1C2B23BBE88F',
             changed: 1490010362,
             user: 1,
@@ -820,5 +820,3 @@ https://api.zenmoney.ru/v8/suggest/  - Suggest
     //...
 }
 ```
-
-
