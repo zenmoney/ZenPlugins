@@ -210,14 +210,15 @@ Account - счёт пользователя.
     comment:   String?
 
     interval: ('day' | 'week' | 'month' | 'year')?
-    step:    Int >= 0
-    points: [Int >= 0 && < step]
+    step:    Int? >= 0
+    points: [Int  >= 0 && < step]?
     startDate: 'yyyy-MM-dd'
     endDate:   'yyyy-MM-dd'?
     notify: Bool
 }
 ```
 Объект описывающий принцип создания планируемых операций.
+`interval` - интервал шага. Если null, значит, планируемая без повторения.
 `step` - шаг с которым создаются планируемые операции
 `points` - точки внутри шага, в которых создаются планируемые
 `startDate` - с какой даты создавать планируемые
@@ -451,30 +452,30 @@ https://api.zenmoney.ru/v8/suggest/  - Suggest
 #### Diff object
 ```Swift
 {
-	currentClientTimestamp: Int //Unix timestamp
-	serverTimestamp:        Int //Unix timestamp
+    currentClientTimestamp: Int //Unix timestamp
+    serverTimestamp:        Int //Unix timestamp
 	
-	forceFetch: [String -> Object.class]?
+    forceFetch: [String -> Object.class]?
 	
-	instrument:     [Instrument]?
-	company:        [Company]?
-	user:           [User]?
-	account:        [Account]?
-	tag:            [Tag]?
-	merchant:       [Merchant]?
-	budget:         [Budget]?
-	reminder:       [Reminder]?
-	reminderMarker: [ReminderMarker]?
-	transaction:    [Transaction]?
+    instrument:     [Instrument]?
+    company:        [Company]?
+    user:           [User]?
+    account:        [Account]?
+    tag:            [Tag]?
+    merchant:       [Merchant]?
+    budget:         [Budget]?
+    reminder:       [Reminder]?
+    reminderMarker: [ReminderMarker]?
+    transaction:    [Transaction]?
 	
-	deletion: [
-		{
-			id:     String -> Object.id
-			object: String -> Object.class
-			stamp:  Int
-			user:   Int
-		}
-	]?
+    deletion: [
+        {
+            id:     String -> Object.id
+            object: String -> Object.class
+            stamp:  Int
+            user:   Int
+        }
+    ]?
 }
 ```
 
@@ -562,10 +563,10 @@ https://api.zenmoney.ru/v8/suggest/  - Suggest
             capitalization: null,
             percent: null,
             startDate: null,
-		    endDateOffset: null,
-		    endDateOffsetInterval: null,
-		    payoffStep: null,
-		    payoffInterval: null
+            endDateOffset: null,
+            endDateOffsetInterval: null,
+            payoffStep: null,
+            payoffInterval: null
         },
         {
             id: 'C52B6A9C-5BF1-435B-9568-DAA91CE8BAF8',
@@ -588,10 +589,10 @@ https://api.zenmoney.ru/v8/suggest/  - Suggest
             capitalization: null,
             percent: null,
             startDate: null,
-		    endDateOffset: null,
-		    endDateOffsetInterval: null,
-		    payoffStep: null,
-		    payoffInterval: null
+            endDateOffset: null,
+            endDateOffsetInterval: null,
+            payoffStep: null,
+            payoffInterval: null
         },
         {
             id: '1E60FC58-D639-47E3-8D7A-809586862F06',
@@ -614,10 +615,10 @@ https://api.zenmoney.ru/v8/suggest/  - Suggest
             capitalization: null,
             percent: null,
             startDate: null,
-		    endDateOffset: null,
-		    endDateOffsetInterval: null,
-		    payoffStep: null,
-		    payoffInterval: null
+            endDateOffset: null,
+            endDateOffsetInterval: null,
+            payoffStep: null,
+            payoffInterval: null
         },
         {
             id: '0593FEF0-2618-45EB-B8DA-6BCF3B660177',
@@ -640,10 +641,10 @@ https://api.zenmoney.ru/v8/suggest/  - Suggest
             capitalization: null,
             percent: null,
             startDate: null,
-		    endDateOffset: null,
-		    endDateOffsetInterval: null,
-		    payoffStep: null,
-		    payoffInterval: null
+            endDateOffset: null,
+            endDateOffsetInterval: null,
+            payoffStep: null,
+            payoffInterval: null
         }
     ],
     tag: [
@@ -690,8 +691,8 @@ https://api.zenmoney.ru/v8/suggest/  - Suggest
             payee: 'Паша',
             comment: 'Возврат долга',
             interval: null,
-		    step: null,
-		    points: null,
+            step: null,
+            points: null,
             startDate: '2017-03-22'
             endDate: null,
             notify: true
@@ -736,14 +737,14 @@ https://api.zenmoney.ru/v8/suggest/  - Suggest
             payee: null,
             originalPayee: null,
             comment: 'Аванс',
-            date: '2017-03-20'
-	        mcc: null,
-	        reminderMarker: null,
-	        opIncome: null,
-	        opIncomeInstrument: null,
-	        opOutcome: null,
-	        opOutcomeInstrument: null,
-	        latitude: null,
+            date: '2017-03-20',
+            mcc: null,
+            reminderMarker: null,
+            opIncome: null,
+            opIncomeInstrument: null,
+            opOutcome: null,
+            opOutcomeInstrument: null,
+            latitude: null,
             longitude: null
         },
         {
@@ -763,14 +764,14 @@ https://api.zenmoney.ru/v8/suggest/  - Suggest
             payee: 'OOO Techdom',
             originalPayee: null,
             comment: 'За воду + смена счетчиков',
-            date: '2017-03-08'
-	        mcc: null,
-	        reminderMarker: null,
-	        opIncome: null,
-	        opIncomeInstrument: null,
-	        opOutcome: null,
-	        opOutcomeInstrument: null,
-	        latitude: null,
+            date: '2017-03-08',
+            mcc: null,
+            reminderMarker: null,
+            opIncome: null,
+            opIncomeInstrument: null,
+            opOutcome: null,
+            opOutcomeInstrument: null,
+            latitude: null,
             longitude: null
         },
         {
@@ -790,14 +791,14 @@ https://api.zenmoney.ru/v8/suggest/  - Suggest
             payee: 'Паша',
             originalPayee: null,
             comment: 'Паша дал в долг до среды',
-            date: '2017-03-20'
-	        mcc: null,
-	        reminderMarker: null,
-	        opIncome: null,
-	        opIncomeInstrument: null,
-	        opOutcome: null,
-	        opOutcomeInstrument: null,
-	        latitude: null,
+            date: '2017-03-20',
+            mcc: null,
+            reminderMarker: null,
+            opIncome: null,
+            opIncomeInstrument: null,
+            opOutcome: null,
+            opOutcomeInstrument: null,
+            latitude: null,
             longitude: null
         }
     ]
@@ -819,3 +820,5 @@ https://api.zenmoney.ru/v8/suggest/  - Suggest
     //...
 }
 ```
+
+
