@@ -198,7 +198,7 @@ function main() {
 #### ZenMoney.addAccount(account: (Account | [Account])) throws
 Добавляет счет.
  
-```
+```Swift
 Account {
     id:      String
     title:   String
@@ -221,7 +221,7 @@ Account {
     endDateOffsetInterval: ('day' | 'week' | 'month' | 'year')
     payoffStep: Int?
     payoffInterval: ('month' | 'year')?
- }
+}
 ```
 
 `id` - уникальный в пределах плагина ID счета. На него ссылаются операции в полях `incomeAccount`, `outcomeAccount` . В случае отсутствия ID счета в источнике данных можно задать счету любой ID, главное, чтобы он отличался от ID других счетов, данные по которым импортирует плагин.
@@ -254,7 +254,7 @@ Account {
 
 #### ZenMoney.addTransaction(transaction: (Transaction | [Transaction])) throws
 Добавляет операцию.
-```
+```Swift
 Transaction {
     id:             String?
     incomeBankID:   String?
