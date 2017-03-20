@@ -419,6 +419,7 @@ function RocketBank(ZenMoney) {
                     case "card2card_cash_out_other": // Исходящий перевод внутри банка
                         transaction.outcome = sum;
                         break;
+                    case "atm_commission":
                     case "commission": // Комиссия за операцию
                     case "rocket_fee": // Услуги банка
                     case "card_commission":
@@ -461,6 +462,9 @@ function RocketBank(ZenMoney) {
                     case "miles_cash_back": // Возврат за рокетрубли
                         transaction.income = sum;
                         transaction.payee = "Рокетбанк";
+                        break;
+                    case "emoney_payment":
+                        transaction.outcome = sum;
                         break;
                     case "open_deposit": // Открытие вклада
                         var operation_found = false;
