@@ -503,15 +503,15 @@ https://api.zenmoney.ru/v8/suggest/  - Suggest
 Ответ сервера (всего лишь пример):
 ```javascript
 {
-    serverTimestamp: 1490008434,
+    serverTimestamp: 1490016362,
     instrument: [
         {
             id: 1,
+            changed: 1490000000,
             title: 'Доллар США',
             shortTitle: 'USD',
-            changed: 1490000000,
             symbol: '$',
-            rate: 50.4
+            rate: 57.55
         },
         {
             id: 2,
@@ -524,25 +524,126 @@ https://api.zenmoney.ru/v8/suggest/  - Suggest
     ],
     company: [
         {
+            id: 4624,
+            title: 'Сбербанк России',
+            fullTitle: null,
+            www: 'sbrf.ru',
+            country: 'RU'
         }
     ],
     user: [
-	    {
-	        id: 1,
-	        login: 'my_user',
-	        changed: 1490000000,
-	        parent: null,
-	        currency: 1
-	    }
+        {
+            id: 1,
+            changed: 1490000000,
+            login: 'my_user',
+            currency: 1,
+            parent: null
+        }
     ],
     account: [
         {
             id: 'A85F1093-3886-4C99-823E-04E7202E5771',
-            title: 'Долги',
-            type: 'debt',
+            changed: 1490000000,
+            user: 1,
+            role: null,
             instrument: 1,
-            balance: 5,
-            changed: 1490000000
+            company: null,
+            type: 'debt',
+            title: 'Долги',
+            syncID: null,
+            balance: 34.75,
+            startBalance: 0,
+            creditLimit: null,
+            inBalance: false,
+            savings: false,
+            enableCorrection: false,
+            enableSMS: false,
+            archive: false,
+            capitalization: null,
+            percent: null,
+            startDate: null,
+		    endDateOffset: null,
+		    endDateOffsetInterval: null,
+		    payoffStep: null,
+		    payoffInterval: null
+        },
+        {
+            id: 'C52B6A9C-5BF1-435B-9568-DAA91CE8BAF8',
+            changed: 1490000000,
+            user: 1,
+            role: null,
+            instrument: 1,
+            company: null,
+            type: 'cash',
+            title: 'Доллары',
+            syncID: null,
+            balance: 322.5,
+            startBalance: 22.5,
+            creditLimit: null,
+            inBalance: true,
+            savings: false,
+            enableCorrection: false,
+            enableSMS: false,
+            archive: false,
+            capitalization: null,
+            percent: null,
+            startDate: null,
+		    endDateOffset: null,
+		    endDateOffsetInterval: null,
+		    payoffStep: null,
+		    payoffInterval: null
+        },
+        {
+            id: '1E60FC58-D639-47E3-8D7A-809586862F06',
+            changed: 1490000000,
+            user: 1,
+            role: null,
+            instrument: 2,
+            company: null,
+            type: 'cash',
+            title: 'Рубли',
+            syncID: null,
+            balance: 4400,
+            startBalance: 4400,
+            creditLimit: null,
+            inBalance: true,
+            savings: false,
+            enableCorrection: false,
+            enableSMS: false,
+            archive: false,
+            capitalization: null,
+            percent: null,
+            startDate: null,
+		    endDateOffset: null,
+		    endDateOffsetInterval: null,
+		    payoffStep: null,
+		    payoffInterval: null
+        },
+        {
+            id: '0593FEF0-2618-45EB-B8DA-6BCF3B660177',
+            changed: 1490000000,
+            user: 1,
+            role: null,
+            instrument: 2,
+            company: 4624,
+            type: 'ccard',
+            title: 'Кредитка Сбера',
+            syncID: ['1240'],
+            balance: -2500,
+            startBalance: 4000,
+            creditLimit: 150000,
+            inBalance: true,
+            savings: false,
+            enableCorrection: true,
+            enableSMS: true,
+            archive: false,
+            capitalization: null,
+            percent: null,
+            startDate: null,
+		    endDateOffset: null,
+		    endDateOffsetInterval: null,
+		    payoffStep: null,
+		    payoffInterval: null
         }
     ],
     tag: [
@@ -554,6 +655,150 @@ https://api.zenmoney.ru/v8/suggest/  - Suggest
             showOutcome: true,
             budgetIncome: false,
             budgetOutcome: true
+        },
+        {
+            id: '7B8A79A6-FA48-4DE8-A820-3CCC4DDB0EB6',
+            changed: 1490000000,
+            title: 'Зарплата',
+            showIncome: true,
+            showOutcome: false,
+            budgetIncome: true,
+            budgetOutcome: false
+        }
+    ],
+    merchant: [
+        {
+            id: '202EC174-9C9D-42FE-BD55-A5D4F38D5E76',
+            changed: 1490000000,
+            user: 1,
+            title: 'Паша'
+        }
+    ],
+    reminder: [
+	    {
+            id: 'EB80C872-D9E1-48E7-B021-1C2B23BBE88F',
+            changed: 1490010362,
+            user: 1,
+            incomeInstrument: 2,
+            incomeAccount: 'A85F1093-3886-4C99-823E-04E7202E5771',
+            income: 2000,
+            outcomeInstrument: 2,
+            outcomeAccount: '1E60FC58-D639-47E3-8D7A-809586862F06',
+            outcome: 2000,
+            tag: null,
+            merchant: '202EC174-9C9D-42FE-BD55-A5D4F38D5E76',
+            payee: 'Паша',
+            comment: 'Возврат долга',
+            interval: null,
+		    step: null,
+		    points: null,
+            startDate: '2017-03-22'
+            endDate: null,
+            notify: true
+        }
+    ],
+    reminderMarker: [
+        {
+            id: '26AEDA53-D532-42FA-A099-EEC78741DE58',
+            changed: 1490010362,
+            user: 1,
+            incomeInstrument: 2,
+            incomeAccount: 'A85F1093-3886-4C99-823E-04E7202E5771',
+            income: 2000,
+            outcomeInstrument: 2,
+            outcomeAccount: '1E60FC58-D639-47E3-8D7A-809586862F06',
+            outcome: 2000,
+            tag: null,
+            merchant: '202EC174-9C9D-42FE-BD55-A5D4F38D5E76',
+            payee: 'Паша',
+            comment: 'Возврат долга',
+            date: '2017-03-22',
+            reminder: 'EB80C872-D9E1-48E7-B021-1C2B23BBE88F',
+            state: 'planned',
+            notify: true
+        }
+    ],
+    transaction: [
+        {
+            id: 'EB80C872-D9E1-48E7-B021-1C2B23BBE88F',
+            changed: 1490010362,
+            created: 1490010222,
+            user: 1,
+            deleted: false,
+            incomeInstrument: 1,
+            incomeAccount: 'C52B6A9C-5BF1-435B-9568-DAA91CE8BAF8',
+            income: 300,
+            outcomeInstrument: 1,
+            outcomeAccount: 'C52B6A9C-5BF1-435B-9568-DAA91CE8BAF8',
+            outcome: 0,
+            tag: ['7B8A79A6-FA48-4DE8-A820-3CCC4DDB0EB6'],
+            merchant: null,
+            payee: null,
+            originalPayee: null,
+            comment: 'Аванс',
+            date: '2017-03-20'
+	        mcc: null,
+	        reminderMarker: null,
+	        opIncome: null,
+	        opIncomeInstrument: null,
+	        opOutcome: null,
+	        opOutcomeInstrument: null,
+	        latitude: null,
+            longitude: null
+        },
+        {
+            id: '8ECFEAB7-17F2-40F5-8B9B-279D2A136732',
+            changed: 1488000309,
+            created: 1488000309,
+            user: 1,
+            deleted: false,
+            incomeInstrument: 2,
+            incomeAccount: '0593FEF0-2618-45EB-B8DA-6BCF3B660177',
+            income: 0,
+            outcomeInstrument: 2,
+            outcomeAccount: '0593FEF0-2618-45EB-B8DA-6BCF3B660177',
+            outcome: 8500,
+            tag: ['5114B761-4FC4-4107-A0F2-C4DF0ED9CB07'],
+            merchant: null,
+            payee: 'OOO Techdom',
+            originalPayee: null,
+            comment: 'За воду + смена счетчиков',
+            date: '2017-03-08'
+	        mcc: null,
+	        reminderMarker: null,
+	        opIncome: null,
+	        opIncomeInstrument: null,
+	        opOutcome: null,
+	        opOutcomeInstrument: null,
+	        latitude: null,
+            longitude: null
+        },
+        {
+            id: '8ECFEAB7-17F2-40F5-8B9B-279D2A136732',
+            changed: 1488000309,
+            created: 1488000309,
+            user: 1,
+            deleted: false,
+            incomeInstrument: 2,
+            incomeAccount: '0593FEF0-2618-45EB-B8DA-6BCF3B660177',
+            income: 0,
+            outcomeInstrument: 2,
+            outcomeAccount: 'A85F1093-3886-4C99-823E-04E7202E5771',
+            outcome: 2000,
+            tag: null,
+            merchant: '202EC174-9C9D-42FE-BD55-A5D4F38D5E76',
+            payee: 'Паша',
+            originalPayee: null,
+            comment: 'Паша дал в долг до среды',
+            date: '2017-03-20'
+	        mcc: null,
+	        reminderMarker: null,
+	        opIncome: null,
+	        opIncomeInstrument: null,
+	        opOutcome: null,
+	        opOutcomeInstrument: null,
+	        latitude: null,
+            longitude: null
         }
     ]
 }   
