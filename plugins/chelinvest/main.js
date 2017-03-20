@@ -1,6 +1,17 @@
 //
 
-var g_headers = {},
+var g_headers = {
+      "Accept": "application/json, text/javascript, */*; q=0.01",
+      "Accept-Encoding":"gzip, deflate, br",
+      "Accept-Language":"ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4",
+      "Cache-Control":"no-cache",
+      "Connection":"keep-alive",
+      "Content-Type":"application/x-www-form-urlencoded; charset=UTF-8",
+      "DNT":"1",
+      "Pragma":"no-cache",
+      "User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36",
+      "X-Requested-With":"XMLHttpRequest"
+    },
   g_baseurl =  "https://investpay.ru",
   g_login_url = g_baseurl + "/session",
   g_logincheck_url = g_baseurl + "/front/users/current",
@@ -30,7 +41,8 @@ function main(){
   var accList = processAccounts();
   processTransactions(accList);
 
-  // ZenMoney.setResult({success: true});
+  ZenMoney.setResult({success: true});
+  // ZenMoney.request("DELETE", g_login_url, g_headers)  // Выход
 }
 
 
@@ -49,7 +61,9 @@ function login() {
 
     throw new ZenMoney.Error("Введите начальный период для синхронизации.", false, true);
 
-  ZenMoney.requestGet(g_logincheck_url);
+  g_headers['Cookie'] = ZenMoney.getData("sessionid", "x")
+
+  ZenMoney.requestGet(g_logincheck_url, g_headers);
   if (ZenMoney.getLastStatusCode() == 200) {
     ZenMoney.trace("Уже авторизованы.", "auth");
     return;
@@ -60,15 +74,30 @@ function login() {
     "email": g_preferences.login,
     "password": g_preferences.password,
     "confirmation_type": g_preferences.confirmation_type,
-  });
+  }, g_headers);
 
   if (ZenMoney.getLastStatusCode() != 200) {
     throw new ZenMoney.Error("Неверное имя пользователя или пароль.", false, true);
   }
 
+  // Сохраняем куки удачной авторизации
+  var cookies = ZenMoney.getLastResponseHeader('Set-Cookie').split(';');
+
+  for (var i = 0; i < cookies.length; i++) {
+    if (cookies[i].startsWith('_session_id')) {
+      g_sessionid = cookies[i];
+      g_headers['Cookie'] = g_sessionid;
+
+      ZenMoney.setData("sessionid", g_sessionid)
+      ZenMoney.saveData();
+
+      break;
+    }
+  }
+
   if (g_preferences.confirmation_type != "none"){
     ZenMoney.trace("Вводим код")
-    var smsCode = ZenMoney.retrieveCode("Введите код подтверждения из смс для авторизации приложения в Инвестпей.", null, {
+    var smsCode = ZenMoney.retrieveCode("Введите код подтверждения для авторизации приложения в Инвестпей.", null, {
       inputType: "number",
       time: 60000
     });
@@ -78,7 +107,7 @@ function login() {
     getJson(ZenMoney.requestPost(g_login_url, {
       "login_confirmation": smsCode,
       "email": "undefined",
-    }))
+    }, g_headers))
 
     if (ZenMoney.getLastStatusCode() != 200) {
       throw new ZenMoney.Error("Неверный код подтверждения.", "auth");
@@ -95,9 +124,9 @@ function processAccounts() {
 
   var accList = [];
 
-  var accounts = getJson(ZenMoney.requestGet(g_cards_url)).accounts;
-  var deposits = getJson(ZenMoney.requestGet(g_deposits_url)).deposits;
-  var credits = getJson(ZenMoney.requestGet(g_credits_url)).singleCredits;
+  var accounts = getJson(ZenMoney.requestGet(g_cards_url, g_headers)).accounts;
+  var deposits = getJson(ZenMoney.requestGet(g_deposits_url, g_headers)).deposits;
+  var credits = getJson(ZenMoney.requestGet(g_credits_url, g_headers)).singleCredits;
 
   ZenMoney.trace("Всего счетов " + accounts.length, "account");
 
@@ -132,7 +161,7 @@ function processAccounts() {
         syncID: cardPan(account),
         instrument: currency[account.currencyIsoCode],
         type: "ccard",
-        balance: parseFloat(account.balance),
+        balance: parseFloat(account.creditAmount) > 0 ? parseFloat(account.creditAmount) * (-1) : parseFloat(account.balance),
         creditLimit: parseFloat(account.loanAmount),
       });
     }
@@ -215,6 +244,11 @@ function processAccounts() {
 // Обработка операций
 function processTransactions(accList) {
 
+  if (g_preferences.period == 0) {
+    ZenMoney.trace("Пропускаем синхронизацию транзакций", "transac");
+    return;
+  }
+
   var tranList = [];
   var lastSyncTime = ZenMoney.getData("lastSync", 0);
   var g_tran_time = "";
@@ -229,6 +263,8 @@ function processTransactions(accList) {
     start = lastSyncTime;
   }
 
+  start = start - 7 * 86400000; // всегда захватываем ещё 7 дней для обработки холдов
+
   g_tran_time = "&start=" + dateFormat(start) + "&finish=" + dateFormat(finish);
 
   ZenMoney.trace("Запрашиваем транзакции с " + dateFormat(start) + " по " + dateFormat(finish), "transac")
@@ -237,7 +273,7 @@ function processTransactions(accList) {
     var account = accList[i];
     var trans_url = g_trans_pref + account.id + g_trans_suf + g_tran_time
 
-    var trans = getJson(ZenMoney.requestGet(trans_url)).transactions;
+    var trans = getJson(ZenMoney.requestGet(trans_url, g_headers)).transactions;
 
     ZenMoney.trace("Обрабатываем операции по аккаунту: '" + account.title + "', всего " + trans.length, "transac")
     var count = trans.length;
@@ -254,14 +290,27 @@ function processTransactions(accList) {
       t.incomeBankID = t.id;
       t.outcomeBankID = t.id;
 
-      if (lastSyncTime / 1000 > t.date) {
+      /* if (lastSyncTime / 1000 > t.date) {
         ZenMoney.trace("Пропускаем транзакцию: #" + t.id, "skip")
         count = count - 1
         continue;
-      }
+      } */  // Защита от дублирования транзакций не нужна
 
-      var re = /(\d+|\d+\.\d+) (USD|EUR|RUB) = (\d+|\d+\.\d+) (USD|EUR|RUB)/;
+      var re = /(\d+|\d+\.\d+) (USD|EUR|RUB|GBP) = (\d+|\d+\.\d+) (USD|EUR|RUB|GBP)/;
       var exch = tran.event.description.match(re);  // Конвертация валют
+
+      re = /Пополнение(.|[\r\n])+Пункт/m;
+      var cashIn = tran.event.description.match(re);  // Пополнение наличными
+
+      re = /ВЫДАЧА НАЛИЧНЫХ/;
+      var cashOut = tran.event.description.match(re);  // Выдача наличных
+
+      re = /Место совершения транзакции: .+?\S+\\\S+\\(.+\\\S+)/;
+      var payee = tran.event.description.match(re);  // Место совершения транзацкии
+
+      if (payee) {
+        t.payee = payee[1].replace("\\", ", ");
+      }
 
       if (amount < 0) {
         amount = Math.abs(amount);
@@ -275,6 +324,10 @@ function processTransactions(accList) {
         if (tran.event.destinationCardOrAccount) {
           t.incomeAccount = String(tran.event.destinationCardOrAccount.id)
           t.income = t.opOutcome ? t.opOutcome : amount
+        }
+        else if (cashOut) {  // Снятие наличных?
+          t.incomeAccount = 'cash#' + (exch ? t.opOutcomeInstrument : currency[tran.account.currencyIsoCode])
+          t.income = amount
         }
         else {
           t.incomeAccount = account.id;
@@ -291,13 +344,17 @@ function processTransactions(accList) {
 
         if (exch) {
           t.opIncome = Number((amount * exch[1] / exch[3]).toFixed(2));
-          t.opInccomeInstrument = exch[2];
+          t.opIncomeInstrument = exch[2];
         }
 
         // Перевод между счетами?
         if (tran.event.destinationCardOrAccount) {
           t.outcomeAccount = String(tran.event.destinationCardOrAccount.id)
           t.outcome = t.opIncome ? t.opIncome : amount;
+        }
+        else if (cashIn) { // Пополнение наличными?
+          t.outcomeAccount = 'cash#' + (exch ? t.opIncomeInstrument : currency[tran.account.currencyIsoCode])
+          t.outcome = amount
         }
         else {
           t.outcomeAccount = account.id;

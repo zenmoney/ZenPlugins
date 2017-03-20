@@ -4,10 +4,11 @@ var g_headers = {},
 	g_authurl =  "https://oauth.modulbank.ru/api/oauth2/",
 	g_baseurl =  "https://api.modulbank.ru/v1/",
 	g_sessionid,
-	g_preferences;
+	g_preferences,
+	g_accounts = []; // линки активных счетов, по ним фильтруем обработку операций
 
-var g_clientId     = "";
-var g_clientSecret = "";
+var g_clientId     = "",
+    g_clientSecret = "";
 
 /**
  * Основной метод
@@ -29,6 +30,12 @@ function main(){
  */
 function login() {
 
+	g_sessionid = ZenMoney.getData('mb_session', undefined);
+	
+	requestJson("account-info");
+	
+	if (g_sessionid) return;
+	
 	if (!g_preferences.login) 
 
 		throw new ZenMoney.Error("Введите логин в интернет-банк!", null, true);
@@ -37,12 +44,6 @@ function login() {
 
 		throw new ZenMoney.Error("Введите пароль в интернет-банк!", null, true);
 
-	if (g_sessionid){
-
-		ZenMoney.trace("Cессия уже установлена. Используем её.");
-		
-		return;
-	}
 
 	var code = ZenMoney.requestPost(g_authurl, {
 		"CellPhone":g_preferences.login,
@@ -54,25 +55,27 @@ function login() {
 
 	var smsCode = ZenMoney.retrieveCode("Введите код подтверждения из смс для авторизации приложения в интернет-банке Модульбанк", null, {
 		inputType: "number",
-		time: 18E4				// TODO: 5 минут
+		time: 300000 // TODO: 5 минут
 	});
 
 	code = getJson(ZenMoney.requestPost(g_authurl + "entersmscode", 
 		{"CellPhone":g_preferences.login}, 
-		{"MB-SMS-VALIDATION":smsCode}))
-	["Token"];
+		{"MB-SMS-VALIDATION":smsCode}));
 	
+	if (code["exceptionType"] == "SmsWrongCode"){
+
+		throw new ZenMoney.Error("Не верный код смс!", null, true);
+	}
+
 	code = ZenMoney.requestPost(g_authurl + "accept", 
 	{	
-		"Token":code,
+		"Token":code["Token"],
 		"RedirectUri":"https://zenmoney.ru"
 	})
 	.split('=')[1];
 
 	code = code.substring(0, code.length - 1);
-	
-	ZenMoney.trace(g_baseurl + "oauth/token?"+code);
-	
+		
 	g_sessionid = getJson(ZenMoney.requestPost(g_baseurl + "oauth/token", {
 		"ClientId":g_clientId,
 		"clientSecret":g_clientSecret,
@@ -80,10 +83,11 @@ function login() {
     	"code":code
 	}))["accessToken"];
 
-	ZenMoney.trace('Создали новую сессию. ' + g_sessionid);
-}
+	ZenMoney.setData('mb_session', g_sessionid);
+	ZenMoney.saveData();
 
-var g_accounts = []; // линки активных счетов, по ним фильтруем обработку операций
+	ZenMoney.trace('Сессия установлена.');
+}
 
 /**
  * Обработка счетов
@@ -96,26 +100,18 @@ function processAccounts() {
 
 	var accDict = []; 
 
-	var companies = requestJson("account-info");
-
-	ZenMoney.trace('Получено компаний: '+ companies.length);
-
-	companies.forEach(function(company) {
+	requestJson("account-info").forEach(function(company) {
 
 		company.bankAccounts.forEach(function(account) { accounts.push(account); });
 	});
 	
 	ZenMoney.trace('Получено счетов: '+ accounts.length);
 
-	for (var i = 0; i < accounts.length; i++) {
-
-		var account = accounts[i];
+	accounts.forEach(function(account) {
 		
 		if (isAccountSkipped(account.id)) {
 
 			ZenMoney.trace('Пропускаем карту/счёт: ' + account.accountName);
-
-			continue;
 		}
 
 		// расчетный счет ------------------------------------
@@ -128,7 +124,7 @@ function processAccounts() {
 				title:			account.accountName,
 				type:			'checking',
 				balance:		account.balance,
-				syncID: 		[account.bankCorrespondentAccount],
+				syncID: 		[account.number.substring(account.number.length-4)],
 				creditLimit: 	0
 
 			});
@@ -144,7 +140,7 @@ function processAccounts() {
 				title:					account.accountName,
 				type:					'deposit',
 				balance:				account.balance,
-				syncID: 				[account.bankCorrespondentAccount],
+				syncID: 				[account.number.substring(account.number.length-4)],
 				startDate: 				account.beginDate,
 				instrument:				account.currency,
 				percent:				0,
@@ -167,7 +163,7 @@ function processAccounts() {
 				title:			account.accountName,
 				type:			'ccard',
 				balance:		account.balance,
-				syncID: 		[account.bankCorrespondentAccount]
+				syncID: 		[account.number.substring(account.number.length-4)]
 			});
 			g_accounts.push(account.id);
 		}
@@ -181,7 +177,7 @@ function processAccounts() {
 				title:			account.accountName,
 				type:			'deposit',
 				balance:		account.balance,
-				syncID: 		[account.bankCorrespondentAccount],
+				syncID: 		[account.number.substring(account.number.length-4)],
 				creditLimit: 	0
 			});
 			g_accounts.push(account.id);
@@ -196,12 +192,12 @@ function processAccounts() {
 				title:			account.accountName,
 				type:			'deposit',
 				balance:		account.balance,
-				syncID: 		[account.bankCorrespondentAccount],
+				syncID: 		[account.number.substring(account.number.length-4)],
 				creditLimit: 	0
 			});
 			g_accounts.push(account.id);
 		}
-	}
+	});
 
 	ZenMoney.trace('Всего счетов добавлено: '+ accDict.length);
 
@@ -227,6 +223,8 @@ function processTransactions(data) {
 		lastSyncTime = Date.now() - period*24*60*60*1000;
 	}
 
+	ZenMoney.trace(lastSyncTime);
+
 	// всегда захватываем одну неделю минимум
 	lastSyncTime = Math.min(lastSyncTime, Date.now() - 7*24*60*60*1000);
 
@@ -236,32 +234,29 @@ function processTransactions(data) {
 
 	var companies = requestJson("account-info");
 
-	ZenMoney.trace('Получено компаний: '+ companies.length);
-
 	companies.forEach(function(company) {
 
 		company.bankAccounts.forEach(function(account) { 
+
 			// работаем только по активным счетам
-			if (!in_array(accounts[i].id, g_accounts)) 
+			if (in_array(account.id, g_accounts)) 
 
 				accounts.push(account); 
 		});
 	});
 
-	var transactions = requestJson("operation-history/" + accounts[0].id, null, {"from": lastSyncTime});
+	var transactions = [];
 
-	for (var i = accounts.length - 1; i >= 1; i--) {
+	accounts.forEach(function(account) {
 		
-		transactions = transactions.concat(requestJson("operation-history/"+accounts[i].id, null, {"from": lastSyncTime}));
-	}
+		transactions = transactions.concat(requestJson("operation-history/" + account.id, null, {"from": lastSyncTime}));
+	});
 
 	ZenMoney.trace('Получено операций: ' + transactions.length);
 
 	var tranDict = {};
 
-	for (var i = 0; i < transactions.length; i++) {
-
-		var transaction = transactions[i];
+	transactions.forEach(function(transaction) {
 
 		var account = null;
 
@@ -280,7 +275,8 @@ function processTransactions(data) {
 
 		// учитываем только успешные операции
 		if (transaction.status && transaction.status != 'Executed' && transaction.status != 'Received')
-			continue;
+
+			return;
 
 		var tran = {};
 		var executed = new Date(transaction.executed);
@@ -345,7 +341,7 @@ function processTransactions(data) {
 
 		if (tran.date > lastSyncTime)
 			lastSyncTime = tran.date;
-	}
+	});
 
 
 	ZenMoney.trace('Всего операций добавлено: '+ Object.getOwnPropertyNames(tranDict).length);
@@ -369,6 +365,8 @@ function isAccountSkipped(id) { return ZenMoney.getLevel() >= 13 && ZenMoney.isA
  * @param html
  */
 function getJson(html) {
+
+	ZenMoney.trace("Парсим строку в JSON \n" + html);
 
 	try { return JSON.parse(html); } catch (e) {
 
@@ -403,7 +401,18 @@ function requestJson(requestCode, getparams, postbody) {
 	var url = g_baseurl + requestCode + "?" + params.join("&");
 
 	var data = ZenMoney.requestPost(url, postbody, g_headers);
-	
+
+	if (ZenMoney.getLastStatusCode() == 401) {
+
+		ZenMoney.trace("Токен не актуален, статус 401");
+    	g_sessionid = undefined;
+
+        ZenMoney.setData("mb_session", null);
+        ZenMoney.saveData();
+		ZenMoney.trace("Токен очищен в хранидеще данных модуля");
+        return;
+    }
+
 	if (!data) {
 
 		ZenMoney.trace('Пустой ответ с url "' + url + '". Попытаемся ещё раз...');

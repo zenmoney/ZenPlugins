@@ -6,7 +6,7 @@
  * @constructor
  */
 function Request() {
-    this.baseURI = 'https://mybank.oplata.kykyryza.ru/api/v0001/';
+    this.baseURI = 'https://bank.beeline.ru/api/v0001/';
 
     /**
      * @param cardNumber

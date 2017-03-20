@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>payeer</id>
+    <version>1.0</version>
+    <build>1</build>
+    <company>15585</company>
+    <files>
+        <js>main.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+	<description>Бета-версия плагина синхронизации с Payeer.
+Для работы с плагином, необходимо в личном кабинете https://payeer.com/ru/account/?tab=api добавить соответствующего пользователя. Сделать это можно в разделе "Массовые выплаты", нажав на кнопку "Добавить пользователя".
+</description>
+</provider>

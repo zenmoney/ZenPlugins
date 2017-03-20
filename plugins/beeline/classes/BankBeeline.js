@@ -5,7 +5,7 @@
 /**
  * @constructor
  */
-function BankKykyryza() {
+function BankBeeline() {
     var contractToAccount   = {};
     var accountToInstrument = {};
 

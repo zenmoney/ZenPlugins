@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+            title="Логин"
+            positiveButtonText="ОК"
+            summary="|Штрих-код карты|{@s}"
+            dialogTitle="Логин"
+            negativeButtonText="Отмена"
+            dialogMessage="Введите штрих-код карты &quot;Билайн&quot;."
+            obligatory="true"
+            key="login">
+    </EditTextPreference>
+    <EditTextPreference
+            positiveButtonText="ОК"
+            key="password"
+            dialogTitle="Пароль"
+            negativeButtonText="Отмена"
+            title="Пароль"
+            summary="||***********"
+            obligatory="true"
+            dialogMessage="Введите пароль, используемый для входа в в Интернет-банк &quot;Билайн&quot;."
+            inputType="textPassword">
+    </EditTextPreference>
+    <ListPreference
+            positiveButtonText="ОК"
+            key="period"
+            dialogTitle="Период загрузки"
+            negativeButtonText="Отмена"
+            title="Начальный период загрузки данных"
+            entries="Квартал|Месяц|Неделя"
+            entryValues="92|31|7"
+            defaultValue="31"
+            summary="|31|{@s}"
+            dialogMessage="Укажите период, за который нужно загрузить данные.">
+    </ListPreference>
+</PreferenceScreen>

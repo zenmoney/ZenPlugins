@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
   <id>chelinvest</id>
-  <version>1.0</version>
-  <build>01</build>
+  <version>1.1</version>
+  <build>7</build>
   <company>4443</company>
   <files>
     <js>main.js</js>
