@@ -75,12 +75,12 @@ Content-Type: application/json
 #### Company
 ```Swift
 {
-    id:         Int
-    changed:    Int // Unix timestamp 
-    title:      String
-    fullTitle:  String
-    www:        String
-    country:    String
+    id:        Int
+    changed:   Int // Unix timestamp 
+    title:     String
+    fullTitle: String
+    www:       String
+    country:   String
 }
 ```
 Company - это банк либо другая платежная организация, в которой могут существовать счета.
@@ -88,11 +88,11 @@ Company - это банк либо другая платежная органи�
 #### User
 ```Swift
 {
-    id:         Int
-    changed:    Int // Unix timestamp 
-    login:      String?
-    currency:   Int  -> Instrument.id
-    parent:     Int? -> User.id
+    id:       Int
+    changed:  Int // Unix timestamp 
+    login:    String?
+    currency: Int  -> Instrument.id
+    parent:   Int? -> User.id
 }
 ```
 `currency` - основная валюта пользователя. В ней система считает балансы и показывает пользователю отчеты.
@@ -157,9 +157,9 @@ Account - счёт пользователя.
 #### Tag
 ```Swift
 {
-    id:         String // UUID
-    changed:    Int    // Unix timestamp 
-    user:       Int  -> User.id
+    id:      String // UUID
+    changed: Int    // Unix timestamp 
+    user:    Int  -> User.id
 	
     title:   String
     parent:  String? -> Tag.id
@@ -182,10 +182,10 @@ Account - счёт пользователя.
 #### Merchant
 ```Swift
 {
-    id:         String // UUID
-    changed:    Int    // Unix timestamp 
-    user:       Int  -> User.id
-    title:      String
+    id:      String // UUID
+    changed: Int    // Unix timestamp 
+    user:    Int  -> User.id
+    title:   String
 }
 ```
 Контрагент операции. В отличие от строкового payee в операциях, Merchant отображается в списке плательщиков и получателей в приложении и по ним приложение делает подсказки.
@@ -206,8 +206,8 @@ Account - счёт пользователя.
 
     tag:      [String  -> Tag.id]?
     merchant:  String? -> Merchant.id
-    payee:         String?
-    comment:       String?
+    payee:     String?
+    comment:   String?
 
     interval: ('day' | 'week' | 'month' | 'year')?
     step:    Int >= 0
@@ -254,8 +254,8 @@ Reminder с такими параметрами означает, что нуж�
 
     tag:      [String  -> Tag.id]?
     merchant:  String? -> Merchant.id
-    payee:         String?
-    comment:       String?
+    payee:     String?
+    comment:   String?
 	
     date: 'yyyy-MM-dd'
 
@@ -442,6 +442,135 @@ Reminder с такими параметрами означает, что нуж�
 
 Основные URL:
 
-https://api.zenmoney.ru/v8/diff/     - Diff
+https://api.zenmoney.ru/v8/diff/			- Diff
 
 https://api.zenmoney.ru/v8/suggest/  - Suggest
+
+Основная работа с API идёт через Diff.
+
+#### Diff object
+```Swift
+{
+	currentClientTimestamp: Int //Unix timestamp
+	serverTimestamp:        Int //Unix timestamp
+	
+	forceFetch: [String -> Object.class]?
+	
+	instrument:     [Instrument]?
+	company:        [Company]?
+	user:           [User]?
+	account:        [Account]?
+	tag:            [Tag]?
+	merchant:       [Merchant]?
+	budget:         [Budget]?
+	reminder:       [Reminder]?
+	reminderMarker: [ReminderMarker]?
+	transaction:    [Transaction]?
+	
+	deletion: [
+		{
+			id:     String -> Object.id
+			object: String -> Object.class
+			stamp:  Int
+			user:   Int
+		}
+	]?
+}
+```
+
+`currentClientTimestamp` - текущее время на клиенте. Используется сервером для коррекции времени. Не передается от сервера клиенту.
+
+`serverTimestamp` - метка последней синхронизации. В случае первой синхронизации клиент должен передать 0. При получении ответа от сервера клиент сохраняет `serverTimestamp` из его ответа для передачи на сервер при следующем запросе.
+
+`forceFetch` - какие сущности сервер должен выдать полностью, как будто это первая синхронизация.
+
+Далее идут объекты системные и пользовательские, которые изменились со времени последней синхронизации. 
+При обработке запроса клиента сервер сверяет changed в объекте с changed серверной версии объекта, и если на сервере объект более новый, то он не меняется. В ответ сервер симметрично запросу клиента выдает свои изменения с времени последней синхронизации.
+
+`deletion` - информация по удаленному объекту. Некоторые объекты, например Transaction, ReminderMarker, Budget могут быть помечены удаленными полем внутри себя, но все пользовательские объекты, у которых есть id, могут быть удалены окончательно через deletion. При получении объекта deletion получившая сторона обязана удалить у себя этот объект.
+
+Примеры: 
+
+- Первая синхронизация
+Клиент отправляет запрос:
+```javascript
+{
+    currentClientTimestamp: (new Date()).getTime() / 1000,
+    serverTimestamp: 0
+}    
+```
+
+Ответ сервера (всего лишь пример):
+```javascript
+{
+    serverTimestamp: 1490008434,
+    instrument: [
+        {
+            id: 1,
+            title: 'Доллар США',
+            shortTitle: 'USD',
+            changed: 1490000000,
+            symbol: '$',
+            rate: 50.4
+        },
+        {
+            id: 2,
+            title: 'Российский рубль',
+            shortTitle: 'RUB',
+            changed: 1490000000,
+            symbol: 'руб.',
+            rate: 1
+        }
+    ],
+    company: [
+        {
+        }
+    ],
+    user: [
+	    {
+	        id: 1,
+	        login: 'my_user',
+	        changed: 1490000000,
+	        parent: null,
+	        currency: 1
+	    }
+    ],
+    account: [
+        {
+            id: 'A85F1093-3886-4C99-823E-04E7202E5771',
+            title: 'Долги',
+            type: 'debt',
+            instrument: 1,
+            balance: 5,
+            changed: 1490000000
+        }
+    ],
+    tag: [
+        {
+            id: '5114B761-4FC4-4107-A0F2-C4DF0ED9CB07',
+            changed: 1490000000,
+            title: 'Квартира (дом)',
+            showIncome: false,
+            showOutcome: true,
+            budgetIncome: false,
+            budgetOutcome: true
+        }
+    ]
+}   
+```
+
+- Допустим клиент полностью удалил у себя операцию с id '7DE41EB0-3C61-4DB2-BAE8-BDB2A6A46604'. Тогда он в Diff передает следующий объект deleteion:
+```javascript
+{
+    //...
+    deletion: [
+        {
+            id: '7DE41EB0-3C61-4DB2-BAE8-BDB2A6A46604',
+            object: 'transaction',
+            user: 123456,
+            stamp: 1490008039
+        }
+    ]
+    //...
+}
+```
