@@ -180,26 +180,31 @@ var main = (function (_, utils, BSB, ZenMoney, errors) {
                 if (isCurrencyConversion) {
                     zenMoneyTransaction.comment += '\n' + absTransactionDelta.toFixed(2) + ' ' + transactionCurrency;
                 }
-                var isAtmCashTransaction = transaction.transactionType === 'Bankomat';
-                if (isAtmCashTransaction) {
-                    if (isIncome) {
-                        throw errors.fatal('not implemented: ' + utils.toReadableJson(transaction));
-                    }
-                    zenMoneyTransaction.income = absTransactionDelta;
-                    zenMoneyTransaction.outcome = absAccountDelta;
-                    zenMoneyTransaction.incomeAccount = 'cash#' + transactionCurrency;
-                    zenMoneyTransaction.outcomeAccount = account.id;
-                } else if (isIncome) {
+
+                var isOwnCashTransferTransaction = _.contains(BSB.ownCashTransferTransactionTypes, transaction.transactionType);
+                var cashAccountAlias = 'cash#' + transactionCurrency;
+                if (isIncome) {
                     zenMoneyTransaction.income = absAccountDelta;
-                    zenMoneyTransaction.outcome = 0;
                     zenMoneyTransaction.incomeAccount = account.id;
-                    zenMoneyTransaction.outcomeAccount = account.id;
+                    if (isOwnCashTransferTransaction) {
+                        zenMoneyTransaction.outcome = absTransactionDelta;
+                        zenMoneyTransaction.outcomeAccount = cashAccountAlias;
+                    } else {
+                        zenMoneyTransaction.outcome = 0;
+                        zenMoneyTransaction.outcomeAccount = account.id;
+                    }
                 } else {
-                    zenMoneyTransaction.income = 0;
                     zenMoneyTransaction.outcome = absAccountDelta;
-                    zenMoneyTransaction.incomeAccount = account.id;
                     zenMoneyTransaction.outcomeAccount = account.id;
+                    if (isOwnCashTransferTransaction) {
+                        zenMoneyTransaction.income = absTransactionDelta;
+                        zenMoneyTransaction.incomeAccount = cashAccountAlias;
+                    } else {
+                        zenMoneyTransaction.income = 0;
+                        zenMoneyTransaction.incomeAccount = account.id;
+                    }
                 }
+
                 if (isCurrencyConversion) {
                     if (isIncome) {
                         zenMoneyTransaction.opIncome = absTransactionDelta;
