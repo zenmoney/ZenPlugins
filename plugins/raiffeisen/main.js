@@ -452,7 +452,7 @@ function processTransactions() {
         for (var j = 0; j < nodeReturns.length; j++) {
             var nodeRet = nodeReturns[j];
 
-            var date = new Date(nodeRet.getChildElement('commitDate').getText());
+            var date = new Date(nodeRet.getChildElement('commitDate').getText().substr(0, 10));
             var transCurrency = nodeRet.getChildElement('currency').getText();
             var accCurrency = nodeAccount.getChildElement('currency').getText();
             var isOutcome = (nodeRet.getChildElement('type').getText() == '0');
