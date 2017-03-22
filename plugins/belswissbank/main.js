@@ -66,12 +66,15 @@ var main = (function (_, utils, BSB, ZenMoney, errors) {
                 var isNonAmbiguousPair = transactions.length === 2;
                 if (isNonAmbiguousPair) {
                     var sorted = _.sortBy(transactions, _.property('income'));
-                    var outcomeTransaction = _.omit(sorted[0], 'income', 'incomeAccount');
-                    var incomeTransaction = _.omit(sorted[1], 'outcome', 'outcomeAccount');
+                    var outcomeTransaction = sorted[0];
+                    var incomeTransaction = sorted[1];
                     transactionReplacements[outcomeTransaction.id] = _.defaults.apply(_, [
-                        {id: outcomeTransaction.id + '+' + incomeTransaction.id},
-                        incomeTransaction,
-                        outcomeTransaction
+                        {
+                            incomeBankID: incomeTransaction.id,
+                            outcomeBankID: outcomeTransaction.id
+                        },
+                        _.omit(incomeTransaction, 'id', 'outcome', 'outcomeAccount'),
+                        _.omit(outcomeTransaction, 'id', 'income', 'incomeAccount')
                     ]);
                     transactionReplacements[incomeTransaction.id] = null;
                 } else {
