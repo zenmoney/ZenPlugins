@@ -12,7 +12,8 @@ var BSB = (function (codeToCurrencyLookup, utils, errors) {
         'Service payment to card': 1,
         'Zachislenie': 1,
         'Tovary i uslugi': -1,
-        'Bankomat': -1
+        'Bankomat': -1,
+        'Nalichnye': -1
     };
 
     return {
