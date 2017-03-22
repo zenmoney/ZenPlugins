@@ -16,7 +16,11 @@ var utils = (function (ZenMoney, _) {
         return response.status === 200;
     }
 
-    var categoriesToLog = (ZenMoney.getPreferences().categoriesToLog || 'info,warn').split(',');
+    function getPreference(key, defaultValue) {
+        return ZenMoney.getPreferences()[key] || defaultValue;
+    }
+
+    var categoriesToLog = getPreference('categoriesToLog', 'info,warn').split(',');
     var logEverything = categoriesToLog.indexOf('*') !== -1;
 
     function log(message, category) {
@@ -36,6 +40,8 @@ var utils = (function (ZenMoney, _) {
 
     return {
         log: log,
+
+        getPreference: getPreference,
 
         generateUUID: function () {
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (char) {

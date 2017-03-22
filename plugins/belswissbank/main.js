@@ -66,12 +66,15 @@ var main = (function (_, utils, BSB, ZenMoney, errors) {
                 var isNonAmbiguousPair = transactions.length === 2;
                 if (isNonAmbiguousPair) {
                     var sorted = _.sortBy(transactions, _.property('income'));
-                    var outcomeTransaction = _.omit(sorted[0], 'income', 'incomeAccount');
-                    var incomeTransaction = _.omit(sorted[1], 'outcome', 'outcomeAccount');
+                    var outcomeTransaction = sorted[0];
+                    var incomeTransaction = sorted[1];
                     transactionReplacements[outcomeTransaction.id] = _.defaults.apply(_, [
-                        {id: outcomeTransaction.id + '+' + incomeTransaction.id},
-                        incomeTransaction,
-                        outcomeTransaction
+                        {
+                            incomeBankID: incomeTransaction.id,
+                            outcomeBankID: outcomeTransaction.id
+                        },
+                        _.omit(incomeTransaction, 'id', 'outcome', 'outcomeAccount'),
+                        _.omit(outcomeTransaction, 'id', 'income', 'incomeAccount')
                     ]);
                     transactionReplacements[incomeTransaction.id] = null;
                 } else {
@@ -134,21 +137,33 @@ var main = (function (_, utils, BSB, ZenMoney, errors) {
         var newLastSeenBsbTransaction = _.last(bsbTransactions);
         return bsbTransactions
             .reduce(function (result, transaction, index, transactions) {
-                var factor = BSB.getFactor(transaction);
-                var transactionDelta = factor * transaction.transactionAmount;
-
                 var transactionCurrency = transaction.transactionCurrency;
                 var isCurrencyConversion = transactionCurrency !== accountCurrency;
 
                 var previousTransaction = index === 0 ? lastSeenBsbTransaction : transactions[index - 1];
-                if (transaction.accountRest === null) {
+
+                var isAccountRestAbsent = transaction.accountRest === null;
+                var accountRestsDelta = isAccountRestAbsent ? null : transaction.accountRest - previousTransaction.accountRest;
+
+                var factor = BSB.transactionTypeFactors[transaction.transactionType];
+                if (!factor) {
+                    if (accountRestsDelta === null) {
+                        throw errors.fatal('unknown transactionType: ' + utils.toReadableJson(transactionType));
+                    } else {
+                        factor = Math.sign(accountRestsDelta);
+                    }
+                }
+                var transactionDelta = factor * transaction.transactionAmount;
+                var isIncome = factor >= 0;
+
+                if (isAccountRestAbsent) {
                     if (isCurrencyConversion) {
                         throw errors.fatal('cannot determine missing accountRest for currency conversion: ' + utils.toReadableJson(transaction));
                     }
                     transaction.accountRest = previousTransaction.accountRest + transactionDelta;
                 }
                 var accountDelta = isCurrencyConversion ?
-                    transaction.accountRest - previousTransaction.accountRest :
+                    accountRestsDelta :
                     transactionDelta;
 
                 var zenMoneyTransaction = {
@@ -165,7 +180,6 @@ var main = (function (_, utils, BSB, ZenMoney, errors) {
                 if (isCurrencyConversion) {
                     zenMoneyTransaction.comment += '\n' + absTransactionDelta.toFixed(2) + ' ' + transactionCurrency;
                 }
-                var isIncome = factor >= 0;
                 var isAtmCashTransaction = transaction.transactionType === 'Bankomat';
                 if (isAtmCashTransaction) {
                     if (isIncome) {
