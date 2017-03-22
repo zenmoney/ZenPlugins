@@ -12,7 +12,8 @@ var BSB = (function (codeToCurrencyLookup, utils, errors) {
         'Service payment to card': 1,
         'Zachislenie': 1,
         'Tovary i uslugi': -1,
-        'Bankomat': -1
+        'Bankomat': -1,
+        'Nalichnye': -1
     };
 
     return {
@@ -85,13 +86,7 @@ var BSB = (function (codeToCurrencyLookup, utils, errors) {
             return response.body;
         },
 
-        getFactor: function (transaction) {
-            var transactionType = transaction.transactionType;
-            if (!(transactionType in transactionTypeFactors)) {
-                throw errors.fatal('unknown transactionType: ' + utils.toReadableJson(transactionType));
-            }
-            return transactionTypeFactors[transactionType];
-        },
+        transactionTypeFactors: transactionTypeFactors,
 
         getIsoCurrency: function (currencyCode) {
             if (!(currencyCode in codeToCurrencyLookup)) {
