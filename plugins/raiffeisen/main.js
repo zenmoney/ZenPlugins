@@ -94,8 +94,8 @@ function requestSession(login, password) {
 		ZenMoney.trace('docResponse: ' + docResponse.toString());
 
 
-        // DEBUG //
-	    if (docResponse.toString() == "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\" />") {
+	    // DEBUG //
+		if (docResponse.getRootElement().getChildElements().length == 0) {
 		    var response1 = ZenMoney.requestPost(g_baseUrl + g_authSer, doc.toString(), g_headers);
 		    var docResponse1 = converter.parse(response1);
 		    ZenMoney.trace('docResponse1: ' + docResponse1.toString());
@@ -377,6 +377,14 @@ function requestDeposits() {
             payoffStep: 1,
             payoffInterval: 'month'
         };
+        
+
+
+        // DEBUG //
+        ZenMoney.trace('Собираемся добавить вклад: ' + JSON.stringify(zenAccount));
+        // DEBUG //
+
+        
 
         ZenMoney.addAccount(zenAccount);
         ZenMoney.trace('Добавлен вклад: ' + JSON.stringify(zenAccount));
@@ -444,7 +452,6 @@ function processTransactions() {
         for (var j = 0; j < nodeReturns.length; j++) {
             var nodeRet = nodeReturns[j];
 
-            var transId = Number(nodeRet.getChildElement('id').getText());
             var date = new Date(nodeRet.getChildElement('commitDate').getText());
             var transCurrency = nodeRet.getChildElement('currency').getText();
             var accCurrency = nodeAccount.getChildElement('currency').getText();
@@ -452,7 +459,6 @@ function processTransactions() {
             var isIncome = (nodeRet.getChildElement('type').getText() == '1');
 
             var zenTrans = {
-                id: transId.toString(),
                 date: n2(date.getDate()) + '.' + n2(date.getMonth() + 1) + '.' + date.getFullYear(),
                 outcome: 0,
                 outcomeAccount: '',
@@ -483,34 +489,48 @@ function processTransactions() {
                     zenTrans.opIncomeInstrument = transCurrency;
                 }
             }
+            
+            if (nodeRet.getChildElement('id') != null) {
+                var transId = Number(nodeRet.getChildElement('id').getText());
 
-            // if there once already was a transaction with the same ID
-            // then it is a transfer between accounts
-            // we will complete now the first transaction
-            // and skip current transaction
-            if (mapTransactions.has(transId)) {
-                var zenSameTrans = mapTransactions[transId];
+                // if there once already was a transaction with the same ID
+                // then it is a transfer between accounts
+                // we will complete now the first transaction
+                // and skip current transaction
+                if (mapTransactions.has(transId)) {
+                    var zenSameTrans = mapTransactions[transId];
 
-                if (isOutcome && (zenSameTrans.income > 0)) {
-                    zenSameTrans.outcome = zenTrans.outcome;
-                    zenSameTrans.outcomeAccount = zenTrans.outcomeAccount;
-                    if (transCurency != accCurrency) {
-                        zenSameTrans.opOutcome = zenTrans.opOutcome;
-                        zenSameTrans.opOutcomeInstrument = zenTrans.opOutcomeInstrument;
+                    if (isOutcome && (zenSameTrans.income > 0)) {
+                        zenSameTrans.outcome = zenTrans.outcome;
+                        zenSameTrans.outcomeAccount = zenTrans.outcomeAccount;
+                        if (transCurency != accCurrency) {
+                            zenSameTrans.opOutcome = zenTrans.opOutcome;
+                            zenSameTrans.opOutcomeInstrument = zenTrans.opOutcomeInstrument;
+                        }
+                    }
+                    else if (isIncome && (zenSameTrans.outcome > 0)) {
+                        zenSameTrans.income = zenTrans.income;
+                        zenSameTrans.incomeAccount = zenTrans.incomeAccount;
+                        if (transCurency != accCurrency) {
+                            zenSameTrans.opIncome = zenTrans.opIncome;
+                            zenSameTrans.opIncomeInstrument = zenTrans.opIncomeInstrument;
+                        }
                     }
                 }
-                else if (isIncome && (zenSameTrans.outcome > 0)) {
-                    zenSameTrans.income = zenTrans.income;
-                    zenSameTrans.incomeAccount = zenTrans.incomeAccount;
-                    if (transCurency != accCurrency) {
-                        zenSameTrans.opIncome = zenTrans.opIncome;
-                        zenSameTrans.opIncomeInstrument = zenTrans.opIncomeInstrument;
-                    }
+                else {
+                    zenTrans.id = transId;
+                    mapTransactions.set(transId, zenTrans);
                 }
             }
             else {
-                mapTransactions.set(transId, zenTrans);
-            }            
+
+
+                // DEBUG //
+                ZenMoney.trace('Получена операция без id: ' + nodeRet.toString());
+                // DEBUG //
+
+
+            }
 
             if (zenTrans.date > lastSyncTime)
                 lastSyncTime = zenTrans.date;
