@@ -86,13 +86,7 @@ var BSB = (function (codeToCurrencyLookup, utils, errors) {
             return response.body;
         },
 
-        getFactor: function (transaction) {
-            var transactionType = transaction.transactionType;
-            if (!(transactionType in transactionTypeFactors)) {
-                throw errors.fatal('unknown transactionType: ' + utils.toReadableJson(transactionType));
-            }
-            return transactionTypeFactors[transactionType];
-        },
+        transactionTypeFactors: transactionTypeFactors,
 
         getIsoCurrency: function (currencyCode) {
             if (!(currencyCode in codeToCurrencyLookup)) {
