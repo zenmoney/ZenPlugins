@@ -34,4 +34,15 @@
             summary="|Категории для логирования|{@s}"
     >
     </EditTextPreference>
+    <EditTextPreference
+            key="apiUrl"
+            title="API URL (настройка для разработчиков)"
+            defaultValue="https://24.bsb.by/mobile/api"
+            dialogTitle="API URL"
+            dialogMessage="Введите API URL. Изменение данной опции может потребоваться для отладки работы приложения с плагином."
+            positiveButtonText="ОК"
+            negativeButtonText="Отмена"
+            summary="|apiUrl|{@s}"
+    >
+    </EditTextPreference>
 </PreferenceScreen>
