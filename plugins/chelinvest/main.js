@@ -61,6 +61,8 @@ function login() {
 
     throw new ZenMoney.Error("Введите начальный период для синхронизации.", false, true);
 
+  g_headers['Cookie'] = ZenMoney.getData("sessionid", "x")
+
   ZenMoney.requestGet(g_logincheck_url, g_headers);
   if (ZenMoney.getLastStatusCode() == 200) {
     ZenMoney.trace("Уже авторизованы.", "auth");
@@ -78,9 +80,24 @@ function login() {
     throw new ZenMoney.Error("Неверное имя пользователя или пароль.", false, true);
   }
 
+  // Сохраняем куки удачной авторизации
+  var cookies = ZenMoney.getLastResponseHeader('Set-Cookie').split(';');
+
+  for (var i = 0; i < cookies.length; i++) {
+    if (cookies[i].startsWith('_session_id')) {
+      g_sessionid = cookies[i];
+      g_headers['Cookie'] = g_sessionid;
+
+      ZenMoney.setData("sessionid", g_sessionid)
+      ZenMoney.saveData();
+
+      break;
+    }
+  }
+
   if (g_preferences.confirmation_type != "none"){
     ZenMoney.trace("Вводим код")
-    var smsCode = ZenMoney.retrieveCode("Введите код подтверждения из смс для авторизации приложения в Инвестпей.", null, {
+    var smsCode = ZenMoney.retrieveCode("Введите код подтверждения для авторизации приложения в Инвестпей.", null, {
       inputType: "number",
       time: 60000
     });
@@ -144,7 +161,7 @@ function processAccounts() {
         syncID: cardPan(account),
         instrument: currency[account.currencyIsoCode],
         type: "ccard",
-        balance: parseFloat(account.balance),
+        balance: parseFloat(account.creditAmount) > 0 ? parseFloat(account.creditAmount) * (-1) : parseFloat(account.balance),
         creditLimit: parseFloat(account.loanAmount),
       });
     }
@@ -227,6 +244,11 @@ function processAccounts() {
 // Обработка операций
 function processTransactions(accList) {
 
+  if (g_preferences.period == 0) {
+    ZenMoney.trace("Пропускаем синхронизацию транзакций", "transac");
+    return;
+  }
+
   var tranList = [];
   var lastSyncTime = ZenMoney.getData("lastSync", 0);
   var g_tran_time = "";
@@ -282,6 +304,13 @@ function processTransactions(accList) {
 
       re = /ВЫДАЧА НАЛИЧНЫХ/;
       var cashOut = tran.event.description.match(re);  // Выдача наличных
+
+      re = /Место совершения транзакции: .+?\S+\\\S+\\(.+\\\S+)/;
+      var payee = tran.event.description.match(re);  // Место совершения транзацкии
+
+      if (payee) {
+        t.payee = payee[1].replace("\\", ", ");
+      }
 
       if (amount < 0) {
         amount = Math.abs(amount);
