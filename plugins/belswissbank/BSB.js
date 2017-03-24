@@ -16,6 +16,12 @@ var BSB = (function (codeToCurrencyLookup, utils, errors) {
         'Nalichnye': -1
     };
 
+    var ownCashTransferTransactionTypes = [
+        'Popolnenie',
+        'Bankomat',
+        'Nalichnye'
+    ];
+
     return {
         bankBirthday: new Date(1033977600000),
 
@@ -91,6 +97,8 @@ var BSB = (function (codeToCurrencyLookup, utils, errors) {
         },
 
         transactionTypeFactors: transactionTypeFactors,
+
+        ownCashTransferTransactionTypes: ownCashTransferTransactionTypes,
 
         getIsoCurrency: function (currencyCode) {
             if (!(currencyCode in codeToCurrencyLookup)) {
