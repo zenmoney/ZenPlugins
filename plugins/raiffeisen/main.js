@@ -355,9 +355,16 @@ function requestDeposits() {
         var currency = nodeDep.getChildElement('currency').getText();
         currency = currency.substr(currency.length - 3, 3);
 
-        var startDateShift = nodeDep.getChildElement('openDate').getText();
-        startDateShift = startDateShift.substr(1, startDateShift.length - 2);
-        var startDate = new Date(Date.now() - startDateShift * (24 * 60 * 60 * 1000));
+        var openDate = nodeDep.getChildElement('openDate').getText();                
+        // DEBUG //
+        ZenMoney.trace('openDate: ' + openDate);
+        var startDate = new Date(openDate.substr(0, 10));
+        if (isNaN(startDate.valueOf())) {
+            ZenMoney.trace('startDate: is an Invalid Date');
+            startDate = Date.now();
+        }
+        // DEBUG //
+
 
 
         var isCapitalized = (nodeDep.getChildElement('capitalization').getText() == 'true');
