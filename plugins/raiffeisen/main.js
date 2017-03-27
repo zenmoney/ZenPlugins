@@ -462,6 +462,12 @@ function processTransactions() {
         for (var j = 0; j < nodeReturns.length; j++) {
             var nodeRet = nodeReturns[j];
 
+			var description = nodeRet.getChildElement('shortDescription').getText();
+			// do not count these operations
+			// because they are negative duplicates of real transactions
+			if (description == 'CREDIT CARD POSTING')
+				continue;
+
             var date = new Date(nodeRet.getChildElement('commitDate').getText().substr(0, 10));
             var transCurrency = nodeRet.getChildElement('currency').getText();
             var accCurrency = nodeAccount.getChildElement('currency').getText();
@@ -474,7 +480,7 @@ function processTransactions() {
                 outcomeAccount: '',
                 income: 0,
                 incomeAccount: '',
-                payee: nodeRet.getChildElement('shortDescription').getText()
+                payee: description
             };
 
             if (isOutcome) {
