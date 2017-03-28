@@ -8,6 +8,7 @@ var BSB = (function (codeToCurrencyLookup, utils, errors) {
 
     var transactionTypeFactors = {
         'Vozvrat': 1,
+        'Vozvrat sredstv': 1,
         'Popolnenie': 1,
         'Service payment to card': 1,
         'Zachislenie': 1,
