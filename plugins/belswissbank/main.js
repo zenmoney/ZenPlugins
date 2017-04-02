@@ -148,7 +148,8 @@ var main = (function (_, utils, BSB, ZenMoney, errors) {
                 var factor = BSB.transactionTypeFactors[transaction.transactionType];
                 if (!factor) {
                     if (accountRestsDelta === null) {
-                        throw errors.fatal('unknown transactionType: ' + utils.toReadableJson(transactionType));
+                        utils.log('cannot figure out transaction factor (transactionType is unknown, accountRest is missing), ignoring transaction: ' + utils.toReadableJson(transaction), 'warn');
+                        return result;
                     } else {
                         factor = Math.sign(accountRestsDelta);
                     }
@@ -158,7 +159,8 @@ var main = (function (_, utils, BSB, ZenMoney, errors) {
 
                 if (isAccountRestAbsent) {
                     if (isCurrencyConversion) {
-                        throw errors.fatal('cannot determine missing accountRest for currency conversion: ' + utils.toReadableJson(transaction));
+                        utils.log('cannot figure out transaction delta (is currency conversion, accountRest is missing), ignoring transaction: ' + utils.toReadableJson(transaction), 'warn');
+                        return result;
                     }
                     transaction.accountRest = previousTransaction.accountRest + transactionDelta;
                 }
