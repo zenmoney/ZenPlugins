@@ -252,6 +252,8 @@ function requestAccounts() {
         else {
             zenAccount.type = 'ccard';
             zenAccount.title = g_accountCards[accNumber][0];
+            if (nodeAcc.getChildElement('creditLimit') != undefined)
+                zenAccount.creditLimit = Number(nodeAcc.getChildElement('creditLimit'));
             for (var card = 0; card < g_accountCards[accNumber].length; card++)
                 zenAccount.syncID.push(g_accountCards[accNumber][card]);
         }
