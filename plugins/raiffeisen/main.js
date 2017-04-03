@@ -84,7 +84,7 @@ function requestSession(login, password) {
         var nodeFault = nodeReply.getChildElement('soap:Fault');
         if (nodeFault != null) {
             g_isSuccessful = false;
-            if (getValue(nodeFaule, 'faultstring', '') == 'logins.password.incorrect') {
+            if (getValue(nodeFault, 'faultstring', '') == 'logins.password.incorrect') {
                 throw new ZenMoney.Error('Райффайзенбанк: Неверный логин или пароль', true);
             }
             var faultDetails = nodeFault.getChildElement('detail').getChildElement('ns1:mobileServiceFault');
