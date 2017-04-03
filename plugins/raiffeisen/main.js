@@ -18,6 +18,7 @@
     g_accountCards = {},
     g_accounts = [],
     g_loans = [],
+    g_converter,
     g_preferences,
     g_isSuccessful = true;
 
@@ -25,6 +26,7 @@
 * Основной метод
 */
 function main() {
+    g_converter = new marknote.Parser();
     g_preferences = ZenMoney.getPreferences();
 
     openSession();
@@ -187,8 +189,7 @@ function requestAccounts() {
         else {
             zenAccount.type = 'ccard';
             zenAccount.title = g_accountCards[accNumber][0];
-            if (nodeAcc.getChildElement('creditLimit') != undefined)
-                zenAccount.creditLimit = Number(nodeAcc.getChildElement('creditLimit'));
+            zenAccount.creditLimit = Number(getValue(nodeAcc, 'creditLimit', '0'));
             for (var card = 0; card < g_accountCards[accNumber].length; card++)
                 zenAccount.syncID.push(g_accountCards[accNumber][card]);
         }
@@ -227,9 +228,9 @@ function requestLoans() {
 
         var paymentRest = Number('-' + getValue(nodeLoan, 'paymentRest'));
 
-        var startDate = +new Date(getValue(nodeLoan, 'openDate'));
+        var startDate = +new Date(getValue(nodeLoan, 'openDate').substr(0, 10));
         startDate = startDate / 1000;
-        var endDate = +new Date(getValue(nodeLoan, 'closeDate'));
+        var endDate = +new Date(getValue(nodeLoan, 'closeDate').substr(0, 10));
         endDate = endDate / 1000;
         var dateOffset = Math.round(Number((endDate - startDate) / (30 * 24 * 60 * 60)));
 
@@ -281,7 +282,7 @@ function requestDeposits() {
         // <currency> contains a string that looks like 'bmw.curr.rur'
         var currency = getValue(nodeDep, 'currency');
         currency = currency.substr(currency.length - 3, 3);
-        var openDate = getValue(nodeDep, 'openDate');
+        var startDate = new Date(getValue(nodeDep, 'openDate').substr(0, 10));
         var isCapitalized = (getValue(nodeDep, 'capitalization') == 'true');
 
         var zenAccount = {
@@ -484,7 +485,7 @@ function processLoanPayments() {
         for (var j = 0; j < nodeReturns.length; j++) {
             var nodeRet = nodeReturns[j];
 
-            var date = new Date(getValue(nodeRet, 'commitDate'));
+            var date = new Date(getValue(nodeRet, 'commitDate').substr(0, 10));
             var transCurrency = getValue(nodeRet, 'currency');
             var accCurrency = getValue(nodeLoan, 'currency');
             var intrestPayment = Number(getValue(nodeRet, 'intrestPayment'));
@@ -504,23 +505,37 @@ function processLoanPayments() {
     }
 }
 
+/**
+* Отправить запрос с телом nodeRequest на сервис serviceName и получить ответ
+* @param {marknote.Element} nodeRequest
+* @param {String} serviceName
+* @returns {marknote.Document}
+*/
 function makeRequest(nodeRequest, serviceName) {
-    var converter = new marknote.Parser();
-    var doc = converter.parse(g_envelope);
+    var doc = g_converter.parse(g_envelope);
     var nodeBody = doc.getRootElement().getChildElement('soapenv:Body');
     nodeBody.addChildElement(nodeRequest);
     var reply = ZenMoney.requestPost(g_baseUrl + serviceName, doc.toString(), g_headers);
-    return converter.parse(reply);
+    return g_converter.parse(reply);
 }
 
+/**
+* Получить текстовое значение поля либо вернуть дефолтное значение
+* @param {marknote.Element} node
+* @param {String} key
+* @param {String} ?defaultValue
+* @returns {String}
+*/
 function getValue(node, key, defaultValue) {
-    a = typeof a !== 'undefined' ? a : 42;
     defaultValue = (typeof defaultValue !== 'undefined') ? defaultValue : '';
     if (node == null)
         return defaultValue;
     if (node.getChildElement(key) == null)
         return defaultValue;
-    return node.getChildElement(key).getText();
+    var value = node.getChildElement(key).getText();
+    if (value == '')
+        return defaultValue;
+    return value;
 }
 
 /**
