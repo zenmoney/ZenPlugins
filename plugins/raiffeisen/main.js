@@ -189,6 +189,12 @@ function requestAccounts() {
         else {
             zenAccount.type = 'ccard';
             zenAccount.title = g_accountCards[accNumber][0];
+            
+            // DEBUG //
+            if (nodeAcc.getChildElement('creditLimit') == null)
+                ZenMoney.trace('There is no creditLimit field');
+            // DEBUG //
+
             zenAccount.creditLimit = Number(getValue(nodeAcc, 'creditLimit', '0'));
             for (var card = 0; card < g_accountCards[accNumber].length; card++)
                 zenAccount.syncID.push(g_accountCards[accNumber][card]);
