@@ -51,8 +51,13 @@ function Request() {
         var url = this.baseURI + 'wallets?rid=' + generateHash();
 
         var request = ZenMoney.requestGet(url, defaultHeaders());
+        if (request === null) {
+            return [];
+        }
 
-        return getJson(request).data.wallets;
+        var res = getJson(request);
+
+        return res.hasOwnProperty('data') && res.data.hasOwnProperty('wallets') ? res.data.wallets : [];
     };
 
     /**
