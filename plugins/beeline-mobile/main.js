@@ -66,11 +66,11 @@ function BeelineBank(ZenMoney) {
      */
     function syncTransactions(account) {
         /* Дата, до которой нужно загрузить данные о транзакциях */
-        var lastSavedTransactionDate = getDateOfLastSavedTransaction(account);
+        var dateOfLastProcessedTransaction = getDateOfLastProcessedTransaction(account);
 
         /* Вычисление примерного количества транзакций, которое необходимо загрузить */
         var transactionsPerDayCount = 10;
-        var daysToSyncCount = parseInt((getCurrentDate() - lastSavedTransactionDate) / 24 / 60 / 60 / 1000);
+        var daysToSyncCount = parseInt((getCurrentDate() - dateOfLastProcessedTransaction) / 24 / 60 / 60 / 1000);
         var transactionsToSyncCount = ZenMoney.getData('transactions_sync_limit') || transactionsPerDayCount * daysToSyncCount;
 
         /* Отправка данных на сервер, получение от него ответа */
@@ -79,7 +79,7 @@ function BeelineBank(ZenMoney) {
 
         /* Проверка, что ответ от сервера не содержит ошибки */
         if (data.hasOwnProperty("response")) {
-            ZenMoney.trace('Произошла ошибка при получении данных о транзакциях: ' + data.response.description);
+            ZenMoney.trace('Произошла ошибка при получении данных о транзакциях: ' + data.error.message);
             throw new ZenMoney.Error('Не удалось загрузить данные о транзакциях.');
         }
 
@@ -88,8 +88,8 @@ function BeelineBank(ZenMoney) {
 
             /* Проверка, что все транзакции до нужной даты были загружены.
              * Если нет, увеличение количества загружаемых транзакций и повторение загрузки. */
-            var lastLoadedOperationDate = getLastLoadedOperationDate(data.operationList);
-            if (lastSavedTransactionDate <= lastLoadedOperationDate) {
+            var dateOfLastTransactionFromServer = getDateOfLastTransactionFromServer(data.operationList);
+            if (dateOfLastProcessedTransaction <= dateOfLastTransactionFromServer) {
                 ZenMoney.trace("Увеличение лимита загружаемых данных.");
                 ZenMoney.setData('transactions_sync_limit', parseInt(transactionsToSyncCount * 3 / 2));
                 syncTransactions(account);
@@ -102,16 +102,21 @@ function BeelineBank(ZenMoney) {
 
                     /* Завершение обработки, если транзакция уже была обработана в предыдущей синхронизации
                      * или не попадает в заданный период загрузки данных */
-                    if (dt < lastSavedTransactionDate) {
+                    if (dt < dateOfLastProcessedTransaction) {
                         ZenMoney.trace("Транзакция #" + operation.id +
                             " уже обработана ранее или не попадает в период загрузки данных.");
                         break;
                     }
 
+                    /* Пропуск транзакции, если она относится к использованию бонусов */
+                    if (operation.operationType == 2) {
+                        continue;
+                    }
+
                     /* Подготовка транзакции к импорту в базу ZenMoney. */
                     var transaction = {
                         id: operation.id,
-                        date: operation.dateTime,
+                        date: operation.dateTime.split(' ')[0],
                         comment: operation.userComment,
                         outcome: 0,
                         outcomeAccount: account,
@@ -162,7 +167,8 @@ function BeelineBank(ZenMoney) {
                         /* Возврат кода об ошибке */
                         return false;
                     }
-                    ZenMoney.trace("Транзакция добавлена: " + transaction.comment + " " + transaction.payee);
+                    ZenMoney.trace("Транзакция #" + transaction.id + " добавлена: " +
+                        transaction.date + ": " + transaction.payee + " | " + sum);
                 }
             }
 
@@ -181,15 +187,16 @@ function BeelineBank(ZenMoney) {
      *
      * @returns {number}
      */
-    function getDateOfLastSavedTransaction(account) {
-        var lastProcessedTransactionDate = ZenMoney.getData('latest_processed_date_' + account, 0);
-        if (lastProcessedTransactionDate == 0) {
-            var prefs = ZenMoney.getPreferences();
-            var defaultPeriodInDays = 7;
-            var period = !prefs.hasOwnProperty('period') || isNaN(period = parseInt(prefs.period)) ? defaultPeriodInDays : period;
-            lastProcessedTransactionDate = getCurrentDate() - period * 24 * 60 * 60 * 1000;
+    function getDateOfLastProcessedTransaction(account) {
+        var lastProcessedDate = ZenMoney.getData('latest_processed_date_' + account, 0);
+        var prefs = ZenMoney.getPreferences();
+        var period = !prefs.hasOwnProperty('period') || isNaN(period = parseInt(prefs.period)) ? 7 : period;
+        var syncedPeriod = ZenMoney.getData('period_to_sync_' + account, 0);
+        if (lastProcessedDate == 0 || period != syncedPeriod) {
+            lastProcessedDate = getCurrentDate() - period * 24 * 60 * 60 * 1000;
+            ZenMoney.setData('period_to_sync_' + account, period);
         }
-        return lastProcessedTransactionDate;
+        return lastProcessedDate;
     }
 
     /**
@@ -206,7 +213,7 @@ function BeelineBank(ZenMoney) {
      *
      * @returns {number}
      */
-    function getLastLoadedOperationDate(operationList) {
+    function getDateOfLastTransactionFromServer(operationList) {
         var lastOperation = operationList[operationList.length-1];
         return Date.parse(lastOperation.dateTime);
     }
@@ -236,7 +243,7 @@ function BeelineBank(ZenMoney) {
     function authorize() {
         var data = doRequest(REQUESTS.AUTHORIZE, null);
         if (!data.hasOwnProperty('jsessionid')) {
-            throw new ZenMoney.Error('Ошибка авторизации: ' + data.response);
+            throw new ZenMoney.Error('Ошибка авторизации: ' + data.error.message);
         }
         ZenMoney.setData('jsessionid', data.jsessionid);
     };
@@ -289,7 +296,7 @@ function BeelineBank(ZenMoney) {
      */
     function syncAccount() {
         var profile = doRequest(REQUESTS.GET_ACCOUNT, null);
-        if (profile.hasOwnProperty("response") || !profile.hasOwnProperty("auxInfo")) {
+        if (profile.hasOwnProperty("error") || !profile.hasOwnProperty("auxInfo")) {
             ZenMoney.trace('Ошибка при получении списка аккаунтов: ' + JSON.stringify(profile));
             throw new ZenMoney.Error('Не удалось загрузить список аккаунтов');
         }
@@ -298,7 +305,7 @@ function BeelineBank(ZenMoney) {
             id: profile.auxInfo.panTail,
             type: 'ccard',
             instrument: DEFAULT_CURRENCY,
-            balance: profile.money.availableBalance,
+            balance: profile.money.availableBalance / 100,
             syncID: [parseInt(profile.auxInfo.panTail)]
         }
         ZenMoney.addAccount(beelineAccount);
@@ -320,7 +327,8 @@ function BeelineBank(ZenMoney) {
         }
         if (param) {
             finalUrl += param;
-        }if (!data.method || data.method.toUpperCase() === 'GET') {
+        }
+        if (!data.method || data.method.toUpperCase() === 'GET') {
             response = ZenMoney.requestGet(finalUrl, getHeaders());
         } else {
             response = ZenMoney.request(data.method, finalUrl, data.body, getHeaders());
@@ -329,7 +337,7 @@ function BeelineBank(ZenMoney) {
             ZenMoney.trace('Получен пустой ответ при совершении ' + data.method + '-запроса по адресу "' + finalUrl + '".');
             throw new ZenMoney.Error('Неверный ответ с сервера');
         }
-        if (response.status == 401) {
+        if (ZenMoney.getLastStatusCode() == 401) {
             getSessionId(true);
             return doRequest(data, param);
         }

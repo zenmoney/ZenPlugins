@@ -118,6 +118,8 @@ function RocketBank(ZenMoney) {
      * @return {String[]}
      */
     this.fetchDeposits = function (deposits) {
+        var that = this;
+
         ZenMoney.trace("Найдено вкладов: " + deposits.length);
 
         var accounts = [];
@@ -176,12 +178,12 @@ function RocketBank(ZenMoney) {
                 switch (operation.kind) {
                     case "first_refill": // Первичное пополнение
                         transaction.income = sum;
-                        this.deposits_operations.push(transaction);
+                        that.deposits_operations.push(transaction);
                         break;
                     case "percent": // Проценты
                         transaction.income = sum;
                         transaction.payee = "Рокетбанк";
-                        this.deposits_percent.push(transaction);
+                        that.deposits_percent.push(transaction);
                         break;
                     default:
                         error("Неизвестный тип транзакции депозита", JSON.stringify(operation));
@@ -383,14 +385,14 @@ function RocketBank(ZenMoney) {
                             transaction.income = sum;
                         }
                         break;
-                    case "atm_cash_out": // Снятие наличных
+                    case "atm_cash_out": // Снятие наличных в банкомате
                         transaction.income = sum;
                         transaction.incomeAccount = "cash#" + operation.money.currency_code;
                         transaction.outcome = sum;
                         transaction.payee = null;
                         break;
-                    case "atm_cash_in": // Пополнение наличными
-                    case "office_cash_in":
+                    case "atm_cash_in": // Пополнение наличными через банкомат
+                    case "office_cash_in": // Пополнение наличными через отделение банка
                         transaction.income = sum;
                         transaction.outcome = sum;
                         transaction.outcomeAccount = "cash#" + operation.money.currency_code;
@@ -417,9 +419,10 @@ function RocketBank(ZenMoney) {
                     case "card2card_cash_out_other": // Исходящий перевод внутри банка
                         transaction.outcome = sum;
                         break;
+                    case "atm_commission": // Комиссия за снятие наличных
                     case "commission": // Комиссия за операцию
                     case "rocket_fee": // Услуги банка
-                    case "card_commission":
+                    case "card_commission": // Комиссия за обслуживание карты
                         transaction.outcome = sum;
                         transaction.payee = "Рокетбанк";
                         transaction.comment = getComment(operation);
@@ -459,6 +462,9 @@ function RocketBank(ZenMoney) {
                     case "miles_cash_back": // Возврат за рокетрубли
                         transaction.income = sum;
                         transaction.payee = "Рокетбанк";
+                        break;
+                    case "emoney_payment":
+                        transaction.outcome = sum;
                         break;
                     case "open_deposit": // Открытие вклада
                         var operation_found = false;

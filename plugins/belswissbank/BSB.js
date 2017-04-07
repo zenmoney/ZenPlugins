@@ -8,18 +8,30 @@ var BSB = (function (codeToCurrencyLookup, utils, errors) {
 
     var transactionTypeFactors = {
         'Vozvrat': 1,
+        'Vozvrat sredstv': 1,
         'Popolnenie': 1,
         'Service payment to card': 1,
         'Zachislenie': 1,
         'Tovary i uslugi': -1,
-        'Bankomat': -1
+        'Bankomat': -1,
+        'Nalichnye': -1
     };
+
+    var ownCashTransferTransactionTypes = [
+        'Popolnenie',
+        'Bankomat',
+        'Nalichnye'
+    ];
 
     return {
         bankBirthday: new Date(1033977600000),
 
+        makeUrl: function (path) {
+            return utils.getPreference('apiUrl', 'https://24.bsb.by/mobile/api') + path + '?lang=ru';
+        },
+
         authorize: function (username, password, deviceId) {
-            var BSB_AUTH_URL = 'https://24.bsb.by/mobile/api/authorization?lang=ru';
+            var BSB_AUTH_URL = this.makeUrl('/authorization');
             utils.requestJson({
                 bodyLogSanitizer: utils.sanitize,
                 url: BSB_AUTH_URL,
@@ -53,7 +65,7 @@ var BSB = (function (codeToCurrencyLookup, utils, errors) {
         confirm: function (deviceId, confirmationCode) {
             var response = utils.requestJson({
                 bodyLogSanitizer: utils.sanitize,
-                url: 'https://24.bsb.by/mobile/api/devices/' + deviceId + '?lang=ru',
+                url: this.makeUrl('/devices/' + deviceId),
                 method: 'POST',
                 body: confirmationCode.toString()
             });
@@ -65,7 +77,7 @@ var BSB = (function (codeToCurrencyLookup, utils, errors) {
         getCards: function () {
             var response = utils.requestJson({
                 bodyLogSanitizer: utils.sanitize,
-                url: 'https://24.bsb.by/mobile/api/cards?lang=ru',
+                url: this.makeUrl('/cards'),
                 method: 'GET'
             });
             utils.assertSuccessfulResponse(response, errors.temporal);
@@ -74,7 +86,7 @@ var BSB = (function (codeToCurrencyLookup, utils, errors) {
 
         getTransactions: function (cardId, from, to) {
             var response = utils.requestJson({
-                url: 'https://24.bsb.by/mobile/api/cards/' + cardId + '/sms?lang=ru',
+                url: this.makeUrl('/cards/' + cardId + '/sms'),
                 method: 'POST',
                 body: {
                     fromDate: formatBsbApiDate(from),
@@ -85,13 +97,9 @@ var BSB = (function (codeToCurrencyLookup, utils, errors) {
             return response.body;
         },
 
-        getFactor: function (transaction) {
-            var transactionType = transaction.transactionType;
-            if (!(transactionType in transactionTypeFactors)) {
-                throw errors.fatal('unknown transactionType: ' + utils.toReadableJson(transactionType));
-            }
-            return transactionTypeFactors[transactionType];
-        },
+        transactionTypeFactors: transactionTypeFactors,
+
+        ownCashTransferTransactionTypes: ownCashTransferTransactionTypes,
 
         getIsoCurrency: function (currencyCode) {
             if (!(currencyCode in codeToCurrencyLookup)) {

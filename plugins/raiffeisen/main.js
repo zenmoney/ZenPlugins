@@ -1,47 +1,49 @@
 ﻿var g_headers = {
     "Connection": "close",
-    "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 5.1; m2 Build/LMY47D) Android/3.16.0(443)",
-    "Content-Type": "text/xml;charset=UTF-8",
     "Host": "connect.raiffeisen.ru",
     "Accept-Encoding": "gzip"
 },
-g_envelope = "\
-    <soapenv:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://entry.rconnect/xsd\" xmlns:ser=\"http://service.rconnect\" xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:soapenc=\"http://schemas.xmlsoap.org/soap/encoding/\">\
-    <soapenv:Header />\
-    <soapenv:Body>\
-    </soapenv:Body>\
-    </soapenv:Envelope>",
-g_baseUrl = 'https://connect.raiffeisen.ru/Mobile-WS/services/',
-g_authSer = 'RCAuthorizationService',
-g_cardSer = 'RCCardService',
-g_accSer = 'RCAccountService',
-g_loanSer = 'RCLoanService',
-g_depositSer = 'RCDepositService',
-g_accounts = [],
-g_loans = [],
-g_preferences;
+    g_envelope = "\
+        <soapenv:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://entry.rconnect/xsd\" xmlns:ser=\"http://service.rconnect\" xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:soapenc=\"http://schemas.xmlsoap.org/soap/encoding/\">\
+        <soapenv:Header />\
+        <soapenv:Body>\
+        </soapenv:Body>\
+        </soapenv:Envelope>",
+    g_baseUrl = 'https://connect.raiffeisen.ru/Mobile-WS/services/',
+    g_authSer = 'RCAuthorizationService',
+    g_cardSer = 'RCCardService',
+    g_accSer = 'RCAccountService',
+    g_loanSer = 'RCLoanService',
+    g_depositSer = 'RCDepositService',
+    g_accountCards = {},
+    g_accounts = [],
+    g_loans = [],
+    g_converter,
+    g_preferences,
+    g_isSuccessful = true;
 
 /**
 * Основной метод
 */
 function main() {
+    g_converter = new marknote.Parser();
     g_preferences = ZenMoney.getPreferences();
 
     openSession();
-    var isSuccessful = true;
     try {
         processAccounts();
         processTransactions();
         processLoanPayments();
     }
     catch (exception) {
+        ZenMoney.trace('Что-то пошло не так:');
         ZenMoney.trace(exception.message);
-        ZenMoney.trace('Что-то пошло не так, закрываем сессию.');
-        isSuccessful = false;
+        closeSession();
+        throw exception;
     }
     closeSession();
 
-    ZenMoney.setResult({ success: isSuccessful });
+    ZenMoney.setResult({ success: g_isSuccessful });
 }
 
 /**
@@ -60,13 +62,7 @@ function openSession() {
 function closeSession() {
     ZenMoney.trace('Закрываем сессию');
     var nodeCloseSession = new marknote.Element('ser:CloseSession');
-
-    var converter = new marknote.Parser();
-    var doc = converter.parse(g_envelope);
-    var nodeBody = doc.getRootElement().getChildElement('soapenv:Body');
-    nodeBody.addChildElement(nodeCloseSession);
-
-    var data = ZenMoney.requestPost(g_baseUrl + g_authSer, doc.toString(), g_headers);
+    makeRequest(nodeCloseSession, g_authSer);
 }
 
 /**
@@ -82,12 +78,25 @@ function requestSession(login, password) {
     nodeCredentials.addChildElement(nodeLogin);
     nodeCredentials.addChildElement(nodePassword);
 
-    var converter = new marknote.Parser();
-    var doc = converter.parse(g_envelope);
-    var nodeBody = doc.getRootElement().getChildElement('soapenv:Body');
-    nodeBody.addChildElement(nodeCredentials);
-
-    ZenMoney.requestPost(g_baseUrl + g_authSer, doc.toString(), g_headers);
+    var docResponse = makeRequest(nodeCredentials, g_authSer);
+    var nodeReply = docResponse.getRootElement().getChildElement('soap:Body');
+    if (nodeReply != null) {
+        var nodeFault = nodeReply.getChildElement('soap:Fault');
+        if (nodeFault != null) {
+            g_isSuccessful = false;
+            if (getValue(nodeFault, 'faultstring', '') == 'logins.password.incorrect') {
+                throw new ZenMoney.Error('Райффайзенбанк: Неверный логин или пароль', true);
+            }
+            var faultDetails = nodeFault.getChildElement('detail').getChildElement('ns1:mobileServiceFault');
+            if (faultDetails != null) {
+                var faultMessage = getValue(faultDetails, 'userMessage', 'неизвестная ошибка');
+                throw new ZenMoney.Error('Райффайзенбанк: ' + faultMessage);
+            }
+            else {
+                throw new ZenMoney.Error('Райффайзенбанк: ' + faultString);
+            }
+        }
+    }
 }
 
 /**
@@ -106,49 +115,31 @@ function processAccounts() {
 function requestCards() {
     ZenMoney.trace('Запрашиваем данные по картам...');
     var nodeGetCards = new marknote.Element('ser:GetCards');
-    var converter = new marknote.Parser();
-    var doc = converter.parse(g_envelope);
-    var nodeBody = doc.getRootElement().getChildElement('soapenv:Body');
-    nodeBody.addChildElement(nodeGetCards);
 
-    var cards = ZenMoney.requestPost(g_baseUrl + g_cardSer, doc.toString(), g_headers);
-
-    var docCards = converter.parse(cards);
-    var nodeCards = docCards.getRootElement().getChildElement('soap:Body').getChildElement('ns2:GetCardsResponse').getChildElements();
+    var docCards = makeRequest(nodeGetCards, g_cardSer);
+    var nodeReply = docCards.getRootElement().getChildElement('soap:Body');
+    if (nodeReply == null) {
+        ZenMoney.trace('docCards: ' + docCards.toString());
+        throw new ZenMoney.Error('Райффайзенбанк: получен некорректный ответ от сервера');
+    }
+    var nodeCards = nodeReply.getChildElement('ns2:GetCardsResponse').getChildElements();
     ZenMoney.trace('Получено карт: ' + nodeCards.length);
 
     for (var i = 0; i < nodeCards.length; i++) {
         var nodeCard = nodeCards[i];
 
-        var cardNum = nodeCard.getChildElement('number').getText();
+        var cardNum = getValue(nodeCard, 'number');
         cardNum = cardNum.substr(cardNum.length - 4, 4);
         if (isAccountSkipped(cardNum)) {
             ZenMoney.trace('Пропускаем карту: ' + cardNum);
             continue;
         }
+        ZenMoney.trace('Найдена карта: ' + cardNum);
 
-        var accNum = nodeCard.getChildElement('accountNumber').getText();
-        accNum = accNum.substr(accNum.length - 4, 4);
-
-        // for now requesting credit limit is unclear,
-        // so both credit and debet cards are processed the same way
-        var isCreditCard = false;
-        if (nodeCard.getChildElement('accountType').getText() == '3')
-            isCreditCard = true;
-
-        var zenAccount = {
-            id: 'card:' + nodeCard.getChildElement('id').getText(),
-            title: 'card:' + nodeCard.getChildElement('id').getText(),
-            syncID: [],
-            instrument: nodeCard.getChildElement('currency').getText(),
-            type: 'ccard',
-            balance: Number(nodeCard.getChildElement('balance').getText()),
-        };
-        zenAccount.syncID.push(cardNum);
-        zenAccount.syncID.push(accNum);
-
-        ZenMoney.addAccount(zenAccount);
-        ZenMoney.trace('Добавлена карта: ' + JSON.stringify(zenAccount));
+        var accNum = getValue(nodeCard, 'accountNumber');
+        if (g_accountCards[accNum] == undefined)
+            g_accountCards[accNum] = [];
+        g_accountCards[accNum].push(cardNum);
     }
 }
 
@@ -158,48 +149,56 @@ function requestCards() {
 function requestAccounts() {
     ZenMoney.trace('Запрашиваем данные по счетам...');
     var nodeGetAccounts = new marknote.Element('ser:GetAccounts');
-    var converter = new marknote.Parser();
-    var doc = converter.parse(g_envelope);
-    var nodeBody = doc.getRootElement().getChildElement('soapenv:Body');
-    nodeBody.addChildElement(nodeGetAccounts);
 
-    var accounts = ZenMoney.requestPost(g_baseUrl + g_accSer, doc.toString(), g_headers);
-
-    var docAccounts = converter.parse(accounts);
-    var nodeAccount = docAccounts.getRootElement().getChildElement('soap:Body').getChildElement('ns2:GetAccountsResponse').getChildElements();
+    var docAccounts = makeRequest(nodeGetAccounts, g_accSer);
+    var nodeReply = docAccounts.getRootElement().getChildElement('soap:Body');
+    if (nodeReply == null) {
+        ZenMoney.trace('docAccounts: ' + docAccounts.toString());
+        throw new ZenMoney.Error('Райффайзенбанк: получен некорректный ответ от сервера');
+    }
+    var nodeAccount = nodeReply.getChildElement('ns2:GetAccountsResponse').getChildElements();
     ZenMoney.trace('Получено счетов: ' + nodeAccount.length);
 
     for (var i = 0; i < nodeAccount.length; i++) {
         var nodeAcc = nodeAccount[i];
-        var accNum = nodeAcc.getChildElement('number').getText();
-        accNum = accNum.substr(accNum.length - 4, 4);
+        var accNumber = getValue(nodeAcc, 'number');
+        var accNum = accNumber.substr(accNumber.length - 4, 4);
 
-        var isClosed = false;
-        if (nodeAcc.getChildElement('closeDate') != undefined)
-            if (nodeAcc.getChildElement('closeDate').getText().length() != 0)
-                isClosed = true;
-
+        var isClosed = (getValue(nodeAcc, 'closeDate') != '');
         if (isClosed || isAccountSkipped(accNum)) {
             ZenMoney.trace('Пропускаем счёт: ' + accNum);
             continue;
         }
 
-        var isSaving = false;
-        try {
-            if (nodeAcc.getChildElement('accountSubtype').getText() == 'SAVING')
-                isSaving = true;
-        }
-        catch (exception) { }
-
+        var isSaving = (getValue(nodeAcc, 'accountSubtype') == 'SAVING');
         var zenAccount = {
-            id: 'account:' + nodeAcc.getChildElement('id').getText(),
-            title: 'account:' + nodeAcc.getChildElement('id').getText(),
-            syncID: accNum,
-            instrument: nodeAcc.getChildElement('currency').getText(),
-            type: 'checking',
-            balance: Number(nodeAcc.getChildElement('balance').getText()),
-            savings: isSaving
+            id: 'account:' + getValue(nodeAcc, 'id'),
+            syncID: [],
+            instrument: getValue(nodeAcc, 'currency'),
+            balance: Number(getValue(nodeAcc, 'balance')),
         };
+        zenAccount.syncID.push(accNum);
+
+        // if no card is binded then import it as an account
+        if (g_accountCards[accNumber] == undefined) {
+            zenAccount.type = 'checking';
+            zenAccount.title = getValue(nodeAcc, 'number');
+            zenAccount.savings = isSaving;
+        }
+        // else import it as a card
+        else {
+            zenAccount.type = 'ccard';
+            zenAccount.title = g_accountCards[accNumber][0];
+            
+            // DEBUG //
+            if (nodeAcc.getChildElement('creditLimit') == null)
+                ZenMoney.trace('There is no creditLimit field');
+            // DEBUG //
+
+            zenAccount.creditLimit = Number(getValue(nodeAcc, 'creditLimit', '0'));
+            for (var card = 0; card < g_accountCards[accNumber].length; card++)
+                zenAccount.syncID.push(g_accountCards[accNumber][card]);
+        }
 
         ZenMoney.addAccount(zenAccount);
         ZenMoney.trace('Добавлен счёт: ' + JSON.stringify(zenAccount));
@@ -214,42 +213,41 @@ function requestAccounts() {
 function requestLoans() {
     ZenMoney.trace('Запрашиваем данные по кредитам...');
     var nodeGetLoans = new marknote.Element('ser:GetLoans');
-    var converter = new marknote.Parser();
-    var doc = converter.parse(g_envelope);
-    var nodeBody = doc.getRootElement().getChildElement('soapenv:Body');
-    nodeBody.addChildElement(nodeGetLoans);
 
-    var loans = ZenMoney.requestPost(g_baseUrl + g_loanSer, doc.toString(), g_headers);
-
-    var docLoans = converter.parse(loans);
-    var nodeLoans = docLoans.getRootElement().getChildElement('soap:Body').getChildElement('ns2:GetLoansResponse').getChildElements();
+    var docLoans = makeRequest(nodeGetLoans, g_loanSer);
+    var nodeReply = docLoans.getRootElement().getChildElement('soap:Body');
+    if (nodeReply == null) {
+        ZenMoney.trace('docLoans: ' + docLoans.toString());
+        throw new ZenMoney.Error('Райффайзенбанк: получен некорректный ответ от сервера');
+    }
+    var nodeLoans = nodeReply.getChildElement('ns2:GetLoansResponse').getChildElements();
     ZenMoney.trace('Получено кредитов: ' + nodeLoans.length);
 
     for (var i = 0; i < nodeLoans.length; i++) {
         var nodeLoan = nodeLoans[i];
-        var loanNum = nodeLoan.getChildElement('id').getText();
+        var loanNum = getValue(nodeLoan, 'id');
         loanNum = loanNum.substr(loanNum.length - 4, 4);
         
         // <currency> contains a string that looks like 'bmw.curr.rur'
-        var currency = nodeLoan.getChildElement('currency').getText();
+        var currency = getValue(nodeLoan, 'currency');
         currency = currency.substr(currency.length - 3, 3);
 
-        var paymentRest = Number('-' + nodeLoan.getChildElement('paymentRest').getText());
+        var paymentRest = Number('-' + getValue(nodeLoan, 'paymentRest'));
 
-        var startDate = +new Date(nodeLoan.getChildElement('openDate').getText());
+        var startDate = +new Date(getValue(nodeLoan, 'openDate').substr(0, 10));
         startDate = startDate / 1000;
-        var endDate = +new Date(nodeLoan.getChildElement('closeDate').getText());
+        var endDate = +new Date(getValue(nodeLoan, 'closeDate').substr(0, 10));
         endDate = endDate / 1000;
         var dateOffset = Math.round(Number((endDate - startDate) / (30 * 24 * 60 * 60)));
 
         var zenAccount = {
-            id: 'loan:' + nodeLoan.getChildElement('id').getText(),
-            title: 'loan:' + nodeLoan.getChildElement('id').getText(),
+            id: 'loan:' + getValue(nodeLoan, 'id'),
+            title: getValue(nodeLoan, 'id'),
             syncID: loanNum,
             instrument: currency,
             type: 'loan',
             balance: paymentRest,
-            percent: Number(nodeLoan.getChildElement('intrestRate').getText()),
+            percent: Number(getValue(nodeLoan, 'intrestRate')),
             capitalization: true,
             startDate: startDate,
             endDateOffset: dateOffset,
@@ -271,61 +269,52 @@ function requestLoans() {
 function requestDeposits() {
     ZenMoney.trace('Запрашиваем данные по вкладам...');
     var nodeGetDeposits = new marknote.Element('ser:GetDeposits');
-    var converter = new marknote.Parser();
-    var doc = converter.parse(g_envelope);
-    var nodeBody = doc.getRootElement().getChildElement('soapenv:Body');
-    nodeBody.addChildElement(nodeGetDeposits);
 
-    var deposits = ZenMoney.requestPost(g_baseUrl + g_depositSer, doc.toString(), g_headers);
+    var docDeposits = makeRequest(nodeGetDeposits, g_depositSer);
+    var nodeReply = docDeposits.getRootElement().getChildElement('soap:Body');
+    if (nodeReply == null) {
+        ZenMoney.trace('docDeposits: ' + docDeposits.toString());
+        throw new ZenMoney.Error('Райффайзенбанк: получен некорректный ответ от сервера');
+    }
+    var nodeDeposits = nodeReply.getChildElement('ns2:GetDepositsResponse').getChildElements();
 
-    var docDeposits = converter.parse(deposits);
-    var nodeDeposits = docDeposits.getRootElement().getChildElement('soap:Body').getChildElement('ns2:GetDepositsResponse').getChildElements();
     ZenMoney.trace('Получено вкладов: ' + nodeDeposits.length);
 
     for (var i = 0; i < nodeDeposits.length; i++) {
         var nodeDep = nodeDeposits[i];
-        var depNum = nodeDep.getChildElement('accountNumber').getText();
+        var depNum = getValue(nodeDep, 'accountNumber');
         depNum = depNum.substr(depNum.length - 4, 4);
 
         // <currency> contains a string that looks like 'bmw.curr.rur'
-        var currency = nodeDep.getChildElement('currency').getText();
+        var currency = getValue(nodeDep, 'currency');
         currency = currency.substr(currency.length - 3, 3);
-
-        var startDateShift = nodeDep.getChildElement('openDate').getText();
-        startDateShift = startDateShift.substr(1, startDateShift.length - 2);
-        var startDate = new Date(Date.now() - startDateShift * (24 * 60 * 60 * 1000));
-
-        var endDateShift = nodeDep.getChildElement('closeDate').getText();
-        endDateShift = endDateShift.substr(1, endDateShift.length - 2);
-        var endDate = new Date(Date.now() + endDateShift * (24 * 60 * 60 * 1000));
-
-        var dateOffset = Math.round(Number((endDate - startDate) / (24 * 60 * 60 * 1000)));
+        var startDate = new Date(getValue(nodeDep, 'openDate').substr(0, 10));
+        var isCapitalized = (getValue(nodeDep, 'capitalization') == 'true');
 
         var zenAccount = {
-            id: 'deposit:' + nodeDep.getChildElement('id').getText(),
-            title: 'deposit:' + nodeDep.getChildElement('id').getText(),
+            id: 'deposit:' + getValue(nodeDep, 'id'),
+            title: getValue(nodeDep, 'names'),
             syncID: depNum,
             instrument: currency,
             type: 'deposit',
-            balance: Number(nodeDep.getChildElement('currentAmount').getText()),
-            startBalance: Number(nodeDep.getChildElement('initialAmount').getText()),
-            percent: nodeDep.getChildElement('intrestRate').getText(),
-            capitalization: Bool(nodeDep.getChildElement('capitalization').getText()),
+            balance: Number(getValue(nodeDep, 'currentAmount')),
+            startBalance: Number(getValie(nodeDep, 'initialAmount')),
+            percent: Number(getValue(nodeDep, 'interestRate')),
+            capitalization: isCapitalized,
             startDate: startDate,
-            endDateOffset: dateOffset,
+            endDateOffset: Number(getValue(nodeDep, 'daysQuantity')),
             endDateOffsetInterval: 'day',
             payoffStep: 1,
             payoffInterval: 'month'
         };
-
         ZenMoney.addAccount(zenAccount);
         ZenMoney.trace('Добавлен вклад: ' + JSON.stringify(zenAccount));
     }
 }
 
-///**
-// * Обработка операций по счетам
-// */
+/**
+ * Обработка операций по счетам
+ */
 function processTransactions() {
     ZenMoney.trace('Запрашиваем данные по последним операциям по счетам...');
 
@@ -336,7 +325,7 @@ function processTransactions() {
         // по умолчанию загружаем операции за неделю
         var period = !g_preferences.hasOwnProperty('period') || isNaN(period = parseInt(g_preferences.period)) ? 7 : period;
 
-        if (period > 100) period = 100;	// на всякий случай, ограничим лимит, а то слишком долго будет
+        if (period > 100) period = 100;    // на всякий случай ограничим лимит, а то слишком долго будет
 
         lastSyncTime = Date.now() - period * 24 * 60 * 60 * 1000;
     }
@@ -365,101 +354,111 @@ function processTransactions() {
         nodeMovements.addChildElement(nodeStart);
         nodeMovements.addChildElement(nodeEnd);
 
-        var converter = new marknote.Parser();
-        var doc = converter.parse(g_envelope);
-        var nodeBody = doc.getRootElement().getChildElement('soapenv:Body');
-        nodeBody.addChildElement(nodeMovements);
-
-        var movements = ZenMoney.requestPost(g_baseUrl + g_accSer, doc.toString(), g_headers);
-
-        var docMovements = converter.parse(movements);
-        var nodeReturns = docMovements.getRootElement().getChildElement('soap:Body').getChildElement('ns2:GetAccountMovementsResponse').getChildElements();
+        var docMovements = makeRequest(nodeMovements, g_accSer);
+        var nodeReply = docMovements.getRootElement().getChildElement('soap:Body');
+        if (nodeReply == null) {
+            ZenMoney.trace('docMovements: ' + docMovements.toString());
+            throw new ZenMoney.Error('Райффайзенбанк: получен некорректный ответ от сервера');
+        }
+        var nodeReturns = nodeReply.getChildElement('ns2:GetAccountMovementsResponse').getChildElements();
         ZenMoney.trace('Получено операций по счетам: ' + nodeReturns.length);
-         
+
         for (var j = 0; j < nodeReturns.length; j++) {
             var nodeRet = nodeReturns[j];
 
-            var transId = Number(nodeRet.getChildElement('id').getText());
-            var date = new Date(nodeRet.getChildElement('commitDate').getText());
-            var transCurrency = nodeRet.getChildElement('currency').getText();
-            var accCurrency = nodeAccount.getChildElement('currency').getText();
-            var isOutcome = (nodeRet.getChildElement('type').getText() == '0');
-            var isIncome = (nodeRet.getChildElement('type').getText() == '1');
+			var description = getValue(nodeRet, 'shortDescription');
+			// do not count these operations
+			// because they are negative duplicates of real transactions
+			if (description == 'CREDIT CARD POSTING')
+				continue;
+
+            var date = new Date(getValue(nodeRet, 'commitDate').substr(0, 10));
+            var transCurrency = getValue(nodeRet, 'currency');
+            var accCurrency = getValue(nodeAccount, 'currency');
+            var isOutcome = (getValue(nodeRet, 'type') == '0');
+            var isIncome = (getValue(nodeRet, 'type') == '1');
 
             var zenTrans = {
-                id: transId.toString(),
-                date: n2(date.getDay()) + '.' + n2(date.getMonth() + 1) + '.' + date.getFullYear(),
+                date: n2(date.getDate()) + '.' + n2(date.getMonth() + 1) + '.' + date.getFullYear(),
                 outcome: 0,
                 outcomeAccount: '',
                 income: 0,
                 incomeAccount: '',
-                payee: nodeRet.getChildElement('shortDescription').getText()
+                payee: description
             };
 
             if (isOutcome) {
-                zenTrans.outcomeAccount = 'account:' + nodeAccount.getChildElement('id').getText();
+                zenTrans.outcomeAccount = 'account:' + getValue(nodeAccount, 'id');
                 zenTrans.incomeAccount = zenTrans.outcomeAccount;
                 if (transCurrency == accCurrency) {
-                    zenTrans.outcome = Number(nodeRet.getChildElement('amount').getText());
+                    zenTrans.outcome = Number(getValue(nodeRet, 'amount'));
                 }
                 else {
-                    zenTrans.opOutcome = Number(nodeRet.getChildElement('amount').getText());
+                    zenTrans.opOutcome = Number(getValue(nodeRet, 'amount'));
                     zenTrans.opOutcomeInstrument = transCurrency;
                 }
             }
             else if (isIncome) {
-                zenTrans.incomeAccount = 'account:' + nodeAccount.getChildElement('id').getText();
+                zenTrans.incomeAccount = 'account:' + getValue(nodeAccount, 'id');
                 zenTrans.outcomeAccount = zenTrans.incomeAccount;
                 if (transCurrency == accCurrency) {
-                    zenTrans.income = Number(nodeRet.getChildElement('amount').getText());
+                    zenTrans.income = Number(getValue(nodeRet, 'amount'));
                 }
                 else {
-                    zenTrans.opIncome = Number(nodeRet.getChildElement('amount').getText());
+                    zenTrans.opIncome = Number(getValue(nodeRet, 'amount'));
                     zenTrans.opIncomeInstrument = transCurrency;
                 }
             }
+            
+            var transId = Number(getValue(nodeRet, 'id', '-1'));
+            if (transId != -1) {
+                // if there once already was a transaction with the same ID
+                // then it is a transfer between accounts
+                // we will complete now the first transaction
+                // and skip current transaction
+                if (mapTransactions.has(transId)) {
+                    var zenSameTrans = mapTransactions[transId];
 
-            // if there once already was a transaction with the same ID
-            // then it is a transfer between accounts
-            // we will complete now the first transaction
-            // and skip current transaction
-            if (mapTransactions.has(transId)) {
-                var zenSameTrans = mapTransactions[transId];
-
-                if (isOutcome && (zenSameTrans.income > 0)) {
-                    zenSameTrans.outcome = zenTrans.outcome;
-                    zenSameTrans.outcomeAccount = zenTrans.outcomeAccount;
-                    if (transCurency != accCurrency) {
-                        zenSameTrans.opOutcome = zenTrans.opOutcome;
-                        zenSameTrans.opOutcomeInstrument = zenTrans.opOutcomeInstrument;
+                    if (isOutcome && (zenSameTrans.income > 0)) {
+                        zenSameTrans.outcome = zenTrans.outcome;
+                        zenSameTrans.outcomeAccount = zenTrans.outcomeAccount;
+                        if (transCurency != accCurrency) {
+                            zenSameTrans.opOutcome = zenTrans.opOutcome;
+                            zenSameTrans.opOutcomeInstrument = zenTrans.opOutcomeInstrument;
+                        }
+                    }
+                    else if (isIncome && (zenSameTrans.outcome > 0)) {
+                        zenSameTrans.income = zenTrans.income;
+                        zenSameTrans.incomeAccount = zenTrans.incomeAccount;
+                        if (transCurency != accCurrency) {
+                            zenSameTrans.opIncome = zenTrans.opIncome;
+                            zenSameTrans.opIncomeInstrument = zenTrans.opIncomeInstrument;
+                        }
                     }
                 }
-                else if (isIncome && (zenSameTrans.outcome > 0)) {
-                    zenSameTrans.income = zenTrans.income;
-                    zenSameTrans.incomeAccount = zenTrans.incomeAccount;
-                    if (transCurency != accCurrency) {
-                        zenSameTrans.opIncome = zenTrans.opIncome;
-                        zenSameTrans.opIncomeInstrument = zenTrans.opIncomeInstrument;
-                    }
+                else {
+                    zenTrans.id = transId;
+                    mapTransactions.set(transId, zenTrans);
                 }
             }
             else {
-                mapTransactions[transId] = zenTrans;
-            }            
+                // DEBUG //
+                ZenMoney.trace('Получена операция без id: ' + nodeRet.toString());
+                // DEBUG //
+            }
 
             if (zenTrans.date > lastSyncTime)
                 lastSyncTime = zenTrans.date;
         }
     }
 
-    var transIds = mapTransactions.keys();
-    for (var i = 0; i < transIds.length; i++) {
-        var transId = transIds[i];
-        var zenTrans = mapTransactions[transId];
-        ZenMoney.addTransaction(zenTrans);
-        ZenMoney.trace('Добавлена операция: ' + JSON.stringify(zenTrans));
+    var sum = 0;
+    for (var trans of mapTransactions.values()) {
+        ZenMoney.addTransaction(trans);
+        ZenMoney.trace('Добавлена операция: ' + JSON.stringify(trans));
+        sum++;
     }
-    ZenMoney.trace('Всего операций добавлено: ' + transIds.length);
+    ZenMoney.trace('Всего операций добавлено: ' + sum);
 
     ZenMoney.setData('last_sync', lastSyncTime);
     ZenMoney.saveData();
@@ -480,38 +479,69 @@ function processLoanPayments() {
         var nodePayments = new marknote.Element('ser:GetLoanPayments');
         nodePayments.addChildElement(nodeLoan);
 
-        var converter = new marknote.Parser();
-        var doc = converter.parse(g_envelope);
-        var nodeBody = doc.getRootElement().getChildElement('soapenv:Body');
-        nodeBody.addChildElement(nodePayments);
-
-        var payments = ZenMoney.requestPost(g_baseUrl + g_loanSer, doc.toString(), g_headers);
-
-        var docPayments = converter.parse(payments);
-        var nodeReturns = docPayments.getRootElement().getChildElement('soap:Body').getChildElement('ns2:GetLoanPaymentsResponse').getChildElements();
+        var docPayments = makeRequest(nodePayments, g_loanSer);
+        var nodeReply = docPayments.getRootElement().getChildElement('soap:Body');
+        if (nodeReply == null) {
+            ZenMoney.trace('docPayments: ' + docPayments.toString());
+            throw new ZenMoney.Error('Райффайзенбанк: получен некорректный ответ от сервера');
+        }
+        var nodeReturns = nodeReply.getChildElement('ns2:GetLoanPaymentsResponse').getChildElements();
         ZenMoney.trace('Получено платежей по кредиту: ' + nodeReturns.length);
          
         for (var j = 0; j < nodeReturns.length; j++) {
             var nodeRet = nodeReturns[j];
 
-            var date = new Date(nodeRet.getChildElement('commitDate').getText());
-            var transCurrency = nodeRet.getChildElement('currency').getText();
-            var accCurrency = nodeLoan.getChildElement('currency').getText();
-            var intrestPayment = Number(nodeRet.getChildElement('intrestPayment').getText());
-            var loanAmountPayment = Number(nodeRet.getChildElement('loanAmountPayment').getText());
+            var date = new Date(getValue(nodeRet, 'commitDate').substr(0, 10));
+            var transCurrency = getValue(nodeRet, 'currency');
+            var accCurrency = getValue(nodeLoan, 'currency');
+            var intrestPayment = Number(getValue(nodeRet, 'intrestPayment'));
+            var loanAmountPayment = Number(getValue(nodeRet, 'loanAmountPayment'));
 
             var zenTrans = {
-                id: nodeRet.getChildElement('id').getText(),
+                id: getValue(nodeRet, 'id'),
                 date: n2(date.getDate()) + '.' + n2(date.getMonth() + 1) + '.' + date.getFullYear(),
                 outcome: 0,
-                outcomeAccount: 'loan:' + nodeLoan.getChildElement('id').getText(),
+                outcomeAccount: 'loan:' + getValue(nodeLoan, 'id'),
                 income: intrestPayment + loanAmountPayment,
-                incomeAccount: 'loan:' + nodeLoan.getChildElement('id').getText()
+                incomeAccount: 'loan:' + getValue(nodeLoan, 'id')
             };
             ZenMoney.addTransaction(zenTrans);
             ZenMoney.trace('Добавлен платёж: ' + JSON.stringify(zenTrans));
         }
     }
+}
+
+/**
+* Отправить запрос с телом nodeRequest на сервис serviceName и получить ответ
+* @param {marknote.Element} nodeRequest
+* @param {String} serviceName
+* @returns {marknote.Document}
+*/
+function makeRequest(nodeRequest, serviceName) {
+    var doc = g_converter.parse(g_envelope);
+    var nodeBody = doc.getRootElement().getChildElement('soapenv:Body');
+    nodeBody.addChildElement(nodeRequest);
+    var reply = ZenMoney.requestPost(g_baseUrl + serviceName, doc.toString(), g_headers);
+    return g_converter.parse(reply);
+}
+
+/**
+* Получить текстовое значение поля либо вернуть дефолтное значение
+* @param {marknote.Element} node
+* @param {String} key
+* @param {String} ?defaultValue
+* @returns {String}
+*/
+function getValue(node, key, defaultValue) {
+    defaultValue = (typeof defaultValue !== 'undefined') ? defaultValue : '';
+    if (node == null)
+        return defaultValue;
+    if (node.getChildElement(key) == null)
+        return defaultValue;
+    var value = node.getChildElement(key).getText();
+    if (value == '')
+        return defaultValue;
+    return value;
 }
 
 /**
