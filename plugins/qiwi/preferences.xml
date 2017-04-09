@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen>
 	<EditTextPreference
-		title="Логин"
-		positiveButtonText="ОК"
-		summary="|Логин|{@s}"
-		dialogTitle="Логин"
-		negativeButtonText="Отмена"
-		dialogMessage="Введите логин(номер телефона), используемый для входа в Qiwi-кошелек."
+		title="Номер телефона"
+		summary="|Номер телефона|{@s}"
+		dialogTitle="Номер телефона"
+		dialogMessage="Введите номер телефона(+7xxxxxxxxxx), используемый для входа в Qiwi-кошелек."
 		obligatory="true"
+		positiveButtonText="ОК"
+		negativeButtonText="Отмена"
 		key="login">
 	</EditTextPreference>
 	<EditTextPreference
