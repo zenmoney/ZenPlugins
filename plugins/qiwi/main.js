@@ -1,7 +1,3 @@
-/**
- * @author Ilnaz Fazliakhmetov <ilnaz94@gmail.com>
- */
-
 var g_headers = {
         'Accept': 'application/vnd.qiwi.sso-v1+json',
         'Content-Type': 'application/json',
@@ -109,7 +105,7 @@ function processAccounts() {
         };
 
         if (isAccountSkipped(acc1.id)) {
-            ZenMoney.trace('Пропускаем карту/счёт: ' + a.title);
+            ZenMoney.trace('Пропускаем карту/счёт: ' + acc1.id);
             continue;
         }
 
