@@ -133,6 +133,19 @@
  */
 
 /**
+ * Транзакция для депозита
+ *
+ * @typedef {Object} DepositTransaction
+ * @property {String} id
+ * @property {Number} date
+ * @property {String} comment
+ * @property {Number} outcome
+ * @property {String} outcomeAccount
+ * @property {Number} income
+ * @property {String} incomeAccount
+ */
+
+/**
  * Ответ с данными об аккаунте
  *
  * @typedef {Object} Feed
