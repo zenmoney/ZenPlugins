@@ -97,6 +97,19 @@ function requestSession(login, password) {
             }
         }
     }
+	
+	
+	// DEBUG //
+    var nodeBatchResponseNoAuthType = new marknote.Element('ser:getBatchResponseNoAuthType');
+    var docBatchResponseNoAuthType = makeRequest(nodeBatchResponseNoAuthType, g_authSer);
+    var nodeInfos = docBatchResponseNoAuthType.getRootElement().getChildElement('soap:Body').getChildElement('ns2:getBatchResponseNoAuthTypeResponse').getChildElement('return').getChildElements();
+    for (var i = 0; i < nodeInfos.length; i++) {
+        if (nodeInfos[i].getChildElement('accountSubtype') != null)
+            ZenMoney.trace('account: ' + nodeInfos[i].toString());
+        else if (nodeInfos[i].getChildElement('accountNumber') != null)
+            ZenMoney.trace('card: ' + nodeInfos[i].toString());
+    }
+	// DEBUG //
 }
 
 /**
@@ -189,13 +202,6 @@ function requestAccounts() {
         else {
             zenAccount.type = 'ccard';
             zenAccount.title = g_accountCards[accNumber][0];
-            
-            // DEBUG //
-            if (nodeAcc.getChildElement('creditLimit') == null)
-                ZenMoney.trace('There is no creditLimit field');
-            // DEBUG //
-
-            zenAccount.creditLimit = Number(getValue(nodeAcc, 'creditLimit', '0'));
             for (var card = 0; card < g_accountCards[accNumber].length; card++)
                 zenAccount.syncID.push(g_accountCards[accNumber][card]);
         }
@@ -298,7 +304,7 @@ function requestDeposits() {
             instrument: currency,
             type: 'deposit',
             balance: Number(getValue(nodeDep, 'currentAmount')),
-            startBalance: Number(getValie(nodeDep, 'initialAmount')),
+            startBalance: Number(getValue(nodeDep, 'initialAmount')),
             percent: Number(getValue(nodeDep, 'interestRate')),
             capitalization: isCapitalized,
             startDate: startDate,
