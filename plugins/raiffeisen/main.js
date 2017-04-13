@@ -102,9 +102,23 @@ function requestSession(login, password) {
 	// DEBUG //
     var nodeBatchResponseNoAuthType = new marknote.Element('ser:getBatchResponseNoAuthType');
     var docBatchResponseNoAuthType = makeRequest(nodeBatchResponseNoAuthType, g_authSer);
-    var nodeBody = docBatchResponseNoAuthType.getRootElement().getChildElement('soap:Body');
-    if (nodeBody != null) {
-        var nodeBatchResponse = nodeBody.getChildElement('ns2:getBatchResponseNoAuthTypeResponse');
+    var nodeBodyNoAuthType = docBatchResponseNoAuthType.getRootElement().getChildElement('soap:Body');
+
+    var nodeBatchResponse = new marknote.Element('ser:getBatchResponse');
+    var docBatchResponse = makeRequest(nodeBatchResponse, g_authSer);
+    var nodeBody = docBatchResponse.getRootElement().getChildElement('soap:Body');
+    
+    if ((nodeBodyNoAuthType != null) || (nodeBody != null)) {
+        var nodeBatchResponse = null;
+        if (nodeBodyNoAuthType != null) {
+            ZenMoney.trace('getBatchResponseNoAuthType:');
+            nodeBatchResponse = nodeBodyNoAuthType.getChildElement('ns2:getBatchResponseNoAuthTypeResponse');
+        }
+        else {
+            ZenMoney.trace('getBatchResponse:');
+            nodeBatchResponse = nodeBody.getChildElement('ns2:getBatchResponseResponse');
+        }
+
         if (nodeBatchResponse != null) {
             nodeReturn = nodeBatchResponse.getChildElement('return');
             if (nodeReturn != null) {
@@ -116,7 +130,16 @@ function requestSession(login, password) {
                         ZenMoney.trace('card: ' + nodeInfos[i].toString());
                 }
             }
+            else {
+                ZenMoney.trace('nodeReturn is empty');
+            }
         }
+        else {
+            ZenMoney.trace('nodeBatchResponse is empty');
+        }
+    }
+    else {
+        ZenMoney.trace('Both batch responses are empty');
     }
 	// DEBUG //
 }
