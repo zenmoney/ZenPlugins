@@ -102,12 +102,21 @@ function requestSession(login, password) {
 	// DEBUG //
     var nodeBatchResponseNoAuthType = new marknote.Element('ser:getBatchResponseNoAuthType');
     var docBatchResponseNoAuthType = makeRequest(nodeBatchResponseNoAuthType, g_authSer);
-    var nodeInfos = docBatchResponseNoAuthType.getRootElement().getChildElement('soap:Body').getChildElement('ns2:getBatchResponseNoAuthTypeResponse').getChildElement('return').getChildElements();
-    for (var i = 0; i < nodeInfos.length; i++) {
-        if (nodeInfos[i].getChildElement('accountSubtype') != null)
-            ZenMoney.trace('account: ' + nodeInfos[i].toString());
-        else if (nodeInfos[i].getChildElement('accountNumber') != null)
-            ZenMoney.trace('card: ' + nodeInfos[i].toString());
+    var nodeBody = docBatchResponseNoAuthType.getRootElement().getChildElement('soap:Body');
+    if (nodeBody != null) {
+        var nodeBatchResponse = nodeBody.getChildElement('ns2:getBatchResponseNoAuthTypeResponse');
+        if (nodeBatchResponse != null) {
+            nodeReturn = nodeBatchResponse.getChildElement('return');
+            if (nodeReturn != null) {
+                var nodeInfos = nodeReturn.getChildElements();
+                for (var i = 0; i < nodeInfos.length; i++) {
+                    if (nodeInfos[i].getChildElement('accountSubtype') != null)
+                        ZenMoney.trace('account: ' + nodeInfos[i].toString());
+                    else if (nodeInfos[i].getChildElement('accountNumber') != null)
+                        ZenMoney.trace('card: ' + nodeInfos[i].toString());
+                }
+            }
+        }
     }
 	// DEBUG //
 }
