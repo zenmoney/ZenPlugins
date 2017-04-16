@@ -175,10 +175,6 @@ function requestCards() {
 
         var cardNum = getValue(nodeCard, 'number');
         cardNum = cardNum.substr(cardNum.length - 4, 4);
-        if (isAccountSkipped(cardNum)) {
-            ZenMoney.trace('Пропускаем карту: ' + cardNum);
-            continue;
-        }
         ZenMoney.trace('Найдена карта: ' + cardNum);
 
         var accNum = getValue(nodeCard, 'accountNumber');
@@ -209,15 +205,16 @@ function requestAccounts() {
         var accNumber = getValue(nodeAcc, 'number');
         var accNum = accNumber.substr(accNumber.length - 4, 4);
 
+        var accId = 'account:' + getValue(nodeAcc, 'id');
         var isClosed = (getValue(nodeAcc, 'closeDate') != '');
-        if (isClosed || isAccountSkipped(accNum)) {
+        if (isClosed || isAccountSkipped(accId)) {
             ZenMoney.trace('Пропускаем счёт: ' + accNum);
             continue;
         }
 
         var isSaving = (getValue(nodeAcc, 'accountSubtype') == 'SAVING');
         var zenAccount = {
-            id: 'account:' + getValue(nodeAcc, 'id'),
+            id: accId,
             syncID: [],
             instrument: getValue(nodeAcc, 'currency'),
             balance: Number(getValue(nodeAcc, 'balance')),
@@ -266,6 +263,12 @@ function requestLoans() {
         var loanNum = getValue(nodeLoan, 'id');
         loanNum = loanNum.substr(loanNum.length - 4, 4);
         
+        var loanId = 'loan:' + getValue(nodeLoan, 'id');
+        if (isAccountSkipped(loanId)) {
+            ZenMoney.trace('Пропускаем кредит: ' + loanNum);
+            continue;
+        }
+
         // <currency> contains a string that looks like 'bmw.curr.rur'
         var currency = getValue(nodeLoan, 'currency');
         currency = currency.substr(currency.length - 3, 3);
@@ -279,7 +282,7 @@ function requestLoans() {
         var dateOffset = Math.round(Number((endDate - startDate) / (30 * 24 * 60 * 60)));
 
         var zenAccount = {
-            id: 'loan:' + getValue(nodeLoan, 'id'),
+            id: loanId,
             title: getValue(nodeLoan, 'id'),
             syncID: loanNum,
             instrument: currency,
@@ -323,6 +326,12 @@ function requestDeposits() {
         var depNum = getValue(nodeDep, 'accountNumber');
         depNum = depNum.substr(depNum.length - 4, 4);
 
+        var depId = 'deposit:' + getValue(nodeDep, 'id');
+        if (isAccountSkipped(depId)) {
+            ZenMoney.trace('Пропускаем вклад: ' + depNum);
+            continue;
+        }
+
         // <currency> contains a string that looks like 'bmw.curr.rur'
         var currency = getValue(nodeDep, 'currency');
         currency = currency.substr(currency.length - 3, 3);
@@ -330,7 +339,7 @@ function requestDeposits() {
         var isCapitalized = (getValue(nodeDep, 'capitalization') == 'true');
 
         var zenAccount = {
-            id: 'deposit:' + getValue(nodeDep, 'id'),
+            id: depId,
             title: getValue(nodeDep, 'names'),
             syncID: depNum,
             instrument: currency,
