@@ -408,6 +408,7 @@ function RocketBank(ZenMoney) {
                     case "card2card_cash_in": // Перевод с карты (входящий)
                     case "card2card_cash_in_other":
                     case "internal_p2p_in": // Пополнение по номеру карты
+                    case "mcb_client_cash_in":
                         transaction.income = sum;
                         transaction.payee = null;
                         transaction.comment = getComment(operation);
@@ -417,6 +418,7 @@ function RocketBank(ZenMoney) {
                         transaction.payee = null;
                         break;
                     case "card2card_cash_out_other": // Исходящий перевод внутри банка
+                    case "card2card_to_friend": // Перевод денег
                         transaction.outcome = sum;
                         break;
                     case "atm_commission": // Комиссия за снятие наличных
