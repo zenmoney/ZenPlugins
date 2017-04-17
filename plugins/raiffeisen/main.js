@@ -97,6 +97,51 @@ function requestSession(login, password) {
             }
         }
     }
+	
+	
+	// DEBUG //
+    var nodeBatchResponseNoAuthType = new marknote.Element('ser:getBatchResponseNoAuthType');
+    var docBatchResponseNoAuthType = makeRequest(nodeBatchResponseNoAuthType, g_authSer);
+    var nodeBodyNoAuthType = docBatchResponseNoAuthType.getRootElement().getChildElement('soap:Body');
+
+    var nodeBatchResponse = new marknote.Element('ser:getBatchResponse');
+    var docBatchResponse = makeRequest(nodeBatchResponse, g_authSer);
+    var nodeBody = docBatchResponse.getRootElement().getChildElement('soap:Body');
+    
+    if ((nodeBodyNoAuthType != null) || (nodeBody != null)) {
+        var nodeBatchResponse = null;
+        if (nodeBodyNoAuthType != null) {
+            ZenMoney.trace('getBatchResponseNoAuthType:');
+            nodeBatchResponse = nodeBodyNoAuthType.getChildElement('ns2:getBatchResponseNoAuthTypeResponse');
+        }
+        else {
+            ZenMoney.trace('getBatchResponse:');
+            nodeBatchResponse = nodeBody.getChildElement('ns2:getBatchResponseResponse');
+        }
+
+        if (nodeBatchResponse != null) {
+            nodeReturn = nodeBatchResponse.getChildElement('return');
+            if (nodeReturn != null) {
+                var nodeInfos = nodeReturn.getChildElements();
+                for (var i = 0; i < nodeInfos.length; i++) {
+                    if (nodeInfos[i].getChildElement('accountSubtype') != null)
+                        ZenMoney.trace('account: ' + nodeInfos[i].toString());
+                    else if (nodeInfos[i].getChildElement('accountNumber') != null)
+                        ZenMoney.trace('card: ' + nodeInfos[i].toString());
+                }
+            }
+            else {
+                ZenMoney.trace('nodeReturn is empty');
+            }
+        }
+        else {
+            ZenMoney.trace('nodeBatchResponse is empty');
+        }
+    }
+    else {
+        ZenMoney.trace('Both batch responses are empty');
+    }
+	// DEBUG //
 }
 
 /**
@@ -130,10 +175,6 @@ function requestCards() {
 
         var cardNum = getValue(nodeCard, 'number');
         cardNum = cardNum.substr(cardNum.length - 4, 4);
-        if (isAccountSkipped(cardNum)) {
-            ZenMoney.trace('Пропускаем карту: ' + cardNum);
-            continue;
-        }
         ZenMoney.trace('Найдена карта: ' + cardNum);
 
         var accNum = getValue(nodeCard, 'accountNumber');
@@ -164,15 +205,16 @@ function requestAccounts() {
         var accNumber = getValue(nodeAcc, 'number');
         var accNum = accNumber.substr(accNumber.length - 4, 4);
 
+        var accId = 'account:' + getValue(nodeAcc, 'id');
         var isClosed = (getValue(nodeAcc, 'closeDate') != '');
-        if (isClosed || isAccountSkipped(accNum)) {
+        if (isClosed || isAccountSkipped(accId)) {
             ZenMoney.trace('Пропускаем счёт: ' + accNum);
             continue;
         }
 
         var isSaving = (getValue(nodeAcc, 'accountSubtype') == 'SAVING');
         var zenAccount = {
-            id: 'account:' + getValue(nodeAcc, 'id'),
+            id: accId,
             syncID: [],
             instrument: getValue(nodeAcc, 'currency'),
             balance: Number(getValue(nodeAcc, 'balance')),
@@ -189,13 +231,6 @@ function requestAccounts() {
         else {
             zenAccount.type = 'ccard';
             zenAccount.title = g_accountCards[accNumber][0];
-            
-            // DEBUG //
-            if (nodeAcc.getChildElement('creditLimit') == null)
-                ZenMoney.trace('There is no creditLimit field');
-            // DEBUG //
-
-            zenAccount.creditLimit = Number(getValue(nodeAcc, 'creditLimit', '0'));
             for (var card = 0; card < g_accountCards[accNumber].length; card++)
                 zenAccount.syncID.push(g_accountCards[accNumber][card]);
         }
@@ -228,6 +263,12 @@ function requestLoans() {
         var loanNum = getValue(nodeLoan, 'id');
         loanNum = loanNum.substr(loanNum.length - 4, 4);
         
+        var loanId = 'loan:' + getValue(nodeLoan, 'id');
+        if (isAccountSkipped(loanId)) {
+            ZenMoney.trace('Пропускаем кредит: ' + loanNum);
+            continue;
+        }
+
         // <currency> contains a string that looks like 'bmw.curr.rur'
         var currency = getValue(nodeLoan, 'currency');
         currency = currency.substr(currency.length - 3, 3);
@@ -241,7 +282,7 @@ function requestLoans() {
         var dateOffset = Math.round(Number((endDate - startDate) / (30 * 24 * 60 * 60)));
 
         var zenAccount = {
-            id: 'loan:' + getValue(nodeLoan, 'id'),
+            id: loanId,
             title: getValue(nodeLoan, 'id'),
             syncID: loanNum,
             instrument: currency,
@@ -285,6 +326,12 @@ function requestDeposits() {
         var depNum = getValue(nodeDep, 'accountNumber');
         depNum = depNum.substr(depNum.length - 4, 4);
 
+        var depId = 'deposit:' + getValue(nodeDep, 'id');
+        if (isAccountSkipped(depId)) {
+            ZenMoney.trace('Пропускаем вклад: ' + depNum);
+            continue;
+        }
+
         // <currency> contains a string that looks like 'bmw.curr.rur'
         var currency = getValue(nodeDep, 'currency');
         currency = currency.substr(currency.length - 3, 3);
@@ -292,13 +339,13 @@ function requestDeposits() {
         var isCapitalized = (getValue(nodeDep, 'capitalization') == 'true');
 
         var zenAccount = {
-            id: 'deposit:' + getValue(nodeDep, 'id'),
+            id: depId,
             title: getValue(nodeDep, 'names'),
             syncID: depNum,
             instrument: currency,
             type: 'deposit',
             balance: Number(getValue(nodeDep, 'currentAmount')),
-            startBalance: Number(getValie(nodeDep, 'initialAmount')),
+            startBalance: Number(getValue(nodeDep, 'initialAmount')),
             percent: Number(getValue(nodeDep, 'interestRate')),
             capitalization: isCapitalized,
             startDate: startDate,

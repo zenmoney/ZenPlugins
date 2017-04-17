@@ -288,7 +288,7 @@ function RocketBank(ZenMoney) {
          */
         var profile = request("GET", "/profile", null, device, token);
         if (profile.hasOwnProperty("response")) {
-            if (profile.response.status == 401) {
+            if (profile.response.status === 401) {
                 return requestProfile(device, getToken(device, true));
             } else {
                 error("Не удалось загрузить профиль пользователя", profile.response.description);
@@ -309,7 +309,7 @@ function RocketBank(ZenMoney) {
         var lastSyncTime = parseInt(ZenMoney.getData("last_sync_" + account, 0));
 
         // первоначальная инициализация
-        if (lastSyncTime == 0) {
+        if (lastSyncTime === 0) {
             var preferences = ZenMoney.getPreferences();
             var period = 7;
             // по умолчанию загружаем операции за неделю
@@ -347,7 +347,7 @@ function RocketBank(ZenMoney) {
          */
         var data = request("GET", "/accounts/" + account + "/feed?page=" + page + "&per_page=" + limit, null, device, token);
         if (data.hasOwnProperty("response")) {
-            if (data.response.status == 401) {
+            if (data.response.status === 401) {
                 return this.loadOperations(device, getToken(device, true), account, timestamp, page, limit, transactions);
             } else {
                 error("Не удалось загрузить список операций", data.response.description);
@@ -362,7 +362,7 @@ function RocketBank(ZenMoney) {
                     ZenMoney.trace("Транзакция #" + operation.id + " уже была ранее обработана (" + dt.toLocaleString() + ")");
                     return transactions;
                 }
-                if (operation.status != "confirmed" && operation.status != "hold") {
+                if (operation.status !== "confirmed" && operation.status !== "hold") {
                     ZenMoney.trace("Пропускаем операцию со статусом " + operation.status);
                     continue;
                 }
@@ -453,7 +453,7 @@ function RocketBank(ZenMoney) {
                         transaction.income = sum;
                         transaction.comment = getComment(operation);
 
-                        if (operation.merchant.id == 333) { // Начисление процентов
+                        if (operation.merchant.id === 333) { // Начисление процентов
                             transaction.payee = "Рокетбанк";
                         } else {
                             transaction.payee = null;
@@ -464,19 +464,20 @@ function RocketBank(ZenMoney) {
                         transaction.payee = "Рокетбанк";
                         break;
                     case "emoney_payment":
+                    case "quasi_cash":
                         transaction.outcome = sum;
                         break;
                     case "open_deposit": // Открытие вклада
                         var operation_found = false;
 
-                        this.deposits_operations.map(function (transaction) {
-                            if (transaction.outcome == 0 && transaction.income == sum) {
+                        this.deposits_operations.map(function (depositTransaction) {
+                            if (depositTransaction.outcome === 0 && depositTransaction.income === sum) {
 
-                                if (dateFromTimestamp(transaction.date) == dateFromTimestamp(transaction.date)) {
-                                    transaction.outcome = sum;
-                                    transaction.outcomeAccount = account;
-                                    if (transaction.comment != null) {
-                                        transaction.comment += ": " + transaction.comment;
+                                if (dateFromTimestamp(depositTransaction.date) === dateFromTimestamp(transaction.date)) {
+                                    depositTransaction.outcome = sum;
+                                    depositTransaction.outcomeAccount = account;
+                                    if (depositTransaction.comment !== null) {
+                                        depositTransaction.comment += ": " + transaction.comment;
                                     }
 
                                     operation_found = true;
@@ -499,7 +500,7 @@ function RocketBank(ZenMoney) {
                         error("Неизвестный тип транзакции", JSON.stringify(operation));
                 }
 
-                if (operation.location.latitude != null && operation.location.longitude != null) {
+                if (operation.location.latitude !== null && operation.location.longitude !== null) {
                     transaction.latitude = operation.location.latitude;
                     transaction.longitude = operation.location.longitude;
                 }
@@ -609,7 +610,7 @@ function RocketBank(ZenMoney) {
          * @type {Register}
          */
         var data = request("POST", "/devices/register", {phone: phone}, device, null);
-        if (data.response.status == 200) {
+        if (data.response.status === 200) {
             ZenMoney.trace(data.response.description);
         } else {
             error("Не удалось отправить код подтверждения", data.response.description);
@@ -639,7 +640,7 @@ function RocketBank(ZenMoney) {
          * @type {Verification}
          */
         var data = request("PATCH", "/sms_verifications/" + verificationToken + "/verify", {code: code}, device, null);
-        if (data.response.status == 200) {
+        if (data.response.status === 200) {
             ZenMoney.trace(data.response.description);
         } else {
             error("Не удалось подтвердить телефон", data.response.description);
@@ -662,7 +663,7 @@ function RocketBank(ZenMoney) {
         if (friend.hasOwnProperty("last_name")) {
             parts.push(friend.last_name);
         }
-        return parts.length == 0 ? null : parts.join(" ");
+        return parts.length === 0 ? null : parts.join(" ");
     }
 
     /**
@@ -686,7 +687,7 @@ function RocketBank(ZenMoney) {
      */
     function getComment(operation) {
         var comment = operation.details;
-        if (operation.comment != null) {
+        if (operation.comment !== null) {
             comment += ": " + operation.comment;
         }
         return comment;
