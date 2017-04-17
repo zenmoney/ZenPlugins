@@ -2,7 +2,7 @@
 <provider>
     <id>rocketbank</id>
     <version>1.0</version>
-    <build>23</build>
+    <build>24</build>
     <company>15444</company>
     <files>
         <js>md5.min.js</js>
