@@ -20,8 +20,8 @@
     g_loans = [],
     g_converter,
     g_preferences,
-	g_syncStartDate,
-	g_syncEndDate,
+    g_syncStartDate,
+    g_syncEndDate,
     g_isSuccessful = true;
 
 /**
@@ -30,8 +30,8 @@
 function main() {
     g_converter = new marknote.Parser();
     g_preferences = ZenMoney.getPreferences();
-	g_syncStartDate = getSyncStartDate();
-	g_syncEndDate = g_syncStartDate;
+    g_syncStartDate = getSyncStartDate();
+    g_syncEndDate = g_syncStartDate;
 
     openSession();
     try {
@@ -358,11 +358,11 @@ function processTransactions() {
         for (var j = 0; j < nodeReturns.length; j++) {
             var nodeRet = nodeReturns[j];
 
-			var description = getValue(nodeRet, 'shortDescription');
-			// do not count these operations
-			// because they are negative duplicates of real transactions
-			if (description == 'CREDIT CARD POSTING')
-				continue;
+            var description = getValue(nodeRet, 'shortDescription');
+            // do not count these operations
+            // because they are negative duplicates of real transactions
+            if (description == 'CREDIT CARD POSTING')
+                continue;
 
             var date = new Date(getValue(nodeRet, 'commitDate').substr(0, 10));
             var transCurrency = getValue(nodeRet, 'currency');
@@ -477,14 +477,14 @@ function processLoanPayments() {
         var nodeReturns = nodeReply.getChildElement('ns2:GetLoanPaymentsResponse').getChildElements();
         ZenMoney.trace('Получено платежей по кредиту за весь период: ' + nodeReturns.length);
          
-		var sum = 0;
+        var sum = 0;
         for (var j = 0; j < nodeReturns.length; j++) {
             var nodeRet = nodeReturns[j];
 
             var date = new Date(getValue(nodeRet, 'commitDate').substr(0, 10));
-			if (date < g_syncStartDate)
-				continue;
-			
+            if (date < g_syncStartDate)
+                continue;
+            
             var transCurrency = getValue(nodeRet, 'currency');
             var accCurrency = getValue(nodeLoan, 'currency');
             var intrestPayment = Number(getValue(nodeRet, 'intrestPayment'));
@@ -500,7 +500,7 @@ function processLoanPayments() {
             };
             ZenMoney.addTransaction(zenTrans);
             ZenMoney.trace('Добавлен платёж: ' + JSON.stringify(zenTrans));
-			sum++;
+            sum++;
             if (zenTrans.date > g_syncEndDate)
                 g_syncEndDate = zenTrans.date;
         }
@@ -546,28 +546,28 @@ function getValue(node, key, defaultValue) {
 * @returns {Date}
 */
 function getSyncStartDate() {
-	var lastSyncTime = ZenMoney.getData('last_sync', 0);
-	var period;
+    var lastSyncTime = ZenMoney.getData('last_sync', 0);
+    var period;
 
     // первая снхронизация
     if (lastSyncTime == 0) {
-		ZenMoney.trace('Первая синхронизация');
-		if (g_preferences.hasOwnProperty('period'))
-			period = parseInt(g_preferences.period);
-		
+        ZenMoney.trace('Первая синхронизация');
+        if (g_preferences.hasOwnProperty('period'))
+            period = parseInt(g_preferences.period);
+        
         // загружаем операции минимум за 1 день, максимум за 100 дней
-		if (isNaN(period))
-			period = 1;
-		else if (period > 100)
-			period = 100;
+        if (isNaN(period))
+            period = 1;
+        else if (period > 100)
+            period = 100;
 
         lastSyncTime = Date.now() - period * 24 * 60 * 60 * 1000;
     }
     else {
-		lastSyncTime = Math.min(lastSyncTime, Date.now() - 1 * 24 * 60 * 60 * 1000);
-	}
-	
-	return new Date(lastSyncTime);
+        lastSyncTime = Math.min(lastSyncTime, Date.now() - 1 * 24 * 60 * 60 * 1000);
+    }
+    
+    return new Date(lastSyncTime);
 }
 
 /**
