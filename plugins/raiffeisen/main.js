@@ -332,10 +332,10 @@ function processTransactions() {
         lastSyncTime = Date.now() - period * 24 * 60 * 60 * 1000;
     }
 
-    // всегда захватываем одну неделю минимум
-    lastSyncTime = Math.min(lastSyncTime, Date.now() - 7 * 24 * 60 * 60 * 1000);
+    // всегда захватываем один день минимум
+    lastSyncTime = Math.min(lastSyncTime, Date.now() - 1 * 24 * 60 * 60 * 1000);
 
-    ZenMoney.trace('Запрашиваем операции с ' + new Date(lastSyncTime).toLocaleString());
+    ZenMoney.trace('Запрашиваем операции с ' + new Date(lastSyncTime).toISOString());
 
     var mapTransactions = new Map();
 
