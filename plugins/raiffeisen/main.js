@@ -20,6 +20,8 @@
     g_loans = [],
     g_converter,
     g_preferences,
+	g_syncStartDate,
+	g_syncEndDate,
     g_isSuccessful = true;
 
 /**
@@ -28,6 +30,8 @@
 function main() {
     g_converter = new marknote.Parser();
     g_preferences = ZenMoney.getPreferences();
+	g_syncStartDate = getSyncStartDate();
+	g_syncEndDate = g_syncStartDate;
 
     openSession();
     try {
@@ -43,6 +47,8 @@ function main() {
     }
     closeSession();
 
+    ZenMoney.setData('last_sync', g_syncEndDate);
+    ZenMoney.saveData();
     ZenMoney.setResult({ success: g_isSuccessful });
 }
 
@@ -319,23 +325,7 @@ function requestDeposits() {
  */
 function processTransactions() {
     ZenMoney.trace('Запрашиваем данные по последним операциям по счетам...');
-
-    var lastSyncTime = ZenMoney.getData('last_sync', 0);
-
-    // первоначальная инициализация
-    if (lastSyncTime == 0) {
-        // по умолчанию загружаем операции за неделю
-        var period = !g_preferences.hasOwnProperty('period') || isNaN(period = parseInt(g_preferences.period)) ? 7 : period;
-
-        if (period > 100) period = 100;    // на всякий случай ограничим лимит, а то слишком долго будет
-
-        lastSyncTime = Date.now() - period * 24 * 60 * 60 * 1000;
-    }
-
-    // всегда захватываем один день минимум
-    lastSyncTime = Math.min(lastSyncTime, Date.now() - 1 * 24 * 60 * 60 * 1000);
-
-    ZenMoney.trace('Запрашиваем операции с ' + new Date(lastSyncTime).toISOString());
+    ZenMoney.trace('Запрашиваем операции с ' + g_syncStartDate.toISOString().substr(0, 10));
 
     var mapTransactions = new Map();
 
@@ -347,7 +337,7 @@ function processTransactions() {
             nodeAccount.addChildElement(nodeAccInfo[j]);
 
         var nodeStart = new marknote.Element('startDate');
-        nodeStart.setText(new Date(lastSyncTime).toISOString());
+        nodeStart.setText(g_syncStartDate.toISOString().substr(0, 10));
         var nodeEnd = new marknote.Element('endDate');
         nodeEnd.setText(new Date(Date.now()).toISOString());
 
@@ -449,8 +439,8 @@ function processTransactions() {
                 // DEBUG //
             }
 
-            if (zenTrans.date > lastSyncTime)
-                lastSyncTime = zenTrans.date;
+            if (zenTrans.date > g_syncEndDate)
+                g_syncEndDate = zenTrans.date;
         }
     }
 
@@ -461,16 +451,13 @@ function processTransactions() {
         sum++;
     }
     ZenMoney.trace('Всего операций добавлено: ' + sum);
-
-    ZenMoney.setData('last_sync', lastSyncTime);
-    ZenMoney.saveData();
 }
 
 /**
 * Обработка платежей по кредитам
 */
 function processLoanPayments() {
-    ZenMoney.trace('Запрашиваем данные о совершённых платежах по кредитам...');
+    ZenMoney.trace('Запрашиваем данные о всех совершённых платежах по кредитам...');
     for (var i = 0; i < g_loans.length; i++) {
         var nodeLoanInfo = g_loans[i].getChildElements();
 
@@ -488,12 +475,16 @@ function processLoanPayments() {
             throw new ZenMoney.Error('Райффайзенбанк: получен некорректный ответ от сервера');
         }
         var nodeReturns = nodeReply.getChildElement('ns2:GetLoanPaymentsResponse').getChildElements();
-        ZenMoney.trace('Получено платежей по кредиту: ' + nodeReturns.length);
+        ZenMoney.trace('Получено платежей по кредиту за весь период: ' + nodeReturns.length);
          
+		var sum = 0;
         for (var j = 0; j < nodeReturns.length; j++) {
             var nodeRet = nodeReturns[j];
 
             var date = new Date(getValue(nodeRet, 'commitDate').substr(0, 10));
+			if (date < g_syncStartDate)
+				continue;
+			
             var transCurrency = getValue(nodeRet, 'currency');
             var accCurrency = getValue(nodeLoan, 'currency');
             var intrestPayment = Number(getValue(nodeRet, 'intrestPayment'));
@@ -509,7 +500,11 @@ function processLoanPayments() {
             };
             ZenMoney.addTransaction(zenTrans);
             ZenMoney.trace('Добавлен платёж: ' + JSON.stringify(zenTrans));
+			sum++;
+            if (zenTrans.date > g_syncEndDate)
+                g_syncEndDate = zenTrans.date;
         }
+        ZenMoney.trace('Всего платежей добавлено: ' + sum);
     }
 }
 
@@ -544,6 +539,35 @@ function getValue(node, key, defaultValue) {
     if (value == '')
         return defaultValue;
     return value;
+}
+
+/**
+* Установить дату начала периода синхронизации
+* @returns {Date}
+*/
+function getSyncStartDate() {
+	var lastSyncTime = ZenMoney.getData('last_sync', 0);
+	var period;
+
+    // первая снхронизация
+    if (lastSyncTime == 0) {
+		ZenMoney.trace('Первая синхронизация');
+		if (g_preferences.hasOwnProperty('period'))
+			period = parseInt(g_preferences.period);
+		
+        // загружаем операции минимум за 1 день, максимум за 100 дней
+		if (isNaN(period))
+			period = 1;
+		else if (period > 100)
+			period = 100;
+
+        lastSyncTime = Date.now() - period * 24 * 60 * 60 * 1000;
+    }
+    else {
+		lastSyncTime = Math.min(lastSyncTime, Date.now() - 1 * 24 * 60 * 60 * 1000);
+	}
+	
+	return new Date(lastSyncTime);
 }
 
 /**
