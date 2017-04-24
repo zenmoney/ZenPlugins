@@ -547,11 +547,11 @@ function getValue(node, key, defaultValue) {
 */
 function getSyncStartDate() {
     var lastSyncTime = ZenMoney.getData('last_sync', 0);
-    var period;
 
     // первая снхронизация
     if (lastSyncTime == 0) {
         ZenMoney.trace('Первая синхронизация');
+        var period;
         if (g_preferences.hasOwnProperty('period'))
             period = parseInt(g_preferences.period);
         
@@ -564,7 +564,7 @@ function getSyncStartDate() {
         lastSyncTime = Date.now() - period * 24 * 60 * 60 * 1000;
     }
     else {
-        lastSyncTime = Math.min(lastSyncTime, Date.now() - 1 * 24 * 60 * 60 * 1000);
+        lastSyncTime = Math.min(+new Date(lastSyncTime), Date.now() - 1 * 24 * 60 * 60 * 1000);
     }
     
     return new Date(lastSyncTime);
