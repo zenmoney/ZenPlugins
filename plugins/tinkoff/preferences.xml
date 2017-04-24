@@ -2,13 +2,13 @@
 <PreferenceScreen>
 	<EditTextPreference
 		title="Логин"
+		key="login"
 		positiveButtonText="ОК"
 		summary="|ID пользователя или логин|{@s}"
 		dialogTitle="Логин"
 		negativeButtonText="Отмена"
 		dialogMessage="Введите идентификатор пользователя или логин для входа в систему Тинькофф банк."
-		obligatory="true"
-		key="login">
+		obligatory="true">
 	</EditTextPreference>
 	<EditTextPreference
 		positiveButtonText="ОК"
@@ -22,11 +22,22 @@
 		inputType="textPassword">
 	</EditTextPreference>
 	<ListPreference
+			positiveButtonText="ОК"
+			key="loadOperations"
+			dialogTitle="При создании подключения"
+			negativeButtonText="Отмена"
+			title="При создании подключения"
+			entries="Загружать операции|Не загружать операции" entryValues="1|0"
+			defaultValue="1"
+			summary="|1|{@s}"
+			dialogMessage="Укажите нужно ли загружать операции при создании подключения">
+	</ListPreference>
+	<ListPreference
 		positiveButtonText="ОК"
 		key="period"
 		dialogTitle="Период загрузки"
 		negativeButtonText="Отмена"
-		title="Начальный период загрузки данных"
+		title="Загружать операции за период"
 		entries="Квартал|Месяц|Неделя" entryValues="92|31|7"
         defaultValue="31"
 		summary="|31|{@s}"

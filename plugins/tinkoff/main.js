@@ -219,9 +219,8 @@ function processAccounts() {
  * @param data
  */
 function processTransactions(data) {
-	ZenMoney.trace('Запрашиваем данные по последним операциям...');
-
 	var lastSyncTime = ZenMoney.getData('last_sync', 0);
+	var createSyncTime = ZenMoney.getData('create_sync', 0);
 
 	// первоначальная инициализация
 	if (lastSyncTime == 0) {
@@ -231,10 +230,27 @@ function processTransactions(data) {
 		if (period > 100) period = 100;	// на всякий случай, ограничим лимит, а то слишком долго будет
 
 		lastSyncTime = Date.now() - period*24*60*60*1000;
+
+		// первый запуск, загружать операции не нужно
+		if (createSyncTime == 0 && g_preferences.loadOperations < 1) {
+			ZenMoney.trace('Подключение без операций. Первый запуск. Операции пропускаем.');
+			createSyncTime = Date.now();
+			ZenMoney.setData('create_sync', createSyncTime);
+			ZenMoney.saveData();
+			return;
+		}
 	}
+
+	ZenMoney.trace('Запрашиваем данные по последним операциям...');
 
 	// всегда захватываем одну неделю минимум
 	lastSyncTime = Math.min(lastSyncTime, Date.now() - 7*24*60*60*1000);
+
+	// последующий запуск с зафиксированным временем старта
+	if (createSyncTime > 0) {
+		ZenMoney.trace('CreateSyncTime: '+ createSyncTime);
+		lastSyncTime = Math.max(lastSyncTime, createSyncTime);
+	}
 
 	ZenMoney.trace('LastSyncTime: '+ lastSyncTime);
 	ZenMoney.trace('Запрашиваем операции с '+ new Date(lastSyncTime).toLocaleString());
