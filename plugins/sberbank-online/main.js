@@ -383,8 +383,9 @@ function processApiAccounts(){
 		acc.percent = getElementByTag(xml4, 'creditingRate', replaceTagsAndSpaces, parseToFloat);
 		acc.capitalization = getElementByTag(xml4, 'repaymentMethod', replaceTagsAndSpaces).toLowerCase().indexOf('аннуитетный') >= 0;
 		acc.startBalance = getElementByTag(xml4, ['origianlAmount', 'amount'], replaceTagsAndSpaces, parseToFloat);
-		acc.balance = -(getElementByTag(xml4, ['mainDeptAmount', 'amount'], replaceTagsAndSpaces, parseToFloat) +
-				getElementByTag(xml4, ['interestsAmount', 'amount'], replaceTagsAndSpaces, parseToFloat));
+		/*acc.balance = -(getElementByTag(xml4, ['mainDeptAmount', 'amount'], replaceTagsAndSpaces, parseToFloat) +
+				getElementByTag(xml4, ['interestsAmount', 'amount'], replaceTagsAndSpaces, parseToFloat));*/
+		acc.balance = getElementByTag(xml4, ['detail', 'remainAmount', 'amount'], replaceTagsAndSpaces, parseToFloat) * -1;
 
 		var start = getElementByTag(xml4, 'termStart', replaceTagsAndSpaces).substr(0, 10);
 		var end = getElementByTag(xml4, 'termEnd', replaceTagsAndSpaces).substr(0, 10);
@@ -1092,6 +1093,10 @@ function parseTransactionDescription(description, sum, instrument, tran) {
 		tran.income = -sum;
 		tran.incomeAccount = 'cash#' + instrument;
 	}
+
+	// переводы между счетами
+	else if (str = getWebDescriptionValue(description, ' BP '))
+		tran.comment = str;
 
 	// значение по умолчанию - оставляем описание как есть
 	else

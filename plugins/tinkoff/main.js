@@ -24,8 +24,8 @@ function main(){
  * @returns {String} Идентификатор сессии
  */
 function login() {
-	if (!g_preferences.login) throw new ZenMoney.Error("Введите логин в интернет-банк!", null, true);
-	if (!g_preferences.password) throw new ZenMoney.Error("Введите пароль в интернет-банк!", null, true);
+	if (!g_preferences.login) throw new ZenMoney.Error("Введите логин в интернет-банк!", true);
+	if (!g_preferences.password) throw new ZenMoney.Error("Введите пароль в интернет-банк!", true);
 
 	if (g_sessionid)
 		ZenMoney.trace("Cессия уже установлена. Используем её.");
@@ -76,7 +76,10 @@ function login() {
 			if ("OK" == json.resultCode) {
 				g_sessionid = json.payload.sessionid;
 			}
-			else throw new ZenMoney.Error(json.plainMessage || json.errorMessage, null, "AUTHENTICATION_FAILED" == json.resultCode);
+			else {
+				var authFailed = "AUTHENTICATION_FAILED" == json.resultCode;
+				throw new ZenMoney.Error(json.plainMessage || json.errorMessage, authFailed, authFailed);
+			}
 		}
 
 		if (g_sessionid)
@@ -233,12 +236,13 @@ function processTransactions(data) {
 	// всегда захватываем одну неделю минимум
 	lastSyncTime = Math.min(lastSyncTime, Date.now() - 7*24*60*60*1000);
 
+	ZenMoney.trace('LastSyncTime: '+ lastSyncTime);
 	ZenMoney.trace('Запрашиваем операции с '+ new Date(lastSyncTime).toLocaleString());
 
 	var transactions = requestJson("operations", null, {
 		"start": 	lastSyncTime
-		//"start":    Date.parse('2016-06-29T00:00'),
-		//"end":      Date.parse('2016-06-29T23:00')
+		//"start":    Date.parse('2017-03-18T00:00'),
+		//"end":      Date.parse('2017-03-18T23:00')
 	});
 	ZenMoney.trace('Получено операций: '+transactions.payload.length);
 	ZenMoney.trace('JSON: '+JSON.stringify(transactions.payload));
@@ -280,7 +284,7 @@ function processTransactions(data) {
 			tran.outcomeAccount = tran.incomeAccount;
 
 			// пополнение наличными
-			if (t.group && t.group == "CASH"){
+			if (t.group && t.group == "CASH" && (!t.partnerType || t.partnerType != 'card2card')){
 				tran.outcomeAccount = "cash#"+ t.amount.currency.name;
 				tran.outcome = t.accountAmount.value;
 			}
@@ -308,20 +312,24 @@ function processTransactions(data) {
 			tran.incomeAccount = tran.outcomeAccount;
 
 			// снятие наличных
-			if (t.group && t.group == "CASH"){
-				tran.incomeAccount = "cash#"+ t.amount.currency.name;
-				tran.income = t.accountAmount.value;
-			}
-			else {
-				// получатель
-				if (t.merchant)
-					tran.payee = t.merchant.name;
-				else if (t.payment && t.payment.fieldsValues && t.payment.fieldsValues.addressee)
-					tran.payee = t.payment.fieldsValues.addressee;
+			if (!t.merchant || t.merchant.name.toLowerCase().indexOf('card2card') < 0) {
+				if (t.group && t.group == "CASH") {
+					tran.incomeAccount = "cash#" + t.amount.currency.name;
+					tran.income = t.accountAmount.value;
+				}
+				else {
+					// получатель
+					if (t.merchant)
+						tran.payee = t.merchant.name;
+					else if (t.payment && t.payment.fieldsValues && t.payment.fieldsValues.addressee)
+						tran.payee = t.payment.fieldsValues.addressee;
+					else if (t.operationPaymentType && t.operationPaymentType == "REGULAR" && t.brand && t.brand.name)
+						tran.payee = t.brand.name;
 
-				// MCC
-				if (t.mcc && !isNaN(mcc = parseInt(t.mcc)) && mcc > 1)
-					tran.mcc = mcc; // у Тинькова mcc-коды 0 и 1 используются для своих нужд
+					// MCC
+					if (t.mcc && !isNaN(mcc = parseInt(t.mcc)) && mcc > 99)
+						tran.mcc = mcc; // у Тинькова mcc-коды используются для своих нужд
+				}
 			}
 
 			// операция в валюте
@@ -344,7 +352,6 @@ function processTransactions(data) {
 				|| (t.operationPaymentType && t.operationPaymentType == "TEMPLATE"))
 				tran.comment = t.description;
 		}
-
 
 		// старый формат идентификатора
 		tran.id = t.payment ? t.payment.paymentId : t.id;
@@ -372,8 +379,10 @@ function processTransactions(data) {
 		// с 5 февраля избавляемся от ucid, а не акцептированные операции имеют временный id
 		// передвигаем дату патча на 3 февраля
 		var idPatch2 = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) >= Date.UTC(2017, 1, 3);
+		// с 4 марта корректируем временный id на верный (был с ошибкой)
+		var idPatch3 = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) >= Date.UTC(2017, 2, 4);
 		if (idPatch2)
-			tran.id = t.debitingTime ? t.id : '[tmp]#'+t.id;
+			tran.id = t.debitingTime ? t.id : (idPatch3 ? 'tmp#' : '[tmp]#')+t.id; // правильный идентификатор временной операции должен начинаться с 'tmp#'
 
 		// склеим переводы ------------------------------------------------------------------
 		var tranId = tran.id;
@@ -422,11 +431,12 @@ function processTransactions(data) {
 			}
 		}
 		else {
-        	ZenMoney.trace('Операция!!! ' + tranId);
+        	//ZenMoney.trace('Операция!!! ' + tranId);
             tranDict[tranId] = tran;
         }
 		if (tran.date > lastSyncTime)
 			lastSyncTime = tran.date;
+
 	}
 
 	ZenMoney.trace('Всего операций добавлено: '+ Object.getOwnPropertyNames(tranDict).length);
