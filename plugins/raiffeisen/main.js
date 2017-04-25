@@ -21,8 +21,7 @@
     g_converter,
     g_preferences,
     g_syncStartDate,
-    g_syncEndDate,
-    g_isSuccessful = true;
+    g_syncEndDate;
 
 /**
 * Основной метод
@@ -49,7 +48,7 @@ function main() {
 
     ZenMoney.setData('last_sync', g_syncEndDate);
     ZenMoney.saveData();
-    ZenMoney.setResult({ success: g_isSuccessful });
+    ZenMoney.setResult({ success: true });
 }
 
 /**
@@ -214,7 +213,8 @@ function requestLoans() {
     var nodeReply = docLoans.getRootElement().getChildElement('soap:Body');
     if (nodeReply == null) {
         ZenMoney.trace('docLoans: ' + docLoans.toString());
-        throw new ZenMoney.Error('Райффайзенбанк: получен некорректный ответ от сервера');
+        ZenMoney.trace('Райффайзенбанк: получен некорректный ответ от сервера');
+        return;
     }
     var nodeLoans = nodeReply.getChildElement('ns2:GetLoansResponse').getChildElements();
     ZenMoney.trace('Получено кредитов: ' + nodeLoans.length);
@@ -276,7 +276,8 @@ function requestDeposits() {
     var nodeReply = docDeposits.getRootElement().getChildElement('soap:Body');
     if (nodeReply == null) {
         ZenMoney.trace('docDeposits: ' + docDeposits.toString());
-        throw new ZenMoney.Error('Райффайзенбанк: получен некорректный ответ от сервера');
+        ZenMoney.trace('Райффайзенбанк: получен некорректный ответ от сервера');
+        return;
     }
     var nodeDeposits = nodeReply.getChildElement('ns2:GetDepositsResponse').getChildElements();
 
