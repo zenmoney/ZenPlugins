@@ -21,11 +21,16 @@ var g_baseurl =  'https://mobile.vtb24.ru/', //"https://online.vtb24.ru/"
  */
 function main() {
 	g_preferences = ZenMoney.getPreferences();
-	if (!g_preferences.login) throw new ZenMoney.Error("Введите логин в ВТБ24-Онлайн!", null, true);
-	if (!g_preferences.password) throw new ZenMoney.Error("Введите пароль в ВТБ24-Онлайн!", null, true);
+	if (!g_preferences.login) throw new ZenMoney.Error("Введите логин в ВТБ24-Онлайн!", true);
+	if (!g_preferences.password) throw new ZenMoney.Error("Введите пароль в ВТБ24-Онлайн!", true);
+
+	// тест переводов
+	// makeTransfer('17F9D3290454421EA289CF6AEF1884440', '33EB7DE0D82643FCA680B5D2B81888550', 5.1);	// тест на счёт
+	// makeTransfer('17F9D3290454421EA289CF6AEF1884440', '120DE36346D142A2B632CC74F92988890', 7);		// тест между картами
+	// return;
 
 	var json = login();
-	//ZenMoney.trace('JSON после входа: '+ JSON.stringify(json));
+	ZenMoney.trace('JSON после входа: '+ JSON.stringify(json));
 
 	processAccounts(json);
 
@@ -82,12 +87,14 @@ function login(){
 
 	if (!json.authorized) {
 		if (json.accountLocked)
-			throw new ZenMoney.Error('Ваш аккаунт заблокирован банком, свяжитесь со службой технической поддержки для разблокирования аккаунта.', null, true);
+			throw new ZenMoney.Error('Ваш аккаунт заблокирован банком, свяжитесь со службой технической поддержки для разблокирования аккаунта.', true, true);
 
 		if (json.error && json.error.msg) {
 			var error = json.error.msg;
-			if (error)
-				throw new ZenMoney.Error(error, null, /Логин или пароль введены неверно/i.test(error));
+			if (error) {
+				var wrongLogin = /Логин или пароль введены неверно/i.test(error);
+				throw new ZenMoney.Error(error, wrongLogin, wrongLogin);
+			}
 		}
 
 		if (json.authConfirmation) {
@@ -102,11 +109,11 @@ function login(){
 
 			var smsCode = ZenMoney.retrieveCode("Введите код авторизации из СМС для входа в ВТБ24-Онлайн", null, {
 				inputType: "number",
-				time: 18E4
+				time: 5*60*1000
 			});
 
 			if (!smsCode || smsCode == 0 || String(smsCode).trim() == '')
-				throw new ZenMoney.Error('Получен пустой код авторизации', true);
+				throw new ZenMoney.Error('Получен пустой код авторизации', true, true);
 			else
 				ZenMoney.trace('Код авторизации получен.');
 
@@ -123,8 +130,10 @@ function login(){
             //ZenMoney.trace("JSON: "+ JSON.stringify(json));
 			if (json.error) {
 				error = json.error.msg;
-				if (error)
-					throw new ZenMoney.Error(error, null, /Неверный SMS/i.test(error));
+				if (error) {
+					var wrongSms = /Неверный SMS/i.test(error);
+					throw new ZenMoney.Error(error, wrongSms, wrongSms);
+				}
 			}
 
 			g_pageToken = json.pageToken;
@@ -146,9 +155,10 @@ var g_accounts = []; // линки активных счетов, по ним ф
  * @param {string} json
  */
 function processAccounts(json) {
-	ZenMoney.trace('Инициализация...');
+	ZenMoney.trace('Инициализация запроса счетов...');
+	var callId = 1;
 
-	// открываем список счетов
+	// открываем список карточных счетов
 	json = requestJson('processor/process/minerva/action', null, {
 		post: {
 			components: JSON.stringify([{
@@ -159,116 +169,41 @@ function processAccounts(json) {
 						portfolioId: "AccountsAndCards",
 						isMobile: "true"
 					},
-					partialResult: true,
+					partialResult: false,
 					requestId:"8"
 				}]
 			}]),
 			pageInstanceUid: g_browserSessionUid+'.1',
-			callId: 2,
+			callId: callId,
 			pageSecurityID: g_pageSecurityID,
 			pageToken: g_pageToken
 		}
 	}, addHeaders({Referer: g_url_login}));
-
-	// загружаем список счетов
-	json = requestJson('processor/process/minerva/operation', null, {
-		post: {
-			action: 'checkAvailability',
-			serviceData: 'telebank|RequestCallbackInitData|RequestCallbackScenario',
-			callId: 1,
-			pageSecurityID: g_pageSecurityID,
-			pageToken: g_pageToken
-		}
-	}, addHeaders({ Referer: g_url_login }));
-	//ZenMoney.trace('1. JSON checkAvailability: '+ JSON.stringify(json));
-
 	g_pageToken = json.pageToken;
+	callId++;
 
 	json = requestJson('processor/process/minerva/action', null, {
 		post: {
-			components: JSON.stringify([
-				{
-					"componentId" : "SideMenuComponent",
-					"actions" : [{
-						"actionId" : "REGISTERED_CALLBACK_REQUEST",
-						"requestId" : "1"
-					}
-					]
-				}, {
-					"componentId" : "MOBILENOTIFICATIONS",
-					"actions" : [{
-						"actionId" : "NOTIFICATIONS",
-						"params" : {
-							"allNotificationsRequired" : true
-						},
-						"permanent" : true,
-						"requestId" : "2"
-					}, {
-						"actionId" : "PERSONAL_OFFERS",
-						"params" : {
-							"getIncomeParams" : {
-								"isPdaNotifications" : true
-							}
-						},
-						"requestId" : "3"
-					}
-					]
-				}, {
-					"componentId" : "COMPLEX_SERVICE_CONTRACT_TOPIC",
-					"actions" : [{
-						"actionId" : "COMPLEX_SERVICE_CONTRACT",
-						"params" : {},
-						"requestId" : "4"
-					}
-					]
-				}, {
-					"componentId" : "PRODUCT_LIST",
-					"actions" : [{
-						"actionId" : "PORTFOLIOS",
-						"params" : {
-							"portfolioId" : "AccountsAndCards",
-							"forProductPage" : "true"
-						},
-						"requestId" : "5"
-					}
-					]
-				}, {
-					"componentId" : "mobileHomePageTransactions",
-					"actions" : [{
-						"actionId" : "TRANSACTIONS",
-						"params" : {
-							"numberOfTransactions" : "5"
-						},
-						"requestId" : "6"
-					}
-					]
-				}, {
-					"componentId" : "CacheTokenComponent",
-					"actions" : [{
-						"actionId" : "CACHE_TOKENS",
-						"permanent" : true,
-						"requestId" : "7"
-					}
-					]
-				}
-				]
-			),
+			components: '[]',
 			pageInstanceUid: g_browserSessionUid+'.1',
-			callId: 2,
+			callId: callId,
 			pageSecurityID: g_pageSecurityID,
 			pageToken: g_pageToken
 		}
-	}, addHeaders({ Referer: g_url_login }));
-	ZenMoney.trace('JSON списка счетов: '+ JSON.stringify(json));
+	}, addHeaders({Referer: g_url_login}));
+	ZenMoney.trace('JSON списка карточных счетов: '+ JSON.stringify(json));
+	g_pageToken = json.pageToken;
+	callId++;
 
+	var accDict = [];
 	var portfolios = getJsonObjectById(json, 'MobileAccountsAndCardsHomepage', 'PORTFOLIOS', false);
 	if (portfolios) {
 		var accounts = portfolios.result.items[0].products;
-		var accDict = [];
 		for (var a = 0; a < accounts.length; a++) {
 			var account = accounts[a];
 
 			switch (account.id) {
+				// мастер-счета с картами, прикреплёнными к ним
 				case 'MasterAccountProduct':
 					for (iGr = 0; iGr < account.groups.length; iGr++) {
 						group = account.groups[iGr];
@@ -283,7 +218,7 @@ function processAccounts(json) {
 							}
 
 							acc = {
-								id: item.id,
+								id: 'master:'+ item.id,
 								title: item.displayName,
 								type: 'ccard',
 								syncID: [item.number.substr(5, 3) + item.number.substr(-3)], // в синнкайди добавляем и код валюты, чтобы исключить повторения
@@ -295,11 +230,11 @@ function processAccounts(json) {
 
 							// проверим нет ли карт, прикреплённых к мастер счёту
 							if (item.hasOwnProperty('items'))
-								for (var i = 0; i < item.items.length; i++)
+								for (i = 0; i < item.items.length; i++)
 									acc.syncID.push(item.items[i].number.substr(-4));
 
 							accDict.push(acc);
-							g_accounts[acc.id] = {
+							g_accounts[item.id] = {
 								id: acc.id,
 								title: acc.title,
 								type: 'MasterAccount'
@@ -308,6 +243,7 @@ function processAccounts(json) {
 					}
 					break;
 
+				// дебетовые и кредитные карты без мастер-счёта
 				case 'DebitCardProduct':
 				case 'CreditCardProduct':
 					for (iGr = 0; iGr < account.groups.length; iGr++) {
@@ -323,7 +259,7 @@ function processAccounts(json) {
 							}
 
 							acc = {
-								id: item.id,
+								id: 'card:'+ item.id,
 								title: item.displayName,
 								type: 'ccard',
 								syncID: item.number.substr(-4),
@@ -334,7 +270,7 @@ function processAccounts(json) {
 							ZenMoney.trace('Добавляем карту: ' + acc.title + ' (#' + acc.id + ')');
 
 							accDict.push(acc);
-							g_accounts[acc.id] = {
+							g_accounts[item.id] = {
 								id: acc.id,
 								title: acc.title,
 								type: 'CreditCard'
@@ -346,7 +282,101 @@ function processAccounts(json) {
 		}
 	}
 	else
-		ZenMoney.trace('В ответе банка не найден список счетов.');
+		ZenMoney.trace('В ответе банка не найден список карточных счетов.');
+
+
+	ZenMoney.trace('Загружаем накопительные счета...');
+	// открываем список накопительных счетов и вкладов
+	json = requestJson('processor/process/minerva/action', null, {
+		post: {
+			components: JSON.stringify([{
+					"componentId": "MobileSavingsAndInvestmentsHomepage",
+					"actions": [{
+						"actionId": "PORTFOLIOS",
+						"params": {
+							"portfolioId": "InvestmentsAndSavings",
+							"isMobile": "true"
+						},
+						"partialResult": true,
+						"requestId": callId-1
+					}]
+				}]
+			),
+			pageInstanceUid: g_browserSessionUid+'.1',
+			callId: callId,
+			pageSecurityID: g_pageSecurityID,
+			pageToken: g_pageToken
+		}
+	}, addHeaders({ Referer: g_url_login }));
+	ZenMoney.trace('JSON ответа: '+ JSON.stringify(json));
+	g_pageToken = json.pageToken;
+	callId++;
+
+	var deposits = getJsonObjectById(json, 'MobileSavingsAndInvestmentsHomepage', 'PORTFOLIOS', false);
+	if (!deposits) {
+		// пытаемся запросить повторно
+		json = requestJson('processor/process/minerva/action', null, {
+			post: {
+				components: '[]',
+				pageInstanceUid: g_browserSessionUid + '.1',
+				callId: callId,
+				pageSecurityID: g_pageSecurityID,
+				pageToken: g_pageToken
+			}
+		}, addHeaders({Referer: g_url_login}));
+		ZenMoney.trace('JSON повторного запроса: ' + JSON.stringify(json));
+		deposits = getJsonObjectById(json, 'MobileAccountsAndCardsHomepage', 'PORTFOLIOS', false);
+	}
+
+	if (deposits) {
+		ZenMoney.trace('items: '+JSON.stringify(deposits.result.items));
+		var accounts2 = deposits.result.items[0].products;
+		for (var a2 = 0; a2 < accounts2.length; a2++) {
+			var account2 = accounts2[a2];
+			switch (account2.id) {
+				// накопительные счета
+				case 'SavingsAccountProduct':
+					for (iGr = 0; iGr < account2.groups.length; iGr++) {
+						group = account2.groups[iGr];
+
+						for (iItem = 0; iItem < group.items.length; iItem++) {
+							item = group.items[iItem];
+							if (!item.hasOwnProperty('number')) continue;
+
+							if (isAccountSkipped(item.id)) {
+								ZenMoney.trace('Пропускаем накопительнй счёт: '+ item.displayName +' (#'+ item.id +')');
+								continue;
+							}
+
+							acc = {
+								id: 'saving:'+ item.id,
+								title: item.displayName,
+								type: 'checking',
+								syncID: [item.number.substr(-4)],
+								instrument: getInstrument(item.amount.currency),
+								balance: item.amount.sum
+							};
+
+							ZenMoney.trace('Добавляем накопительный счёт: ' + acc.title + ' (#' + acc.id + ')');
+
+							// проверим нет ли карт, прикреплённых к мастер счёту
+							if (item.hasOwnProperty('items'))
+								for (i = 0; i < item.items.length; i++)
+									acc.syncID.push(item.items[i].number.substr(-4));
+
+							accDict.push(acc);
+							g_accounts[item.id] = {
+								id: acc.id,
+								title: acc.title,
+								type: 'SavingsAccount'
+							};
+						}
+					}
+					break;
+			}
+		}
+	} else
+		ZenMoney.trace('Получить данные по счетам не получилось!');
 
 	ZenMoney.trace('Всего счетов добавлено: '+ accDict.length);
 	ZenMoney.trace('JSON: '+ JSON.stringify(accDict));
@@ -362,7 +392,7 @@ function processTransactions() {
 		var acc = g_accounts[accId];
 		browserId++;
 
-		ZenMoney.trace('Загружаем "' + acc.title + '" (#' + accId + ')');
+		ZenMoney.trace('Загружаем "' + acc.title + '" (#' + acc.id + ')');
 
 		var lastSyncTime = ZenMoney.getData('last_sync_' + accId, 0);
 
@@ -601,16 +631,67 @@ function makeTransfer(accFrom, accTo, sum) {
 
 	ZenMoney.trace('Перевод ' + sum + ' со счёта ' + accFrom + ' на счёт ' + accTo);
 
+	var accFromType = '';
+	var pos = accFrom.indexOf(':');
+	if (pos > 0) {
+		accFromType = accFrom.substr(0, pos);
+		accFrom = accFrom.substr(pos+1);
+	}
+
+	var accToType = '';
+	pos = accTo.indexOf(':');
+	if (pos > 0) {
+		accToType = accTo.substr(0, pos);
+		accTo = accTo.substr(pos+1);
+	}
+
+	// проверка доступности перевода между счетами
+	var transferAllowed = false;
+	var transferType = accFromType +':'+ accToType;
+	if (accFromType != '' && accToType != '') {
+		switch (transferType){
+			case 'master:saving':
+			case 'master:deposit':
+			case 'card:deposit':
+			case 'master:card':
+			case 'card:master':
+			case 'master:master':
+			case 'card:card':
+				transferAllowed = true;
+				break;
+		}
+	}
+
+	if (!transferAllowed)
+		ZenMoney.Error('Данный тип перевода не поддерживается. Возможные варианты переводов: мастер счёт - вклад/накопительный, карта - вклад.', true);
+
 	g_preferences = ZenMoney.getPreferences();
 	login();
 
+	switch (transferType) {
+		case 'master:saving':
+		case 'master:deposit':
+		case 'card:deposit':
+			makeTransferToAcc(accFrom, accTo, sum);
+			break;
+
+		case 'master:card':
+		case 'card:master':
+		case 'master:master':
+		case 'card:card':
+			makeTransferToCard(accFrom, accTo, sum);
+	}
+
+}
+
+function makeTransferToCard(accFrom, accTo, sum) {
 	var callId = 1;
 
 	// 1. Загружаем форму перевода
 	data = ZenMoney.requestPost(g_baseurl + 'processor/process/minerva/operation',
 		{
 			action: "editForm",
-			operation: 7760,
+			operation: 7760,	// переводы на карточные счета
 			ignoreCache: true,
 			callId: callId,
 			pageSecurityID: g_pageSecurityID,
@@ -635,110 +716,33 @@ function makeTransfer(accFrom, accTo, sum) {
 			command: "AccountDebet@OnChanged",
 			inputStageResponseId: data.inputStageResponseId,
 			jsonObj: JSON.stringify({
-				inputStageResponseId:  data.inputStageResponseId,
-				stage:  "INPUT",
-				elements:  [
-					{
-						className:  "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.listentrys.modelbased.AccountDictionaryDropDownVO",
-						metaData:  {
-							titles:  {
-								name:  "Карта/счет списания",
-								shortName:  "Карта/счет",
-								description:  "Откуда осуществляется перевод.",
-								placeholder:  "Выберите счёт или карту"
-								},
-							dependsOn:  [],
-							lockOnPostback:  "DependentFieldsOnly",
-							postbackNotify:  "OnChanged",
-							type:  {
-								tint:  "DropDown",
-								localPart:  "Numeric",
-								namespaceURI:  "http://vtb24.ru/minerva",
-								prefix:  "",
-								nullable:  true
-								},
-							checkList:  [],
-							dataSource:  {
-								itemType:  "AccountDictionaryEntry",
-								keyField:  "Id",
-								allowNonListValue:  false
-								}
+					inputStageResponseId:  data.inputStageResponseId,
+					stage:  "INPUT",
+					elements:  [
+						{
+							className:  "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.listentrys.modelbased.AccountDictionaryDropDownVO",
+							fieldType:  "AccountDebet",
+							value: {
+								id: accFrom,
+								classType: "AccountDictionaryEntry"
 							},
-						fieldType:  "AccountDebet",
-						value: {
-							id: accFrom,
-							classType: "AccountDictionaryEntry"
+							keyField:  "id",
+							listTicket:  sourceAccountListTicket
 						},
-						keyField:  "id",
-						listTicket:  sourceAccountListTicket
-					},
-					{
-						className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.listentrys.modelbased.AccountDictionaryDropDownVO",
-						metaData: {
-							titles: {
-								name: "Карта/счет зачисления",
-								shortName: "Карта/счет",
-								description: "Куда зачислить средства.",
-								placeholder: "Выберите счёт или карту"
-							},
-							dependsOn: ["AccountDebet"],
-							lockOnPostback: "DependentFieldsOnly",
-							postbackNotify: "OnChanged",
-							type: {
-								tint: "DropDown",
-								localPart: "Numeric",
-								namespaceURI: "http://vtb24.ru/minerva",
-								prefix: "",
-								nullable: true
-							},
-							checkList: [],
-							dataSource: {
-								itemType: "AccountDictionaryEntry",
-								keyField: "Id",
-								allowNonListValue: false
-							}
+						{
+							className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.listentrys.modelbased.AccountDictionaryDropDownVO",
+							fieldType: "AccountCredit",
+							keyField: "id",
+							listTicket: destinationAccountListTicket
 						},
-						fieldType: "AccountCredit",
-						keyField: "id",
-						listTicket: destinationAccountListTicket
-					},
-					{
-						actualValue: "",
-						className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.SumFieldVO",
-						metaData: {
-							titles: {
-								name: "Сумма в валюте списания",
-								shortName: "Сумма в ва",
-								description: "Минимальная сумма списания 0.01 единица валюты."
-							},
-							dependsOn: ["AccountDebet", "AccountCredit"],
-							lockOnPostback: "DependentFieldsOnly",
-							postbackNotify: "None",
-							type: {
-								tint: "Money",
-								localPart: "double",
-								namespaceURI: "http://www.w3.org/2001/XMLSchema",
-								prefix: "xsd",
-								nullable: false
-							},
-							checkList: [{
-								className: "RangeCheck",
-								checkProperties: {
-									errorMessage: "Введите сумму больше 0, до 1000000000",
-									upperBoundType: "INCLUSIVE",
-									lowerBound: "0",
-									lowerBoundType: "EXCLUSIVE",
-									upperBound: "1000000000"
-								}
-							}
-							],
-							hint: ""
-						},
-						fieldType: "SumCur1",
-						value: ""
-					}],
-				fieldId:  "AccountDebet",
-				command:  "AccountDebet@OnChanged"
+						{
+							actualValue: "",
+							className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.SumFieldVO",
+							fieldType: "SumCur1",
+							value: ""
+						}],
+					fieldId:  "AccountDebet",
+					command:  "AccountDebet@OnChanged"
 				}
 			),
 			ignoreCache: true,
@@ -764,32 +768,7 @@ function makeTransfer(accFrom, accTo, sum) {
 					inputStageResponseId: data.inputStageResponseId,
 					stage: "INPUT",
 					elements: [{
-						//actualValue: "120DE36346D142A2B632CC74F9298889",
 						className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.listentrys.modelbased.AccountDictionaryDropDownVO",
-						metaData: {
-							titles: {
-								name: "Карта/счет списания",
-								shortName: "Карта/счет",
-								description: "Откуда осуществляется перевод.",
-								placeholder: "Выберите счёт или карту"
-							},
-							dependsOn: [],
-							lockOnPostback: "DependentFieldsOnly",
-							postbackNotify: "OnChanged",
-							type: {
-								tint: "DropDown",
-								localPart: "Numeric",
-								namespaceURI: "http://vtb24.ru/minerva",
-								prefix: "",
-								nullable: true
-							},
-							checkList: [],
-							dataSource: {
-								itemType: "AccountDictionaryEntry",
-								keyField: "Id",
-								allowNonListValue: false
-							}
-						},
 						fieldType: "AccountDebet",
 						value: {
 							id: accFrom,
@@ -800,30 +779,6 @@ function makeTransfer(accFrom, accTo, sum) {
 					},
 						{
 							className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.listentrys.modelbased.AccountDictionaryDropDownVO",
-							metaData: {
-								titles: {
-									name: "Карта/счет зачисления",
-									shortName: "Карта/счет",
-									description: "Куда зачислить средства.",
-									placeholder: "Выберите счёт или карту"
-								},
-								dependsOn: ["AccountDebet"],
-								lockOnPostback: "DependentFieldsOnly",
-								postbackNotify: "OnChanged",
-								type: {
-									tint: "DropDown",
-									localPart: "Numeric",
-									namespaceURI: "http://vtb24.ru/minerva",
-									prefix: "",
-									nullable: true
-								},
-								checkList: [],
-								dataSource: {
-									itemType: "AccountDictionaryEntry",
-									keyField: "Id",
-									allowNonListValue: false
-								}
-							},
 							fieldType: "AccountCredit",
 							value: {
 								id: accTo,
@@ -835,35 +790,6 @@ function makeTransfer(accFrom, accTo, sum) {
 						{
 							actualValue: "",
 							className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.SumFieldVO",
-							metaData: {
-								titles: {
-									name: "Сумма в валюте списания",
-									shortName: "Сумма в ва",
-									description: "Минимальная сумма списания 0.01 единица валюты."
-								},
-								dependsOn: ["AccountDebet", "AccountCredit"],
-								lockOnPostback: "DependentFieldsOnly",
-								postbackNotify: "None",
-								type: {
-									tint: "Money",
-									localPart: "double",
-									namespaceURI: "http://www.w3.org/2001/XMLSchema",
-									prefix: "xsd",
-									nullable: false
-								},
-								checkList: [{
-									className: "RangeCheck",
-									checkProperties: {
-										errorMessage: "Введите сумму больше 0, до 1000000000",
-										upperBoundType: "INCLUSIVE",
-										lowerBound: "0",
-										lowerBoundType: "EXCLUSIVE",
-										upperBound: "1000000000"
-									}
-								}
-								],
-								hint: ""
-							},
 							fieldType: "SumCur1",
 							value: ""
 						}],
@@ -895,30 +821,6 @@ function makeTransfer(accFrom, accTo, sum) {
 				stage: "INPUT",
 				elements: [{
 					className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.listentrys.modelbased.AccountDictionaryDropDownVO",
-					metaData: {
-						titles: {
-							name: "Карта/счет списания",
-							shortName: "Карта/счет",
-							description: "Откуда осуществляется перевод.",
-							placeholder: "Выберите счёт или карту"
-						},
-						dependsOn: [],
-						lockOnPostback: "DependentFieldsOnly",
-						postbackNotify: "OnChanged",
-						type: {
-							tint: "DropDown",
-							localPart: "Numeric",
-							namespaceURI: "http://vtb24.ru/minerva",
-							prefix: "",
-							nullable: true
-						},
-						checkList: [],
-						dataSource: {
-							itemType: "AccountDictionaryEntry",
-							keyField: "Id",
-							allowNonListValue: false
-						}
-					},
 					fieldType: "AccountDebet",
 					value: {
 						id: accFrom,
@@ -929,30 +831,6 @@ function makeTransfer(accFrom, accTo, sum) {
 				},
 					{
 						className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.listentrys.modelbased.AccountDictionaryDropDownVO",
-						metaData: {
-							titles: {
-								name: "Карта/счет зачисления",
-								shortName: "Карта/счет",
-								description: "Куда зачислить средства.",
-								placeholder: "Выберите счёт или карту"
-							},
-							dependsOn: ["AccountDebet"],
-							lockOnPostback: "DependentFieldsOnly",
-							postbackNotify: "OnChanged",
-							type: {
-								tint: "DropDown",
-								localPart: "Numeric",
-								namespaceURI: "http://vtb24.ru/minerva",
-								prefix: "",
-								nullable: true
-							},
-							checkList: [],
-							dataSource: {
-								itemType: "AccountDictionaryEntry",
-								keyField: "Id",
-								allowNonListValue: false
-							}
-						},
 						fieldType: "AccountCredit",
 						value: {
 							id: accTo,
@@ -964,34 +842,6 @@ function makeTransfer(accFrom, accTo, sum) {
 					{
 						actualValue: "",
 						className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.SumFieldVO",
-						metaData: {
-							titles: {
-								name: "Сумма в валюте списания",
-								shortName: "Сумма в ва",
-								description: "Минимальная сумма списания 0.01 единица валюты."
-							},
-							dependsOn: ["AccountDebet", "AccountCredit"],
-							lockOnPostback: "DependentFieldsOnly",
-							postbackNotify: "None",
-							type: {
-								tint: "Money",
-								localPart: "double",
-								namespaceURI: "http://www.w3.org/2001/XMLSchema",
-								prefix: "xsd",
-								nullable: false
-							},
-							checkList: [{
-								className: "RangeCheck",
-								checkProperties: {
-									errorMessage: "Введите сумму больше 0, до 1000000000",
-									upperBoundType: "INCLUSIVE",
-									lowerBound: "0",
-									lowerBoundType: "EXCLUSIVE",
-									upperBound: "1000000000"
-								}
-							}],
-							hint: "?"
-						},
 						fieldType: "SumCur1",
 						value: sum
 					}],
@@ -1026,101 +876,46 @@ function makeTransfer(accFrom, accTo, sum) {
 					elements: [{
 						actualValue: false,
 						className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.CheckboxFieldVO",
-						metaData: {
-							titles: {
-								name: "Сохранить шаблон",
-								shortName: "Сохранить шаблон"
-							},
-							dependsOn: [],
-							lockOnPostback: "DependentFieldsOnly",
-							postbackNotify: "OnChanged",
-							type: {
-								tint: "CheckBox",
-								localPart: "boolean",
-								namespaceURI: "http://www.w3.org/2001/XMLSchema",
-								prefix: "xsd",
-								nullable: true
-							},
-							checkList: []
-						},
 						fieldType: "_TemplateToggle_",
 						value: false
 					}
 					]
 				},
 					{
-					className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.StageGroupVO",
-					name: "SPO_PARAMETERS_FULL",
-					elements: [{
-						actualValue: false,
-						className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.CheckboxFieldVO",
-						metaData: {
-							titles: {
-								name: "Настроить автоплатеж",
-								shortName: "Настроить автоплатеж"
-							},
-							dependsOn: [],
-							lockOnPostback: "DependentFieldsOnly",
-							postbackNotify: "OnChanged",
-							type: {
-								tint: "CheckBox",
-								localPart: "boolean",
-								namespaceURI: "http://www.w3.org/2001/XMLSchema",
-								prefix: "xsd",
-								nullable: true
-							},
-							checkList: []
-						},
-						fieldType: "_SpoToggle_",
-						value: false
-					}
-					]
-				},
-					{
-					actualValue: "None",
-					className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.listentrys.SimpleDropDownFieldVO",
-					metaData: {
-						titles: {
-							description: ""
-						},
-						dependsOn: [],
-						lockOnPostback: "DependentFieldsOnly",
-						postbackNotify: "OnChanged",
-						type: {
-							tint: "DropDown",
-							localPart: "string",
-							namespaceURI: "http://www.w3.org/2001/XMLSchema",
-							prefix: "xsd",
-							nullable: false
-						},
-						checkList: [],
-						dataSource: {
-							itemType: "ListEntry",
-							keyField: "id",
-							allowNonListValue: false
+						className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.StageGroupVO",
+						name: "SPO_PARAMETERS_FULL",
+						elements: [{
+							actualValue: false,
+							className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.CheckboxFieldVO",
+							fieldType: "_SpoToggle_",
+							value: false
 						}
+						]
 					},
-					fieldType: "AuthorizationType",
-					value: {
-						id: "None",
-						name: "Без подтверждения"
-					},
-					fields: [{
-						id: "None",
-						name: "Без подтверждения"
-					}, {
-						id: "SMS",
-						name: "SMS/Push-код"
-					}, {
-						id: "ChallengeResponse",
-						name: "Генератор (режим \"A\")"
-					}, {
-						id: "MAC",
-						name: "Генератор (режим \"Б\")"
+					{
+						actualValue: "None",
+						className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.listentrys.SimpleDropDownFieldVO",
+						fieldType: "AuthorizationType",
+						value: {
+							id: "None",
+							name: "Без подтверждения"
+						},
+						fields: [{
+							id: "None",
+							name: "Без подтверждения"
+						}, {
+							id: "SMS",
+							name: "SMS/Push-код"
+						}, {
+							id: "ChallengeResponse",
+							name: "Генератор (режим \"A\")"
+						}, {
+							id: "MAC",
+							name: "Генератор (режим \"Б\")"
+						}
+						],
+						keyField: "id"
 					}
-					],
-					keyField: "id"
-				}
 				],
 				operation: 7760,
 				command: "CONFIRM"
@@ -1149,6 +944,353 @@ function makeTransfer(accFrom, accTo, sum) {
 				stage: "NOTIFICATION",
 				elements: [],
 				operation: 7760,
+				command: "DONE"
+			}),
+			ignoreCache: true,
+			hasTemplate: false,
+			callId: callId,
+			pageSecurityID: g_pageSecurityID,
+			pageToken: g_pageToken
+		},
+		addHeaders({Referer: g_url_login}));
+	if (!data) throw new ZenMoney.Error('Не удалось подтвердить перевод');
+	data = getJson(data);
+	checkErrors(data);
+	ZenMoney.trace('6. Подтверждаем перевод');
+}
+
+function makeTransferToAcc(accFrom, accTo, sum) {
+	var callId = 1;
+
+	// 1. Загружаем форму перевода
+	data = ZenMoney.requestPost(g_baseurl + 'processor/process/minerva/operation',
+		{
+			action: "editForm",
+			operation: 9210, // перевод на накопительные счета и вклады
+			ignoreCache: true,
+			callId: callId,
+			pageSecurityID: g_pageSecurityID,
+			pageToken: g_pageToken
+		},
+		addHeaders({Referer: g_url_login}));
+	if (!data) throw new ZenMoney.Error('Не удалось загрузить форму перевода');
+	data = getJson(data);
+	checkErrors(data);
+	ZenMoney.trace('1. Загрузили форму перевода');
+	//ZenMoney.trace('Получили ответ: '+ JSON.stringify(data));
+	callId++;
+
+	// 2. Выберем счёт-источник
+	var sourceAccountListTicket = getJsonListTicket(data, 'SourceAccountOrCard');
+	var destinationAccountListTicket = getJsonListTicket(data, 'DestAccountOrCard');
+	//ZenMoney.trace('AccountDebet listTicket: '+ sourceAccountListTicket);
+	//ZenMoney.trace('AccountCredit listTicket: '+ destinationAccountListTicket);
+	data = ZenMoney.requestPost(g_baseurl + 'processor/process/minerva/operation',
+		{
+			action: "confirm",
+			command: "SourceAccountOrCard@OnChanged",
+			inputStageResponseId: data.inputStageResponseId,
+			jsonObj: JSON.stringify({
+					inputStageResponseId: data.inputStageResponseId,
+					stage: "INPUT",
+					elements: [
+						{
+							className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.listentrys.modelbased.AccountDictionaryDropDownVO",
+							fieldType: "SourceAccountOrCard",
+							value: {
+								id: accFrom,
+								classType: "AccountDictionaryEntry"
+							},
+							keyField: "id",
+							listTicket: sourceAccountListTicket
+						},
+						{
+							className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.listentrys.modelbased.AccountDictionaryDropDownVO",
+							fieldType: "DestAccountOrCard",
+							keyField: "id",
+							listTicket: destinationAccountListTicket
+						},
+						{
+							className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.SumFieldVO",
+							fieldType: "Sum",
+							value: ""
+						}],
+					"fieldId": "SourceAccountOrCard",
+					"command": "SourceAccountOrCard@OnChanged"
+				}
+			),
+			ignoreCache: true,
+			hasTemplate: false,
+			callId: callId,
+			pageSecurityID: g_pageSecurityID,
+			pageToken: g_pageToken
+		},
+		addHeaders({Referer: g_url_login}));
+	if (!data) throw new ZenMoney.Error('Не удалось выбрать счёт источник');
+	data = getJson(data);
+	checkErrors(data);
+	ZenMoney.trace('2. Выбрали счёт-источник');
+	callId++;
+
+	// 3. Выберем счёт-назначения
+	data = ZenMoney.requestPost(g_baseurl + 'processor/process/minerva/operation',
+		{
+			action: "confirm",
+			command: "DestAccountOrCard@OnChanged",
+			inputStageResponseId: data.inputStageResponseId,
+			jsonObj: JSON.stringify({
+					inputStageResponseId: data.inputStageResponseId,
+					stage: "INPUT",
+					elements: [
+						{
+							className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.listentrys.modelbased.AccountDictionaryDropDownVO",
+							fieldType: "SourceAccountOrCard",
+							value: {
+								id: accFrom,
+								classType: "AccountDictionaryEntry"
+							},
+							keyField: "id",
+							listTicket: sourceAccountListTicket
+						},
+						{
+							className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.listentrys.modelbased.AccountDictionaryDropDownVO",
+							fieldType: "DestAccountOrCard",
+							value: {
+								id: accTo,
+								classType: "AccountDictionaryEntry"
+							},
+							keyField: "Id",
+							listTicket: destinationAccountListTicket
+						},
+						{
+							className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.SumFieldVO",
+							fieldType: "Sum",
+							value: ""
+						}],
+					"fieldId": "DestAccountOrCard",
+					"command": "DestAccountOrCard@OnChanged"
+				}
+			),
+			ignoreCache: true,
+			hasTemplate: false,
+			callId: callId,
+			pageSecurityID: g_pageSecurityID,
+			pageToken: g_pageToken
+		},
+		addHeaders({Referer: g_url_login}));
+	if (!data) throw new ZenMoney.Error('Не удалось выбрать счёт назначения');
+	data = getJson(data);
+	checkErrors(data);
+	ZenMoney.trace('3. Выбрали счёт-назначения');
+	callId++;
+
+	// 4. отправляем форму
+	data = ZenMoney.requestPost(g_baseurl + 'processor/process/minerva/operation',
+		{
+			action: "confirm",
+			command: "CONTINUE",
+			inputStageResponseId: data.inputStageResponseId,
+			jsonObj: JSON.stringify({
+				inputStageResponseId: data.inputStageResponseId,
+				stage: "INPUT",
+				elements: [
+					{
+						className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.listentrys.modelbased.AccountDictionaryDropDownVO",
+						fieldType: "SourceAccountOrCard",
+						value: {
+							id: accFrom,
+							classType: "AccountDictionaryEntry"
+						},
+						keyField: "id",
+						listTicket: sourceAccountListTicket
+					},
+					{
+						className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.listentrys.modelbased.AccountDictionaryDropDownVO",
+						fieldType: "DestAccountOrCard",
+						value: {
+							id: accTo,
+							classType: "AccountDictionaryEntry"
+						},
+						keyField: "id",
+						listTicket: destinationAccountListTicket
+					},
+					{
+						className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.SumFieldVO",
+						fieldType: "Sum",
+						value: sum
+					}],
+				operation: 9210,
+				command: "CONTINUE"
+			}),
+			ignoreCache: true,
+			hasTemplate: false,
+			callId: callId,
+			pageSecurityID: g_pageSecurityID,
+			pageToken: g_pageToken
+		},
+		addHeaders({Referer: g_url_login}));
+	if (!data) throw new ZenMoney.Error('Не удалось отправить форму');
+	data = getJson(data);
+	checkErrors(data);
+	ZenMoney.trace('4. Отправили форму');
+	callId++;
+
+	// 5. Выбраем способ подтверждения без СМС
+	data = ZenMoney.requestPost(g_baseurl + 'processor/process/minerva/operation',
+		{
+			action: "confirm",
+			command: "AuthorizationType@OnChanged",
+			inputStageResponseId: data.inputStageResponseId,
+			jsonObj: JSON.stringify({
+				inputStageResponseId: data.inputStageResponseId,
+				stage: "CONFIRMATION",
+				elements: [
+					{
+						className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.StageGroupVO",
+						name: "TEMPLATE_PARAMETERS_FULL",
+						elements: [{
+							actualValue: false,
+							className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.CheckboxFieldVO",
+							fieldType: "_TemplateToggle_",
+							value: false
+						}]
+					},
+					{
+						className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.StageGroupVO",
+						name: "SPO_PARAMETERS_FULL",
+						elements: [{
+							actualValue: false,
+							className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.CheckboxFieldVO",
+							fieldType: "_SpoToggle_",
+							value: false
+						}]
+					},
+					{
+						actualValue: "None",
+						className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.listentrys.SimpleDropDownFieldVO",
+						fieldType: "AuthorizationType",
+						value: {
+							id: "None",
+							name: "Без подтверждения"
+						},
+						fields: [
+							{
+								id: "None",
+								name: "Без подтверждения"
+							}, {
+								id: "SMS",
+								name: "SMS/Push-код"
+							}, {
+								id: "ChallengeResponse",
+								name: "Генератор (режим \"A\")"
+							}, {
+								id: "MAC",
+								name: "Генератор (режим \"Б\")"
+							}
+						],
+						keyField: "id"
+					}
+				],
+				fieldId: "AuthorizationType",
+				command: "AuthorizationType@OnChanged"
+			}),
+			ignoreCache: false,
+			hasTemplate: false,
+			callId: callId,
+			pageSecurityID: g_pageSecurityID,
+			pageToken: g_pageToken
+		},
+		addHeaders({Referer: g_url_login}));
+	if (!data) throw new ZenMoney.Error('Не удалось подготовиться к подтверждению перевода');
+	data = getJson(data);
+	checkErrors(data);
+	ZenMoney.trace('5. Выбираем способ подтверждения без СМС');
+	callId++;
+
+	// 6. Готовимся подтвердить перевод
+	data = ZenMoney.requestPost(g_baseurl + 'processor/process/minerva/operation',
+		{
+			action: "confirm",
+			command: "CONFIRM",
+			inputStageResponseId: data.inputStageResponseId,
+			jsonObj: JSON.stringify({
+				inputStageResponseId: data.inputStageResponseId,
+				stage: "CONFIRMATION",
+				elements: [{
+					className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.StageGroupVO",
+					name: "TEMPLATE_PARAMETERS_FULL",
+					elements: [{
+						actualValue: false,
+						className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.CheckboxFieldVO",
+						fieldType: "_TemplateToggle_",
+						value: false
+					}
+					]
+				},
+					{
+						className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.StageGroupVO",
+						name: "SPO_PARAMETERS_FULL",
+						elements: [{
+							actualValue: false,
+							className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.CheckboxFieldVO",
+							fieldType: "_SpoToggle_",
+							value: false
+						}
+						]
+					},
+					{
+						actualValue: "None",
+						className: "com.vtb.telebank.client.shared.minerva.transfers.operations.confirmoperations.base.listentrys.SimpleDropDownFieldVO",
+						fieldType: "AuthorizationType",
+						value: {
+							id: "None",
+							name: "Без подтверждения"
+						},
+						fields: [
+							{
+								id: "None",
+								name: "Без подтверждения"
+							}, {
+								id: "SMS",
+								name: "SMS/Push-код"
+							}, {
+								id: "ChallengeResponse",
+								name: "Генератор (режим \"A\")"
+							}, {
+								id: "MAC",
+								name: "Генератор (режим \"Б\")"
+							}
+						],
+						keyField: "id"
+					}
+				],
+				operation: 9210,
+				command: "CONFIRM"
+			}),
+			ignoreCache: false,
+			hasTemplate: false,
+			callId: callId,
+			pageSecurityID: g_pageSecurityID,
+			pageToken: g_pageToken
+		},
+		addHeaders({Referer: g_url_login}));
+	if (!data) throw new ZenMoney.Error('Не удалось подготовиться к подтверждению перевода');
+	data = getJson(data);
+	checkErrors(data);
+	ZenMoney.trace('5. Готовимся подтвердить перевод');
+	callId++;
+
+	// 6. Подтверждаем перевод
+	data = ZenMoney.requestPost(g_baseurl + 'processor/process/minerva/operation',
+		{
+			action: "confirm",
+			command: "DONE",
+			inputStageResponseId: data.inputStageResponseId,
+			jsonObj: JSON.stringify({
+				inputStageResponseId: data.inputStageResponseId,
+				stage: "NOTIFICATION",
+				elements: [],
+				operation: 9210,
 				command: "DONE"
 			}),
 			ignoreCache: true,
