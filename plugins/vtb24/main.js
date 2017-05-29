@@ -25,12 +25,12 @@ function main() {
 	if (!g_preferences.password) throw new ZenMoney.Error("Введите пароль в ВТБ24-Онлайн!", true);
 
 	// тест переводов
-	// makeTransfer('17F9D3290454421EA289CF6AEF1884440', '33EB7DE0D82643FCA680B5D2B81888550', 5.1);	// тест на счёт
+	// makeTransfer('17F9D3290454421EA289CF6AEF1884440', '33EB7DE0D82643FCA680B5D2B81888550', 5.1);		// тест на счёт
 	// makeTransfer('17F9D3290454421EA289CF6AEF1884440', '120DE36346D142A2B632CC74F92988890', 7);		// тест между картами
 	// return;
 
 	var json = login();
-	ZenMoney.trace('JSON после входа: '+ JSON.stringify(json));
+	//ZenMoney.trace('JSON после входа: '+ JSON.stringify(json));
 
 	processAccounts(json);
 
@@ -72,18 +72,23 @@ function login(){
 			dateTime: dtStr
 		},
 		noException: true
-	}, addHeaders({Referer: g_baseurl + 'content/telebank-client/ru/login.html'}));
+	}, {
+			'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+			'Referer': g_baseurl + 'content/telebank-client-mobile/ru/login.touch.html',
+			'Origin': 'https://mobile.vtb24.ru'
+		}
+	);
 
 	g_pageToken = json.pageToken;
 	//ZenMoney.trace('JSON: '+ JSON.stringify(json));
 
 	// проверим, не авторизированы ли уже
 	/*if (isAlreadyAuthorized == 'true'){
-		ZenMoney.trace('Уже авторизированы. Используем текущую сессию.');
+	 ZenMoney.trace('Уже авторизированы. Используем текущую сессию.');
 
-		// ToDO: корректно завершать авторизацию, чтобы при повторном входе можно было воспользоваться текущей сессией
-		return;
-	}*/
+	 // ToDO: корректно завершать авторизацию, чтобы при повторном входе можно было воспользоваться текущей сессией
+	 return;
+	 }*/
 
 	if (!json.authorized) {
 		if (json.accountLocked)
@@ -125,9 +130,9 @@ function login(){
 				},
 				noException: true
 			});
-            ZenMoney.trace("СМС-код отправлен.");
+			ZenMoney.trace("СМС-код отправлен.");
 
-            //ZenMoney.trace("JSON: "+ JSON.stringify(json));
+			//ZenMoney.trace("JSON: "+ JSON.stringify(json));
 			if (json.error) {
 				error = json.error.msg;
 				if (error) {
@@ -328,7 +333,7 @@ function processAccounts(json) {
 		deposits = getJsonObjectById(json, 'MobileAccountsAndCardsHomepage', 'PORTFOLIOS', false);
 	}
 
-	if (deposits) {
+	if (deposits && deposits.result) {
 		ZenMoney.trace('items: '+JSON.stringify(deposits.result.items));
 		var accounts2 = deposits.result.items[0].products;
 		for (var a2 = 0; a2 < accounts2.length; a2++) {
@@ -376,7 +381,10 @@ function processAccounts(json) {
 			}
 		}
 	} else
-		ZenMoney.trace('Получить данные по счетам не получилось!');
+		ZenMoney.trace('В ответе банка не найден список накопительных счетов.');
+
+	if (accDict.length == 0)
+		ZenMoney.Error('Не удалось загрузить список счетов. Это может быть временной ошибкой связи с банком. Попробуйте повторить позднее.', true);
 
 	ZenMoney.trace('Всего счетов добавлено: '+ accDict.length);
 	ZenMoney.trace('JSON: '+ JSON.stringify(accDict));
@@ -387,6 +395,44 @@ function processAccounts(json) {
  * Обработка операций
  */
 function processTransactions() {
+	var createSyncTime = ZenMoney.getData('createSync', 0);
+
+	// инициализация начального времени
+	if (!createSyncTime) {
+		// период загрузки данных в месяцах (с начала календарного месяца)
+		ZenMoney.trace("periodNew: "+ g_preferences.periodNew);
+
+		var period = !g_preferences.hasOwnProperty('periodNew') || isNaN(period = parseInt(g_preferences.periodNew)) ? 1 : period;
+		if (period > 3) period = 3;
+
+		ZenMoney.trace('Начальный период загрузки операций: '+ period);
+
+		// загружать операции нужно
+		if (period > 0) {
+			var dtNow = new Date();
+			var year = dtNow.getFullYear();
+			var month = dtNow.getMonth() - (period - 1);
+			if (month < 0) {
+				month = 12 + month;
+				year--;
+			}
+
+			var dtSync = new Date(year, month, 1);
+			ZenMoney.trace('CalcSyncTime: '+ dtSync);
+
+			createSyncTime = dtSync.getTime();
+		}
+		else
+			createSyncTime = Date.now();
+
+		ZenMoney.setData('createSync', createSyncTime);
+	}
+
+	if (createSyncTime <= 0)
+		throw new ZenMoney.Error('Ошибка инициализации плагина.');
+
+	ZenMoney.trace('CreateSyncTime: '+ new Date(createSyncTime) +' ('+ createSyncTime +')');
+
 	var browserId = 2;
 	for(var accId in g_accounts) {
 		var acc = g_accounts[accId];
@@ -394,26 +440,31 @@ function processTransactions() {
 
 		ZenMoney.trace('Загружаем "' + acc.title + '" (#' + acc.id + ')');
 
-		var lastSyncTime = ZenMoney.getData('last_sync_' + accId, 0);
+		var lastSyncTimeVar = 'last_sync_'+ accId;
+		var lastSyncTime = ZenMoney.getData(lastSyncTimeVar, 0);
+		ZenMoney.trace('LastSyncTime: '+ new Date(lastSyncTime) +' ('+ lastSyncTime +')');
 
-		// первоначальная инициализация
-		if (!lastSyncTime || lastSyncTime == 0) {
-			// по умолчанию загружаем операции за неделю
-			var period = !g_preferences.hasOwnProperty('period') || isNaN(period = parseInt(g_preferences.period)) ? 7 : period;
+		// всегда захватываем одну неделю минимум для обработки hold-операций
+		if (lastSyncTime) {
+			lastSyncTime -= 7 * 24 * 60 * 60 * 1000;
+			ZenMoney.trace('NeedSyncTime: ' + new Date(lastSyncTime) + ' (' + lastSyncTime + ')');
 
-			if (period > 100) period = 100;	// на всякий случай, ограничим лимит, а то слишком долго будет
+			// если есть время последней синхронизации, то всегда работаем от него
+			// lastSyncTime = Math.max(lastSyncTime, createSyncTime);
+		} else
+			lastSyncTime = createSyncTime;
 
-			lastSyncTime = Date.now() - period * 24 * 60 * 60 * 1000;
-		}
+		ZenMoney.trace('WorkSyncTime: ' + new Date(lastSyncTime) + ' (' + lastSyncTime + ')');
 
-		// всегда захватываем одну неделю минимум
-		lastSyncTime = Math.min(lastSyncTime, Date.now() - 7 * 24 * 60 * 60 * 1000);
+		if (lastSyncTime <= 0)
+			throw new ZenMoney.Error('Ошибка инициализации плагина 2.');
+
 		var lastSyncDate = new Date(lastSyncTime);
 		var nowSyncDate = new Date();
 		var startDate = n2(lastSyncDate.getDate()) + '.' + n2(lastSyncDate.getMonth() + 1) + '.' + lastSyncDate.getFullYear();
 		var endDate = n2(nowSyncDate.getDate()) + '.' + n2(nowSyncDate.getMonth() + 1) + '.' + nowSyncDate.getFullYear();
 
-		ZenMoney.trace('Запрашиваем операции с ' + lastSyncDate.toLocaleString());
+		ZenMoney.trace('Запрашиваем операции с ' + startDate);
 
 		json = requestJson('processor/process/minerva/operation', null, {
 			post: {
@@ -431,55 +482,55 @@ function processTransactions() {
 			post: {
 				components: JSON.stringify([
 					{
-					componentId:  "SideMenuComponent",
-					actions:  [{
-						actionId:  "REGISTERED_CALLBACK_REQUEST",
-						requestId:  "1"
+						componentId:  "SideMenuComponent",
+						actions:  [{
+							actionId:  "REGISTERED_CALLBACK_REQUEST",
+							requestId:  "1"
 						}
 						]
 					}, {
-					componentId:  "MOBILENOTIFICATIONS",
-					actions:  [{
-						actionId:  "NOTIFICATIONS",
-						params:  {
-							allNotificationsRequired:  true
+						componentId:  "MOBILENOTIFICATIONS",
+						actions:  [{
+							actionId:  "NOTIFICATIONS",
+							params:  {
+								allNotificationsRequired:  true
 							},
-						permanent:  true,
-						requestId:  "2"
+							permanent:  true,
+							requestId:  "2"
 						}, {
-						actionId:  "PERSONAL_OFFERS",
-						params:  {
-							getIncomeParams:  {
-								isPdaNotifications:  true
+							actionId:  "PERSONAL_OFFERS",
+							params:  {
+								getIncomeParams:  {
+									isPdaNotifications:  true
 								}
 							},
-						requestId:  "3"
+							requestId:  "3"
 						}
 						]
 					}, {
-					componentId:  "productsStatement",
-					actions:  [{
-						actionId:  "STATEMENT",
-						params:  {
-							products:  [{
-								id:  accId,
-								className:  acc.type,
-								number:  "",
-								dateCreation:  ""
+						componentId:  "productsStatement",
+						actions:  [{
+							actionId:  "STATEMENT",
+							params:  {
+								products:  [{
+									id:  accId,
+									className:  acc.type,
+									number:  "",
+									dateCreation:  ""
 								}
 								],
-							startDate:  startDate,
-							endDate:  endDate
+								startDate:  startDate,
+								endDate:  endDate
 							},
-						requestId:  "4"
+							requestId:  "4"
 						}
 						]
 					}, {
-					componentId:  "CacheTokenComponent",
-					actions:  [{
-						actionId:  "CACHE_TOKENS",
-						permanent:  true,
-						requestId:  "5"
+						componentId:  "CacheTokenComponent",
+						actions:  [{
+							actionId:  "CACHE_TOKENS",
+							permanent:  true,
+							requestId:  "5"
 						}
 						]
 					}
@@ -490,7 +541,7 @@ function processTransactions() {
 				pageToken: g_pageToken
 			}
 		}, addHeaders({Referer: g_url_login}));
-		ZenMoney.trace('1. JSON списка операций: ' + JSON.stringify(json));
+		//ZenMoney.trace('1. JSON списка операций: ' + JSON.stringify(json));
 
 		pageToken = json.pageToken;
 
@@ -503,7 +554,7 @@ function processTransactions() {
 				pageToken: g_pageToken
 			}
 		}, addHeaders({Referer: g_url_login}));
-		ZenMoney.trace('2. JSON списка операций: ' + JSON.stringify(json));
+		//ZenMoney.trace('2. JSON списка операций: ' + JSON.stringify(json));
 
 		g_pageToken = pageToken;
 
@@ -523,7 +574,7 @@ function processTransactions() {
 						pageToken: pageToken
 					}
 				}, addHeaders({Referer: g_url_login}));
-				ZenMoney.trace((3+k)+'. JSON списка операций: ' + JSON.stringify(json));
+				//ZenMoney.trace((3+k)+'. JSON списка операций: ' + JSON.stringify(json));
 
 				prodStat = getJsonObjectById(json, 'productsStatement', 'STATEMENT');
 				if (prodStat)
@@ -546,7 +597,6 @@ function processTransactions() {
 					continue;
 
 				var tran = {};
-				ZenMoney.trace('Добавляем операцию #' + iTran + ': ' + t.displayedDate + ' - ' + t.details);
 
 				// ВТБ в качестве идентификатора присылает каждый раз новый GUID !!!
 				// tran.id = t.id;
@@ -556,6 +606,8 @@ function processTransactions() {
 				var sum = t.amount.sum;
 				var curr = getInstrument(t.amount.currency);
 				if (sum > -0.01 && sum < 0.01) continue; // предохранитель
+
+				ZenMoney.trace('Добавляем операцию #'+ iTran +': '+ t.displayedDate +' - '+ t.details +' ('+ tran.date +') '+ (sum > 0 ? '+' : '') + sum);
 
 				if (sum < 0) {
 					tran.income = 0;
@@ -569,7 +621,7 @@ function processTransactions() {
 					tran.outcomeAccount = acc.id;
 				}
 
-				if (t.details.indexOf("нятие в ") > 0 || t.details.indexOf("ополнение в ") > 0){
+				if (t.details && (t.details.indexOf("нятие в ") > 0 || t.details.indexOf("ополнение в ") > 0 || t.details.indexOf("банкомат") > 0)){
 					// операции наличными
 					if (sum > 0) {
 						tran.outcome = sum;
@@ -585,7 +637,15 @@ function processTransactions() {
 				{
 					switch (acc.type){
 						case 'MasterAccount':
+							// обработка получателя при оплате через PayPass (с 27 мая)
+							var dtYear = parseInt(t.transactionDate.substr(6, 4));
+							var dtMonth = parseInt(t.transactionDate.substr(3, 2)) - 1;
+							var dtDay = parseInt(t.transactionDate.substr(0, 2));
+							var payeePatch = Date.UTC(dtYear, dtMonth, dtDay) >= Date.UTC(2017, 4, 27);
+
 							if (retail = /^Операция п.*?\d+\.\s+(.+?)(?:\s+[а-яА-Я].*)?$/.exec(t.details))
+								tran.payee = retail[1];
+							if (payeePatch) if (retail = /^Карта \*\d{4}\s+(.*)/.exec(t.details))
 								tran.payee = retail[1];
 							break;
 
@@ -594,7 +654,7 @@ function processTransactions() {
 							// с 20 февраля скорректированный анализ получателей из комментариев
 							var retailPatch = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) >= Date.UTC(2017, 1, 20);
 							if ((!retailPatch && (retail = /^[\dX]+\s+Retail\s+(.+)/.exec(t.details)))                  // старый формат
-							|| (retailPatch && (retail = /^(?:[\dX]+\s+Retail|\S+\s+\*\d{4})\s+(.+)/.exec(t.details)))) // новый формат
+								|| (retailPatch && (retail = /^(?:[\dX]+\s+Retail|\S+\s+\*\d{4})\s+(.+)/.exec(t.details)))) // новый формат
 								tran.payee = retail[1];
 							break;
 					}
@@ -614,7 +674,13 @@ function processTransactions() {
 		ZenMoney.trace('Всего операций добавлено: ' + tranDict.length);
 		ZenMoney.trace('JSON: ' + JSON.stringify(tranDict));
 		ZenMoney.addTransaction(tranDict);
+
+		var nextSyncTime = Date.now();
+		ZenMoney.setData(lastSyncTimeVar, nextSyncTime);
+		ZenMoney.trace('NextSyncTime: ' + new Date(nextSyncTime) + ' (' + nextSyncTime + ')');
 	}
+
+	ZenMoney.saveData();
 }
 
 /**
@@ -1457,6 +1523,11 @@ function getJson(html) {
 		return JSON.parse(html);
 	} catch (e) {
 		ZenMoney.trace('Bad json (' + e.message + '): ' + html);
+
+		// попытаемся представить, что это html
+		if (message = /page__error-panel-text.*?>(.*?)<\/div/i.exec(html))
+			throw new ZenMoney.Error('Ответ банка: '+message);
+
 		throw new ZenMoney.Error('Сервер вернул ошибочные данные: ' + e.message);
 	}
 }
@@ -1476,18 +1547,19 @@ function requestJson(requestCode, data, parameters, headers) {
 	if (data)
 		for (var d in data) params.push(encodeURIComponent(d) + "=" + encodeURIComponent(data[d]));
 	/*params.push(encodeURIComponent("appVersion") + "=" + encodeURIComponent("3.1.0"));
-	params.push(encodeURIComponent("platform") + "=" + encodeURIComponent("android"));
-	params.push(encodeURIComponent("origin") + "=" + encodeURIComponent("mobile,ib5,loyalty"));*/
+	 params.push(encodeURIComponent("platform") + "=" + encodeURIComponent("android"));
+	 params.push(encodeURIComponent("origin") + "=" + encodeURIComponent("mobile,ib5,loyalty"));*/
 
+	var paramsStr = params.length > 0 ? '?' + params.join('&') : '';
 	if (parameters.post)
-		data = ZenMoney.requestPost(g_baseurl + requestCode + "?" + params.join("&"), parameters.post, headers || g_headers);
+		data = ZenMoney.requestPost(g_baseurl + requestCode + paramsStr, parameters.post, headers || g_headers);
 	else {
 		if (parameters) for (var k in parameters) params.push(encodeURIComponent(k) + "=" + encodeURIComponent(parameters[k]));
-		data = ZenMoney.requestGet(g_baseurl + requestCode + "?" + params.join("&"), headers || g_headers);
+		data = ZenMoney.requestGet(g_baseurl + requestCode + paramsStr, headers || g_headers);
 	}
 
-    if (!data)
-        ZenMoney.trace('Пришёл пустой ответ во время запроса по адресу "'+ g_baseurl + requestCode + '".');
+	if (!data)
+		ZenMoney.trace('Пришёл пустой ответ во время запроса по адресу "'+ g_baseurl + requestCode + '".');
 
 	data = getJson(data);
 

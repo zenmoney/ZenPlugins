@@ -4,10 +4,10 @@
 		title="Логин"
 		key="login"
 		positiveButtonText="ОК"
-		summary="|ID пользователя или логин|{@s}"
+		summary="|Логин пользователя|{@s}"
 		dialogTitle="Логин"
 		negativeButtonText="Отмена"
-		dialogMessage="Введите идентификатор пользователя или логин для входа в систему Тинькофф банк."
+		dialogMessage="Введите логин для входа в систему Тинькофф банк. Внимание: вход по номеру телефона ещё не поддерживается."
 		obligatory="true">
 	</EditTextPreference>
 	<EditTextPreference
@@ -22,25 +22,14 @@
 		inputType="textPassword">
 	</EditTextPreference>
 	<ListPreference
-			positiveButtonText="ОК"
-			key="loadOperations"
-			dialogTitle="При создании подключения"
-			negativeButtonText="Отмена"
-			title="При создании подключения"
-			entries="Загружать операции|Не загружать операции" entryValues="1|0"
-			defaultValue="1"
-			summary="|1|{@s}"
-			dialogMessage="Укажите нужно ли загружать операции при создании подключения">
-	</ListPreference>
-	<ListPreference
 		positiveButtonText="ОК"
-		key="period"
-		dialogTitle="Период загрузки"
+		key="periodNew"
+		dialogTitle="Загружать операции при создании подключения"
 		negativeButtonText="Отмена"
-		title="Загружать операции за период"
-		entries="Квартал|Месяц|Неделя" entryValues="92|31|7"
-        defaultValue="31"
-		summary="|31|{@s}"
-		dialogMessage="Укажите начальный период, за который нужно загрузить данные.">
+		title="Загружать операции при создании подключения"
+		entries="Не загружать|За текущий месяц|За текущий и прошлый месяцы|За 3 месяца" entryValues="0|1|2|3"
+		defaultValue="1"
+		summary="|1|{@s}"
+		dialogMessage="Укажите как нужно загружать операции при создании подключения.">
 	</ListPreference>
 </PreferenceScreen>

@@ -219,41 +219,66 @@ function processAccounts() {
  * @param data
  */
 function processTransactions(data) {
-	var lastSyncTime = ZenMoney.getData('last_sync', 0);
-	var createSyncTime = ZenMoney.getData('create_sync', 0);
+	var createSyncTime = ZenMoney.getData('createSync', 0);
 
-	// первоначальная инициализация
-	if (lastSyncTime == 0) {
-		// по умолчанию загружаем операции за неделю
-		var period = !g_preferences.hasOwnProperty('period') || isNaN(period = parseInt(g_preferences.period)) ? 7 : period;
+	// инициализация начального времени
+	if (!createSyncTime) {
+		// период загрузки данных в месяцах (с начала календарного месяца)
+		ZenMoney.trace("periodNew: "+ g_preferences.periodNew);
 
-		if (period > 100) period = 100;	// на всякий случай, ограничим лимит, а то слишком долго будет
+		var period = !g_preferences.hasOwnProperty('periodNew') || isNaN(period = parseInt(g_preferences.periodNew)) ? 1 : period;
+		if (period > 3) period = 3;
 
-		lastSyncTime = Date.now() - period*24*60*60*1000;
+		ZenMoney.trace('Начальный период загрузки операций: '+ period);
 
-		// первый запуск, загружать операции не нужно
-		if (createSyncTime == 0 && g_preferences.loadOperations < 1) {
-			ZenMoney.trace('Подключение без операций. Первый запуск. Операции пропускаем.');
+		// загружать операции нужно
+		if (period > 0) {
+			var dtNow = new Date();
+			var year = dtNow.getFullYear();
+			var month = dtNow.getMonth() - (period - 1);
+			if (month < 0) {
+				month = 12 + month;
+				year--;
+			}
+
+			var dtSync = new Date(year, month, 1);
+			ZenMoney.trace('CalcSyncTime: '+ dtSync);
+
+			createSyncTime = dtSync.getTime();
+		}
+		else
 			createSyncTime = Date.now();
-			ZenMoney.setData('create_sync', createSyncTime);
+
+		ZenMoney.setData('createSync', createSyncTime);
+
+		if (period <= 0) {
+			ZenMoney.trace('Подключение без операций. Первый запуск. Операции пропускаем.');
 			ZenMoney.saveData();
 			return;
 		}
 	}
 
-	ZenMoney.trace('Запрашиваем данные по последним операциям...');
+	var lastSyncTime = ZenMoney.getData('last_sync', 0);
+	ZenMoney.trace('LastSyncTime: '+ new Date(lastSyncTime) +' ('+ lastSyncTime +')');
 
-	// всегда захватываем одну неделю минимум
-	lastSyncTime = Math.min(lastSyncTime, Date.now() - 7*24*60*60*1000);
+	// всегда захватываем одну неделю минимум для обработки hold-операций
+	if (lastSyncTime) {
+		lastSyncTime -= 7 * 24 * 60 * 60 * 1000;
+		ZenMoney.trace('NeedSyncTime: ' + new Date(lastSyncTime) + ' (' + lastSyncTime + ')');
 
-	// последующий запуск с зафиксированным временем старта
-	if (createSyncTime > 0) {
-		ZenMoney.trace('CreateSyncTime: '+ createSyncTime);
-		lastSyncTime = Math.max(lastSyncTime, createSyncTime);
-	}
+		// если есть время последней синхронизации, то всегда работаем от него
+		// lastSyncTime = Math.max(lastSyncTime, createSyncTime);
+	} else
+		lastSyncTime = createSyncTime;
 
-	ZenMoney.trace('LastSyncTime: '+ lastSyncTime);
-	ZenMoney.trace('Запрашиваем операции с '+ new Date(lastSyncTime).toLocaleString());
+	ZenMoney.trace('WorkSyncTime: ' + new Date(lastSyncTime) + ' (' + lastSyncTime + ')');
+
+	if (lastSyncTime <= 0)
+		throw new ZenMoney.Error('Ошибка инициализации плагина 2.');
+
+	var lastSyncDate = new Date(lastSyncTime);
+	var startDate = n2(lastSyncDate.getDate()) +'.'+ n2(lastSyncDate.getMonth() + 1) +'.'+ lastSyncDate.getFullYear() +' '+ n2(lastSyncDate.getHours()) +':'+ n2(lastSyncDate.getMinutes());
+	ZenMoney.trace('Запрашиваем операции с ' + startDate);
 
 	var transactions = requestJson("operations", null, {
 		"start": 	lastSyncTime
@@ -266,8 +291,12 @@ function processTransactions(data) {
 	var tranDict = {};      // список найденных оперций
 	var paymentsDict = {};  // список идентификаторов переводов
 
+
 	for (var i = 0; i < transactions.payload.length; i++) {
 		var t = transactions.payload[i];
+
+		if (t.operationTime.milliseconds > lastSyncTime)
+			lastSyncTime = t.operationTime.milliseconds;
 
 		// работаем только по активным счетам
 		if (!in_array(t.account, g_accounts))
@@ -372,44 +401,46 @@ function processTransactions(data) {
 		// старый формат идентификатора
 		tran.id = t.payment ? t.payment.paymentId : t.id;
 
-		// со 2 сентября новый порядок идентификации операций перевода: outcomeID~~incomeID
-		var transferPatch = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) >= Date.UTC(2016, 8, 2);
-		if (transferPatch)
-			tran.id = t.id;
-
-		// со 5 февраля новый идентификатор переводов (incomeBankID и outcomeBankID)
-		// передвигаем дату патча на 3 февраля
-		var transferPatch2 = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) >= Date.UTC(2017, 1, 3);
-
-		// с 10 ноября новый порядок идентификации операций - берём не id, а ucid, если есть (чтобы холды метчились корректно)
-		// с 3 февраля исправление не верного порядка патчей
-		/*var idPatch = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) >= Date.UTC(2017, 1, 3);
-		if (idPatch)
-			tran.id = t.ucid ? t.ucid : t.id;*/
-
 		// ИТОГИ АНАЛИЗА:
 		//   id - уникальный идентификатор операции (технический идетификатор)
 		//   paymentId - идентификатор финансового документа/проводки
 		//   ucid - не понятная и не уникальная фигня :(
 
+		// со 2 сентября новый порядок идентификации операций перевода: outcomeID~~incomeID
+		var transferPatch = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) >= Date.UTC(2016, 8, 2);
+
+		// со 5 февраля новый идентификатор переводов (incomeBankID и outcomeBankID)
+		// передвигаем дату патча на 3 февраля
+		var transferPatch2 = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) >= Date.UTC(2017, 1, 3);
+
 		// с 5 февраля избавляемся от ucid, а не акцептированные операции имеют временный id
 		// передвигаем дату патча на 3 февраля
 		var idPatch2 = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) >= Date.UTC(2017, 1, 3);
+
 		// с 4 марта корректируем временный id на верный (был с ошибкой)
 		var idPatch3 = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) >= Date.UTC(2017, 2, 4);
+
+		// с 11 мая комиссию (переводов) считать отдельноq операцией
+		var idFeePatch = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) >= Date.UTC(2017, 4, 11);
+
+
+		if (transferPatch)
+			tran.id = t.id;
+
 		if (idPatch2)
 			tran.id = t.debitingTime ? t.id : (idPatch3 ? 'tmp#' : '[tmp]#')+t.id; // правильный идентификатор временной операции должен начинаться с 'tmp#'
+
 
 		// склеим переводы ------------------------------------------------------------------
 		var tranId = tran.id;
 		if (transferPatch)
 			tranId = t.payment ? t.payment.paymentId : tran.id ;
-		/* избавляемся от ucid
-		if (idPatch)
-			tranId = t.payment ? t.payment.paymentId : (t.ucid ? t.ucid : t.id);*/
 		if (idPatch2)
 			// для переводов добавляем 'p', чтобы не пересекаться с id
 			tranId = t.payment ? 'p'+t.payment.paymentId : tran.id;
+		if (idFeePatch && t.group == 'CHARGE')
+			// для комиссии добавляем 'f', чтобы не пересекаться с id
+			tranId = t.payment ? 'f'+t.payment.paymentId : tran.id;
 
 		// если ранее операция с таким идентификатором уже встречалась, значит это перевод
 		if (tranDict[tranId] && tranDict[tranId].income == 0 && tran.income > 0) {
@@ -450,9 +481,6 @@ function processTransactions(data) {
         	//ZenMoney.trace('Операция!!! ' + tranId);
             tranDict[tranId] = tran;
         }
-		if (tran.date > lastSyncTime)
-			lastSyncTime = tran.date;
-
 	}
 
 	ZenMoney.trace('Всего операций добавлено: '+ Object.getOwnPropertyNames(tranDict).length);
@@ -460,8 +488,15 @@ function processTransactions(data) {
 	for (var k in tranDict)
 		ZenMoney.addTransaction(tranDict[k]);
 
-	ZenMoney.setData('last_sync', lastSyncTime);
+	//ZenMoney.setData('last_sync', lastSyncTime);
+	//ZenMoney.trace('LastSyncTime: '+ lastSyncTime);
+	//ZenMoney.trace('Следующий период синхронизации с '+ new Date(lastSyncTime));
+
+	var nextSyncTime = Date.now();
+	ZenMoney.setData('last_sync', nextSyncTime);
 	ZenMoney.saveData();
+
+	ZenMoney.trace('NextSyncTime: ' + new Date(nextSyncTime) + ' (' + nextSyncTime + ')');
 }
 
 /**
@@ -538,7 +573,12 @@ function getJson(html) {
 		return JSON.parse(html);
 	} catch (e) {
 		ZenMoney.trace('Bad json (' + e.message + '): ' + html);
-		throw new ZenMoney.Error('Сервер вернул ошибочные данные: ' + e.message);
+
+		// попытаемся представить, что это html
+		if (/технические\s+работы/i.exec(html))
+			throw new ZenMoney.Error('Сервер банка сообщает о технических работах. Попробуйте повторить позднее.');
+
+		throw new ZenMoney.Error('Сервер банка вернул ошибочные данные: ' + e.message);
 	}
 }
 
