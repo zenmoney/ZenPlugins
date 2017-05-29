@@ -497,6 +497,13 @@ function RocketBank(ZenMoney) {
                             transaction.outcome = sum;
                         }
                         break;
+                    case null: // Неизвестный тип контекста
+                        if (operation.money.amount > 0) {
+                            transaction.income = sum;
+                        } else {
+                            transaction.outcome = sum;
+                        }
+                        break;
                     default:
                         delete operation["receipt_url"]; // Do not log private info
                         error("Неизвестный тип транзакции", JSON.stringify(operation));
