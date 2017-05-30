@@ -29,8 +29,8 @@ POST /oauth2/token/ HTTP/1.1
 Host: api.zenmoney.ru
 Content-Type: application/x-www-form-urlencoded
 
-
 grant_type=authorization_code&client_id=464119&client_secret=deadbeef&code=FD0485FC&redirect_uri=http%3A%2F%2Fexample.com%2Fcb%2F123
+
 
 HTTP/1.1 200 OK
 Content-Type: application/json
@@ -164,6 +164,8 @@ Account - счёт пользователя.
     title:   String
     parent:  String? -> Tag.id
     icon:    String?
+    picture: String?
+    color:   Int?
 	
     showIncome:    Bool
     showOutcome:   Bool
@@ -178,6 +180,10 @@ Account - счёт пользователя.
 `budgetIncome` - включена ли категория в расчёт дохода в бюджете
 `budgetOutcome` - включена ли категория в расчёт расхода в бюджете
 `required` - являются ли расходы по данной категории обязательными. Если null, то тоже считаются обязательными.
+`icon` - id иконки категории
+`color` - цвет иконки категории в в виде числа. Рассчитывается по alpha, red, green, blue 0 <= 255. 
+unsigned long color = (a << 24) + (r << 16) + (g << 8) + (b << 0).
+`picture` - ссылка на картинку для данной категории.
 
 #### Merchant
 ```Swift
@@ -448,6 +454,12 @@ https://api.zenmoney.ru/v8/diff/			- Diff
 https://api.zenmoney.ru/v8/suggest/  - Suggest
 
 Основная работа с API идёт через Diff.
+
+###Diff
+Скрипт синхронизации. Принимает на вход изменения на клиенте с момента последней синхронизации и отдает изменения на сервере за этот же промежуток времени. Формат обмена - Diff object.
+```Swift
+/v8/diff/ <- DiffObject
+```
 
 #### Diff object
 ```Swift
@@ -819,4 +831,37 @@ https://api.zenmoney.ru/v8/suggest/  - Suggest
     ]
     //...
 }
+```
+
+### Suggest
+Скрипт для подсказки категории и получателя для операции.
+
+```Swift
+func suggest = /v8/suggest/
+suggest(transaction: Transaction)   -> Transaction
+suggest(transaction: [Transaction]) -> [Transaction]
+```
+
+Можно при вызове передавать только часть полей операции, к примеру только ```payee```. Тогда на выходе будет урезанный объект операции. Гарантированно возвращаются только переданные поля.
+Пример:
+
+```HTTP
+POST /v8/suggest/ HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer AbF949beF4DC46b1
+
+{
+    "payee": "McDonalds"
+}
+
+
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+    "payee": "МакДональдс",
+    "merchant": "7BF5E890-2E2B-42FD-842A-B70B56620755",
+    "tag": ["1B11D636-5250-4DDA-8157-3810A0319EC2"]
+}
+
 ```
