@@ -458,7 +458,8 @@ https://api.zenmoney.ru/v8/suggest/  - Suggest
 ###Diff
 Скрипт синхронизации. Принимает на вход изменения на клиенте с момента последней синхронизации и отдает изменения на сервере за этот же промежуток времени. Формат обмена - Diff object.
 ```Swift
-/v8/diff/ <- DiffObject
+func diff = /v8/diff/
+diff(diff: DiffObject) -> DiffObject
 ```
 
 #### Diff object
