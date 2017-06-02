@@ -2,7 +2,7 @@
 <provider>
     <id>kykyryza</id>
     <version>1.0</version>
-    <build>7</build>
+    <build>8</build>
     <company>15359</company>
     <files>
         <js>md5.min.js</js>
