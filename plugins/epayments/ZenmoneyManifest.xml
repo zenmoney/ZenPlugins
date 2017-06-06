@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
     <id>epayments</id>
-    <version>0.1</version>
-    <build>1</build>
+    <version>1.0</version>
+    <build>2</build>
     <company>15584</company>
     <files>
         <js>classes/Bank.js</js>
