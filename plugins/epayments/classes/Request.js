@@ -73,8 +73,8 @@ function Request() {
         var operations       = [];
         var lastSyncTime     = getLastSyncTime();
 
-        var date = new Date(lastSyncTime);
-        ZenMoney.trace('Дата последней синхронизации: ' + date.toUTCString());
+        var date = new Date(lastSyncTime * 1000);
+        ZenMoney.trace('Дата последней транзакции: ' + date.toUTCString());
 
         while (isFirstPage || paginationOffset < paginationTotal) {
             request     = this.requestOperations(paginationLimit, paginationOffset);
@@ -108,11 +108,19 @@ function Request() {
     this.requestOperations = function (limit, offset) {
         var url = this.baseURI + 'v1/Transactions/';
 
+        var from = getLastSyncTime();
+        var till = parseInt(Date.now() / 1000);
+
+        // fix for old saved data
+        if (from > till) {
+            from = parseInt(from / 1000);
+        }
+
         var requestData = {
-            from: getLastSyncTime(),
+            from: from,
             skip: offset,
             take: limit,
-            till: parseInt(Date.now() / 1000)
+            till: till
         };
 
         return ZenMoney.requestPost(url, requestData, apiHeaders());
