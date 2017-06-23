@@ -31,10 +31,10 @@ function BankKykyryza() {
             accountToInstrument[accountId]                    = _instrument;
 
             /**
-             * временно добавляем в лог данные о типе и количестве денежных средств на карте
+             * временно добавляем в лог данные о карте
              * необходимо узнать как записывается кредитный лимит по карте
              */
-            ZenMoney.trace("account equities: " + JSON.stringify(dataItem.equities), 'log-account-data');
+            ZenMoney.trace("account data: " + JSON.stringify(dataItem), 'log-account-data');
 
             return {
                 id:           accountId,
