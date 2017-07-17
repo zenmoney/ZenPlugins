@@ -109,6 +109,8 @@ function processAccounts() {
 			continue;
 		}
 
+		var creditLimit = a.creditLimit ? a.creditLimit.value : 0;
+
 		// дебетовые карты ------------------------------------
 		if (a.accountType == 'Current' && a.status == 'NORM') {
 			ZenMoney.trace('Добавляем дебетовую карту: '+ a.name +' (#'+ a.id +')');
@@ -118,8 +120,11 @@ function processAccounts() {
 				type:			'ccard',
 				syncID:			[],
 				instrument:		a.moneyAmount.currency.name,
-				balance:		a.moneyAmount.value
+				balance:		a.moneyAmount.value - creditLimit
 			};
+
+			if (creditLimit > 0)
+				acc1.creditLimit = creditLimit;
 
 			// номера карт
 			for (var k1 = 0; k1 < a.cardNumbers.length; k1++) {
@@ -140,7 +145,6 @@ function processAccounts() {
 		else if (a.accountType == 'Credit' && a.status == 'NORM') {
 			ZenMoney.trace("Добавляем кредитную карту: "+ a.name +' (#'+ a.id +')');
 
-			var creditLimit = a.creditLimit.value;
 			var acc2 = {
 				id:				a.id,
 				title:			a.name,
@@ -150,6 +154,12 @@ function processAccounts() {
 				instrument:		a.moneyAmount.currency.name,
 				balance:		a.moneyAmount.value - creditLimit
 			};
+
+			// пересчитаем остаток, если провалились в минус сверх кредитного лимита
+			if (a.moneyAmount.value == 0 && a.debtAmount) {
+				ZenMoney.trace('Пересчитаем остаток на карте, так как провалились ниже лимита...');
+				acc2.balance = -a.debtAmount.value;
+			}
 
 			// номера карт
 			for (var k2 = 0; k2 < a.cardNumbers.length; k2++) {
@@ -292,6 +302,7 @@ function processTransactions(data) {
 	var paymentsDict = {};  // список идентификаторов переводов
 
 
+	var acceptOper = []; // запоминаем операции по operTime:amount, чтобы не допустить попадание в выписку операции дважды (холд и акцепта)
 	for (var i = 0; i < transactions.payload.length; i++) {
 		var t = transactions.payload[i];
 
@@ -331,14 +342,11 @@ function processTransactions(data) {
 			// пополнение наличными
 			if (t.group && t.group == "CASH" && (!t.partnerType || t.partnerType != 'card2card')){
 				tran.outcomeAccount = "cash#"+ t.amount.currency.name;
-				tran.outcome = t.accountAmount.value;
+				tran.outcome = t.amount.value;
 			}
 
 			// операция в валюте
 			if (t.accountAmount.currency.name != t.amount.currency.name) {
-				if (currencyTransferPatch && tran.outcome > 0)
-					tran.outcome = t.amount.value;
-
 				tran.opIncome = t.amount.value;
 				tran.opIncomeInstrument = t.amount.currency.name;
 			}
@@ -360,7 +368,7 @@ function processTransactions(data) {
 			if (!t.merchant || t.merchant.name.toLowerCase().indexOf('card2card') < 0) {
 				if (t.group && t.group == "CASH") {
 					tran.incomeAccount = "cash#" + t.amount.currency.name;
-					tran.income = t.accountAmount.value;
+					tran.income = t.amount.value;
 				}
 				else {
 					// получатель
@@ -379,9 +387,6 @@ function processTransactions(data) {
 
 			// операция в валюте
 			if (t.accountAmount.currency.name != t.amount.currency.name) {
-				if (currencyTransferPatch && tran.income > 0)
-					tran.income = t.amount.value;
-
 				tran.opOutcome = t.amount.value;
 				tran.opOutcomeInstrument = t.amount.currency.name;
 			}
@@ -397,6 +402,7 @@ function processTransactions(data) {
 				|| (t.operationPaymentType && t.operationPaymentType == "TEMPLATE"))
 				tran.comment = t.description;
 		}
+
 
 		// старый формат идентификатора
 		tran.id = t.payment ? t.payment.paymentId : t.id;
@@ -420,7 +426,7 @@ function processTransactions(data) {
 		// с 4 марта корректируем временный id на верный (был с ошибкой)
 		var idPatch3 = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) >= Date.UTC(2017, 2, 4);
 
-		// с 11 мая комиссию (переводов) считать отдельноq операцией
+		// с 11 мая комиссию (переводов) считать отдельной операцией
 		var idFeePatch = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) >= Date.UTC(2017, 4, 11);
 
 
@@ -442,6 +448,47 @@ function processTransactions(data) {
 			// для комиссии добавляем 'f', чтобы не пересекаться с id
 			tranId = t.payment ? 'f'+t.payment.paymentId : tran.id;
 
+
+		// исключим попадание операции дважды
+		var acceptOperId = t.operationTime.milliseconds+':'+(t.type == 'Debit' ? '+' : '-')+t.amount.value;
+		if (acceptOper[acceptOperId])
+		{
+			// если операция уже была добавлена, то холд пропускаем
+			if (!t.debitingTime)
+				continue;
+
+			var tranId2 = acceptOper[acceptOperId];
+			if (tranDict[tranId2])
+			{
+				ZenMoney.trace('Пропускаем повтор операции: '+ acceptOperId);
+
+				if (tran.income > 0) {
+					tranDict[tranId2].income = tran.income;
+					tranDict[tranId2].incomeAccount = tran.incomeAccount;
+
+					if (tran.opIncome) {
+						tranDict[tranId2].opIncome = tran.opIncome;
+						tranDict[tranId2].opIncomeInstrument = tran.opIncomeInstrument;
+					}
+				}
+				else if (tran.outcome > 0) {
+					tranDict[tranId2].outcome = tran.outcome;
+					tranDict[tranId2].outcomeAccount = tran.outcomeAccount;
+
+					if (tran.opOutcome) {
+						tranDict[tranId2].opOutcome = tran.opOutcome;
+						tranDict[tranId2].opOutcomeInstrument = tran.opOutcomeInstrument;
+					}
+				}
+
+				continue;
+			}
+
+			// если по какой-то случайности этой операции нет среди ранее обработанных, то работаем как обычно
+		}
+
+		acceptOper[acceptOperId] = tranId;
+
 		// если ранее операция с таким идентификатором уже встречалась, значит это перевод
 		if (tranDict[tranId] && tranDict[tranId].income == 0 && tran.income > 0) {
 			tranDict[tranId].income = tran.income;
@@ -459,8 +506,12 @@ function processTransactions(data) {
 				tranDict[tranId].outcomeBankID = tranDict[tranId].id;
 				delete tranDict[tranId].id;
 			}
+
+			continue;
 		}
-		else if (tranDict[tranId] && tranDict[tranId].outcome == 0 && tran.outcome > 0) {
+
+		// обрабатываем так же перевод в обратную сторону
+		if (tranDict[tranId] && tranDict[tranId].outcome == 0 && tran.outcome > 0) {
 			tranDict[tranId].outcome = tran.outcome;
 			tranDict[tranId].outcomeAccount = tran.outcomeAccount;
 
@@ -476,11 +527,12 @@ function processTransactions(data) {
 				tranDict[tranId].outcomeBankID = tran.id;
 				delete tranDict[tranId].id;
 			}
+
+			continue;
 		}
-		else {
-        	//ZenMoney.trace('Операция!!! ' + tranId);
-            tranDict[tranId] = tran;
-        }
+
+		//ZenMoney.trace('Операция!!! ' + tranId);
+		tranDict[tranId] = tran;
 	}
 
 	ZenMoney.trace('Всего операций добавлено: '+ Object.getOwnPropertyNames(tranDict).length);

@@ -2,8 +2,9 @@
 <provider>
     <id>vtb24</id>
     <version>1.0</version>
-    <build>53</build>
+    <build>58</build>
     <company>4637</company>
+    <codeRequired>true</codeRequired>
     <files>
         <js>library.js</js>
         <js>main.js</js>

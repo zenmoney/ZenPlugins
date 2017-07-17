@@ -12,6 +12,9 @@ var g_headers = {
  * Основной метод
  */
 function main() {
+	//makeTransfer('card:21237288', 'account:12632802', 10);
+	//return;
+
 	g_preferences = ZenMoney.getPreferences();
 
 	if (!g_preferences.login) throw new ZenMoney.Error("Введите логин в интернет-банк!", null, true);
@@ -751,7 +754,7 @@ function doTransferAPI(token, fromAcc, toAcc, sum) {
 	var docNum = getElementByTag(xml, 'id');
 	ZenMoney.trace('Номер документа: ' + docNum);
 
-	if (docNum < 0) { // новый документа
+	if (docNum < 0) { // новый документ
 		xml = requestApi('private/payments/confirm.do', {
 			'mobileSdkData': JSON.stringify(createSdkData()),
 			'transactionToken': token,
@@ -762,6 +765,8 @@ function doTransferAPI(token, fromAcc, toAcc, sum) {
 		//ZenMoney.trace('Запуск перевода: '+ xml);
 		ZenMoney.trace('Перевод осуществлён.')
 	}
+	else
+		throw new ZenMoney.Error("Не удалось выполнить перевод. Пожалуйста, обратитесь к разработчикам плагина.");
 }
 
 

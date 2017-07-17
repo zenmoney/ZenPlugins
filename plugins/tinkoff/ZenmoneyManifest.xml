@@ -2,8 +2,9 @@
 <provider>
     <id>tinkoff</id>
     <version>1.0</version>
-    <build>59</build>
+    <build>68</build>
     <company>4902</company>
+    <codeRequired>false</codeRequired>
     <files>
         <js>md5.min.js</js>
         <js>main.js</js>

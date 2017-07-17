@@ -2,8 +2,9 @@
 <provider>
     <id>sberbank-online</id>
     <version>1.1</version>
-    <build>67</build>
+    <build>69</build>
     <company>4624</company>
+    <codeRequired>true</codeRequired>
     <files>
         <js>md5.js</js>
         <js>library.js</js>

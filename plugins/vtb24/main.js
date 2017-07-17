@@ -21,8 +21,8 @@ var g_baseurl =  'https://mobile.vtb24.ru/', //"https://online.vtb24.ru/"
  */
 function main() {
 	g_preferences = ZenMoney.getPreferences();
-	if (!g_preferences.login) throw new ZenMoney.Error("Введите логин в ВТБ24-Онлайн!", true);
-	if (!g_preferences.password) throw new ZenMoney.Error("Введите пароль в ВТБ24-Онлайн!", true);
+	if (!g_preferences.login) throw new ZenMoney.Error("Введите логин в ВТБ24-Онлайн!", true, true);
+	if (!g_preferences.password) throw new ZenMoney.Error("Введите пароль в ВТБ24-Онлайн!", true, true);
 
 	// тест переводов
 	// makeTransfer('17F9D3290454421EA289CF6AEF1884440', '33EB7DE0D82643FCA680B5D2B81888550', 5.1);		// тест на счёт
@@ -50,7 +50,7 @@ function login(){
 
 	if (!html) {
 		ZenMoney.trace('По адресу "'+ g_url_login +'" банк ничего не вернул.');
-		throw new ZenMoney.Error('Не удалось загрузить форму для входа в ВТБ24.', null, true);
+		throw new ZenMoney.Error('Не удалось загрузить форму для входа в ВТБ24.');
 	}
 
 	g_pageSecurityID = getParam(html, /page-security-id="([^"]*)/i, null, html_entity_decode);
@@ -92,7 +92,7 @@ function login(){
 
 	if (!json.authorized) {
 		if (json.accountLocked)
-			throw new ZenMoney.Error('Ваш аккаунт заблокирован банком, свяжитесь со службой технической поддержки для разблокирования аккаунта.', true, true);
+			throw new ZenMoney.Error('Ваш аккаунт заблокирован банком, свяжитесь со службой технической поддержки для разблокирования аккаунта.', true, false);
 
 		if (json.error && json.error.msg) {
 			var error = json.error.msg;
@@ -118,7 +118,7 @@ function login(){
 			});
 
 			if (!smsCode || smsCode == 0 || String(smsCode).trim() == '')
-				throw new ZenMoney.Error('Получен пустой код авторизации', true, true);
+				throw new ZenMoney.Error('Получен пустой код авторизации', true, false);
 			else
 				ZenMoney.trace('Код авторизации получен.');
 
@@ -137,7 +137,7 @@ function login(){
 				error = json.error.msg;
 				if (error) {
 					var wrongSms = /Неверный SMS/i.test(error);
-					throw new ZenMoney.Error(error, wrongSms, wrongSms);
+					throw new ZenMoney.Error(error, wrongSms, false);
 				}
 			}
 
@@ -200,8 +200,8 @@ function processAccounts(json) {
 	g_pageToken = json.pageToken;
 	callId++;
 
-	var do_accounts = []; // данные для запроса детальной информации по счетам
-  var accMap  = {}; // хэш для ускоренного сопоставления accDict и productsDetails
+    var do_accounts = [];   // данные для запроса детальной информации по счетам
+    var accMap  = {};       // хэш для ускоренного сопоставления accDict и productsDetails для определения кредитного лимита
 	var accDict = [];
 	var portfolios = getJsonObjectById(json, 'MobileAccountsAndCardsHomepage', 'PORTFOLIOS', false);
 	if (portfolios) {
@@ -246,14 +246,6 @@ function processAccounts(json) {
 								title: acc.title,
 								type: 'MasterAccount'
 							};
-
-							detail = {
-								id: item.id,
-								className: item.classType,
-								title: item.name
-							};
-							do_accounts.push(detail);
-							accMap[item.id] = accDict.length - 1;
 						}
 					}
 					break;
@@ -291,13 +283,15 @@ function processAccounts(json) {
 								type: 'CreditCard'
 							};
 
-							detail = {
-								id: item.id,
-								className: item.classType,
-								title: item.name
-							};
-							do_accounts.push(detail);
-							accMap[item.id] = accDict.length - 1;
+							if (account.id = 'CreditCardProduct') {
+                                detail = {
+                                    id: item.id,
+                                    className: item.classType,
+                                    title: item.name
+                                };
+                                do_accounts.push(detail);
+                                accMap[item.id] = accDict.length - 1;
+                            }
 						}
 					}
 					break;
@@ -307,63 +301,67 @@ function processAccounts(json) {
 	else
 		ZenMoney.trace('В ответе банка не найден список карточных счетов.');
 
-	ZenMoney.trace('Загружаем детальную информацию по счетам...');
-	json = requestJson('processor/process/minerva/action', null, {
-		post: {
-			components: JSON.stringify([{
-				componentId: "productsDetails",
-				actions: [{
-					actionId: "DETAILS",
-					params: {
-						objects: do_accounts
-					},
-					partialResult: false,
-					requestId:"6"
-				}]
-			}]),
-			pageInstanceUid: g_browserSessionUid+'.1',
-			callId: callId,
-			pageSecurityID: g_pageSecurityID,
-			pageToken: g_pageToken
-		}
-	}, addHeaders({Referer: g_url_login}));
-	g_pageToken = json.pageToken;
-	callId++;
 
-	json = requestJson('processor/process/minerva/action', null, {
-		post: {
-			components: '[]',
-			pageInstanceUid: g_browserSessionUid+'.1',
-			callId: callId,
-			pageSecurityID: g_pageSecurityID,
-			pageToken: g_pageToken
-		}
-	}, addHeaders({Referer: g_url_login}));
-	ZenMoney.trace('JSON детальной информации по счетам: '+ JSON.stringify(json));
-	g_pageToken = json.pageToken;
-	callId++;
+	if (do_accounts.length > 0) {
+        ZenMoney.trace('Загружаем детальную информацию по кредитным картам...');
+        json = requestJson('processor/process/minerva/action', null, {
+            post: {
+                components: JSON.stringify([{
+                    componentId: "productsDetails",
+                    actions: [{
+                        actionId: "DETAILS",
+                        params: {
+                            objects: do_accounts
+                        },
+                        partialResult: false,
+                        requestId: "6"
+                    }]
+                }]),
+                pageInstanceUid: g_browserSessionUid + '.1',
+                callId: callId,
+                pageSecurityID: g_pageSecurityID,
+                pageToken: g_pageToken
+            }
+        }, addHeaders({Referer: g_url_login}));
+        g_pageToken = json.pageToken;
+        callId++;
 
-	var details = getJsonObjectById(json, 'productsDetails', 'DETAILS', false);
-	if (details) {
-		var accounts = details.result.items;
-		for (var a = 0; a < accounts.length; a++) {
-			var account = accounts[a];
-			var i = 0;
-			// Игнорируем если нет такого объекта
-			if (!(account.id in accMap)) {
-				continue;
-			} else {
-				i = accMap[account.id];
-			}
-			// Ставим настоящие лимиты счета
-			if ("balance" in account && "amountSum" in account.balance) {
-				accDict[i].balance = account.balance.amountSum;
-			}
-			if ("cardAccount" in account && "creditLimit" in account.cardAccount) {
-				accDict[i].creditLimit = account.cardAccount.creditLimit;
-			}
-		}
-	}
+        json = requestJson('processor/process/minerva/action', null, {
+            post: {
+                components: '[]',
+                pageInstanceUid: g_browserSessionUid + '.1',
+                callId: callId,
+                pageSecurityID: g_pageSecurityID,
+                pageToken: g_pageToken
+            }
+        }, addHeaders({Referer: g_url_login}));
+        ZenMoney.trace('JSON детальной информации по счетам: ' + JSON.stringify(json));
+        g_pageToken = json.pageToken;
+        callId++;
+
+        var details = getJsonObjectById(json, 'productsDetails', 'DETAILS', false);
+        if (details) {
+            accounts = details.result.items;
+            for (a = 0; a < accounts.length; a++) {
+                account = accounts[a];
+
+                // Игнорируем если нет такого объекта
+                if (!(account.id in accMap))
+                    continue;
+
+                var i = accMap[account.id];
+
+                // Ставим настоящие лимиты счета
+                if ("balance" in account && "amountSum" in account.balance) {
+                    accDict[i].balance = account.balance.amountSum;
+                }
+                if ("cardAccount" in account && "creditLimit" in account.cardAccount) {
+                    accDict[i].creditLimit = account.cardAccount.creditLimit;
+                }
+            }
+        }
+    }
+
 
 	ZenMoney.trace('Загружаем накопительные счета...');
 	// открываем список накопительных счетов и вкладов
