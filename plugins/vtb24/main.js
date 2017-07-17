@@ -200,6 +200,8 @@ function processAccounts(json) {
 	g_pageToken = json.pageToken;
 	callId++;
 
+	var do_accounts = []; // данные для запроса детальной информации по счетам
+  var accMap  = {}; // хэш для ускоренного сопоставления accDict и productsDetails
 	var accDict = [];
 	var portfolios = getJsonObjectById(json, 'MobileAccountsAndCardsHomepage', 'PORTFOLIOS', false);
 	if (portfolios) {
@@ -244,6 +246,14 @@ function processAccounts(json) {
 								title: acc.title,
 								type: 'MasterAccount'
 							};
+
+							detail = {
+								id: item.id,
+								className: item.classType,
+								title: item.name
+							};
+							do_accounts.push(detail);
+							accMap[item.id] = accDict.length - 1;
 						}
 					}
 					break;
@@ -280,6 +290,14 @@ function processAccounts(json) {
 								title: acc.title,
 								type: 'CreditCard'
 							};
+
+							detail = {
+								id: item.id,
+								className: item.classType,
+								title: item.name
+							};
+							do_accounts.push(detail);
+							accMap[item.id] = accDict.length - 1;
 						}
 					}
 					break;
@@ -289,6 +307,63 @@ function processAccounts(json) {
 	else
 		ZenMoney.trace('В ответе банка не найден список карточных счетов.');
 
+	ZenMoney.trace('Загружаем детальную информацию по счетам...');
+	json = requestJson('processor/process/minerva/action', null, {
+		post: {
+			components: JSON.stringify([{
+				componentId: "productsDetails",
+				actions: [{
+					actionId: "DETAILS",
+					params: {
+						objects: do_accounts
+					},
+					partialResult: false,
+					requestId:"6"
+				}]
+			}]),
+			pageInstanceUid: g_browserSessionUid+'.1',
+			callId: callId,
+			pageSecurityID: g_pageSecurityID,
+			pageToken: g_pageToken
+		}
+	}, addHeaders({Referer: g_url_login}));
+	g_pageToken = json.pageToken;
+	callId++;
+
+	json = requestJson('processor/process/minerva/action', null, {
+		post: {
+			components: '[]',
+			pageInstanceUid: g_browserSessionUid+'.1',
+			callId: callId,
+			pageSecurityID: g_pageSecurityID,
+			pageToken: g_pageToken
+		}
+	}, addHeaders({Referer: g_url_login}));
+	ZenMoney.trace('JSON детальной информации по счетам: '+ JSON.stringify(json));
+	g_pageToken = json.pageToken;
+	callId++;
+
+	var details = getJsonObjectById(json, 'productsDetails', 'DETAILS', false);
+	if (details) {
+		var accounts = details.result.items;
+		for (var a = 0; a < accounts.length; a++) {
+			var account = accounts[a];
+			var i = 0;
+			// Игнорируем если нет такого объекта
+			if (!(account.id in accMap)) {
+				continue;
+			} else {
+				i = accMap[account.id];
+			}
+			// Ставим настоящие лимиты счета
+			if ("balance" in account && "amountSum" in account.balance) {
+				accDict[i].balance = account.balance.amountSum;
+			}
+			if ("cardAccount" in account && "creditLimit" in account.cardAccount) {
+				accDict[i].creditLimit = account.cardAccount.creditLimit;
+			}
+		}
+	}
 
 	ZenMoney.trace('Загружаем накопительные счета...');
 	// открываем список накопительных счетов и вкладов
