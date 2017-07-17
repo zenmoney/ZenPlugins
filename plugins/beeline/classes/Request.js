@@ -22,9 +22,25 @@ function Request() {
         };
 
         var requestData = getJson(ZenMoney.requestPost(url, data, defaultHeaders()));
-        if (requestData.status != 'OK') { // AUTH_WRONG || AUTH_LOCKED_TEMPORARY
+        if (requestData.status != 'OK') {
             ZenMoney.trace('Bad auth: ' + +requestData.status, 'warning');
-            throw new ZenMoney.Error('Не удалось авторизоваться');
+
+            var errorMessage = 'Не удалось авторизоваться: ';
+            switch (requestData.status) {
+                case 'CANNOT_FIND_SUBJECT':
+                    errorMessage += 'неправильный номер карты';
+                    break;
+                case 'AUTH_WRONG':
+                    errorMessage += 'неправильный пароль';
+                    break;
+                case 'AUTH_LOCKED_TEMPORARY':
+                    errorMessage += 'доступ временно запрещен';
+                    break;
+                default:
+                    errorMessage += 'неизвестная ошибка';
+            }
+
+            throw new ZenMoney.Error(errorMessage);
         }
     };
 
