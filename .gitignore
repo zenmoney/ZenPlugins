@@ -1,15 +1,10 @@
-/*.npmignore
-/.cache/
-/.npm/
-
 # ZenPlugin debugger files
 zp_data.json
 zp_pipe.txt
 zp_preferences.json
 
 # JetBrains IDE files
-*.iml
-.idea
+/.idea
 
 # Eclipse project files
 .classpath
@@ -25,3 +20,17 @@ nbproject/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# dependencies
+/node_modules
+
+# testing
+/coverage
+
+# production
+/build
+
+# misc
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
