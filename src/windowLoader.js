@@ -21,37 +21,7 @@ const fetchPreferences = () => fetchFile('/zen/preferences')
   .then((preferences) => JSON.parse(preferences));
 
 const fetchManifest = () => fetchFile('/zen/manifest')
-  .then((xml) => {
-    let root = new DOMParser().parseFromString(xml, 'text/xml').documentElement;
-    if (root.nodeName !== 'provider') {
-      throw new Error('Wrong root object in ZenmoneyManifest.xml');
-    }
-    const manifest = {};
-    const children = root.children;
-    for (let i = 0; i < children.length; i++) {
-      let name = children[i].nodeName;
-      if (name !== 'files') {
-        manifest[name] = children[i].innerHTML;
-      } else {
-        const files = children[i].children;
-        for (let j = 0; j < files.length; j++) {
-          name = files[j].nodeName;
-          if (name === 'preferences') {
-            manifest.preferences = files[j].innerHTML;
-          } else {
-            if (!manifest.files) {
-              manifest.files = [];
-            }
-            manifest.files.push(files[j].innerHTML);
-          }
-        }
-      }
-    }
-    if (!manifest.id || !manifest.build || !manifest.files || !manifest.version) {
-      throw new Error('Wrong ZenmoneyManifest.xml');
-    }
-    return manifest;
-  });
+  .then((preferences) => JSON.parse(preferences));
 
 const fetchData = () => fetchFile('/zen/data');
 

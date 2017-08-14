@@ -4,6 +4,7 @@ const path = require('path');
 const httpProxy = require('http-proxy');
 const _ = require('underscore');
 const {ZP_HEADER_PREFIX} = require("../src/shared");
+const cheerio = require('cheerio');
 
 const serializeErrors = (handler) => {
   return function(req, res) {
@@ -16,6 +17,29 @@ const serializeErrors = (handler) => {
       });
     }
   };
+};
+
+const convertManifestXmlToJs = (xml) => {
+  const $ = cheerio.load(xml);
+  return $("provider").children().toArray()
+    .reduce((memo, node) => {
+      const key = node.tagName;
+      if (key === "files") {
+        const result = $(node).children().toArray()
+          .reduce((memo, fileNode) => {
+            if (fileNode.tagName === "preferences") {
+              memo.preferences = $(fileNode).text();
+            } else {
+              memo.files.push($(fileNode).text());
+            }
+            return memo;
+          }, {files: [], preferences: null});
+        Object.assign(memo, result);
+      } else {
+        memo[key] = $(node).text();
+      }
+      return memo;
+    }, {});
 };
 
 module.exports = ({allowedHost, host, https}) => {
@@ -41,7 +65,14 @@ module.exports = ({allowedHost, host, https}) => {
         '/zen/manifest',
         serializeErrors((req, res) => {
           res.set('Content-Type', 'text/xml');
-          res.send(fs.readFileSync(`${params.pluginPath}/ZenmoneyManifest.xml`));
+          const xml = fs.readFileSync(`${params.pluginPath}/ZenmoneyManifest.xml`);
+          const manifest = convertManifestXmlToJs(xml);
+          ["id", "build", "files", "version", "preferences"].forEach((requiredProp) => {
+            if (!manifest[requiredProp]) {
+              throw new Error(`Wrong ZenmoneyManifest.xml: ${requiredProp} prop should be set`);
+            }
+          });
+          res.json(manifest);
         })
       );
 
