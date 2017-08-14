@@ -7,8 +7,8 @@ const {TRANSFERABLE_HEADER_PREFIX, PROXY_TARGET_HEADER} = require("../src/shared
 const {getManifest} = require('./utils');
 
 const convertErrorToSerializable = (e) => ({
-  message: e.message,
-  stack: e.stack.slice(e.stack.indexOf("at")),
+  message: e.stack,
+  stack: e.stack.replace(/^Error: /, '').replace(e.message + '\n', ''),
 });
 
 const serializeErrors = (handler) => {
@@ -22,7 +22,21 @@ const serializeErrors = (handler) => {
 };
 
 const removeSecureSealFromCookieValue = (value) => value.replace(/\s?Secure;/i, '');
-
+const readDebuggerFile = (file, missingFileValue) => {
+  const candidatePaths = [
+    path.join(paths.pluginJs, file),
+    path.join(__dirname, '../debugger/', file),
+  ];
+  const existingPaths = candidatePaths.filter(x => fs.existsSync(x));
+  if (existingPaths.length === 0) {
+    if (missingFileValue) {
+      return missingFileValue;
+    } else {
+      throw new Error(`${file} is missing, search paths: [${candidatePaths}]`)
+    }
+  }
+  return fs.readFileSync(existingPaths[0]);
+};
 module.exports = ({allowedHost, host, https}) => {
   return {
     compress: false,
@@ -59,7 +73,7 @@ module.exports = ({allowedHost, host, https}) => {
       app.get(
         '/zen/preferences',
         serializeErrors((req, res) => {
-          const preferences = JSON.parse(fs.readFileSync(path.join(__dirname, '../debugger/zp_preferences.json')));
+          const preferences = JSON.parse(readDebuggerFile('zp_preferences.json'));
           const patchedPreferences = _.omit(preferences, ['zp_plugin_directory', 'zp_pipe']);
           res.json(patchedPreferences);
         })
@@ -68,7 +82,7 @@ module.exports = ({allowedHost, host, https}) => {
       app.get(
         '/zen/data',
         serializeErrors((req, res) => {
-          const data = JSON.parse(fs.readFileSync(path.join(__dirname, '../debugger/zp_data.json')));
+          const data = JSON.parse(readDebuggerFile('zp_data.json', '{}'));
           return res.json(data);
         })
       );
@@ -77,7 +91,7 @@ module.exports = ({allowedHost, host, https}) => {
         '/zen/pipe',
         serializeErrors((req, res) => {
           res.set('Content-Type', 'text/plain');
-          res.send(fs.readFileSync(path.join(__dirname, '../debugger/zp_pipe.txt')));
+          res.send(readDebuggerFile('zp_pipe.txt', ''));
         })
       );
 
