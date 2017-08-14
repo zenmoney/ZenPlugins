@@ -11,10 +11,11 @@ const getGlobalScope = () => {
   throw new Error("Neither window nor self are accessible in current runtime");
 };
 
-const global = getGlobalScope();
+export const global = getGlobalScope();
 
 export let ZenMoney = global.ZenMoney;
 
 export const injectApiInstance = (value) => {
+  global.ZenMoney = value;
   ZenMoney = value;
 };

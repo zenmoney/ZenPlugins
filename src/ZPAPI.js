@@ -421,7 +421,7 @@ function ZPAPI({manifest, preferences, data}) {
 
   this.request = (method, url, body, headers) => fetchRemoteSync({method: method.toUpperCase(), url, headers, body});
   this.requestGet = (url, headers) => this.request('GET', url, null, headers);
-  this.requestPost = (url, body, headers) => this.request('GET', url, body, headers);
+  this.requestPost = (url, body, headers) => this.request('POST', url, body, headers);
 
   this.addAccount = addAccount;
   this.addTransaction = addTransaction;

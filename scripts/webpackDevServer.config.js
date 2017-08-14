@@ -1,45 +1,24 @@
-const {paths, params} = require('./constants');
+const {paths} = require('./constants');
 const fs = require('fs');
 const path = require('path');
 const httpProxy = require('http-proxy');
 const _ = require('underscore');
 const {ZP_HEADER_PREFIX} = require("../src/shared");
-const cheerio = require('cheerio');
+const {getManifest} = require('./utils');
+
+const convertErrorToSerializable = (e) => ({
+  message: e.message,
+  stack: e.stack.slice(e.stack.indexOf("at")),
+});
 
 const serializeErrors = (handler) => {
   return function(req, res) {
     try {
       handler.apply(this, arguments);
     } catch (e) {
-      res.status(500).json({
-        message: e.message,
-        stack: e.stack.slice(e.stack.indexOf("at")),
-      });
+      res.status(500).json(convertErrorToSerializable(e));
     }
   };
-};
-
-const convertManifestXmlToJs = (xml) => {
-  const $ = cheerio.load(xml);
-  return $("provider").children().toArray()
-    .reduce((memo, node) => {
-      const key = node.tagName;
-      if (key === "files") {
-        const result = $(node).children().toArray()
-          .reduce((memo, fileNode) => {
-            if (fileNode.tagName === "preferences") {
-              memo.preferences = $(fileNode).text();
-            } else {
-              memo.files.push($(fileNode).text());
-            }
-            return memo;
-          }, {files: [], preferences: null});
-        Object.assign(memo, result);
-      } else {
-        memo[key] = $(node).text();
-      }
-      return memo;
-    }, {});
 };
 
 module.exports = ({allowedHost, host, https}) => {
@@ -65,8 +44,7 @@ module.exports = ({allowedHost, host, https}) => {
         '/zen/manifest',
         serializeErrors((req, res) => {
           res.set('Content-Type', 'text/xml');
-          const xml = fs.readFileSync(`${params.pluginPath}/ZenmoneyManifest.xml`);
-          const manifest = convertManifestXmlToJs(xml);
+          const manifest = getManifest();
           ["id", "build", "files", "version", "preferences"].forEach((requiredProp) => {
             if (!manifest[requiredProp]) {
               throw new Error(`Wrong ZenmoneyManifest.xml: ${requiredProp} prop should be set`);
@@ -79,14 +57,18 @@ module.exports = ({allowedHost, host, https}) => {
       app.get(
         '/zen/preferences',
         serializeErrors((req, res) => {
-          const preferences = _.omit(require('../debugger/zp_preferences.json'), ['zp_plugin_directory', 'zp_pipe']);
-          res.json(preferences);
+          const preferences = JSON.parse(fs.readFileSync(path.join(__dirname, '../debugger/zp_preferences.json')));
+          const patchedPreferences = _.omit(preferences, ['zp_plugin_directory', 'zp_pipe']);
+          res.json(patchedPreferences);
         })
       );
 
       app.get(
         '/zen/data',
-        serializeErrors((req, res) => res.json(require('../debugger/zp_data.json')))
+        serializeErrors((req, res) => {
+          const data = JSON.parse(fs.readFileSync(path.join(__dirname, '../debugger/zp_data.json')));
+          return res.json(data);
+        })
       );
 
       app.get(
@@ -98,9 +80,8 @@ module.exports = ({allowedHost, host, https}) => {
       );
 
       const proxy = new httpProxy.createProxyServer();
-      proxy.on('error', function(err, req, res) {
-        res.writeHead(502, {'Content-Type': 'text/plain'});
-        res.end(`There was an error proxying your request\n${err.toString()}\n${JSON.stringify(err)}`);
+      proxy.on('error', (err, req, res) => {
+        res.status(502).json(convertErrorToSerializable(err));
       });
 
       app.all('/out', (req, res) => {

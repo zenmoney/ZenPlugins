@@ -1,16 +1,15 @@
-import {ZPAPI} from './ZPAPI';
-import {ZPAPIError} from './ZPAPIError';
+import {global} from "./globals";
+import {ZPAPI} from "./ZPAPI";
+import {ZPAPIError} from "./ZPAPIError";
 
-// eslint-disable-next-line no-restricted-globals
-self.addEventListener('message', (event) => {
+global.addEventListener('message', (event) => {
   if (!event) {
     return;
   }
   const {injectApiInstance} = require('./globals');
   injectApiInstance(new ZPAPI(event.data));
-
   try {
-    const {main} = require('currentPlugin');
+    const {main} = require('currentPluginManifest');
     main();
   } catch (e) {
     const zpApiError = ZPAPIError(e);

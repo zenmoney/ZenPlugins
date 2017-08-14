@@ -5,31 +5,37 @@ const CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 const eslintFormatter = require('react-dev-utils/eslintFormatter');
 const {paths} = require('./constants');
 const _ = require('underscore');
+const path = require('path');
+const currentPluginManifest = path.join(paths.pluginJs, './ZenmoneyManifest.xml');
 
 module.exports = ({production}) => ({
   devtool: production ? false : 'eval',
-  entry: production ? {
-    bundle: paths.pluginJs,
-  } : {
-    windowLoader: paths.windowLoaderJs,
-    workerLoader: paths.workerLoaderJs,
-  },
+  entry: production
+    ? {
+      index: currentPluginManifest,
+    }
+    : {
+      windowLoader: paths.windowLoaderJs,
+      workerLoader: paths.workerLoaderJs,
+    },
   output: {
     path: paths.appBuild,
-    library: "main",
-    libraryTarget: "var",
-    libraryExport: "main",
     filename: '[name].js',
     chunkFilename: '[name].chunk.js',
   },
   resolve: {
     alias: {
-      currentPlugin: paths.pluginJs,
+      currentPluginManifest: currentPluginManifest,
     },
   },
   module: {
     strictExportPresence: true,
-    rules: [
+    rules: _.compact([
+      {
+        test: /ZenmoneyManifest.xml$/,
+        include: paths.pluginJs,
+        loader: path.resolve(__dirname, './plugin-manifest-loader.js'),
+      },
       {
         test: /\.js$/,
         enforce: 'pre',
@@ -52,7 +58,7 @@ module.exports = ({production}) => ({
           cacheDirectory: true,
         },
       },
-    ],
+    ]),
   },
   plugins: _.compact([
     !production && new HtmlWebpackPlugin({
