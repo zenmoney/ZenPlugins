@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const httpProxy = require('http-proxy');
 const _ = require('underscore');
-const {ZP_HEADER_PREFIX} = require("../src/shared");
+const {TRANSFERABLE_HEADER_PREFIX, PROXY_TARGET_HEADER} = require("../src/shared");
 const {getManifest} = require('./utils');
 
 const convertErrorToSerializable = (e) => ({
@@ -20,6 +20,8 @@ const serializeErrors = (handler) => {
     }
   };
 };
+
+const removeSecureSealFromCookieValue = (value) => value.replace(/\s?Secure;/i, '');
 
 module.exports = ({allowedHost, host, https}) => {
   return {
@@ -83,23 +85,31 @@ module.exports = ({allowedHost, host, https}) => {
       proxy.on('error', (err, req, res) => {
         res.status(502).json(convertErrorToSerializable(err));
       });
-
-      app.all('/out', (req, res) => {
-        let target = req.query.to;
-        if (!target) {
-          throw new Error('"to" queryParam must be present');
+      proxy.on('proxyRes', (proxyRes, req, res) => {
+        if (proxyRes.headers['set-cookie']) {
+          proxyRes.headers['set-cookie'] = proxyRes.headers['set-cookie'].map(removeSecureSealFromCookieValue);
         }
+      });
 
+      app.all('*', (req, res, next) => {
         const incomingHeaders = Array.from(Object.entries(req.headers));
+        let target = null;
         incomingHeaders.forEach(([key, value]) => {
-          delete req.headers[key];
-          if (key.startsWith(ZP_HEADER_PREFIX)) {
-            req.headers[key.slice(ZP_HEADER_PREFIX.length)] = value;
+          if (key !== 'cookie') {
+            delete req.headers[key];
+          }
+          if (key === PROXY_TARGET_HEADER) {
+            target = value;
+          } else if (key.startsWith(TRANSFERABLE_HEADER_PREFIX)) {
+            req.headers[key.slice(TRANSFERABLE_HEADER_PREFIX.length)] = value;
           }
         });
+        if (!target) {
+          next();
+          return;
+        }
         proxy.web(req, res, {
           target: target,
-          proxyTimeout: 5000,
           changeOrigin: true,
           preserveHeaderKeyCase: true,
           ignorePath: true,

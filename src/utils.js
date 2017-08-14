@@ -1,5 +1,5 @@
-import {ZPAPIError} from './ZPAPIError';
-import {ZP_HEADER_PREFIX} from "./shared";
+import {TRANSFERABLE_HEADER_PREFIX, PROXY_TARGET_HEADER} from "./shared";
+import {ZPAPIError} from "./ZPAPIError";
 
 let lastRequest = null;
 
@@ -20,7 +20,7 @@ export const getLastStatusCode = () => lastRequest
   : 0;
 
 export const getLastResponseHeader = (name) => lastRequest
-  ? lastRequest.getResponseHeader(ZP_HEADER_PREFIX + name) || lastRequest.getResponseHeader(name)
+  ? lastRequest.getResponseHeader(TRANSFERABLE_HEADER_PREFIX + name) || lastRequest.getResponseHeader(name)
   : null;
 
 export const getLastResponseHeaders = function() {
@@ -32,7 +32,7 @@ export const getLastResponseHeaders = function() {
   for (let i = 0; i < strokes.length; i++) {
     const idx = strokes[i].indexOf(':');
     const header = [
-      strokes[i].substring(0, idx).replace(ZP_HEADER_PREFIX, '').trim(),
+      strokes[i].substring(0, idx).replace(TRANSFERABLE_HEADER_PREFIX, '').trim(),
       strokes[i].substring(idx + 2)
     ];
     if (header[0].length > 0) {
@@ -161,11 +161,17 @@ export const processHeadersAndBody = ({headers, body}) => {
 export const fetchRemoteSync = ({method, url, headers, body}) => {
   const req = new XMLHttpRequest();
   req.withCredentials = true;
-  req.open(method, `/out?to=${encodeURIComponent(url)}`, false);
+
+  const {pathname, search} = new URL(url);
+  const pathWithQueryParams = pathname + search;
+  req.open(method, pathWithQueryParams, false);
+
   const {headers: processedHeaders, body: processedBody} = processHeadersAndBody({headers, body});
+  req.setRequestHeader(PROXY_TARGET_HEADER, url);
   processedHeaders.forEach(({key, value}) => {
-    req.setRequestHeader(ZP_HEADER_PREFIX + key, value);
+    req.setRequestHeader(TRANSFERABLE_HEADER_PREFIX + key, value);
   });
+
   try {
     req.send(processedBody);
     lastRequest = req;
