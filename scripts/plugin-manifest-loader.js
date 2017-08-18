@@ -5,10 +5,14 @@ module.exports = function(xml) {
   var manifest = convertManifestXmlToJs(xml);
   if (manifest.modular === 'true') {
     return `var result = require(${JSON.stringify('./index')});
-global.main = result.main;
-module.exports = result;`;
+    for (var key in result) {
+      if(result.hasOwnProperty(key)) {
+        global[key] = result[key];
+      }
+    }
+    module.exports = result;`;
   } else {
-    return manifest.files.map(f => `require(${JSON.stringify('!!script-loader!./' + f)});\n`).join('') +
-      `module.exports = {main: global.main};`;
+    return manifest.files.map(f => `require(${JSON.stringify('!!script-loader!./' + f)});`)
+      .concat(`module.exports = {main: global.main};`).join('\n');
   }
 };

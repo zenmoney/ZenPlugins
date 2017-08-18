@@ -1,4 +1,3 @@
-import {global} from "./globals";
 import {ZPAPI} from "./ZPAPI";
 import {ZPAPIError} from "./ZPAPIError";
 
@@ -6,8 +5,7 @@ global.addEventListener('message', (event) => {
   if (!event) {
     return;
   }
-  const {injectApiInstance} = require('./globals');
-  injectApiInstance(new ZPAPI(event.data));
+  global.ZenMoney = new ZPAPI(event.data);
   try {
     const {main} = require('currentPluginManifest');
     main();
