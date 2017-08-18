@@ -20,7 +20,7 @@ if (!checkRequiredFiles([paths.pluginJs])) {
   process.exit(1);
 }
 
-const HOST = process.env.HOST || '0.0.0.0';
+const HOST = process.env.HOST || 'localhost';
 const DEFAULT_PORT = parseInt(process.env.PORT, 10) || 5000;
 const https = process.env.HTTPS === 'true';
 choosePort(HOST, DEFAULT_PORT)
