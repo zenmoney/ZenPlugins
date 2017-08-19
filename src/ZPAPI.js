@@ -1,5 +1,5 @@
 import {
-  fetchFileDataSync,
+  fetchFileSync,
   fetchRemoteSync,
   getLastError,
   getLastResponseHeader,
@@ -9,10 +9,11 @@ import {
   getLastStatusString,
   getLastUrl,
   handleException,
+  isSuccessfulHttpStatus,
   setDefaultEncoding,
   setThrowOnError
-} from './utils';
-import {ZPAPIError} from './ZPAPIError';
+} from "./utils";
+import {ZPAPIError} from "./ZPAPIError";
 
 function isArray(object) {
   return Array.isArray ?
@@ -400,13 +401,16 @@ function ZPAPI({manifest, preferences, data}) {
   }
 
   this.retrieveCode = (comment, image, options) => {
-    this.trace(comment + '\n\nВведите код в файл zp_pipe');
+    this.trace(`retrieveCode\n${comment}\nСохраните пользовательский ввод в файл zp_pipe.txt в папке с плагином`);
 
     let time = (options && options.time ? options.time : 0) || 60000;
     while (time > 0) {
       let code;
       try {
-        code = fetchFileDataSync('/zen/pipe');
+        const {body, status} = fetchFileSync('/zen/pipe');
+        if (isSuccessfulHttpStatus(status)) {
+          code = body;
+        }
       } catch (e) {
         code = null;
       }

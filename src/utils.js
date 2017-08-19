@@ -65,14 +65,42 @@ function urlEncodeParameters(obj) {
   return str;
 }
 
-export const fetchFileDataSync = (url) => {
-  const request = new XMLHttpRequest();
-  request.open('GET', url, false);
-  request.send();
-  return request.responseText && request.responseText.length > 0
-    ? request.responseText
-    : null;
+export const fetchFile = (url) => {
+  return new Promise(function(resolve, reject) {
+    const req = new XMLHttpRequest();
+    req.open('GET', url, true);
+    req.onerror = reject;
+    req.onload = function() {
+      resolve({
+        status: this.status,
+        body: this.responseText,
+      });
+    };
+    req.send();
+  });
 };
+
+export const isSuccessfulHttpStatus = (status) => 200 <= status && status < 300;
+
+export const fetchFileSync = (url) => {
+  const req = new XMLHttpRequest();
+  req.open('GET', url, false);
+  req.send();
+  return {
+    body: req.responseText && req.responseText.length > 0
+      ? req.responseText
+      : null,
+    status: req.status,
+  };
+};
+
+export const fetchJson = (url) => fetchFile(url)
+  .then(({status, body}) => {
+    const parsedBody = JSON.parse(body);
+    return isSuccessfulHttpStatus(status)
+      ? parsedBody
+      : Promise.reject(parsedBody);
+  });
 
 export const handleException = (error) => {
   if (typeof error === 'function') {
