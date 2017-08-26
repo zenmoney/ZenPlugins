@@ -7,7 +7,7 @@
 		summary="|Логин пользователя|{@s}"
 		dialogTitle="Логин"
 		negativeButtonText="Отмена"
-		dialogMessage="Введите логин для входа в систему Тинькофф банк. Внимание: вход по номеру телефона ещё не поддерживается."
+		dialogMessage="Введите логин для входа в Тинькофф Банк. Вход по номеру телефона временно не поддерживается."
 		obligatory="true">
 	</EditTextPreference>
 	<EditTextPreference
@@ -18,7 +18,7 @@
 		title="Пароль"
 		summary="||***********"
 		obligatory="true"
-		dialogMessage="Введите пароль, используемый для входа в систему Тинькофф банк."
+		dialogMessage="Введите пароль для входа в Тинькофф Банк."
 		inputType="textPassword">
 	</EditTextPreference>
 	<ListPreference
@@ -30,6 +30,6 @@
 		entries="Не загружать|За текущий месяц|За текущий и прошлый месяцы|За 3 месяца" entryValues="0|1|2|3"
 		defaultValue="1"
 		summary="|1|{@s}"
-		dialogMessage="Укажите как нужно загружать операции при создании подключения.">
+		dialogMessage="Выберите период загрузки операций при создании подключения.">
 	</ListPreference>
 </PreferenceScreen>

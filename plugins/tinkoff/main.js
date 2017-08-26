@@ -515,7 +515,7 @@ function processTransactions(data) {
 
 					// Плата за обслуживание
 					case "CHARGE":
-						tran.payee = t.description;
+						tran.comment = t.description;
 						break;
 
 					// Платеж
