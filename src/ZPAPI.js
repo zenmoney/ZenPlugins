@@ -126,7 +126,7 @@ function ZPAPI({manifest, preferences, data}) {
 
     this.Error = ZPAPIError;
 
-    this.trace = (msg, caller) => console.log("[ZP " + manifest.id + "]: [" + (caller || "trace") + "]", msg);
+    this.trace = (msg, caller) => console.log('[' + (caller || 'trace') + ']', msg);
 
     this.setExceptions = setThrowOnError;
     this.setDefaultCharset = setDefaultEncoding;
