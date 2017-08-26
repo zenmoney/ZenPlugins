@@ -12,7 +12,7 @@ var g_headers = {
  * Основной метод
  */
 function main() {
-	//makeTransfer('card:21237288', 'account:12632802', 10);
+	//makeTransfer('card:21237288', 'account:12632802', 2);
 	//return;
 
 	g_preferences = ZenMoney.getPreferences();
@@ -198,7 +198,7 @@ function requestApiInner(url, params, no_default_params, ignoreErrors) {
 		if (!ignoreErrors) {
 			var error = getParam(html, /<text>\s*(?:<!\[CDATA\[)?\s*(.*?)\s*(?:\]\]>)?\s*<\/text>/i);
 			ZenMoney.trace('error: ' + error);
-			var ex = new ZenMoney.Error(error || "Ошибка при обработке запроса к " + url, null, /не может быть|неправильный идентификатор|неправильный пароль/i.test(error));
+			var ex = new ZenMoney.Error(error || "Ошибка при обработке запроса к " + url, null, /не может быть|неправильный|неверный|заблокирован/i.test(error));
 			ex.code = code;
 			throw ex;
 		}
@@ -560,9 +560,8 @@ function processApiTransactions() {
 						parsingPatch = Date.UTC(dtPatch.getFullYear(), dtPatch.getMonth(), dtPatch.getDate()) >= Date.UTC(2017, 1, 16);
 						instrument = getElementByTag(operation, ['currency', 'code'], replaceTagsAndSpaces);
 						if (parsingPatch)
-						// новая схема обработки описания (после 16 февраля)
+							// новая схема обработки описания (после 16 февраля)
 							parseTransactionDescription(description, sum, instrument, tran);
-
 						else {
 							if (/^Note\s+acceptance\s+/i.test(description) && sum > 0) {
 								tran.outcome = sum;
@@ -752,21 +751,36 @@ function doTransferAPI(token, fromAcc, toAcc, sum) {
 	//ZenMoney.trace('Токен: '+ token);
 
 	var docNum = getElementByTag(xml, 'id');
-	ZenMoney.trace('Номер документа: ' + docNum);
+	//ZenMoney.trace('Номер документа: ' + docNum);
 
-	if (docNum < 0) { // новый документ
-		xml = requestApi('private/payments/confirm.do', {
-			'mobileSdkData': JSON.stringify(createSdkData()),
-			'transactionToken': token,
-			'id': docNum,
-			'operation': 'confirm'
-		});
+	xml = requestApi('private/payments/confirm.do', {
+		'mobileSdkData': JSON.stringify(createSdkData()),
+		'transactionToken': token,
+		'id': docNum,
+		'operation': 'confirm'
+	});
 
-		//ZenMoney.trace('Запуск перевода: '+ xml);
-		ZenMoney.trace('Перевод осуществлён.')
+	var status = getElementByTag(xml, 'status');
+	//ZenMoney.trace('Запуск перевода: '+ xml);
+	ZenMoney.trace('Статус перевода: '+ status);
+
+	var code = getElementByTag(status, 'code');
+	ZenMoney.trace('Код результата: '+ code);
+
+	if (code == '0')
+		ZenMoney.trace('Перевод осуществлён.');
+	else {
+		var text = getElementByTag(status, 'text');
+		ZenMoney.trace('Не удалось выполнить перевод. Ответ банка: '+ xml);
+
+		if (text) {
+			text = tex.trim();
+			if (text.substr(0, 9) == '<![CDATA[')
+				text = text.substring(9, text.length - 3).trim();
+		}
+
+		throw new ZenMoney.Error('Не удалось выполнить перевод. Ответ банка: '+ text);
 	}
-	else
-		throw new ZenMoney.Error("Не удалось выполнить перевод. Пожалуйста, обратитесь к разработчикам плагина.");
 }
 
 
@@ -1141,30 +1155,25 @@ function processWebTransactions(id, acc) {
  */
 function parseTransactionDescription(description, sum, instrument, tran) {
 
-	// оплата по карте
+
 	var str = null;
-	if (str = getWebDescriptionValue(description, 'Retail'))
+	if (str = getWebDescriptionValue(description, [
+			'Retail',               // оплата по карте
+			'Unique'                // unique
+		]))
 		tran.payee = str;
 
-	// оплата в кредит
-	else if (str = getWebDescriptionValue(description, 'Credit'))
+	else if (str = getWebDescriptionValue(description, [
+			'Credit',               // оплата в кредит
+			'CH Debit',             // поступление
+			'CH Payment',           // списание
+			'BP Billing Transfer',  // платёж в Сбербанк Онлайн
+			'BP Card - Acct',       // дополнительный взнос на вклад
+			'BP Acct - Card'        // частичное снятие со вклада
+
+		]))
 		tran.comment = str;
 
-	// поступление
-	else if (str = getWebDescriptionValue(description, 'CH Debit'))
-		tran.comment = str;
-
-	// списание
-	else if (str = getWebDescriptionValue(description, 'CH Payment'))
-		tran.comment = str;
-
-	// платёж в Сбербанк Онлайн
-	else if (str = getWebDescriptionValue(description, 'BP Billing Transfer'))
-		tran.comment = str;
-
-	// unique
-	else if (str = getWebDescriptionValue(description, 'Unique'))
-		tran.payee = str;
 
 	// взнос наличными
 	else if (str = getWebDescriptionValue(description, 'Note Acceptance') && sum > 0) {
@@ -1178,10 +1187,6 @@ function parseTransactionDescription(description, sum, instrument, tran) {
 		tran.income = -sum;
 		tran.incomeAccount = 'cash#' + instrument;
 	}
-
-	// переводы между счетами
-	else if (str = getWebDescriptionValue(description, ' BP '))
-		tran.comment = str;
 
 	// значение по умолчанию - оставляем описание как есть
 	else
@@ -1538,15 +1543,24 @@ function getWebSum(str) {
 
 /**
  * Получить значение описания операции
- * @param {string} description ОПисание
- * @param {string} str Искомая строка
- * @param {string} str2 Вторая искомая строка
+ * @param {string} description Описание
+ * @param {Array} arr Искомая строка либо массив строк
  * @returns {string}
  */
-function getWebDescriptionValue(description, str, str2) {
-	var pos = description.lastIndexOf(str);
-	var pos2 = !str2 ? -1 : description.lastIndexOf(str2);
-	if (pos >= 0 || pos2 >= 0)
-		return description.substr(pos >= 0 ? pos + str.length : pos2 + str2.length).trim();
+function getWebDescriptionValue(description, arr) {
+	if (typeof arr === 'string')
+		arr = [arr];
+
+	if (isArray(arr)) {
+		for (var i=0; i<arr.length; i++) {
+			var pos = description.lastIndexOf(arr[i]);
+			if (pos >= 0) {
+				var str = description.substr(pos + arr[i].length).trim();
+				if (str.substr(0, 4) === 'RUS ') str = str.substr(4).trim();
+				return str;
+			}
+		}
+	}
+
 	return null;
 }
