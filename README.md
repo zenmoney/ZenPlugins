@@ -157,8 +157,14 @@ function main() {
 #### ZenMoney.getPreferences() -> {String: String}
 Возвращает настройки плагина. Ключи те же, что и в файле настроек preferences.xml.
 
-#### constructor ZenMoney.Error(message: String?, allowRetry: Bool?, fatal: Bool?) -> ZenMoney.Error
-Исключение, которое нужно использовать при необходимости такового. Так же некоторые функции ZenPlugin API могут бросать исключения. В случае если плагин не может продолжить работу без изменения настроек, нужно бросать фатальное исключение с fatal = true.
+#### constructor ZenMoney.Error(message: String?, logIsNotImportant: Bool?, forcePluginReinstall: Bool?) -> ZenMoney.Error
+Исключение, которое нужно использовать при необходимости такового.
+
+logIsNotImportant: флаг, сигнализирующий о том, что лог работы плагина не важен.
+>Если true, то в приложении, когда пользователю показывается ошибка, в алерте есть только одна кнопка "Ок".
+>Если false, то есть две кнопки: "Отправить лог разарботчикам" и "Закрыть".
+
+forcePluginReinstall: флаг, сигнализирующий о том, что плагин не может продолжить работу без переустановки с изменением настроек.
 
 #### ZenMoney.setDefaultCharset(charset: String) 
 Задает кодировку по умолчанию, которая используется при сетевом взаимодействии.

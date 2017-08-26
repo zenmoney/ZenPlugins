@@ -1,4 +1,4 @@
-function ZPAPIError(message, allowRetry, fatal) {
+function ZPAPIError(message, logIsNotImportant, forcePluginReinstall) {
     message = message || "";
     let self;
     if (this instanceof ZPAPIError) {
@@ -49,11 +49,11 @@ function ZPAPIError(message, allowRetry, fatal) {
             self = new ZPAPIError(message);
         }
     }
-    if (self.fatal === undefined || fatal !== undefined) {
-        self.fatal = !!fatal;
+    if (self.fatal === undefined || forcePluginReinstall !== undefined) {
+        self.fatal = !!forcePluginReinstall;
     }
-    if (self.allowRetry === undefined || allowRetry !== undefined) {
-        self.allowRetry = !!allowRetry;
+    if (self.allowRetry === undefined || logIsNotImportant !== undefined) {
+        self.allowRetry = !!logIsNotImportant;
     }
     return self;
 }
