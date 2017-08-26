@@ -6,13 +6,12 @@ const eslintFormatter = require("react-dev-utils/eslintFormatter");
 const {paths} = require("./constants");
 const _ = require("underscore");
 const path = require("path");
-const currentPluginManifest = path.join(paths.pluginJs, "./ZenmoneyManifest.xml");
 
 module.exports = ({production}) => ({
     devtool: production ? false : "eval",
     entry: production
         ? {
-            index: currentPluginManifest,
+            index: paths.pluginJs,
         }
         : {
             windowLoader: paths.windowLoaderJs,
@@ -25,7 +24,7 @@ module.exports = ({production}) => ({
     },
     resolve: {
         alias: {
-            currentPluginManifest: currentPluginManifest,
+            currentPluginManifest: paths.pluginJs,
         },
     },
     module: {

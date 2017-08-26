@@ -1,4 +1,4 @@
-const {paths} = require("./constants");
+const {paths, params} = require("./constants");
 const fs = require("fs");
 const path = require("path");
 const httpProxy = require("http-proxy");
@@ -24,7 +24,7 @@ const serializeErrors = (handler) => {
 const removeSecureSealFromCookieValue = (value) => value.replace(/\s?Secure;/i, "");
 const readDebuggerFile = (file, missingFileValue) => {
     const candidatePaths = [
-        path.join(paths.pluginJs, file),
+        path.join(params.pluginPath, file),
         path.join(__dirname, "../debugger/", file),
     ];
     const existingPaths = candidatePaths.filter(x => fs.existsSync(x));
