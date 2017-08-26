@@ -1,18 +1,23 @@
-var g_baseurl =  'https://mobile.vtb24.ru/', //"https://online.vtb24.ru/"
-	g_url_login = g_baseurl+'content/telebank-client-mobile/ru/login.touch.html',
-	g_url_product_select = g_baseurl+'content/telebank-client-mobile/ru/login/telebank/product-details/_jcr_content.product-select.html',
-	g_url_product_details = g_baseurl+'content/telebank-client-mobile/ru/login/telebank/product-details.touch.html',
+var g_baseurl =  'https://online.vtb24.ru/',
+	g_url_login = g_baseurl+'content/vtb24-online-client/ru/login.html',
 	g_headers = {
-		'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-		'Accept-Charset': 'windows-1251,utf-8;q=0.7,*;q=0.3',
+		'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+		//'Accept-Charset': 'windows-1251,utf-8;q=0.7,*;q=0.3',
 		'Accept-Language': 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
 		'Cache-Control': 'no-cache',
 		'Connection': 'keep-alive',
 		'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.76 Safari/537.36',
 		'Pragma': 'no-cache',
-		//'Origin': 'https://mobile.vtb24.ru',
-		'X-Requested-With': 'XMLHttpRequest'
+		'DNT': '1',
+		'Host': 'online.vtb24.ru'
+		//'X-Requested-With': 'XMLHttpRequest'
 		//'Referer': g_baseurl + 'content/telebank-client/ru/login.html'
+	},
+	g_headers2 = {
+		'Accept': 'application/json, text/javascript, */*; q=0.01',
+		'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+		'Referer': g_baseurl + 'content/vtb24-online-client/ru/login.html',
+		'Origin': 'https://online.vtb24.ru'
 	},
 	g_preferences, g_pageToken, g_pageSecurityID, g_browserSessionUid;
 
@@ -20,6 +25,7 @@ var g_baseurl =  'https://mobile.vtb24.ru/', //"https://online.vtb24.ru/"
  * Основной метод
  */
 function main() {
+
 	g_preferences = ZenMoney.getPreferences();
 	if (!g_preferences.login) throw new ZenMoney.Error("Введите логин в ВТБ24-Онлайн!", true, true);
 	if (!g_preferences.password) throw new ZenMoney.Error("Введите пароль в ВТБ24-Онлайн!", true, true);
@@ -58,7 +64,7 @@ function login(){
 
 	g_browserSessionUid = guid();
 
-	var isAlreadyAuthorized = getParamByName(html, 'isMinervaUserAuthenticated');
+	//var isAlreadyAuthorized = getParamByName(html, 'isMinervaUserAuthenticated');
 	//ZenMoney.trace('isAlreadyAuthorized: '+ isAlreadyAuthorized);
 
 	ZenMoney.trace('Пытаемся войти...');
@@ -67,17 +73,11 @@ function login(){
 		post: {
 			login: g_preferences.login,
 			password: g_preferences.password,
-			isMobile: true,
-			_charset_: 'utf-8',
-			dateTime: dtStr
+			dateTime: dtStr,
+			pageSecurityID: g_pageSecurityID
 		},
 		noException: true
-	}, {
-			'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-			'Referer': g_baseurl + 'content/telebank-client-mobile/ru/login.touch.html',
-			'Origin': 'https://mobile.vtb24.ru'
-		}
-	);
+	}, g_headers2);
 
 	g_pageToken = json.pageToken;
 	//ZenMoney.trace('JSON: '+ JSON.stringify(json));
@@ -109,7 +109,7 @@ function login(){
 					action: 'challenge'
 				},
 				noException: true
-			});
+			}, g_headers2);
 			//ZenMoney.trace('JSON: '+ JSON.stringify(json));
 
 			var smsCode = ZenMoney.retrieveCode("Введите код авторизации из СМС для входа в ВТБ24-Онлайн", null, {
@@ -129,7 +129,7 @@ function login(){
 					challengeResponse: smsCode
 				},
 				noException: true
-			});
+			}, g_headers2);
 			ZenMoney.trace("СМС-код отправлен.");
 
 			//ZenMoney.trace("JSON: "+ JSON.stringify(json));
@@ -183,7 +183,7 @@ function processAccounts(json) {
 			pageSecurityID: g_pageSecurityID,
 			pageToken: g_pageToken
 		}
-	}, addHeaders({Referer: g_url_login}));
+	}, g_headers2);
 	g_pageToken = json.pageToken;
 	callId++;
 
@@ -195,7 +195,7 @@ function processAccounts(json) {
 			pageSecurityID: g_pageSecurityID,
 			pageToken: g_pageToken
 		}
-	}, addHeaders({Referer: g_url_login}));
+	}, g_headers2);
 	ZenMoney.trace('JSON списка карточных счетов: '+ JSON.stringify(json));
 	g_pageToken = json.pageToken;
 	callId++;
@@ -322,7 +322,7 @@ function processAccounts(json) {
                 pageSecurityID: g_pageSecurityID,
                 pageToken: g_pageToken
             }
-        }, addHeaders({Referer: g_url_login}));
+        }, g_headers2);
         g_pageToken = json.pageToken;
         callId++;
 
@@ -334,7 +334,7 @@ function processAccounts(json) {
                 pageSecurityID: g_pageSecurityID,
                 pageToken: g_pageToken
             }
-        }, addHeaders({Referer: g_url_login}));
+        }, g_headers2);
         ZenMoney.trace('JSON детальной информации по счетам: ' + JSON.stringify(json));
         g_pageToken = json.pageToken;
         callId++;
@@ -385,7 +385,7 @@ function processAccounts(json) {
 			pageSecurityID: g_pageSecurityID,
 			pageToken: g_pageToken
 		}
-	}, addHeaders({ Referer: g_url_login }));
+	}, g_headers2);
 	ZenMoney.trace('JSON ответа: '+ JSON.stringify(json));
 	g_pageToken = json.pageToken;
 	callId++;
@@ -401,7 +401,7 @@ function processAccounts(json) {
 				pageSecurityID: g_pageSecurityID,
 				pageToken: g_pageToken
 			}
-		}, addHeaders({Referer: g_url_login}));
+		}, g_headers2);
 		ZenMoney.trace('JSON повторного запроса: ' + JSON.stringify(json));
 		deposits = getJsonObjectById(json, 'MobileAccountsAndCardsHomepage', 'PORTFOLIOS', false);
 	}
@@ -547,7 +547,7 @@ function processTransactions() {
 				pageSecurityID: g_pageSecurityID,
 				pageToken: g_pageToken
 			}
-		}, addHeaders({Referer: g_url_login}));
+		}, g_headers2);
 
 		g_pageToken = json.pageToken;
 
@@ -613,7 +613,7 @@ function processTransactions() {
 				pageSecurityID: g_pageSecurityID,
 				pageToken: g_pageToken
 			}
-		}, addHeaders({Referer: g_url_login}));
+		}, g_headers2);
 		//ZenMoney.trace('1. JSON списка операций: ' + JSON.stringify(json));
 
 		pageToken = json.pageToken;
@@ -626,7 +626,7 @@ function processTransactions() {
 				pageSecurityID: g_pageSecurityID,
 				pageToken: g_pageToken
 			}
-		}, addHeaders({Referer: g_url_login}));
+		}, g_headers2);
 		//ZenMoney.trace('2. JSON списка операций: ' + JSON.stringify(json));
 
 		g_pageToken = pageToken;
@@ -646,7 +646,7 @@ function processTransactions() {
 						pageSecurityID: g_pageSecurityID,
 						pageToken: pageToken
 					}
-				}, addHeaders({Referer: g_url_login}));
+				}, g_headers2);
 				//ZenMoney.trace((3+k)+'. JSON списка операций: ' + JSON.stringify(json));
 
 				prodStat = getJsonObjectById(json, 'productsStatement', 'STATEMENT');
@@ -718,8 +718,12 @@ function processTransactions() {
 
 							if (retail = /^Операция п.*?\d+\.\s+(.+?)(?:\s+[а-яА-Я].*)?$/.exec(t.details))
 								tran.payee = retail[1];
-							if (payeePatch) if (retail = /^Карта \*\d{4}\s+(.*)/.exec(t.details))
-								tran.payee = retail[1];
+							if (payeePatch) if (retail = /^Карта \*\d{4}\s+(.*)/.exec(t.details)) {
+                                if (t.details.indexOf('еревод') > 0)
+                                    tran.description = retail[1];
+                                else
+                                    tran.payee = retail[1];
+                            }
 							break;
 
 						case 'CreditCard':
@@ -728,7 +732,12 @@ function processTransactions() {
 							var retailPatch = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) >= Date.UTC(2017, 1, 20);
 							if ((!retailPatch && (retail = /^[\dX]+\s+Retail\s+(.+)/.exec(t.details)))                  // старый формат
 								|| (retailPatch && (retail = /^(?:[\dX]+\s+Retail|\S+\s+\*\d{4})\s+(.+)/.exec(t.details)))) // новый формат
-								tran.payee = retail[1];
+                            {
+                                if (t.details.indexOf('еревод') > 0)
+                                    tran.description = retail[1];
+                                else
+                                    tran.payee = retail[1];
+                            }
 							break;
 					}
 
@@ -1624,15 +1633,20 @@ function requestJson(requestCode, data, parameters, headers) {
 	 params.push(encodeURIComponent("origin") + "=" + encodeURIComponent("mobile,ib5,loyalty"));*/
 
 	var paramsStr = params.length > 0 ? '?' + params.join('&') : '';
+	var url = g_baseurl + requestCode;
 	if (parameters.post)
-		data = ZenMoney.requestPost(g_baseurl + requestCode + paramsStr, parameters.post, headers || g_headers);
+		data = ZenMoney.requestPost(url + paramsStr, parameters.post, headers || g_headers);
 	else {
 		if (parameters) for (var k in parameters) params.push(encodeURIComponent(k) + "=" + encodeURIComponent(parameters[k]));
-		data = ZenMoney.requestGet(g_baseurl + requestCode + paramsStr, headers || g_headers);
+		data = ZenMoney.requestGet(url + paramsStr, headers || g_headers);
 	}
 
+	var resultCode = ZenMoney.getLastStatusCode();
 	if (!data)
-		ZenMoney.trace('Пришёл пустой ответ во время запроса по адресу "'+ g_baseurl + requestCode + '".');
+		ZenMoney.trace('Пришёл пустой ответ во время запроса по адресу "'+ url + '" [ResultCode: ' + resultCode + ']');
+
+	if (resultCode == '403')
+		throw new ZenMoney.Error("Доступ к странице интернет-банка запрещён: "+ url);
 
 	data = getJson(data);
 
