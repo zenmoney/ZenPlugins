@@ -17,7 +17,7 @@ const paths = {
     appHtml: resolve("public/index.html"),
     windowLoaderJs: resolve("src/windowLoader.js"),
     workerLoaderJs: resolve("src/workerLoader.js"),
-    pluginJs: params.pluginPath,
+    pluginJs: path.join(params.pluginPath, "./ZenmoneyManifest.xml"),
     appPackageJson: resolve("package.json"),
     yarnLockFile: resolve("yarn.lock"),
     testsSetup: resolve("src/setupTests.js"),
