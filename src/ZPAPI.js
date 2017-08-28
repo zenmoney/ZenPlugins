@@ -126,7 +126,7 @@ function ZPAPI({manifest, preferences, data}) {
 
     this.Error = ZPAPIError;
 
-    this.trace = (msg, caller) => console.log('[' + (caller || 'trace') + ']', msg);
+    this.trace = (msg, caller) => console.log("[" + (caller || "trace") + "]", msg);
 
     this.setExceptions = setThrowOnError;
     this.setDefaultCharset = setDefaultEncoding;
@@ -190,6 +190,7 @@ function ZPAPI({manifest, preferences, data}) {
 
     const setResult = (result) => {
         if (isComplete) {
+            console.error("Ignored setResult call: calling it more than once is not expected");
             return;
         }
         if (typeof result !== "object") {
@@ -206,7 +207,7 @@ function ZPAPI({manifest, preferences, data}) {
             this.trace("setResult fail: " + new ZPAPIError(resultError, !!result.allow_retry));
         }
         // eslint-disable-next-line no-restricted-globals
-        self.postMessage("close");
+        self.postMessage({type: "completed", success: result.success});
     };
 
     function addAccount(accounts) {
