@@ -18,5 +18,6 @@ window.onload = function() {
                     statusElement.textContent = e.data.success ? "Success" : "Failure";
                 }
             };
+            window.__pluginWorker = worker;
         });
 };
