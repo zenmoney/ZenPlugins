@@ -20,6 +20,7 @@ global.addEventListener("message", (event) => {
                 console.log(zpApiError.arguments);
             }
         }
+        global.postMessage({type: "completed", success: false});
         throw zpApiError;
     }
 });
