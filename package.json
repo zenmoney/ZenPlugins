@@ -62,18 +62,5 @@
     "moduleFileExtensions": [
       "js"
     ]
-  },
-  "babel": {
-    "presets": [
-      "react-app"
-    ]
-  },
-  "eslintConfig": {
-    "extends": "react-app",
-    "globals": {
-      "console": false,
-      "ZenMoney": false,
-      "fetch": false
-    }
   }
 }
