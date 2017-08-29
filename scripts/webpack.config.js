@@ -56,7 +56,7 @@ module.exports = ({production}) => ({
                 test: /\.js$/,
                 include: paths.appSrc,
                 loader: require.resolve("babel-loader"),
-                options: {
+                options: production ? {} : {
                     cacheDirectory: true,
                 },
             },
