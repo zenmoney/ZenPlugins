@@ -23,4 +23,4 @@ const paths = {
     testsSetup: resolve("src/setupTests.js"),
 };
 
-module.exports = {paths, params};
+module.exports = {resolve, paths, params};

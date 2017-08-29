@@ -1,6 +1,6 @@
 // source: https://www.currency-iso.org/dam/downloads/lists/list_one.xml
 // published on: 2017-01-01
-var codeToCurrencyLookup = {
+export default {
     "104": "MMK",
     "108": "BIF",
     "116": "KHR",
@@ -178,5 +178,5 @@ var codeToCurrencyLookup = {
     "068": "BOB",
     "072": "BWP",
     "096": "BND",
-    "090": "SBD"
+    "090": "SBD",
 };
