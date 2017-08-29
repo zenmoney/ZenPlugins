@@ -3,7 +3,7 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const HtmlWebpackExcludeAssetsPlugin = require("html-webpack-exclude-assets-plugin");
 const CaseSensitivePathsPlugin = require("case-sensitive-paths-webpack-plugin");
 const eslintFormatter = require("react-dev-utils/eslintFormatter");
-const {paths} = require("./constants");
+const {paths, resolve} = require("./constants");
 const _ = require("underscore");
 const path = require("path");
 
@@ -24,7 +24,10 @@ module.exports = ({production}) => ({
     },
     resolve: {
         alias: {
+            "asap/raw": resolve("src/asapRawMock"),
+            polyfills: resolve("src/polyfills"),
             currentPluginManifest: paths.pluginJs,
+            xhrViaZenApi: resolve("src/XMLHttpRequestViaZenAPI"),
         },
     },
     module: {
