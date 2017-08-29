@@ -27,7 +27,7 @@ export const getLastResponseHeaders = function() {
     if (!lastRequest) {
         return null;
     }
-    const strokes = lastRequest.getAllResponseHeaders().split("\n");
+    const strokes = lastRequest.getAllResponseHeaders().split(/\r?\n/);
     const headers = [];
     for (let i = 0; i < strokes.length; i++) {
         const idx = strokes[i].indexOf(":");

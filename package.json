@@ -27,7 +27,6 @@
     "http-proxy": "1.16.2",
     "imports-loader": "0.7.1",
     "jest": "20.0.4",
-    "jshashes": "1.0.7",
     "object-assign": "4.1.1",
     "pad-left": "2.1.0",
     "promise": "8.0.1",
