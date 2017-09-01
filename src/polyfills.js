@@ -1,3 +1,4 @@
+import sanitize from "./common/sanitize";
 import * as consoleAdapter from "./consoleAdapter";
 
 ["setImmediate", "setTimeout", "setInterval"].forEach((methodName) => {
@@ -9,7 +10,7 @@ import * as consoleAdapter from "./consoleAdapter";
 global.__trackNetworkEvent = (eventName, payload) => {
     const sanitizedPayload = global.__sanitizeNetworkLogMask === void 0
         ? payload
-        : "(sanitized)";
+        : sanitize(payload, global.__sanitizeNetworkLogMask[eventName]);
     console.debug("network", eventName, sanitizedPayload);
 };
 
