@@ -14,6 +14,7 @@ import {
     setThrowOnError
 } from "./utils";
 import {ZPAPIError} from "./ZPAPIError";
+import {nativeConsole} from "./consoleAdapter";
 
 function isArray(object) {
     return Array.isArray ?
@@ -126,7 +127,7 @@ function ZPAPI({manifest, preferences, data}) {
 
     this.Error = ZPAPIError;
 
-    this.trace = (msg, caller) => console.log("[" + (caller || "trace") + "]", msg);
+    this.trace = (msg, caller) => nativeConsole.log("[" + (caller || "trace") + "]", msg);
 
     this.setExceptions = setThrowOnError;
     this.setDefaultCharset = setDefaultEncoding;
