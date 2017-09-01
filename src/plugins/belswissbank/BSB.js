@@ -1,10 +1,8 @@
-import * as errors from "../../common/errors";
 import * as network from "../../common/network";
-import {toReadableJson} from "../../common/printing";
 import retry from "../../common/retry";
 import codeToCurrencyLookup from "./codeToCurrencyLookup";
-import * as utils from "./utils";
 import {formatBsbApiDate} from "./dateUtils";
+import * as utils from "./utils";
 
 export const transactionTypeFactors = {
     "Vozvrat": 1,
@@ -31,10 +29,10 @@ function makeApiUrl(path) {
 
 export async function authorize(username, password, deviceId) {
     const BSB_AUTH_URL = makeApiUrl("/authorization");
-    await network.sanitizeLogs(() => network.fetchJson(BSB_AUTH_URL, {method: "DELETE"}));
+    await network.fetchJson(BSB_AUTH_URL, {method: "DELETE"});
 
     const authStatusResponse = await retry({
-        getter: () => network.sanitizeLogs(() => network.fetchJson(BSB_AUTH_URL, {
+        getter: () => network.sanitizeNetworkLogs(() => network.fetchJson(BSB_AUTH_URL, {
             method: "POST",
             body: {
                 "username": username,
@@ -48,18 +46,16 @@ export async function authorize(username, password, deviceId) {
         predicate: (response) => response.status !== 415,
         maxAttempts: 10,
     });
-    utils.assertResponseSuccess(authStatusResponse, errors.fatal);
+    utils.assertResponseSuccess(authStatusResponse);
     return authStatusResponse.body;
 }
 
 export async function confirm(deviceId, confirmationCode) {
-    const response = await network.sanitizeLogs(() => network.fetchJson(makeApiUrl(`/devices/${deviceId}`), {
+    const response = await network.sanitizeNetworkLogs(() => network.fetchJson(makeApiUrl(`/devices/${deviceId}`), {
         method: "POST",
         body: confirmationCode.toString(),
     }));
-    if (response.body.deviceStatus !== "CONFIRMED") {
-        throw errors.temporal(`confirmation failed: ${toReadableJson(response)}`);
-    }
+    console.assert(response.body.deviceStatus === "CONFIRMED", "confirmation failed:", response);
 }
 
 export async function getCards() {
@@ -67,7 +63,7 @@ export async function getCards() {
         method: "GET",
         sanitizeLogs: true,
     });
-    utils.assertResponseSuccess(response, errors.temporal);
+    utils.assertResponseSuccess(response);
     return response.body;
 }
 
@@ -79,13 +75,11 @@ export async function getTransactions(cardId, from, to) {
             toDate: formatBsbApiDate(to),
         },
     });
-    utils.assertResponseSuccess(response, errors.temporal);
+    utils.assertResponseSuccess(response);
     return response.body;
 }
 
 export function currencyCodeToIsoCurrency(currencyCode) {
-    if (!(currencyCode in codeToCurrencyLookup)) {
-        throw errors.temporal(`unknown currency ${currencyCode}`);
-    }
+    console.assert(currencyCode in codeToCurrencyLookup, "unknown currency", currencyCode);
     return codeToCurrencyLookup[currencyCode];
 }

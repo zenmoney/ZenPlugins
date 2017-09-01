@@ -18,14 +18,14 @@ export async function fetchJson(url, init = {}) {
     return responseToJson(response);
 }
 
-export function sanitizeLogs(fn) {
-    if (global.__sanitizeNetworkLogs === true) {
+export function sanitizeNetworkLogs(fn, mask = {request: {body: true}, response: {body: true}}) {
+    if (global.__sanitizeNetworkLogMask !== void 0) {
         throw new Error("sanitizeNetworkLogs misuse (most likely nested call)");
     }
     try {
-        global.__sanitizeNetworkLogs = true;
+        global.__sanitizeNetworkLogMask = mask;
         return fn();
     } finally {
-        global.__sanitizeNetworkLogs = false;
+        global.__sanitizeNetworkLogMask = void 0;
     }
 }

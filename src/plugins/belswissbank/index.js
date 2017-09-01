@@ -1,6 +1,5 @@
 import _ from "underscore";
 import * as errors from "../../common/errors";
-import {toReadableJson} from "../../common/printing";
 import * as BSB from "./BSB";
 import {formatCommentDateTime} from "./dateUtils";
 import * as utils from "./utils";
@@ -78,7 +77,7 @@ function mergeTransferTransactions(transactionsForAccounts) {
                 ]);
                 transactionReplacements[incomeTransaction.id] = null;
             } else {
-                ZenMoney.trace(`cannot merge non-pair transfer #${transferId}, groupSize=${items.length}`, "warn");
+                console.warn("cannot merge non-pair transfer", {transferId, groupSize: items.length});
             }
             return transactionReplacements;
         }, {})
@@ -113,12 +112,11 @@ async function processCard(card) {
     const syncFrom = new Date(lastSeenBsbTransaction.transactionDate);
     const syncTo = new Date();
 
-    ZenMoney.trace(
-        `fetching transactions for ${toReadableJson({
-            accountId: account.id,
-            from: syncFrom.toISOString(),
-            to: syncTo.toISOString(),
-        })}`, "info");
+    console.info("fetching transactions for", {
+        accountId: account.id,
+        from: syncFrom.toISOString(),
+        to: syncTo.toISOString(),
+    });
 
     const bsbTransactions = _.chain(await BSB.getTransactions(card.cardId, syncFrom, syncTo))
         .filter((transaction) => transaction.transactionType !== "Otkaz" &&
@@ -140,7 +138,7 @@ async function processCard(card) {
             let factor = BSB.transactionTypeFactors[transaction.transactionType];
             if (!factor) {
                 if (accountRestsDelta === null) {
-                    ZenMoney.trace(`cannot figure out transaction factor (transactionType is unknown, accountRest is missing), ignoring transaction: ${toReadableJson(transaction)}`, "warn");
+                    console.warn("cannot figure out transaction factor (transactionType is unknown, accountRest is missing), ignoring transaction:", transaction);
                     return result;
                 } else {
                     factor = Math.sign(accountRestsDelta);
@@ -151,7 +149,7 @@ async function processCard(card) {
 
             if (isAccountRestAbsent) {
                 if (isCurrencyConversion) {
-                    ZenMoney.trace(`cannot figure out transaction delta (is currency conversion, accountRest is missing), ignoring transaction: ${toReadableJson(transaction)}`, "warn");
+                    console.warn("cannot figure out transaction delta (is currency conversion, accountRest is missing), ignoring transaction:", transaction);
                     return result;
                 }
                 transaction.accountRest = previousTransaction.accountRest + transactionDelta;
@@ -213,7 +211,7 @@ ${absTransactionDelta.toFixed(2)} ${transactionCurrency}`;
                 result.transfers.push({
                     transferId: [
                         transaction.transactionDate, absTransactionDelta,
-                        transaction.transactionCurrency
+                        transaction.transactionCurrency,
                     ].join("|"),
                     transaction: zenMoneyTransaction,
                 });
@@ -233,8 +231,8 @@ ${absTransactionDelta.toFixed(2)} ${transactionCurrency}`;
         });
 }
 
-export async function asyncMain() {
-    ZenMoney.trace(`started at ${new Date().toISOString()}`, "info");
+async function asyncMain() {
+    console.info("started at", new Date());
     await login();
 
     const cards = await BSB.getCards();
@@ -246,7 +244,7 @@ export async function asyncMain() {
             ZenMoney.addAccount(account);
             if (transactions.length) {
                 ZenMoney.addTransaction(transactions);
-                ZenMoney.trace(`added ${transactions.length} transaction(s) for account ${account.id}`, "info");
+                console.info(`added ${transactions.length} transaction(s) for account ${account.id}`);
             }
             onBeforeSave();
         });
