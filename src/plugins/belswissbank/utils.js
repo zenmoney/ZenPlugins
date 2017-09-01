@@ -1,5 +1,3 @@
-import {toReadableJson} from "../../common/printing";
-
 export function generateUUID() {
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(char) {
         const seed = Math.random() * 16 | 0;
@@ -9,8 +7,6 @@ export function generateUUID() {
     });
 }
 
-export const assertResponseSuccess = function(response, createError) {
-    if (response.status !== 200) {
-        throw createError(`non-successful response: ${toReadableJson(response)}`);
-    }
+export const assertResponseSuccess = function(response) {
+    console.assert(response.status === 200, "non-successful response", response);
 };

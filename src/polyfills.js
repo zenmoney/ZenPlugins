@@ -1,4 +1,4 @@
-import {toReadableJson} from "./common/printing";
+import * as consoleAdapter from "./consoleAdapter";
 
 ["setImmediate", "setTimeout", "setInterval"].forEach((methodName) => {
     global[methodName] = () => {
@@ -7,12 +7,10 @@ import {toReadableJson} from "./common/printing";
 });
 
 global.__trackNetworkEvent = (eventName, payload) => {
-    const shouldSanitize = global.__sanitizeNetworkLogs;
-    ZenMoney.trace([
-        eventName,
-        shouldSanitize && "(sanitized)",
-        toReadableJson(payload, shouldSanitize),
-    ].filter(Boolean).join(" "), "network");
+    const sanitizedPayload = global.__sanitizeNetworkLogMask === void 0
+        ? payload
+        : "(sanitized)";
+    console.debug("network", eventName, sanitizedPayload);
 };
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
@@ -23,3 +21,9 @@ global.Promise = require("promise/lib/es6-extensions.js");
 global.fetch = require("imports-loader?self=>{}&{default:XMLHttpRequest}=xhrViaZenApi!exports-loader?self.fetch!whatwg-fetch");
 
 Object.assign = require("object-assign");
+
+if (consoleAdapter.isNativeConsoleImplemented()) {
+    consoleAdapter.shapeNativeConsole();
+} else {
+    consoleAdapter.install();
+}
