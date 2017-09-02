@@ -28,3 +28,7 @@ if (consoleAdapter.isNativeConsoleImplemented()) {
 } else {
     consoleAdapter.install();
 }
+
+if (!("isAccountSkipped" in ZenMoney)) {
+    ZenMoney.isAccountSkipped = () => false;
+}

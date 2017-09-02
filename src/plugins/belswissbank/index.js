@@ -4,10 +4,6 @@ import * as BSB from "./BSB";
 import {formatCommentDateTime} from "./dateUtils";
 import * as utils from "./utils";
 
-function isAccountSkipped(id) { // common cargo cult?
-    return ZenMoney.getLevel() >= 13 && ZenMoney.isAccountSkipped(id);
-}
-
 function ensureDeviceId() {
     let deviceId = ZenMoney.getData("deviceId");
     if (!deviceId) {
@@ -236,7 +232,7 @@ async function asyncMain() {
     await login();
 
     const cards = await BSB.getCards();
-    const activeCards = cards.filter((card) => !isAccountSkipped(calculateAccountId(card)));
+    const activeCards = cards.filter((card) => !ZenMoney.isAccountSkipped(calculateAccountId(card)));
     const processedCards = await Promise.all(activeCards.map(processCard));
 
     mergeTransferTransactions(processedCards)
