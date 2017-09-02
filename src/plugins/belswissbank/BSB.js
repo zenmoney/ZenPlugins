@@ -1,8 +1,8 @@
+import padLeft from "pad-left";
+import {isValidDate} from "../../common/dates";
 import * as network from "../../common/network";
 import retry from "../../common/retry";
 import codeToCurrencyLookup from "./codeToCurrencyLookup";
-import {formatBsbApiDate} from "./dateUtils";
-import * as utils from "./utils";
 
 export const transactionTypeFactors = {
     "Vozvrat": 1,
@@ -21,11 +21,27 @@ export const ownCashTransferTransactionTypes = [
     "Nalichnye",
 ];
 
+export function formatBsbApiDate(userDate) {
+    if (!isValidDate(userDate)) {
+        throw new Error("valid date should be provided");
+    }
+    // day.month.year in bank timezone (+3)
+    const bankTimezone = 3 * 3600 * 1000;
+    const date = new Date(userDate.valueOf() + bankTimezone);
+    return [
+        date.getUTCDate(),
+        date.getUTCMonth() + 1,
+        date.getUTCFullYear(),
+    ].map((number) => padLeft(number, 2, "0")).join(".");
+}
+
 export const bankBirthday = new Date(1033977600000);
 
-function makeApiUrl(path) {
-    return `https://24.bsb.by/mobile/api${path}?lang=ru`;
-}
+export const assertResponseSuccess = function(response) {
+    console.assert(response.status === 200, "non-successful response", response);
+};
+
+const makeApiUrl = (path) => `https://24.bsb.by/mobile/api${path}?lang=ru`;
 
 export async function authorize(username, password, deviceId) {
     const BSB_AUTH_URL = makeApiUrl("/authorization");
@@ -46,7 +62,7 @@ export async function authorize(username, password, deviceId) {
         predicate: (response) => response.status !== 415,
         maxAttempts: 10,
     });
-    utils.assertResponseSuccess(authStatusResponse);
+    assertResponseSuccess(authStatusResponse);
     return authStatusResponse.body;
 }
 
@@ -63,7 +79,7 @@ export async function getCards() {
         method: "GET",
         sanitizeLogs: true,
     });
-    utils.assertResponseSuccess(response);
+    assertResponseSuccess(response);
     return response.body;
 }
 
@@ -75,7 +91,7 @@ export async function getTransactions(cardId, from, to) {
             toDate: formatBsbApiDate(to),
         },
     });
-    utils.assertResponseSuccess(response);
+    assertResponseSuccess(response);
     return response.body;
 }
 
