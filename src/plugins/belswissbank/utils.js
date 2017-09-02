@@ -6,7 +6,3 @@ export function generateUUID() {
         return hexValue.toString(16);
     });
 }
-
-export const assertResponseSuccess = function(response) {
-    console.assert(response.status === 200, "non-successful response", response);
-};

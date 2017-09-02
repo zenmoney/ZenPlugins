@@ -1,13 +1,13 @@
 import _ from "underscore";
 import * as errors from "../../common/errors";
 import * as BSB from "./BSB";
-import {formatCommentDateTime} from "./dateUtils";
-import * as utils from "./utils";
+import {formatCommentDateTime} from "../../common/dates";
+import {generateUUID} from "./utils";
 
 function ensureDeviceId() {
     let deviceId = ZenMoney.getData("deviceId");
     if (!deviceId) {
-        deviceId = utils.generateUUID();
+        deviceId = generateUUID();
         ZenMoney.setData("deviceId", deviceId);
         ZenMoney.saveData();
     }
@@ -47,9 +47,7 @@ async function login() {
     }
 }
 
-function calculateAccountId(card) {
-    return card.cardId.toString();
-}
+const calculateAccountId = (card) => card.cardId.toString();
 
 function mergeTransferTransactions(transactionsForAccounts) {
     const transactionReplacements = _.chain(transactionsForAccounts)
