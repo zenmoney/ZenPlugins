@@ -3,7 +3,8 @@ const util = require("util");
 const consoleAdapter = {
     assert(condition, ...args) {
         if (!condition) {
-            throw new Error("Assertion error: " + (util.format(...args) || "console.assert"));
+            const details = util.format(...args) || "console.assert";
+            throw new Error("Assertion failed: " + details);
         }
     },
 
@@ -49,6 +50,11 @@ export const shapeNativeConsole = () => {
     Object.keys(nativeConsole)
         .filter(key => !(key in consoleAdapter))
         .forEach(key => delete nativeConsole[key]);
-    nativeConsole.assert = consoleAdapter.assert;
+    const assert = nativeConsole.assert.bind(nativeConsole);
+    nativeConsole.assert = function(condition) {
+        assert(...arguments);
+        if (!condition) {
+            throw new Error("Assertion failed");
+        }
+    };
 };
-
