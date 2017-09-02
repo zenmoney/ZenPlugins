@@ -17,6 +17,7 @@ export default function adaptScrape(scrape) {
                         console.info(`added ${transactions.length} transaction(s) for account ${account.id}`);
                     }
                 });
+                console.debug("scrape results", results);
                 ZenMoney.setResult({success: true});
             },
             (e) => ZenMoney.setResult({
