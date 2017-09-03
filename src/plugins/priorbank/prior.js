@@ -37,10 +37,12 @@ export async function fetchLoginSalt({preAuthHeaders, login}) {
 
 const sha512 = new SHA512();
 
+export const calculatePasswordHash = ({loginSalt, password}) => sha512.hex(sha512.hex(password.slice(0, 16)) + loginSalt);
+
 export async function login({preAuthHeaders, loginSalt, login, password}) {
     const response = await fetchJson(makeApiUrl("/Authorization/Login"), {
         method: "POST",
-        body: {login, password: sha512.hex(sha512.hex(password) + loginSalt), lang: "RUS"},
+        body: {login, password: calculatePasswordHash({loginSalt, password}), lang: "RUS"},
         headers: preAuthHeaders,
     });
     assertResponseSuccess(response);
