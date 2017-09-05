@@ -119,6 +119,7 @@ function wrapMethod(self, method) {
 }
 
 function ZPAPI({manifest, preferences, data}) {
+    this.runtime = "browser";
     const knownAccounts = {};
 
     let isComplete = false;
