@@ -23,7 +23,7 @@ global.fetch = require("imports-loader?self=>{}&{default:XMLHttpRequest}=xhrViaZ
 
 Object.assign = require("object-assign");
 
-if (consoleAdapter.isNativeConsoleImplemented()) {
+if (ZenMoney.runtime === "browser" && consoleAdapter.isNativeConsoleImplemented()) {
     consoleAdapter.shapeNativeConsole();
 } else {
     consoleAdapter.install();
