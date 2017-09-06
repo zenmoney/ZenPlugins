@@ -45,7 +45,7 @@ const makeApiUrl = (path) => `https://24.bsb.by/mobile/api${path}?lang=ru`;
 
 export async function authorize(username, password, deviceId) {
     const BSB_AUTH_URL = makeApiUrl("/authorization");
-    await network.fetchJson(BSB_AUTH_URL, {method: "DELETE"});
+    await network.sanitizeNetworkLogs(() => network.fetchJson(BSB_AUTH_URL, {method: "DELETE"}));
 
     const authStatusResponse = await retry({
         getter: () => network.sanitizeNetworkLogs(() => network.fetchJson(BSB_AUTH_URL, {
