@@ -106,22 +106,21 @@ module.exports = ({allowedHost, host, https}) => {
             });
 
             app.all("*", (req, res, next) => {
-                const incomingHeaders = Array.from(Object.entries(req.headers));
-                let target = null;
-                incomingHeaders.forEach(([key, value]) => {
-                    if (key !== "cookie") {
-                        delete req.headers[key];
-                    }
-                    if (key === PROXY_TARGET_HEADER) {
-                        target = value;
-                    } else if (key.startsWith(TRANSFERABLE_HEADER_PREFIX)) {
-                        req.headers[key.slice(TRANSFERABLE_HEADER_PREFIX.length)] = value;
-                    }
-                });
+                const target = req.headers[PROXY_TARGET_HEADER];
                 if (!target) {
                     next();
                     return;
                 }
+                req.headers = _.object(_.compact(_.pairs(req.headers).map((pair) => {
+                    const [key, value] = pair;
+                    if (key === "cookie") {
+                        return pair;
+                    }
+                    if (key !== PROXY_TARGET_HEADER && key.startsWith(TRANSFERABLE_HEADER_PREFIX)) {
+                        return [key.slice(TRANSFERABLE_HEADER_PREFIX.length), value];
+                    }
+                    return null;
+                })));
                 proxy.web(req, res, {
                     target: target,
                     changeOrigin: true,
