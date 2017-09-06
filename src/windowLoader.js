@@ -1,13 +1,13 @@
 import {fetchJson} from "./utils";
 
-const fetchPreferences = () => fetchJson("/zen/preferences");
-const fetchManifest = () => fetchJson("/zen/manifest");
-const fetchData = () => fetchJson("/zen/data");
-
 window.onload = function() {
     const statusElement = document.getElementById("root");
     statusElement.textContent = "Loading plugin…";
-    Promise.all([fetchPreferences(), fetchManifest(), fetchData()])
+    Promise.all([
+        fetchJson("/zen/preferences"),
+        fetchJson("/zen/manifest"),
+        fetchJson("/zen/data"),
+    ])
         .then(([preferences, manifest, data]) => {
             document.title = `[${manifest.id}] ${document.title}`;
             const worker = new Worker("/workerLoader.js");
@@ -19,5 +19,9 @@ window.onload = function() {
                 }
             };
             window.__pluginWorker = worker;
+        })
+        .catch((e) => {
+            statusElement.textContent = "Failure\n" + e.message;
+            return Promise.reject(e);
         });
 };

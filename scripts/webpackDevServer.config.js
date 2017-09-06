@@ -5,11 +5,9 @@ const httpProxy = require("http-proxy");
 const _ = require("underscore");
 const {TRANSFERABLE_HEADER_PREFIX, PROXY_TARGET_HEADER} = require("../src/shared");
 const {getManifest} = require("./utils");
+const stripBOM = require("strip-bom");
 
-const convertErrorToSerializable = (e) => ({
-    message: e.stack,
-    stack: e.stack.replace(/^Error: /, "").replace(e.message + "\n", ""),
-});
+const convertErrorToSerializable = (e) => _.pick(e, ["message", "stack"]);
 
 const serializeErrors = (handler) => {
     return function(req, res) {
@@ -21,8 +19,19 @@ const serializeErrors = (handler) => {
     };
 };
 
+const readJson = (file, missingFileValue) => {
+    const {content, path} = readPluginFile(file, missingFileValue);
+    try {
+        return JSON.parse(content);
+    } catch (e) {
+        e.message += ` in ${path}`;
+        throw e;
+    }
+};
+
 const removeSecureSealFromCookieValue = (value) => value.replace(/\s?Secure;/i, "");
-const readDebuggerFile = (file, missingFileValue) => {
+
+const readPluginFile = (file, missingFileValue) => {
     const candidatePaths = [
         path.join(params.pluginPath, file),
         path.join(__dirname, "../debugger/", file),
@@ -35,7 +44,10 @@ const readDebuggerFile = (file, missingFileValue) => {
             throw new Error(`${file} is missing, search paths: [${candidatePaths}]`)
         }
     }
-    return fs.readFileSync(existingPaths[0]);
+    return {
+        content: stripBOM(fs.readFileSync(existingPaths[0], "utf8")),
+        path: existingPaths[0],
+    };
 };
 module.exports = ({allowedHost, host, https}) => {
     return {
@@ -73,7 +85,7 @@ module.exports = ({allowedHost, host, https}) => {
             app.get(
                 "/zen/preferences",
                 serializeErrors((req, res) => {
-                    const preferences = JSON.parse(readDebuggerFile("zp_preferences.json"));
+                    const preferences = readJson("zp_preferences.json");
                     const patchedPreferences = _.omit(preferences, ["zp_plugin_directory", "zp_pipe"]);
                     res.json(patchedPreferences);
                 })
@@ -82,7 +94,7 @@ module.exports = ({allowedHost, host, https}) => {
             app.get(
                 "/zen/data",
                 serializeErrors((req, res) => {
-                    const data = JSON.parse(readDebuggerFile("zp_data.json", "{}"));
+                    const data = readJson("zp_data.json", "{}");
                     return res.json(data);
                 })
             );
@@ -91,7 +103,7 @@ module.exports = ({allowedHost, host, https}) => {
                 "/zen/pipe",
                 serializeErrors((req, res) => {
                     res.set("Content-Type", "text/plain");
-                    res.send(readDebuggerFile("zp_pipe.txt", ""));
+                    res.send(readPluginFile("zp_pipe.txt", ""));
                 })
             );
 
