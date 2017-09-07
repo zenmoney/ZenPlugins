@@ -76,20 +76,20 @@ export async function fetchCards({postAuthHeaders, userSession}) {
     return response.body.result;
 }
 
-export async function fetchCardDetails({postAuthHeaders, userSession, from = null, to = null}) {
+export async function fetchCardDetails({postAuthHeaders, userSession, fromDate = null, toDate = null}) {
     const body = {
         usersession: userSession,
         ids: [],
         dateFromSpecified: false,
         dateToSpecified: false,
     };
-    if (from) {
+    if (fromDate) {
         body.dateFromSpecified = true;
-        body.dateFrom = from;
+        body.dateFrom = fromDate;
     }
-    if (to) {
+    if (toDate) {
         body.dateToSpecified = true;
-        body.dateTo = to;
+        body.dateTo = toDate;
     }
     const response = await fetchJson(makeApiUrl("/Cards/CardDesc"), {
         method: "POST",

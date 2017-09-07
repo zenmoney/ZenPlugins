@@ -1,5 +1,5 @@
+import {adaptAsyncFn, traceFunctionCalls, provideScrapeDates} from "../../common/adapters";
 import * as prior from "./prior";
-import adaptScrape from "./adaptScrape";
 
 const calculateAccountId = (card) => String(card.clientObject.id);
 
@@ -73,10 +73,10 @@ function convertToZenMoneyData(card) {
             balance: card.balance.available,
         },
         transactions: card.transactions.map((transaction) => convertToZenMoneyTransaction(accountId, transaction)),
-    }
+    };
 }
 
-export async function scrape({from, to}) {
+export async function scrape({fromDate, toDate}) {
     const {login, password} = ZenMoney.getPreferences();
     if (!login || !password) {
         throw new Error("login and password should be provided");
@@ -89,7 +89,7 @@ export async function scrape({from, to}) {
 
     const [cardItems, cardDetailItems] = await Promise.all([
         prior.fetchCards({postAuthHeaders, userSession}),
-        prior.fetchCardDetails({postAuthHeaders, userSession, from, to}),
+        prior.fetchCardDetails({postAuthHeaders, userSession, fromDate, toDate}),
     ]);
     const cards = prior.joinTransactions({cardItems, cardDetailItems});
     return cards
@@ -97,4 +97,4 @@ export async function scrape({from, to}) {
         .map(convertToZenMoneyData);
 }
 
-export const main = adaptScrape(scrape);
+export const main = adaptAsyncFn(provideScrapeDates(traceFunctionCalls(scrape)));
