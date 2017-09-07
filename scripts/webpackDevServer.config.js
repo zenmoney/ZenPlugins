@@ -39,7 +39,7 @@ const readPluginFile = (file, missingFileValue) => {
     const existingPaths = candidatePaths.filter(x => fs.existsSync(x));
     if (existingPaths.length === 0) {
         if (missingFileValue) {
-            return missingFileValue;
+            return {content: missingFileValue, path: null};
         } else {
             throw new Error(`${file} is missing, search paths: [${candidatePaths}]`)
         }
@@ -103,7 +103,7 @@ module.exports = ({allowedHost, host, https}) => {
                 "/zen/pipe",
                 serializeErrors((req, res) => {
                     res.set("Content-Type", "text/plain");
-                    res.send(readPluginFile("zp_pipe.txt", ""));
+                    res.send(readPluginFile("zp_pipe.txt", "").content);
                 })
             );
 
