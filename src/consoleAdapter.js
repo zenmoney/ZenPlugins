@@ -1,9 +1,23 @@
 const util = require("util");
 
+const formatWithCustomInspectParams = function(...args) {
+    const transformedArgs = args.map(value => typeof value === "object" ? {
+        inspect(recurseTimes, ctx) {
+            return util.inspect(value, {
+                ...ctx,
+                showHidden: true,
+                depth: null,
+                maxArrayLength: null,
+            });
+        },
+    } : value);
+    return util.format(...transformedArgs);
+};
+
 const consoleAdapter = {
     assert(condition, ...args) {
         if (!condition) {
-            const details = util.format(...args) || "console.assert";
+            const details = formatWithCustomInspectParams(...args) || "console.assert";
             throw new Error("Assertion failed: " + details);
         }
     },
@@ -15,7 +29,7 @@ const consoleAdapter = {
 
 ["log", "warn", "info", "error", "debug"].forEach((methodName) => {
     consoleAdapter[methodName] = function() {
-        ZenMoney.trace(util.format(...arguments), methodName);
+        ZenMoney.trace(formatWithCustomInspectParams(...arguments), methodName);
     };
 });
 
