@@ -15,7 +15,7 @@ window.onload = function() {
             statusElement.textContent = "Running…";
             worker.onmessage = function(e) {
                 if (e.data && e.data.type === "completed") {
-                    statusElement.textContent = e.data.success ? "Success" : "Failure";
+                    statusElement.textContent = e.data.success ? "Success" : "Failure\n" + e.data.message;
                 }
             };
             window.__pluginWorker = worker;
