@@ -292,13 +292,14 @@ function processTransactions(data) {
 
 	var transactions = requestJson("operations", null, {
 		"start": 	lastSyncTime
-		//"start":    Date.parse('2017-03-04T00:00'),
-		//"end":      Date.parse('2017-03-04T23:00')
+		//"start":    Date.parse('2017-08-27T00:00'),
+		//"end":      Date.parse('2017-08-27T23:00')
 	});
 	ZenMoney.trace('Получено операций: '+transactions.payload.length);
 	ZenMoney.trace('JSON: '+JSON.stringify(transactions.payload));
 
 	var tranDict = {};      // список найденных оперций
+	var tranDictHold = {};  // список ключей операций для контроля холдов и акцептов в одной выписке
 	var paymentsDict = {};  // список идентификаторов переводов
 
 
@@ -319,7 +320,8 @@ function processTransactions(data) {
 		var tran = {};
 		var dt = new Date(t.operationTime.milliseconds);
 		tran.date = n2(dt.getDate()) + '.' + n2(dt.getMonth() + 1) + '.' + dt.getFullYear();
-		tran.time = n2(dt.getHours()) + ':' + n2(dt.getMinutes() + 1) + ':' + n2(dt.getSeconds());
+		tran.time = n2(dt.getHours()) + ':' + n2(dt.getMinutes() + 1) + ':' + n2(dt.getSeconds()); // для внутреннего использования
+		tran.created = t.operationTime.milliseconds;
 
 		if (t.accountAmount.value == 0) {
 			ZenMoney.trace('Пропускаем пустую операцию #' + i + ': ' + tran.date + ', ' + tran.time + ', ' + t.description + ', '
@@ -344,24 +346,39 @@ function processTransactions(data) {
 
 		ZenMoney.trace('Добавляем операцию #' + i + ': ' + tran.date + ', ' + tran.time + ', ' + t.description + ', '
 			+ (t.type == "Credit" ? '+' : (t.type == "Debit" ? '-' : '')) + t.accountAmount.value
-			+ ' [' + tranId + '] account:' + t.account);
+			+ ' [' + tranId + '] acc:' + t.account);
 		//ZenMoney.trace('JSON: '+JSON.stringify(t));
 
 		// флаг операции в валюте
 		var foreignCurrency = t.accountAmount.currency.name != t.amount.currency.name;
 
+		// ключ для поиска дублей по идентификатору
 		var tranKey = t.type + ':' + tranId;
+		// обратный ключ для второй половины перевода
 		var tranKey2 = (t.type == 'Debit' ? 'Credit' : 'Debit') + ':' + tranId;
 
-		// холд -----------------------------------------------------------------------------
-		if (tranDict[tranKey] && !t.debitingTime)
+		// ключ контроля дублей по холду
+		var payee = '-payee-';
+		if (t.payment && t.payment.fieldsValues) {
+			if (t.payment.fieldsValues.addressee)
+				payee = t.payment.fieldsValues.addressee;
+			else if (t.payment.fieldsValues.lastName)
+				payee = t.payment.fieldsValues.lastName;
+		} else if (t.merchant)
+			payee = t.merchant.name;
+		else if (t.brand)
+			payee = t.brand.name;
+		var tranKeyHold = tran.created+':'+t.accountAmount.value+':'+t.account+':'+payee;
+		//ZenMoney.trace('tranKeyHold: '+tranKeyHold);
+
+		// холд пропускаем ----------------------------------------------------------------
+		if (!t.debitingTime && (tranDict[tranKey] || tranDictHold[tranKeyHold]))
 			continue;
 
-		// перевод ---------------------------------------------------------------------------
+		// перевод ------------------------------------------------------------------------
 		if (tranDict[tranKey2])
-			//&& (|| (t.type == 'Credit' && tranDict[tranKey2].income == 0 && tranDict[tranKey2].incomeAccount != t.account))
 		{
-			// доходная часть перевода
+			// доходная часть перевода ---
 			if (t.type == 'Credit' && tranDict[tranKey2].income == 0 && tranDict[tranKey2].incomeAccount != t.account)
 			{
 				tranDict[tranKey2].income = t.accountAmount.value;
@@ -384,7 +401,7 @@ function processTransactions(data) {
 				continue;
 			}
 
-			// расходная часть перевода
+			// расходная часть перевода ----
 			if (t.type == 'Debit' && tranDict[tranKey2].outcome == 0 && tranDict[tranKey2].outcomeAccount != t.account)
 			{
 				tranDict[tranKey2].outcome = t.accountAmount.value;
@@ -417,10 +434,18 @@ function processTransactions(data) {
 				ZenMoney.trace('Объединили операцию в перевод с имеющейся ID '+ tranId);
 				continue;
 			}
-
 		}
 
-		// доход ------------------------------------------------------------------
+		// акцепт холда ------------------------------------------------------------------
+		if (tranDictHold[tranKeyHold])
+		{
+			var t2 = tranDict[tranDictHold[tranKeyHold]];
+			ZenMoney.trace('Обнаружили акцепт холда: #'+ t2.id + ' => #'+ t.id);
+			t2.id = t.id;
+			continue;
+		}
+
+		// доход -------------------------------------------------------------------------
 		if (t.type == "Credit")
 		{
 			tran.income = t.accountAmount.value;
@@ -432,8 +457,10 @@ function processTransactions(data) {
 				switch (t.group) {
 					// Пополнение наличными
 					case "CASH":
-						tran.outcomeAccount = "cash#" + t.amount.currency.name;
-						tran.outcome = t.amount.value;
+						if (!t.partnerType || t.partnerType != "card2card") {
+							tran.outcomeAccount = "cash#" + t.amount.currency.name;
+							tran.outcome = t.amount.value;
+						}
 						break;
 
 					// Если совсем ничего не подошло
@@ -489,8 +516,10 @@ function processTransactions(data) {
 				{
 					// Снятие наличных
 					case "CASH":
-						tran.incomeAccount = "cash#" + t.amount.currency.name;
-						tran.income = t.amount.value;
+						if (!t.partnerType || t.partnerType != "card2card") {
+							tran.incomeAccount = "cash#" + t.amount.currency.name;
+							tran.income = t.amount.value;
+						}
 						break;
 
 					// Перевод
@@ -555,6 +584,7 @@ function processTransactions(data) {
 
 		//ZenMoney.trace('Операция!!! ' + tranId);
 		tranDict[tranKey] = tran;
+		tranDictHold[tranKeyHold] = tranKey;
 	}
 
 	ZenMoney.trace('Всего операций добавлено: '+ Object.getOwnPropertyNames(tranDict).length);
