@@ -44,7 +44,6 @@ XMLHttpRequestViaZenAPI.prototype.send = function(body) {
 
     const headers = this._requestHeaders;
     const {method, url} = this._request;
-    global.__trackNetworkEvent && global.__trackNetworkEvent("request", {method, url, headers, body});
 
     this.readyState = XMLHttpRequestViaZenAPI.LOADING;
 
@@ -66,16 +65,6 @@ XMLHttpRequestViaZenAPI.prototype.send = function(body) {
         return xhrResponseHeaders;
     };
     this.readyState = XMLHttpRequestViaZenAPI.DONE;
-
-    global.__trackNetworkEvent && global.__trackNetworkEvent("response", {
-        status: this.status,
-        url: this.responseURL,
-        headers: zenResponseHeaders.reduce((memo, [key, value]) => {
-            memo[key] = value;
-            return memo;
-        }, {}),
-        body: this.responseText,
-    });
 
     this.onload();
 };
