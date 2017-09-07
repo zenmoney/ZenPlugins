@@ -340,7 +340,9 @@ yarn
 PLUGIN=src/my-bank yarn start
 # для windows
 yarn
-set PLUGIN=src/my-bank && yarn start
+set PLUGIN=src/my-bank&&yarn start
+или
+set "PLUGIN=src/my-bank" && yarn start
 ```
 
 При старте начинает работу вебсервер, занимающийся сборкой скриптов и проксированием запросов к сторонним (банковским) хостам.
