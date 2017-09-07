@@ -1,31 +1,36 @@
 import _ from "underscore";
+import sanitize from "./sanitize";
 
-const responseToJson = async (response) => ({
-    body: await response.json(),
-    ..._.pick(response, ["ok", "status", "statusText", "url"]),
-});
-
-export async function fetchJson(url, init = {}) {
-    const response = await fetch(url, {
-        ...init,
-        body: init.body && JSON.stringify(init.body),
+export async function fetchJson(url, options = {}) {
+    const init = {
+        ..._.omit(options, ["sanitizeRequestLog", "sanitizeResponseLog"]),
+        ...options.body && {body: JSON.stringify(options.body)},
         headers: {
-            ...init.headers,
             "Accept": "application/json, text/plain, */*",
             "Content-Type": "application/json;charset=UTF-8",
+            ...options.headers,
         },
-    });
-    return responseToJson(response);
-}
+    };
 
-export function sanitizeNetworkLogs(fn, mask = {request: {body: true}, response: {body: true}}) {
-    if (global.__sanitizeNetworkLogMask !== void 0) {
-        throw new Error("sanitizeNetworkLogs misuse (most likely nested call)");
-    }
-    try {
-        global.__sanitizeNetworkLogMask = mask;
-        return fn();
-    } finally {
-        global.__sanitizeNetworkLogMask = void 0;
-    }
+    console.debug("fetchJson request", sanitize({
+        method: init.method || "GET",
+        url,
+        headers: init.headers,
+        ...options.body && {body: options.body},
+    }, options.sanitizeRequestLog || false));
+
+    const response = await fetch(url, init);
+    const body = await response.json();
+
+    console.debug("fetchJson response", sanitize({
+        status: response.status,
+        url: response.url,
+        headers: _.object(Array.from(response.headers.entries())),
+        body,
+    }, options.sanitizeResponseLog || false));
+
+    return {
+        ..._.pick(response, ["ok", "status", "statusText", "url", "headers"]),
+        body,
+    };
 }
