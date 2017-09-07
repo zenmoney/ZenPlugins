@@ -1,5 +1,8 @@
 import {isValidDate} from "./dates";
 
+const MS_IN_DAY = 24 * 60 * 60 * 1000;
+const MS_IN_WEEK = 7 * MS_IN_DAY;
+
 const unsealSyncPromise = (promise) => {
     let state = "pending";
     let value = null;
@@ -21,7 +24,7 @@ const calculateFromDate = () => {
     if (lastSuccessDateString) {
         const lastSuccessDate = new Date(lastSuccessDateString);
         console.assert(isValidDate(lastSuccessDate), {lastSuccessDateString}, "is not a valid date");
-        return lastSuccessDate;
+        return new Date(lastSuccessDate - MS_IN_WEEK);
     }
     const startDateString = ZenMoney.getPreferences().startDate;
     const startDate = new Date(startDateString);
