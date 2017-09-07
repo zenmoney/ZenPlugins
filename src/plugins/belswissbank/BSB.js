@@ -1,6 +1,6 @@
 import padLeft from "pad-left";
 import {isValidDate} from "../../common/dates";
-import * as network from "../../common/network";
+import {fetchJson} from "../../common/network";
 import retry from "../../common/retry";
 import codeToCurrencyLookup from "./codeToCurrencyLookup";
 
@@ -45,10 +45,12 @@ const makeApiUrl = (path) => `https://24.bsb.by/mobile/api${path}?lang=ru`;
 
 export async function authorize(username, password, deviceId) {
     const BSB_AUTH_URL = makeApiUrl("/authorization");
-    await network.sanitizeNetworkLogs(() => network.fetchJson(BSB_AUTH_URL, {method: "DELETE"}));
+    await fetchJson(BSB_AUTH_URL, {
+        method: "DELETE",
+    });
 
     const authStatusResponse = await retry({
-        getter: () => network.sanitizeNetworkLogs(() => network.fetchJson(BSB_AUTH_URL, {
+        getter: () => fetchJson(BSB_AUTH_URL, {
             method: "POST",
             body: {
                 "username": username,
@@ -58,7 +60,9 @@ export async function authorize(username, password, deviceId) {
                 "osType": 3,
                 "currencyIso": "BYN",
             },
-        })),
+            sanitizeRequestLog: {body: {username: true, password: true, deviceId: true}},
+            sanitizeResponseLog: {body: {birthDate: true, eripId: true, fio: true, mobilePhone: true, sessionId: true, username: true}},
+        }),
         predicate: (response) => response.status !== 415,
         maxAttempts: 10,
     });
@@ -67,29 +71,31 @@ export async function authorize(username, password, deviceId) {
 }
 
 export async function confirm(deviceId, confirmationCode) {
-    const response = await network.sanitizeNetworkLogs(() => network.fetchJson(makeApiUrl(`/devices/${deviceId}`), {
+    const response = await fetchJson(makeApiUrl(`/devices/${deviceId}`), {
         method: "POST",
         body: confirmationCode.toString(),
-    }));
+        sanitizeRequestLog: {body: true},
+    });
     console.assert(response.body.deviceStatus === "CONFIRMED", "confirmation failed:", response);
 }
 
 export async function getCards() {
-    const response = await network.fetchJson(makeApiUrl("/cards"), {
+    const response = await fetchJson(makeApiUrl("/cards"), {
         method: "GET",
-        sanitizeLogs: true,
+        sanitizeResponseLog: {body: {contract: true, maskedCardNumber: true, ownerName: true, ownerNameLat: true, rbsContract: true}},
     });
     assertResponseSuccess(response);
     return response.body;
 }
 
 export async function getTransactions(cardId, from, to) {
-    const response = await network.fetchJson(makeApiUrl(`/cards/${cardId}/sms`), {
+    const response = await fetchJson(makeApiUrl(`/cards/${cardId}/sms`), {
         method: "POST",
         body: {
             fromDate: formatBsbApiDate(from),
             toDate: formatBsbApiDate(to),
         },
+        sanitizeResponseLog: {body: {last4: true}},
     });
     assertResponseSuccess(response);
     return response.body;

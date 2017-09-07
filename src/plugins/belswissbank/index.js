@@ -106,12 +106,6 @@ async function processCard(card) {
     const syncFrom = new Date(lastSeenBsbTransaction.transactionDate);
     const syncTo = new Date();
 
-    console.info("fetching transactions for", {
-        accountId: account.id,
-        from: syncFrom.toISOString(),
-        to: syncTo.toISOString(),
-    });
-
     const bsbTransactions = _.chain(await BSB.getTransactions(card.cardId, syncFrom, syncTo))
         .filter((transaction) => transaction.transactionType !== "Otkaz" &&
         transaction.transactionAmount > 0 &&
