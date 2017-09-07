@@ -12,7 +12,7 @@ export async function fetchJson(url, options = {}) {
         },
     };
 
-    console.debug("fetchJson request", sanitize({
+    console.debug && console.debug("fetchJson request", sanitize({
         method: init.method || "GET",
         url,
         headers: init.headers,
@@ -22,7 +22,7 @@ export async function fetchJson(url, options = {}) {
     const response = await fetch(url, init);
     const body = await response.json();
 
-    console.debug("fetchJson response", sanitize({
+    console.debug && console.debug("fetchJson response", sanitize({
         status: response.status,
         url: response.url,
         headers: _.object(Array.from(response.headers.entries())),
