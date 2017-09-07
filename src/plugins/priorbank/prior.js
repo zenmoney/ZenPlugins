@@ -14,7 +14,9 @@ function assertResponseSuccess(response) {
 const makeApiUrl = (path) => `https://www.prior.by/api3/api${path}`;
 
 export async function fetchPreAuthHeaders() {
-    const response = await fetchJson(makeApiUrl("/Authorization/MobileToken"));
+    const response = await fetchJson(makeApiUrl("/Authorization/MobileToken"), {
+        sanitizeResponseLog: {body: true},
+    });
     assertResponseSuccess(response);
 
     return {
@@ -29,6 +31,8 @@ export async function fetchLoginSalt({preAuthHeaders, login}) {
         method: "POST",
         body: {login, lang: "RUS"},
         headers: preAuthHeaders,
+        sanitizeRequestLog: {body: {login: true}, headers: true},
+        sanitizeResponseLog: {body: {result: true}},
     });
     assertResponseSuccess(response);
 
@@ -44,6 +48,8 @@ export async function login({preAuthHeaders, loginSalt, login, password}) {
         method: "POST",
         body: {login, password: calculatePasswordHash({loginSalt, password}), lang: "RUS"},
         headers: preAuthHeaders,
+        sanitizeRequestLog: {body: {login: true, password: true}, headers: true},
+        sanitizeResponseLog: {body: {result: true}},
     });
     assertResponseSuccess(response);
 
@@ -62,6 +68,8 @@ export async function fetchCards({postAuthHeaders, userSession}) {
         method: "POST",
         body: {usersession: userSession},
         headers: postAuthHeaders,
+        sanitizeRequestLog: {body: {usersession: true}, headers: true},
+        sanitizeResponseLog: {body: {result: {clientObject: {cardRBSNumber: true, contractNum: true, iban: true}}}},
     });
     assertResponseSuccess(response);
 
@@ -87,6 +95,8 @@ export async function fetchCardDetails({postAuthHeaders, userSession, from = nul
         method: "POST",
         body,
         headers: postAuthHeaders,
+        sanitizeRequestLog: {body: {usersession: true}, headers: true},
+        sanitizeResponseLog: {body: {result: {contract: {addrLineA: true, addrLineB: true, addrLineC: true}}}},
     });
     assertResponseSuccess(response);
     return response.body.result;
