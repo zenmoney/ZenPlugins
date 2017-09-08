@@ -11,7 +11,7 @@ const convertToZenMoneyTransaction = (accountId, {
     details,
     isCurrencyConversion,
 }) => {
-    const zenMoneyTransaction = {date: transactionDate, payee: details.payee};
+    const zenMoneyTransaction = {date: transactionDate, created: transactionDate, payee: details.payee};
 
     const commentLines = [];
     if (isCurrencyConversion) {

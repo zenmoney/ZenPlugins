@@ -16,6 +16,7 @@ Array [
     "transactions": Array [
       Object {
         "comment": "Payment From Client Contract",
+        "created": 2017-01-02T21:00:00.000Z,
         "date": 2017-01-02T21:00:00.000Z,
         "income": 0,
         "incomeAccount": "BYN_ACCOUNT_ID",
@@ -25,6 +26,7 @@ Array [
       },
       Object {
         "comment": "Поступление на контракт клиента #ID",
+        "created": 2017-01-02T21:00:00.000Z,
         "date": 2017-01-02T21:00:00.000Z,
         "income": 10,
         "incomeAccount": "BYN_ACCOUNT_ID",
@@ -33,6 +35,7 @@ Array [
         "payee": null,
       },
       Object {
+        "created": 2017-01-08T21:00:00.000Z,
         "date": 2017-01-08T21:00:00.000Z,
         "income": 0,
         "incomeAccount": "BYN_ACCOUNT_ID",
@@ -57,6 +60,7 @@ Array [
       Object {
         "comment": "4.00 BYN
 (rate=2.0000)",
+        "created": 2016-12-31T21:00:00.000Z,
         "date": 2016-12-31T21:00:00.000Z,
         "income": 2,
         "incomeAccount": "USD_ACCOUNT_ID",
@@ -68,6 +72,7 @@ Array [
       },
       Object {
         "comment": "Поступление на контракт клиента #ID",
+        "created": 2016-12-31T21:00:00.000Z,
         "date": 2016-12-31T21:00:00.000Z,
         "income": 1000,
         "incomeAccount": "USD_ACCOUNT_ID",
@@ -76,6 +81,7 @@ Array [
         "payee": null,
       },
       Object {
+        "created": 2017-01-05T21:00:00.000Z,
         "date": 2017-01-05T21:00:00.000Z,
         "income": 0,
         "incomeAccount": "USD_ACCOUNT_ID",
@@ -86,6 +92,7 @@ Array [
       Object {
         "comment": "100.00 BYN
 (rate=1.9736)",
+        "created": 2017-01-07T21:00:00.000Z,
         "date": 2017-01-07T21:00:00.000Z,
         "income": 100,
         "incomeAccount": "cash#BYN",
@@ -98,6 +105,7 @@ Array [
       Object {
         "comment": "202.34 BYN
 (rate=2.0234)",
+        "created": 2017-01-09T21:00:00.000Z,
         "date": 2017-01-09T21:00:00.000Z,
         "income": 0,
         "incomeAccount": "USD_ACCOUNT_ID",
@@ -110,6 +118,7 @@ Array [
       Object {
         "comment": "20.00 BYN
 (rate=2.0000)",
+        "created": 2017-01-09T21:00:00.000Z,
         "date": 2017-01-09T21:00:00.000Z,
         "income": 0,
         "incomeAccount": "USD_ACCOUNT_ID",
