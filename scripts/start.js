@@ -25,7 +25,7 @@ const DEFAULT_PORT = parseInt(process.env.PORT, 10) || 5000;
 const https = process.env.HTTPS === "true";
 choosePort(HOST, DEFAULT_PORT)
     .then(port => {
-        const webpackConfig = createWebpackConfig({production: false});
+        const webpackConfig = createWebpackConfig({production: process.env.PRODUCTION === "true"});
         const urls = prepareUrls(https ? "https" : "http", HOST, port);
         const compiler = createCompiler(webpack, webpackConfig, params.pluginName, urls, fs.existsSync(paths.yarnLockFile));
         const serverConfig = createDevServerConfig({allowedHost: urls.lanUrlForConfig, host: HOST, https});
