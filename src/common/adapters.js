@@ -69,36 +69,37 @@ export function adaptAsyncFn(fn) {
         if (state === "rejected") {
             throw value;
         } else if (state === "pending") {
-            console.debug && console.debug("unable to unseal promise synchronously, falling back to ZenMoney.setResult()");
-            resultHandled.catch((e) => {
-                ZenMoney.setResult(e)
-            });
+            resultHandled.catch((e) => ZenMoney.setResult(e));
         }
     };
 }
 
 export function traceFunctionCalls(fn) {
-    console.assert(typeof fn === "function", "logCalls argument should be a function");
+    console.assert(typeof fn === "function", "traceFunctionCalls argument should be a function");
 
     let callIdx = 0;
     const functionName = fn.name || "anonymous";
     return function logCallsWrapper() {
         const callId = ++callIdx;
         const label = `${functionName} call #${callId}`;
-        console.debug(label, {arguments: Array.from(arguments)});
+        console.debug(label, {arguments: Array.from(arguments)}, "@", new Date());
+        console.time(label);
         const result = fn.apply(this, arguments);
 
         if (!result.then) {
             console.debug(label, {result});
+            console.timeEnd(label);
             return result;
         }
         return result.then(
             (resolveValue) => {
                 console.debug(label, {resolveValue});
+                console.timeEnd(label);
                 return resolveValue;
             },
             (rejectValue) => {
                 console.debug(label, {rejectValue});
+                console.timeEnd(label);
                 return Promise.reject(rejectValue);
             }
         );
