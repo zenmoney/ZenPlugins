@@ -4,22 +4,43 @@ import {fetchJson} from "../../common/network";
 import retry from "../../common/retry";
 import codeToCurrencyLookup from "./codeToCurrencyLookup";
 
-export const transactionTypeFactors = {
+const transactionTypeFactors = {
+    "Возврат": 1,
     "Vozvrat": 1,
+    "Возврат средств": 1,
     "Vozvrat sredstv": 1,
+    "Пополнение": 1,
     "Popolnenie": 1,
     "Service payment to card": 1,
+    "Зачисление": 1,
     "Zachislenie": 1,
+    "Товары и услуги": -1,
     "Tovary i uslugi": -1,
+    "Банкомат": -1,
     "Bankomat": -1,
+    "Наличные": -1,
     "Nalichnye": -1,
 };
 
-export const ownCashTransferTransactionTypes = [
+const rejectedTransactionTypes = [
+    "Отказ",
+    "Otkaz",
+];
+
+const ownCashTransferTransactionTypes = [
+    "Пополнение",
     "Popolnenie",
+    "Банкомат",
     "Bankomat",
+    "Наличные",
     "Nalichnye",
 ];
+
+export const getTransactionFactor = (transaction) => transactionTypeFactors[transaction.transactionType] || null;
+
+export const isOwnCashTransferTransaction = (transaction) => ownCashTransferTransactionTypes.indexOf(transaction.transactionType) !== -1;
+
+export const isRejectedTransaction = (transaction) => rejectedTransactionTypes.indexOf(transaction.transactionType) !== -1;
 
 export function formatBsbApiDate(userDate) {
     if (!isValidDate(userDate)) {
@@ -34,8 +55,6 @@ export function formatBsbApiDate(userDate) {
         date.getUTCFullYear(),
     ].map((number) => padLeft(number, 2, "0")).join(".");
 }
-
-export const bankBirthday = new Date(1033977600000);
 
 export const assertResponseSuccess = function(response) {
     console.assert(response.status === 200, "non-successful response", response);
@@ -79,7 +98,7 @@ export async function confirm(deviceId, confirmationCode) {
     console.assert(response.body.deviceStatus === "CONFIRMED", "confirmation failed:", response);
 }
 
-export async function getCards() {
+export async function fetchCards() {
     const response = await fetchJson(makeApiUrl("/cards"), {
         method: "GET",
         sanitizeResponseLog: {body: {contract: true, maskedCardNumber: true, ownerName: true, ownerNameLat: true, rbsContract: true}},
@@ -88,12 +107,12 @@ export async function getCards() {
     return response.body;
 }
 
-export async function getTransactions(cardId, from, to) {
+export async function fetchTransactions(cardId, fromDate, toDate) {
     const response = await fetchJson(makeApiUrl(`/cards/${cardId}/sms`), {
         method: "POST",
         body: {
-            fromDate: formatBsbApiDate(from),
-            toDate: formatBsbApiDate(to),
+            fromDate: formatBsbApiDate(fromDate),
+            toDate: formatBsbApiDate(toDate || new Date()),
         },
         sanitizeResponseLog: {body: {last4: true}},
     });

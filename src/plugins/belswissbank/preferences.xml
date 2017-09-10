@@ -23,4 +23,17 @@
             summary="||***********"
     >
     </EditTextPreference>
+    <EditTextPreference
+            key="startDate"
+            obligatory="true"
+            inputType="date"
+            title="С какой даты необходимо загружать операции"
+            defaultValue="2010-01-01T12:00:00.000Z"
+            dialogTitle="Дата начала загрузки"
+            dialogMessage="Введите дату, с которой необходимо загружать операции"
+            positiveButtonText="ОК"
+            negativeButtonText="Отмена"
+            summary="|startDate|{@s}"
+    >
+    </EditTextPreference>
 </PreferenceScreen>

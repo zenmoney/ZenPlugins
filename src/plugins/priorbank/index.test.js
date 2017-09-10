@@ -254,10 +254,3 @@ describe("scraper happy path", () => {
     });
 
 });
-
-it("should check prefs", () => {
-    global.ZenMoney = {
-        getPreferences: () => ({login: null, password: null}),
-    };
-    return expect(scrape({from: null})).rejects.toEqual(new Error("login and password should be provided"));
-});
