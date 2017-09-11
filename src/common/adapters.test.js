@@ -1,5 +1,5 @@
-import {adaptAsyncFn, provideScrapeDates} from "./adapters";
-
+import _ from "underscore";
+import {adaptAsyncFn, postProcessTransaction, provideScrapeDates} from "./adapters";
 describe("adaptAsyncFn", () => {
     it("should call addAccount, addTransaction, setResult", () => {
         const setResultCalled = new Promise((resolve) => {
@@ -7,6 +7,7 @@ describe("adaptAsyncFn", () => {
                 addAccount: jest.fn(),
                 addTransaction: jest.fn(),
                 setResult: resolve,
+                features: {},
             };
             const main = adaptAsyncFn(async () => [{account: "account", transactions: [1, 2]}]);
             main();
@@ -55,6 +56,37 @@ describe("adaptAsyncFn", () => {
             }
         });
         return expect(() => main()).toThrow(error);
+    });
+
+    it("should handle invalid usages synchronously", () => {
+        expect(() => adaptAsyncFn(null)).toThrow("adaptAsyncFn argument is not a function");
+        expect(() => adaptAsyncFn(_.noop)()).toThrow("scrape() did not return a promise");
+    });
+
+    it("should check promise returns an array", () => {
+        return expect(new Promise((resolve) => {
+            global.ZenMoney = {setResult: resolve};
+            adaptAsyncFn(() => Promise.resolve())();
+        })).resolves.toMatchObject({message: "scrape() result is not an array"});
+    });
+
+    it("should check promise result array is not empty", () => {
+        return expect(new Promise((resolve) => {
+            global.ZenMoney = {setResult: resolve};
+            adaptAsyncFn(() => Promise.resolve([]))();
+        })).resolves.toMatchObject({message: "scrape results are empty"});
+    });
+
+    [
+        {account: null, transactions: []},
+        {account: {}, transactions: null},
+    ].forEach((invalidResultItem, i) => {
+        it("should check promise result array items are correctly shaped " + i, () => {
+            return expect(new Promise((resolve) => {
+                global.ZenMoney = {setResult: resolve};
+                adaptAsyncFn(() => Promise.resolve([invalidResultItem]))();
+            })).resolves.toMatchObject({message: "scrape result should be array of {account, transactions[]}"});
+        });
     });
 });
 
@@ -124,6 +156,28 @@ describe("provideScrapeDates", () => {
             expect(global.ZenMoney.setData).toHaveBeenCalledTimes(0);
             expect(global.ZenMoney.saveData).toHaveBeenCalledTimes(0);
         });
+    });
+});
+
+describe("postProcessTransactions", () => {
+    const withTimezoneOffset = (date, offsetInMinutes) => {
+        date.getTimezoneOffset = () => offsetInMinutes;
+        return date;
+    };
+    const processDate = (date) => postProcessTransaction({date}).date;
+    const assertIsUntouched = (date) => expect(processDate(date)).toBe(date);
+
+    it("should fix dates if dateProcessing feature is not implemented", () => {
+        global.ZenMoney = {features: {}};
+        expect(processDate(withTimezoneOffset(new Date("2010-01-01T00:00:00+05:00"), -300))).toEqual(new Date("2010-01-01T00:00:00Z"));
+        expect(processDate(withTimezoneOffset(new Date("2010-01-01T00:00:00-05:00"), 300))).toEqual(new Date("2010-01-01T00:00:00Z"));
+        
+        global.ZenMoney = {features: {dateProcessing: true}};
+        assertIsUntouched(withTimezoneOffset(new Date("2010-01-01T00:00:00+05:00"), -300));
+        assertIsUntouched(withTimezoneOffset(new Date("2010-01-01T00:00:00-05:00"), 300));
+        assertIsUntouched("2010-01-01");
+        assertIsUntouched(null);
+        assertIsUntouched(undefined);
     });
 });
 

@@ -21,5 +21,9 @@ if (ZenMoney.runtime === "browser" && consoleAdapter.isNativeConsoleImplemented(
 }
 
 if (!("isAccountSkipped" in ZenMoney)) {
-    ZenMoney.isAccountSkipped = () => false;
+    ZenMoney.isAccountSkipped = (accountId) => false;
+}
+
+if (!("features" in ZenMoney)) {
+    ZenMoney.features = {};
 }

@@ -1,6 +1,7 @@
 import {isValidDate} from "./dates";
 
-const MS_IN_DAY = 24 * 60 * 60 * 1000;
+const MS_IN_MINUTE = 60 * 1000;
+const MS_IN_DAY = 24 * 60 * MS_IN_MINUTE;
 const MS_IN_WEEK = 7 * MS_IN_DAY;
 
 const unsealSyncPromise = (promise) => {
@@ -46,21 +47,35 @@ export function provideScrapeDates(fn) {
     };
 }
 
+export function postProcessTransaction(transaction) {
+    if (ZenMoney.features.dateProcessing) {
+        return transaction;
+    }
+    if (!(transaction.date instanceof Date)) {
+        return transaction;
+    }
+    return {
+        ...transaction,
+        date: new Date(transaction.date.valueOf() - transaction.date.getTimezoneOffset() * MS_IN_MINUTE),
+    };
+}
+
 export function adaptAsyncFn(fn) {
-    console.assert(typeof fn === "function", "adaptAsyncFn argument should be a function");
+    console.assert(typeof fn === "function", "adaptAsyncFn argument is not a function");
 
     return function adaptedAsyncFn() {
         const result = fn();
-        console.assert(result && typeof result.then === "function", "scrape function should return a promise");
+        console.assert(result && typeof result.then === "function", "scrape() did not return a promise");
         const resultHandled = result.then((results) => {
-            console.assert(results && Array.isArray(results), "scrape result should be array");
+            console.assert(results && Array.isArray(results), "scrape() result is not an array");
+            console.assert(results.length > 0, "scrape results are empty");
             console.assert(
                 results.every((result) => result.account && Array.isArray(result.transactions)),
                 "scrape result should be array of {account, transactions[]}"
             );
             results.forEach(({account, transactions}) => {
                 ZenMoney.addAccount(account);
-                ZenMoney.addTransaction(transactions);
+                ZenMoney.addTransaction(transactions.map(postProcessTransaction));
             });
             ZenMoney.setResult({success: true});
         });
