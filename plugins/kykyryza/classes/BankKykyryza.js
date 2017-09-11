@@ -30,6 +30,12 @@ function BankKykyryza() {
             contractToAccount[dataItem.contractId.toString()] = accountId;
             accountToInstrument[accountId]                    = _instrument;
 
+            /**
+             * временно добавляем в лог данные о карте
+             * необходимо узнать как записывается кредитный лимит по карте
+             */
+            ZenMoney.trace("account data: " + JSON.stringify(dataItem), 'log-account-data');
+
             return {
                 id:           accountId,
                 title:        dataItem.name,

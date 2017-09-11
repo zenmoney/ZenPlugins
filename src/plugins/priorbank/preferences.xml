@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+            key="login"
+            obligatory="true"
+            title="Имя пользователя"
+            dialogTitle="Имя пользователя"
+            dialogMessage="Введите имя пользователя"
+            positiveButtonText="ОК"
+            negativeButtonText="Отмена"
+            summary="|Имя пользователя|{@s}"
+    >
+    </EditTextPreference>
+    <EditTextPreference
+            key="password"
+            obligatory="true"
+            inputType="textPassword"
+            title="Пароль"
+            dialogTitle="Пароль"
+            dialogMessage="Введите пароль"
+            positiveButtonText="ОК"
+            negativeButtonText="Отмена"
+            summary="||***********"
+    >
+    </EditTextPreference>
+    <EditTextPreference
+            key="startDate"
+            obligatory="true"
+            inputType="date"
+            title="Начиная с какой даты необходимо загружать операции"
+            defaultValue="2010-01-01T12:00:00.000Z"
+            dialogTitle="Дата начала загрузки"
+            dialogMessage="Введите дату, с которой необходимо загружать операции"
+            positiveButtonText="ОК"
+            negativeButtonText="Отмена"
+            summary="|startDate|{@s}"
+    >
+    </EditTextPreference>
+</PreferenceScreen>

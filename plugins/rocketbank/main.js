@@ -386,6 +386,7 @@ function RocketBank(ZenMoney) {
                         }
                         break;
                     case "atm_cash_out": // Снятие наличных в банкомате
+                    case "atm_cash_out_open": // Снятие наличных в банкомате Открытия
                         transaction.income = sum;
                         transaction.incomeAccount = "cash#" + operation.money.currency_code;
                         transaction.outcome = sum;

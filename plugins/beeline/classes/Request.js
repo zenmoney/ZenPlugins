@@ -22,9 +22,25 @@ function Request() {
         };
 
         var requestData = getJson(ZenMoney.requestPost(url, data, defaultHeaders()));
-        if (requestData.status != 'OK') { // AUTH_WRONG || AUTH_LOCKED_TEMPORARY
+        if (requestData.status != 'OK') {
             ZenMoney.trace('Bad auth: ' + +requestData.status, 'warning');
-            throw new ZenMoney.Error('Не удалось авторизоваться');
+
+            var errorMessage = 'Не удалось авторизоваться: ';
+            switch (requestData.status) {
+                case 'CANNOT_FIND_SUBJECT':
+                    errorMessage += 'неправильный номер карты';
+                    break;
+                case 'AUTH_WRONG':
+                    errorMessage += 'неправильный пароль';
+                    break;
+                case 'AUTH_LOCKED_TEMPORARY':
+                    errorMessage += 'доступ временно запрещен';
+                    break;
+                default:
+                    errorMessage += 'неизвестная ошибка';
+            }
+
+            throw new ZenMoney.Error(errorMessage);
         }
     };
 
@@ -35,8 +51,13 @@ function Request() {
         var url = this.baseURI + 'wallets?rid=' + generateHash();
 
         var request = ZenMoney.requestGet(url, defaultHeaders());
+        if (request === null) {
+            return [];
+        }
 
-        return getJson(request).data.wallets;
+        var res = getJson(request);
+
+        return res.hasOwnProperty('data') && res.data.hasOwnProperty('wallets') ? res.data.wallets : [];
     };
 
     /**
@@ -127,7 +148,10 @@ function Request() {
      * @returns {{content-type: string}}
      */
     function defaultHeaders() {
-        return {'content-type': 'application/json;charset=UTF-8'};
+        return {
+            'content-type': 'application/json;charset=UTF-8',
+            'channel': 'web'
+        };
     }
 
     /**

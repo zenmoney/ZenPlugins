@@ -1,0 +1,134 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`happy path scrape result 1`] = `
+Array [
+  Object {
+    "account": Object {
+      "balance": 499.99,
+      "id": "BYN_ACCOUNT_ID",
+      "instrument": "BYN",
+      "syncID": Array [
+        "2345",
+      ],
+      "title": "BYNdefaultSynonym",
+      "type": "ccard",
+    },
+    "transactions": Array [
+      Object {
+        "comment": "Payment From Client Contract",
+        "created": 2017-01-02T21:00:00.000Z,
+        "date": 2017-01-02T21:00:00.000Z,
+        "income": 0,
+        "incomeAccount": "BYN_ACCOUNT_ID",
+        "outcome": 4,
+        "outcomeAccount": "BYN_ACCOUNT_ID",
+        "payee": null,
+      },
+      Object {
+        "comment": "Поступление на контракт клиента #ID",
+        "created": 2017-01-02T21:00:00.000Z,
+        "date": 2017-01-02T21:00:00.000Z,
+        "income": 10,
+        "incomeAccount": "BYN_ACCOUNT_ID",
+        "outcome": 0,
+        "outcomeAccount": "BYN_ACCOUNT_ID",
+        "payee": null,
+      },
+      Object {
+        "created": 2017-01-08T21:00:00.000Z,
+        "date": 2017-01-08T21:00:00.000Z,
+        "income": 0,
+        "incomeAccount": "BYN_ACCOUNT_ID",
+        "outcome": 6,
+        "outcomeAccount": "BYN_ACCOUNT_ID",
+        "payee": "BLR",
+      },
+    ],
+  },
+  Object {
+    "account": Object {
+      "balance": 100.5,
+      "id": "USD_ACCOUNT_ID",
+      "instrument": "USD",
+      "syncID": Array [
+        "1234",
+      ],
+      "title": "USDcustomSynonym",
+      "type": "ccard",
+    },
+    "transactions": Array [
+      Object {
+        "comment": "4.00 BYN
+(rate=2.0000)",
+        "created": 2016-12-31T21:00:00.000Z,
+        "date": 2016-12-31T21:00:00.000Z,
+        "income": 2,
+        "incomeAccount": "USD_ACCOUNT_ID",
+        "opIncome": 4,
+        "opIncomeInstrument": "BYN",
+        "outcome": 0,
+        "outcomeAccount": "USD_ACCOUNT_ID",
+        "payee": "BLR",
+      },
+      Object {
+        "comment": "Поступление на контракт клиента #ID",
+        "created": 2016-12-31T21:00:00.000Z,
+        "date": 2016-12-31T21:00:00.000Z,
+        "income": 1000,
+        "incomeAccount": "USD_ACCOUNT_ID",
+        "outcome": 0,
+        "outcomeAccount": "USD_ACCOUNT_ID",
+        "payee": null,
+      },
+      Object {
+        "created": 2017-01-05T21:00:00.000Z,
+        "date": 2017-01-05T21:00:00.000Z,
+        "income": 0,
+        "incomeAccount": "USD_ACCOUNT_ID",
+        "outcome": 2.79,
+        "outcomeAccount": "USD_ACCOUNT_ID",
+        "payee": "NLD",
+      },
+      Object {
+        "comment": "100.00 BYN
+(rate=1.9736)",
+        "created": 2017-01-07T21:00:00.000Z,
+        "date": 2017-01-07T21:00:00.000Z,
+        "income": 100,
+        "incomeAccount": "cash#BYN",
+        "opOutcome": 100,
+        "opOutcomeInstrument": "BYN",
+        "outcome": 50.67,
+        "outcomeAccount": "USD_ACCOUNT_ID",
+        "payee": "BLR",
+      },
+      Object {
+        "comment": "202.34 BYN
+(rate=2.0234)",
+        "created": 2017-01-09T21:00:00.000Z,
+        "date": 2017-01-09T21:00:00.000Z,
+        "income": 0,
+        "incomeAccount": "USD_ACCOUNT_ID",
+        "opOutcome": 202.34,
+        "opOutcomeInstrument": "BYN",
+        "outcome": 100,
+        "outcomeAccount": "USD_ACCOUNT_ID",
+        "payee": "BLR",
+      },
+      Object {
+        "comment": "20.00 BYN
+(rate=2.0000)",
+        "created": 2017-01-09T21:00:00.000Z,
+        "date": 2017-01-09T21:00:00.000Z,
+        "income": 0,
+        "incomeAccount": "USD_ACCOUNT_ID",
+        "opOutcome": 20,
+        "opOutcomeInstrument": "BYN",
+        "outcome": 10,
+        "outcomeAccount": "USD_ACCOUNT_ID",
+        "payee": "BLR",
+      },
+    ],
+  },
+]
+`;

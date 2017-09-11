@@ -148,7 +148,10 @@ function Request() {
      * @returns {{content-type: string}}
      */
     function defaultHeaders() {
-        return {'content-type': 'application/json;charset=UTF-8'};
+        return {
+            'content-type': 'application/json;charset=UTF-8',
+            'channel': 'web'
+        };
     }
 
     /**

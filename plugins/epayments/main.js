@@ -3,9 +3,9 @@
  */
 
 function main() {
-    var bank     = new Bank();
-    var kykyruza = new BankEpayments();
-    var request  = new Request();
+    var bank      = new Bank();
+    var epayments = new BankEpayments();
+    var request   = new Request();
 
     var preferences = ZenMoney.getPreferences();
 
@@ -17,17 +17,17 @@ function main() {
     var userData = request.getUser();
 
     var accountsData = userData.cards;
-    bank.addAccounts(kykyruza.prepareAccountsData(accountsData));
+    bank.addAccounts(epayments.prepareAccountsData(accountsData));
 
     var walletsData = userData.ewallets;
-    bank.addAccounts(kykyruza.prepareWalletsData(walletsData));
+    bank.addAccounts(epayments.prepareWalletsData(walletsData));
 
     var operationsData = request.getOperations();
-    var operations     = kykyruza.prepareOperationsData(operationsData);
+    var operations     = epayments.prepareOperationsData(operationsData);
     bank.addOperations(operations);
 
     if (operations.length > 0) {
-        request.setLastSyncTime(operations[0].date);
+        request.setLastSyncTime(parseInt(operations[operations.length - 1].date / 1000));
     }
 
     ZenMoney.saveData();
