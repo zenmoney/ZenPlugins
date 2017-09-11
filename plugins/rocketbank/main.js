@@ -354,7 +354,11 @@ function RocketBank(ZenMoney) {
                 error("Не удалось загрузить список операций", data.response.description);
             }
         }
-        ZenMoney.trace("Загрузили страницу " + data.pagination.current_page + " из " + data.pagination.total_pages);
+		if (data.hasOwnProperty("pagination")) {
+			ZenMoney.trace("Загрузили страницу " + data.pagination.current_page + " из " + data.pagination.total_pages);
+		} else {
+            error("Отсутствует информация о количестве страниц данных", JSON.stringify(data));
+		}
         if (data.hasOwnProperty("feed")) {
             for (var i = 0; i < data.feed.length; i++) {
                 var operation = data.feed[i][1];
@@ -553,7 +557,7 @@ function RocketBank(ZenMoney) {
         if (!deviceId) {
             ZenMoney.trace("Необходимо привязать устройство...");
             var phone = ZenMoney.retrieveCode(
-                "Введите свой номер телефона в формате +79211234567",
+                "Введите номер телефона для входа в Рокетбанк. Формат: +79211234567",
                 null,
                 {
                     inputType: "phone",
@@ -579,7 +583,7 @@ function RocketBank(ZenMoney) {
         if (!token || force_new) {
             ZenMoney.trace("Требуется создать новый токен");
             var password = ZenMoney.retrieveCode(
-                "Введите пароль, используемый для входа в официальные приложения",
+                "Введите пароль (пин-код) для входа в Рокетбанк",
                 null,
                 {
                     inputType: "numberPassword",
@@ -639,7 +643,7 @@ function RocketBank(ZenMoney) {
      */
     function verifyDevice(verificationToken, device) {
         var code = ZenMoney.retrieveCode(
-            "Введите код подтверждения из смс для авторизации приложения в интернет-банке",
+            "Введите код подтверждения из SMS для входа в Рокетбанк",
             null,
             {
                 inputType: "numberDecimal",
