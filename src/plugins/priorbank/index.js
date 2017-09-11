@@ -1,4 +1,3 @@
-import {adaptAsyncFn, provideScrapeDates, traceFunctionCalls} from "../../common/adapters";
 import {convertToZenMoneyTransaction} from "./mappingUtils";
 import * as prior from "./prior";
 const calculateAccountId = (card) => String(card.clientObject.id);
@@ -34,5 +33,3 @@ export async function scrape({fromDate, toDate}) {
         .filter((card) => !ZenMoney.isAccountSkipped(calculateAccountId(card)))
         .map(convertToZenMoneyData);
 }
-
-export const main = adaptAsyncFn(provideScrapeDates(traceFunctionCalls(scrape)));

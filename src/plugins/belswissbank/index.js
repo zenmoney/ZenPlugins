@@ -1,5 +1,4 @@
 import _ from "underscore";
-import {adaptAsyncFn, provideScrapeDates, traceFunctionCalls} from "../../common/adapters";
 import {formatCommentDateTime} from "../../common/dates";
 import * as errors from "../../common/errors";
 import {convertToZenMoneyTransaction} from "../priorbank/mappingUtils";
@@ -151,7 +150,7 @@ function processCard(card, bsbTransactions) {
     return {account, transactions};
 }
 
-async function scrape({fromDate, toDate}) {
+export async function scrape({fromDate, toDate}) {
     await login();
 
     const cards = await BSB.fetchCards();
@@ -166,5 +165,3 @@ async function scrape({fromDate, toDate}) {
         (transaction) => transaction.payee.endsWith("PERSON TO PERSON I-B BSB")
     );
 }
-
-export const main = adaptAsyncFn(provideScrapeDates(traceFunctionCalls(scrape)));
