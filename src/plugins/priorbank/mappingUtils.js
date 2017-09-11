@@ -22,6 +22,8 @@ function checkTransaction(transaction) {
 }
 
 export function convertToZenMoneyTransaction(accountId, bankTransaction) {
+    console.assert(accountId, "accountId should be provided");
+    console.assert(bankTransaction, "bankTransaction should be provided");
     checkTransaction(bankTransaction);
     const {
         transactionId,
