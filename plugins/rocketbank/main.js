@@ -177,6 +177,7 @@ function RocketBank(ZenMoney) {
                 };
                 switch (operation.kind) {
                     case "first_refill": // Первичное пополнение
+                    case "refill": // Пополнение
                         transaction.income = sum;
                         that.deposits_operations.push(transaction);
                         break;
