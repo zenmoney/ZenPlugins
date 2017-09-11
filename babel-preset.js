@@ -4,7 +4,7 @@ const getTargets = (oldTargets) => {
     if ("BABEL_TARGET" in process.env) {
         return JSON.parse(process.env.BABEL_TARGET);
     }
-    if (process.env.NODE_ENV === "development") {
+    if (process.env.BABEL_ENV === "development") {
         return {chrome: 60};
     }
     return oldTargets;
