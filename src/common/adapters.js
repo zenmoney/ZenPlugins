@@ -105,3 +105,5 @@ export function traceFunctionCalls(fn) {
         );
     };
 }
+
+export const adaptScrapeToMain = (scrape) => adaptAsyncFn(provideScrapeDates(traceFunctionCalls(scrape)));
