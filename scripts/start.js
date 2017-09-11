@@ -1,5 +1,5 @@
-process.env.BABEL_ENV = "development";
-process.env.NODE_ENV = "development";
+process.env.BABEL_ENV = process.env.BABEL_ENV || "development";
+process.env.NODE_ENV = process.env.NODE_ENV || "development";
 process.on("unhandledRejection", err => {
     throw err;
 });
@@ -25,7 +25,7 @@ const DEFAULT_PORT = parseInt(process.env.PORT, 10) || 5000;
 const https = process.env.HTTPS === "true";
 choosePort(HOST, DEFAULT_PORT)
     .then(port => {
-        const webpackConfig = createWebpackConfig({production: process.env.PRODUCTION === "true"});
+        const webpackConfig = createWebpackConfig({production: process.env.NODE_ENV === "production"});
         const urls = prepareUrls(https ? "https" : "http", HOST, port);
         const compiler = createCompiler(webpack, webpackConfig, params.pluginName, urls, fs.existsSync(paths.yarnLockFile));
         const serverConfig = createDevServerConfig({allowedHost: urls.lanUrlForConfig, host: HOST, https});
