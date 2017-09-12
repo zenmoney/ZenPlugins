@@ -28,6 +28,7 @@ const calculateFromDate = () => {
         return new Date(lastSuccessDate - MS_IN_WEEK);
     }
     const startDateString = ZenMoney.getPreferences().startDate;
+    console.assert(startDateString, "startDate should be specified in preferences");
     const startDate = new Date(startDateString);
     console.assert(isValidDate(startDate), {startDateString}, "is not a valid date");
     return startDate;
