@@ -142,7 +142,6 @@ function processCard(card, bsbTransactions) {
                 accountAmount: isCurrencyConversion ? accountAmount : transactionAmount,
                 payee: _.compact([transaction.countryCode, transaction.city, transaction.transactionDetails]).join(" "),
                 comment: formatCommentDateTime(transactionDate),
-                isCurrencyConversion,
                 isCashTransfer: BSB.isOwnCashTransferTransaction(transaction),
             });
         })

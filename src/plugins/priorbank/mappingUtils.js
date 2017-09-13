@@ -10,15 +10,22 @@ function checkTransaction(transaction) {
     [
         "transactionAmount",
         "accountAmount",
-    ].forEach((key) => console.assert(_.isNumber(transaction[key]), `key "${key}" is not a number in transaction:`, transaction));
+    ].forEach((key) => console.assert(_.isNumber(transaction[key]), `key "${key}" is not a positive number in transaction:`, transaction));
+    console.assert(Math.sign(transaction.transactionAmount) === Math.sign(transaction.accountAmount), "transaction and account amount have different signs");
     [
-        "isCurrencyConversion",
         "isCashTransfer",
     ].forEach((key) => console.assert(_.isBoolean(transaction[key]), `key "${key}" is not a boolean in transaction:`, transaction));
     [
         "payee",
         "comment",
     ].forEach((key) => console.assert(!_.isUndefined(transaction[key]), `key "${key}" is not defined in transaction:`, transaction));
+}
+
+export function formatRate({transactionAmount, accountAmount}) {
+    const rate = transactionAmount / accountAmount;
+    return rate < 1
+        ? `1/${(1 / rate).toFixed(4)}`
+        : rate.toFixed(4);
 }
 
 export function convertToZenMoneyTransaction(accountId, bankTransaction) {
@@ -30,12 +37,13 @@ export function convertToZenMoneyTransaction(accountId, bankTransaction) {
         transactionDate,
         transactionCurrency,
         transactionAmount,
+        accountCurrency,
         accountAmount,
         payee,
         comment,
-        isCurrencyConversion,
         isCashTransfer,
     } = bankTransaction;
+    const isCurrencyConversion = accountCurrency !== transactionCurrency;
     const zenMoneyTransaction = {date: transactionDate, payee};
     if (transactionId) {
         zenMoneyTransaction.id = transactionId;
@@ -46,7 +54,7 @@ export function convertToZenMoneyTransaction(accountId, bankTransaction) {
     }
     if (isCurrencyConversion) {
         commentLines.push(`${Math.abs(transactionAmount).toFixed(2)} ${transactionCurrency}`);
-        commentLines.push(`(rate=${(transactionAmount / accountAmount).toFixed(4)})`);
+        commentLines.push(`(rate=${formatRate({transactionAmount, accountAmount})})`);
     }
 
     if (transactionAmount >= 0) {
