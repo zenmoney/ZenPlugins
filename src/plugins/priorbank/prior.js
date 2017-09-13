@@ -127,8 +127,6 @@ function parseTransDetails(transDetails) {
 }
 
 const normalizePreparedItem = (item, accountCurrency) => {
-    const transactionCurrency = item.transCurrIso;
-    const isCurrencyConversion = accountCurrency !== transactionCurrency;
     const details = parseTransDetails(item.transDetails);
     return ({
         transactionDate: new Date(item.transDate),
@@ -136,7 +134,6 @@ const normalizePreparedItem = (item, accountCurrency) => {
         transactionCurrency: item.transCurrIso,
         accountAmount: -item.amount,
         accountCurrency,
-        isCurrencyConversion,
         isCashTransfer: details.type === "ATM",
         payee: details.payee,
         comment: details.comment,
@@ -149,8 +146,7 @@ const normalizeCommittedItem = (item, accountCurrency) => {
     const transactionCurrency = item.transCurrIso;
     const transactionDate = new Date(item.transDate);
     const accountAmount = item.accountAmount;
-    const isCurrencyConversion = accountCurrency !== transactionCurrency;
-    const transactionAmount = isCurrencyConversion ? item.amount : accountAmount;
+    const transactionAmount = accountCurrency === transactionCurrency ? accountAmount : item.amount;
     const details = parseTransDetails(item.transDetails);
     return {
         transactionDate,
@@ -158,7 +154,6 @@ const normalizeCommittedItem = (item, accountCurrency) => {
         transactionCurrency,
         accountAmount,
         accountCurrency,
-        isCurrencyConversion,
         isCashTransfer: details.type === "ATM",
         payee: details.payee,
         comment: details.comment,
