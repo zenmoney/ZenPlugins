@@ -160,24 +160,24 @@ describe("provideScrapeDates", () => {
 });
 
 describe("postProcessTransactions", () => {
-    const withTimezoneOffset = (date, offsetInMinutes) => {
-        date.getTimezoneOffset = () => offsetInMinutes;
-        return date;
-    };
     const processDate = (date) => postProcessTransaction({date}).date;
     const assertIsUntouched = (date) => expect(processDate(date)).toBe(date);
 
     it("should fix dates if dateProcessing feature is not implemented", () => {
         global.ZenMoney = {features: {}};
-        expect(processDate(withTimezoneOffset(new Date("2010-01-01T00:00:00+05:00"), -300))).toEqual(new Date("2010-01-01T00:00:00Z"));
-        expect(processDate(withTimezoneOffset(new Date("2010-01-01T00:00:00-05:00"), 300))).toEqual(new Date("2010-01-01T00:00:00Z"));
-        
+        expect(processDate(new Date(2010, 0, 0, 23, 59, 59))).toEqual("2009-12-31");
+        expect(processDate(new Date(2010, 0, 1, 0, 0, 0))).toEqual("2010-01-01");
+        expect(processDate(new Date(2010, 0, 1, 23, 59, 59))).toEqual("2010-01-01");
+        expect(processDate(new Date(2010, 0, 2, 0, 0, 0))).toEqual("2010-01-02");
+        assertIsUntouched(Date.now());
+
         global.ZenMoney = {features: {dateProcessing: true}};
-        assertIsUntouched(withTimezoneOffset(new Date("2010-01-01T00:00:00+05:00"), -300));
-        assertIsUntouched(withTimezoneOffset(new Date("2010-01-01T00:00:00-05:00"), 300));
+        assertIsUntouched(new Date("2010-01-01T00:00:00+05:00"));
+        assertIsUntouched(new Date("2010-01-01T00:00:00-05:00"));
         assertIsUntouched("2010-01-01");
         assertIsUntouched(null);
         assertIsUntouched(undefined);
+        assertIsUntouched(Date.now());
     });
 });
 

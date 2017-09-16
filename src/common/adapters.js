@@ -1,4 +1,4 @@
-import {isValidDate} from "./dates";
+import {formatZenMoneyDate, isValidDate} from "./dates";
 
 const MS_IN_MINUTE = 60 * 1000;
 const MS_IN_DAY = 24 * 60 * MS_IN_MINUTE;
@@ -57,7 +57,7 @@ export function postProcessTransaction(transaction) {
     }
     return {
         ...transaction,
-        date: new Date(transaction.date.valueOf() - transaction.date.getTimezoneOffset() * MS_IN_MINUTE),
+        date: formatZenMoneyDate(transaction.date),
     };
 }
 
