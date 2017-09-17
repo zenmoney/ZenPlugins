@@ -4,9 +4,6 @@
 
 import * as main from "../cft/main";
 
-/**
- * @type {string}
- */
 const apiUri = 'https://bank.beeline.ru/api/v0001';
 
 /**
