@@ -222,9 +222,10 @@ const makeApiUrl = (path, params = {}) => {
  * @returns {string}
  */
 const generateHash = () => {
-    return '0123456789abcdf'.repeat(5).split('').sort(() => {
-        return 0.5 - Math.random()
-    }).join('').substring(0, 13);
+    return Array.apply(null, {length: 16})
+                .map(() => Number(Math.floor(Math.random() * 16)).toString(16))
+                .join('')
+                .substring(0, 13);
 };
 
 export {
