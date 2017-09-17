@@ -5,6 +5,7 @@
 import {TYPES as TYPE} from "../constants/transactions";
 import {entity} from "../zenmoney_entity/transaction";
 import * as helper from "./helpers";
+import _ from "lodash";
 
 /**
  * @param item
@@ -41,10 +42,10 @@ const converter = (item, mapContractToAccount = {}) => {
     } else {
         let amount   = item.money.amount;
         let currency = item.money.currency;
-        if (helper.hasKey(item, 'money.amountDetail.amount')) {
+        if (_.has(item, 'money.amountDetail.amount')) {
             amount = item.money.amountDetail.amount;
         }
-        if (helper.hasKey(item, 'money.accountAmount')) {
+        if (_.has(item, 'money.accountAmount')) {
             amount   = item.money.accountAmount.amount;
             currency = item.money.accountAmount.currency;
         }
@@ -72,7 +73,7 @@ const converter = (item, mapContractToAccount = {}) => {
 
         if (item.type === TYPE.RECHARGE && isIncome) {
             transaction.outcome = transaction.income;
-            if (helper.hasKey(item, 'typeName')) {
+            if (_.has(item, 'typeName')) {
                 transaction.outcomeAccount = item.typeName === 'Пополнение наличными'
                     ? 'cash#' + helper.resolveCurrencyCode(currency)
                     : 'checking#' + helper.resolveCurrencyCode(currency);
@@ -100,25 +101,25 @@ const converter = (item, mapContractToAccount = {}) => {
     }
 
     if (item.type !== TYPE.CASH) {
-        if (helper.hasKey(item, 'paymentDetail.depositBankName')) {
+        if (_.has(item, 'paymentDetail.depositBankName')) {
             transaction.payee = item.paymentDetail.depositBankName;
-        } else if (helper.hasKey(item, 'description')) {
+        } else if (_.has(item, 'description')) {
             transaction.payee = item.description;
         }
     }
 
-    if (helper.hasKey(item, 'mcc.code')) {
+    if (_.has(item, 'mcc.code')) {
         transaction.mcc = helper.toInteger(item.mcc.code);
     }
 
     commentLines.push(resolveFirstCommentLine(item));
-    if (item.type === TYPE.ZKDP && helper.hasKey(item, 'paymentDetail.transferKey')) {
+    if (item.type === TYPE.ZKDP && _.has(item, 'paymentDetail.transferKey')) {
         commentLines.push('Код: ' + item.paymentDetail.transferKey);
     }
-    if (item.type === TYPE.FDT_RBS_COMMISSION && helper.hasKey(item, 'paymentDetail.payee')) {
+    if (item.type === TYPE.FDT_RBS_COMMISSION && _.has(item, 'paymentDetail.payee')) {
         commentLines.push('Получатель: ' + item.paymentDetail.payee);
     }
-    if (helper.hasKey(item, 'comment')) {
+    if (_.has(item, 'comment')) {
         commentLines.push(item.comment);
     }
     if (commentLines.length > 0) {
@@ -163,10 +164,10 @@ const resolveFirstCommentLine = (item) => {
 const resolveAccountId = (item, contractToAccount) => {
     let accountId = null;
 
-    if (helper.hasKey(item, 'cardId')) {
+    if (_.has(item, 'cardId')) {
         accountId = helper.cardUniqueAccountId(item.cardId);
     } else {
-        if (helper.hasKey(item, 'contractId') && helper.hasKey(contractToAccount, item.contractId)) {
+        if (_.has(item, 'contractId') && _.has(contractToAccount, item.contractId)) {
             accountId = contractToAccount[item.contractId];
         }
     }
