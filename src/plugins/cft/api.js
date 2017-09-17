@@ -20,8 +20,6 @@ const defaultHeaders = {
  * @param uri
  */
 const setApiUri = (uri) => {
-    if (uri.substr(-1) !== '/') uri += '/';
-
     apiUri = uri;
 };
 
@@ -31,7 +29,7 @@ const setApiUri = (uri) => {
  * @returns {Promise.<void>}
  */
 async function auth(cardNumber, password) {
-    const response = await fetchJson(makeApiUrl("authentication/authenticate"), {
+    const response = await fetchJson(`${apiUri}/authentication/authenticate?rid=${generateHash()}`, {
         log:                 true,
         method:              "POST",
         body:                {
@@ -74,7 +72,7 @@ async function auth(cardNumber, password) {
  * @returns {Promise.<Array>}
  */
 async function fetchCards() {
-    const response = await fetchJson(makeApiUrl("cards"), {
+    const response = await fetchJson(`${apiUri}/cards?rid=${generateHash()}`, {
         log:                 true,
         headers:             defaultHeaders,
         sanitizeRequestLog:  {},
@@ -97,7 +95,7 @@ async function fetchCards() {
  * @returns {Promise.<Array>}
  */
 async function fetchWallets() {
-    const response = await fetchJson(makeApiUrl("wallets"), {
+    const response = await fetchJson(`${apiUri}/wallets?rid=${generateHash()}`, {
         log:                 true,
         headers:             defaultHeaders,
         sanitizeRequestLog:  {},
@@ -166,12 +164,7 @@ async function fetchTransactions(dateFrom) {
  * @returns {Promise.<Array>}
  */
 async function fetchTransactionsInternal(limit, offset) {
-    const urlParams = {
-        'limit':  limit,
-        'offset': offset,
-    };
-
-    const response = await fetchJson(makeApiUrl("hst", urlParams), {
+    const response = await fetchJson(`${apiUri}/hst?limit=${limit}&offset=${offset}&rid=${generateHash()}`, {
         log:                 true,
         headers:             defaultHeaders,
         sanitizeRequestLog:  {},
@@ -199,26 +192,6 @@ const assertResponseSuccess = (response, allowedStatuses = ['OK']) => {
 };
 
 /**
- * @param path
- * @param params
- * @returns {string}
- */
-const makeApiUrl = (path, params = {}) => {
-    params['rid'] = generateHash();
-
-    const query = Object.keys(params)
-                        .map((key) => {
-                            return [
-                                key,
-                                params[key]
-                            ].map(encodeURIComponent).join("=")
-                        })
-                        .join("&");
-
-    return apiUri + path + '?' + query;
-};
-
-/**
  * @returns {string}
  */
 const generateHash = () => {
@@ -235,6 +208,5 @@ export {
     fetchCards,
     fetchWallets,
     fetchTransactions,
-    makeApiUrl,
     generateHash,
 };

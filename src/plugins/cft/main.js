@@ -9,24 +9,25 @@ import {converter as transactionsDataToZenmoneyTransaction} from "./converters/t
 import {mapContractToAccount} from "./converters/helpers";
 
 /**
- * @param uriApi
- * @param dateFrom
- * @returns {Promise.<Array.<*>>}
+ * @param fromDate
+ * @param toDate
+ * @param apiUri
+ * @returns {Promise.<*>}
  */
-async function scrape(uriApi, dateFrom) {
+async function scrape({fromDate, toDate, apiUri}) {
     const {password, card_number} = ZenMoney.getPreferences();
 
     console.assert(card_number, "Введите штрих-код карты!");
     console.assert(password, "Введите пароль в интернет-банк!");
 
-    api.setApiUri(uriApi);
+    api.setApiUri(apiUri);
 
     await api.auth(card_number, password);
 
     const [cards_data, wallets_data, transactions_data] = await Promise.all([
         api.fetchCards(),
         api.fetchWallets(),
-        api.fetchTransactions(dateFrom),
+        api.fetchTransactions(fromDate),
     ]);
 
     const cards   = cards_data.map(cardDataToZenmoneyAccount);
