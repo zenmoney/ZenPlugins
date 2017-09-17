@@ -9,7 +9,8 @@
             negativeButtonText="Отмена"
             positiveButtonText="ОК"
             inputType="number"
-            obligatory="true">
+            obligatory="true"
+    >
     </EditTextPreference>
     <EditTextPreference
             key="password"
@@ -20,18 +21,20 @@
             negativeButtonText="Отмена"
             positiveButtonText="ОК"
             inputType="textPassword"
-            obligatory="true">
+            obligatory="true"
+    >
     </EditTextPreference>
-    <ListPreference
-            key="period"
-            summary="|31|{@s}"
-            title="Начальный период загрузки данных"
-            dialogTitle="Период загрузки"
-            dialogMessage="Укажите начальный период, за который нужно загрузить данные."
+    <EditTextPreference
+            key="startDate"
+            obligatory="true"
+            inputType="date"
+            title="С какой даты необходимо загружать операции"
+            defaultValue="2010-06-01T12:00:00.000Z"
+            dialogTitle="Дата начала загрузки"
+            dialogMessage="Введите дату, с которой необходимо загружать операции"
             positiveButtonText="ОК"
             negativeButtonText="Отмена"
-            entries="Квартал|Месяц|Неделя|Не загружать"
-            entryValues="92|31|7|0"
-            defaultValue="31">
-    </ListPreference>
+            summary="|startDate|{@s}"
+    >
+    </EditTextPreference>
 </PreferenceScreen>

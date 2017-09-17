@@ -1,21 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
     <id>kykyryza</id>
-    <version>1.0</version>
-    <build>9</build>
+    <version>2.0</version>
+    <build>10</build>
     <company>15359</company>
+    <modular>true</modular>
     <files>
-        <js>md5.min.js</js>
-        <js>classes/Bank.js</js>
-        <js>classes/BankKykyryza.js</js>
-        <js>classes/Request.js</js>
-        <js>main.js</js>
+        <js>index.js</js>
         <preferences>preferences.xml</preferences>
     </files>
     <description>
         Синхронизация работает через API интернет-банка https://mybank.oplata.kykyryza.ru/. Поддерживаются карты и валютные кошельки.
 
-        Для подключения импорта укажите ваш штрих-код карты и пароль от интернет-банка и выберите период, за который будут загружены операции при первой синхронизации.
+        Для подключения импорта укажите ваш штрих-код карты и пароль от интернет-банка и выберите дату с которой будут загружены операции при первой синхронизации.
 
         Штрих-код карты и пароль хранятся в приложении в зашифрованном виде и не передаются на сторонние серверы, включая серверы Дзен-мани.
     </description>
