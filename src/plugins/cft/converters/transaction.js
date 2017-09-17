@@ -109,7 +109,7 @@ const converter = (item, mapContractToAccount = {}) => {
     }
 
     if (_.has(item, 'mcc.code')) {
-        transaction.mcc = helper.toInteger(item.mcc.code);
+        transaction.mcc = Number(item.mcc.code);
     }
 
     commentLines.push(resolveFirstCommentLine(item));

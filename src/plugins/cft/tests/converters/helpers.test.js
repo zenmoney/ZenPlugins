@@ -4,13 +4,6 @@
 
 import * as helper from "../../converters/helpers";
 
-describe("toInteger", () => {
-    it("should return integer", () => {
-        expect(helper.toInteger(123)).toBe(123);
-        expect(helper.toInteger('123')).toBe(123);
-    });
-});
-
 describe("resolveCurrencyCode", () => {
     it("should return fixed currency code", () => {
         expect(helper.resolveCurrencyCode('USD')).toBe('USD');
