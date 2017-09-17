@@ -2,8 +2,6 @@
  * @author Ryadnov Andrey <me@ryadnov.ru>
  */
 
-import _ from "lodash";
-
 /**
  * @param data
  * @returns {{}}
