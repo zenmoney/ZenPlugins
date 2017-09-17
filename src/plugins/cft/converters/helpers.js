@@ -19,14 +19,6 @@ const mapContractToAccount = (data) => {
 };
 
 /**
- * @param value
- * @returns {number}
- */
-const toInteger = (value) => {
-    return value * 1;
-};
-
-/**
  * @param code
  * @returns {string}
  */
@@ -61,7 +53,6 @@ const uniqueAccountId = (prefix, id) => {
 
 export {
     mapContractToAccount,
-    toInteger,
     resolveCurrencyCode,
     cardUniqueAccountId,
     walletUniqueAccountId,

@@ -4,7 +4,7 @@
 
 import {TYPES as ZENMONEY_ACCOUNT_TYPE} from "../constants/zenmoney_accounts";
 import {entity} from "../zenmoney_entity/account";
-import {cardUniqueAccountId as accountId, resolveCurrencyCode, toInteger} from "./helpers";
+import {cardUniqueAccountId as accountId, resolveCurrencyCode} from "./helpers";
 
 /**
  * @param data
@@ -24,7 +24,7 @@ const converter = (data) => {
     data.equities.forEach((equity) => {
         if (equity.type === 'FUNDS') {
             account.instrument = resolveCurrencyCode(equity.currencyCode);
-            account.balance    = toInteger(equity.amount);
+            account.balance    = Number(equity.amount);
         }
     });
 
