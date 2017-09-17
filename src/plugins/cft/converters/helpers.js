@@ -2,6 +2,8 @@
  * @author Ryadnov Andrey <me@ryadnov.ru>
  */
 
+import _ from "lodash";
+
 /**
  * @param data
  * @returns {{}}
@@ -22,28 +24,6 @@ const mapContractToAccount = (data) => {
  */
 const toInteger = (value) => {
     return value * 1;
-};
-
-/**
- * @param item
- * @param key
- * @returns {boolean}
- */
-const hasKey = (item, key) => {
-    let hasKey = true;
-
-    key = key + ''; // to string
-    key.split('.').forEach((k) => {
-        if (hasKey) {
-            if (k in item) {
-                item = item[k];
-            } else {
-                hasKey = false;
-            }
-        }
-    });
-
-    return hasKey;
 };
 
 /**
@@ -82,7 +62,6 @@ const uniqueAccountId = (prefix, id) => {
 export {
     mapContractToAccount,
     toInteger,
-    hasKey,
     resolveCurrencyCode,
     cardUniqueAccountId,
     walletUniqueAccountId,

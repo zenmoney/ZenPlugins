@@ -11,32 +11,6 @@ describe("toInteger", () => {
     });
 });
 
-describe("hasKey", () => {
-    it("should return bool", () => {
-        let obj = {
-            key1: {
-                subKey1: 'OK',
-                subKey2: {
-                    subSubKey1: 'OK'
-                },
-            },
-            key2: 'OK',
-            '12': 'OK',
-            13:   'OK',
-        };
-        expect(helper.hasKey(obj, 'key1')).toBe(true);
-        expect(helper.hasKey(obj, 'key2')).toBe(true);
-        expect(helper.hasKey(obj, 'key3')).toBe(false);
-        expect(helper.hasKey(obj, '12')).toBe(true);
-        expect(helper.hasKey(obj, '13')).toBe(true);
-        expect(helper.hasKey(obj, 'key1.subKey1')).toBe(true);
-        expect(helper.hasKey(obj, 'key1.subKey2')).toBe(true);
-        expect(helper.hasKey(obj, 'key1.subKey3')).toBe(false);
-        expect(helper.hasKey(obj, 'key1.subKey2.subSubKey1')).toBe(true);
-        expect(helper.hasKey(obj, 'key1.subKey2.subSubKey2')).toBe(false);
-    });
-});
-
 describe("resolveCurrencyCode", () => {
     it("should return fixed currency code", () => {
         expect(helper.resolveCurrencyCode('USD')).toBe('USD');
