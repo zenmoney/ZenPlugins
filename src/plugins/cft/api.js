@@ -61,13 +61,13 @@ async function auth(cardNumber, password) {
     if (!(response.status === 200 && s === 'OK')) {
         let reason = 'неизвестная ошибка';
 
-        if (['CANNOT_FIND_SUBJECT', 'PRINCIPAL_IS_EMPTY', 'CANNOT_FOUND_AUTHENTICATION_PROVIDER'].indexOf(s) >= 0 || (s === 'VALIDATION_FAIL' && ['EAN_OUT_OF_RANGE', 'EAN_MUST_HAVE_13_SYMBOLS'].indexOf(response.body.messages[0].code) >= 0)) {
+        if (['CANNOT_FIND_SUBJECT', 'PRINCIPAL_IS_EMPTY', 'CANNOT_FOUND_AUTHENTICATION_PROVIDER'].indexOf(s) !== -1 || (s === 'VALIDATION_FAIL' && ['EAN_OUT_OF_RANGE', 'EAN_MUST_HAVE_13_SYMBOLS'].indexOf(response.body.messages[0].code) !== -1)) {
             reason = 'неправильный номер карты';
-        } else if (['AUTH_WRONG', 'EMPTY_SECRET_NOT_ALLOWED'].indexOf(s) >= 0) {
+        } else if (['AUTH_WRONG', 'EMPTY_SECRET_NOT_ALLOWED'].indexOf(s) !== -1) {
             reason = 'неправильный пароль';
         } else if (s === 'AUTH_LOCKED_TEMPORARY') {
             reason = 'доступ временно запрещен';
-        } else if (['CORE_NOT_AVAILABLE_ERROR', 'CORE_UNAVAILABLE'].indexOf(s) >= 0) {
+        } else if (['CORE_NOT_AVAILABLE_ERROR', 'CORE_UNAVAILABLE'].indexOf(s) !== -1) {
             reason = 'технические работы в банке';
         }
 
@@ -197,7 +197,7 @@ async function fetchTransactionsInternal(limit, offset) {
  */
 const assertResponseSuccess = (response, allowedStatuses = ['OK']) => {
     console.assert(
-        response.status === 200 && allowedStatuses.indexOf(response.body.status) > -1,
+        response.status === 200 && allowedStatuses.indexOf(response.body.status) !== -1,
         "non-successful response",
         response
     );
