@@ -4,14 +4,8 @@
 
 import {fetchJson} from "../../common/network";
 
-/**
- * @type {string}
- */
 let apiUri = '';
 
-/**
- * @type {{channel: string}}
- */
 const defaultHeaders = {
     'channel': 'web'
 };
