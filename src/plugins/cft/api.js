@@ -5,11 +5,6 @@
 import {fetchJson} from "../../common/network";
 
 /**
- * @type {boolean}
- */
-const logFetches = true;
-
-/**
  * @type {string}
  */
 let apiUri = '';
@@ -37,7 +32,7 @@ const setApiUri = (uri) => {
  */
 async function auth(cardNumber, password) {
     const response = await fetchJson(makeApiUrl("authentication/authenticate"), {
-        log:                 logFetches,
+        log:                 true,
         method:              "POST",
         body:                {
             principal: cardNumber,
@@ -80,7 +75,7 @@ async function auth(cardNumber, password) {
  */
 async function fetchCards() {
     const response = await fetchJson(makeApiUrl("cards"), {
-        log:                 logFetches,
+        log:                 true,
         headers:             defaultHeaders,
         sanitizeRequestLog:  {},
         sanitizeResponseLog: {
@@ -103,7 +98,7 @@ async function fetchCards() {
  */
 async function fetchWallets() {
     const response = await fetchJson(makeApiUrl("wallets"), {
-        log:                 logFetches,
+        log:                 true,
         headers:             defaultHeaders,
         sanitizeRequestLog:  {},
         sanitizeResponseLog: {},
@@ -177,7 +172,7 @@ async function fetchTransactionsInternal(limit, offset) {
     };
 
     const response = await fetchJson(makeApiUrl("hst", urlParams), {
-        log:                 logFetches,
+        log:                 true,
         headers:             defaultHeaders,
         sanitizeRequestLog:  {},
         sanitizeResponseLog: {},
