@@ -8,10 +8,7 @@ export function formatCommentDateTime(date) {
     if (!isValidDate(date)) {
         throw new Error("valid date should be provided");
     }
-    return formatZenMoneyDate(date) + " " +
+    return [date.getFullYear(), date.getMonth() + 1, date.getDate()].map(toAtLeastTwoDigitsString).join("-") + " " +
         [date.getHours(), date.getMinutes(), date.getSeconds()].map(toAtLeastTwoDigitsString).join(":");
 }
 
-export function formatZenMoneyDate(date) {
-    return [date.getFullYear(), date.getMonth() + 1, date.getDate()].map(toAtLeastTwoDigitsString).join("-");
-}
