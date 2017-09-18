@@ -58,6 +58,7 @@ export function postProcessTransaction(transaction) {
     return {
         ...transaction,
         date: new Date(transaction.date.valueOf() - transaction.date.getTimezoneOffset() * MS_IN_MINUTE),
+        created: transaction.date,
     };
 }
 
