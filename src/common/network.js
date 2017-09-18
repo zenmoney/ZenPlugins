@@ -12,7 +12,7 @@ export async function fetchJson(url, options = {}) {
         },
     };
 
-    const shouldLog = options.log !== false && console.debug;
+    const shouldLog = options.log !== false;
     shouldLog && console.debug("fetchJson request", sanitize({
         method: init.method || "GET",
         url,
@@ -35,7 +35,7 @@ export async function fetchJson(url, options = {}) {
     shouldLog && console.debug("fetchJson response", sanitize({
         status: response.status,
         url: response.url,
-        headers: _.object(Array.from(response.headers.entries())),
+        headers: response.headers.entries ? _.object(Array.from(response.headers.entries())) : response.headers.raw(),
         body,
     }, options.sanitizeResponseLog || false));
 
