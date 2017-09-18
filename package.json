@@ -52,6 +52,7 @@
       "src/**/*.js"
     ],
     "setupFiles": [],
+    "setupTestFrameworkScriptFile": "<rootDir>/scripts/setupJestTestFramework.js",
     "testMatch": [
       "<rootDir>/src/**/__tests__/**/*.js?(x)",
       "<rootDir>/src/**/?(*.)(spec|test).js?(x)"
