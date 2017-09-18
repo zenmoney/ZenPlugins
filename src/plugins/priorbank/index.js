@@ -18,7 +18,8 @@ function convertToZenMoneyData(card) {
 }
 
 export async function scrape({fromDate, toDate}) {
-    const {login, password} = ZenMoney.getPreferences();
+    const {login: rawLogin, password} = ZenMoney.getPreferences();
+    const login = rawLogin.trim();
     const preAuthHeaders = await prior.fetchPreAuthHeaders();
     const loginSalt = await prior.fetchLoginSalt({preAuthHeaders, login});
     const {accessToken, userSession} = await prior.login({preAuthHeaders, loginSalt, login, password});
