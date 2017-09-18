@@ -1,5 +1,5 @@
 import _ from "underscore";
-import {adaptAsyncFn, postProcessTransaction, provideScrapeDates} from "./adapters";
+import {adaptAsyncFn, convertTimestampToDate, postProcessTransaction, provideScrapeDates} from "./adapters";
 describe("adaptAsyncFn", () => {
     it("should call addAccount, addTransaction, setResult", () => {
         const setResultCalled = new Promise((resolve) => {
@@ -159,25 +159,53 @@ describe("provideScrapeDates", () => {
     });
 });
 
+describe("convertTimestampToDate", () => {
+    it("should handle s timestamps", () => {
+        expect(convertTimestampToDate(0)).toEqual(new Date("1970-01-01T00:00:00.000Z"));
+        expect(convertTimestampToDate(9999999999)).toEqual(new Date("2286-11-20T17:46:39.000Z"));
+    });
+    it("should handle ms timestamps", () => {
+        expect(convertTimestampToDate(10000000000)).toEqual(new Date("1970-04-26T17:46:40.000Z"));
+        expect(convertTimestampToDate(1505700000000)).toEqual(new Date("2017-09-18T02:00:00.000Z"));
+    });
+});
+
 describe("postProcessTransactions", () => {
-    const withTimezoneOffset = (date, offsetInMinutes) => {
-        date.getTimezoneOffset = () => offsetInMinutes;
-        return date;
+    const withTimezoneOffset = (offsetInHours, fn) => {
+        const original = Date.prototype.getTimezoneOffset;
+        let result;
+        try {
+            // eslint-disable-next-line no-extend-native
+            Date.prototype.getTimezoneOffset = () => offsetInHours * 60;
+            result = fn();
+        } finally {
+            // eslint-disable-next-line no-extend-native
+            Date.prototype.getTimezoneOffset = original;
+        }
+        return result;
     };
     const processDate = (date) => postProcessTransaction({date}).date;
     const assertIsUntouched = (date) => expect(processDate(date)).toBe(date);
 
     it("should fix dates if dateProcessing feature is not implemented", () => {
         global.ZenMoney = {features: {}};
-        expect(processDate(withTimezoneOffset(new Date("2010-01-01T00:00:00+05:00"), -300))).toEqual(new Date("2010-01-01T00:00:00Z"));
-        expect(processDate(withTimezoneOffset(new Date("2010-01-01T00:00:00-05:00"), 300))).toEqual(new Date("2010-01-01T00:00:00Z"));
-        
-        global.ZenMoney = {features: {dateProcessing: true}};
-        assertIsUntouched(withTimezoneOffset(new Date("2010-01-01T00:00:00+05:00"), -300));
-        assertIsUntouched(withTimezoneOffset(new Date("2010-01-01T00:00:00-05:00"), 300));
+
+        assertIsUntouched("2010-01-01");
         assertIsUntouched("2010-01-01");
         assertIsUntouched(null);
         assertIsUntouched(undefined);
+
+        const expectedDate = new Date("2010-01-01T00:00:00Z");
+        withTimezoneOffset(-5, () => expect(processDate(new Date("2010-01-01T00:00:00+05:00"))).toEqual(expectedDate));
+        withTimezoneOffset(-5, () => expect(processDate(new Date("2010-01-01T00:00:00+05:00").valueOf())).toEqual(expectedDate));
+        withTimezoneOffset(0, () => expect(processDate(new Date("2010-01-01T00:00:00Z"))).toEqual(expectedDate));
+        withTimezoneOffset(0, () => expect(processDate(new Date("2010-01-01T00:00:00Z").valueOf())).toEqual(expectedDate));
+        withTimezoneOffset(5, () => expect(processDate(new Date("2010-01-01T00:00:00-05:00"))).toEqual(expectedDate));
+        withTimezoneOffset(5, () => expect(processDate(new Date("2010-01-01T00:00:00-05:00").valueOf())).toEqual(expectedDate));
+
+        global.ZenMoney = {features: {dateProcessing: true}};
+        withTimezoneOffset(-5, () => assertIsUntouched(new Date("2010-01-01T00:00:00+05:00")));
+        withTimezoneOffset(-5, () => assertIsUntouched(new Date("2010-01-01T00:00:00+05:00").valueOf()));
     });
 });
 

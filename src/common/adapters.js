@@ -48,17 +48,28 @@ export function provideScrapeDates(fn) {
     };
 }
 
+export function convertTimestampToDate(timestamp) {
+    // used mobile interpreter implementation as a reference
+    const millis = timestamp < 10000000000
+        ? timestamp * 1000
+        : timestamp;
+    return new Date(millis);
+}
+
 export function postProcessTransaction(transaction) {
     if (ZenMoney.features.dateProcessing) {
         return transaction;
     }
-    if (!(transaction.date instanceof Date)) {
+    let date = (typeof transaction.date === "number")
+        ? convertTimestampToDate(transaction.date)
+        : transaction.date;
+    if (!(date instanceof Date)) {
         return transaction;
     }
     return {
         ...transaction,
-        date: new Date(transaction.date.valueOf() - transaction.date.getTimezoneOffset() * MS_IN_MINUTE),
-        created: transaction.date,
+        date: new Date(date.valueOf() - date.getTimezoneOffset() * MS_IN_MINUTE),
+        created: date,
     };
 }
 
