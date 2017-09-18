@@ -42,7 +42,23 @@ const sha512 = new SHA512();
 
 export const calculatePasswordHash = ({loginSalt, password}) => sha512.hex(sha512.hex(password.slice(0, 16)) + loginSalt);
 
+function getCharCodesDistribution(obj) {
+    return _.mapObject(obj, (value) => {
+        const charCodes = value.split("").map((char) => char.charCodeAt(0));
+        return _.countBy(charCodes, (code) => {
+            if (0 <= code && code < 128) {
+                return "ascii";
+            } else if (128 <= code && code < 256) {
+                return "ansi";
+            } else {
+                return "other";
+            }
+        });
+    });
+}
+
 export async function login({preAuthHeaders, loginSalt, login, password}) {
+    console.debug("charCodesDistribution", getCharCodesDistribution({login, password}));
     const response = await fetchJson(makeApiUrl("/Authorization/Login"), {
         method: "POST",
         body: {login, password: calculatePasswordHash({loginSalt, password}), lang: "RUS"},
