@@ -186,6 +186,10 @@ function RocketBank(ZenMoney) {
                         transaction.payee = "Рокетбанк";
                         that.deposits_percent.push(transaction);
                         break;
+                    case "finish": // Закрытие вклада
+                        transaction.outcome = sum;
+	                    that.deposits_operations.push(transaction);
+                        break;
                     default:
                         error("Неизвестный тип транзакции депозита", JSON.stringify(operation));
                 }
