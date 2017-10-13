@@ -23,13 +23,13 @@
 	</EditTextPreference>
 	<ListPreference
 		positiveButtonText="ОК"
-		key="period"
-		dialogTitle="Период загрузки"
+		key="periodNew"
+		dialogTitle="Загружать операции при создании подключения"
 		negativeButtonText="Отмена"
-		title="Начальный период загрузки данных"
-		entries="Квартал|Месяц|Неделя" entryValues="92|31|7"
-		defaultValue="31"
-		summary="|31|{@s}"
-		dialogMessage="Укажите начальный период, за который нужно загрузить данные.">
+		title="Загружать операции при создании подключения"
+		entries="За сегодня|За текущий месяц|За текущий и прошлый месяцы|За 3 месяца" entryValues="0|1|2|3"
+		defaultValue="1"
+		summary="|1|{@s}"
+		dialogMessage="Укажите как нужно загружать операции при создании подключения.">
 	</ListPreference>
 </PreferenceScreen>

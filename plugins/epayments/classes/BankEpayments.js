@@ -12,13 +12,12 @@ function BankEpayments() {
      */
     this.prepareAccountsData = function (data) {
         return data.map(function (dataItem) {
-            var instrument = resolveInstrument(dataItem.cardCurrency)
+            var instrument = resolveInstrument(dataItem.cardCurrency);
 
             var syncID = [dataItem.id.substr(-4)];
-            if (dataItem.hasOwnProperty('prevCardId')) {
+            if (dataItem.hasOwnProperty('prevCardId') && dataItem.prevCardId !== null) {
                 syncID.push(dataItem.prevCardId.substr(-4));
             }
-
             return {
                 id:           dataItem.id,
                 title:        'Карта ' + instrument,

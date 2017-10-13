@@ -177,6 +177,7 @@ function RocketBank(ZenMoney) {
                 };
                 switch (operation.kind) {
                     case "first_refill": // Первичное пополнение
+                    case "refill": // Пополнение
                         transaction.income = sum;
                         that.deposits_operations.push(transaction);
                         break;
@@ -184,6 +185,10 @@ function RocketBank(ZenMoney) {
                         transaction.income = sum;
                         transaction.payee = "Рокетбанк";
                         that.deposits_percent.push(transaction);
+                        break;
+                    case "finish": // Закрытие вклада
+                        transaction.outcome = sum;
+	                    that.deposits_operations.push(transaction);
                         break;
                     default:
                         error("Неизвестный тип транзакции депозита", JSON.stringify(operation));
@@ -353,7 +358,11 @@ function RocketBank(ZenMoney) {
                 error("Не удалось загрузить список операций", data.response.description);
             }
         }
-        ZenMoney.trace("Загрузили страницу " + data.pagination.current_page + " из " + data.pagination.total_pages);
+		if (data.hasOwnProperty("pagination")) {
+			ZenMoney.trace("Загрузили страницу " + data.pagination.current_page + " из " + data.pagination.total_pages);
+		} else {
+            error("Отсутствует информация о количестве страниц данных", JSON.stringify(data));
+		}
         if (data.hasOwnProperty("feed")) {
             for (var i = 0; i < data.feed.length; i++) {
                 var operation = data.feed[i][1];
@@ -386,6 +395,7 @@ function RocketBank(ZenMoney) {
                         }
                         break;
                     case "atm_cash_out": // Снятие наличных в банкомате
+                    case "atm_cash_out_open": // Снятие наличных в банкомате Открытия
                         transaction.income = sum;
                         transaction.incomeAccount = "cash#" + operation.money.currency_code;
                         transaction.outcome = sum;
@@ -497,6 +507,13 @@ function RocketBank(ZenMoney) {
                             transaction.outcome = sum;
                         }
                         break;
+                    case null: // Неизвестный тип контекста
+                        if (operation.money.amount > 0) {
+                            transaction.income = sum;
+                        } else {
+                            transaction.outcome = sum;
+                        }
+                        break;
                     default:
                         delete operation["receipt_url"]; // Do not log private info
                         error("Неизвестный тип транзакции", JSON.stringify(operation));
@@ -544,7 +561,7 @@ function RocketBank(ZenMoney) {
         if (!deviceId) {
             ZenMoney.trace("Необходимо привязать устройство...");
             var phone = ZenMoney.retrieveCode(
-                "Введите свой номер телефона в формате +79211234567",
+                "Введите номер телефона для входа в Рокетбанк. Формат: +79211234567",
                 null,
                 {
                     inputType: "phone",
@@ -570,7 +587,7 @@ function RocketBank(ZenMoney) {
         if (!token || force_new) {
             ZenMoney.trace("Требуется создать новый токен");
             var password = ZenMoney.retrieveCode(
-                "Введите пароль, используемый для входа в официальные приложения",
+                "Введите пароль (пин-код) для входа в Рокетбанк",
                 null,
                 {
                     inputType: "numberPassword",
@@ -630,7 +647,7 @@ function RocketBank(ZenMoney) {
      */
     function verifyDevice(verificationToken, device) {
         var code = ZenMoney.retrieveCode(
-            "Введите код подтверждения из смс для авторизации приложения в интернет-банке",
+            "Введите код подтверждения из SMS для входа в Рокетбанк",
             null,
             {
                 inputType: "numberDecimal",

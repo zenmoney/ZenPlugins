@@ -3,12 +3,12 @@
 	<EditTextPreference
 		title="Логин"
 		positiveButtonText="ОК"
+		key="login"
 		summary="|ID пользователя или логин|{@s}"
 		dialogTitle="Логин"
 		negativeButtonText="Отмена"
 		dialogMessage="Введите идентификатор пользователя или логин для входа в систему Сбербанк Онлайн."
-		obligatory="true"
-		key="login">
+		obligatory="true">
 	</EditTextPreference>
 	<EditTextPreference
 		positiveButtonText="ОК"
@@ -32,4 +32,15 @@
 		dialogMessage="Введите ПИН-код мобильного приложения Сбербанк Онлайн (5 цифр)."
 		inputType="numberPassword">
 	</EditTextPreference>
+	<ListPreference
+			positiveButtonText="ОК"
+			key="loadOperations"
+			dialogTitle="Загружать операции при создании подключения"
+			negativeButtonText="Отмена"
+			title="Загружать операции при создании подключения"
+			entries="За сегодня|Все доступные операции" entryValues="0|1"
+			defaultValue="1"
+			summary="|1|{@s}"
+			dialogMessage="Укажите нужно ли загружать операции при создании подключения">
+	</ListPreference>
 </PreferenceScreen>

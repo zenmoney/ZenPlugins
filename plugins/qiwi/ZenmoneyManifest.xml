@@ -2,8 +2,8 @@
 <provider>
     <id>qiwi</id>
     <version>1.0</version>
-    <build>2</build>
-    <company>13605</company>
+    <build>4</build>
+    <company>15592</company>
     <files>
         <js>main.js</js>
         <js>library.js</js>
