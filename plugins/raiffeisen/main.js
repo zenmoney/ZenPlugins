@@ -15,7 +15,7 @@
     g_accSer = 'RCAccountService',
     g_loanSer = 'RCLoanService',
     g_depositSer = 'RCDepositService',
-    g_accountCards = {},
+    g_accountCards = [],
     g_accounts = [],
     g_loans = [],
     g_converter,
@@ -133,15 +133,75 @@ function requestCards() {
     for (var i = 0; i < nodeCards.length; i++) {
         var nodeCard = nodeCards[i];
 
+        var accNum = getValue(nodeCard, 'accountNumber');
         var cardNum = getValue(nodeCard, 'number');
         cardNum = cardNum.substr(cardNum.length - 4, 4);
         ZenMoney.trace('Найдена карта: ' + cardNum);
 
-        var accNum = getValue(nodeCard, 'accountNumber');
+        var cardsInfo = {
+            cardNums: [],
+            creditLimit: 0
+        };
         if (g_accountCards[accNum] == undefined)
-            g_accountCards[accNum] = [];
-        g_accountCards[accNum].push(cardNum);
+            g_accountCards[accNum] = cardsInfo;
+
+        g_accountCards[accNum].cardNums.push(cardNum);
+        if (getValue(nodeCard, 'accountType') == '3') {
+            // it is a credit card
+            if (g_accountCards[accNum].creditLimit == 0)
+                g_accountCards[accNum].creditLimit = requestCreditLimit(getValue(nodeCard, 'id'));
+        }
     }
+}
+
+/**
+* Запрос и обработка кредитного лимита
+* @param {String} cardId
+* @returns {Number}
+*/
+function requestCreditLimit(cardId) {
+    ZenMoney.trace('Запрашиваем данные по кредитному лимиту...');
+
+    var nodeCardId = new marknote.Element('cardId');
+    var nodeStatementId = new marknote.Element('id');
+    var nodeStatementPrime = new marknote.Element('isPrime');
+
+    nodeCardId.setText(cardId);
+
+    var nodeCreditStatements = new marknote.Element('ser:getCreditStatementPeriods2');
+    nodeCreditStatements.addChildElement(nodeCardId);
+
+    var docCreditStatements = makeRequest(nodeCreditStatements, g_cardSer);
+    var nodeReply = docCreditStatements.getRootElement().getChildElement('soap:Body');
+    if (nodeReply == null) {
+        ZenMoney.trace('docCreditStatements: ' + docCreditStatements.toString());
+        ZenMoney.trace('Райффайзенбанк: получен некорректный ответ от сервера');
+        return 0;
+    }
+
+    var nodeStatements = nodeReply.getChildElement('ns2:getCreditStatementPeriods2Response').getChildElements();
+    for (var i = 0; i < nodeStatements.length; i++) {
+        if (getValue(nodeStatements[i], 'current') == 'true') {
+            nodeStatementId.setText(getValue(nodeStatements[i], 'id'));
+            nodeStatementPrime.setText(getValue(nodeStatements[i], 'prime', 'true'));
+            break;
+        }
+    }
+
+    var nodeCurrentStatement = new marknote.Element('ser:getCurrentCreditStatement');
+    nodeCurrentStatement.addChildElement(nodeCardId);
+    nodeCurrentStatement.addChildElement(nodeStatementId);
+    nodeCurrentStatement.addChildElement(nodeStatementPrime);
+
+    var docCurrentStatement = makeRequest(nodeGetCards, g_cardSer);
+    var nodeReplyStatement = docCurrentStatement.getRootElement().getChildElement('soap:Body');
+    if (nodeReplyStatement == null) {
+        ZenMoney.trace('docCurrentStatement: ' + docCurrentStatement.toString());
+        ZenMoney.trace('Райффайзенбанк: получен некорректный ответ от сервера');
+        return 0;
+    }
+    var nodeStatement = nodeReplyStatement.getChildElement('ns2:getCurrentCreditStatementResponse').getChildElements();
+    return Number(getValue(nodeStatement[0], 'availableCreditLimit', '0'));
 }
 
 /**
@@ -189,10 +249,12 @@ function requestAccounts() {
         }
         // else import it as a card
         else {
+            cardsInfo = g_accountCards[accNumber];
             zenAccount.type = 'ccard';
-            zenAccount.title = g_accountCards[accNumber][0];
-            for (var card = 0; card < g_accountCards[accNumber].length; card++)
-                zenAccount.syncID.push(g_accountCards[accNumber][card]);
+            zenAccount.title = cardsInfo.cardNums[0];
+            zenAccount.creditLimit = cardsInfo.creditLimit;
+            zenAccount.balance = Math.round((zenAccount.balance - zenAccount.creditLimit) * 100) / 100;
+            zenAccount.syncID.concat(cardsInfo.cardNums);
         }
 
         ZenMoney.addAccount(zenAccount);
