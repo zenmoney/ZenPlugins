@@ -211,18 +211,24 @@ function ZPAPI({manifest, preferences, data}) {
             this.trace("setResult success: " + JSON.stringify(result));
             addAccount(result.account);
             addTransaction(result.transaction);
+            // eslint-disable-next-line no-restricted-globals
+            self.postMessage({
+                type: "completed",
+                success: true,
+                pluginDataChange: this._saveDataRequested
+                    ? {oldValue: data, newValue: this._data}
+                    : null,
+            });
         } else {
             const resultError = result.message ? result.message.toString() : "[RSU] setResult called without success";
             this.trace("setResult fail: " + new ZPAPIError(resultError, !!result.allow_retry));
+            // eslint-disable-next-line no-restricted-globals
+            self.postMessage({
+                type: "completed",
+                success: false,
+                message: resultError,
+            });
         }
-        // eslint-disable-next-line no-restricted-globals
-        self.postMessage({
-            type: "completed",
-            success: result.success,
-            pluginDataChange: this._saveDataRequested
-                ? {oldValue: data, newValue: this._data}
-                : null,
-        });
     };
 
     function addAccount(accounts) {

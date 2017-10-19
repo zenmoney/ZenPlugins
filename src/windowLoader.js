@@ -10,9 +10,9 @@ window.onload = function() {
     const statusElement = document.getElementById("root");
     statusElement.textContent = "Loading plugin…";
     Promise.all([
-        pickBody(fetchJson("/zen/preferences")),
-        pickBody(fetchJson("/zen/manifest")),
-        pickBody(fetchJson("/zen/data")),
+        pickBody(fetchJson("/zen/preferences", {log: false})),
+        pickBody(fetchJson("/zen/manifest", {log: false})),
+        pickBody(fetchJson("/zen/data", {log: false})),
     ])
         .then(([preferences, manifest, data]) => {
             document.title = `[${manifest.id}] ${document.title}`;
