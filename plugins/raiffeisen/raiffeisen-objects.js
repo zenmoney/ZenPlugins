@@ -1,8 +1,8 @@
 /**
- * Парсит счёт из R-Connect в соответствии с wsdl-схемой
+ * РџР°СЂСЃРёС‚ СЃС‡С‘С‚ РёР· R-Connect РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ wsdl-СЃС…РµРјРѕР№
  *
  * @class
- * @param {Array.<marknote.Element>} nodes Массив xml-элементов
+ * @param {Array.<marknote.Element>} nodes РњР°СЃСЃРёРІ xml-СЌР»РµРјРµРЅС‚РѕРІ
  */
 var Account = function (nodes) {
     var _nodes = nodes || new marknote.Element('');
@@ -104,10 +104,10 @@ var Account = function (nodes) {
 };
 
 /**
- * Парсит карту из R-Connect в соответствии с wsdl-схемой
+ * РџР°СЂСЃРёС‚ РєР°СЂС‚Сѓ РёР· R-Connect РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ wsdl-СЃС…РµРјРѕР№
  *
  * @class
- * @param {Array.<marknote.Element>} nodes Массив xml-элементов
+ * @param {Array.<marknote.Element>} nodes РњР°СЃСЃРёРІ xml-СЌР»РµРјРµРЅС‚РѕРІ
  */
 var Card = function (nodes) {
     var _nodes = nodes || new marknote.Element('');
@@ -211,10 +211,10 @@ var Card = function (nodes) {
 };
 
 /**
- * Парсит кредит из R-Connect в соответствии с wsdl-схемой
+ * РџР°СЂСЃРёС‚ РєСЂРµРґРёС‚ РёР· R-Connect РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ wsdl-СЃС…РµРјРѕР№
  *
  * @class
- * @param {Array.<marknote.Element>} nodes Массив xml-элементов
+ * @param {Array.<marknote.Element>} nodes РњР°СЃСЃРёРІ xml-СЌР»РµРјРµРЅС‚РѕРІ
  */
 var Loan = function (nodes) {
     var _nodes = nodes || new marknote.Element('');
@@ -305,10 +305,10 @@ var Loan = function (nodes) {
 };
 
 /**
- * Парсит вклад из R-Connect в соответствии с wsdl-схемой
+ * РџР°СЂСЃРёС‚ РІРєР»Р°Рґ РёР· R-Connect РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ wsdl-СЃС…РµРјРѕР№
  *
  * @class
- * @param {Array.<marknote.Element>} nodes Массив xml-элементов
+ * @param {Array.<marknote.Element>} nodes РњР°СЃСЃРёРІ xml-СЌР»РµРјРµРЅС‚РѕРІ
  */
 var Deposit = function (nodes) {
     var _nodes = nodes || new marknote.Element('');
@@ -418,10 +418,10 @@ var Deposit = function (nodes) {
 };
 
 /**
- * Парсит транзакцию по карте из R-Connect в соответствии с wsdl-схемой
+ * РџР°СЂСЃРёС‚ С‚СЂР°РЅР·Р°РєС†РёСЋ РїРѕ РєР°СЂС‚Рµ РёР· R-Connect РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ wsdl-СЃС…РµРјРѕР№
  *
  * @class
- * @param {Array.<marknote.Element>} nodes Массив xml-элементов
+ * @param {Array.<marknote.Element>} nodes РњР°СЃСЃРёРІ xml-СЌР»РµРјРµРЅС‚РѕРІ
  */
 var CardTransaction = function (nodes) {
     var _nodes = nodes || new marknote.Element('');
@@ -470,11 +470,11 @@ var CardTransaction = function (nodes) {
         return zenTrans;
     }
 
-    // Сумма в валюте операции
+    // РЎСѓРјРјР° РІ РІР°Р»СЋС‚Рµ РѕРїРµСЂР°С†РёРё
     this.amount = function () {
         return Number(g_soap.getValue(_nodes, 'amount'));
     }
-    // Сумма в валюте счёта
+    // РЎСѓРјРјР° РІ РІР°Р»СЋС‚Рµ СЃС‡С‘С‚Р°
     this.billingAmount = function () {
         return Number(g_soap.getValue(_nodes, 'billingAmount'));
     }
@@ -514,10 +514,10 @@ var CardTransaction = function (nodes) {
 };
 
 /**
- * Парсит операцию по счёту из R-Connect в соответствии с wsdl-схемой
+ * РџР°СЂСЃРёС‚ РѕРїРµСЂР°С†РёСЋ РїРѕ СЃС‡С‘С‚Сѓ РёР· R-Connect РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ wsdl-СЃС…РµРјРѕР№
  *
  * @class
- * @param {Array.<marknote.Element>} nodes Массив xml-элементов
+ * @param {Array.<marknote.Element>} nodes РњР°СЃСЃРёРІ xml-СЌР»РµРјРµРЅС‚РѕРІ
  */
 var AccountMovement = function (nodes) {
     var _nodes = nodes || new marknote.Element('');
@@ -594,10 +594,10 @@ var AccountMovement = function (nodes) {
 };
 
 /**
- * Парсит платёж по кредиту из R-Connect в соответствии с wsdl-схемой
+ * РџР°СЂСЃРёС‚ РїР»Р°С‚С‘Р¶ РїРѕ РєСЂРµРґРёС‚Сѓ РёР· R-Connect РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ wsdl-СЃС…РµРјРѕР№
  *
  * @class
- * @param {Array.<marknote.Element>} nodes Массив xml-элементов
+ * @param {Array.<marknote.Element>} nodes РњР°СЃСЃРёРІ xml-СЌР»РµРјРµРЅС‚РѕРІ
  */
 var LoanPayment = function (nodes) {
     var _nodes = nodes || new marknote.Element('');

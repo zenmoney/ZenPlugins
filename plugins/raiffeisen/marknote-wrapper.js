@@ -6,7 +6,7 @@ var g_loanSer = 'RCLoanService';
 var g_depositSer = 'RCDepositService';
 
 /**
- * Обёртка вокруг marknote, нацеленая на soap для R-Connect
+ * РћР±С‘СЂС‚РєР° РІРѕРєСЂСѓРі marknote, РЅР°С†РµР»РµРЅР°СЏ РЅР° soap РґР»СЏ R-Connect
  *
  * @class
  */
@@ -26,12 +26,12 @@ var MarknoteWrapper = function () {
         </soapenv:Envelope>";
 
     /**
-     * Отправить запрос на сервис и получить ответ
+     * РћС‚РїСЂР°РІРёС‚СЊ Р·Р°РїСЂРѕСЃ РЅР° СЃРµСЂРІРёСЃ Рё РїРѕР»СѓС‡РёС‚СЊ РѕС‚РІРµС‚
      *
-     * @param {string} requestName Название запроса
-     * @param {string} serviceName Название сервиса
-     * @param {?Array.<marknote.Element>} nodes Дочерние xml-элементы для запроса
-     * @returns {marknote.Document} Распарсенный ответ
+     * @param {string} requestName РќР°Р·РІР°РЅРёРµ Р·Р°РїСЂРѕСЃР°
+     * @param {string} serviceName РќР°Р·РІР°РЅРёРµ СЃРµСЂРІРёСЃР°
+     * @param {?Array.<marknote.Element>} nodes Р”РѕС‡РµСЂРЅРёРµ xml-СЌР»РµРјРµРЅС‚С‹ РґР»СЏ Р·Р°РїСЂРѕСЃР°
+     * @returns {marknote.Document} Р Р°СЃРїР°СЂСЃРµРЅРЅС‹Р№ РѕС‚РІРµС‚
      */
     this.sendRequest = function (requestName, serviceName, nodes) {
         var nodeRequest = new marknote.Element('ser:' + requestName);
@@ -49,29 +49,29 @@ var MarknoteWrapper = function () {
     }
 
     /**
-     * Отправить запрос на сервис и обработать полученный ответ
+     * РћС‚РїСЂР°РІРёС‚СЊ Р·Р°РїСЂРѕСЃ РЅР° СЃРµСЂРІРёСЃ Рё РѕР±СЂР°Р±РѕС‚Р°С‚СЊ РїРѕР»СѓС‡РµРЅРЅС‹Р№ РѕС‚РІРµС‚
      *
-     * @param {string} requestName Название запроса
-     * @param {string} serviceName Название сервиса
-     * @param {?Array.<marknote.Element>} nodes Дочерние xml-элементы для запроса
-     * @returns {Array.<marknote.Element>} Дочерние xml-элементы ответа
+     * @param {string} requestName РќР°Р·РІР°РЅРёРµ Р·Р°РїСЂРѕСЃР°
+     * @param {string} serviceName РќР°Р·РІР°РЅРёРµ СЃРµСЂРІРёСЃР°
+     * @param {?Array.<marknote.Element>} nodes Р”РѕС‡РµСЂРЅРёРµ xml-СЌР»РµРјРµРЅС‚С‹ РґР»СЏ Р·Р°РїСЂРѕСЃР°
+     * @returns {Array.<marknote.Element>} Р”РѕС‡РµСЂРЅРёРµ xml-СЌР»РµРјРµРЅС‚С‹ РѕС‚РІРµС‚Р°
      */
     this.processRequest = function (requestName, serviceName, nodes) {
         var doc = this.sendRequest(requestName, serviceName, nodes);
         var nodeReply = doc.getRootElement().getChildElement('soap:Body');
         if (nodeReply == null) {
             ZenMoney.trace(requestName + ': ' + doc.toString());
-            throw new ZenMoney.Error('Райффайзенбанк: получен некорректный ответ от сервера');
+            throw new ZenMoney.Error('Р Р°Р№С„С„Р°Р№Р·РµРЅР±Р°РЅРє: РїРѕР»СѓС‡РµРЅ РЅРµРєРѕСЂСЂРµРєС‚РЅС‹Р№ РѕС‚РІРµС‚ РѕС‚ СЃРµСЂРІРµСЂР°');
         }
         return nodeReply.getChildElement('ns2:' + requestName + 'Response').getChildElements();
     }
 
     /**
-     * Создать текстовый xml-элемент
+     * РЎРѕР·РґР°С‚СЊ С‚РµРєСЃС‚РѕРІС‹Р№ xml-СЌР»РµРјРµРЅС‚
      *
-     * @param {string} name Название
-     * @param {string} str Значение
-     * @returns {marknote.Element} Xml-элемент
+     * @param {string} name РќР°Р·РІР°РЅРёРµ
+     * @param {string} str Р—РЅР°С‡РµРЅРёРµ
+     * @returns {marknote.Element} Xml-СЌР»РµРјРµРЅС‚
      */
     this.textNode = function (name, str) {
         var node = new marknote.Element(name);
@@ -80,11 +80,11 @@ var MarknoteWrapper = function () {
     }
 
     /**
-     * Создать xml-элемент c дочерними xml-элементами
+     * РЎРѕР·РґР°С‚СЊ xml-СЌР»РµРјРµРЅС‚ c РґРѕС‡РµСЂРЅРёРјРё xml-СЌР»РµРјРµРЅС‚Р°РјРё
      *
-     * @param {string} name Название
-     * @param {Array.<marknote.Element>} arr Дочерние xml-элементами
-     * @returns {marknote.Element} Xml-элемент
+     * @param {string} name РќР°Р·РІР°РЅРёРµ
+     * @param {Array.<marknote.Element>} arr Р”РѕС‡РµСЂРЅРёРµ xml-СЌР»РµРјРµРЅС‚Р°РјРё
+     * @returns {marknote.Element} Xml-СЌР»РµРјРµРЅС‚
      */
     this.arrayNode = function (name, arr) {
         var node = new marknote.Element(name);
@@ -94,12 +94,12 @@ var MarknoteWrapper = function () {
     }
 
     /**
-     * Получить значение дочернего xml-элемента с указанным именем
+     * РџРѕР»СѓС‡РёС‚СЊ Р·РЅР°С‡РµРЅРёРµ РґРѕС‡РµСЂРЅРµРіРѕ xml-СЌР»РµРјРµРЅС‚Р° СЃ СѓРєР°Р·Р°РЅРЅС‹Рј РёРјРµРЅРµРј
      *
-     * @param {marknote.Element} node Родительский xml-элемент
-     * @param {string} name Имя
-     * @param {?string} defaultValue Дефолтное значение
-     * @returns {string} Значение
+     * @param {marknote.Element} node Р РѕРґРёС‚РµР»СЊСЃРєРёР№ xml-СЌР»РµРјРµРЅС‚
+     * @param {string} name РРјСЏ
+     * @param {?string} defaultValue Р”РµС„РѕР»С‚РЅРѕРµ Р·РЅР°С‡РµРЅРёРµ
+     * @returns {string} Р—РЅР°С‡РµРЅРёРµ
      */
     this.getValue = function (node, name, defaultValue) {
         defaultValue = (typeof defaultValue !== 'undefined') ? defaultValue : '';
