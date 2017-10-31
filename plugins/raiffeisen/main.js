@@ -25,7 +25,6 @@ function main() {
 
     addToZenMoney(zenAccounts, zenTransactions);
 
-    lalala.net();
     ZenMoney.setResult({ success: true });
 }
 
