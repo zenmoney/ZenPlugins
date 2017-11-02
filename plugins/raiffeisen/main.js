@@ -64,21 +64,21 @@ function requestSession(login, password) {
     var doc = g_soap.sendRequest('login', g_authSer, nodes);
     var nodeReply = doc.getRootElement().getChildElement('soap:Body');
     if (nodeReply != null) {
-		var nodeFault = nodeReply.getChildElement('soap:Fault');
-		if (nodeFault != null) {
-			if (g_soap.getValue(nodeFault, 'faultstring', '') === 'logins.password.incorrect')
-				throw new ZenMoney.Error('Райффайзенбанк: Неверный логин или пароль', true);
+        var nodeFault = nodeReply.getChildElement('soap:Fault');
+        if (nodeFault != null) {
+            if (g_soap.getValue(nodeFault, 'faultstring', '') === 'logins.password.incorrect')
+                throw new ZenMoney.Error('Райффайзенбанк: Неверный логин или пароль', true);
 
-			var faultDetails = nodeFault.getChildElement('detail').getChildElement('ns1:mobileServiceFault');
-			if (faultDetails != null) {
-				var faultMessage = g_soap.getValue(faultDetails, 'userMessage', 'неизвестная ошибка');
-				throw new ZenMoney.Error('Райффайзенбанк: ' + faultMessage);
-			}
-			else {
-				throw new ZenMoney.Error('Райффайзенбанк: ' + faultString);
-			}
-		}
-	}
+            var faultDetails = nodeFault.getChildElement('detail').getChildElement('ns1:mobileServiceFault');
+            if (faultDetails != null) {
+                var faultMessage = g_soap.getValue(faultDetails, 'userMessage', 'неизвестная ошибка');
+                throw new ZenMoney.Error('Райффайзенбанк: ' + faultMessage);
+            }
+            else {
+                throw new ZenMoney.Error('Райффайзенбанк: ' + faultString);
+            }
+        }
+    }
 }
 
 /**
