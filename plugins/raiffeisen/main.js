@@ -109,9 +109,9 @@ function getFromRaiffesisen(zenAccounts, zenTransactions, startDate) {
     for (var i = 0; i < cards.length; ++i) {
         ZenMoney.trace('Обрабатываем карту ' + cards[i].cardNum());
         var zenAccount;
-        var accNum = cards[i].accountNumber();
+        var accNum = cards[i].accNum();
         for (var j = 0; j < zenAccounts.length; ++j) {
-            if (zenAccounts[j].numberString === accNum) {
+            if (zenAccounts[j].syncID.find(obj => obj === accNum) != null) {
                 zenAccount = zenAccounts[j];
                 break;
             }

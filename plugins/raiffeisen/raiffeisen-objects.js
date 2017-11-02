@@ -126,6 +126,10 @@ var Card = function (nodes) {
     this.isCredit = function () {
         return (this.accountType() === 3);
     }
+    this.accNum = function () {
+        var accNum = this.accountNumber();
+        return accNum.substr(accNum.length - 4, 4);
+    }
     this.cardNum = function () {
         var cardNum = this.numberString();
         return cardNum.substr(cardNum.length - 4, 4);
@@ -140,7 +144,7 @@ var Card = function (nodes) {
     }
 
     this.accountNumber = function () {
-        return Number(g_soap.getValue(_nodes, 'accountNumber'));
+        return g_soap.getValue(_nodes, 'accountNumber');
     }
     this.accountType = function () {
         return Number(g_soap.getValue(_nodes, 'accountType'));
