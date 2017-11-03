@@ -108,7 +108,7 @@ function getFromRaiffesisen(zenAccounts, zenTransactions, startDate) {
     ZenMoney.trace('Получено карт: ' + cards.length);
     for (var i = 0; i < cards.length; ++i) {
         ZenMoney.trace('Обрабатываем карту ' + cards[i].cardNum());
-        var zenAccount;
+        var zenAccount = null;
         var accNum = cards[i].accNum();
         for (var j = 0; j < zenAccounts.length; ++j) {
             if (zenAccounts[j].syncID.find(obj => obj === accNum) != null) {
@@ -116,6 +116,11 @@ function getFromRaiffesisen(zenAccounts, zenTransactions, startDate) {
                 break;
             }
         }
+        if (zenAccount == null) {
+            ZenMoney.trace('Пропускаем карту, так как пропущен счёт ' + accNum);
+            continue;
+        }
+            
         cards[i].addToZenAccount(zenAccount);
 
         var transactions = getCardTransactions(cards[i], startDate);
