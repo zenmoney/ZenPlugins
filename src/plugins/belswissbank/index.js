@@ -1,8 +1,9 @@
+import {convertToZenMoneyTransaction} from "../priorbank/mappingUtils";
 import _ from "underscore";
 import {formatCommentDateTime} from "../../common/dates";
 import * as errors from "../../common/errors";
-import {convertToZenMoneyTransaction} from "../priorbank/mappingUtils";
 import * as BSB from "./BSB";
+import {mergeTransfers} from "./mergeTransfers";
 import {generateUUID} from "./utils";
 
 function ensureDeviceId() {
@@ -44,109 +45,47 @@ async function login() {
 
 const calculateAccountId = (card) => card.cardId.toString();
 
-function mergeTransferTransactions(accountTransactions, isTransferTransaction) {
-    const transfers = _.flatten(accountTransactions.map(({transactions}) => {
-        return transactions
-            .filter(isTransferTransaction)
-            .map((transaction) => {
-                return {
-                    transferId: [
-                        transaction.transactionDate,
-                        Math.max(transaction.income, transaction.outcome),
-                        transaction.transactionCurrency,
-                    ].join("|"),
-                    transaction,
-                };
-            });
-
-    }));
-    const transfersGroupedByTransferId = _.groupBy(transfers, (x) => x.transferId);
-    const replacements = _.reduce(transfersGroupedByTransferId, (memo, transfers, transferId) => {
-        const transactions = transfers.map((x) => x.transaction);
-        const isNonAmbiguousPair = transactions.length === 2;
-        if (isNonAmbiguousPair) {
-            const [outcomeTransaction, incomeTransaction] = _.sortBy(transactions, (x) => x.income);
-            memo[outcomeTransaction.id] = _.defaults(...[
-                {
-                    incomeBankID: incomeTransaction.id,
-                    outcomeBankID: outcomeTransaction.id,
-                },
-                _.omit(incomeTransaction, "id", "outcome", "outcomeAccount"),
-                _.omit(outcomeTransaction, "id", "income", "incomeAccount"),
-            ]);
-            memo[incomeTransaction.id] = null;
-        } else {
-            console.warn("cannot merge non-pair transfer", {transferId, groupSize: transfers.length});
-        }
-        return memo;
-    }, {});
-    return accountTransactions.map(({account, transactions}) => {
-        return {
-            account,
-            transactions: _.compact(transactions.map(function(transaction) {
-                const replacement = replacements[transaction.id];
-                return _.isUndefined(replacement) ? transaction : replacement;
-            })),
-        };
-    });
-}
-
-function processCard(card, bsbTransactions) {
-    const lastFourDigits = card.maskedCardNumber.slice(-4);
-    const accountCurrency = BSB.currencyCodeToIsoCurrency(card.currency);
-    const accountId = calculateAccountId(card);
-    const account = {
-        id: accountId,
+function convertToZenMoneyAccount(card) {
+    return {
+        id: calculateAccountId(card),
         title: card.name,
         type: "ccard",
-        syncID: [lastFourDigits],
-        instrument: accountCurrency,
+        syncID: [card.maskedCardNumber.slice(-4)],
+        instrument: BSB.currencyCodeToIsoCurrency(card.currency),
         balance: card.amount,
     };
-    const transactions = _.sortBy(
+}
+
+function normalizeBsbTransactions({accountCurrency, bsbTransactions}) {
+    return _.sortBy(
         bsbTransactions.filter((transaction) => !BSB.isRejectedTransaction(transaction) && transaction.transactionAmount > 0),
         (x) => x.cardTransactionId
     )
-        .map(function(transaction, index, transactions) {
+        .map((transaction, index, transactions) => {
+            const transactionAmount = BSB.getTransactionFactor(transaction) * transaction.transactionAmount;
             const transactionCurrency = transaction.transactionCurrency;
-            const isCurrencyConversion = transactionCurrency !== accountCurrency;
-
-            const previousAccountRest = index === 0 ? 0 : transactions[index - 1].accountRest;
-            const accountAmount = transaction.accountRest === null ? null : transaction.accountRest - previousAccountRest;
-
-            let factor = BSB.getTransactionFactor(transaction);
-            if (factor === null) {
-                if (accountAmount === null) {
-                    console.error("cannot figure out transaction factor (transactionType is unknown, accountRest is missing), ignoring transaction:", transaction);
-                    return null;
-                } else {
-                    factor = Math.sign(accountAmount);
-                }
-            }
-            const transactionAmount = factor * transaction.transactionAmount;
-
-            if (transaction.accountRest === null) {
-                if (isCurrencyConversion) {
-                    console.error("cannot figure out transaction delta (is currency conversion, accountRest is missing), ignoring transaction:", transaction);
-                    return null;
-                }
-                transaction.accountRest = previousAccountRest + transactionAmount;
+            const accountAmount = transactionCurrency === accountCurrency
+                ? transactionAmount
+                : BSB.figureOutAccountRestsDelta({transactions, index, accountCurrency});
+            if (accountAmount === null) {
+                console.error("accountAmount is unknown", {transaction, previousTransactions: transactions.slice(0, index)});
+                return null;
             }
             const transactionDate = new Date(transaction.transactionDate);
-            return convertToZenMoneyTransaction(accountId, {
-                transactionId: transaction.cardTransactionId.toString(),
+            return {
+                transactionId: transaction.cardTransactionId,
                 transactionDate,
                 transactionCurrency,
                 transactionAmount,
                 accountCurrency,
-                accountAmount: isCurrencyConversion ? accountAmount : transactionAmount,
+                accountAmount,
                 payee: _.compact([transaction.countryCode, transaction.city, transaction.transactionDetails]).join(" "),
                 comment: formatCommentDateTime(transactionDate),
-                isCashTransfer: BSB.isOwnCashTransferTransaction(transaction),
-            });
+                isCashTransfer: BSB.isCashTransferTransaction(transaction),
+                isElectronicTransfer: BSB.isElectronicTransferTransaction(transaction),
+            };
         })
         .filter(Boolean);
-    return {account, transactions};
 }
 
 export async function scrape({fromDate, toDate}) {
@@ -154,13 +93,18 @@ export async function scrape({fromDate, toDate}) {
 
     const cards = await BSB.fetchCards();
     const activeCards = cards.filter((card) => !ZenMoney.isAccountSkipped(calculateAccountId(card)));
-
-    const processedCards = await Promise.all(activeCards.map(async (card) => {
+    const cardTransactions = await Promise.all(activeCards.map(async (card) => {
         const bsbTransactions = await BSB.fetchTransactions(card.cardId, fromDate, toDate);
-        return processCard(card, bsbTransactions);
+        return {card, bsbTransactions};
     }));
-    return mergeTransferTransactions(
-        processedCards,
-        (transaction) => transaction.payee.endsWith("PERSON TO PERSON I-B BSB")
-    );
+    const result = cardTransactions.map(({card, bsbTransactions}) => {
+        const account = convertToZenMoneyAccount(card);
+        const bankTransactions = normalizeBsbTransactions({
+            accountId: account.id,
+            accountCurrency: account.instrument,
+            bsbTransactions,
+        });
+        return {account, bankTransactions, transactions: bankTransactions.map((x) => convertToZenMoneyTransaction(account.id, x))};
+    });
+    return mergeTransfers(result);
 }
