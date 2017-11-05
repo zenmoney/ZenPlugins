@@ -27,7 +27,7 @@ const rejectedTransactionTypes = [
     "Otkaz",
 ];
 
-const ownCashTransferTransactionTypes = [
+const cashTransferTransactionTypes = [
     "Пополнение",
     "Popolnenie",
     "Банкомат",
@@ -36,11 +36,16 @@ const ownCashTransferTransactionTypes = [
     "Nalichnye",
 ];
 
-export const getTransactionFactor = (transaction) => transactionTypeFactors[transaction.transactionType] || null;
+export const getTransactionFactor = (transaction) => {
+    console.assert(transaction.transactionType in transactionTypeFactors, "unknown transactionType in transaction:", transaction);
+    return transactionTypeFactors[transaction.transactionType];
+};
 
-export const isOwnCashTransferTransaction = (transaction) => ownCashTransferTransactionTypes.indexOf(transaction.transactionType) !== -1;
+export const isElectronicTransferTransaction = (transaction) => transaction.transactionDetails === "PERSON TO PERSON I-B BSB";
 
-export const isRejectedTransaction = (transaction) => rejectedTransactionTypes.indexOf(transaction.transactionType) !== -1;
+export const isCashTransferTransaction = (transaction) => cashTransferTransactionTypes.indexOf(transaction.transactionType) !== -1;
+
+export const isRejectedTransaction = (transaction) => rejectedTransactionTypes.indexOf(transaction.transactionType.trim()) !== -1;
 
 export function formatBsbApiDate(userDate) {
     if (!isValidDate(userDate)) {
@@ -123,4 +128,32 @@ export async function fetchTransactions(cardId, fromDate, toDate) {
 export function currencyCodeToIsoCurrency(currencyCode) {
     console.assert(currencyCode in codeToCurrencyLookup, "unknown currency", currencyCode);
     return codeToCurrencyLookup[currencyCode];
+}
+
+function getAccountRest({transactions, index, accountCurrency}) {
+    console.assert(0 <= index && index < transactions.length, "index out of range");
+    const transaction = transactions[index];
+    if (transaction.accountRest === null) {
+        if (transaction.transactionCurrency === accountCurrency && index > 0) {
+            const previousAccountRest = getAccountRest({
+                transactions,
+                index: index - 1,
+                accountCurrency,
+            });
+            if (previousAccountRest !== null) {
+                return previousAccountRest + getTransactionFactor(transactions[index]) * transactions[index].transactionAmount;
+            }
+        }
+    }
+    return transaction.accountRest;
+}
+
+export function figureOutAccountRestsDelta({transactions, index, accountCurrency}) {
+    console.assert(0 <= index && index < transactions.length, "index out of range");
+    if (index === 0) {
+        return null;
+    }
+    const previousAccountRest = getAccountRest({transactions, index: index - 1, accountCurrency});
+    const currentAccountRest = getAccountRest({transactions, index, accountCurrency});
+    return previousAccountRest === null || currentAccountRest === null ? null : currentAccountRest - previousAccountRest;
 }
