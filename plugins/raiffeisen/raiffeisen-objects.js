@@ -139,6 +139,7 @@ var Card = function (nodes) {
             zenAccount.type = 'ccard';
             zenAccount.title = this.cardNum();
             zenAccount.creditLimit = this.creditLimit();
+            zenAccount.balance = zenAccount.balance - zenAccount.creditLimit;
         }
         zenAccount.syncID.push(this.cardNum());
     }
