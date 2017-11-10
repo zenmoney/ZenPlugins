@@ -283,6 +283,7 @@ Reminder с такими параметрами означает, что нуж�
     created: Int    // Unix timestamp
     user:    Int -> User.id
     deleted: Bool
+    hold:    Bool?
 	
     incomeInstrument:  Int    -> Instrument.id
     incomeAccount:     String -> Account.id
