@@ -11,7 +11,7 @@ function checkTransaction(transaction) {
         "transactionAmount",
         "accountAmount",
     ].forEach((key) => console.assert(_.isNumber(transaction[key]), `key "${key}" is not a positive number in transaction:`, transaction));
-    console.assert(Math.sign(transaction.transactionAmount) === Math.sign(transaction.accountAmount), "transaction and account amount have different signs");
+    console.assert(Math.sign(transaction.transactionAmount) === Math.sign(transaction.accountAmount), "transaction and account amount have different signs:", transaction);
     [
         "isCashTransfer",
     ].forEach((key) => console.assert(_.isBoolean(transaction[key]), `key "${key}" is not a boolean in transaction:`, transaction));
