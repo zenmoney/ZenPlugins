@@ -330,6 +330,8 @@ function getAccountMovements(account, startDate) {
 
         if (movement.shortDescription() === 'CREDIT CARD POSTING')
             continue;
+        if (movement.shortDescription() === 'CREDIT CARD PRINCIPAL REPMNT')
+            continue;
         if (movement.fullDescription().substr(0, 7) === 'CARD **')
             continue;
         if (!movement.isIncome() && !movement.isOutcome())
