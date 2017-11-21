@@ -63,7 +63,12 @@ var MarknoteWrapper = function () {
             ZenMoney.trace(requestName + ': ' + doc.toString());
             throw new ZenMoney.Error('Райффайзенбанк: получен некорректный ответ от сервера');
         }
-        return nodeReply.getChildElement('ns2:' + requestName + 'Response').getChildElements();
+        var nodeResponse = nodeReply.getChildElement('ns2:' + requestName + 'Response');
+        if (nodeResponse == null) {
+            ZenMoney.trace(requestName + ': ' + doc.toString());
+            throw new ZenMoney.Error('Райффайзенбанк: получен некорректный ответ от сервера');
+        }
+        return nodeResponse.getChildElements();
     }
 
     /**
