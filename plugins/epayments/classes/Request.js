@@ -15,89 +15,54 @@ function Request() {
     var authAccessToken;
     const otpRegex = /\d{6}/;
 
-    this.baseURI = 'https://api.epayments.com/';
+    const baseURL = 'https://api.epayments.com/';
+    const cabinetURL = 'https://my.epayments.com/';
+
+    const otpOptions = {
+        'inputType': 'number',
+        'time':      3E4
+    };
+
+    const authHeaders = Object.assign({}, defaultHeaders(), {
+        'Referer':       cabinetURL,
+        'Content-Type':  'application/x-www-form-urlencoded',
+        'Authorization': 'Basic ZXBheW1lbnRzOm1ZbjZocmtnMElMcXJ0SXA4S1NE'
+    });
+
 
     /**
      * @param login
      * @param password
      */
     this.auth = function (login, password, otp) {
-        var cabinet_url = 'https://my.epayments.com/';
-
-        var html = ZenMoney.requestGet(cabinet_url, defaultHeaders());
-        if (!html || ZenMoney.getLastStatusCode() > 400) {
-            ZenMoney.trace(html);
+        var response = ZenMoney.requestGet(cabinetURL, defaultHeaders());
+        if (!response || ZenMoney.getLastStatusCode() > 400) {
+            ZenMoney.trace(response)
             throw new ZenMoney.Error('Ошибка при подключении к интернет-банку!');
         }
 
-        otp = processOtpInput(otp)
+        var authData = authenthicate(login, password, otp)
 
-        var authData = {
-            'grant_type': 'password_otp',
-            'username':   login,
-            'password':   password,
-            'otpcode':    otp
-        };
-        var authHeaders = Object.assign({}, defaultHeaders(), {
-            'Referer':       cabinet_url,
-            'Content-Type':  'application/x-www-form-urlencoded',
-            'Authorization': 'Basic ZXBheW1lbnRzOm1ZbjZocmtnMElMcXJ0SXA4S1NE'
-        });
-        var otpOptions = {
-            'inputType': 'number', //Или numberPassword?
-            'time': 3E4
-        };
-
-        var requestData = getJson(ZenMoney.requestPost(this.baseURI + 'token', authData, authHeaders));
-        if (!requestData.access_token) {
-            var error = requestData.error
-            var errorDesc = requestData.error_description;
-
-            if (error === 'otp_code_required') {
-                var receivedOtp = ZenMoney.retrieveCode('Введите одноразовый пароль', null, otpOptions);
-                return this.auth(login, password, receivedOtp)
-            }
-
-            if (error === 'otp_code_invalid') {
-                var receivedOtp = ZenMoney.retrieveCode('Одноразовый пароль введен неверно. Попробуйте еще раз', null, otpOptions);
-                return this.auth(login, password, receivedOtp)
-            }
-
-            if (error === 'bot_detected') {
-                //TODO: CAPTCHA
-                ZenMoney.trace("ePeayments заподозрил бота и хочет ввода CAPTCHA")
-                throw new ZenMoney.Error('Банк заподозрил в вас бота, попробуйте зайти через браузер, ' +
-                   'потом снова проведите синхронизацию в Zenmoney', true, false)
-            }
-
-            if (error) {
-                throw new ZenMoney.Error(errorDesc, null, /invalid_grant/i.test(error));
-            }
-
-            ZenMoney.trace(requestData);
-            throw new ZenMoney.Error('Не удалось зайти в личный кабинет. Сайт изменен?');
-        }
-
-        authTokenType   = requestData.token_type;
-        authAccessToken = requestData.access_token;
+        authTokenType   = authData.token_type;
+        authAccessToken = authData.access_token;
     };
 
     /**
      * @returns {Object[]}
      */
     this.getUser = function () {
-        var url = this.baseURI + 'v1/user/';
+        var url = baseURL + 'v1/user/';
 
-        var request = ZenMoney.requestGet(url, apiHeaders());
+        var response = ZenMoney.requestGet(url, apiHeaders());
 
-        return getJson(request);
+        return getJson(response);
     };
 
     /**
      * @returns {Object[]}
      */
     this.getOperations = function () {
-        var request, requestData;
+        var request, response;
         var paginationLimit  = 10; // min value: 10
         var paginationOffset = 0;
         var paginationTotal  = null;
@@ -109,19 +74,19 @@ function Request() {
         ZenMoney.trace('Дата последней транзакции: ' + date.toUTCString());
 
         while (isFirstPage || paginationOffset < paginationTotal) {
-            request     = this.requestOperations(paginationLimit, paginationOffset);
-            requestData = getJson(request);
+            responseJson = this.requestOperations(paginationLimit, paginationOffset);
+            response     = getJson(responseJson);
 
-            if (requestData.errorCode != 0) {
-                throw new ZenMoney.Error('Errors: ' + JSON.stringify(requestData.errorMsgs));
+            if (response.errorCode != 0) {
+                throw new ZenMoney.Error('Errors: ' + JSON.stringify(response.errorMsgs));
             }
 
             if (isFirstPage) {
-                paginationTotal = requestData.count;
+                paginationTotal = response.count;
                 isFirstPage     = false;
             }
 
-            requestData.transactions.forEach(function (operation) {
+            response.transactions.forEach(function (operation) {
                 if (operation.state != 'AuthDecline') {
                     operations.push(operation);
                 }
@@ -138,7 +103,7 @@ function Request() {
      * @param offset
      */
     this.requestOperations = function (limit, offset) {
-        var url = this.baseURI + 'v1/Transactions/';
+        var url = baseURL + 'v1/Transactions/';
 
         var from = getLastSyncTime();
         var till = parseInt(Date.now() / 1000);
@@ -216,6 +181,56 @@ function Request() {
         }
 
         return time;
+    }
+
+    /**
+     * @param {String} login
+     * @param {String} password
+     * @param {String} otp
+     * @return {Object}
+     */
+    function authenthicate(login, password, otp) {
+        otp = processOtpInput(otp)
+
+        var authData = {
+            'grant_type': 'password_otp',
+            'username':   login,
+            'password':   password,
+            'otpcode':    otp
+        };
+
+        var response = getJson(ZenMoney.requestPost(baseURL + 'token', authData, authHeaders));
+
+        if (!response.access_token) {
+            var error = response.error
+            var errorDesc = response.error_description;
+
+            if (error === 'otp_code_required') {
+                var receivedOtp = ZenMoney.retrieveCode('Введите одноразовый пароль', null, otpOptions);
+                return authenthicate(login, password, receivedOtp)
+            }
+
+            if (error === 'otp_code_invalid') {
+                var receivedOtp = ZenMoney.retrieveCode('Одноразовый пароль введен неверно. Попробуйте еще раз', null, otpOptions);
+                return authenthicate(login, password, receivedOtp)
+            }
+
+            if (error === 'bot_detected') {
+                //TODO: CAPTCHA
+                ZenMoney.trace("ePeayments заподозрил бота и хочет ввода CAPTCHA")
+                throw new ZenMoney.Error('Банк заподозрил в вас бота, попробуйте зайти через браузер, ' +
+                    'потом снова проведите синхронизацию в Zenmoney', true, false)
+            }
+
+            if (error) {
+                throw new ZenMoney.Error(errorDesc, null, /invalid_grant/i.test(error));
+            }
+
+            ZenMoney.trace(response);
+            throw new ZenMoney.Error('Не удалось зайти в личный кабинет. Сайт изменен?');
+        } else {
+            return { 'token_type': response.token_type, 'access_token': response.access_token }
+        }
     }
 
     /**
