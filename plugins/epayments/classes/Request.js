@@ -2,12 +2,18 @@
  * @author Ryadnov Andrey <me@ryadnov.ru>
  */
 
+ //Modified 29.11.2017
+ /**
+ * @author Pedorich Nikita <pedorich.n@gmail.com>
+ */
+
 /**
  * @constructor
  */
 function Request() {
     var authTokenType;
     var authAccessToken;
+    const otpRegex = /\d{6}/;
 
     this.baseURI = 'https://api.epayments.com/';
 
@@ -15,7 +21,7 @@ function Request() {
      * @param login
      * @param password
      */
-    this.auth = function (login, password) {
+    this.auth = function (login, password, otp) {
         var cabinet_url = 'https://my.epayments.com/';
 
         var html = ZenMoney.requestGet(cabinet_url, defaultHeaders());
@@ -24,22 +30,48 @@ function Request() {
             throw new ZenMoney.Error('Ошибка при подключении к интернет-банку!');
         }
 
-        var authData    = {
+        otp = processOtpInput(otp)
+
+        var authData = {
             'grant_type': 'password_otp',
-            username:     login,
-            password:     password,
-            'otpcode':    ''
+            'username':   login,
+            'password':   password,
+            'otpcode':    otp
         };
         var authHeaders = Object.assign({}, defaultHeaders(), {
             'Referer':       cabinet_url,
             'Content-Type':  'application/x-www-form-urlencoded',
             'Authorization': 'Basic ZXBheW1lbnRzOm1ZbjZocmtnMElMcXJ0SXA4S1NE'
         });
+        var otpOptions = {
+            'inputType': 'number', //Или numberPassword?
+            'time': 3E4
+        };
+
         var requestData = getJson(ZenMoney.requestPost(this.baseURI + 'token', authData, authHeaders));
         if (!requestData.access_token) {
-            var error = requestData.error_description;
+            var error = requestData.error
+            var errorDesc = requestData.error_description;
+
+            if (error === 'otp_code_required') {
+                var receivedOtp = ZenMoney.retrieveCode('Введите одноразовый пароль', null, otpOptions);
+                return this.auth(login, password, receivedOtp)
+            }
+
+            if (error === 'otp_code_invalid') {
+                var receivedOtp = ZenMoney.retrieveCode('Одноразовый пароль введен неверно. Попробуйте еще раз', null, otpOptions);
+                return this.auth(login, password, receivedOtp)
+            }
+
+            if (error === 'bot_detected') {
+                //TODO: CAPTCHA
+                ZenMoney.trace("ePeayments заподозрил бота и хочет ввода CAPTCHA")
+                throw new ZenMoney.Error('Банк заподозрил в вас бота, попробуйте зайти через браузер, ' +
+                   'потом снова проведите синхронизацию в Zenmoney', true, false)
+            }
+
             if (error) {
-                throw new ZenMoney.Error(error, null, /Неверный логин или пароль/i.test(error));
+                throw new ZenMoney.Error(errorDesc, null, /invalid_grant/i.test(error));
             }
 
             ZenMoney.trace(requestData);
@@ -184,5 +216,22 @@ function Request() {
         }
 
         return time;
+    }
+
+    /**
+     * @param {String} code
+     * @return {String}
+     */
+    function processOtpInput(code) {
+        if (code) {
+            var match = code.match(otpRegex)
+            if (match && match.length > 0) {
+                return match[0]
+            } else {
+                return ''
+            }
+        } else {
+            return ''
+        }
     }
 }
