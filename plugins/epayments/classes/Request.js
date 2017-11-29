@@ -35,9 +35,15 @@ function Request() {
      * @param password
      */
     this.auth = function (login, password, otp) {
-        var response = ZenMoney.requestGet(cabinetURL, defaultHeaders());
-        if (!response || ZenMoney.getLastStatusCode() > 400) {
-            ZenMoney.trace(response)
+        ZenMoney.request('HEAD', cabinetURL, null,  defaultHeaders());
+        var cabinetStatus = ZenMoney.getLastStatusCode()
+        ZenMoney.request('HEAD', baseURL, null, defaultHeaders());
+        var apiStatus = ZenMoney.getLastStatusCode()
+
+        if (cabinetStatus > 400 || apiStatus > 400) {
+            ZenMoney.trace('Cabinet Status Code ' + cabinetStatus)
+            ZenMoney.trace('API Status Code ' + apiStatus)
+
             throw new ZenMoney.Error('Ошибка при подключении к интернет-банку!');
         }
 
