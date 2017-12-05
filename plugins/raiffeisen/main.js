@@ -172,13 +172,13 @@ function addToZenMoney(zenAccounts, zenTransactions) {
     var syncEndDate = new Date(ZenMoney.getData('last_sync', 0));
 
     for (var i = 0; i < zenAccounts.length; ++i) {
+        ZenMoney.trace('Добавляем Zen-счёт: ' + JSON.stringify(zenAccounts[i]));
         ZenMoney.addAccount(zenAccounts[i]);
-        ZenMoney.trace('Добавлен Zen-счёт: ' + JSON.stringify(zenAccounts[i]));
     }
 
     for (var i = 0; i < zenTransactions.length; ++i) {
+        ZenMoney.trace('Добавляем Zen-транзакцию: ' + JSON.stringify(zenTransactions[i]));
         ZenMoney.addTransaction(zenTransactions[i]);
-        ZenMoney.trace('Добавлена Zen-транзакция: ' + JSON.stringify(zenTransactions[i]));
 
         if (zenTransactions[i].date > Math.round(syncEndDate.getTime() / 1000))
             syncEndDate = new Date(zenTransactions[i].date * 1000);
