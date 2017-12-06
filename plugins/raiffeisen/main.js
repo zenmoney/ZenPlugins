@@ -332,6 +332,8 @@ function getAccountMovements(account, startDate) {
             continue;
         if (movement.shortDescription() === 'CREDIT CARD PRINCIPAL REPMNT')
             continue;
+        if (movement.shortDescription() === 'RCONNECT ACCESS')
+            continue;
         if (movement.fullDescription().substr(0, 7) === 'CARD **')
             continue;
         if (!movement.isIncome() && !movement.isOutcome())
