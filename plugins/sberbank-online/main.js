@@ -369,7 +369,7 @@ function processApiAccounts() {
 			//ZenMoney.trace('XML-XML: '+xml3);
 
             var errorText3 = getElementByTag(xml3, ['error', 'text'], replaceTagsAndSpaces);
-            if (!errorText3)
+            if (errorText3)
                 throw new ZenMoney.Error('Не удалось получить информацию по вкладу. Ответ банка: '+ errorText3);
 
 			acc.type = 'deposit';
