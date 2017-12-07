@@ -2,7 +2,7 @@
 <provider>
     <id>sberbank-online</id>
     <version>1.1</version>
-    <build>79</build>
+    <build>81</build>
     <company>4624</company>
     <codeRequired>true</codeRequired>
     <files>
