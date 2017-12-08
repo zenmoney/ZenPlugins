@@ -332,11 +332,11 @@ function getAccountMovements(account, startDate) {
             continue;
         if (movement.shortDescription() === 'CREDIT CARD PRINCIPAL REPMNT')
             continue;
-        if (movement.fullDescription() === 'RCONNECT ACCESS')
-            continue;
         if (movement.fullDescription().substr(0, 7) === 'CARD **')
             continue;
         if (!movement.isIncome() && !movement.isOutcome())
+            continue;
+        if (movement.amount() === 0)
             continue;
 
         movements.push(movement);
@@ -363,6 +363,8 @@ function getCardTransactions(card, startDate) {
         var transaction = new CardTransaction(returns[j]);
 
         if (!transaction.isIncome() && !transaction.isOutcome())
+            continue;
+        if (transaction.amount() === 0)
             continue;
 
         transactions.push(transaction);
