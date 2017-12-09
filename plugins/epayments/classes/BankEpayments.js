@@ -88,8 +88,17 @@ function BankEpayments() {
                 operation.income         = isIncome ? dataItem.total : 0;
 
                 if (dataItem.operation.typeCode == 'Atm') { // снятие нала
-                    operation.income        = dataItem.amount;
-                    operation.incomeAccount = 'cash#' + resolveInstrument(dataItem.currency);
+                    if (dataItem.currency != data.txnCurrency) { //Снятие в валюте отличной от валюты счета
+                        operation.income              = dataItem.txnAmount; //Сумма в валюте снятия
+                        operation.incomeAccount       = 'cash#' + resolveInstrument(dataItem.txnCurrency); //Валюта снятия
+                        operation.outcome             = dataItem.total; //Сумма в валюте счета + комиссия
+                        operation.opOutcome           = dataItem.txnAmount;
+                        operation.opOutcomeInstrument = resolveInstrument(dataItem.txnCurrency) //Валюта снятия
+                    } else {
+                        operation.income        = dataItem.amount;
+                        operation.incomeAccount = 'cash#' + resolveInstrument(dataItem.currency);
+                    }
+
                 }
 
                 operations.push(operation);
