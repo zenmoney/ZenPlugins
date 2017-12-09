@@ -136,7 +136,7 @@ module.exports = ({allowedHost, host, https}) => {
                 "/zen/pipe",
                 serializeErrors((req, res) => {
                     res.set("Content-Type", "text/plain");
-                    res.send(readPluginFileSync("zp_pipe.txt", "").content);
+                    res.send(readPluginFileSync("zp_pipe.txt", "").content.replace(/\n$/, ""));
                 })
             );
 
