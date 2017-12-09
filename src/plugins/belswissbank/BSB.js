@@ -80,7 +80,7 @@ export async function authorize(username, password, deviceId) {
                 "username": username,
                 "password": password,
                 "deviceId": deviceId,
-                "applicationVersion": "Web 5.3.12",
+                "applicationVersion": "Web 5.8.1",
                 "osType": 3,
                 "currencyIso": "BYN",
             },
@@ -97,7 +97,7 @@ export async function authorize(username, password, deviceId) {
 export async function confirm(deviceId, confirmationCode) {
     const response = await fetchJson(makeApiUrl(`/devices/${deviceId}`), {
         method: "POST",
-        body: confirmationCode.toString(),
+        body: confirmationCode,
         sanitizeRequestLog: {body: true},
     });
     console.assert(response.body.deviceStatus === "CONFIRMED", "confirmation failed:", response);
