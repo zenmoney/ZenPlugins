@@ -1,5 +1,5 @@
-var g_baseurl =  'https://online.vtb24.ru/',
-	g_url_login = g_baseurl+'content/vtb24-online-client/ru/login.html',
+var g_baseurl =  'https://online.vtb.ru/',
+	g_url_login = g_baseurl+'content/v/ru/login.html',
 	g_headers = {
 		'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
 		//'Accept-Charset': 'windows-1251,utf-8;q=0.7,*;q=0.3',
@@ -9,15 +9,15 @@ var g_baseurl =  'https://online.vtb24.ru/',
 		'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.76 Safari/537.36',
 		'Pragma': 'no-cache',
 		'DNT': '1',
-		'Host': 'online.vtb24.ru'
+		'Host': 'online.vtb.ru'
 		//'X-Requested-With': 'XMLHttpRequest'
-		//'Referer': g_baseurl + 'content/telebank-client/ru/login.html'
+		//'Referer': g_baseurl + 'content/v/ru/login.html'
 	},
 	g_headers2 = {
 		'Accept': 'application/json, text/javascript, */*; q=0.01',
 		'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-		'Referer': g_baseurl + 'content/vtb24-online-client/ru/login.html',
-		'Origin': 'https://online.vtb24.ru'
+		'Referer': g_baseurl + 'content/v/ru/login.html',
+		'Origin': 'https://online.vtb.ru'
 	},
 	g_preferences, g_pageToken, g_pageSecurityID, g_browserSessionUid;
 
@@ -27,8 +27,8 @@ var g_baseurl =  'https://online.vtb24.ru/',
 function main() {
 
 	g_preferences = ZenMoney.getPreferences();
-	if (!g_preferences.login) throw new ZenMoney.Error("Введите логин в ВТБ24-Онлайн!", true, true);
-	if (!g_preferences.password) throw new ZenMoney.Error("Введите пароль в ВТБ24-Онлайн!", true, true);
+	if (!g_preferences.login) throw new ZenMoney.Error("Введите логин в ВТБ-Онлайн!", true, true);
+	if (!g_preferences.password) throw new ZenMoney.Error("Введите пароль в ВТБ-Онлайн!", true, true);
 
 	// тест переводов
 	// makeTransfer('17F9D3290454421EA289CF6AEF1884440', '33EB7DE0D82643FCA680B5D2B81888550', 5.1);		// тест на счёт
@@ -56,7 +56,7 @@ function login(){
 
 	if (!html) {
 		ZenMoney.trace('По адресу "'+ g_url_login +'" банк ничего не вернул.');
-		throw new ZenMoney.Error('Не удалось загрузить форму для входа в ВТБ24.');
+		throw new ZenMoney.Error('Не удалось загрузить форму для входа в ВТБ.');
 	}
 
 	g_pageSecurityID = getParam(html, /page-security-id="([^"]*)/i, null, html_entity_decode);
@@ -112,7 +112,7 @@ function login(){
 			}, g_headers2);
 			//ZenMoney.trace('JSON: '+ JSON.stringify(json));
 
-			var smsCode = ZenMoney.retrieveCode("Введите код авторизации из СМС для входа в ВТБ24-Онлайн", null, {
+			var smsCode = ZenMoney.retrieveCode("Введите код авторизации из СМС для входа в ВТБ-Онлайн", null, {
 				inputType: "number",
 				time: 5*60*1000
 			});
@@ -146,7 +146,7 @@ function login(){
 		}
 
 		if (!json.authorized)
-			throw new ZenMoney.Error('Не удалось зайти в ВТБ24-Онлайн. Сайт изменен?');
+			throw new ZenMoney.Error('Не удалось зайти в ВТБ-Онлайн. Сайт изменен?');
 	}
 	else
 		ZenMoney.trace('Уже авторизованы. Продолжаем...');
