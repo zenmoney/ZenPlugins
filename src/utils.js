@@ -179,10 +179,7 @@ export const processHeadersAndBody = ({headers, body}) => {
 export const fetchRemoteSync = ({method, url, headers, body}) => {
     const req = new XMLHttpRequest();
     req.withCredentials = true;
-
-    const {pathname, search} = new URL(url);
-    const pathWithQueryParams = pathname + search;
-    req.open(method, pathWithQueryParams, false);
+    req.open(method, "/" + url, false);
 
     const {headers: processedHeaders, body: processedBody} = processHeadersAndBody({headers, body});
     req.setRequestHeader(PROXY_TARGET_HEADER, url);

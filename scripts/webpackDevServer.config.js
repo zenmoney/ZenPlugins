@@ -148,14 +148,18 @@ module.exports = ({allowedHost, host, https}) => {
                 if (proxyRes.headers["set-cookie"]) {
                     proxyRes.headers["set-cookie"] = proxyRes.headers["set-cookie"].map(removeSecureSealFromCookieValue);
                 }
+                if (proxyRes.headers["location"]) {
+                    proxyRes.headers["location"] = "http://" + req._reqHost + "/" + proxyRes.headers["location"];
+                }
             });
 
             app.all("*", (req, res, next) => {
-                const target = req.headers[PROXY_TARGET_HEADER];
+                const target = /^\/http/i.test(req.url) ? req.url.substring(1) : null;
                 if (!target) {
                     next();
                     return;
                 }
+                req._reqHost = req.headers.host;
                 req.headers = _.object(_.compact(_.pairs(req.headers).map((pair) => {
                     const [key, value] = pair;
                     if (key === "cookie") {
@@ -172,7 +176,7 @@ module.exports = ({allowedHost, host, https}) => {
                     preserveHeaderKeyCase: true,
                     ignorePath: true,
                     secure: false,
-                    xfwd: false,
+                    xfwd: false
                 });
             });
         },
