@@ -34,7 +34,7 @@ const writeJsonSync = (file, object) => {
     writePluginFileSync(file, JSON.stringify(object, null, 4));
 };
 
-const removeSecureSealFromCookieValue = (value) => value.replace(/\s?Secure;/i, "");
+const removeSecureSealFromCookieValue = (value) => value.replace(/\s?Secure(;|\s*$)/ig, "");
 
 const readPluginFileSync = (file, missingFileValue) => {
     const candidatePaths = [
