@@ -1,65 +1,6 @@
-import {adaptAsyncFn, traceFunctionCalls, provideScrapeDates} from "../../common/adapters";
+import {convertToZenMoneyTransaction} from "./mappingUtils";
 import * as prior from "./prior";
-
 const calculateAccountId = (card) => String(card.clientObject.id);
-
-const convertToZenMoneyTransaction = (accountId, {
-    transactionCurrency,
-    transactionAmount,
-    accountAmount,
-    transactionDate,
-    details,
-    isCurrencyConversion,
-}) => {
-    const zenMoneyTransaction = {date: transactionDate, created: transactionDate, payee: details.payee};
-
-    const commentLines = [];
-    if (isCurrencyConversion) {
-        commentLines.push(`${Math.abs(transactionAmount).toFixed(2)} ${transactionCurrency}`);
-        commentLines.push(`(rate=${(transactionAmount / accountAmount).toFixed(4)})`);
-    }
-    if (details.comment) {
-        commentLines.push(details.comment);
-    }
-
-    if (transactionAmount >= 0) {
-        zenMoneyTransaction.income = Math.abs(accountAmount);
-        zenMoneyTransaction.incomeAccount = accountId;
-        if (details.type === "ATM") {
-            zenMoneyTransaction.outcome = Math.abs(transactionAmount);
-            zenMoneyTransaction.outcomeAccount = `cash#${transactionCurrency}`;
-        } else {
-            zenMoneyTransaction.outcome = 0;
-            zenMoneyTransaction.outcomeAccount = accountId;
-        }
-    } else {
-        zenMoneyTransaction.outcome = Math.abs(accountAmount);
-        zenMoneyTransaction.outcomeAccount = accountId;
-        if (details.type === "ATM") {
-            zenMoneyTransaction.income = Math.abs(transactionAmount);
-            zenMoneyTransaction.incomeAccount = `cash#${transactionCurrency}`;
-        } else {
-            zenMoneyTransaction.income = 0;
-            zenMoneyTransaction.incomeAccount = accountId;
-        }
-    }
-
-    if (isCurrencyConversion) {
-        if (transactionAmount >= 0) {
-            zenMoneyTransaction.opIncome = Math.abs(transactionAmount);
-            zenMoneyTransaction.opIncomeInstrument = transactionCurrency;
-        } else {
-            zenMoneyTransaction.opOutcome = Math.abs(transactionAmount);
-            zenMoneyTransaction.opOutcomeInstrument = transactionCurrency;
-        }
-    }
-
-    if (commentLines.length > 0) {
-        zenMoneyTransaction.comment = commentLines.join("\n");
-    }
-
-    return zenMoneyTransaction;
-};
 
 function convertToZenMoneyData(card) {
     const accountId = calculateAccountId(card);
@@ -77,11 +18,8 @@ function convertToZenMoneyData(card) {
 }
 
 export async function scrape({fromDate, toDate}) {
-    const {login, password} = ZenMoney.getPreferences();
-    if (!login || !password) {
-        throw new Error("login and password should be provided");
-    }
-
+    const {login: rawLogin, password} = ZenMoney.getPreferences();
+    const login = rawLogin.trim();
     const preAuthHeaders = await prior.fetchPreAuthHeaders();
     const loginSalt = await prior.fetchLoginSalt({preAuthHeaders, login});
     const {accessToken, userSession} = await prior.login({preAuthHeaders, loginSalt, login, password});
@@ -96,5 +34,3 @@ export async function scrape({fromDate, toDate}) {
         .filter((card) => !ZenMoney.isAccountSkipped(calculateAccountId(card)))
         .map(convertToZenMoneyData);
 }
-
-export const main = adaptAsyncFn(provideScrapeDates(traceFunctionCalls(scrape)));

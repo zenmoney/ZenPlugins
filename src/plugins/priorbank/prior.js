@@ -1,6 +1,5 @@
 import {SHA512} from "jshashes";
 import _ from "underscore";
-import {isValidDate} from "../../common/dates";
 import {fetchJson} from "../../common/network";
 
 function isSuccessfulResponse(response) {
@@ -43,7 +42,23 @@ const sha512 = new SHA512();
 
 export const calculatePasswordHash = ({loginSalt, password}) => sha512.hex(sha512.hex(password.slice(0, 16)) + loginSalt);
 
+function getCharCodesDistribution(obj) {
+    return _.mapObject(obj, (value) => {
+        const charCodes = value.split("").map((char) => char.charCodeAt(0));
+        return _.countBy(charCodes, (code) => {
+            if (0 <= code && code < 128) {
+                return "ascii";
+            } else if (128 <= code && code < 256) {
+                return "ansi";
+            } else {
+                return "other";
+            }
+        });
+    });
+}
+
 export async function login({preAuthHeaders, loginSalt, login, password}) {
+    console.debug("charCodesDistribution", getCharCodesDistribution({login, password}));
     const response = await fetchJson(makeApiUrl("/Authorization/Login"), {
         method: "POST",
         body: {login, password: calculatePasswordHash({loginSalt, password}), lang: "RUS"},
@@ -128,17 +143,16 @@ function parseTransDetails(transDetails) {
 }
 
 const normalizePreparedItem = (item, accountCurrency) => {
-    const transactionCurrency = item.transCurrIso;
-    const isCurrencyConversion = accountCurrency !== transactionCurrency;
+    const details = parseTransDetails(item.transDetails);
     return ({
         transactionDate: new Date(item.transDate),
         transactionAmount: -item.transAmount,
         transactionCurrency: item.transCurrIso,
-        accountDate: null,
         accountAmount: -item.amount,
         accountCurrency,
-        details: parseTransDetails(item.transDetails),
-        isCurrencyConversion,
+        isCashTransfer: details.type === "ATM",
+        payee: details.payee,
+        comment: details.comment,
         __sourceKind: "prepared",
         __source: item,
     });
@@ -147,19 +161,18 @@ const normalizePreparedItem = (item, accountCurrency) => {
 const normalizeCommittedItem = (item, accountCurrency) => {
     const transactionCurrency = item.transCurrIso;
     const transactionDate = new Date(item.transDate);
-    const accountDate = new Date(item.postingDate);
     const accountAmount = item.accountAmount;
-    const isCurrencyConversion = accountCurrency !== transactionCurrency;
-    const transactionAmount = isCurrencyConversion ? item.amount : accountAmount;
+    const transactionAmount = accountCurrency === transactionCurrency ? accountAmount : item.amount;
+    const details = parseTransDetails(item.transDetails);
     return {
         transactionDate,
         transactionAmount,
         transactionCurrency,
-        accountDate,
         accountAmount,
         accountCurrency,
-        details: parseTransDetails(item.transDetails),
-        isCurrencyConversion,
+        isCashTransfer: details.type === "ATM",
+        payee: details.payee,
+        comment: details.comment,
         __sourceKind: "committed",
         __source: item,
     };
@@ -175,21 +188,7 @@ const extractAndNormalizeTransactions = (cardDetails, accountCurrency) => {
             .map((item) => normalizeTransactionItem({committed, item, accountCurrency}))
             .reverse()
         ));
-    transactions.forEach(checkNormalizedTransaction);
     return _.sortBy(transactions, x => x.transactionDate);
-};
-
-const checkNormalizedTransaction = (transaction) => {
-    [
-        "transactionAmount",
-        "accountAmount",
-        "transactionCurrency",
-        "accountCurrency",
-        "details",
-    ].forEach((key) => console.assert(transaction[key], "!" + key, transaction));
-    console.assert(isValidDate(transaction.transactionDate), "transactionDate is invalid date", transaction);
-    console.assert(transaction.accountDate === null || isValidDate(transaction.accountDate), "accountDate is invalid date", transaction);
-    console.assert(typeof transaction.isCurrencyConversion === "boolean", "bool isCurrencyConversion", transaction);
 };
 
 export function joinTransactions({cardItems, cardDetailItems}) {

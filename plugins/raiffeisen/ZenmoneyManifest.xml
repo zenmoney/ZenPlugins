@@ -1,15 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <provider>
     <id>raiffeisen</id>
-    <version>1.1</version>
-    <build>6</build>
+    <version>2.0</version>
+    <build>0</build>
     <company>5156</company>
     <files>
         <js>marknote.js</js>
+        <js>marknote-wrapper.js</js>
+        <js>raiffeisen-objects.js</js>
         <js>main.js</js>
         <preferences>preferences.xml</preferences>
     </files>
-	<description>Бета-версия плагина синхронизации Райффайзен R-Connect.
+	<description>Плагин синхронизации Райффайзен R-Connect.
 
 Для подключения импорта укажите ваш логин и пароль от интернет-банка.
 

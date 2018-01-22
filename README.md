@@ -273,7 +273,8 @@ Transaction {
     payee: String?
 	
     date: ('yyyy-MM-dd' | timestamp in s)?
-	
+    hold: Bool?
+    
     opIncome:            Double? >= 0
     opIncomeInstrument:  Account.instrument?
     opOutcome:           Double? >= 0
@@ -308,6 +309,8 @@ Transaction {
 `payee` - место совершения операции. "МакДоналдс", "Пятерочка" и т.п.
 
 `mcc` - [код места совершения операции](https://ru.wikipedia.org/wiki/Merchant_Category_Code)
+
+`hold` - является ли операция холдом
 
 #### ZenMoney.setResult({success: Bool, message: String?, account: [Account]?, transaction: [Transaction]?})
 При вызове добавляет счета account и операции transaction и завершает работу плагина. Если `!success`, то это равносильно завершению работы с исключением `ZenMoney.Error(message)`.
@@ -350,3 +353,4 @@ set "PLUGIN=src/my-bank" && yarn start
 В консоли разработчика вы можете просматривать логи плагина.
 
 Известный нюанс, который ждёт вас при использовании функции `ZenMoney.retrieveCode`: отладчик ожидает пользовательский ввод в файле `zp_pipe.txt` в папке плагина до тех пор, пока файл пустой. Перед каждым запуском плагина рекомендуется убедиться, что `zp_pipe.txt` пустой, иначе будут подхватываться старые данные.
+

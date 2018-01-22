@@ -1,5 +1,6 @@
+import {nativeConsole} from "./consoleAdapter";
 import {
-    fetchFileSync,
+    getResourceSync,
     fetchRemoteSync,
     getLastError,
     getLastResponseHeader,
@@ -9,12 +10,10 @@ import {
     getLastStatusString,
     getLastUrl,
     handleException,
-    isSuccessfulHttpStatus,
     setDefaultEncoding,
     setThrowOnError
 } from "./utils";
 import {ZPAPIError} from "./ZPAPIError";
-import {nativeConsole} from "./consoleAdapter";
 
 function isArray(object) {
     return Array.isArray ?
@@ -160,21 +159,29 @@ function ZPAPI({manifest, preferences, data}) {
     this.setCookie = function() {
     };
 
-    this.getData = function(name, defaultValue) {
-        return data[name] !== undefined ? data[name] : defaultValue;
+    this._data = data;
+
+    this.getData = (name, defaultValue) => {
+        return this._data[name] !== undefined
+            ? this._data[name]
+            : defaultValue;
     };
 
-    this.setData = function(name, value) {
-        data[name] = value;
+    this.setData = (name, value) => {
+        this._data = {
+            ...this._data,
+            [name]: value,
+        };
     };
 
-    this.clearData = function() {
-        data = {};
+    this.clearData = () => {
+        this._data = {};
     };
 
     this.saveData = () => {
-        this.trace("saveData:\n" + JSON.stringify(data) + "\n\n" +
-            "Для того, чтобы плагин мог использовать эти данные при следующем запуске, сохраните их в файл zp_data.json\n");
+        if (this._data !== data) {
+            this._saveDataRequested = true;
+        }
     };
 
     this.saveCookies = function() {
@@ -204,12 +211,24 @@ function ZPAPI({manifest, preferences, data}) {
             this.trace("setResult success: " + JSON.stringify(result));
             addAccount(result.account);
             addTransaction(result.transaction);
+            // eslint-disable-next-line no-restricted-globals
+            self.postMessage({
+                type: "completed",
+                success: true,
+                pluginDataChange: this._saveDataRequested
+                    ? {oldValue: data, newValue: this._data}
+                    : null,
+            });
         } else {
             const resultError = result.message ? result.message.toString() : "[RSU] setResult called without success";
             this.trace("setResult fail: " + new ZPAPIError(resultError, !!result.allow_retry));
+            // eslint-disable-next-line no-restricted-globals
+            self.postMessage({
+                type: "completed",
+                success: false,
+                message: resultError,
+            });
         }
-        // eslint-disable-next-line no-restricted-globals
-        self.postMessage({type: "completed", success: result.success});
     };
 
     function addAccount(accounts) {
@@ -412,8 +431,8 @@ ${comment}
         while (time > 0) {
             let code;
             try {
-                const {body, status} = fetchFileSync("/zen/pipe");
-                if (isSuccessfulHttpStatus(status)) {
+                const {body, status} = getResourceSync("/zen/pipe");
+                if (status === 200) {
                     code = body;
                 }
             } catch (e) {

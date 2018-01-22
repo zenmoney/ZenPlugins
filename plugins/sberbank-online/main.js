@@ -189,19 +189,31 @@ function requestApiInner(url, params, no_default_params, ignoreErrors) {
 	}
 	// регистрируем девайс
 	var html = ZenMoney.requestPost(url, newParams, m_headers);
-	// Проверим на правильность
 
+	// Проверим на правильность
 	var code = getParam(html, /<status>\s*<code>\s*(-?\d+)\s*<\/code>/i, null, parseBalance);
 
 	if (!/<status>\s*<code>\s*0\s*<\/code>/i.test(html)) {
+
 		ZenMoney.trace('Ответ с ошибкой от ' + url + ': ' + clearHtml(html));
-		if (!ignoreErrors) {
-			var error = getParam(html, /<text>\s*(?:<!\[CDATA\[)?\s*(.*?)\s*(?:\]\]>)?\s*<\/text>/i);
-			ZenMoney.trace('error: ' + error);
-			var ex = new ZenMoney.Error(error || "Ошибка при обработке запроса к " + url, null, /не может быть|неправильный|неверный|заблокирован/i.test(error));
-			ex.code = code;
-			throw ex;
-		}
+
+		var error = getParam(html, /<text>\s*(?:<!\[CDATA\[)?\s*(.*?)\s*(?:\]\]>)?\s*<\/text>/i);
+		ZenMoney.trace('error: ' + error);
+		ZenMoney.trace('ignoreErrors: ' + ignoreErrors);
+
+		if (error) {
+			//var repeat = /повторите попытку|временно недоступна/i.test(error); -- с АБС всё ещё не понятно как быть :(
+			var repeat = /повторите попытку/i.test(error);
+			var fatal = /не может быть|неправильный|неверный|заблокирован/i.test(error);
+			error = 'Ответ от банка: ' + error;
+
+			if (!ignoreErrors || repeat) {
+                var ex = new ZenMoney.Error(error, repeat, fatal);
+                ex.code = code;
+                throw ex;
+            }
+		} else
+			throw new ZenMoney.Error('Ошибка обращения к ' + url);
 	}
 	return html;
 }
@@ -211,8 +223,8 @@ var g_accounts = {};		// список добавленных счетов, по 
  * Обработка счетов через API
  */
 function processApiAccounts() {
-	var xml = requestApi('private/products/list.do', {showProductType: 'cards,accounts,imaccounts,loans'});
 	ZenMoney.trace('Запрашиваем данные по всем счетам...');
+	var xml = requestApi('private/products/list.do', {showProductType: 'cards,accounts,imaccounts,loans'});
 	ZenMoney.trace('list.do: ' + xml);
 	var accDict = [];
 
@@ -282,6 +294,7 @@ function processApiAccounts() {
 			if (getElementByTag(card, 'type', replaceTagsAndSpaces) == 'credit') {
 				// обработаем свойства кредитных карт
 				var xml2 = requestApi('private/cards/info.do', {id: id}, true);
+
 				var creditLimits = getElementByTag(xml2, ['limit', 'amount'], replaceTagsAndSpaces, parseToFloat);
 				if (creditLimits > 0) {
 					acc.creditLimit = creditLimits;
@@ -354,6 +367,10 @@ function processApiAccounts() {
 			// дополнительная информация по вкладам
 			var xml3 = requestApi('private/accounts/info.do', {id: id}, true);
 			//ZenMoney.trace('XML-XML: '+xml3);
+
+            var errorText3 = getElementByTag(xml3, ['error', 'text'], replaceTagsAndSpaces);
+            if (errorText3)
+                throw new ZenMoney.Error('Не удалось получить информацию по вкладу. Ответ банка: '+ errorText3);
 
 			acc.type = 'deposit';
 			acc.percent = rate;
@@ -799,35 +816,38 @@ function loginWeb() {
 	// Входим
 	ZenMoney.setDefaultCharset('windows-1251');
 	html = ZenMoney.requestPost(baseurl, {
+		fakeLogin: '',
+		fakePassword: '',
 		'field(login)': g_preferences.login,
 		'field(password)': g_preferences.password,
 		operation: 'button.begin'
 	}, addHeaders({Referer: baseurl, 'X-Requested-With': 'XMLHttpRequest', Origin: 'https://online.sberbank.ru'}));
 	ZenMoney.setDefaultCharset('utf-8');
-	ZenMoney.trace('Пытаемся войти...');
+	ZenMoney.trace('Пытаемся войти в веб-версию Сбербанк-Онлайн...');
 
-	var error = getParam(html, /<h1[^>]*>О временной недоступности услуги[\s\S]*?<p[^>]*>([\s\S]*?)<\/p>/i, replaceTagsAndSpaces, html_entity_decode);
-	if (error)
-		throw new ZenMoney.Error(error);
-
-	error = getParam(html, /в связи с ошибкой в работе системы[\s\S]*?<div[^>]*>([\s\S]*?)<\/div>/i, replaceTagsAndSpaces, html_entity_decode);
-	if (error)
-		throw new ZenMoney.Error(error);
+	var error = getParam(html, /<h1[^>]*>О временной недоступности услуги[\s\S]*?<p[^>]*>([\s\S]*?)<\/p>|в связи с ошибкой в работе системы[\s\S]*?<div[^>]*>([\s\S]*?)<\/div>/i, replaceTagsAndSpaces, html_entity_decode);
+	if (error) {
+		ZenMoney.trace('HTML: '+ html);
+		throw new ZenMoney.Error('Ошибка входа. Ответ от банка: ' + error);
+	}
 
 	if (/\$\$errorFlag/i.test(html)) {
 		error = getParam(html, /([\s\S]*)/, [replaceTagsAndSpaces, /^:/, ''], html_entity_decode);
-		throw new ZenMoney.Error(error, null, /Ошибка идентификации/i.test(error));
+		ZenMoney.trace('HTML: '+ html);
+		throw new ZenMoney.Error('Ошибка входа. Ответ от банка: '+error, null, /Ошибка идентификации/i.test(error));
 	}
 
 	var page = getParam(html, /value\s*=\s*["'](https:[^'"]*?AuthToken=[^'"]*)/i);
-	if (!page)
+	if (!page) {
+		ZenMoney.trace('HTML: '+ html);
 		throw new ZenMoney.Error('Не удаётся пройти авторизацию.');
+	}
 
 	if (/online.sberbank.ru\/PhizIC/.test(page)) {
 		html = loginWebAccount(page);
 	} else if (/Off_Service/i.test(page))
-		throw new ZenMoney.Error("В настоящее время услуга Сбербанк Онлайн временно недоступна по техническим причинам. Сбербанк приносит свои извинения за доставленные" +
-			" неудобства.");
+		throw new ZenMoney.Error("В настоящее время услуга Сбербанк Онлайн временно недоступна по техническим причинам. " +
+			" Сбербанк приносит свои извинения за доставленные неудобства.", true);
 	else {
 		ZenMoney.trace('Текущий вариант Сбербанк Онлайн не поддерживается: ' + html);
 		throw new ZenMoney.Error("К сожалению, текущий вариант Сбербанк-онлайн пока не поддерживается. Пожалуйста, обратитесь к разработчикам для исправления.");
@@ -1155,25 +1175,22 @@ function processWebTransactions(id, acc) {
  */
 function parseTransactionDescription(description, sum, instrument, tran) {
 
-
 	var str = null;
 	if (str = getWebDescriptionValue(description, [
-			'Retail',               // оплата по карте
-			'Unique'                // unique
+			'Retail',				// оплата по карте
+			'Unique'				// unique
 		]))
 		tran.payee = str;
 
 	else if (str = getWebDescriptionValue(description, [
-			'Credit',               // оплата в кредит
-			'CH Debit',             // поступление
-			'CH Payment',           // списание
-			'BP Billing Transfer',  // платёж в Сбербанк Онлайн
-			'BP Card - Acct',       // дополнительный взнос на вклад
-			'BP Acct - Card'        // частичное снятие со вклада
-
+			'Credit',				// оплата в кредит
+			'CH Debit',				// поступление
+			'CH Payment',			// списание
+			'BP Billing Transfer',	// платёж в Сбербанк Онлайн
+			'BP Card - Acct',		// дополнительный взнос на вклад
+			'BP Acct - Card'		// частичное снятие со вклада
 		]))
 		tran.comment = str;
-
 
 	// взнос наличными
 	else if (str = getWebDescriptionValue(description, 'Note Acceptance') && sum > 0) {

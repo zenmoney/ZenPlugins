@@ -7,3 +7,5 @@ cache:
     - node_modules
 script:
   - yarn test
+notifications:
+  slack: zenmoneydev:bl8QrLjknCK9qGvyHjEcndaY

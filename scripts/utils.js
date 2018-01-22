@@ -25,12 +25,26 @@ const convertManifestXmlToJs = (xml) => {
         }, {});
 };
 
-const getManifest = () => {
+const readPluginManifest = () => {
     const xml = fs.readFileSync(`${params.pluginPath}/ZenmoneyManifest.xml`);
     return convertManifestXmlToJs(xml);
 };
 
+const readPluginPreferencesSchema = () => {
+    const xml = fs.readFileSync(`${params.pluginPath}/${readPluginManifest().preferences}`);
+    const $ = cheerio.load(xml);
+    return $("EditTextPreference").toArray().map((preference) => {
+        const $preference = $(preference);
+        return {
+            key: $preference.attr("key"),
+            obligatory: $preference.attr("obligatory"),
+            defaultValue: $preference.attr("defaultvalue"),
+        };
+    });
+};
+
 module.exports = {
     convertManifestXmlToJs,
-    getManifest,
+    readPluginManifest,
+    readPluginPreferencesSchema,
 };

@@ -65,10 +65,10 @@ function urlEncodeParameters(obj) {
     return str;
 }
 
-export const fetchFile = (url) => {
+export const fetchFile = (url, init = {}) => {
     return new Promise(function(resolve, reject) {
         const req = new XMLHttpRequest();
-        req.open("GET", url, true);
+        req.open(init.method || "GET", url, true);
         req.onerror = reject;
         req.onload = function() {
             resolve({
@@ -80,9 +80,7 @@ export const fetchFile = (url) => {
     });
 };
 
-export const isSuccessfulHttpStatus = (status) => 200 <= status && status < 300;
-
-export const fetchFileSync = (url) => {
+export const getResourceSync = (url) => {
     const req = new XMLHttpRequest();
     req.open("GET", url, false);
     req.send();
@@ -93,14 +91,6 @@ export const fetchFileSync = (url) => {
         status: req.status,
     };
 };
-
-export const fetchJson = (url) => fetchFile(url)
-    .then(({status, body}) => {
-        const parsedBody = JSON.parse(body);
-        return isSuccessfulHttpStatus(status)
-            ? parsedBody
-            : Promise.reject(parsedBody);
-    });
 
 export const handleException = (error) => {
     if (typeof error === "function") {
@@ -189,10 +179,7 @@ export const processHeadersAndBody = ({headers, body}) => {
 export const fetchRemoteSync = ({method, url, headers, body}) => {
     const req = new XMLHttpRequest();
     req.withCredentials = true;
-
-    const {pathname, search} = new URL(url);
-    const pathWithQueryParams = pathname + search;
-    req.open(method, pathWithQueryParams, false);
+    req.open(method, "/" + url, false);
 
     const {headers: processedHeaders, body: processedBody} = processHeadersAndBody({headers, body});
     req.setRequestHeader(PROXY_TARGET_HEADER, url);

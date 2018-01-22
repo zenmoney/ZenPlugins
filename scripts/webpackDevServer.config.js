@@ -4,8 +4,9 @@ const path = require("path");
 const httpProxy = require("http-proxy");
 const _ = require("underscore");
 const {TRANSFERABLE_HEADER_PREFIX, PROXY_TARGET_HEADER} = require("../src/shared");
-const {getManifest} = require("./utils");
+const {readPluginManifest, readPluginPreferencesSchema} = require("./utils");
 const stripBOM = require("strip-bom");
+const bodyParser = require("body-parser");
 
 const convertErrorToSerializable = (e) => _.pick(e, ["message", "stack"]);
 
@@ -19,8 +20,8 @@ const serializeErrors = (handler) => {
     };
 };
 
-const readJson = (file, missingFileValue) => {
-    const {content, path} = readPluginFile(file, missingFileValue);
+const readJsonSync = (file, missingFileValue) => {
+    const {content, path} = readPluginFileSync(file, missingFileValue);
     try {
         return JSON.parse(content);
     } catch (e) {
@@ -29,9 +30,13 @@ const readJson = (file, missingFileValue) => {
     }
 };
 
-const removeSecureSealFromCookieValue = (value) => value.replace(/\s?Secure;/i, "");
+const writeJsonSync = (file, object) => {
+    writePluginFileSync(file, JSON.stringify(object, null, 4));
+};
 
-const readPluginFile = (file, missingFileValue) => {
+const removeSecureSealFromCookieValue = (value) => value.replace(/\s?Secure(;|\s*$)/ig, "");
+
+const readPluginFileSync = (file, missingFileValue) => {
     const candidatePaths = [
         path.join(params.pluginPath, file),
         path.join(__dirname, "../debugger/", file),
@@ -49,6 +54,11 @@ const readPluginFile = (file, missingFileValue) => {
         path: existingPaths[0],
     };
 };
+
+const writePluginFileSync = (file, content) => {
+    fs.writeFileSync(path.join(params.pluginPath, file), content, "utf8");
+};
+
 module.exports = ({allowedHost, host, https}) => {
     return {
         compress: false,
@@ -67,12 +77,13 @@ module.exports = ({allowedHost, host, https}) => {
         public: allowedHost,
         setup(app) {
             app.disable("x-powered-by");
+            app.use(bodyParser.json());
 
             app.get(
                 "/zen/manifest",
                 serializeErrors((req, res) => {
                     res.set("Content-Type", "text/xml");
-                    const manifest = getManifest();
+                    const manifest = readPluginManifest();
                     ["id", "build", "files", "version", "preferences"].forEach((requiredProp) => {
                         if (!manifest[requiredProp]) {
                             throw new Error(`Wrong ZenmoneyManifest.xml: ${requiredProp} prop should be set`);
@@ -85,17 +96,39 @@ module.exports = ({allowedHost, host, https}) => {
             app.get(
                 "/zen/preferences",
                 serializeErrors((req, res) => {
-                    const preferences = readJson("zp_preferences.json");
-                    const patchedPreferences = _.omit(preferences, ["zp_plugin_directory", "zp_pipe"]);
-                    res.json(patchedPreferences);
+                    const preferences = _.omit(readJsonSync("zp_preferences.json"), ["zp_plugin_directory", "zp_pipe"]);
+                    const preferencesSchema = readPluginPreferencesSchema();
+                    const missingObligatoryPrefKeys = preferencesSchema
+                        .filter((x) => x.obligatory && !x.defaultValue && !(x.key in preferences))
+                        .map((x) => x.key);
+                    if (missingObligatoryPrefKeys.length > 0) {
+                        throw new Error(
+                            `The following preference keys are obligatory and don't have defaultValue, thus should be set in zp_preferences.json: ` +
+                            JSON.stringify(missingObligatoryPrefKeys)
+                        );
+                    }
+                    const defaultValues = preferencesSchema.reduce((memo, preferenceSchema) => {
+                        memo[preferenceSchema.key] = preferenceSchema.defaultValue;
+                        return memo;
+                    }, {});
+                    res.json(_.defaults(preferences, defaultValues));
                 })
             );
 
             app.get(
                 "/zen/data",
                 serializeErrors((req, res) => {
-                    const data = readJson("zp_data.json", "{}");
+                    const data = readJsonSync("zp_data.json", "{}");
                     return res.json(data);
+                })
+            );
+
+            app.post(
+                "/zen/data",
+                serializeErrors((req, res) => {
+                    console.assert(req.body.newValue, "newValue should be provided");
+                    writeJsonSync("zp_data.json", req.body.newValue);
+                    return res.json(true);
                 })
             );
 
@@ -103,7 +136,7 @@ module.exports = ({allowedHost, host, https}) => {
                 "/zen/pipe",
                 serializeErrors((req, res) => {
                     res.set("Content-Type", "text/plain");
-                    res.send(readPluginFile("zp_pipe.txt", "").content);
+                    res.send(readPluginFileSync("zp_pipe.txt", "").content.replace(/\n$/, ""));
                 })
             );
 
@@ -115,14 +148,18 @@ module.exports = ({allowedHost, host, https}) => {
                 if (proxyRes.headers["set-cookie"]) {
                     proxyRes.headers["set-cookie"] = proxyRes.headers["set-cookie"].map(removeSecureSealFromCookieValue);
                 }
+                if (proxyRes.headers["location"]) {
+                    proxyRes.headers["location"] = "http://" + req._reqHost + "/" + proxyRes.headers["location"];
+                }
             });
 
             app.all("*", (req, res, next) => {
-                const target = req.headers[PROXY_TARGET_HEADER];
+                const target = /^\/http/i.test(req.url) ? req.url.substring(1) : null;
                 if (!target) {
                     next();
                     return;
                 }
+                req._reqHost = req.headers.host;
                 req.headers = _.object(_.compact(_.pairs(req.headers).map((pair) => {
                     const [key, value] = pair;
                     if (key === "cookie") {
@@ -139,7 +176,7 @@ module.exports = ({allowedHost, host, https}) => {
                     preserveHeaderKeyCase: true,
                     ignorePath: true,
                     secure: false,
-                    xfwd: false,
+                    xfwd: false
                 });
             });
         },

@@ -1,6 +1,7 @@
 import {isValidDate} from "./dates";
 
-const MS_IN_DAY = 24 * 60 * 60 * 1000;
+const MS_IN_MINUTE = 60 * 1000;
+const MS_IN_DAY = 24 * 60 * MS_IN_MINUTE;
 const MS_IN_WEEK = 7 * MS_IN_DAY;
 
 const unsealSyncPromise = (promise) => {
@@ -27,6 +28,7 @@ const calculateFromDate = () => {
         return new Date(lastSuccessDate - MS_IN_WEEK);
     }
     const startDateString = ZenMoney.getPreferences().startDate;
+    console.assert(startDateString, "startDate should be specified in preferences");
     const startDate = new Date(startDateString);
     console.assert(isValidDate(startDate), {startDateString}, "is not a valid date");
     return startDate;
@@ -46,21 +48,47 @@ export function provideScrapeDates(fn) {
     };
 }
 
+export function convertTimestampToDate(timestamp) {
+    // used mobile interpreter implementation as a reference
+    const millis = timestamp < 10000000000
+        ? timestamp * 1000
+        : timestamp;
+    return new Date(millis);
+}
+
+export function postProcessTransaction(transaction) {
+    if (ZenMoney.features.dateProcessing) {
+        return transaction;
+    }
+    let date = (typeof transaction.date === "number")
+        ? convertTimestampToDate(transaction.date)
+        : transaction.date;
+    if (!(date instanceof Date)) {
+        return transaction;
+    }
+    return {
+        ...transaction,
+        date: new Date(date.valueOf() - date.getTimezoneOffset() * MS_IN_MINUTE),
+        created: date,
+    };
+}
+
 export function adaptAsyncFn(fn) {
-    console.assert(typeof fn === "function", "adaptAsyncFn argument should be a function");
+    console.assert(typeof fn === "function", "adaptAsyncFn argument is not a function");
 
     return function adaptedAsyncFn() {
         const result = fn();
-        console.assert(result && typeof result.then === "function", "scrape function should return a promise");
+        console.assert(result && typeof result.then === "function", "scrape() did not return a promise");
         const resultHandled = result.then((results) => {
-            console.assert(results && Array.isArray(results), "scrape result should be array");
+            console.assert(results && Array.isArray(results), "scrape() result is not an array");
+            console.assert(results.length > 0, "scrape results are empty");
             console.assert(
                 results.every((result) => result.account && Array.isArray(result.transactions)),
                 "scrape result should be array of {account, transactions[]}"
             );
             results.forEach(({account, transactions}) => {
                 ZenMoney.addAccount(account);
-                ZenMoney.addTransaction(transactions);
+                ZenMoney.addTransaction(transactions.map(postProcessTransaction));
             });
             ZenMoney.setResult({success: true});
         });
@@ -69,38 +97,41 @@ export function adaptAsyncFn(fn) {
         if (state === "rejected") {
             throw value;
         } else if (state === "pending") {
-            console.debug && console.debug("unable to unseal promise synchronously, falling back to ZenMoney.setResult()");
-            resultHandled.catch((e) => {
-                ZenMoney.setResult(e)
-            });
+            resultHandled.catch((e) => ZenMoney.setResult(e));
         }
     };
 }
 
 export function traceFunctionCalls(fn) {
-    console.assert(typeof fn === "function", "logCalls argument should be a function");
+    console.assert(typeof fn === "function", "traceFunctionCalls argument should be a function");
 
     let callIdx = 0;
     const functionName = fn.name || "anonymous";
     return function logCallsWrapper() {
         const callId = ++callIdx;
         const label = `${functionName} call #${callId}`;
-        console.debug(label, {arguments: Array.from(arguments)});
+        console.debug(label, {arguments: Array.from(arguments)}, "@", new Date());
+        console.time(label);
         const result = fn.apply(this, arguments);
 
         if (!result.then) {
             console.debug(label, {result});
+            console.timeEnd(label);
             return result;
         }
         return result.then(
             (resolveValue) => {
                 console.debug(label, {resolveValue});
+                console.timeEnd(label);
                 return resolveValue;
             },
             (rejectValue) => {
                 console.debug(label, {rejectValue});
+                console.timeEnd(label);
                 return Promise.reject(rejectValue);
             }
         );
     };
 }
+
+export const adaptScrapeToMain = (scrape) => adaptAsyncFn(provideScrapeDates(traceFunctionCalls(scrape)));
