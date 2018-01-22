@@ -454,10 +454,16 @@ function RocketBank(ZenMoney) {
                             if (this.cards.hasOwnProperty(accounts[0])) {
                                 transaction.outcome = sum;
                                 transaction.outcomeAccount = this.cards[accounts[0]];
-                            }
-                            if (this.accounts.hasOwnProperty(accounts[0])) {
+                            } else if (this.accounts.hasOwnProperty(accounts[0])) {
                                 transaction.outcome = sum;
                                 transaction.outcomeAccount = this.accounts[accounts[0]];
+                            }
+                            if (this.cards.hasOwnProperty(accounts[1])) {
+                                transaction.income = sum;
+                                transaction.incomeAccount = this.cards[accounts[1]];
+                            } else if (this.accounts.hasOwnProperty(accounts[1])) {
+                                transaction.income = sum;
+                                transaction.incomeAccount = this.accounts[accounts[1]];
                             }
                         }
                         break;
