@@ -41,7 +41,7 @@
     "util": "0.10.3",
     "webpack": "3.5.1",
     "webpack-dev-server": "2.7.1",
-    "whatwg-fetch": "2.0.3"
+    "whatwg-fetch": "git+https://github.com/skvav/fetch.git#a646b2f837308b483af07012c80e8fd8bb5984f6"
   },
   "scripts": {
     "start": "node scripts/start.js",

@@ -134,44 +134,37 @@ export const processHeadersAndBody = ({headers, body}) => {
     const resultHeaders = [];
 
     if (headers) {
-        Array.from(Object.entries(headers))
-            .forEach(([key, value]) => {
-                if (value) {
-                    value = value.toString();
+        for (const key in headers) {
+            let value = headers[key];
+            if (value) {
+                value = value.toString();
+            }
+            if (!key.length || !value || !value.length) {
+                handleException(`[NHE] Wrong header "${key}" value "${value}"`);
+                return null;
+            }
+            if (body && key.toLowerCase().indexOf("content-type") >= 0) {
+                contentType = value;
+                const v = value.toLowerCase();
+                const i = value.lastIndexOf("charset=");
+                if (i >= 0 && i < v.length) {
+                    charset = v.substring(i);
                 }
-                if (!key.length || !value || !value.length) {
-                    handleException(`[NHE] Wrong header "${key}" value "${value}"`);
-                    return null;
-                }
-                if (body && key.toLowerCase().indexOf("content-type") >= 0) {
-                    contentType = value;
-                    const v = value.toLowerCase();
-                    const i = value.lastIndexOf("charset=");
-                    if (i >= 0 && i < v.length) {
-                        charset = v.substring(i);
+                if (typeof body !== "string") {
+                    if (v.indexOf("json") >= 0) {
+                        type = "JSON";
+                    } else if (v.indexOf("xml") >= 0) {
+                        type = "XML";
                     }
-                    if (typeof body !== "string") {
-                        if (v.indexOf("json") >= 0) {
-                            type = "JSON";
-                        } else if (v.indexOf("xml") >= 0) {
-                            type = "XML";
-                        }
-                    }
-                } else {
-                    resultHeaders.push({key: key, value});
                 }
-            });
+            }
+            resultHeaders.push({key: key, value});
+        }
     }
     body = processBody(body, type);
-    if (contentType || body) {
-        if (!contentType) {
-            contentType = "application/x-www-form-urlencoded";
-        }
-        if (!charset) {
-            charset = defaultEncoding || "utf-8";
-            contentType += "; charset=" + charset;
-        }
-        resultHeaders.push({key: "Content-Type", value: contentType});
+    if (body && !contentType) {
+        resultHeaders.push({key: "Content-Type",
+            value: "application/x-www-form-urlencoded; charset=" + (defaultEncoding || "utf-8")});
     }
     return {headers: resultHeaders, body};
 };
@@ -185,6 +178,9 @@ export const fetchRemoteSync = ({method, url, headers, body}) => {
     req.setRequestHeader(PROXY_TARGET_HEADER, url);
     processedHeaders.forEach(({key, value}) => {
         req.setRequestHeader(TRANSFERABLE_HEADER_PREFIX + key, value);
+        if (key.toLowerCase() === 'content-type') {
+            req.setRequestHeader(key, value);
+        }
     });
 
     try {

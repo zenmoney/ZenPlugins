@@ -77,7 +77,6 @@ module.exports = ({allowedHost, host, https}) => {
         public: allowedHost,
         setup(app) {
             app.disable("x-powered-by");
-            app.use(bodyParser.json());
 
             app.get(
                 "/zen/manifest",
@@ -125,6 +124,7 @@ module.exports = ({allowedHost, host, https}) => {
 
             app.post(
                 "/zen/data",
+                bodyParser.json(),
                 serializeErrors((req, res) => {
                     console.assert(req.body.newValue, "newValue should be provided");
                     writeJsonSync("zp_data.json", req.body.newValue);
@@ -159,17 +159,30 @@ module.exports = ({allowedHost, host, https}) => {
                     next();
                     return;
                 }
+                if (req.rawHeaders) {
+                    const headers = {};
+                    for (let i = 0; i < req.rawHeaders.length; i += 2) {
+                        let header = req.rawHeaders[i];
+                        const key = header.toLowerCase();
+                        if (key.trim() !== "cookie") {
+                            if (key === PROXY_TARGET_HEADER || !key.startsWith(TRANSFERABLE_HEADER_PREFIX)) {
+                                continue;
+                            }
+                            header = header.slice(TRANSFERABLE_HEADER_PREFIX.length);
+                        }
+                        const value = req.rawHeaders[i + 1];
+                        if (headers[header]) {
+                            headers[header] += ',' + value;
+                        } else {
+                            headers[header] = value;
+                        }
+                    }
+                    req.headers = headers;
+                } else {
+                    req.headers = {};
+                }
                 req._reqHost = req.headers.host;
-                req.headers = _.object(_.compact(_.pairs(req.headers).map((pair) => {
-                    const [key, value] = pair;
-                    if (key === "cookie") {
-                        return pair;
-                    }
-                    if (key !== PROXY_TARGET_HEADER && key.startsWith(TRANSFERABLE_HEADER_PREFIX)) {
-                        return [key.slice(TRANSFERABLE_HEADER_PREFIX.length), value];
-                    }
-                    return null;
-                })));
+
                 proxy.web(req, res, {
                     target: target,
                     changeOrigin: true,
