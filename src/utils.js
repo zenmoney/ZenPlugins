@@ -172,10 +172,13 @@ export const processHeadersAndBody = ({headers, body}) => {
 export const fetchRemoteSync = ({method, url, headers, body}) => {
     const req = new XMLHttpRequest();
     req.withCredentials = true;
-    req.open(method, "/" + url, false);
+
+    const {origin, pathname, search} = new URL(url);
+    const pathWithQueryParams = pathname + search;
+    req.open(method, pathWithQueryParams, false);
 
     const {headers: processedHeaders, body: processedBody} = processHeadersAndBody({headers, body});
-    req.setRequestHeader(PROXY_TARGET_HEADER, url);
+    req.setRequestHeader(PROXY_TARGET_HEADER, origin);
     processedHeaders.forEach(({key, value}) => {
         req.setRequestHeader(TRANSFERABLE_HEADER_PREFIX + key, value);
         if (key.toLowerCase() === 'content-type') {

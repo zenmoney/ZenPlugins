@@ -7,6 +7,7 @@ const {TRANSFERABLE_HEADER_PREFIX, PROXY_TARGET_HEADER} = require("../src/shared
 const {readPluginManifest, readPluginPreferencesSchema} = require("./utils");
 const stripBOM = require("strip-bom");
 const bodyParser = require("body-parser");
+const {URL} = require("url");
 
 const convertErrorToSerializable = (e) => _.pick(e, ["message", "stack"]);
 
@@ -148,17 +149,29 @@ module.exports = ({allowedHost, host, https}) => {
                 if (proxyRes.headers["set-cookie"]) {
                     proxyRes.headers["set-cookie"] = proxyRes.headers["set-cookie"].map(removeSecureSealFromCookieValue);
                 }
-                if (proxyRes.headers["location"]) {
-                    proxyRes.headers["location"] = "http://" + req._reqHost + "/" + proxyRes.headers["location"];
+                const location = proxyRes.headers["location"];
+                if (location && /^https?:\/\//i.test(location)) {
+                    const {origin, pathname, search} = new URL(location);
+                    proxyRes.headers["location"] = pathname + search +
+                        ((search === '') ? '?' : '&') + PROXY_TARGET_HEADER + '=' + origin;
                 }
             });
 
             app.all("*", (req, res, next) => {
-                const target = /^\/http/i.test(req.url) ? req.url.substring(1) : null;
+                const targetIdx = req.url.indexOf(PROXY_TARGET_HEADER);
+                let target;
+                if (targetIdx > 0) {
+                    target  = req.url.substring(targetIdx + PROXY_TARGET_HEADER.length + 1);
+                    req.url = req.url.substring(0, targetIdx - 1);
+                } else {
+                    target = req.headers[PROXY_TARGET_HEADER];
+                }
                 if (!target) {
                     next();
                     return;
                 }
+                target += req.url;
+
                 if (req.rawHeaders) {
                     const headers = {};
                     for (let i = 0; i < req.rawHeaders.length; i += 2) {
@@ -172,7 +185,7 @@ module.exports = ({allowedHost, host, https}) => {
                         }
                         const value = req.rawHeaders[i + 1];
                         if (headers[header]) {
-                            headers[header] += ',' + value;
+                            headers[header] += "," + value;
                         } else {
                             headers[header] = value;
                         }
@@ -181,7 +194,6 @@ module.exports = ({allowedHost, host, https}) => {
                 } else {
                     req.headers = {};
                 }
-                req._reqHost = req.headers.host;
 
                 proxy.web(req, res, {
                     target: target,
