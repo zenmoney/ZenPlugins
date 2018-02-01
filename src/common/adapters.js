@@ -80,6 +80,15 @@ export function adaptAsyncFn(fn) {
         const result = fn();
         console.assert(result && typeof result.then === "function", "scrape() did not return a promise");
         const resultHandled = result.then((results) => {
+            if (results && !Array.isArray(results) &&
+                    Array.isArray(results.accounts) &&
+                    Array.isArray(results.transactions)) {
+                ZenMoney.addAccount(results.accounts);
+                ZenMoney.addTransaction(results.transactions.map(postProcessTransaction));
+                ZenMoney.setResult({success: true});
+                return;
+            }
+
             console.assert(results && Array.isArray(results), "scrape() result is not an array");
             console.assert(results.length > 0, "scrape results are empty");
             console.assert(

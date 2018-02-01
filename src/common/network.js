@@ -29,7 +29,7 @@ export async function fetchJson(url, options = {}) {
         isBodyValidJson = true;
     } catch (e) {
         body = await maybeNonJsonResponse.text();
-        isBodyValidJson = false;
+        isBodyValidJson = body === '';
     }
 
     shouldLog && console.debug("fetchJson response", sanitize({

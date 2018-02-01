@@ -20,6 +20,27 @@ describe("adaptAsyncFn", () => {
         });
     });
 
+    it("should call addAccount, addTransaction, setResult when called with accounts and transactions arrays", () => {
+        const setResultCalled = new Promise((resolve) => {
+            global.ZenMoney = {
+                addAccount: jest.fn(),
+                addTransaction: jest.fn(),
+                setResult: resolve,
+                features: {},
+            };
+            const main = adaptAsyncFn(async () => {
+                return {accounts: ["account"], transactions: [1, 2]};
+            });
+            main();
+        });
+        return expect(setResultCalled).resolves.toEqual({success: true}).then(x => {
+            expect(global.ZenMoney.addAccount).toHaveBeenCalledTimes(1);
+            expect(global.ZenMoney.addAccount).toHaveBeenCalledWith(["account"]);
+            expect(global.ZenMoney.addTransaction).toHaveBeenCalledTimes(1);
+            expect(global.ZenMoney.addTransaction).toHaveBeenCalledWith([1, 2]);
+        });
+    });
+
     it("should fallback to setResult(error) when error thrown in async promise context", () => {
         const testError = new Error("test error");
         return expect(new Promise((resolve) => {
