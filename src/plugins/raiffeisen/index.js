@@ -62,7 +62,7 @@ async function login(login, password) {
         sanitizeResponseLog: {body: {access_token: true, resource_owner: true}},
     }, false);
     if (response.status === 401) {
-        throw new ZenMoney.Error('Райффайзенбанк: Неверный логин или пароль', true);
+        throw new ZenMoney.Error("Райффайзенбанк: Неверный логин или пароль", true);
     }
     validateResponse(response, response => response.body.access_token);
     return {
@@ -91,28 +91,48 @@ export function parseAccount(json) {
         return null;
     }
     const account = {
-        id: 'ACCOUNT_' + json.account.id,
+        id: "ACCOUNT_" + json.account.id,
         instrument: json.account.currency.shortName,
         syncID: [json.account.cba.substring(json.account.cba.length - 4)],
         balance: json.balance,
-        type: 'checking'
+        type: "checking"
     };
     const accounts = {};
     accounts[account.id] = account;
     if (json.cards && json.cards.length > 0) {
         for (const card of json.cards) {
-            accounts['CARD_' + card.id] = account;
+            accounts["CARD_" + card.id] = account;
             account.syncID.push(card.pan.substring(card.pan.length - 4));
             if (json.cards.length === 1) {
-                account.type = 'ccard';
-                account.title = (card.product ? card.product + ' ' : '') + '*' + account.syncID[account.syncID.length - 1];
+                account.type = "ccard";
+                account.title = (card.product ? card.product + " " : "") + "*" + account.syncID[account.syncID.length - 1];
             }
         }
     }
     if (!account.title) {
-        account.title = '' + account.syncID[0];
+        account.title = "" + account.syncID[0];
     }
     return accounts;
+}
+
+async function fetchDeposits(token) {
+    await fetchJson("https://sso.raiffeisen.ru/rest/deposit?alien=false", {
+        headers: {
+            "Authorization": `Bearer ${token}`
+        }
+    });
+    //TODO process deposits
+    return {};
+}
+
+async function fetchLoans(token) {
+    await fetchJson("https://sso.raiffeisen.ru/rest/loan?alien=false", {
+        headers: {
+            "Authorization": `Bearer ${token}`
+        }
+    });
+    //TODO process loans
+    return {};
 }
 
 async function fetchTransactionsPaged(token, page, limit) {
@@ -133,12 +153,12 @@ async function fetchTransactionsPaged(token, page, limit) {
 
 export function parseTransaction(json) {
     const transaction = {
-        date:  json.date.substring(0, 10),
-        hold:  json.type !== 'TRANSACTION',
+        date: json.date.substring(0, 10),
+        hold: json.type !== "TRANSACTION",
         income:         json.billAmount > 0 ? json.billAmount : 0,
-        incomeAccount:  json.relation + '_' + json.relatedId,
+        incomeAccount:  json.relation + "_" + json.relatedId,
         outcome:        json.billAmount < 0 ? -json.billAmount : 0,
-        outcomeAccount: json.relation + '_' + json.relatedId
+        outcomeAccount: json.relation + "_" + json.relatedId
     };
     if (json.currencyId !== json.billCurrencyId) {
         if (json.amount > 0) {
@@ -170,7 +190,7 @@ export function parseTransaction(json) {
 }
 
 async function fetchTransactions(token, fromDate) {
-    const fromDateStr = fromDate.getFullYear() + '-' + n2(fromDate.getMonth() + 1) + '-' + n2(fromDate.getDate());
+    const fromDateStr = fromDate.getFullYear() + "-" + n2(fromDate.getMonth() + 1) + "-" + n2(fromDate.getDate());
     const limit = 25;
     let transactions = [];
     let page = 0;
@@ -210,7 +230,7 @@ export function adjustAccounts(accounts) {
 }
 
 function n2(n) {
-    return n < 10 ? '0' + n : '' + n;
+    return n < 10 ? "0" + n : "" + n;
 }
 
 export async function scrape({fromDate, toDate}) {
@@ -221,14 +241,18 @@ export async function scrape({fromDate, toDate}) {
     if (!preferences.password) {
         throw new ZenMoney.Error("Введите пароль в интернет-банк!", null, true);
     }
-    let oldPluginLastSyncDate = ZenMoney.getData('last_sync', 0);
+    let oldPluginLastSyncDate = ZenMoney.getData("last_sync", 0);
     if (oldPluginLastSyncDate && oldPluginLastSyncDate > 0) {
         oldPluginLastSyncDate = oldPluginLastSyncDate - 24 * 60 * 60 * 1000;
         fromDate = new Date(oldPluginLastSyncDate);
-        ZenMoney.setData('last_sync', null);
+        ZenMoney.setData("last_sync", null);
     }
     const token = (await login(preferences.login, preferences.password)).accessToken;
-    const accounts = await fetchAccounts(token);
+    const accounts = Object.assign(
+        await fetchAccounts(token),
+        await fetchDeposits(token),
+        await fetchLoans(token)
+    );
     const transactions = await fetchTransactions(token, fromDate);
     return {
         accounts:     adjustAccounts(accounts),
