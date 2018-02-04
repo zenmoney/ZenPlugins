@@ -126,13 +126,69 @@ async function fetchDeposits(token) {
 }
 
 async function fetchLoans(token) {
-    await fetchJson("https://sso.raiffeisen.ru/rest/loan?alien=false", {
+    const response = await fetchJson("https://sso.raiffeisen.ru/rest/loan?alien=false", {
         headers: {
             "Authorization": `Bearer ${token}`
         }
-    });
-    //TODO process loans
-    return {};
+    }, response => Array.isArray(response.body));
+    const loans = {};
+    for (const json of response.body) {
+        const loan = parseLoan(json);
+        if (loan) {
+            Object.assign(loans, loan);
+        }
+    }
+    return loans;
+}
+
+export function parseLoan(json) {
+    
+    console.log(json);
+    
+    if (!json.docNumber) {
+        return null;
+    }
+    var startDate = +new Date(json.open.substr(0, 10));
+    startDate = startDate / 1000;
+    var endDate = +new Date(json.close.substr(0, 10));
+    endDate = endDate / 1000;
+    var dateOffset = Math.round(Number((endDate - startDate) / (30 * 24 * 60 * 60)));
+    const loan = {
+        id: "LOAN_" + json.docNumber,
+        instrument: json.currency.shortName,
+        syncID: [json.docNumber],
+        balance: -json.leftDebt,
+        type: "loan",
+        percent: json.rate,
+        startDate: json.open,
+        endDateOffset: dateOffset,
+        endDateOffsetInterval: 'month',
+        capitalization: true,
+        payoffStep: 1,
+        payoffInterval: 'month'
+    };
+    const loans = {};
+    loans[loan.id] = loan;
+    if (!loan.title) {
+        loan.title = "" + loan.syncID[0];
+    }
+    return loans;
+}
+
+export function parsePayment(json) {
+    
+    console.log(json);
+    
+    const transaction = {
+        date: json.date.substring(0, 10),
+        hold: false,
+        comment: json.relatedDescription.name,
+        income:         json.amount > 0 ? json.amount : 0,
+        incomeAccount:  json.relation + "_" + json.relatedName.name,
+        outcome:        json.amount < 0 ? -json.amount : 0,
+        outcomeAccount: json.relation + "_" + json.relatedName.name
+    };
+    return transaction;
 }
 
 async function fetchTransactionsPaged(token, page, limit) {
@@ -152,6 +208,10 @@ async function fetchTransactionsPaged(token, page, limit) {
 }
 
 export function parseTransaction(json) {
+    if (json.relation == "LOAN") {
+        return parsePayment(json);
+    }
+    
     const transaction = {
         date: json.date.substring(0, 10),
         hold: json.type !== "TRANSACTION",
