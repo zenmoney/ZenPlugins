@@ -1,4 +1,4 @@
-import _ from "underscore";
+import _ from "lodash";
 import {isValidDate} from "../../common/dates";
 
 function checkTransaction(transaction) {

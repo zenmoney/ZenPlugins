@@ -1,21 +1,21 @@
+import _ from "lodash";
 import {convertToZenMoneyTransaction} from "./mappingUtils";
 import * as prior from "./prior";
+
 const calculateAccountId = (card) => String(card.clientObject.id);
 
-function convertToZenMoneyData(card) {
-    const accountId = calculateAccountId(card);
+function convertToZenMoneyAccount(card) {
     return {
-        account: {
-            id: accountId,
-            title: card.clientObject.customSynonym || card.clientObject.defaultSynonym,
-            type: prior.getAccountType(card),
-            syncID: [card.clientObject.cardMaskedNumber.slice(-4)],
-            instrument: card.clientObject.currIso,
-            balance: card.balance.available,
-        },
-        transactions: card.transactions.map((transaction) => convertToZenMoneyTransaction(accountId, transaction)),
+        id: calculateAccountId(card),
+        title: card.clientObject.customSynonym || card.clientObject.defaultSynonym,
+        type: prior.getAccountType(card),
+        syncID: [card.clientObject.cardMaskedNumber.slice(-4)],
+        instrument: card.clientObject.currIso,
+        balance: card.balance.available,
     };
 }
+
+const convertToZenMoneyTransactions = (accountId, transactions) => transactions.map((transaction) => convertToZenMoneyTransaction(accountId, transaction));
 
 export async function scrape({fromDate, toDate}) {
     const {login: rawLogin, password} = ZenMoney.getPreferences();
@@ -30,7 +30,11 @@ export async function scrape({fromDate, toDate}) {
         prior.fetchCardDetails({postAuthHeaders, userSession, fromDate, toDate}),
     ]);
     const cards = prior.joinTransactions({cardItems, cardDetailItems});
-    return cards
-        .filter((card) => !ZenMoney.isAccountSkipped(calculateAccountId(card)))
-        .map(convertToZenMoneyData);
+    return {
+        accounts: cards.map((card) => convertToZenMoneyAccount(card)),
+        transactions: _.flatMap(
+            cards.filter((card) => !ZenMoney.isAccountSkipped(calculateAccountId(card))),
+            (card) => convertToZenMoneyTransactions(calculateAccountId(card), card.transactions)
+        ),
+    }
 }
