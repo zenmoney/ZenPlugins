@@ -1,4 +1,4 @@
-import _ from "underscore";
+import _ from "lodash";
 import sanitize from "./sanitize";
 
 export async function fetchJson(url, options = {}) {
@@ -42,7 +42,7 @@ export async function fetchJson(url, options = {}) {
     shouldLog && console.debug("fetchJson response", sanitize({
         status: response.status,
         url: response.url,
-        headers: response.headers.entries ? _.object(Array.from(response.headers.entries())) : response.headers.raw(),
+        headers: response.headers.entries ? _.fromPairs(Array.from(response.headers.entries())) : response.headers.raw(),
         body,
         ms: endTicks - beforeFetchTicks,
     }, options.sanitizeResponseLog || false));
