@@ -1,9 +1,9 @@
 import {fetchJson as rawFetchJson} from "../../common/network";
+import {retry, toNodeCallbackArguments} from "../../common/retry";
 
-async function fetchJson(url, options = {}, condition = null, retryCount = 3) {
+async function fetchJson(url, options = {}, predicate = defaultResponsePredicate) {
     options = Object.assign({
         method: "GET",
-        log: true,
         sanitizeRequestLog: {headers: {"Authorization": true}}
     }, options);
     options.headers = Object.assign({
@@ -16,33 +16,15 @@ async function fetchJson(url, options = {}, condition = null, retryCount = 3) {
         "Accept-Language": "ru;q=1"
     }, options.headers || {});
 
-    let response;
-    let error;
-    try {
-        response = await rawFetchJson(url, options);
-        error = null;
-    } catch (e) {
-        response = null;
-        error = e;
-    }
-    if ((response === null || response.status === 502) && retryCount > 1) {
-        return fetchJson(url, options, condition, retryCount - 1);
-    }
-    if (response === null) {
-        throw error;
-    }
-    if (condition !== false) {
-        validateResponse(response, condition);
-    }
-    return response;
+    return (await retry({
+        getter: toNodeCallbackArguments(() => rawFetchJson(url, options)),
+        predicate: ([error, response]) => !error && response && (!predicate || predicate(response)),
+        maxAttempts: 3
+    }))[1];
 }
 
-function validateResponse(response, condition) {
-    console.assert(
-        response.status === 200 && response.body && !response.body.error && (!condition || condition(response)),
-        "non-successful response",
-        response
-    );
+function defaultResponsePredicate(response) {
+    return response.status === 200 && response.body && !response.body.error;
 }
 
 async function login(login, password) {
@@ -60,11 +42,10 @@ async function login(login, password) {
         },
         sanitizeRequestLog:  {body: {username: true, password: true}},
         sanitizeResponseLog: {body: {access_token: true, resource_owner: true}},
-    }, false);
+    }, response => response.status === 401 || (defaultResponsePredicate(response) && response.body.access_token));
     if (response.status === 401) {
         throw new ZenMoney.Error("Райффайзенбанк: Неверный логин или пароль", true);
     }
-    validateResponse(response, response => response.body.access_token);
     return {
         accessToken: response.body.access_token
     };
@@ -142,17 +123,12 @@ async function fetchLoans(token) {
 }
 
 export function parseLoan(json) {
-    
-    console.log(json);
-    
     if (!json.docNumber) {
         return null;
     }
-    var startDate = +new Date(json.open.substr(0, 10));
-    startDate = startDate / 1000;
-    var endDate = +new Date(json.close.substr(0, 10));
-    endDate = endDate / 1000;
-    var dateOffset = Math.round(Number((endDate - startDate) / (30 * 24 * 60 * 60)));
+    const startDate = new Date(json.open.substr(0, 10)).getTime() / 1000;
+    const endDate = new Date(json.close.substr(0, 10)).getTime() / 1000;
+    const dateOffset = Math.round((endDate - startDate) / (30 * 24 * 60 * 60));
     const loan = {
         id: "LOAN_" + json.docNumber,
         instrument: json.currency.shortName,
@@ -160,7 +136,7 @@ export function parseLoan(json) {
         balance: -json.leftDebt,
         type: "loan",
         percent: json.rate,
-        startDate: json.open,
+        startDate: startDate,
         endDateOffset: dateOffset,
         endDateOffsetInterval: 'month',
         capitalization: true,
@@ -169,17 +145,12 @@ export function parseLoan(json) {
     };
     const loans = {};
     loans[loan.id] = loan;
-    if (!loan.title) {
-        loan.title = "" + loan.syncID[0];
-    }
+    loan.title = "" + loan.syncID[0];
     return loans;
 }
 
-export function parsePayment(json) {
-    
-    console.log(json);
-    
-    const transaction = {
+export function parseLoanPayment(json) {
+    return {
         date: json.date.substring(0, 10),
         hold: false,
         comment: json.relatedDescription.name,
@@ -188,7 +159,6 @@ export function parsePayment(json) {
         outcome:        json.amount < 0 ? -json.amount : 0,
         outcomeAccount: json.relation + "_" + json.relatedName.name
     };
-    return transaction;
 }
 
 async function fetchTransactionsPaged(token, page, limit) {
@@ -208,8 +178,8 @@ async function fetchTransactionsPaged(token, page, limit) {
 }
 
 export function parseTransaction(json) {
-    if (json.relation == "LOAN") {
-        return parsePayment(json);
+    if (json.relation === "LOAN") {
+        return parseLoanPayment(json);
     }
     
     const transaction = {

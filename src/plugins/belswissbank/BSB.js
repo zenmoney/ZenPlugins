@@ -1,7 +1,7 @@
 import padLeft from "pad-left";
 import {isValidDate} from "../../common/dates";
 import {fetchJson} from "../../common/network";
-import retry from "../../common/retry";
+import {retry} from "../../common/retry";
 import codeToCurrencyLookup from "./codeToCurrencyLookup";
 
 const transactionTypeFactors = {

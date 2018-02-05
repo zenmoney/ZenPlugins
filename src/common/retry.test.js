@@ -1,4 +1,4 @@
-import retry from "./retry";
+import {retry} from "./retry";
 
 describe("retry", () => {
     it("should resolve when working with sync getter", async () => {
