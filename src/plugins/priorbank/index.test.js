@@ -1,5 +1,5 @@
 import fetchMock from "fetch-mock";
-import _ from "underscore";
+import _ from "lodash";
 import util from "util";
 import {scrape} from "./index";
 
@@ -207,6 +207,15 @@ describe("scraper happy path", () => {
                                             "feeAmount": 0.0,
                                             "accountAmount": -10.00,
                                             "transDetails": "Retail BLR",
+                                        },
+                                        {
+                                            "postingDate": "2017-01-09T00:00:00+03:00",
+                                            "transDate": "2017-01-08T00:00:00+03:00",
+                                            "transCurrIso": "USD",
+                                            "amount": -200,
+                                            "feeAmount": 0.0,
+                                            "accountAmount": -200,
+                                            "transDetails": "Cash BLR",
                                         },
                                         {
                                             "postingDate": "2017-01-09T00:00:00+03:00",

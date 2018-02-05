@@ -1,5 +1,5 @@
 import {SHA512} from "jshashes";
-import _ from "underscore";
+import _ from "lodash";
 import {fetchJson} from "../../common/network";
 
 function isSuccessfulResponse(response) {
@@ -43,7 +43,7 @@ const sha512 = new SHA512();
 export const calculatePasswordHash = ({loginSalt, password}) => sha512.hex(sha512.hex(password.slice(0, 16)) + loginSalt);
 
 function getCharCodesDistribution(obj) {
-    return _.mapObject(obj, (value) => {
+    return _.mapValues(obj, (value) => {
         const charCodes = value.split("").map((char) => char.charCodeAt(0));
         return _.countBy(charCodes, (code) => {
             if (0 <= code && code < 128) {
@@ -74,9 +74,7 @@ export async function login({preAuthHeaders, loginSalt, login, password}) {
     };
 }
 
-export function calculatePostAuthHeaders({preAuthHeaders, accessToken}) {
-    return _.extend({}, preAuthHeaders, {"Authorization": `bearer ${accessToken}`});
-}
+export const calculatePostAuthHeaders = ({preAuthHeaders, accessToken}) => ({...preAuthHeaders, "Authorization": `bearer ${accessToken}`});
 
 export async function fetchCards({postAuthHeaders, userSession}) {
     const response = await fetchJson(makeApiUrl("/Cards"), {
@@ -129,7 +127,7 @@ const extractTransactionBuckets = (cardDetails) => {
     return abortedTransactions.concat(regularTransactions);
 };
 
-const knownTransactionTypes = ["Retail", "ATM", "CH Debit"];
+const knownTransactionTypes = ["Retail", "ATM", "CH Debit", "Cash"];
 
 const normalizeSpaces = (text) => _.compact(text.split(" ")).join(" ");
 
@@ -170,7 +168,7 @@ const normalizeCommittedItem = (item, accountCurrency) => {
         transactionCurrency,
         accountAmount,
         accountCurrency,
-        isCashTransfer: details.type === "ATM",
+        isCashTransfer: details.type === "ATM" || details.type === "Cash",
         payee: details.payee,
         comment: details.comment,
         __sourceKind: "committed",
