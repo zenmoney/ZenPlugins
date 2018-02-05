@@ -12,8 +12,9 @@ export async function fetchJson(url, options = {}) {
         },
     };
 
+    const beforeFetchTicks = Date.now();
     const shouldLog = options.log !== false;
-    shouldLog && console.debug("fetchJson request", sanitize({
+    shouldLog && console.debug("json request", sanitize({
         method: init.method || "GET",
         url,
         headers: init.headers,
@@ -32,11 +33,13 @@ export async function fetchJson(url, options = {}) {
         isBodyValidJson = body === '';
     }
 
+    const endTicks = Date.now();
     shouldLog && console.debug("fetchJson response", sanitize({
         status: response.status,
         url: response.url,
         headers: response.headers.entries ? _.object(Array.from(response.headers.entries())) : response.headers.raw(),
         body,
+        ms: endTicks - beforeFetchTicks,
     }, options.sanitizeResponseLog || false));
 
     if (!isBodyValidJson) {
