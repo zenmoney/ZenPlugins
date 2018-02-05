@@ -4,7 +4,7 @@ const HtmlWebpackExcludeAssetsPlugin = require("html-webpack-exclude-assets-plug
 const CaseSensitivePathsPlugin = require("case-sensitive-paths-webpack-plugin");
 const eslintFormatter = require("react-dev-utils/eslintFormatter");
 const {paths, resolve} = require("./constants");
-const _ = require("underscore");
+const _ = require("lodash");
 const path = require("path");
 
 module.exports = ({production}) => ({

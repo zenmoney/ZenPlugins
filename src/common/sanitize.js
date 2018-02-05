@@ -1,4 +1,4 @@
-import _ from "underscore";
+import _ from "lodash";
 
 export default function sanitize(value, mask) {
     if (!mask) {
@@ -20,7 +20,7 @@ export default function sanitize(value, mask) {
         return value.map((item) => sanitize(item, mask));
     }
     if (_.isObject(value)) {
-        return _.mapObject(value, (val, key) => sanitize(val, mask === true ? true : mask[key]));
+        return _.mapValues(value, (val, key) => sanitize(val, mask === true ? true : mask[key]));
     }
     return "<value>";
 }

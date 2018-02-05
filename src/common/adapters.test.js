@@ -1,4 +1,4 @@
-import _ from "underscore";
+import _ from "lodash";
 import {adaptAsyncFn, convertTimestampToDate, postProcessTransaction, provideScrapeDates} from "./adapters";
 describe("adaptAsyncFn", () => {
     it("should call addAccount, addTransaction, setResult", () => {
@@ -84,11 +84,11 @@ describe("adaptAsyncFn", () => {
         expect(() => adaptAsyncFn(_.noop)()).toThrow("scrape() did not return a promise");
     });
 
-    it("should check promise returns an array", () => {
+    it("should check promise returns anything", () => {
         return expect(new Promise((resolve) => {
             global.ZenMoney = {setResult: resolve};
             adaptAsyncFn(() => Promise.resolve())();
-        })).resolves.toMatchObject({message: "scrape() result is not an array"});
+        })).resolves.toMatchObject({message: "scrape() did not return anything"});
     });
 
     it("should check promise result array is not empty", () => {

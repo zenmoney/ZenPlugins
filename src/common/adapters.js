@@ -80,15 +80,15 @@ export function adaptAsyncFn(fn) {
         const result = fn();
         console.assert(result && typeof result.then === "function", "scrape() did not return a promise");
         const resultHandled = result.then((results) => {
-            if (results && !Array.isArray(results) &&
-                    Array.isArray(results.accounts) &&
-                    Array.isArray(results.transactions)) {
+            console.assert(results, "scrape() did not return anything");
+            if (!Array.isArray(results)) {
+                console.assert(Array.isArray(results.accounts) && Array.isArray(results.transactions), "scrape should return {accounts[], transactions[]}");
                 ZenMoney.addAccount(results.accounts);
                 ZenMoney.addTransaction(results.transactions.map(postProcessTransaction));
                 ZenMoney.setResult({success: true});
                 return;
             }
-
+            console.error("scrape result shape {account, transactions[]} is deprecated.\nconsider using {accounts[], transactions[]}");
             console.assert(results && Array.isArray(results), "scrape() result is not an array");
             console.assert(results.length > 0, "scrape results are empty");
             console.assert(
