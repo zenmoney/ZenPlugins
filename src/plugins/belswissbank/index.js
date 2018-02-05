@@ -1,9 +1,9 @@
-import {convertToZenMoneyTransaction} from "../priorbank/mappingUtils";
-import _ from "underscore";
+import _ from "lodash";
 import {formatCommentDateTime} from "../../common/dates";
 import * as errors from "../../common/errors";
+import {convertToZenMoneyTransaction} from "../priorbank/mappingUtils";
 import * as BSB from "./BSB";
-import {mergeTransfers} from "./mergeTransfers";
+import {getTransactionToTransferReplacements} from "./mergeTransfers";
 import {generateUUID} from "./utils";
 
 function ensureDeviceId() {
@@ -68,7 +68,7 @@ function normalizeBsbTransactions({accountCurrency, bsbTransactions}) {
                 ? transactionAmount
                 : BSB.figureOutAccountRestsDelta({transactions, index, accountCurrency});
             if (accountAmount === null) {
-                console.error("accountAmount is unknown", {transaction, previousTransactions: transactions.slice(0, index)});
+                console.error("accountAmount is unknown, ignored transaction", {transaction, previousTransactions: transactions.slice(0, index)});
                 return null;
             }
             const transactionDate = new Date(transaction.transactionDate);
@@ -92,19 +92,23 @@ export async function scrape({fromDate, toDate}) {
     await login();
 
     const cards = await BSB.fetchCards();
-    const activeCards = cards.filter((card) => !ZenMoney.isAccountSkipped(calculateAccountId(card)));
-    const cardTransactions = await Promise.all(activeCards.map(async (card) => {
-        const bsbTransactions = await BSB.fetchTransactions(card.cardId, fromDate, toDate);
-        return {card, bsbTransactions};
-    }));
-    const result = cardTransactions.map(({card, bsbTransactions}) => {
-        const account = convertToZenMoneyAccount(card);
+    const accounts = cards
+        .filter((card) => !ZenMoney.isAccountSkipped(calculateAccountId(card)))
+        .map((card) => convertToZenMoneyAccount(card));
+    const transactionPairs = _.flatten(await Promise.all(accounts.map(async (account) => {
         const bankTransactions = normalizeBsbTransactions({
-            accountId: account.id,
             accountCurrency: account.instrument,
-            bsbTransactions,
+            bsbTransactions: await BSB.fetchTransactions(account.id, fromDate, toDate),
         });
-        return {account, bankTransactions, transactions: bankTransactions.map((x) => convertToZenMoneyTransaction(account.id, x))};
-    });
-    return mergeTransfers(result);
+        const zenTransactions = bankTransactions.map((x) => convertToZenMoneyTransaction(account.id, x));
+        return _.zip(bankTransactions, zenTransactions);
+    })));
+    const transactionToTransferReplacements = getTransactionToTransferReplacements(transactionPairs);
+    return {
+        accounts,
+        transactions: _.compact(transactionPairs.map(([bankTransaction, zenTransaction]) => {
+            const replacement = transactionToTransferReplacements[zenTransaction.id];
+            return _.isUndefined(replacement) ? zenTransaction : replacement;
+        })),
+    };
 }
