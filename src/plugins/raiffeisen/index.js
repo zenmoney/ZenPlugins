@@ -1,7 +1,7 @@
-import {fetchJson as rawFetchJson} from "../../common/network";
-import {retry, toNodeCallbackArguments} from "../../common/retry";
+import * as network from "../../common/network";
+import * as retry   from "../../common/retry";
 
-async function fetchJson(url, options = {}, predicate = defaultResponsePredicate) {
+async function fetchJson(url, options = {}, predicate = () => true) {
     options = Object.assign({
         method: "GET",
         sanitizeRequestLog: {headers: {"Authorization": true}}
@@ -16,19 +16,32 @@ async function fetchJson(url, options = {}, predicate = defaultResponsePredicate
         "Accept-Language": "ru;q=1"
     }, options.headers || {});
 
-    return (await retry({
-        getter: toNodeCallbackArguments(() => rawFetchJson(url, options)),
-        predicate: ([error, response]) => !error && response && (!predicate || predicate(response)),
-        maxAttempts: 3
-    }))[1];
+    let response;
+    try {
+        response = (await retry.retry({
+            getter: retry.toNodeCallbackArguments(() => network.fetchJson(url, options)),
+            predicate: ([error, response]) => !error && response && response.status < 500,
+            maxAttempts: 3
+        }))[1];
+    } catch (e) {
+        if (e instanceof retry.RetryError) {
+            e = e.failedResults.some(([error, response]) => error !== null) || new ZenMoney.Error("[NER]", true);
+        }
+        throw e;
+    }
+    if (predicate) {
+        validateResponse(response, response => response.body && !response.body.error && predicate(response));
+    }
+
+    return response;
 }
 
-function defaultResponsePredicate(response) {
-    return response.status === 200 && response.body && !response.body.error;
+function validateResponse(response, predicate) {
+    console.assert(!predicate || predicate(response), "non-successful response");
 }
 
 async function login(login, password) {
-    const response = await fetchJson("https://sso.raiffeisen.ru/oauth/token", {
+    let response = await fetchJson("https://sso.raiffeisen.ru/oauth/token", {
         method: "POST",
         headers: {
             "Authorization": "Basic b2F1dGhVc2VyOm9hdXRoUGFzc3dvcmQhQA=="
@@ -42,10 +55,37 @@ async function login(login, password) {
         },
         sanitizeRequestLog:  {body: {username: true, password: true}},
         sanitizeResponseLog: {body: {access_token: true, resource_owner: true}},
-    }, response => response.status === 401 || (defaultResponsePredicate(response) && response.body.access_token));
+    }, null);
+
     if (response.status === 401) {
         throw new ZenMoney.Error("Райффайзенбанк: Неверный логин или пароль", true);
     }
+    if (response.status === 267) {
+        const confirmData = (await fetchJson("https://sso.raiffeisen.ru/oauth/entry/confirm/sms", {
+            method: "POST"
+        }, response => response.body.requestId && response.body.methods)).body;
+        if (!confirmData.methods.some(method => method.method === "SMSOTP")) {
+            throw new ZenMoney.Error("Райффайзенбанк: Неизвестный способ подтверждения входа");
+        }
+        const prompt = "Райффайзенбанк: Для подтверждения входа и импорта из банка введите код из СМС";
+        const code = ZenMoney.retrieveCode(prompt, null, {
+            inputType: "numberDecimal",
+            time: confirmData["await"] || 120000,
+        });
+        response = await fetchJson(`https://sso.raiffeisen.ru/oauth/entry/confirm/${confirmData.requestId}/sms`, {
+            method: "PUT",
+            body: {
+                code: code
+            },
+            sanitizeResponseLog: {body: {access_token: true, resource_owner: true}}
+        }, null);
+        if (response.status !== 200) {
+            throw new ZenMoney.Error("Райффайзенбанк: Неверный код подтверждения.", true);
+        }
+    }
+
+    validateResponse(response, response => response.body && !response.body.error && response.body.access_token);
+
     return {
         accessToken: response.body.access_token
     };
