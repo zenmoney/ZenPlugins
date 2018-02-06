@@ -29,7 +29,12 @@ export async function fetchJson(url, options = {}) {
         isBodyValidJson = true;
     } catch (e) {
         body = await maybeNonJsonResponse.text();
-        isBodyValidJson = body === '';
+        if (body === "") {
+            body = undefined;
+            isBodyValidJson = true;
+        } else {
+            isBodyValidJson = false;
+        }
     }
 
     shouldLog && console.debug("fetchJson response", sanitize({

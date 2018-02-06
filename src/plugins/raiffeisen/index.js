@@ -25,10 +25,12 @@ async function fetchJson(url, options = {}, predicate = () => true) {
         }))[1];
     } catch (e) {
         if (e instanceof retry.RetryError) {
-            e = e.failedResults.some(([error, response]) => error !== null) || new ZenMoney.Error("[NER]", true);
+            e = e.failedResults.find(([error, response]) => error !== null);
+            e = e ? e[0] : new ZenMoney.Error("[NER]", true);
         }
         throw e;
     }
+
     if (predicate) {
         validateResponse(response, response => response.body && !response.body.error && predicate(response));
     }
@@ -114,7 +116,7 @@ export function parseAccount(json) {
     const account = {
         id: "ACCOUNT_" + json.account.id,
         instrument: json.account.currency.shortName,
-        syncID: [json.account.cba.substring(json.account.cba.length - 4)],
+        syncID: [json.account.cba.slice(-4)],
         balance: json.balance,
         type: "checking"
     };
@@ -123,7 +125,7 @@ export function parseAccount(json) {
     if (json.cards && json.cards.length > 0) {
         for (const card of json.cards) {
             accounts["CARD_" + card.id] = account;
-            account.syncID.push(card.pan.substring(card.pan.length - 4));
+            account.syncID.push(card.pan.slice(-4));
             if (json.cards.length === 1) {
                 account.type = "ccard";
                 account.title = (card.product ? card.product + " " : "") + "*" + account.syncID[account.syncID.length - 1];
@@ -141,9 +143,43 @@ async function fetchDeposits(token) {
         headers: {
             "Authorization": `Bearer ${token}`
         }
-    });
-    //TODO process deposits
-    return {};
+    }, response => Array.isArray(response.body));
+    const deposits = {};
+    for (const json of response.body) {
+        const deposit = parseDeposit(json);
+        if (deposit) {
+            Object.assign(deposits, deposit);
+        }
+    }
+    return deposits;
+}
+
+export function parseDeposit(json) {
+    if (!json.deals || !json.deals.length) {
+        return null;
+    }
+    const deal = json.deals[0];
+    const deposit = {
+        id: "DEPOSIT_" + deal.id,
+        type: "deposit",
+        title: json.product && json.product.name ? json.product.name.name : null,
+        instrument: deal.currency.shortName,
+        syncID: [deal.id.toString().slice(-4)],
+        balance: deal.currentAmount,
+        percent: deal.rate,
+        startDate: deal.open.substring(0, 10),
+        endDateOffset: deal.duration,
+        endDateOffsetInterval: "day",
+        capitalization: json.capital,
+        payoffStep:     json.frequency ? 1 : 0,
+        payoffInterval: json.frequency ? json.frequency.id === "Y" ? "year" : "month" : null
+    };
+    if (!deposit.title) {
+        deposit.title = "*" + deposit.syncID[0];
+    }
+    const deposits = {};
+    deposits[deposit.id] = deposit;
+    return deposits;
 }
 
 async function fetchLoans(token) {
@@ -172,33 +208,21 @@ export function parseLoan(json) {
     const loan = {
         id: "LOAN_" + json.docNumber,
         instrument: json.currency.shortName,
-        syncID: [json.docNumber],
+        syncID: [json.cba.slice(-4)],
         balance: -json.leftDebt,
         type: "loan",
         percent: json.rate,
         startDate: startDate,
         endDateOffset: dateOffset,
-        endDateOffsetInterval: 'month',
+        endDateOffsetInterval: "month",
         capitalization: true,
         payoffStep: 1,
-        payoffInterval: 'month'
+        payoffInterval: "month"
     };
     const loans = {};
     loans[loan.id] = loan;
-    loan.title = "" + loan.syncID[0];
+    loan.title = "*" + loan.syncID[0];
     return loans;
-}
-
-export function parseLoanPayment(json) {
-    return {
-        date: json.date.substring(0, 10),
-        hold: false,
-        comment: json.relatedDescription.name,
-        income:         json.amount > 0 ? json.amount : 0,
-        incomeAccount:  json.relation + "_" + json.relatedName.name,
-        outcome:        json.amount < 0 ? -json.amount : 0,
-        outcomeAccount: json.relation + "_" + json.relatedName.name
-    };
 }
 
 async function fetchTransactionsPaged(token, page, limit) {
@@ -217,9 +241,36 @@ async function fetchTransactionsPaged(token, page, limit) {
     return transactions;
 }
 
+export function parseLoanTransaction(json) {
+    return {
+        date: json.date.substring(0, 10),
+        hold: false,
+        comment: json.relatedDescription.name,
+        income:         json.amount > 0 ? json.amount : 0,
+        incomeAccount:  json.relation + "_" + json.relatedName.name,
+        outcome:        json.amount < 0 ? -json.amount : 0,
+        outcomeAccount: json.relation + "_" + json.relatedName.name
+    };
+}
+
+export function parseDepositTransaction(json) {
+    return {
+        date: json.date.substring(0, 10),
+        hold: false,
+        comment: json.relatedDescription.name,
+        income:         json.amount > 0 ? json.amount : 0,
+        incomeAccount:  json.relation + "_" + json.relatedId,
+        outcome:        json.amount < 0 ? -json.amount : 0,
+        outcomeAccount: json.relation + "_" + json.relatedId
+    };
+}
+
 export function parseTransaction(json) {
     if (json.relation === "LOAN") {
-        return parseLoanPayment(json);
+        return parseLoanTransaction(json);
+    }
+    if (json.relation === "DEPOSIT") {
+        return parseDepositTransaction(json);
     }
     
     const transaction = {
