@@ -82,7 +82,7 @@ async function login(login, password) {
             sanitizeResponseLog: {body: {access_token: true, resource_owner: true}}
         }, null);
         if (response.status !== 200) {
-            throw new ZenMoney.Error("Райффайзенбанк: Неверный код подтверждения.", true);
+            throw new ZenMoney.Error("Райффайзенбанк: Введён неверный код подтверждения. Запустите импорт ещё раз.", true);
         }
     }
 
@@ -93,6 +93,42 @@ async function login(login, password) {
     };
 }
 
+async function fetchCards(token, accounts) {
+    const response = await fetchJson("https://sso.raiffeisen.ru/rest/card?alien=false", {
+        headers: {
+            "Authorization": `Bearer ${token}`
+        }
+    }, response => Array.isArray(response.body));
+    return parseCards(response.body, accounts);
+}
+
+export function parseCards(jsonArray, accounts = {}) {
+    const cards = {};
+    for (const json of jsonArray) {
+        if (!json.account) {
+            continue;
+        }
+        const syncID = json.pan.slice(-4);
+        const accountId = "ACCOUNT_" + json.account.id;
+        const account = accounts[accountId] || cards[accountId] || {syncID: []};
+        account.type = "ccard";
+        cards["CARD_" + json.id] = account;
+        cards[accountId] = account;
+        if (account.syncID.indexOf(syncID) < 0) {
+            account.syncID.push(syncID);
+        }
+        if (account.id || json.main.id !== 1) {
+            continue;
+        }
+        account.id = accountId;
+        account.instrument = json.currency.shortName;
+        account.title      = json.product;
+        account.balance    = json.balance;
+        account.syncID.push(json.cba.slice(-4));
+    }
+    return cards;
+}
+
 async function fetchAccounts(token) {
     const response = await fetchJson("https://sso.raiffeisen.ru/rest/account?alien=false", {
         headers: {
@@ -101,7 +137,7 @@ async function fetchAccounts(token) {
     }, response => Array.isArray(response.body));
     const accounts = {};
     for (const json of response.body) {
-        const account = parseAccount(json);
+        const account = parseAccountWithCards(json);
         if (account) {
             Object.assign(accounts, account);
         }
@@ -109,7 +145,7 @@ async function fetchAccounts(token) {
     return accounts;
 }
 
-export function parseAccount(json) {
+export function parseAccountWithCards(json) {
     if (!json.account || !json.account.id) {
         return null;
     }
@@ -123,12 +159,12 @@ export function parseAccount(json) {
     const accounts = {};
     accounts[account.id] = account;
     if (json.cards && json.cards.length > 0) {
+        account.type = "ccard";
         for (const card of json.cards) {
             accounts["CARD_" + card.id] = account;
             account.syncID.push(card.pan.slice(-4));
-            if (json.cards.length === 1) {
-                account.type = "ccard";
-                account.title = (card.product ? card.product + " " : "") + "*" + account.syncID[account.syncID.length - 1];
+            if (card.main.id === 1) {
+                account.title = card.product;
             }
         }
     }
@@ -138,48 +174,58 @@ export function parseAccount(json) {
     return accounts;
 }
 
-async function fetchDeposits(token) {
-    await fetchJson("https://sso.raiffeisen.ru/rest/deposit?alien=false", {
+async function fetchDepositsWithTransactions(token, fromDate) {
+    const response = await fetchJson("https://sso.raiffeisen.ru/rest/deposit?alien=false", {
         headers: {
             "Authorization": `Bearer ${token}`
         }
     }, response => Array.isArray(response.body));
-    const deposits = {};
-    for (const json of response.body) {
-        const deposit = parseDeposit(json);
-        if (deposit) {
-            Object.assign(deposits, deposit);
-        }
-    }
-    return deposits;
+    const fromDateStr = fromDate.getFullYear() + "-" + n2(fromDate.getMonth() + 1) + "-" + n2(fromDate.getDate());
+    const result = parseDepositsWithTransactions(response.body);
+    result.transactions = result.transactions.filter(transaction => transaction.date >= fromDateStr);
+    return result;
 }
 
-export function parseDeposit(json) {
-    if (!json.deals || !json.deals.length) {
-        return null;
+export function parseDepositsWithTransactions(jsonArray) {
+    const accounts     = {};
+    const transactions = [];
+    for (const json of jsonArray) {
+        if (!json.deals || !json.deals.length) {
+            continue;
+        }
+        let deposit = null;
+        for (const deal of json.deals) {
+            if (!deposit) {
+                deposit = {
+                    id: "DEPOSIT_ID_" + json.id,
+                    type: "deposit",
+                    title: json.product.name.name,
+                    instrument: deal.currency.shortName,
+                    syncID: [json.number],
+                    startBalance: deal.startAmount,
+                    percent: deal.rate,
+                    startDate: deal.open.substring(0, 10),
+                    endDateOffset: deal.duration,
+                    endDateOffsetInterval: "day",
+                    capitalization: json.capital,
+                    payoffStep:     json.frequency ? 1 : 0,
+                    payoffInterval: json.frequency ? json.frequency.id === "Y" ? "year" : "month" : null
+                };
+                accounts[deposit.id] = deposit;
+            }
+            accounts["DEPOSIT_" + deal.id] = deposit;
+            deposit.balance = deal.currentAmount;
+            transactions.push({
+                income: deal.startAmount,
+                incomeAccount: deposit.id,
+                outcome: 0,
+                outcomeAccount: deposit.id,
+                date: deal.open.substring(0, 10),
+                hold: false
+            });
+        }
     }
-    const deal = json.deals[0];
-    const deposit = {
-        id: "DEPOSIT_" + deal.id,
-        type: "deposit",
-        title: json.product && json.product.name ? json.product.name.name : null,
-        instrument: deal.currency.shortName,
-        syncID: [deal.id.toString().slice(-4)],
-        balance: deal.currentAmount,
-        percent: deal.rate,
-        startDate: deal.open.substring(0, 10),
-        endDateOffset: deal.duration,
-        endDateOffsetInterval: "day",
-        capitalization: json.capital,
-        payoffStep:     json.frequency ? 1 : 0,
-        payoffInterval: json.frequency ? json.frequency.id === "Y" ? "year" : "month" : null
-    };
-    if (!deposit.title) {
-        deposit.title = "*" + deposit.syncID[0];
-    }
-    const deposits = {};
-    deposits[deposit.id] = deposit;
-    return deposits;
+    return {accounts: accounts, transactions: transactions};
 }
 
 async function fetchLoans(token) {
@@ -192,7 +238,7 @@ async function fetchLoans(token) {
     for (const json of response.body) {
         const loan = parseLoan(json);
         if (loan) {
-            Object.assign(loans, loan);
+            loans[loan.id] = loan;
         }
     }
     return loans;
@@ -208,7 +254,7 @@ export function parseLoan(json) {
     const loan = {
         id: "LOAN_" + json.docNumber,
         instrument: json.currency.shortName,
-        syncID: [json.cba.slice(-4)],
+        syncID: [json.docNumber],
         balance: -json.leftDebt,
         type: "loan",
         percent: json.rate,
@@ -219,10 +265,8 @@ export function parseLoan(json) {
         payoffStep: 1,
         payoffInterval: "month"
     };
-    const loans = {};
-    loans[loan.id] = loan;
     loan.title = "*" + loan.syncID[0];
-    return loans;
+    return loan;
 }
 
 async function fetchTransactionsPaged(token, page, limit) {
@@ -369,12 +413,13 @@ export async function scrape({fromDate, toDate}) {
         ZenMoney.setData("last_sync", null);
     }
     const token = (await login(preferences.login, preferences.password)).accessToken;
-    const accounts = Object.assign(
-        await fetchAccounts(token),
-        await fetchDeposits(token),
+    const accounts = await fetchAccounts(token);
+    let {accounts: deposits, transactions} = await fetchDepositsWithTransactions(token, fromDate);
+    Object.assign(accounts, deposits,
+        await fetchCards(token, accounts),
         await fetchLoans(token)
     );
-    const transactions = await fetchTransactions(token, fromDate);
+    transactions = transactions.concat(await fetchTransactions(token, fromDate));
     return {
         accounts:     adjustAccounts(accounts),
         transactions: adjustTransactions(transactions, accounts)

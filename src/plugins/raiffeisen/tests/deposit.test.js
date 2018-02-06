@@ -1,8 +1,8 @@
-import {parseDeposit} from '../index';
+import {parseDepositsWithTransactions} from '../index';
 
 describe("deposit parser", () => {
-    it("should return valid account when it's a deposit with monthly capitalization", () => {
-        const deposit = parseDeposit({
+    it("should return valid account and transactions when it's a deposit with monthly capitalization", () => {
+        const {accounts, transactions} = parseDepositsWithTransactions([{
             alien: false,
             account: {
                 id: 10206507,
@@ -61,15 +61,17 @@ describe("deposit parser", () => {
             } ],
             replenish: true,
             withdraw: true
-        });
+        }]);
 
-        expect(deposit).toEqual({'DEPOSIT_1025641': {
-            id: 'DEPOSIT_1025641',
+        const expectedAccounts = {};
+        const deposit = {
+            id: 'DEPOSIT_ID_5655',
             title: 'Зарплатный',
             type: 'deposit',
             instrument: 'RUB',
+            startBalance: 200000,
             balance: 200849.32,
-            syncID: ['5641'],
+            syncID: ['00/814294/5655'],
             percent: 5,
             startDate: '2017-12-29',
             endDateOffsetInterval: 'day',
@@ -77,11 +79,25 @@ describe("deposit parser", () => {
             payoffInterval: 'month',
             payoffStep: 1,
             capitalization: true
-        }});
+        };
+        expectedAccounts[deposit.id] = deposit;
+        expectedAccounts["DEPOSIT_1025641"] = deposit;
+
+        const expectedTransactions = [{
+            incomeAccount: 'DEPOSIT_ID_5655',
+            income: 200000,
+            outcomeAccount: 'DEPOSIT_ID_5655',
+            outcome: 0,
+            hold: false,
+            date: '2017-12-29'
+        }];
+
+        expect(accounts).toEqual(expectedAccounts);
+        expect(transactions).toEqual(expectedTransactions);
     });
 
-    it("should return valid account when it's a deposit without capitalization", () => {
-        const deposit = parseDeposit({
+    it("should return valid account and transactions when it's a deposit without capitalization", () => {
+        const {accounts, transactions} = parseDepositsWithTransactions([{
             alien: false,
             account: {
                 id: 10206507,
@@ -137,15 +153,17 @@ describe("deposit parser", () => {
                 paidInterest: 0
             } ],
             replenish: false,
-            withdraw: false });
+            withdraw: false }]);
 
-        expect(deposit).toEqual({'DEPOSIT_1025643': {
-            id: 'DEPOSIT_1025643',
+        const expectedAccounts = {};
+        const deposit = {
+            id: 'DEPOSIT_ID_5657',
             title: 'Прибыльный Сезон',
             type: 'deposit',
             instrument: 'RUB',
+            startBalance: 200000,
             balance: 200000,
-            syncID: ['5643'],
+            syncID: ['00/814294/5657'],
             percent: 5.2,
             startDate: '2017-12-29',
             endDateOffsetInterval: 'day',
@@ -153,6 +171,20 @@ describe("deposit parser", () => {
             payoffInterval: null,
             payoffStep: 0,
             capitalization: false
-        }});
+        };
+        expectedAccounts[deposit.id] = deposit;
+        expectedAccounts["DEPOSIT_1025643"] = deposit;
+
+        const expectedTransactions = [{
+            incomeAccount: 'DEPOSIT_ID_5657',
+            income: 200000,
+            outcomeAccount: 'DEPOSIT_ID_5657',
+            outcome: 0,
+            hold: false,
+            date: '2017-12-29'
+        }];
+
+        expect(accounts).toEqual(expectedAccounts);
+        expect(transactions).toEqual(expectedTransactions);
     });
 });
