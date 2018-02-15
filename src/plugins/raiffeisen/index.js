@@ -370,17 +370,22 @@ async function fetchTransactions(token, fromDate) {
 }
 
 export function adjustTransactions(transactions, accounts) {
+    const filtered = [];
     for (const transaction of transactions) {
         const incomeAccount  = accounts[transaction.incomeAccount];
         const outcomeAccount = accounts[transaction.outcomeAccount];
+        if (!incomeAccount && !outcomeAccount) {
+            continue;
+        }
         if (incomeAccount) {
             transaction.incomeAccount = incomeAccount.id;
         }
         if (outcomeAccount) {
             transaction.outcomeAccount = outcomeAccount.id;
         }
+        filtered.push(transaction);
     }
-    return transactions;
+    return filtered;
 }
 
 export function adjustAccounts(accounts) {
