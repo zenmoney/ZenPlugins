@@ -97,125 +97,136 @@ var g_accounts = []; // линки активных счетов, по ним ф
  */
 function processAccounts() {
 	ZenMoney.trace('Запрашиваем данные по счетам...');
-	var accounts = requestJson("accounts_flat");
-	ZenMoney.trace('Получено счетов: '+ accounts.payload.length);
-	ZenMoney.trace('JSON: '+JSON.stringify(accounts.payload));
+	//var accounts = requestJson("accounts_flat");
+	var accounts = requestJson("grouped_requests", null, {
+		requestsData: JSON.stringify(
+			[{
+				key: 0,
+				operation: 'accounts'
+			}]
+		)
+	});
 
+	ZenMoney.trace('JSON счетов: '+JSON.stringify(accounts));
+
+	accounts = accounts.payload[0].payload;
 	var accDict = [];
-	for (var i = 0; i < accounts.payload.length; i++) {
-		var a = accounts.payload[i];
-		if (isAccountSkipped(a.id)) {
-			ZenMoney.trace('Пропускаем карту/счёт: '+ a.name +' (#'+ a.id +')');
-			continue;
-		}
-
-		var creditLimit = a.creditLimit ? a.creditLimit.value : 0;
-
-		// дебетовые карты ------------------------------------
-		if (a.accountType == 'Current' && a.status == 'NORM') {
-			ZenMoney.trace('Добавляем дебетовую карту: '+ a.name +' (#'+ a.id +')');
-			var acc1 = {
-				id:				a.id,
-				title:			a.name,
-				type:			'ccard',
-				syncID:			[],
-				instrument:		a.moneyAmount.currency.name,
-				balance:		a.moneyAmount.value - creditLimit
-			};
-
-			if (creditLimit > 0)
-				acc1.creditLimit = creditLimit;
-
-			// номера карт
-			for (var k1 = 0; k1 < a.cardNumbers.length; k1++) {
-				var card1 =  a.cardNumbers[k1];
-				if (card1.activated)
-					acc1.syncID.push(card1.value.substring(card1.value.length-4))
+	for (var k = 0; k < accounts.length; k++) {
+		for (var i = 0; i < accounts[k].accounts.length; i++) {
+			var a = accounts[k].accounts[i];
+			if (isAccountSkipped(a.id)) {
+				ZenMoney.trace('Пропускаем карту/счёт: ' + a.name + ' (#' + a.id + ')');
+				continue;
 			}
 
-			if (acc1.syncID.length > 0) {
-				// добавим ещё и номер счёта карты
-				acc1.syncID.push(a.id.substring(a.id.length-4));
+			var creditLimit = a.creditLimit ? a.creditLimit.value : 0;
 
-				accDict.push(acc1);
+			// дебетовые карты ------------------------------------
+			if (a.accountType == 'Current' && a.status == 'NORM') {
+				ZenMoney.trace('Добавляем дебетовую карту: '+ a.name +' (#'+ a.id +')');
+				var acc1 = {
+					id:				a.id,
+					title:			a.name,
+					type:			'ccard',
+					syncID:			[],
+					instrument:		a.moneyAmount.currency.name,
+					balance:		a.moneyAmount.value - creditLimit
+				};
+
+				if (creditLimit > 0)
+					acc1.creditLimit = creditLimit;
+
+				// номера карт
+				for (var k1 = 0; k1 < a.cardNumbers.length; k1++) {
+					var card1 = a.cardNumbers[k1];
+					if (card1.activated)
+						acc1.syncID.push(card1.value.substring(card1.value.length - 4))
+				}
+
+				if (acc1.syncID.length > 0) {
+					// добавим ещё и номер счёта карты
+					acc1.syncID.push(a.id.substring(a.id.length - 4));
+
+					accDict.push(acc1);
+					g_accounts.push(a.id);
+				}
+			}
+			// кредитные карты ----------------------------------------
+			else if (a.accountType == 'Credit' && a.status == 'NORM') {
+				ZenMoney.trace("Добавляем кредитную карту: " + a.name + ' (#' + a.id + ')');
+
+				var acc2 = {
+					id:				a.id,
+					title:			a.name,
+					type:			'ccard',
+					syncID:			[],
+					creditLimit:	creditLimit,
+					instrument:		a.moneyAmount.currency.name,
+					balance:		a.moneyAmount.value - creditLimit
+				};
+
+				// пересчитаем остаток, если провалились в минус сверх кредитного лимита
+				if (a.moneyAmount.value == 0 && a.debtAmount) {
+					ZenMoney.trace('Пересчитаем остаток на карте, так как провалились ниже лимита...');
+					acc2.balance = -a.debtAmount.value;
+				}
+
+				// номера карт
+				for (var k2 = 0; k2 < a.cardNumbers.length; k2++) {
+					var card2 = a.cardNumbers[k2];
+					if (card2.activated)
+						acc2.syncID.push(card2.value.substring(card2.value.length - 4))
+				}
+
+				if (acc2.syncID.length > 0) {
+					// добавим ещё и номер счёта карты
+					acc2.syncID.push(a.id.substring(a.id.length - 4));
+
+					accDict.push(acc2);
+					g_accounts.push(a.id);
+				}
+			}
+			// накопительные счета ------------------------------------
+			else if (a.accountType == 'Saving' && a.status == 'NORM') {
+				ZenMoney.trace("Добавляем накопительный счёт: "+a.name +' (#'+ a.id +')');
+				accDict.push({
+					id:				a.id,
+					title:			a.name,
+					type:			'deposit', //'checking'
+					syncID:			a.id.substring(a.id.length-4),
+					instrument:		a.moneyAmount.currency.name,
+					balance:		a.moneyAmount.value,
+					// пока создаём накопительные счета как вклады
+					percent:		0,
+					capitalization:	true,
+					startDate:		a.creationDate.milliseconds,
+					endDateOffsetInterval: 'month',
+					endDateOffset:	1,
+					payoffInterval:	'month',
+					payoffStep:		1
+				});
 				g_accounts.push(a.id);
 			}
-		}
-		// кредитные карты ----------------------------------------
-		else if (a.accountType == 'Credit' && a.status == 'NORM') {
-			ZenMoney.trace("Добавляем кредитную карту: "+ a.name +' (#'+ a.id +')');
-
-			var acc2 = {
-				id:				a.id,
-				title:			a.name,
-				type:			'ccard',
-				syncID:			[],
-				creditLimit:	creditLimit,
-				instrument:		a.moneyAmount.currency.name,
-				balance:		a.moneyAmount.value - creditLimit
-			};
-
-			// пересчитаем остаток, если провалились в минус сверх кредитного лимита
-			if (a.moneyAmount.value == 0 && a.debtAmount) {
-				ZenMoney.trace('Пересчитаем остаток на карте, так как провалились ниже лимита...');
-				acc2.balance = -a.debtAmount.value;
-			}
-
-			// номера карт
-			for (var k2 = 0; k2 < a.cardNumbers.length; k2++) {
-				var card2 =  a.cardNumbers[k2];
-				if (card2.activated)
-					acc2.syncID.push(card2.value.substring(card2.value.length-4))
-			}
-
-			if (acc2.syncID.length > 0) {
-				// добавим ещё и номер счёта карты
-				acc2.syncID.push(a.id.substring(a.id.length-4));
-
-				accDict.push(acc2);
+			// депозиты --------------------------------------------------
+			else if (a.accountType == 'Deposit' && a.status == 'ACTIVE') {
+				ZenMoney.trace("Добавляем депозит: "+a.name +' (#'+ a.id +')');
+				accDict.push({
+					id:				a.id,
+					title:			a.name,
+					type:			'deposit',
+					syncID:			a.id.substring(a.id.length-4),
+					instrument:		a.moneyAmount.currency.name,
+					balance:		a.moneyAmount.value,
+					percent:		a.depositRate,
+					capitalization:	a.typeOfInterest == 'TO_DEPOSIT',
+					startDate:		a.openDate.milliseconds,
+					endDateOffsetInterval: 'month',
+					endDateOffset:	a.period,
+					payoffInterval:	'month',
+					payoffStep:		1
+				});
 				g_accounts.push(a.id);
 			}
-		}
-		// накопительные счета ------------------------------------
-		else if (a.accountType == 'Saving' && a.status == 'NORM') {
-			ZenMoney.trace("Добавляем накопительный счёт: "+a.name +' (#'+ a.id +')');
-			accDict.push({
-				id:				a.id,
-				title:			a.name,
-				type:			'deposit', //'checking'
-				syncID:			a.id.substring(a.id.length-4),
-				instrument:		a.moneyAmount.currency.name,
-				balance:		a.moneyAmount.value,
-				// пока создаём накопительные счета как вклады
-				percent:		0,
-				capitalization:	true,
-				startDate:		a.creationDate.milliseconds,
-				endDateOffsetInterval: 'month',
-				endDateOffset:	1,
-				payoffInterval:	'month',
-				payoffStep:		1
-			});
-			g_accounts.push(a.id);
-		}
-		// депозиты --------------------------------------------------
-		else if (a.accountType == 'Deposit' && a.status == 'ACTIVE') {
-			ZenMoney.trace("Добавляем депозит: "+a.name +' (#'+ a.id +')');
-			accDict.push({
-				id:				a.id,
-				title:			a.name,
-				type:			'deposit',
-				syncID:			a.id.substring(a.id.length-4),
-				instrument:		a.moneyAmount.currency.name,
-				balance:		a.moneyAmount.value,
-				percent:		a.depositRate,
-				capitalization:	a.typeOfInterest == 'TO_DEPOSIT',
-				startDate:		a.openDate.milliseconds,
-				endDateOffsetInterval: 'month',
-				endDateOffset:	a.period,
-				payoffInterval:	'month',
-				payoffStep:		1
-			});
-			g_accounts.push(a.id);
 		}
 	}
 
@@ -290,25 +301,25 @@ function processTransactions(data) {
 	var startDate = n2(lastSyncDate.getDate()) +'.'+ n2(lastSyncDate.getMonth() + 1) +'.'+ lastSyncDate.getFullYear() +' '+ n2(lastSyncDate.getHours()) +':'+ n2(lastSyncDate.getMinutes());
 	ZenMoney.trace('Запрашиваем операции с ' + startDate);
 
-    /*var transactions2 = requestJson("operations", null, {
-        "start": 	lastSyncTime
-        //"start":    Date.parse('2017-08-27T00:00'),
-        //"end":      Date.parse('2017-08-27T23:00')
-    });*/
-    var transactions = requestJson("grouped_requests", null, {
-        requestsData: JSON.stringify(
-            [{
-                key: 0,
-                operation: 'operations',
-                params: {
-                    start: lastSyncTime
-                }
-            }]
-        )
-    });
+	/*var transactions2 = requestJson("operations", null, {
+		"start": 	lastSyncTime
+		//"start":    Date.parse('2017-08-27T00:00'),
+		//"end":      Date.parse('2017-08-27T23:00')
+	});*/
+	var transactions = requestJson("grouped_requests", null, {
+		requestsData: JSON.stringify(
+			[{
+				key: 0,
+				operation: 'operations',
+				params: {
+					start: lastSyncTime
+				}
+			}]
+		)
+	});
 
-    var payload = transactions.payload[0].payload;
-    ZenMoney.trace('Получено операций: '+ payload.length);
+	var payload = transactions.payload[0].payload;
+	ZenMoney.trace('Получено операций: '+ payload.length);
 	ZenMoney.trace('JSON: '+JSON.stringify(payload));
 
 	var tranDict = {};      // список найденных оперций
@@ -482,7 +493,7 @@ function processTransactions(data) {
 
 					case "INCOME":
 						if (t.partnerType === "card2card" && t.payment &&
-								t.payment.cardNumber && t.payment.cardNumber.length > 4) {
+							t.payment.cardNumber && t.payment.cardNumber.length > 4) {
 							tran.comment = t.description;
 							tran.outcome = t.amount.value;
 							tran.outcomeAccount = "ccard#" + t.amount.currency.name + "#" +
