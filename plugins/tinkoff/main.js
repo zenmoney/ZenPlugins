@@ -290,21 +290,34 @@ function processTransactions(data) {
 	var startDate = n2(lastSyncDate.getDate()) +'.'+ n2(lastSyncDate.getMonth() + 1) +'.'+ lastSyncDate.getFullYear() +' '+ n2(lastSyncDate.getHours()) +':'+ n2(lastSyncDate.getMinutes());
 	ZenMoney.trace('Запрашиваем операции с ' + startDate);
 
-	var transactions = requestJson("operations", null, {
-		"start": 	lastSyncTime
-		//"start":    Date.parse('2017-08-27T00:00'),
-		//"end":      Date.parse('2017-08-27T23:00')
-	});
-	ZenMoney.trace('Получено операций: '+transactions.payload.length);
-	ZenMoney.trace('JSON: '+JSON.stringify(transactions.payload));
+    /*var transactions2 = requestJson("operations", null, {
+        "start": 	lastSyncTime
+        //"start":    Date.parse('2017-08-27T00:00'),
+        //"end":      Date.parse('2017-08-27T23:00')
+    });*/
+    var transactions = requestJson("grouped_requests", null, {
+        requestsData: JSON.stringify(
+            [{
+                key: 0,
+                operation: 'operations',
+                params: {
+                    start: lastSyncTime
+                }
+            }]
+        )
+    });
+
+    var payload = transactions.payload[0].payload;
+    ZenMoney.trace('Получено операций: '+ payload.length);
+	ZenMoney.trace('JSON: '+JSON.stringify(payload));
 
 	var tranDict = {};      // список найденных оперций
 	var tranDictHold = {};  // список ключей операций для контроля холдов и акцептов в одной выписке
 	var paymentsDict = {};  // список идентификаторов переводов
 
 
-	for (var i = 0; i < transactions.payload.length; i++) {
-		var t = transactions.payload[i];
+	for (var i = 0; i < payload.length; i++) {
+		var t = payload[i];
 
 		if (t.operationTime.milliseconds > lastSyncTime)
 			lastSyncTime = t.operationTime.milliseconds;
@@ -318,7 +331,8 @@ function processTransactions(data) {
 			continue;
 
 		var tran = {};
-		var dt = new Date(t.operationTime.milliseconds);
+		// дата по-видимому всегда привязана к часовому поясу Москвы. Так что нужно ее корректировать
+		var dt = new Date(t.operationTime.milliseconds + (180 + new Date().getTimezoneOffset()) * 60000);
 		tran.date = n2(dt.getDate()) + '.' + n2(dt.getMonth() + 1) + '.' + dt.getFullYear();
 		tran.time = n2(dt.getHours()) + ':' + n2(dt.getMinutes() + 1) + ':' + n2(dt.getSeconds()); // для внутреннего использования
 		tran.created = t.operationTime.milliseconds;
@@ -343,6 +357,9 @@ function processTransactions(data) {
 
 		// отделяем акцепт от холда временем дебетового списания
 		tran.id = t.debitingTime ? t.id : 'tmp#' + t.id;
+
+		// добавим флаг холда
+		tran.hold = t.debitingTime ? false : true;
 
 		ZenMoney.trace('Добавляем операцию #' + i + ': ' + tran.date + ', ' + tran.time + ', ' + t.description + ', '
 			+ (t.type == "Credit" ? '+' : (t.type == "Debit" ? '-' : '')) + t.accountAmount.value
@@ -462,6 +479,16 @@ function processTransactions(data) {
 							tran.outcome = t.amount.value;
 						}
 						break;
+
+					case "INCOME":
+						if (t.partnerType === "card2card" && t.payment &&
+								t.payment.cardNumber && t.payment.cardNumber.length > 4) {
+							tran.comment = t.description;
+							tran.outcome = t.amount.value;
+							tran.outcomeAccount = "ccard#" + t.amount.currency.name + "#" +
+								t.payment.cardNumber.substring(t.payment.cardNumber.length - 4);
+							break;
+						}
 
 					// Если совсем ничего не подошло
 					default:
