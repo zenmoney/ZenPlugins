@@ -155,5 +155,13 @@ export function figureOutAccountRestsDelta({transactions, index, accountCurrency
     }
     const previousAccountRest = getAccountRest({transactions, index: index - 1, accountCurrency});
     const currentAccountRest = getAccountRest({transactions, index, accountCurrency});
-    return previousAccountRest === null || currentAccountRest === null ? null : currentAccountRest - previousAccountRest;
+    if (previousAccountRest === null || currentAccountRest === null) {
+        return null;
+    }
+    const accountDelta = currentAccountRest - previousAccountRest;
+    const transactionDelta = getTransactionFactor(transactions[index]) * transactions[index].transactionAmount;
+    if (Math.sign(transactionDelta) !== Math.sign(accountDelta)) {
+        return null;
+    }
+    return accountDelta;
 }
