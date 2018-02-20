@@ -50,4 +50,22 @@ describe("figureOutAccountRestsDelta", () => {
         expect(() => figureOutAccountRestsDelta({index: -1, transactions, accountCurrency})).toThrow();
         expect(() => figureOutAccountRestsDelta({index: 1, transactions, accountCurrency})).toThrow();
     });
+
+    it("should handle ambiguous amounts signs", () => {
+        const transactions = [
+            {
+                "transactionType": "Товары и услуги",
+                "transactionAmount": 1,
+                "transactionCurrency": "BYN",
+                "accountRest": 11.46,
+            },
+            {
+                "transactionType": "Товары и услуги",
+                "transactionAmount": 10,
+                "transactionCurrency": "BYN",
+                "accountRest": 27.93,
+            },
+        ];
+        expect(figureOutAccountRestsDelta({index: 1, transactions, accountCurrency: "USD"})).toBeNull();
+    });
 });
