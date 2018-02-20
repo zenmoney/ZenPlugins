@@ -253,7 +253,7 @@ describe("card parser", () => {
         const expected = {};
 
         const account1 = {
-            "balance": 111363.67,
+            "available": 111363.67,
             "id": "ACCOUNT_16453728",
             "instrument": "RUB",
             "syncID": [

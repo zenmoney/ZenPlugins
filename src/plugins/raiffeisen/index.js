@@ -123,8 +123,12 @@ export function parseCards(jsonArray, accounts = {}) {
         account.id = accountId;
         account.instrument = json.currency.shortName;
         account.title      = json.product;
-        account.balance    = json.balance;
         account.syncID.push(json.cba.slice(-4));
+        if (json.type.id === 2) {
+            account.available = json.balance;
+        } else {
+            account.balance = json.balance;
+        }
     }
     return cards;
 }
