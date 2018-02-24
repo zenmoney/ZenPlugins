@@ -316,6 +316,8 @@ function main() {
             // Вываливаемся с ошибкой 
             throw new ZenMoney.Error("Ошибка синхронизации: Не получены данные по карточным счетам.", null, true);
         };
+        ZenMoney.trace("Получены карточные счета:\n" + JSON.stringify(result));
+
         // Проверяем количество полученных карточных счетов
         if (result.cardAccounts.length === 0) {
             // Если их количество равно 0, завершаем работу функции без ошибки
@@ -333,7 +335,7 @@ function main() {
                 "syncID": [ account.name.substring(account.name.length - 4) ],
                 "instrument": account.currency.nameIso,
                 "type": "ccard",
-                "balance": account.availableBalance,
+                "balance": account.availableBalance - account.mainCreditLimit,
                 "creditLimit": account.mainCreditLimit,
                 "savings": "false",
                 "bank": 5132,
@@ -380,6 +382,8 @@ function main() {
             // Вываливаемся с ошибкой
             throw new ZenMoney.Error("Ошибка синхронизации счетов: Не получены данные.", null, true);
         };
+        ZenMoney.trace("Получены счета:\n" + JSON.stringify(result));
+
         // Проверяем количество полученных счетов
         if (result.length === 0) {
             // Если их количество равно 0, завершаем работу функции без ошибки
@@ -528,7 +532,7 @@ function main() {
                 "archive": false,
                 "percent": 0,
                 "payoffStep": account.capitalPeriodMonths,
-                "payoffInterval": "month"
+                "payoffInterval": account.capitalPeriodMonths > 0 ? "month" : null
             };
             // Если пользователь переименовал вклад в банке, используем название которое он указал
             if (account.clientLabel) {
@@ -610,16 +614,24 @@ function main() {
             throw new ZenMoney.Error("Ошибка синхронизации: Не получены данные по транзакциям счета " + id + ".", null, false);
             return false;
         };
+        ZenMoney.trace("Получены операции по счетам " + type + ":\n" + JSON.stringify(result));
+
         // Проверяем количество полученных транзакций
         if (result.transactions.length !== 0) {
             // Если их количество не равно 0
             for (var i1 = 0; i1 < result.transactions.length; ++i1) {
                 // Передаем переменной transaction значение из массива по индексу
                 var transaction = result.transactions[i1];
+                var ground = transaction.ground ? transaction.ground.trim() : "";
+                if (ground.toLowerCase() === "выдача кредита" ||
+                    ground.toLowerCase() === "погашение основного долга") {
+                    continue;
+                }
+
                 // Создаем массив с данными
                 var transaction_info = {
-                    "date": transaction.transactionDate,
-                    "comment": transaction.ground
+                    "date": transaction.transactionDate.substring(0, 10),
+                    "comment": ground.length > 0 ? ground : null
                 };
                 // Проверяем тип операции
                 if (transaction.transactionSum >= 0) {
@@ -642,6 +654,9 @@ function main() {
                 // Присваиваем MCC код если он имеется
                 if (transaction.mcc) {
                     transaction_info.mcc = parseInt(transaction.mcc);
+                    if (isNaN(transaction_info.mcc)) {
+                        transaction_info.mcc = null;
+                    }
                 }
                 
                 ZenMoney.addTransaction(transaction_info);
@@ -650,9 +665,4 @@ function main() {
         
         return true;
     };
-    
-    // Функция для проверки игнорирования
-    function isAccountSkipped(id) {
-        return ZenMoney.getLevel() >= 13 && ZenMoney.isAccountSkipped(id);
-    }
 };

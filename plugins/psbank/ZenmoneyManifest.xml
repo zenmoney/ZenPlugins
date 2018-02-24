@@ -2,7 +2,7 @@
 <provider>
     <id>psbank</id>
     <version>1.0</version>
-    <build>2</build>
+    <build>8</build>
     <company>5132</company>
     <files>
         <js>main.js</js>
