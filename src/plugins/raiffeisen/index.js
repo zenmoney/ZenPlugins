@@ -85,6 +85,11 @@ async function login(login, password) {
             throw new ZenMoney.Error("Райффайзенбанк: Введён неверный код подтверждения. Запустите импорт ещё раз.", true);
         }
     }
+    if (response.body &&
+            response.body.error === "invalid_request" &&
+            response.body.error_description === "Missing grant type") {
+        throw new ZenMoney.Error("Райффайзенбанк: У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии", true);
+    }
 
     validateResponse(response, response => response.body && !response.body.error && response.body.access_token);
 
