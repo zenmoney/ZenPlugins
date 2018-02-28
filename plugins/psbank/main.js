@@ -171,12 +171,12 @@ function main() {
         // Если запрос не выполнился
         if (!result) {
             // Вываливаемся с ошибкой
-            throw new ZenMoney.Error("Ошибка авторизации: Не получены данные.", null, true);
+            throw new ZenMoney.Error("Ошибка авторизации: Не получены данные.");
         };
         // Проверяем, что в полученных данных присутствует текст: <input name="__RequestVerificationToken"
         if (result.indexOf("<input name=\"__RequestVerificationToken\"") === -1) {
             // Значение в тексте не найдено, вываливаемся с ошибкой
-            throw new ZenMoney.Error("Ошибка авторизации: Не найдено поле с токеном.", null, true);
+            throw new ZenMoney.Error("Ошибка авторизации: Не найдено поле с токеном.");
         };
         // Обрезаем текст с подстоки "<input name="__RequestVerificationToken"" до конца
         var XSRFToken = result.substr(result.indexOf("<input name=\"__RequestVerificationToken\""));
@@ -210,13 +210,13 @@ function main() {
         // Если запрос не выполнился
         if (!result) {
             // Вываливаемся с ошибкой 
-            throw new ZenMoney.Error("Ошибка авторизации: Не получены данные при получении токена.", null, true);
+            throw new ZenMoney.Error("Ошибка авторизации: Не получены данные при получении токена.");
         };
         // Проверяем значение переменной error в полученных данных
         if (result.error) {
             // Если значение переменной error не пустое
             // Вываливаемся с ошибкой и описанием
-            throw new ZenMoney.Error("Ошибка авторизации: " + result.error_description, null, true);
+            throw new ZenMoney.Error("Ошибка авторизации: " + result.error_description);
         };
         // Формируем заголовки
         options.headers = {
@@ -230,7 +230,7 @@ function main() {
             // Если запрос не выполнился
             if (!auth) {
                 // Вываливаемся с ошибкой 
-                throw new ZenMoney.Error("Ошибка авторизации: Не получены данные для двухэтапной авторизации.", null, true);
+                throw new ZenMoney.Error("Ошибка авторизации: Не получены данные для двухэтапной авторизации.");
             };
             // Формируем сообщение для показа пользователю
             var message = "Введите";
@@ -240,7 +240,7 @@ function main() {
                 // Если запрос не выполнился
                 if (!sms) {
                     // Вываливаемся с ошибкой 
-                    throw new ZenMoney.Error("Ошибка авторизации: Не получены данные для двухэтапной авторизации по SMS.", null, true);
+                    throw new ZenMoney.Error("Ошибка авторизации: Не получены данные для двухэтапной авторизации по SMS.");
                 };
                 message = message + " SMS" + sms.smsNumber;
             };
@@ -256,29 +256,30 @@ function main() {
             // Если пользоватеь ничего не ввел
             if (code.length === 0) {
                 // Вываливаемся с ошибкой 
-                throw new ZenMoney.Error("Ошибка авторизации: Вы не ввели код авторизации.", null, true);
+                throw new ZenMoney.Error("Ошибка авторизации: Вы не ввели код авторизации.", true);
             };
             // В зависимости от буквы в коде подготавливаем данные
 
             switch(code.substr(0,1)) {
                 case "P":
                     // Код из PUSH
-                    var data = {
+                    data = {
                         "authorizerType": 11,
                         "value": code.substr(1)
                     };
                     break;
                 case "S":
                     // Код из SMS
-                    var data = {
+                    data = {
                         "authorizerType": 2,
                         "value": code.substr(1)
                     };
                     break;
                 default:
-                    // Не определена буква в коде
-                    // Вываливаемся с ошибкой 
-                    throw new ZenMoney.Error("Ошибка авторизации: Не удалось определить первую букву в коде.", null, true);
+                    data = {
+                        "authorizerType": auth.pushStatus === 4 ? 11 : 2,
+                        "value": code
+                    };
                     break;
             };
             // Отправляем запрос с кодом в интернет-банк
@@ -287,7 +288,7 @@ function main() {
             if (code) {
                 // Если данные имеются, значит ошибка при отправке кода авторизации
                 // Вываливаемся с ошибкой
-                throw new ZenMoney.Error("Ошибка авторизации: " + code.exceptionMessage, null, true);
+                throw new ZenMoney.Error("Ошибка авторизации: " + code.exceptionMessage, true);
             };
         };
         
@@ -298,7 +299,7 @@ function main() {
         // Если запрос не выполнился
         if (!result) {
             // Вываливаемся с ошибкой 
-            throw new ZenMoney.Error("Ошибка авторизации: Не получены данные при проверке авторизации.", null, true);
+            throw new ZenMoney.Error("Ошибка авторизации: Не получены данные при проверке авторизации.");
         };
         
         // Возвращаемся
@@ -314,7 +315,7 @@ function main() {
         // Если запрос не выполнился
         if (!result) {
             // Вываливаемся с ошибкой 
-            throw new ZenMoney.Error("Ошибка синхронизации: Не получены данные по карточным счетам.", null, true);
+            throw new ZenMoney.Error("Ошибка синхронизации: Не получены данные по карточным счетам.");
         };
         ZenMoney.trace("Получены карточные счета:\n" + JSON.stringify(result));
 
@@ -380,7 +381,7 @@ function main() {
         // Если запрос не выполнился
         if (!result) {
             // Вываливаемся с ошибкой
-            throw new ZenMoney.Error("Ошибка синхронизации счетов: Не получены данные.", null, true);
+            throw new ZenMoney.Error("Ошибка синхронизации счетов: Не получены данные.");
         };
         ZenMoney.trace("Получены счета:\n" + JSON.stringify(result));
 
@@ -434,7 +435,7 @@ function main() {
         // Если запрос не выполнился
         if (!result) {
             // Вываливаемся с ошибкой 
-            throw new ZenMoney.Error("Ошибка синхронизации: Не получены данные по кредитам.", null, true);
+            throw new ZenMoney.Error("Ошибка синхронизации: Не получены данные по кредитам.");
         };
         // Проверяем количество полученных кредитов
         if (result.loans.length === 0) {
@@ -497,7 +498,7 @@ function main() {
         // Если запрос не выполнился
         if (!result) {
             // Вываливаемся с ошибкой 
-            throw new ZenMoney.Error("Ошибка синхронизации: Не получены данные по вкладам.", null, true);
+            throw new ZenMoney.Error("Ошибка синхронизации: Не получены данные по вкладам.");
         };
 
         // Проверяем количество полученных вкладов
@@ -582,7 +583,7 @@ function main() {
     // Функция для синхронизации транзакций
     function syncTransactions(id, type) {
         if (id == "" || type == "") {
-            throw new ZenMoney.Error("Ошибка синхронизации: Не переданы данные.", null, true);
+            throw new ZenMoney.Error("Ошибка синхронизации: Не переданы данные.");
         }
         
         switch (type) {
@@ -603,7 +604,7 @@ function main() {
                 return;
                 break;
             default:
-                throw new ZenMoney.Error("Ошибка синхронизации: Не верный параметр.", null, false);
+                throw new ZenMoney.Error("Ошибка синхронизации: Не верный параметр.");
                 return false;
                 break;
         }
@@ -611,7 +612,7 @@ function main() {
         // Если запрос не выполнился
         if (!result) {
             // Вываливаемся с ошибкой 
-            throw new ZenMoney.Error("Ошибка синхронизации: Не получены данные по транзакциям счета " + id + ".", null, false);
+            throw new ZenMoney.Error("Ошибка синхронизации: Не получены данные по транзакциям счета " + id + ".");
             return false;
         };
         ZenMoney.trace("Получены операции по счетам " + type + ":\n" + JSON.stringify(result));
