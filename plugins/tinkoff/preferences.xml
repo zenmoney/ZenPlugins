@@ -1,35 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen>
 	<EditTextPreference
-		title="Логин"
 		key="login"
-		positiveButtonText="ОК"
-		summary="|Логин пользователя|{@s}"
+		title="Логин *"
 		dialogTitle="Логин"
+		dialogMessage="Введите логин для входа в Тинькофф Банк."
+		summary="|Логин пользователя|{@s}"
+		positiveButtonText="ОК"
 		negativeButtonText="Отмена"
-		dialogMessage="Введите логин для входа в Тинькофф Банк. Вход по номеру телефона временно не поддерживается."
 		obligatory="true">
 	</EditTextPreference>
 	<EditTextPreference
-		positiveButtonText="ОК"
 		key="password"
-		dialogTitle="Пароль"
-		negativeButtonText="Отмена"
 		title="Пароль"
+		dialogTitle="Пароль (не обязательно)"
+		dialogMessage="Введите пароль для входа в Тинькофф Банк. Если не указать, будет запрошен при первом запуске."
+		positiveButtonText="ОК"
+		negativeButtonText="Отмена"
+		inputType="textPassword"
 		summary="||***********"
-		obligatory="true"
-		dialogMessage="Введите пароль для входа в Тинькофф Банк."
-		inputType="textPassword">
+		obligatory="false">
 	</EditTextPreference>
 	<ListPreference
-		positiveButtonText="ОК"
 		key="periodNew"
-		dialogTitle="Загружать операции при создании подключения"
-		negativeButtonText="Отмена"
 		title="Загружать операции при создании подключения"
+		dialogTitle="Загружать операции при создании подключения"
+		dialogMessage="Выберите период загрузки операций при создании подключения."
 		entries="Не загружать|За текущий месяц|За текущий и прошлый месяцы|За 3 месяца" entryValues="0|1|2|3"
 		defaultValue="1"
 		summary="|1|{@s}"
-		dialogMessage="Выберите период загрузки операций при создании подключения.">
+		positiveButtonText="ОК"
+		negativeButtonText="Отмена"
+	>
 	</ListPreference>
 </PreferenceScreen>

@@ -25,12 +25,67 @@ function main(){
  * @returns {String} Идентификатор сессии
  */
 function login() {
-	if (!g_preferences.login) throw new ZenMoney.Error("Введите логин в интернет-банк!", true);
-	if (!g_preferences.password) throw new ZenMoney.Error("Введите пароль в интернет-банк!", true);
+	if (!g_preferences.login) throw new ZenMoney.Error("Введите логин в интернет-банк в параметрах подключения!", true, true);
+	//if (!g_preferences.pin) throw new ZenMoney.Error("Введите пин-код для входа в интернет-банк в параметрах подключения!", true);
+
+	function LevelUp()
+	{
+		ZenMoney.trace('Запрашиваем подтверждение привелений пользователя...');
+
+		// получим привилегии пользователя
+		var level_up = requestJson("level_up", null, {
+			post: {
+				sessionid: sessionId
+			},
+			noException: true
+		});
+
+		if (level_up.resultCode === 'OK') {
+			ZenMoney.trace('Успешно повысили привелегии пользователя.');
+		}
+		// подтверждение через секретный вопрос
+		else if  (level_up.resultCode === 'WAITING_CONFIRMATION' && level_up.confirmationData && level_up.confirmationData.Question)
+		{
+			ZenMoney.trace("Необходимо подтвердить права...");
+
+			var answer = ZenMoney.retrieveCode("Тинькофф банк хочет удостовериться, что это действительно вы, и задаёт секретный вопрос (ответ на этот вопрос отсылается сразу в банк): " +
+				level_up.confirmationData.Question.question, null, {
+				inputType: "text",
+				time: 18E4
+			});
+			ZenMoney.trace("Получили ответ на секретный вопрос.");
+
+			var json = requestJson("confirm", {}, {
+				post: {
+					//deviceId: deviceId,
+					sessionid: sessionId,
+					initialOperation: level_up.initialOperation,
+					initialOperationTicket: level_up.operationTicket,
+					confirmationData: '{"Question":"' + answer + '"}'
+				},
+				noException: true
+			});
+
+			// проверим ответ на ошибки
+			if (json.resultCode !== 'OK') {
+				ZenMoney.trace('Ответ не принят: '+ JSON.stringify(json));
+				throw new ZenMoney.Error("Ответ не принят: "+ (json.plainMessage || json.errorMessage));
+			}
+			else
+				ZenMoney.trace('Ответ на секретный вопрос принят банком.');
+		}
+		else
+		{
+			ZenMoney.trace('Ошибка получения привилегий для входа: ' + JSON.stringify(level_up));
+			throw new ZenMoney.Error('Не удалось повысить привелегии пользователя для входа!');
+		}
+	}
 
 	if (g_sessionid)
 		ZenMoney.trace("Cессия уже установлена. Используем её.");
 	else {
+		ZenMoney.trace('Пытаемся войти...');
+
 		var deviceId = ZenMoney.getData('device_id', 0), deviceNew = false;
 		if (deviceId == 0){
 			ZenMoney.trace('Первый запуск.');
@@ -38,56 +93,223 @@ function login() {
 			deviceNew = true;
 		}
 
-		var json = requestJson("session", {
-			deviceId: deviceId
-		}, {
-			post: {
-				username: g_preferences.login,
-				password: g_preferences.password,
-				//origin: "web,ib5",
-				//wuid: md5id,
-				screen_size: "1080x1920x32",
-				timezone: -(new Date).getTimezoneOffset()
-			},
-			noException: true
-		});
+		// сохраняем идентификатор устройства
 		g_deviceid = deviceId;
 		if (deviceNew)
 			ZenMoney.setData('device_id', deviceId);
 
-		ZenMoney.trace('Пытаемся войти...');
 
-		if ("DEVICE_LINK_NEEDED" == json.resultCode) {
-			ZenMoney.trace("Необходимо привязать устройство...");
-			var sessionId = json.payload.sessionid;
-			var smsCode = ZenMoney.retrieveCode("Введите код подтверждения из смс для авторизации приложения в интернет-банке Тинькофф", null, {
-				inputType: "number",
-				time: 18E4
-			});
-			ZenMoney.trace("Получили код");
-			var json2 = requestJson("confirm", {
-				initialOperationTicket: json.payload.confirmationData.operationTicket,
-				confirmationData: '{"SMSBYID":"' + smsCode + '"}',
-				initialOperation: "mobile_link_device",
-				sessionid: sessionId
-			});
-			g_sessionid = sessionId;
-			ZenMoney.trace('Привязали устройство.');
-		} else {
-			if ("OK" == json.resultCode) {
-				g_sessionid = json.payload.sessionid;
-			}
-			else {
-				var authFailed = "AUTHENTICATION_FAILED" == json.resultCode;
-				throw new ZenMoney.Error(json.plainMessage || json.errorMessage, authFailed, authFailed);
-			}
+		// создаём сессию
+		var session = requestJson("session");
+		if (session.resultCode !== 'OK') {
+			ZenMoney.trace('Не удалось создать сессию с банком: '+ JSON.stringify(session));
+			throw new ZenMoney.Error("Ошибка: не удалось создать сессию с банком!");
 		}
 
-		if (g_sessionid)
-			ZenMoney.trace('Создали новую сессию.');
+		ZenMoney.trace("Получили идентификатор сессии.");
+		var sessionId = session.payload;
 
-		if (deviceNew)
-			ZenMoney.saveData();
+		var pinHash = ZenMoney.getData('pinHash', null);
+		// если пина ещё нет, установим его
+		if (!pinHash)
+		{
+			// получаем пароль
+			var password = g_preferences.hasOwnProperty('password') ? g_preferences.password : null;
+			if (!password)
+				for (var i=0; i<2; i++) {
+					password = ZenMoney.retrieveCode("Введите пароль для входа в интернет-банк Тинькофф", null, {
+						inputType: "password",
+						time: 18E4
+					});
+
+					if (password) {
+						ZenMoney.trace('Пароль получен от пользователя.');
+						break;
+					}
+				}
+			else
+				ZenMoney.trace('Пароль взят из настроек подключения.');
+
+			if (!password) {
+				ZenMoney.trace('Не указан пароль для входа');
+				throw new ZenMoney.Error("Ошибка: не удалось получить пароль для входа!", true);
+			}
+
+			// входим по логину-паролю
+			var post = {
+				//deviceId: deviceId,
+				sessionid: sessionId,
+				password: password
+			};
+			if (in_array(g_preferences.login.substr(0, 1), ['+', '7', '8']))
+				//post.phone = trimStart(g_preferences.login, ['+', '8']);
+				post.phone = g_preferences.login;
+			else
+				post.username = g_preferences.login;
+
+			var sign_up = requestJson("sign_up", null, {
+				post: post,
+				noException: true
+			});
+
+			// ошибка входа по паролю
+			if (sign_up.resultCode.substr(0, 8) === 'INVALID_')
+			{
+				ZenMoney.trace("Ошибка входа: "+ JSON.stringify(sign_up));
+				throw new ZenMoney.Error('Ответ от банка: ' + (sign_up.plainMessage || sign_up.errorMessage), true);
+			}
+			else if (sign_up.resultCode === 'OPERATION_REJECTED')
+			{
+				ZenMoney.trace("Ошибка входа: "+ JSON.stringify(sign_up));
+				throw new ZenMoney.Error('Ответ от банка: ' + (sign_up.plainMessage || sign_up.errorMessage), true, true);
+			}
+			// если нужно подтверждение по смс
+			else if (sign_up.resultCode === 'WAITING_CONFIRMATION')  // DEVICE_LINK_NEEDED
+			{
+				ZenMoney.trace("Необходимо подтвердить вход...");
+
+				var smsCode = ZenMoney.retrieveCode("Введите код подтверждения из смс для первого входа в интернет-банк Тинькофф", null, {
+					inputType: "number",
+					time: 18E4
+				});
+				ZenMoney.trace("Получили код");
+
+				var json2 = requestJson("confirm", {
+					confirmationData: '{"SMSBYID":"' + smsCode + '"}'
+				}, {
+					post: {
+						//deviceId: deviceId,
+						sessionid: sessionId,
+						initialOperation: 'sign_up',
+						initialOperationTicket: sign_up.operationTicket
+					},
+					noException: true
+				});
+
+				// проверим ответ на ошибки
+				if (json2.resultCode !== 'OK') {
+					ZenMoney.trace('Ошибка авторизации устройства: '+ JSON.stringify(json2));
+					throw new ZenMoney.Error("Ошибка авторизации: "+ (json2.plainMessage || json2.errorMessage));
+				}
+				else
+					ZenMoney.trace('СМС-код принят банком.');
+			}
+			else
+			{
+				ZenMoney.trace("Прошёл вход без подтверждения.");
+				if (sign_up.resultCode === 'AUTHENTICATION_FAILED')
+					throw new ZenMoney.Error('Ответ от банка: ' + (sign_up.plainMessage || sign_up.errorMessage));
+			}
+
+			// получаем привилегии пользователя
+			LevelUp();
+
+			// попытаемся привязать устройство
+			/*var device_linked = ZenMoney.getData('device_linked', false);
+			if (!device_linked) {
+				// авторизуем устройство, чтобы не вводить СМС-код каждый раз
+				var mobile_link_device = requestJson("mobile_link_device", null, {
+					post: {
+						sessionid: sessionId
+					},
+					noException: true
+				});
+				ZenMoney.trace("Авторизуем устройство...");
+
+				var sms = ZenMoney.retrieveCode("Введите код подтверждения из смс для авторизации приложения в интернет-банке Тинькофф", null, {
+					inputType: "number",
+					time: 18E4
+				});
+				ZenMoney.trace("Получили код авторизации.");
+
+				var confirm = requestJson("confirm", {
+					confirmationData: '{"SMSBYID":"' + sms + '"}'
+				}, {
+					post: {
+						//deviceId: deviceId,
+						sessionid: sessionId,
+						initialOperation: 'mobile_link_device',
+						initialOperationTicket: mobile_link_device.operationTicket
+					},
+					noException: true
+				});
+				ZenMoney.trace("Авторизовали устройство.");
+
+				// проверим ответ на ошибки
+				if (confirm.resultCode === 'DEVICE_ALREADY_LINKED') {
+					// если устройство уже вдруг слинковано, ну и отлично
+					ZenMoney.trace('Устройство уже авторизовано.');
+					ZenMoney.setData('device_linked', true);
+					deviceNew = true;
+				}
+				else if (confirm.resultCode !== 'OK') {
+					// обработаем прочие ошибки
+					ZenMoney.trace('Ошибка авторизации устройства: ' + JSON.stringify(confirm));
+					throw new ZenMoney.Error("Ошибка авторизации: " + (confirm.plainMessage || confirm.errorMessage), true);
+				}
+			}*/
+
+
+			// устанавливаем ПИН для быстрого входа
+			pinHash = hex_md5(Math.random().toString());
+			var save_pin = requestJson("mobile_save_pin", null, {
+				post: {
+					sessionid: sessionId,
+					pinHash: pinHash
+				},
+				noException: true
+			});
+
+			if (save_pin.resultCode === 'OK') {
+				ZenMoney.trace('Установили ПИН-код для быстрого входа.');
+				ZenMoney.setData('pinHash', pinHash);
+
+				// сохраним время установки пин-кода для авторизации
+				var dt = new Date();
+				var dtOffset = dt.getTimezoneOffset() * 60 * 1000;
+				var pinHashTime = dt.getTime() - dtOffset + 3 * 60 * 1000; // по Москве
+				ZenMoney.setData('pinHashTime', pinHashTime);
+			}
+			else
+				ZenMoney.trace('Не удалось установить ПИН-код для быстрого входа: ' + JSON.stringify(save_pin));
+		}
+		else
+		{
+			// входим по пину
+			var pinHashDate = ZenMoney.getData('pinHashTime', 0);
+			var oldSessionId = ZenMoney.getData('session_id', 0);
+			var sign_up = requestJson("sign_up", {
+				auth_type:  'pin'
+			}, {
+				post: {
+					//deviceId:         deviceId,
+					sessionid:          sessionId,
+					pinHash:            pinHash,
+					auth_type_set_date: pinHashDate,
+					oldSessionId:       oldSessionId
+				},
+				noException: true
+			});
+			//ZenMoney.trace('SIGN_UP 2: '+ JSON.stringify(sign_up));
+
+			if (sign_up.resultCode !== 'OK') {
+				ZenMoney.trace('Ошибка входа по ПИН-коду: ' + JSON.stringify(sign_up));
+				throw new ZenMoney.Error('Ошибка входа по ПИН-коду: '+ (sign_up.plainMessage || sign_up.errorMessage));
+			}
+			else
+				ZenMoney.trace('Успешно вошли по ПИН-коду.');
+
+			// получаем привилегии пользователя
+			LevelUp();
+		}
+
+		g_sessionid = sessionId;
+		ZenMoney.trace('Сохранили сессию.');
+
+		// сохраним id сесии для следующего входа
+		ZenMoney.setData('session_id', g_sessionid);
+
+		ZenMoney.saveData();
 	}
 	return g_sessionid
 }
@@ -134,7 +356,8 @@ function processAccounts() {
 				type:			'ccard',
 				syncID:			[],
 				instrument:		a.moneyAmount.currency.name,
-				balance:		a.moneyAmount.value - creditLimit
+				//balance:		a.moneyAmount.value - creditLimit
+				balance:        a.accountBalance.value  // эксперимент с новым балансом
 			};
 
 			if (creditLimit > 0)
@@ -364,7 +587,7 @@ function processTransactions(data) {
 			continue;
 
 		// учитываем только успешные операции
-		if (t.status && t.status == 'FAILED')
+		if (t.status && t.status === 'FAILED')
 			continue;
 
 		var tran = {};
@@ -376,7 +599,7 @@ function processTransactions(data) {
 
 		if (t.accountAmount.value == 0) {
 			ZenMoney.trace('Пропускаем пустую операцию #' + i + ': ' + tran.date + ', ' + tran.time + ', ' + t.description + ', '
-				+ (t.type == "Credit" ? '+' : (t.type == "Debit" ? '-' : '')) + t.accountAmount.value);
+				+ (t.type === "Credit" ? '+' : (t.type === "Debit" ? '-' : '')) + t.accountAmount.value);
 			continue;
 		}
 
@@ -388,7 +611,7 @@ function processTransactions(data) {
 		// Внутренний ID операции
 		var tranId = t.payment && t.payment.paymentId
 			// если есть paymentId, объединяем по нему, отделяя комиссии от переводов
-			? (t.group == 'CHARGE' ? 'f' : 'p') + t.payment.paymentId
+			? (t.group === 'CHARGE' ? 'f' : 'p') + t.payment.paymentId
 			// либо работаем просто как с операциями, разделяя их на доходы и расходы
 			: t.id;
 
@@ -399,7 +622,7 @@ function processTransactions(data) {
 		tran.hold = t.debitingTime ? false : true;
 
 		ZenMoney.trace('Добавляем операцию #' + i + ': ' + tran.date + ', ' + tran.time + ', ' + t.description + ', '
-			+ (t.type == "Credit" ? '+' : (t.type == "Debit" ? '-' : '')) + t.accountAmount.value
+			+ (t.type === "Credit" ? '+' : (t.type === "Debit" ? '-' : '')) + t.accountAmount.value
 			+ ' [' + tranId + '] acc:' + t.account);
 		//ZenMoney.trace('JSON: '+JSON.stringify(t));
 
@@ -409,20 +632,11 @@ function processTransactions(data) {
 		// ключ для поиска дублей по идентификатору
 		var tranKey = t.type + ':' + tranId;
 		// обратный ключ для второй половины перевода
-		var tranKey2 = (t.type == 'Debit' ? 'Credit' : 'Debit') + ':' + tranId;
+		var tranKey2 = (t.type === 'Debit' ? 'Credit' : 'Debit') + ':' + tranId;
 
 		// ключ контроля дублей по холду
-		var payee = '-payee-';
-		if (t.payment && t.payment.fieldsValues) {
-			if (t.payment.fieldsValues.addressee)
-				payee = t.payment.fieldsValues.addressee;
-			else if (t.payment.fieldsValues.lastName)
-				payee = t.payment.fieldsValues.lastName;
-		} else if (t.merchant)
-			payee = t.merchant.name;
-		else if (t.brand)
-			payee = t.brand.name;
-		var tranKeyHold = tran.created+':'+t.accountAmount.value+':'+t.account+':'+payee;
+		var tranAmount = t.amount ? t.amount + t.amount.currency.name : t.accountAmount.value + t.accountAmount.currency.name;
+		var tranKeyHold = tran.created+':'+t.account+':'+tranAmount;
 		//ZenMoney.trace('tranKeyHold: '+tranKeyHold);
 
 		// холд пропускаем ----------------------------------------------------------------
@@ -433,7 +647,7 @@ function processTransactions(data) {
 		if (tranDict[tranKey2])
 		{
 			// доходная часть перевода ---
-			if (t.type == 'Credit' && tranDict[tranKey2].income == 0 && tranDict[tranKey2].incomeAccount != t.account)
+			if (t.type === 'Credit' && tranDict[tranKey2].income == 0 && tranDict[tranKey2].incomeAccount != t.account)
 			{
 				tranDict[tranKey2].income = t.accountAmount.value;
 				tranDict[tranKey2].incomeAccount = t.account;
@@ -456,7 +670,7 @@ function processTransactions(data) {
 			}
 
 			// расходная часть перевода ----
-			if (t.type == 'Debit' && tranDict[tranKey2].outcome == 0 && tranDict[tranKey2].outcomeAccount != t.account)
+			if (t.type === 'Debit' && tranDict[tranKey2].outcome == 0 && tranDict[tranKey2].outcomeAccount != t.account)
 			{
 				tranDict[tranKey2].outcome = t.accountAmount.value;
 				tranDict[tranKey2].outcomeAccount = t.account;
@@ -468,7 +682,7 @@ function processTransactions(data) {
 				}
 
 				// при объединении в перевод всегда берём комментарий из расходной части
-				if (t.operationPaymentType == 'TEMPLATE')
+				if (t.operationPaymentType === 'TEMPLATE')
 					tranDict[tranKey2].comment = t.description; // наименование шаблона
 				else {
 					// добавим в перевод коммент из расходной части
@@ -500,7 +714,7 @@ function processTransactions(data) {
 		}
 
 		// доход -------------------------------------------------------------------------
-		if (t.type == "Credit")
+		if (t.type === "Credit")
 		{
 			tran.income = t.accountAmount.value;
 			tran.incomeAccount = t.account;
@@ -511,7 +725,7 @@ function processTransactions(data) {
 				switch (t.group) {
 					// Пополнение наличными
 					case "CASH":
-						if (!t.partnerType || t.partnerType != "card2card") {
+						if (!t.partnerType || t.partnerType !== "card2card") {
 							tran.outcomeAccount = "cash#" + t.amount.currency.name;
 							tran.outcome = t.amount.value;
 						}
@@ -524,8 +738,8 @@ function processTransactions(data) {
 							tran.outcome = t.amount.value;
 							tran.outcomeAccount = "ccard#" + t.amount.currency.name + "#" +
 								t.payment.cardNumber.substring(t.payment.cardNumber.length - 4);
-							break;
 						}
+						break;
 
 					// Если совсем ничего не подошло
 					default:
@@ -539,7 +753,7 @@ function processTransactions(data) {
 						}
 
 						if (!tran.payee) {
-							if (t.operationPaymentType == 'TEMPLATE')
+							if (t.operationPaymentType === 'TEMPLATE')
 								tran.comment = t.description; // наименование шаблона
 							else {
 								tran.comment = '';
@@ -568,7 +782,7 @@ function processTransactions(data) {
 			}
 		}
 		// расход -----------------------------------------------------------------
-		else if (t.type == "Debit")
+		else if (t.type === "Debit")
 		{
 			tran.outcome = t.accountAmount.value;
 			tran.outcomeAccount = t.account;
@@ -580,7 +794,7 @@ function processTransactions(data) {
 				{
 					// Снятие наличных
 					case "CASH":
-						if (!t.partnerType || t.partnerType != "card2card") {
+						if (!t.partnerType || t.partnerType !== "card2card") {
 							tran.incomeAccount = "cash#" + t.amount.currency.name;
 							tran.income = t.amount.value;
 						}
@@ -596,7 +810,7 @@ function processTransactions(data) {
 								tran.payee = t.payment.fieldsValues.lastName;
 						}
 
-						if (t.operationPaymentType == 'TEMPLATE')
+						if (t.operationPaymentType === 'TEMPLATE')
 							tran.comment = t.description; // наименование шаблона
 						else {
 							tran.comment = '';
@@ -613,7 +827,7 @@ function processTransactions(data) {
 
 					// Платеж
 					case "PAY":
-						if (t.operationPaymentType && t.operationPaymentType == "REGULAR") {
+						if (t.operationPaymentType && t.operationPaymentType === "REGULAR") {
 							tran.payee = t.brand ? t.brand.name : t.description;
 						} else {
 							tran.payee = t.merchant ? t.merchant.name : t.description;
@@ -764,15 +978,18 @@ function requestJson(requestCode, data, parameters) {
 
 	if (data)
 		for (var d in data) params.push(encodeURIComponent(d) + "=" + encodeURIComponent(data[d]));
-	params.push(encodeURIComponent("appVersion") + "=" + encodeURIComponent("4.1.2"));
+	params.push(encodeURIComponent("appVersion") + "=" + encodeURIComponent("4.1.3"));
 	params.push(encodeURIComponent("platform") + "=" + encodeURIComponent("android"));
-	params.push(encodeURIComponent("origin") + "=" + encodeURIComponent("mobile,ib5,loyalty"));
+	params.push(encodeURIComponent("origin") + "=" + encodeURIComponent("mobile,ib5,loyalty,platform"));
 	g_deviceid && params.push(encodeURIComponent("deviceId") + "=" + encodeURIComponent(g_deviceid));
 
 	if (parameters.post)
 		data = ZenMoney.requestPost(g_baseurl + requestCode + "?" + params.join("&"), parameters.post, g_headers);
 	else {
-		if (parameters) for (var k in parameters) params.push(encodeURIComponent(k) + "=" + encodeURIComponent(parameters[k]));
+		if (parameters)
+			for (var k in parameters)
+				if (k !== 'noException')
+					params.push(encodeURIComponent(k) + "=" + encodeURIComponent(parameters[k]));
 		data = ZenMoney.requestGet(g_baseurl + requestCode + "?" + params.join("&"), g_headers);
 	}
 
@@ -789,9 +1006,11 @@ function requestJson(requestCode, data, parameters) {
 
 	data = getJson(data);
 
-	if ("OK" != data.resultCode && !parameters.noException) {
+	if (data.resultCode !== 'OK' && !parameters.noException) {
 		ZenMoney.trace("Ошибка: " + requestCode + ", " + data.errorMessage);
-		throw new ZenMoney.Error((parameters.scope ? parameters.scope + ": " : "") + (data.plainMessage || data.errorMessage));
+		if (!data.errorMessage)
+			ZenMoney.trace("Request data: " + JSON.stringify(data));
+		throw new ZenMoney.Error("Ответ от банка: " + (parameters.scope ? parameters.scope + ". " : "") + (data.plainMessage || data.errorMessage));
 	}
 	return data
 }
@@ -810,4 +1029,14 @@ function is_array(arr) {
 
 function n2(n) {
 	return n < 10 ? '0' + n : '' + n;
+}
+
+function trimStart(string, chars) {
+	var start = 0;
+
+	while (in_array(string[start], chars)) {
+		start++;
+	}
+
+	return string.substr(start);
 }
