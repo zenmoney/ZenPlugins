@@ -48,8 +48,8 @@ function login() {
 		{
 			ZenMoney.trace("Необходимо подтвердить права...");
 
-			var answer = ZenMoney.retrieveCode("Тинькофф банк хочет удостовериться, что это действительно вы, и задаёт секретный вопрос (ответ на этот вопрос отсылается сразу в банк): " +
-				level_up.confirmationData.Question.question, null, {
+			var answer = ZenMoney.retrieveCode("Секретный вопрос от банка: " +
+				level_up.confirmationData.Question.question + ". Ответ на этот вопрос сразу передается в банк.", null, {
 				inputType: "text",
 				time: 18E4
 			});
@@ -187,9 +187,16 @@ function login() {
 				});
 
 				// проверим ответ на ошибки
-				if (json2.resultCode !== 'OK') {
+				if (in_array(json2.resultCode, ['INTERNAL_ERROR', 'CONFIRMATION_FAILED']))
+				{
 					ZenMoney.trace('Ошибка авторизации устройства: '+ JSON.stringify(json2));
-					throw new ZenMoney.Error("Ошибка авторизации: "+ (json2.plainMessage || json2.errorMessage));
+					throw new ZenMoney.Error('Ответ банка: '+ (json2.plainMessage || json2.errorMessage), true);
+				}
+				// ошибки с логом
+				else if (json2.resultCode !== 'OK')
+				{
+					ZenMoney.trace('Ошибка авторизации устройства: '+ JSON.stringify(json2));
+					throw new ZenMoney.Error('Ошибка авторизации: '+ (json2.plainMessage || json2.errorMessage));
 				}
 				else
 					ZenMoney.trace('СМС-код принят банком.');
@@ -292,7 +299,14 @@ function login() {
 			});
 			//ZenMoney.trace('SIGN_UP 2: '+ JSON.stringify(sign_up));
 
-			if (sign_up.resultCode !== 'OK') {
+			if (sign_up.resultCode === 'DEVICE_LINK_NEEDED')
+			{
+				// устройство не авторизировано
+				ZenMoney.setData('pinHash', null);
+				throw new ZenMoney.Error('Требуется привязка устройства. Запустите подключение к банку снова.', true);
+			}
+			else if (sign_up.resultCode !== 'OK')
+			{
 				ZenMoney.trace('Ошибка входа по ПИН-коду: ' + JSON.stringify(sign_up));
 				throw new ZenMoney.Error('Ошибка входа по ПИН-коду: '+ (sign_up.plainMessage || sign_up.errorMessage));
 			}
@@ -348,7 +362,7 @@ function processAccounts() {
 		var creditLimit = a.creditLimit ? a.creditLimit.value : 0;
 
 		// дебетовые карты ------------------------------------
-		if (a.accountType == 'Current' && a.status == 'NORM') {
+		if (a.accountType === 'Current' && a.status === 'NORM') {
 			ZenMoney.trace('Добавляем дебетовую карту: '+ a.name +' (#'+ a.id +')');
 			var acc1 = {
 				id:				a.id,
@@ -357,7 +371,7 @@ function processAccounts() {
 				syncID:			[],
 				instrument:		a.moneyAmount.currency.name,
 				//balance:		a.moneyAmount.value - creditLimit
-				balance:        a.accountBalance.value  // эксперимент с новым балансом
+				balance:        Math.min(a.accountBalance.value, a.moneyAmount.value - creditLimit) // эксперимент с новым балансом
 			};
 
 			if (creditLimit > 0)
@@ -379,8 +393,8 @@ function processAccounts() {
 			}
 		}
 		// кредитные карты ----------------------------------------
-		else if (a.accountType == 'Credit' && a.status == 'NORM') {
-			ZenMoney.trace("Добавляем кредитную карту: " + a.name + ' (#' + a.id + ')');
+		else if (a.accountType === 'Credit' && a.status === 'NORM') {
+			ZenMoney.trace('Добавляем кредитную карту: ' + a.name + ' (#' + a.id + ')');
 
 			var acc2 = {
 				id:				a.id,
@@ -414,8 +428,8 @@ function processAccounts() {
 			}
 		}
 		// накопительные счета ------------------------------------
-		else if (a.accountType == 'Saving' && a.status == 'NORM') {
-			ZenMoney.trace("Добавляем накопительный счёт: "+a.name +' (#'+ a.id +')');
+		else if (a.accountType === 'Saving' && a.status === 'NORM') {
+			ZenMoney.trace('Добавляем накопительный счёт: '+ a.name +' (#'+ a.id +')');
 			accDict.push({
 				id:				a.id,
 				title:			a.name,
@@ -435,8 +449,8 @@ function processAccounts() {
 			g_accounts.push(a.id);
 		}
 		// депозиты --------------------------------------------------
-		else if (a.accountType == 'Deposit' && a.status == 'ACTIVE') {
-			ZenMoney.trace("Добавляем депозит: "+a.name +' (#'+ a.id +')');
+		else if (a.accountType === 'Deposit' && a.status === 'ACTIVE') {
+			ZenMoney.trace('Добавляем депозит: '+ a.name +' (#'+ a.id +')');
 			accDict.push({
 				id:				a.id,
 				title:			a.name,
@@ -445,7 +459,7 @@ function processAccounts() {
 				instrument:		a.moneyAmount.currency.name,
 				balance:		a.moneyAmount.value,
 				percent:		a.depositRate,
-				capitalization:	a.typeOfInterest == 'TO_DEPOSIT',
+				capitalization:	a.typeOfInterest === 'TO_DEPOSIT',
 				startDate:		a.openDate.milliseconds,
 				endDateOffsetInterval: 'month',
 				endDateOffset:	a.period,
@@ -454,8 +468,36 @@ function processAccounts() {
 			});
 			g_accounts.push(a.id);
 		}
+		// мультивалютный вклад
+		else if (a.accountType === 'MultiDeposit' && a.accounts) {
+			for (var k=0; k<a.accounts.length; k++)
+			{
+				var deposit = a.accounts[k];
+				var currency = deposit.moneyAmount.currency.name;
+				var name = a.name + ' (' + currency + ')';
+				var id = a.id +'_'+ currency;
+				var syncid = a.id.substring(a.id.length-4) +'_'+ currency;
+				ZenMoney.trace('Добавляем мультивалютный вклад: '+ name +' (#'+ id +')');
+				accDict.push({
+					id:				id,
+					title:			name,
+					type:			'deposit',
+					syncID:			syncid,
+					instrument:		deposit.moneyAmount.currency.name,
+					balance:		deposit.moneyAmount.value,
+					percent:		deposit.depositRate,
+					capitalization:	deposit.typeOfInterest === 'TO_DEPOSIT',
+					startDate:		a.openDate.milliseconds,
+					endDateOffsetInterval: 'month',
+					endDateOffset:	a.period,
+					payoffInterval:	'month',
+					payoffStep:		1
+				});
+				g_accounts.push(id);
+			}
+		}
 		// кредиты наличными
-		else if (a.accountType == 'CashLoan' && a.status == 'NORM') {
+		else if (a.accountType === 'CashLoan' && a.status === 'NORM') {
 			ZenMoney.trace("Добавляем кредит: "+ a.name +' (#'+ a.id +')');
 			accDict.push({
 				id:             a.id,
@@ -635,7 +677,7 @@ function processTransactions(data) {
 		var tranKey2 = (t.type === 'Debit' ? 'Credit' : 'Debit') + ':' + tranId;
 
 		// ключ контроля дублей по холду
-		var tranAmount = t.amount ? t.amount + t.amount.currency.name : t.accountAmount.value + t.accountAmount.currency.name;
+		var tranAmount = t.amount ? t.amount.value + t.amount.currency.name : t.accountAmount.value + t.accountAmount.currency.name;
 		var tranKeyHold = tran.created+':'+t.account+':'+tranAmount;
 		//ZenMoney.trace('tranKeyHold: '+tranKeyHold);
 
