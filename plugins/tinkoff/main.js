@@ -625,8 +625,13 @@ function processTransactions(data) {
 			lastSyncTime = t.operationTime.milliseconds;
 
 		// работаем только по активным счетам
-		if (!in_array(t.account, g_accounts))
-			continue;
+		var tAccount = t.account;
+		if (!in_array(tAccount, g_accounts))
+		{
+			tAccount = t.account +'_'+ t.amount.currency.name;
+			if (!in_array(tAccount, g_accounts))
+				continue;
+		}
 
 		// учитываем только успешные операции
 		if (t.status && t.status === 'FAILED')
@@ -665,11 +670,11 @@ function processTransactions(data) {
 
 		ZenMoney.trace('Добавляем операцию #' + i + ': ' + tran.date + ', ' + tran.time + ', ' + t.description + ', '
 			+ (t.type === "Credit" ? '+' : (t.type === "Debit" ? '-' : '')) + t.accountAmount.value
-			+ ' [' + tranId + '] acc:' + t.account);
+			+ ' [' + tranId + '] acc:' + tAccount);
 		//ZenMoney.trace('JSON: '+JSON.stringify(t));
 
 		// флаг операции в валюте
-		var foreignCurrency = t.accountAmount.currency.name != t.amount.currency.name;
+		var foreignCurrency = t.accountAmount.currency.name !== t.amount.currency.name;
 
 		// ключ для поиска дублей по идентификатору
 		var tranKey = t.type + ':' + tranId;
@@ -678,7 +683,7 @@ function processTransactions(data) {
 
 		// ключ контроля дублей по холду
 		var tranAmount = t.amount ? t.amount.value + t.amount.currency.name : t.accountAmount.value + t.accountAmount.currency.name;
-		var tranKeyHold = tran.created+':'+t.account+':'+tranAmount;
+		var tranKeyHold = tran.created+':'+tAccount+':'+tranAmount;
 		//ZenMoney.trace('tranKeyHold: '+tranKeyHold);
 
 		// холд пропускаем ----------------------------------------------------------------
@@ -692,7 +697,7 @@ function processTransactions(data) {
 			if (t.type === 'Credit' && tranDict[tranKey2].income == 0 && tranDict[tranKey2].incomeAccount != t.account)
 			{
 				tranDict[tranKey2].income = t.accountAmount.value;
-				tranDict[tranKey2].incomeAccount = t.account;
+				tranDict[tranKey2].incomeAccount = tAccount;
 
 				// операция в валюте
 				if (foreignCurrency) {
@@ -712,10 +717,10 @@ function processTransactions(data) {
 			}
 
 			// расходная часть перевода ----
-			if (t.type === 'Debit' && tranDict[tranKey2].outcome == 0 && tranDict[tranKey2].outcomeAccount != t.account)
+			if (t.type === 'Debit' && tranDict[tranKey2].outcome == 0 && tranDict[tranKey2].outcomeAccount != tAccount)
 			{
 				tranDict[tranKey2].outcome = t.accountAmount.value;
-				tranDict[tranKey2].outcomeAccount = t.account;
+				tranDict[tranKey2].outcomeAccount = tAccount;
 
 				// операция в валюте
 				if (foreignCurrency) {
@@ -759,7 +764,7 @@ function processTransactions(data) {
 		if (t.type === "Credit")
 		{
 			tran.income = t.accountAmount.value;
-			tran.incomeAccount = t.account;
+			tran.incomeAccount = tAccount;
 			tran.outcome = 0;
 			tran.outcomeAccount = tran.incomeAccount;
 
@@ -827,7 +832,7 @@ function processTransactions(data) {
 		else if (t.type === "Debit")
 		{
 			tran.outcome = t.accountAmount.value;
-			tran.outcomeAccount = t.account;
+			tran.outcomeAccount = tAccount;
 			tran.income = 0;
 			tran.incomeAccount = tran.outcomeAccount;
 
