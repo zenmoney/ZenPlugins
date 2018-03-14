@@ -286,4 +286,145 @@ describe("card parser", () => {
 
         expect(cards).toEqual(expected);
     });
+
+    it("should parse json with no cba", () => {
+        const cards = parseCards([
+            {
+                alien: false,
+                accountId: 15964969,
+                account: {
+                    id: 15964969,
+                    cba: '40817810301003402816',
+                    currency: {
+                        id: 'RUR',
+                        symbol: '₽',
+                        name: { name: 'Российский рубль' },
+                        precision: 2,
+                        code: '810',
+                        shortName: 'RUB',
+                        sort: 2
+                    }
+                },
+                procurationCredentials: { debit: true, credit: true, createProcuration: true },
+                id: 62629984,
+                icdbId: 7215739,
+                open: '2016-03-28T00:00',
+                expire: '2020-03-31T00:00',
+                pan: '462729******8643',
+                product: 'RUR Visa Classic',
+                appleWalletSupport: true,
+                androidPaySupport: true,
+                cobrend: false,
+                balance: 0,
+                hold: 0,
+                currencyId: 'RUR',
+                currency: {
+                    id: 'RUR',
+                    symbol: '₽',
+                    name: { name: 'Российский рубль' },
+                    precision: 2,
+                    code: '810',
+                    shortName: 'RUB',
+                    sort: 2
+                },
+                cba: '40817810301003402816',
+                creditBlock: false,
+                debitBlock: false,
+                paymentSystem: { id: 'VISA', name: 'Visa' },
+                type: { id: 1, name: 'Дебетовая карта' },
+                main: { id: 1, name: 'Основная' },
+                status: { id: 0, name: 'Открыта' },
+                smsNotificationEnabled: true,
+                settings: {
+                    countryCount: 10,
+                    manageTrip: true,
+                    manageLimit: true,
+                    manageSms: true,
+                    manageProcurations: false,
+                    manageStatementDay: false
+                }
+            },
+            {
+                alien: false,
+                accountId: -3,
+                account: {
+                    id: -3,
+                    currency: {
+                        id: 'RUB',
+                        symbol: '₽',
+                        name: { name: 'Российский рубль' },
+                        precision: 2,
+                        code: '643',
+                        shortName: 'RUB',
+                        sort: 1
+                    }
+                },
+                procurationCredentials: { debit: true, credit: true, createProcuration: false },
+                id: 68684601,
+                icdbId: 9183348,
+                open: '2018-01-24T00:00',
+                expire: '2021-01-31T00:00',
+                pan: '553496******0271',
+                product: 'RUR MasterCard Corporate Debit',
+                appleWalletSupport: true,
+                androidPaySupport: true,
+                cobrend: false,
+                balance: 354223.4,
+                hold: 423,
+                currencyId: 'RUB',
+                currency: {
+                    id: 'RUB',
+                    symbol: '₽',
+                    name: { name: 'Российский рубль' },
+                    precision: 2,
+                    code: '643',
+                    shortName: 'RUB',
+                    sort: 1
+                },
+                paymentSystem: { id: 'EUROCARD', name: 'MasterCard' },
+                type: { id: 3, name: 'Дебетовая корпоративная карта' },
+                main: { id: 1, name: 'Основная' },
+                status: { id: 0, name: 'Открыта' },
+                smsNotificationEnabled: true,
+                settings: {
+                    countryCount: 10,
+                    manageTrip: false,
+                    manageLimit: false,
+                    manageSms: false,
+                    manageProcurations: false,
+                    manageStatementDay: false
+                }
+            }
+        ]);
+
+        const expected = {};
+        const account1 = {
+            "id": "ACCOUNT_15964969",
+            "balance": 0,
+            "instrument": "RUB",
+            "syncID": [
+                "8643",
+                "2816"
+            ],
+            "title": "RUR Visa Classic",
+            "type": "ccard"
+        };
+        expected["ACCOUNT_15964969"] = account1;
+        expected["CARD_62629984"] = account1;
+
+        const account2 = {
+            "id": "ACCOUNT_-3",
+            "balance": 354223.4,
+            "instrument": "RUB",
+            "syncID": [
+                "0271"
+            ],
+            "title": "RUR MasterCard Corporate Debit",
+            "type": "ccard"
+        };
+        expected["ACCOUNT_-3"] = account2;
+        expected["CARD_68684601"] = account2;
+
+        expect(cards).toEqual(expected);
+    });
 });

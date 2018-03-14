@@ -128,7 +128,9 @@ export function parseCards(jsonArray, accounts = {}) {
         account.id = accountId;
         account.instrument = json.currency.shortName;
         account.title      = json.product;
-        account.syncID.push(json.cba.slice(-4));
+        if (json.cba) {
+            account.syncID.push(json.cba.slice(-4));
+        }
         if (json.type.id === 2) {
             account.available = json.balance;
         } else {
