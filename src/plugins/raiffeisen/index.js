@@ -21,7 +21,7 @@ async function fetchJson(url, options = {}, predicate = () => true) {
         response = (await retry.retry({
             getter: retry.toNodeCallbackArguments(() => network.fetchJson(url, options)),
             predicate: ([error, response]) => !error && response && response.status < 500,
-            maxAttempts: 3
+            maxAttempts: 10
         }))[1];
     } catch (e) {
         if (e instanceof retry.RetryError) {
