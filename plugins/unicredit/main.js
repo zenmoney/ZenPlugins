@@ -78,8 +78,10 @@ function getAccounts(sessionId) {
         appversion: '2.18.23.1'
     };
 
-    var responseXml = ZenMoney.requestPost(BASE_URL, request, defaultHeaders);
-    return xml2json(responseXml);
+    var xml = ZenMoney.requestPost(BASE_URL, request, defaultHeaders);
+    ZenMoney.trace('Загружены счета:\n' + xml);
+
+    return xml2json(xml);
 }
 
 function parseAccounts(json) {
@@ -146,6 +148,8 @@ function getTransactions(sessionId) {
     };
 
     var xml = ZenMoney.requestPost(BASE_URL, getHistoryRequest, defaultHeaders);
+    ZenMoney.trace('Загружены операции:\n' + xml);
+
     return xml2json(xml);
 }
 
