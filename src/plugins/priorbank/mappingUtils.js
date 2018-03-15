@@ -44,7 +44,7 @@ export function convertToZenMoneyTransaction(accountId, bankTransaction) {
         isCashTransfer,
     } = bankTransaction;
     const isCurrencyConversion = accountCurrency !== transactionCurrency;
-    const zenMoneyTransaction = {date: transactionDate, payee};
+    const zenMoneyTransaction = {date: transactionDate.getTime(), payee};
     if (transactionId) {
         zenMoneyTransaction.id = transactionId;
     }
