@@ -198,7 +198,7 @@ function requestApiInner(url, params, no_default_params, ignoreErrors) {
 
 	if (!/<status>\s*<code>\s*0\s*<\/code>/i.test(html)) {
 
-		ZenMoney.trace('Ответ с ошибкой от ' + url + ': ' + html); 
+		ZenMoney.trace('Ответ с ошибкой от ' + url + ': ' + html);
 
 		var error = getParam(html, /<text>\s*(?:<!\[CDATA\[)?\s*(.*?)\s*(?:\]\]>)?\s*<\/text>/i);
 		ZenMoney.trace('error: ' + error);
