@@ -30,7 +30,7 @@ function login() {
 
 	function LevelUp()
 	{
-		ZenMoney.trace('Запрашиваем подтверждение привелений пользователя...');
+		ZenMoney.trace('Запрашиваем подтверждение привилегий пользователя...');
 
 		// получим привилегии пользователя
 		var level_up = requestJson("level_up", null, {
@@ -41,7 +41,7 @@ function login() {
 		});
 
 		if (level_up.resultCode === 'OK') {
-			ZenMoney.trace('Успешно повысили привелегии пользователя.');
+			ZenMoney.trace('Успешно повысили привилегии пользователя.');
 		}
 		// подтверждение через секретный вопрос
 		else if  (level_up.resultCode === 'WAITING_CONFIRMATION' && level_up.confirmationData && level_up.confirmationData.Question)
@@ -66,18 +66,24 @@ function login() {
 				noException: true
 			});
 
-			// проверим ответ на ошибки
+			// ответ на вопрос не верный
+			if (json.resultCode === 'CONFIRMATION_FAILED') {
+				ZenMoney.trace('Ответ не принят: '+ JSON.stringify(json));
+				throw new ZenMoney.Error('Ответ банка: '+ (json.plainMessage || json.errorMessage), true);
+			}
+			// ответ не принят
 			if (json.resultCode !== 'OK') {
 				ZenMoney.trace('Ответ не принят: '+ JSON.stringify(json));
-				throw new ZenMoney.Error("Ответ не принят: "+ (json.plainMessage || json.errorMessage));
+				throw new ZenMoney.Error('Ответ не принят: '+ (json.plainMessage || json.errorMessage));
 			}
+			// всё хорошо, ответ верный
 			else
 				ZenMoney.trace('Ответ на секретный вопрос принят банком.');
 		}
 		else
 		{
 			ZenMoney.trace('Ошибка получения привилегий для входа: ' + JSON.stringify(level_up));
-			throw new ZenMoney.Error('Не удалось повысить привелегии пользователя для входа!');
+			throw new ZenMoney.Error('Не удалось повысить привилегии пользователя для входа!');
 		}
 	}
 
@@ -141,11 +147,11 @@ function login() {
 				sessionid: sessionId,
 				password: password
 			};
-			if (in_array(g_preferences.login.substr(0, 1), ['+', '7', '8']))
+			/*if (in_array(g_preferences.login.substr(0, 1), ['+', '7', '8']))
 				//post.phone = trimStart(g_preferences.login, ['+', '8']);
 				post.phone = g_preferences.login;
-			else
-				post.username = g_preferences.login;
+			else*/
+			post.username = g_preferences.login;
 
 			var sign_up = requestJson("sign_up", null, {
 				post: post,
@@ -158,6 +164,7 @@ function login() {
 				ZenMoney.trace("Ошибка входа: "+ JSON.stringify(sign_up));
 				throw new ZenMoney.Error('Ответ от банка: ' + (sign_up.plainMessage || sign_up.errorMessage), true);
 			}
+			// операция отклонена
 			else if (sign_up.resultCode === 'OPERATION_REJECTED')
 			{
 				ZenMoney.trace("Ошибка входа: "+ JSON.stringify(sign_up));
@@ -285,7 +292,7 @@ function login() {
 			// входим по пину
 			var pinHashDate = ZenMoney.getData('pinHashTime', 0);
 			var oldSessionId = ZenMoney.getData('session_id', 0);
-			var sign_up = requestJson("sign_up", {
+			var sign_up2 = requestJson("sign_up", {
 				auth_type:  'pin'
 			}, {
 				post: {
@@ -299,16 +306,26 @@ function login() {
 			});
 			//ZenMoney.trace('SIGN_UP 2: '+ JSON.stringify(sign_up));
 
-			if (sign_up.resultCode === 'DEVICE_LINK_NEEDED')
+			// устройство не авторизировано
+			if (sign_up2.resultCode === 'DEVICE_LINK_NEEDED')
 			{
-				// устройство не авторизировано
 				ZenMoney.setData('pinHash', null);
-				throw new ZenMoney.Error('Требуется привязка устройства. Запустите подключение к банку снова.', true);
+				ZenMoney.saveData();
+				ZenMoney.trace('Требуется привязка устройства: ' + JSON.stringify(sign_up2));
+				throw new ZenMoney.Error('Требуется привязка устройства. Перезапустите подключение к банку.', true);
 			}
-			else if (sign_up.resultCode !== 'OK')
+			// не верный пин-код
+			if (in_array(sign_up2.resultCode, ['WRONG_PIN_CODE', 'PIN_ATTEMPS_EXCEEDED']))
 			{
-				ZenMoney.trace('Ошибка входа по ПИН-коду: ' + JSON.stringify(sign_up));
-				throw new ZenMoney.Error('Ошибка входа по ПИН-коду: '+ (sign_up.plainMessage || sign_up.errorMessage));
+				ZenMoney.setData('pinHash', null);
+				ZenMoney.saveData();
+				ZenMoney.trace('Ошибка входа по ПИН-коду: ' + JSON.stringify(sign_up2));
+				throw new ZenMoney.Error('Ошибка входа по ПИН-коду. Перезапустите подключение к банку.', true);
+			}
+			else if (sign_up2.resultCode !== 'OK')
+			{
+				ZenMoney.trace('Ошибка входа по ПИН-коду: ' + JSON.stringify(sign_up2));
+				throw new ZenMoney.Error('Ошибка входа по ПИН-коду: '+ (sign_up2.plainMessage || sign_up2.errorMessage));
 			}
 			else
 				ZenMoney.trace('Успешно вошли по ПИН-коду.');
@@ -498,24 +515,28 @@ function processAccounts() {
 		}
 		// кредиты наличными
 		else if (a.accountType === 'CashLoan' && a.status === 'NORM') {
-			ZenMoney.trace("Добавляем кредит: "+ a.name +' (#'+ a.id +')');
-			accDict.push({
-				id:             a.id,
-				title:          a.name,
-				type:           'loan',
-				syncID:         a.id.substring(a.id.length-4),
-				instrument:     a.debtAmount.currency.name,
-				balance:        a.debtAmount.value,
-				startBalance:   a.creditAmount.value,
-				startDate:		a.creationDate.milliseconds,
-				percent:        a.tariffInfo.interestRate,
-				capitalization:	true,
-				endDateOffsetInterval: 'month',
-				endDateOffset:	a.remainingPaymentsCount,
-				payoffInterval:	'month',
-				payoffStep:		1
-			});
-			g_accounts.push(a.id);
+			if (a.debtAmount.value > 0) {
+				ZenMoney.trace("Добавляем кредит наличными: " + a.name + ' (#' + a.id + ')');
+				accDict.push({
+					id:             a.id,
+					title:          a.name,
+					type:           'loan',
+					syncID:         a.id.substring(a.id.length-4),
+					instrument:     a.debtAmount.currency.name,
+					balance:        a.debtAmount.value,
+					startBalance:   a.creditAmount.value,
+					startDate:		a.creationDate.milliseconds,
+					percent:        a.tariffInfo.interestRate,
+					capitalization:	true,
+					endDateOffsetInterval: 'month',
+					endDateOffset:	a.remainingPaymentsCount,
+					payoffInterval:	'month',
+					payoffStep:		1
+				});
+				g_accounts.push(a.id);
+			}
+			else
+				ZenMoney.trace("Пропускаем кредит наличными " + a.name + ' (#' + a.id + '), так как он уже закрыт');
 		}
 	}
 

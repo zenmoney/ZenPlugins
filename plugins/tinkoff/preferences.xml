@@ -4,7 +4,7 @@
 		key="login"
 		title="Логин *"
 		dialogTitle="Логин"
-		dialogMessage="Введите логин для входа в Тинькофф Банк."
+		dialogMessage="Введите логин для входа в Тинькофф Банк. Вход по номеру телефона не поддерживается."
 		summary="|Логин пользователя|{@s}"
 		positiveButtonText="ОК"
 		negativeButtonText="Отмена"
@@ -30,7 +30,6 @@
 		defaultValue="1"
 		summary="|1|{@s}"
 		positiveButtonText="ОК"
-		negativeButtonText="Отмена"
-	>
+		negativeButtonText="Отмена">
 	</ListPreference>
 </PreferenceScreen>
