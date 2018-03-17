@@ -116,8 +116,10 @@ function loginAPI() {
 			'operation': 'confirm',
 			'mGUID': mGUID,
 			'smsPassword': code
+		}, {
+			noException: true
 		});
-		ZenMoney.trace('Успешно привязали устройство.');
+		ZenMoney.trace('Отправили СМС-код авторизации устройства.');
 
 		html = requestApiLogin('registerApp.do', {
 			'operation': 'createPIN',
@@ -127,6 +129,7 @@ function loginAPI() {
 			'devID': devid,
 			'mobileSdkData': JSON.stringify(createSdkData())
 		});
+		ZenMoney.trace('Установили ПИН-код для входа в приложение Сбербанк Онлайн.');
 
 		ZenMoney.setData('guid', mGUID);
 		ZenMoney.saveData();
@@ -195,7 +198,7 @@ function requestApiInner(url, params, no_default_params, ignoreErrors) {
 
 	if (!/<status>\s*<code>\s*0\s*<\/code>/i.test(html)) {
 
-		ZenMoney.trace('Ответ с ошибкой от ' + url + ': ' + clearHtml(html));
+		ZenMoney.trace('Ответ с ошибкой от ' + url + ': ' + html); 
 
 		var error = getParam(html, /<text>\s*(?:<!\[CDATA\[)?\s*(.*?)\s*(?:\]\]>)?\s*<\/text>/i);
 		ZenMoney.trace('error: ' + error);
@@ -203,9 +206,9 @@ function requestApiInner(url, params, no_default_params, ignoreErrors) {
 
 		if (error) {
 			//var repeat = /повторите попытку|временно недоступна/i.test(error); -- с АБС всё ещё не понятно как быть :(
-			var repeat = /повторите попытку/i.test(error);
+			var repeat = (error.indexOf('повторите попытку') > 0) || (error.indexOf('ввели неправильный') > 0);
 			var fatal = /не может быть|неправильный|неверный|заблокирован/i.test(error);
-			error = 'Ответ от банка: ' + error;
+			error = 'Ответ от банка: ' + error.htmlEntityDecode();
 
 			if (!ignoreErrors || repeat) {
                 var ex = new ZenMoney.Error(error, repeat, fatal);
@@ -303,7 +306,16 @@ function processApiAccounts() {
 
 				ZenMoney.trace('Добавляем кредитную карту: ' + acc.title + ' (#' + id + ')');
 			}
-			else {
+			else
+			{
+				// обработаем свойства дебетовых карт с овердрафтом
+				//var xml3 = requestApi('private/cards/info.do', {id: id}, true);
+				//ZenMoney.trace('Свойства дебетовой карты для анализа (#'+ id +'): '+ xml3);
+
+				// Сбер не передаёт размер овердрафта, но включает его в доступный остаток по карте
+				acc.available = acc.balance;
+				acc.balance = null;
+
 				// для дебетовок добавим также и syncID лицевого счёта
 				var cardAcc = getElementByTag(card, 'cardAccount', replaceTagsAndSpaces);
 				if (cardAcc && cardAcc != '') {
@@ -311,7 +323,7 @@ function processApiAccounts() {
 					acc.syncID.push(cardAcc);
 				}
 
-				ZenMoney.trace('Добавляем дебетовую карту: ' + acc.title + ' (#' + id + ')');
+				ZenMoney.trace('Добавляем дебетовую карту: '+ acc.title +' (#'+ id +')');
 			}
 		}
 
@@ -828,13 +840,13 @@ function loginWeb() {
 	var error = getParam(html, /<h1[^>]*>О временной недоступности услуги[\s\S]*?<p[^>]*>([\s\S]*?)<\/p>|в связи с ошибкой в работе системы[\s\S]*?<div[^>]*>([\s\S]*?)<\/div>/i, replaceTagsAndSpaces, html_entity_decode);
 	if (error) {
 		ZenMoney.trace('HTML: '+ html);
-		throw new ZenMoney.Error('Ошибка входа. Ответ от банка: ' + error);
+		throw new ZenMoney.Error('Ошибка входа. Ответ от банка: ' + error.htmlEntityDecode());
 	}
 
 	if (/\$\$errorFlag/i.test(html)) {
 		error = getParam(html, /([\s\S]*)/, [replaceTagsAndSpaces, /^:/, ''], html_entity_decode);
 		ZenMoney.trace('HTML: '+ html);
-		throw new ZenMoney.Error('Ошибка входа. Ответ от банка: '+error, null, /Ошибка идентификации/i.test(error));
+		throw new ZenMoney.Error('Ошибка входа. Ответ от банка: '+error.htmlEntityDecode(), null, /Ошибка идентификации/i.test(error));
 	}
 
 	var page = getParam(html, /value\s*=\s*["'](https:[^'"]*?AuthToken=[^'"]*)/i);
