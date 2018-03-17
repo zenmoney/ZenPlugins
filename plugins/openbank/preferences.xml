@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+	<ListPreference
+		positiveButtonText="ОК"
+		key="periodNew"
+		dialogTitle="Загружать операции при создании подключения"
+		negativeButtonText="Отмена"
+		title="Загружать операции при создании подключения"
+		entries="Не загружать|За текущий месяц|За текущий и прошлый месяцы|За 3 месяца" entryValues="0|1|2|3"
+		defaultValue="1"
+		summary="|1|{@s}"
+		dialogMessage="Выберите период загрузки операций при создании подключения.">
+	</ListPreference>
+</PreferenceScreen>
