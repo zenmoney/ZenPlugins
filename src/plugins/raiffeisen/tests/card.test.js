@@ -258,12 +258,12 @@ describe("card parser", () => {
             "instrument": "RUB",
             "syncID": [
                 "3780",
-                "5325",
                 "4085",
                 "6330"
             ],
             "title": "RUR Visa CASHBACK Credit",
-            "type": "ccard"
+            "type": "ccard",
+            "_cba": "40817810401003615325"
         };
         expected["ACCOUNT_16453728"] = account1;
         expected["CARD_63561259"]    = account1;
@@ -275,11 +275,11 @@ describe("card parser", () => {
             "id": "ACCOUNT_16754955",
             "instrument": "RUB",
             "syncID": [
-                "4506",
-                "0811",
+                "4506"
             ],
             "title": "RUR MasterCard Gold Package",
-            "type": "ccard"
+            "type": "ccard",
+            "_cba": "40817810101003720811"
         };
         expected["ACCOUNT_16754955"] = account2;
         expected["CARD_64641574"]    = account2;
@@ -403,11 +403,11 @@ describe("card parser", () => {
             "balance": 0,
             "instrument": "RUB",
             "syncID": [
-                "8643",
-                "2816"
+                "8643"
             ],
             "title": "RUR Visa Classic",
-            "type": "ccard"
+            "type": "ccard",
+            "_cba": "40817810301003402816"
         };
         expected["ACCOUNT_15964969"] = account1;
         expected["CARD_62629984"] = account1;

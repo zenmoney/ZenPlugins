@@ -129,7 +129,7 @@ export function parseCards(jsonArray, accounts = {}) {
         account.instrument = json.currency.shortName;
         account.title      = json.product;
         if (json.cba) {
-            account.syncID.push(json.cba.slice(-4));
+            account._cba = json.cba;
         }
         if (json.type.id === 2) {
             account.available = json.balance;
@@ -163,9 +163,10 @@ export function parseAccountWithCards(json) {
     const account = {
         id: "ACCOUNT_" + json.account.id,
         instrument: json.account.currency.shortName,
-        syncID: [json.account.cba.slice(-4)],
+        syncID: [],
         balance: json.balance,
-        type: "checking"
+        type: "checking",
+        _cba: json.account.cba
     };
     const accounts = {};
     accounts[account.id] = account;
@@ -180,7 +181,7 @@ export function parseAccountWithCards(json) {
         }
     }
     if (!account.title) {
-        account.title = "" + account.syncID[0];
+        account.title = "*" + (account.syncID[0] || account._cba.slice(-4));
     }
     return accounts;
 }
@@ -401,10 +402,29 @@ export function adjustTransactions(transactions, accounts) {
 
 export function adjustAccounts(accounts) {
     const filtered = [];
+    const accountsByCbaKey = {};
     for (const id in accounts) {
         const account = accounts[id];
-        if (account.id === id) {
-            filtered.push(account);
+        if (account.id !== id) {
+            continue;
+        }
+        filtered.push(account);
+        if (!account._cba) {
+            delete account._cba;
+            continue;
+        }
+        const key = account.instrument + "_" + account._cba.slice(-4);
+        let group = accountsByCbaKey[key];
+        if (!group) {
+            accountsByCbaKey[key] = group = [];
+        }
+        group.push(account);
+    }
+    for (const key in accountsByCbaKey) {
+        const group = accountsByCbaKey[key];
+        for (const account of group) {
+            account.syncID.push(group.length > 1 ? account._cba : account._cba.slice(-4));
+            delete account._cba;
         }
     }
     return filtered;
