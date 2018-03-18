@@ -1,0 +1,34 @@
+[
+    {
+        "id": "B7C94FAC",
+        "currency": {
+            "shortName": "RUB",
+            "symbol": "руб",
+            "rate": 1
+        },
+        "product": "Mastercard World Premium",
+        "cba": "40817810301003402816",
+        "pan": "5536********1038",
+        "moneyAmount": {
+            "value": 145600.24
+        },
+        "accountBalance": {
+            "value": 45600.24
+        }
+    },
+    {
+        "id": "4480910C",
+        "currency": {
+            "shortName": "USD",
+            "symbol": "$",
+            "rate": 54.60
+        },
+        "cba": "40817840401000898597",
+        "moneyAmount": {
+            "value": 2432.19
+        },
+        "accountBalance": {
+            "value": 2432.19
+        }
+    }
+]

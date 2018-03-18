@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>example</id>
+    <version>1.0</version>
+    <build>1</build>
+    <company>0</company>
+    <modular>true</modular>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+    <description>Пример плагина синхронизации.
+
+Для подключения импорта укажите ваш логин и пароль от интернет-банка.</description>
+</provider>
