@@ -4,6 +4,7 @@ var g_headers = {
 	g_baseurl =  'https://api1.open.ru/2-37/',
 	g_accesstoken,
 	g_preferences,
+	g_timeoffset = (180 + new Date().getTimezoneOffset()) * 60000,
 	g_accounts = [];
 
 function main() {
@@ -175,7 +176,7 @@ function processAccounts() {
 		} else if (a.type == 3) {
 			// Вклад (депозит)
 			ZenMoney.trace('Добавляем вклад: '+ a.title +' (#'+ a.account_id +')', 'process_accounts');
-			var date = new Date(a.open_date);
+
 			accDict.push({
 				id: a.account_id.toString(),
 				title: a.title,
@@ -185,7 +186,7 @@ function processAccounts() {
 				balance: a.balance,
 				capitalization: true,
     		percent: a.annual_interest,
-    		startDate: date.getTime(),
+    		startDate: a.open_date.substring(0, 10),
     		endDateOffset: monthDiff(a.open_date, a.closing_date),
     		endDateOffsetInterval: 'month',
     		payoffStep: 1,
@@ -196,7 +197,7 @@ function processAccounts() {
 		} else if (a.type == 4) {
 			// Кредит
 			ZenMoney.trace('Добавляем кредит: '+ a.title +' (#'+ a.account_id +')', 'process_accounts');
-			var date = new Date(a.open_date);
+
 			accDict.push({
 				id: a.account_id.toString(),
 				title: a.title,
@@ -207,7 +208,7 @@ function processAccounts() {
 				startBalance: a.loan_amount,
 				capitalization: true,
     		percent: a.annual_interest,
-    		startDate: date.getTime(),
+    		startDate: a.open_date.substring(0, 10),
     		endDateOffset: Math.ceil(a.full_payment / a.next_payment),
     		endDateOffsetInterval: 'month',
     		payoffStep: 1,
@@ -218,7 +219,7 @@ function processAccounts() {
 		} else if (a.type == 5 && a.kopilka && a.kopilka == 1) {
 			// Счет-копилка
 			ZenMoney.trace('Добавляем копилку: '+ a.title +' (#'+ a.account_id +')', 'process_accounts');
-			var date = new Date(a.open_date);
+
 			accDict.push({
 				id: a.account_id.toString(),
 				title: a.title,
@@ -228,9 +229,9 @@ function processAccounts() {
 				balance: a.balance,
 				capitalization: true,
     		percent: a.annual_interest,
-    		startDate: date.getTime(),
-    		endDateOffset: 1,
-    		endDateOffsetInterval: 'month',
+    		startDate: a.open_date.substring(0, 10),
+    		endDateOffset: 10,
+    		endDateOffsetInterval: 'year',
     		payoffStep: 1,
     		payoffInterval: 'month'
 			});
@@ -337,7 +338,8 @@ function processTransactions() {
 			 */
 			tran.payee = t.title.substring(0, t.title.lastIndexOf('/'));
 			var date = new Date(t.transaction_date ? t.transaction_date : t.short_transaction_date);
-			tran.date = date.getTime();
+			// Корректируем время, потому что банк отдает время по МСК
+			tran.date = date.getTime() + g_timeoffset;
 			tran.income = 0;
 			tran.outcome = 0;
 			tran.outcomeAccount = acc.toString();
