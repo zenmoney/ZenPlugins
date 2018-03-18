@@ -175,7 +175,7 @@ function processAccounts() {
 		} else if (a.type == 3) {
 			// Вклад (депозит)
 			ZenMoney.trace('Добавляем вклад: '+ a.title +' (#'+ a.account_id +')', 'process_accounts');
-
+			var date = new Date(a.open_date);
 			accDict.push({
 				id: a.account_id.toString(),
 				title: a.title,
@@ -185,7 +185,7 @@ function processAccounts() {
 				balance: a.balance,
 				capitalization: true,
     		percent: a.annual_interest,
-    		startDate: a.open_date,
+    		startDate: date.getTime(),
     		endDateOffset: monthDiff(a.open_date, a.closing_date),
     		endDateOffsetInterval: 'month',
     		payoffStep: 1,
@@ -196,7 +196,7 @@ function processAccounts() {
 		} else if (a.type == 4) {
 			// Кредит
 			ZenMoney.trace('Добавляем кредит: '+ a.title +' (#'+ a.account_id +')', 'process_accounts');
-
+			var date = new Date(a.open_date);
 			accDict.push({
 				id: a.account_id.toString(),
 				title: a.title,
@@ -207,7 +207,7 @@ function processAccounts() {
 				startBalance: a.loan_amount,
 				capitalization: true,
     		percent: a.annual_interest,
-    		startDate: a.open_date,
+    		startDate: date.getTime(),
     		endDateOffset: Math.ceil(a.full_payment / a.next_payment),
     		endDateOffsetInterval: 'month',
     		payoffStep: 1,
@@ -218,7 +218,7 @@ function processAccounts() {
 		} else if (a.type == 5 && a.kopilka && a.kopilka == 1) {
 			// Счет-копилка
 			ZenMoney.trace('Добавляем копилку: '+ a.title +' (#'+ a.account_id +')', 'process_accounts');
-
+			var date = new Date(a.open_date);
 			accDict.push({
 				id: a.account_id.toString(),
 				title: a.title,
@@ -228,7 +228,7 @@ function processAccounts() {
 				balance: a.balance,
 				capitalization: true,
     		percent: a.annual_interest,
-    		startDate: a.open_date,
+    		startDate: date.getTime(),
     		endDateOffset: 1,
     		endDateOffsetInterval: 'month',
     		payoffStep: 1,
@@ -336,7 +336,8 @@ function processTransactions() {
 			 *	TODO: hold валютной операции, снятие наличных
 			 */
 			tran.payee = t.title.substring(0, t.title.lastIndexOf('/'));
-			tran.date = t.transaction_date ? t.transaction_date : t.short_transaction_date;
+			var date = new Date(t.transaction_date ? t.transaction_date : t.short_transaction_date);
+			tran.date = date.getTime();
 			tran.income = 0;
 			tran.outcome = 0;
 			tran.outcomeAccount = acc.toString();
