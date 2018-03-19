@@ -33,13 +33,4 @@
             negativeButtonText="Отмена"
             summary="|startDate|{@s}">
     </EditTextPreference>
-    <EditTextPreference
-            key="serverAddress"
-            title="Адрес прокси (необязательно)"
-            dialogTitle="Адрес прокси"
-            dialogMessage="Адрес прокси для Приватбанка"
-            positiveButtonText="ОК"
-            negativeButtonText="Отмена"
-            summary="||{@s}">
-    </EditTextPreference>
 </PreferenceScreen>
