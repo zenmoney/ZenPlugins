@@ -4,7 +4,7 @@ var g_headers = {
 	g_baseurl =  'https://api1.open.ru/2-37/',
 	g_accesstoken,
 	g_preferences,
-	g_timeoffset = (180 + new Date().getTimezoneOffset()) * 60000,
+	g_timeoffset = -180 * 60 * 1000,
 	g_accounts = [];
 
 function main() {
