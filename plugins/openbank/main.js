@@ -119,10 +119,10 @@ function authWithPin() {
 function errorResponse(response, text, tag = 'trace', text_for_user = 'Ошибка') {
 	if (response.error.code && response.error.error_message) {
 		ZenMoney.trace(text + ': #' + response.error.code + ', ' + response.error.error_message, tag);
-		throw new ZenMoney.Error(text_for_user + ': ' + response.error.error_message, true);
+		throw new ZenMoney.Error(text_for_user + ': ' + response.error.error_message, false);
 	}
 	ZenMoney.trace(text + ': ' + JSON.stringify(response), tag);
-	throw new ZenMoney.Error(text_for_user + ': неизвестная ошибка!', true);
+	throw new ZenMoney.Error(text_for_user + ': неизвестная ошибка!', false);
 }
 
 function processAccounts() {
