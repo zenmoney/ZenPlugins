@@ -43,7 +43,10 @@ export function adjustTransactions(transactions, accounts) {
             const transaction  = group[0];
             const transferType = group[0]._transferType;
             ["", "Account", "BankID"].forEach(postfix => {
-                transaction[transferType + postfix] = group[1][transferType + postfix];
+                const value = group[1][transferType + postfix];
+                if (value !== undefined) {
+                    transaction[transferType + postfix] = value;
+                }
             });
             delete transaction._transferId;
             delete transaction._transferType;

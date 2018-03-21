@@ -86,6 +86,10 @@ export function convertTransactions(xml) {
 }
 
 export function convertTransactionJson(json) {
+    const description = cleanDescription(json.description);
+    if (description && /кредитного лимита/i.test(description)) {
+        return null;
+    }
     const transaction = {};
     const opAmount = parseSum(json.amount);
     const amount   = parseSum(json.cardamount);
@@ -97,12 +101,12 @@ export function convertTransactionJson(json) {
         }
     }
     transaction.date = new Date(json.trandate + "T" + json.trantime);
-    transaction.comment = cleanDescription(json.description);
+    transaction.comment = description;
     transaction.incomeAccount = json.card;
     transaction.income = amount.sum > 0 ? amount.sum : 0;
     transaction.outcomeAccount = json.card;
     transaction.outcome = amount.sum < 0 ? -amount.sum : 0;
-    if (opAmount.instrument !== amount.instrument) {
+    if (opAmount.sum !== 0 && opAmount.instrument !== amount.instrument) {
         if (amount.sum > 0) {
             transaction.opIncome = Math.abs(opAmount.sum);
             transaction.opIncomeInstrument = opAmount.instrument;
@@ -113,6 +117,7 @@ export function convertTransactionJson(json) {
     }
     if (transaction.comment) {
         [
+            parseHold,
             parseCashWithdrawal,
             parseCashReplenishment,
             parseInnerTransferTo,
@@ -131,7 +136,10 @@ export function cleanDescription(description) {
     if (!description) {
         return null;
     }
-    return description.replace(/&quot;/g, '"').replace(/<[^>]*>/g, "");
+    return description
+        .replace(/&quot;/g, '"')
+        .replace(/&apos;/g, "'")
+        .replace(/<[^>]*>/g, "");
 }
 
 export function getTransferSyncId(id) {
@@ -144,6 +152,15 @@ export function getTransferSyncId(id) {
 
 export function getTransferId(transaction, opAmount) {
     return `${transaction.date.getTime() / 1000}_${opAmount.instrument}_${opAmount.sum}`;
+}
+
+export function parseHold(transaction) {
+    if (/Предавторизация/i.test(transaction.comment)) {
+        transaction.hold = true;
+        delete transaction.incomeBankID;
+        delete transaction.outcomeBankID;
+    }
+    return false;
 }
 
 export function parseCashWithdrawal(transaction, opAmount) {
