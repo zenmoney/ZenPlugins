@@ -1,8 +1,7 @@
 var g_headers = {
 	'User-Agent': 'okhttp/3.4.2'
 	},
-	g_baseurl =  'https://api1.open.ru/2-37/',
-	g_accesstoken,
+	g_baseurl = 'https://api1.open.ru/2-37/',
 	g_preferences,
 	g_timeoffset = -180 * 60 * 1000,
 	g_accounts = [];
@@ -56,6 +55,8 @@ function authDevice() {
 	ZenMoney.trace('Сгенерирован device_info: ' + deviceinfo, 'auth_device');
 	ZenMoney.trace('Запрашиваем отправку СМС-кода пользователю...', 'auth_device');
 
+	ZenMoney.trace('Обнуляем cookie access_token', 'auth_device');
+	ZenMoney.setCookie('api1.open.ru', 'access_token', null);
 	var auth_card = requestJson('auth/card', null, 'card_no=' + cardNum + '&device_info=' + deviceinfo);
 	if (auth_card.error || !auth_card.data) {
 		errorResponse(auth_card, 'Ошибка при запросе СМС-кода', 'auth_device');
@@ -81,13 +82,15 @@ function authDevice() {
 	var accesstoken = auth_tempcode.data.access_token;
 	var installid = auth_tempcode.data.install_id;
 
+	ZenMoney.trace('Сохраняем cookie access_token: ' + accesstoken, 'auth_device');
+	ZenMoney.setCookie('api1.open.ru', 'access_token', accesstoken);
 	ZenMoney.trace('Генерируем PIN-код и передаем его банку...', 'auth_device');
 
 	var shaObj = new jsSHA('SHA-1', 'TEXT');
 	shaObj.update(Math.random().toString() + '_' + imei);
 	var pincode = shaObj.getHash('HEX');
 
-	var auth_pin = requestJson('auth/pin', null, 'pin_code=' + pincode + '&device_info=' + deviceinfo, accesstoken);
+	var auth_pin = requestJson('auth/pin', null, 'pin_code=' + pincode + '&device_info=' + deviceinfo);
 	if (auth_pin.error || !auth_pin.data || auth_pin.data != 'success') {
 		errorResponse(auth_pin, 'Ошибка при сохранении PIN-кода', 'auth_device');
 	}
@@ -108,11 +111,15 @@ function authWithPin() {
 	var installid = ZenMoney.getData('installid', null);
 	var deviceinfo = ZenMoney.getData('deviceinfo', null);
 
+	ZenMoney.trace('Обнуляем cookie access_token', 'auth_device');
+	ZenMoney.setCookie('api1.open.ru', 'access_token', null);
 	var auth_login = requestJson('auth/login', null, 'pin_code=' + pincode + '&device_info=' + deviceinfo + '&install_id=' + installid);
 	if (auth_login.error || !auth_login.data.access_token) {
 		errorResponse(auth_login, 'Ошибка при авторизации по PIN-коду', 'auth_with_pin');
 	}
-	g_accesstoken = auth_login.data.access_token;
+	var accesstoken = auth_login.data.access_token;
+	ZenMoney.trace('Сохраняем cookie access_token: ' + accesstoken, 'auth_device');
+	ZenMoney.setCookie('api1.open.ru', 'access_token', accesstoken);
 	ZenMoney.trace('Успешно вошли по PIN-коду: ' + JSON.stringify(auth_login), 'auth_with_pin');
 }
 
@@ -129,7 +136,7 @@ function processAccounts() {
 
 	ZenMoney.trace('Запрашиваем информацию по счетам...', 'process_accounts');
 
-	var accounts = requestJson('accounts', {'use_cached_data': 0}, null, g_accesstoken);
+	var accounts = requestJson('accounts', {'use_cached_data': 0}, null);
 	if (accounts.error || !accounts.data.account_list) {
 		errorResponse(accounts, 'Ошибка при получении счетов', 'process_accounts');
 	}
@@ -313,7 +320,7 @@ function processTransactions() {
 
 	for (var i = 0; i < g_accounts.length; i++) {
 		acc = g_accounts[i];
-		var transactions = requestJson('accounts/' + acc + '/transactions', {'date_start': lastSyncDate.toISOString()}, null, g_accesstoken);
+		var transactions = requestJson('accounts/' + acc + '/transactions', {'date_start': lastSyncDate.toISOString()}, null);
 		if (transactions.error || !transactions.data) {
 			errorResponse(transactions, 'Ошибка при получении транзакций по счету #' + acc, 'process_transactions');
 		}
@@ -442,7 +449,7 @@ function getJson(html) {
 	}
 }
 
-function requestJson(requestCode, getparams, postbody, access_token = null) {
+function requestJson(requestCode, getparams, postbody) {
 
 	var params = [];
 
@@ -455,10 +462,6 @@ function requestJson(requestCode, getparams, postbody, access_token = null) {
 
 	var url = g_baseurl + requestCode + "?" + params.join("&");
 
-	if (access_token) {
-		g_headers['Cookie'] = 'access_token=' + access_token;
-	}
-
 	if (postbody !== null) {
 		var data = ZenMoney.requestPost(url, postbody, g_headers);
 	} else {
@@ -467,7 +470,6 @@ function requestJson(requestCode, getparams, postbody, access_token = null) {
 
 	if (ZenMoney.getLastStatusCode() != 200) {
 		ZenMoney.trace('Получен ответ со статусом != 200. Ошибка!');
-    g_sessionid = undefined;
     return;
   }
 
