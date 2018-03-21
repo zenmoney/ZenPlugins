@@ -2,6 +2,7 @@ var g_headers = {
 	'User-Agent': 'okhttp/3.4.2'
 	},
 	g_baseurl = 'https://api1.open.ru/2-37/',
+	g_cookieset = false,
 	g_preferences,
 	g_timeoffset = -180 * 60 * 1000,
 	g_accounts = [];
@@ -55,8 +56,6 @@ function authDevice() {
 	ZenMoney.trace('Сгенерирован device_info: ' + deviceinfo, 'auth_device');
 	ZenMoney.trace('Запрашиваем отправку СМС-кода пользователю...', 'auth_device');
 
-	ZenMoney.trace('Обнуляем cookie access_token', 'auth_device');
-	ZenMoney.setCookie('api1.open.ru', 'access_token', null);
 	var auth_card = requestJson('auth/card', null, 'card_no=' + cardNum + '&device_info=' + deviceinfo);
 	if (auth_card.error || !auth_card.data) {
 		errorResponse(auth_card, 'Ошибка при запросе СМС-кода', 'auth_device');
@@ -84,6 +83,7 @@ function authDevice() {
 
 	ZenMoney.trace('Сохраняем cookie access_token: ' + accesstoken, 'auth_device');
 	ZenMoney.setCookie('api1.open.ru', 'access_token', accesstoken);
+	g_cookieset = true;
 	ZenMoney.trace('Генерируем PIN-код и передаем его банку...', 'auth_device');
 
 	var shaObj = new jsSHA('SHA-1', 'TEXT');
@@ -111,8 +111,10 @@ function authWithPin() {
 	var installid = ZenMoney.getData('installid', null);
 	var deviceinfo = ZenMoney.getData('deviceinfo', null);
 
-	ZenMoney.trace('Обнуляем cookie access_token', 'auth_device');
-	ZenMoney.setCookie('api1.open.ru', 'access_token', null);
+	if (g_cookieset) {
+		ZenMoney.trace('Обнуляем cookie access_token', 'auth_device');
+		ZenMoney.setCookie('api1.open.ru', 'access_token', null);
+	}
 	var auth_login = requestJson('auth/login', null, 'pin_code=' + pincode + '&device_info=' + deviceinfo + '&install_id=' + installid);
 	if (auth_login.error || !auth_login.data.access_token) {
 		errorResponse(auth_login, 'Ошибка при авторизации по PIN-коду', 'auth_with_pin');
@@ -120,6 +122,7 @@ function authWithPin() {
 	var accesstoken = auth_login.data.access_token;
 	ZenMoney.trace('Сохраняем cookie access_token: ' + accesstoken, 'auth_device');
 	ZenMoney.setCookie('api1.open.ru', 'access_token', accesstoken);
+	g_cookieset = true;
 	ZenMoney.trace('Успешно вошли по PIN-коду: ' + JSON.stringify(auth_login), 'auth_with_pin');
 }
 
