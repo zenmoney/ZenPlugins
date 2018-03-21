@@ -2,7 +2,7 @@
 <provider>
     <id>openbank</id>
     <version>0.1.1</version>
-    <build>42</build>
+    <build>43</build>
     <company>4761</company>
     <files>
         <js>imei_gen.min.js</js>
