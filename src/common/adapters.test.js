@@ -1,5 +1,8 @@
 import _ from "lodash";
-import {adaptAsyncFn, convertTimestampToDate, postProcessTransaction, provideScrapeDates} from "./adapters";
+import {
+    adaptAsyncFn, convertAccountNumberToSyncID, convertTimestampToDate, postProcessTransaction,
+    provideScrapeDates
+} from "./adapters";
 describe("adaptAsyncFn", () => {
     it("should call addAccount, addTransaction, setResult", () => {
         const setResultCalled = new Promise((resolve) => {
@@ -14,7 +17,7 @@ describe("adaptAsyncFn", () => {
         });
         return expect(setResultCalled).resolves.toEqual({success: true}).then(x => {
             expect(global.ZenMoney.addAccount).toHaveBeenCalledTimes(1);
-            expect(global.ZenMoney.addAccount).toHaveBeenCalledWith("account");
+            expect(global.ZenMoney.addAccount).toHaveBeenCalledWith(["account"]);
             expect(global.ZenMoney.addTransaction).toHaveBeenCalledTimes(1);
             expect(global.ZenMoney.addTransaction).toHaveBeenCalledWith([1, 2]);
         });
@@ -227,6 +230,64 @@ describe("postProcessTransactions", () => {
         global.ZenMoney = {features: {dateProcessing: true}};
         withTimezoneOffset(-5, () => assertIsUntouched(new Date("2010-01-01T00:00:00+05:00")));
         withTimezoneOffset(-5, () => assertIsUntouched(new Date("2010-01-01T00:00:00+05:00").valueOf()));
+    });
+});
+
+describe("convertAccountNumberToSyncID", () => {
+    it("should add last 4 letters of number to syncID if numbers do not intersect", () => {
+        const accounts = [
+            {syncID: ["0001"], number: "111120"},
+            {syncID: ["0002"], number: "222"},
+            {syncID: ["0003"]}
+        ];
+        const expected = [
+            {syncID: ["0001", "1120"]},
+            {syncID: ["0002", "222"]},
+            {syncID: ["0003"]}
+        ];
+        expect(convertAccountNumberToSyncID(accounts)).toEqual(expected);
+    });
+
+    it("should add last 4 letters of number to syncID if numbers intersect but accounts have different instruments", () => {
+        const accounts = [
+            {syncID: ["0001"], number: "121120", instrument: "RUB"},
+            {syncID: ["0002"], number: "111120", instrument: "USD"},
+            {syncID: ["0003"]}
+        ];
+        const expected = [
+            {syncID: ["0001", "1120"], instrument: "RUB"},
+            {syncID: ["0002", "1120"], instrument: "USD"},
+            {syncID: ["0003"]}
+        ];
+        expect(convertAccountNumberToSyncID(accounts)).toEqual(expected);
+    });
+
+    it("should add number starting from 5th digit to syncID if numbers intersect", () => {
+        const accounts = [
+            {syncID: ["0001"], number: "00000121120", instrument: "RUB"},
+            {syncID: ["0002"], number: "00000111120", instrument: "RUB"},
+            {syncID: ["0003"]}
+        ];
+        const expected = [
+            {syncID: ["0001", "121120"], instrument: "RUB"},
+            {syncID: ["0002", "111120"], instrument: "RUB"},
+            {syncID: ["0003"]}
+        ];
+        expect(convertAccountNumberToSyncID(accounts)).toEqual(expected);
+    });
+
+    it("should add full number if numbers intersect and are short", () => {
+        const accounts = [
+            {syncID: ["0001"], number: "121120", instrument: "RUB"},
+            {syncID: ["0002"], number: "111120", instrument: "RUB"},
+            {syncID: ["0003"]}
+        ];
+        const expected = [
+            {syncID: ["0001", "121120"], instrument: "RUB"},
+            {syncID: ["0002", "111120"], instrument: "RUB"},
+            {syncID: ["0003"]}
+        ];
+        expect(convertAccountNumberToSyncID(accounts)).toEqual(expected);
     });
 });
 
