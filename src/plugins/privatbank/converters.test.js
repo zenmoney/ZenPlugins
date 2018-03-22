@@ -47,6 +47,51 @@ describe("convertTransactions", () => {
             }
         ]);
     });
+
+    it("should add account id if it is not present in accounts", () => {
+        const xml = `<?xml version="1.0" encoding="UTF-8"?><response version="1.0"><merchant><id>131968</id><signature>4cc7fc6c241065a3fde3a7f111574a91b59b0ccd</signature></merchant><data><oper>cmt</oper><info>
+        <statements status="excellent" credit="7137.0" debet="6048.75">
+            <statement card="5363542602444722" appcode="515326" trandate="2018-03-21" trantime="16:35:00" amount="380.00 UAH" cardamount="-380.00 UAH" rest="3490.96 UAH" terminal="" description="Снятие наличных в банкомате: ATM8593 V-INTERN_10A, ENERHODAR"/>
+            <statement card="5363542602444722" appcode="952321" trandate="2018-03-19" trantime="01:27:00" amount="38.26 UAH" cardamount="-38.65 UAH" rest="-466.04 UAH" terminal="" description="Продукты: Магазин &amp;quot;Элен&amp;quot;, Енергодар, вул.В-Iнтернац. 10а"/>
+            <statement card="5363542602444722" appcode="960318" trandate="2018-03-17" trantime="10:49:00" amount="31.86 UAH" cardamount="-31.86 UAH" rest="122.61 UAH" terminal="" description="Ресторан: Тов КГХ АЭС, Енергодар, Промышленная, 1"/>
+        </statements></info></data></response>`;
+        const accounts = {
+            "1": {id: "1", syncID: []}
+        };
+        const transactions = convertTransactions(xml, accounts);
+        expect(transactions).toEqual([
+            {
+                "date": new Date("2018-03-21T16:35:00"),
+                "income": 380,
+                "incomeAccount": "cash#UAH",
+                "outcome": 380,
+                "outcomeAccount": "5363542602444722",
+                "outcomeBankID": "515326",
+            },
+            {
+                "date": new Date("2018-03-19T01:27:00"),
+                "income": 0,
+                "incomeAccount": "5363542602444722",
+                "outcome": 38.65,
+                "outcomeAccount": "5363542602444722",
+                "outcomeBankID": "952321",
+                "payee": "Магазин \"Элен\", Енергодар, вул.В-Iнтернац. 10а",
+            },
+            {
+                "date": new Date("2018-03-17T10:49:00"),
+                "income": 0,
+                "incomeAccount": "5363542602444722",
+                "outcome": 31.86,
+                "outcomeAccount": "5363542602444722",
+                "outcomeBankID": "960318",
+                "payee": "Тов КГХ АЭС, Енергодар, Промышленная, 1"
+            }
+        ]);
+        expect(accounts).toEqual({
+            "1": {id: "1", syncID: ["4722"]},
+            "5363542602444722": {id: "1", syncID: ["4722"]}
+        });
+    });
 });
 
 describe("convertAccounts", () => {
@@ -77,24 +122,24 @@ describe("convertAccounts", () => {
             "5167985500160759": {
                 "id": "5168742331568802",
                 "type": "ccard",
-                "title": "*8802",
+                "title": "*0759",
                 "instrument": "UAH",
+                "number": "5168742331568802",
                 "balance": 350.09,
                 "creditLimit": 0,
                 "syncID": [
-                    "8802",
                     "0759"
                 ]
             },
             "5168742331568802": {
                 "id": "5168742331568802",
                 "type": "ccard",
-                "title": "*8802",
+                "title": "*0759",
                 "instrument": "UAH",
+                "number": "5168742331568802",
                 "balance": 350.09,
                 "creditLimit": 0,
                 "syncID": [
-                    "8802",
                     "0759"
                 ]
             }

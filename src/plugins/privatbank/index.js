@@ -89,10 +89,10 @@ export async function scrape({fromDate, toDate}) {
             password: passwords[i],
             baseUrl:  preferences.serverAddress
         });
-        Object.assign(accounts, convertAccounts(
-            await bank.fetchAccounts()));
+        const account = convertAccounts(await bank.fetchAccounts());
         transactions = transactions.concat(convertTransactions(
-            await bank.fetchTransactions(fromDate, toDate)));
+            await bank.fetchTransactions(fromDate, toDate), account));
+        Object.assign(accounts, account);
     }
     return {
         accounts:     adjustAccounts(accounts),

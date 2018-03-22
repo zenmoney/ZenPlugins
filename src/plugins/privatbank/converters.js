@@ -23,13 +23,12 @@ export function convertAccounts(xml) {
                         if (value.length === 19) {
                             value = value.substring(0, value.length - 3);
                         }
-                        account.id = value;
-                        if (account.syncID.indexOf(value) < 0) {
-                            account.syncID.push(value);
-                        }
+                        account.syncID = account.syncID.filter(syncID => syncID !== value);
+                        account.id     = value;
+                        account.number = value;
                         break;
                     case "card_number":
-                        if (account.syncID.indexOf(value) < 0) {
+                        if (account.number !== value && account.syncID.indexOf(value) < 0) {
                             account.syncID.push(value);
                         }
                         break;
@@ -58,18 +57,19 @@ export function convertAccounts(xml) {
         }
         return account;
     }, {syncID: []});
+    accounts[account.number] = account;
     account.type   = "ccard";
     account.syncID = account.syncID.map(id => {
         accounts[id] = account;
         return id.slice(-4);
     });
     if (!account.title) {
-        account.title = "*" + account.syncID[0];
+        account.title = "*" + (account.syncID[0] || account.number.slice(-4));
     }
     return accounts;
 }
 
-export function convertTransactions(xml) {
+export function convertTransactions(xml, accounts) {
     const $ = cheerio.load(xml, {
         xml: {
             recognizeSelfClosing: true
@@ -77,8 +77,10 @@ export function convertTransactions(xml) {
     });
     const transactions = [];
     $("statements").children().toArray().forEach(node => {
-        const transaction = convertTransactionJson(node.attribs);
+        const json = node.attribs;
+        const transaction = convertTransactionJson(json);
         if (transaction) {
+            checkTransactionAccount(json.card, accounts);
             transactions.push(transaction);
         }
     });
@@ -130,6 +132,15 @@ export function convertTransactionJson(json) {
         delete transaction.comment;
     }
     return transaction;
+}
+
+export function checkTransactionAccount(id, accounts) {
+    if (!id || !accounts || accounts[id]) {
+        return;
+    }
+    const account = accounts[Object.keys(accounts)[0]];
+    account.syncID.push(id.slice(-4));
+    accounts[id] = account;
 }
 
 export function cleanDescription(description) {
