@@ -1,16 +1,17 @@
 import _ from "lodash";
-import {adaptAsyncFn, convertTimestampToDate, postProcessTransaction, provideScrapeDates} from "./adapters";
+import {adaptScrapeToGlobalApi, convertTimestampToDate, postProcessTransaction, provideScrapeDates} from "./adapters";
 
-describe("adaptAsyncFn", () => {
+describe("adaptScrapeToGlobalApi", () => {
     it("should call addAccount, addTransaction, setResult", () => {
         const setResultCalled = new Promise((resolve) => {
             global.ZenMoney = {
+                getPreferences: jest.fn(),
                 addAccount: jest.fn(),
                 addTransaction: jest.fn(),
                 setResult: resolve,
                 features: {},
             };
-            const main = adaptAsyncFn(async () => [{account: "account", transactions: [1, 2]}]);
+            const main = adaptScrapeToGlobalApi(async () => [{account: "account", transactions: [1, 2]}]);
             main();
         });
         return expect(setResultCalled).resolves.toEqual({success: true}).then(x => {
@@ -24,13 +25,15 @@ describe("adaptAsyncFn", () => {
     it("should call addAccount, addTransaction, setResult when called with accounts and transactions arrays", () => {
         const setResultCalled = new Promise((resolve) => {
             global.ZenMoney = {
+                getPreferences: () => ({key: "value"}),
                 addAccount: jest.fn(),
                 addTransaction: jest.fn(),
                 setResult: resolve,
                 features: {},
             };
-            const main = adaptAsyncFn(async () => {
-                return {accounts: ["account"], transactions: [1, 2]};
+            const main = adaptScrapeToGlobalApi(async (args) => {
+                expect(args).toEqual({preferences: {key: "value"}});
+                return ({accounts: ["account"], transactions: [1, 2]});
             });
             main();
         });
@@ -46,9 +49,10 @@ describe("adaptAsyncFn", () => {
         const testError = new Error("test error");
         return expect(new Promise((resolve) => {
             global.ZenMoney = {
+                getPreferences: jest.fn(),
                 setResult: resolve,
             };
-            const main = adaptAsyncFn(async () => {
+            const main = adaptScrapeToGlobalApi(async () => {
                 throw testError;
             });
             main();
@@ -57,12 +61,13 @@ describe("adaptAsyncFn", () => {
 
     it("should throw out errors thrown inside sync promise", () => {
         global.ZenMoney = {
+            getPreferences: jest.fn(),
             setResult: () => {
                 throw new Error("setResult should not be called in sync promise context");
             },
         };
         const error = new Error("test error");
-        const main = adaptAsyncFn(() => {
+        const main = adaptScrapeToGlobalApi(() => {
             return {
                 then(resolveHandler, rejectionHandler) {
                     console.assert(resolveHandler);
@@ -81,21 +86,30 @@ describe("adaptAsyncFn", () => {
     });
 
     it("should handle invalid usages synchronously", () => {
-        expect(() => adaptAsyncFn(null)).toThrow("adaptAsyncFn argument is not a function");
-        expect(() => adaptAsyncFn(_.noop)()).toThrow("scrape() did not return a promise");
+        global.ZenMoney = {
+            getPreferences: jest.fn(),
+        };
+        expect(() => adaptScrapeToGlobalApi(null)).toThrow("argument must be function");
+        expect(() => adaptScrapeToGlobalApi(_.noop)()).toThrow("scrape() did not return a promise");
     });
 
     it("should check promise returns anything", () => {
         return expect(new Promise((resolve) => {
-            global.ZenMoney = {setResult: resolve};
-            adaptAsyncFn(() => Promise.resolve())();
+            global.ZenMoney = {
+                getPreferences: jest.fn(),
+                setResult: resolve,
+            };
+            adaptScrapeToGlobalApi(() => Promise.resolve())();
         })).resolves.toMatchObject({message: "scrape() did not return anything"});
     });
 
     it("should check promise result array is not empty", () => {
         return expect(new Promise((resolve) => {
-            global.ZenMoney = {setResult: resolve};
-            adaptAsyncFn(() => Promise.resolve([]))();
+            global.ZenMoney = {
+                getPreferences: jest.fn(),
+                setResult: resolve,
+            };
+            adaptScrapeToGlobalApi(() => Promise.resolve([]))();
         })).resolves.toMatchObject({message: "scrape results are empty"});
     });
 
@@ -105,8 +119,11 @@ describe("adaptAsyncFn", () => {
     ].forEach((invalidResultItem, i) => {
         it("should check promise result array items are correctly shaped " + i, () => {
             return expect(new Promise((resolve) => {
-                global.ZenMoney = {setResult: resolve};
-                adaptAsyncFn(() => Promise.resolve([invalidResultItem]))();
+                global.ZenMoney = {
+                    getPreferences: jest.fn(),
+                    setResult: resolve,
+                };
+                adaptScrapeToGlobalApi(() => Promise.resolve([invalidResultItem]))();
             })).resolves.toMatchObject({message: "scrape result should be array of {account, transactions[]}"});
         });
     });

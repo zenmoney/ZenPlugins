@@ -37,9 +37,9 @@ const calculateFromDate = () => {
 export function provideScrapeDates(fn) {
     console.assert(typeof fn === "function", "provideScrapeDates argument should be a function");
 
-    return function scrapeWithProvidedDates() {
+    return function scrapeWithDates(args) {
         const successAttemptDate = new Date().toISOString();
-        const scrapeResult = fn({fromDate: calculateFromDate(), toDate: null});
+        const scrapeResult = fn({...args, fromDate: calculateFromDate(), toDate: null});
         return scrapeResult.then((x) => {
             ZenMoney.setData("scrape/lastSuccessDate", successAttemptDate);
             ZenMoney.saveData();
@@ -73,11 +73,11 @@ export function postProcessTransaction(transaction) {
     };
 }
 
-export function adaptAsyncFn(fn) {
-    console.assert(typeof fn === "function", "adaptAsyncFn argument is not a function");
+export function adaptScrapeToGlobalApi(scrape) {
+    console.assert(typeof scrape === "function", "argument must be function");
 
     return function adaptedAsyncFn() {
-        const result = fn();
+        const result = scrape({preferences: ZenMoney.getPreferences()});
         console.assert(result && typeof result.then === "function", "scrape() did not return a promise");
         const resultHandled = result.then((results) => {
             console.assert(results, "scrape() did not return anything");
@@ -143,4 +143,4 @@ export function traceFunctionCalls(fn) {
     };
 }
 
-export const adaptScrapeToMain = (scrape) => adaptAsyncFn(provideScrapeDates(traceFunctionCalls(scrape)));
+export const adaptScrapeToMain = (scrape) => adaptScrapeToGlobalApi(provideScrapeDates(traceFunctionCalls(scrape)));
