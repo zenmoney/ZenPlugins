@@ -88,8 +88,8 @@ describe("convertTransactions", () => {
             }
         ]);
         expect(accounts).toEqual({
-            "1": {id: "1", syncID: ["4722"]},
-            "5363542602444722": {id: "1", syncID: ["4722"]}
+            "1": {id: "1", syncID: ["5363542602444722"]},
+            "5363542602444722": {id: "1", syncID: ["5363542602444722"]}
         });
     });
 });
@@ -124,11 +124,11 @@ describe("convertAccounts", () => {
                 "type": "ccard",
                 "title": "*0759",
                 "instrument": "UAH",
-                "number": "5168742331568802",
                 "balance": 350.09,
                 "creditLimit": 0,
                 "syncID": [
-                    "0759"
+                    "5168742331568802",
+                    "5167985500160759"
                 ]
             },
             "5168742331568802": {
@@ -136,11 +136,11 @@ describe("convertAccounts", () => {
                 "type": "ccard",
                 "title": "*0759",
                 "instrument": "UAH",
-                "number": "5168742331568802",
                 "balance": 350.09,
                 "creditLimit": 0,
                 "syncID": [
-                    "0759"
+                    "5168742331568802",
+                    "5167985500160759"
                 ]
             }
         });

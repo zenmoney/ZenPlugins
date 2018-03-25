@@ -1,5 +1,6 @@
 import {PrivatBank} from "./privatbank";
 import {convertTransactions, convertAccounts} from "./converters";
+import {convertAccountSyncID} from "../../common/accounts";
 
 export function adjustAccounts(accounts) {
     const filtered = [];
@@ -9,7 +10,7 @@ export function adjustAccounts(accounts) {
             filtered.push(account);
         }
     }
-    return filtered;
+    return convertAccountSyncID(filtered);
 }
 
 export function adjustTransactions(transactions, accounts) {

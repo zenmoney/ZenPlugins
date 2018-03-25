@@ -56,38 +56,6 @@ export function convertTimestampToDate(timestamp) {
     return new Date(millis);
 }
 
-export function convertAccountNumberToSyncID(accounts) {
-    const accountsByNumberKey = {};
-    for (const account of accounts) {
-        if (account.number === null || account.number === undefined) {
-            delete account.number;
-            continue;
-        }
-        console.assert(typeof account.number === "string", "account.number should be string");
-        const key = account.instrument + "_" + account.number.slice(-4);
-        let group = accountsByNumberKey[key];
-        if (!group) {
-            accountsByNumberKey[key] = group = [];
-        }
-        group.push(account);
-    }
-    for (const key in accountsByNumberKey) {
-        const group = accountsByNumberKey[key];
-        for (const account of group) {
-            if (!account.syncID) {
-                account.syncID = [];
-            }
-            const syncId = group.length > 1 ? account.number.length <= 9 ?
-                account.number : account.number.slice(5) : account.number.slice(-4);
-            if (account.syncID.indexOf(syncId) < 0) {
-                account.syncID.push(syncId);
-            }
-            delete account.number;
-        }
-    }
-    return accounts;
-}
-
 export function postProcessTransaction(transaction) {
     if (ZenMoney.features.dateProcessing) {
         return transaction;
@@ -115,7 +83,7 @@ export function adaptAsyncFn(fn) {
             console.assert(results, "scrape() did not return anything");
             if (!Array.isArray(results)) {
                 console.assert(Array.isArray(results.accounts) && Array.isArray(results.transactions), "scrape should return {accounts[], transactions[]}");
-                ZenMoney.addAccount(convertAccountNumberToSyncID(results.accounts));
+                ZenMoney.addAccount(results.accounts);
                 ZenMoney.addTransaction(results.transactions.map(postProcessTransaction));
                 ZenMoney.setResult({success: true});
                 return;
@@ -127,7 +95,7 @@ export function adaptAsyncFn(fn) {
                 results.every((result) => result.account && Array.isArray(result.transactions)),
                 "scrape result should be array of {account, transactions[]}"
             );
-            ZenMoney.addAccount(convertAccountNumberToSyncID(results.map(({account, transactions}) => account)));
+            ZenMoney.addAccount(results.map(({account, transactions}) => account));
             results.forEach(({account, transactions}) => {
                 ZenMoney.addTransaction(transactions.map(postProcessTransaction));
             });

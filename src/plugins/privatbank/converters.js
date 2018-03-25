@@ -23,20 +23,28 @@ export function convertAccounts(xml) {
                         if (value.length === 19) {
                             value = value.substring(0, value.length - 3);
                         }
-                        account.syncID = account.syncID.filter(syncID => syncID !== value);
-                        account.id     = value;
-                        account.number = value;
+                        account.id = value;
+                        if (account.syncID.indexOf(value) < 0) {
+                            account.syncID.push(value);
+                            accounts[value] = account;
+                        }
                         break;
                     case "card_number":
-                        if (account.number !== value && account.syncID.indexOf(value) < 0) {
+                        if (account.syncID.indexOf(value) < 0) {
                             account.syncID.push(value);
+                            accounts[value] = account;
+                            if (!account.title) {
+                                account.title = "*" + value.slice(-4)
+                            }
                         }
                         break;
                     case "currency":
                         account.instrument = value;
                         break;
                     case "acc_name":
-                        account.title = value;
+                        if (value) {
+                            account.title = value;
+                        }
                         break;
                     default:
                         break;
@@ -56,15 +64,9 @@ export function convertAccounts(xml) {
                 break;
         }
         return account;
-    }, {syncID: []});
-    accounts[account.number] = account;
-    account.type   = "ccard";
-    account.syncID = account.syncID.map(id => {
-        accounts[id] = account;
-        return id.slice(-4);
-    });
+    }, {type: "ccard", syncID: []});
     if (!account.title) {
-        account.title = "*" + (account.syncID[0] || account.number.slice(-4));
+        account.title = "*" + account.syncID[0].slice(-4);
     }
     return accounts;
 }
@@ -139,7 +141,7 @@ export function checkTransactionAccount(id, accounts) {
         return;
     }
     const account = accounts[Object.keys(accounts)[0]];
-    account.syncID.push(id.slice(-4));
+    account.syncID.push(id);
     accounts[id] = account;
 }
 
