@@ -34,3 +34,6 @@ Thumbs.db
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# for network traces and other stuff, not intended for public use
+/src/plugins/**/temp
