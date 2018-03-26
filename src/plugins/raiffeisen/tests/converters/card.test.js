@@ -1,8 +1,8 @@
-import {parseCards} from '../index';
+import {convertCards} from '../../converters';
 
-describe("card parser", () => {
+describe("convertCards", () => {
     it("should return valid cards", () => {
-        const cards = parseCards([
+        const cards = convertCards([
             {
                 issuedProcurations: [ {
                     id: 611542,
@@ -257,13 +257,13 @@ describe("card parser", () => {
             "id": "ACCOUNT_16453728",
             "instrument": "RUB",
             "syncID": [
-                "3780",
-                "4085",
-                "6330"
+                "447603******3780",
+                "447603******4085",
+                "447603******6330",
+                "40817810401003615325",
             ],
             "title": "RUR Visa CASHBACK Credit",
             "type": "ccard",
-            "_cba": "40817810401003615325"
         };
         expected["ACCOUNT_16453728"] = account1;
         expected["CARD_63561259"]    = account1;
@@ -275,11 +275,11 @@ describe("card parser", () => {
             "id": "ACCOUNT_16754955",
             "instrument": "RUB",
             "syncID": [
-                "4506"
+                "510070******4506",
+                "40817810101003720811"
             ],
             "title": "RUR MasterCard Gold Package",
-            "type": "ccard",
-            "_cba": "40817810101003720811"
+            "type": "ccard"
         };
         expected["ACCOUNT_16754955"] = account2;
         expected["CARD_64641574"]    = account2;
@@ -288,7 +288,7 @@ describe("card parser", () => {
     });
 
     it("should parse json with no cba", () => {
-        const cards = parseCards([
+        const cards = convertCards([
             {
                 alien: false,
                 accountId: 15964969,
@@ -403,11 +403,11 @@ describe("card parser", () => {
             "balance": 0,
             "instrument": "RUB",
             "syncID": [
-                "8643"
+                "462729******8643",
+                "40817810301003402816"
             ],
             "title": "RUR Visa Classic",
-            "type": "ccard",
-            "_cba": "40817810301003402816"
+            "type": "ccard"
         };
         expected["ACCOUNT_15964969"] = account1;
         expected["CARD_62629984"] = account1;
@@ -417,7 +417,7 @@ describe("card parser", () => {
             "balance": 354223.4,
             "instrument": "RUB",
             "syncID": [
-                "0271"
+                "553496******0271"
             ],
             "title": "RUR MasterCard Corporate Debit",
             "type": "ccard"

@@ -15,9 +15,7 @@ function sanitizeSyncId(id) {
 export function convertAccountSyncID(accounts) {
     const accountsByLast4Digits = {};
     for (const account of accounts) {
-        if (!Array.isArray(account.syncID)) {
-            continue;
-        }
+        console.assert(Array.isArray(account.syncID), "account.syncID should be array of strings");
         for (const id of account.syncID) {
             console.assert(typeof id === "number" || typeof id === "string",
                 "account.syncID should be array of strings");
@@ -30,9 +28,6 @@ export function convertAccountSyncID(accounts) {
         }
     }
     for (const account of accounts) {
-        if (!Array.isArray(account.syncID)) {
-            continue;
-        }
         const syncID = [];
         for (let id of account.syncID) {
             const key   = account.instrument + "_" + getLast4Digits(id);
@@ -45,4 +40,15 @@ export function convertAccountSyncID(accounts) {
         account.syncID = syncID;
     }
     return accounts;
+}
+
+export function convertAccountMapToArray(accounts) {
+    const filtered = [];
+    for (const id in accounts) {
+        const account = accounts[id];
+        if (account.id.toString() === id) {
+            filtered.push(account);
+        }
+    }
+    return filtered;
 }

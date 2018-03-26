@@ -85,7 +85,12 @@ export class PrivatBank {
             <payment id="">
                 <prop name="country" value="UA"/>
             </payment>`;
-        return this.fetch("balance", data);
+        const body = await this.fetch("balance", data);
+        if (body.indexOf("this card is not in merchants card") >= 0) {
+            throw new ZenMoney.Error(`Невозможно получить баланс карты мерчанта ${this.merchant}. ` +
+                `Проверьте, что настройки мерчанта в Приват24 соотвествуют требованиям плагина`, true, true);
+        }
+        return body;
     }
 
     async fetchTransactions(fromDate, toDate) {

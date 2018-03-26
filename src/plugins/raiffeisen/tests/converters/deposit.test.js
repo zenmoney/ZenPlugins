@@ -1,8 +1,8 @@
-import {parseDepositsWithTransactions} from '../index';
+import {convertDepositsWithTransactions} from '../../converters';
 
-describe("deposit parser", () => {
+describe("convertDepositsWithTransactions", () => {
     it("should return valid account and transactions when it's a deposit with monthly capitalization", () => {
-        const {accounts, transactions} = parseDepositsWithTransactions([{
+        const {accounts, transactions} = convertDepositsWithTransactions([{
             alien: false,
             account: {
                 id: 10206507,
@@ -97,7 +97,7 @@ describe("deposit parser", () => {
     });
 
     it("should return valid account and transactions when it's a deposit without capitalization", () => {
-        const {accounts, transactions} = parseDepositsWithTransactions([{
+        const {accounts, transactions} = convertDepositsWithTransactions([{
             alien: false,
             account: {
                 id: 10206507,

@@ -1,5 +1,15 @@
 import * as network from "../../common/network";
-import * as retry   from "../../common/retry";
+import * as retry from "../../common/retry";
+import {convertAccountMapToArray, convertAccountSyncID} from "../../common/accounts";
+import {toAtLeastTwoDigitsString} from "../../common/dates";
+import {convertTransactionAccounts} from "../../common/transactions";
+import {
+    convertAccounts,
+    convertCards,
+    convertDepositsWithTransactions,
+    convertLoans,
+    convertTransactions
+} from "./converters";
 
 async function fetchJson(url, options = {}, predicate = () => true) {
     options = Object.assign({
@@ -98,92 +108,22 @@ async function login(login, password) {
     };
 }
 
-async function fetchCards(token, accounts) {
-    const response = await fetchJson("https://sso.raiffeisen.ru/rest/card?alien=false", {
-        headers: {
-            "Authorization": `Bearer ${token}`
-        }
-    }, response => Array.isArray(response.body));
-    return parseCards(response.body, accounts);
-}
-
-export function parseCards(jsonArray, accounts = {}) {
-    const cards = {};
-    for (const json of jsonArray) {
-        if (!json.account) {
-            continue;
-        }
-        const syncID = json.pan.slice(-4);
-        const accountId = "ACCOUNT_" + json.account.id;
-        const account = accounts[accountId] || cards[accountId] || {syncID: []};
-        account.type = "ccard";
-        cards["CARD_" + json.id] = account;
-        cards[accountId] = account;
-        if (account.syncID.indexOf(syncID) < 0) {
-            account.syncID.push(syncID);
-        }
-        if (account.id || json.main.id !== 1) {
-            continue;
-        }
-        account.id = accountId;
-        account.instrument = json.currency.shortName;
-        account.title      = json.product;
-        if (json.cba) {
-            account._cba = json.cba;
-        }
-        if (json.type.id === 2) {
-            account.available = json.balance;
-        } else {
-            account.balance = json.balance;
-        }
-    }
-    return cards;
-}
-
 async function fetchAccounts(token) {
     const response = await fetchJson("https://sso.raiffeisen.ru/rest/account?alien=false", {
         headers: {
             "Authorization": `Bearer ${token}`
         }
     }, response => Array.isArray(response.body));
-    const accounts = {};
-    for (const json of response.body) {
-        const account = parseAccountWithCards(json);
-        if (account) {
-            Object.assign(accounts, account);
-        }
-    }
-    return accounts;
+    return convertAccounts(response.body);
 }
 
-export function parseAccountWithCards(json) {
-    if (!json.account || !json.account.id) {
-        return null;
-    }
-    const account = {
-        id: "ACCOUNT_" + json.account.id,
-        instrument: json.account.currency.shortName,
-        syncID: [],
-        balance: json.balance,
-        type: "checking",
-        _cba: json.account.cba
-    };
-    const accounts = {};
-    accounts[account.id] = account;
-    if (json.cards && json.cards.length > 0) {
-        account.type = "ccard";
-        for (const card of json.cards) {
-            accounts["CARD_" + card.id] = account;
-            account.syncID.push(card.pan.slice(-4));
-            if (card.main.id === 1) {
-                account.title = card.product;
-            }
+async function fetchCards(token, accounts) {
+    const response = await fetchJson("https://sso.raiffeisen.ru/rest/card?alien=false", {
+        headers: {
+            "Authorization": `Bearer ${token}`
         }
-    }
-    if (!account.title) {
-        account.title = "*" + (account.syncID[0] || account._cba.slice(-4));
-    }
-    return accounts;
+    }, response => Array.isArray(response.body));
+    return convertCards(response.body, accounts);
 }
 
 async function fetchDepositsWithTransactions(token, fromDate) {
@@ -192,52 +132,12 @@ async function fetchDepositsWithTransactions(token, fromDate) {
             "Authorization": `Bearer ${token}`
         }
     }, response => Array.isArray(response.body));
-    const fromDateStr = fromDate.getFullYear() + "-" + n2(fromDate.getMonth() + 1) + "-" + n2(fromDate.getDate());
-    const result = parseDepositsWithTransactions(response.body);
+    const fromDateStr = fromDate.getFullYear() + "-" +
+        toAtLeastTwoDigitsString(fromDate.getMonth() + 1) + "-" +
+        toAtLeastTwoDigitsString(fromDate.getDate());
+    const result = convertDepositsWithTransactions(response.body);
     result.transactions = result.transactions.filter(transaction => transaction.date >= fromDateStr);
     return result;
-}
-
-export function parseDepositsWithTransactions(jsonArray) {
-    const accounts     = {};
-    const transactions = [];
-    for (const json of jsonArray) {
-        if (!json.deals || !json.deals.length) {
-            continue;
-        }
-        let deposit = null;
-        for (const deal of json.deals) {
-            if (!deposit) {
-                deposit = {
-                    id: "DEPOSIT_ID_" + json.id,
-                    type: "deposit",
-                    title: json.product.name.name,
-                    instrument: deal.currency.shortName,
-                    syncID: [json.number],
-                    startBalance: deal.startAmount,
-                    percent: deal.rate,
-                    startDate: deal.open.substring(0, 10),
-                    endDateOffset: deal.duration,
-                    endDateOffsetInterval: "day",
-                    capitalization: json.capital,
-                    payoffStep:     json.frequency ? 1 : 0,
-                    payoffInterval: json.frequency ? json.frequency.id === "Y" ? "year" : "month" : null
-                };
-                accounts[deposit.id] = deposit;
-            }
-            accounts["DEPOSIT_" + deal.id] = deposit;
-            deposit.balance = deal.currentAmount;
-            transactions.push({
-                income: deal.startAmount,
-                incomeAccount: deposit.id,
-                outcome: 0,
-                outcomeAccount: deposit.id,
-                date: deal.open.substring(0, 10),
-                hold: false
-            });
-        }
-    }
-    return {accounts: accounts, transactions: transactions};
 }
 
 async function fetchLoans(token) {
@@ -246,39 +146,7 @@ async function fetchLoans(token) {
             "Authorization": `Bearer ${token}`
         }
     }, response => Array.isArray(response.body));
-    const loans = {};
-    for (const json of response.body) {
-        const loan = parseLoan(json);
-        if (loan) {
-            loans[loan.id] = loan;
-        }
-    }
-    return loans;
-}
-
-export function parseLoan(json) {
-    if (!json.docNumber) {
-        return null;
-    }
-    const startDate = new Date(json.open.substr(0, 10)).getTime() / 1000;
-    const endDate = new Date(json.close.substr(0, 10)).getTime() / 1000;
-    const dateOffset = Math.round((endDate - startDate) / (30 * 24 * 60 * 60));
-    const loan = {
-        id: "LOAN_" + json.docNumber,
-        instrument: json.currency.shortName,
-        syncID: [json.docNumber],
-        balance: -json.leftDebt,
-        type: "loan",
-        percent: json.rate,
-        startDate: startDate,
-        endDateOffset: dateOffset,
-        endDateOffsetInterval: "month",
-        capitalization: true,
-        payoffStep: 1,
-        payoffInterval: "month"
-    };
-    loan.title = "*" + loan.syncID[0];
-    return loan;
+    return convertLoans(response.body);
 }
 
 async function fetchTransactionsPaged(token, page, limit) {
@@ -287,87 +155,13 @@ async function fetchTransactionsPaged(token, page, limit) {
             "Authorization": `Bearer ${token}`
         }
     }, response => response.body.list);
-    const transactions = [];
-    for (const json of response.body.list) {
-        const transaction = parseTransaction(json);
-        if (transaction) {
-            transactions.push(transaction);
-        }
-    }
-    return transactions;
-}
-
-export function parseLoanTransaction(json) {
-    return {
-        date: json.date.substring(0, 10),
-        hold: false,
-        comment: json.relatedDescription.name,
-        income:         json.amount > 0 ? json.amount : 0,
-        incomeAccount:  json.relation + "_" + json.relatedName.name,
-        outcome:        json.amount < 0 ? -json.amount : 0,
-        outcomeAccount: json.relation + "_" + json.relatedName.name
-    };
-}
-
-export function parseDepositTransaction(json) {
-    return {
-        date: json.date.substring(0, 10),
-        hold: false,
-        comment: json.relatedDescription.name,
-        income:         json.amount > 0 ? json.amount : 0,
-        incomeAccount:  json.relation + "_" + json.relatedId,
-        outcome:        json.amount < 0 ? -json.amount : 0,
-        outcomeAccount: json.relation + "_" + json.relatedId
-    };
-}
-
-export function parseTransaction(json) {
-    if (json.relation === "LOAN") {
-        return parseLoanTransaction(json);
-    }
-    if (json.relation === "DEPOSIT") {
-        return parseDepositTransaction(json);
-    }
-    
-    const transaction = {
-        date: json.date.substring(0, 10),
-        hold: json.type !== "TRANSACTION",
-        income:         json.billAmount > 0 ? json.billAmount : 0,
-        incomeAccount:  json.relation + "_" + json.relatedId,
-        outcome:        json.billAmount < 0 ? -json.billAmount : 0,
-        outcomeAccount: json.relation + "_" + json.relatedId
-    };
-    if (json.currencyId !== json.billCurrencyId) {
-        if (json.amount > 0) {
-            transaction.opIncome = json.amount;
-            transaction.opIncomeInstrument = json.currency.shortName;
-        } else if (json.amount < 0) {
-            transaction.opOutcome = -json.amount;
-            transaction.opOutcomeInstrument = json.currency.shortName;
-        }
-    }
-    const payee = json.merchant ? json.merchant.trim() : null;
-    if (payee) {
-        transaction.payee = payee;
-    }
-    if (json.note && (!transaction.payee || json.note.indexOf(transaction.payee) < 0)) {
-        transaction.comment = json.note;
-    }
-    if (json.parentCategoryId === 13) {
-        transaction.payee = null;
-        if (transaction.outcome > 0) {
-            transaction.incomeAccount = "cash#" + json.currency.shortName;
-            transaction.income = -json.amount;
-        } else {
-            transaction.outcomeAccount = "cash#" + json.currency.shortName;
-            transaction.outcome = json.amount;
-        }
-    }
-    return transaction;
+    return convertTransactions(response.body.list);
 }
 
 async function fetchTransactions(token, fromDate) {
-    const fromDateStr = fromDate.getFullYear() + "-" + n2(fromDate.getMonth() + 1) + "-" + n2(fromDate.getDate());
+    const fromDateStr = fromDate.getFullYear() + "-" +
+        toAtLeastTwoDigitsString(fromDate.getMonth() + 1) + "-" +
+        toAtLeastTwoDigitsString(fromDate.getDate());
     const limit = 25;
     let transactions = [];
     let page = 0;
@@ -382,56 +176,11 @@ async function fetchTransactions(token, fromDate) {
 }
 
 export function adjustTransactions(transactions, accounts) {
-    const filtered = [];
-    for (const transaction of transactions) {
-        const incomeAccount  = accounts[transaction.incomeAccount];
-        const outcomeAccount = accounts[transaction.outcomeAccount];
-        if (!incomeAccount && !outcomeAccount) {
-            continue;
-        }
-        if (incomeAccount) {
-            transaction.incomeAccount = incomeAccount.id;
-        }
-        if (outcomeAccount) {
-            transaction.outcomeAccount = outcomeAccount.id;
-        }
-        filtered.push(transaction);
-    }
-    return filtered;
+    return convertTransactionAccounts(transactions, accounts);
 }
 
 export function adjustAccounts(accounts) {
-    const filtered = [];
-    const accountsByCbaKey = {};
-    for (const id in accounts) {
-        const account = accounts[id];
-        if (account.id !== id) {
-            continue;
-        }
-        filtered.push(account);
-        if (!account._cba) {
-            delete account._cba;
-            continue;
-        }
-        const key = account.instrument + "_" + account._cba.slice(-4);
-        let group = accountsByCbaKey[key];
-        if (!group) {
-            accountsByCbaKey[key] = group = [];
-        }
-        group.push(account);
-    }
-    for (const key in accountsByCbaKey) {
-        const group = accountsByCbaKey[key];
-        for (const account of group) {
-            account.syncID.push(group.length > 1 ? account._cba : account._cba.slice(-4));
-            delete account._cba;
-        }
-    }
-    return filtered;
-}
-
-function n2(n) {
-    return n < 10 ? "0" + n : "" + n;
+    return convertAccountSyncID(convertAccountMapToArray(accounts));
 }
 
 export async function scrape({fromDate, toDate}) {

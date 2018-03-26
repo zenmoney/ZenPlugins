@@ -2,7 +2,7 @@
 <provider>
     <id>privatbank</id>
     <version>1.0.0</version>
-    <build>6</build>
+    <build>7</build>
     <company>12574</company>
     <codeRequired>false</codeRequired>
     <modular>true</modular>

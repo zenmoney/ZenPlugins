@@ -1,8 +1,8 @@
-import {parseAccountWithCards} from "../index";
+import {convertAccounts} from "../../converters";
 
-describe("account parser", () => {
+describe("convertAccounts", () => {
     it("should return valid accounts", () => {
-        const accounts = Object.assign(...[
+        const accounts = convertAccounts([
             {
                 alien: false,
                 account: {
@@ -79,26 +79,28 @@ describe("account parser", () => {
                 status: { id: 1, name: 'Открыт' },
                 cards: [ ]
             }
-        ].map(parseAccountWithCards));
+        ]);
 
         expect(accounts).toEqual({
             "ACCOUNT_2358990": {
                 "balance": 0,
                 "id": "ACCOUNT_2358990",
                 "instrument": "RUB",
-                "syncID": [],
+                "syncID": [
+                    "40817810401001898597"
+                ],
                 "title": "*8597",
-                "type": "checking",
-                "_cba": "40817810401001898597"
+                "type": "checking"
             },
             "ACCOUNT_2358991": {
                 "balance": 12345,
                 "id": "ACCOUNT_2358991",
                 "instrument": "USD",
-                "syncID": [],
+                "syncID": [
+                    "40817840401000898597"
+                ],
                 "title": "*8597",
-                "type": "checking",
-                "_cba": "40817840401000898597"
+                "type": "checking"
             }
         });
     });

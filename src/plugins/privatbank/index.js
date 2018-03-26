@@ -1,72 +1,38 @@
 import {PrivatBank} from "./privatbank";
-import {convertTransactions, convertAccounts} from "./converters";
-import {convertAccountSyncID} from "../../common/accounts";
+import {convertAccounts, convertTransactions} from "./converters";
+import {convertAccountMapToArray, convertAccountSyncID} from "../../common/accounts";
+import {convertTransactionAccounts, mapObjectsGroupedByKey} from "../../common/transactions";
 
 export function adjustAccounts(accounts) {
-    const filtered = [];
-    for (const id in accounts) {
-        const account = accounts[id];
-        if (account.id === id) {
-            filtered.push(account);
-        }
-    }
-    return convertAccountSyncID(filtered);
+    return convertAccountSyncID(convertAccountMapToArray(accounts));
 }
 
 export function adjustTransactions(transactions, accounts) {
-    let filtered = [];
-    const transactionsByTransferId = {};
-    for (const transaction of transactions) {
-        const incomeAccount  = accounts[transaction.incomeAccount];
-        const outcomeAccount = accounts[transaction.outcomeAccount];
-        if (!incomeAccount && !outcomeAccount) {
-            continue;
-        }
-        if (incomeAccount) {
-            transaction.incomeAccount = incomeAccount.id;
-        }
-        if (outcomeAccount) {
-            transaction.outcomeAccount = outcomeAccount.id;
-        }
-        if (transaction._transferId) {
-            let group = transactionsByTransferId[transaction._transferId];
-            if (!group) {
-                transactionsByTransferId[transaction._transferId] = group = [];
+    return mapObjectsGroupedByKey(convertTransactionAccounts(transactions, accounts),
+        (transaction)       => transaction._transferId || null,
+        (transactions, key) => {
+            if (key === null) {
+                return transactions;
             }
-            group.push(transaction);
-        } else {
-            filtered.push(transaction);
-        }
-    }
-    for (const key in transactionsByTransferId) {
-        const group = transactionsByTransferId[key];
-        if (group.length === 2 && group[0]._transferType !== group[1]._transferType) {
-            const transaction  = group[0];
-            const transferType = group[0]._transferType;
-            ["", "Account", "BankID"].forEach(postfix => {
-                const value = group[1][transferType + postfix];
-                if (value !== undefined) {
-                    transaction[transferType + postfix] = value;
-                }
+            if (transactions.length === 2 &&
+                    transactions[0]._transferType !==
+                    transactions[1]._transferType) {
+                const transaction  = transactions[0];
+                const transferType = transactions[0]._transferType;
+                ["", "Account", "BankID"].forEach(postfix => {
+                    const value = transactions[1][transferType + postfix];
+                    if (value !== undefined) {
+                        transaction[transferType + postfix] = value;
+                    }
+                });
+                transactions = [transaction];
+            }
+            transactions.forEach(transaction => {
+                delete transaction._transferId;
+                delete transaction._transferType;
             });
-            delete transaction._transferId;
-            delete transaction._transferType;
-            filtered.push(transaction);
-            continue;
-        }
-        for (const transaction of group) {
-            if (group.length > 1) {
-                transaction[transaction._transferType] = 0;
-                transaction[transaction._transferType + "Account"] =
-                    transaction._transferType === "income" ?
-                    transaction.outcomeAccount : transaction.incomeAccount;
-            }
-            delete transaction._transferId;
-            delete transaction._transferType;
-            filtered.push(transaction);
-        }
-    }
-    return filtered;
+            return transactions;
+        });
 }
 
 export async function scrape({fromDate, toDate}) {
