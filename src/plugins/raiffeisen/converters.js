@@ -1,3 +1,5 @@
+import _ from "lodash";
+
 export function convertAccounts(jsonArray) {
     const accounts = {};
     for (const json of jsonArray) {
@@ -156,11 +158,10 @@ export function convertTransactions(jsonArray) {
     const transactions = [];
     let prevJson = null;
     for (const json of jsonArray) {
-        let currJson = JSON.stringify(json);
-        if (prevJson && prevJson === currJson) {
+        if (prevJson && _.isEqual(prevJson, json)) {
             continue;
         }
-        prevJson = currJson;
+        prevJson = json;
         const transaction = convertTransaction(json);
         if (transaction) {
             transactions.push(transaction);
