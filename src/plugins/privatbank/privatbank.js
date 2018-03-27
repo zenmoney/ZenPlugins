@@ -73,6 +73,10 @@ export class PrivatBank {
             method: "POST",
             body: xml
         });
+        if (response.status === 504 && response.body && response.body.indexOf("504 Gateway Time-out") >= 0) {
+            //proxy error
+            throw new ZenMoney.Error("[NER]", true);
+        }
         console.assert(response && response.status === 200 && response.body, "non-successful response");
         return response.body;
     }
@@ -88,7 +92,8 @@ export class PrivatBank {
         const body = await this.fetch("balance", data);
         if (body.indexOf("this card is not in merchants card") >= 0) {
             throw new ZenMoney.Error(`Невозможно получить баланс карты мерчанта ${this.merchant}. ` +
-                `Проверьте, что настройки мерчанта в Приват24 соотвествуют требованиям плагина`, true, true);
+                `Проверьте, что настройки мерчанта в Приват24 соотвествуют требованиям плагина. ` +
+                `Если карта была перевыпущена, то для нее нужно зарегистрировать новый мерчант.`, true, true);
         }
         return body;
     }
