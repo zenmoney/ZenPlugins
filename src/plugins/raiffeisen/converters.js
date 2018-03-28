@@ -24,6 +24,9 @@ export function convertAccount(json) {
         syncID: []
     };
     accounts[account.id] = account;
+    if (json.type.id === 2) {
+        account.savings = true;
+    }
     if (json.cards && json.cards.length > 0) {
         account.type = "ccard";
         for (const card of json.cards) {
@@ -58,7 +61,7 @@ export function convertCards(jsonArray, accounts = {}) {
         if (account.syncID.indexOf(syncID) < 0) {
             account.syncID.splice(Math.max(0, account.syncID.length - 1), 0, syncID);
         }
-        if (account.id || json.main.id !== 1) {
+        if (account.id || (!json.alien && json.main.id !== 1)) {
             continue;
         }
         account.id = accountId;

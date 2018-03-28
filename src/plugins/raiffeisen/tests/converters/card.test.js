@@ -287,7 +287,7 @@ describe("convertCards", () => {
         expect(cards).toEqual(expected);
     });
 
-    it("should parse json with no cba", () => {
+    it("should convert card with no cba", () => {
         const cards = convertCards([
             {
                 alien: false,
@@ -424,6 +424,84 @@ describe("convertCards", () => {
         };
         expected["ACCOUNT_-3"] = account2;
         expected["CARD_68684601"] = account2;
+
+        expect(cards).toEqual(expected);
+    });
+
+    it("should convert alien card", () => {
+        const cards = convertCards([
+            {
+                alien: true,
+                accountId: 16264501,
+                account: {
+                    id: 16264501,
+                    cba: '40817810701003528028',
+                    currency: {
+                        id: 'RUR',
+                        symbol: '₽',
+                        name: { name: 'Российский рубль' },
+                        precision: 2,
+                        code: '810',
+                        shortName: 'RUB',
+                        sort: 2
+                    }
+                },
+                procurationCredentials: { debit: true, credit: true, createProcuration: false },
+                id: 63249656,
+                icdbId: 7755982,
+                open: '2016-10-18T00:00',
+                expire: '2020-10-31T00:00',
+                pan: '447603******6946',
+                product: 'RUR Supplementary Visa CASHBACK Credit',
+                appleWalletSupport: true,
+                androidPaySupport: true,
+                cobrend: true,
+                balance: 40.76,
+                hold: 0,
+                currencyId: 'RUR',
+                currency: {
+                    id: 'RUR',
+                    symbol: '₽',
+                    name: { name: 'Российский рубль' },
+                    precision: 2,
+                    code: '810',
+                    shortName: 'RUB',
+                    sort: 2
+                },
+                cba: '40817810701003528028',
+                rate: 34,
+                creditBlock: false,
+                debitBlock: false,
+                paymentSystem: { id: 'VISA', name: 'Visa' },
+                type: { id: 2, name: 'Кредитная карта' },
+                main: { id: 0, name: 'Дополнительная' },
+                status: { id: 1, name: 'Открыта' },
+                smsNotificationEnabled: true,
+                settings: {
+                    countryCount: 10,
+                    manageTrip: true,
+                    manageLimit: false,
+                    manageSms: true,
+                    manageProcurations: false,
+                    manageStatementDay: false
+                }
+            }
+        ]);
+
+        const card = {
+            "id": "ACCOUNT_16264501",
+            "type": "ccard",
+            "title": "RUR Supplementary Visa CASHBACK Credit",
+            "instrument": "RUB",
+            "available": 40.76,
+            "syncID": [
+                "447603******6946",
+                "40817810701003528028",
+            ]
+        };
+        const expected = {};
+        expected["ACCOUNT_16264501"] = card;
+        expected["CARD_63249656"] = card;
 
         expect(cards).toEqual(expected);
     });
