@@ -320,6 +320,7 @@ function processTransactions() {
 	ZenMoney.trace('Запрашиваем операции с ' + startDate, 'process_transactions');
 
 	var tranDict = {};      // список найденных операций
+	var xintDict = [];			// список для поиска переводов
 
 	for (var i = 0; i < g_accounts.length; i++) {
 		acc = g_accounts[i];
@@ -336,20 +337,20 @@ function processTransactions() {
 			var tran = {};
 			var payee = '';
 			tran.hold = (t.transaction_status == 1) ? false : true;
-			var forHash = t.description.replace(/\s+/g,'') + t.short_transaction_date.substring(0, 10);
+			var forHash = acc + t.short_transaction_date + t.transaction_id;
 			var shaObj = new jsSHA('SHA-1', 'TEXT');
 			shaObj.update(forHash);
-			var tranKey = ':' + shaObj.getHash('HEX');
-			var opTranKey = (t.transaction_type == 2 ? 'out' : 'in') + tranKey;
-			tranKey = (t.transaction_type == 2 ? 'in' : 'out') + tranKey;
+			var tranHash = shaObj.getHash('HEX');
+			var tranKey = (t.transaction_type == 2 ? 'in' : 'out') + ':' + tranHash;
 			var foreignCurrency = (t.original_currency && t.original_currency != t.transaction_currency);
 			/*
-			 *	TODO: hold валютной операции, снятие наличных
+			 *	TODO: hold валютной операции
 			 */
 			tran.payee = t.title.substring(0, t.title.lastIndexOf('/'));
 			var date = new Date(t.transaction_date ? t.transaction_date : t.short_transaction_date);
 			// Корректируем время, потому что банк отдает время по МСК
 			tran.date = date.getTime() + g_timeoffset;
+			tran.time = n2(date.getHours()) + ':' + n2(date.getMinutes()) + ':' + n2(date.getSeconds()); // для внутреннего использования
 			tran.income = 0;
 			tran.outcome = 0;
 			tran.outcomeAccount = acc.toString();
@@ -395,28 +396,52 @@ function processTransactions() {
 				continue;
 			}
 
-			if (tranDict[opTranKey]) {
-				ZenMoney.trace('Найден перевод (1/2): ' + JSON.stringify(tran), 'process_transactions');
-				ZenMoney.trace('Найден перевод (2/2): ' + JSON.stringify(tranDict[opTranKey]), 'process_transactions');
-				if (t.transaction_type == 1 && tranDict[opTranKey].outcome == 0) {
+			// Идентификация переводов
+			var transferHash = t.description.replace(/\s+/g,'') + t.short_transaction_date.substring(0, 10);
+			var shaObj = new jsSHA('SHA-1', 'TEXT');
+			shaObj.update(transferHash);
+			var transferHash = shaObj.getHash('HEX');
+			var xintTran = {
+				'hash': transferHash,
+				'type': t.transaction_type,
+				'id': tranKey
+			};
+			var result = xintDict.findIndex(function(obj) {
+  			return (obj.hash == transferHash && obj.type == (t.transaction_type === 1 ? 2 : 1));
+			});
+			if (result > -1) {
+				var xintFound = xintDict[result];
+				var xintFirstPart = tranDict[xintFound['id']];
+				ZenMoney.trace('Найден перевод (1/2): ' + JSON.stringify(xintFirstPart), 'process_transactions');
+				ZenMoney.trace('Найден перевод (2/2): ' + JSON.stringify(tran), 'process_transactions');
+				if (t.transaction_type == 1) {
 					// текущая транзакция доходная, добавим расходную часть
-					tranDict[opTranKey].outcomeBankID = tran.outcomeBankID;
-					tranDict[opTranKey].outcomeAccount = tran.outcomeAccount;
-					tranDict[opTranKey].outcome = tran.outcome;
+					xintFirstPart.outcomeBankID = tran.outcomeBankID;
+					xintFirstPart.outcomeAccount = tran.outcomeAccount;
+					xintFirstPart.outcome = tran.outcome;
 				}
-				if (t.transaction_type == 2 && tranDict[opTranKey].income == 0) {
+				if (t.transaction_type == 2) {
 					// текущая транзакция расходная, добавим доходную часть
-					tranDict[opTranKey].incomeBankID = tran.incomeBankID;
-					tranDict[opTranKey].incomeAccount = tran.incomeAccount;
-					tranDict[opTranKey].income = tran.income;
+					xintFirstPart.incomeBankID = tran.incomeBankID;
+					xintFirstPart.incomeAccount = tran.incomeAccount;
+					xintFirstPart.income = tran.income;
 				}
-				tranDict['xint:' + opTranKey.substring(opTranKey.indexOf(':') + 1)] = tranDict[opTranKey];
-				delete tranDict[opTranKey];
+				xintFirstPart.comment = (xintFirstPart.comment ? xintFirstPart.comment : tran.title);
+				if (xintFirstPart.time == '00:00:00' && tran.time != '00:00:00') {
+					xintFirstPart.date = tran.date;
+					xintFirstPart.time = tran.time;
+				}
+				tranDict['xint:' + xintFound['id'].substring(xintFound['id'].indexOf(':') + 1)] = xintFirstPart;
+				ZenMoney.trace('Сформировали перевод: ' + JSON.stringify(xintFirstPart), 'process_transactions');
+				delete tranDict[xintFound['id']];
+				xintDict.splice(result, 1);
 			} else {
 				tranDict[tranKey] = tran;
+				xintDict.push(xintTran);
 			}
 		}
 	}
+
 	ZenMoney.trace('JSON операций: ' + JSON.stringify(tranDict), 'process_transactions');
 	for (var k in tranDict) {
 		ZenMoney.addTransaction(tranDict[k]);
