@@ -73,9 +73,24 @@ export class PrivatBank {
             method: "POST",
             body: xml
         });
-        if (response.status === 504 && response.body && response.body.indexOf("504 Gateway Time-out") >= 0) {
-            //proxy error
-            throw new ZenMoney.Error("[NER]", true);
+        if (response.body) {
+            if (response.status === 504 && response.body.indexOf("504 Gateway Time-out") >= 0) {
+                throw new ZenMoney.Error("[NER] Proxy connection error", true);
+            }
+            if (response.body.indexOf("invalid ip:") >= 0) {
+                throw new ZenMoney.Error(`Не удалось получить данные по мерчанту ${this.merchant}. ` +
+                    `Укажите IP-адрес: 95.213.236.52 в настройках мерчанта в Приват24.`, true);
+            }
+            if (response.body.indexOf("this card is not in merchants card") >= 0) {
+                throw new ZenMoney.Error(`Не удалось получить баланс карты по мерчанту ${this.merchant}. `  +
+                    `Если карта была недавно перевыпущена, зарегистрируйте для неё новый мерчант и ` +
+                    `обновите его в настройках подключения к банку.`, true);
+            }
+            if (/point\s+\/.*not allowed for merchant/.test(response.body)) {
+                throw new ZenMoney.Error(`Не удалось получить данные по мерчанту ${this.merchant}. ` +
+                    `Проверьте, что в Приват24 вы поставили галочки "Баланс по счёту мерчанта физлица" и ` +
+                    `"Выписка по счёту мерчанта физлица".`, true);
+            }
         }
         console.assert(response && response.status === 200 && response.body, "non-successful response");
         return response.body;
@@ -89,13 +104,7 @@ export class PrivatBank {
             <payment id="">
                 <prop name="country" value="UA"/>
             </payment>`;
-        const body = await this.fetch("balance", data);
-        if (body.indexOf("this card is not in merchants card") >= 0) {
-            throw new ZenMoney.Error(`Невозможно получить баланс карты мерчанта ${this.merchant}. ` +
-                `Проверьте, что настройки мерчанта в Приват24 соотвествуют требованиям плагина. ` +
-                `Если карта была перевыпущена, то для нее нужно зарегистрировать новый мерчант.`, true, true);
-        }
-        return body;
+        return this.fetch("balance", data);
     }
 
     async fetchTransactions(fromDate, toDate) {
