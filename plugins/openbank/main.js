@@ -4,7 +4,6 @@ var g_headers = {
 	g_baseurl = 'https://api1.open.ru/2-37/',
 	g_cookieset = false,
 	g_preferences,
-	g_timeoffset = -180 * 60 * 1000,
 	g_accounts = [];
 
 function main() {
@@ -347,10 +346,13 @@ function processTransactions() {
 			 *	TODO: hold валютной операции
 			 */
 			tran.payee = t.title.substring(0, t.title.lastIndexOf('/'));
-			var date = new Date(t.transaction_date ? t.transaction_date : t.short_transaction_date);
-			// Корректируем время, потому что банк отдает время по МСК
-			tran.date = date.getTime() + g_timeoffset;
-			tran.time = n2(date.getHours()) + ':' + n2(date.getMinutes()) + ':' + n2(date.getSeconds()); // для внутреннего использования
+			var date = (t.transaction_date ? t.transaction_date : t.short_transaction_date);
+			var dt = new Date(date + '+03:00'); // Корректируем время, потому что банк отдает время по МСК
+			tran.date = dt.getTime();
+			tran.time = '00:00:00';
+			if (date.indexOf('T') > -1) {
+				tran.time = date.substring(date.indexOf('T') + 1); // для внутреннего использования
+			}
 			tran.income = 0;
 			tran.outcome = 0;
 			tran.outcomeAccount = acc.toString();
