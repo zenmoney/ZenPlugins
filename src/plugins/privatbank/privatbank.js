@@ -77,6 +77,10 @@ export class PrivatBank {
             if (response.status === 504 && response.body.indexOf("504 Gateway Time-out") >= 0) {
                 throw new ZenMoney.Error("[NER] Proxy connection error", true);
             }
+            if (response.body.indexOf("invalid signature") >= 0) {
+                throw new ZenMoney.Error(`Не удалось получить данные по мерчанту ${this.merchant}. ` +
+                    `Неверный пароль. Проверьте, что вы указали верный пароль в настройках подключения к банку.`, true);
+            }
             if (response.body.indexOf("invalid ip:") >= 0) {
                 throw new ZenMoney.Error(`Не удалось получить данные по мерчанту ${this.merchant}. ` +
                     `Укажите IP-адрес: 95.213.236.52 в настройках мерчанта в Приват24.`, true);

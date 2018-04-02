@@ -38,15 +38,15 @@ export function adjustTransactions(transactions, accounts) {
 export async function scrape({fromDate, toDate}) {
     const preferences = ZenMoney.getPreferences();
     if (!preferences.merchantId) {
-        throw new ZenMoney.Error("Введите номер мерчанта!", null, true);
+        throw new ZenMoney.Error("Введите номер мерчанта!", true, true);
     }
     if (!preferences.password) {
-        throw new ZenMoney.Error("Введите пароль!", null, true);
+        throw new ZenMoney.Error("Введите пароль!", true, true);
     }
     const merchants = preferences.merchantId.split(/\s+/);
     const passwords = preferences.password.split(/\s+/);
     if (merchants.length !== passwords.length) {
-        throw new ZenMoney.Error("Количество паролей должно быть равно количеству мерчантов", null, true);
+        throw new ZenMoney.Error("Количество паролей, разделенных через пробел, в настройках подключения должно быть равно количеству мерчантов, разделенных через пробел", true, true);
     }
     const accounts   = {};
     let transactions = [];
