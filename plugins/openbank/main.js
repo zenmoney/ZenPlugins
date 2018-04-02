@@ -18,8 +18,8 @@ function main() {
 function checkForAuth() {
 	var pincode = ZenMoney.getData('pincode', null);
 	var installid = ZenMoney.getData('installid', null);
-	var deviceinfo = ZenMoney.getData('deviceinfo', null);
-	if (!pincode || !installid || !deviceinfo) {
+	var device_id = ZenMoney.getData('device_id', null);
+	if (!pincode || !installid || !device_id) {
 		ZenMoney.trace('Требуется привязка приложения.', 'check_for_auth');
 		authDevice();
 	}
@@ -40,22 +40,10 @@ function authDevice() {
 		throw new ZenMoney.Error('Ошибка: номер карты должен состоять из 16 цифр!', true);
 	}
 
-	ZenMoney.trace('Генерируем device_info...', 'auth_device');
-
-	var imei = imei_gen();
-	var deviceinfo = JSON.stringify({
-		'device_id': imei,
-		'device_locale': 'ru',
-		'device_os_version': '4.4.2',
-		'device_root': '0',
-		'app_version': '311',
-		'device_os': '2'
-	});
-
-	ZenMoney.trace('Сгенерирован device_info: ' + deviceinfo, 'auth_device');
+	var device_id = imei_gen();
 	ZenMoney.trace('Запрашиваем отправку СМС-кода пользователю...', 'auth_device');
 
-	var auth_card = requestJson('auth/card', null, 'card_no=' + cardNum + '&device_info=' + deviceinfo);
+	var auth_card = requestJson('auth/card', null, 'card_no=' + cardNum + '&device_info=' + deviceInfo(device_id));
 	if (auth_card.error || !auth_card.data) {
 		errorResponse(auth_card, 'Ошибка при запросе СМС-кода', 'auth_device');
 	}
@@ -86,10 +74,10 @@ function authDevice() {
 	ZenMoney.trace('Генерируем PIN-код и передаем его банку...', 'auth_device');
 
 	var shaObj = new jsSHA('SHA-1', 'TEXT');
-	shaObj.update(Math.random().toString() + '_' + imei);
+	shaObj.update(Math.random().toString() + '_' + device_id);
 	var pincode = shaObj.getHash('HEX');
 
-	var auth_pin = requestJson('auth/pin', null, 'pin_code=' + pincode + '&device_info=' + deviceinfo);
+	var auth_pin = requestJson('auth/pin', null, 'pin_code=' + pincode + '&device_info=' + deviceInfo(device_id));
 	if (auth_pin.error || !auth_pin.data || auth_pin.data != 'success') {
 		errorResponse(auth_pin, 'Ошибка при сохранении PIN-кода', 'auth_device');
 	}
@@ -98,7 +86,7 @@ function authDevice() {
 
 	ZenMoney.setData('pincode', pincode);
 	ZenMoney.setData('installid', installid);
-	ZenMoney.setData('deviceinfo', deviceinfo);
+	ZenMoney.setData('device_id', device_id);
 	ZenMoney.saveData();
 
 	ZenMoney.trace('Приложение успешно привязано!', 'auth_device');
@@ -108,13 +96,13 @@ function authDevice() {
 function authWithPin() {
 	var pincode = ZenMoney.getData('pincode', null);
 	var installid = ZenMoney.getData('installid', null);
-	var deviceinfo = ZenMoney.getData('deviceinfo', null);
+	var device_id = ZenMoney.getData('device_id', null);
 
 	if (g_cookieset) {
 		ZenMoney.trace('Обнуляем cookie access_token', 'auth_device');
 		ZenMoney.setCookie('api1.open.ru', 'access_token', null);
 	}
-	var auth_login = requestJson('auth/login', null, 'pin_code=' + pincode + '&device_info=' + deviceinfo + '&install_id=' + installid);
+	var auth_login = requestJson('auth/login', null, 'pin_code=' + pincode + '&device_info=' + deviceInfo(device_id) + '&install_id=' + installid);
 	if (auth_login.error || !auth_login.data.access_token) {
 		errorResponse(auth_login, 'Ошибка при авторизации по PIN-коду', 'auth_with_pin');
 	}
@@ -458,6 +446,19 @@ function processTransactions() {
 
 function isAccountSkipped(id) {
 	return ZenMoney.getLevel() >= 13 && ZenMoney.isAccountSkipped(id);
+}
+
+function deviceInfo(imei) {
+	var deviceinfo = JSON.stringify({
+		'device_id': imei,
+		'device_locale': 'ru',
+		'device_os_version': '6.0.1',
+		'device_root': '0',
+		'app_version': '311',
+		'device_os': '2'
+	});
+	ZenMoney.trace('Сгенерирован device_info: ' + deviceinfo, 'auth_device');
+	return deviceinfo;
 }
 
 function monthDiff(d1, d2) {
