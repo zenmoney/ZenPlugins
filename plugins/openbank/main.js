@@ -37,7 +37,7 @@ function authDevice() {
 	});
 	if (!cardNum || cardNum.length != 16) {
 		ZenMoney.trace('Номер карты должен состоять из 16 цифр. Получено: ' + cardNum.length, 'input');
-		throw new ZenMoney.Error('Ошибка: номер карты должен состоять из 16 цифр!', true);
+		throw new ZenMoney.Error('Ошибка: номер карты должен состоять из 16 цифр!', true, true);
 	}
 
 	var device_id = imei_gen();
@@ -45,7 +45,7 @@ function authDevice() {
 
 	var auth_card = requestJson('auth/card', null, 'card_no=' + cardNum + '&device_info=' + deviceInfo(device_id));
 	if (auth_card.error || !auth_card.data) {
-		errorResponse(auth_card, 'Ошибка при запросе СМС-кода', 'auth_device');
+		errorResponse(auth_card, 'Ошибка при запросе СМС-кода', 'auth_device', true, true);
 	}
 
 	ZenMoney.trace('Запрашиваем СМС-код у пользователя...', 'input');
@@ -56,14 +56,14 @@ function authDevice() {
 	});
 	if (!smsCode || smsCode.length != 5) {
 		ZenMoney.trace('СМС-код должен состоять из 5 цифр. Получено: ' + smsCode.length, 'input');
-		throw new ZenMoney.Error('Ошибка: СМС-код должен состоять из 5 цифр!', true);
+		throw new ZenMoney.Error('Ошибка: СМС-код должен состоять из 5 цифр!', true, true);
 	}
 
 	ZenMoney.trace('Пытаемся авторизоваться по СМС-коду...', 'auth_device');
 
 	var auth_tempcode = requestJson('auth/tempcode', null, 'attempt_id=' + auth_card.data.attempt_id + '&code=' + smsCode);
 	if (auth_tempcode.error || !auth_tempcode.data) {
-		errorResponse(auth_tempcode, 'Ошибка при проверке СМС-кода', 'auth_device');
+		errorResponse(auth_tempcode, 'Ошибка при проверке СМС-кода', 'auth_device', true, true);
 	}
 	var accesstoken = auth_tempcode.data.access_token;
 	var installid = auth_tempcode.data.install_id;
@@ -79,7 +79,7 @@ function authDevice() {
 
 	var auth_pin = requestJson('auth/pin', null, 'pin_code=' + pincode + '&device_info=' + deviceInfo(device_id));
 	if (auth_pin.error || !auth_pin.data || auth_pin.data != 'success') {
-		errorResponse(auth_pin, 'Ошибка при сохранении PIN-кода', 'auth_device');
+		errorResponse(auth_pin, 'Ошибка при сохранении PIN-кода', 'auth_device', false, true);
 	}
 
 	ZenMoney.trace('Сохраняем все данные об устройстве и PIN-код в локальном хранилище...', 'auth_device');
@@ -110,16 +110,19 @@ function authWithPin() {
 	ZenMoney.trace('Сохраняем cookie access_token: ' + accesstoken, 'auth_device');
 	ZenMoney.setCookie('api1.open.ru', 'access_token', accesstoken);
 	g_cookieset = true;
-	ZenMoney.trace('Успешно вошли по PIN-коду: ' + JSON.stringify(auth_login), 'auth_with_pin');
+	ZenMoney.trace('Успешно вошли по PIN-коду!', 'auth_with_pin');
 }
 
-function errorResponse(response, text, tag = 'trace', text_for_user = 'Ошибка') {
+function errorResponse(response, text, tag, logIsNotImportant, forcePluginReinstall) {
+	tag = tag || 'trace';
+	logIsNotImportant = logIsNotImportant || false;
+	forcePluginReinstall = forcePluginReinstall || false;
 	if (response.error.code && response.error.error_message) {
 		ZenMoney.trace(text + ': #' + response.error.code + ', ' + response.error.error_message, tag);
-		throw new ZenMoney.Error(text_for_user + ': ' + response.error.error_message, false);
+		throw new ZenMoney.Error('Ошибка: ' + response.error.error_message, logIsNotImportant, forcePluginReinstall);
 	}
 	ZenMoney.trace(text + ': ' + JSON.stringify(response), tag);
-	throw new ZenMoney.Error(text_for_user + ': неизвестная ошибка!', false);
+	throw new ZenMoney.Error('Неизвестная ошибка! Рекомендуется направить лог разработчикам.', logIsNotImportant, forcePluginReinstall);
 }
 
 function processAccounts() {
@@ -251,8 +254,7 @@ function processAccounts() {
 		}
 	}
 
-	ZenMoney.trace('Всего счетов добавлено: '+ accDict.length, 'process_accounts');
-	ZenMoney.trace('JSON: '+ JSON.stringify(accDict), 'process_accounts');
+	ZenMoney.trace('Всего добавлено ' + accDict.length + ' счетов. JSON: '+ JSON.stringify(accDict), 'process_accounts');
 	ZenMoney.addAccount(accDict);
 }
 
@@ -291,17 +293,16 @@ function processTransactions() {
 	}
 
 	var lastSyncTime = ZenMoney.getData('lastSync', 0);
-	ZenMoney.trace('LastSyncTime: '+ new Date(lastSyncTime) +' ('+ lastSyncTime +')', 'process_transactions');
+	ZenMoney.trace('Последняя синхронизация: '+ new Date(lastSyncTime) +' ('+ lastSyncTime +')', 'process_transactions');
 
 	// всегда захватываем одну неделю минимум для обработки hold-операций
 	if (lastSyncTime) {
 		lastSyncTime -= 7 * 24 * 60 * 60 * 1000;
-		ZenMoney.trace('NeedSyncTime: ' + new Date(lastSyncTime) + ' (' + lastSyncTime + ')', 'process_transactions');
 	} else {
 		lastSyncTime = createSyncTime;
 	}
 
-	ZenMoney.trace('WorkSyncTime: ' + new Date(lastSyncTime) + ' (' + lastSyncTime + ')', 'process_transactions');
+	ZenMoney.trace('Требуется синхронизация с ' + new Date(lastSyncTime) + ' (' + lastSyncTime + ')', 'process_transactions');
 	var lastSyncDate = new Date(lastSyncTime);
 	var startDate = n2(lastSyncDate.getDate()) +'.'+ n2(lastSyncDate.getMonth() + 1) +'.'+ lastSyncDate.getFullYear() +' '+ n2(lastSyncDate.getHours()) +':'+ n2(lastSyncDate.getMinutes());
 	ZenMoney.trace('Запрашиваем операции с ' + startDate, 'process_transactions');
@@ -432,7 +433,7 @@ function processTransactions() {
 		}
 	}
 
-	ZenMoney.trace('JSON операций: ' + JSON.stringify(tranDict), 'process_transactions');
+	ZenMoney.trace('Всего добавлено ' + tranDict.length + ' операций. JSON: ' + JSON.stringify(tranDict), 'process_transactions');
 	for (var k in tranDict) {
 		ZenMoney.addTransaction(tranDict[k]);
 	}
@@ -441,7 +442,7 @@ function processTransactions() {
 	ZenMoney.setData('lastSync', nextSyncTime);
 	ZenMoney.saveData();
 
-	ZenMoney.trace('NextSyncTime: ' + new Date(nextSyncTime) + ' (' + nextSyncTime + ')');
+	ZenMoney.trace('Следующая синхронизация: ' + new Date(nextSyncTime) + ' (' + nextSyncTime + ')', 'process_transactions');
 }
 
 function isAccountSkipped(id) {
@@ -457,7 +458,7 @@ function deviceInfo(imei) {
 		'app_version': '311',
 		'device_os': '2'
 	});
-	ZenMoney.trace('Сгенерирован device_info: ' + deviceinfo, 'auth_device');
+	ZenMoney.trace('Сгенерирован device_info: ' + deviceinfo);
 	return deviceinfo;
 }
 
