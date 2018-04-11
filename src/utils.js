@@ -65,21 +65,6 @@ function urlEncodeParameters(obj) {
     return str;
 }
 
-export const fetchFile = (url, init = {}) => {
-    return new Promise(function(resolve, reject) {
-        const req = new XMLHttpRequest();
-        req.open(init.method || "GET", url, true);
-        req.onerror = reject;
-        req.onload = function() {
-            resolve({
-                status: this.status,
-                body: this.responseText,
-            });
-        };
-        req.send();
-    });
-};
-
 export const getResourceSync = (url) => {
     const req = new XMLHttpRequest();
     req.open("GET", url, false);
@@ -181,7 +166,7 @@ export const fetchRemoteSync = ({method, url, headers, body}) => {
     req.setRequestHeader(PROXY_TARGET_HEADER, origin);
     processedHeaders.forEach(({key, value}) => {
         req.setRequestHeader(TRANSFERABLE_HEADER_PREFIX + key, value);
-        if (key.toLowerCase() === 'content-type') {
+        if (key.toLowerCase() === "content-type") {
             req.setRequestHeader(key, value);
         }
     });
@@ -195,3 +180,8 @@ export const fetchRemoteSync = ({method, url, headers, body}) => {
         return null;
     }
 };
+
+export const extractErrorDetails = (error) => [
+    error.message,
+    error.stack && error.stack.replace("Error: " + error.message + "\n", ""),
+].filter(Boolean).join("\n");

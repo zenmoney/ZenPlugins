@@ -27,3 +27,13 @@ if (!("isAccountSkipped" in ZenMoney)) {
 if (!("features" in ZenMoney)) {
     ZenMoney.features = {};
 }
+
+if (!("readLine" in ZenMoney)) {
+    ZenMoney.readLine = async (message, options = {}) => {
+        if (typeof message !== "string") {
+            throw new Error("message must be string");
+        }
+        const {imageUrl = null, ...rest} = options;
+        return ZenMoney.retrieveCode(message, imageUrl, rest);
+    };
+}
