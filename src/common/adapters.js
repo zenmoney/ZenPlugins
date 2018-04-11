@@ -124,29 +124,23 @@ export function adaptScrapeToGlobalApi(scrape) {
 export function traceFunctionCalls(fn) {
     console.assert(typeof fn === "function", "traceFunctionCalls argument should be a function");
 
-    let callIdx = 0;
     const functionName = fn.name || "anonymous";
     return function logCallsWrapper() {
-        const callId = ++callIdx;
-        const label = `${functionName} call #${callId}`;
-        console.debug(label, {arguments: Array.from(arguments)}, "@", new Date());
-        console.time(label);
+        const startMs = Date.now();
+        console.log("call", functionName, "with args:", ...Array.from(arguments));
         const result = fn.apply(this, arguments);
 
         if (!result.then) {
-            console.debug(label, {result});
-            console.timeEnd(label);
+            console.log(`${functionName} call returned result:`, result, `\n(${(Date.now() - startMs).toFixed(0)}ms)`);
             return result;
         }
         return result.then(
             (resolveValue) => {
-                console.debug(label, {resolveValue});
-                console.timeEnd(label);
+                console.log(`${functionName} call resolved with`, resolveValue, `\n(${(Date.now() - startMs).toFixed(0)}ms)`);
                 return resolveValue;
             },
             (rejectValue) => {
-                console.debug(label, {rejectValue});
-                console.timeEnd(label);
+                console.error(`${functionName} call rejected with`, rejectValue, `\n(${(Date.now() - startMs).toFixed(0)}ms)`);
                 return Promise.reject(rejectValue);
             }
         );
