@@ -1,3 +1,4 @@
+import _ from "lodash";
 import {isValidDate} from "./dates";
 
 const MS_IN_MINUTE = 60 * 1000;
@@ -28,7 +29,7 @@ const calculateFromDate = () => {
         return new Date(lastSuccessDate - MS_IN_WEEK);
     }
     const startDateString = ZenMoney.getPreferences().startDate;
-    console.assert(startDateString, "startDate should be specified in preferences");
+    console.assert(startDateString, `preferences must contain "startDate"`);
     const startDate = new Date(startDateString);
     console.assert(isValidDate(startDate), {startDateString}, "is not a valid date");
     return startDate;
@@ -46,6 +47,15 @@ export function provideScrapeDates(fn) {
             return x;
         });
     };
+}
+
+function assertAccountIdsAreUnique(accounts) {
+    _.toPairs(_.countBy(accounts, (x) => x.id))
+        .filter(([id, count]) => count > 1)
+        .forEach(([id, count]) => {
+            throw new Error(`There are ${count} accounts with the same id=${id}`);
+        });
+    return accounts;
 }
 
 export function convertTimestampToDate(timestamp) {
@@ -93,7 +103,7 @@ export function adaptScrapeToGlobalApi(scrape) {
             console.assert(results, "scrape() did not return anything");
             if (!Array.isArray(results)) {
                 console.assert(Array.isArray(results.accounts) && Array.isArray(results.transactions), "scrape should return {accounts[], transactions[]}");
-                ZenMoney.addAccount(results.accounts);
+                ZenMoney.addAccount(assertAccountIdsAreUnique(results.accounts));
                 ZenMoney.addTransaction(castTransactionDatesToTicks(results.transactions.map(fixDateTimezones)));
                 ZenMoney.setResult({success: true});
                 return;
