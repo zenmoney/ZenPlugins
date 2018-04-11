@@ -1,5 +1,5 @@
 import _ from "lodash";
-import {adaptScrapeToGlobalApi, convertTimestampToDate, postProcessTransaction, provideScrapeDates} from "./adapters";
+import {adaptScrapeToGlobalApi, convertTimestampToDate, fixDateTimezones, provideScrapeDates} from "./adapters";
 
 describe("adaptScrapeToGlobalApi", () => {
     it("should call addAccount, addTransaction, setResult", () => {
@@ -223,7 +223,7 @@ describe("postProcessTransactions", () => {
         }
         return result;
     };
-    const processDate = (date) => postProcessTransaction({date}).date;
+    const processDate = (date) => fixDateTimezones({date}).date;
     const assertIsUntouched = (date) => expect(processDate(date)).toBe(date);
 
     it("should fix dates if dateProcessing feature is not implemented", () => {

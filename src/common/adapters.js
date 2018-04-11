@@ -56,7 +56,7 @@ export function convertTimestampToDate(timestamp) {
     return new Date(millis);
 }
 
-export function postProcessTransaction(transaction) {
+export function fixDateTimezones(transaction) {
     if (ZenMoney.features.dateProcessing) {
         return transaction;
     }
@@ -73,6 +73,16 @@ export function postProcessTransaction(transaction) {
     };
 }
 
+function castTransactionDatesToTicks(transactions) {
+    // temporal fix for j2v8 on android 6: Date objects marshalling is broken
+    if (ZenMoney.features.j2v8Date) {
+        return transactions;
+    }
+    return transactions.map((transaction) => transaction.date instanceof Date
+        ? {...transaction, date: transaction.date.getTime()}
+        : transaction);
+}
+
 export function adaptScrapeToGlobalApi(scrape) {
     console.assert(typeof scrape === "function", "argument must be function");
 
@@ -84,7 +94,7 @@ export function adaptScrapeToGlobalApi(scrape) {
             if (!Array.isArray(results)) {
                 console.assert(Array.isArray(results.accounts) && Array.isArray(results.transactions), "scrape should return {accounts[], transactions[]}");
                 ZenMoney.addAccount(results.accounts);
-                ZenMoney.addTransaction(results.transactions.map(postProcessTransaction));
+                ZenMoney.addTransaction(castTransactionDatesToTicks(results.transactions.map(fixDateTimezones)));
                 ZenMoney.setResult({success: true});
                 return;
             }
@@ -97,7 +107,7 @@ export function adaptScrapeToGlobalApi(scrape) {
             );
             ZenMoney.addAccount(results.map(({account, transactions}) => account));
             results.forEach(({account, transactions}) => {
-                ZenMoney.addTransaction(transactions.map(postProcessTransaction));
+                ZenMoney.addTransaction(transactions.map(fixDateTimezones));
             });
             ZenMoney.setResult({success: true});
         });
