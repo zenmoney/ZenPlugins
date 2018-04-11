@@ -91,27 +91,9 @@ function castDate(object) {
     return null;
 }
 
-function wrapMethod(self, method) {
-    const old = self[method];
-    if (old) {
-        self[method] = function() {
-            let args = arguments;
-            try {
-                return old.apply(self, args);
-            } catch (e) {
-                if (typeof e.stack === "string" &&
-                    e.stack.length > 0 &&
-                    e.stack.indexOf(method) !== 0) {
-                    e.stack = method + "\n" + e.stack;
-                } else if (!e.stack) {
-                    e.stack = method;
-                }
-                e.arguments = e.arguments || JSON.stringify(args);
-                throw e;
-            }
-        };
-    }
-}
+const notImplemented = () => {
+    throw new Error("API method is not implemented");
+};
 
 function ZPAPI({manifest, preferences, data}) {
     this.runtime = "browser";
@@ -120,36 +102,20 @@ function ZPAPI({manifest, preferences, data}) {
     this.getLevel = () => 12;
 
     this.Error = ZPAPIError;
-
     this.trace = (msg, caller) => nativeConsole.log("[" + (caller || "trace") + "]", msg);
-
     this.setExceptions = setThrowOnError;
     this.setDefaultCharset = setDefaultEncoding;
     this.getLastError = getLastError;
-
     this.isAvailable = () => true;
-
     this.getPreferences = () => preferences;
-
-    this.setOptions = () => {
-    };
-
-    this.setAuthentication = (name, pass, authscope) => {
-    };
-
-    this.clearAuthentication = () => {
-    };
-
-    this.getCookies = function() {
-        return [];
-    };
-
-    this.getCookie = function() {
-        return null;
-    };
-
-    this.setCookie = function() {
-    };
+    this.setOptions = notImplemented;
+    this.setAuthentication = notImplemented;
+    this.clearAuthentication = notImplemented;
+    this.getCookies = notImplemented;
+    this.getCookie = notImplemented;
+    this.setCookie = () => console.warn("setCookie is not implemented in browser runtime, this call makes no effect");
+    this.saveCookies = notImplemented;
+    this.restoreCookies = notImplemented;
 
     this._data = data;
 
@@ -174,12 +140,6 @@ function ZPAPI({manifest, preferences, data}) {
         if (this._data !== data) {
             this._saveDataRequested = true;
         }
-    };
-
-    this.saveCookies = function() {
-    };
-
-    this.restoreCookies = function() {
     };
 
     this.getLastStatusString = getLastStatusString;
@@ -217,16 +177,13 @@ function ZPAPI({manifest, preferences, data}) {
     });
 
     function addAccount(accounts) {
-        if (!accounts) {
-            return;
-        }
-        if (!isArray(accounts)) {
+        if (!Array.isArray(accounts)) {
             accounts = [accounts];
         }
 
         for (let i = 0; i < accounts.length; i++) {
             const account = accounts[i];
-            if (typeof account !== "object" || isArray(account)) {
+            if (typeof account !== "object" || Array.isArray(account)) {
                 return handleException("[AOB] Wrong account object. It should be {} object or array of objects");
             }
             const id = account.id;
@@ -251,7 +208,7 @@ function ZPAPI({manifest, preferences, data}) {
             }
             let syncIDs = account.syncID;
             let syncIDCount = 0;
-            if (!isArray(syncIDs)) {
+            if (!Array.isArray(syncIDs)) {
                 syncIDs = [syncIDs];
             }
             for (let j = 0; j < syncIDs.length; j++) {
@@ -304,12 +261,12 @@ function ZPAPI({manifest, preferences, data}) {
         if (!transactions) {
             return;
         }
-        if (!isArray(transactions)) {
+        if (!Array.isArray(transactions)) {
             transactions = [transactions];
         }
         for (let i = 0; i < transactions.length; i++) {
             const transaction = transactions[i];
-            if (typeof transaction !== "object" || isArray(transaction)) {
+            if (typeof transaction !== "object" || Array.isArray(transaction)) {
                 return handleException("[TOB] Wrong transaction object. It should be {} object or array of objects");
             }
             if (!addTransactionObject(transaction)) {
@@ -364,13 +321,13 @@ function ZPAPI({manifest, preferences, data}) {
         if ((transaction.opIncome !== undefined &&
             transaction.opIncome !== null && (typeof transaction.opIncome !== "number" || transaction.opIncome < 0)) ||
             (transaction.opOutcome !== undefined &&
-            transaction.opOutcome !== null && (typeof transaction.opOutcome !== "number" || transaction.opOutcome < 0))) {
+                transaction.opOutcome !== null && (typeof transaction.opOutcome !== "number" || transaction.opOutcome < 0))) {
             return handleException("[TON] Wrong transaction " + id + ". opIncome and opOutcome should be null or non-negative");
         }
         if ((transaction.latitude !== undefined && (typeof transaction.latitude !== "number" ||
             Math.abs(transaction.latitude) > 90)) ||
             (transaction.longitude !== undefined && (typeof transaction.longitude !== "number" ||
-            Math.abs(transaction.longitude) > 180))) {
+                Math.abs(transaction.longitude) > 180))) {
             return handleException("[TCO] Wrong transaction " + id + " coordinates");
         }
         if (transaction.date !== undefined && castDate(transaction.date) === null) {
@@ -378,7 +335,7 @@ function ZPAPI({manifest, preferences, data}) {
         }
         if (transaction.mcc !== undefined &&
             transaction.mcc !== null && (typeof transaction.mcc !== "number" ||
-            Math.floor(transaction.mcc) !== transaction.mcc)) {
+                Math.floor(transaction.mcc) !== transaction.mcc)) {
             return handleException("[TMC] Wrong transaction " + id + ". MCC should be null or integer");
         }
         if (typeof transaction.incomeAccount !== "string" || transaction.incomeAccount.length === 0 ||

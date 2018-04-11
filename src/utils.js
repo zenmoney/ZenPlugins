@@ -77,19 +77,13 @@ export const getResourceSync = (url) => {
     };
 };
 
-export const handleException = (error) => {
-    if (typeof error === "function") {
-        try {
-            return error();
-        } catch (e) {
-            error = e;
-        }
+export const handleException = (message) => {
+    if (typeof message !== "string") {
+        throw new Error("message must be string");
     }
-    if (error) {
-        lastError = error.toString();
-        if (throwOnError) {
-            throw ZPAPIError(error);
-        }
+    lastError = message;
+    if (throwOnError) {
+        throw new ZPAPIError(message);
     }
     return null;
 };
@@ -113,29 +107,19 @@ const processBody = (body, type) => {
 
 export const processHeadersAndBody = ({headers, body}) => {
     let contentType = null;
-    let charset = null;
     let type = "URL_ENCODING";
 
-    const resultHeaders = [];
-
-    if (headers) {
-        for (const key in headers) {
-            let value = headers[key];
-            if (value) {
-                value = value.toString();
-            }
-            if (!key.length || !value || !value.length) {
-                handleException(`[NHE] Wrong header "${key}" value "${value}"`);
+    const resultHeaders = Object.entries(headers || {})
+        .map(([key, v]) => {
+            if (!key || !v) {
+                handleException(`[NHE] Wrong header ${JSON.stringify({key, value: v})}`);
                 return null;
             }
-            if (body && key.toLowerCase().indexOf("content-type") >= 0) {
+            const value = v.toString();
+            if (body && key.toLowerCase() === "content-type") {
                 contentType = value;
-                const v = value.toLowerCase();
-                const i = value.lastIndexOf("charset=");
-                if (i >= 0 && i < v.length) {
-                    charset = v.substring(i);
-                }
                 if (typeof body !== "string") {
+                    const v = value.toLowerCase();
                     if (v.indexOf("json") >= 0) {
                         type = "JSON";
                     } else if (v.indexOf("xml") >= 0) {
@@ -143,13 +127,11 @@ export const processHeadersAndBody = ({headers, body}) => {
                     }
                 }
             }
-            resultHeaders.push({key: key, value});
-        }
-    }
+            return {key, value};
+        });
     body = processBody(body, type);
     if (body && !contentType) {
-        resultHeaders.push({key: "Content-Type",
-            value: "application/x-www-form-urlencoded; charset=" + (defaultEncoding || "utf-8")});
+        resultHeaders.push({key: "Content-Type", value: "application/x-www-form-urlencoded; charset=" + (defaultEncoding || "utf-8")});
     }
     return {headers: resultHeaders, body};
 };
