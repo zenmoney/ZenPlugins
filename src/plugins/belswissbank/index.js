@@ -4,7 +4,7 @@ import * as errors from "../../common/errors";
 import {convertToZenMoneyTransaction} from "../priorbank/mappingUtils";
 import * as BSB from "./BSB";
 import {getTransactionToTransferReplacements} from "./mergeTransfers";
-import {generateUUID} from "./utils";
+import {generateUUID} from "../../common/utils";
 
 function ensureDeviceId() {
     let deviceId = ZenMoney.getData("deviceId");
