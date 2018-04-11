@@ -1,6 +1,6 @@
 import {nativeConsole} from "./consoleAdapter";
+import {promptAsync} from "./promptAsync";
 import {
-    getResourceSync,
     fetchRemoteSync,
     getLastError,
     getLastResponseHeader,
@@ -9,24 +9,20 @@ import {
     getLastStatusCode,
     getLastStatusString,
     getLastUrl,
+    getResourceSync,
     handleException,
     setDefaultEncoding,
-    setThrowOnError
+    setThrowOnError,
 } from "./utils";
 import {ZPAPIError} from "./ZPAPIError";
 
-function isArray(object) {
-    return Array.isArray ?
-        Array.isArray(object) : Object.prototype.toString.call(object) === "[object Array]";
-}
-
-function sleep(millis) {
-    const time1 = new Date().getTime();
+function sleepSync(durationMs) {
+    const startMs = Date.now();
     for (let i = 0; i < 30000000; i++) {
     }
-    const time2 = new Date().getTime();
-    if (time2 - time1 < millis) {
-        sleep(millis - time2 + time1);
+    const nowMs = Date.now();
+    if (nowMs - startMs < durationMs) {
+        sleepSync(durationMs - nowMs + startMs);
     }
 }
 
@@ -121,8 +117,6 @@ function ZPAPI({manifest, preferences, data}) {
     this.runtime = "browser";
     const knownAccounts = {};
 
-    let isComplete = false;
-
     this.getLevel = () => 12;
 
     this.Error = ZPAPIError;
@@ -134,8 +128,6 @@ function ZPAPI({manifest, preferences, data}) {
     this.getLastError = getLastError;
 
     this.isAvailable = () => true;
-
-    this.isSetResultCalled = () => isComplete;
 
     this.getPreferences = () => preferences;
 
@@ -196,40 +188,33 @@ function ZPAPI({manifest, preferences, data}) {
     this.getLastResponseHeaders = getLastResponseHeaders;
     this.getLastUrl = getLastUrl;
     this.getLastResponseParameters = getLastResponseParameters;
+    this.setResultCalled = new Promise((resolve, reject) => {
+        let isComplete = false;
+        this.isSetResultCalled = () => isComplete;
 
-    const setResult = (result) => {
-        if (isComplete) {
-            console.error("Ignored setResult call: calling it more than once is not expected");
-            return;
-        }
-        if (typeof result !== "object") {
-            handleException("[ROB] Wrong result object");
-            return;
-        }
-        isComplete = true;
-        if (result.success) {
-            this.trace("setResult success: " + JSON.stringify(result));
-            addAccount(result.account);
-            addTransaction(result.transaction);
-            // eslint-disable-next-line no-restricted-globals
-            self.postMessage({
-                type: "completed",
-                success: true,
-                pluginDataChange: this._saveDataRequested
-                    ? {oldValue: data, newValue: this._data}
-                    : null,
-            });
-        } else {
-            const resultError = result.message ? result.message.toString() : "[RSU] setResult called without success";
-            this.trace("setResult fail: " + new ZPAPIError(resultError, !!result.allow_retry));
-            // eslint-disable-next-line no-restricted-globals
-            self.postMessage({
-                type: "completed",
-                success: false,
-                message: resultError,
-            });
-        }
-    };
+        this.setResult = (result) => {
+            if (isComplete) {
+                throw new Error("setResult must be called exactly once");
+            }
+            if (typeof result !== "object") {
+                handleException("[ROB] Wrong result object");
+                return;
+            }
+            isComplete = true;
+            if (result.success) {
+                this.trace("setResult success: " + JSON.stringify(result));
+                addAccount(result.account);
+                addTransaction(result.transaction);
+                resolve({
+                    pluginDataChange: this._saveDataRequested
+                        ? {oldValue: data, newValue: this._data}
+                        : null,
+                });
+            } else {
+                reject(result);
+            }
+        };
+    });
 
     function addAccount(accounts) {
         if (!accounts) {
@@ -422,41 +407,41 @@ function ZPAPI({manifest, preferences, data}) {
         }
     }
 
-    this.retrieveCode = (comment, image, options) => {
-        this.trace(`retrieveCode
-${comment}
-Сохраните пользовательский ввод в файл zp_pipe.txt в папке с плагином`);
-
-        let time = (options && options.time ? options.time : 0) || 60000;
-        while (time > 0) {
-            let code;
-            try {
-                const {body, status} = getResourceSync("/zen/pipe");
-                if (status === 200) {
-                    code = body;
-                }
-            } catch (e) {
-                code = null;
-            }
-            if (code) {
-                return code;
-            }
-            sleep(1000);
-            time -= 1000;
-        }
-        return null;
-    };
-
     this.request = (method, url, body, headers) => fetchRemoteSync({method: method.toUpperCase(), url, headers, body});
     this.requestGet = (url, headers) => this.request("GET", url, null, headers);
     this.requestPost = (url, body, headers) => this.request("POST", url, body, headers);
 
     this.addAccount = addAccount;
     this.addTransaction = addTransaction;
-    this.setResult = setResult;
-    wrapMethod(this, "addAccount");
-    wrapMethod(this, "addTransaction");
-    wrapMethod(this, "setResult");
 }
+
+const retrieveCodeRetryIntervalMs = 1000;
+
+Object.assign(ZPAPI.prototype, {
+    retrieveCode(comment, image, options) {
+        console.error("ZenMoney.retrieveCode(...) is deprecated. Use async ZenMoney.readLine(...) instead");
+        console.log(`retrieveCode("${comment}") is expecting result inside zp_data.txt`);
+
+        let remainingTime = (options && options.time) || 60000;
+        while (remainingTime > 0) {
+            const {body, status} = getResourceSync("/zen/pipe");
+            if (status === 200 && body) {
+                return body;
+            } else {
+                console.warn(`retrieveCode error, trying again in ${retrieveCodeRetryIntervalMs}ms`, {status, body});
+                sleepSync(retrieveCodeRetryIntervalMs);
+                remainingTime -= retrieveCodeRetryIntervalMs;
+            }
+        }
+        return null;
+    },
+
+    readLine(message, options = {}) {
+        if (typeof message !== "string") {
+            throw new Error("message must be string");
+        }
+        return promptAsync(message, options);
+    },
+});
 
 export {ZPAPI};

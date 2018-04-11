@@ -1,57 +1,41 @@
 import {fetchJson} from "./common/network";
+import {handleMessageFromWorker} from "./handleMessageFromWorker";
 
 const pickBody = (fetchPromise) => fetchPromise.then(
     (response) => response.ok
         ? response.body
-        : Promise.reject(response.body)
+        : Promise.reject(response.body),
 );
 
-window.onload = function() {
-    const statusElement = document.getElementById("root");
-    statusElement.textContent = "Loading plugin…";
-    Promise.all([
+async function loadAndRun({onStatusChange}) {
+    const [preferences, manifest, data] = await Promise.all([
         pickBody(fetchJson("/zen/preferences", {log: false})),
         pickBody(fetchJson("/zen/manifest", {log: false})),
         pickBody(fetchJson("/zen/data", {log: false})),
-    ])
-        .then(([preferences, manifest, data]) => {
-            document.title = `[${manifest.id}] ${document.title}`;
-            const worker = new Worker("/workerLoader.js");
-            worker.postMessage({manifest, preferences, data});
-            statusElement.textContent = "Running…";
-            worker.onmessage = function(e) {
-                if (!e.data) {
-                    return;
-                }
-                handleMessage(e.data, (message) => statusElement.textContent = message);
-            };
-            window.__pluginWorker = worker;
-        })
-        .catch((e) => {
-            statusElement.textContent = "Failure\n" + e.message;
-            return Promise.reject(e);
-        });
-};
+    ]);
+    document.title = `[${manifest.id}] ${document.title}`;
+    const worker = new Worker("/workerLoader.js");
+    worker.postMessage({
+        type: ":commands/execute-sync",
+        payload: {
+            manifest,
+            preferences,
+            data,
+        },
+    });
+    worker.addEventListener("message", (event) => handleMessageFromWorker({event, onStatusChange}));
+    onStatusChange("Running…");
+    window.__worker__ = worker; // prevents worker gargabe collection; allows setting breakpoints after worker ends execution
+}
 
-const handleMessage = ({type, success, message, pluginDataChange}, setStatus) => {
-    if (type === "completed") {
-        if (success) {
-            if (pluginDataChange) {
-                console.debug({pluginDataChange});
-                const commitPluginData = window.confirm("Plugin data has changed. Commit?");
-                if (commitPluginData) {
-                    setStatus("Committing plugin data…");
-                    fetchJson("/zen/data", {method: "POST", body: pluginDataChange, log: false})
-                        .then(() => setStatus("Success"))
-                        .catch((e) => {
-                            setStatus("Failure\n" + e.message)
-                        });
-                } else {
-                    setStatus("Success");
-                }
-            }
-        } else {
-            setStatus("Failure\n" + message);
-        }
+window.onload = async function() {
+    const statusElement = document.getElementById("root");
+    const onStatusChange = (message) => statusElement.textContent = message;
+    try {
+        onStatusChange("Loading plugin manifest/preferences/data…");
+        await loadAndRun({onStatusChange});
+    } catch (e) {
+        onStatusChange("Failed to execute sync:\n" + e.message);
+        throw e;
     }
 };
