@@ -64,11 +64,5 @@ export const shapeNativeConsole = () => {
     Object.keys(nativeConsole)
         .filter(key => !(key in consoleAdapter))
         .forEach(key => delete nativeConsole[key]);
-    const assert = nativeConsole.assert.bind(nativeConsole);
-    nativeConsole.assert = function(condition) {
-        assert(...arguments);
-        if (!condition) {
-            throw new Error("Assertion failed");
-        }
-    };
+    nativeConsole.assert = consoleAdapter.assert;
 };
