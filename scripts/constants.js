@@ -13,8 +13,8 @@ const params = {
 const paths = {
     appBuild: resolve("build"),
     appSrc: resolve("src"),
-    appPublic: resolve("public"),
-    appHtml: resolve("public/index.html"),
+    appPublic: resolve("scripts/public"),
+    appHtml: resolve("scripts/public/index.html"),
     windowLoaderJs: resolve("src/windowLoader.js"),
     workerLoaderJs: resolve("src/workerLoader.js"),
     pluginJs: path.join(params.pluginPath, "./ZenmoneyManifest.xml"),
