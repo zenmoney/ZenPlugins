@@ -26,4 +26,13 @@ describe("sanitize", () => {
         expect(sanitize(sampleValues, false))
             .toEqual(sampleValues);
     });
+
+    it("should preserve value if value is unexpected for the mask", () => {
+        expect(sanitize({
+            a: "unexpected value"
+        }, {a: {b: true}})).toEqual({
+            a: "unexpected value"
+        });
+        expect(sanitize("unexpected value", {a: {b: true}})).toEqual("unexpected value");
+    });
 });

@@ -4,6 +4,9 @@ export default function sanitize(value, mask) {
     if (!mask) {
         return value;
     }
+    if (_.isObject(mask) && !_.isObject(value)) {
+        return value;
+    }
     if (_.isString(value)) {
         return "<string[" + value.length + "]>";
     }
