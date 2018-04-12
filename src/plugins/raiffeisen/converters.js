@@ -52,21 +52,41 @@ export function convertCards(jsonArray, accounts = {}) {
         if (!json.account) {
             continue;
         }
-        const syncID = json.pan;
-        const accountId = "ACCOUNT_" + json.account.id;
-        const account   = accounts[accountId] || cards[accountId] || {syncID: []};
+
+        const isMainCard = json.alien || json.main.id === 1;
+
+        let accountId = "ACCOUNT_" + json.account.id;
+        let account   = accounts[accountId] || cards[accountId];
+        if (!account && json.account.id < 0) {
+            for (const acc of Object.values(accounts)) {
+                if (acc.type === "checking"
+                        && acc.syncID.length <= 1
+                        && acc.instrument === json.currency.shortName
+                        && acc.balance === json.balance) {
+                    account   = acc;
+                    accountId = acc.id;
+                    break;
+                }
+            }
+        }
+        if (!account) {
+            account = {syncID: []};
+        }
         account.type = "ccard";
         cards["CARD_" + json.id] = account;
         cards[accountId] = account;
-        if (account.syncID.indexOf(syncID) < 0) {
-            account.syncID.splice(Math.max(0, account.syncID.length - 1), 0, syncID);
+        if (account.syncID.length <= 1 && isMainCard) {
+            account.title = json.product;
         }
-        if (account.id || (!json.alien && json.main.id !== 1)) {
+        if (account.syncID.indexOf(json.pan) < 0) {
+            account.syncID.splice(Math.max(0, account.syncID.length - 1), 0, json.pan);
+        }
+        if (account.id || !isMainCard) {
             continue;
         }
+
         account.id = accountId;
         account.instrument = json.currency.shortName;
-        account.title      = json.product;
         if (json.cba) {
             account.syncID.push(json.cba);
         }

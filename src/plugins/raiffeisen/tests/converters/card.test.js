@@ -428,6 +428,98 @@ describe("convertCards", () => {
         expect(cards).toEqual(expected);
     });
 
+    it("should find account for card without cba", () => {
+        const accounts = {
+            'ACCOUNT_17347766': {
+                id: 'ACCOUNT_17347766',
+                type: 'checking',
+                instrument: 'RUB',
+                balance: 82355.4,
+                syncID: [ '40802810200000035677'],
+                title: '*5677'
+            }
+        };
+        const cards = convertCards([
+            {
+                alien: false,
+                accountId: -3,
+                account: {
+                    id: -3,
+                    currency: {
+                        id: 'RUB',
+                        symbol: '₽',
+                        name: { name: 'Российский рубль' },
+                        precision: 2,
+                        code: '643',
+                        shortName: 'RUB',
+                        sort: 1
+                    }
+                },
+                procurationCredentials: { debit: true, credit: true, createProcuration: false },
+                id: 68643928,
+                icdbId: 9177977,
+                open: '2018-01-23T00:00',
+                expire: '2021-01-31T00:00',
+                pan: '446916******1038',
+                product: 'RUR Visa Business Optimum Gold',
+                appleWalletSupport: true,
+                androidPaySupport: true,
+                cobrend: false,
+                name: 'Business',
+                balance: 82355.4,
+                hold: 28705.13,
+                currencyId: 'RUB',
+                currency: {
+                    id: 'RUB',
+                    symbol: '₽',
+                    name: { name: 'Российский рубль' },
+                    precision: 2,
+                    code: '643',
+                    shortName: 'RUB',
+                    sort: 1
+                },
+                paymentSystem: { id: 'VISA', name: 'Visa' },
+                type: { id: 3, name: 'Дебетовая корпоративная карта' },
+                main: { id: 1, name: 'Основная' },
+                status: { id: 0, name: 'Открыта' },
+                smsNotificationEnabled: true,
+                settings: {
+                    countryCount: 10,
+                    manageTrip: false,
+                    manageLimit: false,
+                    manageSms: false,
+                    manageProcurations: false,
+                    manageStatementDay: false
+                }
+            }
+        ], accounts);
+
+        expect(cards).toEqual({
+            'ACCOUNT_17347766': {
+                id: 'ACCOUNT_17347766',
+                type: 'ccard',
+                instrument: 'RUB',
+                balance: 82355.4,
+                syncID: [
+                    '446916******1038',
+                    '40802810200000035677'
+                ],
+                title: 'RUR Visa Business Optimum Gold'
+            },
+            'CARD_68643928': {
+                id: 'ACCOUNT_17347766',
+                type: 'ccard',
+                instrument: 'RUB',
+                balance: 82355.4,
+                syncID: [
+                    '446916******1038',
+                    '40802810200000035677'
+                ],
+                title: 'RUR Visa Business Optimum Gold'
+            }
+        });
+    });
+
     it("should convert alien card", () => {
         const cards = convertCards([
             {
