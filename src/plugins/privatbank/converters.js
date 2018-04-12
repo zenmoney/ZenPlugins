@@ -122,11 +122,11 @@ export function convertTransactionJson(json) {
     if (transaction.comment) {
         [
             parseHold,
+            parseTransfer,
             parseCashWithdrawal,
             parseCashReplenishment,
             parseInnerTransferTo,
             parseInnerTransferFrom,
-            parseTransfer,
             parsePayee
         ].some(parser => parser(transaction, opAmount));
     }
@@ -187,7 +187,9 @@ export function parseCashWithdrawal(transaction, opAmount) {
 }
 
 export function parseCashReplenishment(transaction, opAmount) {
-    if (transaction.outcome === 0 && /Пополнение.*наличными/i.test(transaction.comment)) {
+    if (transaction.outcome === 0
+            && /Пополнение.*наличными/i.test(transaction.comment)
+            && /своей карты/i.test(transaction.comment)) {
         transaction.outcome = opAmount.sum;
         transaction.outcomeAccount = "cash#" + opAmount.instrument;
         transaction.comment = null;
@@ -224,6 +226,8 @@ export function parseInnerTransferFrom(transaction, opAmount) {
 
 export function parseTransfer(transaction) {
     for (const regex of [
+        /Пополнение наличными.*Плательщик:?\s*тел\.\s*([^.]+)/i,
+        /Пополнение наличными.*Плательщик:?\s*([^.]+)/i,
         /еревод на.*Получатель:?\s*([^.]+)/i,
         /Перевод с.*Отправитель:?\s*([^.]+)/i,
         /Зачисление.*с.*Плательщик:?\s*([^.]+)/i,
