@@ -199,14 +199,19 @@ export function parseCashReplenishment(transaction, opAmount) {
 }
 
 export function parseInnerTransferTo(transaction, opAmount) {
-    const match = transaction.comment.match(/Перевод на свою карту\s+(\d+\*+\d+)/i);
-    if (match) {
-        transaction.incomeAccount = "ccard#" + opAmount.instrument + "#" + getTransferSyncId(match[1]);
-        transaction.income = opAmount.sum;
-        transaction.comment = null;
-        transaction._transferId = getTransferId(transaction, opAmount);
-        transaction._transferType = "income";
-        return true;
+    for (const regex of [
+        /Перевод на свою «Копилку»\s+(\d+\*+\d+)/i,
+        /Перевод на свою карту\s+(\d+\*+\d+)/i
+    ]) {
+        const match = transaction.comment.match(regex);
+        if (match) {
+            transaction.incomeAccount = "ccard#" + opAmount.instrument + "#" + getTransferSyncId(match[1]);
+            transaction.income = opAmount.sum;
+            transaction.comment = null;
+            transaction._transferId = getTransferId(transaction, opAmount);
+            transaction._transferType = "income";
+            return true;
+        }
     }
     return false;
 }
