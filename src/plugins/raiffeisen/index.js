@@ -72,6 +72,9 @@ async function login(login, password) {
     if (response.status === 401) {
         throw new ZenMoney.Error("Райффайзенбанк: Неверный логин или пароль", true);
     }
+    if (response.status === 222) {
+        throw new ZenMoney.Error("Райффайзенбанк: Пароль устарел. Смените его в приложении банка, а потом обновите в настройках подключения.", true);
+    }
     if (response.status === 267) {
         const confirmData = (await fetchJson("https://sso.raiffeisen.ru/oauth/entry/confirm/sms", {
             method: "POST"
