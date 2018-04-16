@@ -235,10 +235,10 @@ function processAccounts(json) {
 				// мастер-счета с картами, прикреплёнными к ним
 				case 'MasterAccountProduct':
 					for (var iGr = 0; iGr < account.groups.length; iGr++) {
-						group = account.groups[iGr];
+						var group = account.groups[iGr];
 
 						for (var iItem = 0; iItem < group.items.length; iItem++) {
-							item = group.items[iItem];
+							var item = group.items[iItem];
 							if (!item.hasOwnProperty('number')) continue;
 
 							if (isAccountSkipped(item.id)) {
@@ -246,7 +246,7 @@ function processAccounts(json) {
 								continue;
 							}
 
-							acc = {
+							var acc = {
 								id: 'master:'+ item.id,
 								title: item.displayName,
 								type: 'ccard',
@@ -306,7 +306,7 @@ function processAccounts(json) {
 							};
 
 							if (account.id = 'CreditCardProduct') {
-                                detail = {
+                                var detail = {
                                     id: item.id,
                                     className: item.classType,
                                     title: item.name
@@ -520,7 +520,7 @@ function processAccounts(json) {
 		ZenMoney.trace('В ответе банка не найден список накопительных счетов.');
 
 	if (accDict.length === 0)
-		ZenMoney.Error('Не удалось загрузить список счетов. Это может быть временной ошибкой связи с банком. Попробуйте повторить позднее.', true);
+		throw new ZenMoney.Error('Не удалось загрузить список счетов. Это может быть временной ошибкой связи с банком. Попробуйте повторить позднее.', true);
 
 	ZenMoney.trace('Всего счетов добавлено: '+ accDict.length);
 	ZenMoney.trace('JSON: '+ JSON.stringify(accDict));
@@ -570,6 +570,7 @@ function processTransactions() {
 	ZenMoney.trace('CreateSyncTime: '+ new Date(createSyncTime) +' ('+ createSyncTime +')');
 
 	var browserId = 2;
+	var json;
 	for(var accId in g_accounts) {
 		var acc = g_accounts[accId];
 		browserId++;
@@ -679,7 +680,13 @@ function processTransactions() {
 		}, g_headers2);
 		//ZenMoney.trace('1. JSON списка операций: ' + JSON.stringify(json));
 
-		pageToken = json.pageToken;
+		if (!json) {
+
+			ZenMoney.trace('Не удалось загрузить операции по счёту "'+ acc.title +'"');
+			continue;
+		}
+
+		var pageToken = json.pageToken;
 
 		json = requestJson('processor/process/minerva/action', null, {
 			post: {
@@ -779,6 +786,7 @@ function processTransactions() {
 							var dtDay = parseInt(t.transactionDate.substr(0, 2));
 							var payeePatch = Date.UTC(dtYear, dtMonth, dtDay) >= Date.UTC(2017, 4, 27);
 
+							var retail;
 							if (retail = /^Операция п.*?\d+\.\s+(.+?)(?:\s+[а-яА-Я].*)?$/.exec(t.details))
 								tran.payee = retail[1];
 							if (payeePatch) if (retail = /^Карта \*\d{4}\s+(.*)/.exec(t.details)) {
@@ -902,7 +910,7 @@ function makeTransferToCard(accFrom, accTo, sum) {
 	var callId = 1;
 
 	// 1. Загружаем форму перевода
-	data = ZenMoney.requestPost(g_baseurl + 'processor/process/minerva/operation',
+	var data = ZenMoney.requestPost(g_baseurl + 'processor/process/minerva/operation',
 		{
 			action: "editForm",
 			operation: 7760,	// переводы на карточные счета
@@ -1177,7 +1185,7 @@ function makeTransferToAcc(accFrom, accTo, sum) {
 	var callId = 1;
 
 	// 1. Загружаем форму перевода
-	data = ZenMoney.requestPost(g_baseurl + 'processor/process/minerva/operation',
+	var data = ZenMoney.requestPost(g_baseurl + 'processor/process/minerva/operation',
 		{
 			action: "editForm",
 			operation: 9210, // перевод на накопительные счета и вклады
@@ -1708,11 +1716,14 @@ function requestJson(requestCode, data, parameters, headers) {
 	}
 
 	var resultCode = ZenMoney.getLastStatusCode();
-	if (!data)
-		ZenMoney.trace('Пришёл пустой ответ во время запроса по адресу "'+ url + '" [ResultCode: ' + resultCode + ']');
 
 	if (resultCode == '403')
 		throw new ZenMoney.Error("Доступ к странице интернет-банка запрещён: "+ url);
+
+	if (!data) {
+		ZenMoney.trace('Пришёл пустой ответ во время запроса по адресу "' + url + '" [ResultCode: ' + resultCode + ']');
+		return null;
+	}
 
 	data = getJson(data);
 
