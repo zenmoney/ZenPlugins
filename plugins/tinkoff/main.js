@@ -388,7 +388,8 @@ function processAccounts() {
 				syncID:			[],
 				instrument:		a.moneyAmount.currency.name,
 				//balance:		a.moneyAmount.value - creditLimit
-				balance:        Math.min(a.accountBalance.value, a.moneyAmount.value - creditLimit) // эксперимент с новым балансом
+				balance:        Math.min(a.accountBalance.value, a.moneyAmount.value - creditLimit), // эксперимент с новым балансом
+				balance_income: Math.max(a.accountBalance.value, a.moneyAmount.value - creditLimit)  // эксперимент2 с новым балансом
 			};
 
 			if (creditLimit > 0)
@@ -401,13 +402,11 @@ function processAccounts() {
 					acc1.syncID.push(card1.value.substring(card1.value.length - 4))
 			}
 
-			if (acc1.syncID.length > 0) {
-				// добавим ещё и номер счёта карты
-				acc1.syncID.push(a.id.substring(a.id.length - 4));
+			// добавим и номер счёта карты
+			acc1.syncID.push(a.id.substring(a.id.length - 4));
 
-				accDict.push(acc1);
-				g_accounts.push(a.id);
-			}
+			accDict.push(acc1);
+			g_accounts.push(a.id);
 		}
 		// кредитные карты ----------------------------------------
 		else if (a.accountType === 'Credit' && a.status === 'NORM') {
@@ -436,13 +435,11 @@ function processAccounts() {
 					acc2.syncID.push(card2.value.substring(card2.value.length - 4))
 			}
 
-			if (acc2.syncID.length > 0) {
-				// добавим ещё и номер счёта карты
-				acc2.syncID.push(a.id.substring(a.id.length - 4));
+			// добавим и номер счёта карты
+			acc2.syncID.push(a.id.substring(a.id.length - 4));
 
-				accDict.push(acc2);
-				g_accounts.push(a.id);
-			}
+			accDict.push(acc2);
+			g_accounts.push(a.id);
 		}
 		// накопительные счета ------------------------------------
 		else if (a.accountType === 'Saving' && a.status === 'NORM') {
@@ -630,197 +627,258 @@ function processTransactions(data) {
 		}
 	});
 
-	var payload = transactions.payload[0].payload;
-	ZenMoney.trace('Получено операций: '+ payload.length);
-	ZenMoney.trace('JSON: '+JSON.stringify(payload));
-
 	var tranDict = {};      // список найденных оперций
 	var tranDictHold = {};  // список ключей операций для контроля холдов и акцептов в одной выписке
-	var paymentsDict = {};  // список идентификаторов переводов
 
+	var payload = transactions.payload[0].payload;
+	if (!payload) {
+		ZenMoney.trace('Не удалось получить операции: '+ JSON.stringify(transactions));
+		throw new ZenMoney.Error('Не удалось получить список операций от банка. Пожалуйста, повторите позднее.', true);
+	}
+	else {
+		ZenMoney.trace('Получено операций: ' + payload.length);
+		ZenMoney.trace('JSON: ' + JSON.stringify(payload));
 
-	for (var i = 0; i < payload.length; i++) {
-		var t = payload[i];
+		var holdSum = {}; // для определения текущего остатка с учётом холдов
+		for (var i = 0; i < payload.length; i++) {
+			var t = payload[i];
 
-		if (t.operationTime.milliseconds > lastSyncTime)
-			lastSyncTime = t.operationTime.milliseconds;
+			if (t.operationTime.milliseconds > lastSyncTime)
+				lastSyncTime = t.operationTime.milliseconds;
 
-		// работаем только по активным счетам
-		var tAccount = t.account;
-		if (!in_array(tAccount, g_accounts))
-		{
-			tAccount = t.account +'_'+ t.amount.currency.name;
-			if (!in_array(tAccount, g_accounts))
-				continue;
-		}
+			var tran = {};
+			// дата по-видимому всегда привязана к часовому поясу Москвы. Так что нужно ее корректировать
+			var dt = new Date(t.operationTime.milliseconds + (180 + new Date().getTimezoneOffset()) * 60000);
+			tran.date = n2(dt.getDate()) + '.' + n2(dt.getMonth() + 1) + '.' + dt.getFullYear();
+			tran.time = n2(dt.getHours()) + ':' + n2(dt.getMinutes() + 1) + ':' + n2(dt.getSeconds()); // для внутреннего использования
+			tran.created = t.operationTime.milliseconds;
 
-		// учитываем только успешные операции
-		if (t.status && t.status === 'FAILED')
-			continue;
+			var operLog = '#' + i + ': ' + tran.date + ', ' + tran.time + ', ' + t.description + ', '
+				+ (t.type === "Credit" ? '+' : (t.type === "Debit" ? '-' : '')) + t.accountAmount.value;
 
-		var tran = {};
-		// дата по-видимому всегда привязана к часовому поясу Москвы. Так что нужно ее корректировать
-		var dt = new Date(t.operationTime.milliseconds + (180 + new Date().getTimezoneOffset()) * 60000);
-		tran.date = n2(dt.getDate()) + '.' + n2(dt.getMonth() + 1) + '.' + dt.getFullYear();
-		tran.time = n2(dt.getHours()) + ':' + n2(dt.getMinutes() + 1) + ':' + n2(dt.getSeconds()); // для внутреннего использования
-		tran.created = t.operationTime.milliseconds;
-
-		if (t.accountAmount.value == 0) {
-			ZenMoney.trace('Пропускаем пустую операцию #' + i + ': ' + tran.date + ', ' + tran.time + ', ' + t.description + ', '
-				+ (t.type === "Credit" ? '+' : (t.type === "Debit" ? '-' : '')) + t.accountAmount.value);
-			continue;
-		}
-
-		// ИТОГИ АНАЛИЗА:
-		//   id - уникальный идентификатор операции (технический идетификатор)
-		//   paymentId - идентификатор финансового документа/проводки
-		//   ucid - не понятная и не уникальная фигня :(
-
-		// Внутренний ID операции
-		var tranId = t.payment && t.payment.paymentId
-			// если есть paymentId, объединяем по нему, отделяя комиссии от переводов
-			? (t.group === 'CHARGE' ? 'f' : 'p') + t.payment.paymentId
-			// либо работаем просто как с операциями, разделяя их на доходы и расходы
-			: t.id;
-
-		// отделяем акцепт от холда временем дебетового списания
-		tran.id = t.debitingTime ? t.id : 'tmp#' + t.id;
-
-		// добавим флаг холда
-		tran.hold = t.debitingTime ? false : true;
-
-		ZenMoney.trace('Добавляем операцию #' + i + ': ' + tran.date + ', ' + tran.time + ', ' + t.description + ', '
-			+ (t.type === "Credit" ? '+' : (t.type === "Debit" ? '-' : '')) + t.accountAmount.value
-			+ ' [' + tranId + '] acc:' + tAccount);
-		//ZenMoney.trace('JSON: '+JSON.stringify(t));
-
-		// флаг операции в валюте
-		var foreignCurrency = t.accountAmount.currency.name !== t.amount.currency.name;
-
-		// ключ для поиска дублей по идентификатору
-		var tranKey = t.type + ':' + tranId;
-		// обратный ключ для второй половины перевода
-		var tranKey2 = (t.type === 'Debit' ? 'Credit' : 'Debit') + ':' + tranId;
-
-		// ключ контроля дублей по холду
-		var tranAmount = t.amount ? t.amount.value + t.amount.currency.name : t.accountAmount.value + t.accountAmount.currency.name;
-		var tranKeyHold = tran.created+':'+tAccount+':'+tranAmount;
-		//ZenMoney.trace('tranKeyHold: '+tranKeyHold);
-
-		// холд пропускаем ----------------------------------------------------------------
-		if (!t.debitingTime && (tranDict[tranKey] || tranDictHold[tranKeyHold]))
-			continue;
-
-		// перевод ------------------------------------------------------------------------
-		if (tranDict[tranKey2])
-		{
-			// доходная часть перевода ---
-			if (t.type === 'Credit' && tranDict[tranKey2].income == 0 && tranDict[tranKey2].incomeAccount != t.account)
-			{
-				tranDict[tranKey2].income = t.accountAmount.value;
-				tranDict[tranKey2].incomeAccount = tAccount;
-
-				// операция в валюте
-				if (foreignCurrency) {
-					tranDict[tranKey2].opOutcome = t.amount.value;
-					tranDict[tranKey2].opOutcomeInstrument = t.amount.currency.name;
+			// работаем только по активным счетам
+			var tAccount = t.account;
+			if (!in_array(tAccount, g_accounts)) {
+				tAccount = t.account + '_' + t.amount.currency.name;
+				if (!in_array(tAccount, g_accounts)) {
+					ZenMoney.trace('Пропускаем операцию ' + operLog + ' (счёт игнорируется)');
+					continue;
 				}
+			}
 
-				tranDict[tranKey2].incomeBankID = tran.id;
-				tranDict[tranKey2].outcomeBankID = tranDict[tranKey2].id;
-				delete tranDict[tranKey2].id;
-
-				tranDict['Transfer:'+tranId] = tranDict[tranKey2];
-				delete tranDict[tranKey2];
-
-				ZenMoney.trace('Объединили операцию в перевод с имеющейся ID '+ tranId);
+			// учитываем только успешные операции
+			if (t.status && t.status === 'FAILED') {
+				ZenMoney.trace('Пропускаем операцию ' + operLog + ' (статус: ' + t.status + ')');
 				continue;
 			}
 
-			// расходная часть перевода ----
-			if (t.type === 'Debit' && tranDict[tranKey2].outcome == 0 && tranDict[tranKey2].outcomeAccount != tAccount)
-			{
-				tranDict[tranKey2].outcome = t.accountAmount.value;
-				tranDict[tranKey2].outcomeAccount = tAccount;
-
-				// операция в валюте
-				if (foreignCurrency) {
-					tranDict[tranKey2].opOutcome = t.amount.value;
-					tranDict[tranKey2].opOutcomeInstrument = t.amount.currency.name;
-				}
-
-				// при объединении в перевод всегда берём комментарий из расходной части
-				if (t.operationPaymentType === 'TEMPLATE')
-					tranDict[tranKey2].comment = t.description; // наименование шаблона
-				else {
-					// добавим в перевод коммент из расходной части
-					tranDict[tranKey2].comment = '';
-					if (t.merchant)
-						tranDict[tranKey2].comment = t.merchant.name + ": ";
-					tranDict[tranKey2].comment += t.description;
-				}
-
-				tranDict[tranKey2].incomeBankID = tranDict[tranKey2].id;
-				tranDict[tranKey2].outcomeBankID = tran.id;
-				delete tranDict[tranKey2].id;
-
-				tranDict['Transfer:'+tranId] = tranDict[tranKey2];
-				delete tranDict[tranKey2];
-
-				ZenMoney.trace('Объединили операцию в перевод с имеющейся ID '+ tranId);
+			if (t.accountAmount.value == 0) {
+				ZenMoney.trace('Пропускаем пустую операцию ' + operLog);
 				continue;
 			}
-		}
 
-		// акцепт холда ------------------------------------------------------------------
-		if (tranDictHold[tranKeyHold])
-		{
-			var t2 = tranDict[tranDictHold[tranKeyHold]];
-			ZenMoney.trace('Обнаружили акцепт холда: #'+ t2.id + ' => #'+ t.id);
-			t2.id = t.id;
-			continue;
-		}
+			// ИТОГИ АНАЛИЗА:
+			//   id - уникальный идентификатор операции (технический идетификатор)
+			//   paymentId - идентификатор финансового документа/проводки
+			//   ucid - не понятная и не уникальная фигня :(
 
-		// доход -------------------------------------------------------------------------
-		if (t.type === "Credit")
-		{
-			tran.income = t.accountAmount.value;
-			tran.incomeAccount = tAccount;
-			tran.outcome = 0;
-			tran.outcomeAccount = tran.incomeAccount;
+			// Внутренний ID операции
+			var tranId = t.payment && t.payment.paymentId
+				// если есть paymentId, объединяем по нему, отделяя комиссии от переводов
+				? (t.group === 'CHARGE' ? 'f' : 'p') + t.payment.paymentId
+				// либо работаем просто как с операциями, разделяя их на доходы и расходы
+				: t.id;
 
-			if (t.group) {
-				switch (t.group) {
-					// Пополнение наличными
-					case "CASH":
-						if (!t.partnerType || t.partnerType !== "card2card") {
-							tran.outcomeAccount = "cash#" + t.amount.currency.name;
-							tran.outcome = t.amount.value;
-						}
-						break;
+			// отделяем акцепт от холда временем дебетового списания
+			tran.id = t.debitingTime ? t.id : 'tmp#' + t.id;
 
-					case "INCOME":
-						if (t.partnerType === "card2card" && t.payment &&
-							t.payment.cardNumber && t.payment.cardNumber.length > 4) {
-							tran.comment = t.description;
-							tran.outcome = t.amount.value;
-							tran.outcomeAccount = "ccard#" + t.amount.currency.name + "#" +
-								t.payment.cardNumber.substring(t.payment.cardNumber.length - 4);
-						}
-						break;
+			// добавим флаг холда
+			tran.hold = t.debitingTime ? false : true;
 
-					// Если совсем ничего не подошло
-					default:
-						if (t.subgroup) {
-							switch (t.subgroup.id) {
-								// перевод от другого клиента банка
-								case "C4":
-									tran.payee = t.description;
-									break;
+			var hold = tran.hold ? ' [H] ' : '';
+			ZenMoney.trace('Добавляем операцию #' + i + ':  ' + tran.date + ', ' + tran.time + ', ' + hold + t.description + ', '
+				+ (t.type === "Credit" ? '+' : (t.type === "Debit" ? '-' : '')) + t.accountAmount.value
+				+ ' [' + tranId + '] acc:' + tAccount);
+			//ZenMoney.trace('JSON: '+JSON.stringify(t));
+
+			// флаг операции в валюте
+			var foreignCurrency = t.accountAmount.currency.name !== t.amount.currency.name;
+
+			// ключ для поиска дублей по идентификатору
+			var tranKey = t.type + ':' + tranId;
+			// обратный ключ для второй половины перевода
+			var tranKey2 = (t.type === 'Debit' ? 'Credit' : 'Debit') + ':' + tranId;
+
+			// ключ контроля дублей по холду
+			var tranAmount = t.amount ? t.amount.value + t.amount.currency.name : t.accountAmount.value + t.accountAmount.currency.name;
+			var tranKeyHold = tran.created + ':' + tAccount + ':' + tranAmount;
+			if (t.payment && t.payment.fieldsValues && t.payment.fieldsValues.uid)
+				tranKeyHold += ':' + t.payment.fieldsValues.uid;
+			//ZenMoney.trace('tranKeyHold: '+tranKeyHold);
+
+			// холд пропускаем ----------------------------------------------------------------
+			if (!t.debitingTime && (tranDict[tranKey] || tranDictHold[tranKeyHold]))
+				continue;
+
+			// перевод ------------------------------------------------------------------------
+			if (tranDict[tranKey2]) {
+				// доходная часть перевода ---
+				if (t.type === 'Credit' && tranDict[tranKey2].income == 0 && tranDict[tranKey2].incomeAccount != t.account) {
+					tranDict[tranKey2].income = t.accountAmount.value;
+					tranDict[tranKey2].incomeAccount = tAccount;
+
+					// операция в валюте
+					if (foreignCurrency) {
+						tranDict[tranKey2].opOutcome = t.amount.value;
+						tranDict[tranKey2].opOutcomeInstrument = t.amount.currency.name;
+					}
+
+					tranDict[tranKey2].incomeBankID = tran.id;
+					tranDict[tranKey2].outcomeBankID = tranDict[tranKey2].id;
+					delete tranDict[tranKey2].id;
+
+					tranDict['Transfer:' + tranId] = tranDict[tranKey2];
+					delete tranDict[tranKey2];
+
+					ZenMoney.trace('Объединили операцию в перевод с имеющейся ID ' + tranId);
+					continue;
+				}
+
+				// расходная часть перевода ----
+				if (t.type === 'Debit' && tranDict[tranKey2].outcome == 0 && tranDict[tranKey2].outcomeAccount != tAccount) {
+					tranDict[tranKey2].outcome = t.accountAmount.value;
+					tranDict[tranKey2].outcomeAccount = tAccount;
+
+					// операция в валюте
+					if (foreignCurrency) {
+						tranDict[tranKey2].opOutcome = t.amount.value;
+						tranDict[tranKey2].opOutcomeInstrument = t.amount.currency.name;
+					}
+
+					// при объединении в перевод всегда берём комментарий из расходной части
+					if (t.operationPaymentType === 'TEMPLATE')
+						tranDict[tranKey2].comment = t.description; // наименование шаблона
+					else {
+						// добавим в перевод коммент из расходной части
+						tranDict[tranKey2].comment = '';
+						if (t.merchant)
+							tranDict[tranKey2].comment = t.merchant.name + ": ";
+						tranDict[tranKey2].comment += t.description;
+					}
+
+					tranDict[tranKey2].incomeBankID = tranDict[tranKey2].id;
+					tranDict[tranKey2].outcomeBankID = tran.id;
+					delete tranDict[tranKey2].id;
+
+					tranDict['Transfer:' + tranId] = tranDict[tranKey2];
+					delete tranDict[tranKey2];
+
+					ZenMoney.trace('Объединили операцию в перевод с имеющейся ID ' + tranId);
+					continue;
+				}
+			}
+
+			// акцепт холда ------------------------------------------------------------------
+			if (tranDictHold[tranKeyHold]) {
+				var t2 = tranDict[tranDictHold[tranKeyHold]];
+				ZenMoney.trace('Обнаружили акцепт холда: #' + t2.id + ' => #' + t.id);
+				t2.id = t.id;
+				continue;
+			}
+
+			// доход -------------------------------------------------------------------------
+			if (t.type === "Credit") {
+				tran.income = t.accountAmount.value;
+				tran.incomeAccount = tAccount;
+				tran.outcome = 0;
+				tran.outcomeAccount = tran.incomeAccount;
+
+				if (t.group) {
+					switch (t.group) {
+						// Пополнение наличными
+						case "CASH":
+							if (!t.partnerType || t.partnerType !== "card2card") {
+								tran.outcomeAccount = "cash#" + t.amount.currency.name;
+								tran.outcome = t.amount.value;
 							}
-						}
+							break;
 
-						if (!tran.payee) {
+						case "INCOME":
+							if (t.partnerType === "card2card" && t.payment &&
+								t.payment.cardNumber && t.payment.cardNumber.length > 4) {
+								tran.comment = t.description;
+								tran.outcome = t.amount.value;
+								tran.outcomeAccount = "ccard#" + t.amount.currency.name + "#" +
+									t.payment.cardNumber.substring(t.payment.cardNumber.length - 4);
+							}
+							break;
+
+						// Если совсем ничего не подошло
+						default:
+							if (t.subgroup) {
+								switch (t.subgroup.id) {
+									// перевод от другого клиента банка
+									case "C4":
+										tran.payee = t.description;
+										break;
+								}
+							}
+
+							if (!tran.payee) {
+								if (t.operationPaymentType === 'TEMPLATE')
+									tran.comment = t.description; // наименование шаблона
+								else {
+									tran.comment = '';
+									if (t.merchant)
+										tran.comment = t.merchant.name + ": ";
+									tran.comment += t.description;
+								}
+							}
+							else {
+								// если получатель определился, то нет необходимости писать его и в комментарии
+								if (t.merchant)
+									tran.comment = t.merchant.name;
+							}
+					}
+				} else {
+					tran.comment = '';
+					if (t.merchant)
+						tran.comment = t.merchant.name + ": ";
+					tran.comment += t.description;
+				}
+
+				// операция в валюте
+				if (foreignCurrency) {
+					tran.opIncome = t.amount.value;
+					tran.opIncomeInstrument = t.amount.currency.name;
+				}
+			}
+			// расход -----------------------------------------------------------------
+			else if (t.type === "Debit") {
+				tran.outcome = t.accountAmount.value;
+				tran.outcomeAccount = tAccount;
+				tran.income = 0;
+				tran.incomeAccount = tran.outcomeAccount;
+
+				if (t.group) {
+					switch (t.group) {
+						// Снятие наличных
+						case "CASH":
+							if (!t.partnerType || t.partnerType !== "card2card") {
+								tran.incomeAccount = "cash#" + t.amount.currency.name;
+								tran.income = t.amount.value;
+							}
+							break;
+
+						// Перевод
+						case "TRANSFER":
+							if (t.payment && t.payment.fieldsValues) {
+								if (t.payment.fieldsValues.addressee)
+									tran.payee = t.payment.fieldsValues.addressee;
+								else if (t.payment.fieldsValues.lastName)
+									tran.payee = t.payment.fieldsValues.lastName;
+							}
+
 							if (t.operationPaymentType === 'TEMPLATE')
 								tran.comment = t.description; // наименование шаблона
 							else {
@@ -829,108 +887,85 @@ function processTransactions(data) {
 									tran.comment = t.merchant.name + ": ";
 								tran.comment += t.description;
 							}
-						}
-						else {
-							// если получатель определился, то нет необходимости писать его и в комментарии
-							if (t.merchant)
-								tran.comment = t.merchant.name;
-						}
+							break;
+
+						// Плата за обслуживание
+						case "CHARGE":
+							tran.comment = t.description;
+							break;
+
+						// Платеж
+						case "PAY":
+							if (t.operationPaymentType && t.operationPaymentType === "REGULAR") {
+								tran.payee = t.brand ? t.brand.name : t.description;
+							} else {
+								tran.payee = t.merchant ? t.merchant.name : t.description;
+							}
+
+							// MCC
+							if (t.mcc && !isNaN(mcc = parseInt(t.mcc)) && mcc > 99) {
+								tran.mcc = mcc; // у Тинькова mcc-коды используются для своих нужд
+							}
+
+							break;
+
+						// Если совсем ничего не подошло
+						default:
+							tran.comment = t.description;
+					}
 				}
-			} else {
-				tran.comment = '';
-				if (t.merchant)
-					tran.comment = t.merchant.name + ": ";
-				tran.comment += t.description;
+
+				// операция в валюте
+				if (foreignCurrency) {
+					tran.opOutcome = t.amount.value;
+					tran.opOutcomeInstrument = t.amount.currency.name;
+				}
+
+				// местоположение
+				if (t.locations && is_array(t.locations) && t.locations.length > 0) {
+					tran.latitude = t.locations[0].latitude;
+					tran.longitude = t.locations[0].longitude;
+				}
 			}
 
-			// операция в валюте
-			if (foreignCurrency) {
-				tran.opIncome = t.amount.value;
-				tran.opIncomeInstrument = t.amount.currency.name;
+
+			//ZenMoney.trace('Операция!!! ' + tranId);
+			tranDict[tranKey] = tran;
+			tranDictHold[tranKeyHold] = tranKey;
+
+			//
+			if (tran.hold) {
+				if (tran.incomeAccount && !holdSum.hasOwnProperty(tran.incomeAccount)) holdSum[tran.incomeAccount] = 0;
+				if (tran.outcomeAccount && !holdSum.hasOwnProperty(tran.outcomeAccount)) holdSum[tran.outcomeAccount] = 0;
+				if (tran.income > 0) holdSum[tran.incomeAccount] += tran.income;
+				if (tran.outcome > 0) holdSum[tran.outcomeAccount] -= tran.outcome;
 			}
 		}
-		// расход -----------------------------------------------------------------
-		else if (t.type === "Debit")
+
+		// анализ зависших холдов, не нужно ли скорректировать остаток на карте
+		ZenMoney.trace('> Сверка остатков на счетах по HOLD-операциям...');
+		//ZenMoney.trace('g_account: ' + JSON.stringify(g_accounts));
+		//ZenMoney.trace('holdSum: ' + JSON.stringify(holdSum));
+
+		for(var i=0; i<g_accounts.length; i++)
 		{
-			tran.outcome = t.accountAmount.value;
-			tran.outcomeAccount = tAccount;
-			tran.income = 0;
-			tran.incomeAccount = tran.outcomeAccount;
+			var id = g_accounts[i];
 
-			if (t.group) {
-				switch (t.group)
-				{
-					// Снятие наличных
-					case "CASH":
-						if (!t.partnerType || t.partnerType !== "card2card") {
-							tran.incomeAccount = "cash#" + t.amount.currency.name;
-							tran.income = t.amount.value;
-						}
-						break;
-
-					// Перевод
-					case "TRANSFER":
-						if (t.payment && t.payment.fieldsValues)
-						{
-							if (t.payment.fieldsValues.addressee)
-								tran.payee = t.payment.fieldsValues.addressee;
-							else if (t.payment.fieldsValues.lastName)
-								tran.payee = t.payment.fieldsValues.lastName;
-						}
-
-						if (t.operationPaymentType === 'TEMPLATE')
-							tran.comment = t.description; // наименование шаблона
-						else {
-							tran.comment = '';
-							if (t.merchant)
-								tran.comment = t.merchant.name + ": ";
-							tran.comment += t.description;
-						}
-						break;
-
-					// Плата за обслуживание
-					case "CHARGE":
-						tran.comment = t.description;
-						break;
-
-					// Платеж
-					case "PAY":
-						if (t.operationPaymentType && t.operationPaymentType === "REGULAR") {
-							tran.payee = t.brand ? t.brand.name : t.description;
-						} else {
-							tran.payee = t.merchant ? t.merchant.name : t.description;
-						}
-
-						// MCC
-						if (t.mcc && !isNaN(mcc = parseInt(t.mcc)) && mcc > 99) {
-							tran.mcc = mcc; // у Тинькова mcc-коды используются для своих нужд
-						}
-
-						break;
-
-					// Если совсем ничего не подошло
-					default:
-						tran.comment = t.description;
+			if (!holdSum.hasOwnProperty(id)) {
+				var pos = id.indexOf('_');
+				if (!holdSum.hasOwnProperty(id.substring(0, pos))) {
+					//ZenMoney.trace('#'+ id +': пропускаем, так как нет hold-операций.');
+					continue;
 				}
 			}
 
-			// операция в валюте
-			if (foreignCurrency) {
-				tran.opOutcome = t.amount.value;
-				tran.opOutcomeInstrument = t.amount.currency.name;
+			if (holdSum[id] > 0) {
+				g_accounts[i].balance = g_accounts[i].balance_income;
+				ZenMoney.trace('> Счёт #'+ id +': cумма hold-операций ' + (Math.round((holdSum[id])*100)/100) + ' => обновили остаток на '+ g_accounts[i].balance_income);
 			}
-
-			// местоположение
-			if (t.locations && is_array(t.locations) && t.locations.length > 0) {
-				tran.latitude = t.locations[0].latitude;
-				tran.longitude = t.locations[0].longitude;
-			}
+			else
+				ZenMoney.trace('> Счёт #'+ id +': cумма hold-операций ' + (Math.round((holdSum[id])*100)/100) + ' (остаток верный)');
 		}
-
-
-		//ZenMoney.trace('Операция!!! ' + tranId);
-		tranDict[tranKey] = tran;
-		tranDictHold[tranKeyHold] = tranKey;
 	}
 
 	ZenMoney.trace('Всего операций добавлено: '+ Object.getOwnPropertyNames(tranDict).length);
