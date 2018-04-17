@@ -1,23 +1,50 @@
+import deepDiff from "deep-diff";
 import {fetchJson} from "./common/network";
 
+const prettifyDiffEntry = (diffEntry) => {
+    if (diffEntry.kind === "A") {
+        return prettifyDiffEntry(Object.assign({path: diffEntry.path.concat(diffEntry.index)}, diffEntry.item));
+    }
+    const lines = [];
+    if (diffEntry.kind === "E" || diffEntry.kind === "D") {
+        lines.push(`− ${JSON.stringify(diffEntry.path)}: ${JSON.stringify(diffEntry.lhs)}`);
+    }
+    if (diffEntry.kind === "E" || diffEntry.kind === "N") {
+        lines.push(`+ ${JSON.stringify(diffEntry.path)}: ${JSON.stringify(diffEntry.rhs)}`);
+    }
+    return lines.join("\n");
+};
+
+export const prettyDeepDiff = (x, y) => deepDiff(x, y).map(diffEntry => prettifyDiffEntry(diffEntry));
+
 const messageHandlers = {
-    ":events/sync-success": async function({payload: {pluginDataChange}, onStatusChange}) {
+    ":events/sync-start": async function({onStatusChange}) {
+        onStatusChange("Syncing…");
+    },
+
+    ":events/sync-success": async function({payload: {addedAccounts, addedTransactions, pluginDataChange}, onStatusChange}) {
+        const summary = `Synced\nGot ${addedAccounts.length} account(s), ${addedTransactions.length} transaction(s)`;
+        const ending = `\nCheers!`;
         if (!pluginDataChange) {
-            onStatusChange("Completed successfully");
+            onStatusChange(summary);
             return;
         }
+        onStatusChange(`${summary}\n\nDo we want to save changed plugin data to zp_data.json?`);
+
+        await new Promise((resolve) => setTimeout(resolve, 1));
         const saveConfirmed = window.confirm([
-            `Plugin changed some data:`,
-            JSON.stringify(pluginDataChange, null, 2),
-            `Save newValue to zp_data.json?`,
+            `Diff:`,
+            ...prettyDeepDiff(pluginDataChange.oldValue, pluginDataChange.newValue),
+            `\nSave?`,
         ].join("\n"));
+
         const pluginDataSaved = saveConfirmed ? fetchJson("/zen/data", {method: "POST", body: pluginDataChange, log: false}) : Promise.resolve();
-        onStatusChange("Committing plugin data…");
+        onStatusChange(`${summary}\nSaving plugin data…`);
         try {
             await pluginDataSaved;
-            onStatusChange("Success");
+            onStatusChange(`${summary}\n\n${saveConfirmed ? "Saved plugin data changes" : "You discarded plugin data changes"}\n${ending}`);
         } catch (e) {
-            onStatusChange("Cannot save plugin data:\n" + e.message)
+            onStatusChange(`${summary}\nWe've failed to save plugin data changes because:\n${e.message}\n${ending}`);
         }
     },
 
