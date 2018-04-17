@@ -98,6 +98,8 @@ const notImplemented = () => {
 function ZPAPI({manifest, preferences, data}) {
     this.runtime = "browser";
     const knownAccounts = {};
+    const addedAccounts = [];
+    const addedTransactions = [];
 
     this.getLevel = () => 12;
 
@@ -162,10 +164,15 @@ function ZPAPI({manifest, preferences, data}) {
             }
             isComplete = true;
             if (result.success) {
-                this.trace("setResult success: " + JSON.stringify(result));
-                addAccount(result.account);
-                addTransaction(result.transaction);
+                if (result.account) {
+                    addAccount(result.account);
+                }
+                if (result.transaction) {
+                    addTransaction(result.transaction);
+                }
                 resolve({
+                    addedAccounts,
+                    addedTransactions,
                     pluginDataChange: this._saveDataRequested
                         ? {oldValue: data, newValue: this._data}
                         : null,
@@ -251,6 +258,7 @@ function ZPAPI({manifest, preferences, data}) {
                     return handleException("[ADE] Wrong account " + id + " deposit or loan parameters");
                 }
             }
+            addedAccounts.push(account);
             knownAccounts[account.id] = {
                 id: account.id,
             };
@@ -258,9 +266,6 @@ function ZPAPI({manifest, preferences, data}) {
     }
 
     function addTransaction(transactions) {
-        if (!transactions) {
-            return;
-        }
         if (!Array.isArray(transactions)) {
             transactions = [transactions];
         }
@@ -269,7 +274,7 @@ function ZPAPI({manifest, preferences, data}) {
             if (typeof transaction !== "object" || Array.isArray(transaction)) {
                 return handleException("[TOB] Wrong transaction object. It should be {} object or array of objects");
             }
-            if (!addTransactionObject(transaction)) {
+            if (addTransactionObject(transaction)) {
                 return;
             }
         }
@@ -362,6 +367,7 @@ function ZPAPI({manifest, preferences, data}) {
             outAccount.id === undefined) {
             return handleException("[TAC] Wrong transaction " + id + ". Transaction should have at least incomeAccount or outcomeAccount added");
         }
+        addedTransactions.push(transaction);
     }
 
     this.request = (method, url, body, headers) => fetchRemoteSync({method: method.toUpperCase(), url, headers, body});

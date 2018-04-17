@@ -3,17 +3,16 @@ import {ZPAPI} from "./ZPAPI";
 
 const messageHandlers = {
     ":commands/execute-sync": async ({payload: {manifest, preferences, data}, reply}) => {
+        reply({type: ":events/sync-start"});
         const api = new ZPAPI({manifest, preferences, data});
         global.ZenMoney = api;
         try {
             const {main} = require("currentPluginManifest");
             main();
-            const {pluginDataChange} = await api.setResultCalled;
+            const result = await api.setResultCalled;
             reply({
                 type: ":events/sync-success",
-                payload: {
-                    pluginDataChange,
-                },
+                payload: result,
             })
         } catch (error) {
             reply({
