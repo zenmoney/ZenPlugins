@@ -136,14 +136,13 @@ describe("provideScrapeDates", () => {
             getData: jest.fn(),
             setData: jest.fn(),
             saveData: jest.fn(),
-            getPreferences: () => ({"startDate": startDate}),
         };
 
         const scrape = jest.fn().mockReturnValueOnce(Promise.resolve());
         const scrapeWithProvidedDates = provideScrapeDates(scrape);
 
-        scrapeWithProvidedDates();
-        expect(scrape).toHaveBeenCalledWith({fromDate: new Date(startDate), toDate: null});
+        scrapeWithProvidedDates({preferences: {startDate}});
+        expect(scrape).toHaveBeenCalledWith({preferences: {}, fromDate: new Date(startDate), toDate: null});
     });
 
     it("should provide scrape fromDate equal to lastSuccessDate minus 1 week", () => {
@@ -154,13 +153,12 @@ describe("provideScrapeDates", () => {
             getData: jest.fn().mockReturnValueOnce(lastSuccessDate),
             setData: jest.fn(),
             saveData: jest.fn(),
-            getPreferences: () => ({"startDate": startDate}),
         };
 
         const scrape = jest.fn().mockReturnValueOnce(Promise.resolve());
         const scrapeWithProvidedDates = provideScrapeDates(scrape);
-        scrapeWithProvidedDates();
-        expect(scrape).toHaveBeenCalledWith({fromDate: new Date(expectedFromDate), toDate: null});
+        scrapeWithProvidedDates({preferences: {startDate}});
+        expect(scrape).toHaveBeenCalledWith({preferences: {}, fromDate: new Date(expectedFromDate), toDate: null});
     });
 
     it("should save last success date on success", () => {
@@ -169,12 +167,10 @@ describe("provideScrapeDates", () => {
             getData: jest.fn(),
             setData: jest.fn(),
             saveData: jest.fn(),
-            getPreferences: () => ({"startDate": startDate}),
         };
-
         const scrape = jest.fn().mockReturnValueOnce(Promise.resolve());
         const scrapeWithProvidedDates = provideScrapeDates(scrape);
-        return scrapeWithProvidedDates().then(() => {
+        return scrapeWithProvidedDates({preferences: {startDate}}).then(() => {
             expect(global.ZenMoney.setData).toHaveBeenCalledWith("scrape/lastSuccessDate", expect.any(String));
             expect(global.ZenMoney.saveData).toHaveBeenCalledTimes(1);
         });
@@ -186,12 +182,11 @@ describe("provideScrapeDates", () => {
             getData: jest.fn(),
             setData: jest.fn(),
             saveData: jest.fn(),
-            getPreferences: () => ({"startDate": startDate}),
         };
 
         const scrape = jest.fn().mockReturnValueOnce(Promise.reject());
         const scrapeWithProvidedDates = provideScrapeDates(scrape);
-        return scrapeWithProvidedDates().catch(() => {
+        return scrapeWithProvidedDates({preferences: {startDate}}).catch(() => {
             expect(global.ZenMoney.setData).toHaveBeenCalledTimes(0);
             expect(global.ZenMoney.saveData).toHaveBeenCalledTimes(0);
         });

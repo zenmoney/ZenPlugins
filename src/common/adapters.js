@@ -1,5 +1,6 @@
 import _ from "lodash";
 import {isValidDate} from "./dates";
+import {sanitize} from "./sanitize";
 
 const MS_IN_MINUTE = 60 * 1000;
 const MS_IN_DAY = 24 * 60 * MS_IN_MINUTE;
@@ -21,14 +22,13 @@ const unsealSyncPromise = (promise) => {
     return {state, value};
 };
 
-const calculateFromDate = () => {
+const calculateFromDate = (startDateString) => {
     const lastSuccessDateString = ZenMoney.getData("scrape/lastSuccessDate");
     if (lastSuccessDateString) {
         const lastSuccessDate = new Date(lastSuccessDateString);
         console.assert(isValidDate(lastSuccessDate), {lastSuccessDateString}, "is not a valid date");
         return new Date(lastSuccessDate - MS_IN_WEEK);
     }
-    const startDateString = ZenMoney.getPreferences().startDate;
     console.assert(startDateString, `preferences must contain "startDate"`);
     const startDate = new Date(startDateString);
     console.assert(isValidDate(startDate), {startDateString}, "is not a valid date");
@@ -40,7 +40,12 @@ export function provideScrapeDates(fn) {
 
     return function scrapeWithDates(args) {
         const successAttemptDate = new Date().toISOString();
-        const scrapeResult = fn({...args, fromDate: calculateFromDate(), toDate: null});
+        const scrapeResult = fn({
+            ...args,
+            preferences: _.omit(args.preferences, ["startDate"]),
+            fromDate: calculateFromDate(args.preferences.startDate),
+            toDate: null,
+        });
         return scrapeResult.then((x) => {
             ZenMoney.setData("scrape/lastSuccessDate", successAttemptDate);
             ZenMoney.saveData();
@@ -135,10 +140,10 @@ export function traceFunctionCalls(fn) {
     console.assert(typeof fn === "function", "traceFunctionCalls argument should be a function");
 
     const functionName = fn.name || "anonymous";
-    return function logCallsWrapper() {
+    return function logCallsWrapper(args) {
         const startMs = Date.now();
-        console.log("call", functionName, "with args:", ...Array.from(arguments));
-        const result = fn.apply(this, arguments);
+        console.log("call", functionName, "with args:", sanitize(args, {preferences: true}));
+        const result = fn.call(this, args);
 
         if (!result.then) {
             console.log(`${functionName} call returned result:`, result, `\n(${(Date.now() - startMs).toFixed(0)}ms)`);

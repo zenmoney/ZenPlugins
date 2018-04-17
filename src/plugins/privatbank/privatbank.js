@@ -2,7 +2,7 @@ import {SHA1, MD5} from "jshashes";
 import {toAtLeastTwoDigitsString} from "../../common/dates";
 
 import _ from "lodash";
-import sanitize from "../../common/sanitize";
+import {sanitize} from "../../common/sanitize";
 
 const sha1 = new SHA1();
 const md5  = new MD5();

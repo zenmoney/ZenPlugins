@@ -1,4 +1,4 @@
-import sanitize from "./sanitize";
+import {sanitize} from "./sanitize";
 
 describe("sanitize", () => {
     it("should sanitize values by truthy mask", () => {
