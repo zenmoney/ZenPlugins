@@ -1,5 +1,5 @@
 import _ from "lodash";
-import sanitize from "./sanitize";
+import {sanitize} from "./sanitize";
 
 export async function fetchJson(url, options = {}) {
     const init = {

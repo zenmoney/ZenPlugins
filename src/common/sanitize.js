@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-export default function sanitize(value, mask) {
+export function sanitize(value, mask) {
     if (!mask) {
         return value;
     }
