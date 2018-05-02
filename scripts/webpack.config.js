@@ -7,7 +7,38 @@ const {paths, resolve} = require("./constants");
 const _ = require("lodash");
 const path = require("path");
 
-module.exports = ({production}) => ({
+const getHtmlPlugins = ({production, devServer}) => {
+    if (!devServer) {
+        return [];
+    }
+    if (production) {
+        return [
+            new HtmlWebpackPlugin({
+                inject: false,
+                template: paths.hostedPluginHtml,
+            }),
+        ];
+    } else {
+        return [
+            new HtmlWebpackPlugin({
+                inject: true,
+                template: paths.windowLoaderHtml,
+                excludeAssets: [/workerLoader/],
+            }),
+            new HtmlWebpackExcludeAssetsPlugin(),
+        ];
+    }
+};
+
+const getPluginsSection = ({production, devServer}) => getHtmlPlugins({production, devServer}).concat([
+    new webpack.NamedModulesPlugin(),
+    new webpack.DefinePlugin({
+        NODE_ENV: JSON.stringify(process.env.NODE_ENV || "development"),
+    }),
+    new CaseSensitivePathsPlugin(),
+]);
+
+module.exports = ({production, devServer}) => ({
     devtool: production ? false : "eval",
     entry: production
         ? {
@@ -63,19 +94,7 @@ module.exports = ({production}) => ({
             },
         ]),
     },
-    plugins: _.compact([
-        !production && new HtmlWebpackPlugin({
-            inject: true,
-            template: paths.appHtml,
-            excludeAssets: [/workerLoader/],
-        }),
-        !production && new HtmlWebpackExcludeAssetsPlugin(),
-        new webpack.NamedModulesPlugin(),
-        new webpack.DefinePlugin({
-            NODE_ENV: JSON.stringify(process.env.NODE_ENV || "development"),
-        }),
-        new CaseSensitivePathsPlugin(),
-    ]),
+    plugins: getPluginsSection({production, devServer}),
     performance: {
         hints: false,
     },

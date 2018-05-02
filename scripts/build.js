@@ -39,7 +39,7 @@ function build() {
     console.log("Compiling...");
     fs.emptyDirSync(paths.appBuild);
 
-    const webpackConfig = createWebpackConfig({production: true});
+    const webpackConfig = createWebpackConfig({production: true, devServer: false});
     const compiler = webpack(webpackConfig);
     return new Promise((resolve, reject) => {
         compiler.run((err, stats) => {
