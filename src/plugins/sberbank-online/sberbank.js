@@ -16,6 +16,34 @@ export async function login(login, pin) {
 
     let response;
 
+    if (ZenMoney.getData("mGUID")) {
+        response = await fetchXml("https://online.sberbank.ru:4477/CSAMAPI/login.do", {
+            method: "POST",
+            headers: {
+                "User-Agent": "Mobile Device",
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Host": "online.sberbank.ru:4477",
+                "Connection": "Keep-Alive",
+                "Accept-Encoding": "gzip"
+            },
+            body: {
+                "operation": "button.login",
+                "mGUID": ZenMoney.getData("mGUID"),
+                "password": pin,
+                "version": "9.20",
+                "appType": "android",
+                "appVersion": "7.11.1",
+                "isLightScheme": false,
+                "deviceName": "Xperia Z2",
+                "devID":    ZenMoney.getData("devID"),
+                "mobileSdkData": JSON.stringify(createSdkData(login))
+            }
+        }, null);
+        if (_.get(response, "body.response.status.code") === "7") {
+            ZenMoney.setData("mGUID", null);
+        }
+    }
+
     if (!ZenMoney.getData("mGUID")) {
         response = await fetchXml("https://online.sberbank.ru:4477/CSAMAPI/registerApp.do", {
             method: "POST",
@@ -93,30 +121,8 @@ export async function login(login, pin) {
                 "mobileSdkData": JSON.stringify(createSdkData(login))
             }
         });
-    } else {
-        response = await fetchXml("https://online.sberbank.ru:4477/CSAMAPI/login.do", {
-            method: "POST",
-            headers: {
-                "User-Agent": "Mobile Device",
-                "Content-Type": "application/x-www-form-urlencoded",
-                "Host": "online.sberbank.ru:4477",
-                "Connection": "Keep-Alive",
-                "Accept-Encoding": "gzip"
-            },
-            body: {
-                "operation": "button.login",
-                "mGUID": ZenMoney.getData("mGUID"),
-                "password": pin,
-                "version": "9.20",
-                "appType": "android",
-                "appVersion": "7.11.1",
-                "isLightScheme": false,
-                "deviceName": "Xperia Z2",
-                "devID":    ZenMoney.getData("devID"),
-                "mobileSdkData": JSON.stringify(createSdkData(login))
-            }
-        });
     }
+
     validateResponse(response, response =>
         _.get(response, "body.response.loginData.token") &&
         _.get(response, "body.response.loginData.host"));
@@ -148,6 +154,55 @@ export async function login(login, pin) {
     }, response => _.get(response, "body.response.loginCompleted") === "true");
 
     return response.body.response.person;
+}
+
+export async function fetchAccounts() {
+    const response = await fetchXml("https://node1.online.sberbank.ru:4477/mobile9/private/products/list.do", {
+        method: "POST",
+        headers: {
+            "User-Agent": "Mobile Device",
+            "Content-Type": "application/x-www-form-urlencoded;charset=windows-1251",
+            "Host": "node1.online.sberbank.ru:4477",
+            "Connection": "Keep-Alive",
+            "Accept-Encoding": "gzip",
+        },
+        body: {showProductType: "cards,accounts,imaccounts,loans"}
+    }, response => _.get(response, "body.response.cards"));
+    return getArray(response.body.response.cards.card);
+}
+
+export async function fetchAccountDetails(accountId) {
+    const response = await fetchXml("https://node1.online.sberbank.ru:4477/mobile9/private/cards/info.do", {
+        method: "POST",
+        headers: {
+            "User-Agent": "Mobile Device",
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Host": "node1.online.sberbank.ru:4477",
+            "Connection": "Keep-Alive",
+            "Accept-Encoding": "gzip",
+        },
+        body: {id: accountId}
+    }, response => response => _.get(response, "body.response.detail"));
+    return response.body.response.detail;
+}
+
+export async function fetchTransactions(accountId, fromDate, toDate) {
+    const response = await fetchXml("https://node1.online.sberbank.ru:4477/mobile9/private/cards/abstract.do", {
+        method: "POST",
+        headers: {
+            "User-Agent": "Mobile Device",
+            "Referer": "Android/6.0/7.11.1",
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Host": "node1.online.sberbank.ru:4477",
+            "Connection": "Keep-Alive",
+            "Accept-Encoding": "gzip"
+        },
+        body: {id: accountId, count: 10, paginationSize: 10}
+        // Допускаются и другие параметры, чтобы получить операции за указанные даты.
+        // Но этот способ не работает с кредитной картой.
+        // body: {id: accountId, from: formatDate(fromDate), to: formatDate(toDate)}
+    }, response => response => _.get(response, "body.response.operations"));
+    return getArray(response.body.response.operations.operation);
 }
 
 export async function fetchXml(url, options = {}, predicate = () => true) {
@@ -205,15 +260,21 @@ function validateResponse(response, predicate) {
     console.assert(!predicate || predicate(response), "non-successful response");
 }
 
+function getArray(object) {
+    return object === null || object === undefined
+        ? object
+        : Array.isArray(object) ? object : [object];
+}
+
+function formatDate(date) {
+    return [date.getDate(), date.getMonth() + 1, date.getFullYear()].map(toAtLeastTwoDigitsString).join(".");
+}
+
 export function parseXml(xml) {
     const $ = cheerio.load(xml, {
         xmlMode: true
     });
     return parseXmlNode($().children()[0]);
-}
-
-function isEmptyNodeData(data) {
-
 }
 
 function parseXmlNode(root) {
@@ -249,14 +310,12 @@ function parseXmlNode(root) {
                 value = null;
             } else if (node.children.length === 1
                     && node.children[0].type === "text") {
-                value = node.children[0].data;
+                value = node.children[0].data.trim();
                 if (value === "") {
                     value = null;
                 }
-            } else if (node.children.length > 1) {
-                value = parseXmlNode(node);
             } else {
-                throw new Error("Error parsing XML. Unexpected child node type");
+                value = parseXmlNode(node);
             }
             let _value = object[key];
             if (_value !== undefined) {

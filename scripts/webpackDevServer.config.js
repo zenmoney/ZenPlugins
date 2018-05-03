@@ -37,6 +37,8 @@ const writeJsonSync = (file, object) => {
 
 const removeSecureSealFromCookieValue = (value) => value.replace(/\s?Secure(;|\s*$)/ig, "");
 
+const removeDomainFromCookieValue = (value) => value.replace(/\s?Domain=[^;]*(;|\s*$)/ig, "");
+
 const readPluginFileSync = (file, missingFileValue) => {
     const candidatePaths = [
         path.join(params.pluginPath, file),
@@ -147,7 +149,9 @@ module.exports = ({allowedHost, host, https}) => {
             });
             proxy.on("proxyRes", (proxyRes, req, res) => {
                 if (proxyRes.headers["set-cookie"]) {
-                    proxyRes.headers["set-cookie"] = proxyRes.headers["set-cookie"].map(removeSecureSealFromCookieValue);
+                    proxyRes.headers["set-cookie"] = proxyRes.headers["set-cookie"]
+                        .map(removeSecureSealFromCookieValue)
+                        .map(removeDomainFromCookieValue);
                 }
                 const location = proxyRes.headers["location"];
                 if (location && /^https?:\/\//i.test(location)) {

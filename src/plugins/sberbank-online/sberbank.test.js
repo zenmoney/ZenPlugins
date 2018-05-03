@@ -199,4 +199,117 @@ describe("parseXml", () => {
             }
         });
     });
+
+    it("parses complex xml", () => {
+        expect(parseXml(`<?xml version="1.0" encoding="windows-1251" ?> 
+<response> 
+    <status> 
+        <code>0</code> 
+    </status> 
+                        <operations>
+                            <operation><date>04.01.2018T00:00:00</date> 
+    <sum> 
+                        <amount>+95000.00</amount> 
+    <currency> 
+        <code>RUB</code>  
+        <name>руб.</name> 
+    </currency> 
+    </sum> 
+<description><![CDATA[Дополнительный взнос]]></description></operation>
+                            <operation><date>05.01.2018T00:00:00</date> 
+    <sum> 
+                        <amount>-50.00</amount> 
+    <currency> 
+        <code>RUB</code>  
+        <name>руб.</name> 
+    </currency> 
+    </sum> 
+<description><![CDATA[Частичная выдача]]></description></operation>
+                            <operation><date>17.01.2018T00:00:00</date> 
+    <sum> 
+                        <amount>-62000.00</amount> 
+    <currency> 
+        <code>RUB</code>  
+        <name>руб.</name> 
+    </currency> 
+    </sum> 
+<description><![CDATA[Частичная выдача]]></description></operation>
+                        </operations>
+                            <balances> 
+    <openingBalance> 
+                        <amount>4657.30</amount> 
+    <currency> 
+        <code>RUB</code>  
+        <name>руб.</name> 
+    </currency> 
+    </openingBalance> 
+    <closingBalance> 
+                        <amount>1440.30</amount> 
+    <currency> 
+        <code>RUB</code>  
+        <name>руб.</name> 
+    </currency> 
+    </closingBalance> 
+                            </balances> 
+</response>`)).toEqual({
+            response: {
+                status: {
+                    code: "0"
+                },
+                operations: {
+                    operation: [
+                        {
+                            date: "04.01.2018T00:00:00",
+                            sum: {
+                                amount: "+95000.00",
+                                currency: {
+                                    code: "RUB",
+                                    name: "руб."
+                                }
+                            },
+                            description: "Дополнительный взнос"
+                        },
+                        {
+                            date: "05.01.2018T00:00:00",
+                            sum: {
+                                amount: "-50.00",
+                                currency: {
+                                    code: "RUB",
+                                    name: "руб."
+                                }
+                            },
+                            description: "Частичная выдача"
+                        },
+                        {
+                            date: "17.01.2018T00:00:00",
+                            sum: {
+                                amount: "-62000.00",
+                                currency: {
+                                    code: "RUB",
+                                    name: "руб."
+                                }
+                            },
+                            description: "Частичная выдача"
+                        }
+                    ]
+                },
+                balances: {
+                    openingBalance: {
+                        amount: "4657.30",
+                        currency: {
+                            code: "RUB",
+                            name: "руб."
+                        }
+                    },
+                    closingBalance: {
+                        amount: "1440.30",
+                        currency: {
+                            code: "RUB",
+                            name: "руб."
+                        }
+                    }
+                }
+            }
+        });
+    });
 });
