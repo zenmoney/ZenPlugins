@@ -1,6 +1,6 @@
 const util = require("util");
 
-const formatWithCustomInspectParams = function(...args) {
+export const formatWithCustomInspectParams = function(...args) {
     const transformedArgs = args.map(value => typeof value === "object" ? {
         inspect(recurseTimes, ctx) {
             return util.inspect(value, {
