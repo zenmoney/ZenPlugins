@@ -44,10 +44,10 @@
     "whatwg-fetch": "git+https://github.com/skvav/fetch.git#a646b2f837308b483af07012c80e8fd8bb5984f6"
   },
   "scripts": {
-    "start": "node scripts/start.js",
-    "host": "node scripts/host.js",
-    "build": "node scripts/build.js",
-    "test": "node scripts/test.js"
+    "start": "yarn && node scripts/start.js",
+    "host": "yarn && node scripts/host.js",
+    "build": "yarn && node scripts/build.js",
+    "test": "yarn && node scripts/test.js"
   },
   "jest": {
     "collectCoverageFrom": [

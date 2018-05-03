@@ -21,7 +21,6 @@ bash:
 ```
 git clone git@github.com:zenmoney/ZenPlugins.git
 cd ZenPlugins
-yarn
 PLUGIN=src/plugins/example yarn start
 ```
 
@@ -30,8 +29,7 @@ windows batch:
 ```
 git clone git@github.com:zenmoney/ZenPlugins.git
 cd ZenPlugins
-yarn
-set "PLUGIN=plugins/example" && yarn start
+set "PLUGIN=src/plugins/example" && yarn start
 ```
 
 Останется только открыть корень репозитория в IDE.

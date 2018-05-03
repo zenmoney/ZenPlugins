@@ -49,15 +49,13 @@
 в bash:
 
 ```bash
-yarn
 PLUGIN=src/plugins/example yarn start
 ```
 
 или в windows batch:
 
 ```
-yarn
-set "PLUGIN=plugins/example" && yarn start
+set "PLUGIN=src/plugins/example" && yarn start
 ```
 
 При старте начинает работу web-сервер, занимающийся сборкой скриптов и проксированием запросов к сторонним хостам.
