@@ -20,6 +20,13 @@ export async function scrape({preferences, fromDate, toDate}) {
         pluginData.registered = true;
         ZenMoney.setData("registered", pluginData.registered);
         const {cardNumber, cardExpirationDate, phoneNumber} = preferences;
+        // FIXME must be checked in a wrapper
+        Object.entries({cardNumber, cardExpirationDate, phoneNumber}).forEach(([key, value]) => {
+            if (!value) {
+                // FIXME must use InvalidPreferencesError here, but InvalidPreferencesError android handler is buggy
+                throw new TemporaryError(`preference key ${key} must be set`);
+            }
+        });
         const {accessToken, refreshToken} = await register({
             deviceId: pluginData.deviceId,
             cardNumber,
@@ -31,7 +38,6 @@ export async function scrape({preferences, fromDate, toDate}) {
         pluginData.refreshToken = refreshToken;
         ZenMoney.setData("refreshToken", pluginData.refreshToken);
         ZenMoney.saveData();
-
     }
     let loginResponse = await login({sessionId, deviceId: pluginData.deviceId, accessToken: pluginData.accessToken});
     if (isExpiredLogin(loginResponse)) {
