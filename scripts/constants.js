@@ -1,8 +1,14 @@
 const path = require("path");
 const resolve = relativePath => path.resolve(process.cwd(), relativePath);
+const chalk = require("chalk");
 
 if (!process.env.PLUGIN) {
-    throw new Error("PLUGIN env var must be set");
+    const scriptName = path.basename(process.argv.find((x) => x.endsWith(".js")), ".js");
+    const command = process.platform === "win32"
+        ? `set "PLUGIN=src/plugins/example" && yarn ${scriptName}`
+        : `PLUGIN=src/plugins/example yarn ${scriptName}`;
+    console.error(`${chalk.red("You must specify plugin path in PLUGIN env var to proceed, e.g.:")}\n${chalk.cyan(command)}`);
+    process.exit(1);
 }
 
 const params = {
