@@ -122,7 +122,7 @@ export function adaptScrapeToGlobalApi(scrape) {
             );
             ZenMoney.addAccount(results.map(({account, transactions}) => account));
             results.forEach(({account, transactions}) => {
-                ZenMoney.addTransaction(transactions.map(fixDateTimezones));
+                ZenMoney.addTransaction(castTransactionDatesToTicks(transactions.map(fixDateTimezones)));
             });
             ZenMoney.setResult({success: true});
         });
