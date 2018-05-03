@@ -14,7 +14,6 @@ import {
     setDefaultEncoding,
     setThrowOnError,
 } from "./utils";
-import {ZPAPIError} from "./ZPAPIError";
 
 function sleepSync(durationMs) {
     const startMs = Date.now();
@@ -103,7 +102,6 @@ function ZPAPI({manifest, preferences, data}) {
 
     this.getLevel = () => 12;
 
-    this.Error = ZPAPIError;
     this.trace = (msg, caller) => nativeConsole.log("[" + (caller || "trace") + "]", msg);
     this.setExceptions = setThrowOnError;
     this.setDefaultCharset = setDefaultEncoding;

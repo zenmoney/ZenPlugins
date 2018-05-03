@@ -4,5 +4,7 @@ module.exports = {
         "console": false,
         "ZenMoney": false,
         "fetch": false,
+        "TemporaryError": false,
+        "InvalidPreferencesError": false,
     },
 };

@@ -1,5 +1,4 @@
 import {PROXY_TARGET_HEADER, TRANSFERABLE_HEADER_PREFIX} from "./shared";
-import {ZPAPIError} from "./ZPAPIError";
 
 let lastRequest = null;
 
@@ -83,7 +82,7 @@ export const handleException = (message) => {
     }
     lastError = message;
     if (throwOnError) {
-        throw new ZPAPIError(message);
+        throw new Error(message);
     }
     return null;
 };
