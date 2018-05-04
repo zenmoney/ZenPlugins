@@ -1,10 +1,10 @@
 import _ from "lodash";
 import {formatCommentDateTime} from "../../common/dates";
 import * as errors from "../../common/errors";
+import {generateUUID} from "../../common/utils";
 import {convertToZenMoneyTransaction} from "../priorbank/mappingUtils";
 import * as BSB from "./BSB";
 import {getTransactionToTransferReplacements} from "./mergeTransfers";
-import {generateUUID} from "../../common/utils";
 
 function ensureDeviceId() {
     let deviceId = ZenMoney.getData("deviceId");
@@ -59,7 +59,7 @@ function convertToZenMoneyAccount(card) {
 function normalizeBsbTransactions({accountCurrency, bsbTransactions}) {
     return _.sortBy(
         bsbTransactions.filter((transaction) => !BSB.isRejectedTransaction(transaction) && transaction.transactionAmount > 0),
-        (x) => x.cardTransactionId
+        (x) => x.cardTransactionId,
     )
         .map((transaction, index, transactions) => {
             const transactionAmount = BSB.getTransactionFactor(transaction) * transaction.transactionAmount;

@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen>
     <EditTextPreference
-            key="scriptUrl"
-            obligatory="true"
-            title="Script URL"
-            defaultValue="http://192.168.1.1:5000/index.js"
-            dialogTitle="Script URL"
-            positiveButtonText="Ok"
-            negativeButtonText="Cancel"
-            summary="|scriptUrl|{@s}"
+        key="scriptUrl"
+        obligatory="true"
+        title="Script URL"
+        defaultValue="http://192.168.1.1:5000/index.js"
+        dialogTitle="Script URL"
+        positiveButtonText="Ok"
+        negativeButtonText="Cancel"
+        summary="|scriptUrl|{@s}"
     >
     </EditTextPreference>
     <EditTextPreference
-            key="preferencesJson"
-            obligatory="true"
-            title="Preferences JSON"
-            defaultValue="{&quot;startDate&quot;:&quot;2010-01-01T12:00:00.000Z&quot;}"
-            dialogTitle="Preferences accessible in loaded plugin"
-            positiveButtonText="Ok"
-            negativeButtonText="Cancel"
-            summary="|preferencesJson|{@s}"
+        key="preferencesJson"
+        obligatory="true"
+        title="Preferences JSON"
+        defaultValue="{&quot;startDate&quot;:&quot;2010-01-01T12:00:00.000Z&quot;}"
+        dialogTitle="Preferences accessible in loaded plugin"
+        positiveButtonText="Ok"
+        negativeButtonText="Cancel"
+        summary="|preferencesJson|{@s}"
     >
     </EditTextPreference>
 </PreferenceScreen>

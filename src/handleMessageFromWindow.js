@@ -13,7 +13,7 @@ const messageHandlers = {
             reply({
                 type: ":events/sync-success",
                 payload: result,
-            })
+            });
         } catch (error) {
             reply({
                 type: ":events/sync-failure",

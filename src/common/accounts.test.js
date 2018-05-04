@@ -5,12 +5,12 @@ describe("convertAccountSyncID", () => {
         const accounts = [
             {syncID: ["0001", "111120"]},
             {syncID: ["0002", "222"]},
-            {syncID: ["0003"]}
+            {syncID: ["0003"]},
         ];
         const expected = [
             {syncID: ["0001", "1120"]},
             {syncID: ["0002", "222"]},
-            {syncID: ["0003"]}
+            {syncID: ["0003"]},
         ];
         expect(convertAccountSyncID(accounts)).toEqual(expected);
     });
@@ -19,12 +19,12 @@ describe("convertAccountSyncID", () => {
         const accounts = [
             {syncID: ["0001", "121120"], instrument: "RUB"},
             {syncID: ["0002", "111120"], instrument: "USD"},
-            {syncID: ["0003"]}
+            {syncID: ["0003"]},
         ];
         const expected = [
             {syncID: ["0001", "1120"], instrument: "RUB"},
             {syncID: ["0002", "1120"], instrument: "USD"},
-            {syncID: ["0003"]}
+            {syncID: ["0003"]},
         ];
         expect(convertAccountSyncID(accounts)).toEqual(expected);
     });
@@ -33,12 +33,12 @@ describe("convertAccountSyncID", () => {
         const accounts = [
             {syncID: ["0001", "00000121120"], instrument: "RUB"},
             {syncID: ["0002", "00000111120"], instrument: "RUB"},
-            {syncID: ["0003"]}
+            {syncID: ["0003"]},
         ];
         const expected = [
             {syncID: ["0001", "*****121120"], instrument: "RUB"},
             {syncID: ["0002", "*****111120"], instrument: "RUB"},
-            {syncID: ["0003"]}
+            {syncID: ["0003"]},
         ];
         expect(convertAccountSyncID(accounts)).toEqual(expected);
     });
@@ -47,12 +47,12 @@ describe("convertAccountSyncID", () => {
         const accounts = [
             {syncID: ["0001", "121120"], instrument: "RUB"},
             {syncID: ["0002", "111120"], instrument: "RUB"},
-            {syncID: ["0003"]}
+            {syncID: ["0003"]},
         ];
         const expected = [
             {syncID: ["0001", "121120"], instrument: "RUB"},
             {syncID: ["0002", "111120"], instrument: "RUB"},
-            {syncID: ["0003"]}
+            {syncID: ["0003"]},
         ];
         expect(convertAccountSyncID(accounts)).toEqual(expected);
     });

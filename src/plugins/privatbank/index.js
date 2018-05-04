@@ -1,7 +1,7 @@
-import {PrivatBank} from "./privatbank";
-import {convertAccounts, convertTransactions} from "./converters";
 import {convertAccountMapToArray, convertAccountSyncID} from "../../common/accounts";
 import {convertTransactionAccounts, mapObjectsGroupedByKey} from "../../common/transactions";
+import {convertAccounts, convertTransactions} from "./converters";
+import {PrivatBank} from "./privatbank";
 
 export function adjustAccounts(accounts) {
     return convertAccountSyncID(convertAccountMapToArray(accounts));
@@ -9,15 +9,15 @@ export function adjustAccounts(accounts) {
 
 export function adjustTransactions(transactions, accounts) {
     return mapObjectsGroupedByKey(convertTransactionAccounts(transactions, accounts),
-        (transaction)       => transaction._transferId || null,
+        (transaction) => transaction._transferId || null,
         (transactions, key) => {
             if (key === null) {
                 return transactions;
             }
             if (transactions.length === 2 &&
-                    transactions[0]._transferType !==
-                    transactions[1]._transferType) {
-                const transaction  = transactions[0];
+                transactions[0]._transferType !==
+                transactions[1]._transferType) {
+                const transaction = transactions[0];
                 const transferType = transactions[0]._transferType;
                 ["", "Account", "BankID"].forEach(postfix => {
                     const value = transactions[1][transferType + postfix];
@@ -48,13 +48,13 @@ export async function scrape({fromDate, toDate}) {
     if (merchants.length !== passwords.length) {
         throw new ZenMoney.Error("Количество паролей, разделенных через пробел, в настройках подключения должно быть равно количеству мерчантов, разделенных через пробел", true, true);
     }
-    const accounts   = {};
+    const accounts = {};
     let transactions = [];
     for (let i = 0; i < merchants.length; i++) {
         const bank = new PrivatBank({
             merchant: merchants[i],
             password: passwords[i],
-            baseUrl:  preferences.serverAddress
+            baseUrl: preferences.serverAddress,
         });
         const account = convertAccounts(await bank.fetchAccounts());
         transactions = transactions.concat(convertTransactions(
@@ -62,7 +62,7 @@ export async function scrape({fromDate, toDate}) {
         Object.assign(accounts, account);
     }
     return {
-        accounts:     adjustAccounts(accounts),
-        transactions: adjustTransactions(transactions, accounts)
+        accounts: adjustAccounts(accounts),
+        transactions: adjustTransactions(transactions, accounts),
     };
 }

@@ -80,7 +80,7 @@ describe("adaptScrapeToGlobalApi", () => {
                         },
                     };
                 },
-            }
+            };
         });
         return expect(() => main()).toThrow(error);
     });

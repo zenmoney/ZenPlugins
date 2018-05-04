@@ -27,7 +27,7 @@ function sleepSync(durationMs) {
 }
 
 function collapseWhitespaces(str) {
-    return str.replace(/\s+/g, " ").trim()
+    return str.replace(/\s+/g, " ").trim();
 }
 
 function castInterval(object) {

@@ -22,7 +22,7 @@ export function mapObjectsGroupedByKey(objects, keyGetter, groupMapper) {
 export function convertTransactionAccounts(transactions, accounts) {
     const filtered = [];
     for (const transaction of transactions) {
-        const incomeAccount  = accounts[transaction.incomeAccount];
+        const incomeAccount = accounts[transaction.incomeAccount];
         const outcomeAccount = accounts[transaction.outcomeAccount];
         if (!incomeAccount && !outcomeAccount) {
             continue;
@@ -44,7 +44,7 @@ export function filterTransactionDuplicates(transactions) {
             transaction.payee.trim() : "";
         const date =
             typeof transaction.date === "string" ||
-            typeof transaction.date === "number" ?  transaction.date.toString() : transaction.date.getTime().toString();
+            typeof transaction.date === "number" ? transaction.date.toString() : transaction.date.getTime().toString();
         return `${date}_${payee}_${transaction.incomeAccount}_${transaction.income}_${transaction.outcomeAccount}_${transaction.outcome}`;
     }, group => group[0]);
 }

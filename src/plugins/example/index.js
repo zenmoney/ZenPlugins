@@ -17,6 +17,6 @@ export async function scrape({fromDate, toDate}) {
         .map(transaction => converters.convertTransaction(transaction, accounts));
     return {
         accounts: accounts,
-        transactions: transactions
+        transactions: transactions,
     };
 }

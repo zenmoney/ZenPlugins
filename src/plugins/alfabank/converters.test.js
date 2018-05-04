@@ -1,4 +1,4 @@
-import {parseApiMovementDescription, toZenmoneyAccount, convertApiMovementToReadableTransaction} from "./converters";
+import {parseApiMovementDescription, toZenmoneyAccount} from "./converters";
 
 describe("toZenmoneyAccount", () => {
     it("maps api credit account", () => {
@@ -61,7 +61,7 @@ describe("toZenmoneyAccount", () => {
             "instrument": "RUR",
             "balance": 8936.66,
         });
-    })
+    });
 });
 
 test("parseApiMovementDescription", () => {

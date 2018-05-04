@@ -22,25 +22,25 @@ describe("parseXml", () => {
                         <minimumPINLength>5</minimumPINLength> 
                     </registrationParameters> 
 </response>`)).toEqual({
-           response: {
-               status: {
-                   code: "0"
-               },
-               loginCompleted: "false",
-               confirmRegistrationStage: {
-                   mGUID: "596822784bbcef111e3e1d2e1e22cb5e"
-               },
-               confirmInfo: {
-                   type: "smsp",
-                   smsp: {
-                       lifeTime: "597",
-                       attemptsRemain: "3"
-                   }
-               },
-               registrationParameters: {
-                   minimumPINLength: "5"
-               }
-           }
+            response: {
+                status: {
+                    code: "0",
+                },
+                loginCompleted: "false",
+                confirmRegistrationStage: {
+                    mGUID: "596822784bbcef111e3e1d2e1e22cb5e",
+                },
+                confirmInfo: {
+                    type: "smsp",
+                    smsp: {
+                        lifeTime: "597",
+                        attemptsRemain: "3",
+                    },
+                },
+                registrationParameters: {
+                    minimumPINLength: "5",
+                },
+            },
         });
     });
 
@@ -107,8 +107,8 @@ describe("parseXml", () => {
                                 amount: "1650.30",
                                 currency: {
                                     code: "RUB",
-                                    name: "ðóá."
-                                }
+                                    name: "ðóá.",
+                                },
                             },
                             cardAccount: "40817810855760689742",
                             description: "MasterCard Mass",
@@ -121,15 +121,15 @@ describe("parseXml", () => {
                             smsName: "2235",
                             state: "active",
                             statusWay4: "+-ÊÀÐÒÎ×ÊÀ ÎÒÊÐÛÒÀ",
-                            type: "debit"
+                            type: "debit",
                         },
                         {
                             availableLimit: {
                                 amount: "104599.86",
                                 currency: {
                                     code: "RUB",
-                                    name: "ðóá."
-                                }
+                                    name: "ðóá.",
+                                },
                             },
                             description: "Visa Gold",
                             expireDate: "05/2019",
@@ -141,17 +141,17 @@ describe("parseXml", () => {
                             smsName: "5678",
                             state: "active",
                             statusWay4: "+-ÊÀÐÒÎ×ÊÀ ÎÒÊÐÛÒÀ",
-                            type: "credit"
-                        }
+                            type: "credit",
+                        },
                     ],
                     status: {
-                        code: "0"
-                    }
+                        code: "0",
+                    },
                 },
                 status: {
-                    code: "0"
-                }
-            }
+                    code: "0",
+                },
+            },
         });
     });
 
@@ -183,20 +183,20 @@ describe("parseXml", () => {
                 confirmInfo: {
                     smsp: {
                         attemptsRemain: "2",
-                        lifeTime: "587"
+                        lifeTime: "587",
                     },
-                    type: "smsp"
+                    type: "smsp",
                 },
                 loginCompleted: "false",
                 status: {
                     code: "1",
                     errors: {
                         error: {
-                            text: "Вы ввели неправильный идентификатор или пароль из SMS. Пожалуйста, попробуйте снова."
-                        }
-                    }
-                }
-            }
+                            text: "Вы ввели неправильный идентификатор или пароль из SMS. Пожалуйста, попробуйте снова.",
+                        },
+                    },
+                },
+            },
         });
     });
 
@@ -254,7 +254,7 @@ describe("parseXml", () => {
 </response>`)).toEqual({
             response: {
                 status: {
-                    code: "0"
+                    code: "0",
                 },
                 operations: {
                     operation: [
@@ -264,10 +264,10 @@ describe("parseXml", () => {
                                 amount: "+95000.00",
                                 currency: {
                                     code: "RUB",
-                                    name: "руб."
-                                }
+                                    name: "руб.",
+                                },
                             },
-                            description: "Дополнительный взнос"
+                            description: "Дополнительный взнос",
                         },
                         {
                             date: "05.01.2018T00:00:00",
@@ -275,10 +275,10 @@ describe("parseXml", () => {
                                 amount: "-50.00",
                                 currency: {
                                     code: "RUB",
-                                    name: "руб."
-                                }
+                                    name: "руб.",
+                                },
                             },
-                            description: "Частичная выдача"
+                            description: "Частичная выдача",
                         },
                         {
                             date: "17.01.2018T00:00:00",
@@ -286,30 +286,30 @@ describe("parseXml", () => {
                                 amount: "-62000.00",
                                 currency: {
                                     code: "RUB",
-                                    name: "руб."
-                                }
+                                    name: "руб.",
+                                },
                             },
-                            description: "Частичная выдача"
-                        }
-                    ]
+                            description: "Частичная выдача",
+                        },
+                    ],
                 },
                 balances: {
                     openingBalance: {
                         amount: "4657.30",
                         currency: {
                             code: "RUB",
-                            name: "руб."
-                        }
+                            name: "руб.",
+                        },
                     },
                     closingBalance: {
                         amount: "1440.30",
                         currency: {
                             code: "RUB",
-                            name: "руб."
-                        }
-                    }
-                }
-            }
+                            name: "руб.",
+                        },
+                    },
+                },
+            },
         });
     });
 });

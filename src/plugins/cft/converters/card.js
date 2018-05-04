@@ -13,18 +13,18 @@ import {cardUniqueAccountId as accountId, resolveCurrencyCode} from "./helpers";
 const converter = (data) => {
     const account = entity();
 
-    account.id     = accountId(data.id);
-    account.title  = data.name;
-    account.type   = ZENMONEY_ACCOUNT_TYPE.CARD;
+    account.id = accountId(data.id);
+    account.title = data.name;
+    account.type = ZENMONEY_ACCOUNT_TYPE.CARD;
     account.syncID = [
         data.ean.toString(),
         data.panTail.toString(),
     ];
 
     data.equities.forEach((equity) => {
-        if (equity.type === 'FUNDS') {
+        if (equity.type === "FUNDS") {
             account.instrument = resolveCurrencyCode(equity.currencyCode);
-            account.balance    = Number(equity.amount);
+            account.balance = Number(equity.amount);
         }
     });
 
@@ -33,4 +33,4 @@ const converter = (data) => {
 
 export {
     converter,
-}
+};

@@ -6,8 +6,8 @@ import * as api from "../api";
 
 describe("setApiUri", () => {
     it("should set correct url", () => {
-        api.setApiUri('http://example.com');
-        expect(api.apiUri).toBe('http://example.com');
+        api.setApiUri("http://example.com");
+        expect(api.apiUri).toBe("http://example.com");
     });
 });
 
