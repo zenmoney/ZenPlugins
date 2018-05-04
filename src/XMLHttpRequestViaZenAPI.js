@@ -59,8 +59,8 @@ XMLHttpRequestViaZenAPI.prototype.send = function(body) {
     [, this.statusText] = ZenMoney.getLastStatusString().match(/^HTTP\/1.1 \d+ (.*)$/);
     const zenResponseHeaders = ZenMoney.getLastResponseHeaders();
     const xhrResponseHeaders = zenResponseHeaders
-            .map(([key, value]) => `${key}: ${value}`)
-            .join("\n") + "\n";
+        .map(([key, value]) => `${key}: ${value}`)
+        .join("\n") + "\n";
     this.getAllResponseHeaders = function() {
         return xhrResponseHeaders;
     };

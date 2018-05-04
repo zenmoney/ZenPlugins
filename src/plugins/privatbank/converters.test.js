@@ -18,7 +18,7 @@ describe("convertTransactions", () => {
                 "incomeAccount": "5167985500160759",
                 "outcome": 164,
                 "outcomeAccount": "5167985500160759",
-                "payee": "Воля, ТОВ(Volia)"
+                "payee": "Воля, ТОВ(Volia)",
             },
             {
                 "outcomeBankID": "162010",
@@ -27,7 +27,7 @@ describe("convertTransactions", () => {
                 "incomeAccount": "5167985500160759",
                 "outcome": 126,
                 "outcomeAccount": "5167985500160759",
-                "payee": "Рівнегаз Збут, ТзОВ"
+                "payee": "Рівнегаз Збут, ТзОВ",
             },
             {
                 "date": new Date("2018-03-01 00:00:00"),
@@ -35,7 +35,7 @@ describe("convertTransactions", () => {
                 "incomeAccount": "5168742331568802",
                 "outcome": 0,
                 "outcomeAccount": "5168742331568802",
-                "comment": "Начисление процентов на остаток средств по договору"
+                "comment": "Начисление процентов на остаток средств по договору",
             },
             {
                 "date": new Date("2018-03-01 00:00:00"),
@@ -43,8 +43,8 @@ describe("convertTransactions", () => {
                 "incomeAccount": "5168742331568802",
                 "outcome": 0.68,
                 "outcomeAccount": "5168742331568802",
-                "comment": "Удержание налога с начисленных на остаток собственных средств на карте процентов"
-            }
+                "comment": "Удержание налога с начисленных на остаток собственных средств на карте процентов",
+            },
         ]);
     });
 
@@ -56,7 +56,7 @@ describe("convertTransactions", () => {
             <statement card="5363542602444722" appcode="960318" trandate="2018-03-17" trantime="10:49:00" amount="31.86 UAH" cardamount="-31.86 UAH" rest="122.61 UAH" terminal="" description="Ресторан: Тов КГХ АЭС, Енергодар, Промышленная, 1"/>
         </statements></info></data></response>`;
         const accounts = {
-            "1": {id: "1", syncID: []}
+            "1": {id: "1", syncID: []},
         };
         const transactions = convertTransactions(xml, accounts);
         expect(transactions).toEqual([
@@ -84,12 +84,12 @@ describe("convertTransactions", () => {
                 "outcome": 31.86,
                 "outcomeAccount": "5363542602444722",
                 "outcomeBankID": "960318",
-                "payee": "Тов КГХ АЭС, Енергодар, Промышленная, 1"
-            }
+                "payee": "Тов КГХ АЭС, Енергодар, Промышленная, 1",
+            },
         ]);
         expect(accounts).toEqual({
             "1": {id: "1", syncID: ["5363542602444722"]},
-            "5363542602444722": {id: "1", syncID: ["5363542602444722"]}
+            "5363542602444722": {id: "1", syncID: ["5363542602444722"]},
         });
     });
 });
@@ -128,8 +128,8 @@ describe("convertAccounts", () => {
                 "creditLimit": 0,
                 "syncID": [
                     "5168742331568802",
-                    "5167985500160759"
-                ]
+                    "5167985500160759",
+                ],
             },
             "5168742331568802": {
                 "id": "5168742331568802",
@@ -140,9 +140,9 @@ describe("convertAccounts", () => {
                 "creditLimit": 0,
                 "syncID": [
                     "5168742331568802",
-                    "5167985500160759"
-                ]
-            }
+                    "5167985500160759",
+                ],
+            },
         });
     });
 });

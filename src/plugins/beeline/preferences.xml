@@ -1,40 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen>
     <EditTextPreference
-            key="card_number"
-            summary="|Штрих-код карты|{@s}"
-            title="Штрих-код карты"
-            dialogTitle="Штрих-код карты"
-            dialogMessage="Введите штрих-код карты, используемый для входа в интернет-банк"
-            negativeButtonText="Отмена"
-            positiveButtonText="ОК"
-            inputType="number"
-            obligatory="true"
+        key="card_number"
+        summary="|Штрих-код карты|{@s}"
+        title="Штрих-код карты"
+        dialogTitle="Штрих-код карты"
+        dialogMessage="Введите штрих-код карты, используемый для входа в интернет-банк"
+        negativeButtonText="Отмена"
+        positiveButtonText="ОК"
+        inputType="number"
+        obligatory="true"
     >
     </EditTextPreference>
     <EditTextPreference
-            key="password"
-            summary="||***********"
-            title="Пароль"
-            dialogTitle="Пароль"
-            dialogMessage="Введите пароль, используемый для входа в интернет-банк"
-            negativeButtonText="Отмена"
-            positiveButtonText="ОК"
-            inputType="textPassword"
-            obligatory="true"
+        key="password"
+        summary="||***********"
+        title="Пароль"
+        dialogTitle="Пароль"
+        dialogMessage="Введите пароль, используемый для входа в интернет-банк"
+        negativeButtonText="Отмена"
+        positiveButtonText="ОК"
+        inputType="textPassword"
+        obligatory="true"
     >
     </EditTextPreference>
     <EditTextPreference
-            key="startDate"
-            obligatory="true"
-            inputType="date"
-            title="С какой даты необходимо загружать операции"
-            defaultValue="2010-06-01T12:00:00.000Z"
-            dialogTitle="Дата начала загрузки"
-            dialogMessage="Введите дату, с которой необходимо загружать операции"
-            positiveButtonText="ОК"
-            negativeButtonText="Отмена"
-            summary="|startDate|{@s}"
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="С какой даты необходимо загружать операции"
+        defaultValue="2010-06-01T12:00:00.000Z"
+        dialogTitle="Дата начала загрузки"
+        dialogMessage="Введите дату, с которой необходимо загружать операции"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|startDate|{@s}"
     >
     </EditTextPreference>
 </PreferenceScreen>

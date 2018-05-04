@@ -17,7 +17,7 @@ const unsealSyncPromise = (promise) => {
         rejectValue => {
             state = "rejected";
             value = rejectValue;
-        }
+        },
     );
     return {state, value};
 };
@@ -118,7 +118,7 @@ export function adaptScrapeToGlobalApi(scrape) {
             console.assert(results.length > 0, "scrape results are empty");
             console.assert(
                 results.every((result) => result.account && Array.isArray(result.transactions)),
-                "scrape result should be array of {account, transactions[]}"
+                "scrape result should be array of {account, transactions[]}",
             );
             ZenMoney.addAccount(results.map(({account, transactions}) => account));
             results.forEach(({account, transactions}) => {
@@ -157,7 +157,7 @@ export function traceFunctionCalls(fn) {
             (rejectValue) => {
                 console.error(`${functionName} call rejected with`, rejectValue, `\n(${(Date.now() - startMs).toFixed(0)}ms)`);
                 return Promise.reject(rejectValue);
-            }
+            },
         );
     };
 }

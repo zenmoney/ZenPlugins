@@ -1,5 +1,4 @@
-import {formatCommentDateTime} from "./dates";
-import {isValidDate} from "./dates";
+import {formatCommentDateTime, isValidDate} from "./dates";
 
 describe("formatCommentDateTime", () => {
     it("should return stringified datetime in year-month-day hours:minutes:seconds format", () => {

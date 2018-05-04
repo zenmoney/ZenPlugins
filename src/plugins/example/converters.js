@@ -5,7 +5,7 @@ export function convertAccount(json) {
         instrument: json.currency.shortName,
         balance: json.accountBalance.value,
         creditLimit: 0,
-        syncID: []
+        syncID: [],
     };
     if (json.pan) {
         account.syncID.push(json.pan.slice(-4));
@@ -29,7 +29,7 @@ export function convertTransaction(json, accounts) {
         incomeAccount: json.relationId,
         outcome: json.accountAmount.value < 0 ? -json.accountAmount.value : 0,
         outcomeAccount: json.relationId,
-        date: new Date(json.operationTime)
+        date: new Date(json.operationTime),
     };
     if (!transaction.hold) {
         transaction.id = json.id;

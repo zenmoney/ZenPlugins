@@ -4,7 +4,7 @@
 
 import * as main from "../cft/main";
 
-const apiUri = 'https://mybank.oplata.kykyryza.ru/api/v0001';
+const apiUri = "https://mybank.oplata.kykyryza.ru/api/v0001";
 
 /**
  * @param fromDate
