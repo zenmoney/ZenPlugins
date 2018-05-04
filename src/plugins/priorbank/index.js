@@ -34,7 +34,7 @@ export async function scrape({fromDate, toDate}) {
         accounts: cards.map((card) => convertToZenMoneyAccount(card)),
         transactions: _.flatMap(
             cards.filter((card) => !ZenMoney.isAccountSkipped(calculateAccountId(card))),
-            (card) => convertToZenMoneyTransactions(calculateAccountId(card), card.transactions)
+            (card) => convertToZenMoneyTransactions(calculateAccountId(card), card.transactions),
         ),
-    }
+    };
 }

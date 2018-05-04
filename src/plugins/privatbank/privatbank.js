@@ -1,11 +1,11 @@
-import {SHA1, MD5} from "jshashes";
-import {toAtLeastTwoDigitsString} from "../../common/dates";
+import {MD5, SHA1} from "jshashes";
 
 import _ from "lodash";
+import {toAtLeastTwoDigitsString} from "../../common/dates";
 import {sanitize} from "../../common/sanitize";
 
 const sha1 = new SHA1();
-const md5  = new MD5();
+const md5 = new MD5();
 
 function formatDate(date) {
     return [date.getDate(), date.getMonth() + 1, date.getFullYear()].map(toAtLeastTwoDigitsString).join(".");
@@ -18,7 +18,7 @@ export async function fetchXml(url, options = {}) {
             "Accept": "application/xml, text/plain, */*",
             "Content-Type": "application/xml;charset=UTF-8",
             ...options.headers,
-        }
+        },
     };
 
     const beforeFetchTicks = Date.now();
@@ -44,7 +44,7 @@ export async function fetchXml(url, options = {}) {
 
     return {
         ..._.pick(response, ["ok", "status", "statusText", "url", "headers"]),
-        body
+        body,
     };
 }
 
@@ -71,7 +71,7 @@ export class PrivatBank {
             </request>`;
         const response = await fetchXml(`${this.baseUrl}${url}`, {
             method: "POST",
-            body: xml
+            body: xml,
         });
         if (response.body) {
             if (response.status === 504 && response.body.indexOf("504 Gateway Time-out") >= 0) {
@@ -86,7 +86,7 @@ export class PrivatBank {
                     `Укажите IP-адрес: 95.213.236.52 в настройках мерчанта в Приват24.`, true);
             }
             if (response.body.indexOf("this card is not in merchants card") >= 0) {
-                throw new ZenMoney.Error(`Не удалось получить баланс карты по мерчанту ${this.merchant}. `  +
+                throw new ZenMoney.Error(`Не удалось получить баланс карты по мерчанту ${this.merchant}. ` +
                     `Если карта была недавно перевыпущена, зарегистрируйте для неё новый мерчант и ` +
                     `обновите его в настройках подключения к банку.`, true);
             }

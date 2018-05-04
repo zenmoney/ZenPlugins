@@ -16,12 +16,12 @@ export function convertAccount(json) {
         return null;
     }
     const accounts = {};
-    const account  = {
+    const account = {
         id: "ACCOUNT_" + json.account.id,
         type: "checking",
         instrument: json.account.currency.shortName,
-        balance:    json.balance,
-        syncID: []
+        balance: json.balance,
+        syncID: [],
     };
     accounts[account.id] = account;
     if (json.type.id === 2) {
@@ -56,14 +56,14 @@ export function convertCards(jsonArray, accounts = {}) {
         const isMainCard = json.alien || json.main.id === 1;
 
         let accountId = "ACCOUNT_" + json.account.id;
-        let account   = accounts[accountId] || cards[accountId];
+        let account = accounts[accountId] || cards[accountId];
         if (!account && json.account.id < 0) {
             for (const acc of Object.values(accounts)) {
                 if (acc.type === "checking"
-                        && acc.syncID.length <= 1
-                        && acc.instrument === json.currency.shortName
-                        && acc.balance === json.balance) {
-                    account   = acc;
+                    && acc.syncID.length <= 1
+                    && acc.instrument === json.currency.shortName
+                    && acc.balance === json.balance) {
+                    account = acc;
                     accountId = acc.id;
                     break;
                 }
@@ -100,7 +100,7 @@ export function convertCards(jsonArray, accounts = {}) {
 }
 
 export function convertDepositsWithTransactions(jsonArray) {
-    const accounts     = {};
+    const accounts = {};
     const transactions = [];
     for (const json of jsonArray) {
         if (!json.deals || !json.deals.length) {
@@ -115,14 +115,14 @@ export function convertDepositsWithTransactions(jsonArray) {
                     title: json.product.name.name,
                     instrument: deal.currency.shortName,
                     syncID: [json.number],
-                    startBalance:   deal.startAmount,
-                    percent:        deal.rate,
-                    startDate:      deal.open.substring(0, 10),
-                    endDateOffset:  deal.duration,
+                    startBalance: deal.startAmount,
+                    percent: deal.rate,
+                    startDate: deal.open.substring(0, 10),
+                    endDateOffset: deal.duration,
                     endDateOffsetInterval: "day",
                     capitalization: json.capital,
-                    payoffStep:     json.frequency ? 1 : 0,
-                    payoffInterval: json.frequency ? json.frequency.id === "Y" ? "year" : "month" : null
+                    payoffStep: json.frequency ? 1 : 0,
+                    payoffInterval: json.frequency ? json.frequency.id === "Y" ? "year" : "month" : null,
                 };
                 accounts[deposit.id] = deposit;
             }
@@ -134,7 +134,7 @@ export function convertDepositsWithTransactions(jsonArray) {
                 outcome: 0,
                 outcomeAccount: deposit.id,
                 date: deal.open.substring(0, 10),
-                hold: false
+                hold: false,
             });
         }
     }
@@ -156,8 +156,8 @@ export function convertLoan(json) {
     if (!json.docNumber) {
         return null;
     }
-    const startDate  = new Date(json.open.substr(0, 10)).getTime() / 1000;
-    const endDate    = new Date(json.close.substr(0, 10)).getTime() / 1000;
+    const startDate = new Date(json.open.substr(0, 10)).getTime() / 1000;
+    const endDate = new Date(json.close.substr(0, 10)).getTime() / 1000;
     const dateOffset = Math.round((endDate - startDate) / (30 * 24 * 60 * 60));
     const loan = {
         id: "LOAN_" + json.docNumber,
@@ -171,7 +171,7 @@ export function convertLoan(json) {
         endDateOffsetInterval: "month",
         capitalization: true,
         payoffStep: 1,
-        payoffInterval: "month"
+        payoffInterval: "month",
     };
     loan.title = "*" + loan.syncID[0].slice(-4);
     return loan;
@@ -198,10 +198,10 @@ export function convertLoanTransaction(json) {
         date: json.date.substring(0, 10),
         hold: false,
         comment: json.relatedDescription.name,
-        income:         json.amount > 0 ? json.amount : 0,
-        incomeAccount:  json.relation + "_" + json.relatedName.name,
-        outcome:        json.amount < 0 ? -json.amount : 0,
-        outcomeAccount: json.relation + "_" + json.relatedName.name
+        income: json.amount > 0 ? json.amount : 0,
+        incomeAccount: json.relation + "_" + json.relatedName.name,
+        outcome: json.amount < 0 ? -json.amount : 0,
+        outcomeAccount: json.relation + "_" + json.relatedName.name,
     };
 }
 
@@ -210,10 +210,10 @@ export function convertDepositTransaction(json) {
         date: json.date.substring(0, 10),
         hold: false,
         comment: json.relatedDescription.name,
-        income:         json.amount > 0 ? json.amount : 0,
-        incomeAccount:  json.relation + "_" + json.relatedId,
-        outcome:        json.amount < 0 ? -json.amount : 0,
-        outcomeAccount: json.relation + "_" + json.relatedId
+        income: json.amount > 0 ? json.amount : 0,
+        incomeAccount: json.relation + "_" + json.relatedId,
+        outcome: json.amount < 0 ? -json.amount : 0,
+        outcomeAccount: json.relation + "_" + json.relatedId,
     };
 }
 
@@ -228,10 +228,10 @@ export function convertTransaction(json) {
     const transaction = {
         date: json.date.substring(0, 10),
         hold: json.type !== "TRANSACTION",
-        income:         json.billAmount > 0 ? json.billAmount : 0,
-        incomeAccount:  json.relation + "_" + json.relatedId,
-        outcome:        json.billAmount < 0 ? -json.billAmount : 0,
-        outcomeAccount: json.relation + "_" + json.relatedId
+        income: json.billAmount > 0 ? json.billAmount : 0,
+        incomeAccount: json.relation + "_" + json.relatedId,
+        outcome: json.billAmount < 0 ? -json.billAmount : 0,
+        outcomeAccount: json.relation + "_" + json.relatedId,
     };
     if (json.currencyId !== json.billCurrencyId) {
         if (json.amount > 0) {

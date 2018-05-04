@@ -7,17 +7,17 @@ describe("convertAccount", () => {
             "currency": {
                 "shortName": "RUB",
                 "symbol": "руб",
-                "rate": 1
+                "rate": 1,
             },
             "product": "Mastercard Credit World Premium",
             "cba": "40817810301003402816",
             "pan": "5536********1038",
             "moneyAmount": {
-                "value": 145600.24
+                "value": 145600.24,
             },
             "accountBalance": {
-                "value": 45600.24
-            }
+                "value": 45600.24,
+            },
         });
 
         expect(account).toEqual({
@@ -28,8 +28,8 @@ describe("convertAccount", () => {
             creditLimit: 100000,
             syncID: [
                 "1038",
-                "2816"
-            ]
+                "2816",
+            ],
         });
     });
 
@@ -39,15 +39,15 @@ describe("convertAccount", () => {
             "currency": {
                 "shortName": "USD",
                 "symbol": "$",
-                "rate": 54.60
+                "rate": 54.60,
             },
             "cba": "40817840401000898597",
             "moneyAmount": {
-                "value": 2432.19
+                "value": 2432.19,
             },
             "accountBalance": {
-                "value": 2432.19
-            }
+                "value": 2432.19,
+            },
         });
 
         expect(account).toEqual({
@@ -57,8 +57,8 @@ describe("convertAccount", () => {
             balance: 2432.19,
             creditLimit: 0,
             syncID: [
-                "8597"
-            ]
+                "8597",
+            ],
         });
     });
 });
@@ -74,16 +74,16 @@ describe("convertTransaction", () => {
                 "value": -3,
                 "currency": {
                     "shortName": "USD",
-                    "symbol": "$"
-                }
+                    "symbol": "$",
+                },
             },
             "accountAmount": {
                 "value": -164.10,
                 "currency": {
                     "shortName": "RUB",
-                    "symbol": "руб"
-                }
-            }
+                    "symbol": "руб",
+                },
+            },
         });
 
         expect(transaction).toEqual({
@@ -94,7 +94,7 @@ describe("convertTransaction", () => {
             outcome: 164.10,
             outcomeAccount: "B7C94FAC",
             opOutcome: 3,
-            opOutcomeInstrument: "USD"
+            opOutcomeInstrument: "USD",
         });
     });
 
@@ -110,16 +110,16 @@ describe("convertTransaction", () => {
                 "value": -50,
                 "currency": {
                     "shortName": "USD",
-                    "symbol": "$"
-                }
+                    "symbol": "$",
+                },
             },
             "accountAmount": {
                 "value": -50,
                 "currency": {
                     "shortName": "USD",
-                    "symbol": "$"
-                }
-            }
+                    "symbol": "$",
+                },
+            },
         });
 
         expect(transaction).toEqual({
@@ -129,7 +129,7 @@ describe("convertTransaction", () => {
             income: 0,
             incomeAccount: "4480910C",
             outcome: 50,
-            outcomeAccount: "4480910C"
+            outcomeAccount: "4480910C",
         });
     });
 });

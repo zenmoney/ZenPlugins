@@ -1,10 +1,10 @@
-import {sanitize} from "../../common/sanitize";
-import {toAtLeastTwoDigitsString} from "../../common/dates";
 import {MD5} from "jshashes";
 import _ from "lodash";
+import {toAtLeastTwoDigitsString} from "../../common/dates";
+import {sanitize} from "../../common/sanitize";
 
 const cheerio = require("cheerio");
-const qs      = require("querystring");
+const qs = require("querystring");
 
 const md5 = new MD5();
 
@@ -24,7 +24,7 @@ export async function login(login, pin) {
                 "Content-Type": "application/x-www-form-urlencoded",
                 "Host": "online.sberbank.ru:4477",
                 "Connection": "Keep-Alive",
-                "Accept-Encoding": "gzip"
+                "Accept-Encoding": "gzip",
             },
             body: {
                 "operation": "button.login",
@@ -35,9 +35,9 @@ export async function login(login, pin) {
                 "appVersion": "7.11.1",
                 "isLightScheme": false,
                 "deviceName": "Xperia Z2",
-                "devID":    ZenMoney.getData("devID"),
-                "mobileSdkData": JSON.stringify(createSdkData(login))
-            }
+                "devID": ZenMoney.getData("devID"),
+                "mobileSdkData": JSON.stringify(createSdkData(login)),
+            },
         }, null);
         if (_.get(response, "body.response.status.code") === "7") {
             ZenMoney.setData("mGUID", null);
@@ -52,7 +52,7 @@ export async function login(login, pin) {
                 "Content-Type": "application/x-www-form-urlencoded",
                 "Host": "online.sberbank.ru:4477",
                 "Connection": "Keep-Alive",
-                "Accept-Encoding": "gzip"
+                "Accept-Encoding": "gzip",
             },
             body: {
                 "operation": "register",
@@ -61,17 +61,17 @@ export async function login(login, pin) {
                 "appType": "android",
                 "appVersion": "7.11.1",
                 "deviceName": "Xperia Z2",
-                "devID":    ZenMoney.getData("devID"),
-                "devIDOld": ZenMoney.getData("devIDOld")
-            }
+                "devID": ZenMoney.getData("devID"),
+                "devIDOld": ZenMoney.getData("devIDOld"),
+            },
         }, response => _.get(response, "body.response.confirmRegistrationStage.mGUID"));
 
         ZenMoney.setData("mGUID", response.body.response.confirmRegistrationStage.mGUID);
 
         if (_.get(response, "body.response.confirmInfo.type") === "smsp") {
-            const code =  await ZenMoney.readLine("Введите пароль регистрации из СМС для подключения импорта операций из Сбербанк Онлайн для Android", {
+            const code = await ZenMoney.readLine("Введите пароль регистрации из СМС для подключения импорта операций из Сбербанк Онлайн для Android", {
                 time: 120000,
-                inputType: "number"
+                inputType: "number",
             });
             if (!code || !code.trim()) {
                 throw new ZenMoney.Error("Получен пустой код авторизации устройства", true);
@@ -83,15 +83,15 @@ export async function login(login, pin) {
                     "Content-Type": "application/x-www-form-urlencoded",
                     "Host": "online.sberbank.ru:4477",
                     "Connection": "Keep-Alive",
-                    "Accept-Encoding": "gzip"
+                    "Accept-Encoding": "gzip",
                 },
                 body: {
                     "operation": "confirm",
                     "mGUID": ZenMoney.getData("mGUID"),
                     "smsPassword": code,
                     "version": "9.20",
-                    "appType": "android"
-                }
+                    "appType": "android",
+                },
             }, null);
             if (_.get(response, "body.response.status.code") === "1") {
                 throw new ZenMoney.Error("Вы ввели неправильный идентификатор или пароль из SMS. Повторите подключение импорта.", true);
@@ -105,7 +105,7 @@ export async function login(login, pin) {
                 "Content-Type": "application/x-www-form-urlencoded",
                 "Host": "online.sberbank.ru:4477",
                 "Connection": "Keep-Alive",
-                "Accept-Encoding": "gzip"
+                "Accept-Encoding": "gzip",
             },
             body: {
                 "operation": "createPIN",
@@ -116,10 +116,10 @@ export async function login(login, pin) {
                 "appVersion": "7.11.1",
                 "isLightScheme": false,
                 "deviceName": "Xperia Z2",
-                "devID":    ZenMoney.getData("devID"),
+                "devID": ZenMoney.getData("devID"),
                 "devIDOld": ZenMoney.getData("devIDOld"),
-                "mobileSdkData": JSON.stringify(createSdkData(login))
-            }
+                "mobileSdkData": JSON.stringify(createSdkData(login)),
+            },
         });
     }
 
@@ -128,7 +128,7 @@ export async function login(login, pin) {
         _.get(response, "body.response.loginData.host"));
 
     const token = response.body.response.loginData.token;
-    const host  = response.body.response.loginData.host;
+    const host = response.body.response.loginData.host;
 
     response = await fetchXml(`https://${host}:4477/mobile9/postCSALogin.do`, {
         method: "POST",
@@ -137,7 +137,7 @@ export async function login(login, pin) {
             "Content-Type": "application/x-www-form-urlencoded",
             "Host": `${host}:4477`,
             "Connection": "Keep-Alive",
-            "Accept-Encoding": "gzip"
+            "Accept-Encoding": "gzip",
         },
         body: {
             "token": token,
@@ -149,8 +149,8 @@ export async function login(login, pin) {
             "deviceName": "Xperia Z2",
             "deviceType": "Android SDK built for x86_64",
             "deviceOSType": "android",
-            "deviceOSVersion": "6.0"
-        }
+            "deviceOSVersion": "6.0",
+        },
     }, response => _.get(response, "body.response.loginCompleted") === "true");
 
     return response.body.response.person;
@@ -166,7 +166,7 @@ export async function fetchAccounts() {
             "Connection": "Keep-Alive",
             "Accept-Encoding": "gzip",
         },
-        body: {showProductType: "cards,accounts,imaccounts,loans"}
+        body: {showProductType: "cards,accounts,imaccounts,loans"},
     }, response => _.get(response, "body.response.cards"));
     return getArray(response.body.response.cards.card);
 }
@@ -181,7 +181,7 @@ export async function fetchAccountDetails(accountId) {
             "Connection": "Keep-Alive",
             "Accept-Encoding": "gzip",
         },
-        body: {id: accountId}
+        body: {id: accountId},
     }, response => response => _.get(response, "body.response.detail"));
     return response.body.response.detail;
 }
@@ -195,9 +195,9 @@ export async function fetchTransactions(accountId, fromDate, toDate) {
             "Content-Type": "application/x-www-form-urlencoded",
             "Host": "node1.online.sberbank.ru:4477",
             "Connection": "Keep-Alive",
-            "Accept-Encoding": "gzip"
+            "Accept-Encoding": "gzip",
         },
-        body: {id: accountId, count: 10, paginationSize: 10}
+        body: {id: accountId, count: 10, paginationSize: 10},
         // Допускаются и другие параметры, чтобы получить операции за указанные даты.
         // Но этот способ не работает с кредитной картой.
         // body: {id: accountId, from: formatDate(fromDate), to: formatDate(toDate)}
@@ -209,7 +209,7 @@ export async function fetchXml(url, options = {}, predicate = () => true) {
     const init = {
         ..._.omit(options, ["sanitizeRequestLog", "sanitizeResponseLog", "log"]),
         ...options.body && {body: qs.stringify(options.body)},
-        headers: options.headers
+        headers: options.headers,
     };
 
     const beforeFetchTicks = Date.now();
@@ -247,7 +247,7 @@ export async function fetchXml(url, options = {}, predicate = () => true) {
 
     response = {
         ..._.pick(response, ["ok", "status", "statusText", "url", "headers"]),
-        body
+        body,
     };
     if (predicate) {
         validateResponse(response, response => _.get(response, "body.response.status.code") === "0" && predicate(response));
@@ -272,7 +272,7 @@ function formatDate(date) {
 
 export function parseXml(xml) {
     const $ = cheerio.load(xml, {
-        xmlMode: true
+        xmlMode: true,
     });
     return parseXmlNode($().children()[0]);
 }
@@ -294,8 +294,8 @@ function parseXmlNode(root) {
         }
         if (node.type === "cdata") {
             if (children.length !== 1 || !node.children
-                    || node.children.length !== 1
-                    || node.children[0].type !== "text") {
+                || node.children.length !== 1
+                || node.children[0].type !== "text") {
                 throw new Error("Error parsing XML. Unsupported CDATA node");
             }
             return node.children[0].data.trim();
@@ -309,7 +309,7 @@ function parseXmlNode(root) {
             if (!node.children || !node.children.length) {
                 value = null;
             } else if (node.children.length === 1
-                    && node.children[0].type === "text") {
+                && node.children[0].type === "text") {
                 value = node.children[0].data.trim();
                 if (value === "") {
                     value = null;
@@ -381,9 +381,9 @@ function createSdkData(login) {
 
     const obj = {
         "TIMESTAMP": dt.getUTCFullYear() + "-"
-            + toAtLeastTwoDigitsString(dt.getUTCMonth()) + "-"
-            + toAtLeastTwoDigitsString(dt.getUTCDate()) + "T"
-            + dt.getUTCHours() + ":" + dt.getUTCMinutes() + ":" + dt.getUTCSeconds() + "Z",
+        + toAtLeastTwoDigitsString(dt.getUTCMonth()) + "-"
+        + toAtLeastTwoDigitsString(dt.getUTCDate()) + "T"
+        + dt.getUTCHours() + ":" + dt.getUTCMinutes() + ":" + dt.getUTCSeconds() + "Z",
         "HardwareID": imei,
         "SIM_ID": simId,
         "PhoneNumber": "",
@@ -397,8 +397,8 @@ function createSdkData(login) {
                 "Timestamp": "" + (dt.getTime() - Math.floor(Math.random() * 1000000)),
                 "Heading": "" + (Math.random() * 90),
                 "Speed": "3",
-                "Status": "3"
-            }
+                "Status": "3",
+            },
         ],
         "DeviceModel": "D6503",
         "MultitaskingSupported": true,
@@ -411,7 +411,7 @@ function createSdkData(login) {
             "BBSID": generateHex("5c:f4:ab:xx:xx:xx", hex.substr(6, 12)),
             "SignalStrength": "" + Math.floor(-30 - Math.random() * 20),
             "Channel": "null",
-            "SSID": "TPLink"
+            "SSID": "TPLink",
         },
         "CellTowerId": "" + (12875 + Math.floor(Math.random() * 10000)),
         "LocationAreaCode": "9722",
@@ -422,7 +422,7 @@ function createSdkData(login) {
         "OS_ID": hex.substring(12, 16),
         "SDK_VERSION": "2.0.1",
         "Compromised": 0,
-        "Emulator": 0
+        "Emulator": 0,
     };
 
     ZenMoney.setData("imei", imei);
@@ -441,8 +441,9 @@ function generateImei(val, mask) {
     const g_imei_default = "35374906******L"; //Samsung
     const serial = (Math.abs(crc32(val) % 1000000)) + "";
 
-    if (!mask)
+    if (!mask) {
         mask = g_imei_default;
+    }
 
     mask = mask.replace(/\*{6}/, serial);
     mask = mask.replace(/L/, luhnGet(mask.replace(/L/, "")));
@@ -460,8 +461,9 @@ function generateSimSN(val, mask) {
     const g_simsn_default = "897010266********L"; //билайн
     const serial = (Math.abs(crc32(val + "simSN") % 100000000)) + "";
 
-    if (!mask)
+    if (!mask) {
         mask = g_simsn_default;
+    }
 
     mask = mask.replace(/\*{8}/, serial);
     mask = mask.replace(/L/, luhnGet(mask.replace(/L/, "")));
@@ -470,13 +472,13 @@ function generateSimSN(val, mask) {
 }
 
 function crc32(str) {
-    function makeCRCTable(){
+    function makeCRCTable() {
         let c;
         const crcTable = [];
-        for (let n =0; n < 256; n++){
+        for (let n = 0; n < 256; n++) {
             c = n;
-            for (let k =0; k < 8; k++){
-                c = ((c&1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
+            for (let k = 0; k < 8; k++) {
+                c = ((c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
             }
             crcTable[n] = c;
         }
@@ -486,7 +488,7 @@ function crc32(str) {
     const crcTable = makeCRCTable();
     let crc = 0 ^ (-1);
 
-    for (let i = 0; i < str.length; i++ ) {
+    for (let i = 0; i < str.length; i++) {
         crc = (crc >>> 8) ^ crcTable[(crc ^ str.charCodeAt(i)) & 0xFF];
     }
 
@@ -506,10 +508,12 @@ function luhnGet(num) {
             }
         } else {
             const n = parseInt(num[i]);
-            arr.push(n)
+            arr.push(n);
         }
     }
 
-    const summ = arr.reduce((a, b) => { return a + b; });
+    const summ = arr.reduce((a, b) => {
+        return a + b;
+    });
     return (summ % 10);
 }

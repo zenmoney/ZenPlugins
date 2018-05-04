@@ -1,20 +1,14 @@
-import * as network from "../../common/network";
-import * as retry from "../../common/retry";
 import {convertAccountMapToArray, convertAccountSyncID} from "../../common/accounts";
 import {toAtLeastTwoDigitsString} from "../../common/dates";
+import * as network from "../../common/network";
+import * as retry from "../../common/retry";
 import {convertTransactionAccounts} from "../../common/transactions";
-import {
-    convertAccounts,
-    convertCards,
-    convertDepositsWithTransactions,
-    convertLoans,
-    convertTransactions
-} from "./converters";
+import {convertAccounts, convertCards, convertDepositsWithTransactions, convertLoans, convertTransactions} from "./converters";
 
 async function fetchJson(url, options = {}, predicate = () => true) {
     options = Object.assign({
         method: "GET",
-        sanitizeRequestLog: {headers: {"Authorization": true}}
+        sanitizeRequestLog: {headers: {"Authorization": true}},
     }, options);
     options.headers = Object.assign({
         "Host": "online.raiffeisen.ru",
@@ -23,7 +17,7 @@ async function fetchJson(url, options = {}, predicate = () => true) {
         "Accept-Encoding": "gzip",
         "Accept": "application/json",
         "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 6.0; Android SDK built for x86_64 Build/MASTER)",
-        "Accept-Language": "ru"
+        "Accept-Language": "ru",
     }, options.headers || {});
 
     let response;
@@ -31,7 +25,7 @@ async function fetchJson(url, options = {}, predicate = () => true) {
         response = (await retry.retry({
             getter: retry.toNodeCallbackArguments(() => network.fetchJson(url, options)),
             predicate: ([error, response]) => !error && response && response.status < 500,
-            maxAttempts: 10
+            maxAttempts: 10,
         }))[1];
     } catch (e) {
         if (e instanceof retry.RetryError) {
@@ -56,14 +50,14 @@ async function login(login, password) {
     let response = await fetchJson("https://online.raiffeisen.ru/oauth/token", {
         method: "POST",
         headers: {
-            "Authorization": "Basic b2F1dGhVc2VyOm9hdXRoUGFzc3dvcmQhQA=="
+            "Authorization": "Basic b2F1dGhVc2VyOm9hdXRoUGFzc3dvcmQhQA==",
         },
         body: {
             "grant_type": "password",
             "password": password,
             "platform": "android",
             "username": login,
-            "version": "497"
+            "version": "497",
         },
         sanitizeRequestLog:  {body: {username: true, password: true}},
         sanitizeResponseLog: {body: {username: true, access_token: true, resource_owner: true}},
@@ -90,32 +84,32 @@ async function login(login, password) {
         response = await fetchJson(`https://online.raiffeisen.ru/oauth/entry/confirm/${confirmData.requestId}/sms`, {
             method: "PUT",
             body: {
-                code: code
+                code: code,
             },
-            sanitizeResponseLog: {body: {username: true, access_token: true, resource_owner: true}}
+            sanitizeResponseLog: {body: {username: true, access_token: true, resource_owner: true}},
         }, null);
         if (response.status !== 200) {
             throw new ZenMoney.Error("Райффайзенбанк: Введён неверный код подтверждения. Запустите импорт ещё раз.", true);
         }
     }
     if (response.body &&
-            response.body.error === "invalid_request" &&
-            response.body.error_description === "Missing grant type") {
+        response.body.error === "invalid_request" &&
+        response.body.error_description === "Missing grant type") {
         throw new ZenMoney.Error("Райффайзенбанк: У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии", true);
     }
 
     validateResponse(response, response => response.body && !response.body.error && response.body.access_token);
 
     return {
-        accessToken: response.body.access_token
+        accessToken: response.body.access_token,
     };
 }
 
 async function fetchAccounts(token) {
     const response = await fetchJson("https://online.raiffeisen.ru/rest/account?alien=false", {
         headers: {
-            "Authorization": `Bearer ${token}`
-        }
+            "Authorization": `Bearer ${token}`,
+        },
     }, response => Array.isArray(response.body));
     return convertAccounts(response.body);
 }
@@ -123,8 +117,8 @@ async function fetchAccounts(token) {
 async function fetchCards(token, accounts) {
     const response = await fetchJson("https://online.raiffeisen.ru/rest/card?alien=false", {
         headers: {
-            "Authorization": `Bearer ${token}`
-        }
+            "Authorization": `Bearer ${token}`,
+        },
     }, response => Array.isArray(response.body));
     return convertCards(response.body, accounts);
 }
@@ -132,8 +126,8 @@ async function fetchCards(token, accounts) {
 async function fetchDepositsWithTransactions(token, fromDate) {
     const response = await fetchJson("https://online.raiffeisen.ru/rest/deposit?alien=false", {
         headers: {
-            "Authorization": `Bearer ${token}`
-        }
+            "Authorization": `Bearer ${token}`,
+        },
     }, response => Array.isArray(response.body));
     const fromDateStr = fromDate.getFullYear() + "-" +
         toAtLeastTwoDigitsString(fromDate.getMonth() + 1) + "-" +
@@ -146,8 +140,8 @@ async function fetchDepositsWithTransactions(token, fromDate) {
 async function fetchLoans(token) {
     const response = await fetchJson("https://online.raiffeisen.ru/rest/loan?alien=false", {
         headers: {
-            "Authorization": `Bearer ${token}`
-        }
+            "Authorization": `Bearer ${token}`,
+        },
     }, response => Array.isArray(response.body));
     return convertLoans(response.body);
 }
@@ -155,8 +149,8 @@ async function fetchLoans(token) {
 async function fetchTransactionsPaged(token, page, limit) {
     const response = await fetchJson(`https://online.raiffeisen.ru/rest/transaction?size=${limit}&sort=date&page=${page}&order=desc`, {
         headers: {
-            "Authorization": `Bearer ${token}`
-        }
+            "Authorization": `Bearer ${token}`,
+        },
     }, response => response.body.list);
     return convertTransactions(response.body.list);
 }
@@ -205,11 +199,11 @@ export async function scrape({fromDate, toDate}) {
     let {accounts: deposits, transactions} = await fetchDepositsWithTransactions(token, fromDate);
     Object.assign(accounts, deposits,
         await fetchCards(token, accounts),
-        await fetchLoans(token)
+        await fetchLoans(token),
     );
     transactions = transactions.concat(await fetchTransactions(token, fromDate));
     return {
-        accounts:     adjustAccounts(accounts),
-        transactions: adjustTransactions(transactions, accounts)
+        accounts: adjustAccounts(accounts),
+        transactions: adjustTransactions(transactions, accounts),
     };
 }

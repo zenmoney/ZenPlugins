@@ -3,8 +3,8 @@ const cheerio = require("cheerio");
 export function convertAccounts(xml) {
     const $ = cheerio.load(xml, {
         xml: {
-            recognizeSelfClosing: true
-        }
+            recognizeSelfClosing: true,
+        },
     });
     const accounts = {};
     const account = $("cardbalance").children().toArray().reduce((account, node) => {
@@ -34,7 +34,7 @@ export function convertAccounts(xml) {
                             account.syncID.push(value);
                             accounts[value] = account;
                             if (!account.title) {
-                                account.title = "*" + value.slice(-4)
+                                account.title = "*" + value.slice(-4);
                             }
                         }
                         break;
@@ -51,7 +51,7 @@ export function convertAccounts(xml) {
                 }
             });
         }
-        const key   = node.name;
+        const key = node.name;
         const value = node.children[0].data;
         switch (key) {
             case "fin_limit":
@@ -74,8 +74,8 @@ export function convertAccounts(xml) {
 export function convertTransactions(xml, accounts) {
     const $ = cheerio.load(xml, {
         xml: {
-            recognizeSelfClosing: true
-        }
+            recognizeSelfClosing: true,
+        },
     });
     const transactions = [];
     $("statements").children().toArray().forEach(node => {
@@ -96,7 +96,7 @@ export function convertTransactionJson(json) {
     }
     const transaction = {};
     const opAmount = parseSum(json.amount);
-    const amount   = parseSum(json.cardamount);
+    const amount = parseSum(json.cardamount);
     if (json.appcode) {
         if (amount.sum > 0) {
             transaction.incomeBankID = json.appcode;
@@ -127,7 +127,7 @@ export function convertTransactionJson(json) {
             parseCashReplenishment,
             parseInnerTransferTo,
             parseInnerTransferFrom,
-            parsePayee
+            parsePayee,
         ].some(parser => parser(transaction, opAmount));
     }
     if (!transaction.comment) {
@@ -150,7 +150,7 @@ export function cleanDescription(description) {
         return null;
     }
     return description
-        .replace(/&quot;/g, '"')
+        .replace(/&quot;/g, "\"")
         .replace(/&apos;/g, "'")
         .replace(/<[^>]*>/g, "");
 }
@@ -188,8 +188,8 @@ export function parseCashWithdrawal(transaction, opAmount) {
 
 export function parseCashReplenishment(transaction, opAmount) {
     if (transaction.outcome === 0
-            && /Пополнение.*наличными/i.test(transaction.comment)
-            && /своей карты/i.test(transaction.comment)) {
+        && /Пополнение.*наличными/i.test(transaction.comment)
+        && /своей карты/i.test(transaction.comment)) {
         transaction.outcome = opAmount.sum;
         transaction.outcomeAccount = "cash#" + opAmount.instrument;
         transaction.comment = null;
@@ -201,7 +201,7 @@ export function parseCashReplenishment(transaction, opAmount) {
 export function parseInnerTransferTo(transaction, opAmount) {
     for (const regex of [
         /Перевод на свою «Копилку»\s+(\d+\*+\d+)/i,
-        /Перевод на свою карту\s+(\d+\*+\d+)/i
+        /Перевод на свою карту\s+(\d+\*+\d+)/i,
     ]) {
         const match = transaction.comment.match(regex);
         if (match) {
@@ -237,7 +237,7 @@ export function parseTransfer(transaction) {
         /Перевод с.*Отправитель:?\s*([^.]+)/i,
         /Зачисление.*с.*Плательщик:?\s*([^.]+)/i,
         /латеж на.*Получатель:?\s*([^.]+)/i,
-        /Зарплата,\s+(.+)$/i
+        /Зарплата,\s+(.+)$/i,
     ]) {
         const match = transaction.comment.match(regex);
         if (match) {
@@ -269,6 +269,6 @@ export function parseSum(text) {
     console.assert(!isNaN(sum), `failed to parse sum in ${text}`);
     return {
         sum,
-        instrument: parts.length <= 1 ? "UAH" : parts[1]
+        instrument: parts.length <= 1 ? "UAH" : parts[1],
     };
 }

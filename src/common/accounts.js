@@ -30,7 +30,7 @@ export function convertAccountSyncID(accounts) {
     for (const account of accounts) {
         const syncID = [];
         for (let id of account.syncID) {
-            const key   = account.instrument + "_" + getLast4Digits(id);
+            const key = account.instrument + "_" + getLast4Digits(id);
             const group = accountsByLast4Digits[key];
             id = group.length > 1 ? sanitizeSyncId(id) : getLast4Digits(id);
             if (syncID.indexOf(id) < 0) {

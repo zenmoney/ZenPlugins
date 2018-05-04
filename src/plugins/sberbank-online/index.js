@@ -1,4 +1,4 @@
-import {login, fetchAccounts, fetchTransactions, fetchAccountDetails} from "./sberbank";
+import {fetchAccountDetails, fetchAccounts, fetchTransactions, login} from "./sberbank";
 
 export async function scrape({preferences, fromDate, toDate}) {
     if (!preferences.login) {
@@ -21,6 +21,6 @@ export async function scrape({preferences, fromDate, toDate}) {
     //TODO convert accounts and transactions
     return {
         accounts: [],
-        transactions: []
+        transactions: [],
     };
 }

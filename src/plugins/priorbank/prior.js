@@ -184,7 +184,7 @@ const extractAndNormalizeTransactions = (cardDetails, accountCurrency) => {
     const transactions = _.flatten(extractTransactionBuckets(cardDetails)
         .map(({committed, items}) => items
             .map((item) => normalizeTransactionItem({committed, item, accountCurrency}))
-            .reverse()
+            .reverse(),
         ));
     return _.sortBy(transactions, x => x.transactionDate);
 };
@@ -194,7 +194,7 @@ export function joinTransactions({cardItems, cardDetailItems}) {
         ...card,
         transactions: extractAndNormalizeTransactions(
             _.find(cardDetailItems, {id: card.clientObject.id}),
-            card.clientObject.currIso
+            card.clientObject.currIso,
         ),
     }));
 }

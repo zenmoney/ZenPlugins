@@ -4,9 +4,9 @@
 
 import * as api from "./api";
 import {converter as cardDataToZenmoneyAccount} from "./converters/card";
-import {converter as walletDataToZenmoneyAccount} from "./converters/wallet";
-import {converter as transactionsDataToZenmoneyTransaction} from "./converters/transaction";
 import {mapContractToAccount} from "./converters/helpers";
+import {converter as transactionsDataToZenmoneyTransaction} from "./converters/transaction";
+import {converter as walletDataToZenmoneyAccount} from "./converters/wallet";
 
 /**
  * @param fromDate
@@ -30,21 +30,21 @@ async function scrape({fromDate, toDate, apiUri}) {
         api.fetchTransactions(fromDate),
     ]);
 
-    const cards   = cards_data.map(cardDataToZenmoneyAccount);
+    const cards = cards_data.map(cardDataToZenmoneyAccount);
     const wallets = wallets_data.map(walletDataToZenmoneyAccount);
 
-    const map          = mapContractToAccount(cards_data);
+    const map = mapContractToAccount(cards_data);
     const transactions = transactions_data.map((data) => transactionsDataToZenmoneyTransaction(data, map));
 
-    let accounts            = [].concat(cards, wallets).filter((account) => !ZenMoney.isAccountSkipped(account.id));
+    let accounts = [].concat(cards, wallets).filter((account) => !ZenMoney.isAccountSkipped(account.id));
     let transactionsAccount = accounts.splice(0, 1)[0];
 
     return [].concat(
         accounts.map(convertAccountsForResult),
         {
-            account:      transactionsAccount,
+            account: transactionsAccount,
             transactions: transactions,
-        }
+        },
     );
 }
 
@@ -54,7 +54,7 @@ async function scrape({fromDate, toDate, apiUri}) {
  */
 const convertAccountsForResult = (account) => {
     return {
-        account:      account,
+        account: account,
         transactions: [],
     };
 

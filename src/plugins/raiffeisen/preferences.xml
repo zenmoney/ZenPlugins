@@ -1,36 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen>
     <EditTextPreference
-            key="login"
-            title="Логин"
-            dialogTitle="Логин"
-            dialogMessage="Введите идентификатор пользователя или логин для входа в систему Raiffeisen R-Connect."
-            summary="|ID пользователя или логин|{@s}"
-            positiveButtonText="ОК"
-            negativeButtonText="Отмена"
-            obligatory="true">
+        key="login"
+        title="Логин"
+        dialogTitle="Логин"
+        dialogMessage="Введите идентификатор пользователя или логин для входа в систему Raiffeisen R-Connect."
+        summary="|ID пользователя или логин|{@s}"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        obligatory="true">
     </EditTextPreference>
     <EditTextPreference
-            key="password"
-            title="Пароль"
-            dialogTitle="Пароль"
-            dialogMessage="Введите пароль, используемый для входа в систему Raiffeisen R-Connect."
-            inputType="textPassword"
-            summary="||***********"
-            positiveButtonText="ОК"
-            negativeButtonText="Отмена"
-            obligatory="true">
+        key="password"
+        title="Пароль"
+        dialogTitle="Пароль"
+        dialogMessage="Введите пароль, используемый для входа в систему Raiffeisen R-Connect."
+        inputType="textPassword"
+        summary="||***********"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        obligatory="true">
     </EditTextPreference>
     <EditTextPreference
-            key="startDate"
-            obligatory="true"
-            inputType="date"
-            title="С какой даты необходимо загружать операции"
-            defaultValue="2017-12-01T00:00:00.000Z"
-            dialogTitle="Дата начала загрузки"
-            dialogMessage="Введите дату, с которой необходимо загружать операции"
-            positiveButtonText="ОК"
-            negativeButtonText="Отмена"
-            summary="|startDate|{@s}">
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="С какой даты необходимо загружать операции"
+        defaultValue="2017-12-01T00:00:00.000Z"
+        dialogTitle="Дата начала загрузки"
+        dialogMessage="Введите дату, с которой необходимо загружать операции"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|startDate|{@s}">
     </EditTextPreference>
 </PreferenceScreen>
