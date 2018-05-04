@@ -7,6 +7,7 @@ const expectedModularManifestFilesSection = `<files>
 </files>`;
 
 const repositoryUri = "https://github.com/zenmoney/ZenPlugins/blob/master";
+
 function generateModularLoader({files, preferences}) {
     if (!_.isEqual(files, ["index.js"]) || preferences !== "preferences.xml") {
         throw new Error("modular ZenMoneyManifest.xml files section must be exactly equal to:\n" + expectedModularManifestFilesSection);
@@ -34,6 +35,7 @@ Object.assign(global, result);
 module.exports = result;
 `;
 }
+
 module.exports = function(xml) {
     this.cacheable && this.cacheable();
     const pluginManifest = convertManifestXmlToJs(xml);
