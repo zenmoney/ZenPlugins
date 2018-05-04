@@ -49,7 +49,7 @@ const readPluginFileSync = (file, missingFileValue) => {
         if (missingFileValue) {
             return {content: missingFileValue, path: null};
         } else {
-            throw new Error(`${file} is missing, search paths: [${candidatePaths}]`)
+            throw new Error(`${file} is missing, search paths: [${candidatePaths}]`);
         }
     }
     return {
@@ -92,7 +92,7 @@ module.exports = ({allowedHost, host, https}) => {
                         }
                     });
                     res.json(manifest);
-                })
+                }),
             );
 
             app.get(
@@ -106,7 +106,7 @@ module.exports = ({allowedHost, host, https}) => {
                     if (missingObligatoryPrefKeys.length > 0) {
                         throw new Error(
                             `The following preference keys are obligatory and don't have defaultValue, thus should be set in zp_preferences.json: ` +
-                            JSON.stringify(missingObligatoryPrefKeys)
+                            JSON.stringify(missingObligatoryPrefKeys),
                         );
                     }
                     const defaultValues = preferencesSchema.reduce((memo, preferenceSchema) => {
@@ -114,7 +114,7 @@ module.exports = ({allowedHost, host, https}) => {
                         return memo;
                     }, {});
                     res.json(_.defaults(preferences, defaultValues));
-                })
+                }),
             );
 
             app.get(
@@ -122,7 +122,7 @@ module.exports = ({allowedHost, host, https}) => {
                 serializeErrors((req, res) => {
                     const data = readJsonSync("zp_data.json", "{}");
                     return res.json(data);
-                })
+                }),
             );
 
             app.post(
@@ -132,7 +132,7 @@ module.exports = ({allowedHost, host, https}) => {
                     console.assert(req.body.newValue, "newValue should be provided");
                     writeJsonSync("zp_data.json", req.body.newValue);
                     return res.json(true);
-                })
+                }),
             );
 
             app.get(
@@ -140,7 +140,7 @@ module.exports = ({allowedHost, host, https}) => {
                 serializeErrors((req, res) => {
                     res.set("Content-Type", "text/plain");
                     res.send(readPluginFileSync("zp_pipe.txt", "").content.replace(/\n$/, ""));
-                })
+                }),
             );
 
             const proxy = new httpProxy.createProxyServer();
@@ -157,7 +157,7 @@ module.exports = ({allowedHost, host, https}) => {
                 if (location && /^https?:\/\//i.test(location)) {
                     const {origin, pathname, search} = new URL(location);
                     proxyRes.headers["location"] = pathname + search +
-                        ((search === '') ? '?' : '&') + PROXY_TARGET_HEADER + '=' + origin;
+                        ((search === "") ? "?" : "&") + PROXY_TARGET_HEADER + "=" + origin;
                 }
             });
 
@@ -165,7 +165,7 @@ module.exports = ({allowedHost, host, https}) => {
                 const targetIdx = req.url.indexOf(PROXY_TARGET_HEADER);
                 let target;
                 if (targetIdx > 0) {
-                    target  = req.url.substring(targetIdx + PROXY_TARGET_HEADER.length + 1);
+                    target = req.url.substring(targetIdx + PROXY_TARGET_HEADER.length + 1);
                     req.url = req.url.substring(0, targetIdx - 1);
                 } else {
                     target = req.headers[PROXY_TARGET_HEADER];
@@ -205,7 +205,7 @@ module.exports = ({allowedHost, host, https}) => {
                     preserveHeaderKeyCase: true,
                     ignorePath: true,
                     secure: false,
-                    xfwd: false
+                    xfwd: false,
                 });
             });
         },
