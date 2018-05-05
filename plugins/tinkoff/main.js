@@ -345,7 +345,7 @@ function login() {
 	return g_sessionid
 }
 
-var g_accounts = []; // линки активных счетов, по ним фильтруем обработку операций
+var g_accDict = [];  // список активных счетов
 /**
  * Обработка счетов
  */
@@ -368,7 +368,6 @@ function processAccounts() {
 	ZenMoney.trace('JSON счетов: '+JSON.stringify(accounts));
 
 	accounts = accounts.payload[0].payload;
-	var accDict = [];
 	for (var i = 0; i < accounts.length; i++) {
 		var a = accounts[i];
 		if (isAccountSkipped(a.id)) {
@@ -405,8 +404,7 @@ function processAccounts() {
 			// добавим и номер счёта карты
 			acc1.syncID.push(a.id.substring(a.id.length - 4));
 
-			accDict.push(acc1);
-			g_accounts.push(a.id);
+			g_accDict.push(acc1);
 		}
 		// кредитные карты ----------------------------------------
 		else if (a.accountType === 'Credit' && a.status === 'NORM') {
@@ -438,13 +436,12 @@ function processAccounts() {
 			// добавим и номер счёта карты
 			acc2.syncID.push(a.id.substring(a.id.length - 4));
 
-			accDict.push(acc2);
-			g_accounts.push(a.id);
+			g_accDict.push(acc2);
 		}
 		// накопительные счета ------------------------------------
 		else if (a.accountType === 'Saving' && a.status === 'NORM') {
 			ZenMoney.trace('Добавляем накопительный счёт: '+ a.name +' (#'+ a.id +')');
-			accDict.push({
+			g_accDict.push({
 				id:				a.id,
 				title:			a.name,
 				type:			'deposit', //'checking'
@@ -460,12 +457,11 @@ function processAccounts() {
 				payoffInterval:	'month',
 				payoffStep:		1
 			});
-			g_accounts.push(a.id);
 		}
 		// депозиты --------------------------------------------------
 		else if (a.accountType === 'Deposit' && a.status === 'ACTIVE') {
 			ZenMoney.trace('Добавляем депозит: '+ a.name +' (#'+ a.id +')');
-			accDict.push({
+			g_accDict.push({
 				id:				a.id,
 				title:			a.name,
 				type:			'deposit',
@@ -480,7 +476,6 @@ function processAccounts() {
 				payoffInterval:	'month',
 				payoffStep:		1
 			});
-			g_accounts.push(a.id);
 		}
 		// мультивалютный вклад
 		else if (a.accountType === 'MultiDeposit' && a.accounts) {
@@ -492,7 +487,7 @@ function processAccounts() {
 				var id = a.id +'_'+ currency;
 				var syncid = a.id.substring(a.id.length-4) +'_'+ currency;
 				ZenMoney.trace('Добавляем мультивалютный вклад: '+ name +' (#'+ id +')');
-				accDict.push({
+				g_accDict.push({
 					id:				id,
 					title:			name,
 					type:			'deposit',
@@ -507,14 +502,13 @@ function processAccounts() {
 					payoffInterval:	'month',
 					payoffStep:		1
 				});
-				g_accounts.push(id);
 			}
 		}
 		// кредиты наличными
 		else if (a.accountType === 'CashLoan' && a.status === 'NORM') {
 			if (a.debtAmount.value > 0) {
 				ZenMoney.trace("Добавляем кредит наличными: " + a.name + ' (#' + a.id + ')');
-				accDict.push({
+				g_accDict.push({
 					id:             a.id,
 					title:          a.name,
 					type:           'loan',
@@ -530,16 +524,15 @@ function processAccounts() {
 					payoffInterval:	'month',
 					payoffStep:		1
 				});
-				g_accounts.push(a.id);
 			}
 			else
 				ZenMoney.trace("Пропускаем кредит наличными " + a.name + ' (#' + a.id + '), так как он уже закрыт');
 		}
 	}
 
-	ZenMoney.trace('Всего счетов добавлено: '+ accDict.length);
-	ZenMoney.trace('JSON: '+ JSON.stringify(accDict));
-	ZenMoney.addAccount(accDict);
+	ZenMoney.trace('Всего счетов добавлено: '+ g_accDict.length);
+	ZenMoney.trace('JSON: '+ JSON.stringify(g_accDict));
+	//ZenMoney.addAccount(g_accDict);
 }
 
 /**
@@ -640,8 +633,8 @@ function processTransactions(data) {
 		ZenMoney.trace('JSON: ' + JSON.stringify(payload));
 
 		var holdSum = {}; // для определения текущего остатка с учётом холдов
-		for (var i = 0; i < payload.length; i++) {
-			var t = payload[i];
+		for (var iPayload = 0; iPayload < payload.length; iPayload++) {
+			var t = payload[iPayload];
 
 			if (t.operationTime.milliseconds > lastSyncTime)
 				lastSyncTime = t.operationTime.milliseconds;
@@ -653,14 +646,14 @@ function processTransactions(data) {
 			tran.time = n2(dt.getHours()) + ':' + n2(dt.getMinutes() + 1) + ':' + n2(dt.getSeconds()); // для внутреннего использования
 			tran.created = t.operationTime.milliseconds;
 
-			var operLog = '#' + i + ': ' + tran.date + ', ' + tran.time + ', ' + t.description + ', '
+			var operLog = '#' + iPayload + ': ' + tran.date + ', ' + tran.time + ', ' + t.description + ', '
 				+ (t.type === "Credit" ? '+' : (t.type === "Debit" ? '-' : '')) + t.accountAmount.value;
 
 			// работаем только по активным счетам
 			var tAccount = t.account;
-			if (!in_array(tAccount, g_accounts)) {
+			if (!in_accounts(tAccount, g_accDict)) {
 				tAccount = t.account + '_' + t.amount.currency.name;
-				if (!in_array(tAccount, g_accounts)) {
+				if (!in_accounts(tAccount, g_accDict)) {
 					ZenMoney.trace('Пропускаем операцию ' + operLog + ' (счёт игнорируется)');
 					continue;
 				}
@@ -696,7 +689,7 @@ function processTransactions(data) {
 			tran.hold = t.debitingTime ? false : true;
 
 			var hold = tran.hold ? ' [H] ' : '';
-			ZenMoney.trace('Добавляем операцию #' + i + ':  ' + tran.date + ', ' + tran.time + ', ' + hold + t.description + ', '
+			ZenMoney.trace('Добавляем операцию #' + iPayload + ':  ' + tran.date + ', ' + tran.time + ', ' + hold + t.description + ', '
 				+ (t.type === "Credit" ? '+' : (t.type === "Debit" ? '-' : '')) + t.accountAmount.value
 				+ ' [' + tranId + '] acc:' + tAccount);
 			//ZenMoney.trace('JSON: '+JSON.stringify(t));
@@ -797,8 +790,15 @@ function processTransactions(data) {
 					switch (t.group) {
 						// Пополнение наличными
 						case "CASH":
-							if (!t.partnerType || t.partnerType !== "card2card") {
+							if ((!t.partnerType || t.partnerType.toLowerCase() !== "card2card")
+								&& (!t.merchant || t.merchant.name.toLowerCase().indexOf("card2card") >= 0)) {
 								tran.outcomeAccount = "cash#" + t.amount.currency.name;
+								tran.outcome = t.amount.value;
+							}
+							else if (t.payment && t.payment.providerId && t.payment.providerId.toLowerCase().indexOf("c2c") >= 0) {
+								tran.outcomeAccount = "cash#" + t.amount.currency.name;
+								if (t.payment.cardNumber)
+									tran.outcomeAccount = tran.outcomeAccount + "#" + t.payment.cardNumber.substring(t.payment.cardNumber.length - 4);
 								tran.outcome = t.amount.value;
 							}
 							break;
@@ -864,8 +864,15 @@ function processTransactions(data) {
 					switch (t.group) {
 						// Снятие наличных
 						case "CASH":
-							if (!t.partnerType || t.partnerType !== "card2card") {
+							if ((!t.partnerType || t.partnerType.toLowerCase() !== "card2card")
+								&& (!t.merchant || t.merchant.name.toLowerCase().indexOf("card2card") >= 0)) {
 								tran.incomeAccount = "cash#" + t.amount.currency.name;
+								tran.income = t.amount.value;
+							}
+							else if (t.payment && t.payment.providerId && t.payment.providerId.toLowerCase().indexOf("c2c") >= 0) {
+								tran.incomeAccount = "cash#" + t.amount.currency.name;
+								if (t.payment.cardNumber)
+									tran.incomeAccount = tran.outcomeAccount + "#" + t.payment.cardNumber.substring(t.payment.cardNumber.length - 4);
 								tran.income = t.amount.value;
 							}
 							break;
@@ -947,9 +954,9 @@ function processTransactions(data) {
 		//ZenMoney.trace('g_account: ' + JSON.stringify(g_accounts));
 		//ZenMoney.trace('holdSum: ' + JSON.stringify(holdSum));
 
-		for(var i=0; i<g_accounts.length; i++)
+		for(var i=0; i<g_accDict.length; i++)
 		{
-			var id = g_accounts[i];
+			var id = g_accDict[i].id;
 
 			if (!holdSum.hasOwnProperty(id)) {
 				var pos = id.indexOf('_');
@@ -960,8 +967,8 @@ function processTransactions(data) {
 			}
 
 			if (holdSum[id] > 0) {
-				g_accounts[i].balance = g_accounts[i].balance_income;
-				ZenMoney.trace('> Счёт #'+ id +': cумма hold-операций ' + (Math.round((holdSum[id])*100)/100) + ' => обновили остаток на '+ g_accounts[i].balance_income);
+				g_accDict[i].balance = g_accDict[i].balance_income;
+				ZenMoney.trace('> Счёт #'+ id +': cумма hold-операций ' + (Math.round((holdSum[id])*100)/100) + ' => обновили остаток на '+ g_accDict[i].balance_income);
 			}
 			else
 				ZenMoney.trace('> Счёт #'+ id +': cумма hold-операций ' + (Math.round((holdSum[id])*100)/100) + ' (остаток верный)');
@@ -970,6 +977,8 @@ function processTransactions(data) {
 
 	ZenMoney.trace('Всего операций добавлено: '+ Object.getOwnPropertyNames(tranDict).length);
 	ZenMoney.trace('JSON: '+ JSON.stringify(tranDict));
+
+	ZenMoney.addAccount(g_accDict);
 	for (var k in tranDict)
 		ZenMoney.addTransaction(tranDict[k]);
 
@@ -1123,6 +1132,13 @@ function in_array(needle, haystack) {
 	for(var i = 0; i < length; i++) {
 		if(haystack[i] == needle) return true;
 	}
+	return false;
+}
+
+function in_accounts(id, accounts) {
+	var length = accounts.length;
+	for(var i = 0; i < length; i++)
+		if(accounts[i].id == id) return true;
 	return false;
 }
 
