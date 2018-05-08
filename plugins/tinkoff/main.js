@@ -872,7 +872,7 @@ function processTransactions(data) {
 							else if (t.payment && t.payment.providerId && t.payment.providerId.toLowerCase().indexOf("c2c") >= 0) {
 								tran.incomeAccount = "cash#" + t.amount.currency.name;
 								if (t.payment.cardNumber)
-									tran.incomeAccount = tran.outcomeAccount + "#" + t.payment.cardNumber.substring(t.payment.cardNumber.length - 4);
+									tran.incomeAccount = tran.incomeAccount + "#" + t.payment.cardNumber.substring(t.payment.cardNumber.length - 4);
 								tran.income = t.amount.value;
 							}
 							break;
