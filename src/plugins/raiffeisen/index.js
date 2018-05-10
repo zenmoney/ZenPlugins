@@ -17,13 +17,13 @@ async function fetchJson(url, options = {}, predicate = () => true) {
         sanitizeRequestLog: {headers: {"Authorization": true}}
     }, options);
     options.headers = Object.assign({
-        "Host": "sso.raiffeisen.ru",
+        "Host": "online.raiffeisen.ru",
         "Content-Type": "application/json",
-        "RC-Device": "ios",
-        "Accept-Encoding": "br, gzip, deflate",
+        "RC-Device": "android",
+        "Accept-Encoding": "gzip",
         "Accept": "application/json",
-        "User-Agent": "Raiffeisen 5.0.4 (140) / iPhone (iOS 11.2.2) / iPhone10,4",
-        "Accept-Language": "ru;q=1"
+        "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 6.0; Android SDK built for x86_64 Build/MASTER)",
+        "Accept-Language": "ru"
     }, options.headers || {});
 
     let response;
@@ -53,7 +53,7 @@ function validateResponse(response, predicate) {
 }
 
 async function login(login, password) {
-    let response = await fetchJson("https://sso.raiffeisen.ru/oauth/token", {
+    let response = await fetchJson("https://online.raiffeisen.ru/oauth/token", {
         method: "POST",
         headers: {
             "Authorization": "Basic b2F1dGhVc2VyOm9hdXRoUGFzc3dvcmQhQA=="
@@ -61,12 +61,12 @@ async function login(login, password) {
         body: {
             "grant_type": "password",
             "password": password,
-            "platform": "ios",
+            "platform": "android",
             "username": login,
-            "version": "140"
+            "version": "497"
         },
         sanitizeRequestLog:  {body: {username: true, password: true}},
-        sanitizeResponseLog: {body: {access_token: true, resource_owner: true}},
+        sanitizeResponseLog: {body: {username: true, access_token: true, resource_owner: true}},
     }, null);
 
     if (response.status === 401) {
@@ -76,7 +76,7 @@ async function login(login, password) {
         throw new ZenMoney.Error("Райффайзенбанк: Пароль устарел. Смените его в приложении банка, а потом обновите в настройках подключения.", true);
     }
     if (response.status === 267) {
-        const confirmData = (await fetchJson("https://sso.raiffeisen.ru/oauth/entry/confirm/sms", {
+        const confirmData = (await fetchJson("https://online.raiffeisen.ru/oauth/entry/confirm/sms", {
             method: "POST"
         }, response => response.body.requestId && response.body.methods)).body;
         if (!confirmData.methods.some(method => method.method === "SMSOTP")) {
@@ -87,12 +87,12 @@ async function login(login, password) {
             inputType: "numberDecimal",
             time: confirmData["await"] || 120000,
         });
-        response = await fetchJson(`https://sso.raiffeisen.ru/oauth/entry/confirm/${confirmData.requestId}/sms`, {
+        response = await fetchJson(`https://online.raiffeisen.ru/oauth/entry/confirm/${confirmData.requestId}/sms`, {
             method: "PUT",
             body: {
                 code: code
             },
-            sanitizeResponseLog: {body: {access_token: true, resource_owner: true}}
+            sanitizeResponseLog: {body: {username: true, access_token: true, resource_owner: true}}
         }, null);
         if (response.status !== 200) {
             throw new ZenMoney.Error("Райффайзенбанк: Введён неверный код подтверждения. Запустите импорт ещё раз.", true);
@@ -112,7 +112,7 @@ async function login(login, password) {
 }
 
 async function fetchAccounts(token) {
-    const response = await fetchJson("https://sso.raiffeisen.ru/rest/account?alien=false", {
+    const response = await fetchJson("https://online.raiffeisen.ru/rest/account?alien=false", {
         headers: {
             "Authorization": `Bearer ${token}`
         }
@@ -121,7 +121,7 @@ async function fetchAccounts(token) {
 }
 
 async function fetchCards(token, accounts) {
-    const response = await fetchJson("https://sso.raiffeisen.ru/rest/card?alien=false", {
+    const response = await fetchJson("https://online.raiffeisen.ru/rest/card?alien=false", {
         headers: {
             "Authorization": `Bearer ${token}`
         }
@@ -130,7 +130,7 @@ async function fetchCards(token, accounts) {
 }
 
 async function fetchDepositsWithTransactions(token, fromDate) {
-    const response = await fetchJson("https://sso.raiffeisen.ru/rest/deposit?alien=false", {
+    const response = await fetchJson("https://online.raiffeisen.ru/rest/deposit?alien=false", {
         headers: {
             "Authorization": `Bearer ${token}`
         }
@@ -144,7 +144,7 @@ async function fetchDepositsWithTransactions(token, fromDate) {
 }
 
 async function fetchLoans(token) {
-    const response = await fetchJson("https://sso.raiffeisen.ru/rest/loan?alien=false", {
+    const response = await fetchJson("https://online.raiffeisen.ru/rest/loan?alien=false", {
         headers: {
             "Authorization": `Bearer ${token}`
         }
@@ -153,7 +153,7 @@ async function fetchLoans(token) {
 }
 
 async function fetchTransactionsPaged(token, page, limit) {
-    const response = await fetchJson(`https://sso.raiffeisen.ru/rest/transaction?detailRequired=1&order=asc&page=${page}&size=${limit}`, {
+    const response = await fetchJson(`https://online.raiffeisen.ru/rest/transaction?size=${limit}&sort=date&page=${page}&order=desc`, {
         headers: {
             "Authorization": `Bearer ${token}`
         }

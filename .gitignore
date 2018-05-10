@@ -20,6 +20,7 @@ nbproject/
 .Trashes
 ehthumbs.db
 Thumbs.db
+.*.sw?
 
 # dependencies
 /node_modules
