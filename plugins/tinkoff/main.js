@@ -296,11 +296,11 @@ function login() {
 				auth_type:  'pin'
 			}, {
 				post: {
-					//deviceId:         deviceId,
-					sessionid:          sessionId,
-					pinHash:            pinHash,
+					//deviceId:			deviceId,
+					sessionid:			sessionId,
+					pinHash:			pinHash,
 					auth_type_set_date: pinHashDate,
-					oldSessionId:       oldSessionId
+					oldSessionId:		oldSessionId
 				},
 				noException: true
 			});
@@ -387,7 +387,7 @@ function processAccounts() {
 				syncID:			[],
 				instrument:		a.moneyAmount.currency.name,
 				//balance:		a.moneyAmount.value - creditLimit
-				balance:        Math.min(a.accountBalance.value, a.moneyAmount.value - creditLimit), // эксперимент с новым балансом
+				balance:		Math.min(a.accountBalance.value, a.moneyAmount.value - creditLimit), // эксперимент с новым балансом
 				balance_income: Math.max(a.accountBalance.value, a.moneyAmount.value - creditLimit)  // эксперимент2 с новым балансом
 			};
 
@@ -509,15 +509,15 @@ function processAccounts() {
 			if (a.debtAmount.value > 0) {
 				ZenMoney.trace("Добавляем кредит наличными: " + a.name + ' (#' + a.id + ')');
 				g_accDict.push({
-					id:             a.id,
-					title:          a.name,
-					type:           'loan',
-					syncID:         a.id.substring(a.id.length-4),
-					instrument:     a.debtAmount.currency.name,
-					balance:        a.debtAmount.value,
+					id:				a.id,
+					title:			a.name,
+					type:			'loan',
+					syncID:			a.id.substring(a.id.length-4),
+					instrument:		a.debtAmount.currency.name,
+					balance:		a.debtAmount.value,
 					startBalance:   a.creditAmount.value,
 					startDate:		a.creationDate.milliseconds,
-					percent:        a.tariffInfo.interestRate,
+					percent:		a.tariffInfo.interestRate,
 					capitalization:	true,
 					endDateOffsetInterval: 'month',
 					endDateOffset:	a.remainingPaymentsCount,
@@ -603,8 +603,8 @@ function processTransactions(data) {
 
 	/*var transactions2 = requestJson("operations", null, {
 		"start": 	lastSyncTime
-		//"start":    Date.parse('2017-08-27T00:00'),
-		//"end":      Date.parse('2017-08-27T23:00')
+		//"start":	Date.parse('2017-08-27T00:00'),
+		//"end":	Date.parse('2017-08-27T23:00')
 	});*/
 	var transactions = requestJson("grouped_requests", null, {
 		post: {
@@ -620,7 +620,7 @@ function processTransactions(data) {
 		}
 	});
 
-	var tranDict = {};      // список найденных оперций
+	var tranDict = {};		// список найденных оперций
 	var tranDictHold = {};  // список ключей операций для контроля холдов и акцептов в одной выписке
 
 	var payload = transactions.payload[0].payload;
@@ -790,16 +790,20 @@ function processTransactions(data) {
 					switch (t.group) {
 						// Пополнение наличными
 						case "CASH":
-							if ((!t.partnerType || t.partnerType.toLowerCase() !== "card2card")
-								&& (!t.merchant || t.merchant.name.toLowerCase().indexOf("card2card") >= 0)) {
+							var c2c = (t.partnerType && t.partnerType.toLowerCase() === "card2card")
+								|| (t.merchant && t.merchant.name.toLowerCase().indexOf("card2card") >= 0)
+								|| (t.payment && t.payment.providerId && t.payment.providerId.toLowerCase().indexOf("c2c") >= 0);
+							if (!c2c) {
+								// операция с наличными
 								tran.outcomeAccount = "cash#" + t.amount.currency.name;
 								tran.outcome = t.amount.value;
 							}
-							else if (t.payment && t.payment.providerId && t.payment.providerId.toLowerCase().indexOf("c2c") >= 0) {
-								tran.outcomeAccount = "cash#" + t.amount.currency.name;
-								if (t.payment.cardNumber)
-									tran.outcomeAccount = tran.outcomeAccount + "#" + t.payment.cardNumber.substring(t.payment.cardNumber.length - 4);
-								tran.outcome = t.amount.value;
+							else {
+								// card2card-перевод
+								if (t.payment && t.payment.cardNumber) {
+                                    tran.outcomeAccount = "ccard#" + t.amount.currency.name + "#" + t.payment.cardNumber.substring(t.payment.cardNumber.length - 4);
+                                    tran.outcome = t.amount.value;
+                                }
 							}
 							break;
 
@@ -864,18 +868,22 @@ function processTransactions(data) {
 					switch (t.group) {
 						// Снятие наличных
 						case "CASH":
-							if ((!t.partnerType || t.partnerType.toLowerCase() !== "card2card")
-								&& (!t.merchant || t.merchant.name.toLowerCase().indexOf("card2card") >= 0)) {
-								tran.incomeAccount = "cash#" + t.amount.currency.name;
-								tran.income = t.amount.value;
-							}
-							else if (t.payment && t.payment.providerId && t.payment.providerId.toLowerCase().indexOf("c2c") >= 0) {
-								tran.incomeAccount = "cash#" + t.amount.currency.name;
-								if (t.payment.cardNumber)
-									tran.incomeAccount = tran.incomeAccount + "#" + t.payment.cardNumber.substring(t.payment.cardNumber.length - 4);
-								tran.income = t.amount.value;
-							}
-							break;
+                            var c2c = (t.partnerType && t.partnerType.toLowerCase() === "card2card")
+                                || (t.merchant && t.merchant.name.toLowerCase().indexOf("card2card") >= 0)
+                                || (t.payment && t.payment.providerId && t.payment.providerId.toLowerCase().indexOf("c2c") >= 0);
+                            if (!c2c) {
+                                // операция с наличными
+                                tran.incomeAccount = "cash#" + t.amount.currency.name;
+                                tran.income = t.amount.value;
+                            }
+                            else {
+                                // card2card-перевод
+                                if (t.payment && t.payment.cardNumber) {
+                                    tran.incomeAccount = "ccard#" + t.amount.currency.name + "#" + t.payment.cardNumber.substring(t.payment.cardNumber.length - 4);
+                                    tran.income = t.amount.value;
+                                }
+                            }
+                            break;
 
 						// Перевод
 						case "TRANSFER":
