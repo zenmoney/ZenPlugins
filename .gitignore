@@ -9,6 +9,7 @@ zp_preferences.json
 # JetBrains
 /.idea/workspace.xml
 /.idea/deployment.xml
+/.idea/watcherTasks.xml
 
 # Eclipse project files
 /.classpath
