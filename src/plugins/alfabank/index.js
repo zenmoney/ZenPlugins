@@ -1,7 +1,8 @@
 import {toZenmoneyTransaction} from "../../common/converters";
 import {generateUUID} from "../../common/utils";
 import {assertLoginIsSuccessful, getAccessToken, getAllCommonMovements, getCommonAccounts, isExpiredLogin, login, register} from "./api";
-import {convertApiMovementsToReadableTransactions, toZenmoneyAccount} from "./converters";
+import {toZenmoneyAccount, convertApiMovementsToReadableTransactions} from "./converters";
+import {normalizePreferences} from "./preferences";
 
 export async function scrape({preferences, fromDate, toDate}) {
     const sessionId = generateUUID();
@@ -19,14 +20,7 @@ export async function scrape({preferences, fromDate, toDate}) {
     if (!pluginData.registered) {
         pluginData.registered = true;
         ZenMoney.setData("registered", pluginData.registered);
-        const {cardNumber, cardExpirationDate, phoneNumber} = preferences;
-        // FIXME must be checked in a wrapper
-        Object.entries({cardNumber, cardExpirationDate, phoneNumber}).forEach(([key, value]) => {
-            if (!value) {
-                // FIXME must use InvalidPreferencesError here, but InvalidPreferencesError android handler is buggy
-                throw new TemporaryError(`preference key ${key} must be set`);
-            }
-        });
+        const {cardNumber, cardExpirationDate, phoneNumber} = normalizePreferences(preferences);
         const {accessToken, refreshToken} = await register({
             deviceId: pluginData.deviceId,
             cardNumber,
