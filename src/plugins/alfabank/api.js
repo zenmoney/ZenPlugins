@@ -183,22 +183,6 @@ export async function getCommonAccounts({sessionId, deviceId}) {
     return response.body.accounts;
 }
 
-export async function getAccountDetails({sessionId, deviceId, accountNumber}) {
-    const response = await callGate({
-        sessionId,
-        deviceId,
-        service: "Budget",
-        body: {"operationId": "Budget:GetAccountDetails", "parameters": {"account": accountNumber}},
-    });
-
-    console.assert(response.status === 200, "Unexpected response status code", response);
-
-    const {account, operationId, ...rest} = response.body;
-    console.assert(operationId === "Budget:GetAccountDetailsResult", "Unexpected response body.operationId", response);
-
-    return rest;
-}
-
 // note: API filters movements by date and respects time+timezone only for determining specific day
 const formatApiDate = (date) => date ? date.toISOString().replace(/Z$/, "+0000") : null;
 
@@ -253,24 +237,6 @@ export async function getAllCommonMovements({sessionId, deviceId, startDate = nu
         }
     } while (!haveReceivedIncompletePage() && count >= minRequestedCount);
     return _.flatten(pagesOfMovements);
-}
-
-export async function getCardsList({sessionId, deviceId}) {
-    const response = await callGate({
-        sessionId,
-        deviceId,
-        service: "CustomerCards",
-        body: {
-            "tokensIncluded": false,
-            "withDigitalCards": true,
-            "withInactiveCards": true,
-            "operationId": "CustomerCards:GetCardsList",
-        },
-    });
-    console.assert(response.status === 200, "Unexpected response status code", response);
-    console.assert(response.body.operationId === "CustomerCards:CardsList", "Unexpected response body.operationId", response);
-
-    return _.flatMap(response.body.fields, (field) => field.value);
 }
 
 export const parseApiAmount = (apiAmount) => {
