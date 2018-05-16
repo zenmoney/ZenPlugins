@@ -138,7 +138,7 @@ export async function register({deviceId, cardNumber, cardExpirationDate, phoneN
     };
 
     const {previousMultiFactorResponseParams} = await registerCustomer({queryRedirectParams, cardExpirationDate, cardNumber, phoneNumber});
-    const confirmationCode = await ZenMoney.readLine("Введите код из СМС сообщения", {inputType: "phone"});
+    const confirmationCode = await ZenMoney.readLine("Введите код из СМС сообщения", {inputType: "number"});
     const {redirectUrl} = await finishCustomerRegistration({confirmationCode, queryRedirectParams, previousMultiFactorResponseParams});
     const redirectedResponse = await fetchJson(redirectUrl);
     const [, accessToken] = redirectedResponse.url.match(/access_token=(.+?)&/);
