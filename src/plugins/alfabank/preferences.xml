@@ -3,6 +3,7 @@
     <EditTextPreference
         key="cardNumber"
         obligatory="true"
+        inputType="phone"
         title="Номер карты Альфа-банка"
         dialogTitle="Номер карты Альфа-банка"
         dialogMessage=""
@@ -13,6 +14,7 @@
     <EditTextPreference
         key="cardExpirationDate"
         obligatory="true"
+        inputType="number"
         title="Срок действия карты"
         dialogTitle="Срок действия карты"
         dialogMessage=""
@@ -23,6 +25,7 @@
     <EditTextPreference
         key="phoneNumber"
         obligatory="true"
+        inputType="phone"
         title="Номер телефона"
         dialogTitle="Номер телефона"
         dialogMessage=""
