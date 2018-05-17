@@ -10,6 +10,7 @@ zp_preferences.json
 /.idea/workspace.xml
 /.idea/deployment.xml
 /.idea/watcherTasks.xml
+/.idea/jscsPlugin.xml
 
 # Eclipse project files
 /.classpath
