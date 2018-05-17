@@ -24,6 +24,8 @@ export async function getAccessToken({sessionId, deviceId, refreshToken}) {
             "session_id": sessionId,
             "User-Agent": userAgent,
         },
+        sanitizeRequestLog: {url: true, headers: {"DEVICE-ID": true, "session_id": true}},
+        sanitizeResponseLog: {url: true, body: {access_token: true, refresh_token: true}},
     });
 
     console.assert(response.status === 200, "Unexpected token status", response);
@@ -38,6 +40,7 @@ export function login({sessionId, deviceId, accessToken}) {
     return callGate({
         sessionId,
         deviceId,
+        accessToken,
         service: "Authorization",
         body: {
             "operationId": "Authorization:Login",
@@ -52,7 +55,13 @@ export function login({sessionId, deviceId, accessToken}) {
                 "password": "",
             },
         },
-        accessToken,
+        sanitizeRequestLog: {
+            body: {
+                "parameters": {
+                    "deviceId": true,
+                },
+            },
+        },
     });
 }
 
@@ -66,7 +75,7 @@ export function assertLoginIsSuccessful(loginResponse) {
     console.assert(loginResponse.body.operationId === "Authorization:LoginResult", "Unexpected login operationId", loginResponse);
 }
 
-export function callGate({sessionId, deviceId, service, body, accessToken = null}) {
+export function callGate({sessionId, deviceId, service, body, accessToken = null, sanitizeRequestLog = {}, sanitizeResponseLog = {}}) {
     const headers = {
         "jmb-protocol-version": "1.0",
         "jmb-protocol-service": service,
@@ -88,6 +97,8 @@ export function callGate({sessionId, deviceId, service, body, accessToken = null
         method: "POST",
         headers,
         body,
+        sanitizeRequestLog: _.merge({}, {headers: {Authorization: true, "DEVICE-ID": true, "session_id": true}}, sanitizeRequestLog),
+        sanitizeResponseLog: sanitizeResponseLog,
     });
 }
 
