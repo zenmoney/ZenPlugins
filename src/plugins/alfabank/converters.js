@@ -90,7 +90,7 @@ export function convertApiMovementToReadableTransaction(apiMovement) {
         hold: apiMovement.hold,
         posted,
         origin,
-        payee: apiMovement.shortDescription || null,
+        payee: (apiMovement.recipientInfo && apiMovement.recipientInfo.recipientName) || apiMovement.shortDescription || null,
         mcc,
         location: null,
         comment: formatComment({posted, origin}),
