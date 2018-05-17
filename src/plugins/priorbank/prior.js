@@ -40,7 +40,12 @@ export async function fetchLoginSalt({preAuthHeaders, login}) {
 
 const sha512 = new SHA512();
 
-export const calculatePasswordHash = ({loginSalt, password}) => sha512.hex(sha512.hex(password.slice(0, 16)) + loginSalt);
+export const calculatePasswordHash = ({loginSalt, password}) => {
+    const passwordHash = sha512.hex(password.slice(0, 16));
+    return loginSalt
+        ? sha512.hex(passwordHash + loginSalt)
+        : passwordHash;
+};
 
 function getCharCodesDistribution(obj) {
     return _.mapValues(obj, (value) => {
