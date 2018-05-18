@@ -1,4 +1,4 @@
-import {parseApiMovementDescription, toZenmoneyAccount} from "./converters";
+import {normalizeIsoDate, parseApiMovementDescription, toZenmoneyAccount} from "./converters";
 
 describe("toZenmoneyAccount", () => {
     it("maps api credit account", () => {
@@ -81,4 +81,10 @@ test("parseApiMovementDescription", () => {
     ];
     const results = descriptions.map((input) => ({input, output: parseApiMovementDescription(input, -1)}));
     expect(results).toMatchSnapshot();
+});
+
+test("normalizeIsoDate normalizes isoDate for JavaScriptCore new Date(isoDate)", () => {
+    expect(normalizeIsoDate("2017-12-01T12:00:00.000+0300")).toEqual("2017-12-01T12:00:00.000+03:00");
+    expect(normalizeIsoDate("2017-12-01T12:00:00.000Z")).toEqual("2017-12-01T12:00:00.000Z");
+    expect(normalizeIsoDate("2017-12-01T12:00:00.000-0550")).toEqual("2017-12-01T12:00:00.000-05:50");
 });
