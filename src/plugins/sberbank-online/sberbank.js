@@ -8,6 +8,21 @@ const qs = require("querystring");
 
 const md5 = new MD5();
 
+const hostDefault = "https://node1.online.sberbank.ru:4477/mobile9/private";
+const bodyDefault = {
+    "version": "9.20",
+    "appType": "android",
+    "appVersion": "7.11.1",
+    "deviceName": "Xperia Z2",
+};
+const headerDefault = {
+    "User-Agent": "Mobile Device",
+    "Content-Type": "application/x-www-form-urlencoded",
+    "Host": "node1.online.sberbank.ru:4477",
+    "Connection": "Keep-Alive",
+    "Accept-Encoding": "gzip",
+};
+
 export async function login(login, pin) {
     if (!ZenMoney.getData("devID")) {
         ZenMoney.setData("devID", getUid(36) + "0000");
@@ -15,29 +30,18 @@ export async function login(login, pin) {
     }
 
     let response;
-
     if (ZenMoney.getData("mGUID")) {
         response = await fetchXml("https://online.sberbank.ru:4477/CSAMAPI/login.do", {
             method: "POST",
-            headers: {
-                "User-Agent": "Mobile Device",
-                "Content-Type": "application/x-www-form-urlencoded",
-                "Host": "online.sberbank.ru:4477",
-                "Connection": "Keep-Alive",
-                "Accept-Encoding": "gzip",
-            },
-            body: {
+            headers: headerDefault,
+            body: Object.assign({
                 "operation": "button.login",
                 "mGUID": ZenMoney.getData("mGUID"),
                 "password": pin,
-                "version": "9.20",
-                "appType": "android",
-                "appVersion": "7.11.1",
                 "isLightScheme": false,
-                "deviceName": "Xperia Z2",
                 "devID": ZenMoney.getData("devID"),
                 "mobileSdkData": JSON.stringify(createSdkData(login)),
-            },
+            }, bodyDefault),
         }, null);
         if (_.get(response, "body.response.status.code") === "7") {
             ZenMoney.setData("mGUID", null);
@@ -47,23 +51,13 @@ export async function login(login, pin) {
     if (!ZenMoney.getData("mGUID")) {
         response = await fetchXml("https://online.sberbank.ru:4477/CSAMAPI/registerApp.do", {
             method: "POST",
-            headers: {
-                "User-Agent": "Mobile Device",
-                "Content-Type": "application/x-www-form-urlencoded",
-                "Host": "online.sberbank.ru:4477",
-                "Connection": "Keep-Alive",
-                "Accept-Encoding": "gzip",
-            },
-            body: {
+            headers: headerDefault,
+            body: Object.assign({
                 "operation": "register",
                 "login": login,
-                "version": "9.20",
-                "appType": "android",
-                "appVersion": "7.11.1",
-                "deviceName": "Xperia Z2",
                 "devID": ZenMoney.getData("devID"),
                 "devIDOld": ZenMoney.getData("devIDOld"),
-            },
+            }, bodyDefault),
         }, response => _.get(response, "body.response.confirmRegistrationStage.mGUID"));
 
         ZenMoney.setData("mGUID", response.body.response.confirmRegistrationStage.mGUID);
@@ -78,18 +72,12 @@ export async function login(login, pin) {
             }
             response = await fetchXml("https://online.sberbank.ru:4477/CSAMAPI/registerApp.do", {
                 method: "POST",
-                headers: {
-                    "User-Agent": "Mobile Device",
-                    "Content-Type": "application/x-www-form-urlencoded",
-                    "Host": "online.sberbank.ru:4477",
-                    "Connection": "Keep-Alive",
-                    "Accept-Encoding": "gzip",
-                },
+                headers: headerDefault,
                 body: {
                     "operation": "confirm",
                     "mGUID": ZenMoney.getData("mGUID"),
                     "smsPassword": code,
-                    "version": "9.20",
+                    "version": bodyDefault.version,
                     "appType": "android",
                 },
             }, null);
@@ -100,26 +88,16 @@ export async function login(login, pin) {
 
         response = await fetchXml("https://online.sberbank.ru:4477/CSAMAPI/registerApp.do", {
             method: "POST",
-            headers: {
-                "User-Agent": "Mobile Device",
-                "Content-Type": "application/x-www-form-urlencoded",
-                "Host": "online.sberbank.ru:4477",
-                "Connection": "Keep-Alive",
-                "Accept-Encoding": "gzip",
-            },
-            body: {
+            headers: headerDefault,
+            body: Object.assign({
                 "operation": "createPIN",
                 "mGUID": ZenMoney.getData("mGUID"),
                 "password": pin,
-                "version": "9.20",
-                "appType": "android",
-                "appVersion": "7.11.1",
                 "isLightScheme": false,
-                "deviceName": "Xperia Z2",
                 "devID": ZenMoney.getData("devID"),
                 "devIDOld": ZenMoney.getData("devIDOld"),
                 "mobileSdkData": JSON.stringify(createSdkData(login)),
-            },
+            }, bodyDefault),
         });
     }
 
@@ -132,77 +110,337 @@ export async function login(login, pin) {
 
     response = await fetchXml(`https://${host}:4477/mobile9/postCSALogin.do`, {
         method: "POST",
-        headers: {
-            "User-Agent": "Mobile Device",
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Host": `${host}:4477`,
-            "Connection": "Keep-Alive",
-            "Accept-Encoding": "gzip",
-        },
-        body: {
+        headers: Object.assign({}, headerDefault, {"Host": `${host}:4477`}),
+        body: Object.assign({
             "token": token,
             "appName": "????????",
             "appBuildOSType": "android",
-            "appVersion": "7.11.1",
             "appBuildType": "RELEASE",
             "appFormat": "STANDALONE",
-            "deviceName": "Xperia Z2",
             "deviceType": "Android SDK built for x86_64",
             "deviceOSType": "android",
             "deviceOSVersion": "6.0",
-        },
+        }, _.pick(bodyDefault, [ "appVersion", "deviceName" ] )),
     }, response => _.get(response, "body.response.loginCompleted") === "true");
 
     return response.body.response.person;
 }
 
 export async function fetchAccounts() {
-    const response = await fetchXml("https://node1.online.sberbank.ru:4477/mobile9/private/products/list.do", {
+    let headersForm = Object.assign({}, headerDefault, {"Content-Type": "application/x-www-form-urlencoded;charset=windows-1251"});
+
+    const response = await fetchXml("products/list.do", {
         method: "POST",
-        headers: {
-            "User-Agent": "Mobile Device",
-            "Content-Type": "application/x-www-form-urlencoded;charset=windows-1251",
-            "Host": "node1.online.sberbank.ru:4477",
-            "Connection": "Keep-Alive",
-            "Accept-Encoding": "gzip",
-        },
+        headers: headersForm,
         body: {showProductType: "cards,accounts,imaccounts,loans"},
-    }, response => _.get(response, "body.response.cards"));
-    return getArray(response.body.response.cards.card);
+    });
+
+    const accDict = [];
+    const additionalCards =[];
+
+    //--- карты ------------------------------
+    const cards = response.body.response.cards ? getArray(response.body.response.cards.card) : [];
+    const parsedAccounts = [];
+    for (const card of cards) {
+        if (card.state !== "active") {
+            console.log(`Пропускаем карту '${card.name}' – не активна (#${card.id})`);
+            continue;
+        }
+
+        const acc = {
+            id: card.id,
+            title: card.name,
+            type: "ccard",
+            syncID: [],
+            balance: parseFloat(card.availableLimit.amount),
+            instrument: card.availableLimit.currency.code,
+            mainCard: "",	// идентификатор основной карты, если эта - дополнительная
+        };
+
+        const cardNum = getAccNumber(card);
+
+        // отдельно обрабатываем доп.карты
+        if (card.mainCardId) {
+            console.log(`Замечена дополнительная карта: ${acc.title} (#${acc.id})`);
+
+            const mainCardId = card.mainCardId;
+            let mainCardIdStr = "card:" + mainCardId;
+
+            // сохраним номер доп.карты у родителя
+            let cardMain;
+            for (let j = 0; j < accDict.length; j++) {
+                cardMain = accDict[j];
+
+                if (cardMain.id !== mainCardIdStr)
+                    continue;
+
+                if (cardNum && cardNum !== "")
+                    cardMain.syncID.push(cardNum);
+
+                break;
+            }
+
+            // отметим, что это доп.карта, чтобы не добавлять её отдельно
+            acc.mainCard = mainCardIdStr;
+            if (cardMain)
+                console.log(`... прикрепляем к карте '${cardMain.title}' (#${mainCardIdStr})`);
+            else {
+                additionalCards[mainCardId] = cardNum;
+                console.log(`... прикрепляем к неизвестной пока карте (#${mainCardIdStr})`);
+            }
+        } else {
+            // сохраним номер карты
+            if (cardNum && cardNum != "")
+                acc.syncID.push(cardNum);
+
+            if (card.type === "credit") {
+                console.log(`Добавляем кредитную карту: ${acc.title} (#${acc.id})`);
+
+                // обработаем свойства кредитных карт
+                const response = await fetchXml("cards/info.do", {
+                    method: "POST",
+                    headers: headersForm,
+                    body: {
+                        id: acc.id,
+                    },
+                }, response => _.get(response, "body.response.detail.creditType.limit.amount"));
+
+                // установим кредитный лимит
+                const creditLimits = response.body.response.detail.creditType.limit.amount;
+                if (creditLimits > 0) {
+                    acc.creditLimit = parseInt(creditLimits, 10);
+                    acc.balance = Math.round((acc.balance - acc.creditLimit) * 100) / 100;
+                }
+
+            } else {
+                console.log(`Добавляем дебетовую карту: ${acc.title} (#${acc.id})`);
+
+                // обработаем свойства дебетовых карт с овердрафтом
+                // обработаем свойства кредитных карт
+                const response = await fetchXml("cards/info.do", {
+                    method: "POST",
+                    headers: headersForm,
+                    body: {
+                        id: acc.id,
+                    },
+                }, response => _.get(response, "body.response.detail"));
+
+                console.log(`Свойства дебетовой карты для анализа овердрафта (#${acc.id}): `, response);
+
+                // Сбер не передаёт размер овердрафта, но включает его в доступный остаток по карте
+                acc.available = parseFloat(acc.balance);
+                delete acc.balance;
+
+                // для дебетовок добавим также и syncID лицевого счёта
+                let cardAcc = card.cardAccount;
+                if (cardAcc && cardAcc !== "") {
+                    cardAcc = cardAcc.substr(-4);
+                    acc.syncID.push(cardAcc);
+                }
+            }
+        }
+
+        if (acc.syncID.length > 0) {
+            parsedAccounts[getAccTypeId(acc)] = { account: acc };
+            accDict.push(acc);
+        }
+    }
+
+    // обработаем доп.карты, отложенные на потом
+    for (let addCard in additionalCards) {
+        if (!parsedAccounts[addCard])
+            continue;
+
+        const mainCard = parsedAccounts[addCard].account;
+        mainCard.syncID.push(additionalCards[addCard]);
+        ZenMoney.trace("Записали дополнительную карту *"+ additionalCards[addCard] +" к карте " + mainCard.title + " (#" + addCard + ")");
+    }
+
+    //--- счета ------------------------------
+    const accounts = response.body.response.accounts ? getArray(response.body.response.accounts.account) : [];
+    for (const account of accounts) {
+        if (account.state !== "OPENED") {
+            console.log(`Пропускаем счёт '${account.name}' – не действующий (#${account.id})`);
+            continue;
+        }
+
+        const acc = {
+            id: account.id,
+            title: account.name,
+            type: "checking",
+            syncID: [],
+            balance: parseFloat(account.balance.amount),
+            instrument: account.balance.currency.code,
+        };
+
+        console.log(`Добавляем сберегательный счёт: ${acc.title} (#${acc.id})`);
+
+        const accNum = getAccNumber(account);
+        if (accNum && accNum !== "")
+            acc.syncID.push(accNum);
+
+        if (account.rate && account.rate > 0) {
+            // обработаем свойства депозита
+            const response = await fetchXml("accounts/info.do", {
+                method: "POST",
+                headers: headersForm,
+                body: {
+                    id: acc.id,
+                },
+            }, response => _.get(response, "body.response.detail"));
+
+            acc.type = "deposit";
+            acc.percent = parseFloat(account.rate);
+            acc.capitalization = true;
+            acc.startDate = response.body.response.detail.open.substr(0, 10);
+            acc.endDateOffsetInterval = "year";
+            acc.endDateOffset = 1;
+            acc.payoffInterval = "month";
+            acc.payoffStep = 1;
+        }
+
+        accDict.push(acc);
+    }
+
+    //--- кредиты ------------------------------
+    const loans = response.body.response.loans ? getArray(response.body.response.loans.loan) : [];
+    for (const loan of loans) {
+        const acc = {
+            id: loan.id,
+            title: loan.name,
+            type: "loan",
+            //syncID: [],
+            //balance: loan.balance.amount,
+            instrument: loan.balance.currency.code,
+        };
+
+        console.log(`Добавляем кредит: ${acc.title} (#${acc.id})`, loan);
+
+        const accNum = getAccNumber(loan);
+        if (accNum && accNum !== "")
+            acc.syncID.push(accNum);
+
+        // обработаем свойства депозита
+        const response = await fetchXml("loans/info.do", {
+            method: "POST",
+            headers: headersForm,
+            body: {
+                id: acc.id,
+            },
+        }, response => _.get(response, "body.response.detail"));
+
+        console.log("Нужно добавить обработку свойств кредита", response.body.response.detail);
+
+        /*acc.syncID = getElementByTag(xml4, 'accountNumber', replaceTagsAndSpaces).substr(-4);
+        acc.percent = getElementByTag(xml4, 'creditingRate', replaceTagsAndSpaces, parseToFloat);
+        acc.capitalization = getElementByTag(xml4, 'repaymentMethod', replaceTagsAndSpaces).toLowerCase().indexOf('аннуитетный') >= 0;
+        acc.startBalance = getElementByTag(xml4, ['origianlAmount', 'amount'], replaceTagsAndSpaces, parseToFloat);
+        /!*acc.balance = -(getElementByTag(xml4, ['mainDeptAmount', 'amount'], replaceTagsAndSpaces, parseToFloat) +
+         getElementByTag(xml4, ['interestsAmount', 'amount'], replaceTagsAndSpaces, parseToFloat));*!/
+        acc.balance = getElementByTag(xml4, ['detail', 'remainAmount', 'amount'], replaceTagsAndSpaces, parseToFloat) * -1;
+
+        var start = getElementByTag(xml4, 'termStart', replaceTagsAndSpaces).substr(0, 10);
+        var end = getElementByTag(xml4, 'termEnd', replaceTagsAndSpaces).substr(0, 10);
+        var dt1 = new Date(start.substr(6, 4), start.substr(3, 2) - 1, start.substr(0, 2));
+        var dt2 = new Date(end.substr(6, 4), end.substr(3, 2) - 1, end.substr(0, 2));
+        var days = Math.floor((dt2.getTime() - dt1.getTime()) / (1000 * 60 * 60 * 24));
+        acc.startDate = start;
+        acc.endDateOffsetInterval = 'day';
+        acc.endDateOffset = days;
+        acc.payoffInterval = 'month';
+        acc.payoffStep = 1;
+
+        acc.id = "loan:" + acc.id; // для переводов необходим тип счёта
+        accDict.push(acc);*/
+    }
+
+    //--- ????? ------------------------------
+    const imaccounts = response.body.response.imaccounts ? getArray(response.body.response.imaccounts.imaccount) : [];
+    for (const imaccount of imaccounts) {
+        console.log("Найден счёт не известного типа:", imaccount);
+    }
+
+    return accDict;
 }
 
-export async function fetchAccountDetails(accountId) {
-    const response = await fetchXml("https://node1.online.sberbank.ru:4477/mobile9/private/cards/info.do", {
-        method: "POST",
-        headers: {
-            "User-Agent": "Mobile Device",
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Host": "node1.online.sberbank.ru:4477",
-            "Connection": "Keep-Alive",
-            "Accept-Encoding": "gzip",
-        },
-        body: {id: accountId},
-    }, response => response => _.get(response, "body.response.detail"));
-    return response.body.response.detail;
-}
+export async function fetchTransactions(account, fromDate, toDate) {
+    let body = {};
+    let accountType = "";
+    switch (account.type) {
+        case "ccard":
+            body = {id: account.id, count: 10, paginationSize: 10};
+            accountType = "cards";
+            break;
 
-export async function fetchTransactions(accountId, fromDate, toDate) {
-    const response = await fetchXml("https://node1.online.sberbank.ru:4477/mobile9/private/cards/abstract.do", {
+        case "loan":
+        case "checking":
+        case "deposit":
+            body = {id: account.id, from: formatDate(fromDate), to: formatDate(toDate)};
+            accountType = "accounts";
+            break;
+
+        default:
+            accountType = account.type + "s";
+            break;
+    }
+
+    const response = await fetchXml(accountType + "/abstract.do", {
         method: "POST",
-        headers: {
-            "User-Agent": "Mobile Device",
-            "Referer": "Android/6.0/7.11.1",
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Host": "node1.online.sberbank.ru:4477",
-            "Connection": "Keep-Alive",
-            "Accept-Encoding": "gzip",
-        },
-        body: {id: accountId, count: 10, paginationSize: 10},
-        // Допускаются и другие параметры, чтобы получить операции за указанные даты.
-        // Но этот способ не работает с кредитной картой.
-        // body: {id: accountId, from: formatDate(fromDate), to: formatDate(toDate)}
+        headers: Object.assign({}, headerDefault, {"Referer": "Android/6.0/7.11.1"}),
+        body: body,
     }, response => response => _.get(response, "body.response.operations"));
-    return getArray(response.body.response.operations.operation);
+
+    // обработаем массив операций
+    const tranDict = [];
+    if (response.body.response.operations && response.body.response.operations.operation) {
+        for (let i = 0; i < response.body.response.operations.operation.length; i++) {
+            const operation = response.body.response.operations.operation[i];
+
+            const tran = { date: operation.date.substr(0, 10) };
+
+            const sum = parseFloat(operation.sum.amount);
+            const instrument = operation.sum.currency.code;
+
+            //if (true) { // ToDO: DEBUG
+            /*if (instrument.toLocaleLowerCase() != acc.instrument.toLocaleLowerCase()) {
+                if (!tranInstrument)
+                    ZenMoney.trace('Обнаружена валютная операция! Необходима подгрузка данных через веб-версию Сбербанк Онлайн.');
+
+                tranInstrument = true;
+                break;
+            }*/
+
+            if (Math.abs(sum) < 0.01)
+                continue;
+            else {
+                const accId = account.mainCard ? account.mainCard : account.id;
+
+                if (sum > 0) {
+                    tran.income = sum;
+                    tran.incomeAccount = accId;
+                    tran.outcome = 0;
+                    tran.outcomeAccount = accId;
+                } else {
+                    tran.income = 0;
+                    tran.incomeAccount = accId;
+                    tran.outcome = -sum;
+                    tran.outcomeAccount = accId;
+                }
+            }
+
+            let description = operation.description;
+            if (description) {
+                if (description.substr(0, 9) === "<![CDATA[")
+                    description = description.substring(9, description.length - 3);
+
+                parseTransactionDescription(description, sum, instrument, tran);
+            }
+
+            tranDict.push(tran);
+        }
+    }
+
+    return tranDict;
 }
 
 export async function fetchXml(url, options = {}, predicate = () => true) {
@@ -211,6 +449,13 @@ export async function fetchXml(url, options = {}, predicate = () => true) {
         ...options.body && {body: qs.stringify(options.body)},
         headers: options.headers,
     };
+
+    // дополним адрес, если он не полный
+    if (url.substr(0, 4) !== "http") {
+        if (url.substr(0, 1) !== "/")
+            url = "/" + url;
+        url = hostDefault + url;
+    }
 
     const beforeFetchTicks = Date.now();
     const shouldLog = options.log !== false;
@@ -256,13 +501,84 @@ export async function fetchXml(url, options = {}, predicate = () => true) {
     return response;
 }
 
+/**
+ * Обработать описание операции
+ * @param {string} description Описание операции
+ * @param {number} sum Сумма операции
+ * @param {string} instrument Код валюты
+ * @param {object} tran Транзакция
+ * @returns {object} tran
+ */
+function parseTransactionDescription(description, sum, instrument, tran) {
+
+    let str;
+    // расходные операции по карте
+    if (str = getWebDescriptionValue(description,
+            [
+                "Retail", // оплата по карте
+                "Unique", // unique
+        ])) {
+        tran.payee = str;
+    }
+    // расходные операции по счёту
+    else if (str = getWebDescriptionValue(description, [
+            "Credit", // оплата в кредит
+            "CH Debit", // поступление
+            "CH Payment", // списание
+            "BP Billing Transfer", // платёж в Сбербанк Онлайн
+            "BP Card - Acct", // дополнительный взнос на вклад
+            "BP Acct - Card", // частичное снятие со вклада
+        ])) {
+        tran.comment = str;
+    }
+    // взнос наличными
+    else if (str = getWebDescriptionValue(description, "Note Acceptance") && sum > 0) {
+        tran.outcome = sum;
+        tran.outcomeAccount = "cash#" + instrument;
+    }
+    // снятие наличных
+    else if (str = getWebDescriptionValue(description, "ATM", "ITT") && sum < 0) {
+        tran.income = -sum;
+        tran.incomeAccount = "cash#" + instrument;
+    }
+    // значение по умолчанию - оставляем описание как есть
+    else
+        tran.comment = description;
+
+    return tran;
+}
+
+/**
+ * Получить значение описания операции
+ * @param {string} description Описание
+ * @param {Array} arr Искомая строка либо массив строк
+ * @returns {string}
+ */
+function getWebDescriptionValue(description, arr) {
+    if (typeof arr === "string")
+        arr = [ arr ];
+
+    if (Array.isArray(arr)) {
+        for (let i = 0; i < arr.length; i++) {
+            const pos = description.lastIndexOf(arr[i]);
+            if (pos >= 0) {
+                let str = description.substr(pos + arr[i].length).trim();
+                if (str.substr(0, 4) === "RUS ") str = str.substr(4).trim();
+                return str;
+            }
+        }
+    }
+
+    return null;
+}
+
 function validateResponse(response, predicate) {
     console.assert(!predicate || predicate(response), "non-successful response");
 }
 
 function getArray(object) {
     return object === null || object === undefined
-        ? object
+        ? []
         : Array.isArray(object) ? object : [object];
 }
 
@@ -389,31 +705,31 @@ function createSdkData(login) {
         "PhoneNumber": "",
         "GeoLocationInfo": [
             {
-                "Longitude": "" + (37 + Math.random()),
-                "Latitude": "" + (55 + Math.random()),
+                "Longitude": (37.0 + Math.random()).toString(10),
+                "Latitude": (55.0 + Math.random()).toString(10),
                 "HorizontalAccuracy": "5",
-                "Altitude": "" + (150 + Math.floor(Math.random() * 20)),
+                "Altitude": (150 + Math.floor(Math.random() * 20)).toString(10),
                 "AltitudeAccuracy": "5",
-                "Timestamp": "" + (dt.getTime() - Math.floor(Math.random() * 1000000)),
-                "Heading": "" + (Math.random() * 90),
+                "Timestamp": (dt.getTime() - Math.floor(Math.random() * 1000000)).toString(10),
+                "Heading": (Math.random() * 90).toString(10),
                 "Speed": "3",
                 "Status": "3",
             },
         ],
         "DeviceModel": "D6503",
         "MultitaskingSupported": true,
-        "DeviceName": "Xperia Z2",
+        "deviceName": bodyDefault.deviceName,
         "DeviceSystemName": "Android",
         "DeviceSystemVersion": "22",
         "Languages": "ru",
         "WiFiMacAddress": generateHex("44:d4:e0:xx:xx:xx", hex.substr(0, 6)),
         "WiFiNetworksData": {
             "BBSID": generateHex("5c:f4:ab:xx:xx:xx", hex.substr(6, 12)),
-            "SignalStrength": "" + Math.floor(-30 - Math.random() * 20),
+            "SignalStrength": Math.floor(-30 - Math.random() * 20).toString(10),
             "Channel": "null",
             "SSID": "TPLink",
         },
-        "CellTowerId": "" + (12875 + Math.floor(Math.random() * 10000)),
+        "CellTowerId": (12875 + Math.floor(Math.random() * 10000)).toString(10),
         "LocationAreaCode": "9722",
         "ScreenSize": "1080x1776",
         "RSA_ApplicationKey": rsa_app_key,
@@ -459,7 +775,7 @@ function generateImei(val, mask) {
  */
 function generateSimSN(val, mask) {
     const g_simsn_default = "897010266********L"; //билайн
-    const serial = (Math.abs(crc32(val + "simSN") % 100000000)) + "";
+    const serial = (Math.abs(crc32(val + "simSN") % 100000000)).toString(10);
 
     if (!mask) {
         mask = g_simsn_default;
@@ -500,14 +816,14 @@ function luhnGet(num) {
     num = num.toString();
     for (let i = 0; i < num.length; i++) {
         if (i % 2 === 0) {
-            const m = parseInt(num[i]) * 2;
+            const m = parseInt(num[i], 10) * 2;
             if (m > 9) {
                 arr.push(m - 9);
             } else {
                 arr.push(m);
             }
         } else {
-            const n = parseInt(num[i]);
+            const n = parseInt(num[i], 10);
             arr.push(n);
         }
     }
@@ -516,4 +832,42 @@ function luhnGet(num) {
         return a + b;
     });
     return (summ % 10);
+}
+
+/**
+ * Получить код счёта (4 последние цифры)
+ * @param card
+ * @returns {*}
+ */
+function getAccNumber(card) {
+    let cardNum = card.smsName;
+    if (cardNum && cardNum !== "")
+     return cardNum;
+
+    cardNum = card.number;
+    if (cardNum && cardNum !== "") {
+        cardNum = cardNum.substr(-4);
+        return cardNum;
+    }
+
+    return null;
+}
+
+/**
+ * Получить префикс типа счёта
+ * @param account
+ * @returns {*}
+ */
+function getAccTypeId(account) {
+    switch (account.type) {
+        case "ccard":
+            return "card";
+
+        case "checking":
+        case "deposit":
+            return "account";
+
+        default:
+            return account.type;
+    }
 }

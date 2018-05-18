@@ -1,4 +1,4 @@
-import {fetchAccountDetails, fetchAccounts, fetchTransactions, login} from "./sberbank";
+import * as sberbank from "./sberbank";
 
 export async function scrape({preferences, fromDate, toDate}) {
     if (!preferences.login) {
@@ -9,18 +9,26 @@ export async function scrape({preferences, fromDate, toDate}) {
     }
     toDate = toDate || new Date();
 
-    await login(preferences.login, preferences.pin);
-    const accounts = await fetchAccounts();
-    console.log("accounts", accounts);
+    await sberbank.login(preferences.login, preferences.pin);
+
+    console.log("Запрашиваем счета...");
+    const accounts = await sberbank.fetchAccounts();
+    console.log("Загрузили счета: ", accounts);
+
+    let transactions = [];
     for (const account of accounts) {
-        const details = await fetchAccountDetails(account.id);
-        console.log(`details for ${account.id}`, details);
-        const transactions = await fetchTransactions(account.id, fromDate, toDate);
-        console.log(`transactions for ${account.id}`, transactions);
+        console.log(`Запрашиваем операции: ${account.title} (#${account.id})`);
+
+        const trans = await sberbank.fetchTransactions(account, fromDate, toDate);
+        if (trans) {
+            console.log(`Загрузили операции:`, trans);
+            transactions = transactions.concat(trans);
+        } else
+            console.log("Нет операций.");
     }
-    //TODO convert accounts and transactions
+
     return {
-        accounts: [],
-        transactions: [],
+        accounts: accounts,
+        transactions: transactions,
     };
 }
