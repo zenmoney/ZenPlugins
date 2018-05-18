@@ -130,6 +130,8 @@ async function registerCustomer({queryRedirectParams, cardExpirationDate, cardNu
                 "type": "CARD",
             },
         },
+        sanitizeRequestLog: {body: true},
+        sanitizeResponseLog: {body: true},
     });
     console.assert(response.status === 200, "registerCustomer failed", response);
 
@@ -151,7 +153,10 @@ export async function register({deviceId, cardNumber, cardExpirationDate, phoneN
     const {previousMultiFactorResponseParams} = await registerCustomer({queryRedirectParams, cardExpirationDate, cardNumber, phoneNumber});
     const confirmationCode = await ZenMoney.readLine("Введите код из СМС сообщения", {inputType: "number"});
     const {redirectUrl} = await finishCustomerRegistration({confirmationCode, queryRedirectParams, previousMultiFactorResponseParams});
-    const redirectedResponse = await fetchJson(redirectUrl);
+    const redirectedResponse = await fetchJson(redirectUrl, {
+        sanitizeRequestLog: true,
+        sanitizeResponseLog: true,
+    });
     const [, accessToken] = redirectedResponse.url.match(/access_token=(.+?)&/);
     const [, refreshToken] = redirectedResponse.url.match(/refresh_token=(.+?)&/);
     return {accessToken, refreshToken};
@@ -168,6 +173,8 @@ export async function finishCustomerRegistration({confirmationCode, queryRedirec
                 type: "CARD",
             },
         },
+        sanitizeRequestLog: {body: true},
+        sanitizeResponseLog: {url: true, body: true},
     });
     if (response.status === 500 && Array.isArray(response.body.errors)) {
         const message = _.compact(response.body.errors.map((x) => x.message)).join("\n");
