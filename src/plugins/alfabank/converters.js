@@ -79,6 +79,8 @@ function calculateAccountId(parsedAmount, apiMovement) {
     }
 }
 
+export const normalizeIsoDate = (isoDate) => isoDate.replace(/([+-])(\d{2})(\d{2})$/, "$1$2:$3");
+
 export function convertApiMovementToReadableTransaction(apiMovement) {
     const posted = {amount: parseApiAmount(apiMovement.amount), instrument: apiMovement.currency};
     const {mcc, origin} = parseApiMovementDescription(apiMovement.description, Math.sign(posted.amount));
@@ -86,7 +88,7 @@ export function convertApiMovementToReadableTransaction(apiMovement) {
         type: "transaction",
         id: apiMovement.key,
         account: {id: calculateAccountId(posted.amount, apiMovement)},
-        date: new Date(apiMovement.createDate),
+        date: new Date(normalizeIsoDate(apiMovement.createDate)),
         hold: apiMovement.hold,
         posted,
         origin,
@@ -135,7 +137,7 @@ function mergeTransactionPairsIntoTransfers(tuples) {
     );
 
     if (nonPairs.length > 0) {
-        console.error("Cannot merge these ambiguous transaction pairs into transfers:", nonPairs);
+        console.error("Cannot merge these ambiguous transaction pairs into transfers:", JSON.stringify(nonPairs, null, 2));
     }
 
     const transfers = pairs.map(([transferId, items]) => {
