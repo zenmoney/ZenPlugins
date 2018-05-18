@@ -10,6 +10,10 @@ export function normalizeCardExpirationDate(cardExpirationDate) {
     return `${mm}/${yy}`;
 }
 
+export function normalizePhoneNumber(phoneNumber) {
+    return phoneNumber.replace(/^(\+7|8)/, "7");
+}
+
 export function normalizePreferences(preferences) {
     const {cardNumber, cardExpirationDate, phoneNumber} = preferences;
     // FIXME must be checked in a wrapper
@@ -19,5 +23,9 @@ export function normalizePreferences(preferences) {
             throw new TemporaryError(`preference key ${key} must be set`);
         }
     });
-    return {cardNumber, cardExpirationDate: normalizeCardExpirationDate(cardExpirationDate), phoneNumber};
+    return {
+        cardNumber,
+        cardExpirationDate: normalizeCardExpirationDate(cardExpirationDate),
+        phoneNumber: normalizePhoneNumber(phoneNumber),
+    };
 }
