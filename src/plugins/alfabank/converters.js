@@ -113,7 +113,7 @@ function isTransferTuple({apiMovement: {senderInfo, recipientInfo}, readableTran
         return false;
     }
     if (readableTransaction.posted.amount > 0) {
-        return senderInfo.senderNameBank === bankName;
+        return senderInfo.senderNameBank === bankName && senderInfo.senderAccountNumberDescription;
     } else {
         return recipientInfo &&
             recipientInfo.recipientNameBank === bankName &&
