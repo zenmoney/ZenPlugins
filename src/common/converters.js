@@ -77,7 +77,7 @@ function makeZenmoneyTransfer(transfer) {
         hold,
         sides,
         comment,
-        ...rest,
+        ...rest
     } = transfer;
 
     console.assert(type === "transfer", `type must be equal to "transfer"`);
@@ -143,7 +143,7 @@ function makeZenmoneyTransaction(transaction) {
         mcc,
         location,
         comment,
-        ...rest,
+        ...rest
     } = transaction;
 
     console.assert(type === "transaction", `type must be equal to "transaction"`);
@@ -207,7 +207,7 @@ function makeZenmoneyTransaction(transaction) {
         const {
             instrument: originInstrument,
             amount: originAmount,
-            ...originRest,
+            ...originRest
         } = origin;
         console.assert(_.isNumber(originAmount), "origin.amount must be Number:", transaction);
         console.assert(_.isString(originInstrument), "origin.instrument must be String:", transaction);
