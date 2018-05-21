@@ -1,7 +1,7 @@
 import {toZenmoneyTransaction} from "../../common/converters";
 import {generateUUID} from "../../common/utils";
 import {assertLoginIsSuccessful, getAccessToken, getAllCommonMovements, getCommonAccounts, isExpiredLogin, login, register} from "./api";
-import {toZenmoneyAccount, convertApiMovementsToReadableTransactions} from "./converters";
+import {convertApiMovementsToReadableTransactions, toZenmoneyAccount} from "./converters";
 import {normalizePreferences} from "./preferences";
 
 export async function scrape({preferences, fromDate, toDate}) {
@@ -35,9 +35,17 @@ export async function scrape({preferences, fromDate, toDate}) {
     }
     let loginResponse = await login({sessionId, deviceId: pluginData.deviceId, accessToken: pluginData.accessToken});
     if (isExpiredLogin(loginResponse)) {
-        const {accessToken, expiresIn} = await getAccessToken({sessionId, deviceId: pluginData.deviceId, refreshToken: pluginData.refreshToken});
+        const {accessToken, expiresIn, refreshToken} = await getAccessToken({sessionId, deviceId: pluginData.deviceId, refreshToken: pluginData.refreshToken});
+
         console.log(`got new accessToken, expires in ${((expiresIn - Date.now()) / 86400000).toFixed(2)} day(s)`);
+        pluginData.accessToken = accessToken;
+
         ZenMoney.setData("accessToken", accessToken);
+        if (refreshToken !== pluginData.refreshToken) {
+            console.log("got new refreshToken");
+            pluginData.refreshToken = refreshToken;
+            ZenMoney.setData("refreshToken", refreshToken);
+        }
         ZenMoney.saveData();
 
         loginResponse = await login({sessionId, deviceId: pluginData.deviceId, accessToken});

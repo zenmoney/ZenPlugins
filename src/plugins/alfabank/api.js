@@ -31,9 +31,7 @@ export async function getAccessToken({sessionId, deviceId, refreshToken}) {
     console.assert(response.status === 200, "Unexpected token status", response);
     console.assert(response.body.operationId === "OpenID:TokenResult", "Unexpected response body.operationId", response);
 
-    console.assert(response.body.refresh_token === refreshToken, "Unexpected response body.refresh_token", response);
-
-    return {accessToken: response.body.access_token, expiresIn: response.body.expires_in};
+    return {accessToken: response.body.access_token, expiresIn: response.body.expires_in, refreshToken: response.body.refresh_token};
 }
 
 export function login({sessionId, deviceId, accessToken}) {
