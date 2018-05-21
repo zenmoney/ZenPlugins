@@ -16,20 +16,10 @@
 
 Вовсе необязательно идти рассматривать плагин на GitHub, можно запустить локально.
 
-bash:
-
 ```
 git clone git@github.com:zenmoney/ZenPlugins.git
 cd ZenPlugins
-PLUGIN=src/plugins/example yarn start
-```
-
-windows batch:
-
-```
-git clone git@github.com:zenmoney/ZenPlugins.git
-cd ZenPlugins
-set "PLUGIN=src/plugins/example" && yarn start
+yarn start example
 ```
 
 Останется только открыть корень репозитория в IDE.

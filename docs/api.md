@@ -91,20 +91,37 @@ const {login, password} = ZenMoney.getPreferences();
 
 ## Получение текстового ввода от пользователя в момент работы плагина
 
+Например, для аутентификации понадобился SMS код, который банк прислал владельцу аккаунта.
+
+### Async API
+
+```
+const smsCode = await ZenMoney.readLine("Введите код из СМС сообщения");
+if (!smsCode) {
+    throw new Error("Без SMS-кода не смогу =[");
+}
+```
+
+### (deprecated) Sync API
+
 `ZenMoney.retrieveCode(message, imageUrl, options: {time, inputType})`
 
 `options.time: Int?` - время, через которое ввод станет неактуальным и окно закроется, вернув `null`.
 
 `options.inputType: ('text' | 'textPassword' | 'number' | 'numberDecimal' | 'numberPassword' | 'phone' | 'textEmailAddress')?` - тип текстового ввода. Набор значений тот же, что и у `EditTextPreference` в [preferences.xml](docs/files/preferences.xml.md).
 
-Например, для аутентификации понадобился SMS код, который банк прислал владельцу аккаунта.
-
 ```
-const smsCode = ZenMoney.retrieveCode("Введите полученный от банка SMS-код");
+const smsCode = ZenMoney.retrieveCode("Введите код из СМС сообщения");
 if (!smsCode) {
     throw new Error("Без SMS-кода не смогу =[");
 }
 ```
+
+Функция `ZenMoney.retrieveCode` в браузерном отладчике реализована не очень хорошо: она читает значение файла `zp_pipe.txt` в папке плагина до тех пор, пока файл пустой.
+
+После каждого использования этой функции рекомендуется опустошить файл `zp_pipe.txt`, иначе retrieveCode будет возвращать устаревший пользовательский ввод.
+
+Когда-нибудь мы заменим этот костыль на браузерный [confirm](https://developer.mozilla.org/en-US/docs/Web/API/Window/confirm)
 
 ## Сохранение данных между вызовами плагина
 
