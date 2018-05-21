@@ -30,7 +30,6 @@ describe("scraper happy path", () => {
 
     it("should work", () => {
         global.ZenMoney = {
-            getPreferences: () => ({login: "login", password: "password"}),
             isAccountSkipped: () => false,
         };
 
@@ -257,7 +256,11 @@ describe("scraper happy path", () => {
             ]),
         });
 
-        return expect(scrape({from: null}))
+        return expect(scrape({
+            preferences: {login: "login", password: "password"},
+            fromDate: null,
+            toDate: null,
+        }))
             .resolves
             .toMatchSnapshot("happy path scrape result");
     });

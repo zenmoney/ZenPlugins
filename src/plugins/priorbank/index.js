@@ -1,40 +1,30 @@
-import _ from "lodash";
-import {convertToZenMoneyTransaction} from "./mappingUtils";
-import * as prior from "./prior";
+import {toZenmoneyTransaction} from "../../common/converters";
+import {convertApiCardsToReadableTransactions, toZenmoneyAccount} from "./converters";
+import {calculatePostAuthHeaders, fetchCardDesc, fetchCards, fetchLoginSalt, fetchPreAuthHeaders, login} from "./prior";
 
-const calculateAccountId = (card) => String(card.clientObject.id);
-
-function convertToZenMoneyAccount(card) {
-    return {
-        id: calculateAccountId(card),
-        title: card.clientObject.customSynonym || card.clientObject.defaultSynonym,
-        type: prior.getAccountType(card),
-        syncID: [card.clientObject.cardMaskedNumber.slice(-4)],
-        instrument: card.clientObject.currIso,
-        balance: card.balance.available,
-    };
-}
-
-const convertToZenMoneyTransactions = (accountId, transactions) => transactions.map((transaction) => convertToZenMoneyTransaction(accountId, transaction));
-
-export async function scrape({fromDate, toDate}) {
-    const {login: rawLogin, password} = ZenMoney.getPreferences();
-    const login = rawLogin.trim();
-    const preAuthHeaders = await prior.fetchPreAuthHeaders();
-    const loginSalt = await prior.fetchLoginSalt({preAuthHeaders, login});
-    const {accessToken, userSession} = await prior.login({preAuthHeaders, loginSalt, login, password});
-    const postAuthHeaders = prior.calculatePostAuthHeaders({preAuthHeaders, accessToken});
-
-    const [cardItems, cardDetailItems] = await Promise.all([
-        prior.fetchCards({postAuthHeaders, userSession}),
-        prior.fetchCardDetails({postAuthHeaders, userSession, fromDate, toDate}),
+export async function scrape({preferences, fromDate, toDate}) {
+    const preAuthHeaders = await fetchPreAuthHeaders();
+    const loginSalt = await fetchLoginSalt({
+        preAuthHeaders,
+        login: preferences.login.trim(),
+    });
+    const {accessToken, userSession} = await login({
+        preAuthHeaders,
+        loginSalt,
+        login: preferences.login.trim(),
+        password: preferences.password,
+    });
+    const postAuthHeaders = calculatePostAuthHeaders({preAuthHeaders, accessToken});
+    const [cardsBodyResult, cardDescBodyResult] = await Promise.all([
+        fetchCards({postAuthHeaders, userSession}),
+        fetchCardDesc({postAuthHeaders, userSession, fromDate, toDate}),
     ]);
-    const cards = prior.joinTransactions({cardItems, cardDetailItems});
+
+    const readableTransactions = convertApiCardsToReadableTransactions({cardsBodyResult, cardDescBodyResult});
+    console.debug({readableTransactions});
+
     return {
-        accounts: cards.map((card) => convertToZenMoneyAccount(card)),
-        transactions: _.flatMap(
-            cards.filter((card) => !ZenMoney.isAccountSkipped(calculateAccountId(card))),
-            (card) => convertToZenMoneyTransactions(calculateAccountId(card), card.transactions),
-        ),
+        accounts: cardsBodyResult.map(toZenmoneyAccount),
+        transactions: readableTransactions.map(toZenmoneyTransaction),
     };
 }

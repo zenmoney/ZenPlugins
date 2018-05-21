@@ -2,7 +2,7 @@ import _ from "lodash";
 import {formatCommentDateTime} from "../../common/dates";
 import * as errors from "../../common/errors";
 import {generateUUID} from "../../common/utils";
-import {convertToZenMoneyTransaction} from "../priorbank/mappingUtils";
+import {convertToZenMoneyTransaction} from "./mappingUtils";
 import * as BSB from "./BSB";
 import {getTransactionToTransferReplacements} from "./mergeTransfers";
 
