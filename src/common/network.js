@@ -83,7 +83,7 @@ export function parseXml(xml) {
         xmlMode: true,
     });
     const object = parseXmlNode($().children()[0]);
-    if (!object || typeof object !== 'object') {
+    if (!object || typeof object !== "object") {
         throw new Error("Error parsing XML. Unexpected root node");
     }
     return object;
@@ -130,7 +130,7 @@ function parseXmlNode(root) {
             } else {
                 value = parseXmlNode(node);
             }
-            if (value && typeof value === 'object' && node.attribs) {
+            if (value && typeof value === "object" && node.attribs) {
                 Object.assign(value, node.attribs);
             }
             let _value = object[key];

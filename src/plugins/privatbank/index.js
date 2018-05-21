@@ -35,24 +35,17 @@ export function adjustTransactions(transactions, accounts) {
         });
 }
 
-export async function scrape({fromDate, toDate}) {
-    const preferences = ZenMoney.getPreferences();
-    if (!preferences.merchantId) {
-        throw new ZenMoney.Error("Введите номер мерчанта!", true, true);
-    }
-    if (!preferences.password) {
-        throw new ZenMoney.Error("Введите пароль!", true, true);
-    }
+export async function scrape({preferences, fromDate, toDate}) {
     const merchants = preferences.merchantId.split(/\s+/);
     const passwords = preferences.password.split(/\s+/);
     if (merchants.length !== passwords.length) {
-        throw new ZenMoney.Error("Количество паролей, разделенных через пробел, в настройках подключения должно быть равно количеству мерчантов, разделенных через пробел", true, true);
+        throw new InvalidPreferencesError("Количество паролей, разделенных через пробел, в настройках подключения должно быть равно количеству мерчантов, разделенных через пробел");
     }
     const accounts = {};
     let transactions = [];
-    for (let i = 0; i < merchants.length; i++) {
+    await Promise.all(merchants.map(async (merchant, i) => {
         const bank = new PrivatBank({
-            merchant: merchants[i],
+            merchant: merchant,
             password: passwords[i],
             baseUrl: preferences.serverAddress,
         });
@@ -60,7 +53,7 @@ export async function scrape({fromDate, toDate}) {
         transactions = transactions.concat(convertTransactions(
             await bank.fetchTransactions(fromDate, toDate), account));
         Object.assign(accounts, account);
-    }
+    }));
     return {
         accounts: adjustAccounts(accounts),
         transactions: adjustTransactions(transactions, accounts),

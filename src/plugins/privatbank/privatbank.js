@@ -1,51 +1,12 @@
 import {MD5, SHA1} from "jshashes";
-
-import _ from "lodash";
 import {toAtLeastTwoDigitsString} from "../../common/dates";
-import {sanitize} from "../../common/sanitize";
+import * as network from "../../common/network";
 
 const sha1 = new SHA1();
 const md5 = new MD5();
 
 function formatDate(date) {
     return [date.getDate(), date.getMonth() + 1, date.getFullYear()].map(toAtLeastTwoDigitsString).join(".");
-}
-
-export async function fetchXml(url, options = {}) {
-    const init = {
-        ..._.omit(options, ["sanitizeRequestLog", "sanitizeResponseLog", "log"]),
-        headers: {
-            "Accept": "application/xml, text/plain, */*",
-            "Content-Type": "application/xml;charset=UTF-8",
-            ...options.headers,
-        },
-    };
-
-    const beforeFetchTicks = Date.now();
-    const shouldLog = options.log !== false;
-    shouldLog && console.debug("fetchXml request", sanitize({
-        method: init.method || "GET",
-        url,
-        headers: init.headers,
-        ...options.body && {body: options.body},
-    }, options.sanitizeRequestLog || false));
-
-    const response = await fetch(url, init);
-    const body = await response.text();
-
-    const endTicks = Date.now();
-    shouldLog && console.debug("fetchXml response", sanitize({
-        status: response.status,
-        url: response.url,
-        headers: response.headers.entries ? _.fromPairs(Array.from(response.headers.entries())) : response.headers.raw(),
-        body,
-        ms: endTicks - beforeFetchTicks,
-    }, options.sanitizeResponseLog || false));
-
-    return {
-        ..._.pick(response, ["ok", "status", "statusText", "url", "headers"]),
-        body,
-    };
 }
 
 export class PrivatBank {
@@ -69,8 +30,12 @@ export class PrivatBank {
                 </merchant>
                 <data>${data}</data>
             </request>`;
-        const response = await fetchXml(`${this.baseUrl}${url}`, {
+        const response = await network.fetch(`${this.baseUrl}${url}`, {
             method: "POST",
+            headers: {
+                "Accept": "application/xml, text/plain, */*",
+                "Content-Type": "application/xml;charset=UTF-8",
+            },
             body: xml,
         });
         if (response.body) {

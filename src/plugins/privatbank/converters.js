@@ -1,91 +1,51 @@
-const cheerio = require("cheerio");
+import * as _ from "lodash";
+import {parseXml} from "../../common/network";
 
 export function convertAccounts(xml) {
-    const $ = cheerio.load(xml, {
-        xml: {
-            recognizeSelfClosing: true,
-        },
-    });
     const accounts = {};
-    const account = $("cardbalance").children().toArray().reduce((account, node) => {
-        if (!node.name) {
-            return account;
-        }
-        if (node.name === "card") {
-            node.children.forEach(node => {
-                if (!node.name) {
-                    return;
-                }
-                const key = node.name;
-                let value = node.children && node.children.length > 0 ? node.children[0].data : null;
-                switch (key) {
-                    case "account":
-                        if (value.length === 19) {
-                            value = value.substring(0, value.length - 3);
-                        }
-                        account.id = value;
-                        if (account.syncID.indexOf(value) < 0) {
-                            account.syncID.push(value);
-                            accounts[value] = account;
-                        }
-                        break;
-                    case "card_number":
-                        if (account.syncID.indexOf(value) < 0) {
-                            account.syncID.push(value);
-                            accounts[value] = account;
-                            if (!account.title) {
-                                account.title = "*" + value.slice(-4);
-                            }
-                        }
-                        break;
-                    case "currency":
-                        account.instrument = value;
-                        break;
-                    case "acc_name":
-                        if (value) {
-                            account.title = value;
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            });
-        }
-        const key = node.name;
-        const value = node.children[0].data;
-        switch (key) {
-            case "fin_limit":
-                account.creditLimit = parseFloat(value);
-                break;
-            case "balance":
-                account.balance = parseFloat(value);
-                break;
-            default:
-                break;
-        }
-        return account;
-    }, {type: "ccard", syncID: []});
+    const json = _.get(parseXml(xml), "response.data.info.cardbalance");
+    if (!json) {
+        return accounts;
+    }
+    const account = {
+        type: "ccard",
+        title: json.card.acc_name,
+        instrument: json.card.currency,
+        balance: parseFloat(json.balance),
+        creditLimit: parseFloat(json.fin_limit),
+        syncID: [],
+    };
+    let id = json.card.account;
+    if (id.length === 19) {
+        id = id.substring(0, id.length - 3);
+    }
+    account.id = id;
+    account.syncID.push(id);
+    accounts[id] = account;
+    const cardId = json.card.card_number;
+    if (account.syncID.indexOf(cardId) < 0) {
+        account.syncID.push(cardId);
+        accounts[cardId] = account;
+    }
     if (!account.title) {
-        account.title = "*" + account.syncID[0].slice(-4);
+        account.title = "*" + account.syncID[account.syncID.length - 1].slice(-4);
     }
     return accounts;
 }
 
 export function convertTransactions(xml, accounts) {
-    const $ = cheerio.load(xml, {
-        xml: {
-            recognizeSelfClosing: true,
-        },
-    });
     const transactions = [];
-    $("statements").children().toArray().forEach(node => {
-        const json = node.attribs;
-        const transaction = convertTransactionJson(json);
-        if (transaction) {
-            checkTransactionAccount(json.card, accounts);
-            transactions.push(transaction);
+    let jsonArray = _.get(parseXml(xml), "response.data.info.statements.statement");
+    if (jsonArray) {
+        jsonArray = _.castArray(jsonArray);
+        for (const json of jsonArray) {
+            const transaction = convertTransactionJson(json);
+            if (transaction) {
+                checkTransactionAccount(json.card, accounts);
+                transactions.push(transaction);
+            }
         }
-    });
+    }
     return transactions;
 }
 
