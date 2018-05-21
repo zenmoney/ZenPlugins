@@ -122,5 +122,15 @@ Array [
       },
     },
   },
+  Object {
+    "input": "12345678 JP SINNZIYUKUNEGISIYASUKU> 18.05.11 18.05.11 3500 JPY 123456++++++7890",
+    "output": Object {
+      "mcc": null,
+      "origin": Object {
+        "amount": -3500,
+        "instrument": "JPY",
+      },
+    },
+  },
 ]
 `;

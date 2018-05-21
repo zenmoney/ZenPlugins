@@ -35,7 +35,7 @@ export function toZenmoneyAccount(apiAccount) {
 
 const dateRegExp = /\d{2}\.\d{2}\.\d{2}/;
 const spaceRegExp = /\s+/;
-const amountRegExp = /((?:\d+)?\.\d+)/;
+const amountRegExp = /(\d*?(?:\.\d+)?)/;
 const currencyRegExp = /(\w{3})/;
 const optionalMccRegExp = /(?:\s+MCC(\d+))?/;
 
