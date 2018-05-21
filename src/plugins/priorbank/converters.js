@@ -1,5 +1,6 @@
 import _ from "lodash";
-import {asCashTransfer, convertReadableTransactionToReadableTransferSide, formatComment} from "../../common/converters";
+import {asCashTransfer, formatComment} from "../../common/converters";
+import {mergeTransfers} from "../../common/mergeTransfers";
 
 const calculateAccountId = (card) => String(card.clientObject.id);
 
@@ -96,70 +97,8 @@ const convertApiTransactionToReadableTransaction = (apiTransaction, accountCurre
     throw new Error(`apiTransaction.type "${apiTransaction.type}" not implemented`);
 };
 
-function defaultIsTransferTuple({apiTransaction}) {
-    return apiTransaction.payload.transDetails.includes("P2P SDBO") || apiTransaction.payload.transDetails.includes("P2P_SDBO   ");
-}
-
-const defaultMakeTransferId = ({apiTransaction, readableTransaction}) => {
-    const {amount, instrument} = readableTransaction.origin || readableTransaction.posted;
-    return `${Math.abs(amount)} ${instrument} @ ${readableTransaction.date} ${apiTransaction.payload.transTime}`;
-};
-
-const defaultMakeTransactionId = (x) => {
-    if (x.readableTransaction.type === "transfer") { // e.g. Cash, ATM
-        return "transfer";
-    }
-    return `${defaultMakeTransferId(x)} ${x.readableTransaction.posted.amount >= 0 ? "+" : "-"} `;
-};
-
-// FIXME subject for generalization (see alfabank, belswissbank using similar algos, this one is stricter and verbose)
-function mergeTransactionPairsIntoTransfers(tuples, isTransferTuple = defaultIsTransferTuple, makeTransferId = defaultMakeTransferId, makeTransactionId = defaultMakeTransactionId) {
-    const potentialTransferTuples = tuples.filter(isTransferTuple);
-
-    const [pairs, nonPairs] = _.partition(
-        Object.entries(_.groupBy(potentialTransferTuples, (x) => makeTransferId(x))),
-        ([transferId, items]) => items.length === 2,
-    );
-
-    if (nonPairs.length > 0) {
-        const [singles, collisiveBuckets] = _.partition(nonPairs, ([transferId, items]) => items.length === 1);
-        if (singles.length > 0) {
-            console.debug("Cannot find a pair for singles looking like transfers:", JSON.stringify(singles, null, 2));
-        }
-        if (collisiveBuckets.length > 0) {
-            throw new Error("Transactions have collisive transferId:" + JSON.stringify(collisiveBuckets, null, 2));
-        }
-    }
-
-    const replacementsByTransactionIdLookup = pairs.reduce((lookup, [transferId, items]) => {
-        const transfer = {
-            type: "transfer",
-            date: items[0].readableTransaction.date, // we may choose any date (they are equal)
-            hold: items.some(({readableTransaction}) => readableTransaction.hold),
-            sides: items.map(({readableTransaction}) => convertReadableTransactionToReadableTransferSide(readableTransaction)),
-            comment: null,
-        };
-        return items.reduce((lookup, item, index) => {
-            const id = makeTransactionId(item);
-            console.assert(_.isUndefined(lookup[id]), "transfer side replacement is already defined");
-            lookup[id] = index === 0 ? transfer : null;
-            return lookup;
-        }, lookup);
-    }, {});
-    const readableTransactions = _.compact(tuples.map((x) => {
-        const replacement = replacementsByTransactionIdLookup[makeTransactionId(x)];
-        return _.isUndefined(replacement) ? x.readableTransaction : replacement;
-    }));
-    console.assert(readableTransactions.length === tuples.length - pairs.length, "transactions count checksum mismatch", {
-        readableTransactionsLength: readableTransactions.length,
-        tuplesLength: tuples.length,
-        transfersLength: pairs.length,
-    });
-    return readableTransactions;
-}
-
 export function convertApiCardsToReadableTransactions({cardsBodyResult, cardDescBodyResult}) {
-    const tuples = _.sortBy(_.flatMap(cardsBodyResult, (card) => {
+    const items = _.sortBy(_.flatMap(cardsBodyResult, (card) => {
         const cardDesc = cardDescBodyResult.find((x) => x.id === card.clientObject.id);
         const abortedTransactions = _.flatMap(cardDesc.contract.abortedContractList, (x) => x.abortedTransactionList.reverse())
             .map((abortedTransaction) => ({type: "abortedTransaction", payload: abortedTransaction}));
@@ -174,5 +113,23 @@ export function convertApiCardsToReadableTransactions({cardsBodyResult, cardDesc
                 return {apiTransaction, readableTransaction};
             });
     }), x => x.readableTransaction.date);
-    return mergeTransactionPairsIntoTransfers(tuples);
+    return mergeTransfers({
+        items,
+        selectReadableTransaction: (item) => item.readableTransaction,
+        isTransferItem: (item) =>
+            item.apiTransaction.payload.transDetails.includes("P2P SDBO") ||
+            item.apiTransaction.payload.transDetails.includes("P2P_SDBO"),
+        makeGroupKey: (item) => {
+            const {amount, instrument} = item.readableTransaction.origin || item.readableTransaction.posted;
+            return `${Math.abs(amount)} ${instrument} @ ${item.readableTransaction.date} ${item.apiTransaction.payload.transTime}`;
+        },
+        selectTransactionId: (item) => {
+            if (item.readableTransaction.type === "transfer") { // e.g. Cash, ATM
+                return null;
+            }
+            const {amount, instrument} = item.readableTransaction.origin || item.readableTransaction.posted;
+            const sign = item.readableTransaction.posted.amount >= 0 ? "+" : "-";
+            return `${Math.abs(amount)} ${instrument} @ ${item.readableTransaction.date} ${item.apiTransaction.payload.transTime} ${sign}`;
+        },
+    });
 }
