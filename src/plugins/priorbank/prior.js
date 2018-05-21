@@ -94,7 +94,7 @@ export async function fetchCards({postAuthHeaders, userSession}) {
     return response.body.result;
 }
 
-export async function fetchCardDetails({postAuthHeaders, userSession, fromDate = null, toDate = null}) {
+export async function fetchCardDesc({postAuthHeaders, userSession, fromDate = null, toDate = null}) {
     const body = {
         usersession: userSession,
         ids: [],
@@ -118,95 +118,4 @@ export async function fetchCardDetails({postAuthHeaders, userSession, fromDate =
     });
     assertResponseSuccess(response);
     return response.body.result;
-}
-
-const extractTransactionBuckets = (cardDetails) => {
-    const abortedTransactions = cardDetails.contract.abortedContractList.map((x) => ({
-        committed: false,
-        items: x.abortedTransactionList,
-    }));
-    const regularTransactions = cardDetails.contract.account.transCardList.map((x) => ({
-        committed: true,
-        items: x.transactionList,
-    }));
-    return abortedTransactions.concat(regularTransactions);
-};
-
-const knownTransactionTypes = ["Retail", "ATM", "CH Debit", "Cash"];
-
-const normalizeSpaces = (text) => _.compact(text.split(" ")).join(" ");
-
-function parseTransDetails(transDetails) {
-    const type = knownTransactionTypes.find((type) => transDetails.startsWith(type + " "));
-    if (type) {
-        return {type, payee: normalizeSpaces(transDetails.slice(type.length)), comment: null};
-    } else {
-        return {type: null, payee: null, comment: normalizeSpaces(transDetails)};
-    }
-}
-
-const normalizePreparedItem = (item, accountCurrency) => {
-    const details = parseTransDetails(item.transDetails);
-    return ({
-        transactionDate: new Date(item.transDate),
-        transactionAmount: -item.transAmount,
-        transactionCurrency: item.transCurrIso,
-        accountAmount: -item.amount,
-        accountCurrency,
-        isCashTransfer: details.type === "ATM",
-        payee: details.payee,
-        comment: details.comment,
-        __sourceKind: "prepared",
-        __source: item,
-    });
-};
-
-const normalizeCommittedItem = (item, accountCurrency) => {
-    const transactionCurrency = item.transCurrIso;
-    const transactionDate = new Date(item.transDate);
-    const accountAmount = item.accountAmount;
-    const transactionAmount = accountCurrency === transactionCurrency ? accountAmount : item.amount;
-    const details = parseTransDetails(item.transDetails);
-    return {
-        transactionDate,
-        transactionAmount,
-        transactionCurrency,
-        accountAmount,
-        accountCurrency,
-        isCashTransfer: details.type === "ATM" || details.type === "Cash",
-        payee: details.payee,
-        comment: details.comment,
-        __sourceKind: "committed",
-        __source: item,
-    };
-};
-
-const normalizeTransactionItem = ({committed, item, accountCurrency}) => committed
-    ? normalizeCommittedItem(item, accountCurrency)
-    : normalizePreparedItem(item, accountCurrency);
-
-const extractAndNormalizeTransactions = (cardDetails, accountCurrency) => {
-    const transactions = _.flatten(extractTransactionBuckets(cardDetails)
-        .map(({committed, items}) => items
-            .map((item) => normalizeTransactionItem({committed, item, accountCurrency}))
-            .reverse(),
-        ));
-    return _.sortBy(transactions, x => x.transactionDate);
-};
-
-export function joinTransactions({cardItems, cardDetailItems}) {
-    return cardItems.map((card) => ({
-        ...card,
-        transactions: extractAndNormalizeTransactions(
-            _.find(cardDetailItems, {id: card.clientObject.id}),
-            card.clientObject.currIso,
-        ),
-    }));
-}
-
-export function getAccountType(card) {
-    if (card.clientObject.type !== 6) {
-        console.error(`Unknown cardType, falling back to ccard, card=`, card.clientObject);
-    }
-    return "ccard";
 }
