@@ -1,5 +1,6 @@
 import _ from "lodash";
-import {asCashTransfer, convertReadableTransactionToReadableTransferSide, formatComment} from "../../common/converters";
+import {asCashTransfer, formatComment} from "../../common/converters";
+import {mergeTransfers} from "../../common/mergeTransfers";
 import {parseApiAmount} from "./api";
 
 function convertCreditApiAccount(apiAccount) {
@@ -106,78 +107,31 @@ export function convertApiMovementToReadableTransaction(apiMovement) {
     return readableTransaction;
 }
 
-const bankName = `АО "АЛЬФА-БАНК"`;
-
-function isTransferTuple({apiMovement: {senderInfo, recipientInfo}, readableTransaction}) {
-    if (readableTransaction.type !== "transaction") {
-        return false;
-    }
-    if (readableTransaction.posted.amount > 0) {
-        return senderInfo.senderNameBank === bankName && senderInfo.senderAccountNumberDescription;
-    } else {
-        return recipientInfo &&
-            recipientInfo.recipientNameBank === bankName &&
-            recipientInfo.recipientAccountNumberDescription;
-    }
-}
-
-function mergeTransactionPairsIntoTransfers(tuples) {
-    const potentialTransfers = tuples.filter(isTransferTuple).map(({apiMovement, readableTransaction}) => {
-        const {amount, instrument} = readableTransaction.origin || readableTransaction.posted;
-        return {
-            transferId: `${Math.abs(amount)} ${instrument} @ ${apiMovement.createDate}`,
-            apiMovement,
-            readableTransaction,
-        };
-    });
-
-    const [pairs, nonPairs] = _.partition(
-        _.toPairs(_.groupBy(potentialTransfers, (x) => x.transferId)),
-        ([transferId, items]) => items.length === 2,
-    );
-
-    if (nonPairs.length > 0) {
-        console.error("Cannot merge these ambiguous transaction pairs into transfers:", JSON.stringify(nonPairs, null, 2));
-    }
-
-    const transfers = pairs.map(([transferId, items]) => {
-        return {
-            type: "transfer",
-            date: items[0].readableTransaction.date, // we may choose any date (they are equal)
-            hold: items.some(({readableTransaction}) => readableTransaction.hold),
-            sides: items.map(({readableTransaction}) => convertReadableTransactionToReadableTransferSide(readableTransaction)),
-            comment: null,
-        };
-    });
-
-    const replacementsByTransactionIdLookup = transfers.reduce((lookup, transfer) => {
-        transfer.sides.forEach(({id}, index) => {
-            console.assert(id, "transfer side id must be provided");
-            console.assert(_.isUndefined(lookup[id]), "transfer side replacement is already defined");
-            lookup[id] = index === 0 ? transfer : null;
-        });
-        return lookup;
-    }, {});
-
-    const readableTransactions = _.compact(tuples.map(({readableTransaction}) => {
-        const replacement = replacementsByTransactionIdLookup[readableTransaction.id];
-        return _.isUndefined(replacement) ? readableTransaction : replacement;
-    }));
-
-    console.assert(readableTransactions.length === tuples.length - transfers.length, "transactions count checksum failed", {
-        readableTransactionsLength: readableTransactions.length,
-        tuplesLength: tuples.length,
-        transfersLength: transfers.length,
-    });
-
-    return readableTransactions;
-}
-
 export function convertApiMovementsToReadableTransactions(apiMovements) {
     const uniqueMovements = _.uniqBy(apiMovements, x => x.key);
-    const tuples = uniqueMovements.map((apiMovement) => ({
+    const items = uniqueMovements.map((apiMovement) => ({
         apiMovement,
         readableTransaction: convertApiMovementToReadableTransaction(apiMovement),
     }));
-    return mergeTransactionPairsIntoTransfers(tuples);
+    return mergeTransfers({
+        items: items,
+        selectReadableTransaction: (item) => item.readableTransaction,
+        isTransferItem: ({apiMovement: {senderInfo, recipientInfo}, readableTransaction}) => {
+            if (readableTransaction.type !== "transaction") {
+                return false;
+            }
+            if (readableTransaction.posted.amount > 0) {
+                return senderInfo.senderNameBank === `АО "АЛЬФА-БАНК"` && senderInfo.senderAccountNumberDescription;
+            } else {
+                return recipientInfo &&
+                    recipientInfo.recipientNameBank === `АО "АЛЬФА-БАНК"` &&
+                    recipientInfo.recipientAccountNumberDescription;
+            }
+        },
+        makeGroupKey: (item) => {
+            const {amount, instrument} = item.readableTransaction.origin || item.readableTransaction.posted;
+            return `${Math.abs(amount)} ${instrument} @ ${item.readableTransaction.date}`;
+        },
+        selectTransactionId: (item) => item.readableTransaction.id,
+    });
 }
