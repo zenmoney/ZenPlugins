@@ -1,5 +1,4 @@
 import {SHA512} from "jshashes";
-import _ from "lodash";
 import {fetchJson} from "../../common/network";
 
 function isSuccessfulResponse(response) {
@@ -47,23 +46,7 @@ export const calculatePasswordHash = ({loginSalt, password}) => {
         : passwordHash;
 };
 
-function getCharCodesDistribution(obj) {
-    return _.mapValues(obj, (value) => {
-        const charCodes = value.split("").map((char) => char.charCodeAt(0));
-        return _.countBy(charCodes, (code) => {
-            if (0 <= code && code < 128) {
-                return "ascii";
-            } else if (128 <= code && code < 256) {
-                return "ansi";
-            } else {
-                return "other";
-            }
-        });
-    });
-}
-
 export async function login({preAuthHeaders, loginSalt, login, password}) {
-    console.debug("charCodesDistribution", getCharCodesDistribution({login, password}));
     const response = await fetchJson(makeApiUrl("/Authorization/Login"), {
         method: "POST",
         body: {login, password: calculatePasswordHash({loginSalt, password}), lang: "RUS"},
