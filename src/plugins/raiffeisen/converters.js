@@ -179,12 +179,18 @@ export function convertLoan(json) {
 
 export function convertTransactions(jsonArray) {
     const transactions = [];
-    let prevJson = null;
-    for (const json of jsonArray) {
-        if (prevJson && _.isEqual(prevJson, json)) {
-            continue;
+    let i = -1;
+    l: for (const json of jsonArray) {
+        i++;
+        for (let j = i - 1; j >= 0; j--) {
+            const prevJson = jsonArray[j];
+            if (prevJson.date !== json.date) {
+                break;
+            }
+            if (_.isEqual(prevJson, json)) {
+                continue l;
+            }
         }
-        prevJson = json;
         const transaction = convertTransaction(json);
         if (transaction) {
             transactions.push(transaction);

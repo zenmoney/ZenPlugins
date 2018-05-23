@@ -2,7 +2,7 @@
 <provider>
     <id>raiffeisen</id>
     <version>3.0</version>
-    <build>57</build>
+    <build>58</build>
     <company>5156</company>
     <modular>true</modular>
     <files>

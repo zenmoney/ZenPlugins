@@ -28,11 +28,12 @@ async function fetchJson(url, options = {}, predicate = () => true) {
             maxAttempts: 10,
         }))[1];
     } catch (e) {
-        if (e instanceof retry.RetryError) {
-            e = e.failedResults.find(([error, response]) => error !== null);
-            e = e ? e[0] : new ZenMoney.Error("[NER]", true);
+        let err = e;
+        if (err instanceof retry.RetryError) {
+            err = err.failedResults.find(([error, response]) => error !== null);
+            err = err ? err[0] : new ZenMoney.Error("[NER]", true);
         }
-        throw e;
+        throw err;
     }
 
     if (predicate) {
@@ -64,17 +65,17 @@ async function login(login, password) {
     }, null);
 
     if (response.status === 401) {
-        throw new ZenMoney.Error("Райффайзенбанк: Неверный логин или пароль", true);
+        throw new TemporaryError("Неверный логин или пароль");
     }
     if (response.status === 222) {
-        throw new ZenMoney.Error("Райффайзенбанк: Пароль устарел. Смените его в приложении банка, а потом обновите в настройках подключения.", true);
+        throw new TemporaryError("Пароль устарел. Смените его в приложении банка, а потом обновите в настройках подключения.");
     }
     if (response.status === 267) {
         const confirmData = (await fetchJson("https://online.raiffeisen.ru/oauth/entry/confirm/sms", {
-            method: "POST"
+            method: "POST",
         }, response => response.body.requestId && response.body.methods)).body;
         if (!confirmData.methods.some(method => method.method === "SMSOTP")) {
-            throw new ZenMoney.Error("Райффайзенбанк: Неизвестный способ подтверждения входа");
+            throw new Error("Райффайзенбанк: Неизвестный способ подтверждения входа");
         }
         const prompt = "Райффайзенбанк: Для подтверждения входа и импорта из банка введите код из СМС";
         const code = ZenMoney.retrieveCode(prompt, null, {
@@ -89,13 +90,13 @@ async function login(login, password) {
             sanitizeResponseLog: {body: {username: true, access_token: true, resource_owner: true}},
         }, null);
         if (response.status !== 200) {
-            throw new ZenMoney.Error("Райффайзенбанк: Введён неверный код подтверждения. Запустите импорт ещё раз.", true);
+            throw new TemporaryError("Введён неверный код подтверждения. Запустите импорт ещё раз.");
         }
     }
     if (response.body &&
         response.body.error === "invalid_request" &&
         response.body.error_description === "Missing grant type") {
-        throw new ZenMoney.Error("Райффайзенбанк: У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии", true);
+        throw new TemporaryError("У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии");
     }
 
     validateResponse(response, response => response.body && !response.body.error && response.body.access_token);
@@ -180,14 +181,7 @@ export function adjustAccounts(accounts) {
     return convertAccountSyncID(convertAccountMapToArray(accounts));
 }
 
-export async function scrape({fromDate, toDate}) {
-    const preferences = ZenMoney.getPreferences();
-    if (!preferences.login) {
-        throw new ZenMoney.Error("Введите логин в интернет-банк!", null, true);
-    }
-    if (!preferences.password) {
-        throw new ZenMoney.Error("Введите пароль в интернет-банк!", null, true);
-    }
+export async function scrape({preferences, fromDate, toDate}) {
     let oldPluginLastSyncDate = ZenMoney.getData("last_sync", 0);
     if (oldPluginLastSyncDate && oldPluginLastSyncDate > 0) {
         oldPluginLastSyncDate = oldPluginLastSyncDate - 24 * 60 * 60 * 1000;
