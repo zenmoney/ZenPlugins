@@ -186,7 +186,7 @@ export async function fetchTransactions({id, type}, fromDate, toDate) {
             ? {id, from: formatDate(fromDate), to: formatDate(toDate)}
             : {id, count: 10, paginationSize: 10},
     }, response => response => _.get(response, "body.operations"));
-    let transactions = getArray(response.body.operations.operation);
+    let transactions = getArray(_.get(response, "body.operations.operation"));
     if (!isFetchingByDate) {
         transactions = transactions.filter(transaction => {
             const date = new Date(parseDate(transaction.date));
