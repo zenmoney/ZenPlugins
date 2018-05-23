@@ -40,25 +40,25 @@ export class PrivatBank {
         });
         if (response.body) {
             if (response.status === 504 && response.body.indexOf("504 Gateway Time-out") >= 0) {
-                throw new ZenMoney.Error("[NER] Proxy connection error", true);
+                throw new TemporaryError("[NER] Proxy connection error");
             }
             if (response.body.indexOf("invalid signature") >= 0) {
-                throw new ZenMoney.Error(`Не удалось получить данные по мерчанту ${this.merchant}. ` +
-                    `Неверный пароль. Проверьте, что вы указали верный пароль в настройках подключения к банку.`, true);
+                throw new TemporaryError(`Не удалось получить данные по мерчанту ${this.merchant}. ` +
+                    `Неверный пароль. Проверьте, что вы указали верный пароль в настройках подключения к банку.`);
             }
             if (response.body.indexOf("invalid ip:") >= 0) {
-                throw new ZenMoney.Error(`Не удалось получить данные по мерчанту ${this.merchant}. ` +
-                    `Укажите IP-адрес: 95.213.236.52 в настройках мерчанта в Приват24.`, true);
+                throw new TemporaryError(`Не удалось получить данные по мерчанту ${this.merchant}. ` +
+                    `Укажите IP-адрес: 95.213.236.52 в настройках мерчанта в Приват24.`);
             }
             if (response.body.indexOf("this card is not in merchants card") >= 0) {
-                throw new ZenMoney.Error(`Не удалось получить баланс карты по мерчанту ${this.merchant}. ` +
+                throw new TemporaryError(`Не удалось получить баланс карты по мерчанту ${this.merchant}. ` +
                     `Если карта была недавно перевыпущена, зарегистрируйте для неё новый мерчант и ` +
-                    `обновите его в настройках подключения к банку.`, true);
+                    `обновите его в настройках подключения к банку.`);
             }
             if (/point\s+\/.*not allowed for merchant/.test(response.body)) {
-                throw new ZenMoney.Error(`Не удалось получить данные по мерчанту ${this.merchant}. ` +
+                throw new TemporaryError(`Не удалось получить данные по мерчанту ${this.merchant}. ` +
                     `Проверьте, что в Приват24 вы поставили галочки "Баланс по счёту мерчанта физлица" и ` +
-                    `"Выписка по счёту мерчанта физлица".`, true);
+                    `"Выписка по счёту мерчанта физлица".`);
             }
         }
         console.assert(response && response.status === 200 && response.body, "non-successful response");

@@ -173,11 +173,11 @@ async function fetchTransactions(token, fromDate) {
     return transactions;
 }
 
-export function adjustTransactions(transactions, accounts) {
+function adjustTransactions(transactions, accounts) {
     return convertTransactionAccounts(transactions, accounts);
 }
 
-export function adjustAccounts(accounts) {
+function adjustAccounts(accounts) {
     return convertAccountSyncID(convertAccountMapToArray(accounts));
 }
 

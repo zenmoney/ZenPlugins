@@ -3,11 +3,11 @@ import {convertTransactionAccounts, mapObjectsGroupedByKey} from "../../common/t
 import {convertAccounts, convertTransactions} from "./converters";
 import {PrivatBank} from "./privatbank";
 
-export function adjustAccounts(accounts) {
+function adjustAccounts(accounts) {
     return convertAccountSyncID(convertAccountMapToArray(accounts));
 }
 
-export function adjustTransactions(transactions, accounts) {
+function adjustTransactions(transactions, accounts) {
     return mapObjectsGroupedByKey(convertTransactionAccounts(transactions, accounts),
         (transaction) => transaction._transferId || null,
         (transactions, key) => {

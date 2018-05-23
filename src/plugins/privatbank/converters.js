@@ -112,7 +112,11 @@ export function cleanDescription(description) {
     return description
         .replace(/&quot;/g, "\"")
         .replace(/&apos;/g, "'")
-        .replace(/<[^>]*>/g, "");
+        .replace(/&lt;/g, " ")
+        .replace(/&gt;/g, " ")
+        .replace(/<[^>]*>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
 }
 
 export function getTransferSyncId(id) {
