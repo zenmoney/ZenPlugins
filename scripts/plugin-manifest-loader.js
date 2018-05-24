@@ -15,7 +15,9 @@ function generateModularLoader({files, preferences}) {
     return `require("polyfills");
 var result = require("./index");
 
-var exportsThatMakeNoDifference = Object.keys(result).filter((key) => key !== "main" && key !== "scrape");
+var exportsThatMakeNoDifference = Object.keys(result).filter(function (key) {
+    return key !== "scrape"
+});
 if (exportsThatMakeNoDifference.length > 0) {
     console.error(exportsThatMakeNoDifference + " members exported by index.js are not handled by ZenMoney, thus looking like a developer mistake (exports are useless and make no effect). It is recommended to stop exporting them.  See: ${repositoryUri}");
 }
@@ -26,11 +28,12 @@ if (result.scrape && result.main || !result.scrape && !result.main) {
 
 if (result.scrape) {
     var adaptScrapeToMain = require("adapters").adaptScrapeToMain;
-    var main = adaptScrapeToMain(result.scrape);
-    result = Object.assign({}, result, {main: main});
+    result.main = adaptScrapeToMain(result.scrape);
 }
 
-Object.assign(global, result);
+for (var key in result) {
+    global[key] = result[key];
+}
 
 module.exports = result;
 `;

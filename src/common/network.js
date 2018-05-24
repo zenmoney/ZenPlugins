@@ -27,12 +27,12 @@ export async function fetch(url, options = {}) {
 
     let response = await global.fetch(url, init);
     let body = await response.text();
-    let isBodyValid = true;
+    let bodyParsingException = null;
     if (options.parse) {
         try {
             body = options.parse(body);
         } catch (e) {
-            isBodyValid = false;
+            bodyParsingException = e;
         }
     }
     response = {
@@ -44,13 +44,13 @@ export async function fetch(url, options = {}) {
     shouldLog && console.debug("response", sanitize({
         status: response.status,
         url: response.url,
-        headers: response.headers.entries ? _.fromPairs(Array.from(response.headers.entries())) : response.headers.raw(),
+        headers: response.headers.entries ? _.fromPairs([...response.headers.entries()]) : response.headers.raw(),
         body,
         ms: endTicks - beforeFetchTicks,
     }, options.sanitizeResponseLog || false));
 
-    if (!isBodyValid) {
-        throw new ParseError("body is not valid", response);
+    if (bodyParsingException) {
+        throw new ParseError(`Could not parse response. ${bodyParsingException}`, response);
     }
 
     return response;
