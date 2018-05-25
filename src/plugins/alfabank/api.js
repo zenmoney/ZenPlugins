@@ -68,7 +68,14 @@ export function assertLoginIsSuccessful(loginResponse) {
     console.assert(loginResponse.body.operationId === "Authorization:LoginResult", "Unexpected login operationId", loginResponse);
 }
 
-export function callGate({sessionId, deviceId, service, body, accessToken = null, sanitizeRequestLog = {}, sanitizeResponseLog = {}}) {
+function assertNotServerError(response) {
+    if (response.status === 500 && Array.isArray(response.body.errors)) {
+        const message = _.compact(response.body.errors.map((x) => x.message)).join("\n");
+        throw new Error(message);
+    }
+}
+
+export async function callGate({sessionId, deviceId, service, body, accessToken = null, sanitizeRequestLog = {}, sanitizeResponseLog = {}}) {
     const headers = {
         "jmb-protocol-version": "1.0",
         "jmb-protocol-service": service,
@@ -86,13 +93,16 @@ export function callGate({sessionId, deviceId, service, body, accessToken = null
     if (accessToken) {
         headers["Authorization"] = `Bearer ${accessToken}`;
     }
-    return fetchJson("https://alfa-mobile.alfabank.ru/ALFAJMB/gate", {
+
+    const response = await fetchJson("https://alfa-mobile.alfabank.ru/ALFAJMB/gate", {
         method: "POST",
         headers,
         body,
         sanitizeRequestLog: _.merge({}, {headers: {Authorization: true, "DEVICE-ID": true, "session_id": true}}, sanitizeRequestLog),
         sanitizeResponseLog: sanitizeResponseLog,
     });
+    assertNotServerError(response);
+    return response;
 }
 
 async function getOidReference({queryRedirectParams, previousMultiFactorResponseParams}) {
@@ -106,6 +116,7 @@ async function getOidReference({queryRedirectParams, previousMultiFactorResponse
         sanitizeRequestLog: {body: true},
         sanitizeResponseLog: {body: true},
     });
+    assertNotServerError(response);
     console.assert(response.status === 200, "getOidReference failed", response);
     const {reference: {reference}} = response.body;
     return reference;
@@ -128,6 +139,7 @@ async function registerCustomer({queryRedirectParams, cardExpirationDate, cardNu
         sanitizeRequestLog: {body: true},
         sanitizeResponseLog: {body: true},
     });
+    assertNotServerError(response);
     console.assert(response.status === 200, "registerCustomer failed", response);
 
     const {params: previousMultiFactorResponseParams} = response.body;
@@ -171,12 +183,7 @@ export async function finishCustomerRegistration({confirmationCode, queryRedirec
         sanitizeRequestLog: {body: true},
         sanitizeResponseLog: {url: true, body: true, headers: {"set-cookie": true}},
     });
-    if (response.status === 500 && Array.isArray(response.body.errors)) {
-        const message = _.compact(response.body.errors.map((x) => x.message)).join("\n");
-        if (message) {
-            throw new Error(message);
-        }
-    }
+    assertNotServerError(response);
     console.assert(response.status === 200, "finishCustomerRegistration failed", response);
     const {params: {code}, redirectUrl} = response.body;
     return {code, redirectUrl};
