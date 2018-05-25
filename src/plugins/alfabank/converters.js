@@ -22,11 +22,12 @@ function convertNonCreditApiAccount(apiAccount) {
 
 export function toZenmoneyAccount(apiAccount) {
     const {description, number, currencyCode} = apiAccount;
+    const id = number.slice(-4);
     return {
         type: "ccard",
-        id: number.slice(-4),
+        id,
         title: description,
-        syncID: [number.slice(-4)],
+        syncID: [id],
         instrument: currencyCode,
         ...apiAccount.creditInfo
             ? convertCreditApiAccount(apiAccount)
@@ -69,15 +70,19 @@ export function parseApiMovementDescription(description, sign) {
 }
 
 function calculateAccountId(parsedAmount, apiMovement) {
-    if (parsedAmount > 0) {
-        const recipientAccountId = apiMovement.recipientInfo.recipientAccountNumberDescription;
-        console.assert(recipientAccountId, "recipientAccountId is unknown", apiMovement);
-        return recipientAccountId.slice(-4);
-    } else {
-        const senderAccountId = apiMovement.senderInfo.senderAccountNumberDescription;
-        console.assert(senderAccountId, "senderAccountId is unknown", apiMovement);
-        return senderAccountId.slice(-4);
+    const candidates = parsedAmount > 0
+        ? [
+            apiMovement.recipientInfo.recipientAccountNumberDescription,
+            apiMovement.recipientInfo.recipientValue,
+        ] : [
+            apiMovement.senderInfo.senderAccountNumberDescription,
+        ];
+    const accountIds = _.uniq(_.compact(candidates).map((x) => x.slice(-4)));
+    if (accountIds.length === 1) {
+        return accountIds[0];
     }
+    console.error({apiMovement, accountIds});
+    throw new Error(`cannot determine ${parsedAmount > 0 ? "recipient" : "sender"} account id (see log)`);
 }
 
 export const normalizeIsoDate = (isoDate) => isoDate.replace(/([+-])(\d{2})(\d{2})$/, "$1$2:$3");
@@ -107,9 +112,33 @@ export function convertApiMovementToReadableTransaction(apiMovement) {
     return readableTransaction;
 }
 
+function complementSides(apiMovements) {
+    const relatedMovementsByReferenceLookup = _.fromPairs(_.toPairs(_.groupBy(apiMovements, x => {
+        delete x.actions;
+        return x.reference;
+    })).filter(([key, items]) => key !== "HOLD" && items.length === 2));
+    const neverLosingDataCustomizer = function(valueInA, valueInB, key, objA, objB) {
+        if (valueInA && valueInB && valueInA !== valueInB && !(_.isPlainObject(valueInA) && _.isPlainObject(valueInB))) {
+            if (key === "recipientAccountNumberDescription" && objA.recipientValue && valueInB.endsWith(objA.recipientValue.slice(-4))) {
+                return;
+            }
+            console.assert(false, key, `has ambiguous values:`, [valueInA, valueInB], `objects:`, [objA, objB]);
+        }
+    };
+    return apiMovements.map((apiMovement) => {
+        const relatedMovements = relatedMovementsByReferenceLookup[apiMovement.reference];
+        if (!relatedMovements) {
+            return apiMovement;
+        }
+        const senderInfo = _.mergeWith({}, ...relatedMovements.map((x) => x.senderInfo), neverLosingDataCustomizer);
+        const recipientInfo = _.mergeWith({}, ...relatedMovements.map((x) => x.recipientInfo), neverLosingDataCustomizer);
+        return {...apiMovement, senderInfo, recipientInfo};
+    });
+
+}
+
 export function convertApiMovementsToReadableTransactions(apiMovements) {
-    const uniqueMovements = _.uniqBy(apiMovements, x => x.key);
-    const items = uniqueMovements.map((apiMovement) => ({
+    const items = complementSides(_.uniqBy(apiMovements, x => x.key)).map((apiMovement) => ({
         apiMovement,
         readableTransaction: convertApiMovementToReadableTransaction(apiMovement),
     }));
