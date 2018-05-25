@@ -44,6 +44,16 @@ const extractRegularTransactionAmount = ({accountCurrency, regularTransaction}) 
     return Math.sign(regularTransaction.accountAmount) * Math.abs(regularTransaction.amount);
 };
 
+export function chooseDistinctCards(cardsBodyResult) {
+    const cardsToEvict = _.toPairs(
+        _.groupBy(cardsBodyResult, (x) => x.clientObject.cardContractNumber)
+    ).reduce((idsToEvict, [cardContractNumber, cards]) => idsToEvict.concat(_.sortBy(cards, [
+        (x) => x.clientObject.cardStatus === 1 ? 0 : 1,
+        (x) => x.clientObject.defaultSynonym,
+    ]).slice(1)), []);
+    return cardsBodyResult.filter((card) => !cardsToEvict.includes(card));
+}
+
 const convertApiTransactionToReadableTransaction = (apiTransaction) => {
     const accountCurrency = apiTransaction.card.clientObject.currIso;
     if (apiTransaction.type === "abortedTransaction") {
@@ -99,11 +109,14 @@ const convertApiTransactionToReadableTransaction = (apiTransaction) => {
     throw new Error(`apiTransaction.type "${apiTransaction.type}" not implemented`);
 };
 
-export function convertApiCardsToReadableTransactions({cardsBodyResult, cardDescBodyResult}) {
+export function convertApiCardsToReadableTransactions({cardsBodyResultWithoutDuplicates, cardDescBodyResult}) {
     const cardDescByIdLookup = _.keyBy(cardDescBodyResult, (x) => x.id);
     const abortedContracts = _.flatMap(
-        cardsBodyResult,
-        (card) => cardDescByIdLookup[card.clientObject.id].contract.abortedContractList.map((abortedContract) => ({abortedContract, card})),
+        cardsBodyResultWithoutDuplicates,
+        (card) => cardDescByIdLookup[card.clientObject.id].contract.abortedContractList.map((abortedContract) => ({
+            abortedContract,
+            card,
+        })),
     );
     const abortedContractsWithoutDuplicates = _.uniqBy(abortedContracts, ({abortedContract}) => abortedContract.abortedCard);
     const abortedTransactions = _.flatMap(
@@ -112,8 +125,11 @@ export function convertApiCardsToReadableTransactions({cardsBodyResult, cardDesc
             .map((abortedTransaction) => ({type: "abortedTransaction", payload: abortedTransaction, card})),
     );
     const transCards = _.flatMap(
-        cardsBodyResult,
-        (card) => cardDescByIdLookup[card.clientObject.id].contract.account.transCardList.map((transCard) => ({transCard, card})),
+        cardsBodyResultWithoutDuplicates,
+        (card) => cardDescByIdLookup[card.clientObject.id].contract.account.transCardList.map((transCard) => ({
+            transCard,
+            card,
+        })),
     );
     const transCardsWithoutDuplicates = _.uniqBy(transCards, ({transCard}) => transCard.transCardNum);
     const regularTransactions = _.flatMap(
