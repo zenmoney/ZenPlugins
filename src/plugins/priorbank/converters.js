@@ -118,9 +118,8 @@ export function convertApiCardsToReadableTransactions({cardsBodyResultWithoutDup
             card,
         })),
     );
-    const abortedContractsWithoutDuplicates = _.uniqBy(abortedContracts, ({abortedContract}) => abortedContract.abortedCard);
     const abortedTransactions = _.flatMap(
-        abortedContractsWithoutDuplicates,
+        abortedContracts,
         ({abortedContract, card}) => abortedContract.abortedTransactionList.reverse()
             .map((abortedTransaction) => ({type: "abortedTransaction", payload: abortedTransaction, card})),
     );
@@ -131,9 +130,8 @@ export function convertApiCardsToReadableTransactions({cardsBodyResultWithoutDup
             card,
         })),
     );
-    const transCardsWithoutDuplicates = _.uniqBy(transCards, ({transCard}) => transCard.transCardNum);
     const regularTransactions = _.flatMap(
-        transCardsWithoutDuplicates,
+        transCards,
         ({transCard, card}) => transCard.transactionList.reverse()
             .map((regularTransaction) => ({type: "regularTransaction", payload: regularTransaction, card})),
     );
