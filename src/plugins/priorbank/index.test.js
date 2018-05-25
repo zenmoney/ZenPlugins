@@ -157,6 +157,7 @@ describe("scraper happy path", () => {
                         },
                         "abortedContractList": [
                             {
+                                "abortedCard": 1,
                                 "abortedTransactionList": [
                                     {
                                         "amount": 6,
@@ -242,6 +243,7 @@ describe("scraper happy path", () => {
                         },
                         "abortedContractList": [
                             {
+                                "abortedCard": 2,
                                 "abortedTransactionList": [
                                     {
                                         "amount": 100,

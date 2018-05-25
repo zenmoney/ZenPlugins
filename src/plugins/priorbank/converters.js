@@ -101,13 +101,15 @@ const convertApiTransactionToReadableTransaction = (apiTransaction) => {
 
 export function convertApiCardsToReadableTransactions({cardsBodyResult, cardDescBodyResult}) {
     const cardDescByIdLookup = _.keyBy(cardDescBodyResult, (x) => x.id);
-    const abortedTransactions = _.flatMap(
+    const abortedContracts = _.flatMap(
         cardsBodyResult,
-        (card) => _.flatMap(
-            cardDescByIdLookup[card.clientObject.id].contract.abortedContractList,
-            (x) => x.abortedTransactionList.reverse()
-                .map((abortedTransaction) => ({type: "abortedTransaction", payload: abortedTransaction, card})),
-        ),
+        (card) => cardDescByIdLookup[card.clientObject.id].contract.abortedContractList.map((abortedContract) => ({abortedContract, card})),
+    );
+    const abortedContractsWithoutDuplicates = _.uniqBy(abortedContracts, ({abortedContract}) => abortedContract.abortedCard);
+    const abortedTransactions = _.flatMap(
+        abortedContractsWithoutDuplicates,
+        ({abortedContract, card}) => abortedContract.abortedTransactionList.reverse()
+            .map((abortedTransaction) => ({type: "abortedTransaction", payload: abortedTransaction, card})),
     );
     const transCards = _.flatMap(
         cardsBodyResult,
