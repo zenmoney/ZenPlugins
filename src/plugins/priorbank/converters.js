@@ -44,11 +44,13 @@ const extractRegularTransactionAmount = ({accountCurrency, regularTransaction}) 
     return Math.sign(regularTransaction.accountAmount) * Math.abs(regularTransaction.amount);
 };
 
-const convertApiTransactionToReadableTransaction = (apiTransaction, accountCurrency, accountId) => {
+const convertApiTransactionToReadableTransaction = (apiTransaction) => {
+    const accountCurrency = apiTransaction.card.clientObject.currIso;
     if (apiTransaction.type === "abortedTransaction") {
         const abortedTransaction = apiTransaction.payload;
         const details = parseTransDetails(abortedTransaction.transDetails);
-        const posted = {amount: -abortedTransaction.amount, instrument: accountCurrency};
+        const sign = Math.sign(-abortedTransaction.transAmount);
+        const posted = {amount: sign * Math.abs(abortedTransaction.amount), instrument: accountCurrency};
         const origin = abortedTransaction.transCurrIso === accountCurrency
             ? null
             : {
@@ -58,7 +60,7 @@ const convertApiTransactionToReadableTransaction = (apiTransaction, accountCurre
         return {
             type: "transaction",
             id: null,
-            account: {id: accountId},
+            account: {id: calculateAccountId(apiTransaction.card)},
             date: new Date(abortedTransaction.transDate),
             hold: true,
             posted,
@@ -83,7 +85,7 @@ const convertApiTransactionToReadableTransaction = (apiTransaction, accountCurre
         return {
             type: "transaction",
             id: null,
-            account: {id: accountId},
+            account: {id: calculateAccountId(apiTransaction.card)},
             date: new Date(regularTransaction.transDate),
             hold: false,
             posted,
@@ -98,23 +100,35 @@ const convertApiTransactionToReadableTransaction = (apiTransaction, accountCurre
 };
 
 export function convertApiCardsToReadableTransactions({cardsBodyResult, cardDescBodyResult}) {
-    const items = _.sortBy(_.flatMap(cardsBodyResult, (card) => {
-        const cardDesc = cardDescBodyResult.find((x) => x.id === card.clientObject.id);
-        const abortedTransactions = _.flatMap(cardDesc.contract.abortedContractList, (x) => x.abortedTransactionList.reverse())
-            .map((abortedTransaction) => ({type: "abortedTransaction", payload: abortedTransaction}));
-        const regularTransactions = _.flatMap(cardDesc.contract.account.transCardList, (x) => x.transactionList.reverse())
-            .map((regularTransaction) => ({type: "regularTransaction", payload: regularTransaction}));
-        return abortedTransactions.concat(regularTransactions)
-            .map((apiTransaction) => {
-                const readableTransaction = convertApiTransactionToReadableTransaction(apiTransaction, card.clientObject.currIso, calculateAccountId(card));
-                if (["ATM", "Cash"].includes(parseTransDetails(apiTransaction.payload.transDetails).type)) {
-                    return {apiTransaction, readableTransaction: asCashTransfer(readableTransaction)};
-                }
-                return {apiTransaction, readableTransaction};
-            });
-    }), x => x.readableTransaction.date);
+    const cardDescByIdLookup = _.keyBy(cardDescBodyResult, (x) => x.id);
+    const abortedTransactions = _.flatMap(
+        cardsBodyResult,
+        (card) => _.flatMap(
+            cardDescByIdLookup[card.clientObject.id].contract.abortedContractList,
+            (x) => x.abortedTransactionList.reverse()
+                .map((abortedTransaction) => ({type: "abortedTransaction", payload: abortedTransaction, card})),
+        ),
+    );
+    const transCards = _.flatMap(
+        cardsBodyResult,
+        (card) => cardDescByIdLookup[card.clientObject.id].contract.account.transCardList.map((transCard) => ({transCard, card})),
+    );
+    const transCardsWithoutDuplicates = _.uniqBy(transCards, ({transCard}) => transCard.transCardNum);
+    const regularTransactions = _.flatMap(
+        transCardsWithoutDuplicates,
+        ({transCard, card}) => transCard.transactionList.reverse()
+            .map((regularTransaction) => ({type: "regularTransaction", payload: regularTransaction, card})),
+    );
+    const items = abortedTransactions.concat(regularTransactions)
+        .map((apiTransaction) => {
+            const readableTransaction = convertApiTransactionToReadableTransaction(apiTransaction);
+            if (["ATM", "Cash"].includes(parseTransDetails(apiTransaction.payload.transDetails).type)) {
+                return {apiTransaction, readableTransaction: asCashTransfer(readableTransaction)};
+            }
+            return {apiTransaction, readableTransaction};
+        });
     return mergeTransfers({
-        items,
+        items: _.sortBy(items, ({readableTransaction}) => readableTransaction.date),
         selectReadableTransaction: (item) => item.readableTransaction,
         isTransferItem: (item) =>
             item.apiTransaction.payload.transDetails.includes("P2P SDBO") ||
