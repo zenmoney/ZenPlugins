@@ -143,24 +143,19 @@ export function convertApiMovementsToReadableTransactions(apiMovements) {
         readableTransaction: convertApiMovementToReadableTransaction(apiMovement),
     }));
     return mergeTransfers({
-        items: items,
+        items,
         selectReadableTransaction: (item) => item.readableTransaction,
-        isTransferItem: ({apiMovement: {senderInfo, recipientInfo}, readableTransaction}) => {
+        isTransferItem: ({apiMovement: {senderInfo, recipientInfo, reference}, readableTransaction}) => {
             if (readableTransaction.type !== "transaction") {
                 return false;
             }
             if (readableTransaction.posted.amount > 0) {
-                return senderInfo.senderNameBank === `АО "АЛЬФА-БАНК"` && senderInfo.senderAccountNumberDescription;
+                return senderInfo.senderNameBank === `АО "АЛЬФА-БАНК"`;
             } else {
-                return recipientInfo &&
-                    recipientInfo.recipientNameBank === `АО "АЛЬФА-БАНК"` &&
-                    recipientInfo.recipientAccountNumberDescription;
+                return recipientInfo && recipientInfo.recipientNameBank === `АО "АЛЬФА-БАНК"`;
             }
         },
-        makeGroupKey: (item) => {
-            const {amount, instrument} = item.readableTransaction.origin || item.readableTransaction.posted;
-            return `${Math.abs(amount)} ${instrument} @ ${item.readableTransaction.date}`;
-        },
+        makeGroupKey: (item) => item.apiMovement.reference,
         selectTransactionId: (item) => item.readableTransaction.id,
     });
 }
