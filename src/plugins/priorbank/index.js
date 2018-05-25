@@ -1,5 +1,5 @@
 import {toZenmoneyTransaction} from "../../common/converters";
-import {convertApiCardsToReadableTransactions, toZenmoneyAccount} from "./converters";
+import {chooseDistinctCards, convertApiCardsToReadableTransactions, toZenmoneyAccount} from "./converters";
 import {calculatePostAuthHeaders, fetchCardDesc, fetchCards, fetchLoginSalt, fetchPreAuthHeaders, login} from "./prior";
 
 export async function scrape({preferences, fromDate, toDate}) {
@@ -20,11 +20,12 @@ export async function scrape({preferences, fromDate, toDate}) {
         fetchCardDesc({postAuthHeaders, userSession, fromDate, toDate}),
     ]);
 
-    const readableTransactions = convertApiCardsToReadableTransactions({cardsBodyResult, cardDescBodyResult});
+    const cardsBodyResultWithoutDuplicates = chooseDistinctCards(cardsBodyResult);
+    const readableTransactions = convertApiCardsToReadableTransactions({cardsBodyResultWithoutDuplicates, cardDescBodyResult});
     console.debug({readableTransactions});
 
     return {
-        accounts: cardsBodyResult.map(toZenmoneyAccount),
+        accounts: cardsBodyResultWithoutDuplicates.map(toZenmoneyAccount),
         transactions: readableTransactions.map(toZenmoneyTransaction),
     };
 }
