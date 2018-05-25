@@ -46,7 +46,7 @@ const extractRegularTransactionAmount = ({accountCurrency, regularTransaction}) 
 
 export function chooseDistinctCards(cardsBodyResult) {
     const cardsToEvict = _.toPairs(
-        _.groupBy(cardsBodyResult, (x) => x.clientObject.cardContractNumber)
+        _.groupBy(cardsBodyResult, (x) => x.clientObject.cardContractNumber),
     ).reduce((idsToEvict, [cardContractNumber, cards]) => idsToEvict.concat(_.sortBy(cards, [
         (x) => x.clientObject.cardStatus === 1 ? 0 : 1,
         (x) => x.clientObject.defaultSynonym,
@@ -110,39 +110,21 @@ const convertApiTransactionToReadableTransaction = (apiTransaction) => {
 };
 
 export function convertApiCardsToReadableTransactions({cardsBodyResultWithoutDuplicates, cardDescBodyResult}) {
-    const cardDescByIdLookup = _.keyBy(cardDescBodyResult, (x) => x.id);
-    const abortedContracts = _.flatMap(
-        cardsBodyResultWithoutDuplicates,
-        (card) => cardDescByIdLookup[card.clientObject.id].contract.abortedContractList.map((abortedContract) => ({
-            abortedContract,
-            card,
-        })),
-    );
-    const abortedTransactions = _.flatMap(
-        abortedContracts,
-        ({abortedContract, card}) => abortedContract.abortedTransactionList.reverse()
-            .map((abortedTransaction) => ({type: "abortedTransaction", payload: abortedTransaction, card})),
-    );
-    const transCards = _.flatMap(
-        cardsBodyResultWithoutDuplicates,
-        (card) => cardDescByIdLookup[card.clientObject.id].contract.account.transCardList.map((transCard) => ({
-            transCard,
-            card,
-        })),
-    );
-    const regularTransactions = _.flatMap(
-        transCards,
-        ({transCard, card}) => transCard.transactionList.reverse()
-            .map((regularTransaction) => ({type: "regularTransaction", payload: regularTransaction, card})),
-    );
-    const items = abortedTransactions.concat(regularTransactions)
-        .map((apiTransaction) => {
-            const readableTransaction = convertApiTransactionToReadableTransaction(apiTransaction);
-            if (["ATM", "Cash"].includes(parseTransDetails(apiTransaction.payload.transDetails).type)) {
-                return {apiTransaction, readableTransaction: asCashTransfer(readableTransaction)};
-            }
-            return {apiTransaction, readableTransaction};
-        });
+    const items = _.sortBy(_.flatMap(cardsBodyResultWithoutDuplicates, (card) => {
+        const cardDesc = cardDescBodyResult.find((x) => x.id === card.clientObject.id);
+        const abortedTransactions = _.flatMap(cardDesc.contract.abortedContractList, (x) => x.abortedTransactionList.reverse())
+            .map((abortedTransaction) => ({type: "abortedTransaction", payload: abortedTransaction, card}));
+        const regularTransactions = _.flatMap(cardDesc.contract.account.transCardList, (x) => x.transactionList.reverse())
+            .map((regularTransaction) => ({type: "regularTransaction", payload: regularTransaction, card}));
+        return abortedTransactions.concat(regularTransactions)
+            .map((apiTransaction) => {
+                const readableTransaction = convertApiTransactionToReadableTransaction(apiTransaction);
+                if (["ATM", "Cash"].includes(parseTransDetails(apiTransaction.payload.transDetails).type)) {
+                    return {apiTransaction, readableTransaction: asCashTransfer(readableTransaction)};
+                }
+                return {apiTransaction, readableTransaction};
+            });
+    }), x => x.readableTransaction.date);
     return mergeTransfers({
         items: _.sortBy(items, ({readableTransaction}) => readableTransaction.date),
         selectReadableTransaction: (item) => item.readableTransaction,
