@@ -131,6 +131,7 @@ describe("scraper happy path", () => {
                         "account": {
                             "transCardList": [
                                 {
+                                    "transCardNum": 1,
                                     "transactionList": [
                                         {
                                             "postingDate": "2017-01-03T00:00:00+03:00",
@@ -175,6 +176,7 @@ describe("scraper happy path", () => {
                         "account": {
                             "transCardList": [
                                 {
+                                    "transCardNum": 2,
                                     "transactionList": [
                                         {
                                             "postingDate": "2017-01-02T00:00:00+03:00",
