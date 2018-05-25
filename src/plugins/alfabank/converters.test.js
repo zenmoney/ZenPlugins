@@ -79,7 +79,7 @@ test("parseApiMovementDescription", () => {
         "123456++++++7890    \\USA\\aws amazon co\\Amazon web se                  01.02.03 01.02.03          .12  USD MCC7399",
         "123456++++++7890    \\USA\\aws amazon co\\Amazon web se                  01.02.03 01.02.03          .12  USD",
         "12345678 JP SINNZIYUKUNEGISIYASUKU> 18.05.11 18.05.11 3500 JPY 123456++++++7890",
-];
+    ];
     const results = descriptions.map((input) => ({input, output: parseApiMovementDescription(input, -1)}));
     expect(results).toMatchSnapshot();
 });

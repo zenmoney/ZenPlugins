@@ -53,13 +53,8 @@ export function login({sessionId, deviceId, accessToken}) {
                 "password": "",
             },
         },
-        sanitizeRequestLog: {
-            body: {
-                "parameters": {
-                    "deviceId": true,
-                },
-            },
-        },
+        sanitizeRequestLog: {body: true},
+        sanitizeResponseLog: {body: true, headers: {"set-cookie": true}},
     });
 }
 
@@ -108,6 +103,8 @@ async function getOidReference({queryRedirectParams, previousMultiFactorResponse
             previousMultiFactorResponseParams,
             type: "CARD",
         },
+        sanitizeRequestLog: {body: true},
+        sanitizeResponseLog: {body: true},
     });
     console.assert(response.status === 200, "getOidReference failed", response);
     const {reference: {reference}} = response.body;
@@ -172,7 +169,7 @@ export async function finishCustomerRegistration({confirmationCode, queryRedirec
             },
         },
         sanitizeRequestLog: {body: true},
-        sanitizeResponseLog: {url: true, body: true},
+        sanitizeResponseLog: {url: true, body: true, headers: {"set-cookie": true}},
     });
     if (response.status === 500 && Array.isArray(response.body.errors)) {
         const message = _.compact(response.body.errors.map((x) => x.message)).join("\n");
