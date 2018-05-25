@@ -138,7 +138,10 @@ function complementSides(apiMovements) {
 }
 
 export function convertApiMovementsToReadableTransactions(apiMovements) {
-    const items = complementSides(_.uniqBy(apiMovements, x => x.key)).map((apiMovement) => ({
+    const movementsWithoutDuplicates = _.uniqBy(apiMovements, x => x.key);
+    const movementsWithoutNonAccountableArtifacts = movementsWithoutDuplicates.filter((x) => !x.shortDescription || !x.shortDescription.startsWith("Погашение "));
+    const movementsWithCompleteSides = complementSides(movementsWithoutNonAccountableArtifacts);
+    const items = movementsWithCompleteSides.map((apiMovement) => ({
         apiMovement,
         readableTransaction: convertApiMovementToReadableTransaction(apiMovement),
     }));
