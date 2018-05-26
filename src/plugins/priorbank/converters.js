@@ -45,12 +45,13 @@ const extractRegularTransactionAmount = ({accountCurrency, regularTransaction}) 
 };
 
 export function chooseDistinctCards(cardsBodyResult) {
-    const cardsToEvict = _.toPairs(
-        _.groupBy(cardsBodyResult, (x) => x.clientObject.cardContractNumber),
-    ).reduce((idsToEvict, [cardContractNumber, cards]) => idsToEvict.concat(_.sortBy(cards, [
-        (x) => x.clientObject.cardStatus === 1 ? 0 : 1,
-        (x) => x.clientObject.defaultSynonym,
-    ]).slice(1)), []);
+    const cardsToEvict = _.flatMap(
+        _.toPairs(_.groupBy(cardsBodyResult, (x) => x.clientObject.cardContractNumber)),
+        ([cardContractNumber, cards]) => _.sortBy(cards, [
+            (x) => x.clientObject.cardStatus === 1 ? 0 : 1,
+            (x) => x.clientObject.defaultSynonym,
+        ]).slice(1),
+    );
     return cardsBodyResult.filter((card) => !cardsToEvict.includes(card));
 }
 
