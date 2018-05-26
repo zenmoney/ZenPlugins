@@ -22,7 +22,11 @@ const messageHandlers = {
         onStatusChange("Syncing…");
     },
 
-    ":events/sync-success": async function({payload: {addedAccounts, addedTransactions, pluginDataChange}, onStatusChange}) {
+    ":events/sync-success": async function({payload: {addedAccounts, addedTransactions, pluginDataChange}, onStatusChange, setState}) {
+        setState((state) => ({
+            ...state,
+            scrapeResult: {accounts: addedAccounts, transactions: addedTransactions},
+        }));
         const summary = `Synced\nGot ${addedAccounts.length} account(s), ${addedTransactions.length} transaction(s)`;
         const ending = `\nCheers!`;
         if (!pluginDataChange) {
@@ -58,11 +62,12 @@ const messageHandlers = {
     },
 };
 
-export async function handleMessageFromWorker({event, onStatusChange}) {
+export async function handleMessageFromWorker({event, onStatusChange, setState}) {
     const messageHandler = messageHandlers[event.data.type] || (() => console.warn("message", event.data.type, " from worker was not handled", {event}));
     await messageHandler({
         payload: event.data.payload,
         reply: (message) => event.currentTarget.postMessage(message),
         onStatusChange,
+        setState,
     });
 }

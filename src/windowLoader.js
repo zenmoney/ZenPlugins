@@ -1,5 +1,8 @@
+import React from "react";
+import ReactDOM from "react-dom";
 import {fetchJson} from "./common/network";
 import {handleMessageFromWorker} from "./handleMessageFromWorker";
+import {UI} from "./UI";
 import {waitForOpenDevtools} from "./utils";
 
 const pickSuccessfulBody = async (fetchPromise) => {
@@ -7,27 +10,43 @@ const pickSuccessfulBody = async (fetchPromise) => {
     if (!response.ok) {
         throw response.body;
     }
-});
+    return response.body;
+};
 
-window.onload = async function() {
-    const statusElement = document.getElementById("root");
-    const onStatusChange = (message) => statusElement.textContent = message;
+const rootElement = document.getElementById("root");
+
+let state = {
+    status: "Loading plugin manifest/preferences/data…",
+    onManualStartPress: null,
+};
+
+const setState = (transform) => {
+    state = transform(state);
+    return ReactDOM.render(<UI {...state} />, rootElement);
+};
+
+window.dev = {
+    get state() {
+        return state;
+    },
+};
+
+async function init() {
     try {
         const worker = new Worker("/workerLoader.js");
-        onStatusChange("Loading plugin manifest/preferences/data…");
 
         window.__worker__ = worker; // prevents worker GC - allows setting breakpoints after worker ends execution
 
         const [preferences, manifest, data] = await Promise.all([
-            pickBody(fetchJson("/zen/preferences", {log: false})),
-            pickBody(fetchJson("/zen/manifest", {log: false})),
-            pickBody(fetchJson("/zen/data", {log: false})),
+            pickSuccessfulBody(fetchJson("/zen/preferences", {log: false})),
+            pickSuccessfulBody(fetchJson("/zen/manifest", {log: false})),
+            pickSuccessfulBody(fetchJson("/zen/data", {log: false})),
         ]);
+        setState((state) => ({...state, status: "Waiting until you open developer tools…"}));
 
         document.title = `[${manifest.id}] ${document.title}`;
 
         const manualStartButtonPressed = new Promise((resolve) => setState((state) => ({...state, onManualStartPress: resolve})));
-
 
         await Promise.race([waitForOpenDevtools(), manualStartButtonPressed]);
 
@@ -47,7 +66,9 @@ window.onload = async function() {
             },
         });
     } catch (e) {
-        onStatusChange("Failed to execute sync:\n" + e.message);
+        setState((state) => ({...state, status: "Failed to execute sync:\n" + e.message}));
         throw e;
     }
-};
+}
+
+init();
