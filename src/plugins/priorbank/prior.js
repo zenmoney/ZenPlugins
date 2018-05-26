@@ -5,30 +5,34 @@ function isSuccessfulResponse(response) {
     return response.status === 200 && (!("success" in response.body) || response.body.success === true);
 }
 
-function assertResponseSuccess(response) {
+export function assertResponseSuccess(response) {
     console.assert(isSuccessfulResponse(response), "non-successful response", response);
 }
 
 const makeApiUrl = (path) => `https://www.prior.by/api3/api${path}`;
+const userAgent = "PriorMobile3/3.17.03.22 (Android 24; versionCode 37)";
 
-export async function fetchPreAuthHeaders() {
+export async function getMobileToken() {
     const response = await fetchJson(makeApiUrl("/Authorization/MobileToken"), {
         sanitizeResponseLog: {body: true},
     });
     assertResponseSuccess(response);
-
+    console.assert(response.body.token_type === "bearer", "unknown token type", response.body.token_type);
     return {
-        "Authorization": `${response.body.token_type} ${response.body.access_token}`,
-        "client_id": response.body.client_secret,
-        "User-Agent": "PriorMobile3/3.17.03.22 (Android 24; versionCode 37)",
+        authAccessToken: response.body.access_token,
+        clientSecret: response.body.client_secret,
     };
 }
 
-export async function fetchLoginSalt({preAuthHeaders, login}) {
+export async function getSalt({authAccessToken, clientSecret, login}) {
     const response = await fetchJson(makeApiUrl("/Authorization/GetSalt"), {
         method: "POST",
         body: {login, lang: "RUS"},
-        headers: preAuthHeaders,
+        headers: {
+            "Authorization": `bearer ${authAccessToken}`,
+            "client_id": clientSecret,
+            "User-Agent": userAgent,
+        },
         sanitizeRequestLog: {body: {login: true}, headers: true},
         sanitizeResponseLog: {body: {result: true}},
     });
@@ -46,11 +50,15 @@ export const calculatePasswordHash = ({loginSalt, password}) => {
         : passwordHash;
 };
 
-export async function login({preAuthHeaders, loginSalt, login, password}) {
+export async function authLogin({authAccessToken, clientSecret, loginSalt, login, password}) {
     const response = await fetchJson(makeApiUrl("/Authorization/Login"), {
         method: "POST",
         body: {login, password: calculatePasswordHash({loginSalt, password}), lang: "RUS"},
-        headers: preAuthHeaders,
+        headers: {
+            "Authorization": `bearer ${authAccessToken}`,
+            "client_id": clientSecret,
+            "User-Agent": userAgent,
+        },
         sanitizeRequestLog: {body: {login: true, password: true}, headers: true},
         sanitizeResponseLog: {body: {result: true}},
     });
@@ -62,22 +70,21 @@ export async function login({preAuthHeaders, loginSalt, login, password}) {
     };
 }
 
-export const calculatePostAuthHeaders = ({preAuthHeaders, accessToken}) => ({...preAuthHeaders, "Authorization": `bearer ${accessToken}`});
-
-export async function fetchCards({postAuthHeaders, userSession}) {
-    const response = await fetchJson(makeApiUrl("/Cards"), {
+export function getCards({accessToken, clientSecret, userSession}) {
+    return fetchJson(makeApiUrl("/Cards"), {
         method: "POST",
         body: {usersession: userSession},
-        headers: postAuthHeaders,
+        headers: {
+            "client_id": clientSecret,
+            "User-Agent": userAgent,
+            "Authorization": `bearer ${accessToken}`,
+        },
         sanitizeRequestLog: {body: {usersession: true}, headers: true},
         sanitizeResponseLog: {body: {result: {clientObject: {cardRBSNumber: true, contractNum: true, iban: true}}}},
     });
-    assertResponseSuccess(response);
-
-    return response.body.result;
 }
 
-export async function fetchCardDesc({postAuthHeaders, userSession, fromDate = null, toDate = null}) {
+export function getCardDesc({accessToken, clientSecret, userSession, fromDate = null, toDate = null}) {
     const body = {
         usersession: userSession,
         ids: [],
@@ -92,13 +99,15 @@ export async function fetchCardDesc({postAuthHeaders, userSession, fromDate = nu
         body.dateToSpecified = true;
         body.dateTo = toDate;
     }
-    const response = await fetchJson(makeApiUrl("/Cards/CardDesc"), {
+    return fetchJson(makeApiUrl("/Cards/CardDesc"), {
         method: "POST",
         body,
-        headers: postAuthHeaders,
+        headers: {
+            "client_id": clientSecret,
+            "User-Agent": userAgent,
+            "Authorization": `bearer ${accessToken}`,
+        },
         sanitizeRequestLog: {body: {usersession: true}, headers: true},
         sanitizeResponseLog: {body: {result: {contract: {addrLineA: true, addrLineB: true, addrLineC: true}}}},
     });
-    assertResponseSuccess(response);
-    return response.body.result;
 }
