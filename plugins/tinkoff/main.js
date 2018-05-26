@@ -811,7 +811,8 @@ function processTransactions(data) {
                                 tran.outcome = t.amount.value;
                                 tran.outcomeAccount = "ccard#" + t.amount.currency.name + "#" +
                                     t.payment.cardNumber.substring(t.payment.cardNumber.length - 4);
-                            }
+                            } else if (t.senderDetails)
+                                tran.payee = t.senderDetails;
                             break;
 
                         // Если совсем ничего не подошло
