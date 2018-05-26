@@ -14,6 +14,7 @@ import {
     setDefaultEncoding,
     setThrowOnError,
 } from "./utils";
+import {makePluginDataApi} from "./ZPAPI.pluginData";
 
 function sleepSync(durationMs) {
     const startMs = Date.now();
@@ -117,30 +118,8 @@ function ZPAPI({manifest, preferences, data}) {
     this.saveCookies = notImplemented;
     this.restoreCookies = notImplemented;
 
-    this._data = data;
-
-    this.getData = (name, defaultValue) => {
-        return this._data[name] !== undefined
-            ? this._data[name]
-            : defaultValue;
-    };
-
-    this.setData = (name, value) => {
-        this._data = {
-            ...this._data,
-            [name]: value,
-        };
-    };
-
-    this.clearData = () => {
-        this._data = {};
-    };
-
-    this.saveData = () => {
-        if (this._data !== data) {
-            this._saveDataRequested = true;
-        }
-    };
+    const pluginDataApi = makePluginDataApi(data);
+    Object.assign(this, pluginDataApi.methods);
 
     this.getLastStatusString = getLastStatusString;
     this.getLastStatusCode = getLastStatusCode;
@@ -171,8 +150,8 @@ function ZPAPI({manifest, preferences, data}) {
                 resolve({
                     addedAccounts,
                     addedTransactions,
-                    pluginDataChange: this._saveDataRequested
-                        ? {oldValue: data, newValue: this._data}
+                    pluginDataChange: pluginDataApi.saveDataRequested
+                        ? {oldValue: pluginDataApi.initialData, newValue: pluginDataApi.currentData}
                         : null,
                 });
             } else {
