@@ -18,6 +18,7 @@ const rootElement = document.getElementById("root");
 let state = {
     status: "Loading plugin manifest/preferences/data…",
     onManualStartPress: null,
+    scrapeResult: null,
 };
 
 const updateUI = (UI) => ReactDOM.render(<UI {...state} />, rootElement);

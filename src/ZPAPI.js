@@ -96,6 +96,10 @@ const notImplemented = () => {
 
 function ZPAPI({manifest, preferences, data}) {
     this.runtime = "browser";
+    this.features = {
+        j2v8Date: true,
+        dateProcessing: true,
+    };
     const knownAccounts = {};
     const addedAccounts = [];
     const addedTransactions = [];
