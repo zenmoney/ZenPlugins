@@ -15,7 +15,9 @@ const prettifyDiffEntry = (diffEntry) => {
     return lines.join("\n");
 };
 
-export const prettyDeepDiff = (x, y) => deepDiff(x, y).map(diffEntry => prettifyDiffEntry(diffEntry));
+const prettyDeepDiff = (x, y) => deepDiff(x, y).map(diffEntry => prettifyDiffEntry(diffEntry));
+
+const isFlagPresent = (flag) => new RegExp(`[?&]${flag}\\b`).test(window.location.search);
 
 const messageHandlers = {
     ":events/sync-start": async function({onStatusChange}) {
@@ -36,17 +38,20 @@ const messageHandlers = {
         onStatusChange(`${summary}\n\nDo we want to save changed plugin data to zp_data.json?`);
 
         await new Promise((resolve) => setTimeout(resolve, 1));
-        const saveConfirmed = window.confirm([
-            `Diff:`,
-            ...prettyDeepDiff(pluginDataChange.oldValue, pluginDataChange.newValue),
-            `\nSave?`,
-        ].join("\n"));
+        const promptDisabled = isFlagPresent("no-prompt");
+        const diffLines = prettyDeepDiff(pluginDataChange.oldValue, pluginDataChange.newValue);
+        const saveConfirmed = promptDisabled || window.confirm([`Diff:`, ...diffLines, `\nSave?`].join("\n"));
 
         const pluginDataSaved = saveConfirmed ? fetchJson("/zen/data", {method: "POST", body: pluginDataChange, log: false}) : Promise.resolve();
         onStatusChange(`${summary}\nSaving plugin data…`);
         try {
             await pluginDataSaved;
-            onStatusChange(`${summary}\n\n${saveConfirmed ? "Saved plugin data changes" : "You discarded plugin data changes"}\n${ending}`);
+            onStatusChange(
+                `${summary}\n\n${saveConfirmed
+                    ? `Saved plugin data changes: \n${diffLines}`
+                    : "You discarded plugin data changes"
+                }\n${ending}`,
+            );
         } catch (e) {
             onStatusChange(`${summary}\nWe've failed to save plugin data changes because:\n${e.message}\n${ending}`);
         }
