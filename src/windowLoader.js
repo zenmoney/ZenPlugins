@@ -20,10 +20,18 @@ let state = {
     onManualStartPress: null,
 };
 
+const updateUI = (UI) => ReactDOM.render(<UI {...state} />, rootElement);
 const setState = (transform) => {
     state = transform(state);
-    return ReactDOM.render(<UI {...state} />, rootElement);
+    return updateUI(UI);
 };
+
+if (module.hot) {
+    module.hot.accept("./UI", () => {
+        console.log("./UI hot reloaded");
+        updateUI(require("./UI").UI);
+    });
+}
 
 window.dev = {
     get state() {

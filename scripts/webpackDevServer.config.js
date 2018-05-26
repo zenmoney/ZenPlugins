@@ -74,6 +74,7 @@ module.exports = ({allowedHost, host, https}) => {
             aggregateTimeout: 100,
             poll: false,
         },
+        hot: true,
         https: https,
         host: host,
         overlay: false,

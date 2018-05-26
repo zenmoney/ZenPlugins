@@ -30,13 +30,14 @@ const getHtmlPlugins = ({production, devServer}) => {
     }
 };
 
-const getPluginsSection = ({production, devServer}) => getHtmlPlugins({production, devServer}).concat([
+const getPluginsSection = ({production, devServer}) => getHtmlPlugins({production, devServer}).concat(_.compact([
     new webpack.NamedModulesPlugin(),
+    !production && new webpack.HotModuleReplacementPlugin(),
     new webpack.DefinePlugin({
         NODE_ENV: JSON.stringify(process.env.NODE_ENV || "development"),
     }),
     new CaseSensitivePathsPlugin(),
-]);
+]));
 
 module.exports = ({production, devServer}) => ({
     devtool: production ? false : "eval",
@@ -45,7 +46,10 @@ module.exports = ({production, devServer}) => ({
             index: paths.pluginJs,
         }
         : {
-            windowLoader: paths.windowLoaderJs,
+            windowLoader: [
+                !production && require.resolve("react-dev-utils/webpackHotDevClient"),
+                paths.windowLoaderJs,
+            ],
             workerLoader: paths.workerLoaderJs,
         },
     output: {
