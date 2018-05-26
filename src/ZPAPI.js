@@ -13,7 +13,7 @@ import {
     handleException,
     setDefaultEncoding,
     setThrowOnError,
-} from "./utils";
+} from "./ZPAPI.utils";
 
 function sleepSync(durationMs) {
     const startMs = Date.now();
