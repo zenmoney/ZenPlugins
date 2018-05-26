@@ -1,4 +1,4 @@
-import {extractErrorDetails} from "./ZPAPI.utils";
+import {extractErrorDetails} from "./utils";
 import {ZPAPI} from "./ZPAPI";
 
 const messageHandlers = {
