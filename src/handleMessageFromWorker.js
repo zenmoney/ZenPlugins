@@ -15,7 +15,7 @@ const prettifyDiffEntry = (diffEntry) => {
     return lines.join("\n");
 };
 
-const prettyDeepDiff = (x, y) => deepDiff(x, y).map(diffEntry => prettifyDiffEntry(diffEntry));
+const prettyDeepDiff = (x, y) => deepDiff(x, y).map(diffEntry => prettifyDiffEntry(diffEntry)).join("\n");
 
 const isFlagPresent = (flag) => new RegExp(`[?&]${flag}\\b`).test(window.location.search);
 
@@ -40,7 +40,7 @@ const messageHandlers = {
         await new Promise((resolve) => setTimeout(resolve, 1));
         const promptDisabled = isFlagPresent("no-prompt");
         const diffLines = prettyDeepDiff(pluginDataChange.oldValue, pluginDataChange.newValue);
-        const saveConfirmed = promptDisabled || window.confirm([`Diff:`, ...diffLines, `\nSave?`].join("\n"));
+        const saveConfirmed = promptDisabled || window.confirm([`Diff:`, diffLines, `\nSave?`].join("\n"));
 
         const pluginDataSaved = saveConfirmed ? fetchJson("/zen/data", {method: "POST", body: pluginDataChange, log: false}) : Promise.resolve();
         onStatusChange(`${summary}\nSaving plugin data…`);
