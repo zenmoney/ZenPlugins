@@ -386,17 +386,15 @@ function processAccounts() {
                 instrument: a.moneyAmount.currency.name,
             };
 
-            var creditLimit = a.creditLimit ? a.creditLimit.value : 0;
-            var accBalance = a.accountBalance.value > 0 ? a.accountBalance.value : a.debtBalance.value ? -a.debtBalance.value : 0;
+            // овердрафт
+            if (a.creditLimit.value > 0)
+                acc1.creditLimit = a.creditLimit.value;
 
-            // новый способ контроля остатка – устанавливаем его, только если точно уверены в актуальности остатка со всеми обработанными холдами
-            if (!initialized || a.moneyAmount.value - creditLimit === accBalance - a.authorizationsAmount.value)
-                acc1.balance = accBalance - a.authorizationsAmount.value;
+            // контроль точности расчёта остатка банком
+            if (!initialized || parseDecimal(a.moneyAmount.value) === parseDecimal(a.accountBalance.value - a.authorizationsAmount.value))
+                acc1.balance = parseDecimal(a.moneyAmount.value - a.creditLimit.value);
 
-            ZenMoney.trace("Добавляем дебетовую карту: "+ a.name +" (#"+ a.id +") = "+ acc1.balance +" "+ acc1.instrument);
-
-            if (creditLimit > 0)
-                acc1.creditLimit = creditLimit;
+            ZenMoney.trace("Добавляем дебетовую карту: "+ a.name +" (#"+ a.id +") = "+ (acc1.balance !== null ? acc1.balance +" "+ acc1.instrument : "undefined"));
 
             // номера карт
             for (var k1 = 0; k1 < a.cardNumbers.length; k1++) {
@@ -417,17 +415,12 @@ function processAccounts() {
                 title: a.name,
                 type: "ccard",
                 syncID: [],
-                creditLimit:	creditLimit,
+                creditLimit: a.creditLimit.value,
                 instrument: a.moneyAmount.currency.name,
-                //balance: a.moneyAmount.value - creditLimit,
+                balance: parseDecimal(a.creditLimit.value > a.moneyAmount.value
+                    ? - a.debtAmount.value - a.authorizationsAmount.value
+                    : a.moneyAmount.value - a.creditLimit.value),
             };
-
-            var creditLimit = a.creditLimit ? a.creditLimit.value : 0;
-            var accBalance = a.accountBalance.value > 0 ? a.accountBalance.value : a.debtBalance.value ? -a.debtBalance.value : 0;
-
-            // новый способ контроля остатка – устанавливаем его, только если точно уверены в актуальности остатка со всеми обработанными холдами
-            if (!initialized || a.moneyAmount.value - creditLimit === accBalance - a.authorizationsAmount.value)
-                acc2.balance = accBalance - a.authorizationsAmount.value;
 
             ZenMoney.trace("Добавляем кредитную карту: " + a.name + " (#" + a.id + ") = "+ acc2.balance +" "+ acc2.instrument);
 
@@ -1129,4 +1122,9 @@ function trimStart(string, chars) {
     }
 
     return string.substr(start);
+}
+
+function parseDecimal(str) {
+    const number = Number(str.toFixed(2).replace(/\s/g, "").replace(/,/g, "."));
+    return number;
 }
