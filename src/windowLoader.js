@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 import {fetchJson} from "./common/network";
 import {handleMessageFromWorker} from "./handleMessageFromWorker";
 import {UI} from "./UI";
-import {waitForOpenDevtools} from "./utils";
+import {isFlagPresent, waitForOpenDevtools} from "./utils";
 
 const pickSuccessfulBody = async (fetchPromise) => {
     const response = await fetchPromise;
@@ -16,9 +16,15 @@ const pickSuccessfulBody = async (fetchPromise) => {
 const rootElement = document.getElementById("root");
 
 let state = {
-    status: "Loading plugin manifest/preferences/data…",
+    workflowState: ":workflow-state/none",
+    waitingForDevtools: null,
     onManualStartPress: null,
+    scrapeState: ":scrape-state/none",
     scrapeResult: null,
+    scrapeError: null,
+    persistPluginDataState: ":persist-plugin-data-state/none",
+    persistPluginDataError: null,
+    onPersistPluginDataConfirm: null,
 };
 
 const updateUI = (UI) => ReactDOM.render(<UI {...state} />, rootElement);
@@ -41,43 +47,75 @@ window.dev = {
 };
 
 async function init() {
+    const canStartScrape = Promise.race([
+        waitForOpenDevtools(),
+        new Promise((resolve) => setState((state) => ({
+            ...state,
+            waitingForDevtools: true,
+            onManualStartPress: resolve,
+        }))),
+    ]);
+    canStartScrape.then(() => setState((state) => ({
+        ...state,
+        waitingForDevtools: false,
+        onManualStartPress: null,
+    })));
+
     try {
         const worker = new Worker("/workerLoader.js");
 
         window.__worker__ = worker; // prevents worker GC - allows setting breakpoints after worker ends execution
 
+        setState((state) => ({...state, workflowState: ":workflow-state/loading-assets"}));
         const [preferences, manifest, data] = await Promise.all([
             pickSuccessfulBody(fetchJson("/zen/preferences", {log: false})),
             pickSuccessfulBody(fetchJson("/zen/manifest", {log: false})),
             pickSuccessfulBody(fetchJson("/zen/data", {log: false})),
         ]);
-        setState((state) => ({...state, status: "Waiting until you open developer tools…"}));
-
         document.title = `[${manifest.id}] ${document.title}`;
 
-        const manualStartButtonPressed = new Promise((resolve) => setState((state) => ({...state, onManualStartPress: resolve})));
+        setState((state) => ({...state, workflowState: ":workflow-state/waiting"}));
+        await canStartScrape;
+        setState((state) => ({...state, workflowState: ":workflow-state/scraping", scrapeState: ":scrape-state/starting"}));
 
-        await Promise.race([waitForOpenDevtools(), manualStartButtonPressed]);
-
-        setState((state) => ({...state, onManualStartPress: null, status: "Starting sync"}));
-
-        worker.addEventListener("message", (event) => handleMessageFromWorker({
-            event,
-            onStatusChange: (status) => setState((state) => ({...state, status})),
-            setState,
-        }));
-        worker.postMessage({
-            type: ":commands/execute-sync",
-            payload: {
-                manifest,
-                preferences,
-                data,
-            },
+        const scrapeResult = await new Promise((resolve, reject) => {
+            worker.addEventListener("message", (event) => handleMessageFromWorker({
+                event,
+                onSyncStarted: () => setState((state) => ({...state, scrapeState: ":scrape-state/started"})),
+                onSyncSuccess: resolve,
+                onSyncError: reject,
+            }));
+            worker.postMessage({
+                type: ":commands/execute-sync",
+                payload: {manifest, preferences, data},
+            });
         });
-    } catch (e) {
-        setState((state) => ({...state, status: "Failed to execute sync:\n" + e.message}));
-        throw e;
+        setState((state) => ({...state, scrapeState: ":scrape-state/success", scrapeResult}));
+
+        const {save} = isFlagPresent("no-prompt")
+            ? {save: true}
+            : await new Promise((resolve) => setState((state) => ({
+                ...state,
+                persistPluginDataState: ":persist-plugin-data-state/confirm",
+                onPersistPluginDataConfirm: resolve,
+            })));
+        if (save) {
+            setState((state) => ({...state, persistPluginDataState: ":persist-plugin-data-state/saving"}));
+            try {
+                await fetchJson("/zen/data", {method: "POST", body: scrapeResult.pluginDataChange, log: false});
+                setState((state) => ({...state, persistPluginDataState: ":persist-plugin-data-state/saved"}));
+            } catch (error) {
+                setState((state) => ({...state, persistPluginDataState: ":persist-plugin-data-state/save-error", persistPluginDataError: error}));
+            }
+        } else {
+            setState((state) => ({...state, persistPluginDataState: ":persist-plugin-data-state/dismiss"}));
+        }
+    } catch (error) {
+        setState((state) => ({...state, scrapeState: ":scrape-state/error", scrapeError: error}));
+        throw error;
     }
+
+    setState((state) => ({...state, workflowState: ":workflow-state/complete"}));
 }
 
 init();

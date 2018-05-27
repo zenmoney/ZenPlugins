@@ -13,3 +13,5 @@ export const waitForOpenDevtools = () => new Promise(function fn(resolve) {
         setTimeout(fn, 100, resolve);
     }
 });
+
+export const isFlagPresent = (flag) => new RegExp(`[?&]${flag}\\b`).test(window.location.search);

@@ -6,7 +6,6 @@ export const BreakingPre = ({children}) => (
             fontFamily: "inherit",
             whiteSpace: "pre-wrap",
             wordBreak: "break-all",
-            overflowY: "auto",
             margin: 0,
         }}
     >

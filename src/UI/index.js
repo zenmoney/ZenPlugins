@@ -1,9 +1,10 @@
 import _ from "lodash";
 import React from "react";
+import {prettyDeepDiff} from "../diff";
 import {Account} from "./Account";
 import {BreakingPre} from "./BreakingPre";
 import {Bubble} from "./Bubble";
-import {border, fontColor} from "./designSystem";
+import {border, fontColor, zenmoneyGreenColor, zenmoneyRedColor} from "./designSystem";
 import {DayTransactions} from "./Transaction";
 
 const SidePane = ({children}) => <div style={{borderLeft: border, overflowY: "auto"}}>{children}</div>;
@@ -75,7 +76,12 @@ export class UI extends React.PureComponent {
     }
 
     render() {
-        const {status, onManualStartPress, scrapeResult} = this.props;
+        const {
+            waitingForDevtools, onManualStartPress,
+            scrapeState, workflowState,
+            scrapeResult, scrapeError,
+            persistPluginDataState, persistPluginDataError, onPersistPluginDataConfirm,
+        } = this.props;
         const {resolveAccount} = this.state;
         return (
             <div style={{
@@ -85,18 +91,53 @@ export class UI extends React.PureComponent {
                 height: "100vh",
                 color: fontColor,
             }}>
-                <BreakingPre>
-                    {onManualStartPress && (
+                <SidePane>
+                    {waitingForDevtools && (
                         <React.Fragment>
-                            Open docked devtools (Command-Option-I on Mac, F12 on Windows) to proceed or press{" "}
-                            <button onClick={onManualStartPress}>Start manually</button>
+                            Open docked devtools (Command-Option-I on Mac, F12 on Windows) to proceed or press <button onClick={onManualStartPress}>Start manually</button>
                         </React.Fragment>
                     )}
-                    {onManualStartPress && "\n"}
-                    {status}
-                </BreakingPre>
-                {scrapeResult && <AccountsPane accounts={scrapeResult.accounts} />}
-                {scrapeResult && <TransactionsPane transactions={scrapeResult.transactions} resolveAccount={resolveAccount} />}
+                    {workflowState === ":workflow-state/waiting" && <div>Waiting</div>}
+                    {workflowState === ":workflow-state/loading-assets" && <div>Loading plugin manifest/preferences/data…</div>}
+                    {scrapeState === ":scrape-state/starting" && <div>Scraping starting</div>}
+                    {scrapeState === ":scrape-state/started" && <div>Scraping…</div>}
+                    {scrapeState === ":scrape-state/success" &&
+                    <div>Scraped {scrapeResult.accounts.length} account(s), {scrapeResult.transactions.length} transaction(s)</div>}
+                    {scrapeState === ":scrape-state/success" && scrapeResult.pluginDataChange && (
+                        <React.Fragment>
+                            <div>pluginData changes:</div>
+                            {prettyDeepDiff(scrapeResult.pluginDataChange.oldValue, scrapeResult.pluginDataChange.newValue)
+                                .map((line, i) => <div key={i} style={{color: line.startsWith("+") ? zenmoneyGreenColor : zenmoneyRedColor}}>{line}</div>)}
+                            {persistPluginDataState === ":persist-plugin-data-state/confirm" && (
+                                <React.Fragment>
+                                    <button onClick={onPersistPluginDataConfirm.bind(null, {save: true})}>Save</button>
+                                    <button onClick={onPersistPluginDataConfirm.bind(null, {save: false})}>Dismiss</button>
+                                </React.Fragment>
+                            )}
+                            {persistPluginDataState === ":persist-plugin-data-state/saving" && <div>Saving pluginData…</div>}
+                            {persistPluginDataState === ":persist-plugin-data-state/saved" && <div>You saved pluginData changes</div>}
+                            {persistPluginDataState === ":persist-plugin-data-state/dismiss" && <div>You dismissed pluginData changes</div>}
+                            {persistPluginDataState === ":persist-plugin-data-state/save-error" && (
+                                <div>
+                                    We've failed to save plugin data changes because:
+                                    <br />
+                                    {persistPluginDataError.message}
+                                </div>
+                            )}
+                        </React.Fragment>
+                    )}
+                    {scrapeState === ":scrape-state/success" && !scrapeResult.pluginDataChange && <div>pluginData: no changes</div>}
+                    {scrapeState === ":scrape-state/error" && <div>Scrape error:
+                        <BreakingPre>{scrapeError}</BreakingPre>
+                    </div>}
+                    {workflowState === ":workflow-state/complete" && <div><br />Cheers!</div>}
+                </SidePane>
+                {scrapeState === ":scrape-state/success" && (
+                    <React.Fragment>
+                        <AccountsPane accounts={scrapeResult.accounts} />
+                        <TransactionsPane transactions={scrapeResult.transactions} resolveAccount={resolveAccount} />
+                    </React.Fragment>
+                )}
             </div>
         );
     }
