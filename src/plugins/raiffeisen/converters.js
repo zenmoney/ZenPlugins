@@ -1,4 +1,5 @@
 import _ from "lodash";
+import {toAtLeastTwoDigitsString} from "../../common/dates";
 
 export function convertAccounts(jsonArray) {
     const accounts = {};
@@ -99,15 +100,19 @@ export function convertCards(jsonArray, accounts = {}) {
     return cards;
 }
 
-export function convertDepositsWithTransactions(jsonArray) {
+export function convertDepositsWithTransactions(jsonArray, fromDate) {
     const accounts = {};
     const transactions = [];
+    const fromDateStr = fromDate.getFullYear() + "-" +
+        toAtLeastTwoDigitsString(fromDate.getMonth() + 1) + "-" +
+        toAtLeastTwoDigitsString(fromDate.getDate());
     for (const json of jsonArray) {
         if (!json.deals || !json.deals.length) {
             continue;
         }
         let deposit = null;
         for (const deal of json.deals) {
+            const date = deal.open.substring(0, 10);
             if (!deposit) {
                 deposit = {
                     id: "DEPOSIT_ID_" + json.id,
@@ -117,7 +122,7 @@ export function convertDepositsWithTransactions(jsonArray) {
                     syncID: [json.number],
                     startBalance: deal.startAmount,
                     percent: deal.rate,
-                    startDate: deal.open.substring(0, 10),
+                    startDate: date,
                     endDateOffset: deal.duration,
                     endDateOffsetInterval: "day",
                     capitalization: json.capital,
@@ -128,12 +133,15 @@ export function convertDepositsWithTransactions(jsonArray) {
             }
             accounts["DEPOSIT_" + deal.id] = deposit;
             deposit.balance = deal.currentAmount;
+            if (date < fromDateStr) {
+                continue;
+            }
             transactions.push({
                 income: deal.startAmount,
                 incomeAccount: deposit.id,
                 outcome: 0,
                 outcomeAccount: deposit.id,
-                date: deal.open.substring(0, 10),
+                date: date,
                 hold: false,
             });
         }
