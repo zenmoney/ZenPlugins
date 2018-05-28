@@ -14,6 +14,7 @@ import {
     setDefaultEncoding,
     setThrowOnError,
 } from "./ZPAPI.utils";
+import {makePluginDataApi} from "./ZPAPI.pluginData";
 
 function sleepSync(durationMs) {
     const startMs = Date.now();
