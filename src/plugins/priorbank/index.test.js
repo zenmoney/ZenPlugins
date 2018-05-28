@@ -1,6 +1,7 @@
 import fetchMock from "fetch-mock";
 import _ from "lodash";
 import util from "util";
+import {makePluginDataApi} from "../../ZPAPI.pluginData";
 import {scrape} from "./index";
 
 const priorSuccessResponse = (result) => ({
@@ -31,6 +32,7 @@ describe("scraper happy path", () => {
     it("should work", () => {
         global.ZenMoney = {
             isAccountSkipped: () => false,
+            ...makePluginDataApi({}).methods,
         };
 
         fetchMock.once({
@@ -38,13 +40,13 @@ describe("scraper happy path", () => {
             matcher: (url) => url.endsWith("/Authorization/MobileToken"),
             response: {
                 access_token: "access_token",
-                token_type: "token_type",
+                token_type: "bearer",
                 client_secret: "client_secret",
             },
         });
 
         const preAuthExpectedHeaders = {
-            Authorization: "token_type access_token",
+            Authorization: "bearer access_token",
             client_id: "client_secret",
             "User-Agent": "PriorMobile3/3.17.03.22 (Android 24; versionCode 37)",
         };

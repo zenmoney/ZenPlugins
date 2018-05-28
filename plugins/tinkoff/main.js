@@ -13,10 +13,18 @@ var g_preferences;
  */
 function main(){
     g_preferences = ZenMoney.getPreferences();
-    login();
+
+    if (login() === false) {
+        ZenMoney.setResult({success: false});
+        return;
+    }
 
     processAccounts();
     processTransactions();
+
+    if (g_accDict.length === 0)
+        throw new ZenMoney.Error("Не удалось обнаружить счета для синхронизации");
+
     ZenMoney.setResult({success: true});
 }
 
@@ -164,7 +172,7 @@ function login() {
                 throw new ZenMoney.Error("Ответ от банка: " + (sign_up.plainMessage || sign_up.errorMessage), true, true);
             }
             // если нужно подтверждение по смс
-            else if (sign_up.resultCode === "WAITING_CONFIRMATION")  // DEVICE_LINK_NEEDED
+            else if (sign_up.resultCode === "WAITING_CONFIRMATION") // DEVICE_LINK_NEEDED
             {
                 ZenMoney.trace("Необходимо подтвердить вход...");
 
@@ -291,20 +299,29 @@ function login() {
             });
             //ZenMoney.trace('SIGN_UP 2: '+ JSON.stringify(sign_up));
 
-            // устройство не авторизировано
-            if (sign_up2.resultCode === "DEVICE_LINK_NEEDED") {
+            if (in_array(sign_up2.resultCode, ["DEVICE_LINK_NEEDED", "WRONG_PIN_CODE", "PIN_ATTEMPS_EXCEEDED"])) {
                 ZenMoney.setData("pinHash", null);
                 ZenMoney.saveData();
-                ZenMoney.trace("Требуется привязка устройства: " + JSON.stringify(sign_up2));
-                throw new ZenMoney.Error("Требуется привязка устройства. Перезапустите подключение к банку.", true);
-            }
-            // не верный пин-код
-            if (in_array(sign_up2.resultCode, ["WRONG_PIN_CODE", "PIN_ATTEMPS_EXCEEDED"])) {
-                ZenMoney.setData("pinHash", null);
-                ZenMoney.saveData();
-                ZenMoney.trace("Ошибка входа по ПИН-коду: " + JSON.stringify(sign_up2));
-                throw new ZenMoney.Error("Ошибка входа по ПИН-коду. Перезапустите подключение к банку.", true);
+
+                switch (sign_up2.resultCode) {
+                    // устройство не авторизировано
+                    case "DEVICE_LINK_NEEDED":
+                        ZenMoney.trace("Требуется привязка устройства: " + JSON.stringify(sign_up2));
+                        throw new ZenMoney.Error("Требуется привязка устройства. Перезапустите подключение к банку.", true);
+                        //return false;
+
+                    // не верный пин-код
+                    case "WRONG_PIN_CODE":
+                    case "PIN_ATTEMPS_EXCEEDED":
+                        ZenMoney.trace("Ошибка входа по ПИН-коду: " + JSON.stringify(sign_up2));
+                        throw new ZenMoney.Error("Ошибка входа по ПИН-коду. Перезапустите подключение к банку.", true);
+
+                    default:
+                        break;
+                }
             } else if (sign_up2.resultCode !== "OK") {
+                ZenMoney.setData("pinHash", null);
+                ZenMoney.saveData();
                 ZenMoney.trace("Ошибка входа по ПИН-коду: " + JSON.stringify(sign_up2));
                 throw new ZenMoney.Error("Ошибка входа по ПИН-коду: " + (sign_up2.plainMessage || sign_up2.errorMessage));
             } else
@@ -334,19 +351,22 @@ function processAccounts() {
     ZenMoney.trace("Запрашиваем данные по счетам...");
     //var accounts = requestJson("accounts_flat");
     var accounts = requestJson("grouped_requests", {_methods: "accounts_flat"},
-     {
-        post: {
-            requestsData: JSON.stringify(
-             [{
-                key: 0,
-                operation: "accounts_flat",
-            },]
-            ),
-        },
-    }
+        {
+            post: {
+                requestsData: JSON.stringify(
+                    [{
+                        key: 0,
+                        operation: "accounts_flat",
+                    }]
+                ),
+            },
+        }
     );
 
     ZenMoney.trace("JSON счетов: "+JSON.stringify(accounts));
+
+    // при первом запуске подключения остатки на счетах передаём принудительно
+    var initialized = ZenMoney.getData("initialized", false);
 
     accounts = accounts.payload[0].payload;
     for (var i = 0; i < accounts.length; i++) {
@@ -356,34 +376,31 @@ function processAccounts() {
             continue;
         }
 
-        var creditLimit = a.creditLimit ? a.creditLimit.value : 0;
-
         // дебетовые карты ------------------------------------
         if (a.accountType === "Current" && a.status === "NORM") {
-            ZenMoney.trace("Добавляем дебетовую карту: "+ a.name +" (#"+ a.id +")");
             var acc1 = {
                 id: a.id,
                 title: a.name,
                 type: "ccard",
                 syncID: [],
                 instrument: a.moneyAmount.currency.name,
-                //balance:		a.moneyAmount.value - creditLimit
-                balance: Math.min(a.accountBalance.value, a.moneyAmount.value - creditLimit), // эксперимент с новым балансом
-                balance_income: Math.max(a.accountBalance.value, a.moneyAmount.value - creditLimit),  // эксперимент2 с новым балансом
             };
 
-            // на случай подвисших холдов за пределами выписки, которые обнулили accountBalance (случай с Лукойлом)
-            if (acc1.balance == 0 && acc1.balance_income > 0)
-             acc1.balance = acc1.balance_income;
+            // овердрафт
+            if (a.creditLimit.value > 0)
+                acc1.creditLimit = a.creditLimit.value;
 
-            if (creditLimit > 0)
-             acc1.creditLimit = creditLimit;
+            // контроль точности расчёта остатка банком
+            if (!initialized || parseDecimal(a.moneyAmount.value) === parseDecimal(a.accountBalance.value - a.authorizationsAmount.value))
+                acc1.balance = parseDecimal(a.moneyAmount.value - a.creditLimit.value);
+
+            ZenMoney.trace("Добавляем дебетовую карту: "+ a.name +" (#"+ a.id +") = "+ (acc1.balance !== null ? acc1.balance +" "+ acc1.instrument : "undefined"));
 
             // номера карт
             for (var k1 = 0; k1 < a.cardNumbers.length; k1++) {
                 var card1 = a.cardNumbers[k1];
                 if (card1.activated)
-                 acc1.syncID.push(card1.value.substring(card1.value.length - 4))
+                    acc1.syncID.push(card1.value.substring(card1.value.length - 4))
             }
 
             // добавим и номер счёта карты
@@ -393,29 +410,25 @@ function processAccounts() {
         }
         // кредитные карты ----------------------------------------
         else if (a.accountType === "Credit" && a.status === "NORM") {
-            ZenMoney.trace("Добавляем кредитную карту: " + a.name + " (#" + a.id + ")");
-
             var acc2 = {
                 id: a.id,
                 title: a.name,
                 type: "ccard",
                 syncID: [],
-                creditLimit:	creditLimit,
+                creditLimit: a.creditLimit.value,
                 instrument: a.moneyAmount.currency.name,
-                balance: a.moneyAmount.value - creditLimit,
+                balance: parseDecimal(a.creditLimit.value > a.moneyAmount.value
+                    ? - a.debtAmount.value - a.authorizationsAmount.value
+                    : a.moneyAmount.value - a.creditLimit.value),
             };
 
-            // пересчитаем остаток, если провалились в минус сверх кредитного лимита
-            if (a.moneyAmount.value == 0 && a.debtAmount) {
-                ZenMoney.trace("Пересчитаем остаток на карте, так как провалились ниже лимита...");
-                acc2.balance = -a.debtAmount.value;
-            }
+            ZenMoney.trace("Добавляем кредитную карту: " + a.name + " (#" + a.id + ") = "+ acc2.balance +" "+ acc2.instrument);
 
             // номера карт
             for (var k2 = 0; k2 < a.cardNumbers.length; k2++) {
                 var card2 = a.cardNumbers[k2];
                 if (card2.activated)
-                 acc2.syncID.push(card2.value.substring(card2.value.length - 4))
+                    acc2.syncID.push(card2.value.substring(card2.value.length - 4))
             }
 
             // добавим и номер счёта карты
@@ -425,27 +438,20 @@ function processAccounts() {
         }
         // накопительные счета ------------------------------------
         else if (a.accountType === "Saving" && a.status === "NORM") {
-            ZenMoney.trace("Добавляем накопительный счёт: "+ a.name +" (#"+ a.id +")");
+            ZenMoney.trace("Добавляем накопительный счёт: "+ a.name +" (#"+ a.id +") = "+ a.moneyAmount.value +" "+ a.moneyAmount.currency.name);
             g_accDict.push({
                 id: a.id,
                 title: a.name,
-                type: "deposit", //'checking'
+                type: "checking",
                 syncID: a.id.substring(a.id.length-4),
                 instrument: a.moneyAmount.currency.name,
                 balance: a.moneyAmount.value,
-                // пока создаём накопительные счета как вклады
-                percent: 0,
-                capitalization:	true,
-                startDate: a.creationDate.milliseconds,
-                endDateOffsetInterval: "month",
-                endDateOffset:	1,
-                payoffInterval:	"month",
-                payoffStep: 1,
+                savings: true,
             });
         }
         // депозиты --------------------------------------------------
         else if (a.accountType === "Deposit" && a.status === "ACTIVE") {
-            ZenMoney.trace("Добавляем депозит: "+ a.name +" (#"+ a.id +")");
+            ZenMoney.trace("Добавляем депозит: "+ a.name +" (#"+ a.id +") = "+ a.moneyAmount.value +" "+ a.moneyAmount.currency.name);
             g_accDict.push({
                 id: a.id,
                 title: a.name,
@@ -470,7 +476,7 @@ function processAccounts() {
                 var name = a.name + " (" + currency + ")";
                 var id = a.id +"_"+ currency;
                 var syncid = a.id.substring(a.id.length-4) +"_"+ currency;
-                ZenMoney.trace("Добавляем мультивалютный вклад: "+ name +" (#"+ id +")");
+                ZenMoney.trace("Добавляем мультивалютный вклад: "+ name +" (#"+ id +") = "+ deposit.moneyAmount.value +" "+ deposit.moneyAmount.currency.name);
                 g_accDict.push({
                     id: id,
                     title: name,
@@ -491,7 +497,7 @@ function processAccounts() {
         // кредиты наличными
         else if (a.accountType === "CashLoan" && a.status === "NORM") {
             if (a.debtAmount.value > 0) {
-                ZenMoney.trace("Добавляем кредит наличными: " + a.name + " (#" + a.id + ")");
+                ZenMoney.trace("Добавляем кредит наличными: " + a.name + " (#" + a.id + ") = -"+ a.debtAmount.value +" "+ a.debtAmount.currency.name);
                 g_accDict.push({
                     id: a.id,
                     title: a.name,
@@ -509,8 +515,13 @@ function processAccounts() {
                     payoffStep: 1,
                 });
             } else
-             ZenMoney.trace("Пропускаем кредит наличными " + a.name + " (#" + a.id + "), так как он уже закрыт");
+                ZenMoney.trace("Пропускаем кредит наличными " + a.name + " (#" + a.id + "), так как он уже закрыт");
         }
+    }
+
+    if (!initialized) {
+        ZenMoney.setData("initialized", true);
+        ZenMoney.saveData();
     }
 
     ZenMoney.trace("Всего счетов добавлено: "+ g_accDict.length);
@@ -550,7 +561,7 @@ function processTransactions(data) {
 
             createSyncTime = dtSync.getTime();
         } else
-         createSyncTime = Date.now();
+            createSyncTime = Date.now();
 
         ZenMoney.setData("createSync", createSyncTime);
 
@@ -572,12 +583,12 @@ function processTransactions(data) {
         // если есть время последней синхронизации, то всегда работаем от него
         // lastSyncTime = Math.max(lastSyncTime, createSyncTime);
     } else
-     lastSyncTime = createSyncTime;
+        lastSyncTime = createSyncTime;
 
     ZenMoney.trace("WorkSyncTime: " + new Date(lastSyncTime) + " (" + lastSyncTime + ")");
 
     if (lastSyncTime <= 0)
-     throw new ZenMoney.Error("Ошибка инициализации плагина 2.");
+        throw new ZenMoney.Error("Ошибка инициализации плагина 2.");
 
     var lastSyncDate = new Date(lastSyncTime);
     var startDate = n2(lastSyncDate.getDate()) +"."+ n2(lastSyncDate.getMonth() + 1) +"."+ lastSyncDate.getFullYear() +" "+ n2(lastSyncDate.getHours()) +":"+ n2(lastSyncDate.getMinutes());
@@ -591,13 +602,13 @@ function processTransactions(data) {
     var transactions = requestJson("grouped_requests", null, {
         post: {
             requestsData: JSON.stringify(
-             [{
-                key: 0,
-                operation: "operations",
-                params: {
-                    start: lastSyncTime,
-                },
-            },]
+                [{
+                    key: 0,
+                    operation: "operations",
+                    params: {
+                        start: lastSyncTime,
+                    },
+                }]
             ),
         },
     });
@@ -613,12 +624,11 @@ function processTransactions(data) {
         ZenMoney.trace("Получено операций: " + payload.length);
         ZenMoney.trace("JSON: " + JSON.stringify(payload));
 
-        var holdSum = {}; // для определения текущего остатка с учётом холдов
         for (var iPayload = 0; iPayload < payload.length; iPayload++) {
             var t = payload[iPayload];
 
             if (t.operationTime.milliseconds > lastSyncTime)
-             lastSyncTime = t.operationTime.milliseconds;
+                lastSyncTime = t.operationTime.milliseconds;
 
             var tran = {};
             // дата по-видимому всегда привязана к часовому поясу Москвы. Так что нужно ее корректировать
@@ -658,10 +668,10 @@ function processTransactions(data) {
 
             // Внутренний ID операции
             var tranId = t.payment && t.payment.paymentId
-             // если есть paymentId, объединяем по нему, отделяя комиссии от переводов
-             ? (t.group === "CHARGE" ? "f" : "p") + t.payment.paymentId
-             // либо работаем просто как с операциями, разделяя их на доходы и расходы
-             : t.id;
+                // если есть paymentId, объединяем по нему, отделяя комиссии от переводов
+                ? (t.group === "CHARGE" ? "f" : "p") + t.payment.paymentId
+                // либо работаем просто как с операциями, разделяя их на доходы и расходы
+                : t.id;
 
             // отделяем акцепт от холда временем дебетового списания
             tran.id = t.debitingTime ? t.id : "tmp#" + t.id;
@@ -687,12 +697,12 @@ function processTransactions(data) {
             var tranAmount = t.amount ? t.amount.value + t.amount.currency.name : t.accountAmount.value + t.accountAmount.currency.name;
             var tranKeyHold = tran.created + ":" + tAccount + ":" + tranAmount;
             if (t.payment && t.payment.fieldsValues && t.payment.fieldsValues.uid)
-             tranKeyHold += ":" + t.payment.fieldsValues.uid;
+                tranKeyHold += ":" + t.payment.fieldsValues.uid;
             //ZenMoney.trace('tranKeyHold: '+tranKeyHold);
 
             // холд пропускаем ----------------------------------------------------------------
             if (!t.debitingTime && (tranDict[tranKey] || tranDictHold[tranKeyHold]))
-             continue;
+                continue;
 
             // перевод ------------------------------------------------------------------------
             if (tranDict[tranKey2]) {
@@ -794,7 +804,8 @@ function processTransactions(data) {
                                 tran.outcome = t.amount.value;
                                 tran.outcomeAccount = "ccard#" + t.amount.currency.name + "#" +
                                     t.payment.cardNumber.substring(t.payment.cardNumber.length - 4);
-                            }
+                            } else if (t.senderDetails)
+                                tran.payee = t.senderDetails;
                             break;
 
                         // Если совсем ничего не подошло
@@ -925,37 +936,6 @@ function processTransactions(data) {
             //ZenMoney.trace('Операция!!! ' + tranId);
             tranDict[tranKey] = tran;
             tranDictHold[tranKeyHold] = tranKey;
-
-            //
-            if (tran.hold) {
-                if (tran.incomeAccount && !holdSum.hasOwnProperty(tran.incomeAccount)) holdSum[tran.incomeAccount] = 0;
-                if (tran.outcomeAccount && !holdSum.hasOwnProperty(tran.outcomeAccount)) holdSum[tran.outcomeAccount] = 0;
-                if (tran.income > 0) holdSum[tran.incomeAccount] += tran.income;
-                if (tran.outcome > 0) holdSum[tran.outcomeAccount] -= tran.outcome;
-            }
-        }
-
-        // анализ зависших холдов, не нужно ли скорректировать остаток на карте
-        ZenMoney.trace("> Сверка остатков на счетах по HOLD-операциям...");
-        //ZenMoney.trace('g_account: ' + JSON.stringify(g_accounts));
-        //ZenMoney.trace('holdSum: ' + JSON.stringify(holdSum));
-
-        for(var i=0; i<g_accDict.length; i++) {
-            var id = g_accDict[i].id;
-
-            if (!holdSum.hasOwnProperty(id)) {
-                var pos = id.indexOf("_");
-                if (!holdSum.hasOwnProperty(id.substring(0, pos))) {
-                    //ZenMoney.trace('#'+ id +': пропускаем, так как нет hold-операций.');
-                    continue;
-                }
-            }
-
-            if (holdSum[id] > 0) {
-                g_accDict[i].balance = g_accDict[i].balance_income;
-                ZenMoney.trace("> Счёт #"+ id +": cумма hold-операций " + (Math.round((holdSum[id])*100)/100) + " => обновили остаток на "+ g_accDict[i].balance_income);
-            } else
-             ZenMoney.trace("> Счёт #"+ id +": cумма hold-операций " + (Math.round((holdSum[id])*100)/100) + " (остаток верный)");
         }
     }
 
@@ -964,7 +944,7 @@ function processTransactions(data) {
 
     ZenMoney.addAccount(g_accDict);
     for (var k in tranDict)
-     ZenMoney.addTransaction(tranDict[k]);
+        ZenMoney.addTransaction(tranDict[k]);
 
     //ZenMoney.setData('last_sync', lastSyncTime);
     //ZenMoney.trace('LastSyncTime: '+ lastSyncTime);
@@ -1001,7 +981,7 @@ function makeTransfer(fromAcc, toAcc, sum){
         for (var iAcc = 0; iAcc < accounts.payload.length; iAcc++) {
             var acc = accounts.payload[iAcc];
             if (acc.id != fromAcc)
-             continue;
+                continue;
 
             fromCurr = acc.moneyAmount.currency.name;
 
@@ -1015,7 +995,7 @@ function makeTransfer(fromAcc, toAcc, sum){
     }
 
     if (!fromCurr)
-     throw new ZenMoney.Error("Не удалось определить валюту счёта-источника");
+        throw new ZenMoney.Error("Не удалось определить валюту счёта-источника");
 
     // если во время перевода произойдёт ошибка, будет выброшен эксепшен
     var payment = requestJson("pay", null, {
@@ -1054,7 +1034,7 @@ function getJson(html) {
 
         // попытаемся представить, что это html
         if (/технические\s+работы/i.exec(html))
-         throw new ZenMoney.Error("Сервер банка сообщает о технических работах. Попробуйте повторить позднее.");
+            throw new ZenMoney.Error("Сервер банка сообщает о технических работах. Попробуйте повторить позднее.");
 
         throw new ZenMoney.Error("Сервер банка вернул ошибочные данные: " + e.message);
     }
@@ -1073,19 +1053,19 @@ function requestJson(requestCode, data, parameters) {
     g_sessionid && params.push(encodeURIComponent("sessionid") + "=" + encodeURIComponent(g_sessionid));
 
     if (data)
-     for (var d in data) params.push(encodeURIComponent(d) + "=" + encodeURIComponent(data[d]));
+        for (var d in data) params.push(encodeURIComponent(d) + "=" + encodeURIComponent(data[d]));
     params.push(encodeURIComponent("appVersion") + "=" + encodeURIComponent("4.1.3"));
     params.push(encodeURIComponent("platform") + "=" + encodeURIComponent("android"));
     params.push(encodeURIComponent("origin") + "=" + encodeURIComponent("mobile,ib5,loyalty,platform"));
     g_deviceid && params.push(encodeURIComponent("deviceId") + "=" + encodeURIComponent(g_deviceid));
 
     if (parameters.post)
-     data = ZenMoney.requestPost(g_baseurl + requestCode + "?" + params.join("&"), parameters.post, g_headers);
+        data = ZenMoney.requestPost(g_baseurl + requestCode + "?" + params.join("&"), parameters.post, g_headers);
     else {
         if (parameters)
-         for (var k in parameters)
-          if (k !== "noException")
-           params.push(encodeURIComponent(k) + "=" + encodeURIComponent(parameters[k]));
+            for (var k in parameters)
+                if (k !== "noException")
+                    params.push(encodeURIComponent(k) + "=" + encodeURIComponent(parameters[k]));
         data = ZenMoney.requestGet(g_baseurl + requestCode + "?" + params.join("&"), g_headers);
     }
 
@@ -1093,7 +1073,7 @@ function requestJson(requestCode, data, parameters) {
         ZenMoney.trace("Пришёл пустой ответ во время запроса по адресу \""+ g_baseurl + requestCode + "\". Попытаемся ещё раз...");
 
         if (parameters.post)
-         data = ZenMoney.requestPost(g_baseurl + requestCode + "?" + params.join("&"), parameters.post, g_headers);
+            data = ZenMoney.requestPost(g_baseurl + requestCode + "?" + params.join("&"), parameters.post, g_headers);
         else {
             if (parameters) for (var k2 in parameters) params.push(encodeURIComponent(k2) + "=" + encodeURIComponent(parameters[k2]));
             data = ZenMoney.requestGet(g_baseurl + requestCode + "?" + params.join("&"), g_headers);
@@ -1105,7 +1085,7 @@ function requestJson(requestCode, data, parameters) {
     if (data.resultCode !== "OK" && !parameters.noException) {
         ZenMoney.trace("Ошибка: " + requestCode + ", " + data.errorMessage);
         if (!data.errorMessage)
-         ZenMoney.trace("Request data: " + JSON.stringify(data));
+            ZenMoney.trace("Request data: " + JSON.stringify(data));
         throw new ZenMoney.Error("Ответ от банка: " + (parameters.scope ? parameters.scope + ". " : "") + (data.plainMessage || data.errorMessage));
     }
     return data
@@ -1122,7 +1102,7 @@ function in_array(needle, haystack) {
 function in_accounts(id, accounts) {
     var length = accounts.length;
     for(var i = 0; i < length; i++)
-     if(accounts[i].id == id) return true;
+        if(accounts[i].id == id) return true;
     return false;
 }
 
@@ -1131,7 +1111,7 @@ function is_array(arr) {
 }
 
 function n2(n) {
-    return n < 10 ? "0" + n : "" + n;
+    return n < 10 ? "0" + n : String(n);
 }
 
 function trimStart(string, chars) {
@@ -1142,4 +1122,9 @@ function trimStart(string, chars) {
     }
 
     return string.substr(start);
+}
+
+function parseDecimal(str) {
+    const number = Number(str.toFixed(2).replace(/\s/g, "").replace(/,/g, "."));
+    return number;
 }
