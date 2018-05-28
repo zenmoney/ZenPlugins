@@ -13,8 +13,7 @@ import {
     handleException,
     setDefaultEncoding,
     setThrowOnError,
-} from "./utils";
-import {makePluginDataApi} from "./ZPAPI.pluginData";
+} from "./ZPAPI.utils";
 
 function sleepSync(durationMs) {
     const startMs = Date.now();
@@ -97,6 +96,10 @@ const notImplemented = () => {
 
 function ZPAPI({manifest, preferences, data}) {
     this.runtime = "browser";
+    this.features = {
+        j2v8Date: true,
+        dateProcessing: true,
+    };
     const knownAccounts = {};
     const addedAccounts = [];
     const addedTransactions = [];

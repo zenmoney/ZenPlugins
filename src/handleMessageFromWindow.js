@@ -3,7 +3,7 @@ import {ZPAPI} from "./ZPAPI";
 
 const messageHandlers = {
     ":commands/execute-sync": async ({payload: {manifest, preferences, data}, reply}) => {
-        reply({type: ":events/sync-start"});
+        reply({type: ":events/scrape-started"});
         const api = new ZPAPI({manifest, preferences, data});
         global.ZenMoney = api;
         try {
@@ -11,12 +11,12 @@ const messageHandlers = {
             main();
             const result = await api.setResultCalled;
             reply({
-                type: ":events/sync-success",
+                type: ":events/scrape-success",
                 payload: result,
             });
         } catch (error) {
             reply({
-                type: ":events/sync-failure",
+                type: ":events/scrape-error",
                 payload: {
                     message: extractErrorDetails(error),
                 },
