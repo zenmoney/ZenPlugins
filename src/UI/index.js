@@ -37,7 +37,12 @@ class TransactionsPane extends React.PureComponent {
     render() {
         const {transactions, resolveAccount} = this.props;
         const transactionsByDays = _.orderBy(
-            _.toPairs(_.groupBy(transactions, (x) => x.date.toISOString().slice(0, "2000-01-01".length))),
+            _.toPairs(_.groupBy(transactions, (transaction) => {
+                const date = transaction.date instanceof Date
+                    ? transaction.date
+                    : new Date(transaction.date);
+                return date.toISOString().slice(0, "2000-01-01".length)
+            })),
             ([day]) => day,
             "desc",
         );
