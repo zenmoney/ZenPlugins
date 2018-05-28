@@ -1,4 +1,5 @@
 import {convertAccountMapToArray, convertAccountSyncID} from "../../common/accounts";
+import {toAtLeastTwoDigitsString} from "../../common/dates";
 import {convertTransactionAccounts} from "../../common/transactions";
 import {
     convertAccounts,
@@ -9,6 +10,13 @@ import {
 } from "./converters";
 
 import * as raiffeisen from "./raiffeisen";
+
+function filterTransactions(transactions, fromDate) {
+    const fromDateStr = fromDate.getFullYear() + "-" +
+        toAtLeastTwoDigitsString(fromDate.getMonth() + 1) + "-" +
+        toAtLeastTwoDigitsString(fromDate.getDate());
+    return transactions.filter(transaction => transaction.date >= fromDateStr);
+}
 
 function adjustTransactions(transactions, accounts) {
     return convertTransactionAccounts(transactions, accounts);
@@ -33,6 +41,7 @@ export async function scrape({preferences, fromDate, toDate}) {
         convertCards(await raiffeisen.fetchCards(token), accounts),
         convertLoans(await raiffeisen.fetchLoans(token)),
     );
+    transactions = filterTransactions(transactions, fromDate);
     transactions = transactions.concat(convertTransactions(await raiffeisen.fetchTransactions(token, fromDate)));
     return {
         accounts: adjustAccounts(accounts),

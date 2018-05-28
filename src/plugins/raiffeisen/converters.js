@@ -1,5 +1,4 @@
 import _ from "lodash";
-import {toAtLeastTwoDigitsString} from "../../common/dates";
 
 export function convertAccounts(jsonArray) {
     const accounts = {};
@@ -100,12 +99,9 @@ export function convertCards(jsonArray, accounts = {}) {
     return cards;
 }
 
-export function convertDepositsWithTransactions(jsonArray, fromDate) {
+export function convertDepositsWithTransactions(jsonArray) {
     const accounts = {};
     const transactions = [];
-    const fromDateStr = fromDate.getFullYear() + "-" +
-        toAtLeastTwoDigitsString(fromDate.getMonth() + 1) + "-" +
-        toAtLeastTwoDigitsString(fromDate.getDate());
     for (const json of jsonArray) {
         if (!json.deals || !json.deals.length) {
             continue;
@@ -133,9 +129,6 @@ export function convertDepositsWithTransactions(jsonArray, fromDate) {
             }
             accounts["DEPOSIT_" + deal.id] = deposit;
             deposit.balance = deal.currentAmount;
-            if (date < fromDateStr) {
-                continue;
-            }
             transactions.push({
                 income: deal.startAmount,
                 incomeAccount: deposit.id,
