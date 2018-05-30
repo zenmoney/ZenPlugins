@@ -9,6 +9,10 @@ export class ZPAPIError extends Error {
         // Hides "Send log" button on error modal
         this.allowRetry = Boolean(logIsNotImportant);
     }
+
+    toString() {
+        return (this.fatal ? "F" : "_") + (this.allowRetry ? "R" : "_") + " " + this.message;
+    }
 }
 
 export class InvalidPreferencesError extends ZPAPIError {

@@ -32,7 +32,9 @@ if (result.scrape) {
 }
 
 for (var key in result) {
-    global[key] = result[key];
+    if (result.hasOwnProperty(key)) {
+        global[key] = result[key];
+    }
 }
 
 module.exports = result;

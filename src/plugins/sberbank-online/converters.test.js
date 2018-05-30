@@ -1,5 +1,5 @@
 import {parseXml} from "../../common/network";
-import {convertCards, convertDeposit, convertLoan, convertTransaction} from "./converters";
+import {convertCards, convertDeposit, convertLoan, convertTransaction, updateAccountData, restoreCutCurrencyTransactions} from "./converters";
 
 describe("convertLoan", () => {
     it("returns valid loan", () => {
@@ -611,16 +611,13 @@ describe("convertTransaction", () => {
             id: "account",
             instrument: "RUB",
         })).toEqual({
-            isCurrencyTransaction: false,
-            zenTransaction: {
-                date: "2018-04-16",
-                income: 0,
-                incomeAccount: "account",
-                outcome: 1856.40,
-                outcomeAccount: "account",
-                payee: "MOSCOW WWW.RZD.RU",
-                comment: null,
-            },
+            date: "2018-04-16",
+            income: 0,
+            incomeAccount: "account",
+            outcome: 1856.40,
+            outcomeAccount: "account",
+            payee: "MOSCOW WWW.RZD.RU",
+            comment: null,
         });
 
         expect(convertTransaction({
@@ -634,16 +631,13 @@ describe("convertTransaction", () => {
             id: "account",
             instrument: "RUB",
         })).toEqual({
-            isCurrencyTransaction: false,
-            zenTransaction: {
-                date: "2018-04-05",
-                income: 0,
-                incomeAccount: "account",
-                outcome: 19445.00,
-                outcomeAccount: "account",
-                payee: "ST PETERSBURG IKEA DOM 6 CASH LINE",
-                comment: null,
-            },
+            date: "2018-04-05",
+            income: 0,
+            incomeAccount: "account",
+            outcome: 19445.00,
+            outcomeAccount: "account",
+            payee: "ST PETERSBURG IKEA DOM 6 CASH LINE",
+            comment: null,
         });
     });
 
@@ -659,15 +653,215 @@ describe("convertTransaction", () => {
             id: "account",
             instrument: "RUB",
         })).toEqual({
-            isCurrencyTransaction: false,
-            zenTransaction: {
-                date: "2018-04-17",
-                income: 3000,
-                incomeAccount: "account",
-                outcome: 3000,
-                outcomeAccount: "cash#RUB",
-                comment: null,
+            date: "2018-04-17",
+            income: 3000,
+            incomeAccount: "account",
+            outcome: 3000,
+            outcomeAccount: "cash#RUB",
+            comment: null,
+        });
+    });
+});
+
+describe("updateAccountData", () => {
+    let account;
+    let currAccountData;
+    let prevAccountData;
+
+    let rubTransactions;
+    let usdTransactions;
+
+    let transactions;
+
+    beforeEach(() => {
+        account = {
+            id: "account",
+            instrument: "RUB",
+        };
+        currAccountData = {
+            balance: 1000,
+            currencyMovements: {},
+            transactionHashes: {},
+        };
+        prevAccountData = {
+            balance: 0,
+            transactionHashes: {},
+        };
+        rubTransactions = [
+            {
+                date: "2018-01-01",
+                income: 100,
+                incomeAccount: account.id,
+                outcome: 0,
+                outcomeAccount: account.id,
             },
+            {
+                date: "2018-01-02",
+                income: 133,
+                incomeAccount: account.id,
+                outcome: 0,
+                outcomeAccount: account.id,
+                opIncome: 2,
+                opIncomeInstrument: "USD",
+            },
+        ];
+        usdTransactions = [
+            {
+                date: "2018-01-03",
+                income: null,
+                incomeAccount: account.id,
+                outcome: null,
+                outcomeAccount: account.id,
+                opOutcome: 5,
+                opOutcomeInstrument: "USD",
+            },
+            {
+                date: "2018-01-03",
+                income: null,
+                incomeAccount: account.id,
+                outcome: null,
+                outcomeAccount: account.id,
+                opOutcome: 5,
+                opOutcomeInstrument: "USD",
+            },
+            {
+                date: "2018-01-04",
+                income: null,
+                incomeAccount: account.id,
+                outcome: null,
+                outcomeAccount: account.id,
+                opIncome: 30,
+                opIncomeInstrument: "USD",
+            },
+        ];
+        transactions = rubTransactions.concat(usdTransactions);
+    });
+
+    it("groups transactions by currency", () => {
+        transactions.forEach(transaction => {
+            updateAccountData({transaction, account, currAccountData, prevAccountData});
+        });
+        expect(prevAccountData).toEqual({
+            balance: 0,
+            transactionHashes: {},
+        });
+        expect(currAccountData).toEqual({
+            balance: 1000,
+            transactionHashes: {
+                "2018-01-01_RUB_100": 1,
+                "2018-01-02_RUB_133": 1,
+                "2018-01-03_USD_-5": 2,
+                "2018-01-04_USD_30": 1,
+            },
+            currencyMovements: {
+                "USD": {
+                    sum: 20,
+                    instrument: "USD",
+                    transactions: usdTransactions,
+                },
+                "RUB": {
+                    sum: 233,
+                    instrument: "RUB",
+                    transactions: rubTransactions,
+                },
+            },
+        });
+
+        const result = [];
+        const success = restoreCutCurrencyTransactions({account, prevAccountData, currAccountData, transactions: result});
+        expect(success).toBeTruthy();
+        expect(result.indexOf(usdTransactions[0])).toBeGreaterThan(-1);
+        expect(result.indexOf(usdTransactions[1])).toBeGreaterThan(-1);
+        expect(result.indexOf(usdTransactions[2])).toBeGreaterThan(-1);
+        expect(usdTransactions[0]).toEqual({
+            date: "2018-01-03",
+            income: null,
+            incomeAccount: "account",
+            outcome: 191.75,
+            outcomeAccount: "account",
+            opOutcome: 5,
+            opOutcomeInstrument: "USD",
+        });
+        expect(usdTransactions[1]).toEqual({
+            date: "2018-01-03",
+            income: null,
+            incomeAccount: "account",
+            outcome: 191.75,
+            outcomeAccount: "account",
+            opOutcome: 5,
+            opOutcomeInstrument: "USD",
+        });
+        expect(usdTransactions[2]).toEqual({
+            date: "2018-01-04",
+            income: 1150.5,
+            incomeAccount: "account",
+            outcome: null,
+            outcomeAccount: "account",
+            opIncome: 30,
+            opIncomeInstrument: "USD",
+        });
+    });
+
+    it("checks if transaction is new", () => {
+        prevAccountData.transactionHashes = {
+            "2018-01-01_RUB_100": 1,
+            "2018-01-03_USD_-5": 1,
+        };
+
+        transactions.forEach(transaction => {
+            updateAccountData({transaction, account, currAccountData, prevAccountData});
+        });
+        expect(prevAccountData).toEqual({
+            balance: 0,
+            transactionHashes: {
+                "2018-01-01_RUB_100": 0,
+                "2018-01-03_USD_-5": 0,
+            },
+        });
+        expect(currAccountData).toEqual({
+            balance: 1000,
+            transactionHashes: {
+                "2018-01-01_RUB_100": 1,
+                "2018-01-02_RUB_133": 1,
+                "2018-01-03_USD_-5": 2,
+                "2018-01-04_USD_30": 1,
+            },
+            currencyMovements: {
+                "USD": {
+                    sum: 25,
+                    instrument: "USD",
+                    transactions: [usdTransactions[1], usdTransactions[2]],
+                },
+                "RUB": {
+                    sum: 133,
+                    instrument: "RUB",
+                    transactions: [rubTransactions[1]],
+                },
+            },
+        });
+
+        const result = [];
+        const success = restoreCutCurrencyTransactions({account, prevAccountData, currAccountData, transactions: result});
+        expect(success).toBeTruthy();
+        expect(result.indexOf(usdTransactions[1])).toBeGreaterThan(-1);
+        expect(result.indexOf(usdTransactions[2])).toBeGreaterThan(-1);
+        expect(usdTransactions[1]).toEqual({
+            date: "2018-01-03",
+            income: null,
+            incomeAccount: "account",
+            outcome: 173.4,
+            outcomeAccount: "account",
+            opOutcome: 5,
+            opOutcomeInstrument: "USD",
+        });
+        expect(usdTransactions[2]).toEqual({
+            date: "2018-01-04",
+            income: 1040.4,
+            incomeAccount: "account",
+            outcome: null,
+            outcomeAccount: "account",
+            opIncome: 30,
+            opIncomeInstrument: "USD",
         });
     });
 });

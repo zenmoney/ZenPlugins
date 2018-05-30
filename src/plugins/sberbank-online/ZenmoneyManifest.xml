@@ -2,10 +2,10 @@
 <provider>
     <id>sberbank-online</id>
     <version>1.1</version>
-    <build>88</build>
+    <build>95</build>
     <company>4624</company>
     <modular>true</modular>
-    <codeRequired>true</codeRequired>
+    <codeRequired>false</codeRequired>
     <files>
         <js>index.js</js>
         <preferences>preferences.xml</preferences>

@@ -1,36 +1,141 @@
 import * as _ from "lodash";
 
+function getOpAmount(transaction, account) {
+    let sum;
+    let instrument;
+    if (transaction.income && transaction.incomeAccount === account.id) {
+        sum = transaction.income;
+        instrument = account.instrument;
+    } else if (transaction.outcome && transaction.outcomeAccount === account.id) {
+        sum = -transaction.outcome;
+        instrument = account.instrument;
+    } else if (transaction.opIncome) {
+        sum = transaction.opIncome;
+        instrument = transaction.opIncomeInstrument;
+    } else if (transaction.opOutcome) {
+        sum = -transaction.opOutcome;
+        instrument = transaction.opOutcomeInstrument;
+    }
+    return {sum, instrument};
+}
+
+export function getAccountData(account) {
+    const balance = typeof account.balance === "number"
+        ? account.balance
+        : account.available || null;
+    if (balance === null) {
+        return null;
+    }
+    return {
+        transactionHashes: {},
+        currencyMovements: {},
+        balance,
+    };
+}
+
+export function updateAccountData({transaction, account, currAccountData, prevAccountData}) {
+    const {sum, instrument} = getOpAmount(transaction, account);
+    const hash = `${transaction.date}_${instrument}_${sum}`;
+    if (prevAccountData && prevAccountData.balance !== null) {
+        // Our goal is to restore currency transactions. If there is no previous balance then we failed
+        if (prevAccountData.transactionHashes[hash]) {
+            prevAccountData.transactionHashes[hash]--;
+        } else {
+            let currencyMovement = currAccountData.currencyMovements[instrument];
+            if (currencyMovement) {
+                currencyMovement.sum += sum;
+                currencyMovement.transactions.push(transaction);
+            } else {
+                currAccountData.currencyMovements[instrument] = {sum, instrument, transactions: [transaction]};
+            }
+        }
+    }
+    if (currAccountData.transactionHashes[hash]) {
+        currAccountData.transactionHashes[hash]++;
+    } else {
+        currAccountData.transactionHashes[hash] = 1;
+    }
+}
+
+export function restoreCutCurrencyTransactions({account, currAccountData, prevAccountData, transactions}) {
+    let delta = currAccountData.balance - prevAccountData.balance;
+    const accountCurrencyMovement = currAccountData.currencyMovements[account.instrument];
+    if (accountCurrencyMovement) {
+        delta -= accountCurrencyMovement.sum;
+        delete currAccountData.currencyMovements[account.instrument];
+    }
+
+    const instruments = Object.keys(currAccountData.currencyMovements);
+    if (instruments.length > 1) {
+        return false;
+    }
+    if (instruments.length === 0) {
+        return true;
+    }
+
+    const currencyMovement = currAccountData.currencyMovements[instruments[0]];
+    if (Math.sign(currencyMovement.sum) !== Math.sign(delta)
+            || Math.abs(currencyMovement.sum) < 0.01
+            || Math.abs(delta) < 0.01) {
+        return false;
+    }
+
+    const rate = delta / currencyMovement.sum;
+    let i = -1;
+    for (const transaction of currencyMovement.transactions) {
+        i++;
+        if (transaction.opIncome) {
+            if (i === currencyMovement.transactions.length - 1) {
+                transaction.income = parseDecimal(Math.max(0.01, delta));
+            } else {
+                transaction.income = parseDecimal(transaction.opIncome * rate);
+            }
+            delta -= transaction.income;
+        } else {
+            if (i === currencyMovement.transactions.length - 1) {
+                transaction.outcome = parseDecimal(Math.max(0.01, -delta));
+            } else {
+                transaction.outcome = parseDecimal(transaction.opOutcome * rate);
+            }
+            delta += transaction.outcome;
+        }
+        transactions.push(transaction);
+    }
+
+    return true;
+}
+
+export function isCutCurrencyTransaction(transaction) {
+    return transaction.income === null || transaction.outcome === null;
+}
+
 export function convertTransaction(json, account) {
     const sum = parseDecimal(json.sum.amount);
     if (Math.abs(sum) < 0.01) {
-        return {
-            isCurrencyTransaction: false,
-            zenTransaction: null,
-        };
+        return null;
     }
-    const isCurrencyTransaction = json.sum.currency.code !== account.instrument;
     const transaction = {
         date: parseDate(json.date),
-        income: null,
+        income: 0,
         incomeAccount: account.id,
-        outcome: null,
+        outcome: 0,
         outcomeAccount: account.id,
         comment: json.description || null,
     };
-    if (isCurrencyTransaction) {
+    if (json.sum.currency.code !== account.instrument) {
         if (sum > 0) {
+            transaction.income = null;
             transaction.opIncome = sum;
             transaction.opIncomeInstrument = json.sum.currency.code;
         } else {
+            transaction.outcome = null;
             transaction.opOutcome = -sum;
             transaction.opOutcomeInstrument = json.sum.currency.code;
         }
     } else {
         if (sum > 0) {
             transaction.income = sum;
-            transaction.outcome = 0;
         } else {
-            transaction.income = 0;
             transaction.outcome = -sum;
         }
     }
@@ -46,10 +151,7 @@ export function convertTransaction(json, account) {
             parseComment,
         ].some(parser => parser(transaction, opAmount));
     }
-    return {
-        isCurrencyTransaction,
-        zenTransaction: transaction,
-    };
+    return transaction;
 }
 
 export function convertAccounts(jsonArray, type) {
@@ -103,7 +205,7 @@ export function convertCards(jsonArray) {
             const creditLimit = parseDecimal(json.details.detail.creditType.limit.amount);
             if (creditLimit > 0) {
                 zenAccount.creditLimit = creditLimit;
-                zenAccount.balance = Math.round((zenAccount.balance - zenAccount.creditLimit) * 100) / 100;
+                zenAccount.balance = parseDecimal(zenAccount.balance - zenAccount.creditLimit);
             }
         } else if (json.account.cardAccount) {
             zenAccount.syncID.push(json.account.cardAccount);
@@ -191,6 +293,9 @@ function parseDuration(duration, account) {
 }
 
 function parseDecimal(str) {
+    if (typeof str === "number") {
+        return Math.round(str * 100) / 100;
+    }
     const number = Number(str.replace(/\s/g, "").replace(/,/g, "."));
     console.assert(!isNaN(number), "Cannot parse amount", str);
     return number;

@@ -1,5 +1,12 @@
 import {convertAccountSyncID} from "../../common/accounts";
-import {convertAccounts, convertTransaction} from "./converters";
+import {
+    convertAccounts,
+    convertTransaction,
+    getAccountData,
+    isCutCurrencyTransaction,
+    restoreCutCurrencyTransactions,
+    updateAccountData,
+} from "./converters";
 import * as sberbank from "./sberbank";
 
 export async function scrape({preferences, fromDate, toDate}) {
@@ -16,26 +23,52 @@ export async function scrape({preferences, fromDate, toDate}) {
             if (ZenMoney.isAccountSkipped(account.zenAccount.id)) {
                 return;
             }
-            account.idsWithCurrencyTransactions = [];
+
+            const idsWithCurrencyTransactions = [];
+
+            const prevAccountData = ZenMoney.getData("data_" + account.zenAccount.id);
+            const currAccountData = getAccountData(account.zenAccount);
+
             await Promise.all(account.ids.map(async id => {
-                for (const json of await sberbank.fetchTransactions({id, type}, fromDate, toDate)) {
-                    const transaction = convertTransaction(json, account.zenAccount);
-                    if (transaction.isCurrencyTransaction) {
-                        if (account.idsWithCurrencyTransactions.indexOf(id) < 0) {
-                            account.idsWithCurrencyTransactions.push(id);
+                for (const apiTransaction of await sberbank.fetchTransactions({id, type}, fromDate, toDate)) {
+                    const transaction = convertTransaction(apiTransaction, account.zenAccount);
+                    if (!transaction) {
+                        continue;
+                    }
+                    if (currAccountData) {
+                        updateAccountData({transaction, account: account.zenAccount,
+                            currAccountData, prevAccountData});
+                    }
+                    if (isCutCurrencyTransaction(transaction)) {
+                        if (idsWithCurrencyTransactions.indexOf(id) < 0) {
+                            idsWithCurrencyTransactions.push(id);
                         }
-                    } else if (transaction.zenTransaction) {
-                        zenTransactions.push(transaction.zenTransaction);
+                    } else {
+                        zenTransactions.push(transaction);
                     }
                 }
             }));
-            if (account.idsWithCurrencyTransactions.length > 0) {
+
+            if (idsWithCurrencyTransactions.length > 0 && (!currAccountData || !prevAccountData
+                    || !restoreCutCurrencyTransactions({
+                        account: account.zenAccount,
+                        transactions: zenTransactions,
+                        currAccountData,
+                        prevAccountData,
+                    }))) {
+                account.idsWithCurrencyTransactions = idsWithCurrencyTransactions;
                 accountsWithCurrencyTransactions.push(account);
             }
+            if (currAccountData) {
+                delete currAccountData.currencyMovements;
+            }
+
+            ZenMoney.setData("data_" + account.zenAccount.id, currAccountData);
         }));
     }));
 
     if (accountsWithCurrencyTransactions.length > 0) {
+        console.log("Needs fetching from web");
         //TODO: Fetch currency transactions from web
     }
 
