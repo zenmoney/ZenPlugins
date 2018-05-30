@@ -109,7 +109,23 @@ export function isCutCurrencyTransaction(transaction) {
     return transaction.income === null || transaction.outcome === null;
 }
 
+export function convertLoanTransaction(json, account) {
+    if (json.state !== "paid") {
+        return null;
+    }
+    return {
+        date: parseDate(json.date),
+        income: parseDecimal(json.totalPaymentAmount.amount),
+        incomeAccount: account.id,
+        outcome: 0,
+        outcomeAccount: account.id,
+    };
+}
+
 export function convertTransaction(json, account) {
+    if (json.description === "Капитализация вклада") {
+        return null;
+    }
     const sum = parseDecimal(json.sum.amount);
     if (Math.abs(sum) < 0.01) {
         return null;
@@ -159,7 +175,7 @@ export function convertAccounts(jsonArray, type) {
         const accounts = [];
         for (const json of jsonArray) {
             const zenAccount = type === "account"
-                ? json.account.rate && parseDecimal(json.account.rate) > 0
+                ? json.account.rate && parseDecimal(json.account.rate) > 0.01
                     ? convertDeposit(json.account, json.details)
                     : convertAccount(json.account, json.details)
                 : convertLoan(json.account, json.details);
@@ -243,7 +259,7 @@ export function convertLoan(json, details) {
         instrument: json.amount.currency.code,
         startDate: parseDate(details.detail.termStart),
         startBalance: parseDecimal(json.amount.amount),
-        balance: parseDecimal(details.extDetail.remainAmount.amount),
+        balance: -parseDecimal(details.extDetail.remainAmount.amount),
         capitalization: details.detail.repaymentMethod === "аннуитетный",
         percent: parseDecimal(details.extDetail.rate),
         syncID: [
@@ -352,6 +368,8 @@ function parseComment(transaction) {
     ]);
     if (comment) {
         transaction.comment = comment;
+    } else if (["Частичная выдача", "Дополнительный взнос"].indexOf(transaction.comment) >= 0) {
+        transaction.comment = null;
     }
     return false;
 }

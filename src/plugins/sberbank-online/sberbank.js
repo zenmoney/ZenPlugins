@@ -7,7 +7,6 @@ import {parseDate} from "./converters";
 const qs = require("querystring");
 const md5 = new MD5();
 
-const baseUrl = "https://node1.online.sberbank.ru:4477/mobile9/private";
 const deviceName = "Xperia Z2";
 const version = "9.20";
 const appVersion = "7.11.1";
@@ -15,7 +14,7 @@ const appVersion = "7.11.1";
 const defaultHeaders = {
     "User-Agent": "Mobile Device",
     "Content-Type": "application/x-www-form-urlencoded",
-    "Host": "node1.online.sberbank.ru:4477",
+    "Host": "online.sberbank.ru:4477",
     "Connection": "Keep-Alive",
     "Accept-Encoding": "gzip",
 };
@@ -65,7 +64,7 @@ export async function login(login, pin) {
                 "devIDOld": ZenMoney.getData("devIDOld"),
             },
             sanitizeRequestLog: {body: {login: true, devID: true, devIDOld: true}},
-            sanitizeResponseLog: {body: {confirmRegistrationState: {mGUID: true}}},
+            sanitizeResponseLog: {body: {confirmRegistrationStage: {mGUID: true}}},
         }, response => _.get(response, "body.confirmRegistrationStage.mGUID"));
 
         ZenMoney.setData("mGUID", response.body.confirmRegistrationStage.mGUID);
@@ -134,16 +133,17 @@ export async function login(login, pin) {
             "deviceName": deviceName,
         },
         sanitizeRequestLog: {body: {token: true}},
-        sanitizeResponseLog: {body: {person: true}, headers: {"Set-Cookie": true}},
+        sanitizeResponseLog: {body: {person: true}, headers: {"set-cookie": true}},
     }, response => _.get(response, "body.loginCompleted") === "true");
 
-    return response.body.person;
+    return {host: host, person: response.body.person};
 }
 
-export async function fetchAccounts() {
-    const response = await fetchXml("products/list.do", {
+export async function fetchAccounts(host) {
+    const response = await fetchXml(`https://${host}:4477/mobile9/private/products/list.do`, {
         headers: {
             ...defaultHeaders,
+            "Host": `${host}:4477`,
             "Content-Type": "application/x-www-form-urlencoded;charset=windows-1251",
         },
         body: {showProductType: "cards,accounts,imaccounts,loans"},
@@ -155,7 +155,7 @@ export async function fetchAccounts() {
                 account: account,
                 details: account.mainCardId
                     ? null
-                    : await fetchAccountDetails(account.id, type),
+                    : await fetchAccountDetails(host, account.id, type),
             };
         }));
     }))).reduce((accounts, objects, i) => {
@@ -164,10 +164,11 @@ export async function fetchAccounts() {
     }, {});
 }
 
-async function fetchAccountDetails(accountId, type) {
-    const response = await fetchXml(`${type}s/info.do`, {
+async function fetchAccountDetails(host, accountId, type) {
+    const response = await fetchXml(`https://${host}:4477/mobile9/private/${type}s/info.do`, {
         headers: {
             ...defaultHeaders,
+            "Host": `${host}:4477`,
             "Content-Type": "application/x-www-form-urlencoded;charset=windows-1251",
         },
         body: {id: accountId},
@@ -175,19 +176,22 @@ async function fetchAccountDetails(accountId, type) {
     return response.body;
 }
 
-export async function fetchTransactions({id, type}, fromDate, toDate) {
+export async function fetchTransactions(host, {id, type}, fromDate, toDate) {
     const isFetchingByDate = type !== "card";
-    const response = await fetchXml(`${type}s/abstract.do`, {
+    const response = await fetchXml(`https://${host}:4477/mobile9/private/${type}s/abstract.do`, {
         headers: {
             ...defaultHeaders,
+            "Host": `${host}:4477`,
             "Referer": `Android/6.0/${appVersion}`,
         },
         body: isFetchingByDate
             ? {id, from: formatDate(fromDate), to: formatDate(toDate)}
             : {id, count: 10, paginationSize: 10},
-    }, response => response => _.get(response, "body.operations"));
-    let transactions = getArray(_.get(response, "body.operations.operation"));
-    if (!isFetchingByDate) {
+    });
+    let transactions = type === "loan"
+        ? getArray(_.get(response, "body.elements.element"))
+        : getArray(_.get(response, "body.operations.operation"));
+    if (!isFetchingByDate || type === "loan") {
         transactions = transactions.filter(transaction => {
             const date = new Date(parseDate(transaction.date));
             return date >= fromDate && date <= toDate;
@@ -197,12 +201,6 @@ export async function fetchTransactions({id, type}, fromDate, toDate) {
 }
 
 async function fetchXml(url, options = {}, predicate = () => true) {
-    if (url.substr(0, 4) !== "http") {
-        if (url.substr(0, 1) !== "/") {
-            url = "/" + url;
-        }
-        url = baseUrl + url;
-    }
     options = {
         method: "POST",
         headers: defaultHeaders,

@@ -1,5 +1,13 @@
 import {parseXml} from "../../common/network";
-import {convertCards, convertDeposit, convertLoan, convertTransaction, updateAccountData, restoreCutCurrencyTransactions} from "./converters";
+import {
+    convertCards,
+    convertDeposit,
+    convertLoan,
+    convertLoanTransaction,
+    convertTransaction,
+    restoreCutCurrencyTransactions,
+    updateAccountData,
+} from "./converters";
 
 describe("convertLoan", () => {
     it("returns valid loan", () => {
@@ -178,7 +186,7 @@ describe("convertLoan", () => {
             syncID: [
                 "45506810700020054789",
             ],
-            balance: 1327156.27,
+            balance: -1327156.27,
             startBalance: 1500000,
             capitalization: true,
             percent: 12.50,
@@ -662,6 +670,39 @@ describe("convertTransaction", () => {
         });
     });
 });
+
+describe("convertLoanTransaction", () => {
+    expect(convertLoanTransaction({
+        date: "21.09.2012T00:00:00",
+        interestsAmount: {
+            amount: "29229.78",
+            currency: {code: "RUB", name: "руб."},
+        },
+        paymentNumber: "1",
+        principalAmount: {
+            amount: "5388.74",
+            currency: {code: "RUB", name: "руб."}},
+        remainDebt: {
+            amount: "2894611.26",
+            currency: {code: "RUB", name: "руб."}
+        },
+        state: "paid",
+        totalPaymentAmount: {
+            amount: "34618.52",
+            currency: {code: "RUB", name: "руб."},
+        },
+    }, {
+        id: "account",
+        instrument: "RUB",
+    })).toEqual({
+        date: "2012-09-21",
+        income: 34618.52,
+        incomeAccount: "account",
+        outcome: 0,
+        outcomeAccount: "account",
+    });
+});
+
 
 describe("updateAccountData", () => {
     let account;

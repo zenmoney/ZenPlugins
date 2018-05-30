@@ -1,6 +1,7 @@
 import {convertAccountSyncID} from "../../common/accounts";
 import {
     convertAccounts,
+    convertLoanTransaction,
     convertTransaction,
     getAccountData,
     isCutCurrencyTransaction,
@@ -12,8 +13,8 @@ import * as sberbank from "./sberbank";
 export async function scrape({preferences, fromDate, toDate}) {
     toDate = toDate || new Date();
 
-    await sberbank.login(preferences.login, preferences.pin);
-    const accountsByType = await sberbank.fetchAccounts();
+    const {host} = await sberbank.login(preferences.login, preferences.pin);
+    const accountsByType = await sberbank.fetchAccounts(host);
     const accountsWithCurrencyTransactions = [];
     const zenAccounts = [];
     const zenTransactions = [];
@@ -30,8 +31,10 @@ export async function scrape({preferences, fromDate, toDate}) {
             const currAccountData = getAccountData(account.zenAccount);
 
             await Promise.all(account.ids.map(async id => {
-                for (const apiTransaction of await sberbank.fetchTransactions({id, type}, fromDate, toDate)) {
-                    const transaction = convertTransaction(apiTransaction, account.zenAccount);
+                for (const apiTransaction of await sberbank.fetchTransactions(host, {id, type}, fromDate, toDate)) {
+                    const transaction = type === "loan"
+                        ? convertLoanTransaction(apiTransaction, account.zenAccount)
+                        : convertTransaction(apiTransaction, account.zenAccount);
                     if (!transaction) {
                         continue;
                     }
