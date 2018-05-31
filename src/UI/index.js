@@ -40,8 +40,10 @@ class TransactionsPane extends React.PureComponent {
             _.toPairs(_.groupBy(transactions, (transaction) => {
                 const date = transaction.date instanceof Date
                     ? transaction.date
-                    : new Date(transaction.date);
-                return date.toISOString().slice(0, "2000-01-01".length)
+                    : typeof transaction.date === "string"
+                        ? new Date(transaction.date)
+                        : new Date(transaction.date < 10000000000 ? transaction.date * 1000 : transaction.date);
+                return date.toISOString().slice(0, "2000-01-01".length);
             })),
             ([day]) => day,
             "desc",
