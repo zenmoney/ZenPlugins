@@ -264,3 +264,20 @@ export const parseApiAmount = (apiAmount) => {
     console.assert(!isNaN(number), "Cannot parse amount", apiAmount);
     return number;
 };
+
+export async function getAccountDetails({sessionId, deviceId, accountNumber}) {
+    const response = await callGate({
+        sessionId,
+        deviceId,
+        service: "Budget",
+        body: {"operationId": "Budget:GetAccountDetails", "parameters": {"account": accountNumber}},
+        sanitizeResponseLog: {body: {accountInfo: true}},
+    });
+
+    console.assert(response.status === 200, "Unexpected response status code", response);
+
+    const {account, operationId, ...rest} = response.body;
+    console.assert(operationId === "Budget:GetAccountDetailsResult", "Unexpected response body.operationId", response);
+
+    return rest;
+}
