@@ -14,6 +14,10 @@ describe("toZenmoneyAccount", () => {
                 "nextPaymentAmount": "",
                 "nextPaymentDate": "",
             },
+            "accountDetailsCreditInfo": {
+                "Доступный лимит": "15 294.21 RUR",
+                "Установленный лимит": "17 000.00 RUR",
+            },
         })).toEqual({
             "type": "ccard",
             "title": "Счёт кредитной карты",

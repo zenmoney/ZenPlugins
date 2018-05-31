@@ -3,13 +3,22 @@ import {asCashTransfer, formatComment} from "../../common/converters";
 import {mergeTransfers} from "../../common/mergeTransfers";
 import {parseApiAmount} from "./api";
 
+const trimPostfix = (string, postfix) => {
+    if (!string.endsWith(postfix)) {
+        throw new Error(`${JSON.stringify(string)} does not end with ${postfix}`);
+    }
+    return string.slice(0, -postfix.length);
+};
+
 function convertCreditApiAccount(apiAccount) {
-    const amount = parseApiAmount(apiAccount.amount);
-    const debtAmount = parseApiAmount(apiAccount.creditInfo.amountDebt);
-    console.assert(debtAmount >= 0, "Unexpected negative debtAmount", debtAmount);
+    const {
+        "Доступный лимит": availableWithInstrument,
+        "Установленный лимит": creditLimitWithInstrument,
+    } = apiAccount.accountDetailsCreditInfo;
+    const instrumentPostfix = " " + apiAccount.currencyCode;
     return {
-        available: amount,
-        creditLimit: debtAmount + amount,
+        available: parseApiAmount(trimPostfix(availableWithInstrument, instrumentPostfix)),
+        creditLimit: parseApiAmount(trimPostfix(creditLimitWithInstrument, instrumentPostfix)),
     };
 }
 
@@ -21,7 +30,7 @@ function convertNonCreditApiAccount(apiAccount) {
 }
 
 export function toZenmoneyAccount(apiAccount) {
-    const {description, number, currencyCode} = apiAccount;
+    const {description, number, currencyCode, creditInfo} = apiAccount;
     const id = number.slice(-4);
     return {
         type: "ccard",
@@ -29,7 +38,7 @@ export function toZenmoneyAccount(apiAccount) {
         title: description,
         syncID: [id],
         instrument: currencyCode,
-        ...apiAccount.creditInfo
+        ...creditInfo
             ? convertCreditApiAccount(apiAccount)
             : convertNonCreditApiAccount(apiAccount),
     };
