@@ -9,7 +9,11 @@ if (pluginName) {
         console.error(chalk.red(`providing PLUGIN env variable "${process.env.PLUGIN}" together with argv "${pluginName}" is ambiguous, thus prohibited`));
         process.exit(1);
     }
-    const candidates = [`src/plugins/${pluginName}`, `src/${pluginName}`, pluginName];
+    const candidates = [
+        `src/plugins/${pluginName}`,
+        `plugins/${pluginName}`,
+        pluginName,
+    ];
     const existingCandidate = candidates.find((x) => fs.existsSync(x));
     if (!existingCandidate) {
         console.error(chalk.red("Neither of the following folders exists:"));
