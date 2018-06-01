@@ -1,3 +1,4 @@
+/* eslint-disable brace-style */
 var g_headers = {
     "User-Agent": "User-Agent: Sony D6503/android: 5.1.1/TCSMB/3.1.0",
     "Referrer": "https://www.tinkoff.ru/mybank/",
@@ -387,12 +388,12 @@ function processAccounts() {
             };
 
             // овердрафт
-            if (a.creditLimit.value > 0)
-                acc1.creditLimit = a.creditLimit.value;
+            var creditLimit = a.creditLimit ? a.creditLimit.value : 0;
+            if (creditLimit > 0) acc1.creditLimit = creditLimit;
 
-            // контроль точности расчёта остатка банком
+            // контроль точности расчёта остатка
             if (!initialized || parseDecimal(a.moneyAmount.value) === parseDecimal(a.accountBalance.value - a.authorizationsAmount.value))
-                acc1.balance = parseDecimal(a.moneyAmount.value - a.creditLimit.value);
+                acc1.balance = parseDecimal(a.moneyAmount.value - creditLimit);
 
             ZenMoney.trace("Добавляем дебетовую карту: "+ a.name +" (#"+ a.id +") = "+ (acc1.balance !== null ? acc1.balance +" "+ acc1.instrument : "undefined"));
 
@@ -417,12 +418,32 @@ function processAccounts() {
                 syncID: [],
                 creditLimit: a.creditLimit.value,
                 instrument: a.moneyAmount.currency.name,
-                balance: parseDecimal(a.creditLimit.value > a.moneyAmount.value
-                    ? - a.debtAmount.value - a.authorizationsAmount.value
-                    : a.moneyAmount.value - a.creditLimit.value),
             };
 
-            ZenMoney.trace("Добавляем кредитную карту: " + a.name + " (#" + a.id + ") = "+ acc2.balance +" "+ acc2.instrument);
+            var algorithm = "";
+            // перерасход кредитного лимита
+            if (parseDecimal(a.moneyAmount.value) === 0) {
+                acc2.balance = -a.debtAmount.value;
+                algorithm = "A1";
+            }
+            // нет долга перед банком
+            else if (a.moneyAmount.value - a.authorizationsAmount.value > a.creditLimit.value) {
+                acc2.balance = parseDecimal(a.moneyAmount.value - a.creditLimit.value - a.authorizationsAmount.value);
+                algorithm = "A2";
+            }
+            // контроль точности расчёта остатка
+            else if (!initialized || parseDecimal(a.moneyAmount.value) === parseDecimal(a.creditLimit.value - a.debtAmount.value - a.authorizationsAmount.value)) {
+                acc2.balance = parseDecimal(a.creditLimit.value > a.moneyAmount.value
+                    ? -a.debtAmount.value - a.authorizationsAmount.value
+                    : a.moneyAmount.value - a.creditLimit.value - a.authorizationsAmount.value);
+                algorithm = "B";
+            } else {
+                // доверимся данным банка
+                acc2.balance = a.moneyAmount.value - a.creditLimit.value;
+                algorithm = "C";
+            }
+
+            ZenMoney.trace("Добавляем кредитную карту: " + a.name + " (#" + a.id + ") = "+ acc2.balance +" "+ acc2.instrument +" ["+ algorithm +"]");
 
             // номера карт
             for (var k2 = 0; k2 < a.cardNumbers.length; k2++) {
@@ -516,6 +537,79 @@ function processAccounts() {
                 });
             } else
                 ZenMoney.trace("Пропускаем кредит наличными " + a.name + " (#" + a.id + "), так как он уже закрыт");
+        }
+        // потребительские кредиты
+        else if (a.accountType === "KupiVKredit" && a.creditAccounts) {
+            for (var j=0; j<a.creditAccounts.length; j++) {
+                var vkredit = a.creditAccounts[j];
+                ZenMoney.trace("Добавляем потребительский кредит: " + vkredit.name + " (#" + vkredit.account + ") = " + vkredit.balance.value + " " + vkredit.balance.currency.name);
+                g_accDict.push({
+                    id: vkredit.account,
+                    title: vkredit.name,
+                    type: "loan",
+                    syncID: vkredit.account.substring(a.id.length-4),
+                    instrument: vkredit.balance.currency.name,
+                    balance: vkredit.balance.value,
+                    startBalance: vkredit.amount.value,
+                    startDate: Date.now(), // ToDO: нужно разобраться как достать параметры потребительского кредита
+                    percent: 1,
+                    capitalization:	true,
+                    endDateOffsetInterval: "month",
+                    endDateOffset:	1,
+                    payoffInterval:	"month",
+                    payoffStep: 1,
+                });
+            }
+        }
+        // виртуальные карты ------------------------------------
+        else if (a.accountType === "Wallet" && a.status === "NORM") {
+            var acc3 = {
+                id: a.id,
+                title: a.name,
+                type: "ccard",
+                syncID: [],
+                instrument: a.moneyAmount.currency.name,
+                balance: a.moneyAmount.value,
+            };
+
+            ZenMoney.trace("Добавляем виртуальную карту: "+ a.name +" (#"+ a.id +") = "+ acc3.balance +" "+ acc3.instrument);
+
+            // номера карт
+            for (var k3 = 0; k3 < a.cardNumbers.length; k3++) {
+                var card3 = a.cardNumbers[k3];
+                if (card3.activated)
+                    acc3.syncID.push(card3.value.substring(card3.value.length - 4))
+            }
+
+            // добавим и номер счёта карты
+            acc3.syncID.push(a.id.substring(a.id.length - 4));
+
+            g_accDict.push(acc3);
+        }
+        // телеком-карта ------------------------------------
+        else if (a.accountType === "Telecom" && a.status === "NORM") {
+            var acc4 = {
+                id: a.id,
+                title: a.name,
+                type: "ccard",
+                syncID: [],
+                instrument: a.moneyAmount.currency.name,
+                balance: a.moneyAmount.value,
+            };
+
+            ZenMoney.trace("Добавляем телеком-карту: "+ a.name +" (#"+ a.id +") = "+ acc4.balance +" "+ acc4.instrument);
+
+            // номера карт
+            for (var k4 = 0; k4 < a.cardNumbers.length; k4++) {
+                var card4 = a.cardNumbers[k4];
+                if (card4.activated)
+                    acc4.syncID.push(card4.value.substring(card4.value.length - 4))
+            }
+
+            // добавим и номер счёта карты
+            acc4.syncID.push(a.id.substring(a.id.length - 4));
+
+            g_accDict.push(acc4);
         }
     }
 
@@ -633,7 +727,8 @@ function processTransactions(data) {
             var tran = {};
             // дата по-видимому всегда привязана к часовому поясу Москвы. Так что нужно ее корректировать
             var dt = new Date(t.operationTime.milliseconds + (180 + new Date().getTimezoneOffset()) * 60000);
-            tran.date = n2(dt.getDate()) + "." + n2(dt.getMonth() + 1) + "." + dt.getFullYear();
+            //tran.date = n2(dt.getDate()) + "." + n2(dt.getMonth() + 1) + "." + dt.getFullYear();
+            tran.date = dt.getFullYear() + "-" + n2(dt.getMonth() + 1) + "-" + n2(dt.getDate());
             tran.time = n2(dt.getHours()) + ":" + n2(dt.getMinutes() + 1) + ":" + n2(dt.getSeconds()); // для внутреннего использования
             tran.created = t.operationTime.milliseconds;
 
