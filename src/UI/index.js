@@ -135,7 +135,7 @@ export class UI extends React.PureComponent {
                     )}
                     {scrapeState === ":scrape-state/success" && !scrapeResult.pluginDataChange && <div>pluginData: no changes</div>}
                     {scrapeState === ":scrape-state/error" && <div>Scrape error:
-                        <BreakingPre>{scrapeError}</BreakingPre>
+                        <BreakingPre>{scrapeError.message || "n/a"}</BreakingPre>
                     </div>}
                     {workflowState === ":workflow-state/complete" && <div><br />Cheers!</div>}
                 </SidePane>

@@ -7,8 +7,8 @@ const messageHandlers = {
         onSyncSuccess({accounts: addedAccounts, transactions: addedTransactions, pluginDataChange});
     },
 
-    ":events/scrape-error": async function({payload: {message}, onSyncError}) {
-        onSyncError(message);
+    ":events/scrape-error": async function({payload, onSyncError}) {
+        onSyncError(payload);
     },
 
     ":commands/prompt-user-input": async function({payload: {message, options, correlationId}, reply}) {
