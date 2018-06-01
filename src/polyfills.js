@@ -1,5 +1,4 @@
 import * as consoleAdapter from "./consoleAdapter";
-import {InvalidPreferencesError, TemporaryError, ZPAPIError} from "./errors";
 
 ["setImmediate", "setTimeout", "setInterval"].forEach((methodName) => {
     global[methodName] = () => {
@@ -40,6 +39,3 @@ if (!("readLine" in ZenMoney)) {
         return ZenMoney.retrieveCode(message, imageUrl, rest);
     };
 }
-global.ZenMoney.Error = ZPAPIError;
-global.TemporaryError = TemporaryError;
-global.InvalidPreferencesError = InvalidPreferencesError;

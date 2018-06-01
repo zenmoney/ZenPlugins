@@ -13,6 +13,7 @@ function generateModularLoader({files, preferences}) {
         throw new Error("modular ZenMoneyManifest.xml files section must be exactly equal to:\n" + expectedModularManifestFilesSection);
     }
     return `require("polyfills");
+require("injectErrorsGlobally");
 var result = require("./index");
 
 var exportsThatMakeNoDifference = Object.keys(result).filter(function (key) {
@@ -47,7 +48,9 @@ module.exports = function(xml) {
     if (pluginManifest.modular !== "true") {
         return pluginManifest.files
             .map((file) => `require(${JSON.stringify("!!script-loader!./" + file)});`)
-            .concat(`module.exports = {main: global.main};`).join("\n");
+            .concat(`require("injectErrorsGlobally");`)
+            .concat(`module.exports = {main: global.main};`)
+            .join("\n");
     }
     return generateModularLoader(pluginManifest);
 };

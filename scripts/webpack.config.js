@@ -61,6 +61,7 @@ module.exports = ({production, devServer}) => ({
         alias: {
             "asap/raw": resolve("src/asapRawMock"),
             polyfills: resolve("src/polyfills"),
+            injectErrorsGlobally: resolve("src/injectErrorsGlobally"),
             adapters: resolve("src/common/adapters"),
             currentPluginManifest: paths.pluginJs,
             xhrViaZenApi: resolve("src/XMLHttpRequestViaZenAPI"),
