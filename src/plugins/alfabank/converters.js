@@ -14,12 +14,24 @@ function convertCreditApiAccount(apiAccount) {
     const {
         "Доступный лимит": availableWithInstrument,
         "Установленный лимит": creditLimitWithInstrument,
+        "Начальная сумма кредита": creditAmountWithInstrument,
+        "Остаток задолженности": remainingDebtWithInstrument,
     } = apiAccount.accountDetailsCreditInfo;
     const instrumentPostfix = " " + apiAccount.currencyCode;
-    return {
-        available: parseApiAmount(trimPostfix(availableWithInstrument, instrumentPostfix)),
-        creditLimit: parseApiAmount(trimPostfix(creditLimitWithInstrument, instrumentPostfix)),
-    };
+    if (availableWithInstrument && creditLimitWithInstrument) {
+        return {
+            available: parseApiAmount(trimPostfix(availableWithInstrument, instrumentPostfix)),
+            creditLimit: parseApiAmount(trimPostfix(creditLimitWithInstrument, instrumentPostfix)),
+        };
+    } else if (creditAmountWithInstrument && remainingDebtWithInstrument) {
+        return {
+            startBalance: -parseApiAmount(trimPostfix(creditAmountWithInstrument, instrumentPostfix)),
+            balance: -parseApiAmount(trimPostfix(remainingDebtWithInstrument, instrumentPostfix)),
+        };
+    } else {
+        console.error({apiAccount});
+        throw new Error(`Unhandled credit account named ${apiAccount.description} (see logs)`);
+    }
 }
 
 function convertNonCreditApiAccount(apiAccount) {
