@@ -85,18 +85,14 @@ export function restoreCutCurrencyTransactions({account, currAccountData, prevAc
     for (const transaction of currencyMovement.transactions) {
         i++;
         if (transaction.opIncome) {
-            if (i === currencyMovement.transactions.length - 1) {
-                transaction.income = parseDecimal(Math.max(0.01, delta));
-            } else {
-                transaction.income = parseDecimal(transaction.opIncome * rate);
-            }
+            transaction.income = i === currencyMovement.transactions.length - 1
+                ? parseDecimal(Math.max(0.01, delta))
+                : parseDecimal(transaction.opIncome * rate);
             delta -= transaction.income;
         } else {
-            if (i === currencyMovement.transactions.length - 1) {
-                transaction.outcome = parseDecimal(Math.max(0.01, -delta));
-            } else {
-                transaction.outcome = parseDecimal(transaction.opOutcome * rate);
-            }
+            transaction.outcome = i === currencyMovement.transactions.length - 1
+                ? parseDecimal(Math.max(0.01, -delta))
+                : parseDecimal(transaction.opOutcome * rate);
             delta += transaction.outcome;
         }
         transactions.push(transaction);

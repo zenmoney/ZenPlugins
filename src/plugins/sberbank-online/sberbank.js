@@ -136,7 +136,7 @@ export async function login(login, pin) {
         sanitizeResponseLog: {body: {person: true}, headers: {"set-cookie": true}},
     }, response => _.get(response, "body.loginCompleted") === "true");
 
-    return {host: host, person: response.body.person};
+    return {host, token, login, person: response.body.person};
 }
 
 export async function fetchAccounts(host) {
@@ -200,6 +200,42 @@ export async function fetchTransactions(host, {id, type}, fromDate, toDate) {
     return transactions;
 }
 
+export async function makeTransfer({host, token, login}, {fromAccount, toAccount, sum}) {
+    const response = await fetchXml(`https://${host}:4477/mobile9/private/payments/payment.do`, {
+        headers: {
+            ...defaultHeaders,
+            "Host": `${host}:4477`,
+        },
+        body: {
+            fromResource: fromAccount,
+            exactAmount: "destination-field-exact",
+            operation: "save",
+            buyAmount: sum,
+            transactionToken: token,
+            form: "InternalPayment",
+            toResource: toAccount,
+        },
+        sanitizeRequestLog: {body: {transactionToken: true}},
+    }, response => _.get(response, "body.transactionToken") && _.get(response, "body.document.id"));
+
+    const id = response.body.document.id;
+    const transactionToken = response.body.transactionToken;
+
+    await fetchXml(`https://${host}:4477/mobile9/private/payments/confirm.do`, {
+        headers: {
+            ...defaultHeaders,
+            "Host": `${host}:4477`,
+        },
+        body: {
+            mobileSdkData: JSON.stringify(createSdkData(login)),
+            operation: "confirm",
+            id: id,
+            form: "InternalPayment",
+            transactionToken: transactionToken,
+        },
+    }, response => _.get(response, "body.document.status") === "EXECUTED");
+}
+
 async function fetchXml(url, options = {}, predicate = () => true) {
     options = {
         method: "POST",
@@ -233,7 +269,7 @@ function getArray(object) {
         : Array.isArray(object) ? object : [object];
 }
 
-function formatDate(date) {
+export function formatDate(date) {
     return [date.getDate(), date.getMonth() + 1, date.getFullYear()].map(toAtLeastTwoDigitsString).join(".");
 }
 

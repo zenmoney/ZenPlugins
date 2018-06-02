@@ -17,7 +17,7 @@ require("injectErrorsGlobally");
 var result = require("./index");
 
 var exportsThatMakeNoDifference = Object.keys(result).filter(function (key) {
-    return key !== "scrape"
+    return key !== "scrape" && key !== "makeTransfer";
 });
 if (exportsThatMakeNoDifference.length > 0) {
     console.error(exportsThatMakeNoDifference + " members exported by index.js are not handled by ZenMoney, thus looking like a developer mistake (exports are useless and make no effect). It is recommended to stop exporting them.  See: ${repositoryUri}");

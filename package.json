@@ -27,6 +27,7 @@
     "fs-extra": "3.0.1",
     "html-webpack-exclude-assets-plugin": "0.0.5",
     "html-webpack-plugin": "2.29.0",
+    "html-loader-jest": "0.2.1",
     "http-proxy": "1.16.2",
     "imports-loader": "0.7.1",
     "jest": "20.0.4",
@@ -64,7 +65,8 @@
     "testEnvironment": "node",
     "testURL": "http://localhost",
     "transform": {
-      "^.+\\.js$": "<rootDir>/node_modules/babel-jest"
+      "^.+\\.js$": "<rootDir>/node_modules/babel-jest",
+      "^.+\\.html?$": "html-loader-jest"
     },
     "transformIgnorePatterns": [
       "[/\\\\]node_modules[/\\\\].+\\.js$"

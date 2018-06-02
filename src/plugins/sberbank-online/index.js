@@ -9,11 +9,13 @@ import {
     updateAccountData,
 } from "./converters";
 import * as sberbank from "./sberbank";
+import * as sberbankWeb from "./sberbankWeb";
 
 export async function scrape({preferences, fromDate, toDate}) {
     toDate = toDate || new Date();
 
     const {host} = await sberbank.login(preferences.login, preferences.pin);
+
     const accountsByType = await sberbank.fetchAccounts(host);
     const accountsWithCurrencyTransactions = [];
     const zenAccounts = [];
@@ -71,12 +73,23 @@ export async function scrape({preferences, fromDate, toDate}) {
     }));
 
     if (accountsWithCurrencyTransactions.length > 0) {
-        console.log("Needs fetching from web");
-        //TODO: Fetch currency transactions from web
+        await sberbankWeb.login(host, preferences.login, preferences.password);
+        for (const account of accountsWithCurrencyTransactions) {
+            for (const id of account.idsWithCurrencyTransactions) {
+                await sberbankWeb.fetchTransactions(host, {id, type: account.type}, fromDate, toDate);
+            }
+        }
+        //TODO: Parse web transactions
     }
 
     return {
         accounts: convertAccountSyncID(zenAccounts, true),
         transactions: zenTransactions,
     };
+}
+
+export async function makeTransfer(fromAccount, toAccount, sum) {
+    const preferences = ZenMoney.getPreferences();
+    const auth = await sberbank.login(preferences.login, preferences.pin);
+    await sberbank.makeTransfer(auth, {fromAccount, toAccount, sum});
 }
