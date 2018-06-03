@@ -103,13 +103,11 @@ export async function confirm(deviceId, confirmationCode) {
     console.assert(response.body.deviceStatus === "CONFIRMED", "confirmation failed:", response);
 }
 
-export async function fetchCards() {
-    const response = await fetchJson(makeApiUrl("/cards"), {
+export function fetchCards() {
+    return fetchJson(makeApiUrl("/cards"), {
         method: "GET",
         sanitizeResponseLog: {body: {contract: true, maskedCardNumber: true, ownerName: true, ownerNameLat: true, rbsContract: true}},
     });
-    assertResponseSuccess(response);
-    return response.body;
 }
 
 export async function fetchTransactions(cardId, fromDate, toDate) {
