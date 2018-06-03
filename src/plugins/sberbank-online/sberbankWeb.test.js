@@ -4,7 +4,7 @@ describe("parseTransactions", () => {
     it("return valid transactions", () => {
         const html = require("./html/transactions.html");
         const $ = loadHtml(html);
-        expect(parseTransactions($)).toEqual([
+        expect(parseTransactions($, new Date("2018-06-02T12:00:00Z"))).toEqual([
             {
                 amount: "−50,00 руб.",
                 date: "01.06.2018",

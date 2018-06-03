@@ -41,7 +41,7 @@ function getTextFromNode(node) {
     return node.text().replace(/\s+/g, " ").trim();
 }
 
-export function parseTransactions($) {
+export function parseTransactions($, nowDate) {
     const nodes = $("table[class=tblInf]").children()[0].children.slice(1);
     return nodes.map(node => {
         const description = $("td[class=\"align-left leftPaddingCell\"]", node);
@@ -52,11 +52,11 @@ export function parseTransactions($) {
         }
         let dateStr = getTextFromNode(date).toLowerCase();
         if (dateStr.indexOf("сегодня") >= 0) {
-            dateStr = formatDate(new Date());
+            dateStr = formatDate(nowDate);
         } else if (dateStr.indexOf("вчера") >= 0) {
-            dateStr = formatDate(new Date(new Date().getTime() - 24 * 3600 * 1000));
+            dateStr = formatDate(new Date(nowDate.getTime() - 24 * 3600 * 1000));
         } else if (dateStr.length === 5) {
-            dateStr += "." + new Date().getFullYear();
+            dateStr += "." + nowDate.getFullYear();
         }
         return {
             description: getTextFromNode(description),
@@ -74,7 +74,7 @@ export async function fetchTransactions(host, {id, type}, fromDate, toDate) {
             "Referer": `https://${host}/PhizIC/private/${type}s/list.do`,
         },
     });
-    return parseTransactions(loadHtml(response.body)).filter(transaction => {
+    return parseTransactions(loadHtml(response.body), new Date()).filter(transaction => {
         const date = new Date(parseDate(transaction.date));
         return date >= fromDate && date <= toDate;
     });
