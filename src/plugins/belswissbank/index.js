@@ -2,8 +2,8 @@ import _ from "lodash";
 import {formatCommentDateTime} from "../../common/dates";
 import * as errors from "../../common/errors";
 import {generateUUID} from "../../common/utils";
-import {convertToZenMoneyTransaction} from "./mappingUtils";
 import * as BSB from "./BSB";
+import {convertToZenMoneyTransaction} from "./mappingUtils";
 import {getTransactionToTransferReplacements} from "./mergeTransfers";
 
 function ensureDeviceId() {
@@ -16,8 +16,7 @@ function ensureDeviceId() {
     return deviceId;
 }
 
-async function login() {
-    const {username, password} = ZenMoney.getPreferences();
+async function login({username, password}) {
     const deviceId = ensureDeviceId();
     const authStatus = await BSB.authorize(username, password, deviceId);
     switch (authStatus.userStatus) {
@@ -88,11 +87,14 @@ function normalizeBsbTransactions({accountCurrency, bsbTransactions}) {
         .filter(Boolean);
 }
 
-export async function scrape({fromDate, toDate}) {
-    await login();
-
-    const cards = await BSB.fetchCards();
-    const accounts = cards
+export async function scrape({preferences: {username, password}, fromDate, toDate}) {
+    let cardsResponse = await BSB.fetchCards();
+    if (cardsResponse.status === 401) {
+        await login({username, password});
+        cardsResponse = await BSB.fetchCards();
+    }
+    BSB.assertResponseSuccess(cardsResponse);
+    const accounts = cardsResponse.body
         .filter((card) => !ZenMoney.isAccountSkipped(calculateAccountId(card)))
         .map((card) => convertToZenMoneyAccount(card));
     const transactionPairs = _.flatten(await Promise.all(accounts.map(async (account) => {

@@ -10,4 +10,5 @@
         <preferences>preferences.xml</preferences>
     </files>
     <description>Для подключения импорта укажите ваш логин и пароль от интернет-банка.</description>
+    <codeRequired>false</codeRequired>
 </provider>
