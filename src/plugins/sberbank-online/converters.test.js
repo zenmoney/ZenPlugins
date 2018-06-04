@@ -5,6 +5,7 @@ import {
     convertLoan,
     convertLoanTransaction,
     convertTransaction,
+    parseAmount,
     restoreCutCurrencyTransactions,
     updateAccountData,
 } from "./converters";
@@ -903,6 +904,41 @@ describe("updateAccountData", () => {
             outcomeAccount: "account",
             opIncome: 30,
             opIncomeInstrument: "USD",
+        });
+    });
+});
+
+describe("parseAmount", () => {
+    it("returns valid amounts", () => {
+        expect(parseAmount("+24 539,58 руб.")).toEqual({
+            amount: {
+                sum: 24539.58,
+                instrument: "руб.",
+            },
+            opAmount: {
+                sum: 24539.58,
+                instrument: "руб.",
+            },
+        });
+        expect(parseAmount("−3 298,64 руб.")).toEqual({
+            amount: {
+                sum: -3298.64,
+                instrument: "руб.",
+            },
+            opAmount: {
+                sum: -3298.64,
+                instrument: "руб.",
+            },
+        });
+        expect(parseAmount("−5,00 € (373,10 руб.)")).toEqual({
+            amount: {
+                sum: -373.1,
+                instrument: "руб.",
+            },
+            opAmount: {
+                sum: -5,
+                instrument: "€",
+            },
         });
     });
 });

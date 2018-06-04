@@ -55,8 +55,8 @@ export function convertTransactionJson(json) {
         return null;
     }
     const transaction = {};
-    const opAmount = parseSum(json.amount);
-    const amount = parseSum(json.cardamount);
+    const opAmount = parseAmount(json.amount);
+    const amount = parseAmount(json.cardamount);
     if (json.appcode) {
         if (amount.sum > 0) {
             transaction.incomeBankID = json.appcode;
@@ -227,7 +227,7 @@ export function parsePayee(transaction) {
     return false;
 }
 
-export function parseSum(text) {
+export function parseAmount(text) {
     const parts = text.split(/\s/);
     const sum = parseFloat(parts[0]);
     console.assert(!isNaN(sum), `failed to parse sum in ${text}`);

@@ -1,13 +1,9 @@
-import _ from "lodash";
 import * as network from "../../common/network";
+import {parseDate, reduceWhitespaces} from "./converters";
 import {formatDate} from "./sberbank";
-import {parseDate} from "./converters";
 
 const qs = require("querystring");
 const cheerio = require("cheerio");
-
-let baseUrl = ""; //"https://online.sberbank.ru";
-const appVersion = "7.11.1";
 
 const defaultHeaders = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
@@ -22,23 +18,194 @@ const defaultHeaders = {
     "X-Requested-With": "XMLHttpRequest",
 };
 
-export function extractPageToken(html) {
-    const $ = cheerio.load(html, {
-        normalizeWhitespace: true,
-        xmlMode: false,
+export async function login(login, password) {
+    let response = await goToUserSettings();
+    if (isLoggedIn(response)) {
+        console.log("В вебе уже залогинены, используем текущую сессию.");
+        return getHost(response);
+    }
+
+    response = await fetchHtml("https://online.sberbank.ru/CSAFront/login.do", {
+        method: "POST",
+        headers: {
+            ...defaultHeaders,
+            "Referer": "https://online.sberbank.ru/CSAFront/login.do",
+            "Origin": "https://online.sberbank.ru",
+        },
+        body: {
+            "fakeLogin": "",
+            "fakePassword": "",
+            "field(login)": login,
+            "field(password)": password,
+            "operation": "button.begin",
+        },
     });
-    return $("input[name=PAGE_TOKEN]").attr("value");
+
+    if (/<h1[^>]*>О временной недоступности услуги[\s\S]*?<p[^>]*>([\s\S]*?)<\/p>|в связи с ошибкой в работе системы[\s\S]*?<div[^>]*>([\s\S]*?)<\/div>/i.test(response.body)) {
+        throw new TemporaryError("Сервер банка временно недоступен");
+    }
+    if (/\$\$errorFlag/i.test(response.body)) {
+        throw new Error("Неизвестная ошибка");
+    }
+
+    const authUrl = response.querySelector("form[name=LoginForm] > input[name$=redirect]").attr("value");
+    if (!authUrl) {
+        throw new Error("Не удалось получить url переадресации");
+    }
+
+    let baseUrl = /^(https?:\/\/.*?)\//i.exec(authUrl)[1];
+
+    response = await fetchHtml(authUrl, {
+        headers: {
+            ...defaultHeaders,
+            "Origin": baseUrl,
+            "Referer": `${baseUrl}/CSAFront/index.do`,
+        },
+    });
+
+    if (!/online.sberbank.ru\/PhizIC/.test(response.body)) {
+        throw new Error("Не удалось пройти авторизацию в веб-версии Сбербанк Онлайн");
+    }
+
+    let pageToken;
+    if (/StartMobileBankRegistrationForm/i.test(response.body)) {
+        pageToken = getPageToken(response);
+        if (!pageToken) {
+            throw new Error("Попытались отказаться от подключения мобильного банка, но не удалось найти PAGE_TOKEN!");
+        }
+        await fetchHtml(`${baseUrl}/PhizIC/login/register-mobilebank/start.do`, {
+            method: "POST",
+            headers: {
+                ...defaultHeaders,
+                "Referer": baseUrl,
+            },
+            body: {
+                "PAGE_TOKEN": pageToken,
+                "operation": "skip",
+            },
+        });
+    }
+
+    response = await fetchHtml(`${baseUrl}/PhizIC/confirm/way4.do`, {
+        headers: {
+            ...defaultHeaders,
+            "Referer": `${baseUrl}/CSAFront/index.do`,
+        },
+    });
+    pageToken = getPageToken(response);
+
+    if (/Ранее вы[^<]*?уже создали[^<]*?логин для входа/i.test(response.body)) {
+        throw new InvalidPreferencesError("Ранее вы уже создали логин вместо идентификатора для входа");
+    }
+    if (response.status >= 400) {
+        throw new TemporaryError("Временные технические проблемы в Сбербанк-онлайн. Пожалуйста, попробуйте ещё раз позже.");
+    }
+
+    if (!/PhizIC/.test(response.body)) {
+        throw new Error("Ваш тип личного кабинета не поддерживается. Свяжитесь, пожалуйста, с разработчиками.");
+    }
+
+    if (/confirmTitle/.test(response.body)) {
+        // проверяем сначала тип подтверждения и переключаем его на смс, если это чек
+        const html = response.querySelector("div.confirmButtonRegion").html().trim();
+        if (/confirmCard/i.test(html)) {
+            // запрошен пароль с чека. Это неудобно, запрашиваем пароль по смс.
+            console.log("Запрошен пароль с чека. Это неудобно, запрашиваем пароль по смс.");
+            pageToken = getPageToken(response);
+            await fetchHtml(`${baseUrl}/PhizIC/async/confirm.do`, {
+                method: "POST",
+                headers: {
+                    ...defaultHeaders,
+                    "Referer": baseUrl,
+                },
+                body: {
+                    "PAGE_TOKEN": pageToken,
+                    "operation": "button.confirmSMS",
+                },
+            });
+        } else if (/confirmSMS/i.test(html)) {
+            console.log("Запрошен СМС-код для входа...");
+        } else {
+            console.log("Неизвестный способ подтверждения");
+        }
+
+        const pass = await ZenMoney.readLine("Введите пароль для входа в Сбербанк Онлайн из СМС.\n\nЕсли вы не хотите постоянно вводить СМС-пароли при входе, вы можете отменить" +
+            " их в настройках вашего Сбербанк-онлайн. Это безопасно - для совершения денежных операций требование одноразового пароля всё равно останется.", null, {
+            time: 300000,
+            inputType: "number",
+        });
+
+        if (!pass) {
+            throw new TemporaryError("Получен пустой код для входа в веб-версию Сбербанк Онлайн");
+        }
+
+        await fetchHtml(`${baseUrl}/PhizIC/async/confirm.do`, {
+            method: "POST",
+            headers: {
+                ...defaultHeaders,
+                "Origin": baseUrl,
+                "Referer": `${baseUrl}/PhizIC/confirm/way4.do`,
+            },
+            body: {
+                "receiptNo": "",
+                "passwordsLeft": "",
+                "passwordNo": "",
+                "SID": "",
+                "$$confirmSmsPassword": pass,
+                "PAGE_TOKEN": pageToken,
+                "operation": "button.confirm",
+            },
+        }, response => response.body.trim() === "next");
+
+        response = await fetchHtml(`${baseUrl}/PhizIC/confirm/way4.do`, {
+            method: "POST",
+            headers: {
+                ...defaultHeaders,
+                "Origin": baseUrl,
+                "Referer": `${baseUrl}/PhizIC/confirm/way4.do`,
+            },
+            body: {
+                "receiptNo": "",
+                "passwordsLeft": "",
+                "passwordNo": "",
+                "SID": "",
+                "$$confirmSmsPassword": pass,
+                "PAGE_TOKEN": pageToken,
+                "operation": "button.nextStage",
+            },
+        });
+    }
+
+    if (!isLoggedIn(response)) {
+        if (/Получите новый пароль, нажав/i.test(response.body)) {
+            throw new Error("Не удалось подтвердить вход в веб-версию Сбербанк Онлайн");
+        }
+    }
+
+    await checkAdditionalQuestions(baseUrl, response);
+
+    if (!isLoggedIn(response)) {
+        response = goToUserSettings();
+    }
+    if (!isLoggedIn(response)) {
+        throw new Error("Не удалось войти в Cбербанк-онлайн. Сайт изменен?");
+    }
+
+    return getHost(response);
 }
 
-export function loadHtml(html) {
-    return cheerio.load(html, {
-        normalizeWhitespace: true,
-        xmlMode: false,
+export async function fetchTransactions(host, {id, type}, fromDate, toDate) {
+    const response = await fetchHtml(`https://${host}/PhizIC/private/${type}s/info.do?id=${id}`, {
+        method: "GET",
+        headers: {
+            "Host": `${host}`,
+            "Referer": `https://${host}/PhizIC/private/${type}s/list.do`,
+        },
     });
-}
-
-function getTextFromNode(node) {
-    return node.text().replace(/\s+/g, " ").trim();
+    return parseTransactions(loadHtml(response.body), new Date()).filter(transaction => {
+        const date = new Date(parseDate(transaction.date));
+        return date >= fromDate && date <= toDate;
+    });
 }
 
 export function parseTransactions($, nowDate) {
@@ -66,237 +233,40 @@ export function parseTransactions($, nowDate) {
     });
 }
 
-export async function fetchTransactions(host, {id, type}, fromDate, toDate) {
-    const response = await fetchHtml(`https://${host}/PhizIC/private/${type}s/info.do?id=${id}`, {
-        method: "GET",
-        headers: {
-            "Host": `${host}`,
-            "Referer": `https://${host}/PhizIC/private/${type}s/list.do`,
-        },
-    });
-    return parseTransactions(loadHtml(response.body), new Date()).filter(transaction => {
-        const date = new Date(parseDate(transaction.date));
-        return date >= fromDate && date <= toDate;
+export function loadHtml(html) {
+    return cheerio.load(html, {
+        normalizeWhitespace: true,
+        xmlMode: false,
     });
 }
 
-export async function login(host, login, password) {
-    // let response = await getLoggedInHtml();
-    // if (response) {
-    //     console.log("В вебе уже залогинены, используем текущую сессию.");
-    //     return response;
-    // }
+function getPageToken(response) {
+    return response.querySelector("input[name=PAGE_TOKEN]").attr("value");
+}
 
-    const url = "https://online.sberbank.ru/CSAFront/login.do";
-    const loginResponse = await fetchHtml(url, {
-        method: "POST",
-        headers: {
-            ...defaultHeaders,
-            "Referer": url,
-            "Origin": "https://online.sberbank.ru",
-        },
-        body: {
-            "fakeLogin": "",
-            "fakePassword": "",
-            "field(login)": login,
-            "field(password)": password,
-            "operation": "button.begin",
-        },
-    });
+function getTextFromNode(node) {
+    return reduceWhitespaces(node.text());
+}
 
-    let error = /<h1[^>]*>О временной недоступности услуги[\s\S]*?<p[^>]*>([\s\S]*?)<\/p>|в связи с ошибкой в работе системы[\s\S]*?<div[^>]*>([\s\S]*?)<\/div>/i.test(loginResponse.body);
-    if (error) {
-        //console.log("Ошибка входа HTML: ", loginResponse.body);
-        throw new ZenMoney.Error("Ошибка входа");
-    }
-
-    if (/\$\$errorFlag/i.test(loginResponse.body)) {
-        //console.log("Ошибка входа [2] HTML: ", loginResponse.body);
-        throw new ZenMoney.Error("Ошибка входа [2]");
-    }
-
-    // определим страницу авторизации по токену
-    const urlPageToken = loginResponse.getHtml("form[name=LoginForm] > input[name$=redirect]").attr("value");
-    if (!urlPageToken) {
-        //console.log("Login response HTML: ", loginResponse.body);
-        throw new ZenMoney.Error("Не удалось пройти авторизацию в веб-версии Сбербанк Онлайн.");
-    }
-
-    // инициализируем рабочий адрес сервера
-    baseUrl = /^(https?:\/\/.*?)\//i.exec(urlPageToken)[1];
-
-    let response = await fetchHtml(urlPageToken, {
-        headers: {
-            ...defaultHeaders,
-            "Origin": baseUrl,
-            "Referer": `${baseUrl}/CSAFront/index.do`,
-        },
-    });
-
-    // не известный ответ сервера
-    if (!/online.sberbank.ru\/PhizIC/.test(response.body)) {
-        //console.log("Login response HTML: ", response.body);
-        throw new ZenMoney.Error("Не удалось пройти авторизацию в веб-версии Сбербанк Онлайн [2]");
-    }
-
-    let pageToken;
-    if (/StartMobileBankRegistrationForm/i.test(response.body)) {
-        // Сбербанк хочет, чтобы вы приняли решение о подключении мобильного банка. Откладываем решение.
-        pageToken = response.getHtml("input[name=PAGE_TOKEN]").attr("value");
-        if(!pageToken) throw new ZenMoney.Error("Попытались отказаться от подключения мобильного банка, но не удалось найти PAGE_TOKEN!");
-
-        response = await fetchHtml(`${baseUrl}/PhizIC/login/register-mobilebank/start.do`, {
-            method: "POST",
-            headers: {
-                ...defaultHeaders,
-                "Referer": baseUrl,
-            },
-            body: {
-                "PAGE_TOKEN": pageToken,
-                "operation": "skip",
-            },
-        });
-    }
-
-    response = await fetchHtml(`${baseUrl}/PhizIC/confirm/way4.do`, {
-        headers: {
-            ...defaultHeaders,
-            "Referer": `${baseUrl}/CSAFront/index.do`,
-        },
-    });
-    pageToken = extractPageToken(response.body);
-
-    // Другой кейс, пользователь сменил идентификатор на логин
-    if (/Ранее вы[^<]*?уже создали[^<]*?логин для входа/i.test(response.body))
-        throw new ZenMoney.Error("Ранее вы уже создали логин вместо идентификатора для входа", null, true);
-
-    if (ZenMoney.getLastStatusCode() >= 400) {
-        throw new ZenMoney.Error("Временные технические проблемы в Сбербанк-онлайн. Пожалуйста, попробуйте ещё раз позже.");
-    } else {
-        if (/PhizIC/.test(response.body)) {
-            if (/confirmTitle/.test(response.body)) {
-                // проверяем сначала тип подтверждения и переключаем его на смс, если это чек
-                const html = response.getHtml("div.confirmButtonRegion").html().trim();
-                // запрошен СМС-код
-                if (/confirmSMS/i.test(html)) {
-                    console.log("Запрошен СМС-код для входа...");
-                } else if (/confirmCard/i.test(html)) {
-                    // запрошен пароль с чека. Это неудобно, запрашиваем пароль по смс.
-                    console.log("Запрошен пароль с чека. Это неудобно, запрашиваем пароль по смс.");
-                    pageToken = response.getHtml("input[name=PAGE_TOKEN]").attr("value");
-                    await fetchHtml(`${baseUrl}/PhizIC/async/confirm.do`, {
-                        method: "POST",
-                        headers: {
-                            ...defaultHeaders,
-                            "Referer": baseUrl,
-                        },
-                        body: {
-                            "PAGE_TOKEN": pageToken,
-                            "operation": "button.confirmSMS",
-                        },
-                    });
-                } else {
-                    console.log("Неизвестный способ подтверждения:", html);
-                }
-
-                const pass = await ZenMoney.readLine("Введите пароль для входа в Сбербанк Онлайн из СМС.\n\nЕсли вы не хотите постоянно вводить СМС-пароли при входе, вы можете отменить" +
-                    " их в настройках вашего Сбербанк-онлайн. Это безопасно - для совершения денежных операций требование одноразового пароля всё равно останется.", null, {
-                    time: 300000,
-                    inputType: "number",
-                });
-
-                // смс-код не ввели
-                if (!pass || pass == 0 || String(pass).trim() === "")
-                    throw new ZenMoney.Error("Получен пустой код для входа в веб-версию Сбербанк Онлайн", true);
-
-                response = await fetchHtml(`${baseUrl}/PhizIC/async/confirm.do`, {
-                    method: "POST",
-                    headers: {
-                        ...defaultHeaders,
-                        "Origin": baseUrl,
-                        "Referer": `${baseUrl}/PhizIC/confirm/way4.do`,
-                    },
-                    body: {
-                        "receiptNo": "",
-                        "passwordsLeft": "",
-                        "passwordNo": "",
-                        "SID": "",
-                        "$$confirmSmsPassword": pass,
-                        "PAGE_TOKEN": pageToken,
-                        "operation": "button.confirm",
-                    },
-                }, response => response.body.trim() === "next");
-
-                response = await fetchHtml(`${baseUrl}/PhizIC/confirm/way4.do`, {
-                    method: "POST",
-                    headers: {
-                        ...defaultHeaders,
-                        "Origin": baseUrl,
-                        "Referer": `${baseUrl}/PhizIC/confirm/way4.do`,
-                    },
-                    body: {
-                        "receiptNo": "",
-                        "passwordsLeft": "",
-                        "passwordNo": "",
-                        "SID": "",
-                        "$$confirmSmsPassword": pass,
-                        "PAGE_TOKEN": pageToken,
-                        "operation": "button.nextStage",
-                    },
-                });
-            }
-
-            if (!isLoggedIn(response)) {
-                if (/Получите новый пароль, нажав/i.test(response.body))
-                    throw new ZenMoney.Error("Не удалось подтвердить вход в веб-версию Сбербанк Онлайн");
-            }
-
-            checkAdditionalQuestions(response);
-
-            if (!isLoggedIn(response)) {
-                response = getLoggedInHtml();
-
-                if (!isLoggedIn(response)) {
-                    console.log("Не удалось войти в веб-версию Сбербанк Онлайн", response.body);
-                    throw new ZenMoney.Error("Не удалось войти в Cбербанк-онлайн. Сайт изменен?");
-                }
-            }
-        } else {
-            console.log(response);
-            throw new ZenMoney.Error("Ваш тип личного кабинета не поддерживается. Свяжитесь, пожалуйста, с разработчиками.");
-        }
-    }
-
-    return response;
+function getHost(response) {
+    return /^https?:\/\/(.*?)\//i.exec(response.url)[1];
 }
 
 async function fetchHtml(url, options = {}, predicate = () => true) {
-    if (url.substr(0, 4) !== "http") {
-        if (url.substr(0, 1) !== "/") {
-            url = "/" + url;
-        }
-        url = baseUrl + url;
-    }
     options = {
         method: "GET",
         headers: defaultHeaders,
         ...options,
         stringify: qs.stringify,
     };
-    if (typeof _.get(options, "sanitizeResponseLog.body") === "object") {
-        options.sanitizeResponseLog.body = {response: options.sanitizeResponseLog.body};
-    }
 
     const response = await network.fetch(url, options);
-    response.html = null;
-    response.getHtml = function(selector){
-        "use strict";
-        if (!this.html)
-            this.html = cheerio.load(this.body, {
-                normalizeWhitespace: true,
-                xmlMode: false,
-            });
-        return this.html(selector);
+    let $ = null;
+    response.querySelector = function () {
+        if ($ === null) {
+            $ = loadHtml(this.body);
+        }
+        return $.apply($, arguments);
     };
 
     if (predicate) {
@@ -310,38 +280,32 @@ function validateResponse(response, predicate) {
     console.assert(!predicate || predicate(response), "non-successful response");
 }
 
-async function getLoggedInHtml() {
-    const url = baseUrl || "https://node1.online.sberbank.ru";
-    let response = await fetchHtml(`${url}/PhizIC/private/userprofile/userSettings.do`, {
+async function goToUserSettings(baseUrl = "https://node1.online.sberbank.ru") {
+    return fetchHtml(`${baseUrl}/PhizIC/private/userprofile/userSettings.do`, {
         headers: {
             ...defaultHeaders,
         },
     });
-    if (isLoggedIn(response)) {
-        baseUrl = url;
-        return response;
-    }
-    return null;
 }
 
 function isLoggedIn(response) {
-    return /accountSecurity.do/i.test(response.body);
+    return response && /accountSecurity.do/i.test(response.body);
 }
 
 function checkNext(response) {
-    // ToDO: пепроверить структуру ответа
+    // TODO: пепроверить структуру ответа
     if ((response.body || "").trim() === "next") {
         console.log("У нас next, обновляем страницу.", response);
-        response = getLoggedInHtml();
+        response = goToUserSettings();
     }
     return response;
 }
 
-async function checkAdditionalQuestions(response) {
+async function checkAdditionalQuestions(baseUrl, response) {
     // требуется принять соглашение о безопасности
     if (/internetSecurity/.test(response.body)) {
         console.log("Требуется принять соглашение о безопасности. Принимаем...");
-        const pageToken = response.getHtml("input[name=PAGE_TOKEN]").attr("value");
+        const pageToken = getPageToken(response);
         response = await fetchHtml(`${baseUrl}/PhizIC/internetSecurity.do`, {
             method: "POST",
             headers: {
@@ -358,7 +322,7 @@ async function checkAdditionalQuestions(response) {
 
     if (/Откроется справочник регионов, в котором щелкните по названию выбранного региона/.test(response.body)) {
         console.log("Выбираем все регионы оплаты.");
-        response = await fetchHtml(`${baseUrl}/PhizIC/region.do`, {
+        await fetchHtml(`${baseUrl}/PhizIC/region.do`, {
             method: "POST",
             headers: {
                 ...defaultHeaders,
@@ -369,5 +333,4 @@ async function checkAdditionalQuestions(response) {
             },
         });
     }
-    //response = checkNext(response);
 }

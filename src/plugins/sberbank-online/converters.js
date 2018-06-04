@@ -101,61 +101,84 @@ export function restoreCutCurrencyTransactions({account, currAccountData, prevAc
     return true;
 }
 
+export function isRestoredCurrencyTransaction(transaction) {
+    return transaction.incomeAccount === transaction.outcomeAccount && transaction.opIncome || transaction.opOutcome;
+}
+
 export function isCutCurrencyTransaction(transaction) {
     return transaction.income === null || transaction.outcome === null;
 }
 
-export function convertLoanTransaction(json, account) {
-    if (json.state !== "paid") {
+export function convertLoanTransaction(apiTransaction, account) {
+    if (apiTransaction.state !== "paid") {
         return null;
     }
     return {
-        date: parseDate(json.date),
-        income: parseDecimal(json.totalPaymentAmount.amount),
+        date: parseDate(apiTransaction.date),
+        income: parseDecimal(apiTransaction.totalPaymentAmount.amount),
         incomeAccount: account.id,
         outcome: 0,
         outcomeAccount: account.id,
     };
 }
 
-export function convertTransaction(json, account) {
-    if (json.description === "Капитализация вклада") {
+export function convertWebTransaction(webTransaction, account) {
+    return getTransaction({
+        account,
+        date: webTransaction.date,
+        description: webTransaction.description,
+        ...parseAmount(webTransaction.amount),
+    });
+}
+
+export function convertTransaction(apiTransaction, account) {
+    if (apiTransaction.description === "Капитализация вклада") {
         return null;
     }
-    const sum = parseDecimal(json.sum.amount);
-    if (Math.abs(sum) < 0.01) {
+    const opAmount = {
+        sum: parseDecimal(apiTransaction.sum.amount),
+        instrument: apiTransaction.sum.currency.code,
+    };
+    const amount = opAmount.instrument === account.instrument ? opAmount : null;
+    return getTransaction({
+        account,
+        date: apiTransaction.date,
+        description: apiTransaction.description,
+        opAmount,
+        amount,
+    });
+}
+
+function getTransaction({account, date, opAmount, amount, description}) {
+    if (Math.abs(opAmount.sum) < 0.01) {
         return null;
     }
     const transaction = {
-        date: parseDate(json.date),
+        date: parseDate(date),
         income: 0,
         incomeAccount: account.id,
         outcome: 0,
         outcomeAccount: account.id,
-        comment: json.description || null,
+        comment: description || null,
     };
-    if (json.sum.currency.code !== account.instrument) {
-        if (sum > 0) {
-            transaction.income = null;
-            transaction.opIncome = sum;
-            transaction.opIncomeInstrument = json.sum.currency.code;
+    if (!amount || opAmount.instrument !== amount.instrument) {
+        if (opAmount.sum > 0) {
+            transaction.income = amount ? amount.sum : null;
+            transaction.opIncome = opAmount.sum;
+            transaction.opIncomeInstrument = opAmount.instrument;
         } else {
-            transaction.outcome = null;
-            transaction.opOutcome = -sum;
-            transaction.opOutcomeInstrument = json.sum.currency.code;
+            transaction.outcome = amount ? -amount.sum : null;
+            transaction.opOutcome = -opAmount.sum;
+            transaction.opOutcomeInstrument = opAmount.instrument;
         }
     } else {
-        if (sum > 0) {
-            transaction.income = sum;
+        if (opAmount.sum > 0) {
+            transaction.income = opAmount.sum;
         } else {
-            transaction.outcome = -sum;
+            transaction.outcome = -opAmount.sum;
         }
     }
     if (transaction.comment) {
-        const opAmount = {
-            sum,
-            instrument: json.sum.currency.code,
-        };
         [
             parseCashWithdrawal,
             parseCashReplenishment,
@@ -166,64 +189,64 @@ export function convertTransaction(json, account) {
     return transaction;
 }
 
-export function convertAccounts(jsonArray, type) {
+export function convertAccounts(apiAccountsArray, type) {
     if (type !== "card") {
         const accounts = [];
-        for (const json of jsonArray) {
+        for (const apiAccount of apiAccountsArray) {
             const zenAccount = type === "account"
-                ? json.account.rate && parseDecimal(json.account.rate) > 0.01
-                    ? convertDeposit(json.account, json.details)
-                    : convertAccount(json.account, json.details)
-                : convertLoan(json.account, json.details);
+                ? apiAccount.account.rate && parseDecimal(apiAccount.account.rate) > 0.01
+                    ? convertDeposit(apiAccount.account, apiAccount.details)
+                    : convertAccount(apiAccount.account, apiAccount.details)
+                : convertLoan(apiAccount.account, apiAccount.details);
             if (!zenAccount) {
                 continue;
             }
             accounts.push({
-                ids: [json.account.id],
+                ids: [apiAccount.account.id],
                 type,
                 zenAccount,
             });
         }
         return accounts;
     }
-    return convertCards(jsonArray);
+    return convertCards(apiAccountsArray);
 }
 
-export function convertCards(jsonArray) {
-    jsonArray = _.sortBy(jsonArray,
+export function convertCards(apiCardsArray) {
+    apiCardsArray = _.sortBy(apiCardsArray,
         json => json.account.mainCardId || json.account.id,
         json => json.account.mainCardId ? 1 : 0);
     const accounts = [];
-    for (const json of jsonArray) {
-        if (json.account.state !== "active") {
+    for (const apiCard of apiCardsArray) {
+        if (apiCard.account.state !== "active") {
             continue;
         }
-        if (json.account.mainCardId) {
+        if (apiCard.account.mainCardId) {
             const account = accounts[accounts.length - 1];
-            console.assert(account.ids[0] === json.account.mainCardId, `unexpected additional card ${json.account.id}`);
-            account.ids.push(json.account.id);
-            account.zenAccount.syncID.splice(account.zenAccount.syncID.length - 2, 0, json.account.number);
+            console.assert(account.ids[0] === apiCard.account.mainCardId, `unexpected additional card ${apiCard.account.id}`);
+            account.ids.push(apiCard.account.id);
+            account.zenAccount.syncID.splice(account.zenAccount.syncID.length - 2, 0, apiCard.account.number);
             continue;
         }
         const zenAccount = {
-            id: "card:" + json.account.id,
+            id: "card:" + apiCard.account.id,
             type: "ccard",
-            title: json.account.name,
-            instrument: json.account.availableLimit.currency.code,
-            syncID: [json.account.number],
-            balance: parseDecimal(json.account.availableLimit.amount),
+            title: apiCard.account.name,
+            instrument: apiCard.account.availableLimit.currency.code,
+            syncID: [apiCard.account.number],
+            balance: parseDecimal(apiCard.account.availableLimit.amount),
         };
-        if (json.account.type === "credit") {
-            const creditLimit = parseDecimal(json.details.detail.creditType.limit.amount);
+        if (apiCard.account.type === "credit") {
+            const creditLimit = parseDecimal(apiCard.details.detail.creditType.limit.amount);
             if (creditLimit > 0) {
                 zenAccount.creditLimit = creditLimit;
                 zenAccount.balance = parseDecimal(zenAccount.balance - zenAccount.creditLimit);
             }
-        } else if (json.account.cardAccount) {
-            zenAccount.syncID.push(json.account.cardAccount);
+        } else if (apiCard.account.cardAccount) {
+            zenAccount.syncID.push(apiCard.account.cardAccount);
         }
         accounts.push({
-            ids: [json.account.id],
+            ids: [apiCard.account.id],
             type: "card",
             zenAccount,
         });
@@ -231,30 +254,30 @@ export function convertCards(jsonArray) {
     return accounts;
 }
 
-export function convertAccount(json) {
-    if (json.state !== "OPENED") {
+export function convertAccount(apiAccount) {
+    if (apiAccount.state !== "OPENED") {
         return null;
     }
     return {
-        id: json.id,
+        id: apiAccount.id,
         type: "checking",
-        title: json.name,
-        instrument: json.balance.currency.code,
-        balance: parseDecimal(json.balance.amount),
+        title: apiAccount.name,
+        instrument: apiAccount.balance.currency.code,
+        balance: parseDecimal(apiAccount.balance.amount),
         syncID: [
-            json.number,
+            apiAccount.number,
         ],
     };
 }
 
-export function convertLoan(json, details) {
+export function convertLoan(apiLoan, details) {
     const account = {
-        id: "loan:" + json.id,
+        id: "loan:" + apiLoan.id,
         type: "loan",
-        title: json.name,
-        instrument: json.amount.currency.code,
+        title: apiLoan.name,
+        instrument: apiLoan.amount.currency.code,
         startDate: parseDate(details.detail.termStart),
-        startBalance: parseDecimal(json.amount.amount),
+        startBalance: parseDecimal(apiLoan.amount.amount),
         balance: -parseDecimal(details.extDetail.remainAmount.amount),
         capitalization: details.detail.repaymentMethod === "аннуитетный",
         percent: parseDecimal(details.extDetail.rate),
@@ -268,19 +291,19 @@ export function convertLoan(json, details) {
     return account;
 }
 
-export function convertDeposit(json, details) {
+export function convertDeposit(apiDeposit, details) {
     const account = {
-        id: "account:" + json.id,
+        id: "account:" + apiDeposit.id,
         type: "deposit",
-        title: json.name,
-        instrument: json.balance.currency.code,
+        title: apiDeposit.name,
+        instrument: apiDeposit.balance.currency.code,
         startDate: parseDate(details.detail.open),
         startBalance: 0,
-        balance: parseDecimal(json.balance.amount),
+        balance: parseDecimal(apiDeposit.balance.amount),
         capitalization: true,
-        percent: parseDecimal(json.rate),
+        percent: parseDecimal(apiDeposit.rate),
         syncID: [
-            json.number,
+            apiDeposit.number,
         ],
         payoffStep: 1,
         payoffInterval: "month",
@@ -308,8 +331,11 @@ function parseDecimal(str) {
     if (typeof str === "number") {
         return Math.round(str * 100) / 100;
     }
-    const number = Number(str.replace(/\s/g, "").replace(/,/g, "."));
-    console.assert(!isNaN(number), "Cannot parse amount", str);
+    const number = Number(str.replace(/\s/g, "")
+        .replace(/,/g, ".")
+        .replace("−", "-")
+        .replace("&minus;", "-"));
+    console.assert(!isNaN(number), `could not parse decimal ${str}`);
     return number;
 }
 
@@ -383,4 +409,41 @@ function parseDescription(description, patterns) {
         return str;
     }
     return null;
+}
+
+export function reduceWhitespaces(text) {
+    return text.replace(/\s+/g, " ").trim();
+}
+
+export function parseAmount(text) {
+    text = reduceWhitespaces(text);
+    const match = text.match(/(.+)\s\((.+)\)/i);
+    if (match && match.length === 3) {
+        try {
+            const res = {
+                amount: parseRegularAmount(match[2]),
+                opAmount: parseRegularAmount(match[1]),
+            };
+            res.amount.sum = res.amount.sum * Math.sign(res.opAmount.sum);
+            return res;
+        } catch (e) {
+            console.assert(e === null, `could not parse amount ${text}`);
+        }
+    }
+    const amount = parseRegularAmount(text);
+    return {
+        amount,
+        opAmount: amount,
+    };
+}
+
+function parseRegularAmount(text) {
+    const i = text.lastIndexOf(" ");
+    console.assert(i >= 0 && i < text.length - 1, `could not parse amount ${text}`);
+    const sum = parseDecimal(text.substring(0, i));
+    console.assert(!isNaN(sum), `could not parse amount ${text}`);
+    return {
+        sum,
+        instrument: text.substring(i + 1),
+    };
 }

@@ -1,7 +1,7 @@
 import {loadHtml, parseTransactions} from "./sberbankWeb";
 
 describe("parseTransactions", () => {
-    it("return valid transactions", () => {
+    it("returns valid transactions", () => {
         const html = require("./html/transactions.html");
         const $ = loadHtml(html);
         expect(parseTransactions($, new Date("2018-06-02T12:00:00Z"))).toEqual([

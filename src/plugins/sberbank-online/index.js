@@ -3,8 +3,10 @@ import {
     convertAccounts,
     convertLoanTransaction,
     convertTransaction,
+    convertWebTransaction,
     getAccountData,
     isCutCurrencyTransaction,
+    isRestoredCurrencyTransaction,
     restoreCutCurrencyTransactions,
     updateAccountData,
 } from "./converters";
@@ -14,7 +16,7 @@ import * as sberbankWeb from "./sberbankWeb";
 export async function scrape({preferences, fromDate, toDate}) {
     toDate = toDate || new Date();
 
-    const {host} = await sberbank.login(preferences.login, preferences.pin);
+    let {host} = await sberbank.login(preferences.login, preferences.pin);
 
     const accountsByType = await sberbank.fetchAccounts(host);
     const accountsWithCurrencyTransactions = [];
@@ -73,13 +75,30 @@ export async function scrape({preferences, fromDate, toDate}) {
     }));
 
     if (accountsWithCurrencyTransactions.length > 0) {
-        await sberbankWeb.login(host, preferences.login, preferences.password);
-        for (const account of accountsWithCurrencyTransactions) {
-            for (const id of account.idsWithCurrencyTransactions) {
-                await sberbankWeb.fetchTransactions(host, {id, type: account.type}, fromDate, toDate);
+        let error = null;
+        try {
+            await sberbankWeb.login(preferences.login, preferences.password);
+        } catch (e) {
+            if (e instanceof TemporaryError) {
+                console.error(e);
+                error = e;
+            } else {
+                throw e;
             }
         }
-        //TODO: Parse web transactions
+        if (!error) {
+            for (const account of accountsWithCurrencyTransactions) {
+                for (const id of account.idsWithCurrencyTransactions) {
+                    const webTransactions = await sberbankWeb.fetchTransactions(host, {id, type: account.type}, fromDate, toDate);
+                    for (const webTransaction of webTransactions) {
+                        const transaction = convertWebTransaction(webTransaction, account.zenAccount);
+                        if (transaction && isRestoredCurrencyTransaction(transaction)) {
+                            zenTransactions.push(transaction);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     return {
