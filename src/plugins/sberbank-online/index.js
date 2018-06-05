@@ -74,10 +74,10 @@ export async function scrape({preferences, fromDate, toDate}) {
         }));
     }));
 
-    if (accountsWithCurrencyTransactions.length > 0) {
+    if (accountsWithCurrencyTransactions.length > 0 && !ZenMoney.getData("scrape/lastSuccessDate")) {
         let error = null;
         try {
-            await sberbankWeb.login(preferences.login, preferences.password);
+            host = (await sberbankWeb.login(preferences.login, preferences.password)).host;
         } catch (e) {
             if (e instanceof TemporaryError) {
                 console.error(e);

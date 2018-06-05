@@ -14,15 +14,13 @@ const defaultHeaders = {
     "Connection": "Keep-Alive",
     "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36",
-    "Host": "online.sberbank.ru",
-    "X-Requested-With": "XMLHttpRequest",
 };
 
 export async function login(login, password) {
     let response = await goToUserSettings();
     if (isLoggedIn(response)) {
         console.log("В вебе уже залогинены, используем текущую сессию.");
-        return getHost(response);
+        return {host: /^https?:\/\/(.*?)\//i.exec(response.url)[1]};
     }
 
     response = await fetchHtml("https://online.sberbank.ru/CSAFront/login.do", {
@@ -31,6 +29,7 @@ export async function login(login, password) {
             ...defaultHeaders,
             "Referer": "https://online.sberbank.ru/CSAFront/login.do",
             "Origin": "https://online.sberbank.ru",
+            "Host": "online.sberbank.ru",
         },
         body: {
             "fakeLogin": "",
@@ -39,6 +38,7 @@ export async function login(login, password) {
             "field(password)": password,
             "operation": "button.begin",
         },
+        sanitizeRequestLog: {body: {"field(login)": true, "field(password)": true}},
     });
 
     if (/<h1[^>]*>О временной недоступности услуги[\s\S]*?<p[^>]*>([\s\S]*?)<\/p>|в связи с ошибкой в работе системы[\s\S]*?<div[^>]*>([\s\S]*?)<\/div>/i.test(response.body)) {
@@ -53,13 +53,13 @@ export async function login(login, password) {
         throw new Error("Не удалось получить url переадресации");
     }
 
-    let baseUrl = /^(https?:\/\/.*?)\//i.exec(authUrl)[1];
+    const host = /^https?:\/\/(.*?)\//i.exec(authUrl)[1];
 
     response = await fetchHtml(authUrl, {
         headers: {
             ...defaultHeaders,
-            "Origin": baseUrl,
-            "Referer": `${baseUrl}/CSAFront/index.do`,
+            "Host": host,
+            "Referer": "https://online.sberbank.ru/CSAFront/index.do",
         },
     });
 
@@ -73,25 +73,28 @@ export async function login(login, password) {
         if (!pageToken) {
             throw new Error("Попытались отказаться от подключения мобильного банка, но не удалось найти PAGE_TOKEN!");
         }
-        await fetchHtml(`${baseUrl}/PhizIC/login/register-mobilebank/start.do`, {
+        //TODO: Check Referer, Host, Origin
+        await fetchHtml(`https://${host}/PhizIC/login/register-mobilebank/start.do`, {
             method: "POST",
             headers: {
                 ...defaultHeaders,
-                "Referer": baseUrl,
+                "Referer": "https://online.sberbank.ru/CSAFront/index.do",
+                "X-Requested-With": "XMLHttpRequest",
             },
             body: {
                 "PAGE_TOKEN": pageToken,
                 "operation": "skip",
             },
         });
+        response = await fetchHtml(`https://${host}/PhizIC/confirm/way4.do`, {
+            headers: {
+                ...defaultHeaders,
+                "Host": host,
+                "Referer": "https://online.sberbank.ru/CSAFront/index.do",
+            },
+        });
     }
 
-    response = await fetchHtml(`${baseUrl}/PhizIC/confirm/way4.do`, {
-        headers: {
-            ...defaultHeaders,
-            "Referer": `${baseUrl}/CSAFront/index.do`,
-        },
-    });
     pageToken = getPageToken(response);
 
     if (/Ранее вы[^<]*?уже создали[^<]*?логин для входа/i.test(response.body)) {
@@ -112,11 +115,14 @@ export async function login(login, password) {
             // запрошен пароль с чека. Это неудобно, запрашиваем пароль по смс.
             console.log("Запрошен пароль с чека. Это неудобно, запрашиваем пароль по смс.");
             pageToken = getPageToken(response);
-            await fetchHtml(`${baseUrl}/PhizIC/async/confirm.do`, {
+            await fetchHtml(`https://${host}/PhizIC/async/confirm.do`, {
                 method: "POST",
                 headers: {
                     ...defaultHeaders,
-                    "Referer": baseUrl,
+                    "Host": host,
+                    "Origin": `https://${host}`,
+                    "Referer": `https://${host}/PhizIC/confirm/way4.do`,
+                    "X-Requested-With": "XMLHttpRequest",
                 },
                 body: {
                     "PAGE_TOKEN": pageToken,
@@ -130,7 +136,7 @@ export async function login(login, password) {
         }
 
         const pass = await ZenMoney.readLine("Введите пароль для входа в Сбербанк Онлайн из СМС.\n\nЕсли вы не хотите постоянно вводить СМС-пароли при входе, вы можете отменить" +
-            " их в настройках вашего Сбербанк-онлайн. Это безопасно - для совершения денежных операций требование одноразового пароля всё равно останется.", null, {
+            " их в настройках вашего Сбербанк-онлайн. Это безопасно - для совершения денежных операций требование одноразового пароля всё равно останется.", {
             time: 300000,
             inputType: "number",
         });
@@ -139,12 +145,14 @@ export async function login(login, password) {
             throw new TemporaryError("Получен пустой код для входа в веб-версию Сбербанк Онлайн");
         }
 
-        await fetchHtml(`${baseUrl}/PhizIC/async/confirm.do`, {
+        await fetchHtml(`https://${host}/PhizIC/async/confirm.do`, {
             method: "POST",
             headers: {
                 ...defaultHeaders,
-                "Origin": baseUrl,
-                "Referer": `${baseUrl}/PhizIC/confirm/way4.do`,
+                "Host": host,
+                "Origin": `https://${host}`,
+                "Referer": `https://${host}/PhizIC/confirm/way4.do`,
+                "X-Requested-With": "XMLHttpRequest",
             },
             body: {
                 "receiptNo": "",
@@ -157,12 +165,13 @@ export async function login(login, password) {
             },
         }, response => response.body.trim() === "next");
 
-        response = await fetchHtml(`${baseUrl}/PhizIC/confirm/way4.do`, {
+        response = await fetchHtml(`https://${host}/PhizIC/confirm/way4.do`, {
             method: "POST",
             headers: {
                 ...defaultHeaders,
-                "Origin": baseUrl,
-                "Referer": `${baseUrl}/PhizIC/confirm/way4.do`,
+                "Host": host,
+                "Origin": `https://${host}`,
+                "Referer": `https://${host}/PhizIC/confirm/way4.do`,
             },
             body: {
                 "receiptNo": "",
@@ -176,22 +185,20 @@ export async function login(login, password) {
         });
     }
 
-    if (!isLoggedIn(response)) {
-        if (/Получите новый пароль, нажав/i.test(response.body)) {
-            throw new Error("Не удалось подтвердить вход в веб-версию Сбербанк Онлайн");
-        }
+    if (!isLoggedIn(response) && /Получите новый пароль, нажав/i.test(response.body)) {
+        throw new Error("Не удалось подтвердить вход в веб-версию Сбербанк Онлайн");
     }
 
-    await checkAdditionalQuestions(baseUrl, response);
+    await checkAdditionalQuestions(host, response);
 
     if (!isLoggedIn(response)) {
-        response = goToUserSettings();
+        response = goToUserSettings(host);
     }
     if (!isLoggedIn(response)) {
         throw new Error("Не удалось войти в Cбербанк-онлайн. Сайт изменен?");
     }
 
-    return getHost(response);
+    return {host};
 }
 
 export async function fetchTransactions(host, {id, type}, fromDate, toDate) {
@@ -248,10 +255,6 @@ function getTextFromNode(node) {
     return reduceWhitespaces(node.text());
 }
 
-function getHost(response) {
-    return /^https?:\/\/(.*?)\//i.exec(response.url)[1];
-}
-
 async function fetchHtml(url, options = {}, predicate = () => true) {
     options = {
         method: "GET",
@@ -280,8 +283,8 @@ function validateResponse(response, predicate) {
     console.assert(!predicate || predicate(response), "non-successful response");
 }
 
-async function goToUserSettings(baseUrl = "https://node1.online.sberbank.ru") {
-    return fetchHtml(`${baseUrl}/PhizIC/private/userprofile/userSettings.do`, {
+async function goToUserSettings(host = "node1.online.sberbank.ru") {
+    return fetchHtml(`https://${host}/PhizIC/private/userprofile/userSettings.do`, {
         headers: {
             ...defaultHeaders,
         },
@@ -292,21 +295,23 @@ function isLoggedIn(response) {
     return response && /accountSecurity.do/i.test(response.body);
 }
 
-function checkNext(response) {
+function checkNext(host, response) {
     // TODO: пепроверить структуру ответа
     if ((response.body || "").trim() === "next") {
         console.log("У нас next, обновляем страницу.", response);
-        response = goToUserSettings();
+        response = goToUserSettings(host);
     }
     return response;
 }
 
-async function checkAdditionalQuestions(baseUrl, response) {
+async function checkAdditionalQuestions(host, response) {
+    //TODO: Check Referer, Host, Origin
+
     // требуется принять соглашение о безопасности
     if (/internetSecurity/.test(response.body)) {
         console.log("Требуется принять соглашение о безопасности. Принимаем...");
         const pageToken = getPageToken(response);
-        response = await fetchHtml(`${baseUrl}/PhizIC/internetSecurity.do`, {
+        response = await fetchHtml(`https://${host}/PhizIC/internetSecurity.do`, {
             method: "POST",
             headers: {
                 ...defaultHeaders,
@@ -318,11 +323,11 @@ async function checkAdditionalQuestions(baseUrl, response) {
             },
         });
     }
-    response = checkNext(response);
+    response = checkNext(host, response);
 
     if (/Откроется справочник регионов, в котором щелкните по названию выбранного региона/.test(response.body)) {
         console.log("Выбираем все регионы оплаты.");
-        await fetchHtml(`${baseUrl}/PhizIC/region.do`, {
+        await fetchHtml(`https://${host}/PhizIC/region.do`, {
             method: "POST",
             headers: {
                 ...defaultHeaders,

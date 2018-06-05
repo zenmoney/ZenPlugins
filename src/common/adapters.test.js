@@ -161,6 +161,21 @@ describe("provideScrapeDates", () => {
         expect(scrape).toHaveBeenCalledWith({preferences: {}, fromDate: new Date(expectedFromDate), toDate: null});
     });
 
+    it("should provide scrape fromDate equal to startDate if lastSuccessDate minus 1 week is less than it", () => {
+        const lastSuccessDate = "2015-06-07T08:09:10.000Z";
+        const startDate = "2015-06-05T01:01:01.000Z";
+        global.ZenMoney = {
+            getData: jest.fn().mockReturnValueOnce(lastSuccessDate),
+            setData: jest.fn(),
+            saveData: jest.fn(),
+        };
+
+        const scrape = jest.fn().mockReturnValueOnce(Promise.resolve());
+        const scrapeWithProvidedDates = provideScrapeDates(scrape);
+        scrapeWithProvidedDates({preferences: {startDate}});
+        expect(scrape).toHaveBeenCalledWith({preferences: {}, fromDate: new Date(startDate), toDate: null});
+    });
+
     it("should save last success date on success", () => {
         const startDate = "2010-01-01T01:01:01.000Z";
         global.ZenMoney = {

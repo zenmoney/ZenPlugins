@@ -23,15 +23,15 @@ const unsealSyncPromise = (promise) => {
 };
 
 const calculateFromDate = (startDateString) => {
+    console.assert(startDateString, `preferences must contain "startDate"`);
+    const startDate = new Date(startDateString);
+    console.assert(isValidDate(startDate), {startDateString}, "is not a valid date");
     const lastSuccessDateString = ZenMoney.getData("scrape/lastSuccessDate");
     if (lastSuccessDateString) {
         const lastSuccessDate = new Date(lastSuccessDateString);
         console.assert(isValidDate(lastSuccessDate), {lastSuccessDateString}, "is not a valid date");
-        return new Date(lastSuccessDate - MS_IN_WEEK);
+        return new Date(Math.max(lastSuccessDate.getTime() - MS_IN_WEEK, startDate.getTime()));
     }
-    console.assert(startDateString, `preferences must contain "startDate"`);
-    const startDate = new Date(startDateString);
-    console.assert(isValidDate(startDate), {startDateString}, "is not a valid date");
     return startDate;
 };
 

@@ -15,6 +15,7 @@ global.fetch = require("imports-loader?self=>global&{default:XMLHttpRequest}=xhr
 
 Object.assign = require("object-assign");
 require("./polyfills/array");
+require("./polyfills/math");
 
 if (ZenMoney.runtime === "browser" && consoleAdapter.isNativeConsoleImplemented()) {
     consoleAdapter.shapeNativeConsole();

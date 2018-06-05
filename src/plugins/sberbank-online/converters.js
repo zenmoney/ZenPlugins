@@ -102,7 +102,7 @@ export function restoreCutCurrencyTransactions({account, currAccountData, prevAc
 }
 
 export function isRestoredCurrencyTransaction(transaction) {
-    return transaction.incomeAccount === transaction.outcomeAccount && transaction.opIncome || transaction.opOutcome;
+    return transaction.incomeAccount === transaction.outcomeAccount && (transaction.opIncome || transaction.opOutcome);
 }
 
 export function isCutCurrencyTransaction(transaction) {
