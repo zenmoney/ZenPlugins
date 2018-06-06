@@ -3,40 +3,28 @@
 exports[`convertApiMovementsToReadableTransactions completes missing transfer data 1`] = `
 Array [
   Object {
-    "account": Object {
-      "id": "7890",
-    },
     "comment": null,
     "date": 2018-05-22T09:00:00.000Z,
     "hold": false,
-    "id": "1",
-    "location": null,
-    "mcc": null,
-    "origin": null,
-    "payee": "Между своими счетами",
-    "posted": Object {
-      "amount": 1000,
-      "instrument": "RUR",
-    },
-    "type": "transaction",
-  },
-  Object {
-    "account": Object {
-      "id": "0987",
-    },
-    "comment": null,
-    "date": 2018-05-22T09:00:00.000Z,
-    "hold": false,
-    "id": "2",
-    "location": null,
-    "mcc": null,
-    "origin": null,
-    "payee": "Между своими счетами",
-    "posted": Object {
-      "amount": -1000,
-      "instrument": "RUR",
-    },
-    "type": "transaction",
+    "sides": Array [
+      Object {
+        "account": Object {
+          "id": "7890",
+        },
+        "amount": 1000,
+        "id": "1",
+        "instrument": "RUR",
+      },
+      Object {
+        "account": Object {
+          "id": "0987",
+        },
+        "amount": -1000,
+        "id": "2",
+        "instrument": "RUR",
+      },
+    ],
+    "type": "transfer",
   },
 ]
 `;
