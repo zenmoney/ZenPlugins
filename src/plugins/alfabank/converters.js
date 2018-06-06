@@ -90,7 +90,7 @@ export function parseApiMovementDescription(description, sign) {
     };
 }
 
-function calculateAccountId(parsedAmount, apiMovement) {
+function calculateAccountId(parsedAmount, apiMovement, apiAccounts) {
     const candidates = parsedAmount > 0
         ? [
             apiMovement.recipientInfo.recipientAccountNumberDescription,
@@ -98,23 +98,29 @@ function calculateAccountId(parsedAmount, apiMovement) {
         ] : [
             apiMovement.senderInfo.senderAccountNumberDescription,
         ];
-    const accountIds = _.uniq(_.compact(candidates).map((x) => x.slice(-4)));
-    if (accountIds.length === 1) {
-        return accountIds[0];
+    const candidatesLast4Chars = _.uniq(_.compact(candidates).map((x) => x.slice(-4)));
+    if (candidatesLast4Chars.length === 1) {
+        return candidatesLast4Chars[0];
     }
-    console.error({apiMovement, accountIds});
+    if (candidatesLast4Chars.length === 0) {
+        const nonOwnSharedAccounts = apiAccounts.filter((x) => x.sharedAccountInfo && !x.sharedAccountInfo.isOwn);
+        if (nonOwnSharedAccounts.length === 1) {
+            return nonOwnSharedAccounts[0].number.slice(-4);
+        }
+    }
+    console.error({apiMovement, candidatesLast4Chars});
     throw new Error(`cannot determine ${parsedAmount > 0 ? "recipient" : "sender"} account id (see log)`);
 }
 
 export const normalizeIsoDate = (isoDate) => isoDate.replace(/([+-])(\d{2})(\d{2})$/, "$1$2:$3");
 
-export function convertApiMovementToReadableTransaction(apiMovement) {
+function convertApiMovementToReadableTransaction(apiMovement, apiAccounts) {
     const posted = {amount: parseApiAmount(apiMovement.amount), instrument: apiMovement.currency};
     const {mcc, origin} = parseApiMovementDescription(apiMovement.description, Math.sign(posted.amount));
     const readableTransaction = {
         type: "transaction",
         id: apiMovement.key,
-        account: {id: calculateAccountId(posted.amount, apiMovement)},
+        account: {id: calculateAccountId(posted.amount, apiMovement, apiAccounts)},
         date: new Date(normalizeIsoDate(apiMovement.createDate)),
         hold: apiMovement.hold,
         posted,
@@ -133,38 +139,39 @@ export function convertApiMovementToReadableTransaction(apiMovement) {
     return readableTransaction;
 }
 
+const neverLosingDataMergeCustomizer = function(valueInA, valueInB, key, objA, objB) {
+    if (valueInA && valueInB && valueInA !== valueInB && !(_.isPlainObject(valueInA) && _.isPlainObject(valueInB))) {
+        if (key === "recipientAccountNumberDescription" && objA.recipientValue && valueInB.endsWith(objA.recipientValue.slice(-4))) {
+            return;
+        }
+        console.assert(false, key, `has ambiguous values:`, [valueInA, valueInB], `objects:`, [objA, objB]);
+    }
+};
+
 function complementSides(apiMovements) {
     const relatedMovementsByReferenceLookup = _.fromPairs(_.toPairs(_.groupBy(apiMovements, x => {
         delete x.actions;
         return x.reference;
     })).filter(([key, items]) => key !== "HOLD" && items.length === 2));
-    const neverLosingDataCustomizer = function(valueInA, valueInB, key, objA, objB) {
-        if (valueInA && valueInB && valueInA !== valueInB && !(_.isPlainObject(valueInA) && _.isPlainObject(valueInB))) {
-            if (key === "recipientAccountNumberDescription" && objA.recipientValue && valueInB.endsWith(objA.recipientValue.slice(-4))) {
-                return;
-            }
-            console.assert(false, key, `has ambiguous values:`, [valueInA, valueInB], `objects:`, [objA, objB]);
-        }
-    };
     return apiMovements.map((apiMovement) => {
         const relatedMovements = relatedMovementsByReferenceLookup[apiMovement.reference];
         if (!relatedMovements) {
             return apiMovement;
         }
-        const senderInfo = _.mergeWith({}, ...relatedMovements.map((x) => x.senderInfo), neverLosingDataCustomizer);
-        const recipientInfo = _.mergeWith({}, ...relatedMovements.map((x) => x.recipientInfo), neverLosingDataCustomizer);
+        const senderInfo = _.mergeWith({}, ...relatedMovements.map((x) => x.senderInfo), neverLosingDataMergeCustomizer);
+        const recipientInfo = _.mergeWith({}, ...relatedMovements.map((x) => x.recipientInfo), neverLosingDataMergeCustomizer);
         return {...apiMovement, senderInfo, recipientInfo};
     });
 
 }
 
-export function convertApiMovementsToReadableTransactions(apiMovements) {
+export function convertApiMovementsToReadableTransactions(apiMovements, apiAccounts) {
     const movementsWithoutDuplicates = _.uniqBy(apiMovements, x => x.key);
     const movementsWithoutNonAccountableArtifacts = movementsWithoutDuplicates.filter((x) => !x.shortDescription || !x.shortDescription.startsWith("Погашение "));
     const movementsWithCompleteSides = complementSides(movementsWithoutNonAccountableArtifacts);
     const items = movementsWithCompleteSides.map((apiMovement) => ({
         apiMovement,
-        readableTransaction: convertApiMovementToReadableTransaction(apiMovement),
+        readableTransaction: convertApiMovementToReadableTransaction(apiMovement, apiAccounts),
     }));
     return mergeTransfers({
         items,

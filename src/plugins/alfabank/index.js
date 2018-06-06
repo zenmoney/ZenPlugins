@@ -59,7 +59,7 @@ export async function scrape({preferences, fromDate, toDate}) {
         getCommonAccounts({sessionId, deviceId: pluginData.deviceId}),
         getAllCommonMovements({sessionId, deviceId: pluginData.deviceId, startDate: fromDate, endDate: toDate}),
     ]);
-    const readableTransactions = convertApiMovementsToReadableTransactions(apiMovements.reverse());
+    const readableTransactions = convertApiMovementsToReadableTransactions(apiMovements.reverse(), apiAccounts);
     console.debug({readableTransactions});
     return {
         accounts: await Promise.all(apiAccounts.map(async (apiAccount) => {
