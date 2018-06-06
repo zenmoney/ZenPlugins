@@ -178,9 +178,12 @@ export function convertApiMovementsToReadableTransactions(apiMovements, apiAccou
     return mergeTransfers({
         items,
         selectReadableTransaction: (item) => item.readableTransaction,
-        isTransferItem: ({apiMovement: {senderInfo, recipientInfo, reference}, readableTransaction}) => {
+        isTransferItem: ({apiMovement: {senderInfo, recipientInfo, reference, description}, readableTransaction}) => {
             if (readableTransaction.type !== "transaction") {
                 return false;
+            }
+            if (description.startsWith("Внутрибанковский перевод между счетами")) {
+                return true;
             }
             if (readableTransaction.posted.amount > 0) {
                 return senderInfo.senderNameBank === `АО "АЛЬФА-БАНК"`;
