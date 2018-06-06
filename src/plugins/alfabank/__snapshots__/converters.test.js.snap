@@ -1,5 +1,69 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`convertApiMovementsToReadableTransactions completes missing transfer data 1`] = `
+Array [
+  Object {
+    "account": Object {
+      "id": "7890",
+    },
+    "comment": null,
+    "date": 2018-05-22T09:00:00.000Z,
+    "hold": false,
+    "id": "1",
+    "location": null,
+    "mcc": null,
+    "origin": null,
+    "payee": "Между своими счетами",
+    "posted": Object {
+      "amount": 1000,
+      "instrument": "RUR",
+    },
+    "type": "transaction",
+  },
+  Object {
+    "account": Object {
+      "id": "0987",
+    },
+    "comment": null,
+    "date": 2018-05-22T09:00:00.000Z,
+    "hold": false,
+    "id": "2",
+    "location": null,
+    "mcc": null,
+    "origin": null,
+    "payee": "Между своими счетами",
+    "posted": Object {
+      "amount": -1000,
+      "instrument": "RUR",
+    },
+    "type": "transaction",
+  },
+]
+`;
+
+exports[`convertApiMovementsToReadableTransactions guesses missing sender account info with single non-own shared account 1`] = `
+Array [
+  Object {
+    "account": Object {
+      "id": "4444",
+    },
+    "comment": null,
+    "date": 2018-05-22T09:00:00.000Z,
+    "hold": false,
+    "id": "0",
+    "location": null,
+    "mcc": null,
+    "origin": null,
+    "payee": "test(recipientName)",
+    "posted": Object {
+      "amount": -1000,
+      "instrument": "RUR",
+    },
+    "type": "transaction",
+  },
+]
+`;
+
 exports[`parseApiMovementDescription 1`] = `
 Array [
   Object {

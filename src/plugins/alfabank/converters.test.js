@@ -1,4 +1,4 @@
-import {normalizeIsoDate, parseApiMovementDescription, toZenmoneyAccount} from "./converters";
+import {convertApiMovementsToReadableTransactions, normalizeIsoDate, parseApiMovementDescription, toZenmoneyAccount} from "./converters";
 
 describe("toZenmoneyAccount", () => {
     it("maps api credit account", () => {
@@ -92,4 +92,91 @@ test("normalizeIsoDate normalizes isoDate for JavaScriptCore new Date(isoDate)",
     expect(normalizeIsoDate("2017-12-01T12:00:00.000+0300")).toEqual("2017-12-01T12:00:00.000+03:00");
     expect(normalizeIsoDate("2017-12-01T12:00:00.000Z")).toEqual("2017-12-01T12:00:00.000Z");
     expect(normalizeIsoDate("2017-12-01T12:00:00.000-0550")).toEqual("2017-12-01T12:00:00.000-05:50");
+});
+
+describe("convertApiMovementsToReadableTransactions", () => {
+    const description = "Внутрибанковский перевод между счетами, Анонимский И. О.";
+    it("completes missing transfer data", () => {
+        const transferReference = "test(transferReference)";
+        const shortDescription = "От Анонимский Имь Отьевич";
+        const apiMovements = [
+            {
+                id: "1",
+                createDate: "2018-05-22T12:00:00.000+0300",
+                amount: "+1 000.00",
+                currency: "RUR",
+                status: "P",
+                statusDescription: "Выполнен",
+                description: description,
+                hold: false,
+                key: "1",
+                reference: transferReference,
+                userComment: "",
+                shortDescription: shortDescription,
+                descriptionForRepeat: "Между своими счетами",
+                senderInfo: {senderCardNumber: "", senderBicBank: "", senderNameBank: "", senderAccountNumberDescription: "Текущий сч.. ··0987"},
+            },
+            {
+                id: "2",
+                createDate: "2018-05-22T12:00:00.000+0300",
+                amount: "-1 000.00",
+                currency: "RUR",
+                status: "P",
+                statusDescription: "Выполнен",
+                description: description,
+                hold: false,
+                key: "2",
+                reference: transferReference,
+                userComment: "",
+                shortDescription: "Перевод между счетами",
+                descriptionForRepeat: "Между своими счетами",
+                senderInfo: {senderAccountNumberDescription: "Текущий сч.. ··0987"},
+                recipientInfo: {
+                    recipientName: "Между своими счетами",
+                    recipientValue: "123456**********7890",
+                    recipientCardNumber: "",
+                    recipientBicBank: "",
+                    recipientNameBank: "",
+                },
+            },
+        ];
+        expect(convertApiMovementsToReadableTransactions(apiMovements, [])).toMatchSnapshot();
+    });
+
+    it("guesses missing sender account info with single non-own shared account", () => {
+        const apiMovements = [
+            {
+                id: "0",
+                createDate: "2018-05-22T12:00:00.000+0300",
+                amount: "-1 000.00",
+                currency: "RUR",
+                status: "P",
+                statusDescription: "Выполнен",
+                description: description,
+                hold: false,
+                key: "0",
+                reference: "test(reference)",
+                userComment: "",
+                shortDescription: "Перевод между счетами",
+                descriptionForRepeat: "Между своими счетами",
+                senderInfo: {senderEmail: "test(senderEmail)", senderPhoneNumber: "test(senderPhoneNumber)", senderFIO: "test(senderFIO)"},
+                recipientInfo: {
+                    recipientName: "test(recipientName)",
+                    recipientValue: "123456**********5566",
+                    recipientCardNumber: "",
+                    recipientBicBank: "test(recipientBicBank)",
+                    recipientNameBank: "АО \"АЛЬФА-БАНК\"",
+                    recipientEmail: "test(recipientEmail)",
+                    recipientPhoneNumber: "test(recipientPhoneNumber)",
+                    recipientMaskedName: "test(recipientMaskedName)",
+                    recipientFIO: "test(recipientFIO)",
+                },
+                anotherClientInfo: {clientName: "test(anotherClientInfo.clientName)", clientPhone: "test(anotherClientInfo.clientPhone)"},
+            },
+        ];
+        expect(convertApiMovementsToReadableTransactions(apiMovements, [
+            {number: "x4444", sharedAccountInfo: {isOwn: false}},
+        ])).toMatchSnapshot();
+        expect(() => convertApiMovementsToReadableTransactions(apiMovements, [])).toThrow("cannot determine sender account id");
+    });
 });
