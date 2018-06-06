@@ -13,10 +13,9 @@ const trimPostfix = (string, postfix) => {
 
 function convertCreditApiAccount(apiAccount) {
     const {
+        "Кредитный продукт и валюта": typeWithDashAndInstrument,
         "Доступный лимит": availableWithInstrument,
         "Установленный лимит": creditLimitWithInstrument,
-        "Начальная сумма кредита": creditAmountWithInstrument,
-        "Остаток задолженности": remainingDebtWithInstrument,
     } = apiAccount.accountDetailsCreditInfo;
     const instrumentPostfix = " " + apiAccount.currencyCode;
     if (availableWithInstrument && creditLimitWithInstrument) {
@@ -24,10 +23,10 @@ function convertCreditApiAccount(apiAccount) {
             available: parseApiAmount(trimPostfix(availableWithInstrument, instrumentPostfix)),
             creditLimit: parseApiAmount(trimPostfix(creditLimitWithInstrument, instrumentPostfix)),
         };
-    } else if (creditAmountWithInstrument && remainingDebtWithInstrument) {
+    } else if (typeWithDashAndInstrument.startsWith("Кредит наличными")) {
         return {
-            startBalance: -parseApiAmount(trimPostfix(creditAmountWithInstrument, instrumentPostfix)),
-            balance: -parseApiAmount(trimPostfix(remainingDebtWithInstrument, instrumentPostfix)),
+            startBalance: 0,
+            balance: parseApiAmount(apiAccount.amount),
         };
     } else {
         console.error({apiAccount});
@@ -36,9 +35,8 @@ function convertCreditApiAccount(apiAccount) {
 }
 
 function convertNonCreditApiAccount(apiAccount) {
-    const amount = parseApiAmount(apiAccount.amount);
     return {
-        balance: amount,
+        balance: parseApiAmount(apiAccount.amount),
     };
 }
 

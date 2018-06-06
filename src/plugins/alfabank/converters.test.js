@@ -1,7 +1,7 @@
 import {convertApiMovementsToReadableTransactions, normalizeIsoDate, parseApiMovementDescription, toZenmoneyAccount} from "./converters";
 
 describe("toZenmoneyAccount", () => {
-    it("maps api credit account", () => {
+    it("maps api credit card account", () => {
         expect(toZenmoneyAccount({
             "number": "98765432109876543210",
             "description": "Счёт кредитной карты",
@@ -28,6 +28,36 @@ describe("toZenmoneyAccount", () => {
             "instrument": "RUR",
             "available": 15294.21,
             "creditLimit": 17000,
+        });
+    });
+
+    it("maps api cash credit account", () => {
+        expect(toZenmoneyAccount({
+            number: "98765432109876543210",
+            description: "Большой кредит",
+            amount: "0.00",
+            currencyCode: "RUR",
+            creditInfo: {
+                description: "Кредит наличными",
+                amountDebt: "489 657.26",
+                closeDate: "2023-01-31T00:00:00.000+0300",
+                installmentCard: false,
+                nextPaymentAmount: "",
+                nextPaymentDate: "",
+            },
+            accountDetailsCreditInfo: {
+                "Кредитный продукт и валюта": "Кредит наличными - RUR",
+            },
+        })).toEqual({
+            "type": "ccard",
+            "title": "Большой кредит",
+            "id": "3210",
+            "syncID": [
+                "3210",
+            ],
+            "instrument": "RUR",
+            "startBalance": 0,
+            "balance": 0,
         });
     });
 
