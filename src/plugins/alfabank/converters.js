@@ -91,7 +91,8 @@ export function parseApiMovementDescription(description, sign) {
     };
 }
 
-function calculateAccountId(parsedAmount, apiMovement, apiAccounts) {
+function calculateAccountId(apiMovement, apiAccounts) {
+    const parsedAmount = parseApiAmount(apiMovement.amount);
     const candidates = parsedAmount > 0
         ? [
             apiMovement.recipientInfo.recipientAccountNumberDescription,
@@ -117,13 +118,13 @@ function calculateAccountId(parsedAmount, apiMovement, apiAccounts) {
 
 export const normalizeIsoDate = (isoDate) => isoDate.replace(/([+-])(\d{2})(\d{2})$/, "$1$2:$3");
 
-function convertApiMovementToReadableTransaction(apiMovement, apiAccounts) {
+function convertApiMovementToReadableTransaction(apiMovement, accountId) {
     const posted = {amount: parseApiAmount(apiMovement.amount), instrument: apiMovement.currency};
     const {mcc, origin} = parseApiMovementDescription(apiMovement.description, Math.sign(posted.amount));
     const readableTransaction = {
         type: "transaction",
         id: apiMovement.key,
-        account: {id: calculateAccountId(posted.amount, apiMovement, apiAccounts)},
+        account: {id: accountId},
         date: new Date(normalizeIsoDate(apiMovement.createDate)),
         hold: apiMovement.hold,
         posted,
@@ -169,14 +170,27 @@ function complementSides(apiMovements) {
 
 export function convertApiMovementsToReadableTransactions(apiMovements, apiAccounts) {
     const movementsWithoutDuplicates = _.uniqBy(apiMovements, x => x.key);
-    const movementsWithoutNonAccountableArtifacts = movementsWithoutDuplicates.filter((x) => !x.shortDescription || !x.shortDescription.startsWith("Погашение "));
-    const movementsWithCompleteSides = complementSides(movementsWithoutNonAccountableArtifacts);
-    const items = movementsWithCompleteSides.map((apiMovement) => ({
-        apiMovement,
-        readableTransaction: convertApiMovementToReadableTransaction(apiMovement, apiAccounts),
-    }));
+    const movementsWithCompleteSides = complementSides(movementsWithoutDuplicates);
+    const processedMovements = movementsWithCompleteSides.map((apiMovement) => {
+        const accountId = calculateAccountId(apiMovement, apiAccounts);
+        const matchedAccounts = apiAccounts.filter((x) => x.number.slice(-4) === accountId);
+        if (matchedAccounts.length !== 1) {
+            throw new Error("cannot match accountId=" + accountId);
+        }
+        return {
+            apiMovement,
+            apiAccount: matchedAccounts[0],
+            readableTransaction: convertApiMovementToReadableTransaction(apiMovement, accountId),
+        };
+    });
+    const processedMovementsWithoutNonAccountableArtifacts = processedMovements.filter(({apiMovement, apiAccount}) => {
+        if (!apiAccount.accountDetailsCreditInfo || !apiAccount.accountDetailsCreditInfo["Кредитный продукт и валюта"].startsWith("Кредитная карта")) {
+            return true;
+        }
+        return !apiMovement.shortDescription || !apiMovement.shortDescription.startsWith("Погашение ");
+    });
     return mergeTransfers({
-        items,
+        items: processedMovementsWithoutNonAccountableArtifacts,
         selectReadableTransaction: (item) => item.readableTransaction,
         isTransferItem: ({apiMovement: {senderInfo, recipientInfo, reference, description}, readableTransaction}) => {
             if (readableTransaction.type !== "transaction") {

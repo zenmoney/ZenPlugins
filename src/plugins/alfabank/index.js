@@ -1,6 +1,6 @@
 import {toZenmoneyTransaction} from "../../common/converters";
 import {generateUUID} from "../../common/utils";
-import {assertLoginIsSuccessful, getAccessToken, getAccountDetails, getAllCommonMovements, getCommonAccounts, isExpiredLogin, login, register} from "./api";
+import {assertLoginIsSuccessful, getAccessToken, getAccountsWithAccountDetailsCreditInfo, getAllCommonMovements, isExpiredLogin, login, register} from "./api";
 import {convertApiMovementsToReadableTransactions, toZenmoneyAccount} from "./converters";
 import {normalizePreferences} from "./preferences";
 
@@ -56,20 +56,13 @@ export async function scrape({preferences, fromDate, toDate}) {
         apiAccounts,
         apiMovements,
     ] = await Promise.all([
-        getCommonAccounts({sessionId, deviceId: pluginData.deviceId}),
+        getAccountsWithAccountDetailsCreditInfo({sessionId, deviceId: pluginData.deviceId}),
         getAllCommonMovements({sessionId, deviceId: pluginData.deviceId, startDate: fromDate, endDate: toDate}),
     ]);
     const readableTransactions = convertApiMovementsToReadableTransactions(apiMovements.reverse(), apiAccounts);
     console.debug({readableTransactions});
     return {
-        accounts: await Promise.all(apiAccounts.map(async (apiAccount) => {
-            if (apiAccount.creditInfo) {
-                const accountDetails = await getAccountDetails({sessionId, deviceId: pluginData.deviceId, accountNumber: apiAccount.number});
-                return toZenmoneyAccount({...apiAccount, accountDetailsCreditInfo: accountDetails.creditInfo});
-            } else {
-                return toZenmoneyAccount(apiAccount);
-            }
-        })),
+        accounts: apiAccounts.map(toZenmoneyAccount),
         transactions: readableTransactions.map(toZenmoneyTransaction),
     };
 }
