@@ -67,24 +67,6 @@ describe("toZenmoneyAccount", () => {
             "description": "Текущий счёт",
             "amount": "8 936.66",
             "currencyCode": "RUR",
-            "actions": {
-                "isAvailableForRename": true,
-                "isAvailableForWithdrowal": true,
-                "isMoneyBoxEdit": false,
-            },
-            "filters": [
-                {
-                    "operation": "accounts",
-                    "title": "Счета",
-                    "color": "#F03226",
-                    "filterList": [
-                        {
-                            "name": "Текущий сч.. RUR ··1234",
-                            "value": "01234567890123456789",
-                        },
-                    ],
-                },
-            ],
         })).toEqual({
             "type": "ccard",
             "title": "Текущий счёт",
