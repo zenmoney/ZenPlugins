@@ -3,7 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const httpProxy = require("http-proxy");
 const _ = require("lodash");
-const {TRANSFERABLE_HEADER_PREFIX, PROXY_TARGET_HEADER} = require("../src/shared");
+const {getTargetUrl, TRANSFERABLE_HEADER_PREFIX, PROXY_TARGET_HEADER} = require("../src/shared");
 const {readPluginManifest, readPluginPreferencesSchema} = require("./utils");
 const stripBOM = require("strip-bom");
 const bodyParser = require("body-parser");
@@ -163,19 +163,11 @@ module.exports = ({allowedHost, host, https}) => {
             });
 
             app.all("*", (req, res, next) => {
-                const targetIdx = req.url.indexOf(PROXY_TARGET_HEADER);
-                let target;
-                if (targetIdx > 0) {
-                    target = req.url.substring(targetIdx + PROXY_TARGET_HEADER.length + 1);
-                    req.url = req.url.substring(0, targetIdx - 1);
-                } else {
-                    target = req.headers[PROXY_TARGET_HEADER];
-                }
+                const target = getTargetUrl(req.url, req.headers[PROXY_TARGET_HEADER]);
                 if (!target) {
                     next();
                     return;
                 }
-                target += req.url;
 
                 if (req.rawHeaders) {
                     const headers = {};

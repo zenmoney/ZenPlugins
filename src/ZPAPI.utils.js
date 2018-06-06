@@ -1,6 +1,7 @@
-import {PROXY_TARGET_HEADER, TRANSFERABLE_HEADER_PREFIX} from "./shared";
+import {getTargetUrl, PROXY_TARGET_HEADER, TRANSFERABLE_HEADER_PREFIX} from "./shared";
 
 let lastRequest = null;
+let lastRequestUrl = null;
 
 let throwOnError = true;
 let defaultEncoding = null;
@@ -41,9 +42,7 @@ export const getLastResponseHeaders = function() {
     return headers;
 };
 
-export const getLastUrl = () => lastRequest
-    ? lastRequest.responseURL
-    : null;
+export const getLastUrl = () => lastRequestUrl;
 
 export const getLastResponseParameters = () => lastRequest
     ? {
@@ -154,7 +153,9 @@ export const fetchRemoteSync = ({method, url, headers, body}) => {
 
     try {
         req.send(processedBody);
+        const {pathname, search} = new URL(req.responseURL);
         lastRequest = req;
+        lastRequestUrl = getTargetUrl(pathname + search, origin);
         return req.responseText;
     } catch (e) {
         handleException("[NER] Connection error. " + e);
