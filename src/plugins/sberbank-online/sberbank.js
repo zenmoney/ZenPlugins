@@ -20,6 +20,15 @@ const defaultHeaders = {
 };
 
 export async function login(login, pin) {
+    //Migration
+    if (!ZenMoney.getData("devID") && ZenMoney.getData("devid")) {
+        ZenMoney.setData("devID", ZenMoney.getData("devid"));
+        ZenMoney.setData("devIDOld", getUid(36) + "0000");
+    }
+    if (!ZenMoney.getData("mGUID") && ZenMoney.getData("guid")) {
+        ZenMoney.setData("mGUID", ZenMoney.getData("guid"));
+    }
+
     if (!ZenMoney.getData("devID")) {
         ZenMoney.setData("devID", getUid(36) + "0000");
         ZenMoney.setData("devIDOld", getUid(36) + "0000");
