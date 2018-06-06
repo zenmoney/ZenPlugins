@@ -1,6 +1,7 @@
 import _ from "lodash";
 import {asCashTransfer, formatComment} from "../../common/converters";
 import {mergeTransfers} from "../../common/mergeTransfers";
+import {formatWithCustomInspectParams} from "../../consoleAdapter";
 import {parseApiAmount} from "./api";
 
 const trimPostfix = (string, postfix) => {
@@ -108,8 +109,10 @@ function calculateAccountId(parsedAmount, apiMovement, apiAccounts) {
             return nonOwnSharedAccounts[0].number.slice(-4);
         }
     }
-    console.error({apiMovement, candidatesLast4Chars});
-    throw new Error(`cannot determine ${parsedAmount > 0 ? "recipient" : "sender"} account id (see log)`);
+    throw new Error(formatWithCustomInspectParams(
+        `cannot determine ${parsedAmount > 0 ? "recipient" : "sender"} account id`,
+        {apiMovement, candidatesLast4Chars},
+    ));
 }
 
 export const normalizeIsoDate = (isoDate) => isoDate.replace(/([+-])(\d{2})(\d{2})$/, "$1$2:$3");
@@ -162,7 +165,6 @@ function complementSides(apiMovements) {
         const recipientInfo = _.mergeWith({}, ...relatedMovements.map((x) => x.recipientInfo), neverLosingDataMergeCustomizer);
         return {...apiMovement, senderInfo, recipientInfo};
     });
-
 }
 
 export function convertApiMovementsToReadableTransactions(apiMovements, apiAccounts) {
