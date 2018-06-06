@@ -140,7 +140,10 @@ describe("convertApiMovementsToReadableTransactions", () => {
                 },
             },
         ];
-        expect(convertApiMovementsToReadableTransactions(apiMovements, [])).toMatchSnapshot();
+        expect(convertApiMovementsToReadableTransactions(apiMovements, [
+            {number: "x7890"},
+            {number: "x0987"},
+        ])).toMatchSnapshot();
     });
 
     it("guesses missing sender account info with single non-own shared account", () => {

@@ -203,6 +203,17 @@ export async function getCommonAccounts({sessionId, deviceId}) {
     return response.body.accounts;
 }
 
+export async function getAccountsWithAccountDetailsCreditInfo({sessionId, deviceId}) {
+    const apiAccounts = await getCommonAccounts({sessionId, deviceId});
+    return Promise.all(apiAccounts.map(async (apiAccount) => {
+        if (!apiAccount.creditInfo) {
+            return apiAccount;
+        }
+        const accountDetails = await getAccountDetails({sessionId, deviceId, accountNumber: apiAccount.number});
+        return {...apiAccount, accountDetailsCreditInfo: accountDetails.creditInfo};
+    }));
+}
+
 // note: API filters movements by date and respects time+timezone only for determining specific day
 const formatApiDate = (date) => date ? date.toISOString().replace(/Z$/, "+0000") : null;
 
