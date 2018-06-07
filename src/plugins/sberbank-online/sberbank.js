@@ -148,6 +148,61 @@ export async function login(login, pin) {
     return {host, token, login, person: response.body.person};
 }
 
+export async function loginInPfm(host) {
+    const response = await fetchXml(`https://${host}:4477/mobile9/private/unifiedClientSession/getToken.do`, {
+        headers: {
+            ...defaultHeaders,
+            "Host": `${host}:4477`,
+            "Content-Type": "application/x-www-form-urlencoded;charset=windows-1251",
+            "Accept": "application/x-www-form-urlencoded",
+            "Accept-Charset": "windows-1251",
+        },
+        body: {systemName: "pfm"},
+    }, response => _.get(response, "body.host") && _.get(response, "body.token"));
+    host = response.body.host;
+    await network.fetchJson(`https://${host}/pfm/api/v1.20/login?token=${response.body.token}`, {
+        method: "GET",
+        headers: {
+            "User-Agent": "Mobile Device",
+            "Accept": "application/json",
+            "Content-Type": "application/json;charset=UTF-8",
+            "Accept-Charset": "UTF-8",
+            "Host": `${host}`,
+            "Connection": "Keep-Alive",
+            "Accept-Encoding": "gzip",
+        },
+    });
+    return {host};
+}
+
+async function fetchTransactionsInPfmWithType(host, accountsIds, fromDate, toDate, income) {
+    const response = await network.fetchJson(`https://${host}/pfm/api/v1.20/extracts`
+        + `?from=${formatDate(fromDate)}&to=${formatDate(toDate)}`
+        + `&showCash=true&showCashPayments=true&showOtherAccounts=true`
+        + `&selectedCardId=${accountsIds.join(",")}&income=${income ? "true" : "false"}`, {
+        method: "GET",
+        headers: {
+            "User-Agent": "Mobile Device",
+            "Accept": "application/json",
+            "Content-Type": "application/json;charset=UTF-8",
+            "Accept-Charset": "UTF-8",
+            "Host": `${host}`,
+            "Connection": "Keep-Alive",
+            "Accept-Encoding": "gzip",
+        },
+    });
+    validateResponse(response, response => response.body
+        && response.body.statusCode === 0 && Array.isArray(response.body.operations));
+    return response.body.operations;
+}
+
+export async function fetchTransactionsInPfm(host, accountIds, fromDate, toDate) {
+    const outcomes = await fetchTransactionsInPfmWithType(host, accountIds, fromDate, toDate, false);
+    const incomes = await fetchTransactionsInPfmWithType(host, accountIds, fromDate, toDate, true);
+    return _.sortBy(outcomes.concat(incomes),
+        apiTransaction => apiTransaction.id).reverse();
+}
+
 export async function fetchAccounts(host) {
     const response = await fetchXml(`https://${host}:4477/mobile9/private/products/list.do`, {
         headers: {
@@ -201,9 +256,11 @@ export async function fetchTransactions(host, {id, type}, fromDate, toDate) {
         ? getArray(_.get(response, "body.elements.element"))
         : getArray(_.get(response, "body.operations.operation"));
     if (!isFetchingByDate || type === "loan") {
+        const fromDateStr = formatDateSql(fromDate);
+        const toDateStr = formatDateSql(toDate);
         transactions = transactions.filter(transaction => {
-            const date = new Date(parseDate(transaction.date));
-            return date >= fromDate && date <= toDate;
+            const dateStr = formatDateSql(new Date(parseDate(transaction.date)));
+            return dateStr >= fromDateStr && dateStr <= toDateStr;
         });
     }
     return transactions;
@@ -280,6 +337,10 @@ function getArray(object) {
 
 export function formatDate(date) {
     return [date.getDate(), date.getMonth() + 1, date.getFullYear()].map(toAtLeastTwoDigitsString).join(".");
+}
+
+export function formatDateSql(date) {
+    return [date.getFullYear(), date.getMonth() + 1, date.getDate()].map(toAtLeastTwoDigitsString).join("-");
 }
 
 function getRandomInt(min, max) {

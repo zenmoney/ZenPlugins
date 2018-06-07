@@ -1,109 +1,72 @@
 import {convertAccountSyncID} from "../../common/accounts";
-import {
-    convertAccounts,
-    convertLoanTransaction,
-    convertTransaction,
-    convertWebTransaction,
-    getAccountData,
-    isCutCurrencyTransaction,
-    isRestoredCurrencyTransaction,
-    restoreCutCurrencyTransactions,
-    updateAccountData,
-} from "./converters";
+import {combineIntoTransferByTransferId} from "../../common/transactions";
+import {convertAccounts, convertLoanTransaction, convertTransaction, convertTransactions} from "./converters";
 import * as sberbank from "./sberbank";
-import * as sberbankWeb from "./sberbankWeb";
 
 export async function scrape({preferences, fromDate, toDate}) {
     toDate = toDate || new Date();
 
     let {host} = await sberbank.login(preferences.login, preferences.pin);
 
-    const accountsByType = await sberbank.fetchAccounts(host);
-    const accountsWithCurrencyTransactions = [];
     const zenAccounts = [];
     const zenTransactions = [];
-    await Promise.all(Object.keys(accountsByType).map(type => {
-        return Promise.all(convertAccounts(accountsByType[type], type).map(async account => {
-            zenAccounts.push(account.zenAccount);
-            if (ZenMoney.isAccountSkipped(account.zenAccount.id)) {
+
+    const apiAccountsByType = await sberbank.fetchAccounts(host);
+    const pfmAccounts = [];
+
+    await Promise.all(Object.keys(apiAccountsByType).map(type => {
+        const isPfmAccount = type === "card";
+
+        return Promise.all(convertAccounts(apiAccountsByType[type], type).map(async apiAccount => {
+            zenAccounts.push(apiAccount.zenAccount);
+            ZenMoney.setData("data_" + apiAccount.zenAccount.id, null);
+
+            if (ZenMoney.isAccountSkipped(apiAccount.zenAccount.id)) {
                 return;
             }
 
-            const idsWithCurrencyTransactions = [];
+            if (isPfmAccount) {
+                pfmAccounts.push(apiAccount);
+                apiAccount.transactions = {};
+                apiAccount.ids.forEach(id => {
+                    apiAccount.transactions[id] = [];
+                });
+            }
 
-            const prevAccountData = ZenMoney.getData("data_" + account.zenAccount.id);
-            const currAccountData = getAccountData(account.zenAccount);
-
-            await Promise.all(account.ids.map(async id => {
+            await Promise.all(apiAccount.ids.map(async id => {
                 for (const apiTransaction of await sberbank.fetchTransactions(host, {id, type}, fromDate, toDate)) {
-                    const transaction = type === "loan"
-                        ? convertLoanTransaction(apiTransaction, account.zenAccount)
-                        : convertTransaction(apiTransaction, account.zenAccount);
-                    if (!transaction) {
+                    if (isPfmAccount) {
+                        apiAccount.transactions[id].push(apiTransaction);
                         continue;
                     }
-                    if (currAccountData) {
-                        updateAccountData({transaction, account: account.zenAccount,
-                            currAccountData, prevAccountData});
-                    }
-                    if (isCutCurrencyTransaction(transaction)) {
-                        if (idsWithCurrencyTransactions.indexOf(id) < 0) {
-                            idsWithCurrencyTransactions.push(id);
-                        }
-                    } else {
-                        zenTransactions.push(transaction);
+                    const zenTransaction = type === "loan"
+                        ? convertLoanTransaction(apiTransaction, apiAccount.zenAccount)
+                        : convertTransaction(apiTransaction, apiAccount.zenAccount);
+                    if (zenTransaction) {
+                        zenTransactions.push(zenTransaction);
                     }
                 }
             }));
-
-            if (idsWithCurrencyTransactions.length > 0 && (!currAccountData || !prevAccountData
-                    || !restoreCutCurrencyTransactions({
-                        account: account.zenAccount,
-                        transactions: zenTransactions,
-                        currAccountData,
-                        prevAccountData,
-                    }))) {
-                account.idsWithCurrencyTransactions = idsWithCurrencyTransactions;
-                accountsWithCurrencyTransactions.push(account);
-            }
-            if (currAccountData) {
-                delete currAccountData.currencyMovements;
-            }
-
-            ZenMoney.setData("data_" + account.zenAccount.id, currAccountData);
         }));
     }));
 
-    if (accountsWithCurrencyTransactions.length > 0 && !ZenMoney.getData("scrape/lastSuccessDate")) {
-        let error = null;
-        try {
-            host = (await sberbankWeb.login(preferences.login, preferences.password)).host;
-        } catch (e) {
-            if (e instanceof TemporaryError) {
-                console.error(e);
-                error = e;
-            } else {
-                throw e;
+    if (pfmAccounts.length > 0) {
+        host = (await sberbank.loginInPfm(host)).host;
+        await Promise.all(pfmAccounts.map(apiAccount => Promise.all(apiAccount.ids.map(async id => {
+            const pfmTransactions = await sberbank.fetchTransactionsInPfm(host, [id], fromDate, toDate);
+            for (const zenTransaction of convertTransactions({
+                account: apiAccount.zenAccount,
+                apiTransactions: apiAccount.transactions[id],
+                pfmTransactions,
+            })) {
+                zenTransactions.push(zenTransaction);
             }
-        }
-        if (!error) {
-            for (const account of accountsWithCurrencyTransactions) {
-                for (const id of account.idsWithCurrencyTransactions) {
-                    const webTransactions = await sberbankWeb.fetchTransactions(host, {id, type: account.type}, fromDate, toDate);
-                    for (const webTransaction of webTransactions) {
-                        const transaction = convertWebTransaction(webTransaction, account.zenAccount);
-                        if (transaction && isRestoredCurrencyTransaction(transaction)) {
-                            zenTransactions.push(transaction);
-                        }
-                    }
-                }
-            }
-        }
+        }))));
     }
 
     return {
         accounts: convertAccountSyncID(zenAccounts, true),
-        transactions: zenTransactions,
+        transactions: combineIntoTransferByTransferId(zenTransactions),
     };
 }
 

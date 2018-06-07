@@ -1,112 +1,112 @@
 import * as _ from "lodash";
 
-function getOpAmount(transaction, account) {
-    let sum;
-    let instrument;
-    if (transaction.income && transaction.incomeAccount === account.id) {
-        sum = transaction.income;
-        instrument = account.instrument;
-    } else if (transaction.outcome && transaction.outcomeAccount === account.id) {
-        sum = -transaction.outcome;
-        instrument = account.instrument;
-    } else if (transaction.opIncome) {
-        sum = transaction.opIncome;
-        instrument = transaction.opIncomeInstrument;
-    } else if (transaction.opOutcome) {
-        sum = -transaction.opOutcome;
-        instrument = transaction.opOutcomeInstrument;
-    }
-    return {sum, instrument};
+export function convertTransactionsToOpAmounts(apiTransactions, account) {
+    return apiTransactions.filter(apiTransaction => apiTransaction.sum.currency.code !== account.instrument)
+        .map(apiTransaction => {
+            return {
+                sum: parseDecimal(apiTransaction.sum.amount),
+                instrument: apiTransaction.sum.currency.code,
+                date: apiTransaction.date,
+                description: reduceWhitespaces(apiTransaction.description),
+            };
+        })
+        .reverse();
 }
 
-export function getAccountData(account) {
-    const balance = typeof account.balance === "number"
-        ? account.balance
-        : account.available || null;
-    if (balance === null) {
-        return null;
-    }
-    return {
-        transactionHashes: {},
-        currencyMovements: {},
-        balance,
-    };
-}
-
-export function updateAccountData({transaction, account, currAccountData, prevAccountData}) {
-    const {sum, instrument} = getOpAmount(transaction, account);
-    const hash = `${transaction.date}_${instrument}_${sum}`;
-    if (prevAccountData && prevAccountData.balance !== null) {
-        // Our goal is to restore currency transactions. If there is no previous balance then we failed
-        if (prevAccountData.transactionHashes[hash]) {
-            prevAccountData.transactionHashes[hash]--;
+export function convertTransactions({apiTransactions, pfmTransactions, account}) {
+    const transactions = [];
+    const opAmounts = convertTransactionsToOpAmounts(apiTransactions, account);
+    for (const pfmTransaction of pfmTransactions) {
+        const date = pfmTransaction.date;
+        const sum = parseDecimal(pfmTransaction.cardAmount.amount);
+        const transaction = {
+            date: parseDate(pfmTransaction.date),
+            income: 0,
+            incomeAccount: account.id,
+            outcome: 0,
+            outcomeAccount: account.id,
+        };
+        if (sum > 0) {
+            transaction.income = sum;
+            transaction.incomeBankID = pfmTransaction.id;
         } else {
-            let currencyMovement = currAccountData.currencyMovements[instrument];
-            if (currencyMovement) {
-                currencyMovement.sum += sum;
-                currencyMovement.transactions.push(transaction);
-            } else {
-                currAccountData.currencyMovements[instrument] = {sum, instrument, transactions: [transaction]};
-            }
+            transaction.outcome = -sum;
+            transaction.outcomeBankID = pfmTransaction.id;
         }
-    }
-    if (currAccountData.transactionHashes[hash]) {
-        currAccountData.transactionHashes[hash]++;
-    } else {
-        currAccountData.transactionHashes[hash] = 1;
-    }
-}
+        let opAmount = undefined;
+        switch (pfmTransaction.categoryId) {
+            case 203:
+            case 214:
+                opAmount = selectOpAmount({date, sum, opAmounts}) || {sum, instrument: account.instrument};
+                if (sum > 0) {
+                    transaction.outcome = sum;
+                    transaction.outcomeAccount = "cash#" + opAmount.instrument;
+                } else {
+                    transaction.income = -sum;
+                    transaction.incomeAccount = "cash#" + opAmount.instrument;
+                }
+                break;
+            case 1475:
+            case 1476:
+                opAmount = selectOpAmount({date, sum, opAmounts}) || {sum, instrument: account.instrument};
+                transaction.comment = pfmTransaction.categoryName;
+                transaction._transferId = getTransferId(date, opAmount);
+                transaction._transferType = sum > 0 ? "outcome" : "income";
+                break;
+            default:
+                if (pfmTransaction.merchantInfo && pfmTransaction.merchantInfo.merchant) {
+                    transaction.payee = reduceWhitespaces(pfmTransaction.merchantInfo.merchant);
+                } else if (pfmTransaction.comment) {
+                    transaction.payee = reduceWhitespaces(pfmTransaction.comment.split("    ")[0]);
+                }
+                if (transaction.payee && [
+                    "Оплата услуг",
+                    "Сбербанк Онлайн",
+                    "SBOL",
+                    "SBERBANK ONL@IN PLATEZH RU",
+                ].indexOf(transaction.payee) >= 0) {
+                    transaction.comment = transaction.payee;
+                    delete transaction.payee;
+                }
 
-export function restoreCutCurrencyTransactions({account, currAccountData, prevAccountData, transactions}) {
-    let delta = currAccountData.balance - prevAccountData.balance;
-    const accountCurrencyMovement = currAccountData.currencyMovements[account.instrument];
-    if (accountCurrencyMovement) {
-        delta -= accountCurrencyMovement.sum;
-        delete currAccountData.currencyMovements[account.instrument];
-    }
-
-    const instruments = Object.keys(currAccountData.currencyMovements);
-    if (instruments.length > 1) {
-        return false;
-    }
-    if (instruments.length === 0) {
-        return true;
-    }
-
-    const currencyMovement = currAccountData.currencyMovements[instruments[0]];
-    if (Math.sign(currencyMovement.sum) !== Math.sign(delta)
-            || Math.abs(currencyMovement.sum) < 0.01
-            || Math.abs(delta) < 0.01) {
-        return false;
-    }
-
-    const rate = delta / currencyMovement.sum;
-    let i = -1;
-    for (const transaction of currencyMovement.transactions) {
-        i++;
-        if (transaction.opIncome) {
-            transaction.income = i === currencyMovement.transactions.length - 1
-                ? parseDecimal(Math.max(0.01, delta))
-                : parseDecimal(transaction.opIncome * rate);
-            delta -= transaction.income;
-        } else {
-            transaction.outcome = i === currencyMovement.transactions.length - 1
-                ? parseDecimal(Math.max(0.01, -delta))
-                : parseDecimal(transaction.opOutcome * rate);
-            delta += transaction.outcome;
+                break;
+        }
+        if (opAmount === undefined) {
+            opAmount = selectOpAmount({date, sum, opAmounts, payee: transaction.payee});
+        }
+        if (opAmount && opAmount.instrument !== account.instrument) {
+            if (opAmount.sum > 0) {
+                transaction.opIncome = opAmount.sum;
+                transaction.opIncomeInstrument = opAmount.instrument;
+            } else {
+                transaction.opOutcome = -opAmount.sum;
+                transaction.opOutcomeInstrument = opAmount.instrument;
+            }
         }
         transactions.push(transaction);
     }
-
-    return true;
+    return transactions;
 }
 
-export function isRestoredCurrencyTransaction(transaction) {
-    return transaction.incomeAccount === transaction.outcomeAccount && (transaction.opIncome || transaction.opOutcome);
+function getTransferId(date, opAmount) {
+    return `${date}_${opAmount.instrument}_${parseDecimal(Math.abs(opAmount.sum))}`;
 }
 
-export function isCutCurrencyTransaction(transaction) {
-    return transaction.income === null || transaction.outcome === null;
+export function selectOpAmount({date, payee, sum, opAmounts}) {
+    for (let i = 0; i < opAmounts.length; i++) {
+        const opAmount = opAmounts[i];
+        if (!opAmount || opAmount.date !== date) {
+            continue;
+        }
+        if (Math.sign(opAmount.sum) !== Math.sign(sum)) {
+            continue;
+        }
+        if (payee && opAmount.description.indexOf(payee) < 0) {
+            continue;
+        }
+        opAmounts[i] = null;
+        return opAmount;
+    }
 }
 
 export function convertLoanTransaction(apiTransaction, account) {
@@ -327,7 +327,7 @@ function parseDuration(duration, account) {
     }
 }
 
-function parseDecimal(str) {
+export function parseDecimal(str) {
     if (typeof str === "number") {
         return Math.round(str * 100) / 100;
     }
@@ -356,8 +356,7 @@ function parseCashWithdrawal(transaction, opAmount) {
 }
 
 function parseCashReplenishment(transaction, opAmount) {
-    if (transaction.outcome === 0
-            && parseDescription(transaction.comment, ["Note Acceptance"])) {
+    if (transaction.outcome === 0 && parseDescription(transaction.comment, ["Note Acceptance"])) {
         transaction.outcome = opAmount.sum;
         transaction.outcomeAccount = "cash#" + opAmount.instrument;
         transaction.comment = null;

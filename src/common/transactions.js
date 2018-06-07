@@ -1,3 +1,30 @@
+export function combineIntoTransferByTransferId(transactions) {
+    return mapObjectsGroupedByKey(transactions,
+        (transaction) => transaction._transferId || null,
+        (transactions, key) => {
+            if (key === null) {
+                return transactions;
+            }
+            if (transactions.length === 2
+                    && transactions[0]._transferType !== transactions[1]._transferType) {
+                const transaction = transactions[0];
+                const transferType = transactions[0]._transferType;
+                ["", "Account", "BankID"].forEach(postfix => {
+                    const value = transactions[1][transferType + postfix];
+                    if (value !== undefined) {
+                        transaction[transferType + postfix] = value;
+                    }
+                });
+                transactions = [transaction];
+            }
+            transactions.forEach(transaction => {
+                delete transaction._transferId;
+                delete transaction._transferType;
+            });
+            return transactions;
+        });
+}
+
 export function mapObjectsGroupedByKey(objects, keyGetter, groupMapper) {
     const objectsByKey = new Map();
     for (const object of objects) {
