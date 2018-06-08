@@ -194,9 +194,9 @@ export function convertAccounts(apiAccountsArray, type) {
         const accounts = [];
         for (const apiAccount of apiAccountsArray) {
             const zenAccount = type === "account"
-                ? apiAccount.account.rate && parseDecimal(apiAccount.account.rate) > 0.01
+                ? (apiAccount.account.rate && apiAccount.details.detail.period && parseDecimal(apiAccount.account.rate) > 2
                     ? convertDeposit(apiAccount.account, apiAccount.details)
-                    : convertAccount(apiAccount.account, apiAccount.details)
+                    : convertAccount(apiAccount.account, apiAccount.details))
                 : convertLoan(apiAccount.account, apiAccount.details);
             if (!zenAccount) {
                 continue;
