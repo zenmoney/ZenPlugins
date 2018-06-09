@@ -181,7 +181,7 @@ async function fetchTransactionsInPfmWithType(host, accountsIds, fromDate, toDat
         fromDate.setFullYear(currentYear, 0, 1);
     }
     const response = await network.fetchJson(`https://${host}/pfm/api/v1.20/extracts`
-        + `?=${formatDate(fromDate)}&to=${formatDate(toDate)}`
+        + `?from=${formatDate(fromDate)}&to=${formatDate(toDate)}`
         + `&showCash=true&showCashPayments=true&showOtherAccounts=true`
         + `&selectedCardId=${accountsIds.join(",")}&income=${income ? "true" : "false"}`, {
         method: "GET",
