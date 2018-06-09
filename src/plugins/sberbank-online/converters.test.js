@@ -610,23 +610,23 @@ describe("parseWebAmount", () => {
         expect(parseWebAmount("+24 539,58 руб.")).toEqual({
             posted: {
                 amount: 24539.58,
-                instrument: "руб.",
+                instrument: "RUB",
             },
         });
         expect(parseWebAmount("−3 298,64 руб.")).toEqual({
             posted: {
                 amount: -3298.64,
-                instrument: "руб.",
+                instrument: "RUB",
             },
         });
         expect(parseWebAmount("−5,00 € (373,10 руб.)")).toEqual({
             posted: {
                 amount: -373.1,
-                instrument: "руб.",
+                instrument: "RUB",
             },
             origin: {
                 amount: -5,
-                instrument: "€",
+                instrument: "EUR",
             },
         });
     });
