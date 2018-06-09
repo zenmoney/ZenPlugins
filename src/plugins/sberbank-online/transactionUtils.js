@@ -15,11 +15,38 @@ export function getAccountData(account) {
     };
 }
 
+export function saveAccountData(accountData) {
+    delete accountData.currencyMovements;
+    if (accountData.currencyTransaction
+            && (accountData.currencyTransaction.income === null
+            || accountData.currencyTransaction.outcome === null)) {
+        accountData.currencyTransaction = null;
+    }
+    if (!accountData.currencyTransaction) {
+        delete accountData.currencyTransaction;
+    }
+}
+
+export function loadAccountData(previousAccountData) {
+    if (!previousAccountData) {
+        return null;
+    }
+    if (previousAccountData.currencyTransaction
+            && (previousAccountData.currencyTransaction.income === null
+            || previousAccountData.currencyTransaction.outcome === null)) {
+        delete previousAccountData.currencyTransaction;
+    }
+    if (previousAccountData.currencyTransaction
+            && !(previousAccountData.currencyTransaction.date instanceof Date)) {
+        previousAccountData.currencyTransaction.date = new Date(previousAccountData.currencyTransaction.date);
+    }
+    return previousAccountData;
+}
+
 export function trackLastCurrencyTransaction(zenMoneyTransaction, accountData) {
     const origin = getOriginAmount(zenMoneyTransaction);
     if (origin) {
-        if (accountData.currencyTransaction === null
-                && zenMoneyTransaction.income !== null && zenMoneyTransaction.outcome !== null) {
+        if (accountData.currencyTransaction === null) {
             accountData.currencyTransaction = zenMoneyTransaction;
         } else {
             delete accountData.currencyTransaction;
@@ -57,30 +84,30 @@ export function addDeltaToLastCurrencyTransaction({account, accountData, previou
     if (accountData.balance === null
             || previousAccountData === null
             || previousAccountData.balance === null
-            || !areEqualTransactions(previousAccountData.currencyTransaction, accountData.currencyTransaction)
-            || previousAccountData.currencyTransaction.income === null
-            || previousAccountData.currencyTransaction.outcome === null) {
-        delete accountData.currencyTransaction;
-        return;
+            || !areEqualTransactions(previousAccountData.currencyTransaction, accountData.currencyTransaction)) {
+        return null;
     }
     const delta = accountData.balance - previousAccountData.balance;
-    const transaction = previousAccountData.currencyTransaction;
+    const oldTransaction = previousAccountData.currencyTransaction;
+    const newTransaction = accountData.currencyTransaction;
 
     if (Math.abs(delta) < 0.01) {
-        accountData.currencyTransaction.income = transaction.income;
-        accountData.currencyTransaction.outcome = transaction.outcome;
-        return;
+        newTransaction.income = oldTransaction.income;
+        newTransaction.outcome = oldTransaction.outcome;
+        return null;
     }
 
     const holdCorrectionRate = 0.05;
-    if (transaction.incomeAccount === account.id && transaction.income > 0 && transaction.opIncome > 0
-            && Math.abs(delta) / transaction.income < holdCorrectionRate) {
-        accountData.currencyTransaction.income = parseDecimal(transaction.income + delta);
-    } else if (transaction.outcomeAccount === account.id && transaction.outcome > 0 && transaction.opOutcome > 0
-            && Math.abs(delta) / transaction.outcome < holdCorrectionRate) {
-        accountData.currencyTransaction.outcome = parseDecimal(transaction.outcome - delta);
+    if (oldTransaction.incomeAccount === account.id && oldTransaction.income > 0 && oldTransaction.opIncome > 0
+            && Math.abs(delta) / oldTransaction.income < holdCorrectionRate) {
+        newTransaction.income = parseDecimal(oldTransaction.income + delta);
+    } else if (oldTransaction.outcomeAccount === account.id && oldTransaction.outcome > 0 && oldTransaction.opOutcome > 0
+            && Math.abs(delta) / oldTransaction.outcome < holdCorrectionRate) {
+        newTransaction.outcome = parseDecimal(oldTransaction.outcome - delta);
     }
     delete accountData.currencyTransaction;
+
+    return newTransaction;
 }
 
 export const RestoreResult = {
@@ -146,7 +173,7 @@ function getOriginAmount(transaction) {
 
 function areEqualTransactions(transaction1, transaction2) {
     return transaction1 && transaction2
-        && transaction1.date === transaction2.date
+        && formatDateSql(transaction1.date) === formatDateSql(transaction2.date)
         && transaction1.incomeAccount === transaction2.incomeAccount
         && transaction1.outcomeAccount === transaction2.outcomeAccount
         && transaction1.opIncome === transaction2.opIncome

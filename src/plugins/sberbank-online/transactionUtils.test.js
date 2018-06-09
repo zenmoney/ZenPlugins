@@ -1,13 +1,15 @@
 import {addDeltaToLastCurrencyTransaction, restoreNewCurrencyTransactions, RestoreResult} from "./transactionUtils";
 
 describe("addDeltaToLastCurrencyTransaction", () => {
+    const date = new Date("2018-01-01");
+
     it("adds delta if it < 5%", () => {
         const account = {
             id: "account",
             instrument: "RUB",
         };
         let currTransaction = {
-            date: "2018-01-01",
+            date,
             income: null,
             incomeAccount: account.id,
             outcome: 0,
@@ -16,7 +18,7 @@ describe("addDeltaToLastCurrencyTransaction", () => {
             opIncomeInstrument: "USD",
         };
         let prevTransaction = {
-            date: "2018-01-01",
+            date,
             income: 100,
             incomeAccount: account.id,
             outcome: 0,
@@ -41,7 +43,7 @@ describe("addDeltaToLastCurrencyTransaction", () => {
         expect(accountData.currencyTransaction).toBeUndefined();
         expect(prevTransaction).toEqual(prevTransactionCopy);
         expect(currTransaction).toEqual({
-            date: "2018-01-01",
+            date,
             income: 104,
             incomeAccount: account.id,
             outcome: 0,
@@ -66,7 +68,7 @@ describe("addDeltaToLastCurrencyTransaction", () => {
         expect(accountData.currencyTransaction).toBeUndefined();
         expect(prevTransaction).toEqual(prevTransactionCopy);
         expect(currTransaction).toEqual({
-            date: "2018-01-01",
+            date,
             income: 96,
             incomeAccount: account.id,
             outcome: 0,
@@ -76,7 +78,7 @@ describe("addDeltaToLastCurrencyTransaction", () => {
         });
 
         currTransaction = {
-            date: "2018-01-01",
+            date,
             income: 0,
             incomeAccount: account.id,
             outcome: null,
@@ -85,7 +87,7 @@ describe("addDeltaToLastCurrencyTransaction", () => {
             opOutcomeInstrument: "USD",
         };
         prevTransaction = {
-            date: "2018-01-01",
+            date,
             income: 0,
             incomeAccount: account.id,
             outcome: 100,
@@ -110,7 +112,7 @@ describe("addDeltaToLastCurrencyTransaction", () => {
         expect(accountData.currencyTransaction).toBeUndefined();
         expect(prevTransaction).toEqual(prevTransactionCopy);
         expect(currTransaction).toEqual({
-            date: "2018-01-01",
+            date,
             income: 0,
             incomeAccount: account.id,
             outcome: 104,
@@ -126,7 +128,7 @@ describe("addDeltaToLastCurrencyTransaction", () => {
             instrument: "RUB",
         };
         const currTransaction = {
-            date: "2018-01-01",
+            date,
             income: null,
             incomeAccount: account.id,
             outcome: 0,
@@ -135,7 +137,7 @@ describe("addDeltaToLastCurrencyTransaction", () => {
             opIncomeInstrument: "USD",
         };
         const prevTransaction = {
-            date: "2018-01-01",
+            date,
             income: 100,
             incomeAccount: account.id,
             outcome: 0,

@@ -51,18 +51,24 @@ export function parsePfmDescription(description) {
     };
 }
 
-export function convertApiTransaction(apiTransaction) {
+export function convertApiTransaction(apiTransaction, zenAccount) {
     if (apiTransaction.description === "Капитализация вклада") {
         return null;
     }
-    return {
+    const origin = {
+        amount: parseDecimal(apiTransaction.sum.amount),
+        instrument: apiTransaction.sum.currency.code,
+    };
+    const transaction = {
         date: parseApiDate(apiTransaction.date),
         ...parseApiDescription(apiTransaction.description),
-        origin: {
-            amount: parseDecimal(apiTransaction.sum.amount),
-            instrument: apiTransaction.sum.currency.code,
-        },
     };
+    if (origin.instrument === zenAccount.instrument) {
+        transaction.posted = origin;
+    } else {
+        transaction.origin = origin;
+    }
+    return transaction;
 }
 
 export function convertPfmTransaction(pfmTransaction) {
@@ -137,10 +143,11 @@ export function addTransactions(oldTransactions, newTransactions, isWebTransacti
                     continue l;
                 }
                 if (!isWebTransaction
-                            && (newTransaction.posted.instrument !== oldTransaction.origin.instrument
-                                 || newTransaction.posted.amount === oldTransaction.origin.amount)) {
+                            && ((oldTransaction.posted && oldTransaction.posted.amount === newTransaction.posted.amount)
+                            || (!oldTransaction.posted && (newTransaction.posted.instrument !== oldTransaction.origin.instrument
+                                 || newTransaction.posted.amount === oldTransaction.origin.amount)))) {
                     let origin = null;
-                    if (newTransaction.posted.instrument !== oldTransaction.origin.instrument) {
+                    if (oldTransaction.origin && newTransaction.posted.instrument !== oldTransaction.origin.instrument) {
                         origin = oldTransaction.origin;
                     }
                     for (const key in oldTransaction) {
@@ -179,7 +186,7 @@ export function convertToZenMoneyTransaction(account, transaction) {
             zenMoneyTransaction.outcomeBankID = transaction.id;
         }
     }
-    if (transaction.origin && (!transaction.posted || transaction.origin.instrument !== transaction.posted.instrument)) {
+    if (transaction.origin) {
         if (transaction.origin.amount > 0) {
             zenMoneyTransaction.opIncome = transaction.origin.amount;
             zenMoneyTransaction.opIncomeInstrument = transaction.origin.instrument;

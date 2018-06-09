@@ -15,8 +15,10 @@ import * as sberbankWeb from "./sberbankWeb";
 import {
     addDeltaToLastCurrencyTransaction,
     getAccountData,
+    loadAccountData,
     restoreNewCurrencyTransactions,
     RestoreResult,
+    saveAccountData,
     trackCurrencyMovement,
     trackLastCurrencyTransaction,
 } from "./transactionUtils";
@@ -44,7 +46,7 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
 
             if (isPfmAccount) {
                 pfmAccounts.push(apiAccount);
-                apiAccount.previousAccountData = ZenMoney.getData("data_" + apiAccount.zenAccount.id);
+                apiAccount.previousAccountData = loadAccountData(ZenMoney.getData("data_" + apiAccount.zenAccount.id));
                 apiAccount.accountData = getAccountData(apiAccount.zenAccount);
                 apiAccount.transactions = {};
                 apiAccount.ids.forEach(id => apiAccount.transactions[id] = []);
@@ -54,7 +56,7 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
                 for (const apiTransaction of await sberbank.fetchTransactions(host, {id, type}, fromDate, toDate)) {
                     const transaction = type === "loan"
                         ? convertLoanTransaction(apiTransaction)
-                        : convertApiTransaction(apiTransaction);
+                        : convertApiTransaction(apiTransaction, apiAccount.zenAccount);
                     if (!transaction) {
                         continue;
                     }
@@ -135,13 +137,16 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
             }
         }
         if (!isFirstRun && apiAccount.restoreResult === RestoreResult.UNCHANGED) {
-            addDeltaToLastCurrencyTransaction({
+            const lastCurrencyTransaction = addDeltaToLastCurrencyTransaction({
                 account: apiAccount.zenAccount,
                 accountData: apiAccount.accountData,
                 previousAccountData: apiAccount.previousAccountData,
             });
+            if (lastCurrencyTransaction) {
+                console.log("delta added to last currency transaction", lastCurrencyTransaction);
+            }
         }
-        delete apiAccount.accountData.currencyMovements;
+        saveAccountData(apiAccount.accountData);
         ZenMoney.setData("data_" + apiAccount.zenAccount.id, apiAccount.accountData);
     }
 
