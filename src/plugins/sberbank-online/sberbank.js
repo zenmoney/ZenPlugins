@@ -54,7 +54,7 @@ export async function login(login, pin) {
                 "mobileSdkData": JSON.stringify(createSdkData(login)),
             },
             sanitizeRequestLog: {body: {mGUID: true, password: true, devID: true, mobileSdkData: true}},
-            sanitizeResponseLog: {body: {loginData: {token: true}}},
+            sanitizeResponseLog: {body: {loginData: {token: true}}, headers: {"set-cookie": true}},
         }, null);
         if (_.get(response, "body.status.code") === "7") {
             ZenMoney.setData("mGUID", null);
@@ -158,6 +158,7 @@ export async function loginInPfm(host) {
             "Accept-Charset": "windows-1251",
         },
         body: {systemName: "pfm"},
+        sanitizeResponseLog: {body: {token: true}},
     }, response => _.get(response, "body.host") && _.get(response, "body.token"));
     host = response.body.host;
     await network.fetchJson(`https://${host}/pfm/api/v1.20/login?token=${response.body.token}`, {
@@ -171,6 +172,8 @@ export async function loginInPfm(host) {
             "Connection": "Keep-Alive",
             "Accept-Encoding": "gzip",
         },
+        sanitizeRequestLog: {url: true},
+        sanitizeResponseLog: {url: true, headers: {"set-cookie": true}},
     });
     return {host};
 }
