@@ -3,9 +3,9 @@ import {
     convertCards,
     convertDeposit,
     convertLoan,
-    convertLoanTransaction,
-    convertTransaction,
-    parseAmount,
+    parseApiDescription,
+    parsePfmDescription,
+    parseWebAmount,
 } from "./converters";
 
 describe("convertLoan", () => {
@@ -605,134 +605,75 @@ describe("convertCards", () => {
     });
 });
 
-describe("convertTransaction", () => {
-    it("parses payee", () => {
-        expect(convertTransaction({
-            date: "16.04.2018T00:00:00",
-            description: "Retail RUS MOSCOW        Retail RUS MOSCOW WWW.RZD.RU",
-            sum: {
-                amount: "-1856.40",
-                currency: {code: "RUB", name: "руб."},
-            },
-        }, {
-            id: "account",
-            instrument: "RUB",
-        })).toEqual({
-            date: "2018-04-16",
-            income: 0,
-            incomeAccount: "account",
-            outcome: 1856.40,
-            outcomeAccount: "account",
-            payee: "MOSCOW WWW.RZD.RU",
-            comment: null,
-        });
-
-        expect(convertTransaction({
-            date: "05.04.2018T00:00:00",
-            description: "Retail RUS ST PETERSBURG Retail RUS ST PETERSBURG IKEA DOM 6 CASH LINE",
-            sum: {
-                amount: "-19445.00",
-                currency: {code: "RUB", name: "руб."},
-            },
-        }, {
-            id: "account",
-            instrument: "RUB",
-        })).toEqual({
-            date: "2018-04-05",
-            income: 0,
-            incomeAccount: "account",
-            outcome: 19445.00,
-            outcomeAccount: "account",
-            payee: "ST PETERSBURG IKEA DOM 6 CASH LINE",
-            comment: null,
-        });
-    });
-
-    it("converts cash replenishment", () => {
-        expect(convertTransaction({
-            date: "17.04.2018T21:24:13",
-            description: "Note Acceptance RUS ZLATOUST Note Acceptance RUS ZLATOUST ITT 864001",
-            sum: {
-                amount: "+3000.00",
-                currency: {code: "RUB", name: "руб."},
-            },
-        }, {
-            id: "account",
-            instrument: "RUB",
-        })).toEqual({
-            date: "2018-04-17",
-            income: 3000,
-            incomeAccount: "account",
-            outcome: 3000,
-            outcomeAccount: "cash#RUB",
-            comment: null,
-        });
-    });
-});
-
-describe("convertLoanTransaction", () => {
-    expect(convertLoanTransaction({
-        date: "21.09.2012T00:00:00",
-        interestsAmount: {
-            amount: "29229.78",
-            currency: {code: "RUB", name: "руб."},
-        },
-        paymentNumber: "1",
-        principalAmount: {
-            amount: "5388.74",
-            currency: {code: "RUB", name: "руб."}},
-        remainDebt: {
-            amount: "2894611.26",
-            currency: {code: "RUB", name: "руб."}
-        },
-        state: "paid",
-        totalPaymentAmount: {
-            amount: "34618.52",
-            currency: {code: "RUB", name: "руб."},
-        },
-    }, {
-        id: "account",
-        instrument: "RUB",
-    })).toEqual({
-        date: "2012-09-21",
-        income: 34618.52,
-        incomeAccount: "account",
-        outcome: 0,
-        outcomeAccount: "account",
-    });
-});
-
-describe("parseAmount", () => {
+describe("parseWebAmount", () => {
     it("returns valid amounts", () => {
-        expect(parseAmount("+24 539,58 руб.")).toEqual({
-            amount: {
-                sum: 24539.58,
-                instrument: "руб.",
-            },
-            opAmount: {
-                sum: 24539.58,
+        expect(parseWebAmount("+24 539,58 руб.")).toEqual({
+            posted: {
+                amount: 24539.58,
                 instrument: "руб.",
             },
         });
-        expect(parseAmount("−3 298,64 руб.")).toEqual({
-            amount: {
-                sum: -3298.64,
-                instrument: "руб.",
-            },
-            opAmount: {
-                sum: -3298.64,
+        expect(parseWebAmount("−3 298,64 руб.")).toEqual({
+            posted: {
+                amount: -3298.64,
                 instrument: "руб.",
             },
         });
-        expect(parseAmount("−5,00 € (373,10 руб.)")).toEqual({
-            amount: {
-                sum: -373.1,
+        expect(parseWebAmount("−5,00 € (373,10 руб.)")).toEqual({
+            posted: {
+                amount: -373.1,
                 instrument: "руб.",
             },
-            opAmount: {
-                sum: -5,
+            origin: {
+                amount: -5,
                 instrument: "€",
             },
+        });
+    });
+});
+
+describe("parseApiDescription", () => {
+    it("returns valid data", () => {
+        expect(parseApiDescription("CH Payment RUS MOSCOW CH Payment RUS MOSCOW SBOL")).toEqual({
+            payee: "SBOL",
+            description: "CH Payment RUS MOSCOW",
+        });
+        expect(parseApiDescription("Retail LUX 4029357733 Retail LUX 4029357733 PAYPAL *YOURSERVERS")).toEqual({
+            payee: "PAYPAL *YOURSERVERS",
+            description: "Retail LUX 4029357733",
+        });
+        expect(parseApiDescription("BP Billing Transfer RUS  BP Billing Transfer RUS  SBERBANK ONL@IN PLATEZH")).toEqual({
+            payee: "SBERBANK ONL@IN PLATEZH",
+            description: "BP Billing Transfer RUS",
+        });
+        expect(parseApiDescription("unknown pattern")).toEqual({
+            payee: null,
+            description: "unknown pattern",
+        });
+    });
+});
+
+describe("parsePfmDescription", () => {
+    it("returns valid data", () => {
+        expect(parsePfmDescription("MTS AVTO                 MOSCOW       RUS")).toEqual({
+            payee: "MTS AVTO",
+            description: "MOSCOW RUS",
+        });
+        expect(parsePfmDescription("GO.SKYPE.COM/BILL        LUXEMBOURG   LUX")).toEqual({
+            payee: "GO.SKYPE.COM/BILL",
+            description: "LUXEMBOURG LUX",
+        });
+        expect(parsePfmDescription("SBERBANK ONL@IN PLATEZH   RU")).toEqual({
+            payee: "SBERBANK ONL@IN PLATEZH",
+            description: "RU",
+        });
+        expect(parsePfmDescription("IKEA DOM 6 CASH LINE     ST PETERSBUR RU")).toEqual({
+            payee: "IKEA DOM 6 CASH LINE",
+            description: "ST PETERSBUR RU",
+        });
+        expect(parsePfmDescription("unknown pattern")).toEqual({
+            payee: null,
+            description: "unknown pattern",
         });
     });
 });

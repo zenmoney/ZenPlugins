@@ -37,12 +37,12 @@ export function mapObjectsGroupedByKey(objects, keyGetter, groupMapper) {
         group.push(object);
     }
     let filtered = [];
-    for (const [key, group] of objectsByKey.entries()) {
+    objectsByKey.forEach((group, key) => {
         const objects = groupMapper(group, key);
         if (objects) {
             filtered = filtered.concat(objects);
         }
-    }
+    });
     return filtered;
 }
 

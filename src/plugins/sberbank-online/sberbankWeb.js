@@ -223,6 +223,9 @@ export function parseTransactions($, nowDate) {
         let amount = $("td[class=align-right]", node);
         if (amount.children().length) {
             amount = amount.children()[0];
+            if (amount.children && amount.children.length) {
+                amount = amount.children[0];
+            }
         }
         let dateStr = getTextFromNode(date).toLowerCase();
         if (dateStr.indexOf("сегодня") >= 0) {
@@ -252,7 +255,12 @@ function getPageToken(response) {
 }
 
 function getTextFromNode(node) {
-    return reduceWhitespaces(node.text());
+    try {
+        return reduceWhitespaces(typeof node.text === "function" ? node.text() : node.data);
+    } catch (e) {
+        console.error("unexpected node", node);
+        throw e;
+    }
 }
 
 async function fetchHtml(url, options = {}, predicate = () => true) {

@@ -2,7 +2,7 @@ import {MD5} from "jshashes";
 import _ from "lodash";
 import {toAtLeastTwoDigitsString} from "../../common/dates";
 import * as network from "../../common/network";
-import {parseDate} from "./converters";
+import {formatDateSql, parseDate} from "./converters";
 
 const qs = require("querystring");
 const md5 = new MD5();
@@ -176,6 +176,10 @@ export async function loginInPfm(host) {
 }
 
 async function fetchTransactionsInPfmWithType(host, accountsIds, fromDate, toDate, income) {
+    const currentYear = new Date().getFullYear();
+    if (fromDate.getFullYear() < currentYear) {
+        fromDate.setFullYear(currentYear, 0, 1);
+    }
     const response = await network.fetchJson(`https://${host}/pfm/api/v1.20/extracts`
         + `?from=${formatDate(fromDate)}&to=${formatDate(toDate)}`
         + `&showCash=true&showCashPayments=true&showOtherAccounts=true`
@@ -197,10 +201,9 @@ async function fetchTransactionsInPfmWithType(host, accountsIds, fromDate, toDat
 }
 
 export async function fetchTransactionsInPfm(host, accountIds, fromDate, toDate) {
-    const outcomes = await fetchTransactionsInPfmWithType(host, accountIds, fromDate, toDate, false);
-    const incomes = await fetchTransactionsInPfmWithType(host, accountIds, fromDate, toDate, true);
-    return _.sortBy(outcomes.concat(incomes),
-        apiTransaction => apiTransaction.id).reverse();
+    const transactions = await fetchTransactionsInPfmWithType(host, accountIds, fromDate, toDate, false);
+    transactions.push(...await fetchTransactionsInPfmWithType(host, accountIds, fromDate, toDate, true));
+    return _.sortBy(transactions, apiTransaction => apiTransaction.id).reverse();
 }
 
 export async function fetchAccounts(host) {
@@ -337,10 +340,6 @@ function getArray(object) {
 
 export function formatDate(date) {
     return [date.getDate(), date.getMonth() + 1, date.getFullYear()].map(toAtLeastTwoDigitsString).join(".");
-}
-
-export function formatDateSql(date) {
-    return [date.getFullYear(), date.getMonth() + 1, date.getDate()].map(toAtLeastTwoDigitsString).join("-");
 }
 
 function getRandomInt(min, max) {

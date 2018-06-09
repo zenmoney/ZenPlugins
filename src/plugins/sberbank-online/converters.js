@@ -1,192 +1,203 @@
 import * as _ from "lodash";
+import {toAtLeastTwoDigitsString} from "../../common/dates";
 
-export function convertTransactionsToOpAmounts(apiTransactions, account) {
-    return apiTransactions.filter(apiTransaction => apiTransaction.sum.currency.code !== account.instrument)
-        .map(apiTransaction => {
-            return {
-                sum: parseDecimal(apiTransaction.sum.amount),
-                instrument: apiTransaction.sum.currency.code,
-                date: apiTransaction.date,
-                description: reduceWhitespaces(apiTransaction.description),
-            };
-        })
-        .reverse();
+export function parseApiDate(str) {
+    const parts = str.substring(0, 10).split(".");
+    console.assert(parts.length >= 3, `unexpected date ${str}`);
+    let dateStr =`${parts[2]}-${parts[1]}-${parts[0]}`;
+    if (str.length > 10) {
+        dateStr += str.substring(10);
+    }
+    const date = new Date(dateStr);
+    console.assert(!isNaN(date), `unexpected date ${str}`);
+    return date;
 }
 
-export function convertTransactions({apiTransactions, pfmTransactions, account}) {
-    const transactions = [];
-    const opAmounts = convertTransactionsToOpAmounts(apiTransactions, account);
-    for (const pfmTransaction of pfmTransactions) {
-        const date = pfmTransaction.date;
-        const sum = parseDecimal(pfmTransaction.cardAmount.amount);
-        const transaction = {
-            date: parseDate(pfmTransaction.date),
-            income: 0,
-            incomeAccount: account.id,
-            outcome: 0,
-            outcomeAccount: account.id,
+export function parseApiDescription(description) {
+    description = description ? reduceWhitespaces(description) : null;
+    if (!description) {
+        return {
+            description: null,
+            payee: null,
         };
-        if (sum > 0) {
-            transaction.income = sum;
-            transaction.incomeBankID = pfmTransaction.id;
-        } else {
-            transaction.outcome = -sum;
-            transaction.outcomeBankID = pfmTransaction.id;
-        }
-        let opAmount = undefined;
-        switch (pfmTransaction.categoryId) {
-            case 203:
-            case 214:
-                opAmount = selectOpAmount({date, sum, opAmounts}) || {sum, instrument: account.instrument};
-                if (sum > 0) {
-                    transaction.outcome = sum;
-                    transaction.outcomeAccount = "cash#" + opAmount.instrument;
-                } else {
-                    transaction.income = -sum;
-                    transaction.incomeAccount = "cash#" + opAmount.instrument;
-                }
-                break;
-            case 1475:
-            case 1476:
-                opAmount = selectOpAmount({date, sum, opAmounts}) || {sum, instrument: account.instrument};
-                transaction.comment = pfmTransaction.categoryName;
-                transaction._transferId = getTransferId(date, opAmount);
-                transaction._transferType = sum > 0 ? "outcome" : "income";
-                break;
-            default:
-                if (pfmTransaction.merchantInfo && pfmTransaction.merchantInfo.merchant) {
-                    transaction.payee = reduceWhitespaces(pfmTransaction.merchantInfo.merchant);
-                } else if (pfmTransaction.comment) {
-                    transaction.payee = reduceWhitespaces(pfmTransaction.comment.split("    ")[0]);
-                }
-                if (transaction.payee && [
-                    "Оплата услуг",
-                    "Сбербанк Онлайн",
-                    "SBOL",
-                    "SBERBANK ONL@IN PLATEZH RU",
-                ].indexOf(transaction.payee) >= 0) {
-                    transaction.comment = transaction.payee;
-                    delete transaction.payee;
-                }
-
-                break;
-        }
-        if (opAmount === undefined) {
-            opAmount = selectOpAmount({date, sum, opAmounts, payee: transaction.payee});
-        }
-        if (opAmount && opAmount.instrument !== account.instrument) {
-            if (opAmount.sum > 0) {
-                transaction.opIncome = opAmount.sum;
-                transaction.opIncomeInstrument = opAmount.instrument;
-            } else {
-                transaction.opOutcome = -opAmount.sum;
-                transaction.opOutcomeInstrument = opAmount.instrument;
-            }
-        }
-        transactions.push(transaction);
     }
-    return transactions;
-}
-
-function getTransferId(date, opAmount) {
-    return `${date}_${opAmount.instrument}_${parseDecimal(Math.abs(opAmount.sum))}`;
-}
-
-export function selectOpAmount({date, payee, sum, opAmounts}) {
-    for (let i = 0; i < opAmounts.length; i++) {
-        const opAmount = opAmounts[i];
-        if (!opAmount || opAmount.date !== date) {
-            continue;
+    const parts = description.split(" ");
+    let j = -1;
+    for (let i = 1; 2 * i <= parts.length - 1; i++) {
+        const part1 = parts.slice(0, i).join(" ");
+        const part2 = parts.slice(i, 2 * i).join(" ");
+        if (part1 === part2 && i > j) {
+            j = i;
         }
-        if (Math.sign(opAmount.sum) !== Math.sign(sum)) {
-            continue;
-        }
-        if (payee && opAmount.description.indexOf(payee) < 0) {
-            continue;
-        }
-        opAmounts[i] = null;
-        return opAmount;
     }
+    return {
+        description: j >= 0 ? parts.slice(0, j).join(" ") : description,
+        payee: j >= 0 ? parts.slice(2 * j).join(" ") : null,
+    };
 }
 
-export function convertLoanTransaction(apiTransaction, account) {
+export function parsePfmDescription(description) {
+    const commentParts = description ? description.split("   ") : null;
+    let payee = null;
+    if (commentParts && commentParts.length > 1) {
+        payee = reduceWhitespaces(commentParts[0]);
+        description = reduceWhitespaces(commentParts.slice(1).join(" "));
+    } else {
+        description = reduceWhitespaces(description);
+    }
+    return {
+        description: description ? description : null,
+        payee: payee ? payee : null,
+    };
+}
+
+export function convertApiTransaction(apiTransaction) {
+    if (apiTransaction.description === "Капитализация вклада") {
+        return null;
+    }
+    return {
+        date: parseApiDate(apiTransaction.date),
+        ...parseApiDescription(apiTransaction.description),
+        origin: {
+            amount: parseDecimal(apiTransaction.sum.amount),
+            instrument: apiTransaction.sum.currency.code,
+        },
+    };
+}
+
+export function convertPfmTransaction(pfmTransaction) {
+    return {
+        id: pfmTransaction.id,
+        date: parseApiDate(pfmTransaction.date),
+        categoryId: pfmTransaction.categoryId,
+        ...parsePfmDescription(pfmTransaction.comment),
+        merchant: pfmTransaction.merchantInfo ? reduceWhitespaces(pfmTransaction.merchantInfo.merchant) : null,
+        location: pfmTransaction.merchantInfo ? pfmTransaction.merchantInfo.location || null : null,
+        posted: {
+            amount: parseDecimal(pfmTransaction.cardAmount.amount),
+            instrument: pfmTransaction.cardAmount.currency,
+        },
+    };
+}
+
+export function convertLoanTransaction(apiTransaction) {
     if (apiTransaction.state !== "paid") {
         return null;
     }
     return {
-        date: parseDate(apiTransaction.date),
-        income: parseDecimal(apiTransaction.totalPaymentAmount.amount),
+        date: parseApiDate(apiTransaction.date),
+        posted: {
+            amount: parseDecimal(apiTransaction.totalPaymentAmount.amount),
+            instrument: apiTransaction.totalPaymentAmount.currency.code,
+        },
+    };
+}
+
+export function convertWebTransaction(webTransaction) {
+    return {
+        date: parseApiDate(webTransaction.date),
+        ...parseApiDescription(webTransaction.description),
+        ...parseWebAmount(webTransaction.amount),
+    };
+}
+
+export function formatDateSql(date) {
+    return [date.getFullYear(), date.getMonth() + 1, date.getDate()].map(toAtLeastTwoDigitsString).join("-");
+}
+
+export function addTransactions(oldTransactions, newTransactions, isWebTransaction) {
+    const n = oldTransactions.length;
+    let i = 0;
+    l: for (const newTransaction of newTransactions) {
+        if (!newTransaction) {
+            continue;
+        }
+        if (i < n) {
+            for (let j = 0; j < n; j++) {
+                const oldTransaction = oldTransactions[j];
+                let oldDate;
+                let newDate;
+                if (isWebTransaction) {
+                    oldDate = formatDateSql(oldTransaction.date);
+                    newDate = formatDateSql(newTransaction.date);
+                } else if (oldTransaction.id) {
+                    continue;
+                } else {
+                    oldDate = oldTransaction.date.getTime();
+                    newDate = newTransaction.date.getTime();
+                }
+                if (oldDate !== newDate
+                        || newTransaction.payee !== oldTransaction.payee) {
+                    continue;
+                }
+                if (isWebTransaction && oldTransaction.origin && !oldTransaction.posted
+                        && oldTransaction.origin.instrument !== newTransaction.posted.instrument) {
+                    oldTransaction.posted = newTransaction.posted;
+                    i++;
+                    continue l;
+                }
+                if (!isWebTransaction
+                            && (newTransaction.posted.instrument !== oldTransaction.origin.instrument
+                                 || newTransaction.posted.amount === oldTransaction.origin.amount)) {
+                    let origin = null;
+                    if (newTransaction.posted.instrument !== oldTransaction.origin.instrument) {
+                        origin = oldTransaction.origin;
+                    }
+                    for (const key in oldTransaction) {
+                        if (oldTransaction.hasOwnProperty(key)){
+                            delete oldTransaction[key];
+                        }
+                    }
+                    Object.assign(oldTransaction, newTransaction);
+                    if (origin) {
+                        oldTransaction.origin = origin;
+                    }
+                    i++;
+                    continue l;
+                }
+            }
+        }
+        if (!isWebTransaction) {
+            oldTransactions.push(newTransaction);
+        }
+    }
+}
+
+export function convertToZenMoneyTransaction(account, transaction) {
+    const zenMoneyTransaction = {
+        date: transaction.date,
+        income: transaction.posted ? transaction.posted.amount > 0 ? transaction.posted.amount : 0 : null,
         incomeAccount: account.id,
-        outcome: 0,
+        outcome: transaction.posted ? transaction.posted.amount < 0 ? -transaction.posted.amount : 0 : null,
         outcomeAccount: account.id,
     };
-}
-
-export function convertWebTransaction(webTransaction, account) {
-    return getTransaction({
-        account,
-        date: webTransaction.date,
-        description: webTransaction.description,
-        ...parseAmount(webTransaction.amount),
-    });
-}
-
-export function convertTransaction(apiTransaction, account) {
-    if (apiTransaction.description === "Капитализация вклада") {
-        return null;
-    }
-    const opAmount = {
-        sum: parseDecimal(apiTransaction.sum.amount),
-        instrument: apiTransaction.sum.currency.code,
-    };
-    const amount = opAmount.instrument === account.instrument ? opAmount : null;
-    return getTransaction({
-        account,
-        date: apiTransaction.date,
-        description: apiTransaction.description,
-        opAmount,
-        amount,
-    });
-}
-
-function getTransaction({account, date, opAmount, amount, description}) {
-    if (Math.abs(opAmount.sum) < 0.01) {
-        return null;
-    }
-    const transaction = {
-        date: parseDate(date),
-        income: 0,
-        incomeAccount: account.id,
-        outcome: 0,
-        outcomeAccount: account.id,
-        comment: description || null,
-    };
-    if (!amount || opAmount.instrument !== amount.instrument) {
-        if (opAmount.sum > 0) {
-            transaction.income = amount ? amount.sum : null;
-            transaction.opIncome = opAmount.sum;
-            transaction.opIncomeInstrument = opAmount.instrument;
+    if (transaction.id) {
+        const origin = transaction.origin || transaction.posted;
+        if (origin.amount > 0) {
+            zenMoneyTransaction.incomeBankID = transaction.id;
         } else {
-            transaction.outcome = amount ? -amount.sum : null;
-            transaction.opOutcome = -opAmount.sum;
-            transaction.opOutcomeInstrument = opAmount.instrument;
-        }
-    } else {
-        if (opAmount.sum > 0) {
-            transaction.income = opAmount.sum;
-        } else {
-            transaction.outcome = -opAmount.sum;
+            zenMoneyTransaction.outcomeBankID = transaction.id;
         }
     }
-    if (transaction.comment) {
-        [
-            parseCashWithdrawal,
-            parseCashReplenishment,
-            parsePayee,
-            parseComment,
-        ].some(parser => parser(transaction, opAmount));
+    if (transaction.origin && (!transaction.posted || transaction.origin.instrument !== transaction.posted.instrument)) {
+        if (transaction.origin.amount > 0) {
+            zenMoneyTransaction.opIncome = transaction.origin.amount;
+            zenMoneyTransaction.opIncomeInstrument = transaction.origin.instrument;
+        } else {
+            zenMoneyTransaction.opOutcome = -transaction.origin.amount;
+            zenMoneyTransaction.opOutcomeInstrument = transaction.origin.instrument;
+        }
     }
-    return transaction;
+    if (transaction.location) {
+        zenMoneyTransaction.latitude = parseFloat(transaction.location.latitude);
+        zenMoneyTransaction.longitude = parseFloat(transaction.location.longitude);
+    }
+    [
+        parseCashTransaction,
+        parseInnerTransfer,
+        parsePayee,
+    ].some(parser => parser(transaction, zenMoneyTransaction));
+    return zenMoneyTransaction;
 }
 
 export function convertAccounts(apiAccountsArray, type) {
@@ -345,104 +356,115 @@ export function parseDate(str) {
     return `${parts[2]}-${parts[1]}-${parts[0]}`;
 }
 
-function parseCashWithdrawal(transaction, opAmount) {
-    if (transaction.income === 0 && parseDescription(transaction.comment, ["ATM", "ITT"])) {
-        transaction.income = -opAmount.sum;
-        transaction.incomeAccount = "cash#" + opAmount.instrument;
-        transaction.comment = null;
-        return true;
-    }
-    return false;
-}
-
-function parseCashReplenishment(transaction, opAmount) {
-    if (transaction.outcome === 0 && parseDescription(transaction.comment, ["Note Acceptance"])) {
-        transaction.outcome = opAmount.sum;
-        transaction.outcomeAccount = "cash#" + opAmount.instrument;
-        transaction.comment = null;
-        return true;
-    }
-    return false;
-}
-
-function parsePayee(transaction) {
-    const payee = parseDescription(transaction.comment, [
-        "Retail", // оплата по карте
-        "Unique", // unique
-    ]);
-    if (payee) {
-        transaction.payee = payee;
-        transaction.comment = null;
-        return true;
-    }
-    return false;
-}
-
-function parseComment(transaction) {
-    const comment = parseDescription(transaction.comment, [
-        "Credit", // оплата в кредит
-        "CH Debit", // поступление
-        "CH Payment", // списание
-        "BP Billing Transfer", // платёж в Сбербанк Онлайн
-        "BP Card - Acct", // дополнительный взнос на вклад
-        "BP Acct - Card", // частичное снятие со вклада
-    ]);
-    if (comment) {
-        transaction.comment = comment;
-    } else if (["Частичная выдача", "Дополнительный взнос"].indexOf(transaction.comment) >= 0) {
-        transaction.comment = null;
-    }
-    return false;
-}
-
-function parseDescription(description, patterns) {
-    for (const pattern of patterns) {
-        const pos = description.lastIndexOf(pattern);
-        if (pos < 0) {
-            continue;
+function parseCashTransaction(transaction, zenMoneyTransaction) {
+    if (transaction.categoryId) {
+        if (transaction.categoryId !== 203 && transaction.categoryId !== 214) {
+            return false;
         }
-        let str = description.substr(pos + pattern.length).trim();
-        if (str.substr(0, 4) === "RUS ") {
-            str = str.substr(4).trim();
+    } else {
+        if (!transaction.description
+                || !["ATM", "ITT", "Note Acceptance"].some(word => transaction.description.indexOf(word) >= 0)) {
+            return false;
         }
-        return str;
     }
-    return null;
+    const origin = transaction.origin || transaction.posted;
+    if (origin) {
+        if (origin.amount > 0) {
+            zenMoneyTransaction.outcomeAccount = "cash#" + origin.instrument;
+            zenMoneyTransaction.outcome = origin.amount;
+        } else {
+            zenMoneyTransaction.incomeAccount = "cash#" + origin.instrument;
+            zenMoneyTransaction.income = -origin.amount;
+        }
+    }
+    return true;
+}
+
+function parseInnerTransfer(transaction, zenMoneyTransaction) {
+    //         "Credit", // оплата в кредит
+    //         "CH Debit", // поступление
+    //         "CH Payment", // списание
+    //         "BP Billing Transfer", // платёж в Сбербанк Онлайн
+    //         "BP Card - Acct", // дополнительный взнос на вклад
+    //         "BP Acct - Card", // частичное снятие со вклада
+    if (transaction.categoryId) {
+        if (transaction.categoryId !== 1475 && transaction.categoryId !== 1476) {
+            return false;
+        }
+    } else {
+        if (!transaction.description
+                || ![
+                    "BP Card - Acct",
+                    "BP Acct - Card",
+                    "CH Debit",
+                    "CH Payment",
+                ].some(word => transaction.description.indexOf(word) >= 0)) {
+            return false;
+        }
+    }
+    const origin = transaction.origin || transaction.posted;
+    if (transaction.payee) {
+        zenMoneyTransaction.comment = transaction.payee;
+    }
+    zenMoneyTransaction._transferId = `${Math.round(transaction.date.getTime())}_${origin.instrument}_${parseDecimal(Math.abs(origin.amount))}`;
+    zenMoneyTransaction._transferType = origin.amount > 0 ? "outcome" : "income";
+    return true;
+}
+
+function parsePayee(transaction, zenMoneyTransaction) {
+    if (transaction.payee) {
+        if ([
+            "Оплата услуг",
+            "Сбербанк Онлайн",
+            "SBOL",
+            "SBERBANK ONL@IN PLATEZH RU",
+        ].indexOf(transaction.payee) >= 0) {
+            zenMoneyTransaction.comment = transaction.payee;
+        } else {
+            zenMoneyTransaction.payee = transaction.merchant || transaction.payee;
+        }
+    }
 }
 
 export function reduceWhitespaces(text) {
     return text.replace(/\s+/g, " ").trim();
 }
 
-export function parseAmount(text) {
+export function parseWebAmount(text) {
     text = reduceWhitespaces(text);
     const match = text.match(/(.+)\s\((.+)\)/i);
     if (match && match.length === 3) {
         try {
             const res = {
-                amount: parseRegularAmount(match[2]),
-                opAmount: parseRegularAmount(match[1]),
+                posted: parseRegularAmount(match[2]),
+                origin: parseRegularAmount(match[1]),
             };
-            res.amount.sum = res.amount.sum * Math.sign(res.opAmount.sum);
+            res.posted.amount = res.posted.amount * Math.sign(res.origin.amount);
             return res;
         } catch (e) {
             console.assert(e === null, `could not parse amount ${text}`);
         }
     }
-    const amount = parseRegularAmount(text);
     return {
-        amount,
-        opAmount: amount,
+        posted: parseRegularAmount(text),
     };
 }
 
 function parseRegularAmount(text) {
     const i = text.lastIndexOf(" ");
     console.assert(i >= 0 && i < text.length - 1, `could not parse amount ${text}`);
-    const sum = parseDecimal(text.substring(0, i));
-    console.assert(!isNaN(sum), `could not parse amount ${text}`);
+    const amount = parseDecimal(text.substring(0, i));
+    console.assert(!isNaN(amount), `could not parse amount ${text}`);
+    let instrument = text.substring(i + 1);
+    if (instrument === "$") {
+        instrument = "USD";
+    } else if (instrument === "руб.") {
+        instrument = "RUB";
+    } else if (instrument === "€") {
+        instrument = "EUR";
+    }
     return {
-        sum,
-        instrument: text.substring(i + 1),
+        amount,
+        instrument,
     };
 }
