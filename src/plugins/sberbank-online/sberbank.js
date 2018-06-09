@@ -24,9 +24,11 @@ export async function login(login, pin) {
     if (!ZenMoney.getData("devID") && ZenMoney.getData("devid")) {
         ZenMoney.setData("devID", ZenMoney.getData("devid"));
         ZenMoney.setData("devIDOld", getUid(36) + "0000");
+        ZenMoney.setData("devid", undefined);
     }
     if (!ZenMoney.getData("mGUID") && ZenMoney.getData("guid")) {
         ZenMoney.setData("mGUID", ZenMoney.getData("guid"));
+        ZenMoney.setData("guid", undefined);
     }
 
     if (!ZenMoney.getData("devID")) {
@@ -74,7 +76,15 @@ export async function login(login, pin) {
             },
             sanitizeRequestLog: {body: {login: true, devID: true, devIDOld: true}},
             sanitizeResponseLog: {body: {confirmRegistrationStage: {mGUID: true}}, headers: {"set-cookie": true}},
-        }, response => _.get(response, "body.confirmRegistrationStage.mGUID"));
+        }, null);
+        if (_.get(response, "body.status.code") === "1") {
+            const message = _.get(response, "body.errors.error.text");
+            if (message) {
+                throw new TemporaryError(message);
+            }
+        }
+        validateResponse(response, response => _.get(response, "body.status.code") === "0"
+            && _.get(response, "body.confirmRegistrationStage.mGUID"));
 
         ZenMoney.setData("mGUID", response.body.confirmRegistrationStage.mGUID);
 
@@ -98,6 +108,8 @@ export async function login(login, pin) {
             }, null);
             if (_.get(response, "body.status.code") === "1") {
                 throw new TemporaryError("Вы ввели неправильный идентификатор или пароль из SMS. Повторите подключение импорта.");
+            } else {
+                validateResponse(response, response => _.get(response, "body.status.code") === "0");
             }
         }
 
@@ -324,8 +336,15 @@ async function fetchXml(url, options = {}, predicate = () => true) {
         response.body = response.body.response;
     }
 
+    const status = _.get(response, "body.status.code");
+    if (status === "2") {
+        const message = _.get(response, "body.errors.error.text");
+        if (message && message.indexOf("АБС временно") >= 0) {
+            throw new TemporaryError("Информация из банка временно недоступна.");
+        }
+    }
     if (predicate) {
-        validateResponse(response, response => _.get(response, "body.status.code") === "0" && predicate(response));
+        validateResponse(response, response => status === "0" && predicate(response));
     }
 
     return response;
