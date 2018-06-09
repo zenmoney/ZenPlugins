@@ -73,7 +73,7 @@ export async function login(login, pin) {
                 "devIDOld": ZenMoney.getData("devIDOld"),
             },
             sanitizeRequestLog: {body: {login: true, devID: true, devIDOld: true}},
-            sanitizeResponseLog: {body: {confirmRegistrationStage: {mGUID: true}}},
+            sanitizeResponseLog: {body: {confirmRegistrationStage: {mGUID: true}}, headers: {"set-cookie": true}},
         }, response => _.get(response, "body.confirmRegistrationStage.mGUID"));
 
         ZenMoney.setData("mGUID", response.body.confirmRegistrationStage.mGUID);
