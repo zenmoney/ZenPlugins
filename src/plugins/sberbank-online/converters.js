@@ -189,9 +189,11 @@ export function convertToZenMoneyTransaction(account, transaction) {
     }
     if (transaction.origin) {
         if (transaction.origin.amount > 0) {
+            zenMoneyTransaction.outcome = 0;
             zenMoneyTransaction.opIncome = transaction.origin.amount;
             zenMoneyTransaction.opIncomeInstrument = transaction.origin.instrument;
         } else {
+            zenMoneyTransaction.income = 0;
             zenMoneyTransaction.opOutcome = -transaction.origin.amount;
             zenMoneyTransaction.opOutcomeInstrument = transaction.origin.instrument;
         }

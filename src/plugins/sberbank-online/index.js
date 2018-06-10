@@ -107,6 +107,7 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
                     accountData: apiAccount.accountData,
                     previousAccountData: apiAccount.previousAccountData,
                 });
+                console.log(`restorePosted result ${apiAccount.restoreResult}`);
             }
         }));
     }
@@ -125,6 +126,7 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
     }
 
     for (const apiAccount of pfmAccounts) {
+        const n = zenTransactions.length;
         for (const id of apiAccount.ids) {
             for (const transaction of apiAccount.transactions[id]) {
                 const zenTransaction = convertToZenMoneyTransaction(apiAccount.zenAccount, transaction);
@@ -144,6 +146,9 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
             });
             if (lastCurrencyTransaction) {
                 console.log("delta added to last currency transaction", lastCurrencyTransaction);
+                if (zenTransactions.indexOf(lastCurrencyTransaction, n) < 0) {
+                    zenTransactions.push(lastCurrencyTransaction);
+                }
             }
         }
         saveAccountData(apiAccount.accountData);

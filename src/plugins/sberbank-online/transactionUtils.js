@@ -11,6 +11,7 @@ export function getAccountData(account) {
         transactionHashes: {},
         currencyMovements: {},
         currencyTransaction: null,
+        currencyTransactionDelta: false,
         balance,
     };
 }
@@ -21,9 +22,11 @@ export function saveAccountData(accountData) {
             && (accountData.currencyTransaction.income === null
             || accountData.currencyTransaction.outcome === null)) {
         accountData.currencyTransaction = null;
+        accountData.currencyTransactionDelta = false;
     }
     if (!accountData.currencyTransaction) {
         delete accountData.currencyTransaction;
+        delete accountData.currencyTransactionDelta;
     }
 }
 
@@ -35,6 +38,7 @@ export function loadAccountData(previousAccountData) {
             && (previousAccountData.currencyTransaction.income === null
             || previousAccountData.currencyTransaction.outcome === null)) {
         delete previousAccountData.currencyTransaction;
+        delete previousAccountData.currencyTransactionDelta;
     }
     if (previousAccountData.currencyTransaction
             && !(previousAccountData.currencyTransaction.date instanceof Date)) {
@@ -50,6 +54,7 @@ export function trackLastCurrencyTransaction(zenMoneyTransaction, accountData) {
             accountData.currencyTransaction = zenMoneyTransaction;
         } else {
             delete accountData.currencyTransaction;
+            delete accountData.currencyTransactionDelta;
             return true;
         }
     }
@@ -85,27 +90,47 @@ export function addDeltaToLastCurrencyTransaction({account, accountData, previou
             || previousAccountData === null
             || previousAccountData.balance === null
             || !areEqualTransactions(previousAccountData.currencyTransaction, accountData.currencyTransaction)) {
+        accountData.currencyTransactionDelta = false;
         return null;
     }
-    const delta = accountData.balance - previousAccountData.balance;
-    const oldTransaction = previousAccountData.currencyTransaction;
-    const newTransaction = accountData.currencyTransaction;
 
-    if (Math.abs(delta) < 0.01) {
+    const oldTransaction = previousAccountData.currencyTransaction;
+
+    let newTransaction = accountData.currencyTransaction;
+    if (newTransaction.income !== null && newTransaction.outcome !== null) {
+        accountData.currencyTransactionDelta = true;
+        return null;
+    }
+    if (newTransaction.income === null) {
         newTransaction.income = oldTransaction.income;
+    }
+    if (newTransaction.outcome === null) {
         newTransaction.outcome = oldTransaction.outcome;
+    }
+
+    const delta = previousAccountData.currencyTransactionDelta ? 0 : (accountData.balance - previousAccountData.balance);
+    if (Math.abs(delta) < 0.01) {
+        if (previousAccountData.currencyTransactionDelta) {
+            accountData.currencyTransactionDelta = true;
+        }
         return null;
     }
 
     const holdCorrectionRate = 0.05;
-    if (oldTransaction.incomeAccount === account.id && oldTransaction.income > 0 && oldTransaction.opIncome > 0
-            && Math.abs(delta) / oldTransaction.income < holdCorrectionRate) {
-        newTransaction.income = parseDecimal(oldTransaction.income + delta);
-    } else if (oldTransaction.outcomeAccount === account.id && oldTransaction.outcome > 0 && oldTransaction.opOutcome > 0
-            && Math.abs(delta) / oldTransaction.outcome < holdCorrectionRate) {
-        newTransaction.outcome = parseDecimal(oldTransaction.outcome - delta);
+    if (oldTransaction.incomeAccount === account.id && oldTransaction.income > 0 && oldTransaction.opIncome > 0) {
+        if (Math.abs(delta) / oldTransaction.income < holdCorrectionRate) {
+            newTransaction.income = parseDecimal(oldTransaction.income + delta);
+        } else {
+            newTransaction = null;
+        }
+    } else if (oldTransaction.outcomeAccount === account.id && oldTransaction.outcome > 0 && oldTransaction.opOutcome > 0) {
+        if (Math.abs(delta) / oldTransaction.outcome < holdCorrectionRate) {
+            newTransaction.outcome = parseDecimal(oldTransaction.outcome - delta);
+        } else {
+            newTransaction = null;
+        }
     }
-    delete accountData.currencyTransaction;
+    accountData.currencyTransactionDelta = true;
 
     return newTransaction;
 }

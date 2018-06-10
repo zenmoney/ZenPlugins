@@ -40,7 +40,8 @@ describe("addDeltaToLastCurrencyTransaction", () => {
                 currencyTransaction: prevTransaction,
             },
         });
-        expect(accountData.currencyTransaction).toBeUndefined();
+        expect(accountData.currencyTransaction).toBe(currTransaction);
+        expect(accountData.currencyTransactionDelta).toBeTruthy();
         expect(prevTransaction).toEqual(prevTransactionCopy);
         expect(currTransaction).toEqual({
             date,
@@ -65,7 +66,8 @@ describe("addDeltaToLastCurrencyTransaction", () => {
                 currencyTransaction: prevTransaction,
             },
         });
-        expect(accountData.currencyTransaction).toBeUndefined();
+        expect(accountData.currencyTransaction).toBe(currTransaction);
+        expect(accountData.currencyTransactionDelta).toBeTruthy();
         expect(prevTransaction).toEqual(prevTransactionCopy);
         expect(currTransaction).toEqual({
             date,
@@ -109,7 +111,8 @@ describe("addDeltaToLastCurrencyTransaction", () => {
                 currencyTransaction: prevTransaction,
             },
         });
-        expect(accountData.currencyTransaction).toBeUndefined();
+        expect(accountData.currencyTransaction).toBe(currTransaction);
+        expect(accountData.currencyTransactionDelta).toBeTruthy();
         expect(prevTransaction).toEqual(prevTransactionCopy);
         expect(currTransaction).toEqual({
             date,
@@ -145,7 +148,6 @@ describe("addDeltaToLastCurrencyTransaction", () => {
             opIncome: 1.5,
             opIncomeInstrument: "USD",
         };
-        const currTransactionCopy = Object.assign({}, currTransaction);
         const prevTransactionCopy = Object.assign({}, prevTransaction);
         const accountData = {
             balance: 1000,
@@ -160,9 +162,81 @@ describe("addDeltaToLastCurrencyTransaction", () => {
                 currencyTransaction: prevTransaction,
             },
         });
-        expect(accountData.currencyTransaction).toBeUndefined();
+        expect(accountData.currencyTransaction).toBe(currTransaction);
+        expect(accountData.currencyTransactionDelta).toBeTruthy();
         expect(prevTransaction).toEqual(prevTransactionCopy);
-        expect(currTransaction).toEqual(currTransactionCopy);
+        expect(currTransaction).toEqual(prevTransactionCopy);
+    });
+
+    it("copies params if balance is not changed", () => {
+        const account = {
+            id: "account",
+            instrument: "RUB",
+        };
+        let currTransaction = {
+            date,
+            income: null,
+            incomeAccount: account.id,
+            outcome: 0,
+            outcomeAccount: account.id,
+            opIncome: 1.5,
+            opIncomeInstrument: "USD",
+        };
+        const prevTransaction = {
+            date,
+            income: 100,
+            incomeAccount: account.id,
+            outcome: 0,
+            outcomeAccount: account.id,
+            opIncome: 1.5,
+            opIncomeInstrument: "USD",
+        };
+        const prevTransactionCopy = Object.assign({}, prevTransaction);
+        let accountData = {
+            balance: 1000,
+            currencyTransaction: currTransaction,
+        };
+
+        addDeltaToLastCurrencyTransaction({
+            account,
+            accountData,
+            previousAccountData: {
+                balance: 1000,
+                currencyTransaction: prevTransaction,
+                currencyTransactionDelta: true,
+            },
+        });
+        expect(accountData.currencyTransaction).toBe(currTransaction);
+        expect(accountData.currencyTransactionDelta).toBeTruthy();
+        expect(prevTransaction).toEqual(prevTransactionCopy);
+        expect(currTransaction).toEqual(prevTransactionCopy);
+
+        currTransaction = {
+            date,
+            income: null,
+            incomeAccount: account.id,
+            outcome: 0,
+            outcomeAccount: account.id,
+            opIncome: 1.5,
+            opIncomeInstrument: "USD",
+        };
+        accountData = {
+            balance: 1000,
+            currencyTransaction: currTransaction,
+        };
+        addDeltaToLastCurrencyTransaction({
+            account,
+            accountData,
+            previousAccountData: {
+                balance: 1000,
+                currencyTransaction: prevTransaction,
+                currencyTransactionDelta: false,
+            },
+        });
+        expect(accountData.currencyTransaction).toBe(currTransaction);
+        expect(accountData.currencyTransactionDelta).toBeFalsy();
+        expect(prevTransaction).toEqual(prevTransactionCopy);
+        expect(currTransaction).toEqual(prevTransactionCopy)
     });
 });
 
