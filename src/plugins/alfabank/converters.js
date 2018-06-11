@@ -93,10 +93,10 @@ function calculateAccountId(apiMovement, apiAccounts) {
     const parsedAmount = parseApiAmount(apiMovement.amount);
     const candidates = parsedAmount > 0
         ? [
-            apiMovement.recipientInfo.recipientAccountNumberDescription,
-            apiMovement.recipientInfo.recipientValue,
+            apiMovement.recipientInfo && apiMovement.recipientInfo.recipientAccountNumberDescription,
+            apiMovement.recipientInfo && apiMovement.recipientInfo.recipientValue,
         ] : [
-            apiMovement.senderInfo.senderAccountNumberDescription,
+            apiMovement.senderInfo && apiMovement.senderInfo.senderAccountNumberDescription,
         ];
     const candidatesLast4Chars = _.uniq(_.compact(candidates).map((x) => x.slice(-4)));
     if (candidatesLast4Chars.length === 1) {
