@@ -187,7 +187,7 @@ export async function fetchDetails(account, type){
 }
 
 async function fetchLoanDetails(account){
-    let response = await fetchJson("https://api-myc.homecredit.ru/api/v1/prepayment", {
+    const response = await fetchJson("https://api-myc.homecredit.ru/api/v1/prepayment", {
         headers: {
             ...defaultHeaders,
             "Host": "api-myc.homecredit.ru",
@@ -206,8 +206,36 @@ async function fetchLoanDetails(account){
     return response.body;
 }
 
-export async function fetchTransactions(token, fromDate, toDate = null) {
-    return (await fetchJson("transactions.json", null, response => Array.isArray(response.body))).body;
+export async function fetchTransactions(account, fromDate, toDate = null) {
+    if (account._details.type !== "CreditCard") {
+        console.log(`Загрузка операций по счёту ${account._details.type} не поддерживается`);
+        return [];
+    }
+
+    const type = _.lowerFirst(account._details.type)+"s";
+    const response = await fetchJson(`https://ib.homecredit.ru/rest/${type}/transactions`, {
+        ignoreErrors: true,
+        headers: {
+            ...defaultHeaders,
+            "Authorization": "Bearer "+token,
+            "Host": "ib.homecredit.ru",
+            "X-Device-Ident": device,
+            "X-Private-Key": key,
+            "X-Phone-Number": phone,
+            "X-Auth-Token": token,
+        },
+        body: {
+            accountNumber: account._details.accountNumber,
+            cardNumber: account._details.cardNumber,
+            contractNumber: account._details.contractNumber,
+            count: 0,
+            fromDate: getFormatedDate(fromDate || (fromDate.setDate(fromDate.getDate() - 7))),
+            isSort: false,
+            startPosition: 0,
+            toDate: getFormatedDate(toDate || new Date()),
+        },
+    });
+    return response.body.values;
 }
 
 async function fetchJson(url, options, predicate) {
@@ -229,4 +257,8 @@ async function fetchJson(url, options, predicate) {
 
 function validateResponse(response, predicate, message) {
     console.assert(!predicate || predicate(response), message || "non-successful response");
+}
+
+function getFormatedDate(date){
+    return date.getFullYear() + "-" + ("0" + (date.getMonth() + 1)).slice(-2) + "-" + ("0" + date.getDate()).slice(-2);
 }

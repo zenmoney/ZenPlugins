@@ -1,5 +1,5 @@
 import * as HomeCredit from "./homecredit";
-import {convertAccounts} from "./converters";
+import {convertAccount, convertTransactions} from "./converters";
 import _ from "lodash";
 
 export async function scrape({preferences, fromDate, toDate}) {
@@ -10,12 +10,12 @@ export async function scrape({preferences, fromDate, toDate}) {
     await HomeCredit.login(preferences);
     const fetchedAccounts = await HomeCredit.fetchAccounts();
     const accounts = _.flattenDeep(await Promise.all(Object.keys(fetchedAccounts).map(type => {
-        return Promise.all(fetchedAccounts[type].map(async account => convertAccounts(await HomeCredit.fetchDetails(account, type), type)));
+        return Promise.all(fetchedAccounts[type].map(async account => convertAccount(await HomeCredit.fetchDetails(account, type), type)));
     })));
-
+    const transactions = _.flattenDeep(await Promise.all(accounts.map(async account => convertTransactions(account, await HomeCredit.fetchTransactions(account, fromDate, toDate)))));
     return {
         accounts: accounts,
-        transactions: [],
+        transactions: transactions,
     };
 
 }

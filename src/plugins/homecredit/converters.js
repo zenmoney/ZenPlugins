@@ -1,11 +1,12 @@
-import _ from "lodash";
-
-export function convertAccounts(acc, type) {
+export function convertAccount(acc, type) {
+    let account;
     switch (type) {
-        case "CreditCard": return convertCard(acc);
-        case "CreditLoan": return convertLoan(acc);
-        default: return null;
+        case "CreditCard": account = convertCard(acc); break;
+        case "CreditLoan": account = convertLoan(acc); break;
+        default: account = null; break;
     }
+    account["_details"] = getAccountDetails(acc, type);
+    return account;
 }
 
 export function convertCard(acc) {
@@ -39,26 +40,28 @@ export function convertLoan(acc) {
     }
 }
 
-export function convertTransaction(json, accounts) {
-    const transaction = {
-        hold: json.type !== "TRANSACTION",
-        income: json.accountAmount.value > 0 ? json.accountAmount.value : 0,
-        incomeAccount: json.relationId,
-        outcome: json.accountAmount.value < 0 ? -json.accountAmount.value : 0,
-        outcomeAccount: json.relationId,
-        date: new Date(json.operationTime),
-    };
-    if (!transaction.hold) {
-        transaction.id = json.id;
+function getAccountDetails(acc, type) {
+    return {
+        type: type,
+        accountNumber: acc && acc.account.AccountNumber,
+        cardNumber: acc && acc.account.MainCardNumber,
+        contractNumber: acc && acc.account.ContractNumber,
     }
-    if (json.accountAmount.currency.shortName !== json.amount.currency.shortName) {
-        if (json.amount.value > 0) {
-            transaction.opIncome = json.amount.value;
-            transaction.opIncomeInstrument = json.amount.currency.shortName;
-        } else {
-            transaction.opOutcome = -json.amount.value;
-            transaction.opOutcomeInstrument = json.amount.currency.shortName;
-        }
-    }
-    return transaction;
+}
+
+export function convertTransactions(account, transactions) {
+    return transactions.map(transaction => {
+        const tran = {
+            hold: transaction.postingDate === null,
+            income: transaction.creditDebitIndicator ? transaction.amount : 0,
+            incomeAccount: account.id,
+            outcome: transaction.creditDebitIndicator ? 0 : transaction.amount,
+            outcomeAccount: account.id,
+            date: new Date(transaction.valueDate),
+            payee: transaction.merchantName,
+        };
+        if (transaction.creditDebitIndicator)
+            tran.description = transaction.shortDescription;
+        return tran;
+    });
 }
