@@ -187,7 +187,29 @@ export async function fetchDetails(account, type){
 }
 
 async function fetchLoanDetails(account){
-    const response = await fetchJson("https://api-myc.homecredit.ru/api/v1/prepayment", {
+    // детали кредита
+    let response = await fetchJson("Payment/GetProductDetails", {
+        headers: {
+            ...defaultHeaders,
+            "X-Device-Ident": device,
+            "X-Private-Key": key,
+            "X-Phone-Number": phone,
+            "X-Auth-Token": token,
+        },
+        body: {
+            ContractNumber: account.ContractNumber,
+            AccountNumber: account.AccountNumber,
+            ProductSetCode: account.ProductSet.Code,
+            ProductType: account.ProductType,
+        },
+    });
+
+    const result = {
+        accountBalance: response.body.Result.CreditLoan.AccountBalance,
+    };
+
+    // остаток по кредиту
+    response = await fetchJson("https://api-myc.homecredit.ru/api/v1/prepayment", {
         headers: {
             ...defaultHeaders,
             "Host": "api-myc.homecredit.ru",
@@ -203,7 +225,11 @@ async function fetchLoanDetails(account){
             ProductType: account.ProductType,
         },
     });
-    return response.body;
+
+    return {
+        ...result,
+        ...response.body,
+    };
 }
 
 export async function fetchTransactions(account, fromDate, toDate = null) {

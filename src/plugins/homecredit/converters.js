@@ -30,7 +30,7 @@ export function convertLoan(acc) {
         instrument: "RUB",
         startDate: acc.account.DateSign,
         startBalance: acc.account.CreditAmount,
-        balance: acc.details.repaymentAmount,
+        balance: Math.round((-acc.details.repaymentAmount + acc.details.accountBalance) * 100) / 100,
         endDateOffset: acc.account.Contract.Properties.PaymentNum,
         endDateOffsetInterval: "month",
         capitalization: true,
