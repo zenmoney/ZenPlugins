@@ -140,8 +140,8 @@ export function convertApiCardsToReadableTransactions({cardsBodyResultWithoutDup
             if (item.readableTransaction.type === "transfer") { // e.g. Cash, ATM
                 return null;
             }
-            const {amount, instrument} = item.readableTransaction.origin || item.readableTransaction.posted;
-            const sign = item.readableTransaction.posted.amount >= 0 ? "+" : "-";
+            const {amount, instrument} = item.readableTransaction.posted;
+            const sign = amount >= 0 ? "+" : "-";
             return `${Math.abs(amount)} ${instrument} @ ${item.readableTransaction.date} ${item.apiTransaction.payload.transTime} ${sign}`;
         },
     });
