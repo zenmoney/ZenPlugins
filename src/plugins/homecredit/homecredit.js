@@ -1,6 +1,7 @@
 import {MD5} from "jshashes";
 import * as Network from "../../common/network";
 import _ from "lodash";
+import {InvalidPreferencesError} from "../../errors";
 
 const baseUrl = "https://mob.homecredit.ru/mycredit";
 const md5 = new MD5();
@@ -10,31 +11,30 @@ const defaultHeaders = {
     "Host": "mob.homecredit.ru",
 };
 
-let device;
+/*let device;
 let key;
 let token;
-let phone;
+let phone;*/
 export async function login(preferences) {
     console.log("Авторизация...");
-    device = ZenMoney.getData("device", null);
-    key = ZenMoney.getData("key", null);
-    token = ZenMoney.getData("token", null);
-    if (!device || !key || !token)
-        return registerDevice(preferences);
+    const auth = ZenMoney.getData("auth", null) || {};
+    if (!auth || !auth.device || !auth.key || !auth.token || !auth.phone) {
+        auth.phone = (preferences.phone || "").trim();
+        return registerDevice(auth, preferences);
+    }
 
-    phone = preferences.phone;
     let response = await fetchJson("Pin/CheckUserPin", {
         API: 3,
         ignoreErrors: true,
         headers: {
             ...defaultHeaders,
-            "X-Device-Ident": device,
-            "X-Private-Key": key,
-            "X-Phone-Number": phone,
-            "X-Auth-Token": token,
+            "X-Device-Ident": auth.device,
+            "X-Private-Key":  auth.key,
+            "X-Phone-Number": auth.phone,
+            "X-Auth-Token":   auth.token,
         },
         body: {
-            "Pin": preferences.pin,
+            "Pin": (preferences.pin || "").trim(),
         },
         sanitizeRequestLog: {headers: {"X-Device-Ident": true, "X-Private-Key": true, "X-Phone-Number": true, "X-Auth-Token": true}, body: {Pin: true}},
         sanitizeResponseLog: {headers: {"X-Auth-Token": true}},
@@ -42,48 +42,48 @@ export async function login(preferences) {
 
     if (response.body.StatusCode !== 200) {
         console.log("Нужна повторная регистрация.");
-        registerDevice(preferences);
+        registerDevice(auth, preferences);
         return;
     }
 
     const isValidPin = response.body.Result.IsPinValid;
     if (!isValidPin)
-        throw new ZenMoney.Error("Пин-код не верен. Укажите код, заданный вами в приложении банка 'Мой кредит'.", true);
+        throw new InvalidPreferencesError("Пин-код не верен. Укажите код, заданный вами в приложении банка 'Мой кредит'.");
 
-    token = response.headers.map["x-auth-token"];
-    ZenMoney.setData("token", token);
-    ZenMoney.saveData();
+    auth.token = response.headers.map["x-auth-token"];
+    ZenMoney.setData("auth", auth);
+    return auth;
 }
 
-async function registerDevice(preferences){
+async function registerDevice(auth, preferences){
     console.log("Регистрация устройства...");
 
-    device = md5.hex(preferences.phone + "homecredit").substr(0, 16);
+    auth.device = md5.hex(auth.phone + "homecredit").substr(0, 16);
     let response = await fetchJson("Account/Register", {
         API: 3,
         headers: {
             ...defaultHeaders,
-            "X-Device-Ident": device,
+            "X-Device-Ident": auth.device,
         },
         body: {
-            "BirthDate": preferences.birth,
+            "BirthDate": getFormatedDate(preferences.birth),
             "DeviceName": "samsung zen",
             "OsType": 1,
-            "PhoneNumber": preferences.phone,
+            "PhoneNumber": auth.phone,
             "ScreenSizeType": 4,
         },
         sanitizeRequestLog: {headers: {"X-Device-Ident": true}, body: {BirthDate: true, PhoneNumber: true}},
     });
 
-    key = response.body.Result;
+    auth.key = response.body.Result;
     response = await fetchJson("Sms/SendSmsCode", {
         API: 3,
         method: "POST",
         headers: {
             ...defaultHeaders,
-            "X-Device-Ident": device,
-            "X-Private-Key": key,
-            "X-Phone-Number": preferences.phone,
+            "X-Device-Ident": auth.device,
+            "X-Private-Key":  auth.key,
+            "X-Phone-Number": auth.phone,
         },
     });
 
@@ -102,9 +102,9 @@ async function registerDevice(preferences){
             API: 3,
             headers: {
                 ...defaultHeaders,
-                "X-Device-Ident": device,
-                "X-Private-Key": key,
-                "X-Phone-Number": preferences.phone,
+                "X-Device-Ident": auth.device,
+                "X-Private-Key":  auth.key,
+                "X-Phone-Number": auth.phone,
             },
             body: {
                 "SmsCode": code,
@@ -120,21 +120,21 @@ async function registerDevice(preferences){
         readlineTitle = "Пароль не верен. Попытка #"+(i+2);
     }
     if (!isValidSms)
-        throw new TemporaryError("Не удалось зарегистрировать устройство в 'Мой кредит'");
+        throw new TemporaryError("Пароль не верен. Не удалось зарегистрировать устройство в 'Мой кредит'");
 
     if (!isPinCreated)
-        throw new ZenMoney.Error("Необходимо пройти регистрацию в приложении 'Мой кредит', чтобы установить пин-код для входа", true);
+        throw new TemporaryError("Необходимо пройти регистрацию в приложении 'Мой кредит', чтобы установить пин-код для входа");
 
     response = await fetchJson("Pin/CheckUserPin", {
         API: 3,
         headers: {
             ...defaultHeaders,
-            "X-Device-Ident": device,
-            "X-Private-Key": key,
-            "X-Phone-Number": preferences.phone,
+            "X-Device-Ident": auth.device,
+            "X-Private-Key":  auth.key,
+            "X-Phone-Number": auth.phone,
         },
         body: {
-            "Pin": preferences.pin,
+            "Pin": (preferences.pin || "").trim(),
         },
         sanitizeRequestLog: {headers: {"X-Device-Ident": true, "X-Private-Key": true, "X-Phone-Number": true}, body: {Pin: true}},
         sanitizeResponseLog: {headers: {"X-Auth-Token": true}},
@@ -144,36 +144,32 @@ async function registerDevice(preferences){
     if (!isValidPin)
         throw new ZenMoney.Error("Пин-код не верен. Укажите код, заданный вами в приложении банка 'Мой кредит'.", true);
 
-    token = response.headers.map["x-auth-token"];
-
-    ZenMoney.setData("device", device);
-    ZenMoney.setData("key", key);
-    ZenMoney.setData("token", token);
-    ZenMoney.saveData();
+    auth.token = response.headers.map["x-auth-token"];
+    ZenMoney.setData("auth", auth);
+    return auth;
 }
 
-export async function fetchAccounts() {
+export async function fetchAccounts(auth) {
     console.log("Загружаем список счетов...");
     // загрузим список счетов
     const response = await fetchJson("Product/GetClientProducts", {
         API: 0,
         headers: {
             ...defaultHeaders,
-            "X-Device-Ident": device,
-            "X-Private-Key": key,
-            "X-Phone-Number": phone,
-            "X-Auth-Token": token,
+            "X-Device-Ident": auth.device,
+            "X-Private-Key":  auth.key,
+            "X-Phone-Number": auth.phone,
+            "X-Auth-Token":   auth.token,
         },
     });
-    console.log("Получены счета", response.body.Result);
     return _.pick(response.body.Result, ["CreditCard", "CreditCardTW", "CreditLoan"]);
 }
 
-export async function fetchDetails(account, type){
+export async function fetchDetails(auth, account, type){
     let details;
     switch (type) {
         case "CreditLoan":
-            details = await fetchLoanDetails(account);
+            details = await fetchLoanDetails(auth, account);
             break;
 
         default:
@@ -186,15 +182,15 @@ export async function fetchDetails(account, type){
     };
 }
 
-async function fetchLoanDetails(account){
+async function fetchLoanDetails(auth, account){
     // детали кредита
     let response = await fetchJson("Payment/GetProductDetails", {
         headers: {
             ...defaultHeaders,
-            "X-Device-Ident": device,
-            "X-Private-Key": key,
-            "X-Phone-Number": phone,
-            "X-Auth-Token": token,
+            "X-Device-Ident": auth.device,
+            "X-Private-Key":  auth.key,
+            "X-Phone-Number": auth.phone,
+            "X-Auth-Token":   auth.token,
         },
         body: {
             ContractNumber: account.ContractNumber,
@@ -203,20 +199,17 @@ async function fetchLoanDetails(account){
             ProductType: account.ProductType,
         },
     });
-
-    const result = {
-        accountBalance: response.body.Result.CreditLoan.AccountBalance,
-    };
+    const accountBalance = response.body.Result.CreditLoan.AccountBalance;
 
     // остаток по кредиту
     response = await fetchJson("https://api-myc.homecredit.ru/api/v1/prepayment", {
         headers: {
             ...defaultHeaders,
             "Host": "api-myc.homecredit.ru",
-            "X-Device-Ident": device,
-            "X-Private-Key": key,
-            "X-Phone-Number": phone,
-            "X-Auth-Token": token,
+            "X-Device-Ident": auth.device,
+            "X-Private-Key":  auth.key,
+            "X-Phone-Number": auth.phone,
+            "X-Auth-Token":   auth.token,
         },
         body: {
             ContractNumber: account.ContractNumber,
@@ -227,33 +220,33 @@ async function fetchLoanDetails(account){
     });
 
     return {
-        ...result,
         ...response.body,
+        accountBalance: accountBalance,
     };
 }
 
-export async function fetchTransactions(account, fromDate, toDate = null) {
-    if (account._details.type !== "CreditCard") {
-        console.log(`Загрузка операций по счёту ${account._details.type} не поддерживается`);
+export async function fetchTransactions(auth, acc, fromDate, toDate = null) {
+    if (acc.details.type !== "CreditCard") {
+        console.log(`Загрузка операций по счёту ${acc.details.type} не поддерживается`);
         return [];
     }
 
-    const type = _.lowerFirst(account._details.type)+"s";
+    const type = _.lowerFirst(acc.details.type)+"s";
     const response = await fetchJson(`https://ib.homecredit.ru/rest/${type}/transactions`, {
         ignoreErrors: true,
         headers: {
             ...defaultHeaders,
-            "Authorization": "Bearer "+token,
+            "Authorization": "Bearer "+auth.token,
             "Host": "ib.homecredit.ru",
-            "X-Device-Ident": device,
-            "X-Private-Key": key,
-            "X-Phone-Number": phone,
-            "X-Auth-Token": token,
+            "X-Device-Ident": auth.device,
+            "X-Private-Key":  auth.key,
+            "X-Phone-Number": auth.phone,
+            "X-Auth-Token":   auth.token,
         },
         body: {
-            accountNumber: account._details.accountNumber,
-            cardNumber: account._details.cardNumber,
-            contractNumber: account._details.contractNumber,
+            accountNumber: acc.details.accountNumber,
+            cardNumber: acc.details.cardNumber,
+            contractNumber: acc.details.contractNumber,
             count: 0,
             fromDate: getFormatedDate(fromDate || (fromDate.setDate(fromDate.getDate() - 7))),
             isSort: false,
@@ -286,5 +279,7 @@ function validateResponse(response, predicate, message) {
 }
 
 function getFormatedDate(date){
-    return date.getFullYear() + "-" + ("0" + (date.getMonth() + 1)).slice(-2) + "-" + ("0" + date.getDate()).slice(-2);
+    if (date instanceof String && date.indexOf("-") > 0) return date;
+    const dt = date instanceof Date ? date : new Date(date);
+    return dt.getFullYear() + "-" + ("0" + (dt.getMonth() + 1)).slice(-2) + "-" + ("0" + dt.getDate()).slice(-2);
 }

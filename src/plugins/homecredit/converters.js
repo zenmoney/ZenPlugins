@@ -5,8 +5,11 @@ export function convertAccount(acc, type) {
         case "CreditLoan": account = convertLoan(acc); break;
         default: account = null; break;
     }
-    account["_details"] = getAccountDetails(acc, type);
-    return account;
+    const Account = {
+        account: account,
+        details: getAccountDetails(acc, type),
+    };
+    return Account;
 }
 
 export function convertCard(acc) {
@@ -49,14 +52,14 @@ function getAccountDetails(acc, type) {
     }
 }
 
-export function convertTransactions(account, transactions) {
+export function convertTransactions(acc, transactions) {
     return transactions.map(transaction => {
         const tran = {
             hold: transaction.postingDate === null,
             income: transaction.creditDebitIndicator ? transaction.amount : 0,
-            incomeAccount: account.id,
+            incomeAccount: acc.account.id,
             outcome: transaction.creditDebitIndicator ? 0 : transaction.amount,
-            outcomeAccount: account.id,
+            outcomeAccount: acc.account.id,
             date: new Date(transaction.valueDate),
             payee: transaction.merchantName,
         };
@@ -64,4 +67,13 @@ export function convertTransactions(account, transactions) {
             tran.description = transaction.shortDescription;
         return tran;
     });
+}
+
+function getMcc(code) {
+    switch (code) {
+        case "CAR":
+            return 0;
+
+        default: return null;
+    }
 }
