@@ -1,7 +1,6 @@
 import {MD5} from "jshashes";
 import * as Network from "../../common/network";
 import _ from "lodash";
-import {InvalidPreferencesError} from "../../errors";
 
 const baseUrl = "https://mob.homecredit.ru/mycredit";
 const md5 = new MD5();
@@ -16,7 +15,7 @@ let key;
 let token;
 let phone;*/
 export async function login(preferences) {
-    console.log("Авторизация...");
+    console.log(">>> Авторизация...");
     const auth = ZenMoney.getData("auth", null) || {};
     if (!auth || !auth.device || !auth.key || !auth.token || !auth.phone) {
         auth.phone = (preferences.phone || "").trim();
@@ -29,15 +28,15 @@ export async function login(preferences) {
         headers: {
             ...defaultHeaders,
             "X-Device-Ident": auth.device,
-            "X-Private-Key":  auth.key,
+            "X-Private-Key": auth.key,
             "X-Phone-Number": auth.phone,
-            "X-Auth-Token":   auth.token,
+            "X-Auth-Token": auth.token,
         },
         body: {
             "Pin": (preferences.pin || "").trim(),
         },
-        sanitizeRequestLog: {headers: {"X-Device-Ident": true, "X-Private-Key": true, "X-Phone-Number": true, "X-Auth-Token": true}, body: {Pin: true}},
-        sanitizeResponseLog: {headers: {"X-Auth-Token": true}},
+        sanitizeRequestLog: {headers: {"X-Device-Ident": true, "X-Private-Key": true, "X-Phone-Number": true, "X-Auth-Token": true}, body: {"Pin": true}},
+        sanitizeResponseLog: {headers: {"x-auth-token": true}},
     });
 
     if (response.body.StatusCode !== 200) {
@@ -56,7 +55,7 @@ export async function login(preferences) {
 }
 
 async function registerDevice(auth, preferences){
-    console.log("Регистрация устройства...");
+    console.log(">>> Регистрация устройства...");
 
     auth.device = md5.hex(auth.phone + "homecredit").substr(0, 16);
     let response = await fetchJson("Account/Register", {
@@ -72,7 +71,8 @@ async function registerDevice(auth, preferences){
             "PhoneNumber": auth.phone,
             "ScreenSizeType": 4,
         },
-        sanitizeRequestLog: {headers: {"X-Device-Ident": true}, body: {BirthDate: true, PhoneNumber: true}},
+        sanitizeRequestLog: {headers: {"X-Device-Ident": true}, body: {"BirthDate": true, "PhoneNumber": true}},
+        sanitizeResponseLog: {body: {Result: true}},
     });
 
     auth.key = response.body.Result;
@@ -82,9 +82,10 @@ async function registerDevice(auth, preferences){
         headers: {
             ...defaultHeaders,
             "X-Device-Ident": auth.device,
-            "X-Private-Key":  auth.key,
+            "X-Private-Key": auth.key,
             "X-Phone-Number": auth.phone,
         },
+        sanitizeRequestLog: {headers: {"X-Device-Ident": true, "X-Private-Key": true, "X-Phone-Number": true}},
     });
 
     let isPinCreated;
@@ -103,13 +104,13 @@ async function registerDevice(auth, preferences){
             headers: {
                 ...defaultHeaders,
                 "X-Device-Ident": auth.device,
-                "X-Private-Key":  auth.key,
+                "X-Private-Key": auth.key,
                 "X-Phone-Number": auth.phone,
             },
             body: {
                 "SmsCode": code,
             },
-            sanitizeRequestLog: {headers: {"X-Device-Ident": true, "X-Private-Key": true, "X-Phone-Number": true}, body: {SmsCode: true}},
+            sanitizeRequestLog: {headers: {"X-Device-Ident": true, "X-Private-Key": true, "X-Phone-Number": true}, body: {"SmsCode": true}},
         });
 
         isPinCreated = response.body.Result.IsUserPinCodeCreated;
@@ -130,14 +131,14 @@ async function registerDevice(auth, preferences){
         headers: {
             ...defaultHeaders,
             "X-Device-Ident": auth.device,
-            "X-Private-Key":  auth.key,
+            "X-Private-Key": auth.key,
             "X-Phone-Number": auth.phone,
         },
         body: {
             "Pin": (preferences.pin || "").trim(),
         },
         sanitizeRequestLog: {headers: {"X-Device-Ident": true, "X-Private-Key": true, "X-Phone-Number": true}, body: {Pin: true}},
-        sanitizeResponseLog: {headers: {"X-Auth-Token": true}},
+        sanitizeResponseLog: {headers: {"x-auth-token": true}},
     });
 
     const isValidPin = response.body.Result.IsPinValid;
@@ -150,17 +151,19 @@ async function registerDevice(auth, preferences){
 }
 
 export async function fetchAccounts(auth) {
-    console.log("Загружаем список счетов...");
+    console.log(">>> Загружаем список счетов...");
     // загрузим список счетов
     const response = await fetchJson("Product/GetClientProducts", {
         API: 0,
         headers: {
             ...defaultHeaders,
             "X-Device-Ident": auth.device,
-            "X-Private-Key":  auth.key,
+            "X-Private-Key": auth.key,
             "X-Phone-Number": auth.phone,
-            "X-Auth-Token":   auth.token,
+            "X-Auth-Token": auth.token,
         },
+        sanitizeRequestLog: {headers: {"X-Device-Ident": true, "X-Private-Key": true, "X-Phone-Number": true, "X-Auth-Token": true}},
+        sanitizeResponseLog: {headers: {"x-auth-token": true}},
     });
     return _.pick(response.body.Result, ["CreditCard", "CreditCardTW", "CreditLoan"]);
 }
@@ -188,9 +191,9 @@ async function fetchLoanDetails(auth, account){
         headers: {
             ...defaultHeaders,
             "X-Device-Ident": auth.device,
-            "X-Private-Key":  auth.key,
+            "X-Private-Key": auth.key,
             "X-Phone-Number": auth.phone,
-            "X-Auth-Token":   auth.token,
+            "X-Auth-Token": auth.token,
         },
         body: {
             ContractNumber: account.ContractNumber,
@@ -198,6 +201,8 @@ async function fetchLoanDetails(auth, account){
             ProductSetCode: account.ProductSet.Code,
             ProductType: account.ProductType,
         },
+        sanitizeRequestLog: {headers: {"X-Device-Ident": true, "X-Private-Key": true, "X-Phone-Number": true, "X-Auth-Token": true}},
+        sanitizeResponseLog: {headers: {"x-auth-token": true}},
     });
     const accountBalance = response.body.Result.CreditLoan.AccountBalance;
 
@@ -207,9 +212,9 @@ async function fetchLoanDetails(auth, account){
             ...defaultHeaders,
             "Host": "api-myc.homecredit.ru",
             "X-Device-Ident": auth.device,
-            "X-Private-Key":  auth.key,
+            "X-Private-Key": auth.key,
             "X-Phone-Number": auth.phone,
-            "X-Auth-Token":   auth.token,
+            "X-Auth-Token": auth.token,
         },
         body: {
             ContractNumber: account.ContractNumber,
@@ -217,6 +222,8 @@ async function fetchLoanDetails(auth, account){
             ProductSetCode: account.ProductSet.Code,
             ProductType: account.ProductType,
         },
+        sanitizeRequestLog: {headers: {"X-Device-Ident": true, "X-Private-Key": true, "X-Phone-Number": true, "X-Auth-Token": true}},
+        sanitizeResponseLog: {headers: {"x-auth-token": true}},
     });
 
     return {
@@ -225,13 +232,13 @@ async function fetchLoanDetails(auth, account){
     };
 }
 
-export async function fetchTransactions(auth, acc, fromDate, toDate = null) {
-    if (acc.details.type !== "CreditCard") {
-        console.log(`Загрузка операций по счёту ${acc.details.type} не поддерживается`);
+export async function fetchTransactions(auth, accountData, fromDate, toDate = null) {
+    if (accountData.details.type !== "CreditCard") {
+        console.log(`Загрузка операций по счёту ${accountData.details.type} не поддерживается`);
         return [];
     }
 
-    const type = _.lowerFirst(acc.details.type)+"s";
+    const type = _.lowerFirst(accountData.details.type)+"s";
     const response = await fetchJson(`https://ib.homecredit.ru/rest/${type}/transactions`, {
         ignoreErrors: true,
         headers: {
@@ -239,20 +246,22 @@ export async function fetchTransactions(auth, acc, fromDate, toDate = null) {
             "Authorization": "Bearer "+auth.token,
             "Host": "ib.homecredit.ru",
             "X-Device-Ident": auth.device,
-            "X-Private-Key":  auth.key,
+            "X-Private-Key": auth.key,
             "X-Phone-Number": auth.phone,
-            "X-Auth-Token":   auth.token,
+            "X-Auth-Token": auth.token,
         },
         body: {
-            accountNumber: acc.details.accountNumber,
-            cardNumber: acc.details.cardNumber,
-            contractNumber: acc.details.contractNumber,
+            accountNumber: accountData.details.accountNumber,
+            cardNumber: accountData.details.cardNumber,
+            contractNumber: accountData.details.contractNumber,
             count: 0,
             fromDate: getFormatedDate(fromDate || (fromDate.setDate(fromDate.getDate() - 7))),
             isSort: false,
             startPosition: 0,
             toDate: getFormatedDate(toDate || new Date()),
         },
+        sanitizeRequestLog: {headers: {"Authorization": true, "X-Device-Ident": true, "X-Private-Key": true, "X-Phone-Number": true, "X-Auth-Token": true}},
+        sanitizeResponseLog: {headers: {"x-auth-token": true}},
     });
     return response.body.values;
 }
