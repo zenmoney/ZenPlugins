@@ -190,7 +190,7 @@ export async function loginInPfm(host) {
     return {host};
 }
 
-async function fetchTransactionsInPfmWithType(host, accountsIds, fromDate, toDate, income) {
+async function fetchTransactionsInPfmWithType(host, accountIds, fromDate, toDate, income) {
     const currentYear = new Date().getFullYear();
     if (fromDate.getFullYear() < currentYear) {
         fromDate.setFullYear(currentYear, 0, 1);
@@ -198,7 +198,7 @@ async function fetchTransactionsInPfmWithType(host, accountsIds, fromDate, toDat
     const response = await network.fetchJson(`https://${host}/pfm/api/v1.20/extracts`
         + `?from=${formatDate(fromDate)}&to=${formatDate(toDate)}`
         + `&showCash=true&showCashPayments=true&showOtherAccounts=true`
-        + `&selectedCardId=${accountsIds.join(",")}&income=${income ? "true" : "false"}`, {
+        + `&selectedCardId=${accountIds.join(",")}&income=${income ? "true" : "false"}`, {
         method: "GET",
         headers: {
             "User-Agent": "Mobile Device",
@@ -210,6 +210,10 @@ async function fetchTransactionsInPfmWithType(host, accountsIds, fromDate, toDat
             "Accept-Encoding": "gzip",
         },
     });
+    if (response && response.body && response.body.statusCode === 9) {
+        console.log(`could not get data from pfm for accounts ${accountIds}`);
+        return [];
+    }
     validateResponse(response, response => response.body
         && response.body.statusCode === 0 && Array.isArray(response.body.operations));
     return response.body.operations;
