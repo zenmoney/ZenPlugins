@@ -190,8 +190,14 @@ export async function loginInPfm(host) {
     return {host};
 }
 
+function toMoscowDate(date) {
+    return new Date(date.getTime() + (date.getTimezoneOffset() + 180) * 60000);
+}
+
 async function fetchTransactionsInPfmWithType(host, accountIds, fromDate, toDate, income) {
-    const currentYear = new Date().getFullYear();
+    const currentYear = toMoscowDate(new Date()).getFullYear();
+    fromDate = toMoscowDate(fromDate);
+    toDate = toMoscowDate(toDate);
     if (fromDate.getFullYear() < currentYear) {
         fromDate.setFullYear(currentYear, 0, 1);
     }
@@ -342,7 +348,7 @@ async function fetchXml(url, options = {}, predicate = () => true) {
 
     const status = _.get(response, "body.status.code");
     if (status === "2") {
-        const message = _.get(response, "body.errors.error.text");
+        const message = _.get(response, "body.status.errors.error.text");
         if (message && message.indexOf("АБС временно") >= 0) {
             throw new TemporaryError("Информация из банка временно недоступна.");
         }
