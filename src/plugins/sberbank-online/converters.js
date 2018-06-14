@@ -52,8 +52,7 @@ export function parsePfmDescription(description) {
 }
 
 export function convertApiTransaction(apiTransaction, zenAccount) {
-    if (apiTransaction.description === "Капитализация вклада"
-            || apiTransaction.description === "Пролонгация") {
+    if (!apiTransaction.sum || !apiTransaction.sum.amount) {
         return null;
     }
     const origin = {
