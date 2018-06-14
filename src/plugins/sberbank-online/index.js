@@ -35,6 +35,11 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
     const pfmAccounts = [];
     const webAccounts = [];
 
+    const isFirstRun = !ZenMoney.getData("scrape/lastSuccessDate");
+    if (isFirstRun && ZenMoney.getData("devid")) {
+        fromDate = new Date(new Date().getTime() - 7 * 24 * 3600 * 1000);
+    }
+
     await Promise.all(Object.keys(apiAccountsByType).map(type => {
         const isPfmAccount = type === "card";
 
@@ -69,8 +74,6 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
             }));
         }));
     }));
-
-    const isFirstRun = !ZenMoney.getData("scrape/lastSuccessDate");
 
     if (pfmAccounts.length > 0) {
         host = (await sberbank.loginInPfm(host)).host;

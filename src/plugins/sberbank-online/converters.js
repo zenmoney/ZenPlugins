@@ -73,7 +73,7 @@ export function convertApiTransaction(apiTransaction, zenAccount) {
 
 export function convertPfmTransaction(pfmTransaction) {
     return {
-        id: pfmTransaction.id,
+        id: pfmTransaction.id.toFixed(0),
         date: parseApiDate(pfmTransaction.date),
         categoryId: pfmTransaction.categoryId,
         ...parsePfmDescription(pfmTransaction.comment),
