@@ -8,10 +8,9 @@ export class ZPAPIError extends Error {
         this.fatal = Boolean(forcePluginReinstall);
         // Hides "Send log" button on error modal
         this.allowRetry = Boolean(logIsNotImportant);
-    }
-
-    toString() {
-        return (this.fatal ? "F" : "_") + (this.allowRetry ? "R" : "_") + " " + this.message;
+        this.toString = function () {
+            return (this.fatal ? "F" : "_") + (this.allowRetry ? "R" : "_") + " " + this.message;
+        };
     }
 }
 

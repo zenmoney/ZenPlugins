@@ -24,6 +24,10 @@ import {
 } from "./transactionUtils";
 
 export async function scrape({preferences, fromDate, toDate, isInBackground}) {
+    if (preferences.pin.length !== 5) {
+        throw new InvalidPreferencesError("Пин-код должен быть из 5 цифр");
+    }
+
     toDate = toDate || new Date();
 
     let {host} = await sberbank.login(preferences.login, preferences.pin);
