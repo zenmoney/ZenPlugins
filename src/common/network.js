@@ -25,7 +25,16 @@ export async function fetch(url, options = {}) {
         ...options.body && {body: options.body},
     }, options.sanitizeRequestLog || false));
 
-    let response = await global.fetch(url, init);
+    let response;
+    try {
+        response = await global.fetch(url, init);
+    } catch (e) {
+        if (e instanceof TypeError && e.cause) {
+            throw e.cause;
+        } else {
+            throw e;
+        }
+    }
     let body = await response.text();
     let bodyParsingException = null;
     if (options.parse) {
