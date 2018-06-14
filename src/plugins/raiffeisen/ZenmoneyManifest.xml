@@ -2,9 +2,10 @@
 <provider>
     <id>raiffeisen</id>
     <version>3.0</version>
-    <build>61</build>
+    <build>64</build>
     <company>5156</company>
     <modular>true</modular>
+    <codeRequired>false</codeRequired>
     <files>
         <js>index.js</js>
         <preferences>preferences.xml</preferences>
