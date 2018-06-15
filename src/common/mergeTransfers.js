@@ -3,7 +3,7 @@ import {convertReadableTransactionToReadableTransferSide} from "./converters";
 
 export function mergeTransfers({items, isTransferItem, makeGroupKey, selectTransactionId, selectReadableTransaction}) {
     const {1: singles = [], 2: pairs = [], collisiveBuckets = []} = _.groupBy(
-        Object.entries(_.groupBy(items.filter(isTransferItem), (x) => makeGroupKey(x))),
+        _.toPairs(_.groupBy(items.filter(isTransferItem), (x) => makeGroupKey(x))),
         ([transferId, items]) => items.length > 2 ? "collisiveBuckets" : items.length,
     );
     if (singles.length > 0) {
