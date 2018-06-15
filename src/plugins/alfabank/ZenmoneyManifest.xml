@@ -8,7 +8,7 @@
 
         Синхронизация может запускаться автоматически. Для этого укажите время запуска в поле "Запуск импорта по расписанию".</description>
     <version>1.0</version>
-    <build>1</build>
+    <build>40</build>
     <modular>true</modular>
     <files>
         <js>index.js</js>
