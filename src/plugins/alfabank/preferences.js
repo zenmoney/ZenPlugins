@@ -1,3 +1,5 @@
+import _ from "lodash";
+
 const cardExpirationDateRegExp = /^(\d{2})\/?(\d{2})$/;
 
 export function normalizeCardExpirationDate(cardExpirationDate) {
@@ -17,7 +19,7 @@ export function normalizePhoneNumber(phoneNumber) {
 export function normalizePreferences(preferences) {
     const {cardNumber, cardExpirationDate, phoneNumber} = preferences;
     // FIXME must be checked in a wrapper
-    Object.entries({cardNumber, cardExpirationDate, phoneNumber}).forEach(([key, value]) => {
+    _.toPairs({cardNumber, cardExpirationDate, phoneNumber}).forEach(([key, value]) => {
         if (!value) {
             // FIXME must use InvalidPreferencesError here, but InvalidPreferencesError android handler is buggy
             throw new TemporaryError(`preference key ${key} must be set`);
