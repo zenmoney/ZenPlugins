@@ -7,15 +7,23 @@ export function combineIntoTransferByTransferId(transactions) {
             }
             if (transactions.length === 2
                     && transactions[0]._transferType !== transactions[1]._transferType) {
-                const transaction = transactions[0];
-                const transferType = transactions[0]._transferType;
+                const transaction1 = transactions[0];
+                const transaction2 = transactions[1];
+                const transferType = transaction1._transferType;
                 ["", "Account", "BankID"].forEach(postfix => {
-                    const value = transactions[1][transferType + postfix];
+                    const value = transaction2[transferType + postfix];
                     if (value !== undefined) {
-                        transaction[transferType + postfix] = value;
+                        transaction1[transferType + postfix] = value;
                     }
                 });
-                transactions = [transaction];
+                const hold1 = "hold" in transaction1 ? transaction1.hold : null;
+                const hold2 = "hold" in transaction2 ? transaction2.hold : null;
+                if (hold1 === hold2) {
+                    transaction1.hold = hold1;
+                } else {
+                    transaction1.hold = null;
+                }
+                transactions = [transaction1];
             }
             transactions.forEach(transaction => {
                 delete transaction._transferId;

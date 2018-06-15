@@ -6,7 +6,11 @@ export function parseApiDate(str) {
     console.assert(parts.length >= 3, `unexpected date ${str}`);
     let dateStr =`${parts[2]}-${parts[1]}-${parts[0]}`;
     if (str.length > 10) {
-        dateStr += str.substring(10);
+        if (dateStr >= "2018-06-16") {
+            dateStr += str.substring(10) + "+03:00";
+        } else {
+            dateStr += str.substring(10);
+        }
     }
     const date = new Date(dateStr);
     console.assert(!isNaN(date), `unexpected date ${str}`);
@@ -37,6 +41,11 @@ export function parseApiDescription(description) {
 }
 
 export function parsePfmDescription(description) {
+    if (description) {
+        description = description
+            .replace("VKLAD-KAR ", "VKLAD-KARTA   ")
+            .replace("KARTA-VKL ", "KARTA-VKLAD   ");
+    }
     const commentParts = description ? description.split("   ") : null;
     let payee = null;
     if (commentParts && commentParts.length > 1) {
@@ -61,6 +70,7 @@ export function convertApiTransaction(apiTransaction, zenAccount) {
     };
     const transaction = {
         date: parseApiDate(apiTransaction.date),
+        hold: null,
         ...parseApiDescription(apiTransaction.description),
     };
     if (origin.instrument === zenAccount.instrument) {
@@ -75,6 +85,7 @@ export function convertPfmTransaction(pfmTransaction) {
     return {
         id: pfmTransaction.id.toFixed(0),
         date: parseApiDate(pfmTransaction.date),
+        hold: false,
         categoryId: pfmTransaction.categoryId,
         ...parsePfmDescription(pfmTransaction.comment),
         merchant: pfmTransaction.merchantInfo ? reduceWhitespaces(pfmTransaction.merchantInfo.merchant) : null,
@@ -92,6 +103,7 @@ export function convertLoanTransaction(apiTransaction) {
     }
     return {
         date: parseApiDate(apiTransaction.date),
+        hold: false,
         posted: {
             amount: parseDecimal(apiTransaction.totalPaymentAmount.amount),
             instrument: apiTransaction.totalPaymentAmount.currency.code,
@@ -102,6 +114,7 @@ export function convertLoanTransaction(apiTransaction) {
 export function convertWebTransaction(webTransaction) {
     return {
         date: parseApiDate(webTransaction.date),
+        hold: null,
         ...parseApiDescription(webTransaction.description),
         ...parseWebAmount(webTransaction.amount),
     };
@@ -173,6 +186,7 @@ export function addTransactions(oldTransactions, newTransactions, isWebTransacti
 export function convertToZenMoneyTransaction(account, transaction) {
     const zenMoneyTransaction = {
         date: transaction.date,
+        hold: transaction.hold,
         income: transaction.posted ? transaction.posted.amount > 0 ? transaction.posted.amount : 0 : null,
         incomeAccount: account.id,
         outcome: transaction.posted ? transaction.posted.amount < 0 ? -transaction.posted.amount : 0 : null,

@@ -671,6 +671,10 @@ describe("parsePfmDescription", () => {
             payee: "IKEA DOM 6 CASH LINE",
             description: "ST PETERSBUR RU",
         });
+        expect(parsePfmDescription("SBERBANK ONL@IN VKLAD-KAR RUS")).toEqual({
+            payee: "SBERBANK ONL@IN VKLAD-KARTA",
+            description: "RUS",
+        });
         expect(parsePfmDescription("unknown pattern")).toEqual({
             payee: null,
             description: "unknown pattern",

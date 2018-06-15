@@ -61,6 +61,12 @@ export async function login(login, pin) {
         if (_.get(response, "body.status.code") === "7") {
             ZenMoney.setData("mGUID", null);
         } else {
+            if (_.get(response, "body.status.code") === "1") {
+                const message = getErrorMessage(response.body);
+                if (message) {
+                    throw new InvalidPreferencesError(message);
+                }
+            }
             validateResponse(response, response => _.get(response, "body.status.code") === "0");
         }
     }
@@ -78,7 +84,7 @@ export async function login(login, pin) {
             sanitizeResponseLog: {body: {confirmRegistrationStage: {mGUID: true}}, headers: {"set-cookie": true}},
         }, null);
         if (_.get(response, "body.status.code") === "1") {
-            const message = _.get(response, "body.errors.error.text");
+            const message = getErrorMessage(response.body);
             if (message) {
                 throw new TemporaryError(message);
             }
@@ -347,8 +353,8 @@ async function fetchXml(url, options = {}, predicate = () => true) {
     }
 
     const status = _.get(response, "body.status.code");
-    if (status === "2") {
-        const message = _.get(response, "body.status.errors.error.text");
+    if (status !== "0") {
+        const message = getErrorMessage(response.body);
         if (message && message.indexOf("АБС временно") >= 0) {
             throw new TemporaryError("Информация из банка временно недоступна.");
         }
@@ -358,6 +364,28 @@ async function fetchXml(url, options = {}, predicate = () => true) {
     }
 
     return response;
+}
+
+export function getErrorMessage(xmlObject, maxDepth = 3) {
+    if (!xmlObject || maxDepth <= 0) {
+        return null;
+    }
+    if (xmlObject.errors
+            && xmlObject.errors.error
+            && xmlObject.errors.error.text) {
+        return xmlObject.errors.error.text;
+    }
+    if (maxDepth > 1) {
+        for (const key in xmlObject) {
+            if (xmlObject.hasOwnProperty(key)) {
+                const error = getErrorMessage(xmlObject[key], maxDepth - 1);
+                if (error) {
+                    return error;
+                }
+            }
+        }
+    }
+    return null;
 }
 
 function validateResponse(response, predicate) {

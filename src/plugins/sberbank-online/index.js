@@ -30,6 +30,11 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
 
     toDate = toDate || new Date();
 
+    const isFirstRun = !ZenMoney.getData("scrape/lastSuccessDate");
+    if (isFirstRun && ZenMoney.getData("devid")) {
+        fromDate = new Date(new Date().getTime() - 7 * 24 * 3600 * 1000);
+    }
+
     let {host} = await sberbank.login(preferences.login, preferences.pin);
 
     const zenAccounts = [];
@@ -38,11 +43,6 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
     const apiAccountsByType = await sberbank.fetchAccounts(host);
     const pfmAccounts = [];
     const webAccounts = [];
-
-    const isFirstRun = !ZenMoney.getData("scrape/lastSuccessDate");
-    if (isFirstRun && ZenMoney.getData("devid")) {
-        fromDate = new Date(new Date().getTime() - 7 * 24 * 3600 * 1000);
-    }
 
     await Promise.all(Object.keys(apiAccountsByType).map(type => {
         const isPfmAccount = type === "card";
@@ -85,8 +85,9 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
             await Promise.all(apiAccount.ids.map(async id => {
                 const transactions = apiAccount.transactions[id];
                 const n = transactions.length;
-                addTransactions(transactions,
-                    (await sberbank.fetchTransactionsInPfm(host, [id], fromDate, toDate)).map(convertPfmTransaction));
+                const pfmTransactions = await sberbank.fetchTransactionsInPfm(host, [id], fromDate, toDate);
+                const isHoldByDefault = pfmTransactions.length > 0;
+                addTransactions(transactions, pfmTransactions.map(convertPfmTransaction));
                 if (isFirstRun) {
                     const hasCurrencyTransactions = transactions.some(transaction => !transaction.posted);
                     if (hasCurrencyTransactions) {
@@ -99,8 +100,12 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
                     }
                 }
                 for (let i = 0; i < n; i++) {
+                    const transaction = transactions[i];
+                    if (transaction.hold === null && isHoldByDefault) {
+                        transaction.hold = true;
+                    }
                     trackCurrencyMovement({
-                        transaction: transactions[i],
+                        transaction: transaction,
                         accountData: apiAccount.accountData,
                         previousAccountData: isFirstRun ? null : apiAccount.previousAccountData,
                     });
