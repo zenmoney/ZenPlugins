@@ -54,7 +54,7 @@ export function provideScrapeDates(fn) {
     };
 }
 
-function assertAccountIdsAreUnique(accounts) {
+export function assertAccountIdsAreUnique(accounts) {
     _.toPairs(_.countBy(accounts, (x) => x.id))
         .filter(([id, count]) => count > 1)
         .forEach(([id, count]) => {
