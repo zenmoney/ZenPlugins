@@ -1,4 +1,10 @@
-import {convertApiMovementsToReadableTransactions, normalizeIsoDate, parseApiMovementDescription, toZenmoneyAccount} from "./converters";
+import {
+    convertApiAccountsToAccountTuples,
+    convertApiMovementsToReadableTransactions,
+    normalizeIsoDate,
+    parseApiMovementDescription,
+    toZenmoneyAccount,
+} from "./converters";
 
 describe("toZenmoneyAccount", () => {
     it("maps api credit card account", () => {
@@ -152,10 +158,10 @@ describe("convertApiMovementsToReadableTransactions", () => {
                 },
             },
         ];
-        expect(convertApiMovementsToReadableTransactions(apiMovements, [
-            {number: "x7890"},
-            {number: "x0987"},
-        ])).toMatchSnapshot();
+        expect(convertApiMovementsToReadableTransactions(apiMovements, convertApiAccountsToAccountTuples([
+            {number: "x7890", amount: "1 008.40"},
+            {number: "x0987", amount: "2 016.80"},
+        ]))).toMatchSnapshot();
     });
 
     it("guesses missing sender account info with single non-own shared account", () => {
@@ -189,9 +195,9 @@ describe("convertApiMovementsToReadableTransactions", () => {
                 anotherClientInfo: {clientName: "test(anotherClientInfo.clientName)", clientPhone: "test(anotherClientInfo.clientPhone)"},
             },
         ];
-        expect(convertApiMovementsToReadableTransactions(apiMovements, [
-            {number: "x4444", sharedAccountInfo: {isOwn: false}},
-        ])).toMatchSnapshot();
+        expect(convertApiMovementsToReadableTransactions(apiMovements, convertApiAccountsToAccountTuples([
+            {number: "x4444", amount: "1 024.00", sharedAccountInfo: {isOwn: false}},
+        ]))).toMatchSnapshot();
         expect(() => convertApiMovementsToReadableTransactions(apiMovements, [])).toThrow("cannot determine sender account id");
     });
 });
