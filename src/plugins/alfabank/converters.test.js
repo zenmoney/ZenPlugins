@@ -27,9 +27,9 @@ describe("toZenmoneyAccount", () => {
         })).toEqual({
             "type": "ccard",
             "title": "Счёт кредитной карты",
-            "id": "3210",
+            "id": "98765432109876543210",
             "syncID": [
-                "3210",
+                "98765432109876543210",
             ],
             "instrument": "RUR",
             "available": 15294.21,
@@ -57,9 +57,9 @@ describe("toZenmoneyAccount", () => {
         })).toEqual({
             "type": "ccard",
             "title": "Большой кредит",
-            "id": "3210",
+            "id": "98765432109876543210",
             "syncID": [
-                "3210",
+                "98765432109876543210",
             ],
             "instrument": "RUR",
             "startBalance": 0,
@@ -76,9 +76,9 @@ describe("toZenmoneyAccount", () => {
         })).toEqual({
             "type": "ccard",
             "title": "Текущий счёт",
-            "id": "6789",
+            "id": "01234567890123456789",
             "syncID": [
-                "6789",
+                "01234567890123456789",
             ],
             "instrument": "RUR",
             "balance": 8936.66,

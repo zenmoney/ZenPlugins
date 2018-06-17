@@ -1,4 +1,5 @@
 import _ from "lodash";
+import {ensureSyncIDsAreUniqueButSanitized} from "../../common/accounts";
 import {asCashTransfer, formatComment} from "../../common/converters";
 import {mergeTransfers} from "../../common/mergeTransfers";
 import {formatWithCustomInspectParams} from "../../consoleAdapter";
@@ -42,12 +43,11 @@ function convertNonCreditApiAccount(apiAccount) {
 
 export function toZenmoneyAccount(apiAccount) {
     const {description, number, currencyCode, creditInfo} = apiAccount;
-    const id = number.slice(-4);
     return {
         type: "ccard",
-        id,
+        id: number,
         title: description,
-        syncID: [id],
+        syncID: [number],
         instrument: currencyCode,
         ...creditInfo
             ? convertCreditApiAccount(apiAccount)
@@ -56,24 +56,14 @@ export function toZenmoneyAccount(apiAccount) {
 }
 
 export const convertApiAccountsToAccountTuples = (apiAccounts) => {
-    const accountTuples = apiAccounts.map((apiAccount) => ({
-        apiAccount,
-        zenMoneyAccount: toZenmoneyAccount(apiAccount),
-    }));
-    const idCounts = _.countBy(accountTuples, (x) => x.zenMoneyAccount.id);
-    return accountTuples.map((accountTuple) => {
-        if (idCounts[accountTuple.zenMoneyAccount.id] === 1) {
-            return accountTuple;
-        }
-        const id = accountTuple.zenMoneyAccount.id + accountTuple.zenMoneyAccount.instrument;
-        return {
-            ...accountTuple,
-            zenMoneyAccount: {
-                ...accountTuple.zenMoneyAccount,
-                id,
-                syncID: [id],
-            },
-        };
+    const zenMoneyAccounts = ensureSyncIDsAreUniqueButSanitized({
+        accounts: apiAccounts.map(toZenmoneyAccount),
+        sanitizeSyncId: (syncID) => syncID.slice(-8),
+    });
+    return apiAccounts.map((apiAccount, index) => {
+        const zenMoneyAccount = zenMoneyAccounts[index];
+        console.assert(zenMoneyAccount.id === apiAccount.number, "invariant: ensureSyncIDsAreUniqueButSanitized changed order");
+        return {apiAccount, zenMoneyAccount};
     });
 };
 
