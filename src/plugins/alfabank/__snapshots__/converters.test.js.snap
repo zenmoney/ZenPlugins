@@ -9,7 +9,7 @@ Array [
     "sides": Array [
       Object {
         "account": Object {
-          "id": "7890",
+          "id": "x7890",
         },
         "amount": 1000,
         "id": "1",
@@ -17,7 +17,7 @@ Array [
       },
       Object {
         "account": Object {
-          "id": "0987",
+          "id": "x0987",
         },
         "amount": -1000,
         "id": "2",
@@ -33,7 +33,7 @@ exports[`convertApiMovementsToReadableTransactions guesses missing sender accoun
 Array [
   Object {
     "account": Object {
-      "id": "4444",
+      "id": "x4444",
     },
     "comment": null,
     "date": 2018-05-22T09:00:00.000Z,

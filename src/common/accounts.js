@@ -68,7 +68,9 @@ const assertReplacementsAreUnique = (replacementPairs) => {
 };
 
 export function ensureSyncIDsAreUniqueButSanitized({accounts, sanitizeSyncId}) {
-    const replacementsByInstrument = _.mapValues(_.groupBy(accounts, (x) => x.instrument), (accounts, instrument) => {
+    console.assert(Array.isArray(accounts), "accounts must be array");
+    console.assert(typeof sanitizeSyncId === "function", "sanitizeSyncId must be function");
+    const replacementsByInstrument = _.mapValues(_.groupBy(accounts, (x) => x.instrument), (accounts) => {
         const flattenedAccounts = _.flatMap(accounts, ({syncID, ...rest}) => {
             console.assert(Array.isArray(syncID), "account.syncID must be array");
             return syncID.map((singleSyncID) => {
