@@ -175,7 +175,7 @@ function complementSides(apiMovements) {
     const relatedMovementsByReferenceLookup = _.fromPairs(_.toPairs(_.groupBy(apiMovements, x => {
         delete x.actions;
         return x.reference;
-    })).filter(([key, items]) => key !== "HOLD" && items.length === 2));
+    })).filter(([key, items]) => key !== "HOLD" && !key.startsWith("CASHIN") && items.length === 2));
     return apiMovements.map((apiMovement) => {
         const relatedMovements = relatedMovementsByReferenceLookup[apiMovement.reference];
         if (!relatedMovements) {
