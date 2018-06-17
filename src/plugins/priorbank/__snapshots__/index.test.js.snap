@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`happy path scrape result 1`] = `
+exports[`scraper happy path should work: happy path scrape result 1`] = `
 Object {
   "accounts": Array [
     Object {
