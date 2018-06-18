@@ -48,7 +48,9 @@ XMLHttpRequestViaZenAPI.prototype.send = function(body) {
     this.readyState = XMLHttpRequestViaZenAPI.LOADING;
 
     try {
-        this.responseText = ZenMoney.request(method, url, body, headers);
+        this.responseText = !method || method.toUpperCase() === "GET"
+            ? ZenMoney.requestGet(url, headers)
+            : ZenMoney.request(method, url, body, headers);
     } catch (e) {
         this.onerror(e);
         return;

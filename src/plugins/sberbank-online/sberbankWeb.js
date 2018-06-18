@@ -45,6 +45,9 @@ export async function login(login, password) {
         throw new TemporaryError("Сервер банка временно недоступен");
     }
     if (/\$\$errorFlag/i.test(response.body)) {
+        if (response.body.indexOf("Неверный логин или пароль") >= 0) {
+            throw new InvalidPreferencesError("Неверный пароль от Сбербанк Онлайн");
+        }
         throw new Error("Неизвестная ошибка");
     }
 

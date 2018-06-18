@@ -196,6 +196,64 @@ describe("convertLoan", () => {
             payoffStep: 1,
         });
     });
+    
+    it("returns valid loan if some fields are missing", () => {
+        expect(convertLoan( {
+            id: "11934064",
+            name: "Потребительский кредит",
+            smsName: "9184",
+            state: null,
+        }, {
+            status: { 
+                code: "0",
+            },
+            detail: {
+                description: "Потребительский кредит",
+                repaymentMethod: "аннуитетный",
+                termStart: "04.01.2018T00:00:00",
+                termDuration: "4-9-0",
+                termEnd: "04.10.2022T00:00:00",
+                agreementNumber: "235",
+                accountNumber: "45507810013000079184",
+                personRole: "заемщик/созаемщик",
+                name: "Потребительский кредит",
+            },
+            extDetail: {
+                kind: "АННУИТЕТНЫЙ",
+                fullName: "Потребительский кредит",
+                type: null,
+                termEnd: "04.10.2022T00:00:00",
+                origianlAmount: { amount: "700000,00", currency: { code: "RUB", name: "руб." } },
+                nextPayment: { infoText: "Ближайший платёж ," },
+                currentPayment: null,
+                loanInfo: {
+                    origianlAmount: { amount: "700000,00", currency: { code: "RUB", name: "руб." } },
+                    termStart: "04.01.2018T00:00:00",
+                    termEnd: "04.10.2022T00:00:00",
+                    agreementNumber: "235",
+                    accountNumber: "45507810013000079184",
+                    repaymentMethod: "аннуитетный",
+                },
+            },
+        })).toEqual({
+            id: "loan:11934064",
+            type: "loan",
+            title: "Потребительский кредит",
+            instrument: "RUB",
+            syncID: [
+                "45507810013000079184",
+            ],
+            balance: -700000,
+            startBalance: 700000,
+            capitalization: true,
+            percent: 1,
+            startDate: "2018-01-04",
+            endDateOffsetInterval: "month",
+            endDateOffset: 57,
+            payoffInterval: "month",
+            payoffStep: 1,
+        });
+    });
 });
 
 describe("convertDeposit", () => {
@@ -287,6 +345,8 @@ describe("convertDeposit", () => {
 });
 
 describe("convertCards", () => {
+    const nowDate = new Date("2018-06-02T12:00:00Z");
+
     it("converts debit main and additional cards", () => {
         const jsonArray = parseXml(`<response> 
     <status> 
@@ -384,7 +444,7 @@ describe("convertCards", () => {
 </response>`).response.cards.card.map(json => {
             return {account: json}
         });
-        expect(convertCards(jsonArray)).toEqual([
+        expect(convertCards(jsonArray, nowDate)).toEqual([
             {
                 ids: ["105751881", "105751882"],
                 type: "card",
@@ -585,7 +645,7 @@ describe("convertCards", () => {
         expect(convertCards([{
             account,
             details,
-        }])).toEqual([
+        }], nowDate)).toEqual([
             {
                 ids: ["69474436"],
                 type: "card",
@@ -602,6 +662,38 @@ describe("convertCards", () => {
                 },
             },
         ]);
+    });
+
+    it("skips expired cards", () => {
+        expect(convertCards([{
+            account: {
+                id: "593949641",
+                name: "Visa Classic",
+                smsName: "3233",
+                description: "Visa Classic",
+                number: "4276 55** **** 3233",
+                isMain: "true",
+                type: "debit",
+                availableLimit: { amount: "0.00", currency: { code: "RUB", name: "руб." } },
+                state: "active",
+                cardAccount: "40817810423044618561",
+                showarrestdetail: "false",
+                tokenExists: "false",
+                expireDate: "10/2017",
+                statusWay4: "+-КАРТОЧКА ОТКРЫТА",
+            },
+            details: {
+                holderName: "МИХАИЛ ИГОРЕВИЧ Л.",
+                availableCashLimit: { amount: "0.00", currency: { code: "RUB", name: "руб." } },
+                purchaseLimit: { amount: "0.00", currency: { code: "RUB", name: "руб." } },
+                officeName: "Доп.офис №9055/0774",
+                accountNumber: "40817810423044618561",
+                expireDate: "10/2017",
+                name: "Visa Classic",
+                cardAccount: "40817810455033618561",
+                statusWay4: "+-КАРТОЧКА ОТКРЫТА",
+            },
+        }], nowDate)).toEqual([]);
     });
 });
 

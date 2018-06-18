@@ -2,7 +2,8 @@ import {MD5} from "jshashes";
 import _ from "lodash";
 import {toAtLeastTwoDigitsString} from "../../common/dates";
 import * as network from "../../common/network";
-import {formatDateSql, parseDate} from "./converters";
+import * as retry from "../../common/retry";
+import {formatDateSql, parseDate, toMoscowDate} from "./converters";
 
 const qs = require("querystring");
 const md5 = new MD5();
@@ -58,16 +59,13 @@ export async function login(login, pin) {
             sanitizeRequestLog: {body: {mGUID: true, password: true, devID: true, mobileSdkData: true}},
             sanitizeResponseLog: {body: {loginData: {token: true}}, headers: {"set-cookie": true}},
         }, null);
-        if (_.get(response, "body.status.code") === "7") {
+        if (response.body.status === "7") {
             ZenMoney.setData("mGUID", null);
         } else {
-            if (_.get(response, "body.status.code") === "1") {
-                const message = getErrorMessage(response.body);
-                if (message) {
-                    throw new InvalidPreferencesError(message);
-                }
+            if (response.body.status === "1" && response.body.error) {
+                throw new InvalidPreferencesError(response.body.error);
             }
-            validateResponse(response, response => _.get(response, "body.status.code") === "0");
+            validateResponse(response, response => response.body.status === "0");
         }
     }
 
@@ -83,13 +81,10 @@ export async function login(login, pin) {
             sanitizeRequestLog: {body: {login: true, devID: true, devIDOld: true}},
             sanitizeResponseLog: {body: {confirmRegistrationStage: {mGUID: true}}, headers: {"set-cookie": true}},
         }, null);
-        if (_.get(response, "body.status.code") === "1") {
-            const message = getErrorMessage(response.body);
-            if (message) {
-                throw new TemporaryError(message);
-            }
+        if (response.body.status === "1" && response.body.error) {
+            throw new TemporaryError(response.body.error);
         }
-        validateResponse(response, response => _.get(response, "body.status.code") === "0"
+        validateResponse(response, response => response.body.status === "0"
             && _.get(response, "body.confirmRegistrationStage.mGUID"));
 
         ZenMoney.setData("mGUID", response.body.confirmRegistrationStage.mGUID);
@@ -112,10 +107,10 @@ export async function login(login, pin) {
                 },
                 sanitizeRequestLog: {body: {mGUID: true, smsPassword: true}},
             }, null);
-            if (_.get(response, "body.status.code") === "1") {
+            if (response.body.status === "1") {
                 throw new TemporaryError("Вы ввели неправильный идентификатор или пароль из SMS. Повторите подключение импорта.");
             } else {
-                validateResponse(response, response => _.get(response, "body.status.code") === "0");
+                validateResponse(response, response => response.body.status === "0");
             }
         }
 
@@ -196,19 +191,15 @@ export async function loginInPfm(host) {
     return {host};
 }
 
-function toMoscowDate(date) {
-    return new Date(date.getTime() + (date.getTimezoneOffset() + 180) * 60000);
-}
-
-async function fetchTransactionsInPfmWithType(host, accountIds, fromDate, toDate, income) {
+async function fetchTransactionsInPfmWithType(host, accountIds, fromDate, toDate, income, ignoreToDateError) {
     const currentYear = toMoscowDate(new Date()).getFullYear();
-    fromDate = toMoscowDate(fromDate);
-    toDate = toMoscowDate(toDate);
-    if (fromDate.getFullYear() < currentYear) {
-        fromDate.setFullYear(currentYear, 0, 1);
+    const mskFromDate = toMoscowDate(fromDate);
+    const mskToDate = toMoscowDate(toDate);
+    if (mskFromDate.getFullYear() < currentYear) {
+        mskFromDate.setFullYear(currentYear, 0, 1);
     }
-    const response = await network.fetchJson(`https://${host}/pfm/api/v1.20/extracts`
-        + `?from=${formatDate(fromDate)}&to=${formatDate(toDate)}`
+    let response = await network.fetchJson(`https://${host}/pfm/api/v1.20/extracts`
+        + `?from=${formatDate(mskFromDate)}&to=${formatDate(mskToDate)}`
         + `&showCash=true&showCashPayments=true&showOtherAccounts=true`
         + `&selectedCardId=${accountIds.join(",")}&income=${income ? "true" : "false"}`, {
         method: "GET",
@@ -222,6 +213,14 @@ async function fetchTransactionsInPfmWithType(host, accountIds, fromDate, toDate
             "Accept-Encoding": "gzip",
         },
     });
+    if (!ignoreToDateError && response && response.body
+            && response.body.statusCode === 2
+            && response.body.errors
+            && response.body.errors[0]
+            && response.body.errors[0].field === "to") {
+        return fetchTransactionsInPfmWithType(host, accountIds,
+            fromDate, new Date(toDate.getTime() - 24 * 3600 * 1000), income, true);
+    }
     if (response && response.body && response.body.statusCode === 9) {
         console.log(`could not get data from pfm for accounts ${accountIds}`);
         return [];
@@ -347,20 +346,37 @@ async function fetchXml(url, options = {}, predicate = () => true) {
     if (typeof _.get(options, "sanitizeResponseLog.body") === "object") {
         options.sanitizeResponseLog.body = {response: options.sanitizeResponseLog.body};
     }
-    const response = await network.fetch(url, options);
-    if (response.body && response.body.response) {
-        response.body = response.body.response;
-    }
 
-    const status = _.get(response, "body.status.code");
-    if (status !== "0") {
-        const message = getErrorMessage(response.body);
-        if (message && message.indexOf("АБС временно") >= 0) {
+    let response;
+    try {
+        response = await retry.retry({
+            getter: async () => {
+                const response = await network.fetch(url, options);
+                validateResponse(response, response => response && response.body && response.body.response);
+                response.body = response.body.response;
+                response.body.error = getErrorMessage(response.body);
+                response.body.status = _.get(response, "body.status.code");
+                return response;
+            },
+            predicate: response => response.body.status === "0" || !isTemporaryError(response.body.error),
+            maxAttempts: 5,
+        });
+    } catch (e) {
+        if (e instanceof retry.RetryError
+                || (e.message && e.message.indexOf("could not satisfy predicate in") >= 0)) {
             throw new TemporaryError("Информация из банка временно недоступна.");
+        } else {
+            throw e;
         }
     }
+
+    if (response.body.status !== "0"
+            && response.body.error
+            && response.body.error.indexOf("личный кабинет заблокирован") >= 0) {
+        throw new InvalidPreferencesError(response.body.error);
+    }
     if (predicate) {
-        validateResponse(response, response => status === "0" && predicate(response));
+        validateResponse(response, response => response.body.status === "0" && predicate(response));
     }
 
     return response;
@@ -386,6 +402,10 @@ export function getErrorMessage(xmlObject, maxDepth = 3) {
         }
     }
     return null;
+}
+
+function isTemporaryError(message) {
+    return message && (message.indexOf("АБС временно") >= 0 || message.indexOf("АБС не доступна") >= 0);
 }
 
 function validateResponse(response, predicate) {

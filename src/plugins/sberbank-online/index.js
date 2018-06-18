@@ -80,12 +80,25 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
     }));
 
     if (pfmAccounts.length > 0) {
-        host = (await sberbank.loginInPfm(host)).host;
+        let hasSSLError = false;
+        try {
+            host = (await sberbank.loginInPfm(host)).host;
+        } catch (e) {
+            if (e.message.indexOf("[NCE]") >= 0) {
+                //PFM uses TLSv1.2 which is not supported by Android < 5.0
+                hasSSLError = true;
+                console.log("skipping PFM. Application doesn't seem to support TLSv1.2")
+            } else {
+                throw e;
+            }
+        }
         await Promise.all(pfmAccounts.map(async apiAccount => {
             await Promise.all(apiAccount.ids.map(async id => {
                 const transactions = apiAccount.transactions[id];
                 const n = transactions.length;
-                const pfmTransactions = await sberbank.fetchTransactionsInPfm(host, [id], fromDate, toDate);
+                const pfmTransactions = hasSSLError
+                    ? []
+                    : await sberbank.fetchTransactionsInPfm(host, [id], fromDate, toDate);
                 const isHoldByDefault = pfmTransactions.length > 0;
                 addTransactions(transactions, pfmTransactions.map(convertPfmTransaction));
                 if (isFirstRun) {

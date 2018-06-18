@@ -246,13 +246,19 @@ export function convertAccounts(apiAccountsArray, type) {
     return convertCards(apiAccountsArray);
 }
 
-export function convertCards(apiCardsArray) {
+export function toMoscowDate(date) {
+    return new Date(date.getTime() + (date.getTimezoneOffset() + 180) * 60000);
+}
+
+export function convertCards(apiCardsArray, nowDate = new Date()) {
     apiCardsArray = _.sortBy(apiCardsArray,
         json => json.account.mainCardId || json.account.id,
         json => json.account.mainCardId ? 1 : 0);
     const accounts = [];
+    const mskDate = toMoscowDate(nowDate);
+    const minExpireDate = mskDate.getFullYear() + "-" + toAtLeastTwoDigitsString(mskDate.getMonth() + 1);
     for (const apiCard of apiCardsArray) {
-        if (apiCard.account.state !== "active") {
+        if (apiCard.account.state !== "active" || parseExpireDate(apiCard.account.expireDate) < minExpireDate) {
             continue;
         }
         if (apiCard.account.mainCardId) {
@@ -305,16 +311,25 @@ export function convertAccount(apiAccount) {
 }
 
 export function convertLoan(apiLoan, details) {
+    if (!details.extDetail || !details.extDetail.origianlAmount) {
+        return null;
+    }
     const account = {
         id: "loan:" + apiLoan.id,
         type: "loan",
         title: apiLoan.name,
-        instrument: apiLoan.amount.currency.code,
+        instrument: details.extDetail.origianlAmount.currency.code,
         startDate: parseDate(details.detail.termStart),
-        startBalance: parseDecimal(apiLoan.amount.amount),
-        balance: -parseDecimal(details.extDetail.remainAmount.amount),
+        startBalance: parseDecimal(apiLoan.amount
+            ? apiLoan.amount.amount
+            : details.extDetail.origianlAmount.amount),
+        balance: -parseDecimal(details.extDetail.remainAmount
+            ? details.extDetail.remainAmount.amount
+            : details.extDetail.origianlAmount.amount),
         capitalization: details.detail.repaymentMethod === "аннуитетный",
-        percent: parseDecimal(details.extDetail.rate),
+        percent: details.extDetail.rate
+            ? parseDecimal(details.extDetail.rate)
+            : 1,
         syncID: [
             details.detail.accountNumber,
         ],
@@ -377,6 +392,12 @@ export function parseDate(str) {
     const parts = str.substring(0, 10).split(".");
     console.assert(parts.length === 3, `unexpected date ${str}`);
     return `${parts[2]}-${parts[1]}-${parts[0]}`;
+}
+
+function parseExpireDate(str) {
+    const parts = str.split("/");
+    console.assert(parts.length === 2 && parts[0].length === 2 && parts[1].length === 4, `unexpected expire date ${str}`);
+    return `${parts[1]}-${parts[0]}`;
 }
 
 function parseCashTransaction(transaction, zenMoneyTransaction) {
