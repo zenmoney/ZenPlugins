@@ -471,11 +471,17 @@ function validateResponse(response, predicate) {
 }
 
 function getCookie(response) {
-    const cookie = response.headers
+    let cookie;
+    if (response.headers
             && response.headers["set-cookie"]
-            && response.headers["set-cookie"].indexOf("JSESSIONID") === 0
-        ? response.headers["set-cookie"].split(";")[0]
-        : ZenMoney.getCookie("JSESSIONID");
+            && response.headers["set-cookie"].indexOf("JSESSIONID") === 0) {
+        cookie = response.headers["set-cookie"].split(";")[0];
+    } else {
+        cookie = ZenMoney.getCookie("JSESSIONID");
+        if (cookie) {
+            cookie = "JSESSIONID=" + cookie;
+        }
+    }
     console.assert(cookie, "could not get cookie from response", response.url);
     return cookie;
 }
