@@ -129,10 +129,11 @@ function findMovementAccountTuple(apiMovement, accountTuples) {
             return nonOwnSharedAccountTuples[0];
         }
     }
-    throw new Error(formatWithCustomInspectParams(
-        `cannot determine ${parsedAmount > 0 ? "recipient" : "sender"} account id`,
+    console.warn(
+        `cannot extract ${parsedAmount > 0 ? "recipient" : "sender"} account id (no single candidate), ignoring movement`,
         {apiMovement, candidatesLast4Chars},
-    ));
+    );
+    return null;
 }
 
 export const normalizeIsoDate = (isoDate) => isoDate.replace(/([+-])(\d{2})(\d{2})$/, "$1$2:$3");
