@@ -167,15 +167,21 @@ const neverLosingDataMergeCustomizer = function(valueInA, valueInB, key, objA, o
         if (key === "recipientAccountNumberDescription" && objA.recipientValue && valueInB.endsWith(objA.recipientValue.slice(-4))) {
             return;
         }
-        console.assert(false, key, `has ambiguous values:`, [valueInA, valueInB], `objects:`, [objA, objB]);
+        throw new Error(formatWithCustomInspectParams(key, `has ambiguous values:`, [valueInA, valueInB], `objects:`, [objA, objB]));
     }
 };
 
-function complementSides(apiMovements) {
+const isPossiblyTransfer = ({reference}) => {
+    return reference !== "HOLD"
+        && !reference.startsWith("CASHIN")
+        && !reference.startsWith("AQ"); // AQ\d prefix is common for deposits creation/destroy/percentages, definitely NOT a transfer
+};
+
+function complementTransferSides(apiMovements) {
     const relatedMovementsByReferenceLookup = _.fromPairs(_.toPairs(_.groupBy(apiMovements, x => {
         delete x.actions;
         return x.reference;
-    })).filter(([key, items]) => key !== "HOLD" && !key.startsWith("CASHIN") && items.length === 2));
+    })).filter(([key, items]) => isPossiblyTransfer({reference: key}) && items.length === 2));
     return apiMovements.map((apiMovement) => {
         const relatedMovements = relatedMovementsByReferenceLookup[apiMovement.reference];
         if (!relatedMovements) {
@@ -189,7 +195,7 @@ function complementSides(apiMovements) {
 
 export function convertApiMovementsToReadableTransactions(apiMovements, accountTuples) {
     const movementsWithoutDuplicates = _.uniqBy(apiMovements, x => x.key);
-    const movementsWithCompleteSides = complementSides(movementsWithoutDuplicates);
+    const movementsWithCompleteSides = complementTransferSides(movementsWithoutDuplicates);
     const processedMovements = movementsWithCompleteSides.map((apiMovement) => {
         const accountTuple = findMovementAccountTuple(apiMovement, accountTuples);
         if (accountTuple === null) {
