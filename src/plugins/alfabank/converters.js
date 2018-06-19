@@ -226,6 +226,9 @@ export function convertApiMovementsToReadableTransactions(apiMovements, accountT
             if (readableTransaction.type !== "transaction") {
                 return false;
             }
+            if (!isPossiblyTransfer({reference})) {
+                return false;
+            }
             if (description.startsWith("Внутрибанковский перевод между счетами")) {
                 return true;
             }
