@@ -6,7 +6,7 @@ export function normalizeCardExpirationDate(cardExpirationDate) {
     const match = cardExpirationDate.match(cardExpirationDateRegExp);
     if (!match) {
         // FIXME must use InvalidPreferencesError here, but InvalidPreferencesError android handler is buggy
-        throw new TemporaryError(`cardExpirationDate ${cardExpirationDate} is invalid: use MM/YY format, e.g. 01/21`);
+        throw new TemporaryError(`cardExpirationDate ${cardExpirationDate} is invalid: use MMYY format, e.g. 0121`);
     }
     const [, mm, yy] = match;
     return `${mm}/${yy}`;
