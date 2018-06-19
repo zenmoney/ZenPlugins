@@ -161,11 +161,19 @@ export async function register({deviceId, cardNumber, cardExpirationDate, phoneN
     const confirmationCode = await ZenMoney.readLine("Введите код из СМС сообщения", {inputType: "number"});
     const {redirectUrl} = await finishCustomerRegistration({confirmationCode, queryRedirectParams, previousMultiFactorResponseParams});
     const redirectedResponse = await fetchJson(redirectUrl, {
-        sanitizeRequestLog: true,
-        sanitizeResponseLog: true,
+        sanitizeRequestLog: {url: true},
+        sanitizeResponseLog: {url: true},
     });
-    const [, accessToken] = redirectedResponse.url.match(/access_token=(.+?)&/);
-    const [, refreshToken] = redirectedResponse.url.match(/refresh_token=(.+?)&/);
+    const accessTokenMatch = redirectedResponse.url.match(/access_token=(.+?)&/);
+    if (!accessTokenMatch) {
+        throw new Error(`redirect url does not contain access_token param: ` + redirectedResponse.url);
+    }
+    const refreshTokenMatch = redirectedResponse.url.match(/refresh_token=(.+?)&/);
+    if (!refreshTokenMatch) {
+        throw new Error(`redirect url does not contain refresh_token param: ` + redirectedResponse.url);
+    }
+    const [, accessToken] = accessTokenMatch;
+    const [, refreshToken] = refreshTokenMatch;
     return {accessToken, refreshToken};
 }
 
