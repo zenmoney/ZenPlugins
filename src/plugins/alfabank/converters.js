@@ -101,15 +101,6 @@ export function parseApiMovementDescription(description, sign) {
     };
 }
 
-const findAccountTupleByLast4 = ({accountTuples, last4}) => {
-    const matchingAccounts = accountTuples.filter((x) => x.apiAccount.number.endsWith(last4));
-    if (matchingAccounts.length !== 1) {
-        console.error({last4, matchingAccounts});
-        throw new Error("cannot match account id unambiguously (see logs)");
-    }
-    return matchingAccounts[0];
-};
-
 function findMovementAccountTuple(apiMovement, accountTuples) {
     const parsedAmount = parseApiAmount(apiMovement.amount);
     const candidates = parsedAmount > 0
@@ -121,7 +112,16 @@ function findMovementAccountTuple(apiMovement, accountTuples) {
         ];
     const candidatesLast4Chars = _.uniq(_.compact(candidates).map((x) => x.slice(-4)));
     if (candidatesLast4Chars.length === 1) {
-        return findAccountTupleByLast4({accountTuples, last4: candidatesLast4Chars[0]});
+        const last4 = candidatesLast4Chars[0];
+        const matchingAccounts = accountTuples.filter((x) => x.apiAccount.number.endsWith(last4));
+        if (matchingAccounts.length !== 1) {
+            console.warn(
+                `cannot match ${parsedAmount > 0 ? "recipient" : "sender"} account unambiguously (no single match), ignoring movement`,
+                {apiMovement, last4, matchingAccounts},
+            );
+            return null;
+        }
+        return matchingAccounts[0];
     }
     if (candidatesLast4Chars.length === 0) {
         const nonOwnSharedAccountTuples = accountTuples.filter((x) => x.apiAccount.sharedAccountInfo && !x.apiAccount.sharedAccountInfo.isOwn);
@@ -191,14 +191,22 @@ export function convertApiMovementsToReadableTransactions(apiMovements, accountT
     const movementsWithoutDuplicates = _.uniqBy(apiMovements, x => x.key);
     const movementsWithCompleteSides = complementSides(movementsWithoutDuplicates);
     const processedMovements = movementsWithCompleteSides.map((apiMovement) => {
-        const {apiAccount, zenMoneyAccount} = findMovementAccountTuple(apiMovement, accountTuples);
+        const accountTuple = findMovementAccountTuple(apiMovement, accountTuples);
+        if (accountTuple === null) {
+            return null;
+        }
+        const {apiAccount, zenMoneyAccount} = accountTuple;
         return {
             apiMovement,
             apiAccount,
             readableTransaction: convertApiMovementToReadableTransaction(apiMovement, zenMoneyAccount.id),
         };
     });
-    const processedMovementsWithoutNonAccountableArtifacts = processedMovements.filter(({apiMovement, apiAccount}) => {
+    const processedMovementsWithoutNonAccountableArtifacts = processedMovements.filter((processedMovement) => {
+        if (processedMovement === null) {
+            return false;
+        }
+        const {apiMovement, apiAccount} = processedMovement;
         if (!apiAccount.accountDetailsCreditInfo || !apiAccount.accountDetailsCreditInfo["Кредитный продукт и валюта"].startsWith("Кредитная карта")) {
             return true;
         }
