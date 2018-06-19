@@ -17,10 +17,10 @@
         inputType="phone"
         title="Срок действия карты"
         dialogTitle="Срок действия карты"
-        dialogMessage="Пример: 01/21"
+        dialogMessage="Формат: ММГГ, пример: 0121"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
-        summary="|Пример: 01/21|{@s}"
+        summary="|Формат: ММГГ, пример: 0121|{@s}"
     />
     <EditTextPreference
         key="phoneNumber"
