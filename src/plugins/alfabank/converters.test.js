@@ -198,6 +198,6 @@ describe("convertApiMovementsToReadableTransactions", () => {
         expect(convertApiMovementsToReadableTransactions(apiMovements, convertApiAccountsToAccountTuples([
             {number: "x4444", amount: "1 024.00", sharedAccountInfo: {isOwn: false}},
         ]))).toMatchSnapshot();
-        expect(() => convertApiMovementsToReadableTransactions(apiMovements, [])).toThrow("cannot determine sender account id");
+        expect(convertApiMovementsToReadableTransactions(apiMovements, [])).toEqual([]);
     });
 });
