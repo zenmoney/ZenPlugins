@@ -9,8 +9,14 @@ function getLast4Digits(id, ignoreCurrentSanitizing) {
     }
 }
 
-export function maybeSanitizeSyncIdMaybeNot(id) {
-    return id.length > 9 && !/[^\d*]/.test(id) ? "*****" + id.substring(5) : id;
+export function sanitizeSyncId(id) {
+    if (id.includes("*") || id.length < 16) {
+        return id;
+    }
+    if (id.length === 16) {
+        return id.slice(0, 6) + "******" + id.slice(12, 16);
+    }
+    return "*****" + id.substring(5);
 }
 
 /**
@@ -36,7 +42,7 @@ export function convertAccountSyncID(accounts, ignoreCurrentSanitizing) {
         for (let id of account.syncID) {
             const key = account.instrument + "_" + getLast4Digits(id, ignoreCurrentSanitizing);
             const group = accountsByLast4Digits[key];
-            id = group.length > 1 ? maybeSanitizeSyncIdMaybeNot(id) : getLast4Digits(id, ignoreCurrentSanitizing);
+            id = group.length > 1 ? sanitizeSyncId(id) : getLast4Digits(id, ignoreCurrentSanitizing);
             if (syncID.indexOf(id) < 0) {
                 syncID.push(id);
             }

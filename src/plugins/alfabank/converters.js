@@ -1,5 +1,5 @@
 import _ from "lodash";
-import {ensureSyncIDsAreUniqueButSanitized} from "../../common/accounts";
+import {ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId} from "../../common/accounts";
 import {asCashTransfer, formatComment} from "../../common/converters";
 import {mergeTransfers} from "../../common/mergeTransfers";
 import {formatWithCustomInspectParams} from "../../consoleAdapter";
@@ -58,7 +58,7 @@ export function toZenmoneyAccount(apiAccount) {
 export const convertApiAccountsToAccountTuples = (apiAccounts) => {
     const zenMoneyAccounts = ensureSyncIDsAreUniqueButSanitized({
         accounts: apiAccounts.map(toZenmoneyAccount),
-        sanitizeSyncId: (syncID) => syncID.slice(-8),
+        sanitizeSyncId,
     });
     return apiAccounts.map((apiAccount, index) => {
         const zenMoneyAccount = zenMoneyAccounts[index];
