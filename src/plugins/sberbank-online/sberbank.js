@@ -61,11 +61,6 @@ export async function login(login, pin) {
         }, null);
         if (response.body.status === "7") {
             ZenMoney.setData("mGUID", null);
-        } else {
-            if (response.body.status === "1" && response.body.error) {
-                throw new InvalidPreferencesError(response.body.error);
-            }
-            validateResponse(response, response => response.body.status === "0");
         }
     }
 
@@ -127,12 +122,15 @@ export async function login(login, pin) {
             },
             sanitizeRequestLog: {body: {mGUID: true, password: true, devID: true, devIDOld: true, mobileSdkData: true}},
             sanitizeResponseLog: {body: {loginData: {token: true}}},
-        });
+        }, null);
     }
 
-    validateResponse(response, response =>
-        _.get(response, "body.loginData.token") &&
-        _.get(response, "body.loginData.host"));
+    if (response.body.status === "1" && response.body.error) {
+        throw new InvalidPreferencesError(response.body.error);
+    }
+    validateResponse(response, response => response.body && response.body.status === "0"
+        && _.get(response, "body.loginData.token")
+        && _.get(response, "body.loginData.host"));
 
     const token = response.body.loginData.token;
     const host = response.body.loginData.host;

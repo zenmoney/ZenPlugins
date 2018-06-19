@@ -36,7 +36,7 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
     }
 
     let {host} = await sberbank.login(preferences.login, preferences.pin);
-
+    
     const zenAccounts = [];
     const zenTransactions = [];
 
