@@ -49,7 +49,7 @@ export async function login(preferences) {
     if (!isValidPin)
         throw new InvalidPreferencesError("Пин-код не верен. Укажите код, заданный вами в приложении банка 'Мой кредит'.");
 
-    auth.token = response.headers.map["x-auth-token"];
+    auth.token = response.headers["x-auth-token"];
     ZenMoney.setData("auth", auth);
     return auth;
 }
@@ -145,7 +145,7 @@ async function registerDevice(auth, preferences){
     if (!isValidPin)
         throw new ZenMoney.Error("Пин-код не верен. Укажите код, заданный вами в приложении банка 'Мой кредит'.", true);
 
-    auth.token = response.headers.map["x-auth-token"];
+    auth.token = response.headers["x-auth-token"];
     ZenMoney.setData("auth", auth);
     return auth;
 }

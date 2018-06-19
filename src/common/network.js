@@ -44,16 +44,20 @@ export async function fetch(url, options = {}) {
             bodyParsingException = e;
         }
     }
+
+    const headers = response.headers.entries ? _.fromPairs([...response.headers.entries()]) : response.headers.map;
+
     response = {
-        ..._.pick(response, ["ok", "status", "statusText", "url", "headers"]),
+        ..._.pick(response, ["ok", "status", "statusText", "url"]),
         body,
+        headers,
     };
 
     const endTicks = Date.now();
     shouldLog && console.debug("response", sanitize({
         status: response.status,
         url: response.url,
-        headers: response.headers.entries ? _.fromPairs([...response.headers.entries()]) : response.headers.raw(),
+        headers,
         body,
         ms: endTicks - beforeFetchTicks,
     }, options.sanitizeResponseLog || false));

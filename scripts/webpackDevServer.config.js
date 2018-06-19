@@ -153,6 +153,7 @@ module.exports = ({allowedHost, host, https}) => {
                     proxyRes.headers["set-cookie"] = proxyRes.headers["set-cookie"]
                         .map(removeSecureSealFromCookieValue)
                         .map(removeDomainFromCookieValue);
+                    proxyRes.headers[TRANSFERABLE_HEADER_PREFIX + "set-cookie"] = proxyRes.headers["set-cookie"];
                 }
                 const location = proxyRes.headers["location"];
                 if (location && /^https?:\/\//i.test(location)) {

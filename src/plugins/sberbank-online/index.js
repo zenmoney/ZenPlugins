@@ -23,6 +23,16 @@ import {
     trackLastCurrencyTransaction,
 } from "./transactionUtils";
 
+function getAuth() {
+    return ZenMoney.getData("auth");
+}
+
+function saveAuth(auth) {
+    delete auth.api.token;
+    delete auth.pfm;
+    ZenMoney.setData("auth", auth);
+}
+
 export async function scrape({preferences, fromDate, toDate, isInBackground}) {
     if (preferences.pin.length !== 5) {
         throw new InvalidPreferencesError("Пин-код должен быть из 5 цифр");
@@ -35,12 +45,12 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
         fromDate = new Date(new Date().getTime() - 7 * 24 * 3600 * 1000);
     }
 
-    let {host} = await sberbank.login(preferences.login, preferences.pin);
-    
+    let auth = await sberbank.login(preferences.login, preferences.pin, getAuth());
+
     const zenAccounts = [];
     const zenTransactions = [];
 
-    const apiAccountsByType = await sberbank.fetchAccounts(host);
+    const apiAccountsByType = await sberbank.fetchAccounts(auth);
     const pfmAccounts = [];
     const webAccounts = [];
 
@@ -62,7 +72,7 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
             }
 
             await Promise.all(apiAccount.ids.map(async id => {
-                for (const apiTransaction of await sberbank.fetchTransactions(host, {id, type}, fromDate, toDate)) {
+                for (const apiTransaction of await sberbank.fetchTransactions(auth, {id, type}, fromDate, toDate)) {
                     const transaction = type === "loan"
                         ? convertLoanTransaction(apiTransaction)
                         : convertApiTransaction(apiTransaction, apiAccount.zenAccount);
@@ -82,7 +92,7 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
     if (pfmAccounts.length > 0) {
         let hasSSLError = false;
         try {
-            host = (await sberbank.loginInPfm(host)).host;
+            auth = await sberbank.loginInPfm(auth);
         } catch (e) {
             if (e.message.indexOf("[NCE]") >= 0) {
                 //PFM uses TLSv1.2 which is not supported by Android < 5.0
@@ -98,7 +108,7 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
                 const n = transactions.length;
                 const pfmTransactions = hasSSLError
                     ? []
-                    : await sberbank.fetchTransactionsInPfm(host, [id], fromDate, toDate);
+                    : await sberbank.fetchTransactionsInPfm(auth, [id], fromDate, toDate);
                 const isHoldByDefault = pfmTransactions.length > 0;
                 addTransactions(transactions, pfmTransactions.map(convertPfmTransaction));
                 if (isFirstRun) {
@@ -138,7 +148,7 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
     }
 
     if (webAccounts.length > 0) {
-        host = (await sberbankWeb.login(preferences.login, preferences.password)).host;
+        const host = (await sberbankWeb.login(preferences.login, preferences.password)).host;
         for (const apiAccount of webAccounts) {
             const type = apiAccount.type;
             for (const id of apiAccount.idsWithCurrencyTransactions) {
@@ -180,6 +190,8 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
         ZenMoney.setData("data_" + apiAccount.zenAccount.id, apiAccount.accountData);
     }
 
+    saveAuth(auth);
+
     return {
         accounts: convertAccountSyncID(zenAccounts, true),
         transactions: _.sortBy(combineIntoTransferByTransferId(zenTransactions), zenTransaction => zenTransaction.date),
@@ -189,5 +201,7 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
 export async function makeTransfer(fromAccount, toAccount, sum) {
     const preferences = ZenMoney.getPreferences();
     const auth = await sberbank.login(preferences.login, preferences.pin);
-    await sberbank.makeTransfer(auth, {fromAccount, toAccount, sum});
+    await sberbank.makeTransfer(preferences.login, auth, {fromAccount, toAccount, sum});
+    saveAuth(auth);
+    ZenMoney.saveData();
 }

@@ -20,7 +20,7 @@ const defaultHeaders = {
     "Accept-Encoding": "gzip",
 };
 
-export async function login(login, pin) {
+export async function login(login, pin, auth) {
     //Migration
     if (!ZenMoney.getData("devID") && ZenMoney.getData("devid")) {
         ZenMoney.setData("devID", ZenMoney.getData("devid"));
@@ -36,6 +36,35 @@ export async function login(login, pin) {
         ZenMoney.setData("devID", getUid(36) + "0000");
         ZenMoney.setData("devIDOld", getUid(36) + "0000");
     }
+    ZenMoney.setData("simId", undefined);
+    ZenMoney.setData("imei", undefined);
+
+    let response;
+
+    if (auth && auth.pfm === null) {
+        auth = null;
+    }
+    if (auth) {
+        // response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/renewSession.do`, {
+        //     headers: {
+        //         ...defaultHeaders,
+        //         "Accept": "application/x-www-form-urlencoded",
+        //         "Accept-Charset": "windows-1251",
+        //         "Host": `${auth.api.host}:4477`,
+        //         "Cookie": `${auth.api.cookie}`,
+        //     },
+        // }, null);
+        response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/permissions.do`, {
+            headers: {
+                ...defaultHeaders,
+                "Host": `${auth.api.host}:4477`,
+                "Cookie": `${auth.api.cookie}`,
+            },
+        }, null);
+        if (response.body && response.body.status === "0") {
+            return auth;
+        }
+    }
 
     const commonBody = {
         "version": version,
@@ -44,7 +73,6 @@ export async function login(login, pin) {
         "deviceName": deviceName,
     };
 
-    let response;
     if (ZenMoney.getData("mGUID")) {
         response = await fetchXml("https://online.sberbank.ru:4477/CSAMAPI/login.do", {
             body: {
@@ -60,7 +88,7 @@ export async function login(login, pin) {
             sanitizeResponseLog: {body: {loginData: {token: true}}, headers: {"set-cookie": true}},
         }, null);
         if (response.body.status === "7") {
-            ZenMoney.setData("mGUID", null);
+            ZenMoney.setData("mGUID", undefined);
         }
     }
 
@@ -156,47 +184,75 @@ export async function login(login, pin) {
         sanitizeResponseLog: {body: {person: true}, headers: {"set-cookie": true}},
     }, response => _.get(response, "body.loginCompleted") === "true");
 
-    return {host, token, login, person: response.body.person};
+    return {api: {token, host, cookie: getCookie(response)}};
 }
 
-export async function loginInPfm(host) {
-    const response = await fetchXml(`https://${host}:4477/mobile9/private/unifiedClientSession/getToken.do`, {
+export async function loginInPfm(auth) {
+    let response;
+    // if (auth.pfm) {
+    //     response = await network.fetchJson(`https://${auth.pfm.host}/pfm/api/v1.20/budgets`, {
+    //         method: "GET",
+    //         headers: {
+    //             "User-Agent": "Mobile Device",
+    //             "Accept": "application/json",
+    //             "Content-Type": "application/json;charset=UTF-8",
+    //             "Accept-Charset": "UTF-8",
+    //             "Host": `${auth.pfm.host}`,
+    //             "Connection": "Keep-Alive",
+    //             "Accept-Encoding": "gzip",
+    //             "Cookie": auth.pfm.cookie,
+    //         },
+    //     });
+    //     if (response.body && (response.body.statusCode === 4 || response.body.statusCode === 0)) {
+    //         return auth;
+    //     }
+    // }
+    // if (auth && !auth.api.token) {
+    //     return {...auth, pfm: null};
+    // }
+    response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/unifiedClientSession/getToken.do`, {
         headers: {
             ...defaultHeaders,
-            "Host": `${host}:4477`,
+            "Host": `${auth.api.host}:4477`,
             "Content-Type": "application/x-www-form-urlencoded;charset=windows-1251",
             "Accept": "application/x-www-form-urlencoded",
             "Accept-Charset": "windows-1251",
+            "Cookie": auth.api.cookie,
         },
         body: {systemName: "pfm"},
         sanitizeResponseLog: {body: {token: true}},
     }, response => _.get(response, "body.host") && _.get(response, "body.token"));
-    host = response.body.host;
-    await network.fetchJson(`https://${host}/pfm/api/v1.20/login?token=${response.body.token}`, {
+    auth = {...auth, pfm: {host: response.body.host, cookie: null}};
+    response = await network.fetchJson(`https://${auth.pfm.host}/pfm/api/v1.20/login?token=${response.body.token}`, {
         method: "GET",
         headers: {
             "User-Agent": "Mobile Device",
             "Accept": "application/json",
             "Content-Type": "application/json;charset=UTF-8",
             "Accept-Charset": "UTF-8",
-            "Host": `${host}`,
+            "Host": `${auth.pfm.host}`,
             "Connection": "Keep-Alive",
             "Accept-Encoding": "gzip",
+            "Cookie": auth.api.cookie,
         },
         sanitizeRequestLog: {url: true},
         sanitizeResponseLog: {url: true, headers: {"set-cookie": true}},
     });
-    return {host};
+    auth.pfm.cookie = getCookie(response);
+    return auth;
 }
 
-async function fetchTransactionsInPfmWithType(host, accountIds, fromDate, toDate, income, ignoreToDateError) {
+async function fetchTransactionsInPfmWithType(auth, accountIds, fromDate, toDate, income, ignoreToDateError) {
+    if (!auth.pfm) {
+        return [];
+    }
     const currentYear = toMoscowDate(new Date()).getFullYear();
     const mskFromDate = toMoscowDate(fromDate);
     const mskToDate = toMoscowDate(toDate);
     if (mskFromDate.getFullYear() < currentYear) {
         mskFromDate.setFullYear(currentYear, 0, 1);
     }
-    let response = await network.fetchJson(`https://${host}/pfm/api/v1.20/extracts`
+    let response = await network.fetchJson(`https://${auth.pfm.host}/pfm/api/v1.20/extracts`
         + `?from=${formatDate(mskFromDate)}&to=${formatDate(mskToDate)}`
         + `&showCash=true&showCashPayments=true&showOtherAccounts=true`
         + `&selectedCardId=${accountIds.join(",")}&income=${income ? "true" : "false"}`, {
@@ -206,9 +262,10 @@ async function fetchTransactionsInPfmWithType(host, accountIds, fromDate, toDate
             "Accept": "application/json",
             "Content-Type": "application/json;charset=UTF-8",
             "Accept-Charset": "UTF-8",
-            "Host": `${host}`,
+            "Host": `${auth.pfm.host}`,
             "Connection": "Keep-Alive",
             "Accept-Encoding": "gzip",
+            "Cookie": auth.pfm.cookie,
         },
     });
     if (!ignoreToDateError && response && response.body
@@ -216,7 +273,7 @@ async function fetchTransactionsInPfmWithType(host, accountIds, fromDate, toDate
             && response.body.errors
             && response.body.errors[0]
             && response.body.errors[0].field === "to") {
-        return fetchTransactionsInPfmWithType(host, accountIds,
+        return fetchTransactionsInPfmWithType(auth, accountIds,
             fromDate, new Date(toDate.getTime() - 24 * 3600 * 1000), income, true);
     }
     if (response && response.body && response.body.statusCode === 9) {
@@ -228,18 +285,19 @@ async function fetchTransactionsInPfmWithType(host, accountIds, fromDate, toDate
     return response.body.operations;
 }
 
-export async function fetchTransactionsInPfm(host, accountIds, fromDate, toDate) {
-    const transactions = await fetchTransactionsInPfmWithType(host, accountIds, fromDate, toDate, false);
-    transactions.push(...await fetchTransactionsInPfmWithType(host, accountIds, fromDate, toDate, true));
+export async function fetchTransactionsInPfm(auth, accountIds, fromDate, toDate) {
+    const transactions = await fetchTransactionsInPfmWithType(auth, accountIds, fromDate, toDate, false);
+    transactions.push(...await fetchTransactionsInPfmWithType(auth, accountIds, fromDate, toDate, true));
     return _.sortBy(transactions, apiTransaction => apiTransaction.id).reverse();
 }
 
-export async function fetchAccounts(host) {
-    const response = await fetchXml(`https://${host}:4477/mobile9/private/products/list.do`, {
+export async function fetchAccounts(auth) {
+    const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/products/list.do`, {
         headers: {
             ...defaultHeaders,
-            "Host": `${host}:4477`,
+            "Host": `${auth.api.host}:4477`,
             "Content-Type": "application/x-www-form-urlencoded;charset=windows-1251",
+            "Cookie": auth.api.cookie,
         },
         body: {showProductType: "cards,accounts,imaccounts,loans"},
     });
@@ -250,7 +308,7 @@ export async function fetchAccounts(host) {
                 account: account,
                 details: account.mainCardId
                     ? null
-                    : await fetchAccountDetails(host, account.id, type),
+                    : await fetchAccountDetails(auth, account.id, type),
             };
         }));
     }))).reduce((accounts, objects, i) => {
@@ -259,25 +317,27 @@ export async function fetchAccounts(host) {
     }, {});
 }
 
-async function fetchAccountDetails(host, accountId, type) {
-    const response = await fetchXml(`https://${host}:4477/mobile9/private/${type}s/info.do`, {
+async function fetchAccountDetails(auth, accountId, type) {
+    const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/${type}s/info.do`, {
         headers: {
             ...defaultHeaders,
-            "Host": `${host}:4477`,
+            "Host": `${auth.api.host}:4477`,
             "Content-Type": "application/x-www-form-urlencoded;charset=windows-1251",
+            "Cookie": auth.api.cookie,
         },
         body: {id: accountId},
     }, response => _.get(response, "body.detail"));
     return response.body;
 }
 
-export async function fetchTransactions(host, {id, type}, fromDate, toDate) {
+export async function fetchTransactions(auth, {id, type}, fromDate, toDate) {
     const isFetchingByDate = type !== "card";
-    const response = await fetchXml(`https://${host}:4477/mobile9/private/${type}s/abstract.do`, {
+    const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/${type}s/abstract.do`, {
         headers: {
             ...defaultHeaders,
-            "Host": `${host}:4477`,
+            "Host": `${auth.api.host}:4477`,
             "Referer": `Android/6.0/${appVersion}`,
+            "Cookie": auth.api.cookie,
         },
         body: isFetchingByDate
             ? {id, from: formatDate(fromDate), to: formatDate(toDate)}
@@ -297,18 +357,18 @@ export async function fetchTransactions(host, {id, type}, fromDate, toDate) {
     return transactions;
 }
 
-export async function makeTransfer({host, token, login}, {fromAccount, toAccount, sum}) {
-    const response = await fetchXml(`https://${host}:4477/mobile9/private/payments/payment.do`, {
+export async function makeTransfer(login, auth, {fromAccount, toAccount, sum}) {
+    const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/payments/payment.do`, {
         headers: {
             ...defaultHeaders,
-            "Host": `${host}:4477`,
+            "Host": `${auth.api.host}:4477`,
         },
         body: {
             fromResource: fromAccount,
             exactAmount: "destination-field-exact",
             operation: "save",
             buyAmount: sum,
-            transactionToken: token,
+            transactionToken: auth.api.token,
             form: "InternalPayment",
             toResource: toAccount,
         },
@@ -318,10 +378,10 @@ export async function makeTransfer({host, token, login}, {fromAccount, toAccount
     const id = response.body.document.id;
     const transactionToken = response.body.transactionToken;
 
-    await fetchXml(`https://${host}:4477/mobile9/private/payments/confirm.do`, {
+    await fetchXml(`https://${auth.api.host}:4477/mobile9/private/payments/confirm.do`, {
         headers: {
             ...defaultHeaders,
-            "Host": `${host}:4477`,
+            "Host": `${auth.api.host}:4477`,
         },
         body: {
             mobileSdkData: JSON.stringify(createSdkData(login)),
@@ -410,6 +470,16 @@ function validateResponse(response, predicate) {
     console.assert(!predicate || predicate(response), "non-successful response");
 }
 
+function getCookie(response) {
+    const cookie = response.headers
+            && response.headers["set-cookie"]
+            && response.headers["set-cookie"].indexOf("JSESSIONID") === 0
+        ? response.headers["set-cookie"].split(";")[0]
+        : ZenMoney.getCookie("JSESSIONID");
+    console.assert(cookie, "could not get cookie from response", response.url);
+    return cookie;
+}
+
 function getArray(object) {
     return object === null || object === undefined
         ? []
@@ -447,23 +517,13 @@ function createSdkData(login) {
     const hex = md5.hex(login + "sdk_data");
     const rsa_app_key = md5.hex(login + "rsa app key").toUpperCase();
 
-    let imei = ZenMoney.getData("imei");
-    if (!imei) {
-        imei = generateImei(login, "35472406******L");
-    }
-
-    let simId = ZenMoney.getData("simId");
-    if (!simId) {
-        simId = generateSimSN(login, "2500266********L");
-    }
-
     const obj = {
         "TIMESTAMP": dt.getUTCFullYear() + "-"
             + toAtLeastTwoDigitsString(dt.getUTCMonth()) + "-"
             + toAtLeastTwoDigitsString(dt.getUTCDate()) + "T"
             + dt.getUTCHours() + ":" + dt.getUTCMinutes() + ":" + dt.getUTCSeconds() + "Z",
-        "HardwareID": imei,
-        "SIM_ID": simId,
+        "HardwareID": generateImei(login, "35472406******L"),
+        "SIM_ID": generateSimSN(login, "2500266********L"),
         "PhoneNumber": "",
         "GeoLocationInfo": [
             {
@@ -502,9 +562,6 @@ function createSdkData(login) {
         "Compromised": 0,
         "Emulator": 0,
     };
-
-    ZenMoney.setData("imei", imei);
-    ZenMoney.setData("simId", simId);
 
     return obj;
 }
