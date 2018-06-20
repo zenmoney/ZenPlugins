@@ -227,11 +227,21 @@ export function convertAccounts(apiAccountsArray, type) {
     if (type !== "card") {
         const accounts = [];
         for (const apiAccount of apiAccountsArray) {
-            const zenAccount = type === "account"
-                ? (apiAccount.account.rate && apiAccount.details.detail.period && parseDecimal(apiAccount.account.rate) > 2
-                    ? convertDeposit(apiAccount.account, apiAccount.details)
-                    : convertAccount(apiAccount.account, apiAccount.details))
-                : convertLoan(apiAccount.account, apiAccount.details);
+            let zenAccount;
+            switch (type) {
+                case "loan":
+                    zenAccount = convertLoan(apiAccount.account, apiAccount.details);
+                    break;
+                case "target":
+                    zenAccount = convertTarget(apiAccount.account, apiAccount.details);
+                    break;
+                default:
+                    zenAccount = apiAccount.account.rate && apiAccount.details.detail.period
+                        && parseDecimal(apiAccount.account.rate) > 2
+                        ? convertDeposit(apiAccount.account, apiAccount.details)
+                        : convertAccount(apiAccount.account, apiAccount.details);
+                    break;
+            }
             if (!zenAccount) {
                 continue;
             }
@@ -248,6 +258,10 @@ export function convertAccounts(apiAccountsArray, type) {
 
 export function toMoscowDate(date) {
     return new Date(date.getTime() + (date.getTimezoneOffset() + 180) * 60000);
+}
+
+export function convertTarget(apiTarget, details) {
+    throw new Error("convertTarget not implemented");
 }
 
 export function convertCards(apiCardsArray, nowDate = new Date()) {

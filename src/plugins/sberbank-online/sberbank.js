@@ -45,18 +45,11 @@ export async function login(login, pin, auth) {
         auth = null;
     }
     if (auth) {
-        // response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/renewSession.do`, {
-        //     headers: {
-        //         ...defaultHeaders,
-        //         "Accept": "application/x-www-form-urlencoded",
-        //         "Accept-Charset": "windows-1251",
-        //         "Host": `${auth.api.host}:4477`,
-        //         "Cookie": `${auth.api.cookie}`,
-        //     },
-        // }, null);
-        response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/permissions.do`, {
+        response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/renewSession.do`, {
             headers: {
                 ...defaultHeaders,
+                "Accept": "application/x-www-form-urlencoded",
+                "Accept-Charset": "windows-1251",
                 "Host": `${auth.api.host}:4477`,
                 "Cookie": `${auth.api.cookie}`,
             },
@@ -301,7 +294,7 @@ export async function fetchAccounts(auth) {
         },
         body: {showProductType: "cards,accounts,imaccounts,loans"},
     });
-    const types = ["card", "account", "loan"];
+    const types = ["card", "account", "loan", "target"];
     return (await Promise.all(types.map(type => {
         return Promise.all(getArray(_.get(response.body, `${type}s.${type}`)).map(async account => {
             return {

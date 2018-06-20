@@ -94,7 +94,7 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
         try {
             auth = await sberbank.loginInPfm(auth);
         } catch (e) {
-            if (e.message.indexOf("[NCE]") >= 0) {
+            if (e.toString().indexOf("[NCE]") >= 0) {
                 //PFM uses TLSv1.2 which is not supported by Android < 5.0
                 hasSSLError = true;
                 console.log("skipping PFM. Application doesn't seem to support TLSv1.2")
