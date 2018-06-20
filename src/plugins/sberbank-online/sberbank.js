@@ -298,11 +298,14 @@ export async function fetchAccounts(auth) {
     const types = ["card", "account", "loan", "target"];
     return (await Promise.all(types.map(type => {
         return Promise.all(getArray(_.get(response.body, `${type}s.${type}`)).map(async account => {
+            const params = type === "target"
+                ? {id: account.account.id, type: "account"}
+                : {id: account.id, type};
             return {
                 account: account,
                 details: account.mainCardId
                     ? null
-                    : await fetchAccountDetails(auth, account.id, type),
+                    : await fetchAccountDetails(auth, params),
             };
         }));
     }))).reduce((accounts, objects, i) => {
@@ -311,7 +314,7 @@ export async function fetchAccounts(auth) {
     }, {});
 }
 
-async function fetchAccountDetails(auth, accountId, type) {
+async function fetchAccountDetails(auth, {id, type}) {
     const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/${type}s/info.do`, {
         headers: {
             ...defaultHeaders,
@@ -319,7 +322,7 @@ async function fetchAccountDetails(auth, accountId, type) {
             "Content-Type": "application/x-www-form-urlencoded;charset=windows-1251",
             "Cookie": auth.api.cookie,
         },
-        body: {id: accountId},
+        body: {id: id},
     }, response => _.get(response, "body.detail"));
     return response.body;
 }

@@ -261,7 +261,19 @@ export function toMoscowDate(date) {
 }
 
 export function convertTarget(apiTarget, details) {
-    throw new Error("convertTarget not implemented");
+    return {
+        ids: [apiTarget.account.id],
+        type: "account",
+        zenAccount: {
+            id: "account:" + apiTarget.account.id,
+            type: "checking",
+            title: apiTarget.comment || apiTarget.name,
+            instrument: apiTarget.account.value.currency.code,
+            syncID: [apiTarget.id],
+            balance: parseDecimal(apiTarget.account.value.amount),
+            savings: true,
+        },
+    };
 }
 
 export function convertCards(apiCardsArray, nowDate = new Date()) {
