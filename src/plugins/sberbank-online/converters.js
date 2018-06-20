@@ -227,29 +227,25 @@ export function convertAccounts(apiAccountsArray, type) {
     if (type !== "card") {
         const accounts = [];
         for (const apiAccount of apiAccountsArray) {
-            let zenAccount;
+            let account;
             switch (type) {
                 case "loan":
-                    zenAccount = convertLoan(apiAccount.account, apiAccount.details);
+                    account = convertLoan(apiAccount.account, apiAccount.details);
                     break;
                 case "target":
-                    zenAccount = convertTarget(apiAccount.account, apiAccount.details);
+                    account = convertTarget(apiAccount.account, apiAccount.details);
                     break;
                 default:
-                    zenAccount = apiAccount.account.rate && apiAccount.details.detail.period
+                    account = apiAccount.account.rate && apiAccount.details.detail.period
                         && parseDecimal(apiAccount.account.rate) > 2
                         ? convertDeposit(apiAccount.account, apiAccount.details)
                         : convertAccount(apiAccount.account, apiAccount.details);
                     break;
             }
-            if (!zenAccount) {
+            if (!account) {
                 continue;
             }
-            accounts.push({
-                ids: [apiAccount.account.id],
-                type,
-                zenAccount,
-            });
+            accounts.push(account);
         }
         return accounts;
     }
@@ -269,9 +265,11 @@ export function convertTarget(apiTarget, details) {
             type: "checking",
             title: apiTarget.comment || apiTarget.name,
             instrument: apiTarget.account.value.currency.code,
-            syncID: [apiTarget.id],
             balance: parseDecimal(apiTarget.account.value.amount),
             savings: true,
+            syncID: [
+                apiTarget.id,
+            ],
         },
     };
 }
@@ -326,14 +324,19 @@ export function convertAccount(apiAccount) {
         return null;
     }
     return {
-        id: apiAccount.id,
-        type: "checking",
-        title: apiAccount.name,
-        instrument: apiAccount.balance.currency.code,
-        balance: parseDecimal(apiAccount.balance.amount),
-        syncID: [
-            apiAccount.number,
-        ],
+        ids: [apiAccount.id],
+        type: "account",
+        zenAccount: {
+            id: "account:" + apiAccount.id,
+            type: "checking",
+            title: apiAccount.name,
+            instrument: apiAccount.balance.currency.code,
+            balance: parseDecimal(apiAccount.balance.amount),
+            savings: apiAccount.rate && parseDecimal(apiAccount.rate) >= 1,
+            syncID: [
+                apiAccount.number,
+            ],
+        },
     };
 }
 
@@ -341,7 +344,7 @@ export function convertLoan(apiLoan, details) {
     if (!details.extDetail || !details.extDetail.origianlAmount) {
         return null;
     }
-    const account = {
+    const zenAccount = {
         id: "loan:" + apiLoan.id,
         type: "loan",
         title: apiLoan.name,
@@ -363,12 +366,16 @@ export function convertLoan(apiLoan, details) {
         payoffStep: 1,
         payoffInterval: "month",
     };
-    parseDuration(details.detail.termDuration, account);
-    return account;
+    parseDuration(details.detail.termDuration, zenAccount);
+    return {
+        ids: [apiLoan.id],
+        type: "loan",
+        zenAccount,
+    };
 }
 
 export function convertDeposit(apiDeposit, details) {
-    const account = {
+    const zenAccount = {
         id: "account:" + apiDeposit.id,
         type: "deposit",
         title: apiDeposit.name,
@@ -384,8 +391,12 @@ export function convertDeposit(apiDeposit, details) {
         payoffStep: 1,
         payoffInterval: "month",
     };
-    parseDuration(details.detail.period, account);
-    return account;
+    parseDuration(details.detail.period, zenAccount);
+    return {
+        ids: [apiDeposit.id],
+        type: "account",
+        zenAccount,
+    };
 }
 
 function parseDuration(duration, account) {

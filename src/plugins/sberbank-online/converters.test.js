@@ -1,5 +1,6 @@
 import {parseXml} from "../../common/network";
 import {
+    convertAccount,
     convertCards,
     convertDeposit,
     convertLoan,
@@ -179,22 +180,26 @@ describe("convertLoan", () => {
     </extDetail> 
 </response>`).response;
         expect(convertLoan(json, details)).toEqual({
-            id: "loan:11721741",
+            ids: ["11721741"],
             type: "loan",
-            title: "Потребительский кредит",
-            instrument: "RUB",
-            syncID: [
-                "45506810700020054789",
-            ],
-            balance: -1327156.27,
-            startBalance: 1500000,
-            capitalization: true,
-            percent: 12.50,
-            startDate: "2017-12-02",
-            endDateOffsetInterval: "year",
-            endDateOffset: 3,
-            payoffInterval: "month",
-            payoffStep: 1,
+            zenAccount: {
+                id: "loan:11721741",
+                type: "loan",
+                title: "Потребительский кредит",
+                instrument: "RUB",
+                syncID: [
+                    "45506810700020054789",
+                ],
+                balance: -1327156.27,
+                startBalance: 1500000,
+                capitalization: true,
+                percent: 12.50,
+                startDate: "2017-12-02",
+                endDateOffsetInterval: "year",
+                endDateOffset: 3,
+                payoffInterval: "month",
+                payoffStep: 1,
+            },
         });
     });
     
@@ -237,22 +242,26 @@ describe("convertLoan", () => {
                 },
             },
         })).toEqual({
-            id: "loan:11934064",
+            ids: ["11934064"],
             type: "loan",
-            title: "Потребительский кредит",
-            instrument: "RUB",
-            syncID: [
-                "45507810013000079184",
-            ],
-            balance: -700000,
-            startBalance: 700000,
-            capitalization: true,
-            percent: 1,
-            startDate: "2018-01-04",
-            endDateOffsetInterval: "month",
-            endDateOffset: 57,
-            payoffInterval: "month",
-            payoffStep: 1,
+            zenAccount: {
+                id: "loan:11934064",
+                type: "loan",
+                title: "Потребительский кредит",
+                instrument: "RUB",
+                syncID: [
+                    "45507810013000079184",
+                ],
+                balance: -700000,
+                startBalance: 700000,
+                capitalization: true,
+                percent: 1,
+                startDate: "2018-01-04",
+                endDateOffsetInterval: "month",
+                endDateOffset: 57,
+                payoffInterval: "month",
+                payoffStep: 1,
+            },
         });
     });
 });
@@ -325,22 +334,26 @@ describe("convertDeposit", () => {
             </detail> 
 </response> `).response;
         expect(convertDeposit(json, details)).toEqual({
-            id: "account:12632802",
-            type: "deposit",
-            title: "Вклад Счёт (647)",
-            instrument: "RUB",
-            syncID: [
-                "42307810275022433647",
-            ],
-            balance: 4845.23,
-            startBalance: 0,
-            capitalization: true,
-            percent: 0.01,
-            startDate: "2013-01-15",
-            endDateOffsetInterval: "day",
-            endDateOffset: 1826,
-            payoffInterval: "month",
-            payoffStep: 1,
+            ids: ["12632802"],
+            type: "account",
+            zenAccount: {
+                id: "account:12632802",
+                type: "deposit",
+                title: "Вклад Счёт (647)",
+                instrument: "RUB",
+                syncID: [
+                    "42307810275022433647",
+                ],
+                balance: 4845.23,
+                startBalance: 0,
+                capitalization: true,
+                percent: 0.01,
+                startDate: "2013-01-15",
+                endDateOffsetInterval: "day",
+                endDateOffset: 1826,
+                payoffInterval: "month",
+                payoffStep: 1,
+            },
         });
     });
 });
@@ -695,6 +708,54 @@ describe("convertCards", () => {
                 statusWay4: "+-КАРТОЧКА ОТКРЫТА",
             },
         }], nowDate)).toEqual([]);
+    });
+});
+
+describe("convertAccount", () => {
+    it("returns valid account", () => {
+        expect(convertAccount({
+            id: "567930851",
+            name: "Управляй ОнЛ@йн 6м - 1г (руб.)",
+            rate: "4.00",
+            closeDate: "05.08.2018",
+            smsName: "4892",
+            number: "42305200715542994892",
+            balance: { amount: "90467.72", currency: { code: "RUB", name: "руб." } },
+            availcash: { amount: "60467.72", currency: { code: "RUB", name: "руб." } },
+            state: "OPENED",
+            moneyBoxAvailable: "true",
+            arrested: "false",
+            showarrestdetail: "false",
+        }, {
+            description: "Управляй ОнЛ@йн 6м - 1г (руб.)",
+            period: "0-0-181",
+            open: "05.02.2018T00:00:00",
+            close: "05.08.2018T00:00:00",
+            interestRate: "4.00",
+            maxSumWrite: { amount: "60467.72", currency: { code: "RUB", name: "руб." } },
+            passbook: "false",
+            crossAgency: "true",
+            prolongation: "true",
+            irreducibleAmt: { amount: "30000.00", currency: { code: "RUB", name: "руб." } },
+            name: "Управляй ОнЛ@йн 6м - 1г (руб.)",
+            canChangePercentDestination: "true",
+            moneyBoxAvailable: "true",
+            maxBalance: "1740000.00",
+        })).toEqual({
+            ids: ["567930851"],
+            type: "account",
+            zenAccount: {
+                id: "account:567930851",
+                type: "checking",
+                title: "Управляй ОнЛ@йн 6м - 1г (руб.)",
+                instrument: "RUB",
+                balance: 90467.72,
+                savings: true,
+                syncID: [
+                    "42305200715542994892",
+                ],
+            },
+        });
     });
 });
 
