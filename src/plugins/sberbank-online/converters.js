@@ -291,7 +291,8 @@ export function convertCards(apiCardsArray, nowDate = new Date()) {
             const account = accounts[accounts.length - 1];
             console.assert(account.ids[0] === apiCard.account.mainCardId, `unexpected additional card ${apiCard.account.id}`);
             account.ids.push(apiCard.account.id);
-            account.zenAccount.syncID.splice(account.zenAccount.syncID.length - 2, 0, apiCard.account.number);
+            account.zenAccount.syncID.splice(account.zenAccount.syncID.length - 2, 0,
+                removeWhitespaces(apiCard.account.number));
             continue;
         }
         const zenAccount = {
@@ -299,7 +300,7 @@ export function convertCards(apiCardsArray, nowDate = new Date()) {
             type: "ccard",
             title: apiCard.account.name,
             instrument: apiCard.account.availableLimit.currency.code,
-            syncID: [apiCard.account.number],
+            syncID: [removeWhitespaces(apiCard.account.number)],
             balance: parseDecimal(apiCard.account.availableLimit.amount),
         };
         if (apiCard.account.type === "credit") {
@@ -498,6 +499,10 @@ function parsePayee(transaction, zenMoneyTransaction) {
 
 export function reduceWhitespaces(text) {
     return text.replace(/\s+/g, " ").trim();
+}
+
+export function removeWhitespaces(text) {
+    return text.replace(/\s+/g, "").trim();
 }
 
 export function parseWebAmount(text) {

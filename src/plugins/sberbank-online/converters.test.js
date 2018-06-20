@@ -456,8 +456,8 @@ describe("convertCards", () => {
                     instrument: "RUB",
                     balance: 150,
                     syncID: [
-                        "4276 82** **** 2761",
-                        "4276 82** **** 7622",
+                        "427682******2761",
+                        "427682******7622",
                     ],
                 },
             },
@@ -471,7 +471,7 @@ describe("convertCards", () => {
                     instrument: "RUB",
                     balance: 97.61,
                     syncID: [
-                        "6390 02** **** **88 02",
+                        "639002********8802",
                         "40817810828150008490",
                     ],
                 },
@@ -486,7 +486,7 @@ describe("convertCards", () => {
                     instrument: "RUB",
                     balance: 2434.97,
                     syncID: [
-                        "4276 28** **** 6939",
+                        "427628******6939",
                         "40817810528150034829",
                     ],
                 },
@@ -658,7 +658,7 @@ describe("convertCards", () => {
                     creditLimit: 125000,
                     balance: 0,
                     syncID: [
-                        "4279 01** **** 7314",
+                        "427901******7314",
                     ],
                 },
             },
@@ -672,7 +672,7 @@ describe("convertCards", () => {
                 name: "Visa Classic",
                 smsName: "3233",
                 description: "Visa Classic",
-                number: "4276 55** **** 3233",
+                number: "427655******3233",
                 isMain: "true",
                 type: "debit",
                 availableLimit: { amount: "0.00", currency: { code: "RUB", name: "руб." } },
