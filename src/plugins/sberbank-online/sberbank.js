@@ -78,7 +78,7 @@ export async function login(login, pin, auth) {
                 "mobileSdkData": JSON.stringify(createSdkData(login)),
             },
             sanitizeRequestLog: {body: {mGUID: true, password: true, devID: true, mobileSdkData: true}},
-            sanitizeResponseLog: {body: {loginData: {token: true}}, headers: {"set-cookie": true}},
+            sanitizeResponseLog: {body: {loginData: {token: true}}},
         }, null);
         if (response.body.status === "7") {
             ZenMoney.setData("mGUID", undefined);
@@ -95,7 +95,7 @@ export async function login(login, pin, auth) {
                 "devIDOld": ZenMoney.getData("devIDOld"),
             },
             sanitizeRequestLog: {body: {login: true, devID: true, devIDOld: true}},
-            sanitizeResponseLog: {body: {confirmRegistrationStage: {mGUID: true}}, headers: {"set-cookie": true}},
+            sanitizeResponseLog: {body: {confirmRegistrationStage: {mGUID: true}}},
         }, null);
         if (response.body.status === "1" && response.body.error) {
             throw new TemporaryError(response.body.error);
@@ -174,7 +174,7 @@ export async function login(login, pin, auth) {
             "deviceName": deviceName,
         },
         sanitizeRequestLog: {body: {token: true}},
-        sanitizeResponseLog: {body: {person: true}, headers: {"set-cookie": true}},
+        sanitizeResponseLog: {body: {person: true}},
     }, response => _.get(response, "body.loginCompleted") === "true");
 
     return {api: {token, host, cookie: getCookie(response)}};
@@ -228,8 +228,8 @@ export async function loginInPfm(auth) {
             "Accept-Encoding": "gzip",
             "Cookie": auth.api.cookie,
         },
-        sanitizeRequestLog: {url: true},
-        sanitizeResponseLog: {url: true, headers: {"set-cookie": true}},
+        sanitizeRequestLog: {url: true, headers: {Cookie: true}},
+        sanitizeResponseLog: {url: true},
     });
     auth.pfm.cookie = getCookie(response);
     return auth;
@@ -260,6 +260,7 @@ async function fetchTransactionsInPfmWithType(auth, accountIds, fromDate, toDate
             "Accept-Encoding": "gzip",
             "Cookie": auth.pfm.cookie,
         },
+        sanitizeRequestLog: {headers: {Cookie: true}},
     });
     if (!ignoreToDateError && response && response.body
             && response.body.statusCode === 2
@@ -394,6 +395,11 @@ async function fetchXml(url, options = {}, predicate = () => true) {
         stringify: qs.stringify,
         parse: network.parseXml,
     };
+
+    _.set(options, "sanitizeRequestLog.headers.cookie", true);
+    _.set(options, "sanitizeRequestLog.headers.Cookie", true);
+    _.set(options, "sanitizeResponseLog.headers.set-cookie", true);
+
     if (typeof _.get(options, "sanitizeResponseLog.body") === "object") {
         options.sanitizeResponseLog.body = {response: options.sanitizeResponseLog.body};
     }
