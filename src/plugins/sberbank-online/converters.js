@@ -342,7 +342,8 @@ export function convertCards(apiCardsArray, nowDate = new Date()) {
     const minExpireDate = mskDate.getFullYear() + "-" + toAtLeastTwoDigitsString(mskDate.getMonth() + 1);
     for (const apiCard of apiCardsArray) {
         if (apiCard.account.state !== "active"
-                || apiCard.account.statusWay4 !== "+-КАРТОЧКА ОТКРЫТА"
+                || (apiCard.account.statusWay4 !== "+-КАРТОЧКА ОТКРЫТА"
+                && apiCard.account.statusWay4 !== "K-ДЕЙСТ.ПРИОСТАНОВЛЕНО")
                 || parseExpireDate(apiCard.account.expireDate) < minExpireDate) {
             continue;
         }
