@@ -229,7 +229,7 @@ export async function loginInPfm(auth) {
             "Cookie": auth.api.cookie,
         },
         sanitizeRequestLog: {url: true, headers: {Cookie: true}},
-        sanitizeResponseLog: {url: true},
+        sanitizeResponseLog: {url: true, headers: {"set-cookie": true}},
     });
     auth.pfm.cookie = getCookie(response);
     return auth;
@@ -426,7 +426,7 @@ async function fetchXml(url, options = {}, predicate = () => true) {
     } catch (e) {
         if (e instanceof retry.RetryError
                 || (e.message && e.message.indexOf("could not satisfy predicate in") >= 0)) {
-            throw new TemporaryError("Информация из банка временно недоступна.");
+            throw new Error("Информация из банка временно недоступна.");
         } else {
             throw e;
         }

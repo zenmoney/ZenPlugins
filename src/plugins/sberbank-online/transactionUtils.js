@@ -52,6 +52,7 @@ export function trackLastCurrencyTransaction(zenMoneyTransaction, accountData) {
     if (origin) {
         if (accountData.currencyTransaction === null) {
             accountData.currencyTransaction = zenMoneyTransaction;
+            accountData.currencyTransactionDelta = zenMoneyTransaction.hold !== null && !zenMoneyTransaction.hold;
         } else {
             delete accountData.currencyTransaction;
             delete accountData.currencyTransactionDelta;

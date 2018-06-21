@@ -341,7 +341,9 @@ export function convertCards(apiCardsArray, nowDate = new Date()) {
     const mskDate = toMoscowDate(nowDate);
     const minExpireDate = mskDate.getFullYear() + "-" + toAtLeastTwoDigitsString(mskDate.getMonth() + 1);
     for (const apiCard of apiCardsArray) {
-        if (apiCard.account.state !== "active" || parseExpireDate(apiCard.account.expireDate) < minExpireDate) {
+        if (apiCard.account.state !== "active"
+                || apiCard.account.statusWay4 !== "+-КАРТОЧКА ОТКРЫТА"
+                || parseExpireDate(apiCard.account.expireDate) < minExpireDate) {
             continue;
         }
         if (apiCard.account.mainCardId) {
