@@ -72,8 +72,8 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
             }
 
             await Promise.all(apiAccount.ids.map(async id => {
-                for (const apiTransaction of await sberbank.fetchTransactions(auth, {id, type}, fromDate, toDate)) {
-                    const transaction = type === "loan"
+                for (const apiTransaction of await sberbank.fetchTransactions(auth, {id, type: apiAccount.type}, fromDate, toDate)) {
+                    const transaction = apiAccount.type === "loan"
                         ? convertLoanTransaction(apiTransaction)
                         : convertApiTransaction(apiTransaction, apiAccount.zenAccount);
                     if (!transaction) {

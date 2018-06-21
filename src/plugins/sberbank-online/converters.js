@@ -19,25 +19,78 @@ export function parseApiDate(str) {
 
 export function parseApiDescription(description) {
     description = description ? reduceWhitespaces(description) : null;
+    description = description ? description : null;
+    const result = {description, payee: null};
     if (!description) {
-        return {
-            description: null,
-            payee: null,
-        };
+        return result;
     }
-    const parts = description.split(" ");
-    let j = -1;
-    for (let i = 1; 2 * i <= parts.length - 1; i++) {
-        const part1 = parts.slice(0, i).join(" ");
-        const part2 = parts.slice(i, 2 * i).join(" ");
-        if (part1 === part2 && i > j) {
-            j = i;
+    for (const parser of [
+        {getPosition: (p, i, n) => p * i},
+        {getPosition: (p, i, n) => p === 0 ? 0 : n - i, isDuplicatePayee: true},
+    ]) {
+        const parts = parseDuplicates(description, parser.getPosition);
+        if (parts) {
+            result.payee = parser.isDuplicatePayee ? parts.duplicate : parts.rest;
+            result.description = parser.isDuplicatePayee ? parts.rest : parts.duplicate;
+            break;
         }
     }
-    return {
-        description: j >= 0 ? parts.slice(0, j).join(" ") : description,
-        payee: j >= 0 ? parts.slice(2 * j).join(" ") : null,
-    };
+    return result;
+}
+
+function parseDuplicates(str, getPosition) {
+    let j = -1;
+    let j1;
+    let j2;
+    let duplicate;
+
+    const parts = str.split(" ");
+
+    for (let i = 1; 2 * i <= parts.length; i++) {
+        let i1 = getPosition(0, i, parts.length);
+        let i2 = getPosition(1, i, parts.length);
+        if (i2 < i1) {
+            const k = i1;
+            i1 = i2;
+            i2 = k;
+        }
+        if (i1 >= 0 && i1 < i && i2 >= 0 && i2 + i <= parts.length) {
+            const part1 = parts.slice(i1, i).join(" ");
+            const part2 = parts.slice(i2, i2 + i).join(" ");
+            if (part1 === part2 && i > j) {
+                j = i;
+                j1 = i1;
+                j2 = i2;
+                duplicate = part1;
+            }
+        }
+    }
+
+    if (j >= 0) {
+        // Ensure that the rest is continuous and doesn't have gaps
+        if (j1 === 0) {
+            if (j2 === j) {
+                return {
+                    duplicate,
+                    rest: j2 + j < parts.length ? parts.slice(j2 + j).join(" ") : null,
+                };
+            } else if (j2 === parts.length - j) {
+                return {
+                    duplicate,
+                    rest: j1 + j < j2 ? parts.slice(j1 + j, j2).join(" ") : null,
+                };
+            }
+        } else {
+            if (j2 === j1 + j && j2 + j === parts.length) {
+                return {
+                    duplicate,
+                    rest: j1 > 0 ? parts.slice(0, j1).join(" ") : null,
+                };
+            }
+        }
+    }
+
+    return null;
 }
 
 export function parsePfmDescription(description) {
@@ -134,19 +187,22 @@ export function addTransactions(oldTransactions, newTransactions, isWebTransacti
         if (i < n) {
             for (let j = 0; j < n; j++) {
                 const oldTransaction = oldTransactions[j];
-                let oldDate;
-                let newDate;
                 if (isWebTransaction) {
-                    oldDate = formatDateSql(oldTransaction.date);
-                    newDate = formatDateSql(newTransaction.date);
+                    const oldDate = formatDateSql(oldTransaction.date);
+                    const newDate = formatDateSql(newTransaction.date);
+                    if (oldDate !== newDate) {
+                        continue;
+                    }
                 } else if (oldTransaction.id) {
                     continue;
                 } else {
-                    oldDate = oldTransaction.date.getTime();
-                    newDate = newTransaction.date.getTime();
+                    const oldDate = oldTransaction.date.getTime();
+                    const newDate = newTransaction.date.getTime();
+                    if (Math.abs(oldDate - newDate) > 60000) {
+                        continue;
+                    }
                 }
-                if (oldDate !== newDate
-                        || newTransaction.payee !== oldTransaction.payee) {
+                if (newTransaction.payee !== oldTransaction.payee) {
                     continue;
                 }
                 if (isWebTransaction && oldTransaction.origin && !oldTransaction.posted
@@ -257,6 +313,9 @@ export function toMoscowDate(date) {
 }
 
 export function convertTarget(apiTarget, details) {
+    if (apiTarget.status === "accountDisabled") {
+        return null;
+    }
     return {
         ids: [apiTarget.account.id],
         type: "account",
@@ -500,6 +559,8 @@ function parsePayee(transaction, zenMoneyTransaction) {
             "Сбербанк Онлайн",
             "SBOL",
             "SBERBANK ONL@IN PLATEZH RU",
+            "Mobile Fee",
+            "Payment To",
         ].indexOf(transaction.payee) >= 0) {
             zenMoneyTransaction.comment = transaction.payee;
         } else {

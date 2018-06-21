@@ -857,6 +857,14 @@ describe("parseApiDescription", () => {
             payee: "SBERBANK ONL@IN PLATEZH",
             description: "BP Billing Transfer RUS",
         });
+        expect(parseApiDescription("Payment To 7000 Payment To")).toEqual({
+            payee: "Payment To",
+            description: "7000",
+        });
+        expect(parseApiDescription("Mobile Fee 3200 Mobile Fee")).toEqual({
+            payee: "Mobile Fee",
+            description: "3200",
+        });
         expect(parseApiDescription("unknown pattern")).toEqual({
             payee: null,
             description: "unknown pattern",

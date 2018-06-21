@@ -299,13 +299,15 @@ export async function fetchAccounts(auth) {
     return (await Promise.all(types.map(type => {
         return Promise.all(getArray(_.get(response.body, `${type}s.${type}`)).map(async account => {
             const params = type === "target"
-                ? {id: account.account.id, type: "account"}
-                : {id: account.id, type};
+                ? account.account && account.account.id
+                    ? {id: account.account.id, type: "account"}
+                    : null
+                : account.mainCardId
+                    ? null
+                    : {id: account.id, type};
             return {
                 account: account,
-                details: account.mainCardId
-                    ? null
-                    : await fetchAccountDetails(auth, params),
+                details: params ? await fetchAccountDetails(auth, params) : null,
             };
         }));
     }))).reduce((accounts, objects, i) => {
