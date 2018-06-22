@@ -858,12 +858,12 @@ describe("parseApiDescription", () => {
             description: "BP Billing Transfer RUS",
         });
         expect(parseApiDescription("Payment To 7000 Payment To")).toEqual({
-            payee: "Payment To",
-            description: "7000",
+            payee: null,
+            description: "Payment To 7000",
         });
         expect(parseApiDescription("Mobile Fee 3200 Mobile Fee")).toEqual({
-            payee: "Mobile Fee",
-            description: "3200",
+            payee: null,
+            description: "Mobile Fee 3200",
         });
         expect(parseApiDescription("unknown pattern")).toEqual({
             payee: null,
@@ -893,6 +893,10 @@ describe("parsePfmDescription", () => {
         expect(parsePfmDescription("SBERBANK ONL@IN VKLAD-KAR RUS")).toEqual({
             payee: "SBERBANK ONL@IN VKLAD-KARTA",
             description: "RUS",
+        });
+        expect(parsePfmDescription("TINKOFF BANK CARD2CARD  Visa Direct  RU")).toEqual({
+            payee: "TINKOFF BANK CARD2CARD",
+            description: "Visa Direct RU",
         });
         expect(parsePfmDescription("unknown pattern")).toEqual({
             payee: null,

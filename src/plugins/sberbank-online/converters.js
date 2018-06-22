@@ -26,12 +26,18 @@ export function parseApiDescription(description) {
     }
     for (const parser of [
         {getPosition: (p, i, n) => p * i},
-        {getPosition: (p, i, n) => p === 0 ? 0 : n - i, isDuplicatePayee: true},
+        {getPosition: (p, i, n) => p === 0 ? 0 : n - i, hasDescriptionOnly: true},
     ]) {
         const parts = parseDuplicates(description, parser.getPosition);
         if (parts) {
-            result.payee = parser.isDuplicatePayee ? parts.duplicate : parts.rest;
-            result.description = parser.isDuplicatePayee ? parts.rest : parts.duplicate;
+            result.description = parts.duplicate;
+            if (parser.hasDescriptionOnly) {
+                if (parts.rest) {
+                    result.description += " " + parts.rest;
+                }
+            } else {
+                result.payee = parts.rest;
+            }
             break;
         }
     }
@@ -99,7 +105,7 @@ export function parsePfmDescription(description) {
             .replace("VKLAD-KAR ", "VKLAD-KARTA   ")
             .replace("KARTA-VKL ", "KARTA-VKLAD   ");
     }
-    const commentParts = description ? description.split("   ") : null;
+    const commentParts = description ? description.split("  ") : null;
     let payee = null;
     if (commentParts && commentParts.length > 1) {
         payee = reduceWhitespaces(commentParts[0]);
@@ -216,6 +222,7 @@ export function addTransactions(oldTransactions, newTransactions, isWebTransacti
                             || (!oldTransaction.posted && (newTransaction.posted.instrument !== oldTransaction.origin.instrument
                                  || newTransaction.posted.amount === oldTransaction.origin.amount)))) {
                     let origin = null;
+                    let description = oldTransaction.description;
                     if (oldTransaction.origin && newTransaction.posted.instrument !== oldTransaction.origin.instrument) {
                         origin = oldTransaction.origin;
                     }
@@ -227,6 +234,9 @@ export function addTransactions(oldTransactions, newTransactions, isWebTransacti
                     Object.assign(oldTransaction, newTransaction);
                     if (origin) {
                         oldTransaction.origin = origin;
+                    }
+                    if (description) {
+                        oldTransaction.description = description;
                     }
                     i++;
                     continue l;
@@ -273,6 +283,7 @@ export function convertToZenMoneyTransaction(account, transaction) {
     }
     [
         parseCashTransaction,
+        parseOuterTransfer,
         parseInnerTransfer,
         parsePayee,
     ].some(parser => parser(transaction, zenMoneyTransaction));
@@ -525,14 +536,13 @@ function parseCashTransaction(transaction, zenMoneyTransaction) {
 }
 
 function parseInnerTransfer(transaction, zenMoneyTransaction) {
-    //         "Credit", // оплата в кредит
-    //         "CH Debit", // поступление
-    //         "CH Payment", // списание
-    //         "BP Billing Transfer", // платёж в Сбербанк Онлайн
-    //         "BP Card - Acct", // дополнительный взнос на вклад
-    //         "BP Acct - Card", // частичное снятие со вклада
     if (transaction.categoryId) {
-        if (transaction.categoryId !== 1475 && transaction.categoryId !== 1476) {
+        if ([
+            227, //Перевод со вклада
+            228, //Перевод на вклад
+            1475, //Перевод между своими картами
+            1476, //Перевод между своими картами
+        ].indexOf(transaction.categoryId) < 0) {
             return false;
         }
     } else {
@@ -555,19 +565,55 @@ function parseInnerTransfer(transaction, zenMoneyTransaction) {
     return true;
 }
 
+function parseOuterTransfer(transaction, zenMoneyTransaction) {
+    if (transaction.categoryId) {
+        if ([
+            202, //Перевод на карту другого банка
+            215, //Зачисления
+            216, //Перевод с карты другого банка
+        ].indexOf(transaction.categoryId) < 0) {
+            return false;
+        }
+    } else {
+        if (!transaction.description
+                || ![
+                    "Payment To 7000",
+                    "CARD2CARD",
+                    "Card2Card",
+                    "Visa Direct",
+                ].some(word => transaction.description.indexOf(word) >= 0)) {
+            return false;
+        }
+    }
+    const origin = transaction.origin || transaction.posted;
+    if (origin.amount > 0) {
+        zenMoneyTransaction.comment = "Зачисление";
+    } else {
+        zenMoneyTransaction.comment = "Перевод с карты";
+    }
+    return true;
+}
+
 function parsePayee(transaction, zenMoneyTransaction) {
     if (transaction.payee) {
         if ([
             "Оплата услуг",
             "Сбербанк Онлайн",
+            "AUTOPLATEZH",
             "SBOL",
             "SBERBANK ONL@IN PLATEZH RU",
-            "Mobile Fee",
-            "Payment To",
         ].indexOf(transaction.payee) >= 0) {
             zenMoneyTransaction.comment = transaction.payee;
         } else {
             zenMoneyTransaction.payee = transaction.merchant || transaction.payee;
+        }
+    } else if (transaction.description) {
+        switch (transaction.description) {
+            case "Mobile Fee 3200":
+                zenMoneyTransaction.comment = "Оплата Мобильного банка";
+                break;
+            default:
+                break;
         }
     }
 }
