@@ -1,21 +1,35 @@
-export function combineIntoTransferByTransferId(transactions) {
+export function combineIntoTransfer(transactions, getTransferData) {
     return mapObjectsGroupedByKey(transactions,
-        (transaction) => transaction._transferId || null,
+        (transaction) => {
+            const transferData = getTransferData(transaction);
+            if (transferData) {
+                console.assert(transferData.id !== null && transferData.id !== undefined,
+                    "invalid transfer id for transaction", transaction);
+                console.assert(transferData.type === "income" || transferData.type === "outcome",
+                    "invalid transfer type for transaction", transaction);
+                return transferData.id;
+            } else {
+                return null;
+            }
+        },
         (transactions, key) => {
-            if (key === null) {
+            if (key === null || transactions.length !== 2) {
                 return transactions;
             }
-            if (transactions.length === 2
-                    && transactions[0]._transferType !== transactions[1]._transferType) {
-                const transaction1 = transactions[0];
-                const transaction2 = transactions[1];
-                const transferType = transaction1._transferType;
-                ["", "Account", "BankID"].forEach(postfix => {
-                    const value = transaction2[transferType + postfix];
-                    if (value !== undefined) {
-                        transaction1[transferType + postfix] = value;
-                    }
-                });
+            const type1 = getTransferData(transactions[0]).type;
+            const type2 = getTransferData(transactions[1]).type;
+            if (type1 === type2) {
+                return transactions;
+            }
+            const transaction1 = transactions[0];
+            const transaction2 = transactions[1];
+            ["", "Account", "BankID"].forEach(postfix => {
+                const value = transaction2[type1 + postfix];
+                if (value !== undefined) {
+                    transaction1[type1 + postfix] = value;
+                }
+            });
+            if ("hold" in transaction1 || "hold" in transaction2) {
                 const hold1 = "hold" in transaction1 ? transaction1.hold : null;
                 const hold2 = "hold" in transaction2 ? transaction2.hold : null;
                 if (hold1 === hold2) {
@@ -23,14 +37,30 @@ export function combineIntoTransferByTransferId(transactions) {
                 } else {
                     transaction1.hold = null;
                 }
-                transactions = [transaction1];
             }
-            transactions.forEach(transaction => {
-                delete transaction._transferId;
-                delete transaction._transferType;
-            });
-            return transactions;
+            if ("payee" in transaction1) {
+                transaction1.payee = null;
+            }
+            return [transaction1];
         });
+}
+
+export function combineIntoTransferByTransferId(transactions) {
+    transactions = combineIntoTransfer(transactions, (transaction) => {
+        if (transaction._transferId && transaction._transferType) {
+            return {
+                id: transaction._transferId,
+                type: transaction._transferType,
+            };
+        } else {
+            return null;
+        }
+    });
+    transactions.forEach(transaction => {
+        delete transaction._transferId;
+        delete transaction._transferType;
+    });
+    return transactions;
 }
 
 export function mapObjectsGroupedByKey(objects, keyGetter, groupMapper) {

@@ -1,4 +1,92 @@
-import {mapObjectsGroupedByKey} from "./transactions";
+import {combineIntoTransferByTransferId, mapObjectsGroupedByKey} from "./transactions";
+
+describe("combineIntoTransferByTransferId", () => {
+    it("produces valid transfers", () => {
+        expect(combineIntoTransferByTransferId([
+            {
+                income: 15,
+                incomeAccount: "account1",
+                outcome: 0,
+                outcomeAccount: "account1",
+            },
+            {
+                income: 0,
+                incomeAccount: "account2",
+                outcome: 30,
+                outcomeAccount: "account2",
+            },
+            {
+                incomeBankID: "1",
+                income: 100,
+                incomeAccount: "account1",
+                outcome: 0,
+                outcomeAccount: "account1",
+                _transferId: "transferId1",
+                _transferType: "outcome",
+            },
+            {
+                income: 0,
+                incomeAccount: "account2",
+                outcomeBankID: "2",
+                outcome: 200,
+                outcomeAccount: "account2",
+                _transferId: "transferId1",
+                _transferType: "income",
+            },
+            {
+                incomeBankID: "3",
+                income: 300,
+                incomeAccount: "account3",
+                outcome: 0,
+                outcomeAccount: "account3",
+                payee: "Payee",
+                _transferId: "transferId2",
+                _transferType: "outcome",
+            },
+            {
+                income: 0,
+                incomeAccount: "account4",
+                outcomeBankID: "4",
+                outcome: 400,
+                outcomeAccount: "account4",
+                hold: true,
+                _transferId: "transferId2",
+                _transferType: "income",
+            },
+        ])).toEqual([
+            {
+                income: 15,
+                incomeAccount: "account1",
+                outcome: 0,
+                outcomeAccount: "account1",
+            },
+            {
+                income: 0,
+                incomeAccount: "account2",
+                outcome: 30,
+                outcomeAccount: "account2",
+            },
+            {
+                incomeBankID: "1",
+                income: 100,
+                incomeAccount: "account1",
+                outcomeBankID: "2",
+                outcome: 200,
+                outcomeAccount: "account2",
+            },
+            {
+                incomeBankID: "3",
+                income: 300,
+                incomeAccount: "account3",
+                outcomeBankID: "4",
+                outcome: 400,
+                outcomeAccount: "account4",
+                payee: null,
+                hold: null,
+            },
+        ]);
+    });
+});
 
 describe("mapObjectsGroupedByKey", () => {
     it("groups by key", () => {
