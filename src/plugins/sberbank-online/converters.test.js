@@ -1099,4 +1099,195 @@ describe("convertToZenMoneyTransaction", () => {
             _transferId: "2018-06-20_RUB_4700",
         });
     });
+
+    it("converts income part of card -> card transfer", () => {
+        const zenAccount = {id: "account", instrument: "RUB"};
+
+        const transaction1 = convertApiTransaction({
+            date: "20.06.2018T13:03:59",
+            sum: {
+                amount: "+100,00",
+                currency: { code: "RUB", name: "руб." },
+            },
+            description: "CH Payment RUS MOSCOW CH Payment RUS MOSCOW SBOL",
+        }, zenAccount);
+        expect(transaction1).toEqual({
+            date: new Date("2018-06-20T13:03:59"),
+            hold: null,
+            description: "CH Payment RUS MOSCOW",
+            payee: "SBOL",
+            posted: {
+                amount: 100,
+                instrument: "RUB",
+            },
+        });
+        expect(convertToZenMoneyTransaction(zenAccount, transaction1)).toEqual({
+            date: new Date("2018-06-20T13:03:59"),
+            hold: null,
+            income: 100,
+            incomeAccount: "account",
+            outcome: 0,
+            outcomeAccount: "account",
+            comment: "SBOL",
+            _transferType: "outcome",
+            _transferId: "1529489039000_RUB_100",
+        });
+
+        const transaction2 = convertPfmTransaction({
+            id: 11352124463,
+            date: "20.06.2018T13:03:59",
+            comment: "SBOL                    MOSCOW      RU",
+            categoryId: 1476,
+            categoryName: "Перевод между своими картами",
+            hidden: false,
+            country: "RUS",
+            cardNumber: "4222 22** **** 2222",
+            cardAmount: { amount: "100.00", currency: "RUB" },
+            nationalAmount: { amount: "100.00", currency: "RUB" },
+            availableCategories: [
+                { id: 1476, name: "Перевод между своими картами" },
+                { id: 214, name: "Внесение наличных" },
+                { id: 217, name: "Возврат, отмена операций" },
+                { id: 215, name: "Зачисления" },
+                { id: 216, name: "Перевод на карту" },
+                { id: 227, name: "Перевод со вклада" },
+                { id: 218, name: "Прочие поступления" },
+            ],
+            merchantInfo: {
+                merchant: "Сбербанк Онлайн",
+                imgUrl: "https://pfm.stat.online.sberbank.ru/PFM/logos/22877.jpg",
+            },
+            readOnly: false,
+            nfc: false,
+            isCommentEdited: false,
+        }, zenAccount);
+        expect(transaction2).toEqual({
+            id: "11352124463",
+            date: new Date("2018-06-20T13:03:59"),
+            hold: false,
+            categoryId: 1476,
+            location: null,
+            merchant: "Сбербанк Онлайн",
+            description: "MOSCOW RU",
+            payee: "SBOL",
+            posted: {
+                amount: 100,
+                instrument: "RUB",
+            },
+        });
+        expect(convertToZenMoneyTransaction(zenAccount, transaction2)).toEqual({
+            date: new Date("2018-06-20T13:03:59"),
+            hold: false,
+            income: 100,
+            incomeAccount: "account",
+            incomeBankID: "11352124463",
+            outcome: 0,
+            outcomeAccount: "account",
+            comment: "SBOL",
+            _transferType: "outcome",
+            _transferId: "1529489039000_RUB_100",
+        });
+    });
+
+    it("converts outcome part of card -> card transfer", () => {
+        const zenAccount = {id: "account", instrument: "RUB"};
+
+        const transaction1 = convertApiTransaction({
+            date: "20.06.2018T13:03:59",
+            sum: {
+                amount: "-100,00",
+                currency: { code: "RUB", name: "руб." },
+            },
+            description: "CH Debit RUS MOSCOW CH Debit RUS MOSCOW SBOL",
+        }, zenAccount);
+        expect(transaction1).toEqual({
+            date: new Date("2018-06-20T13:03:59"),
+            hold: null,
+            description: "CH Debit RUS MOSCOW",
+            payee: "SBOL",
+            posted: {
+                amount: -100,
+                instrument: "RUB",
+            },
+        });
+        expect(convertToZenMoneyTransaction(zenAccount, transaction1)).toEqual({
+            date: new Date("2018-06-20T13:03:59"),
+            hold: null,
+            income: 0,
+            incomeAccount: "account",
+            outcome: 100,
+            outcomeAccount: "account",
+            comment: "SBOL",
+            _transferType: "income",
+            _transferId: "1529489039000_RUB_100",
+        });
+
+        const transaction2 = convertPfmTransaction({
+            id: 11352124431,
+            date: "20.06.2018T13:03:59",
+            comment: "SBOL                    MOSCOW      RUS",
+            categoryId: 1475,
+            categoryName: "Перевод между своими картами",
+            hidden: false,
+            country: "RUS",
+            cardNumber: "5222 22** **** 2222",
+            cardAmount: { amount: "-100.00", currency: "RUB" },
+            nationalAmount: { amount: "-100.00", currency: "RUB" },
+            availableCategories: [
+                { id: 1475, name: "Перевод между своими картами" },
+                { id: 201, name: "Автомобиль" },
+                { id: 220, name: "Все для дома" },
+                { id: 203, name: "Выдача наличных" },
+                { id: 205, name: "Здоровье и красота" },
+                { id: 222, name: "Искусство" },
+                { id: 212, name: "Комиссия" },
+                { id: 204, name: "Коммунальные платежи, связь, интернет" },
+                { id: 207, name: "Образование" },
+                { id: 206, name: "Одежда и аксессуары" },
+                { id: 208, name: "Отдых и развлечения" },
+                { id: 8128, name: "Перевод во вне" },
+                { id: 228, name: "Перевод на вклад" },
+                { id: 202, name: "Перевод с карты" },
+                { id: 213, name: "Погашение кредитов" },
+                { id: 210, name: "Прочие расходы" },
+                { id: 219, name: "Путешествия" },
+                { id: 221, name: "Рестораны и кафе" },
+                { id: 209, name: "Супермаркеты" },
+                { id: 211, name: "Транспорт" },
+            ],
+            merchantInfo: {
+                merchant: "Сбербанк Онлайн",
+                imgUrl: "https://pfm.stat.online.sberbank.ru/PFM/logos/22877.jpg",
+            },
+            readOnly: false,
+            nfc: false,
+            isCommentEdited: false,
+        }, zenAccount);
+        expect(transaction2).toEqual({
+            id: "11352124431",
+            date: new Date("2018-06-20T13:03:59"),
+            hold: false,
+            categoryId: 1475,
+            location: null,
+            merchant: "Сбербанк Онлайн",
+            description: "MOSCOW RUS",
+            payee: "SBOL",
+            posted: {
+                amount: -100,
+                instrument: "RUB",
+            },
+        });
+        expect(convertToZenMoneyTransaction(zenAccount, transaction2)).toEqual({
+            date: new Date("2018-06-20T13:03:59"),
+            hold: false,
+            income: 0,
+            incomeAccount: "account",
+            outcome: 100,
+            outcomeAccount: "account",
+            outcomeBankID: "11352124431",
+            comment: "SBOL",
+            _transferType: "income",
+            _transferId: "1529489039000_RUB_100",
+        });
+    });
 });
