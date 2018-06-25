@@ -426,7 +426,7 @@ async function fetchXml(url, options = {}, predicate = () => true) {
     } catch (e) {
         if (e instanceof retry.RetryError
                 || (e.message && e.message.indexOf("could not satisfy predicate in") >= 0)) {
-            throw new TemporaryError("Информация из банка временно недоступна.");
+            throw new TemporaryError("Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите \"Отправить лог последней синхронизации разработчикам\".");
         } else {
             throw e;
         }
