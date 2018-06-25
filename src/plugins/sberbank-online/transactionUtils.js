@@ -3,8 +3,8 @@ import {formatDateSql, parseDecimal} from "./converters";
 export function getAccountData(account) {
     const balance = typeof account.balance === "number"
         ? account.balance
-        : account.available || null;
-    if (balance === null) {
+        : account.available;
+    if (typeof balance !== "number") {
         return null;
     }
     return {
