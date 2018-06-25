@@ -69,8 +69,8 @@ export const convertApiAccountsToAccountTuples = (apiAccounts) => {
 
 const dateRegExp = /\d{2}\.\d{2}\.\d{2}/;
 const spaceRegExp = /\s+/;
-const amountRegExp = /(\d*?(?:\.\d+)?)/;
-const currencyRegExp = /(\w{3})/;
+const amountRegExp = /(\d+\.\d+|\.\d+|\d+\.?)/;
+const currencyRegExp = /([A-Z]{3})/;
 const optionalMccRegExp = /(?:\s+MCC(\d+))?/;
 
 // poor mans parser generator
