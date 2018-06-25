@@ -33,7 +33,7 @@ export async function login(login, pin, auth) {
     }
 
     if (!ZenMoney.getData("devID")) {
-        ZenMoney.setData("devID", getUid(36) + "0000");
+        ZenMoney.setData("devID", md5.hex(login) + "0000");
         ZenMoney.setData("devIDOld", getUid(36) + "0000");
     }
     ZenMoney.setData("simId", undefined);

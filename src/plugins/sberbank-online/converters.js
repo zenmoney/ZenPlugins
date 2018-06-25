@@ -581,7 +581,8 @@ function parseOuterTransfer(transaction, zenMoneyTransaction) {
                     "CARD2CARD",
                     "Card2Card",
                     "Visa Direct",
-                ].some(word => transaction.description.indexOf(word) >= 0)) {
+                ].some(word => transaction.description.indexOf(word) >= 0
+                    || (transaction.payee && transaction.payee.indexOf(word) >= 0))) {
             return false;
         }
     }
@@ -591,6 +592,7 @@ function parseOuterTransfer(transaction, zenMoneyTransaction) {
     } else {
         zenMoneyTransaction.comment = "Перевод с карты";
     }
+    zenMoneyTransaction.hold = false;
     return true;
 }
 
@@ -602,6 +604,7 @@ function parsePayee(transaction, zenMoneyTransaction) {
             "AUTOPLATEZH",
             "SBOL",
             "SBERBANK ONL@IN PLATEZH RU",
+            "SBERBANK ONL@IN PLATEZH",
         ].indexOf(transaction.payee) >= 0) {
             zenMoneyTransaction.comment = transaction.payee;
         } else {
