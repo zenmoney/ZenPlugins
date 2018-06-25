@@ -372,13 +372,14 @@ export function convertCards(apiCardsArray, nowDate = new Date()) {
             title: apiCard.account.name,
             instrument: apiCard.account.availableLimit.currency.code,
             syncID: [removeWhitespaces(apiCard.account.number)],
-            balance: parseDecimal(apiCard.account.availableLimit.amount),
+            available: parseDecimal(apiCard.account.availableLimit.amount),
         };
         if (apiCard.account.type === "credit") {
             const creditLimit = parseDecimal(apiCard.details.detail.creditType.limit.amount);
             if (creditLimit > 0) {
                 zenAccount.creditLimit = creditLimit;
-                zenAccount.balance = parseDecimal(zenAccount.balance - zenAccount.creditLimit);
+                zenAccount.balance = parseDecimal(zenAccount.available - zenAccount.creditLimit);
+                delete zenAccount.available;
             }
         } else if (apiCard.account.cardAccount) {
             zenAccount.syncID.push(apiCard.account.cardAccount);

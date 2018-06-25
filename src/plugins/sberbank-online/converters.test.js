@@ -470,7 +470,7 @@ describe("convertCards", () => {
                     type: "ccard",
                     title: "Electron",
                     instrument: "RUB",
-                    balance: 150,
+                    available: 150,
                     syncID: [
                         "427682******2761",
                         "427682******7622",
@@ -485,7 +485,7 @@ describe("convertCards", () => {
                     type: "ccard",
                     title: "Maestro",
                     instrument: "RUB",
-                    balance: 97.61,
+                    available: 97.61,
                     syncID: [
                         "639002********8802",
                         "40817810828150008490",
@@ -500,7 +500,7 @@ describe("convertCards", () => {
                     type: "ccard",
                     title: "Visa Classic",
                     instrument: "RUB",
-                    balance: 2434.97,
+                    available: 2434.97,
                     syncID: [
                         "427628******6939",
                         "40817810528150034829",
