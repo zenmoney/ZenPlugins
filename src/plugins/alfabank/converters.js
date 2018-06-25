@@ -174,6 +174,7 @@ const neverLosingDataMergeCustomizer = function(valueInA, valueInB, key, objA, o
 
 const isPossiblyTransfer = ({reference}) => {
     return reference !== "HOLD"
+        && reference !== ""
         && !reference.startsWith("CASHIN")
         && !reference.startsWith("AQ"); // AQ\d prefix is common for deposits creation/destroy/percentages, definitely NOT a transfer
 };
