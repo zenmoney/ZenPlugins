@@ -22,9 +22,20 @@ const unsealSyncPromise = (promise) => {
     return {state, value};
 };
 
+const manualDateInputRegExp = /^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/;
+
+export const parseStartDateString = (startDateString) => {
+    const manualDateInputMatch = startDateString.match(manualDateInputRegExp);
+    if (manualDateInputMatch) {
+        const [, dayString, monthString, yearString] = manualDateInputMatch;
+        return new Date(Number(yearString.length === 2 ? "20" + yearString : yearString), Number(monthString) - 1, Number(dayString), 0, 0, 0);
+    }
+    return new Date(startDateString);
+};
+
 const calculateFromDate = (startDateString) => {
     console.assert(startDateString, `preferences must contain "startDate"`);
-    const startDate = new Date(startDateString);
+    const startDate = parseStartDateString(startDateString);
     console.assert(isValidDate(startDate), {startDateString}, "is not a valid date");
     const lastSuccessDateString = ZenMoney.getData("scrape/lastSuccessDate");
     if (lastSuccessDateString) {

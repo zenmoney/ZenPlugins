@@ -1,5 +1,5 @@
 import _ from "lodash";
-import {adaptScrapeToGlobalApi, convertTimestampToDate, fixDateTimezones, provideScrapeDates} from "./adapters";
+import {adaptScrapeToGlobalApi, convertTimestampToDate, fixDateTimezones, parseStartDateString, provideScrapeDates} from "./adapters";
 
 describe("adaptScrapeToGlobalApi", () => {
     it("should call addAccount, addTransaction, setResult", () => {
@@ -256,6 +256,14 @@ describe("postProcessTransactions", () => {
         withTimezoneOffset(-5, () => assertIsUntouched(new Date("2010-01-01T00:00:00+05:00")));
         withTimezoneOffset(-5, () => assertIsUntouched(new Date("2010-01-01T00:00:00+05:00").valueOf()));
     });
+});
+
+test("parseStartDateString handles user input format", () => {
+    const firstOfMay = new Date(2018, 4, 1, 0, 0, 0);
+    expect(parseStartDateString("01.05.2018")).toEqual(firstOfMay);
+    expect(parseStartDateString("1.5.2018")).toEqual(firstOfMay);
+    expect(parseStartDateString("01.05.18")).toEqual(firstOfMay);
+    expect(parseStartDateString("1.5.18")).toEqual(firstOfMay);
 });
 
 afterEach(() => {
