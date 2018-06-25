@@ -921,7 +921,7 @@ describe("convertToZenMoneyTransaction", () => {
             description: "BP Acct - Card RUS  BP Acct - Card RUS  SBERBANK ONL@IN VKLAD-KARTA",
         }, zenAccount);
         expect(transaction1).toEqual({
-            date: new Date("2018-06-24T13:14:38"),
+            date: new Date("2018-06-24T13:14:38+03:00"),
             hold: null,
             description: "BP Acct - Card RUS",
             payee: "SBERBANK ONL@IN VKLAD-KARTA",
@@ -931,7 +931,7 @@ describe("convertToZenMoneyTransaction", () => {
             },
         });
         expect(convertToZenMoneyTransaction(zenAccount, transaction1)).toEqual({
-            date: new Date("2018-06-24T13:14:38"),
+            date: new Date("2018-06-24T13:14:38+03:00"),
             hold: null,
             income: 3500,
             incomeAccount: "account",
@@ -972,7 +972,7 @@ describe("convertToZenMoneyTransaction", () => {
         }, zenAccount);
         expect(transaction2).toEqual({
             id: "11302220500",
-            date: new Date("2018-06-24T13:14:38"),
+            date: new Date("2018-06-24T13:14:38+03:00"),
             hold: false,
             categoryId: 227,
             location: null,
@@ -985,7 +985,7 @@ describe("convertToZenMoneyTransaction", () => {
             },
         });
         expect(convertToZenMoneyTransaction(zenAccount, transaction2)).toEqual({
-            date: new Date("2018-06-24T13:14:38"),
+            date: new Date("2018-06-24T13:14:38+03:00"),
             hold: false,
             income: 3500,
             incomeAccount: "account",
@@ -1011,7 +1011,7 @@ describe("convertToZenMoneyTransaction", () => {
             "transaction.operationCode": "3",
         }, zenAccount);
         expect(transaction).toEqual({
-            date: new Date("2018-06-24T00:00:00"),
+            date: new Date("2018-06-24T00:00:00+03:00"),
             hold: null,
             description: "Частичная выдача",
             payee: null,
@@ -1021,7 +1021,7 @@ describe("convertToZenMoneyTransaction", () => {
             },
         });
         expect(convertToZenMoneyTransaction(zenAccount, transaction)).toEqual({
-            date: new Date("2018-06-24T00:00:00"),
+            date: new Date("2018-06-24T00:00:00+03:00"),
             hold: null,
             income: 0,
             incomeAccount: "account",
@@ -1044,7 +1044,7 @@ describe("convertToZenMoneyTransaction", () => {
             description: "BP Card - Acct RUS  BP Card - Acct RUS  SBERBANK ONL@IN KARTA-VKLAD",
         }, zenAccount);
         expect(transaction).toEqual({
-            date: new Date("2018-06-20T12:43:32"),
+            date: new Date("2018-06-20T12:43:32+03:00"),
             hold: null,
             description: "BP Card - Acct RUS",
             payee: "SBERBANK ONL@IN KARTA-VKLAD",
@@ -1054,7 +1054,7 @@ describe("convertToZenMoneyTransaction", () => {
             },
         });
         expect(convertToZenMoneyTransaction(zenAccount, transaction)).toEqual({
-            date: new Date("2018-06-20T12:43:32"),
+            date: new Date("2018-06-20T12:43:32+03:00"),
             hold: null,
             income: 0,
             incomeAccount: "account",
@@ -1079,7 +1079,7 @@ describe("convertToZenMoneyTransaction", () => {
             "transaction.operationCode": "2",
         }, zenAccount);
         expect(transaction).toEqual({
-            date: new Date("2018-06-20T00:00:00"),
+            date: new Date("2018-06-20T00:00:00+03:00"),
             hold: null,
             description: "Дополнительный взнос",
             payee: null,
@@ -1089,7 +1089,7 @@ describe("convertToZenMoneyTransaction", () => {
             },
         });
         expect(convertToZenMoneyTransaction(zenAccount, transaction)).toEqual({
-            date: new Date("2018-06-20T00:00:00"),
+            date: new Date("2018-06-20T00:00:00+03:00"),
             hold: null,
             income: 4700,
             incomeAccount: "account",
@@ -1112,7 +1112,7 @@ describe("convertToZenMoneyTransaction", () => {
             description: "CH Payment RUS MOSCOW CH Payment RUS MOSCOW SBOL",
         }, zenAccount);
         expect(transaction1).toEqual({
-            date: new Date("2018-06-20T13:03:59"),
+            date: new Date("2018-06-20T13:03:59+03:00"),
             hold: null,
             description: "CH Payment RUS MOSCOW",
             payee: "SBOL",
@@ -1122,7 +1122,7 @@ describe("convertToZenMoneyTransaction", () => {
             },
         });
         expect(convertToZenMoneyTransaction(zenAccount, transaction1)).toEqual({
-            date: new Date("2018-06-20T13:03:59"),
+            date: new Date("2018-06-20T13:03:59+03:00"),
             hold: null,
             income: 100,
             incomeAccount: "account",
@@ -1163,7 +1163,7 @@ describe("convertToZenMoneyTransaction", () => {
         }, zenAccount);
         expect(transaction2).toEqual({
             id: "11352124463",
-            date: new Date("2018-06-20T13:03:59"),
+            date: new Date("2018-06-20T13:03:59+03:00"),
             hold: false,
             categoryId: 1476,
             location: null,
@@ -1176,7 +1176,7 @@ describe("convertToZenMoneyTransaction", () => {
             },
         });
         expect(convertToZenMoneyTransaction(zenAccount, transaction2)).toEqual({
-            date: new Date("2018-06-20T13:03:59"),
+            date: new Date("2018-06-20T13:03:59+03:00"),
             hold: false,
             income: 100,
             incomeAccount: "account",
@@ -1201,7 +1201,7 @@ describe("convertToZenMoneyTransaction", () => {
             description: "CH Debit RUS MOSCOW CH Debit RUS MOSCOW SBOL",
         }, zenAccount);
         expect(transaction1).toEqual({
-            date: new Date("2018-06-20T13:03:59"),
+            date: new Date("2018-06-20T13:03:59+03:00"),
             hold: null,
             description: "CH Debit RUS MOSCOW",
             payee: "SBOL",
@@ -1211,7 +1211,7 @@ describe("convertToZenMoneyTransaction", () => {
             },
         });
         expect(convertToZenMoneyTransaction(zenAccount, transaction1)).toEqual({
-            date: new Date("2018-06-20T13:03:59"),
+            date: new Date("2018-06-20T13:03:59+03:00"),
             hold: null,
             income: 0,
             incomeAccount: "account",
@@ -1265,7 +1265,7 @@ describe("convertToZenMoneyTransaction", () => {
         }, zenAccount);
         expect(transaction2).toEqual({
             id: "11352124431",
-            date: new Date("2018-06-20T13:03:59"),
+            date: new Date("2018-06-20T13:03:59+03:00"),
             hold: false,
             categoryId: 1475,
             location: null,
@@ -1278,7 +1278,7 @@ describe("convertToZenMoneyTransaction", () => {
             },
         });
         expect(convertToZenMoneyTransaction(zenAccount, transaction2)).toEqual({
-            date: new Date("2018-06-20T13:03:59"),
+            date: new Date("2018-06-20T13:03:59+03:00"),
             hold: false,
             income: 0,
             incomeAccount: "account",
