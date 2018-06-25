@@ -1,10 +1,13 @@
 import {parseXml} from "../../common/network";
 import {
     convertAccount,
+    convertApiTransaction,
     convertCards,
     convertDeposit,
     convertLoan,
+    convertPfmTransaction,
     convertTarget,
+    convertToZenMoneyTransaction,
     parseApiDescription,
     parsePfmDescription,
     parseWebAmount,
@@ -901,6 +904,199 @@ describe("parsePfmDescription", () => {
         expect(parsePfmDescription("unknown pattern")).toEqual({
             payee: null,
             description: "unknown pattern",
+        });
+    });
+});
+
+describe("convertToZenMoneyTransaction", () => {
+    it("converts income part of account -> card transfer", () => {
+        const zenAccount = {id: "account", instrument: "RUB"};
+
+        const transaction1 = convertApiTransaction({
+            date: "24.06.2018T13:14:38",
+            sum: {
+                amount: "+3500.00",
+                currency: { code: "RUB", name: "руб." },
+            },
+            description: "BP Acct - Card RUS  BP Acct - Card RUS  SBERBANK ONL@IN VKLAD-KARTA",
+        }, zenAccount);
+        expect(transaction1).toEqual({
+            date: new Date("2018-06-24T13:14:38"),
+            hold: null,
+            description: "BP Acct - Card RUS",
+            payee: "SBERBANK ONL@IN VKLAD-KARTA",
+            posted: {
+                amount: 3500,
+                instrument: "RUB",
+            },
+        });
+        expect(convertToZenMoneyTransaction(zenAccount, transaction1)).toEqual({
+            date: new Date("2018-06-24T13:14:38"),
+            hold: null,
+            income: 3500,
+            incomeAccount: "account",
+            outcome: 0,
+            outcomeAccount: "account",
+            comment: "SBERBANK ONL@IN VKLAD-KARTA",
+            _transferType: "outcome",
+            _transferId: "2018-06-24_RUB_3500",
+        });
+
+        const transaction2 = convertPfmTransaction({
+            id: 11302220500,
+            date: "24.06.2018T13:14:38",
+            comment: "SBERBANK ONL@IN VKLAD-KAR RU",
+            categoryId: 227,
+            categoryName: "Перевод со вклада",
+            hidden: false,
+            country: "RUS",
+            cardNumber: "4222 22** **** 2222",
+            cardAmount: { amount: "3500.00", currency: "RUB" },
+            nationalAmount: { amount: "3500.00", currency: "RUB" },
+            availableCategories: [
+                { id: 227, name: "Перевод со вклада" },
+                { id: 214, name: "Внесение наличных" },
+                { id: 217, name: "Возврат, отмена операций" },
+                { id: 215, name: "Зачисления" },
+                { id: 1476, name: "Перевод между своими картами" },
+                { id: 216, name: "Перевод на карту" },
+                { id: 218, name: "Прочие поступления" },
+            ],
+            merchantInfo: {
+                merchant: "Пополнение карты со счета",
+                imgUrl: "https://pfm.stat.online.sberbank.ru/PFM/logos/22535.jpg",
+            },
+            readOnly: false,
+            nfc: false,
+            isCommentEdited: false,
+        }, zenAccount);
+        expect(transaction2).toEqual({
+            id: "11302220500",
+            date: new Date("2018-06-24T13:14:38"),
+            hold: false,
+            categoryId: 227,
+            location: null,
+            merchant: "Пополнение карты со счета",
+            description: "RU",
+            payee: "SBERBANK ONL@IN VKLAD-KARTA",
+            posted: {
+                amount: 3500,
+                instrument: "RUB",
+            },
+        });
+        expect(convertToZenMoneyTransaction(zenAccount, transaction2)).toEqual({
+            date: new Date("2018-06-24T13:14:38"),
+            hold: false,
+            income: 3500,
+            incomeAccount: "account",
+            incomeBankID: "11302220500",
+            outcome: 0,
+            outcomeAccount: "account",
+            comment: "SBERBANK ONL@IN VKLAD-KARTA",
+            _transferType: "outcome",
+            _transferId: "2018-06-24_RUB_3500",
+        });
+    });
+
+    it("converts outcome part of account -> card transfer", () => {
+        const zenAccount = {id: "account", instrument: "RUB"};
+
+        const transaction = convertApiTransaction({
+            date: "24.06.2018T00:00:00",
+            sum: {
+                amount: "-3500.00",
+                currency: { code: "RUB", name: "руб." },
+            },
+            description: "Частичная выдача",
+            "transaction.operationCode": "3",
+        }, zenAccount);
+        expect(transaction).toEqual({
+            date: new Date("2018-06-24T00:00:00"),
+            hold: null,
+            description: "Частичная выдача",
+            payee: null,
+            posted: {
+                amount: -3500,
+                instrument: "RUB",
+            },
+        });
+        expect(convertToZenMoneyTransaction(zenAccount, transaction)).toEqual({
+            date: new Date("2018-06-24T00:00:00"),
+            hold: null,
+            income: 0,
+            incomeAccount: "account",
+            outcome: 3500,
+            outcomeAccount: "account",
+            _transferType: "income",
+            _transferId: "2018-06-24_RUB_3500",
+        });
+    });
+
+    it("converts outсome part of card -> account transfer", () => {
+        const zenAccount = {id: "account", instrument: "RUB"};
+
+        const transaction = convertApiTransaction({
+            date: "20.06.2018T12:43:32",
+            sum: {
+                amount: "-4700,00",
+                currency: { code: "RUB", name: "руб." },
+            },
+            description: "BP Card - Acct RUS  BP Card - Acct RUS  SBERBANK ONL@IN KARTA-VKLAD",
+        }, zenAccount);
+        expect(transaction).toEqual({
+            date: new Date("2018-06-20T12:43:32"),
+            hold: null,
+            description: "BP Card - Acct RUS",
+            payee: "SBERBANK ONL@IN KARTA-VKLAD",
+            posted: {
+                amount: -4700,
+                instrument: "RUB",
+            },
+        });
+        expect(convertToZenMoneyTransaction(zenAccount, transaction)).toEqual({
+            date: new Date("2018-06-20T12:43:32"),
+            hold: null,
+            income: 0,
+            incomeAccount: "account",
+            outcome: 4700,
+            outcomeAccount: "account",
+            comment: "SBERBANK ONL@IN KARTA-VKLAD",
+            _transferType: "income",
+            _transferId: "2018-06-20_RUB_4700",
+        });
+    });
+
+    it("converts inсome part of card -> account transfer", () => {
+        const zenAccount = {id: "account", instrument: "RUB"};
+
+        const transaction = convertApiTransaction({
+            date: "20.06.2018T00:00:00",
+            sum: {
+                amount: "+4700,00",
+                currency: { code: "RUB", name: "руб." },
+            },
+            description: "Дополнительный взнос",
+            "transaction.operationCode": "2",
+        }, zenAccount);
+        expect(transaction).toEqual({
+            date: new Date("2018-06-20T00:00:00"),
+            hold: null,
+            description: "Дополнительный взнос",
+            payee: null,
+            posted: {
+                amount: 4700,
+                instrument: "RUB",
+            },
+        });
+        expect(convertToZenMoneyTransaction(zenAccount, transaction)).toEqual({
+            date: new Date("2018-06-20T00:00:00"),
+            hold: null,
+            income: 4700,
+            incomeAccount: "account",
+            outcome: 0,
+            outcomeAccount: "account",
+            _transferType: "outcome",
+            _transferId: "2018-06-20_RUB_4700",
         });
     });
 });

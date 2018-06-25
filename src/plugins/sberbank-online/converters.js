@@ -249,14 +249,14 @@ export function addTransactions(oldTransactions, newTransactions, isWebTransacti
     }
 }
 
-export function convertToZenMoneyTransaction(account, transaction) {
+export function convertToZenMoneyTransaction(zenAccount, transaction) {
     const zenMoneyTransaction = {
         date: transaction.date,
         hold: transaction.hold,
         income: transaction.posted ? transaction.posted.amount > 0 ? transaction.posted.amount : 0 : null,
-        incomeAccount: account.id,
+        incomeAccount: zenAccount.id,
         outcome: transaction.posted ? transaction.posted.amount < 0 ? -transaction.posted.amount : 0 : null,
-        outcomeAccount: account.id,
+        outcomeAccount: zenAccount.id,
     };
     if (transaction.id) {
         const origin = transaction.origin || transaction.posted;
@@ -536,23 +536,34 @@ function parseCashTransaction(transaction, zenMoneyTransaction) {
 }
 
 function parseInnerTransfer(transaction, zenMoneyTransaction) {
+    let isAccountTransfer = false;
     if (transaction.categoryId) {
         if ([
             227, //Перевод со вклада
             228, //Перевод на вклад
+        ].indexOf(transaction.categoryId) >= 0) {
+            isAccountTransfer = true;
+        } else if ([
             1475, //Перевод между своими картами
             1476, //Перевод между своими картами
         ].indexOf(transaction.categoryId) < 0) {
             return false;
         }
     } else {
-        if (!transaction.description
-                || ![
-                    "BP Card - Acct",
-                    "BP Acct - Card",
-                    "CH Debit",
-                    "CH Payment",
-                ].some(word => transaction.description.indexOf(word) >= 0)) {
+        if (!transaction.description) {
+            return false;
+        }
+        if ([
+            "BP Card - Acct",
+            "BP Acct - Card",
+            "Частичная выдача",
+            "Дополнительный взнос",
+        ].some(word => transaction.description.indexOf(word) >= 0)) {
+            isAccountTransfer = true;
+        } else if (![
+            "CH Debit",
+            "CH Payment",
+        ].some(word => transaction.description.indexOf(word) >= 0)) {
             return false;
         }
     }
@@ -560,8 +571,12 @@ function parseInnerTransfer(transaction, zenMoneyTransaction) {
     if (transaction.payee) {
         zenMoneyTransaction.comment = transaction.payee;
     }
-    zenMoneyTransaction._transferId = `${Math.round(transaction.date.getTime())}_${origin.instrument}_${parseDecimal(Math.abs(origin.amount))}`;
     zenMoneyTransaction._transferType = origin.amount > 0 ? "outcome" : "income";
+    if (isAccountTransfer) {
+        zenMoneyTransaction._transferId = `${formatDateSql(toMoscowDate(transaction.date))}_${origin.instrument}_${parseDecimal(Math.abs(origin.amount))}`;
+    } else {
+        zenMoneyTransaction._transferId = `${Math.round(transaction.date.getTime())}_${origin.instrument}_${parseDecimal(Math.abs(origin.amount))}`;
+    }
     return true;
 }
 
