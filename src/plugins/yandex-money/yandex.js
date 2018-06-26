@@ -1,5 +1,4 @@
 import * as network from "../../common/network";
-import {TemporaryError} from "../../errors";
 
 const qs = require("querystring");
 
@@ -73,7 +72,7 @@ export async function login() {
         sanitizeRequestLog: {body: true},
         sanitizeResponseLog: {body: {access_token: true}, headers: {"set-cookie": true}},
     }, null);
-    if (!response.body || !response.body.accessToken) {
+    if (!response.body || !response.body.access_token) {
         throw new TemporaryError("Не удалось пройти авторизацию в Яндекс.Деньги. Попробуйте еще раз");
     }
     return {accessToken: response.body.access_token};
