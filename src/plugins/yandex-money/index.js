@@ -29,6 +29,7 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
             transactions.push(transaction);
         }
     }
+    ZenMoney.setData("accessToken", accessToken);
     return {
         accounts: [account],
         transactions,
