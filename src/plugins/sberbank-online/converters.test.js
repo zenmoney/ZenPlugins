@@ -939,7 +939,7 @@ describe("convertToZenMoneyTransaction", () => {
             outcomeAccount: "account",
             comment: "SBERBANK ONL@IN VKLAD-KARTA",
             _transferType: "outcome",
-            _transferId: "2018-06-24_RUB_3500",
+            _transferId: "2018-06-24_1_RUB_3500",
         });
 
         const transaction2 = convertPfmTransaction({
@@ -994,7 +994,7 @@ describe("convertToZenMoneyTransaction", () => {
             outcomeAccount: "account",
             comment: "SBERBANK ONL@IN VKLAD-KARTA",
             _transferType: "outcome",
-            _transferId: "2018-06-24_RUB_3500",
+            _transferId: "2018-06-24_1_RUB_3500",
         });
     });
 
@@ -1028,7 +1028,7 @@ describe("convertToZenMoneyTransaction", () => {
             outcome: 3500,
             outcomeAccount: "account",
             _transferType: "income",
-            _transferId: "2018-06-24_RUB_3500",
+            _transferId: "2018-06-24_1_RUB_3500",
         });
     });
 
@@ -1062,7 +1062,7 @@ describe("convertToZenMoneyTransaction", () => {
             outcomeAccount: "account",
             comment: "SBERBANK ONL@IN KARTA-VKLAD",
             _transferType: "income",
-            _transferId: "2018-06-20_RUB_4700",
+            _transferId: "2018-06-20_2_RUB_4700",
         });
     });
 
@@ -1096,7 +1096,7 @@ describe("convertToZenMoneyTransaction", () => {
             outcome: 0,
             outcomeAccount: "account",
             _transferType: "outcome",
-            _transferId: "2018-06-20_RUB_4700",
+            _transferId: "2018-06-20_2_RUB_4700",
         });
     });
 

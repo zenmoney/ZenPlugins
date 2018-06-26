@@ -537,13 +537,12 @@ function parseCashTransaction(transaction, zenMoneyTransaction) {
 }
 
 function parseInnerTransfer(transaction, zenMoneyTransaction) {
-    let isAccountTransfer = false;
+    let type = 0; //0 - card -> card, 1 - account -> card, 2 - card -> account
     if (transaction.categoryId) {
-        if ([
-            227, //Перевод со вклада
-            228, //Перевод на вклад
-        ].indexOf(transaction.categoryId) >= 0) {
-            isAccountTransfer = true;
+        if (transaction.categoryId === 227) { //Перевод со вклада
+            type = 1;
+        } else if (transaction.categoryId === 228) { //Перевод на вклад
+            type = 2;
         } else if ([
             1475, //Перевод между своими картами
             1476, //Перевод между своими картами
@@ -555,12 +554,15 @@ function parseInnerTransfer(transaction, zenMoneyTransaction) {
             return false;
         }
         if ([
-            "BP Card - Acct",
             "BP Acct - Card",
             "Частичная выдача",
+        ].some(word => transaction.description.indexOf(word) >= 0)) {
+            type = 1;
+        } else if ([
+            "BP Card - Acct",
             "Дополнительный взнос",
         ].some(word => transaction.description.indexOf(word) >= 0)) {
-            isAccountTransfer = true;
+            type = 2;
         } else if (![
             "CH Debit",
             "CH Payment",
@@ -573,10 +575,10 @@ function parseInnerTransfer(transaction, zenMoneyTransaction) {
         zenMoneyTransaction.comment = transaction.payee;
     }
     zenMoneyTransaction._transferType = origin.amount > 0 ? "outcome" : "income";
-    if (isAccountTransfer) {
-        zenMoneyTransaction._transferId = `${formatDateSql(toMoscowDate(transaction.date))}_${origin.instrument}_${parseDecimal(Math.abs(origin.amount))}`;
-    } else {
+    if (type === 0) {
         zenMoneyTransaction._transferId = `${Math.round(transaction.date.getTime())}_${origin.instrument}_${parseDecimal(Math.abs(origin.amount))}`;
+    } else {
+        zenMoneyTransaction._transferId = `${formatDateSql(toMoscowDate(transaction.date))}_${type}_${origin.instrument}_${parseDecimal(Math.abs(origin.amount))}`;
     }
     return true;
 }

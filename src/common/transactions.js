@@ -23,6 +23,9 @@ export function combineIntoTransfer(transactions, getTransferData) {
             }
             const transaction1 = transactions[0];
             const transaction2 = transactions[1];
+            if (transaction2[type1 + "Account"] === transaction1[type2 + "Account"]) {
+                return transactions;
+            }
             ["", "Account", "BankID"].forEach(postfix => {
                 const value = transaction2[type1 + postfix];
                 if (value !== undefined) {

@@ -53,6 +53,26 @@ describe("combineIntoTransferByTransferId", () => {
                 _transferId: "transferId2",
                 _transferType: "income",
             },
+            {
+                incomeBankID: "5",
+                income: 500,
+                incomeAccount: "account5",
+                outcome: 0,
+                outcomeAccount: "account5",
+                payee: "Payee",
+                _transferId: "transferId3",
+                _transferType: "outcome",
+            },
+            {
+                income: 0,
+                incomeAccount: "account5",
+                outcomeBankID: "5",
+                outcome: 500,
+                outcomeAccount: "account5",
+                hold: true,
+                _transferId: "transferId3",
+                _transferType: "income",
+            },
         ])).toEqual([
             {
                 income: 15,
@@ -83,6 +103,22 @@ describe("combineIntoTransferByTransferId", () => {
                 outcomeAccount: "account4",
                 payee: null,
                 hold: null,
+            },
+            {
+                incomeBankID: "5",
+                income: 500,
+                incomeAccount: "account5",
+                outcome: 0,
+                outcomeAccount: "account5",
+                payee: "Payee",
+            },
+            {
+                income: 0,
+                incomeAccount: "account5",
+                outcomeBankID: "5",
+                outcome: 500,
+                outcomeAccount: "account5",
+                hold: true,
             },
         ]);
     });
