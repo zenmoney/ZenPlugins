@@ -582,25 +582,20 @@ function parseInnerTransfer(transaction, zenMoneyTransaction) {
 }
 
 function parseOuterTransfer(transaction, zenMoneyTransaction) {
-    if (transaction.categoryId) {
-        if ([
+    const isOuterTransfer = (transaction.categoryId &&
+        [
             202, //Перевод на карту другого банка
             215, //Зачисления
             216, //Перевод с карты другого банка
-        ].indexOf(transaction.categoryId) < 0) {
-            return false;
-        }
-    } else {
-        if (!transaction.description
-                || ![
-                    "Payment To 7000",
-                    "CARD2CARD",
-                    "Card2Card",
-                    "Visa Direct",
-                ].some(word => transaction.description.indexOf(word) >= 0
-                    || (transaction.payee && transaction.payee.indexOf(word) >= 0))) {
-            return false;
-        }
+        ].indexOf(transaction.categoryId) >= 0) || (transaction.description && [
+            "Payment To 7000",
+            "CARD2CARD",
+            "Card2Card",
+            "Visa Direct",
+        ].some(word => transaction.description.indexOf(word) >= 0
+            || (transaction.payee && transaction.payee.indexOf(word) >= 0)));
+    if (!isOuterTransfer) {
+        return false;
     }
     const origin = transaction.origin || transaction.posted;
     if (origin.amount > 0) {

@@ -1290,4 +1290,102 @@ describe("convertToZenMoneyTransaction", () => {
             _transferId: "1529489039000_RUB_100",
         });
     });
+
+    it("converts outer transfer", () => {
+        const zenAccount = {id: "account", instrument: "RUB"};
+
+        const transaction1 = convertApiTransaction({
+            date: "20.06.2018T15:32:50",
+            sum: {
+                amount: "-10000,00",
+                currency: { code: "RUB", name: "руб." },
+            },
+            description: "Retail RUS MOSCOW Retail RUS MOSCOW Tinkoff Bank Card2Card",
+        }, zenAccount);
+        expect(transaction1).toEqual({
+            date: new Date("2018-06-20T15:32:50+03:00"),
+            hold: null,
+            description: "Retail RUS MOSCOW",
+            payee: "Tinkoff Bank Card2Card",
+            posted: {
+                amount: -10000,
+                instrument: "RUB",
+            },
+        });
+        expect(convertToZenMoneyTransaction(zenAccount, transaction1)).toEqual({
+            date: new Date("2018-06-20T15:32:50+03:00"),
+            hold: false,
+            income: 0,
+            incomeAccount: "account",
+            outcome: 10000,
+            outcomeAccount: "account",
+            comment: "Перевод с карты",
+        });
+
+        const transaction2 = convertPfmTransaction({
+            id: 692815587,
+            date: "20.06.2018T15:32:50",
+            comment: "TINKOFF BANK CARD2CARD  MOSCOW      RUS",
+            categoryId: 210,
+            categoryName: "Прочие расходы",
+            hidden: false,
+            country: "RUS",
+            cardNumber: "5222 22** **** 2222",
+            cardAmount: { amount: "-10000.00", currency: "RUB" },
+            nationalAmount: { amount: "-10000.00", currency: "RUB" },
+            availableCategories: [
+                { id: 210, name: "Прочие расходы" },
+                { id: 201, name: "Автомобиль" },
+                { id: 220, name: "Все для дома" },
+                { id: 203, name: "Выдача наличных" },
+                { id: 205, name: "Здоровье и красота" },
+                { id: 222, name: "Искусство" },
+                { id: 212, name: "Комиссия" },
+                { id: 204, name: "Коммунальные платежи, связь, интернет" },
+                { id: 207, name: "Образование" },
+                { id: 206, name: "Одежда и аксессуары" },
+                { id: 208, name: "Отдых и развлечения" },
+                { id: 8128, name: "Перевод во вне" },
+                { id: 1475, name: "Перевод между своими картами" },
+                { id: 228, name: "Перевод на вклад" },
+                { id: 202, name: "Перевод с карты" },
+                { id: 213, name: "Погашение кредитов" },
+                { id: 219, name: "Путешествия" },
+                { id: 221, name: "Рестораны и кафе" },
+                { id: 209, name: "Супермаркеты" },
+                { id: 211, name: "Транспорт" },
+            ],
+            merchantInfo: {
+                merchant: "Тинькофф Банк",
+                imgUrl: "https://pfm.stat.online.sberbank.ru/PFM/logos/18699.jpg",
+            },
+            readOnly: false,
+            nfc: false,
+            isCommentEdited: true,
+        }, zenAccount);
+        expect(transaction2).toEqual({
+            id: "692815587",
+            date: new Date("2018-06-20T15:32:50+03:00"),
+            hold: false,
+            categoryId: 210,
+            location: null,
+            merchant: "Тинькофф Банк",
+            description: "MOSCOW RUS",
+            payee: "TINKOFF BANK CARD2CARD",
+            posted: {
+                amount: -10000,
+                instrument: "RUB",
+            },
+        });
+        expect(convertToZenMoneyTransaction(zenAccount, transaction2)).toEqual({
+            date: new Date("2018-06-20T15:32:50+03:00"),
+            hold: false,
+            income: 0,
+            incomeAccount: "account",
+            outcome: 10000,
+            outcomeAccount: "account",
+            outcomeBankID: "692815587",
+            comment: "Перевод с карты",
+        });
+    });
 });
