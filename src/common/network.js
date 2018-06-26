@@ -71,23 +71,14 @@ export async function fetch(url, options = {}) {
 
 export async function fetchJson(url, options = {}) {
     return fetch(url, {
+        stringify: JSON.stringify,
         ...options,
         headers: {
             "Accept": "application/json, text/plain, */*",
             "Content-Type": "application/json;charset=UTF-8",
             ...options.headers,
         },
-        stringify: JSON.stringify,
-        parse: body => {
-            try {
-                return JSON.parse(body);
-            } catch (e) {
-                if (body === "") {
-                    return undefined;
-                }
-                throw e;
-            }
-        },
+        parse: (body) => body === "" ? undefined : JSON.parse(body),
     });
 }
 
