@@ -1,0 +1,195 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`convertApiMovementsToReadableTransactions completes missing transfer data 1`] = `
+Array [
+  Object {
+    "comment": null,
+    "date": 2018-05-22T09:00:00.000Z,
+    "hold": false,
+    "sides": Array [
+      Object {
+        "account": Object {
+          "id": "x7890",
+        },
+        "amount": 1000,
+        "id": "1",
+        "instrument": "RUR",
+      },
+      Object {
+        "account": Object {
+          "id": "x0987",
+        },
+        "amount": -1000,
+        "id": "2",
+        "instrument": "RUR",
+      },
+    ],
+    "type": "transfer",
+  },
+]
+`;
+
+exports[`convertApiMovementsToReadableTransactions guesses missing sender account info with single non-own shared account 1`] = `
+Array [
+  Object {
+    "account": Object {
+      "id": "x4444",
+    },
+    "comment": null,
+    "date": 2018-05-22T09:00:00.000Z,
+    "hold": false,
+    "id": "0",
+    "location": null,
+    "mcc": null,
+    "origin": null,
+    "payee": "test(recipientName)",
+    "posted": Object {
+      "amount": -1000,
+      "instrument": "RUR",
+    },
+    "type": "transaction",
+  },
+]
+`;
+
+exports[`parseApiMovementDescription 1`] = `
+Array [
+  Object {
+    "input": "123456++++++7890    220674  /RU/Alfa Iss>SANKT-PETE                   01.02.03 01.02.03 12345.00      RUR",
+    "output": Object {
+      "mcc": null,
+      "origin": Object {
+        "amount": -12345,
+        "instrument": "RUR",
+      },
+    },
+  },
+  Object {
+    "input": "123456++++++7890      123456\\\\789\\\\SANKT PETERBU\\\\Alfa Iss               01.02.03 01.02.03      1234.00  RUR MCC6011",
+    "output": Object {
+      "mcc": 6011,
+      "origin": Object {
+        "amount": -1234,
+        "instrument": "RUR",
+      },
+    },
+  },
+  Object {
+    "input": "123456++++++7890    00123456\\\\643\\\\ST PETERSBURG\\\\st m chkalovs          01.02.03 01.02.03     12345.00  RUR",
+    "output": Object {
+      "mcc": null,
+      "origin": Object {
+        "amount": -12345,
+        "instrument": "RUR",
+      },
+    },
+  },
+  Object {
+    "input": "123456++++++7890        0000\\\\USA\\\\4158004028\\\\REDASH IO                 01.02.03 01.02.03        12.34  USD MCC5734",
+    "output": Object {
+      "mcc": 5734,
+      "origin": Object {
+        "amount": -12.34,
+        "instrument": "USD",
+      },
+    },
+  },
+  Object {
+    "input": "123456++++++7890        0000\\\\USA\\\\8889832664\\\\HELPSHIFT COM             01.02.03 01.02.03        12.34  USD",
+    "output": Object {
+      "mcc": null,
+      "origin": Object {
+        "amount": -12.34,
+        "instrument": "USD",
+      },
+    },
+  },
+  Object {
+    "input": "123456++++++7890      123456\\\\RUS\\\\SANKT PETERBU\\\\WHSD NORTH             01.02.03 01.02.03        50.00  RUR MCC4784",
+    "output": Object {
+      "mcc": 4784,
+      "origin": Object {
+        "amount": -50,
+        "instrument": "RUR",
+      },
+    },
+  },
+  Object {
+    "input": "123456++++++7890    12345678\\\\RUS\\\\BORISOVO\\\\1 KH\\\\KAFE TRATTORI          01.02.03 01.02.03      1680.00  RUR MCC5812",
+    "output": Object {
+      "mcc": 5812,
+      "origin": Object {
+        "amount": -1680,
+        "instrument": "RUR",
+      },
+    },
+  },
+  Object {
+    "input": "123456++++++7890    14687856\\\\FIN\\\\LAPPEENRANTA\\\\Dharahara Oy            01.02.03 01.02.03        35.00  EUR",
+    "output": Object {
+      "mcc": null,
+      "origin": Object {
+        "amount": -35,
+        "instrument": "EUR",
+      },
+    },
+  },
+  Object {
+    "input": "123456++++++7890    28127178\\\\THA\\\\SAMUTPRAKAN\\\\A\\\\CONVENNIENT G          01.02.03 01.02.03      1234.56  THB MCC7011",
+    "output": Object {
+      "mcc": 7011,
+      "origin": Object {
+        "amount": -1234.56,
+        "instrument": "THB",
+      },
+    },
+  },
+  Object {
+    "input": "123456++++++7890    809216  /RU/CARD2CARD ALFA_MOBILE>MOSCOW          01.02.03 01.02.03 15600.00      RUR MCC6536",
+    "output": Object {
+      "mcc": 6536,
+      "origin": Object {
+        "amount": -15600,
+        "instrument": "RUR",
+      },
+    },
+  },
+  Object {
+    "input": "123456++++++7890    \\\\USA\\\\aws amazon co\\\\Amazon web se                  01.02.03 01.02.03          .12  USD MCC7399",
+    "output": Object {
+      "mcc": 7399,
+      "origin": Object {
+        "amount": -0.12,
+        "instrument": "USD",
+      },
+    },
+  },
+  Object {
+    "input": "123456++++++7890    \\\\USA\\\\aws amazon co\\\\Amazon web se                  01.02.03 01.02.03          .12  USD",
+    "output": Object {
+      "mcc": null,
+      "origin": Object {
+        "amount": -0.12,
+        "instrument": "USD",
+      },
+    },
+  },
+  Object {
+    "input": "12345678 JP SINNZIYUKUNEGISIYASUKU> 18.05.11 18.05.11 3500 JPY 123456++++++7890",
+    "output": Object {
+      "mcc": null,
+      "origin": Object {
+        "amount": -3500,
+        "instrument": "JPY",
+      },
+    },
+  },
+  Object {
+    "input": "Комиссия за выпуск/перевыпуск картысогласно тарифам банка 01.01.18   ABCD0I                             ФАМИЛЬЕВ ИМЬ ОТЧЕВИЧ",
+    "output": Object {
+      "mcc": null,
+      "origin": null,
+    },
+  },
+]
+`;

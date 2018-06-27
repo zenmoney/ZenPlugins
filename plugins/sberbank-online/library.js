@@ -693,4 +693,9 @@ Array.prototype.remove = function(value) {
 	if (idx != -1)
 		return this.splice(idx, 1);
 	return false;
+};
+
+function checkEmpty(param, error, notfatal) {
+	if (!param)
+		throw new ZenMoney.Error(error, null, !notfatal);
 }

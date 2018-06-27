@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+            key="birth"
+            title="Дата рождения"
+            dialogTitle="Дата рождения"
+            dialogMessage="Введите дату рождения"
+            defaultValue="1980-01-01T00:00:00.000Z"
+            summary="|birth|{@s}"
+            inputType="date"
+            positiveButtonText="ОК"
+            negativeButtonText="Отмена"
+            obligatory="true">
+    </EditTextPreference>
+    <EditTextPreference
+            key="phone"
+            title="Номер телефона"
+            dialogTitle="Номер телефона"
+            dialogMessage="Введите номер телефона в формате 7хххххххххх"
+            positiveButtonText="ОК"
+            negativeButtonText="Отмена"
+            obligatory="true">
+    </EditTextPreference>
+    <EditTextPreference
+            key="pin"
+            title="Пин-код"
+            dialogTitle="ПИН-код приложения 'Мой кредит'"
+            dialogMessage="Введите ПИН-код мобильного приложения 'Мой кредит' (4 цифры)."
+            inputType="numberPassword"
+            summary="||****"
+            positiveButtonText="ОК"
+            negativeButtonText="Отмена"
+            obligatory="true">
+    </EditTextPreference>
+    <EditTextPreference
+            key="startDate"
+            title="С какой даты загружать операции"
+            dialogTitle="Дата начала загрузки"
+            dialogMessage="Введите дату, с которой загружать операции"
+            defaultValue="2018-04-01T00:00:00.000Z"
+            inputType="date"
+            summary="|startDate|{@s}"
+            positiveButtonText="ОК"
+            negativeButtonText="Отмена"
+            obligatory="true">
+    </EditTextPreference>
+</PreferenceScreen>
