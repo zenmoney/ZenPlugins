@@ -24,9 +24,7 @@ async function fetchJson(url, options = {}, predicate = () => true) {
         },
     });
     if (predicate) {
-        if (response.status === 401
-                && response.headers["www-authenticate"]
-                && response.headers["www-authenticate"].indexOf("invalid_token") >= 0) {
+        if (response.status === 401) {
             throw new TemporaryError("authorization error");
         }
     }
