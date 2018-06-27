@@ -1,0 +1,78 @@
+{
+  "name": "zenplugins",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "babel-core": "6.26.3",
+    "babel-eslint": "8.2.3",
+    "babel-jest": "23.0.1",
+    "babel-loader": "7.1.4",
+    "babel-preset-react-app": "3.1.1",
+    "babel-runtime": "6.26.0",
+    "body-parser": "1.18.0",
+    "case-sensitive-paths-webpack-plugin": "2.1.1",
+    "chalk": "1.1.3",
+    "cheerio": "1.0.0-rc.2",
+    "deep-diff": "0.3.8",
+    "eslint": "4.4.1",
+    "eslint-config-react-app": "^2.0.0",
+    "eslint-loader": "1.9.0",
+    "eslint-plugin-flowtype": "2.35.0",
+    "eslint-plugin-import": "2.7.0",
+    "eslint-plugin-jsx-a11y": "5.1.1",
+    "eslint-plugin-react": "7.1.0",
+    "exports-loader": "0.6.4",
+    "extract-text-webpack-plugin": "3.0.0",
+    "fetch-mock": "5.12.2",
+    "fs-extra": "3.0.1",
+    "html-loader-jest": "0.2.1",
+    "html-webpack-exclude-assets-plugin": "0.0.5",
+    "html-webpack-plugin": "2.29.0",
+    "http-proxy": "1.16.2",
+    "imports-loader": "0.7.1",
+    "jest": "23.1.0",
+    "jshashes": "1.0.7",
+    "lodash": "4.17.4",
+    "object-assign": "4.1.1",
+    "pad-left": "2.1.0",
+    "promise": "8.0.1",
+    "react": "16.4.0",
+    "react-dev-utils": "^3.1.0",
+    "react-dom": "16.4.0",
+    "script-loader": "0.7.0",
+    "strip-bom": "3.0.0",
+    "util": "0.10.3",
+    "webpack": "3.5.1",
+    "webpack-dev-server": "2.7.1",
+    "whatwg-fetch": "git+https://github.com/skvav/fetch.git#a76800dfcc27f883dd84cbd60b6d7919eea28ac4"
+  },
+  "scripts": {
+    "start": "yarn && node scripts/start.js",
+    "host": "yarn && node scripts/host.js",
+    "build": "yarn && node scripts/build.js",
+    "test": "yarn && node scripts/test.js"
+  },
+  "jest": {
+    "collectCoverageFrom": [
+      "src/**/*.js"
+    ],
+    "setupFiles": [],
+    "setupTestFrameworkScriptFile": "<rootDir>/scripts/setupJestTestFramework.js",
+    "testMatch": [
+      "<rootDir>/src/**/__tests__/**/*.js?(x)",
+      "<rootDir>/src/**/?(*.)(spec|test).js?(x)"
+    ],
+    "testEnvironment": "node",
+    "testURL": "http://localhost",
+    "transform": {
+      "^.+\\.js$": "<rootDir>/node_modules/babel-jest",
+      "^.+\\.html?$": "html-loader-jest"
+    },
+    "transformIgnorePatterns": [
+      "[/\\\\]node_modules[/\\\\].+\\.js$"
+    ],
+    "moduleFileExtensions": [
+      "js"
+    ]
+  }
+}

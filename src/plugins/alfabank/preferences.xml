@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="cardNumber"
+        obligatory="true"
+        inputType="number"
+        title="Номер карты Альфа-банка"
+        dialogTitle="Номер карты Альфа-банка"
+        dialogMessage="Пример: 4444555566661111"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|Пример: 4444555566661111|{@s}"
+    />
+    <EditTextPreference
+        key="cardExpirationDate"
+        obligatory="true"
+        inputType="phone"
+        title="Срок действия карты"
+        dialogTitle="Срок действия карты"
+        dialogMessage="Формат: ММГГ, пример: 0121"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|Формат: ММГГ, пример: 0121|{@s}"
+    />
+    <EditTextPreference
+        key="phoneNumber"
+        obligatory="true"
+        inputType="phone"
+        title="Номер телефона"
+        dialogTitle="Номер телефона"
+        dialogMessage="Пример: 79234567890"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|Пример: 79234567890|{@s}"
+    />
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="С какой даты загружать операции"
+        defaultValue="2018-06-11T00:00:00.000Z"
+        dialogTitle="Дата начала загрузки"
+        dialogMessage="Введите дату, с которой загружать операции"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|startDate|{@s}"
+    />
+</PreferenceScreen>

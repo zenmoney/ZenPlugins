@@ -2,12 +2,14 @@
 <provider>
     <id>unicredit</id>
     <version>0.1</version>
-    <build>1</build>
+    <build>10</build>
     <company>4373</company>
     <files>
         <js>lib.js</js>
         <js>main.js</js>
         <preferences>preferences.xml</preferences>
     </files>
-    <description>Интеграция с Enter.Unicredit</description>
+    <description>Для подключения импорта укажите ваш логин и пароль от Enter.UniCredit и выберите период, за который будут загружены операции при первой синхронизации. Если при первом запуске вы не хотите загружать операции, выберите значение "Не загружать".
+
+Логин и пароль хранятся в приложении в зашифрованном виде и не передаются на сторонние серверы, включая серверы Дзен-мани.</description>
 </provider>

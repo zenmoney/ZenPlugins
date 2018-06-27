@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>qiwi</id>
+    <version>1.0</version>
+    <build>7</build>
+    <company>15592</company>
+    <modular>true</modular>
+    <codeRequired>false</codeRequired>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+    <description>Для подключения импорта из QIWI Кошелька сделайте следующее:
+
+- Зайдите на https://qiwi.com/api
+- Нажмите "Выпустить новый токен".
+- Поставьте галочки "Запрос информации о профиле кошелька", "Запрос баланса кошелька" и "Просмотр истории платежей".
+- Полученный в итоге токен скопируйте в настройки подключения (форма выше).</description>
+</provider>

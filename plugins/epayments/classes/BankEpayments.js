@@ -12,13 +12,12 @@ function BankEpayments() {
      */
     this.prepareAccountsData = function (data) {
         return data.map(function (dataItem) {
-            var instrument = resolveInstrument(dataItem.cardCurrency)
+            var instrument = resolveInstrument(dataItem.cardCurrency);
 
             var syncID = [dataItem.id.substr(-4)];
-            if (dataItem.hasOwnProperty('prevCardId')) {
+            if (dataItem.hasOwnProperty('prevCardId') && dataItem.prevCardId !== null) {
                 syncID.push(dataItem.prevCardId.substr(-4));
             }
-
             return {
                 id:           dataItem.id,
                 title:        'Карта ' + instrument,
@@ -89,8 +88,17 @@ function BankEpayments() {
                 operation.income         = isIncome ? dataItem.total : 0;
 
                 if (dataItem.operation.typeCode == 'Atm') { // снятие нала
-                    operation.income        = dataItem.amount;
-                    operation.incomeAccount = 'cash#' + resolveInstrument(dataItem.currency);
+                    if (dataItem.currency != data.txnCurrency) { //Снятие в валюте отличной от валюты счета
+                        operation.income              = dataItem.txnAmount; //Сумма в валюте снятия
+                        operation.incomeAccount       = 'cash#' + resolveInstrument(dataItem.txnCurrency); //Валюта снятия
+                        operation.outcome             = dataItem.total; //Сумма в валюте счета + комиссия
+                        operation.opOutcome           = dataItem.txnAmount;
+                        operation.opOutcomeInstrument = resolveInstrument(dataItem.txnCurrency) //Валюта снятия
+                    } else {
+                        operation.income        = dataItem.amount;
+                        operation.incomeAccount = 'cash#' + resolveInstrument(dataItem.currency);
+                    }
+
                 }
 
                 operations.push(operation);

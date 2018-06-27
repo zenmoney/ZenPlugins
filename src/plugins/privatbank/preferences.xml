@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="merchantId"
+        obligatory="true"
+        title="ID мерчантов *"
+        dialogTitle="ID мерчантов"
+        dialogMessage="Введите ID мерчантов (через пробел), зарегистрированных в Приват24"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|ID мерчанта|{@s}">
+    </EditTextPreference>
+    <EditTextPreference
+        key="password"
+        obligatory="true"
+        title="Пароли мерчантов *"
+        dialogTitle="Пароли мерчантов"
+        dialogMessage="32-х значные пароли мерчантов (через пробел)"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="||******"
+        inputType="textPassword">
+    </EditTextPreference>
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="С какой даты загружать операции"
+        defaultValue="2018-01-01"
+        dialogTitle="Дата начала загрузки"
+        dialogMessage="Введите дату, с которой загружать операции"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|startDate|{@s}">
+    </EditTextPreference>
+</PreferenceScreen>

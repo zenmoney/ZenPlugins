@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="username"
+        obligatory="true"
+        title="Имя пользователя"
+        dialogTitle="Имя пользователя"
+        dialogMessage="Введите имя пользователя для входа в интернет-банк BelSwissBank."
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|Имя пользователя|{@s}"
+    >
+    </EditTextPreference>
+    <EditTextPreference
+        key="password"
+        inputType="textPassword"
+        obligatory="true"
+        title="Пароль"
+        dialogTitle="Пароль"
+        dialogMessage="Введите пароль от интернет-банка BelSwissBank."
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="||***********"
+    >
+    </EditTextPreference>
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="С какой даты загружать операции"
+        defaultValue="2010-01-01T12:00:00.000Z"
+        dialogTitle="Дата начала загрузки"
+        dialogMessage="Введите дату, с которой загружать операции"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|startDate|{@s}"
+    >
+    </EditTextPreference>
+</PreferenceScreen>

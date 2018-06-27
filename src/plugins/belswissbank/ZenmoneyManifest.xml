@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>belswissbank</id>
+    <version>1.0.0</version>
+    <build>9</build>
+    <company>15408</company>
+    <modular>true</modular>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+    <description>Для подключения импорта укажите ваш логин и пароль от интернет-банка.</description>
+    <codeRequired>false</codeRequired>
+</provider>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>homecredit</id>
+    <version>0.1</version>
+    <build>0</build>
+    <company>4412</company>
+    <modular>true</modular>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+    <description>Для подключения импорта укажите дату рождения, номер телефона и пин-код от мобильного приложения 'Мой кредит' HomeCredit банка.
+
+    Все параметры подключения хранятся в приложении в зашифрованном виде njkmrj на вашем телефоне и не передаются куда-либо, кроме как на сервера HomeCredit банка.
+</description>
+</provider>
