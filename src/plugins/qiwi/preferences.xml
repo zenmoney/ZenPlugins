@@ -2,9 +2,9 @@
 <PreferenceScreen>
     <EditTextPreference
         key="token"
-        title="Токен QIWI кошелька"
-        dialogTitle="Токен QIWI кошелька"
-        dialogMessage="Введите токен QIWI кошелька"
+        title="Токен QIWI Кошелька"
+        dialogTitle="Токен QIWI Кошелька"
+        dialogMessage="Введите токен QIWI Кошелька"
         summary="||{@s}"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
