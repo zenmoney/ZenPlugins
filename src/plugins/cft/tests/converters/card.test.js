@@ -7,9 +7,10 @@ import {entity} from "../../zenmoney_entity/account";
 
 describe("card converter", () => {
     it("should return zenmoney account object", () => {
-        const account = converter({
+        const account_data = {
             id: 12345,
             name: "Super card",
+            contractId: 1,
             equities: [
                 {
                     type: "OTHER",
@@ -24,14 +25,33 @@ describe("card converter", () => {
             ],
             ean: 12345678,
             panTail: "0987",
-        });
+        };
 
-        expect(account).toEqual(Object.assign({}, entity(), {
+        const credit_data = [
+            {
+                contractId: 1,
+                grantedAmount: 10000,
+            }
+        ];
+
+        expect(converter(account_data, [])).toEqual(Object.assign({}, entity(), {
             id: "c-12345",
             title: "Super card",
             type: "ccard",
             instrument: "RUB",
             balance: 123,
+            syncID: [
+                "12345678",
+                "0987",
+            ],
+        }));
+        expect(converter(account_data, credit_data)).toEqual(Object.assign({}, entity(), {
+            id: "c-12345",
+            title: "Super card",
+            type: "ccard",
+            instrument: "RUB",
+            balance: 123,
+            creditLimit: 10000,
             syncID: [
                 "12345678",
                 "0987",

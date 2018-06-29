@@ -24,13 +24,14 @@ async function scrape({fromDate, toDate, apiUri}) {
 
     await api.auth(card_number, password);
 
-    const [cards_data, wallets_data, transactions_data] = await Promise.all([
+    const [cards_data, credit_data, wallets_data, transactions_data] = await Promise.all([
         api.fetchCards(),
+        api.fetchCredits(),
         api.fetchWallets(),
         api.fetchTransactions(fromDate),
     ]);
 
-    const cards = cards_data.map(cardDataToZenmoneyAccount);
+    const cards = cards_data.map((data) => cardDataToZenmoneyAccount(data, credit_data));
     const wallets = wallets_data.map(walletDataToZenmoneyAccount);
 
     const map = mapContractToAccount(cards_data);
