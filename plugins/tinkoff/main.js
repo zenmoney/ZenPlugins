@@ -661,6 +661,7 @@ function processTransactions(data) {
 
         if (period <= 0) {
             ZenMoney.trace("Подключение без операций. Первый запуск. Операции пропускаем.");
+            ZenMoney.addAccount(g_accDict);
             ZenMoney.saveData();
             return;
         }
@@ -709,6 +710,7 @@ function processTransactions(data) {
 
     var tranDict = {}; // список найденных оперций
     var tranDictHold = {}; // список ключей операций для контроля холдов и акцептов в одной выписке
+    var tranDictHold2 = {}; // список ключей операций для контроля пропадающих холдов и акцептов через новую операцию
 
     var payload = transactions.payload[0].payload;
     if (!payload) {
@@ -888,6 +890,7 @@ function processTransactions(data) {
                                 if (t.payment && t.payment.cardNumber) {
                                     tran.outcomeAccount = "ccard#" + t.amount.currency.name + "#" + t.payment.cardNumber.substring(t.payment.cardNumber.length - 4);
                                     tran.outcome = t.amount.value;
+                                    tran.hold = null;
                                 }
                             }
                             break;
@@ -1027,6 +1030,22 @@ function processTransactions(data) {
                     tran.longitude = t.locations[0].longitude;
                 }
             }
+
+            /*// ключ дублей холд с акцептом через новую операцию и отменой холда
+            var tranKeyHold2 = tAccount + ":" + tran.date + ":" + (tran.payee ? tran.payee : "") + ":" + tranAmount;
+            if (!tran.hold && tranDictHold2[tranKeyHold2]) {
+                // если за этот день тому же получателю уже был холд на ту же сумму, гасим его
+                ZenMoney.trace("Замещаем HOLD найденным акцептом: "+ tranDictHold2[tranKeyHold2].id +" => "+ tran.id);
+                tranDict[tranDictHold2[tranKeyHold2]] = tran;
+                delete(tranDictHold[tranKeyHold]);
+                delete(tranDictHold2[tranKeyHold2]);
+            }
+            else {
+                //ZenMoney.trace('Операция!!! ' + tranId);
+                tranDict[tranKey] = tran;
+                tranDictHold[tranKeyHold] = tranKey;
+                if (tran.hold) tranDictHold2[tranKeyHold2] = tranKey;
+            }*/
 
             //ZenMoney.trace('Операция!!! ' + tranId);
             tranDict[tranKey] = tran;
