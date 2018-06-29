@@ -25,6 +25,29 @@ describe("sanitize", () => {
             .toEqual(sampleValues);
         expect(sanitize(sampleValues, false))
             .toEqual(sampleValues);
+
+        expect(sanitize({
+            a: [
+                {a1: 12345, a2: "12345", a3: "some data"},
+                {a1: 12345, a2: "12345", a3: "some data"}
+            ],
+            b: [
+                {b1: 12345, b2: "12345", b3: "some data"},
+                {b1: 12345, b2: "12345", b3: "some data"}
+            ]
+        }, {
+            a: true,
+            b: {b1: true, b2: true},
+        })).toEqual({
+            a: [
+                {a1: "<number>", a2: "<string[5]>", a3: "<string[9]>"},
+                {a1: "<number>", a2: "<string[5]>", a3: "<string[9]>"}
+            ],
+            b: [
+                {b1: "<number>", b2: "<string[5]>", b3: "some data"},
+                {b1: "<number>", b2: "<string[5]>", b3: "some data"}
+            ],
+        });
     });
 
     it("should preserve value if value is unexpected for the mask", () => {
