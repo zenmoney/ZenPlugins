@@ -53,6 +53,13 @@ export async function login(login, pin, auth) {
                 "Host": `${auth.api.host}:4477`,
                 "Cookie": `${auth.api.cookie}`,
             },
+            parse: (body) => {
+                if (body) {
+                    return network.parseXml(body);
+                } else {
+                    return {response: {}};
+                }
+            },
         }, null);
         if (response.body && response.body.status === "0") {
             return auth;
@@ -396,9 +403,9 @@ async function fetchXml(url, options = {}, predicate = () => true) {
     options = {
         method: "POST",
         headers: defaultHeaders,
-        ...options,
         stringify: qs.stringify,
         parse: network.parseXml,
+        ...options,
     };
 
     _.set(options, "sanitizeRequestLog.headers.cookie", true);
@@ -504,7 +511,7 @@ function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function getUid(length, chars) {
+export function getUid(length, chars) {
     if (typeof chars !== "string") {
         chars = "abcdefghijklmnopqrstuvwxyz0123456789";
     }
