@@ -17,7 +17,7 @@ function defaultOptions(token) {
 function formatDate(date) {
     return date.getUTCFullYear()
         + "-" + toAtLeastTwoDigitsString(date.getUTCMonth() + 1)
-        + "-" + toAtLeastTwoDigitsString(date.getUTCDate() + 1)
+        + "-" + toAtLeastTwoDigitsString(date.getUTCDate())
         + "T" + toAtLeastTwoDigitsString(date.getUTCHours())
         + ":" + toAtLeastTwoDigitsString(date.getUTCMinutes())
         + ":" + toAtLeastTwoDigitsString(date.getUTCSeconds())
