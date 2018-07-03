@@ -536,7 +536,7 @@ function createSdkData(login) {
 
     const obj = {
         "TIMESTAMP": dt.getUTCFullYear() + "-"
-            + toAtLeastTwoDigitsString(dt.getUTCMonth()) + "-"
+            + toAtLeastTwoDigitsString(dt.getUTCMonth() + 1) + "-"
             + toAtLeastTwoDigitsString(dt.getUTCDate()) + "T"
             + dt.getUTCHours() + ":" + dt.getUTCMinutes() + ":" + dt.getUTCSeconds() + "Z",
         "HardwareID": generateImei(login, "35472406******L"),

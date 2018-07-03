@@ -44,6 +44,9 @@ export function combineIntoTransfer(transactions, getTransferData) {
             if ("payee" in transaction1) {
                 transaction1.payee = null;
             }
+            if (transaction1.date && transaction2.date && transaction2.date < transaction1.date) {
+                transaction1.date = transaction2.date;
+            }
             return [transaction1];
         });
 }

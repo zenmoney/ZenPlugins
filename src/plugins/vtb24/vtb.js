@@ -3,6 +3,7 @@ import * as _ from "lodash";
 import padLeft from "pad-left";
 import * as network from "../../common/network";
 import {TemporaryError} from "../../errors";
+import {formatDateSql, toMoscowDate} from "../sberbank-online/converters";
 
 const cheerio = require("cheerio");
 const md5 = new MD5();
@@ -38,7 +39,7 @@ export function createSdkData(login) {
     const osId = md5.hex(login + "sdk_data").substring(12, 29);
     const rsaAppKey = md5.hex(login + "rsa app key").toUpperCase();
     const timestamp = date.getUTCFullYear() + "-"
-        + padLeft(date.getUTCMonth(), 2, "0") + "-"
+        + padLeft(date.getUTCMonth() + 1, 2, "0") + "-"
         + padLeft(date.getUTCDate(), 2, "0") + "T"
         + padLeft(date.getUTCHours(), 2, "0") + ":"
         + padLeft(date.getUTCMinutes(), 2, "0") + ":"
@@ -261,7 +262,7 @@ export function stringifyToXml(object) {
         return `<long>${object.toFixed(0)}</long>`;
     } else if (object instanceof Date) {
         return "<date>" + object.getUTCFullYear()
-            + padLeft(object.getUTCMonth(), 2, "0")
+            + padLeft(object.getUTCMonth() + 1, 2, "0")
             + padLeft(object.getUTCDate(), 2, "0") + "T"
             + padLeft(object.getUTCHours(), 2, "0")
             + padLeft(object.getUTCMinutes(), 2, "0")
@@ -269,7 +270,7 @@ export function stringifyToXml(object) {
     } else if (_.isArray(object)) {
         let str = "<list><type>";
         if (object.length > 0) {
-            str += object[0].__type;
+            str += "[" + object[0].__type;
         }
         str += `</type><length>${object.length}</length>`;
         object.forEach(object => {
@@ -320,8 +321,8 @@ export async function fetchTransactions({login, token}, {id, type}, fromDate, to
         token,
         body: {
             __type: "ru.vtb24.mobilebanking.protocol.statement.StatementRequest",
-            startDate: fromDate,
-            endDate: toDate,
+            startDate: new Date(formatDateSql(toMoscowDate(fromDate)) + "T00:00:00+03:00"),
+            endDate: new Date(formatDateSql(toMoscowDate(toDate)) + "T23:59:59+03:00"),
             products: [
                 {
                     __type: "ru.vtb24.mobilebanking.protocol.ObjectIdentityMto",
