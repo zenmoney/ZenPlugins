@@ -58,8 +58,12 @@ export function convertAccounts(apiPortfolios) {
 
 export function convertAccount(apiAccount) {
     const zenAccount = {
-        id: apiAccount.id,
         syncID: [],
+    };
+    const account = {
+        id: apiAccount.id,
+        type: apiAccount.__type,
+        zenAccount,
     };
     let amount = apiAccount.amount;
     if (apiAccount.masterAccountCards && apiAccount.masterAccountCards.length > 0) {
@@ -74,10 +78,21 @@ export function convertAccount(apiAccount) {
         apiAccount.masterAccountCards.forEach(card => {
             zenAccount.syncID.push(card.number.replace(/X/g, "*"));
         });
+        if (apiAccount.masterAccountCards.length === 1
+                && apiAccount.masterAccountCards[0].__type === "ru.vtb24.mobilebanking.protocol.product.CreditCardMto") {
+            account.id = apiAccount.masterAccountCards[0].id;
+            account.type = apiAccount.masterAccountCards[0].__type;
+        }
     } else {
         zenAccount.type = "checking";
         zenAccount.title = apiAccount.name;
+        if (apiAccount.contract
+                && apiAccount.contract.__type === "ru.vtb24.mobilebanking.protocol.product.RevolvingCreditLineMto") {
+            account.id = apiAccount.contract.id;
+            account.type = apiAccount.contract.__type;
+        }
     }
+    zenAccount.id = account.id;
     zenAccount.balance = amount.sum;
     zenAccount.instrument = getInstrument(amount.currency.currencyCode);
     const accountSyncId = apiAccount.number.replace(/X/g, "*");
@@ -93,11 +108,7 @@ export function convertAccount(apiAccount) {
     ].indexOf(apiAccount.__type) >= 0) {
         zenAccount.savings = true;
     }
-    return {
-        id: apiAccount.id,
-        type: apiAccount.__type,
-        zenAccount,
-    };
+    return account;
 }
 
 export function convertTransaction(apiTransaction, zenAccount) {
@@ -125,15 +136,31 @@ export function convertTransaction(apiTransaction, zenAccount) {
 }
 
 function parseInnerTransfer(apiTransaction, transaction) {
+    const origin = getOrigin(apiTransaction);
     if (![
-        "Зачисление с другой карты (Р2Р)",
-        "Перевод на другую карту (Р2Р)",
-    ].some(pattern => apiTransaction.details.indexOf(pattern) >= 0)) {
+        /Зачисление с другой карты \(Р2Р\)/,
+        /Перевод на другую карту \(Р2Р\)/,
+        /^Перевод на счет \*(\d{4})/,
+        /^Зачисление со счета \*(\d{4})/,
+        /^Зачисление с накопительного счета \*(\d{4})/,
+        /^Перевод между собственными счетами и картами/,
+    ].some(pattern => {
+        const match = apiTransaction.details.match(pattern);
+        if (match && match[1]) {
+            if (origin.amount > 0) {
+                transaction.outcomeAccount = "ccard#" + origin.instrument + "#" + match[1];
+                transaction.outcome = origin.amount;
+            } else {
+                transaction.incomeAccount = "ccard#" + origin.instrument + "#" + match[1];
+                transaction.income = -origin.amount;
+            }
+        }
+        return Boolean(match);
+    })) {
         return false;
     }
-    const origin = getOrigin(apiTransaction);
     transaction._transferType = origin.amount > 0 ? "outcome" : "income";
-    transaction._transferId = `${Math.round(transaction.date.getTime())}_${origin.instrument}_${parseDecimal(Math.abs(origin.amount))}`;
+    transaction._transferId = `${Math.round(apiTransaction.processedDate.getTime())}_${origin.instrument}_${parseDecimal(Math.abs(origin.amount))}`;
     return true;
 }
 
@@ -156,7 +183,8 @@ function parseCashTransaction(apiTransaction, transaction) {
 
 function parsePayee(apiTransaction, transaction) {
     if ([
-        /Карта \*\d{4} (.+)/,
+        /^Карта \*\d{4} (.+)/,
+        /^(.\*\*\*\*\*\*. .+)/,
     ].some(pattern => {
         const match = apiTransaction.details.match(pattern);
         if (match) {
@@ -167,7 +195,7 @@ function parsePayee(apiTransaction, transaction) {
     })) {
         return false;
     }
-    transaction.payee = apiTransaction.details;
+    transaction.comment = apiTransaction.details;
     return false;
 }
 
