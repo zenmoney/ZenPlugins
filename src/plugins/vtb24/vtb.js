@@ -2,7 +2,6 @@ import {MD5} from "jshashes";
 import * as _ from "lodash";
 import padLeft from "pad-left";
 import * as network from "../../common/network";
-import {TemporaryError} from "../../errors";
 import {formatDateSql, toMoscowDate} from "../sberbank-online/converters";
 
 const cheerio = require("cheerio");
@@ -180,6 +179,9 @@ export async function login(login, password) {
             },
         }},
     });
+    if (response.body.type === "invalid-credentials") {
+        throw new InvalidPreferencesError("Неверный логин или пароль");
+    }
     console.assert(response.body.authorization.methods[0].id === "SMS", "unsupported authorization method");
     await burlapRequest({
         token,

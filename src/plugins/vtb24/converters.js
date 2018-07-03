@@ -76,7 +76,9 @@ export function convertAccount(apiAccount) {
             };
         }
         apiAccount.masterAccountCards.forEach(card => {
-            zenAccount.syncID.push(card.number.replace(/X/g, "*"));
+            if (card) {
+                zenAccount.syncID.push(card.number.replace(/X/g, "*"));
+            }
         });
         if (apiAccount.masterAccountCards.length === 1
                 && apiAccount.masterAccountCards[0].__type === "ru.vtb24.mobilebanking.protocol.product.CreditCardMto") {
