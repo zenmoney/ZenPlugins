@@ -222,24 +222,32 @@ export async function loginInPfm(auth) {
         body: {systemName: "pfm"},
         sanitizeResponseLog: {body: {token: true}},
     }, response => _.get(response, "body.host") && _.get(response, "body.token"));
-    auth = {...auth, pfm: {host: response.body.host, cookie: null}};
-    response = await network.fetchJson(`https://${auth.pfm.host}/pfm/api/v1.20/login?token=${response.body.token}`, {
-        method: "GET",
-        headers: {
-            "User-Agent": "Mobile Device",
-            "Accept": "application/json",
-            "Content-Type": "application/json;charset=UTF-8",
-            "Accept-Charset": "UTF-8",
-            "Host": `${auth.pfm.host}`,
-            "Connection": "Keep-Alive",
-            "Accept-Encoding": "gzip",
-            "Cookie": auth.api.cookie,
-        },
-        sanitizeRequestLog: {url: true, headers: {Cookie: true}},
-        sanitizeResponseLog: {url: true, headers: {"set-cookie": true}},
-    });
-    auth.pfm.cookie = getCookie(response);
-    return auth;
+    const host = response.body.host;
+    try {
+        response = await network.fetchJson(`https://${host}/pfm/api/v1.20/login?token=${response.body.token}`, {
+            method: "GET",
+            headers: {
+                "User-Agent": "Mobile Device",
+                "Accept": "application/json",
+                "Content-Type": "application/json;charset=UTF-8",
+                "Accept-Charset": "UTF-8",
+                "Host": `${host}`,
+                "Connection": "Keep-Alive",
+                "Accept-Encoding": "gzip",
+                "Cookie": auth.api.cookie,
+            },
+            sanitizeRequestLog: {url: true, headers: {Cookie: true}},
+            sanitizeResponseLog: {url: true, headers: {"set-cookie": true}},
+        });
+    } catch (e) {
+        if (e.response && typeof e.response.body === "string" && e.response.body.indexOf("<H1>SRVE") >= 0) {
+            // PFM server error
+            return {...auth, pfm: null};
+        } else {
+            throw e;
+        }
+    }
+    return {...auth, pfm: {host, cookie: getCookie(response)}};
 }
 
 async function fetchTransactionsInPfmWithType(auth, accountIds, fromDate, toDate, income, ignoreToDateError) {
@@ -474,7 +482,10 @@ export function getErrorMessage(xmlObject, maxDepth = 3) {
 }
 
 function isTemporaryError(message) {
-    return message && (message.indexOf("АБС временно") >= 0 || message.indexOf("АБС не доступна") >= 0);
+    return message && (message.indexOf("АБС временно") >= 0
+        || message.indexOf("АБС не доступна") >= 0
+        || message.indexOf("Во время выполнения операции произошла ошибка") >= 0
+        || message.indexOf("По техническим причинам Вы не можете выполнить данную операцию") >= 0);
 }
 
 function validateResponse(response, predicate) {
