@@ -5,20 +5,30 @@ export function convertAccounts(apiPortfolios) {
     const accounts = [];
     apiPortfolios.forEach(portfolio => {
         portfolio.productGroups.forEach(product => {
-            console.assert(product.mainProduct, "unexpected product", product);
             let converter = null;
-            let apiAccount = product.mainProduct;
+            let apiAccount = product.products && product.products.length === 1 && product.products[0]
+                ? product.products[0]
+                : product.mainProduct;
             switch (portfolio.id) {
                 case "CARDS":
-                    if (apiAccount.__type === "ru.vtb24.mobilebanking.protocol.product.MasterAccountMto") {
+                    const types = [
+                        {card: "CreditCardMto", account: "CreditCardAccountMto"},
+                        {card: "DebitCardMto", account: "DebitCardAccountMto"},
+                        {card: "MasterAccountCardMto", account: "MasterAccountMto"},
+                    ];
+                    if (types.some(type => {
+                        return apiAccount.__type === `ru.vtb24.mobilebanking.protocol.product.${type.account}`;
+                    })) {
+                        apiAccount.cards = apiAccount.cards || null;
                         converter = convertAccount;
-                    } else if (apiAccount.__type === "ru.vtb24.mobilebanking.protocol.product.CreditCardMto"
-                            && apiAccount.cardAccount
-                            && apiAccount.cardAccount.__type === "ru.vtb24.mobilebanking.protocol.product.CreditCardAccountMto") {
+                    } else if (apiAccount.cardAccount && types.some(type => {
+                        return apiAccount.__type === `ru.vtb24.mobilebanking.protocol.product.${type.card}`
+                            && apiAccount.cardAccount.__type === `ru.vtb24.mobilebanking.protocol.product.${type.account}`;
+                    })) {
                         converter = convertAccount;
                         apiAccount = {
                             ...apiAccount.cardAccount,
-                            masterAccountCards: [{
+                            cards: [{
                                 ..._.omit(apiAccount, "cardAccount"),
                                 cardAccount: null,
                             }],
@@ -66,24 +76,29 @@ export function convertAccount(apiAccount) {
         zenAccount,
     };
     let amount = apiAccount.amount;
-    if (apiAccount.masterAccountCards && apiAccount.masterAccountCards.length > 0) {
+    if (apiAccount.cards && apiAccount.cards.filter(card => Boolean(card)).length > 0) {
+        const cards = apiAccount.cards.filter(card => {
+            return card && card.status.id === "ACTIVE" && !card.archived;
+        });
+        if (cards.length === 0) {
+            return null;
+        }
         zenAccount.type = "ccard";
-        zenAccount.title = apiAccount.masterAccountCards[0].name;
-        if (apiAccount.masterAccountCards[0].balance) {
+        zenAccount.title = cards[0].name;
+        if (cards[0].balance) {
             amount = {
-                sum: apiAccount.masterAccountCards[0].balance.amountSum,
-                currency: apiAccount.masterAccountCards[0].baseCurrency,
+                sum: cards[0].balance.amountSum,
+                currency: cards[0].baseCurrency,
             };
         }
-        apiAccount.masterAccountCards.forEach(card => {
-            if (card) {
+        cards.forEach(card => {
+            if (card.number) {
                 zenAccount.syncID.push(card.number.replace(/X/g, "*"));
             }
         });
-        if (apiAccount.masterAccountCards.length === 1
-                && apiAccount.masterAccountCards[0].__type === "ru.vtb24.mobilebanking.protocol.product.CreditCardMto") {
-            account.id = apiAccount.masterAccountCards[0].id;
-            account.type = apiAccount.masterAccountCards[0].__type;
+        if (cards.length === 1 && cards[0].__type === "ru.vtb24.mobilebanking.protocol.product.CreditCardMto") {
+            account.id = cards[0].id;
+            account.type = cards[0].__type;
         }
     } else {
         zenAccount.type = "checking";
@@ -162,7 +177,7 @@ function parseInnerTransfer(apiTransaction, transaction) {
         return false;
     }
     transaction._transferType = origin.amount > 0 ? "outcome" : "income";
-    transaction._transferId = `${Math.round(apiTransaction.processedDate.getTime())}_${origin.instrument}_${parseDecimal(Math.abs(origin.amount))}`;
+    transaction._transferId = Math.round(apiTransaction.processedDate.getTime());
     return true;
 }
 

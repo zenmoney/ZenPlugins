@@ -244,9 +244,10 @@ export async function login(login, password) {
             },
         }},
     });
-    if (_.get(response, "body.authorization.id") !== "00000000-0000-0000-0000-000000000000") {
+    if (response.body.type === "invalid-sms-code") {
         throw new TemporaryError("Вы ввели неверный код. Повторите запуск синхронизации.");
     }
+    console.assert(response.body.authorization.id === "00000000-0000-0000-0000-000000000000", "invalid response");
     return {
         login,
         token,
