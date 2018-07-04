@@ -51,6 +51,10 @@ export function convertAccounts(apiPortfolios) {
                                 account: null,
                             },
                         };
+                    } else if (apiAccount.__type === "ru.vtb24.mobilebanking.protocol.product.LoanContractMto"
+                            && apiAccount.account
+                            && apiAccount.account.__type === "ru.vtb24.mobilebanking.protocol.product.LoanAccountMto") {
+                        converter = convertLoan;
                     }
                     break;
                 default:
@@ -125,6 +129,39 @@ export function convertAccount(apiAccount) {
     ].indexOf(apiAccount.__type) >= 0) {
         zenAccount.savings = true;
     }
+    return account;
+}
+
+export function convertLoan(apiAccount) {
+    const zenAccount = {
+        type: "loan",
+        title: apiAccount.name,
+        instrument: getInstrument(apiAccount.creditSum.currency.currencyCode),
+        startDate: apiAccount.openDate,
+        startBalance: apiAccount.creditSum.sum,
+        balance: -apiAccount.account.amount.sum,
+        percent: 1,
+        capitalization: true,
+        payoffInterval: "month",
+        payoffStep: 1,
+        syncID: [apiAccount.account.number],
+    };
+    const contractPeriod = apiAccount.contractPeriod || apiAccount.account.contract.contractPeriod;
+    switch (contractPeriod.unit.id.toLowerCase()) {
+        case "month":
+        case "year":
+            zenAccount.endDateOffsetInterval = contractPeriod.unit.id.toLowerCase();
+            zenAccount.endDateOffset = contractPeriod.value;
+            break;
+        default:
+            console.assert(false, `unsupported loan contract period ${contractPeriod.unit.id}`);
+    }
+    const account = {
+        id: apiAccount.id,
+        type: apiAccount.__type,
+        zenAccount,
+    };
+    zenAccount.id = account.id;
     return account;
 }
 
