@@ -137,10 +137,11 @@ export function convertTransaction(apiTransaction, zenAccount) {
         date: apiTransaction.transactionDate,
         hold: apiTransaction.isHold,
     };
-    if (apiTransaction.transactionAmount.sum < 0) {
-        transaction.outcome = -apiTransaction.transactionAmount.sum;
+    const origin = getOrigin(apiTransaction);
+    if (origin.amount < 0) {
+        transaction.outcome = -origin.amount;
     } else {
-        transaction.income = apiTransaction.transactionAmount.sum;
+        transaction.income = origin.amount;
     }
     if (apiTransaction.details) {
         [
@@ -221,8 +222,9 @@ function getInstrument(code) {
 }
 
 function getOrigin(apiTransaction) {
+    const transactionAmount = apiTransaction.transactionAmountInAccountCurrency || apiTransaction.transactionAmount;
     return {
-        amount: apiTransaction.transactionAmount.sum,
-        instrument: getInstrument(apiTransaction.transactionAmount.currency.currencyCode),
+        amount: transactionAmount.sum,
+        instrument: getInstrument(transactionAmount.currency.currencyCode),
     };
 }
