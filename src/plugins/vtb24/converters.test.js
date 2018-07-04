@@ -55,7 +55,6 @@ describe("convertAccount", () => {
             __type: "ru.vtb24.mobilebanking.protocol.product.MasterAccountMto",
             amount: null,
             archived: false,
-            cards: [null],
             closeDate: null,
             contract: null,
             details: null,
@@ -64,7 +63,7 @@ describe("convertAccount", () => {
             isDefault: true,
             lastOperationDate: null,
             mainCard: null,
-            masterAccountCards: [
+            cards: [
                 {
                     archived: false,
                     balance: {
@@ -155,7 +154,6 @@ describe("convertAccount", () => {
                 sum: 0.05,
             },
             archived: false,
-            cards: [],
             closeDate: null,
             creditLimit: 0,
             details: null,
@@ -172,7 +170,7 @@ describe("convertAccount", () => {
                 __type: "ru.vtb24.mobilebanking.protocol.product.AccountStatusMto",
                 id: "OPEN",
             },
-            masterAccountCards: [
+            cards: [
                 {
 
                     __type: "ru.vtb24.mobilebanking.protocol.product.CreditCardMto",
@@ -424,7 +422,7 @@ describe("convertTransaction", () => {
             outcome: 59585,
             outcomeAccount: "account",
             _transferType: "income",
-            _transferId: "1530089104000_RUB_59585",
+            _transferId: 1530089104000,
         });
     });
 
