@@ -19,7 +19,6 @@ export function convertAccounts(apiPortfolios) {
                     if (types.some(type => {
                         return apiAccount.__type === `ru.vtb24.mobilebanking.protocol.product.${type.account}`;
                     })) {
-                        apiAccount.cards = apiAccount.cards || null;
                         converter = convertAccount;
                     } else if (apiAccount.cardAccount && types.some(type => {
                         return apiAccount.__type === `ru.vtb24.mobilebanking.protocol.product.${type.card}`
@@ -195,6 +194,7 @@ function parseInnerTransfer(apiTransaction, transaction) {
     if (![
         /Зачисление с другой карты \(Р2Р\)/,
         /Перевод на другую карту \(Р2Р\)/,
+        /^Перевод с карты \*(\d{4})/,
         /^Перевод на счет \*(\d{4})/,
         /^Зачисление со счета \*(\d{4})/,
         /^Зачисление с накопительного счета \*(\d{4})/,
@@ -222,6 +222,7 @@ function parseInnerTransfer(apiTransaction, transaction) {
 function parseCashTransaction(apiTransaction, transaction) {
     if (![
         "Снятие в банкомате",
+        "Пополнение через банкомат",
     ].some(pattern => apiTransaction.details.indexOf(pattern) >= 0)) {
         return false;
     }
