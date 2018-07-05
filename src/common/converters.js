@@ -96,8 +96,8 @@ function makeZenmoneyTransfer(transfer) {
         assertRestIsEmpty(rest, `side props`, details);
     });
     const [outcome, income] = _.sortBy(sides, (x) => x.amount >= 0);
-    console.assert(outcome.amount < 0, "one side must be sender (outcome)");
-    console.assert(income.amount >= 0, "one side must be receiver (income)");
+    console.assert(outcome.amount < 0, "one side must be sender (outcome)", transfer);
+    console.assert(income.amount >= 0, "one side must be receiver (income)", transfer);
 
     console.assert(!_.isUndefined(comment), `comment must be defined:`, transfer);
 
