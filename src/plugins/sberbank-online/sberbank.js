@@ -113,7 +113,7 @@ export async function login(login, pin, auth) {
         ZenMoney.setData("mGUID", response.body.confirmRegistrationStage.mGUID);
 
         if (_.get(response, "body.confirmInfo.type") === "smsp") {
-            const code = await ZenMoney.readLine("Введите пароль регистрации из СМС для подключения импорта операций из Сбербанк Онлайн для Android", {
+            const code = await ZenMoney.readLine("Введите код для входа в Сбербанк Онлайн для Android из SMS или пуш-уведомления", {
                 time: 120000,
                 inputType: "number",
             });
@@ -131,7 +131,7 @@ export async function login(login, pin, auth) {
                 sanitizeRequestLog: {body: {mGUID: true, smsPassword: true}},
             }, null);
             if (response.body.status === "1") {
-                throw new TemporaryError("Вы ввели неправильный идентификатор или пароль из SMS. Повторите подключение импорта.");
+                throw new TemporaryError("Вы ввели некорректные реквизиты доступа или код из SMS. Повторите подключение синхронизации.");
             } else {
                 validateResponse(response, response => response.body.status === "0");
             }
