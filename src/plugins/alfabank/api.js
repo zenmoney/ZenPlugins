@@ -71,6 +71,12 @@ export function assertLoginIsSuccessful(loginResponse) {
 function assertNotServerError(response) {
     if (response.status === 500 && Array.isArray(response.body.errors)) {
         const message = _.compact(response.body.errors.map((x) => x.message)).join("\n");
+        if (message.includes("Некорректные данные.")) {
+            throw new InvalidPreferencesError(message);
+        }
+        if (message.includes("Мы обнаружили, что вы поменяли SIM-карту.")) {
+            throw new TemporaryError(message);
+        }
         throw new Error(message);
     }
 }
