@@ -1,5 +1,4 @@
 import * as _ from "lodash";
-import {parseDecimal} from "../sberbank-online/converters";
 
 export function convertAccounts(apiPortfolios) {
     const accounts = [];
@@ -79,13 +78,10 @@ export function convertAccount(apiAccount) {
         zenAccount,
     };
     let amount = apiAccount.amount;
-    if (apiAccount.cards && apiAccount.cards.filter(card => Boolean(card)).length > 0) {
-        const cards = apiAccount.cards.filter(card => {
-            return card && card.status.id === "ACTIVE" && !card.archived;
-        });
-        if (cards.length === 0) {
-            return null;
-        }
+    const cards = apiAccount.cards ? apiAccount.cards.filter(card => {
+        return card && card.status.id === "ACTIVE" && !card.archived;
+    }) : [];
+    if (cards.length > 0) {
         zenAccount.type = "ccard";
         zenAccount.title = cards[0].name;
         if (cards[0].balance) {
@@ -99,11 +95,17 @@ export function convertAccount(apiAccount) {
                 zenAccount.syncID.push(card.number.replace(/X/g, "*"));
             }
         });
-        if (cards.length === 1 && cards[0].__type === "ru.vtb24.mobilebanking.protocol.product.CreditCardMto") {
+        if (cards.length === 1
+                && (cards[0].__type === "ru.vtb24.mobilebanking.protocol.product.CreditCardMto"
+                || cards[0].__type === "ru.vtb24.mobilebanking.protocol.product.DebitCardMto")) {
             account.id = cards[0].id;
             account.type = cards[0].__type;
         }
     } else {
+        if (apiAccount.__type === "ru.vtb24.mobilebanking.protocol.product.CreditCardAccountMto"
+                || apiAccount.__type === "ru.vtb24.mobilebanking.protocol.product.DebitCardAccountMto") {
+            return null;
+        }
         zenAccount.type = "checking";
         zenAccount.title = apiAccount.name;
         if (apiAccount.contract
@@ -111,6 +113,9 @@ export function convertAccount(apiAccount) {
             account.id = apiAccount.contract.id;
             account.type = apiAccount.contract.__type;
         }
+    }
+    if (!amount) {
+        return null;
     }
     zenAccount.id = account.id;
     zenAccount.balance = amount.sum;
