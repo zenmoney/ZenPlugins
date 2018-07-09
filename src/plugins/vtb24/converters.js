@@ -79,7 +79,7 @@ export function convertAccount(apiAccount) {
     };
     let amount = apiAccount.amount;
     const cards = apiAccount.cards ? apiAccount.cards.filter(card => {
-        return card && card.status.id === "ACTIVE" && !card.archived;
+        return card && card.status && card.status.id === "ACTIVE" && !card.archived;
     }) : [];
     if (cards.length > 0) {
         zenAccount.type = "ccard";

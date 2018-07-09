@@ -70,7 +70,8 @@ function getRandomInt(min, max) {
 
 async function burlapRequest(options) {
     const id = getRandomInt(-2000000000, 2000000000).toFixed(0);
-    return await network.fetch("https://mb.vtb24.ru/mobilebanking/burlap/", {
+    const cache = {};
+    const response = await network.fetch("https://mb.vtb24.ru/mobilebanking/burlap/", {
         method: "POST",
         headers: {
             "mb-protocol-version": PROTOCOL_VERSION,
@@ -123,12 +124,24 @@ async function burlapRequest(options) {
         parse: (bodyStr) => {
             const i = bodyStr.indexOf(PROTOCOL_VERSION);
             console.assert(i >= 0 && i <= 10, "Could not get response protocol version");
-            const body = parseXml(bodyStr.substring(i + PROTOCOL_VERSION.length));
+            const body = parseXml(bodyStr.substring(i + PROTOCOL_VERSION.length), cache);
             console.assert(typeof body === "object"
                 && body.correlationId === id, "unexpected response");
-            return body.payload;
+            const payload = body.payload;
+            if (payload) {
+                unfoldReferences(payload, cache, [
+                    "ru.vtb24.mobilebanking.protocol.AmountMto",
+                    "ru.vtb24.mobilebanking.protocol.product.CardBalanceMto",
+                ]);
+                reduceDuplicatesByTypeAndId(payload, cache);
+            }
+            return payload;
         },
     });
+    if (response.body) {
+        unfoldReferences(response.body, cache);
+    }
+    return response;
 }
 
 export async function login(login, password) {
@@ -338,15 +351,115 @@ export async function fetchTransactions({login, token}, {id, type}, fromDate, to
     return response.body.transactions;
 }
 
-export function parseXml(xml) {
+export function parseXml(xml, cache) {
     const $ = cheerio.load(xml, {
         xmlMode: true,
     });
     const root = $().children()[0].children[0];
-    return parseNode(root);
+    cache = cache || {};
+    cache.count = 0;
+    return parseNode(root, cache);
 }
 
-function parseNode(node) {
+function getCachedObject(object, cache) {
+    if (!object || !object.id || !object.__type
+            || (object.__type.indexOf("ru.vtb24.mobilebanking.protocol.product.") !== 0
+            && object.__type.indexOf("ru.vtb24.mobilebanking.protocol.statement.") !== 0)
+            || object.__type.indexOf("StatusMto") >= 0
+            || object.__type.indexOf("PortfolioMto") >= 0) {
+        return null;
+    }
+    const id = `${object.__type}_${object.id}`;
+    const cachedObject = cache[id];
+    if (cachedObject === object) {
+        return null;
+    }
+    if (cachedObject === undefined) {
+        cache[id] = object;
+        return null;
+    }
+    return cachedObject;
+}
+
+export function unfoldReferences(object, cache, types) {
+    let forEach;
+    if (_.isArray(object)) {
+        forEach = (fn) => object.forEach(fn);
+    } else if (_.isObject(object)) {
+        forEach = (fn) => {
+            for (const key in object) {
+                if (!object.hasOwnProperty(key) || key === "__id" || key === "__type") {
+                    continue;
+                }
+                fn(object[key], key);
+            }
+        };
+    } else {
+        return;
+    }
+    forEach((value, key) => {
+        if (typeof value !== "string" || value.indexOf("<ref[") !== 0) {
+            unfoldReferences(value, cache, types);
+            return;
+        }
+        const id = value.substring(5, value.length - 2);
+        const cachedValue = cache[id];
+        if (types && (!cachedValue || !cachedValue.__type || types.indexOf(cachedValue.__type) < 0)) {
+            return;
+        }
+        object[key] = cachedValue;
+    });
+}
+
+export function reduceDuplicatesByTypeAndId(object, cache, onlyCopyValueToCachedObject) {
+    let forEach;
+    let cachedObject = null;
+    if (_.isArray(object)) {
+        forEach = (fn) => object.forEach(fn);
+    } else if (_.isObject(object)) {
+        cachedObject = getCachedObject(object, cache);
+        if (cachedObject) {
+            object.__id.forEach(id => {
+                cache[id] = cachedObject;
+                if (cachedObject.__id.indexOf(id) < 0) {
+                    cachedObject.__id.push(id);
+                }
+            });
+        }
+        forEach = (fn) => {
+            for (const key in object) {
+                if (!object.hasOwnProperty(key) || key === "__id" || key === "__type") {
+                    continue;
+                }
+                fn(object[key], key);
+            }
+        };
+    } else {
+        return;
+    }
+    forEach((value, key) => {
+        const cachedValue = getCachedObject(value, cache);
+        if (cachedObject) {
+            const _value = cachedObject[key];
+            if (_value === null || _value === undefined) {
+                cachedObject[key] = cachedValue ? getReference(cachedValue.__id[0]) : value;
+            }
+        }
+    });
+    forEach((value, key) => {
+        const valueObject = onlyCopyValueToCachedObject ? null : getCachedObject(value, cache);
+        reduceDuplicatesByTypeAndId(value, cache, valueObject !== null);
+        if (valueObject) {
+            object[key] = getReference(valueObject.__id[0]);
+        }
+    });
+}
+
+function getReference(id) {
+    return `<ref[${id}]>`;
+}
+
+function parseNode(node, cache) {
     if (node.name === "null") {
         console.assert(!node.children || node.children.length === 0, "unexpected node null");
         return null;
@@ -356,11 +469,9 @@ function parseNode(node) {
             && node.children[0].type === "text"), `unexpected node ${node.name}`);
         let value = node.children && node.children.length > 0 ? node.children[0].data : null;
         if (value !== null) {
-            if (node.name === "ref") {
-                value = null;
-            } else if (node.name === "long" || node.name === "int") {
+            if (node.name === "long" || node.name === "int") {
                 value = parseInt(value, 10);
-                console.assert(!isNaN(value), "unexpected node long");
+                console.assert(!isNaN(value), `unexpected node ${node.name}`);
             } else if (node.name === "boolean") {
                 value = value !== "0";
             } else if (node.name === "double") {
@@ -370,6 +481,10 @@ function parseNode(node) {
                 value = new Date(`${value.substring(0, 4)}-${value.substring(4, 6)}-${value.substring(6, 8)}T`
                     + `${value.substring(9, 11)}:${value.substring(11, 13)}:${value.substring(13, 15)}Z`);
                 console.assert(!isNaN(value), "unexpected node date");
+            } else if (node.name === "ref") {
+                const object = cache[value];
+                console.assert(object, `unexpected node ref ${value}`);
+                return getReference(value);
             }
         }
         return value;
@@ -382,14 +497,17 @@ function parseNode(node) {
         || node.children[0].children.length === 0
         || (node.children[0].children.length === 1 && node.children[0].children[0].type === "text")), `unexpected node ${node.name}`);
 
+    const id = cache.count.toString();
     if (node.name === "map") {
-        const object = {};
+        const object = {__id: [id]};
+        cache[id] = object;
+        cache.count++;
         if (node.children[0].children && node.children[0].children.length === 1) {
             object.__type = node.children[0].children[0].data;
         }
         for (let i = 1; i < node.children.length; i += 2) {
-            const key = parseNode(node.children[i]);
-            object[key] = parseNode(node.children[i + 1]);
+            const key = parseNode(node.children[i], cache);
+            object[key] = parseNode(node.children[i + 1], cache);
         }
         return object;
     }
@@ -402,8 +520,10 @@ function parseNode(node) {
         const length = parseInt(node.children[1].children[0].data, 10);
         console.assert(length === node.children.length - 2, "unexpected node list. Length != actual count of children");
         const object = [];
+        cache[id] = object;
+        cache.count++;
         for (let i = 2; i < node.children.length; i++) {
-            object.push(parseNode(node.children[i]));
+            object.push(parseNode(node.children[i], cache));
         }
         return object;
     }
