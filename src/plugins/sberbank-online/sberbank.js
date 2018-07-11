@@ -247,6 +247,12 @@ export async function loginInPfm(auth) {
             throw e;
         }
     }
+    if (response.body && response.body.errors
+            && response.body.errors[0]
+            && response.body.errors[0].desc
+            && response.body.errors[0].desc.indexOf("не удалось загрузить из config-factory.xml") >= 0) {
+        return {...auth, pfm: null};
+    }
     return {...auth, pfm: {host, cookie: getCookie(response)}};
 }
 
