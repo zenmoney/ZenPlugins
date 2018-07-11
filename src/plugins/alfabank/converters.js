@@ -24,7 +24,12 @@ function convertCreditApiAccount(apiAccount) {
             available: parseApiAmount(trimPostfix(availableWithInstrument, instrumentPostfix)),
             creditLimit: parseApiAmount(trimPostfix(creditLimitWithInstrument, instrumentPostfix)),
         };
-    } else if (typeWithDashAndInstrument.startsWith("Кредит наличными") || typeWithDashAndInstrument.startsWith("Потребительский кредит") || typeWithDashAndInstrument.startsWith("Ипотечный кредит")) {
+    } else if (
+        typeWithDashAndInstrument.startsWith("Кредит наличными") ||
+        typeWithDashAndInstrument.startsWith("Потребительский кредит") ||
+        typeWithDashAndInstrument.startsWith("Ипотечный кредит") ||
+        typeWithDashAndInstrument.startsWith("Бизнес - кредит")
+    ) {
         return {
             startBalance: 0,
             balance: parseApiAmount(apiAccount.amount),
@@ -172,7 +177,7 @@ const neverLosingDataMergeCustomizer = function(valueInA, valueInB, key, objA, o
     }
 };
 
-const isPossiblyTransfer = ({reference}) => {
+export const isPossiblyTransfer = ({reference}) => {
     return reference !== "HOLD"
         && reference !== ""
         && !reference.startsWith("CASHIN")
