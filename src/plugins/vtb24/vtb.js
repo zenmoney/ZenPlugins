@@ -70,7 +70,7 @@ function getRandomInt(min, max) {
 
 async function burlapRequest(options) {
     const id = getRandomInt(-2000000000, 2000000000).toFixed(0);
-    const cache = {};
+    let payload = null;
     const response = await network.fetch("https://mb.vtb24.ru/mobilebanking/burlap/", {
         method: "POST",
         headers: {
@@ -124,23 +124,18 @@ async function burlapRequest(options) {
         parse: (bodyStr) => {
             const i = bodyStr.indexOf(PROTOCOL_VERSION);
             console.assert(i >= 0 && i <= 10, "Could not get response protocol version");
-            const body = parseXml(bodyStr.substring(i + PROTOCOL_VERSION.length), cache);
+            const body = parseXml(bodyStr.substring(i + PROTOCOL_VERSION.length));
             console.assert(typeof body === "object"
                 && body.correlationId === id, "unexpected response");
-            const payload = body.payload;
+            payload = body.payload;
             if (payload) {
-                unfoldReferences(payload, cache, [
-                    "ru.vtb24.mobilebanking.protocol.AmountMto",
-                    "ru.vtb24.mobilebanking.protocol.product.CardBalanceMto",
-                ]);
-                reduceDuplicatesByTypeAndId(payload, cache);
+                reduceDuplicatesByTypeAndId(payload);
+                return resolveCycles(payload);
             }
             return payload;
         },
     });
-    if (response.body) {
-        unfoldReferences(response.body, cache);
-    }
+    response.body = payload;
     return response;
 }
 
@@ -351,7 +346,7 @@ export async function fetchTransactions({login, token}, {id, type}, fromDate, to
     return response.body.transactions;
 }
 
-export function parseXml(xml, cache) {
+export function parseXml(xml, cache = {}) {
     const $ = cheerio.load(xml, {
         xmlMode: true,
     });
@@ -362,9 +357,8 @@ export function parseXml(xml, cache) {
 }
 
 function getCachedObject(object, cache) {
-    if (!object || !object.id || !object.__type
-            || (object.__type.indexOf("ru.vtb24.mobilebanking.protocol.product.") !== 0
-            && object.__type.indexOf("ru.vtb24.mobilebanking.protocol.statement.") !== 0)
+    if (!object || !object.__type || typeof object.id !== "string"
+            || object.id.length < 24
             || object.__type.indexOf("StatusMto") >= 0
             || object.__type.indexOf("PortfolioMto") >= 0) {
         return null;
@@ -381,82 +375,71 @@ function getCachedObject(object, cache) {
     return cachedObject;
 }
 
-export function unfoldReferences(object, cache, types) {
-    let forEach;
-    if (_.isArray(object)) {
-        forEach = (fn) => object.forEach(fn);
-    } else if (_.isObject(object)) {
-        forEach = (fn) => {
-            for (const key in object) {
-                if (!object.hasOwnProperty(key) || key === "__id" || key === "__type") {
-                    continue;
-                }
-                fn(object[key], key);
-            }
-        };
-    } else {
-        return;
+export function resolveCycles(object, cache = {}) {
+    if (object && object.__id !== undefined) {
+        const copy = cache[object.__id];
+        if (copy && copy.__id === undefined) {
+            copy.__id = object.__id;
+        }
+        return `<ref[${object.__id}]>`;
     }
-    forEach((value, key) => {
-        if (typeof value !== "string" || value.indexOf("<ref[") !== 0) {
-            unfoldReferences(value, cache, types);
-            return;
+    if (_.isArray(object)) {
+        Object.defineProperty(object, "__id", {enumerable: false, value: cache.count || 0});
+        cache.count = object.__id + 1;
+        return object.map(value => resolveCycles(value, cache));
+    } else if (_.isObject(object) && !(object instanceof Date)) {
+        const copy = {};
+        Object.defineProperty(object, "__id", {enumerable: false, value: cache.count || 0});
+        cache.count = object.__id + 1;
+        cache[object.__id] = copy;
+        for (const key in object) {
+            if (object.hasOwnProperty(key)) {
+                copy[key] = resolveCycles(object[key], cache);
+            }
         }
-        const id = value.substring(5, value.length - 2);
-        const cachedValue = cache[id];
-        if (types && (!cachedValue || !cachedValue.__type || types.indexOf(cachedValue.__type) < 0)) {
-            return;
-        }
-        object[key] = cachedValue;
-    });
+        return copy;
+    } else {
+        return object;
+    }
 }
 
-export function reduceDuplicatesByTypeAndId(object, cache, onlyCopyValueToCachedObject) {
+export function reduceDuplicatesByTypeAndId(object, cache = {}, onlyCopyValueToCachedObject) {
+    if (object && object.__reduceDuplicates) {
+        return;
+    }
     let forEach;
     let cachedObject = null;
     if (_.isArray(object)) {
         forEach = (fn) => object.forEach(fn);
-    } else if (_.isObject(object)) {
+    } else if (_.isObject(object) && !(object instanceof Date)) {
         cachedObject = getCachedObject(object, cache);
-        if (cachedObject) {
-            object.__id.forEach(id => {
-                cache[id] = cachedObject;
-                if (cachedObject.__id.indexOf(id) < 0) {
-                    cachedObject.__id.push(id);
-                }
-            });
-        }
         forEach = (fn) => {
             for (const key in object) {
-                if (!object.hasOwnProperty(key) || key === "__id" || key === "__type") {
-                    continue;
+                if (object.hasOwnProperty(key)) {
+                    fn(object[key], key);
                 }
-                fn(object[key], key);
             }
         };
     } else {
         return;
     }
+    Object.defineProperty(object, "__reduceDuplicates", {enumerable: false, value: true});
     forEach((value, key) => {
         const cachedValue = getCachedObject(value, cache);
         if (cachedObject) {
             const _value = cachedObject[key];
             if (_value === null || _value === undefined) {
-                cachedObject[key] = cachedValue ? getReference(cachedValue.__id[0]) : value;
+                cachedObject[key] = cachedValue || value;
             }
         }
     });
     forEach((value, key) => {
-        const valueObject = onlyCopyValueToCachedObject ? null : getCachedObject(value, cache);
-        reduceDuplicatesByTypeAndId(value, cache, valueObject !== null);
-        if (valueObject) {
-            object[key] = getReference(valueObject.__id[0]);
+        const cachedValue = onlyCopyValueToCachedObject ? null : getCachedObject(value, cache);
+        reduceDuplicatesByTypeAndId(value, cache, cachedValue !== null);
+        if (cachedValue) {
+            object[key] = cachedValue;
         }
     });
-}
-
-function getReference(id) {
-    return `<ref[${id}]>`;
 }
 
 function parseNode(node, cache) {
@@ -484,7 +467,7 @@ function parseNode(node, cache) {
             } else if (node.name === "ref") {
                 const object = cache[value];
                 console.assert(object, `unexpected node ref ${value}`);
-                return getReference(value);
+                return object;
             }
         }
         return value;
@@ -499,7 +482,7 @@ function parseNode(node, cache) {
 
     const id = cache.count.toString();
     if (node.name === "map") {
-        const object = {__id: [id]};
+        const object = {};
         cache[id] = object;
         cache.count++;
         if (node.children[0].children && node.children[0].children.length === 1) {

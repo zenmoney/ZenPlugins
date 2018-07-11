@@ -1,4 +1,4 @@
-import {getSignature, parseXml, reduceDuplicatesByTypeAndId, unfoldReferences} from "./vtb";
+import {getSignature, parseXml, reduceDuplicatesByTypeAndId, resolveCycles} from "./vtb";
 
 describe("getSignature", () => {
     function getBytes(str) {
@@ -81,29 +81,31 @@ describe("parseXml", () => {
 
     it("parses map", () => {
         expect(parseXml("<map><type>MapType</type></map>")).toEqual({
-            __id: ["0"],
             __type: "MapType",
         });
         expect(parseXml("<map><type>MapType</type><string>key</string><string>value</string></map>")).toEqual({
-            __id: ["0"],
             __type: "MapType",
             key: "value",
         });
         expect(parseXml("<map><type>MapType</type><string>key</string><string>value</string><string>map</string><map><type>InnerMap</type><string>innerKey</string><string>innerValue</string></map></map>")).toEqual({
-            __id: ["0"],
             __type: "MapType",
             key: "value",
             map: {
-                __id: ["1"],
                 __type: "InnerMap",
                 innerKey: "innerValue",
             },
         });
     });
 
+    it("parses reference" ,() => {
+        const object = parseXml("<map><type>MapType</type><string>self</string><ref>0</ref></map>");
+        expect(Object.keys(object).length).toBe(2);
+        expect(object.__type).toEqual("MapType");
+        expect(object.self).toBe(object);
+    });
+
     it("parses complex object", () => {
         expect(parseXml(`<map><type>com.mobiletransport.messaging.DefaultMessageImpl</type><string>id</string><string>2fa2f4f1-4f99-4bc4-a499-22666e55bb97</string><string>theme</string><string>Default theme</string><string>sendTimestamp</string><long>1530191913628</long><string>correlationId</string><string>-1388223371</string><string>timeToLive</string><long>0</long><string>payload</string><null></null><string>properties</string><map><type>java.util.Hashtable</type><string>request_time_to_live</string><long>30000</long><string>request_send_timestamp</string><long>1530191910664</long></map></map>`)).toEqual({
-            __id: ["0"],
             __type: "com.mobiletransport.messaging.DefaultMessageImpl",
             id: "2fa2f4f1-4f99-4bc4-a499-22666e55bb97",
             theme: "Default theme",
@@ -112,7 +114,6 @@ describe("parseXml", () => {
             timeToLive: 0,
             payload: null,
             properties: {
-                __id: ["1"],
                 __type: "java.util.Hashtable",
                 "request_time_to_live": 30000,
                 "request_send_timestamp": 1530191910664,
@@ -120,7 +121,6 @@ describe("parseXml", () => {
         });
 
         expect(parseXml(`<map><type>com.mobiletransport.messaging.DefaultMessageImpl</type><string>id</string><string>af255651-d412-4ab7-96e3-844780652ab7</string><string>theme</string><string>SonMessagesRequest theme</string><string>sendTimestamp</string><long>1530191975935</long><string>correlationId</string><string>-309335901</string><string>timeToLive</string><long>0</long><string>payload</string><map><type>ru.vtb24.mobilebanking.protocol.son.SonMessagesResponse</type><string>messages</string><list><type></type><length>0</length></list></map><string>properties</string><map><type>java.util.Hashtable</type><string>request_time_to_live</string><long>30000</long><string>request_send_timestamp</string><long>1530191974149</long></map></map>`)).toEqual({
-            __id: ["0"],
             __type: "com.mobiletransport.messaging.DefaultMessageImpl",
             id: "af255651-d412-4ab7-96e3-844780652ab7",
             theme: "SonMessagesRequest theme",
@@ -128,12 +128,10 @@ describe("parseXml", () => {
             correlationId: "-309335901",
             timeToLive: 0,
             payload: {
-                __id: ["1"],
                 __type: "ru.vtb24.mobilebanking.protocol.son.SonMessagesResponse",
                 messages: [],
             },
             properties: {
-                __id: ["3"],
                 __type: "java.util.Hashtable",
                 "request_time_to_live": 30000,
                 "request_send_timestamp": 1530191974149,
@@ -141,7 +139,6 @@ describe("parseXml", () => {
         });
 
         expect(parseXml(`<map><type>com.mobiletransport.messaging.DefaultMessageImpl</type><string>id</string><string>dbde2974-76c9-436f-890f-3bfa834d5118</string><string>theme</string><string>Default theme</string><string>sendTimestamp</string><long>1530280627107</long><string>correlationId</string><string>-1388223371</string><string>timeToLive</string><long>0</long><string>payload</string><map><type>ru.vtb24.mobilebanking.protocol.security.SessionInfoMto</type><string>sessionId</string><string>2359583739-d8544647-6204-45c2-9118-dc3432998f6c</string><string>showFirstVisitMaster</string><boolean>0</boolean><string>isRestrictedAccessEnabled</string><boolean>0</boolean><string>authorizationLevel</string><map><type>ru.vtb24.mobilebanking.protocol.security.AuthorizationLevelMto</type><string>id</string><string>ANONYMOUS</string></map><string>role</string><map><type>ru.vtb24.mobilebanking.protocol.security.TelebankRoleMto</type><string>id</string><string>UNDEFINED</string></map><string>authorization</string><null></null><string>userInfo</string><map><type>ru.vtb24.mobilebanking.protocol.UserInfoMto</type><string>id</string><string>2359583739-d8544647-6204-45c2-9118-dc3432998f6c</string><string>unc</string><null></null><string>firstName</string><null></null><string>firstNameLatin</string><null></null><string>lastName</string><null></null><string>lastNameLatin</string><null></null><string>patronymic</string><null></null><string>sex</string><null></null><string>phoneWork</string><null></null><string>phoneMobile</string><null></null><string>email</string><null></null><string>alias</string><null></null><string>teleInfo</string><boolean>0</boolean><string>birthday</string><null></null></map><string>availableAccountingSystems</string><list><type>[string</type><length>1</length><string>All</string></list><string>userSettings</string><null></null><string>sessionHistory</string><null></null><string>lastLogonInChannel</string><null></null></map><string>properties</string><map><type>java.util.Hashtable</type><string>request_time_to_live</string><long>30000</long><string>request_send_timestamp</string><long>1530280626976</long></map></map>`)).toEqual({
-            __id: ["0"],
             __type: "com.mobiletransport.messaging.DefaultMessageImpl",
             id: "dbde2974-76c9-436f-890f-3bfa834d5118",
             theme: "Default theme",
@@ -149,24 +146,20 @@ describe("parseXml", () => {
             correlationId: "-1388223371",
             timeToLive: 0,
             payload: {
-                __id: ["1"],
                 __type: "ru.vtb24.mobilebanking.protocol.security.SessionInfoMto",
                 sessionId: "2359583739-d8544647-6204-45c2-9118-dc3432998f6c",
                 showFirstVisitMaster: false,
                 isRestrictedAccessEnabled: false,
                 authorizationLevel: {
-                    __id: ["2"],
                     __type: "ru.vtb24.mobilebanking.protocol.security.AuthorizationLevelMto",
                     id: "ANONYMOUS",
                 },
                 role: {
-                    __id: ["3"],
                     __type: "ru.vtb24.mobilebanking.protocol.security.TelebankRoleMto",
                     id: "UNDEFINED",
                 },
                 authorization: null,
                 userInfo: {
-                    __id: ["4"],
                     __type: "ru.vtb24.mobilebanking.protocol.UserInfoMto",
                     id: "2359583739-d8544647-6204-45c2-9118-dc3432998f6c",
                     unc: null,
@@ -191,7 +184,6 @@ describe("parseXml", () => {
                 lastLogonInChannel: null,
             },
             properties: {
-                __id: ["6"],
                 __type: "java.util.Hashtable",
                 "request_time_to_live": 30000,
                 "request_send_timestamp": 1530280626976,
@@ -203,187 +195,135 @@ describe("parseXml", () => {
 describe("reduceDuplicatesByTypeAndId", () => {
     it("reduces duplicates in child objects", () => {
         const object = {
-            __id: ["0"],
             __type: "ru.vtb24.mobilebanking.protocol.product.Product1",
-            id: "parent",
+            id: "0000000000000000000000000",
             child: {
-                __id: ["1"],
                 __type: "ru.vtb24.mobilebanking.protocol.product.Product2",
-                id: "child",
+                id: "1111111111111111111111111",
                 parent: {
-                    __id: ["2"],
                     __type: "ru.vtb24.mobilebanking.protocol.product.Product1",
-                    id: "parent",
+                    id: "0000000000000000000000000",
                     parentKey: "parentValue",
                     child: {
-                        __id: ["3"],
                         __type: "ru.vtb24.mobilebanking.protocol.product.Product2",
-                        id: "child",
-                        parent: "<ref[0]>",
+                        id: "1111111111111111111111111",
                         childKey: "childValue",
                     },
                 },
             },
         };
-        const cache = {
-            "0": object,
-            "1": object.child,
-            "2": object.child.parent,
-            "3": object.child.parent.child,
-            count: 4,
-        };
-        reduceDuplicatesByTypeAndId(object, cache);
-        expect(object).toEqual({
-            __id: ["0", "2"],
+        object.child.parent.child.parent = object;
+        reduceDuplicatesByTypeAndId(object);
+        expect(object).toMatchObject({
             __type: "ru.vtb24.mobilebanking.protocol.product.Product1",
-            id: "parent",
+            id: "0000000000000000000000000",
             parentKey: "parentValue",
             child: {
-                __id: ["1", "3"],
                 __type: "ru.vtb24.mobilebanking.protocol.product.Product2",
-                id: "child",
+                id: "1111111111111111111111111",
                 childKey: "childValue",
-                parent: "<ref[0]>",
             },
         });
-        expect(cache["0"]).toBe(object);
-        expect(cache["2"]).toBe(object);
-        expect(cache["1"]).toBe(object.child);
-        expect(cache["3"]).toBe(object.child);
+        expect(Object.keys(object).length).toBe(4);
+        expect(Object.keys(object.child).length).toBe(4);
+        expect(object.child.parent).toBe(object);
     });
 
     it("reduces duplicates in array", () => {
         const object = [
             {
-                __id: ["0"],
                 __type: "ru.vtb24.mobilebanking.protocol.product.Product1",
-                id: "id",
+                id: "0000000000000000000000000",
                 key1: "value1",
                 key2: null,
             },
             {
-                __id: ["1"],
                 __type: "ru.vtb24.mobilebanking.protocol.product.Product1",
-                id: "id",
+                id: "0000000000000000000000000",
                 key2: "value2",
             },
             {
-                __id: ["2"],
                 __type: "ru.vtb24.mobilebanking.protocol.product.Product1",
-                id: "id",
+                id: "0000000000000000000000000",
                 key3: "value3",
                 child: {
-                    __id: ["3"],
                     __type: "ru.vtb24.mobilebanking.protocol.product.Product1",
-                    id: "id",
+                    id: "0000000000000000000000000",
                     key4: "value4",
                 },
             },
         ];
-        const cache = {
-            "0": object[0],
-            "1": object[1],
-            "2": object[2],
-            "3": object[2].child,
-            count: 4,
-        };
-        reduceDuplicatesByTypeAndId(object, cache);
-        expect(object).toEqual([
-            {
-                __id: ["0", "1", "2", "3"],
-                __type: "ru.vtb24.mobilebanking.protocol.product.Product1",
-                id: "id",
-                key1: "value1",
-                key2: "value2",
-                key3: "value3",
-                key4: "value4",
-                child: "<ref[0]>",
-            },
-            "<ref[0]>",
-            "<ref[0]>",
-        ]);
-        expect(cache["0"]).toBe(object[0]);
-        expect(cache["1"]).toBe(object[0]);
-        expect(cache["2"]).toBe(object[0]);
-        expect(cache["3"]).toBe(object[0]);
+        reduceDuplicatesByTypeAndId(object);
+        expect(object.length).toBe(3);
+        expect(object[2]).toBe(object[0]);
+        expect(object[1]).toBe(object[0]);
+        expect(object[0]).toMatchObject({
+            __type: "ru.vtb24.mobilebanking.protocol.product.Product1",
+            id: "0000000000000000000000000",
+            key1: "value1",
+            key2: "value2",
+            key3: "value3",
+            key4: "value4",
+        });
+        expect(Object.keys(object[0]).length).toBe(7);
+        expect(object[0].child).toBe(object[0]);
     });
 
     it("reduces duplicates in different objects", () => {
         const object = [
             {
                 child: {
-                    __id: ["0"],
                     __type: "ru.vtb24.mobilebanking.protocol.product.Product1",
-                    id: "child",
+                    id: "0000000000000000000000000",
                     key1: "value1",
                 },
             },
             {
                 child: {
-                    __id: ["1"],
                     __type: "ru.vtb24.mobilebanking.protocol.product.Product1",
-                    id: "child",
+                    id: "0000000000000000000000000",
                     key2: "value2",
                 },
             },
         ];
-        const cache = {
-            "0": object[0].child,
-            "1": object[1].child,
-            count: 2,
-        };
-        reduceDuplicatesByTypeAndId(object, cache);
-        expect(object).toEqual([
-            {
-                child: {
-                    __id: ["0", "1"],
-                    __type: "ru.vtb24.mobilebanking.protocol.product.Product1",
-                    id: "child",
-                    key1: "value1",
-                    key2: "value2",
-                },
-            },
-            {
-                child: "<ref[0]>",
-            },
-        ]);
-        expect(cache["0"]).toBe(object[0].child);
-        expect(cache["1"]).toBe(object[0].child);
+        reduceDuplicatesByTypeAndId(object);
+        expect(object.length).toBe(2);
+        const child = object[0].child;
+        expect(object[0]).toEqual({
+            child,
+        });
+        expect(object[1]).toEqual({
+            child,
+        });
+        expect(child).toEqual({
+            __type: "ru.vtb24.mobilebanking.protocol.product.Product1",
+            id: "0000000000000000000000000",
+            key1: "value1",
+            key2: "value2",
+        });
     });
 });
 
-describe("unfoldReferences", () => {
-    it("unfolds only references to given types", () => {
-        const object = {
-            key1: "<ref[0]>",
-            key2: "<ref[1]>",
-            key3: "<ref[2]>",
-            key4: "<ref[3]>",
-            key5: "<ref[4]>",
-            key6: {
-                key7: "<ref[5]>",
+describe("resolveCycles", () => {
+    it("resolves cycles", () => {
+        const parent = {
+            child: {
+                childKey: "childValue",
             },
+            children: [],
         };
-        const cache = {
-            "0": {__type: "UnfoldType"},
-            "1": [],
-            "2": {},
-            "3": {__type: "Type"},
-            "4": "Hello",
-            "5": {__type: "AnotherType"},
-        };
-        unfoldReferences(object, cache, [
-            "UnfoldType",
-        ]);
-        expect(object).toEqual({
-            key1: cache["0"],
-            key2: "<ref[1]>",
-            key3: "<ref[2]>",
-            key4: "<ref[3]>",
-            key5: "<ref[4]>",
-            key6: {
-                key7: "<ref[5]>",
+        parent.child.parent = parent;
+        parent.children.push(parent.child);
+        expect(resolveCycles(parent)).toEqual({
+            __id: 0,
+            child: {
+                __id: 1,
+                childKey: "childValue",
+                parent: "<ref[0]>",
             },
+            children: [
+                "<ref[1]>",
+            ],
         });
     });
 });
