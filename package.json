@@ -33,6 +33,7 @@
     "jest": "23.1.0",
     "jshashes": "1.0.7",
     "lodash": "4.17.4",
+    "moment": "2.22.2",
     "object-assign": "4.1.1",
     "pad-left": "2.1.0",
     "promise": "8.0.1",

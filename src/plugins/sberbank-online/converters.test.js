@@ -8,6 +8,7 @@ import {
     convertPfmTransaction,
     convertTarget,
     convertToZenMoneyTransaction,
+    getIntervalBetweenDates,
     parseApiDescription,
     parsePfmDescription,
     parseWebAmount,
@@ -221,6 +222,67 @@ describe("convertLoan", () => {
                 repaymentMethod: "аннуитетный",
                 termStart: "04.01.2018T00:00:00",
                 termDuration: "4-9-0",
+                termEnd: "04.10.2022T00:00:00",
+                agreementNumber: "235",
+                accountNumber: "45507810013000079184",
+                personRole: "заемщик/созаемщик",
+                name: "Потребительский кредит",
+            },
+            extDetail: {
+                kind: "АННУИТЕТНЫЙ",
+                fullName: "Потребительский кредит",
+                type: null,
+                termEnd: "04.10.2022T00:00:00",
+                origianlAmount: { amount: "700000,00", currency: { code: "RUB", name: "руб." } },
+                nextPayment: { infoText: "Ближайший платёж ," },
+                currentPayment: null,
+                loanInfo: {
+                    origianlAmount: { amount: "700000,00", currency: { code: "RUB", name: "руб." } },
+                    termStart: "04.01.2018T00:00:00",
+                    termEnd: "04.10.2022T00:00:00",
+                    agreementNumber: "235",
+                    accountNumber: "45507810013000079184",
+                    repaymentMethod: "аннуитетный",
+                },
+            },
+        })).toEqual({
+            ids: ["11934064"],
+            type: "loan",
+            zenAccount: {
+                id: "loan:11934064",
+                type: "loan",
+                title: "Потребительский кредит",
+                instrument: "RUB",
+                syncID: [
+                    "45507810013000079184",
+                ],
+                balance: -700000,
+                startBalance: 700000,
+                capitalization: true,
+                percent: 1,
+                startDate: "2018-01-04",
+                endDateOffsetInterval: "month",
+                endDateOffset: 57,
+                payoffInterval: "month",
+                payoffStep: 1,
+            },
+        });
+    });
+
+    it("returns valid loan if termDuration is missing", () => {
+        expect(convertLoan( {
+            id: "11934064",
+            name: "Потребительский кредит",
+            smsName: "9184",
+            state: null,
+        }, {
+            status: {
+                code: "0",
+            },
+            detail: {
+                description: "Потребительский кредит",
+                repaymentMethod: "аннуитетный",
+                termStart: "04.01.2018T00:00:00",
                 termEnd: "04.10.2022T00:00:00",
                 agreementNumber: "235",
                 accountNumber: "45507810013000079184",
@@ -1386,6 +1448,23 @@ describe("convertToZenMoneyTransaction", () => {
             outcomeAccount: "account",
             outcomeBankID: "692815587",
             comment: "Перевод с карты",
+        });
+    });
+});
+
+describe("getIntervalBetweenDates", () => {
+    it("returns right intervals", () => {
+        expect(getIntervalBetweenDates(new Date("2018-06-01"), new Date("2019-06-01"))).toEqual({
+            interval: "year",
+            count: 1,
+        });
+        expect(getIntervalBetweenDates(new Date("2012-05-28"), new Date("2025-08-21"), ["year", "month"])).toEqual({
+            interval: "month",
+            count: 158,
+        });
+        expect(getIntervalBetweenDates(new Date("2018-06-01"), new Date("2018-06-10"))).toEqual({
+            interval: "day",
+            count: 9,
         });
     });
 });
