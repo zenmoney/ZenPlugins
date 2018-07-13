@@ -55,7 +55,7 @@ export function convertAccounts(apiPortfolios) {
             const account = converter(apiAccount);
             if (_.isArray(account)) {
                 accounts.push(...account);
-            } else {
+            } else if (account) {
                 accounts.push(account);
             }
         });

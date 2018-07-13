@@ -473,7 +473,7 @@ function parseNode(node, cache) {
             } else if (node.name === "date") {
                 const date = new Date(`${value.substring(0, 4)}-${value.substring(4, 6)}-${value.substring(6, 8)}T`
                     + `${value.substring(9, 11)}:${value.substring(11, 13)}:${value.substring(13, 15)}Z`);
-                console.assert(!isNaN(date) && date.getTime() >= 0, `unexpected node date ${value}`);
+                console.assert(!isNaN(date) && date.getFullYear() >= 1900, `unexpected node date ${value}`);
                 return date;
             } else if (node.name === "ref") {
                 const object = cache[value];
