@@ -8,8 +8,12 @@ export async function scrape({preferences, fromDate, toDate}) {
     toDate = toDate || new Date();
     const auth = await login(preferences.login, preferences.password);
     const apiAccounts = convertAccounts(await fetchAccounts(auth));
+    const zenAccounts = [];
     const transactions = [];
     await Promise.all(apiAccounts.map(async apiAccount => {
+        if (zenAccounts.indexOf(apiAccount.zenAccount) < 0) {
+            zenAccounts.push(apiAccount.zenAccount);
+        }
         if (ZenMoney.isAccountSkipped(apiAccount.zenAccount.id)) {
             return;
         }
@@ -22,7 +26,7 @@ export async function scrape({preferences, fromDate, toDate}) {
     }));
     return {
         accounts: ensureSyncIDsAreUniqueButSanitized({
-            accounts: apiAccounts.map(account => account.zenAccount),
+            accounts: zenAccounts,
             sanitizeSyncId,
         }),
         transactions: _.sortBy(combineIntoTransferByTransferId(transactions), zenTransaction => zenTransaction.date),

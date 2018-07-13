@@ -355,7 +355,8 @@ export function convertCards(apiCardsArray, nowDate = new Date()) {
     for (const apiCard of apiCardsArray) {
         if (apiCard.account.state !== "active"
                 || (apiCard.account.statusWay4 !== "+-КАРТОЧКА ОТКРЫТА"
-                && apiCard.account.statusWay4 !== "K-ДЕЙСТ.ПРИОСТАНОВЛЕНО")
+                && apiCard.account.statusWay4 !== "K-ДЕЙСТ.ПРИОСТАНОВЛЕНО"
+                && apiCard.account.statusWay4 !== "X-ПЕРЕВЫП., НЕ ВЫДАНА")
                 || parseExpireDate(apiCard.account.expireDate) < minExpireDate) {
             continue;
         }

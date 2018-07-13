@@ -122,6 +122,9 @@ async function burlapRequest(options) {
                 : signature) + PROTOCOL_VERSION + bodyStr;
         },
         parse: (bodyStr) => {
+            if (bodyStr === "") {
+                throw new TemporaryError("У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии");
+            }
             const i = bodyStr.indexOf(PROTOCOL_VERSION);
             console.assert(i >= 0 && i <= 10, "Could not get response protocol version");
             const body = parseXml(bodyStr.substring(i + PROTOCOL_VERSION.length));
@@ -360,7 +363,8 @@ function getCachedObject(object, cache) {
     if (!object || !object.__type || typeof object.id !== "string"
             || object.id.length < 24
             || object.__type.indexOf("StatusMto") >= 0
-            || object.__type.indexOf("PortfolioMto") >= 0) {
+            || object.__type.indexOf("PortfolioMto") >= 0
+            || object.__type === "ru.vtb24.mobilebanking.protocol.item.ItemMto") {
         return null;
     }
     const id = `${object.__type}_${object.id}`;
@@ -461,9 +465,10 @@ function parseNode(node, cache) {
                 value = parseFloat(value);
                 console.assert(!isNaN(value), "unexpected node double");
             } else if (node.name === "date") {
-                value = new Date(`${value.substring(0, 4)}-${value.substring(4, 6)}-${value.substring(6, 8)}T`
+                const date = new Date(`${value.substring(0, 4)}-${value.substring(4, 6)}-${value.substring(6, 8)}T`
                     + `${value.substring(9, 11)}:${value.substring(11, 13)}:${value.substring(13, 15)}Z`);
-                console.assert(!isNaN(value), "unexpected node date");
+                console.assert(!isNaN(date) && date.getTime() >= 0, `unexpected node date ${value}`);
+                return date;
             } else if (node.name === "ref") {
                 const object = cache[value];
                 console.assert(object, `unexpected node ref ${value}`);
