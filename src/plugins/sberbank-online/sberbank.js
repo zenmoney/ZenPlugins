@@ -346,7 +346,8 @@ async function fetchAccountDetails(auth, {id, type}) {
             "Cookie": auth.api.cookie,
         },
         body: {id: id},
-    }, response => _.get(response, "body.detail"));
+    }, null);
+    validateResponse(response, response => _.get(response, "body.detail"));
     return response.body;
 }
 
