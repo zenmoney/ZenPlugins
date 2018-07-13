@@ -139,6 +139,12 @@ async function burlapRequest(options) {
         },
     });
     response.body = payload;
+    if (response.body
+            && response.body.__type === "ru.vtb24.mobilebanking.protocol.ErrorResponse"
+            && response.body.message
+            && response.body.message.indexOf("временно недоступна") >= 0) {
+        throw new TemporaryError("Информация из Банка ВТБ временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите \"Отправить лог последней синхронизации разработчикам\".");
+    }
     return response;
 }
 
