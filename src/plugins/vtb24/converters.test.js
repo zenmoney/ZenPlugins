@@ -545,7 +545,7 @@ describe("convertLoan", () => {
             loan: null,
             account:  {
                 __type: "ru.vtb24.mobilebanking.protocol.product.LoanAccountMto",
-                number: "43302310200000556732",
+                number: "634/5010-0004540",
                 id: "E7DCC89E89EC47DDA57EB2925D2ECCC1",
                 name: "Ипотека",
                 displayName: "Ипотека",
@@ -626,7 +626,7 @@ describe("convertLoan", () => {
                 payoffInterval: "month",
                 payoffStep: 1,
                 syncID: [
-                    "43302310200000556732",
+                    "63450100004540",
                 ],
             },
         });
