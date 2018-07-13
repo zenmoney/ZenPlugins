@@ -210,7 +210,10 @@ export function addTransactions(oldTransactions, newTransactions, isWebTransacti
                         continue;
                     }
                 }
-                if (newTransaction.payee !== oldTransaction.payee) {
+                if (newTransaction.payee !== oldTransaction.payee && (isWebTransaction
+                        || !(oldTransaction.payee && !newTransaction.payee
+                            && newTransaction.description
+                            && newTransaction.description.indexOf(oldTransaction.payee) === 0))) {
                     continue;
                 }
                 if (isWebTransaction && oldTransaction.origin && !oldTransaction.posted
@@ -225,6 +228,7 @@ export function addTransactions(oldTransactions, newTransactions, isWebTransacti
                                  || newTransaction.posted.amount === oldTransaction.origin.amount)))) {
                     let origin = null;
                     const description = oldTransaction.description;
+                    const payee = oldTransaction.payee;
                     if (oldTransaction.origin && newTransaction.posted.instrument !== oldTransaction.origin.instrument) {
                         origin = oldTransaction.origin;
                     }
@@ -239,6 +243,9 @@ export function addTransactions(oldTransactions, newTransactions, isWebTransacti
                     }
                     if (description) {
                         oldTransaction.description = description;
+                    }
+                    if (payee && !oldTransaction.payee) {
+                        oldTransaction.payee = payee;
                     }
                     i++;
                     continue l;
