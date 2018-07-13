@@ -963,6 +963,10 @@ describe("parsePfmDescription", () => {
             payee: "TINKOFF BANK CARD2CARD",
             description: "Visa Direct RU",
         });
+        expect(parsePfmDescription("\"KONDITERSKAYA ZOLOTOY KOROSTOV-NA-DO RU")).toEqual({
+            payee: "\"KONDITERSKAYA ZOLOTOY KO",
+            description: "ROSTOV-NA-DO RU",
+        });
         expect(parsePfmDescription("unknown pattern")).toEqual({
             payee: null,
             description: "unknown pattern",

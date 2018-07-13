@@ -104,7 +104,8 @@ export function parsePfmDescription(description) {
     if (description) {
         description = description
             .replace("VKLAD-KAR ", "VKLAD-KARTA   ")
-            .replace("KARTA-VKL ", "KARTA-VKLAD   ");
+            .replace("KARTA-VKL ", "KARTA-VKLAD   ")
+            .replace("ROSTOV-NA-DO", "   ROSTOV-NA-DO");
     }
     const commentParts = description ? description.split("  ") : null;
     let payee = null;
@@ -223,7 +224,7 @@ export function addTransactions(oldTransactions, newTransactions, isWebTransacti
                             || (!oldTransaction.posted && (newTransaction.posted.instrument !== oldTransaction.origin.instrument
                                  || newTransaction.posted.amount === oldTransaction.origin.amount)))) {
                     let origin = null;
-                    let description = oldTransaction.description;
+                    const description = oldTransaction.description;
                     if (oldTransaction.origin && newTransaction.posted.instrument !== oldTransaction.origin.instrument) {
                         origin = oldTransaction.origin;
                     }
