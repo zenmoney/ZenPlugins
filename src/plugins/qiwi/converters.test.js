@@ -139,6 +139,7 @@ describe("convertTransactions", () => {
             {
                 id: "13319571944",
                 date: new Date("2018-06-21T20:02:51+03:00"),
+                hold: false,
                 income: 200,
                 incomeAccount: "79881234567_643",
                 outcome: 0,
