@@ -174,12 +174,18 @@ export function convertLoan(apiAccount) {
     return account;
 }
 
-export function convertTransaction(apiTransaction, zenAccount) {
+export function convertTransaction(apiTransaction, apiAccount) {
+    if (apiTransaction.details && [
+        "ru.vtb24.mobilebanking.protocol.product.CreditCardMto",
+        "ru.vtb24.mobilebanking.protocol.product.DebitCardMto",
+    ].indexOf(apiTransaction.debet.__type) >= 0 && apiAccount.id !== apiTransaction.debet.id) {
+        return null;
+    }
     const transaction = {
         income: 0,
-        incomeAccount: zenAccount.id,
+        incomeAccount: apiAccount.zenAccount.id,
         outcome: 0,
-        outcomeAccount: zenAccount.id,
+        outcomeAccount: apiAccount.zenAccount.id,
         date: apiTransaction.transactionDate,
         hold: apiTransaction.isHold,
     };
@@ -263,7 +269,11 @@ function parsePayee(apiTransaction, transaction) {
     })) {
         return false;
     }
-    transaction.comment = apiTransaction.details;
+    if (apiTransaction.__type === "ru.vtb24.mobilebanking.protocol.statement.CardTransactionMto") {
+        transaction.payee = apiTransaction.details;
+    } else {
+        transaction.comment = apiTransaction.details;
+    }
     return false;
 }
 

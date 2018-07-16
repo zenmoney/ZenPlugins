@@ -18,7 +18,7 @@ export async function scrape({preferences, fromDate, toDate}) {
             return;
         }
         (await fetchTransactions(auth, apiAccount, fromDate, toDate)).forEach(apiTransaction => {
-            const transaction = convertTransaction(apiTransaction, apiAccount.zenAccount);
+            const transaction = convertTransaction(apiTransaction, apiAccount);
             if (transaction) {
                 transactions.push(transaction);
             }

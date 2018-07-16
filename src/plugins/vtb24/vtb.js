@@ -71,73 +71,82 @@ function getRandomInt(min, max) {
 async function burlapRequest(options) {
     const id = getRandomInt(-2000000000, 2000000000).toFixed(0);
     let payload = null;
-    const response = await network.fetch("https://mb.vtb24.ru/mobilebanking/burlap/", {
-        method: "POST",
-        headers: {
-            "mb-protocol-version": PROTOCOL_VERSION,
-            "mb-app-version": APP_VERSION,
-            "Content-Type": "application/x-www-form-urlencoded",
-            "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 6.0; Android SDK built for x86_64 Build/MASTER)",
-            "Host": "mb.vtb24.ru",
-            "Connection": "Keep-Alive",
-            "Accept-Encoding": "gzip",
-        },
-        body: options.body || null,
-        sanitizeRequestLog: {headers: {"cookie": true}, body: _.get(options, "sanitizeRequestLog.body")},
-        sanitizeResponseLog: {headers: {"set-cookie": true}, body: _.get(options, "sanitizeResponseLog.body")},
-        stringify: (body) => {
-            body = {
-                __type: "com.mobiletransport.messaging.DefaultMessageImpl",
-                correlationId: getRandomInt(-2000000000, 2000000000).toFixed(0),
-                id,
-                localCacheId: 0,
-                sendTimestamp: Math.round(new Date().getTime()),
-                theme: options.theme || "Default theme",
-                timeToLive: 30000,
-                payload: body,
-                properties: {
-                    __type: "java.util.Hashtable",
-                    PROTOVERSION: PROTOCOL_VERSION,
-                    DEVICE_MODEL: "Android SDK built for x86_64",
-                    DEVICE_MANUFACTURER: "unknown",
-                    APP_VERSION: APP_VERSION,
-                    PLATFORM: "ANDROID",
-                    DEVICE_PLATFORM: "ANDROID",
-                    OS: "Android OS 6.0",
-                    APPVERSION: APP_VERSION,
-                    DEVICE: "Android SDK built for x86_64",
-                    DEVICEUSERNAME: "android-build",
-                    DEVICE_OS: "Android OS 6.0",
-                    ...options.token && {"CLIENT-TOKEN": options.token},
-                    ...options.sdkData && {
-                        AF_MOBILE_DEVICE: options.sdkData,
-                        AF_DEVICE_PRINT: "",
+    let response;
+    try {
+        response = await network.fetch("https://mb.vtb24.ru/mobilebanking/burlap/", {
+            method: "POST",
+            headers: {
+                "mb-protocol-version": PROTOCOL_VERSION,
+                "mb-app-version": APP_VERSION,
+                "Content-Type": "application/x-www-form-urlencoded",
+                "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 6.0; Android SDK built for x86_64 Build/MASTER)",
+                "Host": "mb.vtb24.ru",
+                "Connection": "Keep-Alive",
+                "Accept-Encoding": "gzip",
+            },
+            body: options.body || null,
+            sanitizeRequestLog: {headers: {"cookie": true}, body: _.get(options, "sanitizeRequestLog.body")},
+            sanitizeResponseLog: {headers: {"set-cookie": true}, body: _.get(options, "sanitizeResponseLog.body")},
+            stringify: (body) => {
+                body = {
+                    __type: "com.mobiletransport.messaging.DefaultMessageImpl",
+                    correlationId: getRandomInt(-2000000000, 2000000000).toFixed(0),
+                    id,
+                    localCacheId: 0,
+                    sendTimestamp: Math.round(new Date().getTime()),
+                    theme: options.theme || "Default theme",
+                    timeToLive: 30000,
+                    payload: body,
+                    properties: {
+                        __type: "java.util.Hashtable",
+                        PROTOVERSION: PROTOCOL_VERSION,
+                        DEVICE_MODEL: "Android SDK built for x86_64",
+                        DEVICE_MANUFACTURER: "unknown",
+                        APP_VERSION: APP_VERSION,
+                        PLATFORM: "ANDROID",
+                        DEVICE_PLATFORM: "ANDROID",
+                        OS: "Android OS 6.0",
+                        APPVERSION: APP_VERSION,
+                        DEVICE: "Android SDK built for x86_64",
+                        DEVICEUSERNAME: "android-build",
+                        DEVICE_OS: "Android OS 6.0",
+                        ...options.token && {"CLIENT-TOKEN": options.token},
+                        ...options.sdkData && {
+                            AF_MOBILE_DEVICE: options.sdkData,
+                            AF_DEVICE_PRINT: "",
+                        },
                     },
-                },
-            };
-            const bodyStr = stringifyToXml(body);
-            const signature = getSignature(PROTOCOL_VERSION, bodyStr);
-            return (getByteLength(signature) > 5
-                ? signature.substring(1)
-                : signature) + PROTOCOL_VERSION + bodyStr;
-        },
-        parse: (bodyStr) => {
-            if (bodyStr === "") {
-                throw new TemporaryError("У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии");
-            }
-            const i = bodyStr.indexOf(PROTOCOL_VERSION);
-            console.assert(i >= 0 && i <= 10, "Could not get response protocol version");
-            const body = parseXml(bodyStr.substring(i + PROTOCOL_VERSION.length));
-            console.assert(typeof body === "object"
-                && body.correlationId === id, "unexpected response");
-            payload = body.payload;
-            if (payload) {
-                reduceDuplicatesByTypeAndId(payload);
-                return resolveCycles(payload);
-            }
-            return payload;
-        },
-    });
+                };
+                const bodyStr = stringifyToXml(body);
+                const signature = getSignature(PROTOCOL_VERSION, bodyStr);
+                return (getByteLength(signature) > 5
+                    ? signature.substring(1)
+                    : signature) + PROTOCOL_VERSION + bodyStr;
+            },
+            parse: (bodyStr) => {
+                if (bodyStr === "") {
+                    throw new TemporaryError("У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии");
+                }
+                const i = bodyStr.indexOf(PROTOCOL_VERSION);
+                console.assert(i >= 0 && i <= 10, "Could not get response protocol version");
+                const body = parseXml(bodyStr.substring(i + PROTOCOL_VERSION.length));
+                console.assert(typeof body === "object"
+                    && body.correlationId === id, "unexpected response");
+                payload = body.payload;
+                if (payload) {
+                    reduceDuplicatesByTypeAndId(payload);
+                    return resolveCycles(payload);
+                }
+                return payload;
+            },
+        });
+    } catch (e) {
+        if (e.response && e.response.status === 503) {
+            throw new TemporaryError("Информация из Банка ВТБ временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите \"Отправить лог последней синхронизации разработчикам\".");
+        } else {
+            throw e;
+        }
+    }
     response.body = payload;
     if (response.body
             && response.body.__type === "ru.vtb24.mobilebanking.protocol.ErrorResponse"
