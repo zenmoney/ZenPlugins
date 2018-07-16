@@ -21,45 +21,34 @@ const serializeErrors = (handler) => {
     };
 };
 
-const readJsonSync = (file, missingFileValue) => {
-    const {content, path} = readPluginFileSync(file, missingFileValue);
+const readJsonSync = (file) => {
+    const content = readPluginFileSync(file);
     try {
         return JSON.parse(content);
     } catch (e) {
-        e.message += ` in ${path}`;
+        e.message += ` in ${file}`;
         throw e;
     }
-};
-
-const writeJsonSync = (file, object) => {
-    writePluginFileSync(file, JSON.stringify(object, null, 4));
 };
 
 const removeSecureSealFromCookieValue = (value) => value.replace(/\s?Secure(;|\s*$)/ig, "");
 
 const removeDomainFromCookieValue = (value) => value.replace(/\s?Domain=[^;]*(;|\s*$)/ig, "");
 
-const readPluginFileSync = (file, missingFileValue) => {
-    const candidatePaths = [
-        path.join(params.pluginPath, file),
-        path.join(__dirname, "../debugger/", file),
-    ];
-    const existingPaths = candidatePaths.filter(x => fs.existsSync(x));
-    if (existingPaths.length === 0) {
-        if (missingFileValue) {
-            return {content: missingFileValue, path: null};
-        } else {
-            throw new Error(`${file} is missing, search paths: [${candidatePaths}]`);
+const readPluginFileSync = (filepath) => stripBOM(fs.readFileSync(filepath, "utf8"));
+
+const pluginPreferencesPath = path.join(params.pluginPath, "zp_preferences.json");
+const pluginDataPath = path.join(params.pluginPath, "zp_data.json");
+const pluginCodePath = path.join(params.pluginPath, "zp_pipe.txt");
+
+const ensureFileExists = (filepath, defaultContent) => {
+    try {
+        fs.writeFileSync(filepath, defaultContent, {encoding: "utf8", flag: "wx"});
+    } catch (e) {
+        if (e.code !== "EEXIST") {
+            throw e;
         }
     }
-    return {
-        content: stripBOM(fs.readFileSync(existingPaths[0], "utf8")),
-        path: existingPaths[0],
-    };
-};
-
-const writePluginFileSync = (file, content) => {
-    fs.writeFileSync(path.join(params.pluginPath, file), content, "utf8");
 };
 
 module.exports = ({allowedHost, host, https}) => {
@@ -97,9 +86,11 @@ module.exports = ({allowedHost, host, https}) => {
             );
 
             app.get(
-                "/zen/preferences",
+                "/zen/zp_preferences.json",
                 serializeErrors((req, res) => {
-                    const preferences = _.omit(readJsonSync("zp_preferences.json"), ["zp_plugin_directory", "zp_pipe"]);
+                    ensureFileExists(pluginPreferencesPath, "{}\n");
+                    const rawPreferences = readJsonSync(pluginPreferencesPath);
+                    const preferences = _.omit(rawPreferences, ["zp_plugin_directory", "zp_pipe"]);
                     const preferencesSchema = readPluginPreferencesSchema();
                     const missingObligatoryPrefKeys = preferencesSchema
                         .filter((x) => x.obligatory && !x.defaultValue && !(x.key in preferences))
@@ -119,28 +110,31 @@ module.exports = ({allowedHost, host, https}) => {
             );
 
             app.get(
-                "/zen/data",
+                "/zen/zp_data.json",
                 serializeErrors((req, res) => {
-                    const data = readJsonSync("zp_data.json", "{}");
+                    ensureFileExists(pluginDataPath, "{}\n");
+                    const data = readJsonSync(pluginDataPath);
                     return res.json(data);
                 }),
             );
 
             app.post(
-                "/zen/data",
+                "/zen/zp_data.json",
                 bodyParser.json(),
                 serializeErrors((req, res) => {
                     console.assert(req.body.newValue, "newValue should be provided");
-                    writeJsonSync("zp_data.json", req.body.newValue);
+                    fs.writeFileSync(pluginDataPath, JSON.stringify(req.body.newValue, null, 4), "utf8");
                     return res.json(true);
                 }),
             );
 
             app.get(
-                "/zen/pipe",
+                "/zen/zp_pipe.txt",
                 serializeErrors((req, res) => {
                     res.set("Content-Type", "text/plain");
-                    res.send(readPluginFileSync("zp_pipe.txt", "").content.replace(/\n$/, ""));
+                    ensureFileExists(pluginCodePath, "");
+                    const content = readPluginFileSync(pluginCodePath);
+                    res.send(content.replace(/\n$/, ""));
                 }),
             );
 
