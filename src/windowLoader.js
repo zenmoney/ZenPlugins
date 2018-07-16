@@ -68,9 +68,9 @@ async function init() {
 
         setState((state) => ({...state, workflowState: ":workflow-state/loading-assets"}));
         const [preferences, manifest, data] = await Promise.all([
-            pickSuccessfulBody(fetchJson("/zen/preferences", {log: false})),
+            pickSuccessfulBody(fetchJson("/zen/zp_preferences.json", {log: false})),
             pickSuccessfulBody(fetchJson("/zen/manifest", {log: false})),
-            pickSuccessfulBody(fetchJson("/zen/data", {log: false})),
+            pickSuccessfulBody(fetchJson("/zen/zp_data.json", {log: false})),
         ]);
         document.title = `[${manifest.id}] ${document.title}`;
 
@@ -102,7 +102,7 @@ async function init() {
         if (save) {
             setState((state) => ({...state, persistPluginDataState: ":persist-plugin-data-state/saving"}));
             try {
-                await fetchJson("/zen/data", {method: "POST", body: scrapeResult.pluginDataChange, log: false});
+                await fetchJson("/zen/zp_data.json", {method: "POST", body: scrapeResult.pluginDataChange, log: false});
                 setState((state) => ({...state, persistPluginDataState: ":persist-plugin-data-state/saved"}));
             } catch (error) {
                 setState((state) => ({...state, persistPluginDataState: ":persist-plugin-data-state/save-error", persistPluginDataError: error}));

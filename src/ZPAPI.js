@@ -368,7 +368,7 @@ Object.assign(ZPAPI.prototype, {
 
         let remainingTime = (options && options.time) || 60000;
         while (remainingTime > 0) {
-            const {body, status} = getResourceSync("/zen/pipe");
+            const {body, status} = getResourceSync("/zen/zp_pipe.txt");
             if (status === 200 && body) {
                 return body;
             } else {
