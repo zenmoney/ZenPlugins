@@ -368,6 +368,10 @@ export function convertCards(apiCardsArray, nowDate = new Date()) {
                 || parseExpireDate(apiCard.account.expireDate) < minExpireDate) {
             continue;
         }
+        if (apiCard.account.statusWay4 === "X-ПЕРЕВЫП., НЕ ВЫДАНА"
+                && parseDecimal(apiCard.account.availableLimit.amount) < 0) {
+            continue;
+        }
         if (apiCard.account.mainCardId) {
             const account = accounts[accounts.length - 1];
             console.assert(account.ids[0] === apiCard.account.mainCardId, `unexpected additional card ${apiCard.account.id}`);
