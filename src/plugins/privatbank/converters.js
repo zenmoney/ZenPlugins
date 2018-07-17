@@ -163,6 +163,7 @@ export function parseCashReplenishment(transaction, opAmount) {
 }
 
 export function parseInnerTransferTo(transaction, opAmount) {
+    let i = 0;
     for (const regex of [
         /Перевод на свою «Копилку»\s+(\d+\*+\d+)/i,
         /Перевод на свою карту\s+(\d+\*+\d+)/i,
@@ -171,11 +172,12 @@ export function parseInnerTransferTo(transaction, opAmount) {
         if (match) {
             transaction.incomeAccount = "ccard#" + opAmount.instrument + "#" + getTransferSyncId(match[1]);
             transaction.income = opAmount.sum;
-            transaction.comment = null;
+            transaction.comment = i === 0 ? match[0] : null;
             transaction._transferId = getTransferId(transaction, opAmount);
             transaction._transferType = "income";
             return true;
         }
+        i++;
     }
     return false;
 }
@@ -214,11 +216,21 @@ export function parseTransfer(transaction) {
 }
 
 export function parsePayee(transaction) {
-    const i = transaction.comment.indexOf(":");
+    let i = transaction.comment.indexOf(":");
     if (i < 0 || i + 1 >= transaction.comment.length) {
         return false;
     }
-    let payee = transaction.comment.substring(i + 1).replace(/\.*\s*Код квитанции:.*$/i, "").trim();
+    let payee = transaction.comment.substring(i + 1)
+        .replace(/\.*\s*Код квитанции:.*$/i, "")
+        .replace(/^\s*Получатель:\s*/i, "")
+        .trim();
+    if (!payee) {
+        return false;
+    }
+    i = payee.indexOf(",");
+    if (i >= 0 && i < payee.length - 1) {
+        payee = payee.substring(0, i).trim();
+    }
     if (payee) {
         transaction.payee = payee;
         transaction.comment = null;

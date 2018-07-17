@@ -18,7 +18,7 @@ describe("convertTransactions", () => {
                 "incomeAccount": "5167985500160759",
                 "outcome": 164,
                 "outcomeAccount": "5167985500160759",
-                "payee": "Воля, ТОВ(Volia)",
+                "payee": "Воля",
             },
             {
                 "outcomeBankID": "162010",
@@ -27,7 +27,7 @@ describe("convertTransactions", () => {
                 "incomeAccount": "5167985500160759",
                 "outcome": 126,
                 "outcomeAccount": "5167985500160759",
-                "payee": "Рівнегаз Збут, ТзОВ",
+                "payee": "Рівнегаз Збут",
             },
             {
                 "date": new Date("2018-03-01 00:00:00"),
@@ -75,7 +75,7 @@ describe("convertTransactions", () => {
                 "outcome": 38.65,
                 "outcomeAccount": "5363542602444722",
                 "outcomeBankID": "952321",
-                "payee": "Магазин \"Элен\", Енергодар, вул.В-Iнтернац. 10а",
+                "payee": "Магазин \"Элен\"",
             },
             {
                 "date": new Date("2018-03-17T10:49:00"),
@@ -84,7 +84,7 @@ describe("convertTransactions", () => {
                 "outcome": 31.86,
                 "outcomeAccount": "5363542602444722",
                 "outcomeBankID": "960318",
-                "payee": "Тов КГХ АЭС, Енергодар, Промышленная, 1",
+                "payee": "Тов КГХ АЭС",
             },
         ]);
         expect(accounts).toEqual({
