@@ -216,6 +216,10 @@ export function parseTransfer(transaction) {
 }
 
 export function parsePayee(transaction) {
+    if (transaction.comment.indexOf("Авторизация карты") >= 0
+            && transaction.comment.indexOf("подтверждения") >= 0) {
+        return false;
+    }
     let i = transaction.comment.indexOf(":");
     if (i < 0 || i + 1 >= transaction.comment.length) {
         return false;
