@@ -10,12 +10,8 @@ const defaultHeaders = {
     "Host": "mob.homecredit.ru",
 };
 
-/*let device;
-let key;
-let token;
-let phone;*/
 export async function login(preferences) {
-    console.log(">>> Авторизация...");
+    console.log(">>> Авторизация =======================================================================");
     const auth = ZenMoney.getData("auth", null) || {};
     if (!auth || !auth.device || !auth.key || !auth.token || !auth.phone) {
         auth.phone = (preferences.phone || "").trim();
@@ -55,7 +51,7 @@ export async function login(preferences) {
 }
 
 async function registerDevice(auth, preferences){
-    console.log(">>> Регистрация устройства...");
+    console.log(">>> Регистрация устройства ============================================================");
 
     auth.device = md5.hex(auth.phone + "homecredit").substr(0, 16);
     let response = await fetchJson("Account/Register", {
@@ -151,7 +147,7 @@ async function registerDevice(auth, preferences){
 }
 
 export async function fetchAccounts(auth) {
-    console.log(">>> Загружаем список счетов...");
+    console.log(">>> Загружаем список счетов ===========================================================");
     // загрузим список счетов
     const response = await fetchJson("Product/GetClientProducts", {
         API: 0,
@@ -186,6 +182,8 @@ export async function fetchDetails(auth, account, type){
 }
 
 async function fetchLoanDetails(auth, account){
+    console.log(`>>> Загружаем детали счёта: ${account.AccountNumber} [${account.ContractNumber}] --------------`);
+
     // детали кредита
     let response = await fetchJson("Payment/GetProductDetails", {
         headers: {
@@ -207,6 +205,7 @@ async function fetchLoanDetails(auth, account){
     const accountBalance = response.body.Result.CreditLoan.AccountBalance;
 
     // остаток по кредиту
+    console.log(`>>> Запрашиваем остаток по кредиту (${account.AccountNumber}) ---------------------`);
     response = await fetchJson("https://api-myc.homecredit.ru/api/v1/prepayment", {
         headers: {
             ...defaultHeaders,
@@ -233,6 +232,7 @@ async function fetchLoanDetails(auth, account){
 }
 
 export async function fetchTransactions(auth, accountData, fromDate, toDate = null) {
+    console.log(`>>> Загружаем список операций (${accountData.details.accountNumber}) =====================================`);
     if (accountData.details.type !== "CreditCard") {
         console.log(`Загрузка операций по счёту ${accountData.details.type} не поддерживается`);
         return [];
@@ -279,7 +279,7 @@ async function fetchJson(url, options, predicate) {
     if (predicate)
         validateResponse(response, response => response.body && predicate(response));
     if (!options.ignoreErrors)
-        validateResponse(response, response => response.body && (response.body.StatusCode === 200 || response.body.statusCode === 200), response.body.Errors && response.body.Errors.length>0 && ("Ответ банка – "+response.body.Errors[0]));
+        validateResponse(response, response => response.body && (response.body.StatusCode === 200 || response.body.statusCode === 200), response.body && response.body.Errors && response.body.Errors.length>0 && ("Ответ банка – "+response.body.Errors[0]));
     return response;
 }
 
