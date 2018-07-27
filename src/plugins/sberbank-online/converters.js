@@ -206,7 +206,7 @@ export function addTransactions(oldTransactions, newTransactions, isWebTransacti
                 } else {
                     const oldDate = oldTransaction.date.getTime();
                     const newDate = newTransaction.date.getTime();
-                    if (Math.abs(oldDate - newDate) > 60000) {
+                    if (Math.abs(oldDate - newDate) > 90000) {
                         continue;
                     }
                 }
@@ -369,7 +369,10 @@ export function convertCards(apiCardsArray, nowDate = new Date()) {
             continue;
         }
         if (apiCard.account.statusWay4 === "X-ПЕРЕВЫП., НЕ ВЫДАНА"
-                && parseDecimal(apiCard.account.availableLimit.amount) < 0) {
+                && (parseDecimal(apiCard.account.availableLimit.amount) <= 0
+                || (apiCard.account.type === "credit"
+                    && parseDecimal(apiCard.details.detail.creditType.limit.amount) ===
+                       parseDecimal(apiCard.account.availableLimit.amount)))) {
             continue;
         }
         if (apiCard.account.mainCardId) {
