@@ -69,8 +69,12 @@ export function assertLoginIsSuccessful(loginResponse) {
 }
 
 function assertNotServerError(response) {
-    if (response.status === 500 && Array.isArray(response.body.errors)) {
-        const message = _.compact(response.body.errors.map((x) => x.message)).join("\n");
+    if (response.status === 200) {
+        return;
+    }
+    const errors = _.get(response, ["body", "errors"]);
+    if (Array.isArray(errors)) {
+        const message = _.compact(errors.map((x) => x.message)).join("\n");
         if (message.includes("Некорректные данные.")) {
             throw new InvalidPreferencesError(message);
         }
