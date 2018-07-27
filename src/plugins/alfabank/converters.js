@@ -143,6 +143,17 @@ function findMovementAccountTuple(apiMovement, accountTuples) {
 
 export const normalizeIsoDate = (isoDate) => isoDate.replace(/([+-])(\d{2})(\d{2})$/, "$1$2:$3");
 
+export const extractDate = (apiMovement) => {
+    const created = new Date(normalizeIsoDate(apiMovement.createDate));
+    if (apiMovement.executeTimeStamp) {
+        const executed = new Date(normalizeIsoDate(apiMovement.executeTimeStamp));
+        return executed < created
+            ? executed
+            : created;
+    }
+    return created;
+};
+
 function convertApiMovementToReadableTransaction(apiMovement, accountId) {
     const posted = {amount: parseApiAmount(apiMovement.amount), instrument: apiMovement.currency};
     const {mcc, origin} = parseApiMovementDescription(apiMovement.description, Math.sign(posted.amount));
@@ -150,7 +161,7 @@ function convertApiMovementToReadableTransaction(apiMovement, accountId) {
         type: "transaction",
         id: apiMovement.key,
         account: {id: accountId},
-        date: new Date(normalizeIsoDate(apiMovement.createDate)),
+        date: extractDate(apiMovement),
         hold: apiMovement.hold,
         posted,
         origin,
@@ -196,7 +207,8 @@ function complementTransferSides(apiMovements) {
         }
         const senderInfo = _.mergeWith({}, ...relatedMovements.map((x) => x.senderInfo), neverLosingDataMergeCustomizer);
         const recipientInfo = _.mergeWith({}, ...relatedMovements.map((x) => x.recipientInfo), neverLosingDataMergeCustomizer);
-        return {...apiMovement, senderInfo, recipientInfo};
+        const executeTimeStamp = relatedMovements.map((x) => x.executeTimeStamp).find(Boolean);
+        return {...apiMovement, executeTimeStamp, senderInfo, recipientInfo};
     });
 }
 
