@@ -114,6 +114,9 @@ function makeZenmoneyTransfer(transfer) {
         incomeBankID: income.id,
         comment,
     };
+    if (_.isBoolean(hold)) {
+        result.hold = hold;
+    }
     if (outcome.instrument !== income.instrument) {
         Object.assign(result, {
             opOutcome: income.amount,
@@ -228,9 +231,11 @@ function makeZenmoneyTransaction(transaction) {
             result.opOutcomeInstrument = originInstrument;
         }
     }
-
+    if (_.isBoolean(hold)) {
+        result.hold = hold;
+    }
     console.assert(!_.isUndefined(location) && (location === null || _.isPlainObject(location)), "location must be defined Object:", transaction);
-    if (location !== null) {
+    if (location) {
         const {latitude, longitude, locationRest} = location;
         console.assert(_.isNumber(latitude), "location.latitude must be Number:", transaction);
         console.assert(_.isNumber(longitude), "location.longitude must be Number:", transaction);
