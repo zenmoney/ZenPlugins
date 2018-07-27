@@ -192,7 +192,9 @@ export const isPossiblyTransfer = ({reference}) => {
     return reference !== "HOLD"
         && reference !== ""
         && !reference.startsWith("CASHIN")
-        && !reference.startsWith("AQ"); // AQ\d prefix is common for deposits creation/destroy/percentages, definitely NOT a transfer
+        // U\d{2}A, AQ\d prefixes are common for all deposits creation/destroy/percentages
+        && !reference.startsWith("U")
+        && !reference.startsWith("AQ");
 };
 
 function complementTransferSides(apiMovements) {
