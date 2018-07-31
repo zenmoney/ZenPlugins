@@ -76,7 +76,7 @@ export function convertTransactions(accountData, transactions) {
             payee: transaction.merchantName,
         };
         if (transaction.creditDebitIndicator)
-            tran.description = transaction.shortDescription;
+            tran.comment = transaction.shortDescription;
         if (transaction.mcc)
             tran.mcc = getMcc(transaction.mcc);
         return tran;
