@@ -83,7 +83,7 @@ export function convertTransactions(accountData, transactions) {
     });
 }
 
-function getMcc(code) {
+export function getMcc(code) {
     switch (code) {
         case "CAR":
             return 5542;
@@ -98,6 +98,8 @@ function getMcc(code) {
 
         case "HOBBY & LEISURE":
         case "HOME & GARDEN":
+        case "TRANSPORTATION":
+        case "TELECOMMUNICATION":
         case "OTHER":
             return null;
 
