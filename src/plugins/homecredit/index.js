@@ -15,8 +15,9 @@ export async function scrape({preferences, fromDate, toDate}) {
     // операции
     const transactions = _.flattenDeep(await Promise.all(accountsData.map(async account => convertTransactions(account, await HomeCredit.fetchTransactions(auth, account, fromDate, toDate)))));
 
+    const accounts = accountsData.map(account => account.account);
     return {
-        accounts: accountsData.map(account => account.account),
+        accounts: accounts ? accounts : [],
         transactions: transactions,
     };
 }

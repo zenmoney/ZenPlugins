@@ -1,4 +1,5 @@
 import {MD5} from "jshashes";
+import {parseStartDateString} from "../../common/adapters";
 import * as Network from "../../common/network";
 import _ from "lodash";
 
@@ -57,8 +58,11 @@ export async function login(preferences) {
 }
 
 async function registerDevice(auth, preferences){
-    console.log(">>> Регистрация устройства ============================================================");
+    const date = getFormatedDate(preferences.birth);
+    if (!date)
+        throw new InvalidPreferencesError("Параметр подключения 'День рождения' указан не верно")
 
+    console.log(">>> Регистрация устройства ============================================================");
     auth.device = md5.hex(auth.phone + "homecredit").substr(0, 16);
     let response = await fetchJson("Account/Register", {
         API: 3,
@@ -67,7 +71,7 @@ async function registerDevice(auth, preferences){
             "X-Device-Ident": auth.device,
         },
         body: {
-            "BirthDate": getFormatedDate(preferences.birth),
+            "BirthDate": date,
             "DeviceName": "samsung zen",
             "OsType": 1,
             "PhoneNumber": auth.phone,
@@ -333,14 +337,17 @@ function getErrorMessage(errors){
         return "";
 
     let message = errors[0];
-    _.forEach(errors, function(value, key) {
+    errors.forEach(function(value) {
         if (value.indexOf("повторите")<0) message = value;
     });
     return message;
 }
 
 function getFormatedDate(date){
-    if (date instanceof String && date.indexOf("-") > 0) return date;
-    const dt = date instanceof Date ? date : new Date(date);
-    return dt.getFullYear() + "-" + ("0" + (dt.getMonth() + 1)).slice(-2) + "-" + ("0" + dt.getDate()).slice(-2);
+    const dt = typeof date === "string" ? parseStartDateString(date) : date;
+    return isValidDate(dt) ? dt.getFullYear() + "-" + ("0" + (dt.getMonth() + 1)).slice(-2) + "-" + ("0" + dt.getDate()).slice(-2) : null;
+}
+
+function isValidDate(d) {
+    return d && d instanceof Date && !isNaN(d);
 }

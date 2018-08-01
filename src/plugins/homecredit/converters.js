@@ -2,6 +2,7 @@ export function convertAccount(accountData, type) {
     const resultData = {};
     switch (type) {
         case "CreditCard": resultData.account = convertCard(accountData); break;
+        case "CreditCardTW": resultData.account = convertCardTW(accountData); break;
         case "CreditLoan": resultData.account = convertLoan(accountData); break;
         default: resultData.account = null; break;
     }
@@ -9,7 +10,7 @@ export function convertAccount(accountData, type) {
     return resultData;
 }
 
-export function convertCard(accountData) {
+function convertCard(accountData) {
     return {
         id: accountData.account.ContractNumber,
         type: "ccard",
@@ -21,7 +22,19 @@ export function convertCard(accountData) {
     }
 }
 
-export function convertLoan(accountData) {
+function convertCardTW(accountData) {
+    return {
+        id: accountData.account.ContractNumber,
+        type: "ccard",
+        syncID: accountData.account.AccountNumber.substr(-4),
+        title: accountData.account.ProductName,
+        instrument: "RUB",
+        balance: Math.round((accountData.account.AvailableBalance - accountData.account.CreditLimit) * 100) / 100,
+        creditLimit: accountData.account.CreditLimit,
+    }
+}
+
+function convertLoan(accountData) {
     var res = {
         id: accountData.account.ContractNumber,
         type: "loan",
