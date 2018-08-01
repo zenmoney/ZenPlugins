@@ -421,12 +421,17 @@ function processAccounts() {
             };
 
             var algorithm = "";
-            // перерасход кредитного лимита
+            // A1: перерасход кредитного лимита
             if (parseDecimal(a.moneyAmount.value) === 0) {
                 acc2.balance = -a.debtAmount.value;
                 algorithm = "A1";
             }
-            // нет долга перед банком
+            // A3: нет долга перед банком
+            else if (a.moneyAmount.value > a.creditLimit.value) {
+                acc2.balance = a.moneyAmount.value - a.creditLimit.value;
+                algorithm = "A3";
+            }
+            // A2: нет долга перед банком
             else if (a.moneyAmount.value - a.authorizationsAmount.value > a.creditLimit.value) {
                 acc2.balance = parseDecimal(a.moneyAmount.value - a.creditLimit.value - a.authorizationsAmount.value);
                 algorithm = "A2";
@@ -1031,11 +1036,12 @@ function processTransactions(data) {
                 }
             }
 
-            /*// ключ дублей холд с акцептом через новую операцию и отменой холда
+            // ключ дублей холд с акцептом через новую операцию и отменой холда
             var tranKeyHold2 = tAccount + ":" + tran.date + ":" + (tran.payee ? tran.payee : "") + ":" + tranAmount;
             if (!tran.hold && tranDictHold2[tranKeyHold2]) {
                 // если за этот день тому же получателю уже был холд на ту же сумму, гасим его
-                ZenMoney.trace("Замещаем HOLD найденным акцептом: "+ tranDictHold2[tranKeyHold2].id +" => "+ tran.id);
+                ZenMoney.trace("Замещаем HOLD найденным акцептом: "+ tranDict[tranDictHold2[tranKeyHold2]].id +" => "+ tran.id);
+                tran.created = tranDict[tranDictHold[tranKeyHold]].created; // сохраним время холда, так как у акцепта его нет
                 tranDict[tranDictHold2[tranKeyHold2]] = tran;
                 delete(tranDictHold[tranKeyHold]);
                 delete(tranDictHold2[tranKeyHold2]);
@@ -1045,7 +1051,7 @@ function processTransactions(data) {
                 tranDict[tranKey] = tran;
                 tranDictHold[tranKeyHold] = tranKey;
                 if (tran.hold) tranDictHold2[tranKeyHold2] = tranKey;
-            }*/
+            }
 
             //ZenMoney.trace('Операция!!! ' + tranId);
             tranDict[tranKey] = tran;
@@ -1148,7 +1154,7 @@ function getJson(html) {
 
         // попытаемся представить, что это html
         if (/технические\s+работы/i.exec(html))
-            throw new ZenMoney.Error("Сервер банка сообщает о технических работах. Попробуйте повторить позднее.");
+            throw new ZenMoney.Error("Сервер банка сообщает о технических работах. Попробуйте повторить позднее.", true);
 
         throw new ZenMoney.Error("Сервер банка вернул ошибочные данные: " + e.message);
     }
