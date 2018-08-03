@@ -453,12 +453,15 @@ async function fetchXml(url, options = {}, predicate = () => true) {
             throw e;
         }
     }
-
+    if (response.body.status === "3" && !response.body.error) {
+        throw new TemporaryError("Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите \"Отправить лог последней синхронизации разработчикам\".");
+    }
     if (response.body.status !== "0"
             && response.body.error
             && response.body.error.indexOf("личный кабинет заблокирован") >= 0) {
         throw new InvalidPreferencesError(response.body.error);
     }
+
     if (predicate) {
         validateResponse(response, response => response.body.status === "0" && predicate(response));
     }
