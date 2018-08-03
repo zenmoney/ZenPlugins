@@ -974,6 +974,48 @@ describe("parsePfmDescription", () => {
     });
 });
 
+describe("convertPfmTransaction", () => {
+    it("returns null if card amount is invalid", () => {
+        expect(convertPfmTransaction({
+            id: 12885923514,
+            date: "28.07.2018T00:00:00",
+            comment: "AHABAH HAIR SPA          LIMASSOL     CY",
+            categoryId: 205,
+            categoryName: "Здоровье и красота",
+            hidden: false,
+            country: "CYP",
+            cardNumber: "4276 08** **** 8754",
+            cardAmount: { amount: "-1993.09", currency: "EUR" },
+            nationalAmount: { amount: "-1993.09", currency: "RUB" },
+            availableCategories: [
+                { id: 205, name: "Здоровье и красота" },
+                { id: 201, name: "Автомобиль" },
+                { id: 220, name: "Все для дома" },
+                { id: 203, name: "Выдача наличных" },
+                { id: 222, name: "Искусство" },
+                { id: 212, name: "Комиссия" },
+                { id: 204, name: "Коммунальные платежи, связь, интернет" },
+                { id: 207, name: "Образование" },
+                { id: 206, name: "Одежда и аксессуары" },
+                { id: 208, name: "Отдых и развлечения" },
+                { id: 8128, name: "Перевод во вне" },
+                { id: 1475, name: "Перевод между своими картами" },
+                { id: 228, name: "Перевод на вклад" },
+                { id: 202, name: "Перевод с карты" },
+                { id: 213, name: "Погашение кредитов" },
+                { id: 210, name: "Прочие расходы" },
+                { id: 219, name: "Путешествия" },
+                { id: 221, name: "Рестораны и кафе" },
+                { id: 209, name: "Супермаркеты" },
+                { id: 211, name: "Транспорт" },
+            ],
+            readOnly: false,
+            nfc: false,
+            isCommentEdited: false,
+        })).toBeNull();
+    });
+});
+
 describe("convertToZenMoneyTransaction", () => {
     it("converts income part of account -> card transfer", () => {
         const zenAccount = {id: "account", instrument: "RUB"};

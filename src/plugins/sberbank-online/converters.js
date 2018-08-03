@@ -143,6 +143,10 @@ export function convertApiTransaction(apiTransaction, zenAccount) {
 }
 
 export function convertPfmTransaction(pfmTransaction) {
+    if (pfmTransaction.cardAmount.currency !== pfmTransaction.nationalAmount.currency
+            && pfmTransaction.cardAmount.amount === pfmTransaction.nationalAmount.amount) {
+        return null;
+    }
     return {
         id: pfmTransaction.id.toFixed(0),
         date: parseApiDate(pfmTransaction.date),
