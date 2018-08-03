@@ -182,7 +182,12 @@ export async function login(login, pin, auth) {
         },
         sanitizeRequestLog: {body: {token: true}},
         sanitizeResponseLog: {body: {person: true}},
-    }, response => _.get(response, "body.loginCompleted") === "true");
+    }, null);
+    if (response.body && response.body.status === "3" && !response.body.error) {
+        throw new TemporaryError("Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите \"Отправить лог последней синхронизации разработчикам\".");
+    }
+    validateResponse(response, response => response.body.status === 0
+        && _.get(response, "body.loginCompleted") === "true");
 
     return {api: {token, host, cookie: getCookie(response)}};
 }
@@ -452,9 +457,6 @@ async function fetchXml(url, options = {}, predicate = () => true) {
         } else {
             throw e;
         }
-    }
-    if (response.body.status === "3" && !response.body.error) {
-        throw new TemporaryError("Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите \"Отправить лог последней синхронизации разработчикам\".");
     }
     if (response.body.status !== "0"
             && response.body.error
