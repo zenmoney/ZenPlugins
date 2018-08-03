@@ -186,7 +186,7 @@ export async function login(login, pin, auth) {
     if (response.body && response.body.status === "3" && !response.body.error) {
         throw new TemporaryError("Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите \"Отправить лог последней синхронизации разработчикам\".");
     }
-    validateResponse(response, response => response.body.status === 0
+    validateResponse(response, response => response.body.status === "0"
         && _.get(response, "body.loginCompleted") === "true");
 
     return {api: {token, host, cookie: getCookie(response)}};
