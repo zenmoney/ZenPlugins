@@ -3,6 +3,14 @@ import {ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId} from "../../common/a
 import {fetchAccounts, fetchTransactions, login} from "./api";
 import {convertAccount, convertTransaction} from "./converters";
 
+function isAccountReference(accountId) {
+    return accountId && [
+        "cash#",
+        "ccard#",
+        "checking#",
+    ].some(prefix => accountId.indexOf(prefix) === 0);
+}
+
 export async function scrape({preferences, fromDate, toDate, isInBackground}) {
     if (!toDate) {
         toDate = new Date();
@@ -26,11 +34,11 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
         });
     }));
     transactions.forEach(transaction => {
-        if (!accounts[transaction.incomeAccount]) {
+        if (!accounts[transaction.incomeAccount] && !isAccountReference(transaction.incomeAccount)) {
             transaction.income = 0;
             transaction.incomeAccount = transaction.outcomeAccount;
         }
-        if (!accounts[transaction.outcomeAccount]) {
+        if (!accounts[transaction.outcomeAccount] && !isAccountReference(transaction.outcomeAccount)) {
             transaction.outcome = 0;
             transaction.outcomeAccount = transaction.incomeAccount;
         }

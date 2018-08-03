@@ -8,8 +8,8 @@ const base64 = new Base64();
 const qs = require("querystring");
 
 const CLIENT_SECRET = "";
-const CLIENT_ID = "zenmoneyru";
-const REDIRECT_URI = "http://zenmoney.ru/callback/tinkoff/";
+const CLIENT_ID = "";
+const REDIRECT_URI = "";
 
 async function fetchJson(url, options = {}) {
     return await network.fetchJson(url, {
@@ -93,13 +93,14 @@ export async function login({accessToken, refreshToken, expirationDateMs} = {}) 
 }
 
 export async function fetchAccounts({accessToken}, {inn}) {
-    const response = await fetchJson(`https://sme-partner.tinkoff.ru/api/v1/partner/company/${inn}/account`, {
+    const response = await fetchJson(`https://sme-partner.tinkoff.ru/api/v1/partner/company/${inn}/accounts`, {
+        method: "GET",
         headers: {
             Host: "sme-partner.tinkoff.ru",
             Authorization: `Bearer ${accessToken}`,
         },
     });
-    return response.body.result;
+    return response.body;
 }
 
 function formatDate(date) {
@@ -113,10 +114,11 @@ export async function fetchTransactions({accessToken}, {inn}, {id}, fromDate, to
         + `accountNumber=${id}`
         + `&from=${encodeURIComponent(formatDate(fromDate))}`
         + `&till=${encodeURIComponent(formatDate(toDate))}`, {
+        method: "GET",
         headers: {
             Host: "sme-partner.tinkoff.ru",
             Authorization: `Bearer ${accessToken}`,
         },
     });
-    return response.body.result.operation;
+    return response.body.operation;
 }

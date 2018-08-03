@@ -19,6 +19,7 @@ describe("convertAccount", () => {
             title: "Мой счет",
             instrument: "RUB",
             balance: 54202.31,
+            syncID: ["40702810610000000179"],
         });
     });
 });
@@ -56,6 +57,7 @@ describe("convertTransaction", () => {
             outcomeAccount: "43310000000724",
             date: "2018-07-30",
             payee: null,
+            comment: null,
         });
     });
 });
