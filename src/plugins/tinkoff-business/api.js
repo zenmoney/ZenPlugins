@@ -75,7 +75,7 @@ export async function login({accessToken, refreshToken, expirationDateMs} = {}) 
         body = await fetchJson("https://sso.tinkoff.ru/secure/token", {
             headers: {
                 "Host": "sso.tinkoff.ru",
-                "Authorization": `Basic ${base64.hex(`${CLIENT_ID}:${CLIENT_SECRET}`)}`,
+                "Authorization": `Basic ${base64.encode(`${CLIENT_ID}:${CLIENT_SECRET}`)}`,
             },
             body: {
                 grant_type: "authorization_code",
