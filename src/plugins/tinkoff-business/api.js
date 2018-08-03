@@ -26,9 +26,6 @@ async function fetchJson(url, options = {}) {
 }
 
 export async function login({accessToken, refreshToken, expirationDateMs} = {}) {
-    if (!ZenMoney.openWebView) {
-        throw new TemporaryError("У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии.");
-    }
     let body;
     if (accessToken) {
         const expirationDate = new Date(expirationDateMs);
@@ -46,7 +43,7 @@ export async function login({accessToken, refreshToken, expirationDateMs} = {}) 
         } else {
             return arguments[0];
         }
-    } else {
+    } else if (ZenMoney.openWebView) {
         const {error, code} = await new Promise((resolve) => {
             const state = getUid(16);
             const redirectUriWithoutProtocol = REDIRECT_URI.replace(/^https?:\/\//i, "");
@@ -83,6 +80,8 @@ export async function login({accessToken, refreshToken, expirationDateMs} = {}) 
                 redirect_uri: REDIRECT_URI,
             },
         });
+    } else {
+        throw new TemporaryError("У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии.");
     }
     console.assert(body && body.access_token && body.refresh_token && body.expires_in, "non-successfull authorization", body);
     return {
