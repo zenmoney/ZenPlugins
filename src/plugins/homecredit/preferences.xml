@@ -31,7 +31,6 @@
             dialogTitle="4 цифры 3-го блока номера карты"
             dialogMessage="Введите 4 цифры 3-го блока номера карты для входа в интернет-банк"
             inputType="numberPassword"
-            summary="||****"
             negativeButtonText="Отмена"
             positiveButtonText="ОК"
             obligatory="false"
