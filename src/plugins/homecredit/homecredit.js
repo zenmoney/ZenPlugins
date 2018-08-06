@@ -101,7 +101,7 @@ export async function authBase(preferences) {
             "parameterTypes": ["cz.bsc.g6.components.usernamepasswordauthentication.json.services.api.mo.UsernamePasswordCredentialMo"],
         },
         headers: defaultMyCreditHeaders,
-        sanitizeRequestLog: { body: {arguments: {code: true, password: true, username: true}} },
+        sanitizeRequestLog: { body: {arguments: {"code": true, "password": true, "deviceID": true, "username": true}} },
     });
 
     // ERROR_LOGIN, BLOCK_USER_CODE
@@ -199,7 +199,7 @@ async function registerMyCreditDevice(auth, preferences){
             "Pin": (preferences.pin || "").trim(),
         },
         sanitizeRequestLog: {headers: {"X-Device-Ident": true, "X-Private-Key": true, "X-Phone-Number": true}, body: {Pin: true}},
-        sanitizeResponseLog: {headers: {"x-auth-token": true}},
+        sanitizeResponseLog: {headers: {"X-Auth-Token": true}},
     });
 
     const isValidPin = response.body.Result.IsPinValid;
@@ -286,7 +286,7 @@ export async function fetchMyCreditAccounts(auth) {
             "X-Auth-Token": auth.token,
         },
         sanitizeRequestLog: {headers: {"X-Device-Ident": true, "X-Private-Key": true, "X-Phone-Number": true, "X-Auth-Token": true}},
-        sanitizeResponseLog: {headers: {"x-auth-token": true}},
+        sanitizeResponseLog: {headers: {"X-Auth-Token": true}},
     });
 
     const fetchedAccounts = _.pick(response.body.Result, ["CreditCard", "CreditCardTW", "CreditLoan"]);
@@ -312,7 +312,7 @@ export async function fetchMyCreditAccounts(auth) {
             const account = fetchedAccounts.CreditLoan[key];
 
             console.log(`>>> Подгрузим информацию по кредиту '${account.ProductName}' [Мой кредит] --------`);
-            /*const response = await fetchJson("Payment/GetProductDetails", {
+            await fetchJson("Payment/GetProductDetails", {
                 headers: {
                     ...defaultMyCreditHeaders,
                     "X-Device-Ident": auth.device,
@@ -327,8 +327,8 @@ export async function fetchMyCreditAccounts(auth) {
                     ProductType: account.ProductType,
                 },
                 sanitizeRequestLog: {headers: {"X-Device-Ident": true, "X-Private-Key": true, "X-Phone-Number": true, "X-Auth-Token": true}},
-                sanitizeResponseLog: {headers: {"x-auth-token": true}},
-            });*/
+                sanitizeResponseLog: {headers: {"X-Auth-Token": true}},
+            });
 
             const response = await fetchJson("https://api-myc.homecredit.ru/api/v1/prepayment", {
                 headers: {
@@ -344,8 +344,8 @@ export async function fetchMyCreditAccounts(auth) {
                     "isEarlyRepayment": "False",
                     "isSingleContract": "True",
                 },
-                sanitizeRequestLog: {headers: {"x-device-ident": true, "x-private-key": true, "x-phone-number": true, "x-auth-token": true}},
-                sanitizeResponseLog: {headers: {"x-auth-token": true}},
+                sanitizeRequestLog: {headers: {"X-Device-Ident": true, "X-Private-Key": true, "X-Phone-Number": true, "X-Auth-Token": true}},
+                sanitizeResponseLog: {headers: {"X-Auth-Token": true}},
             });
 
             // добавим информацию о реалном остатке по кредиту
@@ -387,7 +387,7 @@ export async function fetchMyCreditTransactions(auth, accountData, fromDate, toD
             "toDate": getFormatedDate(toDate || new Date()),
         },
         sanitizeRequestLog: {headers: {"Authorization": true, "X-Device-Ident": true, "X-Private-Key": true, "X-Phone-Number": true, "X-Auth-Token": true}},
-        sanitizeResponseLog: {headers: {"x-auth-token": true}},
+        sanitizeResponseLog: {headers: {"X-Auth-Token": true}},
     });
     return response.body.values;
 }

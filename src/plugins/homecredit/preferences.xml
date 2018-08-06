@@ -3,37 +3,39 @@
 	<EditTextPreference
         key="login"
         summary="|Логин|{@s}"
-        title="Логин *"
+        title="Логин"
         dialogTitle="Логин"
         dialogMessage="Введите логин, используемый для входа в интернет-банк"
         negativeButtonText="Отмена"
         positiveButtonText="ОК"
         inputType="text"
-        obligatory="true"
+        obligatory="false"
     >
     </EditTextPreference>
     <EditTextPreference
         key="password"
         summary="||***********"
-        title="Пароль *"
+        title="Пароль"
         dialogTitle="Пароль"
         dialogMessage="Введите пароль, используемый для входа в интернет-банк"
         negativeButtonText="Отмена"
         positiveButtonText="ОК"
         inputType="textPassword"
-        obligatory="true"
+        obligatory="false"
     >
     </EditTextPreference>
     <EditTextPreference
             key="code"
             summary="|0000|{@s}"
-            title="4 цифры карты *"
+            title="4 цифры карты"
             dialogTitle="4 цифры 3-го блока номера карты"
             dialogMessage="Введите 4 цифры 3-го блока номера карты для входа в интернет-банк"
+            inputType="numberPassword"
+            summary="||****"
             negativeButtonText="Отмена"
             positiveButtonText="ОК"
             inputType="text"
-            obligatory="true"
+            obligatory="false"
     >
     </EditTextPreference>
     <EditTextPreference
@@ -46,7 +48,7 @@
             summary="|дд.мм.гггг|{@s}"
             positiveButtonText="ОК"
             negativeButtonText="Отмена"
-            obligatory="true">
+            obligatory="false">
     </EditTextPreference>
     <EditTextPreference
             key="phone"
@@ -58,7 +60,7 @@
             summary="|7xxxxxxxxxx|{@s}"
             positiveButtonText="ОК"
             negativeButtonText="Отмена"
-            obligatory="true">
+            obligatory="false">
     </EditTextPreference>
     <EditTextPreference
             key="pin"
@@ -70,7 +72,7 @@
             summary="||****"
             positiveButtonText="ОК"
             negativeButtonText="Отмена"
-            obligatory="true">
+            obligatory="false">
     </EditTextPreference>
     <EditTextPreference
             key="startDate"
