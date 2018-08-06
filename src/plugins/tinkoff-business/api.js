@@ -26,11 +26,11 @@ async function fetchJson(url, options = {}) {
 }
 
 export async function login({accessToken, refreshToken, expirationDateMs} = {}) {
-    let body;
+    let response;
     if (accessToken) {
         const expirationDate = new Date(expirationDateMs);
         if (expirationDate < new Date() + 60000) {
-            body = await fetchJson("https://sso.tinkoff.ru/secure/token", {
+            response = await fetchJson("https://sso.tinkoff.ru/secure/token", {
                 headers: {
                     "Host": "sso.tinkoff.ru",
                 },
@@ -69,7 +69,7 @@ export async function login({accessToken, refreshToken, expirationDateMs} = {}) 
             throw new TemporaryError("Не удалось пройти авторизацию в Тинькофф Бизнес. Попробуйте еще раз");
         }
         console.assert(code && !error, "non-successfull authorization", error);
-        body = await fetchJson("https://sso.tinkoff.ru/secure/token", {
+        response = await fetchJson("https://sso.tinkoff.ru/secure/token", {
             headers: {
                 "Host": "sso.tinkoff.ru",
                 "Authorization": `Basic ${base64.encode(`${CLIENT_ID}:${CLIENT_SECRET}`)}`,
@@ -83,11 +83,14 @@ export async function login({accessToken, refreshToken, expirationDateMs} = {}) 
     } else {
         throw new TemporaryError("У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии.");
     }
-    console.assert(body && body.access_token && body.refresh_token && body.expires_in, "non-successfull authorization", body);
+    console.assert(response.body
+        && response.body.access_token
+        && response.body.refresh_token
+        && response.body.expires_in, "non-successfull authorization", response);
     return {
-        accessToken: body.access_token,
-        refreshToken: body.refresh_token,
-        expirationDateMs: new Date().getTime() + body.expires_in * 1000,
+        accessToken: response.body.access_token,
+        refreshToken: response.body.refresh_token,
+        expirationDateMs: new Date().getTime() + response.body.expires_in * 1000,
     };
 }
 

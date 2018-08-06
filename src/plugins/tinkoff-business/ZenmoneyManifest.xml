@@ -2,7 +2,7 @@
 <provider>
     <id>tinkoff-business</id>
     <version>1.0</version>
-    <build>1</build>
+    <build>2</build>
     <company>15572</company>
     <modular>true</modular>
     <codeRequired>false</codeRequired>
