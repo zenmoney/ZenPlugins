@@ -1,3 +1,4 @@
+import _ from "lodash";
 import React from "react";
 import ReactDOM from "react-dom";
 import {fetchJson} from "./common/network";
@@ -46,6 +47,20 @@ window.dev = {
     },
 };
 
+function fulfillPreferences(rawPreferences, preferencesSchema) {
+    const missingObligatoryPreferenceItems = preferencesSchema
+        .filter((x) => x.obligatory && !rawPreferences.hasOwnProperty(x.key));
+    const fulfilledPreferences = missingObligatoryPreferenceItems.reduce((extension, {key, defaultValue}) => {
+        const value = prompt(`Let's fill preferences\n(located inside PLUGIN_PATH/zp_preferences.json)\n${key}:`, defaultValue);
+        if (value === null) {
+            throw new Error(`preferences.${key} must be provided`);
+        }
+        extension[key] = value;
+        return extension;
+    }, {});
+    return {...rawPreferences, ...fulfilledPreferences};
+}
+
 async function init() {
     const canStartScrape = Promise.race([
         waitForOpenDevtools(),
@@ -67,13 +82,21 @@ async function init() {
         window.__worker__ = worker; // prevents worker GC - allows setting breakpoints after worker ends execution
 
         setState((state) => ({...state, workflowState: ":workflow-state/loading-assets"}));
-        const [preferences, manifest, data] = await Promise.all([
+        let [rawPreferences, preferencesSchema, manifest, data] = await Promise.all([
             pickSuccessfulBody(fetchJson("/zen/zp_preferences.json", {log: false})),
+            pickSuccessfulBody(fetchJson("/zen/zp_preferences.json/schema", {log: false})),
             pickSuccessfulBody(fetchJson("/zen/manifest", {log: false})),
             pickSuccessfulBody(fetchJson("/zen/zp_data.json", {log: false})),
         ]);
         document.title = `[${manifest.id}] ${document.title}`;
 
+        setState((state) => ({...state, workflowState: ":workflow-state/filling-preferences"}));
+        await new Promise((resolve) => setTimeout(resolve, 1));
+
+        const preferences = fulfillPreferences(rawPreferences, preferencesSchema);
+        if (!_.isEqual(preferences, rawPreferences)) {
+            await fetchJson("/zen/zp_preferences.json", {method: "POST", body: preferences});
+        }
         setState((state) => ({...state, workflowState: ":workflow-state/waiting"}));
         await canStartScrape;
         setState((state) => ({...state, workflowState: ":workflow-state/scraping", scrapeState: ":scrape-state/starting"}));
@@ -111,7 +134,12 @@ async function init() {
             setState((state) => ({...state, persistPluginDataState: ":persist-plugin-data-state/dismiss"}));
         }
     } catch (error) {
-        setState((state) => ({...state, scrapeState: ":scrape-state/error", scrapeError: error}));
+        setState((state) => ({
+            ...state,
+            workflowState: ":workflow-state/none",
+            scrapeState: ":scrape-state/error",
+            scrapeError: error,
+        }));
         throw error;
     }
 
