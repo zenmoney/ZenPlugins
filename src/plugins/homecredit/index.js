@@ -1,23 +1,78 @@
 import * as HomeCredit from "./homecredit";
-import {convertAccount, convertTransactions} from "./converters";
+import * as Converters from "./converters";
 import _ from "lodash";
 
 export async function scrape({preferences, fromDate, toDate}) {
-    const auth = await HomeCredit.login(preferences);
-    const fetchedAccounts = await HomeCredit.fetchAccounts(auth);
-    console.log(">>> Полученные счета", fetchedAccounts);
 
-    // счета
-    let accountsData = _.flattenDeep(await Promise.all(Object.keys(fetchedAccounts).map(type => {
-        return Promise.all(fetchedAccounts[type].map(async account => convertAccount(await HomeCredit.fetchDetails(auth, account, type), type)));
-    })));
+    let accountsData = [];
+    let transactions = [];
 
-    // операции
-    const transactions = _.flattenDeep(await Promise.all(accountsData.map(async account => convertTransactions(account, await HomeCredit.fetchTransactions(auth, account, fromDate, toDate)))));
+    if (preferences.login && preferences.password && preferences.code) {
+        // Авторизация в базовом приложении банка
+        await HomeCredit.authBase(preferences);
+        const fetchedAccounts = await HomeCredit.fetchBaseAccounts();
 
-    const accounts = accountsData.map(account => account.account);
+        if (fetchedAccounts.credits) {
+            console.log(">>> Обнаружены кредиты, необходима синхронизация через приложение 'Мой кредит'");
+            if (!preferences.birth || !preferences.phone || !preferences.pin) {
+                console.log(">>> Подключение к 'Мой кредит' не настроено. Кредиты пропускаем.");
+                delete fetchedAccounts.credits;
+            } else {
+                // Авторизация в приложении "Мой кредит" (необходимы данные по кредитам)
+                const auth = await HomeCredit.authMyCredit(preferences);
+                const fetchedMyCreditAccounts = await HomeCredit.fetchMyCreditAccounts(auth);
+                fetchedAccounts.credits.forEach(function(account) {
+                    const loan = getLoan(fetchedMyCreditAccounts.CreditLoan, account.contractNumber);
+                    account.AccountNumber = loan.AccountNumber;
+                    account.DateSign = loan.DateSign;
+                    account.CreditAmount = loan.CreditAmount;
+                    account.Contract = {Properties: { PaymentNum: loan.Contract.Properties.PaymentNum }};
+                    account.RepaymentAmount = loan.RepaymentAmount;
+                    account.AccountBalance = loan.AccountBalance;
+                })
+            }
+        }
+
+        accountsData = await Promise.all(Object.keys(fetchedAccounts).map(async type => {
+            return Promise.all(fetchedAccounts[type].map(async account => Converters.convertAccount(account, type)));
+        }));
+
+        transactions = _.flattenDeep(await Promise.all(Object.keys(accountsData).map(async type => {
+            return Promise.all(accountsData[type].map(async accountData =>
+                Converters.convertTransactions(accountData, await HomeCredit.fetchBaseTransactions(accountData, accountData.details.type, fromDate, toDate))))
+        })));
+
+        accountsData = _.flattenDeep(accountsData);
+
+    } else {
+        // Авторизация в приложении "Мой кредит"
+        if (!preferences.birth || !preferences.phone || !preferences.pin) {
+            throw new InvalidPreferencesError("Необходимо заполнить параметры подключения к банку хотя бы для одного из способов авторизации");
+        }
+
+        const auth = await HomeCredit.authMyCredit(preferences);
+        const fetchedAccounts = await HomeCredit.fetchMyCreditAccounts(auth);
+
+        // счета
+        accountsData = _.flattenDeep(await Promise.all(Object.keys(fetchedAccounts).map(type => {
+            return Promise.all(fetchedAccounts[type].map(async account => Converters.convertAccount(account, type)));
+        })));
+
+        transactions = _.flattenDeep(await Promise.all(accountsData.map(async accountData => Converters.convertTransactions(accountData, await HomeCredit.fetchMyCreditTransactions(auth, accountData, fromDate, toDate)))));
+    }
+
+    let accounts = accountsData.map(account => account.account);
     return {
-        accounts: accounts ? accounts : [],
+        accounts: accounts,
         transactions: transactions,
     };
+}
+
+function getLoan(loans, contractNumber) {
+    let result;
+    loans.forEach(function(loan) {
+        if (loan.ContractNumber === contractNumber)
+            result = loan;
+    });
+    return result;
 }

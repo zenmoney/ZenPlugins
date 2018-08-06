@@ -1,10 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen>
+	<EditTextPreference
+        key="login"
+        summary="|Логин|{@s}"
+        title="Логин *"
+        dialogTitle="Логин"
+        dialogMessage="Введите логин, используемый для входа в интернет-банк"
+        negativeButtonText="Отмена"
+        positiveButtonText="ОК"
+        inputType="text"
+        obligatory="true"
+    >
+    </EditTextPreference>
+    <EditTextPreference
+        key="password"
+        summary="||***********"
+        title="Пароль *"
+        dialogTitle="Пароль"
+        dialogMessage="Введите пароль, используемый для входа в интернет-банк"
+        negativeButtonText="Отмена"
+        positiveButtonText="ОК"
+        inputType="textPassword"
+        obligatory="true"
+    >
+    </EditTextPreference>
+    <EditTextPreference
+            key="code"
+            summary="|0000|{@s}"
+            title="4 цифры карты *"
+            dialogTitle="4 цифры 3-го блока номера карты"
+            dialogMessage="Введите 4 цифры 3-го блока номера карты для входа в интернет-банк"
+            negativeButtonText="Отмена"
+            positiveButtonText="ОК"
+            inputType="text"
+            obligatory="true"
+    >
+    </EditTextPreference>
     <EditTextPreference
             key="birth"
             title="Дата рождения"
             dialogTitle="Дата рождения"
-            dialogMessage="Формат: дд.мм.гггг"
+            dialogMessage="Введите дату рождения для входа в 'Мой кредит'
+Формат: дд.мм.гггг"
             inputType="text"
             summary="|дд.мм.гггг|{@s}"
             positiveButtonText="ОК"
@@ -15,7 +52,8 @@
             key="phone"
             title="Номер телефона"
             dialogTitle="Номер телефона"
-            dialogMessage="Формат: 7хххххххххх"
+            dialogMessage="Введите номер телефона для входа в 'Мой кредит'
+Формат: 7хххххххххх"
 			inputType="number"
             summary="|7xxxxxxxxxx|{@s}"
             positiveButtonText="ОК"
@@ -26,7 +64,8 @@
             key="pin"
             title="Пин-код"
             dialogTitle="ПИН-код приложения 'Мой кредит'"
-            dialogMessage="Формат: 4 цифры."
+            dialogMessage="Введите пин-код для входа в 'Мой кредит'
+Формат: 4 цифры."
             inputType="numberPassword"
             summary="||****"
             positiveButtonText="ОК"
