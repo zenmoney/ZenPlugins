@@ -1,4 +1,5 @@
 import _ from "lodash";
+import {InvalidPreferencesError, TemporaryError, ZPAPIError} from "../errors";
 import {isValidDate} from "./dates";
 import {sanitize} from "./sanitize";
 
@@ -109,6 +110,33 @@ function castTransactionDatesToTicks(transactions) {
         : transaction);
 }
 
+function getPresentationError(error) {
+    const meaningfulError = error && error.message
+        ? error
+        : new Error("Thrown error must be an object containing message field, but was: " + JSON.stringify(error));
+    if (meaningfulError instanceof ZPAPIError) {
+        return meaningfulError;
+    } else {
+        meaningfulError.message = "[RUE] " + meaningfulError.message;
+        return meaningfulError;
+    }
+}
+
+function augmentErrorWithDevelopmentHints(error) {
+    if (ZenMoney.runtime === "browser") {
+        if (error instanceof InvalidPreferencesError) {
+            error.message += "\nInvalidPreferencesError: user will be forced into preferences screen and will see the message above on production UI without [Send log] button.";
+        } else if (error instanceof TemporaryError) {
+            error.message += "\n(TemporaryError: the message above will be displayed on production UI without [Send log] button)";
+        } else if (error instanceof ZPAPIError) {
+            error.message += "\n(The message above will be displayed on production UI with [Send log] button)";
+        } else {
+            error.message += "\n(The message above will never be displayed on production UI; use TemporaryError or InvalidPreferencesError if you want to show meaningful message to user)";
+        }
+    }
+    return error;
+}
+
 export function adaptScrapeToGlobalApi(scrape) {
     console.assert(typeof scrape === "function", "argument must be function");
 
@@ -140,14 +168,12 @@ export function adaptScrapeToGlobalApi(scrape) {
 
         const {state, value} = unsealSyncPromise(resultHandled);
         if (state === "rejected") {
-            throw value;
+            throw augmentErrorWithDevelopmentHints(getPresentationError(value));
         } else if (state === "pending") {
-            resultHandled.catch((e) =>
-                ZenMoney.setResult(
-                    e && e.message
-                        ? e
-                        : {message: "Thrown error must be an object containing message field, but was: " + JSON.stringify(e)},
-                ));
+            resultHandled.catch((e) => {
+                const error = augmentErrorWithDevelopmentHints(getPresentationError(e));
+                ZenMoney.setResult(error);
+            });
         }
     };
 }

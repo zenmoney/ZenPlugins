@@ -100,7 +100,7 @@ describe("adaptScrapeToGlobalApi", () => {
                 setResult: resolve,
             };
             adaptScrapeToGlobalApi(() => Promise.resolve())();
-        })).resolves.toMatchObject({message: "scrape() did not return anything"});
+        })).resolves.toMatchObject({message: "[RUE] scrape() did not return anything"});
     });
 
     it("should check promise result array is not empty", () => {
@@ -110,7 +110,7 @@ describe("adaptScrapeToGlobalApi", () => {
                 setResult: resolve,
             };
             adaptScrapeToGlobalApi(() => Promise.resolve([]))();
-        })).resolves.toMatchObject({message: "scrape results are empty"});
+        })).resolves.toMatchObject({message: "[RUE] scrape results are empty"});
     });
 
     [
@@ -124,7 +124,7 @@ describe("adaptScrapeToGlobalApi", () => {
                     setResult: resolve,
                 };
                 adaptScrapeToGlobalApi(() => Promise.resolve([invalidResultItem]))();
-            })).resolves.toMatchObject({message: "scrape result should be array of {account, transactions[]}"});
+            })).resolves.toMatchObject({message: "[RUE] scrape result should be array of {account, transactions[]}"});
         });
     });
 });
