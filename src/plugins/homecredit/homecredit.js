@@ -229,19 +229,19 @@ export async function fetchBaseAccounts() {
     const fetchedAccounts = {};
     ["creditCards", "credits", "debitCards", "deposits", "merchantCards"].forEach(function(key) {
         if (!response.body.hasOwnProperty(key) || !response.body[key].list || response.body[key].list.length === 0) return;
-        const list = response.body[key].list;
-        _.remove(list, function(elem) {
-            if (elem.contractStatus !== "Действующий") {
-                console.log(`>>> Счёт '${elem.ProductName}' не активен. Пропускаем...`);
-                return true;
+        let list = [];
+        response.body[key].list.forEach(function(elem) {
+            if (_.includes(["Действующий", "Active"], elem.contractStatus) === false) {
+                console.log(`>>> Счёт '${elem.productName}' не активен. Пропускаем...`);
+                return;
             }
-            if (ZenMoney.isAccountSkipped(elem.ContractNumber)) {
-                console.log(`>>> Счёт "${elem.ProductName}" в списке игнорируемых. Пропускаем...`);
-                return true;
+            if (ZenMoney.isAccountSkipped(elem.contractNumber)) {
+                console.log(`>>> Счёт "${elem.productName}" в списке игнорируемых. Пропускаем...`);
+                return;
             }
-            return false;
+            list.push(elem)
         });
-        if (response.body[key].list.length === 0) return;
+        if (list.length === 0) return;
         fetchedAccounts[key] = list;
     });
 

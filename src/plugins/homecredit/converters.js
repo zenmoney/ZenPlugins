@@ -55,8 +55,11 @@ function convertCard(account) {
     if (creditLimit) {
         result.creditLimit = creditLimit;
         result.balance = Math.round((availableBalance - creditLimit) * 100) / 100;
-    } else
+    } else if (availableBalance) {
         result.balance = availableBalance;
+    } else {
+        result.balance = 0;
+    }
     return result;
 }
 

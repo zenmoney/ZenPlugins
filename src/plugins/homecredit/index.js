@@ -44,6 +44,28 @@ export async function scrape({preferences, fromDate, toDate}) {
 
         accountsData = _.flattenDeep(accountsData);
 
+        let tmpAccountsData = {};
+        accountsData.forEach(function(a) {
+            if (tmpAccountsData.hasOwnProperty(a.account.id)) {
+                tmpAccountsData[a.account.id].account.syncID.push(a.account.syncID)
+            } else {
+                if (typeof a.account.syncID === "string") {
+                    a.account.syncID = [
+                        a.account.syncID,
+                    ]
+                }
+                tmpAccountsData[a.account.id] = a;
+            }
+        });
+        accountsData = Object.values(tmpAccountsData);
+
+        let tmpTransactions = {};
+        transactions.forEach(function(t) {
+            if (!tmpTransactions.hasOwnProperty(t.id)) {
+                tmpTransactions[t.id] = t
+            }
+        });
+        transactions = Object.values(tmpTransactions);
     } else {
         // Авторизация в приложении "Мой кредит"
         if (!preferences.birth || !preferences.phone || !preferences.pin) {
