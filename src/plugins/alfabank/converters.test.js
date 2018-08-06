@@ -1,6 +1,7 @@
 import {
     convertApiAccountsToAccountTuples,
     convertApiMovementsToReadableTransactions,
+    extractDate,
     normalizeIsoDate,
     parseApiMovementDescription,
     toZenmoneyAccount,
@@ -111,6 +112,15 @@ test("normalizeIsoDate normalizes isoDate for JavaScriptCore new Date(isoDate)",
     expect(normalizeIsoDate("2017-12-01T12:00:00.000+0300")).toEqual("2017-12-01T12:00:00.000+03:00");
     expect(normalizeIsoDate("2017-12-01T12:00:00.000Z")).toEqual("2017-12-01T12:00:00.000Z");
     expect(normalizeIsoDate("2017-12-01T12:00:00.000-0550")).toEqual("2017-12-01T12:00:00.000-05:50");
+});
+
+test("extractDate uses executeTimeStamp (if it's present and less than createDate) to ensure the same date is passed in hold/non-hold", () => {
+    expect(extractDate({createDate: "2018-06-18T12:00:00.000+0300"}))
+        .toEqual(new Date("2018-06-18T12:00:00.000+0300"));
+    expect(extractDate({createDate: "2018-06-18T12:00:00.000+0300", executeTimeStamp: "2018-06-19T00:42:47.402+0300"}))
+        .toEqual(new Date("2018-06-18T12:00:00.000+0300"));
+    expect(extractDate({createDate: "2018-06-20T12:00:00.000+0300", executeTimeStamp: "2018-06-19T00:42:47.402+0300"}))
+        .toEqual(new Date("2018-06-19T00:42:47.402+0300"));
 });
 
 describe("convertApiMovementsToReadableTransactions", () => {

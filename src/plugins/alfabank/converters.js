@@ -24,7 +24,12 @@ function convertCreditApiAccount(apiAccount) {
             available: parseApiAmount(trimPostfix(availableWithInstrument, instrumentPostfix)),
             creditLimit: parseApiAmount(trimPostfix(creditLimitWithInstrument, instrumentPostfix)),
         };
-    } else if (typeWithDashAndInstrument.startsWith("Кредит наличными") || typeWithDashAndInstrument.startsWith("Потребительский кредит") || typeWithDashAndInstrument.startsWith("Ипотечный кредит")) {
+    } else if (
+        typeWithDashAndInstrument.startsWith("Кредит наличными") ||
+        typeWithDashAndInstrument.startsWith("Потребительский кредит") ||
+        typeWithDashAndInstrument.startsWith("Ипотечный кредит") ||
+        typeWithDashAndInstrument.startsWith("Бизнес - кредит")
+    ) {
         return {
             startBalance: 0,
             balance: parseApiAmount(apiAccount.amount),
@@ -138,6 +143,17 @@ function findMovementAccountTuple(apiMovement, accountTuples) {
 
 export const normalizeIsoDate = (isoDate) => isoDate.replace(/([+-])(\d{2})(\d{2})$/, "$1$2:$3");
 
+export const extractDate = (apiMovement) => {
+    const created = new Date(normalizeIsoDate(apiMovement.createDate));
+    if (apiMovement.executeTimeStamp) {
+        const executed = new Date(normalizeIsoDate(apiMovement.executeTimeStamp));
+        return executed < created
+            ? executed
+            : created;
+    }
+    return created;
+};
+
 function convertApiMovementToReadableTransaction(apiMovement, accountId) {
     const posted = {amount: parseApiAmount(apiMovement.amount), instrument: apiMovement.currency};
     const {mcc, origin} = parseApiMovementDescription(apiMovement.description, Math.sign(posted.amount));
@@ -145,7 +161,7 @@ function convertApiMovementToReadableTransaction(apiMovement, accountId) {
         type: "transaction",
         id: apiMovement.key,
         account: {id: accountId},
-        date: new Date(normalizeIsoDate(apiMovement.createDate)),
+        date: extractDate(apiMovement),
         hold: apiMovement.hold,
         posted,
         origin,
@@ -172,11 +188,13 @@ const neverLosingDataMergeCustomizer = function(valueInA, valueInB, key, objA, o
     }
 };
 
-const isPossiblyTransfer = ({reference}) => {
+export const isPossiblyTransfer = ({reference}) => {
     return reference !== "HOLD"
         && reference !== ""
         && !reference.startsWith("CASHIN")
-        && !reference.startsWith("AQ"); // AQ\d prefix is common for deposits creation/destroy/percentages, definitely NOT a transfer
+        // U\d{2}A, AQ\d prefixes are common for all deposits creation/destroy/percentages
+        && !reference.startsWith("U")
+        && !reference.startsWith("AQ");
 };
 
 function complementTransferSides(apiMovements) {
@@ -191,7 +209,8 @@ function complementTransferSides(apiMovements) {
         }
         const senderInfo = _.mergeWith({}, ...relatedMovements.map((x) => x.senderInfo), neverLosingDataMergeCustomizer);
         const recipientInfo = _.mergeWith({}, ...relatedMovements.map((x) => x.recipientInfo), neverLosingDataMergeCustomizer);
-        return {...apiMovement, senderInfo, recipientInfo};
+        const executeTimeStamp = relatedMovements.map((x) => x.executeTimeStamp).find(Boolean);
+        return {...apiMovement, executeTimeStamp, senderInfo, recipientInfo};
     });
 }
 

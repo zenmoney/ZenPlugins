@@ -1,5 +1,6 @@
 import * as _ from "lodash";
 import {toAtLeastTwoDigitsString} from "../../common/dates";
+const moment = require("moment");
 
 export function parseApiDate(str) {
     const parts = str.substring(0, 10).split(".");
@@ -103,7 +104,8 @@ export function parsePfmDescription(description) {
     if (description) {
         description = description
             .replace("VKLAD-KAR ", "VKLAD-KARTA   ")
-            .replace("KARTA-VKL ", "KARTA-VKLAD   ");
+            .replace("KARTA-VKL ", "KARTA-VKLAD   ")
+            .replace("ROSTOV-NA-DO", "   ROSTOV-NA-DO");
     }
     const commentParts = description ? description.split("  ") : null;
     let payee = null;
@@ -141,6 +143,10 @@ export function convertApiTransaction(apiTransaction, zenAccount) {
 }
 
 export function convertPfmTransaction(pfmTransaction) {
+    if (pfmTransaction.cardAmount.currency !== pfmTransaction.nationalAmount.currency
+            && pfmTransaction.cardAmount.amount === pfmTransaction.nationalAmount.amount) {
+        return null;
+    }
     return {
         id: pfmTransaction.id.toFixed(0),
         date: parseApiDate(pfmTransaction.date),
@@ -204,11 +210,14 @@ export function addTransactions(oldTransactions, newTransactions, isWebTransacti
                 } else {
                     const oldDate = oldTransaction.date.getTime();
                     const newDate = newTransaction.date.getTime();
-                    if (Math.abs(oldDate - newDate) > 60000) {
+                    if (Math.abs(oldDate - newDate) > 90000) {
                         continue;
                     }
                 }
-                if (newTransaction.payee !== oldTransaction.payee) {
+                if (newTransaction.payee !== oldTransaction.payee && (isWebTransaction
+                        || !(oldTransaction.payee && !newTransaction.payee
+                            && newTransaction.description
+                            && newTransaction.description.indexOf(oldTransaction.payee) === 0))) {
                     continue;
                 }
                 if (isWebTransaction && oldTransaction.origin && !oldTransaction.posted
@@ -222,7 +231,8 @@ export function addTransactions(oldTransactions, newTransactions, isWebTransacti
                             || (!oldTransaction.posted && (newTransaction.posted.instrument !== oldTransaction.origin.instrument
                                  || newTransaction.posted.amount === oldTransaction.origin.amount)))) {
                     let origin = null;
-                    let description = oldTransaction.description;
+                    const description = oldTransaction.description;
+                    const payee = oldTransaction.payee;
                     if (oldTransaction.origin && newTransaction.posted.instrument !== oldTransaction.origin.instrument) {
                         origin = oldTransaction.origin;
                     }
@@ -237,6 +247,9 @@ export function addTransactions(oldTransactions, newTransactions, isWebTransacti
                     }
                     if (description) {
                         oldTransaction.description = description;
+                    }
+                    if (payee && !oldTransaction.payee) {
+                        oldTransaction.payee = payee;
                     }
                     i++;
                     continue l;
@@ -354,8 +367,16 @@ export function convertCards(apiCardsArray, nowDate = new Date()) {
     for (const apiCard of apiCardsArray) {
         if (apiCard.account.state !== "active"
                 || (apiCard.account.statusWay4 !== "+-КАРТОЧКА ОТКРЫТА"
-                && apiCard.account.statusWay4 !== "K-ДЕЙСТ.ПРИОСТАНОВЛЕНО")
+                && apiCard.account.statusWay4 !== "K-ДЕЙСТ.ПРИОСТАНОВЛЕНО"
+                && apiCard.account.statusWay4 !== "X-ПЕРЕВЫП., НЕ ВЫДАНА")
                 || parseExpireDate(apiCard.account.expireDate) < minExpireDate) {
+            continue;
+        }
+        if (apiCard.account.statusWay4 === "X-ПЕРЕВЫП., НЕ ВЫДАНА"
+                && (parseDecimal(apiCard.account.availableLimit.amount) <= 0
+                || (apiCard.account.type === "credit"
+                    && parseDecimal(apiCard.details.detail.creditType.limit.amount) ===
+                       parseDecimal(apiCard.account.availableLimit.amount)))) {
             continue;
         }
         if (apiCard.account.mainCardId) {
@@ -440,7 +461,15 @@ export function convertLoan(apiLoan, details) {
         payoffStep: 1,
         payoffInterval: "month",
     };
-    parseDuration(details.detail.termDuration, zenAccount);
+    if (details.detail.termDuration) {
+        parseDuration(details.detail.termDuration, zenAccount);
+    } else {
+        const {interval, count} = getIntervalBetweenDates(
+            parseDate(details.detail.termStart),
+            parseDate(details.detail.termEnd), ["year", "month"]);
+        zenAccount.endDateOffset = count;
+        zenAccount.endDateOffsetInterval = interval;
+    }
     return {
         ids: [apiLoan.id],
         type: "loan",
@@ -486,6 +515,17 @@ function parseDuration(duration, account) {
         account.endDateOffsetInterval = "day";
         account.endDateOffset = parts[0] * 365 + parts[1] * 30 + parts[2];
     }
+}
+
+export function getIntervalBetweenDates(fromDate, toDate, intervals = ["year", "month", "day"]) {
+    for (let i = 0; i < intervals.length; i++) {
+        const interval = intervals[i];
+        const count = moment(toDate).diff(moment(fromDate), interval, i < intervals.length - 1);
+        if (_.isInteger(count)) {
+            return {interval, count};
+        }
+    }
+    throw new Error(`could not calculate interval between dates ${fromDate} ${toDate}`);
 }
 
 export function parseDecimal(str) {

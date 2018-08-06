@@ -182,7 +182,12 @@ export async function login(login, pin, auth) {
         },
         sanitizeRequestLog: {body: {token: true}},
         sanitizeResponseLog: {body: {person: true}},
-    }, response => _.get(response, "body.loginCompleted") === "true");
+    }, null);
+    if (response.body && response.body.status === "3" && !response.body.error) {
+        throw new TemporaryError("Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите \"Отправить лог последней синхронизации разработчикам\".");
+    }
+    validateResponse(response, response => response.body.status === "0"
+        && _.get(response, "body.loginCompleted") === "true");
 
     return {api: {token, host, cookie: getCookie(response)}};
 }
@@ -246,6 +251,12 @@ export async function loginInPfm(auth) {
         } else {
             throw e;
         }
+    }
+    if (response.body && response.body.errors
+            && response.body.errors[0]
+            && response.body.errors[0].desc
+            && response.body.errors[0].desc.indexOf("не удалось загрузить из config-factory.xml") >= 0) {
+        return {...auth, pfm: null};
     }
     return {...auth, pfm: {host, cookie: getCookie(response)}};
 }
@@ -340,7 +351,8 @@ async function fetchAccountDetails(auth, {id, type}) {
             "Cookie": auth.api.cookie,
         },
         body: {id: id},
-    }, response => _.get(response, "body.detail"));
+    }, null);
+    validateResponse(response, response => _.get(response, "body.detail"));
     return response.body;
 }
 
@@ -446,12 +458,12 @@ async function fetchXml(url, options = {}, predicate = () => true) {
             throw e;
         }
     }
-
     if (response.body.status !== "0"
             && response.body.error
             && response.body.error.indexOf("личный кабинет заблокирован") >= 0) {
         throw new InvalidPreferencesError(response.body.error);
     }
+
     if (predicate) {
         validateResponse(response, response => response.body.status === "0" && predicate(response));
     }

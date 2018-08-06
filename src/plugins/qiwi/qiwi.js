@@ -48,14 +48,25 @@ export async function fetchAccounts({token, walletId}) {
 
 export async function fetchTransactions({token, walletId}, fromDate, toDate) {
     toDate = toDate || new Date();
-    return fetchTransactionPaged({token, walletId}, fromDate, toDate);
+    const apiTransactions = [];
+    let nextTxnDate;
+    let nextTxnId;
+    do {
+        const response = await fetchTransactionPaged({token, walletId}, fromDate, toDate);
+        nextTxnDate = response.body.nextTxnDate;
+        nextTxnId = response.body.nextTxnId;
+        if (response.body.data.length > 0) {
+            apiTransactions.push(...response.body.data);
+        }
+    } while (nextTxnId && nextTxnDate);
+    return apiTransactions;
 }
 
-async function fetchTransactionPaged({token, walletId}, fromDate, toDate) {
-    const response = await fetchJson(
+async function fetchTransactionPaged({token, walletId}, fromDate, toDate, nextTxnId, nextTxnDate) {
+    return fetchJson(
         `https://edge.qiwi.com/payment-history/v2/persons/${walletId}/payments?rows=50`
         + `&startDate=${encodeURIComponent(formatDate(fromDate))}`
-        + (toDate ? `&endDate=${encodeURIComponent(formatDate(toDate))}` : ""),
+        + (toDate ? `&endDate=${encodeURIComponent(formatDate(toDate))}` : "")
+        + (nextTxnDate && nextTxnId ? `&nextTxnDate=${encodeURIComponent(nextTxnDate)}&nextTxnId=${nextTxnId}` : ""),
         {token});
-    return response.body.data;
 }

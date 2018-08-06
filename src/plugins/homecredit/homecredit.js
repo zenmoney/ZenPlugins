@@ -1,4 +1,5 @@
 import {MD5} from "jshashes";
+import {parseStartDateString} from "../../common/adapters";
 import * as Network from "../../common/network";
 import _ from "lodash";
 
@@ -10,18 +11,14 @@ const defaultHeaders = {
     "Host": "mob.homecredit.ru",
 };
 
-/*let device;
-let key;
-let token;
-let phone;*/
 export async function login(preferences) {
-    console.log(">>> Авторизация...");
     const auth = ZenMoney.getData("auth", null) || {};
     if (!auth || !auth.device || !auth.key || !auth.token || !auth.phone) {
         auth.phone = (preferences.phone || "").trim();
         return registerDevice(auth, preferences);
     }
 
+    console.log(">>> Авторизация =====================================================================");
     let response = await fetchJson("Pin/CheckUserPin", {
         API: 3,
         ignoreErrors: true,
@@ -45,6 +42,12 @@ export async function login(preferences) {
         return;
     }
 
+    if (response.body.StatusCode !== 200) {
+        console.log("Нужна повторная регистрация.");
+        registerDevice(auth, preferences);
+        return;
+    }
+
     const isValidPin = response.body.Result.IsPinValid;
     if (!isValidPin)
         throw new InvalidPreferencesError("Пин-код не верен. Укажите код, заданный вами в приложении банка 'Мой кредит'.");
@@ -55,8 +58,11 @@ export async function login(preferences) {
 }
 
 async function registerDevice(auth, preferences){
-    console.log(">>> Регистрация устройства...");
+    const date = getFormatedDate(preferences.birth);
+    if (!date)
+        throw new InvalidPreferencesError("Параметр подключения 'День рождения' указан не верно")
 
+    console.log(">>> Регистрация устройства ============================================================");
     auth.device = md5.hex(auth.phone + "homecredit").substr(0, 16);
     let response = await fetchJson("Account/Register", {
         API: 3,
@@ -65,7 +71,7 @@ async function registerDevice(auth, preferences){
             "X-Device-Ident": auth.device,
         },
         body: {
-            "BirthDate": getFormatedDate(preferences.birth),
+            "BirthDate": date,
             "DeviceName": "samsung zen",
             "OsType": 1,
             "PhoneNumber": auth.phone,
@@ -151,7 +157,7 @@ async function registerDevice(auth, preferences){
 }
 
 export async function fetchAccounts(auth) {
-    console.log(">>> Загружаем список счетов...");
+    console.log(">>> Загружаем список счетов ===========================================================");
     // загрузим список счетов
     const response = await fetchJson("Product/GetClientProducts", {
         API: 0,
@@ -165,7 +171,26 @@ export async function fetchAccounts(auth) {
         sanitizeRequestLog: {headers: {"X-Device-Ident": true, "X-Private-Key": true, "X-Phone-Number": true, "X-Auth-Token": true}},
         sanitizeResponseLog: {headers: {"x-auth-token": true}},
     });
-    return _.pick(response.body.Result, ["CreditCard", "CreditCardTW", "CreditLoan"]);
+
+    // список интересующиъ счетов
+    const fetchedAccounts = _.pick(response.body.Result, ["CreditCard", "CreditCardTW", "CreditLoan"]);
+
+    // удаляем не нужные счета
+    _.forEach(Object.keys(fetchedAccounts), function(key) {
+        _.remove(fetchedAccounts[key], function(elem){
+            if (elem.ContractStatus > 1) {
+                console.log(`>>> Счёт "${elem.ProductName}" не активен. Пропускаем...`);
+                return true;
+            }
+            if (ZenMoney.isAccountSkipped(elem.ContractNumber)) {
+                console.log(`>>> Счёт "${elem.ProductName}" в списке игнорируемых. Пропускаем...`);
+                return true;
+            }
+            return false;
+        })
+    });
+
+    return fetchedAccounts;
 }
 
 export async function fetchDetails(auth, account, type){
@@ -186,6 +211,8 @@ export async function fetchDetails(auth, account, type){
 }
 
 async function fetchLoanDetails(auth, account){
+    console.log(`>>> Загружаем детали счёта: ${account.AccountNumber} [${account.ContractNumber}] ==============`);
+
     // детали кредита
     let response = await fetchJson("Payment/GetProductDetails", {
         headers: {
@@ -206,33 +233,42 @@ async function fetchLoanDetails(auth, account){
     });
     const accountBalance = response.body.Result.CreditLoan.AccountBalance;
 
-    // остаток по кредиту
-    response = await fetchJson("https://api-myc.homecredit.ru/api/v1/prepayment", {
-        headers: {
-            ...defaultHeaders,
-            "Host": "api-myc.homecredit.ru",
-            "X-Device-Ident": auth.device,
-            "X-Private-Key": auth.key,
-            "X-Phone-Number": auth.phone,
-            "X-Auth-Token": auth.token,
-        },
-        body: {
-            ContractNumber: account.ContractNumber,
-            AccountNumber: account.AccountNumber,
-            ProductSetCode: account.ProductSet.Code,
-            ProductType: account.ProductType,
-        },
-        sanitizeRequestLog: {headers: {"X-Device-Ident": true, "X-Private-Key": true, "X-Phone-Number": true, "X-Auth-Token": true}},
-        sanitizeResponseLog: {headers: {"x-auth-token": true}},
-    });
+    // Запрос остатка только по тем кредитам, где есть срок ближайшего платежа
+    let detailedResponse = {};
+    if (response.body.Result.PayDate) {
+        // остаток по кредиту
+        console.log(`>>> Запрашиваем остаток по кредиту (${account.AccountNumber}) ---------------------`);
+        response = await fetchJson("https://api-myc.homecredit.ru/api/v1/prepayment", {
+            headers: {
+                ...defaultHeaders,
+                "Host": "api-myc.homecredit.ru",
+                "X-Device-Ident": auth.device,
+                "X-Private-Key": auth.key,
+                "X-Phone-Number": auth.phone,
+                "X-Auth-Token": auth.token,
+            },
+            body: {
+                ContractNumber: account.ContractNumber,
+                AccountNumber: account.AccountNumber,
+                ProductSetCode: account.ProductSet.Code,
+                ProductType: account.ProductType,
+            },
+            sanitizeRequestLog: {headers: {"X-Device-Ident": true, "X-Private-Key": true, "X-Phone-Number": true, "X-Auth-Token": true}},
+            sanitizeResponseLog: {headers: {"x-auth-token": true}},
+        });
+
+        detailedResponse = response.body;
+    } else
+        console.log(`>>> По кредиту (${account.AccountNumber}) нет данных о ближайшем платеже ---------------------`);
 
     return {
-        ...response.body,
+        ...detailedResponse,
         accountBalance: accountBalance,
     };
 }
 
 export async function fetchTransactions(auth, accountData, fromDate, toDate = null) {
+    console.log(`>>> Загружаем список операций (${accountData.details.accountNumber}) =====================================`);
     if (accountData.details.type !== "CreditCard") {
         console.log(`Загрузка операций по счёту ${accountData.details.type} не поддерживается`);
         return [];
@@ -278,8 +314,17 @@ async function fetchJson(url, options, predicate) {
     });
     if (predicate)
         validateResponse(response, response => response.body && predicate(response));
-    if (!options.ignoreErrors)
-        validateResponse(response, response => response.body && (response.body.StatusCode === 200 || response.body.statusCode === 200), response.body.Errors && response.body.Errors.length>0 && ("Ответ банка – "+response.body.Errors[0]));
+    if (!options.ignoreErrors && response.body && (response.body.StatusCode !== 200 && response.body.statusCode !== 200)) {
+        const message = getErrorMessage(response.body.Errors);
+        if (message) {
+            if (message.indexOf("повторите попытку") + 1)
+                throw new TemporaryError(message);
+            else if (message.indexOf("роверьте дату рождения") + 1)
+                throw new InvalidPreferencesError(message);
+            else
+                throw new Error(message);
+        }
+    }
     return response;
 }
 
@@ -287,8 +332,22 @@ function validateResponse(response, predicate, message) {
     console.assert(!predicate || predicate(response), message || "non-successful response");
 }
 
+function getErrorMessage(errors){
+    if (!errors || !_.isArray(errors) || errors.length === 0)
+        return "";
+
+    let message = errors[0];
+    errors.forEach(function(value) {
+        if (value.indexOf("повторите")<0) message = value;
+    });
+    return message;
+}
+
 function getFormatedDate(date){
-    if (date instanceof String && date.indexOf("-") > 0) return date;
-    const dt = date instanceof Date ? date : new Date(date);
-    return dt.getFullYear() + "-" + ("0" + (dt.getMonth() + 1)).slice(-2) + "-" + ("0" + dt.getDate()).slice(-2);
+    const dt = typeof date === "string" ? parseStartDateString(date) : date;
+    return isValidDate(dt) ? dt.getFullYear() + "-" + ("0" + (dt.getMonth() + 1)).slice(-2) + "-" + ("0" + dt.getDate()).slice(-2) : null;
+}
+
+function isValidDate(d) {
+    return d && d instanceof Date && !isNaN(d);
 }

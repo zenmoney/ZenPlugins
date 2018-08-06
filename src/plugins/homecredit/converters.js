@@ -2,6 +2,7 @@ export function convertAccount(accountData, type) {
     const resultData = {};
     switch (type) {
         case "CreditCard": resultData.account = convertCard(accountData); break;
+        case "CreditCardTW": resultData.account = convertCardTW(accountData); break;
         case "CreditLoan": resultData.account = convertLoan(accountData); break;
         default: resultData.account = null; break;
     }
@@ -9,7 +10,7 @@ export function convertAccount(accountData, type) {
     return resultData;
 }
 
-export function convertCard(accountData) {
+function convertCard(accountData) {
     return {
         id: accountData.account.ContractNumber,
         type: "ccard",
@@ -21,8 +22,20 @@ export function convertCard(accountData) {
     }
 }
 
-export function convertLoan(accountData) {
+function convertCardTW(accountData) {
     return {
+        id: accountData.account.ContractNumber,
+        type: "ccard",
+        syncID: accountData.account.AccountNumber.substr(-4),
+        title: accountData.account.ProductName,
+        instrument: "RUB",
+        balance: Math.round((accountData.account.AvailableBalance - accountData.account.CreditLimit) * 100) / 100,
+        creditLimit: accountData.account.CreditLimit,
+    }
+}
+
+function convertLoan(accountData) {
+    var res = {
         id: accountData.account.ContractNumber,
         type: "loan",
         syncID: accountData.account.ContractNumber.substr(-4),
@@ -30,14 +43,16 @@ export function convertLoan(accountData) {
         instrument: "RUB",
         startDate: accountData.account.DateSign,
         startBalance: accountData.account.CreditAmount,
-        balance: Math.round((-accountData.details.repaymentAmount + accountData.details.accountBalance) * 100) / 100,
         endDateOffset: accountData.account.Contract.Properties.PaymentNum,
         endDateOffsetInterval: "month",
         capitalization: true,
         percent: accountData.account.CreditLoanGuiData.PercentPaid,
         payoffStep: 1,
         payoffInterval: "month",
-    }
+    };
+    if (accountData.details)
+        res.balance = Math.round((-accountData.details.repaymentAmount + accountData.details.accountBalance) * 100) / 100;
+    return res;
 }
 
 function getAccountDetails(accountData, type) {
@@ -61,19 +76,33 @@ export function convertTransactions(accountData, transactions) {
             payee: transaction.merchantName,
         };
         if (transaction.creditDebitIndicator)
-            tran.description = transaction.shortDescription;
+            tran.comment = transaction.shortDescription;
         if (transaction.mcc)
             tran.mcc = getMcc(transaction.mcc);
         return tran;
     });
 }
 
-function getMcc(code) {
+export function getMcc(code) {
     switch (code) {
-        case "CAR": return 5542;
-        case "HEALTH & BEAUTY": return 7298;
-        case "FOOD": return 5411;
-        case "CAFES & RESTAURANTS": return 5812;
+        case "CAR":
+            return 5542;
+        case "HEALTH & BEAUTY":
+            return 7298;
+        case "FOOD":
+            return 5411;
+        case "CAFES & RESTAURANTS":
+            return 5812;
+        case "CLOTHING SHOES & ACCESSORIES":
+            return 5651;
+
+        case "HOBBY & LEISURE":
+        case "HOME & GARDEN":
+        case "TRANSPORTATION":
+        case "TELECOMMUNICATION":
+        case "OTHER":
+            return null;
+
         default: {
             console.log(">>> Новый МСС код !!!", code);
             return null;

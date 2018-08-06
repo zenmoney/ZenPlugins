@@ -2,7 +2,7 @@
 <provider>
     <id>qiwi</id>
     <version>1.0</version>
-    <build>11</build>
+    <build>12</build>
     <company>15592</company>
     <modular>true</modular>
     <codeRequired>false</codeRequired>

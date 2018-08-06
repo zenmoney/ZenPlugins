@@ -21,12 +21,13 @@ export function convertAccounts(apiAccounts, walletId) {
 export function convertTransactions(apiTransactions, walletId) {
     const transactions = [];
     for (const apiTransaction of apiTransactions) {
-        if (apiTransaction.status !== "SUCCESS") {
+        if (apiTransaction.status === "ERROR") {
             continue;
         }
         const accountId = getAccountId(walletId, apiTransaction.sum.currency);
         const transaction = {
             id: apiTransaction.txnId.toFixed(0),
+            hold: apiTransaction.status !== "SUCCESS",
             date: new Date(apiTransaction.date),
             income: apiTransaction.type === "IN" ? apiTransaction.sum.amount : 0,
             incomeAccount: accountId,

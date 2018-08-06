@@ -1,4 +1,4 @@
-import {parseXml, getSignature} from "./vtb";
+import {getSignature, parseXml, reduceDuplicatesByTypeAndId, resolveCycles} from "./vtb";
 
 describe("getSignature", () => {
     function getBytes(str) {
@@ -97,6 +97,13 @@ describe("parseXml", () => {
         });
     });
 
+    it("parses reference" ,() => {
+        const object = parseXml("<map><type>MapType</type><string>self</string><ref>0</ref></map>");
+        expect(Object.keys(object).length).toBe(2);
+        expect(object.__type).toEqual("MapType");
+        expect(object.self).toBe(object);
+    });
+
     it("parses complex object", () => {
         expect(parseXml(`<map><type>com.mobiletransport.messaging.DefaultMessageImpl</type><string>id</string><string>2fa2f4f1-4f99-4bc4-a499-22666e55bb97</string><string>theme</string><string>Default theme</string><string>sendTimestamp</string><long>1530191913628</long><string>correlationId</string><string>-1388223371</string><string>timeToLive</string><long>0</long><string>payload</string><null></null><string>properties</string><map><type>java.util.Hashtable</type><string>request_time_to_live</string><long>30000</long><string>request_send_timestamp</string><long>1530191910664</long></map></map>`)).toEqual({
             __type: "com.mobiletransport.messaging.DefaultMessageImpl",
@@ -181,6 +188,142 @@ describe("parseXml", () => {
                 "request_time_to_live": 30000,
                 "request_send_timestamp": 1530280626976,
             },
+        });
+    });
+});
+
+describe("reduceDuplicatesByTypeAndId", () => {
+    it("reduces duplicates in child objects", () => {
+        const object = {
+            __type: "ru.vtb24.mobilebanking.protocol.product.Product1",
+            id: "0000000000000000000000000",
+            child: {
+                __type: "ru.vtb24.mobilebanking.protocol.product.Product2",
+                id: "1111111111111111111111111",
+                parent: {
+                    __type: "ru.vtb24.mobilebanking.protocol.product.Product1",
+                    id: "0000000000000000000000000",
+                    parentKey: "parentValue",
+                    child: {
+                        __type: "ru.vtb24.mobilebanking.protocol.product.Product2",
+                        id: "1111111111111111111111111",
+                        childKey: "childValue",
+                    },
+                },
+            },
+        };
+        object.child.parent.child.parent = object;
+        reduceDuplicatesByTypeAndId(object);
+        expect(object).toMatchObject({
+            __type: "ru.vtb24.mobilebanking.protocol.product.Product1",
+            id: "0000000000000000000000000",
+            parentKey: "parentValue",
+            child: {
+                __type: "ru.vtb24.mobilebanking.protocol.product.Product2",
+                id: "1111111111111111111111111",
+                childKey: "childValue",
+            },
+        });
+        expect(Object.keys(object).length).toBe(4);
+        expect(Object.keys(object.child).length).toBe(4);
+        expect(object.child.parent).toBe(object);
+    });
+
+    it("reduces duplicates in array", () => {
+        const object = [
+            {
+                __type: "ru.vtb24.mobilebanking.protocol.product.Product1",
+                id: "0000000000000000000000000",
+                key1: "value1",
+                key2: null,
+            },
+            {
+                __type: "ru.vtb24.mobilebanking.protocol.product.Product1",
+                id: "0000000000000000000000000",
+                key2: "value2",
+            },
+            {
+                __type: "ru.vtb24.mobilebanking.protocol.product.Product1",
+                id: "0000000000000000000000000",
+                key3: "value3",
+                child: {
+                    __type: "ru.vtb24.mobilebanking.protocol.product.Product1",
+                    id: "0000000000000000000000000",
+                    key4: "value4",
+                },
+            },
+        ];
+        reduceDuplicatesByTypeAndId(object);
+        expect(object.length).toBe(3);
+        expect(object[2]).toBe(object[0]);
+        expect(object[1]).toBe(object[0]);
+        expect(object[0]).toMatchObject({
+            __type: "ru.vtb24.mobilebanking.protocol.product.Product1",
+            id: "0000000000000000000000000",
+            key1: "value1",
+            key2: "value2",
+            key3: "value3",
+            key4: "value4",
+        });
+        expect(Object.keys(object[0]).length).toBe(7);
+        expect(object[0].child).toBe(object[0]);
+    });
+
+    it("reduces duplicates in different objects", () => {
+        const object = [
+            {
+                child: {
+                    __type: "ru.vtb24.mobilebanking.protocol.product.Product1",
+                    id: "0000000000000000000000000",
+                    key1: "value1",
+                },
+            },
+            {
+                child: {
+                    __type: "ru.vtb24.mobilebanking.protocol.product.Product1",
+                    id: "0000000000000000000000000",
+                    key2: "value2",
+                },
+            },
+        ];
+        reduceDuplicatesByTypeAndId(object);
+        expect(object.length).toBe(2);
+        const child = object[0].child;
+        expect(object[0]).toEqual({
+            child,
+        });
+        expect(object[1]).toEqual({
+            child,
+        });
+        expect(child).toEqual({
+            __type: "ru.vtb24.mobilebanking.protocol.product.Product1",
+            id: "0000000000000000000000000",
+            key1: "value1",
+            key2: "value2",
+        });
+    });
+});
+
+describe("resolveCycles", () => {
+    it("resolves cycles", () => {
+        const parent = {
+            child: {
+                childKey: "childValue",
+            },
+            children: [],
+        };
+        parent.child.parent = parent;
+        parent.children.push(parent.child);
+        expect(resolveCycles(parent)).toEqual({
+            __id: 0,
+            child: {
+                __id: 1,
+                childKey: "childValue",
+                parent: "<ref[0]>",
+            },
+            children: [
+                "<ref[1]>",
+            ],
         });
     });
 });
