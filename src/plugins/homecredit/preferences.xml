@@ -34,7 +34,6 @@
             summary="||****"
             negativeButtonText="Отмена"
             positiveButtonText="ОК"
-            inputType="text"
             obligatory="false"
     >
     </EditTextPreference>
