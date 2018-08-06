@@ -86,26 +86,27 @@ module.exports = ({allowedHost, host, https}) => {
             );
 
             app.get(
+                "/zen/zp_preferences.json/schema",
+                serializeErrors((req, res) => {
+                    res.json(readPluginPreferencesSchema());
+                }),
+            );
+
+            app.get(
                 "/zen/zp_preferences.json",
                 serializeErrors((req, res) => {
                     ensureFileExists(pluginPreferencesPath, "{}\n");
-                    const rawPreferences = readJsonSync(pluginPreferencesPath);
-                    const preferences = _.omit(rawPreferences, ["zp_plugin_directory", "zp_pipe"]);
-                    const preferencesSchema = readPluginPreferencesSchema();
-                    const missingObligatoryPrefKeys = preferencesSchema
-                        .filter((x) => x.obligatory && !x.defaultValue && !(x.key in preferences))
-                        .map((x) => x.key);
-                    if (missingObligatoryPrefKeys.length > 0) {
-                        throw new Error(
-                            `The following preference keys are obligatory and don't have defaultValue, thus should be set in zp_preferences.json: ` +
-                            JSON.stringify(missingObligatoryPrefKeys),
-                        );
-                    }
-                    const defaultValues = preferencesSchema.reduce((memo, preferenceSchema) => {
-                        memo[preferenceSchema.key] = preferenceSchema.defaultValue;
-                        return memo;
-                    }, {});
-                    res.json(_.defaults(preferences, defaultValues));
+                    const preferences = _.omit(readJsonSync(pluginPreferencesPath), ["zp_plugin_directory", "zp_pipe"]);
+                    res.json(preferences);
+                }),
+            );
+
+            app.post(
+                "/zen/zp_preferences.json",
+                bodyParser.json(),
+                serializeErrors((req, res) => {
+                    fs.writeFileSync(pluginPreferencesPath, JSON.stringify(req.body, null, 4), "utf8");
+                    return res.json(true);
                 }),
             );
 

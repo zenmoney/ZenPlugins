@@ -118,6 +118,7 @@ export class UI extends React.PureComponent {
                     )}
                     {workflowState === ":workflow-state/waiting" && <div>Waiting</div>}
                     {workflowState === ":workflow-state/loading-assets" && <div>Loading plugin manifest/preferences/data…</div>}
+                    {workflowState === ":workflow-state/filling-preferences" && <div>Filling preferences…</div>}
                     {scrapeState === ":scrape-state/starting" && <div>Scraping starting</div>}
                     {scrapeState === ":scrape-state/started" && <div>Scraping…</div>}
                     {scrapeState === ":scrape-state/success" &&
