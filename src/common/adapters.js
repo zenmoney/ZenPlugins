@@ -142,7 +142,12 @@ export function adaptScrapeToGlobalApi(scrape) {
         if (state === "rejected") {
             throw value;
         } else if (state === "pending") {
-            resultHandled.catch((e) => ZenMoney.setResult(e));
+            resultHandled.catch((e) =>
+                ZenMoney.setResult(
+                    e && e.message
+                        ? e
+                        : {message: "Thrown error must be an object containing message field, but was: " + JSON.stringify(e)},
+                ));
         }
     };
 }
