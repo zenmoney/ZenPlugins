@@ -872,6 +872,13 @@ function processTransactions(data) {
                 continue;
             }
 
+            // mcc-код операции
+            let mcc = t.mcc ? parseInt(t.mcc, 10) : -1;
+            if (isNaN(mcc)) mcc = -1;
+
+            // флаг card2card переводов
+            const c2c = mcc === 6538;
+
             // доход -------------------------------------------------------------------------
             if (t.type === "Credit") {
                 tran.income = t.accountAmount.value;
@@ -883,30 +890,28 @@ function processTransactions(data) {
                     switch (t.group) {
                         // Пополнение наличными
                         case "CASH":
-                            var c2c = (t.partnerType && t.partnerType.toLowerCase() === "card2card")
-                                || (t.merchant && t.merchant.name.toLowerCase().indexOf("card2card") >= 0)
-                                || (t.payment && t.payment.providerId && t.payment.providerId.toLowerCase().indexOf("c2c") >= 0);
+                            /*(t.partnerType && t.partnerType.toLowerCase() === "card2card")
+                            || (t.merchant && (t.merchant.name.toLowerCase().indexOf("card2card") >= 0 || t.merchant.name.toLowerCase().indexOf("c2c") >= 0))
+                            || (t.payment && t.payment.providerId && (t.payment.providerId.toLowerCase().indexOf("card2card") >= 0 || t.payment.providerId.toLowerCase().indexOf("c2c") >= 0));*/
+
                             if (!c2c) {
                                 // операция с наличными
                                 tran.outcomeAccount = "cash#" + t.amount.currency.name;
                                 tran.outcome = t.amount.value;
-                            } else {
-                                // card2card-перевод
-                                if (t.payment && t.payment.cardNumber) {
-                                    tran.outcomeAccount = "ccard#" + t.amount.currency.name + "#" + t.payment.cardNumber.substring(t.payment.cardNumber.length - 4);
-                                    tran.outcome = t.amount.value;
-                                    tran.hold = null;
-                                }
+                            }
+                            // card2card-перевод
+                            else if (t.payment && t.payment.cardNumber) {
+                                tran.outcomeAccount = "ccard#" + t.amount.currency.name + "#" + t.payment.cardNumber.substring(t.payment.cardNumber.length - 4);
+                                tran.outcome = t.amount.value;
+                                tran.hold = null;
                             }
                             break;
 
                         case "INCOME":
-                            if (t.partnerType === "card2card" && t.payment &&
-                                t.payment.cardNumber && t.payment.cardNumber.length > 4) {
+                            if (c2c && t.payment && t.payment.cardNumber && t.payment.cardNumber.length > 4) {
                                 tran.comment = t.description;
                                 tran.outcome = t.amount.value;
-                                tran.outcomeAccount = "ccard#" + t.amount.currency.name + "#" +
-                                    t.payment.cardNumber.substring(t.payment.cardNumber.length - 4);
+                                tran.outcomeAccount = "ccard#" + t.amount.currency.name + "#" + t.payment.cardNumber.substring(t.payment.cardNumber.length - 4);
                             } else if (t.senderDetails)
                                 tran.payee = t.senderDetails;
                             break;
@@ -961,19 +966,18 @@ function processTransactions(data) {
                     switch (t.group) {
                         // Снятие наличных
                         case "CASH":
-                            var c2c = (t.partnerType && t.partnerType.toLowerCase() === "card2card")
-                                || (t.merchant && t.merchant.name.toLowerCase().indexOf("card2card") >= 0)
-                                || (t.payment && t.payment.providerId && t.payment.providerId.toLowerCase().indexOf("c2c") >= 0);
+                            /*var c2c = (t.partnerType && t.partnerType.toLowerCase() === "card2card")
+                                || (t.merchant && (t.merchant.name.toLowerCase().indexOf("card2card") >= 0 || t.merchant.name.toLowerCase().indexOf("c2c") >= 0))
+                                || (t.payment && t.payment.providerId && (t.payment.providerId.toLowerCase().indexOf("card2card") >= 0 || t.payment.providerId.toLowerCase().indexOf("c2c") >= 0));*/
                             if (!c2c) {
                                 // операция с наличными
                                 tran.incomeAccount = "cash#" + t.amount.currency.name;
                                 tran.income = t.amount.value;
-                            } else {
-                                // card2card-перевод
-                                if (t.payment && t.payment.cardNumber) {
-                                    tran.incomeAccount = "ccard#" + t.amount.currency.name + "#" + t.payment.cardNumber.substring(t.payment.cardNumber.length - 4);
-                                    tran.income = t.amount.value;
-                                }
+                            }
+                            // card2card-перевод
+                            else if (t.payment && t.payment.cardNumber) {
+                                tran.incomeAccount = "ccard#" + t.amount.currency.name + "#" + t.payment.cardNumber.substring(t.payment.cardNumber.length - 4);
+                                tran.income = t.amount.value;
                             }
                             break;
 
@@ -1010,8 +1014,7 @@ function processTransactions(data) {
                             }
 
                             // MCC
-                            var mcc;
-                            if (t.mcc && !isNaN(mcc = parseInt(t.mcc)) && mcc > 99) {
+                            if (mcc > 99) {
                                 tran.mcc = mcc; // у Тинькова mcc-коды используются для своих нужд
                             }
 
@@ -1037,7 +1040,8 @@ function processTransactions(data) {
             }
 
             // ключ дублей холд с акцептом через новую операцию и отменой холда
-            var tranKeyHold2 = tAccount + ":" + tran.date + ":" + (tran.payee ? tran.payee : "") + ":" + tranAmount;
+            // НЕ РАБОТАЕТ
+            /*var tranKeyHold2 = tAccount + ":" + tran.date + ":" + (tran.payee ? tran.payee : "") + ":" + tranAmount;
             if (!tran.hold && tranDictHold2[tranKeyHold2]) {
                 // если за этот день тому же получателю уже был холд на ту же сумму, гасим его
                 ZenMoney.trace("Замещаем HOLD найденным акцептом: "+ tranDict[tranDictHold2[tranKeyHold2]].id +" => "+ tran.id);
@@ -1051,7 +1055,7 @@ function processTransactions(data) {
                 tranDict[tranKey] = tran;
                 tranDictHold[tranKeyHold] = tranKey;
                 if (tran.hold) tranDictHold2[tranKeyHold2] = tranKey;
-            }
+            }*/
 
             //ZenMoney.trace('Операция!!! ' + tranId);
             tranDict[tranKey] = tran;
