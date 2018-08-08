@@ -191,6 +191,7 @@ const neverLosingDataMergeCustomizer = function(valueInA, valueInB, key, objA, o
 export const isPossiblyTransfer = ({reference}) => {
     return reference !== "HOLD"
         && reference !== ""
+        && !reference.startsWith("OP1ED")
         && !reference.startsWith("CASHIN")
         // U\d{2}A, AQ\d prefixes are common for all deposits creation/destroy/percentages
         && !reference.startsWith("U")
