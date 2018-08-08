@@ -42,18 +42,13 @@ export async function scrape({preferences, fromDate, toDate}) {
                 Converters.convertTransactions(accountData, await HomeCredit.fetchBaseTransactions(accountData, accountData.details.type, fromDate, toDate))))
         })));
 
-        accountsData = _.flattenDeep(accountsData);
-
         let tmpAccountsData = {};
-        accountsData.forEach(function(a) {
+        _.flattenDeep(accountsData).forEach(function(a) {
             if (tmpAccountsData.hasOwnProperty(a.account.id)) {
                 tmpAccountsData[a.account.id].account.syncID.push(a.account.syncID)
             } else {
-                if (typeof a.account.syncID === "string") {
-                    a.account.syncID = [
-                        a.account.syncID,
-                    ]
-                }
+                if (typeof a.account.syncID === "string")
+                    a.account.syncID = [a.account.syncID];
                 tmpAccountsData[a.account.id] = a;
             }
         });

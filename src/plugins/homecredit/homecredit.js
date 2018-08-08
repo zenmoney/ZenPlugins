@@ -10,7 +10,6 @@ const baseUri = "https://ib.homecredit.ru/mobile/remoting";
 const defaultMyCreditHeaders = {
     "_ver_": "3.7.0",
     "_os_": 1,
-    "Host": "mob.homecredit.ru",
 };
 const defaultBaseHeaders = {
     "User-Agent": "okhttp/3.10.0",
@@ -100,7 +99,7 @@ export async function authBase(preferences) {
             "methodName": "login",
             "parameterTypes": ["cz.bsc.g6.components.usernamepasswordauthentication.json.services.api.mo.UsernamePasswordCredentialMo"],
         },
-        headers: defaultMyCreditHeaders,
+        headers: defaultBaseHeaders,
         sanitizeRequestLog: { body: {arguments: {"code": true, "password": true, "deviceID": true, "username": true}} },
     });
 
@@ -229,7 +228,7 @@ export async function fetchBaseAccounts() {
     const fetchedAccounts = {};
     ["creditCards", "credits", "debitCards", "deposits", "merchantCards"].forEach(function(key) {
         if (!response.body.hasOwnProperty(key) || !response.body[key].list || response.body[key].list.length === 0) return;
-        let list = [];
+        const list = [];
         response.body[key].list.forEach(function(elem) {
             if (_.includes(["Действующий", "Active"], elem.contractStatus) === false) {
                 console.log(`>>> Счёт '${elem.productName}' не активен. Пропускаем...`);
@@ -239,7 +238,7 @@ export async function fetchBaseAccounts() {
                 console.log(`>>> Счёт "${elem.productName}" в списке игнорируемых. Пропускаем...`);
                 return;
             }
-            list.push(elem)
+            list.push(elem);
         });
         if (list.length === 0) return;
         fetchedAccounts[key] = list;
