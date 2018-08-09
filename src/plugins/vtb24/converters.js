@@ -230,7 +230,7 @@ function parseInnerTransfer(apiTransaction, transaction) {
     })) {
         return false;
     }
-    if (!apiTransaction.order && !apiTransaction.order.id && !apiTransaction.processedDate) {
+    if ((!apiTransaction.order || !apiTransaction.order.id) && !apiTransaction.processedDate) {
         return true;
     }
     transaction._transferType = origin.amount > 0 ? "outcome" : "income";
