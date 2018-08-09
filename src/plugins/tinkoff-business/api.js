@@ -11,8 +11,8 @@ const CLIENT_SECRET = "";
 const CLIENT_ID = "";
 const REDIRECT_URI = "";
 
-async function fetchJson(url, options = {}) {
-    return await network.fetchJson(url, {
+async function fetchJson(url, options = {}, predicate = () => true) {
+    const response = await network.fetchJson(url, {
         method: "POST",
         sanitizeRequestLog: {headers: {Authorization: true}},
         sanitizeResponseLog: {headers: {"set-cookie": true}},
@@ -23,13 +23,19 @@ async function fetchJson(url, options = {}) {
             ...options.headers,
         },
     });
+    if (predicate) {
+        if (response.body && response.body.errorCode === "AUTH_REQUIRED") {
+            throw new Error("AuthError")
+        }
+        console.assert(predicate(response), "non-successful response");
+    }
+    return response;
 }
 
 export async function login({accessToken, refreshToken, expirationDateMs} = {}) {
     let response;
     if (accessToken) {
-        const expirationDate = new Date(expirationDateMs);
-        if (expirationDate < new Date() + 60000) {
+        if (expirationDateMs < new Date().getTime() + 60000) {
             response = await fetchJson("https://sso.tinkoff.ru/secure/token", {
                 headers: {
                     "Host": "sso.tinkoff.ru",
@@ -39,10 +45,17 @@ export async function login({accessToken, refreshToken, expirationDateMs} = {}) 
                     refresh_token: refreshToken,
                     fingerprint: "{}",
                 },
-            });
+            }, null);
+            if (response.body && response.body.error === "invalid_grant") {
+                response = null;
+                accessToken = null;
+            }
         } else {
             return arguments[0];
         }
+    }
+    if (accessToken) {
+        //nothing
     } else if (ZenMoney.openWebView) {
         const {error, code} = await new Promise((resolve) => {
             const state = getUid(16);
@@ -79,7 +92,7 @@ export async function login({accessToken, refreshToken, expirationDateMs} = {}) 
                 code,
                 redirect_uri: REDIRECT_URI,
             },
-        });
+        }, null);
     } else {
         throw new TemporaryError("У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии.");
     }

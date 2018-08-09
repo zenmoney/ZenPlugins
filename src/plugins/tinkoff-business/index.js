@@ -15,10 +15,24 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
     if (!toDate) {
         toDate = new Date();
     }
-    const auth = await login(ZenMoney.getData("auth"));
     const accounts = {};
     const transactions = [];
-    await Promise.all((await fetchAccounts(auth, preferences)).map(async apiAccount => {
+
+    let auth = await login(ZenMoney.getData("auth"));
+    let apiAccounts;
+    try {
+        apiAccounts = await fetchAccounts(auth, preferences);
+    } catch (e) {
+        if (e && e.message === "AuthError") {
+            auth.expirationDateMs = 0;
+            auth = await login(auth);
+            apiAccounts = await fetchAccounts(auth, preferences);
+        } else {
+            throw e;
+        }
+    }
+
+    await Promise.all(apiAccounts.map(async apiAccount => {
         const account = convertAccount(apiAccount);
         if (account) {
             accounts[account.id] = account;
