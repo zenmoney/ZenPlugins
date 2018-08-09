@@ -17,12 +17,20 @@ export async function scrape({preferences, fromDate, toDate}) {
         if (ZenMoney.isAccountSkipped(apiAccount.zenAccount.id)) {
             return;
         }
-        (await fetchTransactions(auth, apiAccount, fromDate, toDate)).forEach(apiTransaction => {
-            const transaction = convertTransaction(apiTransaction, apiAccount);
-            if (transaction) {
-                transactions.push(transaction);
+        try {
+            (await fetchTransactions(auth, apiAccount, fromDate, toDate)).forEach(apiTransaction => {
+                const transaction = convertTransaction(apiTransaction, apiAccount);
+                if (transaction) {
+                    transactions.push(transaction);
+                }
+            });
+        } catch (e) {
+            if (e && e.message && e.message.indexOf("временно") >= 0) {
+                console.log(`skipping transactions for account ${apiAccount.id}`);
+            } else {
+                throw e;
             }
-        });
+        }
     }));
     return {
         accounts: ensureSyncIDsAreUniqueButSanitized({
