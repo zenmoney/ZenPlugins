@@ -230,6 +230,9 @@ function parseInnerTransfer(apiTransaction, transaction) {
     })) {
         return false;
     }
+    if (!apiTransaction.order && !apiTransaction.order.id && !apiTransaction.processedDate) {
+        return true;
+    }
     transaction._transferType = origin.amount > 0 ? "outcome" : "income";
     transaction._transferId = apiTransaction.order && apiTransaction.order.id
         ? apiTransaction.order.id
