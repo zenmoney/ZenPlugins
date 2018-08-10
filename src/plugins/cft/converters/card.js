@@ -32,6 +32,7 @@ const converter = (data, credits) => {
     credits.forEach((credit) => {
         if (credit.contractId === data.contractId) {
             account.creditLimit = Number(credit.grantedAmount);
+            account.balance = account.balance - account.creditLimit
         }
     });
 

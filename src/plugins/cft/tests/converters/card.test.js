@@ -20,7 +20,7 @@ describe("card converter", () => {
                 {
                     type: "FUNDS",
                     currencyCode: "RUR",
-                    amount: "123",
+                    amount: "123.66",
                 },
             ],
             ean: 12345678,
@@ -30,7 +30,7 @@ describe("card converter", () => {
         const credit_data = [
             {
                 contractId: 1,
-                grantedAmount: 10000,
+                grantedAmount: 200,
             }
         ];
 
@@ -39,7 +39,7 @@ describe("card converter", () => {
             title: "Super card",
             type: "ccard",
             instrument: "RUB",
-            balance: 123,
+            balance: 123.66,
             syncID: [
                 "12345678",
                 "0987",
@@ -50,8 +50,8 @@ describe("card converter", () => {
             title: "Super card",
             type: "ccard",
             instrument: "RUB",
-            balance: 123,
-            creditLimit: 10000,
+            balance: -76.34,
+            creditLimit: 200,
             syncID: [
                 "12345678",
                 "0987",
