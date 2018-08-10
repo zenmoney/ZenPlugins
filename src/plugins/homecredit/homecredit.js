@@ -248,7 +248,7 @@ export async function fetchBaseAccounts() {
     await Promise.all(["creditCards", "debitCards"].map(async type => {
         if (!fetchedAccounts.hasOwnProperty(type)) return;
         await Promise.all(fetchedAccounts[type].map(async account => {
-            console.log(`>>> Загрузка деталей карты '${getCardNumber(account.cardNumber)}' [Базовый] -----------`);
+            console.log(`>>> Загрузка деталей карты '${account.productName}' (${getCardNumber(account.cardNumber)}) [Базовый] -----------`);
             const response = await fetchJson(`${baseUri}/ProductService`, {
                 log: true,
                 method: "POST",
@@ -310,7 +310,7 @@ export async function fetchMyCreditAccounts(auth) {
         await Promise.all(Object.keys(fetchedAccounts.CreditLoan).map(async key => {
             const account = fetchedAccounts.CreditLoan[key];
 
-            console.log(`>>> Подгрузим информацию по кредиту '${account.ProductName}' [Мой кредит] --------`);
+            console.log(`>>> Подгрузим информацию по кредиту '${account.ProductName}' (${account.AccountNumber}) [Мой кредит] --------`);
             await fetchJson("Payment/GetProductDetails", {
                 headers: {
                     ...defaultMyCreditHeaders,
@@ -357,7 +357,7 @@ export async function fetchMyCreditAccounts(auth) {
 }
 
 export async function fetchMyCreditTransactions(auth, accountData, fromDate, toDate = null) {
-    console.log(`>>> Загружаем список операций '${accountData.details.accountNumber}' [Мой кредит] ========================`);
+    console.log(`>>> Загружаем список операций '${accountData.details.title}' (${accountData.details.accountNumber}) [Мой кредит] ========================`);
     if (accountData.details.type !== "CreditCard") {
         console.log(`Загрузка операций по счёту ${accountData.details.type} не поддерживается`);
         return [];
@@ -392,7 +392,7 @@ export async function fetchMyCreditTransactions(auth, accountData, fromDate, toD
 }
 
 export async function fetchBaseTransactions(accountData, type, fromDate, toDate = null) {
-    console.log(`>>> Загружаем список операций '${getCardNumber(accountData.details.cardNumber) || accountData.details.accountNumber}' [Базовый] ========================`);
+    console.log(`>>> Загружаем список операций '${accountData.details.title}' (${getCardNumber(accountData.details.cardNumber) || accountData.details.accountNumber}) [Базовый] ========================`);
     const listCount = 25;
     let listStartPosition = 0;
 

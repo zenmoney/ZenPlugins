@@ -35,6 +35,7 @@ export function convertAccount(account, type) {
 function getAccountDetails(account, type) {
     return {
         type: type,
+        title: account.productName || account.ProductName,
         accountNumber: account.accountNumber || account.AccountNumber,
         cardNumber: account.cardNumber || account.mainCardNumber || account.CardNumber || account.MainCardNumber,
         contractNumber: account.ContractNumber || account.contractNumber,
@@ -65,13 +66,13 @@ function convertCard(account) {
 
 function convertCardTW(account) {
     return {
-        id: account.account.ContractNumber,
+        id: account.ContractNumber,
         type: "ccard",
-        syncID: account.account.AccountNumber.substr(-4),
-        title: account.account.ProductName,
+        syncID: account.AccountNumber.substr(-4),
+        title: account.ProductName,
         instrument: "RUB",
-        balance: Math.round((account.account.AvailableBalance - account.account.CreditLimit) * 100) / 100,
-        creditLimit: account.account.CreditLimit,
+        balance: Math.round((account.AvailableBalance - account.CreditLimit) * 100) / 100,
+        creditLimit: account.CreditLimit,
     }
 }
 
@@ -95,7 +96,8 @@ function convertLoan(account) {
         res.percent = 0.1;
         res.payoffStep = 1;
         res.payoffInterval = "month";
-        res.balance = Math.round((-account.RepaymentAmount + account.AccountBalance) * 100) / 100;
+        //res.balance = Math.round((-account.RepaymentAmount + account.AccountBalance) * 100) / 100;
+        res.balance = -account.RepaymentAmount;
     } else {
         // Base (заглушка)
         res.startDate = Date.now();

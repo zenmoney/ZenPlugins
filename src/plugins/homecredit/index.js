@@ -44,6 +44,7 @@ export async function scrape({preferences, fromDate, toDate}) {
 
         let tmpAccountsData = {};
         _.flattenDeep(accountsData).forEach(function(a) {
+            if (!a.account) return;
             if (tmpAccountsData.hasOwnProperty(a.account.id)) {
                 tmpAccountsData[a.account.id].account.syncID.push(a.account.syncID)
             } else {
