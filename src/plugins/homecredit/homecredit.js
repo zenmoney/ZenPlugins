@@ -1,9 +1,6 @@
-import {MD5} from "jshashes";
 import {parseStartDateString} from "../../common/adapters";
 import * as Network from "../../common/network";
 import _ from "lodash";
-
-const md5 = new MD5();
 
 const myCreditUrl = "https://mob.homecredit.ru/mycredit";
 const baseUri = "https://ib.homecredit.ru/mobile/remoting";
@@ -15,11 +12,11 @@ const defaultBaseHeaders = {
     "User-Agent": "okhttp/3.10.0",
     "Content-Type": "application/json; charset=utf-8",
 };
-const defaultBaseHeaderArguments = {
+const defaultBaseHeaderForAuth = {
     "appVersion": "2.6.1",
     "javaClass": "cz.bsc.g6.components.usernamepasswordauthentication.json.services.api.mo.UsernamePasswordCredentialMo",
     "system": "Android",
-    "systemVersion": "7.1.2",
+    "systemVersion": "5.0",
 };
 
 let myCreditAuth; // авторизация в "Мой кредит"
@@ -78,7 +75,7 @@ export async function authBase(preferences) {
     let isNewDevice = false;
     if (!device_id) {
         isNewDevice = true;
-        device_id = getDeviceId(preferences.login);
+        device_id = getDeviceId();
     }
 
     const response = await fetchJson(`${baseUri}/LoginService`, {
@@ -87,7 +84,7 @@ export async function authBase(preferences) {
         body: {
             "arguments": [
                 {
-                    ...defaultBaseHeaderArguments,
+                    ...defaultBaseHeaderForAuth,
                     "code": isNewDevice ? preferences.code : null,
                     "deviceID": device_id,
                     "password": preferences.password,
@@ -117,7 +114,7 @@ async function registerMyCreditDevice(auth, preferences){
         throw new InvalidPreferencesError("Параметр подключения 'День рождения' указан не верно")
 
     console.log(">>> Регистрация устройства [Мой кредит] ===============================================");
-    auth.device = getDeviceId(preferences.phone);
+    auth.device = getDeviceId();
     let response = await fetchJson("Account/Register", {
         API: 3,
         headers: {
@@ -226,7 +223,7 @@ export async function fetchBaseAccounts() {
 
     // отфильтруем лишние и не рабочие счета
     const fetchedAccounts = {};
-    ["creditCards", "credits", "debitCards", "deposits", "merchantCards"].forEach(function(key) {
+    ["creditCards", "debitCards", "merchantCards", "credits", "deposits"].forEach(function(key) {
         if (!response.body.hasOwnProperty(key) || !response.body[key].list || response.body[key].list.length === 0) return;
         const list = [];
         response.body[key].list.forEach(function(elem) {
@@ -244,28 +241,63 @@ export async function fetchBaseAccounts() {
         fetchedAccounts[key] = list;
     });
 
-    // догрузим информацию по картам
-    await Promise.all(["creditCards", "debitCards"].map(async type => {
+    // догрузим подробную информацию по каждому счёту
+    await Promise.all(["creditCards", "debitCards", "merchantCards", "credits", "deposits"].map(async type => {
         if (!fetchedAccounts.hasOwnProperty(type)) return;
         await Promise.all(fetchedAccounts[type].map(async account => {
-            console.log(`>>> Загрузка деталей карты '${account.productName}' (${getCardNumber(account.cardNumber)}) [Базовый] -----------`);
-            const response = await fetchJson(`${baseUri}/ProductService`, {
-                log: true,
-                method: "POST",
-                body: {
-                    "arguments": [{
-                        "cardNumber": account.cardNumber,
-                        "javaClass": "cz.bsc.g6.components.product.json.services.api.mo.CreditCardFilterMo",
-                    }],
-                    "javaClass": "org.springframework.remoting.support.RemoteInvocation",
-                    "methodName": "getCreditCardDetails",
-                    "parameterTypes": ["cz.bsc.g6.components.product.json.services.api.mo.CreditCardFilterMo"],
-                },
-                headers: defaultBaseHeaders,
-            });
+            let methodName;
+            let filterMo;
+            switch (type){
+                case "creditCards":
+                    filterMo = "CreditCardFilterMo";
+                    methodName = "getCreditCardDetails";
+                    break;
+                // приложение "Банк Хоум Кредит" по дебетовым картам возвращает только пустые (бесполезные) значения
+                /*case "debitCards":
+                    filterMo = "DebitCardFilterMo";
+                    methodName = "getDebitCardDetails";
+                    break;*/
+                // в приложении "Банк Хоум Кредит" кредиты не поддерживается (вызывают ошибку)
+                /*case "credits":
+                    filterMo = "CreditFilterMo";
+                    methodName = "getCreditDetails";
+                    break;*/
+                // приложение "Банк Хоум Кредит" по карте рассрочки возвращает только пустые (бесполезные) значения
+                /*case "merchantCards":
+                    filterMo = "MerchantCardFilterMo";
+                    methodName = "getMerchantCardDetails";
+                    break;*/
+                // не было данных для проверки
+                /*case "deposits":
+                    filterMo = "DepositFilterMo";
+                    methodName = "getDepositDetails";
+                    break;*/
+                default:
+                    methodName = null;
+                    break;
+            }
+            if (methodName) {
+                console.log(`>>> Загрузка деталей '${account.productName}' (${getCardNumber(account.cardNumber)}) [Базовый] --------------------`);
+                const response = await fetchJson(`${baseUri}/ProductService`, {
+                    log: true,
+                    method: "POST",
+                    body: {
+                        "arguments": [
+                            {
+                                "cardNumber": account.cardNumber,
+                                "javaClass": "cz.bsc.g6.components.product.json.services.api.mo." + filterMo,
+                            }
+                        ],
+                        "javaClass": "org.springframework.remoting.support.RemoteInvocation",
+                        "methodName": methodName,
+                        "parameterTypes": ["cz.bsc.g6.components.product.json.services.api.mo." + filterMo],
+                    },
+                    headers: defaultBaseHeaders,
+                });
 
-            if (response.body.creditLimit) account.creditLimit = response.body.creditLimit;
-            if (response.body.accountNumber) account.accountNumber = response.body.accountNumber;
+                if (response.body.creditLimit) account.creditLimit = response.body.creditLimit;
+                if (response.body.accountNumber) account.accountNumber = response.body.accountNumber;
+            }
         }));
     }));
 
@@ -310,7 +342,7 @@ export async function fetchMyCreditAccounts(auth) {
         await Promise.all(Object.keys(fetchedAccounts.CreditLoan).map(async key => {
             const account = fetchedAccounts.CreditLoan[key];
 
-            console.log(`>>> Подгрузим информацию по кредиту '${account.ProductName}' (${account.AccountNumber}) [Мой кредит] --------`);
+            console.log(`>>> Загрузка информации по кредиту '${account.ProductName}' (${account.AccountNumber}) [Мой кредит] --------`);
             await fetchJson("Payment/GetProductDetails", {
                 headers: {
                     ...defaultMyCreditHeaders,
@@ -356,41 +388,6 @@ export async function fetchMyCreditAccounts(auth) {
     return fetchedAccounts;
 }
 
-export async function fetchMyCreditTransactions(auth, accountData, fromDate, toDate = null) {
-    console.log(`>>> Загружаем список операций '${accountData.details.title}' (${accountData.details.accountNumber}) [Мой кредит] ========================`);
-    if (accountData.details.type !== "CreditCard") {
-        console.log(`Загрузка операций по счёту ${accountData.details.type} не поддерживается`);
-        return [];
-    }
-
-    const type = _.lowerFirst(accountData.details.type)+"s";
-    const response = await fetchJson(`https://ib.homecredit.ru/rest/${type}/transactions`, {
-        ignoreErrors: true,
-        headers: {
-            ...defaultMyCreditHeaders,
-            "Authorization": "Bearer "+auth.token,
-            "Host": "ib.homecredit.ru",
-            "X-Device-Ident": auth.device,
-            "X-Private-Key": auth.key,
-            "X-Phone-Number": auth.phone,
-            "X-Auth-Token": auth.token,
-        },
-        body: {
-            "accountNumber": accountData.details.accountNumber,
-            "cardNumber": accountData.details.cardNumber,
-            "contractNumber": accountData.details.contractNumber,
-            "count": 0,
-            "fromDate": getFormatedDate(fromDate || (fromDate.setDate(fromDate.getDate() - 7))),
-            "isSort": false,
-            "startPosition": 0,
-            "toDate": getFormatedDate(toDate || new Date()),
-        },
-        sanitizeRequestLog: {headers: {"Authorization": true, "X-Device-Ident": true, "X-Private-Key": true, "X-Phone-Number": true, "X-Auth-Token": true}},
-        sanitizeResponseLog: {headers: {"X-Auth-Token": true}},
-    });
-    return response.body.values;
-}
-
 export async function fetchBaseTransactions(accountData, type, fromDate, toDate = null) {
     console.log(`>>> Загружаем список операций '${accountData.details.title}' (${getCardNumber(accountData.details.cardNumber) || accountData.details.accountNumber}) [Базовый] ========================`);
     const listCount = 25;
@@ -412,6 +409,10 @@ export async function fetchBaseTransactions(accountData, type, fromDate, toDate 
         case "credits":
             methodName = "getCreditTransactions";
             filterMo = "CreditTransactionsFilterMo";
+            break;
+        case "merchantCards":
+            methodName = "getMerchantCardTransactions";
+            filterMo = "MerchantCardTransactionsFilterMo";
             break;
         default:
             methodName = null;
@@ -484,6 +485,41 @@ export async function fetchBaseTransactions(accountData, type, fromDate, toDate 
     return transactions;
 }
 
+export async function fetchMyCreditTransactions(auth, accountData, fromDate, toDate = null) {
+    console.log(`>>> Загружаем список операций '${accountData.details.title}' (${accountData.details.accountNumber}) [Мой кредит] ========================`);
+    if (accountData.details.type !== "CreditCard") {
+        console.log(`Загрузка операций по счёту ${accountData.details.type} не поддерживается`);
+        return [];
+    }
+
+    const type = _.lowerFirst(accountData.details.type)+"s";
+    const response = await fetchJson(`https://ib.homecredit.ru/rest/${type}/transactions`, {
+        ignoreErrors: true,
+        headers: {
+            ...defaultMyCreditHeaders,
+            "Authorization": "Bearer "+auth.token,
+            "Host": "ib.homecredit.ru",
+            "X-Device-Ident": auth.device,
+            "X-Private-Key": auth.key,
+            "X-Phone-Number": auth.phone,
+            "X-Auth-Token": auth.token,
+        },
+        body: {
+            "accountNumber": accountData.details.accountNumber,
+            "cardNumber": accountData.details.cardNumber,
+            "contractNumber": accountData.details.contractNumber,
+            "count": 0,
+            "fromDate": getFormatedDate(fromDate || (fromDate.setDate(fromDate.getDate() - 7))),
+            "isSort": false,
+            "startPosition": 0,
+            "toDate": getFormatedDate(toDate || new Date()),
+        },
+        sanitizeRequestLog: {headers: {"Authorization": true, "X-Device-Ident": true, "X-Private-Key": true, "X-Phone-Number": true, "X-Auth-Token": true}},
+        sanitizeResponseLog: {headers: {"X-Auth-Token": true}},
+    });
+    return response.body.values;
+}
+
 async function fetchJson(url, options, predicate) {
     if (url.substr(0, 4) !== "http") {
         const api = options.API ? parseInt(options.API, 10) : 0;
@@ -544,8 +580,11 @@ function isValidDate(d) {
     return d && d instanceof Date && !isNaN(d);
 }
 
-function getDeviceId(str){
-    return md5.hex((str ? str : "-") + "homecredit").substr(0, 16);
+function getDeviceId(){
+    function chr8(){
+        return Math.random().toString(16).slice(-8);
+    }
+    return chr8()+chr8();
 }
 
 function getCardNumber(number) {

@@ -12,24 +12,37 @@ export async function scrape({preferences, fromDate, toDate}) {
         await HomeCredit.authBase(preferences);
         const fetchedAccounts = await HomeCredit.fetchBaseAccounts();
 
-        if (fetchedAccounts.credits) {
-            console.log(">>> Обнаружены кредиты, необходима синхронизация через приложение 'Мой кредит'");
+        if (fetchedAccounts.credits || fetchedAccounts.merchantCards) {
+            if (fetchedAccounts.credits)
+                console.log(">>> Обнаружены кредиты, необходима синхронизация через приложение 'Мой кредит'");
+            if (fetchedAccounts.merchantCards)
+                console.log(">>> Обнаружены карты рассрочки, необходима синхронизация через приложение 'Мой кредит'");
             if (!preferences.birth || !preferences.phone || !preferences.pin) {
-                console.log(">>> Подключение к 'Мой кредит' не настроено. Кредиты пропускаем.");
-                delete fetchedAccounts.credits;
+                console.log(">>> Подключение к 'Мой кредит' не настроено. Крединые продукты пропускаем.");
+                if (fetchedAccounts.credits) delete fetchedAccounts.credits;
+                if (fetchedAccounts.merchantCards) delete fetchedAccounts.merchantCards;
             } else {
-                // Авторизация в приложении "Мой кредит" (необходимы данные по кредитам)
+                // Авторизация в приложении "Мой кредит"
                 const auth = await HomeCredit.authMyCredit(preferences);
                 const fetchedMyCreditAccounts = await HomeCredit.fetchMyCreditAccounts(auth);
-                fetchedAccounts.credits.forEach(function(account) {
-                    const loan = getLoan(fetchedMyCreditAccounts.CreditLoan, account.contractNumber);
-                    account.AccountNumber = loan.AccountNumber;
-                    account.DateSign = loan.DateSign;
-                    account.CreditAmount = loan.CreditAmount;
-                    account.Contract = {Properties: { PaymentNum: loan.Contract.Properties.PaymentNum }};
-                    account.RepaymentAmount = loan.RepaymentAmount;
-                    account.AccountBalance = loan.AccountBalance;
-                })
+                if (fetchedAccounts.credits)
+                    fetchedAccounts.credits.forEach(function(account) {
+                        const loan = getLoan(fetchedMyCreditAccounts.CreditLoan, account.contractNumber);
+                        account.AccountNumber = loan.AccountNumber;
+                        account.DateSign = loan.DateSign;
+                        account.CreditAmount = loan.CreditAmount;
+                        account.Contract = {Properties: { PaymentNum: loan.Contract.Properties.PaymentNum }};
+                        account.RepaymentAmount = loan.RepaymentAmount;
+                        account.AccountBalance = loan.AccountBalance;
+                    });
+                /*if (fetchedAccounts.merchantCards)
+                    fetchedAccounts.merchantCards.forEach(function(account) {
+                        const cardTw = getCardTW(fetchedMyCreditAccounts.CreditCardTW, account.contractNumber, account.cardNumber);
+                        account.AccountNumber = cardTw.AccountNumber;
+                        account.CreditLimit = cardTw.CreditLimit;
+                        account.AvailableBalance = cardTw.AvailableBalance;
+                    });*/
+                delete fetchedAccounts.merchantCards;
             }
         }
 
@@ -42,6 +55,7 @@ export async function scrape({preferences, fromDate, toDate}) {
                 Converters.convertTransactions(accountData, await HomeCredit.fetchBaseTransactions(accountData, accountData.details.type, fromDate, toDate))))
         })));
 
+        // отфильтруем доп.карты и пустые счета
         let tmpAccountsData = {};
         _.flattenDeep(accountsData).forEach(function(a) {
             if (!a.account) return;
@@ -92,5 +106,15 @@ function getLoan(loans, contractNumber) {
         if (loan.ContractNumber === contractNumber)
             result = loan;
     });
+    return result;
+}
+
+function getCardTW(cards, contractNumber, cardNumber) {
+    console.log(">>> Преобразование карты рассрочки из 'Мой кредит' в 'Банк Хоум Кредит': ", cards, contractNumber, cardNumber);
+    let result;
+    /*cards.forEach(function(card) {
+        if (card.ContractNumber === contractNumber && card.CardNumber === cardNumber)
+            result = card;
+    });*/
     return result;
 }

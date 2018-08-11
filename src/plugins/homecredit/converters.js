@@ -9,6 +9,7 @@ export function convertAccount(account, type) {
 
         // карты рассрочки
         case "CreditCardTW": // MyCredit
+        case "merchantCards": // Base
             accountData.account = convertCardTW(account);
             break;
 
@@ -65,15 +66,25 @@ function convertCard(account) {
 }
 
 function convertCardTW(account) {
-    return {
-        id: account.ContractNumber,
+    //console.log(">>> Конвертация карты рассрочки: ", account);
+    const result = {
+        id: account.contractNumber || account.ContractNumber,
         type: "ccard",
-        syncID: account.AccountNumber.substr(-4),
-        title: account.ProductName,
-        instrument: "RUB",
-        balance: Math.round((account.AvailableBalance - account.CreditLimit) * 100) / 100,
-        creditLimit: account.CreditLimit,
+        syncID: (account.accountNumber || account.AccountNumber).substr(-4),
+        title: account.productName || account.ProductName,
+        instrument: account.currency || "RUB",
+    };
+    const creditLimit = account.creditLimit || account.CreditLimit;
+    const availableBalance = account.availableBalance || account.AvailableBalance;
+    if (creditLimit) {
+        result.creditLimit = creditLimit;
+        result.balance = Math.round((availableBalance - creditLimit) * 100) / 100;
+    } else if (availableBalance) {
+        result.balance = availableBalance;
+    } else {
+        result.balance = 0;
     }
+    return result;
 }
 
 function convertLoan(account) {
