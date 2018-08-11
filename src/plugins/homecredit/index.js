@@ -38,11 +38,14 @@ export async function scrape({preferences, fromDate, toDate}) {
                 /*if (fetchedAccounts.merchantCards)
                     fetchedAccounts.merchantCards.forEach(function(account) {
                         const cardTw = getCardTW(fetchedMyCreditAccounts.CreditCardTW, account.contractNumber, account.cardNumber);
-                        account.AccountNumber = cardTw.AccountNumber;
-                        account.CreditLimit = cardTw.CreditLimit;
-                        account.AvailableBalance = cardTw.AvailableBalance;
+                        if (cardTw) {
+                            account.AccountNumber = cardTw.AccountNumber;
+                            account.CreditLimit = cardTw.CreditLimit;
+                            account.AvailableBalance = cardTw.AvailableBalance;
+                        } else
+                            console.log(">>> Игнорируем карту, отсутствующую в 'Мой Кредит':", HomeCredit.getCardNumber(account.cardNumber));
                     });*/
-                delete fetchedAccounts.merchantCards;
+                if (fetchedAccounts.merchantCards) delete fetchedAccounts.merchantCards;
             }
         }
 
@@ -112,9 +115,9 @@ function getLoan(loans, contractNumber) {
 function getCardTW(cards, contractNumber, cardNumber) {
     console.log(">>> Преобразование карты рассрочки из 'Мой кредит' в 'Банк Хоум Кредит': ", cards, contractNumber, cardNumber);
     let result;
-    /*cards.forEach(function(card) {
-        if (card.ContractNumber === contractNumber && card.CardNumber === cardNumber)
+    cards.forEach(function(card) {
+        if (card.ContractNumber === contractNumber && (card.MainCardNumber === cardNumber || card.CardNumber === cardNumber))
             result = card;
-    });*/
+    });
     return result;
 }

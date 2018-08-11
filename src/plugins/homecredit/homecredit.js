@@ -286,7 +286,7 @@ export async function fetchBaseAccounts() {
                             {
                                 "cardNumber": account.cardNumber,
                                 "javaClass": "cz.bsc.g6.components.product.json.services.api.mo." + filterMo,
-                            }
+                            },
                         ],
                         "javaClass": "org.springframework.remoting.support.RemoteInvocation",
                         "methodName": methodName,
@@ -487,12 +487,34 @@ export async function fetchBaseTransactions(accountData, type, fromDate, toDate 
 
 export async function fetchMyCreditTransactions(auth, accountData, fromDate, toDate = null) {
     console.log(`>>> Загружаем список операций '${accountData.details.title}' (${accountData.details.accountNumber}) [Мой кредит] ========================`);
-    if (accountData.details.type !== "CreditCard") {
-        console.log(`Загрузка операций по счёту ${accountData.details.type} не поддерживается`);
+
+    let type;
+    const body = {
+        "accountNumber": accountData.details.accountNumber,
+        "cardNumber": accountData.details.cardNumber,
+        "count": 0,
+        "fromDate": getFormatedDate(fromDate || (fromDate.setDate(fromDate.getDate() - 7))),
+        "isSort": false,
+        "startPosition": 0,
+        "toDate": getFormatedDate(toDate || new Date()),
+    };
+
+    switch(accountData.details.type){
+        case "CreditCard":
+            type = "creditCards";
+            body.contractNumber = accountData.details.contractNumber;
+            break;
+        case "CreditCardTW":
+            type = "merchantCards";
+            break;
+        default:
+            break;
+    }
+    if (!type) {
+        console.log(`>>> Загрузка операций для счёта с типом '${type}' не реализована! Пропускаем.`);
         return [];
     }
 
-    const type = _.lowerFirst(accountData.details.type)+"s";
     const response = await fetchJson(`https://ib.homecredit.ru/rest/${type}/transactions`, {
         ignoreErrors: true,
         headers: {
@@ -504,16 +526,7 @@ export async function fetchMyCreditTransactions(auth, accountData, fromDate, toD
             "X-Phone-Number": auth.phone,
             "X-Auth-Token": auth.token,
         },
-        body: {
-            "accountNumber": accountData.details.accountNumber,
-            "cardNumber": accountData.details.cardNumber,
-            "contractNumber": accountData.details.contractNumber,
-            "count": 0,
-            "fromDate": getFormatedDate(fromDate || (fromDate.setDate(fromDate.getDate() - 7))),
-            "isSort": false,
-            "startPosition": 0,
-            "toDate": getFormatedDate(toDate || new Date()),
-        },
+        body: body,
         sanitizeRequestLog: {headers: {"Authorization": true, "X-Device-Ident": true, "X-Private-Key": true, "X-Phone-Number": true, "X-Auth-Token": true}},
         sanitizeResponseLog: {headers: {"X-Auth-Token": true}},
     });
@@ -587,7 +600,7 @@ function getDeviceId(){
     return chr8()+chr8();
 }
 
-function getCardNumber(number) {
+export function getCardNumber(number) {
     if (typeof number !== "string" || number.length % 4 !== 0)
         return number;
 
