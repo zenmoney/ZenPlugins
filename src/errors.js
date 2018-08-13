@@ -1,9 +1,10 @@
-export class ZPAPIError extends Error {
+export class ZPAPIError {
     constructor(message, logIsNotImportant, forcePluginReinstall) {
-        super(message);
         if (typeof message !== "string") {
             throw new Error("message must be string");
         }
+        this.message = message;
+        this.stack = new Error().stack;
         // Redirects to preferences screen
         this.fatal = Boolean(forcePluginReinstall);
         // Hides "Send log" button on error modal
