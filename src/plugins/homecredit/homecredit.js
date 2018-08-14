@@ -98,6 +98,7 @@ export async function authBase(preferences) {
         },
         headers: defaultBaseHeaders,
         sanitizeRequestLog: { body: {arguments: {"code": true, "password": true, "deviceID": true, "username": true}} },
+        sanitizeResponseLog: { headers: {"set-cookie": true} },
     });
 
     // ERROR_LOGIN, BLOCK_USER_CODE
@@ -143,6 +144,7 @@ async function registerMyCreditDevice(auth, preferences){
             "X-Phone-Number": auth.phone,
         },
         sanitizeRequestLog: {headers: {"X-Device-Ident": true, "X-Private-Key": true, "X-Phone-Number": true}},
+        sanitizeResponseLog: {headers: {"set-cookie": true}},
     });
 
     let isPinCreated;
@@ -168,6 +170,7 @@ async function registerMyCreditDevice(auth, preferences){
                 "SmsCode": code,
             },
             sanitizeRequestLog: {headers: {"X-Device-Ident": true, "X-Private-Key": true, "X-Phone-Number": true}, body: {"SmsCode": true}},
+            sanitizeResponseLog: {headers: {"set-cookie": true}},
         });
 
         isPinCreated = response.body.Result.IsUserPinCodeCreated;
@@ -195,7 +198,7 @@ async function registerMyCreditDevice(auth, preferences){
             "Pin": (preferences.pin || "").trim(),
         },
         sanitizeRequestLog: {headers: {"X-Device-Ident": true, "X-Private-Key": true, "X-Phone-Number": true}, body: {Pin: true}},
-        sanitizeResponseLog: {headers: {"X-Auth-Token": true}},
+        sanitizeResponseLog: {headers: {"X-Auth-Token": true, "set-cookie": true}},
     });
 
     const isValidPin = response.body.Result.IsPinValid;
@@ -380,7 +383,9 @@ export async function fetchMyCreditAccounts(auth) {
             });
 
             // добавим информацию о реалном остатке по кредиту
-            if (response.body.statusCode === 200)
+            if (!response.body)
+                console.log(">>> ОСТАТОК НА СЧЕТУ КРЕДИТА НЕ ДОСТУПЕН! В течение нескольких дней после наступления расчётной даты остаток ещё не доступен.");
+            else if (response.body.statusCode === 200)
                 account.RepaymentAmount = response.body.repaymentAmount;
         }));
     }
@@ -539,14 +544,23 @@ async function fetchJson(url, options, predicate) {
         const apiStr = api > 0 ? `/v${api}` : "";
         url = `${myCreditUrl}${apiStr}/api/${url}`;
     }
-    const response = await Network.fetchJson(url, {
-        method: options.method || "POST",
-        ..._.omit(options, ["API"]),
-    });
+    let response;
+    try {
+        response = await Network.fetchJson(url, {
+            method: options.method || "POST",
+            ..._.omit(options, ["API"]),
+        });
+    } catch (e) {
+        if (e.response && e.response.status === 503) {
+            throw new TemporaryError("Информация из Банка Хоум Кредит временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться несколько дней, откройте Настройки синхронизации и нажмите \"Отправить лог последней синхронизации разработчикам\".");
+        } else {
+            throw e;
+        }
+    }
     if (predicate)
         validateResponse(response, response => response.body && predicate(response));
     if (!options.ignoreErrors && response.body) {
-        if (response.body.StatusCode && response.body.StatusCode !== 200 && response.body.statusCode !== 200) {
+        if ((response.body.StatusCode || response.body.statusCode) && response.body.StatusCode !== 200 && response.body.statusCode !== 200) {
             const message = getErrorMessage(response.body.Errors);
             if (message) {
                 if (message.indexOf("повторите попытку") + 1)

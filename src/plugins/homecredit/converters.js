@@ -108,7 +108,7 @@ function convertLoan(account) {
         res.payoffStep = 1;
         res.payoffInterval = "month";
         //res.balance = Math.round((-account.RepaymentAmount + account.AccountBalance) * 100) / 100;
-        res.balance = -account.RepaymentAmount;
+        if (account.RepaymentAmount) res.balance = -account.RepaymentAmount;
     } else {
         // Base (заглушка)
         res.startDate = Date.now();
@@ -126,7 +126,23 @@ function convertLoan(account) {
 }
 
 export function convertTransactions(accountData, transactions) {
-    return transactions.map(transaction => {
+    const result = [];
+    transactions.forEach(transaction => {
+        // дополнительная логика для счетов кредитов
+        let credit = false;
+        if (["CreditLoan", "credits"].indexOf(accountData.details.type)+1){
+            if (!transaction.creditDebitIndicator) {
+                // списания по основному долгу на счетах кредитов пропускаем
+                if (transaction.shortDescription.indexOf("основного долга")+1)
+                    return;
+            } else {
+                // поступление на счёт кредита записываем в минус
+                if (transaction.shortDescription.indexOf("Выдача кредита")+1)
+                    transaction.creditDebitIndicator = false;
+            }
+            credit = true;
+        }
+
         const tran = {
             id: transaction.movementNumber,
             hold: transaction.postingDate === null,
@@ -137,14 +153,14 @@ export function convertTransactions(accountData, transactions) {
             date: new Date(transaction.valueDate.time || transaction.valueDate),
             payee: transaction.merchantName || transaction.merchant.trim(),
         };
-
-        if (transaction.creditDebitIndicator)
+        if (transaction.creditDebitIndicator || credit)
             tran.comment = transaction.shortDescription;
         if (transaction.mcc)
             tran.mcc = getMcc(transaction.mcc);
 
-        return tran;
+        result.push(tran);
     });
+    return result;
 }
 
 export function getMcc(code) {
@@ -160,11 +176,12 @@ export function getMcc(code) {
         case "CLOTHING SHOES & ACCESSORIES":
             return 5651;
 
+        case "OTHER":
         case "HOBBY & LEISURE":
         case "HOME & GARDEN":
         case "TRANSPORTATION":
         case "TELECOMMUNICATION":
-        case "OTHER":
+        case "UTILITY BILLS":
             return null;
 
         default: {
