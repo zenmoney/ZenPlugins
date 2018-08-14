@@ -874,10 +874,10 @@ function processTransactions(data) {
 
             // mcc-код операции
             let mcc = t.mcc ? parseInt(t.mcc, 10) : -1;
-            if (isNaN(mcc)) mcc = -1;
+            if (!mcc) mcc = -1;
 
             // флаг card2card переводов
-            const c2c = mcc === 6538;
+            const c2c = in_array(mcc, [6538, 6012]);
 
             // доход -------------------------------------------------------------------------
             if (t.type === "Credit") {
