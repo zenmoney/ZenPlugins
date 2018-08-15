@@ -3,7 +3,7 @@
  */
 
 /**
- * @returns {{id: null, title: null, syncID: Array, type: null, balance: number, startBalance: number, creditLimit: number, savings: undefined, capitalization: undefined, percent: undefined, startDate: undefined, endDateOffset: undefined, endDateOffsetInterval: undefined, payoffStep: undefined, payoffInterval: undefined}}
+ * @returns {{id: null, title: null, syncID: Array, type: null, balance: number, startBalance: undefined, creditLimit: number, savings: undefined, capitalization: undefined, percent: undefined, startDate: undefined, endDateOffset: undefined, endDateOffsetInterval: undefined, payoffStep: undefined, payoffInterval: undefined}}
  */
 const entity = () => {
     return {
@@ -12,7 +12,7 @@ const entity = () => {
         syncID: [],
         type: null,
         balance: 0,
-        startBalance: 0,
+        startBalance: undefined,
         creditLimit: 0,
         savings: undefined,
         capitalization: undefined,
