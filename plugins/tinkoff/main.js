@@ -12,10 +12,11 @@ var g_preferences;
 /**
  * Основной метод
  */
-function main(){
+function main(params){
     g_preferences = ZenMoney.getPreferences();
 
-    if (login() === false) {
+    var inBackground = params && params.isInBackground;
+    if (login(inBackground) === false) {
         ZenMoney.setResult({success: false});
         return;
     }
@@ -33,7 +34,7 @@ function main(){
  * Авторизация
  * @returns {String} Идентификатор сессии
  */
-function login() {
+function login(inBackground) {
     if (!g_preferences.login) throw new ZenMoney.Error("Введите логин в интернет-банк в параметрах подключения!", true, true);
 
     //if (!g_preferences.pin) throw new ZenMoney.Error("Введите пин-код для входа в интернет-банк в параметрах подключения!", true);
@@ -124,6 +125,9 @@ function login() {
         var pinHash = ZenMoney.getData("pinHash", null);
         // если пина ещё нет, установим его
         if (!pinHash) {
+            if (inBackground)
+                throw new ZenMoney.Error("Необходима регистрация по ПИН-коду. Запрос в фоновом режиме не возможен. Прекращаем работу.");
+
             // получаем пароль
             var password = g_preferences.hasOwnProperty("password") ? g_preferences.password : null;
             if (!password)
