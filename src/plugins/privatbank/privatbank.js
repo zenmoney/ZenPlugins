@@ -38,6 +38,10 @@ export class PrivatBank {
             },
             body: xml,
         });
+        if (response.body && response.body.indexOf("merchant is blocked") >= 0) {
+            throw new TemporaryError("Мерчант заблокирован. Чтобы перевести мерчант в рабочий режим, " +
+                "авторизуйтесь в Приват24 и отправьте заявку на вкладке \"Все услуги\" - Бизнес - Мерчант - Заявки.");
+        }
         if (response.body) {
             if (response.status === 504 && response.body.indexOf("504 Gateway Time-out") >= 0) {
                 throw new TemporaryError("[NER] Proxy connection error");
