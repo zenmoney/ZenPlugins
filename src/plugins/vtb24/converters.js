@@ -153,7 +153,7 @@ export function convertLoan(apiAccount) {
         capitalization: true,
         payoffInterval: "month",
         payoffStep: 1,
-        syncID: [apiAccount.account.number.replace(/[-/]/g, "")],
+        syncID: [apiAccount.account.number.replace(/[^\d]/g, "")],
     };
     const contractPeriod = apiAccount.contractPeriod || apiAccount.account.contract.contractPeriod;
     switch (contractPeriod.unit.id.toLowerCase()) {
