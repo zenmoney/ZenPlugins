@@ -17,7 +17,7 @@ function validateResponse(response, predicate) {
 export async function login(login, password) {
     // It happens on server side
     if (login !== "example" || password !== "example") {
-        throw new ZenMoney.Error("Неверный логин или пароль", true);
+        throw new InvalidPreferencesError("Неверный логин или пароль");
     }
     return (await fetchJson("auth.json", null, response => response.body.access_token)).body.access_token;
 }

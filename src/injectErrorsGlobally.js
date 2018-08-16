@@ -1,5 +1,4 @@
-import {InvalidPreferencesError, TemporaryError, ZPAPIError} from "./errors";
+import {InvalidPreferencesError, TemporaryError} from "./errors";
 
-global.ZenMoney.Error = ZPAPIError;
 global.TemporaryError = TemporaryError;
 global.InvalidPreferencesError = InvalidPreferencesError;

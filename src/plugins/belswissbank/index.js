@@ -29,7 +29,7 @@ async function login({username, password}) {
             });
 
             if (!/^\d+$/.test(retrievedInput)) {
-                throw errors.temporal("Numeric SMS code was expected.");
+                throw new TemporaryError("Numeric SMS code was expected.");
             }
 
             const confirmationCode = Number(retrievedInput);
@@ -38,7 +38,7 @@ async function login({username, password}) {
         case "OK":
             break;
         default:
-            throw errors.temporal(`auth userStatus is ${authStatus.userStatus}`);
+            throw new TemporaryError(`auth userStatus is ${authStatus.userStatus}`);
     }
 }
 

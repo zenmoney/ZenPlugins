@@ -203,7 +203,7 @@ async function registerMyCreditDevice(auth, preferences){
 
     const isValidPin = response.body.Result.IsPinValid;
     if (!isValidPin)
-        throw new ZenMoney.Error("Пин-код не верен. Укажите код, заданный вами в приложении банка 'Мой кредит'.", true);
+        throw new TemporaryError("Пин-код не верен. Укажите код, заданный вами в приложении банка 'Мой кредит'.");
 
     auth.token = response.headers["x-auth-token"];
     ZenMoney.setData("auth", auth);

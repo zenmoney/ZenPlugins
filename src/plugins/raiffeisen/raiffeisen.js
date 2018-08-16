@@ -28,7 +28,7 @@ async function fetchJson(url, options = {}, predicate = () => true) {
         let err = e;
         if (err instanceof retry.RetryError) {
             err = err.failedResults.find(([error, response]) => error !== null);
-            err = err ? err[0] : new ZenMoney.Error("[NER]", true);
+            err = err ? err[0] : new TemporaryError("[NER]");
         }
         throw err;
     }
