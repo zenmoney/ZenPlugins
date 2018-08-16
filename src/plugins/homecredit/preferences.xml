@@ -9,8 +9,7 @@
         negativeButtonText="Отмена"
         positiveButtonText="ОК"
         inputType="text"
-        obligatory="false"
-    >
+        obligatory="false">
     </EditTextPreference>
     <EditTextPreference
         key="password"
@@ -21,8 +20,7 @@
         negativeButtonText="Отмена"
         positiveButtonText="ОК"
         inputType="textPassword"
-        obligatory="false"
-    >
+        obligatory="false">
     </EditTextPreference>
     <EditTextPreference
             key="code"
@@ -33,8 +31,7 @@
             inputType="numberPassword"
             negativeButtonText="Отмена"
             positiveButtonText="ОК"
-            obligatory="false"
-    >
+            obligatory="false">
     </EditTextPreference>
     <EditTextPreference
             key="birth"
