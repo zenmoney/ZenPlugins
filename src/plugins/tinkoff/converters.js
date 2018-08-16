@@ -1,3 +1,5 @@
+import _ from "lodash";
+
 export function convertAccount(account, initialized) {
     switch(account.accountType){
         case "Current": return getDebitCard(account, initialized); // дебетовые карты
@@ -16,6 +18,194 @@ export function convertAccount(account, initialized) {
             return null;
         }
     }
+}
+
+export function convertTransaction(transaction, accountId) {
+    const tran = {};
+
+    // дата привязана к часовому поясу Москвы
+    const dt = new Date(transaction.operationTime.milliseconds + (180 + new Date().getTimezoneOffset()) * 60000);
+    tran.date = dt.getFullYear() + "-" + n2(dt.getMonth() + 1) + "-" + n2(dt.getDate());
+    tran.time = n2(dt.getHours()) + ":" + n2(dt.getMinutes() + 1) + ":" + n2(dt.getSeconds()); // для внутреннего использования
+    tran.created = transaction.operationTime.milliseconds;
+
+    // Внутренний ID операции
+    /*const tranId = transaction.payment && transaction.payment.paymentId
+        // если есть paymentId, объединяем по нему, отделяя комиссии от переводов
+        ? (transaction.group === "CHARGE" ? "f" : "p") + transaction.payment.paymentId
+        // либо работаем просто как с операциями, разделяя их на доходы и расходы
+        : transaction.id;*/
+
+    // отделяем акцепт от холда временем дебетового списания
+    tran.id = transaction.debitingTime ? transaction.id : "tmp#" + transaction.id;
+    tran.hold = !transaction.debitingTime;
+
+    // флаг операции в валюте
+    const foreignCurrency = transaction.accountAmount.currency.name !== transaction.amount.currency.name;
+
+    // mcc-код операции
+    let mcc = transaction.mcc ? parseInt(transaction.mcc, 10) : -1;
+    if (!mcc) mcc = -1;
+
+    // флаг card2card переводов
+    const c2c = [6538, 6012].indexOf(mcc) >= 0;
+
+    // доход -------------------------------------------------------------------------
+    if (transaction.type === "Credit") {
+        tran.income = transaction.accountAmount.value;
+        tran.incomeAccount = accountId;
+        tran.outcome = 0;
+        tran.outcomeAccount = tran.incomeAccount;
+
+        if (transaction.group) {
+            switch (transaction.group) {
+                // пополнение наличными
+                case "CASH":
+                    if (!c2c) {
+                        // операция с наличными
+                        tran.outcomeAccount = "cash#" + transaction.amount.currency.name;
+                        tran.outcome = transaction.amount.value;
+                    } else
+                    // card2card-перевод
+                    if (transaction.payment && transaction.payment.cardNumber) {
+                        tran.outcomeAccount = "ccard#" + transaction.amount.currency.name + "#" + transaction.payment.cardNumber.substring(transaction.payment.cardNumber.length - 4);
+                        tran.outcome = transaction.amount.value;
+                        tran.hold = null;
+                    }
+                    break;
+
+                case "INCOME":
+                    if (c2c && transaction.payment && transaction.payment.cardNumber && transaction.payment.cardNumber.length > 4) {
+                        tran.comment = transaction.description;
+                        tran.outcome = transaction.amount.value;
+                        tran.outcomeAccount = "ccard#" + transaction.amount.currency.name + "#" + transaction.payment.cardNumber.substring(transaction.payment.cardNumber.length - 4);
+                    } else if (transaction.senderDetails)
+                        tran.payee = transaction.senderDetails;
+                    break;
+
+                // Если совсем ничего не подошло
+                default:
+                    if (transaction.subgroup) {
+                        switch (transaction.subgroup.id) {
+                            // перевод от другого клиента банка
+                            case "C4":
+                                tran.payee = transaction.description;
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+
+                    if (!tran.payee) {
+                        if (transaction.operationPaymentType === "TEMPLATE")
+                            tran.comment = transaction.description; // наименование шаблона
+                        else {
+                            tran.comment = "";
+                            if (transaction.merchant)
+                                tran.comment = transaction.merchant.name + ": ";
+                            tran.comment += transaction.description;
+                        }
+                    } else {
+                        // если получатель определился, то нет необходимости писать его и в комментарии
+                        if (transaction.merchant)
+                            tran.comment = transaction.merchant.name;
+                    }
+            }
+        } else {
+            tran.comment = "";
+            if (transaction.merchant)
+                tran.comment = transaction.merchant.name + ": ";
+            tran.comment += transaction.description;
+        }
+
+        // операция в валюте
+        if (foreignCurrency) {
+            tran.opIncome = transaction.amount.value;
+            tran.opIncomeInstrument = transaction.amount.currency.name;
+        }
+    } else
+    // расход -----------------------------------------------------------------
+    if (transaction.type === "Debit") {
+        tran.outcome = transaction.accountAmount.value;
+        tran.outcomeAccount = accountId;
+        tran.income = 0;
+        tran.incomeAccount = tran.outcomeAccount;
+
+        if (transaction.group) {
+            switch (transaction.group) {
+                // Снятие наличных
+                case "CASH":
+                    if (!c2c) {
+                        // операция с наличными
+                        tran.incomeAccount = "cash#" + transaction.amount.currency.name;
+                        tran.income = transaction.amount.value;
+                    } else
+                    // card2card-перевод
+                    if (transaction.payment && transaction.payment.cardNumber) {
+                        tran.incomeAccount = "ccard#" + transaction.amount.currency.name + "#" + transaction.payment.cardNumber.substring(transaction.payment.cardNumber.length - 4);
+                        tran.income = transaction.amount.value;
+                    }
+                    break;
+
+                // Перевод
+                case "TRANSFER":
+                    if (transaction.payment && transaction.payment.fieldsValues) {
+                        if (transaction.payment.fieldsValues.addressee)
+                            tran.payee = transaction.payment.fieldsValues.addressee;
+                        else if (transaction.payment.fieldsValues.lastName)
+                            tran.payee = transaction.payment.fieldsValues.lastName;
+                    }
+
+                    if (transaction.operationPaymentType === "TEMPLATE")
+                        tran.comment = transaction.description; // наименование шаблона
+                    else {
+                        tran.comment = "";
+                        if (transaction.merchant)
+                            tran.comment = transaction.merchant.name + ": ";
+                        tran.comment += transaction.description;
+                    }
+                    break;
+
+                // Плата за обслуживание
+                case "CHARGE":
+                    tran.comment = transaction.description;
+                    break;
+
+                // Платеж
+                case "PAY":
+                    if (transaction.operationPaymentType && transaction.operationPaymentType === "REGULAR") {
+                        tran.payee = transaction.brand ? transaction.brand.name : transaction.description;
+                    } else {
+                        tran.payee = transaction.merchant ? transaction.merchant.name : transaction.description;
+                    }
+
+                    // MCC
+                    if (mcc > 99) {
+                        tran.mcc = mcc; // у Тинькова mcc-коды используются для своих нужд
+                    }
+
+                    break;
+
+                // Если совсем ничего не подошло
+                default:
+                    tran.comment = transaction.description;
+            }
+        }
+
+        // операция в валюте
+        if (foreignCurrency) {
+            tran.opOutcome = transaction.amount.value;
+            tran.opOutcomeInstrument = transaction.amount.currency.name;
+        }
+
+        // местоположение
+        if (transaction.locations && _.isArray(transaction.locations) && transaction.locations.length > 0) {
+            tran.latitude = transaction.locations[0].latitude;
+            tran.longitude = transaction.locations[0].longitude;
+        }
+    }
+    
+    return tran;
 }
 
 function getDebitCard(account, initialized) {
@@ -268,4 +458,8 @@ function getTelecomAccount(account){
 
 function parseDecimal(str) {
     return Number(str.toFixed(2).replace(/\s/g, "").replace(/,/g, "."));
+}
+
+function n2(n) {
+    return n < 10 ? "0" + n : String(n);
 }

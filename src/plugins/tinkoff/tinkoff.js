@@ -136,8 +136,11 @@ export async function login(preferences, isInBackground, auth, lastIteration){
                 const dtOffset = dt.getTimezoneOffset() * 60 * 1000;
                 const pinHashTime = dt.getTime() - dtOffset + 3 * 60 * 1000; // по Москве
                 ZenMoney.setData("pinHashTime", pinHashTime);
-            } else
+            } else {
                 console.log("Не удалось установить ПИН-код для быстрого входа: " + JSON.stringify(save_pin));
+                ZenMoney.setData("pinHash", null);
+                ZenMoney.setData("pinHashTime", null);
+            }
         } else {
             // ПИН есть, входим по нему ========================================================================================================================
             const pinHashDate = ZenMoney.getData("pinHashTime", 0);
@@ -157,7 +160,6 @@ export async function login(preferences, isInBackground, auth, lastIteration){
             if (["DEVICE_LINK_NEEDED", "WRONG_PIN_CODE", "PIN_ATTEMPS_EXCEEDED"].indexOf(sign_up2.body.resultCode)+1) {
                 auth.pinHash = null;
                 ZenMoney.setData("pinHash", null);
-                ZenMoney.saveData();
 
                 switch (sign_up2.body.resultCode) {
                     // устройство не авторизировано
@@ -183,7 +185,6 @@ export async function login(preferences, isInBackground, auth, lastIteration){
                 }
             } else if (sign_up2.body.resultCode !== "OK") {
                 ZenMoney.setData("pinHash", null);
-                ZenMoney.saveData();
                 throw new TemporaryError("Ошибка входа по ПИН-коду: " + (sign_up2.body.plainMessage || sign_up2.body.errorMessage));
             } else
                 console.log(">>> Успешно вошли по ПИН-коду.");
@@ -194,7 +195,7 @@ export async function login(preferences, isInBackground, auth, lastIteration){
 
         // сохраним id сесии для следующего входа
         ZenMoney.setData("session_id", auth.sessionid);
-        ZenMoney.saveData();
+        ZenMoney.setData("pinHash", auth.pinHash);
     }
 
     return auth;
@@ -246,24 +247,34 @@ async function levelUp(auth) {
     }
 }
 
-export async function fetchAccounts(auth) {
-    console.log(">>> Запрашиваем данные по счетам...");
-
+export async function fetchAccountsAndTransactions(auth, fromDate, toDate) {
+    console.log(">>> Загружаем данные по счетам и операциям...");
     const accounts = await fetchJson(auth, "grouped_requests",
         {
             headers: defaultHeaders,
             get: {
                 _methods: "accounts_flat",
-                requestsData: JSON.stringify([{
-                    key: 0,
-                    operation: "accounts_flat",
-                }]),
+                requestsData: JSON.stringify([
+                    {
+                        key: 0,
+                        operation: "accounts_flat",
+                    },
+                    {
+                        key: 1,
+                        operation: "operations",
+                        params: {
+                            start: fromDate,
+                        },
+                    },
+                ]),
             },
         },
-        response => _.get(response, "body.payload[0].payload"),
+        response => _.get(response, "body.payload[0].payload") && _.get(response, "body.payload[1].payload"),
     );
-
-    return accounts.body.payload[0].payload;
+    return {
+        accounts: accounts.body.payload[0].payload,
+        transactions: accounts.body.payload[1].payload,
+    };
 }
 
 async function fetchJson(auth, url, options, predicate) {
