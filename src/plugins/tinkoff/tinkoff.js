@@ -12,23 +12,22 @@ const defaultHeaders = {
     "Referrer": "https://www.tinkoff.ru/mybank/",
 };
 
-let tinkoffAuth = { sessionid: null, deviceid: null }; // авторизация
-export async function login(preferences, inBackground){
-    if (tinkoffAuth.sessionid)
+export async function login(preferences, isInBackground, auth, lastIteration){
+    if (auth.pinHash && auth.sessionid)
         console.log(">>> Cессия уже установлена. Используем её.");
     else {
         console.log(">>> Пытаемся войти...");
 
         // определяем идентификатор устройства
-        tinkoffAuth.deviceid = ZenMoney.getData("device_id");
-        if (!tinkoffAuth.deviceid) {
+        auth.deviceid = ZenMoney.getData("device_id");
+        if (!auth.deviceid) {
             console.log(">>> Первый запуск подключения...");
-            tinkoffAuth.deviceid = md5.hex(Math.random().toString());
-            ZenMoney.setData("device_id", tinkoffAuth.deviceid);
+            auth.deviceid = md5.hex(Math.random().toString());
+            ZenMoney.setData("device_id", auth.deviceid);
         }
 
         // создаём сессию
-        const response = await fetchJson("session", {
+        const response = await fetchJson(auth, "session", {
             headers: {
                 ...defaultHeaders,
             },
@@ -36,12 +35,11 @@ export async function login(preferences, inBackground){
         });
         if (response.body.resultCode !== "OK")
             throw new Error("Ошибка: не удалось создать сессию с банком");
-        tinkoffAuth.sessionid = response.body.payload;
+        auth.sessionid = response.body.payload;
 
-        let pinHash = ZenMoney.getData("pinHash", null);
-        if (!pinHash) {
-            if (inBackground)
-                throw new console.log(">>> Необходима регистрация по ПИН-коду. Запрос в фоновом режиме не возможен. Прекращаем работу.");
+        if (!auth.pinHash) {
+            if (isInBackground)
+                throw new TemporaryError(">>> Необходима регистрация по ПИН-коду. Запрос в фоновом режиме не возможен. Прекращаем работу.");
 
             // ПИНа ещё нет, установим его =====================================================================================================================
             // получаем пароль
@@ -64,7 +62,7 @@ export async function login(preferences, inBackground){
                 throw new Error("Ошибка: не удалось получить пароль для входа");
 
             // входим по логину-паролю
-            const sign_up = await fetchJson("sign_up", {
+            const sign_up = await fetchJson(auth, "sign_up", {
                 ignoreErrors: true,
                 headers: {
                     ...defaultHeaders,
@@ -86,12 +84,13 @@ export async function login(preferences, inBackground){
             else if (resultCode === "WAITING_CONFIRMATION") {// DEVICE_LINK_NEEDED
                 console.log(">>> Необходимо подтвердить вход...");
 
-                const smsCode = await ZenMoney.readLine("Введите код подтверждения из смс для первого входа в интернет-банк Тинькофф", {
+                const msg = !lastIteration ? "Введите код подтверждения из СМС для входа в интернет-банк Тинькофф" : "Необходимо заново авторизировать устройство. Введите код подтверждения из СМС";
+                const smsCode = await ZenMoney.readLine(msg, {
                     inputType: "number",
                     time: 120000,
                 });
 
-                const json2 = await fetchJson("confirm", {
+                const json2 = await fetchJson(auth, "confirm", {
                     ignoreErrors: true,
                     headers: defaultHeaders,
                     get: {
@@ -110,27 +109,27 @@ export async function login(preferences, inBackground){
                     throw new Error("Ошибка авторизации: " + (json2.body.plainMessage || json2.body.errorMessage));
 
             } else {
-                ZenMoney.trace("Прошёл вход без подтверждения.");
+                console.log(">>> Прошёл вход без подтверждения.");
                 if (sign_up.body.resultCode === "AUTHENTICATION_FAILED")
                     throw new Error("Ошибка авторизации: " + (sign_up.body.plainMessage || sign_up.body.errorMessage));
             }
 
             // получаем привилегии пользователя
-            await levelUp();
+            await levelUp(auth);
 
             // устанавливаем ПИН для быстрого входа
-            pinHash = md5.hex(Math.random());
-            const save_pin = await fetchJson("mobile_save_pin", {
+            auth.pinHash = md5.hex(Math.random());
+            const save_pin = await fetchJson(auth, "mobile_save_pin", {
                 ignoreErrors: true,
                 headers: defaultHeaders,
                 get: {
-                    pinHash: pinHash,
+                    pinHash: auth.pinHash,
                 },
             });
 
             if (save_pin.body.resultCode === "OK") {
                 console.log(">>> Установили ПИН-код для быстрого входа.");
-                ZenMoney.setData("pinHash", pinHash);
+                ZenMoney.setData("pinHash", auth.pinHash);
 
                 // сохраним время установки пин-кода для авторизации
                 const dt = new Date();
@@ -143,19 +142,20 @@ export async function login(preferences, inBackground){
             // ПИН есть, входим по нему ========================================================================================================================
             const pinHashDate = ZenMoney.getData("pinHashTime", 0);
             const oldSessionId = ZenMoney.getData("session_id", 0);
-            const sign_up2 = await fetchJson("sign_up", {
+            const sign_up2 = await fetchJson(auth, "sign_up", {
                 ignoreErrors: true,
                 headers: defaultHeaders,
                 get: {
                     "auth_type": "pin",
-                    "pinHash": pinHash,
+                    "pinHash": auth.pinHash,
                     "auth_type_set_date": pinHashDate,
                     "oldSessionId": oldSessionId,
                 },
             });
-            //ZenMoney.trace('SIGN_UP 2: '+ JSON.stringify(sign_up));
+            //console.log('SIGN_UP 2: '+ JSON.stringify(sign_up));
 
             if (["DEVICE_LINK_NEEDED", "WRONG_PIN_CODE", "PIN_ATTEMPS_EXCEEDED"].indexOf(sign_up2.body.resultCode)+1) {
+                auth.pinHash = null;
                 ZenMoney.setData("pinHash", null);
                 ZenMoney.saveData();
 
@@ -163,12 +163,20 @@ export async function login(preferences, inBackground){
                     // устройство не авторизировано
                     // устройство не авторизировано
                     case "DEVICE_LINK_NEEDED":
-                        throw new InvalidPreferencesError("Требуется привязка устройства. Пожалуйста, пересоздайте подключение к банку.");
+                        if (lastIteration)
+                            throw new InvalidPreferencesError("Требуется привязка устройства. Пожалуйста, пересоздайте подключение к банку.");
+                        // попытка повторного логина с генерацией нового пин-кода
+                        console.log(">>> Требуется привязка устройства. Перелогиниваемся!");
+                        return await login(preferences, isInBackground, auth, true);
 
                     // не верный пин-код
                     case "WRONG_PIN_CODE":
                     case "PIN_ATTEMPS_EXCEEDED":
-                        throw new TemporaryError("Ошибка входа по ПИН-коду. Перезапустите подключение к банку.");
+                        if (lastIteration)
+                            throw new InvalidPreferencesError("Ошибка входа по ПИН-коду. Пожалуйста, пересоздайте подключение к банку.");
+                        // попытка повторного логина с генерацией нового пин-кода
+                        console.log(">>> Нужно установить новый ПИН-код. Перелогиниваемся!");
+                        return await login(preferences, isInBackground, auth, true);
 
                     default:
                         break;
@@ -176,26 +184,25 @@ export async function login(preferences, inBackground){
             } else if (sign_up2.body.resultCode !== "OK") {
                 ZenMoney.setData("pinHash", null);
                 ZenMoney.saveData();
-                //ZenMoney.trace("Ошибка входа по ПИН-коду: " + JSON.stringify(sign_up2));
                 throw new TemporaryError("Ошибка входа по ПИН-коду: " + (sign_up2.body.plainMessage || sign_up2.body.errorMessage));
             } else
                 console.log(">>> Успешно вошли по ПИН-коду.");
 
             // получаем привилегии пользователя
-            await levelUp();
+            await levelUp(auth);
         }
 
         // сохраним id сесии для следующего входа
-        ZenMoney.setData("session_id", tinkoffAuth.sessionid);
+        ZenMoney.setData("session_id", auth.sessionid);
         ZenMoney.saveData();
     }
+
+    return auth;
 }
 
-async function levelUp() {
-    ZenMoney.trace("Запрашиваем подтверждение привилегий пользователя...");
-
+async function levelUp(auth) {
     // получим привилегии пользователя
-    const level_up = await fetchJson("level_up", {
+    const level_up = await fetchJson(auth, "level_up", {
         ignoreErrors: true,
         headers: defaultHeaders,
     });
@@ -207,14 +214,14 @@ async function levelUp() {
 
     // подтверждение через секретный вопрос
     if (level_up.body.resultCode === "WAITING_CONFIRMATION" && level_up.body.confirmationData && level_up.body.confirmationData.Question) {
-        ZenMoney.trace("Необходимо подтвердить права...");
+        console.log(">>> Необходимо подтвердить права привилегий...");
 
         const answer = await ZenMoney.readLine("Секретный вопрос от банка: "+ level_up.body.confirmationData.Question.question +". Ответ на этот вопрос сразу передается в банк.", {
             inputType: "text",
             time: 120000,
         });
 
-        const json = await fetchJson("confirm", {
+        const json = await fetchJson(auth, "confirm", {
             ignoreErrors: true,
             headers: defaultHeaders,
             body: {
@@ -239,9 +246,29 @@ async function levelUp() {
     }
 }
 
-async function fetchJson(url, options) {
+export async function fetchAccounts(auth) {
+    console.log(">>> Запрашиваем данные по счетам...");
+
+    const accounts = await fetchJson(auth, "grouped_requests",
+        {
+            headers: defaultHeaders,
+            get: {
+                _methods: "accounts_flat",
+                requestsData: JSON.stringify([{
+                    key: 0,
+                    operation: "accounts_flat",
+                }]),
+            },
+        },
+        response => _.get(response, "body.payload[0].payload"),
+    );
+
+    return accounts.body.payload[0].payload;
+}
+
+async function fetchJson(auth, url, options, predicate) {
     const params = [];
-    tinkoffAuth.sessionid && params.push(encodeURIComponent("sessionid") + "=" + encodeURIComponent(tinkoffAuth.sessionid));
+    auth.sessionid && params.push(encodeURIComponent("sessionid") + "=" + encodeURIComponent(auth.sessionid));
     if (options.get)
         for (let param in options.get)
             if (options.get.hasOwnProperty(param))
@@ -249,7 +276,7 @@ async function fetchJson(url, options) {
     params.push(encodeURIComponent("appVersion") + "=" + encodeURIComponent("4.1.3"));
     params.push(encodeURIComponent("platform") + "=" + encodeURIComponent("android"));
     params.push(encodeURIComponent("origin") + "=" + encodeURIComponent("mobile,ib5,loyalty,platform"));
-    tinkoffAuth.deviceid && params.push(encodeURIComponent("deviceId") + "=" + encodeURIComponent(tinkoffAuth.deviceid));
+    auth.deviceid && params.push(encodeURIComponent("deviceId") + "=" + encodeURIComponent(auth.deviceid));
 
     if (url.substr(0, 4) !== "http") {
         url = baseUrl + url;
@@ -272,8 +299,14 @@ async function fetchJson(url, options) {
         const message = response.body && response.body.message;
         throw new Error(response.statusText +(message ? ": "+ message : ""));
     }
+    if (predicate)
+        validateResponse(response, response => response.body && predicate(response));
     if (options && !options.ignoreErrors && response.body) {
 
     }
     return response;
+}
+
+function validateResponse(response, predicate, message) {
+    console.assert(!predicate || predicate(response), message || "non-successful response");
 }
