@@ -213,7 +213,7 @@ export function convertTransaction(transaction, accountId) {
 
 export function convertTransactionToTransfer(tranId, tran1, tran2) {
     // доходная часть перевода ---
-    if (tran2.income > 0 && tran1.income == 0 && tran1.incomeAccount != tran2.incomeAccount) {
+    if (tran2.income > 0 && tran1.income === 0 && tran1.incomeAccount !== tran2.incomeAccount) {
         tran1.income = tran2.income;
         tran1.incomeAccount = tran2.incomeAccount;
         if (tran2.opOutcome) tran1.opOutcome = tran2.opOutcome;
@@ -225,7 +225,7 @@ export function convertTransactionToTransfer(tranId, tran1, tran2) {
 
     } else
     // расходная часть перевода ----
-    if (tran2.outcome > 0 && tran1.outcome == 0 && tran1.outcomeAccount != tran2.outcomeAccount) {
+    if (tran2.outcome > 0 && tran1.outcome === 0 && tran1.outcomeAccount !== tran2.outcomeAccount) {
         tran1.outcome = tran2.outcome;
         tran1.outcomeAccount = tran2.outcomeAccount;
         if (tran2.opOutcome) tran1.opOutcome = tran2.opOutcome;

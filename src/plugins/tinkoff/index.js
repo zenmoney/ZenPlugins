@@ -38,7 +38,7 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
         }
 
         // учитываем только успешные операции
-        if ((t.status && t.status === "FAILED") || t.accountAmount.value == 0)
+        if ((t.status && t.status === "FAILED") || t.accountAmount.value === 0)
             return;
 
         const tran = convertTransaction(t, tAccount);
@@ -67,6 +67,6 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
 function in_accounts(id, accounts) {
     const length = accounts.length;
     for(let i = 0; i < length; i++)
-        if(accounts[i].id == id) return true;
+        if(accounts[i].id === id) return true;
     return false;
 }

@@ -28,9 +28,7 @@ export async function login(preferences, isInBackground, auth, lastIteration){
 
         // создаём сессию
         const response = await fetchJson(auth, "session", {
-            headers: {
-                ...defaultHeaders,
-            },
+            headers: defaultHeaders,
             sanitizeResponseLog: {body: {"payload": true}},
         });
         if (response.body.resultCode !== "OK")
@@ -64,9 +62,8 @@ export async function login(preferences, isInBackground, auth, lastIteration){
             // входим по логину-паролю
             const sign_up = await fetchJson(auth, "sign_up", {
                 ignoreErrors: true,
-                headers: {
-                    ...defaultHeaders,
-                },
+                shouldLog: false,
+                headers: defaultHeaders,
                 get: {
                     "username": preferences.login,
                     "password": password,
@@ -100,6 +97,7 @@ export async function login(preferences, isInBackground, auth, lastIteration){
                     body: {
                         "initialOperation": "sign_up",
                     },
+                    sanitizeResponseLog: {body: {payload: {login: true, userId: true}}},
                 });
 
                 // проверим ответ на ошибки
