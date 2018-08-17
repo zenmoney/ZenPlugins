@@ -204,8 +204,42 @@ export function convertTransaction(transaction, accountId) {
             tran.longitude = transaction.locations[0].longitude;
         }
     }
-    
+
+    var hold = tran.hold ? " [H] " : "";
+    console.log(`>>> Добавляем операцию: ${tran.date}, ${tran.time}, ${hold}${transaction.description}, ${transaction.type === "Credit" ? "+" : (transaction.type === "Debit" ? "-" : "")}${transaction.accountAmount.value}`);
+
     return tran;
+}
+
+export function convertTransactionToTransfer(tranId, tran1, tran2) {
+    // доходная часть перевода ---
+    if (tran2.income > 0 && tran1.income == 0 && tran1.incomeAccount != tran2.incomeAccount) {
+        tran1.income = tran2.income;
+        tran1.incomeAccount = tran2.incomeAccount;
+        if (tran2.opOutcome) tran1.opOutcome = tran2.opOutcome;
+        if (tran2.opOutcomeInstrument) tran1.opOutcomeInstrument = tran2.opOutcomeInstrument;
+
+        tran1.incomeBankID = tran2.id;
+        tran1.outcomeBankID = tran1.id;
+        delete tran1.id;
+
+    } else
+    // расходная часть перевода ----
+    if (tran2.outcome > 0 && tran1.outcome == 0 && tran1.outcomeAccount != tran2.outcomeAccount) {
+        tran1.outcome = tran2.outcome;
+        tran1.outcomeAccount = tran2.outcomeAccount;
+        if (tran2.opOutcome) tran1.opOutcome = tran2.opOutcome;
+        if (tran2.opOutcomeInstrument) tran1.opOutcomeInstrument = tran2.opOutcomeInstrument;
+
+        // при объединении в перевод всегда берём комментарий из расходной части
+        tran1.comment = tran2.comment;
+
+        tran1.incomeBankID = tran1.id;
+        tran1.outcomeBankID = tran2.id;
+        delete tran1.id;
+    }
+    if (tran1.payee) delete tran1.payee; // в переводах получателя нет
+    console.log(">>> Объединили операцию в перевод с имеющейся ID " + tranId);
 }
 
 function getDebitCard(account, initialized) {

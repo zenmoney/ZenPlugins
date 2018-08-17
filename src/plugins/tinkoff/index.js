@@ -1,5 +1,5 @@
 import * as Tinkoff from "./tinkoff";
-import {convertAccount, convertTransaction} from "./converters";
+import {convertAccount, convertTransaction, convertTransactionToTransfer} from "./converters";
 import _ from "lodash";
 
 export async function scrape({preferences, fromDate, toDate, isInBackground}) {
@@ -8,6 +8,7 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
     const auth = await Tinkoff.login(preferences, isInBackground, {pinHash: pinHash});
     const fetchedData = await Tinkoff.fetchAccountsAndTransactions(auth, fromDate, toDate);
 
+    // обработаем счета
     const accounts = [];
     const initialized = ZenMoney.getData("initialized", false); // флаг первичной инициализации счетов, когда необходимо передать остатки всех счетов
     await Promise.all(fetchedData.accounts.map(async account => {
@@ -26,7 +27,8 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
         ZenMoney.saveData();
     }
 
-    const transactions = [];
+    // обработаем операции
+    const transactions = {};
     await Promise.all(fetchedData.transactions.map(async t => {
         // работаем только по активным счетам
         let tAccount = t.account;
@@ -36,24 +38,35 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
         }
 
         // учитываем только успешные операции
-        if ((t.status && t.status === "FAILED")
-            || t.accountAmount.value == 0)
+        if ((t.status && t.status === "FAILED") || t.accountAmount.value == 0)
             return;
 
         const tran = convertTransaction(t, tAccount);
-        transactions.push(tran);
+
+        // Внутренний ID операции
+        const tranId = t.payment && t.payment.paymentId
+            // если есть paymentId, объединяем по нему, отделяя комиссии от переводов
+            ? (t.group === "CHARGE" ? "f" : "p") + t.payment.paymentId
+            // либо работаем просто как с операциями, разделяя их на доходы и расходы
+            : t.id;
+
+        if (transactions[tranId]) {
+            // обработаем переводы
+            convertTransactionToTransfer(tranId, transactions[tranId], tran);
+        } else
+            transactions[tranId] = tran;
 
     }));
 
     return {
         accounts: accounts,
-        transactions: transactions,
+        transactions: _.values(transactions),
     };
 }
 
 function in_accounts(id, accounts) {
     const length = accounts.length;
-    for(var i = 0; i < length; i++)
+    for(let i = 0; i < length; i++)
         if(accounts[i].id == id) return true;
     return false;
 }
