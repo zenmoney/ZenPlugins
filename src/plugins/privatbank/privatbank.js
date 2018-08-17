@@ -44,7 +44,7 @@ export class PrivatBank {
         }
         if (response.body) {
             if ((response.status === 504 && response.body.indexOf("504 Gateway Time-out") >= 0)
-                    || (response.status === 502 && response.body.indexOf("Bad Gateway")) >= 0) {
+                    || (response.status === 502 && response.body.indexOf("Bad Gateway") >= 0)) {
                 throw new TemporaryError("[NER] Proxy connection error");
             }
             if (response.body.indexOf("invalid signature") >= 0) {
