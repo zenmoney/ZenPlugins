@@ -494,10 +494,13 @@ export function getErrorMessage(xmlObject, maxDepth = 3) {
 }
 
 function isTemporaryError(message) {
-    return message && (message.indexOf("АБС временно") >= 0
-        || message.indexOf("АБС не доступна") >= 0
-        || message.indexOf("Во время выполнения операции произошла ошибка") >= 0
-        || message.indexOf("По техническим причинам Вы не можете выполнить данную операцию") >= 0);
+    return message && [
+        "временно недоступна",
+        "АБС временно",
+        "АБС не доступна",
+        "Во время выполнения операции произошла ошибка",
+        "По техническим причинам Вы не можете выполнить данную операцию",
+    ].some(str => message.indexOf(str) >= 0);
 }
 
 function validateResponse(response, predicate) {

@@ -214,7 +214,7 @@ export function addTransactions(oldTransactions, newTransactions, isWebTransacti
                         continue;
                     }
                 }
-                if (newTransaction.payee !== oldTransaction.payee && (isWebTransaction
+                if (!arePayeesEqual(newTransaction.payee, oldTransaction.payee) && (isWebTransaction
                         || !(oldTransaction.payee && !newTransaction.payee
                             && newTransaction.description
                             && newTransaction.description.indexOf(oldTransaction.payee) === 0))) {
@@ -260,6 +260,10 @@ export function addTransactions(oldTransactions, newTransactions, isWebTransacti
             oldTransactions.push(newTransaction);
         }
     }
+}
+
+function arePayeesEqual(payee1, payee2) {
+    return payee1 && payee2 && (payee1.indexOf(payee2) === 0 || payee2.indexOf(payee1) === 0);
 }
 
 export function convertToZenMoneyTransaction(zenAccount, transaction) {
@@ -372,13 +376,13 @@ export function convertCards(apiCardsArray, nowDate = new Date()) {
                 || parseExpireDate(apiCard.account.expireDate) < minExpireDate) {
             continue;
         }
-        if (apiCard.account.statusWay4 === "X-ПЕРЕВЫП., НЕ ВЫДАНА"
-                && (parseDecimal(apiCard.account.availableLimit.amount) <= 0
-                || (apiCard.account.type === "credit"
-                    && parseDecimal(apiCard.details.detail.creditType.limit.amount) ===
-                       parseDecimal(apiCard.account.availableLimit.amount)))) {
-            continue;
-        }
+        // if (apiCard.account.statusWay4 === "X-ПЕРЕВЫП., НЕ ВЫДАНА"
+        //         && (parseDecimal(apiCard.account.availableLimit.amount) <= 0
+        //         || (apiCard.account.type === "credit"
+        //             && parseDecimal(apiCard.details.detail.creditType.limit.amount) ===
+        //                parseDecimal(apiCard.account.availableLimit.amount)))) {
+        //     continue;
+        // }
         if (apiCard.account.mainCardId) {
             const account = accounts[accounts.length - 1];
             console.assert(account.ids[0] === apiCard.account.mainCardId, `unexpected additional card ${apiCard.account.id}`);
@@ -387,13 +391,14 @@ export function convertCards(apiCardsArray, nowDate = new Date()) {
                 removeWhitespaces(apiCard.account.number));
             continue;
         }
+        const availableLimit = apiCard.account.availableLimit;
         const zenAccount = {
             id: "card:" + apiCard.account.id,
             type: "ccard",
             title: apiCard.account.name,
-            instrument: apiCard.account.availableLimit.currency.code,
+            instrument: availableLimit ? availableLimit.currency.code : "RUB",
             syncID: [removeWhitespaces(apiCard.account.number)],
-            available: parseDecimal(apiCard.account.availableLimit.amount),
+            available: availableLimit ? parseDecimal(availableLimit.amount) : null,
         };
         if (apiCard.account.type === "credit") {
             const creditLimit = parseDecimal(apiCard.details.detail.creditType.limit.amount);

@@ -64,28 +64,43 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
             }
 
             if (isPfmAccount) {
-                pfmAccounts.push(apiAccount);
                 apiAccount.previousAccountData = loadAccountData(ZenMoney.getData("data_" + apiAccount.zenAccount.id));
                 apiAccount.accountData = getAccountData(apiAccount.zenAccount);
                 apiAccount.transactions = {};
-                apiAccount.ids.forEach(id => apiAccount.transactions[id] = []);
             }
 
             await Promise.all(apiAccount.ids.map(async id => {
-                for (const apiTransaction of await sberbank.fetchTransactions(auth, {id, type: apiAccount.type}, fromDate, toDate)) {
-                    const transaction = apiAccount.type === "loan"
-                        ? convertLoanTransaction(apiTransaction)
-                        : convertApiTransaction(apiTransaction, apiAccount.zenAccount);
-                    if (!transaction) {
-                        continue;
+                try {
+                    const transactions = [];
+                    for (const apiTransaction of await sberbank.fetchTransactions(auth, {id, type: apiAccount.type}, fromDate, toDate)) {
+                        const transaction = apiAccount.type === "loan"
+                            ? convertLoanTransaction(apiTransaction)
+                            : convertApiTransaction(apiTransaction, apiAccount.zenAccount);
+                        if (!transaction) {
+                            continue;
+                        }
+                        if (isPfmAccount) {
+                            transactions.push(transaction);
+                        } else {
+                            zenTransactions.push(convertToZenMoneyTransaction(apiAccount.zenAccount, transaction));
+                        }
                     }
                     if (isPfmAccount) {
-                        apiAccount.transactions[id].push(transaction);
-                    } else {
-                        zenTransactions.push(convertToZenMoneyTransaction(apiAccount.zenAccount, transaction));
+                        apiAccount.transactions[id] = transactions;
+                    }
+                } catch (e) {
+                    if (e.toString().indexOf("временно недоступна") < 0) {
+                        throw e;
                     }
                 }
             }));
+
+            if (isPfmAccount) {
+                apiAccount.ids = Object.keys(apiAccount.transactions);
+                if (apiAccount.ids.length > 0) {
+                    pfmAccounts.push(apiAccount);
+                }
+            }
         }));
     }));
 
