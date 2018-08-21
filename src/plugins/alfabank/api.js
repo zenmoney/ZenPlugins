@@ -9,8 +9,8 @@ const operationSystemVersion = "25";
 const applicationId = "ru.alfabank.mobile.android";
 const userAgent = "okhttp/3.8.0";
 
-export async function getAccessToken({sessionId, deviceId, refreshToken}) {
-    const response = await fetchJson("https://alfa-mobile.alfabank.ru/ALFAJMB/openid/token?refresh_token=" + refreshToken, {
+export function fetchAccessToken({sessionId, deviceId, refreshToken}) {
+    return fetchJson("https://alfa-mobile.alfabank.ru/ALFAJMB/openid/token?refresh_token=" + refreshToken, {
         method: "GET",
         headers: {
             "APP-VERSION": appVersion,
@@ -27,11 +27,6 @@ export async function getAccessToken({sessionId, deviceId, refreshToken}) {
         sanitizeRequestLog: {url: true, headers: {"DEVICE-ID": true, "session_id": true}},
         sanitizeResponseLog: {url: true, body: {access_token: true, refresh_token: true}},
     });
-
-    console.assert(response.status === 200, "Unexpected token status", response);
-    console.assert(response.body.operationId === "OpenID:TokenResult", "Unexpected response body.operationId", response);
-
-    return {accessToken: response.body.access_token, expiresIn: response.body.expires_in, refreshToken: response.body.refresh_token};
 }
 
 export function login({sessionId, deviceId, accessToken}) {
