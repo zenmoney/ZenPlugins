@@ -114,7 +114,7 @@ function getPresentationError(error) {
     const meaningfulError = error && error.message
         ? error
         : new Error("Thrown error must be an object containing message field, but was: " + JSON.stringify(error));
-    if (meaningfulError instanceof ZPAPIError) {
+    if (meaningfulError instanceof ZPAPIError || /^\[[A-Z]{3}]/.test(meaningfulError.message)) {
         return meaningfulError;
     } else {
         meaningfulError.message = "[RUE] " + meaningfulError.message;
