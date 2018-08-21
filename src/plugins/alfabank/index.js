@@ -1,6 +1,14 @@
 import {toZenmoneyTransaction} from "../../common/converters";
 import {generateUUID} from "../../common/utils";
-import {assertLoginIsSuccessful, getAccessToken, getAccountsWithAccountDetailsCreditInfo, getAllCommonMovements, isExpiredLogin, login, register} from "./api";
+import {
+    assertLoginIsSuccessful,
+    fetchAccessToken,
+    getAccountsWithAccountDetailsCreditInfo,
+    getAllCommonMovements,
+    isExpiredLogin,
+    login,
+    register,
+} from "./api";
 import {convertApiAccountsToAccountTuples, convertApiMovementsToReadableTransactions} from "./converters";
 import {normalizePreferences} from "./preferences";
 
@@ -35,20 +43,42 @@ export async function scrape({preferences, fromDate, toDate}) {
     }
     let loginResponse = await login({sessionId, deviceId: pluginData.deviceId, accessToken: pluginData.accessToken});
     if (isExpiredLogin(loginResponse)) {
-        const {accessToken, expiresIn, refreshToken} = await getAccessToken({sessionId, deviceId: pluginData.deviceId, refreshToken: pluginData.refreshToken});
+        const response = await fetchAccessToken({sessionId, deviceId: pluginData.deviceId, refreshToken: pluginData.refreshToken});
+        if (response.status === 200) {
+            console.assert(response.body.operationId === "OpenID:TokenResult", "Unexpected response body.operationId", response);
+            const accessToken = response.body.access_token;
+            const expiresIn = response.body.expires_in;
+            const refreshToken = response.body.refresh_token;
+            console.log(`got new accessToken, expires in ${((expiresIn - Date.now()) / 86400000).toFixed(2)} day(s)`);
+            pluginData.accessToken = accessToken;
 
-        console.log(`got new accessToken, expires in ${((expiresIn - Date.now()) / 86400000).toFixed(2)} day(s)`);
-        pluginData.accessToken = accessToken;
+            ZenMoney.setData("accessToken", accessToken);
+            if (refreshToken !== pluginData.refreshToken) {
+                console.log("got new refreshToken");
+                pluginData.refreshToken = refreshToken;
+                ZenMoney.setData("refreshToken", refreshToken);
+            }
+            ZenMoney.saveData();
 
-        ZenMoney.setData("accessToken", accessToken);
-        if (refreshToken !== pluginData.refreshToken) {
-            console.log("got new refreshToken");
+            loginResponse = await login({sessionId, deviceId: pluginData.deviceId, accessToken});
+        } else if (response.status === 419 && response.body.id === "SESSION_EXPIRED") {
+            const {cardNumber, cardExpirationDate, phoneNumber} = normalizePreferences(preferences);
+            const {accessToken, refreshToken} = await register({
+                deviceId: pluginData.deviceId,
+                cardNumber,
+                cardExpirationDate,
+                phoneNumber,
+            });
+            pluginData.accessToken = accessToken;
+            ZenMoney.setData("accessToken", pluginData.accessToken);
             pluginData.refreshToken = refreshToken;
-            ZenMoney.setData("refreshToken", refreshToken);
-        }
-        ZenMoney.saveData();
+            ZenMoney.setData("refreshToken", pluginData.refreshToken);
+            ZenMoney.saveData();
 
-        loginResponse = await login({sessionId, deviceId: pluginData.deviceId, accessToken});
+            loginResponse = await login({sessionId, deviceId: pluginData.deviceId, accessToken});
+        } else {
+            console.assert(false, "Unexpected accessToken status", response);
+        }
     }
     assertLoginIsSuccessful(loginResponse);
 
