@@ -263,7 +263,7 @@ export function addTransactions(oldTransactions, newTransactions, isWebTransacti
 }
 
 function arePayeesEqual(payee1, payee2) {
-    return payee1 && payee2 && (payee1.indexOf(payee2) === 0 || payee2.indexOf(payee1) === 0);
+    return payee1 === payee2 || (payee1 && payee2 && (payee1.indexOf(payee2) === 0 || payee2.indexOf(payee1) === 0));
 }
 
 export function convertToZenMoneyTransaction(zenAccount, transaction) {
