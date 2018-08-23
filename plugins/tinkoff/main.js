@@ -99,7 +99,8 @@ function login(inBackground) {
     else {
         ZenMoney.trace("Пытаемся войти...");
 
-        var deviceId = ZenMoney.getData("device_id", 0), deviceNew = false;
+        var deviceId = ZenMoney.getData("device_id", 0);
+        var deviceNew = false;
         if (deviceId == 0) {
             ZenMoney.trace("Первый запуск.");
             deviceId = hex_md5(Math.random().toString() + "_" + g_preferences.login);
@@ -872,12 +873,12 @@ function processTransactions(data) {
             if (tranDictHold[tranKeyHold]) {
                 var t2 = tranDict[tranDictHold[tranKeyHold]];
                 ZenMoney.trace("Обнаружили акцепт холда: #" + t2.id + " => #" + t.id);
-                t2.id = t.id;
+                if (t2) t2.id = t.id;
                 continue;
             }
 
             // mcc-код операции
-            let mcc = t.mcc ? parseInt(t.mcc, 10) : -1;
+            var mcc = t.mcc ? parseInt(t.mcc, 10) : -1;
             if (!mcc) mcc = -1;
 
             // флаг card2card переводов
