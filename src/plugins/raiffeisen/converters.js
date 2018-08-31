@@ -75,7 +75,7 @@ export function convertCards(jsonArray, accounts = {}) {
         account.type = "ccard";
         cards["CARD_" + json.id] = account;
         cards[accountId] = account;
-        if (account.syncID.length <= 1 && isMainCard) {
+        if (!account.title || (account.syncID.length <= 1 && isMainCard)) {
             account.title = json.product;
         }
         if (account.syncID.indexOf(json.pan) < 0) {

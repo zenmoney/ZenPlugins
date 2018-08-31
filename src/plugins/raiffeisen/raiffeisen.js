@@ -1,3 +1,4 @@
+import * as _ from "lodash";
 import {toAtLeastTwoDigitsString} from "../../common/dates";
 import * as network from "../../common/network";
 import * as retry from "../../common/retry";
@@ -26,7 +27,8 @@ async function fetchJson(url, options = {}, predicate = () => true) {
         }))[1];
     } catch (e) {
         let err = e;
-        if (err instanceof retry.RetryError) {
+        if (err instanceof retry.RetryError
+                || (err.message && err.message.indexOf("could not satisfy predicate in") >= 0)) {
             err = err.failedResults.find(([error, response]) => error !== null);
             err = err ? err[0] : new TemporaryError("[NER]");
         }
@@ -162,5 +164,5 @@ export async function fetchTransactions(token, fromDate) {
             break;
         }
     }
-    return transactions;
+    return _.orderBy(transactions, ["date"], ["desc"]);
 }
