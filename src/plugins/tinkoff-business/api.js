@@ -23,6 +23,10 @@ async function fetchJson(url, options = {}, predicate = () => true) {
             ...options.headers,
         },
     });
+    if (response.body && response.body.errorMessage
+            && response.body.errorMessage.indexOf("попробуйте позже") >= 0) {
+        throw new TemporaryError("Информация из Тинькофф Бизнес временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите \"Отправить лог последней синхронизации разработчикам\".");
+    }
     if (predicate) {
         if (response.body && response.body.errorCode === "AUTH_REQUIRED") {
             throw new Error("AuthError")
@@ -45,6 +49,8 @@ export async function login({accessToken, refreshToken, expirationDateMs} = {}) 
                     refresh_token: refreshToken,
                     fingerprint: "{}",
                 },
+                sanitizeRequestLog: {body: {refresh_token: true}},
+                sanitizeResponseLog: {body: {access_token: true, refresh_token: true, sessionId: true}},
             }, null);
             if (response.body && response.body.error === "invalid_grant") {
                 response = null;
@@ -92,6 +98,8 @@ export async function login({accessToken, refreshToken, expirationDateMs} = {}) 
                 code,
                 redirect_uri: REDIRECT_URI,
             },
+            sanitizeRequestLog: {body: {code: true}},
+            sanitizeResponseLog: {body: {access_token: true, refresh_token: true, sessionId: true}},
         }, null);
     } else {
         throw new TemporaryError("У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии.");

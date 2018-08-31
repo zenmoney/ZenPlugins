@@ -5,6 +5,7 @@
         title="ИНН компании"
         dialogTitle="ИНН компании"
         dialogMessage="Введите ИНН компании"
+        inputType="number"
         summary="|ИНН компании|{@s}"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
