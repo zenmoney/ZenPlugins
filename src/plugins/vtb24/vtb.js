@@ -150,12 +150,15 @@ async function burlapRequest(options) {
     response.body = payload;
     if (response.body
             && response.body.__type === "ru.vtb24.mobilebanking.protocol.ErrorResponse"
-            && response.body.message
-            && [
-                "операцию позже",
-                "временно недоступна",
-            ].some(str => response.body.message.indexOf(str) >= 0)) {
-        throw new TemporaryError("Информация из Банка ВТБ временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите \"Отправить лог последней синхронизации разработчикам\".");
+            && response.body.message) {
+        if ([
+            "операцию позже",
+            "временно недоступна",
+        ].some(str => response.body.message.indexOf(str) >= 0)) {
+            throw new TemporaryError("Информация из Банка ВТБ временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите \"Отправить лог последней синхронизации разработчикам\".");
+        } else {
+            throw new TemporaryError(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: ${response.body.message}`);
+        }
     }
     return response;
 }

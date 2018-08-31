@@ -264,6 +264,7 @@ test("parseStartDateString handles user input format", () => {
     expect(parseStartDateString("1.5.2018")).toEqual(firstOfMay);
     expect(parseStartDateString("01.05.18")).toEqual(firstOfMay);
     expect(parseStartDateString("1.5.18")).toEqual(firstOfMay);
+    expect(parseStartDateString("2018-05-01")).toEqual(firstOfMay);
 });
 
 afterEach(() => {

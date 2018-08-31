@@ -181,6 +181,10 @@ export function convertTransaction(apiTransaction, apiAccount) {
     ].indexOf(apiTransaction.debet.__type) >= 0 && apiAccount.id !== apiTransaction.debet.id) {
         return null;
     }
+    const origin = getOrigin(apiTransaction);
+    if (origin.amount === 0) {
+        return null;
+    }
     const transaction = {
         income: 0,
         incomeAccount: apiAccount.zenAccount.id,
@@ -189,7 +193,6 @@ export function convertTransaction(apiTransaction, apiAccount) {
         date: apiTransaction.transactionDate,
         hold: apiTransaction.isHold,
     };
-    const origin = getOrigin(apiTransaction);
     if (origin.amount < 0) {
         transaction.outcome = -origin.amount;
     } else {
@@ -285,7 +288,12 @@ function getInstrument(code) {
 }
 
 function getOrigin(apiTransaction) {
-    const transactionAmount = apiTransaction.transactionAmountInAccountCurrency || apiTransaction.transactionAmount;
+    let transactionAmount;
+    if (apiTransaction.transactionAmountInAccountCurrency && apiTransaction.transactionAmountInAccountCurrency.sum !== 0) {
+        transactionAmount = apiTransaction.transactionAmountInAccountCurrency;
+    } else {
+        transactionAmount = apiTransaction.transactionAmount;
+    }
     return {
         amount: transactionAmount.sum,
         instrument: getInstrument(transactionAmount.currency.currencyCode),

@@ -31,6 +31,11 @@ export const parseStartDateString = (startDateString) => {
         const [, dayString, monthString, yearString] = manualDateInputMatch;
         return new Date(Number(yearString.length === 2 ? "20" + yearString : yearString), Number(monthString) - 1, Number(dayString), 0, 0, 0);
     }
+    const dateWithoutTimezoneMatch = startDateString.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (dateWithoutTimezoneMatch) {
+        const [, yearString, monthString, dayString] = dateWithoutTimezoneMatch;
+        return new Date(Number(yearString), Number(monthString) - 1, Number(dayString), 0, 0, 0);
+    }
     return new Date(startDateString);
 };
 
