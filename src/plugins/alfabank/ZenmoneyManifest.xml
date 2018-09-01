@@ -3,8 +3,9 @@
     <id>alfabank</id>
     <company>3</company>
     <version>1.0</version>
-    <build>40</build>
+    <build>54</build>
     <modular>true</modular>
+    <codeRequired>false</codeRequired>
     <files>
         <js>index.js</js>
         <preferences>preferences.xml</preferences>
