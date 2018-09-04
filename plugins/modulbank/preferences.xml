@@ -1,25 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen>
 	<EditTextPreference
-		title="Логин"
+		title="Ключ приложения"
 		positiveButtonText="ОК"
 		summary="|ID пользователя или логин|{@s}"
-		dialogTitle="Логин"
+		dialogTitle="Ключ API"
 		negativeButtonText="Отмена"
-		dialogMessage="Введите идентификатор пользователя или логин для входа в систему Модуль банк."
+		dialogMessage="Введите ключ приложения Модульбанка."
 		obligatory="true"
-		key="login">
-	</EditTextPreference>
-	<EditTextPreference
-		positiveButtonText="ОК"
-		key="password"
-		dialogTitle="Пароль"
-		negativeButtonText="Отмена"
-		title="Пароль"
-		summary="||***********"
-		obligatory="true"
-		dialogMessage="Введите пароль, используемый для входа в систему Модуль банк."
-		inputType="textPassword">
+		key="apiKey">
 	</EditTextPreference>
 	<ListPreference
 		positiveButtonText="ОК"
