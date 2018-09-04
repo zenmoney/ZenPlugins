@@ -10,7 +10,7 @@
 
 В Chrome увидеть debug стрим можно включив `Verbose` уровень, как показано ниже:
 
-![console levels](console-levels.png)
+![console levels](assets/console-levels.png)
 
 ### Ввод настроек
 
