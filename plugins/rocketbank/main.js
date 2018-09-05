@@ -71,7 +71,7 @@ function RocketBank(ZenMoney) {
                 type: "ccard",
                 instrument: card.currency,
                 balance: card.balance,
-                syncID: [card.pan.substr(-4)]
+                syncID: [card.pan.substr(-4)],
             };
             ZenMoney.trace("Обрабатываем карту: " + JSON.stringify(record));
             this.cards[card.title] = card.token;
@@ -99,7 +99,7 @@ function RocketBank(ZenMoney) {
                 type: "checking",
                 instrument: account.currency,
                 balance: account.balance,
-                syncID: [account.account_details.account.substr(-4)]
+                syncID: [account.account_details.account.substr(-4)],
             };
             ZenMoney.trace("Обрабатываем счет: " + JSON.stringify(record));
             this.accounts[account.title] = account.token;
@@ -139,7 +139,7 @@ function RocketBank(ZenMoney) {
                 endDateOffsetInterval: "month",
                 endDateOffset: account.rocket_deposit.period,
                 payoffInterval: "month",
-                payoffStep: 1
+                payoffStep: 1,
             };
             try {
                 ZenMoney.trace("Обрабатываем вклад: " + JSON.stringify(deposit));
@@ -173,7 +173,7 @@ function RocketBank(ZenMoney) {
                     outcome: 0,
                     outcomeAccount: account_id,
                     income: 0,
-                    incomeAccount: account_id
+                    incomeAccount: account_id,
                 };
                 switch (operation.kind) {
                     case "first_refill": // Первичное пополнение
@@ -232,6 +232,8 @@ function RocketBank(ZenMoney) {
      */
     this.processDeposit = function () {
         ZenMoney.trace("Начинаем синхронизацию депозитов");
+        ZenMoney.trace("deposits_operations: "+ JSON.stringify(this.deposits_operations));
+        ZenMoney.trace("deposits_percent: "+ JSON.stringify(this.deposits_percent));
 
         var init = this.processDepositInternal(this.deposits_operations);
         var percent = this.processDepositInternal(this.deposits_percent);
@@ -358,11 +360,11 @@ function RocketBank(ZenMoney) {
                 error("Не удалось загрузить список операций", data.response.description);
             }
         }
-		if (data.hasOwnProperty("pagination")) {
-			ZenMoney.trace("Загрузили страницу " + data.pagination.current_page + " из " + data.pagination.total_pages);
-		} else {
+        if (data.hasOwnProperty("pagination")) {
+            ZenMoney.trace("Загрузили страницу " + data.pagination.current_page + " из " + data.pagination.total_pages);
+        } else {
             error("Отсутствует информация о количестве страниц данных", JSON.stringify(data));
-		}
+        }
         if (data.hasOwnProperty("feed")) {
             for (var i = 0; i < data.feed.length; i++) {
                 var operation = data.feed[i][1];
@@ -384,7 +386,7 @@ function RocketBank(ZenMoney) {
                     outcomeAccount: account,
                     income: 0,
                     incomeAccount: account,
-                    payee: operation.merchant.name
+                    payee: operation.merchant.name,
                 };
                 switch (operation.context_type) {
                     case "pos_spending": // Расход
@@ -513,6 +515,11 @@ function RocketBank(ZenMoney) {
                             transaction.outcome = sum;
                         }
                         break;
+                    case "spisanie":
+                        transaction.outcome = sum;
+                        transaction.payee = null;
+                        transaction.comment = getComment(operation);
+                        break;
                     case null: // Неизвестный тип контекста
                         if (operation.money.amount > 0) {
                             transaction.income = sum;
@@ -571,7 +578,7 @@ function RocketBank(ZenMoney) {
                 null,
                 {
                     inputType: "phone",
-                    time: 18E4
+                    time: 18E4,
                 }
             );
             deviceId = registerDevice(phone);
@@ -597,7 +604,7 @@ function RocketBank(ZenMoney) {
                 null,
                 {
                     inputType: "numberPassword",
-                    time: 18E4
+                    time: 18E4,
                 }
             );
             if (!password) {
@@ -657,7 +664,7 @@ function RocketBank(ZenMoney) {
             null,
             {
                 inputType: "numberDecimal",
-                time: 18E4
+                time: 18E4,
             }
         );
         ZenMoney.trace("Получили код");
@@ -788,7 +795,7 @@ function RocketBank(ZenMoney) {
             "X-Device-ID": device_id,
             "X-Time": date.toString(),
             "X-Sig": hex_md5("0Jk211uvxyyYAFcSSsBK3+etfkDPKMz6asDqrzr+f7c=_" + date + "_dossantos"),
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         };
         if (token) {
             headers["Authorization"] = "Token token=" + token;
