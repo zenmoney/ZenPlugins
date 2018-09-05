@@ -1,3 +1,4 @@
+/* eslint-disable indent,quotes */
 var g_headers = {
 	'User-Agent': 'okhttp/3.4.2'
 	},
@@ -385,6 +386,11 @@ function processTransactions() {
 			} else {
 				ZenMoney.trace('Неизвестный тип транзакции! JSON: ' + JSON.stringify(t), 'process_transactions');
 				continue;
+			}
+
+			if (tran.outcome == 0 && tran.income == 0) {
+                ZenMoney.trace('Пустая операция (без суммы)! JSON: ' + JSON.stringify(t), 'process_transactions');
+                continue;
 			}
 
 			// Идентификация переводов
