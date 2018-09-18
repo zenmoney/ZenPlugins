@@ -12,17 +12,26 @@ const CLIENT_ID = "";
 const REDIRECT_URI = "";
 
 async function fetchJson(url, options = {}, predicate = () => true) {
-    const response = await network.fetchJson(url, {
-        method: "POST",
-        sanitizeRequestLog: {headers: {Authorization: true}},
-        sanitizeResponseLog: {headers: {"set-cookie": true}},
-        ...options,
-        stringify: qs.stringify,
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            ...options.headers,
-        },
-    });
+    let response;
+    try {
+        response = await network.fetchJson(url, {
+            method: "POST",
+            sanitizeRequestLog: {headers: {Authorization: true}},
+            sanitizeResponseLog: {headers: {"set-cookie": true}},
+            ...options,
+            stringify: qs.stringify,
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                ...options.headers,
+            },
+        });
+    } catch (e) {
+        if (e.response && typeof e.response.body === "string" && e.response.body.indexOf("internal server error") >= 0) {
+            throw new TemporaryError("Информация из Тинькофф Бизнес временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите \"Отправить лог последней синхронизации разработчикам\".");
+        } else {
+            throw e;
+        }
+    }
     if (response.body && response.body.errorMessage
             && response.body.errorMessage.indexOf("попробуйте позже") >= 0) {
         throw new TemporaryError("Информация из Тинькофф Бизнес временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите \"Отправить лог последней синхронизации разработчикам\".");
@@ -39,7 +48,7 @@ async function fetchJson(url, options = {}, predicate = () => true) {
 export async function login({accessToken, refreshToken, expirationDateMs} = {}) {
     let response;
     if (accessToken) {
-        if (expirationDateMs < new Date().getTime() + 60000) {
+        if (expirationDateMs < new Date().getTime() + 300000) {
             response = await fetchJson("https://sso.tinkoff.ru/secure/token", {
                 headers: {
                     "Host": "sso.tinkoff.ru",
@@ -52,7 +61,7 @@ export async function login({accessToken, refreshToken, expirationDateMs} = {}) 
                 sanitizeRequestLog: {body: {refresh_token: true}},
                 sanitizeResponseLog: {body: {access_token: true, refresh_token: true, sessionId: true}},
             }, null);
-            if (response.body && response.body.error === "invalid_grant") {
+            if (response.body && response.body.error) {
                 response = null;
                 accessToken = null;
             }
@@ -99,7 +108,7 @@ export async function login({accessToken, refreshToken, expirationDateMs} = {}) 
                 redirect_uri: REDIRECT_URI,
             },
             sanitizeRequestLog: {body: {code: true}},
-            sanitizeResponseLog: {body: {access_token: true, refresh_token: true, sessionId: true}},
+            sanitizeResponseLog: {body: {access_token: true, refresh_token: true, sessionId: true, id_token: true}},
         }, null);
     } else {
         throw new TemporaryError("У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии.");
