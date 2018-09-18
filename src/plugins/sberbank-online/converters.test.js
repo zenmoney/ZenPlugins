@@ -1,5 +1,6 @@
 import {parseXml} from "../../common/network";
 import {
+    addTransactions,
     convertAccount,
     convertApiTransaction,
     convertCards,
@@ -1495,6 +1496,253 @@ describe("convertToZenMoneyTransaction", () => {
             outcomeBankID: "692815587",
             comment: "Перевод с карты",
         });
+    });
+
+    it("converts currency transaction", () => {
+        const zenAccount = {id: "account", instrument: "EUR"};
+        const transaction = convertPfmTransaction({
+            id: 13332899944,
+            date: "19.08.2018T00:00:00",
+            comment: "PP*4169CODE              35314369001  GB",
+            categoryId: 210,
+            categoryName: "Прочие расходы",
+            hidden: false,
+            country: "GBR",
+            cardNumber: "4236 18** **** 8754",
+            cardAmount: { amount: "-0.80", currency: "EUR" },
+            nationalAmount: { amount: "-60.00", currency: "RUB" },
+            availableCategories: [
+                { id: 210, name: "Прочие расходы" },
+                { id: 201, name: "Автомобиль" },
+                { id: 220, name: "Все для дома" },
+                { id: 203, name: "Выдача наличных" },
+                { id: 205, name: "Здоровье и красота" },
+                { id: 222, name: "Искусство" },
+                { id: 212, name: "Комиссия" },
+                { id: 204, name: "Коммунальные платежи, связь, интернет" },
+                { id: 207, name: "Образование" },
+                { id: 206, name: "Одежда и аксессуары" },
+                { id: 208, name: "Отдых и развлечения" },
+                { id: 8128, name: "Перевод во вне" },
+                { id: 1475, name: "Перевод между своими картами" },
+                { id: 228, name: "Перевод на вклад" },
+                { id: 202, name: "Перевод с карты" },
+                { id: 213, name: "Погашение кредитов" },
+                { id: 219, name: "Путешествия" },
+                { id: 221, name: "Рестораны и кафе" },
+                { id: 209, name: "Супермаркеты" },
+                { id: 211, name: "Транспорт" },
+            ],
+            readOnly: false,
+            nfc: false,
+            isCommentEdited: false,
+        }, zenAccount);
+        expect(transaction).toEqual({
+            id: "13332899944",
+            date: new Date("2018-08-19T00:00:00+03:00"),
+            hold: false,
+            categoryId: 210,
+            location: null,
+            merchant: null,
+            description: "35314369001 GB",
+            payee: "PP*4169CODE",
+            posted: {
+                amount: -0.8,
+                instrument: "EUR",
+            },
+        });
+    });
+});
+
+describe("addTransactions", () => {
+    it("combines two equal currency transactions", () => {
+        const oldTransactions = [
+            {
+                date: new Date("2018-08-19T00:00:00+03:00"),
+                hold: null,
+                description: "Retail GBR 35314369001",
+                payee: "PP*4169CODE",
+                origin: {
+                    amount: -60,
+                    instrument: "RUB",
+                },
+            },
+        ];
+        addTransactions(oldTransactions, [
+            {
+                id: "13332899944",
+                date: new Date("2018-08-19T00:00:00+03:00"),
+                hold: false,
+                categoryId: 210,
+                location: null,
+                merchant: null,
+                description: "35314369001 GB",
+                payee: "PP*4169CODE",
+                posted: {
+                    amount: -0.8,
+                    instrument: "EUR",
+                },
+            },
+        ]);
+        expect(oldTransactions).toEqual([
+            {
+                id: "13332899944",
+                date: new Date("2018-08-19T00:00:00+03:00"),
+                hold: false,
+                categoryId: 210,
+                location: null,
+                merchant: null,
+                description: "Retail GBR 35314369001",
+                payee: "PP*4169CODE",
+                origin: {
+                    amount: -60,
+                    instrument: "RUB",
+                },
+                posted: {
+                    amount: -0.8,
+                    instrument: "EUR",
+                },
+            },
+        ]);
+    });
+
+    it("checks signs of currency transactions before combining them", () => {
+        const oldTransactions = [
+            {
+                date: new Date("2018-08-19T00:00:00+03:00"),
+                hold: null,
+                description: "Credit GBR 35314369001",
+                payee: "PP*4169CODE",
+                origin: {
+                    amount: 60,
+                    instrument: "RUB",
+                },
+            },
+        ];
+        addTransactions(oldTransactions, [
+            {
+                id: "13332899944",
+                date: new Date("2018-08-19T00:00:00+03:00"),
+                hold: false,
+                categoryId: 210,
+                location: null,
+                merchant: null,
+                description: "35314369001 GB",
+                payee: "PP*4169CODE",
+                posted: {
+                    amount: -0.8,
+                    instrument: "EUR",
+                },
+            },
+        ]);
+        expect(oldTransactions).toEqual([
+            {
+                date: new Date("2018-08-19T00:00:00+03:00"),
+                hold: null,
+                description: "Credit GBR 35314369001",
+                payee: "PP*4169CODE",
+                origin: {
+                    amount: 60,
+                    instrument: "RUB",
+                },
+            },
+            {
+                id: "13332899944",
+                date: new Date("2018-08-19T00:00:00+03:00"),
+                hold: false,
+                categoryId: 210,
+                location: null,
+                merchant: null,
+                description: "35314369001 GB",
+                payee: "PP*4169CODE",
+                posted: {
+                    amount: -0.8,
+                    instrument: "EUR",
+                },
+            },
+        ]);
+    });
+
+    it("combines two equal transactions with different merchants", () => {
+        const oldTransactions = [
+            convertApiTransaction({
+                date: "11.09.2018T00:00:00",
+                sum: {
+                    amount: "-612.77",
+                    currency: { code: "RUB", name: "руб." },
+                },
+                description: "Retail RUS CHELYABINSK   Retail RUS CHELYABINSK AUCHAN CHELYABINSK",
+            }, {
+                id: "account",
+                instrument: "RUB",
+            }),
+        ];
+        addTransactions(oldTransactions, [
+            convertPfmTransaction({
+                id: 13817049490,
+                date: "11.09.2018T10:16:19",
+                comment: "AUCHAN CHELYABINSK       CHELYABINSK  RUS",
+                categoryId: 209,
+                categoryName: "Супермаркеты",
+                hidden: false,
+                country: "RUS",
+                cardNumber: "4276 72** **** 4387",
+                cardAmount: { amount: "-612.77", currency: "RUB" },
+                nationalAmount: { amount: "-612.77", currency: "RUB" },
+                availableCategories: [
+                    { id: 209, name: "Супермаркеты" },
+                    { id: 201, name: "Автомобиль" },
+                    { id: 220, name: "Все для дома" },
+                    { id: 203, name: "Выдача наличных" },
+                    { id: 205, name: "Здоровье и красота" },
+                    { id: 222, name: "Искусство" },
+                    { id: 212, name: "Комиссия" },
+                    { id: 204, name: "Коммунальные платежи, связь, интернет" },
+                    { id: 207, name: "Образование" },
+                    { id: 206, name: "Одежда и аксессуары" },
+                    { id: 208, name: "Отдых и развлечения" },
+                    { id: 8128, name: "Перевод во вне" },
+                    { id: 1475, name: "Перевод между своими картами" },
+                    { id: 228, name: "Перевод на вклад" },
+                    { id: 202, name: "Перевод с карты" },
+                    { id: 213, name: "Погашение кредитов" },
+                    { id: 210, name: "Прочие расходы" },
+                    { id: 219, name: "Путешествия" },
+                    { id: 221, name: "Рестораны и кафе" },
+                    { id: 211, name: "Транспорт" },
+                ],
+                merchantInfo: {
+                    merchant: "Ашан",
+                    imgUrl: "https://pfm.stat.online.sberbank.ru/PFM/logos/8493.jpg",
+                    location: {
+                        latitude: "55.1708703201",
+                        longitude: "61.3559028417",
+                    },
+                },
+                readOnly: false,
+                nfc: true,
+                isCommentEdited: false,
+            }),
+        ]);
+        expect(oldTransactions).toEqual([
+            {
+                id: "13817049490",
+                date: new Date("2018-09-11T10:16:19+03:00"),
+                hold: false,
+                categoryId: 209,
+                location: {
+                    latitude: "55.1708703201",
+                    longitude: "61.3559028417",
+                },
+                merchant: "Ашан",
+                description: "Retail RUS CHELYABINSK",
+                payee: "AUCHAN CHELYABINSK",
+                posted: {
+                    amount: -612.77,
+                    instrument: "RUB",
+                },
+            },
+        ]);
     });
 });
 
