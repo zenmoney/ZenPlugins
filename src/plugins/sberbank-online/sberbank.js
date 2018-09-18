@@ -2,7 +2,6 @@ import {MD5} from "jshashes";
 import _ from "lodash";
 import {toAtLeastTwoDigitsString} from "../../common/dates";
 import * as network from "../../common/network";
-import * as retry from "../../common/retry";
 import {formatDateSql, parseDate, toMoscowDate} from "./converters";
 
 const qs = require("querystring");
@@ -438,25 +437,22 @@ async function fetchXml(url, options = {}, predicate = () => true) {
 
     let response;
     try {
-        response = await retry.retry({
-            getter: async () => {
-                const response = await network.fetch(url, options);
-                validateResponse(response, response => response && response.body && response.body.response);
-                response.body = response.body.response;
-                response.body.error = getErrorMessage(response.body);
-                response.body.status = _.get(response, "body.status.code");
-                return response;
-            },
-            predicate: response => response.body.status === "0" || !isTemporaryError(response.body.error),
-            maxAttempts: 5,
-        });
+        response = await network.fetch(url, options);
     } catch (e) {
-        if (e instanceof retry.RetryError
-                || (e.message && e.message.indexOf("could not satisfy predicate in") >= 0)) {
+        if (e.response && typeof e.response.body === "string") {
             throw new TemporaryError("Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите \"Отправить лог последней синхронизации разработчикам\".");
         } else {
             throw e;
         }
+    }
+
+    validateResponse(response, response => response && response.body && response.body.response);
+    response.body = response.body.response;
+    response.body.error = getErrorMessage(response.body);
+    response.body.status = _.get(response, "body.status.code");
+
+    if (isTemporaryError(response.body.error) || (predicate && response.body.status === "3")) {
+        throw new TemporaryError("Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите \"Отправить лог последней синхронизации разработчикам\".");
     }
     if (response.body.status !== "0"
             && response.body.error

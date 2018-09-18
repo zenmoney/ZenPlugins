@@ -54,10 +54,21 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
     const pfmAccounts = [];
     const webAccounts = [];
 
-    await Promise.all(Object.keys(apiAccountsByType).map(type => {
+    await Promise.all(["account", "loan", "card", "target"].map(type => {
         const isPfmAccount = type === "card";
 
         return Promise.all(convertAccounts(apiAccountsByType[type], type).map(async apiAccount => {
+            for (const zenAccount of zenAccounts) {
+                if (apiAccount.zenAccount.id === zenAccount.id) {
+                    apiAccount.zenAccount.syncID.forEach(id => {
+                        if (zenAccount.syncID.indexOf(id) < 0) {
+                            zenAccount.syncID.push(id);
+                        }
+                    });
+                    return;
+                }
+            }
+
             zenAccounts.push(apiAccount.zenAccount);
             if (ZenMoney.isAccountSkipped(apiAccount.zenAccount.id)) {
                 return;
