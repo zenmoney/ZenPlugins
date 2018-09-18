@@ -196,6 +196,9 @@ export function formatDateSql(date) {
 
 export function addTransactions(oldTransactions, newTransactions, isWebTransaction) {
     const n = oldTransactions.length;
+    const transactions = oldTransactions;
+    oldTransactions = _.sortBy(oldTransactions, ["date", "payee"]);
+    newTransactions = _.sortBy(newTransactions, ["date", "payee"]);
     let i = 0;
     l: for (const newTransaction of newTransactions) {
         if (!newTransaction) {
@@ -204,25 +207,16 @@ export function addTransactions(oldTransactions, newTransactions, isWebTransacti
         if (i < n) {
             for (let j = 0; j < n; j++) {
                 const oldTransaction = oldTransactions[j];
-                if (isWebTransaction) {
-                    const oldDate = formatDateSql(oldTransaction.date);
-                    const newDate = formatDateSql(newTransaction.date);
-                    if (oldDate !== newDate) {
-                        continue;
-                    }
-                } else if (oldTransaction.id) {
+                if (oldTransaction.id) {
                     continue;
-                } else {
-                    const oldDate = oldTransaction.date.getTime();
-                    const newDate = newTransaction.date.getTime();
-                    if (Math.abs(oldDate - newDate) > 90000) {
-                        continue;
-                    }
                 }
                 if (!arePayeesEqual(newTransaction.payee, oldTransaction.payee) && (isWebTransaction
                         || !(oldTransaction.payee && !newTransaction.payee
                             && newTransaction.description
                             && newTransaction.description.indexOf(oldTransaction.payee) === 0))) {
+                    continue;
+                }
+                if (!areDatesEqual(newTransaction.date, oldTransaction.date)) {
                     continue;
                 }
                 if (isWebTransaction && oldTransaction.origin && !oldTransaction.posted
@@ -233,7 +227,9 @@ export function addTransactions(oldTransactions, newTransactions, isWebTransacti
                 }
                 if (!isWebTransaction
                             && ((oldTransaction.posted && oldTransaction.posted.amount === newTransaction.posted.amount)
-                            || (!oldTransaction.posted && (newTransaction.posted.instrument !== oldTransaction.origin.instrument
+                            || (!oldTransaction.posted
+                                && Math.sign(newTransaction.posted.amount) === Math.sign(oldTransaction.origin.amount)
+                                && (newTransaction.posted.instrument !== oldTransaction.origin.instrument
                                  || newTransaction.posted.amount === oldTransaction.origin.amount)))) {
                     let origin = null;
                     const description = oldTransaction.description;
@@ -262,13 +258,35 @@ export function addTransactions(oldTransactions, newTransactions, isWebTransacti
             }
         }
         if (!isWebTransaction) {
-            oldTransactions.push(newTransaction);
+            transactions.push(newTransaction);
         }
     }
 }
 
 function arePayeesEqual(payee1, payee2) {
     return payee1 === payee2 || (payee1 && payee2 && (payee1.indexOf(payee2) === 0 || payee2.indexOf(payee1) === 0));
+}
+
+function areDatesEqual(date1, date2) {
+    if (Math.abs(date1.getTime() - date2.getTime()) <= 90000) {
+        return true;
+    }
+    date1 = toMoscowDate(date1);
+    date2 = toMoscowDate(date2);
+    const time1 = formatDateTime(date1);
+    const time2 = formatDateTime(date2);
+    if (time1 === "00:00:00" || time2 === "00:00:00") {
+        const day1 = formatDateSql(date1);
+        const day2 = formatDateSql(date2);
+        if (day1 === day2) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function formatDateTime(date) {
+    return [date.getHours(), date.getMinutes(), date.getSeconds()].map(toAtLeastTwoDigitsString).join(":");
 }
 
 export function convertToZenMoneyTransaction(zenAccount, transaction) {
