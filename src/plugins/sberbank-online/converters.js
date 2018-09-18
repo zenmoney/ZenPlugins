@@ -143,8 +143,13 @@ export function convertApiTransaction(apiTransaction, zenAccount) {
 }
 
 export function convertPfmTransaction(pfmTransaction) {
-    if (pfmTransaction.cardAmount.currency !== pfmTransaction.nationalAmount.currency
+    if (pfmTransaction.cardAmount
+            && pfmTransaction.cardAmount.currency !== pfmTransaction.nationalAmount.currency
             && pfmTransaction.cardAmount.amount === pfmTransaction.nationalAmount.amount) {
+        return null;
+    }
+    const cardAmount = pfmTransaction.cardAmount || pfmTransaction.nationalAmount;
+    if (!cardAmount) {
         return null;
     }
     return {
@@ -156,8 +161,8 @@ export function convertPfmTransaction(pfmTransaction) {
         merchant: pfmTransaction.merchantInfo ? reduceWhitespaces(pfmTransaction.merchantInfo.merchant) : null,
         location: pfmTransaction.merchantInfo ? pfmTransaction.merchantInfo.location || null : null,
         posted: {
-            amount: parseDecimal(pfmTransaction.cardAmount.amount),
-            instrument: pfmTransaction.cardAmount.currency,
+            amount: parseDecimal(cardAmount.amount),
+            instrument: cardAmount.currency,
         },
     };
 }
