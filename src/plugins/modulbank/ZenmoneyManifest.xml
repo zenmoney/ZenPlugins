@@ -11,7 +11,7 @@
 
         Укажите с какой даты загружать операции при первой синхронизации.
 
-        Плагин синхронизации с ModulBank имеет открытый код, который размещён на GitHub: https://github.com/zenmoney/ZenPlugins
+        Плагин синхронизации с ModulBank имеет открытый код и размещается на GitHub: https://github.com/zenmoney/ZenPlugins/tree/master/src/plugins/modulbank
     </description>
     <version>1.0</version>
     <build>1</build>

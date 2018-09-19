@@ -36,25 +36,25 @@ export function convertAccount(account) {
     }
 
     // Неизвестный тип счета
-    ZenMoney.trace(`Cчет ${account.accountName} имеет неподдерживаемый тип ${account.category}`)
-    return null
+    ZenMoney.trace(`Cчет ${account.accountName} имеет неподдерживаемый тип ${account.category}`);
+    return null;
 }
 
 export function convertTransaction(json, accounts) {
     if (json.status !== "Executed" && json.status !== "Received") {
-        ZenMoney.trace(`Пропускаем операцию с состоянием '${json.status}'`)
-        return null
+        ZenMoney.trace(`Пропускаем операцию с состоянием '${json.status}'`);
+        return null;
     }
     if (json.category !== "Debet" && json.category !== "Credit") {
-        ZenMoney.trace(`Пропускаем операцию категории '${json.category}'`)
-        return null
+        ZenMoney.trace(`Пропускаем операцию категории '${json.category}'`);
+        return null;
     }
 
-    const syncID = json.bankAccountNumber.slice(-4)
-    const account = accounts.find(acc => acc.syncID.indexOf(syncID) !== -1)
+    const syncID = json.bankAccountNumber.slice(-4);
+    const account = accounts.find(acc => acc.syncID.indexOf(syncID) !== -1);
     if (!account) {
-        ZenMoney.trace(`Пропускаем операцию c неизвестным счетом 'syncID'`)
-        return null
+        ZenMoney.trace(`Пропускаем операцию c неизвестным счетом 'syncID'`);
+        return null;
     }
     const transaction = {
         id: json.id,
@@ -65,17 +65,17 @@ export function convertTransaction(json, accounts) {
         outcomeAccount: account.id,
     }
     if (json.category === "Debet") {
-        transaction.income = json.amountWithCommission || json.amount
-        transaction.opIncomeInstrument = convertCurrencyName(json.currency || account.instrument)
-        transaction.outcome = 0
+        transaction.income = json.amountWithCommission || json.amount;
+        transaction.opIncomeInstrument = convertCurrencyName(json.currency || account.instrument);
+        transaction.outcome = 0;
     } else if (json.category === "Credit") {
-        transaction.outcome = json.amountWithCommission || json.amount
-        transaction.opOutcomeInstrument = convertCurrencyName(json.currency || account.instrument)
-        transaction.income = 0
+        transaction.outcome = json.amountWithCommission || json.amount;
+        transaction.opOutcomeInstrument = convertCurrencyName(json.currency || account.instrument);
+        transaction.income = 0;
     }
-    return transaction
+    return transaction;
 }
 
 function convertCurrencyName(currency) {
-    return currency === "RUR" ? "RUB" : currency
+    return currency === "RUR" ? "RUB" : currency;
 }
