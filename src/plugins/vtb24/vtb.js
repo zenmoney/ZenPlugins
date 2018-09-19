@@ -191,6 +191,9 @@ export async function login(login, password) {
         },
         sanitizeRequestLog: {body: {login: true}},
     });
+    if (response.body.mode === "GeneralError" && response.body.description) {
+        throw new TemporaryError(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: ${response.body.description}`);
+    }
     console.assert(response.body.mode === "Pass", "unsupported login mode");
     response = await burlapRequest({
         sdkData,
@@ -214,7 +217,7 @@ export async function login(login, password) {
     if (response.body.type === "invalid-credentials") {
         throw new InvalidPreferencesError("Неверный логин или пароль");
     }
-    console.assert(response.body.authorization.methods[0].id === "SMS", "unsupported authorization method");
+    console.assert(response.body.authorization.methods.find(method => method.id === "SMS"), "unsupported authorization method");
     await burlapRequest({
         token,
         theme: "SelectAuthorizationTypeRequest theme",
@@ -251,7 +254,7 @@ export async function login(login, password) {
             },
         }},
     });
-    console.assert(response.body.authorization.methods[0].id === "SMS", "unsupported authorization method");
+    console.assert(response.body.authorization.methods.find(method => method.id === "SMS"), "unsupported authorization method");
     const code = await ZenMoney.readLine("Введите код из СМС", {
         time: 120000,
         inputType: "number",
