@@ -63,7 +63,7 @@ export function convertTransaction(json, accounts) {
         date: new Date(json.executed),
         incomeAccount: account.id,
         outcomeAccount: account.id,
-    }
+    };
     if (json.category === "Debet") {
         transaction.income = json.amountWithCommission || json.amount;
         transaction.opIncomeInstrument = convertCurrencyName(json.currency || account.instrument);

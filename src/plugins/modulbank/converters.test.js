@@ -110,10 +110,10 @@ describe("convertTransaction", () => {
             taxDocDate: "",
             payerStatus: "",
             uin: "0",
-        }, [account])
+        }, [account]);
         expect(transaction).toEqual({
             id: "0583f13d-d676-4012-aa8e-75bd31f6ceff",
-            date: new Date("2017-12-31T21:00:00.000Z"),
+            date: new Date("2018-01-01T00:00:00"),
             income: 0,
             incomeAccount: "1435fd90-e2df-4ce6-bc0d-1df46a96dd32",
             outcome: 170000.0,
@@ -166,10 +166,10 @@ describe("convertTransaction", () => {
             taxDocDate: "",
             payerStatus: "",
             uin: "0",
-        }, [account])
+        }, [account]);
         expect(transaction).toEqual({
             id: "724fb8c2-2c35-4a82-a983-e48c9847f692",
-            date: new Date("2018-07-30T21:00:00.000Z"),
+            date: new Date("2018-07-31T00:00:00"),
             income: 9.65,
             incomeAccount: "1435fd90-e2df-4ce6-bc0d-1df46a96dd32",
             opIncomeInstrument: "USD",

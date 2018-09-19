@@ -23,7 +23,7 @@ export async function scrape({preferences, fromDate}) {
     console.log(`Всего операций: ${transactions.length}`);
 
     return {
-        accounts,
-        transactions,
+        accounts: accounts,
+        transactions: transactions,
     }
 }
