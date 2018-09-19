@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>modulbank</id>
+    <company>15523</company>
+    <description>
+        Синхронизация работает через официальный API ModulBank.
+
+        * Логин и пароль банка запрашиваются для получения ключа доступа и не сохраняются.
+        * Ключ доступа хранится в памяти телефона в зашифрованном виде.
+        * Синхронизация происходит напрямую с телефона.
+
+        Укажите с какой даты загружать операции при первой синхронизации.
+
+        Плагин синхронизации с ModulBank имеет открытый код, который размещён на GitHub: https://github.com/zenmoney/ZenPlugins
+    </description>
+    <version>1.0</version>
+    <build>1</build>
+    <modular>true</modular>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+    <codeRequired>false</codeRequired>
+</provider>
