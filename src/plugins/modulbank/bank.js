@@ -3,7 +3,7 @@ import * as network from "../../common/network";
 const baseURL = "https://api.modulbank.ru/v1/";
 
 export async function fetchAccounts(token) {
-    ZenMoney.trace("Запрашиваем данные по счетам...");
+    console.log("Запрашиваем данные по счетам...");
     const response = await fetchJson("account-info", {}, token);
     if (response.status === 401) {
         // Not Authorized
@@ -14,12 +14,12 @@ export async function fetchAccounts(token) {
     companies.forEach(company => {
         Array.prototype.push.apply(accounts, company.bankAccounts)
     });
-    ZenMoney.trace(`Получено счетов: ${accounts.length}`);
+    console.log(`Получено счетов: ${accounts.length}`);
     return accounts;
 }
 
 export async function fetchTransactions(token, accounts, fromDate) {
-    ZenMoney.trace(`Запрашиваем операции с ${fromDate.toLocaleString()}`);
+    console.log(`Запрашиваем операции с ${fromDate.toLocaleString()}`);
     const allTransactions = [];
     for (let account of accounts) {
         let skip = 0;
@@ -38,7 +38,7 @@ export async function fetchTransactions(token, accounts, fromDate) {
             skip += transactions.length
         } while (transactions.length)
     }
-    ZenMoney.trace(`Получено операций: ${allTransactions.length}`);
+    console.log(`Получено операций: ${allTransactions.length}`);
     return allTransactions;
 }
 

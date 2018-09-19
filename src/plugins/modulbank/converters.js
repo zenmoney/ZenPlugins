@@ -36,24 +36,24 @@ export function convertAccount(account) {
     }
 
     // Неизвестный тип счета
-    ZenMoney.trace(`Cчет ${account.accountName} имеет неподдерживаемый тип ${account.category}`);
+    console.log(`Cчет ${account.accountName} имеет неподдерживаемый тип ${account.category}`);
     return null;
 }
 
 export function convertTransaction(json, accounts) {
     if (json.status !== "Executed" && json.status !== "Received") {
-        ZenMoney.trace(`Пропускаем операцию с состоянием '${json.status}'`);
+        console.log(`Пропускаем операцию с состоянием '${json.status}'`);
         return null;
     }
     if (json.category !== "Debet" && json.category !== "Credit") {
-        ZenMoney.trace(`Пропускаем операцию категории '${json.category}'`);
+        console.log(`Пропускаем операцию категории '${json.category}'`);
         return null;
     }
 
     const syncID = json.bankAccountNumber.slice(-4);
     const account = accounts.find(acc => acc.syncID.indexOf(syncID) !== -1);
     if (!account) {
-        ZenMoney.trace(`Пропускаем операцию c неизвестным счетом 'syncID'`);
+        console.log(`Пропускаем операцию c неизвестным счетом 'syncID'`);
         return null;
     }
     const transaction = {

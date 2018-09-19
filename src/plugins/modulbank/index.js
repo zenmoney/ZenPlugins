@@ -15,12 +15,12 @@ export async function scrape({preferences, fromDate}) {
     const accounts = (await bank.fetchAccounts(preferences.token))
         .map(converters.convertAccount)
         .filter(account => account && !ZenMoney.isAccountSkipped(account.id));
-    ZenMoney.trace(`Всего счетов: ${accounts.length}`);
+    console.log(`Всего счетов: ${accounts.length}`);
 
     const transactions = (await bank.fetchTransactions(preferences.token, accounts, fromDate))
         .map(transaction => converters.convertTransaction(transaction, accounts))
         .filter(transaction => transaction);
-    ZenMoney.trace(`Всего операций: ${transactions.length}`);
+    console.log(`Всего операций: ${transactions.length}`);
 
     return {
         accounts,
