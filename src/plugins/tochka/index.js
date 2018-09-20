@@ -1,4 +1,4 @@
-import * as _ from "lodash";
+﻿import * as _ from "lodash";
 import {ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId} from "../../common/accounts";
 import {fetchAccounts, fetchTransactions, login} from "./api";
 import {convertAccount, convertTransaction} from "./converters";
@@ -10,20 +10,8 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
     const accounts = {};
     const transactions = [];
 
-    let auth = await login(ZenMoney.getData("auth"));
-    let apiAccounts;
-    try {
-        apiAccounts = await fetchAccounts(auth, preferences);
-    } catch (e) {
-        if (e && e.message === "AuthError") {
-            auth.expirationDateMs = 0;
-            auth = await login(auth);
-            apiAccounts = await fetchAccounts(auth, preferences);
-        } else {
-            throw e;
-        }
-    }
-
+    let auth = await login(ZenMoney.getData("auth"), preferences);
+    const apiAccounts = await fetchAccounts(auth, preferences);
     await Promise.all(apiAccounts.map(async apiAccount => {
         const account = convertAccount(apiAccount);
         if (account) {
@@ -32,7 +20,7 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
         if (ZenMoney.isAccountSkipped(account.id)) {
             return;
         }
-        const apiTransactions = await fetchTransactions(auth, apiAccount, fromDate, toDate);
+        const apiTransactions = await fetchTransactions(auth, apiAccount, fromDate, toDate, preferences);
         apiTransactions.forEach(apiTransaction => {
             const transaction = convertTransaction(apiTransaction, account);
             if (transaction) {

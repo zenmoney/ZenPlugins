@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen>
-    <EditTextPreference
-        key="inn"
-        title="ИНН компании"
-        dialogTitle="ИНН компании"
-        dialogMessage="Введите ИНН компании"
-        inputType="number"
-        summary="|ИНН компании|{@s}"
+    <ListPreference
+        key="server"
+        dialogTitle="Выбор сервера"
+        dialogMessage="Для входа в виртуальную песочницу: логин и пароль – sandbox, код – 12345."
+        title="Выбор сервера"
+        entries="Виртуальная песочница|Сервер банка" entryValues="sandbox|tochka"
+        defaultValue="0"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
-        obligatory="true">
-    </EditTextPreference>
+        summary="|Виртуальная песочница|{@s}">
+    </ListPreference>
     <EditTextPreference
         key="startDate"
         obligatory="true"

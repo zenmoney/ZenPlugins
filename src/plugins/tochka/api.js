@@ -10,15 +10,18 @@ const REDIRECT_URI = "https://zenmoney.ru/callback/tochka/";
 const apiUrl = "https://enter.tochka.com/api/v1/";
 const sandboxUrl = "https://enter.tochka.com/sandbox/v1/";
 
-export async function login({accessToken, refreshToken, expirationDateMs} = {}) {
+export async function login({accessToken, refreshToken, expirationDateMs} = {}, preferences) {
     let response;
+    const client_id = preferences.server === "sandbox" ? "sandbox" : CLIENT_ID;
+    const client_secret = preferences.server === "sandbox" ? "sandbox_secret" : CLIENT_SECRET;
     if (accessToken) {
         if (expirationDateMs < new Date().getTime() + 7200000) {
             console.log(">>> Авторизация: Обновляем токен, взамен протухшего.");
             response = await fetchJson("oauth2/token", {
+                sandbox: preferences.server === "sandbox",
                 body: {
-                    client_id: CLIENT_ID,
-                    client_secret: CLIENT_SECRET,
+                    client_id: client_id,
+                    client_secret: client_secret,
                     grant_type: "refresh_token",
                     refresh_token: refreshToken,
                 },
@@ -36,16 +39,16 @@ export async function login({accessToken, refreshToken, expirationDateMs} = {}) 
     }
     if (accessToken) {
         //nothing
-    } else /*if (ZenMoney.openWebView)*/ {
+    } else if (ZenMoney.openWebView /*true*/) {
         console.log(">>> Авторизация: Входим через интерфейс банка.");
 
         const {error, code} = await new Promise((resolve) => {
             const state = getUid(16);
             const redirectUriWithoutProtocol = REDIRECT_URI.replace(/^https?:\/\//i, "");
-            const url = CLIENT_ID === "sandbox"
+            const url = client_id === "sandbox"
                 ? "https://enter.tochka.com/sandbox/login/"
                 : `https://enter.tochka.com/api/v1/authorize?${qs.stringify({
-                    client_id: CLIENT_ID,
+                    client_id: client_id,
                     response_type: "code",
                 })}`;
             ZenMoney.openWebView(url, null, (request, callback) => {
@@ -62,14 +65,15 @@ export async function login({accessToken, refreshToken, expirationDateMs} = {}) 
             }, (error, code) => resolve({error, code}));
         });
         if (error && (!error.error || error.error === "access_denied")) {
-            throw new TemporaryError("Не удалось пройти авторизацию в Точка банке. Попробуйте еще раз");
+            throw new TemporaryError("Не удалось пройти авторизацию в банке Точка. Попробуйте еще раз");
         }
         console.assert(code && !error, "non-successfull authorization", error);
 
         // debug sandbox
-        //const code = "vL2kIaqT98O2MQ2WJdbGSYLG82etvpNJ";
+        //const code = "HKVYkGXnMhblLc8Wl0hzp1LsQ8grZa0O";
 
         response = await fetchJson("oauth2/token", {
+            sandbox: preferences.server === "sandbox",
             body: {
                 client_id: CLIENT_ID,
                 client_secret: CLIENT_SECRET,
@@ -79,9 +83,9 @@ export async function login({accessToken, refreshToken, expirationDateMs} = {}) 
             sanitizeRequestLog: {body: {client_id: true, client_secret:true, code: true}},
             sanitizeResponseLog: {body: {access_token: true, refresh_token: true, sessionId: true, id_token: true}},
         }, null);
-    } /*else {
+    } else {
         throw new TemporaryError("У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии.");
-    }*/
+    }
     console.assert(response.body
         && response.body.access_token
         && response.body.refresh_token
@@ -95,7 +99,7 @@ export async function login({accessToken, refreshToken, expirationDateMs} = {}) 
 
 async function fetchJson(url, options = {}, predicate = () => true) {
     if (url.substr(0, 4) !== "http")
-        url = (CLIENT_ID === "sandbox" ? sandboxUrl : apiUrl) + url;
+        url = (options.sandbox ? sandboxUrl : apiUrl) + url;
 
     let response;
     try {
@@ -112,14 +116,14 @@ async function fetchJson(url, options = {}, predicate = () => true) {
         });
     } catch (e) {
         if (e.response && typeof e.response.body === "string" && e.response.body.indexOf("internal server error") >= 0) {
-            throw new TemporaryError("Информация из Точка банка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите \"Отправить лог последней синхронизации разработчикам\".");
+            throw new TemporaryError("Информация из банка Точка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите \"Отправить лог последней синхронизации разработчикам\".");
         } else {
             throw e;
         }
     }
     if (response.body && response.body.errorMessage
         && response.body.errorMessage.indexOf("попробуйте позже") >= 0) {
-        throw new TemporaryError("Информация из Точка банка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите \"Отправить лог последней синхронизации разработчикам\".");
+        throw new TemporaryError("Информация из банка Точка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите \"Отправить лог последней синхронизации разработчикам\".");
     }
     if (predicate) {
         if (response.body && response.body.errorCode === "AUTH_REQUIRED") {
@@ -130,10 +134,11 @@ async function fetchJson(url, options = {}, predicate = () => true) {
     return response;
 }
 
-export async function fetchAccounts({accessToken}, {inn}) {
+export async function fetchAccounts({accessToken}, preferences) {
     console.log(">>> Получаем список счетов");
 
     const response = await fetchJson("account/list", {
+        sandbox: preferences.server === "sandbox",
         method: "GET",
         headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -149,10 +154,11 @@ function formatDate(date) {
     //return toAtLeastTwoDigitsString(date.getUTCDate()) + "." + toAtLeastTwoDigitsString(date.getUTCMonth() + 1) + "." + date.getUTCFullYear();
 }
 
-export async function fetchTransactions({ accessToken }, { account_code, bank_code }, fromDate, toDate) {
+export async function fetchTransactions({ accessToken }, { account_code, bank_code }, fromDate, toDate, preferences) {
     console.log(">>> Получаем выписку по операциям");
 
     let response = await fetchJson("statement", {
+        sandbox: preferences.server === "sandbox",
         method: "POST",
         headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -171,6 +177,7 @@ export async function fetchTransactions({ accessToken }, { account_code, bank_co
 
     const request_id = response.body.request_id;
     response = await fetchJson("statement/status/"+request_id, {
+        sandbox: preferences.server === "sandbox",
         method: "GET",
         headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -184,6 +191,7 @@ export async function fetchTransactions({ accessToken }, { account_code, bank_co
     const status = response.body.status;
     if (status === "ready") {
         response = await fetchJson("statement/result/"+request_id, {
+            sandbox: preferences.server === "sandbox",
             method: "GET",
             headers: {
                 Authorization: `Bearer ${accessToken}`,
