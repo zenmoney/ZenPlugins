@@ -3,8 +3,6 @@ export function convertAccount(apiAccount) {
         id: apiAccount.bank_code,
         type: "checking",
         title: apiAccount.account_code,
-        //instrument: currencies[apiAccount.currency],
-        //balance: apiAccount.balance.otb,
         syncID: [apiAccount.account_code],
     };
 }

@@ -1,24 +1,27 @@
 import * as network from "../../common/network";
-import {getUid} from "../sberbank-online/sberbank";
 import {toAtLeastTwoDigitsString} from "../../common/dates";
+import {sanitizeSyncId} from "../../common/accounts";
 
 const qs = require("querystring");
 
 const CLIENT_ID = "sandbox";
 const CLIENT_SECRET = "sandbox_secret";
-const REDIRECT_URI = "https://zenmoney.ru/callback/tochka/";
-const apiUrl = "https://enter.tochka.com/api/v1/";
-const sandboxUrl = "https://enter.tochka.com/sandbox/v1/";
+const API_REDIRECT_URI = "https://zenmoney.ru/callback/tochka/";
+const SANDBOX_REDIRECT_URI = "https://localhost:8000/";
+const API_URI = "https://enter.tochka.com/api/v1/";
+const SANDBOX_URI = "https://enter.tochka.com/sandbox/v1/";
 
 export async function login({accessToken, refreshToken, expirationDateMs} = {}, preferences) {
     let response;
-    const client_id = preferences.server === "sandbox" ? "sandbox" : CLIENT_ID;
-    const client_secret = preferences.server === "sandbox" ? "sandbox_secret" : CLIENT_SECRET;
+    const client_id = preferences.server === "tochka" ? CLIENT_ID : "sandbox";
+    const client_secret = preferences.server === "tochka" ? CLIENT_SECRET : "sandbox_secret";
+    console.log(">>> Используется сервер: "+ preferences.server);
     if (accessToken) {
         if (expirationDateMs < new Date().getTime() + 7200000) {
             console.log(">>> Авторизация: Обновляем токен, взамен протухшего.");
             response = await fetchJson("oauth2/token", {
-                sandbox: preferences.server === "sandbox",
+                sandbox: client_id === "sandbox",
+                ignoreErrors: true,
                 body: {
                     client_id: client_id,
                     client_secret: client_secret,
@@ -31,6 +34,7 @@ export async function login({accessToken, refreshToken, expirationDateMs} = {}, 
             if (response.body && response.body.error) {
                 response = null;
                 accessToken = null;
+                console.log(">>> Авторизация: Не удалось обновить токен. Требуется повторный вход.");
             }
         } else {
             console.log(">>> Авторизация: Используем действующзий токен.");
@@ -43,21 +47,21 @@ export async function login({accessToken, refreshToken, expirationDateMs} = {}, 
         console.log(">>> Авторизация: Входим через интерфейс банка.");
 
         const {error, code} = await new Promise((resolve) => {
-            const state = getUid(16);
-            const redirectUriWithoutProtocol = REDIRECT_URI.replace(/^https?:\/\//i, "");
+            const redirectUriWithoutProtocol = (client_id === "sandbox" ? SANDBOX_REDIRECT_URI : API_REDIRECT_URI).replace(/^https?:\/\//i, "");
             const url = client_id === "sandbox"
                 ? "https://enter.tochka.com/sandbox/login/"
                 : `https://enter.tochka.com/api/v1/authorize?${qs.stringify({
                     client_id: client_id,
                     response_type: "code",
                 })}`;
+            console.log(">>> WebView: "+ (client_id !== "sandbox" ? url.replace(client_id, "*****") : url));
             ZenMoney.openWebView(url, null, (request, callback) => {
                 const i = request.url.indexOf(redirectUriWithoutProtocol);
                 if (i < 0) {
                     return;
                 }
                 const params = qs.parse(request.url.substring(i + redirectUriWithoutProtocol.length + 1));
-                if (params.code && params.state === state) {
+                if (params.code) {
                     callback(null, params.code);
                 } else {
                     callback(params);
@@ -69,19 +73,21 @@ export async function login({accessToken, refreshToken, expirationDateMs} = {}, 
         }
         console.assert(code && !error, "non-successfull authorization", error);
 
-        // debug sandbox
-        //const code = "HKVYkGXnMhblLc8Wl0hzp1LsQ8grZa0O";
+        //DEBUG SANDBOX
+        //const code = "qGOaKYrlnmjvrwb3W36oGmUBO0sYKlpP";
 
+        console.log(">>> Авторизация: Запрашиваем токен.");
         response = await fetchJson("oauth2/token", {
-            sandbox: preferences.server === "sandbox",
+            sandbox: client_id === "sandbox",
+            method: "POST",
             body: {
-                client_id: CLIENT_ID,
-                client_secret: CLIENT_SECRET,
+                client_id: client_id === "sandbox" ? "sandbox" : CLIENT_ID,
+                client_secret: client_id === "sandbox" ? "sandbox_secret" : CLIENT_SECRET,
                 grant_type: "authorization_code",
                 code: code,
             },
             sanitizeRequestLog: {body: {client_id: true, client_secret:true, code: true}},
-            sanitizeResponseLog: {body: {access_token: true, refresh_token: true, sessionId: true, id_token: true}},
+            sanitizeResponseLog: {body: {access_token: true, refresh_token: true}},
         }, null);
     } else {
         throw new TemporaryError("У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии.");
@@ -99,7 +105,7 @@ export async function login({accessToken, refreshToken, expirationDateMs} = {}, 
 
 async function fetchJson(url, options = {}, predicate = () => true) {
     if (url.substr(0, 4) !== "http")
-        url = (options.sandbox ? sandboxUrl : apiUrl) + url;
+        url = (options.sandbox ? SANDBOX_URI : API_URI) + url;
 
     let response;
     try {
@@ -121,9 +127,8 @@ async function fetchJson(url, options = {}, predicate = () => true) {
             throw e;
         }
     }
-    if (response.body && response.body.errorMessage
-        && response.body.errorMessage.indexOf("попробуйте позже") >= 0) {
-        throw new TemporaryError("Информация из банка Точка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите \"Отправить лог последней синхронизации разработчикам\".");
+    if (!options.ignoreErrors && response.body && response.body.error && response.body.error_description) {
+        throw new Error("Ответ банка: "+ response.body.error_description);
     }
     if (predicate) {
         if (response.body && response.body.errorCode === "AUTH_REQUIRED") {
@@ -155,7 +160,7 @@ function formatDate(date) {
 }
 
 export async function fetchTransactions({ accessToken }, { account_code, bank_code }, fromDate, toDate, preferences) {
-    console.log(">>> Получаем выписку по операциям");
+    console.log(`>>> Получаем выписку по операциям на счету '${sanitizeSyncId(account_code)}'`);
 
     let response = await fetchJson("statement", {
         sandbox: preferences.server === "sandbox",
@@ -164,14 +169,14 @@ export async function fetchTransactions({ accessToken }, { account_code, bank_co
             Authorization: `Bearer ${accessToken}`,
         },
         body: {
-            account_code: account_code,
-            bank_code: bank_code,
-            date_start: formatDate(fromDate),
-            date_end: formatDate(toDate),
+            account_code: account_code, //"40702810101270000000"
+            bank_code: bank_code, // "044525999"
+            date_start: formatDate(fromDate), //"2018-09-01"
+            date_end: formatDate(toDate), // "2018-09-21"
         },
     }, /*response => _.get(response, "response.body.request_id")*/);
     if (response.body.message === "Bad JSON") {
-        console.log(">>> Не удалось создать выписку операций");
+        console.log(`>>> Не удалось создать выписку операций '${sanitizeSyncId(account_code)}'`);
         return [];
     }
 

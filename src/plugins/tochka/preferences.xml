@@ -6,7 +6,7 @@
         dialogMessage="Для входа в виртуальную песочницу: логин и пароль – sandbox, код – 12345."
         title="Выбор сервера"
         entries="Виртуальная песочница|Сервер банка" entryValues="sandbox|tochka"
-        defaultValue="0"
+        defaultValue="sandbox"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="|Виртуальная песочница|{@s}">
