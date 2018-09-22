@@ -1,6 +1,6 @@
-﻿import * as _ from "lodash";
+import * as _ from "lodash";
 import {ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId} from "../../common/accounts";
-import {fetchAccounts, fetchTransactions, login} from "./api";
+import {fetchAccounts, fetchStatement, login} from "./api";
 import {convertAccount, convertTransaction} from "./converters";
 
 export async function scrape({preferences, fromDate, toDate, isInBackground}) {
@@ -20,13 +20,25 @@ export async function scrape({preferences, fromDate, toDate, isInBackground}) {
         if (ZenMoney.isAccountSkipped(account.id)) {
             return;
         }
-        const apiTransactions = await fetchTransactions(auth, apiAccount, fromDate, toDate, preferences);
-        apiTransactions.forEach(apiTransaction => {
-            const transaction = convertTransaction(apiTransaction, account);
-            if (transaction) {
-                transactions.push(transaction);
-            }
-        });
+
+        // ToDO: debug
+        // if (apiAccount.account_code !== "40702810101270000000") return;
+
+        const apiStatement = await fetchStatement(auth, apiAccount, fromDate, toDate, preferences);
+        // остаток на счету на конец периода в выписке
+        if (apiStatement.balance_closing) {
+            account.balance = Number(apiStatement.balance_closing);
+            account.instrument = "RUB";
+        }
+        // операции по счёту из выписки
+        if (apiStatement.payments) {
+            apiStatement.payments.forEach(apiTransaction => {
+                const transaction = convertTransaction(apiTransaction, account);
+                if (transaction) {
+                    transactions.push(transaction);
+                }
+            });
+        }
     }));
 
     ZenMoney.setData("auth", auth);

@@ -43,7 +43,8 @@ export async function login({accessToken, refreshToken, expirationDateMs} = {}, 
     }
     if (accessToken) {
         //nothing
-    } else if (ZenMoney.openWebView /*true*/) {
+    } else if (ZenMoney.openWebView) {
+    //} else if (true) {
         console.log(">>> Авторизация: Входим через интерфейс банка.");
 
         const {error, code} = await new Promise((resolve) => {
@@ -74,7 +75,7 @@ export async function login({accessToken, refreshToken, expirationDateMs} = {}, 
         console.assert(code && !error, "non-successfull authorization", error);
 
         //DEBUG SANDBOX
-        //const code = "qGOaKYrlnmjvrwb3W36oGmUBO0sYKlpP";
+        //const code = "lscrSeKFC3etECTdqnP0zs9X2ktfEanm";
 
         console.log(">>> Авторизация: Запрашиваем токен.");
         response = await fetchJson("oauth2/token", {
@@ -159,7 +160,7 @@ function formatDate(date) {
     //return toAtLeastTwoDigitsString(date.getUTCDate()) + "." + toAtLeastTwoDigitsString(date.getUTCMonth() + 1) + "." + date.getUTCFullYear();
 }
 
-export async function fetchTransactions({ accessToken }, { account_code, bank_code }, fromDate, toDate, preferences) {
+export async function fetchStatement({ accessToken }, { account_code, bank_code }, fromDate, toDate, preferences) {
     console.log(`>>> Получаем выписку по операциям на счету '${sanitizeSyncId(account_code)}'`);
 
     let response = await fetchJson("statement", {
@@ -169,15 +170,21 @@ export async function fetchTransactions({ accessToken }, { account_code, bank_co
             Authorization: `Bearer ${accessToken}`,
         },
         body: {
-            account_code: account_code, //"40702810101270000000"
-            bank_code: bank_code, // "044525999"
-            date_start: formatDate(fromDate), //"2018-09-01"
-            date_end: formatDate(toDate), // "2018-09-21"
+            account_code: account_code,
+            bank_code: bank_code,
+            date_start: formatDate(fromDate),
+            date_end: formatDate(toDate),
         },
+        /*body: JSON.stringify({
+            "account_code" : "40702810101270000000",
+            "bank_code" : "044525999",
+            "date_start" : "2018-09-01",
+            "date_end" : "2018-09-21",
+        }),*/
     }, /*response => _.get(response, "response.body.request_id")*/);
     if (response.body.message === "Bad JSON") {
         console.log(`>>> Не удалось создать выписку операций '${sanitizeSyncId(account_code)}'`);
-        return [];
+        return {};
     }
 
     const request_id = response.body.request_id;
@@ -190,7 +197,7 @@ export async function fetchTransactions({ accessToken }, { account_code, bank_co
     }, /*response => _.get(response, "response.body.status")*/);
     if (response.body.message === "Bad JSON") {
         console.log(">>> Не удалось получить статус выписки");
-        return [];
+        return {};
     }
 
     const status = response.body.status;
@@ -205,8 +212,8 @@ export async function fetchTransactions({ accessToken }, { account_code, bank_co
     }
     if (response.body.message === "Bad JSON") {
         console.log(">>> Не удалось получить выписку");
-        return [];
+        return {};
     }
 
-    return response.body.payments;
+    return response.body;
 }
