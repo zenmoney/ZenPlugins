@@ -915,6 +915,14 @@ describe("parseApiDescription", () => {
             payee: "SBOL",
             description: "CH Payment RUS MOSCOW",
         });
+        expect(parseApiDescription("CH Payment RUS MOSCOW IDT:0614 2 RUS MOSCOW SBOL")).toEqual({
+            payee: "SBOL",
+            description: "CH Payment RUS MOSCOW",
+        });
+        expect(parseApiDescription("CH Debit RUS MOSCOW IDT:0513 1 RUS MOSCOW SBOL")).toEqual({
+            payee: "SBOL",
+            description: "CH Debit RUS MOSCOW",
+        });
         expect(parseApiDescription("Retail LUX 4029357733 Retail LUX 4029357733 PAYPAL *YOURSERVERS")).toEqual({
             payee: "PAYPAL *YOURSERVERS",
             description: "Retail LUX 4029357733",
