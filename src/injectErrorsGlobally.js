@@ -1,4 +1,4 @@
-import {InvalidPreferencesError, TemporaryError} from "./errors";
+import { InvalidPreferencesError, TemporaryError } from './errors'
 
-global.TemporaryError = TemporaryError;
-global.InvalidPreferencesError = InvalidPreferencesError;
+global.TemporaryError = TemporaryError
+global.InvalidPreferencesError = InvalidPreferencesError

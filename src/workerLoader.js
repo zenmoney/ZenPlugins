@@ -1,3 +1,3 @@
-import {handleMessageFromWindow} from "./handleMessageFromWindow";
+import { handleMessageFromWindow } from './handleMessageFromWindow'
 
-global.addEventListener("message", (event) => handleMessageFromWindow({event}));
+global.addEventListener('message', (event) => handleMessageFromWindow({ event }))

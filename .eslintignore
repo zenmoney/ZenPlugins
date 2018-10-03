@@ -1,0 +1,3 @@
+plugins/**/*.js
+src/polyfills/**/*.js
+src/UI/**/*.js
