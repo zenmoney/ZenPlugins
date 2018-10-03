@@ -1,15 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen>
     <EditTextPreference
-        key="token"
-		title="Токен API"
-		summary="|Токен API|{@s}"
-		dialogTitle="Ключ API"
-        positiveButtonText="ОК"
-		negativeButtonText="Отмена"
-		dialogMessage="Введите токен API Модульбанка."
-		obligatory="true"/>
-	<EditTextPreference
 		key="startDate"
 		obligatory="true"
 		inputType="date"
