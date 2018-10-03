@@ -6,12 +6,12 @@
  * @type {{CARD: string, CHECK: string}}
  */
 const TYPES = {
-    CARD: "ccard",
-    CHECK: "checking",
-    LOAD: "loan",
-    DEPOSIT: "deposit",
-};
+  CARD: 'ccard',
+  CHECK: 'checking',
+  LOAD: 'loan',
+  DEPOSIT: 'deposit'
+}
 
 export {
-    TYPES,
-};
+  TYPES
+}

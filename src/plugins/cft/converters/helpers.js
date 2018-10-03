@@ -7,38 +7,38 @@
  * @returns {{}}
  */
 const mapContractToAccount = (data) => {
-    const map = {};
+  const map = {}
 
-    data.forEach(function(item) {
-        map[item.contractId.toString()] = cardUniqueAccountId(item.id);
-    });
+  data.forEach(function (item) {
+    map[item.contractId.toString()] = cardUniqueAccountId(item.id)
+  })
 
-    return map;
-};
+  return map
+}
 
 /**
  * @param code
  * @returns {string}
  */
 const resolveCurrencyCode = (code) => {
-    return code === "RUR" ? "RUB" : code;
-};
+  return code === 'RUR' ? 'RUB' : code
+}
 
 /**
  * @param id
  * @returns {string}
  */
 const cardUniqueAccountId = (id) => {
-    return uniqueAccountId("c", id);
-};
+  return uniqueAccountId('c', id)
+}
 
 /**
  * @param id
  * @returns {string}
  */
 const walletUniqueAccountId = (id) => {
-    return uniqueAccountId("w", id);
-};
+  return uniqueAccountId('w', id)
+}
 
 /**
  * @param prefix
@@ -46,12 +46,12 @@ const walletUniqueAccountId = (id) => {
  * @returns {string}
  */
 const uniqueAccountId = (prefix, id) => {
-    return prefix + "-" + id;
-};
+  return prefix + '-' + id
+}
 
 export {
-    mapContractToAccount,
-    resolveCurrencyCode,
-    cardUniqueAccountId,
-    walletUniqueAccountId,
-};
+  mapContractToAccount,
+  resolveCurrencyCode,
+  cardUniqueAccountId,
+  walletUniqueAccountId
+}

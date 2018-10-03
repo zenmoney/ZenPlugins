@@ -1,18 +1,18 @@
-const {convertManifestXmlToJs} = require("./utils");
-const _ = require("lodash");
+const { convertManifestXmlToJs } = require('./utils')
+const _ = require('lodash')
 
 const expectedModularManifestFilesSection = `<files>
     <js>index.js</js>
     <preferences>preferences.xml</preferences>
-</files>`;
+</files>`
 
-const repositoryUri = "https://github.com/zenmoney/ZenPlugins/blob/master";
+const repositoryUri = 'https://github.com/zenmoney/ZenPlugins/blob/master'
 
-function generateModularLoader({files, preferences}) {
-    if (!_.isEqual(files, ["index.js"]) || preferences !== "preferences.xml") {
-        throw new Error("modular ZenMoneyManifest.xml files section must be exactly equal to:\n" + expectedModularManifestFilesSection);
-    }
-    return `require("polyfills");
+function generateModularLoader ({ files, preferences }) {
+  if (!_.isEqual(files, ['index.js']) || preferences !== 'preferences.xml') {
+    throw new Error('modular ZenMoneyManifest.xml files section must be exactly equal to:\n' + expectedModularManifestFilesSection)
+  }
+  return `require("polyfills");
 require("injectErrorsGlobally");
 var result = require("./index");
 
@@ -39,18 +39,18 @@ for (var key in result) {
 }
 
 module.exports = result;
-`;
+`
 }
 
-module.exports = function(xml) {
-    this.cacheable && this.cacheable();
-    const pluginManifest = convertManifestXmlToJs(xml);
-    if (pluginManifest.modular !== "true") {
-        return pluginManifest.files
-            .map((file) => `require(${JSON.stringify("!!script-loader!./" + file)});`)
-            .concat(`require("injectErrorsGlobally");`)
-            .concat(`module.exports = {main: global.main};`)
-            .join("\n");
-    }
-    return generateModularLoader(pluginManifest);
-};
+module.exports = function (xml) {
+  this.cacheable && this.cacheable()
+  const pluginManifest = convertManifestXmlToJs(xml)
+  if (pluginManifest.modular !== 'true') {
+    return pluginManifest.files
+      .map((file) => `require(${JSON.stringify('!!script-loader!./' + file)});`)
+      .concat(`require("injectErrorsGlobally");`)
+      .concat(`module.exports = {main: global.main};`)
+      .join('\n')
+  }
+  return generateModularLoader(pluginManifest)
+}
