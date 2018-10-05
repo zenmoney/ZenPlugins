@@ -32,10 +32,11 @@ export async function login () {
     }, (error, code) => resolve({ error, code }))
   })
   if (error && (!error.error || error.error === 'access_denied')) {
-    throw new TemporaryError('Не удалось пройти авторизацию в Тинькофф Бизнес. Попробуйте еще раз')
+    throw new TemporaryError('Не удалось пройти авторизацию в ModulBank. Попробуйте еще раз')
   }
   console.assert(code && !error, 'non-successfull authorization', error)
   const response = await network.fetchJson('https://api.modulbank.ru/v1/oauth/token', {
+    method: 'POST',
     headers: {
       'Host': 'api.modulbank.ru'
     },
@@ -102,7 +103,7 @@ async function fetchJson (path, body, token) {
       'Authorization': `Bearer ${token}`
     },
     body,
-    sanitizeResponseLog: { headers: { Authorization: true } }
+    sanitizeRequestLog: { headers: { Authorization: true } }
   }
   return network.fetchJson(baseURL + path, options)
 }
