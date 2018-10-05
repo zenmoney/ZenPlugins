@@ -6219,7 +6219,7 @@ rc@^1.1.7:
     minimist "^1.2.0"
     strip-json-comments "~2.0.1"
 
-react-dev-utils@^3.1.0:
+react-dev-utils@3.1.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/react-dev-utils/-/react-dev-utils-3.1.0.tgz#445c61e9eb0628532b33b02249d9763546d1acce"
   integrity sha512-cbxMvqXL3nFXZo5ZoLJGqerJzrxlieLaLL1SxoNcOoswLhgdoADJa4StRxXUHgfeRFuE+FAiX+RKXYljWhlJ8Q==

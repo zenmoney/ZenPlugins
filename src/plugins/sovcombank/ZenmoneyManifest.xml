@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>sovcombank</id>
+    <version>1.0</version>
+    <build>1</build>
+    <company>4534</company>
+    <modular>true</modular>
+    <codeRequired>true</codeRequired>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+    <description>Синхронизация работает через API мобильного приложения Совкомбанк ЧатБанк.
+
+* Реквизиты доступа к банку хранятся на вашем телефоне в зашифрованном виде.
+* Синхронизация происходит напрямую с телефона.
+
+Укажите с какой даты загружать операции при первой синхронизации. Если историю операций загружать не надо, укажите текущую дату.
+
+Плагин синхронизации с Совкомбанком имеет открытый код, который размещён на GitHub: https://github.com/zenmoney/ZenPlugins</description>
+</provider>

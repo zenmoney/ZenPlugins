@@ -43,7 +43,7 @@
     "pad-left": "2.1.0",
     "promise": "8.0.1",
     "react": "16.4.0",
-    "react-dev-utils": "^3.1.0",
+    "react-dev-utils": "3.1.0",
     "react-dom": "16.4.0",
     "script-loader": "0.7.0",
     "strip-bom": "3.0.0",

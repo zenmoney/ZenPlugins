@@ -6,3 +6,18 @@ export function generateUUID () {
     return hexValue.toString(16)
   })
 }
+
+export function generateRandomString (length, chars) {
+  if (typeof chars !== 'string') {
+    chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
+  }
+  const buf = []
+  for (let i = 0; i < length; i++) {
+    buf.push(chars[randomInt(0, chars.length - 1)])
+  }
+  return buf.join('')
+}
+
+function randomInt (min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min
+}

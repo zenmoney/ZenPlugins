@@ -168,10 +168,15 @@ module.exports = ({ allowedHost, host, https }) => {
 
         if (req.rawHeaders) {
           const headers = {}
+          const isCookieSetExplicitly = Boolean(req.headers[TRANSFERABLE_HEADER_PREFIX + 'cookie'])
           for (let i = 0; i < req.rawHeaders.length; i += 2) {
             let header = req.rawHeaders[i]
             const key = header.toLowerCase()
-            if (key.trim() !== 'cookie') {
+            if (key.trim() === 'cookie') {
+              if (isCookieSetExplicitly) {
+                continue
+              }
+            } else {
               if (key === PROXY_TARGET_HEADER || !key.startsWith(TRANSFERABLE_HEADER_PREFIX)) {
                 continue
               }
