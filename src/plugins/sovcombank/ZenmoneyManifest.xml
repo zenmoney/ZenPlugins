@@ -5,7 +5,7 @@
     <build>1</build>
     <company>4534</company>
     <modular>true</modular>
-    <codeRequired>true</codeRequired>
+    <codeRequired>false</codeRequired>
     <files>
         <js>index.js</js>
         <preferences>preferences.xml</preferences>
