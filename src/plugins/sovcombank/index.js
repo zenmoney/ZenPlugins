@@ -8,6 +8,9 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
   const device = ZenMoney.getData('device') || generateDevice()
   let auth = ZenMoney.getData('auth')
   auth = await login(device, auth)
+  ZenMoney.setData('device', device)
+  ZenMoney.setData('auth', auth)
+  ZenMoney.saveData()
   const transactions = []
   const accounts = (await fetchAccounts(auth))
     .map(convertAccount)
@@ -21,8 +24,6 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
       }
     })
   }))
-  ZenMoney.setData('device', device)
-  ZenMoney.setData('auth', auth)
   return {
     accounts: ensureSyncIDsAreUniqueButSanitized({ accounts: _.values(accounts), sanitizeSyncId }),
     transactions: _.sortBy(transactions, transaction => transaction.date)

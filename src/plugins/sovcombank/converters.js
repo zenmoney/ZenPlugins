@@ -40,7 +40,11 @@ export function convertTransaction (apiTransaction, account) {
 }
 
 function parseDate (apiTransaction, transaction) {
-  transaction.date = new Date(apiTransaction.sortDate + '+03:00')
+  const match = apiTransaction.sortDate.match(/(\d{4}-\d{2}-\d{2})\s(\d{2}:\d{2}:\d{2})/)
+  if (!match) {
+    throw new Error(`unexpected transaction date ${apiTransaction.sortDate}`)
+  }
+  transaction.date = new Date(match[1] + 'T' + match[2] + '+03:00')
 }
 
 function parsePayee (apiTransaction, transaction) {
