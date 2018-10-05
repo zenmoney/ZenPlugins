@@ -169,5 +169,8 @@ describe('parseDescription', () => {
       payee: 'Tortik 11 Baikonur'
     })
     expect(parseDescription('Платеж. Авторизация №827615579638 Дата 2018.10.03 18:10 Описание: RU,MOSCOW  RUS')).toEqual({})
+    expect(parseDescription('Покупка MD00VERNYI UL  DEMJANA SAINT PETERSB RUS')).toEqual({
+      payee: 'VERNYI UL DEMJANA'
+    })
   })
 })

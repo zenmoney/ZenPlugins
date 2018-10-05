@@ -66,8 +66,8 @@ export function parseDescription (description) {
   if (!description || description.indexOf('Платеж. Авторизация №') >= 0) {
     return {}
   }
-  description = description.replace(/^Покупка (MD00)?/, '')
-  const parts = description.split(' ')
+  description = description.replace(/^Покупка (MD00)?/, '').replace(/SAINT PETER[^\s]*/, 'SANKT-PETERBURG')
+  const parts = description.split(' ').filter(part => part)
   if (parts.length > 2 && parts[parts.length - 1] === 'RUS') {
     if (parts[parts.length - 2] === 'G') {
       description = parts.slice(0, parts.length - 3).join(' ')
