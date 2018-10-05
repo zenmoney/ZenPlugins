@@ -15,7 +15,7 @@ export function generateDevice () {
   }
 }
 
-async function callGate (url, { auth, query, body }) {
+async function callGate (url, { auth, query, body, sanitizeRequestLog, sanitizeResponseLog }) {
   const _ts = Math.round(new Date().getTime())
   let search = `?do=${url}`
   if (query || !body) {
@@ -39,7 +39,15 @@ async function callGate (url, { auth, query, body }) {
     },
     body: body ? { ...body, _ts } : null,
     stringify: qs.stringify,
-    parse: JSON.parse
+    parse: JSON.parse,
+    sanitizeResponseLog,
+    sanitizeRequestLog: {
+      ...sanitizeRequestLog,
+      headers: {
+        ...(sanitizeRequestLog && sanitizeRequestLog.headers && sanitizeRequestLog.headers),
+        Cookie: true
+      }
+    }
   })
 }
 
@@ -64,15 +72,18 @@ export async function login (device, auth) {
         token: auth.token,
         uid: auth.uid,
         wrap: sha512.hex(device.id + '' + auth.token)
-      }
+      },
+      sanitizeRequestLog: { body: { token: true, wrap: true } },
+      sanitizeResponseLog: { body: { data: true } }
     })
 
-    auth.nts = response.body.data.nts
-    auth.ibext = response.body.data.ibext
-    auth.ibtim = response.body.data.ibtim
-    auth.token = response.body.data.token
-
-    return auth
+    if (response.body && response.body.result === 'ok' && response.body.data && response.body.data.nts) {
+      auth.nts = response.body.data.nts
+      auth.ibext = response.body.data.ibext
+      auth.ibtim = response.body.data.ibtim
+      auth.token = response.body.data.token
+      return auth
+    }
   }
 
   const phone = await ZenMoney.readLine('Введите номер телефона для входа в Совкомбанк. Формат: +79211234567',
@@ -91,7 +102,9 @@ export async function login (device, auth) {
       apiname: 'getinphone',
       ibin: phone.substring(2),
       key: ''
-    }
+    },
+    sanitizeRequestLog: { body: { ibin: true } },
+    sanitizeResponseLog: { body: { data: { first: true, ptim: true } } }
   })
 
   if (!response.body || response.body.result !== 'ok') {
@@ -121,7 +134,9 @@ export async function login (device, auth) {
       push_address: device.pushAddress,
       push_uid: device.pushUid,
       systemVersion: '10.3.3'
-    }
+    },
+    sanitizeRequestLog: { body: { deviceId: true, ibin: true, key: true } },
+    sanitizeResponseLog: { body: { data: { nts: true, second: true }, token: true } }
   })
 
   if (!response.body || response.body.result !== 'ok') {

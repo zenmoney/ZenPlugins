@@ -1,4 +1,4 @@
-import { convertCard, convertTransaction } from './converters'
+import { convertCard, convertTransaction, parseDescription } from './converters'
 
 describe('convertCard', () => {
   it('converts a credit card', () => {
@@ -74,7 +74,7 @@ describe('convertCard', () => {
     })).toEqual({
       id: '40817810550006885012',
       type: 'ccard',
-      title: 'MC WORLD ХАЛВА 2.0 СНЯТИЕ',
+      title: 'Халва',
       instrument: 'RUB',
       balance: 3000,
       creditLimit: 75000,
@@ -111,12 +111,63 @@ describe('convertTransaction', () => {
       'trnstate': 0
     }, { id: 'account' })).toEqual({
       id: 'b6bdd0dda4ccce6d8c3840c77eaa806c',
+      hold: false,
       date: new Date('2018-10-04T09:30:07+03:00'),
       income: 3000,
       incomeAccount: 'account',
       outcome: 0,
-      outcomeAccount: 'account',
-      payee: 'RU,MOSCOW'
+      outcomeAccount: 'account'
     })
+  })
+
+  it('converts an outcome with a payee', () => {
+    expect(convertTransaction({ num: '',
+      sortDate: '2018-10-04 21:30:53',
+      sum: 1050,
+      sum_issue: 0,
+      desc: 'Покупка MD00PYATEROCHKA 6123 CHEBOKSARY RUS',
+      account: '',
+      bic: '',
+      name: '',
+      inn: '',
+      bank: '',
+      mcc: '5411',
+      oper: 'A',
+      stat: 2,
+      trnstate: 0,
+      id: '9406fdb20a58e2e3ad7e9eebb47f9723',
+      desc_sh: '',
+      debit: 1050,
+      credit: 0,
+      kpp: '',
+      hold: 1,
+      cardEnd: '4623',
+      abs_tid: 'A1349928983#951194201827777453'
+    }, { id: 'account' })).toEqual({
+      id: '9406fdb20a58e2e3ad7e9eebb47f9723',
+      date: new Date('2018-10-04T21:30:53+03:00'),
+      hold: true,
+      income: 0,
+      incomeAccount: 'account',
+      outcome: 1050,
+      outcomeAccount: 'account',
+      payee: 'PYATEROCHKA 6123',
+      mcc: 5411
+    })
+  })
+})
+
+describe('parseDescription', () => {
+  it('parses different descriptions', () => {
+    expect(parseDescription('Покупка MD00PYATEROCHKA 6123 CHEBOKSARY RUS')).toEqual({
+      payee: 'PYATEROCHKA 6123'
+    })
+    expect(parseDescription('Покупка YANDEX TAXI MOSCOW RUS')).toEqual({
+      payee: 'YANDEX TAXI'
+    })
+    expect(parseDescription('Покупка Tortik 11 Baikonur CHEBOXARY G RUS')).toEqual({
+      payee: 'Tortik 11 Baikonur'
+    })
+    expect(parseDescription('Платеж. Авторизация №827615579638 Дата 2018.10.03 18:10 Описание: RU,MOSCOW  RUS')).toEqual({})
   })
 })

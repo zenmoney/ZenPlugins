@@ -7,10 +7,14 @@ export function convertAccount (apiAccount) {
 }
 
 export function convertCard (apiAccount) {
+  let title = apiAccount.cardName
+  if (title.toLowerCase().indexOf('халва') >= 0) {
+    title = 'Халва'
+  }
   return {
     id: apiAccount.account,
     type: 'ccard',
-    title: apiAccount.cardName,
+    title,
     instrument: 'RUB',
     balance: apiAccount.sum - apiAccount.creditLimit,
     creditLimit: apiAccount.creditLimit,
@@ -27,29 +31,49 @@ export function convertTransaction (apiTransaction, account) {
   }
   const transaction = {
     id: apiTransaction.id,
+    date: parseDate(apiTransaction.sortDate),
+    hold: Boolean(apiTransaction.hold),
     income: apiTransaction.credit,
     incomeAccount: account.id,
     outcome: apiTransaction.debit,
     outcomeAccount: account.id
-  };
+  }
+  if (apiTransaction.mcc && !isNaN(parseInt(apiTransaction.mcc))) {
+    transaction.mcc = parseInt(apiTransaction.mcc)
+  }
   [
-    parseDate,
     parsePayee
   ].some(parser => parser(apiTransaction, transaction))
   return transaction
 }
 
-function parseDate (apiTransaction, transaction) {
-  const match = apiTransaction.sortDate.match(/(\d{4}-\d{2}-\d{2})\s(\d{2}:\d{2}:\d{2})/)
+function parseDate (date) {
+  const match = date.match(/(\d{4}-\d{2}-\d{2})\s(\d{2}:\d{2}:\d{2})/)
   if (!match) {
-    throw new Error(`unexpected transaction date ${apiTransaction.sortDate}`)
+    throw new Error(`unexpected transaction date ${date}`)
   }
-  transaction.date = new Date(match[1] + 'T' + match[2] + '+03:00')
+  return new Date(match[1] + 'T' + match[2] + '+03:00')
 }
 
 function parsePayee (apiTransaction, transaction) {
-  const i = apiTransaction.desc_sh ? apiTransaction.desc_sh.indexOf('Описание:') : -1
-  if (i >= 0) {
-    transaction.payee = apiTransaction.desc_sh.substring(i + 'Описание:'.length).trim()
+  const { payee } = parseDescription(apiTransaction.desc)
+  if (payee) {
+    transaction.payee = payee
   }
+}
+
+export function parseDescription (description) {
+  if (!description || description.indexOf('Платеж. Авторизация №') >= 0) {
+    return {}
+  }
+  description = description.replace(/^Покупка (MD00)?/, '')
+  const parts = description.split(' ')
+  if (parts.length > 2 && parts[parts.length - 1] === 'RUS') {
+    if (parts[parts.length - 2] === 'G') {
+      description = parts.slice(0, parts.length - 3).join(' ')
+    } else {
+      description = parts.slice(0, parts.length - 2).join(' ')
+    }
+  }
+  return { payee: description }
 }
