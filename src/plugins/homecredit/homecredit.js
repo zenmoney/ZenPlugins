@@ -5,7 +5,7 @@ import _ from 'lodash'
 const myCreditUrl = 'https://mob.homecredit.ru/mycredit'
 const baseUri = 'https://ib.homecredit.ru/mobile/remoting'
 const defaultMyCreditHeaders = {
-  '_ver_': '3.7.0',
+  '_ver_': '3.7.0', // 2.8.1 + API:4
   '_os_': 1
 }
 const defaultBaseHeaders = {
@@ -538,7 +538,7 @@ async function fetchJson (url, options, predicate) {
       ..._.omit(options, ['API'])
     })
   } catch (e) {
-    if (e.response && e.response.status === 503) {
+    if (e.response && e.response.status >= 500 && e.response.status < 525) {
       throw new TemporaryError('Информация из Банка Хоум Кредит временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться несколько дней, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
     } else {
       throw e
@@ -546,10 +546,11 @@ async function fetchJson (url, options, predicate) {
   }
   if (predicate) { validateResponse(response, response => response.body && predicate(response)) }
   if (!options.ignoreErrors && response.body) {
-    if ((response.body.StatusCode || response.body.statusCode) && response.body.StatusCode !== 200 && response.body.statusCode !== 200) {
+    // ((response.body.StatusCode || response.body.statusCode) && response.body.StatusCode !== 200 && response.body.statusCode !== 200)
+    if (response.body.Errors && _.isArray(response.body.Errors) && response.body.Errors.length > 0) {
       const message = getErrorMessage(response.body.Errors)
       if (message) {
-        if (message.indexOf('повторите попытку') + 1) { throw new TemporaryError(message) } else if (message.indexOf('роверьте дату рождения') + 1) { throw new InvalidPreferencesError(message) } else { throw new Error(message) }
+        if (message.indexOf('повторите попытку') + 1 || message.indexOf('еще раз') + 1) { throw new TemporaryError(message) } else if (message.indexOf('роверьте дату рождения') + 1) { throw new InvalidPreferencesError(message) } else { throw new Error(message) }
       }
     } else if (response.body.success === false) {
       const message = response.body.errorResponseMo.errorMsg

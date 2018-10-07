@@ -43,6 +43,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
                         } else
                             console.log(">>> Игнорируем карту, отсутствующую в 'Мой Кредит':", HomeCredit.getCardNumber(account.cardNumber));
                     }); */
+        // карты рассрочки оставляем на обработку через базовое приложение
         if (fetchedAccounts.merchantCards) delete fetchedAccounts.merchantCards
       }
     }
@@ -108,11 +109,13 @@ function getLoan (loans, contractNumber) {
   return result
 }
 
-function getCardTW (cards, contractNumber, cardNumber) {
-  console.log(">>> Преобразование карты рассрочки из 'Мой кредит' в 'Банк Хоум Кредит': ", cards, contractNumber, cardNumber)
-  let result
-  cards.forEach(function (card) {
-    if (card.ContractNumber === contractNumber && (card.MainCardNumber === cardNumber || card.CardNumber === cardNumber)) { result = card }
-  })
-  return result
-}
+/*
+function getCardTW(cards, contractNumber, cardNumber) {
+    console.log(">>> Преобразование карты рассрочки из 'Мой кредит' в 'Банк Хоум Кредит': ", cards, contractNumber, cardNumber);
+    let result;
+    cards.forEach(function(card) {
+        if (card.ContractNumber === contractNumber && (card.MainCardNumber === cardNumber || card.CardNumber === cardNumber))
+            result = card;
+    });
+    return result;
+} */

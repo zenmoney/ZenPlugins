@@ -172,9 +172,11 @@ export function getMcc (code) {
     case 'CLOTHING SHOES & ACCESSORIES':
       return 5651
 
+    case 'KIDS':
     case 'OTHER':
     case 'HOBBY & LEISURE':
     case 'HOME & GARDEN':
+    case 'TRAVEL':
     case 'TRANSPORTATION':
     case 'TELECOMMUNICATION':
     case 'UTILITY BILLS':
