@@ -2,13 +2,14 @@ import { MD5 } from 'jshashes'
 import * as Network from '../../common/network'
 import _ from 'lodash'
 
+const qs = require('querystring')
 const md5 = new MD5()
 
 const baseUrl = 'https://api01.tinkoff.ru/v1/'
 const defaultHeaders = {
   // "Accept": "*/*",
   // "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-  'User-Agent': 'User-Agent: Sony D6503/android: 5.1.1/TCSMB/3.1.0',
+  'User-Agent': 'User-Agent: Zenmoney/android: 5.1.1/TCSMB/3.1.0',
   'Referrer': 'https://www.tinkoff.ru/mybank/'
 }
 
@@ -91,7 +92,7 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
           body: {
             'initialOperation': 'sign_up'
           },
-          sanitizeResponseLog: { body: { payload: { login: true, userId: true } } }
+          sanitizeResponseLog: { body: { payload: { login: true, userId: true, sessionId: true, sessionid: true } } }
         })
 
         // проверим ответ на ошибки
@@ -189,7 +190,15 @@ async function levelUp (auth) {
   // получим привилегии пользователя
   const levelUp = await fetchJson(auth, 'level_up', {
     ignoreErrors: true,
-    headers: defaultHeaders
+    headers: defaultHeaders,
+    body: {
+      fingerprint: 'Zenmoney/android: 5.0/TCSMB/4.4.1###1080x1920x32###120###false###false###',
+      mobile_device_os: 'android',
+      mobile_device_os_version: '5.0',
+      mobile_device_model: 'Zenmoney',
+      root_flag: false
+      // imei: 359092055350000
+    }
   })
 
   if (levelUp.body.resultCode === 'OK') {
@@ -209,25 +218,30 @@ async function levelUp (auth) {
     const json = await fetchJson(auth, 'confirm', {
       ignoreErrors: true,
       headers: defaultHeaders,
-      body: {
+      get: {
         initialOperation: levelUp.body.initialOperation,
         initialOperationTicket: levelUp.body.operationTicket,
-        confirmationData: '{"Question":"' + answer + '"}'
-      }
+        confirmationType: 'Question',
+        secretValue: answer
+      },
+      body: {
+        confirmationData: { Question: answer }
+      },
+      sanitizeRequestLog: { body: { confirmationData: { Question: true } } }
     })
 
     // ответ на вопрос не верный
     if (json.body.resultCode === 'CONFIRMATION_FAILED') {
-      throw new TemporaryError('Ответ не верный: ' + (json.body.plainMessage || json.body.errorMessage))
+      throw new TemporaryError('Ответ отклонён банком: ' + (json.body.plainMessage || json.body.errorMessage))
     }
     // ответ не принят
     if (json.body.resultCode !== 'OK') {
-      throw new Error('Ответ не принят: ' + (json.body.plainMessage || json.body.errorMessage))
+      throw new Error('Ответ отклонён банком: ' + (json.body.plainMessage || json.body.errorMessage))
     }
     // всё хорошо, ответ верный
     console.log('>>> Ответ на секретный вопрос принят банком.')
   } else {
-    throw new Error('Не удалось повысить привилегии пользователя для входа!')
+    throw new Error('Не удалось повысить привилегии пользователя для входа.')
   }
 }
 
@@ -262,25 +276,22 @@ export async function fetchAccountsAndTransactions (auth, fromDate, toDate) {
 }
 
 async function fetchJson (auth, url, options, predicate) {
-  const params = []
-  auth.sessionid && params.push(encodeURIComponent('sessionid') + '=' + encodeURIComponent(auth.sessionid))
-  if (options.get) {
-    for (let param in options.get) {
-      if (options.get.hasOwnProperty(param)) { params.push(`${encodeURIComponent(param)}=${encodeURIComponent(options.get[param])}`) }
-    }
-  }
-  params.push(encodeURIComponent('appVersion') + '=' + encodeURIComponent('4.1.3'))
-  params.push(encodeURIComponent('platform') + '=' + encodeURIComponent('android'))
-  params.push(encodeURIComponent('origin') + '=' + encodeURIComponent('mobile,ib5,loyalty,platform'))
-  auth.deviceid && params.push(encodeURIComponent('deviceId') + '=' + encodeURIComponent(auth.deviceid))
-
   if (url.substr(0, 4) !== 'http') {
     url = baseUrl + url
   }
 
+  const params = {
+    ...options.get,
+    appVersion: '4.4.1',
+    platform: 'android',
+    origin: 'mobile,ib5,loyalty,platform'
+  }
+  if (auth.sessionid) params.sessionid = auth.sessionid
+  if (auth.deviceid) params.deviceId = auth.deviceid
+
   let response
   try {
-    response = await Network.fetchJson(url + '?' + params.join('&'), {
+    response = await Network.fetchJson(url + '?' + qs.stringify(params), {
       method: options.method || 'POST',
       ..._.omit(options, ['method', 'get'])
     })
