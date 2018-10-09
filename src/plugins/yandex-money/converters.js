@@ -1,14 +1,19 @@
 import currencies from '../belswissbank/codeToCurrencyLookup'
 
 export function convertAccount (apiAccount) {
-  return {
+  const account = {
     id: apiAccount.account,
     type: 'checking',
     title: `Яндекс.Деньги (${currencies[apiAccount.currency]})`,
     instrument: currencies[apiAccount.currency],
-    balance: apiAccount.balance,
     syncID: [apiAccount.account.slice(-4)]
   }
+  if (apiAccount.balance_details && apiAccount.balance_details.available !== apiAccount.balance_details.total) {
+    account.balance = apiAccount.balance_details.total
+  } else {
+    account.balance = apiAccount.balance
+  }
+  return account
 }
 
 export function convertTransaction (apiTransaction, account) {

@@ -2,7 +2,7 @@
 <provider>
     <id>yandex-money</id>
     <version>1.0</version>
-    <build>1</build>
+    <build>6</build>
     <company>15420</company>
     <modular>true</modular>
     <codeRequired>false</codeRequired>
@@ -13,6 +13,6 @@
     <description>Синхронизация реализована на основе официального API Яндекс.Денег.
 
 Укажите с какой даты загружать операции при первой синхронизации. Укажите текущую дату, если историю операций загружать не надо.
-	
+
 Плагин синхронизации с Яндекс.Деньгами имеет открытый код, который размещён на GitHub: https://github.com/zenmoney/ZenPlugins</description>
 </provider>
