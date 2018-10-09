@@ -62,7 +62,8 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
         get: {
           'username': preferences.login,
           'password': password
-        }
+        },
+        sanitizeRequestLog: { url: true }
       })
       const resultCode = signUp.body.resultCode
 
