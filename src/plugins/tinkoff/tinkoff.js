@@ -26,6 +26,7 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
     }
 
     // создаём сессию
+    console.log('>>> Создаём сессию:')
     const response = await fetchJson(auth, 'session', {
       headers: defaultHeaders,
       sanitizeResponseLog: { body: { 'payload': true } }
@@ -55,6 +56,7 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
       if (!password) { throw new Error('Ошибка: не удалось получить пароль для входа') }
 
       // входим по логину-паролю
+      console.log('>>> Авторизация:')
       const signUp = await fetchJson(auth, 'sign_up', {
         ignoreErrors: true,
         shouldLog: false,
@@ -83,6 +85,7 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
           time: 120000
         })
 
+        console.log('>>> Подтверждение кодом:')
         const json2 = await fetchJson(auth, 'confirm', {
           ignoreErrors: true,
           headers: defaultHeaders,
@@ -93,7 +96,7 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
           body: {
             'initialOperation': 'sign_up'
           },
-          sanitizeResponseLog: { body: { payload: { login: true, userId: true, sessionId: true, sessionid: true } } }
+          sanitizeResponseLog: { url: true, body: { payload: { login: true, userId: true, sessionId: true, sessionid: true } } }
         })
 
         // проверим ответ на ошибки
@@ -108,6 +111,7 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
 
       // устанавливаем ПИН для быстрого входа
       auth.pinHash = md5.hex(Math.random())
+      console.log('>>> Инициализация входа по пин-коду:')
       const savePin = await fetchJson(auth, 'mobile_save_pin', {
         ignoreErrors: true,
         headers: defaultHeaders,
@@ -134,6 +138,7 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
       // ПИН есть, входим по нему ========================================================================================================================
       const pinHashDate = ZenMoney.getData('pinHashTime', 0)
       const oldSessionId = ZenMoney.getData('session_id', 0)
+      console.log('>>> Вход по пин-коду:')
       const signUp2 = await fetchJson(auth, 'sign_up', {
         ignoreErrors: true,
         headers: defaultHeaders,
@@ -189,6 +194,7 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
 
 async function levelUp (auth) {
   // получим привилегии пользователя
+  console.log('>>> Попытка поднять привилегии:')
   const levelUp = await fetchJson(auth, 'level_up', {
     ignoreErrors: true,
     headers: defaultHeaders,
@@ -216,6 +222,7 @@ async function levelUp (auth) {
       time: 120000
     })
 
+    console.log('>>> Авторизация контрольным вопросом:')
     const json = await fetchJson(auth, 'confirm', {
       ignoreErrors: true,
       headers: defaultHeaders,
@@ -247,7 +254,7 @@ async function levelUp (auth) {
 }
 
 export async function fetchAccountsAndTransactions (auth, fromDate, toDate) {
-  console.log('>>> Загружаем данные по счетам и операциям...')
+  console.log('>>> Загружаем данные по счетам и операциям:')
   const accounts = await fetchJson(auth, 'grouped_requests',
     {
       headers: defaultHeaders,
@@ -294,7 +301,15 @@ async function fetchJson (auth, url, options, predicate) {
   try {
     response = await Network.fetchJson(url + '?' + qs.stringify(params), {
       method: options.method || 'POST',
-      ..._.omit(options, ['method', 'get'])
+      ..._.omit(options, ['method', 'get']),
+      sanitizeRequestLog: {
+        url: true,
+        ...options.sanitizeRequestLog
+      },
+      sanitizeResponseLog: {
+        url: true,
+        ...options.sanitizeResponseLog
+      }
     })
   } catch (e) {
     if (e.response && e.response.status === 503) {
