@@ -1,8 +1,44 @@
+import { getIntervalBetweenDates } from '../../common/dates'
+
 export function convertAccount (apiAccount) {
   switch (apiAccount.accType) {
     case 'widget': return null
     case 'card': return convertCard(apiAccount)
+    case 'current': return convertCurrentAccount(apiAccount)
+    case 'vklad': return convertDeposit(apiAccount)
     default: throw new Error(`unsupported account type ${apiAccount.accType}`)
+  }
+}
+
+export function convertDeposit (apiAccount) {
+  const { interval, count } = getIntervalBetweenDates(apiAccount.openDate, apiAccount.exp_date)
+  return {
+    id: apiAccount.account,
+    type: 'deposit',
+    title: apiAccount.name,
+    instrument: 'RUB',
+    balance: apiAccount.sum,
+    percent: 1,
+    capitalization: false,
+    startBalance: apiAccount.sum,
+    startDate: new Date(apiAccount.openDate),
+    endDateOffset: count,
+    endDateOffsetInterval: interval,
+    payoffStep: 0,
+    payoffInterval: null,
+    syncID: [apiAccount.account]
+  }
+}
+
+export function convertCurrentAccount (apiAccount) {
+  return {
+    id: apiAccount.account,
+    type: 'checking',
+    title: apiAccount.name,
+    instrument: 'RUB',
+    balance: apiAccount.sum,
+    savings: apiAccount.isNaka === 1,
+    syncID: [apiAccount.account]
   }
 }
 
@@ -30,7 +66,6 @@ export function convertTransaction (apiTransaction, account) {
     return null
   }
   const transaction = {
-    id: apiTransaction.id,
     date: parseDate(apiTransaction.sortDate),
     hold: Boolean(apiTransaction.hold),
     income: apiTransaction.credit,
@@ -38,11 +73,13 @@ export function convertTransaction (apiTransaction, account) {
     outcome: apiTransaction.debit,
     outcomeAccount: account.id
   }
-  if (apiTransaction.mcc && !isNaN(parseInt(apiTransaction.mcc))) {
-    transaction.mcc = parseInt(apiTransaction.mcc)
+  if (!transaction.hold) {
+    transaction.id = apiTransaction.id
   }
   [
-    parsePayee
+    parseCashWithdrawal,
+    parsePayee,
+    parseMcc
   ].some(parser => parser(apiTransaction, transaction))
   return transaction
 }
@@ -60,6 +97,21 @@ function parsePayee (apiTransaction, transaction) {
   if (payee) {
     transaction.payee = payee
   }
+}
+
+function parseMcc (apiTransaction, transaction) {
+  if (apiTransaction.mcc && !isNaN(parseInt(apiTransaction.mcc))) {
+    transaction.mcc = parseInt(apiTransaction.mcc)
+  }
+}
+
+function parseCashWithdrawal (apiTransaction, transaction) {
+  if (apiTransaction.desc && apiTransaction.desc.indexOf('Выдача AVG_ATM') >= 0 && apiTransaction.debit > 0) {
+    transaction.income = transaction.outcome
+    transaction.incomeAccount = 'cash#RUB'
+    return true
+  }
+  return false
 }
 
 export function parseDescription (description) {

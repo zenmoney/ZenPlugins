@@ -1,8 +1,8 @@
-import { convertCard, convertTransaction, parseDescription } from './converters'
+import { convertAccount, convertTransaction, parseDescription } from './converters'
 
-describe('convertCard', () => {
+describe('convertAccount', () => {
   it('converts a credit card', () => {
-    expect(convertCard({
+    expect(convertAccount({
       'account': '40817810550006885012',
       'openDate': '2018-10-03',
       'exp_date': '4012-12-31',
@@ -84,6 +84,124 @@ describe('convertCard', () => {
       ]
     })
   })
+
+  it('converts a savings account', () => {
+    expect(convertAccount({
+      account: '40817810850115100358',
+      openDate: '2018-03-19',
+      exp_date: '4012-12-31',
+      name: 'СКБ "Накопительный счет"',
+      name_sh: '+CFO_SKB_nakopit_schet',
+      sum: 0,
+      sum_pp: 0,
+      sum_acc: 0,
+      accType: 'current',
+      cardCredit: 0,
+      creditLimit: 0,
+      unusedCreditLimit: 0,
+      bank: {
+        bic: '045004763',
+        corrAccNum: '30101810150040000763',
+        name: 'ФИЛИАЛ "ЦЕНТРАЛЬНЫЙ" ПАО "СОВКОМБАНК"',
+        city: 'БЕРДСК',
+        branchId: '508605'
+      },
+      ownerNameEng: '',
+      ownerName: 'Николай Николаевич Николаев',
+      inn: '',
+      kpp: '',
+      ownerAddress: '111111, НИКОЛАЕВСКАЯ ОБЛ, . НИКОЛАЕВСК, .НИКОЛАЕВА, д.11, кв.11',
+      ownerAddressEng: '. .b.',
+      abs_i: 'Николай',
+      abs_o: 'Николаевич',
+      abs_f: 'Николаев',
+      bank_part_id: '',
+      pay: 1,
+      create: 1,
+      dov_date: 'owner',
+      cType: '',
+      uid: '754416',
+      isOwner: '1',
+      ownerIcon: '/ib.php?do=getAva&uid=754416&_ts=Lt6ysz_1539084995&_nts=%nts',
+      owner_uid: '754416',
+      isNaka: 1
+    })).toEqual({
+      id: '40817810850115100358',
+      type: 'checking',
+      title: 'СКБ "Накопительный счет"',
+      instrument: 'RUB',
+      balance: 0,
+      savings: true,
+      syncID: [
+        '40817810850115100358'
+      ]
+    })
+  })
+
+  it('converts a deposit', () => {
+    expect(convertAccount({
+      account: '42304810650120320399',
+      openDate: '2018-05-15',
+      exp_date: '2018-11-13',
+      name: 'СКБ "Максимальный доход 91 - 180 дней"',
+      name_sh: '+CFO_SKB_M_m_doh_180',
+      sum: 1000000,
+      sum_pp: 1000000,
+      sum_acc: 1000000,
+      accType: 'vklad',
+      cardCredit: 0,
+      creditLimit: 0,
+      unusedCreditLimit: 0,
+      bank: {
+        bic: '043469743',
+        corrAccNum: '30101810300000000743',
+        name: 'ПАО "СОВКОМБАНК"',
+        city: 'КОСТРОМА',
+        branchId: '44948421'
+      },
+      shortName: '+CFO_SKB_M_m_doh_180',
+      initDelay: 10,
+      dashInfoSum: 15956.16,
+      dashInfoCur: '810',
+      dashInfoAlert: 0,
+      dashInfo: 'Выплата % на 13.11.2018 составит %sum',
+      ownerNameEng: '',
+      ownerName: 'Николай Николаевич Николаев',
+      inn: '',
+      kpp: '',
+      ownerAddress: '111111, НИКОЛАЕВСКАЯ ОБЛ, . НИКОЛАЕВСК, .НИКОЛАЕВА, д.11, кв.11',
+      ownerAddressEng: '. .b.',
+      abs_i: 'Николай',
+      abs_o: 'Николаевич',
+      abs_f: 'Николаев',
+      bank_part_id: '',
+      pay: 1,
+      create: 1,
+      dov_date: 'owner',
+      cType: '',
+      uid: '1056999',
+      isOwner: '1',
+      ownerIcon: '',
+      owner_uid: '1056999'
+    })).toEqual({
+      id: '42304810650120320399',
+      type: 'deposit',
+      title: 'СКБ "Максимальный доход 91 - 180 дней"',
+      instrument: 'RUB',
+      balance: 1000000,
+      percent: 1,
+      capitalization: false,
+      startBalance: 1000000,
+      startDate: new Date('2018-05-15'),
+      endDateOffset: 182,
+      endDateOffsetInterval: 'day',
+      payoffStep: 0,
+      payoffInterval: null,
+      syncID: [
+        '42304810650120320399'
+      ]
+    })
+  })
 })
 
 describe('convertTransaction', () => {
@@ -121,7 +239,8 @@ describe('convertTransaction', () => {
   })
 
   it('converts an outcome with a payee', () => {
-    expect(convertTransaction({ num: '',
+    expect(convertTransaction({
+      num: '',
       sortDate: '2018-10-04 21:30:53',
       sum: 1050,
       sum_issue: 0,
@@ -144,7 +263,6 @@ describe('convertTransaction', () => {
       cardEnd: '4623',
       abs_tid: 'A1349928983#951194201827777453'
     }, { id: 'account' })).toEqual({
-      id: '9406fdb20a58e2e3ad7e9eebb47f9723',
       date: new Date('2018-10-04T21:30:53+03:00'),
       hold: true,
       income: 0,
@@ -153,6 +271,40 @@ describe('convertTransaction', () => {
       outcomeAccount: 'account',
       payee: 'PYATEROCHKA 6123',
       mcc: 5411
+    })
+  })
+
+  it('converts a cash withdrawal', () => {
+    expect(convertTransaction({
+      num: '',
+      sortDate: '2018-10-08 18:36:45',
+      sum: 3000,
+      sum_issue: 0,
+      desc: 'Выдача AVG_ATM MOSCOW RUS',
+      account: '',
+      bic: '',
+      name: '',
+      inn: '',
+      bank: '',
+      mcc: '6011',
+      oper: 'A',
+      stat: 2,
+      trnstate: 0,
+      id: 'effdf34c7e573d3b80e7730f9fc9174c',
+      desc_sh: '',
+      debit: 3000,
+      credit: 0,
+      kpp: '',
+      hold: 1,
+      cardEnd: '2128',
+      abs_tid: 'A1692268936#969642201828167005'
+    }, { id: 'account' })).toEqual({
+      date: new Date('2018-10-08T18:36:45+03:00'),
+      hold: true,
+      income: 3000,
+      incomeAccount: 'cash#RUB',
+      outcome: 3000,
+      outcomeAccount: 'account'
     })
   })
 })

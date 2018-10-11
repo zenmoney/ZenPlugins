@@ -1,4 +1,4 @@
-import { formatCommentDateTime, isValidDate } from './dates'
+import { formatCommentDateTime, getIntervalBetweenDates, isValidDate } from './dates'
 
 describe('formatCommentDateTime', () => {
   it('should return stringified datetime in year-month-day hours:minutes:seconds format', () => {
@@ -20,5 +20,22 @@ describe('isValidDate', () => {
     expect(isValidDate(Date.now())).toBeFalsy()
     expect(isValidDate(null)).toBeFalsy()
     expect(isValidDate()).toBeFalsy()
+  })
+})
+
+describe('getIntervalBetweenDates', () => {
+  it('returns right intervals', () => {
+    expect(getIntervalBetweenDates(new Date('2018-06-01'), new Date('2019-06-01'))).toEqual({
+      interval: 'year',
+      count: 1
+    })
+    expect(getIntervalBetweenDates(new Date('2012-05-28'), new Date('2025-08-21'), ['year', 'month'])).toEqual({
+      interval: 'month',
+      count: 158
+    })
+    expect(getIntervalBetweenDates(new Date('2018-06-01'), new Date('2018-06-10'))).toEqual({
+      interval: 'day',
+      count: 9
+    })
   })
 })

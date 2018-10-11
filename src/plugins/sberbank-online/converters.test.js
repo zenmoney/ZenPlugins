@@ -9,7 +9,6 @@ import {
   convertPfmTransaction,
   convertTarget,
   convertToZenMoneyTransaction,
-  getIntervalBetweenDates,
   parseApiDescription,
   parsePfmDescription,
   parseWebAmount
@@ -1751,22 +1750,5 @@ describe('addTransactions', () => {
         }
       }
     ])
-  })
-})
-
-describe('getIntervalBetweenDates', () => {
-  it('returns right intervals', () => {
-    expect(getIntervalBetweenDates(new Date('2018-06-01'), new Date('2019-06-01'))).toEqual({
-      interval: 'year',
-      count: 1
-    })
-    expect(getIntervalBetweenDates(new Date('2012-05-28'), new Date('2025-08-21'), ['year', 'month'])).toEqual({
-      interval: 'month',
-      count: 158
-    })
-    expect(getIntervalBetweenDates(new Date('2018-06-01'), new Date('2018-06-10'))).toEqual({
-      interval: 'day',
-      count: 9
-    })
   })
 })
