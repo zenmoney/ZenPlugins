@@ -93,9 +93,12 @@ function parseDate (date) {
 }
 
 function parsePayee (apiTransaction, transaction) {
-  const { payee } = parseDescription(apiTransaction.desc)
+  const { payee, comment } = parseDescription(apiTransaction.desc, apiTransaction.desc_sh)
   if (payee) {
     transaction.payee = payee
+  }
+  if (comment) {
+    transaction.comment = comment
   }
 }
 
@@ -106,7 +109,10 @@ function parseMcc (apiTransaction, transaction) {
 }
 
 function parseCashWithdrawal (apiTransaction, transaction) {
-  if (apiTransaction.desc && apiTransaction.desc.indexOf('Выдача AVG_ATM') >= 0 && apiTransaction.debit > 0) {
+  if (apiTransaction.desc &&
+        apiTransaction.desc.indexOf('Выдача') >= 0 &&
+        apiTransaction.desc.indexOf('ATM') >= 0 &&
+        apiTransaction.debit > 0) {
     transaction.income = transaction.outcome
     transaction.incomeAccount = 'cash#RUB'
     return true
@@ -114,18 +120,44 @@ function parseCashWithdrawal (apiTransaction, transaction) {
   return false
 }
 
-export function parseDescription (description) {
+export function parseDescription (description, shortDescription) {
   if (!description || description.indexOf('Платеж. Авторизация №') >= 0) {
     return {}
   }
-  description = description.replace(/^Покупка (MD00)?/, '').replace(/SAINT PETER[^\s]*/, 'SANKT-PETERBURG')
-  const parts = description.split(' ').filter(part => part)
+  description = description
+    .replace(/\s+/g, ' ')
+    .replace(/SAINT PETER[^\s]*/, 'SANKT-PETERBURG')
+    .trim()
+  if (!description) {
+    return {}
+  }
+
+  let commentType = 0
+  if ([
+    'Зачисление процентов',
+    'Перевод средств'
+  ].some(pattern => shortDescription === pattern)) {
+    commentType = 1
+  }
+  if (commentType === 0 && [
+    'Перевод Card2Card'
+  ].some(pattern => description.indexOf(pattern) >= 0)) {
+    commentType = 2
+  }
+  if (commentType === 0) {
+    description = description
+      .replace(/^Покупка (MD00)?/, '')
+      .replace(/^Возврат покупки (MD00)?/, '')
+  }
+
+  const parts = description.split(' ')
   if (parts.length > 2 && parts[parts.length - 1] === 'RUS') {
     if (parts[parts.length - 2] === 'G') {
-      description = parts.slice(0, parts.length - 3).join(' ')
+      description = parts.slice(0, parts.length - 3 + (commentType === 1 ? 1 : 0)).join(' ')
     } else {
-      description = parts.slice(0, parts.length - 2).join(' ')
+      description = parts.slice(0, parts.length - 2 + (commentType === 1 ? 1 : 0)).join(' ')
     }
   }
-  return { payee: description }
+
+  return commentType > 0 ? { comment: description } : { payee: description }
 }

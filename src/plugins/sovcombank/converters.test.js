@@ -306,6 +306,72 @@ describe('convertTransaction', () => {
       outcome: 3000,
       outcomeAccount: 'account'
     })
+
+    expect(convertTransaction({
+      num: '',
+      sortDate: '2018-10-15 12:40:26',
+      sum: 4000,
+      sum_issue: 0,
+      desc: 'Выдача 490000007554 MD00ATM 490726 75 LENI RUS',
+      account: '',
+      bic: '',
+      name: '',
+      inn: '',
+      bank: '',
+      mcc: '6011',
+      oper: 'A',
+      stat: 2,
+      trnstate: 0,
+      id: '972478cbee9c8344e3c9cd7e7e7d86f2',
+      desc_sh: '',
+      debit: 4000,
+      credit: 0,
+      kpp: '',
+      hold: 1,
+      cardEnd: '5110',
+      abs_tid: 'A1697264830#496717201828845626'
+    }, { id: 'account' })).toEqual({
+      date: new Date('2018-10-15T12:40:26+03:00'),
+      hold: true,
+      income: 4000,
+      incomeAccount: 'cash#RUB',
+      outcome: 4000,
+      outcomeAccount: 'account'
+    })
+  })
+
+  it('converts a transaction with a comment', () => {
+    expect(convertTransaction({
+      num: '0039',
+      sortDate: '2018-10-09 10:09:01',
+      sum: 30000,
+      sum_issue: 0,
+      desc: 'перечисление собственных д/с без НДС  RUS',
+      account: '42303810650110191208',
+      bic: '045004763',
+      name: 'НИКОЛАЕВ НИКОЛАЙ НИКОЛАЕВИЧ',
+      inn: '0',
+      bank: 'ФИЛИАЛ "ЦЕНТРАЛЬНЫЙ" ПАО "СОВКОМБАНК"',
+      mcc: '',
+      oper: '01',
+      stat: 2,
+      trnstate: 0,
+      id: 'a194f9cae2573bc8ab06d214754b395f',
+      desc_sh: 'Перевод средств',
+      debit: 0,
+      credit: 30000,
+      kpp: '',
+      abs_tid: 'M15133650113'
+    }, { id: 'account' })).toEqual({
+      id: 'a194f9cae2573bc8ab06d214754b395f',
+      date: new Date('2018-10-09T10:09:01+03:00'),
+      hold: false,
+      income: 30000,
+      incomeAccount: 'account',
+      outcome: 0,
+      outcomeAccount: 'account',
+      comment: 'перечисление собственных д/с без НДС'
+    })
   })
 })
 
@@ -323,6 +389,18 @@ describe('parseDescription', () => {
     expect(parseDescription('Платеж. Авторизация №827615579638 Дата 2018.10.03 18:10 Описание: RU,MOSCOW  RUS')).toEqual({})
     expect(parseDescription('Покупка MD00VERNYI UL  DEMJANA SAINT PETERSB RUS')).toEqual({
       payee: 'VERNYI UL DEMJANA'
+    })
+    expect(parseDescription('Возврат покупки Lamoda MOSKVA RUS')).toEqual({
+      payee: 'Lamoda'
+    })
+    expect(parseDescription('Перевод Card2Card MOSKVA G RUS')).toEqual({
+      comment: 'Перевод Card2Card'
+    })
+    expect(parseDescription('перечисление собственных д/с без НДС  RUS', 'Перевод средств')).toEqual({
+      comment: 'перечисление собственных д/с без НДС'
+    })
+    expect(parseDescription('Зачисление процентов за депозит(810/000129536900) для счета 810/000129536429  RUS', 'Зачисление процентов')).toEqual({
+      comment: 'Зачисление процентов за депозит(810/000129536900) для счета 810/000129536429'
     })
   })
 })

@@ -114,7 +114,7 @@ export async function login (device, auth) {
     throw new TemporaryError(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: ${response.body.message}`)
   }
 
-  const code = await ZenMoney.readLine('Введите код из SMS для входа в Совкобанк', { inputType: 'number' })
+  const code = await ZenMoney.readLine('Введите код из SMS для входа в Совкомбанк', { inputType: 'number' })
 
   const key = response.body.data.first
   const ptim = response.body.data.ptim
