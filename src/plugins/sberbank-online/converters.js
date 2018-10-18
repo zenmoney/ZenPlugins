@@ -2,8 +2,6 @@
 import * as _ from 'lodash'
 import { getIntervalBetweenDates, toAtLeastTwoDigitsString } from '../../common/dates'
 
-const moment = require('moment')
-
 export function parseApiDate (str) {
   const parts = str.substring(0, 10).split('.')
   console.assert(parts.length >= 3, `unexpected date ${str}`)
@@ -27,26 +25,9 @@ export function parseApiDescription (description) {
   if (!description) {
     return result
   }
-  for (const format of [
-    {
-      regexp: /^CH Payment RUS MOSCOW.*SBOL$/,
-      result: {
-        description: 'CH Payment RUS MOSCOW',
-        payee: 'SBOL'
-      }
-    },
-    {
-      regexp: /^CH Debit RUS MOSCOW.*SBOL$/,
-      result: {
-        description: 'CH Debit RUS MOSCOW',
-        payee: 'SBOL'
-      }
-    }
-  ]) {
-    if (description.match(format.regexp)) {
-      return format.result
-    }
-  }
+  description = description
+    .replace('IDT:0614 2', 'CH Payment')
+    .replace('IDT:0513 1', 'CH Debit')
   for (const parser of [
     { getPosition: (p, i, n) => p * i },
     { getPosition: (p, i, n) => p === 0 ? 0 : n - i, hasDescriptionOnly: true }

@@ -938,6 +938,10 @@ describe('parseApiDescription', () => {
       payee: null,
       description: 'Mobile Fee 3200'
     })
+    expect(parseApiDescription('CH Payment RUS Visa Direct  IDT:0614 2 RUS Visa Direct TINKOFF BANK CARD2CARD')).toEqual({
+      payee: 'TINKOFF BANK CARD2CARD',
+      description: 'CH Payment RUS Visa Direct'
+    })
     expect(parseApiDescription('unknown pattern')).toEqual({
       payee: null,
       description: 'unknown pattern'
@@ -974,6 +978,10 @@ describe('parsePfmDescription', () => {
     expect(parsePfmDescription('"KONDITERSKAYA ZOLOTOY KOROSTOV-NA-DO RU')).toEqual({
       payee: '"KONDITERSKAYA ZOLOTOY KO',
       description: 'ROSTOV-NA-DO RU'
+    })
+    expect(parsePfmDescription('MBK                      MOSCOW       RU')).toEqual({
+      payee: 'MBK',
+      description: 'MOSCOW RU'
     })
     expect(parsePfmDescription('unknown pattern')).toEqual({
       payee: null,
