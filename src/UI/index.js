@@ -6,7 +6,7 @@ import {BreakingPre} from "./BreakingPre";
 import {Bubble} from "./Bubble";
 import {border, fontColor, zenmoneyGreenColor, zenmoneyRedColor} from "./designSystem";
 import {DayTransactions} from "./Transaction";
-import {toAtLeastTwoDigitsString} from "../common/dates";
+import {toAtLeastTwoDigitsString, toDate} from '../common/dates'
 
 const SidePane = ({children}) => <div style={{borderLeft: border, overflowY: "auto"}}>{children}</div>;
 
@@ -38,16 +38,11 @@ class TransactionsPane extends React.PureComponent {
     render() {
         const now = new Date();
         const getDate = (date) => {
-            if (date instanceof Date) {
-                return date;
+            try {
+              return toDate(date)
+            } catch (e) {
+              return now
             }
-            if (typeof date === "string") {
-                return new Date(date);
-            }
-            if (typeof date === "number") {
-                return new Date(date < 10000000000 ? date * 1000 : date);
-            }
-            return now;
         };
         const formatDate = (date) => {
             return [date.getFullYear(), date.getMonth() + 1, date.getDate()].map(toAtLeastTwoDigitsString).join("-");

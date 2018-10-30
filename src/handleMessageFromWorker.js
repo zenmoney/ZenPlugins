@@ -1,5 +1,7 @@
 /* global prompt */
 
+import { toDate } from './common/dates'
+
 const messageHandlers = {
   ':events/scrape-started': async function ({ onSyncStarted }) {
     onSyncStarted()
@@ -16,6 +18,21 @@ const messageHandlers = {
   ':commands/prompt-user-input': async function ({ payload: { message, options, correlationId }, reply }) {
     const result = prompt(message)
     reply({ type: ':events/received-user-input', payload: { result, correlationId } })
+  },
+
+  ':commands/cookie-set': async function ({ payload: { name, value, options } }) {
+    if (value === undefined || value === null) {
+      value = ''
+    }
+    let cookieStr = name + '=' + encodeURIComponent(value)
+    for (const propName in options) {
+      cookieStr += '; ' + propName
+      let propValue = options[propName]
+      if (propName === 'expires') {
+        propValue = toDate(propValue)
+      }
+    }
+    document.cookie = cookieStr
   }
 }
 

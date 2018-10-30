@@ -1,3 +1,5 @@
+/* global self */
+
 import { nativeConsole } from './consoleAdapter'
 import { promptAsync } from './promptAsync'
 import {
@@ -118,7 +120,6 @@ function ZPAPI ({ manifest, preferences, data }) {
   this.clearAuthentication = notImplemented
   this.getCookies = notImplemented
   this.getCookie = notImplemented
-  this.setCookie = () => console.warn('setCookie is not implemented in browser runtime, this call makes no effect')
   this.saveCookies = notImplemented
   this.restoreCookies = notImplemented
 
@@ -385,6 +386,16 @@ Object.assign(ZPAPI.prototype, {
       throw new Error('message must be string')
     }
     return promptAsync(message, options)
+  },
+
+  setCookie (domain, name, value, params) {
+    if (typeof domain !== 'string' || typeof name !== 'string') {
+      throw new Error('cookie must have domain and name')
+    }
+    self.postMessage({
+      type: ':commands/cookie-set',
+      payload: { name, value, options: { domain, ...params } }
+    })
   }
 })
 

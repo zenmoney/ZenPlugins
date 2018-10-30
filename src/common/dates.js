@@ -25,3 +25,16 @@ export function getIntervalBetweenDates (fromDate, toDate, intervals = ['year', 
   }
   throw new Error(`could not calculate interval between dates ${fromDate} ${toDate}`)
 }
+
+export function toDate (date) {
+  if (date instanceof Date) {
+    return date
+  }
+  if (typeof date === 'string') {
+    return new Date(date)
+  }
+  if (typeof date === 'number') {
+    return new Date(date < 10000000000 ? date * 1000 : date)
+  }
+  throw new Error(`could not convert ${date} to date`)
+}
