@@ -172,7 +172,7 @@ module.exports = ({ allowedHost, host, https }) => {
           for (let i = 0; i < req.rawHeaders.length; i += 2) {
             let header = req.rawHeaders[i]
             const key = header.toLowerCase()
-            if (key.trim() === 'cookie') {
+            if (key.trim() === 'cookie' || key.trim() === 'content-length') {
               if (isCookieSetExplicitly) {
                 continue
               }
