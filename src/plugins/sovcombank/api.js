@@ -154,10 +154,27 @@ export async function login (device, auth) {
 }
 
 export async function fetchAccounts (auth) {
+  const sanitizeResponseLog = {
+    body: {
+      data: {
+        options: true,
+        accounts: {
+          bank: true,
+          ownerName: true,
+          ownerNameEng: true,
+          ownerAddress: true,
+          ownerAddressEng: true,
+          abs_i: true,
+          abs_o: true,
+          abs_f: true
+        }
+      }
+    }
+  }
   const responses = await Promise.all([
-    callGate('accountsList', { auth, query: { how: 'back' } }),
-    callGate('accountsList', { auth, query: { how: 'rbs' } }),
-    callGate('accountsList', { auth, query: { how: 'xxi' } })
+    // callGate('accountsList', { auth, sanitizeResponseLog, query: { how: 'back' } }),
+    callGate('accountsList', { auth, sanitizeResponseLog, query: { how: 'rbs' } }),
+    callGate('accountsList', { auth, sanitizeResponseLog, query: { how: 'xxi' } })
   ])
   return _.flatMap(responses, response => {
     if (response.body.data.uid) {

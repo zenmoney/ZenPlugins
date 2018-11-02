@@ -338,6 +338,38 @@ describe('convertTransaction', () => {
       outcome: 4000,
       outcomeAccount: 'account'
     })
+
+    expect(convertTransaction({
+      num: '',
+      sortDate: '2018-11-02 17:59:59',
+      sum: 400,
+      sum_issue: 0,
+      desc: 'Выдача 980000017796    PERM RUS',
+      account: '',
+      bic: '',
+      name: '',
+      inn: '',
+      bank: '',
+      mcc: '6011',
+      oper: 'A',
+      stat: 2,
+      trnstate: 0,
+      id: 'd68d8ea13e1ce6f84ccfc349ac36e1de',
+      desc_sh: '',
+      debit: 400,
+      credit: 0,
+      kpp: '',
+      hold: 1,
+      cardEnd: '5110',
+      abs_tid: 'A1697264830#949800201830664799'
+    }, { id: 'account' })).toEqual({
+      date: new Date('2018-11-02T17:59:59+03:00'),
+      hold: true,
+      income: 400,
+      incomeAccount: 'cash#RUB',
+      outcome: 400,
+      outcomeAccount: 'account'
+    })
   })
 
   it('converts a transaction with a comment', () => {
@@ -401,6 +433,15 @@ describe('parseDescription', () => {
     })
     expect(parseDescription('Зачисление процентов за депозит(810/000129536900) для счета 810/000129536429  RUS', 'Зачисление процентов')).toEqual({
       comment: 'Зачисление процентов за депозит(810/000129536900) для счета 810/000129536429'
+    })
+    expect(parseDescription('Покупка KARUSEL PROSVESHCHENIY SANKT PETERBU RUS')).toEqual({
+      payee: 'KARUSEL PROSVESHCHENIY'
+    })
+    expect(parseDescription('Покупка LEROY MERLIN ST  PETER SAINT PETERSB RUS')).toEqual({
+      payee: 'LEROY MERLIN'
+    })
+    expect(parseDescription('Начисление бонуса в соответствии с условиями бонусной программы. Без НДС.  RUS', 'Начисление бонуса')).toEqual({
+      comment: 'Начисление бонуса в соответствии с условиями бонусной программы. Без НДС.'
     })
   })
 })

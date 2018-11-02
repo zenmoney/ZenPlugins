@@ -2,11 +2,16 @@ import { getIntervalBetweenDates } from '../../common/dates'
 
 export function convertAccount (apiAccount) {
   switch (apiAccount.accType) {
-    case 'widget': return null
-    case 'card': return convertCard(apiAccount)
-    case 'current': return convertCurrentAccount(apiAccount)
-    case 'vklad': return convertDeposit(apiAccount)
-    default: throw new Error(`unsupported account type ${apiAccount.accType}`)
+    case 'widget':
+      return null
+    case 'card':
+      return convertCard(apiAccount)
+    case 'current':
+      return convertCurrentAccount(apiAccount)
+    case 'vklad':
+      return convertDeposit(apiAccount)
+    default:
+      throw new Error(`unsupported account type ${apiAccount.accType}`)
   }
 }
 
@@ -110,9 +115,11 @@ function parseMcc (apiTransaction, transaction) {
 
 function parseCashWithdrawal (apiTransaction, transaction) {
   if (apiTransaction.desc &&
-        apiTransaction.desc.indexOf('Выдача') >= 0 &&
-        apiTransaction.desc.indexOf('ATM') >= 0 &&
-        apiTransaction.debit > 0) {
+      apiTransaction.debit > 0 &&
+      [
+        'Выдача ',
+        'ATM'
+      ].some(str => apiTransaction.desc.indexOf(str) >= 0)) {
     transaction.income = transaction.outcome
     transaction.incomeAccount = 'cash#RUB'
     return true
@@ -126,7 +133,9 @@ export function parseDescription (description, shortDescription) {
   }
   description = description
     .replace(/\s+/g, ' ')
-    .replace(/SAINT PETER[^\s]*/, 'SANKT-PETERBURG')
+    .replace(/ST\s+PETER\s+SAINT\s+PETERSB/, 'SANKT-PETER')
+    .replace(/SAINT PETER[^\s]*/, 'SANKT-PETER')
+    .replace(/SANKT PETER[^\s]*/, 'SANKT-PETER')
     .trim()
   if (!description) {
     return {}
@@ -135,7 +144,8 @@ export function parseDescription (description, shortDescription) {
   let commentType = 0
   if ([
     'Зачисление процентов',
-    'Перевод средств'
+    'Перевод средств',
+    'Начисление бонуса'
   ].some(pattern => shortDescription === pattern)) {
     commentType = 1
   }
