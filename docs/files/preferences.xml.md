@@ -2,11 +2,13 @@
 
 [Пример файла](../../src/plugins/example/preferences.xml)
 
-Структура файла повторяет структуру [Preferences в Android](https://developer.android.com/guide/topics/ui/settings.html?hl=ru) (пространство имен `android:` мы не указываем).
+Структура файла повторяет структуру
+[Preferences в Android](https://developer.android.com/guide/topics/ui/settings.html?hl=ru)
+(пространство имен `android:` мы не указываем).
 
 Наличие поля `startDate` в настройках является обязательным:
 
-```
+```xml
 <EditTextPreference
     key="startDate"
     obligatory="true"
@@ -21,8 +23,10 @@
 />
 ```
 
-Значение поля `startDate` будет передано аргументом типа Date `fromDate` в функцию [scrape()](./index.js.md) при первом запуске.
+Значение поля `startDate` будет передано аргументом типа Date `fromDate` в
+функцию [scrape()](./index.js.md) при первом запуске.
 
 Поддерживаются `EditTextPreference`, `ListPreference`, `CheckBoxPreference`.
 
-О том, как получить введённые пользователем, можно прочесть в [документации API](../api.md#Получение-введённых-пользователем-настроек).
+О том, как получить введённые пользователем, можно прочесть в
+[документации API](../api.md#Получение-введённых-пользователем-настроек).
