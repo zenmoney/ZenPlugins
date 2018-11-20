@@ -67,7 +67,8 @@ export function convertCard (apiAccount) {
 }
 
 export function convertTransaction (apiTransaction, account) {
-  if (apiTransaction.desc_sh === 'Увеличение лимита') {
+  if (apiTransaction.desc_sh === 'Увеличение лимита' ||
+    (apiTransaction.credit === 0 && apiTransaction.debit === 0)) {
     return null
   }
   const transaction = {
@@ -83,6 +84,7 @@ export function convertTransaction (apiTransaction, account) {
   }
   [
     parseCashWithdrawal,
+    parseOuterTransfer,
     parsePayee,
     parseMcc
   ].some(parser => parser(apiTransaction, transaction))
@@ -95,6 +97,15 @@ function parseDate (date) {
     throw new Error(`unexpected transaction date ${date}`)
   }
   return new Date(match[1] + 'T' + match[2] + '+03:00')
+}
+
+function parseOuterTransfer (apiTransaction, transaction) {
+  const match = apiTransaction.desc ? apiTransaction.desc.match(/^Перевод с карты \*(\d{4})/) : null
+  if (!match) {
+    return
+  }
+  transaction.outcome = transaction.income
+  transaction.outcomeAccount = 'ccard#RUB#' + match[1]
 }
 
 function parsePayee (apiTransaction, transaction) {
@@ -115,11 +126,11 @@ function parseMcc (apiTransaction, transaction) {
 
 function parseCashWithdrawal (apiTransaction, transaction) {
   if (apiTransaction.desc &&
-      apiTransaction.debit > 0 &&
-      [
-        'Выдача ',
-        'ATM'
-      ].some(str => apiTransaction.desc.indexOf(str) >= 0)) {
+    apiTransaction.debit > 0 &&
+    [
+      'Выдача ',
+      'ATM'
+    ].some(str => apiTransaction.desc.indexOf(str) >= 0)) {
     transaction.income = transaction.outcome
     transaction.incomeAccount = 'cash#RUB'
     return true
@@ -145,19 +156,24 @@ export function parseDescription (description, shortDescription) {
   if ([
     'Зачисление процентов',
     'Перевод средств',
-    'Начисление бонуса'
+    'Начисление бонуса',
+    'Погашение долга',
+    'Пополнение счета'
   ].some(pattern => shortDescription === pattern)) {
     commentType = 1
   }
   if (commentType === 0 && [
-    'Перевод Card2Card'
-  ].some(pattern => description.indexOf(pattern) >= 0)) {
+    /Перевод.*Card2Card/i,
+    /Перевод 3DI/,
+    /Пополнение /
+  ].some(pattern => pattern.test(description))) {
     commentType = 2
   }
   if (commentType === 0) {
     description = description
       .replace(/^Покупка (MD00)?/, '')
       .replace(/^Возврат покупки (MD00)?/, '')
+      .replace(/^Оплата услуг (MD00)?/, '')
   }
 
   const parts = description.split(' ')

@@ -405,6 +405,40 @@ describe('convertTransaction', () => {
       comment: 'перечисление собственных д/с без НДС'
     })
   })
+
+  it('converts a transfer from another bank', () => {
+    expect(convertTransaction({
+      num: '0021',
+      sortDate: '2018-11-14 18:36:19',
+      sum: 5230.92,
+      sum_issue: 0,
+      desc: 'Перевод с карты *6377, Оплата по договору 1379444052. НДС не облагается.  RUS',
+      account: '30282210400000000019',
+      bic: '044525974',
+      name: 'АО "ТИНЬКОФФ БАНК" / НИКОЛАЕВ НИКОЛАЙ НИКОЛАЕВИЧ',
+      inn: '7710140679',
+      bank: 'АО "ТИНЬКОФФ БАНК"',
+      mcc: '',
+      oper: '01',
+      stat: 2,
+      trnstate: 0,
+      id: '355686e100fd71948a3e7d69b368e186',
+      desc_sh: 'Пополнение счета',
+      debit: 0,
+      credit: 5230.92,
+      kpp: '',
+      abs_tid: 'M15546514102'
+    }, { id: 'account' })).toEqual({
+      id: '355686e100fd71948a3e7d69b368e186',
+      date: new Date('2018-11-14T18:36:19+03:00'),
+      hold: false,
+      income: 5230.92,
+      incomeAccount: 'account',
+      outcome: 5230.92,
+      outcomeAccount: 'ccard#RUB#6377',
+      comment: 'Перевод с карты *6377, Оплата по договору 1379444052. НДС не облагается.'
+    })
+  })
 })
 
 describe('parseDescription', () => {
@@ -442,6 +476,18 @@ describe('parseDescription', () => {
     })
     expect(parseDescription('Начисление бонуса в соответствии с условиями бонусной программы. Без НДС.  RUS', 'Начисление бонуса')).toEqual({
       comment: 'Начисление бонуса в соответствии с условиями бонусной программы. Без НДС.'
+    })
+    expect(parseDescription('Пополнение CHATBANK MONEY SEND RUS')).toEqual({
+      comment: 'Пополнение CHATBANK MONEY'
+    })
+    expect(parseDescription('Оплата услуг MD00Lenta LLC MOSCOW RUS')).toEqual({
+      payee: 'Lenta LLC'
+    })
+    expect(parseDescription('ПОГАШЕНИЕ КРЕДИТА за период с 06/09/2018 по 05/10/2018.  RUS', 'Погашение долга')).toEqual({
+      comment: 'ПОГАШЕНИЕ КРЕДИТА за период с 06/09/2018 по 05/10/2018.'
+    })
+    expect(parseDescription('Перевод с карты *6377, Оплата по договору 1379444052. НДС не облагается.  RUS', 'Пополнение счета')).toEqual({
+      comment: 'Перевод с карты *6377, Оплата по договору 1379444052. НДС не облагается.'
     })
   })
 })
