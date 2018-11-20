@@ -15,6 +15,8 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
   if (!toDate) {
     toDate = new Date()
   }
+  preferences.inn = preferences.inn.toString().replace(/[^\d]/g, '')
+
   const accounts = {}
   const transactions = []
 

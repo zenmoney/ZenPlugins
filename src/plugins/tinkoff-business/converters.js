@@ -4,7 +4,7 @@ export function convertAccount (apiAccount) {
   return {
     id: apiAccount.accountNumber,
     type: 'checking',
-    title: apiAccount.name,
+    title: apiAccount.name ? apiAccount.name : ('Счёт ' + currencies[apiAccount.currency]),
     instrument: currencies[apiAccount.currency],
     balance: apiAccount.balance.otb,
     syncID: [apiAccount.accountNumber]

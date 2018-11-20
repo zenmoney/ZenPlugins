@@ -1,7 +1,7 @@
 import { Base64 } from 'jshashes'
+import { toAtLeastTwoDigitsString } from '../../common/dates'
 import * as network from '../../common/network'
 import { getUid } from '../sberbank-online/sberbank'
-import { toAtLeastTwoDigitsString } from '../../common/dates'
 
 const base64 = new Base64()
 
@@ -32,12 +32,15 @@ async function fetchJson (url, options = {}, predicate = () => true) {
       throw e
     }
   }
-  if (response.body && response.body.errorMessage &&
-            response.body.errorMessage.indexOf('попробуйте позже') >= 0) {
+  if (response.body &&
+    response.body.errorMessage &&
+    response.body.errorMessage.indexOf('попробуйте позже') >= 0) {
     throw new TemporaryError('Информация из Тинькофф Бизнес временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
   }
   if (predicate) {
-    if (response.body && response.body.errorCode === 'AUTH_REQUIRED') {
+    if (response.body && (
+      response.body.errorCode === 'AUTH_REQUIRED' ||
+      response.body.errorCode === 'ACCESS_DENIED')) {
       throw new Error('AuthError')
     }
     console.assert(predicate(response), 'non-successful response')
@@ -114,9 +117,9 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
     throw new TemporaryError('У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии.')
   }
   console.assert(response.body &&
-        response.body.access_token &&
-        response.body.refresh_token &&
-        response.body.expires_in, 'non-successfull authorization', response)
+    response.body.access_token &&
+    response.body.refresh_token &&
+    response.body.expires_in, 'non-successfull authorization', response)
   return {
     accessToken: response.body.access_token,
     refreshToken: response.body.refresh_token,
@@ -137,15 +140,15 @@ export async function fetchAccounts ({ accessToken }, { inn }) {
 
 function formatDate (date) {
   return date.getUTCFullYear() + '-' +
-        toAtLeastTwoDigitsString(date.getUTCMonth() + 1) + '-' +
-        toAtLeastTwoDigitsString(date.getUTCDate()) + '+00:00:00'
+    toAtLeastTwoDigitsString(date.getUTCMonth() + 1) + '-' +
+    toAtLeastTwoDigitsString(date.getUTCDate()) + '+00:00:00'
 }
 
 export async function fetchTransactions ({ accessToken }, { inn }, { id }, fromDate, toDate) {
   const response = await fetchJson(`https://sme-partner.tinkoff.ru/api/v1/partner/company/${inn}/excerpt?` +
-        `accountNumber=${id}` +
-        `&from=${encodeURIComponent(formatDate(fromDate))}` +
-        `&till=${encodeURIComponent(formatDate(toDate))}`, {
+    `accountNumber=${id}` +
+    `&from=${encodeURIComponent(formatDate(fromDate))}` +
+    `&till=${encodeURIComponent(formatDate(toDate))}`, {
     method: 'GET',
     headers: {
       Host: 'sme-partner.tinkoff.ru',
