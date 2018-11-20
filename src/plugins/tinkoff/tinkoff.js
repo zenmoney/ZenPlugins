@@ -5,7 +5,7 @@ import _ from 'lodash'
 const qs = require('querystring')
 const md5 = new MD5()
 
-const baseUrl = 'https://api01.tinkoff.ru/v1/'
+const baseUrl = 'https://api.tinkoff.ru/v1/'
 const defaultHeaders = {
   // "Accept": "*/*",
   // "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
@@ -70,7 +70,7 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
       const resultCode = signUp.body.resultCode
 
       // ошибка входа по паролю
-      if (resultCode.substr(0, 8) === 'INVALID_') {
+      if (resultCode.substr(0, 8) === 'INVALID_' || resultCode.substr(0, 9) === 'INTERNAL_') {
         throw new InvalidPreferencesError('Ответ от банка: ' + (signUp.body.plainMessage || signUp.body.errorMessage))
         // операция отклонена
       } else if (resultCode === 'OPERATION_REJECTED') {
