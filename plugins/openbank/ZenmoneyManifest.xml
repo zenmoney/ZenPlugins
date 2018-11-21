@@ -4,6 +4,7 @@
     <version>0.2.3</version>
     <build>48</build>
     <company>4761</company>
+    <codeRequired>false</codeRequired>
     <files>
         <js>imei_gen.min.js</js>
         <js>sha1.min.js</js>
