@@ -7,6 +7,8 @@ const MS_IN_MINUTE = 60 * 1000
 const MS_IN_DAY = 24 * 60 * MS_IN_MINUTE
 const MS_IN_WEEK = 7 * MS_IN_DAY
 
+const SCRAPE_LAST_SUCCESS_DATE_KEY = 'scrape/lastSuccessDate'
+
 const unsealSyncPromise = (promise) => {
   let state = 'pending'
   let value = null
@@ -43,7 +45,7 @@ const calculateFromDate = (startDateString) => {
   console.assert(startDateString, `preferences must contain "startDate"`)
   const startDate = parseStartDateString(startDateString)
   console.assert(isValidDate(startDate), { startDateString }, 'is not a valid date')
-  const lastSuccessDateString = ZenMoney.getData('scrape/lastSuccessDate')
+  const lastSuccessDateString = ZenMoney.getData(SCRAPE_LAST_SUCCESS_DATE_KEY)
   if (lastSuccessDateString) {
     const lastSuccessDate = new Date(lastSuccessDateString)
     console.assert(isValidDate(lastSuccessDate), { lastSuccessDateString }, 'is not a valid date')
@@ -61,10 +63,11 @@ export function provideScrapeDates (fn) {
       ...args,
       preferences: _.omit(args.preferences, ['startDate']),
       fromDate: calculateFromDate(args.preferences.startDate),
-      toDate: null
+      toDate: null,
+      isFirstRun: !ZenMoney.getData(SCRAPE_LAST_SUCCESS_DATE_KEY)
     })
     return scrapeResult.then((x) => {
-      ZenMoney.setData('scrape/lastSuccessDate', successAttemptDate)
+      ZenMoney.setData(SCRAPE_LAST_SUCCESS_DATE_KEY, successAttemptDate)
       ZenMoney.saveData()
       return x
     })
