@@ -15,6 +15,10 @@ export function formatCommentDateTime (date) {
     [date.getHours(), date.getMinutes(), date.getSeconds()].map(toAtLeastTwoDigitsString).join(':')
 }
 
+export function toShortISOString (date) {
+  return [date.getFullYear(), date.getMonth() + 1, date.getDate()].map(toAtLeastTwoDigitsString).join('-')
+}
+
 export function getIntervalBetweenDates (fromDate, toDate, intervals = ['year', 'month', 'day']) {
   for (let i = 0; i < intervals.length; i++) {
     const interval = intervals[i]
@@ -37,4 +41,8 @@ export function toDate (date) {
     return new Date(date < 10000000000 ? date * 1000 : date)
   }
   throw new Error(`could not convert ${date} to date`)
+}
+
+export function toMoscowDate (date) {
+  return new Date(date.getTime() + (date.getTimezoneOffset() + 180) * 60000)
 }
