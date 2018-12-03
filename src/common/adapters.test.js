@@ -142,7 +142,7 @@ describe('provideScrapeDates', () => {
     const scrapeWithProvidedDates = provideScrapeDates(scrape)
 
     scrapeWithProvidedDates({ preferences: { startDate } })
-    expect(scrape).toHaveBeenCalledWith({ preferences: {}, fromDate: new Date(startDate), toDate: null })
+    expect(scrape).toHaveBeenCalledWith({ preferences: {}, fromDate: new Date(startDate), toDate: null, isFirstRun: true })
   })
 
   it('should provide scrape fromDate equal to lastSuccessDate minus 1 week', () => {
@@ -150,7 +150,7 @@ describe('provideScrapeDates', () => {
     const expectedFromDate = '2015-05-31T08:09:10.000Z'
     const startDate = '2010-01-01T01:01:01.000Z'
     global.ZenMoney = {
-      getData: jest.fn().mockReturnValueOnce(lastSuccessDate),
+      getData: jest.fn().mockReturnValue(lastSuccessDate),
       setData: jest.fn(),
       saveData: jest.fn()
     }
@@ -158,14 +158,14 @@ describe('provideScrapeDates', () => {
     const scrape = jest.fn().mockReturnValueOnce(Promise.resolve())
     const scrapeWithProvidedDates = provideScrapeDates(scrape)
     scrapeWithProvidedDates({ preferences: { startDate } })
-    expect(scrape).toHaveBeenCalledWith({ preferences: {}, fromDate: new Date(expectedFromDate), toDate: null })
+    expect(scrape).toHaveBeenCalledWith({ preferences: {}, fromDate: new Date(expectedFromDate), toDate: null, isFirstRun: false })
   })
 
   it('should provide scrape fromDate equal to startDate if lastSuccessDate minus 1 week is less than it', () => {
     const lastSuccessDate = '2015-06-07T08:09:10.000Z'
     const startDate = '2015-06-05T01:01:01.000Z'
     global.ZenMoney = {
-      getData: jest.fn().mockReturnValueOnce(lastSuccessDate),
+      getData: jest.fn().mockReturnValue(lastSuccessDate),
       setData: jest.fn(),
       saveData: jest.fn()
     }
@@ -173,7 +173,7 @@ describe('provideScrapeDates', () => {
     const scrape = jest.fn().mockReturnValueOnce(Promise.resolve())
     const scrapeWithProvidedDates = provideScrapeDates(scrape)
     scrapeWithProvidedDates({ preferences: { startDate } })
-    expect(scrape).toHaveBeenCalledWith({ preferences: {}, fromDate: new Date(startDate), toDate: null })
+    expect(scrape).toHaveBeenCalledWith({ preferences: {}, fromDate: new Date(startDate), toDate: null, isFirstRun: false })
   })
 
   it('should save last success date on success', () => {

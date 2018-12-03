@@ -34,17 +34,17 @@ describe('retry', () => {
     await expect(retry({
       getter: () => 1,
       predicate: (x) => false
-    })).rejects.toEqual(new Error('could not satisfy predicate in 1 attempt(s)'))
+    })).rejects.toMatchObject({ message: 'could not satisfy predicate in 1 attempt(s)' })
     await expect(retry({
       maxAttempts: 0
-    })).rejects.toEqual(new Error('could not satisfy predicate in 0 attempt(s)'))
+    })).rejects.toMatchObject({ message: 'could not satisfy predicate in 0 attempt(s)' })
   })
 
   it('should reject when working with async getter', async () => {
     await expect(retry({
       getter: () => Promise.resolve(1),
       predicate: (value) => false
-    })).rejects.toEqual(new Error('could not satisfy predicate in 1 attempt(s)'))
+    })).rejects.toMatchObject({ message: 'could not satisfy predicate in 1 attempt(s)' })
     let seed = 0
     await expect(retry({
       getter: () => {
@@ -55,6 +55,6 @@ describe('retry', () => {
     })).rejects.toEqual(10)
     await expect(retry({
       maxAttempts: 0
-    })).rejects.toEqual(new Error('could not satisfy predicate in 0 attempt(s)'))
+    })).rejects.toMatchObject({ message: 'could not satisfy predicate in 0 attempt(s)' })
   })
 })
