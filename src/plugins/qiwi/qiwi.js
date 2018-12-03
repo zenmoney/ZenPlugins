@@ -1,6 +1,7 @@
 import * as _ from 'lodash'
 import { toAtLeastTwoDigitsString } from '../../common/dates'
 import * as network from '../../common/network'
+import { retry } from '../../common/retry'
 
 async function fetchJson (url, options) {
   const response = await network.fetchJson(url, {
@@ -25,12 +26,12 @@ async function fetchJson (url, options) {
 
 function formatDate (date) {
   return date.getUTCFullYear() +
-        '-' + toAtLeastTwoDigitsString(date.getUTCMonth() + 1) +
-        '-' + toAtLeastTwoDigitsString(date.getUTCDate()) +
-        'T' + toAtLeastTwoDigitsString(date.getUTCHours()) +
-        ':' + toAtLeastTwoDigitsString(date.getUTCMinutes()) +
-        ':' + toAtLeastTwoDigitsString(date.getUTCSeconds()) +
-        '+00:00'
+    '-' + toAtLeastTwoDigitsString(date.getUTCMonth() + 1) +
+    '-' + toAtLeastTwoDigitsString(date.getUTCDate()) +
+    'T' + toAtLeastTwoDigitsString(date.getUTCHours()) +
+    ':' + toAtLeastTwoDigitsString(date.getUTCMinutes()) +
+    ':' + toAtLeastTwoDigitsString(date.getUTCSeconds()) +
+    '+00:00'
 }
 
 export async function login (token) {
@@ -38,21 +39,29 @@ export async function login (token) {
     token,
     sanitizeResponseLog: { body: true }
   })
+  if (response.body && response.body.errorCode === 'auth.forbidden') {
+    throw new InvalidPreferencesError('Токен не дает прав на запрос информации о профиле кошелька. ' +
+      'Сгенерируйте новый токен, следуя описанию подключения синхронизации.')
+  }
   return { walletId: response.body.authInfo.personId, token }
 }
 
 export async function fetchAccounts ({ token, walletId }) {
   const response = await fetchJson(`https://edge.qiwi.com/funding-sources/v2/persons/${walletId}/accounts`, { token })
+  if (response.body && response.body.errorCode === 'auth.forbidden') {
+    throw new InvalidPreferencesError('Токен не дает прав на запрос баланса кошелька. ' +
+      'Сгенерируйте новый токен, следуя описанию подключения синхронизации.')
+  }
   return response.body.accounts
 }
 
 export async function fetchTransactions ({ token, walletId }, fromDate, toDate) {
   toDate = toDate || new Date()
   const apiTransactions = []
-  let nextTxnDate
-  let nextTxnId
+  let nextTxnDate = null
+  let nextTxnId = null
   do {
-    const response = await fetchTransactionPaged({ token, walletId }, fromDate, toDate)
+    const response = await fetchTransactionPaged({ token, walletId }, fromDate, toDate, nextTxnId, nextTxnDate)
     nextTxnDate = response.body.nextTxnDate
     nextTxnId = response.body.nextTxnId
     if (response.body.data.length > 0) {
@@ -63,10 +72,19 @@ export async function fetchTransactions ({ token, walletId }, fromDate, toDate) 
 }
 
 async function fetchTransactionPaged ({ token, walletId }, fromDate, toDate, nextTxnId, nextTxnDate) {
-  return fetchJson(
-    `https://edge.qiwi.com/payment-history/v2/persons/${walletId}/payments?rows=50` +
-        `&startDate=${encodeURIComponent(formatDate(fromDate))}` +
-        (toDate ? `&endDate=${encodeURIComponent(formatDate(toDate))}` : '') +
-        (nextTxnDate && nextTxnId ? `&nextTxnDate=${encodeURIComponent(nextTxnDate)}&nextTxnId=${nextTxnId}` : ''),
-    { token })
+  const options = { token }
+  const url = `https://edge.qiwi.com/payment-history/v2/persons/${walletId}/payments?rows=50` +
+    `&startDate=${encodeURIComponent(formatDate(fromDate))}` +
+    (toDate ? `&endDate=${encodeURIComponent(formatDate(toDate))}` : '') +
+    (nextTxnDate && nextTxnId ? `&nextTxnDate=${encodeURIComponent(nextTxnDate)}&nextTxnId=${nextTxnId}` : '')
+  const response = await retry({
+    getter: () => fetchJson(url, options),
+    predicate: response => response.body.errorCode !== 'request.blocked',
+    maxAttempts: 5
+  })
+  if (response.body && response.body.errorCode === 'auth.forbidden') {
+    throw new InvalidPreferencesError('Токен не дает прав на просмотр истории операций. ' +
+      'Сгенерируйте новый токен, следуя описанию подключения синхронизации.')
+  }
+  return response
 }

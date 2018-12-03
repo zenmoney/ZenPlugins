@@ -1,7 +1,8 @@
-export class RetryError extends Error {
+export class RetryError {
   constructor (message, failedResults) {
-    super(message)
+    this.message = message
     this.failedResults = failedResults
+    this.stack = new Error().stack
   }
 }
 
