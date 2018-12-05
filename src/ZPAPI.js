@@ -101,7 +101,8 @@ function ZPAPI ({ manifest, preferences, data }) {
   this.runtime = 'browser'
   this.features = {
     j2v8Date: true,
-    dateProcessing: true
+    dateProcessing: true,
+    binaryRequestBody: true
   }
   const knownAccounts = {}
   const addedAccounts = []

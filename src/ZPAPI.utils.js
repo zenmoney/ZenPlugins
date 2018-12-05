@@ -1,6 +1,7 @@
 /* global XMLHttpRequest */
 
 import { getTargetUrl, PROXY_TARGET_HEADER, TRANSFERABLE_HEADER_PREFIX } from './shared'
+import * as _ from 'lodash'
 
 let lastRequest = null
 let lastRequestUrl = null
@@ -89,7 +90,7 @@ export const handleException = (message) => {
 }
 
 const processBody = (body, type) => {
-  if (!body || typeof body === 'string') {
+  if (!body || typeof body === 'string' || _.isTypedArray(body)) {
     return body
   }
   switch (type) {
