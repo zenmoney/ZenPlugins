@@ -4,18 +4,53 @@ import { getByteLength } from '../utils'
 
 const cheerio = require('cheerio')
 
-export function stringifyRequestBody (body, protocolVersion) {
+function stringToUtf8ByteArray (str, out = []) {
+  // https://github.com/google/closure-library/blob/8598d87242af59aac233270742c8984e2b2bdbe0/closure/goog/crypt/crypt.js#L117-L143
+  let p = out.length
+  let i = 0
+  for (; i < str.length; i++) {
+    let c = str.charCodeAt(i)
+    if (c < 128) {
+      out[p++] = c
+    } else if (c < 2048) {
+      out[p++] = (c >> 6) | 192
+      out[p++] = (c & 63) | 128
+    } else if (
+      ((c & 0xFC00) === 0xD800) && (i + 1) < str.length &&
+      ((str.charCodeAt(i + 1) & 0xFC00) === 0xDC00)) {
+      // Surrogate Pair
+      c = 0x10000 + ((c & 0x03FF) << 10) + (str.charCodeAt(++i) & 0x03FF)
+      out[p++] = (c >> 18) | 240
+      out[p++] = ((c >> 12) & 63) | 128
+      out[p++] = ((c >> 6) & 63) | 128
+      out[p++] = (c & 63) | 128
+    } else {
+      out[p++] = (c >> 12) | 224
+      out[p++] = ((c >> 6) & 63) | 128
+      out[p++] = (c & 63) | 128
+    }
+  }
+  return out
+}
+
+export function stringifyRequestBody (protocolVersion, body) {
   const bodyStr = stringifyToXml({
     sendTimestamp: Math.round(new Date().getTime()),
     ...body
   })
-  const signature = getSignature(protocolVersion, bodyStr)
-  return (getByteLength(signature) > 5
-    ? signature.substring(1)
-    : signature) + protocolVersion + bodyStr
+  const bytes = getSignature(protocolVersion, bodyStr)
+  if (ZenMoney.features.binaryRequestBody) {
+    stringToUtf8ByteArray(protocolVersion + bodyStr, bytes)
+    return new Uint8Array(bytes)
+  } else {
+    const signatureStr = bytes.map(byte => String.fromCharCode(byte)).join('')
+    return (getByteLength(signatureStr) > 5
+      ? signatureStr.substring(1)
+      : signatureStr) + protocolVersion + bodyStr
+  }
 }
 
-export function parseResponseBody (bodyStr, protocolVersion, correlationId) {
+export function parseResponseBody (protocolVersion, bodyStr, correlationId) {
   if (bodyStr === '') {
     throw new TemporaryError('У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии')
   }
@@ -30,12 +65,13 @@ export function parseResponseBody (bodyStr, protocolVersion, correlationId) {
 export function getSignature (protocolVersion, bodyStr) {
   const protocolStrLength = protocolVersion.length
   const num = 1 + protocolStrLength + getByteLength(bodyStr)
-  let symbols = _.chunk(padLeft(num.toString(16), 8, '0').split(''), 2)
-    .map(hexPair => hexPair.join(''))
-    .concat(padLeft(protocolStrLength.toString(16), 2, '0'))
-  return symbols
-    .map(hexStr => String.fromCharCode(parseInt(hexStr, 16)))
-    .join('')
+  return [
+    0xFF & (num >> 24),
+    0xFF & (num >> 16),
+    0xFF & (num >> 8),
+    0xFF & (num),
+    protocolStrLength
+  ]
 }
 
 export function stringifyToXml (object) {

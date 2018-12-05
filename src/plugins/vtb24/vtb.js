@@ -61,7 +61,7 @@ async function burlapRequest (options) {
       body: options.body || null,
       sanitizeRequestLog: { headers: { 'cookie': true }, body: _.get(options, 'sanitizeRequestLog.body') },
       sanitizeResponseLog: { headers: { 'set-cookie': true }, body: _.get(options, 'sanitizeResponseLog.body') },
-      stringify: (body) => stringifyRequestBody({
+      stringify: (body) => stringifyRequestBody(PROTOCOL_VERSION, {
         __type: 'com.mobiletransport.messaging.DefaultMessageImpl',
         correlationId: randomInt(-2000000000, 2000000000).toFixed(0),
         id,
@@ -88,9 +88,9 @@ async function burlapRequest (options) {
             AF_DEVICE_PRINT: ''
           }
         }
-      }, PROTOCOL_VERSION),
+      }),
       parse: (bodyStr) => {
-        payload = parseResponseBody(bodyStr, PROTOCOL_VERSION, id).payload
+        payload = parseResponseBody(PROTOCOL_VERSION, bodyStr, id).payload
         if (payload) {
           reduceDuplicatesByTypeAndId(payload)
           return resolveCycles(payload)
