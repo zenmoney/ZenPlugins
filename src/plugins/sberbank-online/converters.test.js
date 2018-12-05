@@ -1759,4 +1759,114 @@ describe('addTransactions', () => {
       }
     ])
   })
+
+  it('matches on existing transaction only by amount and date if there is only one candidate', () => {
+    const oldTransactions = [
+      {
+        date: new Date('2018-12-06T00:00:00+03:00'),
+        hold: null,
+        payee: 'OAO MTS',
+        description: 'Retail RUS MOSCOW',
+        posted: {
+          amount: -11,
+          instrument: 'RUB'
+        }
+      }
+    ]
+    addTransactions(oldTransactions, [
+      {
+        id: '16106081585',
+        date: new Date('2018-12-06T00:00:00+03:00'),
+        hold: false,
+        categoryId: 204,
+        merchant: 'МТС',
+        payee: 'MTS (spravka 0890)',
+        description: 'MOSCOW RUS',
+        posted: {
+          amount: -11,
+          instrument: 'RUB'
+        }
+      }
+    ])
+    expect(oldTransactions).toEqual([
+      {
+        id: '16106081585',
+        date: new Date('2018-12-06T00:00:00+03:00'),
+        hold: false,
+        categoryId: 204,
+        merchant: 'МТС',
+        payee: 'MTS (spravka 0890)',
+        description: 'Retail RUS MOSCOW',
+        posted: {
+          amount: -11,
+          instrument: 'RUB'
+        }
+      }
+    ])
+  })
+
+  it('checks payee if there is more than one candidate by amount and date', () => {
+    const oldTransactions = [
+      {
+        date: new Date('2018-12-06T00:00:00+03:00'),
+        hold: null,
+        payee: 'OAO Megafon',
+        description: 'Retail RUS MOSCOW',
+        posted: {
+          amount: -11,
+          instrument: 'RUB'
+        }
+      },
+      {
+        date: new Date('2018-12-06T00:00:00+03:00'),
+        hold: null,
+        payee: 'OAO MTS',
+        description: 'Retail RUS MOSCOW',
+        posted: {
+          amount: -11,
+          instrument: 'RUB'
+        }
+      }
+    ]
+    addTransactions(oldTransactions, [
+      {
+        id: '16106081585',
+        date: new Date('2018-12-06T00:00:00+03:00'),
+        hold: false,
+        categoryId: 204,
+        merchant: 'МТС',
+        payee: 'OAO MTS',
+        description: 'MOSCOW RUS',
+        posted: {
+          amount: -11,
+          instrument: 'RUB'
+        }
+      }
+    ])
+    expect(oldTransactions).toEqual([
+      {
+        date: new Date('2018-12-06T00:00:00+03:00'),
+        hold: null,
+        payee: 'OAO Megafon',
+        description: 'Retail RUS MOSCOW',
+        posted: {
+          amount: -11,
+          instrument: 'RUB'
+        }
+      },
+      {
+        id: '16106081585',
+        date: new Date('2018-12-06T00:00:00+03:00'),
+        hold: false,
+        categoryId: 204,
+        merchant: 'МТС',
+        payee: 'OAO MTS',
+        description: 'Retail RUS MOSCOW',
+        posted: {
+          amount: -11,
+          instrument: 'RUB'
+        }
+      }
+    ])
+  })
 })

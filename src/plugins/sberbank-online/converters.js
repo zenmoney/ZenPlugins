@@ -147,8 +147,8 @@ export function convertApiTransaction (apiTransaction, zenAccount) {
 
 export function convertPfmTransaction (pfmTransaction) {
   if (pfmTransaction.cardAmount &&
-            pfmTransaction.cardAmount.currency !== pfmTransaction.nationalAmount.currency &&
-            pfmTransaction.cardAmount.amount === pfmTransaction.nationalAmount.amount) {
+    pfmTransaction.cardAmount.currency !== pfmTransaction.nationalAmount.currency &&
+    pfmTransaction.cardAmount.amount === pfmTransaction.nationalAmount.amount) {
     return null
   }
   const cardAmount = pfmTransaction.cardAmount || pfmTransaction.nationalAmount
@@ -203,67 +203,79 @@ export function addTransactions (oldTransactions, newTransactions, isWebTransact
   oldTransactions = _.sortBy(oldTransactions, ['date', 'payee'])
   newTransactions = _.sortBy(newTransactions, ['date', 'payee'])
   let i = 0
-  l: for (const newTransaction of newTransactions) {
+  for (const newTransaction of newTransactions) {
     if (!newTransaction) {
       continue
     }
-    if (i < n) {
-      for (let j = 0; j < n; j++) {
-        const oldTransaction = oldTransactions[j]
-        if (oldTransaction.id) {
-          continue
-        }
-        if (!arePayeesEqual(newTransaction.payee, oldTransaction.payee) && (isWebTransaction ||
-                        !(oldTransaction.payee && !newTransaction.payee &&
-                            newTransaction.description &&
-                            newTransaction.description.indexOf(oldTransaction.payee) === 0))) {
-          continue
-        }
-        if (!areDatesEqual(newTransaction.date, oldTransaction.date)) {
-          continue
-        }
-        if (isWebTransaction && oldTransaction.origin && !oldTransaction.posted &&
-                        oldTransaction.origin.instrument !== newTransaction.posted.instrument) {
-          oldTransaction.posted = newTransaction.posted
-          i++
-          continue l
-        }
-        if (!isWebTransaction &&
-                            ((oldTransaction.posted && oldTransaction.posted.amount === newTransaction.posted.amount) ||
-                            (!oldTransaction.posted &&
-                                Math.sign(newTransaction.posted.amount) === Math.sign(oldTransaction.origin.amount) &&
-                                (newTransaction.posted.instrument !== oldTransaction.origin.instrument ||
-                                 newTransaction.posted.amount === oldTransaction.origin.amount)))) {
-          let origin = null
-          const description = oldTransaction.description
-          const payee = oldTransaction.payee
-          if (oldTransaction.origin && newTransaction.posted.instrument !== oldTransaction.origin.instrument) {
-            origin = oldTransaction.origin
-          }
-          for (const key in oldTransaction) {
-            if (oldTransaction.hasOwnProperty(key)) {
-              delete oldTransaction[key]
-            }
-          }
-          Object.assign(oldTransaction, newTransaction)
-          if (origin) {
-            oldTransaction.origin = origin
-          }
-          if (description) {
-            oldTransaction.description = description
-          }
-          if (payee && !oldTransaction.payee) {
-            oldTransaction.payee = payee
-          }
-          i++
-          continue l
-        }
+
+    const oldTransaction = i < n ? findMatchingApiTransaction(oldTransactions, newTransaction) : null
+    if (oldTransaction) {
+      i++
+    }
+    if (isWebTransaction) {
+      if (oldTransaction) {
+        oldTransaction.posted = newTransaction.posted
+      }
+      continue
+    }
+    if (!oldTransaction) {
+      transactions.push(newTransaction)
+      continue
+    }
+
+    let origin = null
+    const description = oldTransaction.description
+    const payee = oldTransaction.payee
+    if (oldTransaction.origin && newTransaction.posted.instrument !== oldTransaction.origin.instrument) {
+      origin = oldTransaction.origin
+    }
+    for (const key in oldTransaction) {
+      if (oldTransaction.hasOwnProperty(key)) {
+        delete oldTransaction[key]
       }
     }
-    if (!isWebTransaction) {
-      transactions.push(newTransaction)
+    Object.assign(oldTransaction, newTransaction)
+    if (origin) {
+      oldTransaction.origin = origin
+    }
+    if (description) {
+      oldTransaction.description = description
+    }
+    if (payee && !oldTransaction.payee) {
+      oldTransaction.payee = payee
     }
   }
+}
+
+function findMatchingApiTransaction (apiTransactions, pfmTransaction) {
+  let candidate = null
+  for (const apiTransaction of apiTransactions) {
+    if (apiTransaction.id) {
+      continue
+    }
+    if (!areDatesEqual(apiTransaction.date, pfmTransaction.date)) {
+      continue
+    }
+    if (apiTransaction.posted && !_.isEqual(apiTransaction.posted, pfmTransaction.posted)) {
+      continue
+    }
+    if (!apiTransaction.posted && !_.isEqual(apiTransaction.origin, pfmTransaction.origin) &&
+      (apiTransaction.origin.instrument === pfmTransaction.posted.instrument ||
+        Math.sign(apiTransaction.origin.amount) !== Math.sign(pfmTransaction.posted.amount))
+    ) {
+      continue
+    }
+    if (arePayeesEqual(pfmTransaction.payee, apiTransaction.payee) ||
+      (apiTransaction.payee && !pfmTransaction.payee &&
+        pfmTransaction.description &&
+        pfmTransaction.description.indexOf(apiTransaction.payee) === 0)) {
+      return apiTransaction
+    }
+    if (!candidate) {
+      candidate = apiTransaction
+    }
+  }
+  return candidate
 }
 
 function arePayeesEqual (payee1, payee2) {
@@ -347,7 +359,7 @@ export function convertAccounts (apiAccountsArray, type) {
           break
         default:
           account = apiAccount.account.rate && apiAccount.details.detail.period &&
-                        parseDecimal(apiAccount.account.rate) > 2
+          parseDecimal(apiAccount.account.rate) > 2
             ? convertDeposit(apiAccount.account, apiAccount.details)
             : convertAccount(apiAccount.account, apiAccount.details)
           break
@@ -396,10 +408,10 @@ export function convertCards (apiCardsArray, nowDate = new Date()) {
   const minExpireDate = mskDate.getFullYear() + '-' + toAtLeastTwoDigitsString(mskDate.getMonth() + 1)
   for (const apiCard of apiCardsArray) {
     if (apiCard.account.state !== 'active' ||
-                (apiCard.account.statusWay4 !== '+-КАРТОЧКА ОТКРЫТА' &&
-                apiCard.account.statusWay4 !== 'K-ДЕЙСТ.ПРИОСТАНОВЛЕНО' &&
-                apiCard.account.statusWay4 !== 'X-ПЕРЕВЫП., НЕ ВЫДАНА') ||
-                parseExpireDate(apiCard.account.expireDate) < minExpireDate) {
+      (apiCard.account.statusWay4 !== '+-КАРТОЧКА ОТКРЫТА' &&
+        apiCard.account.statusWay4 !== 'K-ДЕЙСТ.ПРИОСТАНОВЛЕНО' &&
+        apiCard.account.statusWay4 !== 'X-ПЕРЕВЫП., НЕ ВЫДАНА') ||
+      parseExpireDate(apiCard.account.expireDate) < minExpireDate) {
       continue
     }
     // if (apiCard.account.statusWay4 === "X-ПЕРЕВЫП., НЕ ВЫДАНА"
@@ -579,7 +591,7 @@ function parseCashTransaction (transaction, zenMoneyTransaction) {
     }
   } else {
     if (!transaction.description ||
-                !['ATM', 'ITT', 'Note Acceptance'].some(word => transaction.description.indexOf(word) >= 0)) {
+      !['ATM', 'ITT', 'Note Acceptance'].some(word => transaction.description.indexOf(word) >= 0)) {
       return false
     }
   }
@@ -645,17 +657,17 @@ function parseInnerTransfer (transaction, zenMoneyTransaction) {
 
 function parseOuterTransfer (transaction, zenMoneyTransaction) {
   const isOuterTransfer = (transaction.categoryId &&
-        [
-          202, // Перевод на карту другого банка
-          215, // Зачисления
-          216 // Перевод с карты другого банка
-        ].indexOf(transaction.categoryId) >= 0) || (transaction.description && [
+    [
+      202, // Перевод на карту другого банка
+      215, // Зачисления
+      216 // Перевод с карты другого банка
+    ].indexOf(transaction.categoryId) >= 0) || (transaction.description && [
     'Payment To 7000',
     'CARD2CARD',
     'Card2Card',
     'Visa Direct'
   ].some(word => transaction.description.indexOf(word) >= 0 ||
-            (transaction.payee && transaction.payee.indexOf(word) >= 0)))
+    (transaction.payee && transaction.payee.indexOf(word) >= 0)))
   if (!isOuterTransfer) {
     return false
   }
