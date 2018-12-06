@@ -4,33 +4,10 @@ import { getByteLength } from '../utils'
 
 const cheerio = require('cheerio')
 
-function stringToUtf8ByteArray (str, out = []) {
-  // https://github.com/google/closure-library/blob/8598d87242af59aac233270742c8984e2b2bdbe0/closure/goog/crypt/crypt.js#L117-L143
-  let p = out.length
-  let i = 0
-  for (; i < str.length; i++) {
-    let c = str.charCodeAt(i)
-    if (c < 128) {
-      out[p++] = c
-    } else if (c < 2048) {
-      out[p++] = (c >> 6) | 192
-      out[p++] = (c & 63) | 128
-    } else if (
-      ((c & 0xFC00) === 0xD800) && (i + 1) < str.length &&
-      ((str.charCodeAt(i + 1) & 0xFC00) === 0xDC00)) {
-      // Surrogate Pair
-      c = 0x10000 + ((c & 0x03FF) << 10) + (str.charCodeAt(++i) & 0x03FF)
-      out[p++] = (c >> 18) | 240
-      out[p++] = ((c >> 12) & 63) | 128
-      out[p++] = ((c >> 6) & 63) | 128
-      out[p++] = (c & 63) | 128
-    } else {
-      out[p++] = (c >> 12) | 224
-      out[p++] = ((c >> 6) & 63) | 128
-      out[p++] = (c & 63) | 128
-    }
-  }
-  return out
+export const Type = {
+  Int: function (value) { this.value = value },
+  Long: function (value) { this.value = value },
+  Double: function (value) { this.value = value }
 }
 
 export function stringifyRequestBody (protocolVersion, body) {
@@ -81,6 +58,12 @@ export function stringifyToXml (object) {
     return `<boolean>${object === true ? '1' : '0'}</boolean>`
   } else if (typeof object === 'string') {
     return `<string>${object}</string>`
+  } else if (object instanceof Type.Int) {
+    return `<int>${object.value.toFixed(0)}</int>`
+  } else if (object instanceof Type.Long) {
+    return `<long>${object.value.toFixed(0)}</long>`
+  } else if (object instanceof Type.Double) {
+    return `<double>${object.value}</double>`
   } else if (typeof object === 'number') {
     return `<long>${object.toFixed(0)}</long>`
   } else if (object instanceof Date) {
@@ -201,4 +184,33 @@ function parseNode (node, cache) {
     }
     return object
   }
+}
+
+function stringToUtf8ByteArray (str, out = []) {
+  // https://github.com/google/closure-library/blob/8598d87242af59aac233270742c8984e2b2bdbe0/closure/goog/crypt/crypt.js#L117-L143
+  let p = out.length
+  let i = 0
+  for (; i < str.length; i++) {
+    let c = str.charCodeAt(i)
+    if (c < 128) {
+      out[p++] = c
+    } else if (c < 2048) {
+      out[p++] = (c >> 6) | 192
+      out[p++] = (c & 63) | 128
+    } else if (
+      ((c & 0xFC00) === 0xD800) && (i + 1) < str.length &&
+      ((str.charCodeAt(i + 1) & 0xFC00) === 0xDC00)) {
+      // Surrogate Pair
+      c = 0x10000 + ((c & 0x03FF) << 10) + (str.charCodeAt(++i) & 0x03FF)
+      out[p++] = (c >> 18) | 240
+      out[p++] = ((c >> 12) & 63) | 128
+      out[p++] = ((c >> 6) & 63) | 128
+      out[p++] = (c & 63) | 128
+    } else {
+      out[p++] = (c >> 12) | 224
+      out[p++] = ((c >> 6) & 63) | 128
+      out[p++] = (c & 63) | 128
+    }
+  }
+  return out
 }
