@@ -203,4 +203,10 @@ describe('stringifyToXml', () => {
     expect(stringifyToXml(new Type.Long(10))).toEqual('<long>10</long>')
     expect(stringifyToXml(new Type.Double(10))).toEqual('<double>10</double>')
   })
+
+  it('implicitly chooses number type', () => {
+    expect(stringifyToXml(0)).toEqual('<long>0</long>')
+    expect(stringifyToXml(10)).toEqual('<long>10</long>')
+    expect(stringifyToXml(10.12)).toEqual('<double>10.12</double>')
+  })
 })

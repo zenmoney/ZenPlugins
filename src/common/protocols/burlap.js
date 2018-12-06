@@ -64,8 +64,10 @@ export function stringifyToXml (object) {
     return `<long>${object.value.toFixed(0)}</long>`
   } else if (object instanceof Type.Double) {
     return `<double>${object.value}</double>`
-  } else if (typeof object === 'number') {
+  } else if (typeof object === 'number' && Number.isInteger(object)) {
     return `<long>${object.toFixed(0)}</long>`
+  } else if (typeof object === 'number') {
+    return `<double>${object}</double>`
   } else if (object instanceof Date) {
     return '<date>' + object.getUTCFullYear() +
       padLeft(object.getUTCMonth() + 1, 2, '0') +
