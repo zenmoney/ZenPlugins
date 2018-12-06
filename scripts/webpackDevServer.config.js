@@ -31,9 +31,12 @@ const readJsonSync = (file) => {
   }
 }
 
-const removeSecureSealFromCookieValue = (value) => value.replace(/\s?Secure(;|\s*$)/ig, '')
-
-const removeDomainFromCookieValue = (value) => value.replace(/\s?Domain=[^;]*(;|\s*$)/ig, '')
+const makeCookieAccessibleToClientSide = (value) => {
+  return value
+    .replace(/\s?HttpOnly(;|\s*$)/ig, '')
+    .replace(/\s?Secure(;|\s*$)/ig, '')
+    .replace(/\s?Domain=[^;]*(;|\s*$)/ig, '')
+}
 
 const readPluginFileSync = (filepath) => stripBOM(fs.readFileSync(filepath, 'utf8'))
 
@@ -146,9 +149,7 @@ module.exports = ({ allowedHost, host, https }) => {
       })
       proxy.on('proxyRes', (proxyRes, req, res) => {
         if (proxyRes.headers['set-cookie']) {
-          proxyRes.headers['set-cookie'] = proxyRes.headers['set-cookie']
-            .map(removeSecureSealFromCookieValue)
-            .map(removeDomainFromCookieValue)
+          proxyRes.headers['set-cookie'] = proxyRes.headers['set-cookie'].map(makeCookieAccessibleToClientSide)
           proxyRes.headers[TRANSFERABLE_HEADER_PREFIX + 'set-cookie'] = proxyRes.headers['set-cookie']
         }
         const location = proxyRes.headers['location']

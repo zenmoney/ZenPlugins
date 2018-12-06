@@ -63,6 +63,24 @@ function fulfillPreferences (rawPreferences, preferencesSchema) {
   return { ...rawPreferences, ...fulfilledPreferences }
 }
 
+function clearCookies () {
+  document.cookie.split('; ').forEach(cookie => {
+    const d = window.location.hostname.split('.')
+    while (d.length > 0) {
+      const cookieBase = encodeURIComponent(cookie
+        .split(';')[0]
+        .split('=')[0]) + '=; expires=Thu, 01-Jan-1970 00:00:01 GMT; domain=' + d.join('.') + '; path='
+      const p = window.location.pathname.split('/')
+      document.cookie = cookieBase + '/'
+      while (p.length > 0) {
+        document.cookie = cookieBase + p.join('/')
+        p.pop()
+      }
+      d.shift()
+    }
+  })
+}
+
 async function init () {
   const canStartScrape = Promise.race([
     waitForOpenDevtools(),
@@ -79,6 +97,8 @@ async function init () {
   })))
 
   try {
+    clearCookies()
+
     const worker = new Worker('/workerLoader.js')
 
     window.__worker__ = worker // prevents worker GC - allows setting breakpoints after worker ends execution

@@ -4,7 +4,7 @@ export const extractErrorDetails = (error) => [
 ].filter(Boolean).join('\n')
 
 export const waitForOpenDevtools = () => new Promise(function fn (resolve) {
-  const threshold = 100
+  const threshold = 200
   const eatenWidth = window.outerWidth - window.innerWidth
   const eatenHeight = window.outerHeight - window.innerHeight
   if (eatenWidth > threshold || eatenHeight > threshold) {
