@@ -19,11 +19,11 @@ export function stringifyRequestBody (protocolVersion, body) {
   if (ZenMoney.features.binaryRequestBody) {
     stringToUtf8ByteArray(protocolVersion + bodyStr, bytes)
     return new Uint8Array(bytes)
+  } else if (bytes.some(byte => byte >= 128)) {
+    throw new TemporaryError('У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии')
   } else {
     const signatureStr = bytes.map(byte => String.fromCharCode(byte)).join('')
-    return (getByteLength(signatureStr) > 5
-      ? signatureStr.substring(1)
-      : signatureStr) + protocolVersion + bodyStr
+    return signatureStr + protocolVersion + bodyStr
   }
 }
 
