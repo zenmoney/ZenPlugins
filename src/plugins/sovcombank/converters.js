@@ -67,7 +67,7 @@ export function convertCard (apiAccount) {
 }
 
 export function convertTransaction (apiTransaction, account) {
-  if (apiTransaction.desc_sh === 'Увеличение лимита' ||
+  if (['Погашение долга', 'Увеличение лимита'].indexOf(apiTransaction.desc_sh) >= 0 ||
     (apiTransaction.credit === 0 && apiTransaction.debit === 0)) {
     return null
   }
