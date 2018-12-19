@@ -26,10 +26,10 @@ function convertCreditApiAccount (apiAccount) {
     }
   } else if (
     typeWithDashAndInstrument.startsWith('Кредит наличными') ||
-        typeWithDashAndInstrument.startsWith('Потребительский кредит') ||
-        typeWithDashAndInstrument.startsWith('Ипотечный кредит') ||
-        typeWithDashAndInstrument.startsWith('Бизнес - кредит') ||
-        typeWithDashAndInstrument.startsWith('Автокредит')
+    typeWithDashAndInstrument.startsWith('Потребительский кредит') ||
+    typeWithDashAndInstrument.startsWith('Ипотечный кредит') ||
+    typeWithDashAndInstrument.startsWith('Бизнес - кредит') ||
+    typeWithDashAndInstrument.startsWith('Автокредит')
   ) {
     return {
       startBalance: 0,
@@ -172,8 +172,8 @@ function convertApiMovementToReadableTransaction (apiMovement, accountId) {
     comment: formatComment({ posted, origin })
   }
   if (apiMovement.shortDescription === 'Снятие наличных в банкомате' ||
-        apiMovement.description.startsWith('Внесение наличных рублей') ||
-        apiMovement.description.includes('Внесение средств через устройство')) {
+    apiMovement.description.startsWith('Внесение наличных рублей') ||
+    apiMovement.description.includes('Внесение средств через устройство')) {
     return asCashTransfer(readableTransaction)
   }
   // TODO transfers from other banks can be handled
@@ -195,13 +195,14 @@ const makeNeverLosingDataMergeCustomizer = (relatedMovements) => function (value
 
 export const isPossiblyTransfer = ({ reference }) => {
   return reference !== 'HOLD' &&
-        reference !== '' &&
-        reference !== 'CRD_' &&
-        !reference.startsWith('OP1ED') &&
-        !reference.startsWith('CASHIN') &&
-        // U\d{2}A, AQ\d prefixes are common for all deposits creation/destroy/percentages
-        !reference.startsWith('U') &&
-        !reference.startsWith('AQ')
+    reference !== '' &&
+    reference !== 'CRD_' &&
+    !reference.startsWith('OP1ED') &&
+    !reference.startsWith('CASHIN') &&
+    // following references are the same for deposits creation/destroy/percentages:
+    !reference.startsWith('U') && // ^U\d{2}A
+    !reference.startsWith('AQ') && // ^AQ\d
+    !reference.startsWith('AL') // ^AL\d\w
 }
 
 function complementTransferSides (apiMovements) {
