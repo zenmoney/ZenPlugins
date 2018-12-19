@@ -196,7 +196,7 @@ const makeNeverLosingDataMergeCustomizer = (relatedMovements) => function (value
 export const isPossiblyTransfer = ({ reference }) => {
   return reference !== 'HOLD' &&
     reference !== '' &&
-    reference !== 'CRD_' &&
+    !reference.startsWith('CRD_') &&
     !reference.startsWith('OP1ED') &&
     !reference.startsWith('CASHIN') &&
     // following references are the same for deposits creation/destroy/percentages:
