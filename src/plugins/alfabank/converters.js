@@ -180,12 +180,16 @@ function convertApiMovementToReadableTransaction (apiMovement, accountId) {
   return readableTransaction
 }
 
-const neverLosingDataMergeCustomizer = function (valueInA, valueInB, key, objA, objB) {
+const makeNeverLosingDataMergeCustomizer = (relatedMovements) => function (valueInA, valueInB, key, objA, objB) {
   if (valueInA && valueInB && valueInA !== valueInB && !(_.isPlainObject(valueInA) && _.isPlainObject(valueInB))) {
     if (key === 'recipientAccountNumberDescription' && objA.recipientValue && valueInB.endsWith(objA.recipientValue.slice(-4))) {
       return
     }
-    throw new Error(formatWithCustomInspectParams(key, `has ambiguous values:`, [valueInA, valueInB], `objects:`, [objA, objB]))
+    throw new Error(formatWithCustomInspectParams(
+      key,
+      `has ambiguous values:`, [valueInA, valueInB],
+      { objects: [objA, objB], relatedMovements }
+    ))
   }
 }
 
@@ -210,6 +214,7 @@ function complementTransferSides (apiMovements) {
     if (!relatedMovements) {
       return apiMovement
     }
+    const neverLosingDataMergeCustomizer = makeNeverLosingDataMergeCustomizer(relatedMovements)
     const senderInfo = _.mergeWith({}, ...relatedMovements.map((x) => x.senderInfo), neverLosingDataMergeCustomizer)
     const recipientInfo = _.mergeWith({}, ...relatedMovements.map((x) => x.recipientInfo), neverLosingDataMergeCustomizer)
     const executeTimeStamp = relatedMovements.map((x) => x.executeTimeStamp).find(Boolean)
