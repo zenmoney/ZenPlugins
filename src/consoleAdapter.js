@@ -1,16 +1,21 @@
 const util = require('util')
 
 export const formatWithCustomInspectParams = function (...args) {
-  const transformedArgs = args.map(value => typeof value === 'object' ? {
-    inspect (recurseTimes, ctx) {
-      return util.inspect(value, {
-        ...ctx,
-        showHidden: true,
-        depth: null,
-        maxArrayLength: null
-      })
+  const transformedArgs = args.map(value => {
+    if (typeof value !== 'object') {
+      return value
     }
-  } : value)
+    return {
+      [util.inspect.custom || 'inspect'] (recurseTimes, ctx) {
+        return util.inspect(value, {
+          ...ctx,
+          showHidden: true,
+          depth: null,
+          maxArrayLength: null
+        })
+      }
+    }
+  })
   return util.format(...transformedArgs)
 }
 
