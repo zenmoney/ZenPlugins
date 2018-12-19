@@ -11,6 +11,7 @@ zp_preferences.json
 /.idea/deployment.xml
 /.idea/watcherTasks.xml
 /.idea/jscsPlugin.xml
+/.idea/vcs.xml
 /.idea/dictionaries
 
 # Eclipse project files
