@@ -201,6 +201,7 @@ export const isPossiblyTransfer = ({ reference }) => {
     !reference.startsWith('CASHIN') &&
     // following references are the same for deposits creation/destroy/percentages:
     !reference.startsWith('U') && // ^U\d{2}A
+    !reference.startsWith('PML') && // ^PML\d{4}B\d{8}$
     !reference.startsWith('AQ') && // ^AQ\d
     !reference.startsWith('AL') // ^AL\d\w
 }
