@@ -149,4 +149,51 @@ describe('login', () => {
       toDate: null
     })).rejects.toBe(exit)
   })
+
+  it('re-registers when receives SESSION_EXPIRED from fetchAccessToken', async () => {
+    global.ZenMoney = makePluginDataApi({
+      deviceId: '11111111-1111-1111-1111-111111111111',
+      registered: true,
+      accessToken: '22222222-2222-2222-2222-222222222222',
+      refreshToken: '33333333-3333-3333-3333-333333333333'
+    }).methods
+
+    expectLoginRequest({
+      response: {
+        status: 419,
+        body: {
+          id: 'TOKEN_EXPIRED',
+          message: { en: 'Token has expired' },
+          type_id: 'EXPIRED',
+          class: 'class ru.ratauth.exception.ExpiredException'
+        }
+      }
+    })
+
+    expectFetchAccessTokenRequest({
+      response: {
+        status: 419,
+        body: {
+          id: 'SESSION_EXPIRED',
+          message: { en: 'Session has expired' },
+          base_id: '16080bf6-dbe4-428e-b648-06739b59e920',
+          type_id: 'EXPIRED',
+          class: 'class ru.ratauth.exception.ExpiredException'
+        }
+      }
+    })
+
+    const exit = new Error('got expected call')
+    expectRegisterCustomerRequest({ response: { throws: exit } })
+
+    await expect(scrape({
+      preferences: {
+        cardNumber: '4444555566661111',
+        cardExpirationDate: '1234',
+        phoneNumber: '71234567890'
+      },
+      fromDate: new Date(),
+      toDate: null
+    })).rejects.toBe(exit)
+  })
 })
