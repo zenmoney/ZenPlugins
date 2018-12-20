@@ -226,6 +226,44 @@ describe('login', () => {
     await expect(result).rejects.toBeInstanceOf(TemporaryError)
     await expect(result).rejects.toMatchObject({ message: 'Превышено максимальное количество входов' })
   })
+
+  it('throws WS_CALL_ERROR as TemporaryError', async () => {
+    global.ZenMoney = makePluginDataApi({
+      deviceId: '11111111-1111-1111-1111-111111111111',
+      registered: true,
+      accessToken: '22222222-2222-2222-2222-222222222222',
+      refreshToken: '33333333-3333-3333-3333-333333333333'
+    }).methods
+
+    expectLoginRequest({
+      response: {
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        url: 'https://alfa-mobile.alfabank.ru/ALFAJMB/gate',
+        body: {
+          header:
+            {
+              faultCode: 'WS_CALL_ERROR',
+              faultMessage: 'Не удается установить соединение с банком. Повторите попытку позже.'
+            },
+          operationId: 'Exception'
+        }
+      }
+    })
+
+    const result = scrape({
+      preferences: {
+        cardNumber: '4444555566661111',
+        cardExpirationDate: '1234',
+        phoneNumber: '71234567890'
+      },
+      fromDate: new Date(),
+      toDate: null
+    })
+    await expect(result).rejects.toBeInstanceOf(TemporaryError)
+    await expect(result).rejects.toMatchObject({ message: 'Не удается установить соединение с банком. Повторите попытку позже.' })
+  })
 })
 
 function expectOidReferenceRequest ({ response }) {
@@ -526,5 +564,41 @@ describe('registerCustomer', () => {
     })
     await expect(result).rejects.toBeInstanceOf(TemporaryError)
     await expect(result).rejects.toMatchObject({ message: message })
+  })
+
+  it(`throws preferences error messages as InvalidPreferencesError`, async () => {
+    global.ZenMoney = makePluginDataApi({
+      deviceId: '11111111-1111-1111-1111-111111111111',
+      registered: false
+    }).methods
+    expectRegisterCustomerRequest({
+      response: {
+        status: 500,
+        body: {
+          statusCode: '<number>',
+          error: '<string[21]>',
+          message: '<string[33]>',
+          errors: [
+            {
+              id: '<string[78]>',
+              status: '<number>',
+              message: `Некорректные данные.\n Пожалуйста, попробуйте ещё раз.`
+            }
+          ]
+        }
+      }
+    })
+
+    const result = scrape({
+      preferences: {
+        cardNumber: '4444555566661111',
+        cardExpirationDate: '1234',
+        phoneNumber: '71234567890'
+      },
+      fromDate: new Date(),
+      toDate: null
+    })
+    await expect(result).rejects.toBeInstanceOf(InvalidPreferencesError)
+    await expect(result).rejects.toMatchObject({ message: `Некорректные данные.\n Пожалуйста, попробуйте ещё раз.` })
   })
 })
