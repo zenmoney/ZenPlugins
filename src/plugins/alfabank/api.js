@@ -70,6 +70,9 @@ export function isExpiredSession (response) {
 export function assertLoginIsSuccessful (loginResponse) {
   console.assert(loginResponse.status === 200, 'Unexpected login status code', loginResponse)
   if (loginResponse.body.operationId === 'Exception') {
+    if (loginResponse.body.header.faultCode === 'WS_CALL_ERROR') {
+      throw new TemporaryError(loginResponse.body.header.faultMessage)
+    }
     throw new TemporaryError(loginResponse.body.header.faultMessage)
   }
   console.assert(loginResponse.body.header.status === 'STATUS_OK', 'Unexpected login header.status', loginResponse)
@@ -84,7 +87,7 @@ function assertNotServerError (response) {
   if (Array.isArray(errors)) {
     const messages = errors.map((x) => x.message).filter(Boolean)
     const allMessagesText = messages.join('\n')
-    if (allMessagesText.includes('Некорректные данные.')) {
+    if (messages.some((x) => x.startsWith('Некорректные данные.'))) {
       throw new InvalidPreferencesError(allMessagesText)
     }
     if (allMessagesText.includes('Мы обнаружили, что вы поменяли SIM-карту.')) {
