@@ -237,16 +237,12 @@ describe('login', () => {
 
     expectLoginRequest({
       response: {
-        ok: true,
         status: 200,
-        statusText: 'OK',
-        url: 'https://alfa-mobile.alfabank.ru/ALFAJMB/gate',
         body: {
-          header:
-            {
-              faultCode: 'WS_CALL_ERROR',
-              faultMessage: 'Не удается установить соединение с банком. Повторите попытку позже.'
-            },
+          header: {
+            faultCode: 'WS_CALL_ERROR',
+            faultMessage: 'Не удается установить соединение с банком. Повторите попытку позже.'
+          },
           operationId: 'Exception'
         }
       }
@@ -263,6 +259,41 @@ describe('login', () => {
     })
     await expect(result).rejects.toBeInstanceOf(TemporaryError)
     await expect(result).rejects.toMatchObject({ message: 'Не удается установить соединение с банком. Повторите попытку позже.' })
+  })
+
+  it('throws GENERAL_EXCEPTION as TemporaryError', async () => {
+    global.ZenMoney = makePluginDataApi({
+      deviceId: '11111111-1111-1111-1111-111111111111',
+      registered: true,
+      accessToken: '22222222-2222-2222-2222-222222222222',
+      refreshToken: '33333333-3333-3333-3333-333333333333'
+    }).methods
+
+    const description = 'К сожалению, доступ к мобильному банку невозможен. Обратитесь в ближайшее отделение Альфа-Банка или в Телефонный центр "Альфа-Консультант" (+ 7 495 78-888-78 для Москвы и Московской области, 8 800 2000-000 для регионов)'
+    expectLoginRequest({
+      response: {
+        status: 200,
+        body: {
+          header: {
+            status: 'GENERAL_EXCEPTION',
+            description
+          },
+          operationId: 'Authorization:LoginResult'
+        }
+      }
+    })
+
+    const result = scrape({
+      preferences: {
+        cardNumber: '4444555566661111',
+        cardExpirationDate: '1234',
+        phoneNumber: '71234567890'
+      },
+      fromDate: new Date(),
+      toDate: null
+    })
+    await expect(result).rejects.toBeInstanceOf(TemporaryError)
+    await expect(result).rejects.toMatchObject({ message: description })
   })
 })
 
