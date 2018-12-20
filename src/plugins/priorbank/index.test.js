@@ -1,6 +1,6 @@
 import fetchMock from 'fetch-mock'
 import _ from 'lodash'
-import util from 'util'
+import { installFetchMockDeveloperFriendlyFallback } from '../../testUtils'
 import { makePluginDataApi } from '../../ZPAPI.pluginData'
 import { scrape } from './index'
 
@@ -16,18 +16,7 @@ const priorSuccessResponse = (result) => ({
 })
 
 describe('scraper happy path', () => {
-  beforeEach(() => {
-    fetchMock.catch((url, opts) => {
-      throw new Error(util.format('Unmatched fetch request', {
-        matcher: { inspect: () => `(url, {body}) => url.endsWith(${JSON.stringify(url)}) && _.isEqual(JSON.parse(body), ${opts.body})` },
-        ..._.omit(opts, ['body'])
-      }))
-    })
-  })
-  afterEach(() => {
-    fetchMock.reset()
-    fetchMock.restore()
-  })
+  installFetchMockDeveloperFriendlyFallback(fetchMock)
 
   it('should work', () => {
     global.ZenMoney = {
