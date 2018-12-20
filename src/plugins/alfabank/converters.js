@@ -28,6 +28,8 @@ function convertCreditApiAccount (apiAccount) {
     typeWithDashAndInstrument.startsWith('Кредит наличными') ||
     typeWithDashAndInstrument.startsWith('Потребительский кредит') ||
     typeWithDashAndInstrument.startsWith('Ипотечный кредит') ||
+    typeWithDashAndInstrument.startsWith('Разрешенный овердрафт') ||
+    typeWithDashAndInstrument.startsWith('Кредитный продукт') ||
     typeWithDashAndInstrument.startsWith('Бизнес - кредит') ||
     typeWithDashAndInstrument.startsWith('Автокредит')
   ) {
