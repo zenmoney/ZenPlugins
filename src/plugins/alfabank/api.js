@@ -69,6 +69,9 @@ export function isExpiredSession (response) {
 
 export function assertLoginIsSuccessful (loginResponse) {
   console.assert(loginResponse.status === 200, 'Unexpected login status code', loginResponse)
+  if (loginResponse.body.operationId === 'Exception') {
+    throw new TemporaryError(loginResponse.body.header.faultMessage)
+  }
   console.assert(loginResponse.body.header.status === 'STATUS_OK', 'Unexpected login header.status', loginResponse)
   console.assert(loginResponse.body.operationId === 'Authorization:LoginResult', 'Unexpected login operationId', loginResponse)
 }
@@ -79,14 +82,27 @@ function assertNotServerError (response) {
   }
   const errors = _.get(response, ['body', 'errors'])
   if (Array.isArray(errors)) {
-    const message = _.compact(errors.map((x) => x.message)).join('\n')
-    if (message.includes('Некорректные данные.')) {
-      throw new InvalidPreferencesError(message)
+    const messages = errors.map((x) => x.message).filter(Boolean)
+    const allMessagesText = messages.join('\n')
+    if (allMessagesText.includes('Некорректные данные.')) {
+      throw new InvalidPreferencesError(allMessagesText)
     }
-    if (message.includes('Мы обнаружили, что вы поменяли SIM-карту.')) {
-      throw new TemporaryError(message)
+    if (allMessagesText.includes('Мы обнаружили, что вы поменяли SIM-карту.')) {
+      throw new TemporaryError(allMessagesText)
     }
-    throw new Error(message)
+    if (messages.includes('Пароль введён неверно')) {
+      throw new TemporaryError(allMessagesText)
+    }
+    if (messages.includes('Ваша карта закрыта или заблокирована. Для входа используйте другую карту.')) {
+      throw new TemporaryError(allMessagesText)
+    }
+    if (messages.some((x) => x.startsWith('В целях вашей безопасности, вход в мобильное приложение был заблокирован.'))) {
+      throw new TemporaryError(allMessagesText)
+    }
+    if (messages.some((x) => x.startsWith('Пароль устарел.'))) {
+      throw new TemporaryError(allMessagesText)
+    }
+    throw new Error(allMessagesText)
   }
 }
 
