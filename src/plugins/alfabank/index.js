@@ -5,12 +5,31 @@ import {
   fetchAccessToken,
   getAccountsWithAccountDetailsCreditInfo,
   getAllCommonMovements,
-  isExpiredLogin,
+  isExpiredRefreshToken,
+  isExpiredSession,
+  isExpiredToken,
   login,
   register
 } from './api'
 import { convertApiAccountsToAccountTuples, convertApiMovementsToReadableTransactions } from './converters'
 import { normalizePreferences } from './preferences'
+
+async function executeRegistration ({ pluginData, preferences }) {
+  pluginData.registered = true
+  ZenMoney.setData('registered', pluginData.registered)
+  const { cardNumber, cardExpirationDate, phoneNumber } = normalizePreferences(preferences)
+  const { accessToken, refreshToken } = await register({
+    deviceId: pluginData.deviceId,
+    cardNumber,
+    cardExpirationDate,
+    phoneNumber
+  })
+  pluginData.accessToken = accessToken
+  ZenMoney.setData('accessToken', pluginData.accessToken)
+  pluginData.refreshToken = refreshToken
+  ZenMoney.setData('refreshToken', pluginData.refreshToken)
+  ZenMoney.saveData()
+}
 
 export async function scrape ({ preferences, fromDate, toDate }) {
   const sessionId = generateUUID()
@@ -26,23 +45,11 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     ZenMoney.setData('deviceId', pluginData.deviceId)
   }
   if (!pluginData.registered) {
-    pluginData.registered = true
-    ZenMoney.setData('registered', pluginData.registered)
-    const { cardNumber, cardExpirationDate, phoneNumber } = normalizePreferences(preferences)
-    const { accessToken, refreshToken } = await register({
-      deviceId: pluginData.deviceId,
-      cardNumber,
-      cardExpirationDate,
-      phoneNumber
-    })
-    pluginData.accessToken = accessToken
-    ZenMoney.setData('accessToken', pluginData.accessToken)
-    pluginData.refreshToken = refreshToken
-    ZenMoney.setData('refreshToken', pluginData.refreshToken)
-    ZenMoney.saveData()
+    await executeRegistration({ pluginData, preferences })
   }
+
   let loginResponse = await login({ sessionId, deviceId: pluginData.deviceId, accessToken: pluginData.accessToken })
-  if (isExpiredLogin(loginResponse)) {
+  if (isExpiredToken(loginResponse)) {
     const response = await fetchAccessToken({ sessionId, deviceId: pluginData.deviceId, refreshToken: pluginData.refreshToken })
     if (response.status === 200) {
       console.assert(response.body.operationId === 'OpenID:TokenResult', 'Unexpected response body.operationId', response)
@@ -60,25 +67,18 @@ export async function scrape ({ preferences, fromDate, toDate }) {
       }
       ZenMoney.saveData()
 
-      loginResponse = await login({ sessionId, deviceId: pluginData.deviceId, accessToken })
-    } else if (response.status === 419 && response.body.id === 'SESSION_EXPIRED') {
-      const { cardNumber, cardExpirationDate, phoneNumber } = normalizePreferences(preferences)
-      const { accessToken, refreshToken } = await register({
-        deviceId: pluginData.deviceId,
-        cardNumber,
-        cardExpirationDate,
-        phoneNumber
-      })
-      pluginData.accessToken = accessToken
-      ZenMoney.setData('accessToken', pluginData.accessToken)
-      pluginData.refreshToken = refreshToken
-      ZenMoney.setData('refreshToken', pluginData.refreshToken)
-      ZenMoney.saveData()
+      loginResponse = await login({ sessionId, deviceId: pluginData.deviceId, accessToken: pluginData.accessToken })
+    } else if (isExpiredRefreshToken(response)) {
+      await executeRegistration({ pluginData, preferences })
 
-      loginResponse = await login({ sessionId, deviceId: pluginData.deviceId, accessToken })
+      loginResponse = await login({ sessionId, deviceId: pluginData.deviceId, accessToken: pluginData.accessToken })
     } else {
-      console.assert(false, 'Unexpected accessToken status', response)
+      console.assert(false, 'Unhandled fetchAccessToken response', response)
     }
+  } else if (isExpiredSession(loginResponse)) {
+    await executeRegistration({ pluginData, preferences })
+
+    loginResponse = await login({ sessionId, deviceId: pluginData.deviceId, accessToken: pluginData.accessToken })
   }
   assertLoginIsSuccessful(loginResponse)
 

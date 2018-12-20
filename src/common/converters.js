@@ -38,7 +38,7 @@ function makeZenmoneyAccountReference (account) {
       ? `${type}#${instrument}#${syncID}`
       : `${type}#${instrument}`
   } else {
-    console.assert(false, "Either provide specific accounts' id, or provide weak-referencing type, instrument[, syncID]", account)
+    console.assert(false, `Either provide specific accounts' id, or provide weak-referencing type, instrument[, syncID]`, account)
   }
 }
 

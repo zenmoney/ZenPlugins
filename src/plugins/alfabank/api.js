@@ -53,8 +53,18 @@ export function login ({ sessionId, deviceId, accessToken }) {
   })
 }
 
-export function isExpiredLogin (loginResult) {
-  return loginResult.status === 419 && loginResult.body.id === 'TOKEN_EXPIRED'
+export function isExpiredToken (response) {
+  return response.status === 419 && response.body.id === 'TOKEN_EXPIRED'
+}
+
+export function isExpiredRefreshToken (response) {
+  // also body.type_id: 'EXPIRED', body.class: 'class ru.ratauth.exception.ExpiredException' },
+  return response.status === 419 && response.body.id === 'REFRESH_TOKEN_EXPIRED'
+}
+
+export function isExpiredSession (response) {
+  // also body.type_id: 'EXPIRED', body.class: 'class ru.ratauth.exception.ExpiredException'
+  return response.status === 419 && response.body.id === 'SESSION_EXPIRED'
 }
 
 export function assertLoginIsSuccessful (loginResponse) {
