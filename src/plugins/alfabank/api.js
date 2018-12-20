@@ -75,8 +75,12 @@ export function assertLoginIsSuccessful (loginResponse) {
     }
     throw new TemporaryError(loginResponse.body.header.faultMessage)
   }
-  console.assert(loginResponse.body.header.status === 'STATUS_OK', 'Unexpected login header.status', loginResponse)
   console.assert(loginResponse.body.operationId === 'Authorization:LoginResult', 'Unexpected login operationId', loginResponse)
+  if (loginResponse.body.header.status === 'GENERAL_EXCEPTION') {
+    throw new TemporaryError(loginResponse.body.header.description)
+  } else if (loginResponse.body.header.status !== 'STATUS_OK') {
+    console.assert(false, 'Unexpected login header.status', loginResponse)
+  }
 }
 
 function assertNotServerError (response) {
