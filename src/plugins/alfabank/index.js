@@ -68,7 +68,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
       ZenMoney.saveData()
 
       loginResponse = await login({ sessionId, deviceId: pluginData.deviceId, accessToken: pluginData.accessToken })
-    } else if (isExpiredRefreshToken(response)) {
+    } else if (isExpiredSession(response) || isExpiredRefreshToken(response)) {
       await executeRegistration({ pluginData, preferences })
 
       loginResponse = await login({ sessionId, deviceId: pluginData.deviceId, accessToken: pluginData.accessToken })
