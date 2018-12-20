@@ -105,6 +105,9 @@ function assertNotServerError (response) {
     if (messages.some((x) => x.startsWith('Пароль устарел.'))) {
       throw new TemporaryError(allMessagesText)
     }
+    if (messages.some((x) => x.startsWith('Произошла ошибка.'))) {
+      throw new TemporaryError(allMessagesText)
+    }
     throw new Error(allMessagesText)
   }
 }

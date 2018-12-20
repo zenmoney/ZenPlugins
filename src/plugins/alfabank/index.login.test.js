@@ -416,6 +416,58 @@ describe('finishRegistration', () => {
 describe('getOidReference', () => {
   installFetchMockDeveloperFriendlyFallback(fetchMock)
 
+  it('throws "Произошла ошибка." as TemporaryError', async () => {
+    global.ZenMoney = makePluginDataApi({
+      deviceId: '11111111-1111-1111-1111-111111111111',
+      registered: false
+    }).methods
+
+    expectRegisterCustomerRequest({
+      response: {
+        redirectUrl: '<string[245]>',
+        params:
+          {
+            is_webview: '<string[4]>',
+            redirect_uri: '<string[64]>',
+            mfa_token: '<string[36]>',
+            acr_values: '<string[8]>'
+          }
+      }
+    })
+    expectOidReferenceRequest({
+      response: {
+        status: 403,
+        url: 'https://sense.alfabank.ru/passport/cerberus-mini-green/dashboard-green/api/oid/reference',
+        body:
+          {
+            statusCode: '<number>',
+            error: '<string[9]>',
+            message: '<string[20]>',
+            errors:
+              [
+                {
+                  id: '<string[10]>',
+                  status: '<number>',
+                  message: 'Произошла ошибка.\nПожалуйста, запросите пароль повторно'
+                }
+              ]
+          }
+      }
+    })
+
+    const result = scrape({
+      preferences: {
+        cardNumber: '4444555566661111',
+        cardExpirationDate: '1234',
+        phoneNumber: '71234567890'
+      },
+      fromDate: new Date(),
+      toDate: null
+    })
+    await expect(result).rejects.toBeInstanceOf(TemporaryError)
+    await expect(result).rejects.toMatchObject({ message: 'Произошла ошибка.\nПожалуйста, запросите пароль повторно' })
+  })
+
   it(`throws user-relevant error messages as TemporaryError (that's shown on UI and has no Send log button)`, async () => {
     global.ZenMoney = makePluginDataApi({
       deviceId: '11111111-1111-1111-1111-111111111111',
