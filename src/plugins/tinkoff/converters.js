@@ -2,7 +2,9 @@ import _ from 'lodash'
 
 export function convertAccount (account, initialized) {
   switch (account.accountType) {
-    case 'Current': return getDebitCard(account, initialized) // дебетовые карты
+    case 'Current': // дебетовые карты
+    case 'CurrentKids': // Tinkoff Jr.
+      return getDebitCard(account, initialized)
     case 'Credit': return getCreditCard(account, initialized) // кредитные карты
     case 'Saving': return getSavingAccount(account) // накопительные счета
     case 'Deposit': return getDepositAccount(account) // вклады
@@ -48,7 +50,7 @@ export function convertTransaction (transaction, accountId) {
   if (!mcc) mcc = -1
 
   // флаг card2card переводов
-  const c2c = [6538, 6012].indexOf(mcc) >= 0
+  const c2c = [6536, 6538, 6012].indexOf(mcc) >= 0
 
   // доход -------------------------------------------------------------------------
   if (transaction.type === 'Credit') {
@@ -79,7 +81,9 @@ export function convertTransaction (transaction, accountId) {
             tran.comment = transaction.description
             tran.outcome = transaction.amount.value
             tran.outcomeAccount = 'ccard#' + transaction.amount.currency.name + '#' + transaction.payment.cardNumber.substring(transaction.payment.cardNumber.length - 4)
-          } else if (transaction.senderDetails) { tran.payee = transaction.senderDetails }
+          } else if (transaction.senderDetails) {
+            tran.payee = transaction.senderDetails
+          }
           break
 
           // Если совсем ничего не подошло
@@ -251,7 +255,8 @@ function getDebitCard (account, initialized) {
   // контроль точности расчёта остатка
   if (!initialized || parseDecimal(account.moneyAmount.value) === parseDecimal(account.accountBalance.value - account.authorizationsAmount.value)) { result.balance = parseDecimal(account.moneyAmount.value - creditLimit) }
 
-  console.log('>>> Добавляем дебетовую карту: ' + account.name + ' (#' + account.id + ') = ' + (result.balance !== null ? result.balance + ' ' + result.instrument : 'undefined'))
+  const cardType = account.accountType === 'CurrentKids' ? 'детскую' : 'дебетовую'
+  console.log(`>>> Добавляем ${cardType} карту: ${account.name} (#${account.id}) = ${result.balance !== null ? result.balance + ' ' + result.instrument : 'undefined'}`)
 
   // номера карт
   for (let k = 0; k < account.cardNumbers.length; k++) {

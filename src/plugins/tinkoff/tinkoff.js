@@ -204,8 +204,8 @@ async function levelUp (auth) {
       mobile_device_os_version: '5.0',
       mobile_device_model: 'Zenmoney',
       root_flag: false
-      // imei: 359092055350000
-    }
+    },
+    sanitizeResponseLog: { body: { confirmationData: { Question: { question: true } } } }
   })
 
   if (levelUp.body.resultCode === 'OK') {
