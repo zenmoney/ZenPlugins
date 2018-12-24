@@ -2,6 +2,7 @@ import { MD5 } from 'jshashes'
 import _ from 'lodash'
 import { toAtLeastTwoDigitsString } from '../../common/dates'
 import * as network from '../../common/network'
+import { retry, RetryError, toNodeCallbackArguments } from '../../common/retry'
 import { formatDateSql, parseDate, toMoscowDate } from './converters'
 
 const qs = require('querystring')
@@ -437,9 +438,15 @@ async function fetchXml (url, options = {}, predicate = () => true) {
 
   let response
   try {
-    response = await network.fetch(url, options)
+    response = (await retry({
+      getter: toNodeCallbackArguments(() => network.fetch(url, options)),
+      predicate: ([error]) => !error,
+      maxAttempts: 5
+    }))[1]
   } catch (e) {
-    if (e.response && typeof e.response.body === 'string') {
+    if (e instanceof RetryError) {
+      throw e.failedResults[0][0]
+    } else if (e.response && typeof e.response.body === 'string') {
       throw new TemporaryError('Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
     } else {
       throw e
