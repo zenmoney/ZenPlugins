@@ -1,4 +1,4 @@
-import * as Tinkoff from './tinkoff'
+import * as Tinkoff from './api'
 import { convertAccount, convertTransaction, convertTransactionToTransfer } from './converters'
 import _ from 'lodash'
 

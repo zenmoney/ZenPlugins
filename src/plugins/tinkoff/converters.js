@@ -78,12 +78,12 @@ export function convertTransaction (transaction, accountId) {
 
         case 'INCOME':
           if (c2c && transaction.payment && transaction.payment.cardNumber && transaction.payment.cardNumber.length > 4) {
-            tran.comment = transaction.description
             tran.outcome = transaction.amount.value
             tran.outcomeAccount = 'ccard#' + transaction.amount.currency.name + '#' + transaction.payment.cardNumber.substring(transaction.payment.cardNumber.length - 4)
           } else if (transaction.senderDetails) {
             tran.payee = transaction.senderDetails
           }
+          tran.comment = transaction.description
           break
 
           // Если совсем ничего не подошло

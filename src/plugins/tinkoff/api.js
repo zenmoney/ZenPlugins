@@ -1,3 +1,4 @@
+/* eslint-disable no-unreachable */
 import { MD5 } from 'jshashes'
 import * as Network from '../../common/network'
 import _ from 'lodash'
@@ -5,12 +6,25 @@ import _ from 'lodash'
 const qs = require('querystring')
 const md5 = new MD5()
 
-const baseUrl = 'https://api.tinkoff.ru/v1/'
-const defaultHeaders = {
+const BASE_URL = 'https://api.tinkoff.ru/v1/'
+const DEFAULT_HEADERS = {
   // "Accept": "*/*",
   // "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
   'User-Agent': 'User-Agent: Zenmoney/android: 5.1.1/TCSMB/3.1.0',
   'Referrer': 'https://www.tinkoff.ru/mybank/'
+}
+const DEFAULT_GET_PARAMS = {
+  appVersion: '4.4.5',
+  platform: 'android',
+  origin: 'mobile,ib5,loyalty,platform'
+}
+const DEFAULT_SIGN_PARAMS = {
+  fingerprint: 'Zenmoney/android: 5.0/TCSMB/4.4.5###1080x1920x32###180###false###false###',
+  mobile_device_os: 'android',
+  mobile_device_os_version: '5.0',
+  mobile_device_model: 'Zenmoney',
+  root_flag: 'false'
+  // imei:                     359092055350000
 }
 
 export async function login (preferences, isInBackground, auth, lastIteration) {
@@ -28,7 +42,7 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
     // создаём сессию
     console.log('>>> Создаём сессию:')
     const response = await fetchJson(auth, 'session', {
-      headers: defaultHeaders,
+      headers: DEFAULT_HEADERS,
       sanitizeResponseLog: { body: { 'payload': true } }
     })
     if (response.body.resultCode !== 'OK') { throw new Error('Ошибка: не удалось создать сессию с банком') }
@@ -37,7 +51,6 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
     if (!auth.pinHash) {
       if (isInBackground) { throw new TemporaryError('>>> Необходима регистрация по ПИН-коду. Запрос в фоновом режиме не возможен. Прекращаем работу.') }
 
-      // ПИНа ещё нет, установим его =====================================================================================================================
       // получаем пароль
       let password = preferences.password
       if (!password) {
@@ -52,29 +65,46 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
           }
         }
       } else { console.log('>>> Пароль получен из настроек подключения.') }
-
       if (!password) { throw new Error('Ошибка: не удалось получить пароль для входа') }
 
-      // входим по логину-паролю
-      console.log('>>> Авторизация:')
-      const signUp = await fetchJson(auth, 'sign_up', {
-        ignoreErrors: true,
-        shouldLog: false,
-        headers: defaultHeaders,
-        get: {
-          'username': preferences.login,
-          'password': password
-        },
-        sanitizeRequestLog: { url: true }
-      })
-      const resultCode = signUp.body.resultCode
+      const phoneMode = preferences.login.trim().substr(0, 1) === '+'
+      let resultCode, response
+      if (phoneMode) {
+        console.log('>>> Авторизация по телефону...')
+        response = await fetchJson(auth, 'sign_up', {
+          ignoreErrors: true,
+          shouldLog: false,
+          headers: DEFAULT_HEADERS,
+          get: {
+            'phone': preferences.login.trim()
+          },
+          sanitizeRequestLog: { url: true }
+        })
+        resultCode = response.body.resultCode
+      } else {
+        console.log('>>> Авторизация по логину...')
+        response = await fetchJson(auth, 'sign_up', {
+          ignoreErrors: true,
+          shouldLog: false,
+          headers: DEFAULT_HEADERS,
+          get: {
+            'username': preferences.login,
+            'password': password
+          },
+          body: {
+            ...DEFAULT_SIGN_PARAMS
+          },
+          sanitizeRequestLog: { url: true }
+        })
+        resultCode = response.body.resultCode
+      }
 
       // ошибка входа по паролю
       if (resultCode.substr(0, 8) === 'INVALID_' || resultCode.substr(0, 9) === 'INTERNAL_') {
-        throw new InvalidPreferencesError('Ответ от банка: ' + (signUp.body.plainMessage || signUp.body.errorMessage))
+        throw new InvalidPreferencesError('Ответ от банка: ' + (response.body.plainMessage || response.body.errorMessage))
         // операция отклонена
       } else if (resultCode === 'OPERATION_REJECTED') {
-        throw new Error('Ответ от банка: ' + (signUp.body.plainMessage || signUp.body.errorMessage), true, true)
+        throw new TemporaryError('Ответ от банка: ' + (response.body.plainMessage || response.body.errorMessage))
         // если нужно подтверждение по смс
       } else if (resultCode === 'WAITING_CONFIRMATION') { // DEVICE_LINK_NEEDED
         console.log('>>> Необходимо подтвердить вход...')
@@ -86,35 +116,62 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
         })
 
         console.log('>>> Подтверждение кодом:')
-        const json2 = await fetchJson(auth, 'confirm', {
-          ignoreErrors: true,
-          headers: defaultHeaders,
+        // параметры нужно передавать в разных случаях по разному, поэтому передаём в избыточной форме
+        response = await fetchJson(auth, 'confirm', {
+          // ignoreErrors: true,
+          headers: DEFAULT_HEADERS,
           get: {
-            'confirmationData': '{"SMSBYID":"' + smsCode + '"}',
-            'initialOperationTicket': signUp.body.operationTicket
+            'initialOperation': 'sign_up',
+            'initialOperationTicket': response.body.operationTicket,
+            'confirmationData': `{"SMSBYID":"${smsCode}"}`
           },
           body: {
-            'initialOperation': 'sign_up'
+            'initialOperation': 'sign_up',
+            'initialOperationTicket': response.body.operationTicket,
+            'confirmationData': `{"SMSBYID":"${smsCode}"}`
           },
+          sanitizeRequestLog: { body: { confirmationData: true } },
           sanitizeResponseLog: { url: true, body: { payload: { login: true, userId: true, sessionId: true, sessionid: true } } }
         })
 
-        // проверим ответ на ошибки
-        if (['INTERNAL_ERROR', 'CONFIRMATION_FAILED'].indexOf(json2.body.resultCode) + 1) { throw new TemporaryError('Ошибка авторизации: ' + (json2.body.plainMessage || json2.body.errorMessage)) } else if (json2.body.resultCode !== 'OK') { throw new Error('Ошибка авторизации: ' + (json2.body.plainMessage || json2.body.errorMessage)) }
+        // проверим ответ на ошибки (проверка на ошибки вынесена в fetchJson)
+        /* if (['INTERNAL_ERROR', 'CONFIRMATION_FAILED'].indexOf(response.body.resultCode) + 1) {
+          throw new TemporaryError('Ошибка авторизации: ' + (response.body.plainMessage || response.body.errorMessage))
+        } else if (response.body.resultCode !== 'OK') {
+          throw new Error('Ошибка авторизации: ' + (response.body.plainMessage || response.body.errorMessage))
+        } */
+
+        // если вход по номеру телефона, отдельно проверяем пароль
+        if (response.body.payload && response.body.payload.additionalAuth && response.body.payload.additionalAuth.needPassword) {
+          console.log('>>> Ввод пароля:')
+          response = await fetchJson(auth, 'sign_up', {
+            // ignoreErrors: true,
+            headers: DEFAULT_HEADERS,
+            get: {
+              'password': password
+            },
+            body: {
+              ...DEFAULT_SIGN_PARAMS
+            },
+            sanitizeResponseLog: { url: true, body: { payload: { login: true, userId: true, sessionId: true, sessionid: true } } }
+          })
+        }
       } else {
         console.log('>>> Прошёл вход без подтверждения.')
-        if (signUp.body.resultCode === 'AUTHENTICATION_FAILED') { throw new Error('Ошибка авторизации: ' + (signUp.body.plainMessage || signUp.body.errorMessage)) }
+        if (response.body.resultCode === 'AUTHENTICATION_FAILED') { throw new Error('Ошибка авторизации: ' + (response.body.plainMessage || response.body.errorMessage)) }
       }
 
       // получаем привилегии пользователя
+      // if (response.body.payload && response.body.payload.accessLevel === 'CANDIDATE') {
       await levelUp(auth)
+      // }
 
       // устанавливаем ПИН для быстрого входа
       auth.pinHash = md5.hex(Math.random())
       console.log('>>> Инициализация входа по пин-коду:')
       const savePin = await fetchJson(auth, 'mobile_save_pin', {
         ignoreErrors: true,
-        headers: defaultHeaders,
+        headers: DEFAULT_HEADERS,
         get: {
           pinHash: auth.pinHash
         }
@@ -141,7 +198,7 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
       console.log('>>> Вход по пин-коду:')
       const signUp2 = await fetchJson(auth, 'sign_up', {
         ignoreErrors: true,
-        headers: defaultHeaders,
+        headers: DEFAULT_HEADERS,
         get: {
           'auth_type': 'pin',
           'pinHash': auth.pinHash,
@@ -197,13 +254,9 @@ async function levelUp (auth) {
   console.log('>>> Попытка поднять привилегии:')
   const levelUp = await fetchJson(auth, 'level_up', {
     ignoreErrors: true,
-    headers: defaultHeaders,
+    headers: DEFAULT_HEADERS,
     body: {
-      fingerprint: 'Zenmoney/android: 5.0/TCSMB/4.4.1###1080x1920x32###120###false###false###',
-      mobile_device_os: 'android',
-      mobile_device_os_version: '5.0',
-      mobile_device_model: 'Zenmoney',
-      root_flag: false
+      ...DEFAULT_SIGN_PARAMS
     },
     sanitizeResponseLog: { body: { confirmationData: { Question: { question: true } } } }
   })
@@ -225,7 +278,7 @@ async function levelUp (auth) {
     console.log('>>> Авторизация контрольным вопросом:')
     const json = await fetchJson(auth, 'confirm', {
       ignoreErrors: true,
-      headers: defaultHeaders,
+      headers: DEFAULT_HEADERS,
       get: {
         initialOperation: levelUp.body.initialOperation,
         initialOperationTicket: levelUp.body.operationTicket,
@@ -257,7 +310,7 @@ export async function fetchAccountsAndTransactions (auth, fromDate, toDate) {
   console.log('>>> Загружаем данные по счетам и операциям:')
   const accounts = await fetchJson(auth, 'grouped_requests',
     {
-      headers: defaultHeaders,
+      headers: DEFAULT_HEADERS,
       get: {
         _methods: 'accounts_flat',
         requestsData: JSON.stringify([
@@ -285,14 +338,12 @@ export async function fetchAccountsAndTransactions (auth, fromDate, toDate) {
 
 async function fetchJson (auth, url, options, predicate) {
   if (url.substr(0, 4) !== 'http') {
-    url = baseUrl + url
+    url = BASE_URL + url
   }
 
   const params = {
     ...options.get,
-    appVersion: '4.4.1',
-    platform: 'android',
-    origin: 'mobile,ib5,loyalty,platform'
+    ...DEFAULT_GET_PARAMS
   }
   if (auth.sessionid) params.sessionid = auth.sessionid
   if (auth.deviceid) params.deviceId = auth.deviceid
@@ -324,7 +375,11 @@ async function fetchJson (auth, url, options, predicate) {
   }
   if (predicate) { validateResponse(response, response => response.body && predicate(response)) }
   if (options && !options.ignoreErrors && response.body) {
-
+    if (['INTERNAL_ERROR', 'CONFIRMATION_FAILED'].indexOf(response.body.resultCode) + 1) {
+      throw new TemporaryError(response.body.plainMessage || response.body.errorMessage)
+    } else if (response.body.resultCode !== 'OK') {
+      throw new Error(response.body.plainMessage || response.body.errorMessage)
+    }
   }
   return response
 }

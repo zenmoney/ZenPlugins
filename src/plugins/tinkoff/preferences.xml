@@ -4,7 +4,7 @@
 		key="login"
 		title="Логин *"
 		dialogTitle="Логин"
-		dialogMessage="Введите логин для входа в Тинькофф Банк. Вход по номеру телефона не поддерживается."
+		dialogMessage="Введите логин для входа в Тинькофф Банк или номер телефона в формате +79876543210."
 		summary="|Логин пользователя|{@s}"
 		positiveButtonText="ОК"
 		negativeButtonText="Отмена"
@@ -21,15 +21,15 @@
 		summary="||***********"
 		obligatory="false">
 	</EditTextPreference>
-	<ListPreference
-		key="periodNew"
-		title="Загружать операции при создании подключения"
-		dialogTitle="Загружать операции при создании подключения"
-		dialogMessage="Выберите период загрузки операций при создании подключения."
-		entries="Не загружать|За текущий месяц|За текущий и прошлый месяцы|За 3 месяца" entryValues="0|1|2|3"
-		defaultValue="1"
-		summary="|1|{@s}"
+	<EditTextPreference
+		key="startDate"
+		title="С какой даты загружать операции"
+		dialogTitle="Дата начала загрузки"
+		dialogMessage="Введите дату, с которой загружать операции"
 		positiveButtonText="ОК"
-		negativeButtonText="Отмена">
-	</ListPreference>
+		negativeButtonText="Отмена"
+		inputType="date"
+		summary="|гггг-мм-дд|{@s}"
+		obligatory="true">
+	</EditTextPreference>
 </PreferenceScreen>
