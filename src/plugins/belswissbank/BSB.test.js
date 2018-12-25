@@ -1,15 +1,28 @@
-import { figureOutAccountRestsDelta, formatBsbApiDate, isRejectedTransaction } from './BSB'
+import { figureOutAccountRestsDelta, formatBsbCardsApiDate, formatBsbPaymentsApiDate, isRejectedTransaction } from './BSB'
 
-describe('formatBsbApiDate', () => {
-  it('should return stringified date considering bank UTC+3 timezone shift', () => {
-    expect(formatBsbApiDate(new Date(Date.UTC(2017, 0, 2, 0, 0, 0)))).toBe('02.01.2017')
-    expect(formatBsbApiDate(new Date(Date.UTC(2017, 0, 2, 3, 0, 0)))).toBe('02.01.2017')
-    expect(formatBsbApiDate(new Date(Date.UTC(2017, 10, 12, 20, 59, 59)))).toBe('12.11.2017')
-    expect(formatBsbApiDate(new Date(Date.UTC(2017, 10, 12, 21, 0, 0)))).toBe('13.11.2017')
+describe('formatBsbCardsApiDate', () => {
+  it('should return DD.MM.YYYY string considering bank UTC+3 timezone shift', () => {
+    expect(formatBsbCardsApiDate(new Date(Date.UTC(2017, 0, 2, 0, 0, 0)))).toBe('02.01.2017')
+    expect(formatBsbCardsApiDate(new Date(Date.UTC(2017, 0, 2, 3, 0, 0)))).toBe('02.01.2017')
+    expect(formatBsbCardsApiDate(new Date(Date.UTC(2017, 10, 12, 20, 59, 59)))).toBe('12.11.2017')
+    expect(formatBsbCardsApiDate(new Date(Date.UTC(2017, 10, 12, 21, 0, 0)))).toBe('13.11.2017')
   })
 
   it('should throw on non-date', () => {
-    [undefined, null, '', 1234567890].forEach((nonDate) => expect(() => formatBsbApiDate(nonDate)).toThrow())
+    [undefined, null, '', 1234567890].forEach((nonDate) => expect(() => formatBsbCardsApiDate(nonDate)).toThrow())
+  })
+})
+
+describe('formatBsbPaymentsApiDate', () => {
+  it('should return YYYYMMDD string considering bank UTC+3 timezone shift', () => {
+    expect(formatBsbPaymentsApiDate(new Date(Date.UTC(2017, 0, 2, 0, 0, 0)))).toBe('20170102')
+    expect(formatBsbPaymentsApiDate(new Date(Date.UTC(2017, 0, 2, 3, 0, 0)))).toBe('20170102')
+    expect(formatBsbPaymentsApiDate(new Date(Date.UTC(2017, 10, 12, 20, 59, 59)))).toBe('20171112')
+    expect(formatBsbPaymentsApiDate(new Date(Date.UTC(2017, 10, 12, 21, 0, 0)))).toBe('20171113')
+  })
+
+  it('should throw on non-date', () => {
+    [undefined, null, '', 1234567890].forEach((nonDate) => expect(() => formatBsbCardsApiDate(nonDate)).toThrow())
   })
 })
 

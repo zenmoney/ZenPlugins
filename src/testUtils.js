@@ -7,7 +7,7 @@ export function installFetchMockDeveloperFriendlyFallback (fetchMock) {
       throw new Error(util.format('Unmatched fetch request', {
         ..._.omit(opts, ['body']),
         matcher: {
-          [util.inspect.custom || 'inspect']: () => `(url, {body}) => url.endsWith(${JSON.stringify(url)}) && _.isEqual(JSON.parse(body), ${opts.body})`
+          [util.inspect.custom || 'inspect']: () => `(url, {body}) => url === ${JSON.stringify(url)} && _.isEqual(JSON.parse(body), ${opts.body})`
         }
       }))
     })

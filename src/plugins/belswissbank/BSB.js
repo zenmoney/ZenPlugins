@@ -1,7 +1,6 @@
 import padLeft from 'pad-left'
 import { isValidDate } from '../../common/dates'
 import { fetchJson } from '../../common/network'
-import { retry } from '../../common/retry'
 import codeToCurrencyLookup from './codeToCurrencyLookup'
 
 const transactionTypeFactors = {
@@ -47,13 +46,16 @@ export const isCashTransferTransaction = (transaction) => cashTransferTransactio
 
 export const isRejectedTransaction = (transaction) => rejectedTransactionTypes.indexOf(transaction.transactionType.trim()) !== -1
 
-export function formatBsbApiDate (userDate) {
+function patchTimezone (userDate) {
+  const bankTimezone = 3 * 3600 * 1000
+  return new Date(userDate.valueOf() + bankTimezone)
+}
+
+export function formatBsbCardsApiDate (userDate) {
   if (!isValidDate(userDate)) {
     throw new Error('valid date should be provided')
   }
-  // day.month.year in bank timezone (+3)
-  const bankTimezone = 3 * 3600 * 1000
-  const date = new Date(userDate.valueOf() + bankTimezone)
+  const date = patchTimezone(userDate)
   return [
     date.getUTCDate(),
     date.getUTCMonth() + 1,
@@ -72,23 +74,18 @@ export async function authorize (username, password, deviceId) {
   await fetchJson(BSB_AUTH_URL, {
     method: 'DELETE'
   })
-
-  const authStatusResponse = await retry({
-    getter: () => fetchJson(BSB_AUTH_URL, {
-      method: 'POST',
-      body: {
-        'username': username,
-        'password': password,
-        'deviceId': deviceId,
-        'applicationVersion': 'Web 5.8.1',
-        'osType': 3,
-        'currencyIso': 'BYN'
-      },
-      sanitizeRequestLog: { body: { username: true, password: true, deviceId: true } },
-      sanitizeResponseLog: { body: { birthDate: true, eripId: true, fio: true, mobilePhone: true, sessionId: true, username: true } }
-    }),
-    predicate: (response) => response.status !== 415,
-    maxAttempts: 10
+  const authStatusResponse = await fetchJson(BSB_AUTH_URL, {
+    method: 'POST',
+    body: {
+      'username': username,
+      'password': password,
+      'deviceId': deviceId,
+      'applicationVersion': 'Web 5.8.1',
+      'osType': 3,
+      'currencyIso': 'BYN'
+    },
+    sanitizeRequestLog: { body: { username: true, password: true, deviceId: true } },
+    sanitizeResponseLog: { body: { birthDate: true, eripId: true, fio: true, mobilePhone: true, sessionId: true, username: true } }
   })
   assertResponseSuccess(authStatusResponse)
   return authStatusResponse.body
@@ -110,12 +107,43 @@ export function fetchCards () {
   })
 }
 
+export function formatBsbPaymentsApiDate (userDate) {
+  if (!isValidDate(userDate)) {
+    throw new Error('valid date should be provided')
+  }
+  const date = patchTimezone(userDate)
+  return [
+    date.getUTCFullYear(),
+    date.getUTCMonth() + 1,
+    date.getUTCDate()
+  ].map((number) => padLeft(number, 2, '0')).join('')
+}
+
+export function fetchPaymentsArchive ({ fromDate, toDate }) {
+  return fetchJson(makeApiUrl('/archive'), {
+    method: 'POST',
+    body: {
+      'page': { 'pageNumber': 0, 'pageSize': 1000 },
+      'fromDate': formatBsbPaymentsApiDate(fromDate),
+      'toDate': formatBsbPaymentsApiDate(toDate || new Date())
+    },
+    sanitizeResponseLog: { body: { archives: { response: true } } }
+  })
+}
+
+export function extractPaymentsArchive (response) {
+  assertResponseSuccess(response)
+  const { archives, hasNext } = response.body
+  console.assert(!hasNext, 'fetchPaymentsArchive paging is not implemented')
+  return archives
+}
+
 export async function fetchTransactions (cardId, fromDate, toDate) {
   const response = await fetchJson(makeApiUrl(`/cards/${cardId}/sms`), {
     method: 'POST',
     body: {
-      fromDate: formatBsbApiDate(fromDate),
-      toDate: formatBsbApiDate(toDate || new Date())
+      fromDate: formatBsbCardsApiDate(fromDate),
+      toDate: formatBsbCardsApiDate(toDate || new Date())
     },
     sanitizeResponseLog: { body: { last4: true } }
   })
