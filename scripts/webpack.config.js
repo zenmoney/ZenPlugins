@@ -6,6 +6,7 @@ const eslintFormatter = require('react-dev-utils/eslintFormatter')
 const { paths, resolve } = require('./constants')
 const _ = require('lodash')
 const path = require('path')
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 
 const getHtmlPlugins = ({ production, devServer }) => {
   if (!devServer) {
@@ -36,7 +37,8 @@ const getPluginsSection = ({ production, devServer }) => getHtmlPlugins({ produc
   new webpack.DefinePlugin({
     NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'development')
   }),
-  new CaseSensitivePathsPlugin()
+  new CaseSensitivePathsPlugin(),
+  production && new UglifyJsPlugin()
 ]))
 
 module.exports = ({ production, devServer }) => ({
