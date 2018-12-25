@@ -28,7 +28,7 @@ export function getTransactionToTransferReplacements (transactionPairs) {
       ])
       memo[incomeTransaction.id] = null
     } else {
-      console.error('cannot merge non-pair transfer', { transferId, transfers })
+      console.error('cannot find transfer pair (possibly transfer to/from foreign bsb account?)', { transferId, transfers })
     }
     return memo
   }, {})
