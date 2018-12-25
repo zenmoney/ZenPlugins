@@ -86,7 +86,7 @@ export async function login (device, auth) {
     }
   }
 
-  const phone = await ZenMoney.readLine('Введите номер телефона для входа в Совкомбанк. Формат: +79211234567',
+  const phone = await ZenMoney.readLine('Введите номер телефона, c которым вы зарегистрированы в ЧатБанке. Формат: +7**********',
     { inputType: 'phone' })
   if (!phone || phone.length !== 12 || phone.charAt(0) !== '+') {
     throw new TemporaryError('Неверно введен номер телефона. Попробуйте подключить синхронизацию еще раз.')
@@ -108,10 +108,13 @@ export async function login (device, auth) {
   })
 
   if (!response.body || response.body.result !== 'ok') {
-    if (!response.body.message || response.body.message.indexOf('Логин введен неверно') >= 0) {
+    if (!response.body.message) {
+      throw new TemporaryError('Номер телефона не зарегистрирован в ЧатБанк. Пройдите регистрацию в ЧатБанк, затем подключите синхронизацию с Совкомбанк в Дзен-мани.')
+    } else if (response.body.message.indexOf('Логин введен неверно') >= 0) {
       throw new TemporaryError('Неверно введен номер телефона. Попробуйте подключить синхронизацию еще раз.')
+    } else {
+      throw new TemporaryError(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: ${response.body.message}`)
     }
-    throw new TemporaryError(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: ${response.body.message}`)
   }
 
   const code = await ZenMoney.readLine('Введите код из SMS для входа в Совкомбанк', { inputType: 'number' })
