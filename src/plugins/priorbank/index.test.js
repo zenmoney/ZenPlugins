@@ -3,6 +3,7 @@ import _ from 'lodash'
 import { installFetchMockDeveloperFriendlyFallback } from '../../testUtils'
 import { makePluginDataApi } from '../../ZPAPI.pluginData'
 import { scrape } from './index'
+import { mockGetSalt, mockLogin, mockMobileToken } from './mocks'
 
 const priorSuccessResponse = (result) => ({
   'success': true,
@@ -19,57 +20,36 @@ describe('scraper happy path', () => {
   installFetchMockDeveloperFriendlyFallback(fetchMock)
 
   it('should work', () => {
+    const login = 'login'
+    const password = 'password'
+    const tokenType = 'bearer'
+    const clientSecret = 'client_secret'
+    const accessToken = 'access_token'
+
     global.ZenMoney = {
       isAccountSkipped: () => false,
       ...makePluginDataApi({}).methods
     }
 
-    fetchMock.once({
-      method: 'GET',
-      matcher: (url) => url.endsWith('/Authorization/MobileToken'),
-      response: {
-        access_token: 'access_token',
-        token_type: 'bearer',
-        client_secret: 'client_secret'
-      }
-    })
+    mockGetSalt({ tokenType, accessToken, clientSecret, login, response: priorSuccessResponse({ 'salt': 'salt' }) })
 
-    const preAuthExpectedHeaders = {
-      Authorization: 'bearer access_token',
-      client_id: 'client_secret',
-      'User-Agent': 'PriorMobile3/3.17.03.22 (Android 24; versionCode 37)'
-    }
-
-    fetchMock.once({
-      matcher: (url, { body }) => url.endsWith('/Authorization/GetSalt') && _.isEqual(JSON.parse(body), {
-        'login': 'login',
-        'lang': 'RUS'
-      }),
-      method: 'POST',
-      headers: preAuthExpectedHeaders,
-      response: priorSuccessResponse({ 'salt': 'salt' })
-    })
-
-    fetchMock.once({
-      matcher: (url, { body }) => url.endsWith('/Authorization/Login') && _.isEqual(JSON.parse(body), {
-        'login': 'login',
-        'password': '0a610f0bbf7a92accc7e962c53ef3ed7d7d2cabb16139ae169555a6685056b405fa4a3edb041f27e6d8c29bea70eb9bd89bad9fcfcdf05e23b1b8b99ad1256a5',
-        'lang': 'RUS'
-      }),
-      method: 'POST',
-      headers: preAuthExpectedHeaders,
+    mockLogin({
+      tokenType,
+      accessToken,
+      clientSecret,
+      login,
+      hash: '0a610f0bbf7a92accc7e962c53ef3ed7d7d2cabb16139ae169555a6685056b405fa4a3edb041f27e6d8c29bea70eb9bd89bad9fcfcdf05e23b1b8b99ad1256a5',
       response: priorSuccessResponse({ 'access_token': 'logged_in_access_token', 'userSession': 'userSession' })
     })
 
     const postAuthExpectedHeaders = {
       Authorization: 'bearer logged_in_access_token',
-      client_id: 'client_secret',
+      client_id: clientSecret,
       'User-Agent': 'PriorMobile3/3.17.03.22 (Android 24; versionCode 37)'
     }
 
     fetchMock.once({
-      matcher: (url,
-        { body }) => url.endsWith('/Cards') && _.isEqual(JSON.parse(body), { 'usersession': 'userSession' }),
+      matcher: (url, { body }) => url.endsWith('/Cards') && _.isEqual(JSON.parse(body), { 'usersession': 'userSession' }),
       method: 'POST',
       headers: postAuthExpectedHeaders,
       response: priorSuccessResponse([
@@ -114,7 +94,7 @@ describe('scraper happy path', () => {
       method: 'POST',
       headers: {
         Authorization: 'bearer logged_in_access_token',
-        client_id: 'client_secret',
+        client_id: clientSecret,
         'User-Agent': 'PriorMobile3/3.17.03.22 (Android 24; versionCode 37)'
       },
       response: priorSuccessResponse([
@@ -253,8 +233,16 @@ describe('scraper happy path', () => {
       ])
     })
 
+    mockMobileToken({
+      response: {
+        access_token: accessToken,
+        token_type: tokenType,
+        client_secret: clientSecret
+      }
+    })
+
     return expect(scrape({
-      preferences: { login: 'login', password: 'password' },
+      preferences: { login, password },
       fromDate: null,
       toDate: null
     }))
