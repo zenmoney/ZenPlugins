@@ -73,7 +73,10 @@ const makeApiUrl = (path) => `https://24.bsb.by/mobile/api${path}?lang=ru`
 export async function authorize (username, password, deviceId) {
   const BSB_AUTH_URL = makeApiUrl('/authorization')
   await fetchJson(BSB_AUTH_URL, {
-    method: 'DELETE'
+    method: 'DELETE',
+    sanitizeResponseLog: {
+      headers: { 'set-cookie': true }
+    }
   })
   const authStatusResponse = await fetchJson(BSB_AUTH_URL, {
     method: 'POST',
@@ -86,7 +89,10 @@ export async function authorize (username, password, deviceId) {
       'currencyIso': 'BYN'
     },
     sanitizeRequestLog: { body: { username: true, password: true, deviceId: true } },
-    sanitizeResponseLog: { body: { birthDate: true, eripId: true, fio: true, mobilePhone: true, sessionId: true, username: true } }
+    sanitizeResponseLog: {
+      headers: { 'set-cookie': true },
+      body: { birthDate: true, eripId: true, fio: true, mobilePhone: true, sessionId: true, username: true }
+    }
   })
   assertResponseSuccess(authStatusResponse)
   const cookie = parse(splitCookiesString(authStatusResponse.headers['set-cookie'])).find((x) => x.name === 'JSESSIONID')
@@ -99,7 +105,10 @@ export async function confirm (deviceId, confirmationCode) {
   const response = await fetchJson(makeApiUrl(`/devices/${deviceId}`), {
     method: 'POST',
     body: confirmationCode,
-    sanitizeRequestLog: { body: true }
+    sanitizeRequestLog: {
+      headers: { 'set-cookie': true },
+      body: true
+    }
   })
   console.assert(response.body.deviceStatus === 'CONFIRMED', 'confirmation failed:', response)
 }
@@ -107,7 +116,10 @@ export async function confirm (deviceId, confirmationCode) {
 export function fetchCards () {
   return fetchJson(makeApiUrl('/cards'), {
     method: 'GET',
-    sanitizeResponseLog: { body: { contract: true, maskedCardNumber: true, ownerName: true, ownerNameLat: true, rbsContract: true } }
+    sanitizeResponseLog: {
+      headers: { 'set-cookie': true },
+      body: { contract: true, maskedCardNumber: true, ownerName: true, ownerNameLat: true, rbsContract: true }
+    }
   })
 }
 
@@ -131,7 +143,10 @@ export function fetchPaymentsArchive ({ fromDate, toDate }) {
       'fromDate': formatBsbPaymentsApiDate(fromDate),
       'toDate': formatBsbPaymentsApiDate(toDate || new Date())
     },
-    sanitizeResponseLog: { body: { archives: { response: true } } }
+    sanitizeResponseLog: {
+      headers: { 'set-cookie': true },
+      body: { archives: { response: true } }
+    }
   })
 }
 
@@ -149,7 +164,10 @@ export async function fetchTransactions (cardId, fromDate, toDate) {
       fromDate: formatBsbCardsApiDate(fromDate),
       toDate: formatBsbCardsApiDate(toDate || new Date())
     },
-    sanitizeResponseLog: { body: { last4: true } }
+    sanitizeResponseLog: {
+      headers: { 'set-cookie': true },
+      body: { last4: true }
+    }
   })
   assertResponseSuccess(response)
   return response.body
