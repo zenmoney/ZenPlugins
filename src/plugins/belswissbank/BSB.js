@@ -14,6 +14,8 @@ const transactionTypeFactors = {
   'Service payment to card': 1,
   'Зачисление': 1,
   'Zachislenie': 1,
+  'Списание': -1,
+  'Spisanie': -1,
   'Товары и услуги': -1,
   'Tovary i uslugi': -1,
   'Банкомат': -1,
@@ -37,8 +39,9 @@ const cashTransferTransactionTypes = [
 ]
 
 export const getTransactionFactor = (transaction) => {
-  console.assert(transaction.transactionType in transactionTypeFactors, 'unknown transactionType in transaction:', transaction)
-  return transactionTypeFactors[transaction.transactionType]
+  const factor = transactionTypeFactors[transaction.transactionType]
+  console.assert(factor !== undefined, 'unknown transactionType in transaction:', transaction)
+  return factor
 }
 
 export const isElectronicTransferTransaction = (transaction) => transaction.transactionDetails === 'PERSON TO PERSON I-B BSB'
