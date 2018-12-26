@@ -14,6 +14,7 @@ const userAgent = 'PriorMobile3/3.17.03.22 (Android 24; versionCode 37)'
 
 export async function getMobileToken () {
   const response = await fetchJson(makeApiUrl('/Authorization/MobileToken'), {
+    method: 'GET',
     sanitizeResponseLog: { body: true }
   })
   assertResponseSuccess(response)
@@ -41,9 +42,8 @@ export async function getSalt ({ authAccessToken, clientSecret, login }) {
   return response.body.result.salt
 }
 
-const sha512 = new SHA512()
-
 export const calculatePasswordHash = ({ loginSalt, password }) => {
+  const sha512 = new SHA512()
   const passwordHash = sha512.hex(password.slice(0, 16))
   return loginSalt
     ? sha512.hex(passwordHash + loginSalt)
@@ -62,6 +62,9 @@ export async function authLogin ({ authAccessToken, clientSecret, loginSalt, log
     sanitizeRequestLog: { body: { login: true, password: true }, headers: true },
     sanitizeResponseLog: { body: { result: true } }
   })
+  if (response.body.success === false && response.body.errorMessage === 'Неверный логин или пароль') {
+    throw new InvalidPreferencesError(response.body.errorMessage)
+  }
   assertResponseSuccess(response)
 
   return {
