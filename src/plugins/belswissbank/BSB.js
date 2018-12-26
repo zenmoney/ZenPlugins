@@ -1,4 +1,5 @@
 import padLeft from 'pad-left'
+import { parse, splitCookiesString } from 'set-cookie-parser'
 import { isValidDate } from '../../common/dates'
 import { fetchJson } from '../../common/network'
 import codeToCurrencyLookup from './codeToCurrencyLookup'
@@ -88,6 +89,9 @@ export async function authorize (username, password, deviceId) {
     sanitizeResponseLog: { body: { birthDate: true, eripId: true, fio: true, mobilePhone: true, sessionId: true, username: true } }
   })
   assertResponseSuccess(authStatusResponse)
+  const cookie = parse(splitCookiesString(authStatusResponse.headers['set-cookie'])).find((x) => x.name === 'JSESSIONID')
+  ZenMoney.setData('sessionId', cookie.value)
+  ZenMoney.saveData()
   return authStatusResponse.body
 }
 

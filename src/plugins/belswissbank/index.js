@@ -6,18 +6,7 @@ import { floorToMinutes, formatDetails } from './converters'
 import { convertToZenMoneyTransaction } from './mappingUtils'
 import { getTransactionToTransferReplacements } from './mergeTransfers'
 
-function ensureDeviceId () {
-  let deviceId = ZenMoney.getData('deviceId')
-  if (!deviceId) {
-    deviceId = generateUUID()
-    ZenMoney.setData('deviceId', deviceId)
-    ZenMoney.saveData()
-  }
-  return deviceId
-}
-
-async function login ({ username, password }) {
-  const deviceId = ensureDeviceId()
+async function login ({ deviceId, username, password }) {
   const authStatus = await BSB.authorize(username, password, deviceId)
   switch (authStatus.userStatus) {
     case 'WAITING_CONFIRMATION':
@@ -88,12 +77,24 @@ function normalizeBsbTransactions ({ accountCurrency, bsbTransactions, paymentsG
 }
 
 export async function scrape ({ preferences: { username, password }, fromDate, toDate }) {
+  const pluginData = {
+    deviceId: ZenMoney.getData('deviceId'),
+    sessionId: ZenMoney.getData('sessionId')
+  }
+  if (!pluginData.deviceId) {
+    pluginData.deviceId = generateUUID()
+    ZenMoney.setData('deviceId', pluginData.deviceId)
+    ZenMoney.saveData()
+  }
+  if (pluginData.sessionId) {
+    ZenMoney.setCookie('24.bsb.by', 'JSESSIONID', pluginData.sessionId)
+  }
   let probe = await Promise.all([
     BSB.fetchCards(),
     BSB.fetchPaymentsArchive({ fromDate, toDate })
   ])
   if (probe.some((x) => x.status === 401)) {
-    await login({ username, password })
+    await login({ deviceId: pluginData.deviceId, username, password })
     probe = await Promise.all([
       BSB.fetchCards(),
       BSB.fetchPaymentsArchive({ fromDate, toDate })
