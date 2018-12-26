@@ -69,36 +69,43 @@ export const assertResponseSuccess = function (response) {
 }
 
 const makeApiUrl = (path) => `https://24.bsb.by/mobile/api${path}?lang=ru`
+const BSB_AUTH_URL = makeApiUrl('/authorization')
+
+const requestLogout = () => fetchJson(BSB_AUTH_URL, {
+  method: 'DELETE',
+  sanitizeResponseLog: {
+    headers: { 'set-cookie': true }
+  }
+})
+
+const requestLogin = ({ username, password, deviceId }) => fetchJson(BSB_AUTH_URL, {
+  method: 'POST',
+  body: {
+    'username': username,
+    'password': password,
+    'deviceId': deviceId,
+    'applicationVersion': 'Web 5.8.1',
+    'osType': 3,
+    'currencyIso': 'BYN'
+  },
+  sanitizeRequestLog: { body: { username: true, password: true, deviceId: true } },
+  sanitizeResponseLog: {
+    headers: { 'set-cookie': true },
+    body: { birthDate: true, eripId: true, fio: true, mobilePhone: true, sessionId: true, username: true }
+  }
+})
 
 export async function authorize (username, password, deviceId) {
-  const BSB_AUTH_URL = makeApiUrl('/authorization')
-  await fetchJson(BSB_AUTH_URL, {
-    method: 'DELETE',
-    sanitizeResponseLog: {
-      headers: { 'set-cookie': true }
-    }
-  })
-  const authStatusResponse = await fetchJson(BSB_AUTH_URL, {
-    method: 'POST',
-    body: {
-      'username': username,
-      'password': password,
-      'deviceId': deviceId,
-      'applicationVersion': 'Web 5.8.1',
-      'osType': 3,
-      'currencyIso': 'BYN'
-    },
-    sanitizeRequestLog: { body: { username: true, password: true, deviceId: true } },
-    sanitizeResponseLog: {
-      headers: { 'set-cookie': true },
-      body: { birthDate: true, eripId: true, fio: true, mobilePhone: true, sessionId: true, username: true }
-    }
-  })
-  assertResponseSuccess(authStatusResponse)
-  const cookie = parse(splitCookiesString(authStatusResponse.headers['set-cookie'])).find((x) => x.name === 'JSESSIONID')
+  await requestLogout()
+  const loginResponse = await requestLogin({ username, password, deviceId })
+  if (loginResponse.status === 403 && loginResponse.body.error === 'Неверные учетные данные') {
+    throw new InvalidPreferencesError(loginResponse.body.error)
+  }
+  assertResponseSuccess(loginResponse)
+  const cookie = parse(splitCookiesString(loginResponse.headers['set-cookie'])).find((x) => x.name === 'JSESSIONID')
   ZenMoney.setData('sessionId', cookie.value)
   ZenMoney.saveData()
-  return authStatusResponse.body
+  return loginResponse.body
 }
 
 export async function confirm (deviceId, confirmationCode) {
