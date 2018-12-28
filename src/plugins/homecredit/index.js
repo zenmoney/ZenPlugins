@@ -83,6 +83,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
       throw new InvalidPreferencesError('Необходимо заполнить параметры подключения к банку хотя бы для одного из способов авторизации')
     }
 
+    const newConn = ZenMoney.getData('auth', null) === null
     const auth = await HomeCredit.authMyCredit(preferences)
     const fetchedAccounts = await HomeCredit.fetchMyCreditAccounts(auth)
 
@@ -91,7 +92,20 @@ export async function scrape ({ preferences, fromDate, toDate }) {
       return Promise.all(fetchedAccounts[type].map(async account => Converters.convertAccount(account, type)))
     })))
 
-    transactions = _.flattenDeep(await Promise.all(accountsData.map(async accountData => Converters.convertTransactions(accountData, await HomeCredit.fetchMyCreditTransactions(auth, accountData, fromDate, toDate)))))
+    // фикс поступлений сегодняшнего дня (чтобы не создавать лишних корректировок)
+    // если в текущих сутках были поступления, баланс счёта передаём только для нового подключения
+    transactions = await Promise.all(accountsData.map(async accountData => {
+      const trans = Converters.convertTransactions(accountData, await HomeCredit.fetchMyCreditTransactions(auth, accountData, fromDate, toDate))
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const todayIncomes = _.sumBy(trans, function (tran) {
+        return tran.date >= today && tran.income > 0 ? tran.income : 0.0
+      })
+      if (todayIncomes > 0 && !newConn) delete accountData.account.balance
+      return trans
+    }))
+
+    transactions = _.flattenDeep(transactions)
   }
 
   let accounts = accountsData.map(account => account.account)

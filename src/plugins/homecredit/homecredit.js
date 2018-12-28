@@ -5,8 +5,9 @@ import _ from 'lodash'
 const myCreditUrl = 'https://mob.homecredit.ru/mycredit'
 const baseUri = 'https://ib.homecredit.ru/mobile/remoting'
 const defaultMyCreditHeaders = {
-  '_ver_': '3.7.0', // 2.8.1 + API:4
-  '_os_': 1
+  '_ver_': '3.10.0',
+  '_os_': 1,
+  'business_process': 'register'
 }
 const defaultBaseHeaders = {
   'User-Agent': 'okhttp/3.10.0',
@@ -31,7 +32,7 @@ export async function authMyCredit (preferences) {
 
   console.log('>>> Авторизация [Мой кредит] ========================================================')
   let response = await fetchJson('Pin/CheckUserPin', {
-    API: 3,
+    API: 4,
     ignoreErrors: true,
     headers: {
       ...defaultMyCreditHeaders,
@@ -43,15 +44,8 @@ export async function authMyCredit (preferences) {
     body: {
       'Pin': (preferences.pin || '').trim()
     },
-    sanitizeRequestLog: { headers: { 'X-Device-Ident': true, 'X-Private-Key': true, 'X-Phone-Number': true, 'X-Auth-Token': true }, body: { 'Pin': true } },
-    sanitizeResponseLog: { headers: { 'x-auth-token': true } }
+    sanitizeRequestLog: { body: { 'Pin': true } }
   })
-
-  if (response.body.StatusCode !== 200) {
-    console.log('Нужна повторная регистрация.')
-    registerMyCreditDevice(auth, preferences)
-    return
-  }
 
   if (response.body.StatusCode !== 200) {
     console.log('Нужна повторная регистрация.')
@@ -96,12 +90,11 @@ export async function authBase (preferences) {
       'parameterTypes': ['cz.bsc.g6.components.usernamepasswordauthentication.json.services.api.mo.UsernamePasswordCredentialMo']
     },
     headers: defaultBaseHeaders,
-    sanitizeRequestLog: { body: { arguments: { 'code': true, 'password': true, 'deviceID': true, 'username': true } } },
-    sanitizeResponseLog: { headers: { 'set-cookie': true } }
+    sanitizeRequestLog: { body: { arguments: { 'code': true, 'password': true, 'deviceID': true, 'username': true } } }
   })
 
   // ERROR_LOGIN, BLOCK_USER_CODE
-  if (!response.body.success) { throw new InvalidPreferencesError('Не удалось авторизоваться в приложении банка Home Credit. Пожалуйста, настройте параметры подключения.') }
+  if (!response.body.success) throw new InvalidPreferencesError("Не удалось авторизоваться в приложении 'Банк Хоум Кредит'. Пожалуйста, настройте первые 3 параметра подключения или удалите их.")
 
   ZenMoney.setData('device_id', deviceId)
   return response
@@ -114,39 +107,37 @@ async function registerMyCreditDevice (auth, preferences) {
   console.log('>>> Регистрация устройства [Мой кредит] ===============================================')
   auth.device = getDeviceId()
   let response = await fetchJson('Account/Register', {
-    API: 3,
+    API: 4,
     headers: {
       ...defaultMyCreditHeaders,
       'X-Device-Ident': auth.device
     },
     body: {
       'BirthDate': date,
-      'DeviceName': 'samsung zen',
+      'DeviceName': 'Zenmoney',
       'OsType': 1,
       'PhoneNumber': auth.phone,
       'ScreenSizeType': 4
     },
-    sanitizeRequestLog: { headers: { 'X-Device-Ident': true }, body: { 'BirthDate': true, 'PhoneNumber': true } },
+    sanitizeRequestLog: { body: { 'BirthDate': true, 'PhoneNumber': true } },
     sanitizeResponseLog: { body: { Result: true } }
   })
 
-  auth.key = response.body.Result
+  auth.key = response.body.Result.PrivateKey
   response = await fetchJson('Sms/SendSmsCode', {
-    API: 3,
+    API: 4,
     method: 'POST',
     headers: {
       ...defaultMyCreditHeaders,
       'X-Device-Ident': auth.device,
       'X-Private-Key': auth.key,
       'X-Phone-Number': auth.phone
-    },
-    sanitizeRequestLog: { headers: { 'X-Device-Ident': true, 'X-Private-Key': true, 'X-Phone-Number': true } },
-    sanitizeResponseLog: { headers: { 'set-cookie': true } }
+    }
   })
 
   let isPinCreated
   let isValidSms
-  let readlineTitle = "Введите пароль из СМС для регистрации в 'Мой кредит'"
+  let readlineTitle = "Введите пароль из СМС для регистрации в приложении 'Мой кредит'"
   for (let i = 0; i < 3; i++) {
     const code = await ZenMoney.readLine(readlineTitle, {
       time: 120000,
@@ -155,7 +146,7 @@ async function registerMyCreditDevice (auth, preferences) {
     if (!code || !code.trim()) { throw new TemporaryError('Получен пустой пароль') }
 
     response = await fetchJson('Sms/ValidateSmsCode', {
-      API: 3,
+      API: 4,
       headers: {
         ...defaultMyCreditHeaders,
         'X-Device-Ident': auth.device,
@@ -165,22 +156,20 @@ async function registerMyCreditDevice (auth, preferences) {
       body: {
         'SmsCode': code
       },
-      sanitizeRequestLog: { headers: { 'X-Device-Ident': true, 'X-Private-Key': true, 'X-Phone-Number': true }, body: { 'SmsCode': true } },
-      sanitizeResponseLog: { headers: { 'set-cookie': true } }
+      sanitizeRequestLog: { body: { 'SmsCode': true } }
     })
 
     isPinCreated = response.body.Result.IsUserPinCodeCreated
-    isValidSms = response.body.Result.IsValidSMSCode
+    isValidSms = response.body.Result.IsValidSmsCode
     if (isValidSms) { break }
 
     readlineTitle = 'Пароль не верен. Попытка #' + (i + 2)
   }
-  if (!isValidSms) { throw new TemporaryError("Пароль не верен. Не удалось зарегистрировать устройство в 'Мой кредит'") }
-
+  if (!isValidSms) { throw new TemporaryError("Пароль не верен. Не удалось зарегистрировать устройство в приложении 'Мой кредит'") }
   if (!isPinCreated) { throw new TemporaryError("Необходимо пройти регистрацию в приложении 'Мой кредит', чтобы установить пин-код для входа") }
 
   response = await fetchJson('Pin/CheckUserPin', {
-    API: 3,
+    API: 4,
     headers: {
       ...defaultMyCreditHeaders,
       'X-Device-Ident': auth.device,
@@ -190,14 +179,32 @@ async function registerMyCreditDevice (auth, preferences) {
     body: {
       'Pin': (preferences.pin || '').trim()
     },
-    sanitizeRequestLog: { headers: { 'X-Device-Ident': true, 'X-Private-Key': true, 'X-Phone-Number': true }, body: { Pin: true } },
-    sanitizeResponseLog: { headers: { 'X-Auth-Token': true, 'set-cookie': true } }
+    sanitizeRequestLog: { body: { 'Pin': true } }
   })
-
   const isValidPin = response.body.Result.IsPinValid
-  if (!isValidPin) { throw new TemporaryError("Пин-код не верен. Укажите код, заданный вами в приложении банка 'Мой кредит'.") }
-
+  if (!isValidPin) { throw new TemporaryError("Пин-код не верен. Укажите код, заданный вами в приложении 'Мой кредит'.") }
   auth.token = response.headers['x-auth-token']
+
+  /* const codeDebet = await ZenMoney.readLine("Введите кодовое слово для загрузки дебетовых продуктов через приложение 'Мой кредит'. Или пустое значение, если дебетовые продукты загружать не нужно.", {
+    time: 120000,
+    inputType: 'password'
+  })
+  response = await fetchJson('Client/LevelUp', {
+    API: 4,
+    headers: {
+      ...defaultMyCreditHeaders,
+      'X-Auth-Token': auth.token,
+      'X-Device-Ident': auth.device,
+      'X-Private-Key': auth.key,
+      'X-Phone-Number': auth.phone
+    },
+    body: {
+      'CodeWord': '' // codeDebet.trim().upperCase()
+    },
+    sanitizeRequestLog: { body: { 'CodeWord': true } }
+  })
+  auth.token = response.headers['x-auth-token'] */
+
   ZenMoney.setData('auth', auth)
   return auth
 }
@@ -311,8 +318,9 @@ export async function fetchMyCreditAccounts (auth) {
       'X-Phone-Number': auth.phone,
       'X-Auth-Token': auth.token
     },
-    sanitizeRequestLog: { headers: { 'X-Device-Ident': true, 'X-Private-Key': true, 'X-Phone-Number': true, 'X-Auth-Token': true } },
-    sanitizeResponseLog: { headers: { 'X-Auth-Token': true } }
+    body: {
+      'ReturnCachedData': true
+    }
   })
 
   const fetchedAccounts = _.pick(response.body.Result, ['CreditCard', 'CreditCardTW', 'CreditLoan'])
@@ -351,9 +359,7 @@ export async function fetchMyCreditAccounts (auth) {
           AccountNumber: account.AccountNumber,
           ProductSetCode: account.ProductSet.Code,
           ProductType: account.ProductType
-        },
-        sanitizeRequestLog: { headers: { 'X-Device-Ident': true, 'X-Private-Key': true, 'X-Phone-Number': true, 'X-Auth-Token': true } },
-        sanitizeResponseLog: { headers: { 'X-Auth-Token': true } }
+        }
       })
 
       const response = await fetchJson('https://api-myc.homecredit.ru/api/v1/prepayment', {
@@ -369,9 +375,7 @@ export async function fetchMyCreditAccounts (auth) {
           'selectedPrepayment': 'LoanBalance',
           'isEarlyRepayment': 'False',
           'isSingleContract': 'True'
-        },
-        sanitizeRequestLog: { headers: { 'X-Device-Ident': true, 'X-Private-Key': true, 'X-Phone-Number': true, 'X-Auth-Token': true } },
-        sanitizeResponseLog: { headers: { 'X-Auth-Token': true } }
+        }
       })
 
       // добавим информацию о реалном остатке по кредиту
@@ -518,9 +522,7 @@ export async function fetchMyCreditTransactions (auth, accountData, fromDate, to
       'X-Phone-Number': auth.phone,
       'X-Auth-Token': auth.token
     },
-    body: body,
-    sanitizeRequestLog: { headers: { 'Authorization': true, 'X-Device-Ident': true, 'X-Private-Key': true, 'X-Phone-Number': true, 'X-Auth-Token': true } },
-    sanitizeResponseLog: { headers: { 'X-Auth-Token': true } }
+    body: body
   })
   return response.body.values
 }
@@ -535,7 +537,27 @@ async function fetchJson (url, options, predicate) {
   try {
     response = await Network.fetchJson(url, {
       method: options.method || 'POST',
-      ..._.omit(options, ['API'])
+      ..._.omit(options, ['API']),
+      sanitizeRequestLog: {
+        'Authorization': true,
+        'authorization': true,
+        'X-Device-Ident': true,
+        'x-device-ident': true,
+        'X-Private-Key': true,
+        'x-private-key': true,
+        'X-Phone-Number': true,
+        'x-phone-number': true,
+        'X-Auth-Token': true,
+        'x-auth-token': true,
+        'set-cookie': true,
+        ...options.sanitizeRequestLog
+      },
+      sanitizeResponseLog: {
+        'X-Auth-Token': true,
+        'x-auth-token': true,
+        'set-cookie': true,
+        ...options.sanitizeResponseLog
+      }
     })
   } catch (e) {
     if (e.response && e.response.status >= 500 && e.response.status < 525) {
@@ -550,11 +572,11 @@ async function fetchJson (url, options, predicate) {
     if (response.body.Errors && _.isArray(response.body.Errors) && response.body.Errors.length > 0) {
       const message = getErrorMessage(response.body.Errors)
       if (message) {
-        if (message.indexOf('повторите попытку') + 1 || message.indexOf('еще раз') + 1) { throw new TemporaryError(message) } else if (message.indexOf('роверьте дату рождения') + 1) { throw new InvalidPreferencesError(message) } else { throw new Error(message) }
+        if (message.indexOf('повторите попытку') + 1 || message.indexOf('еще раз') + 1) { throw new TemporaryError(message) } else if (message.indexOf('роверьте дату рождения') + 1) { throw new InvalidPreferencesError(message) } else { throw new Error('Ответ банка: ' + message) }
       }
     } else if (response.body.success === false) {
       const message = response.body.errorResponseMo.errorMsg
-      if (message.indexOf('No entity found') + 1) { throw new InvalidPreferencesError('Авторизация не прошла. Пожалуйста, проверьте корректность параметров подключения.') }
+      if (message && message.indexOf('No entity found') + 1) { throw new InvalidPreferencesError('Авторизация не прошла. Пожалуйста, проверьте корректность параметров подключения.') }
     }
   }
   return response
