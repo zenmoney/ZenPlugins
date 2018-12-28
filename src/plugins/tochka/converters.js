@@ -1,11 +1,9 @@
-import { sanitizeSyncId } from '../../common/accounts'
-
 export function convertAccount (apiAccount) {
   return {
-    id: sanitizeSyncId(apiAccount.account_code),
+    id: apiAccount.code,
     type: 'checking',
-    title: apiAccount.account_code,
-    syncID: [apiAccount.account_code]
+    title: apiAccount.code,
+    syncID: [apiAccount.code]
   }
 }
 

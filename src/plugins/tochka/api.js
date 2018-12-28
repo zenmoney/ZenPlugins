@@ -1,6 +1,5 @@
 import * as network from '../../common/network'
 import { toAtLeastTwoDigitsString } from '../../common/dates'
-import { sanitizeSyncId } from '../../common/accounts'
 
 const qs = require('querystring')
 
@@ -13,11 +12,12 @@ const SANDBOX_URI = 'https://enter.tochka.com/sandbox/v1/'
 
 export async function login ({ accessToken, refreshToken, expirationDateMs } = {}, preferences) {
   let response
-  const clientId = preferences.server === 'tochka' ? CLIENT_ID : 'sandbox'
-  const clientSecret = preferences.server === 'tochka' ? CLIENT_SECRET : 'sandbox_secret'
-  console.log('>>> Используется сервер: ' + preferences.server)
+  const clientId = !preferences.server || preferences.server === 'tochka' ? CLIENT_ID : 'sandbox'
+  const clientSecret = !preferences.server || preferences.server === 'tochka' ? CLIENT_SECRET : 'sandbox_secret'
+  // console.log('>>> Используется сервер: ' + preferences.server)
+  console.log(`>>> ClientID: ${clientId.substr(0, 3)}...${clientId.substr(-3)}`)
   if (accessToken) {
-    if (expirationDateMs < new Date().getTime() + 7200000) {
+    if (expirationDateMs < new Date().getTime() + 24 * 60 * 60 * 1000) {
       console.log('>>> Авторизация: Обновляем токен, взамен протухшего.')
       response = await fetchJson('oauth2/token', {
         sandbox: clientId === 'sandbox',
@@ -28,7 +28,7 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
           grant_type: 'refresh_token',
           refresh_token: refreshToken
         },
-        sanitizeRequestLog: { body: { refresh_token: true } },
+        sanitizeRequestLog: { body: { refresh_token: true, client_id: true, client_secret: true } },
         sanitizeResponseLog: { body: { access_token: true, refresh_token: true, sessionId: true } }
       }, null)
       if (response.body && response.body.error) {
@@ -44,14 +44,14 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
   if (accessToken) {
     // nothing
   } else if (ZenMoney.openWebView) {
-    // } else if (true) {
+    // } else if (true) { // DEBUG SANDBOX
     console.log('>>> Авторизация: Входим через интерфейс банка.')
 
     const { error, code } = await new Promise((resolve) => {
       const redirectUriWithoutProtocol = (clientId === 'sandbox' ? SANDBOX_REDIRECT_URI : API_REDIRECT_URI).replace(/^https?:\/\//i, '')
       const url = clientId === 'sandbox'
         ? 'https://enter.tochka.com/sandbox/login/'
-        : `https://enter.tochka.com/api/v1/authorize?${qs.stringify({
+        : `${API_URI}authorize?${qs.stringify({
           client_id: clientId,
           response_type: 'code'
         })}`
@@ -111,13 +111,14 @@ async function fetchJson (url, options = {}, predicate = () => true) {
   try {
     response = await network.fetchJson(url, {
       method: 'POST',
-      sanitizeRequestLog: { headers: { Authorization: true } },
-      sanitizeResponseLog: { headers: { 'set-cookie': true } },
       ...options,
-      stringify: qs.stringify,
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        ...options.headers
+      sanitizeRequestLog: {
+        headers: { Authorization: true },
+        ...options.sanitizeRequestLog
+      },
+      sanitizeResponseLog: {
+        headers: { 'set-cookie': true },
+        ...options.sanitizeResponseLog
       }
     })
   } catch (e) {
@@ -159,55 +160,63 @@ function formatDate (date) {
   // return toAtLeastTwoDigitsString(date.getUTCDate()) + "." + toAtLeastTwoDigitsString(date.getUTCMonth() + 1) + "." + date.getUTCFullYear();
 }
 
-export async function fetchStatement ({ accessToken }, { account_code: accountCode, bank_code: bankCode }, fromDate, toDate, preferences) {
-  console.log(`>>> Получаем выписку по операциям на счету '${sanitizeSyncId(accountCode)}'`)
-
+export async function fetchStatement ({ accessToken }, apiAccount, fromDate, toDate, preferences) {
+  console.log('>>> Заказываем выписку по операциям на счету', apiAccount)
   let response = await fetchJson('statement', {
     sandbox: preferences.server === 'sandbox',
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${accessToken}`
+      'Host': 'enter.tochka.com',
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${accessToken}`
     },
     body: {
-      account_code: accountCode,
-      bank_code: bankCode,
+      account_code: apiAccount.code,
+      bank_code: apiAccount.bank_code,
       date_start: formatDate(fromDate),
       date_end: formatDate(toDate)
     }
-    /* body: JSON.stringify({
-            "account_code" : "40702810101270000000",
-            "bank_code" : "044525999",
-            "date_start" : "2018-09-01",
-            "date_end" : "2018-09-21",
-        }), */
   } /* response => _.get(response, "response.body.request_id") */)
   if (response.body.message === 'Bad JSON') {
-    console.log(`>>> Не удалось создать выписку операций '${sanitizeSyncId(accountCode)}'`)
+    console.log(`>>> Не удалось создать выписку операций '${apiAccount.code}'`)
     return {}
   }
 
   const requestId = response.body.request_id
-  response = await fetchJson('statement/status/' + requestId, {
-    sandbox: preferences.server === 'sandbox',
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${accessToken}`
-    }
-  } /* response => _.get(response, "response.body.status") */)
+  let status = ''
+  const iMax = 5
+  for (let i = 1; i <= iMax; i++) {
+    console.log(`>>> Проверяем статус выписки (попытка #${i})`, requestId)
+    response = await fetchJson('statement/status/' + requestId, {
+      sandbox: preferences.server === 'sandbox',
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      }
+    } /* response => _.get(response, "response.body.status") */)
+
+    status = response.body.status
+    if (status === 'ready' || i >= iMax) break
+    await delay(3)
+  }
   if (response.body.message === 'Bad JSON') {
     console.log('>>> Не удалось получить статус выписки')
     return {}
   }
 
-  const status = response.body.status
-  if (status === 'ready') {
-    response = await fetchJson('statement/result/' + requestId, {
-      sandbox: preferences.server === 'sandbox',
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${accessToken}`
-      }
-    } /* response => _.get(response, "response.body.payments") */)
+  console.log('>>> Запрашиваем содержимое выписки', requestId)
+  response = await fetchJson('statement/result/' + requestId, {
+    sandbox: preferences.server === 'sandbox',
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      Authorization: `Bearer ${accessToken}`
+    }
+  } /* response => _.get(response, "response.body.payments") */)
+  if (status !== 'ready') {
+    throw new Error('Не удалось дождаться ответа от сервера. Пожалуйста, попробуйте уменьшить период загрузки данных')
   }
   if (response.body.message === 'Bad JSON') {
     console.log('>>> Не удалось получить выписку')
@@ -215,4 +224,10 @@ export async function fetchStatement ({ accessToken }, { account_code: accountCo
   }
 
   return response.body
+}
+
+async function delay (seconds) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, seconds * 1000)
+  })
 }

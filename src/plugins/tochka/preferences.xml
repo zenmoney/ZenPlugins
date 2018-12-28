@@ -1,16 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen>
-    <ListPreference
-        key="server"
-        dialogTitle="Выбор сервера"
-        dialogMessage="Для входа в виртуальную песочницу: логин и пароль – sandbox, код – 12345."
-        title="Выбор сервера"
-        entries="Виртуальная песочница|Сервер банка" entryValues="sandbox|tochka"
-        defaultValue="sandbox"
-        positiveButtonText="ОК"
-        negativeButtonText="Отмена"
-        summary="|Виртуальная песочница|{@s}">
-    </ListPreference>
     <EditTextPreference
         key="startDate"
         obligatory="true"

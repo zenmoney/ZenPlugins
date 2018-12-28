@@ -21,9 +21,6 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
       return
     }
 
-    // ToDO: debug
-    // if (apiAccount.account_code !== "40702810101270000000") return;
-
     const apiStatement = await fetchStatement(auth, apiAccount, fromDate, toDate, preferences)
     // остаток на счету на конец периода в выписке
     if (apiStatement.balance_closing) {

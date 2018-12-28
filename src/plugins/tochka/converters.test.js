@@ -3,12 +3,12 @@ import { convertAccount, convertTransaction } from './converters'
 describe('convertAccount', () => {
   it('converts account', () => {
     expect(convertAccount({
-      account_code: '40702810101270000000',
+      code: '40702810101280000000',
       bank_code: '044525999'
     })).toEqual({
-      id: '*****810101270000000',
-      syncID: ['40702810101270000000'],
-      title: '40702810101270000000',
+      id: '40702810101280000000',
+      syncID: ['40702810101280000000'],
+      title: '40702810101280000000',
       type: 'checking'
     })
   })
@@ -40,18 +40,18 @@ describe('convertTransaction', () => {
       'tax_info_status': '',
       'x_payment_id': '1;185705218;151673353;2'
     }, {
-      id: '*****810101270000000',
-      syncID: ['40702810101270000000'],
-      title: '40702810101270000000',
+      id: '40702810101280000000',
+      syncID: ['40702810101280000000'],
+      title: '40702810101280000000',
       type: 'checking'
     })).toEqual({
       comment: 'Покупка товара "Толстый тюлень"',
       date: '01.09.2018',
       id: '1;185705218',
       income: 0,
-      incomeAccount: '*****810101270000000',
+      incomeAccount: '40702810101280000000',
       outcome: 518,
-      outcomeAccount: '*****810101270000000',
+      outcomeAccount: '40702810101280000000',
       payee: 'ООО "Мир тюленей"'
     })
   })
