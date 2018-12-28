@@ -375,7 +375,7 @@ async function fetchJson (auth, url, options, predicate) {
   }
   if (predicate) { validateResponse(response, response => response.body && predicate(response)) }
   if (options && !options.ignoreErrors && response.body) {
-    if (['INTERNAL_ERROR', 'CONFIRMATION_FAILED'].indexOf(response.body.resultCode) + 1) {
+    if (['INTERNAL_ERROR', 'CONFIRMATION_FAILED', 'INVALID_REQUEST_DATA'].indexOf(response.body.resultCode) + 1) {
       throw new TemporaryError(response.body.plainMessage || response.body.errorMessage)
     } else if (response.body.resultCode !== 'OK') {
       throw new Error(response.body.plainMessage || response.body.errorMessage)

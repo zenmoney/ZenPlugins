@@ -2,9 +2,9 @@
 <PreferenceScreen>
 	<EditTextPreference
 		key="login"
-		title="Логин *"
-		dialogTitle="Логин"
-		dialogMessage="Введите логин для входа в Тинькофф Банк или номер телефона в формате +79876543210."
+		title="Логин или телефон"
+		dialogTitle="Логин или телефон"
+		dialogMessage="Введите логин или телефон в формате +7**********"
 		summary="|Логин пользователя|{@s}"
 		positiveButtonText="ОК"
 		negativeButtonText="Отмена"
@@ -12,9 +12,9 @@
 	</EditTextPreference>
 	<EditTextPreference
 		key="password"
-		title="Пароль"
+		title="Пароль (не обязательно)"
 		dialogTitle="Пароль (не обязательно)"
-		dialogMessage="Введите пароль для входа в Тинькофф Банк. Если не указать, будет запрошен при первом запуске."
+		dialogMessage="Если не указать пароль, он будет запрошен при первой синхронизации"
 		positiveButtonText="ОК"
 		negativeButtonText="Отмена"
 		inputType="textPassword"
