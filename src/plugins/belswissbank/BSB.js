@@ -1,4 +1,5 @@
 import padLeft from 'pad-left'
+import qs from 'querystring'
 import { parse, splitCookiesString } from 'set-cookie-parser'
 import { isValidDate } from '../../common/dates'
 import { fetchJson } from '../../common/network'
@@ -71,8 +72,11 @@ export const assertResponseSuccess = function (response) {
   console.assert(response.status === 200, 'non-successful response', response)
 }
 
-const makeApiUrl = (path) => `https://24.bsb.by/mobile/api${path}?lang=ru`
-const BSB_AUTH_URL = makeApiUrl('/authorization')
+const lang = 'ru'
+
+const makeApiUrl = (path, queryParams) => `https://24.bsb.by/mobile/api${path}?${qs.stringify(queryParams)}`
+
+const BSB_AUTH_URL = makeApiUrl('/authorization', { lang })
 
 const requestLogout = () => fetchJson(BSB_AUTH_URL, {
   method: 'DELETE',
@@ -87,7 +91,7 @@ const requestLogin = ({ username, password, deviceId }) => fetchJson(BSB_AUTH_UR
     'username': username,
     'password': password,
     'deviceId': deviceId,
-    'applicationVersion': 'Web 5.8.1',
+    'applicationVersion': 'Web 6.0.12',
     'osType': 3,
     'currencyIso': 'BYN'
   },
@@ -112,7 +116,7 @@ export async function authorize (username, password, deviceId) {
 }
 
 export async function confirm (deviceId, confirmationCode) {
-  const response = await fetchJson(makeApiUrl(`/devices/${deviceId}`), {
+  const response = await fetchJson(makeApiUrl(`/devices/${deviceId}`, { lang }), {
     method: 'POST',
     body: confirmationCode,
     sanitizeRequestLog: {
@@ -124,7 +128,7 @@ export async function confirm (deviceId, confirmationCode) {
 }
 
 export function fetchCards () {
-  return fetchJson(makeApiUrl('/cards'), {
+  return fetchJson(makeApiUrl('/cards', { nocache: true, lang }), {
     method: 'GET',
     sanitizeResponseLog: {
       headers: { 'set-cookie': true },
@@ -146,7 +150,7 @@ export function formatBsbPaymentsApiDate (userDate) {
 }
 
 export function fetchPaymentsArchive ({ fromDate, toDate }) {
-  return fetchJson(makeApiUrl('/archive'), {
+  return fetchJson(makeApiUrl('/archive', { lang }), {
     method: 'POST',
     body: {
       'page': { 'pageNumber': 0, 'pageSize': 1000 },
@@ -168,7 +172,7 @@ export function extractPaymentsArchive (response) {
 }
 
 export async function fetchTransactions (cardId, fromDate, toDate) {
-  const response = await fetchJson(makeApiUrl(`/cards/${cardId}/sms`), {
+  const response = await fetchJson(makeApiUrl(`/cards/${cardId}/sms`, { lang }), {
     method: 'POST',
     body: {
       fromDate: formatBsbCardsApiDate(fromDate),

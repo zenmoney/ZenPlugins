@@ -4,7 +4,7 @@ import _ from 'lodash'
 export function mockCardListRequest ({ response }) {
   fetchMock.once({
     method: 'GET',
-    matcher: (url) => url === 'https://24.bsb.by/mobile/api/cards?lang=ru',
+    matcher: (url) => url === 'https://24.bsb.by/mobile/api/cards?nocache=true&lang=ru',
     response
   })
 }
@@ -52,7 +52,7 @@ export function mockLogin ({ username, password, deviceId, response }) {
       'username': username,
       'password': password,
       'deviceId': deviceId,
-      'applicationVersion': 'Web 5.8.1',
+      'applicationVersion': 'Web 6.0.12',
       'osType': 3,
       'currencyIso': 'BYN'
     }),
