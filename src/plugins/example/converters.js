@@ -1,6 +1,7 @@
 export function convertAccount (json) {
   const account = {
     id: json.id,
+    type: 'card',
     title: json.product,
     instrument: json.currency.shortName,
     balance: json.accountBalance.value,

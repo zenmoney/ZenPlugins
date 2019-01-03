@@ -23,7 +23,8 @@
             "symbol": "$",
             "rate": 54.60
         },
-        "cba": "40817840401000898597",
+      "product": "Mastercard World Premium",
+      "cba": "40817840401000898597",
         "moneyAmount": {
             "value": 2432.19
         },
