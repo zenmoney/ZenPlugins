@@ -1,5 +1,5 @@
 import * as _ from 'lodash'
-import { toAtLeastTwoDigitsString } from '../../common/dates'
+import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import * as network from '../../common/network'
 import * as retry from '../../common/retry'
 

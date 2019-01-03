@@ -1,6 +1,7 @@
 /* eslint-disable no-labels */
 import * as _ from 'lodash'
-import { getIntervalBetweenDates, toAtLeastTwoDigitsString } from '../../common/dates'
+import { getIntervalBetweenDates} from '../../common/momentDateUtils'
+import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 
 export function parseApiDate (str) {
   const parts = str.substring(0, 10).split('.')

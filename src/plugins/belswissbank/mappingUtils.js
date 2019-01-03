@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { isValidDate } from '../../common/dates'
+import { isValidDate } from '../../common/dateUtils'
 
 function checkTransaction (transaction) {
   console.assert(isValidDate(transaction.transactionDate), 'transactionDate is not a valid date in transaction:', transaction);

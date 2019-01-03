@@ -1,5 +1,5 @@
 import { convertAccountMapToArray, convertAccountSyncID } from '../../common/accounts'
-import { toAtLeastTwoDigitsString } from '../../common/dates'
+import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { convertTransactionAccounts } from '../../common/transactions'
 import {
   convertAccounts,

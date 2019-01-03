@@ -1,7 +1,7 @@
 import padLeft from 'pad-left'
 import qs from 'querystring'
 import { parse, splitCookiesString } from 'set-cookie-parser'
-import { isValidDate } from '../../common/dates'
+import { isValidDate } from '../../common/dateUtils'
 import { fetchJson } from '../../common/network'
 import codeToCurrencyLookup from './codeToCurrencyLookup'
 

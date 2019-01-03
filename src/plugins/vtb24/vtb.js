@@ -1,7 +1,7 @@
 import { MD5 } from 'jshashes'
 import * as _ from 'lodash'
 import padLeft from 'pad-left'
-import { toMoscowDate, toShortISOString } from '../../common/dates'
+import { toISODateString } from '../../common/dateUtils'
 import * as network from '../../common/network'
 import { parseResponseBody, stringifyRequestBody } from '../../common/protocols/burlap'
 import { randomInt } from '../../common/utils'
@@ -270,6 +270,10 @@ export async function fetchAccounts ({ login, token }) {
   return response.body.portfolios
 }
 
+function toMoscowDate (date) {
+  return new Date(date.getTime() + (date.getTimezoneOffset() + 180) * 60000)
+}
+
 export async function fetchTransactions ({ login, token }, { id, type }, fromDate, toDate) {
   const sdkData = createSdkData(login)
   const response = await burlapRequest({
@@ -277,8 +281,8 @@ export async function fetchTransactions ({ login, token }, { id, type }, fromDat
     token,
     body: {
       __type: 'ru.vtb24.mobilebanking.protocol.statement.StatementRequest',
-      startDate: new Date(toShortISOString(toMoscowDate(fromDate)) + 'T00:00:00+03:00'),
-      endDate: new Date(toShortISOString(toMoscowDate(toDate)) + 'T23:59:59+03:00'),
+      startDate: new Date(toISODateString(toMoscowDate(fromDate)) + 'T00:00:00+03:00'),
+      endDate: new Date(toISODateString(toMoscowDate(toDate)) + 'T23:59:59+03:00'),
       products: [
         {
           __type: 'ru.vtb24.mobilebanking.protocol.ObjectIdentityMto',

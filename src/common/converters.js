@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { isValidDate } from './dates'
+import { isValidDate } from './dateUtils'
 
 export function formatRate ({ originAmount, postedAmount }) {
   const rate = originAmount / postedAmount

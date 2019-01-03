@@ -1,6 +1,6 @@
 import { MD5 } from 'jshashes'
 import _ from 'lodash'
-import { toAtLeastTwoDigitsString } from '../../common/dates'
+import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import * as network from '../../common/network'
 import { retry, RetryError, toNodeCallbackArguments } from '../../common/retry'
 import { formatDateSql, parseDate, toMoscowDate } from './converters'
