@@ -1,4 +1,4 @@
-import { getIntervalBetweenDates } from '../../common/dates'
+import { getIntervalBetweenDates } from '../../common/momentDateUtils'
 
 export function convertAccount (apiAccount) {
   switch (apiAccount.accType) {

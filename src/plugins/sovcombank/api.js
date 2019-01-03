@@ -1,6 +1,6 @@
 import { SHA512 } from 'jshashes'
 import * as _ from 'lodash'
-import { toAtLeastTwoDigitsString } from '../../common/dates'
+import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { fetch } from '../../common/network'
 import { generateRandomString, generateUUID } from '../../common/utils'
 

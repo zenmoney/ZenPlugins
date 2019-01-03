@@ -1,5 +1,5 @@
 import { MD5, SHA1 } from 'jshashes'
-import { toAtLeastTwoDigitsString } from '../../common/dates'
+import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import * as network from '../../common/network'
 
 const sha1 = new SHA1()

@@ -1,5 +1,5 @@
 import * as network from '../../common/network'
-import { toAtLeastTwoDigitsString } from '../../common/dates'
+import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 
 const qs = require('querystring')
 

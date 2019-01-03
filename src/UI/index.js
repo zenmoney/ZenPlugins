@@ -1,12 +1,13 @@
 import _ from "lodash";
 import React from "react";
+import { toAtLeastTwoDigitsString } from '../common/stringUtils'
 import {prettyDeepDiff} from "../diff";
 import {Account} from "./Account";
 import {BreakingPre} from "./BreakingPre";
 import {Bubble} from "./Bubble";
 import {border, fontColor, zenmoneyGreenColor, zenmoneyRedColor} from "./designSystem";
 import {DayTransactions} from "./Transaction";
-import {toAtLeastTwoDigitsString, toDate} from '../common/dates'
+import {toDate} from '../common/dateUtils'
 
 const SidePane = ({children}) => <div style={{borderLeft: border, overflowY: "auto"}}>{children}</div>;
 

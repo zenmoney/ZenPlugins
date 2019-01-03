@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { InvalidPreferencesError, TemporaryError, ZPAPIError } from '../errors'
-import { isValidDate } from './dates'
+import { isValidDate } from './dateUtils'
 import { sanitize } from './sanitize'
 
 const MS_IN_MINUTE = 60 * 1000

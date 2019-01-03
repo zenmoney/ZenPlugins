@@ -1,4 +1,4 @@
-import { formatCommentDateTime } from '../../common/dates'
+import { formatCommentDateTime } from '../../common/dateUtils'
 
 export const floorToMinutes = (ticks) => new Date(Math.floor(ticks / 60000) * 60000).valueOf()
 

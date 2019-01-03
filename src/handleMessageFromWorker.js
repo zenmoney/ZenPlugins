@@ -1,6 +1,6 @@
 /* global prompt */
 
-import { toDate } from './common/dates'
+import { toDate } from './common/dateUtils'
 
 const messageHandlers = {
   ':events/scrape-started': async function ({ onSyncStarted }) {
