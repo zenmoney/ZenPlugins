@@ -22,6 +22,7 @@ describe('convertAccount', () => {
 
     expect(account).toEqual({
       id: 'B7C94FAC',
+      type: 'card',
       title: 'Mastercard Credit World Premium',
       instrument: 'RUB',
       balance: 45600.24,
@@ -53,6 +54,7 @@ describe('convertAccount', () => {
     expect(account).toEqual({
       id: '4480910C',
       title: '*8597',
+      type: 'card',
       instrument: 'USD',
       balance: 2432.19,
       creditLimit: 0,
