@@ -3,7 +3,8 @@ export function convertAccount (apiAccount) {
     id: apiAccount.code,
     type: 'checking',
     title: apiAccount.code,
-    syncID: [apiAccount.code]
+    syncID: [apiAccount.code],
+    instrument: 'RUB'
   }
 }
 

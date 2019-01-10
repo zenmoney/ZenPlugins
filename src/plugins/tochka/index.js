@@ -25,7 +25,6 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
     // остаток на счету на конец периода в выписке
     if (apiStatement.balance_closing) {
       account.balance = Number(apiStatement.balance_closing)
-      account.instrument = 'RUB'
     }
     // операции по счёту из выписки
     if (apiStatement.payments) {

@@ -1,5 +1,6 @@
+/* eslint-disable no-unused-vars,camelcase */
 import * as network from '../../common/network'
-import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
+import { toAtLeastTwoDigitsString } from '../../common/dates'
 
 const qs = require('querystring')
 
@@ -10,15 +11,20 @@ const SANDBOX_REDIRECT_URI = 'https://localhost:8000/'
 const API_URI = 'https://enter.tochka.com/api/v1/'
 const SANDBOX_URI = 'https://enter.tochka.com/sandbox/v1/'
 
-export async function login ({ accessToken, refreshToken, expirationDateMs } = {}, preferences) {
+export async function login ({ access_token, refresh_token, expirationDateMs } = {}, preferences) {
   let response
   const clientId = !preferences.server || preferences.server === 'tochka' ? CLIENT_ID : 'sandbox'
   const clientSecret = !preferences.server || preferences.server === 'tochka' ? CLIENT_SECRET : 'sandbox_secret'
   // console.log('>>> Используется сервер: ' + preferences.server)
   console.log(`>>> ClientID: ${clientId.substr(0, 3)}...${clientId.substr(-3)}`)
-  if (accessToken) {
-    if (expirationDateMs < new Date().getTime() + 24 * 60 * 60 * 1000) {
-      console.log('>>> Авторизация: Обновляем токен, взамен протухшего.')
+  if (access_token) {
+    if (expirationDateMs < new Date().getTime() - 30 * 60 * 60 * 24 * 1000) {
+      console.log('>>> Авторизация: refresh_token устарел, получаем заново.')
+      access_token = null
+      refresh_token = null
+    } else
+    if (expirationDateMs < new Date().getTime()) {
+      console.log('>>> Авторизация: Обновляем токен взамен устаревшего.')
       response = await fetchJson('oauth2/token', {
         sandbox: clientId === 'sandbox',
         ignoreErrors: true,
@@ -26,25 +32,38 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
           client_id: clientId,
           client_secret: clientSecret,
           grant_type: 'refresh_token',
-          refresh_token: refreshToken
+          refresh_token: refresh_token
         },
         sanitizeRequestLog: { body: { refresh_token: true, client_id: true, client_secret: true } },
         sanitizeResponseLog: { body: { access_token: true, refresh_token: true, sessionId: true } }
       }, null)
+
       if (response.body && response.body.error) {
         response = null
-        accessToken = null
+        access_token = null
         console.log('>>> Авторизация: Не удалось обновить токен. Требуется повторный вход.')
+      }
+
+      console.assert(response.body &&
+        response.body.access_token &&
+        response.body.refresh_token &&
+        response.body.expires_in, 'non-successfull authorization', response)
+
+      return {
+        access_token: response.body.access_token,
+        refresh_token: response.body.refresh_token,
+        expirationDateMs: new Date().getTime() + response.body.expires_in * 1000
       }
     } else {
       console.log('>>> Авторизация: Используем действующзий токен.')
       return arguments[0]
     }
   }
-  if (accessToken) {
+  if (access_token) {
     // nothing
   } else if (ZenMoney.openWebView) {
-    // } else if (true) { // DEBUG SANDBOX
+  // eslint-disable-next-line no-constant-condition
+  // } else if (true) { // DEBUG SANDBOX
     console.log('>>> Авторизация: Входим через интерфейс банка.')
 
     const { error, code } = await new Promise((resolve) => {
@@ -75,7 +94,7 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
     console.assert(code && !error, 'non-successfull authorization', error)
 
     // DEBUG SANDBOX
-    // const code = "lscrSeKFC3etECTdqnP0zs9X2ktfEanm";
+    // const code = 'rysdWuC0V5q9d7uMV5dXkN4aLCebvFIN'
 
     console.log('>>> Авторизация: Запрашиваем токен.')
     response = await fetchJson('oauth2/token', {
@@ -98,8 +117,8 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
         response.body.refresh_token &&
         response.body.expires_in, 'non-successfull authorization', response)
   return {
-    accessToken: response.body.access_token,
-    refreshToken: response.body.refresh_token,
+    access_token: response.body.access_token,
+    refresh_token: response.body.refresh_token,
     expirationDateMs: new Date().getTime() + response.body.expires_in * 1000
   }
 }
@@ -140,14 +159,14 @@ async function fetchJson (url, options = {}, predicate = () => true) {
   return response
 }
 
-export async function fetchAccounts ({ accessToken }, preferences) {
+export async function fetchAccounts ({ access_token } = {}, preferences) {
   console.log('>>> Получаем список счетов')
 
   const response = await fetchJson('account/list', {
     sandbox: preferences.server === 'sandbox',
     method: 'GET',
     headers: {
-      Authorization: `Bearer ${accessToken}`
+      Authorization: `Bearer ${access_token}`
     }
   })
   return response.body
@@ -160,7 +179,7 @@ function formatDate (date) {
   // return toAtLeastTwoDigitsString(date.getUTCDate()) + "." + toAtLeastTwoDigitsString(date.getUTCMonth() + 1) + "." + date.getUTCFullYear();
 }
 
-export async function fetchStatement ({ accessToken }, apiAccount, fromDate, toDate, preferences) {
+export async function fetchStatement ({ access_token } = {}, apiAccount, fromDate, toDate, preferences) {
   console.log('>>> Заказываем выписку по операциям на счету', apiAccount)
   let response = await fetchJson('statement', {
     sandbox: preferences.server === 'sandbox',
@@ -169,7 +188,7 @@ export async function fetchStatement ({ accessToken }, apiAccount, fromDate, toD
       'Host': 'enter.tochka.com',
       'Accept': 'application/json',
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${accessToken}`
+      'Authorization': `Bearer ${access_token}`
     },
     body: {
       account_code: apiAccount.code,
@@ -178,8 +197,15 @@ export async function fetchStatement ({ accessToken }, apiAccount, fromDate, toD
       date_end: formatDate(toDate)
     }
   } /* response => _.get(response, "response.body.request_id") */)
+
   if (response.body.message === 'Bad JSON') {
     console.log(`>>> Не удалось создать выписку операций '${apiAccount.code}'`)
+    return {}
+  }
+
+  // проверим возможность получения выписки
+  if (!response.body.request_id) {
+    console.log(`>>> Не удалось получить выписку операций '${apiAccount.code}':`, response.body)
     return {}
   }
 
@@ -193,7 +219,7 @@ export async function fetchStatement ({ accessToken }, apiAccount, fromDate, toD
       method: 'GET',
       headers: {
         'Accept': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
+        'Authorization': `Bearer ${access_token}`
       }
     } /* response => _.get(response, "response.body.status") */)
 
@@ -212,7 +238,7 @@ export async function fetchStatement ({ accessToken }, apiAccount, fromDate, toD
     method: 'GET',
     headers: {
       'Accept': 'application/json',
-      Authorization: `Bearer ${accessToken}`
+      Authorization: `Bearer ${access_token}`
     }
   } /* response => _.get(response, "response.body.payments") */)
   if (status !== 'ready') {
