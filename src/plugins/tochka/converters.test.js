@@ -9,7 +9,8 @@ describe('convertAccount', () => {
       id: '40702810101280000000',
       syncID: ['40702810101280000000'],
       title: '40702810101280000000',
-      type: 'checking'
+      type: 'checking',
+      instrument: 'RUB'
     })
   })
 })
