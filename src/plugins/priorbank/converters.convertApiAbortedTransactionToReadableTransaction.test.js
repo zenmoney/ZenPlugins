@@ -31,28 +31,28 @@ const transferIncome = {
 
 test('it chooses correct debit side sign', () => {
   expect(convertApiAbortedTransactionToReadableTransaction(transferOutcome))
-    .toMatchObject({ posted: { amount: -100, instrument: 'BYN' } })
+    .toMatchObject({ movements: [{ sum: -100 }] })
 
   expect(convertApiAbortedTransactionToReadableTransaction(transferIncome))
-    .toMatchObject({ posted: { amount: 49.99, instrument: 'USD' } })
+    .toMatchObject({ movements: [{ sum: 49.99 }] })
 })
 
 test('it merges correctly', () => {
   expect(mergeTransfers({
     items: [transferIncome, transferOutcome].map((transaction) => ({
-      apiTransaction: { type: 'abortedTransaction', payload: transaction.abortedTransaction },
+      apiTransaction: { type: 'abortedTransaction', payload: transaction.abortedTransaction, card: { clientObject: { currIso: transaction.accountCurrency } } },
       readableTransaction: convertApiAbortedTransactionToReadableTransaction(transaction)
     }))
   })).toEqual([
     {
-      'comment': null,
+      'movements': [
+        { 'id': null, 'account': { 'id': 'test(accountId)' }, 'sum': 49.99, 'invoice': { sum: +100, instrument: 'BYN' }, 'fee': null },
+        { 'id': null, 'account': { 'id': 'test(accountId)' }, 'sum': -100, 'invoice': null, 'fee': null }
+      ],
       'date': new Date('2018-01-01T00:00:00+03:00'),
       'hold': true,
-      'sides': [
-        { 'account': { 'id': 'test(accountId)' }, 'amount': 49.99, 'id': null, 'instrument': 'USD' },
-        { 'account': { 'id': 'test(accountId)' }, 'amount': -100, 'id': null, 'instrument': 'BYN' }
-      ],
-      'type': 'transfer'
+      'merchant': null,
+      'comment': null
     }
   ])
 })

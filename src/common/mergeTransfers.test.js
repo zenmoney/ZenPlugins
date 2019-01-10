@@ -1,3 +1,4 @@
+import { getSingleReadableTransactionMovement } from './converters'
 import { mergeTransfers } from './mergeTransfers'
 
 describe('mergeTransfers', () => {
@@ -5,26 +6,26 @@ describe('mergeTransfers', () => {
     const date = new Date(2020, 0, 1, 12, 0, 0)
     expect(mergeTransfers({
       items: [
-        { id: 1, posted: { amount: -10, instrument: 'MNT' }, date, account: 'ACCOUNT X' },
-        { id: 2, posted: { amount: +10, instrument: 'MNT' }, date, account: 'ACCOUNT Y' }
+        { movements: [{ id: 1, sum: -10, account: 'ACCOUNT X' }], date },
+        { movements: [{ id: 2, sum: +10, account: 'ACCOUNT Y' }], date }
       ],
       isTransferItem: () => true,
       makeGroupKey: (item) => {
-        const { amount, instrument } = item.origin || item.posted
-        return `${Math.abs(amount)} ${instrument}`
+        const movement = getSingleReadableTransactionMovement(item)
+        return Math.abs(movement.sum)
       },
-      selectTransactionId: (x) => x.id,
+      selectTransactionId: (x) => getSingleReadableTransactionMovement(x).id,
       selectReadableTransaction: (x) => x
     })).toEqual([
       {
-        type: 'transfer',
-        comment: null,
+        movements: [
+          { account: 'ACCOUNT X', sum: -10, id: 1 },
+          { account: 'ACCOUNT Y', sum: 10, id: 2 }
+        ],
         date,
         hold: false,
-        sides: [
-          { 'account': 'ACCOUNT X', 'amount': -10, 'id': 1, 'instrument': 'MNT' },
-          { 'account': 'ACCOUNT Y', 'amount': 10, 'id': 2, 'instrument': 'MNT' }
-        ]
+        merchant: null,
+        comment: null
       }
     ])
   })

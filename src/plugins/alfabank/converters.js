@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
-import { asCashTransfer, formatComment } from '../../common/converters'
+import { addMovement, formatComment, getSingleReadableTransactionMovement, makeCashTransferMovement } from '../../common/converters'
 import { mergeTransfers } from '../../common/mergeTransfers'
 import { formatWithCustomInspectParams } from '../../consoleAdapter'
 import { parseApiAmount } from './api'
@@ -158,25 +158,36 @@ export const extractDate = (apiMovement) => {
 }
 
 function convertApiMovementToReadableTransaction (apiMovement, accountId) {
-  const posted = { amount: parseApiAmount(apiMovement.amount), instrument: apiMovement.currency }
-  const { mcc, origin } = parseApiMovementDescription(apiMovement.description, Math.sign(posted.amount))
+  const sum = parseApiAmount(apiMovement.amount)
+  const accountInstrument = apiMovement.currency
+  const { mcc, origin } = parseApiMovementDescription(apiMovement.description, Math.sign(sum))
+  // TODO rename origin.amount to origin.sum to avoid mapping
+  const invoice = origin === null || origin.instrument === accountInstrument
+    ? null
+    : { sum: origin.amount, instrument: origin.instrument }
   const readableTransaction = {
-    type: 'transaction',
-    id: apiMovement.key,
-    account: { id: accountId },
+    movements: [
+      {
+        id: apiMovement.key,
+        account: { id: accountId },
+        invoice,
+        sum,
+        fee: null
+      }
+    ],
     date: extractDate(apiMovement),
     hold: apiMovement.hold,
-    posted,
-    origin,
-    payee: (apiMovement.recipientInfo && apiMovement.recipientInfo.recipientName) || apiMovement.shortDescription || null,
-    mcc,
-    location: null,
-    comment: formatComment({ posted, origin })
+    merchant: {
+      title: (apiMovement.recipientInfo && apiMovement.recipientInfo.recipientName) || apiMovement.shortDescription || null,
+      mcc,
+      location: null
+    },
+    comment: formatComment({ invoice, sum, fee: null, accountInstrument })
   }
   if (apiMovement.shortDescription === 'Снятие наличных в банкомате' ||
     apiMovement.description.startsWith('Внесение наличных рублей') ||
     apiMovement.description.includes('Внесение средств через устройство')) {
-    return asCashTransfer(readableTransaction)
+    return addMovement(readableTransaction, makeCashTransferMovement(readableTransaction, accountInstrument))
   }
   // TODO transfers from other banks can be handled
   return readableTransaction
@@ -255,7 +266,7 @@ export function convertApiMovementsToReadableTransactions (apiMovements, account
     items: processedMovementsWithoutNonAccountableArtifacts,
     selectReadableTransaction: (item) => item.readableTransaction,
     isTransferItem: ({ apiMovement: { senderInfo, recipientInfo, reference, description }, readableTransaction }) => {
-      if (readableTransaction.type !== 'transaction') {
+      if (readableTransaction.movements.length > 1) {
         return false
       }
       if (!isPossiblyTransfer({ reference })) {
@@ -264,13 +275,21 @@ export function convertApiMovementsToReadableTransactions (apiMovements, account
       if (description.startsWith('Внутрибанковский перевод между счетами')) {
         return true
       }
-      if (readableTransaction.posted.amount > 0) {
+      const movement = getSingleReadableTransactionMovement(readableTransaction)
+      if (movement.sum > 0) {
         return senderInfo.senderNameBank === `АО "АЛЬФА-БАНК"`
       } else {
         return recipientInfo && recipientInfo.recipientNameBank === `АО "АЛЬФА-БАНК"`
       }
     },
     makeGroupKey: (item) => item.apiMovement.reference,
-    selectTransactionId: (item) => item.readableTransaction.id
+    selectTransactionId: ({ readableTransaction }) => {
+      if (readableTransaction.movements.length === 1) {
+        return readableTransaction.movements[0].id
+      }
+      const nonCashMovements = readableTransaction.movements.filter((x) => x.id !== null)
+      console.assert(nonCashMovements.length === 1, `Cannot resolve single movement id`)
+      return nonCashMovements[0].id
+    }
   })
 }

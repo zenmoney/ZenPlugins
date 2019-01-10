@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { asCashTransfer, formatComment } from '../../common/converters'
+import { addMovement, formatComment, getSingleReadableTransactionMovement, makeCashTransferMovement } from '../../common/converters'
 import { mergeTransfers as commonMergeTransfers } from '../../common/mergeTransfers'
 
 const calculateAccountId = (card) => String(card.clientObject.id)
@@ -60,22 +60,28 @@ export const convertApiAbortedTransactionToReadableTransaction = ({ accountId, a
   const sign = abortedTransaction.transDetails === 'CH Debit BLR MINSK P2P SDBO NO FEE'
     ? Math.sign(abortedTransaction.amount)
     : Math.sign(-abortedTransaction.transAmount)
-  const posted = { amount: sign * Math.abs(abortedTransaction.amount), instrument: accountCurrency }
-  const origin = abortedTransaction.transCurrIso === accountCurrency
+  const sum = sign * Math.abs(abortedTransaction.amount)
+  const invoice = abortedTransaction.transCurrIso === accountCurrency
     ? null
-    : { amount: sign * Math.abs(abortedTransaction.transAmount), instrument: abortedTransaction.transCurrIso }
+    : { sum: sign * Math.abs(abortedTransaction.transAmount), instrument: abortedTransaction.transCurrIso }
   return {
-    type: 'transaction',
-    id: null,
-    account: { id: accountId },
+    movements: [
+      {
+        id: null,
+        account: { id: accountId },
+        invoice,
+        sum,
+        fee: null
+      }
+    ],
     date: new Date(abortedTransaction.transDate),
     hold: true,
-    posted,
-    origin,
-    payee: details.payee,
-    mcc: null,
-    location: null,
-    comment: _.compact([details.comment, formatComment({ posted, origin })]).join('\n') || null
+    merchant: {
+      title: details.payee,
+      mcc: null,
+      location: null
+    },
+    comment: _.compact([details.comment, formatComment({ invoice, fee: null, sum, accountInstrument: accountCurrency })]).join('\n') || null
   }
 }
 
@@ -88,26 +94,31 @@ const convertApiTransactionToReadableTransaction = (apiTransaction) => {
   if (apiTransaction.type === 'regularTransaction') {
     const regularTransaction = apiTransaction.payload
     const details = parseTransDetails(regularTransaction.transDetails)
-    const amount = regularTransaction.accountAmount
-    const posted = { amount, instrument: accountCurrency }
-    const origin = regularTransaction.transCurrIso === accountCurrency
+    const sum = regularTransaction.accountAmount
+    const invoice = regularTransaction.transCurrIso === accountCurrency
       ? null
-      : {
-        amount: extractRegularTransactionAmount({ accountCurrency, regularTransaction }),
-        instrument: regularTransaction.transCurrIso
-      }
+      : { sum: extractRegularTransactionAmount({ accountCurrency, regularTransaction }), instrument: regularTransaction.transCurrIso }
     return {
-      type: 'transaction',
-      id: null,
-      account: { id: calculateAccountId(apiTransaction.card) },
+      movements: [
+        {
+          id: null,
+          account: { id: accountId },
+          invoice,
+          sum,
+          fee: null
+        }
+      ],
       date: new Date(regularTransaction.transDate),
       hold: false,
-      posted,
-      origin,
-      payee: details.payee,
-      mcc: null,
-      location: null,
-      comment: _.compact([details.comment, formatComment({ posted, origin })]).join('\n') || null
+      merchant: {
+        title: details.payee,
+        mcc: null,
+        location: null
+      },
+      comment: _.compact([
+        details.comment,
+        formatComment({ invoice, sum, fee: null, accountInstrument: accountCurrency })
+      ]).join('\n') || null
     }
   }
   throw new Error(`apiTransaction.type "${apiTransaction.type}" not implemented`)
@@ -119,18 +130,21 @@ export function mergeTransfers ({ items }) {
     selectReadableTransaction: (item) => item.readableTransaction,
     isTransferItem: (item) =>
       item.apiTransaction.payload.transDetails.includes('P2P SDBO') ||
-            item.apiTransaction.payload.transDetails.includes('P2P_SDBO'),
-    makeGroupKey: (item) => {
-      const { amount, instrument } = item.readableTransaction.origin || item.readableTransaction.posted
-      return `${Math.abs(amount)} ${instrument} @ ${item.readableTransaction.date} ${item.apiTransaction.payload.transTime}`
+      item.apiTransaction.payload.transDetails.includes('P2P_SDBO'),
+    makeGroupKey: ({ readableTransaction, apiTransaction }) => {
+      const movement = getSingleReadableTransactionMovement(readableTransaction)
+      const sum = movement.invoice === null ? movement.sum : movement.invoice.sum
+      const instrument = movement.invoice === null ? apiTransaction.card.clientObject.currIso : movement.invoice.instrument
+      return `${Math.abs(sum)} ${instrument} @ ${readableTransaction.date} ${apiTransaction.payload.transTime}`
     },
-    selectTransactionId: (item) => {
-      if (item.readableTransaction.type === 'transfer') { // e.g. Cash, ATM
+    selectTransactionId: ({ readableTransaction, apiTransaction }) => {
+      if (readableTransaction.movements.length > 1) {
         return null
       }
-      const { amount, instrument } = item.readableTransaction.posted
-      const sign = amount >= 0 ? '+' : '-'
-      return `${Math.abs(amount)} ${instrument} @ ${item.readableTransaction.date} ${item.apiTransaction.payload.transTime} ${sign}`
+      const movement = getSingleReadableTransactionMovement(readableTransaction)
+      const sum = movement.sum
+      const instrument = apiTransaction.card.clientObject.currIso
+      return `${Math.abs(sum)} ${instrument} @ ${readableTransaction.date} ${apiTransaction.payload.transTime} ${(movement.sum >= 0 ? '+' : '-')}`
     }
   })
 }
@@ -146,7 +160,10 @@ export function convertApiCardsToReadableTransactions ({ cardsBodyResultWithoutD
       .map((apiTransaction) => {
         const readableTransaction = convertApiTransactionToReadableTransaction(apiTransaction)
         if (['ATM', 'Cash'].includes(parseTransDetails(apiTransaction.payload.transDetails).type)) {
-          return { apiTransaction, readableTransaction: asCashTransfer(readableTransaction) }
+          return {
+            apiTransaction,
+            readableTransaction: addMovement(readableTransaction, makeCashTransferMovement(readableTransaction, apiTransaction.card.clientObject.currIso))
+          }
         }
         return { apiTransaction, readableTransaction }
       })
