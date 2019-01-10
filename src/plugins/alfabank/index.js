@@ -1,4 +1,3 @@
-import { toZenmoneyTransaction } from '../../common/converters'
 import { generateUUID } from '../../common/utils'
 import {
   assertLoginIsSuccessful,
@@ -91,9 +90,8 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   ])
   const accountTuples = convertApiAccountsToAccountTuples(apiAccounts)
   const readableTransactions = convertApiMovementsToReadableTransactions(apiMovements.reverse(), accountTuples)
-  console.debug({ readableTransactions })
   return {
     accounts: accountTuples.map((x) => x.zenMoneyAccount),
-    transactions: readableTransactions.map(toZenmoneyTransaction)
+    transactions: readableTransactions
   }
 }

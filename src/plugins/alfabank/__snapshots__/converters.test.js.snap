@@ -6,25 +6,27 @@ Array [
     "comment": null,
     "date": 2018-05-22T09:00:00.000Z,
     "hold": false,
-    "sides": Array [
+    "merchant": null,
+    "movements": Array [
       Object {
         "account": Object {
           "id": "x7890",
         },
-        "amount": 1000,
+        "fee": null,
         "id": "1",
-        "instrument": "RUR",
+        "invoice": null,
+        "sum": 1000,
       },
       Object {
         "account": Object {
           "id": "x0987",
         },
-        "amount": -1000,
+        "fee": null,
         "id": "2",
-        "instrument": "RUR",
+        "invoice": null,
+        "sum": -1000,
       },
     ],
-    "type": "transfer",
   },
 ]
 `;
@@ -32,22 +34,25 @@ Array [
 exports[`convertApiMovementsToReadableTransactions guesses missing sender account info with single non-own shared account 1`] = `
 Array [
   Object {
-    "account": Object {
-      "id": "x4444",
-    },
     "comment": null,
     "date": 2018-05-22T09:00:00.000Z,
     "hold": false,
-    "id": "0",
-    "location": null,
-    "mcc": null,
-    "origin": null,
-    "payee": "test(recipientName)",
-    "posted": Object {
-      "amount": -1000,
-      "instrument": "RUR",
+    "merchant": Object {
+      "location": null,
+      "mcc": null,
+      "title": "test(recipientName)",
     },
-    "type": "transaction",
+    "movements": Array [
+      Object {
+        "account": Object {
+          "id": "x4444",
+        },
+        "fee": null,
+        "id": "0",
+        "invoice": null,
+        "sum": -1000,
+      },
+    ],
   },
 ]
 `;

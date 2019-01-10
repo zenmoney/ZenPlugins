@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import { InvalidPreferencesError, TemporaryError, ZPAPIError } from '../errors'
+import { toZenmoneyTransaction } from './converters'
 import { isValidDate } from './dateUtils'
 import { sanitize } from './sanitize'
 
@@ -108,6 +109,14 @@ export function fixDateTimezones (transaction) {
   }
 }
 
+export function patchTransactions (transactions) {
+  return castTransactionDatesToTicks(transactions.map((x) =>
+    x.movements
+      ? fixDateTimezones(toZenmoneyTransaction(x))
+      : fixDateTimezones(x)
+  ))
+}
+
 function castTransactionDatesToTicks (transactions) {
   // temporal fix for j2v8 on android 6: Date objects marshalling is broken
   if (ZenMoney.features.j2v8Date) {
@@ -156,7 +165,7 @@ export function adaptScrapeToGlobalApi (scrape) {
       if (!Array.isArray(results)) {
         console.assert(Array.isArray(results.accounts) && Array.isArray(results.transactions), 'scrape should return {accounts[], transactions[]}')
         ZenMoney.addAccount(assertAccountIdsAreUnique(results.accounts))
-        ZenMoney.addTransaction(castTransactionDatesToTicks(results.transactions.map(fixDateTimezones)))
+        ZenMoney.addTransaction(patchTransactions(results.transactions))
         ZenMoney.setResult({ success: true })
         return
       }
@@ -169,7 +178,7 @@ export function adaptScrapeToGlobalApi (scrape) {
       )
       ZenMoney.addAccount(results.map(({ account, transactions }) => account))
       results.forEach(({ account, transactions }) => {
-        ZenMoney.addTransaction(castTransactionDatesToTicks(transactions.map(fixDateTimezones)))
+        ZenMoney.addTransaction(patchTransactions(transactions))
       })
       ZenMoney.setResult({ success: true })
     })
