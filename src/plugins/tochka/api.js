@@ -1,11 +1,11 @@
 /* eslint-disable no-unused-vars,camelcase */
 import * as network from '../../common/network'
-import { toAtLeastTwoDigitsString } from '../../common/dates'
+import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 
 const qs = require('querystring')
 
-const CLIENT_ID = 'sandbox'
-const CLIENT_SECRET = 'sandbox_secret'
+const CLIENT_ID = 'sandbox_hash'
+const CLIENT_SECRET = 'sandbox_secret_hash'
 const API_REDIRECT_URI = 'https://zenmoney.ru/callback/tochka/'
 const SANDBOX_REDIRECT_URI = 'https://localhost:8000/'
 const API_URI = 'https://enter.tochka.com/api/v1/'
@@ -41,7 +41,11 @@ export async function login ({ access_token, refresh_token, expirationDateMs } =
       if (response.body && response.body.error) {
         response = null
         access_token = null
+        refresh_token = null
+        expirationDateMs = 0
         console.log('>>> Авторизация: Не удалось обновить токен. Требуется повторный вход.')
+        const result = await login({ access_token, refresh_token, expirationDateMs }, preferences)
+        return result
       }
 
       console.assert(response.body &&
@@ -94,7 +98,7 @@ export async function login ({ access_token, refresh_token, expirationDateMs } =
     console.assert(code && !error, 'non-successfull authorization', error)
 
     // DEBUG SANDBOX
-    // const code = 'rysdWuC0V5q9d7uMV5dXkN4aLCebvFIN'
+    // const code = 'QLA74GG14RomYV1UQNr5zbwkcpKSNthn'
 
     console.log('>>> Авторизация: Запрашиваем токен.')
     response = await fetchJson('oauth2/token', {
@@ -141,12 +145,22 @@ async function fetchJson (url, options = {}, predicate = () => true) {
       }
     })
   } catch (e) {
-    if (e.response && typeof e.response.body === 'string' && e.response.body.indexOf('internal server error') >= 0) {
-      throw new TemporaryError('Информация из банка Точка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
+    if (!options.ignoreErrors) {
+      if (e.response && typeof e.response.body === 'string' && e.response.body.indexOf('internal server error') >= 0) {
+        throw new TemporaryError('Информация из банка Точка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
+      } else {
+        throw e
+      }
     } else {
-      throw e
+      return response
     }
   }
+  /*
+  if (response.status !== 200) {
+    const message = response.body && response.body.message
+    throw new Error(response.statusText + (message ? ': ' + message : ''))
+  }
+  */
   if (!options.ignoreErrors && response.body && response.body.error && response.body.error_description) {
     throw new Error('Ответ банка: ' + response.body.error_description)
   }
@@ -162,6 +176,7 @@ async function fetchJson (url, options = {}, predicate = () => true) {
 export async function fetchAccounts ({ access_token } = {}, preferences) {
   console.log('>>> Получаем список счетов')
 
+  // простой список счетов
   const response = await fetchJson('account/list', {
     sandbox: preferences.server === 'sandbox',
     method: 'GET',
@@ -169,6 +184,22 @@ export async function fetchAccounts ({ access_token } = {}, preferences) {
       Authorization: `Bearer ${access_token}`
     }
   })
+
+  // попытаемся достать счета по данным организаций
+  /* const response = await fetchJson('organization/list', {
+    ignoreErrors: true,
+    sandbox: preferences.server === 'sandbox',
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${access_token}`
+    }
+  })
+
+  const result = []
+  response.body.organizations.forEach(function (org) {
+    if (org.accounts) result.concat(org.accounts)
+  }) */
+
   return response.body
 }
 

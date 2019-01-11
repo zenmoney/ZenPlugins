@@ -4,7 +4,7 @@ export function convertAccount (apiAccount) {
     type: 'checking',
     title: apiAccount.code,
     syncID: [apiAccount.code],
-    instrument: 'RUB'
+    instrument: getInstrumentCode(apiAccount.code)
   }
 }
 
@@ -25,4 +25,18 @@ export function convertTransaction (apiTransaction, account) {
     transaction.outcome = -Number(apiTransaction.payment_amount)
   }
   return transaction
+}
+
+function getInstrumentCode (account) {
+  const code = account.substr(5, 3)
+  switch (code) {
+    case '643':
+    case '810':
+      return 'RUB'
+    case '840': return 'USD'
+    case '978': return 'EUR'
+    default:
+      console.log('>>> !!! Не известная валюта!', code)
+      return 'RUB'
+  }
 }
