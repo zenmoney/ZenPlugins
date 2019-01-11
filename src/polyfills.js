@@ -1,10 +1,4 @@
-import * as consoleAdapter from './consoleAdapter';
-
-['setImmediate', 'setTimeout', 'setInterval'].forEach((methodName) => {
-  global[methodName] = () => {
-    throw new Error(`${methodName} is not available in plugin runtime`)
-  }
-})
+import * as consoleAdapter from './consoleAdapter'
 
 global.Promise = require('promise/lib/es6-extensions.js')
 global.Symbol = require('es6-symbol')
