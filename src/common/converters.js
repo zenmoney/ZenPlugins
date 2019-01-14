@@ -40,7 +40,8 @@ function makeZenmoneyAccountReference (account) {
     return account.id
   }
 
-  const { type, instrument, syncIds, company, ...rest } = account
+  const { type: t, instrument, syncIds, company, ...rest } = account
+  const type = t === null ? 'ccard' : t
   const propsThatMakeNoDifference = Object.keys(rest)
   console.assert(
     propsThatMakeNoDifference.length === 0,
@@ -50,7 +51,7 @@ function makeZenmoneyAccountReference (account) {
     `Either provide specific account {id} alone, or provide account weak-ref in shape {type, instrument[, syncIds, company]}`
   )
 
-  console.assert(company === null, `account.company handling is not implemented yet`, account)
+  console.assert(company === null || _.isObject(company), `account.company must be defined Object`, account)
   console.assert(accountTypes.includes(type), `Unknown account.type "${type}". Supported values are`, accountTypes)
   console.assert(_.isString(instrument), 'instrument must be String currency code', account)
   if (type === 'cash') {
