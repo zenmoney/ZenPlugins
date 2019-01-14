@@ -104,27 +104,6 @@ function parseDuplicates (str, getPosition) {
   return null
 }
 
-export function parsePfmDescription (description) {
-  if (description) {
-    description = description
-      .replace('VKLAD-KAR ', 'VKLAD-KARTA   ')
-      .replace('KARTA-VKL ', 'KARTA-VKLAD   ')
-      .replace('ROSTOV-NA-DO', '   ROSTOV-NA-DO')
-  }
-  const commentParts = description ? description.split('  ') : null
-  let payee = null
-  if (commentParts && commentParts.length > 1) {
-    payee = reduceWhitespaces(commentParts[0])
-    description = reduceWhitespaces(commentParts.slice(1).join(' '))
-  } else {
-    description = reduceWhitespaces(description)
-  }
-  return {
-    description: description || null,
-    payee: payee || null
-  }
-}
-
 export function convertApiTransaction (apiTransaction, zenAccount) {
   if (!apiTransaction.sum || !apiTransaction.sum.amount) {
     return null
@@ -147,15 +126,19 @@ export function convertApiTransaction (apiTransaction, zenAccount) {
 }
 
 export function convertPayment (apiTransaction, account) {
+  const invoice = apiTransaction.operationAmount && apiTransaction.operationAmount.amount && {
+    sum: parseDecimal(apiTransaction.operationAmount.amount),
+    instrument: apiTransaction.operationAmount.currency.code
+  }
+  if (!invoice || !invoice.sum) {
+    return null
+  }
   const transaction = {
     movements: [
       {
         id: apiTransaction.id,
         account: { id: account.id },
-        invoice: {
-          sum: parseDecimal(apiTransaction.operationAmount.amount),
-          instrument: apiTransaction.operationAmount.currency.code
-        },
+        invoice,
         sum: null,
         fee: null
       }
@@ -169,6 +152,7 @@ export function convertPayment (apiTransaction, account) {
     parsePaymentInnerTransfer,
     parsePaymentSum,
     parsePaymentCashReplenishment,
+    parsePaymentCashWithdrawal,
     parsePaymentOuterIncomeTransfer,
     parsePaymentOutcomeTransfer,
     parsePaymentPayee
@@ -187,6 +171,26 @@ function parsePaymentSum (transaction, apiTransaction, account) {
       transaction.movements[0].sum = parseDecimal(Math.abs(parseDecimal(sumStr)) * Math.sign(invoice.sum))
     }
   }
+}
+
+function parsePaymentCashWithdrawal (transaction, apiTransaction, account) {
+  if (apiTransaction.form !== 'ExtCardCashOut') {
+    return false
+  }
+  const invoice = transaction.movements[0].invoice || { sum: transaction.movements[0].sum, instrument: account.instrument }
+  transaction.movements.push({
+    id: null,
+    account: {
+      type: 'cash',
+      instrument: invoice.instrument,
+      company: null,
+      syncIds: null
+    },
+    invoice: null,
+    sum: -invoice.sum,
+    fee: null
+  })
+  return true
 }
 
 function parsePaymentCashReplenishment (transaction, apiTransaction, account) {
@@ -219,7 +223,8 @@ function parsePaymentInnerTransfer (transaction, apiTransaction) {
     return false
   }
   const invoice = transaction.movements[0].invoice
-  const sum = parseDecimal(_.get(apiTransaction, 'details.sellAmount.moneyType.value'))
+  const sumStr = _.get(apiTransaction, 'details.sellAmount.moneyType.value')
+  const sum = sumStr ? parseDecimal(sumStr) : -invoice.sum
   const incomeMovement = {
     id: apiTransaction.id,
     account: { id: incomeAccountId },
@@ -303,7 +308,7 @@ function parsePaymentOutcomeTransfer (transaction, apiTransaction, account) {
 }
 
 function parsePaymentPayee (transaction, apiTransaction, account) {
-  let payee = apiTransaction.to
+  let payee = ['ExtDepositCapitalization'].indexOf(apiTransaction.form) >= 0 ? null : apiTransaction.to
   if (payee) {
     if (apiTransaction.form === 'RurPayJurSB') {
       const parts = payee.split(/\s\s+/)
@@ -327,33 +332,8 @@ function parsePaymentPayee (transaction, apiTransaction, account) {
       }
     }
   }
-  if (apiTransaction.description === 'Комиссии') {
-    transaction.comment = 'Комиссии'
-  }
-}
-
-export function convertPfmTransaction (pfmTransaction) {
-  if (pfmTransaction.cardAmount &&
-    pfmTransaction.cardAmount.currency !== pfmTransaction.nationalAmount.currency &&
-    pfmTransaction.cardAmount.amount === pfmTransaction.nationalAmount.amount) {
-    return null
-  }
-  const cardAmount = pfmTransaction.cardAmount || pfmTransaction.nationalAmount
-  if (!cardAmount) {
-    return null
-  }
-  return {
-    id: pfmTransaction.id.toFixed(0),
-    date: parseApiDate(pfmTransaction.date),
-    hold: false,
-    categoryId: pfmTransaction.categoryId,
-    ...parsePfmDescription(pfmTransaction.comment),
-    merchant: pfmTransaction.merchantInfo ? reduceWhitespaces(pfmTransaction.merchantInfo.merchant) : null,
-    location: pfmTransaction.merchantInfo ? pfmTransaction.merchantInfo.location || null : null,
-    posted: {
-      amount: parseDecimal(cardAmount.amount),
-      instrument: cardAmount.currency
-    }
+  if (['Капитализация по вкладу/счету', 'Комиссии'].indexOf(apiTransaction.description) >= 0) {
+    transaction.comment = apiTransaction.description
   }
 }
 
@@ -371,124 +351,8 @@ export function convertLoanTransaction (apiTransaction) {
   }
 }
 
-export function convertWebTransaction (webTransaction) {
-  return {
-    date: parseApiDate(webTransaction.date),
-    hold: null,
-    ...parseApiDescription(webTransaction.description),
-    ...parseWebAmount(webTransaction.amount)
-  }
-}
-
 export function formatDateSql (date) {
   return [date.getFullYear(), date.getMonth() + 1, date.getDate()].map(toAtLeastTwoDigitsString).join('-')
-}
-
-export function addTransactions (oldTransactions, newTransactions, isWebTransaction) {
-  const n = oldTransactions.length
-  const transactions = oldTransactions
-  oldTransactions = _.sortBy(oldTransactions, ['date', 'payee'])
-  newTransactions = _.sortBy(newTransactions, ['date', 'payee'])
-  let i = 0
-  for (const newTransaction of newTransactions) {
-    if (!newTransaction) {
-      continue
-    }
-
-    const oldTransaction = i < n ? findMatchingApiTransaction(oldTransactions, newTransaction) : null
-    if (oldTransaction) {
-      i++
-    }
-    if (isWebTransaction) {
-      if (oldTransaction) {
-        oldTransaction.posted = newTransaction.posted
-      }
-      continue
-    }
-    if (!oldTransaction) {
-      transactions.push(newTransaction)
-      continue
-    }
-
-    let origin = null
-    const description = oldTransaction.description
-    const payee = oldTransaction.payee
-    if (oldTransaction.origin && newTransaction.posted.instrument !== oldTransaction.origin.instrument) {
-      origin = oldTransaction.origin
-    }
-    for (const key in oldTransaction) {
-      if (oldTransaction.hasOwnProperty(key)) {
-        delete oldTransaction[key]
-      }
-    }
-    Object.assign(oldTransaction, newTransaction)
-    if (origin) {
-      oldTransaction.origin = origin
-    }
-    if (description) {
-      oldTransaction.description = description
-    }
-    if (payee && !oldTransaction.payee) {
-      oldTransaction.payee = payee
-    }
-  }
-}
-
-function findMatchingApiTransaction (apiTransactions, pfmTransaction) {
-  let candidate = null
-  for (const apiTransaction of apiTransactions) {
-    if (apiTransaction.id) {
-      continue
-    }
-    if (!areDatesEqual(apiTransaction.date, pfmTransaction.date)) {
-      continue
-    }
-    if (apiTransaction.posted && !_.isEqual(apiTransaction.posted, pfmTransaction.posted)) {
-      continue
-    }
-    if (!apiTransaction.posted && !_.isEqual(apiTransaction.origin, pfmTransaction.origin) &&
-      (apiTransaction.origin.instrument === pfmTransaction.posted.instrument ||
-        Math.sign(apiTransaction.origin.amount) !== Math.sign(pfmTransaction.posted.amount))
-    ) {
-      continue
-    }
-    if (arePayeesEqual(pfmTransaction.payee, apiTransaction.payee) ||
-      (apiTransaction.payee && !pfmTransaction.payee &&
-        pfmTransaction.description &&
-        pfmTransaction.description.indexOf(apiTransaction.payee) === 0)) {
-      return apiTransaction
-    }
-    if (!candidate) {
-      candidate = apiTransaction
-    }
-  }
-  return candidate
-}
-
-function arePayeesEqual (payee1, payee2) {
-  return payee1 === payee2 || (payee1 && payee2 && (payee1.indexOf(payee2) === 0 || payee2.indexOf(payee1) === 0))
-}
-
-function areDatesEqual (date1, date2) {
-  if (Math.abs(date1.getTime() - date2.getTime()) <= 90000) {
-    return true
-  }
-  date1 = toMoscowDate(date1)
-  date2 = toMoscowDate(date2)
-  const time1 = formatDateTime(date1)
-  const time2 = formatDateTime(date2)
-  if (time1 === '00:00:00' || time2 === '00:00:00') {
-    const day1 = formatDateSql(date1)
-    const day2 = formatDateSql(date2)
-    if (day1 === day2) {
-      return true
-    }
-  }
-  return false
-}
-
-function formatDateTime (date) {
-  return [date.getHours(), date.getMinutes(), date.getSeconds()].map(toAtLeastTwoDigitsString).join(':')
 }
 
 export function convertToZenMoneyTransaction (zenAccount, transaction) {
@@ -755,6 +619,7 @@ export function parseDecimal (str) {
   if (typeof str === 'number') {
     return Math.round(str * 100) / 100
   }
+  console.assert(typeof str === 'string', `could not parse decimal ${str}`)
   const number = Number(str.replace(/\s/g, '')
     .replace(/,/g, '.')
     .replace('−', '-')
@@ -903,43 +768,4 @@ export function reduceWhitespaces (text) {
 
 export function removeWhitespaces (text) {
   return text.replace(/\s+/g, '').trim()
-}
-
-export function parseWebAmount (text) {
-  text = reduceWhitespaces(text)
-  const match = text.match(/(.+)\s\((.+)\)/i)
-  if (match && match.length === 3) {
-    try {
-      const res = {
-        posted: parseRegularAmount(match[2]),
-        origin: parseRegularAmount(match[1])
-      }
-      res.posted.amount = res.posted.amount * Math.sign(res.origin.amount)
-      return res
-    } catch (e) {
-      console.assert(e === null, `could not parse amount ${text}`)
-    }
-  }
-  return {
-    posted: parseRegularAmount(text)
-  }
-}
-
-function parseRegularAmount (text) {
-  const i = text.lastIndexOf(' ')
-  console.assert(i >= 0 && i < text.length - 1, `could not parse amount ${text}`)
-  const amount = parseDecimal(text.substring(0, i))
-  console.assert(!isNaN(amount), `could not parse amount ${text}`)
-  let instrument = text.substring(i + 1)
-  if (instrument === '$') {
-    instrument = 'USD'
-  } else if (instrument === 'руб.') {
-    instrument = 'RUB'
-  } else if (instrument === '€') {
-    instrument = 'EUR'
-  }
-  return {
-    amount,
-    instrument
-  }
 }

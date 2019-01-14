@@ -1,4 +1,4 @@
-import { getErrorMessage } from './sberbank'
+import { getErrorMessage } from './api'
 
 describe('getErrorMessage', () => {
   it('returns error text if found', () => {

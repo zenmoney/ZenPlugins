@@ -1,9 +1,9 @@
 import { MD5 } from 'jshashes'
 import _ from 'lodash'
-import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import * as network from '../../common/network'
 import { retry, RetryError, toNodeCallbackArguments } from '../../common/retry'
-import { formatDateSql, parseDate, toMoscowDate } from './converters'
+import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
+import { formatDateSql, parseDate } from './converters'
 
 const qs = require('querystring')
 const md5 = new MD5()
@@ -192,125 +192,6 @@ export async function login (login, pin, auth) {
   return { api: { token, host, cookie: getCookie(response) } }
 }
 
-export async function loginInPfm (auth) {
-  let response
-  // if (auth.pfm) {
-  //     response = await network.fetchJson(`https://${auth.pfm.host}/pfm/api/v1.20/budgets`, {
-  //         method: "GET",
-  //         headers: {
-  //             "User-Agent": "Mobile Device",
-  //             "Accept": "application/json",
-  //             "Content-Type": "application/json;charset=UTF-8",
-  //             "Accept-Charset": "UTF-8",
-  //             "Host": `${auth.pfm.host}`,
-  //             "Connection": "Keep-Alive",
-  //             "Accept-Encoding": "gzip",
-  //             "Cookie": auth.pfm.cookie,
-  //         },
-  //     });
-  //     if (response.body && (response.body.statusCode === 4 || response.body.statusCode === 0)) {
-  //         return auth;
-  //     }
-  // }
-  // if (auth && !auth.api.token) {
-  //     return {...auth, pfm: null};
-  // }
-  response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/unifiedClientSession/getToken.do`, {
-    headers: {
-      ...defaultHeaders,
-      'Host': `${auth.api.host}:4477`,
-      'Content-Type': 'application/x-www-form-urlencoded;charset=windows-1251',
-      'Accept': 'application/x-www-form-urlencoded',
-      'Accept-Charset': 'windows-1251',
-      'Cookie': auth.api.cookie
-    },
-    body: { systemName: 'pfm' },
-    sanitizeResponseLog: { body: { token: true } }
-  }, response => _.get(response, 'body.host') && _.get(response, 'body.token'))
-  const host = response.body.host
-  try {
-    response = await network.fetchJson(`https://${host}/pfm/api/v1.20/login?token=${response.body.token}`, {
-      method: 'GET',
-      headers: {
-        'User-Agent': 'Mobile Device',
-        'Accept': 'application/json',
-        'Content-Type': 'application/json;charset=UTF-8',
-        'Accept-Charset': 'UTF-8',
-        'Host': `${host}`,
-        'Connection': 'Keep-Alive',
-        'Accept-Encoding': 'gzip',
-        'Cookie': auth.api.cookie
-      },
-      sanitizeRequestLog: { url: true, headers: { Cookie: true } },
-      sanitizeResponseLog: { url: true, headers: { 'set-cookie': true } }
-    })
-  } catch (e) {
-    if (e.response && typeof e.response.body === 'string' && e.response.body.indexOf('<H1>SRVE') >= 0) {
-      // PFM server error
-      return { ...auth, pfm: null }
-    } else {
-      throw e
-    }
-  }
-  if (response.body && response.body.errors &&
-    response.body.errors[0] &&
-    response.body.errors[0].desc &&
-    response.body.errors[0].desc.indexOf('не удалось загрузить из config-factory.xml') >= 0) {
-    return { ...auth, pfm: null }
-  }
-  return { ...auth, pfm: { host, cookie: getCookie(response) } }
-}
-
-async function fetchTransactionsInPfmWithType (auth, accountIds, fromDate, toDate, income, ignoreToDateError) {
-  if (!auth.pfm) {
-    return []
-  }
-  const currentYear = toMoscowDate(new Date()).getFullYear()
-  const mskFromDate = toMoscowDate(fromDate)
-  const mskToDate = toMoscowDate(toDate)
-  if (mskFromDate.getFullYear() < currentYear) {
-    mskFromDate.setFullYear(currentYear, 0, 1)
-  }
-  let response = await network.fetchJson(`https://${auth.pfm.host}/pfm/api/v1.20/extracts` +
-    `?from=${formatDate(mskFromDate)}&to=${formatDate(mskToDate)}` +
-    `&showCash=true&showCashPayments=true&showOtherAccounts=true` +
-    `&selectedCardId=${accountIds.join(',')}&income=${income ? 'true' : 'false'}`, {
-    method: 'GET',
-    headers: {
-      'User-Agent': 'Mobile Device',
-      'Accept': 'application/json',
-      'Content-Type': 'application/json;charset=UTF-8',
-      'Accept-Charset': 'UTF-8',
-      'Host': `${auth.pfm.host}`,
-      'Connection': 'Keep-Alive',
-      'Accept-Encoding': 'gzip',
-      'Cookie': auth.pfm.cookie
-    },
-    sanitizeRequestLog: { headers: { Cookie: true } }
-  })
-  if (!ignoreToDateError && response && response.body &&
-    response.body.statusCode === 2 &&
-    response.body.errors &&
-    response.body.errors[0] &&
-    response.body.errors[0].field === 'to') {
-    return fetchTransactionsInPfmWithType(auth, accountIds,
-      fromDate, new Date(toDate.getTime() - 24 * 3600 * 1000), income, true)
-  }
-  if (response && response.body && response.body.statusCode === 9) {
-    console.log(`could not get data from pfm for accounts ${accountIds}`)
-    return []
-  }
-  validateResponse(response, response => response.body &&
-    response.body.statusCode === 0 && Array.isArray(response.body.operations))
-  return response.body.operations
-}
-
-export async function fetchTransactionsInPfm (auth, accountIds, fromDate, toDate) {
-  const transactions = await fetchTransactionsInPfmWithType(auth, accountIds, fromDate, toDate, false)
-  transactions.push(...await fetchTransactionsInPfmWithType(auth, accountIds, fromDate, toDate, true))
-  return _.sortBy(transactions, apiTransaction => apiTransaction.id).reverse()
-}
-
 export async function fetchAccounts (auth) {
   const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/products/list.do`, {
     headers: {
@@ -381,9 +262,24 @@ async function fetchPayments (auth, { id, type, instrument }, fromDate, toDate) 
     })
     batch = getArray(_.get(response, 'body.operations.operation'))
     await Promise.all(batch.map(async transaction => {
+      if (transaction.state === 'DRAFT' || transaction.state === 'SAVED') {
+        return
+      }
+      const invoiceCurrency = _.get(transaction, 'operationAmount.currency.code')
+      if (!invoiceCurrency) {
+        return
+      }
       transactions.push(transaction)
-      if (transaction.operationAmount.currency.code !== instrument ||
-        ['TakingMeans', 'ExtCardTransferIn', 'RurPayment', 'InternalPayment'].indexOf(transaction.form) >= 0) {
+      if (invoiceCurrency !== instrument ||
+        [
+          'TakingMeans',
+          'ExtCardTransferIn',
+          'ExtCardTransferOut',
+          'RurPayment',
+          'InternalPayment',
+          'ExtCardCashOut',
+          'ExtDepositOtherDebit'
+        ].indexOf(transaction.form) >= 0) {
         const detailsResponse = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/payments/view.do`, {
           headers: {
             ...defaultHeaders,
@@ -409,10 +305,9 @@ async function fetchPayments (auth, { id, type, instrument }, fromDate, toDate) 
 }
 
 export async function fetchTransactions (auth, { id, type, instrument }, fromDate, toDate) {
-  if (type === 'card') {
+  if (type === 'card' || type === 'account') {
     return fetchPayments(auth, { id, type, instrument }, fromDate, toDate)
   }
-  const isFetchingByDate = type !== 'card'
   const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/${type}s/abstract.do`, {
     headers: {
       ...defaultHeaders,
@@ -420,22 +315,16 @@ export async function fetchTransactions (auth, { id, type, instrument }, fromDat
       'Referer': `Android/6.0/${appVersion}`,
       'Cookie': auth.api.cookie
     },
-    body: isFetchingByDate
-      ? { id, from: formatDate(fromDate), to: formatDate(toDate) }
-      : { id, count: 10, paginationSize: 10 }
+    body: { id, from: formatDate(fromDate), to: formatDate(toDate) }
   })
-  let transactions = type === 'loan'
+  const fromDateStr = formatDateSql(fromDate)
+  const toDateStr = formatDateSql(toDate)
+  return (type === 'loan'
     ? getArray(_.get(response, 'body.elements.element'))
-    : getArray(_.get(response, 'body.operations.operation'))
-  if (!isFetchingByDate || type === 'loan') {
-    const fromDateStr = formatDateSql(fromDate)
-    const toDateStr = formatDateSql(toDate)
-    transactions = transactions.filter(transaction => {
-      const dateStr = formatDateSql(new Date(parseDate(transaction.date)))
-      return dateStr >= fromDateStr && dateStr <= toDateStr
-    })
-  }
-  return transactions
+    : getArray(_.get(response, 'body.operations.operation'))).filter(transaction => {
+    const dateStr = formatDateSql(new Date(parseDate(transaction.date)))
+    return dateStr >= fromDateStr && dateStr <= toDateStr
+  })
 }
 
 export async function makeTransfer (login, auth, { fromAccount, toAccount, sum }) {

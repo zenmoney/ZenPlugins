@@ -1,7 +1,7 @@
 import { Base64 } from 'jshashes'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import * as network from '../../common/network'
-import { getUid } from '../sberbank-online/sberbank'
+import { getUid } from '../sberbank-online/api'
 
 const base64 = new Base64()
 

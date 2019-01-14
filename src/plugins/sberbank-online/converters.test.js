@@ -1,18 +1,14 @@
 import { parseXml } from '../../common/network'
 import {
-  addTransactions,
   convertAccount,
   convertApiTransaction,
   convertCards,
   convertDeposit,
   convertLoan,
   convertPayment,
-  convertPfmTransaction,
   convertTarget,
   convertToZenMoneyTransaction,
-  parseApiDescription,
-  parsePfmDescription,
-  parseWebAmount
+  parseApiDescription
 } from './converters'
 
 describe('convertLoan', () => {
@@ -886,33 +882,6 @@ describe('convertTarget', () => {
   })
 })
 
-describe('parseWebAmount', () => {
-  it('returns valid amounts', () => {
-    expect(parseWebAmount('+24 539,58 руб.')).toEqual({
-      posted: {
-        amount: 24539.58,
-        instrument: 'RUB'
-      }
-    })
-    expect(parseWebAmount('−3 298,64 руб.')).toEqual({
-      posted: {
-        amount: -3298.64,
-        instrument: 'RUB'
-      }
-    })
-    expect(parseWebAmount('−5,00 € (373,10 руб.)')).toEqual({
-      posted: {
-        amount: -373.1,
-        instrument: 'RUB'
-      },
-      origin: {
-        amount: -5,
-        instrument: 'EUR'
-      }
-    })
-  })
-})
-
 describe('parseApiDescription', () => {
   it('returns valid data', () => {
     expect(parseApiDescription('CH Payment RUS MOSCOW CH Payment RUS MOSCOW SBOL')).toEqual({
@@ -954,89 +923,6 @@ describe('parseApiDescription', () => {
   })
 })
 
-describe('parsePfmDescription', () => {
-  it('returns valid data', () => {
-    expect(parsePfmDescription('MTS AVTO                 MOSCOW       RUS')).toEqual({
-      payee: 'MTS AVTO',
-      description: 'MOSCOW RUS'
-    })
-    expect(parsePfmDescription('GO.SKYPE.COM/BILL        LUXEMBOURG   LUX')).toEqual({
-      payee: 'GO.SKYPE.COM/BILL',
-      description: 'LUXEMBOURG LUX'
-    })
-    expect(parsePfmDescription('SBERBANK ONL@IN PLATEZH   RU')).toEqual({
-      payee: 'SBERBANK ONL@IN PLATEZH',
-      description: 'RU'
-    })
-    expect(parsePfmDescription('IKEA DOM 6 CASH LINE     ST PETERSBUR RU')).toEqual({
-      payee: 'IKEA DOM 6 CASH LINE',
-      description: 'ST PETERSBUR RU'
-    })
-    expect(parsePfmDescription('SBERBANK ONL@IN VKLAD-KAR RUS')).toEqual({
-      payee: 'SBERBANK ONL@IN VKLAD-KARTA',
-      description: 'RUS'
-    })
-    expect(parsePfmDescription('TINKOFF BANK CARD2CARD  Visa Direct  RU')).toEqual({
-      payee: 'TINKOFF BANK CARD2CARD',
-      description: 'Visa Direct RU'
-    })
-    expect(parsePfmDescription('"KONDITERSKAYA ZOLOTOY KOROSTOV-NA-DO RU')).toEqual({
-      payee: '"KONDITERSKAYA ZOLOTOY KO',
-      description: 'ROSTOV-NA-DO RU'
-    })
-    expect(parsePfmDescription('MBK                      MOSCOW       RU')).toEqual({
-      payee: 'MBK',
-      description: 'MOSCOW RU'
-    })
-    expect(parsePfmDescription('unknown pattern')).toEqual({
-      payee: null,
-      description: 'unknown pattern'
-    })
-  })
-})
-
-describe('convertPfmTransaction', () => {
-  it('returns null if card amount is invalid', () => {
-    expect(convertPfmTransaction({
-      id: 12885923514,
-      date: '28.07.2018T00:00:00',
-      comment: 'AHABAH HAIR SPA          LIMASSOL     CY',
-      categoryId: 205,
-      categoryName: 'Здоровье и красота',
-      hidden: false,
-      country: 'CYP',
-      cardNumber: '4276 08** **** 8754',
-      cardAmount: { amount: '-1993.09', currency: 'EUR' },
-      nationalAmount: { amount: '-1993.09', currency: 'RUB' },
-      availableCategories: [
-        { id: 205, name: 'Здоровье и красота' },
-        { id: 201, name: 'Автомобиль' },
-        { id: 220, name: 'Все для дома' },
-        { id: 203, name: 'Выдача наличных' },
-        { id: 222, name: 'Искусство' },
-        { id: 212, name: 'Комиссия' },
-        { id: 204, name: 'Коммунальные платежи, связь, интернет' },
-        { id: 207, name: 'Образование' },
-        { id: 206, name: 'Одежда и аксессуары' },
-        { id: 208, name: 'Отдых и развлечения' },
-        { id: 8128, name: 'Перевод во вне' },
-        { id: 1475, name: 'Перевод между своими картами' },
-        { id: 228, name: 'Перевод на вклад' },
-        { id: 202, name: 'Перевод с карты' },
-        { id: 213, name: 'Погашение кредитов' },
-        { id: 210, name: 'Прочие расходы' },
-        { id: 219, name: 'Путешествия' },
-        { id: 221, name: 'Рестораны и кафе' },
-        { id: 209, name: 'Супермаркеты' },
-        { id: 211, name: 'Транспорт' }
-      ],
-      readOnly: false,
-      nfc: false,
-      isCommentEdited: false
-    })).toBeNull()
-  })
-})
-
 describe('convertToZenMoneyTransaction', () => {
   it('converts income part of account -> card transfer', () => {
     const zenAccount = { id: 'account', instrument: 'RUB' }
@@ -1064,61 +950,6 @@ describe('convertToZenMoneyTransaction', () => {
       hold: null,
       income: 3500,
       incomeAccount: 'account',
-      outcome: 0,
-      outcomeAccount: 'account',
-      comment: 'SBERBANK ONL@IN VKLAD-KARTA',
-      _transferType: 'outcome',
-      _transferId: '2018-06-24_1_RUB_3500'
-    })
-
-    const transaction2 = convertPfmTransaction({
-      id: 11302220500,
-      date: '24.06.2018T13:14:38',
-      comment: 'SBERBANK ONL@IN VKLAD-KAR RU',
-      categoryId: 227,
-      categoryName: 'Перевод со вклада',
-      hidden: false,
-      country: 'RUS',
-      cardNumber: '4222 22** **** 2222',
-      cardAmount: { amount: '3500.00', currency: 'RUB' },
-      nationalAmount: { amount: '3500.00', currency: 'RUB' },
-      availableCategories: [
-        { id: 227, name: 'Перевод со вклада' },
-        { id: 214, name: 'Внесение наличных' },
-        { id: 217, name: 'Возврат, отмена операций' },
-        { id: 215, name: 'Зачисления' },
-        { id: 1476, name: 'Перевод между своими картами' },
-        { id: 216, name: 'Перевод на карту' },
-        { id: 218, name: 'Прочие поступления' }
-      ],
-      merchantInfo: {
-        merchant: 'Пополнение карты со счета',
-        imgUrl: 'https://pfm.stat.online.sberbank.ru/PFM/logos/22535.jpg'
-      },
-      readOnly: false,
-      nfc: false,
-      isCommentEdited: false
-    }, zenAccount)
-    expect(transaction2).toEqual({
-      id: '11302220500',
-      date: new Date('2018-06-24T13:14:38+03:00'),
-      hold: false,
-      categoryId: 227,
-      location: null,
-      merchant: 'Пополнение карты со счета',
-      description: 'RU',
-      payee: 'SBERBANK ONL@IN VKLAD-KARTA',
-      posted: {
-        amount: 3500,
-        instrument: 'RUB'
-      }
-    })
-    expect(convertToZenMoneyTransaction(zenAccount, transaction2)).toEqual({
-      date: new Date('2018-06-24T13:14:38+03:00'),
-      hold: false,
-      income: 3500,
-      incomeAccount: 'account',
-      incomeBankID: '11302220500',
       outcome: 0,
       outcomeAccount: 'account',
       comment: 'SBERBANK ONL@IN VKLAD-KARTA',
@@ -1261,61 +1092,6 @@ describe('convertToZenMoneyTransaction', () => {
       _transferType: 'outcome',
       _transferId: '1529489039000_RUB_100'
     })
-
-    const transaction2 = convertPfmTransaction({
-      id: 11352124463,
-      date: '20.06.2018T13:03:59',
-      comment: 'SBOL                    MOSCOW      RU',
-      categoryId: 1476,
-      categoryName: 'Перевод между своими картами',
-      hidden: false,
-      country: 'RUS',
-      cardNumber: '4222 22** **** 2222',
-      cardAmount: { amount: '100.00', currency: 'RUB' },
-      nationalAmount: { amount: '100.00', currency: 'RUB' },
-      availableCategories: [
-        { id: 1476, name: 'Перевод между своими картами' },
-        { id: 214, name: 'Внесение наличных' },
-        { id: 217, name: 'Возврат, отмена операций' },
-        { id: 215, name: 'Зачисления' },
-        { id: 216, name: 'Перевод на карту' },
-        { id: 227, name: 'Перевод со вклада' },
-        { id: 218, name: 'Прочие поступления' }
-      ],
-      merchantInfo: {
-        merchant: 'Сбербанк Онлайн',
-        imgUrl: 'https://pfm.stat.online.sberbank.ru/PFM/logos/22877.jpg'
-      },
-      readOnly: false,
-      nfc: false,
-      isCommentEdited: false
-    }, zenAccount)
-    expect(transaction2).toEqual({
-      id: '11352124463',
-      date: new Date('2018-06-20T13:03:59+03:00'),
-      hold: false,
-      categoryId: 1476,
-      location: null,
-      merchant: 'Сбербанк Онлайн',
-      description: 'MOSCOW RU',
-      payee: 'SBOL',
-      posted: {
-        amount: 100,
-        instrument: 'RUB'
-      }
-    })
-    expect(convertToZenMoneyTransaction(zenAccount, transaction2)).toEqual({
-      date: new Date('2018-06-20T13:03:59+03:00'),
-      hold: false,
-      income: 100,
-      incomeAccount: 'account',
-      incomeBankID: '11352124463',
-      outcome: 0,
-      outcomeAccount: 'account',
-      comment: 'SBOL',
-      _transferType: 'outcome',
-      _transferId: '1529489039000_RUB_100'
-    })
   })
 
   it('converts outcome part of card -> card transfer', () => {
@@ -1346,74 +1122,6 @@ describe('convertToZenMoneyTransaction', () => {
       incomeAccount: 'account',
       outcome: 100,
       outcomeAccount: 'account',
-      comment: 'SBOL',
-      _transferType: 'income',
-      _transferId: '1529489039000_RUB_100'
-    })
-
-    const transaction2 = convertPfmTransaction({
-      id: 11352124431,
-      date: '20.06.2018T13:03:59',
-      comment: 'SBOL                    MOSCOW      RUS',
-      categoryId: 1475,
-      categoryName: 'Перевод между своими картами',
-      hidden: false,
-      country: 'RUS',
-      cardNumber: '5222 22** **** 2222',
-      cardAmount: { amount: '-100.00', currency: 'RUB' },
-      nationalAmount: { amount: '-100.00', currency: 'RUB' },
-      availableCategories: [
-        { id: 1475, name: 'Перевод между своими картами' },
-        { id: 201, name: 'Автомобиль' },
-        { id: 220, name: 'Все для дома' },
-        { id: 203, name: 'Выдача наличных' },
-        { id: 205, name: 'Здоровье и красота' },
-        { id: 222, name: 'Искусство' },
-        { id: 212, name: 'Комиссия' },
-        { id: 204, name: 'Коммунальные платежи, связь, интернет' },
-        { id: 207, name: 'Образование' },
-        { id: 206, name: 'Одежда и аксессуары' },
-        { id: 208, name: 'Отдых и развлечения' },
-        { id: 8128, name: 'Перевод во вне' },
-        { id: 228, name: 'Перевод на вклад' },
-        { id: 202, name: 'Перевод с карты' },
-        { id: 213, name: 'Погашение кредитов' },
-        { id: 210, name: 'Прочие расходы' },
-        { id: 219, name: 'Путешествия' },
-        { id: 221, name: 'Рестораны и кафе' },
-        { id: 209, name: 'Супермаркеты' },
-        { id: 211, name: 'Транспорт' }
-      ],
-      merchantInfo: {
-        merchant: 'Сбербанк Онлайн',
-        imgUrl: 'https://pfm.stat.online.sberbank.ru/PFM/logos/22877.jpg'
-      },
-      readOnly: false,
-      nfc: false,
-      isCommentEdited: false
-    }, zenAccount)
-    expect(transaction2).toEqual({
-      id: '11352124431',
-      date: new Date('2018-06-20T13:03:59+03:00'),
-      hold: false,
-      categoryId: 1475,
-      location: null,
-      merchant: 'Сбербанк Онлайн',
-      description: 'MOSCOW RUS',
-      payee: 'SBOL',
-      posted: {
-        amount: -100,
-        instrument: 'RUB'
-      }
-    })
-    expect(convertToZenMoneyTransaction(zenAccount, transaction2)).toEqual({
-      date: new Date('2018-06-20T13:03:59+03:00'),
-      hold: false,
-      income: 0,
-      incomeAccount: 'account',
-      outcome: 100,
-      outcomeAccount: 'account',
-      outcomeBankID: '11352124431',
       comment: 'SBOL',
       _transferType: 'income',
       _transferId: '1529489039000_RUB_100'
@@ -1450,429 +1158,6 @@ describe('convertToZenMoneyTransaction', () => {
       outcomeAccount: 'account',
       comment: 'Перевод с карты'
     })
-
-    const transaction2 = convertPfmTransaction({
-      id: 692815587,
-      date: '20.06.2018T15:32:50',
-      comment: 'TINKOFF BANK CARD2CARD  MOSCOW      RUS',
-      categoryId: 210,
-      categoryName: 'Прочие расходы',
-      hidden: false,
-      country: 'RUS',
-      cardNumber: '5222 22** **** 2222',
-      cardAmount: { amount: '-10000.00', currency: 'RUB' },
-      nationalAmount: { amount: '-10000.00', currency: 'RUB' },
-      availableCategories: [
-        { id: 210, name: 'Прочие расходы' },
-        { id: 201, name: 'Автомобиль' },
-        { id: 220, name: 'Все для дома' },
-        { id: 203, name: 'Выдача наличных' },
-        { id: 205, name: 'Здоровье и красота' },
-        { id: 222, name: 'Искусство' },
-        { id: 212, name: 'Комиссия' },
-        { id: 204, name: 'Коммунальные платежи, связь, интернет' },
-        { id: 207, name: 'Образование' },
-        { id: 206, name: 'Одежда и аксессуары' },
-        { id: 208, name: 'Отдых и развлечения' },
-        { id: 8128, name: 'Перевод во вне' },
-        { id: 1475, name: 'Перевод между своими картами' },
-        { id: 228, name: 'Перевод на вклад' },
-        { id: 202, name: 'Перевод с карты' },
-        { id: 213, name: 'Погашение кредитов' },
-        { id: 219, name: 'Путешествия' },
-        { id: 221, name: 'Рестораны и кафе' },
-        { id: 209, name: 'Супермаркеты' },
-        { id: 211, name: 'Транспорт' }
-      ],
-      merchantInfo: {
-        merchant: 'Тинькофф Банк',
-        imgUrl: 'https://pfm.stat.online.sberbank.ru/PFM/logos/18699.jpg'
-      },
-      readOnly: false,
-      nfc: false,
-      isCommentEdited: true
-    }, zenAccount)
-    expect(transaction2).toEqual({
-      id: '692815587',
-      date: new Date('2018-06-20T15:32:50+03:00'),
-      hold: false,
-      categoryId: 210,
-      location: null,
-      merchant: 'Тинькофф Банк',
-      description: 'MOSCOW RUS',
-      payee: 'TINKOFF BANK CARD2CARD',
-      posted: {
-        amount: -10000,
-        instrument: 'RUB'
-      }
-    })
-    expect(convertToZenMoneyTransaction(zenAccount, transaction2)).toEqual({
-      date: new Date('2018-06-20T15:32:50+03:00'),
-      hold: false,
-      income: 0,
-      incomeAccount: 'account',
-      outcome: 10000,
-      outcomeAccount: 'account',
-      outcomeBankID: '692815587',
-      comment: 'Перевод с карты'
-    })
-  })
-
-  it('converts currency transaction', () => {
-    const zenAccount = { id: 'account', instrument: 'EUR' }
-    const transaction = convertPfmTransaction({
-      id: 13332899944,
-      date: '19.08.2018T00:00:00',
-      comment: 'PP*4169CODE              35314369001  GB',
-      categoryId: 210,
-      categoryName: 'Прочие расходы',
-      hidden: false,
-      country: 'GBR',
-      cardNumber: '4236 18** **** 8754',
-      cardAmount: { amount: '-0.80', currency: 'EUR' },
-      nationalAmount: { amount: '-60.00', currency: 'RUB' },
-      availableCategories: [
-        { id: 210, name: 'Прочие расходы' },
-        { id: 201, name: 'Автомобиль' },
-        { id: 220, name: 'Все для дома' },
-        { id: 203, name: 'Выдача наличных' },
-        { id: 205, name: 'Здоровье и красота' },
-        { id: 222, name: 'Искусство' },
-        { id: 212, name: 'Комиссия' },
-        { id: 204, name: 'Коммунальные платежи, связь, интернет' },
-        { id: 207, name: 'Образование' },
-        { id: 206, name: 'Одежда и аксессуары' },
-        { id: 208, name: 'Отдых и развлечения' },
-        { id: 8128, name: 'Перевод во вне' },
-        { id: 1475, name: 'Перевод между своими картами' },
-        { id: 228, name: 'Перевод на вклад' },
-        { id: 202, name: 'Перевод с карты' },
-        { id: 213, name: 'Погашение кредитов' },
-        { id: 219, name: 'Путешествия' },
-        { id: 221, name: 'Рестораны и кафе' },
-        { id: 209, name: 'Супермаркеты' },
-        { id: 211, name: 'Транспорт' }
-      ],
-      readOnly: false,
-      nfc: false,
-      isCommentEdited: false
-    }, zenAccount)
-    expect(transaction).toEqual({
-      id: '13332899944',
-      date: new Date('2018-08-19T00:00:00+03:00'),
-      hold: false,
-      categoryId: 210,
-      location: null,
-      merchant: null,
-      description: '35314369001 GB',
-      payee: 'PP*4169CODE',
-      posted: {
-        amount: -0.8,
-        instrument: 'EUR'
-      }
-    })
-  })
-})
-
-describe('addTransactions', () => {
-  it('combines two equal currency transactions', () => {
-    const oldTransactions = [
-      {
-        date: new Date('2018-08-19T00:00:00+03:00'),
-        hold: null,
-        description: 'Retail GBR 35314369001',
-        payee: 'PP*4169CODE',
-        origin: {
-          amount: -60,
-          instrument: 'RUB'
-        }
-      }
-    ]
-    addTransactions(oldTransactions, [
-      {
-        id: '13332899944',
-        date: new Date('2018-08-19T00:00:00+03:00'),
-        hold: false,
-        categoryId: 210,
-        location: null,
-        merchant: null,
-        description: '35314369001 GB',
-        payee: 'PP*4169CODE',
-        posted: {
-          amount: -0.8,
-          instrument: 'EUR'
-        }
-      }
-    ])
-    expect(oldTransactions).toEqual([
-      {
-        id: '13332899944',
-        date: new Date('2018-08-19T00:00:00+03:00'),
-        hold: false,
-        categoryId: 210,
-        location: null,
-        merchant: null,
-        description: 'Retail GBR 35314369001',
-        payee: 'PP*4169CODE',
-        origin: {
-          amount: -60,
-          instrument: 'RUB'
-        },
-        posted: {
-          amount: -0.8,
-          instrument: 'EUR'
-        }
-      }
-    ])
-  })
-
-  it('checks signs of currency transactions before combining them', () => {
-    const oldTransactions = [
-      {
-        date: new Date('2018-08-19T00:00:00+03:00'),
-        hold: null,
-        description: 'Credit GBR 35314369001',
-        payee: 'PP*4169CODE',
-        origin: {
-          amount: 60,
-          instrument: 'RUB'
-        }
-      }
-    ]
-    addTransactions(oldTransactions, [
-      {
-        id: '13332899944',
-        date: new Date('2018-08-19T00:00:00+03:00'),
-        hold: false,
-        categoryId: 210,
-        location: null,
-        merchant: null,
-        description: '35314369001 GB',
-        payee: 'PP*4169CODE',
-        posted: {
-          amount: -0.8,
-          instrument: 'EUR'
-        }
-      }
-    ])
-    expect(oldTransactions).toEqual([
-      {
-        date: new Date('2018-08-19T00:00:00+03:00'),
-        hold: null,
-        description: 'Credit GBR 35314369001',
-        payee: 'PP*4169CODE',
-        origin: {
-          amount: 60,
-          instrument: 'RUB'
-        }
-      },
-      {
-        id: '13332899944',
-        date: new Date('2018-08-19T00:00:00+03:00'),
-        hold: false,
-        categoryId: 210,
-        location: null,
-        merchant: null,
-        description: '35314369001 GB',
-        payee: 'PP*4169CODE',
-        posted: {
-          amount: -0.8,
-          instrument: 'EUR'
-        }
-      }
-    ])
-  })
-
-  it('combines two equal transactions with different merchants', () => {
-    const oldTransactions = [
-      convertApiTransaction({
-        date: '11.09.2018T00:00:00',
-        sum: {
-          amount: '-612.77',
-          currency: { code: 'RUB', name: 'руб.' }
-        },
-        description: 'Retail RUS CHELYABINSK   Retail RUS CHELYABINSK AUCHAN CHELYABINSK'
-      }, {
-        id: 'account',
-        instrument: 'RUB'
-      })
-    ]
-    addTransactions(oldTransactions, [
-      convertPfmTransaction({
-        id: 13817049490,
-        date: '11.09.2018T10:16:19',
-        comment: 'AUCHAN CHELYABINSK       CHELYABINSK  RUS',
-        categoryId: 209,
-        categoryName: 'Супермаркеты',
-        hidden: false,
-        country: 'RUS',
-        cardNumber: '4276 72** **** 4387',
-        cardAmount: { amount: '-612.77', currency: 'RUB' },
-        nationalAmount: { amount: '-612.77', currency: 'RUB' },
-        availableCategories: [
-          { id: 209, name: 'Супермаркеты' },
-          { id: 201, name: 'Автомобиль' },
-          { id: 220, name: 'Все для дома' },
-          { id: 203, name: 'Выдача наличных' },
-          { id: 205, name: 'Здоровье и красота' },
-          { id: 222, name: 'Искусство' },
-          { id: 212, name: 'Комиссия' },
-          { id: 204, name: 'Коммунальные платежи, связь, интернет' },
-          { id: 207, name: 'Образование' },
-          { id: 206, name: 'Одежда и аксессуары' },
-          { id: 208, name: 'Отдых и развлечения' },
-          { id: 8128, name: 'Перевод во вне' },
-          { id: 1475, name: 'Перевод между своими картами' },
-          { id: 228, name: 'Перевод на вклад' },
-          { id: 202, name: 'Перевод с карты' },
-          { id: 213, name: 'Погашение кредитов' },
-          { id: 210, name: 'Прочие расходы' },
-          { id: 219, name: 'Путешествия' },
-          { id: 221, name: 'Рестораны и кафе' },
-          { id: 211, name: 'Транспорт' }
-        ],
-        merchantInfo: {
-          merchant: 'Ашан',
-          imgUrl: 'https://pfm.stat.online.sberbank.ru/PFM/logos/8493.jpg',
-          location: {
-            latitude: '55.1708703201',
-            longitude: '61.3559028417'
-          }
-        },
-        readOnly: false,
-        nfc: true,
-        isCommentEdited: false
-      })
-    ])
-    expect(oldTransactions).toEqual([
-      {
-        id: '13817049490',
-        date: new Date('2018-09-11T10:16:19+03:00'),
-        hold: false,
-        categoryId: 209,
-        location: {
-          latitude: '55.1708703201',
-          longitude: '61.3559028417'
-        },
-        merchant: 'Ашан',
-        description: 'Retail RUS CHELYABINSK',
-        payee: 'AUCHAN CHELYABINSK',
-        posted: {
-          amount: -612.77,
-          instrument: 'RUB'
-        }
-      }
-    ])
-  })
-
-  it('matches on existing transaction only by amount and date if there is only one candidate', () => {
-    const oldTransactions = [
-      {
-        date: new Date('2018-12-06T00:00:00+03:00'),
-        hold: null,
-        payee: 'OAO MTS',
-        description: 'Retail RUS MOSCOW',
-        posted: {
-          amount: -11,
-          instrument: 'RUB'
-        }
-      }
-    ]
-    addTransactions(oldTransactions, [
-      {
-        id: '16106081585',
-        date: new Date('2018-12-06T00:00:00+03:00'),
-        hold: false,
-        categoryId: 204,
-        merchant: 'МТС',
-        payee: 'MTS (spravka 0890)',
-        description: 'MOSCOW RUS',
-        posted: {
-          amount: -11,
-          instrument: 'RUB'
-        }
-      }
-    ])
-    expect(oldTransactions).toEqual([
-      {
-        id: '16106081585',
-        date: new Date('2018-12-06T00:00:00+03:00'),
-        hold: false,
-        categoryId: 204,
-        merchant: 'МТС',
-        payee: 'MTS (spravka 0890)',
-        description: 'Retail RUS MOSCOW',
-        posted: {
-          amount: -11,
-          instrument: 'RUB'
-        }
-      }
-    ])
-  })
-
-  it('checks payee if there is more than one candidate by amount and date', () => {
-    const oldTransactions = [
-      {
-        date: new Date('2018-12-06T00:00:00+03:00'),
-        hold: null,
-        payee: 'OAO Megafon',
-        description: 'Retail RUS MOSCOW',
-        posted: {
-          amount: -11,
-          instrument: 'RUB'
-        }
-      },
-      {
-        date: new Date('2018-12-06T00:00:00+03:00'),
-        hold: null,
-        payee: 'OAO MTS',
-        description: 'Retail RUS MOSCOW',
-        posted: {
-          amount: -11,
-          instrument: 'RUB'
-        }
-      }
-    ]
-    addTransactions(oldTransactions, [
-      {
-        id: '16106081585',
-        date: new Date('2018-12-06T00:00:00+03:00'),
-        hold: false,
-        categoryId: 204,
-        merchant: 'МТС',
-        payee: 'OAO MTS',
-        description: 'MOSCOW RUS',
-        posted: {
-          amount: -11,
-          instrument: 'RUB'
-        }
-      }
-    ])
-    expect(oldTransactions).toEqual([
-      {
-        date: new Date('2018-12-06T00:00:00+03:00'),
-        hold: null,
-        payee: 'OAO Megafon',
-        description: 'Retail RUS MOSCOW',
-        posted: {
-          amount: -11,
-          instrument: 'RUB'
-        }
-      },
-      {
-        id: '16106081585',
-        date: new Date('2018-12-06T00:00:00+03:00'),
-        hold: false,
-        categoryId: 204,
-        merchant: 'МТС',
-        payee: 'OAO MTS',
-        description: 'Retail RUS MOSCOW',
-        posted: {
-          amount: -11,
-          instrument: 'RUB'
-        }
-      }
-    ])
   })
 })
 
@@ -2676,6 +1961,237 @@ describe('convertPayment', () => {
         location: null
       },
       comment: null
+    })
+  })
+
+  it('converts transfer without sell amount', () => {
+    expect(convertPayment({
+      id: '10950380712',
+      ufsId: null,
+      state: 'EXECUTED',
+      date: '05.01.2019T08:23:19',
+      from: 'Сберегательный счет 40817810644054865350',
+      to: 'Visa Classic 4276 44** **** 3483',
+      description: 'Перевод между своими счетами',
+      operationAmount: { amount: '-15300.00', currency: { code: 'RUB', name: 'руб.' } },
+      isMobilePayment: 'true',
+      copyable: 'true',
+      templatable: 'true',
+      autopayable: 'false',
+      type: 'payment',
+      invoiceSubscriptionSupported: 'false',
+      invoiceReminderSupported: 'false',
+      form: 'InternalPayment',
+      imageId: { staticImage: { url: null } },
+      details: {
+        fromResource:
+          {
+            name: 'fromResource',
+            title: 'Счет списания',
+            type: 'resource',
+            required: 'false',
+            editable: 'false',
+            visible: 'true',
+            resourceType:
+              {
+                availableValues:
+                  {
+                    valueItem:
+                      {
+                        value: 'account:573768749',
+                        selected: 'true',
+                        displayedValue: '408 17 810 6 44054865350 [Сберегательный счет]',
+                        currency: 'RUB'
+                      }
+                  }
+              },
+            changed: 'false'
+          },
+        toResource:
+          {
+            name: 'toResource',
+            title: 'Ресурс зачисления',
+            type: 'resource',
+            required: 'false',
+            editable: 'false',
+            visible: 'true',
+            resourceType:
+              {
+                availableValues:
+                  {
+                    valueItem:
+                      {
+                        value: 'card:581110669',
+                        selected: 'true',
+                        displayedValue: '4276 44** **** 3483 [Visa Classic]',
+                        currency: 'RUB'
+                      }
+                  }
+              },
+            changed: 'false'
+          },
+        buyAmount:
+          {
+            name: 'buyAmount',
+            title: 'Сумма зачисления',
+            type: 'money',
+            required: 'false',
+            editable: 'false',
+            visible: 'true',
+            moneyType: { value: '15300.00' },
+            changed: 'false'
+          }
+      }
+    }, { id: 'account', instrument: 'RUB' })).toEqual({
+      hold: false,
+      date: new Date('2019-01-05T08:23:19+03:00'),
+      movements: [
+        {
+          id: '10950380712',
+          account: { id: 'account:573768749' },
+          invoice: null,
+          sum: -15300.00,
+          fee: null
+        },
+        {
+          id: '10950380712',
+          account: { id: 'card:581110669' },
+          invoice: null,
+          sum: 15300.00,
+          fee: null
+        }
+      ],
+      merchant: null,
+      comment: null
+    })
+  })
+
+  it('converts cash withdrawal', () => {
+    expect(convertPayment({
+      id: '11128289282',
+      ufsId: null,
+      state: 'FINANCIAL',
+      date: '10.01.2019T20:18:16',
+      from: 'Visa Classic 4276 52** **** 4451',
+      to: 'Банкомат Сбербанка',
+      description: 'Выдача наличных',
+      operationAmount: { amount: '-200.00', currency: { code: 'RUB', name: 'руб.' } },
+      isMobilePayment: 'false',
+      copyable: 'false',
+      templatable: 'false',
+      autopayable: 'false',
+      type: 'payment',
+      invoiceSubscriptionSupported: 'false',
+      invoiceReminderSupported: 'false',
+      form: 'ExtCardCashOut',
+      imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/33355.jpg' } }
+    }, { id: 'account', instrument: 'RUB' })).toEqual({
+      hold: false,
+      date: new Date('2019-01-10T20:18:16+03:00'),
+      movements: [
+        {
+          id: '11128289282',
+          account: { id: 'account' },
+          invoice: null,
+          sum: -200,
+          fee: null
+        },
+        {
+          id: null,
+          account: {
+            type: 'cash',
+            instrument: 'RUB',
+            company: null,
+            syncIds: null
+          },
+          invoice: null,
+          sum: 200,
+          fee: null
+        }
+      ],
+      merchant: null,
+      comment: null
+    })
+  })
+
+  it('skips transaction with empty or zero operationAmount', () => {
+    expect(convertPayment({
+      id: '11413628056',
+      ufsId: null,
+      state: 'DRAFT',
+      date: '11.01.2019T06:54:29',
+      from: 'Visa Gold 4279 38** **** 0346',
+      to: 'ООО "КОМПАНИЯ БКС"                                                                        40701810600007906728',
+      description: 'Оплата услуг',
+      isMobilePayment: 'false',
+      copyable: 'true',
+      templatable: 'true',
+      autopayable: 'true',
+      type: 'jurPayment',
+      invoiceSubscriptionSupported: 'false',
+      invoiceReminderSupported: 'false',
+      form: 'RurPayJurSB',
+      imageId: { staticImage: { url: null } }
+    })).toBeNull()
+
+    expect(convertPayment({
+      autopayable: 'false',
+      copyable: 'false',
+      date: '31.12.2018T00:00:00',
+      description: 'Капитализация по вкладу/счету',
+      form: 'ExtDepositCapitalization',
+      id: '6742338167',
+      imageId: { staticImage: { url: null } },
+      invoiceReminderSupported: 'false',
+      invoiceSubscriptionSupported: 'false',
+      isMobilePayment: 'false',
+      operationAmount: {
+        amount: '0.00',
+        currency: { code: 'RUB', name: 'руб.' }
+      },
+      state: 'FINANCIAL',
+      templatable: 'false',
+      to: 'До востребования (руб)                    42301810755244611128',
+      type: 'payment',
+      ufsId: null
+    })).toBeNull()
+  })
+
+  it('converts deposit capitalization', () => {
+    expect(convertPayment({
+      autopayable: 'false',
+      copyable: 'false',
+      date: '31.12.2018T00:00:00',
+      description: 'Капитализация по вкладу/счету',
+      form: 'ExtDepositCapitalization',
+      id: '6742338167',
+      imageId: { staticImage: { url: null } },
+      invoiceReminderSupported: 'false',
+      invoiceSubscriptionSupported: 'false',
+      isMobilePayment: 'false',
+      operationAmount: {
+        amount: '10.00',
+        currency: { code: 'RUB', name: 'руб.' }
+      },
+      state: 'FINANCIAL',
+      templatable: 'false',
+      to: 'До востребования (руб)                    42301810755244611128',
+      type: 'payment',
+      ufsId: null
+    }, { id: 'account', instrument: 'RUB' })).toEqual({
+      hold: false,
+      date: new Date('2018-12-31T00:00:00+03:00'),
+      movements: [
+        {
+          id: '6742338167',
+          account: { id: 'account' },
+          invoice: null,
+          sum: 10,
+          fee: null
+        }
+      ],
+      merchant: null,
+      comment: 'Капитализация по вкладу/счету'
     })
   })
 })
