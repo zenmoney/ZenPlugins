@@ -6,6 +6,7 @@ import {
   convertAccounts,
   convertApiTransaction,
   convertLoanTransaction,
+  convertPayment,
   convertPfmTransaction,
   convertToZenMoneyTransaction,
   convertWebTransaction
@@ -49,13 +50,15 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
 
   const zenAccounts = []
   const zenTransactions = []
+  const paymentIds = {}
 
   const apiAccountsByType = await sberbank.fetchAccounts(auth)
   const pfmAccounts = []
   const webAccounts = []
 
   await Promise.all(['account', 'loan', 'card', 'target'].map(type => {
-    const isPfmAccount = type === 'card'
+    // const isPfmAccount = type === 'card'
+    const isPfmAccount = false
 
     return Promise.all(convertAccounts(apiAccountsByType[type], type).map(async apiAccount => {
       for (const zenAccount of zenAccounts) {
@@ -83,17 +86,44 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
       await Promise.all(apiAccount.ids.map(async id => {
         try {
           const transactions = []
-          for (const apiTransaction of await sberbank.fetchTransactions(auth, { id, type: apiAccount.type }, fromDate, toDate)) {
-            const transaction = apiAccount.type === 'loan'
-              ? convertLoanTransaction(apiTransaction)
-              : convertApiTransaction(apiTransaction, apiAccount.zenAccount)
+          for (const apiTransaction of await sberbank.fetchTransactions(auth, {
+            id,
+            type: apiAccount.type,
+            instrument: apiAccount.zenAccount.instrument
+          }, fromDate, toDate)) {
+            let transaction
+            switch (apiAccount.type) {
+              case 'card':
+                transaction = convertPayment(apiTransaction, apiAccount.zenAccount)
+                if (transaction) {
+                  const id1 = transaction.movements[0].id
+                  const id2 = transaction.movements[1] && transaction.movements[1].id ? transaction.movements[1].id : id1
+                  if (paymentIds[id1] || paymentIds[id2]) {
+                    continue
+                  } else {
+                    paymentIds[id1] = true
+                    paymentIds[id2] = true
+                  }
+                  zenTransactions.push(transaction)
+                }
+                continue
+              case 'loan':
+                transaction = convertLoanTransaction(apiTransaction)
+                break
+              default:
+                transaction = convertApiTransaction(apiTransaction, apiAccount.zenAccount)
+                break
+            }
             if (!transaction) {
               continue
             }
             if (isPfmAccount) {
               transactions.push(transaction)
             } else {
-              zenTransactions.push(convertToZenMoneyTransaction(apiAccount.zenAccount, transaction))
+              const zenTransaction = convertToZenMoneyTransaction(apiAccount.zenAccount, transaction)
+              if (zenTransaction) {
+                zenTransactions.push(zenTransaction)
+              }
             }
           }
           if (isPfmAccount) {
@@ -123,7 +153,7 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
       if (e.toString().indexOf('[NCE]') >= 0) {
         // PFM uses TLSv1.2 which is not supported by Android < 5.0
         hasSSLError = true
-        console.log("skipping PFM. Application doesn't seem to support TLSv1.2")
+        console.log('skipping PFM. Application doesn\'t seem to support TLSv1.2')
       } else {
         throw e
       }

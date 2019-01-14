@@ -10,7 +10,7 @@ const md5 = new MD5()
 
 const deviceName = 'Xperia Z2'
 const version = '9.20'
-const appVersion = '7.11.1'
+const appVersion = '8.6.1'
 
 const defaultHeaders = {
   'User-Agent': 'Mobile Device',
@@ -108,7 +108,7 @@ export async function login (login, pin, auth) {
       throw new TemporaryError(response.body.error)
     }
     validateResponse(response, response => response.body.status === '0' &&
-            _.get(response, 'body.confirmRegistrationStage.mGUID'))
+      _.get(response, 'body.confirmRegistrationStage.mGUID'))
 
     ZenMoney.setData('mGUID', response.body.confirmRegistrationStage.mGUID)
 
@@ -157,8 +157,8 @@ export async function login (login, pin, auth) {
     throw new InvalidPreferencesError(response.body.error)
   }
   validateResponse(response, response => response.body && response.body.status === '0' &&
-        _.get(response, 'body.loginData.token') &&
-        _.get(response, 'body.loginData.host'))
+    _.get(response, 'body.loginData.token') &&
+    _.get(response, 'body.loginData.host'))
 
   const token = response.body.loginData.token
   const host = response.body.loginData.host
@@ -187,7 +187,7 @@ export async function login (login, pin, auth) {
     throw new TemporaryError('Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
   }
   validateResponse(response, response => response.body.status === '0' &&
-        _.get(response, 'body.loginCompleted') === 'true')
+    _.get(response, 'body.loginCompleted') === 'true')
 
   return { api: { token, host, cookie: getCookie(response) } }
 }
@@ -253,9 +253,9 @@ export async function loginInPfm (auth) {
     }
   }
   if (response.body && response.body.errors &&
-            response.body.errors[0] &&
-            response.body.errors[0].desc &&
-            response.body.errors[0].desc.indexOf('не удалось загрузить из config-factory.xml') >= 0) {
+    response.body.errors[0] &&
+    response.body.errors[0].desc &&
+    response.body.errors[0].desc.indexOf('не удалось загрузить из config-factory.xml') >= 0) {
     return { ...auth, pfm: null }
   }
   return { ...auth, pfm: { host, cookie: getCookie(response) } }
@@ -272,9 +272,9 @@ async function fetchTransactionsInPfmWithType (auth, accountIds, fromDate, toDat
     mskFromDate.setFullYear(currentYear, 0, 1)
   }
   let response = await network.fetchJson(`https://${auth.pfm.host}/pfm/api/v1.20/extracts` +
-        `?from=${formatDate(mskFromDate)}&to=${formatDate(mskToDate)}` +
-        `&showCash=true&showCashPayments=true&showOtherAccounts=true` +
-        `&selectedCardId=${accountIds.join(',')}&income=${income ? 'true' : 'false'}`, {
+    `?from=${formatDate(mskFromDate)}&to=${formatDate(mskToDate)}` +
+    `&showCash=true&showCashPayments=true&showOtherAccounts=true` +
+    `&selectedCardId=${accountIds.join(',')}&income=${income ? 'true' : 'false'}`, {
     method: 'GET',
     headers: {
       'User-Agent': 'Mobile Device',
@@ -289,10 +289,10 @@ async function fetchTransactionsInPfmWithType (auth, accountIds, fromDate, toDat
     sanitizeRequestLog: { headers: { Cookie: true } }
   })
   if (!ignoreToDateError && response && response.body &&
-            response.body.statusCode === 2 &&
-            response.body.errors &&
-            response.body.errors[0] &&
-            response.body.errors[0].field === 'to') {
+    response.body.statusCode === 2 &&
+    response.body.errors &&
+    response.body.errors[0] &&
+    response.body.errors[0].field === 'to') {
     return fetchTransactionsInPfmWithType(auth, accountIds,
       fromDate, new Date(toDate.getTime() - 24 * 3600 * 1000), income, true)
   }
@@ -301,7 +301,7 @@ async function fetchTransactionsInPfmWithType (auth, accountIds, fromDate, toDat
     return []
   }
   validateResponse(response, response => response.body &&
-        response.body.statusCode === 0 && Array.isArray(response.body.operations))
+    response.body.statusCode === 0 && Array.isArray(response.body.operations))
   return response.body.operations
 }
 
@@ -356,7 +356,62 @@ async function fetchAccountDetails (auth, { id, type }) {
   return response.body
 }
 
-export async function fetchTransactions (auth, { id, type }, fromDate, toDate) {
+async function fetchPayments (auth, { id, type, instrument }, fromDate, toDate) {
+  const transactions = []
+  const limit = 50
+  let offset = 0
+  let batch = null
+  do {
+    const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/payments/list.do`, {
+      headers: {
+        ...defaultHeaders,
+        'Host': `${auth.api.host}:4477`,
+        'Content-Type': 'application/x-www-form-urlencoded;charset=windows-1251',
+        'Cookie': auth.api.cookie
+      },
+      body: {
+        paginationSize: limit,
+        paginationOffset: offset,
+        from: formatDate(fromDate),
+        to: formatDate(toDate),
+        includeUfs: true,
+        usedResource: `${type}:${id}`,
+        showExternal: true
+      }
+    })
+    batch = getArray(_.get(response, 'body.operations.operation'))
+    await Promise.all(batch.map(async transaction => {
+      transactions.push(transaction)
+      if (transaction.operationAmount.currency.code !== instrument ||
+        ['TakingMeans', 'ExtCardTransferIn', 'RurPayment', 'InternalPayment'].indexOf(transaction.form) >= 0) {
+        const detailsResponse = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/payments/view.do`, {
+          headers: {
+            ...defaultHeaders,
+            'Host': `${auth.api.host}:4477`,
+            'Cookie': auth.api.cookie
+          },
+          body: {
+            id: transaction.id
+          }
+        })
+        const form = _.get(detailsResponse, 'body.document.form')
+        if (form) {
+          transaction.details = _.get(detailsResponse, `body.document.${form}Document`)
+          if (!transaction.details) {
+            throw new Error(`unexpected details form ${form}`)
+          }
+        }
+      }
+    }))
+    offset += limit
+  } while (batch && batch.length === limit)
+  return transactions
+}
+
+export async function fetchTransactions (auth, { id, type, instrument }, fromDate, toDate) {
+  if (type === 'card') {
+    return fetchPayments(auth, { id, type, instrument }, fromDate, toDate)
+  }
   const isFetchingByDate = type !== 'card'
   const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/${type}s/abstract.do`, {
     headers: {
@@ -462,8 +517,8 @@ async function fetchXml (url, options = {}, predicate = () => true) {
     throw new TemporaryError('Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
   }
   if (response.body.status !== '0' &&
-            response.body.error &&
-            response.body.error.indexOf('личный кабинет заблокирован') >= 0) {
+    response.body.error &&
+    response.body.error.indexOf('личный кабинет заблокирован') >= 0) {
     throw new InvalidPreferencesError(response.body.error)
   }
 
@@ -479,8 +534,8 @@ export function getErrorMessage (xmlObject, maxDepth = 3) {
     return null
   }
   if (xmlObject.errors &&
-            xmlObject.errors.error &&
-            xmlObject.errors.error.text) {
+    xmlObject.errors.error &&
+    xmlObject.errors.error.text) {
     return xmlObject.errors.error.text
   }
   if (maxDepth > 1) {
@@ -513,8 +568,8 @@ function validateResponse (response, predicate) {
 function getCookie (response) {
   let cookie
   if (response.headers &&
-            response.headers['set-cookie'] &&
-            response.headers['set-cookie'].indexOf('JSESSIONID') === 0) {
+    response.headers['set-cookie'] &&
+    response.headers['set-cookie'].indexOf('JSESSIONID') === 0) {
     cookie = response.headers['set-cookie'].split(';')[0]
   } else {
     cookie = ZenMoney.getCookie('JSESSIONID')
@@ -565,9 +620,9 @@ function createSdkData (login) {
 
   const obj = {
     'TIMESTAMP': dt.getUTCFullYear() + '-' +
-            toAtLeastTwoDigitsString(dt.getUTCMonth() + 1) + '-' +
-            toAtLeastTwoDigitsString(dt.getUTCDate()) + 'T' +
-            dt.getUTCHours() + ':' + dt.getUTCMinutes() + ':' + dt.getUTCSeconds() + 'Z',
+      toAtLeastTwoDigitsString(dt.getUTCMonth() + 1) + '-' +
+      toAtLeastTwoDigitsString(dt.getUTCDate()) + 'T' +
+      dt.getUTCHours() + ':' + dt.getUTCMinutes() + ':' + dt.getUTCSeconds() + 'Z',
     'HardwareID': generateImei(login, '35472406******L'),
     'SIM_ID': generateSimSN(login, '2500266********L'),
     'PhoneNumber': '',

@@ -6,6 +6,7 @@ import {
   convertCards,
   convertDeposit,
   convertLoan,
+  convertPayment,
   convertPfmTransaction,
   convertTarget,
   convertToZenMoneyTransaction,
@@ -721,10 +722,12 @@ describe('convertCards', () => {
                     <statusWay4>+-КАРТОЧКА ОТКРЫТА</statusWay4> 
             </detail> 
 </response>`).response
-    expect(convertCards([{
-      account,
-      details
-    }], nowDate)).toEqual([
+    expect(convertCards([
+      {
+        account,
+        details
+      }
+    ], nowDate)).toEqual([
       {
         ids: ['69474436'],
         type: 'card',
@@ -744,35 +747,37 @@ describe('convertCards', () => {
   })
 
   it('skips expired cards', () => {
-    expect(convertCards([{
-      account: {
-        id: '593949641',
-        name: 'Visa Classic',
-        smsName: '3233',
-        description: 'Visa Classic',
-        number: '427655******3233',
-        isMain: 'true',
-        type: 'debit',
-        availableLimit: { amount: '0.00', currency: { code: 'RUB', name: 'руб.' } },
-        state: 'active',
-        cardAccount: '40817810423044618561',
-        showarrestdetail: 'false',
-        tokenExists: 'false',
-        expireDate: '10/2017',
-        statusWay4: '+-КАРТОЧКА ОТКРЫТА'
-      },
-      details: {
-        holderName: 'МИХАИЛ ИГОРЕВИЧ Л.',
-        availableCashLimit: { amount: '0.00', currency: { code: 'RUB', name: 'руб.' } },
-        purchaseLimit: { amount: '0.00', currency: { code: 'RUB', name: 'руб.' } },
-        officeName: 'Доп.офис №9055/0774',
-        accountNumber: '40817810423044618561',
-        expireDate: '10/2017',
-        name: 'Visa Classic',
-        cardAccount: '40817810455033618561',
-        statusWay4: '+-КАРТОЧКА ОТКРЫТА'
+    expect(convertCards([
+      {
+        account: {
+          id: '593949641',
+          name: 'Visa Classic',
+          smsName: '3233',
+          description: 'Visa Classic',
+          number: '427655******3233',
+          isMain: 'true',
+          type: 'debit',
+          availableLimit: { amount: '0.00', currency: { code: 'RUB', name: 'руб.' } },
+          state: 'active',
+          cardAccount: '40817810423044618561',
+          showarrestdetail: 'false',
+          tokenExists: 'false',
+          expireDate: '10/2017',
+          statusWay4: '+-КАРТОЧКА ОТКРЫТА'
+        },
+        details: {
+          holderName: 'МИХАИЛ ИГОРЕВИЧ Л.',
+          availableCashLimit: { amount: '0.00', currency: { code: 'RUB', name: 'руб.' } },
+          purchaseLimit: { amount: '0.00', currency: { code: 'RUB', name: 'руб.' } },
+          officeName: 'Доп.офис №9055/0774',
+          accountNumber: '40817810423044618561',
+          expireDate: '10/2017',
+          name: 'Visa Classic',
+          cardAccount: '40817810455033618561',
+          statusWay4: '+-КАРТОЧКА ОТКРЫТА'
+        }
       }
-    }], nowDate)).toEqual([])
+    ], nowDate)).toEqual([])
   })
 })
 
@@ -1868,5 +1873,809 @@ describe('addTransactions', () => {
         }
       }
     ])
+  })
+})
+
+describe('convertPayment', () => {
+  it('converts currency transaction', () => {
+    expect(convertPayment({
+      autopayable: 'false',
+      copyable: 'false',
+      date: '28.12.2018T14:01:43',
+      description: 'Прочие списания',
+      form: 'ExtCardOtherOut',
+      from: 'MasterCard Mass 5298 26** **** 3389',
+      id: '11091826112',
+      imageId: { staticImage: { url: null } },
+      invoiceReminderSupported: 'false',
+      invoiceSubscriptionSupported: 'false',
+      isMobilePayment: 'false',
+      operationAmount: { amount: '-5.00', currency: { code: 'EUR', name: '€' } },
+      state: 'AUTHORIZATION',
+      templatable: 'false',
+      to: 'GO.SKYPE.COM/BILL',
+      type: 'payment',
+      ufsId: null,
+      details: {
+        amount: {
+          changed: 'false',
+          editable: 'false',
+          isSum: 'false',
+          moneyType: { value: '414.05' },
+          name: 'amount',
+          required: 'false',
+          title: 'Сумма в валюте счета',
+          type: 'money',
+          visible: 'true'
+        },
+        commission: {
+          changed: 'false',
+          editable: 'false',
+          isSum: 'false',
+          moneyType: null,
+          name: 'commission',
+          required: 'false',
+          title: 'Комиссия',
+          type: 'money',
+          visible: 'false'
+        },
+        description: {
+          changed: 'false',
+          editable: 'false',
+          isSum: 'false',
+          name: 'description',
+          required: 'false',
+          stringType: { value: 'GO.SKYPE.COM/BILL        LUXEMBOURG   LUX' },
+          title: 'Описание',
+          type: 'string',
+          visible: 'true'
+        },
+        fromResource: {
+          changed: 'false',
+          editable: 'false',
+          isSum: 'false',
+          name: 'fromResource',
+          required: 'true',
+          resourceType: {
+            availableValues: {
+              valueItem: {
+                currency: 'RUB',
+                displayedValue: '5298 26** **** 3389 [MasterCard Mass]',
+                selected: 'true',
+                value: 'card:51833625'
+              }
+            }
+          },
+          title: 'Счет списания',
+          type: 'resource',
+          visible: 'true'
+        },
+        nfc: {
+          changed: 'false',
+          editable: 'false',
+          isSum: 'false',
+          name: 'nfc',
+          required: 'false',
+          stringType: null,
+          title: 'Бесконтактная операция NFC',
+          type: 'string',
+          visible: 'false'
+        },
+        operationDate: {
+          changed: 'false',
+          editable: 'false',
+          isSum: 'false',
+          name: 'operationDate',
+          required: 'false',
+          stringType: { value: '28.12.2018 14:01:43' },
+          title: 'Дата и время совершения операции',
+          type: 'string',
+          visible: 'true'
+        },
+        paymentDetails: {
+          changed: 'false',
+          editable: 'false',
+          isSum: 'false',
+          name: 'paymentDetails',
+          required: 'false',
+          stringType: null,
+          title: 'Информация о платеже',
+          type: 'string',
+          visible: 'false'
+        },
+        sellAmount: {
+          changed: 'false',
+          editable: 'false',
+          isSum: 'false',
+          moneyType: { value: '5' },
+          name: 'sellAmount',
+          required: 'false',
+          title: 'Сумма списания',
+          type: 'money',
+          visible: 'true'
+        }
+      }
+    }, { id: 'account', instrument: 'RUB' })).toEqual({
+      hold: true,
+      date: new Date('2018-12-28T14:01:43+03:00'),
+      movements: [
+        {
+          id: '11091826112',
+          account: { id: 'account' },
+          invoice: {
+            sum: -5,
+            instrument: 'EUR'
+          },
+          sum: -414.05,
+          fee: null
+        }
+      ],
+      merchant: {
+        title: 'GO.SKYPE.COM/BILL',
+        city: 'LUXEMBOURG',
+        country: 'LUX',
+        mcc: null,
+        location: null
+      },
+      comment: null
+    })
+  })
+
+  it('converts cash replenishment', () => {
+    expect(convertPayment({
+      autopayable: 'false',
+      copyable: 'false',
+      date: '19.12.2018T10:49:12',
+      description: 'Внесение наличных',
+      form: 'ExtCardCashIn',
+      id: '10774664622',
+      imageId: {
+        staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/33355.jpg' }
+      },
+      invoiceReminderSupported: 'false',
+      invoiceSubscriptionSupported: 'false',
+      isMobilePayment: 'false',
+      operationAmount: {
+        amount: '41000.00',
+        currency: { code: 'RUB', name: 'руб.' }
+      },
+      state: 'FINANCIAL',
+      templatable: 'false',
+      to: 'Банкомат Сбербанка',
+      type: 'payment',
+      ufsId: null
+    }, { id: 'account', instrument: 'RUB' })).toEqual({
+      hold: false,
+      date: new Date('2018-12-19T10:49:12+03:00'),
+      movements: [
+        {
+          id: '10774664622',
+          account: { id: 'account' },
+          invoice: null,
+          sum: 41000,
+          fee: null
+        },
+        {
+          id: null,
+          account: {
+            type: 'cash',
+            instrument: 'RUB',
+            company: null,
+            syncIds: null
+          },
+          invoice: null,
+          sum: -41000,
+          fee: null
+        }
+      ],
+      merchant: null,
+      comment: null
+    })
+  })
+
+  it('converts outer income transfer', () => {
+    expect(convertPayment({
+      autopayable: 'false',
+      copyable: 'false',
+      date: '28.12.2018T17:01:17',
+      description: 'Входящий перевод',
+      form: 'ExtCardTransferIn',
+      from: '5291 67** **** 2272',
+      id: '11091826845',
+      imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/11ffac45-05f8-4dbd-b7e0-983ffda0bb72.png' } },
+      invoiceReminderSupported: 'false',
+      invoiceSubscriptionSupported: 'false',
+      isMobilePayment: 'false',
+      operationAmount: {
+        amount: '700.00',
+        currency: { code: 'RUB', name: 'руб.' }
+      },
+      state: 'FINANCIAL',
+      templatable: 'false',
+      to: 'Тинькофф Банк',
+      type: 'payment',
+      ufsId: null,
+      details: {
+        amount: {
+          changed: 'false',
+          editable: 'false',
+          moneyType: {
+            currency: { code: 'RUB' },
+            value: '700'
+          },
+          name: 'amount',
+          required: 'false',
+          title: 'Сумма в валюте счета',
+          type: 'money',
+          visible: 'false'
+        },
+        buyAmount: {
+          changed: 'false',
+          editable: 'false',
+          moneyType: {
+            currency: { code: 'RUB' },
+            value: '700'
+          },
+          name: 'buyAmount',
+          required: 'false',
+          title: 'Сумма зачисления',
+          type: 'money',
+          visible: 'true'
+        },
+        description: {
+          changed: 'false',
+          editable: 'false',
+          name: 'description',
+          required: 'false',
+          stringType: { value: 'Тинькофф Банк' },
+          title: 'Описание',
+          type: 'string',
+          visible: 'true'
+        },
+        fromResource: {
+          changed: 'false',
+          editable: 'false',
+          name: 'fromResource',
+          required: 'true',
+          stringType: { value: '**** 2272' },
+          title: 'Счет списания',
+          type: 'string',
+          visible: 'true'
+        },
+        operationDate: {
+          changed: 'false',
+          editable: 'false',
+          name: 'operationDate',
+          required: 'false',
+          stringType: { value: '28.12.2018 17:01:17' },
+          title: 'Дата и время совершения операции',
+          type: 'string',
+          visible: 'true'
+        },
+        toResource: {
+          changed: 'false',
+          editable: 'false',
+          name: 'toResource',
+          required: 'true',
+          resourceType: {
+            availableValues: {
+              valueItem: {
+                currency: 'RUB',
+                displayedValue: '5298 26** **** 3389 [MasterCard Mass]',
+                selected: 'true',
+                value: 'card:51833625'
+              }
+            }
+          },
+          title: 'Счет зачисления',
+          type: 'resource',
+          visible: 'true'
+        }
+      }
+    }, { id: 'account', instrument: 'RUB' })).toEqual({
+      hold: false,
+      date: new Date('2018-12-28T17:01:17+03:00'),
+      movements: [
+        {
+          id: '11091826845',
+          account: { id: 'account' },
+          invoice: null,
+          sum: 700,
+          fee: null
+        },
+        {
+          id: null,
+          account: {
+            type: null,
+            instrument: 'RUB',
+            company: {
+              title: 'Тинькофф Банк'
+            },
+            syncIds: ['2272']
+          },
+          invoice: null,
+          sum: -700,
+          fee: null
+        }
+      ],
+      merchant: null,
+      comment: null
+    })
+  })
+
+  it('converts outer outcome transfer with commission', () => {
+    expect(convertPayment({
+      autopayable: 'false',
+      copyable: 'true',
+      date: '09.01.2019T15:23:10',
+      description: 'Перевод на карту в другом банке',
+      form: 'RurPayment',
+      from: 'MasterCard Mass 5298 26** **** 3389',
+      id: '11363529083',
+      imageId: { staticImage: { url: null } },
+      invoiceReminderSupported: 'false',
+      invoiceSubscriptionSupported: 'false',
+      isMobilePayment: 'false',
+      operationAmount: {
+        amount: '-100.00',
+        currency: { code: 'RUB', name: 'руб.' }
+      },
+      state: 'EXECUTED',
+      templatable: 'true',
+      to: '**** 2272',
+      type: 'payment',
+      ufsId: null,
+      details: {
+        admissionDate: {
+          changed: 'false',
+          dateType: { value: '09.01.2019' },
+          editable: 'false',
+          name: 'admissionDate',
+          required: 'true',
+          title: 'Плановая дата исполнения',
+          type: 'date',
+          visible: 'true'
+        },
+        buyAmount: {
+          changed: 'false',
+          editable: 'false',
+          moneyType: {
+            value: '100'
+          },
+          name: 'buyAmount',
+          required: 'true',
+          title: 'Сумма зачисления',
+          type: 'money',
+          visible: 'true'
+        },
+        commission: {
+          amount: '30.00',
+          currency: { code: 'RUB', name: 'руб.' }
+        },
+        documentDate: {
+          changed: 'false',
+          dateType: { value: '09.01.2019' },
+          editable: 'false',
+          name: 'documentDate',
+          required: 'true',
+          title: 'Дата документа',
+          type: 'date',
+          visible: 'true'
+        },
+        documentNumber: {
+          changed: 'false',
+          editable: 'false',
+          integerType: { value: '898796' },
+          name: 'documentNumber',
+          required: 'true',
+          title: 'Номер документа',
+          type: 'integer',
+          visible: 'true'
+        },
+        fromResource: {
+          changed: 'false',
+          editable: 'false',
+          name: 'fromResource',
+          required: 'true',
+          resourceType: {
+            availableValues: {
+              valueItem: {
+                currency: 'RUB',
+                displayedValue: '5298 26** **** 3389 [MasterCard Mass]',
+                selected: 'true',
+                value: 'card:51833625'
+              }
+            }
+          },
+          title: 'Счет списания',
+          type: 'resource',
+          visible: 'true'
+        },
+        isFundPayment: {
+          booleanType: { value: 'false' },
+          changed: 'false',
+          editable: 'false',
+          name: 'isFundPayment',
+          required: 'false',
+          title: 'Является ли перевод оплатой сбора средств',
+          type: 'boolean',
+          visible: 'false'
+        },
+        receiverAccount: {
+          changed: 'false',
+          editable: 'false',
+          name: 'receiverAccount',
+          required: 'true',
+          stringType: { value: '**** 2272' },
+          title: 'Номер счета/карты получателя',
+          type: 'string',
+          visible: 'true'
+        }
+      }
+    }, { id: 'account', instrument: 'RUB' })).toEqual({
+      hold: false,
+      date: new Date('2019-01-09T15:23:10+03:00'),
+      movements: [
+        {
+          id: '11363529083',
+          account: { id: 'account' },
+          invoice: null,
+          sum: -100,
+          fee: -30
+        },
+        {
+          id: null,
+          account: {
+            type: null,
+            instrument: 'RUB',
+            company: null,
+            syncIds: ['2272']
+          },
+          invoice: null,
+          sum: 100,
+          fee: null
+        }
+      ],
+      merchant: null,
+      comment: null
+    })
+  })
+
+  it('converts outcome outer transfer to Sberbank client', () => {
+    expect(convertPayment({
+      autopayable: 'true',
+      copyable: 'true',
+      date: '19.12.2018T17:27:04',
+      description: 'Перевод клиенту Сбербанка',
+      form: 'RurPayment',
+      from: 'MasterCard Mass 5298 26** **** 3389',
+      id: '10778953787',
+      imageId: { staticImage: {} },
+      invoiceReminderSupported: 'false',
+      invoiceSubscriptionSupported: 'false',
+      isMobilePayment: 'false',
+      operationAmount: { amount: '-40000.00', currency: { code: 'RUB', name: 'руб.' } },
+      state: 'EXECUTED',
+      templatable: 'true',
+      to: 'НИКОЛАЙ НИКОЛАЕВИЧ Н.                                                        5184 27** **** 1478',
+      type: 'payment',
+      ufsId: null,
+      details: {
+        admissionDate: {
+          changed: 'false',
+          dateType: { value: '19.12.2018' },
+          editable: 'false',
+          name: 'admissionDate',
+          required: 'true',
+          title: 'Плановая дата исполнения',
+          type: 'date',
+          visible: 'true'
+        },
+        buyAmount: {
+          changed: 'false',
+          editable: 'false',
+          moneyType: null,
+          name: 'buyAmount',
+          required: 'true',
+          title: 'Сумма зачисления',
+          type: 'money',
+          visible: 'false'
+        },
+        commission: { amount: '0.00', currency: { code: 'RUB', name: 'руб.' } },
+        documentDate: {
+          changed: 'false',
+          dateType: { value: '19.12.2018' },
+          editable: 'false',
+          name: 'documentDate',
+          required: 'true',
+          title: 'Дата документа',
+          type: 'date',
+          visible: 'true'
+        },
+        documentNumber: {
+          changed: 'false',
+          editable: 'false',
+          integerType: { value: '90672' },
+          name: 'documentNumber',
+          required: 'true',
+          title: 'Номер документа',
+          type: 'integer',
+          visible: 'true'
+        },
+        fromResource: {
+          changed: 'false',
+          editable: 'false',
+          name: 'fromResource',
+          required: 'false',
+          resourceType: {
+            availableValues: {
+              valueItem: {
+                value: 'card:51833625',
+                selected: 'true',
+                displayedValue: '5298 26** **** 3389 [MasterCard Mass]',
+                currency: 'RUB'
+              }
+            }
+          },
+          title: 'Счет списания',
+          type: 'resource',
+          visible: 'true'
+        },
+        isFundPayment: {
+          booleanType: { value: 'false' },
+          changed: 'false',
+          editable: 'false',
+          name: 'isFundPayment',
+          required: 'false',
+          title: 'Является ли перевод оплатой сбора средств',
+          type: 'boolean',
+          visible: 'false'
+        },
+        messageToReceiverStatus: {
+          changed: 'false',
+          editable: 'false',
+          name: 'messageToReceiverStatus',
+          required: 'false',
+          stringType: { value: 'сообщение отправлено' },
+          title: 'Статус SMS-сообщения',
+          type: 'string',
+          visible: 'true'
+        },
+        receiverAccount: {
+          changed: 'false',
+          editable: 'false',
+          name: 'receiverAccount',
+          required: 'true',
+          stringType: { value: '5184 27** **** 1478' },
+          title: 'Номер счета/карты получателя',
+          type: 'string',
+          visible: 'true'
+        },
+        receiverName: {
+          changed: 'false',
+          editable: 'false',
+          name: 'receiverName',
+          required: 'true',
+          stringType: { value: 'НИКОЛАЙ НИКОЛАЕВИЧ Н.' },
+          title: 'ФИО получателя',
+          type: 'string',
+          visible: 'true'
+        },
+        sellAmount: {
+          changed: 'false',
+          editable: 'false',
+          moneyType: { value: '40000.00' },
+          name: 'sellAmount',
+          required: 'true',
+          title: 'Сумма в валюте списания',
+          type: 'money',
+          visible: 'true'
+        },
+        sellCurrency: {
+          changed: 'false',
+          editable: 'false',
+          name: 'sellAmountCurrency',
+          required: 'true',
+          stringType: { value: 'RUB' },
+          title: 'Валюта списания',
+          type: 'string',
+          visible: 'true'
+        }
+      }
+    }, { id: 'account', instrument: 'RUB' })).toEqual({
+      hold: false,
+      date: new Date('2018-12-19T17:27:04+03:00'),
+      movements: [
+        {
+          id: '10778953787',
+          account: { id: 'account' },
+          invoice: null,
+          sum: -40000,
+          fee: null
+        },
+        {
+          id: null,
+          account: {
+            type: null,
+            instrument: 'RUB',
+            company: {
+              id: '4624'
+            },
+            syncIds: ['1478']
+          },
+          invoice: null,
+          sum: 40000,
+          fee: null
+        }
+      ],
+      merchant: {
+        title: 'НИКОЛАЙ НИКОЛАЕВИЧ Н.',
+        city: null,
+        country: null,
+        mcc: null,
+        location: null
+      },
+      comment: null
+    })
+  })
+
+  it('converts inner transfer', () => {
+    expect(convertPayment({
+      autopayable: 'true',
+      copyable: 'true',
+      date: '19.12.2018T17:26:24',
+      description: 'Перевод между своими счетами',
+      form: 'InternalPayment',
+      from: 'MasterCard Mass 5298 26** **** 3389',
+      id: '10778929144',
+      imageId: { staticImage: { url: null } },
+      invoiceReminderSupported: 'false',
+      invoiceSubscriptionSupported: 'false',
+      isMobilePayment: 'false',
+      operationAmount: { amount: '-3710.81', currency: { code: 'RUB', name: 'руб.' } },
+      state: 'EXECUTED',
+      templatable: 'true',
+      to: 'Visa Gold 4281 01** **** 5370',
+      type: 'payment',
+      ufsId: null,
+      details: {
+        fromResource: {
+          changed: 'false',
+          editable: 'false',
+          name: 'fromResource',
+          required: 'false',
+          resourceType: {
+            availableValues: {
+              valueItem: { value: 'card:51833625', selected: 'true', displayedValue: '5298 26** **** 3389 [MasterCard Mass]', currency: 'RUB' }
+            }
+          },
+          title: 'Счет списания',
+          type: 'resource',
+          visible: 'true'
+        },
+        sellAmount: {
+          changed: 'false',
+          editable: 'false',
+          moneyType: { value: '3710.81' },
+          name: 'sellAmount',
+          required: 'false',
+          title: 'Сумма списания',
+          type: 'money',
+          visible: 'true'
+        },
+        toResource: {
+          changed: 'false',
+          editable: 'false',
+          name: 'toResource',
+          required: 'false',
+          resourceType: {
+            availableValues: {
+              valueItem: { value: 'card:69474436', selected: 'true', displayedValue: '4281 01** **** 5370 [Visa Gold]', currency: 'RUB' }
+            }
+          },
+          title: 'Ресурс зачисления',
+          type: 'resource',
+          visible: 'true'
+        }
+      }
+    }, { id: 'account', instrument: 'RUB' })).toEqual({
+      hold: false,
+      date: new Date('2018-12-19T17:26:24+03:00'),
+      movements: [
+        {
+          id: '10778929144',
+          account: { id: 'card:51833625' },
+          invoice: null,
+          sum: -3710.81,
+          fee: null
+        },
+        {
+          id: '10778929144',
+          account: { id: 'card:69474436' },
+          invoice: null,
+          sum: 3710.81,
+          fee: null
+        }
+      ],
+      merchant: null,
+      comment: null
+    })
+  })
+
+  it('converts commission', () => {
+    expect(convertPayment({
+      autopayable: 'false',
+      copyable: 'false',
+      date: '19.12.2018T00:00:00',
+      description: 'Комиссии',
+      form: 'TakingMeans',
+      from: 'MasterCard Mass 5298 26** **** 3389',
+      id: '10790859369',
+      imageId: { staticImage: { url: null } },
+      invoiceReminderSupported: 'false',
+      invoiceSubscriptionSupported: 'false',
+      isMobilePayment: 'false',
+      operationAmount: { amount: '-60.00', currency: { code: 'RUB', name: 'руб.' } },
+      state: 'FINANCIAL',
+      templatable: 'false',
+      type: 'payment',
+      ufsId: null
+    }, { id: 'account', instrument: 'RUB' })).toEqual({
+      hold: false,
+      date: new Date('2018-12-19T00:00:00+03:00'),
+      movements: [
+        {
+          id: '10790859369',
+          account: { id: 'account' },
+          invoice: null,
+          sum: -60,
+          fee: null
+        }
+      ],
+      merchant: null,
+      comment: 'Комиссии'
+    })
+  })
+
+  it('converts online payment', () => {
+    expect(convertPayment({
+      autopayable: 'true',
+      copyable: 'true',
+      date: '24.12.2018T16:10:18',
+      description: 'Оплата услуг',
+      form: 'RurPayJurSB',
+      from: 'Visa Gold 4281 01** **** 5370',
+      id: '10936646113',
+      imageId: { staticImage: { url: null } },
+      invoiceReminderSupported: 'false',
+      invoiceSubscriptionSupported: 'true',
+      isMobilePayment: 'false',
+      operationAmount: { amount: '-192.67', currency: { code: 'RUB', name: 'руб.' } },
+      state: 'EXECUTED',
+      templatable: 'true',
+      to: 'Газпром межрегионгаз Санкт-Петербург                                                                        40702810055230176256',
+      type: 'servicePayment',
+      ufsId: null
+    }, { id: 'account', instrument: 'RUB' })).toEqual({
+      hold: false,
+      date: new Date('2018-12-24T16:10:18+03:00'),
+      movements: [
+        {
+          id: '10936646113',
+          account: { id: 'account' },
+          invoice: null,
+          sum: -192.67,
+          fee: null
+        }
+      ],
+      merchant: {
+        title: 'Газпром межрегионгаз Санкт-Петербург',
+        city: null,
+        country: null,
+        mcc: null,
+        location: null
+      },
+      comment: null
+    })
   })
 })

@@ -1,6 +1,6 @@
 /* eslint-disable no-labels */
 import * as _ from 'lodash'
-import { getIntervalBetweenDates} from '../../common/momentDateUtils'
+import { getIntervalBetweenDates } from '../../common/momentDateUtils'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 
 export function parseApiDate (str) {
@@ -144,6 +144,192 @@ export function convertApiTransaction (apiTransaction, zenAccount) {
     transaction.origin = origin
   }
   return transaction
+}
+
+export function convertPayment (apiTransaction, account) {
+  const transaction = {
+    movements: [
+      {
+        id: apiTransaction.id,
+        account: { id: account.id },
+        invoice: {
+          sum: parseDecimal(apiTransaction.operationAmount.amount),
+          instrument: apiTransaction.operationAmount.currency.code
+        },
+        sum: null,
+        fee: null
+      }
+    ],
+    date: parseApiDate(apiTransaction.date),
+    hold: apiTransaction.state === 'AUTHORIZATION',
+    merchant: null,
+    comment: null
+  };
+  [
+    parsePaymentInnerTransfer,
+    parsePaymentSum,
+    parsePaymentCashReplenishment,
+    parsePaymentOuterIncomeTransfer,
+    parsePaymentOutcomeTransfer,
+    parsePaymentPayee
+  ].some(parser => parser(transaction, apiTransaction, account))
+  return transaction
+}
+
+function parsePaymentSum (transaction, apiTransaction, account) {
+  const invoice = transaction.movements[0].invoice
+  if (invoice.instrument === account.instrument) {
+    transaction.movements[0].sum = invoice.sum
+    transaction.movements[0].invoice = null
+  } else {
+    const sumStr = _.get(apiTransaction, 'details.amount.moneyType.value')
+    if (sumStr) {
+      transaction.movements[0].sum = parseDecimal(Math.abs(parseDecimal(sumStr)) * Math.sign(invoice.sum))
+    }
+  }
+}
+
+function parsePaymentCashReplenishment (transaction, apiTransaction, account) {
+  if (apiTransaction.form !== 'ExtCardCashIn') {
+    return false
+  }
+  const invoice = transaction.movements[0].invoice || { sum: transaction.movements[0].sum, instrument: account.instrument }
+  transaction.movements.push({
+    id: null,
+    account: {
+      type: 'cash',
+      instrument: invoice.instrument,
+      company: null,
+      syncIds: null
+    },
+    invoice: null,
+    sum: -invoice.sum,
+    fee: null
+  })
+  return true
+}
+
+function parsePaymentInnerTransfer (transaction, apiTransaction) {
+  if (apiTransaction.form !== 'InternalPayment') {
+    return false
+  }
+  const outcomeAccountId = _.get(apiTransaction, 'details.fromResource.resourceType.availableValues.valueItem.value')
+  const incomeAccountId = _.get(apiTransaction, 'details.toResource.resourceType.availableValues.valueItem.value')
+  if (!incomeAccountId || !outcomeAccountId) {
+    return false
+  }
+  const invoice = transaction.movements[0].invoice
+  const sum = parseDecimal(_.get(apiTransaction, 'details.sellAmount.moneyType.value'))
+  const incomeMovement = {
+    id: apiTransaction.id,
+    account: { id: incomeAccountId },
+    invoice: null,
+    sum: Math.abs(invoice.sum),
+    fee: null
+  }
+  const outcomeMovement = {
+    id: apiTransaction.id,
+    account: { id: outcomeAccountId },
+    invoice: invoice && invoice.sum !== -sum ? invoice : null,
+    sum: -sum,
+    fee: null
+  }
+  transaction.movements = [outcomeMovement, incomeMovement]
+  return true
+}
+
+function parsePaymentOuterIncomeTransfer (transaction, apiTransaction, account) {
+  if (apiTransaction.form !== 'ExtCardTransferIn') {
+    return false
+  }
+  const match = apiTransaction.from && apiTransaction.from.match(/(\d{4})$/)
+  if (!match) {
+    return false
+  }
+  const invoice = transaction.movements[0].invoice || { sum: transaction.movements[0].sum, instrument: account.instrument }
+  transaction.movements.push({
+    id: null,
+    account: {
+      type: null,
+      instrument: invoice.instrument,
+      company: { title: apiTransaction.to },
+      syncIds: [match[1]]
+    },
+    invoice: null,
+    sum: -invoice.sum,
+    fee: null
+  })
+  return true
+}
+
+function parsePaymentOutcomeTransfer (transaction, apiTransaction, account) {
+  if (apiTransaction.form !== 'RurPayment') {
+    return false
+  }
+  const receiver = _.get(apiTransaction, 'details.receiverAccount.stringType.value')
+  const match = receiver && receiver.match(/(\d{4})$/)
+  if (!match) {
+    return false
+  }
+  const feeStr = _.get(apiTransaction, 'details.commission.amount')
+  const fee = feeStr && parseDecimal(feeStr)
+  if (fee) {
+    transaction.movements[0].fee = -Math.abs(fee)
+  }
+  const invoice = transaction.movements[0].invoice || { sum: transaction.movements[0].sum, instrument: account.instrument }
+  transaction.movements.push({
+    id: null,
+    account: {
+      type: null,
+      instrument: invoice.instrument,
+      company: apiTransaction.description === 'Перевод клиенту Сбербанка' ? { id: '4624' } : null,
+      syncIds: [match[1]]
+    },
+    invoice: null,
+    sum: -invoice.sum,
+    fee: null
+  })
+  const receiverName = _.get(apiTransaction, 'details.receiverName.stringType.value')
+  if (receiverName) {
+    transaction.merchant = {
+      title: receiverName,
+      city: null,
+      country: null,
+      mcc: null,
+      location: null
+    }
+  }
+  return true
+}
+
+function parsePaymentPayee (transaction, apiTransaction, account) {
+  let payee = apiTransaction.to
+  if (payee) {
+    if (apiTransaction.form === 'RurPayJurSB') {
+      const parts = payee.split(/\s\s+/)
+      if (parts.length > 1) {
+        payee = parts.slice(0, parts.length - 1).join(' ')
+      }
+    }
+    transaction.merchant = {
+      title: payee,
+      city: null,
+      country: null,
+      mcc: null,
+      location: null
+    }
+    const fullTitle = _.get(apiTransaction, 'details.description.stringType.value')
+    if (fullTitle) {
+      const parts = fullTitle.split(/\s\s+/)
+      if (parts.length > 2) {
+        transaction.merchant.country = parts[parts.length - 1]
+        transaction.merchant.city = parts[parts.length - 2]
+      }
+    }
+  }
+  if (apiTransaction.description === 'Комиссии') {
+    transaction.comment = 'Комиссии'
+  }
 }
 
 export function convertPfmTransaction (pfmTransaction) {
@@ -306,6 +492,10 @@ function formatDateTime (date) {
 }
 
 export function convertToZenMoneyTransaction (zenAccount, transaction) {
+  if (transaction.movements) {
+    return transaction
+  }
+
   const zenMoneyTransaction = {
     date: transaction.date,
     hold: transaction.hold,
