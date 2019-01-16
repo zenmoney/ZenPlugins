@@ -34,7 +34,7 @@ function makeZenmoneyAccountReference (account) {
     )
     console.assert(_.isString(account.id), 'account.id must be String:', account)
     console.assert(
-      accountTypes.every((x) => !account.id.includes(x)),
+      accountTypes.every((x) => account.id !== x && !account.id.includes(x + '#')),
       'account.id must not be used to provide weak reference. Use account weak-referencing type, instrument[, syncID] props instead.'
     )
     return account.id
