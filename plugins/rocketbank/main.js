@@ -527,9 +527,15 @@ function RocketBank(ZenMoney) {
                             transaction.outcome = sum;
                         }
                         break;
+                    case "cashin_commission": // Комиссия за внесение наличных
+                        transaction.outcome = sum;
+                        transaction.comment = getComment(operation);
+                        transaction.payee = "Рокетбанк";
+                        break;
                     default:
                         delete operation["receipt_url"]; // Do not log private info
                         error("Неизвестный тип транзакции", JSON.stringify(operation));
+                        break;
                 }
 
                 if (operation.location.latitude !== null && operation.location.longitude !== null) {
