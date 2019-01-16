@@ -284,7 +284,12 @@ function parsePayee (apiTransaction, transaction) {
 }
 
 function getInstrument (code) {
-  return code === 'RUR' ? 'RUB' : code
+  switch (code) {
+    case 'RUR': return 'RUB'
+    case 'GLD': return 'XAU'
+    case 'SLR': return 'XAG'
+    default: return code
+  }
 }
 
 function getOrigin (apiTransaction) {
