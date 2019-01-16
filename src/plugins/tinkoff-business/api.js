@@ -1,7 +1,7 @@
 import { Base64 } from 'jshashes'
-import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import * as network from '../../common/network'
-import { getUid } from '../sberbank-online/api'
+import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
+import { generateRandomString } from '../../common/utils'
 
 const base64 = new Base64()
 
@@ -76,7 +76,7 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
     // nothing
   } else if (ZenMoney.openWebView) {
     const { error, code } = await new Promise((resolve) => {
-      const state = getUid(16)
+      const state = generateRandomString(16)
       const redirectUriWithoutProtocol = REDIRECT_URI.replace(/^https?:\/\//i, '')
       const url = `https://sso.tinkoff.ru/authorize?${qs.stringify({
         'client_id': CLIENT_ID,

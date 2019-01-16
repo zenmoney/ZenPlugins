@@ -1,16 +1,15 @@
 import { MD5 } from 'jshashes'
 import _ from 'lodash'
+import * as qs from 'querystring'
 import * as network from '../../common/network'
 import { retry, RetryError, toNodeCallbackArguments } from '../../common/retry'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { formatDateSql, parseDate } from './converters'
 
-const qs = require('querystring')
 const md5 = new MD5()
 
-const deviceName = 'Xperia Z2'
-const version = '9.20'
-const appVersion = '8.6.1'
+const API_VERSION = '9.20'
+const APP_VERSION = '8.6.1'
 
 const defaultHeaders = {
   'User-Agent': 'Mobile Device',
@@ -20,86 +19,61 @@ const defaultHeaders = {
   'Accept-Encoding': 'gzip'
 }
 
-export async function login (login, pin, auth) {
-  // Migration
-  if (!ZenMoney.getData('devID') && ZenMoney.getData('devid')) {
-    ZenMoney.setData('devID', ZenMoney.getData('devid'))
-    ZenMoney.setData('devIDOld', getUid(36) + '0000')
-    ZenMoney.setData('devid', undefined)
+export async function renewSession (session) {
+  if (!session || !session.host || !session.cookie) {
+    return null
   }
-  if (!ZenMoney.getData('mGUID') && ZenMoney.getData('guid')) {
-    ZenMoney.setData('mGUID', ZenMoney.getData('guid'))
-    ZenMoney.setData('guid', undefined)
-  }
+  const response = await fetchXml(`https://${session.host}:4477/mobile9/private/renewSession.do`, {
+    headers: {
+      ...defaultHeaders,
+      'Accept': 'application/x-www-form-urlencoded',
+      'Accept-Charset': 'windows-1251',
+      'Host': `${session.host}:4477`,
+      'Cookie': `${session.cookie}`
+    },
+    parse: body => body ? network.parseXml(body) : { response: {} }
+  }, null)
+  return response.body && response.body.status === '0' ? session : null
+}
 
-  if (!ZenMoney.getData('devID')) {
-    ZenMoney.setData('devID', md5.hex(login) + '0000')
-    ZenMoney.setData('devIDOld', getUid(36) + '0000')
+export async function login (login, pin, auth, device) {
+  const commonBody = {
+    'version': API_VERSION,
+    'appType': 'android',
+    'appVersion': APP_VERSION,
+    'deviceName': device.model
   }
-  ZenMoney.setData('simId', undefined)
-  ZenMoney.setData('imei', undefined)
 
   let response
+  let guid = auth && auth.guid
 
-  if (auth && auth.pfm === null) {
-    auth = null
-  }
-  if (auth) {
-    response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/renewSession.do`, {
-      headers: {
-        ...defaultHeaders,
-        'Accept': 'application/x-www-form-urlencoded',
-        'Accept-Charset': 'windows-1251',
-        'Host': `${auth.api.host}:4477`,
-        'Cookie': `${auth.api.cookie}`
-      },
-      parse: (body) => {
-        if (body) {
-          return network.parseXml(body)
-        } else {
-          return { response: {} }
-        }
-      }
-    }, null)
-    if (response.body && response.body.status === '0') {
-      return auth
-    }
-  }
-
-  const commonBody = {
-    'version': version,
-    'appType': 'android',
-    'appVersion': appVersion,
-    'deviceName': deviceName
-  }
-
-  if (ZenMoney.getData('mGUID')) {
+  if (guid) {
     response = await fetchXml('https://online.sberbank.ru:4477/CSAMAPI/login.do', {
       body: {
         ...commonBody,
         'operation': 'button.login',
-        'mGUID': ZenMoney.getData('mGUID'),
+        'mGUID': guid,
         'password': pin,
         'isLightScheme': false,
-        'devID': ZenMoney.getData('devID'),
-        'mobileSdkData': JSON.stringify(createSdkData(login))
+        'devID': device.id,
+        'mobileSdkData': JSON.stringify(createSdkData(login, device))
       },
       sanitizeRequestLog: { body: { mGUID: true, password: true, devID: true, mobileSdkData: true } },
       sanitizeResponseLog: { body: { loginData: { token: true } } }
     }, null)
     if (response.body.status === '7') {
-      ZenMoney.setData('mGUID', undefined)
+      guid = null
     }
   }
 
-  if (!ZenMoney.getData('mGUID')) {
+  if (!guid) {
     response = await fetchXml('https://online.sberbank.ru:4477/CSAMAPI/registerApp.do', {
       body: {
         ...commonBody,
         'operation': 'register',
         'login': login,
-        'devID': ZenMoney.getData('devID'),
-        'devIDOld': ZenMoney.getData('devIDOld')
+        'devID': device.id,
+        'devIDOld': device.idOld
       },
       sanitizeRequestLog: { body: { login: true, devID: true, devIDOld: true } },
       sanitizeResponseLog: { body: { confirmRegistrationStage: { mGUID: true } } }
@@ -110,7 +84,7 @@ export async function login (login, pin, auth) {
     validateResponse(response, response => response.body.status === '0' &&
       _.get(response, 'body.confirmRegistrationStage.mGUID'))
 
-    ZenMoney.setData('mGUID', response.body.confirmRegistrationStage.mGUID)
+    guid = response.body.confirmRegistrationStage.mGUID
 
     if (_.get(response, 'body.confirmInfo.type') === 'smsp') {
       const code = await ZenMoney.readLine('Введите код для входа в Сбербанк Онлайн для Android из SMS или пуш-уведомления', {
@@ -123,9 +97,9 @@ export async function login (login, pin, auth) {
       response = await fetchXml('https://online.sberbank.ru:4477/CSAMAPI/registerApp.do', {
         body: {
           'operation': 'confirm',
-          'mGUID': ZenMoney.getData('mGUID'),
+          'mGUID': guid,
           'smsPassword': code,
-          'version': version,
+          'version': API_VERSION,
           'appType': 'android'
         },
         sanitizeRequestLog: { body: { mGUID: true, smsPassword: true } }
@@ -141,12 +115,12 @@ export async function login (login, pin, auth) {
       body: {
         ...commonBody,
         'operation': 'createPIN',
-        'mGUID': ZenMoney.getData('mGUID'),
+        'mGUID': guid,
         'password': pin,
         'isLightScheme': false,
-        'devID': ZenMoney.getData('devID'),
-        'devIDOld': ZenMoney.getData('devIDOld'),
-        'mobileSdkData': JSON.stringify(createSdkData(login))
+        'devID': device.id,
+        'devIDOld': device.idOld,
+        'mobileSdkData': JSON.stringify(createSdkData(login, device))
       },
       sanitizeRequestLog: { body: { mGUID: true, password: true, devID: true, devIDOld: true, mobileSdkData: true } },
       sanitizeResponseLog: { body: { loginData: { token: true } } }
@@ -177,8 +151,8 @@ export async function login (login, pin, auth) {
       'deviceType': 'Android SDK built for x86_64',
       'deviceOSType': 'android',
       'deviceOSVersion': '6.0',
-      'appVersion': appVersion,
-      'deviceName': deviceName
+      'appVersion': APP_VERSION,
+      'deviceName': device.model
     },
     sanitizeRequestLog: { body: { token: true } },
     sanitizeResponseLog: { body: { person: true } }
@@ -189,7 +163,7 @@ export async function login (login, pin, auth) {
   validateResponse(response, response => response.body.status === '0' &&
     _.get(response, 'body.loginCompleted') === 'true')
 
-  return { api: { token, host, cookie: getCookie(response) } }
+  return { guid, api: { token, host, cookie: getCookie(response) } }
 }
 
 export async function fetchAccounts (auth) {
@@ -275,10 +249,12 @@ async function fetchPayments (auth, { id, type, instrument }, fromDate, toDate) 
           'TakingMeans',
           'ExtCardTransferIn',
           'ExtCardTransferOut',
+          'ExtCardCashOut',
+          'ExtDepositOtherDebit',
           'RurPayment',
           'InternalPayment',
-          'ExtCardCashOut',
-          'ExtDepositOtherDebit'
+          'AccountOpeningClaim',
+          'AccountClosingPayment'
         ].indexOf(transaction.form) >= 0) {
         const detailsResponse = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/payments/view.do`, {
           headers: {
@@ -305,29 +281,27 @@ async function fetchPayments (auth, { id, type, instrument }, fromDate, toDate) 
 }
 
 export async function fetchTransactions (auth, { id, type, instrument }, fromDate, toDate) {
-  if (type === 'card' || type === 'account') {
-    return fetchPayments(auth, { id, type, instrument }, fromDate, toDate)
+  if (type === 'loan') {
+    const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/${type}s/abstract.do`, {
+      headers: {
+        ...defaultHeaders,
+        'Host': `${auth.api.host}:4477`,
+        'Referer': `Android/6.0/${APP_VERSION}`,
+        'Cookie': auth.api.cookie
+      },
+      body: { id, from: formatDate(fromDate), to: formatDate(toDate) }
+    })
+    const fromDateStr = formatDateSql(fromDate)
+    const toDateStr = formatDateSql(toDate)
+    return getArray(_.get(response, 'body.elements.element')).filter(transaction => {
+      const dateStr = formatDateSql(parseDate(transaction.date))
+      return dateStr >= fromDateStr && dateStr <= toDateStr
+    })
   }
-  const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/${type}s/abstract.do`, {
-    headers: {
-      ...defaultHeaders,
-      'Host': `${auth.api.host}:4477`,
-      'Referer': `Android/6.0/${appVersion}`,
-      'Cookie': auth.api.cookie
-    },
-    body: { id, from: formatDate(fromDate), to: formatDate(toDate) }
-  })
-  const fromDateStr = formatDateSql(fromDate)
-  const toDateStr = formatDateSql(toDate)
-  return (type === 'loan'
-    ? getArray(_.get(response, 'body.elements.element'))
-    : getArray(_.get(response, 'body.operations.operation'))).filter(transaction => {
-    const dateStr = formatDateSql(new Date(parseDate(transaction.date)))
-    return dateStr >= fromDateStr && dateStr <= toDateStr
-  })
+  return fetchPayments(auth, { id, type, instrument }, fromDate, toDate)
 }
 
-export async function makeTransfer (login, auth, { fromAccount, toAccount, sum }) {
+export async function makeTransfer (login, auth, device, { fromAccount, toAccount, sum }) {
   const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/payments/payment.do`, {
     headers: {
       ...defaultHeaders,
@@ -354,7 +328,7 @@ export async function makeTransfer (login, auth, { fromAccount, toAccount, sum }
       'Host': `${auth.api.host}:4477`
     },
     body: {
-      mobileSdkData: JSON.stringify(createSdkData(login)),
+      mobileSdkData: JSON.stringify(createSdkData(login, device)),
       operation: 'confirm',
       id: id,
       form: 'InternalPayment',
@@ -476,23 +450,8 @@ function getArray (object) {
     : Array.isArray(object) ? object : [object]
 }
 
-export function formatDate (date) {
+function formatDate (date) {
   return [date.getDate(), date.getMonth() + 1, date.getFullYear()].map(toAtLeastTwoDigitsString).join('.')
-}
-
-function getRandomInt (min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min
-}
-
-export function getUid (length, chars) {
-  if (typeof chars !== 'string') {
-    chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
-  }
-  const buf = []
-  for (let i = 0; i < length; i++) {
-    buf.push(chars[getRandomInt(0, chars.length - 1)])
-  }
-  return buf.join('')
 }
 
 function generateHex (mask, digits) {
@@ -502,7 +461,7 @@ function generateHex (mask, digits) {
   })
 }
 
-function createSdkData (login) {
+function createSdkData (login, device) {
   const dt = new Date()
   const hex = md5.hex(login + 'sdk_data')
   const rsaAppKey = md5.hex(login + 'rsa app key').toUpperCase()
@@ -528,9 +487,9 @@ function createSdkData (login) {
         'Status': '3'
       }
     ],
-    'DeviceModel': 'D6503',
+    'DeviceModel': device.model,
     'MultitaskingSupported': true,
-    'deviceName': deviceName,
+    'deviceName': device.model,
     'DeviceSystemName': 'Android',
     'DeviceSystemVersion': '22',
     'Languages': 'ru',

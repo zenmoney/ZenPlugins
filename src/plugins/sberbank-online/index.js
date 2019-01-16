@@ -1,16 +1,62 @@
-import * as _ from 'lodash'
-import { convertAccountSyncID } from '../../common/accounts'
-import { combineIntoTransferByTransferId } from '../../common/transactions'
-import { fetchAccounts, fetchTransactions, login, makeTransfer as _makeTransfer } from './api'
-import { convertAccounts, convertApiTransaction, convertLoanTransaction, convertPayment, convertToZenMoneyTransaction } from './converters'
+import { MD5 } from 'jshashes'
+import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
+import { generateRandomString } from '../../common/utils'
+import { fetchAccounts, fetchTransactions, login, makeTransfer as _makeTransfer, renewSession } from './api'
+import { convertAccounts, convertLoanTransaction, convertTransaction } from './converters'
+
+const md5 = new MD5()
 
 function getAuth () {
-  return ZenMoney.getData('auth')
+  let guid = ZenMoney.getData('mGUID') || ZenMoney.getData('guid')
+  if (guid) {
+    ZenMoney.setData('mGUID', undefined)
+    ZenMoney.setData('guid', undefined)
+  }
+  let auth = ZenMoney.getData('auth')
+  if (guid) {
+    if (auth) {
+      auth.guid = guid
+    } else {
+      auth = { guid }
+    }
+    saveAuth(auth)
+  }
+  return auth
+}
+
+function getDevice ({ login }) {
+  let device = ZenMoney.getData('device')
+  if (!device) {
+    if (ZenMoney.getData('devID') && ZenMoney.getData('devIDOld')) {
+      device = {
+        id: ZenMoney.getData('devID'),
+        idOld: ZenMoney.getData('devIDOld'),
+        model: 'Xperia Z2'
+      }
+    } else if (ZenMoney.getData('devid')) {
+      device = {
+        id: ZenMoney.getData('devid'),
+        idOld: generateRandomString(36) + '0000',
+        model: 'Xperia Z2'
+      }
+    } else {
+      device = {
+        id: md5.hex(login) + '0000',
+        idOld: generateRandomString(36) + '0000',
+        model: 'Zenmoney Phone'
+      }
+    }
+    ZenMoney.setData('simId', undefined)
+    ZenMoney.setData('imei', undefined)
+    ZenMoney.setData('devid', undefined)
+    ZenMoney.setData('devID', undefined)
+    ZenMoney.setData('devIDOld', undefined)
+    ZenMoney.setData('device', device)
+  }
+  return device
 }
 
 function saveAuth (auth) {
-  delete auth.api.token
-  delete auth.pfm
   ZenMoney.setData('auth', auth)
 }
 
@@ -18,96 +64,75 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
   if (preferences.pin.length !== 5) {
     throw new InvalidPreferencesError('Пин-код должен быть из 5 цифр')
   }
-
-  toDate = toDate || new Date()
-
-  const isFirstRun = !ZenMoney.getData('scrape/lastSuccessDate')
-  if (isFirstRun && ZenMoney.getData('devid')) {
+  if (!ZenMoney.getData('scrape/lastSuccessDate') && ZenMoney.getData('devid')) {
     fromDate = new Date(new Date().getTime() - 7 * 24 * 3600 * 1000)
   }
+  if (!toDate) {
+    toDate = new Date()
+  }
 
-  const auth = await login(preferences.login, preferences.pin, getAuth())
+  let auth = getAuth()
+  if (auth && auth.api) {
+    if (!(await renewSession(auth.api))) {
+      delete auth.api
+    }
+  }
+  if (!auth || !auth.api) {
+    auth = await login(preferences.login, preferences.pin, auth, getDevice(preferences))
+  }
 
-  const zenAccounts = []
-  const zenTransactions = []
-  const paymentIds = {}
+  const { accountData, accountsById } = convertAccounts(await fetchAccounts(auth))
 
-  const apiAccountsByType = await fetchAccounts(auth)
+  const accounts = []
+  const transactions = []
+  const transactionIds = {}
 
-  await Promise.all(['account', 'loan', 'card', 'target'].map(type => {
-    return Promise.all(convertAccounts(apiAccountsByType[type], type).map(async apiAccount => {
-      for (const zenAccount of zenAccounts) {
-        if (apiAccount.zenAccount.id === zenAccount.id) {
-          apiAccount.zenAccount.syncID.forEach(id => {
-            if (zenAccount.syncID.indexOf(id) < 0) {
-              zenAccount.syncID.push(id)
-            }
-          })
-          return
-        }
-      }
-
-      zenAccounts.push(apiAccount.zenAccount)
-      if (ZenMoney.isAccountSkipped(apiAccount.zenAccount.id)) {
-        return
-      }
-
-      await Promise.all(apiAccount.ids.map(async id => {
-        try {
-          for (const apiTransaction of await fetchTransactions(auth, {
-            id,
-            type: apiAccount.type,
-            instrument: apiAccount.zenAccount.instrument
-          }, fromDate, toDate)) {
-            let transaction
-            switch (apiAccount.type) {
-              case 'account':
-              case 'card':
-                transaction = convertPayment(apiTransaction, apiAccount.zenAccount)
-                if (transaction) {
-                  const id1 = transaction.movements[0].id
-                  const id2 = transaction.movements[1] && transaction.movements[1].id ? transaction.movements[1].id : id1
-                  if (paymentIds[id1] || paymentIds[id2]) {
-                    continue
-                  } else {
-                    paymentIds[id1] = true
-                    paymentIds[id2] = true
-                  }
-                }
-                break
-              case 'loan':
-                transaction = convertLoanTransaction(apiTransaction)
-                break
-              default:
-                transaction = convertApiTransaction(apiTransaction, apiAccount.zenAccount)
-                break
-            }
-            const zenTransaction = transaction ? convertToZenMoneyTransaction(apiAccount.zenAccount, transaction) : null
-            if (zenTransaction) {
-              zenTransactions.push(zenTransaction)
+  await Promise.all(accountData.map(async ({ zenAccount: account, products }) => {
+    accounts.push(account)
+    return ZenMoney.isAccountSkipped(account.id) ? null : Promise.all(products.map(async product => {
+      try {
+        for (const apiTransaction of await fetchTransactions(auth, product, fromDate, toDate)) {
+          let transaction
+          if (product.type === 'loan') {
+            transaction = convertLoanTransaction(apiTransaction, account, accountsById)
+          } else {
+            transaction = convertTransaction(apiTransaction, account, accountsById)
+            if (transaction) {
+              const id1 = transaction.movements[0].id
+              const id2 = transaction.movements[1] && transaction.movements[1].id ? transaction.movements[1].id : id1
+              if (transactionIds[id1] || transactionIds[id2]) {
+                continue
+              } else {
+                transactionIds[id1] = true
+                transactionIds[id2] = true
+              }
             }
           }
-        } catch (e) {
-          if (e.toString().indexOf('временно недоступна') < 0) {
-            throw e
+          if (transaction) {
+            transactions.push(transaction)
           }
         }
-      }))
+      } catch (e) {
+        if (e.toString().indexOf('временно недоступна') < 0) {
+          throw e
+        }
+      }
     }))
   }))
 
   saveAuth(auth)
 
   return {
-    accounts: convertAccountSyncID(zenAccounts, true),
-    transactions: _.sortBy(combineIntoTransferByTransferId(zenTransactions), zenTransaction => zenTransaction.date)
+    accounts: ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId }),
+    transactions
   }
 }
 
 export async function makeTransfer (fromAccount, toAccount, sum) {
   const preferences = ZenMoney.getPreferences()
-  const auth = await login(preferences.login, preferences.pin)
-  await _makeTransfer(preferences.login, auth, { fromAccount, toAccount, sum })
+  const device = getDevice(preferences)
+  const auth = await login(preferences.login, preferences.pin, getAuth(), device)
+  await _makeTransfer(preferences.login, auth, device, { fromAccount, toAccount, sum })
   saveAuth(auth)
   ZenMoney.saveData()
 }

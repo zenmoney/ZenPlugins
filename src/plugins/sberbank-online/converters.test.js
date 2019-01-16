@@ -1,15 +1,5 @@
 import { parseXml } from '../../common/network'
-import {
-  convertAccount,
-  convertApiTransaction,
-  convertCards,
-  convertDeposit,
-  convertLoan,
-  convertPayment,
-  convertTarget,
-  convertToZenMoneyTransaction,
-  parseApiDescription
-} from './converters'
+import { convertAccount, convertCards, convertDeposit, convertLoan, convertTransaction, convertTarget, getId } from './converters'
 
 describe('convertLoan', () => {
   it('returns valid loan', () => {
@@ -181,8 +171,13 @@ describe('convertLoan', () => {
     </extDetail> 
 </response>`).response
     expect(convertLoan(json, details)).toEqual({
-      ids: ['11721741'],
-      type: 'loan',
+      products: [
+        {
+          id: '11721741',
+          type: 'loan',
+          instrument: 'RUB'
+        }
+      ],
       zenAccount: {
         id: 'loan:11721741',
         type: 'loan',
@@ -195,7 +190,7 @@ describe('convertLoan', () => {
         startBalance: 1500000,
         capitalization: true,
         percent: 12.50,
-        startDate: '2017-12-02',
+        startDate: new Date('2017-12-02T00:00:00+03:00'),
         endDateOffsetInterval: 'year',
         endDateOffset: 3,
         payoffInterval: 'month',
@@ -243,8 +238,13 @@ describe('convertLoan', () => {
         }
       }
     })).toEqual({
-      ids: ['11934064'],
-      type: 'loan',
+      products: [
+        {
+          id: '11934064',
+          type: 'loan',
+          instrument: 'RUB'
+        }
+      ],
       zenAccount: {
         id: 'loan:11934064',
         type: 'loan',
@@ -257,7 +257,7 @@ describe('convertLoan', () => {
         startBalance: 700000,
         capitalization: true,
         percent: 1,
-        startDate: '2018-01-04',
+        startDate: new Date('2018-01-04T00:00:00+03:00'),
         endDateOffsetInterval: 'month',
         endDateOffset: 57,
         payoffInterval: 'month',
@@ -304,8 +304,13 @@ describe('convertLoan', () => {
         }
       }
     })).toEqual({
-      ids: ['11934064'],
-      type: 'loan',
+      products: [
+        {
+          id: '11934064',
+          type: 'loan',
+          instrument: 'RUB'
+        }
+      ],
       zenAccount: {
         id: 'loan:11934064',
         type: 'loan',
@@ -318,7 +323,7 @@ describe('convertLoan', () => {
         startBalance: 700000,
         capitalization: true,
         percent: 1,
-        startDate: '2018-01-04',
+        startDate: new Date('2018-01-04T00:00:00+03:00'),
         endDateOffsetInterval: 'month',
         endDateOffset: 57,
         payoffInterval: 'month',
@@ -396,8 +401,13 @@ describe('convertDeposit', () => {
             </detail> 
 </response> `).response
     expect(convertDeposit(json, details)).toEqual({
-      ids: ['12632802'],
-      type: 'account',
+      products: [
+        {
+          id: '12632802',
+          type: 'account',
+          instrument: 'RUB'
+        }
+      ],
       zenAccount: {
         id: 'account:12632802',
         type: 'deposit',
@@ -410,7 +420,7 @@ describe('convertDeposit', () => {
         startBalance: 0,
         capitalization: true,
         percent: 0.01,
-        startDate: '2013-01-15',
+        startDate: new Date('2013-01-15T00:00:00+03:00'),
         endDateOffsetInterval: 'day',
         endDateOffset: 1826,
         payoffInterval: 'month',
@@ -522,23 +532,13 @@ describe('convertCards', () => {
     })
     expect(convertCards(jsonArray, nowDate)).toEqual([
       {
-        ids: ['105751881', '105751882'],
-        type: 'card',
-        zenAccount: {
-          id: 'card:105751881',
-          type: 'ccard',
-          title: 'Electron',
-          instrument: 'RUB',
-          available: 150,
-          syncID: [
-            '427682******2761',
-            '427682******7622'
-          ]
-        }
-      },
-      {
-        ids: ['105751883'],
-        type: 'card',
+        products: [
+          {
+            id: '105751883',
+            type: 'card',
+            instrument: 'RUB'
+          }
+        ],
         zenAccount: {
           id: 'card:105751883',
           type: 'ccard',
@@ -552,8 +552,13 @@ describe('convertCards', () => {
         }
       },
       {
-        ids: ['105751885'],
-        type: 'card',
+        products: [
+          {
+            id: '105751885',
+            type: 'card',
+            instrument: 'RUB'
+          }
+        ],
         zenAccount: {
           id: 'card:105751885',
           type: 'ccard',
@@ -563,6 +568,31 @@ describe('convertCards', () => {
           syncID: [
             '427628******6939',
             '40817810528150034829'
+          ]
+        }
+      },
+      {
+        products: [
+          {
+            id: '105751881',
+            type: 'card',
+            instrument: 'RUB'
+          },
+          {
+            id: '105751882',
+            type: 'card',
+            instrument: 'RUB'
+          }
+        ],
+        zenAccount: {
+          id: 'card:105751881',
+          type: 'ccard',
+          title: 'Electron',
+          instrument: 'RUB',
+          available: 150,
+          syncID: [
+            '427682******2761',
+            '427682******7622'
           ]
         }
       }
@@ -725,8 +755,13 @@ describe('convertCards', () => {
       }
     ], nowDate)).toEqual([
       {
-        ids: ['69474436'],
-        type: 'card',
+        products: [
+          {
+            id: '69474436',
+            type: 'card',
+            instrument: 'RUB'
+          }
+        ],
         zenAccount: {
           id: 'card:69474436',
           type: 'ccard',
@@ -735,7 +770,8 @@ describe('convertCards', () => {
           creditLimit: 125000,
           balance: 0,
           syncID: [
-            '427901******7314'
+            '427901******7314',
+            '40817810855501402320'
           ]
         }
       }
@@ -775,6 +811,234 @@ describe('convertCards', () => {
       }
     ], nowDate)).toEqual([])
   })
+
+  it('converts not received cards', () => {
+    expect(convertCards([
+      {
+        id: '601600514',
+        name: 'MasterCard Mass',
+        smsName: '2525',
+        description: 'MasterCard Mass',
+        number: '5469 55** **** 2525',
+        isMain: 'true',
+        type: 'debit',
+        availableLimit: { amount: '3479.13', currency: { code: 'RUB', name: 'руб.' } },
+        state: 'delivery',
+        cardAccount: '40817810155862143125',
+        showarrestdetail: 'true',
+        tokenExists: 'false',
+        expireDate: '04/2021',
+        statusWay4: 'H-НЕ ВЫДАНА КЛИЕНТУ'
+      },
+      {
+        id: '597382852',
+        name: 'MIR',
+        smsName: '2163',
+        description: 'MIR',
+        number: '2202 20** **** 2163',
+        isMain: 'true',
+        type: 'debit',
+        availableLimit: { amount: '8653.00', currency: { code: 'RUB', name: 'руб.' } },
+        state: 'active',
+        cardAccount: '40817810855866742233',
+        showarrestdetail: 'true',
+        tokenExists: 'false',
+        expireDate: '09/2023',
+        statusWay4: '+-КАРТОЧКА ОТКРЫТА'
+      },
+      {
+        id: '578021451',
+        name: 'MasterCard Mass',
+        smsName: '7830',
+        description: 'MasterCard Mass',
+        number: '5469 55** **** 7830',
+        isMain: 'false',
+        type: 'debit',
+        availableLimit: { amount: '3479.13', currency: { code: 'RUB', name: 'руб.' } },
+        state: 'blocked',
+        additionalCardType: 'Client2Other',
+        mainCardId: '601600514',
+        showarrestdetail: 'true',
+        tokenExists: 'false',
+        expireDate: '04/2019',
+        statusWay4: 'K-ДЕЙСТ.ПРИОСТАНОВЛЕНО'
+      },
+      {
+        id: '577869914',
+        name: 'Visa Classic',
+        smsName: '4430',
+        description: 'Visa Classic',
+        number: '4276 01** **** 4430',
+        isMain: 'true',
+        type: 'credit',
+        availableLimit: { amount: '542.01', currency: { code: 'RUB', name: 'руб.' } },
+        state: 'blocked',
+        cardAccount: '40817810240000077824',
+        showarrestdetail: 'true',
+        tokenExists: 'false',
+        expireDate: '08/2021',
+        statusWay4: 'K-ДЕЙСТ.ПРИОСТАНОВЛЕНО'
+      },
+      {
+        id: '577869916',
+        name: 'Visa Classic',
+        smsName: '1181',
+        description: 'Visa Classic',
+        number: '4276 40** **** 1181',
+        isMain: 'true',
+        type: 'debit',
+        availableLimit: { amount: '6601.93', currency: { code: 'RUB', name: 'руб.' } },
+        state: 'active',
+        showarrestdetail: 'true',
+        tokenExists: 'false',
+        expireDate: '08/2020',
+        statusWay4: '+-КАРТОЧКА ОТКРЫТА'
+      },
+      {
+        id: '577869917',
+        name: 'MasterCard Mass',
+        smsName: '9906',
+        description: 'MasterCard Mass',
+        number: '5469 55** **** 9906',
+        isMain: 'true',
+        type: 'debit',
+        availableLimit: { amount: '3479.13', currency: { code: 'RUB', name: 'руб.' } },
+        state: 'blocked',
+        showarrestdetail: 'true',
+        tokenExists: 'false',
+        expireDate: '04/2019',
+        statusWay4: 'K-ДЕЙСТ.ПРИОСТАНОВЛЕНО'
+      },
+      {
+        id: '577869918',
+        name: 'Visa Platinum',
+        smsName: '3483',
+        description: 'Visa Platinum',
+        number: '4274 27** **** 3483',
+        isMain: 'true',
+        type: 'debit',
+        availableLimit: { amount: '12638.56', currency: { code: 'RUB', name: 'руб.' } },
+        state: 'active',
+        cardAccount: '40817810755864853729',
+        showarrestdetail: 'true',
+        tokenExists: 'false',
+        expireDate: '09/2020',
+        statusWay4: '+-КАРТОЧКА ОТКРЫТА'
+      },
+      {
+        id: '584542817',
+        name: 'MasterCard Mass',
+        smsName: '4511',
+        description: 'MasterCard Mass',
+        number: '5469 55** **** 4511',
+        isMain: 'true',
+        type: 'debit',
+        availableLimit: { amount: '3479.13', currency: { code: 'RUB', name: 'руб.' } },
+        state: 'blocked',
+        showarrestdetail: 'true',
+        tokenExists: 'false',
+        expireDate: '04/2019',
+        statusWay4: 'L-ПОТЕРЯНА'
+      },
+      {
+        id: '584542818',
+        name: 'MasterCard Mass',
+        smsName: '9020',
+        description: 'MasterCard Mass',
+        number: '5469 55** **** 9020',
+        isMain: 'false',
+        type: 'debit',
+        availableLimit: { amount: '3479.13', currency: { code: 'RUB', name: 'руб.' } },
+        state: 'active',
+        additionalCardType: 'Client2Other',
+        mainCardId: '601600514',
+        showarrestdetail: 'true',
+        tokenExists: 'false',
+        expireDate: '04/2019',
+        statusWay4: '+-КАРТОЧКА ОТКРЫТА'
+      }
+    ].map(account => { return { account } }), nowDate)).toEqual([
+      {
+        products: [
+          {
+            id: '597382852',
+            type: 'card',
+            instrument: 'RUB'
+          }
+        ],
+        zenAccount: {
+          id: 'card:597382852',
+          type: 'ccard',
+          title: 'MIR',
+          instrument: 'RUB',
+          available: 8653,
+          syncID: [
+            '220220******2163',
+            '40817810855866742233'
+          ]
+        }
+      },
+      {
+        products: [
+          {
+            id: '577869916',
+            type: 'card',
+            instrument: 'RUB'
+          }
+        ],
+        zenAccount: {
+          id: 'card:577869916',
+          type: 'ccard',
+          title: 'Visa Classic',
+          instrument: 'RUB',
+          available: 6601.93,
+          syncID: [
+            '427640******1181'
+          ]
+        }
+      },
+      {
+        products: [
+          {
+            id: '577869918',
+            type: 'card',
+            instrument: 'RUB'
+          }
+        ],
+        zenAccount: {
+          id: 'card:577869918',
+          type: 'ccard',
+          title: 'Visa Platinum',
+          instrument: 'RUB',
+          available: 12638.56,
+          syncID: [
+            '427427******3483',
+            '40817810755864853729'
+          ]
+        }
+      },
+      {
+        products: [
+          {
+            id: '584542818',
+            type: 'card',
+            instrument: 'RUB'
+          }
+        ],
+        zenAccount: {
+          id: 'card:584542818',
+          type: 'ccard',
+          title: 'MasterCard Mass',
+          instrument: 'RUB',
+          available: 3479.13,
+          syncID: [
+            '546955******9020',
+            '40817810155862143125'
+          ]
+        }
+      }
+    ])
+  })
 })
 
 describe('convertAccount', () => {
@@ -808,8 +1072,13 @@ describe('convertAccount', () => {
       moneyBoxAvailable: 'true',
       maxBalance: '1740000.00'
     })).toEqual({
-      ids: ['567930851'],
-      type: 'account',
+      products: [
+        {
+          id: '567930851',
+          type: 'account',
+          instrument: 'RUB'
+        }
+      ],
       zenAccount: {
         id: 'account:567930851',
         type: 'checking',
@@ -865,8 +1134,13 @@ describe('convertTarget', () => {
       moneyBoxAvailable: 'true',
       moneyBoxes: { box: { id: '27543068356', sumType: 'FIXED_SUMMA', amount: '700,00' } }
     })).toEqual({
-      ids: ['560357253'],
-      type: 'account',
+      products: [
+        {
+          id: '560357253',
+          type: 'account',
+          instrument: 'RUB'
+        }
+      ],
       zenAccount: {
         id: 'account:560357253',
         type: 'checking',
@@ -882,288 +1156,9 @@ describe('convertTarget', () => {
   })
 })
 
-describe('parseApiDescription', () => {
-  it('returns valid data', () => {
-    expect(parseApiDescription('CH Payment RUS MOSCOW CH Payment RUS MOSCOW SBOL')).toEqual({
-      payee: 'SBOL',
-      description: 'CH Payment RUS MOSCOW'
-    })
-    expect(parseApiDescription('CH Payment RUS MOSCOW IDT:0614 2 RUS MOSCOW SBOL')).toEqual({
-      payee: 'SBOL',
-      description: 'CH Payment RUS MOSCOW'
-    })
-    expect(parseApiDescription('CH Debit RUS MOSCOW IDT:0513 1 RUS MOSCOW SBOL')).toEqual({
-      payee: 'SBOL',
-      description: 'CH Debit RUS MOSCOW'
-    })
-    expect(parseApiDescription('Retail LUX 4029357733 Retail LUX 4029357733 PAYPAL *YOURSERVERS')).toEqual({
-      payee: 'PAYPAL *YOURSERVERS',
-      description: 'Retail LUX 4029357733'
-    })
-    expect(parseApiDescription('BP Billing Transfer RUS  BP Billing Transfer RUS  SBERBANK ONL@IN PLATEZH')).toEqual({
-      payee: 'SBERBANK ONL@IN PLATEZH',
-      description: 'BP Billing Transfer RUS'
-    })
-    expect(parseApiDescription('Payment To 7000 Payment To')).toEqual({
-      payee: null,
-      description: 'Payment To 7000'
-    })
-    expect(parseApiDescription('Mobile Fee 3200 Mobile Fee')).toEqual({
-      payee: null,
-      description: 'Mobile Fee 3200'
-    })
-    expect(parseApiDescription('CH Payment RUS Visa Direct  IDT:0614 2 RUS Visa Direct TINKOFF BANK CARD2CARD')).toEqual({
-      payee: 'TINKOFF BANK CARD2CARD',
-      description: 'CH Payment RUS Visa Direct'
-    })
-    expect(parseApiDescription('unknown pattern')).toEqual({
-      payee: null,
-      description: 'unknown pattern'
-    })
-  })
-})
-
-describe('convertToZenMoneyTransaction', () => {
-  it('converts income part of account -> card transfer', () => {
-    const zenAccount = { id: 'account', instrument: 'RUB' }
-
-    const transaction1 = convertApiTransaction({
-      date: '24.06.2018T13:14:38',
-      sum: {
-        amount: '+3500.00',
-        currency: { code: 'RUB', name: 'руб.' }
-      },
-      description: 'BP Acct - Card RUS  BP Acct - Card RUS  SBERBANK ONL@IN VKLAD-KARTA'
-    }, zenAccount)
-    expect(transaction1).toEqual({
-      date: new Date('2018-06-24T13:14:38+03:00'),
-      hold: null,
-      description: 'BP Acct - Card RUS',
-      payee: 'SBERBANK ONL@IN VKLAD-KARTA',
-      posted: {
-        amount: 3500,
-        instrument: 'RUB'
-      }
-    })
-    expect(convertToZenMoneyTransaction(zenAccount, transaction1)).toEqual({
-      date: new Date('2018-06-24T13:14:38+03:00'),
-      hold: null,
-      income: 3500,
-      incomeAccount: 'account',
-      outcome: 0,
-      outcomeAccount: 'account',
-      comment: 'SBERBANK ONL@IN VKLAD-KARTA',
-      _transferType: 'outcome',
-      _transferId: '2018-06-24_1_RUB_3500'
-    })
-  })
-
-  it('converts outcome part of account -> card transfer', () => {
-    const zenAccount = { id: 'account', instrument: 'RUB' }
-
-    const transaction = convertApiTransaction({
-      date: '24.06.2018T00:00:00',
-      sum: {
-        amount: '-3500.00',
-        currency: { code: 'RUB', name: 'руб.' }
-      },
-      description: 'Частичная выдача',
-      'transaction.operationCode': '3'
-    }, zenAccount)
-    expect(transaction).toEqual({
-      date: new Date('2018-06-24T00:00:00+03:00'),
-      hold: null,
-      description: 'Частичная выдача',
-      payee: null,
-      posted: {
-        amount: -3500,
-        instrument: 'RUB'
-      }
-    })
-    expect(convertToZenMoneyTransaction(zenAccount, transaction)).toEqual({
-      date: new Date('2018-06-24T00:00:00+03:00'),
-      hold: null,
-      income: 0,
-      incomeAccount: 'account',
-      outcome: 3500,
-      outcomeAccount: 'account',
-      _transferType: 'income',
-      _transferId: '2018-06-24_1_RUB_3500'
-    })
-  })
-
-  it('converts outсome part of card -> account transfer', () => {
-    const zenAccount = { id: 'account', instrument: 'RUB' }
-
-    const transaction = convertApiTransaction({
-      date: '20.06.2018T12:43:32',
-      sum: {
-        amount: '-4700,00',
-        currency: { code: 'RUB', name: 'руб.' }
-      },
-      description: 'BP Card - Acct RUS  BP Card - Acct RUS  SBERBANK ONL@IN KARTA-VKLAD'
-    }, zenAccount)
-    expect(transaction).toEqual({
-      date: new Date('2018-06-20T12:43:32+03:00'),
-      hold: null,
-      description: 'BP Card - Acct RUS',
-      payee: 'SBERBANK ONL@IN KARTA-VKLAD',
-      posted: {
-        amount: -4700,
-        instrument: 'RUB'
-      }
-    })
-    expect(convertToZenMoneyTransaction(zenAccount, transaction)).toEqual({
-      date: new Date('2018-06-20T12:43:32+03:00'),
-      hold: null,
-      income: 0,
-      incomeAccount: 'account',
-      outcome: 4700,
-      outcomeAccount: 'account',
-      comment: 'SBERBANK ONL@IN KARTA-VKLAD',
-      _transferType: 'income',
-      _transferId: '2018-06-20_2_RUB_4700'
-    })
-  })
-
-  it('converts inсome part of card -> account transfer', () => {
-    const zenAccount = { id: 'account', instrument: 'RUB' }
-
-    const transaction = convertApiTransaction({
-      date: '20.06.2018T00:00:00',
-      sum: {
-        amount: '+4700,00',
-        currency: { code: 'RUB', name: 'руб.' }
-      },
-      description: 'Дополнительный взнос',
-      'transaction.operationCode': '2'
-    }, zenAccount)
-    expect(transaction).toEqual({
-      date: new Date('2018-06-20T00:00:00+03:00'),
-      hold: null,
-      description: 'Дополнительный взнос',
-      payee: null,
-      posted: {
-        amount: 4700,
-        instrument: 'RUB'
-      }
-    })
-    expect(convertToZenMoneyTransaction(zenAccount, transaction)).toEqual({
-      date: new Date('2018-06-20T00:00:00+03:00'),
-      hold: null,
-      income: 4700,
-      incomeAccount: 'account',
-      outcome: 0,
-      outcomeAccount: 'account',
-      _transferType: 'outcome',
-      _transferId: '2018-06-20_2_RUB_4700'
-    })
-  })
-
-  it('converts income part of card -> card transfer', () => {
-    const zenAccount = { id: 'account', instrument: 'RUB' }
-
-    const transaction1 = convertApiTransaction({
-      date: '20.06.2018T13:03:59',
-      sum: {
-        amount: '+100,00',
-        currency: { code: 'RUB', name: 'руб.' }
-      },
-      description: 'CH Payment RUS MOSCOW CH Payment RUS MOSCOW SBOL'
-    }, zenAccount)
-    expect(transaction1).toEqual({
-      date: new Date('2018-06-20T13:03:59+03:00'),
-      hold: null,
-      description: 'CH Payment RUS MOSCOW',
-      payee: 'SBOL',
-      posted: {
-        amount: 100,
-        instrument: 'RUB'
-      }
-    })
-    expect(convertToZenMoneyTransaction(zenAccount, transaction1)).toEqual({
-      date: new Date('2018-06-20T13:03:59+03:00'),
-      hold: null,
-      income: 100,
-      incomeAccount: 'account',
-      outcome: 0,
-      outcomeAccount: 'account',
-      comment: 'SBOL',
-      _transferType: 'outcome',
-      _transferId: '1529489039000_RUB_100'
-    })
-  })
-
-  it('converts outcome part of card -> card transfer', () => {
-    const zenAccount = { id: 'account', instrument: 'RUB' }
-
-    const transaction1 = convertApiTransaction({
-      date: '20.06.2018T13:03:59',
-      sum: {
-        amount: '-100,00',
-        currency: { code: 'RUB', name: 'руб.' }
-      },
-      description: 'CH Debit RUS MOSCOW CH Debit RUS MOSCOW SBOL'
-    }, zenAccount)
-    expect(transaction1).toEqual({
-      date: new Date('2018-06-20T13:03:59+03:00'),
-      hold: null,
-      description: 'CH Debit RUS MOSCOW',
-      payee: 'SBOL',
-      posted: {
-        amount: -100,
-        instrument: 'RUB'
-      }
-    })
-    expect(convertToZenMoneyTransaction(zenAccount, transaction1)).toEqual({
-      date: new Date('2018-06-20T13:03:59+03:00'),
-      hold: null,
-      income: 0,
-      incomeAccount: 'account',
-      outcome: 100,
-      outcomeAccount: 'account',
-      comment: 'SBOL',
-      _transferType: 'income',
-      _transferId: '1529489039000_RUB_100'
-    })
-  })
-
-  it('converts outer transfer', () => {
-    const zenAccount = { id: 'account', instrument: 'RUB' }
-
-    const transaction1 = convertApiTransaction({
-      date: '20.06.2018T15:32:50',
-      sum: {
-        amount: '-10000,00',
-        currency: { code: 'RUB', name: 'руб.' }
-      },
-      description: 'Retail RUS MOSCOW Retail RUS MOSCOW Tinkoff Bank Card2Card'
-    }, zenAccount)
-    expect(transaction1).toEqual({
-      date: new Date('2018-06-20T15:32:50+03:00'),
-      hold: null,
-      description: 'Retail RUS MOSCOW',
-      payee: 'Tinkoff Bank Card2Card',
-      posted: {
-        amount: -10000,
-        instrument: 'RUB'
-      }
-    })
-    expect(convertToZenMoneyTransaction(zenAccount, transaction1)).toEqual({
-      date: new Date('2018-06-20T15:32:50+03:00'),
-      hold: false,
-      income: 0,
-      incomeAccount: 'account',
-      outcome: 10000,
-      outcomeAccount: 'account',
-      comment: 'Перевод с карты'
-    })
-  })
-})
-
-describe('convertPayment', () => {
+describe('convertTransaction', () => {
   it('converts currency transaction', () => {
-    expect(convertPayment({
+    expect(convertTransaction({
       autopayable: 'false',
       copyable: 'false',
       date: '28.12.2018T14:01:43',
@@ -1307,7 +1302,7 @@ describe('convertPayment', () => {
   })
 
   it('converts cash replenishment', () => {
-    expect(convertPayment({
+    expect(convertTransaction({
       autopayable: 'false',
       copyable: 'false',
       date: '19.12.2018T10:49:12',
@@ -1359,7 +1354,7 @@ describe('convertPayment', () => {
   })
 
   it('converts outer income transfer', () => {
-    expect(convertPayment({
+    expect(convertTransaction({
       autopayable: 'false',
       copyable: 'false',
       date: '28.12.2018T17:01:17',
@@ -1489,7 +1484,7 @@ describe('convertPayment', () => {
   })
 
   it('converts outer outcome transfer with commission', () => {
-    expect(convertPayment({
+    expect(convertTransaction({
       autopayable: 'false',
       copyable: 'true',
       date: '09.01.2019T15:23:10',
@@ -1627,7 +1622,7 @@ describe('convertPayment', () => {
   })
 
   it('converts outcome outer transfer to Sberbank client', () => {
-    expect(convertPayment({
+    expect(convertTransaction({
       autopayable: 'true',
       copyable: 'true',
       date: '19.12.2018T17:27:04',
@@ -1805,7 +1800,12 @@ describe('convertPayment', () => {
   })
 
   it('converts inner transfer', () => {
-    expect(convertPayment({
+    const account = { id: 'account', instrument: 'RUB' }
+    const accountsById = {}
+    accountsById[getId('card', '51833625')] = account
+    accountsById[getId('RUB', '428101******5370')] = { id: 'account2', instrument: 'RUB' }
+
+    expect(convertTransaction({
       autopayable: 'true',
       copyable: 'true',
       date: '19.12.2018T17:26:24',
@@ -1863,20 +1863,20 @@ describe('convertPayment', () => {
           visible: 'true'
         }
       }
-    }, { id: 'account', instrument: 'RUB' })).toEqual({
+    }, account, accountsById)).toEqual({
       hold: false,
       date: new Date('2018-12-19T17:26:24+03:00'),
       movements: [
         {
           id: '10778929144',
-          account: { id: 'card:51833625' },
+          account: { id: 'account' },
           invoice: null,
           sum: -3710.81,
           fee: null
         },
         {
           id: '10778929144',
-          account: { id: 'card:69474436' },
+          account: { id: 'account2' },
           invoice: null,
           sum: 3710.81,
           fee: null
@@ -1888,7 +1888,7 @@ describe('convertPayment', () => {
   })
 
   it('converts commission', () => {
-    expect(convertPayment({
+    expect(convertTransaction({
       autopayable: 'false',
       copyable: 'false',
       date: '19.12.2018T00:00:00',
@@ -1923,7 +1923,7 @@ describe('convertPayment', () => {
   })
 
   it('converts online payment', () => {
-    expect(convertPayment({
+    expect(convertTransaction({
       autopayable: 'true',
       copyable: 'true',
       date: '24.12.2018T16:10:18',
@@ -1965,12 +1965,17 @@ describe('convertPayment', () => {
   })
 
   it('converts transfer without sell amount', () => {
-    expect(convertPayment({
+    const account = { id: 'account', instrument: 'RUB' }
+    const accountsById = {}
+    accountsById[getId('RUB', '42303810855860470084')] = account
+    accountsById[getId('RUB', '427644******3483')] = { id: 'account2', instrument: 'RUB' }
+
+    expect(convertTransaction({
       id: '10950380712',
       ufsId: null,
       state: 'EXECUTED',
       date: '05.01.2019T08:23:19',
-      from: 'Сберегательный счет 40817810644054865350',
+      from: 'Управляй ОнЛ@йн 3м - 6м (руб.) 42303810855860470084',
       to: 'Visa Classic 4276 44** **** 3483',
       description: 'Перевод между своими счетами',
       operationAmount: { amount: '-15300.00', currency: { code: 'RUB', name: 'руб.' } },
@@ -2000,7 +2005,7 @@ describe('convertPayment', () => {
                       {
                         value: 'account:573768749',
                         selected: 'true',
-                        displayedValue: '408 17 810 6 44054865350 [Сберегательный счет]',
+                        displayedValue: '423 03 810 8 55860470084 [Управляй ОнЛ@йн 3м - 6м (руб.)]',
                         currency: 'RUB'
                       }
                   }
@@ -2042,20 +2047,20 @@ describe('convertPayment', () => {
             changed: 'false'
           }
       }
-    }, { id: 'account', instrument: 'RUB' })).toEqual({
+    }, account, accountsById)).toEqual({
       hold: false,
       date: new Date('2019-01-05T08:23:19+03:00'),
       movements: [
         {
           id: '10950380712',
-          account: { id: 'account:573768749' },
+          account: { id: 'account' },
           invoice: null,
           sum: -15300.00,
           fee: null
         },
         {
           id: '10950380712',
-          account: { id: 'card:581110669' },
+          account: { id: 'account2' },
           invoice: null,
           sum: 15300.00,
           fee: null
@@ -2067,7 +2072,7 @@ describe('convertPayment', () => {
   })
 
   it('converts cash withdrawal', () => {
-    expect(convertPayment({
+    expect(convertTransaction({
       id: '11128289282',
       ufsId: null,
       state: 'FINANCIAL',
@@ -2115,7 +2120,7 @@ describe('convertPayment', () => {
   })
 
   it('skips transaction with empty or zero operationAmount', () => {
-    expect(convertPayment({
+    expect(convertTransaction({
       id: '11413628056',
       ufsId: null,
       state: 'DRAFT',
@@ -2134,7 +2139,7 @@ describe('convertPayment', () => {
       imageId: { staticImage: { url: null } }
     })).toBeNull()
 
-    expect(convertPayment({
+    expect(convertTransaction({
       autopayable: 'false',
       copyable: 'false',
       date: '31.12.2018T00:00:00',
@@ -2158,7 +2163,7 @@ describe('convertPayment', () => {
   })
 
   it('converts deposit capitalization', () => {
-    expect(convertPayment({
+    expect(convertTransaction({
       autopayable: 'false',
       copyable: 'false',
       date: '31.12.2018T00:00:00',

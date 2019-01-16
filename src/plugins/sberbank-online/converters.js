@@ -1,131 +1,8 @@
-/* eslint-disable no-labels */
 import * as _ from 'lodash'
 import { getIntervalBetweenDates } from '../../common/momentDateUtils'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 
-export function parseApiDate (str) {
-  const parts = str.substring(0, 10).split('.')
-  console.assert(parts.length >= 3, `unexpected date ${str}`)
-  let dateStr = `${parts[2]}-${parts[1]}-${parts[0]}`
-  if (str.length > 10) {
-    if (dateStr >= '2018-06-16') {
-      dateStr += str.substring(10) + '+03:00'
-    } else {
-      dateStr += str.substring(10)
-    }
-  }
-  const date = new Date(dateStr)
-  console.assert(!isNaN(date), `unexpected date ${str}`)
-  return date
-}
-
-export function parseApiDescription (description) {
-  description = description ? reduceWhitespaces(description) : null
-  description = description || null
-  const result = { description, payee: null }
-  if (!description) {
-    return result
-  }
-  description = description
-    .replace('IDT:0614 2', 'CH Payment')
-    .replace('IDT:0513 1', 'CH Debit')
-  for (const parser of [
-    { getPosition: (p, i, n) => p * i },
-    { getPosition: (p, i, n) => p === 0 ? 0 : n - i, hasDescriptionOnly: true }
-  ]) {
-    const parts = parseDuplicates(description, parser.getPosition)
-    if (parts) {
-      result.description = parts.duplicate
-      if (parser.hasDescriptionOnly) {
-        if (parts.rest) {
-          result.description += ' ' + parts.rest
-        }
-      } else {
-        result.payee = parts.rest
-      }
-      break
-    }
-  }
-  return result
-}
-
-function parseDuplicates (str, getPosition) {
-  let j = -1
-  let j1
-  let j2
-  let duplicate
-
-  const parts = str.split(' ')
-
-  for (let i = 1; 2 * i <= parts.length; i++) {
-    let i1 = getPosition(0, i, parts.length)
-    let i2 = getPosition(1, i, parts.length)
-    if (i2 < i1) {
-      const k = i1
-      i1 = i2
-      i2 = k
-    }
-    if (i1 >= 0 && i1 < i && i2 >= 0 && i2 + i <= parts.length) {
-      const part1 = parts.slice(i1, i).join(' ')
-      const part2 = parts.slice(i2, i2 + i).join(' ')
-      if (part1 === part2 && i > j) {
-        j = i
-        j1 = i1
-        j2 = i2
-        duplicate = part1
-      }
-    }
-  }
-
-  if (j >= 0) {
-    // Ensure that the rest is continuous and doesn't have gaps
-    if (j1 === 0) {
-      if (j2 === j) {
-        return {
-          duplicate,
-          rest: j2 + j < parts.length ? parts.slice(j2 + j).join(' ') : null
-        }
-      } else if (j2 === parts.length - j) {
-        return {
-          duplicate,
-          rest: j1 + j < j2 ? parts.slice(j1 + j, j2).join(' ') : null
-        }
-      }
-    } else {
-      if (j2 === j1 + j && j2 + j === parts.length) {
-        return {
-          duplicate,
-          rest: j1 > 0 ? parts.slice(0, j1).join(' ') : null
-        }
-      }
-    }
-  }
-
-  return null
-}
-
-export function convertApiTransaction (apiTransaction, zenAccount) {
-  if (!apiTransaction.sum || !apiTransaction.sum.amount) {
-    return null
-  }
-  const origin = {
-    amount: parseDecimal(apiTransaction.sum.amount),
-    instrument: apiTransaction.sum.currency.code
-  }
-  const transaction = {
-    date: parseApiDate(apiTransaction.date),
-    hold: null,
-    ...parseApiDescription(apiTransaction.description)
-  }
-  if (origin.instrument === zenAccount.instrument) {
-    transaction.posted = origin
-  } else {
-    transaction.origin = origin
-  }
-  return transaction
-}
-
-export function convertPayment (apiTransaction, account) {
+export function convertTransaction (apiTransaction, account, accountsById) {
   const invoice = apiTransaction.operationAmount && apiTransaction.operationAmount.amount && {
     sum: parseDecimal(apiTransaction.operationAmount.amount),
     instrument: apiTransaction.operationAmount.currency.code
@@ -143,24 +20,24 @@ export function convertPayment (apiTransaction, account) {
         fee: null
       }
     ],
-    date: parseApiDate(apiTransaction.date),
+    date: parseDate(apiTransaction.date),
     hold: apiTransaction.state === 'AUTHORIZATION',
     merchant: null,
     comment: null
   };
   [
-    parsePaymentInnerTransfer,
-    parsePaymentSum,
-    parsePaymentCashReplenishment,
-    parsePaymentCashWithdrawal,
-    parsePaymentOuterIncomeTransfer,
-    parsePaymentOutcomeTransfer,
-    parsePaymentPayee
-  ].some(parser => parser(transaction, apiTransaction, account))
+    parseInnerTransfer,
+    parseSum,
+    parseCashReplenishment,
+    parseCashWithdrawal,
+    parseOuterIncomeTransfer,
+    parseOutcomeTransfer,
+    parsePayee
+  ].some(parser => parser(transaction, apiTransaction, account, accountsById))
   return transaction
 }
 
-function parsePaymentSum (transaction, apiTransaction, account) {
+function parseSum (transaction, apiTransaction, account) {
   const invoice = transaction.movements[0].invoice
   if (invoice.instrument === account.instrument) {
     transaction.movements[0].sum = invoice.sum
@@ -173,7 +50,7 @@ function parsePaymentSum (transaction, apiTransaction, account) {
   }
 }
 
-function parsePaymentCashWithdrawal (transaction, apiTransaction, account) {
+function parseCashWithdrawal (transaction, apiTransaction, account) {
   if (apiTransaction.form !== 'ExtCardCashOut') {
     return false
   }
@@ -193,7 +70,7 @@ function parsePaymentCashWithdrawal (transaction, apiTransaction, account) {
   return true
 }
 
-function parsePaymentCashReplenishment (transaction, apiTransaction, account) {
+function parseCashReplenishment (transaction, apiTransaction, account) {
   if (apiTransaction.form !== 'ExtCardCashIn') {
     return false
   }
@@ -213,37 +90,61 @@ function parsePaymentCashReplenishment (transaction, apiTransaction, account) {
   return true
 }
 
-function parsePaymentInnerTransfer (transaction, apiTransaction) {
-  if (apiTransaction.form !== 'InternalPayment') {
+function parseInnerTransfer (transaction, apiTransaction, account, accountsById) {
+  if ([
+    'InternalPayment',
+    'AccountOpeningClaim',
+    'AccountClosingPayment'
+  ].indexOf(apiTransaction.form) < 0) {
     return false
   }
-  const outcomeAccountId = _.get(apiTransaction, 'details.fromResource.resourceType.availableValues.valueItem.value')
-  const incomeAccountId = _.get(apiTransaction, 'details.toResource.resourceType.availableValues.valueItem.value')
-  if (!incomeAccountId || !outcomeAccountId) {
+  const outcomeAccount = getAccountForResource(_.get(apiTransaction, 'details.fromResource'), accountsById)
+  const incomeAccount = getAccountForResource(_.get(apiTransaction, 'details.toResource'), accountsById)
+  if (!incomeAccount && !outcomeAccount) {
     return false
   }
+
   const invoice = transaction.movements[0].invoice
   const sumStr = _.get(apiTransaction, 'details.sellAmount.moneyType.value')
   const sum = sumStr ? parseDecimal(sumStr) : -invoice.sum
-  const incomeMovement = {
-    id: apiTransaction.id,
-    account: { id: incomeAccountId },
-    invoice: null,
-    sum: Math.abs(invoice.sum),
-    fee: null
+
+  transaction.movements = []
+  if (outcomeAccount) {
+    transaction.movements.push({
+      id: apiTransaction.id,
+      account: { id: outcomeAccount.id },
+      invoice: invoice && invoice.sum !== -sum ? invoice : null,
+      sum: -sum,
+      fee: null
+    })
   }
-  const outcomeMovement = {
-    id: apiTransaction.id,
-    account: { id: outcomeAccountId },
-    invoice: invoice && invoice.sum !== -sum ? invoice : null,
-    sum: -sum,
-    fee: null
+  if (incomeAccount) {
+    transaction.movements.push({
+      id: apiTransaction.id,
+      account: { id: incomeAccount.id },
+      invoice: null,
+      sum: Math.abs(invoice.sum),
+      fee: null
+    })
   }
-  transaction.movements = [outcomeMovement, incomeMovement]
   return true
 }
 
-function parsePaymentOuterIncomeTransfer (transaction, apiTransaction, account) {
+function getAccountForResource (resource, accountsById) {
+  const id = _.get(resource, 'resourceType.availableValues.valueItem.value')
+  if (!id) {
+    return null
+  }
+  const instrument = _.get(resource, 'resourceType.availableValues.valueItem.currency')
+  let syncId = _.get(resource, 'resourceType.availableValues.valueItem.displayedValue')
+  if (syncId) {
+    const i = syncId.search(/[^\d\s*]/)
+    syncId = i >= 0 ? syncId.substring(0, i).replace(/[^\d*]/g, '') : ''
+  }
+  return accountsById[id] || accountsById[getId(instrument, syncId)]
+}
+
+function parseOuterIncomeTransfer (transaction, apiTransaction, account) {
   if (apiTransaction.form !== 'ExtCardTransferIn') {
     return false
   }
@@ -267,7 +168,7 @@ function parsePaymentOuterIncomeTransfer (transaction, apiTransaction, account) 
   return true
 }
 
-function parsePaymentOutcomeTransfer (transaction, apiTransaction, account) {
+function parseOutcomeTransfer (transaction, apiTransaction, account) {
   if (apiTransaction.form !== 'RurPayment') {
     return false
   }
@@ -307,7 +208,7 @@ function parsePaymentOutcomeTransfer (transaction, apiTransaction, account) {
   return true
 }
 
-function parsePaymentPayee (transaction, apiTransaction, account) {
+function parsePayee (transaction, apiTransaction) {
   let payee = ['ExtDepositCapitalization'].indexOf(apiTransaction.form) >= 0 ? null : apiTransaction.to
   if (payee) {
     if (apiTransaction.form === 'RurPayJurSB') {
@@ -337,17 +238,24 @@ function parsePaymentPayee (transaction, apiTransaction, account) {
   }
 }
 
-export function convertLoanTransaction (apiTransaction) {
+export function convertLoanTransaction (apiTransaction, account) {
   if (apiTransaction.state !== 'paid') {
     return null
   }
   return {
-    date: parseApiDate(apiTransaction.date),
+    movements: [
+      {
+        id: null,
+        account: { id: account.id },
+        invoice: null,
+        sum: parseDecimal(apiTransaction.totalPaymentAmount.amount),
+        fee: null
+      }
+    ],
+    date: parseDate(apiTransaction.date),
     hold: false,
-    posted: {
-      amount: parseDecimal(apiTransaction.totalPaymentAmount.amount),
-      instrument: apiTransaction.totalPaymentAmount.currency.code
-    }
+    merchant: null,
+    comment: null
   }
 }
 
@@ -355,91 +263,81 @@ export function formatDateSql (date) {
   return [date.getFullYear(), date.getMonth() + 1, date.getDate()].map(toAtLeastTwoDigitsString).join('-')
 }
 
-export function convertToZenMoneyTransaction (zenAccount, transaction) {
-  if (transaction.movements) {
-    return transaction
-  }
-
-  const zenMoneyTransaction = {
-    date: transaction.date,
-    hold: transaction.hold,
-    income: transaction.posted ? transaction.posted.amount > 0 ? transaction.posted.amount : 0 : null,
-    incomeAccount: zenAccount.id,
-    outcome: transaction.posted ? transaction.posted.amount < 0 ? -transaction.posted.amount : 0 : null,
-    outcomeAccount: zenAccount.id
-  }
-  if (transaction.id) {
-    const origin = transaction.origin || transaction.posted
-    if (origin.amount > 0) {
-      zenMoneyTransaction.incomeBankID = transaction.id
-    } else {
-      zenMoneyTransaction.outcomeBankID = transaction.id
+export function convertAccounts (apiAccountsByType) {
+  const accountData = []
+  const accountsById = {}
+  for (const type of ['account', 'loan', 'card', 'target']) {
+    for (const data of convertAccountsWithType(apiAccountsByType[type], type)) {
+      const dataForTheSameAccount = accountData.find(d => d.zenAccount.id === data.zenAccount.id)
+      if (dataForTheSameAccount) {
+        for (const syncId of data.zenAccount.syncID) {
+          if (dataForTheSameAccount.zenAccount.syncID.indexOf(syncId) < 0) {
+            dataForTheSameAccount.zenAccount.syncID.push(syncId)
+          }
+        }
+      } else {
+        accountData.push(data)
+      }
     }
   }
-  if (transaction.origin) {
-    if (transaction.origin.amount > 0) {
-      zenMoneyTransaction.outcome = 0
-      zenMoneyTransaction.opIncome = transaction.origin.amount
-      zenMoneyTransaction.opIncomeInstrument = transaction.origin.instrument
-    } else {
-      zenMoneyTransaction.income = 0
-      zenMoneyTransaction.opOutcome = -transaction.origin.amount
-      zenMoneyTransaction.opOutcomeInstrument = transaction.origin.instrument
+  for (const data of accountData) {
+    for (const product of data.products) {
+      accountsById[getId(product.type, product.id)] = data.zenAccount
+    }
+    for (const syncId of data.zenAccount.syncID) {
+      accountsById[getId(data.zenAccount.instrument, syncId)] = data.zenAccount
     }
   }
-  if (transaction.location) {
-    zenMoneyTransaction.latitude = parseFloat(transaction.location.latitude)
-    zenMoneyTransaction.longitude = parseFloat(transaction.location.longitude)
-  }
-  [
-    parseCashTransaction,
-    parseOuterTransfer,
-    parseInnerTransfer,
-    parsePayee
-  ].some(parser => parser(transaction, zenMoneyTransaction))
-  return zenMoneyTransaction
+  return { accountData, accountsById }
 }
 
-export function convertAccounts (apiAccountsArray, type) {
+export function getId (type, id) {
+  return type + ':' + id
+}
+
+function convertAccountsWithType (apiAccountsArray, type) {
   if (type !== 'card') {
-    const accounts = []
+    const accountData = []
     for (const apiAccount of apiAccountsArray) {
-      let account
+      let data
       switch (type) {
         case 'loan':
-          account = convertLoan(apiAccount.account, apiAccount.details)
+          data = convertLoan(apiAccount.account, apiAccount.details)
           break
         case 'target':
-          account = convertTarget(apiAccount.account, apiAccount.details)
+          data = convertTarget(apiAccount.account, apiAccount.details)
           break
         default:
-          account = apiAccount.account.rate && apiAccount.details.detail.period &&
-          parseDecimal(apiAccount.account.rate) > 2
+          data = apiAccount.account.rate && apiAccount.details.detail.period && parseDecimal(apiAccount.account.rate) > 2
             ? convertDeposit(apiAccount.account, apiAccount.details)
             : convertAccount(apiAccount.account, apiAccount.details)
           break
       }
-      if (!account) {
-        continue
+      if (data) {
+        accountData.push(data)
       }
-      accounts.push(account)
     }
-    return accounts
+    return accountData
   }
   return convertCards(apiAccountsArray)
 }
 
-export function toMoscowDate (date) {
+function toMoscowDate (date) {
   return new Date(date.getTime() + (date.getTimezoneOffset() + 180) * 60000)
 }
 
-export function convertTarget (apiTarget, details) {
+export function convertTarget (apiTarget) {
   if (apiTarget.status === 'accountDisabled') {
     return null
   }
   return {
-    ids: [apiTarget.account.id],
-    type: 'account',
+    products: [
+      {
+        id: apiTarget.account.id,
+        type: 'account',
+        instrument: apiTarget.account.value.currency.code
+      }
+    ],
     zenAccount: {
       id: 'account:' + apiTarget.account.id,
       type: 'checking',
@@ -455,61 +353,70 @@ export function convertTarget (apiTarget, details) {
 }
 
 export function convertCards (apiCardsArray, nowDate = new Date()) {
-  apiCardsArray = _.sortBy(apiCardsArray,
-    json => json.account.mainCardId || json.account.id,
-    json => json.account.mainCardId ? 1 : 0)
-  const accounts = []
+  apiCardsArray = _.sortBy(apiCardsArray.map((apiCard, index) => { return { apiCard, index } }),
+    obj => obj.apiCard.account.mainCardId ? 1 : 0,
+    obj => obj.index).map(obj => obj.apiCard)
+
+  const dataById = {}
   const mskDate = toMoscowDate(nowDate)
   const minExpireDate = mskDate.getFullYear() + '-' + toAtLeastTwoDigitsString(mskDate.getMonth() + 1)
+
+  const accountData = []
+
   for (const apiCard of apiCardsArray) {
+    const id = apiCard.account.mainCardId || apiCard.account.id
+    let data = dataById[id]
+    if (!data) {
+      data = { accountNumber: apiCard.account.cardAccount, account: null, products: [] }
+      dataById[id] = data
+    }
     if (apiCard.account.state !== 'active' ||
-      (apiCard.account.statusWay4 !== '+-КАРТОЧКА ОТКРЫТА' &&
-        apiCard.account.statusWay4 !== 'K-ДЕЙСТ.ПРИОСТАНОВЛЕНО' &&
-        apiCard.account.statusWay4 !== 'X-ПЕРЕВЫП., НЕ ВЫДАНА') ||
+      ['+-КАРТОЧКА ОТКРЫТА', 'K-ДЕЙСТ.ПРИОСТАНОВЛЕНО', 'X-ПЕРЕВЫП., НЕ ВЫДАНА'].indexOf(apiCard.account.statusWay4) < 0 ||
       parseExpireDate(apiCard.account.expireDate) < minExpireDate) {
       continue
     }
-    // if (apiCard.account.statusWay4 === "X-ПЕРЕВЫП., НЕ ВЫДАНА"
-    //         && (parseDecimal(apiCard.account.availableLimit.amount) <= 0
-    //         || (apiCard.account.type === "credit"
-    //             && parseDecimal(apiCard.details.detail.creditType.limit.amount) ===
-    //                parseDecimal(apiCard.account.availableLimit.amount)))) {
-    //     continue;
-    // }
-    if (apiCard.account.mainCardId) {
-      const account = accounts[accounts.length - 1]
-      console.assert(account.ids[0] === apiCard.account.mainCardId, `unexpected additional card ${apiCard.account.id}`)
-      account.ids.push(apiCard.account.id)
-      account.zenAccount.syncID.splice(account.zenAccount.syncID.length - 2, 0,
-        removeWhitespaces(apiCard.account.number))
-      continue
-    }
+
     const availableLimit = apiCard.account.availableLimit
-    const zenAccount = {
-      id: 'card:' + apiCard.account.id,
-      type: 'ccard',
-      title: apiCard.account.name,
-      instrument: availableLimit ? availableLimit.currency.code : 'RUB',
-      syncID: [removeWhitespaces(apiCard.account.number)],
-      available: availableLimit ? parseDecimal(availableLimit.amount) : null
-    }
-    if (apiCard.account.type === 'credit') {
-      const creditLimit = parseDecimal(apiCard.details.detail.creditType.limit.amount)
-      if (creditLimit > 0) {
-        zenAccount.creditLimit = creditLimit
-        zenAccount.balance = parseDecimal(zenAccount.available - zenAccount.creditLimit)
-        delete zenAccount.available
+    const instrument = availableLimit ? availableLimit.currency.code : 'RUB'
+    if (!data.account) {
+      const available = availableLimit ? parseDecimal(availableLimit.amount) : null
+      const creditLimit = apiCard.account.type === 'credit'
+        ? parseDecimal(apiCard.details.detail.creditType.limit.amount)
+        : null
+      const account = {
+        id: 'card:' + apiCard.account.id,
+        type: 'ccard',
+        title: apiCard.account.name,
+        instrument,
+        syncID: []
       }
-    } else if (apiCard.account.cardAccount) {
-      zenAccount.syncID.push(apiCard.account.cardAccount)
+      if (data.accountNumber) {
+        account.syncID.push(data.accountNumber)
+      }
+      if (creditLimit && available) {
+        account.creditLimit = creditLimit
+        account.balance = parseDecimal(available - creditLimit)
+      } else if (creditLimit) {
+        account.creditLimit = creditLimit
+        account.available = available
+      } else {
+        account.available = available
+      }
+      data.account = account
+      accountData.push({
+        products: data.products,
+        zenAccount: data.account
+      })
     }
-    accounts.push({
-      ids: [apiCard.account.id],
+    data.account.syncID.splice(data.account.syncID.length - 1, 0, removeWhitespaces(apiCard.account.number))
+    data.products.push({
+      id: apiCard.account.id,
       type: 'card',
-      zenAccount
+      instrument
     })
   }
-  return accounts
+
+  return accountData
 }
 
 export function convertAccount (apiAccount) {
@@ -517,8 +424,13 @@ export function convertAccount (apiAccount) {
     return null
   }
   return {
-    ids: [apiAccount.id],
-    type: 'account',
+    products: [
+      {
+        id: apiAccount.id,
+        type: 'account',
+        instrument: apiAccount.balance.currency.code
+      }
+    ],
     zenAccount: {
       id: 'account:' + apiAccount.id,
       type: 'checking',
@@ -569,8 +481,13 @@ export function convertLoan (apiLoan, details) {
     zenAccount.endDateOffsetInterval = interval
   }
   return {
-    ids: [apiLoan.id],
-    type: 'loan',
+    products: [
+      {
+        id: apiLoan.id,
+        type: 'loan',
+        instrument: details.extDetail.origianlAmount.currency.code
+      }
+    ],
     zenAccount
   }
 }
@@ -594,8 +511,13 @@ export function convertDeposit (apiDeposit, details) {
   }
   parseDuration(details.detail.period, zenAccount)
   return {
-    ids: [apiDeposit.id],
-    type: 'account',
+    products: [
+      {
+        id: apiDeposit.id,
+        type: 'account',
+        instrument: apiDeposit.balance.currency.code
+      }
+    ],
     zenAccount
   }
 }
@@ -615,7 +537,7 @@ function parseDuration (duration, account) {
   }
 }
 
-export function parseDecimal (str) {
+function parseDecimal (str) {
   if (typeof str === 'number') {
     return Math.round(str * 100) / 100
   }
@@ -630,8 +552,11 @@ export function parseDecimal (str) {
 
 export function parseDate (str) {
   const parts = str.substring(0, 10).split('.')
-  console.assert(parts.length === 3, `unexpected date ${str}`)
-  return `${parts[2]}-${parts[1]}-${parts[0]}`
+  console.assert(parts.length >= 3, `unexpected date ${str}`)
+  const dateStr = `${parts[2]}-${parts[1]}-${parts[0]}` + (str.length > 10 ? str.substring(10) + '+03:00' : '')
+  const date = new Date(dateStr)
+  console.assert(!isNaN(date), `unexpected date ${str}`)
+  return date
 }
 
 function parseExpireDate (str) {
@@ -640,132 +565,6 @@ function parseExpireDate (str) {
   return `${parts[1]}-${parts[0]}`
 }
 
-function parseCashTransaction (transaction, zenMoneyTransaction) {
-  if (transaction.categoryId) {
-    if (transaction.categoryId !== 203 && transaction.categoryId !== 214) {
-      return false
-    }
-  } else {
-    if (!transaction.description ||
-      !['ATM', 'ITT', 'Note Acceptance'].some(word => transaction.description.indexOf(word) >= 0)) {
-      return false
-    }
-  }
-  const origin = transaction.origin || transaction.posted
-  if (origin) {
-    if (origin.amount > 0) {
-      zenMoneyTransaction.outcomeAccount = 'cash#' + origin.instrument
-      zenMoneyTransaction.outcome = origin.amount
-    } else {
-      zenMoneyTransaction.incomeAccount = 'cash#' + origin.instrument
-      zenMoneyTransaction.income = -origin.amount
-    }
-  }
-  return true
-}
-
-function parseInnerTransfer (transaction, zenMoneyTransaction) {
-  let type = 0 // 0 - card -> card, 1 - account -> card, 2 - card -> account
-  if (transaction.categoryId) {
-    if (transaction.categoryId === 227) { // Перевод со вклада
-      type = 1
-    } else if (transaction.categoryId === 228) { // Перевод на вклад
-      type = 2
-    } else if ([
-      1475, // Перевод между своими картами
-      1476 // Перевод между своими картами
-    ].indexOf(transaction.categoryId) < 0) {
-      return false
-    }
-  } else {
-    if (!transaction.description) {
-      return false
-    }
-    if ([
-      'BP Acct - Card',
-      'Частичная выдача'
-    ].some(word => transaction.description.indexOf(word) >= 0)) {
-      type = 1
-    } else if ([
-      'BP Card - Acct',
-      'Дополнительный взнос'
-    ].some(word => transaction.description.indexOf(word) >= 0)) {
-      type = 2
-    } else if (![
-      'CH Debit',
-      'CH Payment'
-    ].some(word => transaction.description.indexOf(word) >= 0)) {
-      return false
-    }
-  }
-  const origin = transaction.origin || transaction.posted
-  if (transaction.payee) {
-    zenMoneyTransaction.comment = transaction.payee
-  }
-  zenMoneyTransaction._transferType = origin.amount > 0 ? 'outcome' : 'income'
-  if (type === 0) {
-    zenMoneyTransaction._transferId = `${Math.round(transaction.date.getTime())}_${origin.instrument}_${parseDecimal(Math.abs(origin.amount))}`
-  } else {
-    zenMoneyTransaction._transferId = `${formatDateSql(toMoscowDate(transaction.date))}_${type}_${origin.instrument}_${parseDecimal(Math.abs(origin.amount))}`
-  }
-  return true
-}
-
-function parseOuterTransfer (transaction, zenMoneyTransaction) {
-  const isOuterTransfer = (transaction.categoryId &&
-    [
-      202, // Перевод на карту другого банка
-      215, // Зачисления
-      216 // Перевод с карты другого банка
-    ].indexOf(transaction.categoryId) >= 0) || (transaction.description && [
-    'Payment To 7000',
-    'CARD2CARD',
-    'Card2Card',
-    'Visa Direct'
-  ].some(word => transaction.description.indexOf(word) >= 0 ||
-    (transaction.payee && transaction.payee.indexOf(word) >= 0)))
-  if (!isOuterTransfer) {
-    return false
-  }
-  const origin = transaction.origin || transaction.posted
-  if (origin.amount > 0) {
-    zenMoneyTransaction.comment = 'Зачисление'
-  } else {
-    zenMoneyTransaction.comment = 'Перевод с карты'
-  }
-  zenMoneyTransaction.hold = false
-  return true
-}
-
-function parsePayee (transaction, zenMoneyTransaction) {
-  if (transaction.payee) {
-    if ([
-      'Оплата услуг',
-      'Сбербанк Онлайн',
-      'AUTOPLATEZH',
-      'SBOL',
-      'SBERBANK ONL@IN PLATEZH RU',
-      'SBERBANK ONL@IN PLATEZH'
-    ].indexOf(transaction.payee) >= 0) {
-      zenMoneyTransaction.comment = transaction.payee
-    } else {
-      zenMoneyTransaction.payee = transaction.merchant || transaction.payee
-    }
-  } else if (transaction.description) {
-    switch (transaction.description) {
-      case 'Mobile Fee 3200':
-        zenMoneyTransaction.comment = 'Оплата Мобильного банка'
-        break
-      default:
-        break
-    }
-  }
-}
-
-export function reduceWhitespaces (text) {
-  return text.replace(/\s+/g, ' ').trim()
-}
-
-export function removeWhitespaces (text) {
+function removeWhitespaces (text) {
   return text.replace(/\s+/g, '').trim()
 }
