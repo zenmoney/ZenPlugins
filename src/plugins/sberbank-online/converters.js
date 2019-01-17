@@ -98,23 +98,34 @@ function parseInnerTransfer (transaction, apiTransaction, account, accountsById)
   ].indexOf(apiTransaction.form) < 0) {
     return false
   }
+
+  const instrument = transaction.movements[0].invoice.instrument
   const outcomeAccount = getAccountForResource(_.get(apiTransaction, 'details.fromResource'), accountsById)
-  const incomeAccount = getAccountForResource(_.get(apiTransaction, 'details.toResource'), accountsById)
+  let incomeAccount = getAccountForResource(_.get(apiTransaction, 'details.toResource'), accountsById)
+  if (!incomeAccount) {
+    const match = apiTransaction.to.match(/\s{10}(\d[\d*\s]+)$/)
+    if (match) {
+      incomeAccount = accountsById[getId(instrument, removeWhitespaces(match[1]))]
+    }
+  }
   if (!incomeAccount && !outcomeAccount) {
     return false
   }
 
-  const invoice = transaction.movements[0].invoice
-  const sumStr = _.get(apiTransaction, 'details.sellAmount.moneyType.value')
-  const sum = sumStr ? parseDecimal(sumStr) : -invoice.sum
+  const isIncomeInvoice = apiTransaction.form === 'AccountClosingPayment'
+  const invoiceSum = Math.abs(transaction.movements[0].invoice.sum)
+  const sumStr =
+    _.get(apiTransaction, 'details.sellAmount.moneyType.value') ||
+    _.get(apiTransaction, 'details.destinationAmount.moneyType.value')
+  const sum = sumStr ? parseDecimal(sumStr) : invoiceSum
 
   transaction.movements = []
   if (outcomeAccount) {
     transaction.movements.push({
       id: apiTransaction.id,
       account: { id: outcomeAccount.id },
-      invoice: invoice && invoice.sum !== -sum ? invoice : null,
-      sum: -sum,
+      invoice: isIncomeInvoice || invoiceSum === sum ? null : { sum: -invoiceSum, instrument },
+      sum: isIncomeInvoice ? -invoiceSum : -sum,
       fee: null
     })
   }
@@ -122,11 +133,15 @@ function parseInnerTransfer (transaction, apiTransaction, account, accountsById)
     transaction.movements.push({
       id: apiTransaction.id,
       account: { id: incomeAccount.id },
-      invoice: null,
-      sum: Math.abs(invoice.sum),
+      invoice: isIncomeInvoice && invoiceSum !== sum ? { sum: invoiceSum, instrument } : null,
+      sum: isIncomeInvoice ? sum : invoiceSum,
       fee: null
     })
   }
+  if (apiTransaction.description && (!incomeAccount || !outcomeAccount)) {
+    transaction.comment = apiTransaction.description
+  }
+
   return true
 }
 
