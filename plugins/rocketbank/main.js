@@ -133,9 +133,9 @@ function RocketBank(ZenMoney) {
                 syncID: [account.id.toString().substr(-4)],
                 instrument: account.rocket_deposit.currency,
                 balance: account.balance + account.percent,
-                percent: account.rocket_deposit.rate,
+                percent: +account.rocket_deposit.rate,
                 capitalization: true,
-                startDate: account.start_date,
+                startDate: new Date(account.start_date) ,
                 endDateOffsetInterval: "month",
                 endDateOffset: account.rocket_deposit.period,
                 payoffInterval: "month",
@@ -145,6 +145,7 @@ function RocketBank(ZenMoney) {
                 ZenMoney.trace("Обрабатываем вклад: " + JSON.stringify(deposit));
                 ZenMoney.addAccount(deposit);
             } catch (exception) {
+                console.log(exception);
                 ZenMoney.trace("Не удалось добавить вклад: " + JSON.stringify(deposit));
             }
 
