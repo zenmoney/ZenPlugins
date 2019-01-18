@@ -236,7 +236,8 @@ async function fetchPayments (auth, { id, type, instrument }, fromDate, toDate) 
     })
     batch = getArray(_.get(response, 'body.operations.operation'))
     await Promise.all(batch.map(async transaction => {
-      if (transaction.state === 'DRAFT' || transaction.state === 'SAVED') {
+      if (transaction.state === 'DRAFT' || transaction.state === 'SAVED' ||
+        (transaction.description && transaction.description.indexOf('Создание автоплатежа') === 0)) {
         return
       }
       const invoiceCurrency = _.get(transaction, 'operationAmount.currency.code')
