@@ -176,14 +176,14 @@ export async function fetchAccounts (auth) {
     },
     body: { showProductType: 'cards,accounts,imaccounts,loans' }
   })
-  const types = ['card', 'account', 'loan', 'target']
+  const types = ['card', 'account', 'loan', 'target', 'ima']
   return (await Promise.all(types.map(type => {
-    return Promise.all(getArray(_.get(response.body, `${type}s.${type}`)).map(async account => {
+    return Promise.all(getArray(_.get(response.body, type !== 'ima' ? `${type}s.${type}` : 'imaccounts.ima')).map(async account => {
       const params = type === 'target'
         ? account.account && account.account.id
           ? { id: account.account.id, type: 'account' }
           : null
-        : account.mainCardId
+        : account.mainCardId || type === 'ima'
           ? null
           : { id: account.id, type }
       return {
@@ -198,7 +198,7 @@ export async function fetchAccounts (auth) {
 }
 
 async function fetchAccountDetails (auth, { id, type }) {
-  const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/${type}s/info.do`, {
+  const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/${type !== 'ima' ? type + 's' : 'ima'}/info.do`, {
     headers: {
       ...defaultHeaders,
       'Host': `${auth.api.host}:4477`,
@@ -252,9 +252,11 @@ async function fetchPayments (auth, { id, type, instrument }, fromDate, toDate) 
           'ExtCardCashOut',
           'ExtDepositOtherDebit',
           'RurPayment',
+          'RurPayJurSB',
           'InternalPayment',
           'AccountOpeningClaim',
-          'AccountClosingPayment'
+          'AccountClosingPayment',
+          'IMAOpeningClaim'
         ].indexOf(transaction.form) >= 0) {
         const detailsResponse = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/payments/view.do`, {
           headers: {
@@ -281,8 +283,11 @@ async function fetchPayments (auth, { id, type, instrument }, fromDate, toDate) 
 }
 
 export async function fetchTransactions (auth, { id, type, instrument }, fromDate, toDate) {
+  if (type === 'ima') {
+    return []
+  }
   if (type === 'loan') {
-    const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/${type}s/abstract.do`, {
+    const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/${type !== 'ima' ? type + 's' : 'ima'}/abstract.do`, {
       headers: {
         ...defaultHeaders,
         'Host': `${auth.api.host}:4477`,

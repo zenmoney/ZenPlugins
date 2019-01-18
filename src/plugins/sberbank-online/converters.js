@@ -5,11 +5,13 @@ import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 export function convertTransaction (apiTransaction, account, accountsById) {
   const invoice = apiTransaction.operationAmount && apiTransaction.operationAmount.amount && {
     sum: parseDecimal(apiTransaction.operationAmount.amount),
-    instrument: apiTransaction.operationAmount.currency.code
+    instrument: parseInstrument(apiTransaction.operationAmount.currency.code)
   }
   if (!invoice || !invoice.sum) {
     return null
   }
+  const feeStr = _.get(apiTransaction, 'details.paymentDetails.commission.amount')
+  const fee = feeStr ? -parseDecimal(feeStr) : 0
   const transaction = {
     movements: [
       {
@@ -17,7 +19,7 @@ export function convertTransaction (apiTransaction, account, accountsById) {
         account: { id: account.id },
         invoice,
         sum: null,
-        fee: null
+        fee
       }
     ],
     date: parseDate(apiTransaction.date),
@@ -65,7 +67,7 @@ function parseCashWithdrawal (transaction, apiTransaction, account) {
     },
     invoice: null,
     sum: -invoice.sum,
-    fee: null
+    fee: 0
   })
   return true
 }
@@ -85,7 +87,7 @@ function parseCashReplenishment (transaction, apiTransaction, account) {
     },
     invoice: null,
     sum: -invoice.sum,
-    fee: null
+    fee: 0
   })
   return true
 }
@@ -94,7 +96,8 @@ function parseInnerTransfer (transaction, apiTransaction, account, accountsById)
   if ([
     'InternalPayment',
     'AccountOpeningClaim',
-    'AccountClosingPayment'
+    'AccountClosingPayment',
+    'IMAOpeningClaim'
   ].indexOf(apiTransaction.form) < 0) {
     return false
   }
@@ -126,7 +129,7 @@ function parseInnerTransfer (transaction, apiTransaction, account, accountsById)
       account: { id: outcomeAccount.id },
       invoice: isIncomeInvoice || invoiceSum === sum ? null : { sum: -invoiceSum, instrument },
       sum: isIncomeInvoice ? -invoiceSum : -sum,
-      fee: null
+      fee: 0
     })
   }
   if (incomeAccount) {
@@ -135,7 +138,7 @@ function parseInnerTransfer (transaction, apiTransaction, account, accountsById)
       account: { id: incomeAccount.id },
       invoice: isIncomeInvoice && invoiceSum !== sum ? { sum: invoiceSum, instrument } : null,
       sum: isIncomeInvoice ? sum : invoiceSum,
-      fee: null
+      fee: 0
     })
   }
   if (apiTransaction.description && (!incomeAccount || !outcomeAccount)) {
@@ -150,7 +153,7 @@ function getAccountForResource (resource, accountsById) {
   if (!id) {
     return null
   }
-  const instrument = _.get(resource, 'resourceType.availableValues.valueItem.currency')
+  const instrument = parseInstrument(_.get(resource, 'resourceType.availableValues.valueItem.currency'))
   let syncId = _.get(resource, 'resourceType.availableValues.valueItem.displayedValue')
   if (syncId) {
     const i = syncId.search(/[^\d\s*]/)
@@ -178,7 +181,7 @@ function parseOuterIncomeTransfer (transaction, apiTransaction, account) {
     },
     invoice: null,
     sum: -invoice.sum,
-    fee: null
+    fee: 0
   })
   return true
 }
@@ -208,7 +211,7 @@ function parseOutcomeTransfer (transaction, apiTransaction, account) {
     },
     invoice: null,
     sum: -invoice.sum,
-    fee: null
+    fee: 0
   })
   const receiverName = _.get(apiTransaction, 'details.receiverName.stringType.value')
   if (receiverName) {
@@ -244,7 +247,7 @@ function parsePayee (transaction, apiTransaction) {
       const parts = fullTitle.split(/\s\s+/)
       if (parts.length > 2) {
         transaction.merchant.country = parts[parts.length - 1]
-        transaction.merchant.city = parts[parts.length - 2]
+        transaction.merchant.city = parts[parts.length - 2].length >= 2 ? parts[parts.length - 2] : null
       }
     }
   }
@@ -264,7 +267,7 @@ export function convertLoanTransaction (apiTransaction, account) {
         account: { id: account.id },
         invoice: null,
         sum: parseDecimal(apiTransaction.totalPaymentAmount.amount),
-        fee: null
+        fee: 0
       }
     ],
     date: parseDate(apiTransaction.date),
@@ -281,7 +284,7 @@ export function formatDateSql (date) {
 export function convertAccounts (apiAccountsByType) {
   const accountData = []
   const accountsById = {}
-  for (const type of ['account', 'loan', 'card', 'target']) {
+  for (const type of ['account', 'loan', 'card', 'target', 'ima']) {
     for (const data of convertAccountsWithType(apiAccountsByType[type], type)) {
       const dataForTheSameAccount = accountData.find(d => d.zenAccount.id === data.zenAccount.id)
       if (dataForTheSameAccount) {
@@ -322,6 +325,9 @@ function convertAccountsWithType (apiAccountsArray, type) {
         case 'target':
           data = convertTarget(apiAccount.account, apiAccount.details)
           break
+        case 'ima':
+          data = convertMetalAccount(apiAccount.account)
+          break
         default:
           data = apiAccount.account.rate && apiAccount.details.detail.period && parseDecimal(apiAccount.account.rate) > 2
             ? convertDeposit(apiAccount.account, apiAccount.details)
@@ -341,6 +347,27 @@ function toMoscowDate (date) {
   return new Date(date.getTime() + (date.getTimezoneOffset() + 180) * 60000)
 }
 
+export function convertMetalAccount (apiAccount) {
+  const ozToGramsRate = 31.1034768
+  return {
+    products: [
+      {
+        id: apiAccount.id,
+        type: 'ima',
+        instrument: parseInstrument(apiAccount.balance.currency.code)
+      }
+    ],
+    zenAccount: {
+      id: 'ima:' + apiAccount.id,
+      type: 'checking',
+      title: apiAccount.name,
+      instrument: parseInstrument(apiAccount.balance.currency.code),
+      syncID: [apiAccount.number],
+      balance: parseDecimal(apiAccount.balance.amount) / ozToGramsRate
+    }
+  }
+}
+
 export function convertTarget (apiTarget) {
   if (apiTarget.status === 'accountDisabled') {
     return null
@@ -350,14 +377,14 @@ export function convertTarget (apiTarget) {
       {
         id: apiTarget.account.id,
         type: 'account',
-        instrument: apiTarget.account.value.currency.code
+        instrument: parseInstrument(apiTarget.account.value.currency.code)
       }
     ],
     zenAccount: {
       id: 'account:' + apiTarget.account.id,
       type: 'checking',
       title: apiTarget.comment || apiTarget.name,
-      instrument: apiTarget.account.value.currency.code,
+      instrument: parseInstrument(apiTarget.account.value.currency.code),
       balance: parseDecimal(apiTarget.account.value.amount),
       savings: true,
       syncID: [
@@ -392,7 +419,7 @@ export function convertCards (apiCardsArray, nowDate = new Date()) {
     }
 
     const availableLimit = apiCard.account.availableLimit
-    const instrument = availableLimit ? availableLimit.currency.code : 'RUB'
+    const instrument = availableLimit ? parseInstrument(availableLimit.currency.code) : 'RUB'
     if (!data.account) {
       const available = availableLimit ? parseDecimal(availableLimit.amount) : null
       const creditLimit = apiCard.account.type === 'credit'
@@ -443,14 +470,14 @@ export function convertAccount (apiAccount) {
       {
         id: apiAccount.id,
         type: 'account',
-        instrument: apiAccount.balance.currency.code
+        instrument: parseInstrument(apiAccount.balance.currency.code)
       }
     ],
     zenAccount: {
       id: 'account:' + apiAccount.id,
       type: 'checking',
       title: apiAccount.name,
-      instrument: apiAccount.balance.currency.code,
+      instrument: parseInstrument(apiAccount.balance.currency.code),
       balance: parseDecimal(apiAccount.balance.amount),
       savings: apiAccount.rate && parseDecimal(apiAccount.rate) >= 1,
       syncID: [
@@ -468,7 +495,7 @@ export function convertLoan (apiLoan, details) {
     id: 'loan:' + apiLoan.id,
     type: 'loan',
     title: apiLoan.name,
-    instrument: details.extDetail.origianlAmount.currency.code,
+    instrument: parseInstrument(details.extDetail.origianlAmount.currency.code),
     startDate: parseDate(details.detail.termStart),
     startBalance: parseDecimal(apiLoan.amount
       ? apiLoan.amount.amount
@@ -500,7 +527,7 @@ export function convertLoan (apiLoan, details) {
       {
         id: apiLoan.id,
         type: 'loan',
-        instrument: details.extDetail.origianlAmount.currency.code
+        instrument: parseInstrument(details.extDetail.origianlAmount.currency.code)
       }
     ],
     zenAccount
@@ -512,7 +539,7 @@ export function convertDeposit (apiDeposit, details) {
     id: 'account:' + apiDeposit.id,
     type: 'deposit',
     title: apiDeposit.name,
-    instrument: apiDeposit.balance.currency.code,
+    instrument: parseInstrument(apiDeposit.balance.currency.code),
     startDate: parseDate(details.detail.open),
     startBalance: 0,
     balance: parseDecimal(apiDeposit.balance.amount),
@@ -530,10 +557,29 @@ export function convertDeposit (apiDeposit, details) {
       {
         id: apiDeposit.id,
         type: 'account',
-        instrument: apiDeposit.balance.currency.code
+        instrument: parseInstrument(apiDeposit.balance.currency.code)
       }
     ],
     zenAccount
+  }
+}
+
+function parseInstrument (instrument) {
+  switch (instrument) {
+    case 'AUR':
+    case 'A98':
+      return 'XAU'
+    case 'ARG':
+    case 'A99':
+      return 'XAG'
+    case 'PTR':
+    case 'A76':
+      return 'XPT'
+    case 'PDR':
+    case 'A33':
+      return 'XPD'
+    default:
+      return instrument
   }
 }
 

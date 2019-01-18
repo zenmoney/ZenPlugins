@@ -1,5 +1,5 @@
 import { parseXml } from '../../common/network'
-import { convertAccount, convertCards, convertDeposit, convertLoan, convertTransaction, convertTarget, getId } from './converters'
+import { convertAccount, convertCards, convertDeposit, convertLoan, convertTransaction, convertTarget, getId, convertMetalAccount } from './converters'
 
 describe('convertLoan', () => {
   it('returns valid loan', () => {
@@ -1287,7 +1287,7 @@ describe('convertTransaction', () => {
             instrument: 'EUR'
           },
           sum: -414.05,
-          fee: null
+          fee: 0
         }
       ],
       merchant: {
@@ -1333,7 +1333,7 @@ describe('convertTransaction', () => {
           account: { id: 'account' },
           invoice: null,
           sum: 41000,
-          fee: null
+          fee: 0
         },
         {
           id: null,
@@ -1345,7 +1345,7 @@ describe('convertTransaction', () => {
           },
           invoice: null,
           sum: -41000,
-          fee: null
+          fee: 0
         }
       ],
       merchant: null,
@@ -1461,7 +1461,7 @@ describe('convertTransaction', () => {
           account: { id: 'account' },
           invoice: null,
           sum: 700,
-          fee: null
+          fee: 0
         },
         {
           id: null,
@@ -1475,7 +1475,7 @@ describe('convertTransaction', () => {
           },
           invoice: null,
           sum: -700,
-          fee: null
+          fee: 0
         }
       ],
       merchant: null,
@@ -1613,7 +1613,7 @@ describe('convertTransaction', () => {
           },
           invoice: null,
           sum: 100,
-          fee: null
+          fee: 0
         }
       ],
       merchant: null,
@@ -1771,7 +1771,7 @@ describe('convertTransaction', () => {
           account: { id: 'account' },
           invoice: null,
           sum: -40000,
-          fee: null
+          fee: 0
         },
         {
           id: null,
@@ -1785,7 +1785,7 @@ describe('convertTransaction', () => {
           },
           invoice: null,
           sum: 40000,
-          fee: null
+          fee: 0
         }
       ],
       merchant: {
@@ -1872,14 +1872,14 @@ describe('convertTransaction', () => {
           account: { id: 'account' },
           invoice: null,
           sum: -3710.81,
-          fee: null
+          fee: 0
         },
         {
           id: '10778929144',
           account: { id: 'account2' },
           invoice: null,
           sum: 3710.81,
-          fee: null
+          fee: 0
         }
       ],
       merchant: null,
@@ -1914,7 +1914,7 @@ describe('convertTransaction', () => {
           account: { id: 'account' },
           invoice: null,
           sum: -60,
-          fee: null
+          fee: 0
         }
       ],
       merchant: null,
@@ -1950,7 +1950,7 @@ describe('convertTransaction', () => {
           account: { id: 'account' },
           invoice: null,
           sum: -192.67,
-          fee: null
+          fee: 0
         }
       ],
       merchant: {
@@ -2056,14 +2056,14 @@ describe('convertTransaction', () => {
           account: { id: 'account' },
           invoice: null,
           sum: -15300.00,
-          fee: null
+          fee: 0
         },
         {
           id: '10950380712',
           account: { id: 'account2' },
           invoice: null,
           sum: 15300.00,
-          fee: null
+          fee: 0
         }
       ],
       merchant: null,
@@ -2099,7 +2099,7 @@ describe('convertTransaction', () => {
           account: { id: 'account' },
           invoice: null,
           sum: -200,
-          fee: null
+          fee: 0
         },
         {
           id: null,
@@ -2111,7 +2111,7 @@ describe('convertTransaction', () => {
           },
           invoice: null,
           sum: 200,
-          fee: null
+          fee: 0
         }
       ],
       merchant: null,
@@ -2192,7 +2192,7 @@ describe('convertTransaction', () => {
           account: { id: 'account' },
           invoice: null,
           sum: 10,
-          fee: null
+          fee: 0
         }
       ],
       merchant: null,
@@ -2449,14 +2449,14 @@ describe('convertTransaction', () => {
           account: { id: 'account' },
           invoice: { sum: -100, instrument: 'USD' },
           sum: -6825,
-          fee: null
+          fee: 0
         },
         {
           id: '11260699079',
           account: { id: 'deposit' },
           invoice: null,
           sum: 100,
-          fee: null
+          fee: 0
         }
       ],
       merchant: null,
@@ -2599,18 +2599,88 @@ describe('convertTransaction', () => {
           account: { id: 'deposit' },
           invoice: null,
           sum: -0.01,
-          fee: null
+          fee: 0
         },
         {
           id: '11528807128',
           account: { id: 'account' },
           invoice: { sum: 0.01, instrument: 'USD' },
           sum: 0.66,
-          fee: null
+          fee: 0
         }
       ],
       merchant: null,
       comment: null
+    })
+  })
+})
+
+describe('convertMetalAccount', () => {
+  const ozToGramsRate = 31.1034768
+
+  it('converts gold', () => {
+    expect(convertMetalAccount({
+      id: '500427744',
+      name: 'Обезлич. мет. счета (золото)',
+      number: '20309098838170333558',
+      openDate: '06.01.2019T00:00:00',
+      closeDate: '15.01.2019T00:00:00',
+      balance: { amount: '50,00', currency: { code: 'AUR', name: 'г' } },
+      availcash: { amount: '50,00', currency: { code: 'AUR', name: 'г' } },
+      currency: 'ЗОЛОТО В ГРАММАХ (AUR)',
+      agreementNumber: '20309A98838170333558',
+      state: 'opened',
+      arrested: 'false',
+      showarrestdetail: 'true'
+    })).toEqual({
+      products: [
+        {
+          id: '500427744',
+          type: 'ima',
+          instrument: 'XAU'
+        }
+      ],
+      zenAccount: {
+        id: 'ima:500427744',
+        type: 'checking',
+        title: 'Обезлич. мет. счета (золото)',
+        instrument: 'XAU',
+        syncID: ['20309098838170333558'],
+        balance: 50 / ozToGramsRate
+      }
+    })
+  })
+
+  it('converts silver', () => {
+    expect(convertMetalAccount({
+      id: '500427747',
+      name: 'Обезлич. мет. счета (серебро)',
+      number: '20309099038170403096',
+      openDate: '06.01.2019T00:00:00',
+      closeDate: '15.01.2019T00:00:00',
+      balance: { amount: '3812,00', currency: { code: 'ARG', name: 'г' } },
+      availcash: { amount: '3812,00', currency: { code: 'ARG', name: 'г' } },
+      currency: 'СЕРЕБРО В ГРАММАХ (ARG)',
+      agreementNumber: '20309A99038170403096',
+      state: 'opened',
+      arrested: 'false',
+      showarrestdetail: 'true'
+    })).toEqual({
+      products: [
+        {
+          id: '500427747',
+          type: 'ima',
+          instrument: 'XAG'
+        }
+      ],
+      zenAccount: {
+        id: 'ima:500427747',
+        type: 'checking',
+        title: 'Обезлич. мет. счета (серебро)',
+        instrument: 'XAG',
+        syncID: ['20309099038170403096'],
+        balance: 3812 / ozToGramsRate
+      }
     })
   })
 })
