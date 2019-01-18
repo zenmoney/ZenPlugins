@@ -11,6 +11,8 @@ const CLIENT_SECRET = ''
 const CLIENT_ID = ''
 const REDIRECT_URI = ''
 
+export class AuthError {}
+
 async function fetchJson (url, options = {}, predicate = () => true) {
   let response
   try {
@@ -41,7 +43,7 @@ async function fetchJson (url, options = {}, predicate = () => true) {
     if (response.body && (
       response.body.errorCode === 'AUTH_REQUIRED' ||
       response.body.errorCode === 'ACCESS_DENIED')) {
-      throw new Error('AuthError')
+      throw new AuthError()
     }
     console.assert(predicate(response), 'non-successful response')
   }
@@ -135,7 +137,7 @@ export async function fetchAccounts ({ accessToken }, { inn }) {
       Authorization: `Bearer ${accessToken}`
     }
   })
-  return response.body
+  return response.body || []
 }
 
 function formatDate (date) {

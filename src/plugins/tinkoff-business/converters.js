@@ -21,7 +21,10 @@ export function convertTransaction (apiTransaction, account) {
     outcomeAccount: apiTransaction.payerAccount,
     payee: payee || null,
     comment: apiTransaction.paymentPurpose || null
-  };
+  }
+  if (apiTransaction.id) {
+    transaction.id = apiTransaction.id
+  }
   [
     parseCardTransfer,
     parsePayee
