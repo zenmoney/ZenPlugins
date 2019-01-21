@@ -110,9 +110,10 @@ export function fixDateTimezones (transaction) {
 }
 
 export function patchTransactions (transactions, accounts) {
+  const accountsByIdLookup = _.keyBy(accounts, (x) => x.id)
   return castTransactionDatesToTicks(transactions.map((x) =>
     x.movements
-      ? fixDateTimezones(toZenmoneyTransaction(x))
+      ? fixDateTimezones(toZenmoneyTransaction(x, accountsByIdLookup))
       : fixDateTimezones(x)
   ))
 }

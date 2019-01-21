@@ -18,13 +18,23 @@ export function formatComment ({ invoice, sum, fee, accountInstrument }) {
   return lines.length === 0 ? null : lines.join('\n')
 }
 
+function resolveAccountInstrument (accountRef, serializedAccountRef, accountsByIdLookup) {
+  if (serializedAccountRef === accountRef.id) {
+    const zenmoneyAccount = accountsByIdLookup[accountRef.id]
+    console.assert(zenmoneyAccount, 'specific account ref', accountRef, 'cannot be resolved with provided accounts:', accountsByIdLookup)
+    return zenmoneyAccount.instrument
+  } else {
+    console.assert(accountRef.instrument, 'accountRef instrument must be defined', accountRef)
+    return accountRef.instrument
+  }
+}
+
 const accountTypes = ['cash', 'ccard', 'checking', 'loan', 'deposit']
 
-function makeZenmoneyAccountReference (account) {
+function serializeZenmoneyAccountReference (account) {
   console.assert(_.isPlainObject(account), 'account must be Object:', account)
   if (account.id) {
-    const { id, ...rest } = account
-    const propsThatMakeNoDifference = Object.keys(rest)
+    const propsThatMakeNoDifference = Object.keys(account).filter((x) => x !== 'id')
     console.assert(
       propsThatMakeNoDifference.length === 0,
       propsThatMakeNoDifference,
@@ -34,7 +44,7 @@ function makeZenmoneyAccountReference (account) {
     )
     console.assert(_.isString(account.id), 'account.id must be String:', account)
     console.assert(
-      accountTypes.every((x) => account.id !== x && !account.id.includes(x + '#')),
+      accountTypes.every((type) => account.id !== type && !account.id.startsWith(`${type}#`)),
       'account.id must not be used to provide weak reference. Use account weak-referencing type, instrument[, syncID] props instead.'
     )
     return account.id
@@ -105,7 +115,15 @@ function assertRestIsEmpty (rest, kind, kindInstance) {
   console.assert(propsThatMakeNoDifference.length === 0, propsThatMakeNoDifference, kind, 'are unknown:', kindInstance)
 }
 
-export function toZenmoneyTransaction (readableTransaction) {
+function assertInvoiceIsNotRedundant (invoice, accountInstrument, context) {
+  console.assert(
+    invoice === null || invoice.instrument !== accountInstrument,
+    `invoice:{sum,instrument} must be replaced with null when it's the same as {transaction.sum,account.instrument}:`,
+    context
+  )
+}
+
+export function toZenmoneyTransaction (readableTransaction, accountsByIdLookup) {
   const {
     movements,
     date,
@@ -161,20 +179,17 @@ export function toZenmoneyTransaction (readableTransaction) {
     const movement = movements[0]
     console.assert(_.isPlainObject(movement), 'movement must be Object:', readableTransaction)
 
-    const { id, account, invoice, sum, fee, ...movementRest } = movement
+    const { id, account: accountRef, invoice, sum, fee, ...movementRest } = movement
     assertRestIsEmpty(movementRest, 'movement props', readableTransaction)
 
     console.assert(id === null || _.isString(id), 'movement.id must be defined String:', readableTransaction)
     result.id = id
 
-    const zenmoneyAccountReference = makeZenmoneyAccountReference(account)
+    const serializedAccountRef = serializeZenmoneyAccountReference(accountRef)
 
     console.assert(invoice === null || _.isPlainObject(invoice), 'invoice must be defined Object:', readableTransaction)
-    // console.assert(
-    //   invoice === null || invoice.sum !== sum /* TODO use invoice.instrument !== account.instrument instead of checking sum */,
-    //   `invoice:{sum,instrument} must be replaced with null when it's the same as {sum,account.instrument}:`,
-    //   readableTransaction
-    // )
+
+    assertInvoiceIsNotRedundant(invoice, resolveAccountInstrument(accountRef, serializedAccountRef, accountsByIdLookup), readableTransaction)
 
     console.assert(_.isNumber(sum), 'movement.sum must be Number:', readableTransaction)
 
@@ -183,14 +198,14 @@ export function toZenmoneyTransaction (readableTransaction) {
 
     if (sumWithFee >= 0) {
       result.income = Math.abs(sumWithFee)
-      result.incomeAccount = zenmoneyAccountReference
+      result.incomeAccount = serializedAccountRef
       result.outcome = 0
-      result.outcomeAccount = zenmoneyAccountReference
+      result.outcomeAccount = serializedAccountRef
     } else {
       result.income = 0
-      result.incomeAccount = zenmoneyAccountReference
+      result.incomeAccount = serializedAccountRef
       result.outcome = Math.abs(sumWithFee)
-      result.outcomeAccount = zenmoneyAccountReference
+      result.outcomeAccount = serializedAccountRef
     }
 
     if (invoice !== null) {
@@ -240,19 +255,25 @@ export function toZenmoneyTransaction (readableTransaction) {
       'movements array[2] must contain both income (sum >= 0) and outcome (sum < 0)',
       { readableTransaction, outcomeSumWithFee, incomeSumWithFee }
     )
+    const serializedOutcomeAccountRef = serializeZenmoneyAccountReference(outcomeMovement.account)
+    const serializedIncomeAccountRef = serializeZenmoneyAccountReference(incomeMovement.account)
 
     result.outcome = Math.abs(outcomeSumWithFee)
-    result.outcomeAccount = makeZenmoneyAccountReference(outcomeMovement.account)
+
+    result.outcomeAccount = serializedOutcomeAccountRef
     result.outcomeBankID = outcomeMovement.id
 
     result.income = Math.abs(incomeSumWithFee)
-    result.incomeAccount = makeZenmoneyAccountReference(incomeMovement.account)
+
+    result.incomeAccount = serializedIncomeAccountRef
     result.incomeBankID = incomeMovement.id
 
+    assertInvoiceIsNotRedundant(outcomeMovement.invoice, resolveAccountInstrument(outcomeMovement.account, serializedOutcomeAccountRef, accountsByIdLookup), readableTransaction)
     if (outcomeMovement.invoice) {
       result.opOutcome = Math.abs(outcomeMovement.invoice.sum)
       result.opOutcomeInstrument = outcomeMovement.invoice.instrument
     }
+    assertInvoiceIsNotRedundant(incomeMovement.invoice, resolveAccountInstrument(incomeMovement.account, serializedIncomeAccountRef, accountsByIdLookup), readableTransaction)
     if (incomeMovement.invoice) {
       result.opIncome = Math.abs(incomeMovement.invoice.sum)
       result.opIncomeInstrument = incomeMovement.invoice.instrument
