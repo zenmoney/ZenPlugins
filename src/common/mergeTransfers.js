@@ -1,45 +1,49 @@
 import _ from 'lodash'
 import { getSingleReadableTransactionMovement } from './converters'
 
-export function mergeTransfers ({ items, isTransferItem, makeGroupKey, selectTransactionId, selectReadableTransaction }) {
+export function mergeTransfers ({ items, isTransferItem, makeGroupKey, selectReadableTransaction = (x) => x }) {
+  const weakMode = !isTransferItem
+  if (weakMode) {
+    isTransferItem = (item) => makeGroupKey(item) !== null
+  }
   const { 1: singles = [], 2: pairs = [], collisiveBuckets = [] } = _.groupBy(
     _.toPairs(_.groupBy(items.filter(isTransferItem), (x) => makeGroupKey(x))),
     ([transferId, items]) => items.length > 2 ? 'collisiveBuckets' : items.length
   )
-  if (singles.length > 0) {
-    console.debug('Cannot find a pair for singles looking like transfers:', JSON.stringify(singles, null, 2))
+  if (!weakMode && singles.length > 0) {
+    console.debug('Cannot find a pair for singles looking like transfers:', singles)
   }
-  if (collisiveBuckets.length > 0) {
-    throw new Error('Transactions have collisive transferId:' + JSON.stringify(collisiveBuckets, null, 2))
-  }
+  console.assert(collisiveBuckets.length === 0, 'Transactions have collisive transferId:', collisiveBuckets)
 
   const replacedByMergingMarker = null
-  const replacementsByTransactionIdLookup = pairs.reduce((lookup, [transferId, items]) => {
-    const dates = _.uniqBy(items.map((x) => selectReadableTransaction(x).date), (x) => x.valueOf())
-    console.assert(dates.length === 1, 'transfer dates must be equal', { dates, transferId })
-    const date = dates[0]
-    const hold = items.some((x) => selectReadableTransaction(x).hold)
-    const movements = items.map((x) => getSingleReadableTransactionMovement(selectReadableTransaction(x)))
-    return items.reduce((lookup, item, index) => {
-      const id = selectTransactionId(item)
-      console.assert(id, 'transaction id must be provided')
-      console.assert(_.isUndefined(lookup[id]), 'transfer side replacement is already defined')
-      lookup[id] = index === 0
-        ? {
-          movements,
-          date,
-          hold,
-          merchant: null,
-          comment: null
-        }
-        : replacedByMergingMarker
-      return lookup
-    }, lookup)
+  const replacementsByGroupKeyLookup = pairs.reduce((lookup, [transferId, items]) => {
+    const readableTransactions = items.map(selectReadableTransaction)
+    const date = new Date(Math.min(readableTransactions[0].date.getTime(), readableTransactions[1].date.getTime()))
+    const hold = readableTransactions[0].hold === readableTransactions[1].hold ? readableTransactions[0].hold : null
+    const comment = readableTransactions[0].comment || readableTransactions[1].comment
+    const movements = readableTransactions.map((x) => getSingleReadableTransactionMovement(x))
+    lookup[transferId] = {
+      movements,
+      date,
+      hold,
+      merchant: null,
+      comment
+    }
+    return lookup
   }, {})
 
   const readableTransactions = items.map((item) => {
-    const replacement = replacementsByTransactionIdLookup[selectTransactionId(item)]
-    return _.isUndefined(replacement) ? selectReadableTransaction(item) : replacement
+    if (isTransferItem(item)) {
+      const key = makeGroupKey(item)
+      const replacement = replacementsByGroupKeyLookup[key]
+      if (!_.isUndefined(replacement)) {
+        if (replacement !== replacedByMergingMarker) {
+          replacementsByGroupKeyLookup[key] = replacedByMergingMarker
+        }
+        return replacement
+      }
+    }
+    return selectReadableTransaction(item)
   }).filter((x) => x !== replacedByMergingMarker)
 
   const expectedLength = items.length - pairs.length

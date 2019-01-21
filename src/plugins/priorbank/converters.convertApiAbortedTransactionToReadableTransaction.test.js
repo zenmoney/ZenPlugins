@@ -52,7 +52,7 @@ test('it merges correctly', () => {
       'date': new Date('2018-01-01T00:00:00+03:00'),
       'hold': true,
       'merchant': null,
-      'comment': null
+      'comment': '100.00 BYN\n(rate=2.0004)'
     }
   ])
 })
