@@ -283,13 +283,5 @@ export function convertApiMovementsToReadableTransactions (apiMovements, account
       }
     },
     makeGroupKey: (item) => item.apiMovement.reference,
-    selectTransactionId: ({ readableTransaction }) => {
-      if (readableTransaction.movements.length === 1) {
-        return readableTransaction.movements[0].id
-      }
-      const nonCashMovements = readableTransaction.movements.filter((x) => x.id !== null)
-      console.assert(nonCashMovements.length === 1, `Cannot resolve single movement id`)
-      return nonCashMovements[0].id
-    }
   })
 }

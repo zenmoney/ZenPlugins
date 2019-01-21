@@ -14,7 +14,6 @@ describe('mergeTransfers', () => {
         const movement = getSingleReadableTransactionMovement(item)
         return Math.abs(movement.sum)
       },
-      selectTransactionId: (x) => getSingleReadableTransactionMovement(x).id,
       selectReadableTransaction: (x) => x
     })).toEqual([
       {

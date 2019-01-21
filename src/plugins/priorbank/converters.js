@@ -137,15 +137,6 @@ export function mergeTransfers ({ items }) {
       const instrument = movement.invoice === null ? apiTransaction.card.clientObject.currIso : movement.invoice.instrument
       return `${Math.abs(sum)} ${instrument} @ ${readableTransaction.date} ${apiTransaction.payload.transTime}`
     },
-    selectTransactionId: ({ readableTransaction, apiTransaction }) => {
-      if (readableTransaction.movements.length > 1) {
-        return null
-      }
-      const movement = getSingleReadableTransactionMovement(readableTransaction)
-      const sum = movement.sum
-      const instrument = apiTransaction.card.clientObject.currIso
-      return `${Math.abs(sum)} ${instrument} @ ${readableTransaction.date} ${apiTransaction.payload.transTime} ${(movement.sum >= 0 ? '+' : '-')}`
-    }
   })
 }
 
