@@ -51,7 +51,6 @@ function serializeZenmoneyAccountReference (account) {
   }
 
   const { type: t, instrument, syncIds, company, ...rest } = account
-  const type = t === null ? 'ccard' : t
   const propsThatMakeNoDifference = Object.keys(rest)
   console.assert(
     propsThatMakeNoDifference.length === 0,
@@ -61,7 +60,13 @@ function serializeZenmoneyAccountReference (account) {
     `Either provide specific account {id} alone, or provide account weak-ref in shape {type, instrument[, syncIds, company]}`
   )
 
-  console.assert(company === null || _.isObject(company), `account.company must be defined Object`, account)
+  console.assert(
+    company === null || (_.isObject(company) && _.isString(company.id) && _.isEqual(Object.keys(company), ['id'])),
+    `account.company must be defined Object with shape {id}`,
+    account
+  )
+  const type = t === null && _.isArray(syncIds) && syncIds.length > 0 ? 'ccard' : t
+  console.assert(type !== null, 'account.type can be null only when syncIds are present')
   console.assert(accountTypes.includes(type), `Unknown account.type "${type}". Supported values are`, accountTypes)
   console.assert(_.isString(instrument), 'instrument must be String currency code', account)
   if (type === 'cash') {
