@@ -5,26 +5,6 @@ describe('adaptScrapeToGlobalApi', () => {
   it('should call addAccount, addTransaction, setResult', () => {
     const setResultCalled = new Promise((resolve) => {
       global.ZenMoney = {
-        getPreferences: jest.fn(),
-        addAccount: jest.fn(),
-        addTransaction: jest.fn(),
-        setResult: resolve,
-        features: {}
-      }
-      const main = adaptScrapeToGlobalApi(async () => [{ account: 'account', transactions: [1, 2] }])
-      main()
-    })
-    return expect(setResultCalled).resolves.toEqual({ success: true }).then(x => {
-      expect(global.ZenMoney.addAccount).toHaveBeenCalledTimes(1)
-      expect(global.ZenMoney.addAccount).toHaveBeenCalledWith(['account'])
-      expect(global.ZenMoney.addTransaction).toHaveBeenCalledTimes(1)
-      expect(global.ZenMoney.addTransaction).toHaveBeenCalledWith([1, 2])
-    })
-  })
-
-  it('should call addAccount, addTransaction, setResult when called with accounts and transactions arrays', () => {
-    const setResultCalled = new Promise((resolve) => {
-      global.ZenMoney = {
         getPreferences: () => ({ key: 'value' }),
         addAccount: jest.fn(),
         addTransaction: jest.fn(),
@@ -101,31 +81,6 @@ describe('adaptScrapeToGlobalApi', () => {
       }
       adaptScrapeToGlobalApi(() => Promise.resolve())()
     })).resolves.toMatchObject({ message: '[RUE] scrape() did not return anything' })
-  })
-
-  it('should check promise result array is not empty', () => {
-    return expect(new Promise((resolve) => {
-      global.ZenMoney = {
-        getPreferences: jest.fn(),
-        setResult: resolve
-      }
-      adaptScrapeToGlobalApi(() => Promise.resolve([]))()
-    })).resolves.toMatchObject({ message: '[RUE] scrape results are empty' })
-  });
-
-  [
-    { account: null, transactions: [] },
-    { account: {}, transactions: null }
-  ].forEach((invalidResultItem, i) => {
-    it('should check promise result array items are correctly shaped ' + i, () => {
-      return expect(new Promise((resolve) => {
-        global.ZenMoney = {
-          getPreferences: jest.fn(),
-          setResult: resolve
-        }
-        adaptScrapeToGlobalApi(() => Promise.resolve([invalidResultItem]))()
-      })).resolves.toMatchObject({ message: '[RUE] scrape result should be array of {account, transactions[]}' })
-    })
   })
 })
 
