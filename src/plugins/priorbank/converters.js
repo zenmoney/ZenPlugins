@@ -124,19 +124,23 @@ const convertApiTransactionToReadableTransaction = (apiTransaction) => {
   throw new Error(`apiTransaction.type "${apiTransaction.type}" not implemented`)
 }
 
+const isTransferItem = ({ apiTransaction }) =>
+  apiTransaction.payload.transDetails.includes('P2P SDBO') ||
+  apiTransaction.payload.transDetails.includes('P2P_SDBO')
+
 export function mergeTransfers ({ items }) {
   return commonMergeTransfers({
     items,
     selectReadableTransaction: (item) => item.readableTransaction,
-    isTransferItem: (item) =>
-      item.apiTransaction.payload.transDetails.includes('P2P SDBO') ||
-      item.apiTransaction.payload.transDetails.includes('P2P_SDBO'),
     makeGroupKey: ({ readableTransaction, apiTransaction }) => {
+      if (!isTransferItem({ apiTransaction })) {
+        return null
+      }
       const movement = getSingleReadableTransactionMovement(readableTransaction)
       const sum = movement.invoice === null ? movement.sum : movement.invoice.sum
       const instrument = movement.invoice === null ? apiTransaction.card.clientObject.currIso : movement.invoice.instrument
       return `${Math.abs(sum)} ${instrument} @ ${readableTransaction.date} ${apiTransaction.payload.transTime}`
-    },
+    }
   })
 }
 
