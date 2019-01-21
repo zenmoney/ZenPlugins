@@ -13,17 +13,13 @@ export function mergeTransfers ({ items, makeGroupKey, selectReadableTransaction
 
   const replacedByMergingMarker = null
   const replacementsByGroupKeyLookup = pairs.reduce((lookup, [transferId, items]) => {
-    const readableTransactions = items.map(selectReadableTransaction)
-    const date = new Date(Math.min(readableTransactions[0].date.getTime(), readableTransactions[1].date.getTime()))
-    const hold = readableTransactions[0].hold === readableTransactions[1].hold ? readableTransactions[0].hold : null
-    const comment = readableTransactions[0].comment || readableTransactions[1].comment
-    const movements = readableTransactions.map((x) => getSingleReadableTransactionMovement(x))
+    const [a, b] = items.map(selectReadableTransaction)
     lookup[transferId] = {
-      movements,
-      date,
-      hold,
+      movements: [getSingleReadableTransactionMovement(a), getSingleReadableTransactionMovement(b)],
+      date: new Date(Math.min(a.date.getTime(), b.date.getTime())),
+      hold: a.hold === b.hold ? a.hold : null,
       merchant: null,
-      comment
+      comment: a.comment || b.comment
     }
     return lookup
   }, {})
