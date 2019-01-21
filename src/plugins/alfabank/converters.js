@@ -237,6 +237,24 @@ function complementTransferSides (apiMovements) {
   })
 }
 
+const isTransferItem = ({ apiMovement: { senderInfo, recipientInfo, reference, description }, readableTransaction }) => {
+  if (readableTransaction.movements.length > 1) {
+    return false
+  }
+  if (!isPossiblyTransfer({ reference })) {
+    return false
+  }
+  if (description.startsWith('Внутрибанковский перевод между счетами')) {
+    return true
+  }
+  const movement = getSingleReadableTransactionMovement(readableTransaction)
+  if (movement.sum > 0) {
+    return senderInfo.senderNameBank === `АО "АЛЬФА-БАНК"`
+  } else {
+    return recipientInfo && recipientInfo.recipientNameBank === `АО "АЛЬФА-БАНК"`
+  }
+}
+
 export function convertApiMovementsToReadableTransactions (apiMovements, accountTuples) {
   const movementsWithoutDuplicates = _.uniqBy(apiMovements, x => x.key)
   const movementsWithCompleteSides = complementTransferSides(movementsWithoutDuplicates)
@@ -265,23 +283,6 @@ export function convertApiMovementsToReadableTransactions (apiMovements, account
   return mergeTransfers({
     items: processedMovementsWithoutNonAccountableArtifacts,
     selectReadableTransaction: (item) => item.readableTransaction,
-    isTransferItem: ({ apiMovement: { senderInfo, recipientInfo, reference, description }, readableTransaction }) => {
-      if (readableTransaction.movements.length > 1) {
-        return false
-      }
-      if (!isPossiblyTransfer({ reference })) {
-        return false
-      }
-      if (description.startsWith('Внутрибанковский перевод между счетами')) {
-        return true
-      }
-      const movement = getSingleReadableTransactionMovement(readableTransaction)
-      if (movement.sum > 0) {
-        return senderInfo.senderNameBank === `АО "АЛЬФА-БАНК"`
-      } else {
-        return recipientInfo && recipientInfo.recipientNameBank === `АО "АЛЬФА-БАНК"`
-      }
-    },
-    makeGroupKey: (item) => item.apiMovement.reference,
+    makeGroupKey: (item) => isTransferItem(item) ? item.apiMovement.reference : null
   })
 }

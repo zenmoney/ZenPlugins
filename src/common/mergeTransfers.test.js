@@ -9,7 +9,6 @@ describe('mergeTransfers', () => {
         { movements: [{ id: 1, sum: -10, account: 'ACCOUNT X' }], date, hold: false, comment: null, merchant: null },
         { movements: [{ id: 2, sum: +10, account: 'ACCOUNT Y' }], date, hold: false, comment: null, merchant: null }
       ],
-      isTransferItem: () => true,
       makeGroupKey: (item) => {
         const movement = getSingleReadableTransactionMovement(item)
         return Math.abs(movement.sum)

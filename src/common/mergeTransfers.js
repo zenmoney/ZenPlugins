@@ -1,16 +1,12 @@
 import _ from 'lodash'
 import { getSingleReadableTransactionMovement } from './converters'
 
-export function mergeTransfers ({ items, isTransferItem, makeGroupKey, selectReadableTransaction = (x) => x }) {
-  const weakMode = !isTransferItem
-  if (weakMode) {
-    isTransferItem = (item) => makeGroupKey(item) !== null
-  }
+export function mergeTransfers ({ items, makeGroupKey, selectReadableTransaction = (x) => x }) {
   const { 1: singles = [], 2: pairs = [], collisiveBuckets = [] } = _.groupBy(
-    _.toPairs(_.groupBy(items.filter(isTransferItem), (x) => makeGroupKey(x))),
+    _.toPairs(_.groupBy(items.filter((x) => makeGroupKey(x) !== null), (x) => makeGroupKey(x))),
     ([transferId, items]) => items.length > 2 ? 'collisiveBuckets' : items.length
   )
-  if (!weakMode && singles.length > 0) {
+  if (singles.length > 0) {
     console.debug('Cannot find a pair for singles looking like transfers:', singles)
   }
   console.assert(collisiveBuckets.length === 0, 'Transactions have collisive transferId:', collisiveBuckets)
@@ -33,8 +29,8 @@ export function mergeTransfers ({ items, isTransferItem, makeGroupKey, selectRea
   }, {})
 
   const readableTransactions = items.map((item) => {
-    if (isTransferItem(item)) {
-      const key = makeGroupKey(item)
+    const key = makeGroupKey(item)
+    if (key !== null) {
       const replacement = replacementsByGroupKeyLookup[key]
       if (!_.isUndefined(replacement)) {
         if (replacement !== replacedByMergingMarker) {
