@@ -109,7 +109,7 @@ export function fixDateTimezones (transaction) {
   }
 }
 
-export function patchTransactions (transactions) {
+export function patchTransactions (transactions, accounts) {
   return castTransactionDatesToTicks(transactions.map((x) =>
     x.movements
       ? fixDateTimezones(toZenmoneyTransaction(x))
@@ -162,25 +162,14 @@ export function adaptScrapeToGlobalApi (scrape) {
     console.assert(result && typeof result.then === 'function', 'scrape() did not return a promise')
     const resultHandled = result.then((results) => {
       console.assert(results, 'scrape() did not return anything')
-      if (!Array.isArray(results)) {
-        console.assert(Array.isArray(results.accounts) && Array.isArray(results.transactions), 'scrape should return {accounts[], transactions[]}')
-        ZenMoney.addAccount(assertAccountIdsAreUnique(results.accounts))
-        ZenMoney.addTransaction(patchTransactions(results.transactions))
+      if (Array.isArray(results.accounts) && Array.isArray(results.transactions)) {
+        const zenmoneyAccounts = assertAccountIdsAreUnique(results.accounts)
+        ZenMoney.addAccount(zenmoneyAccounts)
+        ZenMoney.addTransaction(patchTransactions(results.transactions, zenmoneyAccounts))
         ZenMoney.setResult({ success: true })
         return
       }
-      console.error('scrape result shape {account, transactions[]} is deprecated.\nconsider using {accounts[], transactions[]}')
-      console.assert(results && Array.isArray(results), 'scrape() result is not an array')
-      console.assert(results.length > 0, 'scrape results are empty')
-      console.assert(
-        results.every((result) => result.account && Array.isArray(result.transactions)),
-        'scrape result should be array of {account, transactions[]}'
-      )
-      ZenMoney.addAccount(results.map(({ account, transactions }) => account))
-      results.forEach(({ account, transactions }) => {
-        ZenMoney.addTransaction(patchTransactions(transactions))
-      })
-      ZenMoney.setResult({ success: true })
+      throw new Error('scrape should return {accounts[], transactions[]}')
     })
 
     const { state, value } = unsealSyncPromise(resultHandled)
