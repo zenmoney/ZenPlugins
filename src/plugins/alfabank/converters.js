@@ -123,7 +123,7 @@ function findMovementAccountTuple (apiMovement, accountTuples) {
     const last4 = candidatesLast4Chars[0]
     const matchingAccounts = accountTuples.filter((x) => x.apiAccount.number.endsWith(last4))
     if (matchingAccounts.length !== 1) {
-      console.warn(
+      console.debug(
         `cannot match ${parsedAmount > 0 ? 'recipient' : 'sender'} account unambiguously (no single match), ignoring movement`,
         { apiMovement, last4, matchingAccounts }
       )
@@ -137,7 +137,7 @@ function findMovementAccountTuple (apiMovement, accountTuples) {
       return nonOwnSharedAccountTuples[0]
     }
   }
-  console.warn(
+  console.debug(
     `cannot extract ${parsedAmount > 0 ? 'recipient' : 'sender'} account id (no single candidate), ignoring movement`,
     { apiMovement, candidatesLast4Chars }
   )
