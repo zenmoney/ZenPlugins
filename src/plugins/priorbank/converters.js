@@ -71,7 +71,7 @@ export const convertApiAbortedTransactionToReadableTransaction = ({ accountId, a
         account: { id: accountId },
         invoice,
         sum,
-        fee: null
+        fee: 0
       }
     ],
     date: new Date(abortedTransaction.transDate),
@@ -81,7 +81,7 @@ export const convertApiAbortedTransactionToReadableTransaction = ({ accountId, a
       mcc: null,
       location: null
     },
-    comment: _.compact([details.comment, formatComment({ invoice, fee: null, sum, accountInstrument: accountCurrency })]).join('\n') || null
+    comment: _.compact([details.comment, formatComment({ invoice, fee: 0, sum, accountInstrument: accountCurrency })]).join('\n') || null
   }
 }
 
@@ -105,7 +105,7 @@ const convertApiTransactionToReadableTransaction = (apiTransaction) => {
           account: { id: accountId },
           invoice,
           sum,
-          fee: null
+          fee: 0
         }
       ],
       date: new Date(regularTransaction.transDate),
@@ -117,7 +117,7 @@ const convertApiTransactionToReadableTransaction = (apiTransaction) => {
       },
       comment: _.compact([
         details.comment,
-        formatComment({ invoice, sum, fee: null, accountInstrument: accountCurrency })
+        formatComment({ invoice, sum, fee: 0, accountInstrument: accountCurrency })
       ]).join('\n') || null
     }
   }

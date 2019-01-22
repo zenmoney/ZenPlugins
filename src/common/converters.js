@@ -9,7 +9,7 @@ export function formatRate ({ invoiceSum, sum }) {
 }
 
 export function formatComment ({ invoice, sum, fee, accountInstrument }) {
-  const feeLine = fee === null ? null : `${Math.abs(fee).toFixed(2)} ${accountInstrument} ${fee > 0 ? 'cashback' : 'fee'}`
+  const feeLine = fee === 0 ? null : `${Math.abs(fee).toFixed(2)} ${accountInstrument} ${fee > 0 ? 'cashback' : 'fee'}`
   const invoiceLine = invoice === null ? null : `${Math.abs(invoice.sum).toFixed(2)} ${invoice.instrument}\n(rate=${formatRate({
     invoiceSum: invoice.sum,
     sum
@@ -111,7 +111,7 @@ export function makeCashTransferMovement (readableTransaction, accountInstrument
     sum: movement.invoice === null
       ? -movement.sum
       : -movement.invoice.sum,
-    fee: null
+    fee: 0
   }
 }
 
@@ -198,8 +198,8 @@ export function toZenmoneyTransaction (readableTransaction, accountsByIdLookup) 
 
     console.assert(_.isNumber(sum), 'movement.sum must be Number:', readableTransaction)
 
-    console.assert(fee === null || _.isNumber(fee), 'movement.fee must be defined Number:', readableTransaction)
-    const sumWithFee = fee === null ? sum : sum + fee
+    console.assert(_.isNumber(fee), 'movement.fee must be Number:', readableTransaction)
+    const sumWithFee = sum + fee
 
     if (sumWithFee >= 0) {
       result.income = Math.abs(sumWithFee)
@@ -250,11 +250,11 @@ export function toZenmoneyTransaction (readableTransaction, accountsByIdLookup) 
 
       console.assert(_.isNumber(sum), 'movement.sum must be Number:', readableTransaction)
 
-      console.assert(fee === null || _.isNumber(fee), 'movement.fee must be defined Number:', readableTransaction)
+      console.assert(_.isNumber(fee), 'movement.fee must be defined Number:', readableTransaction)
     })
     const [outcomeMovement, incomeMovement] = _.sortBy(movements, (x) => x.sum >= 0)
-    const outcomeSumWithFee = outcomeMovement.fee === null ? outcomeMovement.sum : outcomeMovement.sum + outcomeMovement.fee
-    const incomeSumWithFee = incomeMovement.fee === null ? incomeMovement.sum : incomeMovement.sum + incomeMovement.fee
+    const outcomeSumWithFee = outcomeMovement.sum + outcomeMovement.fee
+    const incomeSumWithFee = incomeMovement.sum + incomeMovement.fee
     console.assert(
       outcomeSumWithFee < 0 && incomeSumWithFee >= 0,
       'movements array[2] must contain both income (sum >= 0) and outcome (sum < 0)',
