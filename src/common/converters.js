@@ -31,6 +31,22 @@ function resolveAccountInstrument (accountRef, serializedAccountRef, accountsByI
 
 const accountTypes = ['cash', 'ccard', 'checking', 'loan', 'deposit']
 
+function assertAccountCompanyIsValid (company) {
+  if (company === null) {
+    return
+  }
+  const docs = 'account.company must be defined Object with shape {id: String} or {title: String}'
+  if (_.isPlainObject(company)) {
+    const companyKeys = Object.keys(company)
+    console.assert(
+      (_.isEqual(companyKeys, ['id']) && _.isString(company.id)) ||
+      (_.isEqual(companyKeys, ['title']) && _.isString(company.title)),
+      docs
+    )
+  }
+  console.assert(false, docs, company)
+}
+
 function serializeZenmoneyAccountReference (account) {
   console.assert(_.isPlainObject(account), 'account must be Object:', account)
   if (account.id) {
@@ -60,11 +76,8 @@ function serializeZenmoneyAccountReference (account) {
     `Either provide specific account {id} alone, or provide account weak-ref in shape {type, instrument[, syncIds, company]}`
   )
 
-  console.assert(
-    company === null || (_.isObject(company) && _.isString(company.id) && _.isEqual(Object.keys(company), ['id'])),
-    `account.company must be defined Object with shape {id}`,
-    account
-  )
+  assertAccountCompanyIsValid(company)
+
   const type = t === null && _.isArray(syncIds) && syncIds.length > 0 ? 'ccard' : t
   console.assert(type !== null, 'account.type can be null only when syncIds are present')
   console.assert(accountTypes.includes(type), `Unknown account.type "${type}". Supported values are`, accountTypes)
