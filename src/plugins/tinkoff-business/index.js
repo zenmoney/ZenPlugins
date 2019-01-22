@@ -1,8 +1,7 @@
 import * as _ from 'lodash'
 import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
-import { mergeTransfers } from '../../common/mergeTransfers'
 import { AuthError, fetchAccounts, fetchTransactions, login } from './api'
-import { convertAccount, convertTransaction } from './converters'
+import { convertAccount, convertToZenMoneyTransactions, convertTransaction } from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate, isInBackground }) {
   if (!toDate) {
@@ -10,8 +9,9 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
   }
   preferences.inn = preferences.inn.toString().replace(/[^\d]/g, '')
 
+  const accountsById = {}
   const accounts = []
-  const transactions = []
+  const transactionData = []
 
   let i = 0
   let auth = ZenMoney.getData('auth')
@@ -37,28 +37,30 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
     i++
   } while (!apiAccounts)
 
-  await Promise.all(apiAccounts.map(async apiAccount => {
+  apiAccounts.forEach(apiAccount => {
     const account = convertAccount(apiAccount)
     if (account) {
       accounts.push(account)
+      accountsById[account.id] = account
     }
-    if (ZenMoney.isAccountSkipped(account.id)) {
+  })
+
+  await Promise.all(accounts.map(async account => {
+    if (!ZenMoney.isAccountSkipped(account.id)) {
       return
     }
     (await fetchTransactions(auth, preferences, account, fromDate, toDate)).forEach(apiTransaction => {
-      const transaction = convertTransaction(apiTransaction, account)
-      if (transaction) {
-        transactions.push(transaction)
+      const data = convertTransaction(apiTransaction, account, accountsById)
+      if (data) {
+        transactionData.push(data)
       }
     })
   }))
 
   ZenMoney.setData('auth', auth)
+
   return {
     accounts: ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId }),
-    transactions: _.sortBy(mergeTransfers({
-      items: transactions,
-      makeGroupKey: transaction => transaction.movements[0].id
-    }), transaction => transaction.date)
+    transactions: _.sortBy(convertToZenMoneyTransactions(transactionData), transaction => transaction.date)
   }
 }

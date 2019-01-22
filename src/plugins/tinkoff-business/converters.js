@@ -1,3 +1,4 @@
+import { mergeTransfers } from '../../common/mergeTransfers'
 import currencies from '../belswissbank/codeToCurrencyLookup'
 
 export function convertAccount (apiAccount) {
@@ -11,7 +12,15 @@ export function convertAccount (apiAccount) {
   }
 }
 
-export function convertTransaction (apiTransaction, account) {
+export function convertToZenMoneyTransactions (transactionData) {
+  return mergeTransfers({
+    items: transactionData,
+    makeGroupKey: data => data.groupId,
+    selectReadableTransaction: data => data.transaction
+  })
+}
+
+export function convertTransaction (apiTransaction, account, accountsById) {
   const isOutcome = apiTransaction.payerAccount === account.id
   const payee = apiTransaction.payerAccount === account.id ? apiTransaction.recipient : apiTransaction.payerName
   const transaction = {
@@ -19,7 +28,7 @@ export function convertTransaction (apiTransaction, account) {
     hold: false,
     movements: [
       {
-        id: apiTransaction.id || null,
+        id: null,
         account: { id: account.id },
         invoice: null,
         sum: isOutcome ? -apiTransaction.amount : apiTransaction.amount,
@@ -41,7 +50,10 @@ export function convertTransaction (apiTransaction, account) {
     parsePayeeInComment,
     parsePayee
   ].some(parser => parser(transaction, account))
-  return transaction
+  const groupId = apiTransaction.id && accountsById[apiTransaction.payerAccount] && accountsById[apiTransaction.recipientAccount]
+    ? `${apiTransaction.id}-${apiTransaction.payerAccount}-${apiTransaction.recipientAccount}-${apiTransaction.date}`
+    : null
+  return { transaction, groupId }
 }
 
 function parseCashWithdrawal (transaction, account) {
