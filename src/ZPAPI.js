@@ -98,7 +98,7 @@ const notImplemented = () => {
 }
 
 function ZPAPI ({ manifest, preferences, data }) {
-  this.runtime = 'browser'
+  this.application = { platform: 'browser', version: '1', build: '1' }
   this.features = {
     j2v8Date: true,
     dateProcessing: true,

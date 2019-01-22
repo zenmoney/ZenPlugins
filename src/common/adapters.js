@@ -141,7 +141,7 @@ function getPresentationError (error) {
 }
 
 function augmentErrorWithDevelopmentHints (error) {
-  if (ZenMoney.runtime === 'browser') {
+  if (ZenMoney.application.platform === 'browser') {
     if (error instanceof InvalidPreferencesError) {
       error.message += '\nInvalidPreferencesError: user will be forced into preferences screen and will see the message above on production UI without [Send log] button.'
     } else if (error instanceof TemporaryError) {

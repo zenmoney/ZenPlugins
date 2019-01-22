@@ -11,7 +11,27 @@ Object.assign = require('object-assign')
 require('./polyfills/array')
 require('./polyfills/math')
 
-if (ZenMoney.runtime === 'browser' && consoleAdapter.isNativeConsoleImplemented()) {
+if (!('application' in ZenMoney)) {
+  ZenMoney.application = {
+    platform: 'android',
+    version: '1',
+    build: '1'
+  }
+}
+if (!('device' in ZenMoney)) {
+  ZenMoney.device = {
+    id: 'MASTER',
+    manufacturer: 'Sony',
+    model: 'Xperia Z2',
+    brand: 'Xperia Z2',
+    os: {
+      platform: 'android',
+      version: '6.0'
+    }
+  }
+}
+
+if (ZenMoney.application.platform === 'browser' && consoleAdapter.isNativeConsoleImplemented()) {
   consoleAdapter.shapeNativeConsole()
 } else {
   consoleAdapter.install()

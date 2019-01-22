@@ -6,7 +6,7 @@ export function mergeTransfers ({ items, makeGroupKey, selectReadableTransaction
     _.toPairs(_.groupBy(items.filter((x) => makeGroupKey(x) !== null), (x) => makeGroupKey(x))),
     ([transferId, items]) => items.length > 2 ? 'collisiveBuckets' : items.length
   )
-  if (singles.length > 0) {
+  if (singles.length > 0 && ZenMoney.application.platform === 'browser') {
     console.debug('Cannot find a pair for singles looking like transfers:', singles)
   }
   console.assert(collisiveBuckets.length === 0, 'Transactions have collisive transferId:', collisiveBuckets)
