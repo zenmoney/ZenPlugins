@@ -3,6 +3,7 @@ import { InvalidPreferencesError, TemporaryError, ZPAPIError } from '../errors'
 import { toZenmoneyTransaction } from './converters'
 import { isValidDate } from './dateUtils'
 import { sanitize } from './sanitize'
+import { isDebug } from './utils'
 
 const MS_IN_MINUTE = 60 * 1000
 const MS_IN_DAY = 24 * 60 * MS_IN_MINUTE
@@ -141,7 +142,7 @@ function getPresentationError (error) {
 }
 
 function augmentErrorWithDevelopmentHints (error) {
-  if (ZenMoney.application.platform === 'browser') {
+  if (isDebug()) {
     if (error instanceof InvalidPreferencesError) {
       error.message += '\nInvalidPreferencesError: user will be forced into preferences screen and will see the message above on production UI without [Send log] button.'
     } else if (error instanceof TemporaryError) {

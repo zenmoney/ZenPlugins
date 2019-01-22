@@ -1,12 +1,13 @@
 import _ from 'lodash'
 import { getSingleReadableTransactionMovement } from './converters'
+import { isDebug } from './utils'
 
 export function mergeTransfers ({ items, makeGroupKey, selectReadableTransaction = (x) => x }) {
   const { 1: singles = [], 2: pairs = [], collisiveBuckets = [] } = _.groupBy(
     _.toPairs(_.groupBy(items.filter((x) => makeGroupKey(x) !== null), (x) => makeGroupKey(x))),
     ([transferId, items]) => items.length > 2 ? 'collisiveBuckets' : items.length
   )
-  if (singles.length > 0 && ZenMoney.application.platform === 'browser') {
+  if (singles.length > 0 && isDebug()) {
     console.debug('Cannot find a pair for singles looking like transfers:', singles)
   }
   console.assert(collisiveBuckets.length === 0, 'Transactions have collisive transferId:', collisiveBuckets)

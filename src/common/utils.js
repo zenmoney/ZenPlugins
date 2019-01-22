@@ -1,3 +1,7 @@
+export function isDebug () {
+  return global.ZenMoney && ZenMoney.application && ZenMoney.application.platform === 'browser'
+}
+
 export function generateUUID () {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (char) {
     const seed = Math.random() * 16 | 0
@@ -31,9 +35,14 @@ export function getByteLength (str) {
   let s = str.length
   for (let i = str.length - 1; i >= 0; i--) {
     let code = str.charCodeAt(i)
-    if (code > 0x7f && code <= 0x7ff) s++
-    else if (code > 0x7ff && code <= 0xffff) s += 2
-    if (code >= 0xDC00 && code <= 0xDFFF) i-- // trail surrogate
+    if (code > 0x7f && code <= 0x7ff) {
+      s++
+    } else if (code > 0x7ff && code <= 0xffff) {
+      s += 2
+    }
+    if (code >= 0xDC00 && code <= 0xDFFF) {
+      i--
+    } // trail surrogate
   }
   return s
 }

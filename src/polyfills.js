@@ -1,3 +1,4 @@
+import { isDebug } from './common/utils'
 import * as consoleAdapter from './consoleAdapter'
 
 global.Promise = require('promise/lib/es6-extensions.js')
@@ -14,24 +15,24 @@ require('./polyfills/math')
 if (!('application' in ZenMoney)) {
   ZenMoney.application = {
     platform: 'android',
-    version: '1',
-    build: '1'
+    version: '4.9.9',
+    build: '459'
   }
 }
 if (!('device' in ZenMoney)) {
   ZenMoney.device = {
-    id: 'MASTER',
-    manufacturer: 'Sony',
-    model: 'Xperia Z2',
-    brand: 'Xperia Z2',
+    id: 'PKQ1.180917.001',
+    manufacturer: 'Xiaomi',
+    model: 'Mi A1',
+    brand: 'xiaomi',
     os: {
-      platform: 'android',
-      version: '6.0'
+      name: 'android',
+      version: '9'
     }
   }
 }
 
-if (ZenMoney.application.platform === 'browser' && consoleAdapter.isNativeConsoleImplemented()) {
+if (isDebug() && consoleAdapter.isNativeConsoleImplemented()) {
   consoleAdapter.shapeNativeConsole()
 } else {
   consoleAdapter.install()
