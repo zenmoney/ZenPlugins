@@ -8,14 +8,25 @@ export function formatRate ({ invoiceSum, sum }) {
     : rate.toFixed(4)
 }
 
-export function formatComment ({ invoice, sum, fee, accountInstrument }) {
-  const feeLine = fee === 0 ? null : `${Math.abs(fee).toFixed(2)} ${accountInstrument} ${fee > 0 ? 'cashback' : 'fee'}`
-  const invoiceLine = invoice === null ? null : `${Math.abs(invoice.sum).toFixed(2)} ${invoice.instrument}\n(rate=${formatRate({
-    invoiceSum: invoice.sum,
-    sum
-  })})`
-  const lines = [feeLine, invoiceLine].filter((x) => x !== null)
-  return lines.length === 0 ? null : lines.join('\n')
+export function formatCommentFeeLine (fee, instrument) {
+  return fee === 0 ? null : `${Math.abs(fee).toFixed(2)} ${instrument} ${fee > 0 ? 'cashback' : 'fee'}`
+}
+
+export function formatInvoiceLine (invoice) {
+  return invoice === null ? null : `${Math.abs(invoice.sum).toFixed(2)} ${invoice.instrument}`
+}
+
+export function formatCalculatedRateLine (rate) {
+  return rate === null ? null : `(rate=${rate})`
+}
+
+export function formatRateLine (sum, invoice) {
+  return invoice === null ? null : formatCalculatedRateLine(formatRate({ invoiceSum: invoice.sum, sum }))
+}
+
+export function joinCommentLines (lines) {
+  const filteredLines = lines.filter((x) => x !== null)
+  return filteredLines.length === 0 ? null : filteredLines.join('\n')
 }
 
 function resolveAccountInstrument (accountRef, serializedAccountRef, accountsByIdLookup) {

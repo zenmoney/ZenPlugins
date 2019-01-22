@@ -46,13 +46,13 @@ test('it merges correctly', () => {
   })).toEqual([
     {
       'movements': [
-        { 'id': null, 'account': { 'id': 'test(accountId)' }, 'sum': 49.99, 'invoice': { sum: +100, instrument: 'BYN' }, 'fee': 0 },
-        { 'id': null, 'account': { 'id': 'test(accountId)' }, 'sum': -100, 'invoice': null, 'fee': 0 }
+        { 'id': null, 'account': { 'id': 'test(accountId)' }, 'sum': -100, 'invoice': null, 'fee': 0 },
+        { 'id': null, 'account': { 'id': 'test(accountId)' }, 'sum': 49.99, 'invoice': { sum: +100, instrument: 'BYN' }, 'fee': 0 }
       ],
       'date': new Date('2018-01-01T00:00:00+03:00'),
       'hold': true,
       'merchant': null,
-      'comment': '100.00 BYN\n(rate=2.0004)'
+      'comment': '(rate=1/2.0004)'
     }
   ])
 })
