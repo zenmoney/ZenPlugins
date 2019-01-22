@@ -78,13 +78,6 @@ const makeApiUrl = (path, queryParams) => `https://24.bsb.by/mobile/api${path}?$
 
 const BSB_AUTH_URL = makeApiUrl('/authorization', { lang })
 
-const requestLogout = () => fetchJson(BSB_AUTH_URL, {
-  method: 'DELETE',
-  sanitizeResponseLog: {
-    headers: { 'set-cookie': true }
-  }
-})
-
 const requestLogin = ({ username, password, deviceId }) => fetchJson(BSB_AUTH_URL, {
   method: 'POST',
   body: {
@@ -103,7 +96,6 @@ const requestLogin = ({ username, password, deviceId }) => fetchJson(BSB_AUTH_UR
 })
 
 export async function authorize (username, password, deviceId) {
-  await requestLogout()
   const loginResponse = await requestLogin({ username, password, deviceId })
   if (loginResponse.status === 403 && loginResponse.body.error === 'Неверные учетные данные') {
     throw new InvalidPreferencesError(loginResponse.body.error)

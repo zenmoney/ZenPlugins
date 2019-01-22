@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars,no-debugger */
 import _ from 'lodash'
 import { generateUUID } from '../../common/utils'
 import * as BSB from './BSB'
@@ -76,10 +75,13 @@ function normalizeBsbTransactions ({ accountCurrency, bsbTransactions, paymentsG
     .filter(Boolean)
 }
 
+const sessionTimeoutMs = 15 * 60 * 1000
+
 export async function scrape ({ preferences: { username, password }, fromDate, toDate }) {
   const pluginData = {
     deviceId: ZenMoney.getData('deviceId'),
-    sessionId: ZenMoney.getData('sessionId')
+    sessionId: ZenMoney.getData('sessionId'),
+    scrapeLastSuccessDate: new Date(ZenMoney.getData('scrape/lastSuccessDate'))
   }
   if (!pluginData.deviceId) {
     pluginData.deviceId = generateUUID()
@@ -89,11 +91,13 @@ export async function scrape ({ preferences: { username, password }, fromDate, t
   if (pluginData.sessionId) {
     ZenMoney.setCookie('24.bsb.by', 'JSESSIONID', pluginData.sessionId)
   }
-  let probe = await Promise.all([
-    BSB.fetchCards(),
-    BSB.fetchPaymentsArchive({ fromDate, toDate })
-  ])
-  if (probe.some((x) => x.status === 401)) {
+  let probe = pluginData.scrapeLastSuccessDate.valueOf() + sessionTimeoutMs > Date.now()
+    ? await Promise.all([
+      BSB.fetchCards(),
+      BSB.fetchPaymentsArchive({ fromDate, toDate })
+    ])
+    : null
+  if (probe === null || probe.some((x) => x.status === 401)) {
     await login({ deviceId: pluginData.deviceId, username, password })
     probe = await Promise.all([
       BSB.fetchCards(),
