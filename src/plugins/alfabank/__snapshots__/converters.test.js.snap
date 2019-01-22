@@ -12,7 +12,7 @@ Array [
         "account": Object {
           "id": "x7890",
         },
-        "fee": null,
+        "fee": 0,
         "id": "1",
         "invoice": null,
         "sum": 1000,
@@ -21,7 +21,7 @@ Array [
         "account": Object {
           "id": "x0987",
         },
-        "fee": null,
+        "fee": 0,
         "id": "2",
         "invoice": null,
         "sum": -1000,
@@ -47,7 +47,7 @@ Array [
         "account": Object {
           "id": "x4444",
         },
-        "fee": null,
+        "fee": 0,
         "id": "0",
         "invoice": null,
         "sum": -1000,

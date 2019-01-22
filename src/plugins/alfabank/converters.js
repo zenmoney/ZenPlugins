@@ -172,7 +172,7 @@ function convertApiMovementToReadableTransaction (apiMovement, accountId) {
         account: { id: accountId },
         invoice,
         sum,
-        fee: null
+        fee: 0
       }
     ],
     date: extractDate(apiMovement),
@@ -182,7 +182,7 @@ function convertApiMovementToReadableTransaction (apiMovement, accountId) {
       mcc,
       location: null
     },
-    comment: formatComment({ invoice, sum, fee: null, accountInstrument })
+    comment: formatComment({ invoice, sum, fee: 0, accountInstrument })
   }
   if (apiMovement.shortDescription === 'Снятие наличных в банкомате' ||
     apiMovement.description.startsWith('Внесение наличных рублей') ||

@@ -10,11 +10,11 @@ describe('formatRate', () => {
 
 describe('formatComment', () => {
   it(`should output nothing when there's no invoice`, () => {
-    expect(formatComment({ sum: 120, fee: null, accountInstrument: 'USD', invoice: null }))
+    expect(formatComment({ sum: 120, fee: 0, accountInstrument: 'USD', invoice: null }))
       .toEqual(null)
   })
   it('should include invoice sum+instrument when there is one', () => {
-    expect(formatComment({ sum: 120, fee: null, accountInstrument: 'USD', invoice: { sum: 100, instrument: 'EUR' } }))
+    expect(formatComment({ sum: 120, fee: 0, accountInstrument: 'USD', invoice: { sum: 100, instrument: 'EUR' } }))
       .toEqual('100.00 EUR\n(rate=1/1.2000)')
   })
   it('should include fee/cashback when there is one', () => {

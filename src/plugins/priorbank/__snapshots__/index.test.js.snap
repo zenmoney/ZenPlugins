@@ -40,7 +40,7 @@ Object {
           "account": Object {
             "id": "USD_ACCOUNT_ID",
           },
-          "fee": null,
+          "fee": 0,
           "id": null,
           "invoice": Object {
             "instrument": "BYN",
@@ -64,7 +64,7 @@ Object {
           "account": Object {
             "id": "USD_ACCOUNT_ID",
           },
-          "fee": null,
+          "fee": 0,
           "id": null,
           "invoice": null,
           "sum": 1000,
@@ -85,7 +85,7 @@ Object {
           "account": Object {
             "id": "BYN_ACCOUNT_ID",
           },
-          "fee": null,
+          "fee": 0,
           "id": null,
           "invoice": null,
           "sum": -4,
@@ -106,7 +106,7 @@ Object {
           "account": Object {
             "id": "BYN_ACCOUNT_ID",
           },
-          "fee": null,
+          "fee": 0,
           "id": null,
           "invoice": null,
           "sum": 10,
@@ -127,7 +127,7 @@ Object {
           "account": Object {
             "id": "USD_ACCOUNT_ID",
           },
-          "fee": null,
+          "fee": 0,
           "id": null,
           "invoice": null,
           "sum": -2.79,
@@ -152,7 +152,7 @@ Object {
             "syncIds": null,
             "type": "cash",
           },
-          "fee": null,
+          "fee": 0,
           "id": null,
           "invoice": null,
           "sum": 100,
@@ -161,7 +161,7 @@ Object {
           "account": Object {
             "id": "USD_ACCOUNT_ID",
           },
-          "fee": null,
+          "fee": 0,
           "id": null,
           "invoice": Object {
             "instrument": "BYN",
@@ -188,7 +188,7 @@ Object {
             "syncIds": null,
             "type": "cash",
           },
-          "fee": null,
+          "fee": 0,
           "id": null,
           "invoice": null,
           "sum": 200,
@@ -197,7 +197,7 @@ Object {
           "account": Object {
             "id": "USD_ACCOUNT_ID",
           },
-          "fee": null,
+          "fee": 0,
           "id": null,
           "invoice": null,
           "sum": -200,
@@ -218,7 +218,7 @@ Object {
           "account": Object {
             "id": "BYN_ACCOUNT_ID",
           },
-          "fee": null,
+          "fee": 0,
           "id": null,
           "invoice": null,
           "sum": -6,
@@ -240,7 +240,7 @@ Object {
           "account": Object {
             "id": "USD_ACCOUNT_ID",
           },
-          "fee": null,
+          "fee": 0,
           "id": null,
           "invoice": Object {
             "instrument": "BYN",
@@ -265,7 +265,7 @@ Object {
           "account": Object {
             "id": "USD_ACCOUNT_ID",
           },
-          "fee": null,
+          "fee": 0,
           "id": null,
           "invoice": Object {
             "instrument": "BYN",
