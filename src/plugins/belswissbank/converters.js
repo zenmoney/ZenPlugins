@@ -1,24 +1,45 @@
 import _ from 'lodash'
-import { addMovement, formatComment, getSingleReadableTransactionMovement, makeCashTransferMovement } from '../../common/converters'
+import {
+  addMovement,
+  formatCalculatedRateLine,
+  formatCommentFeeLine,
+  formatInvoiceLine,
+  formatRate,
+  formatRateLine,
+  getSingleReadableTransactionMovement,
+  joinCommentLines,
+  makeCashTransferMovement
+} from '../../common/converters'
 import { formatCommentDateTime } from '../../common/dateUtils'
 import { mergeTransfers } from '../../common/mergeTransfers'
 import { figureOutAccountRestsDelta, getTransactionFactor, isCashTransferTransaction, isElectronicTransferTransaction, isRejectedTransaction } from './BSB'
 
 function formatDetails ({ transaction, matchedPayment }) {
-  const timestamp = formatCommentDateTime(new Date(transaction.transactionDate))
   if (matchedPayment) {
     return {
       payee: [matchedPayment.name, matchedPayment.target].filter(Boolean).join(', '),
-      comment: [matchedPayment.comment, timestamp].filter(Boolean).join(' ')
+      comment: matchedPayment.comment || null
     }
   }
   return {
     payee: [transaction.countryCode, transaction.city, transaction.transactionDetails].filter(Boolean).join(' '),
-    comment: timestamp
+    comment: null
   }
 }
 
 const floorToMinutes = (ticks) => new Date(Math.floor(ticks / 60000) * 60000).valueOf()
+
+function formatMovementPartialDetails (outcome, income) {
+  const movement = outcome.movement
+  const account = outcome.item.account
+  return joinCommentLines([
+    formatCommentDateTime(outcome.transaction.date),
+    formatCommentFeeLine(movement.fee, account.instrument),
+    outcome.item.account.instrument === income.item.account.instrument
+      ? null
+      : formatCalculatedRateLine(formatRate({ invoiceSum: income.movement.sum, sum: Math.abs(outcome.movement.sum) }))
+  ])
+}
 
 export function convertApiTransactionsToReadableTransactions (apiTransactionsByAccount, paymentsArchive) {
   const paymentsGroupedByTransactionDate = _.groupBy(paymentsArchive, (payment) => floorToMinutes(payment.paymentDate))
@@ -46,6 +67,8 @@ export function convertApiTransactionsToReadableTransactions (apiTransactionsByA
         const invoice = account.instrument === apiTransaction.transactionCurrency
           ? null
           : { sum: invoiceSum, instrument: apiTransaction.transactionCurrency }
+        const date = new Date(apiTransaction.transactionDate)
+        const fee = 0
         const readableTransaction = {
           movements: [
             {
@@ -53,13 +76,19 @@ export function convertApiTransactionsToReadableTransactions (apiTransactionsByA
               account: { id: account.id },
               invoice,
               sum: sum,
-              fee: 0
+              fee
             }
           ],
-          date: new Date(apiTransaction.transactionDate),
+          date,
           hold: null,
           merchant: { title: details.payee, mcc: null, location: null },
-          comment: _.compact([details.comment, formatComment({ invoice, sum, fee: 0, accountInstrument: account.instrument })]).join('\n') || null
+          comment: _.compact([
+            details.comment,
+            formatCommentDateTime(date),
+            formatCommentFeeLine(fee, account.instrument),
+            formatInvoiceLine(invoice),
+            formatRateLine(sum, invoice)
+          ]).join('\n') || null
         }
         if (isCashTransferTransaction(apiTransaction) && !isElectronicTransferTransaction(apiTransaction)) {
           return { readableTransaction: addMovement(readableTransaction, makeCashTransferMovement(readableTransaction, account.instrument)), account }
@@ -84,6 +113,7 @@ export function convertApiTransactionsToReadableTransactions (apiTransactionsByA
         movement.invoice === null ? account.instrument : movement.invoice.instrument
       ].join('|')
     },
-    selectReadableTransaction: (x) => x.readableTransaction
+    selectReadableTransaction: (x) => x.readableTransaction,
+    mergeComments: formatMovementPartialDetails
   })
 }

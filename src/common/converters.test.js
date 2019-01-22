@@ -1,4 +1,4 @@
-import { formatComment, formatRate } from './converters'
+import { formatCommentFeeLine, formatInvoiceLine, formatRate, formatRateLine, joinCommentLines } from './converters'
 
 describe('formatRate', () => {
   it('should never output rate below 1', () => {
@@ -7,6 +7,15 @@ describe('formatRate', () => {
     expect(formatRate({ invoiceSum: 49, sum: 50 })).toEqual('1/1.0204')
   })
 })
+
+// TODO split tests
+function formatComment ({ invoice, sum, fee, accountInstrument }) {
+  return joinCommentLines([
+    formatCommentFeeLine(fee, accountInstrument),
+    formatInvoiceLine(invoice),
+    formatRateLine(sum, invoice)
+  ])
+}
 
 describe('formatComment', () => {
   it(`should output nothing when there's no invoice`, () => {

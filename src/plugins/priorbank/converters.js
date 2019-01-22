@@ -1,5 +1,15 @@
 import _ from 'lodash'
-import { addMovement, formatComment, getSingleReadableTransactionMovement, makeCashTransferMovement } from '../../common/converters'
+import {
+  addMovement,
+  formatCalculatedRateLine,
+  formatCommentFeeLine,
+  formatInvoiceLine,
+  formatRate,
+  formatRateLine,
+  getSingleReadableTransactionMovement,
+  joinCommentLines,
+  makeCashTransferMovement
+} from '../../common/converters'
 import { mergeTransfers as commonMergeTransfers } from '../../common/mergeTransfers'
 
 const calculateAccountId = (card) => String(card.clientObject.id)
@@ -26,7 +36,7 @@ function parseTransDetails (transDetails) {
   if (type) {
     return { type, payee: normalizeSpaces(transDetails.slice(type.length)), comment: null }
   } else {
-    return { type: null, payee: null, comment: normalizeSpaces(transDetails) }
+    return { type: null, payee: null, comment: normalizeSpaces(transDetails) || null }
   }
 }
 
@@ -64,6 +74,7 @@ export const convertApiAbortedTransactionToReadableTransaction = ({ accountId, a
   const invoice = abortedTransaction.transCurrIso === accountCurrency
     ? null
     : { sum: sign * Math.abs(abortedTransaction.transAmount), instrument: abortedTransaction.transCurrIso }
+  const fee = 0
   return {
     movements: [
       {
@@ -71,7 +82,7 @@ export const convertApiAbortedTransactionToReadableTransaction = ({ accountId, a
         account: { id: accountId },
         invoice,
         sum,
-        fee: 0
+        fee
       }
     ],
     date: new Date(abortedTransaction.transDate),
@@ -81,7 +92,12 @@ export const convertApiAbortedTransactionToReadableTransaction = ({ accountId, a
       mcc: null,
       location: null
     },
-    comment: _.compact([details.comment, formatComment({ invoice, fee: 0, sum, accountInstrument: accountCurrency })]).join('\n') || null
+    comment: joinCommentLines([
+      details.comment,
+      formatCommentFeeLine(fee, accountCurrency),
+      formatInvoiceLine(invoice),
+      formatRateLine(sum, invoice)
+    ])
   }
 }
 
@@ -98,6 +114,7 @@ const convertApiTransactionToReadableTransaction = (apiTransaction) => {
     const invoice = regularTransaction.transCurrIso === accountCurrency
       ? null
       : { sum: extractRegularTransactionAmount({ accountCurrency, regularTransaction }), instrument: regularTransaction.transCurrIso }
+    const fee = 0
     return {
       movements: [
         {
@@ -105,7 +122,7 @@ const convertApiTransactionToReadableTransaction = (apiTransaction) => {
           account: { id: accountId },
           invoice,
           sum,
-          fee: 0
+          fee
         }
       ],
       date: new Date(regularTransaction.transDate),
@@ -115,10 +132,12 @@ const convertApiTransactionToReadableTransaction = (apiTransaction) => {
         mcc: null,
         location: null
       },
-      comment: _.compact([
+      comment: joinCommentLines([
         details.comment,
-        formatComment({ invoice, sum, fee: 0, accountInstrument: accountCurrency })
-      ]).join('\n') || null
+        formatCommentFeeLine(fee, accountCurrency),
+        formatInvoiceLine(invoice),
+        formatRateLine(sum, invoice)
+      ])
     }
   }
   throw new Error(`apiTransaction.type "${apiTransaction.type}" not implemented`)
@@ -127,6 +146,17 @@ const convertApiTransactionToReadableTransaction = (apiTransaction) => {
 const isTransferItem = ({ apiTransaction }) =>
   apiTransaction.payload.transDetails.includes('P2P SDBO') ||
   apiTransaction.payload.transDetails.includes('P2P_SDBO')
+
+function formatMovementPartialDetails (outcome, income) {
+  const movement = outcome.movement
+  const accountInstrument = outcome.item.apiTransaction.card.clientObject.currIso
+  return joinCommentLines([
+    formatCommentFeeLine(movement.fee, accountInstrument),
+    outcome.item.apiTransaction.card.clientObject.currIso === income.item.apiTransaction.card.clientObject.currIso
+      ? null
+      : formatCalculatedRateLine(formatRate({ invoiceSum: income.movement.sum, sum: Math.abs(outcome.movement.sum) }))
+  ])
+}
 
 export function mergeTransfers ({ items }) {
   return commonMergeTransfers({
@@ -140,7 +170,8 @@ export function mergeTransfers ({ items }) {
       const sum = movement.invoice === null ? movement.sum : movement.invoice.sum
       const instrument = movement.invoice === null ? apiTransaction.card.clientObject.currIso : movement.invoice.instrument
       return `${Math.abs(sum)} ${instrument} @ ${readableTransaction.date} ${apiTransaction.payload.transTime}`
-    }
+    },
+    mergeComments: formatMovementPartialDetails
   })
 }
 

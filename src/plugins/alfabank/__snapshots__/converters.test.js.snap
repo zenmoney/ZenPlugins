@@ -10,21 +10,21 @@ Array [
     "movements": Array [
       Object {
         "account": Object {
-          "id": "x7890",
-        },
-        "fee": 0,
-        "id": "1",
-        "invoice": null,
-        "sum": 1000,
-      },
-      Object {
-        "account": Object {
           "id": "x0987",
         },
         "fee": 0,
         "id": "2",
         "invoice": null,
         "sum": -1000,
+      },
+      Object {
+        "account": Object {
+          "id": "x7890",
+        },
+        "fee": 0,
+        "id": "1",
+        "invoice": null,
+        "sum": 1000,
       },
     ],
   },

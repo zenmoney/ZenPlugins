@@ -1,6 +1,16 @@
 import _ from 'lodash'
 import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
-import { addMovement, formatComment, getSingleReadableTransactionMovement, makeCashTransferMovement } from '../../common/converters'
+import {
+  addMovement,
+  formatCalculatedRateLine,
+  formatCommentFeeLine,
+  formatInvoiceLine,
+  formatRate,
+  formatRateLine,
+  getSingleReadableTransactionMovement,
+  joinCommentLines,
+  makeCashTransferMovement
+} from '../../common/converters'
 import { mergeTransfers } from '../../common/mergeTransfers'
 import { formatWithCustomInspectParams } from '../../consoleAdapter'
 import { parseApiAmount } from './api'
@@ -159,12 +169,12 @@ export const extractDate = (apiMovement) => {
 
 function convertApiMovementToReadableTransaction (apiMovement, accountId) {
   const sum = parseApiAmount(apiMovement.amount)
-  const accountInstrument = apiMovement.currency
   const { mcc, origin } = parseApiMovementDescription(apiMovement.description, Math.sign(sum))
   // TODO rename origin.amount to origin.sum to avoid mapping
-  const invoice = origin === null || origin.instrument === accountInstrument
+  const invoice = origin === null || origin.instrument === apiMovement.currency
     ? null
     : { sum: origin.amount, instrument: origin.instrument }
+  const fee = 0
   const readableTransaction = {
     movements: [
       {
@@ -172,7 +182,7 @@ function convertApiMovementToReadableTransaction (apiMovement, accountId) {
         account: { id: accountId },
         invoice,
         sum,
-        fee: 0
+        fee
       }
     ],
     date: extractDate(apiMovement),
@@ -182,12 +192,16 @@ function convertApiMovementToReadableTransaction (apiMovement, accountId) {
       mcc,
       location: null
     },
-    comment: formatComment({ invoice, sum, fee: 0, accountInstrument })
+    comment: joinCommentLines([
+      formatCommentFeeLine(fee, apiMovement.currency),
+      formatInvoiceLine(invoice),
+      formatRateLine(sum, invoice)
+    ])
   }
   if (apiMovement.shortDescription === 'Снятие наличных в банкомате' ||
     apiMovement.description.startsWith('Внесение наличных рублей') ||
     apiMovement.description.includes('Внесение средств через устройство')) {
-    return addMovement(readableTransaction, makeCashTransferMovement(readableTransaction, accountInstrument))
+    return addMovement(readableTransaction, makeCashTransferMovement(readableTransaction, apiMovement.currency))
   }
   // TODO transfers from other banks can be handled
   return readableTransaction
@@ -255,6 +269,16 @@ const isTransferItem = ({ apiMovement: { senderInfo, recipientInfo, reference, d
   }
 }
 
+function formatMovementPartialDetails (outcome, income) {
+  const movement = outcome.movement
+  return joinCommentLines([
+    formatCommentFeeLine(movement.fee, outcome.item.apiMovement.currency),
+    outcome.item.apiMovement.currency === income.item.apiMovement.currency
+      ? null
+      : formatCalculatedRateLine(formatRate({ invoiceSum: income.movement.sum, sum: Math.abs(outcome.movement.sum) }))
+  ])
+}
+
 export function convertApiMovementsToReadableTransactions (apiMovements, accountTuples) {
   const movementsWithoutDuplicates = _.uniqBy(apiMovements, x => x.key)
   const movementsWithCompleteSides = complementTransferSides(movementsWithoutDuplicates)
@@ -280,9 +304,11 @@ export function convertApiMovementsToReadableTransactions (apiMovements, account
     }
     return !apiMovement.shortDescription || !apiMovement.shortDescription.startsWith('Погашение ')
   })
+
   return mergeTransfers({
     items: processedMovementsWithoutNonAccountableArtifacts,
     selectReadableTransaction: (item) => item.readableTransaction,
-    makeGroupKey: (item) => isTransferItem(item) ? item.apiMovement.reference : null
+    makeGroupKey: (item) => isTransferItem(item) ? item.apiMovement.reference : null,
+    mergeComments: formatMovementPartialDetails
   })
 }
