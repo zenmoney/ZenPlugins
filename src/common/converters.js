@@ -244,9 +244,6 @@ export function toZenmoneyTransaction (readableTransaction, accountsByIdLookup) 
       console.assert(id === null || _.isString(id), 'movement.id must be defined String:', readableTransaction)
 
       console.assert(invoice === null || _.isPlainObject(invoice), 'invoice must be defined Object:', readableTransaction)
-      if (invoice !== null && invoice.sum === sum /* TODO use invoice.instrument === account.instrument instead */) {
-        throw new Error('invoice must be null when {sum,instrument} are the same as sum and account instrument')
-      }
 
       console.assert(_.isNumber(sum), 'movement.sum must be Number:', readableTransaction)
 
