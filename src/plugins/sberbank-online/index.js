@@ -1,8 +1,8 @@
 import { MD5 } from 'jshashes'
 import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
 import { generateRandomString } from '../../common/utils'
-import { fetchAccounts, fetchTransactions, login, makeTransfer as _makeTransfer, renewSession } from './api'
-import { convertAccounts, convertLoanTransaction, convertTransaction } from './converters'
+import { fetchAccounts, fetchPayments, fetchTransactions, login, makeTransfer as _makeTransfer, renewSession } from './api'
+import { convertAccounts, convertLoanTransaction, convertTransaction, adjustTransactionsAndCheckBalance } from './converters'
 
 const md5 = new MD5()
 
@@ -64,7 +64,8 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
   if (preferences.pin.length !== 5) {
     throw new InvalidPreferencesError('Пин-код должен быть из 5 цифр')
   }
-  if (!ZenMoney.getData('scrape/lastSuccessDate') && ZenMoney.getData('devid')) {
+  const isFirstRun = !ZenMoney.getData('scrape/lastSuccessDate')
+  if (isFirstRun && ZenMoney.getData('devid')) {
     fromDate = new Date(new Date().getTime() - 7 * 24 * 3600 * 1000)
   }
   if (!toDate) {
@@ -91,7 +92,18 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
     accounts.push(account)
     return ZenMoney.isAccountSkipped(account.id) ? null : Promise.all(products.map(async product => {
       try {
-        for (const apiTransaction of await fetchTransactions(auth, product, fromDate, toDate)) {
+        let apiTransactions = await fetchTransactions(auth, product, fromDate, toDate)
+        if (product.type !== 'loan' && product.type !== 'ima') {
+          const apiPayments = await fetchPayments(auth, product, fromDate, toDate)
+          const { isBalanceAmbiguous, transactions: trans } = adjustTransactionsAndCheckBalance(apiTransactions, apiPayments)
+          apiTransactions = trans
+          if (isBalanceAmbiguous && !isFirstRun) {
+            delete account.balance
+            delete account.available
+            account.balance = null
+          }
+        }
+        for (const apiTransaction of apiTransactions) {
           let transaction
           if (product.type === 'loan') {
             transaction = convertLoanTransaction(apiTransaction, account, accountsById)

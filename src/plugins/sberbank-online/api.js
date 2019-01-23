@@ -4,7 +4,7 @@ import * as qs from 'querystring'
 import * as network from '../../common/network'
 import { retry, RetryError, toNodeCallbackArguments } from '../../common/retry'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
-import { formatDateSql, parseDate } from './converters'
+import { formatDateSql, parseDate, parseOuterAccountData } from './converters'
 
 const md5 = new MD5()
 
@@ -211,7 +211,7 @@ async function fetchAccountDetails (auth, { id, type }) {
   return response.body
 }
 
-async function fetchPayments (auth, { id, type, instrument }, fromDate, toDate) {
+export async function fetchPayments (auth, { id, type, instrument }, fromDate, toDate) {
   const transactions = []
   const limit = 50
   let offset = 0
@@ -258,7 +258,8 @@ async function fetchPayments (auth, { id, type, instrument }, fromDate, toDate) 
           'AccountOpeningClaim',
           'AccountClosingPayment',
           'IMAOpeningClaim'
-        ].indexOf(transaction.form) >= 0) {
+        ].indexOf(transaction.form) >= 0 ||
+        parseOuterAccountData(transaction.to)) {
         const detailsResponse = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/payments/view.do`, {
           headers: {
             ...defaultHeaders,
@@ -287,24 +288,25 @@ export async function fetchTransactions (auth, { id, type, instrument }, fromDat
   if (type === 'ima') {
     return []
   }
-  if (type === 'loan') {
-    const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/${type !== 'ima' ? type + 's' : 'ima'}/abstract.do`, {
-      headers: {
-        ...defaultHeaders,
-        'Host': `${auth.api.host}:4477`,
-        'Referer': `Android/6.0/${APP_VERSION}`,
-        'Cookie': auth.api.cookie
-      },
-      body: { id, from: formatDate(fromDate), to: formatDate(toDate) }
-    })
-    const fromDateStr = formatDateSql(fromDate)
-    const toDateStr = formatDateSql(toDate)
-    return getArray(_.get(response, 'body.elements.element')).filter(transaction => {
-      const dateStr = formatDateSql(parseDate(transaction.date))
-      return dateStr >= fromDateStr && dateStr <= toDateStr
-    })
-  }
-  return fetchPayments(auth, { id, type, instrument }, fromDate, toDate)
+  const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/${type !== 'ima' ? type + 's' : 'ima'}/abstract.do`, {
+    headers: {
+      ...defaultHeaders,
+      'Host': `${auth.api.host}:4477`,
+      'Referer': `Android/6.0/${APP_VERSION}`,
+      'Cookie': auth.api.cookie
+    },
+    body: type === 'card'
+      ? { id, count: 10, paginationSize: 10 }
+      : { id, from: formatDate(fromDate), to: formatDate(toDate) }
+  })
+  const fromDateStr = formatDateSql(fromDate)
+  const toDateStr = formatDateSql(toDate)
+  return (type === 'loan'
+    ? getArray(_.get(response, 'body.elements.element'))
+    : getArray(_.get(response, 'body.operations.operation'))).filter(transaction => {
+    const dateStr = formatDateSql(parseDate(transaction.date))
+    return dateStr >= fromDateStr && dateStr <= toDateStr
+  })
 }
 
 export async function makeTransfer (login, auth, device, { fromAccount, toAccount, sum }) {

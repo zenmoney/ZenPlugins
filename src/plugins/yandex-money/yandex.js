@@ -2,9 +2,9 @@ import * as network from '../../common/network'
 
 const qs = require('querystring')
 
-const CLIENT_ID = '57DCAFF3AC9CFEFEF4DA51501BCA28BD765C6F94B1D106225E51B2CBD276A2D5'
+const CLIENT_ID = ''
 const SCOPE = 'operation-history account-info'
-const REDIRECT_URI = 'http://zenmoney.ru/callback/yandex/'
+const REDIRECT_URI = ''
 
 export function isAuthError (err) {
   return err && err.message === 'authorization error'

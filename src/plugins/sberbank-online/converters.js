@@ -171,12 +171,13 @@ function parseOuterIncomeTransfer (transaction, apiTransaction, account) {
     return false
   }
   const invoice = transaction.movements[0].invoice || { sum: transaction.movements[0].sum, instrument: account.instrument }
+  const outerAccount = parseOuterAccountData(apiTransaction.to)
   transaction.movements.push({
     id: null,
     account: {
-      type: null,
+      type: outerAccount ? outerAccount.type : null,
       instrument: invoice.instrument,
-      company: { title: apiTransaction.to },
+      company: outerAccount ? outerAccount.company : { title: apiTransaction.to },
       syncIds: [match[1]]
     },
     invoice: null,
@@ -187,12 +188,14 @@ function parseOuterIncomeTransfer (transaction, apiTransaction, account) {
 }
 
 function parseOutcomeTransfer (transaction, apiTransaction, account) {
-  if (apiTransaction.form !== 'RurPayment') {
+  const outerAccountStr = _.get(apiTransaction, 'details.paymentDetails.stringType.value') || apiTransaction.to
+  const outerAccount = parseOuterAccountData(outerAccountStr)
+  if (apiTransaction.form !== 'RurPayment' && !outerAccount) {
     return false
   }
   const receiver = _.get(apiTransaction, 'details.receiverAccount.stringType.value')
   const match = receiver && receiver.match(/(\d{4})$/)
-  if (!match) {
+  if (!match && !outerAccount) {
     return false
   }
   const feeStr = _.get(apiTransaction, 'details.commission.amount')
@@ -204,10 +207,10 @@ function parseOutcomeTransfer (transaction, apiTransaction, account) {
   transaction.movements.push({
     id: null,
     account: {
-      type: null,
+      type: outerAccount ? outerAccount.type : null,
       instrument: invoice.instrument,
-      company: apiTransaction.description === 'Перевод клиенту Сбербанка' ? { id: '4624' } : null,
-      syncIds: [match[1]]
+      company: apiTransaction.description === 'Перевод клиенту Сбербанка' ? { id: '4624' } : outerAccount ? outerAccount.company : null,
+      syncIds: match ? [match[1]] : null
     },
     invoice: null,
     sum: -invoice.sum,
@@ -628,4 +631,88 @@ function parseExpireDate (str) {
 
 function removeWhitespaces (text) {
   return text.replace(/\s+/g, '').trim()
+}
+
+export function parseOuterAccountData (str) {
+  if (str) {
+    for (const data of [
+      { pattern: 'TINKOFF BANK CARD2CARD', account: { type: 'ccard', company: { id: '4902' } } },
+      { pattern: 'Тинькофф', account: { type: null, company: { id: '4902' } } },
+      { pattern: 'TINKOFF', account: { type: null, company: { id: '4902' } } },
+      { pattern: 'CARD2CARD ALFA_MOBILE', account: { type: 'ccard', company: { id: '3' } } },
+      { pattern: 'С2С ALFA_MOBILE', account: { type: 'ccard', company: { id: '3' } } },
+      { pattern: 'СовКомБанк', account: { type: null, company: { id: '4534' } } },
+      { pattern: 'Яндекс.Деньги', account: { type: null, company: { id: '15420' } } },
+      { pattern: 'Рокетбанк', account: { type: null, company: { id: '15444' } } },
+      { pattern: 'Home Credit Bank', account: { type: null, company: { id: '4412' } } },
+      { pattern: 'HCFB', account: { type: null, company: { id: '4412' } } },
+      { pattern: 'C2C R-ONLINE', account: { type: 'ccard', company: { id: '5156' } } },
+      { pattern: 'OPEN.RU CARD2CARD', account: { type: 'ccard', company: { id: '4761' } } },
+      { pattern: 'QIWI', account: { type: null, company: { id: '15592' } } }
+    ]) {
+      if (str.toLowerCase().indexOf(data.pattern.toLowerCase()) >= 0) {
+        return data.account
+      }
+    }
+  }
+  return null
+}
+
+export function adjustTransactionsAndCheckBalance (apiTransactions, apiPayments) {
+  const delta = 3 * 60 * 1000
+  let isBalanceAmbiguous = !apiTransactions.length
+  let transactions = []
+  let i = 0
+  let j = 0
+  while (i < apiTransactions.length) {
+    const apiTransaction = apiTransactions[i]
+    const apiPayment = j < apiPayments.length ? apiPayments[j] : null
+    const timestamp1 = parseDate(apiTransaction.date).getTime()
+    const timestamp2 = apiPayment ? parseDate(apiPayment.date).getTime() : 0
+    if (timestamp1 > timestamp2 + delta) {
+      const adjusted = convertApiTransactionToPayment(apiTransaction)
+      if (adjusted) {
+        transactions.push(adjusted)
+      }
+      i++
+    } else {
+      transactions.push(apiPayment)
+      if (timestamp2 > timestamp1 + delta) {
+        isBalanceAmbiguous = true
+      } else {
+        i++
+      }
+      j++
+    }
+  }
+  while (j < apiPayments.length) {
+    transactions.push(apiPayments[j])
+    j++
+  }
+  return { transactions, isBalanceAmbiguous }
+}
+
+function convertApiTransactionToPayment (apiTransaction) {
+  if (apiTransaction.description && apiTransaction.description.indexOf('Mobile Fee') >= 0) {
+    return {
+      autopayable: 'false',
+      copyable: 'false',
+      date: apiTransaction.date,
+      description: 'Комиссии',
+      form: 'TakingMeans',
+      from: 'MasterCard Mass',
+      id: null,
+      imageId: { staticImage: { url: null } },
+      invoiceReminderSupported: 'false',
+      invoiceSubscriptionSupported: 'false',
+      isMobilePayment: 'false',
+      operationAmount: apiTransaction.sum,
+      state: 'AUTHORIZATION',
+      templatable: 'false',
+      type: 'payment',
+      ufsId: null
+    }
+  }
+  console.debug('inconvertible api transaction', apiTransaction)
+  return null
 }

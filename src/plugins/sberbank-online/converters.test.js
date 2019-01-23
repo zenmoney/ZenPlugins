@@ -1,5 +1,15 @@
 import { parseXml } from '../../common/network'
-import { convertAccount, convertCards, convertDeposit, convertLoan, convertTransaction, convertTarget, getId, convertMetalAccount } from './converters'
+import {
+  convertAccount,
+  convertCards,
+  convertDeposit,
+  convertLoan,
+  convertTransaction,
+  convertTarget,
+  getId,
+  convertMetalAccount,
+  adjustTransactionsAndCheckBalance
+} from './converters'
 
 describe('convertLoan', () => {
   it('returns valid loan', () => {
@@ -1468,9 +1478,7 @@ describe('convertTransaction', () => {
           account: {
             type: null,
             instrument: 'RUB',
-            company: {
-              title: 'Тинькофф Банк'
-            },
+            company: { id: '4902' },
             syncIds: ['2272']
           },
           invoice: null,
@@ -1795,6 +1803,148 @@ describe('convertTransaction', () => {
         mcc: null,
         location: null
       },
+      comment: null
+    })
+  })
+
+  it('converts outer outcome transfer to known bank but account syncId is absent', () => {
+    expect(convertTransaction({
+      autopayable: 'false',
+      copyable: 'false',
+      date: '23.01.2019T15:05:34',
+      description: 'Прочие списания',
+      form: 'ExtCardOtherOut',
+      from: 'MasterCard Mass 5298 26** **** 3389',
+      id: '11771931545',
+      imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/11ffac45-05f8-4dbd-b7e0-983ffda0bb72.png' } },
+      invoiceReminderSupported: 'false',
+      invoiceSubscriptionSupported: 'false',
+      isMobilePayment: 'false',
+      operationAmount: { amount: '-100.00', currency: { code: 'RUB', name: 'руб.' } },
+      state: 'AUTHORIZATION',
+      templatable: 'false',
+      to: 'Тинькофф Банк',
+      type: 'payment',
+      ufsId: null,
+      details: {
+        amount: {
+          changed: 'false',
+          editable: 'false',
+          isSum: 'false',
+          moneyType: { value: '100' },
+          name: 'amount',
+          required: 'false',
+          title: 'Сумма в валюте счета',
+          type: 'money',
+          visible: 'false'
+        },
+        commission: {
+          changed: 'false',
+          editable: 'false',
+          isSum: 'false',
+          moneyType: null,
+          name: 'commission',
+          required: 'false',
+          title: 'Комиссия',
+          type: 'money',
+          visible: 'false'
+        },
+        description: {
+          changed: 'false',
+          editable: 'false',
+          isSum: 'false',
+          name: 'description',
+          required: 'false',
+          stringType: { value: 'Тинькофф Банк' },
+          title: 'Описание',
+          type: 'string',
+          visible: 'true'
+        },
+        fromResource: {
+          changed: 'false',
+          editable: 'false',
+          isSum: 'false',
+          name: 'fromResource',
+          required: 'true',
+          resourceType: {
+            availableValues: {
+              valueItem: { value: 'card:51833625', selected: 'true', displayedValue: '5298 26** **** 3389 [MasterCard Mass]', currency: 'RUB' }
+            }
+          },
+          title: 'Счет списания',
+          type: 'resource',
+          visible: 'true'
+        },
+        nfc: {
+          changed: 'false',
+          editable: 'false',
+          isSum: 'false',
+          name: 'nfc',
+          required: 'false',
+          stringType: null,
+          title: 'Бесконтактная операция NFC',
+          type: 'string',
+          visible: 'false'
+        },
+        operationDate: {
+          changed: 'false',
+          editable: 'false',
+          isSum: 'false',
+          name: 'operationDate',
+          required: 'false',
+          stringType: { value: '23.01.2019 15:05:34' },
+          title: 'Дата и время совершения операции',
+          type: 'string',
+          visible: 'true'
+        },
+        paymentDetails: {
+          changed: 'false',
+          editable: 'false',
+          isSum: 'false',
+          name: 'paymentDetails',
+          required: 'false',
+          stringType: { value: 'TINKOFF BANK CARD2CARD   MOSCOW       RUS' },
+          title: 'Информация о платеже',
+          type: 'string',
+          visible: 'true'
+        },
+        sellAmount: {
+          changed: 'false',
+          editable: 'false',
+          isSum: 'false',
+          moneyType: { value: '100' },
+          name: 'sellAmount',
+          required: 'false',
+          title: 'Сумма списания',
+          type: 'money',
+          visible: 'true'
+        }
+      }
+    }, { id: 'account', instrument: 'RUB' })).toEqual({
+      hold: true,
+      date: new Date('2019-01-23T15:05:34+03:00'),
+      movements: [
+        {
+          id: '11771931545',
+          account: { id: 'account' },
+          invoice: null,
+          sum: -100,
+          fee: 0
+        },
+        {
+          id: null,
+          account: {
+            type: 'ccard',
+            instrument: 'RUB',
+            company: { id: '4902' },
+            syncIds: null
+          },
+          invoice: null,
+          sum: 100,
+          fee: 0
+        }
+      ],
+      merchant: null,
       comment: null
     })
   })
@@ -2681,6 +2831,262 @@ describe('convertMetalAccount', () => {
         syncID: ['20309099038170403096'],
         balance: 3812 / ozToGramsRate
       }
+    })
+  })
+})
+
+describe('adjustTransactionsAndCheckBalance', () => {
+  it('adds missing convertable api transactions to payments', () => {
+    expect(adjustTransactionsAndCheckBalance([
+      {
+        date: '19.01.2019T21:00:34',
+        description: 'CH Debit RUS MOSCOW IDT:0513 1 RUS MOSCOW SBOL',
+        sum: {
+          amount: '-40000.00',
+          currency: { code: 'RUB', name: 'руб.' }
+        }
+      },
+      {
+        date: '19.01.2019T20:15:31',
+        description: 'Note Acceptance RUS SANKT-PETERBU Note Acceptance RUS SANKT-PETERBU ITT 702889',
+        sum: {
+          amount: '+50000.00',
+          currency: { code: 'RUB', name: 'руб.' }
+        }
+      },
+      {
+        date: '19.01.2019T00:00:00',
+        description: 'Mobile Fee 3200 Mobile Fee',
+        sum: { amount: '-60.00', currency: { code: 'RUB', name: 'руб.' } }
+      },
+      {
+        date: '09.01.2019T15:24:43',
+        description: 'CH Debit RUS MOSCOW IDT:0513 1 RUS MOSCOW SBOL',
+        sum: {
+          amount: '-100.00',
+          currency: { code: 'RUB', name: 'руб.' }
+        }
+      }
+    ], [
+      {
+        autopayable: 'true',
+        copyable: 'true',
+        date: '19.01.2019T20:59:58',
+        description: 'Перевод клиенту Сбербанка',
+        form: 'RurPayment',
+        from: 'MasterCard Mass 5298 26** **** 3389',
+        id: '11669890219',
+        imageId: { staticImage: { url: null } },
+        invoiceReminderSupported: 'false',
+        invoiceSubscriptionSupported: 'false',
+        isMobilePayment: 'false',
+        operationAmount: { amount: '-40000.00', currency: { code: 'RUB', name: 'руб.' } },
+        state: 'EXECUTED',
+        templatable: 'true',
+        to: 'НИКОЛАЙ НИКОЛАЕВИЧ Н.                                                        5469 55** **** 6339',
+        type: 'payment',
+        ufsId: null
+      },
+      {
+        autopayable: 'false',
+        copyable: 'false',
+        date: '19.01.2019T20:15:31',
+        description: 'Внесение наличных',
+        form: 'ExtCardCashIn',
+        id: '11669837967',
+        imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/33355.jpg' } },
+        invoiceReminderSupported: 'false',
+        invoiceSubscriptionSupported: 'false',
+        isMobilePayment: 'false',
+        operationAmount: { amount: '50000.00', currency: { code: 'RUB', name: 'руб.' } },
+        state: 'FINANCIAL',
+        templatable: 'false',
+        to: 'Банкомат Сбербанка',
+        type: 'payment',
+        ufsId: null
+      }
+    ])).toEqual({
+      isBalanceAmbiguous: false,
+      transactions: [
+        {
+          autopayable: 'true',
+          copyable: 'true',
+          date: '19.01.2019T20:59:58',
+          description: 'Перевод клиенту Сбербанка',
+          form: 'RurPayment',
+          from: 'MasterCard Mass 5298 26** **** 3389',
+          id: '11669890219',
+          imageId: { staticImage: { url: null } },
+          invoiceReminderSupported: 'false',
+          invoiceSubscriptionSupported: 'false',
+          isMobilePayment: 'false',
+          operationAmount: { amount: '-40000.00', currency: { code: 'RUB', name: 'руб.' } },
+          state: 'EXECUTED',
+          templatable: 'true',
+          to: 'НИКОЛАЙ НИКОЛАЕВИЧ Н.                                                        5469 55** **** 6339',
+          type: 'payment',
+          ufsId: null
+        },
+        {
+          autopayable: 'false',
+          copyable: 'false',
+          date: '19.01.2019T20:15:31',
+          description: 'Внесение наличных',
+          form: 'ExtCardCashIn',
+          id: '11669837967',
+          imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/33355.jpg' } },
+          invoiceReminderSupported: 'false',
+          invoiceSubscriptionSupported: 'false',
+          isMobilePayment: 'false',
+          operationAmount: { amount: '50000.00', currency: { code: 'RUB', name: 'руб.' } },
+          state: 'FINANCIAL',
+          templatable: 'false',
+          to: 'Банкомат Сбербанка',
+          type: 'payment',
+          ufsId: null
+        },
+        {
+          autopayable: 'false',
+          copyable: 'false',
+          date: '19.01.2019T00:00:00',
+          description: 'Комиссии',
+          form: 'TakingMeans',
+          from: 'MasterCard Mass',
+          id: null,
+          imageId: { staticImage: { url: null } },
+          invoiceReminderSupported: 'false',
+          invoiceSubscriptionSupported: 'false',
+          isMobilePayment: 'false',
+          operationAmount: { amount: '-60.00', currency: { code: 'RUB', name: 'руб.' } },
+          state: 'AUTHORIZATION',
+          templatable: 'false',
+          type: 'payment',
+          ufsId: null
+        }
+      ]
+    })
+  })
+
+  it('detects ambiguous balance', () => {
+    expect(adjustTransactionsAndCheckBalance([
+      {
+        date: '19.01.2019T20:15:31',
+        description: 'Note Acceptance RUS SANKT-PETERBU Note Acceptance RUS SANKT-PETERBU ITT 702889',
+        sum: {
+          amount: '+50000.00',
+          currency: { code: 'RUB', name: 'руб.' }
+        }
+      },
+      {
+        date: '19.01.2019T00:00:00',
+        description: 'Mobile Fee 3200 Mobile Fee',
+        sum: { amount: '-60.00', currency: { code: 'RUB', name: 'руб.' } }
+      },
+      {
+        date: '09.01.2019T15:24:43',
+        description: 'CH Debit RUS MOSCOW IDT:0513 1 RUS MOSCOW SBOL',
+        sum: {
+          amount: '-100.00',
+          currency: { code: 'RUB', name: 'руб.' }
+        }
+      }
+    ], [
+      {
+        autopayable: 'true',
+        copyable: 'true',
+        date: '19.01.2019T20:59:58',
+        description: 'Перевод клиенту Сбербанка',
+        form: 'RurPayment',
+        from: 'MasterCard Mass 5298 26** **** 3389',
+        id: '11669890219',
+        imageId: { staticImage: { url: null } },
+        invoiceReminderSupported: 'false',
+        invoiceSubscriptionSupported: 'false',
+        isMobilePayment: 'false',
+        operationAmount: { amount: '-40000.00', currency: { code: 'RUB', name: 'руб.' } },
+        state: 'EXECUTED',
+        templatable: 'true',
+        to: 'НИКОЛАЙ НИКОЛАЕВИЧ Н.                                                        5469 55** **** 6339',
+        type: 'payment',
+        ufsId: null
+      },
+      {
+        autopayable: 'false',
+        copyable: 'false',
+        date: '19.01.2019T20:15:31',
+        description: 'Внесение наличных',
+        form: 'ExtCardCashIn',
+        id: '11669837967',
+        imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/33355.jpg' } },
+        invoiceReminderSupported: 'false',
+        invoiceSubscriptionSupported: 'false',
+        isMobilePayment: 'false',
+        operationAmount: { amount: '50000.00', currency: { code: 'RUB', name: 'руб.' } },
+        state: 'FINANCIAL',
+        templatable: 'false',
+        to: 'Банкомат Сбербанка',
+        type: 'payment',
+        ufsId: null
+      }
+    ])).toEqual({
+      isBalanceAmbiguous: true,
+      transactions: [
+        {
+          autopayable: 'true',
+          copyable: 'true',
+          date: '19.01.2019T20:59:58',
+          description: 'Перевод клиенту Сбербанка',
+          form: 'RurPayment',
+          from: 'MasterCard Mass 5298 26** **** 3389',
+          id: '11669890219',
+          imageId: { staticImage: { url: null } },
+          invoiceReminderSupported: 'false',
+          invoiceSubscriptionSupported: 'false',
+          isMobilePayment: 'false',
+          operationAmount: { amount: '-40000.00', currency: { code: 'RUB', name: 'руб.' } },
+          state: 'EXECUTED',
+          templatable: 'true',
+          to: 'НИКОЛАЙ НИКОЛАЕВИЧ Н.                                                        5469 55** **** 6339',
+          type: 'payment',
+          ufsId: null
+        },
+        {
+          autopayable: 'false',
+          copyable: 'false',
+          date: '19.01.2019T20:15:31',
+          description: 'Внесение наличных',
+          form: 'ExtCardCashIn',
+          id: '11669837967',
+          imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/33355.jpg' } },
+          invoiceReminderSupported: 'false',
+          invoiceSubscriptionSupported: 'false',
+          isMobilePayment: 'false',
+          operationAmount: { amount: '50000.00', currency: { code: 'RUB', name: 'руб.' } },
+          state: 'FINANCIAL',
+          templatable: 'false',
+          to: 'Банкомат Сбербанка',
+          type: 'payment',
+          ufsId: null
+        },
+        {
+          autopayable: 'false',
+          copyable: 'false',
+          date: '19.01.2019T00:00:00',
+          description: 'Комиссии',
+          form: 'TakingMeans',
+          from: 'MasterCard Mass',
+          id: null,
+          imageId: { staticImage: { url: null } },
+          invoiceReminderSupported: 'false',
+          invoiceSubscriptionSupported: 'false',
+          isMobilePayment: 'false',
+          operationAmount: { amount: '-60.00', currency: { code: 'RUB', name: 'руб.' } },
+          state: 'AUTHORIZATION',
+          templatable: 'false',
+          type: 'payment',
+          ufsId: null
+        }
+      ]
     })
   })
 })

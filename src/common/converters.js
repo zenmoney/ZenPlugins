@@ -54,8 +54,9 @@ function assertAccountCompanyIsValid (company) {
       (_.isEqual(companyKeys, ['title']) && _.isString(company.title)),
       docs
     )
+  } else {
+    console.assert(false, docs, company)
   }
-  console.assert(false, docs, company)
 }
 
 function serializeZenmoneyAccountReference (account) {
@@ -89,8 +90,8 @@ function serializeZenmoneyAccountReference (account) {
 
   assertAccountCompanyIsValid(company)
 
-  const type = t === null && _.isArray(syncIds) && syncIds.length > 0 ? 'ccard' : t
-  console.assert(type !== null, 'account.type can be null only when syncIds are present')
+  const type = t === null && (company || (_.isArray(syncIds) && syncIds.length > 0)) ? 'ccard' : t
+  console.assert(type !== null, 'account.type can be null only when syncIds or company are present')
   console.assert(accountTypes.includes(type), `Unknown account.type "${type}". Supported values are`, accountTypes)
   console.assert(_.isString(instrument), 'instrument must be String currency code', account)
   if (type === 'cash') {
