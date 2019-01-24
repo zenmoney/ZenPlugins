@@ -46,7 +46,7 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
   })
 
   await Promise.all(accounts.map(async account => {
-    if (!ZenMoney.isAccountSkipped(account.id)) {
+    if (ZenMoney.isAccountSkipped(account.id)) {
       return
     }
     (await fetchTransactions(auth, preferences, account, fromDate, toDate)).forEach(apiTransaction => {
