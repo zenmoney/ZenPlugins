@@ -67,11 +67,13 @@ export async function login (login, pin, auth, device) {
   }
 
   if (!guid) {
+    const loginWithoutSpaces = login.replace(/\s+/g, '').trim()
+    const isLoginCardNumber = loginWithoutSpaces.match(/^\d{16}\d*$/)
     response = await fetchXml('https://online.sberbank.ru:4477/CSAMAPI/registerApp.do', {
       body: {
         ...commonBody,
         'operation': 'register',
-        'login': login,
+        ...isLoginCardNumber ? { cardNumber: loginWithoutSpaces } : { login },
         'devID': device.id,
         'devIDOld': device.idOld
       },
