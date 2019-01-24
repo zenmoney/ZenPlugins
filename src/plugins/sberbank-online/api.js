@@ -183,7 +183,7 @@ export async function fetchAccounts (auth) {
         ? account.account && account.account.id
           ? { id: account.account.id, type: 'account' }
           : null
-        : account.mainCardId || type === 'ima'
+        : account.mainCardId || (type === 'card' && account.type !== 'credit') || type === 'ima'
           ? null
           : { id: account.id, type }
       return {
@@ -257,7 +257,8 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
           'InternalPayment',
           'AccountOpeningClaim',
           'AccountClosingPayment',
-          'IMAOpeningClaim'
+          'IMAOpeningClaim',
+          'IMAPayment'
         ].indexOf(transaction.form) >= 0 ||
         parseOuterAccountData(transaction.to)) {
         const detailsResponse = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/payments/view.do`, {

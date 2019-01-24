@@ -2,6 +2,8 @@ import * as _ from 'lodash'
 import { getIntervalBetweenDates } from '../../common/momentDateUtils'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 
+const GRAMS_IN_OZ = 31.1034768
+
 export function convertTransaction (apiTransaction, account, accountsById) {
   const invoice = apiTransaction.operationAmount && apiTransaction.operationAmount.amount && {
     sum: parseDecimal(apiTransaction.operationAmount.amount),
@@ -9,6 +11,9 @@ export function convertTransaction (apiTransaction, account, accountsById) {
   }
   if (!invoice || !invoice.sum) {
     return null
+  }
+  if (parseMetalInstrument(apiTransaction.operationAmount.currency.code)) {
+    invoice.sum = invoice.sum / GRAMS_IN_OZ
   }
   const feeStr = _.get(apiTransaction, 'details.paymentDetails.commission.amount')
   const fee = feeStr ? -parseDecimal(feeStr) : 0
@@ -97,7 +102,8 @@ function parseInnerTransfer (transaction, apiTransaction, account, accountsById)
     'InternalPayment',
     'AccountOpeningClaim',
     'AccountClosingPayment',
-    'IMAOpeningClaim'
+    'IMAOpeningClaim',
+    'IMAPayment'
   ].indexOf(apiTransaction.form) < 0) {
     return false
   }
@@ -351,7 +357,6 @@ function toMoscowDate (date) {
 }
 
 export function convertMetalAccount (apiAccount) {
-  const ozToGramsRate = 31.1034768
   return {
     products: [
       {
@@ -366,7 +371,7 @@ export function convertMetalAccount (apiAccount) {
       title: apiAccount.name,
       instrument: parseInstrument(apiAccount.balance.currency.code),
       syncID: [apiAccount.number],
-      balance: parseDecimal(apiAccount.balance.amount) / ozToGramsRate
+      balance: parseDecimal(apiAccount.balance.amount) / GRAMS_IN_OZ
     }
   }
 }
@@ -409,11 +414,13 @@ export function convertCards (apiCardsArray, nowDate = new Date()) {
   const accountData = []
 
   for (const apiCard of apiCardsArray) {
+    const accountId = apiCard.account.cardAccount
     const id = apiCard.account.mainCardId || apiCard.account.id
-    let data = dataById[id]
-    if (!data) {
-      data = { accountNumber: apiCard.account.cardAccount, account: null, products: [] }
-      dataById[id] = data
+    const data = dataById[id] || dataById[accountId] ||
+      { accountNumber: apiCard.account.cardAccount, account: null, products: [] }
+    dataById[id] = data
+    if (accountId) {
+      dataById[accountId] = data
     }
     if (apiCard.account.state !== 'active' ||
       ['+-КАРТОЧКА ОТКРЫТА', 'K-ДЕЙСТ.ПРИОСТАНОВЛЕНО', 'X-ПЕРЕВЫП., НЕ ВЫДАНА'].indexOf(apiCard.account.statusWay4) < 0 ||
@@ -567,7 +574,7 @@ export function convertDeposit (apiDeposit, details) {
   }
 }
 
-function parseInstrument (instrument) {
+function parseMetalInstrument (instrument) {
   switch (instrument) {
     case 'AUR':
     case 'A98':
@@ -582,8 +589,12 @@ function parseInstrument (instrument) {
     case 'A33':
       return 'XPD'
     default:
-      return instrument
+      return null
   }
+}
+
+function parseInstrument (instrument) {
+  return parseMetalInstrument(instrument) || instrument
 }
 
 function parseDuration (duration, account) {

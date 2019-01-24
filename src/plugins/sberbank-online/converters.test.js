@@ -1049,6 +1049,270 @@ describe('convertCards', () => {
       }
     ])
   })
+
+  it('converts several main cards for one account', () => {
+    expect(convertCards([
+      {
+        account: {
+          id: '587949969',
+          name: 'Кредитная',
+          smsName: '8293',
+          description: 'MasterCard Mass',
+          number: '5313 29** **** 8293',
+          isMain: 'true',
+          type: 'credit',
+          availableLimit: { amount: '199601,00', currency: { code: 'RUB', name: 'руб.' } },
+          state: 'active',
+          cardAccount: '45817810540402102383',
+          showarrestdetail: 'true',
+          tokenExists: 'false',
+          expireDate: '01/2019',
+          statusWay4: '+-КАРТОЧКА ОТКРЫТА'
+        },
+        details: {
+          detail: {
+            creditType: {
+              limit: { amount: '200000,00', currency: { code: 'RUB', name: 'руб.' } },
+              ownSum: { amount: '-399,00', currency: { code: 'RUB', name: 'руб.' } },
+              minPayment: { amount: '0,00', currency: { code: 'RUB', name: 'руб.' } },
+              DebtInfoResult: {
+                StatusCode: '0',
+                DebtInfo: {
+                  openDate: '06.04.2016T00:00:00',
+                  ovdAmount: { amount: '0.00', currency: { code: 'RUR', name: 'руб.' } },
+                  LastBillingDate: '05.01.2019T00:00:00',
+                  MandPaymOnReport: { amount: '0.00', currency: { code: 'RUR', name: 'руб.' } },
+                  MandatoryPaymentPAN: { amount: '0.00', currency: { code: 'RUB', name: 'руб.' } },
+                  TotalOnReport: { amount: '0.00', currency: { code: 'RUR', name: 'руб.' } },
+                  Debt: { amount: '399.00', currency: { code: 'RUR', name: 'руб.' } },
+                  Total_Tomorrow: { amount: '399.00', currency: { code: 'RUR', name: 'руб.' } },
+                  Total_DayAfterTomorrow: { amount: '399.00', currency: { code: 'RUR', name: 'руб.' } },
+                  Blocked_Cache: { amount: '0.00', currency: { code: 'RUR', name: 'руб.' } },
+                  Total_ReportToday: { amount: '0.00', currency: { code: 'RUR', name: 'руб.' } }
+                }
+              }
+            },
+            holderName: 'НИКОЛАЙ НИКОЛАЕВИЧ Н.',
+            availableCashLimit: { amount: '199601,00', currency: { code: 'RUB', name: 'руб.' } },
+            purchaseLimit: { amount: '199601,00', currency: { code: 'RUB', name: 'руб.' } },
+            officeName: 'Доп.офис №8646/090',
+            accountNumber: '45817810540402102383',
+            expireDate: '01/2019',
+            name: 'Кредитная',
+            cardAccount: '45817810540402102383',
+            statusWay4: '+-КАРТОЧКА ОТКРЫТА'
+          }
+        }
+      },
+      {
+        account: {
+          id: '602323574',
+          name: 'Новая',
+          smsName: '8005',
+          description: 'Visa Classic',
+          number: '4276 31** **** 8005',
+          isMain: 'true',
+          type: 'debit',
+          availableLimit: { amount: '18329,11', currency: { code: 'RUB', name: 'руб.' } },
+          state: 'blocked',
+          showarrestdetail: 'true',
+          tokenExists: 'false',
+          expireDate: '02/2020',
+          statusWay4: 'K-ДЕЙСТ.ПРИОСТАНОВЛЕНО'
+        },
+        details: null
+      },
+      {
+        account: {
+          id: '643274742',
+          name: 'MasterCard Mass',
+          smsName: '0997',
+          description: 'MasterCard Mass',
+          number: '5469 21** **** 0997',
+          isMain: 'true',
+          type: 'credit',
+          availableLimit: { amount: '199601,00', currency: { code: 'RUB', name: 'руб.' } },
+          state: 'active',
+          cardAccount: '45817810540402102383',
+          showarrestdetail: 'true',
+          tokenExists: 'false',
+          expireDate: '12/2021',
+          statusWay4: '+-КАРТОЧКА ОТКРЫТА'
+        },
+        details: {
+          detail: {
+            creditType: {
+              limit: { amount: '200000,00', currency: { code: 'RUB', name: 'руб.' } },
+              ownSum: { amount: '-399,00', currency: { code: 'RUB', name: 'руб.' } },
+              minPayment: { amount: '0,00', currency: { code: 'RUB', name: 'руб.' } },
+              DebtInfoResult: {
+                StatusCode: '0',
+                DebtInfo: {
+                  openDate: '06.04.2016T00:00:00',
+                  ovdAmount: { amount: '0.00', currency: { code: 'RUR', name: 'руб.' } },
+                  LastBillingDate: '05.01.2019T00:00:00',
+                  MandPaymOnReport: { amount: '0.00', currency: { code: 'RUR', name: 'руб.' } },
+                  MandatoryPaymentPAN: { amount: '0.00', currency: { code: 'RUB', name: 'руб.' } },
+                  TotalOnReport: { amount: '0.00', currency: { code: 'RUR', name: 'руб.' } },
+                  Debt: { amount: '399.00', currency: { code: 'RUR', name: 'руб.' } },
+                  Total_Tomorrow: { amount: '399.00', currency: { code: 'RUR', name: 'руб.' } },
+                  Total_DayAfterTomorrow: { amount: '399.00', currency: { code: 'RUR', name: 'руб.' } },
+                  Blocked_Cache: { amount: '0.00', currency: { code: 'RUR', name: 'руб.' } },
+                  Total_ReportToday: { amount: '0.00', currency: { code: 'RUR', name: 'руб.' } }
+                }
+              }
+            },
+            holderName: 'НИКОЛАЙ НИКОЛАЕВИЧ Н.',
+            availableCashLimit: { amount: '199601,00', currency: { code: 'RUB', name: 'руб.' } },
+            purchaseLimit: { amount: '199601,00', currency: { code: 'RUB', name: 'руб.' } },
+            officeName: 'Доп.офис №8646/090',
+            accountNumber: '45817810540402102383',
+            expireDate: '12/2021',
+            name: 'MasterCard Mass',
+            cardAccount: '45817810540402102383',
+            statusWay4: '+-КАРТОЧКА ОТКРЫТА'
+          }
+        }
+      },
+      {
+        account: {
+          id: '624914437',
+          name: 'Visa Classic',
+          smsName: '1241',
+          description: 'Visa Classic',
+          number: '4276 09** **** 1241',
+          isMain: 'true',
+          type: 'debit',
+          availableLimit: { amount: '18329,11', currency: { code: 'RUB', name: 'руб.' } },
+          state: 'active',
+          cardAccount: '40817810631001292724',
+          showarrestdetail: 'true',
+          tokenExists: 'false',
+          expireDate: '02/2020',
+          statusWay4: '+-КАРТОЧКА ОТКРЫТА'
+        },
+        details: null
+      },
+      {
+        account: {
+          id: '642513943',
+          name: 'MasterCard Mass',
+          smsName: '2039',
+          description: 'MasterCard Mass',
+          number: '5469 28** **** 2039',
+          isMain: 'true',
+          type: 'credit',
+          availableLimit: { amount: '199601,00', currency: { code: 'RUB', name: 'руб.' } },
+          state: 'blocked',
+          cardAccount: '45817810540402102383',
+          showarrestdetail: 'true',
+          tokenExists: 'false',
+          expireDate: '12/2021',
+          statusWay4: 'K-ДЕЙСТ.ПРИОСТАНОВЛЕНО'
+        },
+        details: {
+          detail: {
+            creditType: {
+              limit: { amount: '200000,00', currency: { code: 'RUB', name: 'руб.' } },
+              ownSum: { amount: '-399,00', currency: { code: 'RUB', name: 'руб.' } },
+              minPayment: { amount: '0,00', currency: { code: 'RUB', name: 'руб.' } },
+              DebtInfoResult: {
+                StatusCode: '0',
+                DebtInfo: {
+                  openDate: '06.04.2016T00:00:00',
+                  ovdAmount: { amount: '0.00', currency: { code: 'RUR', name: 'руб.' } },
+                  LastBillingDate: '05.01.2019T00:00:00',
+                  MandPaymOnReport: { amount: '0.00', currency: { code: 'RUR', name: 'руб.' } },
+                  MandatoryPaymentPAN: { amount: '0.00', currency: { code: 'RUB', name: 'руб.' } },
+                  TotalOnReport: { amount: '0.00', currency: { code: 'RUR', name: 'руб.' } },
+                  Debt: { amount: '399.00', currency: { code: 'RUR', name: 'руб.' } },
+                  Total_Tomorrow: { amount: '399.00', currency: { code: 'RUR', name: 'руб.' } },
+                  Total_DayAfterTomorrow: { amount: '399.00', currency: { code: 'RUR', name: 'руб.' } },
+                  Blocked_Cache: { amount: '0.00', currency: { code: 'RUR', name: 'руб.' } },
+                  Total_ReportToday: { amount: '0.00', currency: { code: 'RUR', name: 'руб.' } }
+                }
+              }
+            },
+            holderName: 'НИКОЛАЙ НИКОЛАЕВИЧ Н.',
+            availableCashLimit: { amount: '199601,00', currency: { code: 'RUB', name: 'руб.' } },
+            purchaseLimit: { amount: '199601,00', currency: { code: 'RUB', name: 'руб.' } },
+            officeName: 'Доп.офис №8646/090',
+            accountNumber: '45817810540402102383',
+            expireDate: '12/2021',
+            name: 'MasterCard Mass',
+            cardAccount: '45817810540402102383',
+            statusWay4: 'K-ДЕЙСТ.ПРИОСТАНОВЛЕНО'
+          }
+        }
+      },
+      {
+        account: {
+          id: '587269324',
+          name: 'UEC',
+          smsName: '2501',
+          description: 'UEC',
+          number: '6054 61** **** 2291',
+          isMain: 'true',
+          type: 'debit',
+          availableLimit: { amount: '0,00', currency: { code: 'RUB', name: 'руб.' } },
+          state: 'blocked',
+          showarrestdetail: 'true',
+          tokenExists: 'false',
+          expireDate: '03/2021',
+          statusWay4: 'a-ПЕРВИЧНЫЙ ВЫПУСК УЭК'
+        },
+        details: null
+      }
+    ], nowDate)).toEqual([
+      {
+        products: [
+          {
+            id: '587949969',
+            type: 'card',
+            instrument: 'RUB'
+          },
+          {
+            id: '643274742',
+            type: 'card',
+            instrument: 'RUB'
+          }
+        ],
+        zenAccount: {
+          id: 'card:587949969',
+          type: 'ccard',
+          title: 'Кредитная',
+          instrument: 'RUB',
+          balance: -399,
+          creditLimit: 200000,
+          syncID: [
+            '531329******8293',
+            '546921******0997',
+            '45817810540402102383'
+          ]
+        }
+      },
+      {
+        products: [
+          {
+            id: '624914437',
+            type: 'card',
+            instrument: 'RUB'
+          }
+        ],
+        zenAccount: {
+          id: 'card:624914437',
+          type: 'ccard',
+          title: 'Visa Classic',
+          instrument: 'RUB',
+          available: 18329.11,
+          syncID: [
+            '427609******1241',
+            '40817810631001292724'
+          ]
+        }
+      }
+    ])
+  })
 })
 
 describe('convertAccount', () => {
