@@ -1,6 +1,7 @@
 import * as _ from 'lodash'
 import { getIntervalBetweenDates } from '../../common/momentDateUtils'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
+import { parseOuterAccountData } from '../../common/accounts'
 
 const GRAMS_IN_OZ = 31.1034768
 
@@ -642,31 +643,6 @@ function parseExpireDate (str) {
 
 function removeWhitespaces (text) {
   return text.replace(/\s+/g, '').trim()
-}
-
-export function parseOuterAccountData (str) {
-  if (str) {
-    for (const data of [
-      { pattern: 'TINKOFF BANK CARD2CARD', account: { type: 'ccard', company: { id: '4902' } } },
-      { pattern: 'Тинькофф', account: { type: null, company: { id: '4902' } } },
-      { pattern: 'TINKOFF', account: { type: null, company: { id: '4902' } } },
-      { pattern: 'CARD2CARD ALFA_MOBILE', account: { type: 'ccard', company: { id: '3' } } },
-      { pattern: 'С2С ALFA_MOBILE', account: { type: 'ccard', company: { id: '3' } } },
-      { pattern: 'СовКомБанк', account: { type: null, company: { id: '4534' } } },
-      { pattern: 'Яндекс.Деньги', account: { type: null, company: { id: '15420' } } },
-      { pattern: 'Рокетбанк', account: { type: null, company: { id: '15444' } } },
-      { pattern: 'Home Credit Bank', account: { type: null, company: { id: '4412' } } },
-      { pattern: 'HCFB', account: { type: null, company: { id: '4412' } } },
-      { pattern: 'C2C R-ONLINE', account: { type: 'ccard', company: { id: '5156' } } },
-      { pattern: 'OPEN.RU CARD2CARD', account: { type: 'ccard', company: { id: '4761' } } },
-      { pattern: 'QIWI', account: { type: null, company: { id: '15592' } } }
-    ]) {
-      if (str.toLowerCase().indexOf(data.pattern.toLowerCase()) >= 0) {
-        return data.account
-      }
-    }
-  }
-  return null
 }
 
 export function adjustTransactionsAndCheckBalance (apiTransactions, apiPayments) {

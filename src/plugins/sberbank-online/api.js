@@ -3,8 +3,9 @@ import _ from 'lodash'
 import * as qs from 'querystring'
 import * as network from '../../common/network'
 import { retry, RetryError, toNodeCallbackArguments } from '../../common/retry'
+import { parseOuterAccountData } from '../../common/accounts'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
-import { formatDateSql, parseDate, parseOuterAccountData } from './converters'
+import { formatDateSql, parseDate } from './converters'
 
 const md5 = new MD5()
 

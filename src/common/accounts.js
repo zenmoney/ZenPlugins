@@ -99,3 +99,30 @@ export function ensureSyncIDsAreUniqueButSanitized ({ accounts, sanitizeSyncId }
   })
   return accounts.map((account) => ({ ...account, syncID: account.syncID.map((syncID) => replacementsByInstrument[account.instrument][syncID] || syncID) }))
 }
+
+export function parseOuterAccountData (str) {
+  if (str) {
+    for (const data of [
+      { pattern: 'TINKOFF BANK CARD2CARD', account: { type: 'ccard', company: { id: '4902' } } },
+      { pattern: 'Тинькофф', account: { type: null, company: { id: '4902' } } },
+      { pattern: 'TINKOFF', account: { type: null, company: { id: '4902' } } },
+      { pattern: 'CARD2CARD ALFA_MOBILE', account: { type: 'ccard', company: { id: '3' } } },
+      { pattern: 'С2С ALFA_MOBILE', account: { type: 'ccard', company: { id: '3' } } },
+      { pattern: 'СовКомБанк', account: { type: null, company: { id: '4534' } } },
+      { pattern: 'Сбербанк Онлайн', account: { type: 'ccard', company: { id: '4624' } } },
+      { pattern: 'Яндекс.Деньги', account: { type: null, company: { id: '15420' } } },
+      { pattern: 'YANDEX.MONEY', account: { type: null, company: { id: '15420' } } },
+      { pattern: 'Рокетбанк', account: { type: null, company: { id: '15444' } } },
+      { pattern: 'Home Credit Bank', account: { type: null, company: { id: '4412' } } },
+      { pattern: 'HCFB', account: { type: null, company: { id: '4412' } } },
+      { pattern: 'C2C R-ONLINE', account: { type: 'ccard', company: { id: '5156' } } },
+      { pattern: 'OPEN.RU CARD2CARD', account: { type: 'ccard', company: { id: '4761' } } },
+      { pattern: 'QIWI', account: { type: null, company: { id: '15592' } } }
+    ]) {
+      if (str.toLowerCase().indexOf(data.pattern.toLowerCase()) >= 0) {
+        return data.account
+      }
+    }
+  }
+  return null
+}
