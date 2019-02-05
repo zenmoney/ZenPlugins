@@ -1755,6 +1755,125 @@ describe('convertTransaction', () => {
     })
   })
 
+  it('converts outer income transfer with unknown sender bank', () => {
+    expect(convertTransaction({
+      id: '12087175649',
+      ufsId: null,
+      state: 'FINANCIAL',
+      date: '04.02.2019T11:45:39',
+      from: '2202 20** **** 0932',
+      to: 'Сбербанк Онлайн',
+      description: 'Входящий перевод',
+      operationAmount: { amount: '500.00', currency: { code: 'RUB', name: 'руб.' } },
+      isMobilePayment: 'false',
+      copyable: 'false',
+      templatable: 'false',
+      autopayable: 'false',
+      type: 'payment',
+      invoiceSubscriptionSupported: 'false',
+      invoiceReminderSupported: 'false',
+      form: 'ExtCardTransferIn',
+      imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/6f904da7-1663-4e68-801f-fe288c3283f6.png' } },
+      details: {
+        description: {
+          name: 'description',
+          title: 'Описание',
+          type: 'string',
+          required: 'false',
+          editable: 'false',
+          visible: 'true',
+          stringType: { value: 'Сбербанк Онлайн' },
+          changed: 'false'
+        },
+        toResource: {
+          name: 'toResource',
+          title: 'Счет зачисления',
+          type: 'resource',
+          required: 'true',
+          editable: 'false',
+          visible: 'true',
+          resourceType: {
+            availableValues: {
+              valueItem: {
+                value: 'card:98043945',
+                selected: 'true',
+                displayedValue: '5469 75** **** 2343 [MasterCard Mass]',
+                currency: 'RUB'
+              }
+            }
+          },
+          changed: 'false'
+        },
+        fromResource: {
+          name: 'fromResource',
+          title: 'Счет списания',
+          type: 'string',
+          required: 'false',
+          editable: 'false',
+          visible: 'true',
+          stringType: { value: '**** 0932' },
+          changed: 'false'
+        },
+        buyAmount: {
+          name: 'buyAmount',
+          title: 'Сумма зачисления',
+          type: 'money',
+          required: 'false',
+          editable: 'false',
+          visible: 'true',
+          moneyType: { value: '500', currency: { code: 'RUB' } },
+          changed: 'false'
+        },
+        amount: {
+          name: 'amount',
+          title: 'Сумма в валюте счета',
+          type: 'money',
+          required: 'false',
+          editable: 'false',
+          visible: 'false',
+          moneyType: { value: '500', currency: { code: 'RUB' } },
+          changed: 'false'
+        },
+        operationDate: {
+          name: 'operationDate',
+          title: 'Дата и время совершения операции',
+          type: 'string',
+          required: 'false',
+          editable: 'false',
+          visible: 'true',
+          stringType: { value: '04.02.2019 11:45:39' },
+          changed: 'false'
+        }
+      }
+    }, { id: 'account', instrument: 'RUB' })).toEqual({
+      hold: false,
+      date: new Date('2019-02-04T11:45:39+03:00'),
+      movements: [
+        {
+          id: '12087175649',
+          account: { id: 'account' },
+          invoice: null,
+          sum: 500,
+          fee: 0
+        },
+        {
+          id: null,
+          account: {
+            type: null,
+            instrument: 'RUB',
+            company: null,
+            syncIds: ['0932']
+          },
+          invoice: null,
+          sum: -500,
+          fee: 0
+        }
+      ],
+      merchant: null,
+      comment: null
+    })
+  })
+
   it('converts outer outcome transfer with commission', () => {
     expect(convertTransaction({
       autopayable: 'false',
@@ -2202,6 +2321,54 @@ describe('convertTransaction', () => {
             instrument: 'RUB',
             company: { id: '4902' },
             syncIds: null
+          },
+          invoice: null,
+          sum: 100,
+          fee: 0
+        }
+      ],
+      merchant: null,
+      comment: null
+    })
+  })
+
+  it('converts outer outcome transfer to known bank with certain syncId', () => {
+    expect(convertTransaction({
+      id: '12081077506',
+      ufsId: null,
+      state: 'EXECUTED',
+      date: '04.02.2019T10:05:27',
+      from: 'MasterCard Mass 5469 75** **** 2363',
+      to: 'Пополнение кошелька в Яндекс.Деньгах 30233810100001170180',
+      description: 'Оплата услуг Интернет-магазинов',
+      operationAmount: { amount: '-100.00', currency: { code: 'RUB', name: 'руб.' } },
+      isMobilePayment: 'false',
+      copyable: 'false',
+      templatable: 'false',
+      autopayable: 'false',
+      type: 'servicePayment',
+      invoiceSubscriptionSupported: 'false',
+      invoiceReminderSupported: 'false',
+      form: 'ExternalProviderPayment',
+      imageId: { staticImage: { url: null } }
+    }, { id: 'account', instrument: 'RUB' })).toEqual({
+      hold: false,
+      date: new Date('2019-02-04T10:05:27+03:00'),
+      movements: [
+        {
+          id: '12081077506',
+          account: { id: 'account' },
+          invoice: null,
+          sum: -100,
+          fee: 0
+        },
+        {
+          id: null,
+          account: {
+            type: null,
+            instrument: 'RUB',
+            company: { id: '15420' },
+            syncIds: ['0180']
           },
           invoice: null,
           sum: 100,

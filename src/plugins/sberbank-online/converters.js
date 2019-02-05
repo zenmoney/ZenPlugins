@@ -184,7 +184,7 @@ function parseOuterIncomeTransfer (transaction, apiTransaction, account) {
     account: {
       type: outerAccount ? outerAccount.type : null,
       instrument: invoice.instrument,
-      company: outerAccount ? outerAccount.company : { title: apiTransaction.to },
+      company: outerAccount ? outerAccount.company : apiTransaction.to === 'Сбербанк Онлайн' ? null : { title: apiTransaction.to },
       syncIds: [match[1]]
     },
     invoice: null,
@@ -200,7 +200,7 @@ function parseOutcomeTransfer (transaction, apiTransaction, account) {
   if (apiTransaction.form !== 'RurPayment' && !outerAccount) {
     return false
   }
-  const receiver = _.get(apiTransaction, 'details.receiverAccount.stringType.value')
+  const receiver = _.get(apiTransaction, 'details.receiverAccount.stringType.value') || apiTransaction.to
   const match = receiver && receiver.match(/(\d{4})$/)
   if (!match && !outerAccount) {
     return false
