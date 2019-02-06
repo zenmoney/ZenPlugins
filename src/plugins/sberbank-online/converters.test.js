@@ -2350,7 +2350,102 @@ describe('convertTransaction', () => {
       invoiceSubscriptionSupported: 'false',
       invoiceReminderSupported: 'false',
       form: 'ExternalProviderPayment',
-      imageId: { staticImage: { url: null } }
+      imageId: { staticImage: { url: null } },
+      details: {
+        documentNumber: {
+          name: 'documentNumber',
+          title: 'Номер документа',
+          type: 'integer',
+          required: 'false',
+          editable: 'false',
+          visible: 'true',
+          integerType: {
+            value: '85334'
+          },
+          changed: 'false'
+        },
+        receiverName: {
+          name: 'receiverName',
+          title: 'Получатель',
+          type: 'string',
+          required: 'false',
+          editable: 'false',
+          visible: 'true',
+          stringType: {
+            value: 'Пополнение кошелька в Яндекс.Деньгах'
+          },
+          changed: 'false'
+        },
+        fromResource: {
+          name: 'fromResource',
+          title: 'Оплата с',
+          type: 'resource',
+          required: 'true',
+          editable: 'false',
+          visible: 'true',
+          resourceType: {
+            availableValues: {
+              valueItem: {
+                value: 'card:98043945',
+                selected: 'true',
+                displayedValue: '5469 75** **** 2363 [MasterCard Mass]',
+                currency: 'RUB'
+              }
+            }
+          },
+          changed: 'false'
+        },
+        amount: {
+          name: 'amount',
+          title: 'Сумма',
+          type: 'money',
+          required: 'false',
+          editable: 'false',
+          visible: 'true',
+          moneyType: {
+            value: '100.00'
+          },
+          changed: 'false'
+        },
+        currency: {
+          name: 'currency',
+          title: 'Валюта',
+          type: 'string',
+          required: 'false',
+          editable: 'false',
+          visible: 'true',
+          stringType: {
+            value: 'RUB'
+          },
+          changed: 'false'
+        },
+        recIdentifier: {
+          name: 'RecIdentifier',
+          title: 'Номер заказа',
+          type: 'string',
+          required: 'false',
+          editable: 'false',
+          visible: 'true',
+          stringType: {
+            value: '118197841'
+          },
+          changed: 'false'
+        },
+        itemList: {
+          item: {
+            name: 'Пополнение кошелька в Яндекс.Деньгах',
+            description: 'Яндекс.Деньги',
+            count: '1',
+            price: {
+              amount: '100',
+              currency: {
+                code: 'RUB',
+                name: 'руб.'
+              }
+            }
+          }
+        }
+      }
     }, { id: 'account', instrument: 'RUB' })).toEqual({
       hold: false,
       date: new Date('2019-02-04T10:05:27+03:00'),

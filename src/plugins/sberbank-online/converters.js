@@ -223,7 +223,7 @@ function parseOutcomeTransfer (transaction, apiTransaction, account) {
     sum: -invoice.sum,
     fee: 0
   })
-  const receiverName = _.get(apiTransaction, 'details.receiverName.stringType.value')
+  const receiverName = !outerAccount && _.get(apiTransaction, 'details.receiverName.stringType.value')
   if (receiverName) {
     transaction.merchant = {
       title: receiverName,
