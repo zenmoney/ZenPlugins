@@ -173,7 +173,7 @@ function parseOuterIncomeTransfer (transaction, apiTransaction, account) {
   if (apiTransaction.form !== 'ExtCardTransferIn') {
     return false
   }
-  const match = apiTransaction.from && apiTransaction.from.match(/(\d{4})$/)
+  const match = apiTransaction.from && apiTransaction.from.match(/(\d\d\s*\d\d)$/)
   if (!match) {
     return false
   }
@@ -185,7 +185,7 @@ function parseOuterIncomeTransfer (transaction, apiTransaction, account) {
       type: outerAccount ? outerAccount.type : null,
       instrument: invoice.instrument,
       company: outerAccount ? outerAccount.company : apiTransaction.to === 'Сбербанк Онлайн' ? null : { title: apiTransaction.to },
-      syncIds: [match[1]]
+      syncIds: [removeWhitespaces(match[1])]
     },
     invoice: null,
     sum: -invoice.sum,
@@ -237,6 +237,13 @@ function parseOutcomeTransfer (transaction, apiTransaction, account) {
 }
 
 function parsePayee (transaction, apiTransaction) {
+  if (apiTransaction.to && [
+    'Автоплатеж'
+  ].indexOf(apiTransaction.to) >= 0) {
+    transaction.comment = apiTransaction.to
+    return
+  }
+
   let payee = ['ExtDepositCapitalization'].indexOf(apiTransaction.form) >= 0 ? null : apiTransaction.to
   if (payee) {
     if (apiTransaction.form === 'RurPayJurSB') {

@@ -215,7 +215,8 @@ async function fetchAccountDetails (auth, { id, type }) {
 }
 
 export async function fetchPayments (auth, { id, type, instrument }, fromDate, toDate) {
-  const transactions = []
+  let transactions = []
+
   const limit = 50
   let offset = 0
   let batch = null
@@ -238,54 +239,104 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
       }
     })
     batch = getArray(_.get(response, 'body.operations.operation'))
-    await Promise.all(batch.map(async transaction => {
-      if (transaction.state === 'DRAFT' || transaction.state === 'SAVED' ||
-        (transaction.description && transaction.description.indexOf('Создание автоплатежа') === 0)) {
-        return
+    offset += limit
+    transactions.push(...batch)
+  } while (batch && batch.length === limit)
+
+  transactions = filterTransactions(transactions)
+
+  await Promise.all(transactions.map(async transaction => {
+    const invoiceCurrency = _.get(transaction, 'operationAmount.currency.code')
+    if (invoiceCurrency !== instrument ||
+      [
+        'TakingMeans',
+        'ExtCardTransferIn',
+        'ExtCardTransferOut',
+        'ExtCardCashOut',
+        'ExtDepositOtherDebit',
+        'RurPayment',
+        'RurPayJurSB',
+        'InternalPayment',
+        'AccountOpeningClaim',
+        'AccountClosingPayment',
+        'IMAOpeningClaim',
+        'IMAPayment'
+      ].indexOf(transaction.form) >= 0 ||
+      parseOuterAccountData(transaction.to) ||
+      transaction.to === 'Автоплатеж') {
+      const detailsResponse = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/payments/view.do`, {
+        headers: {
+          ...defaultHeaders,
+          'Host': `${auth.api.host}:4477`,
+          'Cookie': auth.api.cookie
+        },
+        body: {
+          id: transaction.id
+        }
+      })
+      const form = _.get(detailsResponse, 'body.document.form')
+      if (form) {
+        transaction.details = _.get(detailsResponse, `body.document.${form}Document`)
+        if (!transaction.details) {
+          throw new Error(`unexpected details form ${form}`)
+        }
       }
-      const invoiceCurrency = _.get(transaction, 'operationAmount.currency.code')
-      if (!invoiceCurrency) {
-        return
-      }
-      transactions.push(transaction)
-      if (invoiceCurrency !== instrument ||
-        [
-          'TakingMeans',
-          'ExtCardTransferIn',
-          'ExtCardTransferOut',
-          'ExtCardCashOut',
-          'ExtDepositOtherDebit',
-          'RurPayment',
-          'RurPayJurSB',
-          'InternalPayment',
-          'AccountOpeningClaim',
-          'AccountClosingPayment',
-          'IMAOpeningClaim',
-          'IMAPayment'
-        ].indexOf(transaction.form) >= 0 ||
-        parseOuterAccountData(transaction.to)) {
-        const detailsResponse = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/payments/view.do`, {
-          headers: {
-            ...defaultHeaders,
-            'Host': `${auth.api.host}:4477`,
-            'Cookie': auth.api.cookie
-          },
-          body: {
-            id: transaction.id
-          }
-        })
-        const form = _.get(detailsResponse, 'body.document.form')
-        if (form) {
-          transaction.details = _.get(detailsResponse, `body.document.${form}Document`)
-          if (!transaction.details) {
-            throw new Error(`unexpected details form ${form}`)
+    }
+  }))
+
+  return transactions
+}
+
+export function filterTransactions (transactions) {
+  const filtered = []
+  transactions.forEach((transaction, i) => {
+    if (transaction.state === 'DRAFT' || transaction.state === 'SAVED' || (transaction.description && [
+      'Создание автоплатежа',
+      'Приостановка автоплатежа',
+      'Редактирование автоплатежа'
+    ].some(pattern => transaction.description.indexOf(pattern) === 0))) {
+      return
+    }
+    const invoiceCurrency = _.get(transaction, 'operationAmount.currency.code')
+    if (!invoiceCurrency) {
+      return
+    }
+    const date = parseDate(transaction.date)
+    if (transaction.state === 'AUTHORIZATION' && i > 0) {
+      const data = _.pick(transaction, ['from', 'to', 'description', 'operationAmount', 'form'])
+      for (let j = i - 1; j >= 0; j--) {
+        const prev = transactions[j]
+        const prevDate = parseDate(prev.date)
+        if (Math.abs(prevDate.getTime() - date.getTime()) > 14 * 24 * 3600 * 1000) {
+          break
+        }
+        if (prev.state === 'FINANCIAL') {
+          const prevData = _.pick(transaction, ['from', 'to', 'description', 'operationAmount', 'form'])
+          if (_.isEqual(data, prevData)) {
+            return
           }
         }
       }
-    }))
-    offset += limit
-  } while (batch && batch.length === limit)
-  return transactions
+    }
+    if (transaction.state === 'FINANCIAL' && i < transactions.length - 1) {
+      const data = _.pick(transaction, ['from', 'operationAmount'])
+      for (let j = i + 1; j < transactions.length; j++) {
+        const next = transactions[j]
+        const nextDate = parseDate(next.date)
+        if (Math.abs(nextDate.getTime() - date.getTime()) > 5 * 60 * 1000) {
+          break
+        }
+        if (next.state === 'EXECUTED') {
+          const nextData = _.pick(transaction, ['from', 'operationAmount'])
+          if (_.isEqual(data, nextData)) {
+            return
+          }
+        }
+      }
+    }
+    filtered.push(transaction)
+  })
+  return filtered
 }
 
 export async function fetchTransactions (auth, { id, type, instrument }, fromDate, toDate) {
