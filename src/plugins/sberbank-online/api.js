@@ -318,12 +318,12 @@ export function filterTransactions (transactions) {
         }
       }
     }
-    if (transaction.state === 'FINANCIAL' && i < transactions.length - 1) {
+    if ((transaction.state === 'FINANCIAL' || transaction.state === 'AUTHORIZATION') && i < transactions.length - 1) {
       const data = _.pick(transaction, ['from', 'operationAmount'])
       for (let j = i + 1; j < transactions.length; j++) {
         const next = transactions[j]
         const nextDate = parseDate(next.date)
-        if (Math.abs(nextDate.getTime() - date.getTime()) > 5 * 60 * 1000) {
+        if (Math.abs(nextDate.getTime() - date.getTime()) > 2 * 60 * 1000) {
           break
         }
         if (next.state === 'EXECUTED') {

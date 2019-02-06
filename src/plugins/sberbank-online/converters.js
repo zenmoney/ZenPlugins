@@ -238,7 +238,8 @@ function parseOutcomeTransfer (transaction, apiTransaction, account) {
 
 function parsePayee (transaction, apiTransaction) {
   if (apiTransaction.to && [
-    'Автоплатеж'
+    'Автоплатеж',
+    'Sberbank platezh'
   ].indexOf(apiTransaction.to) >= 0) {
     transaction.comment = apiTransaction.to
     return
