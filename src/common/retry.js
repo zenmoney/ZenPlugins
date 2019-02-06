@@ -20,10 +20,14 @@ export async function retry ({
   getter,
   predicate,
   maxAttempts = 1,
-  log = false
+  log = false,
+  delayMs = 0
 }) {
   const failedResults = []
   for (let attempt = 1; attempt <= maxAttempts; ++attempt) {
+    if (delayMs > 0 && attempt > 1 && global.setTimeout) {
+      await new Promise(resolve => setTimeout(resolve, delayMs))
+    }
     const getterResult = getter()
     const value = await getterResult
     const ok = predicate(value)

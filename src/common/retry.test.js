@@ -57,4 +57,24 @@ describe('retry', () => {
       maxAttempts: 0
     })).rejects.toMatchObject({ message: 'could not satisfy predicate in 0 attempt(s)' })
   })
+
+  it('should delay next try if delayMs is set', async () => {
+    let i = 0
+    let date = new Date().getTime()
+    const delayMs = 100
+    await retry({
+      getter: () => {
+        const now = new Date().getTime()
+        if (i > 0) {
+          expect(now).toBeGreaterThanOrEqual(date + delayMs)
+        }
+        i++
+        date = now
+        return i
+      },
+      predicate: i => i >= 3,
+      maxAttempts: 5,
+      delayMs
+    })
+  })
 })

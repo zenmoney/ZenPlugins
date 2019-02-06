@@ -1,4 +1,5 @@
 import { MD5, SHA1 } from 'jshashes'
+import { retry, RetryError } from '../../common/retry'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import * as network from '../../common/network'
 
@@ -21,8 +22,9 @@ export class PrivatBank {
   }
 
   async fetch (url, data) {
+    url = `${this.baseUrl}${url}`
     const xml =
-            `<?xml version="1.0" encoding="UTF-8"?>
+      `<?xml version="1.0" encoding="UTF-8"?>
             <request version="1.0">
                 <merchant>
                     <id>${this.merchant}</id>
@@ -30,43 +32,55 @@ export class PrivatBank {
                 </merchant>
                 <data>${data}</data>
             </request>`
-    const response = await network.fetch(`${this.baseUrl}${url}`, {
+    const options = {
       method: 'POST',
       headers: {
         'Accept': 'application/xml, text/plain, */*',
         'Content-Type': 'application/xml;charset=UTF-8'
       },
       body: xml
-    })
-    if (response.status === 429) {
-      throw new TemporaryError('Информация из ПриватБанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
     }
-    if (response.body && response.body.indexOf('merchant is blocked') >= 0) {
-      throw new TemporaryError('Мерчант заблокирован. Чтобы перевести мерчант в рабочий режим, ' +
-                'авторизуйтесь в Приват24 и отправьте заявку на вкладке "Все услуги" - Бизнес - Мерчант - Заявки.')
+
+    let response
+    try {
+      response = await retry({
+        getter: () => network.fetch(url, options),
+        predicate: response => !(response.status === 429 || (response.body && (
+          (response.status === 504 && response.body.indexOf('504 Gateway Time-out') >= 0) ||
+          (response.status === 502 && response.body.indexOf('Bad Gateway') >= 0)))),
+        maxAttempts: 3,
+        delayMs: 1000
+      })
+    } catch (e) {
+      if (e instanceof RetryError) {
+        throw new TemporaryError('Информация из ПриватБанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
+      } else {
+        throw e
+      }
     }
+
     if (response.body) {
-      if ((response.status === 504 && response.body.indexOf('504 Gateway Time-out') >= 0) ||
-                    (response.status === 502 && response.body.indexOf('Bad Gateway') >= 0)) {
-        throw new TemporaryError('[NER] Proxy connection error')
+      if (response.body.indexOf('merchant is blocked') >= 0) {
+        throw new TemporaryError('Мерчант заблокирован. Чтобы перевести мерчант в рабочий режим, ' +
+          'авторизуйтесь в Приват24 и отправьте заявку на вкладке "Все услуги" - Бизнес - Мерчант - Заявки.')
       }
       if (response.body.indexOf('invalid signature') >= 0) {
         throw new TemporaryError(`Не удалось получить данные по мерчанту ${this.merchant}. ` +
-                    `Неверный пароль. Проверьте, что вы указали верный пароль в настройках подключения к банку.`)
+          `Неверный пароль. Проверьте, что вы указали верный пароль в настройках подключения к банку.`)
       }
       if (response.body.indexOf('invalid ip:') >= 0) {
         throw new TemporaryError(`Не удалось получить данные по мерчанту ${this.merchant}. ` +
-                    `Укажите IP-адрес: 95.213.236.52 в настройках мерчанта в Приват24.`)
+          `Укажите IP-адрес: 95.213.236.52 в настройках мерчанта в Приват24.`)
       }
       if (response.body.indexOf('this card is not in merchants card') >= 0) {
         throw new TemporaryError(`Не удалось получить баланс карты по мерчанту ${this.merchant}. ` +
-                    `Если карта была недавно перевыпущена, зарегистрируйте для неё новый мерчант и ` +
-                    `обновите его в настройках подключения к банку.`)
+          `Если карта была недавно перевыпущена, зарегистрируйте для неё новый мерчант и ` +
+          `обновите его в настройках подключения к банку.`)
       }
       if (/point\s+\/.*not allowed for merchant/.test(response.body)) {
         throw new TemporaryError(`Не удалось получить данные по мерчанту ${this.merchant}. ` +
-                    `Проверьте, что в Приват24 вы поставили галочки "Баланс по счёту мерчанта физлица" и ` +
-                    `"Выписка по счёту мерчанта физлица".`)
+          `Проверьте, что в Приват24 вы поставили галочки "Баланс по счёту мерчанта физлица" и ` +
+          `"Выписка по счёту мерчанта физлица".`)
       }
     }
     console.assert(response && response.status === 200 && response.body, 'non-successful response')
@@ -75,7 +89,7 @@ export class PrivatBank {
 
   async fetchAccounts () {
     const data =
-            `<oper>cmt</oper>
+      `<oper>cmt</oper>
             <wait>5</wait>
             <test>0</test>
             <payment id="">
@@ -86,7 +100,7 @@ export class PrivatBank {
 
   async fetchTransactions (fromDate, toDate) {
     const data =
-            `<oper>cmt</oper>
+      `<oper>cmt</oper>
             <wait>5</wait>
             <test>0</test>
             <payment id="">
