@@ -3,7 +3,7 @@ import { convertAccount, convertTransaction, parseDescription } from './converte
 describe('convertAccount', () => {
   it('converts a credit card', () => {
     expect(convertAccount({
-      'account': '40817810550006885012',
+      'account': '40817810550006889810',
       'openDate': '2018-10-03',
       'exp_date': '4012-12-31',
       'name': 'Карта рассрочки "Халва " - Сайт, депозитный',
@@ -20,8 +20,8 @@ describe('convertAccount', () => {
       'isRepayment': 1,
       'cardName': 'MC WORLD ХАЛВА 2.0 СНЯТИЕ',
       'cardBin': '553609',
-      'cardEnd': '6549',
-      'cardExpDate': '2023-03-31',
+      'cardEnd': '8723',
+      'cardExpDate': '2023-02-15',
       'cardStat': 'ACT',
       'cardType': 1,
       'cardSys': 'International',
@@ -54,14 +54,14 @@ describe('convertAccount', () => {
       },
       'sum_own': 3000,
       'ownerNameEng': '',
-      'ownerName': 'Сычкин Константин Владимирович',
+      'ownerName': 'Николаев Николай Николаевич',
       'inn': '',
       'kpp': '',
-      'ownerAddress': '195276, САНКТ-ПЕТЕРБУРГ ОБЛ, . САНКТ-ПЕТЕРБУРГ, .СУЗДАЛЬСКИЙ, д.75, кв.70',
+      'ownerAddress': '111111, НИКОЛАЕВСКАЯ ОБЛ, . НИКОЛАЕВСК, .НИКОЛАЕВА, д.11, кв.11',
       'ownerAddressEng': '. .b.',
-      'abs_i': 'Константин',
-      'abs_o': 'Владимирович',
-      'abs_f': 'Сычкин',
+      'abs_i': 'Николай',
+      'abs_o': 'Николаевич',
+      'abs_f': 'Николаев',
       'bank_part_id': '',
       'pay': 1,
       'create': 1,
@@ -72,15 +72,15 @@ describe('convertAccount', () => {
       'ownerIcon': '',
       'owner_uid': '1780033'
     })).toEqual({
-      id: '40817810550006885012',
+      id: '40817810550006889810',
       type: 'ccard',
       title: 'Халва',
       instrument: 'RUB',
       balance: 3000,
       creditLimit: 75000,
       syncID: [
-        '553609******6549',
-        '40817810550006885012'
+        '553609******8723',
+        '40817810550006889810'
       ]
     })
   })
