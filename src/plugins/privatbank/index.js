@@ -1,4 +1,5 @@
 import { convertAccountMapToArray, convertAccountSyncID } from '../../common/accounts'
+import { RetryError } from '../../common/retry'
 import { combineIntoTransferByTransferId, convertTransactionAccounts } from '../../common/transactions'
 import { convertAccounts, convertTransactions } from './converters'
 import { PrivatBank } from './privatbank'
@@ -11,7 +12,7 @@ function adjustTransactions (transactions, accounts) {
   return combineIntoTransferByTransferId(convertTransactionAccounts(transactions, accounts))
 }
 
-export async function scrape ({ preferences, fromDate, toDate }) {
+export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
   const merchants = preferences.merchantId.split(/\s+/)
   const passwords = preferences.password.split(/\s+/)
   if (merchants.length !== passwords.length) {
@@ -25,9 +26,34 @@ export async function scrape ({ preferences, fromDate, toDate }) {
       password: passwords[i],
       baseUrl: preferences.serverAddress
     })
-    const account = convertAccounts(await bank.fetchAccounts())
-    transactions = transactions.concat(convertTransactions(
-      await bank.fetchTransactions(fromDate, toDate), account))
+    let apiTransactions
+    try {
+      apiTransactions = await bank.fetchTransactions(fromDate, toDate)
+    } catch (e) {
+      if (e instanceof RetryError) {
+        if (isFirstRun) {
+          throw new TemporaryError('Информация из ПриватБанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
+        } else {
+          apiTransactions = null
+        }
+      } else {
+        throw e
+      }
+    }
+    let apiAccounts
+    try {
+      apiAccounts = await bank.fetchAccounts()
+    } catch (e) {
+      if (e instanceof RetryError) {
+        throw new TemporaryError('Информация из ПриватБанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
+      } else {
+        throw e
+      }
+    }
+    const account = convertAccounts(apiAccounts, !apiTransactions)
+    if (apiTransactions) {
+      transactions = transactions.concat(convertTransactions(apiTransactions, account))
+    }
     Object.assign(accounts, account)
   }))
   return {

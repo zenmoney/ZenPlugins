@@ -1,7 +1,7 @@
 import { MD5, SHA1 } from 'jshashes'
-import { retry, RetryError } from '../../common/retry'
-import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import * as network from '../../common/network'
+import { retry } from '../../common/retry'
+import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 
 const sha1 = new SHA1()
 const md5 = new MD5()
@@ -41,23 +41,14 @@ export class PrivatBank {
       body: xml
     }
 
-    let response
-    try {
-      response = await retry({
-        getter: () => network.fetch(url, options),
-        predicate: response => !(response.status === 429 || (response.body && (
-          (response.status === 504 && response.body.indexOf('504 Gateway Time-out') >= 0) ||
-          (response.status === 502 && response.body.indexOf('Bad Gateway') >= 0)))),
-        maxAttempts: 3,
-        delayMs: 1000
-      })
-    } catch (e) {
-      if (e instanceof RetryError) {
-        throw new TemporaryError('Информация из ПриватБанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
-      } else {
-        throw e
-      }
-    }
+    const response = await retry({
+      getter: () => network.fetch(url, options),
+      predicate: response => !(response.status === 429 || (response.body && (
+        (response.status === 504 && response.body.indexOf('504 Gateway Time-out') >= 0) ||
+        (response.status === 502 && response.body.indexOf('Bad Gateway') >= 0)))),
+      maxAttempts: 3,
+      delayMs: 2000
+    })
 
     if (response.body) {
       if (response.body.indexOf('merchant is blocked') >= 0) {

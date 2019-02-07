@@ -1,7 +1,7 @@
 import * as _ from 'lodash'
 import { parseXml } from '../../common/network'
 
-export function convertAccounts (xml) {
+export function convertAccounts (xml, shouldHideBalance) {
   const accounts = {}
   const json = _.get(parseXml(xml), 'response.data.info.cardbalance')
   if (!json) {
@@ -11,9 +11,13 @@ export function convertAccounts (xml) {
     type: 'ccard',
     title: json.card.acc_name,
     instrument: json.card.currency,
-    balance: parseFloat(json.balance),
-    creditLimit: parseFloat(json.fin_limit),
     syncID: []
+  }
+  if (shouldHideBalance) {
+    account.balance = null
+  } else {
+    account.balance = parseFloat(json.balance)
+    account.creditLimit = parseFloat(json.fin_limit)
   }
   let id = json.card.account
   if (id.length === 19) {
@@ -111,7 +115,7 @@ export function cleanDescription (description) {
   }
   return description
     .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
+    .replace(/&apos;/g, '\'')
     .replace(/&lt;/g, ' ')
     .replace(/&gt;/g, ' ')
     .replace(/<[^>]*>/g, ' ')
@@ -152,8 +156,8 @@ export function parseCashWithdrawal (transaction, opAmount) {
 
 export function parseCashReplenishment (transaction, opAmount) {
   if (transaction.outcome === 0 &&
-        /Пополнение.*наличными/i.test(transaction.comment) &&
-        /своей карты/i.test(transaction.comment)) {
+    /Пополнение.*наличными/i.test(transaction.comment) &&
+    /своей карты/i.test(transaction.comment)) {
     transaction.outcome = opAmount.sum
     transaction.outcomeAccount = 'cash#' + opAmount.instrument
     transaction.comment = null
@@ -217,7 +221,7 @@ export function parseTransfer (transaction) {
 
 export function parsePayee (transaction) {
   if (transaction.comment.indexOf('Авторизация карты') >= 0 &&
-            transaction.comment.indexOf('подтверждения') >= 0) {
+    transaction.comment.indexOf('подтверждения') >= 0) {
     return false
   }
   let i = transaction.comment.indexOf(':')
