@@ -1,6 +1,12 @@
 import { retry } from './retry'
 
 describe('retry', () => {
+  const _setTimeout = global.setTimeout
+
+  afterEach(() => {
+    global.setTimeout = _setTimeout
+  })
+
   it('should resolve when working with sync getter', async () => {
     await expect(retry({
       getter: () => 1,
@@ -59,22 +65,24 @@ describe('retry', () => {
   })
 
   it('should delay next try if delayMs is set', async () => {
+    global.setTimeout = jest.fn(callback => callback())
     let i = 0
-    let date = new Date().getTime()
     const delayMs = 100
     await retry({
       getter: () => {
-        const now = new Date().getTime()
-        if (i > 0) {
-          expect(now).toBeGreaterThanOrEqual(date + delayMs)
+        if (i === 0) {
+          expect(global.setTimeout).not.toHaveBeenCalled()
+        } else {
+          expect(global.setTimeout).toHaveBeenNthCalledWith(i, expect.anything(), delayMs)
         }
+        expect(i).toBeLessThan(3)
         i++
-        date = now
         return i
       },
-      predicate: i => i >= 3,
+      predicate: i => i > 2,
       maxAttempts: 5,
       delayMs
     })
+    expect(i).toEqual(3)
   })
 })
