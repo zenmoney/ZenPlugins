@@ -116,7 +116,9 @@ export function parseOuterAccountData (str) {
       { pattern: 'HCFB', account: { type: null, company: { id: '4412' } } },
       { pattern: 'C2C R-ONLINE', account: { type: 'ccard', company: { id: '5156' } } },
       { pattern: 'OPEN.RU CARD2CARD', account: { type: 'ccard', company: { id: '4761' } } },
-      { pattern: 'QIWI', account: { type: null, company: { id: '15592' } } }
+      { pattern: 'QIWI', account: { type: null, company: { id: '15592' } } },
+      { pattern: 'MONODirect', account: { type: 'ccard', company: { id: '15620' } } },
+      { pattern: 'Приват', account: { type: null, company: { id: '12574' } } }
     ]) {
       if (str.toLowerCase().indexOf(data.pattern.toLowerCase()) >= 0) {
         return data.account
