@@ -93,6 +93,11 @@
     ],
     "env": [
       "jest"
+    ],
+    "ignore": [
+      "plugins/",
+      "src/UI/",
+      "src/polyfills/"
     ]
   }
 }
