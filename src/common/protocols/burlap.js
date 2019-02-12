@@ -7,7 +7,13 @@ const cheerio = require('cheerio')
 export const Type = {
   Int: function (value) { this.value = value },
   Long: function (value) { this.value = value },
-  Double: function (value) { this.value = value }
+  Double: function (value) { this.value = value },
+  List: function (items, itemType) {
+    console.assert(_.isArray(items), 'Type.List items must be array')
+    console.assert(_.isString(itemType) && itemType.length > 0, 'Type.List itemType must be non-empty string')
+    this.items = items
+    this.itemType = itemType
+  }
 }
 
 export function stringifyRequestBody (protocolVersion, body) {
@@ -75,7 +81,16 @@ export function stringifyToXml (object) {
       padLeft(object.getUTCHours(), 2, '0') +
       padLeft(object.getUTCMinutes(), 2, '0') +
       padLeft(object.getUTCSeconds(), 2, '0') + '.000Z</date>'
+  } else if (object instanceof Type.List) {
+    // List with explicitly given type
+    let str = `<list><type>[${object.itemType}</type><length>${object.items.length}</length>`
+    object.items.forEach(value => {
+      str += stringifyToXml(value)
+    })
+    str += '</list>'
+    return str
   } else if (_.isArray(object)) {
+    // List without explicitly given type, all elements are same type, list takes type from first element
     let str = '<list><type>'
     if (object.length > 0) {
       str += '[' + object[0].__type

@@ -209,4 +209,39 @@ describe('stringifyToXml', () => {
     expect(stringifyToXml(10)).toEqual('<long>10</long>')
     expect(stringifyToXml(10.12)).toEqual('<double>10.12</double>')
   })
+
+  it('implicitly converts lists and maps', () => {
+    expect(stringifyToXml({ __type: 'xml.type.desc', a: 1 })).toEqual(
+      '<map><type>xml.type.desc</type><string>a</string><long>1</long></map>'
+    )
+
+    expect(stringifyToXml([{ __type: 'xml.type.desc', a: 1 }])).toEqual(
+      '<list>' +
+      '<type>[xml.type.desc</type>' +
+      '<length>1</length>' +
+      '<map><type>xml.type.desc</type><string>a</string><long>1</long></map>' +
+      '</list>'
+    )
+
+    expect(stringifyToXml([{ __type: 'xml.type.desc', a: 1 }, { __type: 'xml.type.desc', b: '2' }])).toEqual(
+      '<list>' +
+      '<type>[xml.type.desc</type>' +
+      '<length>2</length>' +
+      '<map><type>xml.type.desc</type><string>a</string><long>1</long></map>' +
+      '<map><type>xml.type.desc</type><string>b</string><string>2</string></map>' +
+      '</list>'
+    )
+  })
+
+  it('preserves explicit list type', () => {
+    const items = [{ __type: 'xml.type.item', a: 1 }, { __type: 'xml.type.item', b: 2 }]
+    const typedList = new Type.List(items, 'xml.type.itemList')
+    expect(stringifyToXml(typedList)).toEqual(
+      '<list>' +
+      '<type>[xml.type.itemList</type>' +
+      '<length>2</length>' +
+      '<map><type>xml.type.item</type><string>a</string><long>1</long></map>' +
+      '<map><type>xml.type.item</type><string>b</string><long>2</long></map></list>'
+    )
+  })
 })
