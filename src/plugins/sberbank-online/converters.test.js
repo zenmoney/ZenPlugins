@@ -1,4 +1,5 @@
 import { parseXml } from '../../common/network'
+import { filterTransactions } from './api'
 import {
   convertAccount,
   convertCards,
@@ -3429,7 +3430,7 @@ describe('adjustTransactionsAndCheckBalance', () => {
           currency: { code: 'RUB', name: 'руб.' }
         }
       }
-    ], [
+    ], filterTransactions([
       {
         autopayable: 'true',
         copyable: 'true',
@@ -3467,7 +3468,7 @@ describe('adjustTransactionsAndCheckBalance', () => {
         type: 'payment',
         ufsId: null
       }
-    ])).toEqual({
+    ]))).toEqual({
       isBalanceAmbiguous: false,
       transactions: [
         {
@@ -3552,7 +3553,7 @@ describe('adjustTransactionsAndCheckBalance', () => {
           currency: { code: 'RUB', name: 'руб.' }
         }
       }
-    ], [
+    ], filterTransactions([
       {
         autopayable: 'true',
         copyable: 'true',
@@ -3590,7 +3591,7 @@ describe('adjustTransactionsAndCheckBalance', () => {
         type: 'payment',
         ufsId: null
       }
-    ])).toEqual({
+    ]))).toEqual({
       isBalanceAmbiguous: true,
       transactions: [
         {
@@ -3647,6 +3648,520 @@ describe('adjustTransactionsAndCheckBalance', () => {
           templatable: 'false',
           type: 'payment',
           ufsId: null
+        }
+      ]
+    })
+  })
+
+  it('compares transactions by date and order flexibly', () => {
+    expect(adjustTransactionsAndCheckBalance([
+      {
+        date: '10.02.2019T09:17:25',
+        sum: { amount: '-10196,85', currency: { code: 'RUB', name: 'руб.' } },
+        description: 'BP Card - Acct RUS  BP Card - Acct RUS  SBERBANK ONL@IN KARTA-VKLAD'
+      },
+      {
+        date: '08.02.2019T18:45:27',
+        sum: { amount: '+33000,00', currency: { code: 'RUB', name: 'руб.' } },
+        description: 'CH Payment RUS MOSCOW IDT:0614 2 RUS MOSCOW SBOL'
+      },
+      {
+        date: '08.02.2019T08:46:56',
+        sum: { amount: '+44676,17', currency: { code: 'RUB', name: 'руб.' } },
+        description: 'ESB Payment to Card RUS  ESB Payment to Card RUS  1'
+      },
+      {
+        date: '08.02.2019T00:00:00',
+        sum: { amount: '-30000,00', currency: { code: 'RUB', name: 'руб.' } },
+        description: 'CH Debit RUS Visa Direct  IDT:0513 1 RUS Visa Direct TINKOFF BANK CARD2CARD'
+      },
+      {
+        date: '08.02.2019T00:00:00',
+        sum: { amount: '-30000,00', currency: { code: 'RUB', name: 'руб.' } },
+        description: 'CH Debit RUS Visa Direct  IDT:0513 1 RUS Visa Direct TINKOFF BANK CARD2CARD'
+      },
+      {
+        date: '08.02.2019T00:00:00',
+        sum: { amount: '-4000,00', currency: { code: 'RUB', name: 'руб.' } },
+        description: 'CH Debit RUS Visa Direct  IDT:0513 1 RUS Visa Direct TINKOFF BANK CARD2CARD'
+      },
+      {
+        date: '08.02.2019T00:00:00',
+        sum: { amount: '-2554,45', currency: { code: 'RUB', name: 'руб.' } },
+        description: 'Retail RUS MOSCOW        Retail RUS MOSCOW OZON.RU'
+      },
+      {
+        date: '05.02.2019T00:00:00',
+        sum: { amount: '+4000,00', currency: { code: 'RUB', name: 'руб.' } },
+        description: 'CH Payment RUS Visa Direct  IDT:0614 2 RUS Visa Direct TINKOFF BANK CARD2CARD'
+      },
+      {
+        date: '05.02.2019T00:00:00',
+        sum: { amount: '-2000,00', currency: { code: 'RUB', name: 'руб.' } },
+        description: 'CH Debit RUS Visa Direct  IDT:0513 1 RUS Visa Direct TINKOFF BANK CARD2CARD'
+      },
+      {
+        date: '05.02.2019T00:00:00',
+        sum: { amount: '+500,00', currency: { code: 'RUB', name: 'руб.' } },
+        description: 'CH Payment RUS Visa Direct  IDT:0614 2 RUS Visa Direct TINKOFF BANK CARD2CARD'
+      }
+    ], filterTransactions([
+      {
+        id: '12251735104',
+        ufsId: null,
+        state: 'EXECUTED',
+        date: '10.02.2019T09:16:44',
+        from: 'Visa Classic 4276 49** **** 2340',
+        to: 'Сберегательный счет 40817810549782372548',
+        description: 'Перевод между своими счетами',
+        operationAmount: { amount: '-10196.85', currency: { code: 'RUB', name: 'руб.' } },
+        isMobilePayment: 'false',
+        copyable: 'true',
+        templatable: 'true',
+        autopayable: 'false',
+        type: 'payment',
+        invoiceSubscriptionSupported: 'false',
+        invoiceReminderSupported: 'false',
+        form: 'InternalPayment',
+        imageId: { staticImage: { url: null } }
+      },
+      {
+        id: '12218793772',
+        ufsId: null,
+        state: 'FINANCIAL',
+        date: '08.02.2019T18:45:27',
+        from: '2202 20** **** 1290',
+        to: 'Сбербанк Онлайн',
+        description: 'Входящий перевод',
+        operationAmount: { amount: '33000.00', currency: { code: 'RUB', name: 'руб.' } },
+        isMobilePayment: 'false',
+        copyable: 'false',
+        templatable: 'false',
+        autopayable: 'false',
+        type: 'payment',
+        invoiceSubscriptionSupported: 'false',
+        invoiceReminderSupported: 'false',
+        form: 'ExtCardTransferIn',
+        imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/6f904da7-1663-4e68-801f-fe288c3283f6.png' } }
+      },
+      {
+        id: '12219040731',
+        ufsId: null,
+        state: 'FINANCIAL',
+        date: '08.02.2019T15:49:52',
+        from: 'Visa Classic 4276 49** **** 2340',
+        to: 'Тинькофф Банк',
+        description: 'Перевод',
+        operationAmount: { amount: '-4000.00', currency: { code: 'RUB', name: 'руб.' } },
+        isMobilePayment: 'false',
+        copyable: 'false',
+        templatable: 'false',
+        autopayable: 'false',
+        type: 'payment',
+        invoiceSubscriptionSupported: 'false',
+        invoiceReminderSupported: 'false',
+        form: 'ExtCardTransferOut',
+        imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/11ffac45-05f8-4dbd-b7e0-983ffda0bb72.png' } }
+      },
+      {
+        id: '12219040704',
+        ufsId: null,
+        state: 'FINANCIAL',
+        date: '08.02.2019T15:49:24',
+        from: 'Visa Classic 4276 49** **** 2340',
+        to: 'Тинькофф Банк',
+        description: 'Перевод',
+        operationAmount: { amount: '-30000.00', currency: { code: 'RUB', name: 'руб.' } },
+        isMobilePayment: 'false',
+        copyable: 'false',
+        templatable: 'false',
+        autopayable: 'false',
+        type: 'payment',
+        invoiceSubscriptionSupported: 'false',
+        invoiceReminderSupported: 'false',
+        form: 'ExtCardTransferOut',
+        imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/11ffac45-05f8-4dbd-b7e0-983ffda0bb72.png' } }
+      },
+      {
+        id: '12199610025',
+        ufsId: null,
+        state: 'FINANCIAL',
+        date: '08.02.2019T08:46:56',
+        to: 'Зачисление',
+        description: 'Прочие поступления',
+        operationAmount: { amount: '44676.17', currency: { code: 'RUB', name: 'руб.' } },
+        isMobilePayment: 'false',
+        copyable: 'false',
+        templatable: 'false',
+        autopayable: 'false',
+        type: 'payment',
+        invoiceSubscriptionSupported: 'false',
+        invoiceReminderSupported: 'false',
+        form: 'ExtCardOtherIn',
+        imageId: { staticImage: { url: null } }
+      },
+      {
+        id: '12202740545',
+        ufsId: null,
+        state: 'FINANCIAL',
+        date: '08.02.2019T08:05:32',
+        from: 'Visa Classic 4276 49** **** 2340',
+        to: 'Тинькофф Банк',
+        description: 'Перевод',
+        operationAmount: { amount: '-30000.00', currency: { code: 'RUB', name: 'руб.' } },
+        isMobilePayment: 'false',
+        copyable: 'false',
+        templatable: 'false',
+        autopayable: 'false',
+        type: 'payment',
+        invoiceSubscriptionSupported: 'false',
+        invoiceReminderSupported: 'false',
+        form: 'ExtCardTransferOut',
+        imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/11ffac45-05f8-4dbd-b7e0-983ffda0bb72.png' } }
+      },
+      {
+        id: '12244584823',
+        ufsId: null,
+        state: 'FINANCIAL',
+        date: '08.02.2019T00:00:00',
+        from: 'Visa Classic 4276 49** **** 2340',
+        to: 'OZON.ru',
+        description: 'Оплата товаров и услуг',
+        operationAmount: { amount: '-2554.45', currency: { code: 'RUB', name: 'руб.' } },
+        isMobilePayment: 'false',
+        copyable: 'false',
+        templatable: 'false',
+        autopayable: 'false',
+        type: 'payment',
+        invoiceSubscriptionSupported: 'false',
+        invoiceReminderSupported: 'false',
+        form: 'ExtCardPayment',
+        imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/dbcf613f-9b21-4e1b-9d9a-bfc84f00741d.png' } }
+      },
+      {
+        id: '12140627398',
+        ufsId: null,
+        state: 'FINANCIAL',
+        date: '05.02.2019T17:38:16',
+        from: 'Visa Classic 4276 49** **** 2340',
+        to: 'Тинькофф Банк',
+        description: 'Перевод',
+        operationAmount: { amount: '-2000.00', currency: { code: 'RUB', name: 'руб.' } },
+        isMobilePayment: 'false',
+        copyable: 'false',
+        templatable: 'false',
+        autopayable: 'false',
+        type: 'payment',
+        invoiceSubscriptionSupported: 'false',
+        invoiceReminderSupported: 'false',
+        form: 'ExtCardTransferOut',
+        imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/11ffac45-05f8-4dbd-b7e0-983ffda0bb72.png' } }
+      },
+      {
+        id: '12140627379',
+        ufsId: null,
+        state: 'FINANCIAL',
+        date: '05.02.2019T17:36:04',
+        from: '5213 24** **** 1737',
+        to: 'Тинькофф Банк',
+        description: 'Входящий перевод',
+        operationAmount: { amount: '500.00', currency: { code: 'RUB', name: 'руб.' } },
+        isMobilePayment: 'false',
+        copyable: 'false',
+        templatable: 'false',
+        autopayable: 'false',
+        type: 'payment',
+        invoiceSubscriptionSupported: 'false',
+        invoiceReminderSupported: 'false',
+        form: 'ExtCardTransferIn',
+        imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/11ffac45-05f8-4dbd-b7e0-983ffda0bb72.png' } }
+      },
+      {
+        id: '12140627351',
+        ufsId: null,
+        state: 'FINANCIAL',
+        date: '05.02.2019T17:35:45',
+        from: '5213 24** **** 1737',
+        to: 'Тинькофф Банк',
+        description: 'Входящий перевод',
+        operationAmount: { amount: '4000.00', currency: { code: 'RUB', name: 'руб.' } },
+        isMobilePayment: 'false',
+        copyable: 'false',
+        templatable: 'false',
+        autopayable: 'false',
+        type: 'payment',
+        invoiceSubscriptionSupported: 'false',
+        invoiceReminderSupported: 'false',
+        form: 'ExtCardTransferIn',
+        imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/11ffac45-05f8-4dbd-b7e0-983ffda0bb72.png' } }
+      },
+      {
+        id: '12067071492',
+        ufsId: null,
+        state: 'FINANCIAL',
+        date: '03.02.2019T15:55:06',
+        from: '4276 49** **** 1102',
+        to: 'Сбербанк Онлайн',
+        description: 'Входящий перевод',
+        operationAmount: { amount: '1000.00', currency: { code: 'RUB', name: 'руб.' } },
+        isMobilePayment: 'false',
+        copyable: 'false',
+        templatable: 'false',
+        autopayable: 'false',
+        type: 'payment',
+        invoiceSubscriptionSupported: 'false',
+        invoiceReminderSupported: 'false',
+        form: 'ExtCardTransferIn',
+        imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/6f904da7-1663-4e68-801f-fe288c3283f6.png' } }
+      },
+      {
+        id: '12067784460',
+        ufsId: null,
+        state: 'FINANCIAL',
+        date: '03.02.2019T13:26:36',
+        from: 'Visa Classic 4276 49** **** 2340',
+        to: 'Тинькофф Банк',
+        description: 'Перевод',
+        operationAmount: { amount: '-1000.00', currency: { code: 'RUB', name: 'руб.' } },
+        isMobilePayment: 'false',
+        copyable: 'false',
+        templatable: 'false',
+        autopayable: 'false',
+        type: 'payment',
+        invoiceSubscriptionSupported: 'false',
+        invoiceReminderSupported: 'false',
+        form: 'ExtCardTransferOut',
+        imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/11ffac45-05f8-4dbd-b7e0-983ffda0bb72.png' } }
+      }
+    ]))).toEqual({
+      isBalanceAmbiguous: false,
+      transactions: [
+        {
+          id: '12251735104',
+          ufsId: null,
+          state: 'EXECUTED',
+          date: '10.02.2019T09:16:44',
+          from: 'Visa Classic 4276 49** **** 2340',
+          to: 'Сберегательный счет 40817810549782372548',
+          description: 'Перевод между своими счетами',
+          operationAmount: { amount: '-10196.85', currency: { code: 'RUB', name: 'руб.' } },
+          isMobilePayment: 'false',
+          copyable: 'true',
+          templatable: 'true',
+          autopayable: 'false',
+          type: 'payment',
+          invoiceSubscriptionSupported: 'false',
+          invoiceReminderSupported: 'false',
+          form: 'InternalPayment',
+          imageId: { staticImage: { url: null } }
+        },
+        {
+          id: '12218793772',
+          ufsId: null,
+          state: 'FINANCIAL',
+          date: '08.02.2019T18:45:27',
+          from: '2202 20** **** 1290',
+          to: 'Сбербанк Онлайн',
+          description: 'Входящий перевод',
+          operationAmount: { amount: '33000.00', currency: { code: 'RUB', name: 'руб.' } },
+          isMobilePayment: 'false',
+          copyable: 'false',
+          templatable: 'false',
+          autopayable: 'false',
+          type: 'payment',
+          invoiceSubscriptionSupported: 'false',
+          invoiceReminderSupported: 'false',
+          form: 'ExtCardTransferIn',
+          imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/6f904da7-1663-4e68-801f-fe288c3283f6.png' } }
+        },
+        {
+          id: '12219040731',
+          ufsId: null,
+          state: 'FINANCIAL',
+          date: '08.02.2019T15:49:52',
+          from: 'Visa Classic 4276 49** **** 2340',
+          to: 'Тинькофф Банк',
+          description: 'Перевод',
+          operationAmount: { amount: '-4000.00', currency: { code: 'RUB', name: 'руб.' } },
+          isMobilePayment: 'false',
+          copyable: 'false',
+          templatable: 'false',
+          autopayable: 'false',
+          type: 'payment',
+          invoiceSubscriptionSupported: 'false',
+          invoiceReminderSupported: 'false',
+          form: 'ExtCardTransferOut',
+          imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/11ffac45-05f8-4dbd-b7e0-983ffda0bb72.png' } }
+        },
+        {
+          id: '12219040704',
+          ufsId: null,
+          state: 'FINANCIAL',
+          date: '08.02.2019T15:49:24',
+          from: 'Visa Classic 4276 49** **** 2340',
+          to: 'Тинькофф Банк',
+          description: 'Перевод',
+          operationAmount: { amount: '-30000.00', currency: { code: 'RUB', name: 'руб.' } },
+          isMobilePayment: 'false',
+          copyable: 'false',
+          templatable: 'false',
+          autopayable: 'false',
+          type: 'payment',
+          invoiceSubscriptionSupported: 'false',
+          invoiceReminderSupported: 'false',
+          form: 'ExtCardTransferOut',
+          imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/11ffac45-05f8-4dbd-b7e0-983ffda0bb72.png' } }
+        },
+        {
+          id: '12199610025',
+          ufsId: null,
+          state: 'FINANCIAL',
+          date: '08.02.2019T08:46:56',
+          to: 'Зачисление',
+          description: 'Прочие поступления',
+          operationAmount: { amount: '44676.17', currency: { code: 'RUB', name: 'руб.' } },
+          isMobilePayment: 'false',
+          copyable: 'false',
+          templatable: 'false',
+          autopayable: 'false',
+          type: 'payment',
+          invoiceSubscriptionSupported: 'false',
+          invoiceReminderSupported: 'false',
+          form: 'ExtCardOtherIn',
+          imageId: { staticImage: { url: null } }
+        },
+        {
+          id: '12202740545',
+          ufsId: null,
+          state: 'FINANCIAL',
+          date: '08.02.2019T08:05:32',
+          from: 'Visa Classic 4276 49** **** 2340',
+          to: 'Тинькофф Банк',
+          description: 'Перевод',
+          operationAmount: { amount: '-30000.00', currency: { code: 'RUB', name: 'руб.' } },
+          isMobilePayment: 'false',
+          copyable: 'false',
+          templatable: 'false',
+          autopayable: 'false',
+          type: 'payment',
+          invoiceSubscriptionSupported: 'false',
+          invoiceReminderSupported: 'false',
+          form: 'ExtCardTransferOut',
+          imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/11ffac45-05f8-4dbd-b7e0-983ffda0bb72.png' } }
+        },
+        {
+          id: '12244584823',
+          ufsId: null,
+          state: 'FINANCIAL',
+          date: '08.02.2019T00:00:00',
+          from: 'Visa Classic 4276 49** **** 2340',
+          to: 'OZON.ru',
+          description: 'Оплата товаров и услуг',
+          operationAmount: { amount: '-2554.45', currency: { code: 'RUB', name: 'руб.' } },
+          isMobilePayment: 'false',
+          copyable: 'false',
+          templatable: 'false',
+          autopayable: 'false',
+          type: 'payment',
+          invoiceSubscriptionSupported: 'false',
+          invoiceReminderSupported: 'false',
+          form: 'ExtCardPayment',
+          imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/dbcf613f-9b21-4e1b-9d9a-bfc84f00741d.png' } }
+        },
+        {
+          id: '12140627398',
+          ufsId: null,
+          state: 'FINANCIAL',
+          date: '05.02.2019T17:38:16',
+          from: 'Visa Classic 4276 49** **** 2340',
+          to: 'Тинькофф Банк',
+          description: 'Перевод',
+          operationAmount: { amount: '-2000.00', currency: { code: 'RUB', name: 'руб.' } },
+          isMobilePayment: 'false',
+          copyable: 'false',
+          templatable: 'false',
+          autopayable: 'false',
+          type: 'payment',
+          invoiceSubscriptionSupported: 'false',
+          invoiceReminderSupported: 'false',
+          form: 'ExtCardTransferOut',
+          imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/11ffac45-05f8-4dbd-b7e0-983ffda0bb72.png' } }
+        },
+        {
+          id: '12140627379',
+          ufsId: null,
+          state: 'FINANCIAL',
+          date: '05.02.2019T17:36:04',
+          from: '5213 24** **** 1737',
+          to: 'Тинькофф Банк',
+          description: 'Входящий перевод',
+          operationAmount: { amount: '500.00', currency: { code: 'RUB', name: 'руб.' } },
+          isMobilePayment: 'false',
+          copyable: 'false',
+          templatable: 'false',
+          autopayable: 'false',
+          type: 'payment',
+          invoiceSubscriptionSupported: 'false',
+          invoiceReminderSupported: 'false',
+          form: 'ExtCardTransferIn',
+          imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/11ffac45-05f8-4dbd-b7e0-983ffda0bb72.png' } }
+        },
+        {
+          id: '12140627351',
+          ufsId: null,
+          state: 'FINANCIAL',
+          date: '05.02.2019T17:35:45',
+          from: '5213 24** **** 1737',
+          to: 'Тинькофф Банк',
+          description: 'Входящий перевод',
+          operationAmount: { amount: '4000.00', currency: { code: 'RUB', name: 'руб.' } },
+          isMobilePayment: 'false',
+          copyable: 'false',
+          templatable: 'false',
+          autopayable: 'false',
+          type: 'payment',
+          invoiceSubscriptionSupported: 'false',
+          invoiceReminderSupported: 'false',
+          form: 'ExtCardTransferIn',
+          imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/11ffac45-05f8-4dbd-b7e0-983ffda0bb72.png' } }
+        },
+        {
+          id: '12067071492',
+          ufsId: null,
+          state: 'FINANCIAL',
+          date: '03.02.2019T15:55:06',
+          from: '4276 49** **** 1102',
+          to: 'Сбербанк Онлайн',
+          description: 'Входящий перевод',
+          operationAmount: { amount: '1000.00', currency: { code: 'RUB', name: 'руб.' } },
+          isMobilePayment: 'false',
+          copyable: 'false',
+          templatable: 'false',
+          autopayable: 'false',
+          type: 'payment',
+          invoiceSubscriptionSupported: 'false',
+          invoiceReminderSupported: 'false',
+          form: 'ExtCardTransferIn',
+          imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/6f904da7-1663-4e68-801f-fe288c3283f6.png' } }
+        },
+        {
+          id: '12067784460',
+          ufsId: null,
+          state: 'FINANCIAL',
+          date: '03.02.2019T13:26:36',
+          from: 'Visa Classic 4276 49** **** 2340',
+          to: 'Тинькофф Банк',
+          description: 'Перевод',
+          operationAmount: { amount: '-1000.00', currency: { code: 'RUB', name: 'руб.' } },
+          isMobilePayment: 'false',
+          copyable: 'false',
+          templatable: 'false',
+          autopayable: 'false',
+          type: 'payment',
+          invoiceSubscriptionSupported: 'false',
+          invoiceReminderSupported: 'false',
+          form: 'ExtCardTransferOut',
+          imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/11ffac45-05f8-4dbd-b7e0-983ffda0bb72.png' } }
         }
       ]
     })

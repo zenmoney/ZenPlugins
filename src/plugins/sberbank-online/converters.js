@@ -621,7 +621,7 @@ function parseDuration (duration, account) {
   }
 }
 
-function parseDecimal (str) {
+export function parseDecimal (str) {
   if (typeof str === 'number') {
     return Math.round(str * 100) / 100
   }
@@ -634,13 +634,17 @@ function parseDecimal (str) {
   return number
 }
 
-export function parseDate (str) {
+function parseDateAndDateStr (str) {
   const parts = str.substring(0, 10).split('.')
   console.assert(parts.length >= 3, `unexpected date ${str}`)
-  const dateStr = `${parts[2]}-${parts[1]}-${parts[0]}` + (str.length > 10 ? str.substring(10) + '+03:00' : '')
-  const date = new Date(dateStr)
-  console.assert(!isNaN(date), `unexpected date ${str}`)
-  return date
+  const dateStr = `${parts[2]}-${parts[1]}-${parts[0]}`
+  const date = new Date(dateStr + (str.length > 10 ? str.substring(10) + '+03:00' : ''))
+  console.assert(!isNaN(date.getTime()), `unexpected date ${str}`)
+  return { date, dateStr }
+}
+
+export function parseDate (str) {
+  return parseDateAndDateStr(str).date
 }
 
 function parseExpireDate (str) {
@@ -654,37 +658,88 @@ function removeWhitespaces (text) {
 }
 
 export function adjustTransactionsAndCheckBalance (apiTransactions, apiPayments) {
-  const delta = 3 * 60 * 1000
   let isBalanceAmbiguous = !apiTransactions.length
-  let transactions = []
-  let i = 0
-  let j = 0
-  while (i < apiTransactions.length) {
-    const apiTransaction = apiTransactions[i]
-    const apiPayment = j < apiPayments.length ? apiPayments[j] : null
-    const timestamp1 = parseDate(apiTransaction.date).getTime()
-    const timestamp2 = apiPayment ? parseDate(apiPayment.date).getTime() : 0
-    if (timestamp1 > timestamp2 + delta) {
-      const adjusted = convertApiTransactionToPayment(apiTransaction)
-      if (adjusted) {
-        transactions.push(adjusted)
+  if (isBalanceAmbiguous) {
+    return { transactions: apiPayments, isBalanceAmbiguous }
+  }
+  const transactionDataArray = apiTransactions.map(apiTransaction => {
+    return {
+      ...parseDateAndDateStr(apiTransaction.date),
+      amount: { sum: parseDecimal(apiTransaction.sum.amount), instrument: apiTransaction.sum.currency.code },
+      apiTransaction
+    }
+  })
+  const paymentDataArray = apiPayments.map(apiPayment => {
+    return {
+      ...parseDateAndDateStr(apiPayment.date),
+      amount: { sum: parseDecimal(apiPayment.operationAmount.amount), instrument: apiPayment.operationAmount.currency.code },
+      apiTransaction: null,
+      apiPayment
+    }
+  })
+  const maxDateDeltaMs = 3 * 60 * 1000
+  for (const transactionData of transactionDataArray) {
+    let paymentData = null
+    let k = -1
+    for (let j = 0; j < paymentDataArray.length; j++) {
+      const pd = paymentDataArray[j]
+      if (pd.dateStr > transactionData.dateStr) {
+        continue
       }
-      i++
+      if (pd.date >= transactionData.date) {
+        k = j + 1
+      } else if (pd.date < transactionData.date && pd.dateStr !== transactionData.dateStr) {
+        break
+      } else if (k < 0) {
+        k = j
+      }
+      if (!pd.apiTransaction &&
+        pd.dateStr === transactionData.dateStr &&
+        pd.amount.instrument === transactionData.amount.instrument &&
+        Math.abs((pd.amount.sum - transactionData.amount.sum) / transactionData.amount.sum) < 0.1) {
+        if (Math.abs(pd.date.getTime() - transactionData.date.getTime()) < maxDateDeltaMs) {
+          paymentData = pd
+          break
+        } else if (paymentData === null) {
+          paymentData = pd
+        }
+      }
+    }
+    if (paymentData) {
+      paymentData.apiTransaction = transactionData.apiTransaction
     } else {
-      transactions.push(apiPayment)
-      if (timestamp2 > timestamp1 + delta) {
+      const payment = convertApiTransactionToPayment(transactionData.apiTransaction)
+      if (payment) {
+        paymentData = {
+          ...transactionData,
+          apiPayment: payment
+        }
+        if (k < 0) {
+          paymentDataArray.push(paymentData)
+        } else {
+          paymentDataArray.splice(k, 0, paymentData)
+        }
+      } else if (k >= 0) {
         isBalanceAmbiguous = true
-      } else {
-        i++
       }
-      j++
     }
   }
-  while (j < apiPayments.length) {
-    transactions.push(apiPayments[j])
-    j++
+  if (!isBalanceAmbiguous) {
+    const lastTransactionDateStr = transactionDataArray[transactionDataArray.length - 1].dateStr
+    for (let i = 0; i < paymentDataArray.length; i++) {
+      const paymentData = paymentDataArray[i]
+      if (paymentData.dateStr <= lastTransactionDateStr) {
+        break
+      }
+      if (!paymentData.apiTransaction &&
+        paymentDataArray.length > i + 1 &&
+        paymentDataArray[i + 1].apiTransaction) {
+        isBalanceAmbiguous = true
+        break
+      }
+    }
   }
-  return { transactions, isBalanceAmbiguous }
+  return { transactions: paymentDataArray.map(paymentData => paymentData.apiPayment), isBalanceAmbiguous }
 }
 
 function convertApiTransactionToPayment (apiTransaction) {

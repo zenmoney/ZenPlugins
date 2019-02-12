@@ -5,12 +5,12 @@ import * as network from '../../common/network'
 import { retry, RetryError, toNodeCallbackArguments } from '../../common/retry'
 import { parseOuterAccountData } from '../../common/accounts'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
-import { formatDateSql, parseDate } from './converters'
+import { formatDateSql, parseDate, parseDecimal } from './converters'
 
 const md5 = new MD5()
 
 const API_VERSION = '9.20'
-const APP_VERSION = '8.6.1'
+const APP_VERSION = '9.2.0'
 
 const defaultHeaders = {
   'User-Agent': 'Mobile Device',
@@ -243,7 +243,7 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
     transactions.push(...batch)
   } while (batch && batch.length === limit)
 
-  transactions = filterTransactions(transactions)
+  transactions = filterTransactions(transactions, fromDate)
 
   await Promise.all(transactions.map(async transaction => {
     const invoiceCurrency = _.get(transaction, 'operationAmount.currency.code')
@@ -287,10 +287,10 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
   return transactions
 }
 
-export function filterTransactions (transactions) {
+export function filterTransactions (transactions, fromDate) {
   const filtered = []
   transactions.forEach((transaction, i) => {
-    if (transaction.state === 'DRAFT' || transaction.state === 'SAVED' || (transaction.description && [
+    if (['DRAFT', 'SAVED', 'REFUSED'].indexOf(transaction.state) >= 0 || (transaction.description && [
       'Создание автоплатежа',
       'Приостановка автоплатежа',
       'Редактирование автоплатежа'
@@ -301,7 +301,14 @@ export function filterTransactions (transactions) {
     if (!invoiceCurrency) {
       return
     }
+    const sum = parseDecimal(_.get(transaction, 'operationAmount.amount'))
+    if (!sum) {
+      return
+    }
     const date = parseDate(transaction.date)
+    if (fromDate && date < fromDate) {
+      return
+    }
     if (transaction.state === 'AUTHORIZATION' && i > 0) {
       const data = _.pick(transaction, ['from', 'to', 'description', 'operationAmount', 'form'])
       for (let j = i - 1; j >= 0; j--) {
@@ -359,6 +366,13 @@ export async function fetchTransactions (auth, { id, type, instrument }, fromDat
   return (type === 'loan'
     ? getArray(_.get(response, 'body.elements.element'))
     : getArray(_.get(response, 'body.operations.operation'))).filter(transaction => {
+    if (type !== 'loan') {
+      const sumStr = _.get(transaction, 'sum.amount')
+      const sum = sumStr ? parseDecimal(sumStr) : 0
+      if (!sum) {
+        return false
+      }
+    }
     const dateStr = formatDateSql(parseDate(transaction.date))
     return dateStr >= fromDateStr && dateStr <= toDateStr
   })

@@ -191,7 +191,7 @@ function ZPAPI ({ manifest, preferences, data }) {
       } else {
         account.type = 'ccard'
       }
-      if ((account.balance !== undefined && typeof account.balance !== 'number') ||
+      if ((account.balance !== undefined && account.balance !== null && typeof account.balance !== 'number') ||
                 (account.startBalance !== undefined && typeof account.startBalance !== 'number') ||
                 (account.creditLimit !== undefined && typeof account.creditLimit !== 'number')) {
         return handleException('[ABA] Wrong account ' + id + '. Account balance, startBalance, creditLimit fields should not be set or be numbers')
