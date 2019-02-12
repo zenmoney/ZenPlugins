@@ -658,9 +658,8 @@ function removeWhitespaces (text) {
 }
 
 export function adjustTransactionsAndCheckBalance (apiTransactions, apiPayments) {
-  let isBalanceAmbiguous = !apiTransactions.length
-  if (isBalanceAmbiguous) {
-    return { transactions: apiPayments, isBalanceAmbiguous }
+  if (!apiTransactions.length) {
+    return { transactions: apiPayments, isBalanceAmbiguous: apiPayments.length > 0 }
   }
   const transactionDataArray = apiTransactions.map(apiTransaction => {
     return {
@@ -678,6 +677,7 @@ export function adjustTransactionsAndCheckBalance (apiTransactions, apiPayments)
     }
   })
   const maxDateDeltaMs = 3 * 60 * 1000
+  let isBalanceAmbiguous = false
   for (const transactionData of transactionDataArray) {
     let paymentData = null
     let k = -1
