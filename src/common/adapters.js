@@ -111,6 +111,9 @@ export function fixDateTimezones (transaction) {
 }
 
 export function patchTransactions (transactions, accounts) {
+  if (ZenMoney.features.transactionDtoV2) {
+    return transactions
+  }
   const accountsByIdLookup = _.keyBy(accounts, (x) => x.id)
   return castTransactionDatesToTicks(transactions.map((x) =>
     x.movements
