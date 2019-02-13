@@ -318,7 +318,7 @@ export function filterTransactions (transactions, fromDate) {
           break
         }
         if (prev.state === 'FINANCIAL') {
-          const prevData = _.pick(transaction, ['from', 'to', 'description', 'operationAmount', 'form'])
+          const prevData = _.pick(prev, ['from', 'to', 'description', 'operationAmount', 'form'])
           if (_.isEqual(data, prevData)) {
             return
           }
@@ -334,7 +334,7 @@ export function filterTransactions (transactions, fromDate) {
           break
         }
         if (next.state === 'EXECUTED') {
-          const nextData = _.pick(transaction, ['from', 'operationAmount'])
+          const nextData = _.pick(next, ['from', 'operationAmount'])
           if (_.isEqual(data, nextData)) {
             return
           }
