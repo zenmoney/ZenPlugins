@@ -2564,6 +2564,150 @@ describe('convertTransaction', () => {
     })
   })
 
+  it('converts inner transfer with ambiguous type', () => {
+    const account = { id: 'account', instrument: 'RUB' }
+    const accountsById = {}
+    accountsById[getId('card', '47407397')] = account
+    accountsById[getId('card', '84375705')] = { id: 'account2', instrument: 'RUB' }
+
+    expect(convertTransaction({
+      id: '12401471400',
+      ufsId: null,
+      state: 'FINANCIAL',
+      date: '15.02.2019T12:02:31',
+      from: 'MasterCard Mass 5469 55** **** 2222',
+      to: 'Сбербанк',
+      description: 'Перевод',
+      operationAmount: { amount: '-11324.90', currency: { code: 'RUB', name: 'руб.' } },
+      isMobilePayment: 'false',
+      copyable: 'false',
+      templatable: 'false',
+      autopayable: 'false',
+      type: 'payment',
+      invoiceSubscriptionSupported: 'false',
+      invoiceReminderSupported: 'false',
+      form: 'ExtCardTransferOut',
+      imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/6f904da7-1663-4e68-801f-fe288c3283f6.png' } },
+      details: {
+        description: {
+          name: 'description',
+          title: 'Описание',
+          type: 'string',
+          required: 'false',
+          editable: 'false',
+          visible: 'true',
+          stringType: { value: 'Сбербанк' },
+          changed: 'false'
+        },
+        toResource: {
+          name: 'toResource',
+          title: 'Счет зачисления',
+          type: 'resource',
+          required: 'false',
+          editable: 'false',
+          visible: 'true',
+          resourceType:
+            {
+              availableValues:
+                {
+                  valueItem:
+                    {
+                      value: 'card:84375705',
+                      selected: 'true',
+                      displayedValue: '4279 01** **** 3333 [Visa Gold]',
+                      currency: 'RUB'
+                    }
+                }
+            },
+          changed: 'false'
+        },
+        fromResource: {
+          name: 'fromResource',
+          title: 'Счет списания',
+          type: 'resource',
+          required: 'true',
+          editable: 'false',
+          visible: 'true',
+          resourceType:
+            {
+              availableValues:
+                {
+                  valueItem:
+                    {
+                      value: 'card:47407397',
+                      selected: 'true',
+                      displayedValue: '5469 55** **** 2222 [MasterCard Mass]',
+                      currency: 'RUB'
+                    }
+                }
+            },
+          changed: 'false'
+        },
+        sellAmount: {
+          name: 'sellAmount',
+          title: 'Сумма списания',
+          type: 'money',
+          required: 'false',
+          editable: 'false',
+          visible: 'true',
+          moneyType: { value: '11324.9', currency: { code: 'RUB' } },
+          changed: 'false'
+        },
+        amount: {
+          name: 'amount',
+          title: 'Сумма в валюте счета',
+          type: 'money',
+          required: 'false',
+          editable: 'false',
+          visible: 'false',
+          moneyType: { value: '11324.9', currency: { code: 'RUB' } },
+          changed: 'false'
+        },
+        commission: {
+          name: 'commission',
+          title: 'Комиссия',
+          type: 'money',
+          required: 'false',
+          editable: 'false',
+          visible: 'false',
+          moneyType: null,
+          changed: 'false'
+        },
+        operationDate: {
+          name: 'operationDate',
+          title: 'Дата и время совершения операции',
+          type: 'string',
+          required: 'false',
+          editable: 'false',
+          visible: 'true',
+          stringType: { value: '15.02.2019 12:02:31' },
+          changed: 'false'
+        }
+      }
+    }, account, accountsById)).toEqual({
+      hold: false,
+      date: new Date('2019-02-15T12:02:31+03:00'),
+      movements: [
+        {
+          id: '12401471400',
+          account: { id: 'account' },
+          invoice: null,
+          sum: -11324.9,
+          fee: 0
+        },
+        {
+          id: '12401471400',
+          account: { id: 'account2' },
+          invoice: null,
+          sum: 11324.9,
+          fee: 0
+        }
+      ],
+      merchant: null,
+      comment: null
+    })
+  })
+
   it('converts commission', () => {
     expect(convertTransaction({
       autopayable: 'false',
@@ -4162,6 +4306,327 @@ describe('adjustTransactionsAndCheckBalance', () => {
           invoiceReminderSupported: 'false',
           form: 'ExtCardTransferOut',
           imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/11ffac45-05f8-4dbd-b7e0-983ffda0bb72.png' } }
+        }
+      ]
+    })
+  })
+
+  it('matches transactions with opposite sums', () => {
+    expect(adjustTransactionsAndCheckBalance([
+      {
+        date: '15.02.2019T12:02:31',
+        sum: { amount: '+11324.90', currency: { code: 'RUB', name: 'руб.' } },
+        description: 'CH Payment RUS MOSCOW IDT:0614 2 RUS MOSCOW AUTOPLATEZH_P2P'
+      },
+      {
+        date: '10.02.2019T05:51:39',
+        sum: { amount: '-284.00', currency: { code: 'RUB', name: 'руб.' } },
+        description: 'Retail RUS MOSCOW Retail RUS MOSCOW UBER'
+      }
+    ], [
+      {
+        id: '12401471400',
+        ufsId: null,
+        state: 'FINANCIAL',
+        date: '15.02.2019T12:02:31',
+        from: 'MasterCard Mass 5469 55** **** 2222',
+        to: 'Сбербанк',
+        description: 'Перевод',
+        operationAmount: { amount: '-11324.90', currency: { code: 'RUB', name: 'руб.' } },
+        isMobilePayment: 'false',
+        copyable: 'false',
+        templatable: 'false',
+        autopayable: 'false',
+        type: 'payment',
+        invoiceSubscriptionSupported: 'false',
+        invoiceReminderSupported: 'false',
+        form: 'ExtCardTransferOut',
+        imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/6f904da7-1663-4e68-801f-fe288c3283f6.png' } }
+      },
+      {
+        id: '12247983163',
+        ufsId: null,
+        state: 'FINANCIAL',
+        date: '09.02.2019T05:51:29',
+        from: 'Visa Gold 4279 01** **** 3333',
+        to: 'UBER',
+        description: 'Оплата товаров и услуг',
+        operationAmount: { amount: '-284.00', currency: { code: 'RUB', name: 'руб.' } },
+        isMobilePayment: 'false',
+        copyable: 'false',
+        templatable: 'false',
+        autopayable: 'false',
+        type: 'payment',
+        invoiceSubscriptionSupported: 'false',
+        invoiceReminderSupported: 'false',
+        form: 'ExtCardPayment',
+        imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/0429659f-04eb-4949-83b0-0915490b430e.png' } }
+      }
+    ])).toEqual({
+      isBalanceAmbiguous: false,
+      transactions: [
+        {
+          id: '12401471400',
+          ufsId: null,
+          state: 'FINANCIAL',
+          date: '15.02.2019T12:02:31',
+          from: 'MasterCard Mass 5469 55** **** 2222',
+          to: 'Сбербанк',
+          description: 'Перевод',
+          operationAmount: { amount: '-11324.90', currency: { code: 'RUB', name: 'руб.' } },
+          isMobilePayment: 'false',
+          copyable: 'false',
+          templatable: 'false',
+          autopayable: 'false',
+          type: 'payment',
+          invoiceSubscriptionSupported: 'false',
+          invoiceReminderSupported: 'false',
+          form: 'ExtCardTransferOut',
+          imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/6f904da7-1663-4e68-801f-fe288c3283f6.png' } }
+        },
+        {
+          id: '12247983163',
+          ufsId: null,
+          state: 'FINANCIAL',
+          date: '09.02.2019T05:51:29',
+          from: 'Visa Gold 4279 01** **** 3333',
+          to: 'UBER',
+          description: 'Оплата товаров и услуг',
+          operationAmount: { amount: '-284.00', currency: { code: 'RUB', name: 'руб.' } },
+          isMobilePayment: 'false',
+          copyable: 'false',
+          templatable: 'false',
+          autopayable: 'false',
+          type: 'payment',
+          invoiceSubscriptionSupported: 'false',
+          invoiceReminderSupported: 'false',
+          form: 'ExtCardPayment',
+          imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/0429659f-04eb-4949-83b0-0915490b430e.png' } }
+        }
+      ]
+    })
+  })
+
+  it('matches transactions with strange 1 day date difference', () => {
+    expect(adjustTransactionsAndCheckBalance([
+      {
+        date: '17.02.2019T14:48:16',
+        sum: { amount: '-105.00', currency: { code: 'RUB', name: 'руб.' } },
+        description: 'Retail RUS MOSCOW Retail RUS MOSCOW YANDEX.TAXI'
+      },
+      {
+        date: '15.02.2019T05:51:39',
+        sum: { amount: '-284.00', currency: { code: 'RUB', name: 'руб.' } },
+        description: 'Retail RUS MOSCOW Retail RUS MOSCOW UBER'
+      },
+      {
+        date: '12.02.2019T21:02:52',
+        sum: { amount: '-311.00', currency: { code: 'RUB', name: 'руб.' } },
+        description: 'Retail RUS MOSCOW Retail RUS MOSCOW UBER'
+      },
+      {
+        date: '10.02.2019T00:00:00',
+        sum: { amount: '-125.00', currency: { code: 'RUB', name: 'руб.' } },
+        description: 'Retail RUS BELKACAR.RU   Retail RUS BELKACAR.RU BELKACAR'
+      },
+      {
+        date: '02.02.2019T12:10:03',
+        sum: { amount: '-280.80', currency: { code: 'RUB', name: 'руб.' } },
+        description: 'Retail RUS RYAZAN Retail RUS RYAZAN IP NIKOLAEVA E.A.'
+      }
+    ], [
+      {
+        id: '12443909234',
+        ufsId: null,
+        state: 'FINANCIAL',
+        date: '16.02.2019T14:48:06',
+        from: 'MasterCard Gold 5484 40** **** 2222',
+        to: 'Яндекс.Такси',
+        description: 'Оплата товаров и услуг',
+        operationAmount: { amount: '-105.00', currency: { code: 'RUB', name: 'руб.' } },
+        isMobilePayment: 'false',
+        copyable: 'false',
+        templatable: 'false',
+        autopayable: 'false',
+        type: 'payment',
+        invoiceSubscriptionSupported: 'false',
+        invoiceReminderSupported: 'false',
+        form: 'ExtCardPayment',
+        imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/e61c6173-df6b-462d-af2d-c872fd2b86dc.png' } }
+      },
+      {
+        id: '12247983163',
+        ufsId: null,
+        state: 'FINANCIAL',
+        date: '14.02.2019T05:51:29',
+        from: 'Visa Gold 4279 01** **** 3333',
+        to: 'UBER',
+        description: 'Оплата товаров и услуг',
+        operationAmount: { amount: '-284.00', currency: { code: 'RUB', name: 'руб.' } },
+        isMobilePayment: 'false',
+        copyable: 'false',
+        templatable: 'false',
+        autopayable: 'false',
+        type: 'payment',
+        invoiceSubscriptionSupported: 'false',
+        invoiceReminderSupported: 'false',
+        form: 'ExtCardPayment',
+        imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/0429659f-04eb-4949-83b0-0915490b430e.png' } }
+      },
+      {
+        id: '12161617364',
+        ufsId: null,
+        state: 'FINANCIAL',
+        date: '11.02.2019T21:02:08',
+        from: 'Visa Gold 4279 01** **** 3333',
+        to: 'UBER',
+        description: 'Оплата товаров и услуг',
+        operationAmount: { amount: '-311.00', currency: { code: 'RUB', name: 'руб.' } },
+        isMobilePayment: 'false',
+        copyable: 'false',
+        templatable: 'false',
+        autopayable: 'false',
+        type: 'payment',
+        invoiceSubscriptionSupported: 'false',
+        invoiceReminderSupported: 'false',
+        form: 'ExtCardPayment',
+        imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/0429659f-04eb-4949-83b0-0915490b430e.png' } }
+      },
+      {
+        id: '12161617350',
+        ufsId: null,
+        state: 'FINANCIAL',
+        date: '08.02.2019T15:47:40',
+        from: 'Visa Gold 4279 01** **** 3333',
+        to: 'BelkaCar',
+        description: 'Оплата товаров и услуг',
+        operationAmount: { amount: '-125.00', currency: { code: 'RUB', name: 'руб.' } },
+        isMobilePayment: 'false',
+        copyable: 'false',
+        templatable: 'false',
+        autopayable: 'false',
+        type: 'payment',
+        invoiceSubscriptionSupported: 'false',
+        invoiceReminderSupported: 'false',
+        form: 'ExtCardPayment',
+        imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/cb73d159-a8d0-4d3c-be31-0d9461a48270.png' } }
+      },
+      {
+        id: '12434269174',
+        ufsId: null,
+        state: 'FINANCIAL',
+        date: '02.02.2019T12:10:03',
+        from: 'MasterCard Gold 5484 40** **** 2222',
+        to: 'IP NIKOLAEVA E.A.',
+        description: 'Оплата товаров и услуг',
+        operationAmount: { amount: '-280.80', currency: { code: 'RUB', name: 'руб.' } },
+        isMobilePayment: 'false',
+        copyable: 'false',
+        templatable: 'false',
+        autopayable: 'false',
+        type: 'payment',
+        invoiceSubscriptionSupported: 'false',
+        invoiceReminderSupported: 'false',
+        form: 'ExtCardPayment',
+        imageId: { staticImage: { url: null } }
+      }
+    ])).toEqual({
+      isBalanceAmbiguous: false,
+      transactions: [
+        {
+          id: '12443909234',
+          ufsId: null,
+          state: 'FINANCIAL',
+          date: '16.02.2019T14:48:06',
+          from: 'MasterCard Gold 5484 40** **** 2222',
+          to: 'Яндекс.Такси',
+          description: 'Оплата товаров и услуг',
+          operationAmount: { amount: '-105.00', currency: { code: 'RUB', name: 'руб.' } },
+          isMobilePayment: 'false',
+          copyable: 'false',
+          templatable: 'false',
+          autopayable: 'false',
+          type: 'payment',
+          invoiceSubscriptionSupported: 'false',
+          invoiceReminderSupported: 'false',
+          form: 'ExtCardPayment',
+          imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/e61c6173-df6b-462d-af2d-c872fd2b86dc.png' } }
+        },
+        {
+          id: '12247983163',
+          ufsId: null,
+          state: 'FINANCIAL',
+          date: '14.02.2019T05:51:29',
+          from: 'Visa Gold 4279 01** **** 3333',
+          to: 'UBER',
+          description: 'Оплата товаров и услуг',
+          operationAmount: { amount: '-284.00', currency: { code: 'RUB', name: 'руб.' } },
+          isMobilePayment: 'false',
+          copyable: 'false',
+          templatable: 'false',
+          autopayable: 'false',
+          type: 'payment',
+          invoiceSubscriptionSupported: 'false',
+          invoiceReminderSupported: 'false',
+          form: 'ExtCardPayment',
+          imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/0429659f-04eb-4949-83b0-0915490b430e.png' } }
+        },
+        {
+          id: '12161617364',
+          ufsId: null,
+          state: 'FINANCIAL',
+          date: '11.02.2019T21:02:08',
+          from: 'Visa Gold 4279 01** **** 3333',
+          to: 'UBER',
+          description: 'Оплата товаров и услуг',
+          operationAmount: { amount: '-311.00', currency: { code: 'RUB', name: 'руб.' } },
+          isMobilePayment: 'false',
+          copyable: 'false',
+          templatable: 'false',
+          autopayable: 'false',
+          type: 'payment',
+          invoiceSubscriptionSupported: 'false',
+          invoiceReminderSupported: 'false',
+          form: 'ExtCardPayment',
+          imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/0429659f-04eb-4949-83b0-0915490b430e.png' } }
+        },
+        {
+          id: '12161617350',
+          ufsId: null,
+          state: 'FINANCIAL',
+          date: '08.02.2019T15:47:40',
+          from: 'Visa Gold 4279 01** **** 3333',
+          to: 'BelkaCar',
+          description: 'Оплата товаров и услуг',
+          operationAmount: { amount: '-125.00', currency: { code: 'RUB', name: 'руб.' } },
+          isMobilePayment: 'false',
+          copyable: 'false',
+          templatable: 'false',
+          autopayable: 'false',
+          type: 'payment',
+          invoiceSubscriptionSupported: 'false',
+          invoiceReminderSupported: 'false',
+          form: 'ExtCardPayment',
+          imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos/cb73d159-a8d0-4d3c-be31-0d9461a48270.png' } }
+        },
+        {
+          id: '12434269174',
+          ufsId: null,
+          state: 'FINANCIAL',
+          date: '02.02.2019T12:10:03',
+          from: 'MasterCard Gold 5484 40** **** 2222',
+          to: 'IP NIKOLAEVA E.A.',
+          description: 'Оплата товаров и услуг',
+          operationAmount: { amount: '-280.80', currency: { code: 'RUB', name: 'руб.' } },
+          isMobilePayment: 'false',
+          copyable: 'false',
+          templatable: 'false',
+          autopayable: 'false',
+          type: 'payment',
+          invoiceSubscriptionSupported: 'false',
+          invoiceReminderSupported: 'false',
+          form: 'ExtCardPayment',
+          imageId: { staticImage: { url: null } }
         }
       ]
     })

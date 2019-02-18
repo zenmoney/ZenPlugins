@@ -24,17 +24,25 @@ export async function renewSession (session) {
   if (!session || !session.host || !session.cookie) {
     return null
   }
-  const response = await fetchXml(`https://${session.host}:4477/mobile9/private/renewSession.do`, {
-    headers: {
-      ...defaultHeaders,
-      'Accept': 'application/x-www-form-urlencoded',
-      'Accept-Charset': 'windows-1251',
-      'Host': `${session.host}:4477`,
-      'Cookie': `${session.cookie}`
-    },
-    parse: body => body ? network.parseXml(body) : { response: {} }
-  }, null)
-  return response.body && response.body.status === '0' ? session : null
+  try {
+    const response = await fetchXml(`https://${session.host}:4477/mobile9/private/renewSession.do`, {
+      headers: {
+        ...defaultHeaders,
+        'Accept': 'application/x-www-form-urlencoded',
+        'Accept-Charset': 'windows-1251',
+        'Host': `${session.host}:4477`,
+        'Cookie': `${session.cookie}`
+      },
+      parse: body => body ? network.parseXml(body) : { response: {} }
+    }, null)
+    return response.body && response.body.status === '0' ? session : null
+  } catch (e) {
+    if (e.message && e.message.indexOf('non-successful response') >= 0) {
+      return null
+    } else {
+      throw e
+    }
+  }
 }
 
 export async function login (login, pin, auth, device) {

@@ -104,7 +104,8 @@ function parseInnerTransfer (transaction, apiTransaction, account, accountsById)
     'AccountOpeningClaim',
     'AccountClosingPayment',
     'IMAOpeningClaim',
-    'IMAPayment'
+    'IMAPayment',
+    'ExtCardTransferOut'
   ].indexOf(apiTransaction.form) < 0) {
     return false
   }
@@ -686,18 +687,20 @@ export function adjustTransactionsAndCheckBalance (apiTransactions, apiPayments)
       if (pd.dateStr > transactionData.dateStr) {
         continue
       }
+      const delta = transactionData.date.getTime() - pd.date.getTime()
+      const areDatesEqual = pd.dateStr === transactionData.dateStr || (delta >= 24 * 60 * 60 * 1000 && delta <= 2 * 24 * 60 * 60 * 1000)
       if (pd.date >= transactionData.date) {
         k = j + 1
-      } else if (pd.date < transactionData.date && pd.dateStr !== transactionData.dateStr) {
+      } else if (pd.date < transactionData.date && !areDatesEqual) {
         break
       } else if (k < 0) {
         k = j
       }
-      if (!pd.apiTransaction &&
-        pd.dateStr === transactionData.dateStr &&
-        pd.amount.instrument === transactionData.amount.instrument &&
-        Math.abs((pd.amount.sum - transactionData.amount.sum) / transactionData.amount.sum) < 0.1) {
-        if (Math.abs(pd.date.getTime() - transactionData.date.getTime()) < maxDateDeltaMs) {
+      if (!pd.apiTransaction && areDatesEqual &&
+        pd.amount.instrument === transactionData.amount.instrument && (
+          Math.abs(pd.amount.sum) === Math.abs(transactionData.amount.sum) ||
+          Math.abs((pd.amount.sum - transactionData.amount.sum) / transactionData.amount.sum) < 0.1)) {
+        if (Math.abs(delta) < maxDateDeltaMs) {
           paymentData = pd
           break
         } else if (paymentData === null) {
