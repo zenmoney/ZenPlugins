@@ -2708,6 +2708,164 @@ describe('convertTransaction', () => {
     })
   })
 
+  it('converts inner currency transfer', () => {
+    const account = { id: 'account', instrument: 'RUB' }
+    const accountsById = {}
+    accountsById[getId('card', '599624168')] = account
+    accountsById[getId('account', '578020177')] = { id: 'account2', instrument: 'USD' }
+
+    expect(convertTransaction({
+      id: '12476663813',
+      ufsId: null,
+      state: 'EXECUTED',
+      date: '18.02.2019T11:07:00',
+      from: 'Visa Classic Molodejka 4276 26** **** 1888',
+      to: 'Пополняй ОнЛ@йн 1г - 2г (вал.) 42306840426000103281',
+      description: 'Перевод между своими счетами',
+      operationAmount: { amount: '-336.10', currency: { code: 'RUB', name: 'руб.' } },
+      isMobilePayment: 'true',
+      copyable: 'true',
+      templatable: 'true',
+      autopayable: 'false',
+      type: 'payment',
+      invoiceSubscriptionSupported: 'false',
+      invoiceReminderSupported: 'false',
+      form: 'InternalPayment',
+      imageId: { staticImage: { url: null } },
+      details: {
+        fromResource: {
+          name: 'fromResource',
+          title: 'Счет списания',
+          type: 'resource',
+          required: 'false',
+          editable: 'false',
+          visible: 'true',
+          resourceType: {
+            availableValues: {
+              valueItem: {
+                value: 'card:599624168',
+                selected: 'true',
+                displayedValue: '4276 26** **** 1888 [Visa Classic Molodejka]',
+                currency: 'RUB'
+              }
+            }
+          },
+          changed: 'false'
+        },
+        toResource: {
+          name: 'toResource',
+          title: 'Ресурс зачисления',
+          type: 'resource',
+          required: 'false',
+          editable: 'false',
+          visible: 'true',
+          resourceType: {
+            availableValues: {
+              valueItem: {
+                value: 'account:578020177',
+                selected: 'true',
+                displayedValue: '423 06 840 4 26000103281 [Пополняй ОнЛ@йн 1г - 2г (вал.)]',
+                currency: 'USD'
+              }
+            }
+          },
+          changed: 'false'
+        },
+        course: {
+          name: 'course',
+          title: 'Курс конверсии',
+          type: 'money',
+          required: 'false',
+          editable: 'false',
+          visible: 'true',
+          moneyType: { value: '67.2200' },
+          changed: 'false'
+        },
+        buyAmount: {
+          name: 'buyAmount',
+          title: 'Сумма зачисления',
+          type: 'money',
+          required: 'false',
+          editable: 'false',
+          visible: 'true',
+          moneyType: { value: '5.00' },
+          changed: 'false'
+        },
+        sellAmount: {
+          name: 'sellAmount',
+          title: 'Сумма списания',
+          type: 'money',
+          required: 'false',
+          editable: 'false',
+          visible: 'true',
+          moneyType: { value: '336.10' },
+          changed: 'false'
+        }
+      }
+    }, account, accountsById)).toEqual({
+      hold: false,
+      date: new Date('2019-02-18T11:07:00+03:00'),
+      movements: [
+        {
+          id: '12476663813',
+          account: { id: 'account' },
+          invoice: { sum: -5, instrument: 'USD' },
+          sum: -336.10,
+          fee: 0
+        },
+        {
+          id: '12476663813',
+          account: { id: 'account2' },
+          invoice: null,
+          sum: 5,
+          fee: 0
+        }
+      ],
+      merchant: null,
+      comment: null
+    })
+  })
+
+  it('converts card to deposit transfer', () => {
+    const account = { id: 'account', instrument: 'RUB' }
+    const accountsById = {}
+    accountsById[getId('card', '599624168')] = account
+    accountsById[getId('account', '578020177')] = { id: 'account2', instrument: 'USD' }
+
+    expect(convertTransaction({
+      id: '12487593206',
+      ufsId: null,
+      state: 'FINANCIAL',
+      date: '18.02.2019T00:00:00',
+      to: 'Универсальный                    42307810655076721341',
+      description: 'Входящий перевод на вклад/счет',
+      operationAmount: { amount: '500.00', currency: { code: 'RUB', name: 'руб.' } },
+      isMobilePayment: 'false',
+      copyable: 'false',
+      templatable: 'false',
+      autopayable: 'false',
+      type: 'payment',
+      invoiceSubscriptionSupported: 'false',
+      invoiceReminderSupported: 'false',
+      form: 'ExtDepositTransferIn',
+      imageId: { staticImage: { url: null } }
+    }, { id: 'account', instrument: 'RUB' })).toEqual({
+      hold: false,
+      date: new Date('2019-02-18T00:00:00+03:00'),
+      movements: [
+        {
+          id: '12487593206',
+          account: { id: 'account' },
+          invoice: null,
+          sum: 500,
+          fee: 0
+        }
+      ],
+      merchant: null,
+      comment: 'Входящий перевод на вклад/счет'
+    })
+  })
+
   it('converts commission', () => {
     expect(convertTransaction({
       autopayable: 'false',

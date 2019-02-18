@@ -261,6 +261,7 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
         'ExtCardTransferIn',
         'ExtCardTransferOut',
         'ExtCardCashOut',
+        'ExtDepositTransferIn',
         'ExtDepositOtherDebit',
         'RurPayment',
         'RurPayJurSB',

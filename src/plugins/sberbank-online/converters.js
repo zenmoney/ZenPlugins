@@ -110,53 +110,57 @@ function parseInnerTransfer (transaction, apiTransaction, account, accountsById)
     return false
   }
 
-  const instrument = transaction.movements[0].invoice.instrument
-  const outcomeAccount = getAccountForResource(_.get(apiTransaction, 'details.fromResource'), accountsById)
-  let incomeAccount = getAccountForResource(_.get(apiTransaction, 'details.toResource'), accountsById)
-  if (!incomeAccount) {
-    const match = apiTransaction.to.match(/\s{10}(\d[\d*\s]+)$/)
-    if (match) {
-      incomeAccount = accountsById[getId(instrument, removeWhitespaces(match[1]))]
-    }
-  }
-  if (!incomeAccount && !outcomeAccount) {
+  const outcomeAccountData = getAccountDataFromResource(_.get(apiTransaction, 'details.fromResource'))
+  const outcomeAccount = !outcomeAccountData ? null :
+    accountsById[outcomeAccountData.id] ||
+    accountsById[getId(outcomeAccountData.instrument, outcomeAccountData.syncId)]
+  if (!outcomeAccount) {
     return false
   }
 
-  const isIncomeInvoice = apiTransaction.form === 'AccountClosingPayment'
-  const invoiceSum = Math.abs(transaction.movements[0].invoice.sum)
-  const sumStr =
-    _.get(apiTransaction, 'details.sellAmount.moneyType.value') ||
-    _.get(apiTransaction, 'details.destinationAmount.moneyType.value')
-  const sum = sumStr ? parseDecimal(sumStr) : invoiceSum
+  const incomeAccountData = getAccountDataFromResource(_.get(apiTransaction, 'details.toResource'))
+  let incomeAccount = !incomeAccountData ? null :
+    accountsById[incomeAccountData.id] ||
+    accountsById[getId(incomeAccountData.instrument, incomeAccountData.syncId)]
+  if (!incomeAccount) {
+    const match = apiTransaction.to.match(/\s{10}(\d[\d*\s]+)$/)
+    if (match) {
+      incomeAccount = accountsById[getId(transaction.movements[0].invoice.instrument, removeWhitespaces(match[1]))]
+    }
+  }
+  if (!incomeAccount) {
+    return false
+  }
 
-  transaction.movements = []
-  if (outcomeAccount) {
-    transaction.movements.push({
+  const outcomeStr = _.get(apiTransaction, 'details.sellAmount.moneyType.value')
+  const outcome = outcomeStr ? parseDecimal(outcomeStr) : Math.abs(transaction.movements[0].invoice.sum)
+  const incomeStr =
+    _.get(apiTransaction, 'details.buyAmount.moneyType.value') ||
+    _.get(apiTransaction, 'details.destinationAmount.moneyType.value')
+  const income = incomeStr ? parseDecimal(incomeStr) : Math.abs(transaction.movements[0].invoice.sum)
+
+  const isIncomeInvoice = apiTransaction.form === 'AccountClosingPayment'
+  transaction.movements = [
+    {
       id: apiTransaction.id,
       account: { id: outcomeAccount.id },
-      invoice: isIncomeInvoice || invoiceSum === sum ? null : { sum: -invoiceSum, instrument },
-      sum: isIncomeInvoice ? -invoiceSum : -sum,
+      invoice: !isIncomeInvoice && outcomeAccount.instrument !== incomeAccount.instrument ? { sum: -income, instrument: incomeAccount.instrument } : null,
+      sum: -outcome,
       fee: 0
-    })
-  }
-  if (incomeAccount) {
-    transaction.movements.push({
+    },
+    {
       id: apiTransaction.id,
       account: { id: incomeAccount.id },
-      invoice: isIncomeInvoice && invoiceSum !== sum ? { sum: invoiceSum, instrument } : null,
-      sum: isIncomeInvoice ? sum : invoiceSum,
+      invoice: isIncomeInvoice && outcomeAccount.instrument !== incomeAccount.instrument ? { sum: outcome, instrument: outcomeAccount.instrument } : null,
+      sum: income,
       fee: 0
-    })
-  }
-  if (apiTransaction.description && (!incomeAccount || !outcomeAccount)) {
-    transaction.comment = apiTransaction.description
-  }
+    }
+  ]
 
   return true
 }
 
-function getAccountForResource (resource, accountsById) {
+function getAccountDataFromResource (resource) {
   const id = _.get(resource, 'resourceType.availableValues.valueItem.value')
   if (!id) {
     return null
@@ -167,7 +171,8 @@ function getAccountForResource (resource, accountsById) {
     const i = syncId.search(/[^\d\s*]/)
     syncId = i >= 0 ? syncId.substring(0, i).replace(/[^\d*]/g, '') : ''
   }
-  return accountsById[id] || accountsById[getId(instrument, syncId)]
+  syncId = syncId || null
+  return { id, instrument, syncId }
 }
 
 function parseOuterIncomeTransfer (transaction, apiTransaction, account) {
@@ -246,7 +251,7 @@ function parsePayee (transaction, apiTransaction) {
     return
   }
 
-  let payee = ['ExtDepositCapitalization'].indexOf(apiTransaction.form) >= 0 ? null : apiTransaction.to
+  let payee = ['ExtDepositCapitalization', 'ExtDepositTransferIn'].indexOf(apiTransaction.form) >= 0 ? null : apiTransaction.to
   if (payee) {
     if (apiTransaction.form === 'RurPayJurSB') {
       const parts = payee.split(/\s\s+/)
@@ -270,7 +275,7 @@ function parsePayee (transaction, apiTransaction) {
       }
     }
   }
-  if (['Капитализация по вкладу/счету', 'Комиссии'].indexOf(apiTransaction.description) >= 0) {
+  if (['Капитализация по вкладу/счету', 'Комиссии', 'Входящий перевод на вклад/счет'].indexOf(apiTransaction.description) >= 0) {
     transaction.comment = apiTransaction.description
   }
 }
