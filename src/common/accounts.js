@@ -118,7 +118,8 @@ export function parseOuterAccountData (str) {
       { pattern: 'OPEN.RU CARD2CARD', account: { type: 'ccard', company: { id: '4761' } } },
       { pattern: 'QIWI', account: { type: null, company: { id: '15592' } } },
       { pattern: 'MONODirect', account: { type: 'ccard', company: { id: '15620' } } },
-      { pattern: 'Приват', account: { type: null, company: { id: '12574' } } }
+      { pattern: 'Приват', account: { type: null, company: { id: '12574' } } },
+      { pattern: 'CREDIT EUROPE BANK', account: { type: null, company: { id: '5165' } } }
     ]) {
       if (str.toLowerCase().indexOf(data.pattern.toLowerCase()) >= 0) {
         return data.account
