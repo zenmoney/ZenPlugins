@@ -181,20 +181,32 @@ export function toZenmoneyTransaction (readableTransaction, accountsByIdLookup) 
 
   console.assert(merchant === null || _.isPlainObject(merchant), 'merchant must be defined Object:', readableTransaction)
   if (merchant !== null) {
-    console.assert(merchant.title === null || _.isString(merchant.title), 'merchant.payee must be defined String:', readableTransaction)
-    result.payee = merchant.title
+    const { city, country, title, fullTitle, location, mcc, ...merchantRest } = merchant
 
-    console.assert(merchant.mcc === null || _.isNumber(merchant.mcc), 'merchant.mcc must be defined Number:', readableTransaction)
-    result.mcc = merchant.mcc
+    assertRestIsEmpty(merchantRest, 'merchant props', readableTransaction)
+    console.assert(fullTitle === undefined || (title === undefined && city === undefined && country === undefined),
+      'merchant must be either { fullTitle, mcc, location } or { title, city, country, mcc, location }', readableTransaction)
 
-    console.assert(
-      merchant.location === null || _.isPlainObject(merchant.location),
+    if (fullTitle === undefined) {
+      console.assert(title === null || _.isString(title), 'merchant.title must be defined String:', readableTransaction)
+      console.assert(city === null || _.isString(city), 'merchant.city must be defined String:', readableTransaction)
+      console.assert(country === null || _.isString(country), 'merchant.country must be defined String:', readableTransaction)
+      result.payee = title
+    } else {
+      console.assert(fullTitle === null || _.isString(fullTitle), 'merchant.fullTitle must be defined String:', readableTransaction)
+      result.payee = fullTitle
+    }
+
+    console.assert(mcc === null || _.isNumber(mcc), 'merchant.mcc must be defined Number:', readableTransaction)
+    result.mcc = mcc
+
+    console.assert(location === null || _.isPlainObject(location),
       'merchant.location must be defined Object:',
       readableTransaction
     )
 
-    if (merchant.location !== null) {
-      const { latitude, longitude, locationRest } = merchant.location
+    if (location !== null) {
+      const { latitude, longitude, locationRest } = location
       assertRestIsEmpty(locationRest, 'merchant.location props', readableTransaction)
 
       console.assert(_.isNumber(latitude), 'merchant.location.latitude must be Number:', readableTransaction)
