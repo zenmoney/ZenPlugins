@@ -1,4 +1,4 @@
-import { normalizeCardExpirationDate, normalizePhoneNumber } from './preferences'
+import { normalizeCardExpirationDate, normalizePhoneNumber } from '../preferences'
 
 test('normalizeCardExpirationDate', () => {
   expect(normalizeCardExpirationDate('01/21')).toEqual('01/21')

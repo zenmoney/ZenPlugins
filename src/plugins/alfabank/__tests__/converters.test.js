@@ -5,7 +5,7 @@ import {
   normalizeIsoDate,
   parseApiMovementDescription,
   toZenmoneyAccount
-} from './converters'
+} from '../converters'
 
 describe('toZenmoneyAccount', () => {
   it('maps api credit card account', () => {

@@ -1,8 +1,8 @@
 import fetchMock from 'fetch-mock'
 import _ from 'lodash'
-import { installFetchMockDeveloperFriendlyFallback } from '../../testUtils'
-import { makePluginDataApi } from '../../ZPAPI.pluginData'
-import { scrape } from './index'
+import { installFetchMockDeveloperFriendlyFallback } from '../../../testUtils'
+import { makePluginDataApi } from '../../../ZPAPI.pluginData'
+import { scrape } from '../index'
 
 function expectLoginRequest ({ response }) {
   fetchMock.once({
