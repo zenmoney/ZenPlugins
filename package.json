@@ -77,9 +77,6 @@
       "^.+\\.js$": "<rootDir>/node_modules/babel-jest",
       "^.+\\.html?$": "jest-raw-loader"
     },
-    "transformIgnorePatterns": [
-      "[/\\\\]node_modules[/\\\\].+\\.js$"
-    ],
     "moduleFileExtensions": [
       "js"
     ]
