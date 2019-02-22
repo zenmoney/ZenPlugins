@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { parseOuterAccountData } from '../../common/accounts'
 
 export function convertAccount (account, initialized) {
   switch (account.accountType) {
@@ -199,6 +200,17 @@ export function convertTransaction (transaction, accountId) {
     if (transaction.locations && _.isArray(transaction.locations) && transaction.locations.length > 0) {
       tran.latitude = transaction.locations[0].latitude
       tran.longitude = transaction.locations[0].longitude
+    }
+  }
+
+  // получателей в кази-кэш переносим в комментарии операции
+  if (mcc === 6051 && tran.payee) {
+    const payee = parseOuterAccountData(tran.payee)
+    if (payee) {
+
+    } else {
+      if (tran.comment) tran.comment += ` (${payee})`
+      else tran.commen = tran.payee
     }
   }
 

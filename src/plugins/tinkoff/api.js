@@ -43,7 +43,7 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
     console.log('>>> Создаём сессию:')
     const response = await fetchJson(auth, 'session', {
       headers: DEFAULT_HEADERS,
-      sanitizeResponseLog: { body: { 'payload': true } }
+      sanitizeResponseLog: { body: { 'payload': true, 'trackingId': true } }
     })
     if (response.body.resultCode !== 'OK') { throw new Error('Ошибка: не удалось создать сессию с банком') }
     auth.sessionid = response.body.payload
@@ -65,7 +65,7 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
           }
         }
       } else { console.log('>>> Пароль получен из настроек подключения.') }
-      if (!password) { throw new Error('Ошибка: не удалось получить пароль для входа') }
+      if (!password) { throw new TemporaryError('Ошибка: не удалось получить пароль для входа') }
 
       const phoneMode = preferences.login.trim().substr(0, 1) === '+'
       let resultCode, response
