@@ -1,4 +1,4 @@
-import { reduceDuplicatesByTypeAndId, resolveCycles } from './vtb'
+import { reduceDuplicatesByTypeAndId, resolveCycles } from '../vtb'
 
 describe('reduceDuplicatesByTypeAndId', () => {
   it('reduces duplicates in child objects', () => {

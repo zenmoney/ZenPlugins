@@ -26,12 +26,32 @@ export async function scrape ({ preferences, fromDate, toDate }) {
       })
     } catch (e) {
       if (e && e.message && e.message.indexOf('временно') >= 0) {
-        console.log(`skipping transactions for account ${apiAccount.id}`)
+        if (apiAccount.cards && apiAccount.cards.length) {
+          await Promise.all(apiAccount.cards.map(async apiCard => {
+            try {
+              (await fetchTransactions(auth, apiCard, fromDate, toDate)).forEach(apiTransaction => {
+                const transaction = convertTransaction(apiTransaction, apiAccount)
+                if (transaction) {
+                  transactions.push(transaction)
+                }
+              })
+            } catch (e) {
+              if (e && e.message && e.message.indexOf('временно') >= 0) {
+                console.log(`skipping transactions for account ${apiAccount.id} card ${apiCard.id}`)
+              } else {
+                throw e
+              }
+            }
+          }))
+        } else {
+          console.log(`skipping transactions for account ${apiAccount.id}`)
+        }
       } else {
         throw e
       }
     }
   }))
+
   return {
     accounts: ensureSyncIDsAreUniqueButSanitized({
       accounts: zenAccounts,

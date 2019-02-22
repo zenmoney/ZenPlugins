@@ -77,6 +77,16 @@ export function convertAccount (apiAccount) {
   const cards = apiAccount.cards ? apiAccount.cards.filter(card => {
     return card && card.status && card.status.id === 'ACTIVE' && !card.archived
   }) : []
+  const isMasterAccount = ['ru.vtb24.mobilebanking.protocol.product.MasterAccountMto'].indexOf(apiAccount.__type) >= 0
+
+  if (isMasterAccount) {
+    accounts[0].cards = apiAccount.cards
+      ? apiAccount.cards
+        .filter(card => card && card.status && card.status.id === 'ACTIVE' && !card.archived)
+        .map(card => card ? ({ type: card.__type, id: card.id }) : null)
+      : []
+  }
+
   const isCardAccount = [
     'ru.vtb24.mobilebanking.protocol.product.CreditCardAccountMto',
     'ru.vtb24.mobilebanking.protocol.product.DebitCardAccountMto'].indexOf(apiAccount.__type) >= 0
