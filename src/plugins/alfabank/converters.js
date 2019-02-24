@@ -1,5 +1,8 @@
 import _ from 'lodash'
-import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
+import {
+  ensureSyncIDsAreUniqueButSanitized,
+  sanitizeSyncId
+} from '../../common/accounts'
 import {
   addMovement,
   formatCalculatedRateLine,
@@ -89,6 +92,7 @@ const dateRegExp = /\d{2}\.\d{2}\.\d{2}/
 const spaceRegExp = /\s+/
 const amountRegExp = /(\d+\.\d+|\.\d+|\d+\.?)/
 const currencyRegExp = /([A-Z]{3})/
+const optionalPayRegExp = /(?:\s+\((Apple|Google|Android|Samsung) Pay-\d+\))?/i
 const optionalMccRegExp = /(?:\s+MCC(\d+))?/
 
 // poor mans parser generator
@@ -98,6 +102,7 @@ const descriptionRegExp = new RegExp([
   amountRegExp,
   spaceRegExp,
   currencyRegExp,
+  optionalPayRegExp,
   optionalMccRegExp
 ].map((x) => x.source).join(''))
 
@@ -109,7 +114,7 @@ export function parseApiMovementDescription (description, sign) {
       mcc: null
     }
   }
-  const [, amount, currency, mcc] = match
+  const [, amount, currency,, mcc] = match
   return {
     origin: {
       amount: sign * Number(amount),
@@ -157,14 +162,70 @@ function findMovementAccountTuple (apiMovement, accountTuples) {
 export const normalizeIsoDate = (isoDate) => isoDate.replace(/([+-])(\d{2})(\d{2})$/, '$1$2:$3')
 
 export const extractDate = (apiMovement) => {
-  const created = new Date(normalizeIsoDate(apiMovement.createDate))
-  if (apiMovement.executeTimeStamp) {
-    const executed = new Date(normalizeIsoDate(apiMovement.executeTimeStamp))
-    return executed < created
-      ? executed
-      : created
+  return new Date(normalizeIsoDate(apiMovement.createDate))
+}
+
+export const getMerchantDataFromDescription = (description) => {
+  const spacedPattern = /(\d{6,8})\s+(\w{2,3})\s+([\w .&-]+)>([\w.-]{1,23})/ // 35 characters max
+  const slashedPattern = /(\d{6,8}|\s+)\\(\w{3})\\([\w \\]{1,28})\s+/ // 40 characters max
+
+  let matched = description.match(spacedPattern)
+  if (matched) {
+    const [,, country, title, city] = matched
+    return { country, title, city }
   }
-  return created
+
+  matched = description.match(slashedPattern)
+  if (matched) {
+    const [,, country, rest] = matched
+    const [city, ...restTitle] = rest.split(/\\/)
+    const title = (restTitle.pop()).trim()
+    return { country, city, title }
+  }
+
+  return null
+}
+
+const getMerchant = (apiMovement, mcc = null) => {
+  const unknownMerchantData = { mcc, country: null, city: null, title: null, location: null }
+
+  if (apiMovement.reference.match(/C03/)) {
+    // 'Оплата неналоговых платежей (штрафы, пошлины)'
+    return null
+  }
+
+  if (apiMovement.reference.match(/C07/)) {
+    // 'На счёт другому клиенту'
+    return { ...unknownMerchantData, title: apiMovement.senderInfo.senderMaskedName || apiMovement.recipientInfo.recipientMaskedName }
+  }
+
+  if (apiMovement.shortDescription && !apiMovement.shortDescription.match('Перевод между счетами')) {
+    if (apiMovement.shortDescription.match(/CARD2CARD/)) {
+      return null
+    }
+
+    if (apiMovement.category && apiMovement.category.bankCategoryId && apiMovement.category.bankCategoryId === '00012') {
+      // 'Мобильная связь, интернет, ТВ, телефон'
+      return { ...unknownMerchantData, title: apiMovement.shortDescription }
+    }
+
+    const merchantData = getMerchantDataFromDescription(apiMovement.description)
+    if (merchantData) {
+      return { ...unknownMerchantData, ...merchantData }
+    }
+
+    return null
+  }
+
+  if (apiMovement.recipientInfo && apiMovement.recipientInfo.recipientName) {
+    return { ...unknownMerchantData, title: apiMovement.recipientInfo.recipientName }
+  }
+
+  if (apiMovement.shortDescription) {
+    return { ...unknownMerchantData, title: apiMovement.shortDescription.replace(/^От /, '') }
+  }
+
+  return null
 }
 
 function convertApiMovementToReadableTransaction (apiMovement, accountId) {
@@ -187,11 +248,7 @@ function convertApiMovementToReadableTransaction (apiMovement, accountId) {
     ],
     date: extractDate(apiMovement),
     hold: apiMovement.hold,
-    merchant: {
-      title: (apiMovement.recipientInfo && apiMovement.recipientInfo.recipientName) || apiMovement.shortDescription || null,
-      mcc,
-      location: null
-    },
+    merchant: getMerchant(apiMovement, mcc),
     comment: joinCommentLines([
       formatCommentFeeLine(fee, apiMovement.currency),
       formatInvoiceLine(invoice),
@@ -203,9 +260,88 @@ function convertApiMovementToReadableTransaction (apiMovement, accountId) {
     apiMovement.description.includes('Внесение средств через устройство')) {
     return addMovement(readableTransaction, makeCashTransferMovement(readableTransaction, apiMovement.currency))
   }
+
+  if (apiMovement.shortDescription && apiMovement.shortDescription.match(/CARD2CARD/)) {
+    readableTransaction.movements.push(makeCard2CardMovement(readableTransaction, apiMovement))
+    return readableTransaction
+  }
+
+  if (apiMovement.reference.match(/C0[23]/)) {
+    readableTransaction.movements.push(makeOuterMovement(readableTransaction, apiMovement))
+    readableTransaction.comment = apiMovement.description
+    return readableTransaction
+  }
+
+  if (apiMovement.reference.match(/C07/)) {
+    if (Math.sign(parseApiAmount(apiMovement.amount)) === 1) {
+      readableTransaction.movements.push(makeInternalMovement(readableTransaction, apiMovement))
+    }
+    readableTransaction.comment = apiMovement.description
+    return readableTransaction
+  }
+
+  if (apiMovement.reference.match(/^M0/) ||
+    (apiMovement.reference.match(/OP1ED/) && !isMoneyBoxTransfer({ reference: apiMovement.reference, descriptions: [apiMovement.description] }))) {
+    readableTransaction.movements.push(makeIncomeMovement(readableTransaction, apiMovement))
+    readableTransaction.comment = apiMovement.description
+    return readableTransaction
+  }
+
   // TODO transfers from other banks can be handled
   return readableTransaction
 }
+
+const makeIncomeMovement = (readableTransaction, apiMovement) => ({
+  id: null,
+  account: {
+    company: null,
+    instrument: apiMovement.currency,
+    syncIds: apiMovement.senderInfo ? [`${apiMovement.senderInfo.senderAccountNumber}`] : null,
+    type: null
+  },
+  invoice: null,
+  sum: -1 * parseApiAmount(apiMovement.amount),
+  fee: 0
+})
+
+const makeCard2CardMovement = (readableTransaction, apiMovement) => ({
+  id: null,
+  account: {
+    company: null,
+    instrument: apiMovement.currency,
+    syncIds: apiMovement.senderInfo ? [`${apiMovement.senderInfo.senderAccountNumber}`] : null,
+    type: 'ccard'
+  },
+  invoice: null,
+  sum: -1 * parseApiAmount(apiMovement.amount),
+  fee: 0
+})
+
+const makeOuterMovement = (readableTransaction, apiMovement) => ({
+  id: null,
+  account: {
+    company: null,
+    instrument: apiMovement.currency,
+    syncIds: apiMovement.recipientInfo ? [`${apiMovement.recipientInfo.recipientValue}`] : null,
+    type: null
+  },
+  invoice: null,
+  sum: -1 * parseApiAmount(apiMovement.amount),
+  fee: 0
+})
+
+const makeInternalMovement = (readableTransaction, apiMovement) => ({
+  id: null,
+  account: {
+    company: null,
+    instrument: apiMovement.currency,
+    syncIds: apiMovement.senderInfo ? [`${apiMovement.senderInfo.senderAccountNumber}`] : null,
+    type: null
+  },
+  invoice: null,
+  sum: -1 * parseApiAmount(apiMovement.amount),
+  fee: 0
+})
 
 const makeNeverLosingDataMergeCustomizer = (relatedMovements) => function (valueInA, valueInB, key, objA, objB) {
   if (valueInA && valueInB && valueInA !== valueInB && !(_.isPlainObject(valueInA) && _.isPlainObject(valueInB))) {
@@ -219,6 +355,9 @@ const makeNeverLosingDataMergeCustomizer = (relatedMovements) => function (value
     ))
   }
 }
+
+const isMoneyBoxTransfer = ({ reference, descriptions }) =>
+  reference.startsWith('OP1ED') && descriptions.every(description => description.match('Копилка'))
 
 export const isPossiblyTransfer = ({ reference }) => {
   return reference !== 'HOLD' &&
@@ -237,7 +376,12 @@ function complementTransferSides (apiMovements) {
   const relatedMovementsByReferenceLookup = _.fromPairs(_.toPairs(_.groupBy(apiMovements, x => {
     delete x.actions
     return x.reference
-  })).filter(([key, items]) => isPossiblyTransfer({ reference: key }) && items.length === 2))
+  })).filter(
+    ([key, items]) => (
+      isPossiblyTransfer({ reference: key }) ||
+      isMoneyBoxTransfer({ reference: key, descriptions: items.map(item => item.description) })
+    ) && items.length === 2
+  ))
   return apiMovements.map((apiMovement) => {
     const relatedMovements = relatedMovementsByReferenceLookup[apiMovement.reference]
     if (!relatedMovements) {
@@ -246,8 +390,7 @@ function complementTransferSides (apiMovements) {
     const neverLosingDataMergeCustomizer = makeNeverLosingDataMergeCustomizer(relatedMovements)
     const senderInfo = _.mergeWith({}, ...relatedMovements.map((x) => x.senderInfo), neverLosingDataMergeCustomizer)
     const recipientInfo = _.mergeWith({}, ...relatedMovements.map((x) => x.recipientInfo), neverLosingDataMergeCustomizer)
-    const executeTimeStamp = relatedMovements.map((x) => x.executeTimeStamp).find(Boolean)
-    return { ...apiMovement, executeTimeStamp, senderInfo, recipientInfo }
+    return { ...apiMovement, senderInfo, recipientInfo }
   })
 }
 
@@ -256,6 +399,9 @@ const isTransferItem = ({ apiMovement: { senderInfo, recipientInfo, reference, d
     return false
   }
   if (!isPossiblyTransfer({ reference })) {
+    if (isMoneyBoxTransfer({ reference, descriptions: [description] })) {
+      return true
+    }
     return false
   }
   if (description.startsWith('Внутрибанковский перевод между счетами')) {

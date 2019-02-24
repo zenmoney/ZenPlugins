@@ -38,6 +38,8 @@ Array [
     "date": 2018-05-22T09:00:00.000Z,
     "hold": false,
     "merchant": Object {
+      "city": null,
+      "country": null,
       "location": null,
       "mcc": null,
       "title": "test(recipientName)",
@@ -194,6 +196,16 @@ Array [
     "output": Object {
       "mcc": null,
       "origin": null,
+    },
+  },
+  Object {
+    "input": "123456++++++7890    10054005\\\\643\\\\KAZAN\\\\AUCHAN 054 KA                  31.01.19 29.01.19       546.00  RUR (Apple Pay-9710) MCC5411",
+    "output": Object {
+      "mcc": 5411,
+      "origin": Object {
+        "amount": -546,
+        "instrument": "RUR",
+      },
     },
   },
 ]
