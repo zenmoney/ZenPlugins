@@ -166,12 +166,12 @@ export const extractDate = (apiMovement) => {
 }
 
 export const getMerchantDataFromDescription = (description) => {
-  const spacedPattern = /(\d{6,8})\s+(\w{2,3})\s+([\w .&-]+)>([\w.-]{1,23})/ // 35 characters max
+  const spacedPattern = /(\d{6,8})\s+(\w{2,3})\s+([\w .&-]+)>([\w.-]{1,23})?/ // 35 characters max
   const slashedPattern = /(\d{6,8}|\s+)\\(\w{3})\\([\w \\]{1,28})\s+/ // 40 characters max
 
   let matched = description.match(spacedPattern)
   if (matched) {
-    const [,, country, title, city] = matched
+    const [,, country, title, city = null] = matched
     return { country, title, city }
   }
 

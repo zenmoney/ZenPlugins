@@ -129,7 +129,8 @@ describe('getMerchantDataFromDescription', () => {
     '21863431 RU CLINIC SADKO>N.NOVGOROD 19.02.13 19.02.13 2830.00 RUR 123456++++++7890',
     '10620413 RU APTECHNYY PUNKT 1002>N. 19.02.12 19.02.12 636.00 RUR 123456++++++7890',
     '221518 RU Alfa Iss>SANKT-PETERBURG 19.02.20 19.02.20 300.00 RUR 123456++++++7890',
-    '10478045 RU APTEKA-12>TYUMEN 19.02.22 19.02.22 1944.00 RUR 123456++++++7890'
+    '10478045 RU APTEKA-12>TYUMEN 19.02.22 19.02.22 1944.00 RUR 123456++++++7890',
+    '11425642 RU PEREKRESTOK CHKALOVSKI> 19.02.28 19.02.28 474.08 RUR 123456++++++7890'
   ]
 
   const slashed = [
@@ -174,7 +175,8 @@ describe('getMerchantDataFromDescription', () => {
       { 'city': 'N.NOVGOROD', 'country': 'RU', 'title': 'CLINIC SADKO' },
       { 'city': 'N.', 'country': 'RU', 'title': 'APTECHNYY PUNKT 1002' },
       { 'city': 'SANKT-PETERBURG', 'country': 'RU', 'title': 'Alfa Iss' },
-      { 'city': 'TYUMEN', 'country': 'RU', 'title': 'APTEKA-12' }
+      { 'city': 'TYUMEN', 'country': 'RU', 'title': 'APTEKA-12' },
+      { 'city': null, 'country': 'RU', 'title': 'PEREKRESTOK CHKALOVSKI' }
     ]
     expect(merchants).toEqual(expectation)
   })
