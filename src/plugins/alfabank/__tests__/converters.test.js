@@ -947,4 +947,80 @@ describe('convertApiMovementsToReadableTransactions', () => {
 
     expect(convertApiMovementsToReadableTransactions(apiMovements, accountTuples)).toEqual(transactions)
   })
+
+  it('converts expenses as expenses, not as transfers', () => {
+    const apiMovements = [
+      {
+        id: '26',
+        createDate: '2019-02-22T12:00:00.000+0300',
+        amount: '-153.00',
+        currency: 'RUR',
+        status: '',
+        statusDescription: '',
+        description: '123456++++++7890 20456312\\643\\MOSCOW\\CITYMOBIL 25.02.19 22.02.19 153.00 RUR MCC4121',
+        hold: false,
+        key: '1190225MOCO@SVXB56337',
+        reference: 'CRD_7C07NE',
+        userComment: '',
+        shortDescription: 'CITYMOBIL',
+        descriptionForRepeat: '',
+        senderInfo: { senderAccountNumberDescription: 'Текущий сч.. ··1234' },
+        recipientInfo:
+          {
+            recipientName: '',
+            recipientValue: '',
+            recipientCardNumber: '',
+            recipientBicBank: '',
+            recipientNameBank: ''
+          },
+        category:
+          {
+            id: '24',
+            bankCategoryId: '00015',
+            bankCategoryName: 'Общественный транспорт',
+            color: '#CCCE00'
+          },
+        actions:
+          {
+            isAvailableForMarking: true,
+            isAvailableForRepeat: false,
+            isAvailableForCreateTemplate: false,
+            isAvailableForPDF: false,
+            isAvailableForCreateToDo: false
+          }
+      }
+    ]
+
+    const transactions = [
+      {
+        comment: null,
+        date: new Date('2019-02-22T09:00:00.000Z'),
+        hold: false,
+        merchant: {
+          city: 'MOSCOW',
+          country: '643',
+          location: null,
+          mcc: 4121,
+          title: 'CITYMOBIL'
+        },
+        movements: [
+          {
+            id: '1190225MOCO@SVXB56337',
+            account: { id: 'x1234' },
+            invoice: null,
+            sum: -153,
+            fee: 0
+          }
+        ]
+      }
+    ]
+
+    const apiAccounts = [
+      { number: 'x1234', amount: '10 213.03', description: 'Текущий' }
+    ]
+
+    const accountTuples = convertApiAccountsToAccountTuples(apiAccounts)
+
+    expect(convertApiMovementsToReadableTransactions(apiMovements, accountTuples)).toEqual(transactions)
+  })
 })

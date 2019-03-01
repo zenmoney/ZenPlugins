@@ -189,12 +189,12 @@ export const getMerchantDataFromDescription = (description) => {
 const getMerchant = (apiMovement, mcc = null) => {
   const unknownMerchantData = { mcc, country: null, city: null, title: null, location: null }
 
-  if (apiMovement.reference.match(/C03/)) {
+  if (apiMovement.reference.match(/^C03/)) {
     // 'Оплата неналоговых платежей (штрафы, пошлины)'
     return null
   }
 
-  if (apiMovement.reference.match(/C07/)) {
+  if (apiMovement.reference.match(/^C07/)) {
     // 'На счёт другому клиенту'
     return { ...unknownMerchantData, title: apiMovement.senderInfo.senderMaskedName || apiMovement.recipientInfo.recipientMaskedName }
   }
@@ -266,13 +266,13 @@ function convertApiMovementToReadableTransaction (apiMovement, accountId) {
     return readableTransaction
   }
 
-  if (apiMovement.reference.match(/C0[23]/)) {
+  if (apiMovement.reference.match(/^C0[23]/)) {
     readableTransaction.movements.push(makeOuterMovement(readableTransaction, apiMovement))
     readableTransaction.comment = apiMovement.description
     return readableTransaction
   }
 
-  if (apiMovement.reference.match(/C07/)) {
+  if (apiMovement.reference.match(/^C07/)) {
     if (Math.sign(parseApiAmount(apiMovement.amount)) === 1) {
       readableTransaction.movements.push(makeInternalMovement(readableTransaction, apiMovement))
     }
@@ -281,7 +281,7 @@ function convertApiMovementToReadableTransaction (apiMovement, accountId) {
   }
 
   if (apiMovement.reference.match(/^M0/) ||
-    (apiMovement.reference.match(/OP1ED/) && !isMoneyBoxTransfer({ reference: apiMovement.reference, descriptions: [apiMovement.description] }))) {
+    (apiMovement.reference.match(/^OP1ED/) && !isMoneyBoxTransfer({ reference: apiMovement.reference, descriptions: [apiMovement.description] }))) {
     readableTransaction.movements.push(makeIncomeMovement(readableTransaction, apiMovement))
     readableTransaction.comment = apiMovement.description
     return readableTransaction
