@@ -166,12 +166,12 @@ export const extractDate = (apiMovement) => {
 }
 
 export const getMerchantDataFromDescription = (description) => {
-  const spacedPattern = /(\d+)\s+(\w{2,3})\s+([^>]+)>([\w.-]+)?/ // 35 characters max
+  const spacedPattern = /\w+\s+(\w{2,3})\s+([^>]+?)>(.+)?\s+(?:\d{2}\.\d{2}\.\d{2}\s+){2}/ // 35 characters max
   const slashedPattern = /(\d{6,8}|\s+)\\(\w{3})\\([\w \\]{1,28})\s+/ // 40 characters max
 
   let matched = description.match(spacedPattern)
   if (matched) {
-    const [,, country, title, city = null] = matched
+    const [, country, title, city = null] = matched
     return { country, title, city }
   }
 
@@ -189,6 +189,11 @@ export const getMerchantDataFromDescription = (description) => {
 const getMerchant = (apiMovement, mcc = null) => {
   const unknownMerchantData = { mcc, country: null, city: null, title: null, location: null }
 
+  if (apiMovement.reference.match(/^C02/)) {
+    // 'На счёт в другой банк'
+    return null
+  }
+
   if (apiMovement.reference.match(/^C03/)) {
     // 'Оплата неналоговых платежей (штрафы, пошлины)'
     return null
@@ -200,7 +205,7 @@ const getMerchant = (apiMovement, mcc = null) => {
   }
 
   if (apiMovement.shortDescription && !apiMovement.shortDescription.match('Перевод между счетами')) {
-    if (apiMovement.shortDescription.match(/CARD2CARD/)) {
+    if (apiMovement.shortDescription.match(/CARD2CARD/i)) {
       return null
     }
 
@@ -209,7 +214,10 @@ const getMerchant = (apiMovement, mcc = null) => {
       return { ...unknownMerchantData, title: apiMovement.shortDescription }
     }
 
-    const merchantData = getMerchantDataFromDescription(apiMovement.description)
+    const merchantData = {
+      title: apiMovement.shortDescription.replace(/^От /, ''),
+      ...(getMerchantDataFromDescription(apiMovement.description) || {})
+    }
     if (merchantData) {
       return { ...unknownMerchantData, ...merchantData }
     }

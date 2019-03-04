@@ -131,7 +131,11 @@ describe('getMerchantDataFromDescription', () => {
     '221518 RU Alfa Iss>SANKT-PETERBURG 19.02.20 19.02.20 300.00 RUR 123456++++++7890',
     '10478045 RU APTEKA-12>TYUMEN 19.02.22 19.02.22 1944.00 RUR 123456++++++7890',
     '11425642 RU PEREKRESTOK CHKALOVSKI> 19.02.28 19.02.28 474.08 RUR 123456++++++7890',
-    '40000098 RU MTRK EVROPOLIS, - 78-6> 19.03.03 19.03.03 100.00 RUR 123456++++++7890'
+    '40000098 RU MTRK EVROPOLIS, - 78-6> 19.03.03 19.03.03 100.00 RUR 123456++++++7890',
+    '00000001 US PAYPAL  FISHISFAST>4029 18.12.06 18.12.06 60.00 USD 123456++++++7890',
+    'I018203 RU KORONAPAY.COM/ONLINE>- 19.02.28 19.02.28 13511.00 RUR 123456++++++7890',
+    '99990607 RU PROMO WI-FI RU>MSK G 19.02.28 19.02.28 450.00 RUR 123456++++++7890',
+    '89800480 RU Card2Card>MOSKVA G 19.01.10 19.01.10 17330.85 RUR 123456++++++7890'
   ]
 
   const slashed = [
@@ -153,7 +157,8 @@ describe('getMerchantDataFromDescription', () => {
     '123456++++++7890    00961336\\643\\N NOVGOROD\\KRONOS B POKR              13.02.19 11.02.19      2470.00  RUR MCC8043',
     '123456++++++7890    20913073\\643\\N NOVGOROD\\MAXIDOM NNOVG              12.02.19 09.02.19      5857.00  RUR MCC5200',
     '123456++++++7890    10704013\\RUS\\SAINT PETERSB\\AUCHAN GULLIV           16.02.19 14.02.19       203.32  RUR (Android Pay-8897) MCC5411',
-    '123456++++++7890    \\372\\ITUNES COM\\ITUNES COM BI                     31.01.19 29.01.19       169.00  RUR MCC5735'
+    '123456++++++7890    \\372\\ITUNES COM\\ITUNES COM BI                     31.01.19 29.01.19       169.00  RUR MCC5735',
+    '123456++++++7890    89800480\\RUS\\MOSKVA G\\http\\Card2Card              02.09.18 31.08.18     50000.00  RUR MCC6538'
   ]
 
   it('spaced', () => {
@@ -178,7 +183,11 @@ describe('getMerchantDataFromDescription', () => {
       { 'city': 'SANKT-PETERBURG', 'country': 'RU', 'title': 'Alfa Iss' },
       { 'city': 'TYUMEN', 'country': 'RU', 'title': 'APTEKA-12' },
       { 'city': null, 'country': 'RU', 'title': 'PEREKRESTOK CHKALOVSKI' },
-      { 'city': null, 'country': 'RU', 'title': 'MTRK EVROPOLIS, - 78-6' }
+      { 'city': null, 'country': 'RU', 'title': 'MTRK EVROPOLIS, - 78-6' },
+      { 'city': '4029', 'country': 'US', 'title': 'PAYPAL  FISHISFAST' },
+      { 'city': '-', 'country': 'RU', 'title': 'KORONAPAY.COM/ONLINE' },
+      { 'city': 'MSK G', 'country': 'RU', 'title': 'PROMO WI-FI RU' },
+      { 'city': 'MOSKVA G', 'country': 'RU', 'title': 'Card2Card' }
     ]
     expect(merchants).toEqual(expectation)
   })
@@ -204,7 +213,8 @@ describe('getMerchantDataFromDescription', () => {
       { 'city': 'N NOVGOROD', 'country': '643', 'title': 'KRONOS B POKR' },
       { 'city': 'N NOVGOROD', 'country': '643', 'title': 'MAXIDOM NNOVG' },
       { 'city': 'SAINT PETERSB', 'country': 'RUS', 'title': 'AUCHAN GULLIV' },
-      { 'city': 'ITUNES COM', 'country': '372', 'title': 'ITUNES COM BI' }
+      { 'city': 'ITUNES COM', 'country': '372', 'title': 'ITUNES COM BI' },
+      { 'city': 'MOSKVA G', 'country': 'RUS', 'title': 'Card2Card' }
     ]
     expect(merchants).toEqual(expectation)
   })
