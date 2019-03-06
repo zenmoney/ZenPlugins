@@ -162,7 +162,14 @@ function findMovementAccountTuple (apiMovement, accountTuples) {
 export const normalizeIsoDate = (isoDate) => isoDate.replace(/([+-])(\d{2})(\d{2})$/, '$1$2:$3')
 
 export const extractDate = (apiMovement) => {
-  return new Date(normalizeIsoDate(apiMovement.createDate))
+  const created = new Date(normalizeIsoDate(apiMovement.createDate))
+  if (apiMovement.executeTimeStamp) {
+    const executed = new Date(normalizeIsoDate(apiMovement.executeTimeStamp))
+    return executed < created && (created - executed <= 36 * 60 * 60 * 1000)
+      ? executed
+      : created
+  }
+  return created
 }
 
 export const getMerchantDataFromDescription = (description) => {

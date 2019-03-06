@@ -226,12 +226,14 @@ test('normalizeIsoDate normalizes isoDate for JavaScriptCore new Date(isoDate)',
   expect(normalizeIsoDate('2017-12-01T12:00:00.000-0550')).toEqual('2017-12-01T12:00:00.000-05:50')
 })
 
-test('extractDate not uses executeTimeStamp', () => {
+test("extractDate uses executeTimeStamp (if it's present and <= 36 hours less than createDate) to ensure the same date is passed in hold/non-hold", () => {
   expect(extractDate({ createDate: '2018-06-18T12:00:00.000+0300' }))
     .toEqual(new Date('2018-06-18T12:00:00.000+0300'))
   expect(extractDate({ createDate: '2018-06-18T12:00:00.000+0300', executeTimeStamp: '2018-06-19T00:42:47.402+0300' }))
     .toEqual(new Date('2018-06-18T12:00:00.000+0300'))
   expect(extractDate({ createDate: '2018-06-20T12:00:00.000+0300', executeTimeStamp: '2018-06-19T00:42:47.402+0300' }))
+    .toEqual(new Date('2018-06-19T00:42:47.402+0300'))
+  expect(extractDate({ createDate: '2018-06-20T12:00:00.000+0300', executeTimeStamp: '2018-06-18T00:42:47.402+0300' }))
     .toEqual(new Date('2018-06-20T12:00:00.000+0300'))
 })
 
