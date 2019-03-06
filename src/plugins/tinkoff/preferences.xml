@@ -32,4 +32,14 @@
 		summary="|гггг-мм-дд|{@s}"
 		obligatory="true">
 	</EditTextPreference>
+	<EditTextPreference
+		key="ignoreCards"
+		title="Список карт, с которых не нужно добавлять операции"
+		dialogTitle="Список карт"
+		dialogMessage="Последние 4 цифры номеров карт, с которых не нужно добавлять операции (через запятую)"
+		summary="|Номера карт|{@s}"
+		positiveButtonText="ОК"
+		negativeButtonText="Отмена"
+		obligatory="false">
+	</EditTextPreference>
 </PreferenceScreen>

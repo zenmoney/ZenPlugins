@@ -35,8 +35,10 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
       if (!inAccounts(tAccount, accounts)) return
     }
 
-    // учитываем только успешные операции
-    if ((t.status && t.status === 'FAILED') || t.accountAmount.value === 0) { return }
+    const cardId = t.cardNumber.substr(t.cardNumber.length - 4)
+
+    // учитываем только успешные операции с карт, которые не были добавлены в игнор
+    if (preferences.ignoreCards.indexOf(cardId) !== -1 || (t.status && t.status === 'FAILED') || t.accountAmount.value === 0) { return }
 
     const tran = convertTransaction(t, tAccount)
 
