@@ -1,0 +1,17 @@
+image: node:8.15.1
+
+cache:
+  paths:
+    - .yarn
+    - node_modules
+
+before_script:
+  - yarn config set cache-folder .yarn
+
+stages:
+  - test
+
+run-test:
+  stage: test
+  script:
+    - yarn test
