@@ -203,8 +203,8 @@ export function convertTransaction (transaction, accountId) {
     }
   }
 
-  // получателей в кази-кэш переносим в комментарии операции
-  if (mcc === 6051 && tran.payee) {
+  // кази-кэш
+  /* if (mcc === 6051 && tran.payee) {
     const payee = parseOuterAccountData(tran.payee)
     if (payee) {
 
@@ -212,7 +212,7 @@ export function convertTransaction (transaction, accountId) {
       if (tran.comment) tran.comment += ` (${payee})`
       else tran.commen = tran.payee
     }
-  }
+  } */
 
   var hold = tran.hold ? ' [H] ' : ''
   console.log(`>>> Добавляем операцию: ${tran.date}, ${tran.time}, ${hold}${transaction.description}, ${transaction.type === 'Credit' ? '+' : (transaction.type === 'Debit' ? '-' : '')}${transaction.accountAmount.value}`)
@@ -416,7 +416,7 @@ function getCashLoan (account) {
     percent: account.tariffInfo.interestRate,
     capitalization: true,
     endDateOffsetInterval: 'month',
-    endDateOffset: account.remainingPaymentsCount,
+    endDateOffset: account.remainingPaymentsCount > 0 ? account.remainingPaymentsCount : 1,
     payoffInterval: 'month',
     payoffStep: 1
   }

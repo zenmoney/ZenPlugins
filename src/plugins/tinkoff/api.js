@@ -67,16 +67,16 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
       } else { console.log('>>> Пароль получен из настроек подключения.') }
       if (!password) { throw new TemporaryError('Ошибка: не удалось получить пароль для входа') }
 
-      const phoneMode = preferences.login.trim().substr(0, 1) === '+'
+      const phone = getPhoneNumber(preferences.login)
       let resultCode, response
-      if (phoneMode) {
+      if (phone) {
         console.log('>>> Авторизация по телефону...')
         response = await fetchJson(auth, 'sign_up', {
           ignoreErrors: true,
           shouldLog: false,
           headers: DEFAULT_HEADERS,
           get: {
-            'phone': preferences.login.trim()
+            'phone': phone
           },
           sanitizeRequestLog: { url: true }
         })
@@ -249,6 +249,12 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
   return auth
 }
 
+export function getPhoneNumber (str) {
+  const number = /^(?:\+?7|8|)(\d{10})$/.exec(str.trim())
+  if (number) return '+7' + number[1]
+  return null
+}
+
 async function levelUp (auth) {
   // получим привилегии пользователя
   console.log('>>> Попытка поднять привилегии:')
@@ -376,7 +382,7 @@ async function fetchJson (auth, url, options, predicate) {
   if (predicate) { validateResponse(response, response => response.body && predicate(response)) }
   if (options && !options.ignoreErrors && response.body) {
     if (['INTERNAL_ERROR', 'CONFIRMATION_FAILED', 'INVALID_REQUEST_DATA'].indexOf(response.body.resultCode) + 1) {
-      throw new TemporaryError(response.body.plainMessage || response.body.errorMessage)
+      throw new TemporaryError('Ответ банка: ' + (response.body.plainMessage || response.body.errorMessage))
     } else if (response.body.resultCode !== 'OK') {
       throw new Error(response.body.plainMessage || response.body.errorMessage)
     }
