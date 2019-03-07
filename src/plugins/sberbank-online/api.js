@@ -1,5 +1,6 @@
 import { MD5 } from 'jshashes'
 import _ from 'lodash'
+import * as moment from 'moment'
 import * as qs from 'querystring'
 import * as network from '../../common/network'
 import { retry, RetryError, toNodeCallbackArguments } from '../../common/retry'
@@ -178,6 +179,13 @@ export async function login (login, pin, auth, device) {
 }
 
 export async function fetchAccounts (auth) {
+  await fetchXml(`https://${auth.api.host}:4477/mobile9/private/finances/targets/list.do`, {
+    headers: {
+      ...defaultHeaders,
+      'Host': `${auth.api.host}:4477`,
+      'Cookie': auth.api.cookie
+    }
+  })
   const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/products/list.do`, {
     headers: {
       ...defaultHeaders,
@@ -228,6 +236,8 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
   const limit = 50
   let offset = 0
   let batch = null
+  const fromDateStr = formatDate(moment(toDate).add(-5, 'year').toDate())
+  const toDateStr = formatDate(toDate)
   do {
     const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/payments/list.do`, {
       headers: {
@@ -239,8 +249,8 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
       body: {
         paginationSize: limit,
         paginationOffset: offset,
-        from: formatDate(fromDate),
-        to: formatDate(toDate),
+        from: fromDateStr,
+        to: toDateStr,
         includeUfs: true,
         usedResource: `${type}:${id}`,
         showExternal: true
@@ -249,7 +259,7 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
     batch = getArray(_.get(response, 'body.operations.operation'))
     offset += limit
     transactions.push(...batch)
-  } while (batch && batch.length === limit)
+  } while (batch && batch.length === limit && parseDate(batch[batch.length - 1].date) >= fromDate)
 
   transactions = filterTransactions(transactions, fromDate)
 

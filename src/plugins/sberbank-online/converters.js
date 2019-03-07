@@ -111,16 +111,16 @@ function parseInnerTransfer (transaction, apiTransaction, account, accountsById)
   }
 
   const outcomeAccountData = getAccountDataFromResource(_.get(apiTransaction, 'details.fromResource'))
-  const outcomeAccount = !outcomeAccountData ? null :
-    accountsById[outcomeAccountData.id] ||
-    accountsById[getId(outcomeAccountData.instrument, outcomeAccountData.syncId)]
+  const outcomeAccount = !outcomeAccountData
+    ? null
+    : accountsById[outcomeAccountData.id] || accountsById[getId(outcomeAccountData.instrument, outcomeAccountData.syncId)]
   if (!outcomeAccount) {
     return false
   }
 
   const incomeAccountData = getAccountDataFromResource(_.get(apiTransaction, 'details.toResource'))
-  let incomeAccount = !incomeAccountData ? null :
-    accountsById[incomeAccountData.id] ||
+  let incomeAccount = !incomeAccountData ? null
+    : accountsById[incomeAccountData.id] ||
     accountsById[getId(incomeAccountData.instrument, incomeAccountData.syncId)]
   if (!incomeAccount) {
     const match = apiTransaction.to.match(/\s{10}(\d[\d*\s]+)$/)
@@ -702,8 +702,8 @@ export function adjustTransactionsAndCheckBalance (apiTransactions, apiPayments)
         k = j
       }
       if (!pd.apiTransaction && areDatesEqual &&
-        pd.amount.instrument === transactionData.amount.instrument && (
-          Math.abs(pd.amount.sum) === Math.abs(transactionData.amount.sum) ||
+        pd.amount.instrument === transactionData.amount.instrument &&
+        (Math.abs(pd.amount.sum) === Math.abs(transactionData.amount.sum) ||
           Math.abs((pd.amount.sum - transactionData.amount.sum) / transactionData.amount.sum) < 0.1)) {
         if (Math.abs(delta) < maxDateDeltaMs) {
           paymentData = pd
