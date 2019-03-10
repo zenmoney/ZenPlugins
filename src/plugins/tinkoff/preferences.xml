@@ -32,4 +32,9 @@
 		summary="|гггг-мм-дд|{@s}"
 		obligatory="true">
 	</EditTextPreference>
+	<CheckBoxPreference
+		key="cardIdInComment"
+		title="Добавлять в комментарий к операции номер карты"
+		obligatory="false">
+	</CheckBoxPreference>
 </PreferenceScreen>

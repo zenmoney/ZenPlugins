@@ -38,8 +38,14 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
     // учитываем только успешные операции
     if ((t.status && t.status === 'FAILED') || t.accountAmount.value === 0) { return }
 
+    const cardId = t.cardNumber.substr(t.cardNumber.length - 4)
     const tran = convertTransaction(t, tAccount)
 
+    // При необходимости добавляем номер карты в комментарий к операции
+    if (preferences.cardIdInComment) {
+      if (tran.comment) tran.comment = '*' + cardId + ' ' + tran.comment
+      else tran.comment = '*' + cardId
+    }
     // Внутренний ID операции
     const tranId = t.payment && t.payment.paymentId
     // если есть paymentId, объединяем по нему, отделяя комиссии от переводов

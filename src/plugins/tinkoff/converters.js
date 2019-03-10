@@ -210,7 +210,7 @@ export function convertTransaction (transaction, accountId) {
 
     } else {
       if (tran.comment) tran.comment += ` (${payee})`
-      else tran.commen = tran.payee
+      else tran.comment = tran.payee
     }
   }
 
