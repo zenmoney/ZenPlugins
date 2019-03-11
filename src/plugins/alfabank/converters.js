@@ -223,6 +223,14 @@ const getMerchant = (apiMovement, mcc = null) => {
     return null
   }
 
+  if (
+    apiMovement.shortDescription === 'Снятие наличных в банкомате' ||
+    apiMovement.description.startsWith('Внесение наличных рублей') ||
+    apiMovement.description.includes('Внесение средств через устройство')
+  ) {
+    return null
+  }
+
   if (apiMovement.shortDescription && !apiMovement.shortDescription.match('Перевод между счетами')) {
     if (apiMovement.shortDescription.match(/CARD2CARD/i)) {
       return null

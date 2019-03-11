@@ -1101,4 +1101,67 @@ describe('convertApiMovementsToReadableTransactions', () => {
 
     expect(convertApiMovementsToReadableTransactions(apiMovements, accountTuples)).toEqual(transactions)
   })
+
+  it('ignore merchant in cash withdraw / deposit operations', () => {
+    const apiMovements = [
+      {
+        id: '1',
+        createDate: '2019-03-01T12:00:00.000+0300',
+        amount: '-600.00',
+        currency: 'RUR',
+        status: '',
+        statusDescription: '',
+        description: '222106 RU Alfa Iss>PERM 19.03.01 19.03.01 600.00 RUR 555949++++++1592 (Android Pay-9780)',
+        hold: true,
+        key: '4RY70S1190301',
+        reference: 'HOLD',
+        userComment: '',
+        shortDescription: 'Снятие наличных в банкомате',
+        descriptionForRepeat: '',
+        senderInfo: { senderAccountNumberDescription: 'Текущий.. ··1234' },
+        actions:
+          {
+            isAvailableForMarking: true,
+            isAvailableForRepeat: false,
+            isAvailableForCreateTemplate: false,
+            isAvailableForPDF: false,
+            isAvailableForCreateToDo: false
+          }
+      }
+    ]
+
+    const transactions = [
+      {
+        movements:
+          [
+            {
+              id: null,
+              account: { type: 'cash', instrument: 'RUR', syncIds: null, company: null },
+              invoice: null,
+              sum: 600,
+              fee: 0
+            },
+            {
+              id: '4RY70S1190301',
+              account: { id: 'x1234' },
+              invoice: null,
+              sum: -600,
+              fee: 0
+            }
+          ],
+        date: new Date('Fri Mar 01 2019 14:00:00 GMT+0500 (+05)'),
+        hold: true,
+        merchant: null,
+        comment: null
+      }
+    ]
+
+    const apiAccounts = [
+      { number: 'x1234', amount: '10 213.03', description: 'Текущий' }
+    ]
+
+    const accountTuples = convertApiAccountsToAccountTuples(apiAccounts)
+
+    expect(convertApiMovementsToReadableTransactions(apiMovements, accountTuples)).toEqual(transactions)
+  })
 })
