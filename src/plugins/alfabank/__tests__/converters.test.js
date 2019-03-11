@@ -681,6 +681,70 @@ describe('convertApiMovementsToReadableTransactions', () => {
     expect(convertApiMovementsToReadableTransactions(apiMovements, accountTuples)).toEqual(transactions)
   })
 
+  it('converts inner transfers without recipientInfo', () => {
+    const apiMovements = [
+      {
+        id: '2326',
+        createDate: '2013-10-01T12:00:00.000+0400',
+        amount: '-400.00',
+        currency: 'RUR',
+        status: '',
+        statusDescription: '',
+        description: 'Перевод денежных средств',
+        hold: false,
+        key: '1131001MOCO#DS4005769',
+        reference: 'C070110130000101',
+        userComment: '',
+        shortDescription: 'Перевод денежных средств',
+        descriptionForRepeat: '',
+        senderInfo: { senderAccountNumberDescription: 'Текущий сч..··1234' },
+        recipientInfo:
+          {
+            recipientName: '',
+            recipientValue: '',
+            recipientCardNumber: '',
+            recipientBicBank: '',
+            recipientNameBank: ''
+          },
+        actions:
+          {
+            isAvailableForMarking: true,
+            isAvailableForRepeat: false,
+            isAvailableForCreateTemplate: false,
+            isAvailableForPDF: false,
+            isAvailableForCreateToDo: false
+          }
+      }
+    ]
+
+    const transactions = [
+      {
+        movements:
+          [
+            {
+              id: '1131001MOCO#DS4005769',
+              account: { id: 'x1234' },
+              invoice: null,
+              sum: -400,
+              fee: 0
+            }
+          ],
+        date: new Date('Tue Oct 01 2013 19:00:00 GMT+1100 (+10)'),
+        hold: false,
+        merchant: null,
+        comment: 'Перевод денежных средств'
+      }
+    ]
+
+    const apiAccounts = [
+      { number: 'x1234', amount: '10 213.03', description: 'Текущий' }
+    ]
+
+    const accountTuples = convertApiAccountsToAccountTuples(apiAccounts)
+
+    expect(convertApiMovementsToReadableTransactions(apiMovements, accountTuples)).toEqual(transactions)
+  })
+
   it('converts mobile and internet payments', () => {
     const apiMovements = [
       {

@@ -208,7 +208,19 @@ const getMerchant = (apiMovement, mcc = null) => {
 
   if (apiMovement.reference.match(/^C07/)) {
     // 'На счёт другому клиенту'
-    return { ...unknownMerchantData, title: apiMovement.senderInfo.senderMaskedName || apiMovement.recipientInfo.recipientMaskedName }
+    let title
+
+    if (apiMovement.senderInfo.senderMaskedName) {
+      title = apiMovement.senderInfo.senderMaskedName
+    } else if (apiMovement.recipientInfo.recipientMaskedName) {
+      title = apiMovement.recipientInfo.recipientMaskedName
+    }
+
+    if (title) {
+      return { ...unknownMerchantData, title }
+    }
+
+    return null
   }
 
   if (apiMovement.shortDescription && !apiMovement.shortDescription.match('Перевод между счетами')) {
