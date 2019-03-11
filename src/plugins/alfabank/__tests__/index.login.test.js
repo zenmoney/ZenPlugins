@@ -3,13 +3,15 @@ import _ from 'lodash'
 import { installFetchMockDeveloperFriendlyFallback } from '../../../testUtils'
 import { makePluginDataApi } from '../../../ZPAPI.pluginData'
 import { scrape } from '../index'
+import { formatApiDate } from '../api'
+import * as utils from '../../../common/utils'
 
-function expectLoginRequest ({ response }) {
+function expectLoginRequest ({ accessToken, response }) {
   fetchMock.once({
     method: 'POST',
     headers: {
       'DEVICE-ID': '11111111-1111-1111-1111-111111111111',
-      Authorization: 'Bearer 22222222-2222-2222-2222-222222222222'
+      Authorization: `Bearer ${accessToken || '22222222-2222-2222-2222-222222222222'}`
     },
     matcher: (url, { body }) => url === 'https://alfa-mobile.alfabank.ru/ALFAJMB/gate' && _.isEqual(JSON.parse(body), {
       'operationId': 'Authorization:Login',
@@ -65,6 +67,64 @@ function expectFetchAccessTokenRequest ({ response }) {
   })
 }
 
+function expectFetchCommonAccounts ({ response }) {
+  fetchMock.once({
+    method: 'POST',
+    headers: {
+      Accept: 'application/json, text/plain, */*',
+      'Content-Type': 'application/json;charset=UTF-8',
+      'jmb-protocol-version': '1.0',
+      'jmb-protocol-service': 'Budget',
+      'APP-VERSION': '10.8.1',
+      'OS-VERSION': '7.1.1',
+      OS: 'android',
+      'DEVICE-ID': '11111111-1111-1111-1111-111111111111',
+      'DEVICE-MODEL': 'Sony D6503',
+      applicationId: 'ru.alfabank.mobile.android',
+      appVersion: '10.8.1',
+      osVersion: '7.1.1',
+      'User-Agent': 'okhttp/3.8.0'
+    },
+    matcher: (url, { body }) => url === 'https://alfa-mobile.alfabank.ru/ALFAJMB/gate' && _.isEqual(JSON.parse(body), {
+      operationId: 'Budget:GetCommonAccounts',
+      parameters: { operation: 'mainPage' }
+    }),
+    response
+  })
+}
+
+function expectFetchCommonMovements ({ sessionId, startDate, endDate, offset, count, response }) {
+  fetchMock.once({
+    method: 'POST',
+    headers: {
+      'jmb-protocol-version': '1.0',
+      'jmb-protocol-service': 'Budget',
+      'APP-VERSION': '10.8.1',
+      'OS-VERSION': '7.1.1',
+      OS: 'android',
+      'DEVICE-ID': '11111111-1111-1111-1111-111111111111',
+      'DEVICE-MODEL': 'Sony D6503',
+      applicationId: 'ru.alfabank.mobile.android',
+      appVersion: '10.8.1',
+      osVersion: '7.1.1',
+      session_id: sessionId,
+      'User-Agent': 'okhttp/3.8.0'
+    },
+    matcher: (url, { body }) => url === 'https://alfa-mobile.alfabank.ru/ALFAJMB/gate' && _.isEqual(JSON.parse(body), {
+      operationId: 'Budget:GetCommonMovements',
+      operation: 'commonStatement',
+      filters: [],
+      tagsCloud: [],
+      startDate,
+      endDate,
+      offset,
+      count,
+      forceCache: false
+    }),
+    response
+  })
+}
+
 describe('login', () => {
   installFetchMockDeveloperFriendlyFallback(fetchMock)
 
@@ -100,6 +160,150 @@ describe('login', () => {
       fromDate: new Date(),
       toDate: null
     })).rejects.toBe(exit)
+  })
+
+  describe('handles TOKEN_NOT_FOUND from login', () => {
+    it('re-logins if refresh_token is still valid', async () => {
+      const sessionId = utils.generateUUID()
+      utils.generateUUID = jest.fn(() => sessionId)
+
+      global.ZenMoney = makePluginDataApi({
+        deviceId: '11111111-1111-1111-1111-111111111111',
+        registered: true,
+        accessToken: '22222222-2222-2222-2222-222222222222',
+        refreshToken: '33333333-3333-3333-3333-333333333333'
+      }).methods
+
+      expectLoginRequest({
+        response: {
+          status: 403,
+          body: {
+            id: 'TOKEN_NOT_FOUND',
+            message: { en: 'Token not found' },
+            type_id: 'AUTHORIZATION',
+            class: 'class ru.ratauth.exception.AuthorizationException'
+          }
+        }
+      })
+
+      expectFetchAccessTokenRequest({
+        response: {
+          status: 200,
+          body: {
+            operationId: 'OpenID:TokenResult',
+            access_token: '44444444-4444-4444-4444-444444444444',
+            expires_in: Date.now() + (2 * 86400000),
+            refresh_token: '55555555-5555-5555-5555-555555555555'
+          }
+        }
+      })
+
+      expectLoginRequest({
+        accessToken: '44444444-4444-4444-4444-444444444444',
+        response: {
+          status: 200,
+          body: {
+            header: { status: 'STATUS_OK' },
+            operationId: 'Authorization:LoginResult'
+          }
+        }
+      })
+
+      expectFetchCommonAccounts({
+        response: {
+          status: 200,
+          body: {
+            operationId: 'Budget:GetCommonAccountsResult',
+            accounts: []
+          }
+        }
+      })
+
+      const fromDate = new Date()
+      const toDate = null
+
+      expectFetchCommonMovements({
+        sessionId,
+        startDate: formatApiDate(fromDate),
+        endDate: formatApiDate(toDate),
+        offset: 0,
+        count: 1024,
+        response: {
+          status: 200,
+          body: {
+            operationId: 'Budget:GetCommonMovementsResult',
+            accountsAmount: { credit: '10 000.00', debet: '11 656.60', currency: 'RUR' },
+            movements: []
+          }
+        }
+      })
+
+      await expect(scrape({
+        preferences: {
+          cardNumber: '4444555566661111',
+          cardExpirationDate: '1234',
+          phoneNumber: '71234567890'
+        },
+        fromDate,
+        toDate
+      })).resolves.toEqual({
+        accounts: [],
+        transactions: []
+      })
+    })
+
+    it('re-registers when receives REFRESH_TOKEN_EXPIRED from fetchAccessToken', async () => {
+      const sessionId = utils.generateUUID()
+      utils.generateUUID = jest.fn(() => sessionId)
+
+      global._fetchMock = fetchMock
+      global.ZenMoney = makePluginDataApi({
+        deviceId: '11111111-1111-1111-1111-111111111111',
+        registered: true,
+        accessToken: '22222222-2222-2222-2222-222222222222',
+        refreshToken: '33333333-3333-3333-3333-333333333333'
+      }).methods
+
+      expectLoginRequest({
+        response: {
+          status: 403,
+          body: {
+            id: 'TOKEN_NOT_FOUND',
+            message: { en: 'Token not found' },
+            type_id: 'AUTHORIZATION',
+            class: 'class ru.ratauth.exception.AuthorizationException'
+          }
+        }
+      })
+
+      expectFetchAccessTokenRequest({
+        response: {
+          status: 419,
+          body: {
+            id: 'REFRESH_TOKEN_EXPIRED',
+            message: { en: 'Refresh token has expired' },
+            type_id: 'EXPIRED',
+            class: 'class ru.ratauth.exception.ExpiredException'
+          }
+        }
+      })
+
+      const exit = new Error('got expected call')
+      expectRegisterCustomerRequest({ response: { throws: exit } })
+
+      const fromDate = new Date()
+      const toDate = null
+
+      await expect(scrape({
+        preferences: {
+          cardNumber: '4444555566661111',
+          cardExpirationDate: '1234',
+          phoneNumber: '71234567890'
+        },
+        fromDate,
+        toDate
+      })).rejects.toBe(exit)
+    })
   })
 
   it('re-registers when receives REFRESH_TOKEN_EXPIRED from fetchAccessToken', async () => {

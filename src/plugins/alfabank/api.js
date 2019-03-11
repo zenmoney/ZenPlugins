@@ -57,6 +57,10 @@ export function isExpiredToken (response) {
   return response.status === 419 && response.body.id === 'TOKEN_EXPIRED'
 }
 
+export function isNotFoundToken (response) {
+  return response.status === 403 && response.body.id === 'TOKEN_NOT_FOUND'
+}
+
 export function isExpiredRefreshToken (response) {
   // also body.type_id: 'EXPIRED', body.class: 'class ru.ratauth.exception.ExpiredException' },
   return response.status === 419 && response.body.id === 'REFRESH_TOKEN_EXPIRED'
@@ -264,7 +268,7 @@ export async function getAccountsWithAccountDetailsCreditInfo ({ sessionId, devi
 }
 
 // note: API filters movements by date and respects time+timezone only for determining specific day
-const formatApiDate = (date) => date ? date.toISOString().replace(/Z$/, '+0000') : null
+export const formatApiDate = (date) => date ? date.toISOString().replace(/Z$/, '+0000') : null
 
 async function getCommonMovements ({ sessionId, deviceId, startDate = null, endDate = null, offset, count }) {
   const response = await callGate({
