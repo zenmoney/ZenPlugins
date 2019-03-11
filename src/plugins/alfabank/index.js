@@ -5,6 +5,7 @@ import {
   getAccountsWithAccountDetailsCreditInfo,
   getAllCommonMovements,
   isExpiredRefreshToken,
+  isBlockedSession,
   isExpiredSession,
   isExpiredToken,
   isNotFoundToken,
@@ -75,7 +76,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     } else {
       console.assert(false, 'Unhandled fetchAccessToken response', response)
     }
-  } else if (isExpiredSession(loginResponse)) {
+  } else if (isExpiredSession(loginResponse) || isBlockedSession(loginResponse)) {
     await executeRegistration({ pluginData, preferences })
 
     loginResponse = await login({ sessionId, deviceId: pluginData.deviceId, accessToken: pluginData.accessToken })

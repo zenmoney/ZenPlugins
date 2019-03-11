@@ -71,6 +71,10 @@ export function isExpiredSession (response) {
   return response.status === 419 && response.body.id === 'SESSION_EXPIRED'
 }
 
+export function isBlockedSession (response) {
+  return response.status === 403 && response.body.id === 'SESSION_BLOCKED'
+}
+
 export function assertLoginIsSuccessful (loginResponse) {
   console.assert(loginResponse.status === 200, 'Unexpected login status code', loginResponse)
   if (loginResponse.body.operationId === 'Exception') {
