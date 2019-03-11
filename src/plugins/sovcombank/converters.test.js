@@ -269,7 +269,7 @@ describe('convertTransaction', () => {
       incomeAccount: 'account',
       outcome: 1050,
       outcomeAccount: 'account',
-      payee: 'PYATEROCHKA 6123',
+      payee: 'PYATEROCHKA 6123 CHEBOKSARY RUS',
       mcc: 5411
     })
   })
@@ -444,20 +444,20 @@ describe('convertTransaction', () => {
 describe('parseDescription', () => {
   it('parses different descriptions', () => {
     expect(parseDescription('Покупка MD00PYATEROCHKA 6123 CHEBOKSARY RUS')).toEqual({
-      payee: 'PYATEROCHKA 6123'
+      payee: 'PYATEROCHKA 6123 CHEBOKSARY RUS'
     })
     expect(parseDescription('Покупка YANDEX TAXI MOSCOW RUS')).toEqual({
-      payee: 'YANDEX TAXI'
+      payee: 'YANDEX TAXI MOSCOW RUS'
     })
     expect(parseDescription('Покупка Tortik 11 Baikonur CHEBOXARY G RUS')).toEqual({
-      payee: 'Tortik 11 Baikonur'
+      payee: 'Tortik 11 Baikonur CHEBOXARY G RUS'
     })
     expect(parseDescription('Платеж. Авторизация №827615579638 Дата 2018.10.03 18:10 Описание: RU,MOSCOW  RUS')).toEqual({})
     expect(parseDescription('Покупка MD00VERNYI UL  DEMJANA SAINT PETERSB RUS')).toEqual({
-      payee: 'VERNYI UL DEMJANA'
+      payee: 'VERNYI UL DEMJANA SANKT-PETERBURG RUS'
     })
     expect(parseDescription('Возврат покупки Lamoda MOSKVA RUS')).toEqual({
-      payee: 'Lamoda'
+      payee: 'Lamoda MOSKVA RUS'
     })
     expect(parseDescription('Перевод Card2Card MOSKVA G RUS')).toEqual({
       comment: 'Перевод Card2Card'
@@ -469,10 +469,10 @@ describe('parseDescription', () => {
       comment: 'Зачисление процентов за депозит(810/000129536900) для счета 810/000129536429'
     })
     expect(parseDescription('Покупка KARUSEL PROSVESHCHENIY SANKT PETERBU RUS')).toEqual({
-      payee: 'KARUSEL PROSVESHCHENIY'
+      payee: 'KARUSEL PROSVESHCHENIY SANKT-PETERBURG RUS'
     })
     expect(parseDescription('Покупка LEROY MERLIN ST  PETER SAINT PETERSB RUS')).toEqual({
-      payee: 'LEROY MERLIN'
+      payee: 'LEROY MERLIN SANKT-PETERBURG RUS'
     })
     expect(parseDescription('Начисление бонуса в соответствии с условиями бонусной программы. Без НДС.  RUS', 'Начисление бонуса')).toEqual({
       comment: 'Начисление бонуса в соответствии с условиями бонусной программы. Без НДС.'
@@ -481,7 +481,7 @@ describe('parseDescription', () => {
       comment: 'Пополнение CHATBANK MONEY'
     })
     expect(parseDescription('Оплата услуг MD00Lenta LLC MOSCOW RUS')).toEqual({
-      payee: 'Lenta LLC'
+      payee: 'Lenta LLC MOSCOW RUS'
     })
     expect(parseDescription('ПОГАШЕНИЕ КРЕДИТА за период с 06/09/2018 по 05/10/2018.  RUS', 'Погашение долга')).toEqual({
       comment: 'ПОГАШЕНИЕ КРЕДИТА за период с 06/09/2018 по 05/10/2018.'

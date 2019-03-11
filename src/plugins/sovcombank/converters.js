@@ -144,9 +144,10 @@ export function parseDescription (description, shortDescription) {
   }
   description = description
     .replace(/\s+/g, ' ')
-    .replace(/ST\s+PETER\s+SAINT\s+PETERSB/, 'SANKT-PETER')
-    .replace(/SAINT PETER[^\s]*/, 'SANKT-PETER')
-    .replace(/SANKT PETER[^\s]*/, 'SANKT-PETER')
+    .replace(/ST\s+PETER\s+SAINT\s+PETERSB/, 'SANKT-PETERBURG')
+    .replace(/SAINT PETER[^\s]*/, 'SANKT-PETERBURG')
+    .replace(/SANKT PETER[^\s]*/, 'SANKT-PETERBURG')
+    .replace(/SANKT-PETE[^\s]*/, 'SANKT-PETERBURG')
     .trim()
   if (!description) {
     return {}
@@ -176,12 +177,14 @@ export function parseDescription (description, shortDescription) {
       .replace(/^Оплата услуг (MD00)?/, '')
   }
 
-  const parts = description.split(' ')
-  if (parts.length > 2 && parts[parts.length - 1] === 'RUS') {
-    if (parts[parts.length - 2] === 'G') {
-      description = parts.slice(0, parts.length - 3 + (commentType === 1 ? 1 : 0)).join(' ')
-    } else {
-      description = parts.slice(0, parts.length - 2 + (commentType === 1 ? 1 : 0)).join(' ')
+  if (commentType > 0) {
+    const parts = description.split(' ')
+    if (parts.length > 2 && parts[parts.length - 1] === 'RUS') {
+      if (parts[parts.length - 2] === 'G') {
+        description = parts.slice(0, parts.length - 3 + (commentType === 1 ? 1 : 0)).join(' ')
+      } else {
+        description = parts.slice(0, parts.length - 2 + (commentType === 1 ? 1 : 0)).join(' ')
+      }
     }
   }
 

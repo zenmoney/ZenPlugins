@@ -1,45 +1,45 @@
 import { SHA512 } from 'jshashes'
 import * as _ from 'lodash'
-import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { fetch } from '../../common/network'
-import { generateRandomString, generateUUID } from '../../common/utils'
+import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
+import { generateRandomString } from '../../common/utils'
 
 const qs = require('querystring')
 const sha512 = new SHA512()
 
 export function generateDevice () {
   return {
-    id: generateUUID().toUpperCase(),
-    pushUid: generateUUID().toUpperCase(),
-    pushAddress: 'apn' + generateRandomString(32)
+    id: generateRandomString(128),
+    pushUid: '-37280bc' + generateRandomString(35),
+    pushAddress: 'gcm' + generateRandomString(31)
   }
 }
 
-async function callGate (url, { auth, query, body, sanitizeRequestLog, sanitizeResponseLog }) {
-  const _ts = Math.round(new Date().getTime())
-  let search = `?do=${url}`
-  if (query || !body) {
-    search += `&_nts=${auth.nts}`
-    if (query) {
-      search += '&' + qs.stringify(query)
+async function callGate (url, { auth, query, body, sanitizeRequestLog, sanitizeResponseLog, json = true }) {
+  if (url.indexOf('http') !== 0) {
+    let search = `?do=${url}`
+    if (query || !body) {
+      search += `&_nts=${auth.nts}`
+      if (query) {
+        search += '&' + qs.stringify(query)
+      }
     }
-    search += `&_ts=${_ts}`
+    url = `https://online.sovcombank.ru/ib.php${search}`
   }
-  return fetch(`https://online.sovcombank.ru/ib.php${search}`, {
+  return fetch(url, {
     method: body ? 'POST' : 'GET',
     headers: {
       'Host': 'online.sovcombank.ru',
       'Accept': '*/*',
       'Content-Type': 'application/x-www-form-urlencoded',
-      'Accept-Language': 'ru-RU;q=1, en-RU;q=0.9',
-      'Accept-Encoding': 'gzip, deflate',
-      'Connection': 'keep-alive',
-      'User-Agent': 'CTBBank/1.9.2 (iPhone; iOS 10.3.3; Scale/2.00)',
-      'Cookie': `ibtim=${auth.ibtim}; ibext=${auth.ibext}`
+      'Accept-Encoding': 'gzip',
+      'Connection': 'Keep-Alive',
+      'User-Agent': 'CTBBank Sovcombank androidapp Unknown_Android_SDK_built_for_x86|5.0.2 native|2.2.7',
+      'Cookie': `ABibStyle=White1; ibtim=${auth.ibtim}; ibext=${auth.ibext}`
     },
-    body: body ? { ...body, _ts } : null,
+    body: body || null,
     stringify: qs.stringify,
-    parse: JSON.parse,
+    parse: json ? JSON.parse : null,
     sanitizeResponseLog,
     sanitizeRequestLog: {
       ...sanitizeRequestLog,
@@ -51,24 +51,26 @@ async function callGate (url, { auth, query, body, sanitizeRequestLog, sanitizeR
   })
 }
 
+function generateTimestamp () {
+  return generateRandomString(12) + '_' + Math.round(new Date().getTime())
+}
+
 export async function login (device, auth) {
   let response
 
   if (auth && auth.uid) {
     auth.ibext = ''
-    auth.ibtim = generateRandomString(12) + '_' + Math.round(new Date().getTime())
+    auth.ibtim = generateTimestamp()
 
     response = await callGate('mobileLogin', {
       auth,
       body: {
-        appBuild: '276',
-        deviceModel: 'iPhone10,1',
-        deviceName: 'iPhone',
-        language: 'ru-RU',
-        locale: 'ru_RU',
+        appBuild: '2.2.7',
+        deviceModel: 'generic_x86',
+        deviceName: 'Android SDK built for x86',
         push_address: device.pushAddress,
         push_uid: device.pushUid,
-        systemVersion: '10.3.3',
+        systemVersion: '5.0.2',
         token: auth.token,
         uid: auth.uid,
         wrap: sha512.hex(device.id + '' + auth.token)
@@ -86,22 +88,30 @@ export async function login (device, auth) {
     }
   }
 
-  const phone = await ZenMoney.readLine('Введите номер телефона, c которым вы зарегистрированы в ЧатБанке. Формат: +7**********',
-    { inputType: 'phone' })
-  if (!phone || phone.length !== 12 || phone.charAt(0) !== '+') {
-    throw new TemporaryError('Неверно введен номер телефона. Попробуйте подключить синхронизацию еще раз.')
+  const login = await ZenMoney.readLine('Введите логин, c которым вы зарегистрированы в ЧатБанке.')
+  if (!login) {
+    throw new TemporaryError('Неверно введен логин. Попробуйте подключить синхронизацию еще раз.')
   }
+
+  const keysrc = generateTimestamp()
+  await callGate(`https://online.sovcombank.ru/ab/abkey.php?fg=255,255,255&bg=0,144,255&set=num&key=${keysrc}&_nts=null`, {
+    json: false,
+    auth: {
+      ibext: '',
+      ibtim: generateTimestamp()
+    }
+  })
 
   auth = {}
   auth.ibext = ''
-  auth.ibtim = generateRandomString(12) + '_' + Math.round(new Date().getTime())
+  auth.ibtim = generateTimestamp()
 
-  response = await callGate('getinphone', {
+  response = await callGate('getin', {
     auth,
     body: {
-      apiname: 'getinphone',
-      ibin: phone.substring(2),
-      key: ''
+      ibin: login,
+      key: '',
+      keysrc
     },
     sanitizeRequestLog: { body: { ibin: true } },
     sanitizeResponseLog: { body: { data: { first: true, ptim: true } } }
@@ -109,9 +119,9 @@ export async function login (device, auth) {
 
   if (!response.body || response.body.result !== 'ok') {
     if (!response.body.message) {
-      throw new TemporaryError('Номер телефона не зарегистрирован в ЧатБанк. Пройдите регистрацию в ЧатБанк, затем подключите синхронизацию с Совкомбанк в Дзен-мани.')
+      throw new TemporaryError('Логин не зарегистрирован в ЧатБанк. Пройдите регистрацию в ЧатБанк, затем подключите синхронизацию с Совкомбанк в Дзен-мани.')
     } else if (response.body.message.indexOf('Логин введен неверно') >= 0) {
-      throw new TemporaryError('Неверно введен номер телефона. Попробуйте подключить синхронизацию еще раз.')
+      throw new TemporaryError('Логин введен неверно. Попробуйте подключить синхронизацию еще раз.')
     } else {
       throw new TemporaryError(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: ${response.body.message}`)
     }
@@ -126,17 +136,15 @@ export async function login (device, auth) {
   response = await callGate('getses', {
     auth,
     body: {
-      appBuild: '276',
+      appBuild: '2.2.7',
       deviceId: device.id,
-      deviceModel: 'iPhone10,1',
-      deviceName: 'iPhone',
+      deviceModel: 'generic_x86',
+      deviceName: 'Android SDK built for x86',
       ibin,
       key,
-      language: 'ru-RU',
-      locale: 'ru_RU',
       push_address: device.pushAddress,
       push_uid: device.pushUid,
-      systemVersion: '10.3.3'
+      systemVersion: '5.0.2'
     },
     sanitizeRequestLog: { body: { deviceId: true, ibin: true, key: true } },
     sanitizeResponseLog: { body: { data: { nts: true, second: true }, token: true } }
