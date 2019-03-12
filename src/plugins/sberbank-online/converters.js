@@ -3,7 +3,7 @@ import { getIntervalBetweenDates } from '../../common/momentDateUtils'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { parseOuterAccountData } from '../../common/accounts'
 
-const GRAMS_IN_OZ = 31.1034768
+export const GRAMS_IN_OZ = 31.1034768
 
 export function convertTransaction (apiTransaction, account, accountsById) {
   const invoice = apiTransaction.operationAmount && apiTransaction.operationAmount.amount && {
@@ -14,7 +14,7 @@ export function convertTransaction (apiTransaction, account, accountsById) {
     return null
   }
   if (parseMetalInstrument(apiTransaction.operationAmount.currency.code)) {
-    invoice.sum = invoice.sum / GRAMS_IN_OZ
+    invoice.sum /= GRAMS_IN_OZ
   }
   const feeStr = _.get(apiTransaction, 'details.paymentDetails.commission.amount')
   const fee = feeStr ? -parseDecimal(feeStr) : 0
@@ -133,13 +133,19 @@ function parseInnerTransfer (transaction, apiTransaction, account, accountsById)
   }
 
   const outcomeStr = _.get(apiTransaction, 'details.sellAmount.moneyType.value')
-  const outcome = outcomeStr ? parseDecimal(outcomeStr) : Math.abs(transaction.movements[0].invoice.sum)
+  let outcome = outcomeStr ? parseDecimal(outcomeStr) : Math.abs(transaction.movements[0].invoice.sum)
+  if (outcomeAccountData.isMetal) {
+    outcome /= GRAMS_IN_OZ
+  }
   const incomeStr =
     _.get(apiTransaction, 'details.buyAmount.moneyType.value') ||
     _.get(apiTransaction, 'details.destinationAmount.moneyType.value')
-  const income = incomeStr ? parseDecimal(incomeStr) : Math.abs(transaction.movements[0].invoice.sum)
+  let income = incomeStr ? parseDecimal(incomeStr) : Math.abs(transaction.movements[0].invoice.sum)
+  if (incomeAccountData && incomeAccountData.isMetal) {
+    income /= GRAMS_IN_OZ
+  }
 
-  const isIncomeInvoice = apiTransaction.form === 'AccountClosingPayment'
+  const isIncomeInvoice = ['AccountClosingPayment', 'IMAPayment'].indexOf(apiTransaction.form) >= 0
   transaction.movements = [
     {
       id: apiTransaction.id,
@@ -165,14 +171,15 @@ function getAccountDataFromResource (resource) {
   if (!id) {
     return null
   }
-  const instrument = parseInstrument(_.get(resource, 'resourceType.availableValues.valueItem.currency'))
+  const instrumentStr = _.get(resource, 'resourceType.availableValues.valueItem.currency')
+  const instrument = parseInstrument(instrumentStr)
   let syncId = _.get(resource, 'resourceType.availableValues.valueItem.displayedValue')
   if (syncId) {
     const i = syncId.search(/[^\d\s*]/)
     syncId = i >= 0 ? syncId.substring(0, i).replace(/[^\d*]/g, '') : ''
   }
   syncId = syncId || null
-  return { id, instrument, syncId }
+  return { id, instrument, syncId, isMetal: Boolean(parseMetalInstrument(instrumentStr)) }
 }
 
 function parseOuterIncomeTransfer (transaction, apiTransaction, account) {
@@ -334,6 +341,9 @@ export function convertAccounts (apiAccountsByType) {
 }
 
 export function getId (type, id) {
+  if (type === 'ima') {
+    type = 'im-account'
+  }
   return type + ':' + id
 }
 
@@ -671,7 +681,8 @@ export function adjustTransactionsAndCheckBalance (apiTransactions, apiPayments)
     return {
       ...parseDateAndDateStr(apiTransaction.date),
       amount: { sum: parseDecimal(apiTransaction.sum.amount), instrument: apiTransaction.sum.currency.code },
-      apiTransaction
+      apiTransaction,
+      apiPayment: null
     }
   })
   const paymentDataArray = apiPayments.map(apiPayment => {
@@ -693,10 +704,10 @@ export function adjustTransactionsAndCheckBalance (apiTransactions, apiPayments)
         continue
       }
       const delta = transactionData.date.getTime() - pd.date.getTime()
-      const areDatesEqual = pd.dateStr === transactionData.dateStr || (delta >= 24 * 60 * 60 * 1000 && delta <= 2 * 24 * 60 * 60 * 1000)
+      const areDatesEqual = delta <= 2 * 24 * 60 * 60 * 1000
       if (pd.date >= transactionData.date) {
         k = j + 1
-      } else if (pd.date < transactionData.date && !areDatesEqual) {
+      } else if (delta > 2 * 24 * 60 * 60 * 1000) {
         break
       } else if (k < 0) {
         k = j
@@ -727,23 +738,39 @@ export function adjustTransactionsAndCheckBalance (apiTransactions, apiPayments)
         } else {
           paymentDataArray.splice(k, 0, paymentData)
         }
-      } else if (k >= 0) {
+      }
+    }
+    if (paymentData) {
+      transactionData.apiPayment = paymentData.apiPayment
+    }
+  }
+  if (!isBalanceAmbiguous) {
+    let hasPayment = false
+    for (let i = transactionDataArray.length - 1; i >= 0; i--) {
+      const transactionData = transactionDataArray[i]
+      if (transactionData.apiPayment) {
+        hasPayment = true
+      } else if (hasPayment) {
         isBalanceAmbiguous = true
+        break
       }
     }
   }
   if (!isBalanceAmbiguous) {
     const lastTransactionDateStr = transactionDataArray[transactionDataArray.length - 1].dateStr
+    let hasTransaction = false
     for (let i = 0; i < paymentDataArray.length; i++) {
       const paymentData = paymentDataArray[i]
       if (paymentData.dateStr <= lastTransactionDateStr) {
         break
-      }
-      if (!paymentData.apiTransaction &&
-        paymentDataArray.length > i + 1 &&
-        paymentDataArray[i + 1].apiTransaction) {
-        isBalanceAmbiguous = true
-        break
+      } else if (paymentData.apiTransaction) {
+        if (i > 0 && !hasTransaction) {
+          isBalanceAmbiguous = true
+          break
+        }
+        hasTransaction = true
+      } else {
+        hasTransaction = false
       }
     }
   }

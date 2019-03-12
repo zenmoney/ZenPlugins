@@ -91,43 +91,51 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
   await Promise.all(accountData.map(async ({ zenAccount: account, products }) => {
     accounts.push(account)
     return ZenMoney.isAccountSkipped(account.id) ? null : Promise.all(products.map(async product => {
+      let isBalanceAmbiguous = false
+      let apiTransactions
       try {
-        let apiTransactions = await fetchTransactions(auth, product, fromDate, toDate)
-        if (product.type !== 'loan' && product.type !== 'ima') {
-          const apiPayments = await fetchPayments(auth, product, fromDate, toDate)
-          const { isBalanceAmbiguous, transactions: trans } = adjustTransactionsAndCheckBalance(apiTransactions, apiPayments)
-          apiTransactions = trans
-          if (isBalanceAmbiguous && !isFirstRun) {
-            delete account.balance
-            delete account.available
-            account.balance = null
-          }
-        }
-        for (const apiTransaction of apiTransactions) {
-          let transaction
-          if (product.type === 'loan') {
-            transaction = convertLoanTransaction(apiTransaction, account, accountsById)
-          } else {
-            transaction = convertTransaction(apiTransaction, account, accountsById)
-            if (transaction) {
-              const id1 = transaction.movements[0].id
-              const id2 = transaction.movements[1] && transaction.movements[1].id ? transaction.movements[1].id : id1
-              if (transactionIds[id1] || transactionIds[id2]) {
-                continue
-              } else {
-                transactionIds[id1] = true
-                transactionIds[id2] = true
-              }
-            }
-          }
-          if (transaction) {
-            transactions.push(transaction)
-          }
-        }
+        apiTransactions = await fetchTransactions(auth, product, fromDate, toDate)
       } catch (e) {
-        if (e.toString().indexOf('временно недоступна') < 0) {
+        apiTransactions = []
+        if (e.toString().indexOf('временно недоступна') >= 0) {
+          isBalanceAmbiguous = true
+        } else {
           throw e
         }
+      }
+      if (product.type !== 'loan' && product.type !== 'ima') {
+        const apiPayments = await fetchPayments(auth, product, fromDate, toDate)
+        if (isBalanceAmbiguous) {
+          apiTransactions = apiPayments
+        } else {
+          ({ isBalanceAmbiguous, transactions: apiTransactions } = adjustTransactionsAndCheckBalance(apiTransactions, apiPayments))
+        }
+      }
+      for (const apiTransaction of apiTransactions) {
+        let transaction
+        if (product.type === 'loan') {
+          transaction = convertLoanTransaction(apiTransaction, account, accountsById)
+        } else {
+          transaction = convertTransaction(apiTransaction, account, accountsById)
+          if (transaction) {
+            const id1 = transaction.movements[0].id
+            const id2 = transaction.movements[1] && transaction.movements[1].id ? transaction.movements[1].id : id1
+            if (transactionIds[id1] || transactionIds[id2]) {
+              continue
+            } else {
+              transactionIds[id1] = true
+              transactionIds[id2] = true
+            }
+          }
+        }
+        if (transaction) {
+          transactions.push(transaction)
+        }
+      }
+      if (isBalanceAmbiguous && !isFirstRun) {
+        delete account.balance
+        delete account.available
+        account.balance = null
       }
     }))
   }))

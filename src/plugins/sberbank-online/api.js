@@ -179,13 +179,17 @@ export async function login (login, pin, auth, device) {
 }
 
 export async function fetchAccounts (auth) {
-  await fetchXml(`https://${auth.api.host}:4477/mobile9/private/finances/targets/list.do`, {
-    headers: {
-      ...defaultHeaders,
-      'Host': `${auth.api.host}:4477`,
-      'Cookie': auth.api.cookie
-    }
-  })
+  try {
+    await fetchXml(`https://${auth.api.host}:4477/mobile9/private/finances/targets/list.do`, {
+      headers: {
+        ...defaultHeaders,
+        'Host': `${auth.api.host}:4477`,
+        'Cookie': auth.api.cookie
+      }
+    })
+  } catch (e) {
+    // nothing
+  }
   const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/products/list.do`, {
     headers: {
       ...defaultHeaders,
