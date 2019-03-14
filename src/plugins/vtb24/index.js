@@ -2,7 +2,7 @@ import * as _ from 'lodash'
 import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
 import { combineIntoTransferByTransferId } from '../../common/transactions'
 import { convertAccounts, convertTransaction } from './converters'
-import { fetchAccounts, fetchTransactions, login } from './vtb'
+import { fetchAccounts, fetchTransactions, login } from './api'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
   toDate = toDate || new Date()
