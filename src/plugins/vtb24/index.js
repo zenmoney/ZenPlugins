@@ -53,10 +53,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   }))
 
   return {
-    accounts: ensureSyncIDsAreUniqueButSanitized({
-      accounts: zenAccounts,
-      sanitizeSyncId
-    }),
+    accounts: ensureSyncIDsAreUniqueButSanitized({ accounts: zenAccounts, sanitizeSyncId }),
     transactions: _.sortBy(combineIntoTransferByTransferId(transactions), zenTransaction => zenTransaction.date)
   }
 }

@@ -285,8 +285,21 @@ function parsePayee (apiTransaction, transaction) {
   })) {
     return false
   }
-  if (apiTransaction.__type === 'ru.vtb24.mobilebanking.protocol.statement.CardTransactionMto') {
-    transaction.payee = apiTransaction.details
+  if (
+    apiTransaction.__type === 'ru.vtb24.mobilebanking.protocol.statement.CardTransactionMto'
+  ) {
+    if (
+      [
+        'Пополнение',
+        'Зачисление',
+        'Списание по карте',
+        'Начисленные %'
+      ].some(description => description === apiTransaction.details)
+    ) {
+      transaction.comment = apiTransaction.details
+    } else {
+      transaction.payee = apiTransaction.details
+    }
   } else {
     transaction.comment = apiTransaction.details
   }
