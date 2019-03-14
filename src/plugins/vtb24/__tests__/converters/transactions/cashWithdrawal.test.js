@@ -1,5 +1,7 @@
+import { toZenmoneyTransaction } from '../../../../../common/converters'
 import { convertTransaction } from '../../../converters'
-const convertForAccount = apiAccount => apiTransaction => convertTransaction(apiTransaction, apiAccount)
+const convertToReadableTransactionForAccount = apiAccount => apiTransaction => convertTransaction(apiTransaction, apiAccount)
+const convertToZenmoneyTransactionForAccount = accountsByIdLookup => readableTransaction => toZenmoneyTransaction(readableTransaction, accountsByIdLookup)
 
 describe('convertTransaction', () => {
   it('converts cash withdrawal', () => {
@@ -59,25 +61,57 @@ describe('convertTransaction', () => {
     ]
 
     const apiAccount = {
+      id: 'account',
       zenAccount: {
         id: 'account'
       }
     }
 
-    const expectedOldFormat = [
+    const expectedReadableTransactions = [
+      {
+        comment: null,
+        date: new Date('2019-03-03T07:36:33.000Z'),
+        hold: false,
+        merchant: null,
+        movements: [
+          {
+            id: '68f+ZNz/Y/7gHfvAvM9LKr+e/KA=;qIL1uH8RogbpWtIMjCq5tTarUtw=',
+            account: { id: 'account' },
+            invoice: null,
+            sum: -6000,
+            fee: 0
+          },
+          {
+            id: null,
+            account: { type: 'cash', instrument: 'RUB', syncIds: null, company: null },
+            invoice: null,
+            sum: 6000,
+            fee: 0
+          }
+        ]
+      }
+    ]
+
+    const expectedZenmoneyTransactions = [
       {
         date: new Date('2019-03-03T07:36:33.000Z'),
         hold: false,
         income: 6000,
         incomeAccount: 'cash#RUB',
+        incomeBankID: null,
         outcome: 6000,
-        outcomeAccount: 'account'
+        outcomeAccount: 'account',
+        comment: null,
+        outcomeBankID: '68f+ZNz/Y/7gHfvAvM9LKr+e/KA=;qIL1uH8RogbpWtIMjCq5tTarUtw='
       }
     ]
 
-    const converter = convertForAccount(apiAccount)
-    const converted = apiTransactions.map(converter)
+    const readableTransactionConverter = convertToReadableTransactionForAccount(apiAccount)
+    const readableTransactions = apiTransactions.map(readableTransactionConverter)
+    expect(readableTransactions).toEqual(expectedReadableTransactions)
 
-    expect(converted).toEqual(expectedOldFormat)
+    const zenmoneyTransactionConverter = convertToZenmoneyTransactionForAccount({ [apiAccount.id]: apiAccount })
+    const zenmoneyTransactions = readableTransactions.map(zenmoneyTransactionConverter)
+    expect(zenmoneyTransactions).toEqual(expectedZenmoneyTransactions)
   })
 })

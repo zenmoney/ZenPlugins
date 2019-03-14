@@ -1,5 +1,7 @@
+import { toZenmoneyTransaction } from '../../../../../common/converters'
 import { convertTransaction } from '../../../converters'
-const convertForAccount = apiAccount => apiTransaction => convertTransaction(apiTransaction, apiAccount)
+const convertToReadableTransactionForAccount = apiAccount => apiTransaction => convertTransaction(apiTransaction, apiAccount)
+const convertToZenmoneyTransactionForAccount = accountsByIdLookup => readableTransaction => toZenmoneyTransaction(readableTransaction, accountsByIdLookup)
 
 describe('convertTransaction', () => {
   it('converts inner transfer', () => {
@@ -221,47 +223,123 @@ describe('convertTransaction', () => {
       }
     ]
 
-    const expected = [
+    const expectedReadableTransactions = [
       {
+        comment: null,
+        date: new Date('2018-06-27T08:45:04.000Z'),
+        hold: true,
+        merchant: null,
+        movements: [
+          {
+            id: '880947d1-bdd0-4c88-afd0-eb29283a1db5',
+            account: { id: 'account' },
+            invoice: null,
+            sum: -59585,
+            fee: 0
+          }
+        ]
+      },
+      {
+        comment: null,
+        date: new Date('2019-03-04T15:27:14.000Z'),
+        hold: false,
+        merchant: null,
+        movements: [
+          {
+            id: '2Qe/wGcaAzn6y+NFxWEMjcy6mjM=;gSdGO1PlZip77oyKjk1avg4jjjY=',
+            account: { id: 'account' },
+            invoice: null,
+            sum: 1500,
+            fee: 0
+          },
+          {
+            id: null,
+            account: {
+              company: null,
+              instrument: 'RUB',
+              syncIds: [
+                '3184'
+              ],
+              type: 'ccard'
+            },
+            invoice: null,
+            sum: -1500,
+            fee: 0
+          }
+        ]
+      },
+      {
+        comment: null,
+        date: new Date('2019-03-07T11:56:32.000Z'),
+        hold: false,
+        merchant: {
+          city: null,
+          country: null,
+          mcc: null,
+          location: null,
+          title: 'Ф****в Имь Отчевич'
+        },
+        movements: [
+          {
+            id: 'Q3H+VQYwcGHKSfinvmCRK6mITEA=;fS76Rj7PrQ+sQn/4egQK/EE7LN0=',
+            account: { id: 'account' },
+            invoice: null,
+            sum: -320,
+            fee: 0
+          }
+        ]
+      }
+    ]
+
+    const expectedZenmoneyTransactions = [
+      {
+        id: '880947d1-bdd0-4c88-afd0-eb29283a1db5',
         date: new Date('2018-06-27T11:45:04+03:00'),
         hold: true,
         income: 0,
         incomeAccount: 'account',
         outcome: 59585,
         outcomeAccount: 'account',
-        _transferType: 'income',
-        _transferId: 1530089104000
+        comment: null
       },
       {
         date: new Date('2019-03-04T15:27:14.000Z'),
         hold: false,
         income: 1500,
         incomeAccount: 'account',
+        incomeBankID: '2Qe/wGcaAzn6y+NFxWEMjcy6mjM=;gSdGO1PlZip77oyKjk1avg4jjjY=',
         outcome: 1500,
         outcomeAccount: 'ccard#RUB#3184',
-        _transferType: 'outcome',
-        _transferId: '889845048'
+        outcomeBankID: null,
+        comment: null
       },
       {
-        comment: 'Ф****в Имь Отчевич',
+        id: 'Q3H+VQYwcGHKSfinvmCRK6mITEA=;fS76Rj7PrQ+sQn/4egQK/EE7LN0=',
         date: new Date('2019-03-07T11:56:32.000Z'),
         hold: false,
         income: 0,
         incomeAccount: 'account',
         outcome: 320,
-        outcomeAccount: 'account'
+        outcomeAccount: 'account',
+        payee: 'Ф****в Имь Отчевич',
+        comment: null,
+        mcc: null
       }
     ]
 
     const apiAccount = {
+      id: 'account',
       zenAccount: {
         id: 'account'
       }
     }
 
-    const converter = convertForAccount(apiAccount)
-    const converted = apiTransactions.map(converter)
+    const readableTransactionConverter = convertToReadableTransactionForAccount(apiAccount)
+    const readableTransactions = apiTransactions.map(readableTransactionConverter)
+    expect(readableTransactions).toEqual(expectedReadableTransactions)
 
-    expect(converted).toEqual(expected)
+    const zenmoneyTransactionConverter = convertToZenmoneyTransactionForAccount({ [apiAccount.id]: apiAccount })
+    const zenmoneyTransactions = readableTransactions.map(zenmoneyTransactionConverter)
+    expect(zenmoneyTransactions).toEqual(expectedZenmoneyTransactions)
   })
 })

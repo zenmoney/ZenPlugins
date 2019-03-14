@@ -196,18 +196,21 @@ export function convertTransaction (apiTransaction, apiAccount) {
     return null
   }
   const transaction = {
-    income: 0,
-    incomeAccount: apiAccount.zenAccount.id,
-    outcome: 0,
-    outcomeAccount: apiAccount.zenAccount.id,
+    comment: null,
     date: apiTransaction.transactionDate,
-    hold: apiTransaction.isHold
+    hold: apiTransaction.isHold,
+    merchant: null,
+    movements: [
+      {
+        id: apiTransaction.id,
+        account: { id: apiAccount.id || apiAccount.zenAccount.id || apiTransaction.debet.id },
+        invoice: null,
+        sum: origin.amount,
+        fee: origin.fee
+      }
+    ]
   }
-  if (origin.amount < 0) {
-    transaction.outcome = -origin.amount
-  } else {
-    transaction.income = origin.amount
-  }
+
   if (apiTransaction.details) {
     [
       parseInnerTransfer,
@@ -231,25 +234,44 @@ function parseInnerTransfer (apiTransaction, transaction) {
   ].some(pattern => {
     const match = apiTransaction.details.match(pattern)
     if (match && match[1]) {
-      if (origin.amount > 0) {
-        transaction.outcomeAccount = 'ccard#' + origin.instrument + '#' + match[1]
-        transaction.outcome = origin.amount
-      } else {
-        transaction.incomeAccount = 'ccard#' + origin.instrument + '#' + match[1]
-        transaction.income = -origin.amount
-      }
+      console.assert(transaction.movements.length < 2, 'Too much movements', { transaction, apiTransaction })
+      transaction.movements.push({
+        id: null,
+        account: {
+          type: 'ccard',
+          instrument: origin.instrument,
+          syncIds: [
+            match[1]
+          ],
+          company: null
+        },
+        invoice: null,
+        sum: -origin.amount,
+        fee: 0
+      })
     }
     return Boolean(match)
-  })) {
+  }) && !(() => {
+    if (apiTransaction.order && apiTransaction.order.operationInfo && apiTransaction.order.operationInfo.categoryId === '47') {
+      // Перевод другому клиенту ВТБ
+      transaction.merchant = {
+        title: apiTransaction.order.description,
+        city: null,
+        country: null,
+        location: null,
+        mcc: null
+      }
+
+      return true
+    }
+  })()) {
     return false
   }
+
   if ((!apiTransaction.order || !apiTransaction.order.id) && !apiTransaction.processedDate) {
     return true
   }
-  transaction._transferType = origin.amount > 0 ? 'outcome' : 'income'
-  transaction._transferId = apiTransaction.order && apiTransaction.order.id
-    ? apiTransaction.order.id
-    : Math.round(apiTransaction.processedDate.getTime())
+
   return true
 }
 
@@ -261,13 +283,20 @@ function parseCashTransaction (apiTransaction, transaction) {
     return false
   }
   const origin = getOrigin(apiTransaction)
-  if (origin.amount > 0) {
-    transaction.outcomeAccount = 'cash#' + origin.instrument
-    transaction.outcome = origin.amount
-  } else {
-    transaction.incomeAccount = 'cash#' + origin.instrument
-    transaction.income = -origin.amount
-  }
+  console.assert(transaction.movements.length < 2, 'Too much movements', { transaction, apiTransaction })
+  transaction.movements.push({
+    id: null,
+    account: {
+      type: 'cash',
+      instrument: origin.instrument,
+      syncIds: null,
+      company: null
+    },
+    invoice: null,
+    sum: -origin.amount,
+    fee: 0
+  })
+
   return true
 }
 
@@ -278,7 +307,13 @@ function parsePayee (apiTransaction, transaction) {
   ].some(pattern => {
     const match = apiTransaction.details.match(pattern)
     if (match) {
-      transaction.payee = match[1]
+      transaction.merchant = {
+        city: null,
+        country: null,
+        mcc: null,
+        location: null,
+        title: match[1]
+      }
       return true
     }
     return false
@@ -297,8 +332,23 @@ function parsePayee (apiTransaction, transaction) {
       ].some(description => description === apiTransaction.details)
     ) {
       transaction.comment = apiTransaction.details
+      if (apiTransaction.order && apiTransaction.order.operationInfo && apiTransaction.order.operationInfo.categoryId === '6') {
+        transaction.merchant = {
+          title: apiTransaction.order.description,
+          city: null,
+          country: null,
+          location: null,
+          mcc: null
+        }
+      }
     } else {
-      transaction.payee = apiTransaction.details
+      transaction.merchant = {
+        city: null,
+        country: null,
+        mcc: null,
+        location: null,
+        title: apiTransaction.details
+      }
     }
   } else {
     transaction.comment = apiTransaction.details
@@ -322,8 +372,12 @@ function getOrigin (apiTransaction) {
   } else {
     transactionAmount = apiTransaction.transactionAmount
   }
+
+  let transactionFeeSum = (apiTransaction.feeAmount && apiTransaction.feeAmount.sum) || 0
+
   return {
     amount: transactionAmount.sum,
-    instrument: getInstrument(transactionAmount.currency.currencyCode)
+    instrument: getInstrument(transactionAmount.currency.currencyCode),
+    fee: transactionFeeSum
   }
 }

@@ -1,6 +1,5 @@
-// import { toZenmoneyTransaction } from '../../../../../common/converters'
 import { convertTransaction } from '../../../converters'
-const convertForAccount = apiAccount => apiTransaction => convertTransaction(apiTransaction, apiAccount)
+const convertToReadableTransactionForAccount = apiAccount => apiTransaction => convertTransaction(apiTransaction, apiAccount)
 
 describe('convertTransaction', () => {
   it('skips transaction from additional card', () => {
@@ -101,13 +100,12 @@ describe('convertTransaction', () => {
       id: '1334A5E71E3249AB9E8ECCE8C6627144'
     }
 
-    const expected = [
+    const expectedReadableTransactions = [
       null
     ]
 
-    const converter = convertForAccount(apiAccount)
-    const converted = apiTransactions.map(converter)
-
-    expect(converted).toEqual(expected)
+    const readableTransactionConverter = convertToReadableTransactionForAccount(apiAccount)
+    const readableTransactions = apiTransactions.map(readableTransactionConverter)
+    expect(readableTransactions).toEqual(expectedReadableTransactions)
   })
 })
