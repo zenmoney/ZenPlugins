@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen>
 	<EditTextPreference
-		title="Логин"
+		title="Логин или номер карты ВТБ"
 		positiveButtonText="ОК"
 		summary="|ID пользователя или логин|{@s}"
-		dialogTitle="Логин"
+		dialogTitle="Логин или номер карты ВТБ"
 		negativeButtonText="Отмена"
-		dialogMessage="Введите идентификатор пользователя или логин для входа в систему ВТБ-Онлайн."
 		obligatory="true"
 		key="login">
 	</EditTextPreference>
@@ -18,7 +17,6 @@
 		title="Пароль"
 		summary="||***********"
 		obligatory="true"
-		dialogMessage="Введите пароль, используемый для входа в систему ВТБ-Онлайн."
 		inputType="textPassword">
 	</EditTextPreference>
     <EditTextPreference
