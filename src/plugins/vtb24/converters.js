@@ -204,7 +204,7 @@ export function convertTransaction (apiTransaction, apiAccount) {
       {
         id: apiTransaction.id,
         account: { id: apiAccount.id || apiAccount.zenAccount.id || apiTransaction.debet.id },
-        invoice: null,
+        invoice: origin.invoice,
         sum: origin.amount,
         fee: origin.fee
       }
@@ -373,11 +373,21 @@ function getOrigin (apiTransaction) {
     transactionAmount = apiTransaction.transactionAmount
   }
 
+  let invoice = null
+  if (apiTransaction.transactionAmountInAccountCurrency &&
+    apiTransaction.transactionAmountInAccountCurrency.currency.currencyCode !== apiTransaction.transactionAmount.currency.currencyCode) {
+    invoice = {
+      instrument: apiTransaction.transactionAmount.currency.currencyCode,
+      sum: apiTransaction.transactionAmount.sum
+    }
+  }
+
   let transactionFeeSum = (apiTransaction.feeAmount && apiTransaction.feeAmount.sum) || 0
 
   return {
     amount: transactionAmount.sum,
     instrument: getInstrument(transactionAmount.currency.currencyCode),
+    invoice,
     fee: transactionFeeSum
   }
 }

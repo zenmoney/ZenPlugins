@@ -548,7 +548,10 @@ describe('convertTransaction', () => {
           {
             id: 'UxyFDmFrU9H5zcg2Blf8Xdo5cv4=;pA/9gNf9M67Uz/hf17TaYbq8YUc=',
             account: { id: 'account' },
-            invoice: null,
+            invoice: {
+              sum: -6.99,
+              instrument: 'USD'
+            },
             sum: -501.88,
             fee: 0
           }
@@ -563,6 +566,8 @@ describe('convertTransaction', () => {
         hold: false,
         income: 0,
         incomeAccount: 'account',
+        opOutcome: 6.99,
+        opOutcomeInstrument: 'USD',
         outcome: 501.88,
         outcomeAccount: 'account',
         payee: 'PAYPAL ROSEGAL',
