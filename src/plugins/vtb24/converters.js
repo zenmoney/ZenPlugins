@@ -1,6 +1,7 @@
 import * as _ from 'lodash'
 
 export const GRAMS_IN_OZ = 31.1034768
+export const atMostTwoDecimals = value /* : number */ => Math.floor(value * 100) / 100
 
 export function convertAccounts (apiPortfolios) {
   const accounts = []
@@ -87,7 +88,7 @@ export function convertMetalAccount (apiAccount) {
       title: apiAccount.name,
       instrument,
       syncID: [apiAccount.number],
-      balance: apiAccount.amount.sum / GRAMS_IN_OZ
+      balance: atMostTwoDecimals(apiAccount.amount.sum / GRAMS_IN_OZ)
     }
   }
 }

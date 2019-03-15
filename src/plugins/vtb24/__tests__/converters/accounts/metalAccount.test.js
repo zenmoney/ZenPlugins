@@ -1,5 +1,5 @@
 import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../../../../common/accounts'
-import { convertMetalAccount, GRAMS_IN_OZ } from '../../../converters'
+import { atMostTwoDecimals, convertMetalAccount, GRAMS_IN_OZ } from '../../../converters'
 
 describe('convertLoan', () => {
   it('converts metal accounts', () => {
@@ -80,7 +80,7 @@ describe('convertLoan', () => {
           title: 'Обезличенный металлический счет',
           instrument: 'XPT',
           syncID: ['20309A00000000000003'],
-          balance: 0 / GRAMS_IN_OZ
+          balance: atMostTwoDecimals(0 / GRAMS_IN_OZ)
         }
       },
       {
@@ -96,7 +96,7 @@ describe('convertLoan', () => {
           title: 'Обезличенный металлический счет',
           instrument: 'XPD',
           syncID: ['20309A00000000000009'],
-          balance: 45.4 / GRAMS_IN_OZ
+          balance: atMostTwoDecimals(45.4 / GRAMS_IN_OZ)
         }
       }
     ]
@@ -108,7 +108,7 @@ describe('convertLoan', () => {
         title: 'Обезличенный металлический счет',
         instrument: 'XPT',
         syncID: ['0003'],
-        balance: 0 / GRAMS_IN_OZ
+        balance: atMostTwoDecimals(0 / GRAMS_IN_OZ)
       },
       {
         id: '868F3B610B04454D81B53F1E3038156E',
@@ -116,7 +116,7 @@ describe('convertLoan', () => {
         title: 'Обезличенный металлический счет',
         instrument: 'XPD',
         syncID: ['0009'],
-        balance: 45.4 / GRAMS_IN_OZ
+        balance: atMostTwoDecimals(45.4 / GRAMS_IN_OZ)
       }
     ]
 
