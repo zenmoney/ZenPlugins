@@ -10,6 +10,7 @@ const md5 = new MD5()
 
 const PROTOCOL_VERSION = '2.37.3'
 const APP_VERSION = '9.37.16'
+const deviceName = 'Zenmoney'
 
 export function createSdkData (login) {
   const date = new Date()
@@ -26,7 +27,7 @@ export function createSdkData (login) {
 "HardwareID": "-1",
 "SIM_ID": "-1",
 "PhoneNumber": "-1",
-"DeviceModel": "Android SDK built for x86_64",
+"DeviceModel": "${deviceName}",
 "MultitaskingSupported": true,
 "DeviceName": "generic_x86_64",
 "DeviceSystemName": "Android",
@@ -72,14 +73,14 @@ async function burlapRequest (options) {
         properties: {
           __type: 'java.util.Hashtable',
           PROTOVERSION: PROTOCOL_VERSION,
-          DEVICE_MODEL: 'Android SDK built for x86_64',
+          DEVICE_MODEL: deviceName,
           DEVICE_MANUFACTURER: 'unknown',
           APP_VERSION: APP_VERSION,
           PLATFORM: 'ANDROID',
           DEVICE_PLATFORM: 'ANDROID',
           OS: 'Android OS 6.0',
           APPVERSION: APP_VERSION,
-          DEVICE: 'Android SDK built for x86_64',
+          DEVICE: deviceName,
           DEVICEUSERNAME: 'android-build',
           DEVICE_OS: 'Android OS 6.0',
           ...options.token && { 'CLIENT-TOKEN': options.token },
