@@ -7,6 +7,9 @@ import {
   parseApiMovementDescription,
   toZenmoneyAccount
 } from '../converters'
+import { toZenmoneyTransaction } from '../../../common/converters'
+
+const convertToZenmoneyTransactionForAccounts = accountsByIdLookup => readableTransaction => toZenmoneyTransaction(readableTransaction, accountsByIdLookup)
 
 describe('toZenmoneyAccount', () => {
   it('maps api credit card account', () => {
@@ -1163,5 +1166,184 @@ describe('convertApiMovementsToReadableTransactions', () => {
     const accountTuples = convertApiAccountsToAccountTuples(apiAccounts)
 
     expect(convertApiMovementsToReadableTransactions(apiMovements, accountTuples)).toEqual(transactions)
+  })
+
+  it('converts multiple incomes with same reference', () => {
+    const apiMovements = [
+      {
+        id: '616',
+        createDate: '2018-07-05T12:00:00.000+0300',
+        amount: '+2 338.18',
+        currency: 'RUR',
+        status: '',
+        statusDescription: '',
+        description: 'ЗАРАБОТНАЯ ПЛАТА. Основание 7703389880050718UQ1B Платёжное поручение № 00000 от 05.07.2018.',
+        hold: false,
+        key: '1180705MOCOMSZVC33646',
+        reference: 'WSLKD00202122711',
+        userComment: '',
+        shortDescription: 'От Общество с ограниченной ответственн остью «Работа»',
+        descriptionForRepeat: '',
+        senderInfo:
+          {
+            senderCardNumber: '',
+            senderAccountNumber: '40702810302200004512',
+            senderBicBank: '044525593',
+            senderNameBank: 'АО "АЛЬФА-БАНК"'
+          },
+        recipientInfo: { recipientAccountNumberDescription: 'Текущий за.. ··6840' },
+        actions:
+          {
+            isAvailableForMarking: false,
+            isAvailableForRepeat: false,
+            isAvailableForCreateTemplate: false,
+            isAvailableForPDF: false,
+            isAvailableForCreateToDo: false
+          }
+      },
+      {
+        id: '617',
+        createDate: '2018-07-05T12:00:00.000+0300',
+        amount: '+50 016.00',
+        currency: 'RUR',
+        status: '',
+        statusDescription: '',
+        description: 'ЗАРАБОТНАЯ ПЛАТА. Основание 7703389880050718UQ1B Платёжное поручение № 00000 от 05.07.2018.',
+        hold: false,
+        key: '1180705MOCOMSZVC33644',
+        reference: 'WSLKD00202122711',
+        userComment: '',
+        shortDescription: 'От Общество с ограниченной ответственн остью «Работа»',
+        descriptionForRepeat: '',
+        senderInfo:
+          {
+            senderCardNumber: '',
+            senderAccountNumber: '40702810302200004512',
+            senderBicBank: '044525593',
+            senderNameBank: 'АО "АЛЬФА-БАНК"'
+          },
+        recipientInfo: { recipientAccountNumberDescription: 'Текущий за.. ··6840' },
+        actions:
+          {
+            isAvailableForMarking: false,
+            isAvailableForRepeat: false,
+            isAvailableForCreateTemplate: false,
+            isAvailableForPDF: false,
+            isAvailableForCreateToDo: false
+          }
+      }
+    ]
+
+    const expectedReadableTransactions = [
+      {
+        movements:
+          [
+            {
+              id: '1180705MOCOMSZVC33646',
+              account: { id: '40817800000000006840' },
+              invoice: null,
+              sum: 2338.18,
+              fee: 0
+            }
+          ],
+        date: new Date('Thu Jul 05 2018 12:00:00 GMT+0300 (MSK)'),
+        hold: false,
+        merchant:
+          {
+            mcc: null,
+            country: null,
+            city: null,
+            title: 'Общество с ограниченной ответственн остью «Работа»',
+            location: null
+          },
+        comment: null
+      },
+      {
+        movements:
+          [
+            {
+              id: '1180705MOCOMSZVC33644',
+              account: { id: '40817800000000006840' },
+              invoice: null,
+              sum: 50016,
+              fee: 0
+            }
+          ],
+        date: new Date('Thu Jul 05 2018 12:00:00 GMT+0300 (MSK)'),
+        hold: false,
+        merchant:
+          {
+            mcc: null,
+            country: null,
+            city: null,
+            title: 'Общество с ограниченной ответственн остью «Работа»',
+            location: null
+          },
+        comment: null
+      }
+    ]
+
+    const expectedZenmoneyTransactions = [
+      {
+        comment: null,
+        date: new Date('2018-07-05T09:00:00.000Z'),
+        hold: false,
+        id: '1180705MOCOMSZVC33646',
+        income: 2338.18,
+        incomeAccount: '40817800000000006840',
+        mcc: null,
+        outcome: 0,
+        outcomeAccount: '40817800000000006840',
+        payee: 'Общество с ограниченной ответственн остью «Работа»'
+      },
+      {
+        comment: null,
+        date: new Date('2018-07-05T09:00:00.000Z'),
+        hold: false,
+        id: '1180705MOCOMSZVC33644',
+        income: 50016,
+        incomeAccount: '40817800000000006840',
+        mcc: null,
+        outcome: 0,
+        outcomeAccount: '40817800000000006840',
+        payee: 'Общество с ограниченной ответственн остью «Работа»'
+      }
+    ]
+
+    const apiAccounts = [{
+      number: '40817800000000006840',
+      description: 'Текущий зарплатный счёт',
+      amount: '53.90',
+      currencyCode: 'RUR',
+      actions:
+        {
+          isAvailableForRename: true,
+          isAvailableForWithdrowal: true,
+          isMoneyBoxEdit: false
+        },
+      filters: [
+        {
+          operation: 'accounts',
+          title: 'Счета',
+          color: '#F03226',
+          filterList:
+            [
+              {
+                name: 'Текущий за.. RUR ··6840',
+                value: '40817800000000006840'
+              }
+            ]
+        }
+      ]
+    }]
+
+    const accountTuples = convertApiAccountsToAccountTuples(apiAccounts)
+    const readableTransactions = convertApiMovementsToReadableTransactions(apiMovements, accountTuples)
+    expect(readableTransactions).toEqual(expectedReadableTransactions)
+
+    const lookup = apiAccounts.reduce((all, acc) => ({ ...all, [acc.number]: acc }), {})
+    const zenmoneyTransactionConverter = convertToZenmoneyTransactionForAccounts(lookup)
+    const zenmoneyTransactions = readableTransactions.map(zenmoneyTransactionConverter)
+    expect(zenmoneyTransactions).toEqual(expectedZenmoneyTransactions)
   })
 })
