@@ -9,6 +9,7 @@ import {
   isExpiredSession,
   isExpiredToken,
   isNotFoundToken,
+  isNotFoundSession,
   login,
   register
 } from './api'
@@ -69,7 +70,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
       ZenMoney.saveData()
 
       loginResponse = await login({ sessionId, deviceId: pluginData.deviceId, accessToken: pluginData.accessToken })
-    } else if (isExpiredSession(response) || isBlockedSession(response) || isExpiredRefreshToken(response)) {
+    } else if (isExpiredSession(response) || isBlockedSession(response) || isNotFoundSession(response) || isExpiredRefreshToken(response)) {
       await executeRegistration({ pluginData, preferences })
 
       loginResponse = await login({ sessionId, deviceId: pluginData.deviceId, accessToken: pluginData.accessToken })

@@ -358,6 +358,58 @@ describe('login', () => {
     })).rejects.toBe(exit)
   })
 
+  it('re-registers when receives SESSION_NOT_FOUND from fetchAccessToken', async () => {
+    global._fetchMock = fetchMock
+    global.ZenMoney = makePluginDataApi({
+      deviceId: '11111111-1111-1111-1111-111111111111',
+      registered: true,
+      accessToken: '22222222-2222-2222-2222-222222222222',
+      refreshToken: '33333333-3333-3333-3333-333333333333'
+    }).methods
+
+    expectLoginRequest({
+      response: {
+        status: 403,
+        body: {
+          id: 'TOKEN_NOT_FOUND',
+          message: { en: 'Token not found' },
+          type_id: 'AUTHORIZATION',
+          class: 'class ru.ratauth.exception.AuthorizationException'
+        }
+      }
+    })
+
+    expectFetchAccessTokenRequest({
+      response: {
+        status: 403,
+        statusText: 'Forbidden',
+        body: {
+          id: 'SESSION_NOT_FOUND',
+          message: { en: 'Session not found' },
+          base_id: '16080bf6-dbe4-428e-b648-06739b59e920',
+          type_id: 'AUTHORIZATION',
+          class: 'class ru.ratauth.exception.AuthorizationException'
+        }
+      }
+    })
+
+    const exit = new Error('got expected call')
+    expectRegisterCustomerRequest({ response: { throws: exit } })
+
+    const fromDate = new Date()
+    const toDate = null
+
+    await expect(scrape({
+      preferences: {
+        cardNumber: '4444555566661111',
+        cardExpirationDate: '1234',
+        phoneNumber: '71234567890'
+      },
+      fromDate,
+      toDate
+    })).rejects.toBe(exit)
+  })
+
   it('re-registers when receives REFRESH_TOKEN_EXPIRED from fetchAccessToken', async () => {
     global.ZenMoney = makePluginDataApi({
       deviceId: '11111111-1111-1111-1111-111111111111',
