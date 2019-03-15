@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { fetchJson } from '../../common/network'
 
 const appVersion = '10.8.1'
-const deviceName = 'Sony D6503'
+const deviceName = 'Zenmoney'
 const osVersion = '7.1.1'
 const operationSystem = 'Android'
 const operationSystemVersion = '25'
