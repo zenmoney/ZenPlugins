@@ -306,7 +306,7 @@ describe('login', () => {
     })
   })
 
-  it('re-registers when receives SESSION_BLOCKED from login', async () => {
+  it('re-registers when receives SESSION_BLOCKED from fetchAccessToken', async () => {
     global._fetchMock = fetchMock
     global.ZenMoney = makePluginDataApi({
       deviceId: '11111111-1111-1111-1111-111111111111',
@@ -317,7 +317,20 @@ describe('login', () => {
 
     expectLoginRequest({
       response: {
+        status: 419,
+        body: {
+          id: 'TOKEN_EXPIRED',
+          message: { en: 'Token has expired' },
+          type_id: 'EXPIRED',
+          class: 'class ru.ratauth.exception.ExpiredException'
+        }
+      }
+    })
+
+    expectFetchAccessTokenRequest({
+      response: {
         status: 403,
+        statusText: 'Forbidden',
         body: {
           id: 'SESSION_BLOCKED',
           message: { en: 'Session is blocked' },
