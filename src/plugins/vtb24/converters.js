@@ -233,7 +233,7 @@ export function convertTransaction (apiTransaction, apiAccount) {
     movements: [
       {
         id: apiTransaction.id,
-        account: { id: apiAccount.id || apiAccount.zenAccount.id || apiTransaction.debet.id },
+        account: { id: apiAccount.zenAccount.id },
         invoice: origin.invoice,
         sum: origin.amount,
         fee: origin.fee
