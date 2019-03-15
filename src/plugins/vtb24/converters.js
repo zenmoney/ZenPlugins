@@ -1,5 +1,7 @@
 import * as _ from 'lodash'
 
+export const GRAMS_IN_OZ = 31.1034768
+
 export function convertAccounts (apiPortfolios) {
   const accounts = []
   apiPortfolios.forEach(portfolio => {
@@ -27,6 +29,12 @@ export function convertAccounts (apiPortfolios) {
           }
           break
         case 'SAVINGS':
+          if (apiAccount.__type === 'ru.vtb24.mobilebanking.protocol.product.MetalAccountMto') {
+            converter = convertMetalAccount
+          } else {
+            converter = convertAccount
+          }
+          break
         case 'ACCOUNTS':
           converter = convertAccount
           break
@@ -61,6 +69,26 @@ export function convertAccounts (apiPortfolios) {
     })
   })
   return accounts
+}
+
+export function convertMetalAccount (apiAccount) {
+  return {
+    products: [
+      {
+        id: apiAccount.id,
+        type: 'ima',
+        instrument: parseMetalInstrument(apiAccount.amount.currency.currencyCode)
+      }
+    ],
+    zenAccount: {
+      id: 'ima:' + apiAccount.id,
+      type: 'checking',
+      title: apiAccount.name,
+      instrument: parseMetalInstrument(apiAccount.amount.currency.currencyCode),
+      syncID: [apiAccount.number],
+      balance: apiAccount.amount.sum / GRAMS_IN_OZ
+    }
+  }
 }
 
 export function convertAccount (apiAccount) {
@@ -359,9 +387,17 @@ function parsePayee (apiTransaction, transaction) {
 function getInstrument (code) {
   switch (code) {
     case 'RUR': return 'RUB'
+    default: return parseMetalInstrument(code)
+  }
+}
+
+function parseMetalInstrument (code) {
+  switch (code) {
     case 'GLD': return 'XAU'
     case 'SLR': return 'XAG'
-    default: return code
+    case 'PLT': return 'XPT'
+    case 'PLD': return 'XPD'
+    default: return null
   }
 }
 
@@ -383,6 +419,10 @@ function getOrigin (apiTransaction) {
   }
 
   let transactionFeeSum = (apiTransaction.feeAmount && apiTransaction.feeAmount.sum) || 0
+
+  if (parseMetalInstrument(apiTransaction.transactionAmount.currency.currencyCode)) {
+    invoice.sum /= GRAMS_IN_OZ
+  }
 
   return {
     amount: transactionAmount.sum,
