@@ -72,19 +72,21 @@ export function convertAccounts (apiPortfolios) {
 }
 
 export function convertMetalAccount (apiAccount) {
+  const instrument = parseMetalInstrument(apiAccount.amount.currency.currencyCode)
+  console.assert(instrument, 'Unknown metal account code', apiAccount.amount.currency.currencyCode)
   return {
     products: [
       {
         id: apiAccount.id,
         type: 'ima',
-        instrument: parseMetalInstrument(apiAccount.amount.currency.currencyCode)
+        instrument
       }
     ],
     zenAccount: {
       id: 'ima:' + apiAccount.id,
       type: 'checking',
       title: apiAccount.name,
-      instrument: parseMetalInstrument(apiAccount.amount.currency.currencyCode),
+      instrument,
       syncID: [apiAccount.number],
       balance: apiAccount.amount.sum / GRAMS_IN_OZ
     }
@@ -387,7 +389,7 @@ function parsePayee (apiTransaction, transaction) {
 function getInstrument (code) {
   switch (code) {
     case 'RUR': return 'RUB'
-    default: return parseMetalInstrument(code)
+    default: return parseMetalInstrument(code) || code
   }
 }
 
