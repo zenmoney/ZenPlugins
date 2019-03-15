@@ -71,12 +71,11 @@ describe('convertLoan', () => {
         products: [
           {
             id: 'A29003298F6C435CB71C359E14B1BB80',
-            type: 'ima',
             instrument: 'XPT'
           }
         ],
         zenAccount: {
-          id: 'ima:A29003298F6C435CB71C359E14B1BB80',
+          id: 'A29003298F6C435CB71C359E14B1BB80',
           type: 'checking',
           title: 'Обезличенный металлический счет',
           instrument: 'XPT',
@@ -88,12 +87,11 @@ describe('convertLoan', () => {
         products: [
           {
             id: '868F3B610B04454D81B53F1E3038156E',
-            type: 'ima',
             instrument: 'XPD'
           }
         ],
         zenAccount: {
-          id: 'ima:868F3B610B04454D81B53F1E3038156E',
+          id: '868F3B610B04454D81B53F1E3038156E',
           type: 'checking',
           title: 'Обезличенный металлический счет',
           instrument: 'XPD',
@@ -105,7 +103,7 @@ describe('convertLoan', () => {
 
     const expectedZenmoneyAccounts = [
       {
-        id: 'ima:A29003298F6C435CB71C359E14B1BB80',
+        id: 'A29003298F6C435CB71C359E14B1BB80',
         type: 'checking',
         title: 'Обезличенный металлический счет',
         instrument: 'XPT',
@@ -113,7 +111,7 @@ describe('convertLoan', () => {
         balance: 0 / GRAMS_IN_OZ
       },
       {
-        id: 'ima:868F3B610B04454D81B53F1E3038156E',
+        id: '868F3B610B04454D81B53F1E3038156E',
         type: 'checking',
         title: 'Обезличенный металлический счет',
         instrument: 'XPD',

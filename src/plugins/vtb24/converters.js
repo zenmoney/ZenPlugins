@@ -78,12 +78,11 @@ export function convertMetalAccount (apiAccount) {
     products: [
       {
         id: apiAccount.id,
-        type: 'ima',
         instrument
       }
     ],
     zenAccount: {
-      id: 'ima:' + apiAccount.id,
+      id: apiAccount.id,
       type: 'checking',
       title: apiAccount.name,
       instrument,
