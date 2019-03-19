@@ -372,12 +372,20 @@ function parsePayee (apiTransaction, transaction) {
         }
       }
     } else {
+      const purchaseMerchantData =
+        /^Покупка /.test(apiTransaction.details)
+          ? {
+            fullTitle: apiTransaction.details.replace(/^Покупка /, '').trim()
+          }
+          : {
+            city: null,
+            country: null,
+            title: apiTransaction.details
+          }
       transaction.merchant = {
-        city: null,
-        country: null,
+        ...purchaseMerchantData,
         mcc: null,
-        location: null,
-        title: apiTransaction.details
+        location: null
       }
     }
   } else {

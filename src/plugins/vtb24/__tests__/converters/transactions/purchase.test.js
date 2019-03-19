@@ -294,6 +294,47 @@ describe('convertTransaction', () => {
             __type: 'ru.vtb24.mobilebanking.protocol.StatusMto',
             id: 'SUCCESS'
           }
+      },
+      {
+        __type: 'ru.vtb24.mobilebanking.protocol.statement.CardTransactionMto',
+        id: '5x68QJ9sIpVHryQQflawldCFCPc=;ZDvGUy6vxtxx72SQZ4YAUFRLDBw=',
+        details: 'Покупка RUS SANKT-PETERBU MAGNIT MM LEVACKIY ',
+        isHold: false,
+        statusName: null,
+        transactionAmountInAccountCurrency:
+          {
+            __type: 'ru.vtb24.mobilebanking.protocol.AmountMto',
+            sum: -144.7,
+            currency:
+              {
+                __type: 'ru.vtb24.mobilebanking.protocol.CurrencyMto',
+                currencyCode: 'RUR',
+                name: 'Рубль России',
+                displaySymbol: '₽'
+              }
+          },
+        debet: '<ref[17]>',
+        transactionDate: new Date('Wed Mar 13 2019 00:00:00 GMT+0300 (MSK)'),
+        processedDate: new Date('Mon Mar 18 2019 00:00:00 GMT+0300 (MSK)'),
+        transactionAmount:
+          {
+            __type: 'ru.vtb24.mobilebanking.protocol.AmountMto',
+            sum: -144.7,
+            currency:
+              {
+                __type: 'ru.vtb24.mobilebanking.protocol.CurrencyMto',
+                currencyCode: 'RUR',
+                name: 'Рубль России',
+                displaySymbol: '₽'
+              }
+          },
+        feeAmount: null,
+        order: null,
+        status:
+          {
+            __type: 'ru.vtb24.mobilebanking.protocol.StatusMto',
+            id: 'SUCCESS'
+          }
       }
     ]
 
@@ -396,6 +437,25 @@ describe('convertTransaction', () => {
             fee: 0
           }
         ]
+      },
+      {
+        comment: null,
+        date: new Date('2019-03-12T21:00:00.000Z'),
+        hold: false,
+        merchant: {
+          location: null,
+          mcc: null,
+          fullTitle: 'RUS SANKT-PETERBU MAGNIT MM LEVACKIY'
+        },
+        movements: [
+          {
+            id: '5x68QJ9sIpVHryQQflawldCFCPc=;ZDvGUy6vxtxx72SQZ4YAUFRLDBw=',
+            account: { id: 'account' },
+            invoice: null,
+            sum: -144.7,
+            fee: 0
+          }
+        ]
       }
     ]
 
@@ -457,6 +517,18 @@ describe('convertTransaction', () => {
         outcome: 466.3,
         outcomeAccount: 'account',
         comment: 'Начисленные %'
+      },
+      {
+        id: '5x68QJ9sIpVHryQQflawldCFCPc=;ZDvGUy6vxtxx72SQZ4YAUFRLDBw=',
+        date: new Date('2019-03-12T21:00:00.000Z'),
+        hold: false,
+        income: 0,
+        incomeAccount: 'account',
+        outcome: 144.7,
+        outcomeAccount: 'account',
+        payee: 'RUS SANKT-PETERBU MAGNIT MM LEVACKIY',
+        mcc: null,
+        comment: null
       }
     ]
 
