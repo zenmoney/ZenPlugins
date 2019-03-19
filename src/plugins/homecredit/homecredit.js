@@ -248,31 +248,29 @@ export async function fetchBaseAccounts () {
     await Promise.all(fetchedAccounts[type].map(async account => {
       let methodName
       let filterMo
+      const additionalArguments = {}
       switch (type) {
         case 'creditCards':
           filterMo = 'CreditCardFilterMo'
           methodName = 'getCreditCardDetails'
           break
-          // приложение "Банк Хоум Кредит" по дебетовым картам возвращает только пустые (бесполезные) значения
-          /* case "debitCards":
-                    filterMo = "DebitCardFilterMo";
-                    methodName = "getDebitCardDetails";
-                    break; */
-          // в приложении "Банк Хоум Кредит" кредиты не поддерживается (вызывают ошибку)
-          /* case "credits":
-                    filterMo = "CreditFilterMo";
-                    methodName = "getCreditDetails";
-                    break; */
-          // приложение "Банк Хоум Кредит" по карте рассрочки возвращает только пустые (бесполезные) значения
-          /* case "merchantCards":
-                    filterMo = "MerchantCardFilterMo";
-                    methodName = "getMerchantCardDetails";
-                    break; */
-          // не было данных для проверки
-          /* case "deposits":
-                    filterMo = "DepositFilterMo";
-                    methodName = "getDepositDetails";
-                    break; */
+        case 'debitCards':
+          filterMo = 'DebitCardFilterMo'
+          methodName = 'getDebitCardDetails'
+          break
+        case 'credits':
+          filterMo = 'CreditFilterMo'
+          methodName = 'getCreditDetails'
+          break
+        case 'merchantCards':
+          additionalArguments.cardMBR = 0
+          filterMo = 'MerchantCardFilterMo'
+          methodName = 'getMerchantCardDetails'
+          break
+        case 'deposits':
+          filterMo = 'DepositFilterMo'
+          methodName = 'getDepositDetails'
+          break
         default:
           methodName = null
           break
@@ -285,7 +283,9 @@ export async function fetchBaseAccounts () {
           body: {
             'arguments': [
               {
+                ...additionalArguments,
                 'cardNumber': account.cardNumber,
+                'contractNumber': account.contractNumber,
                 'javaClass': 'cz.bsc.g6.components.product.json.services.api.mo.' + filterMo
               }
             ],
@@ -296,7 +296,7 @@ export async function fetchBaseAccounts () {
           headers: defaultBaseHeaders
         })
 
-        if (response.body.creditLimit) account.creditLimit = response.body.creditLimit
+        if (response.body.creditLimit || response.body.overdraftLimit) account.creditLimit = response.body.creditLimit || response.body.overdraftLimit
         if (response.body.accountNumber) account.accountNumber = response.body.accountNumber
       }
     }))
