@@ -10,14 +10,15 @@ const defaultMyCreditHeaders = {
   'business_process': 'register'
 }
 const defaultBaseHeaders = {
+  'Host': 'ib.homecredit.ru',
   'User-Agent': 'okhttp/3.10.0',
   'Content-Type': 'application/json; charset=utf-8'
 }
-const defaultBaseHeaderForAuth = {
-  'appVersion': '2.6.1',
+const defaultArgumentsForAuth = {
+  'appVersion': '3.1.7',
   'javaClass': 'cz.bsc.g6.components.usernamepasswordauthentication.json.services.api.mo.UsernamePasswordCredentialMo',
   'system': 'Android',
-  'systemVersion': '5.0'
+  'systemVersion': '5.1.1'
 }
 
 let myCreditAuth // авторизация в "Мой кредит"
@@ -62,12 +63,11 @@ export async function authMyCredit (preferences) {
   return myCreditAuth
 }
 
-export async function authBase (preferences) {
+export async function authBase (deviceId, preferences) {
   console.log('>>> Авторизация [Базовый] ======================================================')
-  let deviceId = ZenMoney.getData('device_id', null)
-  let isNewDevice = false
+  // let isNewDevice = false
   if (!deviceId) {
-    isNewDevice = true
+    // isNewDevice = true
     deviceId = getDeviceId()
   }
 
@@ -77,14 +77,14 @@ export async function authBase (preferences) {
     body: {
       'arguments': [
         {
-          ...defaultBaseHeaderForAuth,
-          'code': isNewDevice ? preferences.code : null,
+          ...defaultArgumentsForAuth,
+          'code': preferences.code,
           'deviceID': deviceId,
           'password': preferences.password,
           'username': preferences.login
         }
       ],
-      'attributes': null,
+      // 'attributes': null,
       'javaClass': 'org.springframework.remoting.support.RemoteInvocation',
       'methodName': 'login',
       'parameterTypes': ['cz.bsc.g6.components.usernamepasswordauthentication.json.services.api.mo.UsernamePasswordCredentialMo']
@@ -94,10 +94,9 @@ export async function authBase (preferences) {
   })
 
   // ERROR_LOGIN, BLOCK_USER_CODE
-  if (!response.body.success) throw new InvalidPreferencesError("Не удалось авторизоваться в приложении 'Банк Хоум Кредит'. Пожалуйста, настройте первые 3 параметра подключения или удалите их.")
+  if (!response.body.success) throw new InvalidPreferencesError("Не удалось авторизоваться. Пожалуйста, проверьте включён ли у вас доступ в приложении 'Мобильный Банк' и корректно укажите первые 3 параметра подключения (или удалите их, чтобы не использвоать этот способ входа).")
 
-  ZenMoney.setData('device_id', deviceId)
-  return response
+  return deviceId
 }
 
 async function registerMyCreditDevice (auth, preferences) {

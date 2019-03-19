@@ -8,7 +8,9 @@ export async function scrape ({ preferences, fromDate, toDate }) {
 
   if (preferences.login && preferences.password && preferences.code) {
     // Авторизация в базовом приложении банка
-    await HomeCredit.authBase(preferences)
+    const deviceId = await HomeCredit.authBase(ZenMoney.getData('device_id', null), preferences)
+    ZenMoney.setData('device_id', deviceId)
+
     const fetchedAccounts = await HomeCredit.fetchBaseAccounts()
 
     if (fetchedAccounts.credits || fetchedAccounts.merchantCards) {
@@ -44,7 +46,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
                             console.log(">>> Игнорируем карту, отсутствующую в 'Мой Кредит':", HomeCredit.getCardNumber(account.cardNumber));
                     }); */
         // карты рассрочки оставляем на обработку через базовое приложение
-        if (fetchedAccounts.merchantCards) delete fetchedAccounts.merchantCards
+        // if (fetchedAccounts.merchantCards) delete fetchedAccounts.merchantCards
       }
     }
 

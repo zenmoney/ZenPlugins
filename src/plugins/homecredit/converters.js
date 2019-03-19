@@ -152,7 +152,15 @@ export function convertTransactions (accountData, transactions) {
       payee: transaction.merchantName || transaction.merchant.trim()
     }
     if (transaction.creditDebitIndicator || credit) { tran.comment = transaction.shortDescription }
-    if (transaction.mcc) { tran.mcc = getMcc(transaction.mcc) }
+
+    if (transaction.mcc) {
+      if (transaction.mcc === 'ATM CASH WITHDRAWAL') {
+        tran.income = tran.outcome
+        tran.incomeAccount = 'cash#' + transaction.payCurrency
+      } else {
+        tran.mcc = getMcc(transaction.mcc)
+      }
+    }
 
     result.push(tran)
   })
@@ -172,10 +180,13 @@ export function getMcc (code) {
     case 'CLOTHING SHOES & ACCESSORIES':
       return 5651
 
+    case 'ELECTRONICS':
     case 'KIDS':
     case 'OTHER':
     case 'HOBBY & LEISURE':
     case 'HOME & GARDEN':
+    case 'PUBLIC TRANSPORTATION':
+    case 'TAXES & CHARGES':
     case 'TRAVEL':
     case 'TRANSPORTATION':
     case 'TELECOMMUNICATION':
@@ -183,7 +194,7 @@ export function getMcc (code) {
       return null
 
     default: {
-      console.log('>>> Новый МСС код !!!', code)
+      console.log('>>> !!! Новый МСС код: ', code)
       return null
     }
   }
