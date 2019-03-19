@@ -399,6 +399,7 @@ export async function fetchBaseTransactions (accountData, type, fromDate, toDate
       methodName = 'getCreditCardTransactions'
       filterMo = 'CreditCardTransactionsFilterMo'
       break
+    case 'merchantCards':
     case 'debitCards':
       methodName = 'getDebitCardTransactions'
       filterMo = 'DebitCardTransactionsFilterMo'
@@ -406,10 +407,6 @@ export async function fetchBaseTransactions (accountData, type, fromDate, toDate
     case 'credits':
       methodName = 'getCreditTransactions'
       filterMo = 'CreditTransactionsFilterMo'
-      break
-    case 'merchantCards':
-      methodName = 'getMerchantCardTransactions'
-      filterMo = 'MerchantCardTransactionsFilterMo'
       break
     default:
       methodName = null
@@ -456,6 +453,7 @@ export async function fetchBaseTransactions (accountData, type, fromDate, toDate
       case 'creditCards':
         list = response.body.creditCardTransactions.list
         break
+      case 'merchantCards':
       case 'debitCards':
         list = response.body.debitCardTransactions.list
         break

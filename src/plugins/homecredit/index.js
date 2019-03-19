@@ -13,9 +13,9 @@ export async function scrape ({ preferences, fromDate, toDate }) {
 
     const fetchedAccounts = await HomeCredit.fetchBaseAccounts()
 
-    if (fetchedAccounts.credits || fetchedAccounts.merchantCards) {
+    if (fetchedAccounts.credits /* || fetchedAccounts.merchantCards */) {
       if (fetchedAccounts.credits) { console.log(">>> Обнаружены кредиты, необходима синхронизация через приложение 'Мой кредит'") }
-      if (fetchedAccounts.merchantCards) { console.log(">>> Обнаружены карты рассрочки, необходима синхронизация через приложение 'Мой кредит'") }
+      // if (fetchedAccounts.merchantCards) { console.log(">>> Обнаружены карты рассрочки, необходима синхронизация через приложение 'Мой кредит'") }
       if (!preferences.birth || !preferences.phone || !preferences.pin) {
         console.log(">>> Подключение к 'Мой кредит' не настроено. Крединые продукты пропускаем.")
         if (fetchedAccounts.credits) delete fetchedAccounts.credits

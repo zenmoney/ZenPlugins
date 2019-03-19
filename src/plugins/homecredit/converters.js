@@ -75,7 +75,7 @@ function convertCardTW (account) {
     instrument: account.currency || 'RUB'
   }
   const creditLimit = account.creditLimit || account.CreditLimit
-  const availableBalance = account.availableBalance || account.AvailableBalance
+  const availableBalance = account.availableBalance || account.AvailableBalance || account.balance || account.Balance
   if (creditLimit) {
     result.creditLimit = creditLimit
     result.balance = Math.round((availableBalance - creditLimit) * 100) / 100
