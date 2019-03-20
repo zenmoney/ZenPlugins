@@ -118,7 +118,7 @@ export function stringifyToXml (object) {
     str += '</map>'
     return str
   } else {
-    throw new Error('unsupported xml object type')
+    console.assert(false, 'unsupported xml object', object)
   }
 }
 
