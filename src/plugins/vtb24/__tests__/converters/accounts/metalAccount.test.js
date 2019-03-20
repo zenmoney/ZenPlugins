@@ -125,6 +125,5 @@ describe('convertLoan', () => {
 
     const zenMoneyAccounts = ensureSyncIDsAreUniqueButSanitized({ accounts: expectedReadableAccounts.map(acc => acc.zenAccount), sanitizeSyncId })
     expect(zenMoneyAccounts).toEqual(expectedZenmoneyAccounts)
-
   })
 })
