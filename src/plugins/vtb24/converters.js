@@ -330,7 +330,13 @@ function parseCashTransaction (apiTransaction, transaction) {
   return true
 }
 
-function parsePayee (apiTransaction, transaction) {
+export function parsePayee (apiTransaction, transaction) {
+  console.assert(![
+    'perevod mezhdu schetami/kartami',
+    'Payment From Contract',
+    'TransferCreditOnLine'
+  ].some(detail => apiTransaction.details.indexOf(detail) >= 0), 'Incorrect merchant description!')
+
   if ([
     /^Карта \*\d{4} (.+)/,
     /^(.\*\*\*\*\*\*. .+)/
