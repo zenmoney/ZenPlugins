@@ -34,7 +34,7 @@ async function callGate (url, { auth, query, body, sanitizeRequestLog, sanitizeR
       'Content-Type': 'application/x-www-form-urlencoded',
       'Accept-Encoding': 'gzip',
       'Connection': 'Keep-Alive',
-      'User-Agent': 'CTBBank Sovcombank androidapp Unknown_Android_SDK_built_for_x86|5.0.2 native|2.2.7',
+      'User-Agent': 'CTBBank Sovcombank androidapp Unknown_Android_SDK_built_for_x86|5.0.2 native|2.2.8',
       'Cookie': `ABibStyle=White1; ibtim=${auth.ibtim}; ibext=${auth.ibext}`
     },
     body: body || null,
@@ -52,7 +52,7 @@ async function callGate (url, { auth, query, body, sanitizeRequestLog, sanitizeR
 }
 
 function generateTimestamp () {
-  return generateRandomString(12) + '_' + Math.round(new Date().getTime())
+  return generateRandomString(12, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ') + '_' + Math.round(new Date().getTime())
 }
 
 export async function login (device, auth) {
@@ -65,7 +65,7 @@ export async function login (device, auth) {
     response = await callGate('mobileLogin', {
       auth,
       body: {
-        appBuild: '2.2.7',
+        appBuild: '2.2.8',
         deviceModel: 'generic_x86',
         deviceName: 'Android SDK built for x86',
         push_address: device.pushAddress,
@@ -88,23 +88,24 @@ export async function login (device, auth) {
     }
   }
 
+  const ibtim = generateTimestamp()
+  auth = {}
+  auth.ibext = ''
+  auth.ibtim = ibtim
+
+  const keysrc = generateTimestamp()
+  await callGate(`https://online.sovcombank.ru/ab/abkey.php?fg=255,255,255&bg=0,144,255&set=num&key=${keysrc}&_nts=`, {
+    json: false,
+    auth: {
+      ibext: '',
+      ibtim
+    }
+  })
+
   const login = await ZenMoney.readLine('Введите логин, c которым вы зарегистрированы в ЧатБанке.')
   if (!login) {
     throw new TemporaryError('Неверно введен логин. Попробуйте подключить синхронизацию еще раз.')
   }
-
-  const keysrc = generateTimestamp()
-  await callGate(`https://online.sovcombank.ru/ab/abkey.php?fg=255,255,255&bg=0,144,255&set=num&key=${keysrc}&_nts=null`, {
-    json: false,
-    auth: {
-      ibext: '',
-      ibtim: generateTimestamp()
-    }
-  })
-
-  auth = {}
-  auth.ibext = ''
-  auth.ibtim = generateTimestamp()
 
   response = await callGate('getin', {
     auth,
@@ -136,7 +137,7 @@ export async function login (device, auth) {
   response = await callGate('getses', {
     auth,
     body: {
-      appBuild: '2.2.7',
+      appBuild: '2.2.8',
       deviceId: device.id,
       deviceModel: 'generic_x86',
       deviceName: 'Android SDK built for x86',
