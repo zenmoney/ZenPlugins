@@ -1,4 +1,5 @@
 import * as _ from 'lodash'
+import { distinctTransactions as commonDistinctTransactions } from '../../common/distinctTransactions'
 
 export const GRAMS_IN_OZ = 31.1034768
 export const atMostTwoDecimals = value /* : number */ => Math.floor(value * 100) / 100
@@ -215,10 +216,17 @@ export function convertLoan (apiAccount) {
 }
 
 export function convertTransaction (apiTransaction, apiAccount) {
-  if (apiTransaction.details && [
-    'ru.vtb24.mobilebanking.protocol.product.CreditCardMto',
-    'ru.vtb24.mobilebanking.protocol.product.DebitCardMto'
-  ].indexOf(apiTransaction.debet.__type) >= 0 && apiAccount.id !== apiTransaction.debet.id) {
+  if (apiTransaction.details && (
+    ([
+      'Перевод денежных средств по картам Банка'
+    ].some(detailDesc => apiTransaction.details.indexOf(detailDesc) >= 0) &&
+    [
+      'ru.vtb24.mobilebanking.protocol.product.CreditCardMto'
+    ].indexOf(apiTransaction.debet.__type) >= 0
+    ) || ([
+      'ru.vtb24.mobilebanking.protocol.product.CreditCardMto',
+      'ru.vtb24.mobilebanking.protocol.product.DebitCardMto'
+    ].indexOf(apiTransaction.debet.__type) >= 0 && apiAccount.id !== apiTransaction.debet.id))) {
     return null
   }
   const origin = getOrigin(apiTransaction)
@@ -227,7 +235,7 @@ export function convertTransaction (apiTransaction, apiAccount) {
   }
   const transaction = {
     comment: null,
-    date: apiTransaction.transactionDate,
+    date: new Date(apiTransaction.transactionDate),
     hold: apiTransaction.isHold,
     merchant: null,
     movements: [
@@ -447,3 +455,8 @@ function getOrigin (apiTransaction) {
     fee: transactionFeeSum
   }
 }
+
+export const getDistinctTransactions = ({ transactions }) => commonDistinctTransactions({
+  readableTransactions: transactions,
+  makeEqualityObject: (x) => ({ ...x, movements: x.movements.map(movement => ({ ...movement, id: undefined })) })
+})
