@@ -22,7 +22,8 @@ function cookies (response) {
   if (response.headers) {
     const cookies = response.headers['set-cookie']
     if (cookies) {
-      return cookies.replace(',', '')
+      const requiredValues = /(JSESSIONID=[^;]*;).*(TS[^=]*=[^;]*;)/
+      return requiredValues.exec(cookies).slice(1).join(';')
     } else {
       return cookies
     }
