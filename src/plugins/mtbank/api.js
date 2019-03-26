@@ -121,7 +121,7 @@ export async function fetchTransactions (sessionCookies, accounts, fromDate, toD
     })
   }))
 
-  return _.flatMap(responses, response => {
+  const operations = _.flatMap(responses, response => {
     return _.flatMap(response.body.data, d => {
       return d.operations.map(op => {
         op.accountId = d.accountId
@@ -129,5 +129,9 @@ export async function fetchTransactions (sessionCookies, accounts, fromDate, toD
         return op
       })
     })
+  })
+
+  return operations.filter(function (op) {
+    return op.status !== 'E' && new Date(op.transDate) > fromDate
   })
 }

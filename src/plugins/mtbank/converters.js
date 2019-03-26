@@ -7,9 +7,16 @@ export function convertAccount (json) {
       title: json.description,
       instrument: json.cards[0].cardCurr,
       balance: Number.parseFloat(json.avlBalance),
-      syncID: [json.cardAccounts[0].accountId, json.cards[0].pan.slice(-4)],
+      syncID: [],
       productType: json.productType
     }
+
+    json.cardAccounts.forEach(function (el) {
+      account.syncID.push(el.accountId)
+    })
+    json.cards.forEach(function (el) {
+      account.syncID.push(el.pan.slice(-4))
+    })
 
     if (json.avlLimit) {
       account.creditLimit = Number.parseFloat(json.avlLimit)
