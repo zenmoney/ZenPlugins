@@ -132,6 +132,6 @@ export async function fetchTransactions (sessionCookies, accounts, fromDate, toD
   })
 
   return operations.filter(function (op) {
-    return op.status !== 'E' && new Date(op.transDate) > fromDate
+    return op.status !== 'E' && new Date(op.transDate) > fromDate && !op.description.includes('Гашение кредита в виде "овердрафт" по договору')
   })
 }
