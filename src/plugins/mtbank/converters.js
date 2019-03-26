@@ -14,6 +14,9 @@ export function convertAccount (json) {
 
     json.cardAccounts.forEach(function (el) {
       account.syncID.push(el.accountId)
+      if (json.isOverdraft === true) {
+        account.syncID.push(el.accountId + 'M')
+      }
     })
     json.cards.forEach(function (el) {
       account.syncID.push(el.pan.slice(-4))
