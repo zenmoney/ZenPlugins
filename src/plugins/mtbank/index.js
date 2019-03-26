@@ -1,4 +1,4 @@
-import * as bank from './bank'
+import * as bank from './api'
 import * as converters from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate }) {

@@ -1,4 +1,5 @@
 import * as network from '../../common/network'
+import * as _ from 'lodash'
 
 const baseUrl = 'https://mybank.by/api/v1/'
 
@@ -103,7 +104,7 @@ export async function fetchTransactions (sessionCookies, accounts, fromDate, toD
 
   const dates = createDateIntervals(fromDate, toDate)
 
-  const responses = await Promise.all(accounts.flatMap((account) => {
+  const responses = await Promise.all(_.flatMap(accounts, (account) => {
     return dates.map(dates => {
       return fetchJson('product/loadOperationStatements', {
         method: 'POST',
@@ -119,8 +120,8 @@ export async function fetchTransactions (sessionCookies, accounts, fromDate, toD
     })
   }))
 
-  return responses.flatMap(response => {
-    return response.body.data.flatMap(d => {
+  return _.flatMap(responses, response => {
+    return _.flatMap(response.body.data, d => {
       return d.operations.map(op => {
         op.accountId = d.accountId
 

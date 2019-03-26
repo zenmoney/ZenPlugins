@@ -1,5 +1,5 @@
-import { scrape } from './index'
 import fetchMock from 'fetch-mock'
+import { scrape } from './index'
 
 describe('scrape', () => {
   it('should hit the mocks and return results', async () => {
@@ -13,7 +13,7 @@ describe('scrape', () => {
       {
         preferences: { phone: '123456789', password: 'pass' },
         fromDate: new Date('2019-01-01T00:00:00.000Z'),
-        toDate: null
+        toDate: new Date('2019-01-02T00:00:00.000Z')
       }
     )
 
@@ -28,7 +28,7 @@ describe('scrape', () => {
     }])
 
     expect(result.transactions).toEqual([{
-      'date': new Date('2018-12-27T21:00:00.000Z'),
+      'date': new Date('2018-12-28 00:00:00'),
       'hold': false,
       'income': 0,
       'incomeAccount': '1111111',
@@ -38,7 +38,7 @@ describe('scrape', () => {
       'outcomeAccount': '1111111',
       'payee': 'PAYPAL'
     }, {
-      'date': new Date('2018-12-28T22:07:39.000Z'),
+      'date': new Date('2018-12-29 01:07:39'),
       'hold': false,
       'income': 0,
       'incomeAccount': '1111111',
