@@ -12,7 +12,7 @@ describe('scrape', () => {
     const result = await scrape(
       {
         preferences: { phone: '123456789', password: 'pass' },
-        fromDate: new Date('2019-01-01T00:00:00.000Z'),
+        fromDate: new Date('2018-12-27T00:00:00.000Z'),
         toDate: new Date('2019-01-02T00:00:00.000Z')
       }
     )
@@ -64,7 +64,7 @@ function mockLoadOperationStatements () {
           'accountId': 'BY36MTBK10110001000001111000',
           'avlBalance': '791.3',
           'client': 'Иванов Иван Иванович',
-          'dateFrom': '2019-01-01',
+          'dateFrom': '2018-12-27',
           'dateTo': '2019-03-25',
           'incomingBalance': '999.9',
           'numDateContract': '11111111 от 1111.11.11',
