@@ -41,6 +41,7 @@ describe('convertAccount', () => {
         'pinPhoneNumber': '123456789012'
       }],
       'description': 'PayOkay',
+      'debtPayment': null,
       'isActive': true,
       'isOverdraft': false,
       'rate': '0.0001'
