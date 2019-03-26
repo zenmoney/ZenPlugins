@@ -41,6 +41,7 @@ describe('convertAccount', () => {
         'pinPhoneNumber': '123456789012'
       }],
       'description': 'PayOkay',
+      'over': null,
       'debtPayment': null,
       'isActive': true,
       'isOverdraft': false,
@@ -54,6 +55,7 @@ describe('convertAccount', () => {
       productType: 'PC',
       instrument: 'BYN',
       balance: 99.9,
+      creditLimit: 0,
       syncID: [
         'BY36MTBK10110008000001111000',
         '1111'

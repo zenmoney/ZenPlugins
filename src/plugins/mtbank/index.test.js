@@ -19,6 +19,7 @@ describe('scrape', () => {
 
     expect(result.accounts).toEqual([{
       'balance': 999.9,
+      'creditLimit': 0,
       'id': '1111111',
       'instrument': 'BYN',
       'productType': 'PC',
