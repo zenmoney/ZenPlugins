@@ -8,7 +8,8 @@ export function convertAccount (json) {
       instrument: json.cards[0].cardCurr,
       balance: Number.parseFloat(json.debtPayment !== null ? -json.debtPayment : json.avlBalance),
       syncID: [],
-      productType: json.productType
+      productType: json.productType,
+      creditLimit: Number.parseFloat(json.over !== null ? json.over : 0)
     }
 
     json.cardAccounts.forEach(function (el) {
