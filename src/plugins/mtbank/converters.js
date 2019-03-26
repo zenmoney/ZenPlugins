@@ -6,7 +6,7 @@ export function convertAccount (json) {
       type: 'card',
       title: json.description,
       instrument: json.cards[0].cardCurr,
-      balance: Number.parseFloat(json.debtPayment !== null ? -1 * json.debtPayment : json.avlBalance),
+      balance: Number.parseFloat(json.debtPayment !== null ? -json.debtPayment : json.avlBalance),
       syncID: [],
       productType: json.productType
     }
