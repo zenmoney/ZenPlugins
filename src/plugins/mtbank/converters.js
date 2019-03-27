@@ -49,7 +49,7 @@ export function convertTransaction (json, accounts) {
     incomeAccount: account.id,
     outcome: json.debitFlag === '0' ? transAmount : 0,
     outcomeAccount: account.id,
-    date: new Date(json.transDate),
+    date: getDate(json.transDate),
     payee: json.place
   }
 
@@ -66,4 +66,9 @@ export function convertTransaction (json, accounts) {
   }
 
   return transaction
+}
+
+function getDate (str) {
+  const [year, month, day, hour, minute, second] = str.match(/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/).slice(1)
+  return new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}+03:00`)
 }
