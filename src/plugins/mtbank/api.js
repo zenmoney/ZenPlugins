@@ -9,6 +9,12 @@ async function fetchJson (url, options, predicate = () => true, error = (message
     validateResponse(response, response => predicate(response), error)
   }
 
+  if (!response.body.success && response.body.error && response.body.error.description) {
+    if (response.body.error.description.indexOf('Неверный пароль') >= 0)
+      throw new InvalidPreferencesError('Ответ банка: ' + response.body.error.description + response.body.error.lockedTime)
+    throw new TemporaryError('Ответ банка: ' + response.body.error.description + response.body.error.lockedTime)
+  }
+
   return response
 }
 
