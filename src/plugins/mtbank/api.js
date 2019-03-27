@@ -4,11 +4,13 @@ import * as _ from 'lodash'
 const baseUrl = 'https://mybank.by/api/v1/'
 
 async function fetchJson (url, options, predicate = () => true, error = (message) => console.assert(false, message)) {
-  options = {
-    ...options,
-    sanitizeRequestLog: { headers: { Cookie: true } },
-    sanitizeResponseLog: { headers: { 'set-cookie': true } }
-  }
+  options = _.defaultsDeep(
+    options,
+    {
+      sanitizeRequestLog: { headers: { Cookie: true } },
+      sanitizeResponseLog: { headers: { 'set-cookie': true } }
+    }
+  )
   const response = await network.fetchJson(baseUrl + url, options)
   if (predicate) {
     validateResponse(response, response => predicate(response), error)
@@ -52,7 +54,7 @@ export async function login (login, password) {
     headers: { 'Cookie': sessionCookies },
     body: { phoneNumber: login, loginWay: '1' },
     sanitizeRequestLog: { body: { phoneNumber: true } },
-    sanitizeResponseLogi: { body: { data: { smsCode: { phone: true } } } }
+    sanitizeResponseLog: { body: { data: { smsCode: { phone: true } } } }
   }, response => response.success, message => new InvalidPreferencesError('Неверный номер телефона'))
 
   await fetchJson('login/checkPassword2', {
