@@ -1,5 +1,5 @@
 import fetchMock from 'fetch-mock'
-import { scrape } from './index'
+import { scrape } from '..'
 
 describe('scrape', () => {
   it('should hit the mocks and return results', async () => {
