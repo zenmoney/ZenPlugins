@@ -29,23 +29,40 @@ describe('scrape', () => {
     }])
 
     expect(result.transactions).toEqual([{
-      'date': new Date('2018-12-28 00:00:00'),
-      'hold': false,
-      'income': 0,
-      'incomeAccount': '1111111',
-      'opOutcome': 5,
-      'opOutcomeInstrument': 'EUR',
-      'outcome': 12.39,
-      'outcomeAccount': '1111111',
-      'payee': 'PAYPAL'
+      hold: false,
+      date: new Date('2018-12-28T00:00:00+0300'),
+      movements: [{
+        id: null,
+        account: { id: '1111111' },
+        sum: -12.39,
+        fee: 0,
+        invoice: {
+          sum: -5,
+          instrument: 'EUR'
+        }
+      }],
+      merchant: {
+        fullTitle: 'PAYPAL',
+        location: null,
+        mcc: null
+      },
+      comment: null
     }, {
-      'date': new Date('2018-12-29 01:07:39'),
-      'hold': false,
-      'income': 0,
-      'incomeAccount': '1111111',
-      'outcome': 29.68,
-      'outcomeAccount': '1111111',
-      'payee': 'Магазин'
+      hold: false,
+      date: new Date('2018-12-29T01:07:39+0300'),
+      movements: [{
+        id: null,
+        account: { id: '1111111' },
+        sum: -29.68,
+        fee: 0,
+        invoice: null
+      }],
+      merchant: {
+        fullTitle: 'Магазин',
+        location: null,
+        mcc: null
+      },
+      comment: null
     }])
   })
 })
