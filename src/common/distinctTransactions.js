@@ -7,7 +7,7 @@ const isEqualTransactions = distinctByFields =>
       distinctByFields(b)
     )
 
-export const distinctTransactions = ({ readableTransactions, makeEqualityObject = (x) => x, selectReadableTransaction = (x) => x }) => {
+export const distinctTransactions = ({ transactions, makeEqualityObject = (x) => x }) => {
   const distinctTransactions = transactions => _.uniqWith(transactions, isEqualTransactions(makeEqualityObject))
-  return distinctTransactions(readableTransactions).map(selectReadableTransaction)
+  return distinctTransactions(transactions)
 }

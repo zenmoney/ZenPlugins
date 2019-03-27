@@ -11,7 +11,7 @@ describe('distinctTransactions', () => {
 
   it('unique for equal transactions', () => {
     const assertion = distinctTransactions({
-      readableTransactions: transactions
+      transactions
     })
     const expectation = [
       {},
@@ -23,7 +23,7 @@ describe('distinctTransactions', () => {
 
   it('respects with makeEqualityObject', () => {
     const assertion = distinctTransactions({
-      readableTransactions: transactions,
+      transactions,
       makeEqualityObject: transaction => ({ ...transaction, ...(transaction.type ? { type: undefined } : {}) })
     })
     const expectation = [
