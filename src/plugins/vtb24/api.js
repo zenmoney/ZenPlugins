@@ -115,6 +115,10 @@ async function burlapRequest (options) {
       'временно недоступна'
     ].some(str => response.body.message.indexOf(str) >= 0)) {
       throw new TemporaryError('Информация из Банка ВТБ временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
+    } else if ([
+      'Ошибка обращения'
+    ].some(str => response.body.message.indexOf(str) >= 0)) {
+      throw new Error(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: ${response.body.message}`)
     } else {
       throw new TemporaryError(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: ${response.body.message}`)
     }

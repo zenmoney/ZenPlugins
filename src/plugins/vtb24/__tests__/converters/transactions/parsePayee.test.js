@@ -5,12 +5,6 @@ describe('parsePayee', () => {
     const apiTransactions = [
       {
         details: 'perevod mezhdu schetami/kartami'
-      },
-      {
-        details: 'Payment From Contract'
-      },
-      {
-        details: 'TransferCreditOnLine'
       }
     ]
 
