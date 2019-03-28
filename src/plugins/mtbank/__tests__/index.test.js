@@ -12,8 +12,8 @@ describe('scrape', () => {
     const result = await scrape(
       {
         preferences: { phone: '123456789', password: 'pass' },
-        fromDate: new Date('2018-12-27T00:00:00.000Z'),
-        toDate: new Date('2019-01-02T00:00:00.000Z')
+        fromDate: new Date('2018-12-27T00:00:00.000+03:00'),
+        toDate: new Date('2019-01-02T00:00:00.000+03:00')
       }
     )
 
@@ -30,7 +30,7 @@ describe('scrape', () => {
 
     expect(result.transactions).toEqual([{
       hold: false,
-      date: new Date('2018-12-28T00:00:00+0300'),
+      date: new Date('2018-12-28T00:00:00+03:00'),
       movements: [{
         id: null,
         account: { id: '1111111' },
@@ -49,7 +49,7 @@ describe('scrape', () => {
       comment: null
     }, {
       hold: false,
-      date: new Date('2018-12-29T01:07:39+0300'),
+      date: new Date('2018-12-29T01:07:39+03:00'),
       movements: [{
         id: null,
         account: { id: '1111111' },
