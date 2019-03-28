@@ -17,8 +17,10 @@ async function fetchJson (url, options, predicate = () => true, error = (message
   }
 
   if (!response.body.success && response.body.error && response.body.error.description) {
-    if (response.body.error.description.indexOf('Неверный пароль') >= 0) { throw new InvalidPreferencesError('Ответ банка: ' + response.body.error.description + response.body.error.lockedTime) }
-    throw new TemporaryError('Ответ банка: ' + response.body.error.description + response.body.error.lockedTime)
+    const errorDescription = response.body.error.description
+    const errorMessage = 'Ответ банка: ' + errorDescription + response.body.error.lockedTime
+    if (errorDescription.indexOf('Неверный пароль') >= 0) { throw new InvalidPreferencesError(errorMessage) }
+    throw new TemporaryError(errorMessage)
   }
 
   return response
@@ -68,6 +70,7 @@ export async function login (login, password) {
 }
 
 export async function fetchAccounts (sessionCookies) {
+  console.log('>>> Загрузка списка счетов...')
   const products = (await fetchJson('user/loadUser', {
     headers: { 'Cookie': sessionCookies }
   }, response => response.body && response.body.data && response.body.data.products,
@@ -80,46 +83,30 @@ function formatDate (date) {
   return date.toISOString().replace('T', ' ').split('.')[0]
 }
 
-function roundToDay (date) {
-  date.setHours(0)
-  date.setMinutes(0)
-  date.setSeconds(0)
-  date.setMilliseconds(0)
-
-  return date
-}
-
-function createDateIntervals (fromDate, toDate) {
-  const fromDay = roundToDay(fromDate)
-
-  const toDay = roundToDay(toDate)
-  toDay.setDate(toDate.getDate() + 1)
-
-  const interval = 10 * 24 * 60 * 60 * 1000 // 5 days interval for fetching data
-
+export function createDateIntervals (fromDate, toDate) {
+  const interval = 10 * 24 * 60 * 60 * 1000 // 10 days interval for fetching data
   const dates = []
-  let time = fromDay.getTime()
+
+  let time = fromDate.getTime()
   let prevTime = null
-  while (time < toDay.getTime()) {
+  while (time < toDate.getTime()) {
     if (prevTime !== null) {
-      dates.push([new Date(prevTime), new Date(time - 24 * 60 * 60 * 1000)]) // time - 1 day, so that days are not intersecting
+      dates.push([new Date(prevTime), new Date(time - 1)])
     }
 
     prevTime = time
     time = time + interval
   }
-  dates.push([new Date(prevTime), toDay])
+  dates.push([new Date(prevTime), toDate])
 
   return dates
 }
 
 export async function fetchTransactions (sessionCookies, accounts, fromDate, toDate = new Date()) {
-  if (toDate === null) {
-    toDate = new Date() // loading up to now
-  }
+  console.log('>>> Загрузка списка транзакций...')
+  toDate = toDate || new Date()
 
   const dates = createDateIntervals(fromDate, toDate)
-
   const responses = await Promise.all(_.flatMap(accounts, (account) => {
     return dates.map(dates => {
       return fetchJson('product/loadOperationStatements', {
@@ -140,13 +127,15 @@ export async function fetchTransactions (sessionCookies, accounts, fromDate, toD
     return _.flatMap(response.body.data, d => {
       return d.operations.map(op => {
         op.accountId = d.accountId
-
         return op
       })
     })
   })
 
-  return operations.filter(function (op) {
+  const filteredOperations = operations.filter(function (op) {
     return op.status !== 'E' && new Date(op.transDate) > fromDate && !op.description.includes('Гашение кредита в виде "овердрафт" по договору')
   })
+
+  console.log(`>>> Загружено ${filteredOperations.length} операций.`)
+  return filteredOperations
 }

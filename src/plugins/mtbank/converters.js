@@ -98,6 +98,7 @@ function parseCash (transaction, apiTransaction) {
 }
 
 function parsePayee (transaction, apiTransaction) {
+  // интернет-платежи отображаем без получателя
   if (!apiTransaction.place || apiTransaction.place.indexOf('MTB INTERNET POS') >= 0) {
     return false
   }
