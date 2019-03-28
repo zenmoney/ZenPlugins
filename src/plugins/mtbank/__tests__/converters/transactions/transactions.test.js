@@ -34,7 +34,7 @@ describe('convertTransaction', () => {
 
     expect(transaction).toEqual({
       hold: false,
-      date: new Date('2019-02-14T00:00:00+0300'),
+      date: new Date('2019-02-14T00:00:00+03:00'),
       movements: [{
         id: null,
         account: { id: '1113333' },
@@ -74,7 +74,7 @@ describe('convertTransaction', () => {
 
     expect(transaction).toEqual({
       hold: false,
-      date: new Date('2019-03-07T11:58:07+0300'),
+      date: new Date('2019-03-07T11:58:07+03:00'),
       movements: [{
         id: null,
         account: { id: '1113333' },
@@ -107,7 +107,7 @@ describe('convertTransaction', () => {
 
     expect(transaction).toEqual({
       hold: false,
-      date: new Date('2019-01-31T23:25:42+0300'),
+      date: new Date('2019-01-31T23:25:42+03:00'),
       movements: [{
         id: null,
         account: { id: '1113333' },
@@ -140,7 +140,7 @@ describe('convertTransaction', () => {
 
     expect(transaction).toEqual({
       hold: false,
-      date: new Date('2019-01-02T17:55:34+0300'),
+      date: new Date('2019-01-02T17:55:34+03:00'),
       movements: [{
         id: null,
         account: { id: '1113333' },
@@ -173,7 +173,7 @@ describe('convertTransaction', () => {
 
     expect(transaction).toEqual({
       hold: false,
-      date: new Date('2019-01-05T00:26:11+0300'),
+      date: new Date('2019-01-05T00:26:11+03:00'),
       movements: [{
         id: null,
         account: { id: '1113333' },
@@ -206,7 +206,7 @@ describe('convertTransaction', () => {
 
     expect(transaction).toEqual({
       hold: false,
-      date: new Date('2019-01-28T07:51:13+0300'),
+      date: new Date('2019-01-28T07:51:13+03:00'),
       movements: [{
         id: null,
         account: { id: '1113333' },
