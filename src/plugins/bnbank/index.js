@@ -17,6 +17,6 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   console.log(transactions)
   return {
     accounts: preparedAccounts,
-    transactions: []
+    transactions: transactions
   }
 }

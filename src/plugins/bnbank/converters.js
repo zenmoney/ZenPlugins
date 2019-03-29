@@ -1,3 +1,4 @@
+import codeToCurrencyLookup from './codeToCurrencyLookup'
 export const card = 'card'
 export const deposit = 'deposit'
 
@@ -18,7 +19,7 @@ export function convertAccount (json, accountType) {
           type: card,
           title: json.productName,
           currencyCode: json.currency,
-          instrument: json.currency,
+          instrument: codeToCurrencyLookup[json.currency],
           balance: Number.parseFloat(json.cards[0].balance),
           syncID: [json.internalAccountId],
           rkcCode: json.rkcCode
@@ -37,14 +38,16 @@ export function convertAccount (json, accountType) {
         type: deposit,
         title: 'Депозит ' + json.productName,
         currencyCode: json.currency,
-        instrument: json.currency,
+        instrument: codeToCurrencyLookup[json.currency],
         balance: Number.parseFloat(json.balanceAmount),
         syncID: [json.internalAccountId],
+        capitalization: true,
         startDate: new Date(json.openDate),
-        endDateOffset: new Date(json.endDate),
+        endDateOffset: new Date(json.endDate).getTime() / 1000,
         percent: json.interestRate,
         endDateOffsetInterval: 'month',
         payoffInterval: 'month',
+        payoffStep: 1,
         rkcCode: json.rkcCode
       }
     default:
@@ -59,10 +62,11 @@ export function convertTransaction (apiTransaction, accounts) {
   })
 
   const transaction = {
-    date: new Date(apiTransaction.operationDate),
+    date: new Date(apiTransaction.transactionDate),
     movements: [ getMovement(apiTransaction, account) ],
     merchant: null,
-    comment: null
+    comment: null,
+    hold: apiTransaction.operationSign !== '1'
   };
 
   [
@@ -79,7 +83,7 @@ function getMovement (apiTransaction, account) {
     id: null,
     account: { id: account.id },
     invoice: null,
-    sum: apiTransaction.operationAmount,
+    sum: apiTransaction.operationCode === 3 ? -apiTransaction.operationAmount : apiTransaction.operationAmount,
     fee: 0
   }
 }
@@ -94,11 +98,11 @@ function parseCash (transaction, apiTransaction) {
       account: {
         company: null,
         type: 'cash',
-        instrument: apiTransaction.operationCurrency,
+        instrument: codeToCurrencyLookup[apiTransaction.operationCurrency],
         syncIds: null
       },
       invoice: null,
-      sum: -Number.parseFloat(apiTransaction.operationAmount),
+      sum: Number.parseFloat(apiTransaction.operationAmount),
       fee: 0
     })
     return true
@@ -115,7 +119,8 @@ function parsePayee (transaction, apiTransaction) {
 
   transaction.merchant = {
     mcc: null,
-    location: apiTransaction.operationPlace
+    fullTitle: apiTransaction.operationPlace ? apiTransaction.operationPlace : '',
+    location: null
   }
 }
 
