@@ -14,7 +14,6 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   const preparedAccounts = cards.concat(deposits)
   const transactions = (await bank.fetchTransactions(token, preparedAccounts, fromDate, toDate))
     .map(transaction => converters.convertTransaction(transaction, preparedAccounts))
-  console.log(transactions)
   return {
     accounts: preparedAccounts,
     transactions: transactions

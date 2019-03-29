@@ -116,10 +116,9 @@ function parsePayee (transaction, apiTransaction) {
     apiTransaction.operationPlace.indexOf('OPLATA USLUG - KOMPLAT BNB') >= 0) {
     return false
   }
-
   transaction.merchant = {
     mcc: null,
-    fullTitle: apiTransaction.operationPlace ? apiTransaction.operationPlace : '',
+    fullTitle: apiTransaction.operationPlace,
     location: null
   }
 }

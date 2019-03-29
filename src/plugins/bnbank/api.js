@@ -45,7 +45,8 @@ export async function login (login, password) {
       deviceUDID: deviceID,
       login: login,
       password: password
-    }
+    },
+    sanitizeRequestLog: { body: { login: true, password: true } }
   }, response => response.success, message => new InvalidPreferencesError('Неверный логин или пароль'))
 
   return res.body.sessionToken
@@ -71,7 +72,7 @@ export function createDateIntervals (fromDate, toDate) {
   let prevTime = null
   while (time < toDate.getTime()) {
     if (prevTime !== null) {
-      dates.push([new Date(prevTime), new Date(time - 1)])
+      dates.push([new Date(prevTime), new Date(time - 1000)])
     }
 
     prevTime = time
@@ -125,9 +126,8 @@ export async function fetchTransactions (token, accounts, fromDate, toDate = new
   })
 
   const filteredOperations = operations.filter(function (op) {
-    return op.operationDate > fromDate
+    return op.transactionDate > fromDate
   })
-  console.log(filteredOperations)
 
   console.log(`>>> Загружено ${filteredOperations.length} операций.`)
   return filteredOperations
