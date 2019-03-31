@@ -1,8 +1,8 @@
-import { convertAccount } from '../../converters'
+import { convertCard, convertDeposit, convertAccount } from '../../converters'
 
 describe('convertAccount', () => {
   it('card account', () => {
-    const account = convertAccount({
+    const account = convertCard({
       accountNumber: 'BY41BLNB30000000000000000933',
       accountStatus: 'OPEN',
       accountType: '1',
@@ -48,7 +48,7 @@ describe('convertAccount', () => {
       rkcCode: '004',
       rkcName: 'ЦБУ №4 г.Минск',
       url: 'https://alseda.by/media/public/orange_dream.jpg'
-    }, 'card')
+    })
 
     expect(account).toEqual({
       id: '2007549330000000',
@@ -66,7 +66,7 @@ describe('convertAccount', () => {
   })
 
   it('card deposit', () => {
-    const account = convertAccount({
+    const account = convertDeposit({
       accountNumber: 'BY89BLNB30000000000000000840',
       accountStatus: 'OPEN',
       accountType: '0',
@@ -93,7 +93,7 @@ describe('convertAccount', () => {
       rkcCode: '765',
       rkcName: 'Белорусский народный банк',
       url: 'https://alseda.by/media/public/deposit_vernoe_reshenie.png'
-    }, 'deposit')
+    })
 
     expect(account).toEqual({
       id: '1100600000000000',
@@ -112,5 +112,17 @@ describe('convertAccount', () => {
       startDate: new Date('2018-12-13T21:00:00.000Z'),
       syncID: ['1100600000000000']
     })
+  })
+
+  it('unknown account', () => {
+    const account = convertAccount({})
+
+    expect(account).toEqual(null)
+  })
+
+  it('card without cards', () => {
+    const account = convertCard({})
+
+    expect(account).toEqual(null)
   })
 })

@@ -18,7 +18,7 @@ describe('convertTransaction', () => {
       accountNumber: '2007549330000000',
       accountType: '1',
       actionGroup: 1802,
-      cardPAN: '4500412240124000',
+      cardPAN: '4500000040120000',
       concreteType: '1',
       merchantId: '1600000',
       operationAmount: 3900,

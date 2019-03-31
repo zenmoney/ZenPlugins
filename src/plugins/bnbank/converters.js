@@ -31,7 +31,7 @@ export function convertAccount (json, accountType) {
 
         return account
       }
-      break
+      return null
     case deposit:
       return {
         id: json.internalAccountId,
