@@ -56,7 +56,6 @@ export function convertAccount (json, accountType) {
 }
 
 export function convertTransaction (apiTransaction, accounts) {
-  console.log(apiTransaction)
   const account = accounts.find(account => {
     return account.syncID.indexOf(apiTransaction.accountNumber) !== -1
   })
@@ -66,7 +65,7 @@ export function convertTransaction (apiTransaction, accounts) {
     movements: [ getMovement(apiTransaction, account) ],
     merchant: null,
     comment: null,
-    hold: apiTransaction.operationSign !== '1'
+    hold: false
   };
 
   [

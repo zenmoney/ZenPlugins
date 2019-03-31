@@ -1,6 +1,7 @@
 import * as bank from './api'
 import * as converters from './converters'
 
+// TODO: Please! Add more unit tests because I tested just some critical cases.
 export async function scrape ({ preferences, fromDate, toDate }) {
   const token = await bank.login(preferences.phone, preferences.password)
   const accounts = (await bank.fetchAccounts(token))
