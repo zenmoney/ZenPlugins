@@ -20,7 +20,6 @@ export function convertTransaction (apiTransaction, accounts) {
     return account.syncID.indexOf(apiTransaction.cardNum) !== -1
   })
 
-  console.log(getDate(apiTransaction.date))
   const transaction = {
     date: getDate(apiTransaction.date),
     movements: [ getMovement(apiTransaction, account) ],
@@ -30,9 +29,9 @@ export function convertTransaction (apiTransaction, accounts) {
   };
 
   [
-    // parseCash,
-    // parseComment,
-    // parsePayee
+    parseCash,
+    parseComment,
+    parsePayee
   ].some(parser => parser(transaction, apiTransaction))
 
   return transaction
@@ -43,13 +42,13 @@ function getMovement (apiTransaction, account) {
     id: null,
     account: { id: account.id },
     invoice: null,
-    sum: Number.parseFloat(apiTransaction.amount.replace(' ', '').replace(',', '.')),
+    sum: getSumAmount(apiTransaction.type, apiTransaction.amount),
     fee: 0
   }
 
-  if (apiTransaction.currency !== account.instrument) {
+  if (apiTransaction.currencyReal !== account.instrument) {
     movement.invoice = {
-      sum: Number.parseFloat(apiTransaction.amountReal.replace(' ', '').replace(',', '.')),
+      sum: getSumAmount(apiTransaction.type, apiTransaction.amountReal),
       instrument: apiTransaction.currencyReal
     }
   }
@@ -57,20 +56,19 @@ function getMovement (apiTransaction, account) {
   return movement
 }
 
-/* function parseCash (transaction, apiTransaction) {
-  if (apiTransaction.description.indexOf('нятие нал') > 0 ||
-    apiTransaction.description.indexOf('ополнение нал') > 0) {
+function parseCash (transaction, apiTransaction) {
+  if (apiTransaction.description.indexOf('наличных на карту') > 0) {
     // добавим вторую часть перевода
     transaction.movements.push({
       id: null,
       account: {
         company: null,
         type: 'cash',
-        instrument: apiTransaction.curr,
+        instrument: apiTransaction.currency,
         syncIds: null
       },
       invoice: null,
-      sum: -getSumAmount(apiTransaction.debitFlag, apiTransaction.amount),
+      sum: -getSumAmount(apiTransaction.type, apiTransaction.amount),
       fee: 0
     })
     return true
@@ -78,22 +76,22 @@ function getMovement (apiTransaction, account) {
 }
 
 function parsePayee (transaction, apiTransaction) {
-  // интернет-платежи отображаем без получателя
-  if (!apiTransaction.place || apiTransaction.place.indexOf('MTB INTERNET POS') >= 0) {
+  if (!apiTransaction.place) {
     return false
   }
 
   transaction.merchant = {
-    mcc: null,
+    mcc: Number(apiTransaction.mcc),
     location: null
   }
-  const merchant = apiTransaction.place.split(' / ').map(str => str.trim())
+  const merchant = apiTransaction.place.split(', ')
   if (merchant.length === 1) {
-    transaction.merchant.fullTitle = merchant[0]
-  } else if (merchant.length === 3) {
-    transaction.merchant.title = merchant[0]
-    transaction.merchant.city = merchant[1]
-    transaction.merchant.country = merchant[2]
+    transaction.merchant.fullTitle = apiTransaction.place
+  } else if (merchant.length > 1) {
+    const [country, title, city] = apiTransaction.place.match(/([a-zA-Z]{2}) (.*), (.*)/).slice(1)
+    transaction.merchant.title = title
+    transaction.merchant.city = city
+    transaction.merchant.country = country
   } else {
     throw new Error('Ошибка обработки транзакции с получателем: ' + apiTransaction.place)
   }
@@ -103,31 +101,24 @@ function parseComment (transaction, apiTransaction) {
   if (!apiTransaction.description) { return false }
 
   switch (apiTransaction.description) {
-    // переводы между счетами полезной информации не несут, гасим сразу
-    case 'Пополнение при переводе между картами в Интернет-банке в рамках одного клиента':
-    case 'Списание при переводе в Интернет-банке в рамках одного клиента':
-    case 'Перевод с БПК МТБ в системе Р2Р':
-    case 'Перевод на БПК МТБ в системе Р2Р':
-    case 'Списание при переводе в Интернет-банке, произвольном платеже, оплате кредита':
-    case 'Перевод между своими картами':
+    // переводы между счетами и зачисление полезной информации не несут, гасим сразу
+    case 'Внесение наличных на карту':
       return true
 
     // в покупках комментарии не оставляем
-    case 'Оплата товаров и услуг':
-    case 'Оплата товаров и услуг в сети МТБанка':
+    case 'Безналичная оплата':
       return false
-
-    // сохраняем комментарий и гасим дальнейшую оработку
-    case 'Перевод на карту другого клиента':
-    case 'Оплата в Интернет-банке':
-      transaction.comment = apiTransaction.description
-      return true
 
     default:
       transaction.comment = apiTransaction.description
       return false
   }
-} */
+}
+
+function getSumAmount (debitFlag, strAmount) {
+  const amount = Number.parseFloat(strAmount.replace(' ', '').replace(',', '.'))
+  return debitFlag === 'ЗАЧИСЛЕНИЕ' ? amount : -amount
+}
 
 export function getDate (str) {
   const [day, month, year, hour, minute] = str.match(/(\d{2}).(\d{2}).(\d{4}) (\d{2}):(\d{2})/).slice(1)

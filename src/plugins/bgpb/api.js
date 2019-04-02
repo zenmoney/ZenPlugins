@@ -10,7 +10,7 @@ export function generateBoundary () {
 
 export function terminalTime () {
   const now = new Date()
-  return String(now.getFullYear()) + ('0' + (now.getMonth() + 1)).slice(-2) + ('0' + now.getDay()).slice(-2) + ('0' + now.getHours()).slice(-2) + ('0' + now.getMinutes()).slice(-2) + ('0' + now.getSeconds()).slice(-2)
+  return String(now.getFullYear()) + ('0' + (now.getMonth() + 1)).slice(-2) + ('0' + now.getDate()).slice(-2) + ('0' + now.getHours()).slice(-2) + ('0' + now.getMinutes()).slice(-2) + ('0' + now.getSeconds()).slice(-2)
 }
 
 async function fetchApi (url, xml, predicate = () => true, error = (message) => console.assert(false, message)) {
@@ -58,13 +58,16 @@ export function parseMail (html) {
   const cheerio = require('cheerio')
   let $ = cheerio.load(html)
   $ = cheerio.load($().children()[0].children[0].Body)
+  if (!$('table tr td[style="border: none;width:17cm;"]').toArray()[2]) {
+    return []
+  }
   let card = $('table tr td[style="border: none;width:17cm;"]').toArray()[2].children[0].data.split(' ')[7]
 
   let counter = 0
   let i = 0
   let data = []
   flatMap($('table[class="section_3"] tr td').toArray().slice(2), td => {
-    if (td.children[0] && td.children[0].type === 'text') {
+    if (td.children && td.children[0] && td.children[0].type === 'text') {
       if (counter === 11) {
         counter = 0
         i++
@@ -73,13 +76,14 @@ export function parseMail (html) {
         data[i] = {
           cardNum: card,
           date: null,
-          operation: null,
+          description: null,
           type: null,
           amountReal: null,
           currencyReal: null,
           amount: null,
           currency: null,
-          location: null
+          place: null,
+          mcc: null
         }
       }
       switch (counter) {
@@ -87,7 +91,7 @@ export function parseMail (html) {
           data[i].date = td.children[0].data
           break
         case 2:
-          data[i].operation = td.children[0].data
+          data[i].description = td.children[0].data
           break
         case 3:
           data[i].type = td.children[0].data
@@ -105,7 +109,10 @@ export function parseMail (html) {
           data[i].currency = td.children[0].data
           break
         case 8:
-          data[i].location = td.children[0].data
+          data[i].place = td.children[0].data
+          break
+        case 10:
+          data[i].mcc = td.children[0].data
           break
       }
       counter++
@@ -145,7 +152,7 @@ export async function fetchAccounts (sid) {
     '   <TerminalId>41742991</TerminalId>\r\n' +
     '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-    '</BS_Request>', response => true, message => new InvalidPreferencesError('bad request'))
+    '</BS_Request>\r\n', response => true, message => new InvalidPreferencesError('bad request'))
   if (res.BS_Response.GetProducts && res.BS_Response.GetProducts.Product && res.BS_Response.GetProducts.Product.length > 0) {
     return res.BS_Response.GetProducts.Product
   }
@@ -173,7 +180,7 @@ export async function fetchBalance (sid, account) {
     '         <InputDataSource>Lookup</InputDataSource>\r\n' +
     '      </InputDataSources>\r\n' +
     '   </TerminalCapabilities>\r\n' +
-    '</BS_Request>', response => true, message => new InvalidPreferencesError('bad request'))
+    '</BS_Request>\r\n', response => true, message => new InvalidPreferencesError('bad request'))
   if (res.BS_Response.Balance && res.BS_Response.Balance.Amount) {
     return Number.parseFloat(res.BS_Response.Balance.Amount.replace(',', '.'))
   }
@@ -191,7 +198,7 @@ export async function fetchTransactionsAccId (sid, account) {
     '   <TerminalId>41742991</TerminalId>\r\n' +
     '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-    '</BS_Request>', response => true, message => new InvalidPreferencesError('bad request'))
+    '</BS_Request>\r\n', response => true, message => new InvalidPreferencesError('bad request'))
   if (res.BS_Response.GetActions && res.BS_Response.GetActions.Action && res.BS_Response.GetActions.Action.length > 2) {
     return res.BS_Response.GetActions.Action[2].Id
   }
@@ -203,7 +210,7 @@ export async function fetchTransactionsAccId (sid, account) {
 // }
 
 export function createDateIntervals (fromDate, toDate) {
-  const interval = 10 * 24 * 60 * 60 * 1000 // 10 days interval for fetching data
+  const interval = 31 * 24 * 60 * 60 * 1000 // 31 days interval for fetching data
   const dates = []
 
   let time = fromDate.getTime()
@@ -231,15 +238,15 @@ export async function fetchTransactions (sid, accounts, fromDate, toDate = new D
       return fetchApi('sou/xml_online.admin',
         '<BS_Request>\r\n' +
         '   <ExecuteAction Id="' + account.transactionsAccId + '">\r\n' +
-        '      <Parameter Id="DateFrom">' + String(('0' + date[0].getDay()).slice(-2) + '.' + ('0' + (date[0].getMonth() + 1)).slice(-2) + '.' + String(date[0].getFullYear())) + '</Parameter>\r\n' +
-        '      <Parameter Id="DateTill">' + String(('0' + date[1].getDay()).slice(-2) + '.' + ('0' + (date[1].getMonth() + 1)).slice(-2) + '.' + String(date[1].getFullYear())) + '</Parameter>\r\n' +
+        '      <Parameter Id="DateFrom">' + String(date[0].getDate() + '.' + ('0' + (date[0].getMonth() + 1)).slice(-2) + '.' + String(date[0].getFullYear())) + '</Parameter>\r\n' +
+        '      <Parameter Id="DateTill">' + String(date[1].getDate() + '.' + ('0' + (date[1].getMonth() + 1)).slice(-2) + '.' + String(date[1].getFullYear())) + '</Parameter>\r\n' +
         '   </ExecuteAction>\r\n' +
         '   <RequestType>ExecuteAction</RequestType>\r\n' +
         '   <Session IpAddress="10.0.2.15" Prolong="Y" SID="' + sid + '"/>\r\n' +
         '   <TerminalId>41742991</TerminalId>\r\n' +
         '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
         '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-        '</BS_Request>', response => true, message => new InvalidPreferencesError('bad request'))
+        '</BS_Request>\r\n', response => true, message => new InvalidPreferencesError('bad request'))
     })
   }))
   const mailIDs = flatMap(responses, response => {
@@ -265,12 +272,13 @@ export async function fetchTransactions (sid, accounts, fromDate, toDate = new D
       '           <InputDataSource>Lookup</InputDataSource>\r\n' +
       '       </InputDataSources>\r\n' +
       '   </TerminalCapabilities>\r\n' +
-      '</BS_Request>', response => true, message => new InvalidPreferencesError('bad request'))
+      '</BS_Request>\r\n', response => true, message => new InvalidPreferencesError('bad request'))
   }))
   const transactions = await Promise.all(flatMap(mails, mail => {
     let data = mail.BS_Response.MailAttachment.Attachment
     return parseMail(data)
   }))
+  console.log(transactions)
 
   console.log(`>>> Загружено ${transactions.length} операций.`)
   return transactions
