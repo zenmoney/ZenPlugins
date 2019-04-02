@@ -271,8 +271,7 @@ export async function fetchTransactions (sid, accounts, fromDate, toDate = new D
     let data = mail.BS_Response.MailAttachment.Attachment
     return parseMail(data)
   }))
-  console.log(transactions)
 
-//  console.log(`>>> Загружено ${filteredOperations.length} операций.`)
-//  return filteredOperations
+  console.log(`>>> Загружено ${transactions.length} операций.`)
+  return transactions
 }
