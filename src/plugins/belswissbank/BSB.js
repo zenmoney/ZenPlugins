@@ -3,7 +3,7 @@ import qs from 'querystring'
 import { parse, splitCookiesString } from 'set-cookie-parser'
 import { isValidDate } from '../../common/dateUtils'
 import { fetchJson } from '../../common/network'
-import codeToCurrencyLookup from './codeToCurrencyLookup'
+import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
 
 const transactionTypeFactors = {
   'Возврат': 1,

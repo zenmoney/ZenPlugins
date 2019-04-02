@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>bgpb</id>
+    <version>1.0</version>
+    <build>2</build>
+    <company>15362</company>
+    <modular>true</modular>
+    <codeRequired>false</codeRequired>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+    <description>Синхронизация работает через API приложения "BGPB mobile" БелГазПромБанка.
+
+* Реквизиты доступа к банку хранятся на телефоне в зашифрованном виде.
+* Синхронизация происходит напрямую с телефона.
+
+API банка не позволяет загружать транзакции с определенной даты, поэтому загружаться всегда будут только последние транзакции по счету.
+
+Плагин синхронизации с БелГазПромБанком имеет открытый код, который размещён на GitHub: https://github.com/zenmoney/ZenPlugins</description>
+</provider>
