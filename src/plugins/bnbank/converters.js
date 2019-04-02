@@ -1,4 +1,4 @@
-import codeToCurrencyLookup from './codeToCurrencyLookup'
+import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
 export const card = 'card'
 export const deposit = 'deposit'
 
