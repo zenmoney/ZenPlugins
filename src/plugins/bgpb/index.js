@@ -12,10 +12,10 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     accounts[i].transactionsAccId = await bank.fetchTransactionsAccId(token, accounts[i])
   }
   const transactions = (await bank.fetchTransactions(token, accounts, fromDate, toDate))
-  //  .map(transaction => converters.convertTransaction(transaction, accounts))
+    .map(transaction => converters.convertTransaction(transaction, accounts))
   console.log(transactions)
   return {
     accounts: accounts,
-    transactions: []
+    transactions: transactions
   }
 }

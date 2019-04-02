@@ -1,7 +1,6 @@
 import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
 
 export function convertAccount (ob) {
-  console.log(ob)
   return {
     id: ob.Id,
     transactionsAccId: null,
@@ -18,21 +17,22 @@ export function convertAccount (ob) {
 
 export function convertTransaction (apiTransaction, accounts) {
   const account = accounts.find(account => {
-    return account.syncID.indexOf(apiTransaction.accountId) !== -1
+    return account.syncID.indexOf(apiTransaction.cardNum) !== -1
   })
 
+  console.log(getDate(apiTransaction.date))
   const transaction = {
-    date: getDate(apiTransaction.transDate),
+    date: getDate(apiTransaction.date),
     movements: [ getMovement(apiTransaction, account) ],
     merchant: null,
     comment: null,
-    hold: apiTransaction.status !== 'T'
+    hold: false
   };
 
   [
-    parseCash,
-    parseComment,
-    parsePayee
+    // parseCash,
+    // parseComment,
+    // parsePayee
   ].some(parser => parser(transaction, apiTransaction))
 
   return transaction
@@ -43,21 +43,21 @@ function getMovement (apiTransaction, account) {
     id: null,
     account: { id: account.id },
     invoice: null,
-    sum: getSumAmount(apiTransaction.debitFlag, apiTransaction.transAmount),
+    sum: Number.parseFloat(apiTransaction.amount.replace(' ', '').replace(',', '.')),
     fee: 0
   }
 
-  if (apiTransaction.curr !== account.instrument) {
+  if (apiTransaction.currency !== account.instrument) {
     movement.invoice = {
-      sum: getSumAmount(apiTransaction.debitFlag, apiTransaction.amount),
-      instrument: apiTransaction.curr
+      sum: Number.parseFloat(apiTransaction.amountReal.replace(' ', '').replace(',', '.')),
+      instrument: apiTransaction.currencyReal
     }
   }
 
   return movement
 }
 
-function parseCash (transaction, apiTransaction) {
+/* function parseCash (transaction, apiTransaction) {
   if (apiTransaction.description.indexOf('нятие нал') > 0 ||
     apiTransaction.description.indexOf('ополнение нал') > 0) {
     // добавим вторую часть перевода
@@ -127,14 +127,9 @@ function parseComment (transaction, apiTransaction) {
       transaction.comment = apiTransaction.description
       return false
   }
-}
-
-function getSumAmount (debitFlag, strAmount) {
-  const amount = Number.parseFloat(strAmount)
-  return debitFlag === '1' ? amount : -amount
-}
+} */
 
 export function getDate (str) {
-  const [year, month, day, hour, minute, second] = str.match(/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})/).slice(1)
-  return new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}+03:00`)
+  const [day, month, year, hour, minute] = str.match(/(\d{2}).(\d{2}).(\d{4}) (\d{2}):(\d{2})/).slice(1)
+  return new Date(`${year}-${month}-${day}T${hour}:${minute}:00+03:00`)
 }
