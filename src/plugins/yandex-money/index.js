@@ -1,5 +1,5 @@
 import { convertAccount, convertTransaction } from './converters'
-import { fetchAccount, fetchTransactions, isAuthError, login } from './yandex'
+import { fetchAccount, fetchTransactions, isAuthError, login } from './api'
 
 export async function scrape ({ preferences, fromDate, toDate, isInBackground }) {
   let apiAccount = null
