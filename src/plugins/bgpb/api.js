@@ -205,10 +205,6 @@ export async function fetchTransactionsAccId (sid, account) {
   return null
 }
 
-// function formatDate (date) {
-//   return date.toISOString().replace('T', ' ').split('.')[0]
-// }
-
 export function createDateIntervals (fromDate, toDate) {
   const interval = 31 * 24 * 60 * 60 * 1000 // 31 days interval for fetching data
   const dates = []
@@ -228,6 +224,10 @@ export function createDateIntervals (fromDate, toDate) {
   return dates
 }
 
+function transactionDate (date) {
+  return String(date.getDate() + '.' + ('0' + (date.getMonth() + 1)).slice(-2) + '.' + String(date.getFullYear()))
+}
+
 export async function fetchTransactions (sid, accounts, fromDate, toDate = new Date()) {
   console.log('>>> Загрузка списка транзакций...')
   toDate = toDate || new Date()
@@ -238,8 +238,8 @@ export async function fetchTransactions (sid, accounts, fromDate, toDate = new D
       return fetchApi('sou/xml_online.admin',
         '<BS_Request>\r\n' +
         '   <ExecuteAction Id="' + account.transactionsAccId + '">\r\n' +
-        '      <Parameter Id="DateFrom">' + String(date[0].getDate() + '.' + ('0' + (date[0].getMonth() + 1)).slice(-2) + '.' + String(date[0].getFullYear())) + '</Parameter>\r\n' +
-        '      <Parameter Id="DateTill">' + String(date[1].getDate() + '.' + ('0' + (date[1].getMonth() + 1)).slice(-2) + '.' + String(date[1].getFullYear())) + '</Parameter>\r\n' +
+        '      <Parameter Id="DateFrom">' + transactionDate(date[0]) + '</Parameter>\r\n' +
+        '      <Parameter Id="DateTill">' + transactionDate(date[1]) + '</Parameter>\r\n' +
         '   </ExecuteAction>\r\n' +
         '   <RequestType>ExecuteAction</RequestType>\r\n' +
         '   <Session IpAddress="10.0.2.15" Prolong="Y" SID="' + sid + '"/>\r\n' +
@@ -278,7 +278,6 @@ export async function fetchTransactions (sid, accounts, fromDate, toDate = new D
     let data = mail.BS_Response.MailAttachment.Attachment
     return parseMail(data)
   }))
-  console.log(transactions)
 
   console.log(`>>> Загружено ${transactions.length} операций.`)
   return transactions
