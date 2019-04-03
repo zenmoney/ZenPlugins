@@ -110,10 +110,10 @@ function parsePayee (transaction, apiTransaction) {
   const merchant = apiTransaction.place.split(' / ').map(str => str.trim())
   if (merchant.length === 1) {
     transaction.merchant.fullTitle = merchant[0]
-  } else if (merchant.length === 3) {
-    transaction.merchant.title = merchant[0]
-    transaction.merchant.city = merchant[1]
-    transaction.merchant.country = merchant[2]
+  } else if (merchant.length >= 3) {
+    transaction.merchant.country = merchant.pop()
+    transaction.merchant.city = merchant.pop()
+    transaction.merchant.title = merchant.join(' / ')
   } else {
     throw new Error('Ошибка обработки транзакции с получателем: ' + apiTransaction.place)
   }

@@ -218,4 +218,43 @@ describe('convertTransaction', () => {
       comment: 'velcom по № телефона | номер услуги 381861'
     })
   })
+
+  it('should convert full merchant transaction', () => {
+    const transaction = convertTransaction({
+      accountId: 'BY36MTBK10110008000001111000',
+      amount: '3.0',
+      balance: '2098.33',
+      cardPan: '111111******1111',
+      curr: 'BYN',
+      debitFlag: '0',
+      description: 'Оплата товаров и услуг',
+      error: '',
+      operationDate: '2019-03-05',
+      orderStatus: '1',
+      place: 'SHOP / OOO "YAMI"        / MINSK        / BY',
+      status: 'T',
+      transAmount: '3.0',
+      transDate: '2019-03-01 10:43:48'
+    }, accounts)
+
+    expect(transaction).toEqual({
+      hold: false,
+      date: new Date('2019-03-01T10:43:48+03:00'),
+      movements: [{
+        id: null,
+        account: { id: '1113333' },
+        sum: -3,
+        fee: 0,
+        invoice: null
+      }],
+      merchant: {
+        'city': 'MINSK',
+        'country': 'BY',
+        'location': null,
+        'mcc': null,
+        'title': 'SHOP / OOO "YAMI"'
+      },
+      comment: null
+    })
+  })
 })
