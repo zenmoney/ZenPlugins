@@ -1,4 +1,4 @@
-import codeToCurrencyLookup from '../../../codeToCurrencyLookup'
+import codeToCurrencyLookup from '../../../../../common/codeToCurrencyLookup'
 import { card, convertTransaction } from '../../../converters'
 
 describe('convertTransaction', () => {
