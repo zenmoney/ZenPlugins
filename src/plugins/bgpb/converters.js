@@ -30,7 +30,48 @@ export function convertTransaction (apiTransaction, accounts) {
 
   [
     parseCash,
-    parseComment,
+    parsePayee,
+    parseComment
+  ].some(parser => parser(transaction, apiTransaction))
+
+  return transaction
+}
+
+export function convertLastTransaction (apiTransaction, accounts) {
+  console.log(apiTransaction)
+  let message = apiTransaction.pushMessageText
+  if (message.slice(0, 4) !== 'Card') {
+    // Значит это не транзакция, а просто уведомление банка
+    return null
+  }
+  let rawData = message.split('; ')
+  const account = accounts.find(account => {
+    return account.syncID.indexOf(rawData[0].slice(-4)) !== -1
+  })
+
+  let amountData = rawData[1].split(': ')
+  let currency = amountData[1].slice(-3)
+  let amount = amountData[1].replace(' ' + currency, '')
+  apiTransaction.description = amountData[0]
+  apiTransaction.currency = currency
+  apiTransaction.type = amountData[0]
+  apiTransaction.amount = amount
+  apiTransaction.payeeLastTransaction = rawData[3]
+  const transaction = {
+    date: getDateFromJSON(rawData[2]),
+    movements: [ getMovement({
+      type: amountData[0],
+      amount: amount,
+      currencyReal: currency,
+      amountReal: '' // на текущий момент не понятно как нормально узнать реальное списание при использовании другой валюты, поэтому будем делать такие списания корректировками :(
+    }, account) ],
+    merchant: null,
+    comment: null,
+    hold: false
+  };
+
+  [
+    parseCash,
     parsePayee
   ].some(parser => parser(transaction, apiTransaction))
 
@@ -57,7 +98,8 @@ function getMovement (apiTransaction, account) {
 }
 
 function parseCash (transaction, apiTransaction) {
-  if (apiTransaction.description.indexOf('наличных на карту') > 0) {
+  if (apiTransaction.description.indexOf('наличных на карту') > 0 ||
+    apiTransaction.description === 'Пополнение') {
     // добавим вторую часть перевода
     transaction.movements.push({
       id: null,
@@ -71,19 +113,33 @@ function parseCash (transaction, apiTransaction) {
       sum: -getSumAmount(apiTransaction.type, apiTransaction.amount),
       fee: 0
     })
-    return true
+    return false
   }
 }
 
 function parsePayee (transaction, apiTransaction) {
-  if (!apiTransaction.place) {
+  if (!apiTransaction.place && !apiTransaction.payeeLastTransaction) {
     return false
   }
 
   transaction.merchant = {
-    mcc: Number(apiTransaction.mcc),
+    mcc: isFinite(apiTransaction.mcc) ? Number(apiTransaction.mcc) : null,
     location: null
   }
+  if (apiTransaction.payeeLastTransaction) {
+    const merchant = apiTransaction.payeeLastTransaction.split(',')
+    if (merchant.length === 1) {
+      transaction.merchant.fullTitle = apiTransaction.payeeLastTransaction
+    } else if (merchant.length > 1) {
+      transaction.merchant.title = merchant[0]
+      transaction.merchant.city = merchant[1]
+      transaction.merchant.country = merchant[2]
+    } else {
+      throw new Error('Ошибка обработки транзакции с получателем: ' + apiTransaction.place)
+    }
+    return
+  }
+
   const merchant = apiTransaction.place.split(', ')
   if (merchant.length === 1) {
     transaction.merchant.fullTitle = apiTransaction.place
@@ -116,11 +172,34 @@ function parseComment (transaction, apiTransaction) {
 }
 
 function getSumAmount (debitFlag, strAmount) {
-  const amount = Number.parseFloat(strAmount.replace(' ', '').replace(',', '.'))
-  return debitFlag === 'ЗАЧИСЛЕНИЕ' ? amount : -amount
+  const amount = Number.parseFloat(strAmount.replace(',', '.').replace(' ', ''))
+  if (debitFlag === 'ЗАЧИСЛЕНИЕ' || debitFlag.indexOf('Пополнение') === 0) {
+    return amount
+  }
+  return -amount
 }
 
 export function getDate (str) {
   const [day, month, year, hour, minute] = str.match(/(\d{2}).(\d{2}).(\d{4}) (\d{2}):(\d{2})/).slice(1)
   return new Date(`${year}-${month}-${day}T${hour}:${minute}:00+03:00`)
+}
+
+export function getDateFromJSON (str) {
+  const [day, month, year, hour, minute] = str.match(/(\d{2}).(\d{2}).(\d{2}) (\d{2}):(\d{2}):\d{2}/).slice(1)
+  return new Date(`20${year}-${month}-${day}T${hour}:${minute}:00+03:00`)
+}
+
+export function transactionsUnique (array) {
+  let a = array.concat()
+  for (let i = 0; i < a.length; ++i) {
+    for (let j = i + 1; j < a.length; ++j) {
+      if (a[i].date.getTime() === a[j].date.getTime() &&
+      a[i].movements.length === a[j].movements.length &&
+      a[i].movements[0].account.id === a[j].movements[0].account.id &&
+        a[i].movements[0].sum === a[j].movements[0].sum) {
+        a.splice(j--, 1)
+      }
+    }
+  }
+  return a
 }

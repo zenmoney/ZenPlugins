@@ -1,5 +1,5 @@
 import { flatMap } from 'lodash'
-import { fetch, parseXml } from '../../common/network'
+import { fetch, fetchJson, parseXml } from '../../common/network'
 import { generateRandomString } from '../../common/utils'
 
 const baseUrl = 'https://mobapp-frontend.bgpb.by/'
@@ -48,13 +48,26 @@ async function fetchApi (url, xml, predicate = () => true, error = (message) => 
   return res
 }
 
+async function fetchApiJson (url, options, predicate = () => true, error = (message) => console.assert(false, message)) {
+  const response = await fetchJson(baseUrl + url, options)
+  if (predicate) {
+    validateResponse(response, response => predicate(response), error)
+  }
+
+  if (response.body.errorCode !== 0) {
+    throw new TemporaryError('Ответ банка: ' + response.body)
+  }
+
+  return response
+}
+
 function validateResponse (response, predicate, error) {
   if (!predicate || !predicate(response)) {
     error('non-successful response')
   }
 }
 
-export function parseMail (html) {
+export function parseFullTransactionsMail (html) {
   const cheerio = require('cheerio')
   let $ = cheerio.load(html)
   $ = cheerio.load($().children()[0].children[0].Body)
@@ -83,6 +96,7 @@ export function parseMail (html) {
           amount: null,
           currency: null,
           place: null,
+          authCode: null,
           mcc: null
         }
       }
@@ -111,6 +125,9 @@ export function parseMail (html) {
         case 8:
           data[i].place = td.children[0].data
           break
+        case 9:
+          data[i].authCode = td.children[0].data
+          break
         case 10:
           data[i].mcc = td.children[0].data
           break
@@ -123,7 +140,7 @@ export function parseMail (html) {
 }
 
 export async function login (login, password) {
-  let res = await fetchApi('sou/xml_online.admin',
+  let res = await fetchApi('sou/xml_online.admin?q=login',
     '<BS_Request>\r\n' +
     '   <Login Biometric="N" IpAddress="10.0.2.15" Type="PWD">\r\n' +
     '      <Parameter Id="Login">' + login + '</Parameter>\r\n' +
@@ -200,7 +217,9 @@ export async function fetchTransactionsAccId (sid, account) {
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
     '</BS_Request>\r\n', response => true, message => new InvalidPreferencesError('bad request'))
   if (res.BS_Response.GetActions && res.BS_Response.GetActions.Action && res.BS_Response.GetActions.Action.length > 2) {
-    return res.BS_Response.GetActions.Action[2].Id
+    return {
+      transactionsAccId: res.BS_Response.GetActions.Action[2].Id
+    }
   }
   return null
 }
@@ -228,7 +247,7 @@ function transactionDate (date) {
   return String(date.getDate() + '.' + ('0' + (date.getMonth() + 1)).slice(-2) + '.' + String(date.getFullYear()))
 }
 
-export async function fetchTransactions (sid, accounts, fromDate, toDate = new Date()) {
+export async function fetchFullTransactions (sid, accounts, fromDate, toDate = new Date()) {
   console.log('>>> Загрузка списка транзакций...')
   toDate = toDate || new Date()
 
@@ -276,9 +295,27 @@ export async function fetchTransactions (sid, accounts, fromDate, toDate = new D
   }))
   const transactions = await Promise.all(flatMap(mails, mail => {
     let data = mail.BS_Response.MailAttachment.Attachment
-    return parseMail(data)
+    return parseFullTransactionsMail(data)
   }))
 
   console.log(`>>> Загружено ${transactions.length} операций.`)
+  return transactions
+}
+
+export async function fetchLastTransactions (sid, accounts) {
+  console.log('>>> Загрузка списка последних транзакций...')
+  const transactions = (await fetchApiJson('push-history/api/andorid_5.17.1/v1/getHistory', {
+    method: 'POST',
+    body: {
+      'eventTypes': [
+        4,
+        8
+      ],
+      'limit': 40,
+      'offset': 0,
+      'sessionId': sid
+    } }, response => response.body.errorCode && response.body.errorCode === 0 && response.body.historyRecords && response.body.historyRecords.length > 0, message => new TemporaryError(message))).body.historyRecords
+
+  console.log(`>>> Загружено ${transactions.length} последних операций.`)
   return transactions
 }
