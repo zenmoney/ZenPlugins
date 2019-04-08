@@ -28,8 +28,7 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
         'User-Agent': 'Android',
         'DEVICE_TOKEN': 123456,
         'Connection': 'Keep-Alive',
-        'Accept-Encoding': 'gzip',
-        'Host': 'login.belinvestbank.by'
+        'Accept-Encoding': 'gzip'
       },
       sanitizeRequestLog: { headers: { Cookie: true } },
       sanitizeResponseLog: { headers: { 'set-cookie': true } },
@@ -190,7 +189,8 @@ export async function fetchTransactions (sessionCookies, accounts, fromDate, toD
           dateFrom: formatDate(dates[0]),
           dateTo: formatDate(dates[1])
         }
-      }, response => response.body && response.body.values && response.body.values.history && response.body.values.history.length > 0)
+      }, response => response.body && response.body.values && response.body.values.history && response.body.values.history.length > 0,
+      message => new InvalidPreferencesError('bad request'))
     })
   }))
   console.log(responses)
