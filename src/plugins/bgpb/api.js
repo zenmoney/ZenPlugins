@@ -72,6 +72,7 @@ export function parseFullTransactionsMail (html) {
   const cheerio = require('cheerio')
   let $ = cheerio.load(html)
   $ = cheerio.load($().children()[0].children[0].Body)
+  console.log($)
   if (!$('table tr td[style="border: none;width:17cm;"]').toArray()[2]) {
     return []
   }
