@@ -11,11 +11,11 @@ const dataUrl = 'https://ibank.belinvestbank.by/app_api'
 export function getDevice () {
   let deviceID = ZenMoney.getData('deviceId', generateRandomString(16))
   ZenMoney.setData('deviceId', deviceID)
-  let deviceToken = ZenMoney.getData('deviceToken', base64.encode(generateRandomString(203)))
-  ZenMoney.setData('deviceToken', deviceToken)
+  let deviceToken = ZenMoney.getData('token', base64.encode(generateRandomString(203)))
+  ZenMoney.setData('token', deviceToken)
   return {
-    deviceID: deviceID,
-    deviceToken: deviceToken
+    id: deviceID,
+    token: deviceToken
   }
 }
 
@@ -80,10 +80,10 @@ export async function login (login, password) {
       method: 'signin',
       login: login,
       password: password,
-      deviceId: device.deviceID,
+      deviceId: device.id,
       versionApp: '2.1.7',
       os: 'Android',
-      device_token: device.deviceToken,
+      device_token: device.token,
       device_token_type: 'ANDROID'
     },
     sanitizeRequestLog: { body: { login: true, password: true } }
@@ -99,28 +99,33 @@ export async function login (login, password) {
       }
     }, response => response.success, message => new InvalidPreferencesError('bad request')))
   }
-  console.log(sessionCookies)
 
-  const code = await ZenMoney.readLine('Введите код из СМС', {
-    time: 120000,
-    inputType: 'number'
-  })
-  if (!code || !code.trim()) {
-    throw new TemporaryError('Вы не ввели код. Повторите запуск синхронизации.')
-  }
-
-  res = (await fetchApiJson(loginUrl, {
-    method: 'POST',
-    headers: { 'Cookie': sessionCookies },
-    body: {
-      section: 'account',
-      method: 'signin2',
-      action: 1,
-      key: code,
-      device_token: device.deviceToken,
-      device_token_type: 'ANDROID'
+  let isNeededSaveDevice = false
+  if (res.body.values && !res.body.values.authCode) {
+    // Значит нужно подтверджать смс
+    const code = await ZenMoney.readLine('Введите код из СМС', {
+      time: 120000,
+      inputType: 'number'
+    })
+    if (!code || !code.trim()) {
+      throw new TemporaryError('Вы не ввели код. Повторите запуск синхронизации.')
     }
-  }, response => response.success && response.body.status && response.body.status === 'OK', message => new InvalidPreferencesError('bad request')))
+
+    res = (await fetchApiJson(loginUrl, {
+      method: 'POST',
+      headers: { 'Cookie': sessionCookies },
+      body: {
+        section: 'account',
+        method: 'signin2',
+        action: 1,
+        key: code,
+        device_token: device.token,
+        device_token_type: 'ANDROID'
+      }
+    }, response => response.success && response.body.status && response.body.status === 'OK', message => new InvalidPreferencesError('bad request')))
+
+    isNeededSaveDevice = true
+  }
 
   res = (await fetchApiJson(dataUrl, {
     method: 'POST',
@@ -131,6 +136,19 @@ export async function login (login, password) {
     }
   }, response => response.success && response.body.status && response.body.status === 'OK', message => new InvalidPreferencesError('bad request')))
   sessionCookies = cookies(res)
+
+  if (isNeededSaveDevice) {
+    await fetchApiJson(dataUrl, {
+      method: 'POST',
+      headers: { 'Cookie': sessionCookies },
+      body: {
+        section: 'mobile',
+        method: 'setDeviceId',
+        deviceId: device.id,
+        os: 'Android'
+      }
+    }, response => response.success && response.body.status && response.body.status === 'OK', message => new InvalidPreferencesError('bad request'))
+  }
 
   return sessionCookies
 }
