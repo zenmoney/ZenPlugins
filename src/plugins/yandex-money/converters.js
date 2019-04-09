@@ -10,6 +10,8 @@ export function convertAccount (apiAccount) {
   }
   if (apiAccount.balance_details && apiAccount.balance_details.available !== apiAccount.balance_details.total) {
     account.balance = apiAccount.balance_details.total
+  } else if (apiAccount.balance_details && apiAccount.balance_details.hold) {
+    account.balance = apiAccount.balance + apiAccount.balance_details.hold
   } else {
     account.balance = apiAccount.balance
   }
