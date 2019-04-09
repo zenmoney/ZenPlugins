@@ -43,7 +43,8 @@ async function fetchApi (url, xml, predicate = () => true, error = (message) => 
     const errorDescription = res.BS_Response.Error.ErrorLine
     const errorMessage = 'Ответ банка: ' + errorDescription
     if (errorDescription.indexOf('Неверный логин') >= 0) { throw new InvalidPreferencesError(errorMessage) }
-    throw new TemporaryError(errorMessage)
+    // throw new TemporaryError(errorMessage)
+    throw new Error(errorMessage)
   }
   return res
 }
