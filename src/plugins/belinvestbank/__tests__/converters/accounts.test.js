@@ -3,63 +3,51 @@ import { convertAccount } from '../../converters'
 describe('convertAccount', () => {
   it('should convert checking account', () => {
     const account = convertAccount({
-      'productType': 'PC',
-      'accountId': '1113333',
-      'id': 1,
-      'productCode': '1113333|PC',
-      'show': true,
-      'variationId': '[MASTERCARD][MCW INSTANT BYR 3Y (PAYOKAY)]',
-      'accruedInterest': null,
-      'avlBalance': '99.9',
-      'avlLimit': null,
-      'cardAccounts': [{
-        'accType': null,
-        'accountId': 'BY36MTBK10110008000001111000',
-        'accountIdenType': 'PC',
-        'availableBalance': null,
-        'contractCode': '1113333',
-        'currencyCode': 'BYN',
-        'productType': 'PC'
-      }],
-      'cards': [{
-        'blockReason': null,
-        'cardCurr': 'BYN',
-        'commisDate': '2019-01-31',
-        'commisSum': '99.9',
-        'description': 'MASTERCARD',
-        'embossedName': 'IVAN IVANOV',
-        'isOfAccntHolder': '1',
-        'mainCard': '1',
-        'over': '0',
-        'pan': '999999_1111',
-        'smsNotification': '1',
-        'status': 'A',
-        'term': '01/01',
-        'type': 'MASTERCARD',
-        'vpan': '1234567890123456',
-        'rbs': '1234567',
-        'pinPhoneNumber': '123456789012'
-      }],
-      'description': 'PayOkay',
-      'over': null,
-      'debtPayment': null,
-      'isActive': true,
-      'isOverdraft': false,
-      'rate': '0.0001'
+      balance: '99.90',
+      blocking: '',
+      blockingCode: '',
+      blockingText: '',
+      cardClass: 'type-logo_belcaed-maestro',
+      cardClassColor: '_type_blue',
+      cardHolder: 'IVAN PUPKIN',
+      cardImage: '/core/assets/redesign3/images/cardsLogo/belcard_mini2.svg',
+      cardName: '',
+      cardsKey: 30848200,
+      commonId: 'ownBankCards_30848200',
+      corporative: 0,
+      currency: 'BYN',
+      expdate: 1711832400,
+      finalName: 'Безымянная',
+      fixedBalance: 0,
+      id: '30848200',
+      international: 0,
+      internet: 1,
+      isBelcard: 0,
+      isCredit: 0,
+      isCurrent: true,
+      isDBO: 0,
+      isGroupPackage: '0',
+      isProlongable: 0,
+      isReplaceable: 1,
+      isSendPinAllowed: 1,
+      isVirtual: '0',
+      num: '**** 1111',
+      packageName: '',
+      pimpText: '',
+      status3D: 0,
+      statusLimits: 0,
+      statusPimp: 0,
+      subTitle: '',
+      type: 'БЕЛКАРТ-Maestro'
     })
 
     expect(account).toEqual({
-      id: '1113333',
+      id: '30848200',
       type: 'card',
-      title: 'PayOkay',
-      productType: 'PC',
+      title: 'Безымянная*1111',
       instrument: 'BYN',
       balance: 99.9,
-      creditLimit: 0,
-      syncID: [
-        'BY36MTBK10110008000001111000',
-        '1111'
-      ]
+      syncID: ['1111']
     })
   })
 })

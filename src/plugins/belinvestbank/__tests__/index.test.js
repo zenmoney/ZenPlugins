@@ -1,31 +1,34 @@
 import fetchMock from 'fetch-mock'
+import _ from 'lodash'
 import { scrape } from '..'
+import { makePluginDataApi } from '../../../ZPAPI.pluginData'
+
+var querystring = require('querystring')
 
 describe('scrape', () => {
   it('should hit the mocks and return results', async () => {
-    mockApiRoot()
-    mockIdentity()
-    mockCheckPassword()
-    mockLoadUser()
-    mockLoadOperationStatements()
+    mockZenMoney()
+    mockApiLoginAndPass()
+    // mockIdentity()
+    // mockCheckPassword()
+    // mockLoadUser()
+    // mockLoadOperationStatements()
 
     const result = await scrape(
       {
-        preferences: { phone: '123456789', password: 'pass' },
+        preferences: { login: '123456789', password: 'pass' },
         fromDate: new Date('2018-12-27T00:00:00.000+03:00'),
         toDate: new Date('2019-01-02T00:00:00.000+03:00')
       }
     )
 
     expect(result.accounts).toEqual([{
-      'balance': 999.9,
-      'creditLimit': 0,
-      'id': '1111111',
-      'instrument': 'BYN',
-      'productType': 'PC',
-      'syncID': ['BY36MTBK10110001000001111000', '1111'],
-      'title': 'PayOkay',
-      'type': 'card'
+      id: '30848200',
+      type: 'card',
+      title: 'Безымянная*1111',
+      instrument: 'BYN',
+      balance: 99.9,
+      syncID: ['1111']
     }])
 
     expect(result.transactions).toEqual([{
@@ -66,7 +69,7 @@ describe('scrape', () => {
     }])
   })
 })
-
+/*
 function mockLoadOperationStatements () {
   fetchMock.once('https://mybank.by/api/v1/product/loadOperationStatements', {
     status: 200,
@@ -312,19 +315,38 @@ function mockIdentity () {
     sendAsJson: false
   }, { method: 'POST' })
 }
+*/
+function mockApiLoginAndPass () {
+  fetchMock.once({
+    method: 'POST',
+    matcher: (url, { body }) => url === 'https://login.belinvestbank.by/app_api' && _.isEqual(body, querystring.stringify({
+      section: 'account',
+      method: 'signin',
+      login: '123456789',
+      password: 'pass',
+      deviceId: 'device id',
+      versionApp: '2.1.7',
+      os: 'Android',
+      device_token: 'device token',
+      device_token_type: 'ANDROID'
+    })),
+    response: {
+      status: 200,
+      body: {
+        isNeedConfirmSessionKey: '1',
+        message: 'Внимание! Система "Интернет-банкинг" уже запущена, повторный запуск запрещен.',
+        status: 'ER',
+        textMessage: 'Внимание! Система "Мобильный банкинг" уже запущена, повторный запуск запрещен. Вы хотите аннулировать предыдущий запуск системы?'
+      }
+    }
+  })
+}
 
-function mockApiRoot () {
-  fetchMock.once('https://mybank.by/api/v1/', {
-    status: 404,
-    body: JSON.stringify({
-      'timestamp': '2019-03-25T14:27:04.293+0000',
-      'status': 404,
-      'error': 'Not Found',
-      'message': 'No message available',
-      'path': '/api/v1/'
-    }),
-    statusText: 'OK',
-    headers: { 'set-cookie': 'session-cookie' },
-    sendAsJson: false
-  }, { method: 'GET' })
+function mockZenMoney () {
+  global.ZenMoney = {
+    ...makePluginDataApi({
+      deviceId: 'device id',
+      token: 'device token'
+    }).methods
+  }
 }

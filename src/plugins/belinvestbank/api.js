@@ -211,7 +211,6 @@ export async function fetchTransactions (sessionCookies, accounts, fromDate, toD
       message => new InvalidPreferencesError('bad request'))
     })
   }))
-  console.log(responses)
 
   const operations = flatMap(responses, response => {
     return flatMap(response.body.values.history, op => {
