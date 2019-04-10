@@ -61,12 +61,11 @@ function getMovement (json, account) {
     fee: 0
   }
 
-  if (json.info.amount.currency !== account.instrument) {
-    throw new Error('не известная транзакция')
-    /* movement.invoice = {
-      sum: getSumAmount(json.debitFlag, json.amount),
-      instrument: json.curr
-    } */
+  if (json.operationAmount && json.operationAmount.currency !== account.instrument) {
+    movement.invoice = {
+      sum: -json.operationAmount.amount,
+      instrument: json.operationAmount.currency
+    }
   }
 
   return movement
@@ -107,6 +106,20 @@ function parseCash (transaction, json) {
       fee: 0
     })
     return true
+  } else if (json.operation === 'CURRENCYEXCHANGE') {
+    // добавим вторую часть перевода
+    transaction.movements.push({
+      id: null,
+      account: {
+        company: null,
+        type: 'cash',
+        instrument: json.operationAmount.currency,
+        syncIds: null
+      },
+      invoice: null,
+      sum: json.operationAmount.amount,
+      fee: 0
+    })
   }
 }
 
@@ -132,7 +145,8 @@ function parseComment (transaction, json) {
   if (!json.description) { return false }
 
   // переводы между счетами полезной информации не несут, гасим сразу
-  if (json.description.indexOf('P2P') >= 0) {
+  if (json.description.indexOf('P2P') >= 0 ||
+    json.operation === 'CURRENCYEXCHANGE') {
     return true
   } else if (json.description.indexOf('за обслуживание карточки') >= 0 ||
     json.description.indexOf('Вознаграждение за обслуживание') >= 0) {
