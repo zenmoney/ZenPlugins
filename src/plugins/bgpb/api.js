@@ -217,8 +217,14 @@ export async function fetchTransactionsAccId (sid, account) {
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
     '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
   if (res.BS_Response.GetActions && res.BS_Response.GetActions.Action && res.BS_Response.GetActions.Action.length > 2) {
-    return {
-      transactionsAccId: res.BS_Response.GetActions.Action[2].Id
+    let actions = res.BS_Response.GetActions.Action
+    for (let i = 0; i < actions.length; i++) {
+      if (actions[i].Type === 'itwg:OperationTxt') {
+        // нашли action id для выписки за период
+        return {
+          transactionsAccId: actions[i].Id
+        }
+      }
     }
   }
   return null
