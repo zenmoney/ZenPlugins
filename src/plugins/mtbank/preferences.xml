@@ -8,7 +8,7 @@
         dialogMessage="+375*********"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
-        summary="|ID пользователя или логин|{@s}"
+        summary="||{@s}"
     />
     <EditTextPreference
         key="password"
