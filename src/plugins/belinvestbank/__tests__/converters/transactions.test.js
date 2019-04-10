@@ -21,53 +21,43 @@ describe('convertTransaction', () => {
     {
       name: 'cash add',
       transaction: {
-        amount: '1 600,00',
-        amountReal: '1 600,00',
-        authCode: '264505',
-        cardNum: '1111',
-        currency: 'USD',
-        currencyReal: 'USD',
-        date: '18.01.2019 21:36',
-        description: 'Внесение наличных на карту',
-        mcc: '↵',
-        place: 'BY BGPB PST-93, MINSK',
-        type: 'ЗАЧИСЛЕНИЕ'
+        cardNum: '**** **** **** 1111',
+        date: '2019-01-01 10:12:13',
+        type: 'Выдача наличных',
+        accountAmt: '10,13',
+        status: 'ПРОВЕДЕНО',
+        cardAcceptor: 'Выдача наличных в ATM'
       },
       expectedTransaction: {
-        'comment': null,
-        'date': new Date('2019-01-18T18:36:00.000Z'),
-        'hold': false,
-        'merchant': {
-          'city': 'MINSK',
-          'country': 'BY',
-          'location': null,
-          'mcc': null,
-          'title': 'BGPB PST-93'
-        },
-        'movements':
-        [
+        hold: false,
+        date: new Date('2019-01-01T10:12:13+03:00'),
+        movements: [
           {
-            'account': {
-              'id': '11161311-117d11'
-            },
-            'fee': 0,
-            'id': null,
-            'invoice': null,
-            'sum': 1600
+            id: null,
+            invoice: null,
+            account: { id: '30848200' },
+            sum: -10.13,
+            fee: 0
           },
           {
-            'account': {
-              'company': null,
-              'instrument': 'USD',
-              'syncIds': null,
-              'type': 'cash'
+            account: {
+              company: null,
+              instrument: undefined,
+              syncIds: null,
+              type: 'cash'
             },
-            'fee': 0,
-            'id': null,
-            'invoice': null,
-            'sum': -1600
+            fee: 0,
+            id: null,
+            invoice: null,
+            sum: 10.13
           }
-        ]
+        ],
+        merchant: {
+          fullTitle: 'Выдача наличных в ATM',
+          location: null,
+          mcc: null
+        },
+        comment: null
       }
     }
   ]
