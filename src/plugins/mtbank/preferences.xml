@@ -8,7 +8,7 @@
         dialogMessage="Введите номер телефона для входа в интернет-банк МТБанк"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
-        summary="|ID пользователя или логин|{@s}"
+        summary="||{@s}"
     />
     <EditTextPreference
         key="password"
