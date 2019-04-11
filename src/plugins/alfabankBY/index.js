@@ -1,8 +1,9 @@
 import * as bank from './api'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
-  const token = await bank.login(preferences.login, preferences.password)
-  console.log(token)
+  await bank.login()
+  // const token = await bank.login(preferences.login, preferences.password)
+  // console.log(token)
   // const accounts = (await bank.fetchAccounts(token))
   //  .map(converters.convertAccount)
   //  .filter(account => account !== null)
