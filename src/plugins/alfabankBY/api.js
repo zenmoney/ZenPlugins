@@ -30,13 +30,6 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
     validateResponse(response, response => predicate(response), error)
   }
 
-  if (!response.body.success && response.body.error && response.body.error.description) {
-    const errorDescription = response.body.error.description
-    const errorMessage = 'Ответ банка: ' + errorDescription + (response.body.error.lockedTime && response.body.error.lockedTime !== 'null' ? response.body.error.lockedTime : '')
-    if (errorDescription.indexOf('Неверный пароль') >= 0) { throw new InvalidPreferencesError(errorMessage) }
-    throw new TemporaryError(errorMessage)
-  }
-
   return response
 }
 
@@ -60,7 +53,54 @@ function validateResponse (response, predicate, error) {
   }
 } */
 
-export async function login (login, password) {
+export async function login () {
+  let deviceID = DeviceID()
+  let token = ZenMoney.getData('token')
+  let sessionID = await checkDeviceStatus(deviceID)
+  if (sessionID === null) {
+    // TODO: user have to auth!
+  }
+  if (!await loginByToken(sessionID, deviceID, token)) {
+    console.log('something went wrong')
+  }
+  return null
+}
+
+export async function checkDeviceStatus (deviceID) {
+  let res = (await fetchApiJson('CheckDeviceStatus?locale=ru', {
+    method: 'POST',
+    body: {
+      deviceId: deviceID,
+      locale: 'ru'
+    },
+    sanitizeRequestLog: { body: { deviceId: true } }
+  }, response => response.status, message => new InvalidPreferencesError('bad request')))
+
+  if (res.body.status === 'ACTIVE') {
+    return res.body.sessionId
+  }
+  return null
+}
+
+export async function loginByToken (sessionID, deviceID, token) {
+  let res = (await fetchApiJson('LoginByToken', {
+    method: 'POST',
+    headers: {
+      'X-Session-ID': sessionID,
+      'Cookie': 'JSESSIONID=' + sessionID + '.node_mb3'
+    },
+    body: {
+      deviceId: deviceID,
+      token: token,
+      tokenType: 'PATTERN'
+    },
+    sanitizeRequestLog: { body: { deviceId: true, token: true } }
+  }, response => response.status, message => new InvalidPreferencesError('bad request')))
+
+  return res.body.status === 'OK'
+}
+
+/* export async function login (login, password) {
   let deviceID = DeviceID()
   await fetchApiJson('Authorization', {
     method: 'POST',
@@ -78,7 +118,7 @@ export async function login (login, password) {
   }, response => response.status, message => new InvalidPreferencesError('Неверный логин или пароль'))
 
   return ''
-}
+} */
 
 export async function fetchAccounts (sessionCookies) {
   console.log('>>> Загрузка списка счетов...')
