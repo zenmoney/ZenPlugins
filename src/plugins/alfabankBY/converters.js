@@ -1,39 +1,21 @@
 export function convertAccount (json) {
-  if (json.cards && json.cards.length > 0 &&
-    json.cardAccounts && json.cardAccounts.length > 0) { // only loading card accounts
-    const account = {
-      id: json.accountId,
+  if (json.objectType === 'ACCOUNT') { // only loading card accounts
+    return {
+      id: json.id,
       type: 'card',
-      title: json.description,
-      instrument: json.cards[0].cardCurr,
-      balance: Number.parseFloat(json.debtPayment !== null ? -json.debtPayment : json.avlBalance),
-      syncID: [],
-      productType: json.productType,
-      creditLimit: Number.parseFloat(json.over !== null ? json.over : 0)
+      title: json.icon.title,
+      balance: Number.parseFloat(json.tagBalance),
+      syncID: [json.objectId],
+      productType: json.type
     }
-
-    json.cardAccounts.forEach(function (el) {
-      account.syncID.push(el.accountId)
-      if (json.isOverdraft === true) {
-        account.syncID.push(el.accountId + 'M')
-      }
-    })
-    json.cards.forEach(function (el) {
-      account.syncID.push(el.pan.slice(-4))
-    })
-
-    if (json.avlLimit) {
-      account.creditLimit = Number.parseFloat(json.avlLimit)
-    }
-
-    if (!account.title) {
-      account.title = '*' + account.syncID[0]
-    }
-
-    return account
   } else {
     return null
   }
+}
+
+export function addAccountInfo (account, json) {
+  account.instrument = json.info.amount.currency
+  return account
 }
 
 export function convertTransaction (apiTransaction, accounts) {
