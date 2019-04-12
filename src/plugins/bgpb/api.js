@@ -170,7 +170,10 @@ export async function fetchAccounts (sid) {
     '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
     '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
-  if (res.BS_Response.GetProducts && res.BS_Response.GetProducts.Product && res.BS_Response.GetProducts.Product.length > 0) {
+  if (res.BS_Response.GetProducts && res.BS_Response.GetProducts.Product && !Array.isArray(res.BS_Response.GetProducts.Product)) {
+    // Обрабатываем особенность парсинга xml.
+    return [res.BS_Response.GetProducts.Product]
+  } else if (res.BS_Response.GetProducts && res.BS_Response.GetProducts.Product && res.BS_Response.GetProducts.Product.length > 0) {
     return res.BS_Response.GetProducts.Product
   }
   return []
