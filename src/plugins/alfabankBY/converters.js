@@ -15,6 +15,7 @@ export function convertAccount (json) {
 
 export function addAccountInfo (account, json) {
   account.instrument = json.info.amount.currency
+  account.syncID.push(json.iban)
   return account
 }
 
