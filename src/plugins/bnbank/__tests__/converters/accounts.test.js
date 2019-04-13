@@ -61,7 +61,8 @@ describe('convertAccount', () => {
       syncID: [
         '2007549330000000',
         '0000'
-      ]
+      ],
+      cardHash: '4feuL_a5l1A0nOffbenDdrrv14VyBN2YY1PeYsU8d2c5ZSpRKcZoj-fdk473d-TVBvIYmbwzA2l7Dv6aT1eSg6'
     })
   })
 

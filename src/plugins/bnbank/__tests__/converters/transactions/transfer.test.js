@@ -54,8 +54,8 @@ describe('convertTransaction', () => {
           invoice: null
         }
       ],
-      merchant: null,
-      comment: null
+      merchant: { fullTitle: 'POV-7 BNB PVN', location: null, mcc: null },
+      comment: 'Снятие со счета наличных в ПВН банка'
     })
   })
 })
