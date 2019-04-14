@@ -49,7 +49,7 @@ export async function login () {
     token = auth.token
     sessionID = auth.sessionID
   } else if (!await loginByToken(sessionID, deviceID, token)) {
-    console.log('something went wrong')
+    throw new TemporaryError('Авторизация прошла неуспешно, попробуйте позже')
   }
   return {
     deviceID: deviceID,
