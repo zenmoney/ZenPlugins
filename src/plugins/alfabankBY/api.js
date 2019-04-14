@@ -1,7 +1,7 @@
 import { fetchJson } from '../../common/network'
-import { defaultsDeep, flatMap } from 'lodash'
+import { defaultsDeep, get } from 'lodash'
 import { generateRandomString } from '../../common/utils'
-import { getDate } from './converters'
+import { parseDate } from './converters'
 
 const baseUrl = 'https://insync2.alfa-bank.by/mBank256/v5/'
 
@@ -200,63 +200,40 @@ export async function fetchAccountInfo (sessionID, accountId) {
   throw new Error('Ответ банка:' + res.body.message)
 }
 
-function formatDate (date) {
-  return date.toISOString().replace('T', ' ').split('.')[0]
-}
-
-export function createDateIntervals (fromDate, toDate) {
-  const interval = 10 * 24 * 60 * 60 * 1000 // 10 days interval for fetching data
-  const dates = []
-
-  let time = fromDate.getTime()
-  let prevTime = null
-  while (time < toDate.getTime()) {
-    if (prevTime !== null) {
-      dates.push([new Date(prevTime), new Date(time - 1)])
-    }
-
-    prevTime = time
-    time = time + interval
-  }
-  dates.push([new Date(prevTime), toDate])
-
-  return dates
-}
-
-export async function fetchTransactions (sessionCookies, accounts, fromDate, toDate = new Date()) {
+export async function fetchTransactions (sessionID, accounts, fromDate) {
   console.log('>>> Загрузка списка транзакций...')
-  toDate = toDate || new Date()
+  let transactions = []
 
-  const dates = createDateIntervals(fromDate, toDate)
-  const responses = await Promise.all(flatMap(accounts, (account) => {
-    return dates.map(dates => {
-      return fetchApiJson('product/loadOperationStatements', {
+  const limit = 10
+  let offset = 0
+  let batch = null
+
+  for (let i = 0; i < accounts.length; i++) {
+    let account = accounts[i]
+    do {
+      let response = await fetchApiJson('History', {
         method: 'POST',
-        headers: { 'Cookie': sessionCookies },
+        headers: {
+          'X-Session-ID': sessionID
+        },
         body: {
-          contractCode: account.id,
-          accountIdenType: account.productType,
-          startDate: formatDate(dates[0]),
-          endDate: formatDate(dates[1]),
-          halva: false
+          offset: offset,
+          pageSize: limit,
+          shortcutId: account.id
         }
-      }, response => response.body && response.body.data)
-    })
-  }))
+      }, response => response.body)
+      batch = getArray(get(response, 'body.items'))
+      offset += limit
+      transactions.push(...batch)
+    } while (batch && batch.length === limit && parseDate(batch[batch.length - 1].date) >= fromDate)
+  }
 
-  const operations = flatMap(responses, response => {
-    return flatMap(response.body.data, d => {
-      return d.operations.map(op => {
-        op.accountId = d.accountId
-        return op
-      })
-    })
-  })
+  console.log(`>>> Загружено ${transactions.length} операций.`)
+  return transactions
+}
 
-  const filteredOperations = operations.filter(function (op) {
-    return op.status !== 'E' && getDate(op.transDate) > fromDate && !op.description.includes('Гашение кредита в виде "овердрафт" по договору')
-  })
-
-  console.log(`>>> Загружено ${filteredOperations.length} операций.`)
-  return filteredOperations
+function getArray (object) {
+  return object === null || object === undefined
+    ? []
+    : Array.isArray(object) ? object : [object]
 }
