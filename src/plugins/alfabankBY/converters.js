@@ -30,7 +30,6 @@ export function addAccountInfo (account, json) {
 }
 
 export function convertTransaction (json, accounts) {
-  console.log(json)
   const account = accounts.find(account => {
     return account.syncID.indexOf(json.iban) !== -1
   })
