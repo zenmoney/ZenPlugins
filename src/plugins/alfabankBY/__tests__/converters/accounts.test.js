@@ -1,65 +1,101 @@
-import { convertAccount } from '../../converters'
+import { convertAccount, addAccountInfo } from '../../converters'
 
 describe('convertAccount', () => {
-  it('should convert checking account', () => {
-    const account = convertAccount({
-      'productType': 'PC',
-      'accountId': '1113333',
-      'id': 1,
-      'productCode': '1113333|PC',
-      'show': true,
-      'variationId': '[MASTERCARD][MCW INSTANT BYR 3Y (PAYOKAY)]',
-      'accruedInterest': null,
-      'avlBalance': '99.9',
-      'avlLimit': null,
-      'cardAccounts': [{
-        'accType': null,
-        'accountId': 'BY36MTBK10110008000001111000',
-        'accountIdenType': 'PC',
-        'availableBalance': null,
-        'contractCode': '1113333',
-        'currencyCode': 'BYN',
-        'productType': 'PC'
-      }],
-      'cards': [{
-        'blockReason': null,
-        'cardCurr': 'BYN',
-        'commisDate': '2019-01-31',
-        'commisSum': '99.9',
-        'description': 'MASTERCARD',
-        'embossedName': 'IVAN IVANOV',
-        'isOfAccntHolder': '1',
-        'mainCard': '1',
-        'over': '0',
-        'pan': '999999_1111',
-        'smsNotification': '1',
-        'status': 'A',
-        'term': '01/01',
-        'type': 'MASTERCARD',
-        'vpan': '1234567890123456',
-        'rbs': '1234567',
-        'pinPhoneNumber': '123456789012'
-      }],
-      'description': 'PayOkay',
-      'over': null,
-      'debtPayment': null,
-      'isActive': true,
-      'isOverdraft': false,
-      'rate': '0.0001'
+  let tt = [
+    {
+      name: 'bad account',
+      json: {
+        objectType: 'Other'
+      },
+      expectedAccount: null
+    },
+    {
+      name: 'normal account',
+      json: {
+        arbitraryTransfer: true,
+        hasHistory: true,
+        icon: {
+          backgroundColorFrom: '#f9589e',
+          backgroundColorTo: '#fe9199',
+          captionColor: '#FFFFFF',
+          displayType: 'REGULAR',
+          frameColor: '#c2b7b7',
+          iconUrl: 'v0/Image/49923_392.SVG',
+          title: 'Карта №1'
+        },
+        id: '6505111',
+        objectId: '3014111MFE0011110',
+        objectType: 'ACCOUNT',
+        operations: [
+          {
+            id: '6505111',
+            operation: 'OWNACCOUNTSTRANSFER'
+          }],
+        tagBalance: 486.18,
+        type: 'ACCOUNT'
+      },
+      expectedAccount: {
+        id: '6505111',
+        type: 'card',
+        title: 'Карта №1',
+        balance: 486.18,
+        syncID: ['3014111MFE0011110'],
+        productType: 'ACCOUNT'
+      }
+    }
+  ]
+  tt.forEach(function (tc) {
+    it(tc.name, () => {
+      let account = convertAccount(tc.json)
+      expect(account).toEqual(tc.expectedAccount)
     })
+  })
+})
 
-    expect(account).toEqual({
-      id: '1113333',
+describe('convertAccount', () => {
+  it('add account info', () => {
+    let account = {
+      id: '6505111',
       type: 'card',
-      title: 'PayOkay',
-      productType: 'PC',
+      title: 'Карта №1',
+      balance: 486.18,
+      syncID: ['3014111MFE0011110'],
+      productType: 'ACCOUNT'
+    }
+    let fullAccount = addAccountInfo(account, {
+      iban: 'BY31 ALFA 3014 111M RT00 1111 0000',
+      info: {
+        amount: {
+          amount: 486.18,
+          currency: 'BYN',
+          format: '###,###,###,###,##0.##'
+        },
+        description: 'BY31 ALFA 3014 111M RT00 1111 0000',
+        icon: {
+          backgroundColorFrom: '#f9589e',
+          backgroundColorTo: '#fe9199',
+          captionColor: '#FFFFFF',
+          displayType: 'REGULAR',
+          frameColor: '#c2b7b7',
+          iconUrl: 'v0/Image/49923_392.SVG',
+          title: 'Карта №1'
+        },
+        title: 'Карта №1'
+      },
+      isClosable: false,
+      isPayslipAvailable: false,
+      objectId: '3014111MFE0011110',
+      onDesktop: true,
+      startDate: '20171111000000'
+    })
+    expect(fullAccount).toEqual({
+      id: '6505111',
       instrument: 'BYN',
-      balance: 99.9,
-      creditLimit: 0,
-      syncID: [
-        'BY36MTBK10110008000001111000',
-        '1111'
-      ]
+      type: 'card',
+      title: 'Карта №1',
+      balance: 486.18,
+      syncID: ['3014111MFE0011110', 'BY31 ALFA 3014 111M RT00 1111 0000'],
+      productType: 'ACCOUNT'
     })
   })
 })

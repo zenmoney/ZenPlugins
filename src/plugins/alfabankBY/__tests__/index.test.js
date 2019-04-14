@@ -1,330 +1,208 @@
 import fetchMock from 'fetch-mock'
 import { scrape } from '..'
+import { makePluginDataApi } from '../../../ZPAPI.pluginData'
 
 describe('scrape', () => {
   it('should hit the mocks and return results', async () => {
-    mockApiRoot()
-    mockIdentity()
-    mockCheckPassword()
-    mockLoadUser()
-    mockLoadOperationStatements()
+    mockZenmoney()
+    mockCheckDeviceStatus()
+    mockAuthWithPassportID()
+    mockAuthConfirm()
+    mockFetchAccounts()
+    mockFetchAccountInfo()
+    mockFetchTransactions()
 
     const result = await scrape(
       {
-        preferences: { phone: '123456789', password: 'pass' },
-        fromDate: new Date('2018-12-27T00:00:00.000+03:00'),
-        toDate: new Date('2019-01-02T00:00:00.000+03:00')
+        preferences: { },
+        fromDate: new Date('2019-01-24T00:00:00.000+03:00'),
+        toDate: new Date('2019-01-28T00:00:00.000+03:00')
       }
     )
 
     expect(result.accounts).toEqual([{
-      'balance': 999.9,
-      'creditLimit': 0,
-      'id': '1111111',
-      'instrument': 'BYN',
-      'productType': 'PC',
-      'syncID': ['BY36MTBK10110001000001111000', '1111'],
-      'title': 'PayOkay',
-      'type': 'card'
+      id: '6505111',
+      instrument: 'BYN',
+      type: 'card',
+      title: 'Карта №1',
+      balance: 486.18,
+      syncID: ['3014111MFE0011110', 'BY31 ALFA 3014 111M RT00 1111 0000'],
+      productType: 'ACCOUNT'
     }])
 
     expect(result.transactions).toEqual([{
-      hold: false,
-      date: new Date('2018-12-28T00:00:00+03:00'),
-      movements: [{
-        id: null,
-        account: { id: '1111111' },
-        sum: -12.39,
-        fee: 0,
-        invoice: {
-          sum: -5,
-          instrument: 'EUR'
+      date: new Date('Tue Jan 25 2019 12:27:55 GMT+0300 (Moscow Standard Time)'),
+      movements: [
+        {
+          id: null,
+          account: { id: '6505111' },
+          invoice: null,
+          sum: -7.99,
+          fee: 0
         }
-      }],
+      ],
       merchant: {
-        fullTitle: 'PAYPAL',
+        city: 'Amsterdam',
+        country: 'NL',
         location: null,
-        mcc: null
+        mcc: null,
+        title: 'UBER'
       },
-      comment: null
-    }, {
-      hold: false,
-      date: new Date('2018-12-29T01:07:39+03:00'),
-      movements: [{
-        id: null,
-        account: { id: '1111111' },
-        sum: -29.68,
-        fee: 0,
-        invoice: null
-      }],
-      merchant: {
-        fullTitle: 'Магазин',
-        location: null,
-        mcc: null
-      },
-      comment: null
+      comment: 'Покупка товара / получение услуг',
+      hold: false
     }])
   })
 })
 
-function mockLoadOperationStatements () {
-  fetchMock.once('https://mybank.by/api/v1/product/loadOperationStatements', {
+function mockFetchTransactions () {
+  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/History', {
     status: 200,
     body: JSON.stringify({
-      'ResponseType': 'ResponseOfListOfTransactionStatement',
-      'error': null,
-      'sessionId': null,
-      'success': true,
-      'validateErrors': null,
-      'data': [
+      accounts: [{ id: '3014111MFE0011110', name: 'Карта №1 - ...ALFA3014111MFE001... - 486,18 BYN' }],
+      filterAccount: '3014111MFE0011110',
+      items: [
         {
-          'accountCurr': 'BYN',
-          'accountId': 'BY36MTBK10110001000001111000',
-          'avlBalance': '791.3',
-          'client': 'Иванов Иван Иванович',
-          'dateFrom': '2018-12-27',
-          'dateTo': '2019-03-25',
-          'incomingBalance': '999.9',
-          'numDateContract': '11111111 от 1111.11.11',
-          'operations': [
-            {
-              'amount': '5.0',
-              'balance': '111.1',
-              'cardPan': '111111******1111',
-              'curr': 'EUR',
-              'debitFlag': '0',
-              'description': 'Оплата товаров и услуг',
-              'error': '',
-              'operationDate': '2019-01-02',
-              'orderStatus': '1',
-              'place': 'PAYPAL',
-              'status': 'T',
-              'transAmount': '12.39',
-              'transDate': '2018-12-28 00:00:00'
-            }, {
-              'amount': '29.68',
-              'balance': '531.57',
-              'cardPan': '111111******1111',
-              'curr': 'BYN',
-              'debitFlag': '0',
-              'description': 'Оплата товаров и услуг',
-              'error': '',
-              'operationDate': '2019-01-02',
-              'orderStatus': '1',
-              'place': 'Магазин',
-              'status': 'T',
-              'transAmount': '29.68',
-              'transDate': '2018-12-29 01:07:39'
-            }
-          ],
-          'outgoingBalance': '999.9',
-          'receivedAmount': '999.9',
-          'time': '2019-03-25 17:30:49',
-          'writtenOffAmount': '999.9'
+          availableSplit: true,
+          cardMask: '5.1111',
+          date: '20190125122755',
+          description: 'Amsterdam Покупка товара / получение услуг UBER',
+          iban: 'BY31 ALFA 3014 111M RT00 1111 0000',
+          id: '11113111050111',
+          info: {
+            amount: {
+              amount: -7.99,
+              currency: 'BYN',
+              format: '###,###,###,###,##0.##'
+            },
+            description: 'Карта №1',
+            icon: {
+              backgroundColorFrom: '#8976f3',
+              backgroundColorTo: '#8976f3',
+              captionColor: '#FFFFFF',
+              displayType: 'REGULAR',
+              frameColor: '#c2b7b7',
+              iconUrl: 'v0/Image/52_392.SVG'
+            },
+            title: 'UBER'
+          },
+          sendReceipt: false,
+          showAddRecipient: false,
+          showAddToFuture: false,
+          showCompensate: false,
+          showReceipt: false,
+          showRepeat: false,
+          status: 'NORMAL'
         }
-      ]
+      ],
+      maxAmount: 0,
+      maxDate: '20190308180602',
+      minAmount: -7.99,
+      minDate: '20191113100349',
+      totalItems: 1
     }),
-    statusText: 'OK',
-    headers: { 'set-cookie': 'session-cookie' },
-    sendAsJson: false
+    statusText: 'OK'
   }, { method: 'POST' })
 }
 
-function mockLoadUser () {
-  fetchMock.once('https://mybank.by/api/v1/user/loadUser', {
+function mockFetchAccountInfo () {
+  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/Account/Info', {
     status: 200,
     body: JSON.stringify({
-      'ResponseType': 'ResponseOfUserResponse',
-      'error': null,
-      'sessionId': '1111111111111',
-      'success': true,
-      'validateErrors': null,
-      'data': {
-        'addInfo': [],
-        'products': [{
-          'productType': 'PC',
-          'accountId': '1111111',
-          'id': 1,
-          'productCode': '1111111|PC',
-          'show': true,
-          'variationId': '[MASTERCARD][MCW INSTANT BYR 3Y (PAYOKAY)]',
-          'accruedInterest': null,
-          'avlBalance': '999.9',
-          'avlLimit': null,
-          'cardAccounts': [{
-            'accType': null,
-            'accountId': 'BY36MTBK10110001000001111000',
-            'accountIdenType': 'PC',
-            'availableBalance': null,
-            'contractCode': '1111111',
-            'currencyCode': 'BYN',
-            'productType': 'PC'
-          }],
-          'cardContract': [{
-            'productType': 'MTBANK_CARD',
-            'closeDate': '2020-01-31',
-            'contractNum': '11111111',
-            'openDate': '2018-01-31',
-            'cardTerm': '11/11',
-            'rateBal': '0.0001',
-            'servicePaySum': null,
-            'servicePayTerm': null,
-            'smsNotification': '1',
-            'tariffPlan': 'PayOkay'
-          }],
-          'cards': [{
-            'blockReason': null,
-            'cardCurr': 'BYN',
-            'commisDate': '2011-01-31',
-            'commisSum': '1.1',
-            'description': 'MASTERCARD',
-            'embossedName': 'ANDREI IOKSHA',
-            'isOfAccntHolder': '1',
-            'limits': [{
-              'casheWithdrawalLimit24': 100,
-              'casheWithdrawalLimit24Broad': 10,
-              'casheWithdrawalLimitWeek': 100,
-              'casheWithdrawalLimitWeekBroad': 10,
-              'casheWithdrawalSumLimit24': '1100',
-              'casheWithdrawalSumLimit24Broad': '100',
-              'casheWithdrawalSumLimitWeek': '1500',
-              'casheWithdrawalSumLimitWeekBroad': '1100',
-              'cashelessWithdrawalLimit24': 110,
-              'cashelessWithdrawalLimit24Broad': 11,
-              'cashelessWithdrawalLimitWeek': 100,
-              'cashelessWithdrawalLimitWeekBroad': 10,
-              'cashelessWithdrawalSumLimit24': '1100',
-              'cashelessWithdrawalSumLimit24Broad': '1100',
-              'cashelessWithdrawalSumLimitWeek': '1100',
-              'cashelessWithdrawalSumLimitWeekBroad': '1100'
-            }],
-            'mainCard': '1',
-            'over': '0',
-            'pan': '111111_1111',
-            'smsNotification': '1',
-            'status': 'A',
-            'term': '11/11',
-            'type': 'MASTERCARD',
-            'vpan': '1111111111111111',
-            'rbs': '1111111',
-            'pinPhoneNumber': '111111111111'
-          }],
-          'debtPayment': null,
-          'debtPaymentSumCom': null,
-          'description': 'PayOkay',
-          'gracePeriodAvalDays': null,
-          'gracePeriodEnd': null,
-          'gracePeriodLength': null,
-          'gracePeriodOutRateCashless': null,
-          'gracePeriodRateCashless': null,
-          'gracePeriodStart': null,
-          'isActive': true,
-          'isOverdraft': false,
-          'loanContractDate': null,
-          'loanContractNumber': null,
-          'loanNextPaymentAmmount': null,
-          'loanNextPaymentDate': null,
-          'minPaymentFee': null,
-          'minPaymentMainDept': null,
-          'minPaymentOverFee': null,
-          'minPaymentOverMainDept': null,
-          'minPaymentOverPer': null,
-          'minPaymentPenalty': null,
-          'minPaymentPer': null,
-          'minPaymentStandardOper': null,
-          'minPaymentStandardOperPer': null,
-          'minPaymentStateDue': null,
-          'minPaymentUBS': null,
-          'over': null,
-          'overStandardOperationRate': null,
-          'overdueDebts': null,
-          'ownFunds': null,
-          'points': '',
-          'pointsDate': null,
-          'productIdenType': null,
-          'rate': '0.0001',
-          'rateAvalInstalment': null,
-          'rateAvalInstalmentHistory': [],
-          'rateCache': null,
-          'rateCacheHistory': [],
-          'rateCacheless': null,
-          'rateCachelessHistory': [],
-          'rateChangingHistory': [],
-          'rateExpirPayment': null,
-          'rateExpirPaymentHistory': [],
-          'standardOperationRate': null
-        }],
-        'userEripId': null,
-        'userInfo': {
-          'crmId': '1111111111',
-          'email': '',
-          'firstName': 'Иван',
-          'isCustomLogin': false,
-          'lastName': 'Иванов',
-          'login': '1111111111111111111111111111111111',
-          'phone': '111111111111',
-          'isResident': true
-        }
-      }
+      iban: 'BY31 ALFA 3014 111M RT00 1111 0000',
+      info: {
+        amount: {
+          amount: 486.18,
+          currency: 'BYN',
+          format: '###,###,###,###,##0.##'
+        },
+        description: 'BY31 ALFA 3014 111M RT00 1111 0000',
+        icon: {
+          backgroundColorFrom: '#f9589e',
+          backgroundColorTo: '#fe9199',
+          captionColor: '#FFFFFF',
+          displayType: 'REGULAR',
+          frameColor: '#c2b7b7',
+          iconUrl: 'v0/Image/49923_392.SVG',
+          title: 'Карта №1'
+        },
+        title: 'Карта №1'
+      },
+      isClosable: false,
+      isPayslipAvailable: false,
+      objectId: '3014111MFE0011110',
+      onDesktop: true,
+      startDate: '20171111000000'
     }),
-    statusText: 'OK',
-    headers: { 'set-cookie': 'session-cookie' },
-    sendAsJson: false
-  }, { method: 'GET' })
-}
-
-function mockCheckPassword () {
-  fetchMock.once('https://mybank.by/api/v1/login/checkPassword2', {
-    status: 200,
-    body: JSON.stringify({
-      'ResponseType': 'ResponseOfCheckPasswordResponse',
-      'error': null,
-      'sessionId': null,
-      'success': true,
-      'validateErrors': null,
-      'data': {
-        'fingerToken': null,
-        'nextOperation': null
-      }
-    }),
-    statusText: 'OK',
-    headers: { 'set-cookie': 'session-cookie' },
-    sendAsJson: false
+    statusText: 'OK'
   }, { method: 'POST' })
 }
 
-function mockIdentity () {
-  fetchMock.once('https://mybank.by/api/v1/login/userIdentityByPhone', {
+function mockFetchAccounts () {
+  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/Desktop', {
     status: 200,
     body: JSON.stringify({
-      'ResponseType': 'ResponseOfUserIdentityByPhoneData',
-      'error': null,
-      'sessionId': null,
-      'success': true,
-      'validateErrors': null,
-      'data': {
-        'smsCode': null,
-        'userLinkedAbs': true
-      }
+      shortcuts: [
+        {
+          arbitraryTransfer: true,
+          hasHistory: true,
+          icon: {
+            backgroundColorFrom: '#f9589e',
+            backgroundColorTo: '#fe9199',
+            captionColor: '#FFFFFF',
+            displayType: 'REGULAR',
+            frameColor: '#c2b7b7',
+            iconUrl: 'v0/Image/49923_392.SVG',
+            title: 'Карта №1'
+          },
+          id: '6505111',
+          objectId: '3014111MFE0011110',
+          objectType: 'ACCOUNT',
+          operations: [{ id: '6505111', operation: 'OWNACCOUNTSTRANSFER' }],
+          tagBalance: 486.18,
+          type: 'ACCOUNT'
+        }]
     }),
-    statusText: 'OK',
-    headers: { 'set-cookie': 'session-cookie' },
-    sendAsJson: false
+    statusText: 'OK'
   }, { method: 'POST' })
 }
 
-function mockApiRoot () {
-  fetchMock.once('https://mybank.by/api/v1/', {
-    status: 404,
+function mockAuthConfirm () {
+  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/AuthorizationConfirm?locale=ru', {
+    status: 200,
     body: JSON.stringify({
-      'timestamp': '2019-03-25T14:27:04.293+0000',
-      'status': 404,
-      'error': 'Not Found',
-      'message': 'No message available',
-      'path': '/api/v1/'
+      'status': 'OK',
+      'sessionId': '111cad2f-cb81-1111-111b-53f98c1fede0',
+      'token': '111cad2fcb811111111b53f981112223'
     }),
-    statusText: 'OK',
-    headers: { 'set-cookie': 'session-cookie' },
-    sendAsJson: false
-  }, { method: 'GET' })
+    statusText: 'OK'
+  }, { method: 'POST' })
+}
+
+function mockAuthWithPassportID () {
+  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/Authorization?locale=ru', {
+    status: 200,
+    body: JSON.stringify({
+      'status': 'OK'
+    }),
+    statusText: 'OK'
+  }, { method: 'POST' })
+}
+
+function mockCheckDeviceStatus () {
+  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/CheckDeviceStatus?locale=ru', {
+    status: 200,
+    body: JSON.stringify({
+      'status': 'NO_DEVICE'
+    }),
+    statusText: 'OK'
+  }, { method: 'POST' })
+}
+
+function mockZenmoney () {
+  global.ZenMoney = {
+    ...makePluginDataApi({
+      'deviceID': '123404df-f99a-4826-1234-a3fb7e5a1234'
+    }).methods
+  }
+  ZenMoney.readLine = async () => 'test(readLine)'
 }

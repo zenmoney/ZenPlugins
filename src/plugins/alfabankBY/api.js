@@ -39,20 +39,6 @@ function validateResponse (response, predicate, error) {
   }
 }
 
-/* function cookies (response) {
-  if (response.headers) {
-    const cookies = response.headers['set-cookie']
-    if (cookies) {
-      const requiredValues = /(JSESSIONID=[^;]*;).*(TS[^=]*=[^;]*;)/
-      return requiredValues.exec(cookies).slice(1).join(';')
-    } else {
-      return cookies
-    }
-  } else {
-    return '' // tests not mocking headers, ignoring
-  }
-} */
-
 export async function login () {
   let deviceID = DeviceID()
   let token = ZenMoney.getData('token')
@@ -135,7 +121,7 @@ export async function authConfirm (deviceID) {
   if (res.body.status !== 'OK' && res.body.message) {
     throw new TemporaryError('Ответ банка:' + res.body.message)
   }
-  ZenMoney.setData('token', deviceID)
+  ZenMoney.setData('token', res.body.token)
 
   return {
     sessionID: res.body.sessionId,
