@@ -15,6 +15,7 @@ describe('scrape', () => {
     mockLogin()
     mockFetchAccount()
     mockCardAccountStatement()
+    mockCardLastTransactions()
     mockDepositAccountStatement()
 
     const result = await scrape(
@@ -27,6 +28,7 @@ describe('scrape', () => {
 
     expect(result.accounts).toEqual([{
       'balance': 7.4,
+      'cardHash': '8dkwk_a5l1A0nOffbenDdrrv14VyBN2YY1PeYsU8d2c5ZSpRKcZoj-dDd6aUt-TVBvIYmbwzA2l7Dv6aT1aFqL',
       'currencyCode': '933',
       'id': '2007500000000000',
       'instrument': 'BYN',
@@ -247,6 +249,16 @@ function mockDepositAccountStatement () {
       'accountNumber': '1100000000000000',
       'accountCurrency': 'USD'
     }),
+    statusText: 'OK',
+    headers: { 'session_token': '6af71bdf-69f8-4f62-8e59-4c26ce68add1' },
+    sendAsJson: false
+  }, { method: 'POST' })
+}
+
+function mockCardLastTransactions () {
+  fetchMock.once('https://mb.bnb.by/services/v2/payment/simpleExcute', {
+    status: 200,
+    body: '{"errorInfo":{"error":"0","errorText":"Успешно"},"komplatResponse":[{"errorInfo":{"error":"0","errorText":"Успешно"},"response":"<?xml version=\\"1.0\\" encoding=\\"WINDOWS-1251\\"?>\\n<PS_ERIP>\\n  <GetExtractCardResponse>\\n    <TerminalID>ALSEDA</TerminalID>\\n    <ErrorCode>0</ErrorCode>\\n    <Protocol>BPC</Protocol>\\n    <BPC>\\n      <OperationList oper_count=\\"0\\"/>\\n    </BPC>\\n  </GetExtractCardResponse>\\n</PS_ERIP>\\n"}]}',
     statusText: 'OK',
     headers: { 'session_token': '6af71bdf-69f8-4f62-8e59-4c26ce68add1' },
     sendAsJson: false
