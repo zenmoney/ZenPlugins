@@ -960,11 +960,11 @@ const generateAccountLookup = apiAccounts => apiAccounts.reduce((all, apiAccount
   ...(
     (apiAccount.cards && apiAccount.cards.length)
       ? apiAccount.cards.reduce(
-      (allCards, card) => ({
-        ...allCards,
-        [card.id]: apiAccount
-      }),
-      {}
+        (allCards, card) => ({
+          ...allCards,
+          [card.id]: apiAccount
+        }),
+        {}
       )
       : {}
   )
