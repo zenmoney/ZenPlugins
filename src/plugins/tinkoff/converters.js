@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { parseOuterAccountData } from '../../common/accounts'
+// import { parseOuterAccountData } from '../../common/accounts'
 
 export function convertAccount (account, initialized) {
   switch (account.accountType) {
