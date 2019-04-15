@@ -39,7 +39,7 @@ describe('convertAccount', () => {
         type: 'card',
         title: 'Карта №1',
         balance: 486.18,
-        syncID: ['3014111MFE0011110'],
+        syncID: null,
         productType: 'ACCOUNT'
       }
     }
@@ -59,7 +59,7 @@ describe('convertAccount', () => {
       type: 'card',
       title: 'Карта №1',
       balance: 486.18,
-      syncID: ['3014111MFE0011110'],
+      syncID: null,
       productType: 'ACCOUNT'
     }
     let fullAccount = addAccountInfo(account, {
@@ -94,7 +94,7 @@ describe('convertAccount', () => {
       type: 'card',
       title: 'Карта №1',
       balance: 486.18,
-      syncID: ['3014111MFE0011110', 'BY31 ALFA 3014 111M RT00 1111 0000'],
+      syncID: ['BY31ALFA3014111MRT0011110000'],
       productType: 'ACCOUNT'
     })
   })

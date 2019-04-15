@@ -15,7 +15,7 @@ export function convertAccount (json) {
       type: 'card',
       title: json.icon.title,
       balance: Number.parseFloat(json.tagBalance),
-      syncID: [json.objectId],
+      syncID: null,
       productType: json.type
     }
   } else {
@@ -25,13 +25,13 @@ export function convertAccount (json) {
 
 export function addAccountInfo (account, json) {
   account.instrument = json.info.amount.currency
-  account.syncID.push(json.iban)
+  account.syncID = [json.iban.replace(/\s/g, '')]
   return account
 }
 
 export function convertTransaction (json, accounts) {
   const account = accounts.find(account => {
-    return account.syncID.indexOf(json.iban) !== -1
+    return account.syncID.indexOf(json.iban.replace(/\s/g, '')) !== -1
   })
 
   const transaction = {
