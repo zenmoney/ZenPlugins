@@ -46,6 +46,7 @@ export async function login () {
   if (sessionID === null) {
     await authWithPassportID(deviceID)
     let auth = authConfirm(deviceID)
+    console.log(auth)
     token = auth.token
     sessionID = auth.sessionID
   } else if (!await loginByToken(sessionID, deviceID, token)) {
