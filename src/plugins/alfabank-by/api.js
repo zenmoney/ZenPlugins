@@ -45,7 +45,7 @@ export async function login () {
   var sessionID = await checkDeviceStatus(deviceID)
   if (sessionID === null) {
     await authWithPassportID(deviceID)
-    sessionID = authConfirm(deviceID)
+    sessionID = await authConfirm(deviceID)
   } else if (!await loginByToken(sessionID, deviceID, token)) {
     throw new TemporaryError('Авторизация прошла неуспешно, попробуйте позже')
   }
