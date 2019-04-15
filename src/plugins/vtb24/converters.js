@@ -514,7 +514,7 @@ function parseInternalTransfer (apiTransaction, transaction) {
   transaction.movements.push({
     id: isIncome ? getTransactionId(apiTransaction.outcomeTransaction) : getTransactionId(apiTransaction.incomeTransaction),
     account: {
-      id: isIncome ? apiTransaction.outcomeTransaction.debet.id : apiTransaction.incomeTransaction.debet.id
+      id: getMasterAccountId(isIncome ? apiTransaction.outcomeTransaction.debet : apiTransaction.incomeTransaction.debet)
     },
     invoice: null,
     sum: origin.amount,
@@ -522,6 +522,10 @@ function parseInternalTransfer (apiTransaction, transaction) {
   })
 
   return true
+}
+
+function getMasterAccountId (debet) {
+  return debet.cardAccount ? debet.cardAccount.id : debet.id
 }
 
 export function parsePayee (apiTransaction, transaction) {

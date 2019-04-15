@@ -849,7 +849,7 @@ describe('convertApiTransactionsToReadableTransactions', () => {
             fee: 0
           }, {
             id: 'Yx+Zjwl/zXk4JYkJ96uNnhbUV6Y=',
-            account: { id: '8368CAD908184E378698274A93844B6A' },
+            account: { id: '4116E91D991B47A0B544FBCD8C253595' },
             invoice: null,
             sum: 50000,
             fee: 0
@@ -1696,7 +1696,7 @@ describe('convertApiTransactionsToReadableTransactions', () => {
             'sum': -5000
           }, {
             'account': {
-              'id': 'CBFDBDDEFC3A4F91A8301B2B176DE527'
+              'id': '8FBDCF32B0CA4590AF6022D0E1B71738'
             },
             'fee': 0,
             'id': 'uMrfNzOYxeAYJRytuvlaQbGX/nI=',
