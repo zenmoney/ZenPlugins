@@ -1,7 +1,7 @@
 import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../../../../common/accounts'
 import { atMostTwoDecimals, convertMetalAccount, GRAMS_IN_OZ } from '../../../converters'
 
-describe('convertLoan', () => {
+describe('convertMetalAccount', () => {
   it('converts metal accounts', () => {
     const apiAccounts = [
       {
@@ -68,10 +68,14 @@ describe('convertLoan', () => {
 
     const expectedReadableAccounts = [
       {
+        id: 'A29003298F6C435CB71C359E14B1BB80',
+        type: 'ru.vtb24.mobilebanking.protocol.product.MetalAccountMto',
         products: [
           {
             id: 'A29003298F6C435CB71C359E14B1BB80',
-            instrument: 'XPT'
+            type: 'ru.vtb24.mobilebanking.protocol.product.MetalAccountMto',
+            instrument: 'XPT',
+            apiAccount: apiAccounts[0]
           }
         ],
         zenAccount: {
@@ -84,10 +88,14 @@ describe('convertLoan', () => {
         }
       },
       {
+        id: '868F3B610B04454D81B53F1E3038156E',
+        type: 'ru.vtb24.mobilebanking.protocol.product.MetalAccountMto',
         products: [
           {
             id: '868F3B610B04454D81B53F1E3038156E',
-            instrument: 'XPD'
+            type: 'ru.vtb24.mobilebanking.protocol.product.MetalAccountMto',
+            instrument: 'XPD',
+            apiAccount: apiAccounts[1]
           }
         ],
         zenAccount: {
