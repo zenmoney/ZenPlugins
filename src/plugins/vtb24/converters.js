@@ -25,7 +25,7 @@ export function convertAccounts (apiPortfolios) {
             converter = convertCardAccount
           } else if (apiAccount.cardAccount && types.some(type => {
             return apiAccount.__type === `ru.vtb24.mobilebanking.protocol.product.${type.card}` &&
-                            apiAccount.cardAccount.__type === `ru.vtb24.mobilebanking.protocol.product.${type.account}`
+              apiAccount.cardAccount.__type === `ru.vtb24.mobilebanking.protocol.product.${type.account}`
           })) {
             converter = convertCardAccount
             apiAccount = apiAccount.cardAccount
@@ -43,8 +43,8 @@ export function convertAccounts (apiPortfolios) {
           break
         case 'LOANS':
           if (apiAccount.__type === 'ru.vtb24.mobilebanking.protocol.product.RevolvingCreditLineMto' &&
-                            apiAccount.account &&
-                            apiAccount.account.__type === 'ru.vtb24.mobilebanking.protocol.product.LoanAccountMto') {
+            apiAccount.account &&
+            apiAccount.account.__type === 'ru.vtb24.mobilebanking.protocol.product.LoanAccountMto') {
             converter = convertAccount
             apiAccount = {
               ...apiAccount.account,
@@ -54,8 +54,8 @@ export function convertAccounts (apiPortfolios) {
               }
             }
           } else if (apiAccount.__type === 'ru.vtb24.mobilebanking.protocol.product.LoanContractMto' &&
-                            apiAccount.account &&
-                            apiAccount.account.__type === 'ru.vtb24.mobilebanking.protocol.product.LoanAccountMto') {
+            apiAccount.account &&
+            apiAccount.account.__type === 'ru.vtb24.mobilebanking.protocol.product.LoanAccountMto') {
             converter = convertLoan
           }
           break
@@ -296,7 +296,7 @@ export function convertAccount (apiAccount) {
     zenAccount.type = 'checking'
     zenAccount.title = apiAccount.name
     if (apiAccount.contract &&
-                apiAccount.contract.__type === 'ru.vtb24.mobilebanking.protocol.product.RevolvingCreditLineMto') {
+      apiAccount.contract.__type === 'ru.vtb24.mobilebanking.protocol.product.RevolvingCreditLineMto') {
       accounts[0].id = apiAccount.contract.id
       accounts[0].type = apiAccount.contract.__type
       products[0].id = apiAccount.contract.id
@@ -613,18 +613,25 @@ export function parsePayee (apiTransaction, transaction) {
 
 function getInstrument (code) {
   switch (code) {
-    case 'RUR': return 'RUB'
-    default: return parseMetalInstrument(code) || code
+    case 'RUR':
+      return 'RUB'
+    default:
+      return parseMetalInstrument(code) || code
   }
 }
 
 function parseMetalInstrument (code) {
   switch (code) {
-    case 'GLD': return 'XAU'
-    case 'SLR': return 'XAG'
-    case 'PLT': return 'XPT'
-    case 'PLD': return 'XPD'
-    default: return null
+    case 'GLD':
+      return 'XAU'
+    case 'SLR':
+      return 'XAG'
+    case 'PLT':
+      return 'XPT'
+    case 'PLD':
+      return 'XPD'
+    default:
+      return null
   }
 }
 
@@ -833,7 +840,8 @@ export const composeReferencedMovement = ({ movement, relatedMovements }) => {
         pair = (
           filtered =>
             filtered.length === 2 && filtered
-        )(_.filter(relatedMovements, rMovement => Math.abs(rMovement.apiTransaction.transactionAmount.sum) === Math.abs(movement.apiTransaction.transactionAmount.sum)))
+        )(_.filter(relatedMovements,
+          rMovement => Math.abs(rMovement.apiTransaction.transactionAmount.sum) === Math.abs(movement.apiTransaction.transactionAmount.sum)))
       }
     }
     if (!pair) {
@@ -952,11 +960,11 @@ const generateAccountLookup = apiAccounts => apiAccounts.reduce((all, apiAccount
   ...(
     (apiAccount.cards && apiAccount.cards.length)
       ? apiAccount.cards.reduce(
-        (allCards, card) => ({
-          ...allCards,
-          [card.id]: apiAccount
-        }),
-        {}
+      (allCards, card) => ({
+        ...allCards,
+        [card.id]: apiAccount
+      }),
+      {}
       )
       : {}
   )
