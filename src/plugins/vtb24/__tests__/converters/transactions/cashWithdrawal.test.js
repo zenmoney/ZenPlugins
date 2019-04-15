@@ -75,7 +75,7 @@ describe('convertTransaction', () => {
         merchant: null,
         movements: [
           {
-            id: '68f+ZNz/Y/7gHfvAvM9LKr+e/KA=;qIL1uH8RogbpWtIMjCq5tTarUtw=',
+            id: 'qIL1uH8RogbpWtIMjCq5tTarUtw=',
             account: { id: 'account' },
             invoice: null,
             sum: -6000,
@@ -102,7 +102,7 @@ describe('convertTransaction', () => {
         outcome: 6000,
         outcomeAccount: 'account',
         comment: null,
-        outcomeBankID: '68f+ZNz/Y/7gHfvAvM9LKr+e/KA=;qIL1uH8RogbpWtIMjCq5tTarUtw='
+        outcomeBankID: 'qIL1uH8RogbpWtIMjCq5tTarUtw='
       }
     ]
 

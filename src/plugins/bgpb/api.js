@@ -13,25 +13,23 @@ export function terminalTime () {
   return String(now.getFullYear()) + ('0' + (now.getMonth() + 1)).slice(-2) + ('0' + now.getDate()).slice(-2) + ('0' + now.getHours()).slice(-2) + ('0' + now.getMinutes()).slice(-2) + ('0' + now.getSeconds()).slice(-2)
 }
 
-async function fetchApi (url, xml, predicate = () => true, error = (message) => console.assert(false, message)) {
+async function fetchApi (url, xml, options, predicate = () => true, error = (message) => console.assert(false, message)) {
   let boundary = generateBoundary()
   let boundaryStart = '--' + boundary + '\r\n'
   let boundaryLast = '--' + boundary + '--\r\n'
 
-  let options = {
-    method: 'POST',
-    body: boundaryStart +
+  options.method = options.method ? options.method : 'POST'
+  options.headers = {
+    'User-Agent': 'BGPB mobile/5.17.1 (Android; unknownAndroidSDKbuiltforx86; Android 6.0)',
+    'Content-Type': 'multipart/form-data; boundary=' + boundary
+  }
+  options.body = boundaryStart +
     'Content-Disposition: form-data; name="XML"\r\n' +
     'Content-Transfer-Encoding: binary\r\n' +
     'Content-Type: application/xml; charset=windows-1251\r\n' +
     'Content-Length: ' + xml.length + '\r\n\r\n' +
     xml +
-    boundaryLast,
-    headers: {
-      'User-Agent': 'BGPB mobile/5.17.1 (Android; unknownAndroidSDKbuiltforx86; Android 6.0)',
-      'Content-Type': 'multipart/form-data; boundary=' + boundary
-    }
-  }
+    boundaryLast
 
   const response = await fetch(baseUrl + url, options)
   if (predicate) {
@@ -43,7 +41,8 @@ async function fetchApi (url, xml, predicate = () => true, error = (message) => 
     const errorDescription = res.BS_Response.Error.ErrorLine
     const errorMessage = 'Ответ банка: ' + errorDescription
     if (errorDescription.indexOf('Неверный логин') >= 0) { throw new InvalidPreferencesError(errorMessage) }
-    throw new TemporaryError(errorMessage)
+    // throw new TemporaryError(errorMessage)
+    throw new Error(errorMessage)
   }
   return res
 }
@@ -71,6 +70,7 @@ export function parseFullTransactionsMail (html) {
   const cheerio = require('cheerio')
   let $ = cheerio.load(html)
   $ = cheerio.load($().children()[0].children[0].Body)
+  console.log($)
   if (!$('table tr td[style="border: none;width:17cm;"]').toArray()[2]) {
     return []
   }
@@ -150,7 +150,7 @@ export async function login (login, password) {
     '   <TerminalId>41742991</TerminalId>\r\n' +
     '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-    '</BS_Request>\r\n', response => true, message => new InvalidPreferencesError('Неверный логин или пароль'))
+    '</BS_Request>\r\n', { sanitizeRequestLog: { body: true } }, response => true, message => new InvalidPreferencesError('Неверный логин или пароль'))
   if (res.BS_Response.Login && res.BS_Response.Login.SID) {
     return res.BS_Response.Login.SID
   }
@@ -169,8 +169,11 @@ export async function fetchAccounts (sid) {
     '   <TerminalId>41742991</TerminalId>\r\n' +
     '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-    '</BS_Request>\r\n', response => true, message => new InvalidPreferencesError('bad request'))
-  if (res.BS_Response.GetProducts && res.BS_Response.GetProducts.Product && res.BS_Response.GetProducts.Product.length > 0) {
+    '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
+  if (res.BS_Response.GetProducts && res.BS_Response.GetProducts.Product && !Array.isArray(res.BS_Response.GetProducts.Product)) {
+    // Обрабатываем особенность парсинга xml.
+    return [res.BS_Response.GetProducts.Product]
+  } else if (res.BS_Response.GetProducts && res.BS_Response.GetProducts.Product && res.BS_Response.GetProducts.Product.length > 0) {
     return res.BS_Response.GetProducts.Product
   }
   return []
@@ -197,7 +200,7 @@ export async function fetchBalance (sid, account) {
     '         <InputDataSource>Lookup</InputDataSource>\r\n' +
     '      </InputDataSources>\r\n' +
     '   </TerminalCapabilities>\r\n' +
-    '</BS_Request>\r\n', response => true, message => new InvalidPreferencesError('bad request'))
+    '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
   if (res.BS_Response.Balance && res.BS_Response.Balance.Amount) {
     return Number.parseFloat(res.BS_Response.Balance.Amount.replace(',', '.'))
   }
@@ -215,10 +218,16 @@ export async function fetchTransactionsAccId (sid, account) {
     '   <TerminalId>41742991</TerminalId>\r\n' +
     '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-    '</BS_Request>\r\n', response => true, message => new InvalidPreferencesError('bad request'))
+    '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
   if (res.BS_Response.GetActions && res.BS_Response.GetActions.Action && res.BS_Response.GetActions.Action.length > 2) {
-    return {
-      transactionsAccId: res.BS_Response.GetActions.Action[2].Id
+    let actions = res.BS_Response.GetActions.Action
+    for (let i = 0; i < actions.length; i++) {
+      if (actions[i].Type === 'itwg:OperationTxt') {
+        // нашли action id для выписки за период
+        return {
+          transactionsAccId: actions[i].Id
+        }
+      }
     }
   }
   return null
@@ -265,7 +274,7 @@ export async function fetchFullTransactions (sid, accounts, fromDate, toDate = n
         '   <TerminalId>41742991</TerminalId>\r\n' +
         '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
         '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-        '</BS_Request>\r\n', response => true, message => new InvalidPreferencesError('bad request'))
+        '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
     })
   }))
   const mailIDs = flatMap(responses, response => {
@@ -291,7 +300,7 @@ export async function fetchFullTransactions (sid, accounts, fromDate, toDate = n
       '           <InputDataSource>Lookup</InputDataSource>\r\n' +
       '       </InputDataSources>\r\n' +
       '   </TerminalCapabilities>\r\n' +
-      '</BS_Request>\r\n', response => true, message => new InvalidPreferencesError('bad request'))
+      '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
   }))
   const transactions = await Promise.all(flatMap(mails, mail => {
     let data = mail.BS_Response.MailAttachment.Attachment

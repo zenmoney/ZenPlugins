@@ -2,7 +2,7 @@ import { convertAccount } from '../../../converters'
 
 describe('convertAccount', () => {
   it('converts adjusted credit line', () => {
-    expect(convertAccount({
+    const apiAccount = {
       __type: 'ru.vtb24.mobilebanking.protocol.product.LoanAccountMto',
       amount: {
         __type: 'ru.vtb24.mobilebanking.protocol.AmountMto',
@@ -59,9 +59,17 @@ describe('convertAccount', () => {
         __type: 'ru.vtb24.mobilebanking.protocol.product.AccountStatusMto',
         id: 'OPEN'
       }
-    })).toEqual({
+    }
+    expect(convertAccount(apiAccount)).toEqual({
       id: '92B38AA965C84BB7A53C00F28F9AD9D5',
       type: 'ru.vtb24.mobilebanking.protocol.product.RevolvingCreditLineMto',
+      products: [
+        {
+          id: '92B38AA965C84BB7A53C00F28F9AD9D5',
+          type: 'ru.vtb24.mobilebanking.protocol.product.RevolvingCreditLineMto',
+          apiAccount
+        }
+      ],
       zenAccount: {
         id: '92B38AA965C84BB7A53C00F28F9AD9D5',
         type: 'checking',

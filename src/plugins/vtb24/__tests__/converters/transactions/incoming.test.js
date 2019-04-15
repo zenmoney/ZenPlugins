@@ -138,6 +138,58 @@ describe('convertTransaction', () => {
             __type: 'ru.vtb24.mobilebanking.protocol.StatusMto',
             id: 'SUCCESS'
           }
+      },
+      {
+        __type: 'ru.vtb24.mobilebanking.protocol.statement.CardTransactionMto',
+        id: 'hAJD7WfNZz7YZLW1Zcxn9/ak6Oc=;3UJ6lOXY5qBpYrcvoT3eauLgC8w=',
+        details: 'Зачисление на карту',
+        isHold: false,
+        statusName: null,
+        transactionAmountInAccountCurrency:
+          {
+            __type: 'ru.vtb24.mobilebanking.protocol.AmountMto',
+            sum: 59.76,
+            currency:
+              {
+                __type: 'ru.vtb24.mobilebanking.protocol.CurrencyMto',
+                currencyCode: 'RUR',
+                name: 'Рубль России',
+                displaySymbol: '₽'
+              }
+          },
+        debet: '<ref[17]>',
+        transactionDate: new Date('Mon Mar 25 2019 16:41:54 GMT+0300 (MSK)'),
+        processedDate: new Date('Mon Mar 25 2019 00:00:00 GMT+0300 (MSK)'),
+        transactionAmount:
+          {
+            __type: 'ru.vtb24.mobilebanking.protocol.AmountMto',
+            sum: 59.76,
+            currency:
+              {
+                __type: 'ru.vtb24.mobilebanking.protocol.CurrencyMto',
+                currencyCode: 'RUR',
+                name: 'Рубль России',
+                displaySymbol: '₽'
+              }
+          },
+        feeAmount:
+          {
+            __type: 'ru.vtb24.mobilebanking.protocol.AmountMto',
+            sum: 0,
+            currency:
+              {
+                __type: 'ru.vtb24.mobilebanking.protocol.CurrencyMto',
+                currencyCode: 'RUR',
+                name: 'Рубль России',
+                displaySymbol: '₽'
+              }
+          },
+        order: null,
+        status:
+          {
+            __type: 'ru.vtb24.mobilebanking.protocol.StatusMto',
+            id: 'SUCCESS'
+          }
       }
     ]
 
@@ -149,7 +201,7 @@ describe('convertTransaction', () => {
         merchant: null,
         movements: [
           {
-            id: 'iQ7Tx24cT+OGJGZvx95rV1NN9Ww=;ZLebkT6AwbJw22sE0EwyzPxb2So=',
+            id: 'ZLebkT6AwbJw22sE0EwyzPxb2So=',
             account: { id: 'account' },
             invoice: null,
             sum: 4209,
@@ -164,7 +216,7 @@ describe('convertTransaction', () => {
         merchant: null,
         movements: [
           {
-            id: 'UxyFDmFrU9H5zcg2Blf8Xdo5cv4=;Y/L9vJBRRTH5TkxtzZARhlxifNo=',
+            id: 'Y/L9vJBRRTH5TkxtzZARhlxifNo=',
             account: { id: 'account' },
             invoice: null,
             sum: 5000,
@@ -179,10 +231,25 @@ describe('convertTransaction', () => {
         merchant: null,
         movements: [
           {
-            id: 'UxyFDmFrU9H5zcg2Blf8Xdo5cv4=;7tZ8ksFE93dDSUEXE4HAkKpp1Cs=',
+            id: '7tZ8ksFE93dDSUEXE4HAkKpp1Cs=',
             account: { id: 'account' },
             invoice: null,
             sum: 1605.63,
+            fee: 0
+          }
+        ]
+      },
+      {
+        comment: 'Зачисление на карту',
+        date: new Date('2019-03-25T13:41:54.000Z'),
+        hold: false,
+        merchant: null,
+        movements: [
+          {
+            id: '3UJ6lOXY5qBpYrcvoT3eauLgC8w=',
+            account: { id: 'account' },
+            invoice: null,
+            sum: 59.76,
             fee: 0
           }
         ]
@@ -191,7 +258,7 @@ describe('convertTransaction', () => {
 
     const expectedZenmoneyTransactions = [
       {
-        id: 'iQ7Tx24cT+OGJGZvx95rV1NN9Ww=;ZLebkT6AwbJw22sE0EwyzPxb2So=',
+        id: 'ZLebkT6AwbJw22sE0EwyzPxb2So=',
         date: new Date('2019-01-25T08:30:14.000Z'),
         hold: false,
         income: 4209,
@@ -201,7 +268,7 @@ describe('convertTransaction', () => {
         comment: 'Поступление заработной платы/иных выплат Salary согласно реестру № 0000 от 2019-01-25'
       },
       {
-        id: 'UxyFDmFrU9H5zcg2Blf8Xdo5cv4=;Y/L9vJBRRTH5TkxtzZARhlxifNo=',
+        id: 'Y/L9vJBRRTH5TkxtzZARhlxifNo=',
         date: new Date('2019-01-19T14:56:03.000Z'),
         hold: false,
         income: 5000,
@@ -211,7 +278,7 @@ describe('convertTransaction', () => {
         comment: 'Пополнение'
       },
       {
-        id: 'UxyFDmFrU9H5zcg2Blf8Xdo5cv4=;7tZ8ksFE93dDSUEXE4HAkKpp1Cs=',
+        id: '7tZ8ksFE93dDSUEXE4HAkKpp1Cs=',
         date: new Date('2019-01-11T21:00:00.000Z'),
         hold: false,
         income: 1605.63,
@@ -219,6 +286,16 @@ describe('convertTransaction', () => {
         outcome: 0,
         outcomeAccount: 'account',
         comment: 'Зачисление'
+      },
+      {
+        id: '3UJ6lOXY5qBpYrcvoT3eauLgC8w=',
+        date: new Date('2019-03-25T13:41:54.000Z'),
+        hold: false,
+        income: 59.76,
+        incomeAccount: 'account',
+        outcome: 0,
+        outcomeAccount: 'account',
+        comment: 'Зачисление на карту'
       }
     ]
 

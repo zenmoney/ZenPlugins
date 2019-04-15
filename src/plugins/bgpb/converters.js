@@ -1,18 +1,21 @@
 import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
 
 export function convertAccount (ob) {
-  return {
-    id: ob.Id,
-    transactionsAccId: null,
-    type: 'card',
-    title: ob.CustomName + '*' + ob.No.slice(-4),
-    currencyCode: ob.Currency,
-    cardNumber: ob.No,
-    instrument: codeToCurrencyLookup[ob.Currency],
-    balance: 0,
-    syncID: [ob.No.slice(-4)],
-    productType: ob.ProductType
+  if (ob.ProductType !== 'NON_ONUS') {
+    return {
+      id: ob.Id,
+      transactionsAccId: null,
+      type: 'card',
+      title: ob.CustomName + '*' + ob.No.slice(-4),
+      currencyCode: ob.Currency,
+      cardNumber: ob.No,
+      instrument: codeToCurrencyLookup[ob.Currency],
+      balance: 0,
+      syncID: [ob.No.slice(-4)],
+      productType: ob.ProductType
+    }
   }
+  return null
 }
 
 export function convertTransaction (apiTransaction, accounts) {
@@ -20,6 +23,7 @@ export function convertTransaction (apiTransaction, accounts) {
     return account.syncID.indexOf(apiTransaction.cardNum) !== -1
   })
 
+  console.log(apiTransaction)
   const transaction = {
     date: getDate(apiTransaction.date),
     movements: [ getMovement(apiTransaction, account) ],
