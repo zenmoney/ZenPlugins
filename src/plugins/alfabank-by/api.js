@@ -85,14 +85,13 @@ export async function authWithPassportID (deviceID) {
     method: 'POST',
     body: {
       deviceId: deviceID,
-      locale: 'ru',
       deviceName: 'ZenMoney Plugin',
       isResident: true,
       login: passportID,
       screenHeight: 1794,
       screenWidth: 1080
     },
-    sanitizeRequestLog: { body: { deviceId: true, login: login } }
+    sanitizeRequestLog: { body: { deviceId: true, login: true } }
   }, response => response.status, message => new InvalidPreferencesError('bad request')))
   if (res.body.status !== 'OK' && res.body.message) {
     throw new Error('Ответ банка: ' + res.body.message)

@@ -192,7 +192,7 @@ function mockCheckDeviceStatus () {
   fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/CheckDeviceStatus?locale=ru', {
     status: 200,
     body: JSON.stringify({
-      'status': 'NO_DEVICE'
+      'status': 'NEW'
     }),
     statusText: 'OK'
   }, { method: 'POST' })
