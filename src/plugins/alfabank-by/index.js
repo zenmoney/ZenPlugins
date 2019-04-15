@@ -3,7 +3,6 @@ import * as converters from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
   let loginData = await bank.login()
-  console.log(loginData)
   const accounts = (await bank.fetchAccounts(loginData.deviceID, loginData.sessionID))
     .map(converters.convertAccount)
     .filter(account => account !== null)
