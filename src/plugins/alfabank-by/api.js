@@ -42,13 +42,10 @@ function validateResponse (response, predicate, error) {
 export async function login () {
   let deviceID = DeviceID()
   let token = ZenMoney.getData('token')
-  let sessionID = await checkDeviceStatus(deviceID)
+  var sessionID = await checkDeviceStatus(deviceID)
   if (sessionID === null) {
     await authWithPassportID(deviceID)
-    let auth = authConfirm(deviceID)
-    console.log(auth)
-    token = auth.token
-    sessionID = auth.sessionID
+    sessionID = authConfirm(deviceID)
   } else if (!await loginByToken(sessionID, deviceID, token)) {
     throw new TemporaryError('Авторизация прошла неуспешно, попробуйте позже')
   }
@@ -123,10 +120,7 @@ export async function authConfirm (deviceID) {
   }
   ZenMoney.setData('token', res.body.token)
 
-  return {
-    sessionID: res.body.sessionId,
-    token: res.body.token
-  }
+  return res.body.sessionId
 }
 
 export async function loginByToken (sessionID, deviceID, token) {
