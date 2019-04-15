@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
-    <id>alfabankBY</id>
+    <id>alfabank-by</id>
     <version>1.0</version>
     <build>2</build>
-    <company>15362</company>
+    <company>15417</company>
     <modular>true</modular>
     <codeRequired>false</codeRequired>
     <files>

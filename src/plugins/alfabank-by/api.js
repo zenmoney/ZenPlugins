@@ -95,7 +95,7 @@ export async function authWithPassportID (deviceID) {
     sanitizeRequestLog: { body: { deviceId: true, login: login } }
   }, response => response.status, message => new InvalidPreferencesError('bad request')))
   if (res.body.status !== 'OK' && res.body.message) {
-    throw new TemporaryError('Ответ банка:' + res.body.message)
+    throw new Error('Ответ банка: ' + res.body.message)
   }
 
   return true
@@ -119,7 +119,7 @@ export async function authConfirm (deviceID) {
     sanitizeRequestLog: { body: { deviceId: true } }
   }, response => response.status, message => new InvalidPreferencesError('bad request')))
   if (res.body.status !== 'OK' && res.body.message) {
-    throw new TemporaryError('Ответ банка:' + res.body.message)
+    throw new TemporaryError('Ответ банка: ' + res.body.message)
   }
   ZenMoney.setData('token', res.body.token)
 
@@ -144,7 +144,7 @@ export async function loginByToken (sessionID, deviceID, token) {
     sanitizeRequestLog: { body: { deviceId: true, token: true } }
   }, response => response.status, message => new InvalidPreferencesError('bad request')))
   if (res.body.message) {
-    throw new Error('Ответ банка:' + res.body.message)
+    throw new Error('Ответ банка: ' + res.body.message)
   }
 
   return res.body.status === 'OK'
@@ -183,7 +183,7 @@ export async function fetchAccountInfo (sessionID, accountId) {
   if (res.body.iban) {
     return res.body
   }
-  throw new Error('Ответ банка:' + res.body.message)
+  throw new Error('Ответ банка: ' + res.body.message)
 }
 
 export async function fetchTransactions (sessionID, accounts, fromDate) {
