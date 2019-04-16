@@ -289,6 +289,25 @@ describe('convertTransaction', () => {
         comment: 'ЗАРАБОТНАЯ ПЛАТА ЗА ФЕВРАЛЬ-МАРТ 2019',
         hold: false
       }
+    },
+    {
+      name: 'exchange operation',
+      json: {},
+      expectedTransaction: {
+        date: new Date('Tue Jan 25 2019 12:27:55 GMT+0300 (Moscow Standard Time)'),
+        movements: [
+          {
+            id: null,
+            account: { id: '6505111' },
+            invoice: null,
+            sum: 400,
+            fee: 0
+          }
+        ],
+        merchant: null,
+        comment: 'ЗАРАБОТНАЯ ПЛАТА ЗА ФЕВРАЛЬ-МАРТ 2019',
+        hold: false
+      }
     }
   ]
   tt.forEach(function (tc) {
