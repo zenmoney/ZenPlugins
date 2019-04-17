@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>alfabank-by</id>
+    <version>1.0</version>
+    <build>2</build>
+    <company>15417</company>
+    <modular>true</modular>
+    <codeRequired>false</codeRequired>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+    <description>Синхронизация работает через API приложения "InSync.by" Альфабанка.
+
+* Реквизиты доступа к банку хранятся на телефоне в зашифрованном виде.
+* Идентификационный номер паспорта не хранится в памяти.
+* Синхронизация происходит напрямую с телефона.
+
+Укажите с какой даты загружать операции при первой синхронизации. Укажите текущую дату, если историю операций загружать не надо.
+При первой синхринизации плагин запросит идентификационный номер паспорта и код из СМС.
+
+Плагин синхронизации с Альфабанком имеет открытый код, который размещён на GitHub: https://github.com/zenmoney/ZenPlugins</description>
+</provider>

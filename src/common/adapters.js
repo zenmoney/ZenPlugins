@@ -183,6 +183,9 @@ export function adaptScrapeToGlobalApi (scrape) {
     } else if (state === 'pending') {
       resultHandled.catch((e) => {
         const error = augmentErrorWithDevelopmentHints(getPresentationError(e))
+        if (error.allowRetry) {
+          error.allow_retry = true
+        }
         ZenMoney.setResult(error)
       })
     }

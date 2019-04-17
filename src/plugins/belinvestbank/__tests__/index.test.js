@@ -19,8 +19,8 @@ describe('scrape', () => {
     const result = await scrape(
       {
         preferences: { login: '123456789', password: 'pass' },
-        fromDate: new Date('2018-12-27T00:00:00.000+03:00'),
-        toDate: new Date('2019-01-02T00:00:00.000+03:00')
+        fromDate: new Date(2018, 11, 27),
+        toDate: new Date(2019, 0, 2)
       }
     )
 

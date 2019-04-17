@@ -1,4 +1,4 @@
-import currencies from '../belswissbank/codeToCurrencyLookup'
+import currencies from '../../common/codeToCurrencyLookup'
 
 export function convertAccounts (apiAccounts, walletId) {
   const accounts = []
