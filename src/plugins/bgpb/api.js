@@ -38,10 +38,12 @@ async function fetchApi (url, xml, options, predicate = () => true, error = (mes
   let res = parseXml(response.body)
 
   if (res.BS_Response.Error && res.BS_Response.Error.ErrorLine) {
+    if (res.BS_Response.Error.ErrorLine === 'Ошибка авторизации: Баланс недоступен') {
+      return null
+    }
     const errorDescription = res.BS_Response.Error.ErrorLine
     const errorMessage = 'Ответ банка: ' + errorDescription
     if (errorDescription.indexOf('Неверный логин') >= 0) { throw new InvalidPreferencesError(errorMessage) }
-    // throw new TemporaryError(errorMessage)
     throw new Error(errorMessage)
   }
   return res
@@ -201,6 +203,9 @@ export async function fetchBalance (sid, account) {
     '      </InputDataSources>\r\n' +
     '   </TerminalCapabilities>\r\n' +
     '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
+  if (res === null) {
+    return null
+  }
   if (res.BS_Response.Balance && res.BS_Response.Balance.Amount) {
     return Number.parseFloat(res.BS_Response.Balance.Amount.replace(',', '.'))
   }

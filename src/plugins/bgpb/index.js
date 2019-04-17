@@ -12,9 +12,13 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   }
   for (let i = 0; i < accounts.length; i++) {
     accounts[i].balance = await bank.fetchBalance(token, accounts[i])
+    if (accounts[i].balance === null) {
+      continue
+    }
     let accIDs = await bank.fetchTransactionsAccId(token, accounts[i])
     accounts[i].transactionsAccId = accIDs.transactionsAccId
   }
+  accounts.filter(account => account.balance !== null) // Фильтруем все карты, которые еще не выпущены
 
   const transactionsStatement = (await bank.fetchFullTransactions(token, accounts, fromDate, toDate))
     .map(transaction => converters.convertTransaction(transaction, accounts))
