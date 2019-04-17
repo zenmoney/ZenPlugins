@@ -22,7 +22,8 @@ export function convertAccount (json, accountType) {
           instrument: codeToCurrencyLookup[json.currency],
           balance: Number.parseFloat(json.cards[0].balance),
           syncID: [json.internalAccountId],
-          rkcCode: json.rkcCode
+          rkcCode: json.rkcCode,
+          cardHash: json.cards[0].cardHash
         }
 
         json.cards.forEach(function (el) {
@@ -55,14 +56,14 @@ export function convertAccount (json, accountType) {
   }
 }
 
-export function convertTransaction (apiTransaction, accounts) {
+export function convertTransaction (json, accounts) {
   const account = accounts.find(account => {
-    return account.syncID.indexOf(apiTransaction.accountNumber) !== -1
+    return account.syncID.indexOf(json.accountNumber) !== -1
   })
 
   const transaction = {
-    date: new Date(apiTransaction.transactionDate),
-    movements: [ getMovement(apiTransaction, account) ],
+    date: new Date(json.transactionDate),
+    movements: [ getMovement(json, account) ],
     merchant: null,
     comment: null,
     hold: false
@@ -72,39 +73,69 @@ export function convertTransaction (apiTransaction, accounts) {
     parseCash,
     parseComment,
     parsePayee
-  ].some(parser => parser(transaction, apiTransaction))
+  ].some(parser => parser(transaction, json))
 
   return transaction
 }
 
-function getMovement (apiTransaction, account) {
+export function convertLastTransaction (json, accounts) {
+  const account = accounts.find(account => {
+    return account.syncID.indexOf(json.accountNumber) !== -1
+  })
+  if (json.trans_iso_currency !== account.instrument) {
+    // Пока не понятно как конверсировать валюты, поэтому такие платежи вносим корректировками
+    return null
+  }
+  json.operationPlace = json.card_acceptor
+  json.operationCode = 3
+  json.operationAmount = Number.parseFloat(json.auth_amount)
+  json.operationName = json.transac_type === '1' ? 'Снятие наличных' : ''
+
+  const transaction = {
+    date: new Date(getLastTransactionDate(json.auth_date)),
+    movements: [ getMovement(json, account) ],
+    merchant: null,
+    comment: null,
+    hold: false
+  };
+
+  [
+    parseCash,
+    parseComment,
+    parsePayee
+  ].some(parser => parser(transaction, json))
+
+  return transaction
+}
+
+function getMovement (json, account) {
   return {
     id: null,
     account: { id: account.id },
     invoice: null,
-    sum: apiTransaction.operationCode === 3 ? -apiTransaction.operationAmount : apiTransaction.operationAmount,
+    sum: json.operationCode === 3 ? -json.operationAmount : json.operationAmount,
     fee: 0
   }
 }
 
-function parseCash (transaction, apiTransaction) {
-  if (apiTransaction.operationName.indexOf('наличных') > 0 ||
-    apiTransaction.operationName.indexOf('Снятие денег со счета') > 0 ||
-    apiTransaction.operationName.indexOf('Пополнение наличными') > 0) {
+function parseCash (transaction, json) {
+  if (json.operationName.indexOf('наличных') > 0 ||
+    json.operationName.indexOf('Снятие денег со счета') > 0 ||
+    json.operationName.indexOf('Пополнение наличными') > 0) {
     // добавим вторую часть перевода
     transaction.movements.push({
       id: null,
       account: {
         company: null,
         type: 'cash',
-        instrument: codeToCurrencyLookup[apiTransaction.operationCurrency],
+        instrument: json.trans_iso_currency ? json.trans_iso_currency : codeToCurrencyLookup[json.operationCurrency],
         syncIds: null
       },
       invoice: null,
-      sum: Number.parseFloat(apiTransaction.operationAmount),
+      sum: Number.parseFloat(json.auth_amount ? json.auth_amount : json.operationAmount),
       fee: 0
     })
-    return true
+    return false
   }
 }
 
@@ -117,8 +148,18 @@ function parsePayee (transaction, apiTransaction) {
   }
   transaction.merchant = {
     mcc: null,
-    fullTitle: apiTransaction.operationPlace,
     location: null
+  }
+  const merchant = apiTransaction.operationPlace.split('>').map(str => str.trim())
+  if (merchant.length === 1) {
+    transaction.merchant.fullTitle = apiTransaction.operationPlace
+  } else if (merchant.length === 2) {
+    transaction.merchant.title = merchant[0]
+    let geo = merchant[1].split(' ')
+    transaction.merchant.city = merchant[1].replace(' ' + geo[geo.length - 1], '').trim()
+    transaction.merchant.country = geo[geo.length - 1]
+  } else {
+    throw new Error('Ошибка обработки транзакции с получателем: ' + apiTransaction.operationPlace)
   }
 }
 
@@ -143,4 +184,9 @@ function parseComment (transaction, apiTransaction) {
       transaction.comment = apiTransaction.operationName
       return false
   }
+}
+
+export function getLastTransactionDate (str) {
+  const [day, month, year, hour, minute, second] = str.match(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2}):(\d{2})/).slice(1)
+  return new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}+03:00`)
 }
