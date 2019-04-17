@@ -3,12 +3,11 @@
     <EditTextPreference
         key="login"
         obligatory="true"
-        title="Имя пользователя"
-        dialogTitle="Имя пользователя"
-        dialogMessage="Введите имя пользователя"
+        title="Логин"
+        dialogTitle="Логин"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
-        summary="|Имя пользователя|{@s}"
+        summary="||{@s}"
     >
     </EditTextPreference>
     <EditTextPreference
@@ -17,7 +16,6 @@
         inputType="textPassword"
         title="Пароль"
         dialogTitle="Пароль"
-        dialogMessage="Введите пароль"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="||***********"
@@ -29,8 +27,7 @@
         inputType="date"
         title="С какой даты загружать операции"
         defaultValue="2010-01-01T12:00:00.000Z"
-        dialogTitle="Дата начала загрузки"
-        dialogMessage="Введите дату, с которой загружать операции"
+        dialogTitle="С какой даты загружать операции"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="|startDate|{@s}"

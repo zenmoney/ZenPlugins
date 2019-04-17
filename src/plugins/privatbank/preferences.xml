@@ -3,8 +3,8 @@
     <EditTextPreference
         key="merchantId"
         obligatory="true"
-        title="ID мерчантов *"
-        dialogTitle="ID мерчантов"
+        title="ID мерчанта"
+        dialogTitle="ID мерчанта"
         dialogMessage="Введите ID мерчантов (через пробел), зарегистрированных в Приват24"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
@@ -13,9 +13,8 @@
     <EditTextPreference
         key="password"
         obligatory="true"
-        title="Пароли мерчантов *"
-        dialogTitle="Пароли мерчантов"
-        dialogMessage="32-х значные пароли мерчантов (через пробел)"
+        title="32-значный пароль"
+        dialogTitle="32-значный пароль"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="||******"
@@ -27,8 +26,7 @@
         inputType="date"
         title="С какой даты загружать операции"
         defaultValue="2018-01-01"
-        dialogTitle="Дата начала загрузки"
-        dialogMessage="Введите дату, с которой загружать операции"
+        dialogTitle="С какой даты загружать операции"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="|startDate|{@s}">

@@ -102,9 +102,9 @@ export async function login (device, auth) {
     }
   })
 
-  const login = await ZenMoney.readLine('Введите логин, c которым вы зарегистрированы в ЧатБанке.')
+  const login = await ZenMoney.readLine('Введите логин от ЧатБанка.')
   if (!login) {
-    throw new TemporaryError('Неверно введен логин. Попробуйте подключить синхронизацию еще раз.')
+    throw new TemporaryError('Логин введен неверно. Попробуйте подключить синхронизацию ещё раз.')
   }
 
   response = await callGate('getin', {
@@ -120,15 +120,15 @@ export async function login (device, auth) {
 
   if (!response.body || response.body.result !== 'ok') {
     if (!response.body.message) {
-      throw new TemporaryError('Логин не зарегистрирован в ЧатБанк. Пройдите регистрацию в ЧатБанк, затем подключите синхронизацию с Совкомбанк в Дзен-мани.')
+      throw new TemporaryError('Логин не зарегистрирован в ЧатБанке. Пройдите регистрацию в ЧатБанке, затем подключите синхронизацию ещё раз.')
     } else if (response.body.message.indexOf('Логин введен неверно') >= 0) {
-      throw new TemporaryError('Логин введен неверно. Попробуйте подключить синхронизацию еще раз.')
+      throw new TemporaryError('Логин введен неверно. Попробуйте подключить синхронизацию ещё раз.')
     } else {
       throw new TemporaryError(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: ${response.body.message}`)
     }
   }
 
-  const code = await ZenMoney.readLine('Введите код из SMS для входа в Совкомбанк', { inputType: 'number' })
+  const code = await ZenMoney.readLine('Введите код из SMS', { inputType: 'number' })
 
   const key = response.body.data.first
   const ptim = response.body.data.ptim
@@ -140,7 +140,7 @@ export async function login (device, auth) {
       appBuild: '2.2.8',
       deviceId: device.id,
       deviceModel: 'generic_x86',
-      deviceName: 'Android SDK built for x86',
+      deviceName: 'Zenmoney',
       ibin,
       key,
       push_address: device.pushAddress,
@@ -153,7 +153,7 @@ export async function login (device, auth) {
 
   if (!response.body || response.body.result !== 'ok') {
     if (!response.body.message || response.body.message.indexOf('Неверный одноразовый код') >= 0) {
-      throw new TemporaryError('Вы ввели неверный код из SMS. Повторите подключение синхронизации.')
+      throw new TemporaryError('Введён неверный код из SMS. Повторите подключение синхронизации.')
     }
     throw new TemporaryError(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: ${response.body.message}`)
   }

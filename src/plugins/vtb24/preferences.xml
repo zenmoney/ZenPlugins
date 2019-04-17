@@ -2,19 +2,19 @@
 <PreferenceScreen>
 	<EditTextPreference
 		title="Логин или номер карты ВТБ"
-		positiveButtonText="ОК"
-		summary="|ID пользователя или логин|{@s}"
 		dialogTitle="Логин или номер карты ВТБ"
+		positiveButtonText="ОК"
 		negativeButtonText="Отмена"
+		summary="||{@s}"
 		obligatory="true"
 		key="login">
 	</EditTextPreference>
 	<EditTextPreference
-		positiveButtonText="ОК"
 		key="password"
-		dialogTitle="Пароль"
-		negativeButtonText="Отмена"
 		title="Пароль"
+		dialogTitle="Пароль"
+		positiveButtonText="ОК"
+		negativeButtonText="Отмена"
 		summary="||***********"
 		obligatory="true"
 		inputType="textPassword">
@@ -26,7 +26,6 @@
         title="С какой даты загружать операции"
         defaultValue="2018-04-01T00:00:00.000Z"
         dialogTitle="Дата начала загрузки"
-        dialogMessage="Введите дату, с которой загружать операции"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="|startDate|{@s}">

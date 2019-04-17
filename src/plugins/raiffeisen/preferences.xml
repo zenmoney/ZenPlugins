@@ -4,8 +4,7 @@
         key="login"
         title="Логин"
         dialogTitle="Логин"
-        dialogMessage="Введите идентификатор пользователя или логин для входа в систему Райффайзен Онлайн."
-        summary="|ID пользователя или логин|{@s}"
+        summary="||{@s}"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         obligatory="true">
@@ -14,7 +13,6 @@
         key="password"
         title="Пароль"
         dialogTitle="Пароль"
-        dialogMessage="Введите пароль, используемый для входа в систему Райффайзен Онлайн."
         inputType="textPassword"
         summary="||***********"
         positiveButtonText="ОК"
@@ -27,8 +25,7 @@
         inputType="date"
         title="С какой даты загружать операции"
         defaultValue="2017-12-01T00:00:00.000Z"
-        dialogTitle="Дата начала загрузки"
-        dialogMessage="Введите дату, с которой загружать операции"
+        dialogTitle="С какой даты загружать операции"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="|startDate|{@s}">

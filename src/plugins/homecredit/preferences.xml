@@ -2,10 +2,9 @@
 <PreferenceScreen>
 	<EditTextPreference
         key="login"
-        summary="|Логин|{@s}"
-        title="Логин"
-        dialogTitle="Логин"
-        dialogMessage="Введите логин, используемый для входа в интернет-банк"
+        title="Логин от интернет-банка"
+        dialogTitle="Логин от интернет-банка"
+        summary="||{@s}"
         negativeButtonText="Отмена"
         positiveButtonText="ОК"
         inputType="text"
@@ -14,71 +13,64 @@
     <EditTextPreference
         key="password"
         summary="||***********"
-        title="Пароль"
-        dialogTitle="Пароль"
-        dialogMessage="Введите пароль, используемый для входа в интернет-банк"
+        title="Пароль от интернет-банка"
+        dialogTitle="Пароль от интернет-банка"
         negativeButtonText="Отмена"
         positiveButtonText="ОК"
         inputType="textPassword"
         obligatory="false">
     </EditTextPreference>
     <EditTextPreference
-            key="code"
-            summary="|0000|{@s}"
-            title="4 цифры карты"
-            dialogTitle="4 цифры 3-го блока номера карты"
-            dialogMessage="Введите 4 цифры 3-го блока номера карты для входа в интернет-банк"
-            inputType="numberPassword"
-            negativeButtonText="Отмена"
-            positiveButtonText="ОК"
-            obligatory="false">
+		key="code"
+		summary="||{@s}"
+		title="4 цифры 3-го блока номера карты"
+		dialogTitle="4 цифры 3-го блока номера карты"
+		inputType="numberPassword"
+		negativeButtonText="Отмена"
+		positiveButtonText="ОК"
+		obligatory="false">
     </EditTextPreference>
     <EditTextPreference
-            key="birth"
-            title="Дата рождения"
-            dialogTitle="Дата рождения"
-            dialogMessage="Введите дату рождения для входа в 'Мой кредит'
-Формат: дд.мм.гггг"
-            inputType="text"
-            summary="|дд.мм.гггг|{@s}"
-            positiveButtonText="ОК"
-            negativeButtonText="Отмена"
-            obligatory="false">
+		key="birth"
+		title="Дата рождения"
+		dialogTitle="Дата рождения"
+		dialogMessage="Формат: дд.мм.гггг"
+		inputType="text"
+		summary="||{@s}"
+		positiveButtonText="ОК"
+		negativeButtonText="Отмена"
+		obligatory="false">
     </EditTextPreference>
     <EditTextPreference
-            key="phone"
-            title="Номер телефона"
-            dialogTitle="Номер телефона"
-            dialogMessage="Введите номер телефона для входа в 'Мой кредит'
-Формат: 7хххххххххх"
-			inputType="number"
-            summary="|7xxxxxxxxxx|{@s}"
-            positiveButtonText="ОК"
-            negativeButtonText="Отмена"
-            obligatory="false">
+		key="phone"
+		title="Номер телефона"
+		dialogTitle="Номер телефона"
+		dialogMessage="Формат: 79991111111"
+		inputType="number"
+		summary="||{@s}"
+		positiveButtonText="ОК"
+		negativeButtonText="Отмена"
+		obligatory="false">
     </EditTextPreference>
     <EditTextPreference
-            key="pin"
-            title="Пин-код"
-            dialogTitle="ПИН-код приложения 'Мой кредит'"
-            dialogMessage="Введите пин-код для входа в 'Мой кредит'
-Формат: 4 цифры."
-            inputType="numberPassword"
-            summary="||****"
-            positiveButtonText="ОК"
-            negativeButtonText="Отмена"
-            obligatory="false">
+		key="pin"
+		title="Пароль от Мой кредит"
+		dialogTitle="Пароль от Мой кредит"
+		inputType="numberPassword"
+		summary="||****"
+		positiveButtonText="ОК"
+		negativeButtonText="Отмена"
+		obligatory="false">
     </EditTextPreference>
     <EditTextPreference
-            key="startDate"
-            title="С какой даты загружать операции"
-            dialogTitle="Дата начала загрузки"
-            dialogMessage="Введите дату, с которой загружать операции"
-            inputType="date"
-            summary="|гггг-мм-дд|{@s}"
-            defaultValue="2018-04-01T00:00:00.000Z"
-            positiveButtonText="ОК"
-            negativeButtonText="Отмена"
-            obligatory="true">
+		key="startDate"
+		title="С какой даты загружать операции"
+		dialogTitle="С какой даты загружать операции"
+		inputType="date"
+		summary="|startDate|{@s}"
+		defaultValue="2018-04-01T00:00:00.000Z"
+		positiveButtonText="ОК"
+		negativeButtonText="Отмена"
+		obligatory="true">
     </EditTextPreference>
 </PreferenceScreen>
