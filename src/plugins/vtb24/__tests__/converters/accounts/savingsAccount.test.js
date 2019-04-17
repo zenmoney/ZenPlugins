@@ -2,7 +2,7 @@ import { convertAccount } from '../../../converters'
 
 describe('convertAccount', () => {
   it('converts savings account', () => {
-    expect(convertAccount({
+    const apiAccount = {
       __type: 'ru.vtb24.mobilebanking.protocol.product.SavingsAccountMto',
       amount: {
         currency: {
@@ -29,9 +29,17 @@ describe('convertAccount', () => {
         __type: 'ru.vtb24.mobilebanking.protocol.product.AccountStatusMto',
         id: 'OPEN'
       }
-    })).toEqual({
+    }
+    expect(convertAccount(apiAccount)).toEqual({
       id: 'F1ABB1311A944485B984BD2EE933E4A1',
       type: 'ru.vtb24.mobilebanking.protocol.product.SavingsAccountMto',
+      products: [
+        {
+          id: 'F1ABB1311A944485B984BD2EE933E4A1',
+          type: 'ru.vtb24.mobilebanking.protocol.product.SavingsAccountMto',
+          apiAccount
+        }
+      ],
       zenAccount: {
         id: 'F1ABB1311A944485B984BD2EE933E4A1',
         type: 'checking',

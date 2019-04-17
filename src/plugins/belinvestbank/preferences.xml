@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen>
     <EditTextPreference
-        key="phone"
+        key="login"
         obligatory="true"
-        title="Номер телефона"
-        dialogTitle="Номер телефона"
-        dialogMessage="+375*********"
+        title="Логин"
+        dialogTitle="Логин"
+        dialogMessage="Введите логин для входа в интернет-банк БелИнвестБанк"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
-        summary="||{@s}"
+        summary="|ID пользователя или логин|{@s}"
     />
     <EditTextPreference
         key="password"
@@ -16,7 +16,7 @@
         inputType="textPassword"
         title="Пароль"
         dialogTitle="Пароль"
-        dialogMessage="Пароль для входа в интернет-банк МТБанк"
+        dialogMessage="Введите пароль, используемый для входа в интернет-банк БелИнвестБанк"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="||***********"
@@ -26,7 +26,7 @@
         obligatory="true"
         inputType="date"
         title="С какой даты загружать операции"
-        defaultValue="2018-01-01T00:00:00.000Z"
+        defaultValue="2019-01-01T00:00:00.000Z"
         dialogTitle="Дата начала загрузки"
         dialogMessage="Введите дату, с которой загружать операции"
         positiveButtonText="ОК"
