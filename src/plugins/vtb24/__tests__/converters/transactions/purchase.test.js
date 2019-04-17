@@ -373,7 +373,7 @@ describe('convertTransaction', () => {
         },
         movements: [
           {
-            id: '2Qe/wGcaAzn6y+NFxWEMjcy6mjM=;4YzFJfeuAJ8m+MUjn/oMSUbFUMM=',
+            id: '4YzFJfeuAJ8m+MUjn/oMSUbFUMM=',
             account: { id: 'account' },
             invoice: null,
             sum: -300,
@@ -394,7 +394,7 @@ describe('convertTransaction', () => {
         },
         movements: [
           {
-            id: 'iQ7Tx24cT+OGJGZvx95rV1NN9Ww=;83RHe8XMecT36x1EiaFcB1l8S/M=',
+            id: '83RHe8XMecT36x1EiaFcB1l8S/M=',
             account: { id: 'account' },
             invoice: null,
             sum: -250,
@@ -415,7 +415,7 @@ describe('convertTransaction', () => {
         },
         movements: [
           {
-            id: 'UxyFDmFrU9H5zcg2Blf8Xdo5cv4=;lOkFTtbsHoVUzPn9rEAFZF4u7SY=',
+            id: 'lOkFTtbsHoVUzPn9rEAFZF4u7SY=',
             account: { id: 'account' },
             invoice: null,
             sum: -39,
@@ -430,7 +430,7 @@ describe('convertTransaction', () => {
         merchant: null,
         movements: [
           {
-            id: 'UxyFDmFrU9H5zcg2Blf8Xdo5cv4=;rHqO/DOMvX+E12mf0FQg3WkgC/Q=',
+            id: 'rHqO/DOMvX+E12mf0FQg3WkgC/Q=',
             account: { id: 'account' },
             invoice: null,
             sum: -466.3,
@@ -449,7 +449,7 @@ describe('convertTransaction', () => {
         },
         movements: [
           {
-            id: '5x68QJ9sIpVHryQQflawldCFCPc=;ZDvGUy6vxtxx72SQZ4YAUFRLDBw=',
+            id: 'ZDvGUy6vxtxx72SQZ4YAUFRLDBw=',
             account: { id: 'account' },
             invoice: null,
             sum: -144.7,
@@ -473,7 +473,7 @@ describe('convertTransaction', () => {
         comment: null
       },
       {
-        id: '2Qe/wGcaAzn6y+NFxWEMjcy6mjM=;4YzFJfeuAJ8m+MUjn/oMSUbFUMM=',
+        id: '4YzFJfeuAJ8m+MUjn/oMSUbFUMM=',
         date: new Date('2019-03-07T05:01:03.000Z'),
         hold: false,
         income: 0,
@@ -485,7 +485,7 @@ describe('convertTransaction', () => {
         comment: 'Списание по карте'
       },
       {
-        id: 'iQ7Tx24cT+OGJGZvx95rV1NN9Ww=;83RHe8XMecT36x1EiaFcB1l8S/M=',
+        id: '83RHe8XMecT36x1EiaFcB1l8S/M=',
         date: new Date('2019-01-25T16:27:39.000Z'),
         hold: true,
         income: 0,
@@ -497,7 +497,7 @@ describe('convertTransaction', () => {
         comment: null
       },
       {
-        id: 'UxyFDmFrU9H5zcg2Blf8Xdo5cv4=;lOkFTtbsHoVUzPn9rEAFZF4u7SY=',
+        id: 'lOkFTtbsHoVUzPn9rEAFZF4u7SY=',
         date: new Date('2019-01-14T21:00:00.000Z'),
         hold: false,
         income: 0,
@@ -509,7 +509,7 @@ describe('convertTransaction', () => {
         comment: null
       },
       {
-        id: 'UxyFDmFrU9H5zcg2Blf8Xdo5cv4=;rHqO/DOMvX+E12mf0FQg3WkgC/Q=',
+        id: 'rHqO/DOMvX+E12mf0FQg3WkgC/Q=',
         date: new Date('2018-12-27T21:00:00.000Z'),
         hold: false,
         income: 0,
@@ -519,7 +519,7 @@ describe('convertTransaction', () => {
         comment: 'Начисленные %'
       },
       {
-        id: '5x68QJ9sIpVHryQQflawldCFCPc=;ZDvGUy6vxtxx72SQZ4YAUFRLDBw=',
+        id: 'ZDvGUy6vxtxx72SQZ4YAUFRLDBw=',
         date: new Date('2019-03-12T21:00:00.000Z'),
         hold: false,
         income: 0,
@@ -618,7 +618,7 @@ describe('convertTransaction', () => {
         },
         movements: [
           {
-            id: 'UxyFDmFrU9H5zcg2Blf8Xdo5cv4=;pA/9gNf9M67Uz/hf17TaYbq8YUc=',
+            id: 'pA/9gNf9M67Uz/hf17TaYbq8YUc=',
             account: { id: 'account' },
             invoice: {
               sum: -6.99,
@@ -633,7 +633,7 @@ describe('convertTransaction', () => {
 
     const expectedZenmoneyTransactions = [
       {
-        id: 'UxyFDmFrU9H5zcg2Blf8Xdo5cv4=;pA/9gNf9M67Uz/hf17TaYbq8YUc=',
+        id: 'pA/9gNf9M67Uz/hf17TaYbq8YUc=',
         date: new Date('2018-12-26T21:00:00.000Z'),
         hold: false,
         income: 0,

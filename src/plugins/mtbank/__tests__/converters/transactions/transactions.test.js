@@ -218,4 +218,25 @@ describe('convertTransaction', () => {
       comment: 'velcom по № телефона | номер услуги 381861'
     })
   })
+
+  it('should return null for frozen operations', () => {
+    const transaction = convertTransaction({
+      accountId: 'BY36MTBK10110008000001111000',
+      amount: '',
+      balance: '0.0',
+      cardPan: '',
+      curr: 'BYN',
+      debitFlag: '0',
+      description: 'Средства, заблокированные для погашения плановой/просроченной задолженности',
+      error: '',
+      operationDate: null,
+      orderStatus: '3',
+      place: '',
+      status: 'A',
+      transAmount: '92.97',
+      transDate: null
+    }, accounts)
+
+    expect(transaction).toEqual(null)
+  })
 })

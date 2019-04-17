@@ -66,6 +66,7 @@ function getMovement (json, account) {
       sum: -json.operationAmount.amount,
       instrument: json.operationAmount.currency
     }
+
   }
 
   return movement

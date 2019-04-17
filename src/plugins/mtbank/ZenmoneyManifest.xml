@@ -2,7 +2,7 @@
 <provider>
     <id>mtbank</id>
     <version>1.0</version>
-    <build>2</build>
+    <build>10</build>
     <company>15362</company>
     <modular>true</modular>
     <codeRequired>false</codeRequired>

@@ -2,7 +2,7 @@ import { convertLoan } from '../../../converters'
 
 describe('convertLoan', () => {
   it('converts loan', () => {
-    expect(convertLoan({
+    const apiAccount = {
       __type: 'ru.vtb24.mobilebanking.protocol.product.LoanContractMto',
       number: '634/5010-0004540',
       id: '5D1AB7F045F24C8F823CB785CFDC4ADE',
@@ -87,9 +87,17 @@ describe('convertLoan', () => {
       closeDate: null,
       contractPeriod: null,
       details: null
-    })).toEqual({
+    }
+    expect(convertLoan(apiAccount)).toEqual({
       id: '5D1AB7F045F24C8F823CB785CFDC4ADE',
       type: 'ru.vtb24.mobilebanking.protocol.product.LoanContractMto',
+      products: [
+        {
+          id: '5D1AB7F045F24C8F823CB785CFDC4ADE',
+          type: 'ru.vtb24.mobilebanking.protocol.product.LoanContractMto',
+          apiAccount
+        }
+      ],
       zenAccount: {
         id: '5D1AB7F045F24C8F823CB785CFDC4ADE',
         type: 'loan',

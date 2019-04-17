@@ -1,8 +1,8 @@
-import { convertAccount } from '../../../converters'
+import { convertCardAccount } from '../../../converters'
 
 describe('convertAccount', () => {
   it('converts credit card', () => {
-    expect(convertAccount({
+    const apiAccount = {
       __type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardAccountMto',
       amount: {
         __type: 'ru.vtb24.mobilebanking.protocol.AmountMto',
@@ -82,11 +82,28 @@ describe('convertAccount', () => {
           statusDisplayName: 'Активна'
         }
       ]
-    })).toEqual({
-      id: 'EE270DFC77F64E39B2EC0445200EB087',
-      type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardMto',
+    }
+    expect(convertCardAccount(apiAccount)).toEqual({
+      id: '7D3ABFDFF2024BB79D220FA6B8D4DC77',
+      type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardAccountMto',
+      products: [
+        {
+          id: '7D3ABFDFF2024BB79D220FA6B8D4DC77',
+          type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardAccountMto',
+          apiAccount
+        },
+        {
+          id: 'EE270DFC77F64E39B2EC0445200EB087',
+          type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardMto',
+          apiAccount: apiAccount.cards[0]
+        }
+      ],
+      cards: [{
+        id: apiAccount.cards[0].id,
+        type: apiAccount.cards[0].__type
+      }],
       zenAccount: {
-        id: 'EE270DFC77F64E39B2EC0445200EB087',
+        id: '7D3ABFDFF2024BB79D220FA6B8D4DC77',
         type: 'ccard',
         title: 'Standard',
         instrument: 'RUB',
@@ -100,7 +117,7 @@ describe('convertAccount', () => {
   })
 
   it('converts several credit cards for one account', () => {
-    expect(convertAccount({
+    const apiAccount = {
       __type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardAccountMto',
       creditLimit: 300000,
       number: '432250XXXXXX7804',
@@ -226,28 +243,40 @@ describe('convertAccount', () => {
           details: null
         }
       ]
-    })).toEqual([
+    }
+    expect(convertCardAccount(apiAccount)).toEqual(
       {
-        id: '1334A5E71E3249AB9E8ECCE8C6627144',
-        type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardMto',
+        id: '586375B9033E4CC1ACE9DBE6D343A0E7',
+        type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardAccountMto',
+        products: [
+          {
+            id: '586375B9033E4CC1ACE9DBE6D343A0E7',
+            type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardAccountMto',
+            apiAccount
+          },
+          {
+            id: '1334A5E71E3249AB9E8ECCE8C6627144',
+            type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardMto',
+            apiAccount: apiAccount.cards[0]
+          },
+          {
+            id: '3041EB1B9E47400E9833D2171B640EC1',
+            type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardMto',
+            apiAccount: apiAccount.cards[1]
+          }
+        ],
+        cards: [
+          {
+            id: '1334A5E71E3249AB9E8ECCE8C6627144',
+            type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardMto'
+          },
+          {
+            id: '3041EB1B9E47400E9833D2171B640EC1',
+            type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardMto'
+          }
+        ],
         zenAccount: {
-          id: '1334A5E71E3249AB9E8ECCE8C6627144',
-          type: 'ccard',
-          title: 'Gold',
-          instrument: 'RUB',
-          balance: -31180.35,
-          creditLimit: 300000,
-          syncID: [
-            '432250******7804',
-            '432250******2289'
-          ]
-        }
-      },
-      {
-        id: '3041EB1B9E47400E9833D2171B640EC1',
-        type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardMto',
-        zenAccount: {
-          id: '1334A5E71E3249AB9E8ECCE8C6627144',
+          id: '586375B9033E4CC1ACE9DBE6D343A0E7',
           type: 'ccard',
           title: 'Gold',
           instrument: 'RUB',
@@ -259,6 +288,6 @@ describe('convertAccount', () => {
           ]
         }
       }
-    ])
+    )
   })
 })
