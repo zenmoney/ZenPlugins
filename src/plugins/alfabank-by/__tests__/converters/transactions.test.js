@@ -292,20 +292,67 @@ describe('convertTransaction', () => {
     },
     {
       name: 'exchange operation',
-      json: {},
+      json: {
+        id: '11113111050111',
+        info: {
+          description: 'А-курс',
+          title: 'Конвертация',
+          amount: {
+            format: '###,###,###,###,##0.##',
+            currency: 'BYN',
+            amount: -84.32
+          },
+          icon: {
+            backgroundColorFrom: '#ff814f',
+            backgroundColorTo: '#ff814f',
+            iconUrl: 'v0/Image/50_392.SVG',
+            captionColor: '#FFFFFF',
+            frameColor: '#c2b7b7',
+            displayType: 'REGULAR'
+          }
+        },
+        date: '20190125122755',
+        operationAmount: { format: '###,###,###,###,##0.##', currency: 'USD', amount: 40 },
+        description: 'ПУПКИН ВАСИЛИЙ ИВАНОВИЧ В/о операция по курсу Банка через  АК, эл. сообщ. от  20.03.2019',
+        status: 'NORMAL',
+        operation: 'CURRENCYEXCHANGE',
+        iban: 'BY31 ALFA 3014 111M RT00 1111 0000',
+        showReceipt: true,
+        sendReceipt: true,
+        showAddToFuture: false,
+        showRepeat: true,
+        showAddRecipient: false,
+        availableSplit: false,
+        showCompensate: false
+      },
       expectedTransaction: {
         date: new Date('Tue Jan 25 2019 12:27:55 GMT+0300 (Moscow Standard Time)'),
         movements: [
           {
             id: null,
             account: { id: '6505111' },
+            invoice: {
+              instrument: 'USD',
+              sum: -40
+            },
+            sum: -84.32,
+            fee: 0
+          },
+          {
+            id: null,
+            account: {
+              company: null,
+              type: 'cash',
+              instrument: 'USD',
+              syncIds: null
+            },
             invoice: null,
-            sum: 400,
+            sum: 40,
             fee: 0
           }
         ],
         merchant: null,
-        comment: 'ЗАРАБОТНАЯ ПЛАТА ЗА ФЕВРАЛЬ-МАРТ 2019',
+        comment: null,
         hold: false
       }
     }
