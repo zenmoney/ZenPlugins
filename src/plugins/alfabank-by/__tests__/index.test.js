@@ -204,5 +204,5 @@ function mockZenmoney () {
       'deviceID': '123404df-f99a-4826-1234-a3fb7e5a1234'
     }).methods
   }
-  ZenMoney.readLine = async () => 'test(readLine)'
+  ZenMoney.readLine = async () => '3111111A111PB1'
 }

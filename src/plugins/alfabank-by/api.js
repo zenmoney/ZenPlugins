@@ -72,27 +72,37 @@ export async function checkDeviceStatus (deviceID) {
 }
 
 export async function authWithPassportID (deviceID) {
-  let passportID = await ZenMoney.readLine('Введите идентификационный номер паспорта (3111111A111PB1)', {
+  let passportID = await ZenMoney.readLine('Введите идентификационный номер паспорта латиницей (3111111A111PB1)', {
     inputType: 'string',
     time: 120000
   })
   if (passportID === '') {
-    throw new TemporaryError('Не введен идентификационный номер пасспорта, синхронизация прервана')
+    throw new TemporaryError('Не введен идентификационный номер паспорта, синхронизация прервана')
+  }
+  var isResident = false
+  if ((passportID.toLocaleUpperCase().indexOf('PB') >= 0 || // латиница
+    passportID.toLocaleUpperCase().indexOf('РВ') >= 0) && // кирилица
+    passportID.length === 14) {
+    isResident = true
   }
   let res = (await fetchApiJson('Authorization?locale=ru', {
     method: 'POST',
     body: {
       deviceId: deviceID,
       deviceName: 'ZenMoney Plugin',
-      isResident: true,
-      login: passportID,
+      isResident: isResident,
+      login: passportID.toLocaleUpperCase(),
       screenHeight: 1794,
       screenWidth: 1080
     },
     sanitizeRequestLog: { body: { deviceId: true, login: true } }
   }, response => response.status, message => new InvalidPreferencesError('bad request')))
   if (res.body.status !== 'OK' && res.body.message) {
-    throw new Error('Ответ банка: ' + res.body.message)
+    var errText = 'Ответ банка: ' + res.body.message
+    if (res.body.message === 'Личный номер введен неверно') {
+      throw new InvalidPreferencesError(errText)
+    }
+    throw new Error(errText)
   }
 
   return true
