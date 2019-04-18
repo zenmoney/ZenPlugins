@@ -71,7 +71,7 @@ function validateResponse (response, predicate, error) {
 export function parseFullTransactionsMail (html) {
   const cheerio = require('cheerio')
   let $ = cheerio.load(html)
-  // $ = cheerio.load($().children()[0].children[0].Body)
+  $ = cheerio.load($().children()[0].children[0].Body)
   let tdObjects = $('table tr td[style="border: none;width:17cm;"]').toArray()
   if (tdObjects.length < 3) {
     return []
