@@ -20,6 +20,17 @@
         summary="||******"
         inputType="textPassword">
     </EditTextPreference>
+    <ListPreference
+        key="proxy"
+        title="IP-адрес"
+        dialogTitle="IP-адрес"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        entries="95.213.236.52|92.53.66.39"
+        entryValues="95.213.236.52|92.53.66.39"
+        defaultValue="95.213.236.52"
+        summary="||{@s}">
+    </ListPreference>
     <EditTextPreference
         key="startDate"
         obligatory="true"

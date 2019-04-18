@@ -1,21 +1,18 @@
+import * as qs from 'querystring'
 import * as network from '../../common/network'
+import { clientId, clientSecret, redirectUri } from './config'
 
-const qs = require('querystring')
 const baseURL = 'https://api.modulbank.ru/v1/'
-
-const CLIENT_ID = ''
-const CLIENT_SECRET = ''
-const REDIRECT_URI = ''
 
 export async function login () {
   if (!ZenMoney.openWebView) {
     throw new TemporaryError('У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии.')
   }
   const { error, code } = await new Promise((resolve) => {
-    const redirectUriWithoutProtocol = REDIRECT_URI.replace(/^https?:\/\//i, '')
+    const redirectUriWithoutProtocol = redirectUri.replace(/^https?:\/\//i, '')
     const url = `https://oauth.modulbank.ru/?${qs.stringify({
-      'clientId': CLIENT_ID,
-      'redirectUri': REDIRECT_URI,
+      clientId,
+      redirectUri,
       'scope': 'account-info operation-history'
     })}`
     ZenMoney.openWebView(url, null, (request, callback) => {
@@ -41,9 +38,9 @@ export async function login () {
       'Host': 'api.modulbank.ru'
     },
     body: {
-      clientId: CLIENT_ID,
-      clientSecret: CLIENT_SECRET,
-      redirectUri: REDIRECT_URI,
+      clientId,
+      clientSecret,
+      redirectUri,
       code
     },
     sanitizeRequestLog: { body: true },

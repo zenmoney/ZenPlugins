@@ -3,6 +3,7 @@ import { RetryError } from '../../common/retry'
 import { combineIntoTransferByTransferId, convertTransactionAccounts } from '../../common/transactions'
 import { convertAccounts, convertTransactions } from './converters'
 import { PrivatBank } from './privatbank'
+import * as config from './config'
 
 function adjustAccounts (accounts) {
   return convertAccountSyncID(convertAccountMapToArray(accounts))
@@ -18,13 +19,17 @@ export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
   if (merchants.length !== passwords.length) {
     throw new InvalidPreferencesError('Количество паролей, разделенных через пробел, в настройках подключения должно быть равно количеству мерчантов, разделенных через пробел')
   }
+  if (!config[preferences.proxy]) {
+    throw new InvalidPreferencesError('Укажите новый IP-адрес в настройках мерчанта в Приват24. Новый IP вы можете посмотреть в настройках синхронизации с Приватбанком в Дзен-мани.')
+  }
+
   const accounts = {}
   let transactions = []
   await Promise.all(merchants.map(async (merchant, i) => {
     const bank = new PrivatBank({
       merchant: merchant,
       password: passwords[i],
-      baseUrl: preferences.serverAddress
+      baseUrl: config[preferences.proxy]
     })
     let apiTransactions
     try {

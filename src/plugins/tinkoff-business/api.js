@@ -1,15 +1,11 @@
 import { Base64 } from 'jshashes'
+import * as qs from 'querystring'
 import * as network from '../../common/network'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { generateRandomString } from '../../common/utils'
+import { clientId, clientSecret, redirectUri } from './config'
 
 const base64 = new Base64()
-
-const qs = require('querystring')
-
-const CLIENT_SECRET = ''
-const CLIENT_ID = ''
-const REDIRECT_URI = ''
 
 export class AuthError {}
 
@@ -79,10 +75,10 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
   } else if (ZenMoney.openWebView) {
     const { error, code } = await new Promise((resolve) => {
       const state = generateRandomString(16)
-      const redirectUriWithoutProtocol = REDIRECT_URI.replace(/^https?:\/\//i, '')
+      const redirectUriWithoutProtocol = redirectUri.replace(/^https?:\/\//i, '')
       const url = `https://sso.tinkoff.ru/authorize?${qs.stringify({
-        'client_id': CLIENT_ID,
-        'redirect_uri': REDIRECT_URI,
+        'client_id': clientId,
+        'redirect_uri': redirectUri,
         'state': state
       })}`
       ZenMoney.openWebView(url, null, (request, callback) => {
@@ -105,12 +101,12 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
     response = await fetchJson('https://sso.tinkoff.ru/secure/token', {
       headers: {
         'Host': 'sso.tinkoff.ru',
-        'Authorization': `Basic ${base64.encode(`${CLIENT_ID}:${CLIENT_SECRET}`)}`
+        'Authorization': `Basic ${base64.encode(`${clientId}:${clientSecret}`)}`
       },
       body: {
         grant_type: 'authorization_code',
         code,
-        redirect_uri: REDIRECT_URI
+        redirect_uri: redirectUri
       },
       sanitizeRequestLog: { body: { code: true } },
       sanitizeResponseLog: { body: { access_token: true, refresh_token: true, sessionId: true, id_token: true } }

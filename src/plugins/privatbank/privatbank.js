@@ -11,8 +11,8 @@ function formatDate (date) {
 }
 
 export class PrivatBank {
-  constructor ({ merchant, password, url }) {
-    this.baseUrl = url || 'https://zenmoney.ru/plugins/privatbank/proxy/'
+  constructor ({ merchant, password, baseUrl }) {
+    this.baseUrl = baseUrl
     this.merchant = merchant
     this.password = password
   }
@@ -56,12 +56,12 @@ export class PrivatBank {
           'авторизуйтесь в Приват24 и отправьте заявку на вкладке "Все услуги" - Бизнес - Мерчант - Заявки.')
       }
       if (response.body.indexOf('invalid signature') >= 0) {
-        throw new TemporaryError(`Не удалось получить данные по мерчанту ${this.merchant}. ` +
+        throw new TemporaryError(`Не удалось синхронизировать данные по мерчанту ${this.merchant}. ` +
           `Неверный пароль. Проверьте, что вы указали верный пароль в настройках подключения к банку.`)
       }
       if (response.body.indexOf('invalid ip:') >= 0) {
-        throw new TemporaryError(`Не удалось получить данные по мерчанту ${this.merchant}. ` +
-          `Укажите IP-адрес: 95.213.236.52 в настройках мерчанта в Приват24.`)
+        throw new TemporaryError(`Не удалось синхронизировать данные по мерчанту ${this.merchant}. ` +
+          `В настройках мерчанта в Приват24 укажите IP-адрес из настроек синхронизации.`)
       }
       if (response.body.indexOf('this card is not in merchants card') >= 0) {
         throw new TemporaryError(`Не удалось получить баланс карты по мерчанту ${this.merchant}. ` +
@@ -69,7 +69,7 @@ export class PrivatBank {
           `обновите его в настройках подключения к банку.`)
       }
       if (/point\s+\/.*not allowed for merchant/.test(response.body)) {
-        throw new TemporaryError(`Не удалось получить данные по мерчанту ${this.merchant}. ` +
+        throw new TemporaryError(`Не удалось синхронизировать данные по мерчанту ${this.merchant}. ` +
           `Проверьте, что в Приват24 вы поставили галочки "Баланс по счёту мерчанта физлица" и ` +
           `"Выписка по счёту мерчанта физлица".`)
       }
