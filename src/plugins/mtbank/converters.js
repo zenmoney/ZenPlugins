@@ -37,6 +37,9 @@ export function convertAccount (json) {
 }
 
 export function convertTransaction (apiTransaction, accounts) {
+  if (apiTransaction.status === 'A') { // skip frozen operations
+    return null
+  }
   const account = accounts.find(account => {
     return account.syncID.indexOf(apiTransaction.accountId) !== -1
   })

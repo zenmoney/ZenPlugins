@@ -6,8 +6,7 @@
         inputType="date"
         title="С какой даты загружать операции"
         defaultValue="2018-04-01T00:00:00.000Z"
-        dialogTitle="Дата начала загрузки"
-        dialogMessage="Введите дату, с которой загружать операции"
+        dialogTitle="С какой даты загружать операции"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="|startDate|{@s}">

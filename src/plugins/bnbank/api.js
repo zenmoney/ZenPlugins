@@ -1,4 +1,4 @@
-import { fetchJson } from '../../common/network'
+import { fetchJson, parseXml } from '../../common/network'
 import { flatMap } from 'lodash'
 import { generateRandomString } from '../../common/utils'
 import { deposit, card } from './converters'
@@ -27,6 +27,11 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
   return response
 }
 
+async function fetchXMLApi (url, options, predicate = () => true, error = (message) => console.assert(false, message)) {
+  const response = await fetchApiJson(url, options, predicate, error)
+  return parseXml(response.body.komplatResponse[0].response)
+}
+
 function validateResponse (response, predicate, error) {
   if (!predicate || !predicate(response)) {
     error('non-successful response')
@@ -45,7 +50,8 @@ export async function login (login, password) {
       deviceUDID: deviceID,
       login: login,
       password: password
-    }
+    },
+    sanitizeRequestLog: { body: { login: true, password: true } }
   }, response => response.success, message => new InvalidPreferencesError('Неверный логин или пароль'))
 
   return res.body.sessionToken
@@ -71,7 +77,7 @@ export function createDateIntervals (fromDate, toDate) {
   let prevTime = null
   while (time < toDate.getTime()) {
     if (prevTime !== null) {
-      dates.push([new Date(prevTime), new Date(time - 1)])
+      dates.push([new Date(prevTime), new Date(time - 1000)])
     }
 
     prevTime = time
@@ -125,10 +131,38 @@ export async function fetchTransactions (token, accounts, fromDate, toDate = new
   })
 
   const filteredOperations = operations.filter(function (op) {
-    return op.operationDate > fromDate
+    return op.transactionDate > fromDate
   })
-  console.log(filteredOperations)
 
   console.log(`>>> Загружено ${filteredOperations.length} операций.`)
   return filteredOperations
+}
+
+export async function fetchLastCardTransactions (token, account) {
+  console.log('>>> Загрузка списка последних транзакций для карты ' + account.title)
+  let today = new Date()
+  let monthAgo = new Date(today - 30 * 24 * 60 * 60 * 1000)
+
+  const response = await fetchXMLApi('payment/simpleExcute', {
+    method: 'POST',
+    headers: { 'session_token': token },
+    body: {
+      komplatRequests: [
+        {
+          request: '<?xml version="1.0" encoding="Windows-1251" standalone="yes"?><PS_ERIP><GetExtractCardRequest><TerminalID>@{terminal_id_mb}</TerminalID><Version>3</Version><PAN Expiry="  #{' + account.cardHash + '@[card_expire]}">#{' + account.cardHash + '@[card_number]}</PAN><TypePAN>MS</TypePAN><DateFrom>' + getDate(monthAgo) + '</DateFrom> <DateTo>' + getDate(today) + '</DateTo> <MaxRecords>500</MaxRecords><RequestType>11</RequestType>/></GetExtractCardRequest></PS_ERIP>'
+        }
+      ]
+    }
+  }, response => response.body)
+  const operations = flatMap(response.PS_ERIP.GetExtractCardResponse.BPC.OperationList.oper, d => {
+    d.accountNumber = account.id
+    return d
+  })
+
+  console.log(`>>> Загружено ${operations.length} операций.`)
+  return operations
+}
+
+function getDate (time) {
+  return String(time.getDate() + '/' + ('0' + (time.getMonth() + 1)).slice(-2) + '/' + String(time.getFullYear()) + ' ' + time.getHours() + ':' + time.getMonth() + ':' + time.getSeconds())
 }

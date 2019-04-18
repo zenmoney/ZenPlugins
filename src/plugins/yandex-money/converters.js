@@ -1,4 +1,4 @@
-import currencies from '../belswissbank/codeToCurrencyLookup'
+import currencies from '../../common/codeToCurrencyLookup'
 
 export function convertAccount (apiAccount) {
   const account = {
@@ -10,6 +10,8 @@ export function convertAccount (apiAccount) {
   }
   if (apiAccount.balance_details && apiAccount.balance_details.available !== apiAccount.balance_details.total) {
     account.balance = apiAccount.balance_details.total
+  } else if (apiAccount.balance_details && apiAccount.balance_details.hold) {
+    account.balance = apiAccount.balance + apiAccount.balance_details.hold
   } else {
     account.balance = apiAccount.balance
   }
@@ -21,12 +23,19 @@ export function convertTransaction (apiTransaction, account) {
     return null
   }
   const transaction = {
-    id: apiTransaction.operation_id,
     date: new Date(apiTransaction.datetime),
-    income: apiTransaction.direction === 'in' ? apiTransaction.amount : 0,
-    incomeAccount: account.id,
-    outcome: apiTransaction.direction === 'out' ? apiTransaction.amount : 0,
-    outcomeAccount: account.id
+    hold: false,
+    merchant: null,
+    movements: [
+      {
+        id: apiTransaction.operation_id,
+        account: { id: account.id },
+        invoice: null,
+        sum: apiTransaction.direction === 'in' ? apiTransaction.amount : -apiTransaction.amount,
+        fee: 0
+      }
+    ],
+    comment: null
   };
   [
     parseMcc,
@@ -46,7 +55,13 @@ function parseYandexMoneyTransfer (apiTransaction, transaction) {
   ]) {
     const match = apiTransaction.title.match(pattern)
     if (match) {
-      transaction.payee = `YM ${match[1]}`
+      transaction.merchant = {
+        country: null,
+        city: null,
+        title: `YM ${match[1]}`,
+        mcc: (transaction.merchant && transaction.merchant.mcc) || null,
+        location: null
+      }
       return true
     }
   }
@@ -57,7 +72,10 @@ function parseMcc (apiTransaction, transaction) {
   if (apiTransaction.group_id) {
     const match = apiTransaction.group_id.match(/mcc_(\d{4})/)
     if (match) {
-      transaction.mcc = parseInt(match[1], 10)
+      transaction.merchant = {
+        ...(transaction.merchant || {}),
+        mcc: parseInt(match[1], 10)
+      }
     }
   }
   return false
@@ -80,7 +98,13 @@ function parsePayee (apiTransaction, transaction) {
   for (const pattern of patterns) {
     const match = apiTransaction.title.match(pattern)
     if (match) {
-      transaction.payee = match[1]
+      transaction.merchant = {
+        country: null,
+        city: null,
+        title: match[1],
+        mcc: (transaction.merchant && transaction.merchant.mcc) || null,
+        location: null
+      }
       return false
     }
   }
@@ -88,7 +112,31 @@ function parsePayee (apiTransaction, transaction) {
     /Пополнение счета (.*)/i
   ].some(pattern => apiTransaction.title.match(pattern))) {
     transaction.comment = apiTransaction.title
+  } else if (transaction.merchant && [6011].includes(transaction.merchant.mcc)) {
+    // mcc 6011 - cash withdrawal
+    transaction.merchant = null
+    transaction.comment = apiTransaction.title
+    transaction.movements.push(
+      {
+        id: null,
+        account: {
+          type: 'cash',
+          instrument: 'RUB',
+          syncIds: null,
+          company: null
+        },
+        invoice: null,
+        sum: apiTransaction.amount,
+        fee: 0
+      }
+    )
   } else {
-    transaction.payee = apiTransaction.title
+    transaction.merchant = {
+      country: null,
+      city: null,
+      title: apiTransaction.title,
+      mcc: (transaction.merchant && transaction.merchant.mcc) || null,
+      location: null
+    }
   }
 }

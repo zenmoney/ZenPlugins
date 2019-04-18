@@ -4,9 +4,8 @@
         key="inn"
         title="ИНН компании"
         dialogTitle="ИНН компании"
-        dialogMessage="Введите ИНН компании"
         inputType="number"
-        summary="|ИНН компании|{@s}"
+        summary="||{@s}"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         obligatory="true">
@@ -17,8 +16,7 @@
         inputType="date"
         title="С какой даты загружать операции"
         defaultValue="2018-04-01T00:00:00.000Z"
-        dialogTitle="Дата начала загрузки"
-        dialogMessage="Введите дату, с которой загружать операции"
+        dialogTitle="С какой даты загружать операции"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="|startDate|{@s}">

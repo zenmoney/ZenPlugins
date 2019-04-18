@@ -1,5 +1,5 @@
 import { mergeTransfers } from '../../common/mergeTransfers'
-import currencies from '../belswissbank/codeToCurrencyLookup'
+import currencies from '../../common/codeToCurrencyLookup'
 
 export function convertAccount (apiAccount) {
   return {
