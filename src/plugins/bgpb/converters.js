@@ -44,7 +44,8 @@ export function convertTransaction (apiTransaction, accounts) {
 export function convertLastTransaction (apiTransaction, accounts) {
   console.log(apiTransaction)
   let message = apiTransaction.pushMessageText
-  if (message.slice(0, 4) !== 'Card') {
+  if (message.slice(0, 4) !== 'Card' ||
+  message.indexOf('Смена статуса карты') >= 0) {
     // Значит это не транзакция, а просто уведомление банка
     return null
   }

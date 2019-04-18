@@ -143,6 +143,16 @@ describe('convertLastTransaction', () => {
         acceptedTime: 1554541890000,
         eventType: 4,
         id: '2019-7871636',
+        pushMessageText: 'Card7592; Смена статуса карты; 04.04.19 17:31:40;'
+      },
+      expectedTransaction: null
+    },
+    {
+      name: 'notification 2',
+      transaction: {
+        acceptedTime: 1554541890000,
+        eventType: 4,
+        id: '2019-7871636',
         pushMessageText: 'Приложение BGPB_Mobile активировано на устройстве Unknown Android SDK built for x86_64__.'
       },
       expectedTransaction: null

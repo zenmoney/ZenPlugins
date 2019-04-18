@@ -71,73 +71,76 @@ function validateResponse (response, predicate, error) {
 export function parseFullTransactionsMail (html) {
   const cheerio = require('cheerio')
   let $ = cheerio.load(html)
-  $ = cheerio.load($().children()[0].children[0].Body)
-  console.log($)
-  if (!$('table tr td[style="border: none;width:17cm;"]').toArray()[2]) {
+  // $ = cheerio.load($().children()[0].children[0].Body)
+  let tdObjects = $('table tr td[style="border: none;width:17cm;"]').toArray()
+  if (tdObjects.length < 3) {
     return []
   }
-  let card = $('table tr td[style="border: none;width:17cm;"]').toArray()[2].children[0].data.split(' ')[7]
+  let card = tdObjects[tdObjects.length - 1].children[0].data.split(' ')[7]
 
   let counter = 0
   let i = 0
   let data = []
-  flatMap($('table[class="section_3"] tr td').toArray().slice(2), td => {
-    if (td.children && td.children[0] && td.children[0].type === 'text') {
-      if (counter === 11) {
-        counter = 0
-        i++
-      }
-      if (counter === 0) {
-        data[i] = {
-          cardNum: card,
-          date: null,
-          description: null,
-          type: null,
-          amountReal: null,
-          currencyReal: null,
-          amount: null,
-          currency: null,
-          place: null,
-          authCode: null,
-          mcc: null
+  flatMap($('table[class="section_3"] tr').toArray().slice(1), tr => {
+    if (tr.children.length >= 11) { // Значит это операция, а не просто форматирование
+      tr.children.forEach(function (td) {
+        if (td.children && td.children[0] && td.children[0].type === 'text') {
+          if (counter === 11) {
+            counter = 0
+            i++
+          }
+          if (counter === 0) {
+            data[i] = {
+              cardNum: card,
+              date: null,
+              description: null,
+              type: null,
+              amountReal: null,
+              currencyReal: null,
+              amount: null,
+              currency: null,
+              place: null,
+              authCode: null,
+              mcc: null
+            }
+          }
+          switch (counter) {
+            case 0:
+              data[i].date = td.children[0].data
+              break
+            case 2:
+              data[i].description = td.children[0].data
+              break
+            case 3:
+              data[i].type = td.children[0].data
+              break
+            case 4:
+              data[i].amountReal = td.children[0].data
+              break
+            case 5:
+              data[i].currencyReal = td.children[0].data
+              break
+            case 6:
+              data[i].amount = td.children[0].data
+              break
+            case 7:
+              data[i].currency = td.children[0].data
+              break
+            case 8:
+              data[i].place = td.children[0].data.trim()
+              break
+            case 9:
+              data[i].authCode = td.children[0].data
+              break
+            case 10:
+              data[i].mcc = td.children[0].data
+              break
+          }
+          counter++
         }
-      }
-      switch (counter) {
-        case 0:
-          data[i].date = td.children[0].data
-          break
-        case 2:
-          data[i].description = td.children[0].data
-          break
-        case 3:
-          data[i].type = td.children[0].data
-          break
-        case 4:
-          data[i].amountReal = td.children[0].data
-          break
-        case 5:
-          data[i].currencyReal = td.children[0].data
-          break
-        case 6:
-          data[i].amount = td.children[0].data
-          break
-        case 7:
-          data[i].currency = td.children[0].data
-          break
-        case 8:
-          data[i].place = td.children[0].data
-          break
-        case 9:
-          data[i].authCode = td.children[0].data
-          break
-        case 10:
-          data[i].mcc = td.children[0].data
-          break
-      }
-      counter++
+      })
     }
   })
-  data.pop() // Удаляем последний багнутый элемент
   return data
 }
 
