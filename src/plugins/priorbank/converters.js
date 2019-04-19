@@ -90,7 +90,9 @@ export const convertApiAbortedTransactionToReadableTransaction = ({ accountId, a
     merchant: {
       title: details.payee,
       mcc: null,
-      location: null
+      location: null,
+      city: null,
+      country: null
     },
     comment: joinCommentLines([
       details.comment,
@@ -130,7 +132,9 @@ const convertApiTransactionToReadableTransaction = (apiTransaction) => {
       merchant: {
         title: details.payee,
         mcc: null,
-        location: null
+        location: null,
+        city: null,
+        country: null
       },
       comment: joinCommentLines([
         details.comment,
