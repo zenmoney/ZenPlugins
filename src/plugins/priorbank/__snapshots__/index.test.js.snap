@@ -31,6 +31,8 @@ Object {
       "date": 2016-12-31T21:00:00.000Z,
       "hold": false,
       "merchant": Object {
+        "city": null,
+        "country": null,
         "location": null,
         "mcc": null,
         "title": "BLR",
@@ -55,6 +57,8 @@ Object {
       "date": 2016-12-31T21:00:00.000Z,
       "hold": false,
       "merchant": Object {
+        "city": null,
+        "country": null,
         "location": null,
         "mcc": null,
         "title": null,
@@ -76,6 +80,8 @@ Object {
       "date": 2017-01-02T21:00:00.000Z,
       "hold": false,
       "merchant": Object {
+        "city": null,
+        "country": null,
         "location": null,
         "mcc": null,
         "title": null,
@@ -97,6 +103,8 @@ Object {
       "date": 2017-01-02T21:00:00.000Z,
       "hold": false,
       "merchant": Object {
+        "city": null,
+        "country": null,
         "location": null,
         "mcc": null,
         "title": null,
@@ -118,6 +126,8 @@ Object {
       "date": 2017-01-05T21:00:00.000Z,
       "hold": false,
       "merchant": Object {
+        "city": null,
+        "country": null,
         "location": null,
         "mcc": null,
         "title": "NLD",
@@ -140,6 +150,8 @@ Object {
       "date": 2017-01-07T21:00:00.000Z,
       "hold": false,
       "merchant": Object {
+        "city": null,
+        "country": null,
         "location": null,
         "mcc": null,
         "title": "BLR",
@@ -176,6 +188,8 @@ Object {
       "date": 2017-01-07T21:00:00.000Z,
       "hold": false,
       "merchant": Object {
+        "city": null,
+        "country": null,
         "location": null,
         "mcc": null,
         "title": "BLR",
@@ -209,6 +223,8 @@ Object {
       "date": 2017-01-08T21:00:00.000Z,
       "hold": true,
       "merchant": Object {
+        "city": null,
+        "country": null,
         "location": null,
         "mcc": null,
         "title": "BLR",
@@ -231,6 +247,8 @@ Object {
       "date": 2017-01-09T21:00:00.000Z,
       "hold": true,
       "merchant": Object {
+        "city": null,
+        "country": null,
         "location": null,
         "mcc": null,
         "title": "BLR",
@@ -256,6 +274,8 @@ Object {
       "date": 2017-01-09T21:00:00.000Z,
       "hold": false,
       "merchant": Object {
+        "city": null,
+        "country": null,
         "location": null,
         "mcc": null,
         "title": "BLR",
