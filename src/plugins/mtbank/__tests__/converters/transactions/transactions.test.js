@@ -1,18 +1,20 @@
 import { convertTransaction } from '../../../converters'
 
 describe('convertTransaction', () => {
-  const accounts = [{
-    id: '1113333',
-    type: 'card',
-    title: 'PayOkay',
-    productType: 'PC',
-    instrument: 'BYN',
-    balance: 99.9,
-    syncID: [
-      'BY36MTBK10110008000001111000',
-      '1111'
-    ]
-  }]
+  const accounts = [
+    {
+      id: '1113333',
+      type: 'card',
+      title: 'PayOkay',
+      productType: 'PC',
+      instrument: 'BYN',
+      balance: 99.9,
+      syncID: [
+        'BY36MTBK10110008000001111000',
+        '1111'
+      ]
+    }
+  ]
 
   it('should convert hold foreign currency transaction', () => {
     const transaction = convertTransaction({
@@ -35,16 +37,18 @@ describe('convertTransaction', () => {
     expect(transaction).toEqual({
       hold: false,
       date: new Date('2019-02-14T00:00:00+03:00'),
-      movements: [{
-        id: null,
-        account: { id: '1113333' },
-        sum: -97.91,
-        fee: 0,
-        invoice: {
-          sum: -40.11,
-          instrument: 'EUR'
+      movements: [
+        {
+          id: null,
+          account: { id: '1113333' },
+          sum: -97.91,
+          fee: 0,
+          invoice: {
+            sum: -40.11,
+            instrument: 'EUR'
+          }
         }
-      }],
+      ],
       merchant: {
         fullTitle: 'PAYPAL',
         location: null,
@@ -75,13 +79,15 @@ describe('convertTransaction', () => {
     expect(transaction).toEqual({
       hold: false,
       date: new Date('2019-03-07T11:58:07+03:00'),
-      movements: [{
-        id: null,
-        account: { id: '1113333' },
-        sum: 3000.41,
-        fee: 0,
-        invoice: null
-      }],
+      movements: [
+        {
+          id: null,
+          account: { id: '1113333' },
+          sum: 3000.41,
+          fee: 0,
+          invoice: null
+        }
+      ],
       merchant: null,
       comment: 'Фонд оплаты труда на тек.счет с банк.плат.карточкой (руб) на основании списка ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ сог. дог.№XX-1234 от 01.09.2020'
     })
@@ -108,13 +114,15 @@ describe('convertTransaction', () => {
     expect(transaction).toEqual({
       hold: false,
       date: new Date('2019-01-31T23:25:42+03:00'),
-      movements: [{
-        id: null,
-        account: { id: '1113333' },
-        sum: -2.3,
-        fee: 0,
-        invoice: null
-      }],
+      movements: [
+        {
+          id: null,
+          account: { id: '1113333' },
+          sum: -2.3,
+          fee: 0,
+          invoice: null
+        }
+      ],
       merchant: null,
       comment: 'Плата за СМС-оповещение об операциях с использованием платежной карточки за Январь'
     })
@@ -141,13 +149,15 @@ describe('convertTransaction', () => {
     expect(transaction).toEqual({
       hold: false,
       date: new Date('2019-01-02T17:55:34+03:00'),
-      movements: [{
-        id: null,
-        account: { id: '1113333' },
-        sum: 23.11,
-        fee: 0,
-        invoice: null
-      }],
+      movements: [
+        {
+          id: null,
+          account: { id: '1113333' },
+          sum: 23.11,
+          fee: 0,
+          invoice: null
+        }
+      ],
       merchant: null,
       comment: 'Зачисление Cash-back в рамках продукта АвтоКарта за Декабрь по номеру договора 39035705'
     })
@@ -174,13 +184,15 @@ describe('convertTransaction', () => {
     expect(transaction).toEqual({
       hold: false,
       date: new Date('2019-01-05T00:26:11+03:00'),
-      movements: [{
-        id: null,
-        account: { id: '1113333' },
-        sum: -16,
-        fee: 0,
-        invoice: null
-      }],
+      movements: [
+        {
+          id: null,
+          account: { id: '1113333' },
+          sum: -16,
+          fee: 0,
+          invoice: null
+        }
+      ],
       merchant: null,
       comment: 'Оплата в Интернет-банке'
     })
@@ -207,13 +219,15 @@ describe('convertTransaction', () => {
     expect(transaction).toEqual({
       hold: false,
       date: new Date('2019-01-28T07:51:13+03:00'),
-      movements: [{
-        id: null,
-        account: { id: '1113333' },
-        sum: -50,
-        fee: 0,
-        invoice: null
-      }],
+      movements: [
+        {
+          id: null,
+          account: { id: '1113333' },
+          sum: -50,
+          fee: 0,
+          invoice: null
+        }
+      ],
       merchant: null,
       comment: 'velcom по № телефона | номер услуги 381861'
     })
@@ -240,13 +254,15 @@ describe('convertTransaction', () => {
     expect(transaction).toEqual({
       hold: false,
       date: new Date('2019-03-01T10:43:48+03:00'),
-      movements: [{
-        id: null,
-        account: { id: '1113333' },
-        sum: -3,
-        fee: 0,
-        invoice: null
-      }],
+      movements: [
+        {
+          id: null,
+          account: { id: '1113333' },
+          sum: -3,
+          fee: 0,
+          invoice: null
+        }
+      ],
       merchant: {
         'city': 'MINSK',
         'country': 'BY',
@@ -256,7 +272,8 @@ describe('convertTransaction', () => {
       },
       comment: null
     })
-    
+  })
+
   it('should return null for frozen operations', () => {
     const transaction = convertTransaction({
       accountId: 'BY36MTBK10110008000001111000',
@@ -299,13 +316,15 @@ describe('convertTransaction', () => {
     expect(transaction).toEqual({
       hold: true,
       date: new Date('2019-01-28T07:51:13+03:00'),
-      movements: [{
-        id: null,
-        account: { id: '1113333' },
-        sum: -3.13,
-        fee: 0,
-        invoice: null
-      }],
+      movements: [
+        {
+          id: null,
+          account: { id: '1113333' },
+          sum: -3.13,
+          fee: 0,
+          invoice: null
+        }
+      ],
       merchant: {
         city: 'MINSK',
         country: 'BY',
