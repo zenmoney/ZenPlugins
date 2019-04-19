@@ -2,16 +2,26 @@ image: node:8.15.1
 
 cache:
   paths:
-    - .yarn
-    - node_modules
+    - .yarn/
+    - node_modules/
 
 before_script:
-  - yarn config set cache-folder .yarn
+  - yarn --cache-folder .yarn
 
 stages:
   - test
+  - build
 
-run-test:
+test:
   stage: test
   script:
-    - yarn test
+    - yarn --cache-folder .yarn test
+
+build:
+  stage: build
+  script:
+    - /opt/ZenPlugins/bin/build
+  only:
+    - master
+    - develop
+    - /^[^/]+_beta$/
