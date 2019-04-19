@@ -6,15 +6,28 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   let accountsData = []
   let transactions = []
 
-  if (preferences.login && preferences.password) {
+  // сохранение логина-пароля в данных для перехода на "Мой кредит"
+  if (preferences.login && preferences.password && !preferences.birth && !preferences.phone) {
+    ZenMoney.setData('oldAuth', {
+      login: preferences.login,
+      password: preferences.password,
+      code: preferences.code
+    })
+  }
+
+  const oldAuth = ZenMoney.getData('oldAuth', { login: null, password: null, code: null })
+  const login = preferences.login || oldAuth.login
+  const password = preferences.password || oldAuth.password
+  const code = preferences.code || oldAuth.code
+  if (login && password) {
     // Авторизация в базовом приложении банка ===============================================
-    const deviceId = await Api.authBase(ZenMoney.getData('device_id', null), preferences)
+    const deviceId = await Api.authBase(ZenMoney.getData('device_id', null), login, password, code)
     ZenMoney.setData('device_id', deviceId)
 
     const fetchedAccounts = await Api.fetchBaseAccounts()
 
     if (fetchedAccounts.credits /* || fetchedAccounts.merchantCards */) {
-      if (fetchedAccounts.credits) { console.log(">>> Обнаружены кредиты, необходима синхронизация через приложение 'Мой кредит'") }
+      console.log(">>> Обнаружены кредиты, необходима синхронизация через приложение 'Мой кредит'")
       // if (fetchedAccounts.merchantCards) { console.log(">>> Обнаружены карты рассрочки, необходима синхронизация через приложение 'Мой кредит'") }
       if (!preferences.birth || !preferences.phone || !preferences.pin) {
         console.log(">>> Подключение к 'Мой кредит' не настроено. Крединые продукты пропускаем.")

@@ -63,7 +63,7 @@ export async function authMyCredit (preferences) {
   return myCreditAuth
 }
 
-export async function authBase (deviceId, preferences) {
+export async function authBase (deviceId, login, password, code) {
   console.log('>>> Авторизация [Базовый] ======================================================')
   // let isNewDevice = false
   if (!deviceId) {
@@ -74,11 +74,11 @@ export async function authBase (deviceId, preferences) {
   const args = {
     ...defaultArgumentsForAuth,
     'deviceID': deviceId,
-    'password': preferences.password,
-    'username': preferences.login
+    'password': password,
+    'username': login
   }
-  if (preferences.code) {
-    args.code = preferences.code
+  if (code) {
+    args.code = code
   }
   const response = await fetchJson(`${baseUri}/LoginService`, {
     log: true,
