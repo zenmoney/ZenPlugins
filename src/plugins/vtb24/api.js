@@ -101,7 +101,7 @@ async function burlapRequest (options) {
     })
   } catch (e) {
     if (e.response && e.response.status === 503) {
-      throw new TemporaryError('Информация из Банка ВТБ временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
+      throw new TemporaryError('Информация из Банка ВТБ временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог разработчикам".')
     } else {
       throw e
     }
@@ -114,7 +114,7 @@ async function burlapRequest (options) {
       'операцию позже',
       'временно недоступна'
     ].some(str => response.body.message.indexOf(str) >= 0)) {
-      throw new TemporaryError('Информация из Банка ВТБ временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
+      throw new TemporaryError('Информация из Банка ВТБ временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог разработчикам".')
     } else if ([
       'Ошибка обращения'
     ].some(str => response.body.message.indexOf(str) >= 0)) {
@@ -180,7 +180,7 @@ export async function login (login, password) {
     }
   })
   if (response.body.type === 'invalid-credentials') {
-    throw new InvalidPreferencesError('Неверный логин или пароль')
+    throw new InvalidPreferencesError('Введен неверный логин или пароль')
   }
   console.assert(response.body.authorization.methods.find(method => method.id === 'SMS'), 'unsupported authorization method')
   await burlapRequest({
@@ -224,12 +224,12 @@ export async function login (login, password) {
     }
   })
   console.assert(response.body.authorization.methods.find(method => method.id === 'SMS'), 'unsupported authorization method')
-  const code = await ZenMoney.readLine('Введите код из СМС', {
+  const code = await ZenMoney.readLine('Введите код из SMS или push-уведомления', {
     time: 120000,
     inputType: 'number'
   })
   if (!code || !code.trim()) {
-    throw new TemporaryError('Вы не ввели код. Повторите запуск синхронизации.')
+    throw new TemporaryError('Введён пустой код. Повторите подключение синхронизации ещё раз.')
   }
   response = await burlapRequest({
     sdkData,
@@ -251,7 +251,7 @@ export async function login (login, password) {
     }
   })
   if (response.body.type === 'invalid-sms-code') {
-    throw new TemporaryError('Вы ввели неверный код. Повторите запуск синхронизации.')
+    throw new TemporaryError('Введён неверный код. Повторите подключение синхронизации ещё раз.')
   }
   console.assert(response.body.authorization.id === '00000000-0000-0000-0000-000000000000', 'invalid response')
   return {

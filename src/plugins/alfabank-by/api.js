@@ -47,7 +47,7 @@ export async function login () {
     await authWithPassportID(deviceID)
     sessionID = await authConfirm(deviceID)
   } else if (!await loginByToken(sessionID, deviceID, token)) {
-    throw new TemporaryError('Авторизация прошла неуспешно, попробуйте позже')
+    throw new TemporaryError('Синхронизация не подключена. Попробуйте подключить ещё раз.')
   }
   return {
     deviceID: deviceID,
@@ -72,12 +72,12 @@ export async function checkDeviceStatus (deviceID) {
 }
 
 export async function authWithPassportID (deviceID) {
-  let passportID = await ZenMoney.readLine('Введите идентификационный номер паспорта латиницей (3111111A111PB1)', {
+  let passportID = await ZenMoney.readLine('Введите номер паспорта (Формат: 3111111A111PB1)', {
     inputType: 'string',
     time: 120000
   })
   if (passportID === '') {
-    throw new TemporaryError('Не введен идентификационный номер паспорта, синхронизация прервана')
+    throw new TemporaryError('Не введён номер паспорта. Подключите синхронизацию ещё раз и укажите номер паспорта.')
   }
   var isResident = false
   if ((passportID.toLocaleUpperCase().indexOf('PB') >= 0 || // латиница
@@ -109,12 +109,12 @@ export async function authWithPassportID (deviceID) {
 }
 
 export async function authConfirm (deviceID) {
-  let sms = await ZenMoney.readLine('Код из смс', {
+  let sms = await ZenMoney.readLine('Введите код из смс', {
     inputType: 'number',
     time: 120000
   })
   if (sms === '') {
-    throw new TemporaryError('Не введен код из смс, синхронизация прервана')
+    throw new TemporaryError('Не введён код из смс. Подключите синхронизацию ещё раз.')
   }
   let res = (await fetchApiJson('AuthorizationConfirm?locale=ru', {
     method: 'POST',

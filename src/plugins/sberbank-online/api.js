@@ -99,12 +99,12 @@ export async function login (login, pin, auth, device) {
     guid = response.body.confirmRegistrationStage.mGUID
 
     if (_.get(response, 'body.confirmInfo.type') === 'smsp') {
-      const code = await ZenMoney.readLine('Введите код для входа в Сбербанк Онлайн для Android из SMS или пуш-уведомления', {
+      const code = await ZenMoney.readLine('Введите код из SMS или push-уведомления', {
         time: 120000,
         inputType: 'number'
       })
       if (!code || !code.trim()) {
-        throw new TemporaryError('Получен пустой код авторизации устройства')
+        throw new TemporaryError('Введен пустой код из SMS. Повторите подключение синхронизации ещё раз.')
       }
       response = await fetchXml('https://online.sberbank.ru:4477/CSAMAPI/registerApp.do', {
         body: {
@@ -117,7 +117,7 @@ export async function login (login, pin, auth, device) {
         sanitizeRequestLog: { body: { mGUID: true, smsPassword: true } }
       }, null)
       if (response.body.status === '1') {
-        throw new TemporaryError('Вы ввели некорректные реквизиты доступа или код из SMS. Повторите подключение синхронизации.')
+        throw new TemporaryError('Введены неверные регистрационные данные или код из SMS. Повторите подключение синхронизации ещё раз.')
       } else {
         validateResponse(response, response => response.body.status === '0')
       }
@@ -170,7 +170,7 @@ export async function login (login, pin, auth, device) {
     sanitizeResponseLog: { body: { person: true } }
   }, null)
   if (response.body && response.body.status === '3' && !response.body.error) {
-    throw new TemporaryError('Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
+    throw new TemporaryError('Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог разработчикам".')
   }
   validateResponse(response, response => response.body.status === '0' &&
     _.get(response, 'body.loginCompleted') === 'true')
@@ -465,7 +465,7 @@ async function fetchXml (url, options = {}, predicate = () => true) {
     if (e instanceof RetryError) {
       throw e.failedResults[0][0]
     } else if (e.response && typeof e.response.body === 'string') {
-      throw new TemporaryError('Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
+      throw new TemporaryError('Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог разработчикам".')
     } else {
       throw e
     }
@@ -477,7 +477,7 @@ async function fetchXml (url, options = {}, predicate = () => true) {
   response.body.status = _.get(response, 'body.status.code')
 
   if (isTemporaryError(response.body.error) || (predicate && response.body.status === '3')) {
-    throw new TemporaryError('Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
+    throw new TemporaryError('Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог разработчикам".')
   }
   if (response.body.status !== '0' &&
     response.body.error &&

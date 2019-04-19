@@ -211,7 +211,7 @@ export async function register ({ deviceId, cardNumber, cardExpirationDate, phon
   }
 
   const { previousMultiFactorResponseParams } = await registerCustomer({ queryRedirectParams, cardExpirationDate, cardNumber, phoneNumber })
-  const confirmationCode = await ZenMoney.readLine('Введите код из СМС сообщения', { inputType: 'number' })
+  const confirmationCode = await ZenMoney.readLine('Введите код из SMS или push-уведомления', { inputType: 'number' })
   const { redirectUrl } = await finishCustomerRegistration({ confirmationCode, queryRedirectParams, previousMultiFactorResponseParams })
   const redirectedResponse = await fetchJson(redirectUrl, {
     sanitizeRequestLog: { url: true },

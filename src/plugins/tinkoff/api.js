@@ -55,7 +55,7 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
       let password = preferences.password
       if (!password) {
         for (let i = 0; i < 2; i++) {
-          password = await ZenMoney.readLine('Введите пароль для входа в интернет-банк Тинькофф', {
+          password = await ZenMoney.readLine('Введите пароль от интернет-банка Тинькофф', {
             time: 120000,
             inputType: 'password'
           })
@@ -109,7 +109,7 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
       } else if (resultCode === 'WAITING_CONFIRMATION') { // DEVICE_LINK_NEEDED
         console.log('>>> Необходимо подтвердить вход...')
 
-        const msg = !lastIteration ? 'Введите код подтверждения из СМС для входа в интернет-банк Тинькофф' : 'Необходимо заново авторизировать устройство. Введите код подтверждения из СМС'
+        const msg = !lastIteration ? 'Введите код из SMS' : 'Необходимо заново авторизировать устройство. Введите код из SMS'
         const smsCode = await ZenMoney.readLine(msg, {
           inputType: 'number',
           time: 120000
@@ -270,7 +270,7 @@ async function levelUp (auth) {
   if (levelUp.body.resultCode === 'WAITING_CONFIRMATION' && levelUp.body.confirmationData && levelUp.body.confirmationData.Question) {
     console.log('>>> Необходимо подтвердить права привилегий...')
 
-    const answer = await ZenMoney.readLine('Секретный вопрос от банка: ' + levelUp.body.confirmationData.Question.question + '. Ответ на этот вопрос сразу передается в банк.', {
+    const answer = await ZenMoney.readLine('Секретный вопрос от банка: ' + levelUp.body.confirmationData.Question.question + '. Ответ на вопрос не сохраняется в Дзен-мани.', {
       inputType: 'text',
       time: 120000
     })

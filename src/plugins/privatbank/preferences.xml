@@ -5,7 +5,6 @@
         obligatory="true"
         title="ID мерчанта"
         dialogTitle="ID мерчанта"
-        dialogMessage="Введите ID мерчантов (через пробел), зарегистрированных в Приват24"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="|ID мерчанта|{@s}">
@@ -13,8 +12,8 @@
     <EditTextPreference
         key="password"
         obligatory="true"
-        title="32-значный пароль"
-        dialogTitle="32-значный пароль"
+        title="32-значный пароль мерчанта"
+        dialogTitle="32-значный пароль мерчанта"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="||******"
