@@ -1,12 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen>
+    <ListPreference
+        title="Метод авторизации"
+        dialogTitle="Метод авторизации"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="{@s}"
+        key="loginType"
+        entries="Номер клиента или псевдоним|Номер телефона"
+        entryValues="0|1"
+        defaultValue="0" />
     <EditTextPreference
-        title="Логин"
-        dialogTitle="Логин"
+        title="Номер клиента, псевдоним или телефон"
+        dialogTitle="Номер клиента, псевдоним или телефон"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="||{@s}"
-        dialogMessage="Номер клиента, псевдоним или номер телефона."
         obligatory="true"
         key="login" />
     <EditTextPreference
@@ -15,28 +24,15 @@
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="||******"
-        dialogMessage="Пароль для авторизации в интернет-банке."
         obligatory="true"
         key="password"
         inputType="textPassword" />
     <ListPreference
-        title="Метод авторизации"
-        dialogTitle="Метод авторизации"
+        title="За какой период загружать операции"
+        dialogTitle="За какой период загружать операции"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="{@s}"
-        dialogMessage="Укажите метод авторизации в интернет-банке."
-        key="loginType"
-        entries="Номер клиента или псевдоним|Номер телефона"
-        entryValues="0|1"
-        defaultValue="0" />
-    <ListPreference
-        title="Период загрузки данных"
-        dialogTitle="Период загрузки данных"
-        positiveButtonText="ОК"
-        negativeButtonText="Отмена"
-        summary="{@s}"
-        dialogMessage="Укажите начальный период, за который нужно загрузить данные."
         key="period"
         entries="Квартал|Месяц|Неделя"
         entryValues="92|31|7"

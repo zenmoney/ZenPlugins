@@ -8,7 +8,5 @@
         <js>main.js</js>
         <preferences>preferences.xml</preferences>
     </files>
-    <description>
-        Импорт карт, счетов, кредитов, вкладов и операций по ним из интернет-банка Промсвязьбанка.
-    </description>
+    <description></description>
 </provider>

@@ -3,12 +3,11 @@
     <ListPreference
             positiveButtonText="ОК"
             key="period"
-            dialogTitle="За какой период импортировать операции при создании подключения?"
+            dialogTitle="За какой период загружать операции"
             negativeButtonText="Отмена"
-            title="Период импорта операций при создании подключения"
+            title="За какой период загружать операции"
             entries="Квартал|Месяц|Неделя" entryValues="92|31|7"
             defaultValue="31"
-            summary="|31|{@s}"
-            dialogMessage="Выберите период импорта операций при создании подключения">
+            summary="|31|{@s}">
     </ListPreference>
 </PreferenceScreen>
