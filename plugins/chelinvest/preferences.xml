@@ -3,10 +3,9 @@
   <EditTextPreference
     title="Логин"
     positiveButtonText="ОК"
-    summary="|ID пользователя или логин|{@s}"
+    summary="||{@s}"
     dialogTitle="Логин"
     negativeButtonText="Отмена"
-    dialogMessage="Введите логин для входа в Инвестпей."
     obligatory="true"
     key="login">
   </EditTextPreference>
@@ -18,29 +17,26 @@
     title="Пароль"
     summary="||***********"
     obligatory="true"
-    dialogMessage="Введите пароль для входа в Инвестпей."
     inputType="textPassword">
   </EditTextPreference>
   <ListPreference
     positiveButtonText="ОК"
     key="confirmation_type"
-    dialogTitle="Подтверждение"
+    dialogTitle="Метод подтверждения входа"
     negativeButtonText="Отмена"
-    title="Подтверждение"
+    title="Метод подтверждения входа"
     entries="СМС|ОТП-Токен|Нет" entryValues="sms|otp|none"
     defaultValue="sms"
-    summary="|sms|{@s}"
-    dialogMessage="Укажите метод подтверждения входа">
+    summary="|sms|{@s}">
   </ListPreference>
   <ListPreference
     positiveButtonText="ОК"
     key="period"
-    dialogTitle="Период загрузки"
+    dialogTitle="За какой период загружать операции"
     negativeButtonText="Отмена"
-    title="Начальный период загрузки данных"
+    title="За какой период загружать операции"
     entries="Квартал|Месяц|Неделя|Нет" entryValues="92|31|7|0"
     defaultValue="31"
-    summary="|31|{@s}"
-    dialogMessage="Укажите начальный период, за который нужно загрузить данные.">
+    summary="|31|{@s}">
   </ListPreference>
 </PreferenceScreen>

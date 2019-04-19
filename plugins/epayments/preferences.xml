@@ -2,10 +2,9 @@
 <PreferenceScreen>
     <EditTextPreference
             key="login"
-            summary="|Номер телефона / e-mail|{@s}"
-            title="Номер телефона / e-mail"
-            dialogTitle="Номер телефона / e-mail"
-            dialogMessage="Введите номер телефона или e-mail используемый для входа в интернет-банк"
+            summary="||{@s}"
+            title="Номер телефона или емейл"
+            dialogTitle="Номер телефона или емейл"
             negativeButtonText="Отмена"
             positiveButtonText="ОК"
             obligatory="true">
@@ -13,9 +12,8 @@
     <EditTextPreference
             key="password"
             summary="||***********"
-            title="Пароль"
-            dialogTitle="Пароль"
-            dialogMessage="Введите пароль, используемый для входа в интернет-банк"
+            title="Пароль от интернет-банка"
+            dialogTitle="Пароль от интернет-банка"
             negativeButtonText="Отмена"
             positiveButtonText="ОК"
             inputType="textPassword"
@@ -24,9 +22,8 @@
     <ListPreference
             key="period"
             summary="|31|{@s}"
-            title="Начальный период загрузки данных"
-            dialogTitle="Период загрузки"
-            dialogMessage="Укажите начальный период, за который нужно загрузить данные."
+            title="За какой период загружать данные"
+            dialogTitle="За какой период загружать данные"
             positiveButtonText="ОК"
             negativeButtonText="Отмена"
             entries="Квартал|Месяц|Неделя|Не загружать"
