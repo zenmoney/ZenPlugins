@@ -1,3 +1,4 @@
+import { formatCommentDateTime } from '../../common/dateUtils'
 import { convertApiTransactionsToReadableTransactions } from './converters'
 
 describe('convertApiTransactionsToReadableTransactions', () => {
@@ -50,7 +51,7 @@ describe('convertApiTransactionsToReadableTransactions', () => {
           mcc: null,
           location: null
         },
-        comment: '2019-04-01 12:04:00'
+        comment: formatCommentDateTime(new Date('2019-04-01T09:04:00.000Z'))
       }
     ])
   })
