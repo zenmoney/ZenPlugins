@@ -1,4 +1,4 @@
-import * as HomeCredit from './homecredit'
+import * as Api from './api'
 import * as Converters from './converters'
 import _ from 'lodash'
 
@@ -6,12 +6,12 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   let accountsData = []
   let transactions = []
 
-  if (preferences.login && preferences.password && preferences.code) {
-    // Авторизация в базовом приложении банка
-    const deviceId = await HomeCredit.authBase(ZenMoney.getData('device_id', null), preferences)
+  if (preferences.login && preferences.password) {
+    // Авторизация в базовом приложении банка ===============================================
+    const deviceId = await Api.authBase(ZenMoney.getData('device_id', null), preferences)
     ZenMoney.setData('device_id', deviceId)
 
-    const fetchedAccounts = await HomeCredit.fetchBaseAccounts()
+    const fetchedAccounts = await Api.fetchBaseAccounts()
 
     if (fetchedAccounts.credits /* || fetchedAccounts.merchantCards */) {
       if (fetchedAccounts.credits) { console.log(">>> Обнаружены кредиты, необходима синхронизация через приложение 'Мой кредит'") }
@@ -21,9 +21,9 @@ export async function scrape ({ preferences, fromDate, toDate }) {
         if (fetchedAccounts.credits) delete fetchedAccounts.credits
         if (fetchedAccounts.merchantCards) delete fetchedAccounts.merchantCards
       } else {
-        // Авторизация в приложении "Мой кредит"
-        const auth = await HomeCredit.authMyCredit(preferences)
-        const fetchedMyCreditAccounts = await HomeCredit.fetchMyCreditAccounts(auth)
+        // Авторизация в приложении "Мой кредит" ===========================================
+        const auth = await Api.authMyCredit(preferences)
+        const fetchedMyCreditAccounts = await Api.fetchMyCreditAccounts(auth)
         if (fetchedAccounts.credits) {
           fetchedAccounts.credits.forEach(function (account) {
             const loan = getLoan(fetchedMyCreditAccounts.CreditLoan, account.contractNumber)
@@ -56,7 +56,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
 
     transactions = _.flattenDeep(await Promise.all(Object.keys(accountsData).map(async type => {
       return Promise.all(accountsData[type].map(async accountData =>
-        Converters.convertTransactions(accountData, await HomeCredit.fetchBaseTransactions(accountData, accountData.details.type, fromDate, toDate))))
+        Converters.convertTransactions(accountData, await Api.fetchBaseTransactions(accountData, accountData.details.type, fromDate, toDate))))
     })))
 
     // отфильтруем доп.карты и пустые счета
@@ -80,14 +80,14 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     })
     transactions = Object.values(tmpTransactions)
   } else {
-    // Авторизация в приложении "Мой кредит"
+    // Авторизация в приложении "Мой кредит" ===================================
     if (!preferences.birth || !preferences.phone || !preferences.pin) {
       throw new InvalidPreferencesError('Необходимо заполнить параметры подключения к банку хотя бы для одного из способов авторизации')
     }
 
     const newConn = ZenMoney.getData('auth', null) === null
-    const auth = await HomeCredit.authMyCredit(preferences)
-    const fetchedAccounts = await HomeCredit.fetchMyCreditAccounts(auth)
+    const auth = await Api.authMyCredit(preferences)
+    const fetchedAccounts = await Api.fetchMyCreditAccounts(auth)
 
     // счета
     accountsData = _.flattenDeep(await Promise.all(Object.keys(fetchedAccounts).map(type => {
@@ -97,7 +97,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     // фикс поступлений сегодняшнего дня (чтобы не создавать лишних корректировок)
     // если в текущих сутках были поступления, баланс счёта передаём только для нового подключения
     transactions = await Promise.all(accountsData.map(async accountData => {
-      const trans = Converters.convertTransactions(accountData, await HomeCredit.fetchMyCreditTransactions(auth, accountData, fromDate, toDate))
+      const trans = Converters.convertTransactions(accountData, await Api.fetchMyCreditTransactions(auth, accountData, fromDate, toDate))
       const today = new Date()
       today.setHours(0, 0, 0, 0)
       const todayIncomes = _.sumBy(trans, function (tran) {

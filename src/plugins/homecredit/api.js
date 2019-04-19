@@ -15,7 +15,7 @@ const defaultBaseHeaders = {
   'Content-Type': 'application/json; charset=utf-8'
 }
 const defaultArgumentsForAuth = {
-  'appVersion': '3.1.7',
+  'appVersion': '3.2.1',
   'javaClass': 'cz.bsc.g6.components.usernamepasswordauthentication.json.services.api.mo.UsernamePasswordCredentialMo',
   'system': 'Android',
   'systemVersion': '5.1.1'
@@ -71,30 +71,32 @@ export async function authBase (deviceId, preferences) {
     deviceId = getDeviceId()
   }
 
+  const args = {
+    ...defaultArgumentsForAuth,
+    'deviceID': deviceId,
+    'password': preferences.password,
+    'username': preferences.login
+  }
+  if (preferences.code) {
+    args.code = preferences.code
+  }
   const response = await fetchJson(`${baseUri}/LoginService`, {
     log: true,
     method: 'POST',
     body: {
-      'arguments': [
-        {
-          ...defaultArgumentsForAuth,
-          'code': preferences.code,
-          'deviceID': deviceId,
-          'password': preferences.password,
-          'username': preferences.login
-        }
-      ],
-      // 'attributes': null,
+      'arguments': [ args ],
       'javaClass': 'org.springframework.remoting.support.RemoteInvocation',
       'methodName': 'login',
       'parameterTypes': ['cz.bsc.g6.components.usernamepasswordauthentication.json.services.api.mo.UsernamePasswordCredentialMo']
     },
     headers: defaultBaseHeaders,
-    sanitizeRequestLog: { body: { arguments: { 'code': true, 'password': true, 'deviceID': true, 'username': true } } }
+    sanitizeRequestLog: { body: { arguments: { 'deviceID': true, 'username': true, 'password': true } } }
   })
 
   // ERROR_LOGIN, BLOCK_USER_CODE
-  if (!response.body.success) throw new InvalidPreferencesError("Не удалось авторизоваться. Пожалуйста, проверьте включён ли у вас доступ в приложении 'Мобильный Банк' и корректно укажите первые 3 параметра подключения (или удалите их, чтобы не использвоать этот способ входа).")
+  if (!response.body.success) {
+    throw new InvalidPreferencesError("Не удалось авторизоваться. Пожалуйста, проверьте включён ли у вас доступ в приложении 'Банк Хоум Кредит' и корректно укажите первые 2 параметра подключения (или удалите их, чтобы не использвоать этот способ входа).")
+  }
 
   return deviceId
 }

@@ -88,6 +88,8 @@ function convertCardTW (account) {
 }
 
 function convertLoan (account) {
+  console.log('>>> Конвертер кредита: ', account)
+
   const contractNumber = account.contractNumber || account.ContractNumber
   const res = {
     id: contractNumber,
