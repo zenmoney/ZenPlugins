@@ -87,11 +87,11 @@ export const convertApiAbortedTransactionToReadableTransaction = ({ accountId, a
     ],
     date: new Date(abortedTransaction.transDate),
     hold: true,
-    merchant: {
-      title: details.payee,
+    merchant: details.payee ? {
+      fullTitle: details.payee,
       mcc: null,
       location: null
-    },
+    } : null,
     comment: joinCommentLines([
       details.comment,
       formatCommentFeeLine(fee, accountCurrency),
@@ -127,11 +127,11 @@ const convertApiTransactionToReadableTransaction = (apiTransaction) => {
       ],
       date: new Date(regularTransaction.transDate),
       hold: false,
-      merchant: {
-        title: details.payee,
+      merchant: details.payee ? {
+        fullTitle: details.payee,
         mcc: null,
         location: null
-      },
+      } : null,
       comment: joinCommentLines([
         details.comment,
         formatCommentFeeLine(fee, accountCurrency),
