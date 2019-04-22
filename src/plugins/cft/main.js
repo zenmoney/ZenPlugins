@@ -36,27 +36,11 @@ async function scrape ({ fromDate, toDate, apiUri }) {
 
   const map = mapContractToAccount(cardsData)
   const transactions = transactionsData.map((data) => transactionsDataToZenmoneyTransaction(data, map))
+  const accounts = [].concat(cards, wallets)
 
-  let accounts = [].concat(cards, wallets).filter((account) => !ZenMoney.isAccountSkipped(account.id))
-  let transactionsAccount = accounts.splice(0, 1)[0]
-
-  return [].concat(
-    accounts.map(convertAccountsForResult),
-    {
-      account: transactionsAccount,
-      transactions: transactions
-    }
-  )
-}
-
-/**
- * @param account
- * @returns {{account: *, transactions: Array}}
- */
-const convertAccountsForResult = (account) => {
   return {
-    account: account,
-    transactions: []
+    accounts,
+    transactions
   }
 }
 
