@@ -1,5 +1,4 @@
 import _ from 'lodash'
-// import { parseOuterAccountData } from '../../common/accounts'
 
 export function convertAccount (account, initialized) {
   switch (account.accountType) {
@@ -23,14 +22,14 @@ export function convertAccount (account, initialized) {
   }
 }
 
-export function convertTransaction (transaction, accountId) {
+export function convertTransaction (apiTransaction, accountId) {
   const tran = {}
 
   // дата привязана к часовому поясу Москвы
-  const dt = new Date(transaction.operationTime.milliseconds + (180 + new Date().getTimezoneOffset()) * 60000)
+  const dt = new Date(apiTransaction.operationTime.milliseconds + (180 + new Date().getTimezoneOffset()) * 60000)
   tran.date = dt.getFullYear() + '-' + n2(dt.getMonth() + 1) + '-' + n2(dt.getDate())
   tran.time = n2(dt.getHours()) + ':' + n2(dt.getMinutes() + 1) + ':' + n2(dt.getSeconds()) // для внутреннего использования
-  tran.created = transaction.operationTime.milliseconds
+  tran.created = apiTransaction.operationTime.milliseconds
 
   // Внутренний ID операции
   /* const tranId = transaction.payment && transaction.payment.paymentId
@@ -40,60 +39,60 @@ export function convertTransaction (transaction, accountId) {
         : transaction.id; */
 
   // отделяем акцепт от холда временем дебетового списания
-  tran.id = transaction.debitingTime ? transaction.id : 'tmp#' + transaction.id
-  tran.hold = !transaction.debitingTime
+  tran.id = apiTransaction.debitingTime ? apiTransaction.id : 'tmp#' + apiTransaction.id
+  tran.hold = !apiTransaction.debitingTime
 
   // флаг операции в валюте
-  const foreignCurrency = transaction.accountAmount.currency.name !== transaction.amount.currency.name
+  const foreignCurrency = apiTransaction.accountAmount.currency.name !== apiTransaction.amount.currency.name
 
   // mcc-код операции
-  let mcc = transaction.mcc ? parseInt(transaction.mcc, 10) : -1
+  let mcc = apiTransaction.mcc ? parseInt(apiTransaction.mcc, 10) : -1
   if (!mcc) mcc = -1
 
   // флаг card2card переводов
   const c2c = [6536, 6538, 6012].indexOf(mcc) >= 0
 
   // доход -------------------------------------------------------------------------
-  if (transaction.type === 'Credit') {
-    tran.income = transaction.accountAmount.value
+  if (apiTransaction.type === 'Credit') {
+    tran.income = apiTransaction.accountAmount.value
     tran.incomeAccount = accountId
     tran.outcome = 0
     tran.outcomeAccount = tran.incomeAccount
 
-    if (transaction.group) {
-      switch (transaction.group) {
+    if (apiTransaction.group) {
+      switch (apiTransaction.group) {
         // пополнение наличными
         case 'CASH':
           if (!c2c) {
             // операция с наличными
-            tran.outcomeAccount = 'cash#' + transaction.amount.currency.name
-            tran.outcome = transaction.amount.value
+            tran.outcomeAccount = 'cash#' + apiTransaction.amount.currency.name
+            tran.outcome = apiTransaction.amount.value
           } else
           // card2card-перевод
-          if (transaction.payment && transaction.payment.cardNumber) {
-            tran.outcomeAccount = 'ccard#' + transaction.amount.currency.name + '#' + transaction.payment.cardNumber.substring(transaction.payment.cardNumber.length - 4)
-            tran.outcome = transaction.amount.value
+          if (apiTransaction.payment && apiTransaction.payment.cardNumber) {
+            tran.outcomeAccount = 'ccard#' + apiTransaction.amount.currency.name + '#' + apiTransaction.payment.cardNumber.substring(apiTransaction.payment.cardNumber.length - 4)
+            tran.outcome = apiTransaction.amount.value
             tran.hold = null
           }
           break
 
         case 'INCOME':
-          if (c2c && transaction.payment && transaction.payment.cardNumber && transaction.payment.cardNumber.length > 4) {
-            tran.outcome = transaction.amount.value
-            tran.outcomeAccount = 'ccard#' + transaction.amount.currency.name + '#' + transaction.payment.cardNumber.substring(transaction.payment.cardNumber.length - 4)
-          } else if (transaction.senderDetails) {
-            tran.payee = transaction.senderDetails
+          if (c2c && apiTransaction.payment && apiTransaction.payment.cardNumber && apiTransaction.payment.cardNumber.length > 4) {
+            tran.outcome = apiTransaction.amount.value
+            tran.outcomeAccount = 'ccard#' + apiTransaction.amount.currency.name + '#' + apiTransaction.payment.cardNumber.substring(apiTransaction.payment.cardNumber.length - 4)
+          } else if (apiTransaction.senderDetails) {
+            tran.payee = apiTransaction.senderDetails
           }
-          tran.comment = transaction.description
+          tran.comment = apiTransaction.description
           break
 
           // Если совсем ничего не подошло
         default:
-          if (transaction.subgroup) {
-            switch (transaction.subgroup.id) {
+          if (apiTransaction.subgroup) {
+            switch (apiTransaction.subgroup.id) {
               // перевод от другого клиента банка
               case 'C4':
-                tran.payee = transaction.description
+                tran.payee = apiTransaction.description
                 break
               default:
                 break
@@ -101,80 +100,80 @@ export function convertTransaction (transaction, accountId) {
           }
 
           if (!tran.payee) {
-            if (transaction.operationPaymentType === 'TEMPLATE') {
+            if (apiTransaction.operationPaymentType === 'TEMPLATE') {
               // наименование шаблона
-              tran.comment = transaction.description
+              tran.comment = apiTransaction.description
             } else {
               tran.comment = ''
-              if (transaction.merchant) { tran.comment = transaction.merchant.name + ': ' }
-              tran.comment += transaction.description
+              if (apiTransaction.merchant) { tran.comment = apiTransaction.merchant.name + ': ' }
+              tran.comment += apiTransaction.description
             }
           } else {
             // если получатель определился, то нет необходимости писать его и в комментарии
-            if (transaction.merchant) { tran.comment = transaction.merchant.name }
+            if (apiTransaction.merchant) { tran.comment = apiTransaction.merchant.name }
           }
       }
     } else {
       tran.comment = ''
-      if (transaction.merchant) { tran.comment = transaction.merchant.name + ': ' }
-      tran.comment += transaction.description
+      if (apiTransaction.merchant) { tran.comment = apiTransaction.merchant.name + ': ' }
+      tran.comment += apiTransaction.description
     }
 
     // операция в валюте
     if (foreignCurrency) {
-      tran.opIncome = transaction.amount.value
-      tran.opIncomeInstrument = transaction.amount.currency.name
+      tran.opIncome = apiTransaction.amount.value
+      tran.opIncomeInstrument = apiTransaction.amount.currency.name
     }
   } else
   // расход -----------------------------------------------------------------
-  if (transaction.type === 'Debit') {
-    tran.outcome = transaction.accountAmount.value
+  if (apiTransaction.type === 'Debit') {
+    tran.outcome = apiTransaction.accountAmount.value
     tran.outcomeAccount = accountId
     tran.income = 0
     tran.incomeAccount = tran.outcomeAccount
 
-    if (transaction.group) {
-      switch (transaction.group) {
+    if (apiTransaction.group) {
+      switch (apiTransaction.group) {
         // Снятие наличных
         case 'CASH':
           if (!c2c) {
             // операция с наличными
-            tran.incomeAccount = 'cash#' + transaction.amount.currency.name
-            tran.income = transaction.amount.value
+            tran.incomeAccount = 'cash#' + apiTransaction.amount.currency.name
+            tran.income = apiTransaction.amount.value
           } else
           // card2card-перевод
-          if (transaction.payment && transaction.payment.cardNumber) {
-            tran.incomeAccount = 'ccard#' + transaction.amount.currency.name + '#' + transaction.payment.cardNumber.substring(transaction.payment.cardNumber.length - 4)
-            tran.income = transaction.amount.value
+          if (apiTransaction.payment && apiTransaction.payment.cardNumber) {
+            tran.incomeAccount = 'ccard#' + apiTransaction.amount.currency.name + '#' + apiTransaction.payment.cardNumber.substring(apiTransaction.payment.cardNumber.length - 4)
+            tran.income = apiTransaction.amount.value
           }
           break
 
           // Перевод
         case 'TRANSFER':
-          if (transaction.payment && transaction.payment.fieldsValues) {
-            if (transaction.payment.fieldsValues.addressee) { tran.payee = transaction.payment.fieldsValues.addressee } else if (transaction.payment.fieldsValues.lastName) { tran.payee = transaction.payment.fieldsValues.lastName }
+          if (apiTransaction.payment && apiTransaction.payment.fieldsValues) {
+            if (apiTransaction.payment.fieldsValues.addressee) { tran.payee = apiTransaction.payment.fieldsValues.addressee } else if (apiTransaction.payment.fieldsValues.lastName) { tran.payee = apiTransaction.payment.fieldsValues.lastName }
           }
 
-          if (transaction.operationPaymentType === 'TEMPLATE') {
-            tran.comment = transaction.description // наименование шаблона
+          if (apiTransaction.operationPaymentType === 'TEMPLATE') {
+            tran.comment = apiTransaction.description // наименование шаблона
           } else {
             tran.comment = ''
-            if (transaction.merchant) { tran.comment = transaction.merchant.name + ': ' }
-            tran.comment += transaction.description
+            if (apiTransaction.merchant) { tran.comment = apiTransaction.merchant.name + ': ' }
+            tran.comment += apiTransaction.description
           }
           break
 
           // Плата за обслуживание
         case 'CHARGE':
-          tran.comment = transaction.description
+          tran.comment = apiTransaction.description
           break
 
           // Платеж
         case 'PAY':
-          if (transaction.operationPaymentType && transaction.operationPaymentType === 'REGULAR') {
-            tran.payee = transaction.brand ? transaction.brand.name : transaction.description
+          if (apiTransaction.operationPaymentType && apiTransaction.operationPaymentType === 'REGULAR') {
+            tran.payee = apiTransaction.brand ? apiTransaction.brand.name : apiTransaction.description
           } else {
-            tran.payee = transaction.merchant ? transaction.merchant.name : transaction.description
+            tran.payee = apiTransaction.merchant ? apiTransaction.merchant.name : apiTransaction.description
           }
 
           // MCC
@@ -186,20 +185,20 @@ export function convertTransaction (transaction, accountId) {
 
           // Если совсем ничего не подошло
         default:
-          tran.comment = transaction.description
+          tran.comment = apiTransaction.description
       }
     }
 
     // операция в валюте
     if (foreignCurrency) {
-      tran.opOutcome = transaction.amount.value
-      tran.opOutcomeInstrument = transaction.amount.currency.name
+      tran.opOutcome = apiTransaction.amount.value
+      tran.opOutcomeInstrument = apiTransaction.amount.currency.name
     }
 
     // местоположение
-    if (transaction.locations && _.isArray(transaction.locations) && transaction.locations.length > 0) {
-      tran.latitude = transaction.locations[0].latitude
-      tran.longitude = transaction.locations[0].longitude
+    if (apiTransaction.locations && _.isArray(apiTransaction.locations) && apiTransaction.locations.length > 0) {
+      tran.latitude = apiTransaction.locations[0].latitude
+      tran.longitude = apiTransaction.locations[0].longitude
     }
   }
 
@@ -215,12 +214,12 @@ export function convertTransaction (transaction, accountId) {
   } */
 
   var hold = tran.hold ? ' [H] ' : ''
-  console.log(`>>> Добавляем операцию: ${tran.date}, ${tran.time}, ${hold}${transaction.description}, ${transaction.type === 'Credit' ? '+' : (transaction.type === 'Debit' ? '-' : '')}${transaction.accountAmount.value}`)
+  console.log(`>>> Добавляем операцию: ${tran.date}, ${tran.time}, ${hold}${apiTransaction.description}, ${apiTransaction.type === 'Credit' ? '+' : (apiTransaction.type === 'Debit' ? '-' : '')}${apiTransaction.accountAmount.value}`)
 
   return tran
 }
 
-export function convertTransactionToTransfer (tranId, tran1, tran2) {
+export function doubleTransactionsParsing (tranId, tran1, tran2) {
   // доходная часть перевода ---
   if (tran2.income > 0 && tran1.income === 0 && tran1.incomeAccount !== tran2.incomeAccount) {
     tran1.income = tran2.income
@@ -231,6 +230,8 @@ export function convertTransactionToTransfer (tranId, tran1, tran2) {
     tran1.incomeBankID = tran2.id
     tran1.outcomeBankID = tran1.id
     delete tran1.id
+    if (tran1.payee) delete tran1.payee // в переводах получателя нет
+    console.log('>>> Объединили операцию в перевод с имеющейся ID ' + tranId)
   } else
   // расходная часть перевода ----
   if (tran2.outcome > 0 && tran1.outcome === 0 && tran1.outcomeAccount !== tran2.outcomeAccount) {
@@ -245,9 +246,27 @@ export function convertTransactionToTransfer (tranId, tran1, tran2) {
     tran1.incomeBankID = tran1.id
     tran1.outcomeBankID = tran2.id
     delete tran1.id
+    if (tran1.payee) delete tran1.payee // в переводах получателя нет
+    console.log('>>> Объединили операцию в перевод с имеющейся ID ' + tranId)
+  } else
+  // обработка существующей операции
+  if (transactionCompare(tran1, tran2)) {
+    if (tran1.hold === true && tran2.hold === false) {
+      tran1.hold = tran2.hold
+      tran1.id = tran2.id
+      console.log('>>> Акцепт существующей операции ' + tranId)
+    } else if (tran1.hold === false) {
+      console.log('>>> Пропускаем холд существующего акцепта ' + tranId)
+    }
   }
-  if (tran1.payee) delete tran1.payee // в переводах получателя нет
-  console.log('>>> Объединили операцию в перевод с имеющейся ID ' + tranId)
+}
+
+export function transactionCompare (tran1, tran2) {
+  return tran1.outcome === tran2.outcome &&
+    tran1.income === tran2.income &&
+    tran1.mcc === tran2.mcc &&
+    tran1.payee === tran2.payee &&
+    tran1.created === tran2.created
 }
 
 function getDebitCard (account, initialized) {
