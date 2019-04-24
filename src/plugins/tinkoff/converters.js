@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import { isArray } from 'lodash'
 
 export function convertAccount (account, initialized) {
   switch (account.accountType) {
@@ -40,7 +40,7 @@ export function convertTransaction (apiTransaction, accountId) {
 
   // отделяем акцепт от холда временем дебетового списания
   tran.id = apiTransaction.debitingTime ? apiTransaction.id : 'tmp#' + apiTransaction.id
-  tran.hold = !apiTransaction.debitingTime
+  tran.hold = getTransactionHoldStatus(apiTransaction)
 
   // флаг операции в валюте
   const foreignCurrency = apiTransaction.accountAmount.currency.name !== apiTransaction.amount.currency.name
@@ -196,7 +196,7 @@ export function convertTransaction (apiTransaction, accountId) {
     }
 
     // местоположение
-    if (apiTransaction.locations && _.isArray(apiTransaction.locations) && apiTransaction.locations.length > 0) {
+    if (apiTransaction.locations && isArray(apiTransaction.locations) && apiTransaction.locations.length > 0) {
       tran.latitude = apiTransaction.locations[0].latitude
       tran.longitude = apiTransaction.locations[0].longitude
     }
@@ -213,13 +213,17 @@ export function convertTransaction (apiTransaction, accountId) {
     }
   } */
 
-  var hold = tran.hold ? ' [H] ' : ''
+  const hold = tran.hold ? ' [H] ' : ''
   console.log(`>>> Добавляем операцию: ${tran.date}, ${tran.time}, ${hold}${apiTransaction.description}, ${apiTransaction.type === 'Credit' ? '+' : (apiTransaction.type === 'Debit' ? '-' : '')}${apiTransaction.accountAmount.value}`)
 
   return tran
 }
 
-export function doubleTransactionsParsing (tranId, tran1, tran2) {
+function getTransactionHoldStatus (apiTransaction) {
+  return !apiTransaction.debitingTime
+}
+
+function transactionParsing (tranId, tran1, tran2) {
   // доходная часть перевода ---
   if (tran2.income > 0 && tran1.income === 0 && tran1.incomeAccount !== tran2.incomeAccount) {
     tran1.income = tran2.income
@@ -254,15 +258,82 @@ export function doubleTransactionsParsing (tranId, tran1, tran2) {
     if (tran1.hold === true && tran2.hold === false) {
       tran1.hold = tran2.hold
       tran1.id = tran2.id
-      console.log('>>> Акцепт существующей операции ' + tranId)
+      console.log('>>> Акцепт существующей операции: ', tranId, tran1, tran2)
     } else if (tran1.hold === false) {
-      console.log('>>> Пропускаем холд существующего акцепта ' + tranId)
+      console.log('>>> Пропускаем холд существующего акцепта: ', tranId, tran1, tran2)
+    } else {
+      console.log('>>> Ошибка обработки пары операций: ', tranId, tran1, tran2)
+      throw new Error()
     }
   }
 }
 
-export function transactionCompare (tran1, tran2) {
-  return tran1.outcome === tran2.outcome &&
+export function convertTransactions (apiTransactions, accounts, doubledHoldTransactionsId) {
+  const transactions = {}
+  apiTransactions.forEach(apiTransaction => {
+    // работаем только по активным счетам
+    let accountId = apiTransaction.account
+    if (!inAccounts(accountId, accounts)) {
+      accountId = apiTransaction.account + '_' + apiTransaction.amount.currency.name
+      if (!inAccounts(accountId, accounts)) return
+    }
+
+    // учитываем только успешные операции
+    if ((apiTransaction.status && apiTransaction.status === 'FAILED') || apiTransaction.accountAmount.value === 0) { return }
+
+    // дубли холдов пропускаем (реакция на ошибочные выписки банка)
+    const tranId = getApiTransactionId(apiTransaction)
+    if (doubledHoldTransactionsId[tranId] > 1) {
+      console.log('>>> Пропускаем дубль холда ', tranId)
+      return
+    }
+
+    // обработаем транзакцию банка (результат в transactions)
+    const tran = convertTransaction(apiTransaction, accountId)
+    if (transactions[tranId]) {
+      // обработаем дублирующую операцию
+      transactionParsing(tranId, transactions[tranId], tran)
+    } else {
+      transactions[tranId] = tran
+    }
+  })
+  return transactions
+}
+
+function inAccounts (id, accounts) {
+  const length = accounts.length
+  for (let i = 0; i < length; i++) { if (accounts[i].id === id) return true }
+  return false
+}
+
+export function getDoubledHoldTransactionsId (apiTransactions) {
+  let result = {}
+  apiTransactions.forEach(apiTransaction => {
+    if (!getTransactionHoldStatus(apiTransaction)) return
+    const id = getApiTransactionId(apiTransaction)
+    result[id] = result[id] ? result[id] + 1 : 1
+  })
+  result = Object.keys(result)
+    .filter(key => result[key] > 1)
+    .reduce((obj, key) => {
+      obj[key] = result[key]
+      return obj
+    }, {})
+  if (Object.keys(result).length > 0) { console.log('>>> Дубли HOLD-операций с одинаковым id: ', result) }
+  return result
+}
+
+function getApiTransactionId (apiTransaction) {
+  return apiTransaction.payment && apiTransaction.payment.paymentId
+    // если есть paymentId, объединяем по нему, отделяя комиссии от переводов
+    ? (apiTransaction.group === 'CHARGE' ? 'f' : 'p') + apiTransaction.payment.paymentId
+    // либо работаем просто как с операциями, разделяя их на доходы и расходы
+    : apiTransaction.id
+}
+
+function transactionCompare (tran1, tran2) {
+  return tran1.account === tran2.account &&
+    tran1.outcome === tran2.outcome &&
     tran1.income === tran2.income &&
     tran1.mcc === tran2.mcc &&
     tran1.payee === tran2.payee &&
