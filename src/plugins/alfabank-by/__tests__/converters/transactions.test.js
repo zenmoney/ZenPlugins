@@ -46,6 +46,7 @@ describe('convertTransaction', () => {
         status: 'NORMAL'
       },
       expectedTransaction: {
+        id: '11113111050111',
         date: new Date('Tue Jan 25 2019 12:27:55 GMT+0300 (Moscow Standard Time)'),
         movements: [
           {
@@ -108,6 +109,7 @@ describe('convertTransaction', () => {
         status: 'NORMAL'
       },
       expectedTransaction: {
+        id: '11113111050111',
         date: new Date('Tue Jan 25 2019 12:27:55 GMT+0300 (Moscow Standard Time)'),
         movements: [
           {
@@ -170,6 +172,7 @@ describe('convertTransaction', () => {
         status: 'NORMAL'
       },
       expectedTransaction: {
+        id: '11113111050111',
         date: new Date('Tue Jan 25 2019 12:27:55 GMT+0300 (Moscow Standard Time)'),
         movements: [
           {
@@ -220,6 +223,7 @@ describe('convertTransaction', () => {
         status: 'NORMAL'
       },
       expectedTransaction: {
+        id: '11113111050111',
         date: new Date('Tue Jan 25 2019 12:27:55 GMT+0300 (Moscow Standard Time)'),
         movements: [
           {
@@ -275,6 +279,7 @@ describe('convertTransaction', () => {
         status: 'NORMAL'
       },
       expectedTransaction: {
+        id: '11113111050111',
         date: new Date('Tue Jan 25 2019 12:27:55 GMT+0300 (Moscow Standard Time)'),
         movements: [
           {
@@ -326,6 +331,7 @@ describe('convertTransaction', () => {
         showCompensate: false
       },
       expectedTransaction: {
+        id: '11113111050111',
         date: new Date('Tue Jan 25 2019 12:27:55 GMT+0300 (Moscow Standard Time)'),
         movements: [
           {
@@ -353,6 +359,66 @@ describe('convertTransaction', () => {
         ],
         merchant: null,
         comment: null,
+        hold: false
+      }
+    },
+    {
+      name: 'payment in another currency',
+      json: {
+        id: '11113111050111',
+        info: {
+          description: 'А-курс',
+          title: 'BRUSNIKA',
+          amount: {
+            format: '###,###,###,###,##0.##',
+            currency: 'BYN',
+            amount: -15.58
+          },
+          icon: {
+            backgroundColorFrom: '#ff814f',
+            backgroundColorTo: '#ff814f',
+            iconUrl: 'v0/Image/50_392.SVG',
+            captionColor: '#FFFFFF',
+            frameColor: '#c2b7b7',
+            displayType: 'REGULAR'
+          }
+        },
+        date: '20190125122755',
+        operationAmount: { format: '###,###,###,###,##0.##', currency: 'RUB', amount: -466.9 },
+        description: 'MOSCOW Покупка товара / получение услуг BRUSNIKA',
+        status: 'NORMAL',
+        iban: 'BY31 ALFA 3014 111M RT00 1111 0000',
+        showReceipt: true,
+        sendReceipt: true,
+        showAddToFuture: false,
+        showRepeat: true,
+        showAddRecipient: false,
+        availableSplit: false,
+        showCompensate: false
+      },
+      expectedTransaction: {
+        id: '11113111050111',
+        date: new Date('Tue Jan 25 2019 12:27:55 GMT+0300 (Moscow Standard Time)'),
+        movements: [
+          {
+            id: null,
+            account: { id: '6505111' },
+            invoice: {
+              instrument: 'RUB',
+              sum: -466.9
+            },
+            sum: -15.58,
+            fee: 0
+          }
+        ],
+        merchant: {
+          city: 'MOSCOW',
+          country: 'RU',
+          location: null,
+          mcc: null,
+          title: 'BRUSNIKA'
+        },
+        comment: 'Покупка товара / получение услуг',
         hold: false
       }
     }

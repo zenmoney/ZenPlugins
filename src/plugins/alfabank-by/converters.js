@@ -5,7 +5,8 @@ const countries = {
   'gomel': 'BY',
   'vitebsk': 'BY',
   'mogilev': 'BY',
-  'amsterdam': 'NL'
+  'amsterdam': 'NL',
+  'moscow': 'RU'
 }
 
 export function convertAccount (json) {
@@ -35,6 +36,7 @@ export function convertTransaction (json, accounts) {
   })
 
   const transaction = {
+    id: json.id ? json.id : null,
     date: parseDate(json.date),
     movements: [ getMovement(json, account) ],
     merchant: null,
@@ -62,8 +64,12 @@ function getMovement (json, account) {
   }
 
   if (json.operationAmount && json.operationAmount.currency !== account.instrument) {
+    var amount = json.operationAmount.amount
+    if (json.operation && json.operation === 'CURRENCYEXCHANGE') {
+      amount *= -1
+    }
     movement.invoice = {
-      sum: -json.operationAmount.amount,
+      sum: amount,
       instrument: json.operationAmount.currency
     }
   }
