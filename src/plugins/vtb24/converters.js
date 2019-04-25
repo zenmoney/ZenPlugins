@@ -970,6 +970,10 @@ const generateAccountLookup = apiAccounts => apiAccounts.reduce((all, apiAccount
   )
 }), {})
 
+export function convertTransactions (apiTransactions, account, accountsById) {
+  return []
+}
+
 export const convertApiTransactionsToReadableTransactions = (apiTransactionsByAccountId, apiAccounts) => {
   const accountsByIdLookup = generateAccountLookup(apiAccounts)
   const preprocessedMovements = _.toPairs(apiTransactionsByAccountId)
