@@ -38,7 +38,13 @@ export class PrivatBank {
         'Accept': 'application/xml, text/plain, */*',
         'Content-Type': 'application/xml;charset=UTF-8'
       },
-      body: xml
+      body: xml,
+      sanitizeRequestLog: {
+        url: (url) => '<string>/' + url.substring(this.baseUrl.length)
+      },
+      sanitizeResponseLog: {
+        url: (url) => '<string>/' + url.substring(this.baseUrl.length)
+      }
     }
 
     const response = await retry({

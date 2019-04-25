@@ -36,11 +36,12 @@ export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
       apiTransactions = await bank.fetchTransactions(fromDate, toDate)
     } catch (e) {
       if (e instanceof RetryError) {
-        if (isFirstRun) {
-          throw new TemporaryError('Информация из ПриватБанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
-        } else {
-          apiTransactions = null
-        }
+        throw new TemporaryError('Информация из ПриватБанка временно недоступна. Запустите синхронизацию через некоторое время.\n\nЕсли ситуация повторится, выберите другой IP-адрес в настройках синхронизации с банком.')
+        // if (isFirstRun) {
+        //   throw new TemporaryError('Информация из ПриватБанка временно недоступна. Запустите синхронизацию через некоторое время.\n\nЕсли ситуация повторится, выберите другой IP-адрес в настройках синхронизации с банком.')
+        // } else {
+        //   apiTransactions = null
+        // }
       } else {
         throw e
       }
@@ -50,7 +51,7 @@ export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
       apiAccounts = await bank.fetchAccounts()
     } catch (e) {
       if (e instanceof RetryError) {
-        throw new TemporaryError('Информация из ПриватБанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
+        throw new TemporaryError('Информация из ПриватБанка временно недоступна. Запустите синхронизацию через некоторое время.\n\nЕсли ситуация повторится, выберите другой IP-адрес в настройках синхронизации с банком.')
       } else {
         throw e
       }

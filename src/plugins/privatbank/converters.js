@@ -68,7 +68,7 @@ export function convertTransactionJson (json) {
       transaction.outcomeBankID = json.appcode
     }
   }
-  transaction.date = new Date(json.trandate + 'T' + json.trantime)
+  transaction.date = new Date(json.trandate + 'T' + json.trantime + '+03:00')
   transaction.comment = description
   transaction.incomeAccount = json.card
   transaction.income = amount.sum > 0 ? amount.sum : 0
