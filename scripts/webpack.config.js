@@ -38,7 +38,13 @@ const getPluginsSection = ({ production, devServer }) => getHtmlPlugins({ produc
     NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'development')
   }),
   new CaseSensitivePathsPlugin(),
-  production && new UglifyJsPlugin()
+  production && new UglifyJsPlugin({
+    uglifyOptions: {
+      output: {
+        comments: false
+      }
+    }
+  })
 ]))
 
 module.exports = ({ production, devServer }) => ({
