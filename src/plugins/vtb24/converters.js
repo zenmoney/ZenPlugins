@@ -34,6 +34,10 @@ export function convertAccounts (apiPortfolios) {
         case 'SAVINGS':
           if (apiAccount.__type === 'ru.vtb24.mobilebanking.protocol.product.MetalAccountMto') {
             converter = convertMetalAccount
+          } else if (apiAccount.__type === 'ru.vtb24.mobilebanking.protocol.product.DepositContractMto' &&
+            apiAccount.account &&
+            apiAccount.account.__type === 'ru.vtb24.mobilebanking.protocol.product.DepositAccountMto') {
+            converter = convertDeposit
           } else {
             converter = convertAccount
           }
@@ -95,8 +99,6 @@ export function convertMetalAccount (apiAccount) {
   }
 }
 
-export const isCard = () => true
-
 export function convertCardAccount (apiAccount) {
   const zenAccount = {
     id: apiAccount.id,
@@ -135,6 +137,7 @@ export function convertCardAccount (apiAccount) {
     })
   }
   amount = convertAmount(amount)
+  console.assert(amount, 'unexpected account', apiAccount)
 
   zenAccount.balance = amount.sum
   zenAccount.instrument = amount.instrument
@@ -163,6 +166,41 @@ export function convertAccount (apiAccount) {
   ].indexOf(apiAccount.__type) >= 0) {
     zenAccount.savings = true
   }
+  return { products, zenAccount }
+}
+
+export function convertDeposit (apiAccount) {
+  const zenAccount = {
+    id: apiAccount.id,
+    type: 'deposit',
+    title: apiAccount.name,
+    instrument: getInstrument(apiAccount.account.amount.currency.currencyCode),
+    startDate: apiAccount.openDate,
+    startBalance: 0,
+    balance: apiAccount.account.amount.sum,
+    percent: apiAccount.account.interestRate,
+    capitalization: true,
+    payoffInterval: 'month',
+    payoffStep: 1,
+    syncID: [apiAccount.account.number.replace(/[^\d]/g, '')]
+  }
+  const contractPeriod = apiAccount.contractPeriod || apiAccount.account.contract.contractPeriod
+  switch (contractPeriod.unit.id.toLowerCase()) {
+    case 'month':
+    case 'year':
+    case 'day':
+      zenAccount.endDateOffsetInterval = contractPeriod.unit.id.toLowerCase()
+      zenAccount.endDateOffset = contractPeriod.value
+      break
+    default:
+      console.assert(false, `unsupported loan contract period ${contractPeriod.unit.id}`)
+  }
+  const products = [
+    {
+      id: apiAccount.id,
+      type: apiAccount.__type
+    }
+  ]
   return { products, zenAccount }
 }
 
