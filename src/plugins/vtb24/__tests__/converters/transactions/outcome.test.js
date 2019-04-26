@@ -1,7 +1,4 @@
-import { toZenmoneyTransaction } from '../../../../../common/converters'
 import { convertTransaction } from '../../../converters'
-const convertToReadableTransactionForAccount = apiAccount => apiTransaction => convertTransaction(apiTransaction, apiAccount)
-const convertToZenmoneyTransactionForAccount = accountsByIdLookup => readableTransaction => toZenmoneyTransaction(readableTransaction, accountsByIdLookup)
 
 describe('convertTransaction', () => {
   it('converts purchases', () => {
@@ -338,7 +335,7 @@ describe('convertTransaction', () => {
       }
     ]
 
-    const expectedReadableTransactions = [
+    const expectedTransactions = [
       {
         comment: null,
         date: new Date('2018-06-18T19:16:42+03:00'),
@@ -459,93 +456,12 @@ describe('convertTransaction', () => {
       }
     ]
 
-    const expectedZenmoneyTransactions = [
-      {
-        id: '53989a75-7138-484b-aaa7-e9ea1d12f30a',
-        date: new Date('2018-06-18T19:16:42+03:00'),
-        hold: false,
-        income: 0,
-        incomeAccount: 'account',
-        outcome: 5400,
-        outcomeAccount: 'account',
-        payee: 'MOTEL KIROVSKIE DACHI',
-        mcc: null,
-        comment: null
-      },
-      {
-        id: '4YzFJfeuAJ8m+MUjn/oMSUbFUMM=',
-        date: new Date('2019-03-07T05:01:03.000Z'),
-        hold: false,
-        income: 0,
-        incomeAccount: 'account',
-        outcome: 300,
-        outcomeAccount: 'account',
-        payee: 'ООО КБ "ПЛАТИНА"  Карта Стрелка (ООО "Единая Транспортная Карта")',
-        mcc: null,
-        comment: 'Списание по карте'
-      },
-      {
-        id: '83RHe8XMecT36x1EiaFcB1l8S/M=',
-        date: new Date('2019-01-25T16:27:39.000Z'),
-        hold: true,
-        income: 0,
-        incomeAccount: 'account',
-        outcome: 250,
-        outcomeAccount: 'account',
-        payee: 'PAY MTS RU TOPUP 6342',
-        mcc: null,
-        comment: null
-      },
-      {
-        id: 'lOkFTtbsHoVUzPn9rEAFZF4u7SY=',
-        date: new Date('2019-01-14T21:00:00.000Z'),
-        hold: false,
-        income: 0,
-        incomeAccount: 'account',
-        outcome: 39,
-        outcomeAccount: 'account',
-        payee: 'YANDEX TAXI',
-        mcc: null,
-        comment: null
-      },
-      {
-        id: 'rHqO/DOMvX+E12mf0FQg3WkgC/Q=',
-        date: new Date('2018-12-27T21:00:00.000Z'),
-        hold: false,
-        income: 0,
-        incomeAccount: 'account',
-        outcome: 466.3,
-        outcomeAccount: 'account',
-        comment: 'Начисленные %'
-      },
-      {
-        id: 'ZDvGUy6vxtxx72SQZ4YAUFRLDBw=',
-        date: new Date('2019-03-12T21:00:00.000Z'),
-        hold: false,
-        income: 0,
-        incomeAccount: 'account',
-        outcome: 144.7,
-        outcomeAccount: 'account',
-        payee: 'RUS SANKT-PETERBU MAGNIT MM LEVACKIY',
-        mcc: null,
-        comment: null
-      }
-    ]
-
-    const apiAccount = {
+    const account = {
       id: 'account',
-      zenAccount: {
-        id: 'account'
-      }
+      instrument: 'RUB'
     }
 
-    const readableTransactionConverter = convertToReadableTransactionForAccount(apiAccount)
-    const readableTransactions = apiTransactions.map(readableTransactionConverter)
-    expect(readableTransactions).toEqual(expectedReadableTransactions)
-
-    const zenmoneyTransactionConverter = convertToZenmoneyTransactionForAccount({ [apiAccount.id]: apiAccount })
-    const zenmoneyTransactions = readableTransactions.map(zenmoneyTransactionConverter)
-    expect(zenmoneyTransactions).toEqual(expectedZenmoneyTransactions)
+    expect(apiTransactions.map(apiTransaction => convertTransaction(apiTransaction, account))).toEqual(expectedTransactions)
   })
 
   it('converts purchases in other currency', () => {
@@ -604,7 +520,7 @@ describe('convertTransaction', () => {
       }
     ]
 
-    const expectedReadableTransactions = [
+    const expectedTransactions = [
       {
         comment: null,
         date: new Date('2018-12-26T21:00:00.000Z'),
@@ -631,36 +547,11 @@ describe('convertTransaction', () => {
       }
     ]
 
-    const expectedZenmoneyTransactions = [
-      {
-        id: 'pA/9gNf9M67Uz/hf17TaYbq8YUc=',
-        date: new Date('2018-12-26T21:00:00.000Z'),
-        hold: false,
-        income: 0,
-        incomeAccount: 'account',
-        opOutcome: 6.99,
-        opOutcomeInstrument: 'USD',
-        outcome: 501.88,
-        outcomeAccount: 'account',
-        payee: 'PAYPAL ROSEGAL',
-        mcc: null,
-        comment: null
-      }
-    ]
-
-    const apiAccount = {
+    const account = {
       id: 'account',
-      zenAccount: {
-        id: 'account'
-      }
+      instrument: 'RUB'
     }
 
-    const readableTransactionConverter = convertToReadableTransactionForAccount(apiAccount)
-    const readableTransactions = apiTransactions.map(readableTransactionConverter)
-    expect(readableTransactions).toEqual(expectedReadableTransactions)
-
-    const zenmoneyTransactionConverter = convertToZenmoneyTransactionForAccount({ [apiAccount.id]: apiAccount })
-    const zenmoneyTransactions = readableTransactions.map(zenmoneyTransactionConverter)
-    expect(zenmoneyTransactions).toEqual(expectedZenmoneyTransactions)
+    expect(apiTransactions.map(apiTransaction => convertTransaction(apiTransaction, account))).toEqual(expectedTransactions)
   })
 })

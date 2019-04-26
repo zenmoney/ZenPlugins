@@ -1,13 +1,7 @@
-import { convertApiTransactionsToReadableTransactions, isCard } from '../../../converters'
+import { convertTransaction, mergeTransfers } from '../../../converters'
 
-const composeApiTransactionsByAccountId = (apiTransactions) =>
-  apiTransactions.reduce((all, t) => {
-    const accountId = isCard(t.debet) ? t.debet.cardAccount.id : t.debet.id
-    return ({ ...all, [accountId]: (all[accountId] || []).concat(t) })
-  }, {})
-
-describe('convertApiTransactionsToReadableTransactions', () => {
-  it('converts and merges TransferCreditOnLine', () => {
+describe('mergeTransfers', () => {
+  it('merges converted TransferCreditOnLine', () => {
     const apiTransactions = [
       {
         __type: 'ru.vtb24.mobilebanking.protocol.statement.CardTransactionMto',
@@ -370,60 +364,28 @@ describe('convertApiTransactionsToReadableTransactions', () => {
       }
     ]
 
-    const apiAccounts = [
-      {
-        id: '482DB3278B614204A29472529B40A4E0',
-        type: 'ru.vtb24.mobilebanking.protocol.product.DebitCardAccountMto',
-        products: [
-          {
-            id: '482DB3278B614204A29472529B40A4E0',
-            type: 'ru.vtb24.mobilebanking.protocol.product.DebitCardAccountMto',
-            apiAccount: apiTransactions[0].debet.cardAccount
-          },
-          {
-            id: '9F7182936EBD42EFA77CF22D3BCE5CA2',
-            type: 'ru.vtb24.mobilebanking.protocol.product.DebitCardMto',
-            apiAccount: apiTransactions[0].debet
-          }
-        ],
-        zenAccount: {
-          id: '482DB3278B614204A29472529B40A4E0'
-        }
-      },
-      {
-        id: 'EA29B20AA8664321BDEB13F473001321',
-        type: 'ru.vtb24.mobilebanking.protocol.product.SettlementAccountMto',
-        products: [
-          {
-            id: 'EA29B20AA8664321BDEB13F473001321',
-            type: 'ru.vtb24.mobilebanking.protocol.product.SettlementAccountMto',
-            apiAccount: apiTransactions[1].debet
-          }
-        ],
-        zenAccount: {
-          id: 'EA29B20AA8664321BDEB13F473001321'
-        }
-      }
-    ]
+    const accountsById = {
+      '9F7182936EBD42EFA77CF22D3BCE5CA2': { id: 'account1', instrument: 'RUB' },
+      'EA29B20AA8664321BDEB13F473001321': { id: 'account2', instrument: 'RUB' }
+    }
 
-    const apiTransactionsByAccountId = composeApiTransactionsByAccountId(apiTransactions)
-    const assertion = convertApiTransactionsToReadableTransactions(apiTransactionsByAccountId, apiAccounts)
-    const expectation = [
+    const transactions = mergeTransfers(apiTransactions.map(apiTransaction => convertTransaction(apiTransaction, accountsById[apiTransaction.debet.id])))
+    const expectedTransactions = [
       {
-        date: new Date('2019-04-02T09:38:20.000Z'),
-        hold: true,
+        date: new Date('2019-04-02T09:37:36.000Z'),
+        hold: null,
         comment: null,
         merchant: null,
         movements: [
           {
             id: 'MSPxWmBP5xYKBeKp2Wo37OMJXrA=',
-            account: { id: '482DB3278B614204A29472529B40A4E0' },
+            account: { id: 'account1' },
             invoice: null,
             sum: -19475,
             fee: 0
           }, {
             id: '3GdW33rwiH1yj9zNoNd3nRNAuf0=',
-            account: { id: 'EA29B20AA8664321BDEB13F473001321' },
+            account: { id: 'account2' },
             invoice: null,
             sum: 19475,
             fee: 0
@@ -432,10 +394,10 @@ describe('convertApiTransactionsToReadableTransactions', () => {
       }
     ]
 
-    expect(assertion).toEqual(expectation)
+    expect(transactions).toEqual(expectedTransactions)
   })
 
-  it('converts and merges bank card transfers', () => {
+  it('merges bank card transfers', () => {
     const apiTransactions = [
       {
         __type: 'ru.vtb24.mobilebanking.protocol.statement.AccountTransactionMto',
@@ -796,45 +758,13 @@ describe('convertApiTransactionsToReadableTransactions', () => {
       }
     ]
 
-    const apiAccounts = [
-      {
-        id: '7D4DFA28CDA24709968514B6EF733AD7',
-        type: 'ru.vtb24.mobilebanking.protocol.product.SettlementAccountMto',
-        products: [
-          {
-            id: '7D4DFA28CDA24709968514B6EF733AD7',
-            type: 'ru.vtb24.mobilebanking.protocol.product.SettlementAccountMto',
-            apiAccount: apiTransactions[0].debet
-          }
-        ],
-        zenAccount: {
-          id: '7D4DFA28CDA24709968514B6EF733AD7'
-        }
-      },
-      {
-        id: '4116E91D991B47A0B544FBCD8C253595',
-        type: 'ru.vtb24.mobilebanking.protocol.product.DebitCardAccountMto',
-        products: [
-          {
-            id: '4116E91D991B47A0B544FBCD8C253595',
-            type: 'ru.vtb24.mobilebanking.protocol.product.DebitCardAccountMto',
-            apiAccount: apiTransactions[1].debet.cardAccount
-          },
-          {
-            id: '8368CAD908184E378698274A93844B6A',
-            type: 'ru.vtb24.mobilebanking.protocol.product.DebitCardMto',
-            apiAccount: apiTransactions[1].debet
-          }
-        ],
-        zenAccount: {
-          id: '4116E91D991B47A0B544FBCD8C253595'
-        }
-      }
-    ]
+    const accountsById = {
+      '7D4DFA28CDA24709968514B6EF733AD7': { id: 'account1', instrument: 'RUB' },
+      '8368CAD908184E378698274A93844B6A': { id: 'account2', instrument: 'RUB' }
+    }
 
-    const apiTransactionsByAccountId = composeApiTransactionsByAccountId(apiTransactions)
-    const assertion = convertApiTransactionsToReadableTransactions(apiTransactionsByAccountId, apiAccounts)
-    const expectation = [
+    const transactions = mergeTransfers(apiTransactions.map(apiTransaction => convertTransaction(apiTransaction, accountsById[apiTransaction.debet.id])))
+    const expectedTransactions = [
       {
         date: new Date('2019-03-26T04:08:53.000Z'),
         hold: false,
@@ -843,13 +773,13 @@ describe('convertApiTransactionsToReadableTransactions', () => {
         movements: [
           {
             id: 'uUnAEirMPnfb5U6KGgF4qrA4Yyg=',
-            account: { id: '7D4DFA28CDA24709968514B6EF733AD7' },
+            account: { id: 'account1' },
             invoice: null,
             sum: -50000,
             fee: 0
           }, {
             id: 'Yx+Zjwl/zXk4JYkJ96uNnhbUV6Y=',
-            account: { id: '4116E91D991B47A0B544FBCD8C253595' },
+            account: { id: 'account2' },
             invoice: null,
             sum: 50000,
             fee: 0
@@ -858,10 +788,10 @@ describe('convertApiTransactionsToReadableTransactions', () => {
       }
     ]
 
-    expect(assertion).toEqual(expectation)
+    expect(transactions).toEqual(expectedTransactions)
   })
 
-  it('converts and merges card transactions using account reference', () => {
+  it('merges card transactions', () => {
     const apiTransactions = [
       {
         __type: 'ru.vtb24.mobilebanking.protocol.statement.AccountTransactionMto',
@@ -1635,51 +1565,14 @@ describe('convertApiTransactionsToReadableTransactions', () => {
         __id: 14
       }
     ]
-    const apiAccounts = [
-      {
-        id: 'F85CC22EFB9F414CBEBDCFEB1A4E00C9',
-        type: 'ru.vtb24.mobilebanking.protocol.product.MasterAccountMto',
-        products: [
-          {
-            id: 'F85CC22EFB9F414CBEBDCFEB1A4E00C9',
-            type: 'ru.vtb24.mobilebanking.protocol.product.MasterAccountMto',
-            apiAccount: apiTransactions[0].debet
-          }
-        ],
-        zenAccount: {
-          id: 'F85CC22EFB9F414CBEBDCFEB1A4E00C9'
-        }
-      },
-      {
-        id: '8FBDCF32B0CA4590AF6022D0E1B71738',
-        type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardAccountMto',
-        products: [
-          {
-            id: '8FBDCF32B0CA4590AF6022D0E1B71738',
-            type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardAccountMto',
-            apiAccount: apiTransactions[1].cardAccount
-          },
-          {
-            id: 'CBFDBDDEFC3A4F91A8301B2B176DE527',
-            type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardMto',
-            apiAccount: apiTransactions[1].debet
-          }
-        ],
-        cards: [
-          {
-            id: 'CBFDBDDEFC3A4F91A8301B2B176DE527',
-            type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardMto'
-          }
-        ],
-        zenAccount: {
-          id: 'CBFDBDDEFC3A4F91A8301B2B176DE527'
-        }
-      }
-    ]
 
-    const apiTransactionsByAccountId = composeApiTransactionsByAccountId(apiTransactions)
-    const assertion = convertApiTransactionsToReadableTransactions(apiTransactionsByAccountId, apiAccounts)
-    const expectation = [
+    const accountsById = {
+      'F85CC22EFB9F414CBEBDCFEB1A4E00C9': { id: 'account1', instrument: 'RUB' },
+      'CBFDBDDEFC3A4F91A8301B2B176DE527': { id: 'account2', instrument: 'RUB' }
+    }
+
+    const transactions = mergeTransfers(apiTransactions.map(apiTransaction => convertTransaction(apiTransaction, accountsById[apiTransaction.debet.id])))
+    const expectedTransactions = [
       {
         'comment': null,
         'date': new Date('2019-04-06T06:25:43.000Z'),
@@ -1687,17 +1580,14 @@ describe('convertApiTransactionsToReadableTransactions', () => {
         'merchant': null,
         'movements': [
           {
-            'account': {
-              'id': 'F85CC22EFB9F414CBEBDCFEB1A4E00C9'
-            },
+            'account': { 'id': 'account1' },
             'fee': 0,
             'id': '+p18i9x+nWUwS9AwXCv/DP2PsMA=',
             'invoice': null,
             'sum': -5000
-          }, {
-            'account': {
-              'id': '8FBDCF32B0CA4590AF6022D0E1B71738'
-            },
+          },
+          {
+            'account': { 'id': 'account2' },
             'fee': 0,
             'id': 'uMrfNzOYxeAYJRytuvlaQbGX/nI=',
             'invoice': null,
@@ -1707,6 +1597,6 @@ describe('convertApiTransactionsToReadableTransactions', () => {
       }
     ]
 
-    expect(assertion).toEqual(expectation)
+    expect(transactions).toEqual(expectedTransactions)
   })
 })

@@ -1,6 +1,6 @@
 import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
 import { fetchAccounts, fetchTransactions, login } from './api'
-import { convertAccounts, convertTransaction } from './converters'
+import { mergeTransfers, convertAccounts, convertTransaction } from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
   toDate = toDate || new Date()
@@ -10,13 +10,9 @@ export async function scrape ({ preferences, fromDate, toDate }) {
 
   const accountsData = convertAccounts(apiPortfolios)
   const accounts = []
-  const accountsById = {}
   const transactions = []
-  accountsData.forEach(({ products, zenAccount }) => {
-    accounts.push(zenAccount)
-    products.forEach(product => { accountsById[product.id] = zenAccount })
-  })
   await Promise.all(accountsData.map(async ({ products, zenAccount }) => {
+    accounts.push(zenAccount)
     if (ZenMoney.isAccountSkipped(zenAccount.id)) {
       return
     }
@@ -33,7 +29,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     }
     if (apiTransactions) {
       apiTransactions.forEach(apiTransaction => {
-        const transaction = convertTransaction(apiTransaction, zenAccount, accountsById)
+        const transaction = convertTransaction(apiTransaction, zenAccount)
         if (transaction) {
           transactions.push(transaction)
         }
@@ -45,6 +41,6 @@ export async function scrape ({ preferences, fromDate, toDate }) {
 
   return {
     accounts: ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId }),
-    transactions
+    transactions: mergeTransfers(transactions)
   }
 }

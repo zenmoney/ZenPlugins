@@ -1,7 +1,4 @@
-import { toZenmoneyTransaction } from '../../../../../common/converters'
 import { convertTransaction } from '../../../converters'
-const convertToReadableTransactionForAccount = apiAccount => apiTransaction => convertTransaction(apiTransaction, apiAccount)
-const convertToZenmoneyTransactionForAccount = accountsByIdLookup => readableTransaction => toZenmoneyTransaction(readableTransaction, accountsByIdLookup)
 
 describe('convertTransaction', () => {
   it('converts incoming payment', () => {
@@ -193,7 +190,7 @@ describe('convertTransaction', () => {
       }
     ]
 
-    const expectedReadableTransactions = [
+    const expectedTransactions = [
       {
         comment: 'Поступление заработной платы/иных выплат Salary согласно реестру № 0000 от 2019-01-25',
         date: new Date('2019-01-25T08:30:14.000Z'),
@@ -256,62 +253,11 @@ describe('convertTransaction', () => {
       }
     ]
 
-    const expectedZenmoneyTransactions = [
-      {
-        id: 'ZLebkT6AwbJw22sE0EwyzPxb2So=',
-        date: new Date('2019-01-25T08:30:14.000Z'),
-        hold: false,
-        income: 4209,
-        incomeAccount: 'account',
-        outcome: 0,
-        outcomeAccount: 'account',
-        comment: 'Поступление заработной платы/иных выплат Salary согласно реестру № 0000 от 2019-01-25'
-      },
-      {
-        id: 'Y/L9vJBRRTH5TkxtzZARhlxifNo=',
-        date: new Date('2019-01-19T14:56:03.000Z'),
-        hold: false,
-        income: 5000,
-        incomeAccount: 'account',
-        outcome: 0,
-        outcomeAccount: 'account',
-        comment: 'Пополнение'
-      },
-      {
-        id: '7tZ8ksFE93dDSUEXE4HAkKpp1Cs=',
-        date: new Date('2019-01-11T21:00:00.000Z'),
-        hold: false,
-        income: 1605.63,
-        incomeAccount: 'account',
-        outcome: 0,
-        outcomeAccount: 'account',
-        comment: 'Зачисление'
-      },
-      {
-        id: '3UJ6lOXY5qBpYrcvoT3eauLgC8w=',
-        date: new Date('2019-03-25T13:41:54.000Z'),
-        hold: false,
-        income: 59.76,
-        incomeAccount: 'account',
-        outcome: 0,
-        outcomeAccount: 'account',
-        comment: 'Зачисление на карту'
-      }
-    ]
-
-    const apiAccount = {
+    const account = {
       id: 'account',
-      zenAccount: {
-        id: 'account'
-      }
+      instrument: 'RUB'
     }
 
-    const readableTransactionConverter = convertToReadableTransactionForAccount(apiAccount)
-    const readableTransactions = apiTransactions.map(readableTransactionConverter)
-    expect(readableTransactions).toEqual(expectedReadableTransactions)
-
-    const zenmoneyTransactionConverter = convertToZenmoneyTransactionForAccount({ [apiAccount.id]: apiAccount })
-    const zenmoneyTransactions = readableTransactions.map(zenmoneyTransactionConverter)
-    expect(zenmoneyTransactions).toEqual(expectedZenmoneyTransactions)
+    expect(apiTransactions.map(apiTransaction => convertTransaction(apiTransaction, account))).toEqual(expectedTransactions)
   })
 })

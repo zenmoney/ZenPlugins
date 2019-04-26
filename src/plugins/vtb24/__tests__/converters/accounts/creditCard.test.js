@@ -84,24 +84,16 @@ describe('convertAccount', () => {
       ]
     }
     expect(convertCardAccount(apiAccount)).toEqual({
-      id: '7D3ABFDFF2024BB79D220FA6B8D4DC77',
-      type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardAccountMto',
       products: [
         {
           id: '7D3ABFDFF2024BB79D220FA6B8D4DC77',
-          type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardAccountMto',
-          apiAccount
+          type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardAccountMto'
         },
         {
           id: 'EE270DFC77F64E39B2EC0445200EB087',
-          type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardMto',
-          apiAccount: apiAccount.cards[0]
+          type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardMto'
         }
       ],
-      cards: [{
-        id: apiAccount.cards[0].id,
-        type: apiAccount.cards[0].__type
-      }],
       zenAccount: {
         id: '7D3ABFDFF2024BB79D220FA6B8D4DC77',
         type: 'ccard',
@@ -246,26 +238,11 @@ describe('convertAccount', () => {
     }
     expect(convertCardAccount(apiAccount)).toEqual(
       {
-        id: '586375B9033E4CC1ACE9DBE6D343A0E7',
-        type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardAccountMto',
         products: [
           {
             id: '586375B9033E4CC1ACE9DBE6D343A0E7',
-            type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardAccountMto',
-            apiAccount
+            type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardAccountMto'
           },
-          {
-            id: '1334A5E71E3249AB9E8ECCE8C6627144',
-            type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardMto',
-            apiAccount: apiAccount.cards[0]
-          },
-          {
-            id: '3041EB1B9E47400E9833D2171B640EC1',
-            type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardMto',
-            apiAccount: apiAccount.cards[1]
-          }
-        ],
-        cards: [
           {
             id: '1334A5E71E3249AB9E8ECCE8C6627144',
             type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardMto'
