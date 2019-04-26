@@ -65,10 +65,14 @@ export async function checkDeviceStatus (deviceID) {
     sanitizeRequestLog: { body: { deviceId: true } }
   }, response => response.status, message => new InvalidPreferencesError('bad request')))
 
-  if (res.body.status === 'ACTIVE') {
-    return res.body.sessionId
+  switch (res.body.status) {
+    case 'ACTIVE':
+      return res.body.sessionId
+    case 'LOCKED':
+      throw new InvalidPreferencesError(res.body.message)
+    default:
+      return null
   }
-  return null
 }
 
 export async function authWithPassportID (deviceID) {
