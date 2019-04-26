@@ -1,7 +1,7 @@
 import { convertApiAbortedTransactionToReadableTransaction, mergeTransfers } from './converters'
 
 const transferOutcome = {
-  accountId: 'test(accountId)',
+  accountId: 'test(accountId1)',
   accountCurrency: 'BYN',
   abortedTransaction: {
     amount: -100,
@@ -15,7 +15,7 @@ const transferOutcome = {
   }
 }
 const transferIncome = {
-  accountId: 'test(accountId)',
+  accountId: 'test(accountId2)',
   accountCurrency: 'USD',
   abortedTransaction: {
     amount: 49.99,
@@ -46,8 +46,8 @@ test('it merges correctly', () => {
   })).toEqual([
     {
       'movements': [
-        { 'id': null, 'account': { 'id': 'test(accountId)' }, 'sum': -100, 'invoice': null, 'fee': 0 },
-        { 'id': null, 'account': { 'id': 'test(accountId)' }, 'sum': 49.99, 'invoice': { sum: +100, instrument: 'BYN' }, 'fee': 0 }
+        { 'id': null, 'account': { 'id': 'test(accountId1)' }, 'sum': -100, 'invoice': null, 'fee': 0 },
+        { 'id': null, 'account': { 'id': 'test(accountId2)' }, 'sum': 49.99, 'invoice': { sum: +100, instrument: 'BYN' }, 'fee': 0 }
       ],
       'date': new Date('2018-01-01T00:00:00+03:00'),
       'hold': true,
