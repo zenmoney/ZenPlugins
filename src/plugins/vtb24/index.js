@@ -20,9 +20,11 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     for (const product of products) {
       try {
         apiTransactions = await fetchTransactions(auth, product, fromDate, toDate)
-        break
+        if (apiTransactions) {
+          break
+        }
       } catch (e) {
-        if (!e.message || !['временно', 'Ошибка обращения'].some(pattern => e.message.indexOf(pattern) >= 0)) {
+        if (!e.message || !['временно', 'Ошибка обращения', '[NER]'].some(pattern => e.message.indexOf(pattern) >= 0)) {
           throw e
         }
       }
