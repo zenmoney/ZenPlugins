@@ -1,4 +1,5 @@
 import { flatMap } from 'lodash'
+import { createDateIntervals as commonCreateDateIntervals } from '../../common/dateUtils'
 import { fetch, fetchJson, parseXml } from '../../common/network'
 import { generateRandomString } from '../../common/utils'
 
@@ -243,21 +244,13 @@ export async function fetchTransactionsAccId (sid, account) {
 
 export function createDateIntervals (fromDate, toDate) {
   const interval = 31 * 24 * 60 * 60 * 1000 // 31 days interval for fetching data
-  const dates = []
-
-  let time = fromDate.getTime()
-  let prevTime = null
-  while (time < toDate.getTime()) {
-    if (prevTime !== null) {
-      dates.push([new Date(prevTime), new Date(time - 1)])
-    }
-
-    prevTime = time
-    time = time + interval
-  }
-  dates.push([new Date(prevTime), toDate])
-
-  return dates
+  const gapMs = 1
+  return commonCreateDateIntervals({
+    fromDate,
+    toDate,
+    addIntervalToDate: date => new Date(date.getTime() + interval - gapMs),
+    gapMs
+  })
 }
 
 function transactionDate (date) {
