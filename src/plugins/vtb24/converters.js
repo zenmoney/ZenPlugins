@@ -285,6 +285,10 @@ export function mergeTransfers (transactions) {
   return transactions
 }
 
+function getInvoice (apiTransaction) {
+  return convertAmount(apiTransaction.transactionAmount)
+}
+
 export function convertTransaction (apiTransaction, account) {
   let amount
   if (apiTransaction.transactionAmountInAccountCurrency && apiTransaction.transactionAmountInAccountCurrency.sum !== 0) {
@@ -296,8 +300,9 @@ export function convertTransaction (apiTransaction, account) {
   if (!amount || amount.sum === 0) {
     return null
   }
+  const invoice = getInvoice(apiTransaction)
+  amount.sum = Math.sign(invoice.sum) * Math.abs(amount.sum)
   const feeAmount = convertAmount(apiTransaction.feeAmount)
-  const invoice = convertAmount(apiTransaction.transactionAmount)
   const transaction = {
     comment: null,
     date: new Date(apiTransaction.transactionDate),
@@ -340,7 +345,7 @@ function parseInnerTransfer (apiTransaction, transaction) {
     const match = apiTransaction.details.match(pattern)
     if (match) {
       console.assert(transaction.movements.length < 2, 'Too much movements', { transaction, apiTransaction })
-      const invoice = convertAmount(apiTransaction.transactionAmount)
+      const invoice = getInvoice(apiTransaction)
       transaction.groupKeys = []
       transaction.movements.push({
         id: null,
@@ -386,7 +391,7 @@ function parseCashTransaction (apiTransaction, transaction) {
   ].some(pattern => apiTransaction.details.indexOf(pattern) >= 0)) {
     return false
   }
-  const invoice = convertAmount(apiTransaction.transactionAmount)
+  const invoice = getInvoice(apiTransaction)
   console.assert(transaction.movements.length < 2, 'Too much movements', { transaction, apiTransaction })
   transaction.movements.push({
     id: null,

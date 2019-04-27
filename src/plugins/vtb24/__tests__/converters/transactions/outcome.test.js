@@ -430,7 +430,7 @@ describe('convertTransaction', () => {
             id: 'rHqO/DOMvX+E12mf0FQg3WkgC/Q=',
             account: { id: 'account' },
             invoice: null,
-            sum: -466.3,
+            sum: 466.3,
             fee: 0
           }
         ]
