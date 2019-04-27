@@ -185,15 +185,20 @@ export function convertDeposit (apiAccount) {
     syncID: [apiAccount.account.number.replace(/[^\d]/g, '')]
   }
   const contractPeriod = apiAccount.contractPeriod || apiAccount.account.contract.contractPeriod
-  switch (contractPeriod.unit.id.toLowerCase()) {
-    case 'month':
-    case 'year':
-    case 'day':
-      zenAccount.endDateOffsetInterval = contractPeriod.unit.id.toLowerCase()
-      zenAccount.endDateOffset = contractPeriod.value
-      break
-    default:
-      console.assert(false, `unsupported loan contract period ${contractPeriod.unit.id}`)
+  if (contractPeriod) {
+    switch (contractPeriod.unit.id.toLowerCase()) {
+      case 'month':
+      case 'year':
+      case 'day':
+        zenAccount.endDateOffsetInterval = contractPeriod.unit.id.toLowerCase()
+        zenAccount.endDateOffset = contractPeriod.value
+        break
+      default:
+        console.assert(false, `unsupported loan contract period ${contractPeriod.unit.id}`)
+    }
+  } else {
+    zenAccount.endDateOffset = 1
+    zenAccount.endDateOffsetInterval = 'year'
   }
   const products = [
     {
