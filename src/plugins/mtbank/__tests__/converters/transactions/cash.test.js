@@ -92,6 +92,45 @@ describe('convertTransaction', () => {
     })
   })
 
+  it('should convert cash withdraw transaction other ATM', () => {
+    const transaction = convertTransaction({
+      accountId: 'BY36MTBK10110008000001111000',
+      amount: '50.0',
+      balance: '',
+      cardPan: '111111******1111',
+      curr: 'BYN',
+      debitFlag: '0',
+      description: 'Выдача наличных',
+      error: '',
+      operationDate: null,
+      orderStatus: '2',
+      place: 'BELGAZPROMBANK            / MINSK        / BY',
+      status: 'A',
+      transAmount: '50.0',
+      transDate: '2019-03-07 13:29:59'
+    }, accounts)
+
+    expect(transaction).toEqual({
+      hold: true,
+      date: new Date('2019-03-07T13:29:59+03:00'),
+      movements: [{
+        id: null,
+        account: { id: '1113333' },
+        sum: -50,
+        fee: 0,
+        invoice: null
+      }, {
+        id: null,
+        account: { company: null, type: 'cash', instrument: 'BYN', syncIds: null },
+        sum: 50,
+        fee: 0,
+        invoice: null
+      }],
+      merchant: null,
+      comment: null
+    })
+  })
+
   it('should convert cash USD withdraw transaction', () => {
     const transaction = convertTransaction({
       accountId: 'BY36MTBK10110008000001111000',
