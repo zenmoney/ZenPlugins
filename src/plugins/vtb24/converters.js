@@ -285,7 +285,17 @@ export function mergeTransfers (transactions) {
 }
 
 function getInvoice (apiTransaction) {
-  return convertAmount(apiTransaction.transactionAmount)
+  let amount
+  if (apiTransaction.transactionAmount &&
+    apiTransaction.transactionAmount.sum === 0 &&
+    apiTransaction.transactionAmountInAccountCurrency &&
+    apiTransaction.transactionAmountInAccountCurrency.sum !== 0 &&
+    apiTransaction.transactionAmountInAccountCurrency.currency.currencyCode === apiTransaction.transactionAmount.currency.currencyCode) {
+    amount = apiTransaction.transactionAmountInAccountCurrency
+  } else {
+    amount = apiTransaction.transactionAmount
+  }
+  return convertAmount(amount)
 }
 
 export function convertTransaction (apiTransaction, account) {
@@ -301,7 +311,6 @@ export function convertTransaction (apiTransaction, account) {
   }
   const invoice = getInvoice(apiTransaction)
   amount.sum = Math.sign(invoice.sum) * Math.abs(amount.sum)
-  const feeAmount = convertAmount(apiTransaction.feeAmount)
   const transaction = {
     comment: null,
     date: new Date(apiTransaction.transactionDate),
@@ -313,7 +322,7 @@ export function convertTransaction (apiTransaction, account) {
         account: { id: account.id },
         invoice: invoice.instrument === account.instrument ? null : invoice,
         sum: amount.instrument === account.instrument ? amount.sum : null,
-        fee: feeAmount ? feeAmount.sum : 0
+        fee: 0
       }
     ]
   }
@@ -455,7 +464,8 @@ export function parsePayee (apiTransaction, transaction) {
         'Пополнение',
         'Зачисление',
         'Списание по карте',
-        'Начисленные %'
+        'Начисленные %',
+        'Комиссия'
       ].some(pattern => new RegExp(pattern).test(apiTransaction.details))
     ) {
       transaction.comment = apiTransaction.details
