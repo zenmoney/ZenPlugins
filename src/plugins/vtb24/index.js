@@ -1,6 +1,7 @@
 import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
 import { fetchAccounts, fetchTransactions, login } from './api'
-import { mergeTransfers, convertAccounts, convertTransaction } from './converters'
+import { mergeTransfers, convertAccounts, convertTransaction, getTransactionId } from './converters'
+import { uniqBy } from 'lodash'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
   toDate = toDate || new Date()
@@ -11,26 +12,26 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   const accountsData = convertAccounts(apiPortfolios)
   const accounts = []
   const transactions = []
-  await Promise.all(accountsData.map(async ({ products, zenAccount }) => {
+  await Promise.all(accountsData.map(async ({ mainProduct, products, zenAccount }) => {
     accounts.push(zenAccount)
     if (ZenMoney.isAccountSkipped(zenAccount.id)) {
       return
     }
-    let apiTransactions = null
-    for (const product of products) {
-      try {
-        apiTransactions = await fetchTransactions(auth, product, fromDate, toDate)
-        if (apiTransactions) {
-          break
-        }
-      } catch (e) {
-        if (!e.message || !['временно', 'Ошибка обращения', '[NER]'].some(pattern => e.message.indexOf(pattern) >= 0)) {
-          throw e
+    let apiTransactions = await fetchTransactions(auth, mainProduct, fromDate, toDate)
+    if (!apiTransactions) {
+      for (const product of products) {
+        const batch = await fetchTransactions(auth, product, fromDate, toDate)
+        if (batch) {
+          if (apiTransactions) {
+            apiTransactions.push(...batch)
+          } else {
+            apiTransactions = batch
+          }
         }
       }
     }
     if (apiTransactions) {
-      apiTransactions.forEach(apiTransaction => {
+      uniqBy(apiTransactions, getTransactionId).forEach(apiTransaction => {
         const transaction = convertTransaction(apiTransaction, zenAccount)
         if (transaction) {
           transactions.push(transaction)

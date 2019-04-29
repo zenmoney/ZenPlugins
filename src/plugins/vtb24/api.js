@@ -280,24 +280,32 @@ function toMoscowDate (date) {
 }
 
 export async function fetchTransactions ({ login, token }, { id, type }, fromDate, toDate) {
-  const sdkData = createSdkData(login)
-  const response = await burlapRequest({
-    sdkData,
-    token,
-    body: {
-      __type: 'ru.vtb24.mobilebanking.protocol.statement.StatementRequest',
-      startDate: new Date(toISODateString(toMoscowDate(fromDate)) + 'T00:00:00+03:00'),
-      endDate: new Date(toISODateString(toMoscowDate(toDate)) + 'T23:59:59+03:00'),
-      products: [
-        {
-          __type: 'ru.vtb24.mobilebanking.protocol.ObjectIdentityMto',
-          id,
-          type
-        }
-      ]
+  let transactions = null
+  try {
+    const sdkData = createSdkData(login)
+    const response = await burlapRequest({
+      sdkData,
+      token,
+      body: {
+        __type: 'ru.vtb24.mobilebanking.protocol.statement.StatementRequest',
+        startDate: new Date(toISODateString(toMoscowDate(fromDate)) + 'T00:00:00+03:00'),
+        endDate: new Date(toISODateString(toMoscowDate(toDate)) + 'T23:59:59+03:00'),
+        products: [
+          {
+            __type: 'ru.vtb24.mobilebanking.protocol.ObjectIdentityMto',
+            id,
+            type
+          }
+        ]
+      }
+    })
+    transactions = response.body.transactions
+  } catch (e) {
+    if (!e.message || !['временно', 'Ошибка обращения', '[NER]'].some(pattern => e.message.indexOf(pattern) >= 0)) {
+      throw e
     }
-  })
-  return response.body.transactions
+  }
+  return transactions
 }
 
 function getCachedObject (object, cache) {
