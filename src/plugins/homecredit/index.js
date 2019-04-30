@@ -124,6 +124,11 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   }
 
   let accounts = accountsData.map(account => account.account)
+
+  if (accounts.length === 0) {
+    throw new Error('Счета не найдены')
+  }
+
   return {
     accounts: accounts,
     transactions: transactions

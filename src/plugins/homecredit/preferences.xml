@@ -24,9 +24,9 @@
 	</EditTextPreference>
 	<EditTextPreference
 			key="pin"
-			title="Пароль"
-			dialogTitle="Пароль"
-			inputType="textPassword"
+			title="Пин-код"
+			dialogTitle="Пин-код"
+			inputType="numberPassword"
 			summary="||****"
 			positiveButtonText="ОК"
 			negativeButtonText="Отмена"
