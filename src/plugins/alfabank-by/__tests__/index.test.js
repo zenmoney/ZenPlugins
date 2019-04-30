@@ -14,7 +14,7 @@ describe('scrape', () => {
 
     const result = await scrape(
       {
-        preferences: { },
+        preferences: { isResident: 'false' },
         fromDate: new Date('2019-01-24T00:00:00.000+03:00'),
         toDate: new Date('2019-01-28T00:00:00.000+03:00')
       }
@@ -205,5 +205,5 @@ function mockZenmoney () {
       'deviceID': '123404df-f99a-4826-1234-a3fb7e5a1234'
     }).methods
   }
-  ZenMoney.readLine = async () => '3111111A111PB1'
+  ZenMoney.readLine = async () => 'Z1234567'
 }

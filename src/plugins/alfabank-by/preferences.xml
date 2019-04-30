@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen>
+    <ListPreference
+        key="isResident"
+        title="Резидент РБ"
+        dialogTitle="Резидент РБ"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        entries="Да|Нет"
+        entryValues="true|false"
+        defaultValue="true"
+        summary="||{@s}">
+    </ListPreference>
     <EditTextPreference
         key="startDate"
         obligatory="true"

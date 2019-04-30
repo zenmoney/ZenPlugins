@@ -39,12 +39,12 @@ function validateResponse (response, predicate, error) {
   }
 }
 
-export async function login () {
+export async function login (isResident) {
   let deviceID = DeviceID()
   let token = ZenMoney.getData('token')
   var sessionID = await checkDeviceStatus(deviceID)
   if (sessionID === null) {
-    await authWithPassportID(deviceID)
+    await authWithPassportID(deviceID, isResident)
     sessionID = await authConfirm(deviceID)
   } else if (!await loginByToken(sessionID, deviceID, token)) {
     throw new TemporaryError('Синхронизация не подключена. Попробуйте подключить ещё раз.')
@@ -75,7 +75,7 @@ export async function checkDeviceStatus (deviceID) {
   }
 }
 
-export async function authWithPassportID (deviceID) {
+export async function authWithPassportID (deviceID, isResident) {
   let passportID = await ZenMoney.readLine('Введите номер паспорта (Формат: 3111111A111PB1)', {
     inputType: 'string',
     time: 120000
@@ -83,22 +83,33 @@ export async function authWithPassportID (deviceID) {
   if (passportID === '') {
     throw new TemporaryError('Не введён номер паспорта. Подключите синхронизацию ещё раз и укажите номер паспорта.')
   }
-  var isResident = false
-  if ((passportID.toLocaleUpperCase().indexOf('PB') >= 0 || // латиница
-    passportID.toLocaleUpperCase().indexOf('РВ') >= 0) && // кирилица
-    passportID.length === 14) {
-    isResident = true
+  var body = {
+    deviceId: deviceID,
+    deviceName: 'ZenMoney Plugin',
+    isResident: isResident,
+    login: passportID.toLocaleUpperCase(),
+    screenHeight: 1794,
+    screenWidth: 1080
   }
-  let res = (await fetchApiJson('Authorization?locale=ru', {
-    method: 'POST',
-    body: {
+  if (passportID.toLocaleUpperCase().search(/[0-9]{7}[AА][0-9]{3}[PBРВ][0-9]/i) === -1 && // латиница и кирилица
+      !isResident) {
+    let issueDate = await ZenMoney.readLine('Введите дату выдачи документа (Формат: ГГГГММДД)', {
+      inputType: 'string',
+      time: 120000
+    })
+    body = {
       deviceId: deviceID,
       deviceName: 'ZenMoney Plugin',
       isResident: isResident,
-      login: passportID.toLocaleUpperCase(),
+      documentNum: passportID.toLocaleUpperCase(),
+      issueDate: issueDate,
       screenHeight: 1794,
       screenWidth: 1080
-    },
+    }
+  }
+  let res = (await fetchApiJson('Authorization?locale=ru', {
+    method: 'POST',
+    body: body,
     sanitizeRequestLog: { body: { deviceId: true, login: true } }
   }, response => response.status, message => new InvalidPreferencesError('bad request')))
   if (res.body.status !== 'OK' && res.body.message) {
@@ -152,7 +163,11 @@ export async function loginByToken (sessionID, deviceID, token) {
     sanitizeRequestLog: { body: { deviceId: true, token: true } }
   }, response => response.status, message => new InvalidPreferencesError('bad request')))
   if (res.body.message) {
-    throw new Error('Ответ банка: ' + res.body.message)
+    const bankMessage = 'Ответ банка: ' + res.body.message
+    if (res.body.message === 'Пароль введен неверно') {
+      throw new InvalidPreferencesError(bankMessage)
+    }
+    throw new Error(bankMessage)
   }
 
   return res.body.status === 'OK'
