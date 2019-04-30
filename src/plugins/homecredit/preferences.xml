@@ -26,7 +26,7 @@
 			key="pin"
 			title="Пароль"
 			dialogTitle="Пароль"
-			inputType="numberPassword"
+			inputType="textPassword"
 			summary="||****"
 			positiveButtonText="ОК"
 			negativeButtonText="Отмена"
