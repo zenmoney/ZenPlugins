@@ -9,7 +9,7 @@
 			summary="||{@s}"
 			positiveButtonText="ОК"
 			negativeButtonText="Отмена"
-			obligatory="true">
+			obligatory="false">
 	</EditTextPreference>
 	<EditTextPreference
 			key="birth"
@@ -20,7 +20,7 @@
 			summary="||{@s}"
 			positiveButtonText="ОК"
 			negativeButtonText="Отмена"
-			obligatory="true">
+			obligatory="false">
 	</EditTextPreference>
 	<EditTextPreference
 			key="pin"
@@ -30,7 +30,7 @@
 			summary="||****"
 			positiveButtonText="ОК"
 			negativeButtonText="Отмена"
-			obligatory="true">
+			obligatory="false">
 	</EditTextPreference>
 	<EditTextPreference
 			key="startDate"
