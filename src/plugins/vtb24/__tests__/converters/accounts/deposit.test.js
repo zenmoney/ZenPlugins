@@ -64,12 +64,11 @@ describe('convertDeposit', () => {
       },
       'details': null
     })).toEqual({
-      'products': [
-        {
-          'id': '28F4CC3688744C4EBC12218F07F4B87E',
-          'type': 'ru.vtb24.mobilebanking.protocol.product.DepositContractMto'
-        }
-      ],
+      mainProduct: {
+        'id': '28F4CC3688744C4EBC12218F07F4B87E',
+        'type': 'ru.vtb24.mobilebanking.protocol.product.DepositContractMto'
+      },
+      'products': [],
       'zenAccount': {
         'balance': 103572.36,
         'capitalization': true,
@@ -147,12 +146,11 @@ describe('convertDeposit', () => {
       contractPeriod: null,
       details: null
     })).toEqual({
-      'products': [
-        {
-          'id': '425BFE3BC7344CF2992DEEAED667B379',
-          'type': 'ru.vtb24.mobilebanking.protocol.product.DepositContractMto'
-        }
-      ],
+      mainProduct: {
+        'id': '425BFE3BC7344CF2992DEEAED667B379',
+        'type': 'ru.vtb24.mobilebanking.protocol.product.DepositContractMto'
+      },
+      products: [],
       'zenAccount': {
         'balance': 84.06,
         'capitalization': true,

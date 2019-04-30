@@ -36,7 +36,6 @@ export function convertTransaction (json, accounts) {
   })
 
   const transaction = {
-    id: json.id ? json.id : null,
     date: parseDate(json.date),
     movements: [ getMovement(json, account) ],
     merchant: null,
@@ -56,7 +55,7 @@ export function convertTransaction (json, accounts) {
 
 function getMovement (json, account) {
   const movement = {
-    id: null,
+    id: json.id || null,
     account: { id: account.id },
     invoice: null,
     sum: json.info.amount.amount,

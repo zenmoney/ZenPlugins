@@ -67,12 +67,11 @@ describe('convertMetalAccount', () => {
 
     const expectedAccounts = [
       {
-        products: [
-          {
-            id: 'A29003298F6C435CB71C359E14B1BB80',
-            type: 'ru.vtb24.mobilebanking.protocol.product.MetalAccountMto'
-          }
-        ],
+        mainProduct: {
+          id: 'A29003298F6C435CB71C359E14B1BB80',
+          type: 'ru.vtb24.mobilebanking.protocol.product.MetalAccountMto'
+        },
+        products: [],
         zenAccount: {
           id: 'A29003298F6C435CB71C359E14B1BB80',
           type: 'checking',
@@ -83,12 +82,11 @@ describe('convertMetalAccount', () => {
         }
       },
       {
-        products: [
-          {
-            id: '868F3B610B04454D81B53F1E3038156E',
-            type: 'ru.vtb24.mobilebanking.protocol.product.MetalAccountMto'
-          }
-        ],
+        mainProduct: {
+          id: '868F3B610B04454D81B53F1E3038156E',
+          type: 'ru.vtb24.mobilebanking.protocol.product.MetalAccountMto'
+        },
+        products: [],
         zenAccount: {
           id: '868F3B610B04454D81B53F1E3038156E',
           type: 'checking',

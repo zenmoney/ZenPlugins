@@ -103,6 +103,7 @@ export function ensureSyncIDsAreUniqueButSanitized ({ accounts, sanitizeSyncId }
 export function parseOuterAccountData (str) {
   if (str) {
     for (const data of [
+      { pattern: 'СБЕРБАНК', account: { type: null, company: { id: '4624' } } },
       { pattern: 'TINKOFF BANK CARD2CARD', account: { type: 'ccard', company: { id: '4902' } } },
       { pattern: 'Тинькофф', account: { type: null, company: { id: '4902' } } },
       { pattern: 'TINKOFF', account: { type: null, company: { id: '4902' } } },
@@ -112,6 +113,7 @@ export function parseOuterAccountData (str) {
       { pattern: 'Яндекс.Деньг', account: { type: null, company: { id: '15420' } } },
       { pattern: 'YANDEX.MONEY', account: { type: null, company: { id: '15420' } } },
       { pattern: 'Рокетбанк', account: { type: null, company: { id: '15444' } } },
+      { pattern: 'Rocketbank.ru Card2Car', account: { type: 'ccard', company: { id: '15444' } } },
       { pattern: 'Home Credit Bank', account: { type: null, company: { id: '4412' } } },
       { pattern: 'HCFB', account: { type: null, company: { id: '4412' } } },
       { pattern: 'C2C R-ONLINE', account: { type: 'ccard', company: { id: '5156' } } },
@@ -119,7 +121,9 @@ export function parseOuterAccountData (str) {
       { pattern: 'QIWI', account: { type: null, company: { id: '15592' } } },
       { pattern: 'MONODirect', account: { type: 'ccard', company: { id: '15620' } } },
       { pattern: 'Приват', account: { type: null, company: { id: '12574' } } },
-      { pattern: 'CREDIT EUROPE BANK', account: { type: null, company: { id: '5165' } } }
+      { pattern: 'CREDIT EUROPE BANK', account: { type: null, company: { id: '5165' } } },
+      { pattern: 'УКРСИББАНК', account: { type: null, company: { id: '15395' } } },
+      { pattern: 'УРАЛСИБ', account: { type: null, company: { id: '4783' } } }
     ]) {
       if (str.toLowerCase().indexOf(data.pattern.toLowerCase()) >= 0) {
         return data.account

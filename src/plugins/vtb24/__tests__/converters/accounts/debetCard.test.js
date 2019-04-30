@@ -264,11 +264,11 @@ describe('convertCardAccount', () => {
     }
 
     expect(convertCardAccount(apiAccount)).toEqual({
+      mainProduct: {
+        id: 'DB799928F58E47ECB12F3F64AF506A67',
+        type: 'ru.vtb24.mobilebanking.protocol.product.DebitCardAccountMto'
+      },
       products: [
-        {
-          id: 'DB799928F58E47ECB12F3F64AF506A67',
-          type: 'ru.vtb24.mobilebanking.protocol.product.DebitCardAccountMto'
-        },
         {
           id: 'B472EA16FA154C5080560D2C7A1285BA',
           type: 'ru.vtb24.mobilebanking.protocol.product.DebitCardMto'

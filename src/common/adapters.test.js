@@ -82,6 +82,48 @@ describe('adaptScrapeToGlobalApi', () => {
       adaptScrapeToGlobalApi(() => Promise.resolve())()
     })).resolves.toMatchObject({ message: '[RUE] scrape() did not return anything' })
   })
+
+  it('should wrap runtime error with [RUE] prefix', () => {
+    return expect(new Promise((resolve, reject) => {
+      global.ZenMoney = {
+        getPreferences: jest.fn(),
+        setResult: err => {
+          if (err.success) {
+            resolve()
+          } else {
+            reject(err)
+          }
+        }
+      }
+      const main = adaptScrapeToGlobalApi(async () => {
+        throw new Error('runtime error message')
+      })
+      main()
+    })).rejects.toThrow('[RUE] runtime error message')
+  })
+
+  it('should pass ZPAPIError as it is', async () => {
+    const expectedError = new TemporaryError('temporary error message')
+    const expectedErrorData = _.pick(expectedError, ['message', 'allowRetry', 'fatal'])
+    const promise = expect(new Promise((resolve, reject) => {
+      global.ZenMoney = {
+        getPreferences: jest.fn(),
+        setResult: err => {
+          if (err.success) {
+            resolve()
+          } else {
+            reject(err)
+          }
+        }
+      }
+      const main = adaptScrapeToGlobalApi(async () => {
+        throw expectedError
+      })
+      main()
+    }))
+    await promise.rejects.toBe(expectedError)
+    await promise.rejects.toMatchObject(expectedErrorData)
+  })
 })
 
 describe('provideScrapeDates', () => {

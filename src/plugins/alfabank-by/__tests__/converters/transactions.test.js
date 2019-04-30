@@ -46,11 +46,10 @@ describe('convertTransaction', () => {
         status: 'NORMAL'
       },
       expectedTransaction: {
-        id: '11113111050111',
         date: new Date('Tue Jan 25 2019 12:27:55 GMT+0300 (Moscow Standard Time)'),
         movements: [
           {
-            id: null,
+            id: '11113111050111',
             account: { id: '6505111' },
             invoice: null,
             sum: -6,
@@ -109,11 +108,10 @@ describe('convertTransaction', () => {
         status: 'NORMAL'
       },
       expectedTransaction: {
-        id: '11113111050111',
         date: new Date('Tue Jan 25 2019 12:27:55 GMT+0300 (Moscow Standard Time)'),
         movements: [
           {
-            id: null,
+            id: '11113111050111',
             account: { id: '6505111' },
             invoice: null,
             sum: -500,
@@ -172,11 +170,10 @@ describe('convertTransaction', () => {
         status: 'NORMAL'
       },
       expectedTransaction: {
-        id: '11113111050111',
         date: new Date('Tue Jan 25 2019 12:27:55 GMT+0300 (Moscow Standard Time)'),
         movements: [
           {
-            id: null,
+            id: '11113111050111',
             account: { id: '6505111' },
             invoice: null,
             sum: -0.99,
@@ -223,11 +220,10 @@ describe('convertTransaction', () => {
         status: 'NORMAL'
       },
       expectedTransaction: {
-        id: '11113111050111',
         date: new Date('Tue Jan 25 2019 12:27:55 GMT+0300 (Moscow Standard Time)'),
         movements: [
           {
-            id: null,
+            id: '11113111050111',
             account: { id: '6505111' },
             invoice: null,
             sum: -7.99,
@@ -279,11 +275,10 @@ describe('convertTransaction', () => {
         status: 'NORMAL'
       },
       expectedTransaction: {
-        id: '11113111050111',
         date: new Date('Tue Jan 25 2019 12:27:55 GMT+0300 (Moscow Standard Time)'),
         movements: [
           {
-            id: null,
+            id: '11113111050111',
             account: { id: '6505111' },
             invoice: null,
             sum: 400,
@@ -331,11 +326,10 @@ describe('convertTransaction', () => {
         showCompensate: false
       },
       expectedTransaction: {
-        id: '11113111050111',
         date: new Date('Tue Jan 25 2019 12:27:55 GMT+0300 (Moscow Standard Time)'),
         movements: [
           {
-            id: null,
+            id: '11113111050111',
             account: { id: '6505111' },
             invoice: {
               instrument: 'USD',
@@ -397,11 +391,10 @@ describe('convertTransaction', () => {
         showCompensate: false
       },
       expectedTransaction: {
-        id: '11113111050111',
         date: new Date('Tue Jan 25 2019 12:27:55 GMT+0300 (Moscow Standard Time)'),
         movements: [
           {
-            id: null,
+            id: '11113111050111',
             account: { id: '6505111' },
             invoice: {
               instrument: 'RUB',

@@ -191,7 +191,7 @@ function parseOuterIncomeTransfer (transaction, apiTransaction, account) {
     return false
   }
   const invoice = transaction.movements[0].invoice || { sum: transaction.movements[0].sum, instrument: account.instrument }
-  const outerAccount = parseOuterAccountData(apiTransaction.to)
+  const outerAccount = apiTransaction.to === 'Сбербанк Онлайн' ? null : parseOuterAccountData(apiTransaction.to)
   transaction.movements.push({
     id: null,
     account: {

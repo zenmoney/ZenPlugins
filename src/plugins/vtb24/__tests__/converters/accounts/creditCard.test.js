@@ -84,11 +84,11 @@ describe('convertAccount', () => {
       ]
     }
     expect(convertCardAccount(apiAccount)).toEqual({
+      mainProduct: {
+        id: '7D3ABFDFF2024BB79D220FA6B8D4DC77',
+        type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardAccountMto'
+      },
       products: [
-        {
-          id: '7D3ABFDFF2024BB79D220FA6B8D4DC77',
-          type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardAccountMto'
-        },
         {
           id: 'EE270DFC77F64E39B2EC0445200EB087',
           type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardMto'
@@ -238,11 +238,11 @@ describe('convertAccount', () => {
     }
     expect(convertCardAccount(apiAccount)).toEqual(
       {
+        mainProduct: {
+          id: '586375B9033E4CC1ACE9DBE6D343A0E7',
+          type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardAccountMto'
+        },
         products: [
-          {
-            id: '586375B9033E4CC1ACE9DBE6D343A0E7',
-            type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardAccountMto'
-          },
           {
             id: '1334A5E71E3249AB9E8ECCE8C6627144',
             type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardMto'
