@@ -26,6 +26,12 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
     }
   )
   const response = await fetchJson(baseUrl + url, options)
+  if (response.body.message && [
+    'Мы заблокировали приложение',
+    'Система недоступна'
+  ].some(str => response.body.message.indexOf(str) >= 0)) {
+    throw new TemporaryError('Ответ банка: ' + response.body.message)
+  }
   if (predicate) {
     validateResponse(response, response => predicate(response), error)
   }
@@ -40,14 +46,12 @@ function validateResponse (response, predicate, error) {
 }
 
 export async function login () {
-  let deviceID = DeviceID()
-  let token = ZenMoney.getData('token')
-  var sessionID = await checkDeviceStatus(deviceID)
-  if (sessionID === null) {
+  const deviceID = DeviceID()
+  const token = ZenMoney.getData('token')
+  let sessionID = await checkDeviceStatus(deviceID)
+  if (sessionID === null || !await loginByToken(sessionID, deviceID, token)) {
     await authWithPassportID(deviceID)
     sessionID = await authConfirm(deviceID)
-  } else if (!await loginByToken(sessionID, deviceID, token)) {
-    throw new TemporaryError('Синхронизация не подключена. Попробуйте подключить ещё раз.')
   }
   return {
     deviceID: deviceID,
@@ -63,13 +67,13 @@ export async function checkDeviceStatus (deviceID) {
       locale: 'ru'
     },
     sanitizeRequestLog: { body: { deviceId: true } }
-  }, response => response.status, message => new InvalidPreferencesError('bad request')))
+  }, response => response.status, message => new Error('bad request')))
 
   switch (res.body.status) {
     case 'ACTIVE':
       return res.body.sessionId
     case 'LOCKED':
-      throw new InvalidPreferencesError(res.body.message)
+      throw new Error(res.body.message)
     default:
       return null
   }
@@ -83,7 +87,7 @@ export async function authWithPassportID (deviceID) {
   if (passportID === '') {
     throw new TemporaryError('Не введён номер паспорта. Подключите синхронизацию ещё раз и укажите номер паспорта.')
   }
-  var isResident = false
+  let isResident = false
   if ((passportID.toLocaleUpperCase().indexOf('PB') >= 0 || // латиница
     passportID.toLocaleUpperCase().indexOf('РВ') >= 0) && // кирилица
     passportID.length === 14) {
@@ -100,13 +104,15 @@ export async function authWithPassportID (deviceID) {
       screenWidth: 1080
     },
     sanitizeRequestLog: { body: { deviceId: true, login: true } }
-  }, response => response.status, message => new InvalidPreferencesError('bad request')))
-  if (res.body.status !== 'OK' && res.body.message) {
-    var errText = 'Ответ банка: ' + res.body.message
-    if (res.body.message === 'Личный номер введен неверно') {
-      throw new InvalidPreferencesError(errText)
+  }, response => response.status, message => new Error('bad request')))
+  if (res.body.status !== 'OK') {
+    if (res.body.message && [
+      'Данные введены неверно',
+      'Личный номер введен неверно'
+    ].some(str => res.body.message.indexOf(str) >= 0)) {
+      throw new TemporaryError('Ответ банка: ' + res.body.message)
     }
-    throw new Error(errText)
+    throw new Error('unexpected response')
   }
 
   return true
@@ -128,7 +134,7 @@ export async function authConfirm (deviceID) {
       tokenType: 'PIN'
     },
     sanitizeRequestLog: { body: { deviceId: true } }
-  }, response => response.status, message => new InvalidPreferencesError('bad request')))
+  }, response => response.status, message => new Error('bad request')))
   if (res.body.status !== 'OK' && res.body.message) {
     throw new TemporaryError('Ответ банка: ' + res.body.message)
   }
@@ -150,9 +156,13 @@ export async function loginByToken (sessionID, deviceID, token) {
       tokenType: 'PIN'
     },
     sanitizeRequestLog: { body: { deviceId: true, token: true } }
-  }, response => response.status, message => new InvalidPreferencesError('bad request')))
+  }, response => response.status, message => new Error('bad request')))
   if (res.body.message) {
-    throw new Error('Ответ банка: ' + res.body.message)
+    if (![
+      'Пароль введен неверно'
+    ].some(str => res.body.message.indexOf(str) >= 0)) {
+      throw new Error('unexpected response')
+    }
   }
 
   return res.body.status === 'OK'
@@ -169,7 +179,7 @@ export async function fetchAccounts (deviceID, sessionID) {
       deviceId: deviceID
     },
     sanitizeRequestLog: { body: { deviceId: true } }
-  }, response => response.status, message => new InvalidPreferencesError('bad request')))
+  }, response => response.status, message => new Error('bad request')))
   if (res.body.shortcuts && res.body.shortcuts.length > 0) {
     return res.body.shortcuts
   }
@@ -187,11 +197,11 @@ export async function fetchAccountInfo (sessionID, accountId) {
       id: accountId,
       operationSource: 'DESKTOP'
     }
-  }, response => response.status, message => new InvalidPreferencesError('bad request')))
+  }, response => response.status, message => new Error('bad request')))
   if (res.body.iban) {
     return res.body
   }
-  throw new Error('Ответ банка: ' + res.body.message)
+  throw new Error('unexpected response')
 }
 
 export async function fetchTransactions (sessionID, accounts, fromDate) {
