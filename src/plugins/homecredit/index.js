@@ -95,7 +95,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   } else {
     // Авторизация в приложении "Мой кредит" ===================================
     if (!preferences.birth || !preferences.phone || !preferences.pin) {
-      throw new InvalidPreferencesError('Необходимо заполнить параметры подключения к банку хотя бы для одного из способов авторизации')
+      throw new InvalidPreferencesError('Необходимо заполнить параметры подключения к банку')
     }
 
     const newConn = ZenMoney.getData('auth', null) === null
