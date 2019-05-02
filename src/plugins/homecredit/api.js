@@ -1,5 +1,5 @@
 import { parseStartDateString } from '../../common/adapters'
-import * as Network from '../../common/network'
+import { fetchJson } from '../../common/network'
 import _ from 'lodash'
 
 const myCreditUrl = 'https://mob.homecredit.ru/mycredit'
@@ -50,7 +50,7 @@ export async function authBase (deviceId, login, password, code) {
   if (code) {
     args.code = code
   }
-  const response = await fetchJson(`${baseUri}/LoginService`, {
+  const response = await fetchApiJson(`${baseUri}/LoginService`, {
     log: true,
     method: 'POST',
     body: {
@@ -77,7 +77,7 @@ async function registerMyCreditDevice (auth, preferences) {
 
   console.log('>>> Регистрация устройства [Мой кредит] ===============================================')
   auth.device = getDeviceId()
-  let response = await fetchJson('Account/Register', {
+  let response = await fetchApiJson('Account/Register', {
     API: 4,
     headers: {
       ...defaultMyCreditHeaders,
@@ -95,7 +95,7 @@ async function registerMyCreditDevice (auth, preferences) {
   })
 
   auth.key = response.body.Result.PrivateKey
-  response = await fetchJson('Sms/SendSmsCode', {
+  response = await fetchApiJson('Sms/SendSmsCode', {
     API: 4,
     method: 'POST',
     headers: {
@@ -115,7 +115,11 @@ async function registerMyCreditDevice (auth, preferences) {
   const result = await checkUserPin(auth, preferences)
 
   //  запрос доступа к дебетовым продуктам
-  await levelUp(auth)
+  if (_.get(result, 'body.Result.ClientDataResult.LevelUpAvailable') > 0) {
+    await levelUp(auth)
+  } else {
+    console.log('>>> LevelUp не доступен')
+  }
 
   return result
 }
@@ -130,7 +134,7 @@ async function readSmsCode (auth, readlineTitle = 'Введите код из С
     })
     if (!code || !code.trim()) { throw new TemporaryError('Получен пустой код') }
 
-    response = await fetchJson('Sms/ValidateSmsCode', {
+    response = await fetchApiJson('Sms/ValidateSmsCode', {
       API: 4,
       headers: {
         ...defaultMyCreditHeaders,
@@ -163,7 +167,7 @@ async function checkUserPin (auth, preferences, onErrorCallback = null) {
   }
   if (auth.token) { headers['X-Auth-Token'] = auth.token }
 
-  let response = await fetchJson('Pin/CheckUserPin', {
+  let response = await fetchApiJson('Pin/CheckUserPin', {
     API: 4,
     ignoreErrors: !!onErrorCallback,
     headers: {
@@ -203,11 +207,12 @@ async function checkUserPin (auth, preferences, onErrorCallback = null) {
 }
 
 async function levelUp (auth) {
+  console.log('>>> LevelUp для доступа к дебетовым продуктам...')
   const codeWord = await ZenMoney.readLine('Если у вас есть дебетовые счета или депозиты, введите кодовое слово. Или оставьте поле пустым, если достаточно загрузки кредитных продуктов.', {
     time: 120000,
     inputType: 'password'
   })
-  const response = await fetchJson('Client/LevelUp', {
+  const response = await fetchApiJson('Client/LevelUp', {
     API: 4,
     headers: {
       ...defaultMyCreditHeaders,
@@ -229,7 +234,7 @@ async function levelUp (auth) {
 
 export async function fetchBaseAccounts () {
   console.log('>>> Загрузка списка счетов [Базовый] =======================================')
-  const response = await fetchJson(`${baseUri}/ProductService`, {
+  const response = await fetchApiJson(`${baseUri}/ProductService`, {
     log: true,
     method: 'POST',
     body: {
@@ -296,7 +301,7 @@ export async function fetchBaseAccounts () {
       }
       if (methodName) {
         console.log(`>>> Загрузка деталей '${account.productName}' (${getCardNumber(account.cardNumber)}) [Базовый] --------------------`)
-        const response = await fetchJson(`${baseUri}/ProductService`, {
+        const response = await fetchApiJson(`${baseUri}/ProductService`, {
           log: true,
           method: 'POST',
           body: {
@@ -327,7 +332,7 @@ export async function fetchBaseAccounts () {
 // загрузка списка счетов в "Мой кредит"
 export async function fetchMyCreditAccounts (auth) {
   console.log('>>> Загрузка списка счетов [Мой кредит] =========================================')
-  const response = await fetchJson('Product/GetClientProducts', {
+  const response = await fetchApiJson('Product/GetClientProducts', {
     API: 0,
     headers: {
       ...defaultMyCreditHeaders,
@@ -364,7 +369,7 @@ export async function fetchMyCreditAccounts (auth) {
       const account = fetchedAccounts.CreditLoan[key]
 
       console.log(`>>> Загрузка информации по кредиту '${account.ProductName}' (${account.AccountNumber}) [Мой кредит] --------`)
-      await fetchJson('Payment/GetProductDetails', {
+      await fetchApiJson('Payment/GetProductDetails', {
         headers: {
           ...defaultMyCreditHeaders,
           'X-Device-Ident': auth.device,
@@ -380,7 +385,7 @@ export async function fetchMyCreditAccounts (auth) {
         }
       })
 
-      const response = await fetchJson('https://api-myc.homecredit.ru/api/v1/prepayment', {
+      const response = await fetchApiJson('https://api-myc.homecredit.ru/api/v1/prepayment', {
         headers: {
           ...defaultMyCreditHeaders,
           'X-Device-Ident': auth.device,
@@ -439,7 +444,7 @@ export async function fetchBaseTransactions (accountData, type, fromDate, toDate
   let from = getDate(fromDate || (fromDate.setDate(fromDate.getDate() - 7))).getTime()
   let to = getDate(toDate || new Date()).getTime()
   while (true) {
-    const response = await fetchJson(`${baseUri}/ProductService`, {
+    const response = await fetchApiJson(`${baseUri}/ProductService`, {
       log: true,
       method: 'POST',
       body: {
@@ -527,7 +532,7 @@ export async function fetchMyCreditTransactions (auth, accountData, fromDate, to
     return []
   }
 
-  const response = await fetchJson(`https://ib.homecredit.ru/rest/${type}/transactions`, {
+  const response = await fetchApiJson(`https://ib.homecredit.ru/rest/${type}/transactions`, {
     ignoreErrors: true,
     headers: {
       ...defaultMyCreditHeaders,
@@ -543,7 +548,7 @@ export async function fetchMyCreditTransactions (auth, accountData, fromDate, to
   return response.body.values
 }
 
-async function fetchJson (url, options, predicate) {
+async function fetchApiJson (url, options, predicate) {
   if (url.substr(0, 4) !== 'http') {
     const api = options.API ? parseInt(options.API, 10) : 0
     const apiStr = api > 0 ? `/v${api}` : ''
@@ -551,7 +556,7 @@ async function fetchJson (url, options, predicate) {
   }
   let response
   try {
-    response = await Network.fetchJson(url, {
+    response = await fetchJson(url, {
       method: options.method || 'POST',
       ..._.omit(options, ['API']),
       sanitizeRequestLog: {
