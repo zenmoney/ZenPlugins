@@ -21,10 +21,7 @@ const defaultArgumentsForAuth = {
   'systemVersion': '5.1.1'
 }
 
-let myCreditAuth // авторизация в "Мой кредит"
 export async function authMyCredit (preferences) {
-  if (myCreditAuth) return myCreditAuth
-
   const auth = ZenMoney.getData('auth', null) || {}
   if (!auth || !auth.device || !auth.key || !auth.token || !auth.phone) {
     auth.phone = (preferences.phone || '').trim()
@@ -32,42 +29,13 @@ export async function authMyCredit (preferences) {
   }
 
   console.log('>>> Авторизация [Мой кредит] ========================================================')
-  let response = await fetchJson('Pin/CheckUserPin', {
-    API: 4,
-    ignoreErrors: true,
-    headers: {
-      ...defaultMyCreditHeaders,
-      'X-Device-Ident': auth.device,
-      'X-Private-Key': auth.key,
-      'X-Phone-Number': auth.phone,
-      'X-Auth-Token': auth.token
-    },
-    body: {
-      'Pin': (preferences.pin || '').trim()
-    },
-    sanitizeRequestLog: { body: { 'Pin': true } }
-  })
-
-  if (response.body.StatusCode !== 200) {
-    console.log('Нужна повторная регистрация.')
-    registerMyCreditDevice(auth, preferences)
-    return
-  }
-
-  const isValidPin = response.body.Result.IsPinValid
-  if (!isValidPin) { throw new InvalidPreferencesError("Пин-код не верен. Укажите код, заданный вами в приложении банка 'Мой кредит'.") }
-
-  auth.token = response.headers['x-auth-token']
-  ZenMoney.setData('auth', auth)
-  myCreditAuth = auth
-  return myCreditAuth
+  const result = await checkUserPin(auth, preferences, registerMyCreditDevice)
+  return result
 }
 
 export async function authBase (deviceId, login, password, code) {
   console.log('>>> Авторизация [Базовый] ======================================================')
-  // let isNewDevice = false
   if (!deviceId) {
-    // isNewDevice = true
     deviceId = getDeviceId()
   }
 
@@ -169,21 +137,51 @@ async function registerMyCreditDevice (auth, preferences) {
   if (!isValidSms) { throw new TemporaryError("Пароль не верен. Не удалось зарегистрировать устройство в приложении 'Мой кредит'") }
   if (!isPinCreated) { throw new TemporaryError("Необходимо пройти регистрацию в приложении 'Мой кредит', чтобы установить пин-код для входа") }
 
-  response = await fetchJson('Pin/CheckUserPin', {
+  const result = await checkUserPin(auth, preferences)
+  return result
+}
+
+async function checkUserPin (auth, preferences, onErrorCallback = null) {
+  const headers = {
+    'X-Device-Ident': auth.device,
+    'X-Private-Key': auth.key,
+    'X-Phone-Number': auth.phone
+  }
+  if (auth.token) { headers['X-Auth-Token'] = auth.token }
+
+  const response = await fetchJson('Pin/CheckUserPin', {
     API: 4,
+    ignoreErrors: !!onErrorCallback,
     headers: {
       ...defaultMyCreditHeaders,
-      'X-Device-Ident': auth.device,
-      'X-Private-Key': auth.key,
-      'X-Phone-Number': auth.phone
+      ...headers
     },
     body: {
       'Pin': (preferences.pin || '').trim()
     },
-    sanitizeRequestLog: { body: { 'Pin': true } }
+    sanitizeRequestLog: {
+      body: {
+        'Pin': true
+      }
+    }
   })
-  const isValidPin = response.body.Result.IsPinValid
-  if (!isValidPin) { throw new TemporaryError("Пин-код не верен. Укажите код, заданный вами в приложении 'Мой кредит'.") }
+
+  if (onErrorCallback && response.body.StatusCode !== 200) {
+    auth = await onErrorCallback(auth, preferences)
+    return auth
+  }
+
+  let isValidPin = response.body.Result.IsPinValid
+  if (response.body.Errors) {
+    response.body.Errors.forEach(function (error) {
+      if (error.indexOf('еверный код') > 0) { isValidPin = false }
+    })
+  }
+  if (!isValidPin) {
+    throw new InvalidPreferencesError("Пин-код не верен. Укажите код, заданный вами в приложении банка 'Мой кредит'.")
+  }
+
+  console.assert(response.headers['x-auth-token'], 'Не найден токен доступа к банку')
   auth.token = response.headers['x-auth-token']
 
   /* const codeDebet = await ZenMoney.readLine("Введите кодовое слово для загрузки дебетовых продуктов через приложение 'Мой кредит'. Или пустое значение, если дебетовые продукты загружать не нужно.", {
@@ -207,6 +205,7 @@ async function registerMyCreditDevice (auth, preferences) {
   auth.token = response.headers['x-auth-token'] */
 
   ZenMoney.setData('auth', auth)
+
   return auth
 }
 
