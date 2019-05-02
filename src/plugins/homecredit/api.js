@@ -5,9 +5,10 @@ import _ from 'lodash'
 const myCreditUrl = 'https://mob.homecredit.ru/mycredit'
 const baseUri = 'https://ib.homecredit.ru/mobile/remoting'
 const defaultMyCreditHeaders = {
-  '_ver_': '3.10.0',
+  '_ver_': '4.3.2',
   '_os_': 1,
-  'business_process': 'register'
+  'business_process': 'register',
+  'Host': 'mob.homecredit.ru'
 }
 const defaultBaseHeaders = {
   'Host': 'ib.homecredit.ru',
@@ -25,7 +26,8 @@ export async function authMyCredit (preferences) {
   const auth = ZenMoney.getData('auth', null) || {}
   if (!auth || !auth.device || !auth.key || !auth.token || !auth.phone) {
     auth.phone = (preferences.phone || '').trim()
-    return registerMyCreditDevice(auth, preferences)
+    const result = await registerMyCreditDevice(auth, preferences)
+    return result
   }
 
   console.log('>>> Авторизация [Мой кредит] ========================================================')
@@ -104,15 +106,29 @@ async function registerMyCreditDevice (auth, preferences) {
     }
   })
 
-  let isPinCreated
-  let isValidSms
-  let readlineTitle = "Введите пароль из СМС для регистрации в приложении 'Мой кредит'"
+  // подтверждение кодом из СМС
+  response = await readSmsCode(auth, "Введите код из СМС для регистрации в приложении 'Мой кредит'")
+  if (!response.body.Result.IsUserPinCodeCreated) {
+    throw new TemporaryError("Необходимо пройти регистрацию в приложении 'Мой кредит', чтобы установить пин-код для входа")
+  }
+
+  const result = await checkUserPin(auth, preferences)
+
+  //  запрос доступа к дебетовым продуктам
+  await levelUp(auth)
+
+  return result
+}
+
+async function readSmsCode (auth, readlineTitle = 'Введите код из СМС') {
+  let response
+  let isValidSms = false
   for (let i = 0; i < 3; i++) {
     const code = await ZenMoney.readLine(readlineTitle, {
       time: 120000,
       inputType: 'number'
     })
-    if (!code || !code.trim()) { throw new TemporaryError('Получен пустой пароль') }
+    if (!code || !code.trim()) { throw new TemporaryError('Получен пустой код') }
 
     response = await fetchJson('Sms/ValidateSmsCode', {
       API: 4,
@@ -128,17 +144,15 @@ async function registerMyCreditDevice (auth, preferences) {
       sanitizeRequestLog: { body: { 'SmsCode': true } }
     })
 
-    isPinCreated = response.body.Result.IsUserPinCodeCreated
     isValidSms = response.body.Result.IsValidSmsCode
     if (isValidSms) { break }
 
-    readlineTitle = 'Пароль не верен. Попытка #' + (i + 2)
+    readlineTitle = 'Код не верен. Попытка #' + (i + 2)
   }
-  if (!isValidSms) { throw new TemporaryError("Пароль не верен. Не удалось зарегистрировать устройство в приложении 'Мой кредит'") }
-  if (!isPinCreated) { throw new TemporaryError("Необходимо пройти регистрацию в приложении 'Мой кредит', чтобы установить пин-код для входа") }
 
-  const result = await checkUserPin(auth, preferences)
-  return result
+  if (!isValidSms) { throw new TemporaryError("Код не верен. Не удалось зарегистрировать устройство в приложении 'Мой кредит'") }
+
+  return response
 }
 
 async function checkUserPin (auth, preferences, onErrorCallback = null) {
@@ -149,7 +163,7 @@ async function checkUserPin (auth, preferences, onErrorCallback = null) {
   }
   if (auth.token) { headers['X-Auth-Token'] = auth.token }
 
-  const response = await fetchJson('Pin/CheckUserPin', {
+  let response = await fetchJson('Pin/CheckUserPin', {
     API: 4,
     ignoreErrors: !!onErrorCallback,
     headers: {
@@ -183,12 +197,17 @@ async function checkUserPin (auth, preferences, onErrorCallback = null) {
 
   console.assert(response.headers['x-auth-token'], 'Не найден токен доступа к банку')
   auth.token = response.headers['x-auth-token']
+  ZenMoney.setData('auth', auth)
 
-  /* const codeDebet = await ZenMoney.readLine("Введите кодовое слово для загрузки дебетовых продуктов через приложение 'Мой кредит'. Или пустое значение, если дебетовые продукты загружать не нужно.", {
+  return auth
+}
+
+async function levelUp (auth) {
+  const codeWord = await ZenMoney.readLine('Если у вас есть дебетовые счета или депозиты, введите кодовое слово. Или оставьте поле пустым, если достаточно загрузки кредитных продуктов.', {
     time: 120000,
     inputType: 'password'
   })
-  response = await fetchJson('Client/LevelUp', {
+  const response = await fetchJson('Client/LevelUp', {
     API: 4,
     headers: {
       ...defaultMyCreditHeaders,
@@ -198,15 +217,14 @@ async function checkUserPin (auth, preferences, onErrorCallback = null) {
       'X-Phone-Number': auth.phone
     },
     body: {
-      'CodeWord': '' // codeDebet.trim().upperCase()
+      'CodeWord': codeWord.trim().toUpperCase()
     },
     sanitizeRequestLog: { body: { 'CodeWord': true } }
   })
-  auth.token = response.headers['x-auth-token'] */
 
-  ZenMoney.setData('auth', auth)
-
-  return auth
+  if (response.body.Result.IsSmsNeeding) {
+    await readSmsCode(auth, 'Введите код из СМС для загрузки данных')
+  }
 }
 
 export async function fetchBaseAccounts () {
@@ -570,7 +588,15 @@ async function fetchJson (url, options, predicate) {
     if (response.body.Errors && _.isArray(response.body.Errors) && response.body.Errors.length > 0) {
       const message = getErrorMessage(response.body.Errors)
       if (message) {
-        if (message.indexOf('повторите попытку') + 1 || message.indexOf('еще раз') + 1) { throw new TemporaryError(message) } else if (message.indexOf('роверьте дату рождения') + 1) { throw new InvalidPreferencesError(message) } else { throw new Error('Ответ банка: ' + message) }
+        if (/.*(?:повтори\w+ попытк|еще раз|еверн\w+ код|ревышено колич).*/i.test(message)) {
+          throw new TemporaryError(message)
+        } else {
+          if (message.indexOf('роверьте дату рождения') + 1) {
+            throw new InvalidPreferencesError(message)
+          } else {
+            throw new Error('Ответ банка: ' + message)
+          }
+        }
       }
     } else if (response.body.success === false) {
       const message = response.body.errorResponseMo.errorMsg
