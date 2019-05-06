@@ -44,7 +44,9 @@ function getAccountDetails (apiAccount, type) {
 }
 
 function convertCard (account) {
-  const cardNumber = account.cardNumber || account.mainCardNumber || account.CardNumber || account.MainCardNumber
+  const cardNumber = account.cardNumber || account.mainCardNumber || // BaseeApp
+    account.CardNumber || account.MainCardNumber || // MyCredit
+    account.maskCardNumber // MyCreditDebit
   const result = {
     id: account.contractNumber || account.ContractNumber,
     type: 'ccard',

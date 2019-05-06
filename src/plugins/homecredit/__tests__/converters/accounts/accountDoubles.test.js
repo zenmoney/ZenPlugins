@@ -1,6 +1,7 @@
 import { convertAccount } from '../../../converters'
 
 describe('convertAccount', () => {
+  const accountType = 'CreditCardTW'
   const apiAccounts = [
     {
       '$id': '3',
@@ -210,7 +211,7 @@ describe('convertAccount', () => {
         'creditLimit': 150000,
         'id': '2258773215',
         'instrument': 'RUB',
-        'syncID': '4449',
+        'syncID': '1234',
         'title': 'Карта Рассрочки',
         'type': 'ccard'
       },
@@ -228,7 +229,7 @@ describe('convertAccount', () => {
         'creditLimit': 150000,
         'id': '2258773215',
         'instrument': 'RUB',
-        'syncID': '4449',
+        'syncID': '1234',
         'title': 'Карта Рассрочки - неименная',
         'type': 'ccard'
       },
@@ -252,7 +253,7 @@ describe('convertAccount', () => {
 
   it(`converts CreditCardTW #2 account`, () => {
     expect(convertAccount(
-      apiAccounts[1], 'CreditCardTW'
+      apiAccounts[1], accountType
     )).toEqual(
       zenAccounts[1]
     )

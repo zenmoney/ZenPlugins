@@ -177,6 +177,12 @@ async function checkUserPin (auth, preferences, onErrorCallback = null) {
       ...headers
     },
     body: {
+      'ClientData': {
+        'Location': {
+          'Latitude': 0.0,
+          'Longitude': 0.0
+        }
+      },
       'Pin': (preferences.pin || '').trim()
     },
     sanitizeRequestLog: { body: { 'Pin': true } },
@@ -268,16 +274,21 @@ async function levelUp (auth, codewordOnly) {
     })
   }
 
-  if (response) {
-    const error = getErrorMessage(response.body.Errors)
-    if (error) {
-      throw new InvalidPreferencesError(error)
-    } else {
-      if (_.get(response.body, 'Result.IsSmsNeeding') === true) {
-        await readSmsCode(auth, 'Введите код из СМС для загрузки данных')
-      }
+  console.assert(_.get(response, 'body.Errors'), 'Ошибка авторизации (LevelUp)')
+  const error = getErrorMessage(response.body.Errors)
+  if (error) {
+    throw new InvalidPreferencesError(error)
+  } else {
+    if (_.get(response.body, 'Result.IsSmsNeeding') === true) {
+      await readSmsCode(auth, 'Введите код из СМС для загрузки данных')
     }
   }
+
+  if (response.body.StatusCode === 200) {
+    auth.levelup = true
+  }
+
+  return auth
 }
 
 export async function fetchBaseAccounts () {
@@ -396,10 +407,60 @@ export async function fetchMyCreditAccounts (auth) {
 
   const fetchedAccounts = _.pick(response.body.Result, ['CreditCard', 'CreditCardTW', 'CreditLoan'])
 
+  if (auth.levelup) {
+    let response = await fetchApiJson('Transaction/GetApprovalContracts', {
+      API: 0,
+      headers: {
+        ...defaultMyCreditHeaders,
+        'X-Device-Ident': auth.device,
+        'X-Private-Key': auth.key,
+        'X-Phone-Number': auth.phone,
+        'X-Auth-Token': auth.token
+      },
+      body: {
+        'ApprovalContractsType': 3
+      }
+    })
+
+    response = await fetchApiJson('https://api-myc.homecredit.ru/decard/v2/debitcards', { // ?useCache=true
+      method: 'GET',
+      headers: {
+        ...defaultMyCreditHeaders,
+        'Authorization': 'Bearer ' + auth.token,
+        'X-Device-Ident': auth.device,
+        'X-Private-Key': auth.key,
+        'X-Phone-Number': auth.phone,
+        'X-Auth-Token': auth.token,
+        'Host': 'api-myc.homecredit.ru'
+      }
+    })
+    if (response.status === 200) {
+      if (response.body.debitCards) { fetchedAccounts.debitCards = response.body.debitCards }
+
+      response = await fetchApiJson('https://api-myc.homecredit.ru/deposito/v1/deposits?typeFilter=FIXED&stateFilter=ALL&useCache=true', {
+        method: 'GET',
+        headers: {
+          ...defaultMyCreditHeaders,
+          'Authorization': 'Bearer ' + auth.token,
+          'X-Device-Ident': auth.device,
+          'X-Private-Key': auth.key,
+          'X-Phone-Number': auth.phone,
+          'X-Auth-Token': auth.token,
+          'Host': 'api-myc.homecredit.ru'
+        }
+      })
+      if (response.body.accounts) { fetchedAccounts.accounts = response.body.accounts }
+    } else {
+      console.log('>>> !!! Не удалось пройти авторизацию. Загрузка дебетовых продуктов пропущена.')
+    }
+  }
+
   // удаляем не нужные счета
   _.forEach(Object.keys(fetchedAccounts), function (key) {
     _.remove(fetchedAccounts[key], function (elem) {
-      if (elem.ContractStatus > 1) {
+      if ((!elem.ContractStatus || elem.ContractStatus > 1) &&
+        (!elem.contractStatus || !_.includes(['Действующий', 'Active'], elem.contractStatus) === false) &&
+        (!elem.status || elem.status !== 'ACTIVE')) {
         console.log(`>>> Счёт "${elem.ProductName}" не активен. Пропускаем...`)
         return true
       }
