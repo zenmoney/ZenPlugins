@@ -1,27 +1,27 @@
-export function convertAccount (account, type) {
+export function convertAccount (apiAccount, type) {
   const accountData = {}
   switch (type) {
     // кредитные карты
     case 'CreditCard': // MyCredit
     case 'creditCards': // Base
-      accountData.account = convertCard(account)
+      accountData.account = convertCard(apiAccount)
       break
 
       // карты рассрочки
     case 'CreditCardTW': // MyCredit
     case 'merchantCards': // Base
-      accountData.account = convertCardTW(account)
+      accountData.account = convertCardTW(apiAccount)
       break
 
       // дебетовые карты
     case 'debitCards': // Base
-      accountData.account = convertCard(account)
+      accountData.account = convertCard(apiAccount)
       break
 
       // кредиты
     case 'CreditLoan': // MyCredit
     case 'credits': // Base
-      accountData.account = convertLoan(account)
+      accountData.account = convertLoan(apiAccount)
       break
 
       // депозиты
@@ -29,17 +29,17 @@ export function convertAccount (account, type) {
     default:
       break
   }
-  accountData.details = getAccountDetails(account, type)
+  accountData.details = getAccountDetails(apiAccount, type)
   return accountData
 }
 
-function getAccountDetails (account, type) {
+function getAccountDetails (apiAccount, type) {
   return {
     type: type,
-    title: account.productName || account.ProductName,
-    accountNumber: account.accountNumber || account.AccountNumber,
-    cardNumber: account.cardNumber || account.mainCardNumber || account.CardNumber || account.MainCardNumber,
-    contractNumber: account.ContractNumber || account.contractNumber
+    title: apiAccount.productName || apiAccount.ProductName,
+    accountNumber: apiAccount.accountNumber || apiAccount.AccountNumber,
+    cardNumber: apiAccount.cardNumber || apiAccount.mainCardNumber || apiAccount.CardNumber || apiAccount.MainCardNumber,
+    contractNumber: apiAccount.ContractNumber || apiAccount.contractNumber
   }
 }
 

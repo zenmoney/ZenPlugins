@@ -107,6 +107,15 @@ export async function scrape ({ preferences, fromDate, toDate }) {
       return Promise.all(fetchedAccounts[type].map(async account => Converters.convertAccount(account, type)))
     })))
 
+    // объединим карты одного счёта
+    /* _.map(_.groupBy(accountsData, "account.id"), function (vals, id) {
+      return _.reduce(vals, function (m, o) {
+        for (var p in o) {
+          if ()
+        }
+      })
+    }) */
+
     // фикс поступлений сегодняшнего дня (чтобы не создавать лишних корректировок)
     // если в текущих сутках были поступления, баланс счёта передаём только для нового подключения
     transactions = await Promise.all(accountsData.map(async accountData => {

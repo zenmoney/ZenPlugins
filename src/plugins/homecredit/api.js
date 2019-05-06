@@ -23,7 +23,7 @@ const defaultArgumentsForAuth = {
 }
 
 export async function authMyCredit (preferences) {
-  const auth = ZenMoney.getData('auth', null) || {}
+  let auth = ZenMoney.getData('auth', null) || {}
   if (!auth || !auth.device || !auth.key || !auth.token || !auth.phone) {
     auth.phone = (preferences.phone || '').trim()
     const result = await registerMyCreditDevice(auth, preferences)
@@ -31,8 +31,7 @@ export async function authMyCredit (preferences) {
   }
 
   console.log('>>> Авторизация [Мой кредит] ========================================================')
-  const result = await checkUserPin(auth, preferences, registerMyCreditDevice)
-  return result
+  return (await checkUserPin(auth, preferences, registerMyCreditDevice)).auth
 }
 
 export async function authBase (deviceId, login, password, code) {
@@ -91,7 +90,7 @@ async function registerMyCreditDevice (auth, preferences) {
       'ScreenSizeType': 4
     },
     sanitizeRequestLog: { body: { 'BirthDate': true, 'PhoneNumber': true } },
-    sanitizeResponseLog: { body: { Result: true } }
+    sanitizeResponseLog: { body: { 'Result': { 'PrivateKey': true } } }
   })
 
   auth.key = response.body.Result.PrivateKey
@@ -114,14 +113,17 @@ async function registerMyCreditDevice (auth, preferences) {
 
   const result = await checkUserPin(auth, preferences)
 
-  //  запрос доступа к дебетовым продуктам
-  if (_.get(result, 'body.Result.ClientDataResult.LevelUpAvailable') > 0) {
-    await levelUp(auth)
-  } else {
-    console.log('>>> LevelUp не доступен')
+  //  запрос доступа к дебетовым продуктам (LevelUp)
+  if (result.response.body.Result.ClientDataResult) {
+    const data = result.response.body.Result.ClientDataResult
+    if (data.LevelUpAvailable === 0 && (data.HasDC || data.HasDeposits)) {
+      await levelUp(auth, data.CodewordOnlyLevelUp)
+    } else {
+      console.log('>>> LevelUp не требуется')
+    }
   }
 
-  return result
+  return result.auth
 }
 
 async function readSmsCode (auth, readlineTitle = 'Введите код из СМС') {
@@ -177,16 +179,16 @@ async function checkUserPin (auth, preferences, onErrorCallback = null) {
     body: {
       'Pin': (preferences.pin || '').trim()
     },
-    sanitizeRequestLog: {
-      body: {
-        'Pin': true
-      }
-    }
+    sanitizeRequestLog: { body: { 'Pin': true } },
+    sanitizeResponseLog: { body: { 'Result': { 'ClientDataResult': { 'FirstName': true } } } }
   })
 
   if (onErrorCallback && response.body.StatusCode !== 200) {
     auth = await onErrorCallback(auth, preferences)
-    return auth
+    return {
+      auth,
+      response
+    }
   }
 
   let isValidPin = response.body.Result.IsPinValid
@@ -203,32 +205,78 @@ async function checkUserPin (auth, preferences, onErrorCallback = null) {
   auth.token = response.headers['x-auth-token']
   ZenMoney.setData('auth', auth)
 
-  return auth
+  return {
+    auth,
+    response
+  }
 }
 
-async function levelUp (auth) {
+async function levelUp (auth, codewordOnly) {
   console.log('>>> LevelUp для доступа к дебетовым продуктам...')
-  const codeWord = await ZenMoney.readLine('Если у вас есть дебетовые счета или депозиты, введите кодовое слово. Или оставьте поле пустым, если достаточно загрузки кредитных продуктов.', {
+  const title = codewordOnly
+    ? 'Если у вас есть дебетовые счета или депозиты, необходимо ввести кодовое слово. Или оставьте поле пустым, если достаточно загрузки кредитных продуктов.'
+    : 'Если у вас есть дебетовые счета или депозиты, необходимо ввести кодовое слово или номер дебетовой карты. Или оставьте поле пустым, если достаточно загрузки кредитных продуктов.'
+  const input = await ZenMoney.readLine(title, {
     time: 120000,
-    inputType: 'password'
+    inputType: 'text'
   })
-  const response = await fetchApiJson('Client/LevelUp', {
-    API: 4,
-    headers: {
-      ...defaultMyCreditHeaders,
-      'X-Auth-Token': auth.token,
-      'X-Device-Ident': auth.device,
-      'X-Private-Key': auth.key,
-      'X-Phone-Number': auth.phone
-    },
-    body: {
-      'CodeWord': codeWord.trim().toUpperCase()
-    },
-    sanitizeRequestLog: { body: { 'CodeWord': true } }
-  })
+  if (!input) { return }
 
-  if (response.body.Result.IsSmsNeeding) {
-    await readSmsCode(auth, 'Введите код из СМС для загрузки данных')
+  let response
+  if (!codewordOnly && /[\s\d]{16,}/.test(input)) {
+    console.log('>>> LevelUp по номеру карты')
+    const cardNumber = input.trim().replace(/\s/g, '')
+    const expirationDate = await ZenMoney.readLine('Введите срок действия этой карты в формате ДДММ.', {
+      time: 120000,
+      inputType: 'number'
+    })
+
+    response = await fetchApiJson('Client/LevelUp', {
+      ignoreErrors: true,
+      API: 4,
+      headers: {
+        ...defaultMyCreditHeaders,
+        'X-Auth-Token': auth.token,
+        'X-Device-Ident': auth.device,
+        'X-Private-Key': auth.key,
+        'X-Phone-Number': auth.phone
+      },
+      body: {
+        'CardDataDetail': {
+          'CardNumber': cardNumber.trim().toUpperCase(),
+          'ExpirationDate': expirationDate
+        }
+      },
+      sanitizeRequestLog: { body: { 'CardDataDetail': true } }
+    })
+  } else {
+    console.log('>>> LevelUp по кодовому слову')
+    response = await fetchApiJson('Client/LevelUp', {
+      ignoreErrors: true,
+      API: 4,
+      headers: {
+        ...defaultMyCreditHeaders,
+        'X-Auth-Token': auth.token,
+        'X-Device-Ident': auth.device,
+        'X-Private-Key': auth.key,
+        'X-Phone-Number': auth.phone
+      },
+      body: {
+        'CodeWord': input.trim().toUpperCase()
+      },
+      sanitizeRequestLog: { body: { 'CodeWord': true } }
+    })
+  }
+
+  if (response) {
+    const error = getErrorMessage(response.body.Errors)
+    if (error) {
+      throw new InvalidPreferencesError(error)
+    } else {
+      if (_.get(response.body, 'Result.IsSmsNeeding') === true) {
+        await readSmsCode(auth, 'Введите код из СМС для загрузки данных')
+      }
+    }
   }
 }
 
