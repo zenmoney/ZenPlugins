@@ -485,6 +485,7 @@ export async function fetchMyCreditAccounts (auth) {
       })
 
       const response = await fetchApiJson('https://api-myc.homecredit.ru/api/v1/prepayment', {
+        ignoreErrors: true,
         headers: {
           ...defaultMyCreditHeaders,
           'X-Device-Ident': auth.device,
@@ -501,10 +502,10 @@ export async function fetchMyCreditAccounts (auth) {
       })
 
       // добавим информацию о реальном остатке по кредиту
-      if (!response.body) {
+      if (!response.body || response.status !== 200) {
         console.log('>>> !!! ОСТАТОК НА СЧЕТУ КРЕДИТА НЕ ДОСТУПЕН! В течение нескольких дней после наступления расчётной даты остаток ещё не доступен.')
       } else {
-        if (response.body.statusCode === 200) { account.RepaymentAmount = response.body.repaymentAmount }
+        account.RepaymentAmount = response.body.repaymentAmount
       }
     }))
   }
@@ -689,11 +690,13 @@ async function fetchApiJson (url, options, predicate) {
       }
     })
   } catch (e) {
-    if (e.response && e.response.status >= 500 && e.response.status < 525) {
-      // ToDO: TemporaryError
-      throw new Error('Информация из Банка Хоум Кредит временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться несколько дней, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
-    } else {
-      throw e
+    if (!options.ignoreErrors) {
+      if (e.response && e.response.status >= 500 && e.response.status < 525) {
+        // ToDO: TemporaryError
+        throw new Error('Информация из Банка Хоум Кредит временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться несколько дней, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
+      } else {
+        throw e
+      }
     }
   }
   if (predicate) { validateResponse(response, response => response.body && predicate(response)) }
