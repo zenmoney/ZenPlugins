@@ -226,13 +226,16 @@ async function levelUp (auth, codewordOnly) {
     time: 120000,
     inputType: 'text'
   })
-  if (!input) { return }
+  if (!input) {
+    console.log('>>> LevelUp пропущен (введена пустая строка)')
+    return
+  }
 
   let response
   if (!codewordOnly && /[\s\d]{16,}/.test(input)) {
     console.log('>>> LevelUp по номеру карты')
     const cardNumber = input.trim().replace(/\s/g, '')
-    const expirationDate = await ZenMoney.readLine('Введите срок действия этой карты в формате ДДММ.', {
+    const expirationDate = await ZenMoney.readLine('Введите срок действия этой карты в формате ММГГ.', {
       time: 120000,
       inputType: 'number'
     })

@@ -108,13 +108,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     })))
 
     // объединим карты одного счёта
-    /* _.map(_.groupBy(accountsData, "account.id"), function (vals, id) {
-      return _.reduce(vals, function (m, o) {
-        for (var p in o) {
-          if ()
-        }
-      })
-    }) */
+    accountsData = _.map(_.groupBy(accountsData, 'account.id'), vals => vals[0])
 
     // фикс поступлений сегодняшнего дня (чтобы не создавать лишних корректировок)
     // если в текущих сутках были поступления, баланс счёта передаём только для нового подключения

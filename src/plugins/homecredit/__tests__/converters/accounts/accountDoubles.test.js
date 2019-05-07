@@ -1,4 +1,5 @@
 import { convertAccount } from '../../../converters'
+import _ from 'lodash'
 
 describe('convertAccount', () => {
   const accountType = 'CreditCardTW'
@@ -243,7 +244,7 @@ describe('convertAccount', () => {
     }
   ]
 
-  it(`converts CreditCardTW #1 account`, () => {
+  it('should converts CreditCardTW #1 account', () => {
     expect(convertAccount(
       apiAccounts[0], 'CreditCardTW'
     )).toEqual(
@@ -251,11 +252,17 @@ describe('convertAccount', () => {
     )
   })
 
-  it(`converts CreditCardTW #2 account`, () => {
+  it('should converts CreditCardTW #2 account', () => {
     expect(convertAccount(
       apiAccounts[1], accountType
     )).toEqual(
       zenAccounts[1]
     )
+  })
+
+  it('should group accounts to one', () => {
+    expect(
+      _.map(_.groupBy(zenAccounts, 'account.id'), vals => vals[0])
+    ).toEqual([zenAccounts[0]])
   })
 })
