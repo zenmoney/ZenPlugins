@@ -441,6 +441,7 @@ export async function fetchMyCreditAccounts (auth) {
       if (response.body.accounts) { fetchedAccounts.accounts = response.body.accounts }
     } else {
       console.log('>>> !!! Не удалось пройти авторизацию. Загрузка дебетовых продуктов пропущена.')
+      auth.levelup = false
     }
   }
 
@@ -664,29 +665,30 @@ async function fetchApiJson (url, options, predicate) {
     url = `${myCreditUrl}${apiStr}/api/${url}`
   }
   let response
+  const sanitizeHeaders = {
+    'Authorization': true,
+    'authorization': true,
+    'X-Device-Ident': true,
+    'x-device-ident': true,
+    'X-Private-Key': true,
+    'x-private-key': true,
+    'X-Phone-Number': true,
+    'x-phone-number': true,
+    'X-Auth-Token': true,
+    'x-auth-token': true,
+    'set-cookie': true
+  }
   try {
     response = await fetchJson(url, {
       method: options.method || 'POST',
       ..._.omit(options, ['API']),
       sanitizeRequestLog: {
-        'Authorization': true,
-        'authorization': true,
-        'X-Device-Ident': true,
-        'x-device-ident': true,
-        'X-Private-Key': true,
-        'x-private-key': true,
-        'X-Phone-Number': true,
-        'x-phone-number': true,
-        'X-Auth-Token': true,
-        'x-auth-token': true,
-        'set-cookie': true,
-        ...options.sanitizeRequestLog
+        ...options.sanitizeRequestLog,
+        headers: sanitizeHeaders
       },
       sanitizeResponseLog: {
-        'X-Auth-Token': true,
-        'x-auth-token': true,
-        'set-cookie': true,
-        ...options.sanitizeResponseLog
+        ...options.sanitizeResponseLog,
+        headers: sanitizeHeaders
       }
     })
   } catch (e) {
