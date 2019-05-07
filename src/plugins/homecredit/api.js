@@ -703,7 +703,8 @@ async function fetchApiJson (url, options, predicate) {
       const message = getErrorMessage(response.body.Errors)
       if (message) {
         if (/.*(?:повтори\w+ попытк|еще раз|еверн\w+ код|ревышено колич).*/i.test(message)) {
-          throw new TemporaryError(message)
+          // ToDO: TemporaryError
+          throw new Error(message)
         } else {
           if (message.indexOf('роверьте дату рождения') + 1) {
             throw new InvalidPreferencesError(message)
