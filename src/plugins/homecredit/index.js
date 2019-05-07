@@ -105,10 +105,9 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     // счета
     accountsData = _.flattenDeep(await Promise.all(Object.keys(fetchedAccounts).map(type => {
       return Promise.all(fetchedAccounts[type].map(async account => Converters.convertAccount(account, type)))
-    })))
+    }))).filter(item => item !== null)
 
-    // объединим карты одного счёта
-    accountsData = _.map(_.groupBy(accountsData, 'account.id'), vals => vals[0])
+    accountsData = Api.collapseDoubleAccounts(accountsData)
 
     // фикс поступлений сегодняшнего дня (чтобы не создавать лишних корректировок)
     // если в текущих сутках были поступления, баланс счёта передаём только для нового подключения

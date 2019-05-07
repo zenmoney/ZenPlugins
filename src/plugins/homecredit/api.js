@@ -252,7 +252,7 @@ async function levelUp (auth, codewordOnly) {
       },
       body: {
         'CardDataDetail': {
-          'CardNumber': cardNumber.trim().toUpperCase(),
+          'CardNumber': cardNumber,
           'ExpirationDate': expirationDate
         }
       },
@@ -411,21 +411,7 @@ export async function fetchMyCreditAccounts (auth) {
   const fetchedAccounts = _.pick(response.body.Result, ['CreditCard', 'CreditCardTW', 'CreditLoan'])
 
   if (auth.levelup) {
-    let response = await fetchApiJson('Transaction/GetApprovalContracts', {
-      API: 0,
-      headers: {
-        ...defaultMyCreditHeaders,
-        'X-Device-Ident': auth.device,
-        'X-Private-Key': auth.key,
-        'X-Phone-Number': auth.phone,
-        'X-Auth-Token': auth.token
-      },
-      body: {
-        'ApprovalContractsType': 3
-      }
-    })
-
-    response = await fetchApiJson('https://api-myc.homecredit.ru/decard/v2/debitcards', { // ?useCache=true
+    let response = await fetchApiJson('https://api-myc.homecredit.ru/decard/v2/debitcards?useCache=true', {
       method: 'GET',
       headers: {
         ...defaultMyCreditHeaders,
@@ -461,10 +447,11 @@ export async function fetchMyCreditAccounts (auth) {
   // удаляем не нужные счета
   _.forEach(Object.keys(fetchedAccounts), function (key) {
     _.remove(fetchedAccounts[key], function (elem) {
-      if ((!elem.ContractStatus || elem.ContractStatus > 1) &&
-        (!elem.contractStatus || !_.includes(['Действующий', 'Active'], elem.contractStatus) === false) &&
-        (!elem.status || elem.status !== 'ACTIVE')) {
-        console.log(`>>> Счёт "${elem.ProductName}" не активен. Пропускаем...`)
+      if ((!elem.ContractStatus || elem.ContractStatus > 1) && // MyCredit
+        (!elem.contractStatus || ['ДЕЙСТВУЮЩИЙ', 'ACTIVE'].indexOf(elem.contractStatus.toUpperCase()) < 0) && // MyCredit Debit v2
+        (!elem.status || elem.status.toUpperCase() !== 'ACTIVE')) {
+        const productName = elem.ProductName || elem.productName
+        console.log(`>>> Счёт "${productName}" не активен. Пропускаем...`)
         return true
       }
       if (ZenMoney.isAccountSkipped(elem.ContractNumber)) {
@@ -513,8 +500,12 @@ export async function fetchMyCreditAccounts (auth) {
         }
       })
 
-      // добавим информацию о реалном остатке по кредиту
-      if (!response.body) { console.log('>>> ОСТАТОК НА СЧЕТУ КРЕДИТА НЕ ДОСТУПЕН! В течение нескольких дней после наступления расчётной даты остаток ещё не доступен.') } else if (response.body.statusCode === 200) { account.RepaymentAmount = response.body.repaymentAmount }
+      // добавим информацию о реальном остатке по кредиту
+      if (!response.body) {
+        console.log('>>> !!! ОСТАТОК НА СЧЕТУ КРЕДИТА НЕ ДОСТУПЕН! В течение нескольких дней после наступления расчётной даты остаток ещё не доступен.')
+      } else {
+        if (response.body.statusCode === 200) { account.RepaymentAmount = response.body.repaymentAmount }
+      }
     }))
   }
 
@@ -629,6 +620,11 @@ export async function fetchMyCreditTransactions (auth, accountData, fromDate, to
   }
 
   switch (accountData.details.type) {
+    case 'debitCards':
+      type = 'debitCards'
+      body.accountNumber = accountData.details.accountNumber
+      body.cardNumber = accountData.details.cardNumber
+      break
     case 'CreditCard':
       type = 'creditCards'
       body.contractNumber = accountData.details.contractNumber
@@ -764,4 +760,16 @@ export function getCardNumber (number) {
   for (let i = 0; i < number.length / 4; i++) { result += number.substr(i * 4, 4) + ' ' }
 
   return result.trim()
+}
+
+export function collapseDoubleAccounts (accountsData) {
+  // объединим одинаковые карты
+  let result = _.values(_.map(_.groupBy(accountsData, 'account.id'), vals => vals[0]))
+
+  result = _.union(
+    _.filter(result, item => item.details.type === 'CreditLoan'), // кредиты оставляем как есть, чтобы считать их отдельно
+    _.values(_.map(_.groupBy(_.filter(result, item => item.details.type !== 'CreditLoan'), 'details.accountNumber'), vals => vals[0])) // объединим дебетовые карты со счетами
+  )
+
+  return result
 }

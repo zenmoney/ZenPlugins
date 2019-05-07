@@ -7,26 +7,36 @@ export function convertAccount (apiAccount, type) {
       accountData.account = convertCard(apiAccount)
       break
 
-      // карты рассрочки
+    // карты рассрочки
     case 'CreditCardTW': // MyCredit
     case 'merchantCards': // Base
       accountData.account = convertCardTW(apiAccount)
       break
 
-      // дебетовые карты
+    // дебетовые карты
     case 'debitCards': // Base
       accountData.account = convertCard(apiAccount)
       break
 
-      // кредиты
+    // кредиты
     case 'CreditLoan': // MyCredit
     case 'credits': // Base
       accountData.account = convertLoan(apiAccount)
       break
 
-      // депозиты
+    // депозиты
     case 'deposits': // Base
     default:
+      break
+
+    // дебетовые счета в MyCredit
+    case 'accounts':
+      // счёт кредитов пропускаем, так как "Мой кредит" выдаёт кредиты отдельно
+      if (apiAccount.accountType === 'CREDIT') {
+        return null
+      }
+
+      accountData.account = convertAccountMyCredit(apiAccount)
       break
   }
   accountData.details = getAccountDetails(apiAccount, type)
@@ -36,26 +46,40 @@ export function convertAccount (apiAccount, type) {
 function getAccountDetails (apiAccount, type) {
   return {
     type: type,
-    title: apiAccount.productName || apiAccount.ProductName,
+    title: apiAccount.productName || apiAccount.ProductName || apiAccount.accountName || apiAccount.AccountName,
     accountNumber: apiAccount.accountNumber || apiAccount.AccountNumber,
-    cardNumber: apiAccount.cardNumber || apiAccount.mainCardNumber || apiAccount.CardNumber || apiAccount.MainCardNumber,
+    cardNumber: apiAccount.cardNumber || apiAccount.mainCardNumber || apiAccount.CardNumber || apiAccount.MainCardNumber || apiAccount.maskCardNumber,
     contractNumber: apiAccount.ContractNumber || apiAccount.contractNumber
   }
 }
 
-function convertCard (account) {
-  const cardNumber = account.cardNumber || account.mainCardNumber || // BaseeApp
-    account.CardNumber || account.MainCardNumber || // MyCredit
-    account.maskCardNumber // MyCreditDebit
+function convertAccountMyCredit (apiAccount) {
   const result = {
-    id: account.contractNumber || account.ContractNumber,
+    id: apiAccount.accountNumber,
+    type: 'checking',
+    syncID: apiAccount.accountNumber.substr(-4),
+    title: apiAccount.accountName,
+    instrument: apiAccount.currency || 'RUB'
+  }
+
+  if (apiAccount.runningBalance) { result.balance = apiAccount.runningBalance }
+
+  return result
+}
+
+function convertCard (apiAccount) {
+  const cardNumber = apiAccount.cardNumber || apiAccount.mainCardNumber || // BaseeApp
+    apiAccount.CardNumber || apiAccount.MainCardNumber || // MyCredit
+    apiAccount.maskCardNumber // MyCreditDebit
+  const result = {
+    id: apiAccount.contractNumber || apiAccount.ContractNumber,
     type: 'ccard',
     syncID: cardNumber.substr(-4),
-    title: account.productName || account.ProductName,
-    instrument: account.currency || 'RUB'
+    title: apiAccount.productName || apiAccount.ProductName,
+    instrument: apiAccount.currency || 'RUB'
   }
-  const creditLimit = account.creditLimit || account.CreditLimit
-  const availableBalance = account.availableBalance || account.AvailableBalance
+  const creditLimit = apiAccount.creditLimit || apiAccount.CreditLimit
+  const availableBalance = apiAccount.availableBalance || apiAccount.AvailableBalance
   if (creditLimit) {
     result.creditLimit = creditLimit
     result.balance = Math.round((availableBalance - creditLimit) * 100) / 100
@@ -67,17 +91,17 @@ function convertCard (account) {
   return result
 }
 
-function convertCardTW (account) {
+function convertCardTW (apiAccount) {
   // console.log(">>> Конвертация карты рассрочки: ", account);
   const result = {
-    id: account.contractNumber || account.ContractNumber,
+    id: apiAccount.contractNumber || apiAccount.ContractNumber,
     type: 'ccard',
-    syncID: (account.accountNumber || account.AccountNumber).substr(-4),
-    title: account.productName || account.ProductName,
-    instrument: account.currency || 'RUB'
+    syncID: (apiAccount.accountNumber || apiAccount.AccountNumber).substr(-4),
+    title: apiAccount.productName || apiAccount.ProductName,
+    instrument: apiAccount.currency || 'RUB'
   }
-  const creditLimit = account.creditLimit || account.CreditLimit
-  const availableBalance = account.availableBalance || account.AvailableBalance || account.balance || account.Balance
+  const creditLimit = apiAccount.creditLimit || apiAccount.CreditLimit
+  const availableBalance = apiAccount.availableBalance || apiAccount.AvailableBalance || apiAccount.balance || apiAccount.Balance
   if (creditLimit) {
     result.creditLimit = creditLimit
     result.balance = Math.round((availableBalance - creditLimit) * 100) / 100
@@ -89,30 +113,30 @@ function convertCardTW (account) {
   return result
 }
 
-function convertLoan (account) {
-  console.log('>>> Конвертер кредита: ', account)
+function convertLoan (apiAccount) {
+  console.log('>>> Конвертер кредита: ', apiAccount)
 
-  const contractNumber = account.contractNumber || account.ContractNumber
+  const contractNumber = apiAccount.contractNumber || apiAccount.ContractNumber
   const res = {
     id: contractNumber,
     type: 'loan',
     syncID: contractNumber.substr(-4),
-    title: account.productName || account.ProductName,
+    title: apiAccount.productName || apiAccount.ProductName,
     instrument: 'RUB'
   }
 
-  if (account.DateSign) {
+  if (apiAccount.DateSign) {
     // MyCredit
-    res.startDate = account.DateSign
-    res.startBalance = account.CreditAmount
-    res.endDateOffset = account.Contract.Properties.PaymentNum
+    res.startDate = apiAccount.DateSign
+    res.startBalance = apiAccount.CreditAmount
+    res.endDateOffset = apiAccount.Contract.Properties.PaymentNum
     res.endDateOffsetInterval = 'month'
     res.capitalization = true
     res.percent = 0.1
     res.payoffStep = 1
     res.payoffInterval = 'month'
     // res.balance = Math.round((-account.RepaymentAmount + account.AccountBalance) * 100) / 100;
-    if (account.RepaymentAmount) res.balance = -account.RepaymentAmount
+    if (apiAccount.RepaymentAmount) res.balance = -apiAccount.RepaymentAmount
   } else {
     // Base (заглушка)
     res.startDate = Date.now()

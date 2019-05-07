@@ -41,7 +41,7 @@ describe('convertAccount', () => {
       },
       'details': {
         'accountNumber': '40817810190640141234',
-        'cardNumber': undefined,
+        'cardNumber': '559654XXXXXX4567',
         'contractNumber': '7307250278',
         'title': 'Карта Польза',
         'type': 'debitCards'
