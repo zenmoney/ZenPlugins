@@ -287,8 +287,9 @@ async function levelUp (auth, codewordOnly) {
     }
   }
 
-  if (response.body.StatusCode === 200) {
+  if (_.get(response, 'body.StatusCode') === 200) {
     auth.levelup = true
+    console.log('>>> LevelUp: CurrentLevel = ' + _.get(response.body, 'Result.CurrentLevel'))
   }
 
   return auth
@@ -411,7 +412,21 @@ export async function fetchMyCreditAccounts (auth) {
   const fetchedAccounts = _.pick(response.body.Result, ['CreditCard', 'CreditCardTW', 'CreditLoan'])
 
   if (auth.levelup) {
-    let response = await fetchApiJson('https://api-myc.homecredit.ru/decard/v2/debitcards?useCache=true', {
+    let response = await fetchApiJson('Transaction/GetApprovalContracts', {
+      API: 0,
+      headers: {
+        ...defaultMyCreditHeaders,
+        'X-Device-Ident': auth.device,
+        'X-Private-Key': auth.key,
+        'X-Phone-Number': auth.phone,
+        'X-Auth-Token': auth.token
+      },
+      body: {
+        'ApprovalContractsType': 3
+      }
+    })
+
+    response = await fetchApiJson('https://api-myc.homecredit.ru/decard/v2/debitcards', { // ?useCache=true
       method: 'GET',
       headers: {
         ...defaultMyCreditHeaders,
@@ -420,9 +435,12 @@ export async function fetchMyCreditAccounts (auth) {
         'X-Private-Key': auth.key,
         'X-Phone-Number': auth.phone,
         'X-Auth-Token': auth.token,
-        'Host': 'api-myc.homecredit.ru'
+        'Host': 'api-myc.homecredit.ru',
+        'Accept-Encoding': 'gzip',
+        'User-Agent': 'okhttp/3.6.0'
       }
     })
+
     if (response.status === 200) {
       if (response.body.debitCards) { fetchedAccounts.debitCards = response.body.debitCards }
 
@@ -506,7 +524,7 @@ export async function fetchMyCreditAccounts (auth) {
       if (!response.body || response.status !== 200) {
         console.log('>>> !!! ОСТАТОК НА СЧЕТУ КРЕДИТА НЕ ДОСТУПЕН! В течение нескольких дней после наступления расчётной даты остаток ещё не доступен.')
       } else {
-        account.RepaymentAmount = response.body.repaymentAmount
+        if (response.body) { account.RepaymentAmount = response.body.repaymentAmount }
       }
     }))
   }
