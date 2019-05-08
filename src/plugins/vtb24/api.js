@@ -154,7 +154,10 @@ export async function login (login, password) {
     },
     sanitizeRequestLog: { body: { login: true } }
   })
-  if (response.body.mode === 'GeneralError' && response.body.description) {
+  if ([
+    'GeneralError',
+    'InactiveCard'
+  ].some(mode => response.body.mode === mode) && response.body.description) {
     throw new TemporaryError(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: ${response.body.description}`)
   }
   console.assert(response.body.mode === 'Pass', 'unsupported login mode')
