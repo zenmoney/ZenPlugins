@@ -116,7 +116,7 @@ async function registerMyCreditDevice (auth, preferences) {
   //  запрос доступа к дебетовым продуктам (LevelUp)
   if (result.response.body.Result.ClientDataResult) {
     const data = result.response.body.Result.ClientDataResult
-    if (data.LevelUpAvailable === 0 && (data.HasDC || data.HasDeposits)) {
+    if (data.LevelUpAvailable === 0 && (data.HasDC || data.HasDeposits) && data.CurrentLevel < data.MaxLevel) {
       await levelUp(auth, data.CodewordOnlyLevelUp)
     } else {
       console.log('>>> LevelUp не требуется')
@@ -289,7 +289,9 @@ async function levelUp (auth, codewordOnly) {
 
   if (_.get(response, 'body.StatusCode') === 200) {
     auth.levelup = true
-    console.log('>>> LevelUp: CurrentLevel = ' + _.get(response.body, 'Result.CurrentLevel'))
+    auth.currentLevel = _.get(response.body, 'Result.CurrentLevel')
+    auth.token = response.headers['X-Auth-Token'] || response.headers['x-auth-token']
+    console.log('>>> LevelUp: CurrentLevel = ' + auth.currentLevel)
   }
 
   return auth
@@ -411,7 +413,7 @@ export async function fetchMyCreditAccounts (auth) {
 
   const fetchedAccounts = _.pick(response.body.Result, ['CreditCard', 'CreditCardTW', 'CreditLoan'])
 
-  if (auth.levelup) {
+  if (auth.levelup && auth.currentLevel > 2) {
     console.log('>>> Загрузка списка дебетовых продуктов [ MyCredit ] ===================================')
 
     let response = await fetchApiJson('Transaction/GetApprovalContracts', {
@@ -428,7 +430,8 @@ export async function fetchMyCreditAccounts (auth) {
       }
     })
 
-    response = await fetchApiJson('https://api-myc.homecredit.ru/decard/v2/debitcards?useCache=false', {
+    console.log('>>> Дебетовые карты [ MyCredit ] -----')
+    response = await fetchApiJson('https://api-myc.homecredit.ru/decard/v2/debitcards?useCache=true', {
       method: 'GET',
       headers: {
         ...defaultMyCreditHeaders,
@@ -438,6 +441,7 @@ export async function fetchMyCreditAccounts (auth) {
         'X-Phone-Number': auth.phone,
         'X-Auth-Token': auth.token,
         'Host': 'api-myc.homecredit.ru',
+        'Connection': 'Keep-Alive',
         'Accept-Encoding': 'gzip',
         'User-Agent': 'okhttp/3.6.0'
       }
@@ -446,7 +450,8 @@ export async function fetchMyCreditAccounts (auth) {
     if (response.status === 200) {
       if (response.body.debitCards) { fetchedAccounts.debitCards = response.body.debitCards }
 
-      response = await fetchApiJson('https://api-myc.homecredit.ru/deposito/v1/deposits?typeFilter=FIXED&stateFilter=ALL&useCache=false', {
+      console.log('>>> Депозиты и прочие счета [ MyCredit ] -----')
+      response = await fetchApiJson('https://api-myc.homecredit.ru/deposito/v1/deposits?typeFilter=FIXED&stateFilter=ALL&useCache=true', {
         method: 'GET',
         headers: {
           ...defaultMyCreditHeaders,
@@ -455,7 +460,10 @@ export async function fetchMyCreditAccounts (auth) {
           'X-Private-Key': auth.key,
           'X-Phone-Number': auth.phone,
           'X-Auth-Token': auth.token,
-          'Host': 'api-myc.homecredit.ru'
+          'Host': 'api-myc.homecredit.ru',
+          'Connection': 'Keep-Alive',
+          'Accept-Encoding': 'gzip',
+          'User-Agent': 'okhttp/3.6.0'
         }
       })
       if (response.body.accounts) { fetchedAccounts.accounts = response.body.accounts }
@@ -804,7 +812,7 @@ export function collapseDoubleAccounts (accountsData) {
   // объединим карты со счетами
   count = result.length
   result = _.union(
-    _.filter(result, item => item.details.type === 'CreditLoan'), // кредиты оставляем как есть, чтобы считать их отдельно
+    _.filter(result, item => item.details.type === 'CreditLoan'), // кредиты оставляем как есть, чтобы считать их отдельно без привязки к счёту погашения
     _.values(_.map(_.groupBy(_.filter(result, item => item.details.type !== 'CreditLoan'), 'details.accountNumber'), vals => vals[0]))
   )
   if (count !== result.length) { console.log(`>>> Объединение карт со счетами: ${count - result.length} шт`) }
