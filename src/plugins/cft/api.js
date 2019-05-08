@@ -49,7 +49,6 @@ async function auth (cardNumber, password) {
 
   if (!(response.status === httpSuccessStatus && s === 'OK')) {
     let reason
-    const reasonDefault = 'неизвестная ошибка'
     const reasonUnknownCardNumber = 'неправильный номер карты'
     const reasonWrongPassword = 'неправильный пароль'
     const reasonLocked = 'доступ временно запрещен'
@@ -58,7 +57,8 @@ async function auth (cardNumber, password) {
     const statusesUnknownCardNumber = [
       'CANNOT_FIND_SUBJECT',
       'PRINCIPAL_IS_EMPTY',
-      'CANNOT_FOUND_AUTHENTICATION_PROVIDER'
+      'CANNOT_FOUND_AUTHENTICATION_PROVIDER',
+      'CARD_IS_ARCHIVED'
     ]
     const statusesWrongPassword = [
       'AUTH_WRONG',
@@ -88,10 +88,13 @@ async function auth (cardNumber, password) {
     } else if (statusesTechnicalWorks.indexOf(s) !== -1) {
       reason = reasonTechnicalWorks
     } else {
-      reason = reasonDefault
+      reason = null
     }
-
-    console.assert(false, 'Не удалось авторизоваться: ' + reason, response)
+    if (reason) {
+      throw new TemporaryError(`Не удалось авторизоваться: ${reason}`)
+    } else {
+      console.assert(false, 'Не удалось авторизоваться', response)
+    }
   }
 }
 
