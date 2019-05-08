@@ -35,7 +35,7 @@ describe('convertAccount', () => {
         'balance': 2315.25,
         'id': '7307250278',
         'instrument': 'RUR',
-        'syncID': '4567',
+        'syncID': [ '1234', '4567' ],
         'title': 'Карта Польза',
         'type': 'ccard'
       },
