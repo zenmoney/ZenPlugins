@@ -789,12 +789,22 @@ export function getCardNumber (number) {
 
 export function collapseDoubleAccounts (accountsData) {
   // объединим одинаковые карты
-  let result = _.values(_.map(_.groupBy(accountsData, 'account.id'), vals => vals[0]))
+  let count = accountsData.length
+  let result = _.values(_.map(_.groupBy(accountsData, 'account.id'), function (vals) {
+    const result = vals[0]
+    for (let i = 1; i < vals.length; i++) {
+      if (vals[i].account.syncID) { result.account.syncID = _.union(result.account.syncID, vals[i].account.syncID) }
+    }
+    return result
+  }))
+  if (count !== result.length) { console.log(`>>> Объединение карт одного счёта: ${count - result.length}шт`) }
 
+  count = result.length
   result = _.union(
     _.filter(result, item => item.details.type === 'CreditLoan'), // кредиты оставляем как есть, чтобы считать их отдельно
     _.values(_.map(_.groupBy(_.filter(result, item => item.details.type !== 'CreditLoan'), 'details.accountNumber'), vals => vals[0])) // объединим дебетовые карты со счетами
   )
+  if (count !== result.length) { console.log(`>>> Объединение карт со счетами: ${count - result.length}шт`) }
 
   return result
 }

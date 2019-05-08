@@ -211,7 +211,7 @@ const zenAccounts = [
       'creditLimit': 150000,
       'id': '2258773215',
       'instrument': 'RUB',
-      'syncID': '1234',
+      'syncID': [ '1234', '0015' ],
       'title': 'Карта Рассрочки',
       'type': 'ccard'
     },
@@ -229,7 +229,7 @@ const zenAccounts = [
       'creditLimit': 150000,
       'id': '2258773215',
       'instrument': 'RUB',
-      'syncID': '1234',
+      'syncID': [ '1234', '3456' ],
       'title': 'Карта Рассрочки - неименная',
       'type': 'ccard'
     },
@@ -263,6 +263,25 @@ describe('convertAccount', () => {
 
 describe('convertAccount', () => {
   it('should group accounts to one', () => {
-    expect(collapseDoubleAccounts(zenAccounts)).toEqual([zenAccounts[0]])
+    expect(collapseDoubleAccounts(zenAccounts)).toEqual([
+      {
+        'account': {
+          'balance': 0,
+          'creditLimit': 150000,
+          'id': '2258773215',
+          'instrument': 'RUB',
+          'syncID': [ '1234', '0015', '3456' ],
+          'title': 'Карта Рассрочки',
+          'type': 'ccard'
+        },
+        'details': {
+          'accountNumber': '40817810393280001234',
+          'cardNumber': '450726XXXXXX0015',
+          'contractNumber': '2258773215',
+          'title': 'Карта Рассрочки',
+          'type': 'CreditCardTW'
+        }
+      }
+    ])
   })
 })

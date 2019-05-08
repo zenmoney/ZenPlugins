@@ -1,3 +1,5 @@
+import _ from 'lodash'
+
 export function convertAccount (apiAccount, type) {
   const accountData = {}
   switch (type) {
@@ -10,7 +12,7 @@ export function convertAccount (apiAccount, type) {
     // карты рассрочки
     case 'CreditCardTW': // MyCredit
     case 'merchantCards': // Base
-      accountData.account = convertCardTW(apiAccount)
+      accountData.account = convertCard(apiAccount)
       break
 
     // дебетовые карты
@@ -47,17 +49,33 @@ function getAccountDetails (apiAccount, type) {
   return {
     type: type,
     title: apiAccount.productName || apiAccount.ProductName || apiAccount.accountName || apiAccount.AccountName,
-    accountNumber: apiAccount.accountNumber || apiAccount.AccountNumber,
-    cardNumber: apiAccount.cardNumber || apiAccount.mainCardNumber || apiAccount.CardNumber || apiAccount.MainCardNumber || apiAccount.maskCardNumber,
-    contractNumber: apiAccount.ContractNumber || apiAccount.contractNumber
+    accountNumber: getAccountNumber(apiAccount),
+    cardNumber: getCardNumber(apiAccount),
+    contractNumber: getContractNumber(apiAccount)
   }
+}
+
+function getCardNumber (apiAccount) {
+  return apiAccount.cardNumber || apiAccount.mainCardNumber || // BaseApp
+    apiAccount.CardNumber || apiAccount.MainCardNumber || // MyCredit
+    apiAccount.maskCardNumber // MyCreditDebit v2
+}
+
+function getAccountNumber (apiAccount) {
+  return apiAccount.accountNumber || // BaseApp
+    apiAccount.AccountNumber // MyCredit
+}
+
+function getContractNumber (apiAccount) {
+  return apiAccount.contractNumber || // BaseApp
+    apiAccount.ContractNumber // MyCredit
 }
 
 function convertAccountMyCredit (apiAccount) {
   const result = {
-    id: apiAccount.accountNumber,
+    id: getAccountNumber(apiAccount),
     type: 'checking',
-    syncID: apiAccount.accountNumber.substr(-4),
+    syncID: [ getAccountNumber(apiAccount).substr(-4) ],
     title: apiAccount.accountName,
     instrument: apiAccount.currency || 'RUB'
   }
@@ -68,38 +86,21 @@ function convertAccountMyCredit (apiAccount) {
 }
 
 function convertCard (apiAccount) {
-  const cardNumber = apiAccount.cardNumber || apiAccount.mainCardNumber || // BaseeApp
-    apiAccount.CardNumber || apiAccount.MainCardNumber || // MyCredit
-    apiAccount.maskCardNumber // MyCreditDebit
   const result = {
-    id: apiAccount.contractNumber || apiAccount.ContractNumber,
+    id: getContractNumber(apiAccount),
     type: 'ccard',
-    syncID: cardNumber.substr(-4),
+    syncID: [ getAccountNumber(apiAccount).substr(-4) ],
     title: apiAccount.productName || apiAccount.ProductName,
     instrument: apiAccount.currency || 'RUB'
   }
-  const creditLimit = apiAccount.creditLimit || apiAccount.CreditLimit
-  const availableBalance = apiAccount.availableBalance || apiAccount.AvailableBalance
-  if (creditLimit) {
-    result.creditLimit = creditLimit
-    result.balance = Math.round((availableBalance - creditLimit) * 100) / 100
-  } else if (availableBalance) {
-    result.balance = availableBalance
-  } else {
-    result.balance = 0
-  }
-  return result
-}
 
-function convertCardTW (apiAccount) {
-  // console.log(">>> Конвертация карты рассрочки: ", account);
-  const result = {
-    id: apiAccount.contractNumber || apiAccount.ContractNumber,
-    type: 'ccard',
-    syncID: (apiAccount.accountNumber || apiAccount.AccountNumber).substr(-4),
-    title: apiAccount.productName || apiAccount.ProductName,
-    instrument: apiAccount.currency || 'RUB'
+  // Добавим syncID карты
+  const cardNumber = getCardNumber(apiAccount)
+  if (cardNumber) {
+    result.syncID = _.union(result.syncID, [ cardNumber.substr(-4) ])
   }
+
+  // определим остаток на карте
   const creditLimit = apiAccount.creditLimit || apiAccount.CreditLimit
   const availableBalance = apiAccount.availableBalance || apiAccount.AvailableBalance || apiAccount.balance || apiAccount.Balance
   if (creditLimit) {
@@ -113,14 +114,44 @@ function convertCardTW (apiAccount) {
   return result
 }
 
+/* function convertCardTW (apiAccount) {
+  // console.log(">>> Конвертация карты рассрочки: ", account);
+  const result = {
+    id: apiAccount.contractNumber || apiAccount.ContractNumber,
+    type: 'ccard',
+    syncID: [ getAccountNumber(apiAccount).substr(-4) ],
+    title: apiAccount.productName || apiAccount.ProductName,
+    instrument: apiAccount.currency || 'RUB'
+  }
+
+  // Добавим syncID карты
+  const cardNumber = getCardNumber(apiAccount)
+  if (cardNumber) {
+    result.syncID.concat(cardNumber).unique()
+  }
+
+  // определим остаток на карте
+  const creditLimit = apiAccount.creditLimit || apiAccount.CreditLimit
+  const availableBalance = apiAccount.availableBalance || apiAccount.AvailableBalance || apiAccount.balance || apiAccount.Balance
+  if (creditLimit) {
+    result.creditLimit = creditLimit
+    result.balance = Math.round((availableBalance - creditLimit) * 100) / 100
+  } else if (availableBalance) {
+    result.balance = availableBalance
+  } else {
+    result.balance = 0
+  }
+  return result
+} */
+
 function convertLoan (apiAccount) {
   console.log('>>> Конвертер кредита: ', apiAccount)
 
-  const contractNumber = apiAccount.contractNumber || apiAccount.ContractNumber
+  const contractNumber = getAccountNumber(apiAccount)
   const res = {
     id: contractNumber,
     type: 'loan',
-    syncID: contractNumber.substr(-4),
+    syncID: [ contractNumber.substr(-4) ],
     title: apiAccount.productName || apiAccount.ProductName,
     instrument: 'RUB'
   }
