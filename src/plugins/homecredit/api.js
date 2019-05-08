@@ -412,6 +412,8 @@ export async function fetchMyCreditAccounts (auth) {
   const fetchedAccounts = _.pick(response.body.Result, ['CreditCard', 'CreditCardTW', 'CreditLoan'])
 
   if (auth.levelup) {
+    console.log('>>> Загрузка списка дебетовых продуктов [ MyCredit ] ===================================')
+
     let response = await fetchApiJson('Transaction/GetApprovalContracts', {
       API: 0,
       headers: {
@@ -426,7 +428,7 @@ export async function fetchMyCreditAccounts (auth) {
       }
     })
 
-    response = await fetchApiJson('https://api-myc.homecredit.ru/decard/v2/debitcards', { // ?useCache=true
+    response = await fetchApiJson('https://api-myc.homecredit.ru/decard/v2/debitcards?useCache=false', {
       method: 'GET',
       headers: {
         ...defaultMyCreditHeaders,
@@ -444,7 +446,7 @@ export async function fetchMyCreditAccounts (auth) {
     if (response.status === 200) {
       if (response.body.debitCards) { fetchedAccounts.debitCards = response.body.debitCards }
 
-      response = await fetchApiJson('https://api-myc.homecredit.ru/deposito/v1/deposits?typeFilter=FIXED&stateFilter=ALL&useCache=true', {
+      response = await fetchApiJson('https://api-myc.homecredit.ru/deposito/v1/deposits?typeFilter=FIXED&stateFilter=ALL&useCache=false', {
         method: 'GET',
         headers: {
           ...defaultMyCreditHeaders,
@@ -797,14 +799,15 @@ export function collapseDoubleAccounts (accountsData) {
     }
     return result
   }))
-  if (count !== result.length) { console.log(`>>> Объединение карт одного счёта: ${count - result.length}шт`) }
+  if (count !== result.length) { console.log(`>>> Объединение карт одного счёта: ${count - result.length} шт`) }
 
+  // объединим карты со счетами
   count = result.length
   result = _.union(
     _.filter(result, item => item.details.type === 'CreditLoan'), // кредиты оставляем как есть, чтобы считать их отдельно
-    _.values(_.map(_.groupBy(_.filter(result, item => item.details.type !== 'CreditLoan'), 'details.accountNumber'), vals => vals[0])) // объединим дебетовые карты со счетами
+    _.values(_.map(_.groupBy(_.filter(result, item => item.details.type !== 'CreditLoan'), 'details.accountNumber'), vals => vals[0]))
   )
-  if (count !== result.length) { console.log(`>>> Объединение карт со счетами: ${count - result.length}шт`) }
+  if (count !== result.length) { console.log(`>>> Объединение карт со счетами: ${count - result.length} шт`) }
 
   return result
 }

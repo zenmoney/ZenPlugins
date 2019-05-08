@@ -145,13 +145,11 @@ function convertCard (apiAccount) {
 } */
 
 function convertLoan (apiAccount) {
-  console.log('>>> Конвертер кредита: ', apiAccount)
-
-  const contractNumber = getAccountNumber(apiAccount)
+  // console.log('>>> Конвертер кредита: ', apiAccount)
   const res = {
-    id: contractNumber,
+    id: getContractNumber(apiAccount),
     type: 'loan',
-    syncID: [ contractNumber.substr(-4) ],
+    syncID: [ getContractNumber(apiAccount).substr(-4) ],
     title: apiAccount.productName || apiAccount.ProductName,
     instrument: 'RUB'
   }
