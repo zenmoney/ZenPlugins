@@ -102,6 +102,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     const newConn = ZenMoney.getData('auth', null) === null
     const auth = await Api.authMyCredit(preferences)
     const fetchedAccounts = await Api.fetchMyCreditAccounts(auth)
+    console.log('>>> Список счетов загружен.')
 
     // счета
     accountsData = _.flattenDeep(await Promise.all(Object.keys(fetchedAccounts).map(type => {

@@ -183,6 +183,10 @@ function convertLoan (apiAccount) {
 }
 
 export function convertTransactions (accountData, transactions) {
+  if (!transactions) {
+    return []
+  }
+
   const result = []
   transactions.forEach(transaction => {
     // дополнительная логика для счетов кредитов

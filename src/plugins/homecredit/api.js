@@ -290,7 +290,7 @@ async function levelUp (auth, codewordOnly) {
   if (_.get(response, 'body.StatusCode') === 200) {
     auth.levelup = true
     auth.currentLevel = _.get(response.body, 'Result.CurrentLevel')
-    auth.myc_token = response.headers['X-Auth-Token'] || response.headers['x-auth-token']
+    auth.token = response.headers['X-Auth-Token'] || response.headers['x-auth-token']
     console.log('>>> LevelUp: CurrentLevel = ' + auth.currentLevel)
   }
 
@@ -411,7 +411,10 @@ export async function fetchMyCreditAccounts (auth) {
     }
   })
 
-  const fetchedAccounts = _.pick(response.body.Result, ['CreditCard', 'CreditCardTW', 'CreditLoan'])
+  const fetchedAccounts = _.pick(response.body.Result, ['CreditCard', 'CreditCardTW'])
+
+  // ToDO: В новом API кредиты не работает даже в приложении банка, не возможно узнать остаток по нему
+  // 'CreditLoan'
 
   if (auth.levelup && auth.currentLevel > 2) {
     console.log('>>> Загрузка списка дебетовых продуктов [ MyCredit ] ===================================')
@@ -435,11 +438,11 @@ export async function fetchMyCreditAccounts (auth) {
       method: 'GET',
       headers: {
         ...defaultMyCreditHeaders,
-        'Authorization': 'Bearer ' + auth.myc_token,
+        'Authorization': 'Bearer ' + auth.token,
         'X-Device-Ident': auth.device,
         'X-Private-Key': auth.key,
         'X-Phone-Number': auth.phone,
-        'X-Auth-Token': auth.myc_token,
+        'X-Auth-Token': auth.token,
         'Host': 'api-myc.homecredit.ru',
         'Connection': 'Keep-Alive',
         'Accept-Encoding': 'gzip',
@@ -455,11 +458,11 @@ export async function fetchMyCreditAccounts (auth) {
         method: 'GET',
         headers: {
           ...defaultMyCreditHeaders,
-          'Authorization': 'Bearer ' + auth.myc_token,
+          'Authorization': 'Bearer ' + auth.token,
           'X-Device-Ident': auth.device,
           'X-Private-Key': auth.key,
           'X-Phone-Number': auth.phone,
-          'X-Auth-Token': auth.myc_token,
+          'X-Auth-Token': auth.token,
           'Host': 'api-myc.homecredit.ru',
           'Connection': 'Keep-Alive',
           'Accept-Encoding': 'gzip',
@@ -492,12 +495,14 @@ export async function fetchMyCreditAccounts (auth) {
   })
 
   // догрузим информацию по кредитам из "Мой Кредит"
-  if (fetchedAccounts.CreditLoan && fetchedAccounts.CreditLoan.length > 0) {
+  // ToDO: В новом API кредиты не работает даже в приложении банка, не возможно узнать остаток по нему
+  /* иif (fetchedAccounts.CreditLoan && fetchedAccounts.CreditLoan.length > 0) {
     await Promise.all(Object.keys(fetchedAccounts.CreditLoan).map(async key => {
       const account = fetchedAccounts.CreditLoan[key]
 
       console.log(`>>> Загрузка информации по кредиту '${account.ProductName}' (${account.AccountNumber}) [Мой кредит] --------`)
       await fetchApiJson('Payment/GetProductDetails', {
+        ignoreErrors: true,
         headers: {
           ...defaultMyCreditHeaders,
           'X-Device-Ident': auth.device,
@@ -513,31 +518,35 @@ export async function fetchMyCreditAccounts (auth) {
         }
       })
 
-      const response = await fetchApiJson('https://api-myc.homecredit.ru/api/v1/prepayment', {
-        ignoreErrors: true,
-        headers: {
-          ...defaultMyCreditHeaders,
-          'X-Device-Ident': auth.device,
-          'X-Private-Key': auth.key,
-          'X-Phone-Number': auth.phone,
-          'X-Auth-Token': auth.token
-        },
-        body: {
-          'contractNumber': account.ContractNumber,
-          'selectedPrepayment': 'LoanBalance',
-          'isEarlyRepayment': 'False',
-          'isSingleContract': 'True'
-        }
-      })
-
-      // добавим информацию о реальном остатке по кредиту
       if (!response.body || response.status !== 200) {
-        console.log('>>> !!! ОСТАТОК НА СЧЕТУ КРЕДИТА НЕ ДОСТУПЕН! В течение нескольких дней после наступления расчётной даты остаток ещё не доступен.')
+        console.log('>>> !!! ОСТАТОК НА СЧЕТУ КРЕДИТА НЕ ДОСТУПЕН.')
       } else {
-        if (response.body) { account.RepaymentAmount = response.body.repaymentAmount }
+        const response = await fetchApiJson('https://api-myc.homecredit.ru/api/v1/prepayment', {
+          ignoreErrors: true,
+          headers: {
+            ...defaultMyCreditHeaders,
+            'X-Device-Ident': auth.device,
+            'X-Private-Key': auth.key,
+            'X-Phone-Number': auth.phone,
+            'X-Auth-Token': auth.token
+          },
+          body: {
+            'contractNumber': account.ContractNumber,
+            'selectedPrepayment': 'LoanBalance',
+            'isEarlyRepayment': 'False',
+            'isSingleContract': 'True'
+          }
+        })
+
+        // добавим информацию о реальном остатке по кредиту
+        if (!response.body || response.status !== 200) {
+          console.log('>>> !!! ОСТАТОК НА СЧЕТУ КРЕДИТА НЕ ДОСТУПЕН! В течение нескольких дней после наступления расчётной даты остаток ещё не доступен.')
+        } else {
+          if (response.body) { account.RepaymentAmount = response.body.repaymentAmount }
+        }
       }
     }))
-  }
+  } */
 
   return fetchedAccounts
 }
