@@ -6,6 +6,18 @@ function isSuccessfulResponse (response) {
 }
 
 export function assertResponseSuccess (response) {
+  if (response.body && response.body.success === false && response.body.errorMessage) {
+    const message = response.body.errorMessage
+    if (message === 'Неверный логин или пароль') {
+      throw new InvalidPreferencesError(message)
+    }
+    if ([
+      'Услуга временно заблокирована',
+      'Ошибка на сервере'
+    ].some(pattern => message.indexOf(pattern) >= 0)) {
+      throw new TemporaryError(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: ${message}`)
+    }
+  }
   console.assert(isSuccessfulResponse(response), 'non-successful response', response)
 }
 
@@ -62,9 +74,6 @@ export async function authLogin ({ authAccessToken, clientSecret, loginSalt, log
     sanitizeRequestLog: { body: { login: true, password: true }, headers: true },
     sanitizeResponseLog: { body: { result: true } }
   })
-  if (response.body.success === false && response.body.errorMessage === 'Неверный логин или пароль') {
-    throw new InvalidPreferencesError(response.body.errorMessage)
-  }
   assertResponseSuccess(response)
 
   return {
