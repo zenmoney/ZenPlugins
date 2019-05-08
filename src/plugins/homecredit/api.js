@@ -290,7 +290,7 @@ async function levelUp (auth, codewordOnly) {
   if (_.get(response, 'body.StatusCode') === 200) {
     auth.levelup = true
     auth.currentLevel = _.get(response.body, 'Result.CurrentLevel')
-    auth.token = response.headers['X-Auth-Token'] || response.headers['x-auth-token']
+    auth.myc_token = response.headers['X-Auth-Token'] || response.headers['x-auth-token']
     console.log('>>> LevelUp: CurrentLevel = ' + auth.currentLevel)
   }
 
@@ -435,11 +435,11 @@ export async function fetchMyCreditAccounts (auth) {
       method: 'GET',
       headers: {
         ...defaultMyCreditHeaders,
-        'Authorization': 'Bearer ' + auth.token,
+        'Authorization': 'Bearer ' + auth.myc_token,
         'X-Device-Ident': auth.device,
         'X-Private-Key': auth.key,
         'X-Phone-Number': auth.phone,
-        'X-Auth-Token': auth.token,
+        'X-Auth-Token': auth.myc_token,
         'Host': 'api-myc.homecredit.ru',
         'Connection': 'Keep-Alive',
         'Accept-Encoding': 'gzip',
@@ -455,11 +455,11 @@ export async function fetchMyCreditAccounts (auth) {
         method: 'GET',
         headers: {
           ...defaultMyCreditHeaders,
-          'Authorization': 'Bearer ' + auth.token,
+          'Authorization': 'Bearer ' + auth.myc_token,
           'X-Device-Ident': auth.device,
           'X-Private-Key': auth.key,
           'X-Phone-Number': auth.phone,
-          'X-Auth-Token': auth.token,
+          'X-Auth-Token': auth.myc_token,
           'Host': 'api-myc.homecredit.ru',
           'Connection': 'Keep-Alive',
           'Accept-Encoding': 'gzip',
