@@ -68,7 +68,7 @@ describe('toZenmoneyAccount', () => {
       ],
       'instrument': 'RUR',
       'startBalance': 0,
-      'balance': 0
+      'available': 0
     })
   })
 

@@ -47,8 +47,8 @@ function convertCreditApiAccount (apiAccount) {
     typeWithDashAndInstrument.startsWith('Автокредит')
   ) {
     return {
-      startBalance: 0,
-      balance: parseApiAmount(apiAccount.amount)
+      available: parseApiAmount(apiAccount.amount),
+      startBalance: 0
     }
   } else {
     console.error({ apiAccount })
