@@ -32,7 +32,7 @@ export async function authMyCredit (auth, preferences) {
 
   console.log('>>> Авторизация [Мой кредит] ========================================================')
   auth = (await checkUserPin(auth, preferences, registerMyCreditDevice)).auth
-  console.log('>>> Current Level: ' + auth.currentLevel)
+  console.log('>>> CurrentLevel: ' + auth.currentLevel)
   return auth
 }
 
@@ -211,6 +211,7 @@ async function checkUserPin (auth, preferences, onErrorCallback = null) {
 
   console.assert(response.headers['x-auth-token'], 'Не найден токен доступа к банку')
   auth.token = response.headers['x-auth-token']
+  auth.currentLevel = _.get(response.body, 'Result.ClientDataResult.CurrentLevel')
   ZenMoney.setData('auth', auth)
 
   return {
@@ -294,6 +295,9 @@ async function levelUp (auth, codewordOnly) {
     auth.currentLevel = _.get(response.body, 'Result.CurrentLevel')
     auth.token = response.headers['X-Auth-Token'] || response.headers['x-auth-token']
     console.log('>>> LevelUp: CurrentLevel = ' + auth.currentLevel)
+  } else {
+    auth.levelup = false
+    console.log('>>> LevelUp: не удалось поднять уровень доступа')
   }
 
   return auth

@@ -20,6 +20,9 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   const login = preferences.login || oldAuth.login
   const password = preferences.password || oldAuth.password
   const code = preferences.code || oldAuth.code
+
+  let auth = ZenMoney.getData('auth', null)
+
   if (login && password) {
     // Авторизация в базовом приложении банка ===============================================
     const deviceId = await Api.authBase(ZenMoney.getData('device_id', null), login, password, code)
@@ -89,7 +92,6 @@ export async function scrape ({ preferences, fromDate, toDate }) {
       throw new InvalidPreferencesError('Необходимо заполнить параметры подключения к банку')
     }
 
-    let auth = ZenMoney.getData('auth', null)
     const newConn = auth === null
     auth = await Api.authMyCredit(auth || {}, preferences)
 
@@ -121,8 +123,8 @@ export async function scrape ({ preferences, fromDate, toDate }) {
 
   let accounts = accountsData.map(account => account.account)
 
-  if (accounts.length === 0) {
-    throw new Error('Счета не найдены')
+  if (auth.levelup === false && accounts.length === 0) {
+    throw new InvalidPreferencesError('Для доступа к дебетовым счетам необходимо создать подключение заново и ответить на вопросы банка.')
   }
 
   return {
