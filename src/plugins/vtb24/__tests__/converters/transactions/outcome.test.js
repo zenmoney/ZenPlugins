@@ -332,6 +332,47 @@ describe('convertTransaction', () => {
             __type: 'ru.vtb24.mobilebanking.protocol.StatusMto',
             id: 'SUCCESS'
           }
+      },
+      {
+        __type: 'ru.vtb24.mobilebanking.protocol.statement.CardTransactionMto',
+        id: 'ZtMHTgMLPF+Wc5l+s38K1Netwms=;4BWkAwPPNnw+KLo9dXns3atFIS4=',
+        details: 'Комиссия за ежемесячное СМС информирование клиента ',
+        isHold: false,
+        statusName: null,
+        transactionAmountInAccountCurrency:
+          {
+            __type: 'ru.vtb24.mobilebanking.protocol.AmountMto',
+            sum: -59,
+            currency:
+              {
+                __type: 'ru.vtb24.mobilebanking.protocol.CurrencyMto',
+                currencyCode: 'RUR',
+                name: 'Рубль России',
+                displaySymbol: '₽'
+              }
+          },
+        debet: '',
+        transactionDate: new Date('Thu Apr 25 2019 11:47:16 GMT+0300 (MSK)'),
+        processedDate: new Date('Thu Apr 25 2019 00:00:00 GMT+0300 (MSK)'),
+        transactionAmount:
+          {
+            __type: 'ru.vtb24.mobilebanking.protocol.AmountMto',
+            sum: 0,
+            currency:
+              {
+                __type: 'ru.vtb24.mobilebanking.protocol.CurrencyMto',
+                currencyCode: 'RUR',
+                name: 'Рубль России',
+                displaySymbol: '₽'
+              }
+          },
+        feeAmount: null,
+        order: null,
+        status:
+          {
+            __type: 'ru.vtb24.mobilebanking.protocol.StatusMto',
+            id: 'SUCCESS'
+          }
       }
     ]
 
@@ -450,6 +491,21 @@ describe('convertTransaction', () => {
             account: { id: 'account' },
             invoice: null,
             sum: -144.7,
+            fee: 0
+          }
+        ]
+      },
+      {
+        comment: 'Комиссия за ежемесячное СМС информирование клиента ',
+        date: new Date('2019-04-25T08:47:16.000Z'),
+        hold: false,
+        merchant: null,
+        movements: [
+          {
+            id: '4BWkAwPPNnw+KLo9dXns3atFIS4=',
+            account: { id: 'account' },
+            invoice: null,
+            sum: -59,
             fee: 0
           }
         ]

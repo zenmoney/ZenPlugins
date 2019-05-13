@@ -82,12 +82,11 @@ export function convertMetalAccount (apiAccount) {
   const instrument = parseMetalInstrument(apiAccount.amount.currency.currencyCode)
   console.assert(instrument, 'Unknown metal account code', apiAccount.amount.currency.currencyCode)
   return {
-    products: [
-      {
-        id: apiAccount.id,
-        type: apiAccount.__type
-      }
-    ],
+    mainProduct: {
+      id: apiAccount.id,
+      type: apiAccount.__type
+    },
+    products: [],
     zenAccount: {
       id: apiAccount.id,
       type: 'checking',
@@ -106,12 +105,11 @@ export function convertCardAccount (apiAccount) {
     title: apiAccount.name,
     syncID: []
   }
-  const products = [
-    {
-      id: apiAccount.id,
-      type: apiAccount.__type
-    }
-  ]
+  const mainProduct = {
+    id: apiAccount.id,
+    type: apiAccount.__type
+  }
+  const products = []
 
   let amount = apiAccount.amount
   const cards = apiAccount.cards ? apiAccount.cards.filter(card => {
@@ -149,15 +147,15 @@ export function convertCardAccount (apiAccount) {
     zenAccount.creditLimit = apiAccount.creditLimit
   }
 
-  return { products, zenAccount }
+  return { mainProduct, products, zenAccount }
 }
 
 export function convertAccount (apiAccount) {
-  const { products, zenAccount } = convertCardAccount(apiAccount)
+  const { mainProduct, products, zenAccount } = convertCardAccount(apiAccount)
   if (apiAccount.contract &&
     apiAccount.contract.__type === 'ru.vtb24.mobilebanking.protocol.product.RevolvingCreditLineMto') {
-    products[0].id = apiAccount.contract.id
-    products[0].type = apiAccount.contract.__type
+    mainProduct.id = apiAccount.contract.id
+    mainProduct.type = apiAccount.contract.__type
     zenAccount.id = apiAccount.contract.id
   }
   if ([
@@ -166,7 +164,7 @@ export function convertAccount (apiAccount) {
   ].indexOf(apiAccount.__type) >= 0) {
     zenAccount.savings = true
   }
-  return { products, zenAccount }
+  return { mainProduct, products, zenAccount }
 }
 
 export function convertDeposit (apiAccount) {
@@ -200,13 +198,11 @@ export function convertDeposit (apiAccount) {
     zenAccount.endDateOffset = 1
     zenAccount.endDateOffsetInterval = 'year'
   }
-  const products = [
-    {
-      id: apiAccount.id,
-      type: apiAccount.__type
-    }
-  ]
-  return { products, zenAccount }
+  const mainProduct = {
+    id: apiAccount.id,
+    type: apiAccount.__type
+  }
+  return { mainProduct, products: [], zenAccount }
 }
 
 export function convertLoan (apiAccount) {
@@ -234,16 +230,14 @@ export function convertLoan (apiAccount) {
     default:
       console.assert(false, `unsupported loan contract period ${contractPeriod.unit.id}`)
   }
-  const products = [
-    {
-      id: apiAccount.id,
-      type: apiAccount.__type
-    }
-  ]
-  return { products, zenAccount }
+  const mainProduct = {
+    id: apiAccount.id,
+    type: apiAccount.__type
+  }
+  return { mainProduct, products: [], zenAccount }
 }
 
-const getTransactionId = apiTransaction => {
+export function getTransactionId (apiTransaction) {
   if (/;/.test(apiTransaction.id)) {
     // apiTransaction.id is [statementId, transactionId] pair
     const [, transactionId] = apiTransaction.id.split(';')
@@ -291,7 +285,17 @@ export function mergeTransfers (transactions) {
 }
 
 function getInvoice (apiTransaction) {
-  return convertAmount(apiTransaction.transactionAmount)
+  let amount
+  if (apiTransaction.transactionAmount &&
+    apiTransaction.transactionAmount.sum === 0 &&
+    apiTransaction.transactionAmountInAccountCurrency &&
+    apiTransaction.transactionAmountInAccountCurrency.sum !== 0 &&
+    apiTransaction.transactionAmountInAccountCurrency.currency.currencyCode === apiTransaction.transactionAmount.currency.currencyCode) {
+    amount = apiTransaction.transactionAmountInAccountCurrency
+  } else {
+    amount = apiTransaction.transactionAmount
+  }
+  return convertAmount(amount)
 }
 
 export function convertTransaction (apiTransaction, account) {
@@ -307,7 +311,6 @@ export function convertTransaction (apiTransaction, account) {
   }
   const invoice = getInvoice(apiTransaction)
   amount.sum = Math.sign(invoice.sum) * Math.abs(amount.sum)
-  const feeAmount = convertAmount(apiTransaction.feeAmount)
   const transaction = {
     comment: null,
     date: new Date(apiTransaction.transactionDate),
@@ -319,7 +322,7 @@ export function convertTransaction (apiTransaction, account) {
         account: { id: account.id },
         invoice: invoice.instrument === account.instrument ? null : invoice,
         sum: amount.instrument === account.instrument ? amount.sum : null,
-        fee: feeAmount ? feeAmount.sum : 0
+        fee: 0
       }
     ]
   }
@@ -461,7 +464,8 @@ export function parsePayee (apiTransaction, transaction) {
         'Пополнение',
         'Зачисление',
         'Списание по карте',
-        'Начисленные %'
+        'Начисленные %',
+        'Комиссия'
       ].some(pattern => new RegExp(pattern).test(apiTransaction.details))
     ) {
       transaction.comment = apiTransaction.details

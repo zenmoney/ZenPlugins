@@ -31,11 +31,10 @@ describe('scrape', () => {
     }])
 
     expect(result.transactions).toEqual([{
-      id: '11113111050111',
       date: new Date('Tue Jan 25 2019 12:27:55 GMT+0300 (Moscow Standard Time)'),
       movements: [
         {
-          id: null,
+          id: '11113111050111',
           account: { id: '6505111' },
           invoice: null,
           sum: -7.99,

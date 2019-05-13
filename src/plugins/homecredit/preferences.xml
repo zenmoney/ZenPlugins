@@ -1,76 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen>
 	<EditTextPreference
-        key="login"
-        title="Логин от интернет-банка"
-        dialogTitle="Логин от интернет-банка"
-        summary="||{@s}"
-        negativeButtonText="Отмена"
-        positiveButtonText="ОК"
-        inputType="text"
-        obligatory="false">
-    </EditTextPreference>
-    <EditTextPreference
-        key="password"
-        summary="||***********"
-        title="Пароль от интернет-банка"
-        dialogTitle="Пароль от интернет-банка"
-        negativeButtonText="Отмена"
-        positiveButtonText="ОК"
-        inputType="textPassword"
-        obligatory="false">
-    </EditTextPreference>
-    <EditTextPreference
-		key="code"
-		summary="||{@s}"
-		title="4 цифры 3-го блока номера карты"
-		dialogTitle="4 цифры 3-го блока номера карты"
-		inputType="numberPassword"
-		negativeButtonText="Отмена"
-		positiveButtonText="ОК"
-		obligatory="false">
-    </EditTextPreference>
-    <EditTextPreference
-		key="birth"
-		title="Дата рождения"
-		dialogTitle="Дата рождения"
-		dialogMessage="Формат: дд.мм.гггг"
-		inputType="text"
-		summary="||{@s}"
-		positiveButtonText="ОК"
-		negativeButtonText="Отмена"
-		obligatory="false">
-    </EditTextPreference>
-    <EditTextPreference
-		key="phone"
-		title="Номер телефона"
-		dialogTitle="Номер телефона"
-		dialogMessage="Формат: 79991111111"
-		inputType="number"
-		summary="||{@s}"
-		positiveButtonText="ОК"
-		negativeButtonText="Отмена"
-		obligatory="false">
-    </EditTextPreference>
-    <EditTextPreference
-		key="pin"
-		title="Пароль от Мой кредит"
-		dialogTitle="Пароль от Мой кредит"
-		inputType="numberPassword"
-		summary="||****"
-		positiveButtonText="ОК"
-		negativeButtonText="Отмена"
-		obligatory="false">
-    </EditTextPreference>
-    <EditTextPreference
-		key="startDate"
-		title="С какой даты загружать операции"
-		dialogTitle="С какой даты загружать операции"
-		inputType="date"
-		summary="|startDate|{@s}"
-		defaultValue="2018-04-01T00:00:00.000Z"
-		positiveButtonText="ОК"
-		negativeButtonText="Отмена"
-		obligatory="true">
-    </EditTextPreference>
+			key="phone"
+			title="Номер телефона"
+			dialogTitle="Номер телефона"
+			dialogMessage="Формат: 79991111111"
+			inputType="number"
+			summary="||{@s}"
+			positiveButtonText="ОК"
+			negativeButtonText="Отмена"
+			obligatory="false">
+	</EditTextPreference>
+	<EditTextPreference
+			key="birth"
+			title="Дата рождения"
+			dialogTitle="Дата рождения"
+			dialogMessage="Формат: дд.мм.гггг"
+			inputType="text"
+			summary="||{@s}"
+			positiveButtonText="ОК"
+			negativeButtonText="Отмена"
+			obligatory="false">
+	</EditTextPreference>
+	<EditTextPreference
+			key="pin"
+			title="Пароль"
+			dialogTitle="Пароль"
+			inputType="textPassword"
+			summary="||****"
+			positiveButtonText="ОК"
+			negativeButtonText="Отмена"
+			obligatory="false">
+	</EditTextPreference>
+	<EditTextPreference
+			key="startDate"
+			title="С какой даты загружать операции"
+			dialogTitle="С какой даты загружать операции"
+			inputType="date"
+			summary="|startDate|{@s}"
+			defaultValue="2018-04-01T00:00:00.000Z"
+			positiveButtonText="ОК"
+			negativeButtonText="Отмена"
+			obligatory="true">
+	</EditTextPreference>
 </PreferenceScreen>
