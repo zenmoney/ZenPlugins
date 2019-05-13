@@ -8,8 +8,8 @@ describe('scrape', () => {
     mockCheckDeviceStatus()
     mockAuthWithPassportID()
     mockAuthConfirm()
+    mockFetchDesktop()
     mockFetchAccounts()
-    mockFetchAccountInfo()
     mockFetchTransactions()
 
     const result = await scrape(
@@ -104,40 +104,40 @@ function mockFetchTransactions () {
   }, { method: 'POST' })
 }
 
-function mockFetchAccountInfo () {
-  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/Account/Info', {
+function mockFetchAccounts () {
+  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/Products', {
     status: 200,
     body: JSON.stringify({
-      iban: 'BY31 ALFA 3014 111M RT00 1111 0000',
-      info: {
-        amount: {
-          amount: 486.18,
-          currency: 'BYN',
-          format: '###,###,###,###,##0.##'
+      'items': [ {
+        'id': '6505111',
+        'info': {
+          'description': 'BY31 ALFA 3014 111M RT00 1111 0000',
+          'title': 'Карта №1',
+          'amount': {
+            'format': '###,###,###,###,##0.##',
+            'currency': 'BYN',
+            'amount': 486.18
+          },
+          'icon': {
+            'title': 'Карта №1',
+            'backgroundColorFrom': '#f9589e',
+            'backgroundColorTo': '#fe9199',
+            'iconUrl': 'v0/Image/49923_392.SVG',
+            'captionColor': '#FFFFFF',
+            'frameColor': '#c2b7b7',
+            'displayType': 'REGULAR'
+          }
         },
-        description: 'BY31 ALFA 3014 111M RT00 1111 0000',
-        icon: {
-          backgroundColorFrom: '#f9589e',
-          backgroundColorTo: '#fe9199',
-          captionColor: '#FFFFFF',
-          displayType: 'REGULAR',
-          frameColor: '#c2b7b7',
-          iconUrl: 'v0/Image/49923_392.SVG',
-          title: 'Карта №1'
-        },
-        title: 'Карта №1'
-      },
-      isClosable: false,
-      isPayslipAvailable: false,
-      objectId: '3014111MFE0011110',
-      onDesktop: true,
-      startDate: '20171111000000'
+        'onDesktop': true,
+        'type': 'ACCOUNT'
+      } ],
+      'totals': [ ]
     }),
     statusText: 'OK'
   }, { method: 'POST' })
 }
 
-function mockFetchAccounts () {
+function mockFetchDesktop () {
   fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/Desktop', {
     status: 200,
     body: JSON.stringify({
