@@ -45,12 +45,12 @@ function validateResponse (response, predicate, error) {
   }
 }
 
-export async function login () {
+export async function login (isResident) {
   const deviceID = DeviceID()
   const token = ZenMoney.getData('token')
   let sessionID = await checkDeviceStatus(deviceID)
   if (sessionID === null || !await loginByToken(sessionID, deviceID, token)) {
-    await authWithPassportID(deviceID)
+    await authWithPassportID(deviceID, isResident)
     sessionID = await authConfirm(deviceID)
   }
   return {
@@ -79,7 +79,7 @@ export async function checkDeviceStatus (deviceID) {
   }
 }
 
-export async function authWithPassportID (deviceID) {
+export async function authWithPassportID (deviceID, isResident) {
   let passportID = await ZenMoney.readLine('Введите номер паспорта (Формат: 3111111A111PB1)', {
     inputType: 'string',
     time: 120000
@@ -87,22 +87,33 @@ export async function authWithPassportID (deviceID) {
   if (passportID === '') {
     throw new TemporaryError('Не введён номер паспорта. Подключите синхронизацию ещё раз и укажите номер паспорта.')
   }
-  let isResident = false
-  if ((passportID.toLocaleUpperCase().indexOf('PB') >= 0 || // латиница
-    passportID.toLocaleUpperCase().indexOf('РВ') >= 0) && // кирилица
-    passportID.length === 14) {
-    isResident = true
+  var body = {
+    deviceId: deviceID,
+    deviceName: 'ZenMoney Plugin',
+    isResident: isResident,
+    login: passportID.toLocaleUpperCase(),
+    screenHeight: 1794,
+    screenWidth: 1080
   }
-  let res = (await fetchApiJson('Authorization?locale=ru', {
-    method: 'POST',
-    body: {
+  if (passportID.toLocaleUpperCase().search(/[0-9]{7}[AА][0-9]{3}[PBРВ][0-9]/i) === -1 && // латиница и кирилица
+      !isResident) {
+    let issueDate = await ZenMoney.readLine('Введите дату выдачи документа (Формат: ГГГГММДД)', {
+      inputType: 'string',
+      time: 120000
+    })
+    body = {
       deviceId: deviceID,
       deviceName: 'ZenMoney Plugin',
       isResident: isResident,
-      login: passportID.toLocaleUpperCase(),
+      documentNum: passportID.toLocaleUpperCase(),
+      issueDate: issueDate,
       screenHeight: 1794,
       screenWidth: 1080
-    },
+    }
+  }
+  let res = (await fetchApiJson('Authorization?locale=ru', {
+    method: 'POST',
+    body: body,
     sanitizeRequestLog: { body: { deviceId: true, login: true } }
   }, response => response.status, message => new Error('bad request')))
   if (res.body.status !== 'OK') {
