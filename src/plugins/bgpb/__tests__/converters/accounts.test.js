@@ -1,6 +1,9 @@
 import { convertAccount } from '../../converters'
 
 describe('convertAccount', () => {
+  beforeEach(() => {
+    global.ZenMoney = { isAccountSkipped: () => false }
+  })
   const bankCard = {
     'Id': '11161311-117d11',
     'No': '529911******1111',
@@ -15,7 +18,6 @@ describe('convertAccount', () => {
     'ExtraData': 'cb727d83-2d8a-4c54-898f-6d45f0eba713'
   }
   it('maps bank card to zenmoney one', () => {
-    global.ZenMoney = { isAccountSkipped: () => false }
     expect(convertAccount(bankCard)).toEqual({
       id: '11161311',
       transactionsAccId: null,
