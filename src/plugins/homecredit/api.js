@@ -836,6 +836,6 @@ export function collapseDoubleAccounts (accountsData) {
 
 function getPhoneNumber (str) {
   const number = /^(?:\+?7|8|)(\d{10})$/.exec(str.trim())
-  if (number) return '+7' + number[1]
+  if (number) return '7' + number[1]
   return null
 }
