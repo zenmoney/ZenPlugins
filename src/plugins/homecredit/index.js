@@ -36,7 +36,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
         if (fetchedAccounts.merchantCards) delete fetchedAccounts.merchantCards
       } else {
         // Авторизация в приложении "Мой кредит" ===========================================
-        const auth = await Api.authMyCredit(preferences, ZenMoney.getData('auth', null))
+        const auth = await Api.authMyCredit(ZenMoney.getData('auth', null) || {}, preferences)
         const fetchedMyCreditAccounts = await Api.fetchMyCreditAccounts(auth)
         if (fetchedAccounts.credits) {
           fetchedAccounts.credits.forEach(function (account) {
@@ -91,7 +91,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
 
     let auth = ZenMoney.getData('auth', null)
     const newConn = auth === null
-    auth = await Api.authMyCredit(preferences, auth)
+    auth = await Api.authMyCredit(auth || {}, preferences)
 
     const fetchedAccounts = await Api.fetchMyCreditAccounts(auth)
     console.log('>>> Список счетов загружен.')

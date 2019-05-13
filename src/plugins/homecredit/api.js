@@ -22,9 +22,10 @@ const defaultArgumentsForAuth = {
   'systemVersion': '5.1.1'
 }
 
-export async function authMyCredit (preferences, auth = {}) {
+export async function authMyCredit (auth, preferences) {
   if (!auth || !auth.device || !auth.key || !auth.token || !auth.phone) {
-    auth.phone = (preferences.phone || '').trim()
+    auth.phone = getPhoneNumber((preferences.phone || '').trim())
+    if (!auth.phone) { throw new InvalidPreferencesError('Не корректно указан номер телефона') }
     const result = await registerMyCreditDevice(auth, preferences)
     return result
   }
@@ -827,4 +828,10 @@ export function collapseDoubleAccounts (accountsData) {
   if (count !== result.length) { console.log(`>>> Объединение карт со счетами: ${count - result.length} шт`) }
 
   return result
+}
+
+function getPhoneNumber (str) {
+  const number = /^(?:\+?7|8|)(\d{10})$/.exec(str.trim())
+  if (number) return '+7' + number[1]
+  return null
 }
