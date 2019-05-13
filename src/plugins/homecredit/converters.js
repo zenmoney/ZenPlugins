@@ -191,7 +191,7 @@ export function convertTransactions (accountData, transactions) {
   transactions.forEach(transaction => {
     // дополнительная логика для счетов кредитов
     let credit = false
-    if (['CreditLoan', 'credits'].indexOf(accountData.details.type) + 1) {
+    if (accountData.details && ['CreditLoan', 'credits'].indexOf(accountData.details.type) + 1) {
       if (!transaction.creditDebitIndicator) {
         // списания по основному долгу на счетах кредитов пропускаем
         if (transaction.shortDescription.indexOf('основного долга') + 1) { return }

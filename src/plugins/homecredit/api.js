@@ -818,9 +818,10 @@ export function collapseDoubleAccounts (accountsData) {
   if (count !== result.length) { console.log(`>>> Объединение карт одного счёта: ${count - result.length} шт`) }
 
   // объединим карты со счетами
+  result = _.flattenDeep(result)
   count = result.length
   result = _.union(
-    _.filter(result, item => item.details.type === 'CreditLoan'), // кредиты оставляем как есть, чтобы считать их отдельно без привязки к счёту погашения
+    _.filter(result, item => item.details.type === 'CreditLoan'), // кредиты "Мой кредит" оставляем как есть, чтобы считать их отдельно без привязки к счёту погашения
     _.values(_.map(_.groupBy(_.filter(result, item => item.details.type !== 'CreditLoan'), 'details.accountNumber'), vals => vals[0]))
   )
   if (count !== result.length) { console.log(`>>> Объединение карт со счетами: ${count - result.length} шт`) }
