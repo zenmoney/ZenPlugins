@@ -2,8 +2,7 @@ import * as bank from './api'
 import * as converters from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
-  let isResident = (preferences.isResident === 'true')
-  let loginData = await bank.login(isResident)
+  let loginData = await bank.login(preferences.isResident)
   const accounts = (await bank.fetchAccounts(loginData.deviceID, loginData.sessionID))
     .map(converters.convertAccount)
     .filter(account => account !== null)
