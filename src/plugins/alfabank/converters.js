@@ -114,7 +114,7 @@ export function parseApiMovementDescription (description, sign) {
       mcc: null
     }
   }
-  const [, amount, currency,, mcc] = match
+  const [, amount, currency, , mcc] = match
   return {
     origin: {
       amount: sign * Number(amount),
@@ -184,7 +184,7 @@ export const getMerchantDataFromDescription = (description) => {
 
   matched = description.match(slashedPattern)
   if (matched) {
-    const [,, country, rest] = matched
+    const [, , country, rest] = matched
     const [city, ...restTitle] = rest.split(/\\/)
     const title = (restTitle.pop()).trim()
     return { country, city, title }
@@ -302,7 +302,10 @@ function convertApiMovementToReadableTransaction (apiMovement, accountId) {
   }
 
   if (apiMovement.reference.match(/^C0[23]/)) {
-    readableTransaction.movements.push(makeOuterMovement(readableTransaction, apiMovement))
+    const transferMovement = makeOuterMovement(readableTransaction, apiMovement)
+    if (transferMovement) {
+      readableTransaction.movements.push(makeOuterMovement(readableTransaction, apiMovement))
+    }
     readableTransaction.comment = apiMovement.description
     return readableTransaction
   }
@@ -352,18 +355,18 @@ const makeCard2CardMovement = (readableTransaction, apiMovement) => ({
   fee: 0
 })
 
-const makeOuterMovement = (readableTransaction, apiMovement) => ({
+const makeOuterMovement = (readableTransaction, apiMovement) => apiMovement.recipientInfo && apiMovement.recipientInfo.recipientValue ? ({
   id: null,
   account: {
     company: null,
     instrument: apiMovement.currency,
-    syncIds: apiMovement.recipientInfo ? [`${apiMovement.recipientInfo.recipientValue}`] : null,
+    syncIds: [`${apiMovement.recipientInfo.recipientValue}`],
     type: null
   },
   invoice: null,
   sum: -1 * parseApiAmount(apiMovement.amount),
   fee: 0
-})
+}) : null
 
 const makeInternalMovement = (readableTransaction, apiMovement) => ({
   id: null,
