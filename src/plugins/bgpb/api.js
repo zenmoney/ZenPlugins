@@ -221,7 +221,7 @@ export async function fetchTransactionsAccId (sid, account) {
 
   let res = await fetchApi('sou/xml_online.admin',
     '<BS_Request>\r\n' +
-    '   <GetActions ProductId="' + account.id + '"/>\r\n' +
+    '   <GetActions ProductId="' + account.productId + '"/>\r\n' +
     '   <RequestType>GetActions</RequestType>\r\n' +
     '   <Session IpAddress="10.0.2.15" Prolong="Y" SID="' + sid + '"/>\r\n' +
     '   <TerminalId>41742991</TerminalId>\r\n' +
@@ -312,7 +312,7 @@ export async function fetchFullTransactions (sid, accounts, fromDate, toDate = n
   return transactions
 }
 
-export async function fetchLastTransactions (sid, accounts) {
+export async function fetchLastTransactions (sid) {
   console.log('>>> Загрузка списка последних транзакций...')
   const transactions = (await fetchApiJson('push-history/api/andorid_5.17.1/v1/getHistory', {
     method: 'POST',
