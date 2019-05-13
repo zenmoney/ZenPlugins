@@ -22,8 +22,7 @@ const defaultArgumentsForAuth = {
   'systemVersion': '5.1.1'
 }
 
-export async function authMyCredit (preferences) {
-  let auth = ZenMoney.getData('auth', null) || {}
+export async function authMyCredit (preferences, auth = {}) {
   if (!auth || !auth.device || !auth.key || !auth.token || !auth.phone) {
     auth.phone = (preferences.phone || '').trim()
     const result = await registerMyCreditDevice(auth, preferences)
@@ -31,7 +30,9 @@ export async function authMyCredit (preferences) {
   }
 
   console.log('>>> Авторизация [Мой кредит] ========================================================')
-  return (await checkUserPin(auth, preferences, registerMyCreditDevice)).auth
+  auth = (await checkUserPin(auth, preferences, registerMyCreditDevice)).auth
+  console.log('>>> Current Level: ' + auth.currentLevel)
+  return auth
 }
 
 export async function authBase (deviceId, login, password, code) {
@@ -731,8 +732,7 @@ async function fetchApiJson (url, options, predicate) {
   } catch (e) {
     if (!options.ignoreErrors) {
       if (e.response && e.response.status >= 500 && e.response.status < 525) {
-        // ToDO: TemporaryError
-        throw new Error('Информация из Банка Хоум Кредит временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться несколько дней, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
+        throw new TemporaryError('Информация из Банка Хоум Кредит временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться несколько дней, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
       } else {
         throw e
       }
@@ -745,8 +745,7 @@ async function fetchApiJson (url, options, predicate) {
       const message = getErrorMessage(response.body.Errors)
       if (message) {
         if (/.*(?:повтори\w+ попытк|еще раз|еверн\w+ код|ревышено колич).*/i.test(message)) {
-          // ToDO: TemporaryError
-          throw new Error(message)
+          throw new TemporaryError(message)
         } else {
           if (message.indexOf('роверьте дату рождения') + 1) {
             throw new InvalidPreferencesError(message)

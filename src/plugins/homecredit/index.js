@@ -8,13 +8,13 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   let transactions = []
 
   // сохранение логина-пароля в данных для перехода на "Мой кредит"
-  if (preferences.login && preferences.password && !preferences.birth && !preferences.phone) {
+  /* if (preferences.login && preferences.password && !preferences.birth && !preferences.phone) {
     ZenMoney.setData('oldAuth', {
       login: preferences.login,
       password: preferences.password,
       code: preferences.code
     })
-  }
+  } */
 
   const oldAuth = ZenMoney.getData('oldAuth', { login: null, password: null, code: null })
   const login = preferences.login || oldAuth.login
@@ -36,7 +36,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
         if (fetchedAccounts.merchantCards) delete fetchedAccounts.merchantCards
       } else {
         // Авторизация в приложении "Мой кредит" ===========================================
-        const auth = await Api.authMyCredit(preferences)
+        const auth = await Api.authMyCredit(preferences, ZenMoney.getData('auth', null))
         const fetchedMyCreditAccounts = await Api.fetchMyCreditAccounts(auth)
         if (fetchedAccounts.credits) {
           fetchedAccounts.credits.forEach(function (account) {
@@ -74,17 +74,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     })))
 
     // отфильтруем доп.карты и пустые счета
-    let tmpAccountsData = {}
-    _.flattenDeep(accountsData).forEach(function (a) {
-      if (!a.account) return
-      if (tmpAccountsData.hasOwnProperty(a.account.id)) {
-        tmpAccountsData[a.account.id].account.syncID.push(a.account.syncID)
-      } else {
-        if (typeof a.account.syncID === 'string') { a.account.syncID = [a.account.syncID] }
-        tmpAccountsData[a.account.id] = a
-      }
-    })
-    accountsData = Object.values(tmpAccountsData)
+    accountsData = Api.collapseDoubleAccounts(accountsData)
 
     let tmpTransactions = {}
     transactions.forEach(function (t) {
@@ -99,8 +89,10 @@ export async function scrape ({ preferences, fromDate, toDate }) {
       throw new InvalidPreferencesError('Необходимо заполнить параметры подключения к банку')
     }
 
-    const newConn = ZenMoney.getData('auth', null) === null
-    const auth = await Api.authMyCredit(preferences)
+    let auth = ZenMoney.getData('auth', null)
+    const newConn = auth === null
+    auth = await Api.authMyCredit(preferences, auth)
+
     const fetchedAccounts = await Api.fetchMyCreditAccounts(auth)
     console.log('>>> Список счетов загружен.')
 
