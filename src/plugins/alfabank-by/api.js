@@ -170,7 +170,8 @@ export async function loginByToken (sessionID, deviceID, token) {
 
 export async function fetchAccounts (deviceID, sessionID) {
   console.log('>>> Загрузка списка счетов...')
-  let res = (await fetchApiJson('Desktop', {
+  // Сразу делаем обязательный запрос на рабочий стол
+  await fetchApiJson('Desktop', {
     method: 'POST',
     headers: {
       'X-Session-ID': sessionID
@@ -179,29 +180,21 @@ export async function fetchAccounts (deviceID, sessionID) {
       deviceId: deviceID
     },
     sanitizeRequestLog: { body: { deviceId: true } }
-  }, response => response.status, message => new Error('bad request')))
-  if (res.body.shortcuts && res.body.shortcuts.length > 0) {
-    return res.body.shortcuts
-  }
-  return []
-}
+  }, response => response.status, message => new Error('bad request'))
 
-export async function fetchAccountInfo (sessionID, accountId) {
-  console.log('>>> Загрузка списка счета ' + accountId)
-  let res = (await fetchApiJson('Account/Info', {
+  let res = (await fetchApiJson('Products', {
     method: 'POST',
     headers: {
       'X-Session-ID': sessionID
     },
     body: {
-      id: accountId,
-      operationSource: 'DESKTOP'
+      type: 'ACCOUNT'
     }
   }, response => response.status, message => new Error('bad request')))
-  if (res.body.iban) {
-    return res.body
+  if (res.body.items && res.body.items.length > 0) {
+    return res.body.items
   }
-  throw new Error('unexpected response')
+  return []
 }
 
 export async function fetchTransactions (sessionID, accounts, fromDate) {
@@ -223,7 +216,8 @@ export async function fetchTransactions (sessionID, accounts, fromDate) {
         body: {
           offset: offset,
           pageSize: limit,
-          shortcutId: account.id
+          objectId: account.id,
+          type: account.productType
         }
       }, response => response.body)
       batch = getArray(get(response, 'body.items'))
