@@ -1,9 +1,11 @@
 import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
 
 export function convertAccount (ob) {
-  if (ob.ProductType !== 'NON_ONUS') {
+  const id = ob.Id.split('-')[0]
+  if (ob.ProductType !== 'NON_ONUS' && !ZenMoney.isAccountSkipped(id)) {
+    // eslint-disable-next-line no-debugger
     return {
-      id: ob.Id,
+      id,
       transactionsAccId: null,
       type: 'card',
       title: ob.CustomName + '*' + ob.No.slice(-4),
@@ -12,6 +14,7 @@ export function convertAccount (ob) {
       instrument: codeToCurrencyLookup[ob.Currency],
       balance: 0,
       syncID: [ob.No.slice(-4)],
+      productId: ob.Id,
       productType: ob.ProductType
     }
   }
@@ -44,8 +47,7 @@ export function convertTransaction (apiTransaction, accounts) {
 export function convertLastTransaction (apiTransaction, accounts) {
   console.log(apiTransaction)
   let message = apiTransaction.pushMessageText
-  if (message.slice(0, 4) !== 'Card' ||
-  message.indexOf('Смена статуса карты') >= 0) {
+  if (message.slice(0, 4) !== 'Card' || message.indexOf('Смена статуса карты') >= 0) {
     // Значит это не транзакция, а просто уведомление банка
     return null
   }
@@ -53,6 +55,9 @@ export function convertLastTransaction (apiTransaction, accounts) {
   const account = accounts.find(account => {
     return account.syncID.indexOf(rawData[0].slice(-4)) !== -1
   })
+  if (!account) {
+    return null
+  }
 
   let amountData = rawData[1].split(': ')
   let currency = amountData[1].slice(-3)

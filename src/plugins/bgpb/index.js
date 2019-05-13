@@ -22,7 +22,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
 
   const transactionsStatement = (await bank.fetchFullTransactions(token, accounts, fromDate, toDate))
     .map(transaction => converters.convertTransaction(transaction, accounts))
-  const transactionsLast = (await bank.fetchLastTransactions(token, accounts))
+  const transactionsLast = (await bank.fetchLastTransactions(token))
     .map(transaction => converters.convertLastTransaction(transaction, accounts))
     .filter(function (op) {
       if (op === null) {
