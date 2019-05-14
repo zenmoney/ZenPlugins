@@ -1,4 +1,4 @@
-import { convertAccount, addAccountInfo } from '../../converters'
+import { convertAccount } from '../../converters'
 
 describe('convertAccount', () => {
   let tt = [
