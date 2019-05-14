@@ -209,6 +209,40 @@ export async function fetchAccounts (deviceID, sessionID) {
   return []
 }
 
+export async function fetchDeposits (sessionID) {
+  console.log('>>> Загрузка списка депозитов...')
+  let res = (await fetchApiJson('Products', {
+    method: 'POST',
+    headers: {
+      'X-Session-ID': sessionID
+    },
+    body: {
+      type: 'DEPOSIT'
+    }
+  }, response => response.status, message => new Error('bad request')))
+  if (res.body.items && res.body.items.length > 0) {
+    return res.body.items
+  }
+  return []
+}
+
+export async function fetchCredits (sessionID) {
+  console.log('>>> Загрузка списка депозитов...')
+  let res = (await fetchApiJson('Products', {
+    method: 'POST',
+    headers: {
+      'X-Session-ID': sessionID
+    },
+    body: {
+      type: 'CREDIT'
+    }
+  }, response => response.status, message => new Error('bad request')))
+  if (res.body.items && res.body.items.length > 0) {
+    return res.body.items
+  }
+  return []
+}
+
 export async function fetchTransactions (sessionID, accounts, fromDate) {
   console.log('>>> Загрузка списка транзакций...')
   let transactions = []
