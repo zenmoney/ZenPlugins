@@ -8,6 +8,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     .filter(account => account !== null)
   const transactions = (await bank.fetchTransactions(loginData.sessionID, accounts, fromDate))
     .map(transaction => converters.convertTransaction(transaction, accounts))
+    .filter(transaction => transaction !== null)
   return {
     accounts: accounts,
     transactions: transactions

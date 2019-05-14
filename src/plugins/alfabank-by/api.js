@@ -190,7 +190,8 @@ export async function fetchAccounts (deviceID, sessionID) {
     body: {
       deviceId: deviceID
     },
-    sanitizeRequestLog: { body: { deviceId: true } }
+    sanitizeRequestLog: { body: { deviceId: true } },
+    sanitizeResponseLog: { body: { status: { clientId: true, clientEmail: true, clientName: true, qrCodeErip: true } } }
   }, response => response.status, message => new Error('bad request'))
 
   let res = (await fetchApiJson('Products', {
