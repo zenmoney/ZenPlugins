@@ -414,6 +414,106 @@ describe('convertTransaction', () => {
         comment: 'Покупка товара / получение услуг',
         hold: false
       }
+    },
+    {
+      name: 'ERIP payment',
+      json: {
+        id: '11113111050111',
+        info:
+          {
+            description: 'А-курс',
+            title: 'MTS - Domashnij internet: 000000000',
+            amount: {
+              format: '###,###,###,###,##0.##',
+              currency: 'BYN',
+              amount: -5
+            },
+            icon:
+              {
+                backgroundColorFrom: '#6cbfc7',
+                backgroundColorTo: '#97f6e6',
+                iconUrl: 'v0/Image/49902_392.SVG',
+                captionColor: '#FFFFFF',
+                frameColor: '#c2b7b7',
+                displayType: 'REGULAR'
+              }
+          },
+        date: '20190125122755',
+        cardMask: '4.0000',
+        description: 'INTERNET-BANK AL InSync (ERIP)',
+        status: 'NORMAL',
+        operation: 'PAYMENT',
+        iban: 'BY31 ALFA 3014 111M RT00 1111 0000',
+        showReceipt: true,
+        sendReceipt: true,
+        showAddToFuture: true,
+        showRepeat: true,
+        showAddRecipient: true,
+        availableSplit: true,
+        showCompensate: false
+      },
+      expectedTransaction: {
+        date: new Date('Tue Jan 25 2019 12:27:55 GMT+0300 (Moscow Standard Time)'),
+        movements: [
+          {
+            id: '11113111050111',
+            account: { id: '6505111' },
+            invoice: null,
+            sum: -5,
+            fee: 0
+          }
+        ],
+        merchant: null,
+        comment: 'MTS - Domashnij internet: 000000000',
+        hold: false
+      }
+    },
+    {
+      name: 'skip currency rate orders',
+      json: {
+        id: '11113111050111',
+        info:
+          { description: '1 EUR = 2.3500 BYN',
+            title: 'Заявка №1 на курс конвертации',
+            icon:
+              { backgroundColorFrom: '#6cbfc7',
+                backgroundColorTo: '#32cb77',
+                iconUrl: 'v0/Image/66887_392.SVG',
+                captionColor: '#FFFFFF',
+                frameColor: '#c2b7b7',
+                displayType: 'REGULAR' } },
+        date: '20190125122755',
+        description: '',
+        status: 'NORMAL',
+        rateOrderStatus: 'EXECUTED',
+        operation: 'RATE_ORDER',
+        iban: 'BY31 ALFA 3014 111M RT00 1111 0000',
+        showReceipt: false,
+        sendReceipt: false,
+        showAddToFuture: false,
+        showRepeat: false,
+        showAddRecipient: false,
+        availableSplit: false,
+        showCompensate: false,
+        orderRateDescription: [
+          {
+            accountName: 'Зарплатная',
+            amount: {
+              format: '###,###,###,###,##0.##',
+              currency: 'BYN',
+              amount: -12.8
+            }
+          },
+          {
+            accountName: 'Евро',
+            amount: {
+              format: '###,###,###,###,##0.##',
+              currency: 'EUR',
+              amount: 54
+            }
+          }]
+      },
+      expectedTransaction: null
     }
   ]
   tt.forEach(function (tc) {

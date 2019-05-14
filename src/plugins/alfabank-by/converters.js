@@ -26,6 +26,9 @@ export function convertAccount (json) {
 }
 
 export function convertTransaction (json, accounts) {
+  if (json.operation === 'RATE_ORDER') {
+    return null
+  }
   const account = accounts.find(account => {
     return account.syncID.indexOf(json.iban.replace(/\s/g, '')) !== -1
   })
@@ -156,6 +159,9 @@ function parseComment (transaction, json) {
     let location = json.description.split(' ')
     transaction.comment = json.description.replace(json.info.title, '') // Убираем место покупки
     transaction.comment = transaction.comment.replace(location[0], '').trim() // Убираем город покупки
+    return false
+  } else if (json.description.indexOf('ERIP') >= 0) {
+    transaction.comment = json.info.title
     return false
   }
   transaction.comment = json.description
