@@ -1,4 +1,3 @@
-/* eslint-disable no-unreachable */
 import { MD5 } from 'jshashes'
 import * as Network from '../../common/network'
 import _ from 'lodash'

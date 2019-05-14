@@ -110,6 +110,7 @@ export function parseOuterAccountData (str) {
       { pattern: 'CARD2CARD ALFA_MOBILE', account: { type: 'ccard', company: { id: '3' } } },
       { pattern: 'С2С ALFA_MOBILE', account: { type: 'ccard', company: { id: '3' } } },
       { pattern: 'СовКомБанк', account: { type: null, company: { id: '4534' } } },
+      { pattern: 'Ситибанк', account: { type: null, company: { id: '4859' } } },
       { pattern: 'Яндекс.Деньг', account: { type: null, company: { id: '15420' } } },
       { pattern: 'YANDEX.MONEY', account: { type: null, company: { id: '15420' } } },
       { pattern: 'Рокетбанк', account: { type: null, company: { id: '15444' } } },
