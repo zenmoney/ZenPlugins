@@ -422,7 +422,7 @@ export async function fetchMyCreditAccounts (auth) {
   // ToDO: В новом API кредиты не работает даже в приложении банка, не возможно узнать остаток по нему
   // 'CreditLoan'
 
-  if (auth.levelup && auth.currentLevel > 2) {
+  if (auth && auth.levelup && auth.currentLevel > 2) {
     console.log('>>> Загрузка списка дебетовых продуктов [ MyCredit ] ===================================')
 
     let response = await fetchApiJson('Transaction/GetApprovalContracts', {
@@ -744,7 +744,7 @@ async function fetchApiJson (url, options, predicate) {
     }
   }
   if (predicate) { validateResponse(response, response => response.body && predicate(response)) }
-  if (!options.ignoreErrors && response.body) {
+  if (response.body) {
     // ((response.body.StatusCode || response.body.statusCode) && response.body.StatusCode !== 200 && response.body.statusCode !== 200)
     if (response.body.Errors && _.isArray(response.body.Errors) && response.body.Errors.length > 0) {
       const message = getErrorMessage(response.body.Errors)
@@ -755,11 +755,13 @@ async function fetchApiJson (url, options, predicate) {
           if (message.indexOf('роверьте дату рождения') + 1) {
             throw new InvalidPreferencesError(message)
           } else {
-            throw new Error('Ответ банка: ' + message)
+            if (!options.ignoreErrors) {
+              throw new Error('Ответ банка: ' + message)
+            }
           }
         }
       }
-    } else if (response.body.success === false) {
+    } else if (!options.ignoreErrors && response.body.success === false) {
       const message = response.body.errorResponseMo.errorMsg
       if (message && message.indexOf('No entity found') + 1) { throw new InvalidPreferencesError('Авторизация не прошла. Пожалуйста, проверьте корректность параметров подключения.') }
     }

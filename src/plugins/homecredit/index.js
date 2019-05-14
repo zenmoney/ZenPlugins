@@ -105,6 +105,10 @@ export async function scrape ({ preferences, fromDate, toDate }) {
 
     accountsData = Api.collapseDoubleAccounts(accountsData)
 
+    if (auth.levelup === false && accountsData.length === 0) {
+      throw new InvalidPreferencesError('Для доступа к дебетовым счетам необходимо создать подключение заново и ответить на вопросы банка.')
+    }
+
     // фикс поступлений сегодняшнего дня (чтобы не создавать лишних корректировок)
     // если в текущих сутках были поступления, баланс счёта передаём только для нового подключения
     transactions = await Promise.all(accountsData.map(async accountData => {
@@ -122,10 +126,6 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   }
 
   let accounts = accountsData.map(account => account.account)
-
-  if (auth.levelup === false && accounts.length === 0) {
-    throw new InvalidPreferencesError('Для доступа к дебетовым счетам необходимо создать подключение заново и ответить на вопросы банка.')
-  }
 
   return {
     accounts: ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId }),
