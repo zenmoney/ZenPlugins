@@ -131,9 +131,9 @@ function parsePayee (transaction, apiTransaction) {
   if (!apiTransaction.place && !apiTransaction.payeeLastTransaction) {
     return false
   }
-
+  const mcc = Number(apiTransaction.mcc)
   transaction.merchant = {
-    mcc: isFinite(apiTransaction.mcc) ? Number(apiTransaction.mcc) : null,
+    mcc: isNaN(mcc) || mcc === 0 ? null : mcc,
     location: null
   }
   if (apiTransaction.payeeLastTransaction) {

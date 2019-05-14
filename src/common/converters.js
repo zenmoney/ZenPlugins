@@ -197,7 +197,7 @@ export function toZenmoneyTransaction (readableTransaction, accountsByIdLookup) 
       result.payee = fullTitle
     }
 
-    console.assert(mcc === null || _.isNumber(mcc), 'merchant.mcc must be defined Number:', readableTransaction)
+    console.assert(mcc === null || (_.isNumber(mcc) && mcc > 0), 'merchant.mcc must be null or integer number > 0', readableTransaction)
     result.mcc = mcc
 
     console.assert(location === null || _.isPlainObject(location),
