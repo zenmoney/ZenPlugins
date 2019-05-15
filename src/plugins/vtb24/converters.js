@@ -290,9 +290,10 @@ function getInvoice (apiTransaction) {
     apiTransaction.transactionAmount.sum === 0 &&
     apiTransaction.transactionAmountInAccountCurrency &&
     apiTransaction.transactionAmountInAccountCurrency.sum !== 0 &&
-    apiTransaction.transactionAmountInAccountCurrency.currency.currencyCode === apiTransaction.transactionAmount.currency.currencyCode) {
+    (!apiTransaction.transactionAmount.currency.currencyCode ||
+      apiTransaction.transactionAmountInAccountCurrency.currency.currencyCode === apiTransaction.transactionAmount.currency.currencyCode)) {
     amount = apiTransaction.transactionAmountInAccountCurrency
-  } else {
+  } else if (apiTransaction.transactionAmount) {
     amount = apiTransaction.transactionAmount
   }
   return convertAmount(amount)
