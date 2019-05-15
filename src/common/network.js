@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { ZPAPIError } from '../errors'
 import { sanitize } from './sanitize'
 
 const cheerio = require('cheerio')
@@ -63,7 +64,11 @@ export async function fetch (url, options = {}) {
   }, options.sanitizeResponseLog || false))
 
   if (bodyParsingException) {
-    throw new ParseError(`Could not parse response. ${bodyParsingException}`, response)
+    if (bodyParsingException instanceof ZPAPIError) {
+      throw bodyParsingException
+    } else {
+      throw new ParseError(`Could not parse response. ${bodyParsingException}`, response)
+    }
   }
 
   return response
