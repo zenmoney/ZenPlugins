@@ -52,7 +52,6 @@ export async function authBase (deviceId, login, password, code) {
     args.code = code
   }
   const response = await fetchApiJson(`${baseUri}/LoginService`, {
-    log: true,
     method: 'POST',
     body: {
       'arguments': [ args ],
@@ -306,7 +305,6 @@ async function levelUp (auth, codewordOnly) {
 export async function fetchBaseAccounts () {
   console.log('>>> Загрузка списка счетов [Базовый] =======================================')
   const response = await fetchApiJson(`${baseUri}/ProductService`, {
-    log: true,
     method: 'POST',
     body: {
       'arguments': [],
@@ -373,7 +371,6 @@ export async function fetchBaseAccounts () {
       if (methodName) {
         console.log(`>>> Загрузка деталей '${account.productName}' (${getCardNumber(account.cardNumber)}) [Базовый] --------------------`)
         const response = await fetchApiJson(`${baseUri}/ProductService`, {
-          log: true,
           method: 'POST',
           body: {
             'arguments': [
@@ -593,7 +590,6 @@ export async function fetchBaseTransactions (accountData, type, fromDate, toDate
   let to = getDate(toDate || new Date()).getTime()
   while (true) {
     const response = await fetchApiJson(`${baseUri}/ProductService`, {
-      log: true,
       method: 'POST',
       body: {
         'arguments': [{
@@ -746,8 +742,10 @@ async function fetchApiJson (url, options, predicate) {
   if (predicate) { validateResponse(response, response => response.body && predicate(response)) }
   if (response.body) {
     // ((response.body.StatusCode || response.body.statusCode) && response.body.StatusCode !== 200 && response.body.statusCode !== 200)
-    if (response.body.Errors && _.isArray(response.body.Errors) && response.body.Errors.length > 0) {
-      const message = getErrorMessage(response.body.Errors)
+    if ((response.body.Errors && _.isArray(response.body.Errors) && response.body.Errors.length > 0) || // MyCredit
+      (response.body.errorResponseMo && response.body.errorResponseMo.errorMsg) // BaseApp
+    ) {
+      const message = getErrorMessage(response.body.Errors || _.get(response, 'body.errorResponseMo.errorMsg'))
       if (message) {
         if (/.*(?:повтори\w+ попытк|еще раз|еверн\w+ код|ревышено колич).*/i.test(message)) {
           throw new TemporaryError(message)
@@ -774,7 +772,12 @@ function validateResponse (response, predicate, message) {
 }
 
 function getErrorMessage (errors) {
-  if (!errors || !_.isArray(errors) || errors.length === 0) { return '' }
+  if (!errors) { return '' }
+  if (!_.isArray(errors)) {
+    errors = [ errors ]
+  } else if (errors.length === 0) {
+    return ''
+  }
 
   let message = errors[0]
   errors.forEach(function (value) {

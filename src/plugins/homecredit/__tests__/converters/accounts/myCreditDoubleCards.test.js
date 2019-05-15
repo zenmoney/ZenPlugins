@@ -497,7 +497,7 @@ const accounts = {
 describe('convertAccount', () => {
   for (let accountType in accounts) {
     for (let accountNum in accounts[accountType]) {
-      it(`should converts ${accountType} #${accountNum + 1} account`, () => {
+      it(`should converts ${accountType} #${accountNum} account`, () => {
         expect(
           convertAccount(accounts[accountType][accountNum][0], accountType)
         ).toEqual(

@@ -189,43 +189,48 @@ export function convertTransactions (accountData, transactions) {
 
   const result = []
   transactions.forEach(transaction => {
-    // дополнительная логика для счетов кредитов
-    let credit = false
-    if (accountData.details && ['CreditLoan', 'credits'].indexOf(accountData.details.type) + 1) {
-      if (!transaction.creditDebitIndicator) {
-        // списания по основному долгу на счетах кредитов пропускаем
-        if (transaction.shortDescription.indexOf('основного долга') + 1) { return }
-      } else {
-        // поступление на счёт кредита записываем в минус
-        if (transaction.shortDescription.indexOf('Выдача кредита') + 1) { transaction.creditDebitIndicator = false }
-      }
-      credit = true
-    }
-
-    const tran = {
-      id: transaction.movementNumber,
-      hold: transaction.postingDate === null,
-      income: transaction.creditDebitIndicator ? transaction.amount : 0,
-      incomeAccount: accountData.account.id,
-      outcome: transaction.creditDebitIndicator ? 0 : transaction.amount,
-      outcomeAccount: accountData.account.id,
-      date: new Date(transaction.valueDate.time || transaction.valueDate),
-      payee: transaction.merchantName || transaction.merchant.trim()
-    }
-    if (transaction.creditDebitIndicator || credit) { tran.comment = transaction.shortDescription }
-
-    if (transaction.mcc) {
-      if (transaction.mcc === 'ATM CASH WITHDRAWAL') {
-        tran.income = tran.outcome
-        tran.incomeAccount = 'cash#' + transaction.payCurrency
-      } else {
-        tran.mcc = getMcc(transaction.mcc)
-      }
-    }
-
+    const tran = convertTransaction(accountData, transaction)
     result.push(tran)
   })
   return result
+}
+
+export function convertTransaction (accountData, transaction) {
+  // дополнительная логика для счетов кредитов
+  let credit = false
+  if (accountData.details && ['CreditLoan', 'credits'].indexOf(accountData.details.type) + 1) {
+    if (!transaction.creditDebitIndicator) {
+      // списания по основному долгу на счетах кредитов пропускаем
+      if (transaction.shortDescription.indexOf('основного долга') + 1) { return }
+    } else {
+      // поступление на счёт кредита записываем в минус
+      if (transaction.shortDescription.indexOf('Выдача кредита') + 1) { transaction.creditDebitIndicator = false }
+    }
+    credit = true
+  }
+
+  const tran = {
+    id: transaction.movementNumber,
+    hold: transaction.postingDate === null,
+    income: transaction.creditDebitIndicator ? transaction.amount : 0,
+    incomeAccount: accountData.account.id,
+    outcome: transaction.creditDebitIndicator ? 0 : transaction.amount,
+    outcomeAccount: accountData.account.id,
+    date: new Date(transaction.valueDate.time || transaction.valueDate),
+    payee: transaction.merchantName || transaction.merchant.trim()
+  }
+  if (transaction.creditDebitIndicator || credit) { tran.comment = transaction.shortDescription }
+
+  if (transaction.mcc) {
+    if (transaction.mcc === 'ATM CASH WITHDRAWAL') {
+      tran.income = tran.outcome
+      tran.incomeAccount = 'cash#' + transaction.payCurrency
+    } else {
+      tran.mcc = getMcc(transaction.mcc)
+    }
+  }
+
+  return tran
 }
 
 export function getMcc (code) {
