@@ -62,7 +62,7 @@ function getMovement (json, account) {
 
   if (json.operationAmount && json.operationAmount.currency !== account.instrument) {
     var amount = json.operationAmount.amount
-    if (json.operation && json.operation === 'CURRENCYEXCHANGE') {
+    if ((movement.sum > 0 && amount < 0) || (movement.sum < 0 && amount > 0)) {
       amount *= -1
     }
     movement.invoice = {
