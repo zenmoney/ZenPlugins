@@ -9,6 +9,8 @@ describe('scrape', () => {
     mockAuthWithPassportID()
     mockAuthConfirm()
     mockFetchDesktop()
+    mockFetchDeposits()
+    mockFetchCredits()
     mockFetchAccounts()
     mockFetchTransactions()
 
@@ -131,6 +133,28 @@ function mockFetchAccounts () {
         'onDesktop': true,
         'type': 'ACCOUNT'
       } ],
+      'totals': [ ]
+    }),
+    statusText: 'OK'
+  }, { method: 'POST' })
+}
+
+function mockFetchDeposits () { // TODO: update response body
+  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/Products', {
+    status: 200,
+    body: JSON.stringify({
+      'items': [ ],
+      'totals': [ ]
+    }),
+    statusText: 'OK'
+  }, { method: 'POST' })
+}
+
+function mockFetchCredits () { // TODO: update response body
+  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/Products', {
+    status: 200,
+    body: JSON.stringify({
+      'items': [ ],
       'totals': [ ]
     }),
     statusText: 'OK'
