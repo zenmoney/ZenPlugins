@@ -2,7 +2,7 @@ import { MD5 } from 'jshashes'
 import * as _ from 'lodash'
 import padLeft from 'pad-left'
 import { toISODateString } from '../../common/dateUtils'
-import * as network from '../../common/network'
+import { fetch } from '../../common/network'
 import { parseResponseBody, stringifyRequestBody } from '../../common/protocols/burlap'
 import { randomInt } from '../../common/utils'
 
@@ -48,7 +48,7 @@ async function burlapRequest (options) {
   let payload = null
   let response
   try {
-    response = await network.fetch('https://mb.vtb24.ru/mobilebanking/burlap/', {
+    response = await fetch('https://mb.vtb24.ru/mobilebanking/burlap/', {
       method: 'POST',
       headers: {
         'mb-protocol-version': PROTOCOL_VERSION,
@@ -102,6 +102,8 @@ async function burlapRequest (options) {
   } catch (e) {
     if (e.response && e.response.status === 503) {
       throw new TemporaryError('Информация из Банка ВТБ временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог разработчикам".')
+    } else if (e.cause) {
+      throw e.cause
     } else {
       throw e
     }

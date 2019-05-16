@@ -1,12 +1,13 @@
 import _ from 'lodash'
-import { ZPAPIError } from '../errors'
 import { sanitize } from './sanitize'
 
 const cheerio = require('cheerio')
 
-export class ParseError extends Error {
-  constructor (message, response) {
-    super(message)
+export class ParseError {
+  constructor (message, response, cause) {
+    this.cause = cause
+    this.stack = new Error().stack
+    this.message = message
     this.response = response
   }
 }
@@ -64,11 +65,7 @@ export async function fetch (url, options = {}) {
   }, options.sanitizeResponseLog || false))
 
   if (bodyParsingException) {
-    if (bodyParsingException instanceof ZPAPIError) {
-      throw bodyParsingException
-    } else {
-      throw new ParseError(`Could not parse response. ${bodyParsingException}`, response)
-    }
+    throw new ParseError(`Could not parse response. ${bodyParsingException}`, response, bodyParsingException)
   }
 
   return response
