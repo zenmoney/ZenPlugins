@@ -206,7 +206,7 @@ export function toZenmoneyTransaction (readableTransaction, accountsByIdLookup) 
     )
 
     if (location !== null) {
-      const { latitude, longitude, locationRest } = location
+      const { latitude, longitude, ...locationRest } = location
       assertRestIsEmpty(locationRest, 'merchant.location props', readableTransaction)
 
       console.assert(_.isNumber(latitude), 'merchant.location.latitude must be Number:', readableTransaction)
