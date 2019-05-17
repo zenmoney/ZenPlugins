@@ -109,7 +109,8 @@ async function registerMyCreditDevice (auth, preferences) {
   // подтверждение кодом из СМС
   response = await readSmsCode(auth, "Введите код из СМС для регистрации в приложении 'Мой кредит'")
   if (!response.body.Result.IsUserPinCodeCreated) {
-    throw new TemporaryError("Необходимо пройти регистрацию в приложении 'Мой кредит', чтобы установить пин-код для входа")
+    // throw new TemporaryError("Необходимо пройти регистрацию в приложении 'Мой кредит', чтобы установить пин-код для входа")
+    throw new Error("Необходимо пройти регистрацию в приложении 'Мой кредит', чтобы установить пин-код для входа")
   }
 
   const result = await checkUserPin(auth, preferences)
@@ -508,7 +509,7 @@ export async function fetchMyCreditAccounts (auth) {
       const account = fetchedAccounts.CreditLoan[key]
 
       console.log(`>>> Загрузка информации по кредиту '${account.ProductName}' (${account.AccountNumber}) [Мой кредит] --------`)
-      await fetchApiJson('Payment/GetProductDetails', {
+      const response = await fetchApiJson('Payment/GetProductDetails', {
         ignoreErrors: true,
         headers: {
           ...defaultMyCreditHeaders,
@@ -546,7 +547,7 @@ export async function fetchMyCreditAccounts (auth) {
         })
 
         // добавим информацию о реальном остатке по кредиту
-        if (!response.body || response.status !== 200) {
+        if (!response || !response.body || response.status !== 200) {
           console.log('>>> !!! ОСТАТОК НА СЧЕТУ КРЕДИТА НЕ ДОСТУПЕН! В течение нескольких дней после наступления расчётной даты остаток ещё не доступен.')
         } else {
           if (response.body) { account.RepaymentAmount = response.body.repaymentAmount }
