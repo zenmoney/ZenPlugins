@@ -536,7 +536,11 @@ export async function fetchMyCreditAccounts (auth) {
             'X-Device-Ident': auth.device,
             'X-Private-Key': auth.key,
             'X-Phone-Number': auth.phone,
-            'X-Auth-Token': auth.token
+            'X-Auth-Token': auth.token,
+            // 'X-Client-ID': 0,
+            'Origin': 'https://api-myc.homecredit.ru',
+            'Referer': `https://api-myc.homecredit.ru/api/v1/PrepaymentPage?contractNumber=${account.ContractNumber}&selectedPrepayment=LoanBalance&isEarlyRepayment=True&isSingleContract=True`,
+            'X-Requested-With': 'ru.homecredit.mycredit'
           },
           body: {
             'contractNumber': account.ContractNumber,
@@ -682,7 +686,7 @@ export async function fetchMyCreditTransactions (auth, accountData, fromDate, to
       break
   }
   if (!type) {
-    console.log(`>>> Загрузка операций для счёта с типом '${type}' не реализована! Пропускаем.`)
+    console.log(`>>> Загрузка операций для счёта с типом '${accountData.details.type}' не реализована! Пропускаем.`)
     return []
   }
 
@@ -742,6 +746,8 @@ async function fetchApiJson (url, options, predicate) {
       } else {
         throw e
       }
+    } else {
+      return response
     }
   }
   if (predicate) { validateResponse(response, response => response.body && predicate(response)) }
