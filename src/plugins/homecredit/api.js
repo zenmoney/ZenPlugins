@@ -414,10 +414,14 @@ export async function fetchMyCreditAccounts (auth) {
     }
   })
 
-  const fetchedAccounts = _.pick(response.body.Result, ['CreditCard', 'CreditCardTW'])
+  const typesToFetch = ['CreditCard', 'CreditCardTW']
 
   // ToDO: В новом API кредиты не работает даже в приложении банка, не возможно узнать остаток по нему
-  // 'CreditLoan'
+  if (auth.currentLevel === 2) {
+    typesToFetch.push('CreditLoan')
+  }
+
+  const fetchedAccounts = _.pick(response.body.Result, typesToFetch)
 
   if (auth && auth.levelup && auth.currentLevel > 2) {
     console.log('>>> Загрузка списка дебетовых продуктов [ MyCredit ] ===================================')
@@ -499,7 +503,7 @@ export async function fetchMyCreditAccounts (auth) {
 
   // догрузим информацию по кредитам из "Мой Кредит"
   // ToDO: В новом API кредиты не работает даже в приложении банка, не возможно узнать остаток по нему
-  /* иif (fetchedAccounts.CreditLoan && fetchedAccounts.CreditLoan.length > 0) {
+  if (auth.currentLevel === 2 && fetchedAccounts.CreditLoan && fetchedAccounts.CreditLoan.length > 0) {
     await Promise.all(Object.keys(fetchedAccounts.CreditLoan).map(async key => {
       const account = fetchedAccounts.CreditLoan[key]
 
@@ -549,7 +553,7 @@ export async function fetchMyCreditAccounts (auth) {
         }
       }
     }))
-  } */
+  }
 
   return fetchedAccounts
 }
