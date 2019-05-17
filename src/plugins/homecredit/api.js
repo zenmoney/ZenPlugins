@@ -109,8 +109,7 @@ async function registerMyCreditDevice (auth, preferences) {
   // подтверждение кодом из СМС
   response = await readSmsCode(auth, "Введите код из СМС для регистрации в приложении 'Мой кредит'")
   if (!response.body.Result.IsUserPinCodeCreated) {
-    // throw new TemporaryError("Необходимо пройти регистрацию в приложении 'Мой кредит', чтобы установить пин-код для входа")
-    throw new Error("Необходимо пройти регистрацию в приложении 'Мой кредит', чтобы установить пин-код для входа")
+    throw new TemporaryError("Необходимо пройти регистрацию в приложении 'Мой кредит', чтобы установить пин-код для входа")
   }
 
   const result = await checkUserPin(auth, preferences)
