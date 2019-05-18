@@ -9,9 +9,9 @@ describe('scrape', () => {
     mockAuthWithPassportID()
     mockAuthConfirm()
     mockFetchDesktop()
+    mockFetchAccounts()
     mockFetchDeposits()
     mockFetchCredits()
-    mockFetchAccounts()
     mockFetchTransactions()
 
     const result = await scrape(
