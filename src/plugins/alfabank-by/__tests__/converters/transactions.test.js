@@ -567,6 +567,37 @@ describe('convertTransaction', () => {
         comment: null,
         hold: false
       }
+    },
+    {
+      name: 'skip zero operations',
+      json: {
+        id: '11113111050111',
+        info:
+          { description: 'Карта №1',
+            title: 'GOOGLE *SELLER',
+            amount: { format: '###,###,###,###,##0.##', currency: 'BYN', amount: 0 },
+            icon:
+              { backgroundColorFrom: '#8976f3',
+                backgroundColorTo: '#8976f3',
+                iconUrl: 'v0/Image/52_392.SVG',
+                captionColor: '#FFFFFF',
+                frameColor: '#c2b7b7',
+                displayType: 'REGULAR' } },
+        date: '20190125122755',
+        operationAmount: { format: '###,###,###,###,##0.##', currency: 'EUR', amount: 1 },
+        cardMask: '5.1111',
+        description: 'G.CO/PAYHELP# GBR',
+        status: 'NORMAL',
+        iban: 'BY31 ALFA 3014 111M RT00 1111 0000',
+        showReceipt: false,
+        sendReceipt: false,
+        showAddToFuture: false,
+        showRepeat: false,
+        showAddRecipient: false,
+        availableSplit: false,
+        showCompensate: false
+      },
+      expectedTransaction: null
     }
   ]
   tt.forEach(function (tc) {

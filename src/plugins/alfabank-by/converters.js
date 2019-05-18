@@ -26,7 +26,8 @@ export function convertAccount (json) {
 }
 
 export function convertTransaction (json, accounts) {
-  if (json.operation === 'RATE_ORDER') {
+  if (json.operation === 'RATE_ORDER' ||
+      json.info.amount.amount === 0) {
     return null
   }
   const account = accounts.find(account => {
