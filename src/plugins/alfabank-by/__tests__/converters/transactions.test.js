@@ -237,7 +237,7 @@ describe('convertTransaction', () => {
           mcc: null,
           title: 'UBER'
         },
-        comment: 'Покупка товара / получение услуг',
+        comment: null,
         hold: false
       }
     },
@@ -411,7 +411,7 @@ describe('convertTransaction', () => {
           mcc: null,
           title: 'BRUSNIKA'
         },
-        comment: 'Покупка товара / получение услуг',
+        comment: null,
         hold: false
       }
     },
@@ -514,6 +514,59 @@ describe('convertTransaction', () => {
           }]
       },
       expectedTransaction: null
+    },
+    {
+      name: 'yandex taxi payment',
+      json: {
+        id: '11113111050111',
+        info:
+          { description: 'Карта №1',
+            title: 'YANDEX.TAXI',
+            amount:
+              { format: '###,###,###,###,##0.##',
+                currency: 'BYN',
+                amount: -6.4 },
+            icon:
+              { backgroundColorFrom: '#8976f3',
+                backgroundColorTo: '#8976f3',
+                iconUrl: 'v0/Image/52_392.SVG',
+                captionColor: '#FFFFFF',
+                frameColor: '#c2b7b7',
+                displayType: 'REGULAR' } },
+        date: '20190125122755',
+        cardMask: '5.1111',
+        description: 'SCHIPOL NLD',
+        status: 'NORMAL',
+        iban: 'BY31 ALFA 3014 111M RT00 1111 0000',
+        showReceipt: false,
+        sendReceipt: false,
+        showAddToFuture: false,
+        showRepeat: false,
+        showAddRecipient: false,
+        availableSplit: true,
+        showCompensate: false
+      },
+      expectedTransaction: {
+        date: new Date('Tue Jan 25 2019 12:27:55 GMT+0300 (Moscow Standard Time)'),
+        movements: [
+          {
+            id: '11113111050111',
+            account: { id: '6505111' },
+            invoice: null,
+            sum: -6.4,
+            fee: 0
+          }
+        ],
+        merchant: {
+          city: 'SCHIPOL',
+          country: 'NLD',
+          location: null,
+          mcc: null,
+          title: 'YANDEX.TAXI'
+        },
+        comment: null,
+        hold: false
+      }
     }
   ]
   tt.forEach(function (tc) {
