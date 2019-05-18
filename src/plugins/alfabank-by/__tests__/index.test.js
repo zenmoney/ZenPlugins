@@ -48,7 +48,7 @@ describe('scrape', () => {
         mcc: null,
         title: 'UBER'
       },
-      comment: 'Покупка товара / получение услуг',
+      comment: null,
       hold: false
     }])
   })
