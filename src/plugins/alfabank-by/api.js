@@ -227,7 +227,7 @@ export async function fetchDeposits (sessionID) {
 }
 
 export async function fetchCredits (sessionID) {
-  console.log('>>> Загрузка списка депозитов...')
+  console.log('>>> Загрузка списка кредитов...')
   let res = (await fetchApiJson('Products', {
     method: 'POST',
     headers: {

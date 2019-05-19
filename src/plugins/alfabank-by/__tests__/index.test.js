@@ -9,6 +9,7 @@ describe('scrape', () => {
     mockAuthWithPassportID()
     mockAuthConfirm()
     mockFetchDesktop()
+    mockFetchAccounts()
     mockFetchDeposits()
     mockFetchCredits()
     mockFetchAccounts()
@@ -62,7 +63,7 @@ describe('scrape', () => {
         mcc: null,
         title: 'UBER'
       },
-      comment: 'Покупка товара / получение услуг',
+      comment: null,
       hold: false
     }])
   })

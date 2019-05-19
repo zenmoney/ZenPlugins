@@ -37,7 +37,8 @@ export function convertAccount (json) {
 }
 
 export function convertTransaction (json, accounts) {
-  if (json.operation === 'RATE_ORDER') {
+  if (json.operation === 'RATE_ORDER' ||
+      json.info.amount.amount === 0) {
     return null
   }
   const account = accounts.find(account => {
@@ -55,8 +56,8 @@ export function convertTransaction (json, accounts) {
   [
     parseP2P,
     parseCash,
-    parseComment,
-    parsePayee
+    parsePayee,
+    parseComment
   ].some(parser => parser(transaction, json))
 
   return transaction
@@ -138,13 +139,19 @@ function parseCash (transaction, json) {
 }
 
 function parsePayee (transaction, json) {
-  if (json.description.indexOf('Покупка товара') >= 0) {
+  if (json.description.indexOf('Покупка товара') >= 0 ||
+    json.description.split(' ').length === 2) {
     transaction.merchant = {
       mcc: null,
       location: null
     }
     let location = json.description.split(' ')
-    let country = countries[location[0].toLowerCase()]
+    var country = ''
+    if (location.length === 2) {
+      country = location[1]
+    } else {
+      country = countries[location[0].toLowerCase()]
+    }
     if (country !== undefined) {
       transaction.merchant.title = json.info.title
       transaction.merchant.city = location[0]
@@ -152,6 +159,7 @@ function parsePayee (transaction, json) {
     } else {
       transaction.merchant.fullTitle = json.info.title
     }
+    return true
   }
 }
 
