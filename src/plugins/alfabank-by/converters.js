@@ -10,18 +10,29 @@ const countries = {
 }
 
 export function convertAccount (json) {
-  if (json.type === 'ACCOUNT') { // only loading card accounts
-    return {
-      id: json.id,
-      type: 'card',
-      title: json.info.title,
-      balance: Number.parseFloat(json.info.amount.amount),
-      instrument: json.info.amount.currency,
-      syncID: [json.info.description.replace(/\s/g, '')],
-      productType: json.type
-    }
-  } else {
-    return null
+  switch (json.type) {
+    case 'ACCOUNT':
+      return {
+        id: json.id,
+        type: 'card',
+        title: json.info.title,
+        balance: Number.parseFloat(json.info.amount.amount),
+        instrument: json.info.amount.currency,
+        syncID: [json.info.description.replace(/\s/g, '')],
+        productType: json.type
+      }
+    case 'DEPOSIT':
+      return {
+        id: json.id,
+        type: 'deposit',
+        title: json.info.title,
+        balance: Number.parseFloat(json.info.amount.amount),
+        instrument: json.info.amount.currency,
+        syncID: [json.info.description.replace(/\s/g, '')],
+        productType: json.type
+      }
+    default:
+      return null
   }
 }
 
