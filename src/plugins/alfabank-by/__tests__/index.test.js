@@ -12,7 +12,6 @@ describe('scrape', () => {
     mockFetchAccounts()
     mockFetchDeposits()
     mockFetchCredits()
-    mockFetchAccounts()
     mockFetchTransactionsAccounts()
     mockFetchTransactionsDeposits()
 
@@ -26,6 +25,16 @@ describe('scrape', () => {
 
     expect(result.accounts).toEqual([
       {
+        id: '111001100111011001',
+        instrument: 'BYN',
+        type: 'checking',
+        title: 'InSync отзывный',
+        balance: 50,
+        syncID: ['BY66ALFA3014111MRT0011110000'],
+        productType: 'DEPOSIT',
+        savings: true
+      },
+      {
         id: '6505111',
         instrument: 'BYN',
         type: 'card',
@@ -33,15 +42,6 @@ describe('scrape', () => {
         balance: 486.18,
         syncID: ['BY31ALFA3014111MRT0011110000'],
         productType: 'ACCOUNT'
-      },
-      {
-        id: '111001100111011001',
-        instrument: 'BYN',
-        type: 'deposit',
-        title: 'InSync отзывный',
-        balance: 50,
-        syncID: ['BY66ALFA3014111MRT0011110000'],
-        productType: 'DEPOSIT'
       }
     ])
 

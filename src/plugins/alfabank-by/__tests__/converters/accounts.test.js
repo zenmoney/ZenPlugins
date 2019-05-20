@@ -69,12 +69,13 @@ describe('convertAccount', () => {
       },
       expectedAccount: {
         id: '111001100111011001',
-        type: 'deposit',
+        type: 'checking',
         title: 'InSync отзывный',
         balance: 50,
         instrument: 'BYN',
         syncID: ['BY66ALFA3014111MRT0011110000'],
-        productType: 'DEPOSIT'
+        productType: 'DEPOSIT',
+        savings: true
       }
     }
   ]

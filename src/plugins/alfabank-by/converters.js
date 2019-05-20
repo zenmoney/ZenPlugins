@@ -24,12 +24,13 @@ export function convertAccount (json) {
     case 'DEPOSIT':
       return {
         id: json.id,
-        type: 'deposit',
+        type: 'checking',
         title: json.info.title,
         balance: Number.parseFloat(json.info.amount.amount),
         instrument: json.info.amount.currency,
         syncID: [json.info.description.replace(/\s/g, '')],
-        productType: json.type
+        productType: json.type,
+        savings: true
       }
     default:
       return null
