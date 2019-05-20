@@ -14,9 +14,7 @@ export function convertAccount (json) {
 
     json.cardAccounts.forEach(function (el) {
       account.syncID.push(el.accountId)
-      if (json.isOverdraft === true) {
-        account.syncID.push(el.accountId + 'M')
-      }
+      account.syncID.push(el.accountId + 'M')
     })
     json.cards.forEach(function (el) {
       account.syncID.push(el.pan.slice(-4))
@@ -36,32 +34,35 @@ export function convertAccount (json) {
   }
 }
 
-export function convertTransaction (apiTransaction, accounts) {
-  if (apiTransaction.amount === '') { // skip frozen operations
+export function convertTransaction (json, accounts) {
+  if (json.amount === '') { // skip frozen operations
     return null
   }
   const account = accounts.find(account => {
-    return account.syncID.indexOf(apiTransaction.accountId) !== -1
+    return account.syncID.indexOf(json.accountId) !== -1
   })
 
   const transaction = {
-    date: getDate(apiTransaction.transDate),
-    movements: [ getMovement(apiTransaction, account) ],
+    date: getDate(json.transDate),
+    movements: [ getMovement(json, account) ],
     merchant: null,
     comment: null,
-    hold: apiTransaction.status !== 'T'
+    hold: json.status !== 'T'
   };
 
   [
     parseCash,
     parseComment,
     parsePayee
-  ].some(parser => parser(transaction, apiTransaction))
+  ].some(parser => parser(transaction, json))
 
   return transaction
 }
 
 function getMovement (apiTransaction, account) {
+  if (!account) {
+    console.log(apiTransaction)
+  }
   const movement = {
     id: null,
     account: { id: account.id },
@@ -101,56 +102,52 @@ function parseCash (transaction, apiTransaction) {
   }
 }
 
-function parsePayee (transaction, apiTransaction) {
+function parsePayee (transaction, json) {
   // интернет-платежи отображаем без получателя
-  if (!apiTransaction.place || apiTransaction.place.indexOf('MTB INTERNET POS') >= 0) {
+  if (!json.place || json.place.indexOf('MTB INTERNET POS') >= 0) {
     return false
   }
 
   transaction.merchant = {
-    mcc: null,
+    mcc: json.mcc ? Number.parseInt(json.mcc) : null,
     location: null
   }
-  const merchant = apiTransaction.place.split(' / ').map(str => str.trim())
-  if (merchant.length === 1) {
-    transaction.merchant.fullTitle = merchant[0]
-  } else if (merchant.length >= 3) {
-    transaction.merchant.country = merchant.pop()
-    transaction.merchant.city = merchant.pop()
-    transaction.merchant.title = merchant.join(' / ')
+  if (json.city) {
+    transaction.merchant.country = json.country
+    transaction.merchant.city = json.city
+    transaction.merchant.title = json.place
   } else {
-    throw new Error('Ошибка обработки транзакции с получателем: ' + apiTransaction.place)
+    transaction.merchant.fullTitle = json.place
   }
 }
 
 function parseComment (transaction, apiTransaction) {
   if (!apiTransaction.description) { return false }
 
-  switch (apiTransaction.description) {
-    // переводы между счетами полезной информации не несут, гасим сразу
-    case 'Пополнение при переводе между картами в Интернет-банке в рамках одного клиента':
-    case 'Списание при переводе в Интернет-банке в рамках одного клиента':
-    case 'Перевод с БПК МТБ в системе Р2Р':
-    case 'Перевод на БПК МТБ в системе Р2Р':
-    case 'Списание при переводе в Интернет-банке, произвольном платеже, оплате кредита':
-    case 'Перевод между своими картами':
-      return true
-
-    // в покупках комментарии не оставляем
-    case 'Оплата товаров и услуг':
-    case 'Оплата товаров и услуг в сети МТБанка':
-      return false
-
-    // сохраняем комментарий и гасим дальнейшую оработку
-    case 'Перевод на карту другого клиента':
-    case 'Оплата в Интернет-банке':
-      transaction.comment = apiTransaction.description
-      return true
-
-    default:
-      transaction.comment = apiTransaction.description
-      return false
+  // переводы между счетами полезной информации не несут, гасим сразу
+  if (apiTransaction.description.indexOf('Пополнение при переводе между картами в Интернет-банке в рамках одного клиента') >= 0 ||
+    apiTransaction.description.indexOf('Списание при переводе в Интернет-банке в рамках одного клиента') >= 0 ||
+    apiTransaction.description.indexOf('Перевод с БПК МТБ в системе Р2Р') >= 0 ||
+    apiTransaction.description.indexOf('Перевод на БПК МТБ в системе Р2Р') >= 0 ||
+    apiTransaction.description.indexOf('Списание при переводе в Интернет-банке, произвольном платеже, оплате кредита') >= 0 ||
+    apiTransaction.description.indexOf('Перевод между своими картами') >= 0) {
+    return true
   }
+  // в покупках комментарии не оставляем
+  if (apiTransaction.description.indexOf('Оплата товаров и услуг') >= 0 ||
+    apiTransaction.description.indexOf('Оплата товаров и услуг в сети МТБанка') >= 0 ||
+    apiTransaction.description.indexOf('Покупка с карты банка в устройстве партнера') >= 0 ||
+    apiTransaction.description.indexOf('Покупка с карты банка в чужом устройстве') >= 0) {
+    return false
+  }
+  // сохраняем комментарий и гасим дальнейшую оработку
+  if (apiTransaction.description.indexOf('Перевод на карту другого клиента') >= 0 ||
+    apiTransaction.description.indexOf('Оплата в Интернет-банке') >= 0) {
+    transaction.comment = apiTransaction.description
+    return true
+  }
+  transaction.comment = apiTransaction.description
+  return false
 }
 
 function getSumAmount (debitFlag, strAmount) {

@@ -58,6 +58,7 @@ describe('convertAccount', () => {
       creditLimit: 0,
       syncID: [
         'BY36MTBK10110008000001111000',
+        'BY36MTBK10110008000001111000M',
         '1111'
       ]
     })

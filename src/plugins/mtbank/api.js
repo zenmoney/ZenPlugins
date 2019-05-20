@@ -20,6 +20,12 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
 
   if (!response.body.success && response.body.error && response.body.error.description) {
     const errorDescription = response.body.error.description
+    if (errorDescription.indexOf('не принадлежит клиенту c кодом') >= 0 ||
+      errorDescription.indexOf('Дата запуска/внедрения попадает в период запрашиваемой выписки') >= 0 ||
+      errorDescription.indexOf('Получены не все обязательные поля') >= 0) {
+      console.log('Ответ банка: ' + errorDescription)
+      return false
+    }
     const errorMessage = 'Ответ банка: ' + errorDescription + (response.body.error.lockedTime && response.body.error.lockedTime !== 'null' ? response.body.error.lockedTime : '')
     if (errorDescription.indexOf('Неверный пароль') >= 0) { throw new InvalidPreferencesError(errorMessage) }
     throw new TemporaryError(errorMessage)
@@ -49,24 +55,25 @@ function cookies (response) {
 }
 
 export async function login (login, password) {
-  const sessionCookies = cookies(await fetchApiJson('', {},
-    response => cookies(response),
-    message => new TemporaryError(message)))
-
-  await fetchApiJson('login/userIdentityByPhone', {
+  var res = await fetchApiJson('login/userIdentityByPhone', {
     method: 'POST',
-    headers: { 'Cookie': sessionCookies },
     body: { phoneNumber: login, loginWay: '1' },
     sanitizeRequestLog: { body: { phoneNumber: true } },
     sanitizeResponseLog: { body: { data: { smsCode: { phone: true } } } }
   }, response => response.success, message => new InvalidPreferencesError('Неверный номер телефона'))
+  const sessionCookies = cookies(res)
 
-  await fetchApiJson('login/checkPassword2', {
+  res = await fetchApiJson('login/checkPassword', {
     method: 'POST',
     headers: { 'Cookie': sessionCookies },
     body: { 'password': password },
     sanitizeRequestLog: { body: { password: true } }
   }, response => response.success, message => new InvalidPreferencesError('Неверный пароль'))
+
+  await fetchApiJson('user/userRole', {
+    method: 'POST',
+    body: res.body.data.userInfo.dboContracts[0]
+  }, response => response.success, message => new InvalidPreferencesError('bad request'))
 
   return sessionCookies
 }
@@ -111,22 +118,28 @@ export async function fetchTransactions (sessionCookies, accounts, fromDate, toD
           endDate: formatDate(dates[1]),
           halva: false
         }
-      }, response => response.body && response.body.data)
+      }, response => response.body)
     })
   }))
 
   const operations = flatMap(responses, response => {
-    return flatMap(response.body.data, d => {
-      return d.operations.map(op => {
-        op.accountId = d.accountId
-        return op
+    if (response) {
+      return flatMap(response.body.data, d => {
+        return d.operations.map(op => {
+          op.accountId = d.accountId
+          if (op.description === null) {
+            op.description = ''
+          }
+          return op
+        })
       })
-    })
+    }
   })
 
   const filteredOperations = operations.filter(function (op) {
-    return op.status !== 'E' && getDate(op.transDate) > fromDate && !op.description.includes('Гашение кредита в виде "овердрафт" по договору')
+    return op !== undefined && op.status !== 'E' && getDate(op.transDate) > fromDate && !op.description.includes('Гашение кредита в виде "овердрафт" по договору')
   })
+  console.log(filteredOperations)
 
   console.log(`>>> Загружено ${filteredOperations.length} операций.`)
   return filteredOperations
