@@ -4,7 +4,7 @@ export function convertAccount (json) {
     type: 'card',
     title: json.finalName + '*' + json.num.slice(-4),
     instrument: json.currency,
-    balance: Number.parseFloat(json.balance),
+    balance: Number.parseFloat(json.balance.replace(/\s/g, '')),
     syncID: [json.num.slice(-4)]
   }
 }

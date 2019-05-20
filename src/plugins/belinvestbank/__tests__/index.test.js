@@ -29,7 +29,7 @@ describe('scrape', () => {
       type: 'card',
       title: 'Безымянная*1111',
       instrument: 'BYN',
-      balance: 99.9,
+      balance: 1213.84,
       syncID: ['1111']
     }])
 
@@ -168,7 +168,7 @@ function mockApiFetchAccounts () {
         values: {
           cards: [
             {
-              balance: '99.90',
+              balance: '1 213.84',
               blocking: '',
               blockingCode: '',
               blockingText: '',

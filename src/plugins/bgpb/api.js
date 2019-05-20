@@ -211,7 +211,7 @@ export async function fetchBalance (sid, account) {
     return null
   }
   if (res.BS_Response.Balance && res.BS_Response.Balance.Amount) {
-    return Number.parseFloat(res.BS_Response.Balance.Amount.replace(',', '.'))
+    return Number.parseFloat(res.BS_Response.Balance.Amount.replace(/,/g, '.'))
   }
   return 0
 }
