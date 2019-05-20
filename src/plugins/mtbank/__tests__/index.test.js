@@ -3,9 +3,9 @@ import { scrape } from '..'
 
 describe('scrape', () => {
   it('should hit the mocks and return results', async () => {
-    mockApiRoot()
     mockIdentity()
     mockCheckPassword()
+    mockUserRole()
     mockLoadUser()
     mockLoadOperationStatements()
 
@@ -23,7 +23,7 @@ describe('scrape', () => {
       'id': '1111111',
       'instrument': 'BYN',
       'productType': 'PC',
-      'syncID': ['BY36MTBK10110001000001111000', '1111'],
+      'syncID': ['BY36MTBK10110001000001111000', 'BY36MTBK10110001000001111000M', '1111'],
       'title': 'PayOkay',
       'type': 'card'
     }])
@@ -274,7 +274,7 @@ function mockLoadUser () {
 }
 
 function mockCheckPassword () {
-  fetchMock.once('https://mybank.by/api/v1/login/checkPassword2', {
+  fetchMock.once('https://mybank.by/api/v1/login/checkPassword', {
     status: 200,
     body: JSON.stringify({
       'ResponseType': 'ResponseOfCheckPasswordResponse',
@@ -284,7 +284,26 @@ function mockCheckPassword () {
       'validateErrors': null,
       'data': {
         'fingerToken': null,
-        'nextOperation': null
+        'nextOperation': null,
+        'userInfo': {
+          'email': 'TEST@GMAIL.COM',
+          'firstName': 'Вася',
+          'middleName': 'Петрович',
+          'isCustomLogin': false,
+          'lastName': 'Осюк',
+          'login': 'login',
+          'phone': '',
+          'isResident': true,
+          'dboContracts': [ {
+            'contractNum': 'IB_I/123456',
+            'status': 'REGISTERED',
+            'role': 'F',
+            'isAdmin': null,
+            'name': 'Осюк В.П.',
+            'longname': 'Осюк Вася Петрович',
+            'smsConfirmation': false
+          } ]
+        }
       }
     }),
     statusText: 'OK',
@@ -313,18 +332,19 @@ function mockIdentity () {
   }, { method: 'POST' })
 }
 
-function mockApiRoot () {
-  fetchMock.once('https://mybank.by/api/v1/', {
-    status: 404,
+function mockUserRole () {
+  fetchMock.once('https://mybank.by/api/v1/user/userRole', {
+    status: 200,
     body: JSON.stringify({
-      'timestamp': '2019-03-25T14:27:04.293+0000',
-      'status': 404,
-      'error': 'Not Found',
-      'message': 'No message available',
-      'path': '/api/v1/'
+      'ResponseType': 'ResponseOfstring',
+      'error': null,
+      'sessionId': null,
+      'success': true,
+      'validateErrors': null,
+      'data': null
     }),
     statusText: 'OK',
     headers: { 'set-cookie': 'session-cookie' },
     sendAsJson: false
-  }, { method: 'GET' })
+  }, { method: 'POST' })
 }
