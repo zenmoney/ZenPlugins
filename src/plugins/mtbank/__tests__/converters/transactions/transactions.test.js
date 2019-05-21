@@ -31,7 +31,8 @@ describe('convertTransaction', () => {
       'status': 'T',
       'transAmount': '97.91',
       'transDate': '2019-02-14 00:00:00',
-      'accountId': 'BY36MTBK10110008000001111000'
+      'accountId': 'BY36MTBK10110008000001111000',
+      transactionId: '1111111'
     }, accounts)
 
     expect(transaction).toEqual({
@@ -39,7 +40,7 @@ describe('convertTransaction', () => {
       date: new Date('2019-02-14T00:00:00+03:00'),
       movements: [
         {
-          id: null,
+          id: '1111111',
           account: { id: '1113333' },
           sum: -97.91,
           fee: 0,
@@ -73,7 +74,8 @@ describe('convertTransaction', () => {
       place: '',
       status: 'T',
       transAmount: '3000.41',
-      transDate: '2019-03-07 11:58:07'
+      transDate: '2019-03-07 11:58:07',
+      transactionId: '1111111'
     }, accounts)
 
     expect(transaction).toEqual({
@@ -81,7 +83,7 @@ describe('convertTransaction', () => {
       date: new Date('2019-03-07T11:58:07+03:00'),
       movements: [
         {
-          id: null,
+          id: '1111111',
           account: { id: '1113333' },
           sum: 3000.41,
           fee: 0,
@@ -108,7 +110,8 @@ describe('convertTransaction', () => {
       place: '',
       status: 'T',
       transAmount: '2.3',
-      transDate: '2019-01-31 23:25:42'
+      transDate: '2019-01-31 23:25:42',
+      transactionId: '1111111'
     }, accounts)
 
     expect(transaction).toEqual({
@@ -116,7 +119,7 @@ describe('convertTransaction', () => {
       date: new Date('2019-01-31T23:25:42+03:00'),
       movements: [
         {
-          id: null,
+          id: '1111111',
           account: { id: '1113333' },
           sum: -2.3,
           fee: 0,
@@ -143,7 +146,8 @@ describe('convertTransaction', () => {
       place: '',
       status: 'T',
       transAmount: '23.11',
-      transDate: '2019-01-02 17:55:34'
+      transDate: '2019-01-02 17:55:34',
+      transactionId: '1111111'
     }, accounts)
 
     expect(transaction).toEqual({
@@ -151,7 +155,7 @@ describe('convertTransaction', () => {
       date: new Date('2019-01-02T17:55:34+03:00'),
       movements: [
         {
-          id: null,
+          id: '1111111',
           account: { id: '1113333' },
           sum: 23.11,
           fee: 0,
@@ -178,7 +182,8 @@ describe('convertTransaction', () => {
       place: 'MTB INTERNET POS          / MINSK         / BY',
       status: 'T',
       transAmount: '16.0',
-      transDate: '2019-01-05 00:26:11'
+      transDate: '2019-01-05 00:26:11',
+      transactionId: '1111111'
     }, accounts)
 
     expect(transaction).toEqual({
@@ -186,7 +191,7 @@ describe('convertTransaction', () => {
       date: new Date('2019-01-05T00:26:11+03:00'),
       movements: [
         {
-          id: null,
+          id: '1111111',
           account: { id: '1113333' },
           sum: -16,
           fee: 0,
@@ -213,7 +218,8 @@ describe('convertTransaction', () => {
       place: 'MTB INTERNET POS          / MINSK         / BY',
       status: 'T',
       transAmount: '50.0',
-      transDate: '2019-01-28 07:51:13'
+      transDate: '2019-01-28 07:51:13',
+      transactionId: '1111111'
     }, accounts)
 
     expect(transaction).toEqual({
@@ -221,7 +227,7 @@ describe('convertTransaction', () => {
       date: new Date('2019-01-28T07:51:13+03:00'),
       movements: [
         {
-          id: null,
+          id: '1111111',
           account: { id: '1113333' },
           sum: -50,
           fee: 0,
@@ -248,7 +254,8 @@ describe('convertTransaction', () => {
       place: '',
       status: 'A',
       transAmount: '92.97',
-      transDate: null
+      transDate: null,
+      transactionId: '1111111'
     }, accounts)
 
     expect(transaction).toEqual(null)
@@ -269,7 +276,8 @@ describe('convertTransaction', () => {
       place: 'SHOP "SOSEDI"            / MINSK        / BY',
       status: 'A',
       transAmount: '3.13',
-      transDate: '2019-01-28 07:51:13'
+      transDate: '2019-01-28 07:51:13',
+      transactionId: '1111111'
     }, accounts)
 
     expect(transaction).toEqual({
@@ -277,7 +285,7 @@ describe('convertTransaction', () => {
       date: new Date('2019-01-28T07:51:13+03:00'),
       movements: [
         {
-          id: null,
+          id: '1111111',
           account: { id: '1113333' },
           sum: -3.13,
           fee: 0,
