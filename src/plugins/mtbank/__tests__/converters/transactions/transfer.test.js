@@ -29,14 +29,15 @@ describe('convertTransaction', () => {
       place: 'MTB INTERNET POS          / MINSK         / BY',
       status: 'T',
       transAmount: '147.38',
-      transDate: '2019-03-07 22:17:00'
+      transDate: '2019-03-07 22:17:00',
+      transactionId: '1111111'
     }, accounts)
 
     expect(transaction).toEqual({
       hold: false,
       date: new Date('2019-03-07T22:17:00+03:00'),
       movements: [{
-        id: null,
+        id: '1111111',
         account: { id: '1113333' },
         sum: 147.38,
         fee: 0,
@@ -62,14 +63,15 @@ describe('convertTransaction', () => {
       place: 'MTB INTERNET POS          / MINSK         / BY',
       status: 'T',
       transAmount: '1500.0',
-      transDate: '2019-03-07 18:37:00'
+      transDate: '2019-03-07 18:37:00',
+      transactionId: '1111111'
     }, accounts)
 
     expect(transaction).toEqual({
       hold: false,
       date: new Date('2019-03-07T18:37:00+03:00'),
       movements: [{
-        id: null,
+        id: '1111111',
         account: { id: '1113333' },
         sum: -1500,
         fee: 0,
@@ -95,14 +97,15 @@ describe('convertTransaction', () => {
       place: 'P2P_MTBANK                / MINSK         / BY',
       status: 'T',
       transAmount: '100.0',
-      transDate: '2019-03-13 21:18:33'
+      transDate: '2019-03-13 21:18:33',
+      transactionId: '1111111'
     }, accounts)
 
     expect(transaction).toEqual({
       hold: false,
       date: new Date('2019-03-13T21:18:33+03:00'),
       movements: [{
-        id: null,
+        id: '1111111',
         account: { id: '1113333' },
         sum: -100,
         fee: 0,
@@ -128,14 +131,15 @@ describe('convertTransaction', () => {
       place: 'P2P_MTBANK                / MINSK         / BY',
       status: 'T',
       transAmount: '7.2',
-      transDate: '2019-03-21 12:28:29'
+      transDate: '2019-03-21 12:28:29',
+      transactionId: '1111111'
     }, accounts)
 
     expect(transaction).toEqual({
       hold: false,
       date: new Date('2019-03-21T12:28:29+03:00'),
       movements: [{
-        id: null,
+        id: '1111111',
         account: { id: '1113333' },
         sum: 7.2,
         fee: 0,
@@ -161,14 +165,15 @@ describe('convertTransaction', () => {
       place: 'MTB INTERNET POS          / MINSK         / BY',
       status: 'T',
       transAmount: '4.0',
-      transDate: '2019-03-07 23:10:01'
+      transDate: '2019-03-07 23:10:01',
+      transactionId: '1111111'
     }, accounts)
 
     expect(transaction).toEqual({
       hold: false,
       date: new Date('2019-03-07T23:10:01+03:00'),
       movements: [{
-        id: null,
+        id: '1111111',
         account: { id: '1113333' },
         sum: -4,
         fee: 0,
@@ -194,14 +199,15 @@ describe('convertTransaction', () => {
       place: 'MTB INTERNET POS          / MINSK         / BY',
       status: 'T',
       transAmount: '25.45',
-      transDate: '2019-01-18 19:16:11'
+      transDate: '2019-01-18 19:16:11',
+      transactionId: '1111111'
     }, accounts)
 
     expect(transaction).toEqual({
       hold: false,
       date: new Date('2019-01-18T19:16:11+03:00'),
       movements: [{
-        id: null,
+        id: '1111111',
         account: { id: '1113333' },
         sum: -25.45,
         fee: 0,

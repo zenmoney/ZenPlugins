@@ -59,22 +59,19 @@ export function convertTransaction (json, accounts) {
   return transaction
 }
 
-function getMovement (apiTransaction, account) {
-  if (!account) {
-    console.log(apiTransaction)
-  }
+function getMovement (json, account) {
   const movement = {
-    id: null,
+    id: json.transactionId,
     account: { id: account.id },
     invoice: null,
-    sum: getSumAmount(apiTransaction.debitFlag, apiTransaction.transAmount),
+    sum: getSumAmount(json.debitFlag, json.transAmount),
     fee: 0
   }
 
-  if (apiTransaction.curr !== account.instrument) {
+  if (json.curr !== account.instrument) {
     movement.invoice = {
-      sum: getSumAmount(apiTransaction.debitFlag, apiTransaction.amount),
-      instrument: apiTransaction.curr
+      sum: getSumAmount(json.debitFlag, json.amount),
+      instrument: json.curr
     }
   }
 

@@ -32,7 +32,7 @@ describe('scrape', () => {
       hold: false,
       date: new Date('2018-12-28T00:00:00+03:00'),
       movements: [{
-        id: null,
+        id: '1111111',
         account: { id: '1111111' },
         sum: -12.39,
         fee: 0,
@@ -51,7 +51,7 @@ describe('scrape', () => {
       hold: false,
       date: new Date('2018-12-29T01:07:39+03:00'),
       movements: [{
-        id: null,
+        id: '1111112',
         account: { id: '1111111' },
         sum: -29.68,
         fee: 0,
@@ -100,7 +100,8 @@ function mockLoadOperationStatements () {
               'place': 'PAYPAL',
               'status': 'T',
               'transAmount': '12.39',
-              'transDate': '2018-12-28 00:00:00'
+              'transDate': '2018-12-28 00:00:00',
+              'transactionId': '1111111'
             }, {
               'amount': '29.68',
               'balance': '531.57',
@@ -114,7 +115,8 @@ function mockLoadOperationStatements () {
               'place': 'Магазин',
               'status': 'T',
               'transAmount': '29.68',
-              'transDate': '2018-12-29 01:07:39'
+              'transDate': '2018-12-29 01:07:39',
+              'transactionId': '1111112'
             }
           ],
           'outgoingBalance': '999.9',

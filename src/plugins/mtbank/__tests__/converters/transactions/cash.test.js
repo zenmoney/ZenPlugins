@@ -29,14 +29,15 @@ describe('convertTransaction', () => {
       place: 'MTB RKC 68                / MINSK         / BY',
       status: 'T',
       transAmount: '135.82',
-      transDate: '2019-03-18 10:54:57'
+      transDate: '2019-03-18 10:54:57',
+      transactionId: '1111111'
     }, accounts)
 
     expect(transaction).toEqual({
       hold: false,
       date: new Date('2019-03-18T10:54:57+03:00'),
       movements: [{
-        id: null,
+        id: '1111111',
         account: { id: '1113333' },
         sum: 135.82,
         fee: 0,
@@ -68,14 +69,15 @@ describe('convertTransaction', () => {
       place: 'MTB INSTITUTION           / MINSK         / BY',
       status: 'T',
       transAmount: '80.0',
-      transDate: '2019-03-07 13:29:59'
+      transDate: '2019-03-07 13:29:59',
+      transactionId: '1111111'
     }, accounts)
 
     expect(transaction).toEqual({
       hold: false,
       date: new Date('2019-03-07T13:29:59+03:00'),
       movements: [{
-        id: null,
+        id: '1111111',
         account: { id: '1113333' },
         sum: -80,
         fee: 0,
@@ -107,14 +109,15 @@ describe('convertTransaction', () => {
       place: 'BELGAZPROMBANK            / MINSK        / BY',
       status: 'A',
       transAmount: '50.0',
-      transDate: '2019-03-07 13:29:59'
+      transDate: '2019-03-07 13:29:59',
+      transactionId: '1111111'
     }, accounts)
 
     expect(transaction).toEqual({
       hold: true,
       date: new Date('2019-03-07T13:29:59+03:00'),
       movements: [{
-        id: null,
+        id: '1111111',
         account: { id: '1113333' },
         sum: -50,
         fee: 0,
@@ -146,14 +149,15 @@ describe('convertTransaction', () => {
       place: 'MTB INSTITUTION           / MINSK         / BY',
       status: 'T',
       transAmount: '4098.3',
-      transDate: '2019-01-18 19:09:49'
+      transDate: '2019-01-18 19:09:49',
+      transactionId: '1111111'
     }, accounts)
 
     expect(transaction).toEqual({
       hold: false,
       date: new Date('2019-01-18T19:09:49+03:00'),
       movements: [{
-        id: null,
+        id: '1111111',
         account: { id: '1113333' },
         sum: -4098.3,
         fee: 0,
