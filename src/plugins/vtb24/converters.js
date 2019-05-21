@@ -1,4 +1,5 @@
 import * as _ from 'lodash'
+import { parseOuterAccountData } from '../../common/accounts'
 import { toISODateString } from '../../common/dateUtils'
 import { mergeTransfers as commonMergeTransfers } from '../../common/mergeTransfers'
 
@@ -284,15 +285,20 @@ export function mergeTransfers (transactions) {
   return transactions
 }
 
-function getInvoice (apiTransaction) {
+function getInvoice (apiTransaction, account) {
   let amount
   if (apiTransaction.transactionAmount &&
     apiTransaction.transactionAmount.sum === 0 &&
     apiTransaction.transactionAmountInAccountCurrency &&
     apiTransaction.transactionAmountInAccountCurrency.sum !== 0 &&
-    apiTransaction.transactionAmountInAccountCurrency.currency.currencyCode === apiTransaction.transactionAmount.currency.currencyCode) {
+    (!apiTransaction.transactionAmount.currency.currencyCode ||
+      apiTransaction.transactionAmountInAccountCurrency.currency.currencyCode === apiTransaction.transactionAmount.currency.currencyCode)) {
     amount = apiTransaction.transactionAmountInAccountCurrency
-  } else {
+  } else if (apiTransaction.transactionAmountInAccountCurrency &&
+    apiTransaction.transactionAmountInAccountCurrency.sum !== 0 &&
+    getInstrument(apiTransaction.transactionAmountInAccountCurrency.currency.currencyCode) !== account.instrument) {
+    amount = apiTransaction.transactionAmountInAccountCurrency
+  } else if (apiTransaction.transactionAmount) {
     amount = apiTransaction.transactionAmount
   }
   return convertAmount(amount)
@@ -300,7 +306,9 @@ function getInvoice (apiTransaction) {
 
 export function convertTransaction (apiTransaction, account) {
   let amount
-  if (apiTransaction.transactionAmountInAccountCurrency && apiTransaction.transactionAmountInAccountCurrency.sum !== 0) {
+  if (apiTransaction.transactionAmountInAccountCurrency &&
+    apiTransaction.transactionAmountInAccountCurrency.sum !== 0 &&
+    getInstrument(apiTransaction.transactionAmountInAccountCurrency.currency.currencyCode) === account.instrument) {
     amount = apiTransaction.transactionAmountInAccountCurrency
   } else {
     amount = apiTransaction.transactionAmount
@@ -309,7 +317,7 @@ export function convertTransaction (apiTransaction, account) {
   if (!amount || amount.sum === 0) {
     return null
   }
-  const invoice = getInvoice(apiTransaction)
+  const invoice = getInvoice(apiTransaction, account)
   amount.sum = Math.sign(invoice.sum) * Math.abs(amount.sum)
   const transaction = {
     comment: null,
@@ -330,14 +338,43 @@ export function convertTransaction (apiTransaction, account) {
   if (apiTransaction.details) {
     [
       parseInnerTransfer,
+      parseOuterTransfer,
       parseCashTransaction,
       parsePayee
-    ].some(parser => parser(apiTransaction, transaction))
+    ].some(parser => parser(apiTransaction, transaction, account))
   }
   return transaction
 }
 
-function parseInnerTransfer (apiTransaction, transaction) {
+function parseOuterTransfer (apiTransaction, transaction, account) {
+  for (const pattern of [
+    /^На карту.*\*(\d{4})$/
+  ]) {
+    const match = apiTransaction.details.match(pattern)
+    if (match) {
+      console.assert(transaction.movements.length < 2, 'Too much movements', { transaction, apiTransaction })
+      const accountData = parseOuterAccountData(apiTransaction.details)
+      const invoice = getInvoice(apiTransaction, account)
+      transaction.movements.push({
+        id: null,
+        account: {
+          company: null,
+          ...accountData,
+          type: 'ccard',
+          instrument: invoice.instrument,
+          syncIds: match[1] ? [match[1]] : null
+        },
+        invoice: null,
+        sum: -invoice.sum,
+        fee: 0
+      })
+      return true
+    }
+  }
+  return false
+}
+
+function parseInnerTransfer (apiTransaction, transaction, account) {
   for (const pattern of [
     /^TransferCreditOnLine/,
     /Зачисление с другой карты \(Р2Р\)/,
@@ -353,7 +390,7 @@ function parseInnerTransfer (apiTransaction, transaction) {
     const match = apiTransaction.details.match(pattern)
     if (match) {
       console.assert(transaction.movements.length < 2, 'Too much movements', { transaction, apiTransaction })
-      const invoice = getInvoice(apiTransaction)
+      const invoice = getInvoice(apiTransaction, account)
       transaction.groupKeys = []
       transaction.movements.push({
         id: null,
@@ -392,14 +429,14 @@ function parseInnerTransfer (apiTransaction, transaction) {
   return false
 }
 
-function parseCashTransaction (apiTransaction, transaction) {
+function parseCashTransaction (apiTransaction, transaction, account) {
   if (![
     'Снятие в банкомате',
     'Пополнение через банкомат'
   ].some(pattern => apiTransaction.details.indexOf(pattern) >= 0)) {
     return false
   }
-  const invoice = getInvoice(apiTransaction)
+  const invoice = getInvoice(apiTransaction, account)
   console.assert(transaction.movements.length < 2, 'Too much movements', { transaction, apiTransaction })
   transaction.movements.push({
     id: null,

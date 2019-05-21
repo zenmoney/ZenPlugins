@@ -52,7 +52,6 @@ export async function authBase (deviceId, login, password, code) {
     args.code = code
   }
   const response = await fetchApiJson(`${baseUri}/LoginService`, {
-    log: true,
     method: 'POST',
     body: {
       'arguments': [ args ],
@@ -306,7 +305,6 @@ async function levelUp (auth, codewordOnly) {
 export async function fetchBaseAccounts () {
   console.log('>>> Загрузка списка счетов [Базовый] =======================================')
   const response = await fetchApiJson(`${baseUri}/ProductService`, {
-    log: true,
     method: 'POST',
     body: {
       'arguments': [],
@@ -373,7 +371,6 @@ export async function fetchBaseAccounts () {
       if (methodName) {
         console.log(`>>> Загрузка деталей '${account.productName}' (${getCardNumber(account.cardNumber)}) [Базовый] --------------------`)
         const response = await fetchApiJson(`${baseUri}/ProductService`, {
-          log: true,
           method: 'POST',
           body: {
             'arguments': [
@@ -417,10 +414,14 @@ export async function fetchMyCreditAccounts (auth) {
     }
   })
 
-  const fetchedAccounts = _.pick(response.body.Result, ['CreditCard', 'CreditCardTW'])
+  const typesToFetch = ['CreditCard', 'CreditCardTW']
 
   // ToDO: В новом API кредиты не работает даже в приложении банка, не возможно узнать остаток по нему
-  // 'CreditLoan'
+  if (auth.currentLevel === 2) {
+    typesToFetch.push('CreditLoan')
+  }
+
+  const fetchedAccounts = _.pick(response.body.Result, typesToFetch)
 
   if (auth && auth.levelup && auth.currentLevel > 2) {
     console.log('>>> Загрузка списка дебетовых продуктов [ MyCredit ] ===================================')
@@ -502,12 +503,12 @@ export async function fetchMyCreditAccounts (auth) {
 
   // догрузим информацию по кредитам из "Мой Кредит"
   // ToDO: В новом API кредиты не работает даже в приложении банка, не возможно узнать остаток по нему
-  /* иif (fetchedAccounts.CreditLoan && fetchedAccounts.CreditLoan.length > 0) {
+  if (auth.currentLevel === 2 && fetchedAccounts.CreditLoan && fetchedAccounts.CreditLoan.length > 0) {
     await Promise.all(Object.keys(fetchedAccounts.CreditLoan).map(async key => {
       const account = fetchedAccounts.CreditLoan[key]
 
       console.log(`>>> Загрузка информации по кредиту '${account.ProductName}' (${account.AccountNumber}) [Мой кредит] --------`)
-      await fetchApiJson('Payment/GetProductDetails', {
+      const response = await fetchApiJson('Payment/GetProductDetails', {
         ignoreErrors: true,
         headers: {
           ...defaultMyCreditHeaders,
@@ -534,7 +535,11 @@ export async function fetchMyCreditAccounts (auth) {
             'X-Device-Ident': auth.device,
             'X-Private-Key': auth.key,
             'X-Phone-Number': auth.phone,
-            'X-Auth-Token': auth.token
+            'X-Auth-Token': auth.token,
+            // 'X-Client-ID': 0,
+            'Origin': 'https://api-myc.homecredit.ru',
+            'Referer': `https://api-myc.homecredit.ru/api/v1/PrepaymentPage?contractNumber=${account.ContractNumber}&selectedPrepayment=LoanBalance&isEarlyRepayment=True&isSingleContract=True`,
+            'X-Requested-With': 'ru.homecredit.mycredit'
           },
           body: {
             'contractNumber': account.ContractNumber,
@@ -545,14 +550,14 @@ export async function fetchMyCreditAccounts (auth) {
         })
 
         // добавим информацию о реальном остатке по кредиту
-        if (!response.body || response.status !== 200) {
+        if (!response || !response.body || response.status !== 200) {
           console.log('>>> !!! ОСТАТОК НА СЧЕТУ КРЕДИТА НЕ ДОСТУПЕН! В течение нескольких дней после наступления расчётной даты остаток ещё не доступен.')
         } else {
           if (response.body) { account.RepaymentAmount = response.body.repaymentAmount }
         }
       }
     }))
-  } */
+  }
 
   return fetchedAccounts
 }
@@ -593,7 +598,6 @@ export async function fetchBaseTransactions (accountData, type, fromDate, toDate
   let to = getDate(toDate || new Date()).getTime()
   while (true) {
     const response = await fetchApiJson(`${baseUri}/ProductService`, {
-      log: true,
       method: 'POST',
       body: {
         'arguments': [{
@@ -681,7 +685,7 @@ export async function fetchMyCreditTransactions (auth, accountData, fromDate, to
       break
   }
   if (!type) {
-    console.log(`>>> Загрузка операций для счёта с типом '${type}' не реализована! Пропускаем.`)
+    console.log(`>>> Загрузка операций для счёта с типом '${accountData.details.type}' не реализована! Пропускаем.`)
     return []
   }
 
@@ -741,13 +745,17 @@ async function fetchApiJson (url, options, predicate) {
       } else {
         throw e
       }
+    } else {
+      return response
     }
   }
   if (predicate) { validateResponse(response, response => response.body && predicate(response)) }
   if (response.body) {
     // ((response.body.StatusCode || response.body.statusCode) && response.body.StatusCode !== 200 && response.body.statusCode !== 200)
-    if (response.body.Errors && _.isArray(response.body.Errors) && response.body.Errors.length > 0) {
-      const message = getErrorMessage(response.body.Errors)
+    if ((response.body.Errors && _.isArray(response.body.Errors) && response.body.Errors.length > 0) || // MyCredit
+      (response.body.errorResponseMo && response.body.errorResponseMo.errorMsg) // BaseApp
+    ) {
+      const message = getErrorMessage(response.body.Errors || _.get(response, 'body.errorResponseMo.errorMsg'))
       if (message) {
         if (/.*(?:повтори\w+ попытк|еще раз|еверн\w+ код|ревышено колич).*/i.test(message)) {
           throw new TemporaryError(message)
@@ -774,7 +782,12 @@ function validateResponse (response, predicate, message) {
 }
 
 function getErrorMessage (errors) {
-  if (!errors || !_.isArray(errors) || errors.length === 0) { return '' }
+  if (!errors) { return '' }
+  if (!_.isArray(errors)) {
+    errors = [ errors ]
+  } else if (errors.length === 0) {
+    return ''
+  }
 
   let message = errors[0]
   errors.forEach(function (value) {

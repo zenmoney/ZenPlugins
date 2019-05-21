@@ -10,7 +10,10 @@ describe('scrape', () => {
     mockAuthConfirm()
     mockFetchDesktop()
     mockFetchAccounts()
-    mockFetchTransactions()
+    mockFetchDeposits()
+    mockFetchCredits()
+    mockFetchTransactionsAccounts()
+    mockFetchTransactionsDeposits()
 
     const result = await scrape(
       {
@@ -20,15 +23,27 @@ describe('scrape', () => {
       }
     )
 
-    expect(result.accounts).toEqual([{
-      id: '6505111',
-      instrument: 'BYN',
-      type: 'card',
-      title: 'Карта №1',
-      balance: 486.18,
-      syncID: ['BY31ALFA3014111MRT0011110000'],
-      productType: 'ACCOUNT'
-    }])
+    expect(result.accounts).toEqual([
+      {
+        id: '111001100111011001',
+        instrument: 'BYN',
+        type: 'checking',
+        title: 'InSync отзывный',
+        balance: 50,
+        syncID: ['BY66ALFA3014111MRT0011110000'],
+        productType: 'DEPOSIT',
+        savings: true
+      },
+      {
+        id: '6505111',
+        instrument: 'BYN',
+        type: 'card',
+        title: 'Карта №1',
+        balance: 486.18,
+        syncID: ['BY31ALFA3014111MRT0011110000'],
+        productType: 'ACCOUNT'
+      }
+    ])
 
     expect(result.transactions).toEqual([{
       date: new Date('Tue Jan 25 2019 12:27:55 GMT+0300 (Moscow Standard Time)'),
@@ -48,13 +63,13 @@ describe('scrape', () => {
         mcc: null,
         title: 'UBER'
       },
-      comment: 'Покупка товара / получение услуг',
+      comment: null,
       hold: false
     }])
   })
 })
 
-function mockFetchTransactions () {
+function mockFetchTransactionsAccounts () {
   fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/History', {
     status: 200,
     body: JSON.stringify({
@@ -104,6 +119,23 @@ function mockFetchTransactions () {
   }, { method: 'POST' })
 }
 
+function mockFetchTransactionsDeposits () {
+  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/History', {
+    status: 200,
+    body: JSON.stringify({
+      accounts: [],
+      filterAccount: '111001100111011001',
+      items: [ ],
+      maxAmount: 0,
+      maxDate: '20190308180602',
+      minAmount: 0,
+      minDate: '20191113100349',
+      totalItems: 0
+    }),
+    statusText: 'OK'
+  }, { method: 'POST' })
+}
+
 function mockFetchAccounts () {
   fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/Products', {
     status: 200,
@@ -131,6 +163,51 @@ function mockFetchAccounts () {
         'onDesktop': true,
         'type': 'ACCOUNT'
       } ],
+      'totals': [ ]
+    }),
+    statusText: 'OK'
+  }, { method: 'POST' })
+}
+
+function mockFetchDeposits () { // TODO: update response body
+  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/Products', {
+    status: 200,
+    body: JSON.stringify({
+      items:
+        [
+          {
+            id: '111001100111011001',
+            info: {
+              description: 'BY66 ALFA 3014 111M RT00 1111 0000',
+              title: 'InSync отзывный',
+              amount: {
+                format: '###,###,###,###,##0.##', currency: 'BYN', amount: 50
+              },
+              icon: {
+                title: 'InSync отзывный',
+                backgroundColorFrom: '#f9589e',
+                backgroundColorTo: '#fe9199',
+                iconUrl: 'v0/Image/50007_392.SVG',
+                captionColor: '#FFFFFF',
+                frameColor: '#c2b7b7',
+                displayType: 'REGULAR'
+              }
+            },
+            onDesktop: true,
+            type: 'DEPOSIT'
+          }
+        ],
+      totals:
+    [ { format: '###,###,###,###,##0.##', currency: 'BYN', amount: 50 } ] }),
+    statusText: 'OK'
+  }, { method: 'POST' })
+}
+
+function mockFetchCredits () { // TODO: update response body
+  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/Products', {
+    status: 200,
+    body: JSON.stringify({
+      'items': [ ],
       'totals': [ ]
     }),
     statusText: 'OK'

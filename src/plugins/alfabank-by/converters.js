@@ -10,23 +10,36 @@ const countries = {
 }
 
 export function convertAccount (json) {
-  if (json.type === 'ACCOUNT') { // only loading card accounts
-    return {
-      id: json.id,
-      type: 'card',
-      title: json.info.title,
-      balance: Number.parseFloat(json.info.amount.amount),
-      instrument: json.info.amount.currency,
-      syncID: [json.info.description.replace(/\s/g, '')],
-      productType: json.type
-    }
-  } else {
-    return null
+  switch (json.type) {
+    case 'ACCOUNT':
+      return {
+        id: json.id,
+        type: 'card',
+        title: json.info.title,
+        balance: Number.parseFloat(json.info.amount.amount),
+        instrument: json.info.amount.currency,
+        syncID: [json.info.description.replace(/\s/g, '')],
+        productType: json.type
+      }
+    case 'DEPOSIT':
+      return {
+        id: json.id,
+        type: 'checking',
+        title: json.info.title,
+        balance: Number.parseFloat(json.info.amount.amount),
+        instrument: json.info.amount.currency,
+        syncID: [json.info.description.replace(/\s/g, '')],
+        productType: json.type,
+        savings: true
+      }
+    default:
+      return null
   }
 }
 
 export function convertTransaction (json, accounts) {
-  if (json.operation === 'RATE_ORDER') {
+  if (json.operation === 'RATE_ORDER' ||
+      json.info.amount.amount === 0) {
     return null
   }
   const account = accounts.find(account => {
@@ -44,8 +57,8 @@ export function convertTransaction (json, accounts) {
   [
     parseP2P,
     parseCash,
-    parseComment,
-    parsePayee
+    parsePayee,
+    parseComment
   ].some(parser => parser(transaction, json))
 
   return transaction
@@ -62,7 +75,7 @@ function getMovement (json, account) {
 
   if (json.operationAmount && json.operationAmount.currency !== account.instrument) {
     var amount = json.operationAmount.amount
-    if (json.operation && json.operation === 'CURRENCYEXCHANGE') {
+    if ((movement.sum > 0 && amount < 0) || (movement.sum < 0 && amount > 0)) {
       amount *= -1
     }
     movement.invoice = {
@@ -127,13 +140,19 @@ function parseCash (transaction, json) {
 }
 
 function parsePayee (transaction, json) {
-  if (json.description.indexOf('Покупка товара') >= 0) {
+  if (json.description.indexOf('Покупка товара') >= 0 ||
+    json.description.split(' ').length === 2) {
     transaction.merchant = {
       mcc: null,
       location: null
     }
     let location = json.description.split(' ')
-    let country = countries[location[0].toLowerCase()]
+    var country = ''
+    if (location.length === 2) {
+      country = location[1]
+    } else {
+      country = countries[location[0].toLowerCase()]
+    }
     if (country !== undefined) {
       transaction.merchant.title = json.info.title
       transaction.merchant.city = location[0]
@@ -141,6 +160,7 @@ function parsePayee (transaction, json) {
     } else {
       transaction.merchant.fullTitle = json.info.title
     }
+    return true
   }
 }
 

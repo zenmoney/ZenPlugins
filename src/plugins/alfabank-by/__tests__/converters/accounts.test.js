@@ -43,6 +43,40 @@ describe('convertAccount', () => {
         syncID: ['BY31ALFA3014111MRT0011110000'],
         productType: 'ACCOUNT'
       }
+    },
+    {
+      name: 'deposit',
+      json: {
+        id: '111001100111011001',
+        info: {
+          description: 'BY66 ALFA 3014 111M RT00 1111 0000',
+          title: 'InSync отзывный',
+          amount: {
+            format: '###,###,###,###,##0.##', currency: 'BYN', amount: 50
+          },
+          icon: {
+            title: 'InSync отзывный',
+            backgroundColorFrom: '#f9589e',
+            backgroundColorTo: '#fe9199',
+            iconUrl: 'v0/Image/50007_392.SVG',
+            captionColor: '#FFFFFF',
+            frameColor: '#c2b7b7',
+            displayType: 'REGULAR'
+          }
+        },
+        onDesktop: true,
+        type: 'DEPOSIT'
+      },
+      expectedAccount: {
+        id: '111001100111011001',
+        type: 'checking',
+        title: 'InSync отзывный',
+        balance: 50,
+        instrument: 'BYN',
+        syncID: ['BY66ALFA3014111MRT0011110000'],
+        productType: 'DEPOSIT',
+        savings: true
+      }
     }
   ]
   tt.forEach(function (tc) {
