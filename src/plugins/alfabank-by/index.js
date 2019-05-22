@@ -3,8 +3,11 @@ import * as converters from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
   let loginData = await bank.login(preferences.isResident)
-  const accountsRaw = (await bank.fetchAccounts(loginData.deviceID, loginData.sessionID))
-  const accounts = (await bank.fetchDeposits(loginData.sessionID)).concat(accountsRaw)
+  const accounts = mergeAllAccounts(
+    await bank.fetchAccounts(loginData.deviceID, loginData.sessionID),
+    await bank.fetchCards(loginData.sessionID),
+    await bank.fetchDeposits(loginData.sessionID)
+  )
     .map(converters.convertAccount)
     .filter(account => account !== null)
   await bank.fetchCredits(loginData.sessionID) // для временного перехвата логов
@@ -15,4 +18,17 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     accounts: accounts,
     transactions: transactions
   }
+}
+
+function mergeAllAccounts (accounts, cards, deposits) {
+  return accounts.filter(function (account) {
+    cards.forEach(function (card) {
+      if (card.id.indexOf(account.id) >= 0) {
+        return true
+      }
+    })
+    return false
+  })
+    .concat(cards)
+    .concat(deposits)
 }
