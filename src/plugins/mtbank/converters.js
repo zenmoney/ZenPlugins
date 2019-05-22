@@ -78,21 +78,22 @@ function getMovement (json, account) {
   return movement
 }
 
-function parseCash (transaction, apiTransaction) {
-  if (apiTransaction.description.indexOf('нятие нал') > 0 ||
-    apiTransaction.description.indexOf('ополнение нал') > 0 ||
-    apiTransaction.description === 'Выдача наличных') {
+function parseCash (transaction, json) {
+  if (json.mcc === '6011' ||
+    json.description.indexOf('нятие нал') > 0 ||
+    json.description.indexOf('ополнение нал') > 0 ||
+    json.description === 'Выдача наличных') {
     // добавим вторую часть перевода
     transaction.movements.push({
       id: null,
       account: {
         company: null,
         type: 'cash',
-        instrument: apiTransaction.curr,
+        instrument: json.curr,
         syncIds: null
       },
       invoice: null,
-      sum: -getSumAmount(apiTransaction.debitFlag, apiTransaction.amount),
+      sum: -getSumAmount(json.debitFlag, json.amount),
       fee: 0
     })
     return true
