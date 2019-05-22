@@ -97,20 +97,25 @@ describe('convertTransaction', () => {
   it('should convert cash withdraw transaction other ATM', () => {
     const transaction = convertTransaction({
       accountId: 'BY36MTBK10110008000001111000',
-      amount: '50.0',
-      balance: '',
+      amount: '50.00',
+      balance: null,
       cardPan: '111111******1111',
       curr: 'BYN',
       debitFlag: '0',
-      description: 'Выдача наличных',
-      error: '',
+      description: null,
+      error: null,
       operationDate: null,
-      orderStatus: '2',
-      place: 'BELGAZPROMBANK            / MINSK        / BY',
+      orderStatus: null,
+      place: 'BELGAZPROMBANK',
+      country: 'BY',
+      city: 'MINSK',
       status: 'A',
-      transAmount: '50.0',
+      transAmount: '50.00',
       transDate: '2019-03-07 13:29:59',
-      transactionId: '1111111'
+      mcc: '6011',
+      transactionId: '1111111',
+      rrn: null,
+      approvalCode: null
     }, accounts)
 
     expect(transaction).toEqual({
