@@ -209,6 +209,23 @@ export async function fetchAccounts (deviceID, sessionID) {
   return []
 }
 
+export async function fetchCards (sessionID) {
+  console.log('>>> Загрузка списка карточек...')
+  let res = (await fetchApiJson('Products', {
+    method: 'POST',
+    headers: {
+      'X-Session-ID': sessionID
+    },
+    body: {
+      type: 'CARD'
+    }
+  }, response => response.status, message => new Error('bad request')))
+  if (res.body.items && res.body.items.length > 0) {
+    return res.body.items
+  }
+  return []
+}
+
 export async function fetchDeposits (sessionID) {
   console.log('>>> Загрузка списка депозитов...')
   let res = (await fetchApiJson('Products', {
@@ -254,17 +271,25 @@ export async function fetchTransactions (sessionID, accounts, fromDate) {
   for (let i = 0; i < accounts.length; i++) {
     let account = accounts[i]
     do {
+      var bodyReq = {
+        offset: offset,
+        pageSize: limit,
+        objectId: account.id,
+        type: account.productType
+      }
+      if (account.productType === 'CARD') {
+        bodyReq = {
+          cardId: account.id,
+          offset: offset,
+          pageSize: limit
+        }
+      }
       let response = await fetchApiJson('History', {
         method: 'POST',
         headers: {
           'X-Session-ID': sessionID
         },
-        body: {
-          offset: offset,
-          pageSize: limit,
-          objectId: account.id,
-          type: account.productType
-        }
+        body: bodyReq
       }, response => response.body)
       batch = getArray(get(response, 'body.items'))
       offset += limit

@@ -14,11 +14,21 @@ export function convertAccount (json) {
     case 'ACCOUNT':
       return {
         id: json.id,
-        type: 'card',
+        type: 'checking',
         title: json.info.title,
         balance: Number.parseFloat(json.info.amount.amount),
         instrument: json.info.amount.currency,
         syncID: [json.info.description.replace(/\s/g, '')],
+        productType: json.type
+      }
+    case 'CARD':
+      return {
+        id: json.id,
+        type: 'card',
+        title: json.info.title,
+        balance: Number.parseFloat(json.info.amount.amount),
+        instrument: json.info.amount.currency,
+        syncID: [json.id.slice(1, 18), json.info.description.slice(-4)], // 53014111MRT0011110000380 -> 3014111MRT0011110000
         productType: json.type
       }
     case 'DEPOSIT':
@@ -43,7 +53,7 @@ export function convertTransaction (json, accounts) {
     return null
   }
   const account = accounts.find(account => {
-    return account.syncID.indexOf(json.iban.replace(/\s/g, '')) !== -1
+    return json.iban.replace(/\s/g, '').indexOf(account.syncID[0]) !== -1
   })
 
   const transaction = {
