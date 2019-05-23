@@ -36,12 +36,47 @@ describe('convertAccount', () => {
       },
       expectedAccount: {
         id: '6505111',
-        type: 'card',
+        type: 'checking',
         title: 'Карта №1',
         balance: 486.18,
         instrument: 'BYN',
         syncID: ['BY31ALFA3014111MRT0011110000'],
         productType: 'ACCOUNT'
+      }
+    },
+    {
+      name: 'card',
+      json: {
+        'id': '53014111MRT0011110000380',
+        'info': {
+          'description': '1.2345',
+          'title': 'Карта №1',
+          'amount': {
+            'format': '###,###,###,###,##0.##',
+            'currency': 'BYN',
+            'amount': 486.18
+          },
+          'icon': {
+            'title': 'Карта №1',
+            'backgroundColorFrom': '#f9589e',
+            'backgroundColorTo': '#fe9199',
+            'iconUrl': 'v0/Image/49923_392.SVG',
+            'captionColor': '#FFFFFF',
+            'frameColor': '#c2b7b7',
+            'displayType': 'REGULAR'
+          }
+        },
+        'onDesktop': true,
+        'type': 'CARD'
+      },
+      expectedAccount: {
+        id: '53014111MRT0011110000380',
+        type: 'card',
+        title: 'Карта №1',
+        balance: 486.18,
+        instrument: 'BYN',
+        syncID: ['3014111MRT0011110000', '2345'],
+        productType: 'CARD'
       }
     },
     {

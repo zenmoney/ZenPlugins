@@ -28,7 +28,7 @@ export function convertAccount (json) {
         title: json.info.title,
         balance: Number.parseFloat(json.info.amount.amount),
         instrument: json.info.amount.currency,
-        syncID: [json.id.slice(1, 18), json.info.description.slice(-4)], // 53014111MRT0011110000380 -> 3014111MRT0011110000
+        syncID: [json.id.slice(1, 21), json.info.description.slice(-4)], // 53014111MRT0011110000380 -> 3014111MRT0011110000
         productType: json.type
       }
     case 'DEPOSIT':
