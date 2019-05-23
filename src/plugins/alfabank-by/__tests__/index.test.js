@@ -10,6 +10,7 @@ describe('scrape', () => {
     mockAuthConfirm()
     mockFetchDesktop()
     mockFetchAccounts()
+    mockFetchCards()
     mockFetchDeposits()
     mockFetchCredits()
     mockFetchTransactionsAccounts()
@@ -25,6 +26,15 @@ describe('scrape', () => {
 
     expect(result.accounts).toEqual([
       {
+        id: '53014111MRT0011110000380',
+        instrument: 'BYN',
+        type: 'card',
+        title: 'Карта №1',
+        balance: 486.18,
+        syncID: ['3014111MRT0011110000', '2345'],
+        productType: 'CARD'
+      },
+      {
         id: '111001100111011001',
         instrument: 'BYN',
         type: 'checking',
@@ -33,15 +43,6 @@ describe('scrape', () => {
         syncID: ['BY66ALFA3014111MRT0011110000'],
         productType: 'DEPOSIT',
         savings: true
-      },
-      {
-        id: '6505111',
-        instrument: 'BYN',
-        type: 'card',
-        title: 'Карта №1',
-        balance: 486.18,
-        syncID: ['BY31ALFA3014111MRT0011110000'],
-        productType: 'ACCOUNT'
       }
     ])
 
@@ -50,7 +51,7 @@ describe('scrape', () => {
       movements: [
         {
           id: '11113111050111',
-          account: { id: '6505111' },
+          account: { id: '53014111MRT0011110000380' },
           invoice: null,
           sum: -7.99,
           fee: 0
@@ -162,6 +163,39 @@ function mockFetchAccounts () {
         },
         'onDesktop': true,
         'type': 'ACCOUNT'
+      } ],
+      'totals': [ ]
+    }),
+    statusText: 'OK'
+  }, { method: 'POST' })
+}
+
+function mockFetchCards () {
+  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/Products', {
+    status: 200,
+    body: JSON.stringify({
+      'items': [ {
+        'id': '53014111MRT0011110000380',
+        'info': {
+          'description': '1.2345',
+          'title': 'Карта №1',
+          'amount': {
+            'format': '###,###,###,###,##0.##',
+            'currency': 'BYN',
+            'amount': 486.18
+          },
+          'icon': {
+            'title': 'Карта №1',
+            'backgroundColorFrom': '#f9589e',
+            'backgroundColorTo': '#fe9199',
+            'iconUrl': 'v0/Image/49923_392.SVG',
+            'captionColor': '#FFFFFF',
+            'frameColor': '#c2b7b7',
+            'displayType': 'REGULAR'
+          }
+        },
+        'onDesktop': true,
+        'type': 'CARD'
       } ],
       'totals': [ ]
     }),
