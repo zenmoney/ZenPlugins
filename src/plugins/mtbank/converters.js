@@ -135,12 +135,12 @@ function parseComment (transaction, apiTransaction) {
   if (apiTransaction.description.indexOf('Оплата товаров и услуг') >= 0 ||
     apiTransaction.description.indexOf('Оплата товаров и услуг в сети МТБанка') >= 0 ||
     apiTransaction.description.indexOf('Покупка с карты банка в устройстве партнера') >= 0 ||
-    apiTransaction.description.indexOf('Покупка с карты банка в чужом устройстве') >= 0) {
+    apiTransaction.description.indexOf('Покупка с карты банка в чужом устройстве') >= 0 ||
+    apiTransaction.description.indexOf('Оплата в Интернет-банке') >= 0) {
     return false
   }
   // сохраняем комментарий и гасим дальнейшую оработку
-  if (apiTransaction.description.indexOf('Перевод на карту другого клиента') >= 0 ||
-    apiTransaction.description.indexOf('Оплата в Интернет-банке') >= 0) {
+  if (apiTransaction.description.indexOf('Перевод на карту другого клиента') >= 0) {
     transaction.comment = apiTransaction.description
     return true
   }
