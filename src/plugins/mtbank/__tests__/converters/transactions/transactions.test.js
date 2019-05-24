@@ -170,36 +170,47 @@ describe('convertTransaction', () => {
   it('should convert internet-bank transaction', () => {
     const transaction = convertTransaction({
       accountId: 'BY36MTBK10110008000001111000',
-      amount: '16.0',
-      balance: '3358.22',
+      amount: '9.90',
+      balance: '26.20',
       cardPan: '111111******1111',
       curr: 'BYN',
       debitFlag: '0',
-      description: 'Оплата в Интернет-банке',
-      error: '',
-      operationDate: '2019-01-08',
-      orderStatus: '1',
-      place: 'MTB INTERNET POS          / MINSK         / BY',
+      description: 'Оплата товаров и услуг в сети МТБанка',
+      error: null,
+      operationDate: '2019-01-02',
+      orderStatus: null,
+      place: 'CINNABON',
+      country: 'BY',
+      city: 'MINSK',
       status: 'T',
-      transAmount: '16.0',
-      transDate: '2019-01-05 00:26:11',
-      transactionId: '1111111'
+      transAmount: '9.90',
+      transDate: '2019-01-02 17:55:34',
+      mcc: '5812',
+      transactionId: '1111111',
+      rrn: null,
+      approvalCode: null
     }, accounts)
 
     expect(transaction).toEqual({
       hold: false,
-      date: new Date('2019-01-05T00:26:11+03:00'),
+      date: new Date('2019-01-02T17:55:34+03:00'),
       movements: [
         {
           id: '1111111',
           account: { id: '1113333' },
-          sum: -16,
+          sum: -9.9,
           fee: 0,
           invoice: null
         }
       ],
-      merchant: null,
-      comment: 'Оплата в Интернет-банке'
+      merchant: {
+        country: 'BY',
+        city: 'MINSK',
+        title: 'CINNABON',
+        location: null,
+        mcc: 5812
+      },
+      comment: null
     })
   })
 
