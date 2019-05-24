@@ -51,7 +51,8 @@ export function convertTransaction (apiTransaction, account) {
     parseInternalGroup,
     parseCashGroup,
     parsePayGroup,
-    parseChargeGroup,
+    // parseChargeGroup, -- нет необходимости
+    // parseCorrectionGroup, -- нет необходимости
 
     // старые методы (пошаговая генерация свойств транзакции)
     parseComment
@@ -260,6 +261,7 @@ function parseInternalGroup (transaction, apiTransaction) {
   if (apiTransaction.group !== 'INTERNAL') {
     return false
   }
+  // все внутренние операции (переводы между счетами) без мерчанта и комментариев
   return true
 }
 
@@ -319,27 +321,10 @@ function parsePayGroup (transaction, apiTransaction) {
   return true
 }
 
-function parseChargeGroup (transaction, apiTransaction) {
-  if (apiTransaction.group !== 'CHARGE') {
-    return false
-  }
-
+function parseComment (transaction, apiTransaction) {
   // расчёт комментария
   if (apiTransaction.description) {
     transaction.comment = apiTransaction.description
-  }
-
-  return true
-}
-
-function parseComment (transaction, apiTransaction) {
-  if (apiTransaction.operationPaymentType === 'TEMPLATE') {
-    // наименование шаблона
-    transaction.comment = apiTransaction.description
-  } else {
-    transaction.comment = ''
-    if (apiTransaction.merchant) { transaction.comment = apiTransaction.merchant.name + ': ' }
-    transaction.comment += apiTransaction.description
   }
 }
 
