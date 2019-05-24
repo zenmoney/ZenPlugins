@@ -75,7 +75,7 @@ describe('convertAccount', () => {
         title: 'Карта №1',
         balance: 486.18,
         instrument: 'BYN',
-        syncID: ['3014111MRT0011110000', '2345'],
+        syncID: ['3014111MRT001111', '2345'],
         productType: 'CARD'
       }
     },
