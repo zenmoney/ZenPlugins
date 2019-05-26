@@ -17,6 +17,7 @@ const debetCardData = {
   }
 }
 const transactions = [
+  // зачисление на счёт (card2card)
   [
     {
       postingDate: 1557781200000,
@@ -64,6 +65,55 @@ const transactions = [
       'outcomeAccount': '7005001234',
       'comment': 'Зачисление на счет (перевод) HCFB'
     }
+  ],
+
+  // снятие наличных
+  [
+    {
+      ostingDate: null,
+      valueDate: 1558357796000,
+      amount: 10000,
+      payCurrency: null,
+      description: 'Снятие денежных средств, OKI BINBANK, 000000000143222',
+      creditDebitIndicator: false,
+      mcc: 'ATM CASH WITHDRAWAL',
+      merchant: ' 000000000143222',
+      shortDescription: 'Снятие денежных средств',
+      hashtagList: [ ],
+      movementNumber: '943168929',
+      transactionTypeIBS: 2,
+      paymentType: null,
+      destinationProductType: null,
+      productName: null,
+      operationName: 'Снятие наличных в Банкомате',
+      address: 'OKI BINBANK',
+      country: 'РОССИЯ',
+      city: 'EKATERINBURG',
+      merchantName: '000000000143222',
+      partnercardnumber: null,
+      partnerAccountNumber: null,
+      partnerAccountName: null,
+      sendername: null,
+      senderaccount: null,
+      senderbic: null,
+      referenceid: null,
+      toacct: null,
+      toacct2: null,
+      templateId: null,
+      picUrl: 'https://ib.homecredit.ru/hcfbib.server.portal.app/pics/577450.jpg',
+      payAmount: 10000,
+      installmentInfo: null
+    },
+    {
+      'date': new Date('2019-05-20T16:09:56+03:00'),
+      'hold': false,
+      'id': '943168929',
+      'income': 10000,
+      'incomeAccount': 'cash',
+      'outcome': 10000,
+      'outcomeAccount': '7005001234',
+      'payee': '000000000143222'
+    }
   ]
 ]
 
@@ -77,4 +127,15 @@ describe('[MyCredit] convertTransaction', () => {
       )
     })
   }
+})
+
+xdescribe('[MyCredit] convertOneTransaction', () => {
+  const i = 1
+  it('should convert transaction #' + i, () => {
+    expect(
+      convertTransaction(debetCardData, transactions[i][0])
+    ).toEqual(
+      transactions[i][1]
+    )
+  })
 })

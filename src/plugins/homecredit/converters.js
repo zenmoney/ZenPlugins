@@ -224,7 +224,7 @@ export function convertTransaction (accountData, transaction) {
   if (transaction.mcc) {
     if (transaction.mcc === 'ATM CASH WITHDRAWAL') {
       tran.income = tran.outcome
-      tran.incomeAccount = 'cash#' + transaction.payCurrency
+      tran.incomeAccount = transaction.payCurrency ? 'cash#' + transaction.payCurrency : 'cash'
     } else {
       tran.mcc = getMcc(transaction.mcc)
     }
