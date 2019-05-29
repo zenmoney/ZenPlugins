@@ -140,6 +140,7 @@ const transactions = [
       },
       'movements': [
         {
+          '_id': '4736587157',
           '_cardPresent': true,
           'account': {
             'id': 'accountId'
@@ -297,29 +298,32 @@ const transactions = [
         'mcc': null,
         'title': 'Наталья Л.'
       },
-      'movements': [{
-        '_cardPresent': true,
-        'account': {
-          'id': 'accountId'
-        },
-        'fee': 0,
-        'id': 'p657036814',
-        'invoice': null,
-        'sum': -1388
-      }, {
-        'account': {
-          'company': {
-            'id': '4624'
+      'movements': [
+        {
+          '_id': '4630209694',
+          '_cardPresent': true,
+          'account': {
+            'id': 'accountId'
           },
-          'instrument': 'RUB',
-          'syncIds': ['4996'],
-          'type': 'ccard'
+          'fee': 0,
+          'id': 'p657036814',
+          'invoice': null,
+          'sum': -1388
         },
-        'fee': 0,
-        'id': null,
-        'invoice': null,
-        'sum': 1388
-      }
+        {
+          'account': {
+            'company': {
+              'id': '4624'
+            },
+            'instrument': 'RUB',
+            'syncIds': ['4996'],
+            'type': 'ccard'
+          },
+          'fee': 0,
+          'id': null,
+          'invoice': null,
+          'sum': 1388
+        }
       ]
     }
 
@@ -452,16 +456,18 @@ const transactions = [
         'location': null,
         'mcc': null
       },
-      'movements': [{
-        '_cardPresent': true,
-        'account': {
-          'id': 'accountId'
-        },
-        'fee': 0,
-        'id': 'p674167280',
-        'invoice': null,
-        'sum': -10
-      }]
+      'movements': [
+        {
+          '_id': '4736581078',
+          '_cardPresent': true,
+          'account': {
+            'id': 'accountId'
+          },
+          'fee': 0,
+          'id': 'p674167280',
+          'invoice': null,
+          'sum': -10
+        }]
     }
   ],
 
@@ -588,16 +594,18 @@ const transactions = [
         'mcc': null,
         'title': 'АО "ОТКРЫТИЕ БРОКЕР"'
       },
-      'movements': [{
-        '_cardPresent': true,
-        'account': {
-          'id': 'accountId'
-        },
-        'fee': 0,
-        'id': 'p668557566',
-        'invoice': null,
-        'sum': -4361.77
-      }
+      'movements': [
+        {
+          '_id': '4704116157',
+          '_cardPresent': true,
+          'account': {
+            'id': 'accountId'
+          },
+          'fee': 0,
+          'id': 'p668557566',
+          'invoice': null,
+          'sum': -4361.77
+        }
       ],
       'comment': null
     }
@@ -721,16 +729,18 @@ const transactions = [
         'mcc': null,
         'title': 'Ипотека (совком)'
       },
-      'movements': [{
-        '_cardPresent': true,
-        'account': {
-          'id': 'accountId'
-        },
-        'fee': 0,
-        'id': 'p666599740',
-        'invoice': null,
-        'sum': -15880
-      }],
+      'movements': [
+        {
+          '_id': '4691264950',
+          '_cardPresent': true,
+          'account': {
+            'id': 'accountId'
+          },
+          'fee': 0,
+          'id': 'p666599740',
+          'invoice': null,
+          'sum': -15880
+        }],
       'comment': null
     }
   ],
@@ -852,6 +862,7 @@ const transactions = [
       'merchant': null,
       'movements': [
         {
+          '_id': '4691285179',
           '_cardPresent': true,
           'account': {
             'id': 'accountId'
@@ -991,6 +1002,7 @@ const transactions = [
       },
       'movements': [
         {
+          '_id': '4672372848',
           '_cardPresent': true,
           'account': {
             'id': 'accountId'

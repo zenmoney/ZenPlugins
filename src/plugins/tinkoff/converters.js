@@ -63,6 +63,7 @@ export function convertTransaction (apiTransaction, account) {
 
 function getMovement (apiTransaction, account) {
   const movement = {
+    _id: apiTransaction.id,
     id: getApiTransactionId(apiTransaction),
     account: { id: account.id },
     invoice: null,
@@ -349,62 +350,87 @@ function addMirrorMovement (transaction, account) {
   return transaction
 }
 
-function parsingDoubleTransactions (tranId, tran1, tran2, accounts = {}) {
-  if (tran1.movements.length > 1 || tran2.movements.length > 1) {
-    throw new Error(`Ошибка объединения транзакций #${tranId}`, tran1, tran2)
-  }
+function parsingDoubleTransactions (tranId, tranArr, tran2, accounts = {}) {
+  let parsed = false
+  for (let i = 0; i < tranArr.length; i++) {
+    const tran1 = tranArr[i]
+    const indexStr = tranArr.length > 1 ? '#' + i : ''
 
-  // перевод между счетами
-  if (tran1.movements[0].sum * tran2.movements[0].sum < 0 && tran1.movements[0].account.id !== tran2.movements[0].account.id) {
+    if (tran1.movements.length > 1 || tran2.movements.length > 1) {
+      console.log(`>>> Ошибка объединения транзакций #${tranId}`, tranArr, tran2)
+      throw new Error('Ошибка объединения транзакций')
+    }
+
+    // объединяем в перевод между своимим счетами (только, если счета разные)
+    if (tran1.movements[0].sum * tran2.movements[0].sum < 0 && tran1.movements[0].account.id !== tran2.movements[0].account.id) {
     // при объединении в перевод всегда берём комментарий из расходной части
-    if (tran2.movements[0].sum < 0) {
-      tran1.comment = tran2.comment
+      if (tran2.movements[0].sum < 0) {
+        tran1.comment = tran2.comment
+      }
+
+      tran1.movements.push(tran2.movements.pop())
+
+      // в переводах получателя нет
+      tran1.merchant = null
+
+      console.log(`>>> Объединили ${indexStr}операцию в перевод #${tranId}`)
+      tranArr[i] = tran1
+      parsed = true
+      break
     }
 
-    tran1.movements.push(cleanupMovement(tran2.movements.pop()))
-
-    // в переводах получателя нет
-    tran1.merchant = null
-
-    console.log(`>>> Объединили операцию в перевод #${tranId}`)
-    return tran1
-  } else
-
-  // обработка существующей операции
-  if (transactionCompare(tran1, tran2)) {
-    if (tran1.hold === true && tran2.hold === false) {
-      tran1.hold = tran2.hold
-      tran1.movenements[0].id = tran2.movenements[0].id
-      console.log(`>>> Акцепт существующей операции #${tranId}:`, '\n#1: ', tran1, '\n#2: ', tran2)
-    } else if (tran1.hold === false) {
-      console.log(`>>> Пропускаем холд существующего акцепта #${tranId}:`, '\n#1: ', tran1, '\n#2: ', tran2)
-    } else {
-      throw new Error(`Ошибка обработки одинаковой пары операций #${tranId}`, '\n#1: ', tran1, '\n#2: ', tran2)
-    }
-    return tran1
-  } else
-
-  // проверка на дубли на соседних счетах
-  if (transactionCompare(tran1, tran2, true)) {
-    let movement = tran2.movements[0]
-    let account = accounts[movement.account.id]
-    if (account && account.type !== 'ccard' && movement._cardPresent) {
-      console.log(`>>> Пропускаем ошибочную дубль-операцию по карте не с карточного счёта #${tranId}:`, '\n#1: ', tran1, '\n#2: ', tran2)
-      return tran1
+    // обработка существующей операции (полное совпадение)
+    if (isSameTransaction(tran1, tran2)) {
+      if (tran1.hold === true && tran2.hold === false) {
+        tran1.hold = tran2.hold
+        tran1.movenements[0].id = tran2.movenements[0].id
+        console.log(`>>> Акцепт существующей ${indexStr}операции #${tranId}:`, tranArr, '\n#2: ', tran2)
+      } else if (tran1.hold === false) {
+        console.log(`>>> Пропускаем холд существующего ${indexStr}акцепта #${tranId}:`, tranArr, '\n#2: ', tran2)
+      } else {
+        throw new Error(`Ошибка обработки одинаковой пары операций #${tranId}`, tranArr, '\n#2: ', tran2)
+      }
+      tranArr[i] = tran1
+      parsed = true
+      break
     }
 
-    movement = tran1.movements[0]
-    account = accounts[tran1.movements[0].account.id]
-    if (account && account.type !== 'ccard' && movement._cardPresent) {
-      console.log(`>>> Пропускаем первую операцию по карте не с карточного счёта #${tranId}:`, '\n#1: ', tran1, '\n#2: ', tran2)
-      return tran2
-    }
+    // проверка на дубли на соседних счетах (совпадение без учёта счетов)
+    if (isSameTransaction(tran1, tran2, true)) {
+      let movement = tran2.movements[0]
+      let account = accounts[movement.account.id]
+      if (account && account.type !== 'ccard' && movement._cardPresent) {
+        console.log(`>>> Пропускаем ошибочную дубль-операцию ${indexStr}по карте не с карточного счёта #${tranId}:`, tranArr, '\n#2: ', tran2)
+        parsed = true
+        break
+      }
 
-    console.log(`>>> Обнаружен дубль на соседнем счету. Обе операции оставляем #${tranId}`, '\n#1: ', tran1, '\n#2: ', tran2)
-    return null
+      movement = tran1.movements[0]
+      account = accounts[tran1.movements[0].account.id]
+      if (account && account.type !== 'ccard' && movement._cardPresent) {
+        console.log(`>>> Пропускаем первую операцию ${indexStr}по карте не с карточного счёта #${tranId}:`, tranArr, '\n#2: ', tran2)
+        tranArr[i] = tran2
+        parsed = true
+        break
+      }
+
+      console.log(`>>> Обнаружен дубль на соседнем счету. Обе операции оставляем, чтобы удалить лишние позднее #${tranId}`, tranArr, '\n#2: ', tran2)
+      tranArr[i]._double = true
+      tranArr.push(tran2)
+      i++
+      parsed = true
+      break
+    }
   }
 
-  throw new Error(`Ошибка обработки не известной пары операций #${tranId}`, '\n#1: ', tran1, '\n#2: ', tran2)
+  if (!parsed) {
+    // две не похожие, но с одинаковыйм paymentId – нужно сохранить обе
+    // например, перевод в валюте, состоящий из 3 операций (doubleTransfer2.test.js)
+    tranArr.push(tran2)
+    console.log(`>>> Обнаружена ещё одна операция с тем же paymentId. Все оставляем #${tranId}`, tranArr, '\n#2: ', tran2)
+  }
+
+  return tranArr
 }
 
 export function convertTransactions (apiTransactions, accounts) {
@@ -439,21 +465,9 @@ export function convertTransactions (apiTransactions, accounts) {
 
       if (transactions[tranId]) {
         // обработаем дублирующую операцию
-        const tran = parsingDoubleTransactions(tranId, transactions[tranId], transaction, accounts)
-
-        if (tran) {
-          transactions[tranId] = tran
-          console.log(`>>> Обновляем операцию: ${getTransactionString(tran, accounts[tran.movements[0].account.id])}`)
-        } else if (tran === null) {
-          // собираем дубли в массив для последующего игнорирования
-          console.log(`>>> Оставляем обе дубль-холд операции: ${getTransactionString(transaction, accounts[accountId])}`)
-          if (!_.isArray(transactions[tranId])) {
-            transactions[tranId] = [ transactions[tranId] ]
-          }
-          transactions[tranId].push(cleanupTransaction(transaction)) // собираем все экземпляры дублей
-        }
+        transactions[tranId] = parsingDoubleTransactions(tranId, transactions[tranId], transaction, accounts)
       } else {
-        transactions[tranId] = cleanupTransaction(transaction)
+        transactions[tranId] = [ transaction ]
         console.log(`>>> Добавляем операцию: ${getTransactionString(transaction, accounts[accountId])}`)
       }
     }
@@ -461,14 +475,32 @@ export function convertTransactions (apiTransactions, accounts) {
 
   // избавляемся от ошибочных дублей (фантомные дубли на соседних счетах) – дань глючному Тинькову
   let valueTransactions = _.values(transactions)
-  const doubleTransactions = valueTransactions.filter(transaction => _.isArray(transaction))
+  const doubleTransactions = valueTransactions.filter(transaction => transaction._double)
   if (doubleTransactions.length > 0) {
     console.log(`>>> Обнаружено дублирующихся операций: ${doubleTransactions.length} шт.`, doubleTransactions)
     valueTransactions = valueTransactions.filter(transaction => !_.isArray(transaction))
   }
 
+  // у операций с одним и тем же paymentId обновим id операции
+  valueTransactions = valueTransactions.map(trans => {
+    if (trans.length > 1) {
+      trans = trans.map(transaction => {
+        transaction.movements = transaction.movements.map(movement => {
+          if (movement.id && movement._id) {
+            movement.id = movement.id + '_' + movement._id
+          }
+          return movement
+        })
+        return transaction
+      })
+    } else {
+      trans = [ trans[0] ]
+    }
+    return trans
+  })
+
   // группируем операции, если вдруг есть одновременно холд и акцепт
-  const groupedTransactions = _.groupBy(valueTransactions, transaction => {
+  const groupedTransactions = _.groupBy(_.flattenDeep(valueTransactions), transaction => {
     const movements = []
     transaction.movements.forEach(movement => {
       movements.push(movement.account.id + '@' + movement.sum)
@@ -476,7 +508,7 @@ export function convertTransactions (apiTransactions, accounts) {
     return `${formatCommentDateTime(transaction.date)}#${getMerchantTitle(transaction)}#${transaction.merchant && transaction.merchant.mcc}#${movements.join(';')}`
   })
 
-  // из оставшихся полных дублей (если встретятся) приоритет на акцепты
+  // из оставшихся полных холд-акцепт-дублей (если встретятся) приоритет на акцепты
   const result = (Object.keys(groupedTransactions)).map(key => {
     if (groupedTransactions[key].length <= 1) {
       return groupedTransactions[key][0]
@@ -496,18 +528,16 @@ export function convertTransactions (apiTransactions, accounts) {
     return transactions
   })
 
-  return _.flattenDeep(result)
+  return _.flattenDeep(result).map(transaction => cleanupTransaction(transaction))
 }
 
 export function cleanupTransaction (transaction) {
-  transaction.movements = transaction.movements.map(movement => {
-    return cleanupMovement(movement)
-  })
-  return transaction
+  transaction.movements = transaction.movements.map(movement => cleanupMovement(movement))
+  return _.omit(transaction, ['_double'])
 }
 
 function cleanupMovement (movement) {
-  return _.omit(movement, ['_cardPresent'])
+  return _.omit(movement, ['_cardPresent', '_id'])
 }
 
 export function groupApiTransactionsById (apiTransactions) {
@@ -778,12 +808,22 @@ function getApiTransactionId (apiTransaction) {
     : apiTransaction.id
 }
 
-function transactionCompare (tran1, tran2, ignoreAccount = false) {
-  return (ignoreAccount || (tran1.movements[0].account.id === tran2.movements[0].account.id)) &&
-    tran1.movements[0].sum === tran2.movements[0].sum &&
-    tran1.merchant.mcc === tran2.merchant.mcc &&
-    tran1.merchant.title === tran2.merchant.title &&
-    tran1.merchant.fullTitle === tran2.merchant.fullTitle &&
+function isSameTransaction (tran1, tran2, ignoreAccount = false) {
+  let sameAccount = ignoreAccount || tran1.movements.length === tran2.movements.length
+  if (!ignoreAccount && sameAccount) {
+    sameAccount = !tran1.movements.some((movement, index) => movement.account.id !== tran2.movements[index].account.id)
+  }
+
+  const sameSum = !tran1.movements.some((movement, index) => {
+    return movement.sum !== tran2.movements[index].sum ||
+      JSON.stringify(movement.invoice) !== JSON.stringify(tran2.movements[index].invoice)
+  })
+
+  return sameAccount && sameSum &&
+    (tran1.merchant &&
+      tran1.merchant.mcc === tran2.merchant.mcc &&
+      tran1.merchant.title === tran2.merchant.title &&
+      tran1.merchant.fullTitle === tran2.merchant.fullTitle) &&
     formatCommentDateTime(tran1.date) === formatCommentDateTime(tran2.date)
 }
 
@@ -796,6 +836,10 @@ function getMovementSumToString (movement) {
 }
 
 function getTransactionString (transaction, account = {}) {
+  if (_.isArray(transaction)) {
+    return transaction.map((tran, index) => `#${index}: ${getTransactionString(tran)}`).join('\n')
+  }
+
   const hold = transaction.hold ? ' [H] ' : ''
   const sum = transaction.movements.map(movement => getMovementSumToString(movement)).join(' -> ')
   return `#${transaction.movements[0].id}, ${formatCommentDateTime(transaction.date)}, ${account.title || account.id}, ${hold}${getMerchantTitle(transaction)}, ${sum}`

@@ -2,7 +2,7 @@
 * Обработка ошибки дублирования холд-операций на ВСЕХ счетах в выписке
 */
 
-import { cleanupTransaction, convertTransaction, convertTransactions, groupApiTransactionsById } from '../../../converters'
+import { convertTransaction, convertTransactions, groupApiTransactionsById } from '../../../converters'
 
 const accounts = {
   'accountId': {
@@ -12,29 +12,29 @@ const accounts = {
     syncID: ['1234'],
     instrument: 'RUB'
   },
-  '5000430875': {
-    id: '5000430875',
+  'accountRUB': {
+    id: 'accountRUB',
     title: 'Счет Black RUB',
     type: 'ccard',
     syncID: ['1234'],
     instrument: 'RUB'
   },
-  '5021424493': {
-    id: '5021424493',
+  'accountEUR': {
+    id: 'accountEUR',
     title: 'Счет Black EUR',
     type: 'ccard',
     syncID: ['2345'],
     instrument: 'EUR'
   },
-  '5021424485': {
-    id: '5021424485',
+  'accountUSD': {
+    id: 'accountUSD',
     title: 'Счет Black USD',
     type: 'ccard',
     syncID: ['3456'],
     instrument: 'USD'
   },
-  '8101550435': {
-    id: '8101550435',
+  'checkingId': {
+    id: 'checkingId',
     title: 'Накопительный счет',
     type: 'checking',
     syncID: '4567',
@@ -107,7 +107,7 @@ const transactions = [
       },
       additionalInfo: [],
       virtualPaymentType: 0,
-      account: '5000430875',
+      account: 'accountRUB',
       ucid: '1022338546',
       merchant: {
         name: 'Перекресток',
@@ -147,8 +147,9 @@ const transactions = [
       },
       'movements': [
         {
+          '_id': '1165931124',
           '_cardPresent': true,
-          'account': { 'id': '5000430875' },
+          'account': { 'id': 'accountRUB' },
           'fee': 0,
           'id': '1165931124',
           'invoice': null,
@@ -243,7 +244,7 @@ const transactions = [
       additionalInfo: [],
       compensation: 'default',
       virtualPaymentType: 0,
-      account: '5000430875',
+      account: 'accountRUB',
       ucid: '1022338546',
       merchant: {
         name: 'Перекресток',
@@ -285,9 +286,10 @@ const transactions = [
       },
       'movements': [
         {
+          '_id': '4526773660',
           '_cardPresent': true,
           'account': {
-            'id': '5000430875'
+            'id': 'accountRUB'
           },
           'fee': 0,
           'id': '4526773660',
@@ -359,7 +361,7 @@ const transactions = [
       },
       additionalInfo: [],
       virtualPaymentType: 0,
-      account: '5021424485',
+      account: 'accountUSD',
       ucid: '1022338546',
       merchant: {
         name: 'Перекресток',
@@ -447,7 +449,7 @@ const transactions = [
       },
       additionalInfo: [],
       virtualPaymentType: 0,
-      account: '5021424493',
+      account: 'accountEUR',
       ucid: '1022338546',
       merchant: {
         name: 'Перекресток',
@@ -535,7 +537,7 @@ const transactions = [
       },
       additionalInfo: [],
       virtualPaymentType: 0,
-      account: '8101550435',
+      account: 'checkingId',
       ucid: '1022338546',
       merchant: {
         name: 'Перекресток',
@@ -575,9 +577,10 @@ const transactions = [
       },
       'movements': [
         {
+          '_id': '1165931124',
           '_cardPresent': true,
           'account': {
-            'id': '8101550435'
+            'id': 'checkingId'
           },
           'fee': 0,
           'id': '1165931124',
@@ -685,6 +688,7 @@ const transactions = [
         },
       'movements': [
         {
+          '_id': '1360844704',
           '_cardPresent': true,
           'account':
             {
@@ -793,6 +797,7 @@ const transactions = [
         },
       'movements': [
         {
+          '_id': '1360844711',
           '_cardPresent': true,
           'account':
             {
@@ -858,9 +863,87 @@ describe('convertTransactions', () => {
       convertTransactions(apiTransactions, accounts)
     ).toEqual(
       [
-        cleanupTransaction(transactions[1][1]),
-        cleanupTransaction(transactions[5][1]),
-        cleanupTransaction(transactions[6][1])
+        // из кучи левых дублей должен выжить только один акцепт на основном карточном счёте
+        {
+          'comment': null,
+          'date': new Date('2019-04-16T18:58:36.000Z'),
+          'hold': false,
+          'merchant': {
+            'city': 'SANKT-PETERBU',
+            'country': 'RUS',
+            'location': {
+              'latitude': 59.9395237,
+              'longitude': 30.3120206
+            },
+            'mcc': 5411,
+            'title': 'Перекресток'
+          },
+          'movements': [
+            {
+              'account': {
+                'id': 'accountRUB'
+              },
+              'fee': 0,
+              'id': '4526773660',
+              'invoice': null,
+              'sum': -1041.89
+            }
+          ]
+        },
+
+        // две реальные операции, хоть и похожи один-в-один должны остаться
+        {
+          'comment': null,
+          'date': new Date('2019-05-22T19:04:46.000Z'),
+          'hold': true,
+          'merchant': {
+            'city': 'CHEBOKSARY',
+            'country': 'RUS',
+            'location': {
+              'latitude': 56.1285406,
+              'longitude': 47.2754679
+            },
+            'mcc': 4131,
+            'title': 'ETK CHUVASHIA'
+          },
+          'movements': [
+            {
+              'account': {
+                'id': 'accountId'
+              },
+              'fee': 0,
+              'id': '1360844704',
+              'invoice': null,
+              'sum': -19
+            }
+          ]
+        },
+        {
+          'comment': null,
+          'date': new Date('2019-05-22T19:04:46.000Z'),
+          'hold': true,
+          'merchant': {
+            'city': 'CHEBOKSARY',
+            'country': 'RUS',
+            'location': {
+              'latitude': 56.1285406,
+              'longitude': 47.2754679
+            },
+            'mcc': 4131,
+            'title': 'ETK CHUVASHIA'
+          },
+          'movements': [
+            {
+              'account': {
+                'id': 'accountId'
+              },
+              'fee': 0,
+              'id': '1360844711',
+              'invoice': null,
+              'sum': -19
+            }
+          ]
+        }
       ]
     )
   })

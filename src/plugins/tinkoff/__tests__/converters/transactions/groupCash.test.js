@@ -109,27 +109,30 @@ const transactions = [
       'date': new Date('2019-05-11T13:37:45+03:00'),
       'hold': false,
       'merchant': null,
-      'movements': [{
-        '_cardPresent': true,
-        'account': {
-          'id': 'accountId'
+      'movements': [
+        {
+          '_id': '4680706787',
+          '_cardPresent': true,
+          'account': {
+            'id': 'accountId'
+          },
+          'fee': 0,
+          'id': '4680706787',
+          'invoice': null,
+          'sum': -3000
         },
-        'fee': 0,
-        'id': '4680706787',
-        'invoice': null,
-        'sum': -3000
-      }, {
-        'account': {
-          'company': null,
-          'instrument': 'RUB',
-          'syncIds': null,
-          'type': 'cash'
-        },
-        'fee': 0,
-        'id': null,
-        'invoice': null,
-        'sum': 3000
-      }
+        {
+          'account': {
+            'company': null,
+            'instrument': 'RUB',
+            'syncIds': null,
+            'type': 'cash'
+          },
+          'fee': 0,
+          'id': null,
+          'invoice': null,
+          'sum': 3000
+        }
       ]
     }
   ]

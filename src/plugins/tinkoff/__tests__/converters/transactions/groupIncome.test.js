@@ -16,6 +16,7 @@ const accounts = {
     instrument: 'RUB'
   }
 }
+
 const transactions = [
   // C1: пополнение со своего счёта в другом банке
   [
@@ -107,6 +108,7 @@ const transactions = [
       'merchant': null,
       'movements': [
         {
+          '_id': '4691926762',
           '_cardPresent': true,
           'account': {
             'id': 'accountId'
@@ -248,6 +250,7 @@ const transactions = [
       'merchant': null,
       'movements': [
         {
+          '_id': '4698219023',
           '_cardPresent': true,
           'account': {
             'id': 'accountId'
@@ -382,6 +385,7 @@ const transactions = [
       'merchant': null,
       'movements': [
         {
+          '_id': '4718739054',
           '_cardPresent': true,
           'account': {
             'id': 'accountId'
@@ -487,16 +491,18 @@ const transactions = [
       'date': new Date('2019-05-17T18:03:28+03:00'),
       'hold': false,
       'merchant': null,
-      'movements': [{
-        '_cardPresent': true,
-        'account': {
-          'id': 'accountId'
-        },
-        'fee': 0,
-        'id': '4705900611',
-        'invoice': null,
-        'sum': 2200
-      }
+      'movements': [
+        {
+          '_id': '4705900611',
+          '_cardPresent': true,
+          'account': {
+            'id': 'accountId'
+          },
+          'fee': 0,
+          'id': '4705900611',
+          'invoice': null,
+          'sum': 2200
+        }
       ]
     }
   ],
@@ -589,19 +595,20 @@ const transactions = [
         'location': null,
         'mcc': null
       },
-      'movements': [{
-        '_cardPresent': true,
-        'account': {
-          'id': 'accountId'
-        },
-        'fee': 0,
-        'id': '4717785195',
-        'invoice': null,
-        'sum': 18630
-      }
+      'movements': [
+        {
+          '_id': '4717785195',
+          '_cardPresent': true,
+          'account': {
+            'id': 'accountId'
+          },
+          'fee': 0,
+          'id': '4717785195',
+          'invoice': null,
+          'sum': 18630
+        }
       ]
     }
-
   ],
 
   // C5: перевод между своими счетами
@@ -711,16 +718,18 @@ const transactions = [
       'date': new Date('2019-05-15T20:33:55+03:00'),
       'hold': false,
       'merchant': null,
-      'movements': [{
-        '_cardPresent': true,
-        'account': {
-          'id': 'accountId'
-        },
-        'fee': 0,
-        'id': 'p666839507',
-        'invoice': null,
-        'sum': 30000
-      }
+      'movements': [
+        {
+          '_id': '4692024440',
+          '_cardPresent': true,
+          'account': {
+            'id': 'accountId'
+          },
+          'fee': 0,
+          'id': 'p666839507',
+          'invoice': null,
+          'sum': 30000
+        }
       ]
     }
   ],
@@ -804,16 +813,18 @@ const transactions = [
       'date': new Date('2019-05-13T00:00:00+03:00'),
       'hold': false,
       'merchant': null,
-      'movements': [{
-        '_cardPresent': true,
-        'account': {
-          'id': 'deposit_rub'
-        },
-        'fee': 0,
-        'id': '1681138819',
-        'invoice': null,
-        'sum': 296.1
-      }]
+      'movements': [
+        {
+          '_id': '1681138819',
+          '_cardPresent': true,
+          'account': {
+            'id': 'deposit_rub'
+          },
+          'fee': 0,
+          'id': '1681138819',
+          'invoice': null,
+          'sum': 296.1
+        }]
     }
   ],
 
@@ -898,16 +909,18 @@ const transactions = [
       'date': new Date('2019-04-10T05:30:20+03:00'),
       'hold': false,
       'merchant': null,
-      'movements': [{
-        '_cardPresent': true,
-        'account': {
-          'id': 'accountId'
-        },
-        'fee': 0,
-        'id': '4459696612',
-        'invoice': null,
-        'sum': 5621
-      }]
+      'movements': [
+        {
+          '_id': '4459696612',
+          '_cardPresent': true,
+          'account': {
+            'id': 'accountId'
+          },
+          'fee': 0,
+          'id': '4459696612',
+          'invoice': null,
+          'sum': 5621
+        }]
     }
   ],
 
@@ -1014,16 +1027,18 @@ const transactions = [
       'date': new Date('2019-04-25T17:54:30+03:00'),
       'hold': false,
       'merchant': null,
-      'movements': [{
-        '_cardPresent': true,
-        'account': {
-          'id': 'accountId'
-        },
-        'fee': 0,
-        'id': 'p645738013',
-        'invoice': null,
-        'sum': 10000
-      }
+      'movements': [
+        {
+          '_id': '1680144038',
+          '_cardPresent': true,
+          'account': {
+            'id': 'accountId'
+          },
+          'fee': 0,
+          'id': 'p645738013',
+          'invoice': null,
+          'sum': 10000
+        }
       ]
     }
   ],
@@ -1126,16 +1141,18 @@ const transactions = [
         'location': null,
         'mcc': null
       },
-      'movements': [{
-        '_cardPresent': true,
-        'account': {
-          'id': 'accountId'
-        },
-        'fee': 0,
-        'id': '4736769117',
-        'invoice': null,
-        'sum': 10
-      }],
+      'movements': [
+        {
+          '_id': '4736769117',
+          '_cardPresent': true,
+          'account': {
+            'id': 'accountId'
+          },
+          'fee': 0,
+          'id': '4736769117',
+          'invoice': null,
+          'sum': 10
+        }],
       'comment': 'KEK'
     }
   ],
@@ -1226,15 +1243,17 @@ const transactions = [
         'mcc': null,
         'title': 'Элекснет'
       },
-      'movements': [{
-        'account': {
-          'id': 'accountId'
-        },
-        'fee': 0,
-        'id': '1343137543',
-        'invoice': null,
-        'sum': 3000
-      }]
+      'movements': [
+        {
+          '_id': '1343137543',
+          'account': {
+            'id': 'accountId'
+          },
+          'fee': 0,
+          'id': '1343137543',
+          'invoice': null,
+          'sum': 3000
+        }]
     }
   ]
 ]

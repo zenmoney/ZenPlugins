@@ -115,16 +115,18 @@ const transactions = [
       'date': new Date('2019-05-08T16:31:22+03:00'),
       'hold': false,
       'merchant': null,
-      'movements': [{
-        '_cardPresent': true,
-        'account': {
-          'id': 'accountId'
-        },
-        'fee': 0,
-        'id': 'f659293898',
-        'invoice': null,
-        'sum': -533.82
-      }
+      'movements': [
+        {
+          '_id': '4646309394',
+          '_cardPresent': true,
+          'account': {
+            'id': 'accountId'
+          },
+          'fee': 0,
+          'id': 'f659293898',
+          'invoice': null,
+          'sum': -533.82
+        }
       ]
     }
   ],
@@ -205,16 +207,18 @@ const transactions = [
       'date': new Date('2019-05-04T00:00:00+03:00'),
       'hold': false,
       'merchant': null,
-      'movements': [{
-        '_cardPresent': true,
-        'account': {
-          'id': 'accountId'
-        },
-        'fee': 0,
-        'id': '4620913997',
-        'invoice': null,
-        'sum': -99
-      }
+      'movements': [
+        {
+          '_id': '4620913997',
+          '_cardPresent': true,
+          'account': {
+            'id': 'accountId'
+          },
+          'fee': 0,
+          'id': '4620913997',
+          'invoice': null,
+          'sum': -99
+        }
       ]
     }
   ]

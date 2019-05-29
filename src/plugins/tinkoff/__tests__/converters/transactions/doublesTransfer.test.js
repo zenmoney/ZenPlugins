@@ -5,15 +5,15 @@
 import { convertTransaction, convertTransactions } from '../../../converters'
 
 const accounts = {
-  '5006319460': {
-    id: '5006319460',
+  'accountRUB': {
+    id: 'accountRUB',
     title: 'Счет Black RUB',
     type: 'ccard',
     syncID: ['1234'],
     instrument: 'RUB'
   },
-  '8107123716': {
-    id: '8107123716',
+  'checkingRUB': {
+    id: 'checkingRUB',
     title: 'Накопления',
     type: 'checking',
     syncID: '3716',
@@ -22,6 +22,7 @@ const accounts = {
     savings: true
   }
 }
+
 const transactions = [
   // card2card (входящий)
   [
@@ -31,7 +32,7 @@ const transactions = [
       isSuspicious: false,
       payment: {
         sourceIsQr: false,
-        bankAccountId: '5006319460',
+        bankAccountId: 'accountRUB',
         paymentId: '664352432',
         paymentType: 'Transfer',
         feeAmount: {
@@ -46,7 +47,7 @@ const transactions = [
         hasPaymentOrder: false,
         comment: '',
         fieldsValues: {
-          agreement: '5006319460',
+          agreement: 'accountRUB',
           unid: 'M.1703259419'
         },
         cardNumber: '554386******0123'
@@ -100,13 +101,12 @@ const transactions = [
         id: '7',
         name: 'Финан. услуги'
       },
-      additionalInfo:
-      [{
+      additionalInfo: [{
         fieldName: 'Номер банкомата',
         fieldValue: '10000001'
       }],
       virtualPaymentType: 0,
-      account: '5006319460',
+      account: 'accountRUB',
       ucid: '1033551881',
       card: '34039318',
       loyaltyPayment: [],
@@ -131,8 +131,9 @@ const transactions = [
       'merchant': null,
       'movements': [
         {
+          '_id': '1309413682',
           'account': {
-            'id': '5006319460'
+            'id': 'accountRUB'
           },
           'fee': 0,
           'id': 'p664352432',
@@ -156,6 +157,7 @@ const transactions = [
       ]
     }
   ],
+
   // card2card исходящий (с внешней карты)
   [
     {
@@ -163,7 +165,7 @@ const transactions = [
       isSuspicious: false,
       payment: {
         sourceIsQr: false,
-        bankAccountId: '5006319460',
+        bankAccountId: 'accountRUB',
         paymentId: '664352432',
         paymentType: 'Transfer',
         feeAmount: {
@@ -178,7 +180,7 @@ const transactions = [
         hasPaymentOrder: false,
         comment: '',
         fieldsValues: {
-          agreement: '5006319460',
+          agreement: 'accountRUB',
           unid: 'M.1703259419'
         },
         cardNumber: '554386******0123'
@@ -247,7 +249,7 @@ const transactions = [
       isSuspicious: false,
       payment: {
         sourceIsQr: false,
-        bankAccountId: '5006319460',
+        bankAccountId: 'accountRUB',
         paymentId: '664352190',
         paymentType: 'Transfer',
         feeAmount: {
@@ -262,7 +264,7 @@ const transactions = [
         hasPaymentOrder: false,
         comment: '',
         fieldsValues: {
-          bankContract: '8107123716'
+          bankContract: 'checkingRUB'
         },
         cardNumber: '554386******5555',
         templateId: '51024531',
@@ -322,11 +324,11 @@ const transactions = [
       },
       additionalInfo: [],
       virtualPaymentType: 0,
-      account: '8107123716',
+      account: 'checkingRUB',
       ucid: '1039992507',
       card: '40466136',
       loyaltyPayment: [],
-      senderAgreement: '5006319460',
+      senderAgreement: 'accountRUB',
       group: 'INCOME',
       mccString: '0000',
       cardPresent: false,
@@ -348,8 +350,9 @@ const transactions = [
       'merchant': null,
       'movements': [
         {
+          '_id': '1309412483',
           'account': {
-            'id': '8107123716'
+            'id': 'checkingRUB'
           },
           'fee': 0,
           'id': 'p664352190',
@@ -366,7 +369,7 @@ const transactions = [
       isSuspicious: false,
       payment: {
         sourceIsQr: false,
-        bankAccountId: '5006319460',
+        bankAccountId: 'accountRUB',
         paymentId: '664352190',
         paymentType: 'Transfer',
         feeAmount: {
@@ -381,7 +384,7 @@ const transactions = [
         hasPaymentOrder: false,
         comment: '',
         fieldsValues: {
-          bankContract: '8107123716'
+          bankContract: 'checkingRUB'
         },
         cardNumber: '554386******5555',
         templateId: '51024531',
@@ -441,7 +444,7 @@ const transactions = [
       },
       additionalInfo: [],
       virtualPaymentType: 0,
-      account: '5006319460',
+      account: 'accountRUB',
       ucid: '1033551881',
       card: '34039318',
       loyaltyPayment: [],
@@ -466,8 +469,9 @@ const transactions = [
       'merchant': null,
       'movements': [
         {
+          '_id': '1309412475',
           'account': {
-            'id': '5006319460'
+            'id': 'accountRUB'
           },
           'fee': 0,
           'id': 'p664352190',
@@ -478,7 +482,7 @@ const transactions = [
     }
   ],
 
-  // две раздельные card3card-операции на одном счету, которые НЕ НАДО объединять в перевод
+  // две раздельные card2card-операции на одном счету, которые НЕ НАДО объединять в перевод
   [
     // исходящий card2card-перевод
     {
@@ -487,7 +491,7 @@ const transactions = [
       isSuspicious: false,
       payment: {
         sourceIsQr: false,
-        bankAccountId: '5006319460',
+        bankAccountId: 'accountRUB',
         paymentId: '666999252',
         paymentType: 'Transfer',
         feeAmount: {
@@ -563,7 +567,7 @@ const transactions = [
         fieldValue: '10000001'
       }],
       virtualPaymentType: 0,
-      account: '5006319460',
+      account: 'accountRUB',
       ucid: '1022338546',
       card: '2535796',
       loyaltyPayment: [],
@@ -588,8 +592,9 @@ const transactions = [
       'merchant': null,
       'movements': [
         {
+          '_id': '1321168975',
           'account': {
-            'id': '5006319460'
+            'id': 'accountRUB'
           },
           'fee': 0,
           'id': 'p666999252',
@@ -619,7 +624,7 @@ const transactions = [
       isSuspicious: false,
       payment: {
         sourceIsQr: false,
-        bankAccountId: '5006319460',
+        bankAccountId: 'accountRUB',
         paymentId: '666996139',
         paymentType: 'Transfer',
         feeAmount: {
@@ -634,7 +639,7 @@ const transactions = [
         hasPaymentOrder: false,
         comment: '',
         fieldsValues: {
-          agreement: '5006319460',
+          agreement: 'accountRUB',
           unid: 'M.1710448645'
         },
         cardNumber: '522598**7430'
@@ -694,7 +699,7 @@ const transactions = [
         fieldValue: '10000001'
       }],
       virtualPaymentType: 0,
-      account: '5006319460',
+      account: 'accountRUB',
       ucid: '1022338546',
       card: '2535796',
       loyaltyPayment: [],
@@ -719,14 +724,16 @@ const transactions = [
       'merchant': null,
       'movements': [
         {
+          '_id': '1321161491',
           'account': {
-            'id': '5006319460'
+            'id': 'accountRUB'
           },
           'fee': 0,
           'id': 'p666996139',
           'invoice': null,
           'sum': 10500
-        }, {
+        },
+        {
           'account': {
             'company': null,
             'instrument': 'RUB',
@@ -749,7 +756,7 @@ const transactions = [
       isSuspicious: false,
       payment: {
         sourceIsQr: false,
-        bankAccountId: '5006319460',
+        bankAccountId: 'accountRUB',
         paymentId: '666996139',
         paymentType: 'Transfer',
         feeAmount: {
@@ -764,7 +771,7 @@ const transactions = [
         hasPaymentOrder: false,
         comment: '',
         fieldsValues: {
-          agreement: '5006319460',
+          agreement: 'accountRUB',
           unid: 'M.1710448645'
         },
         cardNumber: '522598**7430'
@@ -825,6 +832,7 @@ const transactions = [
     null
   ]
 ]
+
 const apiTransactions = transactions.map(item => item[0])
 
 describe('convertTransaction', () => {
@@ -856,6 +864,7 @@ describe('convertTransactions', () => {
       convertTransactions(apiTransactions, accounts)
     ).toEqual(
       [
+        // card2card-перевод
         {
           'comment': null,
           'date': new Date('2019-05-13T23:30:40+03:00'),
@@ -864,7 +873,7 @@ describe('convertTransactions', () => {
           'movements': [
             {
               'account': {
-                'id': '5006319460'
+                'id': 'accountRUB'
               },
               'fee': 0,
               'id': 'p664352432',
@@ -885,6 +894,8 @@ describe('convertTransactions', () => {
             }
           ]
         },
+
+        // внутрибанковский перевод между счетами
         {
           'comment': null,
           'date': new Date('2019-05-13T23:29:52+03:00'),
@@ -893,7 +904,7 @@ describe('convertTransactions', () => {
           'movements': [
             {
               'account': {
-                'id': '8107123716'
+                'id': 'checkingRUB'
               },
               'fee': 0,
               'id': 'p664352190',
@@ -902,7 +913,7 @@ describe('convertTransactions', () => {
             },
             {
               'account': {
-                'id': '5006319460'
+                'id': 'accountRUB'
               },
               'fee': 0,
               'id': 'p664352190',
@@ -911,8 +922,66 @@ describe('convertTransactions', () => {
             }
           ]
         },
-        transactions[4][1],
-        transactions[5][1]
+
+        // два не связанных друг с другом card2card перевода (карта тинькоф выступает транзитом)
+        {
+          'comment': null,
+          'date': new Date('2019-05-15T20:40:16.000Z'),
+          'hold': true,
+          'merchant': null,
+          'movements': [
+            {
+              'account': {
+                'id': 'accountRUB'
+              },
+              'fee': 0,
+              'id': 'p666999252',
+              'invoice': null,
+              'sum': -10500
+            },
+            {
+              'account': {
+                'company': null,
+                'instrument': 'RUB',
+                'syncIds': ['6765'],
+                'type': 'ccard'
+              },
+              'fee': 0,
+              'id': null,
+              'invoice': null,
+              'sum': 10500
+            }
+          ]
+        },
+        {
+          'comment': null,
+          'date': new Date('2019-05-15T20:35:47.000Z'),
+          'hold': true,
+          'merchant': null,
+          'movements': [
+            {
+              'account': {
+                'id': 'accountRUB'
+              },
+              'fee': 0,
+              'id': 'p666996139',
+              'invoice': null,
+              'sum': 10500
+            },
+            {
+              'account': {
+                'company': null,
+                'instrument': 'RUB',
+                'syncIds': ['7430'],
+                'type': 'ccard'
+              },
+              'fee': 0,
+              'id': null,
+              'invoice': null,
+              'sum': -10500
+            }
+          ]
+        }
       ]
     )
   })
