@@ -13,6 +13,7 @@ describe('scrape', () => {
     mockFetchCards()
     mockFetchDeposits()
     mockFetchCredits()
+    mockCardInfo()
     mockFetchTransactionsAccounts()
     mockFetchTransactionsDeposits()
 
@@ -118,6 +119,21 @@ function mockFetchTransactionsAccounts () {
     }),
     statusText: 'OK'
   }, { method: 'POST' })
+
+  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/History', {
+    status: 200,
+    body: JSON.stringify({
+      accounts: [{ id: '3014111MFE0011110', name: 'Карта №1 - ...ALFA3014111MFE001... - 486,18 BYN' }],
+      filterAccount: '3014111MFE0011110',
+      items: [ ],
+      maxAmount: 0,
+      maxDate: '20190308180602',
+      minAmount: -7.99,
+      minDate: '20191113100349',
+      totalItems: 1
+    }),
+    statusText: 'OK'
+  }, { method: 'POST' })
 }
 
 function mockFetchTransactionsDeposits () {
@@ -142,7 +158,7 @@ function mockFetchAccounts () {
     status: 200,
     body: JSON.stringify({
       'items': [ {
-        'id': '6505111',
+        'id': '3014111MRT0011110000',
         'info': {
           'description': 'BY31 ALFA 3014 111M RT00 1111 0000',
           'title': 'Карта №1',
@@ -243,6 +259,41 @@ function mockFetchCredits () { // TODO: update response body
     body: JSON.stringify({
       'items': [ ],
       'totals': [ ]
+    }),
+    statusText: 'OK'
+  }, { method: 'POST' })
+}
+
+function mockCardInfo () {
+  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/Card/Info', {
+    status: 200,
+    body: JSON.stringify({
+      'accountNumber': 'BY66 ALFA 3014 111M RT00 1111 0000',
+      'aviaInfo': {
+        'accessible': true,
+        'available': false
+      },
+      'cardImageUrl': 'v0/ImageCard/Iz2JiR1hYjEo2ziqJRLykA==.jpg',
+      'cardMask': '5.1111',
+      'dueDate': '20211030000000',
+      'iban': 'BY66 ALFA 3014 111M RT00 1111 0000',
+      'icon': {
+        'backgroundColorFrom': '#f9589e',
+        'backgroundColorTo': '#fe9199',
+        'captionColor': '#FFFFFF',
+        'displayType': 'REGULAR',
+        'frameColor': '#c2b7b7',
+        'iconUrl': 'v0/Image/49923_392.SVG',
+        'title': 'Карта №1'
+      },
+      'isAlfaCheckEnabled': false,
+      'objectId': '53014111MRT0011110000380',
+      'productName': 'Карта №1 ',
+      'productType': 'K1',
+      'psType': 'MASTER',
+      'startDate': '20181010000000',
+      'status': 'ACTIVE',
+      'title': 'MasterCard World'
     }),
     statusText: 'OK'
   }, { method: 'POST' })
