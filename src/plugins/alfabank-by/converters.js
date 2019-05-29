@@ -19,7 +19,8 @@ export function convertAccount (json) {
         balance: Number.parseFloat(json.info.amount.amount),
         instrument: json.info.amount.currency,
         syncID: [json.info.description.replace(/\s/g, '')],
-        productType: json.type
+        productType: json.type,
+        cardID: json.cardID ? json.cardID : null
       }
     case 'CARD':
       return {
@@ -61,7 +62,8 @@ export function convertTransaction (json, accounts) {
     movements: [ getMovement(json, account) ],
     merchant: null,
     comment: null,
-    hold: json.status !== 'NORMAL'
+    hold: json.status !== 'NORMAL',
+    bankOperation: json.operation ? json.operation : null
   };
 
   [
@@ -77,7 +79,7 @@ export function convertTransaction (json, accounts) {
 function getMovement (json, account) {
   const movement = {
     id: json.id || null,
-    account: { id: account.id },
+    account: { id: account.cardID ? account.cardID : account.id },
     invoice: null,
     sum: json.info.amount.amount,
     fee: 0

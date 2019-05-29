@@ -226,15 +226,15 @@ export async function fetchCards (sessionID) {
   return []
 }
 
-export async function fetchCardDetail (sessionID, cardID) {
-  console.log('>>> Загрузка подробностей по карте ' + cardID)
+export async function fetchCardDetail (sessionID, card) {
+  console.log('>>> Загрузка подробностей по карте ' + card.title)
   let res = (await fetchApiJson('Card/Info', {
     method: 'POST',
     headers: {
       'X-Session-ID': sessionID
     },
     body: {
-      id: cardID,
+      id: card.id,
       operationSource: 'PRODUCT'
     }
   }, response => response.status, message => new Error('bad request')))
@@ -313,6 +313,8 @@ export async function fetchTransactions (sessionID, accounts, fromDate) {
       offset += limit
       transactions.push(...batch)
     } while (batch && batch.length === limit && parseDate(batch[batch.length - 1].date) >= fromDate)
+    offset = 0
+    batch = null
   }
 
   console.log(`>>> Загружено ${transactions.length} операций.`)

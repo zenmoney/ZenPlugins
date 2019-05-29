@@ -41,7 +41,8 @@ describe('convertAccount', () => {
         balance: 486.18,
         instrument: 'BYN',
         syncID: ['BY31ALFA3014111MRT0011110000'],
-        productType: 'ACCOUNT'
+        productType: 'ACCOUNT',
+        cardID: null
       }
     },
     {

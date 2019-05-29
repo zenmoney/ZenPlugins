@@ -70,7 +70,8 @@ describe('convertTransaction', () => {
         ],
         merchant: null,
         comment: null,
-        hold: false
+        hold: false,
+        bankOperation: null
       }
     },
     {
@@ -132,7 +133,8 @@ describe('convertTransaction', () => {
         ],
         merchant: null,
         comment: null,
-        hold: false
+        hold: false,
+        bankOperation: null
       }
     },
     {
@@ -182,7 +184,8 @@ describe('convertTransaction', () => {
         ],
         merchant: null,
         comment: 'Комиссия банка',
-        hold: false
+        hold: false,
+        bankOperation: null
       }
     },
     {
@@ -238,7 +241,8 @@ describe('convertTransaction', () => {
           title: 'UBER'
         },
         comment: null,
-        hold: false
+        hold: false,
+        bankOperation: null
       }
     },
     {
@@ -287,7 +291,8 @@ describe('convertTransaction', () => {
         ],
         merchant: null,
         comment: 'ЗАРАБОТНАЯ ПЛАТА ЗА ФЕВРАЛЬ-МАРТ 2019',
-        hold: false
+        hold: false,
+        bankOperation: null
       }
     },
     {
@@ -353,7 +358,8 @@ describe('convertTransaction', () => {
         ],
         merchant: null,
         comment: null,
-        hold: false
+        hold: false,
+        bankOperation: 'CURRENCYEXCHANGE'
       }
     },
     {
@@ -412,7 +418,8 @@ describe('convertTransaction', () => {
           title: 'BRUSNIKA'
         },
         comment: null,
-        hold: false
+        hold: false,
+        bankOperation: null
       }
     },
     {
@@ -465,7 +472,8 @@ describe('convertTransaction', () => {
         ],
         merchant: null,
         comment: 'MTS - Domashnij internet: 000000000',
-        hold: false
+        hold: false,
+        bankOperation: 'PAYMENT'
       }
     },
     {
@@ -565,7 +573,8 @@ describe('convertTransaction', () => {
           title: 'YANDEX.TAXI'
         },
         comment: null,
-        hold: false
+        hold: false,
+        bankOperation: null
       }
     },
     {
