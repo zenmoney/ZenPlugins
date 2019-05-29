@@ -356,10 +356,11 @@ function parsingDoubleTransactions (tranId, tranArr, tran2, accounts = {}) {
     const tran1 = tranArr[i]
     const indexStr = tranArr.length > 1 ? '#' + i : ''
 
-    if (tran1.movements.length > 1 || tran2.movements.length > 1) {
+    // не нужно, так как есть операции снятия наличных с комиссиями, которые блокируются этим условием
+    /* if (tran1.movements.length > 1 || tran2.movements.length > 1) {
       console.log(`>>> Ошибка объединения транзакций #${tranId}`, tranArr, tran2)
       throw new Error('Ошибка объединения транзакций')
-    }
+    } */
 
     // объединяем в перевод между своимим счетами (только, если счета разные)
     if (tran1.movements[0].sum * tran2.movements[0].sum < 0 && tran1.movements[0].account.id !== tran2.movements[0].account.id) {
@@ -484,10 +485,10 @@ export function convertTransactions (apiTransactions, accounts) {
   // у операций с одним и тем же paymentId обновим id операции
   valueTransactions = valueTransactions.map(trans => {
     if (trans.length > 1) {
-      trans = trans.map(transaction => {
-        transaction.movements = transaction.movements.map(movement => {
+      trans = trans.map((transaction, index) => {
+        transaction.movements = transaction.movements.map((movement) => {
           if (movement.id && movement._id) {
-            movement.id = movement.id + '_' + movement._id
+            movement.id = movement.id !== movement._id ? movement.id + '_' + movement._id : movement.id + '_' + index
           }
           return movement
         })
