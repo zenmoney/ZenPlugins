@@ -180,7 +180,7 @@ function parseIncomeGroup (transaction, apiTransaction) {
 
   const subgroup = apiTransaction.subgroup && apiTransaction.subgroup.id
   const payment = apiTransaction.payment
-  const providerId = payment ? payment.providerId : {}
+  const providerId = payment ? payment.providerId : null
   // const category = apiTransaction.category && apiTransaction.category.id
 
   // расчёт мерчанта
@@ -243,14 +243,15 @@ function parseIncomeGroup (transaction, apiTransaction) {
   }
   if (card || bank) {
     const account = {
-      type: 'ccard',
+      type: null,
       instrument: apiTransaction.amount.currency.name
     }
     if (card) {
-      account.syncIds = [ card.substr(-4) ]
+      account.type = 'ccard'
+      account.syncIds = [card.substr(-4)]
     }
-    if (bank) {
-      account.bank = bank
+    if (bank && bank.company) {
+      account.company = bank.company
     }
     transaction = addMirrorMovement(transaction, account)
   }

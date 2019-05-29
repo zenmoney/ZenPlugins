@@ -120,16 +120,12 @@ const transactions = [
         },
         {
           'account': {
-            'bank': {
-              'company': {
-                'id': '4859'
-              },
-              'type': null
+            'company': {
+              'id': '4859'
             },
-            'company': null,
             'instrument': 'RUB',
             'syncIds': null,
-            'type': 'ccard'
+            'type': null
           },
           'fee': 0,
           'id': null,
@@ -138,6 +134,124 @@ const transactions = [
         }
       ],
       'comment': 'Пополнение через Ситибанк'
+    }
+  ],
+  [
+    {
+      isDispute: false,
+      nomination: 'Возврат денежных средств по договору № 23-05-19-01-Ма от 23.05.2019г.  НДС не облагается.',
+      hasStatement: false,
+      isSuspicious: false,
+      id: '4769891772',
+      offers: [],
+      status: 'OK',
+      idSourceType: 'Prime',
+      type: 'Credit',
+      subgroup: {
+        id: 'C1',
+        name: 'Пополнения'
+      },
+      locations: [],
+      loyaltyBonus: [],
+      cashbackAmount: {
+        currency: {
+          code: 643,
+          name: 'RUB',
+          strCode: '643'
+        },
+        value: 0
+      },
+      description: 'Пополнение через Сбербанк',
+      debitingTime: {
+        milliseconds: 1558904400000
+      },
+      cashback: 0,
+      senderDetails: 'ООО "Амбитур"',
+      brand: {
+        name: 'Сбербанк',
+        baseTextColor: 'ffffff',
+        logo: 'https://static.tinkoff.ru/brands/sberbank.png',
+        id: '11242',
+        roundedLogo: false,
+        link: 'http://www.sberbank.ru/',
+        baseColor: '309c0b',
+        logoFile: 'sberbank.png'
+      },
+      amount: {
+        currency: {
+          code: 643,
+          name: 'RUB',
+          strCode: '643'
+        },
+        value: 1500
+      },
+      operationTime: {
+        milliseconds: 1558964611000
+      },
+      spendingCategory: {
+        id: '70',
+        name: 'Пополнения',
+        icon: '33'
+      },
+      isHce: false,
+      mcc: 0,
+      partnerType: 'BankDepositionType',
+      category: {
+        id: '33',
+        name: 'Другое'
+      },
+      additionalInfo: [],
+      virtualPaymentType: 0,
+      account: 'accountId',
+      ucid: '1046781894',
+      card: '47246707',
+      loyaltyPayment: [],
+      group: 'INCOME',
+      mccString: '0000',
+      cardPresent: true,
+      isExternalCard: false,
+      cardNumber: '553691******0733',
+      accountAmount: {
+        currency: {
+          code: 643,
+          name: 'RUB',
+          strCode: '643'
+        },
+        value: 1500
+      }
+    },
+    {
+      'comment': 'Пополнение через Сбербанк',
+      'date': new Date('2019-05-27T13:43:31.000Z'),
+      'hold': false,
+      'merchant': null,
+      'movements': [
+        {
+          '_cardPresent': true,
+          '_id': '4769891772',
+          'account': {
+            'id': 'accountId'
+          },
+          'fee': 0,
+          'id': '4769891772',
+          'invoice': null,
+          'sum': 1500
+        },
+        {
+          'account': {
+            'company': {
+              'id': '4624'
+            },
+            'instrument': 'RUB',
+            'syncIds': null,
+            'type': null
+          },
+          'fee': 0,
+          'id': null,
+          'invoice': null,
+          'sum': -1500
+        }
+      ]
     }
   ],
 
@@ -1271,7 +1385,7 @@ describe('convertTransaction', () => {
 })
 
 xdescribe('convertOneTransaction', () => {
-  const i = 4
+  const i = 1
   it('should convert transaction ' + i, () => {
     expect(
       convertTransaction(transactions[i][0], accounts[transactions[i][0].account])
