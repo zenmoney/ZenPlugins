@@ -272,13 +272,35 @@ function parseCashGroup (transaction, apiTransaction) {
     return false
   }
 
-  // const subgroup = apiTransaction.subgroup && apiTransaction.subgroup.id
   const payment = apiTransaction.payment || {}
+  switch (payment.providerId) {
+    case 'c2c-out': // исходящий card2card
+    case 'c2c-in-new': // входящий card2card
+      const card = payment.cardNumber
+      if (card) {
+        transaction = addMirrorMovement(transaction, {
+          type: 'ccard',
+          instrument: apiTransaction.amount.currency.name,
+          syncIds: [ card.substr(-4) ]
+        })
+      } else {
+        console.log('Ошибочная транзакция с наличными: ', apiTransaction)
+        throw new Error('Ошибочная транзакция с наличными')
+      }
+      break
 
-  transaction = addMirrorMovement(transaction, {
-    type: 'cash',
-    instrument: apiTransaction.amount.currency.name
-  })
+    case undefined: // в точке партнёра
+    case 'atm-transfer-cash': // в банкомате Тинькова
+      transaction = addMirrorMovement(transaction, {
+        type: 'cash',
+        instrument: apiTransaction.amount.currency.name
+      })
+      break
+
+    default:
+      console.log('Не обрабатываемая операция наличными: ', apiTransaction)
+      throw new Error('Не обрабатываемая операция наличными')
+  }
 
   return true
 }

@@ -10,7 +10,7 @@ const accounts = {
   }
 }
 const transactions = [
-  // снятие наличных в точке-партнёре
+  // undefined: снятие наличных в точке-партнёре
   [
     {
       isDispute: true,
@@ -261,7 +261,7 @@ const transactions = [
     }
   ],
 
-  // снятие наличных в точке Тинькова
+  // atm-transfer-cash: снятие наличных в точке Тинькова
   [
     {
       isDispute: false,
@@ -415,6 +415,140 @@ const transactions = [
         }
       ]
     }
+  ],
+
+  // card2card: входящий
+  [
+    {
+      isDispute: false,
+      hasStatement: false,
+      isSuspicious: false,
+      payment: {
+        sourceIsQr: false,
+        bankAccountId: 'accountRUB',
+        paymentId: '664352432',
+        paymentType: 'Transfer',
+        feeAmount: {
+          currency: {
+            code: 643,
+            name: 'RUB',
+            strCode: '643'
+          },
+          value: 0
+        },
+        providerId: 'c2c-in-new',
+        hasPaymentOrder: false,
+        comment: '',
+        fieldsValues: {
+          agreement: 'accountRUB',
+          unid: 'M.1703259419'
+        },
+        cardNumber: '554386******0123'
+      },
+      id: '1309413682',
+      offers: [],
+      operationPaymentType: 'NORMAL',
+      status: 'OK',
+      idSourceType: 'Online',
+      type: 'Credit',
+      locations: [],
+      loyaltyBonus: [],
+      cashbackAmount: {
+        currency: {
+          code: 643,
+          name: 'RUB',
+          strCode: '643'
+        },
+        value: 0
+      },
+      authMessage: 'Операция утверждена.',
+      description: 'Перевод с карты',
+      cashback: 0,
+      brand: {
+        name: 'Перевод с карты',
+        id: 'c2c-in-new',
+        roundedLogo: false
+      },
+      amount: {
+        currency: {
+          code: 643,
+          name: 'RUB',
+          strCode: '643'
+        },
+        value: 15000
+      },
+      operationTime: {
+        milliseconds: 1557779440000
+      },
+      subcategory: 'Перевод с карты',
+      spendingCategory: {
+        id: '40',
+        name: 'Финансы',
+        icon: '7',
+        parentId: '5'
+      },
+      isHce: false,
+      mcc: 6012,
+      partnerType: 'card2card',
+      category: {
+        id: '7',
+        name: 'Финан. услуги'
+      },
+      additionalInfo: [{
+        fieldName: 'Номер банкомата',
+        fieldValue: '10000001'
+      }],
+      virtualPaymentType: 0,
+      account: 'accountId',
+      ucid: '1033551881',
+      card: '34039318',
+      loyaltyPayment: [],
+      group: 'CASH',
+      mccString: '6012',
+      cardPresent: false,
+      isExternalCard: false,
+      cardNumber: '554386******5555',
+      accountAmount: {
+        currency: {
+          code: 643,
+          name: 'RUB',
+          strCode: '643'
+        },
+        value: 15000
+      }
+    },
+    {
+      'comment': null,
+      'date': new Date('2019-05-13T23:30:40+03:00'),
+      'hold': true,
+      'merchant': null,
+      'movements': [
+        {
+          '_id': '1309413682',
+          'account': {
+            'id': 'accountId'
+          },
+          'fee': 0,
+          'id': 'p664352432',
+          'invoice': null,
+          'sum': 15000
+        },
+        {
+          'account': {
+            'company': null,
+            'instrument': 'RUB',
+            'syncIds': [
+              '0123'
+            ],
+            'type': 'ccard'
+          },
+          'fee': 0,
+          'id': null,
+          'invoice': null,
+          'sum': -15000
+        }
+      ]
+    }
   ]
 ]
 
@@ -431,7 +565,7 @@ describe('convertTransaction', () => {
 })
 
 xdescribe('convertOneTransaction', () => {
-  const i = 2
+  const i = 3
   it('should convert transaction ' + i, () => {
     expect(
       convertTransaction(transactions[i][0], accounts[transactions[i][0].account])
