@@ -42,7 +42,12 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     .filter(transaction => transaction !== null)
   var transactionsAccSkipped = (await bank.fetchTransactions(loginData.sessionID, accountsSkipped, fromDate))
     .map(transaction => converters.convertTransaction(transaction, accountsSkipped))
-    .filter(transaction => transaction !== null && transaction.bankOperation === 'OWNACCOUNTSTRANSFER')
+    .filter(transaction => transaction !== null &&
+      (transaction.bankOperation === 'OWNACCOUNTSTRANSFER' ||
+        transaction.bankOperation === 'PERSONTRANSFERABB' ||
+        (transaction.comment !== null &&
+          (transaction.comment.indexOf('ВЫПЛАТА СРЕДСТВ В РАМКАХ УСЛУГИ "CASHBACK"') >= 0 ||
+            transaction.comment.indexOf('Оплата комиссии') >= 0))))
     .filter(function (tr) {
       for (let i = 0; i < accounts.length; i++) {
         if (accounts[i].id === tr.movements[0].account.id) {
@@ -94,6 +99,7 @@ function transactionsUnique (array) {
   for (let i = 0; i < a.length; ++i) {
     for (let j = i + 1; j < a.length; ++j) {
       if (a[i].movements[0].id === a[j].movements[0].id &&
+        a[i].date.getTime() === a[j].date.getTime() &&
         a[i].movements[0].account.id === a[j].movements[0].account.id) {
         a.splice(j--, 1)
       }
