@@ -275,19 +275,10 @@ function parseCashGroup (transaction, apiTransaction) {
   // const subgroup = apiTransaction.subgroup && apiTransaction.subgroup.id
   const payment = apiTransaction.payment || {}
 
-  const card = payment.cardNumber
-  if (card) {
-    transaction = addMirrorMovement(transaction, {
-      type: 'ccard',
-      instrument: apiTransaction.amount.currency.name,
-      syncIds: [ card.substr(-4) ]
-    })
-  } else {
-    transaction = addMirrorMovement(transaction, {
-      type: 'cash',
-      instrument: apiTransaction.amount.currency.name
-    })
-  }
+  transaction = addMirrorMovement(transaction, {
+    type: 'cash',
+    instrument: apiTransaction.amount.currency.name
+  })
 
   return true
 }
