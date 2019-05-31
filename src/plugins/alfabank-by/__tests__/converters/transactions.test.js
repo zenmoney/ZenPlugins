@@ -607,6 +607,54 @@ describe('convertTransaction', () => {
         showCompensate: false
       },
       expectedTransaction: null
+    },
+    {
+      name: 'card cashback',
+      json: {
+        availableSplit: false,
+        date: '20190125122755',
+        description: 'ВЫПЛАТА СРЕДСТВ В РАМКАХ УСЛУГИ "CASHBACK" ЗА МАРТ 2019 Г., СОГЛАСНО РАСЧЕТОВ ОТ 03.04.2019',
+        iban: 'BY31 ALFA 3014 111M RT00 1111 0000',
+        info: {
+          amount: {
+            amount: 0.83, currency: 'BYN', format: '###,###,###,###,##0.##'
+          },
+          description: 'Карта 1',
+          icon:
+            {
+              backgroundColorFrom: '#8976F3',
+              backgroundColorTo: '#8976F3',
+              iconUrl: 'v0/Image/52_392.SVG',
+              captionColor: '#FFFFFF',
+              frameColor: '#C2B7B7',
+              displayType: 'REGULAR'
+            },
+          title: 'Поступление средств'
+        },
+        sendReceipt: false,
+        showAddRecipient: false,
+        showAddToFuture: false,
+        showCompensate: false,
+        showReceipt: false,
+        showRepeat: false,
+        status: 'NORMAL'
+      },
+      expectedTransaction: {
+        date: new Date('Tue Jan 25 2019 12:27:55 GMT+0300 (Moscow Standard Time)'),
+        movements: [
+          {
+            id: null,
+            account: { id: '6505111' },
+            invoice: null,
+            sum: 0.83,
+            fee: 0
+          }
+        ],
+        merchant: null,
+        comment: 'ВЫПЛАТА СРЕДСТВ В РАМКАХ УСЛУГИ "CASHBACK" ЗА МАРТ 2019 Г., СОГЛАСНО РАСЧЕТОВ ОТ 03.04.2019',
+        hold: false,
+        bankOperation: null
+      }
     }
   ]
   tt.forEach(function (tc) {
