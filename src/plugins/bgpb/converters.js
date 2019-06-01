@@ -141,6 +141,8 @@ function parsePayee (transaction, apiTransaction) {
     const merchant = apiTransaction.payeeLastTransaction.split(',')
     if (merchant.length === 1) {
       transaction.merchant.fullTitle = apiTransaction.payeeLastTransaction
+    } else if (merchant[0] === '') {
+      transaction.merchant = null
     } else if (merchant.length > 1) {
       transaction.merchant.title = merchant[0]
       transaction.merchant.city = merchant[1]
