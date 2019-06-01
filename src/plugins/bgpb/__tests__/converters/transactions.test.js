@@ -246,6 +246,45 @@ describe('convertLastTransaction', () => {
             }
           ]
       }
+    },
+    {
+      name: 'cash withdrawal with bad address',
+      transaction: {
+        acceptedTime: 1554492493000,
+        eventType: 4,
+        id: '2019-7848714',
+        pushMessageText: 'Card1111; Снятие наличных: 100,00 USD; 03.05.19 20:06:18; ,MINSK,BLR; Dostupno: 2 000,84 USD'
+      },
+      expectedTransaction: {
+        'comment': null,
+        'date': new Date('2019-05-03T17:06:00.000Z'),
+        'hold': false,
+        'merchant': null,
+        'movements':
+          [
+            {
+              'account': {
+                'id': '11161311-117d11'
+              },
+              'fee': 0,
+              'id': null,
+              'invoice': null,
+              'sum': -100
+            },
+            {
+              'account': {
+                'company': null,
+                'instrument': 'USD',
+                'syncIds': null,
+                'type': 'cash'
+              },
+              'fee': 0,
+              'id': null,
+              'invoice': null,
+              'sum': 100
+            }
+          ]
+      }
     }
   ]
 
