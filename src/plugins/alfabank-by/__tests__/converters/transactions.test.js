@@ -12,69 +12,6 @@ describe('convertTransaction', () => {
   }
   let tt = [
     {
-      name: 'parse P2P',
-      json: {
-        availableSplit: true,
-        cardMask: '5.1111',
-        date: '20190125122755',
-        description: 'MINSK P2P_MTBANK',
-        iban: 'BY31 ALFA 3014 111M RT00 1111 0000',
-        id: '11113111050111',
-        info: {
-          amount: {
-            amount: -6,
-            currency: 'BYN',
-            format: '###,###,###,###,##0.##'
-          },
-          description: 'Карта №1',
-          icon: {
-            backgroundColorFrom: '#8976f3',
-            backgroundColorTo: '#8976f3',
-            captionColor: '#FFFFFF',
-            displayType: 'REGULAR',
-            frameColor: '#c2b7b7',
-            iconUrl: 'v0/Image/52_392.SVG'
-          },
-          title: 'P2P_MTBANK'
-        },
-        sendReceipt: false,
-        showAddRecipient: false,
-        showAddToFuture: false,
-        showCompensate: false,
-        showReceipt: false,
-        showRepeat: false,
-        status: 'NORMAL'
-      },
-      expectedTransaction: {
-        date: new Date('Tue Jan 25 2019 12:27:55 GMT+0300 (Moscow Standard Time)'),
-        movements: [
-          {
-            id: '11113111050111',
-            account: { id: '6505111' },
-            invoice: null,
-            sum: -6,
-            fee: 0
-          },
-          {
-            id: null,
-            account: {
-              company: null,
-              type: 'ccard',
-              instrument: 'BYN',
-              syncIds: null
-            },
-            invoice: null,
-            sum: 6,
-            fee: 0
-          }
-        ],
-        merchant: null,
-        comment: null,
-        hold: false,
-        bankOperation: null
-      }
-    },
-    {
       name: 'parse cash',
       json: {
         availableSplit: true,
@@ -134,7 +71,8 @@ describe('convertTransaction', () => {
         merchant: null,
         comment: null,
         hold: false,
-        bankOperation: null
+        bankOperation: null,
+        bankTitle: 'ATMALF HO35 DZERJINSKO'
       }
     },
     {
@@ -185,7 +123,8 @@ describe('convertTransaction', () => {
         merchant: null,
         comment: 'Комиссия банка',
         hold: false,
-        bankOperation: null
+        bankOperation: null,
+        bankTitle: 'Комиссия банка'
       }
     },
     {
@@ -242,7 +181,8 @@ describe('convertTransaction', () => {
         },
         comment: null,
         hold: false,
-        bankOperation: null
+        bankOperation: null,
+        bankTitle: 'UBER'
       }
     },
     {
@@ -292,7 +232,8 @@ describe('convertTransaction', () => {
         merchant: null,
         comment: 'ЗАРАБОТНАЯ ПЛАТА ЗА ФЕВРАЛЬ-МАРТ 2019',
         hold: false,
-        bankOperation: null
+        bankOperation: null,
+        bankTitle: 'Поступление средств'
       }
     },
     {
@@ -359,7 +300,8 @@ describe('convertTransaction', () => {
         merchant: null,
         comment: null,
         hold: false,
-        bankOperation: 'CURRENCYEXCHANGE'
+        bankOperation: 'CURRENCYEXCHANGE',
+        bankTitle: 'Конвертация'
       }
     },
     {
@@ -419,7 +361,8 @@ describe('convertTransaction', () => {
         },
         comment: null,
         hold: false,
-        bankOperation: null
+        bankOperation: null,
+        bankTitle: 'BRUSNIKA'
       }
     },
     {
@@ -473,7 +416,8 @@ describe('convertTransaction', () => {
         merchant: null,
         comment: 'MTS - Domashnij internet: 000000000',
         hold: false,
-        bankOperation: 'PAYMENT'
+        bankOperation: 'PAYMENT',
+        bankTitle: 'MTS - Domashnij internet: 000000000'
       }
     },
     {
@@ -574,7 +518,8 @@ describe('convertTransaction', () => {
         },
         comment: null,
         hold: false,
-        bankOperation: null
+        bankOperation: null,
+        bankTitle: 'YANDEX.TAXI'
       }
     },
     {
@@ -653,7 +598,8 @@ describe('convertTransaction', () => {
         merchant: null,
         comment: 'ВЫПЛАТА СРЕДСТВ В РАМКАХ УСЛУГИ "CASHBACK" ЗА МАРТ 2019 Г., СОГЛАСНО РАСЧЕТОВ ОТ 03.04.2019',
         hold: false,
-        bankOperation: null
+        bankOperation: null,
+        bankTitle: 'Поступление средств'
       }
     }
   ]

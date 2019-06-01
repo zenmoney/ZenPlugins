@@ -45,9 +45,8 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     .filter(transaction => transaction !== null &&
       (transaction.bankOperation === 'OWNACCOUNTSTRANSFER' ||
         transaction.bankOperation === 'PERSONTRANSFERABB' ||
-        (transaction.comment !== null &&
-          (transaction.comment.indexOf('ВЫПЛАТА СРЕДСТВ В РАМКАХ УСЛУГИ "CASHBACK"') >= 0 ||
-            transaction.comment.indexOf('Оплата комиссии') >= 0))))
+        transaction.bankTitle.indexOf('Поступление средств') >= 0 ||
+        transaction.bankTitle.indexOf('Комиссия банка') >= 0))
     .filter(function (tr) {
       for (let i = 0; i < accounts.length; i++) {
         if (accounts[i].id === tr.movements[0].account.id) {
@@ -59,6 +58,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   transactions = transactions.concat(transactionsAccSkipped)
   for (let i = 0; i < transactions.length; i++) {
     delete transactions[i].bankOperation
+    delete transactions[i].bankTitle
   }
   return {
     accounts: accounts,
