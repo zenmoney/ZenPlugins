@@ -50,7 +50,8 @@ export function convertAccount (json) {
 
 export function convertTransaction (json, accounts) {
   if (json.operation === 'RATE_ORDER' ||
-      json.info.amount.amount === 0) {
+      json.info.amount.amount === 0 ||
+      json.description.indexOf('ПОПОЛНЕНИЕ КАРТСЧЕТОВ ТЕРМИНАЛ') >= 0 /* Эта операция приходит 2 раза */) {
     return null
   }
   const account = accounts.find(account => {
@@ -63,11 +64,11 @@ export function convertTransaction (json, accounts) {
     merchant: null,
     comment: null,
     hold: json.status !== 'NORMAL',
-    bankOperation: json.operation ? json.operation : null
+    bankOperation: json.operation ? json.operation : null,
+    bankTitle: json.info.title ? json.info.title : ''
   };
 
   [
-    parseP2P,
     parseCash,
     parsePayee,
     parseComment
@@ -97,25 +98,6 @@ function getMovement (json, account) {
   }
 
   return movement
-}
-
-function parseP2P (transaction, json) {
-  if (json.description.indexOf('P2P') > 0) {
-    // добавим вторую часть перевода
-    transaction.movements.push({
-      id: null,
-      account: {
-        company: null,
-        type: 'ccard',
-        instrument: json.info.amount.currency,
-        syncIds: null
-      },
-      invoice: null,
-      sum: -json.info.amount.amount,
-      fee: 0
-    })
-    return true
-  }
 }
 
 function parseCash (transaction, json) {
@@ -193,6 +175,10 @@ function parseComment (transaction, json) {
     transaction.comment = transaction.comment.replace(location[0], '').trim() // Убираем город покупки
     return false
   } else if (json.description.indexOf('ERIP') >= 0) {
+    transaction.comment = json.info.title
+    return false
+  } else if (json.description.indexOf('Перевод между счетами  физических лиц через АК') >= 0) {
+    // Забираем имя, кому делается перевод
     transaction.comment = json.info.title
     return false
   }
