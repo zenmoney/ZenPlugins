@@ -11,7 +11,7 @@ import { formatDateSql, parseDate, parseDecimal } from './converters'
 const md5 = new MD5()
 
 const API_VERSION = '9.20'
-const APP_VERSION = '9.2.0'
+const APP_VERSION = '9.7.1'
 
 const defaultHeaders = {
   'User-Agent': 'Mobile Device',
@@ -61,10 +61,12 @@ export async function login (login, pin, auth, device) {
     response = await fetchXml('https://online.sberbank.ru:4477/CSAMAPI/login.do', {
       body: {
         ...commonBody,
+        'osVersion': '21.0',
         'operation': 'button.login',
         'mGUID': guid,
         'password': pin,
         'isLightScheme': false,
+        'isSafe': true,
         'devID': device.id,
         'mobileSdkData': JSON.stringify(createSdkData(login, device))
       },
@@ -112,7 +114,9 @@ export async function login (login, pin, auth, device) {
           'mGUID': guid,
           'smsPassword': code,
           'version': API_VERSION,
-          'appType': 'android'
+          'appType': 'android',
+          'confirmData': code,
+          'confirmOperation': 'confirmSMS'
         },
         sanitizeRequestLog: { body: { mGUID: true, smsPassword: true } }
       }, null)
