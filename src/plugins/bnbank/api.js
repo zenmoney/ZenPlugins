@@ -147,10 +147,17 @@ export async function fetchLastCardTransactions (token, account) {
       ]
     }
   }, response => response.body)
-  const operations = flatMap(response.PS_ERIP.GetExtractCardResponse.BPC.OperationList.oper, d => {
-    d.accountNumber = account.id
-    return d
-  })
+  var operations = []
+  if (response.PS_ERIP.GetExtractCardResponse.BPC.OperationList.length > 1) {
+    operations = flatMap(response.PS_ERIP.GetExtractCardResponse.BPC.OperationList.oper, d => {
+      d.accountNumber = account.id
+      return d
+    })
+  } else if (response.PS_ERIP.GetExtractCardResponse.BPC.OperationList.length === 1) {
+    let oper = response.PS_ERIP.GetExtractCardResponse.BPC.OperationList.oper
+    oper.accountNumber = account.id
+    operations.push(oper)
+  }
 
   console.log(`>>> Загружено ${operations.length} операций.`)
   return operations
