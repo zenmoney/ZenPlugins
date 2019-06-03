@@ -139,6 +139,49 @@ describe('convertTransaction', () => {
     })
   })
 
+  it('should convert extra fees during cash withdraw in other ATM', () => {
+    const transaction = convertTransaction({
+      accountId: 'BY36MTBK10110008000001111000',
+      amount: '0.25',
+      balance: '77.82',
+      cardPan: '111111******1111',
+      curr: 'BYN',
+      debitFlag: '0',
+      description: 'Комиссия за снятие наличных в чужих ATM',
+      error: null,
+      operationDate: '2019-06-03',
+      orderStatus: null,
+      place: 'SHOP "MARTINFUD" BR.51',
+      country: null,
+      city: null,
+      status: 'T',
+      transAmount: '0.25',
+      transDate: '2019-03-07 13:29:59',
+      mcc: '6011',
+      transactionId: '1111111',
+      rrn: '915017611211',
+      approvalCode: '000000'
+    }, accounts)
+
+    expect(transaction).toEqual({
+      hold: false,
+      date: new Date('2019-03-07T13:29:59+03:00'),
+      movements: [{
+        id: '1111111',
+        account: { id: '1113333' },
+        sum: -0.25,
+        fee: 0,
+        invoice: null
+      }],
+      merchant: {
+        fullTitle: 'SHOP "MARTINFUD" BR.51',
+        location: null,
+        mcc: 6011
+      },
+      comment: 'Комиссия за снятие наличных в чужих ATM'
+    })
+  })
+
   it('should convert cash USD withdraw transaction', () => {
     const transaction = convertTransaction({
       accountId: 'BY36MTBK10110008000001111000',
