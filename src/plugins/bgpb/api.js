@@ -145,6 +145,29 @@ export function parseFullTransactionsMail (html) {
   return data
 }
 
+export function parseFullTransactionsMailCardLimit (html) {
+  const cheerio = require('cheerio')
+  let $ = cheerio.load(html)
+  $ = cheerio.load($().children()[0].children[0].Body)
+
+  let isLimit = false
+  flatMap($('table[class="section_1"] tr').toArray().slice(1), tr => {
+    if (tr.children.length >= 0) { // Значит это строка, а не просто форматирование
+      tr.children.forEach(function (td) {
+        if (td.children && td.children[0] && td.children[0].type === 'text') {
+          if (isLimit) {
+            return td.children[0].data
+          }
+          if (td.children[0].data === 'Лимит овердрафта:') {
+            isLimit = true
+          }
+        }
+      })
+    }
+  })
+  return null
+}
+
 export async function login (login, password) {
   let res = await fetchApi('sou/xml_online.admin?q=login',
     '<BS_Request>\r\n' +
@@ -305,6 +328,7 @@ export async function fetchFullTransactions (sid, accounts, fromDate, toDate = n
   }))
   const transactions = await Promise.all(flatMap(mails, mail => {
     let data = mail.BS_Response.MailAttachment.Attachment
+    parseFullTransactionsMailCardLimit(data)
     return parseFullTransactionsMail(data)
   }))
 
