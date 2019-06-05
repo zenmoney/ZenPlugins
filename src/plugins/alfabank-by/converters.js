@@ -43,9 +43,28 @@ export function convertAccount (json) {
         productType: json.type,
         savings: true
       }
+    case 'CREDIT':
+      return {
+        id: json.id,
+        type: 'card',
+        title: json.info.title,
+        balance: Number.parseFloat(json.info.amount.amount),
+        instrument: json.info.amount.currency,
+        syncID: [json.info.description.replace(/\s/g, '')],
+        productType: json.type,
+        capitalization: false
+      }
     default:
       return null
   }
+}
+
+export function FillLoanAccount (json, account) {
+  account.balance = -json.outstandingAmount.amount
+  account.creditLimit = json.amount.amount
+  account.percent = json.rate
+  account.syncID[0] = json.accountNumber.replace(/\s/g, '')
+  return account
 }
 
 export function convertTransaction (json, accounts) {

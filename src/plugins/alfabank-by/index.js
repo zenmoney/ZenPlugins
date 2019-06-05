@@ -6,20 +6,23 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   var allAccounts = mergeAllAccounts(
     await bank.fetchAccounts(loginData.deviceID, loginData.sessionID),
     await bank.fetchCards(loginData.sessionID),
-    await bank.fetchDeposits(loginData.sessionID)
+    await bank.fetchDeposits(loginData.sessionID),
+    await bank.fetchCredits(loginData.sessionID)
   )
-
-  await bank.fetchCredits(loginData.sessionID) // для временного перехвата логов
 
   var accounts = allAccounts.accounts
     .map(converters.convertAccount)
     .filter(account => account !== null)
   for (let i = 0; i < accounts.length; i++) {
-    if (accounts[i].type === 'card') {
+    if (accounts[i].productType === 'CARD') {
       let detail = await bank.fetchCardDetail(loginData.sessionID, accounts[i])
       if (detail.status !== 'ACTIVE') {
         accounts[i] = null // заблокированные и выключенные карты незачем обрабатывать
       }
+    }
+    if (accounts[i].productType === 'CREDIT') {
+      let detail = await bank.fetchLoanDetail(loginData.sessionID, accounts[i])
+      accounts[i] = converters.FillLoanAccount(detail, accounts[i])
     }
   }
   accounts = accounts.filter(account => account !== null)
@@ -45,8 +48,10 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     .filter(transaction => transaction !== null &&
       (transaction.bankOperation === 'OWNACCOUNTSTRANSFER' ||
         transaction.bankOperation === 'PERSONTRANSFERABB' ||
+        transaction.bankOperation === 'CURRENCYEXCHANGE' ||
         transaction.bankTitle.indexOf('Поступление средств') >= 0 ||
-        transaction.bankTitle.indexOf('Комиссия банка') >= 0))
+        transaction.bankTitle.indexOf('Комиссия банка') >= 0 >= 0 ||
+        transaction.bankTitle.indexOf('Погашение кредита') >= 0))
     .filter(function (tr) {
       for (let i = 0; i < accounts.length; i++) {
         if (accounts[i].id === tr.movements[0].account.id) {
@@ -66,7 +71,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   }
 }
 
-function mergeAllAccounts (accounts, cards, deposits) {
+function mergeAllAccounts (accounts, cards, deposits, credits) {
   var accsSkipped = []
   for (let i = 0; i < accounts.length; i++) {
     for (let j = 0; j < cards.length; j++) {
@@ -88,6 +93,7 @@ function mergeAllAccounts (accounts, cards, deposits) {
   accs = accs
     .concat(cards)
     .concat(deposits)
+    .concat(credits)
   return {
     accounts: accs,
     skipped: accsSkipped

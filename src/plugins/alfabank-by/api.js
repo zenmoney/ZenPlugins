@@ -244,6 +244,24 @@ export async function fetchCardDetail (sessionID, card) {
   return {}
 }
 
+export async function fetchLoanDetail (sessionID, card) {
+  console.log('>>> Загрузка подробностей по кредиту ' + card.title)
+  let res = (await fetchApiJson('Loan/Info', {
+    method: 'POST',
+    headers: {
+      'X-Session-ID': sessionID
+    },
+    body: {
+      id: card.id,
+      operationSource: 'PRODUCT'
+    }
+  }, response => response.status, message => new Error('bad request')))
+  if (res.body.accountNumber) {
+    return res.body
+  }
+  return {}
+}
+
 export async function fetchDeposits (sessionID) {
   console.log('>>> Загрузка списка депозитов...')
   let res = (await fetchApiJson('Products', {
