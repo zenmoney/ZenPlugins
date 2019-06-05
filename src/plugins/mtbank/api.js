@@ -61,14 +61,15 @@ export async function login (login, password) {
     sanitizeRequestLog: { body: { phoneNumber: true } },
     sanitizeResponseLog: { body: { data: { smsCode: { phone: true } } } }
   }, response => response.success, message => new InvalidPreferencesError('Неверный номер телефона'))
-  const sessionCookies = cookies(res)
+  let sessionCookies = cookies(res)
 
   res = await fetchApiJson('login/checkPassword', {
     method: 'POST',
     headers: { 'Cookie': sessionCookies },
-    body: { 'password': password },
+    body: { 'password': password, 'version': '2.0.19' },
     sanitizeRequestLog: { body: { password: true } }
   }, response => response.success, message => new InvalidPreferencesError('Неверный пароль'))
+  sessionCookies = cookies(res)
 
   await fetchApiJson('user/userRole', {
     method: 'POST',
