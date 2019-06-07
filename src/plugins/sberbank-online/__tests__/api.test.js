@@ -1,4 +1,4 @@
-import { filterTransactions, getErrorMessage } from './api'
+import { filterTransactions, getErrorMessage } from '../api'
 
 describe('getErrorMessage', () => {
   it('returns error text if found', () => {

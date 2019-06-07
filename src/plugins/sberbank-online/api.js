@@ -2,7 +2,7 @@ import { MD5 } from 'jshashes'
 import _ from 'lodash'
 import * as moment from 'moment'
 import * as qs from 'querystring'
-import * as network from '../../common/network'
+import { ParseError, parseXml, fetch } from '../../common/network'
 import { retry, RetryError, toNodeCallbackArguments } from '../../common/retry'
 import { parseOuterAccountData } from '../../common/accounts'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
@@ -34,11 +34,11 @@ export async function renewSession (session) {
         'Host': `${session.host}:4477`,
         'Cookie': `${session.cookie}`
       },
-      parse: body => body ? network.parseXml(body) : { response: {} }
+      parse: body => body ? parseXml(body) : { response: {} }
     }, null)
     return response.body && response.body.status === '0' ? session : null
   } catch (e) {
-    if (e.message && e.message.indexOf('non-successful response') >= 0) {
+    if (e instanceof ParseError || (e.message && e.message.indexOf('non-successful response') >= 0)) {
       return null
     } else {
       throw e
@@ -272,6 +272,9 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
   transactions = filterTransactions(transactions, fromDate)
 
   await Promise.all(transactions.map(async transaction => {
+    if (transaction.id === '0') {
+      return
+    }
     const invoiceCurrency = _.get(transaction, 'operationAmount.currency.code')
     if (invoiceCurrency !== instrument ||
       [
@@ -303,7 +306,9 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
       })
       const form = _.get(detailsResponse, 'body.document.form')
       if (form) {
-        transaction.details = _.get(detailsResponse, `body.document.${form}Document`)
+        transaction.details =
+          _.get(detailsResponse, `body.document.${form}Document`) ||
+          _.get(detailsResponse, `body.document.${form.replace(/Payment$/, '')}Document`)
         if (!transaction.details) {
           throw new Error(`unexpected details form ${form}`)
         }
@@ -320,7 +325,8 @@ export function filterTransactions (transactions, fromDate) {
     if (['DRAFT', 'SAVED', 'REFUSED'].indexOf(transaction.state) >= 0 || (transaction.description && [
       'Создание автоплатежа',
       'Приостановка автоплатежа',
-      'Редактирование автоплатежа'
+      'Редактирование автоплатежа',
+      'Отмена автоплатежа'
     ].some(pattern => transaction.description.indexOf(pattern) === 0))) {
       return
     }
@@ -446,7 +452,7 @@ async function fetchXml (url, options = {}, predicate = () => true) {
     method: 'POST',
     headers: defaultHeaders,
     stringify: qs.stringify,
-    parse: network.parseXml,
+    parse: parseXml,
     ...options
   }
 
@@ -461,7 +467,7 @@ async function fetchXml (url, options = {}, predicate = () => true) {
   let response
   try {
     response = (await retry({
-      getter: toNodeCallbackArguments(() => network.fetch(url, options)),
+      getter: toNodeCallbackArguments(() => fetch(url, options)),
       predicate: ([error]) => !error,
       maxAttempts: 5
     }))[1]
@@ -529,7 +535,7 @@ function isTemporaryError (message) {
 }
 
 function validateResponse (response, predicate) {
-  console.assert(!predicate || predicate(response), 'non-successful response')
+  console.assert(!predicate || predicate(response), 'non-successful response', response)
 }
 
 function getCookie (response) {

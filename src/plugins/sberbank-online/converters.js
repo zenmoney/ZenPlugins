@@ -21,7 +21,7 @@ export function convertTransaction (apiTransaction, account, accountsById) {
   const transaction = {
     movements: [
       {
-        id: apiTransaction.id,
+        id: apiTransaction.id === '0' ? null : apiTransaction.id,
         account: { id: account.id },
         invoice,
         sum: null,
@@ -208,6 +208,9 @@ function parseOuterIncomeTransfer (transaction, apiTransaction, account) {
 }
 
 function parseOutcomeTransfer (transaction, apiTransaction, account) {
+  if (['UfsInsurancePolicy'].indexOf(apiTransaction.form) >= 0) {
+    return false
+  }
   const outerAccountStr = _.get(apiTransaction, 'details.paymentDetails.stringType.value') || apiTransaction.to
   const outerAccount = parseOuterAccountData(outerAccountStr)
   if (apiTransaction.form !== 'RurPayment' && !outerAccount) {
