@@ -106,6 +106,7 @@ export function parseOuterAccountData (str) {
       { pattern: 'СБЕРБАНК', account: { type: null, company: { id: '4624' } } },
       { pattern: 'TINKOFF BANK CARD2CARD', account: { type: 'ccard', company: { id: '4902' } } },
       { pattern: 'Тинькофф', account: { type: null, company: { id: '4902' } } },
+      { pattern: 'Tинькoфф', account: { type: null, company: { id: '4902' } } }, // strange typing, not equal to previous line
       { pattern: 'TINKOFF', account: { type: null, company: { id: '4902' } } },
       { pattern: 'CARD2CARD ALFA_MOBILE', account: { type: 'ccard', company: { id: '3' } } },
       { pattern: 'С2С ALFA_MOBILE', account: { type: 'ccard', company: { id: '3' } } },

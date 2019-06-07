@@ -211,17 +211,47 @@ function parseOutcomeTransfer (transaction, apiTransaction, account) {
   if (['UfsInsurancePolicy'].indexOf(apiTransaction.form) >= 0) {
     return false
   }
-  const outerAccountStr = _.get(apiTransaction, 'details.paymentDetails.stringType.value') || apiTransaction.to
+  const isP2PTransfer = apiTransaction.form === 'P2PExternalBankTransfer'
+  let details = apiTransaction.details
+  if (details && isP2PTransfer && details.field) {
+    const fields = Array.isArray(details.field) ? details.field : [details.field]
+    const fieldsMapping = {
+      'receiverCardNumber': 'receiverAccount',
+      'bankID': 'paymentDetails'
+    }
+    details = _.omit(details, 'field')
+    for (const field of fields) {
+      console.assert(field.name, 'unexpected details.fields', apiTransaction)
+      const key = fieldsMapping[field.name] || field.name
+      let value = field
+      if (field.name === 'bankID') {
+        if (value.listType && value.listType.availableValues) {
+          if (Array.isArray(value.listType.availableValues)) {
+            value = value.listType.availableValues[0]
+          } else {
+            value = value.listType.availableValues
+          }
+          if (value && value.valueItem && value.valueItem.title) {
+            value = { stringType: { value: value.valueItem.title } }
+          } else {
+            value = null
+          }
+        }
+      }
+      details[key] = value
+    }
+  }
+  const outerAccountStr = _.get(details, 'paymentDetails.stringType.value') || apiTransaction.to
   const outerAccount = parseOuterAccountData(outerAccountStr)
-  if (apiTransaction.form !== 'RurPayment' && !outerAccount) {
+  if (['RurPayment', 'P2PExternalBankTransfer'].indexOf(apiTransaction.form) < 0 && !outerAccount) {
     return false
   }
-  const receiver = _.get(apiTransaction, 'details.receiverAccount.stringType.value') || apiTransaction.to
+  const receiver = _.get(details, 'receiverAccount.stringType.value') || apiTransaction.to
   const match = receiver && receiver.match(/(\d{4})$/)
   if (!match && !outerAccount) {
     return false
   }
-  const feeStr = _.get(apiTransaction, 'details.commission.amount')
+  const feeStr = _.get(details, 'commission.amount')
   const fee = feeStr && parseDecimal(feeStr)
   if (fee) {
     transaction.movements[0].fee = -Math.abs(fee)
@@ -230,7 +260,7 @@ function parseOutcomeTransfer (transaction, apiTransaction, account) {
   transaction.movements.push({
     id: null,
     account: {
-      type: outerAccount ? outerAccount.type : null,
+      type: isP2PTransfer ? 'ccard' : outerAccount ? outerAccount.type : null,
       instrument: invoice.instrument,
       company: apiTransaction.description === 'Перевод клиенту Сбербанка' ? { id: '4624' } : outerAccount ? outerAccount.company : null,
       syncIds: match ? [match[1]] : null
@@ -239,7 +269,7 @@ function parseOutcomeTransfer (transaction, apiTransaction, account) {
     sum: -invoice.sum,
     fee: 0
   })
-  const receiverName = !outerAccount && _.get(apiTransaction, 'details.receiverName.stringType.value')
+  const receiverName = (!outerAccount || isP2PTransfer) && _.get(details, 'receiverName.stringType.value')
   if (receiverName) {
     transaction.merchant = {
       title: receiverName,
@@ -248,6 +278,10 @@ function parseOutcomeTransfer (transaction, apiTransaction, account) {
       mcc: null,
       location: null
     }
+  }
+  const smsMessage = _.get(details, 'smsMessage.stringType.value')
+  if (smsMessage) {
+    transaction.comment = smsMessage
   }
   return true
 }

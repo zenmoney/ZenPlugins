@@ -290,7 +290,8 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
         'AccountOpeningClaim',
         'AccountClosingPayment',
         'IMAOpeningClaim',
-        'IMAPayment'
+        'IMAPayment',
+        'P2PExternalBankTransfer'
       ].indexOf(transaction.form) >= 0 ||
       parseOuterAccountData(transaction.to) ||
       transaction.to === 'Автоплатеж') {
@@ -308,7 +309,8 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
       if (form) {
         transaction.details =
           _.get(detailsResponse, `body.document.${form}Document`) ||
-          _.get(detailsResponse, `body.document.${form.replace(/Payment$/, '')}Document`)
+          _.get(detailsResponse, `body.document.${form.replace(/Payment$/, '')}Document`) ||
+          _.get(detailsResponse, `body.document.${form}`)
         if (!transaction.details) {
           throw new Error(`unexpected details form ${form}`)
         }
