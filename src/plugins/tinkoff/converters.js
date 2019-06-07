@@ -274,8 +274,8 @@ function parseCashGroup (transaction, apiTransaction) {
 
   const payment = apiTransaction.payment || {}
   switch (payment.providerId) {
-    case 'c2c-out': // исходящий card2card
     case 'c2c-in-new': // входящий card2card
+    case 'c2c-anytoany': // исходящий перевод на чужую карту
       const card = payment.cardNumber
       if (card) {
         transaction = addMirrorMovement(transaction, {

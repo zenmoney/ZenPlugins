@@ -417,7 +417,7 @@ const transactions = [
     }
   ],
 
-  // card2card: входящий
+  // c2c-in-new: входящий
   [
     {
       isDispute: false,
@@ -670,6 +670,139 @@ const transactions = [
           'id': 'p692779954',
           'invoice': null,
           'sum': -500
+        }
+      ]
+    }
+  ],
+
+  // c2c-anytoany
+  [
+    {
+      isDispute: false,
+      hasStatement: false,
+      isSuspicious: false,
+      payment: {
+        sourceIsQr: false,
+        bankAccountId: '5145485040',
+        paymentId: '688997237',
+        paymentType: 'Transfer',
+        feeAmount: {
+          currency: {
+            code: 643,
+            name: 'RUB',
+            strCode: '643'
+          },
+          value: 0
+        },
+        providerId: 'c2c-anytoany',
+        hasPaymentOrder: false,
+        comment: '',
+        fieldsValues: {
+          toCardNumber: '437772******0921'
+        },
+        cardNumber: '479087******3052'
+      },
+      id: '1433084721',
+      offers: [],
+      operationPaymentType: 'NORMAL',
+      status: 'OK',
+      idSourceType: 'Online',
+      type: 'Credit',
+      locations: [],
+      loyaltyBonus: [],
+      cashbackAmount: {
+        currency: {
+          code: 643,
+          name: 'RUB',
+          strCode: '643'
+        },
+        value: 0
+      },
+      authMessage: 'Операция утверждена.',
+      description: 'Перевод с карты на карту',
+      cashback: 0,
+      brand: {
+        name: 'Перевод с карты на карту',
+        id: 'c2c-anytoany',
+        roundedLogo: false
+      },
+      amount: {
+        currency: {
+          code: 643,
+          name: 'RUB',
+          strCode: '643'
+        },
+        value: 2000
+      },
+      operationTime: {
+        milliseconds: 1559642010000
+      },
+      subcategory: 'Перевод с карты на карту',
+      spendingCategory: {
+        id: '40',
+        name: 'Финансы',
+        icon: '7',
+        parentId: '5'
+      },
+      isHce: false,
+      mcc: 6012,
+      partnerType: 'card2card',
+      category: {
+        id: '7',
+        name: 'Финан. услуги'
+      },
+      additionalInfo: [
+        {
+          fieldName: 'Номер банкомата',
+          fieldValue: '11000010'
+        }
+      ],
+      virtualPaymentType: 0,
+      account: 'accountId',
+      ucid: '1055312388',
+      card: '55622113',
+      loyaltyPayment: [],
+      group: 'CASH',
+      mccString: '6012',
+      cardPresent: false,
+      isExternalCard: false,
+      cardNumber: '437772******0921',
+      accountAmount: {
+        currency: {
+          code: 643,
+          name: 'RUB',
+          strCode: '643'
+        },
+        value: 2000
+      }
+    },
+    {
+      'comment': null,
+      'date': new Date('2019-06-04T09:53:30+00:00'),
+      'hold': true,
+      'merchant': null,
+      'movements': [
+        {
+          '_id': '1433084721',
+          'account': {
+            'id': 'accountId'
+          },
+          'fee': 0,
+          'id': 'p688997237',
+          'invoice': null,
+          'sum': 2000
+        },
+        {
+          'account': {
+            'company': null,
+            'instrument': 'RUB',
+            'syncIds': ['3052'],
+            'type': 'ccard'
+          },
+          'fee': 0,
+          'id': null,
+          'invoice': null,
+          'sum': -2000
         }
       ]
     }
