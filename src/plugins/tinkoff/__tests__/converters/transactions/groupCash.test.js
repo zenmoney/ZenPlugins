@@ -261,6 +261,92 @@ const transactions = [
     }
   ],
 
+  // c2c-out
+  [
+    { isDispute: true,
+      hasStatement: false,
+      isSuspicious: false,
+      payment: { sourceIsQr: false,
+        bankAccountId: 'accountRUB',
+        paymentId: '666999252',
+        paymentType: 'Transfer',
+        feeAmount: { currency: [Object], value: 0 },
+        providerId: 'c2c-out',
+        hasPaymentOrder: false,
+        comment: '',
+        fieldsValues: { bankCard: '479087**7146' },
+        cardNumber: '521324**6765',
+        templateId: '70580019',
+        templateIsFavorite: false },
+      id: '1321168975',
+      offers: [],
+      operationPaymentType: 'TEMPLATE',
+      status: 'OK',
+      idSourceType: 'Online',
+      type: 'Debit',
+      locations: [],
+      loyaltyBonus: [],
+      cashbackAmount: { currency: { code: 643, name: 'RUB', strCode: '643' },
+        value: 0 },
+      authMessage: 'Операция утверждена.',
+      description: 'Перевод на карту',
+      cashback: 0,
+      brand: { name: 'Перевод на карту', id: 'c2c-out', roundedLogo: false },
+      amount: { currency: { code: 643, name: 'RUB', strCode: '643' },
+        value: 10500 },
+      operationTime: { milliseconds: 1557952816000 },
+      subcategory: 'Перевод на карту',
+      spendingCategory: { id: '40', name: 'Финансы', icon: '7', parentId: '5' },
+      isHce: false,
+      mcc: 6012,
+      partnerType: 'card2card',
+      category: { id: '7', name: 'Финан. услуги' },
+      additionalInfo: [ { fieldName: 'Номер банкомата', fieldValue: '10000001' } ],
+      virtualPaymentType: 0,
+      account: 'accountId',
+      ucid: '1022338546',
+      card: '2535796',
+      loyaltyPayment: [],
+      group: 'CASH',
+      mccString: '6012',
+      cardPresent: false,
+      isExternalCard: false,
+      cardNumber: '521324**6765',
+      accountAmount: { currency: { code: 643, name: 'RUB', strCode: '643' },
+        value: 10500 }
+    },
+    {
+      'comment': null,
+      'date': new Date('2019-05-15T20:40:16+00:00'),
+      'hold': true,
+      'merchant': null,
+      'movements': [
+        {
+          '_id': '1321168975',
+          'account': {
+            'id': 'accountId'
+          },
+          'fee': 0,
+          'id': 'p666999252',
+          'invoice': null,
+          'sum': -10500
+        },
+        {
+          'account': {
+            'company': null,
+            'instrument': 'RUB',
+            'syncIds': ['7146'],
+            'type': 'ccard'
+          },
+          'fee': 0,
+          'id': null,
+          'invoice': null,
+          'sum': 10500
+        }
+      ]
+    }
+  ],
+
   // atm-transfer-cash: снятие наличных в точке Тинькова
   [
     {

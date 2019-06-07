@@ -272,11 +272,26 @@ function parseCashGroup (transaction, apiTransaction) {
     return false
   }
 
+  let card
   const payment = apiTransaction.payment || {}
   switch (payment.providerId) {
+    case 'c2c-out': // исходящий card2card
+      card = payment.fieldsValues && payment.fieldsValues.bankCard
+      if (card) {
+        transaction = addMirrorMovement(transaction, {
+          type: 'ccard',
+          instrument: apiTransaction.amount.currency.name,
+          syncIds: [ card.substr(-4) ]
+        })
+      } else {
+        console.log('>>> Ошибочная транзакция с наличными: ', apiTransaction)
+        throw new Error('Ошибочная транзакция с наличными')
+      }
+      break
+
     case 'c2c-in-new': // входящий card2card
     case 'c2c-anytoany': // исходящий перевод на чужую карту
-      const card = payment.cardNumber
+      card = payment.cardNumber
       if (card) {
         transaction = addMirrorMovement(transaction, {
           type: 'ccard',

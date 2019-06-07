@@ -471,7 +471,7 @@ const transactions = [
           'account': {
             'company': null,
             'instrument': 'RUB',
-            'syncIds': ['6765'],
+            'syncIds': ['7146'],
             'type': 'ccard'
           },
           'fee': 0,
@@ -778,7 +778,7 @@ describe('convertTransactions', () => {
               'account': {
                 'company': null,
                 'instrument': 'RUB',
-                'syncIds': ['6765'],
+                'syncIds': ['7146'],
                 'type': 'ccard'
               },
               'fee': 0,
