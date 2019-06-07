@@ -284,7 +284,18 @@ function parseCashGroup (transaction, apiTransaction) {
           syncIds: [ card.substr(-4) ]
         })
       } else {
-        console.log('Ошибочная транзакция с наличными: ', apiTransaction)
+        console.log('>>> Ошибочная транзакция с наличными: ', apiTransaction)
+        throw new Error('Ошибочная транзакция с наличными')
+      }
+      break
+
+    case 'p2p-anybank': // перевод по номеру телефона
+      const phone = payment.fieldsValues && payment.fieldsValues.pointer
+      const match = /\+7\d{6}(\d{4})/.exec(phone.trim())
+      if (phone && match) {
+        transaction.comment = [ apiTransaction.description, '+7******' + match[1] ].join(' ')
+      } else {
+        console.log('>>> Ошибочная транзакция с наличными: ', apiTransaction)
         throw new Error('Ошибочная транзакция с наличными')
       }
       break
@@ -298,7 +309,7 @@ function parseCashGroup (transaction, apiTransaction) {
       break
 
     default:
-      console.log('Не обрабатываемая операция наличными: ', apiTransaction)
+      console.log('>>> Не обрабатываемая операция наличными: ', apiTransaction)
       throw new Error('Не обрабатываемая операция наличными')
   }
 
@@ -345,8 +356,10 @@ function parseComment (transaction, apiTransaction) {
 
 function addMirrorMovement (transaction, account) {
   if (transaction.movements.length > 1) {
-    throw new Error('Ошибка добавления зеркальной movement:', transaction)
+    console.log('Ошибка добавления зеркальной movement: ', transaction)
+    throw new Error('Ошибка добавления зеркальной movement')
   }
+
   // добавим вторую часть перевода
   transaction.movements.push({
     id: null,
