@@ -117,13 +117,15 @@ export async function authWithPassportID (deviceID, isResident) {
     sanitizeRequestLog: { body: { deviceId: true, login: true } }
   }, response => response.status, message => new Error('bad request')))
   if (res.body.status !== 'OK') {
-    if (res.body.message && [
+    throw new TemporaryError('Ответ банка: ' + res.body.message)
+    // TODO: временный вывод всех ошибок
+    /* if (res.body.message && [
       'Данные введены неверно',
       'Личный номер введен неверно'
     ].some(str => res.body.message.indexOf(str) >= 0)) {
       throw new TemporaryError('Ответ банка: ' + res.body.message)
     }
-    throw new Error('unexpected response')
+    throw new Error('unexpected response') */
   }
 
   return true

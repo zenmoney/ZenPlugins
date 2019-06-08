@@ -60,10 +60,9 @@ export function convertAccount (json) {
 }
 
 export function FillLoanAccount (json, account) {
-  account.balance = -json.outstandingAmount.amount
+  account.balance = account.balance - json.amount.amount
   account.creditLimit = json.amount.amount
   account.percent = json.rate
-  account.syncID[0] = json.accountNumber.replace(/\s/g, '')
   return account
 }
 
