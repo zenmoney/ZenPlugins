@@ -46,7 +46,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
         transaction.bankOperation === 'PERSONTRANSFERABB' ||
         transaction.bankOperation === 'CURRENCYEXCHANGE' ||
         transaction.bankTitle.indexOf('Поступление средств') >= 0 ||
-        transaction.bankTitle.indexOf('Комиссия банка') >= 0 >= 0 ||
+        transaction.bankTitle.indexOf('Комиссия банка') >= 0 ||
         transaction.bankTitle.indexOf('Погашение кредита') >= 0))
     .filter(function (tr) {
       for (let i = 0; i < accounts.length; i++) {
