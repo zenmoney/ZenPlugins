@@ -192,7 +192,9 @@ function parseComment (transaction, json) {
     transaction.comment = json.description.replace(json.info.title, '') // Убираем место покупки
     transaction.comment = transaction.comment.replace(location[0], '').trim() // Убираем город покупки
     return false
-  } else if (json.description.indexOf('ERIP') >= 0) {
+  } else if (json.description.indexOf('ERIP') >= 0 ||
+    json.operation === 'PAYMENT' ||
+    json.operation === 'COMPANYTRANSFER') {
     transaction.comment = json.info.title
     return false
   } else if (json.description.indexOf('Перевод между счетами  физических лиц через АК') >= 0) {
