@@ -413,8 +413,21 @@ function parsingDoubleTransactions (tranId, tranArr, tran2, accounts = {}) {
 
       tran1.movements.push(tran2.movements.pop())
 
-      // в переводах получателя нет
+      // в переводах нет получателя
       tran1.merchant = null
+
+      /* // id movements должны быть разными!
+      const id = {}
+      tran1.movements.forEach(movement => {
+        if (movement.id === null) { return }
+        if (!id[movement.id]) { id[movement.id] = 0 }
+        id[movement.id]++
+      })
+      tran1.movements.forEach(movement => {
+        if (id[movement.id] > 1) {
+          movement.id = null
+        }
+      }) */
 
       console.log(`>>> Объединили ${indexStr}операцию в перевод #${tranId}`)
       tranArr[i] = tran1
