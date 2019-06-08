@@ -224,4 +224,49 @@ describe('convertTransaction', () => {
       comment: null
     })
   })
+
+  it('should convert cash to card info-kiosk transaction', () => {
+    const transaction = convertTransaction({
+      accountId: 'BY36MTBK10110008000001111000',
+      amount: '300.00',
+      balance: '305.79',
+      cardPan: '111111******1111',
+      curr: 'BYN',
+      debitFlag: '1',
+      description: 'Внесение наличных',
+      error: null,
+      operationDate: '2019-01-18',
+      orderStatus: null,
+      place: 'MTB PST 26',
+      country: 'BY',
+      city: 'MINSK',
+      status: 'T',
+      transAmount: '300.00',
+      transDate: '2019-01-18 19:09:49',
+      mcc: '6012',
+      transactionId: '1111111',
+      rrn: '915820610192',
+      approvalCode: '000000'
+    }, accounts)
+
+    expect(transaction).toEqual({
+      hold: false,
+      date: new Date('2019-01-18T19:09:49+03:00'),
+      movements: [{
+        id: '1111111',
+        account: { id: '1113333' },
+        sum: 300,
+        fee: 0,
+        invoice: null
+      }, {
+        id: null,
+        account: { company: null, type: 'cash', instrument: 'BYN', syncIds: null },
+        sum: -300,
+        fee: 0,
+        invoice: null
+      }],
+      merchant: null,
+      comment: null
+    })
+  })
 })
