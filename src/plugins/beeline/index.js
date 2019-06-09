@@ -4,7 +4,7 @@
 
 import * as main from '../cft/main'
 
-const apiUri = 'https://bank.beeline.ru/api/v0001'
+const apiUri = 'https://bank.beeline.ru/api'
 
 async function scrape ({ fromDate, toDate }) {
   return main.scrape({ fromDate, toDate, apiUri })

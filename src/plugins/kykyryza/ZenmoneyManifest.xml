@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
     <id>kykyryza</id>
-    <version>2.0</version>
-    <build>13</build>
+    <version>3.0</version>
+    <build>14</build>
     <company>15359</company>
     <modular>true</modular>
     <codeRequired>false</codeRequired>
