@@ -12,18 +12,10 @@ const defaultHeaders = {
 
 const httpSuccessStatus = 200
 
-/**
- * @param uri
- */
 const setApiUri = (uri) => {
   apiUri = uri
 }
 
-/**
- * @param cardNumber
- * @param password
- * @returns {Promise.<void>}
- */
 async function auth (cardNumber, password) {
   const response = await fetchJson(`${apiUri}/authentication/authenticate?rid=${generateHash()}`, {
     log: true,
@@ -98,9 +90,6 @@ async function auth (cardNumber, password) {
   }
 }
 
-/**
- * @returns {Promise.<Array>}
- */
 async function fetchCards () {
   const response = await fetchJson(`${apiUri}/cards?rid=${generateHash()}`, {
     log: true,
@@ -121,9 +110,6 @@ async function fetchCards () {
   return response.body.data
 }
 
-/**
- * @returns {Promise.<Array>}
- */
 async function fetchCredits () {
   const response = await fetchJson(`${apiUri}/credit?rid=${generateHash()}`, {
     log: true,
@@ -149,9 +135,6 @@ async function fetchCredits () {
     : []
 }
 
-/**
- * @returns {Promise.<Array>}
- */
 async function fetchWallets () {
   const response = await fetchJson(`${apiUri}/wallets?rid=${generateHash()}`, {
     log: true,
@@ -167,10 +150,6 @@ async function fetchWallets () {
     : []
 }
 
-/**
- * @param dateFrom
- * @returns {Promise.<Array>}
- */
 async function fetchTransactions (dateFrom) {
   let isFirstPage = true
   let transactions = []
@@ -216,11 +195,6 @@ async function fetchTransactions (dateFrom) {
   return transactions
 }
 
-/**
- * @param limit
- * @param offset
- * @returns {Promise.<Array>}
- */
 async function fetchTransactionsInternal (limit, offset) {
   const response = await fetchJson(`${apiUri}/hst?limit=${limit}&offset=${offset}&rid=${generateHash()}`, {
     log: true,
@@ -237,10 +211,6 @@ async function fetchTransactionsInternal (limit, offset) {
   return response.body
 }
 
-/**
- * @param response
- * @param allowedStatuses
- */
 const assertResponseSuccess = (response, allowedStatuses = ['OK']) => {
   console.assert(
     response.status === httpSuccessStatus && allowedStatuses.indexOf(response.body.status) !== -1,
@@ -249,9 +219,6 @@ const assertResponseSuccess = (response, allowedStatuses = ['OK']) => {
   )
 }
 
-/**
- * @returns {string}
- */
 const generateHash = () => {
   return Array.apply(null, { length: 16 })
     .map(() => Number(Math.floor(Math.random() * 16)).toString(16))

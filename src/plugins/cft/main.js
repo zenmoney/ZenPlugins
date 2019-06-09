@@ -8,12 +8,6 @@ import { mapContractToAccount } from './converters/helpers'
 import { converter as transactionsDataToZenmoneyTransaction } from './converters/transaction'
 import { converter as walletDataToZenmoneyAccount } from './converters/wallet'
 
-/**
- * @param fromDate
- * @param toDate
- * @param apiUri
- * @returns {Promise.<*>}
- */
 async function scrape ({ fromDate, toDate, apiUri }) {
   const { password, card_number: cardNumber } = ZenMoney.getPreferences()
 

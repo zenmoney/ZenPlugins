@@ -7,11 +7,6 @@ import { TYPES as TYPE } from '../constants/transactions'
 import { entity } from '../zenmoney_entity/transaction'
 import * as helper from './helpers'
 
-/**
- * @param item
- * @param mapContractToAccount
- * @returns {{id: null, incomeBankID: null, incomeAccount: null, income: number, outcomeBankID: null, outcomeAccount: null, outcome: number, mcc: null, payee: null, date: null, opIncome: undefined, opIncomeInstrument: undefined, opOutcome: undefined, opOutcomeInstrument: undefined, latitude: undefined, longitude: undefined}}
- */
 const converter = (item, mapContractToAccount = {}) => {
   const commentLines = []
 
