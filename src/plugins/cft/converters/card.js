@@ -34,6 +34,17 @@ const converter = (data, credits) => {
   return account
 }
 
+const contractIdsFetcher = (data) => {
+  let list = []
+
+  data.forEach((item) => {
+    list.push(item.contractId)
+  })
+
+  return list
+}
+
 export {
+  contractIdsFetcher,
   converter
 }

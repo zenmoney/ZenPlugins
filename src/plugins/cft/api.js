@@ -2,13 +2,11 @@
  * @author Ryadnov Andrey <me@ryadnov.ru>
  */
 
+import { parse, splitCookiesString } from 'set-cookie-parser'
 import { fetchJson } from '../../common/network'
 
 let apiUri = ''
-
-const defaultHeaders = {
-  'channel': 'web'
-}
+let xXSrfToken = 'undefined'
 
 const httpSuccessStatus = 200
 
@@ -16,8 +14,23 @@ const setApiUri = (uri) => {
   apiUri = uri
 }
 
+const setXXSrfToken = (value) => {
+  xXSrfToken = value
+}
+
+const createHeaders = (rid) => {
+  return {
+    'channel': 'web',
+    'platform': 'web',
+    'X-Request-Id': rid,
+    'X-XSRF-TOKEN': xXSrfToken
+  }
+}
+
 async function auth (cardNumber, password) {
-  const response = await fetchJson(`${apiUri}/authentication/authenticate?rid=${generateHash()}`, {
+  const rid = generateHash()
+
+  const response = await fetchJson(`${apiUri}/v0002/authentication/authenticate?${makeQueryString(rid)}`, {
     log: true,
     method: 'POST',
     body: {
@@ -25,7 +38,7 @@ async function auth (cardNumber, password) {
       secret: password,
       type: 'AUTO'
     },
-    headers: defaultHeaders,
+    headers: createHeaders(rid),
     sanitizeRequestLog: {
       body: {
         principal: true,
@@ -88,12 +101,18 @@ async function auth (cardNumber, password) {
       console.assert(false, 'Не удалось авторизоваться', response)
     }
   }
+
+  const cookie = parse(splitCookiesString(response.headers['set-cookie'])).find((x) => x.name === 'XSRF-TOKEN')
+
+  setXXSrfToken(cookie.value)
 }
 
 async function fetchCards () {
-  const response = await fetchJson(`${apiUri}/cards?rid=${generateHash()}`, {
+  const rid = generateHash()
+
+  const response = await fetchJson(`${apiUri}/v0002/cards?${makeQueryString(rid)}`, {
     log: true,
-    headers: defaultHeaders,
+    headers: createHeaders(rid),
     sanitizeRequestLog: {},
     sanitizeResponseLog: {
       body: {
@@ -111,9 +130,11 @@ async function fetchCards () {
 }
 
 async function fetchCredits () {
-  const response = await fetchJson(`${apiUri}/credit?rid=${generateHash()}`, {
+  const rid = generateHash()
+
+  const response = await fetchJson(`${apiUri}/v0001/credit?${makeQueryString(rid)}`, {
     log: true,
-    headers: defaultHeaders,
+    headers: createHeaders(rid),
     sanitizeRequestLog: {},
     sanitizeResponseLog: {
       body: {
@@ -136,9 +157,11 @@ async function fetchCredits () {
 }
 
 async function fetchWallets () {
-  const response = await fetchJson(`${apiUri}/wallets?rid=${generateHash()}`, {
+  const rid = generateHash()
+
+  const response = await fetchJson(`${apiUri}/v0001/wallets?${makeQueryString(rid)}`, {
     log: true,
-    headers: defaultHeaders,
+    headers: createHeaders(rid),
     sanitizeRequestLog: {},
     sanitizeResponseLog: {}
   })
@@ -150,7 +173,7 @@ async function fetchWallets () {
     : []
 }
 
-async function fetchTransactions (dateFrom) {
+async function fetchTransactions (dateFrom, contractIds) {
   let isFirstPage = true
   let transactions = []
 
@@ -161,22 +184,24 @@ async function fetchTransactions (dateFrom) {
     total: null
   }
 
-  console.log('last sync: ' + lastSyncTime + ' (' + dateFrom + ')')
+  let searchAfter = ''
+
+  console.debug('last sync: ' + lastSyncTime + ' (' + dateFrom + ')')
 
   while (isFirstPage || pagination.offset < pagination.total) {
-    const data = await fetchTransactionsInternal(pagination.limit, pagination.offset)
-
-    if (data.part.offset !== pagination.offset) { // банк ограничивает выборку
-      break
-    }
+    const result = await fetchTransactionsInternal(pagination.limit, lastSyncTime, searchAfter, contractIds)
 
     if (isFirstPage) {
-      pagination.total = data.part.totalCount
+      pagination.total = result.data.totalCount
       isFirstPage = false
     }
 
-    const loadNext = data.data
-      .filter((transaction) => transaction.itemType === 'OPERATION' && ('money' in transaction))
+    const loadNext = result.data.items
+      .filter((transaction) => {
+        searchAfter = transaction.date + ', ' + transaction.id
+
+        return transaction.itemType === 'OPERATION' && ('money' in transaction)
+      })
       .every((transaction) => {
         const isActual = transaction.date > lastSyncTime
 
@@ -195,10 +220,25 @@ async function fetchTransactions (dateFrom) {
   return transactions
 }
 
-async function fetchTransactionsInternal (limit, offset) {
-  const response = await fetchJson(`${apiUri}/hst?limit=${limit}&offset=${offset}&rid=${generateHash()}`, {
+async function fetchTransactionsInternal (limit, gte, searchAfter, contractIds) {
+  const rid = generateHash()
+
+  let query = {
+    gte: gte,
+    lte: '',
+    queryString: '',
+    filters: '',
+    contractIds: contractIds.join(','),
+    limit: 20
+  }
+
+  if (searchAfter !== '') {
+    query.searchAfter = searchAfter
+  }
+
+  const response = await fetchJson(`${apiUri}/v0003/timeline/list?${makeQueryString(rid, query)}`, {
     log: true,
-    headers: defaultHeaders,
+    headers: createHeaders(rid),
     sanitizeRequestLog: {},
     sanitizeResponseLog: {}
   })
@@ -224,6 +264,18 @@ const generateHash = () => {
     .map(() => Number(Math.floor(Math.random() * 16)).toString(16))
     .join('')
     .substring(0, 13)
+}
+
+const makeQueryString = (rid, data) => {
+  const params = {
+    ...data,
+    'rid': rid
+  }
+  const esc = encodeURIComponent
+
+  return Object.keys(params)
+    .map(k => esc(k) + '=' + esc(params[k]))
+    .join('&')
 }
 
 export {
