@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+            key="phone"
+            title="Номер телефона"
+            dialogTitle="Номер телефона"
+            dialogMessage="Формат: 79991111111"
+            inputType="number"
+            summary="||{@s}"
+            positiveButtonText="ОК"
+            negativeButtonText="Отмена"
+            obligatory="false">
+    </EditTextPreference>
+    <EditTextPreference
+            key="password"
+            title="Пин-код"
+            dialogTitle="Пин-код"
+            dialogMessage="Код входа в приложение Рокетбанка"
+            positiveButtonText="ОК"
+            negativeButtonText="Отмена"
+            inputType="numberPassword"
+            summary="||****"
+            obligatory="false">
+    </EditTextPreference>
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="С какой даты загружать операции"
+        defaultValue="2019-05-01T00:00:00.000Z"
+        dialogTitle="С какой даты загружать операции"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|startDate|{@s}">
+    </EditTextPreference>
+</PreferenceScreen>
