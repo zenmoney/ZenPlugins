@@ -158,7 +158,9 @@ export async function login (login, password) {
   })
   if ([
     'GeneralError',
-    'InactiveCard'
+    'InactiveCard',
+    'NoDBO24',
+    'ExpirationDateOver'
   ].some(mode => response.body.mode === mode) && response.body.description) {
     throw new TemporaryError(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: ${response.body.description}`)
   }
