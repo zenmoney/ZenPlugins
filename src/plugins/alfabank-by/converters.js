@@ -43,9 +43,27 @@ export function convertAccount (json) {
         productType: json.type,
         savings: true
       }
+    case 'CREDIT':
+      return {
+        id: json.id,
+        type: 'card',
+        title: json.info.title,
+        balance: Number.parseFloat(json.info.amount.amount),
+        instrument: json.info.amount.currency,
+        syncID: [json.info.description.replace(/\s/g, '')],
+        productType: json.type,
+        capitalization: false
+      }
     default:
       return null
   }
+}
+
+export function FillLoanAccount (json, account) {
+  account.balance = account.balance - json.amount.amount
+  account.creditLimit = json.amount.amount
+  account.percent = json.rate
+  return account
 }
 
 export function convertTransaction (json, accounts) {
@@ -174,7 +192,9 @@ function parseComment (transaction, json) {
     transaction.comment = json.description.replace(json.info.title, '') // Убираем место покупки
     transaction.comment = transaction.comment.replace(location[0], '').trim() // Убираем город покупки
     return false
-  } else if (json.description.indexOf('ERIP') >= 0) {
+  } else if (json.description.indexOf('ERIP') >= 0 ||
+    json.operation === 'PAYMENT' ||
+    json.operation === 'COMPANYTRANSFER') {
     transaction.comment = json.info.title
     return false
   } else if (json.description.indexOf('Перевод между счетами  физических лиц через АК') >= 0) {

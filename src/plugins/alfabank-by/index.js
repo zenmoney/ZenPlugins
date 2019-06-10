@@ -9,13 +9,11 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     await bank.fetchDeposits(loginData.sessionID)
   )
 
-  await bank.fetchCredits(loginData.sessionID) // для временного перехвата логов
-
   var accounts = allAccounts.accounts
     .map(converters.convertAccount)
     .filter(account => account !== null)
   for (let i = 0; i < accounts.length; i++) {
-    if (accounts[i].type === 'card') {
+    if (accounts[i].productType === 'CARD') {
       let detail = await bank.fetchCardDetail(loginData.sessionID, accounts[i])
       if (detail.status !== 'ACTIVE') {
         accounts[i] = null // заблокированные и выключенные карты незачем обрабатывать
@@ -36,6 +34,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
       })
     }
   }
+  mergeCredits(loginData.sessionID, accounts, accountsSkipped)
 
   var transactions = (await bank.fetchTransactions(loginData.sessionID, accounts, fromDate))
     .map(transaction => converters.convertTransaction(transaction, accounts))
@@ -45,8 +44,10 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     .filter(transaction => transaction !== null &&
       (transaction.bankOperation === 'OWNACCOUNTSTRANSFER' ||
         transaction.bankOperation === 'PERSONTRANSFERABB' ||
+        transaction.bankOperation === 'CURRENCYEXCHANGE' ||
         transaction.bankTitle.indexOf('Поступление средств') >= 0 ||
-        transaction.bankTitle.indexOf('Комиссия банка') >= 0))
+        transaction.bankTitle.indexOf('Комиссия банка') >= 0 ||
+        transaction.bankTitle.indexOf('Погашение кредита') >= 0))
     .filter(function (tr) {
       for (let i = 0; i < accounts.length; i++) {
         if (accounts[i].id === tr.movements[0].account.id) {
@@ -92,6 +93,47 @@ function mergeAllAccounts (accounts, cards, deposits) {
     accounts: accs,
     skipped: accsSkipped
   }
+}
+
+async function mergeCredits (sessionID, accounts, skippedAccounts) {
+  var credits = (await bank.fetchCredits(sessionID))
+    .map(converters.convertAccount)
+  if (credits.length === 0) {
+    return null
+  }
+  // Находим в рассрочке кредитный счет и прикрепляем его к карточке
+  let indexToRemove = null
+  for (let c = 0; c < credits.length; c++) {
+    for (let i = 0; i < accounts.length; i++) {
+      if (accounts[i].type === 'card' && accounts[i].syncID[0].indexOf(credits[c].id) !== -1) {
+        let detail = await bank.fetchLoanDetail(sessionID, credits[c])
+        accounts[i] = converters.FillLoanAccount(detail, accounts[i])
+        credits[c].cardID = accounts[i].id
+        credits[c].syncID[0] = detail.iban.replace(/\s/g, '')
+        skippedAccounts.push(credits[c])
+        indexToRemove = c
+        break
+      }
+    }
+  }
+  credits.splice(indexToRemove, 1)
+
+  // Находим в рассрочке счет "рассрочки" и прикрепляем его к карточке
+  indexToRemove = null
+  for (let c = 0; c < credits.length; c++) {
+    let creditDetail = await bank.fetchLoanDetail(sessionID, credits[c])
+    for (let i = 0; i < accounts.length; i++) {
+      if (accounts[i].type === 'card' &&
+        accounts[i].creditLimit === creditDetail.amount.amount &&
+        accounts[i].instrument === credits[c].instrument) {
+        credits[c].cardID = accounts[i].id
+        credits[c].syncID[0] = creditDetail.iban.replace(/\s/g, '')
+        skippedAccounts.push(credits[c])
+      }
+    }
+  }
+  credits.splice(indexToRemove, 1)
+  accounts.push(...credits)
 }
 
 function transactionsUnique (array) {
