@@ -61,7 +61,8 @@ const sanitizeUserResponse = {
   accounts: {
     name_in_latin: true,
     plastic_token: true,
-    account_details: { owner: true }
+    account_details: { owner: true },
+    change_pin: { check_card: { name: true } }
   },
   account_details: {
     owner: true
@@ -267,8 +268,9 @@ async function getToken (auth, forceNew = false) {
     )
 
     if (response.status === 401) {
-      if (response.description) {
-        throw new InvalidPreferencesError(response.description)
+      const description = _.get(response, 'body.response.description') || response.description
+      if (description) {
+        throw new InvalidPreferencesError(description)
       } else {
         throw new Error('Ошибка входа')
       }

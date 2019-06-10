@@ -3,40 +3,21 @@ import { MD5 } from 'jshashes'
 
 const md5 = new MD5()
 
-export function convertCard (apiAccount) {
-  let result
-  try {
-    result = {
-      id: apiAccount.token,
-      title: apiAccount.title,
-      type: 'ccard',
-      instrument: apiAccount.currency,
-      balance: apiAccount.balance,
-      syncID: [apiAccount.pan.substr(-4)]
-    }
-  } catch (exception) {
-    const err = 'Ошибка добавления счёта карты: '
-    console.log(err, apiAccount)
-    throw new Error(err + exception.message)
-  }
-
-  return result
-}
-
 export function convertAccount (apiAccount) {
   let result
   try {
+    const syncId = apiAccount.pan || apiAccount.account_details.account
     result = {
       id: apiAccount.token,
       title: apiAccount.title,
-      type: 'checking',
+      type: apiAccount.pan ? 'ccard' : 'checking',
       instrument: apiAccount.currency,
       balance: apiAccount.balance,
-      syncID: [apiAccount.account_details.account.substr(-4)]
+      syncID: [ syncId.substr(-4) ]
     }
   } catch (exception) {
     const err = 'Ошибка добавления счёта: '
-    console.log(err, apiAccount)
+    console.log('>>> ' + err, apiAccount)
     throw new Error(err + exception.message)
   }
 
@@ -63,7 +44,7 @@ export function convertDeposit (apiAccount) {
     }
   } catch (exception) {
     const err = 'Ошибка добавления счёта депозита: '
-    console.log(err, apiAccount)
+    console.log('>>> ' + err, apiAccount)
     throw new Error(err + exception.message)
   }
 

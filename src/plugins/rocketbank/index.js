@@ -1,5 +1,5 @@
 import { fetchProfile, fetchTransactions } from './api'
-import { convertCard, convertAccount, convertAccountTransaction } from './converters'
+import { convertAccount, convertAccountTransaction } from './converters'
 import _ from 'lodash'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
@@ -9,7 +9,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
 
   const transactions = {}
 
-  const cards = result.profile.user.accounts.map(apiAccount => convertCard(apiAccount))
+  const cards = result.profile.user.accounts.map(apiAccount => convertAccount(apiAccount))
   const accounts = result.profile.user.safe_accounts.map(apiAccount => convertAccount(apiAccount))
   const deposits = []
 

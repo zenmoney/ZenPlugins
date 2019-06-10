@@ -9,18 +9,18 @@
             summary="||{@s}"
             positiveButtonText="ОК"
             negativeButtonText="Отмена"
-            obligatory="false">
+            obligatory="true">
     </EditTextPreference>
     <EditTextPreference
             key="password"
-            title="Пин-код"
-            dialogTitle="Пин-код"
-            dialogMessage="Код входа в приложение Рокетбанка"
+            title="Пароль"
+            dialogTitle="Пароль"
+            dialogMessage="4-значный пароль от приложения Рокетбанка"
             positiveButtonText="ОК"
             negativeButtonText="Отмена"
             inputType="numberPassword"
             summary="||****"
-            obligatory="false">
+            obligatory="true">
     </EditTextPreference>
     <EditTextPreference
         key="startDate"
