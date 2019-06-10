@@ -30,6 +30,7 @@ export function convertAccounts (apiPortfolios) {
           })) {
             converter = convertCardAccount
             apiAccount = apiAccount.cardAccount
+            apiAccount.mainCard = apiAccount.mainCard || product.mainProduct
           }
           break
         case 'SAVINGS':
@@ -106,7 +107,7 @@ export function convertCardAccount (apiAccount) {
     title: apiAccount.name,
     syncID: []
   }
-  const mainProduct = {
+  let mainProduct = {
     id: apiAccount.id,
     type: apiAccount.__type
   }
@@ -116,6 +117,7 @@ export function convertCardAccount (apiAccount) {
   const cards = apiAccount.cards ? apiAccount.cards.filter(card => {
     return card && card.status && card.status.id === 'ACTIVE' && !card.archived
   }) : []
+
   if (cards.length > 0) {
     zenAccount.type = 'ccard'
     zenAccount.title = cards[0].name
@@ -125,9 +127,16 @@ export function convertCardAccount (apiAccount) {
         currency: cards[0].baseCurrency
       }
     }
+    if (apiAccount.__type === 'ru.vtb24.mobilebanking.protocol.product.CreditCardAccountMto') {
+      const mainCard = apiAccount.mainCard || cards[0]
+      mainProduct = { id: mainCard.id, type: mainCard.__type }
+    }
     cards.forEach((card, i) => {
       if (card.number) {
         zenAccount.syncID.push(card.number.replace(/X/g, '*'))
+      }
+      if (mainProduct.id === card.id && mainProduct.type === card.__type) {
+        return
       }
       products.push({
         id: card.id,
