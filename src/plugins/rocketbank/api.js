@@ -218,6 +218,7 @@ async function verifyDevice (auth, verificationToken, deviceId) {
 
     console.log('>>> Получили код подтверждения из СМС.')
     const response = await fetchApiJson(`/sms_verifications/${verificationToken}/verify`, {
+      ignoreErrors: true,
       method: 'PATCH',
       headers: getHeaders(deviceId, null),
       body: { code: code },
@@ -229,7 +230,7 @@ async function verifyDevice (auth, verificationToken, deviceId) {
 
     if (response.status === 406) {
       console.log('>>> Неверный код подтверждения. Повторяем попытку...')
-      title = 'Не верный код. Повторите попытку #' + i
+      title = 'Не верный код. Повторите попытку #' + (i + 2)
       continue
     }
 
@@ -245,7 +246,7 @@ async function verifyDevice (auth, verificationToken, deviceId) {
     return auth
   }
 
-  throw new Error('Не удалось ввести код для регистрации устройства')
+  throw new InvalidPreferencesError('Не удалось ввести код для регистрации устройства')
 }
 
 async function getToken (auth, forceNew = false) {
