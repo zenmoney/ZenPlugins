@@ -1,36 +1,25 @@
-export function convertAccount (json) {
-  if (json.cards && json.cards.length > 0 &&
-    json.cardAccounts && json.cardAccounts.length > 0) { // only loading card accounts
-    const account = {
-      id: json.accountId,
-      type: 'card',
-      title: json.description,
-      instrument: json.cards[0].cardCurr,
-      balance: Number.parseFloat(json.debtPayment !== null ? -json.debtPayment : json.avlBalance),
-      syncID: [],
-      productType: json.productType,
-      creditLimit: Number.parseFloat(json.over !== null ? json.over : 0)
-    }
-
-    json.cardAccounts.forEach(function (el) {
-      account.syncID.push(el.accountId)
-      account.syncID.push(el.accountId + 'M')
-    })
-    json.cards.forEach(function (el) {
-      account.syncID.push(el.pan.slice(-4))
-    })
-
-    if (json.avlLimit) {
-      account.creditLimit = Number.parseFloat(json.avlLimit)
-    }
-
-    if (!account.title) {
-      account.title = '*' + account.syncID[0]
-    }
-
-    return account
-  } else {
-    return null
+export function convertAccount (acc) {
+  console.log(acc)
+  switch (acc.type) {
+    case 'deposit':
+      let start = getDate(acc.details.match(/Дата открытия:\s(.[0-9.]*)/i)[1])
+      let stop = getDate(acc.details.match(/Срок возврата вклада:\s(.[0-9.]*)/i)[1])
+      let depositDays = (stop - start) / 60 / 60 / 24 / 1000
+      return {
+        id: acc.id,
+        type: 'deposit',
+        title: acc.name,
+        instrument: acc.currency,
+        balance: Number.parseFloat(acc.balance.replace(/\s/g, '')),
+        syncID: [acc.id],
+        capitalization: true,
+        percent: Number.parseFloat(acc.details.match(/Процентная ставка:.*\s(.[0-9]*)%/i)[1]),
+        startDate: start,
+        endDateOffset: depositDays,
+        endDateOffsetInterval: 'day',
+        payoffStep: 1,
+        payoffInterval: 'month'
+      }
   }
 }
 
@@ -155,6 +144,6 @@ function getSumAmount (debitFlag, strAmount) {
 }
 
 export function getDate (str) {
-  const [year, month, day, hour, minute, second] = str.match(/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})/).slice(1)
-  return new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}+03:00`)
+  const [day, month, year] = str.match(/(\d{2}).(\d{2}).(\d{4})/).slice(1)
+  return new Date(`${year}-${month}-${day}T00:00:00+03:00`)
 }

@@ -55,14 +55,6 @@ function validateResponse (response, predicate, error) {
   }
 }
 
-/* function cookies (response) {
-  if (response.headers) {
-    return response.headers['set-cookie']
-  } else {
-    return '' // tests not mocking headers, ignoring
-  }
-} */
-
 export async function login (prefs) {
   if (!prefs.codes0 || !/^\s*(?:\d{4}\s+){9}\d{4}\s*$/.test(prefs.codes0)) {
     throw new InvalidPreferencesError('Неправильно введены коды 1-10! Необходимо ввести 10 четырехзначных кодов через пробел.')
@@ -107,8 +99,6 @@ export async function login (prefs) {
   let code = codes.split(/\D+/g)[idx]
 
   url = res.body.match(/<form[^>]+action="([^"]*)"[^>]*name="LoginForm1"/i)
-  let fields = res.body.match(/<input[^>]+name="field_[^"]*" value="([^"]*)" \/>/ig)
-  console.log(fields)
   res = await fetchUrl(res.headers['content-location'] + url[1], {
     method: 'POST',
     headers: {
@@ -119,24 +109,70 @@ export async function login (prefs) {
       bbIbCodevalueField: code,
       bbIbLoginAction: 'in-action',
       bbIbCancelAction: '',
-      field_1: fields[1],
-      field_2: fields[2],
-      field_3: fields[3],
-      field_4: fields[4],
-      field_5: fields[5],
+      field_1: res.body.match(/<input[^>]+name="field_1" value="(.[^"]*)" \/>/i)[1],
+      field_2: res.body.match(/<input[^>]+name="field_2" value="(.[^"]*)" \/>/i)[1],
+      field_3: res.body.match(/<input[^>]+name="field_3" value="(.[^"]*)" \/>/i)[1],
+      field_4: res.body.match(/<input[^>]+name="field_4" value="(.[^"]*)" \/>/i)[1],
+      field_5: res.body.match(/<input[^>]+name="field_5" value="(.[^"]*)" \/>/i)[1],
       code_number_expire_time: true
     }
   }, response => response.success, message => new InvalidPreferencesError(''))
 
-  return ''
+  return res
 }
 
-export async function fetchAccounts (sessionCookies) {
-  console.log('>>> Загрузка списка счетов...')
-  return (await fetchApiJson('user/loadUser', {
-    headers: { 'Cookie': sessionCookies }
-  }, response => response.body && response.body.data && response.body.data.products,
-  message => new TemporaryError(message))).body.data.products
+export async function fetchURLAccounts (loginRequest) {
+  console.log('>>> Загрузка страницы счетов...')
+  let url = loginRequest.body.match(/href="\/([^"]+)">\s*Счета/i)
+  let res = await fetchUrl('/' + url[1], {
+    method: 'GET'
+  }, response => response.success, message => new InvalidPreferencesError(''))
+
+  let urlCards = res.body.match(/<a\s*href="([^"]+)".*Счета с карточкой.*<\/a>/i)
+  let urlDeposits = res.body.match(/<a\s*href="([^"]+)".*Депозиты.*<\/a>/i)
+  return {
+    cards: urlCards[1],
+    deposits: urlDeposits[1]
+  }
+}
+
+function strDecoder (str) {
+  if (str === null) { return null }
+  var str2 = str.split(';')
+  var res = ''
+  str2.forEach(function (s) {
+    let left = s.replace(/&.[0-9]{4}/i, '')
+
+    res += left + String.fromCharCode(s.replace(left + '&#', ''))
+  })
+
+  return res
+}
+
+export async function fetchDeposits (url) {
+  console.log('>>> Загрузка депозитов...')
+  let res = await fetchUrl(url, {
+    method: 'GET'
+  }, response => response.success, message => new InvalidPreferencesError(''))
+
+  let regex = /<td class="tdNoPadding" ><div.[^>]*><span.[^>]*>(.*?)<\/span><span.[^>]*>(.*?)<\/span><\/div><\/td><td class="tdNoPadding" ><div.[^>]*>(.*?)<\/div><\/td><td class="tdNoPadding" ><div.[^>]*><span.[^>]*>(.*?)<\/span><\/div><\/td><td class="tdNoPadding" ><div.[^>]*>(.*?)<\/div><\/td>.*?X<\/a><div.[^>]*>(.*?)<\/div><\/div><\/div><\/td>/ig
+  let m
+
+  var deposits = []
+  while ((m = regex.exec(res.body.replace(/\r?\n|\r/g, ''))) !== null) {
+    if (m.index === regex.lastIndex) {
+      regex.lastIndex++
+    }
+    deposits.push({
+      id: (m[1] + m[2]).replace(/\s/g, ''),
+      name: strDecoder(m[3]),
+      balance: m[4],
+      currency: m[5],
+      details: strDecoder(m[6]),
+      type: 'deposit'
+    })
+  }
+  return deposits
 }
 
 function formatDate (date) {
