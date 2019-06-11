@@ -111,17 +111,24 @@ function parseInnerTransfer (transaction, apiTransaction, account, accountsById)
   }
 
   const outcomeAccountData = getAccountDataFromResource(_.get(apiTransaction, 'details.fromResource'))
-  const outcomeAccount = !outcomeAccountData
-    ? null
-    : accountsById[outcomeAccountData.id] || accountsById[getId(outcomeAccountData.instrument, outcomeAccountData.syncId)]
-  if (!outcomeAccount) {
+  if (!outcomeAccountData) {
     return false
   }
 
+  const outcomeAccount =
+    accountsById[outcomeAccountData.id] ||
+    accountsById[getId(outcomeAccountData.instrument, outcomeAccountData.syncId)] ||
+    {
+      type: null,
+      instrument: outcomeAccountData.instrument,
+      syncIds: outcomeAccountData.syncId ? [outcomeAccountData.syncId.slice(-4)] : null,
+      company: outcomeAccountData.id ? { id: '4624' } : null
+    }
+
   const incomeAccountData = getAccountDataFromResource(_.get(apiTransaction, 'details.toResource'))
-  let incomeAccount = !incomeAccountData ? null
-    : accountsById[incomeAccountData.id] ||
-    accountsById[getId(incomeAccountData.instrument, incomeAccountData.syncId)]
+  let incomeAccount = !incomeAccountData
+    ? null
+    : accountsById[incomeAccountData.id] || accountsById[getId(incomeAccountData.instrument, incomeAccountData.syncId)]
   if (!incomeAccount) {
     const match = apiTransaction.to.match(/\s{10}(\d[\d*\s]+)$/)
     if (match) {
@@ -132,7 +139,9 @@ function parseInnerTransfer (transaction, apiTransaction, account, accountsById)
     return false
   }
 
-  const outcomeStr = _.get(apiTransaction, 'details.sellAmount.moneyType.value')
+  const outcomeStr =
+    _.get(apiTransaction, 'details.sellAmount.moneyType.value') ||
+    _.get(apiTransaction, 'details.chargeOffAmount.moneyType.value')
   let outcome = outcomeStr ? parseDecimal(outcomeStr) : Math.abs(transaction.movements[0].invoice.sum)
   if (outcomeAccountData.isMetal) {
     outcome /= GRAMS_IN_OZ
@@ -149,7 +158,7 @@ function parseInnerTransfer (transaction, apiTransaction, account, accountsById)
   transaction.movements = [
     {
       id: apiTransaction.id,
-      account: { id: outcomeAccount.id },
+      account: outcomeAccount.id ? { id: outcomeAccount.id } : outcomeAccount,
       invoice: !isIncomeInvoice && outcomeAccount.instrument !== incomeAccount.instrument ? { sum: -income, instrument: incomeAccount.instrument } : null,
       sum: -outcome,
       fee: 0
