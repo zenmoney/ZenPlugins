@@ -79,6 +79,9 @@ export class PrivatBank {
           `Проверьте, что в Приват24 вы поставили галочки "Баланс по счёту мерчанта физлица" и ` +
           `"Выписка по счёту мерчанта физлица".`)
       }
+      if (response.body.indexOf('временно недоступен') >= 0) {
+        throw new TemporaryError('Информация из ПриватБанка временно недоступна. Запустите синхронизацию через некоторое время.\n\nЕсли ситуация повторится, выберите другой IP-адрес в настройках синхронизации с банком.')
+      }
     }
     console.assert(response && response.status === 200 && response.body, 'non-successful response')
     return response.body

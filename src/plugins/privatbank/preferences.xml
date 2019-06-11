@@ -27,7 +27,7 @@
         negativeButtonText="Отмена"
         entries="95.213.236.52|92.53.66.39"
         entryValues="95.213.236.52|92.53.66.39"
-        defaultValue="95.213.236.52"
+        defaultValue="92.53.66.39"
         summary="||{@s}">
     </ListPreference>
     <EditTextPreference
