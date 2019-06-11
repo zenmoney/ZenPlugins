@@ -47,7 +47,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
         transaction.bankOperation === 'CURRENCYEXCHANGE' ||
         transaction.bankTitle.indexOf('Поступление средств') >= 0 ||
         transaction.bankTitle.indexOf('Комиссия банка') >= 0 ||
-        transaction.bankTitle.indexOf('Погашение кредита') >= 0))
+        (transaction.bankTitle.indexOf('Погашение кредита') >= 0 && transaction.movements[0].sum < 0)))
     .filter(function (tr) {
       for (let i = 0; i < accounts.length; i++) {
         if (accounts[i].id === tr.movements[0].account.id) {
