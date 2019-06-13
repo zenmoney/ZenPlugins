@@ -234,6 +234,12 @@ async function fetchAccountDetails (auth, { id, type }) {
     },
     body: { id: id }
   }, null)
+  if (type === 'account' &&
+    response.body.status === '2' &&
+    response.body.error &&
+    response.body.error.indexOf('нет прав для просмотра объекта') >= 0) {
+    return null
+  }
   validateResponse(response, response => _.get(response, 'body.detail'))
   return response.body
 }

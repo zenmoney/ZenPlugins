@@ -422,9 +422,9 @@ function convertAccountsWithType (apiAccountsArray, type) {
           data = convertMetalAccount(apiAccount.account)
           break
         default:
-          data = apiAccount.account.rate && apiAccount.details.detail.period && parseDecimal(apiAccount.account.rate) > 2
+          data = apiAccount.account.rate && apiAccount.details && apiAccount.details.detail.period && parseDecimal(apiAccount.account.rate) > 2
             ? convertDeposit(apiAccount.account, apiAccount.details)
-            : convertAccount(apiAccount.account, apiAccount.details)
+            : convertAccount(apiAccount.account)
           break
       }
       if (data) {
