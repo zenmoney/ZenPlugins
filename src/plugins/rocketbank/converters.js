@@ -93,7 +93,12 @@ export function convertDepositTransaction (accountId, apiTransaction, fromDate) 
 
 export function convertAccountTransaction (apiTransaction, account, titleAccounts = {}) {
   if (apiTransaction.status !== 'confirmed' && apiTransaction.status !== 'hold') {
-    console.log('>>> Пропускаем операцию со статусом ' + apiTransaction.status)
+    console.log(`>>> Пропускаем операцию со статусом '${apiTransaction.status}' #${apiTransaction.id}`)
+    return null
+  }
+
+  if (apiTransaction.money.amount === 0) {
+    console.log(`>>> Пропускаем пустую операцию с нулевой суммой #${apiTransaction.id}`)
     return null
   }
 

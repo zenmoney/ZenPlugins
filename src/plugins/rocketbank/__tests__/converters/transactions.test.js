@@ -600,6 +600,57 @@ const transactions = {
         ]
       }
 
+    ],
+
+    // [TSN] Invalid transaction 319774929. Income and outcome must be non-negative
+    [
+      {
+        exchange_details: null,
+        id: 319774929,
+        status: 'hold',
+        comment: null,
+        tag_list: [],
+        friend_transfer_type: null,
+        receipt_url: 'https://rocketbank.ru/receipt/76cd1c34-cf40342b-137d9221-e7398a2a-22bb1e18-98b416da',
+        context_type: 'card2card_cash_out_other',
+        details: 'Терминал МКБ',
+        has_receipt: true,
+        mimimiles: 0,
+        happened_at: 1560424731,
+        sputnik: false,
+        display_money: {
+          amount: 0,
+          currency_code: 'RUB'
+        },
+        money: {
+          amount: 0,
+          currency_code: 'RUB'
+        },
+        category: {
+          id: 368,
+          name: 'Перевод денег',
+          display_name: 'Перевод денег',
+          icon: 'money_transfer',
+          sub_icon: '368'
+        },
+        merchant: {
+          id: 311390,
+          name: 'Терминал МКБ',
+          feed_icon: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/merchants/311390/cool_small_d435d0d0-be8e-4ea8-9534-801cef464453.png',
+          icon: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/merchants/311390/cool_big_d435d0d0-be8e-4ea8-9534-801cef464453.png',
+          iphone_small: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/merchants/311390/iphone_small_d435d0d0-be8e-4ea8-9534-801cef464453.png',
+          iphone_big: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/merchants/311390/iphone_big_d435d0d0-be8e-4ea8-9534-801cef464453.png',
+          android: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/merchants/311390/android_d435d0d0-be8e-4ea8-9534-801cef464453.png'
+        },
+        location: {
+          latitude: null,
+          longitude: null,
+          acc: null
+        },
+        visible: true,
+        action: null
+      },
+      null
     ]
   ],
 
@@ -1248,7 +1299,6 @@ const transactions = {
           }
         ]
       }
-
     ]
   ],
 
@@ -1479,7 +1529,7 @@ describe('convertTransaction', () => {
 
 xdescribe('convertOneTransaction', () => {
   initTitleAccounts()
-  const type = 'internal_cash_in'
+  const type = 'card2card_cash_out_other'
   const num = 2
   it(`should convert '${type}' ${num}`, () => {
     expect(

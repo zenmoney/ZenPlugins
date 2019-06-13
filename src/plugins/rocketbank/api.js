@@ -189,7 +189,7 @@ async function getDevice (auth) {
 
 async function registerDevice (auth) {
   const deviceId = 'zenmoney_' + md5.hex(Math.random().toString() + '_' + auth.phone + '_' + Date.now())
-  console.log(`>>> Отправляем запрос на регистрацию устройства ${depersonalize(deviceId)} (${depersonalize(auth.phone)})...`)
+  console.log(`>>> Отправляем запрос на регистрацию устройства...`)
 
   const response = await fetchApiJson('/devices/register',
     {
@@ -210,34 +210,33 @@ async function registerDevice (auth) {
 async function verifyDevice (auth, verificationToken, deviceId) {
   let title = 'Введите код подтверждения из SMS для входа в Рокетбанк'
   let email = null
-  for (let i = 0; i < 3; i++) {
-    const code = await ZenMoney.readLine(title, { inputType: 'numberDecimal', time: 18E4 })
-    if (code === '') {
-      throw new InvalidPreferencesError('Не был введён код авторизации устройства')
-    }
 
-    console.log('>>> Получили код подтверждения из СМС.')
-    const response = await fetchApiJson(`/sms_verifications/${verificationToken}/verify`, {
-      ignoreErrors: true,
-      method: 'PATCH',
-      headers: getHeaders(deviceId, null),
-      body: { code: code },
-      sanitizeRequestLog: { body: { code: true } },
-      sanitizeResponseLog: { body: { token: true, user: sanitizeUserResponse } }
-    })
-    // response => _.get(response, 'body.user.email'))
-    // request('PATCH', '/sms_verifications/' + verificationToken + '/verify', { code: code }, deviceId, null)
+  const code = await ZenMoney.readLine(title, { inputType: 'numberDecimal', time: 18E4 })
+  if (code === '') {
+    throw new InvalidPreferencesError('Не был введён код авторизации устройства')
+  }
 
-    if (response.status === 406) {
-      console.log('>>> Неверный код подтверждения. Повторяем попытку...')
-      title = 'Не верный код. Повторите попытку #' + (i + 2)
-      continue
-    }
+  console.log('>>> Получили код подтверждения из СМС.')
+  const response = await fetchApiJson(`/sms_verifications/${verificationToken}/verify`, {
+    // ignoreErrors: true,
+    method: 'PATCH',
+    headers: getHeaders(deviceId, null),
+    body: { code: code },
+    sanitizeRequestLog: { body: { code: true } },
+    sanitizeResponseLog: { body: { token: true, user: sanitizeUserResponse } }
+  })
+  // response => _.get(response, 'body.user.email'))
+  // request('PATCH', '/sms_verifications/' + verificationToken + '/verify', { code: code }, deviceId, null)
 
-    email = _.get(response, 'body.user.email')
-    if (email) {
-      break
-    }
+  /* if (response.status === 406) {
+    console.log('>>> Неверный код подтверждения. Повторяем попытку...')
+    title = 'Не верный код. Повторите попытку #' + (i + 2)
+    continue
+  } */
+
+  email = _.get(response, 'body.user.email')
+  if (!email) {
+    throw new Error('Не удалось обнаружить необходимый email в ответе банка')
   }
 
   if (email) {
@@ -359,15 +358,15 @@ async function fetchApiJson (url, options, predicate) {
   return response
 }
 
-function depersonalize (original, percent) {
-  percent = percent || 0.25
+/* function depersonalize (original, percent) {
+  percent = percent || 0.3
   const length = Math.floor(original.length * percent)
   let part = original.slice(0, length * -1)
   for (let i = 0; i < length; i++) {
     part += '*'
   }
   return part
-}
+} */
 
 function getPhoneNumber (str) {
   if (typeof str !== 'string' && typeof str !== 'number') {
