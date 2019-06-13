@@ -352,7 +352,7 @@ function parsePayGroup (transaction, apiTransaction) {
   }
   if (merchant && merchant.region) {
     resultMerchant.title = merchant.name
-    resultMerchant.city = merchant.region.city
+    resultMerchant.city = merchant.region.city !== '' ? merchant.region.city : null
     resultMerchant.country = merchant.region.country
   } else if (brand) {
     resultMerchant.title = brand.name
@@ -867,13 +867,15 @@ function getApiTransactionId (apiTransaction) {
 function isSameTransaction (tran1, tran2, ignoreAccount = false) {
   let sameAccount = ignoreAccount || tran1.movements.length === tran2.movements.length
   if (!ignoreAccount && sameAccount) {
-    sameAccount = !tran1.movements.some((movement, index) => movement.account.id !== tran2.movements[index].account.id)
+    sameAccount = tran1.movements.length === tran2.movements.length &&
+      !tran1.movements.some((movement, index) => movement.account.id !== tran2.movements[index].account.id)
   }
 
-  const sameSum = !tran1.movements.some((movement, index) => {
-    return movement.sum !== tran2.movements[index].sum ||
+  const sameSum = tran1.movements.length === tran2.movements.length &&
+    !tran1.movements.some((movement, index) => {
+      return movement.sum !== tran2.movements[index].sum ||
       JSON.stringify(movement.invoice) !== JSON.stringify(tran2.movements[index].invoice)
-  })
+    })
 
   return sameAccount && sameSum &&
     (tran1.merchant &&

@@ -251,6 +251,109 @@ const transactions = [
         }
       ]
     }
+  ],
+
+  // [TMC] Invalid transaction 1475745169. merchant.city must be null or non-empty string
+  [
+    {
+      isDispute: true,
+      hasStatement: true,
+      isSuspicious: false,
+      id: '1475745169',
+      offers: [],
+      status: 'OK',
+      idSourceType: 'Online',
+      type: 'Debit',
+      locations: [],
+      loyaltyBonus: [],
+      cashbackAmount: {
+        currency: {
+          code: 643,
+          name: 'RUB',
+          strCode: '643'
+        },
+        value: 0
+      },
+      authMessage: 'Операция утверждена.',
+      description: 'INNERSENSE ORGANIC BEA',
+      cashback: 0,
+      amount: {
+        currency: {
+          code: 840,
+          name: 'USD',
+          strCode: '840'
+        },
+        value: 83
+      },
+      operationTime: {
+        milliseconds: 1560208252000
+      },
+      spendingCategory: {
+        id: '54',
+        name: 'Различные товары',
+        icon: '29',
+        parentId: '8'
+      },
+      isHce: false,
+      mcc: 5999,
+      category: {
+        id: '29',
+        name: 'Разные товары'
+      },
+      additionalInfo: [],
+      virtualPaymentType: 0,
+      account: 'accountId',
+      ucid: '1044682206',
+      merchant: {
+        name: 'INNERSENSE ORGANIC BEA',
+        region: {
+          country: 'CA',
+          city: ''
+        }
+      },
+      card: '45147990',
+      loyaltyPayment: [],
+      group: 'PAY',
+      mccString: '5999',
+      cardPresent: false,
+      isExternalCard: false,
+      cardNumber: '553691******1925',
+      accountAmount: {
+        currency: {
+          code: 643,
+          name: 'RUB',
+          strCode: '643'
+        },
+        value: 5457.25
+      }
+    },
+    {
+      'comment': null,
+      'date': new Date('2019-06-10T23:10:52+00:00'),
+      'hold': true,
+      'merchant': {
+        'city': null,
+        'country': 'CA',
+        'location': null,
+        'mcc': 5999,
+        'title': 'INNERSENSE ORGANIC BEA'
+      },
+      'movements': [
+        {
+          '_id': '1475745169',
+          'account': {
+            'id': 'accountId'
+          },
+          'fee': 0,
+          'id': '1475745169',
+          'invoice': {
+            'instrument': 'USD',
+            'sum': -83
+          },
+          'sum': -5457.25
+        }
+      ]
+    }
   ]
 ]
 
@@ -266,8 +369,8 @@ describe('convertTransaction', () => {
   }
 })
 
-xdescribe('convertOneTransaction', () => {
-  const i = 4
+describe('convertOneTransaction', () => {
+  const i = 2
   it('should convert transaction ' + i, () => {
     expect(
       convertTransaction(transactions[i][0], accounts[transactions[i][0].account])
