@@ -4,6 +4,9 @@ import * as converters from './converters'
 export async function scrape ({ preferences, fromDate, toDate }) {
   let lastLoginRequest = await bank.login(preferences)
   const accountURLs = await bank.fetchURLAccounts(lastLoginRequest)
+  const cards = (await bank.fetchCards(accountURLs.cards))
+    .map(converters.convertAccount)
+    .filter(account => account !== null)
   const deposits = (await bank.fetchDeposits(accountURLs.deposits))
     .map(converters.convertAccount)
     .filter(account => account !== null)
@@ -14,7 +17,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     .map(transaction => converters.convertTransaction(transaction, accounts))
     .filter(transaction => transaction !== null) */
   return {
-    accounts: deposits,
+    accounts: cards.concat(deposits),
     transactions: []
   }
 }

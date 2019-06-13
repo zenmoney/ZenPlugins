@@ -20,6 +20,15 @@ export function convertAccount (acc) {
         payoffStep: 1,
         payoffInterval: 'month'
       }
+    case 'card':
+      return {
+        id: acc.id,
+        type: 'card',
+        title: 'Карта ' + acc.cardNum.slice(-4),
+        instrument: acc.currency,
+        balance: Number.parseFloat(acc.balance.replace(/\s/g, '')),
+        syncID: [acc.id, acc.cardNum.slice(-4)]
+      }
   }
 }
 

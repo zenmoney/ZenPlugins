@@ -175,6 +175,31 @@ export async function fetchDeposits (url) {
   return deposits
 }
 
+export async function fetchCards (url) {
+  console.log('>>> Загрузка картсчетов...')
+  let res = await fetchUrl(url, {
+    method: 'GET'
+  }, response => response.success, message => new InvalidPreferencesError(''))
+
+  let regex = /cellLable">(.[^>]*)<\/div><\/td><td class="tdBalance">.*<nobr>(.*)<\/nobr> (.[A-Z]*).*<td class="tdNumber"><div class="cellLable">(.[0-9*]*)<\/div>/ig
+  let m
+
+  var cards = []
+  while ((m = regex.exec(res.body.replace(/\r?\n|\r/g, ''))) !== null) {
+    if (m.index === regex.lastIndex) {
+      regex.lastIndex++
+    }
+    cards.push({
+      id: (m[1]).replace(/\s/g, ''),
+      balance: m[2],
+      currency: m[3],
+      cardNum: m[4],
+      type: 'card'
+    })
+  }
+  return cards
+}
+
 function formatDate (date) {
   return date.toISOString().replace('T', ' ').split('.')[0]
 }
