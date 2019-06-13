@@ -1,7 +1,4 @@
-import { defaultsDeep, flatMap } from 'lodash'
-import { createDateIntervals as commonCreateDateIntervals } from '../../common/dateUtils'
-import { fetch, fetchJson } from '../../common/network'
-import { getDate } from './converters'
+import { fetch } from '../../common/network'
 
 const baseUrl = 'https://ibank.asb.by'
 var querystring = require('querystring')
@@ -18,34 +15,6 @@ async function fetchUrl (url, options, predicate = () => true, error = (message)
   if (err) {
     throw new TemporaryError(err[1])
   }
-  return response
-}
-async function fetchApiJson (url, options, predicate = () => true, error = (message) => console.assert(false, message)) {
-  options = defaultsDeep(
-    options,
-    {
-      sanitizeRequestLog: { headers: { Cookie: true } },
-      sanitizeResponseLog: { headers: { 'set-cookie': true } }
-    }
-  )
-  const response = await fetchJson(baseUrl + url, options)
-  if (predicate) {
-    validateResponse(response, response => predicate(response), error)
-  }
-
-  if (!response.body.success && response.body.error && response.body.error.description) {
-    const errorDescription = response.body.error.description
-    if (errorDescription.indexOf('не принадлежит клиенту c кодом') >= 0 ||
-      errorDescription.indexOf('Дата запуска/внедрения попадает в период запрашиваемой выписки') >= 0 ||
-      errorDescription.indexOf('Получены не все обязательные поля') >= 0) {
-      console.log('Ответ банка: ' + errorDescription)
-      return false
-    }
-    const errorMessage = 'Ответ банка: ' + errorDescription + (response.body.error.lockedTime && response.body.error.lockedTime !== 'null' ? response.body.error.lockedTime : '')
-    if (errorDescription.indexOf('Неверный пароль') >= 0) { throw new InvalidPreferencesError(errorMessage) }
-    throw new TemporaryError(errorMessage)
-  }
-
   return response
 }
 
@@ -181,7 +150,7 @@ export async function fetchCards (url) {
     method: 'GET'
   }, response => response.success, message => new InvalidPreferencesError(''))
 
-  let regex = /cellLable">(.[^>]*)<\/div><\/td><td class="tdBalance">.*<nobr>(.*)<\/nobr> (.[A-Z]*).*<td class="tdNumber"><div class="cellLable">(.[0-9*]*)<\/div>/ig
+  let regex = /<form id="viewns.*action="(.[^"]*)".*name="javax\.faces\.encodedURL" value="(.[^"]*)".*cellLable">(.[^>]*)<\/div><\/td><td class="tdBalance">.*return myfaces\.oam\.submitForm\((.*)\);.*title="Получить отчёт по заблокированным операциям.*<nobr>(.*)<\/nobr> (.[A-Z]*).*<td class="tdNumber"><div class="cellLable">(.[0-9*]*)<\/div>.*id="javax\.faces\.ViewState" value="(.[^"]*)/ig
   let m
 
   var cards = []
@@ -190,71 +159,41 @@ export async function fetchCards (url) {
       regex.lastIndex++
     }
     cards.push({
-      id: (m[1]).replace(/\s/g, ''),
-      balance: m[2],
-      currency: m[3],
-      cardNum: m[4],
-      type: 'card'
+      id: m[3],
+      balance: m[5],
+      currency: m[6],
+      cardNum: m[7],
+      type: 'card',
+      transactionsData: {
+        action: m[1],
+        encodedURL: m[2],
+        additional: m[4].match(/'(.[^']*)'/ig),
+        viewState: m[8]
+      }
     })
   }
   return cards
 }
 
-function formatDate (date) {
-  return date.toISOString().replace('T', ' ').split('.')[0]
-}
+export async function fetchCardsTransactions (acc) {
+  console.log('>>> Загрузка транзакций по ' + acc.title)
 
-export function createDateIntervals (fromDate, toDate) {
-  const interval = 10 * 24 * 60 * 60 * 1000 // 10 days interval for fetching data
-  const gapMs = 1
-  return commonCreateDateIntervals({
-    fromDate,
-    toDate,
-    addIntervalToDate: date => new Date(date.getTime() + interval - gapMs),
-    gapMs
-  })
-}
+  let body = {
+    'javax.faces.encodedURL': acc.raw.transactionsData.encodedURL,
+    'accountNumber': acc.raw.transactionsData.additional[3].replace(/'/g, ''),
+    'javax.faces.ViewState': acc.raw.transactionsData.viewState
+  }
+  body[acc.raw.transactionsData.additional[0].replace(/'/g, '') + ':acctIdSelField'] = acc.raw.id
+  body[acc.raw.transactionsData.additional[0].replace(/'/g, '') + '_SUBMIT'] = 1
+  body[acc.raw.transactionsData.additional[0].replace(/'/g, '') + ':_idcl'] = acc.raw.transactionsData.additional[1].replace(/'/g, '')
+  let res = await fetchUrl(acc.raw.transactionsData.action, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: body
+  }, response => response.success, message => new InvalidPreferencesError(''))
 
-export async function fetchTransactions (sessionCookies, accounts, fromDate, toDate = new Date()) {
-  console.log('>>> Загрузка списка транзакций...')
-  toDate = toDate || new Date()
-
-  const dates = createDateIntervals(fromDate, toDate)
-  const responses = await Promise.all(flatMap(accounts, (account) => {
-    return dates.map(dates => {
-      return fetchApiJson('product/loadOperationStatements', {
-        method: 'POST',
-        headers: { 'Cookie': sessionCookies },
-        body: {
-          contractCode: account.id,
-          accountIdenType: account.productType,
-          startDate: formatDate(dates[0]),
-          endDate: formatDate(dates[1]),
-          halva: false
-        }
-      }, response => response.body)
-    })
-  }))
-
-  const operations = flatMap(responses, response => {
-    if (response) {
-      return flatMap(response.body.data, d => {
-        return d.operations.map(op => {
-          op.accountId = d.accountId
-          if (op.description === null) {
-            op.description = ''
-          }
-          return op
-        })
-      })
-    }
-  })
-
-  const filteredOperations = operations.filter(function (op) {
-    return op !== undefined && op.status !== 'E' && getDate(op.transDate) > fromDate && !op.description.includes('Гашение кредита в виде "овердрафт" по договору')
-  })
-  console.log(filteredOperations)
-
-  console.log(`>>> Загружено ${filteredOperations.length} операций.`)
-  return filteredOperations
+  console.log(res)
+  return []
 }

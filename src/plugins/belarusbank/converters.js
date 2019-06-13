@@ -22,12 +22,13 @@ export function convertAccount (acc) {
       }
     case 'card':
       return {
-        id: acc.id,
+        id: acc.id.replace(/\s/g, ''),
         type: 'card',
         title: 'Карта ' + acc.cardNum.slice(-4),
         instrument: acc.currency,
         balance: Number.parseFloat(acc.balance.replace(/\s/g, '')),
-        syncID: [acc.id, acc.cardNum.slice(-4)]
+        syncID: [acc.id.replace(/\s/g, ''), acc.cardNum.slice(-4)],
+        raw: acc
       }
   }
 }
