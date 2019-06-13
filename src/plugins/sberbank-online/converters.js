@@ -204,15 +204,24 @@ function parseOuterIncomeTransfer (transaction, apiTransaction, account) {
   transaction.movements.push({
     id: null,
     account: {
-      type: outerAccount ? outerAccount.type : null,
+      type: /^\d{4}\s?\d{2}\*{2}\s?\*{4}\s?\d{4}$/.test(apiTransaction.from) ? 'ccard' : outerAccount ? outerAccount.type : null,
       instrument: invoice.instrument,
-      company: outerAccount ? outerAccount.company : apiTransaction.to === 'Сбербанк Онлайн' ? null : { title: apiTransaction.to },
+      company: outerAccount ? outerAccount.company : null,
       syncIds: [removeWhitespaces(match[1])]
     },
     invoice: null,
     sum: -invoice.sum,
     fee: 0
   })
+  if (!outerAccount && apiTransaction.to !== 'Сбербанк Онлайн') {
+    transaction.merchant = {
+      country: null,
+      city: null,
+      title: apiTransaction.to,
+      mcc: null,
+      location: null
+    }
+  }
   return true
 }
 
@@ -589,9 +598,7 @@ export function convertLoan (apiLoan, details) {
       ? details.extDetail.remainAmount.amount
       : details.extDetail.origianlAmount.amount),
     capitalization: details.detail.repaymentMethod === 'аннуитетный',
-    percent: details.extDetail.rate
-      ? parseDecimal(details.extDetail.rate)
-      : 1,
+    percent: (details.extDetail.rate && parseDecimal(details.extDetail.rate)) || 1,
     syncID: [
       details.detail.accountNumber
     ],
@@ -629,7 +636,7 @@ export function convertDeposit (apiDeposit, details) {
     startBalance: 0,
     balance: parseDecimal(apiDeposit.balance.amount),
     capitalization: true,
-    percent: parseDecimal(apiDeposit.rate),
+    percent: parseDecimal(apiDeposit.rate) || 1,
     syncID: [
       apiDeposit.number
     ],

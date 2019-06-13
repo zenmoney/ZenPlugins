@@ -114,7 +114,7 @@ describe('convertTransaction', () => {
         {
           id: null,
           account: {
-            type: null,
+            type: 'ccard',
             instrument: 'RUB',
             company: { id: '4902' },
             syncIds: ['2272']
@@ -233,7 +233,7 @@ describe('convertTransaction', () => {
         {
           id: null,
           account: {
-            type: null,
+            type: 'ccard',
             instrument: 'RUB',
             company: null,
             syncIds: ['0932']

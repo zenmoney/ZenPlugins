@@ -214,4 +214,56 @@ describe('convertTransaction', () => {
       comment: 'kek'
     })
   })
+
+  it('converts income p2p transfer', () => {
+    expect(convertTransaction({ id: '15687953579',
+      ufsId: null,
+      state: 'FINANCIAL',
+      date: '11.06.2019T16:35:53',
+      from: '4279 55** **** 5234',
+      to: 'Николай Николаевич Н.',
+      description: 'Входящий перевод',
+      operationAmount: { amount: '33000.00', currency: { code: 'RUB', name: 'руб.' } },
+      isMobilePayment: 'false',
+      copyable: 'false',
+      templatable: 'false',
+      autopayable: 'false',
+      type: 'payment',
+      invoiceSubscriptionSupported: 'false',
+      invoiceReminderSupported: 'false',
+      form: 'ExtCardTransferIn',
+      imageId: { staticImage: { url: null } } }, { id: 'account', instrument: 'RUB' })).toEqual({
+      hold: false,
+      date: new Date('2019-06-11T16:35:53+03:00'),
+      movements: [
+        {
+          id: '15687953579',
+          account: { id: 'account' },
+          invoice: null,
+          sum: 33000,
+          fee: 0
+        },
+        {
+          id: null,
+          account: {
+            type: 'ccard',
+            instrument: 'RUB',
+            company: null,
+            syncIds: ['5234']
+          },
+          invoice: null,
+          sum: -33000,
+          fee: 0
+        }
+      ],
+      merchant: {
+        country: null,
+        city: null,
+        title: 'Николай Николаевич Н.',
+        mcc: null,
+        location: null
+      },
+      comment: null
+    })
+  })
 })
