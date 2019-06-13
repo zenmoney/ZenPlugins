@@ -304,7 +304,7 @@ function parsePayee (transaction, apiTransaction) {
     return
   }
 
-  let payee = ['ExtDepositCapitalization', 'ExtDepositTransferIn'].indexOf(apiTransaction.form) >= 0 ? null : apiTransaction.to
+  let payee = ['ExtDepositCapitalization', 'ExtDepositTransferIn', 'ExtDepositOtherCredit'].indexOf(apiTransaction.form) >= 0 ? null : apiTransaction.to
   if (payee) {
     if (apiTransaction.form === 'RurPayJurSB') {
       const parts = payee.split(/\s\s+/)
@@ -328,7 +328,11 @@ function parsePayee (transaction, apiTransaction) {
       }
     }
   }
-  if (['Капитализация по вкладу/счету', 'Комиссии', 'Входящий перевод на вклад/счет'].indexOf(apiTransaction.description) >= 0) {
+  if ([
+    'Капитализация по вкладу/счету',
+    'Комиссии',
+    'Входящий перевод на вклад/счет'
+  ].indexOf(apiTransaction.description) >= 0) {
     transaction.comment = apiTransaction.description
   }
 }
