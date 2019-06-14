@@ -48,7 +48,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     return (await Api.fetchTransactions(auth, accountId, fromDate)).map(apiTransaction => Converters.convertDepositTransaction(apiTransaction[1], accountId))
   })) */
 
-  const resultTransactions = _.flattenDeep(_.values(transactions).filter(item => item))
+  const resultTransactions = _.flattenDeep(_.values(transactions)).filter(item => item)
 
   ZenMoney.setData('auth', auth)
 
