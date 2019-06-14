@@ -59,6 +59,47 @@ describe('convertTransaction', () => {
         },
         comment: null
       }
+    },
+    {
+      name: 'bank fees',
+      transaction: {
+        date: '2019-01-01 10:12:13',
+        dateResp: '2019-01-01 10:12:13',
+        type: 'Оплата',
+        cardAcceptor: 'SMS OPOVESCHENIE>MINSK BY',
+        transactionAmt: '2,8',
+        transactionAmtCurrency: 'BYN',
+        accountAmt: '2,8',
+        accountAmtCurrency: 'BYN',
+        feeAmt: 0,
+        feeAmtCurrency: 'BYN',
+        reflectedAccountAmt: '2,8',
+        reflectedAccountAmtCurrency: 'BYN',
+        reflectedFee: 0,
+        reflectedFeeCurrency: 'BYN',
+        balanceAmt: '167,57',
+        balanceAmtCurrency: 'BYN',
+        status: 'ПРОВЕДЕНО',
+        sign: '-',
+        operationColor: '_red',
+        cardNum: '**** 1111',
+        historyKey: 3
+      },
+      expectedTransaction: {
+        hold: false,
+        date: new Date('2019-01-01T10:12:13+03:00'),
+        movements: [
+          {
+            id: null,
+            invoice: null,
+            account: { id: '30848200' },
+            sum: -2.8,
+            fee: 0
+          }
+        ],
+        merchant: null,
+        comment: 'SMS OPOVESCHENIE'
+      }
     }
   ]
 
