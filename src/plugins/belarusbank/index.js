@@ -10,7 +10,9 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   for (let i = 0; i < cards.length; i++) {
     delete cards[i].rawData
   }
-  await bank.fetchCardsTransactions(cards[0])
+  const transactionsCard = (await bank.fetchCardsTransactions(cards[0]))
+    .map(transaction => converters.convertTransaction(transaction, cards))
+    .filter(transaction => transaction !== null)
   const deposits = (await bank.fetchDeposits(accountURLs.deposits))
     .map(converters.convertAccount)
     .filter(account => account !== null)
@@ -22,6 +24,6 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     .filter(transaction => transaction !== null) */
   return {
     accounts: cards.concat(deposits),
-    transactions: []
+    transactions: transactionsCard
   }
 }

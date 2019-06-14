@@ -194,6 +194,27 @@ export async function fetchCardsTransactions (acc) {
     body: body
   }, response => response.success, message => new InvalidPreferencesError(''))
 
-  console.log(res)
-  return []
+  let regex = /<tr class='(.[^']*)'>.[^']*">(.[0-9.]*) (.[0-9:]*)<.[^']*">(.[+-]*)<\/span.[^']*">(.[0-9 .]*)<\/span.[^']*">(.[A-Z]*)<\/span.[^']*">(.[0-9 .]*)<\/span.[^']*">(.[A-Z]*)<\/span.[^а-я]*Наименование операции: (.[^<]*)<\/span.[^а-я]*Точка обслуживания: (.[^<]*)/ig
+  let m
+
+  var transactions = []
+  while ((m = regex.exec(res.body.replace(/\r?\n|\r/g, ''))) !== null) {
+    if (m.index === regex.lastIndex) {
+      regex.lastIndex++
+    }
+    transactions.push({
+      accountID: acc.id,
+      status: m[1],
+      date: m[2],
+      time: m[3],
+      debitFlag: m[4],
+      operationSum: m[5], // В валюте операции
+      operationCurrency: m[6],
+      inAccountSum: m[7], // В валюте счета
+      inAccountCurrency: m[8],
+      comment: m[9],
+      place: m[10]
+    })
+  }
+  return transactions
 }

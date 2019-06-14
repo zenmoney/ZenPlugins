@@ -33,127 +33,94 @@ export function convertAccount (acc) {
   }
 }
 
-export function convertTransaction (json, accounts) {
-  if (json.amount === '') { // skip frozen operations
-    return null
-  }
+export function convertTransaction (tr, accounts) {
   const account = accounts.find(account => {
-    return account.syncID.indexOf(json.accountId) !== -1
+    return account.syncID.indexOf(tr.accountID) !== -1
   })
 
   const transaction = {
-    date: getDate(json.transDate),
-    movements: [ getMovement(json, account) ],
+    date: getFullDate(tr.date + ' ' + tr.time),
+    movements: [ getMovement(tr, account) ],
     merchant: null,
     comment: null,
-    hold: json.status !== 'T'
+    hold: tr.status !== 'operResultOk'
   };
 
   [
     parseCash,
-    parseComment,
     parsePayee
-  ].some(parser => parser(transaction, json))
+  ].some(parser => parser(transaction, tr))
 
   return transaction
 }
 
-function getMovement (json, account) {
+function getMovement (tr, account) {
   const movement = {
-    id: json.transactionId,
+    id: null,
     account: { id: account.id },
     invoice: null,
-    sum: getSumAmount(json.debitFlag, json.transAmount),
+    sum: getSumAmount(tr.debitFlag, tr.operationSum),
     fee: 0
   }
 
-  if (json.curr !== account.instrument) {
+  if (tr.operationCurrency !== account.instrument) {
     movement.invoice = {
-      sum: getSumAmount(json.debitFlag, json.amount),
-      instrument: json.curr
+      sum: getSumAmount(tr.debitFlag, tr.inAccountSum),
+      instrument: tr.operationCurrency
     }
   }
 
   return movement
 }
 
-function parseCash (transaction, json) {
-  if ((json.mcc === '6011' && (json.description === null || json.description.indexOf('Комиссия') === -1)) ||
-    json.description.indexOf('нятие наличных в АТМ') > 0 ||
-    json.description.indexOf('ополнение нал') > 0 ||
-    json.description === 'Внесение наличных' ||
-    json.description === 'Выдача наличных') {
+function parseCash (transaction, tr) {
+  if (tr.comment.indexOf('Пополнение счета') >= 0) {
     // добавим вторую часть перевода
     transaction.movements.push({
       id: null,
       account: {
         company: null,
         type: 'cash',
-        instrument: json.curr,
+        instrument: tr.operationCurrency,
         syncIds: null
       },
       invoice: null,
-      sum: -getSumAmount(json.debitFlag, json.amount),
+      sum: -getSumAmount(tr.debitFlag, tr.operationSum),
       fee: 0
     })
     return true
   }
 }
 
-function parsePayee (transaction, json) {
+function parsePayee (transaction, tr) {
   // интернет-платежи отображаем без получателя
-  if (!json.place || json.place.indexOf('MTB INTERNET POS') >= 0) {
+  if (!tr.place) {
     return false
   }
 
+  let data = tr.place.split('/')
+  if (data.length === 0) {
+    return false
+  }
   transaction.merchant = {
-    mcc: json.mcc ? Number.parseInt(json.mcc) : null,
-    location: null
+    mcc: data[1] !== '' ? Number.parseInt(data[1]) : null,
+    location: null,
+    fullTitle: ''
   }
-  if (json.city) {
-    transaction.merchant.country = json.country
-    transaction.merchant.city = json.city
-    transaction.merchant.title = json.place
-  } else {
-    transaction.merchant.fullTitle = json.place
-  }
-}
-
-function parseComment (transaction, apiTransaction) {
-  if (!apiTransaction.description) { return false }
-
-  // переводы между счетами полезной информации не несут, гасим сразу
-  if (apiTransaction.description.indexOf('Пополнение при переводе между картами в Интернет-банке в рамках одного клиента') >= 0 ||
-    apiTransaction.description.indexOf('Списание при переводе в Интернет-банке в рамках одного клиента') >= 0 ||
-    apiTransaction.description.indexOf('Перевод с БПК МТБ в системе Р2Р') >= 0 ||
-    apiTransaction.description.indexOf('Перевод на БПК МТБ в системе Р2Р') >= 0 ||
-    apiTransaction.description.indexOf('Списание при переводе в Интернет-банке, произвольном платеже, оплате кредита') >= 0 ||
-    apiTransaction.description.indexOf('Перевод между своими картами') >= 0) {
-    return true
-  }
-  // в покупках комментарии не оставляем
-  if (apiTransaction.description.indexOf('Оплата товаров и услуг') >= 0 ||
-    apiTransaction.description.indexOf('Оплата товаров и услуг в сети МТБанка') >= 0 ||
-    apiTransaction.description.indexOf('Покупка с карты банка в устройстве партнера') >= 0 ||
-    apiTransaction.description.indexOf('Покупка с карты банка в чужом устройстве') >= 0 ||
-    apiTransaction.description.indexOf('Оплата в Интернет-банке') >= 0) {
-    return false
-  }
-  // сохраняем комментарий и гасим дальнейшую оработку
-  if (apiTransaction.description.indexOf('Перевод на карту другого клиента') >= 0) {
-    transaction.comment = apiTransaction.description
-    return true
-  }
-  transaction.comment = apiTransaction.description
-  return false
+  transaction.comment = data[0]
 }
 
 function getSumAmount (debitFlag, strAmount) {
-  const amount = Number.parseFloat(strAmount)
-  return debitFlag === '1' ? amount : -amount
+  const amount = Number.parseFloat(strAmount.replace(/\s/g, ''))
+  return debitFlag === '+' ? amount : -amount
 }
 
 export function getDate (str) {
   const [day, month, year] = str.match(/(\d{2}).(\d{2}).(\d{4})/).slice(1)
   return new Date(`${year}-${month}-${day}T00:00:00+03:00`)
+}
+
+export function getFullDate (str) {
+  const [day, month, year, hour, minute, second] = str.match(/(\d{2}).(\d{2}).(\d{4}) (\d{2}):(\d{2}):(\d{2})/).slice(1)
+  return new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}+03:00`)
 }
