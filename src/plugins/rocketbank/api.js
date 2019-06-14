@@ -211,7 +211,7 @@ async function verifyDevice (auth, verificationToken, deviceId) {
   let title = 'Введите код подтверждения из SMS для входа в Рокетбанк'
   let email = null
 
-  const code = await ZenMoney.readLine(title, { inputType: 'numberDecimal', time: 18E4 })
+  const code = await ZenMoney.readLine(title, { inputType: 'numberDecimal', time: 120000 })
   if (code === '') {
     throw new InvalidPreferencesError('Не был введён код авторизации устройства')
   }
@@ -223,7 +223,14 @@ async function verifyDevice (auth, verificationToken, deviceId) {
     headers: getHeaders(deviceId, null),
     body: { code: code },
     sanitizeRequestLog: { body: { code: true } },
-    sanitizeResponseLog: { body: { token: true, user: sanitizeUserResponse } }
+    sanitizeResponseLog: {
+      body: {
+        token: true,
+        pusher_token: true,
+        user: sanitizeUserResponse,
+        form: sanitizeUserResponse
+      }
+    }
   })
   // response => _.get(response, 'body.user.email'))
   // request('PATCH', '/sms_verifications/' + verificationToken + '/verify', { code: code }, deviceId, null)
