@@ -81,6 +81,7 @@ function getMovement (json, account) {
 function parseCash (transaction, json) {
   if ((json.mcc === '6011' && (json.description === null || json.description.indexOf('Комиссия') === -1)) ||
     json.description.indexOf('нятие наличных в АТМ') > 0 ||
+    json.description.indexOf('нятие наличных в ПВН') > 0 ||
     json.description.indexOf('ополнение нал') > 0 ||
     json.description === 'Внесение наличных' ||
     json.description === 'Выдача наличных') {
