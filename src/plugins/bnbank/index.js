@@ -11,11 +11,14 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   for (let i = 0; i < cards.length; i++) {
     lastTransactions = lastTransactions.concat(await bank.fetchLastCardTransactions(token, cards[i]))
   }
-  const deposits = accounts.deposits
-    .map(converters.convertDeposit)
-    .filter(account => account !== null)
+  var preparedAccounts = cards
+  if (accounts.deposits) {
+    const deposits = accounts.deposits
+      .map(converters.convertDeposit)
+      .filter(account => account !== null)
+    preparedAccounts = cards.concat(deposits)
+  }
 
-  const preparedAccounts = cards.concat(deposits)
   const transactions = (await bank.fetchTransactions(token, preparedAccounts, fromDate, toDate))
     .map(transaction => converters.convertTransaction(transaction, preparedAccounts))
   lastTransactions = lastTransactions
