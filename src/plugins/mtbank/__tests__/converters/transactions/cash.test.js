@@ -54,6 +54,54 @@ describe('convertTransaction', () => {
     })
   })
 
+  it('should convert cash withdraw transaction in bank', () => {
+    const transaction = convertTransaction({
+      accountId: 'BY36MTBK10110008000001111000',
+      amount: '1000.00',
+      balance: '1050.01',
+      cardPan: '111111******1111',
+      curr: 'EUR',
+      debitFlag: '0',
+      description: 'Снятие наличных в ПВН МТБанка 14171718',
+      error: null,
+      operationDate: '2019-03-18',
+      orderStatus: null,
+      place: 'MTB RKC 68',
+      country: 'BY',
+      city: 'MINSK',
+      status: 'T',
+      transAmount: '2351.00',
+      transDate: '2019-03-18 10:54:57',
+      mcc: '6010',
+      transactionId: '1111111',
+      rrn: '916407791111',
+      approvalCode: '111111'
+    }, accounts)
+
+    expect(transaction).toEqual({
+      hold: false,
+      date: new Date('2019-03-18T10:54:57+03:00'),
+      movements: [{
+        id: '1111111',
+        account: { id: '1113333' },
+        sum: -2351,
+        fee: 0,
+        invoice: {
+          instrument: 'EUR',
+          sum: -1000
+        }
+      }, {
+        id: null,
+        account: { company: null, type: 'cash', instrument: 'EUR', syncIds: null },
+        sum: 1000,
+        fee: 0,
+        invoice: null
+      }],
+      merchant: null,
+      comment: null
+    })
+  })
+
   it('should convert cash withdraw transaction', () => {
     const transaction = convertTransaction({
       accountId: 'BY36MTBK10110008000001111000',
