@@ -1,5 +1,4 @@
 export function convertAccount (acc) {
-  console.log(acc)
   switch (acc.type) {
     case 'deposit':
       let start = getDate(acc.details.match(/Дата открытия:\s(.[0-9.]*)/i)[1])
@@ -34,6 +33,7 @@ export function convertAccount (acc) {
 }
 
 export function convertTransaction (tr, accounts) {
+  console.log(tr)
   const account = accounts.find(account => {
     return account.syncID.indexOf(tr.accountID) !== -1
   })
@@ -115,7 +115,7 @@ function getSumAmount (debitFlag, strAmount) {
   return debitFlag === '+' ? amount : -amount
 }
 
-export function getDate (str) {
+function getDate (str) {
   const [day, month, year] = str.match(/(\d{2}).(\d{2}).(\d{4})/).slice(1)
   return new Date(`${year}-${month}-${day}T00:00:00+03:00`)
 }

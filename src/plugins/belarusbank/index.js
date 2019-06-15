@@ -16,12 +16,6 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   const deposits = (await bank.fetchDeposits(accountURLs.deposits))
     .map(converters.convertAccount)
     .filter(account => account !== null)
-  /* const accounts = (await bank.fetchURLAccounts(token))
-    .map(converters.convertAccount)
-    .filter(account => account !== null)
-  const transactions = (await bank.fetchTransactions(token, accounts, fromDate, toDate))
-    .map(transaction => converters.convertTransaction(transaction, accounts))
-    .filter(transaction => transaction !== null) */
   return {
     accounts: cards.concat(deposits),
     transactions: transactionsCard
