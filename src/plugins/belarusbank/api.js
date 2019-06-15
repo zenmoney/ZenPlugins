@@ -42,7 +42,6 @@ export async function login (prefs) {
   }, response => response.success, message => new InvalidPreferencesError('Сайт не доступен'))
 
   let url = res.body.match(/<form[^>]+action="([^"]*)"[^>]*name="LoginForm1"/i)
-  console.log(res)
   res = await fetchUrl(res.headers['content-location'] + url[1], {
     method: 'POST',
     headers: {
