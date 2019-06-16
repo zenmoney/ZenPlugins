@@ -44,9 +44,9 @@ export function convertAccount (json, accountType) {
         syncID: [json.internalAccountId],
         capitalization: true,
         startDate: new Date(json.openDate),
-        endDateOffset: new Date(json.endDate).getTime() / 1000,
+        endDateOffset: (new Date(json.endDate).getTime() - new Date(json.openDate).getTime()) / 1000 / 60 / 60 / 24,
+        endDateOffsetInterval: 'day',
         percent: json.interestRate,
-        endDateOffsetInterval: 'month',
         payoffInterval: 'month',
         payoffStep: 1,
         rkcCode: json.rkcCode
