@@ -39,7 +39,7 @@ export async function login (prefs) {
   }
   var res = await fetchUrl('/wps/portal/ibank/', {
     method: 'GET'
-  }, response => response.success, message => new InvalidPreferencesError('Сайт не доступен'))
+  }, response => response.success, message => new Error('Сайт не доступен'))
 
   let url = res.body.match(/<form[^>]+action="([^"]*)"[^>]*name="LoginForm1"/i)
   res = await fetchUrl(res.headers['content-location'] + url[1], {
@@ -55,7 +55,7 @@ export async function login (prefs) {
       bbibUnblockAction: '',
       bbibChangePwdByBlockedClientAction_sendSMS: ''
     }
-  }, response => response.success, message => new InvalidPreferencesError(''))
+  }, response => response.success, message => new Error(''))
 
   let codenum = res.body.match(/Введите[^>]*>код [N№]\s*(\d+)/i)
   codenum = codenum[1] - 1 // Потому что у нас коды с 0 нумеруются
@@ -85,7 +85,7 @@ export async function login (prefs) {
       field_5: res.body.match(/<input[^>]+name="field_5" value="(.[^"]*)" \/>/i)[1],
       code_number_expire_time: true
     }
-  }, response => response.success, message => new InvalidPreferencesError(''))
+  }, response => response.success, message => new Error(''))
 
   return res
 }
@@ -95,7 +95,7 @@ export async function fetchURLAccounts (loginRequest) {
   let url = loginRequest.body.match(/href="\/([^"]+)">\s*Счета/i)
   let res = await fetchUrl('/' + url[1], {
     method: 'GET'
-  }, response => response.success, message => new InvalidPreferencesError(''))
+  }, response => response.success, message => new Error(''))
 
   let urlCards = res.body.match(/<a\s*href="([^"]+)".*Счета с карточкой.*<\/a>/i)
   let urlDeposits = res.body.match(/<a\s*href="([^"]+)".*Депозиты.*<\/a>/i)
@@ -122,7 +122,7 @@ export async function fetchDeposits (url) {
   console.log('>>> Загрузка депозитов...')
   let res = await fetchUrl(url, {
     method: 'GET'
-  }, response => response.success, message => new InvalidPreferencesError(''))
+  }, response => response.success, message => new Error(''))
 
   let regex = /<td class="tdNoPadding" ><div.[^>]*><span.[^>]*>(.*?)<\/span><span.[^>]*>(.*?)<\/span><\/div><\/td><td class="tdNoPadding" ><div.[^>]*>(.*?)<\/div><\/td><td class="tdNoPadding" ><div.[^>]*><span.[^>]*>(.*?)<\/span><\/div><\/td><td class="tdNoPadding" ><div.[^>]*>(.*?)<\/div><\/td>.*?X<\/a><div.[^>]*>(.*?)<\/div><\/div><\/div><\/td>/ig
   let m
@@ -148,7 +148,7 @@ export async function fetchCards (url) {
   console.log('>>> Загрузка картсчетов...')
   let res = await fetchUrl(url, {
     method: 'GET'
-  }, response => response.success, message => new InvalidPreferencesError(''))
+  }, response => response.success, message => new Error(''))
 
   let regex = /<form id="viewns.*action="(.[^"]*)".*name="javax\.faces\.encodedURL" value="(.[^"]*)".*cellLable">(.[^>]*)<\/div><\/td><td class="tdBalance">.*return myfaces\.oam\.submitForm\((.*)\);.*title="Получить отчёт по заблокированным операциям.*<nobr>(.*)<\/nobr> (.[A-Z]*).*<td class="tdNumber"><div class="cellLable">(.[0-9*]*)<\/div>.*id="javax\.faces\.ViewState" value="(.[^"]*)/ig
   let m
@@ -192,7 +192,7 @@ export async function fetchCardsTransactions (acc) {
       'Content-Type': 'application/x-www-form-urlencoded'
     },
     body: body
-  }, response => response.success, message => new InvalidPreferencesError(''))
+  }, response => response.success, message => new Error(''))
 
   let regex = /<tr class='(.[^']*)'>.[^']*">(.[0-9.]*) (.[0-9:]*)<.[^']*">(.[+-]*)<\/span.[^']*">(.[0-9 .]*)<\/span.[^']*">(.[A-Z]*)<\/span.[^']*">(.[0-9 .]*)<\/span.[^']*">(.[A-Z]*)<\/span.[^а-я]*Наименование операции: (.[^<]*)<\/span.[^а-я]*Точка обслуживания: (.[^<]*)/ig
   let m
