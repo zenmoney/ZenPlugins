@@ -1,6 +1,5 @@
 import { convertTransaction } from '../../../converters'
 
-
 describe('convertTransaction', () => {
   let account = {
     id: 'BY75AKBB30141000022233030000',
