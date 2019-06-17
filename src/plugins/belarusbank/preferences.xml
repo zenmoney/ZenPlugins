@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="login"
+        obligatory="true"
+        title="Логин"
+        dialogTitle="Логин"
+        dialogMessage="Логин"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="||{@s}"
+    />
+    <EditTextPreference
+        key="password"
+        obligatory="true"
+        inputType="textPassword"
+        title="Пароль от Беларусбанк"
+        dialogTitle="Пароль от Беларусбанк"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="||***********"
+    />
+    <EditTextPreference
+        key="codes0"
+        obligatory="true"
+        inputType="phone"
+        title="Коды 1-10"
+        dialogTitle="Коды 1-10"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|Введите коды 1-10 через пробел|****">
+    </EditTextPreference>
+    <EditTextPreference
+        key="codes1"
+        obligatory="true"
+        inputType="phone"
+        title="Коды 11-20"
+        dialogTitle="Коды 11-20"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|Введите коды 11-20 через пробел|****">
+    </EditTextPreference>
+    <EditTextPreference
+        key="codes2"
+        obligatory="true"
+        inputType="phone"
+        title="Коды 21-30"
+        dialogTitle="Коды 21-30"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|Введите коды 21-30 через пробел|****">
+    </EditTextPreference>
+    <EditTextPreference
+        key="codes3"
+        obligatory="true"
+        inputType="phone"
+        title="Коды 31-40"
+        dialogTitle="Коды 31-40"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|Введите коды 31-40 через пробел|****">
+    </EditTextPreference>
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="С какой даты загружать операции"
+        defaultValue="2019-01-01T00:00:00.000Z"
+        dialogTitle="С какой даты загружать операции"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|startDate|{@s}"
+    />
+</PreferenceScreen>
