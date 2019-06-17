@@ -102,11 +102,11 @@ function parsePayee (transaction, tr) {
   if (data.length === 0) {
     return false
   }
-  transaction.merchant = {
+  /* transaction.merchant = {
     mcc: data[1] !== '' ? Number.parseInt(data[1]) : null,
     location: null,
     fullTitle: ''
-  }
+  } */ // Пока мало инфы, чтоб парсить
   transaction.comment = data[0]
 }
 
