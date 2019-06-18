@@ -242,58 +242,6 @@ describe('convertTransaction', () => {
       },
       {
         __type: 'ru.vtb24.mobilebanking.protocol.statement.CardTransactionMto',
-        id: 'UxyFDmFrU9H5zcg2Blf8Xdo5cv4=;rHqO/DOMvX+E12mf0FQg3WkgC/Q=',
-        details: 'Начисленные %',
-        isHold: false,
-        statusName: null,
-        transactionAmountInAccountCurrency:
-          {
-            __type: 'ru.vtb24.mobilebanking.protocol.AmountMto',
-            sum: -466.3,
-            currency:
-              {
-                __type: 'ru.vtb24.mobilebanking.protocol.CurrencyMto',
-                currencyCode: 'RUR',
-                name: 'Рубль России',
-                displaySymbol: '₽'
-              }
-          },
-        debet: '<ref[17]>',
-        transactionDate: new Date('Fri Dec 28 2018 00:00:00 GMT+0300 (MSK)'),
-        processedDate: new Date('Sun Dec 30 2018 00:00:00 GMT+0300 (MSK)'),
-        transactionAmount:
-          {
-            __type: 'ru.vtb24.mobilebanking.protocol.AmountMto',
-            sum: 466.3,
-            currency:
-              {
-                __type: 'ru.vtb24.mobilebanking.protocol.CurrencyMto',
-                currencyCode: 'RUR',
-                name: 'Рубль России',
-                displaySymbol: '₽'
-              }
-          },
-        feeAmount:
-          {
-            __type: 'ru.vtb24.mobilebanking.protocol.AmountMto',
-            sum: 0,
-            currency:
-              {
-                __type: 'ru.vtb24.mobilebanking.protocol.CurrencyMto',
-                currencyCode: 'RUR',
-                name: 'Рубль России',
-                displaySymbol: '₽'
-              }
-          },
-        order: null,
-        status:
-          {
-            __type: 'ru.vtb24.mobilebanking.protocol.StatusMto',
-            id: 'SUCCESS'
-          }
-      },
-      {
-        __type: 'ru.vtb24.mobilebanking.protocol.statement.CardTransactionMto',
         id: '5x68QJ9sIpVHryQQflawldCFCPc=;ZDvGUy6vxtxx72SQZ4YAUFRLDBw=',
         details: 'Покупка RUS SANKT-PETERBU MAGNIT MM LEVACKIY ',
         isHold: false,
@@ -457,21 +405,6 @@ describe('convertTransaction', () => {
             account: { id: 'account' },
             invoice: null,
             sum: -39,
-            fee: 0
-          }
-        ]
-      },
-      {
-        comment: 'Начисленные %',
-        date: new Date('2018-12-27T21:00:00.000Z'),
-        hold: false,
-        merchant: null,
-        movements: [
-          {
-            id: 'rHqO/DOMvX+E12mf0FQg3WkgC/Q=',
-            account: { id: 'account' },
-            invoice: null,
-            sum: 466.3,
             fee: 0
           }
         ]

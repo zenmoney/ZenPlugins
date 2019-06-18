@@ -327,6 +327,11 @@ export function convertTransaction (apiTransaction, account) {
     return null
   }
   const invoice = getInvoice(apiTransaction, account)
+  if (apiTransaction.details && [
+    'Начисленные %'
+  ].some(str => apiTransaction.details.indexOf(str) >= 0)) {
+    invoice.sum = -Math.abs(invoice.sum)
+  }
   amount.sum = Math.sign(invoice.sum) * Math.abs(amount.sum)
   const transaction = {
     comment: null,
