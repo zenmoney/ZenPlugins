@@ -265,7 +265,7 @@ function parseOutcomeTransfer (transaction, apiTransaction, account) {
     return false
   }
   const receiver = _.get(details, 'receiverAccount.stringType.value') || apiTransaction.to
-  const match = receiver && receiver.match(/(\d{4})$/)
+  const match = receiver && receiver.match(/(\d{2}\s?\d{2})$/)
   if (!match && !outerAccount) {
     return false
   }
@@ -281,7 +281,7 @@ function parseOutcomeTransfer (transaction, apiTransaction, account) {
       type: isP2PTransfer ? 'ccard' : outerAccount ? outerAccount.type : null,
       instrument: invoice.instrument,
       company: apiTransaction.description === 'Перевод клиенту Сбербанка' ? { id: '4624' } : outerAccount ? outerAccount.company : null,
-      syncIds: match ? [match[1]] : null
+      syncIds: match ? [match[1].replace(/\s+/, '')] : null
     },
     invoice: null,
     sum: -invoice.sum,

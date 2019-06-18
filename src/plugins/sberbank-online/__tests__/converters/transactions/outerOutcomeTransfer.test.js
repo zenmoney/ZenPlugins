@@ -315,6 +315,207 @@ describe('convertTransaction', () => {
       },
       comment: null
     })
+
+    expect(convertTransaction({
+      id: '16482158030',
+      ufsId: null,
+      state: 'EXECUTED',
+      date: '11.06.2019T15:00:51',
+      from: 'Visa Classic 4276 62** **** 3232',
+      to: 'НИКОЛАЙ НИКОЛАЕВИЧ Н.                                                        6390 02** **** **23 93',
+      description: 'Перевод клиенту Сбербанка',
+      operationAmount: { amount: '-700.00', currency: { code: 'RUB', name: 'руб.' } },
+      isMobilePayment: 'true',
+      copyable: 'true',
+      templatable: 'true',
+      autopayable: 'true',
+      type: 'payment',
+      invoiceSubscriptionSupported: 'false',
+      invoiceReminderSupported: 'false',
+      form: 'RurPayment',
+      imageId: { staticImage: { url: null } },
+      details: {
+        documentNumber:
+          {
+            name: 'documentNumber',
+            title: 'Номер документа',
+            type: 'integer',
+            required: 'true',
+            editable: 'false',
+            visible: 'true',
+            integerType: { value: '526817' },
+            changed: 'false'
+          },
+        documentDate:
+          {
+            name: 'documentDate',
+            title: 'Дата документа',
+            type: 'date',
+            required: 'true',
+            editable: 'false',
+            visible: 'true',
+            dateType: { value: '11.06.2019' },
+            changed: 'false'
+          },
+        isFundPayment:
+          {
+            name: 'isFundPayment',
+            title: 'Является ли перевод оплатой сбора средств',
+            type: 'boolean',
+            required: 'false',
+            editable: 'false',
+            visible: 'false',
+            booleanType: { value: 'false' },
+            changed: 'false'
+          },
+        receiverAccount:
+          {
+            name: 'receiverAccount',
+            title: 'Номер счета/карты получателя',
+            type: 'string',
+            required: 'true',
+            editable: 'false',
+            visible: 'true',
+            stringType: { value: '6390 02** **** **23 93' },
+            changed: 'false'
+          },
+        receiverPhone:
+          {
+            name: 'externalPhoneNumber',
+            title: 'Номер телефона получателя',
+            type: 'integer',
+            required: 'true',
+            editable: 'false',
+            visible: 'true',
+            integerType: { value: '9122222222' },
+            changed: 'false'
+          },
+        receiverName:
+          {
+            name: 'receiverName',
+            title: 'ФИО получателя',
+            type: 'string',
+            required: 'true',
+            editable: 'false',
+            visible: 'true',
+            stringType: { value: 'НИКОЛАЙ НИКОЛАЕВИЧ Н.' },
+            changed: 'false'
+          },
+        fromResource:
+          {
+            name: 'fromResource',
+            title: 'Счет списания',
+            type: 'resource',
+            required: 'false',
+            editable: 'false',
+            visible: 'true',
+            resourceType:
+              {
+                availableValues:
+                  {
+                    valueItem:
+                      {
+                        value: 'card:636085621',
+                        selected: 'true',
+                        displayedValue: '4276 62** **** 3232 [Visa Classic]',
+                        currency: 'RUB'
+                      }
+                  }
+              },
+            changed: 'false'
+          },
+        sellAmount:
+          {
+            name: 'sellAmount',
+            title: 'Сумма в валюте списания',
+            type: 'money',
+            required: 'true',
+            editable: 'false',
+            visible: 'true',
+            moneyType: { value: '700.00' },
+            changed: 'false'
+          },
+        sellCurrency:
+          {
+            name: 'sellAmountCurrency',
+            title: 'Валюта списания',
+            type: 'string',
+            required: 'true',
+            editable: 'false',
+            visible: 'true',
+            stringType: { value: 'RUB' },
+            changed: 'false'
+          },
+        buyAmount:
+          {
+            name: 'buyAmount',
+            title: 'Сумма зачисления',
+            type: 'money',
+            required: 'true',
+            editable: 'false',
+            visible: 'false',
+            moneyType: null,
+            changed: 'false'
+          },
+        commission: { amount: '7.00', currency: { code: 'RUB', name: 'руб.' } },
+        admissionDate:
+          {
+            name: 'admissionDate',
+            title: 'Плановая дата исполнения',
+            type: 'date',
+            required: 'true',
+            editable: 'false',
+            visible: 'true',
+            dateType: { value: '11.06.2019' },
+            changed: 'false'
+          },
+        messageToReceiverStatus:
+          {
+            name: 'messageToReceiverStatus',
+            title: 'Статус SMS-сообщения',
+            type: 'string',
+            required: 'false',
+            editable: 'false',
+            visible: 'true',
+            stringType: { value: 'сообщение будет отправлено' },
+            changed: 'false'
+          }
+      }
+    }, { id: 'account', instrument: 'RUB' })).toEqual({
+      hold: false,
+      date: new Date('2019-06-11T15:00:51+03:00'),
+      movements: [
+        {
+          id: '16482158030',
+          account: { id: 'account' },
+          invoice: null,
+          sum: -700,
+          fee: -7
+        },
+        {
+          id: null,
+          account: {
+            type: null,
+            instrument: 'RUB',
+            company: {
+              id: '4624'
+            },
+            syncIds: ['2393']
+          },
+          invoice: null,
+          sum: 700,
+          fee: 0
+        }
+      ],
+      merchant: {
+        title: 'НИКОЛАЙ НИКОЛАЕВИЧ Н.',
+        city: null,
+        country: null,
+        mcc: null,
+        location: null
+      },
+      comment: null
+    })
   })
 
   it('converts outer outcome transfer to known bank but account syncId is absent', () => {
