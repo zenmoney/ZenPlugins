@@ -78,6 +78,7 @@ const sanitizeUserResponse = {
   change_pin: { check_card: { name: true } },
   email: true,
   phone: true,
+  phone_number: true,
   owner: true,
   pusher_token: true,
   login_token: true,
@@ -334,7 +335,8 @@ async function fetchApiJson (url, options, predicate) {
     } else if (!options.ignoreErrors) {
       throw new Error(`Ошибка #${e.response.status}: ${e.response.description}`)
     } else {
-      return response
+      throw new Error()
+      // return response
     }
   }
 
