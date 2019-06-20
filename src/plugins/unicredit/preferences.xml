@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="login"
+        title="Логин"
+        dialogTitle="Логин"
+        summary="||{@s}"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        obligatory="true">
+    </EditTextPreference>
+    <EditTextPreference
+        key="password"
+        title="Пароль"
+        dialogTitle="Пароль"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        inputType="textPassword"
+        summary="||***********"
+        obligatory="true">
+    </EditTextPreference>
+    <EditTextPreference
+        key="startDate"
+        title="С какой даты загружать операции"
+        dialogTitle="С какой даты загружать операции"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        inputType="date"
+        summary="|гггг-мм-дд|{@s}"
+        obligatory="true">
+    </EditTextPreference>
+</PreferenceScreen>
