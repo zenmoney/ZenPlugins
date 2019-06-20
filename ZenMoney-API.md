@@ -2,27 +2,29 @@
 Описание API работы с данными Дзен-мани.
 
 
-- [ZenMoney API](#zenmoney-api)
- - [Авторизация](#auth)
- - [Сущности](#entities)
-     - [Instrument](#instrument)
-     - [Company](#company)
-     - [User](#user)
-     - [Account](#account)
-     - [Tag](#tag)
-     - [Merchant](#merchant)
-     - [Reminder](#reminder)
-     - [ReminderMarker](#remindermarker)
-     - [Transaction](#transaction)
-     - [Budget](#budget)
- - [Принцип работы](#principles)
-   - [Diff](#diff)
-     - [Diff object](#diff-object)
-   - [Suggest](#suggest)
+- [Авторизация](#auth)
+- [Сущности](#entities)
+    - [Instrument](#instrument)
+    - [Company](#company)
+    - [User](#user)
+    - [Account](#account)
+    - [Tag](#tag)
+    - [Merchant](#merchant)
+    - [Reminder](#reminder)
+    - [ReminderMarker](#remindermarker)
+    - [Transaction](#transaction)
+    - [Budget](#budget)
+- [Принцип работы](#principles)
+    - [Diff](#diff)
+        - [Diff object](#diff-object)
+    - [Suggest](#suggest)
 
 ## Авторизация <a name="auth"></a>
-Происходит через протокол [OAuth 2.0](https://habrahabr.ru/company/mailru/blog/115163/). 
-Основные URL:
+Происходит через протокол [OAuth 2.0](https://habrahabr.ru/company/mailru/blog/115163/).
+
+Зарегистрировать свой клиент можно с помощью скрипта на [странице](http://developers.zenmoney.ru/index.html) старой документации. После этого используем полученные consumer_key, consumer_secret и введенный OAuth callback point url в качестве соответственно client_id, client_secret и redirect_uri протокола OAuth 2.0
+
+Основные URL авторизации:
 
 https://api.zenmoney.ru/oauth2/authorize/
 
