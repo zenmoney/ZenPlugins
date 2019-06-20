@@ -448,7 +448,6 @@ Reminder с такими параметрами означает, что нуж�
 #### Budget
 ```
 {
-    id:      String // UUID
     changed: Int    // Unix timestamp 
     user:    Int  -> User.id
 	
