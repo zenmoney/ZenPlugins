@@ -9,7 +9,7 @@ describe('convertAccount', () => {
       'currency': '643',
       'balance': {
         'otb': 54202.31,
-        'authorized': 0,
+        'authorized': 9952.48,
         'pendingPayments': 0,
         'pendingRequisitions': 0
       }
@@ -18,7 +18,7 @@ describe('convertAccount', () => {
       type: 'checking',
       title: 'Мой счет',
       instrument: 'RUB',
-      balance: 54202.31,
+      balance: 64154.79,
       syncID: ['40702810610000000179']
     })
   })

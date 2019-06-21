@@ -30,9 +30,10 @@ async function fetchJson (url, options = {}, predicate = () => true) {
       throw e
     }
   }
-  if (response.body &&
-    response.body.errorMessage &&
-    response.body.errorMessage.indexOf('попробуйте позже') >= 0) {
+  if (response.body && response.body.errorMessage && [
+    'попробуйте позже',
+    'временно не доступен'
+  ].some(str => response.body.errorMessage.indexOf(str) >= 0)) {
     throw new TemporaryError('Информация из Тинькофф Бизнес временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
   }
   if (predicate) {

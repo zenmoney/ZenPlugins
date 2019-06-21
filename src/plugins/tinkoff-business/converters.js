@@ -7,7 +7,7 @@ export function convertAccount (apiAccount) {
     type: 'checking',
     title: apiAccount.name ? apiAccount.name : ('Счёт ' + currencies[apiAccount.currency]),
     instrument: currencies[apiAccount.currency],
-    balance: apiAccount.balance.otb,
+    balance: Math.round((apiAccount.balance.otb + apiAccount.balance.authorized) * 100) / 100,
     syncID: [apiAccount.accountNumber]
   }
 }
