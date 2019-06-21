@@ -8,8 +8,8 @@ import { randomInt } from '../../common/utils'
 
 const md5 = new MD5()
 
-const PROTOCOL_VERSION = '2.37.3'
-const APP_VERSION = '9.37.16'
+const PROTOCOL_VERSION = '14.32.2'
+const APP_VERSION = '14.32.2'
 const deviceName = 'Zenmoney'
 
 export function createSdkData (login) {
