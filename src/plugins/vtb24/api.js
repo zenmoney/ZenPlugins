@@ -8,7 +8,7 @@ import { randomInt } from '../../common/utils'
 
 const md5 = new MD5()
 
-const PROTOCOL_VERSION = '2.37.3'
+const PROTOCOL_VERSION = '14.0.0'
 const APP_VERSION = '9.37.16'
 const deviceName = 'Zenmoney'
 
