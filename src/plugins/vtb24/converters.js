@@ -446,7 +446,8 @@ function parseInnerTransfer (apiTransaction, transaction, account) {
 function parseCashTransaction (apiTransaction, transaction, account) {
   if (![
     'Снятие в банкомате',
-    'Пополнение через банкомат'
+    'Пополнение через банкомат',
+    'Внесение наличных через банкомат'
   ].some(pattern => apiTransaction.details.indexOf(pattern) >= 0)) {
     return false
   }
