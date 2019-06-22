@@ -7,6 +7,9 @@ export function convertAccounts (apiAccounts) {
       case 'account':
         converter = convertAccount
         break
+      case 'card':
+        converter = convertCard
+        break
       case 'credit':
         converter = convertLoan
         break
@@ -34,6 +37,20 @@ export function convertAccount (apiAccount) {
       syncID: [apiAccount.number],
       balance: parseDecimal(apiAccount.rest)
     }
+  }
+}
+
+export function convertCard (apiAccount) {
+  const { account, product } = convertAccount(apiAccount)
+  product.id = apiAccount.account
+  account.id = apiAccount.account
+  account.type = 'ccard'
+  if (apiAccount.account.length === 20) {
+    account.syncID.push(apiAccount.account)
+  }
+  return {
+    product,
+    account
   }
 }
 
