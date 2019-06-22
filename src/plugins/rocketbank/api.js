@@ -244,6 +244,9 @@ async function verifyDevice (auth, verificationToken, deviceId) {
 
   email = _.get(response, 'body.user.email')
   if (!email) {
+    email = _.get(response, 'body.form.email')
+  }
+  if (!email) {
     throw new Error('Не удалось обнаружить необходимый email в ответе банка')
   }
 
