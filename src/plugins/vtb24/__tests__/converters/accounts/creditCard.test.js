@@ -1,4 +1,4 @@
-import { convertCardAccount } from '../../../converters'
+import { convertAccounts, convertCardAccount } from '../../../converters'
 
 describe('convertAccount', () => {
   it('converts credit card', () => {
@@ -212,14 +212,16 @@ describe('convertAccount', () => {
             __type: 'ru.vtb24.mobilebanking.protocol.CurrencyMto',
             currencyCode: 'RUR',
             name: 'Рубль России',
-            displaySymbol: '₽' },
+            displaySymbol: '₽'
+          },
           limits: null,
           balance: {
             __type: 'ru.vtb24.mobilebanking.protocol.product.CardBalanceMto',
             amountSum: -31180.35,
             allowedSum: 268819.65,
             authorizedSum: 2129.7,
-            balanceDate: null },
+            balanceDate: null
+          },
           lockedDate: null,
           status: {
             __type: 'ru.vtb24.mobilebanking.protocol.product.CardStatusMto',
@@ -257,5 +259,189 @@ describe('convertAccount', () => {
         }
       }
     )
+  })
+
+  it('converts credit card account with archive card', () => {
+    const product = {
+      __type: 'ru.vtb24.mobilebanking.protocol.product.ProductGroupMto',
+      type: 'CREDIT_CARD_ACCOUNT',
+      mainProduct: {
+        __type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardMto',
+        number: '427230******5132',
+        brandName: 'Visa',
+        embossed: 'N NIKOLAEV',
+        cardHolder: 'Николаев Н.Н.',
+        isAuthenticationalCard: false,
+        coBrandName: null,
+        isEmitedForOwner: true,
+        shortNumber: '427230******5132',
+        icon: null,
+        cardHolderLastName: 'Николаев',
+        cardHolderFirstName: 'Николай',
+        cardHolderPatronymic: 'Николаевич',
+        nameOnCard: null,
+        statusDisplayName: 'Карта заблокирована',
+        statusToolTip: null,
+        isMain: false,
+        hasDependantCards: false,
+        name: 'Gold',
+        displayName: 'Gold',
+        showOnMainPage: true,
+        archived: false,
+        detailLevel: 'List',
+        id: '6366B67FCC77431D9AAD9FF74CFE0D65',
+        stub: null,
+        ver: 2673603493782812,
+        issueDate: new Date('Mon Jan 01 1900 00:00:00 GMT+0300 (MSK)'),
+        expireDate: new Date('Tue May 31 2022 00:00:00 GMT+0300 (MSK)'),
+        baseCurrency: {
+          __type: 'ru.vtb24.mobilebanking.protocol.CurrencyMto',
+          currencyCode: 'RUR',
+          name: 'Рубль России',
+          displaySymbol: '₽'
+        },
+        limits: null,
+        balance: {
+          __type: 'ru.vtb24.mobilebanking.protocol.product.CardBalanceMto',
+          amountSum: -13975.18,
+          allowedSum: 16024.82,
+          authorizedSum: 329.54,
+          availableOwnBalance: 0,
+          balanceDate: null
+        },
+        lockedDate: new Date('Sat May 18 2019 00:00:00 GMT+0300 (MSK)'),
+        status: {
+          __type: 'ru.vtb24.mobilebanking.protocol.product.CardStatusMto',
+          id: 'Locked'
+        },
+        cardAccount: {
+          __type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardAccountMto',
+          creditLimit: 30000,
+          number: '427230******5132',
+          name: 'Gold',
+          displayName: 'Gold',
+          showOnMainPage: true,
+          archived: false,
+          detailLevel: 'List',
+          id: 'AC25ABEA9D7A4D76B326E5807119EBB7',
+          stub: null,
+          ver: 2673603493782895,
+          loanInfo: null,
+          cards: [
+            '',
+            {
+              __type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardMto',
+              number: '535082******6235',
+              brandName: 'MasterCard',
+              embossed: ' CARDHOLDER',
+              cardHolder: 'Николаев Н.Н.',
+              isAuthenticationalCard: false,
+              coBrandName: null,
+              isEmitedForOwner: true,
+              shortNumber: '535082******6235',
+              icon: 'Muylticard-VTB-NEW',
+              cardHolderLastName: 'Николаев',
+              cardHolderFirstName: 'Николай',
+              cardHolderPatronymic: 'Николаевич',
+              nameOnCard: null,
+              statusDisplayName: 'Активна',
+              statusToolTip: null,
+              isMain: false,
+              hasDependantCards: false,
+              name: 'Instant Issue',
+              displayName: 'Instant Issue',
+              showOnMainPage: true,
+              archived: false,
+              detailLevel: 'List',
+              id: '1054838DA6524B8E98EED62267800942',
+              stub: null,
+              ver: 2673603493782811,
+              issueDate: new Date('Wed Apr 24 2019 00:00:00 GMT+0300 (MSK)'),
+              expireDate: new Date('Tue Apr 30 2024 00:00:00 GMT+0300 (MSK)'),
+              baseCurrency: {
+                __type: 'ru.vtb24.mobilebanking.protocol.CurrencyMto',
+                currencyCode: 'RUR',
+                name: 'Рубль России',
+                displaySymbol: '₽'
+              },
+              limits: null,
+              balance: {
+                __type: 'ru.vtb24.mobilebanking.protocol.product.CardBalanceMto',
+                amountSum: -13975.18,
+                allowedSum: 16024.82,
+                authorizedSum: 329.54,
+                availableOwnBalance: 0,
+                balanceDate: null
+              },
+              lockedDate: null,
+              status: {
+                __type: 'ru.vtb24.mobilebanking.protocol.product.CardStatusMto',
+                id: 'Active'
+              },
+              cardAccount: '',
+              logistics: null,
+              bonusProgram: {
+                __type: 'ru.vtb24.mobilebanking.protocol.ObjectIdentityMto',
+                type: 'ru.vtb24.mobilebanking.protocol.product.BonusProgramMto',
+                id: 'MULTICARTA'
+              },
+              paymentSystemBinding: null,
+              details: null
+            }
+          ],
+          mainCard: '',
+          status: '',
+          openDate: new Date('Mon Jan 01 1900 00:00:00 GMT+0300 (MSK)'),
+          lastOperationDate: null,
+          closeDate: null,
+          amount: {
+            __type: 'ru.vtb24.mobilebanking.protocol.AmountMto',
+            sum: 16024.82,
+            currency: {
+              __type: 'ru.vtb24.mobilebanking.protocol.CurrencyMto',
+              currencyCode: 'RUR',
+              name: 'Рубль России',
+              displaySymbol: '₽'
+            }
+          },
+          paymentSystemBinding: null,
+          details: null
+        },
+        logistics: null,
+        bonusProgram: null,
+        paymentSystemBinding: null,
+        details: null
+      },
+      products: ['']
+    }
+    product.products = [product.mainProduct]
+    product.mainProduct.cardAccount.cards[0] = product.mainProduct
+    product.mainProduct.cardAccount.mainCard = product.mainProduct
+    expect(convertAccounts([
+      {
+        id: 'CARDS',
+        productGroups: [product]
+      }
+    ])).toEqual([
+      {
+        mainProduct: {
+          id: '1054838DA6524B8E98EED62267800942',
+          type: 'ru.vtb24.mobilebanking.protocol.product.CreditCardMto'
+        },
+        products: [],
+        zenAccount: {
+          id: 'AC25ABEA9D7A4D76B326E5807119EBB7',
+          type: 'ccard',
+          title: 'Instant Issue',
+          instrument: 'RUB',
+          balance: -13975.18,
+          creditLimit: 30000,
+          syncID: [
+            '535082******6235',
+            '427230******5132'
+          ]
+        }
+      }
+    ])
   })
 })

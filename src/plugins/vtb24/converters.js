@@ -115,7 +115,7 @@ export function convertCardAccount (apiAccount) {
 
   let amount = apiAccount.amount
   const cards = apiAccount.cards ? apiAccount.cards.filter(card => {
-    return card && card.status && card.status.id === 'ACTIVE' && !card.archived
+    return card && card.status && card.status.id && card.status.id.toUpperCase() === 'ACTIVE' && !card.archived
   }) : []
 
   if (cards.length > 0) {
@@ -128,7 +128,7 @@ export function convertCardAccount (apiAccount) {
       }
     }
     if (apiAccount.__type === 'ru.vtb24.mobilebanking.protocol.product.CreditCardAccountMto') {
-      const mainCard = apiAccount.mainCard || cards[0]
+      const mainCard = apiAccount.mainCard && cards.some(card => card.id === apiAccount.mainCard.id) ? apiAccount.mainCard : cards[0]
       mainProduct = { id: mainCard.id, type: mainCard.__type }
     }
     cards.forEach((card, i) => {
