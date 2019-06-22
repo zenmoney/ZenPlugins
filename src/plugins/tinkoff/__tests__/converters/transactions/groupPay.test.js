@@ -12,6 +12,98 @@ const accounts = {
 const transactions = [
   [
     {
+      isDispute: false,
+      hasStatement: true,
+      isSuspicious: false,
+      id: '1536025716',
+      offers: [],
+      status: 'OK',
+      idSourceType: 'Online',
+      type: 'Debit',
+      locations: [],
+      loyaltyBonus: [],
+      cashbackAmount: {
+        currency: {
+          code: 643,
+          name: 'RUB',
+          strCode: '643'
+        },
+        value: 0
+      },
+      authMessage: 'Операция утверждена.',
+      description: '',
+      cashback: 0,
+      amount: {
+        currency: {
+          code: 643,
+          name: 'RUB',
+          strCode: '643'
+        },
+        value: 87550.55
+      },
+      operationTime: {
+        milliseconds: 1561104374000
+      },
+      spendingCategory: {
+        id: '51',
+        name: 'Другое',
+        icon: '33',
+        parentId: '8'
+      },
+      isHce: false,
+      mcc: 9999,
+      category: {
+        id: '33',
+        name: 'ДРУГИЕ ОПЕРАЦИИ'
+      },
+      additionalInfo: [],
+      virtualPaymentType: 0,
+      account: 'accountId',
+      ucid: '1037018117',
+      merchant: {
+        name: '',
+        region: {
+          country: 'RU',
+          city: 'MOSCOW'
+        }
+      },
+      card: '37498085',
+      loyaltyPayment: [],
+      group: 'PAY',
+      mccString: '9999',
+      cardPresent: false,
+      isExternalCard: false,
+      cardNumber: '553691******1991',
+      accountAmount: {
+        currency: {
+          code: 643,
+          name: 'RUB',
+          strCode: '643'
+        },
+        value: 87550.55
+      }
+    },
+    {
+      'comment': null,
+      'date': new Date('2019-06-21T08:06:14+00:00'),
+      'hold': true,
+      'merchant': null,
+      'movements': [
+        {
+          '_id': '1536025716',
+          'account': {
+            'id': 'accountId'
+          },
+          'fee': 0,
+          'id': '1536025716',
+          'invoice': null,
+          'sum': -87550.55
+        }
+      ]
+    }
+  ],
+  [
+    {
       hasStatement: true,
       isSuspicious: false,
       id: '1165931124',
@@ -369,8 +461,8 @@ describe('convertTransaction', () => {
   }
 })
 
-describe('convertOneTransaction', () => {
-  const i = 2
+xdescribe('convertOneTransaction', () => {
+  const i = 0
   it('should convert transaction ' + i, () => {
     expect(
       convertTransaction(transactions[i][0], accounts[transactions[i][0].account])

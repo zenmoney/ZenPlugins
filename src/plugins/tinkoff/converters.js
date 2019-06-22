@@ -357,7 +357,9 @@ function parsePayGroup (transaction, apiTransaction) {
   } else if (brand) {
     resultMerchant.title = brand.name
   }
-  transaction.merchant = resultMerchant
+  if (resultMerchant.title) {
+    transaction.merchant = resultMerchant
+  }
 
   return true
 }
