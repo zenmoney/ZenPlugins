@@ -21,6 +21,13 @@ const accounts = {
     type: 'checking',
     syncID: ['0000'],
     instrument: 'RUB'
+  },
+  'accountRUB2': {
+    id: 'accountRUB2',
+    title: 'Рублевый счет',
+    type: 'checking',
+    syncID: ['0000'],
+    instrument: 'RUB'
   }
 }
 
@@ -904,6 +911,79 @@ const transactions = {
           }
         ]
       }
+    ],
+
+    [
+      {
+        exchange_details: null,
+        id: 322842804,
+        status: 'confirmed',
+        comment: null,
+        tag_list: [],
+        friend_transfer_type: null,
+        receipt_url: 'https://rocketbank.ru/receipt/ad129334-b8092848-e2099c6e-1efd79f2-3db018b3-d497c4e4',
+        context_type: 'internal_cash_in',
+        details: 'Рублевый счет → Рублевый счет',
+        has_receipt: true,
+        friend: {
+          id: 873328,
+          userpic_url: null,
+          first_name: 'Денис',
+          last_name: 'Новиков',
+          cover_url: null
+        },
+        mimimiles: 0,
+        happened_at: 1560963465,
+        sputnik: false,
+        display_money: {
+          amount: 89240,
+          currency_code: 'RUB'
+        },
+        money: {
+          amount: 89240,
+          currency_code: 'RUB'
+        },
+        category: {
+          id: 437,
+          name: 'Доход',
+          display_name: 'Доход',
+          icon: 'income',
+          sub_icon: '437'
+        },
+        merchant: {
+          id: 615217,
+          name: 'Рублевый счет → Рублевый счет',
+          feed_icon: null,
+          icon: null,
+          iphone_small: null,
+          iphone_big: null,
+          android: null
+        },
+        location: {
+          latitude: null,
+          longitude: null,
+          acc: null
+        },
+        visible: true,
+        action: null
+      },
+      {
+        'comment': 'Рублевый счет → Рублевый счет',
+        'date': new Date('2019-06-19T16:57:45+00:00'),
+        'hold': false,
+        'merchant': null,
+        'movements': [
+          {
+            'account': {
+              'id': 'accountRUB2'
+            },
+            'fee': 0,
+            'id': null,
+            'invoice': null,
+            'sum': -89240
+          }
+        ]
+      }
     ]
   ],
 
@@ -1529,8 +1609,8 @@ describe('convertTransaction', () => {
 
 xdescribe('convertOneTransaction', () => {
   initTitleAccounts()
-  const type = 'card2card_cash_out_other'
-  const num = 2
+  const type = 'internal_cash_in'
+  const num = 3
   it(`should convert '${type}' ${num}`, () => {
     expect(
       convertAccountTransaction(transactions[type][num][0], accounts['cardRUB'], titleAccounts)

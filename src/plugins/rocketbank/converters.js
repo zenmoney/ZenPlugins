@@ -220,6 +220,11 @@ export function convertAccountTransaction (apiTransaction, account, titleAccount
               }
             ]
           }
+
+          if (transaction.movements[0].account.id === transaction.movements[1].account.id) {
+            transaction.movements.pop()
+            console.log('>>> Перевод \'internal_cash_in\' со счёта на самого себя не возможен: ', apiTransaction)
+          }
         } catch (exception) {
           console.log('>>> Ошибка добавления \'internal_cash_in\' операции: ', apiTransaction)
           throw new Error('Ошибка добавления \'internal_cash_in\' операции')
