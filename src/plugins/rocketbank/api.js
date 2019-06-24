@@ -44,7 +44,9 @@ export async function fetchProfile (auth, preferences) {
   }
 
   auth.deviceId = await getDevice(auth)
-  auth.token = await getToken(auth)
+  if (!auth.token) {
+    auth.token = await getToken(auth)
+  }
 
   const profile = await requestProfile(auth)
   if (!profile.hasOwnProperty('user')) {
@@ -90,6 +92,30 @@ const sanitizeUserResponse = {
   transfers: { first_name: true, last_name: true },
   safe_accounts: { account_details: { owner: true } }
 }
+
+function getHeaders (deviceId, token) {
+  const date = Math.floor(Date.now() / 1000)
+  const headers = {
+    'X-Device-ID': deviceId,
+    'X-Time': date.toString(),
+    'X-Sig': md5.hex('0Jk211uvxyyYAFcSSsBK3+etfkDPKMz6asDqrzr+f7c=_' + date + '_dossantos'),
+    'Content-Type': 'application/json'
+    /* 'x-app-version': '3.13.8',
+    'x-device-id': deviceId,
+    'x-device-os': 'Android 5.0',
+    'x-device-type': 'zenmoney',
+    'x-sig': md5.hex('0Jk211uvxyyYAFcSSsBK3+etfkDPKMz6asDqrzr+f7c=_' + date + '_dossantos'),
+    'x-time': date.toString(),
+    'Content-Type': 'application/json',
+    'Host': 'rocketbank.ru' */
+  }
+  if (token) {
+    headers['Authorization'] = 'Token token=' + token
+    // headers['x-device-token'] = token
+  }
+  return headers
+}
+
 async function requestProfile (auth, iteration = 0) {
   const response = await fetchApiJson('/profile', {
     ignoreErrors: true,
@@ -117,6 +143,118 @@ async function requestProfile (auth, iteration = 0) {
   }
 
   return response.body
+}
+
+async function getDevice (auth) {
+  if (!auth.deviceId) {
+    console.log('>>> Необходимо привязать устройство...')
+    auth = await registerDevice(auth)
+    console.log('>>> Устройство привязано')
+  }
+  return auth.deviceId
+}
+
+async function registerDevice (auth) {
+  const deviceId = 'zenmoney_' + md5.hex(Math.random().toString() + '_' + auth.phone + '_' + Date.now())
+  console.log(`>>> Отправляем запрос на регистрацию устройства...`)
+
+  const response = await fetchApiJson('/devices/register',
+    {
+      method: 'POST',
+      headers: getHeaders(deviceId, null),
+      sanitizeRequestLog: { body: { phone: true } },
+      sanitizeResponseLog: { body: { token: true, user: sanitizeUserResponse } },
+      body: {
+        phone: auth.phone
+      }
+    },
+    response => _.get(response, 'body.sms_verification.id')
+  )
+
+  auth = await verifyDevice(auth, response.body.sms_verification.id, deviceId)
+  console.log('>>> Устройство зарегистрировано.')
+  return auth
+}
+
+async function verifyDevice (auth, verificationToken, deviceId) {
+  let title = 'Введите код подтверждения из SMS для входа в Рокетбанк'
+
+  const code = await ZenMoney.readLine(title, { inputType: 'numberDecimal', time: 120000 })
+  if (code === '') {
+    throw new InvalidPreferencesError('Не был введён код авторизации устройства')
+  }
+
+  console.log('>>> Получили код подтверждения из СМС.')
+  const response = await fetchApiJson(`/sms_verifications/${verificationToken}/verify`, {
+    // ignoreErrors: true,
+    method: 'PATCH',
+    headers: getHeaders(deviceId, null),
+    sanitizeRequestLog: { body: { code: true } },
+    sanitizeResponseLog: {
+      body: {
+        token: true,
+        pusher_token: true,
+        user: sanitizeUserResponse,
+        form: sanitizeUserResponse
+      }
+    },
+    body: {
+      id: verificationToken,
+      code: code
+    }
+  })
+  // response => _.get(response, 'body.user.email'))
+
+  const token = _.get(response, 'body.token')
+  if (token) {
+    auth.token = token
+  }
+
+  const email = _.get(response, 'body.user.email')
+  if (!token && !email) {
+    throw new Error('Не удалось обнаружить необходимый email в ответе банка')
+  }
+
+  auth.deviceId = deviceId
+  auth.email = email
+  return auth
+}
+
+async function getToken (auth, forceNew = false) {
+  forceNew = forceNew || false
+  if (!auth.token || forceNew) {
+    console.log('>>> Требуется создать новый токен...')
+    const response = await fetchApiJson('/login',
+      {
+        ignoreErrors: true,
+        method: 'GET',
+        headers: getHeaders(auth.deviceId, null),
+        body: {
+          email: auth.email,
+          password: auth.password
+        },
+        sanitizeRequestLog: { url: true },
+        sanitizeResponseLog: { url: true, body: { token: true, user: sanitizeUserResponse } }
+      }
+      // response => _.get(response, 'body.token')
+    )
+
+    if (response.status === 401) {
+      const description = _.get(response, 'body.response.description') || response.description
+      if (description) {
+        throw new InvalidPreferencesError(description)
+      } else {
+        throw new Error('Ошибка входа')
+      }
+    }
+
+    if (!response.body.token) {
+      throw new Error('Токен для входа не обнаружен')
+    }
+
+    auth.token = response.body.token
+  }
+  return auth.token
 }
 
 export async function fetchTransactions (auth, accountId, fromDate, page = 1, iteration = 0) {
@@ -179,137 +317,6 @@ function logPageInfo (feed, pagination) {
   console.log(logStr)
 }
 
-async function getDevice (auth) {
-  if (!auth.deviceId) {
-    console.log('>>> Необходимо привязать устройство...')
-    auth = await registerDevice(auth)
-    console.log('>>> Устройство привязано')
-  }
-  return auth.deviceId
-}
-
-async function registerDevice (auth) {
-  const deviceId = 'zenmoney_' + md5.hex(Math.random().toString() + '_' + auth.phone + '_' + Date.now())
-  console.log(`>>> Отправляем запрос на регистрацию устройства...`)
-
-  const response = await fetchApiJson('/devices/register',
-    {
-      method: 'POST',
-      headers: getHeaders(deviceId, null),
-      body: { phone: auth.phone },
-      sanitizeRequestLog: { body: { phone: true } },
-      sanitizeResponseLog: { body: { token: true, user: sanitizeUserResponse } }
-    },
-    response => _.get(response, 'body.sms_verification.id')
-  )
-
-  auth = await verifyDevice(auth, response.body.sms_verification.id, deviceId)
-  console.log('>>> Устройство зарегистрировано.')
-  return auth
-}
-
-async function verifyDevice (auth, verificationToken, deviceId) {
-  let title = 'Введите код подтверждения из SMS для входа в Рокетбанк'
-  let email = null
-
-  const code = await ZenMoney.readLine(title, { inputType: 'numberDecimal', time: 120000 })
-  if (code === '') {
-    throw new InvalidPreferencesError('Не был введён код авторизации устройства')
-  }
-
-  console.log('>>> Получили код подтверждения из СМС.')
-  const response = await fetchApiJson(`/sms_verifications/${verificationToken}/verify`, {
-    // ignoreErrors: true,
-    method: 'PATCH',
-    headers: getHeaders(deviceId, null),
-    body: { code: code },
-    sanitizeRequestLog: { body: { code: true } },
-    sanitizeResponseLog: {
-      body: {
-        token: true,
-        pusher_token: true,
-        user: sanitizeUserResponse,
-        form: sanitizeUserResponse
-      }
-    }
-  })
-  // response => _.get(response, 'body.user.email'))
-  // request('PATCH', '/sms_verifications/' + verificationToken + '/verify', { code: code }, deviceId, null)
-
-  /* if (response.status === 406) {
-    console.log('>>> Неверный код подтверждения. Повторяем попытку...')
-    title = 'Не верный код. Повторите попытку #' + (i + 2)
-    continue
-  } */
-
-  email = _.get(response, 'body.user.email')
-  if (!email) {
-    email = _.get(response, 'body.form.email')
-  }
-  if (!email) {
-    throw new Error('Не удалось обнаружить необходимый email в ответе банка')
-  }
-
-  if (email) {
-    auth.deviceId = deviceId
-    auth.email = email
-    return auth
-  }
-
-  throw new InvalidPreferencesError('Не удалось ввести код для регистрации устройства')
-}
-
-async function getToken (auth, forceNew = false) {
-  forceNew = forceNew || false
-  if (!auth.token || forceNew) {
-    console.log('>>> Требуется создать новый токен...')
-    const response = await fetchApiJson('/login',
-      {
-        ignoreErrors: true,
-        method: 'GET',
-        headers: getHeaders(auth.deviceId, null),
-        body: {
-          email: auth.email,
-          password: auth.password
-        },
-        sanitizeRequestLog: { url: true },
-        sanitizeResponseLog: { url: true, body: { token: true, user: sanitizeUserResponse } }
-      }
-      // response => _.get(response, 'body.token')
-    )
-
-    if (response.status === 401) {
-      const description = _.get(response, 'body.response.description') || response.description
-      if (description) {
-        throw new InvalidPreferencesError(description)
-      } else {
-        throw new Error('Ошибка входа')
-      }
-    }
-
-    if (!response.body.token) {
-      throw new Error('Токен для входа не обнаружен')
-    }
-
-    auth.token = response.body.token
-  }
-  return auth.token
-}
-
-function getHeaders (deviceId, token) {
-  const date = Math.floor(Date.now() / 1000)
-  const headers = {
-    'X-Device-ID': deviceId,
-    'X-Time': date.toString(),
-    'X-Sig': md5.hex('0Jk211uvxyyYAFcSSsBK3+etfkDPKMz6asDqrzr+f7c=_' + date + '_dossantos'),
-    'Content-Type': 'application/json'
-  }
-  if (token) {
-    headers['Authorization'] = 'Token token=' + token
-  }
-  return headers
-}
-
 async function fetchApiJson (url, options, predicate) {
   let getParams = ''
   const fetchOptions = {
@@ -343,10 +350,6 @@ async function fetchApiJson (url, options, predicate) {
     }
   }
 
-  if (predicate) {
-    console.assert(!predicate || predicate(response), `Некорректный ответ запроса по адресу '${url}'`)
-  }
-
   if (response.status !== 200) {
     const description = _.get(response, 'body.response.description') || ''
     switch (response.status) {
@@ -359,12 +362,19 @@ async function fetchApiJson (url, options, predicate) {
       case 404: // ресурс не найден
         throw new Error(description)
 
+      case 400: // необходим номер телефона
+        throw new InvalidPreferencesError('Ответ банка: ' + description)
+
       case 406: // неверный код подтверждения
         if (!options.ignoreErrors) {
-          throw new TemporaryError(description)
+          throw new TemporaryError('Ответ банка: ' + description)
         }
         break
     }
+  }
+
+  if (predicate) {
+    console.assert(!predicate || predicate(response), `Некорректный ответ запроса по адресу '${url}'`)
   }
 
   return response
