@@ -104,7 +104,7 @@ function assertNotServerError (response) {
     const messages = errors.map((x) => x.message).filter(Boolean)
     const allMessagesText = messages.join('\n')
     if (messages.some((x) => x.startsWith('Некорректные данные.'))) {
-      throw new InvalidPreferencesError(allMessagesText)
+      throw new Error(allMessagesText)
     }
     if (allMessagesText.includes('Мы обнаружили, что вы поменяли SIM-карту.')) {
       throw new TemporaryError(allMessagesText)
