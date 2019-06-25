@@ -22,6 +22,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   }
   const transactions = await request.fetchTransactions(transactionsParams.auth, transactionsParams.pageParams)
     .then(transactions => converters.convertTransactions(transactions))
+    // .then(transactions => converters.mergeTransactions(transactions))
 
   console.log(transactions)
 
