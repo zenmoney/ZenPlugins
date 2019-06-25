@@ -78,11 +78,12 @@ export function convertTransaction (transaction) {
   }
 
   const accountId = getAccountId(transaction)
+  const isOutcome = transaction.direction === 'Out'
 
   zenTransaction.outcomeAccount = accountId
   zenTransaction.incomeAccount = accountId
-  zenTransaction.outcome = transaction.direction === 'Out' ? 0 : transaction.total
-  zenTransaction.income = transaction.direction === 'In' ? transaction.total : 0
+  zenTransaction.outcome = isOutcome ? transaction.total : 0
+  zenTransaction.income = isOutcome ? 0 : transaction.total
 
   // TODO: добавить другие типы транзакций?
   if (transaction.operation.typeCode === 'Atm') { // снятие налички
