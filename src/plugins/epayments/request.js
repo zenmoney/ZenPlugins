@@ -1,10 +1,12 @@
 import * as network from '../../common/network'
+import * as tools from './tools'
 
 var urls = new function () {
   this.baseURL = 'https://api.epayments.com/'
   this.cabinetURL = 'https://my.epayments.com/'
 
   this.token = this.baseURL + 'token'
+  this.userInfo = this.baseURL + 'v1/user'
   this.transactions = this.baseURL + 'v2/Transactions'
 }()
 
@@ -55,12 +57,11 @@ export async function authenthicate (login, password) {
     const response = await fetch(login, password, otp)
 
     if (response.ok) {
-      return { 'token_type': response.token_type, 'access_token': response.access_token }
+      return { 'token_type': response.body.token_type, 'access_token': response.body.access_token }
     } else {
       const errorCode = response.body ? response.body.error : undefined
 
       if (errorCode === 'otp_code_required') {
-        console.log("i'm, here!")
         const otp = await readCode('Введите одноразовый пароль')
         return fetchRetry(login, password, otp)
       } else if (errorCode === 'otp_code_invalid') {
@@ -78,26 +79,50 @@ export async function authenthicate (login, password) {
     }
   }
 
-  return fetchRetry(login, password)
+  return fetchRetry(login, password, '')
 }
 
-export async function getTransactions (auth, pageParams) {
+export async function fetchUserInfo (auth) {
+  const tokenType = auth.tokenType || 'Bearer'
+
+  const headers = Object.assign({}, defaultHeaders, {
+    'Referer': urls.cabinetURL,
+    'Authorization': tokenType + ' ' + auth.token
+  })
+
+  const params = {
+    method: 'GET',
+    headers: headers
+  }
+
+  return network.fetchJson(urls.userInfo, params)
+}
+
+export async function fetchTransactions (auth, pageParams) {
   async function recursive (params, transactions, toFetch, isFirstPage) {
     const response = await network.fetchJson(urls.transactions, params)
-    if (isFirstPage || params.body.skip < toFetch) {
-      const newToFetch = response.count
-      response.transactions.forEach(transaction => transactions.push(transaction))
-      params.body.skip = params.body.skip + params.body.take
 
-      return recursive(params, transactions, newToFetch, false)
+    if (!response.ok) {
+      const message = 'Ошибка при загрузке транзакций! '
+      console.error(message + JSON.stringify(response))
+      throw new Error(message)
+    }
+
+    if (isFirstPage || params.body.skip < toFetch) {
+      const body = response.body
+      body.transactions.forEach(transaction => transactions.push(transaction))
+      params.body.skip = params.body.skip + params.body.take
+      console.log(params)
+
+      return recursive(params, transactions, body.count, false)
     } else {
       return transactions
     }
   }
 
   const requestData = {
-    from: getTimestamp(pageParams.fromDate) || 1,
-    till: getTimestamp(pageParams.toDate) || getTimestamp(Date.now()),
+    from: tools.getTimestamp(pageParams.fromDate || new Date(0)),
+    till: tools.getTimestamp(pageParams.toDate || new Date()),
     skip: pageParams.offset || 0,
     take: 10
   }
@@ -117,78 +142,3 @@ export async function getTransactions (auth, pageParams) {
 
   return recursive(params, [], 0, true)
 }
-
-function getTimestamp (date) { return Math.floor(date.getTime() / 1000) }
-
-//
-// function getUser () {
-//   var url = baseURL + 'v1/user/'
-//
-//   var response = ZenMoney.requestGet(url, apiHeaders())
-//
-//   return getJson(response)
-// }
-//
-//
-// function requestOperations (limit, offset) {
-//   var url = baseURL + 'v1/Transactions/'
-//
-//   var from = getLastSyncTime()
-//   var till = parseInt(Date.now() / 1000)
-//
-//   // fix for old saved data
-//   if (from > till) {
-//     from = parseInt(from / 1000)
-//   }
-//
-//   var requestData = {
-//     from: from,
-//     skip: offset,
-//     take: limit,
-//     till: till
-//   }
-//
-//   return ZenMoney.requestPost(url, requestData, apiHeaders())
-// }
-//
-// function setLastSyncTime (time) {
-//   ZenMoney.setData('last_sync_time', time)
-// }
-//
-// function defaultHeaders () {
-//   return {
-//     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-//     'Accept-Language': 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
-//     'Connection': 'keep-alive',
-//     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36'
-//   }
-// }
-//
-// function apiHeaders () {
-//   return Object.assign({}, defaultHeaders(), {
-//     'Authorization': authTokenType + ' ' + authAccessToken,
-//     'Content-type': 'application/json'
-//   })
-// }
-//
-// function getJson (data) {
-//   try {
-//     return JSON.parse(data)
-//   } catch (e) {
-//     ZenMoney.trace('Bad json (' + e.message + '): ' + data, 'error')
-//     throw new ZenMoney.Error('Сервер вернул ошибочные данные: ' + e.message)
-//   }
-// }
-//
-// function getLastSyncTime () {
-//   var time = parseInt(ZenMoney.getData('last_sync_time', 0))
-//
-//   if (time == 0) {
-//     var preferences = ZenMoney.getPreferences()
-//     var period = !preferences.hasOwnProperty('period') || isNaN(period = parseInt(preferences.period)) ? 31 : period
-//
-//     time = Math.floor(Date.now() / 1000 - period * 86400)
-//   }
-//
-//   return time
-// }
