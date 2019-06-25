@@ -1,7 +1,7 @@
 export function getTimestamp (date) {
   var milllis = 0
   if (date instanceof Date) milllis = date.getTime()
-  if (date instanceof Number) milllis = date
+  else if (typeof date === 'number') milllis = date
 
   return Math.floor(milllis / 1000)
 }
