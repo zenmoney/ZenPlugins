@@ -752,7 +752,7 @@ const transactions = {
         friend: {
           id: 3231,
           userpic_url: null,
-          first_name: 'Игорь',
+          first_name: 'Иван',
           last_name: 'Петров',
           cover_url: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/image/636123/22ee9366-2e79-488e-8cc9-f983be230d96.jpeg'
         },
@@ -841,7 +841,7 @@ const transactions = {
           id: 205977,
           userpic_url: 'https://209307.selcdn.ru:443/public.rocketbank.ru/uploads/image/2312417/mini_thumb_296c8079%2D5be8%2D4894%2Dadc6%2D878eb97f8f5a.jpeg',
           first_name: 'Евгения',
-          last_name: 'Ашанина',
+          last_name: 'Петрова',
           cover_url: 'https://209307.selcdn.ru:443/public.rocketbank.ru/uploads/i2/1029/0d752395%2Dd63e%2D4b6a%2Daccc%2D188a9cb0702c.jpg'
         },
         mimimiles: 0,
@@ -913,6 +913,7 @@ const transactions = {
       }
     ],
 
+    // перевод на счёт виртуальной карты
     [
       {
         exchange_details: null,
@@ -929,7 +930,7 @@ const transactions = {
           id: 873328,
           userpic_url: null,
           first_name: 'Денис',
-          last_name: 'Новиков',
+          last_name: 'Васечкин',
           cover_url: null
         },
         mimimiles: 0,
@@ -981,6 +982,86 @@ const transactions = {
             'id': null,
             'invoice': null,
             'sum': -89240
+          }
+        ]
+      }
+    ],
+
+    // закрытие вклада
+    [
+      {
+        exchange_details: {
+          from_currency: 'RUB',
+          to_currency: 'RUB',
+          from_amount: 65269.43,
+          to_amount: 65188.76,
+          rate: 1
+        },
+        id: 313852008,
+        status: 'confirmed',
+        comment: null,
+        tag_list: [],
+        friend_transfer_type: null,
+        receipt_url: 'https://rocketbank.ru/receipt/4e1447b4-4f360aa1-96bc0b0b-f9286624-9c120129-14a546ee',
+        context_type: 'internal_cash_in',
+        details: 'Закрытие вклада «Трехмесячный вклад»',
+        has_receipt: true,
+        friend: {
+          id: 13770,
+          userpic_url: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/image/741510/mini_thumb_a4f4b248-5800-4dcf-9cd1-6e85318cf606.jpg',
+          first_name: 'Дмитрий',
+          last_name: 'Васечкин',
+          cover_url: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/image/127629/7f0a0167-7196-4362-8569-5e810290787c.jpg'
+        },
+        mimimiles: 0,
+        happened_at: 1559337071,
+        sputnik: false,
+        display_money: {
+          amount: 65188.76,
+          currency_code: 'RUB'
+        },
+        money: {
+          amount: 65188.76,
+          currency_code: 'RUB'
+        },
+        category: {
+          id: 437,
+          name: 'Доход',
+          display_name: 'Доход',
+          icon: 'income',
+          sub_icon: '437'
+        },
+        merchant: {
+          id: 5343937,
+          name: 'Закрытие вклада «Трехмесячный вклад»',
+          feed_icon: null,
+          icon: null,
+          iphone_small: null,
+          iphone_big: null,
+          android: null
+        },
+        location: {
+          latitude: null,
+          longitude: null,
+          acc: null
+        },
+        visible: true,
+        action: null
+      },
+      {
+        'comment': 'Закрытие вклада «Трехмесячный вклад»',
+        'date': new Date('2019-05-31T21:11:11+00:00'),
+        'hold': false,
+        'merchant': null,
+        'movements': [
+          {
+            'account': {
+              'id': 'cardRUB'
+            },
+            'fee': 0,
+            'id': '313852008',
+            'invoice': null,
+            'sum': 65188.76
           }
         ]
       }
@@ -1394,7 +1475,7 @@ const transactions = {
         friend_transfer_type: null,
         receipt_url: 'https://rocketbank.ru/receipt/bb375f5e-85a49969-5413be3b-f6ed286a-1b4cb14f-8a158843',
         context_type: 'transfer_cash_in',
-        details: 'Петров Игорь Сергеевич. Перевод заработной платы и иных выплат за май 2019 г. Лицевой счет 40817810060000025555',
+        details: 'Петров Иван Сергеевич. Перевод заработной платы и иных выплат за май 2019 г. Лицевой счет 40817810060000025555',
         has_receipt: true,
         mimimiles: 0,
         happened_at: 1559292167,
@@ -1416,7 +1497,7 @@ const transactions = {
         },
         merchant: {
           id: 6162493,
-          name: 'Петров Игорь Сергеевич. Перевод заработной платы и иных выплат за май 2019 г. Лицевой счет 40817810060000025555',
+          name: 'Петров Иван Сергеевич. Перевод заработной платы и иных выплат за май 2019 г. Лицевой счет 40817810060000025555',
           feed_icon: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/bic_banks/image/39/b-logos_77.png',
           icon: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/bic_banks/image/39/b-logos_77.png',
           iphone_small: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/bic_banks/image/39/b-logos_77.png',
@@ -1432,7 +1513,7 @@ const transactions = {
         action: null
       },
       {
-        'comment': 'Петров Игорь Сергеевич. Перевод заработной платы и иных выплат за май 2019 г. Лицевой счет 40817810060000025555',
+        'comment': 'Петров Иван Сергеевич. Перевод заработной платы и иных выплат за май 2019 г. Лицевой счет 40817810060000025555',
         'date': new Date('2019-05-31T08:42:47+00:00'),
         'hold': false,
         'merchant': null,
@@ -1610,7 +1691,7 @@ describe('convertTransaction', () => {
 xdescribe('convertOneTransaction', () => {
   initTitleAccounts()
   const type = 'internal_cash_in'
-  const num = 3
+  const num = 4
   it(`should convert '${type}' ${num}`, () => {
     expect(
       convertAccountTransaction(transactions[type][num][0], accounts['cardRUB'], titleAccounts)

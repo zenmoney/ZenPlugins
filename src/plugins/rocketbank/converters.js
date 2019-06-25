@@ -343,7 +343,7 @@ function getMovement (apiTransaction, account) {
     fee: 0
   }
 
-  if (apiTransaction.exchange_details) {
+  if (apiTransaction.exchange_details && apiTransaction.exchange_details.from_currency !== apiTransaction.exchange_details.to_currency) {
     if (movement.sum > 0) {
       movement.invoice = {
         sum: apiTransaction.exchange_details.from_amount,
