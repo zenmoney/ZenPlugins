@@ -111,10 +111,14 @@ export async function fetchTransactions (auth, pageParams) {
     if (isFirstPage || params.body.skip < toFetch) {
       const body = response.body
       body.transactions.forEach(transaction => transactions.push(transaction))
-      params.body.skip = params.body.skip + params.body.take
-      console.log(params)
 
-      return recursive(params, transactions, body.count, false)
+      const newSkip = params.body.skip + params.body.take
+      if (!isFirstPage && newSkip > toFetch) {
+        return transactions
+      } else {
+        params.body.skip = newSkip
+        return recursive(params, transactions, body.count, false)
+      }
     } else {
       return transactions
     }
