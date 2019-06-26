@@ -262,6 +262,106 @@ const transactions = {
           }
         ]
       }
+    ],
+
+    // перевод через Western Union рассматриваем как обычный расход
+    [
+      {
+        isDispute: true,
+        hasStatement: true,
+        isSuspicious: false,
+        id: '4924931157',
+        offers: [],
+        status: 'OK',
+        idSourceType: 'Prime',
+        type: 'Debit',
+        subgroup: {
+          id: 'B1',
+          name: 'Снятия наличных'
+        },
+        locations: [],
+        loyaltyBonus: [],
+        cashbackAmount: {
+          currency: {
+            code: 643,
+            name: 'RUB',
+            strCode: '643'
+          },
+          value: 0
+        },
+        description: 'Операция в других кредитных организациях WU.COM WU RUS',
+        debitingTime: {
+          milliseconds: 1560805200000
+        },
+        cashback: 0,
+        amount: {
+          currency: {
+            code: 643,
+            name: 'RUB',
+            strCode: '643'
+          },
+          value: 11392.37
+        },
+        operationTime: {
+          milliseconds: 1560607108000
+        },
+        spendingCategory: {
+          id: '52',
+          name: 'Наличные',
+          icon: '21',
+          parentId: '8'
+        },
+        isHce: false,
+        mcc: 6538,
+        category: {
+          id: '7',
+          name: 'Финан. услуги'
+        },
+        additionalInfo: [],
+        virtualPaymentType: 0,
+        account: 'accountId',
+        ucid: '1046162200',
+        merchant: {
+          name: 'WU.COM',
+          region: {
+            country: 'RUS',
+            city: 'WU'
+          }
+        },
+        card: '46627326',
+        loyaltyPayment: [],
+        group: 'CASH',
+        mccString: '6538',
+        cardPresent: false,
+        isExternalCard: false,
+        cardNumber: '553691******9606',
+        accountAmount: {
+          currency: {
+            code: 643,
+            name: 'RUB',
+            strCode: '643'
+          },
+          value: 11392.37
+        }
+      },
+      {
+        'comment': null,
+        'date': new Date('2019-06-15T13:58:28+00:00'),
+        'hold': false,
+        'merchant': null,
+        'movements': [
+          {
+            '_id': '4924931157',
+            'account': {
+              'id': 'accountId'
+            },
+            'fee': 0,
+            'id': '4924931157',
+            'invoice': null,
+            'sum': -11392.37
+          }
+        ]
+      }
     ]
   ],
 
@@ -1067,8 +1167,8 @@ describe('convertTransaction', () => {
 })
 
 describe('convertOneTransaction', () => {
-  const type = 'c2c-out'
-  const i = 1
+  const type = 'undefined'
+  const i = 2
   it(`should convert '${type}' #${i}`, () => {
     expect(
       convertTransaction(transactions[type][i][0], accounts[transactions[type][i][0].account])
