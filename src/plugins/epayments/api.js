@@ -1,7 +1,7 @@
 import * as network from '../../common/network'
 import * as tools from './tools'
 
-var urls = new function () {
+const urls = new function () {
   this.baseURL = 'https://api.epayments.com/'
   this.cabinetURL = 'https://my.epayments.com/'
 
@@ -10,13 +10,18 @@ var urls = new function () {
   this.transactions = this.baseURL + 'v2/Transactions'
 }()
 
-function defaultHeaders () {
-  return {
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-    'Accept-Language': 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
-    'Connection': 'keep-alive',
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36'
-  }
+const defaultHeaders = {
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+  'Accept-Language': 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
+  'Connection': 'keep-alive',
+  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36'
+}
+
+function getAPIHeaders (tokenType, token) {
+  return Object.assign({}, defaultHeaders, {
+    'Referer': urls.cabinetURL,
+    'Authorization': `${tokenType} ${token}`
+  })
 }
 
 export async function authenthicate (login, password) {
@@ -37,17 +42,17 @@ export async function authenthicate (login, password) {
       otpcode: otp
     }
 
-    const authHeaders = Object.assign({}, defaultHeaders(), {
+    const authHeaders = Object.assign({}, defaultHeaders, {
       'Referer': urls.cabinetURL,
       'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
       'Authorization': 'Basic ZXBheW1lbnRzOm1ZbjZocmtnMElMcXJ0SXA4S1NE'
     })
 
     const params = {
-      'method': 'POST',
-      'headers': authHeaders,
-      'body': new URLSearchParams(authData).toString(),
-      'parse': (body) => body === '' ? undefined : JSON.parse(body)
+      method: 'POST',
+      headers: authHeaders,
+      body: new URLSearchParams(authData).toString(),
+      parse: (body) => body === '' ? undefined : JSON.parse(body)
     }
 
     return network.fetch(urls.token, params)
@@ -57,7 +62,7 @@ export async function authenthicate (login, password) {
     const response = await fetch(login, password, otp)
 
     if (response.ok) {
-      return { 'token_type': response.body.token_type, 'access_token': response.body.access_token }
+      return { tokenType: response.body.token_type, token: response.body.access_token }
     } else {
       const errorCode = response.body ? response.body.error : undefined
 
@@ -75,6 +80,7 @@ export async function authenthicate (login, password) {
         throw new Error('Ваш счет временно заблокирован. Попробуйте войти через час')
       } else {
         console.error('Что-то пошло не так ' + JSON.stringify(response))
+        throw new Error('Что-то пошло не так!')
       }
     }
   }
@@ -82,23 +88,26 @@ export async function authenthicate (login, password) {
   return fetchRetry(login, password, '')
 }
 
-export async function fetchUserInfo (auth) {
-  const tokenType = auth.tokenType || 'Bearer'
-
-  const headers = Object.assign({}, defaultHeaders, {
-    'Referer': urls.cabinetURL,
-    'Authorization': tokenType + ' ' + auth.token
-  })
-
+export async function fetchCardsAndWallets (auth) {
   const params = {
     method: 'GET',
-    headers: headers
+    headers: getAPIHeaders(auth.tokenType, auth.token)
   }
 
-  return network.fetchJson(urls.userInfo, params)
+  const response = await network.fetchJson(urls.userInfo, params)
+  if (!response.ok) {
+    const message = 'Ошибка при загрузке информации об аккаунтах! '
+    console.error(message + JSON.stringify(response))
+    throw new Error(message)
+  }
+
+  return {
+    cards: response.body.cards,
+    wallets: response.body.ewallets
+  } // Возвращаем только нужные данные
 }
 
-export async function fetchTransactions (auth, pageParams) {
+export async function fetchTransactions (auth, fromDate, toDate) {
   async function recursive (params, transactions, toFetch, isFirstPage) {
     const response = await network.fetchJson(urls.transactions, params)
 
@@ -125,22 +134,15 @@ export async function fetchTransactions (auth, pageParams) {
   }
 
   const requestData = {
-    from: tools.getTimestamp(pageParams.fromDate || new Date(0)),
-    till: tools.getTimestamp(pageParams.toDate || new Date()),
-    skip: pageParams.offset || 0,
-    take: 10
+    from: tools.getTimestamp(fromDate || new Date(0)),
+    till: tools.getTimestamp(toDate || new Date()),
+    skip: 0,
+    take: 10 // Изменение этого числа не меняет ответ сервера
   }
-
-  const tokenType = auth.tokenType || 'Bearer'
-
-  const headers = Object.assign({}, defaultHeaders, {
-    'Referer': urls.cabinetURL,
-    'Authorization': tokenType + ' ' + auth.token
-  })
 
   const params = {
     method: 'POST',
-    headers: headers,
+    headers: getAPIHeaders(auth.tokenType, auth.token),
     body: requestData
   }
 

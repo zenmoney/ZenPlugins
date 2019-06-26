@@ -1,5 +1,7 @@
+import * as _ from 'lodash'
 import * as tools from './tools'
 import { mergeTransfers as commonMergeTransfers } from '../../common/mergeTransfers'
+import { getSingleReadableTransactionMovement } from '../../common/converters'
 
 export function convertCards (cards) {
   return cards.map(card => {
@@ -7,7 +9,7 @@ export function convertCards (cards) {
 
     const syncID = [card.id.substr(-4)]
 
-    if (card.hasOwnProperty('prevCardId') && card.prevCardId !== null) {
+    if (card.prevCardId) {
       syncID.push(card.prevCardId.substr(-4))
     } // Скопировано из старого плагина, похоже для перевыпущеных карт
 
@@ -26,13 +28,11 @@ export function convertCards (cards) {
 }
 
 export function convertWallets (wallets) {
-  var zenWallets = []
-
-  wallets.forEach(wallet => {
-    wallet.balances.forEach(balanceItem => {
+  return wallets.flatMap(wallet => {
+    return wallet.balances.map(balanceItem => {
       const accountId = uniqueWalletId(balanceItem.accountNumber, balanceItem.currency)
 
-      zenWallets.push({
+      return {
         id: accountId,
         title: `${balanceItem.accountType} ${balanceItem.accountNumber} (${resolveInstrument(balanceItem.currency)})`,
         type: 'checking',
@@ -40,27 +40,22 @@ export function convertWallets (wallets) {
         balance: balanceItem.currentBalance,
         startBalance: 0,
         creditLimit: 0,
-        syncID: accountId
-      })
+        syncID: accountId,
+        company: null
+      }
     })
   })
-
-  return zenWallets
 }
 
 export function extractAccounts (userInfo) {
   const cards = convertCards(userInfo.cards)
-  const wallets = convertWallets(userInfo.ewallets)
+  const wallets = convertWallets(userInfo.wallets)
 
-  return (cards || []).concat(wallets || [])
+  return cards.concat(wallets)
 }
 
-export function convertTransactions (data) {
-  var zenTransactions = []
-
-  data.forEach(transaction => zenTransactions.push(convertTransaction(transaction)))
-
-  return zenTransactions
+export function convertTransactions (apiTransactions, accounts) {
+  return apiTransactions.map(apiTransaction => convertTransaction(apiTransaction, accounts))
 }
 
 export function convertTransaction (apiTransaction) {
@@ -71,6 +66,7 @@ export function convertTransaction (apiTransaction) {
       return uniqueWalletId(apiTransaction.source.identity, apiTransaction.currency)
     }
   }
+
   const accountId = getAccountId(apiTransaction)
 
   const zenTransaction = {
@@ -81,48 +77,28 @@ export function convertTransaction (apiTransaction) {
     comment: tools.cleanUpText(apiTransaction.details)
   };
 
+  // TODO: добавить больше операций?
   [ parseCashWithdrawal ].some(parser => parser(apiTransaction, zenTransaction, accountId))
 
   return zenTransaction
 }
 
-function parseCashWithdrawal (apiTransaction, zenTransaction, accountId) {
-  if (apiTransaction.operation.typeCode !== 'Atm') {
-    return false
-  }
-
-  const sum = apiTransaction.total || apiTransaction.amount
-
-  const movement = {
-    id: null,
-    account: {
-      type: 'cash',
-      instrument: resolveInstrument(apiTransaction.txnCurrency),
-      company: null,
-      syncIds: null
-    },
-    invoice: null,
-    sum: -sum,
-    fee: apiTransaction.fee || 0
-  }
-
-  zenTransaction.movements.push(movement)
-
-  return true
-}
-
 function getMovement (apiTransaction, accountId) {
-  const isOutcome = apiTransaction.direction === 'Out'
+  const isLoad = apiTransaction.operation.type === 'CardLoad' ||
+  apiTransaction.operation.typeCode === 'Load' ||
+  apiTransaction.operation.displayName.toLowerCase().includes('load')
+
   const sum = apiTransaction.total || apiTransaction.amount
   const movement = {
     id: apiTransaction.transactionId,
     account: { id: accountId },
     invoice: null,
-    sum: isOutcome ? -sum : sum,
-    fee: apiTransaction.fee || 0
+    sum: apiTransaction.direction === 'Out' ? -sum : sum,
+    fee: apiTransaction.fee || 0,
+    _load: isLoad
   }
 
-  if (apiTransaction.txnCurrency && apiTransaction.currency !== apiTransaction.txnCurrency) {
+  if (apiTransaction.txnCurrency && (apiTransaction.currency !== apiTransaction.txnCurrency)) {
     var amount = apiTransaction.txnAmount
     if ((movement.sum > 0 && amount < 0) || (movement.sum < 0 && amount > 0)) {
       amount *= -1
@@ -136,17 +112,59 @@ function getMovement (apiTransaction, accountId) {
   return movement
 }
 
-export function mergeTransactions (transactions) {
-  function absAmount (income, outcome) { return Math.max(Math.abs(income), Math.abs(outcome)) }
-  function isLoad (data) { return data.comment.toLowerCase().includes('load') }
+function parseCashWithdrawal (apiTransaction, zenTransaction, accountId) {
+  if (apiTransaction.operation.typeCode !== 'Atm') {
+    return false
+  }
+
+  const movement = {
+    id: null,
+    account: {
+      type: 'cash',
+      instrument: resolveInstrument(apiTransaction.txnCurrency),
+      company: null,
+      syncIds: null
+    },
+    invoice: null,
+    sum: -(apiTransaction.total || apiTransaction.amount),
+    fee: apiTransaction.fee || 0
+  }
+
+  zenTransaction.movements.push(movement)
+
+  return true
+}
+
+export function mergeTransactions (transactions, accounts) {
   return commonMergeTransfers({
     items: transactions,
-    makeGroupKey: data => isLoad(data) ? `${absAmount(data.income, data.outcome)}-${data.date.setSeconds(0, 0)}` : null
+    makeGroupKey: transaction => {
+      const movement = getSingleReadableTransactionMovement(transaction)
+      if ((movement._load || false) && transaction.movements.length === 1) {
+        const account = accounts.find(account => account.id === movement.account.id)
+        return [
+          movement.invoice === null ? Math.abs(movement.sum) : Math.abs(movement.invoice.sum),
+          movement.invoice === null ? account.instrument : movement.invoice.instrument,
+          transaction.date.setSeconds(0, 0)
+        ].join('-')
+      } else {
+        return null
+      }
+    }
+  }).map(transaction => {
+    transaction.movements = transaction.movements.map(movement => _.omit(movement, ['_load']))
+    return transaction
   })
 }
 
-function resolveInstrument (code) { return code.toUpperCase() }
+function resolveInstrument (code) {
+  return code.toUpperCase()
+}
 
-function uniqueCardId (id) { return id }
+function uniqueCardId (id) {
+  return id
+}
 
-function uniqueWalletId (id, currency) { return id + '-' + resolveInstrument(currency) }
+function uniqueWalletId (id, currency) {
+  return id + '-' + resolveInstrument(currency)
+}
