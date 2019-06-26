@@ -59,15 +59,13 @@ export function convertTransactions (apiTransactions, accounts) {
 }
 
 export function convertTransaction (apiTransaction) {
-  function getAccountId (apiTransaction) {
+  const accountId = (function () {
     if (apiTransaction.source.type === 'card') {
       return uniqueCardId(apiTransaction.source.identity)
     } else if (apiTransaction.source.type === 'ewallet') {
       return uniqueWalletId(apiTransaction.source.identity, apiTransaction.currency)
     }
-  }
-
-  const accountId = getAccountId(apiTransaction)
+  }())
 
   const zenTransaction = {
     movements: [ getMovement(apiTransaction, accountId) ],
@@ -88,13 +86,15 @@ function getMovement (apiTransaction, accountId) {
   apiTransaction.operation.typeCode === 'Load' ||
   apiTransaction.operation.displayName.toLowerCase().includes('load')
 
-  const sum = apiTransaction.total || apiTransaction.amount
+  const fee = apiTransaction.fee || 0
+  const sum = apiTransaction.total || (apiTransaction.amount + fee)
+
   const movement = {
     id: apiTransaction.transactionId,
     account: { id: accountId },
     invoice: null,
     sum: apiTransaction.direction === 'Out' ? -sum : sum,
-    fee: apiTransaction.fee || 0,
+    fee: fee,
     _load: isLoad
   }
 
@@ -126,8 +126,8 @@ function parseCashWithdrawal (apiTransaction, zenTransaction, accountId) {
       syncIds: null
     },
     invoice: null,
-    sum: -(apiTransaction.total || apiTransaction.amount),
-    fee: apiTransaction.fee || 0
+    sum: apiTransaction.txnAmount,
+    fee: 0
   }
 
   zenTransaction.movements.push(movement)
@@ -139,12 +139,15 @@ export function mergeTransactions (transactions, accounts) {
   return commonMergeTransfers({
     items: transactions,
     makeGroupKey: transaction => {
+      if (transaction.movements.length !== 1) {
+        return null
+      }
       const movement = getSingleReadableTransactionMovement(transaction)
-      if ((movement._load || false) && transaction.movements.length === 1) {
+      if (movement._load || false) {
         const account = accounts.find(account => account.id === movement.account.id)
         return [
-          movement.invoice === null ? Math.abs(movement.sum) : Math.abs(movement.invoice.sum),
-          movement.invoice === null ? account.instrument : movement.invoice.instrument,
+          movement.invoice ? Math.abs(movement.invoice.sum) : Math.abs(movement.sum),
+          movement.invoice ? movement.invoice.instrument : account.instrument,
           transaction.date.setSeconds(0, 0)
         ].join('-')
       } else {
