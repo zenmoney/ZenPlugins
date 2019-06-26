@@ -11,7 +11,7 @@ export function convertCards (cards) {
 
     if (card.prevCardId) {
       syncID.push(card.prevCardId.substr(-4))
-    } // Скопировано из старого плагина, похоже для перевыпущеных карт
+    } // Скопировано из старого плагина, похоже нужно для перевыпущеных карт
 
     return {
       id: card.id,
@@ -70,7 +70,7 @@ export function convertTransaction (apiTransaction) {
   const zenTransaction = {
     movements: [ getMovement(apiTransaction, accountId) ],
     hold: apiTransaction.state === 'WaitConfirmation',
-    merchant: null, // Нет такой информации в ответе
+    merchant: null, // Такая информация есть только в комментарии в неудобном для парсинга виде
     date: new Date(Date.parse(apiTransaction.operation.date)),
     comment: tools.cleanUpText(apiTransaction.details)
   };
@@ -113,7 +113,7 @@ function getMovement (apiTransaction, accountId) {
 }
 
 function parseCashWithdrawal (apiTransaction, zenTransaction, accountId) {
-  if (apiTransaction.operation.typeCode !== 'Atm') {
+  if (apiTransaction.operation.typeCode !== 'Atm' || apiTransaction.operation.type !== 'CardAtmOperation') {
     return false
   }
 

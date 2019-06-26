@@ -1,3 +1,4 @@
+import * as _ from 'lodash'
 import * as network from '../../common/network'
 import * as tools from './tools'
 
@@ -64,7 +65,7 @@ export async function authenthicate (login, password) {
     if (response.ok) {
       return { tokenType: response.body.token_type, token: response.body.access_token }
     } else {
-      const errorCode = response.body ? response.body.error : undefined
+      const errorCode = _.get(response, 'body.error')
 
       if (errorCode === 'otp_code_required') {
         const otp = await readCode('Введите одноразовый пароль')
@@ -73,11 +74,10 @@ export async function authenthicate (login, password) {
         const otp = await readCode('Одноразовый пароль введен неверно. Попробуйте еще раз')
         return fetchRetry(login, password, otp)
       } else if (errorCode === 'bot_detected') {
-        console.error(response)
         throw new Error('Банк заподозрил в вас бота, попробуйте зайти через браузер, потом снова проведите синхронизацию в Zenmoney')
       } else if (errorCode === 'invalid_grant') {
         console.error(response)
-        throw new Error('Ваш счет временно заблокирован. Попробуйте войти через час')
+        throw new Error(_.get(response, 'body.error_description', 'Неправильный логин или пароль или ваш счет временно заблокирован'))
       } else {
         console.error('Что-то пошло не так ' + JSON.stringify(response))
         throw new Error('Что-то пошло не так!')
