@@ -117,25 +117,13 @@ const transactions = [
           'id': '4691926762',
           'invoice': null,
           'sum': 35000
-        },
-        {
-          'account': {
-            'company': {
-              'id': '4859'
-            },
-            'instrument': 'RUB',
-            'syncIds': null,
-            'type': null
-          },
-          'fee': 0,
-          'id': null,
-          'invoice': null,
-          'sum': -35000
         }
       ],
-      'comment': 'Пополнение через Ситибанк'
+      'comment': 'ПЕРЕВОД НА СВОЙ СЧЁТ'
     }
   ],
+
+  // C1: возврат денежных средств
   [
     {
       isDispute: false,
@@ -221,7 +209,7 @@ const transactions = [
       }
     },
     {
-      'comment': 'Пополнение через Сбербанк',
+      'comment': 'Возврат денежных средств по договору № 23-05-19-01-Ма от 23.05.2019г.  НДС не облагается.',
       'date': new Date('2019-05-27T13:43:31.000Z'),
       'hold': false,
       'merchant': null,
@@ -236,20 +224,111 @@ const transactions = [
           'id': '4769891772',
           'invoice': null,
           'sum': 1500
+        }
+      ]
+    }
+  ],
+
+  // C1: заработная плата
+  [
+    {
+      isDispute: false,
+      nomination: 'ЗАРАБОТНАЯ ПЛАТА ЗА 1 ПОЛОВИНУ ИЮНЯ2019 ГОДА                             НДС НЕ ОБЛАГАЕТСЯ',
+      hasStatement: false,
+      isSuspicious: false,
+      id: '4968114177',
+      offers: [],
+      status: 'OK',
+      idSourceType: 'Prime',
+      type: 'Credit',
+      subgroup: {
+        id: 'C1',
+        name: 'Пополнения'
+      },
+      locations: [],
+      loyaltyBonus: [],
+      cashbackAmount: {
+        currency: {
+          code: 643,
+          name: 'RUB',
+          strCode: '643'
         },
+        value: 0
+      },
+      description: 'Пополнение через Ситибанк',
+      debitingTime: {
+        milliseconds: 1561323600000
+      },
+      cashback: 0,
+      senderDetails: 'ПЕПСИКО ХОЛДИНГС ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ//141580; РОССИЯ, МОСКОВСКАЯ ОБЛ.,СОЛНЕЧНОГОРСКИЙ Р-Н,Г.,ТЕРРИТОРИЯСЭЗ ШЕРРИЗОН,,,СТР.1,//',
+      brand: {
+        name: 'Ситибанк',
+        baseTextColor: 'ffffff',
+        logo: 'https://static.tinkoff.ru/brands/citibank.png',
+        id: '11253',
+        roundedLogo: false,
+        baseColor: '0088d4',
+        logoFile: 'citibank.png'
+      },
+      amount: {
+        currency: {
+          code: 643,
+          name: 'RUB',
+          strCode: '643'
+        },
+        value: 46093.1
+      },
+      operationTime: {
+        milliseconds: 1561362359000
+      },
+      spendingCategory: {
+        id: '70',
+        name: 'Пополнения',
+        icon: '33'
+      },
+      isHce: false,
+      mcc: 0,
+      partnerType: 'BankDepositionType',
+      category: {
+        id: '33',
+        name: 'Другое'
+      },
+      additionalInfo: [],
+      virtualPaymentType: 0,
+      account: 'accountId',
+      ucid: '1027265294',
+      card: '27779348',
+      loyaltyPayment: [],
+      group: 'INCOME',
+      mccString: '0000',
+      cardPresent: true,
+      isExternalCard: false,
+      cardNumber: '437772******8302',
+      accountAmount: {
+        currency: {
+          code: 643,
+          name: 'RUB',
+          strCode: '643'
+        },
+        value: 46093.1
+      }
+    },
+    {
+      'comment': 'ЗАРАБОТНАЯ ПЛАТА ЗА 1 ПОЛОВИНУ ИЮНЯ2019 ГОДА                             НДС НЕ ОБЛАГАЕТСЯ',
+      'date': new Date('2019-06-24T07:45:59+00:00'),
+      'hold': false,
+      'merchant': null,
+      'movements': [
         {
+          '_cardPresent': true,
+          '_id': '4968114177',
           'account': {
-            'company': {
-              'id': '4624'
-            },
-            'instrument': 'RUB',
-            'syncIds': null,
-            'type': null
+            'id': 'accountId'
           },
           'fee': 0,
-          'id': null,
+          'id': '4968114177',
           'invoice': null,
-          'sum': -1500
+          'sum': 46093.1
         }
       ]
     }
@@ -1385,7 +1464,7 @@ describe('convertTransaction', () => {
 })
 
 xdescribe('convertOneTransaction', () => {
-  const i = 1
+  const i = 4
   it('should convert transaction ' + i, () => {
     expect(
       convertTransaction(transactions[i][0], accounts[transactions[i][0].account])

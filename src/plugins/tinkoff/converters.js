@@ -193,6 +193,10 @@ function parseIncomeGroup (transaction, apiTransaction) {
   let title
   let comment
   switch (subgroup) {
+    case 'C1':
+      comment = apiTransaction.nomination || apiTransaction.description
+      break
+
     // входящий перевод от клиента Тинькоф
     case 'C4':
       title = apiTransaction.senderDetails
@@ -216,6 +220,7 @@ function parseIncomeGroup (transaction, apiTransaction) {
       comment = apiTransaction.description
       break
   }
+
   if (providerId === 'transfer-inner') {
     title = null
   }
@@ -238,10 +243,10 @@ function parseIncomeGroup (transaction, apiTransaction) {
   // расчёт перевода
   const card = (providerId === 'c2c-in-new' && payment.cardNumber)
   let bank = null
-  if (subgroup === 'C1' && apiTransaction.brand) {
+  if (apiTransaction.brand && apiTransaction.brand.name) {
     bank = parseOuterAccountData(apiTransaction.brand.name)
   }
-  if (card || bank) {
+  if (card /* && bank */) {
     const account = {
       type: null,
       instrument: apiTransaction.amount.currency.name
