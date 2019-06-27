@@ -12,13 +12,13 @@ describe('convertTransaction', () => {
         movements: [
           {
             account: { id: '1234xxxxxxxx5678' },
-            fee: 2.6,
+            fee: -2.6,
             id: '111111111',
             invoice: {
               instrument: 'UAH',
               sum: -1458.6
             },
-            sum: -56.22,
+            sum: -53.62,
             _type: null
           },
           {
