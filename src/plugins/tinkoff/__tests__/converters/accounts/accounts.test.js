@@ -103,7 +103,7 @@ const accounts = [
       'percent': 6.5,
       startBalance: 0,
       'startDate': new Date('2018-11-13T00:00:00+03:00'),
-      'syncID': ['5549_RUB'],
+      'syncID': ['3428475549'],
       'title': 'Мультивалютный вклад (RUB)',
       'type': 'deposit'
     }]

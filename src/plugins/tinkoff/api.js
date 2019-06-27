@@ -1,6 +1,6 @@
 import { MD5 } from 'jshashes'
-import * as Network from '../../common/network'
-import _ from 'lodash'
+import { get, omit } from 'lodash'
+import { fetchJson } from '../../common/network'
 
 const qs = require('querystring')
 const md5 = new MD5()
@@ -40,7 +40,7 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
 
     // создаём сессию
     console.log('>>> Создаём сессию:')
-    const response = await fetchJson(auth, 'session', {
+    const response = await fetchApiJson(auth, 'session', {
       headers: DEFAULT_HEADERS,
       sanitizeResponseLog: { body: { 'payload': true, 'trackingId': true } }
     })
@@ -70,7 +70,7 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
       let resultCode, response
       if (phone) {
         console.log('>>> Авторизация по телефону...')
-        response = await fetchJson(auth, 'sign_up', {
+        response = await fetchApiJson(auth, 'sign_up', {
           ignoreErrors: true,
           shouldLog: false,
           headers: DEFAULT_HEADERS,
@@ -82,7 +82,7 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
         resultCode = response.body.resultCode
       } else {
         console.log('>>> Авторизация по логину...')
-        response = await fetchJson(auth, 'sign_up', {
+        response = await fetchApiJson(auth, 'sign_up', {
           ignoreErrors: true,
           shouldLog: false,
           headers: DEFAULT_HEADERS,
@@ -116,7 +116,7 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
 
         console.log('>>> Подтверждение кодом:')
         // параметры нужно передавать в разных случаях по разному, поэтому передаём в избыточной форме
-        response = await fetchJson(auth, 'confirm', {
+        response = await fetchApiJson(auth, 'confirm', {
           // ignoreErrors: true,
           headers: DEFAULT_HEADERS,
           get: {
@@ -133,7 +133,7 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
           sanitizeResponseLog: { url: true, body: { payload: { login: true, userId: true, sessionId: true, sessionid: true } } }
         })
 
-        // проверим ответ на ошибки (проверка на ошибки вынесена в fetchJson)
+        // проверим ответ на ошибки (проверка на ошибки вынесена в fetchApiJson)
         /* if (['INTERNAL_ERROR', 'CONFIRMATION_FAILED'].indexOf(response.body.resultCode) + 1) {
           throw new TemporaryError('Ошибка авторизации: ' + (response.body.plainMessage || response.body.errorMessage))
         } else if (response.body.resultCode !== 'OK') {
@@ -143,7 +143,7 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
         // если вход по номеру телефона, отдельно проверяем пароль
         if (response.body.payload && response.body.payload.additionalAuth && response.body.payload.additionalAuth.needPassword) {
           console.log('>>> Ввод пароля:')
-          response = await fetchJson(auth, 'sign_up', {
+          response = await fetchApiJson(auth, 'sign_up', {
             // ignoreErrors: true,
             headers: DEFAULT_HEADERS,
             get: {
@@ -168,7 +168,7 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
       // устанавливаем ПИН для быстрого входа
       auth.pinHash = md5.hex(Math.random())
       console.log('>>> Инициализация входа по пин-коду:')
-      const savePin = await fetchJson(auth, 'mobile_save_pin', {
+      const savePin = await fetchApiJson(auth, 'mobile_save_pin', {
         ignoreErrors: true,
         headers: DEFAULT_HEADERS,
         get: {
@@ -195,7 +195,7 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
       const pinHashDate = ZenMoney.getData('pinHashTime', 0)
       const oldSessionId = ZenMoney.getData('session_id', 0)
       console.log('>>> Вход по пин-коду:')
-      const signUp2 = await fetchJson(auth, 'sign_up', {
+      const signUp2 = await fetchApiJson(auth, 'sign_up', {
         ignoreErrors: true,
         headers: DEFAULT_HEADERS,
         get: {
@@ -257,7 +257,7 @@ export function getPhoneNumber (str) {
 async function levelUp (auth) {
   // получим привилегии пользователя
   console.log('>>> Попытка поднять привилегии:')
-  const levelUp = await fetchJson(auth, 'level_up', {
+  const levelUp = await fetchApiJson(auth, 'level_up', {
     ignoreErrors: true,
     headers: DEFAULT_HEADERS,
     body: {
@@ -281,7 +281,7 @@ async function levelUp (auth) {
     })
 
     console.log('>>> Авторизация контрольным вопросом:')
-    const json = await fetchJson(auth, 'confirm', {
+    const json = await fetchApiJson(auth, 'confirm', {
       ignoreErrors: true,
       headers: DEFAULT_HEADERS,
       get: {
@@ -313,7 +313,7 @@ async function levelUp (auth) {
 
 export async function fetchAccountsAndTransactions (auth, fromDate, toDate) {
   console.log('>>> Загружаем данные по счетам и операциям:')
-  const accounts = await fetchJson(auth, 'grouped_requests',
+  const accounts = await fetchApiJson(auth, 'grouped_requests',
     {
       headers: DEFAULT_HEADERS,
       get: {
@@ -333,7 +333,7 @@ export async function fetchAccountsAndTransactions (auth, fromDate, toDate) {
         ])
       }
     },
-    response => _.get(response, 'body.payload[0].payload') && _.get(response, 'body.payload[1].payload')
+    response => get(response, 'body.payload[0].payload') && get(response, 'body.payload[1].payload')
   )
   return {
     accounts: accounts.body.payload[0].payload,
@@ -341,7 +341,7 @@ export async function fetchAccountsAndTransactions (auth, fromDate, toDate) {
   }
 }
 
-async function fetchJson (auth, url, options, predicate) {
+async function fetchApiJson (auth, url, options, predicate) {
   if (url.substr(0, 4) !== 'http') {
     url = BASE_URL + url
   }
@@ -355,9 +355,9 @@ async function fetchJson (auth, url, options, predicate) {
 
   let response
   try {
-    response = await Network.fetchJson(url + '?' + qs.stringify(params), {
+    response = await fetchJson(url + '?' + qs.stringify(params), {
       method: options.method || 'POST',
-      ..._.omit(options, ['method', 'get']),
+      ...omit(options, ['method', 'get']),
       sanitizeRequestLog: {
         url: true,
         ...options.sanitizeRequestLog

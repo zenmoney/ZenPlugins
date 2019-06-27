@@ -1,6 +1,6 @@
 import { parseOuterAccountData } from '../../common/accounts'
 import { formatCommentDateTime } from '../../common/dateUtils'
-import * as _ from 'lodash'
+import { isArray, groupBy, flattenDeep, union, get, values, drop, omit } from 'lodash'
 
 export function convertAccount (account, initialized = false) {
   switch (account.accountType) {
@@ -355,7 +355,7 @@ function parsePayGroup (transaction, apiTransaction) {
     city: null,
     country: null
   }
-  if (locations && _.isArray(locations) && locations.length > 0) {
+  if (locations && isArray(locations) && locations.length > 0) {
     resultMerchant.location = apiTransaction.locations[0]
   }
   if (merchant && merchant.region) {
@@ -505,8 +505,8 @@ export function convertTransactions (apiTransactions, accounts) {
   apiTransactions.forEach(apiTransaction => {
     // !!! пропускаем ошибочные дубли-холды на счетах с другой валютой
     if (getApiTransactionHoldStatus(apiTransaction) &&
-      _.get(apiTransaction, 'amount.value') === _.get(apiTransaction, 'accountAmount.value') &&
-      _.get(apiTransaction, 'amount.currency.name') !== _.get(apiTransaction, 'accountAmount.currency.name')) {
+      get(apiTransaction, 'amount.value') === get(apiTransaction, 'accountAmount.value') &&
+      get(apiTransaction, 'amount.currency.name') !== get(apiTransaction, 'accountAmount.currency.name')) {
       console.log(`>>> Пропускаем ошибочную дубль-холд операцию по счёту в другой валюте: ${getApiTransactionString(apiTransaction, accounts[apiTransaction.account])}`)
       return
     }
@@ -540,11 +540,11 @@ export function convertTransactions (apiTransactions, accounts) {
   })
 
   // избавляемся от ошибочных дублей (фантомные дубли на соседних счетах) – дань глючному Тинькову
-  let valueTransactions = _.values(transactions)
+  let valueTransactions = values(transactions)
   const doubleTransactions = valueTransactions.filter(transaction => transaction._double)
   if (doubleTransactions.length > 0) {
     console.log(`>>> Обнаружено дублирующихся операций: ${doubleTransactions.length} шт.`, doubleTransactions)
-    valueTransactions = valueTransactions.filter(transaction => !_.isArray(transaction))
+    valueTransactions = valueTransactions.filter(transaction => !isArray(transaction))
   }
 
   // у операций с одним и тем же paymentId обновим id операции
@@ -566,7 +566,7 @@ export function convertTransactions (apiTransactions, accounts) {
   })
 
   // группируем операции, если вдруг есть одновременно холд и акцепт
-  const groupedTransactions = _.groupBy(_.flattenDeep(valueTransactions), transaction => {
+  const groupedTransactions = groupBy(flattenDeep(valueTransactions), transaction => {
     const movements = []
     transaction.movements.forEach(movement => {
       movements.push(movement.account.id + '@' + movement.sum)
@@ -582,11 +582,11 @@ export function convertTransactions (apiTransactions, accounts) {
 
     let transactions = []
     // обработаем дубли, совпавшие по время-мерчант-мсс-суммы
-    const groupedTransationsByHold = _.groupBy(groupedTransactions[key], transactions => transactions.hold)
+    const groupedTransationsByHold = groupBy(groupedTransactions[key], transactions => transactions.hold)
     // если есть одновременно холды и акцепты
     if (groupedTransationsByHold['true'] && groupedTransationsByHold['false']) {
       // то берём все акцепты и остаток холдов (если их больше акцептов)
-      transactions = _.union(groupedTransationsByHold['false'], _.drop(groupedTransationsByHold['true'], groupedTransationsByHold['false'].length))
+      transactions = union(groupedTransationsByHold['false'], drop(groupedTransationsByHold['true'], groupedTransationsByHold['false'].length))
     } else {
       transactions = groupedTransationsByHold['false'] || groupedTransationsByHold['true']
     }
@@ -594,20 +594,20 @@ export function convertTransactions (apiTransactions, accounts) {
     return transactions
   })
 
-  return _.flattenDeep(result).map(transaction => cleanupTransaction(transaction))
+  return flattenDeep(result).map(transaction => cleanupTransaction(transaction))
 }
 
 export function cleanupTransaction (transaction) {
   transaction.movements = transaction.movements.map(movement => cleanupMovement(movement))
-  return _.omit(transaction, ['_double'])
+  return omit(transaction, ['_double'])
 }
 
 function cleanupMovement (movement) {
-  return _.omit(movement, ['_cardPresent', '_id'])
+  return omit(movement, ['_cardPresent', '_id'])
 }
 
 export function groupApiTransactionsById (apiTransactions) {
-  return _.groupBy(apiTransactions, apiTransaction => getApiTransactionId(apiTransaction))
+  return groupBy(apiTransactions, apiTransaction => getApiTransactionId(apiTransaction))
 }
 
 function getDebitCard (account, initialized) {
@@ -633,10 +633,10 @@ function getDebitCard (account, initialized) {
   // номера карт
   for (let k = 0; k < account.cardNumbers.length; k++) {
     const card = account.cardNumbers[k]
-    if (card.activated) { result.syncID.push(card.value.substring(card.value.length - 4)) }
+    if (card.activated) { result.syncID.push(card.value) }
   }
   // добавим и номер счёта карты
-  result.syncID.push(account.id.substring(account.id.length - 4))
+  result.syncID.push(account.id)
 
   return result
 }
@@ -685,10 +685,10 @@ function getCreditCard (account, initialized) {
   // номера карт
   for (let k = 0; k < account.cardNumbers.length; k++) {
     const card = account.cardNumbers[k]
-    if (card.activated) { result.syncID.push(card.value.substring(card.value.length - 4)) }
+    if (card.activated) { result.syncID.push(card.value) }
   }
   // добавим и номер счёта карты
-  result.syncID.push(account.id.substring(account.id.length - 4))
+  result.syncID.push(account.id)
 
   return result
 }
@@ -700,7 +700,7 @@ function getSavingAccount (account) {
     id: account.id,
     title: account.name,
     type: 'checking',
-    syncID: [ account.id.substring(account.id.length - 4) ],
+    syncID: [ account.id ],
     instrument: account.moneyAmount.currency.name,
     balance: account.moneyAmount.value,
     savings: true
@@ -714,7 +714,7 @@ function getDepositAccount (account) {
     id: account.id,
     title: account.name,
     type: 'deposit',
-    syncID: [ account.id.substring(account.id.length - 4) ],
+    syncID: [ account.id ],
     instrument: account.moneyAmount.currency.name,
     balance: account.moneyAmount.value,
     percent: account.depositRate,
@@ -736,7 +736,7 @@ function getMultiDepositAccount (account) {
     const currency = deposit.moneyAmount.currency.name
     const name = account.name + ' (' + currency + ')'
     const id = account.id + '_' + currency
-    const syncid = account.id.substring(account.id.length - 4) + '_' + currency
+    const syncid = account.id
     console.log('>>> Добавляем мультивалютный вклад: ' + name + ' (#' + id + ') = ' + deposit.moneyAmount.value + ' ' + deposit.moneyAmount.currency.name)
     accDict.push({
       id: id,
@@ -770,7 +770,7 @@ function getCashLoan (account) {
     id: account.id,
     title: account.name,
     type: 'loan',
-    syncID: [ account.id.substring(account.id.length - 4) ],
+    syncID: [ account.id ],
     instrument: account.debtAmount.currency.name,
     balance: account.debtAmount.value,
     startBalance: account.creditAmount.value,
@@ -794,7 +794,7 @@ function getKupiVKreditAccount (account) {
       id: vkredit.account,
       title: vkredit.name,
       type: 'loan',
-      syncID: [ vkredit.account.substring(account.id.length - 4) ],
+      syncID: [ vkredit.account ],
       instrument: vkredit.balance.currency.name,
       balance: vkredit.balance.value,
       startBalance: vkredit.amount.value,
@@ -825,10 +825,10 @@ function getWalletAccount (account) {
   // номера карт
   for (let k = 0; k < account.cardNumbers.length; k++) {
     const card = account.cardNumbers[k]
-    if (card.activated) { result.syncID.push(card.value.substring(card.value.length - 4)) }
+    if (card.activated) { result.syncID.push(card.value) }
   }
   // добавим и номер счёта карты
-  result.syncID.push(account.id.substring(account.id.length - 4))
+  result.syncID.push(account.id)
 
   return result
 }
@@ -848,10 +848,10 @@ function getTelecomAccount (account) {
   // номера карт
   for (let k = 0; k < account.cardNumbers.length; k++) {
     const card = account.cardNumbers[k]
-    if (card.activated) { result.syncID.push(card.value.substring(card.value.length - 4)) }
+    if (card.activated) { result.syncID.push(card.value) }
   }
   // добавим и номер счёта карты
-  result.syncID.push(account.id.substring(account.id.length - 4))
+  result.syncID.push(account.id)
 
   return result
 }
@@ -904,7 +904,7 @@ function getMovementSumToString (movement) {
 }
 
 function getTransactionString (transaction, account = {}) {
-  if (_.isArray(transaction)) {
+  if (isArray(transaction)) {
     return transaction.map((tran, index) => `#${index}: ${getTransactionString(tran)}`).join('\n')
   }
 

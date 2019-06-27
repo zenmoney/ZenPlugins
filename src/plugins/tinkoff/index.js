@@ -1,11 +1,12 @@
-import * as Tinkoff from './api'
-import * as _ from 'lodash'
+import { login, fetchAccountsAndTransactions } from './api'
 import { convertAccount, convertTransactions } from './converters'
+import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
+import { isArray, values } from 'lodash'
 
 export async function scrape ({ preferences, fromDate, toDate, isInBackground }) {
   const pinHash = ZenMoney.getData('pinHash', null)
-  const auth = await Tinkoff.login(preferences, isInBackground, { pinHash: pinHash })
-  const fetchedData = await Tinkoff.fetchAccountsAndTransactions(auth, fromDate, toDate)
+  const auth = await login(preferences, isInBackground, { pinHash: pinHash })
+  const fetchedData = await fetchAccountsAndTransactions(auth, fromDate, toDate)
 
   // обработаем счета
   const accounts = {}
@@ -13,7 +14,7 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
   await Promise.all(fetchedData.accounts.map(async account => {
     const acc = convertAccount(account, initialized)
     if (!acc || ZenMoney.isAccountSkipped(acc.id)) return
-    if (_.isArray(acc)) {
+    if (isArray(acc)) {
       acc.forEach(function (item) {
         if (!item) return
         accounts[item.id] = item
@@ -29,7 +30,7 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
   const transactions = convertTransactions(fetchedData.transactions, accounts)
 
   return {
-    accounts: _.values(accounts),
+    accounts: ensureSyncIDsAreUniqueButSanitized({ accounts: values(accounts), sanitizeSyncId }),
     transactions: transactions
   }
 }
