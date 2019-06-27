@@ -40,7 +40,7 @@ export function convertWallets (wallets) {
         balance: balanceItem.currentBalance,
         startBalance: 0,
         creditLimit: 0,
-        syncID: accountId,
+        syncID: [ accountId ],
         company: null
       }
     })
@@ -100,8 +100,8 @@ function getMovement (apiTransaction, accountId) {
     return null
   }())
 
-  const fee = apiTransaction.fee || 0
-  const sum = apiTransaction.total || (apiTransaction.amount + fee)
+  const fee = apiTransaction.fee ? -apiTransaction.fee : 0
+  const sum = apiTransaction.amount && apiTransaction.fee ? apiTransaction.amount : apiTransaction.total
 
   const movement = {
     id: apiTransaction.transactionId,
