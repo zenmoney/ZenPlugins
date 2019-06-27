@@ -12,6 +12,7 @@ const accounts = {
 const transactions = {
   // снятие наличных в точке-партнёре
   'undefined': [
+    // снятие через банкомат АК Барс банка
     [
       {
         isDispute: true,
@@ -139,6 +140,8 @@ const transactions = {
         ]
       }
     ],
+
+    // снятие через банкомат МТС-банка
     [
       {
         isDispute: true,
@@ -264,7 +267,7 @@ const transactions = {
       }
     ],
 
-    // перевод через Western Union рассматриваем как обычный расход
+    // перевод через Western Union
     [
       {
         isDispute: true,
@@ -359,6 +362,126 @@ const transactions = {
             'id': '4924931157',
             'invoice': null,
             'sum': -11392.37
+          }
+        ]
+      }
+    ],
+
+    // снятие через Совком card2card переводом
+    [
+      {
+        isDispute: true,
+        hasStatement: true,
+        isSuspicious: false,
+        id: '4964351770',
+        offers: [],
+        status: 'OK',
+        idSourceType: 'Prime',
+        type: 'Debit',
+        subgroup: {
+          id: 'B1',
+          name: 'Снятия наличных'
+        },
+        locations: [],
+        loyaltyBonus: [],
+        cashbackAmount: {
+          currency: {
+            code: 643,
+            name: 'RUB',
+            strCode: '643'
+          },
+          value: 0
+        },
+        description: 'Операция в других кредитных организациях SOVCOMBANK MOSKVA RUS',
+        debitingTime: {
+          milliseconds: 1561237200000
+        },
+        cashback: 0,
+        brand: {
+          name: 'Совкомбанк',
+          baseTextColor: 'ffffff',
+          logo: 'https://static.tinkoff.ru/brands/sovcombank.png',
+          id: '11586',
+          roundedLogo: false,
+          baseColor: '00468e',
+          logoFile: 'sovcombank.png'
+        },
+        amount: {
+          currency: {
+            code: 643,
+            name: 'RUB',
+            strCode: '643'
+          },
+          value: 5000
+        },
+        operationTime: {
+          milliseconds: 1561132545000
+        },
+        spendingCategory: {
+          id: '52',
+          name: 'Наличные',
+          icon: '21',
+          parentId: '8'
+        },
+        isHce: false,
+        mcc: 6538,
+        category: {
+          id: '7',
+          name: 'Финан. услуги'
+        },
+        additionalInfo: [],
+        virtualPaymentType: 0,
+        account: 'accountId',
+        ucid: '1027249332',
+        merchant: {
+          name: 'Совкомбанк',
+          region: {
+            country: 'RUS',
+            city: 'MOSKVA'
+          }
+        },
+        card: '27763387',
+        loyaltyPayment: [],
+        group: 'CASH',
+        mccString: '6538',
+        cardPresent: false,
+        isExternalCard: false,
+        cardNumber: '553691******8897',
+        accountAmount: {
+          currency: {
+            code: 643,
+            name: 'RUB',
+            strCode: '643'
+          },
+          value: 5000
+        }
+      },
+      {
+        'comment': null,
+        'date': new Date('2019-06-21T15:55:45+00:00'),
+        'hold': false,
+        'merchant': null,
+        'movements': [
+          {
+            'id': '4964351770',
+            '_id': '4964351770',
+            'account': {
+              'id': 'accountId'
+            },
+            'fee': 0,
+            'invoice': null,
+            'sum': -5000
+          },
+          {
+            'id': null,
+            'account': {
+              'company': { 'id': '4534' },
+              'instrument': 'RUB',
+              'syncIds': null,
+              'type': null },
+            'fee': 0,
+            'invoice': null,
+            'sum': 5000
           }
         ]
       }
@@ -1168,7 +1291,7 @@ describe('convertTransaction', () => {
 
 describe('convertOneTransaction', () => {
   const type = 'undefined'
-  const i = 2
+  const i = 3
   it(`should convert '${type}' #${i}`, () => {
     expect(
       convertTransaction(transactions[type][i][0], accounts[transactions[type][i][0].account])

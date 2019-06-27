@@ -323,11 +323,14 @@ function parseCashGroup (transaction, apiTransaction) {
     case undefined: // в точке партнёра
     case 'atm-transfer-cash': // в банкомате Тинькова
       // снятие наличных через Western Union рассматриваем как расход
-      if (apiTransaction.merchant && [ 6538 ].indexOf(apiTransaction.mcc) < 0) {
-        transaction = addMirrorMovement(transaction, {
-          type: 'cash',
-          instrument: apiTransaction.amount.currency.name
-        })
+      const card2card = [ 6538 ].indexOf(apiTransaction.mcc) >= 0
+      if (!card2card) {
+        transaction = addMirrorMovement(transaction, { type: 'cash' }, apiTransaction.amount.currency.name)
+      } else if (apiTransaction.merchant) {
+        const bank = parseOuterAccountData(apiTransaction.merchant.name)
+        if (bank) {
+          transaction = addMirrorMovement(transaction, bank, apiTransaction.amount.currency.name)
+        }
       }
       break
 
@@ -379,7 +382,7 @@ function parseComment (transaction, apiTransaction) {
   }
 }
 
-function addMirrorMovement (transaction, account) {
+function addMirrorMovement (transaction, account, accountInstrument = null) {
   if (transaction.movements.length > 1) {
     console.log('Ошибка добавления зеркальной movement: ', transaction)
     throw new Error('Ошибка добавления зеркальной movement')
@@ -390,7 +393,9 @@ function addMirrorMovement (transaction, account) {
     id: null,
     account: {
       company: null,
-      instrument: transaction.movements[0].account.instrument,
+      instrument: transaction.movements[0].invoice
+        ? transaction.movements[0].invoice.instrument
+        : accountInstrument,
       syncIds: null,
       ...account
     },
