@@ -82,9 +82,22 @@ export function convertTransaction (apiTransaction) {
 }
 
 function getMovement (apiTransaction, accountId) {
-  const isLoad = apiTransaction.operation.type === 'CardLoad' ||
-  apiTransaction.operation.typeCode === 'Load' ||
-  apiTransaction.operation.displayName.toLowerCase().includes('load')
+  const type = (function () {
+    const operation = apiTransaction.operation
+    if (operation.type === 'CardLoad' || operation.type === '5' ||
+        operation.typeCode === 'Load' || /load/i.test(operation.displayName) || /load/i.test(apiTransaction.details)) {
+      return 'load'
+    }
+    if (operation.type === 'CardUnload' || operation.type === '6' ||
+        operation.typeCode === 'Unload' || /unload/i.test(apiTransaction.details)) {
+      return 'unload'
+    }
+    if (operation.type === '10' || /exchange/i.test(operation.details)) {
+      return 'exchange'
+    }
+
+    return null
+  }())
 
   const fee = apiTransaction.fee || 0
   const sum = apiTransaction.total || (apiTransaction.amount + fee)
@@ -95,7 +108,7 @@ function getMovement (apiTransaction, accountId) {
     invoice: null,
     sum: apiTransaction.direction === 'Out' ? -sum : sum,
     fee: fee,
-    _load: isLoad
+    _type: type
   }
 
   if (apiTransaction.txnCurrency && (apiTransaction.currency !== apiTransaction.txnCurrency)) {
@@ -143,19 +156,22 @@ export function mergeTransactions (transactions, accounts) {
         return null
       }
       const movement = getSingleReadableTransactionMovement(transaction)
-      if (movement._load || false) {
+      if (movement._type === 'load' || movement._type === 'unload') {
         const account = accounts.find(account => account.id === movement.account.id)
         return [
+          'internal',
           movement.invoice ? Math.abs(movement.invoice.sum) : Math.abs(movement.sum),
           movement.invoice ? movement.invoice.instrument : account.instrument,
-          transaction.date.setSeconds(0, 0)
+          truncateSeconds(transaction.date) // Переводы внутри системы обычно происходят в пределах минуты
         ].join('-')
+      } else if (movement._type === 'exchange') {
+        return ['exchange', truncateSeconds(transaction.date)].join('-')
       } else {
         return null
       }
     }
   }).map(transaction => {
-    transaction.movements = transaction.movements.map(movement => _.omit(movement, ['_load']))
+    transaction.movements = transaction.movements.map(movement => _.omit(movement, ['_type']))
     return transaction
   })
 }
@@ -170,4 +186,8 @@ function uniqueCardId (id) {
 
 function uniqueWalletId (id, currency) {
   return id + '-' + resolveInstrument(currency)
+}
+
+function truncateSeconds (date) {
+  return date.setSeconds(0, 0)
 }
