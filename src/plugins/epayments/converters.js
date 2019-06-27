@@ -54,8 +54,8 @@ export function extractAccounts (userInfo) {
   return cards.concat(wallets)
 }
 
-export function convertTransactions (apiTransactions, accounts) {
-  return apiTransactions.map(apiTransaction => convertTransaction(apiTransaction, accounts))
+export function convertTransactions (apiTransactions) {
+  return apiTransactions.map(apiTransaction => convertTransaction(apiTransaction))
 }
 
 export function convertTransaction (apiTransaction) {
@@ -84,16 +84,17 @@ export function convertTransaction (apiTransaction) {
 function getMovement (apiTransaction, accountId) {
   const type = (function () {
     const operation = apiTransaction.operation
-    if (operation.type === 'CardLoad' || operation.type === '5' ||
-        operation.typeCode === 'Load' || /load/i.test(operation.displayName) || /load/i.test(apiTransaction.details)) {
+    if (operation.type === 'CardLoad' || operation.type === '5' || operation.typeCode === 'Load') {
       return 'load'
     }
-    if (operation.type === 'CardUnload' || operation.type === '6' ||
-        operation.typeCode === 'Unload' || /unload/i.test(apiTransaction.details)) {
+    if (operation.type === 'CardUnload' || operation.type === '6' || operation.typeCode === 'Unload') {
       return 'unload'
     }
-    if (operation.type === '10' || /exchange/i.test(operation.details)) {
+    if (operation.type === '10' || getRegexForWord('exchange').test(operation.details)) {
       return 'exchange'
+    }
+    if (operation.type === 'CardPostOperation' || operation.typeCode === 'Pos') {
+      return 'pos' //  Пока это никак не используется
     }
 
     return null
@@ -190,4 +191,8 @@ function uniqueWalletId (id, currency) {
 
 function truncateSeconds (date) {
   return date.setSeconds(0, 0)
+}
+
+function getRegexForWord (word) {
+  return new RegExp(`\\b${word}\\b`, 'i')
 }
