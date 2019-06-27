@@ -323,7 +323,7 @@ function parseCashGroup (transaction, apiTransaction) {
     case undefined: // в точке партнёра
     case 'atm-transfer-cash': // в банкомате Тинькова
       // снятие наличных через Western Union рассматриваем как расход
-      if (apiTransaction.merchant && /^(?!.*WU\.COM).*/mi.test(apiTransaction.merchant.name)) {
+      if (apiTransaction.merchant && [ 6538 ].indexOf(apiTransaction.mcc) < 0) {
         transaction = addMirrorMovement(transaction, {
           type: 'cash',
           instrument: apiTransaction.amount.currency.name
