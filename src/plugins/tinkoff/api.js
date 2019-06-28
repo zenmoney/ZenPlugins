@@ -368,7 +368,7 @@ async function fetchApiJson (auth, url, options, predicate) {
       }
     })
   } catch (e) {
-    if (e.response && e.response.status === 503) {
+    if (e.response && e.response.status >= 500 && e.response.status < 525) {
       throw new TemporaryError('Информация из банка Тинькофф временно недоступна. Повторите синхронизацию через некоторое время.')
     } else {
       throw e
