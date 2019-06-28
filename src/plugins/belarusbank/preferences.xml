@@ -28,7 +28,7 @@
         dialogTitle="Коды 1-10"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
-        summary="|Введите коды 1-10 через пробел|****">
+        summary="|Введите коды 1-10 через пробел или +|****">
     </EditTextPreference>
     <EditTextPreference
         key="codes1"
@@ -38,7 +38,7 @@
         dialogTitle="Коды 11-20"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
-        summary="|Введите коды 11-20 через пробел|****">
+        summary="|Введите коды 11-20 через пробел или +|****">
     </EditTextPreference>
     <EditTextPreference
         key="codes2"
@@ -48,7 +48,7 @@
         dialogTitle="Коды 21-30"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
-        summary="|Введите коды 21-30 через пробел|****">
+        summary="|Введите коды 21-30 через пробел или +|****">
     </EditTextPreference>
     <EditTextPreference
         key="codes3"
@@ -58,7 +58,7 @@
         dialogTitle="Коды 31-40"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
-        summary="|Введите коды 31-40 через пробел|****">
+        summary="|Введите коды 31-40 через пробел или +|****">
     </EditTextPreference>
     <EditTextPreference
         key="startDate"

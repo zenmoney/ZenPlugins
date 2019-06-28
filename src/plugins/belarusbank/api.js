@@ -25,17 +25,17 @@ function validateResponse (response, predicate, error) {
 }
 
 export async function login (prefs) {
-  if (!prefs.codes0 || !/^\s*(?:\d{4}\s+){9}\d{4}\s*$/.test(prefs.codes0)) {
-    throw new InvalidPreferencesError('Неправильно введены коды 1-10! Необходимо ввести 10 четырехзначных кодов через пробел.')
+  if (!prefs.codes0 || !/^\s*(?:\d{4}[\s+]+){9}\d{4}\s*$/.test(prefs.codes0)) {
+    throw new InvalidPreferencesError('Неправильно введены коды 1-10! Необходимо ввести 10 четырехзначных кодов через пробел или +.')
   }
-  if (!prefs.codes1 || !/^\s*(?:\d{4}\s+){9}\d{4}\s*$/.test(prefs.codes1)) {
-    throw new InvalidPreferencesError('Неправильно введены коды 11-20! Необходимо ввести 10 четырехзначных кодов через пробел.')
+  if (!prefs.codes1 || !/^\s*(?:\d{4}[\s+]+){9}\d{4}\s*$/.test(prefs.codes1)) {
+    throw new InvalidPreferencesError('Неправильно введены коды 11-20! Необходимо ввести 10 четырехзначных кодов через пробел или +.')
   }
-  if (!prefs.codes2 || !/^\s*(?:\d{4}\s+){9}\d{4}\s*$/.test(prefs.codes2)) {
-    throw new InvalidPreferencesError('Неправильно введены коды 21-30! Необходимо ввести 10 четырехзначных кодов через пробел.')
+  if (!prefs.codes2 || !/^\s*(?:\d{4}[\s+]+){9}\d{4}\s*$/.test(prefs.codes2)) {
+    throw new InvalidPreferencesError('Неправильно введены коды 21-30! Необходимо ввести 10 четырехзначных кодов через пробел или +.')
   }
-  if (!prefs.codes3 || !/^\s*(?:\d{4}\s+){9}\d{4}\s*$/.test(prefs.codes3)) {
-    throw new InvalidPreferencesError('Неправильно введены коды 31-40! Необходимо ввести 10 четырехзначных кодов через пробел.')
+  if (!prefs.codes3 || !/^\s*(?:\d{4}[\s+]+){9}\d{4}\s*$/.test(prefs.codes3)) {
+    throw new InvalidPreferencesError('Неправильно введены коды 31-40! Необходимо ввести 10 четырехзначных кодов через пробел или +.')
   }
   var res = await fetchUrl('/wps/portal/ibank/', {
     method: 'GET'
