@@ -86,7 +86,7 @@ export function convertDepositTransaction (accountId, apiTransaction, fromDate) 
       break
 
     default:
-      console.log('Неизвестный тип транзакции депозита: ', apiTransaction)
+      console.log('>>> Неизвестный тип транзакции депозита: ', apiTransaction)
       throw new Error('Неизвестный тип транзакции депозита')
   }
 }
@@ -120,21 +120,16 @@ export function convertAccountTransaction (apiTransaction, account, titleAccount
 
     case 'atm_cash_out': // Снятие наличных в банкомате
     case 'atm_cash_out_open': // Снятие наличных в банкомате Открытия
-      transaction.comment = getComment(apiTransaction)
-      addMirrorMovement(transaction, {
-        type: 'cash',
-        instrument: apiTransaction.money.currency_code
-      })
-      break
-
     case 'atm_cash_in': // Пополнение наличными через банкомат
     case 'office_cash_in': // Пополнение наличными через отделение банка
     case 'robin_operation': // Пополнение наличными в салоне связи
-      addMirrorMovement(transaction, {
-        type: 'cash',
-        instrument: apiTransaction.money.currency_code
-      })
       transaction.comment = getComment(apiTransaction)
+      addMirrorMovement(transaction,
+        {
+          type: 'cash',
+          instrument: apiTransaction.money.currency_code
+        },
+        apiTransaction)
       break
 
     case 'remittance': // Перевод (исходящий)
@@ -159,10 +154,14 @@ export function convertAccountTransaction (apiTransaction, account, titleAccount
       parseCard2cardMovement(transaction, account, transaction.comment, 'а карту')
       break
 
-    case 'atm_commission': // Комиссия за снятие наличных
-    case 'commission': // Комиссия за операцию
-    case 'rocket_fee': // Услуги банка
-    case 'card_commission': // Комиссия за обслуживание карты
+    case 'atm_commission': // комиссия за снятие наличных
+    case 'commission': // комиссия за операцию
+    case 'rocket_fee': // услуги банка
+    case 'card_commission': // комиссия за обслуживание карты
+    case 'disput_charge': // опротестовывание операции
+    case 'transfer_cash_in': // зачисление межбанка || Начисление процентов
+    case 'cashin_commission': // комиссия за внесение наличных
+    case 'spisanie':
       transaction.comment = getComment(apiTransaction)
       break
 
@@ -170,9 +169,8 @@ export function convertAccountTransaction (apiTransaction, account, titleAccount
       fillPayee(transaction, apiTransaction)
       break
 
-    case 'internal_cash_in': // Входящий перевод внутри банка
+    case 'internal_cash_in': // входящий перевод внутри банка
       transaction.comment = getComment(apiTransaction)
-
       const arrSplited = transaction.comment.split(' → ')
       const arrAccounts = arrSplited.map(title => titleAccounts[title])
       if (arrAccounts.length === 2 && titleAccounts[arrSplited[0]] && titleAccounts[arrSplited[1]]) {
@@ -232,17 +230,6 @@ export function convertAccountTransaction (apiTransaction, account, titleAccount
       }
       break
 
-    case 'transfer_cash_in': // Зачисление межбанка || Начисление процентов
-      transaction.comment = getComment(apiTransaction)
-      break
-
-    case 'miles_cash_back': // Возврат за рокетрубли
-      break
-
-    case 'emoney_payment':
-    case 'quasi_cash':
-      break
-
     case 'open_deposit': // Открытие вклада
       /* let isFounded = false
       this.deposits_operations.map(function (depositTransaction) {
@@ -268,19 +255,14 @@ export function convertAccountTransaction (apiTransaction, account, titleAccount
       } */
       break
 
-    case 'spisanie':
-      transaction.comment = getComment(apiTransaction)
-      break
-
+    case 'miles_cash_back': // возврат за рокетрубли
+    case 'emoney_payment':
+    case 'quasi_cash':
     case null: // Неизвестный тип контекста
       break
 
-    case 'cashin_commission': // Комиссия за внесение наличных
-      transaction.comment = getComment(apiTransaction)
-      break
-
     default:
-      console.log('Неизвестный тип транзакции:', apiTransaction)
+      console.log('>>> Неизвестный тип транзакции:', apiTransaction)
       throw new Error('Неизвестный тип транзакции')
   }
 
@@ -362,7 +344,7 @@ function getMovement (apiTransaction, account) {
 
 function addMirrorMovement (transaction, account, apiTransaction = null) {
   if (transaction.movements.length > 1) {
-    console.log('Ошибка добавления зеркальной movement: ', transaction)
+    console.log('>>> Ошибка добавления зеркальной movement: ', transaction)
     throw new Error('Ошибка добавления зеркальной movement')
   }
 
@@ -384,7 +366,7 @@ function addMirrorMovement (transaction, account, apiTransaction = null) {
   }
 
   if (!account) {
-    console.log('Ошибка добавления зеркальной операции: ', transaction, account, apiTransaction)
+    console.log('>>> Ошибка добавления зеркальной операции: ', transaction, account, apiTransaction)
     throw new Error('Ошибка добавления зеркальной операции')
   }
 

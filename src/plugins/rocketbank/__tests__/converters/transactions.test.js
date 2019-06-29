@@ -1661,6 +1661,75 @@ const transactions = {
         ]
       }
     ]
+  ],
+
+  // опротестовывание операции
+  'disput_charge': [
+    [
+      {
+        exchange_details: null,
+        id: 327575124,
+        status: 'confirmed',
+        comment: '',
+        tag_list: [],
+        friend_transfer_type: null,
+        receipt_url: 'https://rocketbank.ru/receipt/0add6f7b-2ab3f89e-84093d1f-b5fb7c60-8b6beaab-e49afe0c',
+        context_type: 'disput_charge',
+        details: 'Зачисление по опротестованию операции',
+        has_receipt: false,
+        mimimiles: 0,
+        happened_at: 1561710352,
+        sputnik: false,
+        display_money: {
+          amount: 20000,
+          currency_code: 'RUB'
+        },
+        money: {
+          amount: 20000,
+          currency_code: 'RUB'
+        },
+        category: {
+          id: 437,
+          name: 'Доход',
+          display_name: 'Доход',
+          icon: 'income',
+          sub_icon: '437'
+        },
+        merchant: {
+          id: 4123110,
+          name: 'Зачисление по опротестованию операции',
+          feed_icon: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/merchants/4123110/cool_small_87780c78-bf94-48fb-b83a-4ea62e9ef3a9.png',
+          icon: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/merchants/4123110/cool_big_87780c78-bf94-48fb-b83a-4ea62e9ef3a9.png',
+          iphone_small: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/merchants/4123110/iphone_small_87780c78-bf94-48fb-b83a-4ea62e9ef3a9.png',
+          iphone_big: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/merchants/4123110/iphone_big_87780c78-bf94-48fb-b83a-4ea62e9ef3a9.png',
+          android: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/merchants/4123110/android_87780c78-bf94-48fb-b83a-4ea62e9ef3a9.png'
+        },
+        location: {
+          latitude: null,
+          longitude: null,
+          acc: null
+        },
+        visible: true,
+        action: null
+      },
+      {
+        'comment': 'Зачисление по опротестованию операции',
+        'date': new Date('2019-06-28T08:25:52+00:00'),
+        'hold': false,
+        'merchant': null,
+        'movements': [
+          {
+            'account': {
+              'id': 'cardRUB'
+            },
+            'fee': 0,
+            'id': '327575124',
+            'invoice': null,
+            'sum': 20000
+          }
+        ]
+      }
+    ]
   ]
 }
 
@@ -1688,10 +1757,10 @@ describe('convertTransaction', () => {
   })
 })
 
-xdescribe('convertOneTransaction', () => {
+describe('convertOneTransaction', () => {
   initTitleAccounts()
-  const type = 'internal_cash_in'
-  const num = 4
+  const type = 'disput_charge'
+  const num = 0
   it(`should convert '${type}' ${num}`, () => {
     expect(
       convertAccountTransaction(transactions[type][num][0], accounts['cardRUB'], titleAccounts)
