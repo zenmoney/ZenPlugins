@@ -3,7 +3,7 @@ import * as data from './_data'
 
 describe('convertTransactions', () => {
   it('converts currency exchange  between wallets transactions', () => {
-    expect(convertTransactions(data.walletsCurrencyExchangeApiTrnsactions)).toEqual([
+    expect(convertTransactions(data.walletsCurrencyExchangeApiTransactions)).toEqual([
       {
         hold: false,
         date: new Date(Date.parse('2019-06-27T08:02:45.373Z')),

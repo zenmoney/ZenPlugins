@@ -72,7 +72,7 @@ export function convertTransaction (apiTransaction) {
     hold: apiTransaction.state === 'WaitConfirmation',
     merchant: null, // Такая информация есть только в комментарии в неудобном для парсинга виде
     date: new Date(Date.parse(apiTransaction.operation.date)),
-    comment: tools.cleanUpText(apiTransaction.details)
+    comment: tools.cleanUpText(apiTransaction.details || '')
   };
 
   // TODO: добавить больше операций?
@@ -152,6 +152,11 @@ function parseCashWithdrawal (apiTransaction, zenTransaction, accountId) {
 export function mergeTransactions (transactions, accounts) {
   return commonMergeTransfers({
     items: transactions,
+    mergeComments: (outcome, income) => {
+      return outcome.transaction.comment.length >= income.transaction.comment.length
+        ? outcome.transaction.comment
+        : income.transaction.comment
+    },
     makeGroupKey: transaction => {
       if (transaction.movements.length !== 1) {
         return null

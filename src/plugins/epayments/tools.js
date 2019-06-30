@@ -1,9 +1,5 @@
 export function getTimestamp (date) {
-  var milllis = 0
-  if (date instanceof Date) milllis = date.getTime()
-  else if (typeof date === 'number') milllis = date
-
-  return Math.floor(milllis / 1000)
+  return Math.floor(date.getTime() / 1000)
 }
 
 export function cleanUpText (text) {

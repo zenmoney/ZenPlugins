@@ -4,7 +4,6 @@ import * as tools from './tools'
 
 const urls = new function () {
   this.baseURL = 'https://api.epayments.com/'
-  this.cabinetURL = 'https://my.epayments.com/'
 
   this.token = this.baseURL + 'token'
   this.userInfo = this.baseURL + 'v1/user'
@@ -15,19 +14,19 @@ const defaultHeaders = {
   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
   'Accept-Language': 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
   'Connection': 'keep-alive',
-  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36'
+  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36',
+  'Referer': 'https://my.epayments.com/'
 }
 
 function getAPIHeaders (tokenType, token) {
   return Object.assign({}, defaultHeaders, {
-    'Referer': urls.cabinetURL,
     'Authorization': `${tokenType} ${token}`
   })
 }
 
 export async function authenthicate (login, password) {
   async function readCode (message) {
-    const otp = await ZenMoney.readLine(message)
+    const otp = await ZenMoney.readLine(message, { inputType: 'number' })
     if (!otp) {
       throw new Error('Без OTP-кода не смогу =[')
     } else {
@@ -44,7 +43,6 @@ export async function authenthicate (login, password) {
     }
 
     const authHeaders = Object.assign({}, defaultHeaders, {
-      'Referer': urls.cabinetURL,
       'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
       'Authorization': 'Basic ZXBheW1lbnRzOm1ZbjZocmtnMElMcXJ0SXA4S1NE'
     })
@@ -62,7 +60,7 @@ export async function authenthicate (login, password) {
   async function fetchRetry (login, password, otp) {
     const response = await fetch(login, password, otp)
 
-    if (response.ok) {
+    if (response.status === 200) {
       return { tokenType: response.body.token_type, token: response.body.access_token }
     } else {
       const errorCode = _.get(response, 'body.error')
@@ -95,7 +93,7 @@ export async function fetchCardsAndWallets (auth) {
   }
 
   const response = await network.fetchJson(urls.userInfo, params)
-  if (!response.ok) {
+  if (response.status !== 200) {
     const message = 'Ошибка при загрузке информации об аккаунтах! '
     console.error(message + JSON.stringify(response))
     throw new Error(message)
@@ -111,7 +109,7 @@ export async function fetchTransactions (auth, fromDate, toDate) {
   async function recursive (params, transactions, toFetch, isFirstPage) {
     const response = await network.fetchJson(urls.transactions, params)
 
-    if (!response.ok) {
+    if (response.status !== 200) {
       const message = 'Ошибка при загрузке транзакций! '
       console.error(message + JSON.stringify(response))
       throw new Error(message)
