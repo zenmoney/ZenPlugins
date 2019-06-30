@@ -2,25 +2,25 @@ import * as _ from 'lodash'
 import * as network from '../../common/network'
 import * as tools from './tools'
 
-const urls = new function () {
+const urls = (function () {
   this.baseURL = 'https://api.epayments.com/'
   this.cabinetURL = 'https://my.epayments.com/'
 
   this.token = this.baseURL + 'token'
   this.userInfo = this.baseURL + 'v1/user'
   this.transactions = this.baseURL + 'v2/Transactions'
-}()
+}())
 
 const defaultHeaders = {
   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
   'Accept-Language': 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
   'Connection': 'keep-alive',
-  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36'
+  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36',
+  'Referer': urls.cabinetURL
 }
 
 function getAPIHeaders (tokenType, token) {
   return Object.assign({}, defaultHeaders, {
-    'Referer': urls.cabinetURL,
     'Authorization': `${tokenType} ${token}`
   })
 }
@@ -44,7 +44,6 @@ export async function authenthicate (login, password) {
     }
 
     const authHeaders = Object.assign({}, defaultHeaders, {
-      'Referer': urls.cabinetURL,
       'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
       'Authorization': 'Basic ZXBheW1lbnRzOm1ZbjZocmtnMElMcXJ0SXA4S1NE'
     })

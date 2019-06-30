@@ -129,7 +129,7 @@ export const cardUnloadApiTransactions = [
   }
 ]
 
-export const walletsCurrencyExchangeApiTrnsactions = [
+export const walletsCurrencyExchangeApiTransactions = [
   {
     'transactionId': '666666666',
     'direction': 'In',

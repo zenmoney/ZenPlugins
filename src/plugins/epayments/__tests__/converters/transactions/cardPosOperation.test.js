@@ -34,8 +34,8 @@ describe('convertTransaction', () => {
         movements: [{
           id: '888888888',
           account: { id: '1234xxxxxxxx5678' },
-          sum: -10.39,
-          fee: 0.26,
+          sum: -10.13,
+          fee: -0.26,
           invoice: {
             sum: -273.82,
             instrument: 'UAH'
