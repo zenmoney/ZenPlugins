@@ -1,5 +1,5 @@
 export function convertAccount (json) {
-  if (json.cards && json.cards.length > 0 &&
+  if (json.cards && json.cards.length > 0 && json.transAmount !== '0.00' &&
     json.cardAccounts && json.cardAccounts.length > 0) { // only loading card accounts
     const account = {
       id: json.accountId,
