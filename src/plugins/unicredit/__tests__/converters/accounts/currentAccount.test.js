@@ -24,7 +24,7 @@ describe('convertAccount', () => {
         id: '40817810850020022305',
         type: 'checking',
         title: 'Текущий счет',
-        instrument: 'RUR',
+        instrument: 'RUB',
         balance: 0.35,
         syncID: ['40817810850020022305']
       }

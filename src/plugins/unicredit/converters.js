@@ -33,7 +33,7 @@ export function convertAccount (apiAccount) {
       id: apiAccount.number,
       type: 'checking',
       title: apiAccount.nick || apiAccount.name,
-      instrument: apiAccount.iso,
+      instrument: getInstrument(apiAccount.iso),
       syncID: [apiAccount.number],
       balance: parseDecimal(apiAccount.rest)
     }
@@ -87,7 +87,7 @@ function parseDecimal (str) {
 }
 
 export function convertTransaction (apiTransaction, account) {
-  const invoice = { sum: parseDecimal(apiTransaction.amount), instrument: apiTransaction.iso }
+  const invoice = { sum: parseDecimal(apiTransaction.amount), instrument: getInstrument(apiTransaction.iso) }
   return {
     hold: false,
     date: parseDate(apiTransaction.date),
@@ -103,4 +103,8 @@ export function convertTransaction (apiTransaction, account) {
     merchant: null,
     comment: apiTransaction.descr || null
   }
+}
+
+function getInstrument (code) {
+  return code === 'RUR' ? 'RUB' : code
 }

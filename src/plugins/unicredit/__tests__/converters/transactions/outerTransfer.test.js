@@ -14,7 +14,7 @@ describe('convertTransaction', () => {
       name: 'Payments',
       payerdate: '30.05.2019',
       st: 'M'
-    }, { id: 'account', instrument: 'RUR' })).toEqual({
+    }, { id: 'account', instrument: 'RUB' })).toEqual({
       hold: false,
       date: new Date(2019, 4, 30),
       movements: [
