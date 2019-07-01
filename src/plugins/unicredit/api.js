@@ -1,4 +1,5 @@
-import { decode, encode } from 'iconv-lite'
+import { Buffer } from 'buffer'
+import { decode } from 'iconv-lite'
 import { defaultsDeep } from 'lodash'
 import { stringify } from 'querystring'
 import { fetch, parseXml as parse } from '../../common/network'
@@ -9,12 +10,14 @@ const baseUrl = 'https://enter.unicredit.ru/v2/cgi/bsi.dll?'
 const deviceName = 'Zenmoney'
 
 async function callGate (command, options) {
+  const binaryResponse = Boolean(options && options.forceUtf8Decoding)
   return fetch(baseUrl, {
     method: 'POST',
     stringify,
+    binaryResponse,
     parse: str => {
-      if (options && options.recode) {
-        str = decode(encode(str, 'win1251'), 'utf8')
+      if (binaryResponse) {
+        str = decode(Buffer.from(str), 'utf8')
       }
       return parse(str)
     },
@@ -190,7 +193,7 @@ function formatDate (date) {
 
 export async function fetchAccounts ({ sid }) {
   const response = await callGate('rt_android_1common.start', {
-    recode: true,
+    forceUtf8Decoding: true,
     body: {
       TIC: '1',
       SID: sid
@@ -217,7 +220,7 @@ export async function fetchAccounts ({ sid }) {
 
 export async function fetchTransactions ({ sid }, { id }, fromDate, toDate) {
   const response = await callGate('rt_android_1Common.FORM', {
-    recode: true,
+    forceUtf8Decoding: true,
     body: {
       TIC: '1',
       SID: sid,
