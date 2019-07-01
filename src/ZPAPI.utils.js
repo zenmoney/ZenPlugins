@@ -137,9 +137,12 @@ export const processHeadersAndBody = ({ headers, body }) => {
   return { headers: resultHeaders, body }
 }
 
-export const fetchRemoteSync = ({ method, url, headers, body }) => {
+export const fetchRemoteSync = ({ method, url, headers, body, binaryResponse }) => {
   const req = new XMLHttpRequest()
   req.withCredentials = true
+  if (binaryResponse) {
+    req.responseType = 'arraybuffer'
+  }
 
   const { origin, pathname, search } = new URL(url)
   const pathWithQueryParams = pathname + search
@@ -159,7 +162,11 @@ export const fetchRemoteSync = ({ method, url, headers, body }) => {
     const { pathname, search } = new URL(req.responseURL)
     lastRequest = req
     lastRequestUrl = getTargetUrl(pathname + search, origin)
-    return req.responseText
+    if (binaryResponse) {
+      return req.response
+    } else {
+      return req.responseText
+    }
   } catch (e) {
     handleException('[NER] Connection error. ' + e)
     return null

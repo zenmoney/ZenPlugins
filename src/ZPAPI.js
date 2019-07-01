@@ -102,7 +102,8 @@ function ZPAPI ({ manifest, preferences, data }) {
   this.features = {
     j2v8Date: true,
     dateProcessing: true,
-    binaryRequestBody: true
+    binaryRequestBody: true,
+    binaryResponseBody: true
   }
   const knownAccounts = {}
   const addedAccounts = []
@@ -353,9 +354,9 @@ function ZPAPI ({ manifest, preferences, data }) {
     addedTransactions.push(transaction)
   }
 
-  this.request = (method, url, body, headers) => fetchRemoteSync({ method: method.toUpperCase(), url, headers, body })
-  this.requestGet = (url, headers) => this.request('GET', url, null, headers)
-  this.requestPost = (url, body, headers) => this.request('POST', url, body, headers)
+  this.request = (method, url, body, headers, options) => fetchRemoteSync({ method: method.toUpperCase(), url, headers, body, ...options })
+  this.requestGet = (url, headers, options) => this.request('GET', url, null, headers, options)
+  this.requestPost = (url, body, headers, options) => this.request('POST', url, body, headers, options)
 
   this.addAccount = addAccount
   this.addTransaction = addTransaction

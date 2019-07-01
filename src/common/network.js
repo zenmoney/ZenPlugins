@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { IncompatibleVersionError } from '../errors'
 import { sanitize } from './sanitize'
 
 const cheerio = require('cheerio')
@@ -37,7 +38,10 @@ export async function fetch (url, options = {}) {
       throw e
     }
   }
-  let body = await response.text()
+  if (options.binaryResponse && (!ZenMoney.features || !ZenMoney.features.binaryResponseBody)) {
+    throw new IncompatibleVersionError()
+  }
+  let body = options.binaryResponse ? await response.arrayBuffer() : await response.text()
   let bodyParsingException = null
   if (options.parse) {
     try {
@@ -45,6 +49,12 @@ export async function fetch (url, options = {}) {
     } catch (e) {
       bodyParsingException = e
     }
+  }
+  let bodyLog = body
+  if (bodyLog && _.isArrayBuffer(bodyLog)) {
+    bodyLog = Array.from(new Uint8Array(bodyLog))
+  } else if (bodyLog && _.isTypedArray(bodyLog)) {
+    bodyLog = Array.from(bodyLog)
   }
 
   const headers = response.headers.entries ? _.fromPairs([...response.headers.entries()]) : response.headers.map
@@ -60,7 +70,7 @@ export async function fetch (url, options = {}) {
     status: response.status,
     url: response.url,
     headers,
-    body,
+    body: bodyLog,
     ms: endTicks - beforeFetchTicks
   }, options.sanitizeResponseLog || false))
 
@@ -109,8 +119,8 @@ function parseXmlNode (root) {
   for (const node of children) {
     if (node.type === 'cdata') {
       if (children.length !== 1 || !node.children ||
-                node.children.length !== 1 ||
-                node.children[0].type !== 'text') {
+        node.children.length !== 1 ||
+        node.children[0].type !== 'text') {
         throw new Error('Error parsing XML. Unsupported CDATA node')
       }
       return node.children[0].data.trim()
@@ -128,7 +138,7 @@ function parseXmlNode (root) {
           value = null
         }
       } else if (node.children.length === 1 &&
-                    node.children[0].type === 'text') {
+        node.children[0].type === 'text') {
         value = node.children[0].data.trim()
         if (value === '') {
           value = null
