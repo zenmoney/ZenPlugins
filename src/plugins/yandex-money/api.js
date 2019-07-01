@@ -1,5 +1,6 @@
 import * as qs from 'querystring'
 import * as network from '../../common/network'
+import { IncompatibleVersionError } from '../../errors'
 import { clientId, redirectUri } from './config'
 
 const scope = 'operation-history account-info'
@@ -31,7 +32,7 @@ async function fetchJson (url, options = {}, predicate = () => true) {
 
 export async function login () {
   if (!ZenMoney.openWebView) {
-    throw new TemporaryError('У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии.')
+    throw new IncompatibleVersionError()
   }
   const { error, code } = await new Promise((resolve) => {
     const redirectUriWithoutProtocol = redirectUri.replace(/^https?:\/\//i, '')

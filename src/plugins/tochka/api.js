@@ -2,6 +2,7 @@
 import * as qs from 'querystring'
 import * as network from '../../common/network'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
+import { IncompatibleVersionError } from '../../errors'
 import * as config from './config'
 
 const CLIENT_ID = config.clientId
@@ -115,7 +116,7 @@ export async function login ({ access_token, refresh_token, expirationDateMs } =
       sanitizeResponseLog: { body: { access_token: true, refresh_token: true } }
     }, null)
   } else {
-    throw new TemporaryError('У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии.')
+    throw new IncompatibleVersionError()
   }
   console.assert(response.body &&
         response.body.access_token &&

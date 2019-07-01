@@ -3,6 +3,7 @@ import * as qs from 'querystring'
 import * as network from '../../common/network'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { generateRandomString } from '../../common/utils'
+import { IncompatibleVersionError } from '../../errors'
 import { clientId, clientSecret, redirectUri } from './config'
 
 const base64 = new Base64()
@@ -113,7 +114,7 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
       sanitizeResponseLog: { body: { access_token: true, refresh_token: true, sessionId: true, id_token: true } }
     }, null)
   } else {
-    throw new TemporaryError('У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии.')
+    throw new IncompatibleVersionError()
   }
   console.assert(response.body &&
     response.body.access_token &&
