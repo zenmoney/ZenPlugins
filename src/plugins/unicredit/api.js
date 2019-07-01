@@ -114,6 +114,12 @@ export async function login (auth, { login, password }) {
     },
     sanitizeRequestLog: { body: { A: true, B: true } }
   })
+  if (response.body.response.errorlabel && response.body.response.errorlabel.caption && [
+    'при вводе логина или пароля'
+  ].some(str => response.body.response.errorlabel.caption.indexOf(str) >= 0)) {
+    throw new InvalidPreferencesError('Неверный логин или пароль')
+  }
+
   const sid = response.body.response.information.value
 
   response = await callGate('rt_android_1Common.advancedAuth', {
@@ -197,7 +203,8 @@ export async function fetchAccounts ({ sid }) {
     body: {
       TIC: '1',
       SID: sid
-    }
+    },
+    sanitizeResponseLog: { body: { form: { card: { holder: true } } } }
   })
   const accounts = {}
   Object.keys(response.body.form).filter(key => [

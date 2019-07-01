@@ -42,6 +42,11 @@ export function convertAccount (apiAccount) {
 
 export function convertCard (apiAccount) {
   const { account, product } = convertAccount(apiAccount)
+  const creditLimit = parseDecimal(apiAccount.credlim)
+  if (creditLimit > 0) {
+    account.balance -= creditLimit
+    account.creditLimit = creditLimit
+  }
   product.id = apiAccount.account
   account.id = apiAccount.account
   account.type = 'ccard'

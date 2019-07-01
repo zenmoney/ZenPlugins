@@ -1,6 +1,6 @@
 import { convertCard } from '../../../converters'
 
-describe('convertAccount', () => {
+describe('convertCard', () => {
   it('convers card', () => {
     expect(convertCard({
       name: 'Visa Classic +',
