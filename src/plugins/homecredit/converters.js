@@ -71,13 +71,18 @@ function getContractNumber (apiAccount) {
     apiAccount.ContractNumber // MyCredit
 }
 
+function getInstrument (code) {
+  if (!code || code === 'RUR') { return 'RUB' }
+  return code
+}
+
 function convertAccountMyCredit (apiAccount) {
   const result = {
     id: getAccountNumber(apiAccount),
     type: 'checking',
     syncID: [ getAccountNumber(apiAccount).substr(-4) ],
     title: apiAccount.accountName,
-    instrument: apiAccount.currency || 'RUB'
+    instrument: getInstrument(apiAccount.currency)
   }
 
   if (apiAccount.runningBalance) { result.balance = apiAccount.runningBalance }
@@ -91,7 +96,7 @@ function convertCard (apiAccount) {
     type: 'ccard',
     syncID: [ getAccountNumber(apiAccount).substr(-4) ],
     title: apiAccount.productName || apiAccount.ProductName,
-    instrument: apiAccount.currency || 'RUB'
+    instrument: getInstrument(apiAccount.currency)
   }
 
   // Добавим syncID карты
@@ -121,7 +126,7 @@ function convertCard (apiAccount) {
     type: 'ccard',
     syncID: [ getAccountNumber(apiAccount).substr(-4) ],
     title: apiAccount.productName || apiAccount.ProductName,
-    instrument: apiAccount.currency || 'RUB'
+    instrument: getInstrument(apiAccount.currency)
   }
 
   // Добавим syncID карты
