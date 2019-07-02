@@ -28,7 +28,7 @@ export function convertCards (cards) {
 }
 
 export function convertWallets (wallets) {
-  return wallets.flatMap(wallet => {
+  return _.flatMap(wallets, wallet => {
     return wallet.balances.map(balanceItem => {
       const accountId = uniqueWalletId(balanceItem.accountNumber, balanceItem.currency)
 

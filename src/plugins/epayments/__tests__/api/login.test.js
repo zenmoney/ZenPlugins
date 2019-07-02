@@ -1,27 +1,28 @@
 import fetchMock from 'fetch-mock'
+import { parse } from 'querystring'
 import * as api from '../../api'
 
 console.log = jest.fn()
 console.error = jest.fn()
 
 const loginMatcherWithoutOtp = (url, { body }) => {
-  const parsed = new URLSearchParams(body)
+  const parsed = parse(body)
 
   return url === 'https://api.epayments.com/token' &&
-    parsed.get('username') === 'qwerty' &&
-    parsed.get('password') === 'supersecret' &&
-    parsed.get('grant_type') === 'password_otp' &&
-    !parsed.get('otpcode')
+    parsed.username === 'qwerty' &&
+    parsed.password === 'supersecret' &&
+    parsed.grant_type === 'password_otp' &&
+    !parsed.otpcode
 }
 
 const loginMatcherWithOtp = (url, { body }) => {
-  const parsed = new URLSearchParams(body)
+  const parsed = parse(body)
 
   return url === 'https://api.epayments.com/token' &&
-    parsed.get('username') === 'qwerty' &&
-    parsed.get('password') === 'supersecret' &&
-    parsed.get('grant_type') === 'password_otp' &&
-    parsed.get('otpcode') === '123456'
+    parsed.username === 'qwerty' &&
+    parsed.password === 'supersecret' &&
+    parsed.grant_type === 'password_otp' &&
+    parsed.otpcode === '123456'
 }
 
 function mockZenMoney () {

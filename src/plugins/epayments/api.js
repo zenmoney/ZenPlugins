@@ -1,6 +1,7 @@
 import * as _ from 'lodash'
 import * as network from '../../common/network'
 import * as tools from './tools'
+import { stringify } from 'querystring'
 
 const urls = new function () {
   this.baseURL = 'https://api.epayments.com/'
@@ -50,8 +51,10 @@ export async function authenthicate (login, password) {
     const params = {
       method: 'POST',
       headers: authHeaders,
-      body: new URLSearchParams(authData).toString(),
-      parse: (body) => body === '' ? undefined : JSON.parse(body)
+      body: authData,
+      stringify,
+      parse: (body) => body === '' ? undefined : JSON.parse(body),
+      sanitizeRequestLog: { body: { username: true, password: true } }
     }
 
     return network.fetch(urls.token, params)
@@ -89,7 +92,8 @@ export async function authenthicate (login, password) {
 export async function fetchCardsAndWallets (auth) {
   const params = {
     method: 'GET',
-    headers: getAPIHeaders(auth.tokenType, auth.token)
+    headers: getAPIHeaders(auth.tokenType, auth.token),
+    sanitizeRequestLog: { headers: { Authorization: true } }
   }
 
   const response = await network.fetchJson(urls.userInfo, params)
@@ -143,7 +147,8 @@ export async function fetchTransactions (auth, fromDate, toDate) {
   const params = {
     method: 'POST',
     headers: getAPIHeaders(auth.tokenType, auth.token),
-    body: requestData
+    body: requestData,
+    sanitizeRequestLog: { headers: { Authorization: true } }
   }
 
   return recursive(params, [], 0, true)
