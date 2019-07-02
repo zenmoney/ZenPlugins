@@ -20,6 +20,9 @@ zp_pipe.txt
 
 /nbproject/
 
+# VSCode project files
+/.vscode
+
 # OS-specific files
 .DS_Store
 .DS_Store?

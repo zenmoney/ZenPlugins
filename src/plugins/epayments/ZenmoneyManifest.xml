@@ -4,11 +4,9 @@
     <version>1.0</version>
     <build>3</build>
     <company>15584</company>
+    <modular>true</modular>
     <files>
-        <js>classes/Bank.js</js>
-        <js>classes/BankEpayments.js</js>
-        <js>classes/Request.js</js>
-        <js>main.js</js>
+        <js>index.js</js>
         <preferences>preferences.xml</preferences>
     </files>
     <description></description>
