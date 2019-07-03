@@ -29,6 +29,7 @@
     "exports-loader": "0.6.4",
     "extract-text-webpack-plugin": "3.0.0",
     "fetch-mock": "5.12.2",
+    "fints": "git+https://github.com/skvav/fints.git#fints-v0.3.1-gitpkg",
     "fs-extra": "3.0.1",
     "html-webpack-exclude-assets-plugin": "0.0.5",
     "html-webpack-plugin": "2.29.0",
