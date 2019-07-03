@@ -1,5 +1,6 @@
+/* eslint-disable no-unused-vars */
 import { fetchProfile, fetchTransactions } from './api'
-import { convertAccount, convertAccountTransaction } from './converters'
+import { convertAccount, convertAccountTransaction, convertDepositTransaction } from './converters'
 import _ from 'lodash'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
@@ -11,7 +12,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
 
   const cards = result.profile.user.accounts.map(apiAccount => convertAccount(apiAccount))
   const accounts = result.profile.user.safe_accounts.map(apiAccount => convertAccount(apiAccount))
-  const deposits = []
+  const deposits = result.profile.user.deposits.map(apiAccount => convertAccount(apiAccount))
 
   let resultAccounts = {};
   [cards, accounts, deposits].forEach(acc => {
@@ -41,6 +42,10 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     const fetchedTransactions = await fetchTransactions(auth, card.id, fromDate)
     return fetchedTransactions.map(apiTransaction => convertAccountTransaction(apiTransaction, card, titleAccounts))
   }))
+  /* transactions['deposits'] = await Promise.all(deposits.map(async card => {
+    const fetchedTransactions = await fetchTransactions(auth, card.id, fromDate)
+    return fetchedTransactions.map(apiTransaction => convertDepositTransaction(apiTransaction, card, titleAccounts))
+  })) */
   /* console.log('>>> Загружаем вклады: ' + result.profile.user.deposits.length)
   const deposits = result.profile.user.deposits.map(apiDeposit => Converters.convertDeposit(apiDeposit))
   transactions['deposits'] = await Promise.all(Object.keys(deposits).map(async index => {

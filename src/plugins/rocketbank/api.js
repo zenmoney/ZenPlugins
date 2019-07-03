@@ -285,7 +285,8 @@ export async function fetchTransactions (auth, accountId, fromDate, page = 1, it
     let feedPage = []
     if (response.body.feed) {
       feedPage = response.body.feed.filter(apiTransaction => {
-        return apiTransaction[0] === 'operation' && apiTransaction[1].happened_at > fromDate.getTime() / 1000
+        // встречаются операции с типом ключа как 'operation' так и 'rocketruble_operation'
+        return /* apiTransaction[0] === 'operation' && */ apiTransaction[1].happened_at > fromDate.getTime() / 1000
       })
 
       if (feedPage.length > 0) {
