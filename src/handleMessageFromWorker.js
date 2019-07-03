@@ -24,7 +24,7 @@ const messageHandlers = {
     if (value === undefined || value === null) {
       value = ''
     }
-    let cookieStr = name + '=' + encodeURIComponent(value)
+    let cookieStr = name + '=' + value
     for (const propName in options) {
       if (options.hasOwnProperty(propName)) {
         cookieStr += '; ' + propName
