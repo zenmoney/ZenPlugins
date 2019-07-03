@@ -20,19 +20,22 @@ const messageHandlers = {
     reply({ type: ':events/received-user-input', payload: { result, correlationId } })
   },
 
-  ':commands/cookie-set': async function ({ payload: { name, value, options } }) {
+  ':commands/cookie-set': async function ({ payload: { name, value, options, correlationId }, reply }) {
     if (value === undefined || value === null) {
       value = ''
     }
     let cookieStr = name + '=' + encodeURIComponent(value)
     for (const propName in options) {
-      cookieStr += '; ' + propName
-      let propValue = options[propName]
-      if (propName === 'expires') {
-        propValue = toDate(propValue)
+      if (options.hasOwnProperty(propName)) {
+        cookieStr += '; ' + propName
+        let propValue = options[propName]
+        if (propName === 'expires') {
+          propValue = toDate(propValue)
+        }
       }
     }
     document.cookie = cookieStr
+    reply({ type: ':events/cookie-set', payload: { correlationId } })
   }
 }
 

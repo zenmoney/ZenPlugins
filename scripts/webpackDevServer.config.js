@@ -149,14 +149,14 @@ module.exports = ({ allowedHost, host, https }) => {
       })
       proxy.on('proxyRes', (proxyRes, req, res) => {
         if (proxyRes.headers['set-cookie']) {
-          proxyRes.headers['set-cookie'] = proxyRes.headers['set-cookie'].map(makeCookieAccessibleToClientSide)
           proxyRes.headers[TRANSFERABLE_HEADER_PREFIX + 'set-cookie'] = proxyRes.headers['set-cookie']
+          proxyRes.headers['set-cookie'] = proxyRes.headers['set-cookie'].map(makeCookieAccessibleToClientSide)
         }
         const location = proxyRes.headers['location']
         if (location && /^https?:\/\//i.test(location)) {
           const { origin, pathname, search } = new URL(location)
           proxyRes.headers['location'] = pathname + search +
-                        ((search === '') ? '?' : '&') + PROXY_TARGET_HEADER + '=' + origin
+            ((search === '') ? '?' : '&') + PROXY_TARGET_HEADER + '=' + origin
         }
       })
 

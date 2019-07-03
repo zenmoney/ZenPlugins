@@ -391,12 +391,27 @@ Object.assign(ZPAPI.prototype, {
   },
 
   setCookie (domain, name, value, params) {
-    if (typeof domain !== 'string' || typeof name !== 'string') {
-      throw new Error('cookie must have domain and name')
-    }
-    self.postMessage({
-      type: ':commands/cookie-set',
-      payload: { name, value, options: { domain, ...params } }
+    return new Promise((resolve, reject) => {
+      if (typeof domain !== 'string' || typeof name !== 'string') {
+        return reject(new Error('cookie must have domain and name'))
+      }
+      const correlationId = Date.now()
+      const messageHandler = (e) => {
+        const message = e.data
+        if (message.type !== ':events/cookie-set') {
+          return
+        }
+        if (message.payload.correlationId !== correlationId) {
+          return
+        }
+        self.removeEventListener('message', messageHandler)
+        resolve()
+      }
+      self.addEventListener('message', messageHandler)
+      self.postMessage({
+        type: ':commands/cookie-set',
+        payload: { name, value, options: { domain, ...params }, correlationId }
+      })
     })
   }
 })
