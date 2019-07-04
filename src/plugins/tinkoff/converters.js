@@ -322,7 +322,7 @@ function parseCashGroup (transaction, apiTransaction) {
 
     case undefined: // в точке партнёра
     case 'atm-transfer-cash': // в банкомате Тинькова
-      // снятие наличных через Western Union рассматриваем как расход
+      // снятие наличных через Western Union (WU.COM) рассматриваем как расход
       const card2card = [ 6538 ].indexOf(apiTransaction.mcc) >= 0
       if (!card2card) {
         transaction = addMirrorMovement(transaction, { type: 'cash' }, apiTransaction.amount.currency.name)
@@ -330,6 +330,8 @@ function parseCashGroup (transaction, apiTransaction) {
         const bank = parseOuterAccountData(apiTransaction.merchant.name)
         if (bank) {
           transaction = addMirrorMovement(transaction, bank, apiTransaction.amount.currency.name)
+        } else {
+          transaction.merchant = parseMerchant(apiTransaction)
         }
       }
       break
@@ -346,7 +348,11 @@ function parsePayGroup (transaction, apiTransaction) {
   if (apiTransaction.group !== 'PAY') {
     return false
   }
+  transaction.merchant = parseMerchant(apiTransaction)
+  return true
+}
 
+function parseMerchant (apiTransaction) {
   const locations = apiTransaction.locations || {}
   const merchant = apiTransaction.merchant || {}
   const brand = apiTransaction.brand || {}
@@ -368,11 +374,8 @@ function parsePayGroup (transaction, apiTransaction) {
   } else if (brand) {
     resultMerchant.title = brand.name
   }
-  if (resultMerchant.title) {
-    transaction.merchant = resultMerchant
-  }
 
-  return true
+  return resultMerchant.title ? resultMerchant : null
 }
 
 function parseComment (transaction, apiTransaction) {
