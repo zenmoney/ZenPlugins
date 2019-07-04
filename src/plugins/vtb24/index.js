@@ -1,7 +1,8 @@
-import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
-import { fetchAccounts, fetchTransactions, login } from './api'
-import { mergeTransfers, convertAccounts, convertTransaction, getTransactionId } from './converters'
 import { uniqBy } from 'lodash'
+import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
+import { adjustTransactions } from '../../common/transactionGroupHandler'
+import { fetchAccounts, fetchTransactions, login } from './api'
+import { convertAccounts, convertTransaction, getTransactionId } from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
   toDate = toDate || new Date()
@@ -44,6 +45,6 @@ export async function scrape ({ preferences, fromDate, toDate }) {
 
   return {
     accounts: ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId }),
-    transactions: mergeTransfers(transactions)
+    transactions: adjustTransactions({ transactions })
   }
 }

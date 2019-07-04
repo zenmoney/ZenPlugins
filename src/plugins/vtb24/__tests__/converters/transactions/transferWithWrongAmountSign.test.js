@@ -1,4 +1,5 @@
-import { convertTransaction, mergeTransfers } from '../../../converters'
+import { adjustTransactions } from '../../../../../common/transactionGroupHandler'
+import { convertTransaction } from '../../../converters'
 
 describe('convertTransaction', () => {
   it('converts transaction with wrong amount sign', () => {
@@ -263,9 +264,11 @@ describe('convertTransaction', () => {
       'CBFDBDDEFC3A4F91A8301B2B176DE527': { id: 'account2', instrument: 'RUB' }
     }
 
-    const transactions = mergeTransfers(apiTransactions
-      .map(apiTransaction => convertTransaction(apiTransaction, accountsById[apiTransaction.debet.id]))
-      .filter(x => x))
+    const transactions = adjustTransactions({
+      transactions: apiTransactions
+        .map(apiTransaction => convertTransaction(apiTransaction, accountsById[apiTransaction.debet.id]))
+        .filter(x => x)
+    })
     const expectedTransactions = [
       {
         'comment': null,

@@ -1,7 +1,6 @@
 import * as _ from 'lodash'
 import { parseOuterAccountData } from '../../common/accounts'
 import { toISODateString } from '../../common/dateUtils'
-import { mergeTransfers as commonMergeTransfers } from '../../common/mergeTransfers'
 
 export const GRAMS_IN_OZ = 31.1034768
 export const atMostTwoDecimals = value /* : number */ => Math.floor(value * 100) / 100
@@ -269,29 +268,6 @@ function convertAmount (amount) {
     zenAmount.sum = atMostTwoDecimals(zenAmount.sum / GRAMS_IN_OZ)
   }
   return zenAmount
-}
-
-export function mergeTransfers (transactions) {
-  const firstTransfer = transactions.find(transaction => transaction.groupKeys)
-  if (firstTransfer) {
-    const groupKeysLength = firstTransfer.groupKeys.length
-    for (let i = 0; i < groupKeysLength; i++) {
-      transactions = commonMergeTransfers({
-        items: transactions,
-        throwOnCollision: false,
-        getSingleMovement: transaction => transaction.movements.find(movement => Boolean(movement.account.id)),
-        makeGroupKey: transaction => {
-          return transaction.groupKeys &&
-          transaction.groupKeys[i] &&
-          transaction.movements.filter(movement => Boolean(movement.account.id)).length === 1
-            ? transaction.groupKeys[i]
-            : null
-        }
-      })
-    }
-    transactions = transactions.map(transaction => _.omit(transaction, ['groupKeys']))
-  }
-  return transactions
 }
 
 function getInvoice (apiTransaction, account) {

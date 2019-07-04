@@ -1,4 +1,7 @@
-import { convertTransaction, mergeTransfers } from '../../../converters'
+import { convertTransaction } from '../../../converters'
+import { adjustTransactions } from '../../../../../common/transactionGroupHandler'
+
+const mergeTransfers = (transactions) => adjustTransactions({ transactions })
 
 describe('mergeTransfers', () => {
   it('merges converted TransferCreditOnLine', () => {

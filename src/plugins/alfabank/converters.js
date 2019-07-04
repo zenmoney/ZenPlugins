@@ -1,8 +1,5 @@
 import _ from 'lodash'
-import {
-  ensureSyncIDsAreUniqueButSanitized,
-  sanitizeSyncId
-} from '../../common/accounts'
+import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
 import {
   addMovement,
   formatCalculatedRateLine,
