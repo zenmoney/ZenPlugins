@@ -174,6 +174,7 @@ export async function login (auth, { login, password }) {
 
   const pin = (-randomInt(1000000000, 2000000000)).toString()
   await callGate('RT_android_1common.start', {
+    forceUtf8Decoding: true,
     body: {
       TIC: '1',
       SID: sid,
