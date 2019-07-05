@@ -311,4 +311,31 @@ describe('convertTransaction', () => {
       comment: null
     })
   })
+
+  it('should be nill', () => {
+    const transaction = convertTransaction({
+      amount: '0.00',
+      balance: '91.52',
+      cardPan: '111111******1111',
+      curr: 'EUR',
+      debitFlag: '0',
+      description: 'Верификация MasterCard',
+      error: null,
+      operationDate: '2019-07-01',
+      orderStatus: null,
+      place: 'Booking.com',
+      country: 'NL',
+      city: 'Amsterdam',
+      status: 'T',
+      transAmount: '0.00',
+      transDate: '2019-07-01 20:20:15',
+      mcc: '7011',
+      transactionId: '1111111',
+      rrn: '013445145373',
+      approvalCode: '11111',
+      accountId: 'BY36MTBK10110008000001111000'
+    }, accounts)
+
+    expect(transaction).toEqual(null)
+  })
 })
