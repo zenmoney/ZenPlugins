@@ -135,19 +135,26 @@ function parseCash (transaction, json) {
     })
     return true
   } else if (json.operation === 'CURRENCYEXCHANGE') {
+    var currency = json.operationAmount.currency
+    var amount = json.operationAmount.amount
+    if (json.info.amount.amount > 0) {
+      currency = json.info.amount.currency
+      amount = -json.info.amount.amount
+    }
     // добавим вторую часть перевода
     transaction.movements.push({
       id: null,
       account: {
         company: null,
         type: 'cash',
-        instrument: json.operationAmount.currency,
+        instrument: currency,
         syncIds: null
       },
       invoice: null,
-      sum: json.operationAmount.amount,
+      sum: amount,
       fee: 0
     })
+    return true
   }
 }
 
@@ -173,6 +180,18 @@ function parsePayee (transaction, json) {
       transaction.merchant.fullTitle = json.info.title
     }
     return true
+  } else if (json.info.title.indexOf('Комиссия') >= 0) {
+    transaction.merchant = {
+      mcc: null,
+      location: null,
+      fullTitle: 'Альфа-Банк'
+    }
+  } else if (json.operation === 'COMPANYTRANSFER' && json.info.title !== 'Комиссия') {
+    transaction.merchant = {
+      mcc: null,
+      location: null,
+      fullTitle: json.info.title
+    }
   }
 }
 
@@ -193,8 +212,7 @@ function parseComment (transaction, json) {
     transaction.comment = transaction.comment.replace(location[0], '').trim() // Убираем город покупки
     return false
   } else if (json.description.indexOf('ERIP') >= 0 ||
-    json.operation === 'PAYMENT' ||
-    json.operation === 'COMPANYTRANSFER') {
+    json.operation === 'PAYMENT') {
     transaction.comment = json.info.title
     return false
   } else if (json.description.indexOf('Перевод между счетами  физических лиц через АК') >= 0) {

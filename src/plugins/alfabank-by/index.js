@@ -45,6 +45,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
       (transaction.bankOperation === 'OWNACCOUNTSTRANSFER' ||
         transaction.bankOperation === 'PERSONTRANSFERABB' ||
         transaction.bankOperation === 'CURRENCYEXCHANGE' ||
+        transaction.bankOperation === 'COMPANYTRANSFER' ||
         transaction.bankTitle.indexOf('Поступление средств') >= 0 ||
         transaction.bankTitle.indexOf('Комиссия банка') >= 0 ||
         (transaction.bankTitle.indexOf('Погашение кредита') >= 0 && transaction.movements[0].sum < 0)))
@@ -142,7 +143,8 @@ function transactionsUnique (array) {
     for (let j = i + 1; j < a.length; ++j) {
       if (a[i].movements[0].id === a[j].movements[0].id &&
         a[i].date.getTime() === a[j].date.getTime() &&
-        a[i].movements[0].account.id === a[j].movements[0].account.id) {
+        a[i].movements[0].account.id === a[j].movements[0].account.id &&
+        a[i].movements[0].sum === a[j].movements[0].sum) {
         a.splice(j--, 1)
       }
     }
