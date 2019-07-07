@@ -55,8 +55,12 @@ describe('convertTransaction', () => {
             fee: 0
           }
         ],
-        merchant: null,
-        comment: 'OPLATA USLUG',
+        merchant: {
+          fullTitle: 'OPLATA USLUG',
+          location: null,
+          mcc: 4900
+        },
+        comment: 'Покупка/оплата/перевод',
         hold: false
       }
     }

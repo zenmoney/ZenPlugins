@@ -68,7 +68,7 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: null,
-        comment: null,
+        comment: 'Пополнение счета (дополнительный взнос)',
         hold: false
       }
     }

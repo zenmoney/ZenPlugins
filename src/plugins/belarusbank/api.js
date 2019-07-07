@@ -150,7 +150,7 @@ export async function fetchCards (url) {
     method: 'GET'
   }, response => response.success, message => new Error(''))
 
-  let regex = /<form id="viewns.*action="(.[^"]*)".*name="javax\.faces\.encodedURL" value="(.[^"]*)".*cellLable">(.[^>]*)<\/div><\/td><td class="tdBalance">.*return myfaces\.oam\.submitForm\((.*)\);.*title="Получить отчёт по заблокированным операциям.*<nobr>(.*)<\/nobr> (.[A-Z]*).*<td class="tdNumber"><div class="cellLable">(.[0-9*]*)<\/div>.*id="javax\.faces\.ViewState" value="(.[^"]*)/ig
+  let regex = /<form id="viewns.*action="(.[^"]*)".*name="javax\.faces\.encodedURL" value="(.[^"]*)".*cellLable">(.[^>]*)<\/div><\/td><td class="tdBalance"><div class="cellLable"><nobr>(.*)<\/nobr> (.[^"]*)<\/div>.*return myfaces\.oam\.submitForm\((.*)\);.*<td class="tdNumber"><div class="cellLable">(.[0-9*]*)<\/div>.*id="javax\.faces\.ViewState" value="(.[^"]*)/ig
   let m
 
   var cards = []
@@ -160,14 +160,14 @@ export async function fetchCards (url) {
     }
     cards.push({
       id: m[3],
-      balance: m[5],
-      currency: m[6],
+      balance: m[4],
+      currency: m[5],
       cardNum: m[7],
       type: 'card',
       transactionsData: {
         action: m[1],
         encodedURL: m[2],
-        additional: m[4].match(/'(.[^']*)'/ig),
+        additional: m[6].match(/'(.[^']*)'/ig),
         viewState: m[8]
       }
     })
