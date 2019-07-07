@@ -120,7 +120,11 @@ describe('convertTransaction', () => {
             fee: 0
           }
         ],
-        merchant: null,
+        merchant: {
+          fullTitle: 'Альфа-Банк',
+          location: null,
+          mcc: null
+        },
         comment: 'Комиссия банка',
         hold: false,
         bankOperation: null,
@@ -356,11 +360,11 @@ describe('convertTransaction', () => {
             account: {
               company: null,
               type: 'cash',
-              instrument: 'USD',
+              instrument: 'BYN',
               syncIds: null
             },
             invoice: null,
-            sum: -1,
+            sum: -2.09,
             fee: 0
           }
         ],
