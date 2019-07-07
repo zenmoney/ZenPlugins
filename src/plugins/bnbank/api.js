@@ -46,7 +46,7 @@ export async function login (login, password) {
   const res = await fetchApiJson('session/login', {
     method: 'POST',
     body: {
-      applicID: '1.6',
+      applicID: '1.14',
       clientKind: '0',
       deviceUDID: deviceID,
       login: login,
