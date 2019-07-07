@@ -33,6 +33,9 @@ export function convertAccount (acc) {
 }
 
 export function convertTransaction (tr, accounts) {
+  if (tr.status === 'operResultError') {
+    return null
+  }
   console.log(tr)
   const account = accounts.find(account => {
     return account.syncID.indexOf(tr.accountID) !== -1
@@ -42,7 +45,7 @@ export function convertTransaction (tr, accounts) {
     date: getFullDate(tr.date + ' ' + tr.time),
     movements: [ getMovement(tr, account) ],
     merchant: null,
-    comment: null,
+    comment: tr.comment,
     hold: tr.status !== 'operResultOk'
   };
 
@@ -99,15 +102,15 @@ function parsePayee (transaction, tr) {
   }
 
   let data = tr.place.split('/')
-  if (data.length === 0) {
+  if (data.length === 0 ||
+    (data[0] === '' && data[1] === '')) {
     return false
   }
-  /* transaction.merchant = {
+  transaction.merchant = {
     mcc: data[1] !== '' ? Number.parseInt(data[1]) : null,
     location: null,
-    fullTitle: ''
-  } */ // Пока мало инфы, чтоб парсить
-  transaction.comment = data[0]
+    fullTitle: data[0]
+  }
 }
 
 function getSumAmount (debitFlag, strAmount) {
