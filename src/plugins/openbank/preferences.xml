@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="cardNumber"
+        title="Номер карты"
+        dialogTitle="Номер карты"
+        dialogMessage="Формат: 16 цифр (с пробелами или без)"
+        inputType="number"
+        summary="||{@s}"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        obligatory="false">
+    </EditTextPreference>
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="С какой даты загружать операции"
+        defaultValue="2019-05-01T00:00:00.000Z"
+        dialogTitle="С какой даты загружать операции"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|startDate|{@s}">
+    </EditTextPreference>
+</PreferenceScreen>
