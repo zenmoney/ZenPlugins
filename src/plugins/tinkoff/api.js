@@ -380,15 +380,19 @@ async function fetchApiJson (auth, url, options, predicate) {
   }
   if (predicate) { validateResponse(response, response => response.body && predicate(response)) }
   if (options && !options.ignoreErrors && response.body) {
+    const errorMessage = response.body.plainMessage || response.body.errorMessage
     if ([
       'INTERNAL_ERROR',
       'CONFIRMATION_FAILED',
       'INVALID_REQUEST_DATA',
       'REQUEST_RATE_LIMIT_EXCEEDED'
     ].indexOf(response.body.resultCode) + 1) {
-      throw new TemporaryError('Ответ банка: ' + (response.body.plainMessage || response.body.errorMessage))
+      if (errorMessage.indexOf('неверный номер телефона') > 0) {
+        throw new TemporaryError('Вход по номеру телефона временно не работает. Пожалуйста, создайте подключение к банку при помощи логина. Если логина ещё нет, его можно получить в приложении банка.')
+      }
+      throw new TemporaryError('Ответ банка: ' + errorMessage)
     } else if (response.body.resultCode !== 'OK') {
-      throw new Error(response.body.plainMessage || response.body.errorMessage)
+      throw new Error(errorMessage)
     }
   }
   return response
