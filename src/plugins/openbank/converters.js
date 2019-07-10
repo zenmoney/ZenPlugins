@@ -175,8 +175,9 @@ export function convertTransaction (apiTransaction, accountId) {
   }
 
   if (transaction.outcome === 0 && transaction.income === 0) {
-    console.log('>>> Пустая операция (без суммы): ', apiTransaction)
-    throw new Error('Пустая операция (без суммы)')
+    // console.log('>>> Пустая операция (без суммы): ', apiTransaction)
+    // throw new Error('Пустая операция (без суммы)')
+    return null
   }
 
   return transaction

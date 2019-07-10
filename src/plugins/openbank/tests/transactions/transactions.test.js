@@ -35,6 +35,33 @@ const transactions = {
         'time': '19:50:53'
       }
     ]
+  ],
+
+  'outcome': [
+    // расход с пустой суммой
+    [
+      {
+        transaction_id: 1064699145,
+        transaction_type: 1,
+        title: 'Формирование ссудной задолженности ',
+        description: 'Формирование ссудной задолженности \nСумма: 0,00 ₽',
+        bank_name: 'Филиал Центральный ПАО Банка «ФК Открытие»',
+        status_string: 'Проведено',
+        bic: '044525297',
+        inn: '7706092528',
+        cor_account: '30101810945250000297',
+        is_create_receipt_available: 0,
+        transaction_status: 1,
+        transaction_date: '2019-07-10T09:37:32',
+        short_transaction_date: '2019-07-10T00:00:00',
+        transaction_currency: 'RUR',
+        value_transaction_currency: 0,
+        is_create_template_available: 0,
+        original_currency: 'RUR',
+        original_amount: 219
+      },
+      null
+    ]
   ]
 }
 
@@ -53,8 +80,8 @@ describe('convertTransaction', () => {
   })
 })
 
-xdescribe('convertOneTransaction', () => {
-  const type = ' '
+describe('convertOneTransaction', () => {
+  const type = 'outcome'
   const num = 0
   it(`should convert '${type}' ${num}`, () => {
     expect(

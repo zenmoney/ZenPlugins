@@ -43,7 +43,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
 
   return {
     accounts: resultAccounts,
-    transactions: flattenDeep(values(transactions))
+    transactions: flattenDeep(values(transactions)).filter(item => item)
   }
 }
 
