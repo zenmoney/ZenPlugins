@@ -56,15 +56,11 @@ export function extractAccounts (userInfo) {
 
 export function convertTransactions (apiTransactions) {
   return apiTransactions
+    .filter(apiTransaction => apiTransaction.state !== 'AuthDecline')
     .map(apiTransaction => convertTransaction(apiTransaction))
-    .filter(Boolean) // Убрать undefined элементы
 }
 
 export function convertTransaction (apiTransaction) {
-  if (apiTransaction.state === 'AuthDecline') {
-    return undefined
-  }
-
   const accountId = (function () {
     if (apiTransaction.source.type === 'card') {
       return uniqueCardId(apiTransaction.source.identity)
