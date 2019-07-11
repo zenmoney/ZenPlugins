@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import { fetchProfile, fetchTransactions } from './api'
-import { convertAccount, convertAccountTransaction, convertDepositTransaction } from './converters'
+import { convertAccount, convertAccountTransaction, convertDeposit, convertDepositTransaction } from './converters'
 import _ from 'lodash'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
@@ -12,10 +12,10 @@ export async function scrape ({ preferences, fromDate, toDate }) {
 
   const cards = result.profile.user.accounts.map(apiAccount => convertAccount(apiAccount))
   const accounts = result.profile.user.safe_accounts.map(apiAccount => convertAccount(apiAccount))
-  const deposits = result.profile.user.deposits.map(apiAccount => convertAccount(apiAccount))
+  // const deposits = result.profile.user.deposits.map(apiAccount => convertDeposit(apiAccount))
 
   let resultAccounts = {};
-  [cards, accounts, deposits].forEach(acc => {
+  [cards, accounts].forEach(acc => { /*, deposits */
     Object.keys(acc).forEach(index => {
       const account = acc[index]
       const accountId = account.id
