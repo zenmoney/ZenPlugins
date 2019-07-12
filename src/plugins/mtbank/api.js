@@ -18,7 +18,8 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
     validateResponse(response, response => predicate(response), error)
   }
 
-  if (!response.body.success && response.body.error && response.body.error.description) {
+  if (!response.body.success && response.body.error && response.body.error.description &&
+    response.body.error.description.indexOf('Неверное значение contractCode') === 0) {
     const errorDescription = response.body.error.description
     if (errorDescription.indexOf('не принадлежит клиенту c кодом') >= 0 ||
       errorDescription.indexOf('Дата запуска/внедрения попадает в период запрашиваемой выписки') >= 0 ||
@@ -63,10 +64,10 @@ export async function login (login, password) {
   }, response => response.success, message => new InvalidPreferencesError('Неверный номер телефона'))
   let sessionCookies = cookies(res)
 
-  res = await fetchApiJson('login/checkPassword', {
+  res = await fetchApiJson('login/checkPassword2', {
     method: 'POST',
     headers: { 'Cookie': sessionCookies },
-    body: { 'password': password, 'version': '2.0.19' },
+    body: { 'password': password, 'version': '2.1.4' },
     sanitizeRequestLog: { body: { password: true } }
   }, response => response.success, message => new InvalidPreferencesError('Неверный пароль'))
   sessionCookies = cookies(res)
