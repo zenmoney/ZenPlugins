@@ -60,7 +60,17 @@ const transactions = {
         original_currency: 'RUR',
         original_amount: 219
       },
-      null
+      {
+        'date': 1562740652000,
+        'hold': false,
+        'income': 0,
+        'incomeAccount': "accountId",
+        'outcome': 219,
+        'outcomeAccount': "accountId",
+        'outcomeBankID': '1064699145',
+        'payee': '',
+        'time': '09:37:32'
+      }
     ]
   ]
 }
@@ -80,12 +90,12 @@ describe('convertTransaction', () => {
   })
 })
 
-describe('convertOneTransaction', () => {
+xdescribe('convertOneTransaction', () => {
   const type = 'outcome'
   const num = 0
   it(`should convert '${type}' ${num}`, () => {
     expect(
-      convertTransaction(transactions[type][num][0])
+      convertTransaction(transactions[type][num][0], 'accountId')
     ).toEqual(
       transactions[type][num][1]
     )

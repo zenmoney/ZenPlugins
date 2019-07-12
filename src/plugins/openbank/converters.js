@@ -143,11 +143,11 @@ export function convertTransaction (apiTransaction, accountId) {
     if (transaction.hold) {
       payee = apiTransaction.title.substring(12)
       transaction.payee = payee.substring(0, payee.lastIndexOf(' '))
-      transaction.outcome = apiTransaction.value_transaction_currency
+      transaction.outcome = apiTransaction.value_transaction_currency || apiTransaction.original_amount
     } else {
       payee = apiTransaction.title.substring(0, apiTransaction.title.lastIndexOf('/'))
       transaction.payee = payee.substring(0, payee.lastIndexOf('/'))
-      transaction.outcome = -apiTransaction.value_transaction_currency
+      transaction.outcome = -apiTransaction.value_transaction_currency || apiTransaction.original_amount
     }
     if (apiTransaction.title.toLowerCase().indexOf('card2card') > -1) {
       // исходящий c2c
