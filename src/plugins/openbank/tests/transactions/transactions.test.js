@@ -64,9 +64,9 @@ const transactions = {
         'date': 1562740652000,
         'hold': false,
         'income': 0,
-        'incomeAccount': "accountId",
+        'incomeAccount': 'accountId',
         'outcome': 219,
-        'outcomeAccount': "accountId",
+        'outcomeAccount': 'accountId',
         'outcomeBankID': '1064699145',
         'payee': '',
         'time': '09:37:32'
