@@ -55,7 +55,9 @@ export function extractAccounts (userInfo) {
 }
 
 export function convertTransactions (apiTransactions) {
-  return apiTransactions.map(apiTransaction => convertTransaction(apiTransaction))
+  return apiTransactions
+    .filter(apiTransaction => apiTransaction.state !== 'AuthDecline')
+    .map(apiTransaction => convertTransaction(apiTransaction))
 }
 
 export function convertTransaction (apiTransaction) {
