@@ -1,3 +1,5 @@
+import { getIntervalBetweenDates } from '../../common/momentDateUtils'
+
 export function convertAccounts (apiAccounts) {
   const types = Object.keys(apiAccounts)
   const accounts = []
@@ -12,6 +14,9 @@ export function convertAccounts (apiAccounts) {
         break
       case 'credit':
         converter = convertLoan
+        break
+      case 'deposit':
+        converter = convertDeposit
         break
       default:
         throw new Error(`unsupported account type ${type}`)
@@ -75,6 +80,29 @@ export function convertLoan (apiAccount) {
       payoffInterval: 'month',
       endDateOffset: 1,
       endDateOffsetInterval: 'month'
+    }
+  }
+}
+
+export function convertDeposit (apiAccount) {
+  const account = convertAccount(apiAccount).account
+  const startDate = parseDate(apiAccount.date)
+  const { interval, count } = getIntervalBetweenDates(startDate, parseDate(apiAccount.edate))
+  return {
+    product: null,
+    account: {
+      ...account,
+      id: apiAccount.ref,
+      type: 'deposit',
+      syncID: [apiAccount.ref],
+      startBalance: parseDecimal(apiAccount.orig),
+      startDate,
+      capitalization: true,
+      percent: parseDecimal(apiAccount.prc),
+      payoffStep: 1,
+      payoffInterval: 'month',
+      endDateOffset: count,
+      endDateOffsetInterval: interval
     }
   }
 }
