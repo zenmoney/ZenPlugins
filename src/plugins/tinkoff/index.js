@@ -26,11 +26,15 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
     ZenMoney.saveData()
   }
 
-  // обработаем операции
-  const transactions = convertTransactions(fetchedData.transactions, accounts)
+  const resultTransactions = convertTransactions(fetchedData.transactions, accounts)
+  const resultAccounts = ensureSyncIDsAreUniqueButSanitized({ accounts: values(accounts), sanitizeSyncId })
+
+  if (!isArray(resultAccounts) || resultAccounts.length === 0) {
+    throw new Error('Пустой список счетов')
+  }
 
   return {
-    accounts: ensureSyncIDsAreUniqueButSanitized({ accounts: values(accounts), sanitizeSyncId }),
-    transactions: transactions
+    accounts: resultAccounts,
+    transactions: resultTransactions
   }
 }
