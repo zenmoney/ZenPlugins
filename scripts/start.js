@@ -30,6 +30,9 @@ choosePort(HOST, DEFAULT_PORT)
     const compiler = createCompiler(webpack, webpackConfig, params.pluginName, urls, fs.existsSync(paths.yarnLockFile))
     const serverConfig = createDevServerConfig({ allowedHost: urls.lanUrlForConfig, host: HOST, https })
     const devServer = new WebpackDevServer(compiler, serverConfig)
+    devServer.listeningApp.on('upgrade', function (req, socket, head) {
+      devServer.app.emit('upgradeRequest', req, socket, head)
+    })
     devServer.listen(port, HOST, err => {
       if (err) {
         return console.log(err)

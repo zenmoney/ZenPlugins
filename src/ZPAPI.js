@@ -17,6 +17,7 @@ import {
   setThrowOnError
 } from './ZPAPI.utils'
 import { makePluginDataApi } from './ZPAPI.pluginData'
+import WebSocket from './webSocket'
 
 function sleepSync (durationMs) {
   const startMs = Date.now()
@@ -413,7 +414,9 @@ Object.assign(ZPAPI.prototype, {
         payload: { name, value, options: { domain, ...params }, correlationId }
       })
     })
-  }
+  },
+
+  WebSocket: WebSocket
 })
 
 export { ZPAPI }
