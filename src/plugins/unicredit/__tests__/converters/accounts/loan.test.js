@@ -24,7 +24,7 @@ describe('convertLoan', () => {
         type: 'loan',
         title: 'CAR_LOANS',
         instrument: 'RUB',
-        syncID: ['01294829RURRA12392'],
+        syncID: ['0129482912392'],
         balance: -1450000,
         startBalance: 1450000,
         startDate: new Date(2019, 4, 30),

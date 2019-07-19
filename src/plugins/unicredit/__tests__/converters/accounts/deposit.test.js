@@ -32,7 +32,7 @@ describe('convertDeposit', () => {
           type: 'deposit',
           title: 'Вклад PRIME (PRIME Deposit)',
           instrument: 'RUB',
-          syncID: ['00313175RURPRIM204'],
+          syncID: ['00313175204'],
           balance: 1628742.63,
           startBalance: 1550000,
           startDate: new Date(2018, 8, 24),

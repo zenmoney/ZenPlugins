@@ -39,7 +39,7 @@ export function convertAccount (apiAccount) {
       type: 'checking',
       title: apiAccount.nick || apiAccount.name,
       instrument: getInstrument(apiAccount.iso),
-      syncID: [apiAccount.number],
+      syncID: [apiAccount.number.replace(/[^\d*]/g, '')],
       balance: parseDecimal(apiAccount.rest)
     }
   }
@@ -94,7 +94,7 @@ export function convertDeposit (apiAccount) {
       ...account,
       id: apiAccount.ref,
       type: 'deposit',
-      syncID: [apiAccount.ref],
+      syncID: [apiAccount.ref.replace(/[^\d*]/g, '')],
       startBalance: parseDecimal(apiAccount.orig),
       startDate,
       capitalization: true,
