@@ -311,9 +311,9 @@ export async function fetchTransactions ({ login, token }, { id, type }, fromDat
         ]
       }
     })
-    transactions = response.body.transactions
+    transactions = response.body.transactions || []
   } catch (e) {
-    if (!e.message || !['временно', 'Ошибка обращения', '[NER]'].some(pattern => e.message.indexOf(pattern) >= 0)) {
+    if (!e.message || !['временно', 'Ошибка обращения', '[NER]', '[NCE]'].some(pattern => e.message.indexOf(pattern) >= 0)) {
       throw e
     }
   }
