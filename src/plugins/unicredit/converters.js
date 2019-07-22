@@ -9,9 +9,24 @@ export function convertAccounts (apiAccounts) {
       case 'account':
         converter = convertAccount
         break
-      case 'card':
-        converter = convertCard
-        break
+      case 'card': {
+        for (const apiAccount of apiAccounts[type]) {
+          const account = convertCard(apiAccount)
+          if (account) {
+            const existing = accounts.find(acc => acc.product.id === account.product.id)
+            if (existing) {
+              for (const syncId of account.account.syncID) {
+                if (existing.account.syncID.indexOf(syncId) < 0) {
+                  existing.account.syncID.splice(existing.account.syncID.length - 1, 0, syncId)
+                }
+              }
+            } else {
+              accounts.push(account)
+            }
+          }
+        }
+        continue
+      }
       case 'credit':
         converter = convertLoan
         break

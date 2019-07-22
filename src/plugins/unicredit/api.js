@@ -205,7 +205,7 @@ export async function fetchAccounts ({ sid }) {
       TIC: '1',
       SID: sid
     },
-    sanitizeResponseLog: { body: { form: { card: { holder: true } } } }
+    sanitizeResponseLog: { body: { form: { card: { holder: true, fio: true } } } }
   })
   const accounts = {}
   Object.keys(response.body.form).filter(key => [
