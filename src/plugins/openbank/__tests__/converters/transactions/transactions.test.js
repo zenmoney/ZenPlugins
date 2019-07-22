@@ -1,4 +1,4 @@
-import { convertTransaction } from '../../converters'
+import { convertTransaction } from '../../../converters'
 
 const transactions = {
   'income': [

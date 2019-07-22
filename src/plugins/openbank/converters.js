@@ -21,7 +21,8 @@ export function convertAccount (apiAccount) {
         syncID: [ apiAccount.pan ],
         instrument: apiAccount.currency,
         type: 'ccard',
-        balance: apiAccount.balance
+        balance: Math.round((apiAccount.balance - apiAccount.loan_amount) * 100) / 100,
+        creditLimit: apiAccount.loan_amount
       }
 
     // Вклад (депозит)

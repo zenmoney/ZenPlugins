@@ -1,5 +1,5 @@
-import { convertAccount } from '../../converters'
-import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../../../common/accounts'
+import { convertAccount } from '../../../converters'
+import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../../../../common/accounts'
 
 const accounts = {
   // дебетовые карты
