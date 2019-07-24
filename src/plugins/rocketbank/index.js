@@ -34,14 +34,20 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     titleAccounts[account.title] = account
   })
 
-  transactions['accounts'] = await Promise.all(accounts.map(async account => {
+  transactions['accounts&cards'] = await Promise.all(Object.keys(resultAccounts).map(async token => {
+    const account = resultAccounts[token]
+    const fetchedTransactions = await fetchTransactions(auth, account.id, fromDate)
+    return fetchedTransactions.map(apiTransaction => convertAccountTransaction(apiTransaction, account, titleAccounts))
+  }))
+  /* transactions['accounts'] = await Promise.all(accounts.map(async account => {
     const fetchedTransactions = await fetchTransactions(auth, account.id, fromDate)
     return fetchedTransactions.map(apiTransaction => convertAccountTransaction(apiTransaction, account, titleAccounts))
   }))
   transactions['cards'] = await Promise.all(cards.map(async card => {
     const fetchedTransactions = await fetchTransactions(auth, card.id, fromDate)
     return fetchedTransactions.map(apiTransaction => convertAccountTransaction(apiTransaction, card, titleAccounts))
-  }))
+  })) */
+
   /* transactions['deposits'] = await Promise.all(deposits.map(async card => {
     const fetchedTransactions = await fetchTransactions(auth, card.id, fromDate)
     return fetchedTransactions.map(apiTransaction => convertDepositTransaction(apiTransaction, card, titleAccounts))
