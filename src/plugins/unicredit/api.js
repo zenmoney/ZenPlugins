@@ -226,6 +226,20 @@ export async function fetchAccounts ({ sid }) {
   return accounts
 }
 
+export async function fetchHistory ({ sid }, fromDate, toDate) {
+  await callGate('rt_android_1Common.FORM', {
+    forceUtf8Decoding: true,
+    body: {
+      TIC: '1',
+      SID: sid,
+      SCHEMENAME: 'history',
+      STM: '1',
+      DATEWITH: formatDate(fromDate),
+      DATEON: formatDate(toDate)
+    }
+  })
+}
+
 export async function fetchTransactions ({ sid }, { id }, fromDate, toDate) {
   const response = await callGate('rt_android_1Common.FORM', {
     forceUtf8Decoding: true,

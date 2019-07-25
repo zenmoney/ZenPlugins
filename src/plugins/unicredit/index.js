@@ -1,5 +1,5 @@
 import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
-import { fetchAccounts, fetchTransactions, login } from './api'
+import { fetchAccounts, fetchHistory, fetchTransactions, login } from './api'
 import { convertAccounts, convertTransaction } from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate, isInBackground }) {
@@ -11,6 +11,7 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
   ZenMoney.saveData()
 
   const apiAccounts = await fetchAccounts(auth)
+  await fetchHistory(auth, fromDate, toDate)
   const accounts = []
   const transactions = []
   await Promise.all(convertAccounts(apiAccounts).map(async ({ product, account }) => {
