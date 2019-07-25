@@ -206,13 +206,9 @@ export async function fetchAccounts (auth) {
   const types = ['card', 'account', 'loan', 'target', 'ima']
   return (await Promise.all(types.map(type => {
     return Promise.all(getArray(_.get(response.body, type !== 'ima' ? `${type}s.${type}` : 'imaccounts.ima')).map(async account => {
-      const params = type === 'target'
-        ? account.account && account.account.id
-          ? { id: account.account.id, type: 'account' }
-          : null
-        : account.mainCardId || (type === 'card' && account.type !== 'credit') || type === 'ima'
-          ? null
-          : { id: account.id, type }
+      const params = account.mainCardId || (type === 'card' && account.type !== 'credit') || type === 'ima' || type === 'target'
+        ? null
+        : { id: account.id, type }
       return {
         account: account,
         details: params ? await fetchAccountDetails(auth, params) : null
@@ -310,7 +306,13 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
         body: {
           id: transaction.id
         }
-      })
+      }, null)
+      if (detailsResponse.body.status === '1' &&
+        detailsResponse.body.error &&
+        detailsResponse.body.error.indexOf('Вы не можете просмотреть данную операцию через приложение') >= 0) {
+        return
+      }
+      validateResponse(detailsResponse, response => response.body.status === '0')
       const form = _.get(detailsResponse, 'body.document.form')
       if (form) {
         transaction.details =
@@ -330,7 +332,7 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
 export function filterTransactions (transactions, fromDate) {
   const filtered = []
   transactions.forEach((transaction, i) => {
-    if (['DRAFT', 'SAVED', 'REFUSED'].indexOf(transaction.state) >= 0 || (transaction.description && [
+    if (['DRAFT', 'SAVED', 'REFUSED', 'INITIAL', 'INITIAL_LONG_OFFER'].indexOf(transaction.state) >= 0 || (transaction.description && [
       'Создание автоплатежа',
       'Приостановка автоплатежа',
       'Редактирование автоплатежа',

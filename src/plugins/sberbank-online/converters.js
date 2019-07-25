@@ -417,7 +417,7 @@ function convertAccountsWithType (apiAccountsArray, type) {
           data = convertLoan(apiAccount.account, apiAccount.details)
           break
         case 'target':
-          data = convertTarget(apiAccount.account, apiAccount.details)
+          data = convertTarget(apiAccount.account)
           break
         case 'ima':
           data = convertMetalAccount(apiAccount.account)
