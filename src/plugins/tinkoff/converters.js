@@ -19,7 +19,7 @@ export function convertAccount (account, initialized = false) {
       return null
     default: {
       console.log(`>>> !!! Новый счёт с типом '${account.accountType}':`, account)
-      return null
+      throw new Error(`Новый счёт с типом '${account.accountType}'`)
     }
   }
 }
@@ -768,7 +768,7 @@ function getMultiDepositAccount (account) {
 
 function getCashLoan (account) {
   if (account.status !== 'NORM') return null
-  if (account.debtAmount.value <= 0) {
+  if (account.debtAmount.value === 0) {
     console.log('>>> Пропускаем кредит наличными ' + account.name + ' (#' + account.id + '), так как он уже закрыт')
     return null
   }
