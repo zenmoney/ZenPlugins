@@ -520,15 +520,6 @@ describe('convertTransactions', () => {
               'id': null,
               'invoice': null,
               'sum': -10000
-            },
-            {
-              'account': {
-                'id': '5040636556'
-              },
-              'fee': 0,
-              'id': 'p697163191_4880193395',
-              'invoice': null,
-              'sum': -10000
             }
           ]
         },

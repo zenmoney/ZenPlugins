@@ -429,7 +429,14 @@ function parsingDoubleTransactions (tranId, tranArr, tran2, accounts = {}) {
         tran1.comment = tran2.comment
       }
 
-      tran1.movements.push(tran2.movements.pop())
+      const movement = tran2.movements.pop()
+      if (!isMovementExists(tran1.movements, movement)) {
+        tran1.movements.push(movement)
+      } else {
+        console.log('>>> Игнорируем дубль операции перевода: ', tran1, tran2)
+        parsed = true
+        break
+      }
 
       // в переводах нет получателя
       tran1.merchant = null
@@ -448,7 +455,6 @@ function parsingDoubleTransactions (tranId, tranArr, tran2, accounts = {}) {
       }) */
 
       console.log(`>>> Объединили ${indexStr}операцию в перевод #${tranId}`)
-      tranArr[i] = tran1
       parsed = true
       break
     }
@@ -901,6 +907,13 @@ function isSameTransaction (tran1, tran2, ignoreAccount = false) {
       tran1.merchant.title === tran2.merchant.title &&
       tran1.merchant.fullTitle === tran2.merchant.fullTitle) &&
     formatCommentDateTime(tran1.date) === formatCommentDateTime(tran2.date)
+}
+
+function isMovementExists (movements, movement) {
+  return movements.some((move) => {
+    return move.sum === movement.sum &&
+      JSON.stringify(move.invoice) === JSON.stringify(movement.invoice)
+  })
 }
 
 function getMovementSumToString (movement) {

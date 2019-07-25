@@ -523,18 +523,6 @@ describe('convertTransactions', () => {
               'id': 'p729313093_5070206978',
               'invoice': null,
               'sum': -11000
-            },
-            {
-              'account': {
-                'company': null,
-                'instrument': 'RUB',
-                'syncIds': ['4173'],
-                'type': 'ccard'
-              },
-              'fee': 0,
-              'id': null,
-              'invoice': null,
-              'sum': -11000
             }
           ]
         }
