@@ -219,7 +219,8 @@ export async function fetchAccounts ({ sid }) {
     'param',
     'bg',
     'userupd',
-    'filter'
+    'filter',
+    'offer'
   ].indexOf(key) < 0).forEach(key => {
     accounts[key] = getArray(response.body.form[key])
   })
