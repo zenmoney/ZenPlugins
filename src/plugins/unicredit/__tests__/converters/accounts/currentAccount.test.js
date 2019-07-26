@@ -18,7 +18,8 @@ describe('convertAccount', () => {
       upd: '20.06.2019 18:24:43'
     })).toEqual({
       product: {
-        id: '40817810850020022305'
+        id: '40817810850020022305',
+        type: 'account'
       },
       account: {
         id: '40817810850020022305',

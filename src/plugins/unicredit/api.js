@@ -207,6 +207,10 @@ export async function fetchAccounts ({ sid }) {
     },
     sanitizeResponseLog: { body: { form: { card: { holder: true, fio: true } } } }
   })
+  if (response.body.form.id === 'changepass') {
+    const message = 'Мы усилили меры безопасности в отношении паролей доступа в систему. В связи с этим просим вас задать новый пароль.'
+    throw new TemporaryError(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: ${message}`)
+  }
   const accounts = {}
   Object.keys(response.body.form).filter(key => [
     'id',
@@ -228,7 +232,7 @@ export async function fetchAccounts ({ sid }) {
 }
 
 export async function fetchHistory ({ sid }, fromDate, toDate) {
-  await callGate('rt_android_1Common.FORM', {
+  const response = await callGate('rt_android_1Common.FORM', {
     forceUtf8Decoding: true,
     body: {
       TIC: '1',
@@ -239,6 +243,7 @@ export async function fetchHistory ({ sid }, fromDate, toDate) {
       DATEON: formatDate(toDate)
     }
   })
+  return getArray(response.body.form.stmitem)
 }
 
 export async function fetchTransactions ({ sid }, { id }, fromDate, toDate) {

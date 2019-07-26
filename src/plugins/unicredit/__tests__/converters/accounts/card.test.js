@@ -49,7 +49,8 @@ describe('convertAccounts', () => {
     })).toEqual([
       {
         product: {
-          id: '40817810350011001380'
+          id: '40817810350011001380',
+          type: 'card'
         },
         account: {
           id: '40817810350011001380',
@@ -153,7 +154,8 @@ describe('convertAccounts', () => {
     })).toEqual([
       {
         product: {
-          id: '40817810850230007123'
+          id: '40817810850230007123',
+          type: 'card'
         },
         account: {
           id: '40817810850230007123',

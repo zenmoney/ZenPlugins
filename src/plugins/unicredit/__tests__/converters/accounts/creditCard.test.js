@@ -4,7 +4,8 @@ describe('convertAccounts', () => {
   it('converts credit card', () => {
     expect(convertAccounts({
       card: [
-        { name: 'MC Standard',
+        {
+          name: 'MC Standard',
           rest: '300 000.00',
           iso: 'RUB',
           number: '518996******1234',
@@ -41,11 +42,15 @@ describe('convertAccounts', () => {
           act: 'details|block|reissue|refillother|pay|transfer|refill|transettings|pin|travel',
           cca: '40817810850450139213',
           travel: '0',
-          hide: '0' }
+          hide: '0'
+        }
       ]
     })).toEqual([
       {
-        product: { id: '40817810850450139213' },
+        product: {
+          id: '40817810850450139213',
+          type: 'card'
+        },
         account: {
           id: '40817810850450139213',
           type: 'ccard',
