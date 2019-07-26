@@ -7,6 +7,7 @@ export function convertAccount (account, initialized = false) {
     case 'Current': // дебетовые карты
     case 'CurrentKids': // Tinkoff Jr.
       return getDebitCard(account, initialized)
+
     case 'Credit': return getCreditCard(account, initialized) // кредитные карты
     case 'Saving': return getSavingAccount(account) // накопительные счета
     case 'Deposit': return getDepositAccount(account) // вклады
@@ -15,8 +16,11 @@ export function convertAccount (account, initialized = false) {
     case 'KupiVKredit': return getKupiVKreditAccount(account) // потребительские кредиты
     case 'Wallet': return getWalletAccount(account) // виртуальные карты
     case 'Telecom': return getTelecomAccount(account) // телеком-карта
+
     case 'ExternalAccount': // внешние счета сторонних банков, например
+    case 'ImportedCredit': // внешний кредит другого человека
       return null
+
     default: {
       console.log(`>>> !!! Новый счёт с типом '${account.accountType}':`, account)
       throw new Error(`Новый счёт с типом '${account.accountType}'`)
