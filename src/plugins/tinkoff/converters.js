@@ -3,6 +3,12 @@ import { formatCommentDateTime } from '../../common/dateUtils'
 import { isArray, groupBy, flattenDeep, union, get, values, drop, omit } from 'lodash'
 
 export function convertAccount (account, initialized = false) {
+  if (!account.accountType ||
+    account.accountType.startsWith('External') ||
+    account.accountType.startsWith('Imported')) {
+    return null
+  }
+
   switch (account.accountType) {
     case 'Current': // дебетовые карты
     case 'CurrentKids': // Tinkoff Jr.
