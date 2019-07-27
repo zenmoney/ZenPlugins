@@ -1021,131 +1021,6 @@ const transactions = {
     ]
   ],
 
-  'p2p-anybank': [
-    [
-      {
-        isDispute: true,
-        hasStatement: false,
-        isSuspicious: false,
-        payment: {
-          sourceIsQr: false,
-          bankAccountId: '5032902602',
-          paymentId: '692779954',
-          paymentType: 'Transfer',
-          feeAmount: {
-            currency: {
-              code: 643,
-              name: 'RUB',
-              strCode: '643'
-            },
-            value: 0
-          },
-          providerId: 'p2p-anybank',
-          hasPaymentOrder: false,
-          comment: '',
-          fieldsValues: {
-            pointerType: 'Телефон',
-            pointer: '+79121182458',
-            workflowType: 'Landing'
-          },
-          cardNumber: '553691******5852',
-          templateId: '113942724',
-          templateIsFavorite: false
-        },
-        id: '1451671729',
-        offers: [],
-        operationPaymentType: 'TEMPLATE',
-        status: 'SUSPENDED',
-        idSourceType: 'Online',
-        type: 'Debit',
-        locations: [],
-        loyaltyBonus: [],
-        cashbackAmount: {
-          currency: {
-            code: 643,
-            name: 'RUB',
-            strCode: '643'
-          },
-          value: 0
-        },
-        authMessage: 'Операция утверждена.',
-        description: 'Перевод по номеру телефона',
-        cashback: 0,
-        brand: {
-          name: 'Перевод по номеру телефона',
-          id: '16584',
-          roundedLogo: true
-        },
-        amount: {
-          currency: {
-            code: 643,
-            name: 'RUB',
-            strCode: '643'
-          },
-          value: 500
-        },
-        operationTime: {
-          milliseconds: 1559898945000
-        },
-        subcategory: 'Перевод по номеру телефона',
-        spendingCategory: {
-          id: '40',
-          name: 'Финансы',
-          icon: '7',
-          parentId: '5'
-        },
-        isHce: false,
-        mcc: 6012,
-        category: {
-          id: '7',
-          name: 'Финан. услуги'
-        },
-        additionalInfo: [
-          {
-            fieldName: 'Номер банкомата',
-            fieldValue: '21000011'
-          }
-        ],
-        virtualPaymentType: 0,
-        account: 'accountId',
-        ucid: '1026542711',
-        card: '27057739',
-        loyaltyPayment: [],
-        group: 'CASH',
-        mccString: '6012',
-        cardPresent: false,
-        isExternalCard: false,
-        cardNumber: '553691******5852',
-        accountAmount: {
-          currency: {
-            code: 643,
-            name: 'RUB',
-            strCode: '643'
-          },
-          value: 500
-        }
-      },
-      {
-        'comment': 'Перевод по номеру телефона +7******2458',
-        'date': new Date('2019-06-07T09:15:45+00:00'),
-        'hold': true,
-        'merchant': null,
-        'movements': [
-          {
-            '_id': '1451671729',
-            'account': {
-              'id': 'accountId'
-            },
-            'fee': 0,
-            'id': 'p692779954',
-            'invoice': null,
-            'sum': -500
-          }
-        ]
-      }
-    ]
-  ],
-
   'c2c-anytoany': [
     [
       {
@@ -1278,6 +1153,257 @@ const transactions = {
         ]
       }
     ]
+  ],
+
+  // перевод по номеру телефона
+  'p2p-anybank': [
+    [
+      {
+        isDispute: true,
+        hasStatement: false,
+        isSuspicious: false,
+        payment: {
+          sourceIsQr: false,
+          bankAccountId: '5032902602',
+          paymentId: '692779954',
+          paymentType: 'Transfer',
+          feeAmount: {
+            currency: {
+              code: 643,
+              name: 'RUB',
+              strCode: '643'
+            },
+            value: 0
+          },
+          providerId: 'p2p-anybank',
+          hasPaymentOrder: false,
+          comment: '',
+          fieldsValues: {
+            pointerType: 'Телефон',
+            pointer: '+79121182458',
+            workflowType: 'Landing'
+          },
+          cardNumber: '553691******5852',
+          templateId: '113942724',
+          templateIsFavorite: false
+        },
+        id: '1451671729',
+        offers: [],
+        operationPaymentType: 'TEMPLATE',
+        status: 'SUSPENDED',
+        idSourceType: 'Online',
+        type: 'Debit',
+        locations: [],
+        loyaltyBonus: [],
+        cashbackAmount: {
+          currency: {
+            code: 643,
+            name: 'RUB',
+            strCode: '643'
+          },
+          value: 0
+        },
+        authMessage: 'Операция утверждена.',
+        description: 'Перевод по номеру телефона',
+        cashback: 0,
+        brand: {
+          name: 'Перевод по номеру телефона',
+          id: '16584',
+          roundedLogo: true
+        },
+        amount: {
+          currency: {
+            code: 643,
+            name: 'RUB',
+            strCode: '643'
+          },
+          value: 500
+        },
+        operationTime: {
+          milliseconds: 1559898945000
+        },
+        subcategory: 'Перевод по номеру телефона',
+        spendingCategory: {
+          id: '40',
+          name: 'Финансы',
+          icon: '7',
+          parentId: '5'
+        },
+        isHce: false,
+        mcc: 6012,
+        category: {
+          id: '7',
+          name: 'Финан. услуги'
+        },
+        additionalInfo: [
+          {
+            fieldName: 'Номер банкомата',
+            fieldValue: '21000011'
+          }
+        ],
+        virtualPaymentType: 0,
+        account: 'accountId',
+        ucid: '1026542711',
+        card: '27057739',
+        loyaltyPayment: [],
+        group: 'CASH',
+        mccString: '6012',
+        cardPresent: false,
+        isExternalCard: false,
+        cardNumber: '553691******5852',
+        accountAmount: {
+          currency: {
+            code: 643,
+            name: 'RUB',
+            strCode: '643'
+          },
+          value: 500
+        }
+      },
+      {
+        'comment': 'Перевод по номеру телефона +7******2458',
+        'date': new Date('2019-06-07T09:15:45+00:00'),
+        'hold': true,
+        'merchant': null,
+        'movements': [
+          {
+            '_id': '1451671729',
+            'account': {
+              'id': 'accountId'
+            },
+            'fee': 0,
+            'id': 'p692779954',
+            'invoice': null,
+            'sum': -500
+          }
+        ]
+      }
+    ]
+  ],
+  'p2p-uni': [
+    [
+      {
+        isDispute: true,
+        hasStatement: false,
+        isSuspicious: false,
+        payment: {
+          sourceIsQr: false,
+          bankAccountId: 'accountId',
+          paymentId: '752623414',
+          paymentType: 'Transfer',
+          feeAmount: {
+            currency: {
+              code: 643,
+              name: 'RUB',
+              strCode: '643'
+            },
+            value: 0
+          },
+          providerId: 'p2p-uni',
+          hasPaymentOrder: false,
+          comment: '',
+          fieldsValues: {
+            destType: 'Телефон',
+            destValue: '+79252868496',
+            message: 'на пиво'
+          },
+          cardNumber: '553691******8219',
+          templateId: '128695387',
+          templateIsFavorite: false
+        },
+        id: '1755451043',
+        offers: [],
+        operationPaymentType: 'TEMPLATE',
+        status: 'SUSPENDED',
+        idSourceType: 'Online',
+        message: 'на пиво',
+        type: 'Debit',
+        locations: [],
+        loyaltyBonus: [],
+        cashbackAmount: {
+          currency: {
+            code: 643,
+            name: 'RUB',
+            strCode: '643'
+          },
+          value: 0
+        },
+        authMessage: 'Операция утверждена.',
+        description: 'Перевод по номеру телефона',
+        cashback: 0,
+        brand: {
+          name: 'Перевод по номеру телефона',
+          id: 'p2p-uni',
+          roundedLogo: false
+        },
+        amount: {
+          currency: {
+            code: 643,
+            name: 'RUB',
+            strCode: '643'
+          },
+          value: 740
+        },
+        operationTime: {
+          milliseconds: 1564231744000
+        },
+        subcategory: 'Перевод по номеру телефона',
+        spendingCategory: {
+          id: '40',
+          name: 'Финансы',
+          icon: '7',
+          parentId: '5'
+        },
+        isHce: false,
+        mcc: 6012,
+        category: {
+          id: '7',
+          name: 'Финан. услуги'
+        },
+        additionalInfo: [
+          {
+            fieldName: 'Номер банкомата',
+            fieldValue: '21000011'
+          }
+        ],
+        virtualPaymentType: 0,
+        account: 'accountId',
+        ucid: '1055314134',
+        card: '55623860',
+        loyaltyPayment: [],
+        group: 'CASH',
+        mccString: '6012',
+        cardPresent: false,
+        isExternalCard: false,
+        cardNumber: '553691******8219',
+        accountAmount: {
+          currency: {
+            code: 643,
+            name: 'RUB',
+            strCode: '643'
+          },
+          value: 740
+        }
+      },
+      {
+        'comment': 'на пиво +7******8496',
+        'date': new Date('2019-07-27T12:49:04+00:00'),
+        'hold': true,
+        'merchant': null,
+        'movements': [
+          {
+            '_id': '1755451043',
+            'account': {
+              'id': 'accountId'
+            },
+            'fee': 0,
+            'id': 'p752623414',
+            'invoice': null,
+            'sum': -740
+          }
+        ]
+      }
+    ]
   ]
 }
 
@@ -1296,8 +1422,8 @@ describe('convertTransaction', () => {
 })
 
 xdescribe('convertOneTransaction', () => {
-  const type = 'undefined'
-  const i = 3
+  const type = 'p2p-uni'
+  const i = 0
   it(`should convert '${type}' #${i}`, () => {
     expect(
       convertTransaction(transactions[type][i][0], accounts[transactions[type][i][0].account])

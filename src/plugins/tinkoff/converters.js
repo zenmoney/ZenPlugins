@@ -319,11 +319,15 @@ function parseCashGroup (transaction, apiTransaction) {
       }
       break
 
-    case 'p2p-anybank': // перевод по номеру телефона
-      const phone = payment.fieldsValues && payment.fieldsValues.pointer
+    // перевод по номеру телефона
+    case 'p2p-anybank':
+    case 'p2p-uni':
+      const phone = payment.fieldsValues && (payment.fieldsValues.pointer || payment.fieldsValues.destValue)
       const match = /\+7\d{6}(\d{4})/.exec(phone.trim())
       if (phone && match) {
-        transaction.comment = [ apiTransaction.description, '+7******' + match[1] ].join(' ')
+        transaction.comment = apiTransaction.message
+          ? [ apiTransaction.message, '+7******' + match[1] ].join(' ')
+          : [ apiTransaction.description, '+7******' + match[1] ].join(' ')
       } else {
         console.log('>>> Ошибочная транзакция с наличными: ', apiTransaction)
         throw new Error('Ошибочная транзакция с наличными')
