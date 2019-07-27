@@ -207,12 +207,11 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
       })
       // console.log('SIGN_UP 2: '+ JSON.stringify(sign_up));
 
-      if (['DEVICE_LINK_NEEDED', 'WRONG_PIN_CODE', 'PIN_ATTEMPS_EXCEEDED'].indexOf(signUp2.body.resultCode) + 1) {
+      if (['DEVICE_LINK_NEEDED', 'WRONG_PIN_CODE', 'PIN_ATTEMPS_EXCEEDED', 'AUTHENTICATION_FAILED'].indexOf(signUp2.body.resultCode) + 1) {
         auth.pinHash = null
         ZenMoney.setData('pinHash', null)
 
         switch (signUp2.body.resultCode) {
-          // устройство не авторизировано
           // устройство не авторизировано
           case 'DEVICE_LINK_NEEDED':
             if (lastIteration) { throw new InvalidPreferencesError('Требуется привязка устройства. Пожалуйста, пересоздайте подключение к банку.') }
@@ -223,6 +222,7 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
             // не верный пин-код
           case 'WRONG_PIN_CODE':
           case 'PIN_ATTEMPS_EXCEEDED':
+          case 'AUTHENTICATION_FAILED':
             if (lastIteration) { throw new InvalidPreferencesError('Ошибка входа по ПИН-коду. Пожалуйста, пересоздайте подключение к банку.') }
             // попытка повторного логина с генерацией нового пин-кода
             console.log('>>> Нужно установить новый ПИН-код. Перелогиниваемся!')
