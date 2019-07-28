@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="card_number"
+        summary="||{@s}"
+        title="Штрих-код карты"
+        dialogTitle="Штрих-код карты"
+        negativeButtonText="Отмена"
+        positiveButtonText="ОК"
+        inputType="number"
+        obligatory="true"
+    >
+    </EditTextPreference>
+    <EditTextPreference
+        key="password"
+        summary="||***********"
+        title="Пароль"
+        dialogTitle="Пароль"
+        negativeButtonText="Отмена"
+        positiveButtonText="ОК"
+        inputType="textPassword"
+        obligatory="true"
+    >
+    </EditTextPreference>
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="С какой даты загружать операции"
+        defaultValue="2017-06-01T12:00:00.000Z"
+        dialogTitle="С какой даты загружать операции"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|startDate|{@s}"
+    >
+    </EditTextPreference>
+</PreferenceScreen>
