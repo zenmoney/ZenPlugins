@@ -37,10 +37,12 @@ const converter = (item, mapContractToAccount = {}) => {
   } else {
     let amount = item.money.amount
     let currency = item.money.currency
-    if (_.has(item, 'money.amountDetail.amount')) {
+
+    if (_.has(item, 'money.amountDetail.amount' && item.money.amountDetail.amount > 0)) {
       amount = item.money.amountDetail.amount
     }
-    if (_.has(item, 'money.accountAmount')) {
+
+    if (_.has(item, 'money.accountAmount') && item.money.accountAmount.amount > 0) {
       amount = item.money.accountAmount.amount
       currency = item.money.accountAmount.currency
     }
@@ -54,8 +56,8 @@ const converter = (item, mapContractToAccount = {}) => {
     }
 
     /**
-         * Операция совершена в валюте отличной от валюты карты
-         */
+     * Операция совершена в валюте отличной от валюты карты
+     */
     if (currency !== item.money.currency) {
       if (isIncome) {
         transaction.opIncome = item.money.amount
