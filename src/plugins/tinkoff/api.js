@@ -98,14 +98,14 @@ export async function login (preferences, isInBackground, auth, lastIteration) {
         resultCode = response.body.resultCode
       }
 
-      // ошибка входа по паролю
       if (resultCode.substr(0, 8) === 'INVALID_' || resultCode.substr(0, 9) === 'INTERNAL_') {
+        // ошибка входа по паролю
         throw new InvalidPreferencesError('Ответ от банка: ' + (response.body.plainMessage || response.body.errorMessage))
+      } else if (['OPERATION_REJECTED', 'REQUEST_RATE_LIMIT_EXCEEDED'].indexOf(resultCode) >= 0) {
         // операция отклонена
-      } else if (resultCode === 'OPERATION_REJECTED') {
         throw new TemporaryError('Ответ от банка: ' + (response.body.plainMessage || response.body.errorMessage))
-        // если нужно подтверждение по смс
       } else if (resultCode === 'WAITING_CONFIRMATION') { // DEVICE_LINK_NEEDED
+        // если нужно подтверждение по смс
         console.log('>>> Необходимо подтвердить вход...')
 
         const msg = !lastIteration ? 'Введите код из SMS' : 'Необходимо заново авторизировать устройство. Введите код из SMS'
