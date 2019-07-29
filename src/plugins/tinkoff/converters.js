@@ -223,7 +223,9 @@ function parseIncomeGroup (transaction, apiTransaction) {
       break
 
     case undefined:
-      title = apiTransaction.description
+      if (apiTransaction.description && !apiTransaction.description.startsWith('Перевод с')) {
+        title = apiTransaction.description
+      }
       break
 
     default:
@@ -916,10 +918,11 @@ function isSameTransaction (tran1, tran2, ignoreAccount = false) {
     })
 
   return sameAccount && sameSum &&
-    (tran1.merchant &&
+    ((tran1.merchant === null && tran2.merchant === null) ||
+      (tran1.merchant && tran2.merchant &&
       tran1.merchant.mcc === tran2.merchant.mcc &&
       tran1.merchant.title === tran2.merchant.title &&
-      tran1.merchant.fullTitle === tran2.merchant.fullTitle) &&
+      tran1.merchant.fullTitle === tran2.merchant.fullTitle)) &&
     formatCommentDateTime(tran1.date) === formatCommentDateTime(tran2.date)
 }
 

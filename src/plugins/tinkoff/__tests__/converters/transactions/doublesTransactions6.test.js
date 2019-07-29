@@ -7,17 +7,10 @@ const accounts = {
     type: 'ccard',
     syncID: ['1234'],
     instrument: 'RUB'
-  },
-  'accountRUB': {
-    id: 'accountRUB',
-    title: 'Счет Black EUR',
-    type: 'ccard',
-    syncID: ['4567'],
-    instrument: 'EUR'
   }
 }
 
-// Обмен валюты
+// [error] anonymous call rejected with [TypeError: null is not an object (evaluating 't.merchant.mcc')]
 const transactions = [
   [
     {
@@ -26,8 +19,8 @@ const transactions = [
       isSuspicious: false,
       payment: {
         sourceIsQr: false,
-        bankAccountId: 'accountRUB',
-        paymentId: '729313093',
+        bankAccountId: 'cardRUB',
+        paymentId: '748065392',
         paymentType: 'Transfer',
         feeAmount: {
           currency: {
@@ -41,15 +34,15 @@ const transactions = [
         hasPaymentOrder: false,
         comment: '',
         fieldsValues: {
-          agreement: 'accountRUB'
+          agreement: 'cardRUB'
         },
-        cardNumber: '427942******4173'
+        cardNumber: '427655******2568'
       },
-      id: '5070206975',
+      id: '1732256175',
       offers: [],
       operationPaymentType: 'NORMAL',
       status: 'OK',
-      idSourceType: 'Prime',
+      idSourceType: 'Online',
       type: 'Credit',
       locations: [],
       loyaltyBonus: [],
@@ -61,10 +54,8 @@ const transactions = [
         },
         value: 0
       },
+      authMessage: 'Операция утверждена.',
       description: 'Перевод с карты',
-      debitingTime: {
-        milliseconds: 1562533200000
-      },
       cashback: 0,
       brand: {
         name: 'Перевод с карты',
@@ -77,17 +68,16 @@ const transactions = [
           name: 'RUB',
           strCode: '643'
         },
-        value: 11000
+        value: 1008
       },
       operationTime: {
-        milliseconds: 1562575190000
+        milliseconds: 1563902113000
       },
       subcategory: 'Перевод с карты',
       spendingCategory: {
-        id: '51',
-        name: 'Другое',
-        icon: '33',
-        parentId: '8'
+        id: '70',
+        name: 'Пополнения',
+        icon: '33'
       },
       isHce: false,
       mcc: 0,
@@ -99,36 +89,50 @@ const transactions = [
       additionalInfo: [],
       virtualPaymentType: 0,
       account: 'cardRUB',
+      ucid: '1038126153',
+      card: '38603667',
       loyaltyPayment: [],
+      group: 'INCOME',
       mccString: '0000',
-      cardPresent: true,
+      cardPresent: false,
       isExternalCard: false,
+      cardNumber: '553691******8629',
       accountAmount: {
         currency: {
           code: 643,
           name: 'RUB',
           strCode: '643'
         },
-        value: 11000
+        value: 1008
       }
     },
     {
-      'comment': 'Перевод с карты',
-      'date': new Date('2019-07-08T08:39:50+00:00'),
-      'hold': false,
+      'comment': null,
+      'date': new Date('2019-07-23T17:15:13+00:00'),
+      'hold': true,
       'merchant': null,
       'movements': [
         {
-          '_cardPresent': true,
-          '_id': '5070206975',
-          'account':
-            {
-              'id': 'cardRUB'
-            },
+          '_id': '1732256175',
+          'account': {
+            'id': 'cardRUB'
+          },
           'fee': 0,
-          'id': 'p729313093',
+          'id': 'p748065392',
           'invoice': null,
-          'sum': 11000
+          'sum': 1008
+        },
+        {
+          'account': {
+            'company': null,
+            'instrument': 'RUB',
+            'syncIds': ['2568'],
+            'type': 'ccard'
+          },
+          'fee': 0,
+          'id': null,
+          'invoice': null,
+          'sum': -1008
         }
       ]
     }
@@ -140,8 +144,8 @@ const transactions = [
       isSuspicious: false,
       payment: {
         sourceIsQr: false,
-        bankAccountId: 'accountRUB',
-        paymentId: '729313093',
+        bankAccountId: 'cardRUB',
+        paymentId: '748065392',
         paymentType: 'Transfer',
         feeAmount: {
           currency: {
@@ -155,125 +159,11 @@ const transactions = [
         hasPaymentOrder: false,
         comment: '',
         fieldsValues: {
-          agreement: 'accountRUB'
+          agreement: 'cardRUB'
         },
-        cardNumber: '427942******4173'
+        cardNumber: '427655******2568'
       },
-      id: '5070206978',
-      offers: [],
-      operationPaymentType: 'NORMAL',
-      status: 'OK',
-      idSourceType: 'Prime',
-      type: 'Debit',
-      locations: [],
-      loyaltyBonus: [],
-      cashbackAmount: {
-        currency: {
-          code: 643,
-          name: 'RUB',
-          strCode: '643'
-        },
-        value: 0
-      },
-      description: 'Перевод с карты',
-      debitingTime: {
-        milliseconds: 1562533200000
-      },
-      cashback: 0,
-      brand: {
-        name: 'Перевод с карты',
-        id: 'c2c-in-new',
-        roundedLogo: false
-      },
-      amount: {
-        currency: {
-          code: 643,
-          name: 'RUB',
-          strCode: '643'
-        },
-        value: 11000
-      },
-      operationTime: {
-        milliseconds: 1562575190000
-      },
-      subcategory: 'Перевод с карты',
-      spendingCategory: {
-        id: '57',
-        name: 'Переводы',
-        icon: '39',
-        parentId: '8'
-      },
-      isHce: false,
-      mcc: 1,
-      partnerType: 'card2card',
-      category: {
-        id: '39',
-        name: 'Переводы/иб'
-      },
-      additionalInfo: [],
-      virtualPaymentType: 0,
-      account: 'cardRUB',
-      loyaltyPayment: [],
-      mccString: '0001',
-      cardPresent: true,
-      isExternalCard: false,
-      accountAmount: {
-        currency: {
-          code: 643,
-          name: 'RUB',
-          strCode: '643'
-        },
-        value: 11000
-      }
-    },
-    {
-      'comment': 'Перевод с карты',
-      'date': new Date('2019-07-08T08:39:50+00:00'),
-      'hold': false,
-      'merchant': null,
-      'movements': [
-        {
-          '_cardPresent': true,
-          '_id': '5070206978',
-          'account':
-            {
-              'id': 'cardRUB'
-            },
-          'fee': 0,
-          'id': 'p729313093',
-          'invoice': null,
-          'sum': -11000
-        }
-      ]
-    }
-  ],
-  [
-    {
-      isDispute: false,
-      hasStatement: false,
-      isSuspicious: false,
-      payment: {
-        sourceIsQr: false,
-        bankAccountId: 'accountRUB',
-        paymentId: '729313093',
-        paymentType: 'Transfer',
-        feeAmount: {
-          currency: {
-            code: 643,
-            name: 'RUB',
-            strCode: '643'
-          },
-          value: 0
-        },
-        providerId: 'c2c-in-new',
-        hasPaymentOrder: false,
-        comment: '',
-        fieldsValues: {
-          agreement: 'accountRUB'
-        },
-        cardNumber: '427942******4173'
-      },
-      id: '5070206973',
+      id: '5189654029',
       offers: [],
       operationPaymentType: 'NORMAL',
       status: 'OK',
@@ -295,7 +185,7 @@ const transactions = [
       },
       description: 'Перевод с карты',
       debitingTime: {
-        milliseconds: 1562533200000
+        milliseconds: 1563829200000
       },
       cashback: 0,
       brand: {
@@ -309,10 +199,10 @@ const transactions = [
           name: 'RUB',
           strCode: '643'
         },
-        value: 11000
+        value: 1008
       },
       operationTime: {
-        milliseconds: 1562575190000
+        milliseconds: 1563902113000
       },
       subcategory: 'Перевод с карты',
       spendingCategory: {
@@ -329,52 +219,52 @@ const transactions = [
       },
       additionalInfo: [],
       virtualPaymentType: 0,
-      account: 'accountRUB',
-      ucid: '1057018421',
-      card: '57328090',
+      account: 'cardRUB',
+      ucid: '1038126153',
+      card: '38603667',
       loyaltyPayment: [],
       group: 'INCOME',
       mccString: '0000',
       cardPresent: true,
       isExternalCard: false,
-      cardNumber: '518901******5726',
+      cardNumber: '553691******8629',
       accountAmount: {
         currency: {
           code: 643,
           name: 'RUB',
           strCode: '643'
         },
-        value: 11000
+        value: 1008
       }
     },
     {
       'comment': 'Перевод с карты',
-      'date': new Date('2019-07-08T08:39:50+00:00'),
+      'date': new Date('2019-07-23T17:15:13+00:00'),
       'hold': false,
       'merchant': null,
       'movements': [
         {
           '_cardPresent': true,
-          '_id': '5070206973',
+          '_id': '5189654029',
           'account': {
-            'id': 'accountRUB'
+            'id': 'cardRUB'
           },
           'fee': 0,
-          'id': 'p729313093',
+          'id': 'p748065392',
           'invoice': null,
-          'sum': 11000
+          'sum': 1008
         },
         {
           'account': {
             'company': null,
             'instrument': 'RUB',
-            'syncIds': ['4173'],
+            'syncIds': ['2568'],
             'type': 'ccard'
           },
           'fee': 0,
           'id': null,
           'invoice': null,
-          'sum': -11000
+          'sum': -1008
         }
       ]
     }
@@ -385,8 +275,8 @@ const transactions = [
       isSuspicious: false,
       payment: {
         sourceIsQr: false,
-        bankAccountId: 'accountRUB',
-        paymentId: '729313093',
+        bankAccountId: 'cardRUB',
+        paymentId: '748065392',
         paymentType: 'Transfer',
         feeAmount: {
           currency: {
@@ -400,9 +290,9 @@ const transactions = [
         hasPaymentOrder: false,
         comment: '',
         fieldsValues: {
-          agreement: 'accountRUB'
+          agreement: 'cardRUB'
         },
-        cardNumber: '427942******4173'
+        cardNumber: '427655******2568'
       },
       id: '0',
       offers: [],
@@ -428,10 +318,10 @@ const transactions = [
           name: 'RUB',
           strCode: '643'
         },
-        value: 11000
+        value: 1008
       },
       operationTime: {
-        milliseconds: 1562575148000
+        milliseconds: 1563901988000
       },
       subcategory: 'Перевод с карты',
       isHce: false,
@@ -442,8 +332,8 @@ const transactions = [
         name: 'Переводы'
       },
       additionalInfo: [],
-      account: 'externalCard',
-      card: 'externalCard',
+      account: '8788723',
+      card: '8788723',
       loyaltyPayment: [],
       mccString: '0000',
       cardPresent: true,
@@ -454,7 +344,7 @@ const transactions = [
           name: 'RUB',
           strCode: '643'
         },
-        value: 11000
+        value: 1008
       }
     },
     null
@@ -476,7 +366,7 @@ describe('convertTransaction', () => {
 })
 
 xdescribe('convertOneTransaction', () => {
-  const i = 2
+  const i = 0
   it('should convert transaction ' + i, () => {
     expect(
       convertTransaction(transactions[i][0], accounts[transactions[i][0].account])
@@ -493,8 +383,8 @@ describe('convertTransactions', () => {
     ).toEqual(
       [
         {
-          'comment': 'Перевод с карты',
-          'date': new Date('2019-07-08T08:39:50+00:00'),
+          'comment': null,
+          'date': new Date('2019-07-23T17:15:13+00:00'),
           'hold': false,
           'merchant': null,
           'movements': [
@@ -503,26 +393,21 @@ describe('convertTransactions', () => {
                 'id': 'cardRUB'
               },
               'fee': 0,
-              'id': 'p729313093_5070206975',
+              'id': 'p748065392',
               'invoice': null,
-              'sum': 11000
-            }
-          ]
-        },
-        {
-          'comment': 'Перевод с карты',
-          'date': new Date('2019-07-08T08:39:50+00:00'),
-          'hold': false,
-          'merchant': null,
-          'movements': [
+              'sum': 1008
+            },
             {
               'account': {
-                'id': 'cardRUB'
+                'company': null,
+                'instrument': 'RUB',
+                'syncIds': ['2568'],
+                'type': 'ccard'
               },
               'fee': 0,
-              'id': 'p729313093_5070206978',
+              'id': null,
               'invoice': null,
-              'sum': -11000
+              'sum': -1008
             }
           ]
         }
