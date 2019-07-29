@@ -11,9 +11,16 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
   // обработаем счета
   const accounts = {}
   const initialized = ZenMoney.getData('initialized', false) // флаг первичной инициализации счетов, когда необходимо передать остатки всех счетов
+  let skippedAccounts = 0
   await Promise.all(fetchedData.accounts.map(async account => {
     const acc = convertAccount(account, initialized)
-    if (!acc || ZenMoney.isAccountSkipped(acc.id)) return
+    if (!acc) return
+    if (ZenMoney.isAccountSkipped(acc.id)) {
+      skippedAccounts++
+      console.log(`>>> Счёт #${acc.id} '${acc.title}' пропущен пользователем`)
+      return
+    }
+
     if (isArray(acc)) {
       acc.forEach(function (item) {
         if (!item) return
@@ -30,6 +37,9 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
   const resultAccounts = ensureSyncIDsAreUniqueButSanitized({ accounts: values(accounts), sanitizeSyncId })
 
   if (!isArray(resultAccounts) || resultAccounts.length === 0) {
+    if (skippedAccounts > 0) {
+      throw new TemporaryError('Кажется, вы пропустили все счета. Нечего загружать. Попробуйте снова.')
+    }
     throw new Error('Пустой список счетов')
   }
 

@@ -477,7 +477,7 @@ function parsingDoubleTransactions (tranId, tranArr, tran2, accounts = {}) {
     if (isSameTransaction(tran1, tran2)) {
       if (tran1.hold === true && tran2.hold === false) {
         tran1.hold = tran2.hold
-        tran1.movenements[0].id = tran2.movenements[0].id
+        tran1.movements[0].id = tran2.movements[0].id
         console.log(`>>> Акцепт существующей ${indexStr}операции #${tranId}:`, tranArr, '\n#2: ', tran2)
       } else if (tran1.hold === false) {
         console.log(`>>> Пропускаем холд существующего ${indexStr}акцепта #${tranId}:`, tranArr, '\n#2: ', tran2)
@@ -634,9 +634,9 @@ function cleanupMovement (movement) {
   return omit(movement, ['_cardPresent', '_id'])
 }
 
-export function groupApiTransactionsById (apiTransactions) {
+/* export function groupApiTransactionsById (apiTransactions) {
   return groupBy(apiTransactions, apiTransaction => getApiTransactionId(apiTransaction))
-}
+} */
 
 function getDebitCard (account, initialized) {
   if (account.status !== 'NORM') return null
