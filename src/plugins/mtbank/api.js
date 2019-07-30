@@ -14,11 +14,35 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
     }
   )
   const response = await fetchJson(baseUrl + url, options)
+
+  if (response.body && response.body.error) {
+    if ([
+      'phone'
+    ].indexOf(response.body.error.code) >= 0) {
+      throw new InvalidPreferencesError('Неверный номер телефона')
+    }
+    if ([
+      'PASSWORD_ERROR'
+    ].indexOf(response.body.error.code) >= 0) {
+      throw new InvalidPreferencesError('Неверный пароль')
+    }
+    if ([
+      'USER_TEMP_LOCKED',
+      'INTERNAL_SERVER_ERROR'
+    ].indexOf(response.body.error.code) >= 0) {
+      const errorDescription = response.body.error.description || response.body.error.error_description
+      const errorMessage = errorDescription + (response.body.error.lockedTime && response.body.error.lockedTime !== 'null' ? response.body.error.lockedTime : '')
+      throw new TemporaryError(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: ${errorMessage}`)
+    }
+  }
+
   if (predicate) {
     validateResponse(response, response => predicate(response), error)
   }
 
-  if (!response.body.success && response.body.error && response.body.error.description &&
+  if (!response.body.success &&
+    response.body.error &&
+    response.body.error.description &&
     response.body.error.description.indexOf('Неверное значение contractCode') === 0) {
     const errorDescription = response.body.error.description
     if (errorDescription.indexOf('не принадлежит клиенту c кодом') >= 0 ||
@@ -28,14 +52,13 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
       return false
     }
     const errorMessage = 'Ответ банка: ' + errorDescription + (response.body.error.lockedTime && response.body.error.lockedTime !== 'null' ? response.body.error.lockedTime : '')
-    if (errorDescription.indexOf('Неверный пароль') >= 0) { throw new InvalidPreferencesError(errorMessage) }
     throw new TemporaryError(errorMessage)
   }
 
   return response
 }
 
-function validateResponse (response, predicate, error) {
+function validateResponse (response, predicate, error = (message) => console.assert(false, message)) {
   if (!predicate || !predicate(response)) {
     error('non-successful response')
   }
@@ -56,12 +79,12 @@ function cookies (response) {
 }
 
 export async function login (login, password) {
-  var res = await fetchApiJson('login/userIdentityByPhone', {
+  let res = await fetchApiJson('login/userIdentityByPhone', {
     method: 'POST',
     body: { phoneNumber: login, loginWay: '1' },
     sanitizeRequestLog: { body: { phoneNumber: true } },
     sanitizeResponseLog: { body: { data: { smsCode: { phone: true } } } }
-  }, response => response.success, message => new InvalidPreferencesError('Неверный номер телефона'))
+  }, response => response.body.success)
   let sessionCookies = cookies(res)
 
   res = await fetchApiJson('login/checkPassword2', {
@@ -69,13 +92,15 @@ export async function login (login, password) {
     headers: { 'Cookie': sessionCookies },
     body: { 'password': password, 'version': '2.1.4' },
     sanitizeRequestLog: { body: { password: true } }
-  }, response => response.success, message => new InvalidPreferencesError('Неверный пароль'))
+  }, response => response.body.success)
+
   sessionCookies = cookies(res)
 
   await fetchApiJson('user/userRole', {
     method: 'POST',
-    body: res.body.data.userInfo.dboContracts[0]
-  }, response => response.success, message => new InvalidPreferencesError('bad request'))
+    body: res.body.data.userInfo.dboContracts[0],
+    sanitizeResponseLog: { body: { name: true, longname: true } }
+  }, response => response.body.success)
 
   return sessionCookies
 }
