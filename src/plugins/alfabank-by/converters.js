@@ -72,9 +72,11 @@ export function convertTransaction (json, accounts) {
       json.description.indexOf('ПОПОЛНЕНИЕ КАРТСЧЕТОВ ТЕРМИНАЛ') >= 0 /* Эта операция приходит 2 раза */) {
     return null
   }
+  const iban = json.iban.replace(/\s/g, '')
   const account = accounts.find(account => {
-    return json.iban.replace(/\s/g, '').indexOf(account.syncID[0]) !== -1
+    return iban.indexOf(account.syncID[0]) !== -1 || account.syncID[0].indexOf(iban) !== 1
   })
+  console.assert(account, `could not found account with number ${json.iban}`)
 
   const transaction = {
     date: parseDate(json.date),

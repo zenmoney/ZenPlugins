@@ -84,7 +84,7 @@ export async function authWithPassportID (deviceID, isResident) {
     inputType: 'string',
     time: 120000
   })
-  if (passportID === '') {
+  if (!passportID) {
     throw new TemporaryError('Не введён номер паспорта. Подключите синхронизацию ещё раз и укажите номер паспорта.')
   }
   var body = {
