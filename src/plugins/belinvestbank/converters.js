@@ -10,7 +10,7 @@ export function convertAccount (json) {
 }
 
 export function convertTransaction (json, accounts) {
-  if (json.status !== 'ПРОВЕДЕНО') {
+  if (json.status !== 'ПРОВЕДЕНО' && json.status !== 'ЗАБЛОКИРОВАНО') {
     return null
   }
   const account = accounts.find(account => {
@@ -19,10 +19,10 @@ export function convertTransaction (json, accounts) {
 
   const transaction = {
     date: getDate(json.date),
-    movements: [ getMovement(json, account) ],
+    movements: [getMovement(json, account)],
     merchant: null,
     comment: null,
-    hold: false
+    hold: json.status === 'ЗАБЛОКИРОВАНО'
   };
 
   [
