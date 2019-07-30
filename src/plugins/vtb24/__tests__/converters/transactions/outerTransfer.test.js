@@ -1,6 +1,109 @@
 import { convertTransaction } from '../../../converters'
 
 describe('convertTransaction', () => {
+  it.each([
+    [
+      {
+        __type: 'ru.vtb24.mobilebanking.protocol.statement.CardTransactionMto',
+        details: 'CH Debit',
+        isHold: true,
+        fullDetails: 'CH Debit TINKOFF BANK CARD2CARD MOSCOW',
+        statusName: 'В обработке',
+        id: 'aU7+J1lN3dAtYWEobR6YqtPpwM8=;hi0V6X7dEJivlA7+yqEqL7if1nY=',
+        stub: null,
+        ver: null,
+        debet: null,
+        transactionDate: new Date('Tue Jul 30 2019 08:40:27 GMT+0300 (MSK)'),
+        processedDate: null,
+        transactionAmount:
+          {
+            __type: 'ru.vtb24.mobilebanking.protocol.AmountMto',
+            sum: -8000,
+            currency: {
+              __type: 'ru.vtb24.mobilebanking.protocol.CurrencyMto',
+              currencyCode: 'RUR',
+              name: 'Рубль России',
+              displaySymbol: '₽',
+              codeIso: '810',
+              detailLevel: 'Full',
+              id: 'RUR',
+              stub: null,
+              ver: null
+            }
+          },
+        feeAmount:
+          {
+            __type: 'ru.vtb24.mobilebanking.protocol.AmountMto',
+            sum: 0,
+            currency: {
+              __type: 'ru.vtb24.mobilebanking.protocol.CurrencyMto',
+              currencyCode: 'RUR',
+              name: 'Рубль России',
+              displaySymbol: '₽',
+              codeIso: '810',
+              detailLevel: 'Full',
+              id: 'RUR',
+              stub: null,
+              ver: null
+            }
+          },
+        order: null,
+        bonus: null,
+        transactionAmountInAccountCurrency:
+          {
+            __type: 'ru.vtb24.mobilebanking.protocol.AmountMto',
+            sum: -8000,
+            currency: {
+              __type: 'ru.vtb24.mobilebanking.protocol.CurrencyMto',
+              currencyCode: 'RUR',
+              name: 'Рубль России',
+              displaySymbol: '₽',
+              codeIso: '810',
+              detailLevel: 'Full',
+              id: 'RUR',
+              stub: null,
+              ver: null
+            }
+          },
+        status:
+          {
+            __type: 'ru.vtb24.mobilebanking.protocol.StatusMto',
+            id: 'IN_PROGRESS'
+          }
+      },
+      {
+        hold: true,
+        date: new Date('2019-07-30T08:40:27+03:00'),
+        movements: [
+          {
+            id: 'hi0V6X7dEJivlA7+yqEqL7if1nY=',
+            account: { id: 'account' },
+            invoice: null,
+            sum: -8000,
+            fee: 0
+          },
+          {
+            id: null,
+            account: {
+              type: 'ccard',
+              instrument: 'RUB',
+              company: { id: '4902' },
+              syncIds: null
+            },
+            invoice: null,
+            sum: 8000,
+            fee: 0
+          }
+        ],
+        merchant: null,
+        comment: null
+      }
+    ]
+  ])('converts outer transfer', (apiTransaction, transaction) => {
+    const account = { id: 'account', instrument: 'RUB' }
+    expect(convertTransaction(apiTransaction, account)).toEqual(transaction)
+  })
+
   it('converts outer transfer', () => {
     const apiTransactions = [
       {

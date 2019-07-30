@@ -338,12 +338,13 @@ export function convertTransaction (apiTransaction, account) {
 
 function parseOuterTransfer (apiTransaction, transaction, account) {
   for (const pattern of [
-    /^На карту.*\*(\d{4})$/
+    /^На карту.*\*(\d{4})$/,
+    /CH Debit/
   ]) {
     const match = apiTransaction.details.match(pattern)
     if (match) {
       console.assert(transaction.movements.length < 2, 'Too much movements', { transaction, apiTransaction })
-      const accountData = parseOuterAccountData(apiTransaction.details)
+      const accountData = parseOuterAccountData(apiTransaction.fullDetails || apiTransaction.details)
       const invoice = getInvoice(apiTransaction, account)
       transaction.movements.push({
         id: null,

@@ -1,6 +1,81 @@
 import { convertTransaction } from '../../../converters'
 
 describe('convertTransaction', () => {
+  it.each([
+    [
+      {
+        __type: 'ru.vtb24.mobilebanking.protocol.statement.AccountTransactionMto',
+        details: 'ПЕРЕЧИСЛЕНИЕ ЗАРАБОТНОЙ ПЛАТЫ (АВАНСА) ЗА ИЮЛЬ 2019 Г. ПОЛУЧАТЕЛЬ НИКОЛАЕВ НИКОЛАЙ НИКОЛАЕВИЧ. НДС НЕ ОБЛАГАЕТСЯ',
+        isHold: false,
+        fullDetails: 'ПЕРЕЧИСЛЕНИЕ ЗАРАБОТНОЙ ПЛАТЫ (АВАНСА) ЗА ИЮЛЬ 2019 Г. ПОЛУЧАТЕЛЬ НИКОЛАЕВ НИКОЛАЙ НИКОЛАЕВИЧ. НДС НЕ ОБЛАГАЕТСЯ',
+        statusName: null,
+        id: '9cIachhGGuDcZli0UfBsU1nSivg=;65w6GQR3TH0eY/SoVV4KU+J2c0g=',
+        stub: null,
+        ver: null,
+        debet: null,
+        transactionDate: new Date('Thu Jul 25 2019 14:51:00 GMT+0300 (MSK)'),
+        processedDate: new Date('Thu Jul 25 2019 14:51:00 GMT+0300 (MSK)'),
+        transactionAmount:
+            {
+              __type: 'ru.vtb24.mobilebanking.protocol.AmountMto',
+              sum: 8000,
+              currency: {
+                __type: 'ru.vtb24.mobilebanking.protocol.CurrencyMto',
+                currencyCode: 'RUR',
+                name: 'Рубль России',
+                displaySymbol: '₽',
+                codeIso: '810',
+                detailLevel: 'Full',
+                id: 'RUR',
+                stub: null,
+                ver: null
+              }
+            },
+        feeAmount: null,
+        order: null,
+        bonus: null,
+        transactionAmountInAccountCurrency:
+            {
+              __type: 'ru.vtb24.mobilebanking.protocol.AmountMto',
+              sum: 8000,
+              currency: {
+                __type: 'ru.vtb24.mobilebanking.protocol.CurrencyMto',
+                currencyCode: 'RUR',
+                name: 'Рубль России',
+                displaySymbol: '₽',
+                codeIso: '810',
+                detailLevel: 'Full',
+                id: 'RUR',
+                stub: null,
+                ver: null
+              }
+            },
+        status: {
+          __type: 'ru.vtb24.mobilebanking.protocol.StatusMto',
+          id: 'SUCCESS'
+        }
+      },
+      {
+        hold: false,
+        date: new Date('2019-07-25T14:51:00+03:00'),
+        movements: [
+          {
+            id: '65w6GQR3TH0eY/SoVV4KU+J2c0g=',
+            account: { id: 'account' },
+            invoice: null,
+            sum: 8000,
+            fee: 0
+          }
+        ],
+        merchant: null,
+        comment: 'ПЕРЕЧИСЛЕНИЕ ЗАРАБОТНОЙ ПЛАТЫ (АВАНСА) ЗА ИЮЛЬ 2019 Г. ПОЛУЧАТЕЛЬ НИКОЛАЕВ НИКОЛАЙ НИКОЛАЕВИЧ. НДС НЕ ОБЛАГАЕТСЯ'
+      }
+    ]
+  ])('converts income', (apiTransaction, transaction) => {
+    const account = { id: 'account', instrument: 'RUB' }
+    expect(convertTransaction(apiTransaction, account)).toEqual(transaction)
+  })
+
   it('converts incoming payment', () => {
     const apiTransactions = [
       {
