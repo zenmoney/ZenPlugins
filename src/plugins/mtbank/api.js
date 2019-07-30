@@ -24,7 +24,7 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
     if ([
       'PASSWORD_ERROR'
     ].indexOf(response.body.error.code) >= 0) {
-      throw new InvalidPreferencesError('Неверный пароль')
+      throw new InvalidPreferencesError('Неверный номер телефона или пароль')
     }
     if ([
       'USER_TEMP_LOCKED',
