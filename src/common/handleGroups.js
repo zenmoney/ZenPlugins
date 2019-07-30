@@ -38,7 +38,7 @@ export function handleGroups ({
   for (let i = 0; i < n; i++) {
     const groups = {}
     for (const data of dataArray) {
-      const groupKey = data.isProcessed ? null : data.groupKeys[i]
+      const groupKey = data.isProcessed || data.groupKeys.length <= 0 ? null : data.groupKeys[i]
       if (groupKey !== null) {
         let group = groups[groupKey]
         if (!group) {

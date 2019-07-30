@@ -39,4 +39,13 @@ describe('handleGroups', () => {
     expect(handleGroup.mock.calls[0]).toEqual([[4, 8]])
     expect(handleGroup.mock.calls[1]).toEqual([[2, 6, 10]])
   })
+
+  it('preserve items without group keys', () => {
+    const items = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    expect(handleGroups({
+      items: items,
+      makeGroupKeys: n => n % 2 === 0 ? ['even'] : null,
+      handleGroup: items => [items.join(',')]
+    })).toEqual([1, '2,4,6,8,10', 3, 5, 7, 9])
+  })
 })
