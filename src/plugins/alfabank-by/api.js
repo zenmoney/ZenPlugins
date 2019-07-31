@@ -3,7 +3,7 @@ import { defaultsDeep, get } from 'lodash'
 import { generateRandomString } from '../../common/utils'
 import { parseDate } from './converters'
 
-const baseUrl = 'https://insync2.alfa-bank.by/mBank256/v5/'
+const baseUrl = 'https://insync2.alfa-bank.by/mBank256/v6/'
 
 /**
  * @return {string}
@@ -19,7 +19,7 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
     options,
     {
       headers: {
-        'X-Client-App': 'Android/5.4.1',
+        'X-Client-App': 'Android/5.6.1',
         'Content-Type': 'application/json; charset=UTF-8',
         'User-Agent': 'okhttp/3.12.0'
       }
