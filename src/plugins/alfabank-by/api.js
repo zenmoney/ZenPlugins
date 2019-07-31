@@ -3,7 +3,7 @@ import { defaultsDeep, get } from 'lodash'
 import { generateRandomString } from '../../common/utils'
 import { parseDate } from './converters'
 
-const baseUrl = 'https://insync2.alfa-bank.by/mBank256/v6/'
+export const baseUrl = 'https://insync2.alfa-bank.by/mBank256/v6/'
 
 /**
  * @return {string}

@@ -1,6 +1,7 @@
 import fetchMock from 'fetch-mock'
 import { scrape } from '..'
 import { makePluginDataApi } from '../../../ZPAPI.pluginData'
+import { baseUrl } from '../api'
 
 describe('scrape', () => {
   it('should hit the mocks and return results', async () => {
@@ -72,7 +73,7 @@ describe('scrape', () => {
 })
 
 function mockFetchTransactionsAccounts () {
-  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/History', {
+  fetchMock.once(`${baseUrl}History`, {
     status: 200,
     body: JSON.stringify({
       accounts: [{ id: '3014111MFE0011110', name: 'Карта №1 - ...ALFA3014111MFE001... - 486,18 BYN' }],
@@ -120,7 +121,7 @@ function mockFetchTransactionsAccounts () {
     statusText: 'OK'
   }, { method: 'POST' })
 
-  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/History', {
+  fetchMock.once(`${baseUrl}History`, {
     status: 200,
     body: JSON.stringify({
       accounts: [{ id: '3014111MFE0011110', name: 'Карта №1 - ...ALFA3014111MFE001... - 486,18 BYN' }],
@@ -137,7 +138,7 @@ function mockFetchTransactionsAccounts () {
 }
 
 function mockFetchTransactionsDeposits () {
-  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/History', {
+  fetchMock.once(`${baseUrl}History`, {
     status: 200,
     body: JSON.stringify({
       accounts: [],
@@ -154,7 +155,7 @@ function mockFetchTransactionsDeposits () {
 }
 
 function mockFetchAccounts () {
-  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/Products', {
+  fetchMock.once(`${baseUrl}Products`, {
     status: 200,
     body: JSON.stringify({
       'items': [ {
@@ -187,7 +188,7 @@ function mockFetchAccounts () {
 }
 
 function mockFetchCards () {
-  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/Products', {
+  fetchMock.once(`${baseUrl}Products`, {
     status: 200,
     body: JSON.stringify({
       'items': [ {
@@ -220,7 +221,7 @@ function mockFetchCards () {
 }
 
 function mockFetchDeposits () { // TODO: update response body
-  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/Products', {
+  fetchMock.once(`${baseUrl}Products`, {
     status: 200,
     body: JSON.stringify({
       items:
@@ -254,7 +255,7 @@ function mockFetchDeposits () { // TODO: update response body
 }
 
 function mockFetchCredits () { // TODO: update response body
-  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/Products', {
+  fetchMock.once(`${baseUrl}Products`, {
     status: 200,
     body: JSON.stringify({
       'items': [ ],
@@ -265,7 +266,7 @@ function mockFetchCredits () { // TODO: update response body
 }
 
 function mockCardInfo () {
-  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/Card/Info', {
+  fetchMock.once(`${baseUrl}Card/Info`, {
     status: 200,
     body: JSON.stringify({
       'accountNumber': 'BY66 ALFA 3014 111M RT00 1111 0000',
@@ -300,7 +301,7 @@ function mockCardInfo () {
 }
 
 function mockFetchDesktop () {
-  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/Desktop', {
+  fetchMock.once(`${baseUrl}Desktop`, {
     status: 200,
     body: JSON.stringify({
       shortcuts: [
@@ -329,7 +330,7 @@ function mockFetchDesktop () {
 }
 
 function mockAuthConfirm () {
-  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/AuthorizationConfirm?locale=ru', {
+  fetchMock.once(`${baseUrl}AuthorizationConfirm?locale=ru`, {
     status: 200,
     body: JSON.stringify({
       'status': 'OK',
@@ -341,7 +342,7 @@ function mockAuthConfirm () {
 }
 
 function mockAuthWithPassportID () {
-  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/Authorization?locale=ru', {
+  fetchMock.once(`${baseUrl}Authorization?locale=ru`, {
     status: 200,
     body: JSON.stringify({
       'status': 'OK'
@@ -351,7 +352,7 @@ function mockAuthWithPassportID () {
 }
 
 function mockCheckDeviceStatus () {
-  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/CheckDeviceStatus?locale=ru', {
+  fetchMock.once(`${baseUrl}CheckDeviceStatus?locale=ru`, {
     status: 200,
     body: JSON.stringify({
       'status': 'NEW'
