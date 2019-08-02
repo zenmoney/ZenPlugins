@@ -161,7 +161,8 @@ export async function login (login, password) {
     'InactiveCard',
     'NoDBO24',
     'ExpirationDateOver',
-    'CardNotFound'
+    'CardNotFound',
+    'ThirdPersonCard'
   ].some(mode => response.body.mode === mode) && response.body.description) {
     throw new TemporaryError(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: ${response.body.description}`)
   }
@@ -281,7 +282,8 @@ export async function fetchAccounts ({ login, token }) {
   console.assert(response.body.executionPercent && response.body.status, 'unexpected response')
   // console.assert(response.body.executionPercent === 100 &&
   //   response.body.status === 'Complete', 'missing some accounts data')
-  if (response.body.executionPercent !== 100 || response.body.status !== 'Complete') {
+  if (response.body.executionPercent < 75) {
+  // if (response.body.executionPercent !== 100 || response.body.status !== 'Complete') {
     throw new TemporaryError('Информация из Банка ВТБ временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог разработчикам".')
   }
   return response.body.portfolios
