@@ -28,6 +28,10 @@ export async function fetch (url, options = {}) {
     ...options.body && { body: options.body }
   }, options.sanitizeRequestLog || false))
 
+  if (options.binaryResponse && (!ZenMoney.features || !ZenMoney.features.binaryResponseBody)) {
+    throw new IncompatibleVersionError()
+  }
+
   let response
   try {
     response = await global.fetch(url, init)
@@ -37,9 +41,6 @@ export async function fetch (url, options = {}) {
     } else {
       throw e
     }
-  }
-  if (options.binaryResponse && (!ZenMoney.features || !ZenMoney.features.binaryResponseBody)) {
-    throw new IncompatibleVersionError()
   }
   let body = options.binaryResponse ? await response.arrayBuffer() : await response.text()
   let bodyParsingException = null
