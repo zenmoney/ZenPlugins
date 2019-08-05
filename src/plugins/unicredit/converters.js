@@ -139,6 +139,9 @@ export function filterCardTransactions (apiTransactions, product) {
 
 export function convertTransaction (apiTransaction, account) {
   const invoice = { sum: parseDecimal(apiTransaction.amount), instrument: getInstrument(apiTransaction.iso) }
+  if (!invoice.sum) {
+    return null
+  }
   const transaction = {
     hold: apiTransaction.st === 'O',
     date: parseDate(apiTransaction.date),
