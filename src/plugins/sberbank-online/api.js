@@ -307,6 +307,9 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
           id: transaction.id
         }
       }, null)
+      if (detailsResponse.body.status === '3') {
+        return
+      }
       if (detailsResponse.body.status === '1' &&
         detailsResponse.body.error &&
         detailsResponse.body.error.indexOf('Вы не можете просмотреть данную операцию через приложение') >= 0) {
@@ -540,7 +543,9 @@ function isTemporaryError (message) {
     'АБС временно',
     'АБС не доступна',
     'Во время выполнения операции произошла ошибка',
-    'По техническим причинам Вы не можете выполнить данную операцию'
+    'По техническим причинам Вы не можете выполнить данную операцию',
+    'Услуга недоступна',
+    'В связи с проведением технических работ'
   ].some(str => message.indexOf(str) >= 0)
 }
 
