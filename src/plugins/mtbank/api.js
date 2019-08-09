@@ -17,7 +17,8 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
 
   if (response.body && response.body.error) {
     if ([
-      'phone'
+      'phone',
+      'USER_NOT_FOUND'
     ].indexOf(response.body.error.code) >= 0) {
       throw new InvalidPreferencesError('Неверный номер телефона')
     }
