@@ -206,7 +206,8 @@ export async function fetchAccounts (auth) {
   const types = ['card', 'account', 'loan', 'target', 'ima']
   return (await Promise.all(types.map(type => {
     return Promise.all(getArray(_.get(response.body, type !== 'ima' ? `${type}s.${type}` : 'imaccounts.ima')).map(async account => {
-      const params = account.mainCardId || (type === 'card' && account.type !== 'credit') || type === 'ima' || type === 'target'
+      const params = account.mainCardId || (type === 'card' && account.type !== 'credit') || type === 'ima' || type === 'target' ||
+      (type === 'loan' && account.nextPayAmount && account.nextPayAmount.amount === '0.00')
         ? null
         : { id: account.id, type }
       return {

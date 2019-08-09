@@ -583,7 +583,7 @@ export function convertAccount (apiAccount) {
 }
 
 export function convertLoan (apiLoan, details) {
-  if (!details.extDetail || !details.extDetail.origianlAmount) {
+  if (!details || !details.extDetail || !details.extDetail.origianlAmount) {
     return null
   }
   const zenAccount = {
