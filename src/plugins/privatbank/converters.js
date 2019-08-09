@@ -39,14 +39,19 @@ export function convertAccounts (xml, shouldHideBalance) {
 
 export function convertTransactions (xml, accounts) {
   const transactions = []
-  let jsonArray = _.get(parseXml(xml), 'response.data.info.statements.statement')
-  if (jsonArray) {
-    jsonArray = _.castArray(jsonArray)
-    for (const json of jsonArray) {
-      const transaction = convertTransactionJson(json)
-      if (transaction) {
-        checkTransactionAccount(json.card, accounts)
-        transactions.push(transaction)
+  if (!Array.isArray(xml)) {
+    xml = [xml]
+  }
+  for (const part of xml) {
+    let jsonArray = _.get(parseXml(part), 'response.data.info.statements.statement')
+    if (jsonArray) {
+      jsonArray = _.castArray(jsonArray)
+      for (const json of jsonArray) {
+        const transaction = convertTransactionJson(json)
+        if (transaction) {
+          checkTransactionAccount(json.card, accounts)
+          transactions.push(transaction)
+        }
       }
     }
   }

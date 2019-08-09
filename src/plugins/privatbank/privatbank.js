@@ -1,4 +1,5 @@
 import { MD5, SHA1 } from 'jshashes'
+import { createDateIntervals as commonCreateDateIntervals } from '../../common/dateUtils'
 import * as network from '../../common/network'
 import { retry } from '../../common/retry'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
@@ -8,6 +9,17 @@ const md5 = new MD5()
 
 function formatDate (date) {
   return [date.getDate(), date.getMonth() + 1, date.getFullYear()].map(toAtLeastTwoDigitsString).join('.')
+}
+
+function createDateIntervals (fromDate, toDate) {
+  const interval = 30 * 24 * 60 * 60 * 1000 // 30 days interval for fetching data
+  const gapMs = 1
+  return commonCreateDateIntervals({
+    fromDate,
+    toDate,
+    addIntervalToDate: date => new Date(date.getTime() + interval - gapMs),
+    gapMs
+  })
 }
 
 export class PrivatBank {
@@ -99,14 +111,19 @@ export class PrivatBank {
   }
 
   async fetchTransactions (fromDate, toDate) {
-    const data =
-      `<oper>cmt</oper>
+    fromDate = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate())
+    toDate = toDate || new Date()
+    const dates = createDateIntervals(fromDate, toDate).reverse()
+    return Promise.all(dates.map(([fromDate, toDate]) => {
+      const data =
+        `<oper>cmt</oper>
             <wait>5</wait>
             <test>0</test>
             <payment id="">
                 <prop name="sd" value="${formatDate(fromDate)}"/>
-                <prop name="ed" value="${formatDate(toDate || new Date())}"/>
+                <prop name="ed" value="${formatDate(toDate)}"/>
             </payment>`
-    return this.fetch('rest_fiz', data)
+      return this.fetch('rest_fiz', data)
+    }))
   }
 }
