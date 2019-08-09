@@ -30,7 +30,7 @@ const createHeaders = (rid) => {
 async function auth (cardNumber, password) {
   const rid = generateHash()
 
-  const response = await fetchJson(`${apiUri}/v0002/authentication/authenticate?${makeQueryString(rid)}`, {
+  const response = await fetchJson(`${apiUri}/v0001/authentication/auth-by-secret?${makeQueryString(rid)}`, {
     log: true,
     method: 'POST',
     body: {
