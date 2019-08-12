@@ -163,7 +163,13 @@ describe('getMerchantDataFromDescription', () => {
     '123456++++++7890    20913073\\643\\N NOVGOROD\\MAXIDOM NNOVG              12.02.19 09.02.19      5857.00  RUR MCC5200',
     '123456++++++7890    10704013\\RUS\\SAINT PETERSB\\AUCHAN GULLIV           16.02.19 14.02.19       203.32  RUR (Android Pay-8897) MCC5411',
     '123456++++++7890    \\372\\ITUNES COM\\ITUNES COM BI                     31.01.19 29.01.19       169.00  RUR MCC5735',
-    '123456++++++7890    89800480\\RUS\\MOSKVA G\\http\\Card2Card              02.09.18 31.08.18     50000.00  RUR MCC6538'
+    '123456++++++7890    89800480\\RUS\\MOSKVA G\\http\\Card2Card              02.09.18 31.08.18     50000.00  RUR MCC6538',
+    '479004++++++7702    \\495 465 8090\\826\\AIRBNB  HMAP                   09.08.19 07.08.19    29496.27  RUR MCC7011',
+    '479004++++++7702    \\441618366700\\826\\RENTALCARS CO                   09.08.19 07.08.19      7260.29  RUR MCC7512',
+    '479004++++++7702    26026010\\NABER  CHELNY\\643\\MCDONALDS 250          11.08.19 09.08.19      169.00  RUR (Apple Pay-1287) MCC5814',
+    '479004++++++7702      809643\\643\\MOSKVA\\BANKI RU                      08.08.19 07.08.19      1291.94  RUR MCC6300',
+    '123456++++++9876    00000001\\12345678901\\280\\PAYPAL  HELLO            09.08.19 06.08.19       123.45  RUR MCC1234',
+    '123456++++++9876    00000001\\840\\1234567890\\PAYPAL  GOOGL             04.08.19 02.08.19       124.00  RUR MCC1235'
   ]
 
   it('spaced', () => {
@@ -219,18 +225,15 @@ describe('getMerchantDataFromDescription', () => {
       { 'city': 'N NOVGOROD', 'country': '643', 'title': 'MAXIDOM NNOVG' },
       { 'city': 'SAINT PETERSB', 'country': 'RUS', 'title': 'AUCHAN GULLIV' },
       { 'city': 'ITUNES COM', 'country': '372', 'title': 'ITUNES COM BI' },
-      { 'city': 'MOSKVA G', 'country': 'RUS', 'title': 'Card2Card' }
+      { 'city': 'MOSKVA G', 'country': 'RUS', 'title': 'Card2Card' },
+      { 'city': null, 'country': '826', 'title': 'AIRBNB  HMAP' },
+      { 'city': null, 'country': '826', 'title': 'RENTALCARS CO' },
+      { 'city': 'NABER  CHELNY', 'country': '643', 'title': 'MCDONALDS 250' },
+      { 'city': 'MOSKVA', 'country': '643', 'title': 'BANKI RU' },
+      { 'city': null, 'country': '280', 'title': 'PAYPAL  HELLO' },
+      { 'city': null, 'country': '840', 'title': 'PAYPAL  GOOGL' }
     ]
     expect(merchants).toEqual(expectation)
-  })
-
-  it('parses description', () => {
-    const descriptions = [
-      '123456++++++9876    00000001\\12345678901\\280\\PAYPAL  HELLO            09.08.19 06.08.19       123.45  RUR MCC1234',
-      '123456++++++9876    00000001\\840\\1234567890\\PAYPAL  GOOGL             04.08.19 02.08.19       124.00  RUR MCC1235'
-    ]
-    const results = descriptions.map((input) => ({ input, output: getMerchantDataFromDescription(input) }))
-    expect(results).toMatchSnapshot()
   })
 })
 
