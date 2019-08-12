@@ -64,6 +64,7 @@ Array [
   Object {
     "input": "123456++++++9876    00000001\\\\12345678901\\\\280\\\\PAYPAL  HELLO            09.08.19 06.08.19       123.45  RUR MCC1234",
     "output": Object {
+      "city": null,
       "country": "280",
       "title": "PAYPAL  HELLO",
     },
@@ -71,6 +72,7 @@ Array [
   Object {
     "input": "123456++++++9876    00000001\\\\840\\\\1234567890\\\\PAYPAL  GOOGL             04.08.19 02.08.19       124.00  RUR MCC1235",
     "output": Object {
+      "city": null,
       "country": "840",
       "title": "PAYPAL  GOOGL",
     },

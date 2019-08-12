@@ -186,7 +186,7 @@ export const getMerchantDataFromDescription = (description) => {
     // третий элемент - телефон
     const [, country, , rest] = matched
     const title = rest.split(/\\/).pop().trim()
-    return { country, title }
+    return { country, city: null, title }
   }
 
   matched = description.match(slashedPhonePattern2)
@@ -194,7 +194,7 @@ export const getMerchantDataFromDescription = (description) => {
     // второй элемент - телефон
     const [, , country, rest] = matched
     const title = rest.split(/\\/).pop().trim()
-    return { country, title }
+    return { country, city: null, title }
   }
 
   // эта проверка должна быть ниже slashedPhone проверок, т.к. менее строгая

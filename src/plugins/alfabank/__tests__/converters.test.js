@@ -223,6 +223,7 @@ describe('getMerchantDataFromDescription', () => {
     ]
     expect(merchants).toEqual(expectation)
   })
+
   it('parses description', () => {
     const descriptions = [
       '123456++++++9876    00000001\\12345678901\\280\\PAYPAL  HELLO            09.08.19 06.08.19       123.45  RUR MCC1234',
