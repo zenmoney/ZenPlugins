@@ -74,15 +74,19 @@ export class PrivatBank {
           'авторизуйтесь в Приват24 и отправьте заявку на вкладке "Все услуги" - Бизнес - Мерчант - Заявки.')
       }
       if (response.body.indexOf('invalid signature') >= 0) {
-        throw new TemporaryError(`Не удалось синхронизировать данные по мерчанту ${this.merchant}. ` +
+        throw new InvalidPreferencesError(`Не удалось синхронизировать данные по мерчанту ${this.merchant}. ` +
           `Неверный пароль. Проверьте, что вы указали верный пароль в настройках подключения к банку.`)
       }
       if (response.body.indexOf('invalid ip:') >= 0) {
         throw new TemporaryError(`Не удалось синхронизировать данные по мерчанту ${this.merchant}. ` +
           `В настройках мерчанта в Приват24 укажите IP-адрес из настроек синхронизации.`)
       }
+      if (response.body.indexOf('invalid merchant id') >= 0) {
+        throw new InvalidPreferencesError(`Не удалось синхронизировать данные по мерчанту ${this.merchant}. ` +
+          `Проверьте, что вы указали верный ID мерчанта в настройках подключения к банку.`)
+      }
       if (response.body.indexOf('this card is not in merchants card') >= 0) {
-        throw new TemporaryError(`Не удалось получить баланс карты по мерчанту ${this.merchant}. ` +
+        throw new InvalidPreferencesError(`Не удалось получить баланс карты по мерчанту ${this.merchant}. ` +
           `Если карта была недавно перевыпущена, зарегистрируйте для неё новый мерчант и ` +
           `обновите его в настройках подключения к банку.`)
       }
