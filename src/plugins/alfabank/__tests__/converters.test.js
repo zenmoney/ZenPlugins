@@ -107,7 +107,9 @@ test('parseApiMovementDescription', () => {
     '123456++++++7890    \\USA\\aws amazon co\\Amazon web se                  01.02.03 01.02.03          .12  USD',
     '12345678 JP SINNZIYUKUNEGISIYASUKU> 18.05.11 18.05.11 3500 JPY 123456++++++7890',
     'Комиссия за выпуск/перевыпуск картысогласно тарифам банка 01.01.18   ABCD0I                             ФАМИЛЬЕВ ИМЬ ОТЧЕВИЧ',
-    '123456++++++7890    10054005\\643\\KAZAN\\AUCHAN 054 KA                  31.01.19 29.01.19       546.00  RUR (Apple Pay-9710) MCC5411'
+    '123456++++++7890    10054005\\643\\KAZAN\\AUCHAN 054 KA                  31.01.19 29.01.19       546.00  RUR (Apple Pay-9710) MCC5411',
+    '123456++++++9876    00000001\\12345678901\\123\\PAYPAL  HELLO            09.08.19 06.08.19       123.45  RUR MCC1234',
+    '123456++++++9876    00000001\\123\\1234567890\\PAYPAL  GOOGL             04.08.19 02.08.19       124.00  RUR MCC1235'
   ]
   const results = descriptions.map((input) => ({ input, output: parseApiMovementDescription(input, -1) }))
   expect(results).toMatchSnapshot()
@@ -220,6 +222,14 @@ describe('getMerchantDataFromDescription', () => {
       { 'city': 'MOSKVA G', 'country': 'RUS', 'title': 'Card2Card' }
     ]
     expect(merchants).toEqual(expectation)
+  })
+  it('parses description', () => {
+    const descriptions = [
+      '123456++++++9876    00000001\\12345678901\\280\\PAYPAL  HELLO            09.08.19 06.08.19       123.45  RUR MCC1234',
+      '123456++++++9876    00000001\\840\\1234567890\\PAYPAL  GOOGL             04.08.19 02.08.19       124.00  RUR MCC1235'
+    ]
+    const results = descriptions.map((input) => ({ input, output: getMerchantDataFromDescription(input) }))
+    expect(results).toMatchSnapshot()
   })
 })
 

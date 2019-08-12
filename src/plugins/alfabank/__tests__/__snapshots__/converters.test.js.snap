@@ -59,6 +59,25 @@ Array [
 ]
 `;
 
+exports[`getMerchantDataFromDescription parses description 1`] = `
+Array [
+  Object {
+    "input": "123456++++++9876    00000001\\\\12345678901\\\\280\\\\PAYPAL  HELLO            09.08.19 06.08.19       123.45  RUR MCC1234",
+    "output": Object {
+      "country": "280",
+      "title": "PAYPAL  HELLO",
+    },
+  },
+  Object {
+    "input": "123456++++++9876    00000001\\\\840\\\\1234567890\\\\PAYPAL  GOOGL             04.08.19 02.08.19       124.00  RUR MCC1235",
+    "output": Object {
+      "country": "840",
+      "title": "PAYPAL  GOOGL",
+    },
+  },
+]
+`;
+
 exports[`parseApiMovementDescription 1`] = `
 Array [
   Object {
@@ -204,6 +223,26 @@ Array [
       "mcc": 5411,
       "origin": Object {
         "amount": -546,
+        "instrument": "RUR",
+      },
+    },
+  },
+  Object {
+    "input": "123456++++++9876    00000001\\\\12345678901\\\\123\\\\PAYPAL  HELLO            09.08.19 06.08.19       123.45  RUR MCC1234",
+    "output": Object {
+      "mcc": 1234,
+      "origin": Object {
+        "amount": -123.45,
+        "instrument": "RUR",
+      },
+    },
+  },
+  Object {
+    "input": "123456++++++9876    00000001\\\\123\\\\1234567890\\\\PAYPAL  GOOGL             04.08.19 02.08.19       124.00  RUR MCC1235",
+    "output": Object {
+      "mcc": 1235,
+      "origin": Object {
+        "amount": -124,
         "instrument": "RUR",
       },
     },

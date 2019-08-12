@@ -172,6 +172,8 @@ export const extractDate = (apiMovement) => {
 export const getMerchantDataFromDescription = (description) => {
   const spacedPattern = /\w+\s+(\w{2,3})\s+([^>]+?)>(.+)?\s+(?:\d{2}\.\d{2}\.\d{2}\s+){2}/ // 35 characters max
   const slashedPattern = /(\d{6,8}|\s+)\\(\w{3})\\([\w \\]{1,28})\s+/ // 40 characters max
+  const slashedPhonePattern1 = /\d{6,8}\\(\d{3})\\(\d{10,15})\\([\w \\]{1,28})\s/
+  const slashedPhonePattern2 = /\d{6,8}\\(\d{10,15})\\(\d{3})\\([\w \\]{1,28})\s/
 
   let matched = description.match(spacedPattern)
   if (matched) {
@@ -179,8 +181,25 @@ export const getMerchantDataFromDescription = (description) => {
     return { country, title, city }
   }
 
-  matched = description.match(slashedPattern)
+  matched = description.match(slashedPhonePattern1)
   if (matched) {
+    // третий элемент - телефон
+    const [, country, , rest] = matched
+    const title = rest.split(/\\/).pop().trim()
+    return { country, title }
+  }
+
+  matched = description.match(slashedPhonePattern2)
+  if (matched) {
+    // второй элемент - телефон
+    const [, , country, rest] = matched
+    const title = rest.split(/\\/).pop().trim()
+    return { country, title }
+  }
+
+  // эта проверка должна быть ниже slashedPhone проверок, т.к. менее строгая
+  matched = description.match(slashedPattern)
+  if (matched && matched[3].indexOf('\\') !== -1) {
     const [, , country, rest] = matched
     const [city, ...restTitle] = rest.split(/\\/)
     const title = (restTitle.pop()).trim()
