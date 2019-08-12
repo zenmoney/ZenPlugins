@@ -224,4 +224,48 @@ describe('convertTransaction', () => {
     const zenmoneyTransactions = readableTransactions.map(toZenmoneyTransaction)
     expect(zenmoneyTransactions).toEqual(expectedZenmoneyTransactions)
   })
+
+  it.each([
+    [
+      {
+        group_id: 'mcc_5411',
+        operation_id: '618645189097589255',
+        title: 'SHOP "EVROOPT" MVV',
+        amount: 27.31,
+        direction: 'out',
+        datetime: '2019-08-09T17:53:09Z',
+        status: 'success',
+        type: 'payment-shop',
+        spendingCategories: [{ name: 'Groceries', sum: 27.31 }],
+        amount_currency: 'BYN'
+      },
+      {
+        hold: false,
+        date: new Date('2019-08-09T17:53:09.000Z'),
+        movements: [
+          {
+            id: '618645189097589255',
+            account: { id: 'account' },
+            invoice: {
+              sum: -27.31,
+              instrument: 'BYN'
+            },
+            sum: null,
+            fee: 0
+          }
+        ],
+        merchant: {
+          country: null,
+          city: null,
+          title: 'SHOP "EVROOPT" MVV',
+          mcc: 5411,
+          location: null
+        },
+        comment: null
+      }
+    ]
+  ])('converts currency outcome', (apiTransaction, transaction) => {
+    const account = { id: 'account', instrument: 'RUB' }
+    expect(convertTransaction(apiTransaction, account)).toEqual(transaction)
+  })
 })
