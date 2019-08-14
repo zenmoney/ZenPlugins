@@ -190,7 +190,7 @@ async function registerCustomer ({ queryRedirectParams, cardExpirationDate, card
       }
     },
     sanitizeRequestLog: { body: true },
-    sanitizeResponseLog: { body: true }
+    sanitizeResponseLog: { body: { params: true } }
   })
   assertNotServerError(response)
   console.assert(response.status === 200, 'registerCustomer failed', response)
