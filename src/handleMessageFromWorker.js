@@ -21,12 +21,8 @@ const messageHandlers = {
     reply({ type: ':events/received-user-input', payload: { result, correlationId } })
   },
 
-  ':commands/cookie-set': async function ({ payload: { name, value, options, correlationId }, reply }) {
-    setCookie({
-      ...options,
-      name,
-      value
-    })
+  ':commands/cookie-set': async function ({ payload: { cookie, correlationId }, reply }) {
+    setCookie(cookie)
     reply({ type: ':events/cookie-set', payload: { correlationId } })
   },
 
@@ -56,17 +52,11 @@ const messageHandlers = {
 
 function setCookie (cookie) {
   let cookieStr = cookie.name + '=' + (cookie.value === undefined || cookie.value === null ? '' : cookie.value)
-  if (cookie.domain) {
-    cookieStr += '; Domain=' + cookie.domain
-  }
   if (cookie.path) {
     cookieStr += '; Path=' + cookie.path
   }
   if (cookie.expires) {
     cookieStr += '; Expires=' + toDate(cookie.expires).toUTCString()
-  }
-  if (cookie.secure) {
-    cookieStr += '; Secure'
   }
   document.cookie = cookieStr
 }

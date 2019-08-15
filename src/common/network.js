@@ -88,7 +88,7 @@ export async function fetchJson (url, options = {}) {
     ...options,
     headers: {
       'Accept': 'application/json, text/plain, */*',
-      'Content-Type': 'application/json;charset=UTF-8',
+      ...options.body && { 'Content-Type': 'application/json;charset=UTF-8' },
       ...options.headers
     },
     parse: (body) => body === '' ? undefined : JSON.parse(body)
