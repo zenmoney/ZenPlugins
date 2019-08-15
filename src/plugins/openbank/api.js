@@ -173,8 +173,11 @@ export async function fetchAccounts () {
 }
 
 export async function fetchTransactions ({ id, type }, fromDate, toDate) {
+  if (type !== 'card') {
+    return []
+  }
+
   console.log(`>>> Запрашиваем операции по счёту ${type} #${id}...`)
-  console.assert(type === 'card', 'only card transactions supported')
 
   const transactions = []
   const limit = 20
