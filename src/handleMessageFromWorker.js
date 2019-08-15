@@ -1,6 +1,7 @@
 /* global prompt */
 
 import { toDate } from './common/dateUtils'
+import { fetchJson } from './common/network'
 
 const messageHandlers = {
   ':events/scrape-started': async function ({ onSyncStarted }) {
@@ -21,22 +22,53 @@ const messageHandlers = {
   },
 
   ':commands/cookie-set': async function ({ payload: { name, value, options, correlationId }, reply }) {
-    if (value === undefined || value === null) {
-      value = ''
-    }
-    let cookieStr = name + '=' + value
-    for (const propName in options) {
-      if (options.hasOwnProperty(propName)) {
-        cookieStr += '; ' + propName
-        let propValue = options[propName]
-        if (propName === 'expires') {
-          propValue = toDate(propValue)
-        }
-      }
-    }
-    document.cookie = cookieStr
+    setCookie({
+      ...options,
+      name,
+      value
+    })
     reply({ type: ':events/cookie-set', payload: { correlationId } })
+  },
+
+  ':commands/cookies-save': async function ({ payload: { correlationId, cookies }, reply }) {
+    const response = await fetchJson('/zen/zp_cookies.json', {
+      log: false,
+      method: 'POST',
+      body: cookies
+    })
+    console.assert(response.status === 200)
+    reply({ type: ':events/cookies-saved', payload: { correlationId } })
+  },
+
+  ':commands/cookies-restore': async function ({ payload: { correlationId }, reply }) {
+    const response = await fetchJson('/zen/zp_cookies.json', {
+      log: false,
+      method: 'GET'
+    })
+    console.assert(response.status === 200)
+    const cookies = Array.isArray(response.body) ? response.body : []
+    for (const cookie of cookies) {
+      setCookie(cookie)
+    }
+    reply({ type: ':events/cookies-restored', payload: { correlationId, cookies } })
   }
+}
+
+function setCookie (cookie) {
+  let cookieStr = cookie.name + '=' + (cookie.value === undefined || cookie.value === null ? '' : cookie.value)
+  if (cookie.domain) {
+    cookieStr += '; Domain=' + cookie.domain
+  }
+  if (cookie.path) {
+    cookieStr += '; Path=' + cookie.path
+  }
+  if (cookie.expires) {
+    cookieStr += '; Expires=' + toDate(cookie.expires).toUTCString()
+  }
+  if (cookie.secure) {
+    cookieStr += '; Secure'
+  }
+  document.cookie = cookieStr
 }
 
 export async function handleMessageFromWorker ({ event, ...rest }) {

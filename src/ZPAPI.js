@@ -2,8 +2,12 @@
 
 import { nativeConsole } from './consoleAdapter'
 import { promptAsync } from './promptAsync'
+import WebSocket from './webSocket'
+import { makePluginDataApi } from './ZPAPI.pluginData'
 import {
+  addCookies,
   fetchRemoteSync,
+  getCookies,
   getLastError,
   getLastResponseHeader,
   getLastResponseHeaders,
@@ -16,8 +20,6 @@ import {
   setDefaultEncoding,
   setThrowOnError
 } from './ZPAPI.utils'
-import { makePluginDataApi } from './ZPAPI.pluginData'
-import WebSocket from './webSocket'
 
 function sleepSync (durationMs) {
   const startMs = Date.now()
@@ -123,8 +125,6 @@ function ZPAPI ({ manifest, preferences, data }) {
   this.clearAuthentication = notImplemented
   this.getCookies = notImplemented
   this.getCookie = notImplemented
-  this.saveCookies = notImplemented
-  this.restoreCookies = notImplemented
 
   const pluginDataApi = makePluginDataApi(data)
   Object.assign(this, pluginDataApi.methods)
@@ -416,7 +416,52 @@ Object.assign(ZPAPI.prototype, {
     })
   },
 
-  WebSocket: WebSocket
+  WebSocket: WebSocket,
+
+  saveCookies () {
+    return new Promise((resolve, reject) => {
+      const correlationId = Date.now()
+      const messageHandler = (e) => {
+        const message = e.data
+        if (message.type !== ':events/cookies-saved') {
+          return
+        }
+        if (message.payload.correlationId !== correlationId) {
+          return
+        }
+        self.removeEventListener('message', messageHandler)
+        resolve()
+      }
+      self.addEventListener('message', messageHandler)
+      self.postMessage({
+        type: ':commands/cookies-save',
+        payload: { correlationId, cookies: getCookies() }
+      })
+    })
+  },
+
+  restoreCookies () {
+    return new Promise((resolve, reject) => {
+      const correlationId = Date.now()
+      const messageHandler = (e) => {
+        const message = e.data
+        if (message.type !== ':events/cookies-restored') {
+          return
+        }
+        if (message.payload.correlationId !== correlationId) {
+          return
+        }
+        self.removeEventListener('message', messageHandler)
+        addCookies(message.payload.cookies)
+        resolve()
+      }
+      self.addEventListener('message', messageHandler)
+      self.postMessage({
+        type: ':commands/cookies-restore',
+        payload: { correlationId }
+      })
+    })
+  }
 })
 
 export { ZPAPI }

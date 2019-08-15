@@ -44,6 +44,7 @@ const readPluginFileSync = (filepath) => stripBOM(fs.readFileSync(filepath, 'utf
 const pluginPreferencesPath = path.join(params.pluginPath, 'zp_preferences.json')
 const pluginDataPath = path.join(params.pluginPath, 'zp_data.json')
 const pluginCodePath = path.join(params.pluginPath, 'zp_pipe.txt')
+const pluginCookiesPath = path.join(params.pluginPath, 'zp_cookies.json')
 
 const ensureFileExists = (filepath, defaultContent) => {
   try {
@@ -145,6 +146,25 @@ module.exports = ({ allowedHost, host, https }) => {
           ensureFileExists(pluginCodePath, '')
           const content = readPluginFileSync(pluginCodePath)
           res.send(content.replace(/\n$/, ''))
+        })
+      )
+
+      app.post(
+        '/zen/zp_cookies.json',
+        bodyParser.text({ type: 'application/json' }),
+        serializeErrors((req, res) => {
+          fs.writeFileSync(pluginCookiesPath, req.body, 'utf8')
+          return res.json(true)
+        })
+      )
+
+      app.get(
+        '/zen/zp_cookies.json',
+        serializeErrors((req, res) => {
+          res.set('Content-Type', 'application/json;charset=utf8')
+          ensureFileExists(pluginCookiesPath, '')
+          const content = readPluginFileSync(pluginCookiesPath)
+          res.send(content)
         })
       )
 
