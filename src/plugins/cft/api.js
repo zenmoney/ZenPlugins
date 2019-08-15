@@ -5,8 +5,10 @@
 import { parse, splitCookiesString } from 'set-cookie-parser'
 import { fetchJson } from '../../common/network'
 
+const xsrfTokenInitialValue = 'undefined'
+
 let apiUri = ''
-let xXSrfToken = 'undefined'
+let xXSrfToken = xsrfTokenInitialValue
 
 const httpSuccessStatus = 200
 
@@ -23,14 +25,16 @@ const createHeaders = (rid) => {
     'channel': 'web',
     'platform': 'web',
     'X-Request-Id': rid,
-    'X-XSRF-TOKEN': xXSrfToken
+    'X-XSRF-TOKEN': xXSrfToken,
+    'Connection': 'Keep-Alive',
+    'Referer': apiUri.match(/(https?:\/\/[^/]+)/)[1] + '/',
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
   }
 }
 
 async function auth (cardNumber, password) {
-  const rid = generateHash()
-
-  const response = await fetchJson(`${apiUri}/v0001/authentication/auth-by-secret?${makeQueryString(rid)}`, {
+  let rid = generateHash()
+  let response = await fetchJson(`${apiUri}/v0001/authentication/auth-by-secret?${makeQueryString(rid)}`, {
     log: true,
     method: 'POST',
     body: {
@@ -49,13 +53,39 @@ async function auth (cardNumber, password) {
       headers: true
     }
   })
+  if (response.body.status === 'OTP_REQUIRED') {
+    const cookie = parse(splitCookiesString(response.headers['set-cookie'])).find((x) => x.name === 'XSRF-TOKEN')
+    setXXSrfToken(cookie.value)
+    const code = await ZenMoney.readLine('Введите код из SMS или push-уведомления', {
+      time: 120000,
+      inputType: 'number'
+    })
+    rid = generateHash()
+    response = await fetchJson(`${apiUri}/v0001/authentication/confirm?${makeQueryString(rid)}`, {
+      log: true,
+      method: 'POST',
+      body: {
+        principal: cardNumber,
+        otp: code
+      },
+      headers: createHeaders(rid),
+      sanitizeRequestLog: {
+        body: {
+          principal: true
+        }
+      },
+      sanitizeResponseLog: {
+        headers: true
+      }
+    })
+  }
 
   const s = response.body.status
 
   if (!(response.status === httpSuccessStatus && s === 'OK')) {
     let reason
-    const reasonUnknownCardNumber = 'неправильный номер карты'
-    const reasonWrongPassword = 'неправильный пароль'
+    const reasonUnknownCardNumber = 'неверный номер карты'
+    const reasonWrongPassword = 'неверный номер карты или пароль'
     const reasonLocked = 'доступ временно запрещен'
     const reasonTechnicalWorks = 'технические работы в банке'
 
