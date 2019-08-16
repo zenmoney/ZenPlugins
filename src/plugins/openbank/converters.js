@@ -140,7 +140,8 @@ function convertCard (apiAccount) {
         apiAccount.maskCardNum,
         apiAccount.accNum
       ],
-      balance: apiAccount.balance.amount
+      balance: Math.round((apiAccount.balance.amount - apiAccount.creditLimit) * 100) / 100,
+      ...apiAccount.creditLimit && { creditLimit: apiAccount.creditLimit }
     }
   }
 }

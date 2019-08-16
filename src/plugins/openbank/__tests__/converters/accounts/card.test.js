@@ -228,6 +228,92 @@ describe('convertAccounts', () => {
           balance: 4097.06
         }
       }
+    ],
+    [
+      [
+        {
+          cardId: '8064014',
+          maskCardNum: '4058********0954',
+          virtualCardNum: '40585489524V0954',
+          tariffPlan:
+            {
+              name: 'Кредитная Opencard',
+              tariffInfoURL: 'https://cdn.open.ru/storage/files/tariff_opencard_credit.pdf'
+            },
+          bic: '044525297',
+          cardType: 'Visa Gold Rewards',
+          paySystem: 'VISA',
+          balance: { amount: 72401.74, currency: 'RUR' },
+          status: { code: 'NORMAL', value: 'Активна' },
+          externalId: '8064014',
+          designCode: '*Visa Rewards EMV PayWave_Smart_white',
+          designFileName: 'https://ib.open.ru/webbank/image/card-design/wb-small/103cee0b58b4352a17080c3640d95332.jpg',
+          cardExpDate: '2023-04-30T00:00:00.000+0300',
+          main: true,
+          bankName: 'Openbank',
+          bsc: '3C',
+          startDate: '2019-04-01T00:00:00.000+0300',
+          lastTransactionDate: '2019-08-07T00:00:00.000+0300',
+          type: 'credit',
+          productType: 'CARD',
+          prodGroup: '712',
+          cardPC: 'WAY4',
+          idExt: '7833816',
+          holderName: 'NIKOLAY NIKOLAEV',
+          applePayAllowed: true,
+          mbCardDesignFull: 'https://ib.open.ru/webbank/image/card-design/mb-full/103cee0b58b4352a17080c3640d95332.png',
+          mbHalfCardDesign: 'https://ib.open.ru/webbank/image/card-design/mb-half/103cee0b58b4352a17080c3640d95332.png',
+          overdue: false,
+          loyaltyInfo:
+            {
+              bonusInfo:
+                {
+                  type: 'openCard',
+                  totalValue: 1367.04,
+                  compensationBlockedByOverdue: false
+                }
+            },
+          accNum: '40817810580001495803',
+          accName: 'Николаев Николай Николаевич',
+          paySystemPC: 'WAY4',
+          resident: true,
+          pinChangeAvailable: true,
+          reissueInfo:
+            {
+              available: true,
+              free: true,
+              term: 'Перевыпуск занимает до 5 рабочих дней',
+              days: '5'
+            },
+          amountVisible: true,
+          updateTime: 1565940899832,
+          creditLimit: 100000,
+          preferentialRate: true,
+          issueType: 'PERSO',
+          accBackSystemClientId: '7833816',
+          smsInfoAvailable: true
+        }
+      ],
+      {
+        products: [
+          {
+            id: '8064014',
+            type: 'card'
+          }
+        ],
+        account: {
+          id: '40817810580001495803',
+          type: 'ccard',
+          title: 'Кредитная Opencard',
+          instrument: 'RUR',
+          syncID: [
+            '4058********0954',
+            '40817810580001495803'
+          ],
+          balance: -27598.26,
+          creditLimit: 100000
+        }
+      }
     ]
   ])('converts card', (apiAccounts, item) => {
     expect(convertAccounts(apiAccounts)).toEqual([item])
