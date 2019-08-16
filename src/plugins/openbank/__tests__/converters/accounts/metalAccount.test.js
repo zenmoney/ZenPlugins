@@ -22,12 +22,14 @@ describe('convertAccounts', () => {
         balanceRur: { amount: 0, currency: 'RUR' }
       },
       {
-        product: {
-          id: '1039534',
-          type: 'account'
-        },
+        products: [
+          {
+            id: '20309A98277075178012',
+            type: 'account'
+          }
+        ],
         account: {
-          id: '1039534',
+          id: '20309A98277075178012',
           type: 'checking',
           title: 'ОМС',
           instrument: 'XAU',

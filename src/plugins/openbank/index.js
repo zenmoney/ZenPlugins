@@ -13,18 +13,20 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   const accountsData = convertAccounts(await fetchAccounts())
   const accounts = []
   const transactions = []
-  await Promise.all(accountsData.map(async ({ product, account }) => {
+  await Promise.all(accountsData.map(async ({ products, account }) => {
     accounts.push(account)
     if (ZenMoney.isAccountSkipped(account.id)) {
       return
     }
-    const apiTransactions = await fetchTransactions(product, fromDate, toDate)
-    for (const apiTransaction of apiTransactions) {
-      const transaction = convertTransaction(apiTransaction, account)
-      if (transaction) {
-        transactions.push(transaction)
+    await Promise.all(products.map(async product => {
+      const apiTransactions = await fetchTransactions(product, fromDate, toDate)
+      for (const apiTransaction of apiTransactions) {
+        const transaction = convertTransaction(apiTransaction, account)
+        if (transaction) {
+          transactions.push(transaction)
+        }
       }
-    }
+    }))
   }))
 
   return {

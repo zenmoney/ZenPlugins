@@ -2,9 +2,10 @@ import { getIntervalBetweenDates } from '../../common/momentDateUtils'
 
 export function convertAccounts (apiAccounts) {
   const accounts = []
+  const cardAccounts = {}
   for (const apiAccount of apiAccounts) {
     let converter
-    const type = apiAccount.loan ? 'credit' : apiAccount.productType && apiAccount.productType.toLowerCase()
+    const type = apiAccount.loan ? 'credit' : apiAccount.contracts ? 'deposit' : apiAccount.productType && apiAccount.productType.toLowerCase()
     switch (type) {
       case 'card':
         converter = convertCard
@@ -19,15 +20,68 @@ export function convertAccounts (apiAccounts) {
       case 'credit':
         converter = convertLoan
         break
+      case 'deposit':
+        converter = convertDeposit
+        break
       default:
         console.assert(false, 'unsupported account', apiAccount)
     }
     const account = converter(apiAccount)
     if (account) {
+      if (type === 'card') {
+        const existing = cardAccounts[account.account.id]
+        if (existing) {
+          existing.products.push(...account.products)
+          for (const syncId of account.account.syncID) {
+            if (existing.account.syncID.indexOf(syncId) < 0) {
+              existing.account.syncID.splice(1, 0, syncId)
+            }
+          }
+          continue
+        } else {
+          cardAccounts[account.account.id] = account
+        }
+      }
       accounts.push(account)
     }
   }
   return accounts
+}
+
+function convertDeposit (apiAccount) {
+  if (apiAccount.status.code !== 'NORMAL') {
+    return null
+  }
+  const startDate = parseDate(apiAccount.openDate)
+  const endDate = parseDate(apiAccount.expDate)
+  const account = {
+    id: apiAccount.contracts[0].contractNum,
+    type: 'deposit',
+    title: apiAccount.productName,
+    instrument: apiAccount.contracts[0].balance.currency,
+    syncID: [
+      apiAccount.contracts[0].contractNum
+    ],
+    balance: apiAccount.contracts[0].balance.amount,
+    startBalance: apiAccount.contracts[0].balance.amount,
+    startDate,
+    capitalization: true,
+    percent: apiAccount.contracts[0].percent,
+    payoffStep: 1,
+    payoffInterval: 'month'
+  }
+  const { interval, count } = getIntervalBetweenDates(startDate, endDate)
+  account.endDateOffset = count
+  account.endDateOffsetInterval = interval
+  return {
+    account,
+    products: [
+      {
+        id: apiAccount.contracts[0].contractNum,
+        type: 'deposit'
+      }
+    ]
+  }
 }
 
 function convertLoan (apiAccount) {
@@ -57,10 +111,12 @@ function convertLoan (apiAccount) {
   account.endDateOffsetInterval = interval
   return {
     account,
-    product: {
-      id: account.id,
-      type: 'loan'
-    }
+    products: [
+      {
+        id: account.id,
+        type: 'loan'
+      }
+    ]
   }
 }
 
@@ -69,14 +125,16 @@ function convertCard (apiAccount) {
     return null
   }
   return {
-    product: {
-      id: apiAccount.cardId,
-      type: 'card'
-    },
+    products: [
+      {
+        id: apiAccount.cardId,
+        type: 'card'
+      }
+    ],
     account: {
-      id: apiAccount.cardId,
+      id: apiAccount.accNum,
       type: 'ccard',
-      title: apiAccount.tariffPlan.name,
+      title: apiAccount.tariffPlan.name || apiAccount.name,
       instrument: apiAccount.balance.currency,
       syncID: [
         apiAccount.maskCardNum,
@@ -92,12 +150,14 @@ function convertAccount (apiAccount) {
     return null
   }
   return {
-    product: {
-      id: apiAccount.idExt,
-      type: 'account'
-    },
+    products: [
+      {
+        id: apiAccount.accNum,
+        type: 'account'
+      }
+    ],
     account: {
-      id: apiAccount.idExt,
+      id: apiAccount.accNum,
       type: 'checking',
       title: (apiAccount.productType === 'ACCUMULATION' && apiAccount.name) || apiAccount.accName,
       instrument: apiAccount.balance.currency,
@@ -120,12 +180,14 @@ function convertMetalAccount (apiAccount) {
   console.assert(instrument, 'unexpected metal account', apiAccount)
   const balance = apiAccount.balance.amount / GRAMS_IN_OZ
   return {
-    product: {
-      id: apiAccount.idExt,
-      type: 'account'
-    },
+    products: [
+      {
+        id: apiAccount.accNum,
+        type: 'account'
+      }
+    ],
     account: {
-      id: apiAccount.idExt,
+      id: apiAccount.accNum,
       type: 'checking',
       title: apiAccount.name || apiAccount.accName,
       instrument,
@@ -161,9 +223,12 @@ export function parseDate (str) {
 }
 
 export function convertTransaction (apiTransaction, account) {
-  const invoice = {
+  const invoice = apiTransaction.authAmount ? {
     sum: apiTransaction.authAmount.amount,
     instrument: apiTransaction.authAmount.currency
+  } : {
+    sum: apiTransaction.transAmount.amount,
+    instrument: apiTransaction.transAmount.currency
   }
   const transaction = {
     hold: apiTransaction.status.code === 'ACCEPTED',
@@ -179,21 +244,127 @@ export function convertTransaction (apiTransaction, account) {
     ],
     merchant: null,
     comment: null
-  };
+  }
+  const description = (apiTransaction.place && apiTransaction.place.trim()) || (apiTransaction.description && apiTransaction.description.trim());
   [
+    parseInnerTransfer,
+    parseOuterTransfer,
+    parseCashWithdrawal,
     parsePayee
-  ].some(parser => parser(transaction, apiTransaction, account))
+  ].some(parser => parser(transaction, apiTransaction, account, invoice, description))
   return transaction
 }
 
-function parsePayee (transaction, apiTransaction) {
-  const description = apiTransaction.place && apiTransaction.place.trim()
+function parseInnerTransfer (transaction, apiTransaction, account, invoice, description) {
   if (!description) {
+    return false
+  }
+  if (![
+    'Перевод собств. ср-в',
+    'Перечисление денежных средств для пополнения счета',
+    'Продажа металла клиенту'
+  ].some(str => description.indexOf(str) >= 0)) {
+    return false
+  }
+  let detailedGroupKey = null
+  for (const regexp of [
+    /с карты .*\(([\d*]*).*на счёт ([\d*]*)/,
+    /со счёта ([\d*]*).*на карту.*\(([\d*]*)*/
+  ]) {
+    const match = description.match(regexp)
+    if (match) {
+      const outcomeSyncId = match[1]
+      const incomeSyncId = match[2]
+      detailedGroupKey = `${apiTransaction.authDate.substring(0, 10)}_${invoice.instrument}_${Math.abs(invoice.sum * 100) / 100}` +
+        `_${outcomeSyncId.slice(-4)}_${incomeSyncId.slice(-4)}`
+      break
+    }
+  }
+  transaction.movements[0].invoice = null
+  transaction.groupKeys = [
+    detailedGroupKey,
+    `${apiTransaction.authDate.substring(0, 10)}_${invoice.instrument}_${Math.abs(invoice.sum * 100) / 100}`
+  ]
+  return true
+}
+
+function parseOuterTransfer (transaction, apiTransaction, account, invoice, description) {
+  if (!description) {
+    return false
+  }
+  if (![
+    'Перевод по номеру телефона',
+    'OPEN.RU CARD2CARD',
+    'Перевод СБП'
+  ].some(str => description.indexOf(str) >= 0)) {
+    return false
+  }
+  transaction.movements.push({
+    id: null,
+    account: {
+      type: 'ccard',
+      instrument: invoice.instrument,
+      company: null,
+      syncIds: null
+    },
+    invoice: null,
+    sum: -invoice.sum,
+    fee: 0
+  })
+  for (const regexp of [
+    /Получатель: (.*)/,
+    /Перевод СБП от ([^\d]*)/
+  ]) {
+    const match = description.match(regexp)
+    const payee = match && match[1].trim()
+    if (payee) {
+      transaction.merchant = {
+        country: null,
+        city: null,
+        title: payee,
+        mcc: null,
+        location: null
+      }
+    }
+  }
+  if (!transaction.merchant) {
+    transaction.comment = description
+  }
+  return true
+}
+
+function parseCashWithdrawal (transaction, apiTransaction, account, invoice, description) {
+  if (apiTransaction.category && [
+    'CASH_WITHDRAWAL'
+  ].indexOf(apiTransaction.category.code) < 0) {
+    return false
+  }
+  transaction.movements.push({
+    id: null,
+    account: {
+      type: 'cash',
+      instrument: invoice.instrument,
+      company: null,
+      syncIds: null
+    },
+    invoice: null,
+    sum: -invoice.sum,
+    fee: 0
+  })
+  return true
+}
+
+function parsePayee (transaction, apiTransaction, account, invoice, description) {
+  if (!description) {
+    return false
+  }
+  if (apiTransaction.operationType && ['KOM'].indexOf(apiTransaction.operationType.code) >= 0) {
+    transaction.comment = description
     return false
   }
   if ([
     'Комиссия',
-    'OPEN.RU CARD2CARD'
+    'Перечисление аванса'
   ].some(str => description.indexOf(str) >= 0)) {
     transaction.comment = description
     return false

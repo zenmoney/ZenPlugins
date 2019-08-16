@@ -32,6 +32,37 @@ describe('convertTransaction', () => {
         merchant: null,
         comment: 'Комиссия за ведение СКС и осуществления расчетов по карте'
       }
+    ],
+    [
+      {
+        transDate: '2019-08-11T14:00:00.000+0300',
+        authDate: '2019-08-11T00:00:00.000+0300',
+        authAmount: { amount: -13285.95, currency: 'RUR' },
+        transAmount: { amount: -13285.95, currency: 'RUR' },
+        status: { code: 'PROCESSED', value: 'Проведена' },
+        place: ' Неустойка за превышение платежного лимита',
+        category: { code: 'OTHER', value: 'Другое' },
+        operationType: { code: 'KOM', value: 'Комиссия' },
+        cardId: '8628798',
+        categoryIconUrl: 'https://ib.open.ru/webbank/image/transaction-category-icons/commission.png',
+        id: '6264373329/6264376369/8',
+        digitalSign: false
+      },
+      {
+        hold: false,
+        date: new Date('2019-08-11T00:00:00.000+03:00'),
+        movements: [
+          {
+            id: '6264373329/6264376369/8',
+            account: { id: 'account' },
+            invoice: null,
+            sum: -13285.95,
+            fee: 0
+          }
+        ],
+        merchant: null,
+        comment: 'Неустойка за превышение платежного лимита'
+      }
     ]
   ])('converts commission', (apiTransaction, transaction) => {
     const account = { id: 'account', instrument: 'RUR' }

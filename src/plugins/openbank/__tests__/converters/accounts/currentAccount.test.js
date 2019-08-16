@@ -23,12 +23,14 @@ describe('convertAccounts', () => {
         '@type': 'current'
       },
       {
-        product: {
-          id: '78793766244',
-          type: 'account'
-        },
+        products: [
+          {
+            id: '40817810007430488118',
+            type: 'account'
+          }
+        ],
         account: {
-          id: '78793766244',
+          id: '40817810007430488118',
           type: 'checking',
           title: 'Текущий счет',
           instrument: 'RUR',

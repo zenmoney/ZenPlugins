@@ -51,10 +51,12 @@ describe('convertAccounts', () => {
         id: '10024810000000112345'
       },
       {
-        product: {
-          id: '10024810000000112345',
-          type: 'loan'
-        },
+        products: [
+          {
+            id: '10024810000000112345',
+            type: 'loan'
+          }
+        ],
         account: {
           id: '10024810000000112345',
           type: 'loan',

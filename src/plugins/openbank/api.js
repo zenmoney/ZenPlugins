@@ -173,8 +173,17 @@ export async function fetchAccounts () {
 }
 
 export async function fetchTransactions ({ id, type }, fromDate, toDate) {
-  if (type !== 'card') {
-    return []
+  let path
+  switch (type) {
+    case 'card':
+      path = `api/v1.3/card/transactions/?cardIds=${id}`
+      break
+    case 'account':
+    case 'deposit':
+      path = `api/v1.0/deposit/transaction/account/list/?accList=${id}`
+      break
+    default:
+      return []
   }
 
   console.log(`>>> Запрашиваем операции по счёту ${type} #${id}...`)
@@ -187,7 +196,7 @@ export async function fetchTransactions ({ id, type }, fromDate, toDate) {
   let page = 0
   while (true) {
     page++
-    const response = await callGate(`api/v1.3/card/transactions/?cardIds=${id}&dts=${fromDateStr}&dtf=${toDateStr}&count=${limit}&pageNum=${page}`, { method: 'GET' })
+    const response = await callGate(`${path}&dts=${fromDateStr}&dtf=${toDateStr}&count=${limit}&pageNum=${page}`, { method: 'GET' })
     console.assert(response.body && response.body.data && Array.isArray(response.body.data.transactions), 'unexpected transactions response', response)
     const batch = response.body.data.transactions.filter(transaction => parseDate(transaction.authDate).getTime() >= fromDate.getTime())
     transactions.push(...batch)

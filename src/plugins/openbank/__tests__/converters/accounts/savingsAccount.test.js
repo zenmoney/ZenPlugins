@@ -28,12 +28,14 @@ describe('convertAccounts', () => {
         '@type': 'accumulation'
       },
       {
-        product: {
-          id: '2123012',
-          type: 'account'
-        },
+        products: [
+          {
+            id: '40817810300003200218',
+            type: 'account'
+          }
+        ],
         account: {
-          id: '2123012',
+          id: '40817810300003200218',
           type: 'checking',
           title: 'Продукты',
           instrument: 'RUR',
