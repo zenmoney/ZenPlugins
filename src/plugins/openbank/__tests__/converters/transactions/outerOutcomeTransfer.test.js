@@ -21,7 +21,7 @@ describe('convertTransaction', () => {
       },
       {
         hold: false,
-        date: new Date('2019-08-15T11:47:35.000+0300'),
+        date: new Date('2019-08-15T11:47:35.000+03:00'),
         movements: [
           {
             id: '6281422227/6281422228/1',
@@ -51,6 +51,51 @@ describe('convertTransaction', () => {
           location: null
         },
         comment: null
+      }
+    ],
+    [
+      {
+        transDate: '2019-08-14T14:00:00.000+0300',
+        authDate: '2019-08-14T17:47:43.000+0300',
+        authAmount: { amount: -3500, currency: 'RUR' },
+        transAmount: { amount: -3500, currency: 'RUR' },
+        status: { code: 'PROCESSED', value: 'Проведена' },
+        authCode: '862437',
+        place: 'open.ru card2card',
+        category: { code: 'OTHER', value: 'Другое' },
+        operationType: { code: 'P2P', value: 'Перевод P2P' },
+        cardId: '7532739',
+        categoryIconUrl: 'https://ib.open.ru/webbank/image/transaction-category-icons/money_transfer.png',
+        id: '6279569305/6280324568/1',
+        digitalSign: false,
+        mccCode: '6536'
+      },
+      {
+        hold: false,
+        date: new Date('2019-08-14T17:47:43.000+03:00'),
+        movements: [
+          {
+            id: '6279569305/6280324568/1',
+            account: { id: 'account' },
+            invoice: null,
+            sum: -3500,
+            fee: 0
+          },
+          {
+            id: null,
+            account: {
+              type: 'ccard',
+              instrument: 'RUR',
+              company: null,
+              syncIds: null
+            },
+            invoice: null,
+            sum: 3500,
+            fee: 0
+          }
+        ],
+        merchant: null,
+        comment: 'open.ru card2card'
       }
     ]
   ])('converts outer outcome transfer', (apiTransaction, transaction) => {

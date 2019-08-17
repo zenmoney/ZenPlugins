@@ -68,6 +68,66 @@ describe('convertAccounts', () => {
           payoffInterval: 'month'
         }
       }
+    ],
+    [
+      {
+        productName: 'Инвестиционный депозит',
+        contractName: 'N_I81016230003046',
+        contractId: 'N_I81016230003046',
+        contracts:
+          [
+            {
+              contractNum: '42301810933401178923',
+              balance: { amount: 13.8, currency: 'RUR' },
+              percent: 0.1,
+              minPayment: 0,
+              bic: '044525985',
+              productType: 'DEPOSIT',
+              bsc: 'TWR'
+            }
+          ],
+        status: { code: 'NORMAL', value: 'Открыт' },
+        conditionDepositUrl: 'https://www.open.ru/tariffs/cardfees',
+        capitalizationSign: false,
+        paySign: false,
+        withdrawalSign: true,
+        multiCurSign: false,
+        percentFrequency: 1,
+        openDate: '2012-10-02T00:00:00.000+0400',
+        daysElapsed: 2509,
+        closeable: false,
+        bsc: 'TWR',
+        idExt: '899793',
+        amountVisible: true,
+        updateTime: 1565987419685,
+        preferentialRate: false
+      },
+      {
+        products: [
+          {
+            id: '42301810933401178923',
+            type: 'deposit'
+          }
+        ],
+        account: {
+          id: '42301810933401178923',
+          type: 'deposit',
+          title: 'Инвестиционный депозит',
+          instrument: 'RUR',
+          syncID: [
+            '42301810933401178923'
+          ],
+          balance: 13.8,
+          startBalance: 13.8,
+          startDate: new Date('2012-10-02T00:00:00.000+04:00'),
+          capitalization: true,
+          percent: 0.1,
+          endDateOffset: 2509,
+          endDateOffsetInterval: 'day',
+          payoffStep: 1,
+          payoffInterval: 'month'
+        }
+      }
     ]
   ])('converts deposit', (apiAccount, item) => {
     expect(convertAccounts([apiAccount])).toEqual([item])

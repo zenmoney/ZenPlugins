@@ -53,7 +53,6 @@ function convertDeposit (apiAccount) {
     return null
   }
   const startDate = parseDate(apiAccount.openDate)
-  const endDate = parseDate(apiAccount.expDate)
   const account = {
     id: apiAccount.contracts[0].contractNum,
     type: 'deposit',
@@ -70,9 +69,15 @@ function convertDeposit (apiAccount) {
     payoffStep: 1,
     payoffInterval: 'month'
   }
-  const { interval, count } = getIntervalBetweenDates(startDate, endDate)
-  account.endDateOffset = count
-  account.endDateOffsetInterval = interval
+  if (apiAccount.expDate) {
+    const endDate = parseDate(apiAccount.expDate)
+    const { interval, count } = getIntervalBetweenDates(startDate, endDate)
+    account.endDateOffset = count
+    account.endDateOffsetInterval = interval
+  } else {
+    account.endDateOffset = apiAccount.daysElapsed
+    account.endDateOffsetInterval = 'day'
+  }
   return {
     account,
     products: [
@@ -294,10 +299,10 @@ function parseOuterTransfer (transaction, apiTransaction, account, invoice, desc
     return false
   }
   if (![
-    'Перевод по номеру телефона',
-    'OPEN.RU CARD2CARD',
-    'Перевод СБП'
-  ].some(str => description.indexOf(str) >= 0)) {
+    /Перевод по номеру телефона/,
+    /OPEN.RU CARD2CARD/i,
+    /Перевод СБП/
+  ].some(regexp => regexp.test(description))) {
     return false
   }
   transaction.movements.push({
@@ -365,7 +370,8 @@ function parsePayee (transaction, apiTransaction, account, invoice, description)
   }
   if ([
     'Комиссия',
-    'Перечисление аванса'
+    'Перечисление аванса',
+    'Уплата процентов'
   ].some(str => description.indexOf(str) >= 0)) {
     transaction.comment = description
     return false
