@@ -74,7 +74,7 @@ export function convertTransaction (json, accounts) {
   }
   const iban = json.iban.replace(/\s/g, '')
   const account = accounts.find(account => {
-    return iban.indexOf(account.syncID[0]) !== -1 || account.syncID[0].indexOf(iban) !== 1
+    return iban.indexOf(account.syncID[0]) !== -1 || account.syncID[0].indexOf(iban) !== -1
   })
   console.assert(account, `could not found account with number ${json.iban}`)
 
