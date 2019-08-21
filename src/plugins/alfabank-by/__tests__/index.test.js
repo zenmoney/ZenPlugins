@@ -1,6 +1,7 @@
 import fetchMock from 'fetch-mock'
 import { scrape } from '..'
 import { makePluginDataApi } from '../../../ZPAPI.pluginData'
+import { baseUrl } from '../api'
 
 describe('scrape', () => {
   it('should hit the mocks and return results', async () => {
@@ -8,34 +9,51 @@ describe('scrape', () => {
     mockCheckDeviceStatus()
     mockAuthWithPassportID()
     mockAuthConfirm()
+    mockFetchDesktop()
     mockFetchAccounts()
-    mockFetchAccountInfo()
-    mockFetchTransactions()
+    mockFetchCards()
+    mockFetchDeposits()
+    mockFetchCredits()
+    mockCardInfo()
+    mockFetchTransactionsAccounts()
+    mockFetchTransactionsDeposits()
 
     const result = await scrape(
       {
-        preferences: { },
+        preferences: { isResident: 'false' },
         fromDate: new Date('2019-01-24T00:00:00.000+03:00'),
         toDate: new Date('2019-01-28T00:00:00.000+03:00')
       }
     )
 
-    expect(result.accounts).toEqual([{
-      id: '6505111',
-      instrument: 'BYN',
-      type: 'card',
-      title: 'Карта №1',
-      balance: 486.18,
-      syncID: ['BY31ALFA3014111MRT0011110000'],
-      productType: 'ACCOUNT'
-    }])
+    expect(result.accounts).toEqual([
+      {
+        id: '53014111MRT0011110000380',
+        instrument: 'BYN',
+        type: 'card',
+        title: 'Карта №1',
+        balance: 486.18,
+        syncID: ['3014111MRT001111', '2345'],
+        productType: 'CARD'
+      },
+      {
+        id: '111001100111011001',
+        instrument: 'BYN',
+        type: 'checking',
+        title: 'InSync отзывный',
+        balance: 50,
+        syncID: ['BY66ALFA3014111MRT0011110000'],
+        productType: 'DEPOSIT',
+        savings: true
+      }
+    ])
 
     expect(result.transactions).toEqual([{
       date: new Date('Tue Jan 25 2019 12:27:55 GMT+0300 (Moscow Standard Time)'),
       movements: [
         {
-          id: null,
-          account: { id: '6505111' },
+          id: '11113111050111',
+          account: { id: '53014111MRT0011110000380' },
           invoice: null,
           sum: -7.99,
           fee: 0
@@ -48,14 +66,14 @@ describe('scrape', () => {
         mcc: null,
         title: 'UBER'
       },
-      comment: 'Покупка товара / получение услуг',
+      comment: null,
       hold: false
     }])
   })
 })
 
-function mockFetchTransactions () {
-  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/History', {
+function mockFetchTransactionsAccounts () {
+  fetchMock.once(`${baseUrl}History`, {
     status: 200,
     body: JSON.stringify({
       accounts: [{ id: '3014111MFE0011110', name: 'Карта №1 - ...ALFA3014111MFE001... - 486,18 BYN' }],
@@ -102,43 +120,188 @@ function mockFetchTransactions () {
     }),
     statusText: 'OK'
   }, { method: 'POST' })
-}
 
-function mockFetchAccountInfo () {
-  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/Account/Info', {
+  fetchMock.once(`${baseUrl}History`, {
     status: 200,
     body: JSON.stringify({
-      iban: 'BY31 ALFA 3014 111M RT00 1111 0000',
-      info: {
-        amount: {
-          amount: 486.18,
-          currency: 'BYN',
-          format: '###,###,###,###,##0.##'
-        },
-        description: 'BY31 ALFA 3014 111M RT00 1111 0000',
-        icon: {
-          backgroundColorFrom: '#f9589e',
-          backgroundColorTo: '#fe9199',
-          captionColor: '#FFFFFF',
-          displayType: 'REGULAR',
-          frameColor: '#c2b7b7',
-          iconUrl: 'v0/Image/49923_392.SVG',
-          title: 'Карта №1'
-        },
-        title: 'Карта №1'
-      },
-      isClosable: false,
-      isPayslipAvailable: false,
-      objectId: '3014111MFE0011110',
-      onDesktop: true,
-      startDate: '20171111000000'
+      accounts: [{ id: '3014111MFE0011110', name: 'Карта №1 - ...ALFA3014111MFE001... - 486,18 BYN' }],
+      filterAccount: '3014111MFE0011110',
+      items: [ ],
+      maxAmount: 0,
+      maxDate: '20190308180602',
+      minAmount: -7.99,
+      minDate: '20191113100349',
+      totalItems: 1
+    }),
+    statusText: 'OK'
+  }, { method: 'POST' })
+}
+
+function mockFetchTransactionsDeposits () {
+  fetchMock.once(`${baseUrl}History`, {
+    status: 200,
+    body: JSON.stringify({
+      accounts: [],
+      filterAccount: '111001100111011001',
+      items: [ ],
+      maxAmount: 0,
+      maxDate: '20190308180602',
+      minAmount: 0,
+      minDate: '20191113100349',
+      totalItems: 0
     }),
     statusText: 'OK'
   }, { method: 'POST' })
 }
 
 function mockFetchAccounts () {
-  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/Desktop', {
+  fetchMock.once(`${baseUrl}Products`, {
+    status: 200,
+    body: JSON.stringify({
+      'items': [ {
+        'id': '3014111MRT0011110000',
+        'info': {
+          'description': 'BY31 ALFA 3014 111M RT00 1111 0000',
+          'title': 'Карта №1',
+          'amount': {
+            'format': '###,###,###,###,##0.##',
+            'currency': 'BYN',
+            'amount': 486.18
+          },
+          'icon': {
+            'title': 'Карта №1',
+            'backgroundColorFrom': '#f9589e',
+            'backgroundColorTo': '#fe9199',
+            'iconUrl': 'v0/Image/49923_392.SVG',
+            'captionColor': '#FFFFFF',
+            'frameColor': '#c2b7b7',
+            'displayType': 'REGULAR'
+          }
+        },
+        'onDesktop': true,
+        'type': 'ACCOUNT'
+      } ],
+      'totals': [ ]
+    }),
+    statusText: 'OK'
+  }, { method: 'POST' })
+}
+
+function mockFetchCards () {
+  fetchMock.once(`${baseUrl}Products`, {
+    status: 200,
+    body: JSON.stringify({
+      'items': [ {
+        'id': '53014111MRT0011110000380',
+        'info': {
+          'description': '1.2345',
+          'title': 'Карта №1',
+          'amount': {
+            'format': '###,###,###,###,##0.##',
+            'currency': 'BYN',
+            'amount': 486.18
+          },
+          'icon': {
+            'title': 'Карта №1',
+            'backgroundColorFrom': '#f9589e',
+            'backgroundColorTo': '#fe9199',
+            'iconUrl': 'v0/Image/49923_392.SVG',
+            'captionColor': '#FFFFFF',
+            'frameColor': '#c2b7b7',
+            'displayType': 'REGULAR'
+          }
+        },
+        'onDesktop': true,
+        'type': 'CARD'
+      } ],
+      'totals': [ ]
+    }),
+    statusText: 'OK'
+  }, { method: 'POST' })
+}
+
+function mockFetchDeposits () { // TODO: update response body
+  fetchMock.once(`${baseUrl}Products`, {
+    status: 200,
+    body: JSON.stringify({
+      items:
+        [
+          {
+            id: '111001100111011001',
+            info: {
+              description: 'BY66 ALFA 3014 111M RT00 1111 0000',
+              title: 'InSync отзывный',
+              amount: {
+                format: '###,###,###,###,##0.##', currency: 'BYN', amount: 50
+              },
+              icon: {
+                title: 'InSync отзывный',
+                backgroundColorFrom: '#f9589e',
+                backgroundColorTo: '#fe9199',
+                iconUrl: 'v0/Image/50007_392.SVG',
+                captionColor: '#FFFFFF',
+                frameColor: '#c2b7b7',
+                displayType: 'REGULAR'
+              }
+            },
+            onDesktop: true,
+            type: 'DEPOSIT'
+          }
+        ],
+      totals:
+    [ { format: '###,###,###,###,##0.##', currency: 'BYN', amount: 50 } ] }),
+    statusText: 'OK'
+  }, { method: 'POST' })
+}
+
+function mockFetchCredits () { // TODO: update response body
+  fetchMock.once(`${baseUrl}Products`, {
+    status: 200,
+    body: JSON.stringify({
+      'items': [ ],
+      'totals': [ ]
+    }),
+    statusText: 'OK'
+  }, { method: 'POST' })
+}
+
+function mockCardInfo () {
+  fetchMock.once(`${baseUrl}Card/Info`, {
+    status: 200,
+    body: JSON.stringify({
+      'accountNumber': 'BY66 ALFA 3014 111M RT00 1111 0000',
+      'aviaInfo': {
+        'accessible': true,
+        'available': false
+      },
+      'cardImageUrl': 'v0/ImageCard/Iz2JiR1hYjEo2ziqJRLykA==.jpg',
+      'cardMask': '5.1111',
+      'dueDate': '20211030000000',
+      'iban': 'BY66 ALFA 3014 111M RT00 1111 0000',
+      'icon': {
+        'backgroundColorFrom': '#f9589e',
+        'backgroundColorTo': '#fe9199',
+        'captionColor': '#FFFFFF',
+        'displayType': 'REGULAR',
+        'frameColor': '#c2b7b7',
+        'iconUrl': 'v0/Image/49923_392.SVG',
+        'title': 'Карта №1'
+      },
+      'isAlfaCheckEnabled': false,
+      'objectId': '53014111MRT0011110000380',
+      'productName': 'Карта №1 ',
+      'productType': 'K1',
+      'psType': 'MASTER',
+      'startDate': '20181010000000',
+      'status': 'ACTIVE',
+      'title': 'MasterCard World'
+    }),
+    statusText: 'OK'
+  }, { method: 'POST' })
+}
+
+function mockFetchDesktop () {
+  fetchMock.once(`${baseUrl}Desktop`, {
     status: 200,
     body: JSON.stringify({
       shortcuts: [
@@ -167,7 +330,7 @@ function mockFetchAccounts () {
 }
 
 function mockAuthConfirm () {
-  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/AuthorizationConfirm?locale=ru', {
+  fetchMock.once(`${baseUrl}AuthorizationConfirm?locale=ru`, {
     status: 200,
     body: JSON.stringify({
       'status': 'OK',
@@ -179,7 +342,7 @@ function mockAuthConfirm () {
 }
 
 function mockAuthWithPassportID () {
-  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/Authorization?locale=ru', {
+  fetchMock.once(`${baseUrl}Authorization?locale=ru`, {
     status: 200,
     body: JSON.stringify({
       'status': 'OK'
@@ -189,7 +352,7 @@ function mockAuthWithPassportID () {
 }
 
 function mockCheckDeviceStatus () {
-  fetchMock.once('https://insync2.alfa-bank.by/mBank256/v5/CheckDeviceStatus?locale=ru', {
+  fetchMock.once(`${baseUrl}CheckDeviceStatus?locale=ru`, {
     status: 200,
     body: JSON.stringify({
       'status': 'NEW'
@@ -204,5 +367,5 @@ function mockZenmoney () {
       'deviceID': '123404df-f99a-4826-1234-a3fb7e5a1234'
     }).methods
   }
-  ZenMoney.readLine = async () => 'test(readLine)'
+  ZenMoney.readLine = async () => 'Z1234567'
 }

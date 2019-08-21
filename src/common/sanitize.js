@@ -4,6 +4,9 @@ export function sanitize (value, mask) {
   if (!mask) {
     return value
   }
+  if (_.isFunction(mask)) {
+    return mask(value)
+  }
   if (_.isObject(mask) && !_.isObject(value)) {
     return value
   }

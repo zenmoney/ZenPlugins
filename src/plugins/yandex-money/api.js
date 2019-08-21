@@ -1,10 +1,9 @@
+import * as qs from 'querystring'
 import * as network from '../../common/network'
+import { IncompatibleVersionError } from '../../errors'
+import { clientId, redirectUri } from './config'
 
-const qs = require('querystring')
-
-const CLIENT_ID = ''
-const SCOPE = 'operation-history account-info'
-const REDIRECT_URI = ''
+const scope = 'operation-history account-info'
 
 export function isAuthError (err) {
   return err && err.message === 'authorization error'
@@ -33,14 +32,14 @@ async function fetchJson (url, options = {}, predicate = () => true) {
 
 export async function login () {
   if (!ZenMoney.openWebView) {
-    throw new TemporaryError('У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии.')
+    throw new IncompatibleVersionError()
   }
   const { error, code } = await new Promise((resolve) => {
-    const redirectUriWithoutProtocol = REDIRECT_URI.replace(/^https?:\/\//i, '')
+    const redirectUriWithoutProtocol = redirectUri.replace(/^https?:\/\//i, '')
     const url = `https://money.yandex.ru/oauth/authorize?${qs.stringify({
-      'client_id': CLIENT_ID,
-      'scope': SCOPE,
-      'redirect_uri': REDIRECT_URI,
+      'client_id': clientId,
+      'scope': scope,
+      'redirect_uri': redirectUri,
       'response_type': 'code'
     })}`
     ZenMoney.openWebView(url, null, (request, callback) => {
@@ -62,9 +61,9 @@ export async function login () {
   console.assert(code && !error, 'non-successfull authorization', error)
   const response = await fetchJson('https://money.yandex.ru/oauth/token', {
     body: {
-      'client_id': CLIENT_ID,
+      'client_id': clientId,
       'grant_type': 'authorization_code',
-      'redirect_uri': REDIRECT_URI,
+      'redirect_uri': redirectUri,
       code
     },
     sanitizeRequestLog: { body: true },

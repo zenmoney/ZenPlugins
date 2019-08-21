@@ -89,15 +89,11 @@ describe('convertLoan', () => {
       details: null
     }
     expect(convertLoan(apiAccount)).toEqual({
-      id: '5D1AB7F045F24C8F823CB785CFDC4ADE',
-      type: 'ru.vtb24.mobilebanking.protocol.product.LoanContractMto',
-      products: [
-        {
-          id: '5D1AB7F045F24C8F823CB785CFDC4ADE',
-          type: 'ru.vtb24.mobilebanking.protocol.product.LoanContractMto',
-          apiAccount
-        }
-      ],
+      mainProduct: {
+        id: '5D1AB7F045F24C8F823CB785CFDC4ADE',
+        type: 'ru.vtb24.mobilebanking.protocol.product.LoanContractMto'
+      },
+      products: [],
       zenAccount: {
         id: '5D1AB7F045F24C8F823CB785CFDC4ADE',
         type: 'loan',

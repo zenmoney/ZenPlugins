@@ -1,4 +1,4 @@
-import { convertAccount, addAccountInfo } from '../../converters'
+import { convertAccount } from '../../converters'
 
 describe('convertAccount', () => {
   let tt = [
@@ -12,35 +12,106 @@ describe('convertAccount', () => {
     {
       name: 'normal account',
       json: {
-        arbitraryTransfer: true,
-        hasHistory: true,
-        icon: {
-          backgroundColorFrom: '#f9589e',
-          backgroundColorTo: '#fe9199',
-          captionColor: '#FFFFFF',
-          displayType: 'REGULAR',
-          frameColor: '#c2b7b7',
-          iconUrl: 'v0/Image/49923_392.SVG',
-          title: 'Карта №1'
+        'id': '6505111',
+        'info': {
+          'description': 'BY31 ALFA 3014 111M RT00 1111 0000',
+          'title': 'Карта №1',
+          'amount': {
+            'format': '###,###,###,###,##0.##',
+            'currency': 'BYN',
+            'amount': 486.18
+          },
+          'icon': {
+            'title': 'Карта №1',
+            'backgroundColorFrom': '#f9589e',
+            'backgroundColorTo': '#fe9199',
+            'iconUrl': 'v0/Image/49923_392.SVG',
+            'captionColor': '#FFFFFF',
+            'frameColor': '#c2b7b7',
+            'displayType': 'REGULAR'
+          }
         },
-        id: '6505111',
-        objectId: '3014111MFE0011110',
-        objectType: 'ACCOUNT',
-        operations: [
-          {
-            id: '6505111',
-            operation: 'OWNACCOUNTSTRANSFER'
-          }],
-        tagBalance: 486.18,
-        type: 'ACCOUNT'
+        'onDesktop': true,
+        'type': 'ACCOUNT'
       },
       expectedAccount: {
         id: '6505111',
+        type: 'checking',
+        title: 'Карта №1',
+        balance: 486.18,
+        instrument: 'BYN',
+        syncID: ['BY31ALFA3014111MRT0011110000'],
+        productType: 'ACCOUNT',
+        cardID: null
+      }
+    },
+    {
+      name: 'card',
+      json: {
+        'id': '53014111MRT0011110000380',
+        'info': {
+          'description': '1.2345',
+          'title': 'Карта №1',
+          'amount': {
+            'format': '###,###,###,###,##0.##',
+            'currency': 'BYN',
+            'amount': 486.18
+          },
+          'icon': {
+            'title': 'Карта №1',
+            'backgroundColorFrom': '#f9589e',
+            'backgroundColorTo': '#fe9199',
+            'iconUrl': 'v0/Image/49923_392.SVG',
+            'captionColor': '#FFFFFF',
+            'frameColor': '#c2b7b7',
+            'displayType': 'REGULAR'
+          }
+        },
+        'onDesktop': true,
+        'type': 'CARD'
+      },
+      expectedAccount: {
+        id: '53014111MRT0011110000380',
         type: 'card',
         title: 'Карта №1',
         balance: 486.18,
-        syncID: null,
-        productType: 'ACCOUNT'
+        instrument: 'BYN',
+        syncID: ['3014111MRT001111', '2345'],
+        productType: 'CARD'
+      }
+    },
+    {
+      name: 'deposit',
+      json: {
+        id: '111001100111011001',
+        info: {
+          description: 'BY66 ALFA 3014 111M RT00 1111 0000',
+          title: 'InSync отзывный',
+          amount: {
+            format: '###,###,###,###,##0.##', currency: 'BYN', amount: 50
+          },
+          icon: {
+            title: 'InSync отзывный',
+            backgroundColorFrom: '#f9589e',
+            backgroundColorTo: '#fe9199',
+            iconUrl: 'v0/Image/50007_392.SVG',
+            captionColor: '#FFFFFF',
+            frameColor: '#c2b7b7',
+            displayType: 'REGULAR'
+          }
+        },
+        onDesktop: true,
+        type: 'DEPOSIT'
+      },
+      expectedAccount: {
+        id: '111001100111011001',
+        type: 'checking',
+        title: 'InSync отзывный',
+        balance: 50,
+        instrument: 'BYN',
+        syncID: ['BY66ALFA3014111MRT0011110000'],
+        productType: 'DEPOSIT',
+        savings: true
       }
     }
   ]
@@ -48,54 +119,6 @@ describe('convertAccount', () => {
     it(tc.name, () => {
       let account = convertAccount(tc.json)
       expect(account).toEqual(tc.expectedAccount)
-    })
-  })
-})
-
-describe('convertAccount', () => {
-  it('add account info', () => {
-    let account = {
-      id: '6505111',
-      type: 'card',
-      title: 'Карта №1',
-      balance: 486.18,
-      syncID: null,
-      productType: 'ACCOUNT'
-    }
-    let fullAccount = addAccountInfo(account, {
-      iban: 'BY31 ALFA 3014 111M RT00 1111 0000',
-      info: {
-        amount: {
-          amount: 486.18,
-          currency: 'BYN',
-          format: '###,###,###,###,##0.##'
-        },
-        description: 'BY31 ALFA 3014 111M RT00 1111 0000',
-        icon: {
-          backgroundColorFrom: '#f9589e',
-          backgroundColorTo: '#fe9199',
-          captionColor: '#FFFFFF',
-          displayType: 'REGULAR',
-          frameColor: '#c2b7b7',
-          iconUrl: 'v0/Image/49923_392.SVG',
-          title: 'Карта №1'
-        },
-        title: 'Карта №1'
-      },
-      isClosable: false,
-      isPayslipAvailable: false,
-      objectId: '3014111MFE0011110',
-      onDesktop: true,
-      startDate: '20171111000000'
-    })
-    expect(fullAccount).toEqual({
-      id: '6505111',
-      instrument: 'BYN',
-      type: 'card',
-      title: 'Карта №1',
-      balance: 486.18,
-      syncID: ['BY31ALFA3014111MRT0011110000'],
-      productType: 'ACCOUNT'
     })
   })
 })

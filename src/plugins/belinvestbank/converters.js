@@ -4,13 +4,13 @@ export function convertAccount (json) {
     type: 'card',
     title: json.finalName + '*' + json.num.slice(-4),
     instrument: json.currency,
-    balance: Number.parseFloat(json.balance),
+    balance: Number.parseFloat(json.balance.replace(/\s/g, '')),
     syncID: [json.num.slice(-4)]
   }
 }
 
 export function convertTransaction (json, accounts) {
-  if (json.status !== 'ПРОВЕДЕНО') {
+  if (json.status !== 'ПРОВЕДЕНО' && json.status !== 'ЗАБЛОКИРОВАНО') {
     return null
   }
   const account = accounts.find(account => {
@@ -19,10 +19,10 @@ export function convertTransaction (json, accounts) {
 
   const transaction = {
     date: getDate(json.date),
-    movements: [ getMovement(json, account) ],
+    movements: [getMovement(json, account)],
     merchant: null,
     comment: null,
-    hold: false
+    hold: json.status === 'ЗАБЛОКИРОВАНО'
   };
 
   [
@@ -80,13 +80,13 @@ function parsePayee (transaction, json) {
       transaction.merchant.fullTitle = 'Bank'
     }
   } else if (merchant.length === 2) {
+    transaction.merchant.city = merchant[1].split(' ')[0].trim()
+    transaction.merchant.country = merchant[1].slice(-4).trim()
     transaction.merchant.title = merchant[0]
     if (merchant[0] === 'SMS OPOVESCHENIE') {
       transaction.comment = merchant[0]
-      transaction.merchant.title = ''
+      transaction.merchant = null
     }
-    transaction.merchant.city = merchant[1].split(' ')[0].trim()
-    transaction.merchant.country = merchant[1].slice(-4).trim()
   } else {
     throw new Error('Ошибка обработки транзакции с получателем: ' + json.cardAcceptor)
   }

@@ -8258,9 +8258,9 @@ whatwg-fetch@>=0.10.0:
   resolved "https://registry.npmjs.org/whatwg-fetch/-/whatwg-fetch-2.0.4.tgz#dde6a5df315f9d39991aa17621853d720b85566f"
   integrity sha512-dcQ1GWpOD/eEQ97k66aiEVpNnapVj90/+R+SXTPYGHpYBBypfKJEQjLrvMZ7YXbKm21gXd4NcuxUTjiv1YtLng==
 
-"whatwg-fetch@git+https://github.com/skvav/fetch.git#a76800dfcc27f883dd84cbd60b6d7919eea28ac4":
+"whatwg-fetch@git+https://github.com/skvav/fetch.git#55064e902db56b5aea881d35f69160895a9c2343":
   version "2.0.3"
-  resolved "git+https://github.com/skvav/fetch.git#a76800dfcc27f883dd84cbd60b6d7919eea28ac4"
+  resolved "git+https://github.com/skvav/fetch.git#55064e902db56b5aea881d35f69160895a9c2343"
 
 whatwg-mimetype@^2.0.0, whatwg-mimetype@^2.1.0:
   version "2.1.0"

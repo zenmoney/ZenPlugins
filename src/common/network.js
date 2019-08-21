@@ -1,11 +1,14 @@
 import _ from 'lodash'
+import { IncompatibleVersionError } from '../errors'
 import { sanitize } from './sanitize'
 
 const cheerio = require('cheerio')
 
-export class ParseError extends Error {
-  constructor (message, response) {
-    super(message)
+export class ParseError {
+  constructor (message, response, cause) {
+    this.cause = cause
+    this.stack = new Error().stack
+    this.message = message
     this.response = response
   }
 }
@@ -25,6 +28,10 @@ export async function fetch (url, options = {}) {
     ...options.body && { body: options.body }
   }, options.sanitizeRequestLog || false))
 
+  if (options.binaryResponse && (!ZenMoney.features || !ZenMoney.features.binaryResponseBody)) {
+    throw new IncompatibleVersionError()
+  }
+
   let response
   try {
     response = await global.fetch(url, init)
@@ -35,7 +42,7 @@ export async function fetch (url, options = {}) {
       throw e
     }
   }
-  let body = await response.text()
+  let body = options.binaryResponse ? await response.arrayBuffer() : await response.text()
   let bodyParsingException = null
   if (options.parse) {
     try {
@@ -43,6 +50,12 @@ export async function fetch (url, options = {}) {
     } catch (e) {
       bodyParsingException = e
     }
+  }
+  let bodyLog = body
+  if (bodyLog && _.isArrayBuffer(bodyLog)) {
+    bodyLog = Array.from(new Uint8Array(bodyLog))
+  } else if (bodyLog && _.isTypedArray(bodyLog)) {
+    bodyLog = Array.from(bodyLog)
   }
 
   const headers = response.headers.entries ? _.fromPairs([...response.headers.entries()]) : response.headers.map
@@ -58,12 +71,12 @@ export async function fetch (url, options = {}) {
     status: response.status,
     url: response.url,
     headers,
-    body,
+    body: bodyLog,
     ms: endTicks - beforeFetchTicks
   }, options.sanitizeResponseLog || false))
 
   if (bodyParsingException) {
-    throw new ParseError(`Could not parse response. ${bodyParsingException}`, response)
+    throw new ParseError(`Could not parse response. ${bodyParsingException}`, response, bodyParsingException)
   }
 
   return response
@@ -75,7 +88,7 @@ export async function fetchJson (url, options = {}) {
     ...options,
     headers: {
       'Accept': 'application/json, text/plain, */*',
-      'Content-Type': 'application/json;charset=UTF-8',
+      ...options.body && { 'Content-Type': 'application/json;charset=UTF-8' },
       ...options.headers
     },
     parse: (body) => body === '' ? undefined : JSON.parse(body)
@@ -107,8 +120,8 @@ function parseXmlNode (root) {
   for (const node of children) {
     if (node.type === 'cdata') {
       if (children.length !== 1 || !node.children ||
-                node.children.length !== 1 ||
-                node.children[0].type !== 'text') {
+        node.children.length !== 1 ||
+        node.children[0].type !== 'text') {
         throw new Error('Error parsing XML. Unsupported CDATA node')
       }
       return node.children[0].data.trim()
@@ -126,7 +139,7 @@ function parseXmlNode (root) {
           value = null
         }
       } else if (node.children.length === 1 &&
-                    node.children[0].type === 'text') {
+        node.children[0].type === 'text') {
         value = node.children[0].data.trim()
         if (value === '') {
           value = null

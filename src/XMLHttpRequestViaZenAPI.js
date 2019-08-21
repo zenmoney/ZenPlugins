@@ -48,9 +48,22 @@ XMLHttpRequestViaZenAPI.prototype.send = function (body) {
   this.readyState = XMLHttpRequestViaZenAPI.LOADING
 
   try {
-    this.responseText = !method || method.toUpperCase() === 'GET'
-      ? ZenMoney.requestGet(url, headers)
-      : ZenMoney.request(method, url, body, headers)
+    let options = null
+    if (this.responseType === 'arraybuffer' && ZenMoney.features && ZenMoney.features.binaryResponseBody) {
+      options = { binaryResponse: true }
+    }
+    const responseBody = !method || method.toUpperCase() === 'GET'
+      ? ZenMoney.requestGet(url, headers, options)
+      : ZenMoney.request(method, url, body, headers, options)
+    if (options && options.binaryResponse && responseBody && typeof responseBody !== 'string') {
+      if ('buffer' in responseBody) {
+        this.response = responseBody.buffer
+      } else {
+        this.response = responseBody
+      }
+    } else {
+      this.responseText = responseBody
+    }
   } catch (e) {
     this.onerror(e)
     return

@@ -44,9 +44,9 @@ export function convertAccount (json, accountType) {
         syncID: [json.internalAccountId],
         capitalization: true,
         startDate: new Date(json.openDate),
-        endDateOffset: new Date(json.endDate).getTime() / 1000,
+        endDateOffset: (new Date(json.endDate).getTime() - new Date(json.openDate).getTime()) / 1000 / 60 / 60 / 24,
+        endDateOffsetInterval: 'day',
         percent: json.interestRate,
-        endDateOffsetInterval: 'month',
         payoffInterval: 'month',
         payoffStep: 1,
         rkcCode: json.rkcCode
@@ -109,13 +109,18 @@ export function convertLastTransaction (json, accounts) {
 }
 
 function getMovement (json, account) {
-  return {
+  const movement = {
     id: null,
     account: { id: account.id },
     invoice: null,
     sum: json.operationCode === 3 ? -json.operationAmount : json.operationAmount,
     fee: 0
   }
+  if (json.operationName.indexOf('Удержано подоходного налога') >= 0) {
+    let nameSplit = json.operationName.split(' ')
+    movement.fee = Number.parseFloat(nameSplit[nameSplit.length - 1])
+  }
+  return movement
 }
 
 function parseCash (transaction, json) {
@@ -139,34 +144,38 @@ function parseCash (transaction, json) {
   }
 }
 
-function parsePayee (transaction, apiTransaction) {
+function parsePayee (transaction, json) {
   // интернет-платежи отображаем без получателя
-  if (!apiTransaction.operationPlace ||
-    apiTransaction.operationPlace.indexOf('BNB - OPLATA USLUG') >= 0 ||
-    apiTransaction.operationPlace.indexOf('OPLATA USLUG - KOMPLAT BNB') >= 0) {
+  if (!json.operationPlace ||
+    json.operationPlace.indexOf('BNB - OPLATA USLUG') >= 0 ||
+    json.operationPlace.indexOf('OPLATA USLUG - KOMPLAT BNB') >= 0) {
     return false
   }
   transaction.merchant = {
     mcc: null,
     location: null
   }
-  const merchant = apiTransaction.operationPlace.split('>').map(str => str.trim())
+  const merchant = json.operationPlace.split('>').map(str => str.trim())
   if (merchant.length === 1) {
-    transaction.merchant.fullTitle = apiTransaction.operationPlace
+    transaction.merchant.fullTitle = json.operationPlace
   } else if (merchant.length === 2) {
     transaction.merchant.title = merchant[0]
     let geo = merchant[1].split(' ')
     transaction.merchant.city = merchant[1].replace(' ' + geo[geo.length - 1], '').trim()
     transaction.merchant.country = geo[geo.length - 1]
   } else {
-    throw new Error('Ошибка обработки транзакции с получателем: ' + apiTransaction.operationPlace)
+    throw new Error('Ошибка обработки транзакции с получателем: ' + json.operationPlace)
   }
 }
 
-function parseComment (transaction, apiTransaction) {
-  if (!apiTransaction.operationName) { return false }
+function parseComment (transaction, json) {
+  if (!json.operationName) { return false }
 
-  switch (apiTransaction.operationName) {
+  if (json.operationName.indexOf('Капитализация. Удержано подоходного налога') >= 0) {
+    transaction.comment = 'Капитализация'
+    return false
+  }
+  switch (json.operationName) {
     // переводы между счетами полезной информации не несут, гасим сразу
     case 'Списание по операции ПЦ "Перечисление с карты на карту" ':
     case 'On-line пополнение договора (списание с БПК)':
@@ -181,7 +190,7 @@ function parseComment (transaction, apiTransaction) {
       return false
 
     default:
-      transaction.comment = apiTransaction.operationName
+      transaction.comment = json.operationName
       return false
   }
 }

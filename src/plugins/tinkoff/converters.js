@@ -1,11 +1,19 @@
-import _ from 'lodash'
 import { parseOuterAccountData } from '../../common/accounts'
+import { formatCommentDateTime } from '../../common/dateUtils'
+import { isArray, groupBy, flattenDeep, union, get, values, drop, omit } from 'lodash'
 
-export function convertAccount (account, initialized) {
+export function convertAccount (account, initialized = false) {
+  if (!account.accountType ||
+    account.accountType.startsWith('External') ||
+    account.accountType.startsWith('Imported')) {
+    return null
+  }
+
   switch (account.accountType) {
     case 'Current': // дебетовые карты
     case 'CurrentKids': // Tinkoff Jr.
       return getDebitCard(account, initialized)
+
     case 'Credit': return getCreditCard(account, initialized) // кредитные карты
     case 'Saving': return getSavingAccount(account) // накопительные счета
     case 'Deposit': return getDepositAccount(account) // вклады
@@ -14,241 +22,623 @@ export function convertAccount (account, initialized) {
     case 'KupiVKredit': return getKupiVKreditAccount(account) // потребительские кредиты
     case 'Wallet': return getWalletAccount(account) // виртуальные карты
     case 'Telecom': return getTelecomAccount(account) // телеком-карта
+
     case 'ExternalAccount': // внешние счета сторонних банков, например
+    case 'ImportedCredit': // внешний кредит другого человека
       return null
+
     default: {
       console.log(`>>> !!! Новый счёт с типом '${account.accountType}':`, account)
+      throw new Error(`Новый счёт с типом '${account.accountType}'`)
+    }
+  }
+}
+
+export function convertTransaction (apiTransaction, account) {
+  if (!account) {
+    console.log(`>>> Пропускаем операцию по не существующему счёту: ${getApiTransactionString(apiTransaction)}`)
+    return null
+  }
+  const movement = getMovement(apiTransaction, account)
+  if (!movement) { return null }
+
+  if (apiTransaction.cardPresent) {
+    movement._cardPresent = apiTransaction.cardPresent
+  }
+
+  const transaction = {
+    date: getApiTransactionDate(apiTransaction),
+    movements: [ movement ],
+    merchant: null,
+    comment: null,
+    hold: getApiTransactionHoldStatus(apiTransaction)
+  };
+
+  [
+    // новые методы (группировака по типу операции)
+    parseTransferGroup,
+    parseIncomeGroup,
+    parseInternalGroup,
+    parseCashGroup,
+    parsePayGroup,
+    // parseChargeGroup, -- нет необходимости
+    // parseCorrectionGroup, -- нет необходимости
+
+    // старые методы (пошаговая генерация свойств транзакции)
+    parseComment
+  ].some(parser => parser(transaction, apiTransaction))
+
+  return transaction
+}
+
+function getMovement (apiTransaction, account) {
+  const movement = {
+    _id: apiTransaction.id,
+    id: getApiTransactionId(apiTransaction),
+    account: { id: account.id },
+    invoice: null,
+    sum: apiTransaction.type === 'Credit' ? apiTransaction.accountAmount.value : -apiTransaction.accountAmount.value,
+    fee: 0
+  }
+
+  if (apiTransaction.accountAmount.currency.name !== apiTransaction.amount.currency.name) {
+    // предохранитель от оперраций-дублей на соседних счетах
+    if (apiTransaction.accountAmount.value === apiTransaction.amount.value) {
       return null
     }
+
+    movement.invoice = {
+      sum: apiTransaction.type === 'Credit' ? apiTransaction.amount.value : -apiTransaction.amount.value,
+      instrument: apiTransaction.amount.currency.name
+    }
+  }
+
+  return movement
+}
+
+function parseTransferGroup (transaction, apiTransaction) {
+  if (apiTransaction.group !== 'TRANSFER' || !apiTransaction.payment) {
+    return false
+  }
+
+  const payment = apiTransaction.payment
+  const providerId = payment.providerId
+  const fieldsValues = payment ? payment.fieldsValues : {}
+
+  // расчёт мерчанта
+  /* let merchant = (providerId === 'c2c-out' && (fieldsValues.recipientName || fieldsValues.bankCard)) ||
+      (providerId === 'p2p-anybank' && fieldsValues.maskedFIO) ||
+      (providerId === 'transfer-legal' && fieldsValues.addressee) ||
+      (providerId === 'transfer-bank' && apiTransaction.description) ||
+      apiTransaction.description // значение по умолчанию */
+  // расчёт комментария
+  /* const comment = (providerId === 'p2p-anybank' && (fieldsValues.comment || payment.comment)) ||
+    (providerId === 'c2c-out' && apiTransaction.description)
+  // (providerId === 'transfer-bank' && fieldsValues.comment) // комментарии межбанковских переводов не сохраняем, так как там часто личная информация!
+  // (providerId === 'transfer-legal' && (fieldsValues.comment || payment.comment)) || // тоже много личного! */
+  // const comment = apiTransaction.message || fieldsValues.message || apiTransaction.comment || fieldsValues.comment || ((!title || title !== apiTransaction.description) && apiTransaction.description)
+
+  let merchant
+  let comment
+  switch (providerId) {
+    case 'c2c-out':
+      merchant = fieldsValues.recipientName || fieldsValues.bankCard
+      comment = apiTransaction.description
+      break
+
+    case 'p2p-anybank':
+      merchant = fieldsValues.maskedFIO || apiTransaction.description || fieldsValues.maskedPAN
+      comment = fieldsValues.comment || payment.comment || apiTransaction.message
+      break
+
+    case 'transfer-legal':
+      merchant = fieldsValues.addressee || apiTransaction.description
+      // comment игнорируем, так как там часто встречается личная информация
+      break
+
+    case 'transfer-bank':
+      merchant = apiTransaction.description
+      // comment игнорируем, так как там часто встречается личная информация
+      break
+
+    case 'transfer-inner':
+      // игнорируем
+      break
+
+    default:
+      merchant = apiTransaction.description
+      comment = apiTransaction.message || fieldsValues.message || apiTransaction.comment || fieldsValues.comment
+      if (!comment && merchant !== apiTransaction.description) {
+        comment = apiTransaction.description
+      }
+      break
+  }
+  if (merchant) {
+    transaction.merchant = {
+      title: merchant,
+      city: null,
+      country: null,
+      mcc: getApiTransactionMcc(apiTransaction),
+      location: null
+    }
+  }
+  if (comment) {
+    transaction.comment = comment
+  }
+
+  // расчёт перевода
+  const card = (providerId === 'p2p-anybank' && fieldsValues.maskedPAN) ||
+      (providerId === 'c2c-out' && fieldsValues.bankCard && fieldsValues.bankCard)
+  const bank = (providerId === 'p2p-anybank' && fieldsValues.workflowType === 'SberTransfer' && { id: '4624' })
+  if (card) {
+    const account = {
+      type: 'ccard',
+      instrument: apiTransaction.amount.currency.name,
+      syncIds: [ card.substr(-4) ]
+    }
+    if (bank) { account.company = bank }
+    transaction = addMirrorMovement(transaction, account)
+  }
+
+  return true
+}
+
+function parseIncomeGroup (transaction, apiTransaction) {
+  if (apiTransaction.group !== 'INCOME') {
+    return false
+  }
+
+  const subgroup = apiTransaction.subgroup && apiTransaction.subgroup.id
+  const payment = apiTransaction.payment
+  const providerId = payment ? payment.providerId : null
+  // const category = apiTransaction.category && apiTransaction.category.id
+
+  // расчёт мерчанта
+  /* const title = (subgroup === 'C4' && apiTransaction.senderDetails) || // входящий перевод от клиента Тинькоф
+    (subgroup === 'C10' && apiTransaction.description) || // пополнение по номеру телефона
+    (subgroup === undefined && apiTransaction.description) // другое */
+  /* const comment = (['C1', 'C3', 'C8', 'C9'].indexOf(subgroup) >= 0 && apiTransaction.description) ||
+    (subgroup === 'C10' && apiTransaction.message) // пополнение по номеру телефона с сообщением */
+
+  let title
+  let comment
+  switch (subgroup) {
+    case 'C1':
+      comment = apiTransaction.nomination || apiTransaction.description
+      break
+
+    // входящий перевод от клиента Тинькоф
+    case 'C4':
+      title = apiTransaction.senderDetails
+      break
+
+    // перевод между своими счетами
+    case 'C5':
+      break
+
+    // пополнение по номеру телефона
+    case 'C10':
+      title = apiTransaction.description
+      comment = apiTransaction.message
+      break
+
+    case undefined:
+      if (apiTransaction.description && !apiTransaction.description.startsWith('Перевод с')) {
+        title = apiTransaction.description
+      }
+      break
+
+    default:
+      comment = apiTransaction.description
+      break
+  }
+
+  if (providerId === 'transfer-inner') {
+    title = null
+  }
+  if (title === comment) {
+    comment = null
+  }
+  if (title) {
+    transaction.merchant = {
+      title: title,
+      city: null,
+      country: null,
+      mcc: getApiTransactionMcc(apiTransaction),
+      location: null
+    }
+  }
+  if (comment) {
+    transaction.comment = comment
+  }
+
+  // расчёт перевода
+  const card = (providerId === 'c2c-in-new' && payment.cardNumber)
+  let bank = null
+  if (apiTransaction.brand && apiTransaction.brand.name) {
+    bank = parseOuterAccountData(apiTransaction.brand.name)
+  }
+  if (card /* && bank */) {
+    const account = {
+      type: null,
+      instrument: apiTransaction.amount.currency.name
+    }
+    if (card) {
+      account.type = 'ccard'
+      account.syncIds = [card.substr(-4)]
+    }
+    if (bank && bank.company) {
+      account.company = bank.company
+    }
+    transaction = addMirrorMovement(transaction, account)
+  }
+
+  return true
+}
+
+function parseInternalGroup (transaction, apiTransaction) {
+  if (apiTransaction.group !== 'INTERNAL') {
+    return false
+  }
+  // все внутренние операции (переводы между счетами) без мерчанта и комментариев
+  return true
+}
+
+function parseCashGroup (transaction, apiTransaction) {
+  if (apiTransaction.group !== 'CASH') {
+    return false
+  }
+
+  let card
+  const payment = apiTransaction.payment || {}
+  switch (payment.providerId) {
+    case 'c2c-out': // исходящий card2card
+      card = payment.fieldsValues && (payment.fieldsValues.bankCard || payment.fieldsValues.dstCardMask)
+      if (card) {
+        transaction = addMirrorMovement(transaction, {
+          type: 'ccard',
+          instrument: apiTransaction.amount.currency.name,
+          syncIds: [ card.substr(-4) ]
+        })
+      } else {
+        console.log('>>> Ошибочная транзакция с наличными: ', apiTransaction)
+        throw new Error('Ошибочная транзакция с наличными')
+      }
+      break
+
+    case 'c2c-in-new': // входящий card2card
+    case 'c2c-anytoany': // исходящий перевод на чужую карту
+      card = payment.cardNumber
+      if (card) {
+        transaction = addMirrorMovement(transaction, {
+          type: 'ccard',
+          instrument: apiTransaction.amount.currency.name,
+          syncIds: [ card.substr(-4) ]
+        })
+      } else {
+        console.log('>>> Ошибочная транзакция с наличными: ', apiTransaction)
+        throw new Error('Ошибочная транзакция с наличными')
+      }
+      break
+
+    // перевод по номеру телефона
+    case 'p2p-anybank':
+    case 'p2p-uni':
+      const phone = payment.fieldsValues && (payment.fieldsValues.pointer || payment.fieldsValues.destValue)
+      const match = /\+7\d{6}(\d{4})/.exec(phone.trim())
+      if (phone && match) {
+        transaction.comment = apiTransaction.message
+          ? [ apiTransaction.message, '+7******' + match[1] ].join(' ')
+          : [ apiTransaction.description, '+7******' + match[1] ].join(' ')
+      } else {
+        console.log('>>> Ошибочная транзакция с наличными: ', apiTransaction)
+        throw new Error('Ошибочная транзакция с наличными')
+      }
+      break
+
+    case undefined: // в точке партнёра
+    case 'atm-transfer-cash': // в банкомате Тинькова
+      // снятие наличных через Western Union (WU.COM) рассматриваем как расход
+      const card2card = [ 6538 ].indexOf(apiTransaction.mcc) >= 0
+      if (!card2card) {
+        transaction = addMirrorMovement(transaction, { type: 'cash' }, apiTransaction.amount.currency.name)
+      } else if (apiTransaction.merchant) {
+        const bank = parseOuterAccountData(apiTransaction.merchant.name)
+        if (bank) {
+          transaction = addMirrorMovement(transaction, bank, apiTransaction.amount.currency.name)
+        } else {
+          transaction.merchant = parseMerchant(apiTransaction)
+        }
+      }
+      break
+
+    default:
+      console.log('>>> Не обрабатываемая операция наличными: ', apiTransaction)
+      throw new Error('Не обрабатываемая операция наличными')
+  }
+
+  return true
+}
+
+function parsePayGroup (transaction, apiTransaction) {
+  if (apiTransaction.group !== 'PAY') {
+    return false
+  }
+  transaction.merchant = parseMerchant(apiTransaction)
+  return true
+}
+
+function parseMerchant (apiTransaction) {
+  const locations = apiTransaction.locations || {}
+  const merchant = apiTransaction.merchant || {}
+  const brand = apiTransaction.brand || {}
+
+  // расчёт мерчанта
+  const resultMerchant = {
+    mcc: getApiTransactionMcc(apiTransaction),
+    location: null,
+    city: null,
+    country: null
+  }
+  if (locations && isArray(locations) && locations.length > 0) {
+    resultMerchant.location = apiTransaction.locations[0]
+  }
+  if (merchant && merchant.region) {
+    resultMerchant.title = merchant.name
+    resultMerchant.city = merchant.region.city !== '' ? merchant.region.city : null
+    resultMerchant.country = merchant.region.country
+  } else if (brand) {
+    resultMerchant.title = brand.name
+  }
+
+  return resultMerchant.title ? resultMerchant : null
+}
+
+function parseComment (transaction, apiTransaction) {
+  // расчёт комментария
+  if (apiTransaction.description) {
+    transaction.comment = apiTransaction.description
   }
 }
 
-export function convertTransaction (transaction, accountId) {
-  const tran = {}
-
-  // дата привязана к часовому поясу Москвы
-  const dt = new Date(transaction.operationTime.milliseconds + (180 + new Date().getTimezoneOffset()) * 60000)
-  tran.date = dt.getFullYear() + '-' + n2(dt.getMonth() + 1) + '-' + n2(dt.getDate())
-  tran.time = n2(dt.getHours()) + ':' + n2(dt.getMinutes() + 1) + ':' + n2(dt.getSeconds()) // для внутреннего использования
-  tran.created = transaction.operationTime.milliseconds
-
-  // Внутренний ID операции
-  /* const tranId = transaction.payment && transaction.payment.paymentId
-        // если есть paymentId, объединяем по нему, отделяя комиссии от переводов
-        ? (transaction.group === "CHARGE" ? "f" : "p") + transaction.payment.paymentId
-        // либо работаем просто как с операциями, разделяя их на доходы и расходы
-        : transaction.id; */
-
-  // отделяем акцепт от холда временем дебетового списания
-  tran.id = transaction.debitingTime ? transaction.id : 'tmp#' + transaction.id
-  tran.hold = !transaction.debitingTime
-
-  // флаг операции в валюте
-  const foreignCurrency = transaction.accountAmount.currency.name !== transaction.amount.currency.name
-
-  // mcc-код операции
-  let mcc = transaction.mcc ? parseInt(transaction.mcc, 10) : -1
-  if (!mcc) mcc = -1
-
-  // флаг card2card переводов
-  const c2c = [6536, 6538, 6012].indexOf(mcc) >= 0
-
-  // доход -------------------------------------------------------------------------
-  if (transaction.type === 'Credit') {
-    tran.income = transaction.accountAmount.value
-    tran.incomeAccount = accountId
-    tran.outcome = 0
-    tran.outcomeAccount = tran.incomeAccount
-
-    if (transaction.group) {
-      switch (transaction.group) {
-        // пополнение наличными
-        case 'CASH':
-          if (!c2c) {
-            // операция с наличными
-            tran.outcomeAccount = 'cash#' + transaction.amount.currency.name
-            tran.outcome = transaction.amount.value
-          } else
-          // card2card-перевод
-          if (transaction.payment && transaction.payment.cardNumber) {
-            tran.outcomeAccount = 'ccard#' + transaction.amount.currency.name + '#' + transaction.payment.cardNumber.substring(transaction.payment.cardNumber.length - 4)
-            tran.outcome = transaction.amount.value
-            tran.hold = null
-          }
-          break
-
-        case 'INCOME':
-          if (c2c && transaction.payment && transaction.payment.cardNumber && transaction.payment.cardNumber.length > 4) {
-            tran.outcome = transaction.amount.value
-            tran.outcomeAccount = 'ccard#' + transaction.amount.currency.name + '#' + transaction.payment.cardNumber.substring(transaction.payment.cardNumber.length - 4)
-          } else if (transaction.senderDetails) {
-            tran.payee = transaction.senderDetails
-          }
-          tran.comment = transaction.description
-          break
-
-          // Если совсем ничего не подошло
-        default:
-          if (transaction.subgroup) {
-            switch (transaction.subgroup.id) {
-              // перевод от другого клиента банка
-              case 'C4':
-                tran.payee = transaction.description
-                break
-              default:
-                break
-            }
-          }
-
-          if (!tran.payee) {
-            if (transaction.operationPaymentType === 'TEMPLATE') {
-              // наименование шаблона
-              tran.comment = transaction.description
-            } else {
-              tran.comment = ''
-              if (transaction.merchant) { tran.comment = transaction.merchant.name + ': ' }
-              tran.comment += transaction.description
-            }
-          } else {
-            // если получатель определился, то нет необходимости писать его и в комментарии
-            if (transaction.merchant) { tran.comment = transaction.merchant.name }
-          }
-      }
-    } else {
-      tran.comment = ''
-      if (transaction.merchant) { tran.comment = transaction.merchant.name + ': ' }
-      tran.comment += transaction.description
-    }
-
-    // операция в валюте
-    if (foreignCurrency) {
-      tran.opIncome = transaction.amount.value
-      tran.opIncomeInstrument = transaction.amount.currency.name
-    }
-  } else
-  // расход -----------------------------------------------------------------
-  if (transaction.type === 'Debit') {
-    tran.outcome = transaction.accountAmount.value
-    tran.outcomeAccount = accountId
-    tran.income = 0
-    tran.incomeAccount = tran.outcomeAccount
-
-    if (transaction.group) {
-      switch (transaction.group) {
-        // Снятие наличных
-        case 'CASH':
-          if (!c2c) {
-            // операция с наличными
-            tran.incomeAccount = 'cash#' + transaction.amount.currency.name
-            tran.income = transaction.amount.value
-          } else
-          // card2card-перевод
-          if (transaction.payment && transaction.payment.cardNumber) {
-            tran.incomeAccount = 'ccard#' + transaction.amount.currency.name + '#' + transaction.payment.cardNumber.substring(transaction.payment.cardNumber.length - 4)
-            tran.income = transaction.amount.value
-          }
-          break
-
-          // Перевод
-        case 'TRANSFER':
-          if (transaction.payment && transaction.payment.fieldsValues) {
-            if (transaction.payment.fieldsValues.addressee) { tran.payee = transaction.payment.fieldsValues.addressee } else if (transaction.payment.fieldsValues.lastName) { tran.payee = transaction.payment.fieldsValues.lastName }
-          }
-
-          if (transaction.operationPaymentType === 'TEMPLATE') {
-            tran.comment = transaction.description // наименование шаблона
-          } else {
-            tran.comment = ''
-            if (transaction.merchant) { tran.comment = transaction.merchant.name + ': ' }
-            tran.comment += transaction.description
-          }
-          break
-
-          // Плата за обслуживание
-        case 'CHARGE':
-          tran.comment = transaction.description
-          break
-
-          // Платеж
-        case 'PAY':
-          if (transaction.operationPaymentType && transaction.operationPaymentType === 'REGULAR') {
-            tran.payee = transaction.brand ? transaction.brand.name : transaction.description
-          } else {
-            tran.payee = transaction.merchant ? transaction.merchant.name : transaction.description
-          }
-
-          // MCC
-          if (mcc > 99) {
-            tran.mcc = mcc // у Тинькова mcc-коды используются для своих нужд
-          }
-
-          break
-
-          // Если совсем ничего не подошло
-        default:
-          tran.comment = transaction.description
-      }
-    }
-
-    // операция в валюте
-    if (foreignCurrency) {
-      tran.opOutcome = transaction.amount.value
-      tran.opOutcomeInstrument = transaction.amount.currency.name
-    }
-
-    // местоположение
-    if (transaction.locations && _.isArray(transaction.locations) && transaction.locations.length > 0) {
-      tran.latitude = transaction.locations[0].latitude
-      tran.longitude = transaction.locations[0].longitude
-    }
+function addMirrorMovement (transaction, account, accountInstrument = null) {
+  if (transaction.movements.length > 1) {
+    console.log('Ошибка добавления зеркальной movement: ', transaction)
+    throw new Error('Ошибка добавления зеркальной movement')
   }
 
-  // получателей в кази-кэш переносим в комментарии операции
-  if (mcc === 6051 && tran.payee) {
-    const payee = parseOuterAccountData(tran.payee)
-    if (payee) {
+  // добавим вторую часть перевода
+  transaction.movements.push({
+    id: null,
+    account: {
+      company: null,
+      instrument: transaction.movements[0].invoice
+        ? transaction.movements[0].invoice.instrument
+        : accountInstrument,
+      syncIds: null,
+      ...account
+    },
+    invoice: null,
+    sum: -transaction.movements[0].sum,
+    fee: 0
+  })
 
-    } else {
-      if (tran.comment) tran.comment += ` (${payee})`
-      else tran.commen = tran.payee
-    }
-  }
-
-  var hold = tran.hold ? ' [H] ' : ''
-  console.log(`>>> Добавляем операцию: ${tran.date}, ${tran.time}, ${hold}${transaction.description}, ${transaction.type === 'Credit' ? '+' : (transaction.type === 'Debit' ? '-' : '')}${transaction.accountAmount.value}`)
-
-  return tran
+  return transaction
 }
 
-export function convertTransactionToTransfer (tranId, tran1, tran2) {
-  // доходная часть перевода ---
-  if (tran2.income > 0 && tran1.income === 0 && tran1.incomeAccount !== tran2.incomeAccount) {
-    tran1.income = tran2.income
-    tran1.incomeAccount = tran2.incomeAccount
-    if (tran2.opOutcome) tran1.opOutcome = tran2.opOutcome
-    if (tran2.opOutcomeInstrument) tran1.opOutcomeInstrument = tran2.opOutcomeInstrument
+function parsingDoubleTransactions (tranId, tranArr, tran2, accounts = {}) {
+  let parsed = false
+  for (let i = 0; i < tranArr.length; i++) {
+    const tran1 = tranArr[i]
+    const indexStr = tranArr.length > 1 ? '#' + i : ''
 
-    tran1.incomeBankID = tran2.id
-    tran1.outcomeBankID = tran1.id
-    delete tran1.id
-  } else
-  // расходная часть перевода ----
-  if (tran2.outcome > 0 && tran1.outcome === 0 && tran1.outcomeAccount !== tran2.outcomeAccount) {
-    tran1.outcome = tran2.outcome
-    tran1.outcomeAccount = tran2.outcomeAccount
-    if (tran2.opOutcome) tran1.opOutcome = tran2.opOutcome
-    if (tran2.opOutcomeInstrument) tran1.opOutcomeInstrument = tran2.opOutcomeInstrument
+    // не нужно, так как есть операции снятия наличных с комиссиями, которые блокируются этим условием
+    /* if (tran1.movements.length > 1 || tran2.movements.length > 1) {
+      console.log(`>>> Ошибка объединения транзакций #${tranId}`, tranArr, tran2)
+      throw new Error('Ошибка объединения транзакций')
+    } */
 
+    // объединяем в перевод между своимим счетами (только, если счета разные)
+    if (tran1.movements[0].sum * tran2.movements[0].sum < 0 && tran1.movements[0].account.id !== tran2.movements[0].account.id) {
     // при объединении в перевод всегда берём комментарий из расходной части
-    tran1.comment = tran2.comment
+      if (tran2.movements[0].sum < 0) {
+        tran1.comment = tran2.comment
+      }
 
-    tran1.incomeBankID = tran1.id
-    tran1.outcomeBankID = tran2.id
-    delete tran1.id
+      const movement = tran2.movements.pop()
+      if (!isMovementExists(tran1.movements, movement)) {
+        tran1.movements.push(movement)
+      } else {
+        console.log('>>> Игнорируем дубль операции перевода: ', tran1, tran2)
+        parsed = true
+        break
+      }
+
+      // в переводах нет получателя
+      tran1.merchant = null
+
+      /* // id movements должны быть разными!
+      const id = {}
+      tran1.movements.forEach(movement => {
+        if (movement.id === null) { return }
+        if (!id[movement.id]) { id[movement.id] = 0 }
+        id[movement.id]++
+      })
+      tran1.movements.forEach(movement => {
+        if (id[movement.id] > 1) {
+          movement.id = null
+        }
+      }) */
+
+      console.log(`>>> Объединили ${indexStr}операцию в перевод #${tranId}`)
+      parsed = true
+      break
+    }
+
+    // обработка существующей операции (полное совпадение)
+    if (isSameTransaction(tran1, tran2)) {
+      if (tran1.hold === true && tran2.hold === false) {
+        tran1.hold = tran2.hold
+        tran1.movements[0].id = tran2.movements[0].id
+        console.log(`>>> Акцепт существующей ${indexStr}операции #${tranId}:`, tranArr, '\n#2: ', tran2)
+      } else if (tran1.hold === false) {
+        console.log(`>>> Пропускаем холд существующего ${indexStr}акцепта #${tranId}:`, tranArr, '\n#2: ', tran2)
+      } else {
+        throw new Error(`Ошибка обработки одинаковой пары операций #${tranId}`, tranArr, '\n#2: ', tran2)
+      }
+      tranArr[i] = tran1
+      parsed = true
+      break
+    }
+
+    // проверка на дубли на соседних счетах (совпадение без учёта счетов)
+    if (isSameTransaction(tran1, tran2, true)) {
+      let movement = tran2.movements[0]
+      let account = accounts[movement.account.id]
+      if (account && account.type !== 'ccard' && movement._cardPresent) {
+        console.log(`>>> Пропускаем ошибочную дубль-операцию ${indexStr}по карте не с карточного счёта #${tranId}:`, tranArr, '\n#2: ', tran2)
+        parsed = true
+        break
+      }
+
+      movement = tran1.movements[0]
+      account = accounts[tran1.movements[0].account.id]
+      if (account && account.type !== 'ccard' && movement._cardPresent) {
+        console.log(`>>> Пропускаем первую операцию ${indexStr}по карте не с карточного счёта #${tranId}:`, tranArr, '\n#2: ', tran2)
+        tranArr[i] = tran2
+        parsed = true
+        break
+      }
+
+      console.log(`>>> Обнаружен дубль на соседнем счету. Обе операции оставляем, чтобы удалить лишние позднее #${tranId}`, tranArr, '\n#2: ', tran2)
+      tranArr[i]._double = true
+      tranArr.push(tran2)
+      i++
+      parsed = true
+      break
+    }
   }
-  if (tran1.payee) delete tran1.payee // в переводах получателя нет
-  console.log('>>> Объединили операцию в перевод с имеющейся ID ' + tranId)
+
+  if (!parsed) {
+    // две не похожие, но с одинаковыйм paymentId – нужно сохранить обе
+    // например, перевод в валюте, состоящий из 3 операций (doubleTransfer2.test.js)
+    tranArr.push(tran2)
+    console.log(`>>> Обнаружена ещё одна операция с тем же paymentId. Все оставляем #${tranId}`, tranArr, '\n#2: ', tran2)
+  }
+
+  return tranArr
 }
+
+export function convertTransactions (apiTransactions, accounts) {
+  const transactions = {}
+
+  apiTransactions.forEach(apiTransaction => {
+    // !!! пропускаем ошибочные дубли-холды на счетах с другой валютой
+    if (getApiTransactionHoldStatus(apiTransaction) &&
+      get(apiTransaction, 'amount.value') === get(apiTransaction, 'accountAmount.value') &&
+      get(apiTransaction, 'amount.currency.name') !== get(apiTransaction, 'accountAmount.currency.name')) {
+      console.log(`>>> Пропускаем ошибочную дубль-холд операцию по счёту в другой валюте: ${getApiTransactionString(apiTransaction, accounts[apiTransaction.account])}`)
+      return
+    }
+
+    // работаем только по активным счетам
+    let accountId = apiTransaction.account
+    if (!inAccounts(accountId, accounts)) {
+      accountId = apiTransaction.account + '_' + apiTransaction.amount.currency.name
+      if (!inAccounts(accountId, accounts)) {
+        console.log(`>>> Пропускаем операцию по не активному счёту '${apiTransaction.account}': ${getApiTransactionString(apiTransaction)}`)
+        return
+      }
+    }
+
+    // учитываем только успешные операции
+    if ((apiTransaction.status && apiTransaction.status === 'FAILED') || apiTransaction.accountAmount.value === 0) { return }
+
+    // обработаем транзакцию банка (результат в transactions)
+    const transaction = convertTransaction(apiTransaction, accounts[accountId])
+    if (transaction) {
+      const tranId = getApiTransactionId(apiTransaction)
+
+      if (transactions[tranId]) {
+        // обработаем дублирующую операцию
+        transactions[tranId] = parsingDoubleTransactions(tranId, transactions[tranId], transaction, accounts)
+      } else {
+        transactions[tranId] = [ transaction ]
+        console.log(`>>> Добавляем операцию: ${getTransactionString(transaction, accounts[accountId])}`)
+      }
+    }
+  })
+
+  // избавляемся от ошибочных дублей (фантомные дубли на соседних счетах) – дань глючному Тинькову
+  let valueTransactions = values(transactions)
+  const doubleTransactions = valueTransactions.filter(transaction => transaction._double)
+  if (doubleTransactions.length > 0) {
+    console.log(`>>> Обнаружено дублирующихся операций: ${doubleTransactions.length} шт.`, doubleTransactions)
+    valueTransactions = valueTransactions.filter(transaction => !isArray(transaction))
+  }
+
+  // у операций с одним и тем же paymentId обновим id операции
+  valueTransactions = valueTransactions.map(trans => {
+    if (trans.length > 1) {
+      trans = trans.map((transaction, index) => {
+        transaction.movements = transaction.movements.map((movement) => {
+          if (movement.id && movement._id) {
+            movement.id = movement.id !== movement._id ? movement.id + '_' + movement._id : movement.id + '_' + index
+          }
+          return movement
+        })
+        return transaction
+      })
+    } else {
+      trans = [ trans[0] ]
+    }
+    return trans
+  })
+
+  // группируем операции, если вдруг есть одновременно холд и акцепт
+  const groupedTransactions = groupBy(flattenDeep(valueTransactions), transaction => {
+    const movements = []
+    transaction.movements.forEach(movement => {
+      movements.push(movement.account.id + '@' + movement.sum)
+    })
+    return `${formatCommentDateTime(transaction.date)}#${getMerchantTitle(transaction)}#${transaction.merchant && transaction.merchant.mcc}#${movements.join(';')}`
+  })
+
+  // из оставшихся полных холд-акцепт-дублей (если встретятся) приоритет на акцепты
+  const result = (Object.keys(groupedTransactions)).map(key => {
+    if (groupedTransactions[key].length <= 1) {
+      return groupedTransactions[key][0]
+    }
+
+    let transactions = []
+    // обработаем дубли, совпавшие по время-мерчант-мсс-суммы
+    const groupedTransationsByHold = groupBy(groupedTransactions[key], transactions => transactions.hold)
+    // если есть одновременно холды и акцепты
+    if (groupedTransationsByHold['true'] && groupedTransationsByHold['false']) {
+      // то берём все акцепты и остаток холдов (если их больше акцептов)
+      transactions = union(groupedTransationsByHold['false'], drop(groupedTransationsByHold['true'], groupedTransationsByHold['false'].length))
+    } else {
+      transactions = groupedTransationsByHold['false'] || groupedTransationsByHold['true']
+    }
+    console.log(`>>> Обработка одинаковых акцептов и холдов (${groupedTransactions[key].length} шт.): `, groupedTransactions[key], '\n>>>=== Итог: ', transactions)
+    return transactions
+  })
+
+  return flattenDeep(result).map(transaction => cleanupTransaction(transaction))
+}
+
+export function cleanupTransaction (transaction) {
+  transaction.movements = transaction.movements.map(movement => cleanupMovement(movement))
+  return omit(transaction, ['_double'])
+}
+
+function cleanupMovement (movement) {
+  return omit(movement, ['_cardPresent', '_id'])
+}
+
+/* export function groupApiTransactionsById (apiTransactions) {
+  return groupBy(apiTransactions, apiTransaction => getApiTransactionId(apiTransaction))
+} */
 
 function getDebitCard (account, initialized) {
   if (account.status !== 'NORM') return null
@@ -273,10 +663,10 @@ function getDebitCard (account, initialized) {
   // номера карт
   for (let k = 0; k < account.cardNumbers.length; k++) {
     const card = account.cardNumbers[k]
-    if (card.activated) { result.syncID.push(card.value.substring(card.value.length - 4)) }
+    if (card.activated) { result.syncID.push(card.value) }
   }
   // добавим и номер счёта карты
-  result.syncID.push(account.id.substring(account.id.length - 4))
+  result.syncID.push(account.id)
 
   return result
 }
@@ -325,10 +715,10 @@ function getCreditCard (account, initialized) {
   // номера карт
   for (let k = 0; k < account.cardNumbers.length; k++) {
     const card = account.cardNumbers[k]
-    if (card.activated) { result.syncID.push(card.value.substring(card.value.length - 4)) }
+    if (card.activated) { result.syncID.push(card.value) }
   }
   // добавим и номер счёта карты
-  result.syncID.push(account.id.substring(account.id.length - 4))
+  result.syncID.push(account.id)
 
   return result
 }
@@ -340,7 +730,7 @@ function getSavingAccount (account) {
     id: account.id,
     title: account.name,
     type: 'checking',
-    syncID: account.id.substring(account.id.length - 4),
+    syncID: [ account.id ],
     instrument: account.moneyAmount.currency.name,
     balance: account.moneyAmount.value,
     savings: true
@@ -354,12 +744,13 @@ function getDepositAccount (account) {
     id: account.id,
     title: account.name,
     type: 'deposit',
-    syncID: account.id.substring(account.id.length - 4),
+    syncID: [ account.id ],
     instrument: account.moneyAmount.currency.name,
     balance: account.moneyAmount.value,
     percent: account.depositRate,
     capitalization: account.typeOfInterest === 'TO_DEPOSIT',
-    startDate: account.openDate.milliseconds,
+    startBalance: 0,
+    startDate: new Date(account.openDate.milliseconds),
     endDateOffsetInterval: 'month',
     endDateOffset: account.period,
     payoffInterval: 'month',
@@ -375,18 +766,19 @@ function getMultiDepositAccount (account) {
     const currency = deposit.moneyAmount.currency.name
     const name = account.name + ' (' + currency + ')'
     const id = account.id + '_' + currency
-    const syncid = account.id.substring(account.id.length - 4) + '_' + currency
+    const syncid = account.id
     console.log('>>> Добавляем мультивалютный вклад: ' + name + ' (#' + id + ') = ' + deposit.moneyAmount.value + ' ' + deposit.moneyAmount.currency.name)
     accDict.push({
       id: id,
       title: name,
       type: 'deposit',
-      syncID: syncid,
+      syncID: [ syncid ],
       instrument: deposit.moneyAmount.currency.name,
       balance: deposit.moneyAmount.value,
       percent: deposit.depositRate,
       capitalization: deposit.typeOfInterest === 'TO_DEPOSIT',
-      startDate: account.openDate.milliseconds,
+      startBalance: 0,
+      startDate: new Date(account.openDate.milliseconds),
       endDateOffsetInterval: 'month',
       endDateOffset: account.period,
       payoffInterval: 'month',
@@ -398,7 +790,7 @@ function getMultiDepositAccount (account) {
 
 function getCashLoan (account) {
   if (account.status !== 'NORM') return null
-  if (account.debtAmount.value <= 0) {
+  if (account.debtAmount.value === 0) {
     console.log('>>> Пропускаем кредит наличными ' + account.name + ' (#' + account.id + '), так как он уже закрыт')
     return null
   }
@@ -408,15 +800,15 @@ function getCashLoan (account) {
     id: account.id,
     title: account.name,
     type: 'loan',
-    syncID: account.id.substring(account.id.length - 4),
+    syncID: [ account.id ],
     instrument: account.debtAmount.currency.name,
     balance: account.debtAmount.value,
     startBalance: account.creditAmount.value,
-    startDate: account.creationDate.milliseconds,
+    startDate: new Date(account.creationDate.milliseconds),
     percent: account.tariffInfo.interestRate,
     capitalization: true,
     endDateOffsetInterval: 'month',
-    endDateOffset: account.remainingPaymentsCount,
+    endDateOffset: account.remainingPaymentsCount > 0 ? account.remainingPaymentsCount : 1,
     payoffInterval: 'month',
     payoffStep: 1
   }
@@ -432,7 +824,7 @@ function getKupiVKreditAccount (account) {
       id: vkredit.account,
       title: vkredit.name,
       type: 'loan',
-      syncID: vkredit.account.substring(account.id.length - 4),
+      syncID: [ vkredit.account ],
       instrument: vkredit.balance.currency.name,
       balance: vkredit.balance.value,
       startBalance: vkredit.amount.value,
@@ -463,10 +855,10 @@ function getWalletAccount (account) {
   // номера карт
   for (let k = 0; k < account.cardNumbers.length; k++) {
     const card = account.cardNumbers[k]
-    if (card.activated) { result.syncID.push(card.value.substring(card.value.length - 4)) }
+    if (card.activated) { result.syncID.push(card.value) }
   }
   // добавим и номер счёта карты
-  result.syncID.push(account.id.substring(account.id.length - 4))
+  result.syncID.push(account.id)
 
   return result
 }
@@ -486,18 +878,109 @@ function getTelecomAccount (account) {
   // номера карт
   for (let k = 0; k < account.cardNumbers.length; k++) {
     const card = account.cardNumbers[k]
-    if (card.activated) { result.syncID.push(card.value.substring(card.value.length - 4)) }
+    if (card.activated) { result.syncID.push(card.value) }
   }
   // добавим и номер счёта карты
-  result.syncID.push(account.id.substring(account.id.length - 4))
+  result.syncID.push(account.id)
 
   return result
 }
 
-function parseDecimal (str) {
-  return Number(str.toFixed(2).replace(/\s/g, '').replace(/,/g, '.'))
+function getApiTransactionMcc (apiTransaction) {
+  let mcc = apiTransaction.mcc ? parseInt(apiTransaction.mcc, 10) : -1
+  if (!mcc) mcc = -1
+  return mcc > 10 ? mcc : null // Тинькоф часть кодов использует для своих нужд
 }
 
-function n2 (n) {
-  return n < 10 ? '0' + n : String(n)
+function getApiTransactionHoldStatus (apiTransaction) {
+  return !apiTransaction.debitingTime
+}
+
+function getApiTransactionId (apiTransaction) {
+  return apiTransaction.payment && apiTransaction.payment.paymentId
+    // если есть paymentId, объединяем по нему, отделяя комиссии от переводов
+    ? (apiTransaction.group === 'CHARGE' ? 'f' : 'p') + apiTransaction.payment.paymentId
+    // либо работаем просто как с операциями, разделяя их на доходы и расходы
+    : apiTransaction.id
+}
+
+function isSameTransaction (tran1, tran2, ignoreAccount = false) {
+  let sameAccount = ignoreAccount || tran1.movements.length === tran2.movements.length
+  if (!ignoreAccount && sameAccount) {
+    sameAccount = tran1.movements.length === tran2.movements.length &&
+      !tran1.movements.some((movement, index) => movement.account.id !== tran2.movements[index].account.id)
+  }
+
+  const sameSum = tran1.movements.length === tran2.movements.length &&
+    !tran1.movements.some((movement, index) => {
+      return movement.sum !== tran2.movements[index].sum ||
+      JSON.stringify(movement.invoice) !== JSON.stringify(tran2.movements[index].invoice)
+    })
+
+  return sameAccount && sameSum &&
+    ((tran1.merchant === null && tran2.merchant === null) ||
+      (tran1.merchant && tran2.merchant &&
+      tran1.merchant.mcc === tran2.merchant.mcc &&
+      tran1.merchant.title === tran2.merchant.title &&
+      tran1.merchant.fullTitle === tran2.merchant.fullTitle)) &&
+    formatCommentDateTime(tran1.date) === formatCommentDateTime(tran2.date)
+}
+
+function isMovementExists (movements, movement) {
+  return movements.some((move) => {
+    return move.sum === movement.sum &&
+      JSON.stringify(move.invoice) === JSON.stringify(movement.invoice)
+  })
+}
+
+function getMovementSumToString (movement) {
+  let result = `${movement.sum}`
+  if (movement.invoice) {
+    result += ` (${movement.invoice.sum} ${movement.invoice.instrument})`
+  }
+  return result
+}
+
+function getTransactionString (transaction, account = {}) {
+  if (isArray(transaction)) {
+    return transaction.map((tran, index) => `#${index}: ${getTransactionString(tran)}`).join('\n')
+  }
+
+  const hold = transaction.hold ? ' [H] ' : ''
+  const sum = transaction.movements.map(movement => getMovementSumToString(movement)).join(' -> ')
+  return `#${transaction.movements[0].id}, ${formatCommentDateTime(transaction.date)}, ${account.title || account.id}, ${hold}${getMerchantTitle(transaction)}, ${sum}`
+}
+
+function getMerchantTitle (transaction) {
+  return (transaction.merchant && (transaction.merchant.title || transaction.merchant.fullTitle)) || ''
+}
+
+function getApiTransactionString (apiTransaction, account = {}) {
+  const id = apiTransaction.id
+  const date = formatCommentDateTime(getApiTransactionDate(apiTransaction))
+  const acc = account.title || (apiTransaction.account && '#' + apiTransaction.account)
+  const hold = getApiTransactionHoldStatus(apiTransaction) ? ' [H] ' : ''
+  const payee = (apiTransaction.merchant && apiTransaction.merchant.name) || (apiTransaction.brand && apiTransaction.brand.name) || apiTransaction.description
+
+  let sum = `${apiTransaction.type === 'Credit' ? apiTransaction.amount.value : -apiTransaction.amount.value} ${apiTransaction.amount.currency.name}`
+  const sum2 = `${apiTransaction.type === 'Credit' ? apiTransaction.accountAmount.value : -apiTransaction.accountAmount.value} ${apiTransaction.accountAmount.currency.name}`
+  if (apiTransaction.amount.currency.name !== apiTransaction.accountAmount.currency.name) {
+    sum += ` (${sum2})`
+  }
+
+  return `#${id}, ${date}, ${acc}, ${hold}${payee}, ${sum}`
+}
+
+function getApiTransactionDate (apiTransaction) {
+  // дата привязана к часовому поясу Москвы
+  return new Date(apiTransaction.operationTime.milliseconds)
+}
+
+function inAccounts (id, accounts) {
+  // return accounts.filter(account => account.id === id).length > 0
+  return accounts.hasOwnProperty(id)
+}
+
+function parseDecimal (str) {
+  return Number(str.toFixed(2).replace(/\s/g, '').replace(/,/g, '.'))
 }

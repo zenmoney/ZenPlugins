@@ -1,7 +1,7 @@
 import { convertApiAbortedTransactionToReadableTransaction, mergeTransfers } from './converters'
 
-const transferOutcome = {
-  accountId: 'test(accountId)',
+const transferIncome = {
+  accountId: 'test(accountId1)',
   accountCurrency: 'BYN',
   abortedTransaction: {
     amount: -100,
@@ -14,8 +14,8 @@ const transferOutcome = {
     hce: false
   }
 }
-const transferIncome = {
-  accountId: 'test(accountId)',
+const transferOutcome = {
+  accountId: 'test(accountId2)',
   accountCurrency: 'USD',
   abortedTransaction: {
     amount: 49.99,
@@ -30,29 +30,29 @@ const transferIncome = {
 }
 
 test('it chooses correct debit side sign', () => {
-  expect(convertApiAbortedTransactionToReadableTransaction(transferOutcome))
-    .toMatchObject({ movements: [{ sum: -100 }] })
-
   expect(convertApiAbortedTransactionToReadableTransaction(transferIncome))
-    .toMatchObject({ movements: [{ sum: 49.99 }] })
+    .toMatchObject({ movements: [{ sum: 100 }] })
+
+  expect(convertApiAbortedTransactionToReadableTransaction(transferOutcome))
+    .toMatchObject({ movements: [{ sum: -49.99 }] })
 })
 
 test('it merges correctly', () => {
   expect(mergeTransfers({
-    items: [transferIncome, transferOutcome].map((transaction) => ({
+    items: [transferOutcome, transferIncome].map((transaction) => ({
       apiTransaction: { type: 'abortedTransaction', payload: transaction.abortedTransaction, card: { clientObject: { currIso: transaction.accountCurrency } } },
       readableTransaction: convertApiAbortedTransactionToReadableTransaction(transaction)
     }))
   })).toEqual([
     {
       'movements': [
-        { 'id': null, 'account': { 'id': 'test(accountId)' }, 'sum': -100, 'invoice': null, 'fee': 0 },
-        { 'id': null, 'account': { 'id': 'test(accountId)' }, 'sum': 49.99, 'invoice': { sum: +100, instrument: 'BYN' }, 'fee': 0 }
+        { 'id': null, 'account': { 'id': 'test(accountId2)' }, 'sum': -49.99, 'invoice': { sum: -100, instrument: 'BYN' }, 'fee': 0 },
+        { 'id': null, 'account': { 'id': 'test(accountId1)' }, 'sum': 100, 'invoice': null, 'fee': 0 }
       ],
-      'date': new Date('2018-01-01T00:00:00+03:00'),
+      'date': new Date('2018-01-01T12:34:56+03:00'),
       'hold': true,
       'merchant': null,
-      'comment': '(rate=1/2.0004)'
+      'comment': '(rate=2.0004)'
     }
   ])
 })

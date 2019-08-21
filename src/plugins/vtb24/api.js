@@ -2,14 +2,14 @@ import { MD5 } from 'jshashes'
 import * as _ from 'lodash'
 import padLeft from 'pad-left'
 import { toISODateString } from '../../common/dateUtils'
-import * as network from '../../common/network'
+import { fetch } from '../../common/network'
 import { parseResponseBody, stringifyRequestBody } from '../../common/protocols/burlap'
 import { randomInt } from '../../common/utils'
 
 const md5 = new MD5()
 
-const PROTOCOL_VERSION = '2.37.3'
-const APP_VERSION = '9.37.16'
+const PROTOCOL_VERSION = '14.32.2'
+const APP_VERSION = '14.32.2'
 const deviceName = 'Zenmoney'
 
 export function createSdkData (login) {
@@ -48,7 +48,7 @@ async function burlapRequest (options) {
   let payload = null
   let response
   try {
-    response = await network.fetch('https://mb.vtb24.ru/mobilebanking/burlap/', {
+    response = await fetch('https://mb.vtb24.ru/mobilebanking/burlap/', {
       method: 'POST',
       headers: {
         'mb-protocol-version': PROTOCOL_VERSION,
@@ -101,7 +101,9 @@ async function burlapRequest (options) {
     })
   } catch (e) {
     if (e.response && e.response.status === 503) {
-      throw new TemporaryError('Информация из Банка ВТБ временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
+      throw new TemporaryError('Информация из Банка ВТБ временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог разработчикам".')
+    } else if (e.cause) {
+      throw e.cause
     } else {
       throw e
     }
@@ -114,7 +116,7 @@ async function burlapRequest (options) {
       'операцию позже',
       'временно недоступна'
     ].some(str => response.body.message.indexOf(str) >= 0)) {
-      throw new TemporaryError('Информация из Банка ВТБ временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
+      throw new TemporaryError('Информация из Банка ВТБ временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог разработчикам".')
     } else if ([
       'Ошибка обращения'
     ].some(str => response.body.message.indexOf(str) >= 0)) {
@@ -154,7 +156,14 @@ export async function login (login, password) {
     },
     sanitizeRequestLog: { body: { login: true } }
   })
-  if (response.body.mode === 'GeneralError' && response.body.description) {
+  if ([
+    'GeneralError',
+    'InactiveCard',
+    'NoDBO24',
+    'ExpirationDateOver',
+    'CardNotFound',
+    'ThirdPersonCard'
+  ].some(mode => response.body.mode === mode) && response.body.description) {
     throw new TemporaryError(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: ${response.body.description}`)
   }
   console.assert(response.body.mode === 'Pass', 'unsupported login mode')
@@ -180,7 +189,7 @@ export async function login (login, password) {
     }
   })
   if (response.body.type === 'invalid-credentials') {
-    throw new InvalidPreferencesError('Неверный логин или пароль')
+    throw new InvalidPreferencesError('Введен неверный логин или пароль')
   }
   console.assert(response.body.authorization.methods.find(method => method.id === 'SMS'), 'unsupported authorization method')
   await burlapRequest({
@@ -224,12 +233,12 @@ export async function login (login, password) {
     }
   })
   console.assert(response.body.authorization.methods.find(method => method.id === 'SMS'), 'unsupported authorization method')
-  const code = await ZenMoney.readLine('Введите код из СМС', {
+  const code = await ZenMoney.readLine('Введите код из SMS или push-уведомления', {
     time: 120000,
     inputType: 'number'
   })
   if (!code || !code.trim()) {
-    throw new TemporaryError('Вы не ввели код. Повторите запуск синхронизации.')
+    throw new TemporaryError('Введён пустой код. Повторите подключение синхронизации ещё раз.')
   }
   response = await burlapRequest({
     sdkData,
@@ -251,7 +260,7 @@ export async function login (login, password) {
     }
   })
   if (response.body.type === 'invalid-sms-code') {
-    throw new TemporaryError('Вы ввели неверный код. Повторите запуск синхронизации.')
+    throw new TemporaryError('Введён неверный код. Повторите подключение синхронизации ещё раз.')
   }
   console.assert(response.body.authorization.id === '00000000-0000-0000-0000-000000000000', 'invalid response')
   return {
@@ -270,8 +279,13 @@ export async function fetchAccounts ({ login, token }) {
       refreshImmediately: false
     }
   })
-  console.assert(response.body.executionPercent === 100 &&
-    response.body.status === 'Complete', 'missing some accounts data')
+  console.assert(response.body.executionPercent && response.body.status, 'unexpected response')
+  // console.assert(response.body.executionPercent === 100 &&
+  //   response.body.status === 'Complete', 'missing some accounts data')
+  if (response.body.executionPercent < 75) {
+  // if (response.body.executionPercent !== 100 || response.body.status !== 'Complete') {
+    throw new TemporaryError('Информация из Банка ВТБ временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог разработчикам".')
+  }
   return response.body.portfolios
 }
 
@@ -280,24 +294,32 @@ function toMoscowDate (date) {
 }
 
 export async function fetchTransactions ({ login, token }, { id, type }, fromDate, toDate) {
-  const sdkData = createSdkData(login)
-  const response = await burlapRequest({
-    sdkData,
-    token,
-    body: {
-      __type: 'ru.vtb24.mobilebanking.protocol.statement.StatementRequest',
-      startDate: new Date(toISODateString(toMoscowDate(fromDate)) + 'T00:00:00+03:00'),
-      endDate: new Date(toISODateString(toMoscowDate(toDate)) + 'T23:59:59+03:00'),
-      products: [
-        {
-          __type: 'ru.vtb24.mobilebanking.protocol.ObjectIdentityMto',
-          id,
-          type
-        }
-      ]
+  let transactions = null
+  try {
+    const sdkData = createSdkData(login)
+    const response = await burlapRequest({
+      sdkData,
+      token,
+      body: {
+        __type: 'ru.vtb24.mobilebanking.protocol.statement.StatementRequest',
+        startDate: new Date(toISODateString(toMoscowDate(fromDate)) + 'T00:00:00+03:00'),
+        endDate: new Date(toISODateString(toMoscowDate(toDate)) + 'T23:59:59+03:00'),
+        products: [
+          {
+            __type: 'ru.vtb24.mobilebanking.protocol.ObjectIdentityMto',
+            id,
+            type
+          }
+        ]
+      }
+    })
+    transactions = response.body.transactions || []
+  } catch (e) {
+    if (!e.message || !['временно', 'Ошибка обращения', '[NER]', '[NCE]'].some(pattern => e.message.indexOf(pattern) >= 0)) {
+      throw e
     }
-  })
-  return response.body.transactions
+  }
+  return transactions
 }
 
 function getCachedObject (object, cache) {

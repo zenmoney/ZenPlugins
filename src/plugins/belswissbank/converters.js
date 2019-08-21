@@ -17,12 +17,16 @@ import { figureOutAccountRestsDelta, getTransactionFactor, isCashTransferTransac
 function formatDetails ({ transaction, matchedPayment }) {
   if (matchedPayment) {
     return {
+      country: null,
+      city: null,
       payee: [matchedPayment.name, matchedPayment.target].filter(Boolean).join(', '),
       comment: matchedPayment.comment || null
     }
   }
   return {
-    payee: [transaction.countryCode, transaction.city, transaction.transactionDetails].filter(Boolean).join(' '),
+    country: transaction.countryCode || null,
+    city: transaction.city || null,
+    payee: transaction.transactionDetails,
     comment: null
   }
 }
@@ -81,7 +85,7 @@ export function convertApiTransactionsToReadableTransactions (apiTransactionsByA
           ],
           date,
           hold: null,
-          merchant: { title: details.payee, mcc: null, location: null },
+          merchant: details.payee ? { country: details.country, city: details.city, title: details.payee, mcc: null, location: null } : null,
           comment: _.compact([
             details.comment,
             formatCommentDateTime(date),

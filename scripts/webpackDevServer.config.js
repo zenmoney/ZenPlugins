@@ -8,6 +8,7 @@ const { readPluginManifest, readPluginPreferencesSchema } = require('./utils')
 const stripBOM = require('strip-bom')
 const bodyParser = require('body-parser')
 const { URL } = require('url')
+const uuid = require('uuid')
 
 const convertErrorToSerializable = (e) => _.pick(e, ['message', 'stack'])
 
@@ -43,6 +44,7 @@ const readPluginFileSync = (filepath) => stripBOM(fs.readFileSync(filepath, 'utf
 const pluginPreferencesPath = path.join(params.pluginPath, 'zp_preferences.json')
 const pluginDataPath = path.join(params.pluginPath, 'zp_data.json')
 const pluginCodePath = path.join(params.pluginPath, 'zp_pipe.txt')
+const pluginCookiesPath = path.join(params.pluginPath, 'zp_cookies.json')
 
 const ensureFileExists = (filepath, defaultContent) => {
   try {
@@ -52,6 +54,11 @@ const ensureFileExists = (filepath, defaultContent) => {
       throw e
     }
   }
+}
+
+const isWebSocketHeader = (header) => {
+  const key = header.toLowerCase()
+  return key.startsWith('sec-websocket-') || ['connection', 'upgrade'].indexOf(key) >= 0
 }
 
 module.exports = ({ allowedHost, host, https }) => {
@@ -142,22 +149,137 @@ module.exports = ({ allowedHost, host, https }) => {
         })
       )
 
+      app.post(
+        '/zen/zp_cookies.json',
+        bodyParser.text({ type: 'application/json' }),
+        serializeErrors((req, res) => {
+          fs.writeFileSync(pluginCookiesPath, req.body, 'utf8')
+          return res.json(true)
+        })
+      )
+
+      app.get(
+        '/zen/zp_cookies.json',
+        serializeErrors((req, res) => {
+          res.set('Content-Type', 'application/json;charset=utf8')
+          ensureFileExists(pluginCookiesPath, '')
+          const content = readPluginFileSync(pluginCookiesPath)
+          res.send(content)
+        })
+      )
+
       // eslint-disable-next-line new-cap
       const proxy = new httpProxy.createProxyServer()
       proxy.on('error', (err, req, res) => {
-        res.status(502).json(convertErrorToSerializable(err))
+        if (typeof res.status === 'function') {
+          res.status(502).json(convertErrorToSerializable(err))
+        }
       })
       proxy.on('proxyRes', (proxyRes, req, res) => {
         if (proxyRes.headers['set-cookie']) {
-          proxyRes.headers['set-cookie'] = proxyRes.headers['set-cookie'].map(makeCookieAccessibleToClientSide)
           proxyRes.headers[TRANSFERABLE_HEADER_PREFIX + 'set-cookie'] = proxyRes.headers['set-cookie']
+          proxyRes.headers['set-cookie'] = proxyRes.headers['set-cookie'].map(makeCookieAccessibleToClientSide)
         }
         const location = proxyRes.headers['location']
         if (location && /^https?:\/\//i.test(location)) {
           const { origin, pathname, search } = new URL(location)
           proxyRes.headers['location'] = pathname + search +
-                        ((search === '') ? '?' : '&') + PROXY_TARGET_HEADER + '=' + origin
+            ((search === '') ? '?' : '&') + PROXY_TARGET_HEADER + '=' + origin
         }
+      })
+
+      const wsOptions = {}
+      const wsResponsePromises = {}
+      const cacheWebSocketResponse = (req, res) => {
+        const { id, url } = req._zpWsOptions
+        wsResponsePromises[id] = new Promise((resolve, reject) => {
+          const response = {
+            url,
+            protocol: `HTTP/${res.httpVersion}`,
+            status: res.statusCode,
+            statusText: res.statusMessage,
+            headers: res.headers,
+            body: null
+          }
+          if (res.upgrade) {
+            resolve(response)
+          } else {
+            reject(new Error('non-upgrade response is not supported yet'))
+          }
+        })
+      }
+      app.post(
+        '/zen/ws',
+        bodyParser.json(),
+        serializeErrors((req, res) => {
+          const id = uuid().toString().replace(/-/g, '').toLowerCase().substring(0, 16)
+          wsOptions[id] = req.body
+          res.json({ id })
+        })
+      )
+      app.get(
+        '/zen/ws/:id',
+        (req, res) => {
+          const id = req.params.id
+          const resPromise = wsResponsePromises[id]
+          delete wsResponsePromises[id]
+          if (resPromise) {
+            resPromise.then(response => res.json(response)).catch(err => res.status(500).json(convertErrorToSerializable(err)))
+          } else {
+            res.status(500).json(convertErrorToSerializable(new Error('Could not found WebSocket response')))
+          }
+        }
+      )
+      proxy.on('proxyReqWs', (proxyReq, req) => {
+        proxyReq.on('response', (res) => {
+          if (res.upgrade) {
+            return
+          }
+          cacheWebSocketResponse(req, res)
+        })
+        proxyReq.on('upgrade', (res) => {
+          if (!res.headers['sec-websocket-protocol'] && req.headers['sec-websocket-protocol'] === 'null') {
+            res.headers['sec-websocket-protocol'] = 'null'
+          }
+          cacheWebSocketResponse(req, res)
+        })
+      })
+      app.on('upgradeRequest', (req, socket, head) => {
+        const i = req.url.indexOf(PROXY_TARGET_HEADER)
+        const id = i >= 0 ? req.url.substring(i + PROXY_TARGET_HEADER.length + 1) : null
+        const options = id ? wsOptions[id] : null
+        if (!options) {
+          socket.destroy()
+          return
+        }
+        delete wsOptions[id]
+        const headers = {}
+        if (req.rawHeaders) {
+          for (let i = 0; i < req.rawHeaders.length; i += 2) {
+            const key = req.rawHeaders[i].toLowerCase()
+            const value = req.rawHeaders[i + 1]
+            if (isWebSocketHeader(key) || key === 'cookie') {
+              headers[key] = value
+            }
+          }
+        }
+        if (options.headers) {
+          _.forOwn(options.headers, (value, header) => {
+            const key = header.toLowerCase()
+            if (!isWebSocketHeader(key)) {
+              headers[key] = value
+            }
+          })
+        }
+        const { host, origin, pathname, search } = new URL(options.url)
+        const url = `${/^https|wss/.test(options.url) ? 'https' : 'http'}://${host}${pathname}${search}`
+        req.url = pathname + search
+        req.headers = headers
+        req._zpWsOptions = { id, url }
+        proxy.ws(req, socket, head, {
+          target: origin,
+          preserveHeaderKeyCase: true
+        })
       })
 
       app.all('*', (req, res, next) => {

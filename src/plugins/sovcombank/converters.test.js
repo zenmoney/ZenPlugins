@@ -202,6 +202,81 @@ describe('convertAccount', () => {
       ]
     })
   })
+
+  it('converts current account for an entrepreneur', () => {
+    expect(convertAccount({
+      account: '40802810311010212042',
+      branchId: '11',
+      bic: '044525058',
+      status: '0',
+      accOpenDate: '2018-04-06 00:00:00',
+      contractDate: '2018-04-06 00:00:00',
+      accCloseDate: '2018-04-06 00:00:00',
+      contractEnd: '',
+      sum_pp: 0,
+      minAmount: '',
+      sum: 0,
+      accType: 'rs',
+      contractNumber: 'Б/Н',
+      kart1: null,
+      kart2:
+        [
+          {
+            num: '9034',
+            dt_doc: '2019-02-07',
+            dt_doc_inbank: '2019-02-07',
+            bo1: '-10',
+            bo2: '4',
+            sum: 100,
+            kvl: 'RUR',
+            acc_p: '40802810311010212042',
+            name_p: 'Индивидуальный предприниматель Николаев Николай Николаевич',
+            acc_r: '45814810911005212042',
+            name_r: 'Требования по неоплаченным операциям к Индивидуальный предприниматель Николаев Николай Николаевич',
+            desc: 'Абонентская плата за услугу мобильного информирования за период 06.01.2019г. по 06.02.2019г, НДС не облагается',
+            dt_acpt: '',
+            status: '1'
+          }
+        ],
+      arest: null,
+      over: null,
+      kppList: '',
+      tarif_id: '12',
+      moeDelo: 0,
+      f_type_client: '4',
+      ownerName: '',
+      ownerNameEng: '',
+      absNameShort: 'ИП Николаев Николай Николаевич',
+      name: 'Индивидуальный предприниматель Николаев Николай Николаевич',
+      inn: '310205689023',
+      kpp: '0',
+      ogrn: '312313022007982',
+      dtRegOgrn: '2012-08-07',
+      ownerAddressEng: '<string[0]>',
+      abs_i: '<string[6]>',
+      abs_o: '<string[10]>',
+      abs_f: '<string[9]>',
+      bank_part_id: '11',
+      ownerAddress: '<string[102]>',
+      cType: 'mip',
+      pay: '1',
+      create: '1',
+      abs_id: '4212042',
+      isOwner: '1',
+      ownerIcon: '',
+      owner_uid: '0',
+      cfmblock: null,
+      endPowerdate: '2037-08-07'
+    })).toEqual({
+      id: '40802810311010212042',
+      type: 'checking',
+      title: 'Индивидуальный предприниматель Николаев Николай Николаевич',
+      instrument: 'RUB',
+      syncID: ['40802810311010212042'],
+      balance: 0,
+      savings: false
+    })
+  })
 })
 
 describe('convertTransaction', () => {

@@ -264,17 +264,18 @@ describe('convertCardAccount', () => {
     }
 
     expect(convertCardAccount(apiAccount)).toEqual({
-      id: 'B472EA16FA154C5080560D2C7A1285BA',
-      type: 'ru.vtb24.mobilebanking.protocol.product.DebitCardMto',
+      mainProduct: {
+        id: 'DB799928F58E47ECB12F3F64AF506A67',
+        type: 'ru.vtb24.mobilebanking.protocol.product.DebitCardAccountMto'
+      },
       products: [
         {
           id: 'B472EA16FA154C5080560D2C7A1285BA',
-          type: 'ru.vtb24.mobilebanking.protocol.product.DebitCardMto',
-          apiAccount: apiAccount.cards[0]
+          type: 'ru.vtb24.mobilebanking.protocol.product.DebitCardMto'
         }
       ],
       zenAccount: {
-        id: 'B472EA16FA154C5080560D2C7A1285BA',
+        id: 'DB799928F58E47ECB12F3F64AF506A67',
         type: 'ccard',
         title: 'Социальная карта москвича',
         instrument: 'RUB',

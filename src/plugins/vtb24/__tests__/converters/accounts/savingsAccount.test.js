@@ -31,15 +31,11 @@ describe('convertAccount', () => {
       }
     }
     expect(convertAccount(apiAccount)).toEqual({
-      id: 'F1ABB1311A944485B984BD2EE933E4A1',
-      type: 'ru.vtb24.mobilebanking.protocol.product.SavingsAccountMto',
-      products: [
-        {
-          id: 'F1ABB1311A944485B984BD2EE933E4A1',
-          type: 'ru.vtb24.mobilebanking.protocol.product.SavingsAccountMto',
-          apiAccount
-        }
-      ],
+      mainProduct: {
+        id: 'F1ABB1311A944485B984BD2EE933E4A1',
+        type: 'ru.vtb24.mobilebanking.protocol.product.SavingsAccountMto'
+      },
+      products: [],
       zenAccount: {
         id: 'F1ABB1311A944485B984BD2EE933E4A1',
         type: 'checking',

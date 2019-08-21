@@ -61,15 +61,11 @@ describe('convertAccount', () => {
       }
     }
     expect(convertAccount(apiAccount)).toEqual({
-      id: '92B38AA965C84BB7A53C00F28F9AD9D5',
-      type: 'ru.vtb24.mobilebanking.protocol.product.RevolvingCreditLineMto',
-      products: [
-        {
-          id: '92B38AA965C84BB7A53C00F28F9AD9D5',
-          type: 'ru.vtb24.mobilebanking.protocol.product.RevolvingCreditLineMto',
-          apiAccount
-        }
-      ],
+      mainProduct: {
+        id: '92B38AA965C84BB7A53C00F28F9AD9D5',
+        type: 'ru.vtb24.mobilebanking.protocol.product.RevolvingCreditLineMto'
+      },
+      products: [],
       zenAccount: {
         id: '92B38AA965C84BB7A53C00F28F9AD9D5',
         type: 'checking',

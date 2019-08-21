@@ -3,17 +3,11 @@
  */
 
 import * as api from './api'
-import { converter as cardDataToZenmoneyAccount } from './converters/card'
+import { contractIdsFetcher as cardContractIdsFetcher, converter as cardDataToZenmoneyAccount } from './converters/card'
 import { mapContractToAccount } from './converters/helpers'
 import { converter as transactionsDataToZenmoneyTransaction } from './converters/transaction'
-import { converter as walletDataToZenmoneyAccount } from './converters/wallet'
+import { contractIdsFetcher as walletContractIdsFetcher, converter as walletDataToZenmoneyAccount } from './converters/wallet'
 
-/**
- * @param fromDate
- * @param toDate
- * @param apiUri
- * @returns {Promise.<*>}
- */
 async function scrape ({ fromDate, toDate, apiUri }) {
   const { password, card_number: cardNumber } = ZenMoney.getPreferences()
 
@@ -24,11 +18,19 @@ async function scrape ({ fromDate, toDate, apiUri }) {
 
   await api.auth(cardNumber, password)
 
-  const [cardsData, creditData, walletsData, transactionsData] = await Promise.all([
+  const [cardsData, creditData, walletsData] = await Promise.all([
     api.fetchCards(),
     api.fetchCredits(),
-    api.fetchWallets(),
-    api.fetchTransactions(fromDate)
+    api.fetchWallets()
+  ])
+
+  let contractIds = [
+    ...cardContractIdsFetcher(cardsData),
+    ...walletContractIdsFetcher(walletsData)
+  ]
+
+  const [transactionsData] = await Promise.all([
+    api.fetchTransactions(fromDate, contractIds)
   ])
 
   const cards = cardsData.map((data) => cardDataToZenmoneyAccount(data, creditData))
@@ -36,27 +38,11 @@ async function scrape ({ fromDate, toDate, apiUri }) {
 
   const map = mapContractToAccount(cardsData)
   const transactions = transactionsData.map((data) => transactionsDataToZenmoneyTransaction(data, map))
+  const accounts = [].concat(cards, wallets)
 
-  let accounts = [].concat(cards, wallets).filter((account) => !ZenMoney.isAccountSkipped(account.id))
-  let transactionsAccount = accounts.splice(0, 1)[0]
-
-  return [].concat(
-    accounts.map(convertAccountsForResult),
-    {
-      account: transactionsAccount,
-      transactions: transactions
-    }
-  )
-}
-
-/**
- * @param account
- * @returns {{account: *, transactions: Array}}
- */
-const convertAccountsForResult = (account) => {
   return {
-    account: account,
-    transactions: []
+    accounts,
+    transactions
   }
 }
 

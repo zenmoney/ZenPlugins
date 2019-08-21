@@ -1,8 +1,5 @@
 import _ from 'lodash'
-import {
-  ensureSyncIDsAreUniqueButSanitized,
-  sanitizeSyncId
-} from '../../common/accounts'
+import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
 import {
   addMovement,
   formatCalculatedRateLine,
@@ -47,8 +44,8 @@ function convertCreditApiAccount (apiAccount) {
     typeWithDashAndInstrument.startsWith('Автокредит')
   ) {
     return {
-      startBalance: 0,
-      balance: parseApiAmount(apiAccount.amount)
+      available: parseApiAmount(apiAccount.amount),
+      startBalance: 0
     }
   } else {
     console.error({ apiAccount })
@@ -114,7 +111,7 @@ export function parseApiMovementDescription (description, sign) {
       mcc: null
     }
   }
-  const [, amount, currency,, mcc] = match
+  const [, amount, currency, , mcc] = match
   return {
     origin: {
       amount: sign * Number(amount),
@@ -174,7 +171,6 @@ export const extractDate = (apiMovement) => {
 
 export const getMerchantDataFromDescription = (description) => {
   const spacedPattern = /\w+\s+(\w{2,3})\s+([^>]+?)>(.+)?\s+(?:\d{2}\.\d{2}\.\d{2}\s+){2}/ // 35 characters max
-  const slashedPattern = /(\d{6,8}|\s+)\\(\w{3})\\([\w \\]{1,28})\s+/ // 40 characters max
 
   let matched = description.match(spacedPattern)
   if (matched) {
@@ -182,12 +178,27 @@ export const getMerchantDataFromDescription = (description) => {
     return { country, title, city }
   }
 
-  matched = description.match(slashedPattern)
-  if (matched) {
-    const [,, country, rest] = matched
-    const [city, ...restTitle] = rest.split(/\\/)
-    const title = (restTitle.pop()).trim()
-    return { country, city, title }
+  for (const regexp of [
+    /\d\\([\w\s]+)\\([\w\s]+)\\([\w\s\\]+)\d{2}\.\d{2}\.\d{2}/,
+    /\s+\\([\d\s]+)\\([\w\s]+)\\([\w\s]+)\d{2}\.\d{2}\.\d{2}/
+  ]) {
+    matched = description.match(regexp)
+    if (matched) {
+      let [, country, city, title] = matched
+      if (city.length === 3) {
+        const c = country
+        country = city
+        city = c
+      }
+      title = title.split(/\\/).pop().trim()
+      if (city && /^[\d\s]+$/.test(city)) {
+        city = null
+      }
+      if (title) {
+        return { country, city, title }
+      }
+      break
+    }
   }
 
   return null
@@ -302,7 +313,10 @@ function convertApiMovementToReadableTransaction (apiMovement, accountId) {
   }
 
   if (apiMovement.reference.match(/^C0[23]/)) {
-    readableTransaction.movements.push(makeOuterMovement(readableTransaction, apiMovement))
+    const transferMovement = makeOuterMovement(readableTransaction, apiMovement)
+    if (transferMovement) {
+      readableTransaction.movements.push(makeOuterMovement(readableTransaction, apiMovement))
+    }
     readableTransaction.comment = apiMovement.description
     return readableTransaction
   }
@@ -352,18 +366,18 @@ const makeCard2CardMovement = (readableTransaction, apiMovement) => ({
   fee: 0
 })
 
-const makeOuterMovement = (readableTransaction, apiMovement) => ({
+const makeOuterMovement = (readableTransaction, apiMovement) => apiMovement.recipientInfo && apiMovement.recipientInfo.recipientValue ? ({
   id: null,
   account: {
     company: null,
     instrument: apiMovement.currency,
-    syncIds: apiMovement.recipientInfo ? [`${apiMovement.recipientInfo.recipientValue}`] : null,
+    syncIds: [`${apiMovement.recipientInfo.recipientValue}`],
     type: null
   },
   invoice: null,
   sum: -1 * parseApiAmount(apiMovement.amount),
   fee: 0
-})
+}) : null
 
 const makeInternalMovement = (readableTransaction, apiMovement) => ({
   id: null,

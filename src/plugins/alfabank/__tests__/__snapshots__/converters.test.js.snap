@@ -208,5 +208,25 @@ Array [
       },
     },
   },
+  Object {
+    "input": "123456++++++9876    00000001\\\\12345678901\\\\123\\\\PAYPAL  HELLO            09.08.19 06.08.19       123.45  RUR MCC1234",
+    "output": Object {
+      "mcc": 1234,
+      "origin": Object {
+        "amount": -123.45,
+        "instrument": "RUR",
+      },
+    },
+  },
+  Object {
+    "input": "123456++++++9876    00000001\\\\123\\\\1234567890\\\\PAYPAL  GOOGL             04.08.19 02.08.19       124.00  RUR MCC1235",
+    "output": Object {
+      "mcc": 1235,
+      "origin": Object {
+        "amount": -124,
+        "instrument": "RUR",
+      },
+    },
+  },
 ]
 `;

@@ -175,6 +175,41 @@ describe('convertTransaction', () => {
       }
     },
     {
+      name: 'deposit capitalization',
+      transaction: {
+        accountType: '0',
+        concreteType: '0',
+        accountNumber: '2007549330000000',
+        operationName: 'Капитализация. Удержано подоходного налога 0.21',
+        transactionDate: 1553158380000,
+        operationDate: 1553158380000,
+        transactionAmount: 1.6,
+        transactionCurrency: '933',
+        operationAmount: 1.6,
+        operationCurrency: '933',
+        operationSign: '1',
+        actionGroup: 19,
+        clientName: 'Vasia Pupkin',
+        operationClosingBalance: 8.06,
+        operationCode: 999
+      },
+      expectedTransaction: {
+        hold: false,
+        date: new Date(1553158380000),
+        movements: [
+          {
+            id: null,
+            account: { id: '2007549330000000' },
+            sum: 1.6,
+            fee: 0.21,
+            invoice: null
+          }
+        ],
+        merchant: null,
+        comment: 'Капитализация'
+      }
+    },
+    {
       name: 'add money to deposit',
       transaction: {
         accountNumber: '2007549330000000',

@@ -1,59 +1,113 @@
-export function convertAccount (account, type) {
+import _ from 'lodash'
+
+export function convertAccount (apiAccount, type) {
   const accountData = {}
   switch (type) {
     // кредитные карты
     case 'CreditCard': // MyCredit
     case 'creditCards': // Base
-      accountData.account = convertCard(account)
+      accountData.account = convertCard(apiAccount)
       break
 
-      // карты рассрочки
+    // карты рассрочки
     case 'CreditCardTW': // MyCredit
     case 'merchantCards': // Base
-      accountData.account = convertCardTW(account)
+      accountData.account = convertCard(apiAccount)
       break
 
-      // дебетовые карты
+    // дебетовые карты
     case 'debitCards': // Base
-      accountData.account = convertCard(account)
+      accountData.account = convertCard(apiAccount)
       break
 
-      // кредиты
+    // кредиты
     case 'CreditLoan': // MyCredit
     case 'credits': // Base
-      accountData.account = convertLoan(account)
+      accountData.account = convertLoan(apiAccount)
       break
 
-      // депозиты
+    // депозиты
     case 'deposits': // Base
     default:
       break
+
+    // дебетовые счета в MyCredit
+    case 'accounts':
+      // счёт кредитов пропускаем, так как "Мой кредит" выдаёт кредиты отдельно
+      if (apiAccount.accountType === 'CREDIT') {
+        return null
+      }
+
+      accountData.account = convertAccountMyCredit(apiAccount)
+      break
   }
-  accountData.details = getAccountDetails(account, type)
+  accountData.details = getAccountDetails(apiAccount, type)
   return accountData
 }
 
-function getAccountDetails (account, type) {
+function getAccountDetails (apiAccount, type) {
   return {
     type: type,
-    title: account.productName || account.ProductName,
-    accountNumber: account.accountNumber || account.AccountNumber,
-    cardNumber: account.cardNumber || account.mainCardNumber || account.CardNumber || account.MainCardNumber,
-    contractNumber: account.ContractNumber || account.contractNumber
+    title: apiAccount.productName || apiAccount.ProductName || apiAccount.accountName || apiAccount.AccountName,
+    accountNumber: getAccountNumber(apiAccount),
+    cardNumber: getCardNumber(apiAccount),
+    contractNumber: getContractNumber(apiAccount)
   }
 }
 
-function convertCard (account) {
-  const cardNumber = account.cardNumber || account.mainCardNumber || account.CardNumber || account.MainCardNumber
+function getCardNumber (apiAccount) {
+  return apiAccount.cardNumber || apiAccount.mainCardNumber || // BaseApp
+    apiAccount.CardNumber || apiAccount.MainCardNumber || // MyCredit
+    apiAccount.maskCardNumber // MyCreditDebit v2
+}
+
+function getAccountNumber (apiAccount) {
+  return apiAccount.accountNumber || // BaseApp
+    apiAccount.AccountNumber // MyCredit
+}
+
+function getContractNumber (apiAccount) {
+  return apiAccount.contractNumber || // BaseApp
+    apiAccount.ContractNumber // MyCredit
+}
+
+function getInstrument (code) {
+  if (!code || code === 'RUR') { return 'RUB' }
+  return code
+}
+
+function convertAccountMyCredit (apiAccount) {
   const result = {
-    id: account.contractNumber || account.ContractNumber,
-    type: 'ccard',
-    syncID: cardNumber.substr(-4),
-    title: account.productName || account.ProductName,
-    instrument: account.currency || 'RUB'
+    id: getAccountNumber(apiAccount),
+    type: 'checking',
+    syncID: [ getAccountNumber(apiAccount).substr(-4) ],
+    title: apiAccount.accountName,
+    instrument: getInstrument(apiAccount.currency)
   }
-  const creditLimit = account.creditLimit || account.CreditLimit
-  const availableBalance = account.availableBalance || account.AvailableBalance
+
+  if (apiAccount.runningBalance) { result.balance = apiAccount.runningBalance }
+
+  return result
+}
+
+function convertCard (apiAccount) {
+  const result = {
+    id: getContractNumber(apiAccount),
+    type: 'ccard',
+    syncID: [ getAccountNumber(apiAccount).substr(-4) ],
+    title: apiAccount.productName || apiAccount.ProductName,
+    instrument: getInstrument(apiAccount.currency)
+  }
+
+  // Добавим syncID карты
+  const cardNumber = getCardNumber(apiAccount)
+  if (cardNumber) {
+    result.syncID = _.union(result.syncID, [ cardNumber.substr(-4) ])
+  }
+
+  // определим остаток на карте
+  const creditLimit = apiAccount.creditLimit || apiAccount.CreditLimit
+  const availableBalance = apiAccount.availableBalance || apiAccount.AvailableBalance || apiAccount.balance || apiAccount.Balance
   if (creditLimit) {
     result.creditLimit = creditLimit
     result.balance = Math.round((availableBalance - creditLimit) * 100) / 100
@@ -65,17 +119,25 @@ function convertCard (account) {
   return result
 }
 
-function convertCardTW (account) {
+/* function convertCardTW (apiAccount) {
   // console.log(">>> Конвертация карты рассрочки: ", account);
   const result = {
-    id: account.contractNumber || account.ContractNumber,
+    id: apiAccount.contractNumber || apiAccount.ContractNumber,
     type: 'ccard',
-    syncID: (account.accountNumber || account.AccountNumber).substr(-4),
-    title: account.productName || account.ProductName,
-    instrument: account.currency || 'RUB'
+    syncID: [ getAccountNumber(apiAccount).substr(-4) ],
+    title: apiAccount.productName || apiAccount.ProductName,
+    instrument: getInstrument(apiAccount.currency)
   }
-  const creditLimit = account.creditLimit || account.CreditLimit
-  const availableBalance = account.availableBalance || account.AvailableBalance || account.balance || account.Balance
+
+  // Добавим syncID карты
+  const cardNumber = getCardNumber(apiAccount)
+  if (cardNumber) {
+    result.syncID.concat(cardNumber).unique()
+  }
+
+  // определим остаток на карте
+  const creditLimit = apiAccount.creditLimit || apiAccount.CreditLimit
+  const availableBalance = apiAccount.availableBalance || apiAccount.AvailableBalance || apiAccount.balance || apiAccount.Balance
   if (creditLimit) {
     result.creditLimit = creditLimit
     result.balance = Math.round((availableBalance - creditLimit) * 100) / 100
@@ -85,30 +147,30 @@ function convertCardTW (account) {
     result.balance = 0
   }
   return result
-}
+} */
 
-function convertLoan (account) {
-  const contractNumber = account.contractNumber || account.ContractNumber
+function convertLoan (apiAccount) {
+  // console.log('>>> Конвертер кредита: ', apiAccount)
   const res = {
-    id: contractNumber,
+    id: getContractNumber(apiAccount),
     type: 'loan',
-    syncID: contractNumber.substr(-4),
-    title: account.productName || account.ProductName,
+    syncID: [ getContractNumber(apiAccount).substr(-4) ],
+    title: apiAccount.productName || apiAccount.ProductName,
     instrument: 'RUB'
   }
 
-  if (account.DateSign) {
+  if (apiAccount.DateSign) {
     // MyCredit
-    res.startDate = account.DateSign
-    res.startBalance = account.CreditAmount
-    res.endDateOffset = account.Contract.Properties.PaymentNum
+    res.startDate = apiAccount.DateSign
+    res.startBalance = apiAccount.CreditAmount
+    res.endDateOffset = apiAccount.Contract.Properties.PaymentNum
     res.endDateOffsetInterval = 'month'
     res.capitalization = true
     res.percent = 0.1
     res.payoffStep = 1
     res.payoffInterval = 'month'
     // res.balance = Math.round((-account.RepaymentAmount + account.AccountBalance) * 100) / 100;
-    if (account.RepaymentAmount) res.balance = -account.RepaymentAmount
+    if (apiAccount.RepaymentAmount) res.balance = -apiAccount.RepaymentAmount
   } else {
     // Base (заглушка)
     res.startDate = Date.now()
@@ -126,45 +188,54 @@ function convertLoan (account) {
 }
 
 export function convertTransactions (accountData, transactions) {
+  if (!transactions) {
+    return []
+  }
+
   const result = []
   transactions.forEach(transaction => {
-    // дополнительная логика для счетов кредитов
-    let credit = false
-    if (['CreditLoan', 'credits'].indexOf(accountData.details.type) + 1) {
-      if (!transaction.creditDebitIndicator) {
-        // списания по основному долгу на счетах кредитов пропускаем
-        if (transaction.shortDescription.indexOf('основного долга') + 1) { return }
-      } else {
-        // поступление на счёт кредита записываем в минус
-        if (transaction.shortDescription.indexOf('Выдача кредита') + 1) { transaction.creditDebitIndicator = false }
-      }
-      credit = true
-    }
-
-    const tran = {
-      id: transaction.movementNumber,
-      hold: transaction.postingDate === null,
-      income: transaction.creditDebitIndicator ? transaction.amount : 0,
-      incomeAccount: accountData.account.id,
-      outcome: transaction.creditDebitIndicator ? 0 : transaction.amount,
-      outcomeAccount: accountData.account.id,
-      date: new Date(transaction.valueDate.time || transaction.valueDate),
-      payee: transaction.merchantName || transaction.merchant.trim()
-    }
-    if (transaction.creditDebitIndicator || credit) { tran.comment = transaction.shortDescription }
-
-    if (transaction.mcc) {
-      if (transaction.mcc === 'ATM CASH WITHDRAWAL') {
-        tran.income = tran.outcome
-        tran.incomeAccount = 'cash#' + transaction.payCurrency
-      } else {
-        tran.mcc = getMcc(transaction.mcc)
-      }
-    }
-
+    const tran = convertTransaction(accountData, transaction)
     result.push(tran)
   })
   return result
+}
+
+export function convertTransaction (accountData, transaction) {
+  // дополнительная логика для счетов кредитов
+  let credit = false
+  if (accountData.details && ['CreditLoan', 'credits'].indexOf(accountData.details.type) + 1) {
+    if (!transaction.creditDebitIndicator) {
+      // списания по основному долгу на счетах кредитов пропускаем
+      if (transaction.shortDescription.indexOf('основного долга') + 1) { return }
+    } else {
+      // поступление на счёт кредита записываем в минус
+      if (transaction.shortDescription.indexOf('Выдача кредита') + 1) { transaction.creditDebitIndicator = false }
+    }
+    credit = true
+  }
+
+  const tran = {
+    id: transaction.movementNumber,
+    hold: transaction.postingDate === null,
+    income: transaction.creditDebitIndicator ? transaction.amount : 0,
+    incomeAccount: accountData.account.id,
+    outcome: transaction.creditDebitIndicator ? 0 : transaction.amount,
+    outcomeAccount: accountData.account.id,
+    date: new Date(transaction.valueDate.time || transaction.valueDate),
+    payee: transaction.merchantName || transaction.merchant.trim()
+  }
+  if (transaction.creditDebitIndicator || credit) { tran.comment = transaction.shortDescription }
+
+  if (transaction.mcc) {
+    if (transaction.mcc === 'ATM CASH WITHDRAWAL') {
+      tran.income = tran.outcome
+      tran.incomeAccount = transaction.payCurrency ? 'cash#' + transaction.payCurrency : 'cash'
+    } else {
+      tran.mcc = getMcc(transaction.mcc)
+    }
+  }
+
+  return tran
 }
 
 export function getMcc (code) {

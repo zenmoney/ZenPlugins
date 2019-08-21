@@ -989,7 +989,7 @@ describe('registerCustomer', () => {
       fromDate: new Date(),
       toDate: null
     })
-    await expect(result).rejects.toBeInstanceOf(InvalidPreferencesError)
+    await expect(result).rejects.toBeInstanceOf(Error)
     await expect(result).rejects.toMatchObject({ message: `Некорректные данные.\n Пожалуйста, попробуйте ещё раз.` })
   })
 })

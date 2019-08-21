@@ -26,3 +26,9 @@ export class TemporaryError extends ZPAPIError {
     super(message, true, false)
   }
 }
+
+export class IncompatibleVersionError extends TemporaryError {
+  constructor () {
+    super('У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии')
+  }
+}

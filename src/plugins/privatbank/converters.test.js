@@ -13,7 +13,7 @@ describe('convertTransactions', () => {
     expect(transactions).toEqual([
       {
         'outcomeBankID': '558011',
-        'date': new Date('2018-03-14 10:25:00'),
+        'date': new Date('2018-03-14T10:25:00+03:00'),
         'income': 0,
         'incomeAccount': '5167985500160759',
         'outcome': 164,
@@ -22,7 +22,7 @@ describe('convertTransactions', () => {
       },
       {
         'outcomeBankID': '162010',
-        'date': new Date('2018-03-08 09:34:00'),
+        'date': new Date('2018-03-08T09:34:00+03:00'),
         'income': 0,
         'incomeAccount': '5167985500160759',
         'outcome': 126,
@@ -30,7 +30,7 @@ describe('convertTransactions', () => {
         'payee': 'Рівнегаз Збут'
       },
       {
-        'date': new Date('2018-03-01 00:00:00'),
+        'date': new Date('2018-03-01T00:00:00+03:00'),
         'income': 3.5,
         'incomeAccount': '5168742331568802',
         'outcome': 0,
@@ -38,7 +38,7 @@ describe('convertTransactions', () => {
         'comment': 'Начисление процентов на остаток средств по договору'
       },
       {
-        'date': new Date('2018-03-01 00:00:00'),
+        'date': new Date('2018-03-01T00:00:00+03:00'),
         'income': 0,
         'incomeAccount': '5168742331568802',
         'outcome': 0.68,
@@ -61,7 +61,7 @@ describe('convertTransactions', () => {
     const transactions = convertTransactions(xml, accounts)
     expect(transactions).toEqual([
       {
-        'date': new Date('2018-03-21T16:35:00'),
+        'date': new Date('2018-03-21T16:35:00+03:00'),
         'income': 380,
         'incomeAccount': 'cash#UAH',
         'outcome': 380,
@@ -69,7 +69,7 @@ describe('convertTransactions', () => {
         'outcomeBankID': '515326'
       },
       {
-        'date': new Date('2018-03-19T01:27:00'),
+        'date': new Date('2018-03-19T01:27:00+03:00'),
         'income': 0,
         'incomeAccount': '5363542602444722',
         'outcome': 38.65,
@@ -78,7 +78,7 @@ describe('convertTransactions', () => {
         'payee': 'Магазин "Элен"'
       },
       {
-        'date': new Date('2018-03-17T10:49:00'),
+        'date': new Date('2018-03-17T10:49:00+03:00'),
         'income': 0,
         'incomeAccount': '5363542602444722',
         'outcome': 31.86,

@@ -7,6 +7,7 @@ export function convertAccount (apiAccount) {
     case 'card':
       return convertCard(apiAccount)
     case 'current':
+    case 'rs':
       return convertCurrentAccount(apiAccount)
     case 'vklad':
       return convertDeposit(apiAccount)

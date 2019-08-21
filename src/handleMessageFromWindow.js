@@ -25,8 +25,10 @@ const messageHandlers = {
     }
   },
 
-  ':events/received-user-input': () => {
-  }
+  ':events/received-user-input': () => {},
+  ':events/cookie-set': () => {},
+  ':events/cookies-saved': () => {},
+  ':events/cookies-restored': () => {}
 }
 
 export async function handleMessageFromWindow ({ event }) {

@@ -1,12 +1,14 @@
 /* eslint-disable no-unused-vars,camelcase */
+import * as qs from 'querystring'
 import * as network from '../../common/network'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
+import { IncompatibleVersionError } from '../../errors'
+import * as config from './config'
 
-const qs = require('querystring')
+const CLIENT_ID = config.clientId
+const CLIENT_SECRET = config.clientSecret
+const API_REDIRECT_URI = config.redirectUri
 
-const CLIENT_ID = 'sandbox_hash'
-const CLIENT_SECRET = 'sandbox_secret_hash'
-const API_REDIRECT_URI = 'https://zenmoney.ru/callback/tochka/'
 const SANDBOX_REDIRECT_URI = 'https://localhost:8000/'
 const API_URI = 'https://enter.tochka.com/api/v1/'
 const SANDBOX_URI = 'https://enter.tochka.com/sandbox/v1/'
@@ -114,7 +116,7 @@ export async function login ({ access_token, refresh_token, expirationDateMs } =
       sanitizeResponseLog: { body: { access_token: true, refresh_token: true } }
     }, null)
   } else {
-    throw new TemporaryError('У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии.')
+    throw new IncompatibleVersionError()
   }
   console.assert(response.body &&
         response.body.access_token &&

@@ -2,8 +2,12 @@
 
 import { nativeConsole } from './consoleAdapter'
 import { promptAsync } from './promptAsync'
+import WebSocket from './webSocket'
+import { makePluginDataApi } from './ZPAPI.pluginData'
 import {
+  addCookies,
   fetchRemoteSync,
+  getCookies,
   getLastError,
   getLastResponseHeader,
   getLastResponseHeaders,
@@ -16,7 +20,6 @@ import {
   setDefaultEncoding,
   setThrowOnError
 } from './ZPAPI.utils'
-import { makePluginDataApi } from './ZPAPI.pluginData'
 
 function sleepSync (durationMs) {
   const startMs = Date.now()
@@ -102,7 +105,8 @@ function ZPAPI ({ manifest, preferences, data }) {
   this.features = {
     j2v8Date: true,
     dateProcessing: true,
-    binaryRequestBody: true
+    binaryRequestBody: true,
+    binaryResponseBody: true
   }
   const knownAccounts = {}
   const addedAccounts = []
@@ -121,8 +125,6 @@ function ZPAPI ({ manifest, preferences, data }) {
   this.clearAuthentication = notImplemented
   this.getCookies = notImplemented
   this.getCookie = notImplemented
-  this.saveCookies = notImplemented
-  this.restoreCookies = notImplemented
 
   const pluginDataApi = makePluginDataApi(data)
   Object.assign(this, pluginDataApi.methods)
@@ -353,9 +355,9 @@ function ZPAPI ({ manifest, preferences, data }) {
     addedTransactions.push(transaction)
   }
 
-  this.request = (method, url, body, headers) => fetchRemoteSync({ method: method.toUpperCase(), url, headers, body })
-  this.requestGet = (url, headers) => this.request('GET', url, null, headers)
-  this.requestPost = (url, body, headers) => this.request('POST', url, body, headers)
+  this.request = (method, url, body, headers, options) => fetchRemoteSync({ method: method.toUpperCase(), url, headers, body, ...options })
+  this.requestGet = (url, headers, options) => this.request('GET', url, null, headers, options)
+  this.requestPost = (url, body, headers, options) => this.request('POST', url, body, headers, options)
 
   this.addAccount = addAccount
   this.addTransaction = addTransaction
@@ -390,12 +392,84 @@ Object.assign(ZPAPI.prototype, {
   },
 
   setCookie (domain, name, value, params) {
-    if (typeof domain !== 'string' || typeof name !== 'string') {
-      throw new Error('cookie must have domain and name')
-    }
-    self.postMessage({
-      type: ':commands/cookie-set',
-      payload: { name, value, options: { domain, ...params } }
+    return new Promise((resolve, reject) => {
+      if (typeof domain !== 'string' || typeof name !== 'string') {
+        return reject(new Error('cookie must have domain and name'))
+      }
+      params = params || {}
+      const cookie = {}
+      cookie.name = name
+      cookie.value = value
+      cookie.domain = domain || null
+      cookie.path = params.path || null
+      cookie.persistent = true
+      cookie.secure = params.secure || false
+      cookie.expires = params.expires || null
+      const correlationId = Date.now()
+      const messageHandler = (e) => {
+        const message = e.data
+        if (message.type !== ':events/cookie-set') {
+          return
+        }
+        if (message.payload.correlationId !== correlationId) {
+          return
+        }
+        self.removeEventListener('message', messageHandler)
+        addCookies([cookie])
+        resolve()
+      }
+      self.addEventListener('message', messageHandler)
+      self.postMessage({
+        type: ':commands/cookie-set',
+        payload: { cookie, correlationId }
+      })
+    })
+  },
+
+  WebSocket: WebSocket,
+
+  saveCookies () {
+    return new Promise((resolve, reject) => {
+      const correlationId = Date.now()
+      const messageHandler = (e) => {
+        const message = e.data
+        if (message.type !== ':events/cookies-saved') {
+          return
+        }
+        if (message.payload.correlationId !== correlationId) {
+          return
+        }
+        self.removeEventListener('message', messageHandler)
+        resolve()
+      }
+      self.addEventListener('message', messageHandler)
+      self.postMessage({
+        type: ':commands/cookies-save',
+        payload: { correlationId, cookies: getCookies() }
+      })
+    })
+  },
+
+  restoreCookies () {
+    return new Promise((resolve, reject) => {
+      const correlationId = Date.now()
+      const messageHandler = (e) => {
+        const message = e.data
+        if (message.type !== ':events/cookies-restored') {
+          return
+        }
+        if (message.payload.correlationId !== correlationId) {
+          return
+        }
+        self.removeEventListener('message', messageHandler)
+        addCookies(message.payload.cookies)
+        resolve()
+      }
+      self.addEventListener('message', messageHandler)
+      self.postMessage({
+        type: ':commands/cookies-restore',
+        payload: { correlationId }
+      })
     })
   }
 })

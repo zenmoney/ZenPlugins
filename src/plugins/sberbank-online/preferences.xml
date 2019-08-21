@@ -4,19 +4,18 @@
         key="login"
         title="Номер карты или логин"
         dialogTitle="Номер карты или логин"
-        dialogMessage="Введите номер карты или логин от Сбербанка"
-        summary="|ID пользователя или логин|{@s}"
+        summary="||{@s}"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         obligatory="true">
     </EditTextPreference>
     <EditTextPreference
         key="pin"
-        title="Пин-код (5 цифр)"
-        dialogTitle="Пин-код (5 цифр)"
-        dialogMessage="Введите ПИН-код (5 цифр) от мобильного приложения Сбербанк Онлайн"
+        title="5-значный пароль от приложения Сбербанк Онлайн"
+        dialogTitle="5-значный пароль от приложения Сбербанк Онлайн"
+        dialogMessage="Введите 5-значный пароль от мобильного приложения Сбербанк Онлайн. Если у вас не установлено приложение Сбербанка, введите 97531."
         inputType="numberPassword"
-        summary="||***********"
+        summary="||*****"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         obligatory="true">
@@ -26,9 +25,8 @@
         obligatory="true"
         inputType="date"
         title="С какой даты загружать операции"
+        dialogTitle="С какой даты загружать операции"
         defaultValue="2018-04-01T00:00:00.000Z"
-        dialogTitle="Дата начала загрузки"
-        dialogMessage="Введите дату, с которой загружать операции"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="|startDate|{@s}">

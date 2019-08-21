@@ -1,4 +1,5 @@
 import { MD5, SHA1 } from 'jshashes'
+import { createDateIntervals as commonCreateDateIntervals } from '../../common/dateUtils'
 import * as network from '../../common/network'
 import { retry } from '../../common/retry'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
@@ -10,9 +11,20 @@ function formatDate (date) {
   return [date.getDate(), date.getMonth() + 1, date.getFullYear()].map(toAtLeastTwoDigitsString).join('.')
 }
 
+function createDateIntervals (fromDate, toDate) {
+  const interval = 30 * 24 * 60 * 60 * 1000 // 30 days interval for fetching data
+  const gapMs = 1
+  return commonCreateDateIntervals({
+    fromDate,
+    toDate,
+    addIntervalToDate: date => new Date(date.getTime() + interval - gapMs),
+    gapMs
+  })
+}
+
 export class PrivatBank {
-  constructor ({ merchant, password, url }) {
-    this.baseUrl = url || 'https://zenmoney.ru/plugins/privatbank/proxy/'
+  constructor ({ merchant, password, baseUrl }) {
+    this.baseUrl = baseUrl
     this.merchant = merchant
     this.password = password
   }
@@ -38,7 +50,13 @@ export class PrivatBank {
         'Accept': 'application/xml, text/plain, */*',
         'Content-Type': 'application/xml;charset=UTF-8'
       },
-      body: xml
+      body: xml,
+      sanitizeRequestLog: {
+        url: (url) => '<string>/' + url.substring(this.baseUrl.length)
+      },
+      sanitizeResponseLog: {
+        url: (url) => '<string>/' + url.substring(this.baseUrl.length)
+      }
     }
 
     const response = await retry({
@@ -56,22 +74,29 @@ export class PrivatBank {
           'авторизуйтесь в Приват24 и отправьте заявку на вкладке "Все услуги" - Бизнес - Мерчант - Заявки.')
       }
       if (response.body.indexOf('invalid signature') >= 0) {
-        throw new TemporaryError(`Не удалось получить данные по мерчанту ${this.merchant}. ` +
+        throw new InvalidPreferencesError(`Не удалось синхронизировать данные по мерчанту ${this.merchant}. ` +
           `Неверный пароль. Проверьте, что вы указали верный пароль в настройках подключения к банку.`)
       }
       if (response.body.indexOf('invalid ip:') >= 0) {
-        throw new TemporaryError(`Не удалось получить данные по мерчанту ${this.merchant}. ` +
-          `Укажите IP-адрес: 95.213.236.52 в настройках мерчанта в Приват24.`)
+        throw new TemporaryError(`Не удалось синхронизировать данные по мерчанту ${this.merchant}. ` +
+          `В настройках мерчанта в Приват24 укажите IP-адрес из настроек синхронизации.`)
+      }
+      if (response.body.indexOf('invalid merchant id') >= 0) {
+        throw new InvalidPreferencesError(`Не удалось синхронизировать данные по мерчанту ${this.merchant}. ` +
+          `Проверьте, что вы указали верный ID мерчанта в настройках подключения к банку.`)
       }
       if (response.body.indexOf('this card is not in merchants card') >= 0) {
-        throw new TemporaryError(`Не удалось получить баланс карты по мерчанту ${this.merchant}. ` +
+        throw new InvalidPreferencesError(`Не удалось получить баланс карты по мерчанту ${this.merchant}. ` +
           `Если карта была недавно перевыпущена, зарегистрируйте для неё новый мерчант и ` +
           `обновите его в настройках подключения к банку.`)
       }
       if (/point\s+\/.*not allowed for merchant/.test(response.body)) {
-        throw new TemporaryError(`Не удалось получить данные по мерчанту ${this.merchant}. ` +
+        throw new TemporaryError(`Не удалось синхронизировать данные по мерчанту ${this.merchant}. ` +
           `Проверьте, что в Приват24 вы поставили галочки "Баланс по счёту мерчанта физлица" и ` +
           `"Выписка по счёту мерчанта физлица".`)
+      }
+      if (response.body.indexOf('временно недоступен') >= 0) {
+        throw new TemporaryError('Информация из ПриватБанка временно недоступна. Запустите синхронизацию через некоторое время.\n\nЕсли ситуация повторится, выберите другой IP-адрес в настройках синхронизации с банком.')
       }
     }
     console.assert(response && response.status === 200 && response.body, 'non-successful response')
@@ -90,14 +115,19 @@ export class PrivatBank {
   }
 
   async fetchTransactions (fromDate, toDate) {
-    const data =
-      `<oper>cmt</oper>
+    fromDate = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate())
+    toDate = toDate || new Date()
+    const dates = createDateIntervals(fromDate, toDate).reverse()
+    return Promise.all(dates.map(([fromDate, toDate]) => {
+      const data =
+        `<oper>cmt</oper>
             <wait>5</wait>
             <test>0</test>
             <payment id="">
                 <prop name="sd" value="${formatDate(fromDate)}"/>
-                <prop name="ed" value="${formatDate(toDate || new Date())}"/>
+                <prop name="ed" value="${formatDate(toDate)}"/>
             </payment>`
-    return this.fetch('rest_fiz', data)
+      return this.fetch('rest_fiz', data)
+    }))
   }
 }

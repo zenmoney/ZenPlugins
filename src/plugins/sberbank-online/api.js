@@ -2,7 +2,7 @@ import { MD5 } from 'jshashes'
 import _ from 'lodash'
 import * as moment from 'moment'
 import * as qs from 'querystring'
-import * as network from '../../common/network'
+import { ParseError, parseXml, fetch } from '../../common/network'
 import { retry, RetryError, toNodeCallbackArguments } from '../../common/retry'
 import { parseOuterAccountData } from '../../common/accounts'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
@@ -11,7 +11,7 @@ import { formatDateSql, parseDate, parseDecimal } from './converters'
 const md5 = new MD5()
 
 const API_VERSION = '9.20'
-const APP_VERSION = '9.2.0'
+const APP_VERSION = '9.7.1'
 
 const defaultHeaders = {
   'User-Agent': 'Mobile Device',
@@ -34,11 +34,11 @@ export async function renewSession (session) {
         'Host': `${session.host}:4477`,
         'Cookie': `${session.cookie}`
       },
-      parse: body => body ? network.parseXml(body) : { response: {} }
+      parse: body => body ? parseXml(body) : { response: {} }
     }, null)
     return response.body && response.body.status === '0' ? session : null
   } catch (e) {
-    if (e.message && e.message.indexOf('non-successful response') >= 0) {
+    if (e instanceof ParseError || (e.message && e.message.indexOf('non-successful response') >= 0)) {
       return null
     } else {
       throw e
@@ -61,10 +61,12 @@ export async function login (login, pin, auth, device) {
     response = await fetchXml('https://online.sberbank.ru:4477/CSAMAPI/login.do', {
       body: {
         ...commonBody,
+        'osVersion': '21.0',
         'operation': 'button.login',
         'mGUID': guid,
         'password': pin,
         'isLightScheme': false,
+        'isSafe': true,
         'devID': device.id,
         'mobileSdkData': JSON.stringify(createSdkData(login, device))
       },
@@ -99,12 +101,12 @@ export async function login (login, pin, auth, device) {
     guid = response.body.confirmRegistrationStage.mGUID
 
     if (_.get(response, 'body.confirmInfo.type') === 'smsp') {
-      const code = await ZenMoney.readLine('Введите код для входа в Сбербанк Онлайн для Android из SMS или пуш-уведомления', {
+      const code = await ZenMoney.readLine('Введите код из SMS или push-уведомления', {
         time: 120000,
         inputType: 'number'
       })
       if (!code || !code.trim()) {
-        throw new TemporaryError('Получен пустой код авторизации устройства')
+        throw new TemporaryError('Введен пустой код из SMS. Повторите подключение синхронизации ещё раз.')
       }
       response = await fetchXml('https://online.sberbank.ru:4477/CSAMAPI/registerApp.do', {
         body: {
@@ -112,12 +114,14 @@ export async function login (login, pin, auth, device) {
           'mGUID': guid,
           'smsPassword': code,
           'version': API_VERSION,
-          'appType': 'android'
+          'appType': 'android',
+          'confirmData': code,
+          'confirmOperation': 'confirmSMS'
         },
         sanitizeRequestLog: { body: { mGUID: true, smsPassword: true } }
       }, null)
       if (response.body.status === '1') {
-        throw new TemporaryError('Вы ввели некорректные реквизиты доступа или код из SMS. Повторите подключение синхронизации.')
+        throw new TemporaryError('Введены неверные регистрационные данные или код из SMS. Повторите подключение синхронизации ещё раз.')
       } else {
         validateResponse(response, response => response.body.status === '0')
       }
@@ -170,7 +174,7 @@ export async function login (login, pin, auth, device) {
     sanitizeResponseLog: { body: { person: true } }
   }, null)
   if (response.body && response.body.status === '3' && !response.body.error) {
-    throw new TemporaryError('Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
+    throw new TemporaryError('Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог разработчикам".')
   }
   validateResponse(response, response => response.body.status === '0' &&
     _.get(response, 'body.loginCompleted') === 'true')
@@ -202,13 +206,10 @@ export async function fetchAccounts (auth) {
   const types = ['card', 'account', 'loan', 'target', 'ima']
   return (await Promise.all(types.map(type => {
     return Promise.all(getArray(_.get(response.body, type !== 'ima' ? `${type}s.${type}` : 'imaccounts.ima')).map(async account => {
-      const params = type === 'target'
-        ? account.account && account.account.id
-          ? { id: account.account.id, type: 'account' }
-          : null
-        : account.mainCardId || (type === 'card' && account.type !== 'credit') || type === 'ima'
-          ? null
-          : { id: account.id, type }
+      const params = account.mainCardId || (type === 'card' && account.type !== 'credit') || type === 'ima' || type === 'target' ||
+      (type === 'loan' && account.nextPayAmount && account.nextPayAmount.amount === '0.00')
+        ? null
+        : { id: account.id, type }
       return {
         account: account,
         details: params ? await fetchAccountDetails(auth, params) : null
@@ -230,6 +231,12 @@ async function fetchAccountDetails (auth, { id, type }) {
     },
     body: { id: id }
   }, null)
+  if (type === 'account' &&
+    response.body.status === '2' &&
+    response.body.error &&
+    response.body.error.indexOf('нет прав для просмотра объекта') >= 0) {
+    return null
+  }
   validateResponse(response, response => _.get(response, 'body.detail'))
   return response.body
 }
@@ -268,6 +275,9 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
   transactions = filterTransactions(transactions, fromDate)
 
   await Promise.all(transactions.map(async transaction => {
+    if (transaction.id === '0') {
+      return
+    }
     const invoiceCurrency = _.get(transaction, 'operationAmount.currency.code')
     if (invoiceCurrency !== instrument ||
       [
@@ -283,7 +293,8 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
         'AccountOpeningClaim',
         'AccountClosingPayment',
         'IMAOpeningClaim',
-        'IMAPayment'
+        'IMAPayment',
+        'P2PExternalBankTransfer'
       ].indexOf(transaction.form) >= 0 ||
       parseOuterAccountData(transaction.to) ||
       transaction.to === 'Автоплатеж') {
@@ -296,10 +307,22 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
         body: {
           id: transaction.id
         }
-      })
+      }, null)
+      if (detailsResponse.body.status === '3') {
+        return
+      }
+      if (detailsResponse.body.status === '1' &&
+        detailsResponse.body.error &&
+        detailsResponse.body.error.indexOf('Вы не можете просмотреть данную операцию через приложение') >= 0) {
+        return
+      }
+      validateResponse(detailsResponse, response => response.body.status === '0')
       const form = _.get(detailsResponse, 'body.document.form')
       if (form) {
-        transaction.details = _.get(detailsResponse, `body.document.${form}Document`)
+        transaction.details =
+          _.get(detailsResponse, `body.document.${form}Document`) ||
+          _.get(detailsResponse, `body.document.${form.replace(/Payment$/, '')}Document`) ||
+          _.get(detailsResponse, `body.document.${form}`)
         if (!transaction.details) {
           throw new Error(`unexpected details form ${form}`)
         }
@@ -313,10 +336,11 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
 export function filterTransactions (transactions, fromDate) {
   const filtered = []
   transactions.forEach((transaction, i) => {
-    if (['DRAFT', 'SAVED', 'REFUSED'].indexOf(transaction.state) >= 0 || (transaction.description && [
+    if (['DRAFT', 'SAVED', 'REFUSED', 'INITIAL', 'INITIAL_LONG_OFFER'].indexOf(transaction.state) >= 0 || (transaction.description && [
       'Создание автоплатежа',
       'Приостановка автоплатежа',
-      'Редактирование автоплатежа'
+      'Редактирование автоплатежа',
+      'Отмена автоплатежа'
     ].some(pattern => transaction.description.indexOf(pattern) === 0))) {
       return
     }
@@ -442,7 +466,7 @@ async function fetchXml (url, options = {}, predicate = () => true) {
     method: 'POST',
     headers: defaultHeaders,
     stringify: qs.stringify,
-    parse: network.parseXml,
+    parse: parseXml,
     ...options
   }
 
@@ -457,7 +481,7 @@ async function fetchXml (url, options = {}, predicate = () => true) {
   let response
   try {
     response = (await retry({
-      getter: toNodeCallbackArguments(() => network.fetch(url, options)),
+      getter: toNodeCallbackArguments(() => fetch(url, options)),
       predicate: ([error]) => !error,
       maxAttempts: 5
     }))[1]
@@ -465,7 +489,7 @@ async function fetchXml (url, options = {}, predicate = () => true) {
     if (e instanceof RetryError) {
       throw e.failedResults[0][0]
     } else if (e.response && typeof e.response.body === 'string') {
-      throw new TemporaryError('Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
+      throw new TemporaryError('Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог разработчикам".')
     } else {
       throw e
     }
@@ -477,7 +501,7 @@ async function fetchXml (url, options = {}, predicate = () => true) {
   response.body.status = _.get(response, 'body.status.code')
 
   if (isTemporaryError(response.body.error) || (predicate && response.body.status === '3')) {
-    throw new TemporaryError('Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
+    throw new TemporaryError('Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог разработчикам".')
   }
   if (response.body.status !== '0' &&
     response.body.error &&
@@ -520,12 +544,14 @@ function isTemporaryError (message) {
     'АБС временно',
     'АБС не доступна',
     'Во время выполнения операции произошла ошибка',
-    'По техническим причинам Вы не можете выполнить данную операцию'
+    'По техническим причинам Вы не можете выполнить данную операцию',
+    'Услуга недоступна',
+    'В связи с проведением технических работ'
   ].some(str => message.indexOf(str) >= 0)
 }
 
 function validateResponse (response, predicate) {
-  console.assert(!predicate || predicate(response), 'non-successful response')
+  console.assert(!predicate || predicate(response), 'non-successful response', response)
 }
 
 function getCookie (response) {

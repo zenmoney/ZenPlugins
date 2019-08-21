@@ -1,7 +1,6 @@
 # Zenmoney browser runtime
-zp_data.json
+zp_*.json
 zp_pipe.txt
-zp_preferences.json
 
 # network traces and other development stuff, not intended for public use
 /src/plugins/**/temp
@@ -21,6 +20,9 @@ zp_preferences.json
 
 /nbproject/
 
+# VSCode project files
+/.vscode
+
 # OS-specific files
 .DS_Store
 .DS_Store?
@@ -30,6 +32,7 @@ zp_preferences.json
 ehthumbs.db
 Thumbs.db
 .*.sw?
+/report.*.json
 
 # dependencies
 /node_modules

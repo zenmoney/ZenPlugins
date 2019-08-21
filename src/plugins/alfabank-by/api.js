@@ -3,7 +3,7 @@ import { defaultsDeep, get } from 'lodash'
 import { generateRandomString } from '../../common/utils'
 import { parseDate } from './converters'
 
-const baseUrl = 'https://insync2.alfa-bank.by/mBank256/v5/'
+export const baseUrl = 'https://insync2.alfa-bank.by/mBank256/v6/'
 
 /**
  * @return {string}
@@ -19,13 +19,19 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
     options,
     {
       headers: {
-        'X-Client-App': 'Android/5.4.1',
+        'X-Client-App': 'Android/5.6.1',
         'Content-Type': 'application/json; charset=UTF-8',
         'User-Agent': 'okhttp/3.12.0'
       }
     }
   )
   const response = await fetchJson(baseUrl + url, options)
+  if (response.body.message && [
+    'Мы заблокировали приложение',
+    'Система недоступна'
+  ].some(str => response.body.message.indexOf(str) >= 0)) {
+    throw new TemporaryError('Ответ банка: ' + response.body.message)
+  }
   if (predicate) {
     validateResponse(response, response => predicate(response), error)
   }
@@ -39,15 +45,13 @@ function validateResponse (response, predicate, error) {
   }
 }
 
-export async function login () {
-  let deviceID = DeviceID()
-  let token = ZenMoney.getData('token')
-  var sessionID = await checkDeviceStatus(deviceID)
-  if (sessionID === null) {
-    await authWithPassportID(deviceID)
+export async function login (isResident) {
+  const deviceID = DeviceID()
+  const token = ZenMoney.getData('token')
+  let sessionID = await checkDeviceStatus(deviceID)
+  if (sessionID === null || !await loginByToken(sessionID, deviceID, token)) {
+    await authWithPassportID(deviceID, isResident)
     sessionID = await authConfirm(deviceID)
-  } else if (!await loginByToken(sessionID, deviceID, token)) {
-    throw new TemporaryError('Авторизация прошла неуспешно, попробуйте позже')
   }
   return {
     deviceID: deviceID,
@@ -63,48 +67,77 @@ export async function checkDeviceStatus (deviceID) {
       locale: 'ru'
     },
     sanitizeRequestLog: { body: { deviceId: true } }
-  }, response => response.status, message => new InvalidPreferencesError('bad request')))
+  }, response => response.status, message => new Error('bad request')))
 
-  if (res.body.status === 'ACTIVE') {
-    return res.body.sessionId
+  switch (res.body.status) {
+    case 'ACTIVE':
+      return res.body.sessionId
+    case 'LOCKED':
+      throw new Error(res.body.message)
+    default:
+      return null
   }
-  return null
 }
 
-export async function authWithPassportID (deviceID) {
-  let passportID = await ZenMoney.readLine('Введите идентификационный номер паспорта (3111111A111PB1)', {
+export async function authWithPassportID (deviceID, isResident) {
+  let passportID = await ZenMoney.readLine('Введите номер паспорта (Формат: 3111111A111PB1)', {
     inputType: 'string',
     time: 120000
   })
-  if (passportID === '') {
-    throw new TemporaryError('Не введен идентификационный номер пасспорта, синхронизация прервана')
+  if (!passportID) {
+    throw new TemporaryError('Не введён номер паспорта. Подключите синхронизацию ещё раз и укажите номер паспорта.')
+  }
+  var body = {
+    deviceId: deviceID,
+    deviceName: 'ZenMoney Plugin',
+    isResident: isResident,
+    login: passportID.toLocaleUpperCase(),
+    screenHeight: 1794,
+    screenWidth: 1080
+  }
+  if (passportID.toLocaleUpperCase().search(/[0-9]{7}[AА][0-9]{3}[PBРВ][0-9]/i) === -1 && // латиница и кирилица
+      !isResident) {
+    let issueDate = await ZenMoney.readLine('Введите дату выдачи документа (Формат: ГГГГММДД)', {
+      inputType: 'string',
+      time: 120000
+    })
+    body = {
+      deviceId: deviceID,
+      deviceName: 'ZenMoney Plugin',
+      isResident: isResident,
+      documentNum: passportID.toLocaleUpperCase(),
+      issueDate: issueDate,
+      screenHeight: 1794,
+      screenWidth: 1080
+    }
   }
   let res = (await fetchApiJson('Authorization?locale=ru', {
     method: 'POST',
-    body: {
-      deviceId: deviceID,
-      deviceName: 'ZenMoney Plugin',
-      isResident: true,
-      login: passportID,
-      screenHeight: 1794,
-      screenWidth: 1080
-    },
+    body: body,
     sanitizeRequestLog: { body: { deviceId: true, login: true } }
-  }, response => response.status, message => new InvalidPreferencesError('bad request')))
-  if (res.body.status !== 'OK' && res.body.message) {
-    throw new Error('Ответ банка: ' + res.body.message)
+  }, response => response.status, message => new Error('bad request')))
+  if (res.body.status !== 'OK') {
+    throw new TemporaryError('Ответ банка: ' + res.body.message)
+    // TODO: временный вывод всех ошибок
+    /* if (res.body.message && [
+      'Данные введены неверно',
+      'Личный номер введен неверно'
+    ].some(str => res.body.message.indexOf(str) >= 0)) {
+      throw new TemporaryError('Ответ банка: ' + res.body.message)
+    }
+    throw new Error('unexpected response') */
   }
 
   return true
 }
 
 export async function authConfirm (deviceID) {
-  let sms = await ZenMoney.readLine('Код из смс', {
+  let sms = await ZenMoney.readLine('Введите код из смс', {
     inputType: 'number',
     time: 120000
   })
   if (sms === '') {
-    throw new TemporaryError('Не введен код из смс, синхронизация прервана')
+    throw new TemporaryError('Не введён код из смс. Подключите синхронизацию ещё раз.')
   }
   let res = (await fetchApiJson('AuthorizationConfirm?locale=ru', {
     method: 'POST',
@@ -114,7 +147,7 @@ export async function authConfirm (deviceID) {
       tokenType: 'PIN'
     },
     sanitizeRequestLog: { body: { deviceId: true } }
-  }, response => response.status, message => new InvalidPreferencesError('bad request')))
+  }, response => response.status, message => new Error('bad request')))
   if (res.body.status !== 'OK' && res.body.message) {
     throw new TemporaryError('Ответ банка: ' + res.body.message)
   }
@@ -136,9 +169,13 @@ export async function loginByToken (sessionID, deviceID, token) {
       tokenType: 'PIN'
     },
     sanitizeRequestLog: { body: { deviceId: true, token: true } }
-  }, response => response.status, message => new InvalidPreferencesError('bad request')))
+  }, response => response.status, message => new Error('bad request')))
   if (res.body.message) {
-    throw new Error('Ответ банка: ' + res.body.message)
+    if (![
+      'Пароль введен неверно'
+    ].some(str => res.body.message.indexOf(str) >= 0)) {
+      throw new Error('unexpected response')
+    }
   }
 
   return res.body.status === 'OK'
@@ -146,7 +183,8 @@ export async function loginByToken (sessionID, deviceID, token) {
 
 export async function fetchAccounts (deviceID, sessionID) {
   console.log('>>> Загрузка списка счетов...')
-  let res = (await fetchApiJson('Desktop', {
+  // Сразу делаем обязательный запрос на рабочий стол
+  await fetchApiJson('Desktop', {
     method: 'POST',
     headers: {
       'X-Session-ID': sessionID
@@ -154,30 +192,110 @@ export async function fetchAccounts (deviceID, sessionID) {
     body: {
       deviceId: deviceID
     },
-    sanitizeRequestLog: { body: { deviceId: true } }
-  }, response => response.status, message => new InvalidPreferencesError('bad request')))
-  if (res.body.shortcuts && res.body.shortcuts.length > 0) {
-    return res.body.shortcuts
-  }
-  return []
-}
+    sanitizeRequestLog: { body: { deviceId: true } },
+    sanitizeResponseLog: { body: { status: { clientId: true, clientEmail: true, clientName: true, qrCodeErip: true } } }
+  }, response => response.status, message => new Error('bad request'))
 
-export async function fetchAccountInfo (sessionID, accountId) {
-  console.log('>>> Загрузка списка счета ' + accountId)
-  let res = (await fetchApiJson('Account/Info', {
+  let res = (await fetchApiJson('Products', {
     method: 'POST',
     headers: {
       'X-Session-ID': sessionID
     },
     body: {
-      id: accountId,
-      operationSource: 'DESKTOP'
+      type: 'ACCOUNT'
     }
-  }, response => response.status, message => new InvalidPreferencesError('bad request')))
-  if (res.body.iban) {
+  }, response => response.status, message => new Error('bad request')))
+  if (res.body.items && res.body.items.length > 0) {
+    return res.body.items
+  }
+  return []
+}
+
+export async function fetchCards (sessionID) {
+  console.log('>>> Загрузка списка карточек...')
+  let res = (await fetchApiJson('Products', {
+    method: 'POST',
+    headers: {
+      'X-Session-ID': sessionID
+    },
+    body: {
+      type: 'CARD'
+    }
+  }, response => response.status, message => new Error('bad request')))
+  if (res.body.items && res.body.items.length > 0) {
+    return res.body.items
+  }
+  return []
+}
+
+export async function fetchCardDetail (sessionID, card) {
+  console.log('>>> Загрузка подробностей по карте ' + card.title)
+  let res = (await fetchApiJson('Card/Info', {
+    method: 'POST',
+    headers: {
+      'X-Session-ID': sessionID
+    },
+    body: {
+      id: card.id,
+      operationSource: 'PRODUCT'
+    }
+  }, response => response.status, message => new Error('bad request')))
+  if (res.body.accountNumber) {
     return res.body
   }
-  throw new Error('Ответ банка: ' + res.body.message)
+  return {}
+}
+
+export async function fetchLoanDetail (sessionID, card) {
+  console.log('>>> Загрузка подробностей по кредиту ' + card.title)
+  let res = (await fetchApiJson('Loan/Info', {
+    method: 'POST',
+    headers: {
+      'X-Session-ID': sessionID
+    },
+    body: {
+      id: card.id,
+      operationSource: 'PRODUCT'
+    }
+  }, response => response.status, message => new Error('bad request')))
+  if (res.body.accountNumber) {
+    return res.body
+  }
+  return {}
+}
+
+export async function fetchDeposits (sessionID) {
+  console.log('>>> Загрузка списка депозитов...')
+  let res = (await fetchApiJson('Products', {
+    method: 'POST',
+    headers: {
+      'X-Session-ID': sessionID
+    },
+    body: {
+      type: 'DEPOSIT'
+    }
+  }, response => response.status, message => new Error('bad request')))
+  if (res.body.items && res.body.items.length > 0) {
+    return res.body.items
+  }
+  return []
+}
+
+export async function fetchCredits (sessionID) {
+  console.log('>>> Загрузка списка кредитов...')
+  let res = (await fetchApiJson('Products', {
+    method: 'POST',
+    headers: {
+      'X-Session-ID': sessionID
+    },
+    body: {
+      type: 'CREDIT'
+    }
+  }, response => response.status, message => new Error('bad request')))
+  if (res.body.items && res.body.items.length > 0) {
+    return res.body.items
+  }
+  return []
 }
 
 export async function fetchTransactions (sessionID, accounts, fromDate) {
@@ -191,21 +309,32 @@ export async function fetchTransactions (sessionID, accounts, fromDate) {
   for (let i = 0; i < accounts.length; i++) {
     let account = accounts[i]
     do {
+      var bodyReq = {
+        offset: offset,
+        pageSize: limit,
+        objectId: account.id,
+        type: account.productType
+      }
+      if (account.productType === 'CARD') {
+        bodyReq = {
+          cardId: account.id,
+          offset: offset,
+          pageSize: limit
+        }
+      }
       let response = await fetchApiJson('History', {
         method: 'POST',
         headers: {
           'X-Session-ID': sessionID
         },
-        body: {
-          offset: offset,
-          pageSize: limit,
-          shortcutId: account.id
-        }
+        body: bodyReq
       }, response => response.body)
       batch = getArray(get(response, 'body.items'))
       offset += limit
       transactions.push(...batch)
     } while (batch && batch.length === limit && parseDate(batch[batch.length - 1].date) >= fromDate)
+    offset = 0
+    batch = null
   }
 
   console.log(`>>> Загружено ${transactions.length} операций.`)

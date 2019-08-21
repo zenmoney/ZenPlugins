@@ -67,9 +67,7 @@ export function chooseDistinctCards (cardsBodyResult) {
 
 export const convertApiAbortedTransactionToReadableTransaction = ({ accountId, accountCurrency, abortedTransaction }) => {
   const details = parseTransDetails(abortedTransaction.transDetails)
-  const sign = abortedTransaction.transDetails === 'CH Debit BLR MINSK P2P SDBO NO FEE'
-    ? Math.sign(abortedTransaction.amount)
-    : Math.sign(-abortedTransaction.transAmount)
+  const sign = Math.sign(-abortedTransaction.amount)
   const sum = sign * Math.abs(abortedTransaction.amount)
   const invoice = abortedTransaction.transCurrIso === accountCurrency
     ? null
@@ -85,13 +83,13 @@ export const convertApiAbortedTransactionToReadableTransaction = ({ accountId, a
         fee
       }
     ],
-    date: new Date(abortedTransaction.transDate),
+    date: parseDate(abortedTransaction),
     hold: true,
-    merchant: {
-      title: details.payee,
+    merchant: details.payee ? {
+      fullTitle: details.payee,
       mcc: null,
       location: null
-    },
+    } : null,
     comment: joinCommentLines([
       details.comment,
       formatCommentFeeLine(fee, accountCurrency),
@@ -99,6 +97,12 @@ export const convertApiAbortedTransactionToReadableTransaction = ({ accountId, a
       formatRateLine(sum, invoice)
     ])
   }
+}
+
+function parseDate (apiTransactionPayload) {
+  return apiTransactionPayload.transTime
+    ? new Date(apiTransactionPayload.transDate.substring(0, 11) + apiTransactionPayload.transTime + apiTransactionPayload.transDate.substring(19))
+    : new Date(apiTransactionPayload.transDate)
 }
 
 const convertApiTransactionToReadableTransaction = (apiTransaction) => {
@@ -125,13 +129,13 @@ const convertApiTransactionToReadableTransaction = (apiTransaction) => {
           fee
         }
       ],
-      date: new Date(regularTransaction.transDate),
+      date: parseDate(regularTransaction),
       hold: false,
-      merchant: {
-        title: details.payee,
+      merchant: details.payee ? {
+        fullTitle: details.payee,
         mcc: null,
         location: null
-      },
+      } : null,
       comment: joinCommentLines([
         details.comment,
         formatCommentFeeLine(fee, accountCurrency),
@@ -169,7 +173,7 @@ export function mergeTransfers ({ items }) {
       const movement = getSingleReadableTransactionMovement(readableTransaction)
       const sum = movement.invoice === null ? movement.sum : movement.invoice.sum
       const instrument = movement.invoice === null ? apiTransaction.card.clientObject.currIso : movement.invoice.instrument
-      return `${Math.abs(sum)} ${instrument} @ ${readableTransaction.date} ${apiTransaction.payload.transTime}`
+      return `${Math.abs(sum)} ${instrument} @ ${apiTransaction.payload.transDate} ${apiTransaction.payload.transTime}`
     },
     mergeComments: formatMovementPartialDetails
   })

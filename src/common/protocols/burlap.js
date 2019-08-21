@@ -1,5 +1,6 @@
 import * as _ from 'lodash'
 import padLeft from 'pad-left'
+import { IncompatibleVersionError } from '../../errors'
 import { getByteLength } from '../utils'
 
 const cheerio = require('cheerio')
@@ -26,7 +27,7 @@ export function stringifyRequestBody (protocolVersion, body) {
     stringToUtf8ByteArray(protocolVersion + bodyStr, bytes)
     return new Uint8Array(bytes)
   } else if (bytes.some(byte => byte >= 128)) {
-    throw new TemporaryError('У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии')
+    throw new IncompatibleVersionError()
   } else {
     const signatureStr = bytes.map(byte => String.fromCharCode(byte)).join('')
     return signatureStr + protocolVersion + bodyStr
@@ -35,7 +36,7 @@ export function stringifyRequestBody (protocolVersion, body) {
 
 export function parseResponseBody (protocolVersion, bodyStr, correlationId) {
   if (bodyStr === '') {
-    throw new TemporaryError('У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии')
+    throw new IncompatibleVersionError()
   }
   const i = bodyStr.indexOf(protocolVersion)
   console.assert(i >= 0 && i <= 10, 'Could not get response protocol version')

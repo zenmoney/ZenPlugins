@@ -1,7 +1,8 @@
-import { fetchJson, parseXml } from '../../common/network'
 import { flatMap } from 'lodash'
+import { createDateIntervals as commonCreateDateIntervals } from '../../common/dateUtils'
+import { fetchJson, parseXml } from '../../common/network'
 import { generateRandomString } from '../../common/utils'
-import { deposit, card } from './converters'
+import { card, deposit } from './converters'
 
 const baseUrl = 'https://mb.bnb.by/services/v2/'
 
@@ -45,7 +46,7 @@ export async function login (login, password) {
   const res = await fetchApiJson('session/login', {
     method: 'POST',
     body: {
-      applicID: '1.10',
+      applicID: '1.14',
       clientKind: '0',
       deviceUDID: deviceID,
       login: login,
@@ -71,21 +72,13 @@ export async function fetchAccounts (token) {
 
 export function createDateIntervals (fromDate, toDate) {
   const interval = 10 * 24 * 60 * 60 * 1000 // 10 days interval for fetching data
-  const dates = []
-
-  let time = fromDate.getTime()
-  let prevTime = null
-  while (time < toDate.getTime()) {
-    if (prevTime !== null) {
-      dates.push([new Date(prevTime), new Date(time - 1000)])
-    }
-
-    prevTime = time
-    time = time + interval
-  }
-  dates.push([new Date(prevTime), toDate])
-
-  return dates
+  const gapMs = 1000
+  return commonCreateDateIntervals({
+    fromDate,
+    toDate,
+    addIntervalToDate: date => new Date(date.getTime() + interval - gapMs),
+    gapMs
+  })
 }
 
 export async function fetchTransactions (token, accounts, fromDate, toDate = new Date()) {

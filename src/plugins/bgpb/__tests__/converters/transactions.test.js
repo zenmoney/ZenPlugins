@@ -143,6 +143,16 @@ describe('convertLastTransaction', () => {
         acceptedTime: 1554541890000,
         eventType: 4,
         id: '2019-7871636',
+        pushMessageText: 'Card7592; Смена статуса карты; 04.04.19 17:31:40;'
+      },
+      expectedTransaction: null
+    },
+    {
+      name: 'notification 2',
+      transaction: {
+        acceptedTime: 1554541890000,
+        eventType: 4,
+        id: '2019-7871636',
         pushMessageText: 'Приложение BGPB_Mobile активировано на устройстве Unknown Android SDK built for x86_64__.'
       },
       expectedTransaction: null
@@ -188,6 +198,90 @@ describe('convertLastTransaction', () => {
               'id': null,
               'invoice': null,
               'sum': -1100
+            }
+          ]
+      }
+    },
+    {
+      name: 'cash withdrawal',
+      transaction: {
+        acceptedTime: 1554492493000,
+        eventType: 4,
+        id: '2019-7848714',
+        pushMessageText: 'Card1111; Снятие наличных: 200,00 USD; 03.05.19 20:06:18; DZERZHINSKOGO 91,MINSK,BY; Dostupno: 2 000,74 USD'
+      },
+      expectedTransaction: {
+        'comment': null,
+        'date': new Date('2019-05-03T17:06:00.000Z'),
+        'hold': false,
+        'merchant': {
+          'city': 'MINSK',
+          'country': 'BY',
+          'location': null,
+          'mcc': null,
+          'title': 'DZERZHINSKOGO 91'
+        },
+        'movements':
+          [
+            {
+              'account': {
+                'id': '11161311-117d11'
+              },
+              'fee': 0,
+              'id': null,
+              'invoice': null,
+              'sum': -200
+            },
+            {
+              'account': {
+                'company': null,
+                'instrument': 'USD',
+                'syncIds': null,
+                'type': 'cash'
+              },
+              'fee': 0,
+              'id': null,
+              'invoice': null,
+              'sum': 200
+            }
+          ]
+      }
+    },
+    {
+      name: 'cash withdrawal with bad address',
+      transaction: {
+        acceptedTime: 1554492493000,
+        eventType: 4,
+        id: '2019-7848714',
+        pushMessageText: 'Card1111; Снятие наличных: 100,00 USD; 03.05.19 20:06:18; ,MINSK,BLR; Dostupno: 2 000,84 USD'
+      },
+      expectedTransaction: {
+        'comment': null,
+        'date': new Date('2019-05-03T17:06:00.000Z'),
+        'hold': false,
+        'merchant': null,
+        'movements':
+          [
+            {
+              'account': {
+                'id': '11161311-117d11'
+              },
+              'fee': 0,
+              'id': null,
+              'invoice': null,
+              'sum': -100
+            },
+            {
+              'account': {
+                'company': null,
+                'instrument': 'USD',
+                'syncIds': null,
+                'type': 'cash'
+              },
+              'fee': 0,
+              'id': null,
+              'invoice': null,
+              'sum': 100
             }
           ]
       }

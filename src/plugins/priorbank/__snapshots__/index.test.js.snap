@@ -31,9 +31,9 @@ Object {
       "date": 2016-12-31T21:00:00.000Z,
       "hold": false,
       "merchant": Object {
+        "fullTitle": "BLR",
         "location": null,
         "mcc": null,
-        "title": "BLR",
       },
       "movements": Array [
         Object {
@@ -54,11 +54,7 @@ Object {
       "comment": "Поступление на контракт клиента #ID",
       "date": 2016-12-31T21:00:00.000Z,
       "hold": false,
-      "merchant": Object {
-        "location": null,
-        "mcc": null,
-        "title": null,
-      },
+      "merchant": null,
       "movements": Array [
         Object {
           "account": Object {
@@ -75,11 +71,7 @@ Object {
       "comment": "Payment From Client Contract",
       "date": 2017-01-02T21:00:00.000Z,
       "hold": false,
-      "merchant": Object {
-        "location": null,
-        "mcc": null,
-        "title": null,
-      },
+      "merchant": null,
       "movements": Array [
         Object {
           "account": Object {
@@ -96,11 +88,7 @@ Object {
       "comment": "Поступление на контракт клиента #ID",
       "date": 2017-01-02T21:00:00.000Z,
       "hold": false,
-      "merchant": Object {
-        "location": null,
-        "mcc": null,
-        "title": null,
-      },
+      "merchant": null,
       "movements": Array [
         Object {
           "account": Object {
@@ -118,9 +106,9 @@ Object {
       "date": 2017-01-05T21:00:00.000Z,
       "hold": false,
       "merchant": Object {
+        "fullTitle": "NLD",
         "location": null,
         "mcc": null,
-        "title": "NLD",
       },
       "movements": Array [
         Object {
@@ -140,9 +128,9 @@ Object {
       "date": 2017-01-07T21:00:00.000Z,
       "hold": false,
       "merchant": Object {
+        "fullTitle": "BLR",
         "location": null,
         "mcc": null,
-        "title": "BLR",
       },
       "movements": Array [
         Object {
@@ -176,9 +164,9 @@ Object {
       "date": 2017-01-07T21:00:00.000Z,
       "hold": false,
       "merchant": Object {
+        "fullTitle": "BLR",
         "location": null,
         "mcc": null,
-        "title": "BLR",
       },
       "movements": Array [
         Object {
@@ -209,9 +197,9 @@ Object {
       "date": 2017-01-08T21:00:00.000Z,
       "hold": true,
       "merchant": Object {
+        "fullTitle": "BLR",
         "location": null,
         "mcc": null,
-        "title": "BLR",
       },
       "movements": Array [
         Object {
@@ -231,9 +219,9 @@ Object {
       "date": 2017-01-09T21:00:00.000Z,
       "hold": true,
       "merchant": Object {
+        "fullTitle": "BLR",
         "location": null,
         "mcc": null,
-        "title": "BLR",
       },
       "movements": Array [
         Object {
@@ -256,9 +244,9 @@ Object {
       "date": 2017-01-09T21:00:00.000Z,
       "hold": false,
       "merchant": Object {
+        "fullTitle": "BLR",
         "location": null,
         "mcc": null,
-        "title": "BLR",
       },
       "movements": Array [
         Object {

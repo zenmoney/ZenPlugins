@@ -1,15 +1,12 @@
 import { Base64 } from 'jshashes'
+import * as qs from 'querystring'
 import * as network from '../../common/network'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { generateRandomString } from '../../common/utils'
+import { IncompatibleVersionError } from '../../errors'
+import { clientId, clientSecret, redirectUri } from './config'
 
 const base64 = new Base64()
-
-const qs = require('querystring')
-
-const CLIENT_SECRET = ''
-const CLIENT_ID = ''
-const REDIRECT_URI = ''
 
 export class AuthError {}
 
@@ -34,9 +31,10 @@ async function fetchJson (url, options = {}, predicate = () => true) {
       throw e
     }
   }
-  if (response.body &&
-    response.body.errorMessage &&
-    response.body.errorMessage.indexOf('попробуйте позже') >= 0) {
+  if (response.body && response.body.errorMessage && [
+    'попробуйте позже',
+    'временно не доступен'
+  ].some(str => response.body.errorMessage.indexOf(str) >= 0)) {
     throw new TemporaryError('Информация из Тинькофф Бизнес временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
   }
   if (predicate) {
@@ -79,10 +77,10 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
   } else if (ZenMoney.openWebView) {
     const { error, code } = await new Promise((resolve) => {
       const state = generateRandomString(16)
-      const redirectUriWithoutProtocol = REDIRECT_URI.replace(/^https?:\/\//i, '')
+      const redirectUriWithoutProtocol = redirectUri.replace(/^https?:\/\//i, '')
       const url = `https://sso.tinkoff.ru/authorize?${qs.stringify({
-        'client_id': CLIENT_ID,
-        'redirect_uri': REDIRECT_URI,
+        'client_id': clientId,
+        'redirect_uri': redirectUri,
         'state': state
       })}`
       ZenMoney.openWebView(url, null, (request, callback) => {
@@ -105,18 +103,18 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
     response = await fetchJson('https://sso.tinkoff.ru/secure/token', {
       headers: {
         'Host': 'sso.tinkoff.ru',
-        'Authorization': `Basic ${base64.encode(`${CLIENT_ID}:${CLIENT_SECRET}`)}`
+        'Authorization': `Basic ${base64.encode(`${clientId}:${clientSecret}`)}`
       },
       body: {
         grant_type: 'authorization_code',
         code,
-        redirect_uri: REDIRECT_URI
+        redirect_uri: redirectUri
       },
       sanitizeRequestLog: { body: { code: true } },
       sanitizeResponseLog: { body: { access_token: true, refresh_token: true, sessionId: true, id_token: true } }
     }, null)
   } else {
-    throw new TemporaryError('У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии.')
+    throw new IncompatibleVersionError()
   }
   console.assert(response.body &&
     response.body.access_token &&

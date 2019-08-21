@@ -6,10 +6,6 @@ import { TYPES as ZENMONEY_ACCOUNT_TYPE } from '../constants/zenmoney_accounts'
 import { entity } from '../zenmoney_entity/account'
 import { resolveCurrencyCode, walletUniqueAccountId as accountId } from './helpers'
 
-/**
- * @param data
- * @returns {{id: null, title: null, syncID: Array, type: null, balance: number, startBalance: number, creditLimit: number, savings: undefined, capitalization: undefined, percent: undefined, startDate: undefined, endDateOffset: undefined, endDateOffsetInterval: undefined, payoffStep: undefined, payoffInterval: undefined}}
- */
 const converter = (data) => {
   const account = entity()
 
@@ -25,6 +21,17 @@ const converter = (data) => {
   return account
 }
 
+const contractIdsFetcher = (data) => {
+  let list = []
+
+  data.forEach((item) => {
+    list.push(item.contractId)
+  })
+
+  return list
+}
+
 export {
+  contractIdsFetcher,
   converter
 }

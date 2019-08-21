@@ -104,7 +104,7 @@ function assertNotServerError (response) {
     const messages = errors.map((x) => x.message).filter(Boolean)
     const allMessagesText = messages.join('\n')
     if (messages.some((x) => x.startsWith('Некорректные данные.'))) {
-      throw new InvalidPreferencesError(allMessagesText)
+      throw new Error(allMessagesText)
     }
     if (allMessagesText.includes('Мы обнаружили, что вы поменяли SIM-карту.')) {
       throw new TemporaryError(allMessagesText)
@@ -190,7 +190,7 @@ async function registerCustomer ({ queryRedirectParams, cardExpirationDate, card
       }
     },
     sanitizeRequestLog: { body: true },
-    sanitizeResponseLog: { body: true }
+    sanitizeResponseLog: { body: { params: true } }
   })
   assertNotServerError(response)
   console.assert(response.status === 200, 'registerCustomer failed', response)
@@ -211,7 +211,7 @@ export async function register ({ deviceId, cardNumber, cardExpirationDate, phon
   }
 
   const { previousMultiFactorResponseParams } = await registerCustomer({ queryRedirectParams, cardExpirationDate, cardNumber, phoneNumber })
-  const confirmationCode = await ZenMoney.readLine('Введите код из СМС сообщения', { inputType: 'number' })
+  const confirmationCode = await ZenMoney.readLine('Введите код из SMS или push-уведомления', { inputType: 'number' })
   const { redirectUrl } = await finishCustomerRegistration({ confirmationCode, queryRedirectParams, previousMultiFactorResponseParams })
   const redirectedResponse = await fetchJson(redirectUrl, {
     sanitizeRequestLog: { url: true },

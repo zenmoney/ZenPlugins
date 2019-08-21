@@ -21,7 +21,7 @@ export function convertTransaction (apiTransaction, account, accountsById) {
   const transaction = {
     movements: [
       {
-        id: apiTransaction.id,
+        id: apiTransaction.id === '0' ? null : apiTransaction.id,
         account: { id: account.id },
         invoice,
         sum: null,
@@ -111,17 +111,24 @@ function parseInnerTransfer (transaction, apiTransaction, account, accountsById)
   }
 
   const outcomeAccountData = getAccountDataFromResource(_.get(apiTransaction, 'details.fromResource'))
-  const outcomeAccount = !outcomeAccountData
-    ? null
-    : accountsById[outcomeAccountData.id] || accountsById[getId(outcomeAccountData.instrument, outcomeAccountData.syncId)]
-  if (!outcomeAccount) {
+  if (!outcomeAccountData) {
     return false
   }
 
+  const outcomeAccount =
+    accountsById[outcomeAccountData.id] ||
+    accountsById[getId(outcomeAccountData.instrument, outcomeAccountData.syncId)] ||
+    {
+      type: null,
+      instrument: outcomeAccountData.instrument,
+      syncIds: outcomeAccountData.syncId ? [outcomeAccountData.syncId.slice(-4)] : null,
+      company: outcomeAccountData.id ? { id: '4624' } : null
+    }
+
   const incomeAccountData = getAccountDataFromResource(_.get(apiTransaction, 'details.toResource'))
-  let incomeAccount = !incomeAccountData ? null
-    : accountsById[incomeAccountData.id] ||
-    accountsById[getId(incomeAccountData.instrument, incomeAccountData.syncId)]
+  let incomeAccount = !incomeAccountData
+    ? null
+    : accountsById[incomeAccountData.id] || accountsById[getId(incomeAccountData.instrument, incomeAccountData.syncId)]
   if (!incomeAccount) {
     const match = apiTransaction.to.match(/\s{10}(\d[\d*\s]+)$/)
     if (match) {
@@ -132,7 +139,9 @@ function parseInnerTransfer (transaction, apiTransaction, account, accountsById)
     return false
   }
 
-  const outcomeStr = _.get(apiTransaction, 'details.sellAmount.moneyType.value')
+  const outcomeStr =
+    _.get(apiTransaction, 'details.sellAmount.moneyType.value') ||
+    _.get(apiTransaction, 'details.chargeOffAmount.moneyType.value')
   let outcome = outcomeStr ? parseDecimal(outcomeStr) : Math.abs(transaction.movements[0].invoice.sum)
   if (outcomeAccountData.isMetal) {
     outcome /= GRAMS_IN_OZ
@@ -149,7 +158,7 @@ function parseInnerTransfer (transaction, apiTransaction, account, accountsById)
   transaction.movements = [
     {
       id: apiTransaction.id,
-      account: { id: outcomeAccount.id },
+      account: outcomeAccount.id ? { id: outcomeAccount.id } : outcomeAccount,
       invoice: !isIncomeInvoice && outcomeAccount.instrument !== incomeAccount.instrument ? { sum: -income, instrument: incomeAccount.instrument } : null,
       sum: -outcome,
       fee: 0
@@ -191,34 +200,76 @@ function parseOuterIncomeTransfer (transaction, apiTransaction, account) {
     return false
   }
   const invoice = transaction.movements[0].invoice || { sum: transaction.movements[0].sum, instrument: account.instrument }
-  const outerAccount = parseOuterAccountData(apiTransaction.to)
+  const outerAccount = apiTransaction.to === 'Сбербанк Онлайн' ? null : parseOuterAccountData(apiTransaction.to)
   transaction.movements.push({
     id: null,
     account: {
-      type: outerAccount ? outerAccount.type : null,
+      type: /^\d{4}\s?\d{2}\*{2}\s?\*{4}\s?\d{4}$/.test(apiTransaction.from) ? 'ccard' : outerAccount ? outerAccount.type : null,
       instrument: invoice.instrument,
-      company: outerAccount ? outerAccount.company : apiTransaction.to === 'Сбербанк Онлайн' ? null : { title: apiTransaction.to },
+      company: outerAccount ? outerAccount.company : null,
       syncIds: [removeWhitespaces(match[1])]
     },
     invoice: null,
     sum: -invoice.sum,
     fee: 0
   })
+  if (!outerAccount && apiTransaction.to !== 'Сбербанк Онлайн') {
+    transaction.merchant = {
+      country: null,
+      city: null,
+      title: apiTransaction.to,
+      mcc: null,
+      location: null
+    }
+  }
   return true
 }
 
 function parseOutcomeTransfer (transaction, apiTransaction, account) {
-  const outerAccountStr = _.get(apiTransaction, 'details.paymentDetails.stringType.value') || apiTransaction.to
-  const outerAccount = parseOuterAccountData(outerAccountStr)
-  if (apiTransaction.form !== 'RurPayment' && !outerAccount) {
+  if (['UfsInsurancePolicy'].indexOf(apiTransaction.form) >= 0) {
     return false
   }
-  const receiver = _.get(apiTransaction, 'details.receiverAccount.stringType.value') || apiTransaction.to
-  const match = receiver && receiver.match(/(\d{4})$/)
+  const isP2PTransfer = apiTransaction.form === 'P2PExternalBankTransfer'
+  let details = apiTransaction.details
+  if (details && isP2PTransfer && details.field) {
+    const fields = Array.isArray(details.field) ? details.field : [details.field]
+    const fieldsMapping = {
+      'receiverCardNumber': 'receiverAccount',
+      'bankID': 'paymentDetails'
+    }
+    details = _.omit(details, 'field')
+    for (const field of fields) {
+      console.assert(field.name, 'unexpected details.fields', apiTransaction)
+      const key = fieldsMapping[field.name] || field.name
+      let value = field
+      if (field.name === 'bankID') {
+        if (value.listType && value.listType.availableValues) {
+          if (Array.isArray(value.listType.availableValues)) {
+            value = value.listType.availableValues[0]
+          } else {
+            value = value.listType.availableValues
+          }
+          if (value && value.valueItem && value.valueItem.title) {
+            value = { stringType: { value: value.valueItem.title } }
+          } else {
+            value = null
+          }
+        }
+      }
+      details[key] = value
+    }
+  }
+  const outerAccountStr = _.get(details, 'paymentDetails.stringType.value') || apiTransaction.to
+  const outerAccount = parseOuterAccountData(outerAccountStr)
+  if (['RurPayment', 'P2PExternalBankTransfer'].indexOf(apiTransaction.form) < 0 && !outerAccount) {
+    return false
+  }
+  const receiver = _.get(details, 'receiverAccount.stringType.value') || apiTransaction.to
+  const match = receiver && receiver.match(/(\d{2}\s?\d{2})$/)
   if (!match && !outerAccount) {
     return false
   }
-  const feeStr = _.get(apiTransaction, 'details.commission.amount')
+  const feeStr = _.get(details, 'commission.amount')
   const fee = feeStr && parseDecimal(feeStr)
   if (fee) {
     transaction.movements[0].fee = -Math.abs(fee)
@@ -227,16 +278,16 @@ function parseOutcomeTransfer (transaction, apiTransaction, account) {
   transaction.movements.push({
     id: null,
     account: {
-      type: outerAccount ? outerAccount.type : null,
+      type: isP2PTransfer ? 'ccard' : outerAccount ? outerAccount.type : null,
       instrument: invoice.instrument,
       company: apiTransaction.description === 'Перевод клиенту Сбербанка' ? { id: '4624' } : outerAccount ? outerAccount.company : null,
-      syncIds: match ? [match[1]] : null
+      syncIds: match ? [match[1].replace(/\s+/, '')] : null
     },
     invoice: null,
     sum: -invoice.sum,
     fee: 0
   })
-  const receiverName = !outerAccount && _.get(apiTransaction, 'details.receiverName.stringType.value')
+  const receiverName = (!outerAccount || isP2PTransfer) && _.get(details, 'receiverName.stringType.value')
   if (receiverName) {
     transaction.merchant = {
       title: receiverName,
@@ -246,19 +297,24 @@ function parseOutcomeTransfer (transaction, apiTransaction, account) {
       location: null
     }
   }
+  const smsMessage = _.get(details, 'smsMessage.stringType.value')
+  if (smsMessage) {
+    transaction.comment = smsMessage
+  }
   return true
 }
 
 function parsePayee (transaction, apiTransaction) {
   if (apiTransaction.to && [
     'Автоплатеж',
-    'Sberbank platezh'
+    'Sberbank platezh',
+    'Зачисление зарплаты'
   ].indexOf(apiTransaction.to) >= 0) {
     transaction.comment = apiTransaction.to
     return
   }
 
-  let payee = ['ExtDepositCapitalization', 'ExtDepositTransferIn'].indexOf(apiTransaction.form) >= 0 ? null : apiTransaction.to
+  let payee = ['ExtDepositCapitalization', 'ExtDepositTransferIn', 'ExtDepositOtherCredit'].indexOf(apiTransaction.form) >= 0 ? null : apiTransaction.to
   if (payee) {
     if (apiTransaction.form === 'RurPayJurSB') {
       const parts = payee.split(/\s\s+/)
@@ -282,7 +338,11 @@ function parsePayee (transaction, apiTransaction) {
       }
     }
   }
-  if (['Капитализация по вкладу/счету', 'Комиссии', 'Входящий перевод на вклад/счет'].indexOf(apiTransaction.description) >= 0) {
+  if ([
+    'Капитализация по вкладу/счету',
+    'Комиссии',
+    'Входящий перевод на вклад/счет'
+  ].indexOf(apiTransaction.description) >= 0) {
     transaction.comment = apiTransaction.description
   }
 }
@@ -357,15 +417,15 @@ function convertAccountsWithType (apiAccountsArray, type) {
           data = convertLoan(apiAccount.account, apiAccount.details)
           break
         case 'target':
-          data = convertTarget(apiAccount.account, apiAccount.details)
+          data = convertTarget(apiAccount.account)
           break
         case 'ima':
           data = convertMetalAccount(apiAccount.account)
           break
         default:
-          data = apiAccount.account.rate && apiAccount.details.detail.period && parseDecimal(apiAccount.account.rate) > 2
+          data = apiAccount.account.rate && apiAccount.details && apiAccount.details.detail.period && parseDecimal(apiAccount.account.rate) > 2
             ? convertDeposit(apiAccount.account, apiAccount.details)
-            : convertAccount(apiAccount.account, apiAccount.details)
+            : convertAccount(apiAccount.account)
           break
       }
       if (data) {
@@ -523,7 +583,7 @@ export function convertAccount (apiAccount) {
 }
 
 export function convertLoan (apiLoan, details) {
-  if (!details.extDetail || !details.extDetail.origianlAmount) {
+  if (!details || !details.extDetail || !details.extDetail.origianlAmount) {
     return null
   }
   const zenAccount = {
@@ -539,9 +599,7 @@ export function convertLoan (apiLoan, details) {
       ? details.extDetail.remainAmount.amount
       : details.extDetail.origianlAmount.amount),
     capitalization: details.detail.repaymentMethod === 'аннуитетный',
-    percent: details.extDetail.rate
-      ? parseDecimal(details.extDetail.rate)
-      : 1,
+    percent: (details.extDetail.rate && parseDecimal(details.extDetail.rate)) || 1,
     syncID: [
       details.detail.accountNumber
     ],
@@ -579,7 +637,7 @@ export function convertDeposit (apiDeposit, details) {
     startBalance: 0,
     balance: parseDecimal(apiDeposit.balance.amount),
     capitalization: true,
-    percent: parseDecimal(apiDeposit.rate),
+    percent: parseDecimal(apiDeposit.rate) || 1,
     syncID: [
       apiDeposit.number
     ],

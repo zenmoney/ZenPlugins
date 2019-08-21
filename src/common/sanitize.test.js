@@ -58,4 +58,12 @@ describe('sanitize', () => {
     })
     expect(sanitize('unexpected value', { a: { b: true } })).toEqual('unexpected value')
   })
+
+  it('should call mask if it is function', () => {
+    const sanitizedValue = {}
+    const mask = jest.fn().mockReturnValue(sanitizedValue)
+    expect(sanitize('unexpected value', mask)).toStrictEqual(sanitizedValue)
+    expect(mask.mock.calls.length).toBe(1)
+    expect(mask).toBeCalledWith('unexpected value')
+  })
 })

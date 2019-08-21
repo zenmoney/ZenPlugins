@@ -2,30 +2,39 @@
  * @author Ryadnov Andrey <me@ryadnov.ru>
  */
 
+import { parse, splitCookiesString } from 'set-cookie-parser'
 import { fetchJson } from '../../common/network'
 
-let apiUri = ''
+const xsrfTokenInitialValue = 'undefined'
 
-const defaultHeaders = {
-  'channel': 'web'
-}
+let apiUri = ''
+let xXSrfToken = xsrfTokenInitialValue
 
 const httpSuccessStatus = 200
 
-/**
- * @param uri
- */
 const setApiUri = (uri) => {
   apiUri = uri
 }
 
-/**
- * @param cardNumber
- * @param password
- * @returns {Promise.<void>}
- */
+const setXXSrfToken = (value) => {
+  xXSrfToken = value
+}
+
+const createHeaders = (rid) => {
+  return {
+    'channel': 'web',
+    'platform': 'web',
+    'X-Request-Id': rid,
+    'X-XSRF-TOKEN': xXSrfToken,
+    'Connection': 'Keep-Alive',
+    'Referer': apiUri.match(/(https?:\/\/[^/]+)/)[1] + '/',
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
+  }
+}
+
 async function auth (cardNumber, password) {
-  const response = await fetchJson(`${apiUri}/authentication/authenticate?rid=${generateHash()}`, {
+  let rid = generateHash()
+  let response = await fetchJson(`${apiUri}/v0001/authentication/auth-by-secret?${makeQueryString(rid)}`, {
     log: true,
     method: 'POST',
     body: {
@@ -33,7 +42,7 @@ async function auth (cardNumber, password) {
       secret: password,
       type: 'AUTO'
     },
-    headers: defaultHeaders,
+    headers: createHeaders(rid),
     sanitizeRequestLog: {
       body: {
         principal: true,
@@ -44,21 +53,47 @@ async function auth (cardNumber, password) {
       headers: true
     }
   })
+  if (response.body.status === 'OTP_REQUIRED') {
+    const cookie = parse(splitCookiesString(response.headers['set-cookie'])).find((x) => x.name === 'XSRF-TOKEN')
+    setXXSrfToken(cookie.value)
+    const code = await ZenMoney.readLine('Введите код из SMS или push-уведомления', {
+      time: 120000,
+      inputType: 'number'
+    })
+    rid = generateHash()
+    response = await fetchJson(`${apiUri}/v0001/authentication/confirm?${makeQueryString(rid)}`, {
+      log: true,
+      method: 'POST',
+      body: {
+        principal: cardNumber,
+        otp: code
+      },
+      headers: createHeaders(rid),
+      sanitizeRequestLog: {
+        body: {
+          principal: true
+        }
+      },
+      sanitizeResponseLog: {
+        headers: true
+      }
+    })
+  }
 
   const s = response.body.status
 
   if (!(response.status === httpSuccessStatus && s === 'OK')) {
     let reason
-    const reasonDefault = 'неизвестная ошибка'
-    const reasonUnknownCardNumber = 'неправильный номер карты'
-    const reasonWrongPassword = 'неправильный пароль'
+    const reasonUnknownCardNumber = 'неверный номер карты'
+    const reasonWrongPassword = 'неверный номер карты или пароль'
     const reasonLocked = 'доступ временно запрещен'
     const reasonTechnicalWorks = 'технические работы в банке'
 
     const statusesUnknownCardNumber = [
       'CANNOT_FIND_SUBJECT',
       'PRINCIPAL_IS_EMPTY',
-      'CANNOT_FOUND_AUTHENTICATION_PROVIDER'
+      'CANNOT_FOUND_AUTHENTICATION_PROVIDER',
+      'CARD_IS_ARCHIVED'
     ]
     const statusesWrongPassword = [
       'AUTH_WRONG',
@@ -88,20 +123,26 @@ async function auth (cardNumber, password) {
     } else if (statusesTechnicalWorks.indexOf(s) !== -1) {
       reason = reasonTechnicalWorks
     } else {
-      reason = reasonDefault
+      reason = null
     }
-
-    console.assert(false, 'Не удалось авторизоваться: ' + reason, response)
+    if (reason) {
+      throw new TemporaryError(`Не удалось авторизоваться: ${reason}`)
+    } else {
+      console.assert(false, 'Не удалось авторизоваться', response)
+    }
   }
+
+  const cookie = parse(splitCookiesString(response.headers['set-cookie'])).find((x) => x.name === 'XSRF-TOKEN')
+
+  setXXSrfToken(cookie.value)
 }
 
-/**
- * @returns {Promise.<Array>}
- */
 async function fetchCards () {
-  const response = await fetchJson(`${apiUri}/cards?rid=${generateHash()}`, {
+  const rid = generateHash()
+
+  const response = await fetchJson(`${apiUri}/v0002/cards?${makeQueryString(rid)}`, {
     log: true,
-    headers: defaultHeaders,
+    headers: createHeaders(rid),
     sanitizeRequestLog: {},
     sanitizeResponseLog: {
       body: {
@@ -118,13 +159,12 @@ async function fetchCards () {
   return response.body.data
 }
 
-/**
- * @returns {Promise.<Array>}
- */
 async function fetchCredits () {
-  const response = await fetchJson(`${apiUri}/credit?rid=${generateHash()}`, {
+  const rid = generateHash()
+
+  const response = await fetchJson(`${apiUri}/v0001/credit?${makeQueryString(rid)}`, {
     log: true,
-    headers: defaultHeaders,
+    headers: createHeaders(rid),
     sanitizeRequestLog: {},
     sanitizeResponseLog: {
       body: {
@@ -146,13 +186,12 @@ async function fetchCredits () {
     : []
 }
 
-/**
- * @returns {Promise.<Array>}
- */
 async function fetchWallets () {
-  const response = await fetchJson(`${apiUri}/wallets?rid=${generateHash()}`, {
+  const rid = generateHash()
+
+  const response = await fetchJson(`${apiUri}/v0001/wallets?${makeQueryString(rid)}`, {
     log: true,
-    headers: defaultHeaders,
+    headers: createHeaders(rid),
     sanitizeRequestLog: {},
     sanitizeResponseLog: {}
   })
@@ -164,11 +203,7 @@ async function fetchWallets () {
     : []
 }
 
-/**
- * @param dateFrom
- * @returns {Promise.<Array>}
- */
-async function fetchTransactions (dateFrom) {
+async function fetchTransactions (dateFrom, contractIds) {
   let isFirstPage = true
   let transactions = []
 
@@ -179,22 +214,24 @@ async function fetchTransactions (dateFrom) {
     total: null
   }
 
-  console.log('last sync: ' + lastSyncTime + ' (' + dateFrom + ')')
+  let searchAfter = ''
+
+  console.debug('last sync: ' + lastSyncTime + ' (' + dateFrom + ')')
 
   while (isFirstPage || pagination.offset < pagination.total) {
-    const data = await fetchTransactionsInternal(pagination.limit, pagination.offset)
-
-    if (data.part.offset !== pagination.offset) { // банк ограничивает выборку
-      break
-    }
+    const result = await fetchTransactionsInternal(pagination.limit, lastSyncTime, searchAfter, contractIds)
 
     if (isFirstPage) {
-      pagination.total = data.part.totalCount
+      pagination.total = result.data.totalCount
       isFirstPage = false
     }
 
-    const loadNext = data.data
-      .filter((transaction) => transaction.itemType === 'OPERATION' && ('money' in transaction))
+    const loadNext = result.data.items
+      .filter((transaction) => {
+        searchAfter = transaction.date + ', ' + transaction.id
+
+        return transaction.itemType === 'OPERATION' && ('money' in transaction)
+      })
       .every((transaction) => {
         const isActual = transaction.date > lastSyncTime
 
@@ -213,15 +250,25 @@ async function fetchTransactions (dateFrom) {
   return transactions
 }
 
-/**
- * @param limit
- * @param offset
- * @returns {Promise.<Array>}
- */
-async function fetchTransactionsInternal (limit, offset) {
-  const response = await fetchJson(`${apiUri}/hst?limit=${limit}&offset=${offset}&rid=${generateHash()}`, {
+async function fetchTransactionsInternal (limit, gte, searchAfter, contractIds) {
+  const rid = generateHash()
+
+  let query = {
+    gte: gte,
+    lte: '',
+    queryString: '',
+    filters: '',
+    contractIds: contractIds.join(','),
+    limit: 20
+  }
+
+  if (searchAfter !== '') {
+    query.searchAfter = searchAfter
+  }
+
+  const response = await fetchJson(`${apiUri}/v0003/timeline/list?${makeQueryString(rid, query)}`, {
     log: true,
-    headers: defaultHeaders,
+    headers: createHeaders(rid),
     sanitizeRequestLog: {},
     sanitizeResponseLog: {}
   })
@@ -234,10 +281,6 @@ async function fetchTransactionsInternal (limit, offset) {
   return response.body
 }
 
-/**
- * @param response
- * @param allowedStatuses
- */
 const assertResponseSuccess = (response, allowedStatuses = ['OK']) => {
   console.assert(
     response.status === httpSuccessStatus && allowedStatuses.indexOf(response.body.status) !== -1,
@@ -246,14 +289,23 @@ const assertResponseSuccess = (response, allowedStatuses = ['OK']) => {
   )
 }
 
-/**
- * @returns {string}
- */
 const generateHash = () => {
   return Array.apply(null, { length: 16 })
     .map(() => Number(Math.floor(Math.random() * 16)).toString(16))
     .join('')
     .substring(0, 13)
+}
+
+const makeQueryString = (rid, data) => {
+  const params = {
+    ...data,
+    'rid': rid
+  }
+  const esc = encodeURIComponent
+
+  return Object.keys(params)
+    .map(k => esc(k) + '=' + esc(params[k]))
+    .join('&')
 }
 
 export {

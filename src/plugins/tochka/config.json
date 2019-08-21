@@ -1,0 +1,5 @@
+{
+  "clientId": "sandbox_hash",
+  "clientSecret": "sandbox_secret_hash",
+  "redirectUri": "https://localhost:8000/"
+}

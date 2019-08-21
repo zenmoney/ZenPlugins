@@ -2,6 +2,7 @@ import * as _ from 'lodash'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import * as network from '../../common/network'
 import * as retry from '../../common/retry'
+import { IncompatibleVersionError } from '../../errors'
 
 async function fetchJson (url, options = {}, predicate = () => true) {
   options = Object.assign({
@@ -95,7 +96,7 @@ export async function login (login, password) {
   if (response.body &&
         response.body.error === 'invalid_request' &&
         response.body.error_description === 'Missing grant type') {
-    throw new TemporaryError('У вас старая версия приложения Дзен-мани. Для корректной работы плагина обновите приложение до последней версии')
+    throw new IncompatibleVersionError()
   }
 
   validateResponse(response, response => response.body && !response.body.error && response.body.access_token)

@@ -31,7 +31,7 @@ function authDevice() {
 
     ZenMoney.trace("Запрашиваем номер карты у пользователя...", "input");
 
-    var cardNum = ZenMoney.retrieveCode("Введите номер карты банка Открытие, к которой привязан Мобильный банк", null, {
+    var cardNum = ZenMoney.retrieveCode("Введите номер карты банка Открытие", null, {
         inputType: "number",
         time: 180000, // 3 минуты
     });

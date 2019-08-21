@@ -22,6 +22,10 @@ export function convertTransaction (apiTransaction, account) {
   if (apiTransaction.status !== 'success') {
     return null
   }
+  const invoice = {
+    sum: apiTransaction.direction === 'in' ? apiTransaction.amount : -apiTransaction.amount,
+    instrument: apiTransaction.amount_currency || account.instrument
+  }
   const transaction = {
     date: new Date(apiTransaction.datetime),
     hold: false,
@@ -30,8 +34,8 @@ export function convertTransaction (apiTransaction, account) {
       {
         id: apiTransaction.operation_id,
         account: { id: account.id },
-        invoice: null,
-        sum: apiTransaction.direction === 'in' ? apiTransaction.amount : -apiTransaction.amount,
+        invoice: invoice.instrument === account.instrument ? null : invoice,
+        sum: invoice.instrument === account.instrument ? invoice.sum : null,
         fee: 0
       }
     ],

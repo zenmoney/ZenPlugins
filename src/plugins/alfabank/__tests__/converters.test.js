@@ -68,7 +68,7 @@ describe('toZenmoneyAccount', () => {
       ],
       'instrument': 'RUR',
       'startBalance': 0,
-      'balance': 0
+      'available': 0
     })
   })
 
@@ -107,7 +107,9 @@ test('parseApiMovementDescription', () => {
     '123456++++++7890    \\USA\\aws amazon co\\Amazon web se                  01.02.03 01.02.03          .12  USD',
     '12345678 JP SINNZIYUKUNEGISIYASUKU> 18.05.11 18.05.11 3500 JPY 123456++++++7890',
     'Комиссия за выпуск/перевыпуск картысогласно тарифам банка 01.01.18   ABCD0I                             ФАМИЛЬЕВ ИМЬ ОТЧЕВИЧ',
-    '123456++++++7890    10054005\\643\\KAZAN\\AUCHAN 054 KA                  31.01.19 29.01.19       546.00  RUR (Apple Pay-9710) MCC5411'
+    '123456++++++7890    10054005\\643\\KAZAN\\AUCHAN 054 KA                  31.01.19 29.01.19       546.00  RUR (Apple Pay-9710) MCC5411',
+    '123456++++++9876    00000001\\12345678901\\123\\PAYPAL  HELLO            09.08.19 06.08.19       123.45  RUR MCC1234',
+    '123456++++++9876    00000001\\123\\1234567890\\PAYPAL  GOOGL             04.08.19 02.08.19       124.00  RUR MCC1235'
   ]
   const results = descriptions.map((input) => ({ input, output: parseApiMovementDescription(input, -1) }))
   expect(results).toMatchSnapshot()
@@ -161,7 +163,13 @@ describe('getMerchantDataFromDescription', () => {
     '123456++++++7890    20913073\\643\\N NOVGOROD\\MAXIDOM NNOVG              12.02.19 09.02.19      5857.00  RUR MCC5200',
     '123456++++++7890    10704013\\RUS\\SAINT PETERSB\\AUCHAN GULLIV           16.02.19 14.02.19       203.32  RUR (Android Pay-8897) MCC5411',
     '123456++++++7890    \\372\\ITUNES COM\\ITUNES COM BI                     31.01.19 29.01.19       169.00  RUR MCC5735',
-    '123456++++++7890    89800480\\RUS\\MOSKVA G\\http\\Card2Card              02.09.18 31.08.18     50000.00  RUR MCC6538'
+    '123456++++++7890    89800480\\RUS\\MOSKVA G\\http\\Card2Card              02.09.18 31.08.18     50000.00  RUR MCC6538',
+    '479004++++++7702    \\495 465 8090\\826\\AIRBNB  HMAP                   09.08.19 07.08.19    29496.27  RUR MCC7011',
+    '479004++++++7702    \\441618366700\\826\\RENTALCARS CO                   09.08.19 07.08.19      7260.29  RUR MCC7512',
+    '479004++++++7702    26026010\\NABER  CHELNY\\643\\MCDONALDS 250          11.08.19 09.08.19      169.00  RUR (Apple Pay-1287) MCC5814',
+    '479004++++++7702      809643\\643\\MOSKVA\\BANKI RU                      08.08.19 07.08.19      1291.94  RUR MCC6300',
+    '123456++++++9876    00000001\\12345678901\\280\\PAYPAL  HELLO            09.08.19 06.08.19       123.45  RUR MCC1234',
+    '123456++++++9876    00000001\\840\\1234567890\\PAYPAL  GOOGL             04.08.19 02.08.19       124.00  RUR MCC1235'
   ]
 
   it('spaced', () => {
@@ -217,7 +225,13 @@ describe('getMerchantDataFromDescription', () => {
       { 'city': 'N NOVGOROD', 'country': '643', 'title': 'MAXIDOM NNOVG' },
       { 'city': 'SAINT PETERSB', 'country': 'RUS', 'title': 'AUCHAN GULLIV' },
       { 'city': 'ITUNES COM', 'country': '372', 'title': 'ITUNES COM BI' },
-      { 'city': 'MOSKVA G', 'country': 'RUS', 'title': 'Card2Card' }
+      { 'city': 'MOSKVA G', 'country': 'RUS', 'title': 'Card2Card' },
+      { 'city': null, 'country': '826', 'title': 'AIRBNB  HMAP' },
+      { 'city': null, 'country': '826', 'title': 'RENTALCARS CO' },
+      { 'city': 'NABER  CHELNY', 'country': '643', 'title': 'MCDONALDS 250' },
+      { 'city': 'MOSKVA', 'country': '643', 'title': 'BANKI RU' },
+      { 'city': null, 'country': '280', 'title': 'PAYPAL  HELLO' },
+      { 'city': null, 'country': '840', 'title': 'PAYPAL  GOOGL' }
     ]
     expect(merchants).toEqual(expectation)
   })
@@ -229,7 +243,7 @@ test('normalizeIsoDate normalizes isoDate for JavaScriptCore new Date(isoDate)',
   expect(normalizeIsoDate('2017-12-01T12:00:00.000-0550')).toEqual('2017-12-01T12:00:00.000-05:50')
 })
 
-test("extractDate uses executeTimeStamp (if it's present and <= 36 hours less than createDate) to ensure the same date is passed in hold/non-hold", () => {
+test('extractDate uses executeTimeStamp (if it\'s present and <= 36 hours less than createDate) to ensure the same date is passed in hold/non-hold', () => {
   expect(extractDate({ createDate: '2018-06-18T12:00:00.000+0300' }))
     .toEqual(new Date('2018-06-18T12:00:00.000+0300'))
   expect(extractDate({ createDate: '2018-06-18T12:00:00.000+0300', executeTimeStamp: '2018-06-19T00:42:47.402+0300' }))
@@ -439,7 +453,8 @@ describe('convertApiMovementsToReadableTransactions', () => {
         statusDescription: 'Выполнен',
         userComment: ''
       },
-      { id: '5',
+      {
+        id: '5',
         createDate: '2018-02-07T12:00:00.000+0300',
         amount: '-757.26',
         currency: 'RUR',
@@ -453,22 +468,60 @@ describe('convertApiMovementsToReadableTransactions', () => {
         descriptionForRepeat: 'Оплата неналоговых платежей (штрафы, пошлины)',
         senderInfo: { senderAccountNumberDescription: 'Текущий сч.. ··0987' },
         recipientInfo:
-          { recipientName: 'Оплата неналоговых платежей (штрафы, пошлины)',
+          {
+            recipientName: 'Оплата неналоговых платежей (штрафы, пошлины)',
             recipientValue: '40601810200003000000',
             recipientCardNumber: '',
             recipientBicBank: '044030001',
-            recipientNameBank: 'СЕВЕРО-ЗАПАДНОЕ ГУ БАНКА РОССИИ' },
+            recipientNameBank: 'СЕВЕРО-ЗАПАДНОЕ ГУ БАНКА РОССИИ'
+          },
         category:
-          { id: '23',
+          {
+            id: '23',
             bankCategoryId: '00024',
             bankCategoryName: 'Штрафы, налоги, комиссии',
-            color: '#FF2E63' },
+            color: '#FF2E63'
+          },
         actions:
-          { isAvailableForMarking: true,
+          {
+            isAvailableForMarking: true,
             isAvailableForRepeat: false,
             isAvailableForCreateTemplate: false,
             isAvailableForPDF: true,
-            isAvailableForCreateToDo: false }
+            isAvailableForCreateToDo: false
+          }
+      },
+      {
+        id: '1518',
+        createDate: '2016-11-04T12:00:00.000+0300',
+        amount: '-2 405.00',
+        currency: 'RUR',
+        status: '',
+        statusDescription: '',
+        description: 'За интернет-услуги по счету № 32591303 от 2016-11-04. НДС: 366.86 руб.',
+        hold: false,
+        key: '1161104MOCO#DS4108493',
+        reference: 'C020411160005090',
+        userComment: '',
+        shortDescription: 'За интернет-услуги по счету № 32591303 от 2016-11-04. НДС: 366.86 руб.',
+        descriptionForRepeat: '',
+        senderInfo: { senderAccountNumberDescription: 'Текущий за.. ··0987' },
+        recipientInfo:
+          {
+            recipientName: '',
+            recipientValue: '',
+            recipientCardNumber: '',
+            recipientBicBank: '',
+            recipientNameBank: ''
+          },
+        actions:
+          {
+            isAvailableForMarking: true,
+            isAvailableForRepeat: false,
+            isAvailableForCreateTemplate: false,
+            isAvailableForPDF: false,
+            isAvailableForCreateToDo: false
+          }
       }
     ]
 
@@ -530,6 +583,23 @@ describe('convertApiMovementsToReadableTransactions', () => {
             fee: 0
           }
         ]
+      },
+      {
+        'comment': 'За интернет-услуги по счету № 32591303 от 2016-11-04. НДС: 366.86 руб.',
+        'date': new Date('2016-11-04T09:00:00.000Z'),
+        'hold': false,
+        'merchant': null,
+        'movements': [
+          {
+            'account': {
+              'id': 'x0987'
+            },
+            'fee': 0,
+            'id': '1161104MOCO#DS4108493',
+            'invoice': null,
+            'sum': -2405
+          }
+        ]
       }
     ]
 
@@ -544,7 +614,8 @@ describe('convertApiMovementsToReadableTransactions', () => {
 
   it('converts inner transfers', () => {
     const apiMovements = [
-      { id: '1',
+      {
+        id: '1',
         createDate: '2018-11-22T12:00:00.000+0300',
         amount: '+2 300.00',
         currency: 'RUR',
@@ -558,27 +629,35 @@ describe('convertApiMovementsToReadableTransactions', () => {
         shortDescription: 'От Фамилиев Имь Отчевич',
         descriptionForRepeat: 'На счёт другому клиенту',
         senderInfo:
-          { senderCardNumber: '',
+          {
+            senderCardNumber: '',
             senderAccountNumber: '98765432100000001234',
             senderBicBank: '044525593',
             senderNameBank: 'АО "АЛЬФА-БАНК"',
             senderEmail: 'from(sender.e@mail)',
             senderPhoneNumber: '79000112233',
             senderMaskedName: 'Фам····в И.О.',
-            senderFIO: 'from(Фамилиев Имь Отчевич)' },
+            senderFIO: 'from(Фамилиев Имь Отчевич)'
+          },
         recipientInfo:
-          { recipientAccountNumberDescription: 'Текущий сч.. ··0987',
+          {
+            recipientAccountNumberDescription: 'Текущий сч.. ··0987',
             recipientEmail: 'to(recipient.e@mail)',
             recipientPhoneNumber: '79001233344',
-            recipientFIO: 'to(Фамилиаров Имь Отчевич)' },
+            recipientFIO: 'to(Фамилиаров Имь Отчевич)'
+          },
         actions:
-          { isAvailableForMarking: false,
+          {
+            isAvailableForMarking: false,
             isAvailableForRepeat: false,
             isAvailableForCreateTemplate: false,
             isAvailableForPDF: true,
-            isAvailableForCreateToDo: false } },
+            isAvailableForCreateToDo: false
+          }
+      },
 
-      { id: '2',
+      {
+        id: '2',
         createDate: '2018-10-05T12:00:00.000+0300',
         amount: '-900.00',
         currency: 'RUR',
@@ -592,12 +671,15 @@ describe('convertApiMovementsToReadableTransactions', () => {
         shortDescription: 'За Дружбу',
         descriptionForRepeat: 'На счёт другому клиенту',
         senderInfo:
-          { senderAccountNumberDescription: 'Текущий сч.. ··0987',
+          {
+            senderAccountNumberDescription: 'Текущий сч.. ··0987',
             senderEmail: 'from(sender.e@mail)',
             senderPhoneNumber: '79001233344',
-            senderFIO: 'from(Фамилиаров Имь Отчевич)' },
+            senderFIO: 'from(Фамилиаров Имь Отчевич)'
+          },
         recipientInfo:
-          { recipientName: 'Фам···в И.О.',
+          {
+            recipientName: 'Фам···в И.О.',
             recipientValue: '900***2233',
             recipientCardNumber: '',
             recipientBicBank: '044525593',
@@ -605,13 +687,17 @@ describe('convertApiMovementsToReadableTransactions', () => {
             recipientEmail: 'to(recipient.e@mail)',
             recipientPhoneNumber: '79000112233',
             recipientMaskedName: 'Фам····в И.О.',
-            recipientFIO: 'to(Фамилиев Имь Отчевич)' },
+            recipientFIO: 'to(Фамилиев Имь Отчевич)'
+          },
         actions:
-          { isAvailableForMarking: true,
+          {
+            isAvailableForMarking: true,
             isAvailableForRepeat: true,
             isAvailableForCreateTemplate: true,
             isAvailableForPDF: true,
-            isAvailableForCreateToDo: true } }
+            isAvailableForCreateToDo: true
+          }
+      }
     ]
 
     const transactions = [
@@ -907,7 +993,8 @@ describe('convertApiMovementsToReadableTransactions', () => {
         },
         recipientInfo: { recipientAccountNumberDescription: 'Накопительный ··1234' }
       },
-      { id: '9',
+      {
+        id: '9',
         createDate: '2018-02-15T12:00:00.000+0300',
         amount: '+18 912.01',
         currency: 'RUR',
@@ -920,18 +1007,24 @@ describe('convertApiMovementsToReadableTransactions', () => {
         userComment: '',
         descriptionForRepeat: '',
         senderInfo:
-          { senderCardNumber: '',
+          {
+            senderCardNumber: '',
             senderBicBank: '',
             senderNameBank: '',
-            senderAccountNumberDescription: 'Текущий ··0987' },
+            senderAccountNumberDescription: 'Текущий ··0987'
+          },
         recipientInfo: { recipientAccountNumberDescription: 'Накопительный ··1234' },
         actions:
-          { isAvailableForMarking: false,
+          {
+            isAvailableForMarking: false,
             isAvailableForRepeat: false,
             isAvailableForCreateTemplate: false,
             isAvailableForPDF: false,
-            isAvailableForCreateToDo: false } },
-      { id: '10',
+            isAvailableForCreateToDo: false
+          }
+      },
+      {
+        id: '10',
         createDate: '2018-02-15T12:00:00.000+0300',
         amount: '-18 912.01',
         currency: 'RUR',
@@ -945,23 +1038,30 @@ describe('convertApiMovementsToReadableTransactions', () => {
         descriptionForRepeat: '',
         senderInfo: { senderAccountNumberDescription: 'Текущий ··0987' },
         recipientInfo:
-          { recipientName: '',
+          {
+            recipientName: '',
             recipientValue: '',
             recipientCardNumber: '',
             recipientBicBank: '',
             recipientNameBank: '',
-            recipientAccountNumberDescription: 'Накопительный ··1234' },
+            recipientAccountNumberDescription: 'Накопительный ··1234'
+          },
         category:
-          { id: '12',
+          {
+            id: '12',
             bankCategoryId: '00013',
             bankCategoryName: 'Финансовые операции',
-            color: '#23CBFF' },
+            color: '#23CBFF'
+          },
         actions:
-          { isAvailableForMarking: true,
+          {
+            isAvailableForMarking: true,
             isAvailableForRepeat: false,
             isAvailableForCreateTemplate: false,
             isAvailableForPDF: false,
-            isAvailableForCreateToDo: false } }
+            isAvailableForCreateToDo: false
+          }
+      }
     ]
 
     const transactions = [
@@ -1310,32 +1410,34 @@ describe('convertApiMovementsToReadableTransactions', () => {
       }
     ]
 
-    const apiAccounts = [{
-      number: '40817800000000006840',
-      description: 'Текущий зарплатный счёт',
-      amount: '53.90',
-      currencyCode: 'RUR',
-      actions:
-        {
-          isAvailableForRename: true,
-          isAvailableForWithdrowal: true,
-          isMoneyBoxEdit: false
-        },
-      filters: [
-        {
-          operation: 'accounts',
-          title: 'Счета',
-          color: '#F03226',
-          filterList:
-            [
-              {
-                name: 'Текущий за.. RUR ··6840',
-                value: '40817800000000006840'
-              }
-            ]
-        }
-      ]
-    }]
+    const apiAccounts = [
+      {
+        number: '40817800000000006840',
+        description: 'Текущий зарплатный счёт',
+        amount: '53.90',
+        currencyCode: 'RUR',
+        actions:
+          {
+            isAvailableForRename: true,
+            isAvailableForWithdrowal: true,
+            isMoneyBoxEdit: false
+          },
+        filters: [
+          {
+            operation: 'accounts',
+            title: 'Счета',
+            color: '#F03226',
+            filterList:
+              [
+                {
+                  name: 'Текущий за.. RUR ··6840',
+                  value: '40817800000000006840'
+                }
+              ]
+          }
+        ]
+      }
+    ]
 
     const accountTuples = convertApiAccountsToAccountTuples(apiAccounts)
     const readableTransactions = convertApiMovementsToReadableTransactions(apiMovements, accountTuples)

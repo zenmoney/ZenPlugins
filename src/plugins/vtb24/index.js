@@ -1,51 +1,50 @@
+import { uniqBy } from 'lodash'
 import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
-import { convertAccounts, convertApiTransactionsToReadableTransactions } from './converters'
+import { adjustTransactions } from '../../common/transactionGroupHandler'
 import { fetchAccounts, fetchTransactions, login } from './api'
+import { convertAccounts, convertTransaction, getTransactionId } from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
   toDate = toDate || new Date()
+
   const auth = await login(preferences.login, preferences.password)
   const apiPortfolios = await fetchAccounts(auth)
-  const apiAccounts = convertAccounts(apiPortfolios)
-  const zenAccounts = []
 
-  const apiTransactionsByAccountId = {}
-
-  await Promise.all(apiAccounts.map(async apiAccount => {
-    if (zenAccounts.indexOf(apiAccount.zenAccount) < 0) {
-      zenAccounts.push(apiAccount.zenAccount)
-    }
-    if (ZenMoney.isAccountSkipped(apiAccount.zenAccount.id)) {
+  const accountsData = convertAccounts(apiPortfolios)
+  const accounts = []
+  const transactions = []
+  await Promise.all(accountsData.map(async ({ mainProduct, products, zenAccount }) => {
+    accounts.push(zenAccount)
+    if (ZenMoney.isAccountSkipped(zenAccount.id)) {
       return
     }
-    try {
-      apiTransactionsByAccountId[apiAccount.id] = (await fetchTransactions(auth, apiAccount, fromDate, toDate))
-    } catch (e) {
-      if (e && e.message && ['временно', 'Ошибка обращения'].some(errorMsgPattern => e.message.indexOf(errorMsgPattern) >= 0)) {
-        if (apiAccount.cards && apiAccount.cards.length) {
-          await Promise.all(apiAccount.cards.map(async apiCard => {
-            try {
-              apiTransactionsByAccountId[apiAccount.id] =
-                (apiTransactionsByAccountId[apiAccount.id] || []).concat(await fetchTransactions(auth, apiCard, fromDate, toDate))
-            } catch (e) {
-              if (e && e.message && e.message.indexOf('временно') >= 0) {
-                console.log(`skipping transactions for account ${apiAccount.id} card ${apiCard.id}`)
-              } else {
-                throw e
-              }
-            }
-          }))
-        } else {
-          console.log(`skipping transactions for account ${apiAccount.id}`)
+    let apiTransactions = await fetchTransactions(auth, mainProduct, fromDate, toDate)
+    if (!apiTransactions) {
+      for (const product of products) {
+        const batch = await fetchTransactions(auth, product, fromDate, toDate)
+        if (batch) {
+          if (apiTransactions) {
+            apiTransactions.push(...batch)
+          } else {
+            apiTransactions = batch
+          }
         }
-      } else {
-        throw e
       }
+    }
+    if (apiTransactions) {
+      uniqBy(apiTransactions, getTransactionId).forEach(apiTransaction => {
+        const transaction = convertTransaction(apiTransaction, zenAccount)
+        if (transaction) {
+          transactions.push(transaction)
+        }
+      })
+    } else {
+      console.log(`skipping transactions for account ${zenAccount.id}`)
     }
   }))
 
   return {
-    accounts: ensureSyncIDsAreUniqueButSanitized({ accounts: zenAccounts, sanitizeSyncId }),
-    transactions: convertApiTransactionsToReadableTransactions(apiTransactionsByAccountId, apiAccounts)
+    accounts: ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId }),
+    transactions: adjustTransactions({ transactions })
   }
 }

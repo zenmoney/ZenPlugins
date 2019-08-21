@@ -36,16 +36,11 @@ describe('convertAccount', () => {
       }
     }
     expect(convertCardAccount(apiAccount)).toEqual({
-      id: 'AA18315EBD4647C990492F812629D493',
-      type: 'ru.vtb24.mobilebanking.protocol.product.MasterAccountMto',
-      products: [
-        {
-          id: 'AA18315EBD4647C990492F812629D493',
-          type: 'ru.vtb24.mobilebanking.protocol.product.MasterAccountMto',
-          apiAccount
-        }
-      ],
-      cards: [],
+      mainProduct: {
+        id: 'AA18315EBD4647C990492F812629D493',
+        type: 'ru.vtb24.mobilebanking.protocol.product.MasterAccountMto'
+      },
+      products: [],
       zenAccount: {
         id: 'AA18315EBD4647C990492F812629D493',
         type: 'checking',
@@ -134,21 +129,11 @@ describe('convertAccount', () => {
       }
     }
     expect(convertCardAccount(apiAccount)).toEqual({
-      id: 'F71710FBFC614CC29030ACF227509AA1',
-      type: 'ru.vtb24.mobilebanking.protocol.product.MasterAccountMto',
+      mainProduct: {
+        id: 'F71710FBFC614CC29030ACF227509AA1',
+        type: 'ru.vtb24.mobilebanking.protocol.product.MasterAccountMto'
+      },
       products: [
-        {
-          id: 'F71710FBFC614CC29030ACF227509AA1',
-          type: 'ru.vtb24.mobilebanking.protocol.product.MasterAccountMto',
-          apiAccount
-        },
-        {
-          id: '4E40E49C08C24A3F85100C31F9BD6B43',
-          type: 'ru.vtb24.mobilebanking.protocol.product.MasterAccountCardMto',
-          apiAccount: apiAccount.cards[0]
-        }
-      ],
-      cards: [
         {
           id: '4E40E49C08C24A3F85100C31F9BD6B43',
           type: 'ru.vtb24.mobilebanking.protocol.product.MasterAccountCardMto'
