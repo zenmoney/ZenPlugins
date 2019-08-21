@@ -45,7 +45,7 @@ export async function login (login, password) {
   const res = await fetchApiJson('session/login', {
     method: 'POST',
     body: {
-      applicID: '1.6',
+      applicID: '1.10',
       clientKind: '0',
       deviceUDID: deviceID,
       login: login,
@@ -154,10 +154,16 @@ export async function fetchLastCardTransactions (token, account) {
       ]
     }
   }, response => response.body)
-  const operations = flatMap(response.PS_ERIP.GetExtractCardResponse.BPC.OperationList.oper, d => {
-    d.accountNumber = account.id
-    return d
-  })
+  var operations = []
+  if (response.PS_ERIP.GetExtractCardResponse.BPC.OperationList.oper && response.PS_ERIP.GetExtractCardResponse.BPC.OperationList.oper.length > 1) {
+    operations = flatMap(response.PS_ERIP.GetExtractCardResponse.BPC.OperationList.oper, d => {
+      d.accountNumber = account.id
+      return d
+    })
+  } else if (response.PS_ERIP.GetExtractCardResponse.BPC.OperationList.oper && response.PS_ERIP.GetExtractCardResponse.BPC.OperationList.oper.auth_date) {
+    operations = [response.PS_ERIP.GetExtractCardResponse.BPC.OperationList.oper]
+    operations[0].accountNumber = account.id
+  }
 
   console.log(`>>> Загружено ${operations.length} операций.`)
   return operations
