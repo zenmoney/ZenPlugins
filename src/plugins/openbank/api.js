@@ -81,6 +81,11 @@ async function authDevice (auth, preferences) {
   if (response.body.error && response.body.error.code === 503) {
     throw new InvalidPreferencesError('Неверный номер карты')
   }
+  if (response.body.error && response.body.error.error_message && [
+    'нельзя зарегистрироваться по корпоративной карте'
+  ].some(str => response.body.error.error_message.indexOf(str) >= 0)) {
+    throw new InvalidPreferencesError('Неверный номер карты. Проверьте, работает ли мобильное приложение Банка Открытие, и повторите подключение синхронизации ещё раз.')
+  }
 
   console.assert(response.body.data && response.body.data.phone && !response.body.error, 'Ошибка запроса СМС-кода')
 

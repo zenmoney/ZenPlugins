@@ -108,7 +108,7 @@ describe('convertTransaction', () => {
         comment: null,
         groupKeys: [
           null,
-          '2019-08-14_A98_0.1'
+          '2019-08-14_XAU_0.0032'
         ]
       }
     ]

@@ -314,6 +314,150 @@ describe('convertAccounts', () => {
           creditLimit: 100000
         }
       }
+    ],
+    [
+      [
+        {
+          cardId: '434651093',
+          maskCardNum: '416038******7923',
+          virtualCardNum: '5AB21A689F060090E0530A42961EBE6E',
+          tariffPlan: {},
+          bic: '044525985',
+          cardType: 'PKB Visa Electron PERM',
+          paySystem: 'VISA',
+          balance: { amount: 2523.78, currency: 'RUR' },
+          status: { code: 'NORMAL', value: 'Активна' },
+          externalId: '434651093',
+          designCode: 'PKB VISA Electron',
+          designFileName: 'https://ib.open.ru/webbank/image/card-design/wb-small/267c78f96bee46230d8cc2e2f2320322.jpg',
+          cardExpDate: '2019-10-31T00:00:00.000+0300',
+          main: true,
+          bankName: 'Openbank',
+          bsc: 'TWR',
+          startDate: '2017-10-01T00:00:00.000+0300',
+          lastTransactionDate: '2019-07-31T00:00:00.000+0300',
+          type: 'debit',
+          productType: 'CARD',
+          cardPC: 'TWO',
+          idExt: '4421565',
+          holderName: 'NIKOLAY NIKOLAEV',
+          applePayAllowed: false,
+          mbCardDesignFull: 'https://ib.open.ru/webbank/image/card-design/mb-full/267c78f96bee46230d8cc2e2f2320322.png',
+          mbHalfCardDesign: 'https://ib.open.ru/webbank/image/card-design/mb-half/267c78f96bee46230d8cc2e2f2320322.png',
+          overdue: false,
+          accNum: '40817810555511271980',
+          accName: 'Николаев Николай Николаевич',
+          paySystemPC: 'TWO',
+          resident: true,
+          pinChangeAvailable: false,
+          reissueInfo: { available: false, free: false },
+          amountVisible: true,
+          updateTime: 1566364197898,
+          creditLimit: 0,
+          preferentialRate: false,
+          smsInfoAvailable: false
+        }
+      ],
+      {
+        products: [
+          {
+            id: '434651093',
+            type: 'card'
+          }
+        ],
+        account: {
+          id: '40817810555511271980',
+          type: 'ccard',
+          title: 'PKB Visa Electron PERM',
+          instrument: 'RUR',
+          syncID: [
+            '416038******7923',
+            '40817810555511271980'
+          ],
+          balance: 2523.78
+        }
+      }
+    ],
+    [
+      [
+        {
+          cardId: '12155984',
+          maskCardNum: '4627********0125',
+          virtualCardNum: '12155984',
+          tariffPlan: {},
+          name: 'Visa Gold',
+          bic: '044525175',
+          cardType: 'Visa Gold',
+          paySystem: 'VISA',
+          balance: { amount: 0, currency: 'RUR' },
+          status: { code: 'NORMAL', value: 'Активна' },
+          externalId: '12155984',
+          designCode: 'vrkk02',
+          designFileName: 'https://ib.open.ru/webbank/image/card-design/wb-small/b5028790c76c692359ef479ebb678759.jpg',
+          cardExpDate: '2021-05-01T00:00:00.000+0300',
+          main: true,
+          bankName: 'Openbank',
+          bsc: 'BINRBO',
+          startDate: '2017-05-24T00:00:00.000+0300',
+          type: 'debit',
+          productType: 'CARD',
+          cardPC: 'BIN',
+          idExt: '128996879000',
+          holderName: 'НИКОЛАЕВ НИКОЛАЙ НИКОЛАЕВИЧ',
+          applePayAllowed: false,
+          mbCardDesignFull: 'https://ib.open.ru/webbank/image/card-design/mb-full/b5028790c76c692359ef479ebb678759.png',
+          mbHalfCardDesign: 'https://ib.open.ru/webbank/image/card-design/mb-half/b5028790c76c692359ef479ebb678759.png',
+          overdue: false,
+          accNum: '-',
+          accName: 'НИКОЛАЕВ НИКОЛАЙ НИКОЛАЕВИЧ',
+          paySystemPC: 'BIN',
+          resident: true,
+          pinChangeAvailable: false,
+          reissueInfo: { available: false, free: false },
+          amountVisible: true,
+          updateTime: 1566299543964,
+          preferentialRate: false,
+          inn: '7706092528',
+          restrictions:
+            [
+              'DEPOSIT_OPEN',
+              'OFFER',
+              'DEPOSIT_CLOSE_DESTINATION',
+              'INVEST_UK',
+              'METAL_OPEN',
+              'PIN_CHANGE',
+              'ACCUMULATION_OPEN',
+              'METAL_BUY',
+              'CONVERSION',
+              'SMS_INFO',
+              'METAL_SELL',
+              'TRANSACTIONS',
+              'FREE_REQUISITES',
+              'PHONE',
+              'BLOCK_UNBLOCK',
+              'INVEST_BROKER'
+            ],
+          smsInfoAvailable: false
+        }
+      ],
+      {
+        products: [
+          {
+            id: '12155984',
+            type: 'card'
+          }
+        ],
+        account: {
+          id: '4627********0125',
+          type: 'ccard',
+          title: 'Visa Gold',
+          instrument: 'RUR',
+          syncID: [
+            '4627********0125'
+          ],
+          balance: 0
+        }
+      }
     ]
   ])('converts card', (apiAccounts, item) => {
     expect(convertAccounts(apiAccounts)).toEqual([item])

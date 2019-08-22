@@ -1,4 +1,4 @@
-import { convertTransaction } from '../../../converters'
+import { convertTransaction, GRAMS_IN_OZ } from '../../../converters'
 
 describe('convertTransaction', () => {
   it.each([
@@ -70,6 +70,43 @@ describe('convertTransaction', () => {
     ]
   ])('converts inner income transfer', (apiTransaction, transaction) => {
     const account = { id: 'account', instrument: 'RUR' }
+    expect(convertTransaction(apiTransaction, account)).toEqual(transaction)
+  })
+
+  it.each([
+    [
+      {
+        authDate: '2019-08-14T00:00:00.000+0300',
+        digitalSign: false,
+        id: '3C:6277002911',
+        description: 'Зачисление 0.1 г. золота клиенту Николаев Николай Николаевич по заявке от 14.08.2019 №67120 по ставке 3210.1 р/гр',
+        transAmount: { amount: 0.1, currency: 'A98' },
+        categoryIconUrl: 'https://ib.open.ru/webbank/image/transaction-category-icons/money_transfer.png',
+        category: { code: 'MONEY_TRANSFER', value: 'Перевод денег' },
+        status: { code: 'PROCESSED', value: 'Проведена' }
+      },
+      {
+        hold: false,
+        date: new Date('2019-08-14T00:00:00.000+03:00'),
+        movements: [
+          {
+            id: '3C:6277002911',
+            account: { id: 'account' },
+            invoice: null,
+            sum: 0.1 / GRAMS_IN_OZ,
+            fee: 0
+          }
+        ],
+        merchant: null,
+        comment: null,
+        groupKeys: [
+          null,
+          '2019-08-14_XAU_0.0032'
+        ]
+      }
+    ]
+  ])('converts metal income transfer', (apiTransaction, transaction) => {
+    const account = { id: 'account', instrument: 'XAU' }
     expect(convertTransaction(apiTransaction, account)).toEqual(transaction)
   })
 })

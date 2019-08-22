@@ -129,6 +129,11 @@ function convertCard (apiAccount) {
   if (apiAccount.status.code !== 'NORMAL') {
     return null
   }
+  const syncIds = [apiAccount.maskCardNum]
+  const accountNumber = apiAccount.accNum && /^[\d\s]*\d{4}$/.test(apiAccount.accNum) ? apiAccount.accNum : null
+  if (accountNumber) {
+    syncIds.push(accountNumber)
+  }
   return {
     products: [
       {
@@ -137,14 +142,11 @@ function convertCard (apiAccount) {
       }
     ],
     account: {
-      id: apiAccount.accNum,
+      id: accountNumber || apiAccount.maskCardNum,
       type: 'ccard',
-      title: apiAccount.tariffPlan.name || apiAccount.name,
+      title: apiAccount.tariffPlan.name || apiAccount.name || apiAccount.cardType,
       instrument: apiAccount.balance.currency,
-      syncID: [
-        apiAccount.maskCardNum,
-        apiAccount.accNum
-      ],
+      syncID: syncIds,
       balance: Math.round((apiAccount.balance.amount - (apiAccount.creditLimit || 0)) * 100) / 100,
       ...apiAccount.creditLimit && { creditLimit: apiAccount.creditLimit }
     }
@@ -176,7 +178,7 @@ function convertAccount (apiAccount) {
   }
 }
 
-const GRAMS_IN_OZ = 31.1034768
+export const GRAMS_IN_OZ = 31.1034768
 
 function convertMetalAccount (apiAccount) {
   if (apiAccount.status.code !== 'NORMAL') {
@@ -229,12 +231,22 @@ export function parseDate (str) {
 }
 
 export function convertTransaction (apiTransaction, account) {
-  const invoice = apiTransaction.authAmount ? {
+  let invoice = apiTransaction.authAmount ? {
     sum: apiTransaction.authAmount.amount,
     instrument: apiTransaction.authAmount.currency
   } : {
     sum: apiTransaction.transAmount.amount,
     instrument: apiTransaction.transAmount.currency
+  }
+  if (parseMetalInstrument(invoice.instrument)) {
+    invoice = {
+      instrument: parseMetalInstrument(invoice.instrument),
+      sum: invoice.sum / GRAMS_IN_OZ
+    }
+  }
+  let sum = apiTransaction.transAmount.amount
+  if (parseMetalInstrument(apiTransaction.transAmount.currency)) {
+    sum /= GRAMS_IN_OZ
   }
   const transaction = {
     hold: apiTransaction.status.code === 'ACCEPTED',
@@ -244,7 +256,7 @@ export function convertTransaction (apiTransaction, account) {
         id: apiTransaction.id,
         account: { id: account.id },
         invoice: invoice.instrument === account.instrument ? null : invoice,
-        sum: apiTransaction.transAmount.amount,
+        sum: sum,
         fee: 0
       }
     ],
@@ -266,11 +278,17 @@ function parseInnerTransfer (transaction, apiTransaction, account, invoice, desc
     return false
   }
   if (![
-    'Перевод собств. ср-в',
-    'Перечисление денежных средств для пополнения счета',
-    'Продажа металла клиенту'
-  ].some(str => description.indexOf(str) >= 0)) {
+    /Перевод собств. ср-в/,
+    /Перечисление денежных средств для пополнения счета/,
+    /Продажа металла клиенту/,
+    /Зачисление(.*)клиенту/
+  ].some(regexp => regexp.test(description))) {
     return false
+  }
+  let invoiceSumStr = `${Math.abs(invoice.sum * 100) / 100}`
+  const dotIndex = invoiceSumStr.indexOf('.')
+  if (dotIndex >= 0 && dotIndex < invoiceSumStr.length - 4) {
+    invoiceSumStr = invoiceSumStr.slice(0, dotIndex + 5)
   }
   let detailedGroupKey = null
   for (const regexp of [
@@ -281,7 +299,7 @@ function parseInnerTransfer (transaction, apiTransaction, account, invoice, desc
     if (match) {
       const outcomeSyncId = match[1]
       const incomeSyncId = match[2]
-      detailedGroupKey = `${apiTransaction.authDate.substring(0, 10)}_${invoice.instrument}_${Math.abs(invoice.sum * 100) / 100}` +
+      detailedGroupKey = `${apiTransaction.authDate.substring(0, 10)}_${invoice.instrument}_${invoiceSumStr}` +
         `_${outcomeSyncId.slice(-4)}_${incomeSyncId.slice(-4)}`
       break
     }
@@ -289,7 +307,7 @@ function parseInnerTransfer (transaction, apiTransaction, account, invoice, desc
   transaction.movements[0].invoice = null
   transaction.groupKeys = [
     detailedGroupKey,
-    `${apiTransaction.authDate.substring(0, 10)}_${invoice.instrument}_${Math.abs(invoice.sum * 100) / 100}`
+    `${apiTransaction.authDate.substring(0, 10)}_${invoice.instrument}_${invoiceSumStr}`
   ]
   return true
 }
