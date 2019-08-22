@@ -148,15 +148,14 @@ export async function fetchLastCardTransactions (token, account) {
     }
   }, response => response.body)
   var operations = []
-  if (response.PS_ERIP.GetExtractCardResponse.BPC.OperationList.oper_count > 1) {
+  if (response.PS_ERIP.GetExtractCardResponse.BPC.OperationList.oper && response.PS_ERIP.GetExtractCardResponse.BPC.OperationList.oper.length > 1) {
     operations = flatMap(response.PS_ERIP.GetExtractCardResponse.BPC.OperationList.oper, d => {
       d.accountNumber = account.id
       return d
     })
-  } else if (response.PS_ERIP.GetExtractCardResponse.BPC.OperationList.oper_count === 1) {
-    let oper = response.PS_ERIP.GetExtractCardResponse.BPC.OperationList.oper
-    oper.accountNumber = account.id
-    operations.push(oper)
+  } else if (response.PS_ERIP.GetExtractCardResponse.BPC.OperationList.oper && response.PS_ERIP.GetExtractCardResponse.BPC.OperationList.oper.auth_date) {
+    operations = [response.PS_ERIP.GetExtractCardResponse.BPC.OperationList.oper]
+    operations[0].accountNumber = account.id
   }
 
   console.log(`>>> Загружено ${operations.length} операций.`)
