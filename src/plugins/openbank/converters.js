@@ -5,7 +5,7 @@ export function convertAccounts (apiAccounts) {
   const cardAccounts = {}
   for (const apiAccount of apiAccounts) {
     let converter
-    const type = apiAccount.loan ? 'credit' : apiAccount.contracts ? 'deposit' : apiAccount.productType && apiAccount.productType.toLowerCase()
+    const type = apiAccount.loan || apiAccount.overdue ? 'credit' : apiAccount.contracts ? 'deposit' : apiAccount.productType && apiAccount.productType.toLowerCase()
     switch (type) {
       case 'card':
         converter = convertCard
