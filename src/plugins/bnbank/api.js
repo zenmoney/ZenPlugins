@@ -16,7 +16,7 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
     validateResponse(response, response => predicate(response), error)
   }
 
-  if (response.body.errorInfo.error !== '0' && response.body.errorInfo.errorText) {
+  if (response.body && response.body.errorInfo && response.body.errorInfo.error !== '0' && response.body.errorInfo.errorText) {
     const errorDescription = response.body.errorInfo.errorText
     const errorMessage = 'Ответ банка: ' + errorDescription
     if (errorDescription.indexOf('Некорректно введен логин или пароль') >= 0) {
