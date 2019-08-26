@@ -62,6 +62,15 @@ export async function fetchAccounts (token) {
   console.log('>>> Загрузка списка счетов...')
   const products = (await fetchApiJson('products/getUserAccountsOverview', {
     method: 'POST',
+    body: {
+      cardAccount: {
+        withBalance: null
+      },
+      corpoCardAccount: {},
+      creditAccount: {},
+      currentAccount: {},
+      depositAccount: {}
+    },
     headers: { 'session_token': token } }, response => response.body && response.body.overviewResponse && (response.body.overviewResponse.cardAccount || response.body.overviewResponse.depositAccount), message => new TemporaryError(message))).body.overviewResponse
 
   return {
