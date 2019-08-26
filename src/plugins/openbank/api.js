@@ -86,6 +86,11 @@ async function authDevice (auth, preferences) {
   ].some(str => response.body.error.error_message.indexOf(str) >= 0)) {
     throw new InvalidPreferencesError('Неверный номер карты. Проверьте, работает ли мобильное приложение Банка Открытие, и повторите подключение синхронизации ещё раз.')
   }
+  if (response.body.error && response.body.error.error_message && [
+    'Проводим плановые работы'
+  ].some(str => response.body.error.error_message.indexOf(str) >= 0)) {
+    throw new TemporaryError(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: ${response.body.error.error_message}`)
+  }
 
   console.assert(response.body.data && response.body.data.phone && !response.body.error, 'Ошибка запроса СМС-кода')
 
