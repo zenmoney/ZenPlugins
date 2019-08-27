@@ -231,6 +231,12 @@ export function parseDate (str) {
 }
 
 export function convertTransaction (apiTransaction, account) {
+  const description = (apiTransaction.place && apiTransaction.place.trim()) || (apiTransaction.description && apiTransaction.description.trim())
+  if (description && [
+    'Погашение ссудной задолженности'
+  ].indexOf(description) >= 0) {
+    return null
+  }
   let invoice = apiTransaction.authAmount ? {
     sum: apiTransaction.authAmount.amount,
     instrument: apiTransaction.authAmount.currency
@@ -262,8 +268,7 @@ export function convertTransaction (apiTransaction, account) {
     ],
     merchant: null,
     comment: null
-  }
-  const description = (apiTransaction.place && apiTransaction.place.trim()) || (apiTransaction.description && apiTransaction.description.trim());
+  };
   [
     parseInnerTransfer,
     parseOuterTransfer,
