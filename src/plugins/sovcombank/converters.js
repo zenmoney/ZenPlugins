@@ -49,21 +49,23 @@ export function convertCurrentAccount (apiAccount) {
 }
 
 export function convertCard (apiAccount) {
-  let title = apiAccount.cardName
+  let title = apiAccount.cardName || apiAccount.name
   if (title.toLowerCase().indexOf('халва') >= 0) {
     title = 'Халва'
   }
+  const syncIds = []
+  if (apiAccount.cardBin && apiAccount.cardEnd) {
+    syncIds.push(apiAccount.cardBin + '******' + apiAccount.cardEnd)
+  }
+  syncIds.push(apiAccount.account)
   return {
     id: apiAccount.account,
     type: 'ccard',
     title,
     instrument: 'RUB',
-    balance: apiAccount.sum - apiAccount.creditLimit,
-    creditLimit: apiAccount.creditLimit,
-    syncID: [
-      apiAccount.cardBin + '******' + apiAccount.cardEnd,
-      apiAccount.account
-    ]
+    balance: apiAccount.sum - (apiAccount.creditLimit || 0),
+    creditLimit: apiAccount.creditLimit || 0,
+    syncID: syncIds
   }
 }
 

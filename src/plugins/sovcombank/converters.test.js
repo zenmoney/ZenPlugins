@@ -277,6 +277,65 @@ describe('convertAccount', () => {
       savings: false
     })
   })
+
+  it('converts card for entrepreneur', () => {
+    expect(convertAccount({
+      account: '40802810711930058747',
+      branchId: '11',
+      bic: '044525058',
+      status: '0',
+      accOpenDate: '2016-09-14 00:00:00',
+      contractDate: '2016-09-14 00:00:00',
+      accCloseDate: '2016-09-14 00:00:00',
+      contractEnd: '',
+      sum_pp: 0,
+      minAmount: '',
+      sum: 0,
+      accType: 'card',
+      contractNumber: 'б/н',
+      kart1: null,
+      kart2: null,
+      arest: null,
+      over: null,
+      kppList: '',
+      moeDelo: 0,
+      f_type_client: '4',
+      ownerName: '<string[58]>',
+      ownerNameEng: '<string[0]>',
+      absNameShort: 'ИП Николаев Николай Николаевич',
+      name: 'Индивидуальный предприниматель Николаев Николай Николаевич',
+      inn: '643900667012',
+      kpp: '',
+      ogrn: '304643918100072',
+      dtRegOgrn: '2004-06-29',
+      ownerAddressEng: '<string[0]>',
+      abs_i: '<string[7]>',
+      abs_o: '<string[11]>',
+      abs_f: '<string[7]>',
+      bank_part_id: '11',
+      abs_opf: 'Индивидуальный предприниматель',
+      ownerAddress: '<string[90]>',
+      cType: 'mip',
+      pay: 0,
+      create: '1',
+      abs_id: '4058747',
+      isOwner: '1',
+      ownerIcon: '',
+      owner_uid: '0',
+      cfmblock: null,
+      cardStat: 'ACT',
+      rbs_id: '758890974',
+      endPowerdate: '2028-01-01'
+    })).toEqual({
+      id: '40802810711930058747',
+      type: 'ccard',
+      title: 'Индивидуальный предприниматель Николаев Николай Николаевич',
+      instrument: 'RUB',
+      syncID: ['40802810711930058747'],
+      balance: 0,
+      creditLimit: 0
+    })
+  })
 })
 
 describe('convertTransaction', () => {
