@@ -82,7 +82,8 @@ async function authDevice (auth, preferences) {
     throw new InvalidPreferencesError('Неверный номер карты')
   }
   if (response.body.error && response.body.error.error_message && [
-    'нельзя зарегистрироваться по корпоративной карте'
+    'нельзя зарегистрироваться по корпоративной карте',
+    'нельзя зарегистрироваться по предоплаченной карте'
   ].some(str => response.body.error.error_message.indexOf(str) >= 0)) {
     throw new InvalidPreferencesError('Неверный номер карты. Проверьте, работает ли мобильное приложение Банка Открытие, и повторите подключение синхронизации ещё раз.')
   }
