@@ -70,7 +70,7 @@ describe('convertAccounts', () => {
             '5586********7823',
             '40817810380003320020'
           ],
-          balance: 21044.33
+          available: 21044.33
         }
       }
     ],
@@ -225,7 +225,7 @@ describe('convertAccounts', () => {
             '5586********6723',
             '40817810780003792345'
           ],
-          balance: 4097.06
+          available: 4097.06
         }
       }
     ],
@@ -310,7 +310,7 @@ describe('convertAccounts', () => {
             '4058********0954',
             '40817810580001495803'
           ],
-          balance: -27598.26,
+          available: 72401.74,
           creditLimit: 100000
         }
       }
@@ -374,7 +374,7 @@ describe('convertAccounts', () => {
             '416038******7923',
             '40817810555511271980'
           ],
-          balance: 2523.78
+          available: 2523.78
         }
       }
     ],
@@ -455,11 +455,304 @@ describe('convertAccounts', () => {
           syncID: [
             '4627********0125'
           ],
-          balance: 0
+          available: 0
         }
       }
+    ],
+    [
+      [
+        {
+          cardId: '12155984',
+          maskCardNum: '4627********9209',
+          virtualCardNum: '12155984',
+          tariffPlan: {},
+          name: 'Visa Gold',
+          bic: '044525175',
+          cardType: 'Visa Gold',
+          paySystem: 'VISA',
+          balance: { amount: 0, currency: 'RUR' },
+          status: { code: 'NORMAL', value: 'Активна' },
+          externalId: '12155984',
+          designCode: 'vrkk02',
+          designFileName: 'https://ib.open.ru/webbank/image/card-design/wb-small/b5028790c76c692359ef479ebb678759.jpg',
+          cardExpDate: '2021-05-01T00:00:00.000+0300',
+          main: true,
+          bankName: 'Openbank',
+          bsc: 'BINRBO',
+          startDate: '2017-05-24T00:00:00.000+0300',
+          type: 'debit',
+          productType: 'CARD',
+          cardPC: 'BIN',
+          idExt: '128996879000',
+          holderName: 'Николаева Николаида Николаевна',
+          applePayAllowed: false,
+          mbCardDesignFull: 'https://ib.open.ru/webbank/image/card-design/mb-full/b5028790c76c692359ef479ebb678759.png',
+          mbHalfCardDesign: 'https://ib.open.ru/webbank/image/card-design/mb-half/b5028790c76c692359ef479ebb678759.png',
+          accNum: '-',
+          accName: 'Николаева Николаида Николаевна',
+          paySystemPC: 'BIN',
+          resident: true,
+          pinChangeAvailable: false,
+          reissueInfo: { available: false, free: false },
+          amountVisible: true,
+          updateTime: 1566887901815,
+          smsInfo: { status: 'Inactive', cardId: '12155984' },
+          preferentialRate: false,
+          restrictions:
+            [
+              'TRANSACTIONS',
+              'PIN_CHANGE',
+              'OFFER',
+              'DEPOSIT_CLOSE_DESTINATION',
+              'INVEST_BROKER',
+              'DEPOSIT_OPEN',
+              'METAL_SELL',
+              'SMS_INFO',
+              'INVEST_UK',
+              'ACCUMULATION_OPEN',
+              'METAL_BUY',
+              'FREE_REQUISITES',
+              'BLOCK_UNBLOCK',
+              'METAL_OPEN',
+              'CONVERSION',
+              'PHONE'
+            ],
+          smsInfoAvailable: false
+        },
+        {
+          cardId: '8493076',
+          maskCardNum: '4627********9209',
+          virtualCardNum: '46275828344V9209',
+          tariffPlan:
+            {
+              name: 'Кредитная Opencard',
+              tariffInfoURL: 'https://cdn.open.ru/storage/files/tariff_opencard_credit.pdf'
+            },
+          bic: '044525297',
+          cardType: 'Visa Gold Credit',
+          paySystem: 'VISA',
+          balance: { amount: 48453.06, currency: 'RUR' },
+          status: { code: 'NORMAL', value: 'Активна' },
+          externalId: '8493076',
+          designCode: 'Синяя птица VISA БИНБанк',
+          designFileName: 'https://ib.open.ru/webbank/image/card-design/wb-small/d2e31c4914ec7f9c8d6c632f09000ac3.jpg',
+          cardExpDate: '2021-05-31T00:00:00.000+0300',
+          main: true,
+          bankName: 'Openbank',
+          bsc: '3C',
+          startDate: '2017-05-01T00:00:00.000+0300',
+          lastTransactionDate: '2019-08-22T00:00:00.000+0300',
+          type: 'credit',
+          productType: 'CARD',
+          prodGroup: '712',
+          cardPC: 'WAY4',
+          idExt: '3597505',
+          holderName: 'NIKOLAIDA NIKOLAEVA',
+          applePayAllowed: true,
+          mbCardDesignFull: 'https://ib.open.ru/webbank/image/card-design/mb-full/d2e31c4914ec7f9c8d6c632f09000ac3.png',
+          mbHalfCardDesign: 'https://ib.open.ru/webbank/image/card-design/mb-half/d2e31c4914ec7f9c8d6c632f09000ac3.png',
+          overdue: false,
+          loyaltyInfo:
+            {
+              bonusInfo:
+                {
+                  type: 'openCard',
+                  totalValue: 311.68,
+                  compensationBlockedByOverdue: false
+                }
+            },
+          accNum: '40817810380003898234',
+          accName: 'Николаева Николаида Николаевна',
+          paySystemPC: 'WAY4',
+          resident: true,
+          pinChangeAvailable: true,
+          reissueInfo:
+            {
+              available: true,
+              free: true,
+              term: 'Перевыпуск занимает до 5 рабочих дней',
+              days: '5'
+            },
+          amountVisible: true,
+          updateTime: 1566887902245,
+          smsInfo: { status: 'Active', phone: '79608704822', cardId: '8493076' },
+          creditLimit: 54000,
+          preferentialRate: true,
+          issueType: 'PERSO',
+          accBackSystemClientId: '3597505',
+          smsInfoAvailable: true
+        },
+        {
+          cardId: '12155985',
+          maskCardNum: '4627********8142',
+          virtualCardNum: '12155985',
+          tariffPlan: {},
+          name: 'Visa Gold',
+          bic: '044525175',
+          cardType: 'Visa Gold',
+          paySystem: 'VISA',
+          balance: { amount: 0, currency: 'RUR' },
+          status: { code: 'NORMAL', value: 'Активна' },
+          externalId: '12155985',
+          designCode: 'vrkk02',
+          designFileName: 'https://ib.open.ru/webbank/image/card-design/wb-small/b5028790c76c692359ef479ebb678759.jpg',
+          cardExpDate: '2020-10-01T00:00:00.000+0300',
+          main: true,
+          bankName: 'Openbank',
+          bsc: 'BINRBO',
+          startDate: '2016-10-27T00:00:00.000+0300',
+          type: 'debit',
+          productType: 'CARD',
+          cardPC: 'BIN',
+          idExt: '128996879000',
+          holderName: 'Николаева Николаида Николаевна',
+          applePayAllowed: false,
+          mbCardDesignFull: 'https://ib.open.ru/webbank/image/card-design/mb-full/b5028790c76c692359ef479ebb678759.png',
+          mbHalfCardDesign: 'https://ib.open.ru/webbank/image/card-design/mb-half/b5028790c76c692359ef479ebb678759.png',
+          accNum: '-',
+          accName: 'Николаева Николаида Николаевна',
+          paySystemPC: 'BIN',
+          resident: true,
+          pinChangeAvailable: false,
+          reissueInfo: { available: false, free: false },
+          amountVisible: true,
+          updateTime: 1566887901821,
+          smsInfo: { status: 'Inactive', cardId: '12155985' },
+          preferentialRate: false,
+          restrictions:
+            [
+              'TRANSACTIONS',
+              'PIN_CHANGE',
+              'OFFER',
+              'DEPOSIT_CLOSE_DESTINATION',
+              'INVEST_BROKER',
+              'DEPOSIT_OPEN',
+              'METAL_SELL',
+              'SMS_INFO',
+              'INVEST_UK',
+              'ACCUMULATION_OPEN',
+              'METAL_BUY',
+              'FREE_REQUISITES',
+              'BLOCK_UNBLOCK',
+              'METAL_OPEN',
+              'CONVERSION',
+              'PHONE'
+            ],
+          smsInfoAvailable: false
+        },
+        {
+          cardId: '8491452',
+          maskCardNum: '4627********8142',
+          virtualCardNum: '46275828346V8142',
+          tariffPlan:
+            {
+              name: 'Opencard',
+              tariffInfoURL: 'https://cdn.open.ru/storage/files/tariff_opencard.pdf'
+            },
+          bic: '044525297',
+          cardType: 'Visa Gold Credit',
+          paySystem: 'VISA',
+          balance: { amount: 0, currency: 'RUR' },
+          status: { code: 'NORMAL', value: 'Активна' },
+          externalId: '8491452',
+          designCode: 'Синяя птица VISA БИНБанк',
+          designFileName: 'https://ib.open.ru/webbank/image/card-design/wb-small/d2e31c4914ec7f9c8d6c632f09000ac3.jpg',
+          cardExpDate: '2020-10-31T00:00:00.000+0300',
+          main: true,
+          bankName: 'Openbank',
+          bsc: '3C',
+          startDate: '2016-10-01T00:00:00.000+0300',
+          lastTransactionDate: '2019-08-26T00:00:00.000+0300',
+          type: 'debit',
+          productType: 'CARD',
+          prodGroup: '713',
+          cardPC: 'WAY4',
+          idExt: '3597505',
+          holderName: 'Николаева Николаида Николаевна',
+          applePayAllowed: true,
+          mbCardDesignFull: 'https://ib.open.ru/webbank/image/card-design/mb-full/d2e31c4914ec7f9c8d6c632f09000ac3.png',
+          mbHalfCardDesign: 'https://ib.open.ru/webbank/image/card-design/mb-half/d2e31c4914ec7f9c8d6c632f09000ac3.png',
+          overdue: false,
+          loyaltyInfo:
+            {
+              bonusInfo:
+                {
+                  type: 'openCard',
+                  totalValue: 311.68,
+                  compensationBlockedByOverdue: false
+                },
+              freeP2PLimit: 20000,
+              freeP2PMaxLimit: 20000,
+              freeP2PCurrentSum: 0
+            },
+          accNum: '40817810180003609151',
+          accName: 'Николаева Николаида Николаевна',
+          paySystemPC: 'WAY4',
+          resident: true,
+          pinChangeAvailable: true,
+          reissueInfo:
+            {
+              available: true,
+              free: true,
+              term: 'Перевыпуск занимает до 5 рабочих дней',
+              days: '5'
+            },
+          amountVisible: true,
+          updateTime: 1566887902253,
+          smsInfo: { status: 'Inactive', cardId: '8491452' },
+          creditLimit: 0,
+          preferentialRate: true,
+          issueType: 'PERSO',
+          accBackSystemClientId: '3597505',
+          smsInfoAvailable: true
+        }
+      ],
+      [
+        {
+          products: [
+            {
+              id: '8493076',
+              type: 'card'
+            }
+          ],
+          account: {
+            id: '40817810380003898234',
+            type: 'ccard',
+            title: 'Кредитная Opencard',
+            instrument: 'RUR',
+            syncID: [
+              '4627********9209',
+              '40817810380003898234'
+            ],
+            available: 48453.06,
+            creditLimit: 54000
+          }
+        },
+        {
+          products: [
+            {
+              id: '8491452',
+              type: 'card'
+            }
+          ],
+          account: {
+            id: '40817810180003609151',
+            type: 'ccard',
+            title: 'Opencard',
+            instrument: 'RUR',
+            syncID: [
+              '4627********8142',
+              '40817810180003609151'
+            ],
+            available: 0
+          }
+        }
+      ]
     ]
   ])('converts card', (apiAccounts, item) => {
-    expect(convertAccounts(apiAccounts)).toEqual([item])
+    if (!Array.isArray(item)) {
+      item = [item]
+    }
+    expect(convertAccounts(apiAccounts)).toEqual(item)
   })
 })

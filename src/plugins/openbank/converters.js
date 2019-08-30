@@ -2,14 +2,14 @@ import { getIntervalBetweenDates } from '../../common/momentDateUtils'
 
 export function convertAccounts (apiAccounts) {
   const accounts = []
-  const cardAccounts = {}
+  const apiCards = []
   for (const apiAccount of apiAccounts) {
     let converter
     const type = apiAccount.loan || apiAccount.overdue ? 'credit' : apiAccount.contracts ? 'deposit' : apiAccount.productType && apiAccount.productType.toLowerCase()
     switch (type) {
       case 'card':
-        converter = convertCard
-        break
+        apiCards.push(apiAccount)
+        continue
       case 'accumulation':
       case 'current':
         converter = convertAccount
@@ -28,24 +28,36 @@ export function convertAccounts (apiAccounts) {
     }
     const account = converter(apiAccount)
     if (account) {
-      if (type === 'card') {
-        const existing = cardAccounts[account.account.id]
-        if (existing) {
-          existing.products.push(...account.products)
-          for (const syncId of account.account.syncID) {
-            if (existing.account.syncID.indexOf(syncId) < 0) {
-              existing.account.syncID.splice(1, 0, syncId)
-            }
-          }
-          continue
-        } else {
-          cardAccounts[account.account.id] = account
-        }
-      }
       accounts.push(account)
     }
   }
+  accounts.push(...convertCards(apiCards))
   return accounts
+}
+
+function convertCards (apiCards) {
+  const cardAccounts = {}
+  const cards = []
+  for (let i = 0; i < apiCards.length; i++) {
+    const apiCard = apiCards[i]
+    if (apiCard.cardPC === 'BIN' && apiCards.some(c => c !== apiCard && c.maskCardNum === apiCard.maskCardNum)) {
+      continue
+    }
+    const card = convertCard(apiCard)
+    const existing = cardAccounts[card.account.id]
+    if (existing) {
+      existing.products.push(...card.products)
+      for (const syncId of card.account.syncID) {
+        if (existing.account.syncID.indexOf(syncId) < 0) {
+          existing.account.syncID.splice(1, 0, syncId)
+        }
+      }
+    } else {
+      cardAccounts[card.account.id] = card
+      cards.push(card)
+    }
+  }
+  return cards
 }
 
 function convertDeposit (apiAccount) {
@@ -147,7 +159,7 @@ function convertCard (apiAccount) {
       title: apiAccount.tariffPlan.name || apiAccount.name || apiAccount.cardType,
       instrument: apiAccount.balance.currency,
       syncID: syncIds,
-      balance: Math.round((apiAccount.balance.amount - (apiAccount.creditLimit || 0)) * 100) / 100,
+      available: apiAccount.balance.amount,
       ...apiAccount.creditLimit && { creditLimit: apiAccount.creditLimit }
     }
   }
