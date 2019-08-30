@@ -105,7 +105,8 @@ function parseInnerTransfer (transaction, apiTransaction, account, accountsById)
     'AccountClosingPayment',
     'IMAOpeningClaim',
     'IMAPayment',
-    'ExtCardTransferOut'
+    'ExtCardTransferOut',
+    'ExtCardLoanPayment'
   ].indexOf(apiTransaction.form) < 0) {
     return false
   }
@@ -200,7 +201,7 @@ function parseOuterIncomeTransfer (transaction, apiTransaction, account) {
     return false
   }
   const invoice = transaction.movements[0].invoice || { sum: transaction.movements[0].sum, instrument: account.instrument }
-  const outerAccount = apiTransaction.to === 'Сбербанк Онлайн' ? null : parseOuterAccountData(apiTransaction.to)
+  const outerAccount = ['Сбербанк Онлайн', 'Сбербанк'].indexOf(apiTransaction.to) >= 0 ? null : parseOuterAccountData(apiTransaction.to)
   transaction.movements.push({
     id: null,
     account: {
@@ -213,7 +214,7 @@ function parseOuterIncomeTransfer (transaction, apiTransaction, account) {
     sum: -invoice.sum,
     fee: 0
   })
-  if (!outerAccount && apiTransaction.to !== 'Сбербанк Онлайн') {
+  if (!outerAccount && ['Сбербанк Онлайн', 'Сбербанк'].indexOf(apiTransaction.to) < 0) {
     transaction.merchant = {
       country: null,
       city: null,
@@ -226,7 +227,7 @@ function parseOuterIncomeTransfer (transaction, apiTransaction, account) {
 }
 
 function parseOutcomeTransfer (transaction, apiTransaction, account) {
-  if (['UfsInsurancePolicy'].indexOf(apiTransaction.form) >= 0) {
+  if (['UfsInsurancePolicy', 'ExtCardLoanPayment'].indexOf(apiTransaction.form) >= 0) {
     return false
   }
   const isP2PTransfer = apiTransaction.form === 'P2PExternalBankTransfer'
@@ -314,7 +315,12 @@ function parsePayee (transaction, apiTransaction) {
     return
   }
 
-  let payee = ['ExtDepositCapitalization', 'ExtDepositTransferIn', 'ExtDepositOtherCredit'].indexOf(apiTransaction.form) >= 0 ? null : apiTransaction.to
+  let payee = [
+    'ExtDepositCapitalization',
+    'ExtDepositTransferIn',
+    'ExtDepositOtherCredit',
+    'ExtCardLoanPayment'
+  ].indexOf(apiTransaction.form) >= 0 ? null : apiTransaction.to
   if (payee) {
     if (apiTransaction.form === 'RurPayJurSB') {
       const parts = payee.split(/\s\s+/)
@@ -322,26 +328,30 @@ function parsePayee (transaction, apiTransaction) {
         payee = parts.slice(0, parts.length - 1).join(' ')
       }
     }
-    transaction.merchant = {
-      title: payee,
-      city: null,
-      country: null,
-      mcc: null,
-      location: null
-    }
-    const fullTitle = _.get(apiTransaction, 'details.description.stringType.value')
-    if (fullTitle) {
-      const parts = fullTitle.split(/\s\s+/)
-      if (parts.length > 2) {
-        transaction.merchant.country = parts[parts.length - 1]
-        transaction.merchant.city = parts[parts.length - 2].length >= 2 ? parts[parts.length - 2] : null
+    const parts = (_.get(apiTransaction, 'details.description.stringType.value') || payee).split(/\s\s+/)
+    if (parts.length > 2) {
+      transaction.merchant = {
+        country: parts[parts.length - 1],
+        city: parts[parts.length - 2].length >= 2 ? parts[parts.length - 2] : null,
+        title: parts.slice(0, parts[parts.length - 2].length >= 2 ? parts.length - 2 : parts.length - 1).join(' '),
+        mcc: null,
+        location: null
+      }
+    } else {
+      transaction.merchant = {
+        title: payee,
+        city: null,
+        country: null,
+        mcc: null,
+        location: null
       }
     }
   }
   if ([
     'Капитализация по вкладу/счету',
     'Комиссии',
-    'Входящий перевод на вклад/счет'
+    'Входящий перевод на вклад/счет',
+    'Погашение кредита'
   ].indexOf(apiTransaction.description) >= 0) {
     transaction.comment = apiTransaction.description
   }

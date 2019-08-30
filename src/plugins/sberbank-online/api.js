@@ -336,7 +336,7 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
 export function filterTransactions (transactions, fromDate) {
   const filtered = []
   transactions.forEach((transaction, i) => {
-    if (['DRAFT', 'SAVED', 'REFUSED', 'INITIAL', 'INITIAL_LONG_OFFER'].indexOf(transaction.state) >= 0 || (transaction.description && [
+    if (['DRAFT', 'SAVED', 'REFUSED', 'INITIAL', 'INITIAL_LONG_OFFER', 'DISPATCHED'].indexOf(transaction.state) >= 0 || (transaction.description && [
       'Создание автоплатежа',
       'Приостановка автоплатежа',
       'Редактирование автоплатежа',

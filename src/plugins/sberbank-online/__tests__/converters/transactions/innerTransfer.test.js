@@ -374,7 +374,7 @@ describe('convertTransaction', () => {
       invoiceReminderSupported: 'false',
       form: 'ExtDepositTransferIn',
       imageId: { staticImage: { url: null } }
-    }, { id: 'account', instrument: 'RUB' })).toEqual({
+    }, account, accountsById)).toEqual({
       hold: false,
       date: new Date('2019-02-18T00:00:00+03:00'),
       movements: [
@@ -495,6 +495,106 @@ describe('convertTransaction', () => {
       ],
       merchant: null,
       comment: null
+    })
+  })
+
+  it('converts card to loan transfer', () => {
+    const account = { id: 'account', instrument: 'RUB' }
+    const accountsById = {}
+    accountsById[getId('card', '546955******0923')] = account
+    accountsById[getId('card', '15798011')] = account
+
+    expect(convertTransaction({
+      id: '18234833056',
+      ufsId: null,
+      state: 'FINANCIAL',
+      date: '27.08.2019T09:03:13',
+      from: 'MasterCard Mass 5469 55** **** 0923',
+      to: 'Сбербанк',
+      description: 'Погашение кредита',
+      operationAmount: { amount: '-10000.00', currency: { code: 'RUB', name: 'руб.' } },
+      isMobilePayment: 'false',
+      copyable: 'false',
+      templatable: 'false',
+      autopayable: 'false',
+      type: 'payment',
+      invoiceSubscriptionSupported: 'false',
+      invoiceReminderSupported: 'false',
+      form: 'ExtCardLoanPayment',
+      imageId: { staticImage: { url: 'https://pfm-stat.online.sberbank.ru/PFM/logos3/6f904da7-1663-4e68-801f-fe288c3283f7.png' } },
+      nationalAmount: { amount: '-10000.00', currency: { code: 'RUB', name: 'руб.' } },
+      details: {
+        description:
+          {
+            name: 'description',
+            title: 'Описание',
+            type: 'string',
+            required: 'false',
+            editable: 'false',
+            visible: 'true',
+            stringType: { value: 'Сбербанк' },
+            changed: 'false'
+          },
+        fromResource:
+          {
+            name: 'fromResource',
+            title: 'Ресурс списания',
+            type: 'resource',
+            required: 'true',
+            editable: 'false',
+            visible: 'true',
+            resourceType:
+              {
+                availableValues:
+                  {
+                    valueItem:
+                      {
+                        value: 'card:15798011',
+                        selected: 'true',
+                        displayedValue: '5469 55** **** 0923 [MasterCard Mass]',
+                        currency: 'RUB'
+                      }
+                  }
+              },
+            changed: 'false'
+          },
+        amount:
+          {
+            name: 'amount',
+            title: 'Сумма в валюте счета',
+            type: 'money',
+            required: 'false',
+            editable: 'false',
+            visible: 'true',
+            moneyType: { value: '10000', currency: { code: 'RUB' } },
+            changed: 'false'
+          },
+        operationDate:
+          {
+            name: 'operationDate',
+            title: 'Дата и время совершения операции',
+            type: 'string',
+            required: 'false',
+            editable: 'false',
+            visible: 'true',
+            stringType: { value: '27.08.2019 09:03:13' },
+            changed: 'false'
+          }
+      }
+    }, account, accountsById)).toEqual({
+      hold: false,
+      date: new Date('2019-08-27T09:03:13+03:00'),
+      movements: [
+        {
+          id: '18234833056',
+          account: { id: 'account' },
+          invoice: null,
+          sum: -10000,
+          fee: 0
+        }
+      ],
+      merchant: null,
+      comment: 'Погашение кредита'
     })
   })
 })
