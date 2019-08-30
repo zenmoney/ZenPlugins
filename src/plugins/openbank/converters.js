@@ -44,6 +44,9 @@ function convertCards (apiCards) {
       continue
     }
     const card = convertCard(apiCard)
+    if (!card) {
+      continue
+    }
     const existing = cardAccounts[card.account.id]
     if (existing) {
       existing.products.push(...card.products)
