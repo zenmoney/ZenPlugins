@@ -1,8 +1,7 @@
-import { uniqBy } from 'lodash'
 import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
 import { adjustTransactions } from '../../common/transactionGroupHandler'
 import { fetchAccounts, fetchTransactions, login } from './api'
-import { convertAccounts, convertTransaction, getTransactionId } from './converters'
+import { convertAccounts, convertTransaction } from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
   toDate = toDate || new Date()
@@ -32,7 +31,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
       }
     }
     if (apiTransactions) {
-      uniqBy(apiTransactions, getTransactionId).forEach(apiTransaction => {
+      apiTransactions.forEach(apiTransaction => {
         const transaction = convertTransaction(apiTransaction, zenAccount)
         if (transaction) {
           transactions.push(transaction)
