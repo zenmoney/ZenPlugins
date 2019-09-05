@@ -66,15 +66,29 @@ export async function fetchAccounts (token) {
       cardAccount: {
         withBalance: null
       },
-      corpoCardAccount: {},
+      corpoCardAccount: {
+        withBalance: null
+      },
       creditAccount: {},
-      currentAccount: {},
+      currentAccount: {
+        withBalance: null
+      },
       depositAccount: {}
     },
-    headers: { 'session_token': token } }, response => response.body && response.body.overviewResponse && (response.body.overviewResponse.cardAccount || response.body.overviewResponse.depositAccount), message => new TemporaryError(message))).body.overviewResponse
+    headers: { 'session_token': token } }, response => response.body && response.body.overviewResponse && (response.body.overviewResponse.cardAccount || response.body.overviewResponse.depositAccount || response.body.overviewResponse.currentAccount), message => new TemporaryError(message))).body.overviewResponse
 
+  var cards = []
+  if (products.cardAccount) {
+    cards = cards.concat(products.cardAccount)
+  }
+  if (products.corpoCardAccount) {
+    cards = cards.concat(products.corpoCardAccount)
+  }
+  if (products.currentAccount) {
+    cards = cards.concat(products.currentAccount)
+  }
   return {
-    cards: products.cardAccount,
+    cards: cards,
     deposits: products.depositAccount
   }
 }
