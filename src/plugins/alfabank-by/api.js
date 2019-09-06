@@ -50,7 +50,12 @@ export async function login (isResident) {
   const token = ZenMoney.getData('token')
   let sessionID = await checkDeviceStatus(deviceID)
   if (sessionID === null || !await loginByToken(sessionID, deviceID, token)) {
-    await authWithPassportID(deviceID, isResident)
+    if (isResident) {
+      await authWithPassportBY(deviceID)
+    } else {
+      await authNoResident(deviceID)
+    }
+
     sessionID = await authConfirm(deviceID)
   }
   return {
@@ -79,53 +84,70 @@ export async function checkDeviceStatus (deviceID) {
   }
 }
 
-export async function authWithPassportID (deviceID, isResident) {
-  let passportID = await ZenMoney.readLine('Введите номер паспорта (Формат: 3111111A111PB1)', {
+export async function authWithPassportBY (deviceID) {
+  let passportID = await ZenMoney.readLine('Введите номер белорусского паспорта (Формат: 3111111A111PB1)', {
     inputType: 'string',
     time: 120000
   })
   if (!passportID) {
     throw new TemporaryError('Не введён номер паспорта. Подключите синхронизацию ещё раз и укажите номер паспорта.')
   }
-  var body = {
+  if (passportID.toLocaleUpperCase().search(/[0-9]{7}[AА][0-9]{3}[PBРВ][0-9]/i) !== -1) { // латиница и кирилица
+    throw new TemporaryError('Иденцификационный номер паспорта введен не верно. Попробуйте еще раз.')
+  }
+  let issueDate = await ZenMoney.readLine('Введите дату выдачи документа (Формат: ГГГГММДД)', {
+    inputType: 'string',
+    time: 120000
+  })
+  let body = {
     deviceId: deviceID,
     deviceName: 'ZenMoney Plugin',
-    isResident: isResident,
-    login: passportID.toLocaleUpperCase(),
+    isResident: true,
+    documentNum: passportID.toLocaleUpperCase(),
+    issueDate: issueDate,
     screenHeight: 1794,
     screenWidth: 1080
-  }
-  if (passportID.toLocaleUpperCase().search(/[0-9]{7}[AА][0-9]{3}[PBРВ][0-9]/i) === -1 && // латиница и кирилица
-      !isResident) {
-    let issueDate = await ZenMoney.readLine('Введите дату выдачи документа (Формат: ГГГГММДД)', {
-      inputType: 'string',
-      time: 120000
-    })
-    body = {
-      deviceId: deviceID,
-      deviceName: 'ZenMoney Plugin',
-      isResident: isResident,
-      documentNum: passportID.toLocaleUpperCase(),
-      issueDate: issueDate,
-      screenHeight: 1794,
-      screenWidth: 1080
-    }
   }
   let res = (await fetchApiJson('Authorization?locale=ru', {
     method: 'POST',
     body: body,
-    sanitizeRequestLog: { body: { deviceId: true, login: true } }
+    sanitizeRequestLog: { body: { deviceId: true, documentNum: true, issueDate: true } }
   }, response => response.status, message => new Error('bad request')))
   if (res.body.status !== 'OK') {
     throw new TemporaryError('Ответ банка: ' + res.body.message)
-    // TODO: временный вывод всех ошибок
-    /* if (res.body.message && [
-      'Данные введены неверно',
-      'Личный номер введен неверно'
-    ].some(str => res.body.message.indexOf(str) >= 0)) {
-      throw new TemporaryError('Ответ банка: ' + res.body.message)
-    }
-    throw new Error('unexpected response') */
+  }
+
+  return true
+}
+
+export async function authNoResident (deviceID) {
+  let passportID = await ZenMoney.readLine('Введите номер паспорта', {
+    inputType: 'string',
+    time: 120000
+  })
+  if (!passportID) {
+    throw new TemporaryError('Не введён номер паспорта. Подключите синхронизацию ещё раз и укажите номер паспорта.')
+  }
+  let issueDate = await ZenMoney.readLine('Введите дату выдачи документа (Формат: ГГГГММДД)', {
+    inputType: 'string',
+    time: 120000
+  })
+  let body = {
+    deviceId: deviceID,
+    deviceName: 'ZenMoney Plugin',
+    isResident: false,
+    documentNum: passportID.toLocaleUpperCase(),
+    issueDate: issueDate,
+    screenHeight: 1794,
+    screenWidth: 1080
+  }
+  let res = (await fetchApiJson('Authorization?locale=ru', {
+    method: 'POST',
+    body: body,
+    sanitizeRequestLog: { body: { deviceId: true, documentNum: true, issueDate: true } }
+  }, response => response.status, message => new Error('bad request')))
+  if (res.body.status !== 'OK') {
+    throw new TemporaryError('Ответ банка: ' + res.body.message)
   }
 
   return true
