@@ -340,7 +340,8 @@ export function filterTransactions (transactions, fromDate) {
       'Создание автоплатежа',
       'Приостановка автоплатежа',
       'Редактирование автоплатежа',
-      'Отмена автоплатежа'
+      'Отмена автоплатежа',
+      'Редактирование автоперевода'
     ].some(pattern => transaction.description.indexOf(pattern) === 0))) {
       return
     }
