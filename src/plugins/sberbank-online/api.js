@@ -270,7 +270,7 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
     batch = getArray(_.get(response, 'body.operations.operation'))
     offset += limit
     transactions.push(...batch)
-  } while (batch && batch.length === limit && parseDate(batch[batch.length - 1].date) >= fromDate)
+  } while (batch && batch.length === limit && formatDateSql(parseDate(batch[batch.length - 1].date)) >= formatDateSql(fromDate))
 
   transactions = filterTransactions(transactions, fromDate)
 
@@ -335,6 +335,7 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
 
 export function filterTransactions (transactions, fromDate) {
   const filtered = []
+  const fromDateStr = fromDate ? formatDateSql(fromDate) : null
   transactions.forEach((transaction, i) => {
     if (['DRAFT', 'SAVED', 'REFUSED', 'INITIAL', 'INITIAL_LONG_OFFER', 'DISPATCHED'].indexOf(transaction.state) >= 0 || (transaction.description && [
       'Создание автоплатежа',
@@ -354,7 +355,7 @@ export function filterTransactions (transactions, fromDate) {
       return
     }
     const date = parseDate(transaction.date)
-    if (fromDate && date < fromDate) {
+    if (fromDate && formatDateSql(date) < fromDateStr) {
       return
     }
     if (transaction.state === 'AUTHORIZATION' && i > 0) {

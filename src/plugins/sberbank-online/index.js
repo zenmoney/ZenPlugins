@@ -1,8 +1,8 @@
 import { MD5 } from 'jshashes'
 import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
 import { generateRandomString } from '../../common/utils'
-import { fetchAccounts, fetchPayments, fetchTransactions, login, makeTransfer as _makeTransfer, renewSession } from './api'
-import { convertAccounts, convertLoanTransaction, convertTransaction, adjustTransactionsAndCheckBalance } from './converters'
+import { fetchAccounts, fetchPayments, fetchTransactions, login, makeTransfer as _makeTransfer } from './api'
+import { adjustTransactionsAndCheckBalance, convertAccounts, convertLoanTransaction, convertTransaction } from './converters'
 
 const md5 = new MD5()
 
@@ -74,9 +74,9 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
 
   let auth = getAuth()
   if (auth && auth.api) {
-    if (!(await renewSession(auth.api))) {
-      delete auth.api
-    }
+    // if (!(await renewSession(auth.api))) {
+    delete auth.api
+    // }
   }
   if (!auth || !auth.api) {
     auth = await login(preferences.login, preferences.pin, auth, getDevice(preferences))
