@@ -114,8 +114,6 @@ async function authDevice (auth, preferences) {
 
   const { access_token: accessToken, install_id: installId } = response.body.data
 
-  console.log('accessToken', accessToken)
-
   await ZenMoney.setCookie(DOMAIN, 'access_token', accessToken)
 
   console.log('>>> Генерируем PIN-код...', 'auth_device')
