@@ -46,6 +46,10 @@ export function convertAccounts (apiAccounts) {
   return accounts
 }
 
+function cleanSyncId (syncId) {
+  return syncId.replace(/\s+/g, '').replace(/[^\d*]/g, str => str.split('').map(c => c.charCodeAt(0) % 10).join(''))
+}
+
 export function convertAccount (apiAccount) {
   return {
     product: { id: apiAccount.number, type: 'account' },
@@ -54,7 +58,7 @@ export function convertAccount (apiAccount) {
       type: 'checking',
       title: apiAccount.nick || apiAccount.name,
       instrument: getInstrument(apiAccount.iso),
-      syncID: [apiAccount.number.replace(/[^\d*]/g, '')],
+      syncID: [cleanSyncId(apiAccount.number)],
       balance: parseDecimal(apiAccount.rest)
     }
   }
@@ -108,7 +112,7 @@ export function convertDeposit (apiAccount) {
       ...account,
       id: apiAccount.ref,
       type: 'deposit',
-      syncID: [apiAccount.ref.replace(/[^\d*]/g, '')],
+      syncID: [cleanSyncId(apiAccount.ref)],
       startBalance: parseDecimal(apiAccount.orig),
       startDate,
       capitalization: true,

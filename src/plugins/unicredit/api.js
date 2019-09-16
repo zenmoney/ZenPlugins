@@ -131,6 +131,10 @@ export async function login (auth, { login, password }) {
   })
   const smsParams = getParamsForCommand(getArray(response.body.form.command), 'GETSMS')
   const hash = smsParams && smsParams.HASH
+  if (!hash && response.body.form.input && response.body.form.input.param === 'PSW') {
+    throw new TemporaryError('Чтобы подключить ЮниКредит Банк, включите в банке вход по SMS и повторите подключение. Вход по сеансовому ключу не поддерживается.')
+  }
+
   console.assert(hash, 'could not parse SMS hash')
 
   response = await callGate('RT_1SMSCODE.Create2FaSMSbyClientRequest', {
