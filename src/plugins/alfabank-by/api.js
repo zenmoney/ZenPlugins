@@ -95,16 +95,11 @@ export async function authWithPassportBY (deviceID) {
   if (passportID.toLocaleUpperCase().search(/[0-9]{7}[AА][0-9]{3}[PBРВ][0-9]/i) !== -1) { // латиница и кирилица
     throw new TemporaryError('Иденцификационный номер паспорта введен не верно. Попробуйте еще раз.')
   }
-  let issueDate = await ZenMoney.readLine('Введите дату выдачи документа (Формат: ГГГГММДД)', {
-    inputType: 'string',
-    time: 120000
-  })
   let body = {
     deviceId: deviceID,
     deviceName: 'ZenMoney Plugin',
     isResident: true,
-    documentNum: passportID.toLocaleUpperCase(),
-    issueDate: issueDate,
+    login: passportID.toLocaleUpperCase(),
     screenHeight: 1794,
     screenWidth: 1080
   }
