@@ -14,7 +14,9 @@ export function convertTransaction (json, accounts) {
     return null
   }
   const account = accounts.find(account => {
-    return account.syncID.indexOf(json.cardNum.slice(-4)) !== -1
+    return account.syncID.indexOf(json.cardNum.slice(-4)) !== -1 ||
+      account.syncID.indexOf(json.cardNum.slice(-8, -4)) !== -1 || // При пополнении может указываться родительская и дочерняя карточка
+      account.instrument === json.balanceAmtCurrency // На случай, если у карточки есть копия, выбираем первый счет по этой же валюте, чтоб не потерять транзакцию
   })
 
   const transaction = {
