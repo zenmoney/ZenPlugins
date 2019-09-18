@@ -58,11 +58,15 @@ export function convertTransaction (tr, accounts) {
 }
 
 function getMovement (tr, account) {
+  var sum = tr.operationSum
+  if (tr.operationCurrency === account.instrument && tr.operationSum !== tr.inAccountSum) {
+    sum = tr.inAccountSum
+  }
   const movement = {
     id: null,
     account: { id: account.id },
     invoice: null,
-    sum: getSumAmount(tr.debitFlag, tr.operationSum),
+    sum: getSumAmount(tr.debitFlag, sum),
     fee: 0
   }
 
@@ -102,14 +106,25 @@ function parsePayee (transaction, tr) {
   }
 
   let data = tr.place.split('/')
+  var mcc = null
+  var fullTitle = null
   if (data.length === 0 ||
     (data[0] === '' && data[1] === '')) {
     return false
   }
+  switch (data.length) {
+    case 2:
+      mcc = Number.parseInt(data[1])
+      fullTitle = data[0].trim()
+      break
+    case 3:
+      mcc = Number.parseInt(data[2])
+      fullTitle = data[0].trim() + '/' + data[1].trim()
+  }
   transaction.merchant = {
-    mcc: data[1] !== '' ? Number.parseInt(data[1]) : null,
+    mcc: mcc,
     location: null,
-    fullTitle: data[0]
+    fullTitle: fullTitle
   }
 }
 
