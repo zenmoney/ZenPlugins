@@ -22,6 +22,10 @@ export function generateRandomString (length, chars) {
   return buf.join('')
 }
 
+export function generateMacAddress () {
+  return 'xx:xx:xx:xx:xx:xx'.replace(/[xy]/g, char => (Math.random() * 16 | 0).toString(16))
+}
+
 export function randomInt (min, max) {
   return Math.floor(Math.random() * (max - min)) + min
 }
