@@ -54,7 +54,8 @@ export async function login (prefs) {
       bbibCodeSMSField: 0,
       bbibUnblockAction: '',
       bbibChangePwdByBlockedClientAction_sendSMS: ''
-    }
+    },
+    sanitizeRequestLog: { body: { bbIbUseridField: true, bbIbPasswordField: true } }
   }, response => response.success, message => new Error(''))
 
   let codenum = res.body.match(/Введите[^>]*>код [N№]\s*(\d+)/i)
@@ -84,7 +85,8 @@ export async function login (prefs) {
       field_4: res.body.match(/<input[^>]+name="field_4" value="(.[^"]*)" \/>/i)[1],
       field_5: res.body.match(/<input[^>]+name="field_5" value="(.[^"]*)" \/>/i)[1],
       code_number_expire_time: true
-    }
+    },
+    sanitizeRequestLog: { body: { bbIbCodevalueField: true } }
   }, response => response.success, message => new Error(''))
 
   return res
@@ -150,7 +152,7 @@ export async function fetchCards (url) {
     method: 'GET'
   }, response => response.success, message => new Error(''))
 
-  let regex = /<form id="viewns.*action="(.[^"]*)".*name="javax\.faces\.encodedURL" value="(.[^"]*)".*cellLable">(.[^>]*)<\/div><\/td><td class="tdBalance"><div class="cellLable"><nobr>(.*)<\/nobr> (.[^"]*)<\/div>.*return myfaces\.oam\.submitForm\((.*)\);.*<td class="tdNumber"><div class="cellLable">(.[0-9*]*)<\/div>.*id="javax\.faces\.ViewState" value="(.[^"]*)/ig
+  let regex = /<form id="viewns.*action="(.[^"]*)".*name="javax\.faces\.encodedURL" value="(.[^"]*)".*cellLable">(.[^>]*)<\/div><\/td><td class="tdBalance"><div class="cellLable"><nobr>(.*)<\/nobr> (.[^"<]*)<\/div>.*return myfaces\.oam\.submitForm\((.*)\);.*<td class="tdNumber"><div class="cellLable">(.[0-9*]*)<\/div>.*id="javax\.faces\.ViewState" value="(.[^"]*)/ig
   let m
 
   var cards = []

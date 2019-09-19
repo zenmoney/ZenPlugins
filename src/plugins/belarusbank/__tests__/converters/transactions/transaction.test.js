@@ -63,6 +63,76 @@ describe('convertTransaction', () => {
         comment: 'Покупка/оплата/перевод',
         hold: false
       }
+    },
+    {
+      name: 'sms banking',
+      json: {
+        accountID: 'BY75AKBB30141000022233030000',
+        comment: 'Покупка/оплата/перевод',
+        date: '01.06.2019',
+        debitFlag: '-',
+        inAccountCurrency: 'EUR',
+        inAccountSum: '35.00',
+        operationCurrency: 'EUR',
+        operationSum: '35.00',
+        place: 'SMS BANKING / MTS/4814',
+        status: 'operResultOk',
+        time: '11:38:16'
+      },
+      expectedTransaction: {
+        date: new Date('2019-06-01T08:38:16.000Z'),
+        movements: [
+          {
+            id: null,
+            account: { id: 'BY75AKBB30141000022233030000' },
+            invoice: null,
+            sum: -35,
+            fee: 0
+          }
+        ],
+        merchant: {
+          fullTitle: 'SMS BANKING/MTS',
+          location: null,
+          mcc: 4814
+        },
+        comment: 'Покупка/оплата/перевод',
+        hold: false
+      }
+    },
+    {
+      name: 'check balans in ATM',
+      json: {
+        accountID: 'BY75AKBB30141000022233030000',
+        comment: 'Плата за просмотр баланса (доступн. остатка)',
+        date: '01.06.2019',
+        debitFlag: '-',
+        inAccountCurrency: 'EUR',
+        inAccountSum: '0.20',
+        operationCurrency: 'EUR',
+        operationSum: '0.00',
+        place: 'ZH/D VOKZAL BPSB ATM/6011',
+        status: 'operResultOk',
+        time: '11:38:16'
+      },
+      expectedTransaction: {
+        date: new Date('2019-06-01T08:38:16.000Z'),
+        movements: [
+          {
+            id: null,
+            account: { id: 'BY75AKBB30141000022233030000' },
+            invoice: null,
+            sum: -0.2,
+            fee: 0
+          }
+        ],
+        merchant: {
+          fullTitle: 'ZH/D VOKZAL BPSB ATM',
+          location: null,
+          mcc: 6011
+        },
+        comment: 'Плата за просмотр баланса (доступн. остатка)',
+        hold: false
+      }
     }
   ]
   tt.forEach(function (tc) {
