@@ -78,6 +78,7 @@ export async function checkDeviceStatus (deviceID) {
     case 'ACTIVE':
       return res.body.sessionId
     case 'LOCKED':
+    case 'RESTORE':
       throw new Error(res.body.message)
     default:
       return null
