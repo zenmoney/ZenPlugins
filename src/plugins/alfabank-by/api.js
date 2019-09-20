@@ -28,7 +28,8 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
   const response = await fetchJson(baseUrl + url, options)
   if (response.body.message && [
     'Мы заблокировали приложение',
-    'Система недоступна'
+    'Система недоступна',
+    'Для входа нужно сменить пароль'
   ].some(str => response.body.message.indexOf(str) >= 0)) {
     throw new TemporaryError('Ответ банка: ' + response.body.message)
   }
@@ -78,7 +79,6 @@ export async function checkDeviceStatus (deviceID) {
     case 'ACTIVE':
       return res.body.sessionId
     case 'LOCKED':
-    case 'RESTORE':
       throw new Error(res.body.message)
     default:
       return null
