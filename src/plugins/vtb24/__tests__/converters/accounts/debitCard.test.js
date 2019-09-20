@@ -1,7 +1,7 @@
 import { convertCardAccount } from '../../../converters'
 
 describe('convertCardAccount', () => {
-  it('converts moscow citizen debet card account', () => {
+  it('converts moscow citizen debit card account', () => {
     const apiAccount = {
       __type: 'ru.vtb24.mobilebanking.protocol.product.DebitCardAccountMto',
       number: '534526******1234',
