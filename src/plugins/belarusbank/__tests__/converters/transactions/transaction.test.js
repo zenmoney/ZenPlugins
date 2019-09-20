@@ -180,7 +180,7 @@ describe('convertTransaction', () => {
         inAccountSum: '5.64',
         operationCurrency: 'RUB',
         operationSum: '400',
-        place: 'Edgar Lakalin/6012',
+        place: 'Vasia Pupkin/6012',
         status: 'operResultOk',
         time: '11:38:16'
       },
@@ -196,7 +196,7 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: {
-          fullTitle: 'Edgar Lakalin',
+          fullTitle: 'Vasia Pupkin',
           location: null,
           mcc: 6012
         },
