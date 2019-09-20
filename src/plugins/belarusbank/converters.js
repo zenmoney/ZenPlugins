@@ -58,21 +58,17 @@ export function convertTransaction (tr, accounts) {
 }
 
 function getMovement (tr, account) {
-  var sum = tr.operationSum
-  if (tr.operationCurrency === account.instrument && tr.operationSum !== tr.inAccountSum) {
-    sum = tr.inAccountSum
-  }
   const movement = {
     id: null,
     account: { id: account.id },
     invoice: null,
-    sum: getSumAmount(tr.debitFlag, sum),
+    sum: getSumAmount(tr.debitFlag, tr.inAccountSum),
     fee: 0
   }
 
   if (tr.operationCurrency !== account.instrument) {
     movement.invoice = {
-      sum: getSumAmount(tr.debitFlag, tr.inAccountSum),
+      sum: getSumAmount(tr.debitFlag, tr.operationSum),
       instrument: tr.operationCurrency
     }
   }
@@ -113,6 +109,9 @@ function parsePayee (transaction, tr) {
     return false
   }
   switch (data.length) {
+    case 1:
+      fullTitle = tr.place
+      break
     case 2:
       mcc = Number.parseInt(data[1])
       fullTitle = data[0].trim()

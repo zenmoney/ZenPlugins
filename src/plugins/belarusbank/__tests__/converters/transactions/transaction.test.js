@@ -133,6 +133,76 @@ describe('convertTransaction', () => {
         comment: 'Плата за просмотр баланса (доступн. остатка)',
         hold: false
       }
+    },
+    {
+      name: 'pension provision income',
+      json: {
+        accountID: 'BY75AKBB30141000022233030000',
+        comment: 'Платежи в счет (пенсия)',
+        date: '01.06.2019',
+        debitFlag: '+',
+        inAccountCurrency: 'EUR',
+        inAccountSum: '173.18',
+        operationCurrency: 'EUR',
+        operationSum: '173.18',
+        place: 'Пенсия ФСЗН',
+        status: 'operResultOk',
+        time: '11:38:16'
+      },
+      expectedTransaction: {
+        date: new Date('2019-06-01T08:38:16.000Z'),
+        movements: [
+          {
+            id: null,
+            account: { id: 'BY75AKBB30141000022233030000' },
+            invoice: null,
+            sum: 173.18,
+            fee: 0
+          }
+        ],
+        merchant: {
+          fullTitle: 'Пенсия ФСЗН',
+          location: null,
+          mcc: null
+        },
+        comment: 'Платежи в счет (пенсия)',
+        hold: false
+      }
+    },
+    {
+      name: 'income in different currency',
+      json: {
+        accountID: 'BY75AKBB30141000022233030000',
+        comment: 'Возврат покупки/оплаты/зачисление перевода',
+        date: '01.06.2019',
+        debitFlag: '+',
+        inAccountCurrency: 'EUR',
+        inAccountSum: '5.64',
+        operationCurrency: 'RUB',
+        operationSum: '400',
+        place: 'Edgar Lakalin/6012',
+        status: 'operResultOk',
+        time: '11:38:16'
+      },
+      expectedTransaction: {
+        date: new Date('2019-06-01T08:38:16.000Z'),
+        movements: [
+          {
+            id: null,
+            account: { id: 'BY75AKBB30141000022233030000' },
+            invoice: { sum: 400, instrument: 'RUB' },
+            sum: 5.64,
+            fee: 0
+          }
+        ],
+        merchant: {
+          fullTitle: 'Edgar Lakalin',
+          location: null,
+          mcc: 6012
+        },
+        comment: 'Возврат покупки/оплаты/зачисление перевода',
+        hold: false
+      }
     }
   ]
   tt.forEach(function (tc) {
