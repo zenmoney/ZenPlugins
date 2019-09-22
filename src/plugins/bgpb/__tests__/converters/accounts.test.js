@@ -53,4 +53,21 @@ describe('convertAccount', () => {
       'ExtraData': 'cb727d83-2d8a-4c54-898f-6d45f0eba713'
     })).toBeNull()
   })
+
+  it('disabled card', () => {
+    expect(convertAccount({
+      'Id': '11161311-117d12',
+      'No': '529911******1112',
+      'Enabled': 'N',
+      'ProductType': 'MS',
+      'ProductTypeName': 'Карточка',
+      'Subclass': 'Карта покупок',
+      'Expired': '20230630',
+      'Currency': '840',
+      'CustomName': 'Карта покупок',
+      'Icon': 'NFC_MC_STD_DISABLE',
+      'BankId': 'cb727d83-2d8a-4c54-898f-6d45f0eba713',
+      'ExtraData': 'cb727d83-2d8a-4c54-898f-6d45f0eba713'
+    })).toBeNull()
+  })
 })
