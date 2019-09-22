@@ -12,7 +12,6 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   var accounts = allAccounts.accounts
     .map(converters.convertAccount)
     .filter(account => account !== null)
-  accounts = mergeCards(accounts)
   for (let i = 0; i < accounts.length; i++) {
     if (accounts[i].productType === 'CARD') {
       let detail = await bank.fetchCardDetail(loginData.sessionID, accounts[i])
@@ -26,6 +25,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   var accountsSkipped = allAccounts.skipped
     .map(converters.convertAccount)
     .filter(account => account !== null)
+    .reverse() // Чтоб дочерние карты были первыми в списке
   for (let i = 0; i < accountsSkipped.length; i++) {
     if (accountsSkipped[i].type === 'checking') {
       accounts.forEach(function (acc) {
@@ -49,7 +49,8 @@ export async function scrape ({ preferences, fromDate, toDate }) {
         transaction.bankOperation === 'COMPANYTRANSFER' ||
         transaction.bankTitle.indexOf('Поступление средств') >= 0 ||
         transaction.bankTitle.indexOf('Комиссия банка') >= 0 ||
-        (transaction.bankTitle.indexOf('Погашение кредита') >= 0 && transaction.movements[0].sum < 0)))
+        (transaction.bankTitle.indexOf('Погашение кредита') >= 0 && transaction.movements[0].sum < 0) ||
+        transaction.byChildCard))
     .filter(function (tr) {
       for (let i = 0; i < accounts.length; i++) {
         if (accounts[i].id === tr.movements[0].account.id) {
@@ -62,6 +63,10 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   for (let i = 0; i < transactions.length; i++) {
     delete transactions[i].bankOperation
     delete transactions[i].bankTitle
+    delete transactions[i].byChildCard
+  }
+  for (let i = 0; i < accounts.length; i++) {
+    delete accounts[i].isChildCard
   }
   return {
     accounts: accounts,
@@ -91,10 +96,7 @@ function mergeAllAccounts (accounts, cards, deposits) {
   accs = accs
     .concat(cards)
     .concat(deposits)
-  return {
-    accounts: accs,
-    skipped: accsSkipped
-  }
+  return mergeCards(accs, accsSkipped)
 }
 
 function mergeCards (accs, accsSkipped) {
@@ -102,14 +104,20 @@ function mergeCards (accs, accsSkipped) {
   let indexToRemove = null
   for (let i = 0; i < accs.length; i++) {
     for (let j = i + 1; j < accs.length; j++) {
-      if (accs[i].id.substr(1, 17) === accs[j].id.substr(1, 17)) {
-        accs[i].syncID.push(accs[j].syncID[1]) // add last 4 numbers of the credit card
+      if (accs[i].type === accs[j].type &&
+        accs[i].type === 'CARD' &&
+        accs[i].id.substr(1, 17) === accs[j].id.substr(1, 17)) {
         indexToRemove = j
-        accsSkipped.push(accounts[i])
+        accs[j].info.description = accs[i].info.description.slice(-4)
+        accs[j].id = accs[i].id
+        accs[j].isChildCard = true
+        accsSkipped.push(accs[j])
       }
     }
   }
-  accs.splice(indexToRemove, 1)
+  if (indexToRemove !== null) {
+    accs.splice(indexToRemove, 1)
+  }
   return {
     accounts: accs,
     skipped: accsSkipped

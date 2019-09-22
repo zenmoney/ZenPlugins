@@ -30,7 +30,8 @@ export function convertAccount (json) {
         balance: Number.parseFloat(json.info.amount.amount),
         instrument: json.info.amount.currency,
         syncID: [json.id.slice(1, 17), json.info.description.slice(-4)], // 5301411112222333303968 -> 3014111122223333
-        productType: json.type
+        productType: json.type,
+        isChildCard: json.isChildCard ? json.isChildCard : false
       }
     case 'DEPOSIT':
       return {
@@ -85,7 +86,8 @@ export function convertTransaction (json, accounts) {
     comment: null,
     hold: json.status !== 'NORMAL',
     bankOperation: json.operation ? json.operation : null,
-    bankTitle: json.info.title ? json.info.title : ''
+    bankTitle: json.info.title ? json.info.title : '',
+    byChildCard: account.isChildCard ? account.isChildCard : false
   };
 
   [
