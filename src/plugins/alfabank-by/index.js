@@ -12,6 +12,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   var accounts = allAccounts.accounts
     .map(converters.convertAccount)
     .filter(account => account !== null)
+  accounts = mergeCards(accounts)
   for (let i = 0; i < accounts.length; i++) {
     if (accounts[i].productType === 'CARD') {
       let detail = await bank.fetchCardDetail(loginData.sessionID, accounts[i])
@@ -90,6 +91,25 @@ function mergeAllAccounts (accounts, cards, deposits) {
   accs = accs
     .concat(cards)
     .concat(deposits)
+  return {
+    accounts: accs,
+    skipped: accsSkipped
+  }
+}
+
+function mergeCards (accs, accsSkipped) {
+  // merge parent and child credit cards
+  let indexToRemove = null
+  for (let i = 0; i < accs.length; i++) {
+    for (let j = i + 1; j < accs.length; j++) {
+      if (accs[i].id.substr(1, 17) === accs[j].id.substr(1, 17)) {
+        accs[i].syncID.push(accs[j].syncID[1]) // add last 4 numbers of the credit card
+        indexToRemove = j
+        accsSkipped.push(accounts[i])
+      }
+    }
+  }
+  accs.splice(indexToRemove, 1)
   return {
     accounts: accs,
     skipped: accsSkipped
