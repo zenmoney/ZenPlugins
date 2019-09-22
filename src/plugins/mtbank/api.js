@@ -100,7 +100,7 @@ export async function login (login, password) {
   await fetchApiJson('user/userRole', {
     method: 'POST',
     body: res.body.data.userInfo.dboContracts[0],
-    sanitizeResponseLog: { body: { name: true, longname: true } }
+    sanitizeResponseLog: { body: { data: { userInfo: true } } }
   }, response => response.body.success)
 
   return sessionCookies
