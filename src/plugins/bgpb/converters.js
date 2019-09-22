@@ -1,6 +1,9 @@
 import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
 
 export function convertAccount (ob) {
+  if (ob.Enabled && ob.Enabled === 'N') {
+    return null
+  }
   const id = ob.Id.split('-')[0]
   if (ob.ProductType !== 'NON_ONUS' && !ZenMoney.isAccountSkipped(id)) {
     // eslint-disable-next-line no-debugger
