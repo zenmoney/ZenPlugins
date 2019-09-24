@@ -72,7 +72,8 @@ describe('convertTransaction', () => {
         comment: null,
         hold: false,
         bankOperation: null,
-        bankTitle: 'ATMALF HO35 DZERJINSKO'
+        bankTitle: 'ATMALF HO35 DZERJINSKO',
+        byChildCard: false
       }
     },
     {
@@ -128,7 +129,8 @@ describe('convertTransaction', () => {
         comment: 'Комиссия банка',
         hold: false,
         bankOperation: null,
-        bankTitle: 'Комиссия банка'
+        bankTitle: 'Комиссия банка',
+        byChildCard: false
       }
     },
     {
@@ -186,7 +188,8 @@ describe('convertTransaction', () => {
         comment: null,
         hold: false,
         bankOperation: null,
-        bankTitle: 'UBER'
+        bankTitle: 'UBER',
+        byChildCard: false
       }
     },
     {
@@ -237,7 +240,8 @@ describe('convertTransaction', () => {
         comment: 'ЗАРАБОТНАЯ ПЛАТА ЗА ФЕВРАЛЬ-МАРТ 2019',
         hold: false,
         bankOperation: null,
-        bankTitle: 'Поступление средств'
+        bankTitle: 'Поступление средств',
+        byChildCard: false
       }
     },
     {
@@ -305,7 +309,8 @@ describe('convertTransaction', () => {
         comment: null,
         hold: false,
         bankOperation: 'CURRENCYEXCHANGE',
-        bankTitle: 'Конвертация'
+        bankTitle: 'Конвертация',
+        byChildCard: false
       }
     },
     {
@@ -372,7 +377,8 @@ describe('convertTransaction', () => {
         comment: null,
         hold: false,
         bankOperation: 'CURRENCYEXCHANGE',
-        bankTitle: 'Конвертация'
+        bankTitle: 'Конвертация',
+        byChildCard: false
       }
     },
     {
@@ -433,7 +439,8 @@ describe('convertTransaction', () => {
         comment: null,
         hold: false,
         bankOperation: null,
-        bankTitle: 'BRUSNIKA'
+        bankTitle: 'BRUSNIKA',
+        byChildCard: false
       }
     },
     {
@@ -488,7 +495,8 @@ describe('convertTransaction', () => {
         comment: 'MTS - Domashnij internet: 000000000',
         hold: false,
         bankOperation: 'PAYMENT',
-        bankTitle: 'MTS - Domashnij internet: 000000000'
+        bankTitle: 'MTS - Domashnij internet: 000000000',
+        byChildCard: false
       }
     },
     {
@@ -590,7 +598,8 @@ describe('convertTransaction', () => {
         comment: null,
         hold: false,
         bankOperation: null,
-        bankTitle: 'YANDEX.TAXI'
+        bankTitle: 'YANDEX.TAXI',
+        byChildCard: false
       }
     },
     {
@@ -670,7 +679,8 @@ describe('convertTransaction', () => {
         comment: 'ВЫПЛАТА СРЕДСТВ В РАМКАХ УСЛУГИ "CASHBACK" ЗА МАРТ 2019 Г., СОГЛАСНО РАСЧЕТОВ ОТ 03.04.2019',
         hold: false,
         bankOperation: null,
-        bankTitle: 'Поступление средств'
+        bankTitle: 'Поступление средств',
+        byChildCard: false
       }
     }
   ]
