@@ -24,7 +24,8 @@ export function convertAccount (account, initialized = false) {
     case 'Telecom': return getTelecomAccount(account) // телеком-карта
 
     case 'ExternalAccount': // внешние счета сторонних банков, например
-    case 'ImportedCredit': // внешний кредит другого человека
+    case 'ImportedCredit': // подключенный кредит другого человека
+    case 'ImportedCurrent': // подключенный счёт карты другого человевка
       return null
 
     default: {
