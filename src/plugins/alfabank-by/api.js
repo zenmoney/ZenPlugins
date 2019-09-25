@@ -151,7 +151,7 @@ export async function authNoResident (deviceID) {
 
 export async function authConfirm (deviceID) {
   let sms = await ZenMoney.readLine('Введите код из смс', {
-    inputType: 'number',
+    inputType: 'numberPassword',
     time: 120000
   })
   if (sms === '') {
