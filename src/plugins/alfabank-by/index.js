@@ -108,7 +108,7 @@ function mergeCards (accs, accsSkipped) {
       if (accs[i].type === accs[j].type &&
         accs[i].type === 'CARD' &&
         accs[i].id.substr(1, 17) === accs[j].id.substr(1, 17)) {
-        if (cardIDCount[accs[j].id.substr(1, 17)] < 1) {
+        if (cardIDCount[accs[j].id.substr(1, 17)] < 1 || cardIDCount[accs[j].id.substr(1, 17)] === undefined) {
           cardIDCount[accs[j].id.substr(1, 17)] !== undefined ? cardIDCount[accs[j].id.substr(1, 17)]++ : cardIDCount[accs[j].id.substr(1, 17)] = 0
           indexToRemove = j
           accs[j].info.description = accs[i].info.description.slice(-4)
