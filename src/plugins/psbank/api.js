@@ -1,8 +1,7 @@
-/* eslint-disable no-unused-vars */
 import { generateUUID, generateRandomString, generateMacAddress } from '../../common/utils'
-import { fetch, fetchJson } from '../../common/network'
+import { fetchJson } from '../../common/network'
 import * as forge from 'node-forge'
-import { get, omit } from 'lodash'
+import { get } from 'lodash'
 import { stringify } from 'querystring'
 
 const qs = require('querystring')
@@ -40,10 +39,7 @@ export async function login (preferences, auth) {
   console.log('>>> Пытаемся войти...')
 
   if (!auth.deviceId || !auth.mobileDeviceInfo || !auth.securityCodeHash) {
-  // eslint-disable-next-line no-constant-condition
-  // if (true) {
     // ===== ПЕРВЫЙ ВХОД ПО ПАРОЛЮ =====
-
     auth.deviceId = generateRandomString(16, '0123456789abcdef')
     auth.mobileDeviceInfo = getMobileDeviceInfo({
       TimeStamp: (new Date()).toISOString(),
@@ -58,6 +54,7 @@ export async function login (preferences, auth) {
     })
 
     // проходим авторизацию
+    const phone = getPhoneNumber(preferences.login)
     let response = await fetchApiJson({}, 'api/authentication/token', {
       method: 'POST',
       stringify,
@@ -67,10 +64,10 @@ export async function login (preferences, auth) {
       },
       body: {
         DeviceId: auth.deviceId,
-        loginType: preferences.loginType === '1' ? 'Phone' : 'Login',
+        loginType: phone ? 'Phone' : 'Login',
         networkType: 'wifi',
         clientChannel: 'MobileAppNew',
-        clientIdentifier: preferences.login,
+        clientIdentifier: phone || preferences.login,
         MobileDeviceInfo: encodeURI(JSON.stringify(auth.mobileDeviceInfo)),
         grant_type: 'passwordless'
       },
@@ -102,6 +99,7 @@ export async function login (preferences, auth) {
         codeType = 'СМС'
       } else if (response.body.pushStatus === 4) {
         codeType = 'PUSH'
+      // } else if (response.body.otpStatus === 4) {
       } else {
         throw new Error('Не известный способ подтверждения нового устройства')
       }
@@ -247,10 +245,34 @@ export async function fetchCards (auth) {
   return response.body
 }
 
+export async function fetchAccounts (auth) {
+  const response = await fetchApiJson(auth, 'api/accounts', {
+    method: 'GET',
+    body: {
+      activeOnly: true
+    }
+  })
+  return response.body
+}
+
 export async function fetchTransactions (auth, id, type, fromDate, toDate) {
   let url
   let params
   switch (type) {
+    case 1: // счета
+      url = `api/accounts/${id}/statement`
+      params = {
+        StartDate: fromDate.toISOString(),
+        EndDate: toDate.toISOString(),
+        Income: true,
+        Outcome: true,
+        ProcessedOnly: false,
+        SortDirection: 2,
+        PageSize: 1000,
+        PageNumber: 1
+      }
+      break
+
     case 2: // карты
       url = `api/cards/accounts/${id}/statement`
       params = {
@@ -298,26 +320,6 @@ function getUrl (url) {
   return url
 }
 
-async function fetchApiHtml (url, options = {}, predicate = null) {
-  url = getUrl(url)
-
-  let response
-  try {
-    response = await fetch(url, {
-      method: options.method || 'POST',
-      ...omit(options, ['method'])
-    })
-  } catch (e) {
-    if (e.response && e.response.status >= 500 && e.response.status < 525) {
-      throw new TemporaryError('Информация из банка временно недоступна. Повторите синхронизацию через некоторое время.')
-    } else {
-      throw new Error('Ошибка загрузки страницы: ' + url)
-    }
-  }
-
-  return response
-}
-
 async function fetchApiJson (auth, url, options = {}, predicate = null) {
   url = getUrl(url)
 
@@ -360,14 +362,27 @@ async function fetchApiJson (auth, url, options = {}, predicate = null) {
   if (predicate) { validateResponse(response, response => response.body && predicate(response)) }
   if (options && !options.ignoreErrors) {
     if (response.status !== 200) {
-      let message
-      let errorType
-      if (response.body) {
-        message = (response.body.message || response.body.exceptionMessage)
-        if (!message) { message = response.body.redirect }
-        errorType = response.body.error ? `[${response.body.error}] ` : ''
+      if (!response.body) {
+        throw new Error()
       }
-      throw new Error((response.statusText || '') + (message ? `:  ${errorType}${message}` : ''))
+      const message = response.body.message || response.body.exceptionMessage || response.body.error_description || response.body.redirect || ''
+      const temp = (response.body.error &&
+        [
+          'use_login_and_password', // error_description: 'Чтобы открыть доступ к мобильному и интернет банку обратитесь в офис или настройте его в банкомате'
+          'invalid_grant' // error_description: 'Ошибка при аутентификации по короткому коду'
+        ].indexOf(response.body.error) >= 0
+      ) ||
+      (response.body.errorType &&
+          [
+            1000 // exceptionMessage: 'Выписка по карте временно недоступна'
+          ].indexOf(response.body.error) >= 0
+      )
+
+      if (temp) {
+        throw new TemporaryError(message)
+      } else {
+        throw new Error((response.body.error ? `[${response.body.error}] ` : '') + message)
+      }
     }
   }
   return response
@@ -423,4 +438,10 @@ function getToken ({ deviceSerialNumber, deviceUid, deviceAddress }) {
       'deviceAddress': deviceAddress
     }
   ))
+}
+
+function getPhoneNumber (str) {
+  const number = /^(?:\+?7|8|)(\d{10})$/.exec(str.trim())
+  if (number) return '+7' + number[1]
+  return null
 }

@@ -1,10 +1,24 @@
 export function convertAccount (apiAccount) {
   switch (apiAccount.accountType) {
-    case 2:
+    case 1: // накопительные счета
+      return getAccount(apiAccount)
+    case 2: // карты
       return getCard(apiAccount)
     default:
       console.log('Не известный тип счёта: ', apiAccount)
       throw new Error('Не известный тип счёта')
+  }
+}
+
+function getAccount (apiAccount) {
+  return {
+    id: apiAccount.accountId.toString(),
+    title: apiAccount.clientLabel || apiAccount.name,
+    type: 'checking',
+    syncID: apiAccount.number.substr(-4),
+    instrument: getInstrument(apiAccount.currency.nameIso),
+    balance: apiAccount.balance,
+    _type: apiAccount.accountType
   }
 }
 
