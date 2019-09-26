@@ -374,7 +374,8 @@ async function fetchApiJson (auth, url, options = {}, predicate = null) {
       ) ||
       (response.body.errorType &&
           [
-            1000 // exceptionMessage: 'Выписка по карте временно недоступна'
+            1000, // exceptionMessage: 'Выписка по карте временно недоступна'
+            2796 // exceptionMessage: 'Вход в систему невозможен для данного канала доступа',
           ].indexOf(response.body.error) >= 0
       )
 
