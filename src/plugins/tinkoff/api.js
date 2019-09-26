@@ -335,8 +335,14 @@ export async function fetchAccountsAndTransactions (auth, fromDate, toDate) {
     },
     response => get(response, 'body.payload[0].payload') && get(response, 'body.payload[1].payload')
   )
+
+  const fetchedAccounts = accounts.body.payload[0].payload
+  if (fetchedAccounts && fetchedAccounts.length === 0) {
+    throw new InvalidPreferencesError('Банк вернул пустой список операций. Нечего загружать.')
+  }
+
   return {
-    accounts: accounts.body.payload[0].payload,
+    accounts: fetchedAccounts,
     transactions: accounts.body.payload[1].payload
   }
 }
