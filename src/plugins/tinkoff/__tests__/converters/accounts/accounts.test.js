@@ -1,6 +1,143 @@
 import { convertAccount } from '../../../converters'
 
 const accounts = {
+  'ImportedCurrent': [
+    [
+      {
+        c2cOutLimitBorder: {
+          currency: {
+            code: 643,
+            name: 'RUB',
+            strCode: '643'
+          },
+          value: 20000
+        },
+        marketingName: 'Расчетная карта. ТПС 3.0 RUB',
+        creationDate: {
+          milliseconds: 1567371600000
+        },
+        tariffFileHash: 'eda09d25-ffc6-470a-8d0b-59743697b148',
+        accountIconType: 'MC_ACCOUNT_RUB',
+        accountGroup: 'Дебетовые карты',
+        moneyAmount: {
+          currency: {
+            code: 643,
+            name: 'RUB',
+            strCode: '643'
+          },
+          value: 15056.56
+        },
+        hidden: false,
+        currency: {
+          code: 643,
+          name: 'RUB',
+          strCode: '643'
+        },
+        loyalty: [
+          {
+            programId: 'Cashback',
+            bonusLimitReached: false,
+            loyalty: 'Tinkoff Black',
+            name: 'Tinkoff Black',
+            loyaltySteps: 1,
+            loyaltyPointsId: 3,
+            loyaltyPointsName: 'Rubles',
+            loyaltyImagine: true,
+            partialCompensation: false,
+            primeLoyaltyId: '33',
+            primeLoyaltyGroupId: 0
+          }
+        ],
+        partNumber: 'TFPLCU3.0',
+        name: 'Счет Tinkoff Black',
+        tariffInfo: {
+          highRateAmount: {
+            currency: {
+              code: 643,
+              name: 'RUB',
+              strCode: '643'
+            },
+            value: 300000
+          },
+          purchaseSumForInterest: {
+            currency: {
+              code: 643,
+              name: 'RUB',
+              strCode: '643'
+            },
+            value: 0.01
+          },
+          purchaseSumForHighInterest: {
+            currency: {
+              code: 643,
+              name: 'RUB',
+              strCode: '643'
+            },
+            value: 3000
+          },
+          lowRate: 0,
+          interestRate: 6
+        },
+        accountType: 'ImportedCurrent',
+        accountBalance: {
+          currency: {
+            code: 643,
+            name: 'RUB',
+            strCode: '643'
+          },
+          value: 15056.56
+        },
+        status: 'NORM',
+        imported: true,
+        c2cOutLimit: {
+          currency: {
+            code: 643,
+            name: 'RUB',
+            strCode: '643'
+          },
+          value: 11000
+        },
+        rate: 6,
+        cardNumbers: [
+          {
+            pinSet: true,
+            statusCode: 'NORM',
+            activated: true,
+            cardIssueType: '3',
+            availableBalance: {
+              currency: {
+                code: 643,
+                name: 'RUB',
+                strCode: '643'
+              },
+              value: 15056.56
+            },
+            cardDesign: '1e98bce31358e02b8878cffb62a307b8',
+            reissued: false,
+            id: '60095712',
+            status: 'Активна',
+            paymentSystem: 'MC',
+            creationDate: {
+              milliseconds: 1567371600000
+            },
+            position: 1,
+            ucid: '1059786180',
+            hce: false,
+            name: 'Tinkoff Black',
+            expirationStatus: 'normal',
+            expiration: {
+              milliseconds: 1727643600000
+            },
+            value: '553691******1072',
+            primary: false
+          }
+        ],
+        id: '5051788676'
+      },
+      null
+    ]
+  ],
+
   // мультивалютный вклад
   'MultiDeposit': [
     [
@@ -401,11 +538,12 @@ describe('convertAccount', () => {
 })
 
 xdescribe('convertOneTransaction', () => {
-  const type = 'ImportedCredit'
+  const type = 'ImportedCurrent'
   const i = 0
+  if (!accounts[type][i][0]) throw new Error()
   it('should convert transaction ' + i, () => {
     expect(
-      convertAccount(accounts[type][i][0])
+      convertAccount(accounts[type][i][0], accounts[accounts[type][i][0].account])
     ).toEqual(
       accounts[type][i][1]
     )
