@@ -67,6 +67,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   }
   for (let i = 0; i < accounts.length; i++) {
     delete accounts[i].isChildCard
+    delete accounts[i].previousID
   }
   return {
     accounts: accounts,
@@ -102,16 +103,21 @@ function mergeAllAccounts (accounts, cards, deposits) {
 function mergeCards (accs, accsSkipped) {
   // merge parent and child credit cards
   let indexToRemove = null
+  let cardIDCount = []
   for (let i = 0; i < accs.length; i++) {
     for (let j = i + 1; j < accs.length; j++) {
       if (accs[i].type === accs[j].type &&
         accs[i].type === 'CARD' &&
         accs[i].id.substr(1, 17) === accs[j].id.substr(1, 17)) {
-        indexToRemove = j
-        accs[j].info.description = accs[i].info.description.slice(-4)
-        accs[j].id = accs[i].id
-        accs[j].isChildCard = true
-        accsSkipped.push(accs[j])
+        if (cardIDCount[accs[j].id.substr(1, 17)] === undefined || cardIDCount[accs[j].id.substr(1, 17)] < 1) {
+          cardIDCount[accs[j].id.substr(1, 17)] !== undefined ? cardIDCount[accs[j].id.substr(1, 17)]++ : cardIDCount[accs[j].id.substr(1, 17)] = 1
+          indexToRemove = j
+          accs[j].info.description = accs[i].info.description.slice(-4)
+          accs[j].previousID = accs[j].id
+          accs[j].id = accs[i].id
+          accs[j].isChildCard = true
+          accsSkipped.push(accs[j])
+        }
       }
     }
   }

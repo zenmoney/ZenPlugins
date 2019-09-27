@@ -31,7 +31,8 @@ export function convertAccount (json) {
         instrument: json.info.amount.currency,
         syncID: [json.id.slice(1, 17), json.info.description.slice(-4)], // 5301411112222333303968 -> 3014111122223333
         productType: json.type,
-        isChildCard: json.isChildCard ? json.isChildCard : false
+        isChildCard: json.isChildCard ? json.isChildCard : false,
+        previousID: json.previousID !== undefined ? json.previousID : null
       }
     case 'DEPOSIT':
       return {
