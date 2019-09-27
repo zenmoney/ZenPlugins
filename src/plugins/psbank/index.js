@@ -1,6 +1,6 @@
 import { login, fetchCards, fetchAccounts, fetchTransactions } from './api'
 import { convertAccount, convertTransaction } from './converters'
-import { flattenDeep, omit, merge } from 'lodash'
+import { flattenDeep, omit, concat } from 'lodash'
 
 export async function scrape ({ preferences, fromDate, toDate, isInBackground }) {
   let auth = ZenMoney.getData('auth', {})
@@ -9,10 +9,10 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
   let accounts = []
 
   const fetchedCards = await fetchCards(auth)
-  merge(accounts, fetchedCards.cardAccounts.map(account => convertAccount(account)))
+  accounts = concat(accounts, fetchedCards.cardAccounts.map(account => convertAccount(account)))
 
   const fetchedAccounts = await fetchAccounts(auth)
-  merge(accounts, fetchedAccounts.map(account => convertAccount(account)))
+  accounts = concat(accounts, fetchedAccounts.map(account => convertAccount(account)))
 
   const transactions = []
   transactions.push(await Promise.all(accounts.map(async account => {
