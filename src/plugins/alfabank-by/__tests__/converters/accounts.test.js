@@ -78,7 +78,8 @@ describe('convertAccount', () => {
         instrument: 'BYN',
         syncID: ['3014111MRT001111', '2345'],
         productType: 'CARD',
-        isChildCard: false
+        isChildCard: false,
+        previousID: null
       }
     },
     {

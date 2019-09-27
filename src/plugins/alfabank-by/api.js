@@ -254,7 +254,7 @@ export async function fetchCardDetail (sessionID, card) {
       'X-Session-ID': sessionID
     },
     body: {
-      id: card.id,
+      id: card.previousID !== null ? card.previousID : card.id,
       operationSource: 'PRODUCT'
     }
   }, response => response.status, message => new Error('bad request')))

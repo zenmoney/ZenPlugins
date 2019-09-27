@@ -67,6 +67,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   }
   for (let i = 0; i < accounts.length; i++) {
     delete accounts[i].isChildCard
+    delete accounts[i].previousID
   }
   return {
     accounts: accounts,
@@ -108,10 +109,11 @@ function mergeCards (accs, accsSkipped) {
       if (accs[i].type === accs[j].type &&
         accs[i].type === 'CARD' &&
         accs[i].id.substr(1, 17) === accs[j].id.substr(1, 17)) {
-        if (cardIDCount[accs[j].id.substr(1, 17)] < 1 || cardIDCount[accs[j].id.substr(1, 17)] === undefined) {
-          cardIDCount[accs[j].id.substr(1, 17)] !== undefined ? cardIDCount[accs[j].id.substr(1, 17)]++ : cardIDCount[accs[j].id.substr(1, 17)] = 0
+        if (cardIDCount[accs[j].id.substr(1, 17)] === undefined || cardIDCount[accs[j].id.substr(1, 17)] < 1) {
+          cardIDCount[accs[j].id.substr(1, 17)] !== undefined ? cardIDCount[accs[j].id.substr(1, 17)]++ : cardIDCount[accs[j].id.substr(1, 17)] = 1
           indexToRemove = j
           accs[j].info.description = accs[i].info.description.slice(-4)
+          accs[j].previousID = accs[j].id
           accs[j].id = accs[i].id
           accs[j].isChildCard = true
           accsSkipped.push(accs[j])
