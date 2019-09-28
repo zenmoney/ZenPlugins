@@ -69,7 +69,7 @@ function validateResponse (response, predicate, error) {
   }
 }
 
-export function parseFullTransactionsMail (html) {
+export function parseFullTransactionsMail (html, overdraft) {
   const cheerio = require('cheerio')
   let $ = cheerio.load(html)
   $ = cheerio.load($().children()[0].children[0].Body)
@@ -102,7 +102,8 @@ export function parseFullTransactionsMail (html) {
               currency: null,
               place: null,
               authCode: null,
-              mcc: null
+              mcc: null,
+              overdraft: overdraft
             }
           }
           switch (counter) {
@@ -151,12 +152,14 @@ export function parseFullTransactionsMailCardLimit (html) {
   $ = cheerio.load($().children()[0].children[0].Body)
 
   let isLimit = false
+  let overdraft = null
   flatMap($('table[class="section_1"] tr').toArray().slice(1), tr => {
     if (tr.children.length >= 0) { // Значит это строка, а не просто форматирование
       tr.children.forEach(function (td) {
         if (td.children && td.children[0] && td.children[0].type === 'text') {
           if (isLimit) {
-            return td.children[0].data
+            overdraft = td.children[0].data
+            isLimit = false
           }
           if (td.children[0].data === 'Лимит овердрафта:') {
             isLimit = true
@@ -165,7 +168,7 @@ export function parseFullTransactionsMailCardLimit (html) {
       })
     }
   })
-  return null
+  return overdraft
 }
 
 export async function login (login, password) {
@@ -328,8 +331,8 @@ export async function fetchFullTransactions (sid, accounts, fromDate, toDate = n
   }))
   const transactions = await Promise.all(flatMap(mails, mail => {
     let data = mail.BS_Response.MailAttachment.Attachment
-    parseFullTransactionsMailCardLimit(data)
-    return parseFullTransactionsMail(data)
+    let overdraft = parseFullTransactionsMailCardLimit(data)
+    return parseFullTransactionsMail(data, overdraft)
   }))
 
   console.log(`>>> Загружено ${transactions.length} операций.`)

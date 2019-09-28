@@ -28,7 +28,8 @@ describe('convertTransaction', () => {
         description: 'Внесение наличных на карту',
         mcc: '↵',
         place: 'BY BGPB PST-93, MINSK',
-        type: 'ЗАЧИСЛЕНИЕ'
+        type: 'ЗАЧИСЛЕНИЕ',
+        overdraft: '0,00'
       },
       expectedTransaction: {
         'comment': null,
@@ -80,7 +81,8 @@ describe('convertTransaction', () => {
         description: 'Безналичная оплата',
         mcc: '1200',
         place: 'GB SHOP, DOUGLAS',
-        type: 'СПИСАНИЕ'
+        type: 'СПИСАНИЕ',
+        overdraft: '0,00'
       },
       expectedTransaction: {
         'comment': null,
