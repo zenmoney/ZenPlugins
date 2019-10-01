@@ -38,7 +38,7 @@
     "jest": "23.1.0",
     "jest-raw-loader": "1.0.1",
     "jshashes": "1.0.7",
-    "lodash": "4.17.4",
+    "lodash": "4.17.13",
     "moment": "2.22.2",
     "node-forge": "0.7.6",
     "object-assign": "4.1.1",
