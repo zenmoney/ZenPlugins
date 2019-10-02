@@ -589,11 +589,9 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: {
-          city: 'SCHIPOL',
-          country: 'NLD',
           location: null,
           mcc: null,
-          title: 'YANDEX.TAXI'
+          fullTitle: 'YANDEX.TAXI'
         },
         comment: null,
         hold: false,
@@ -680,6 +678,116 @@ describe('convertTransaction', () => {
         hold: false,
         bankOperation: null,
         bankTitle: 'Поступление средств',
+        byChildCard: false
+      }
+    },
+    {
+      name: 'USA payment with right merchant',
+      json: {
+        id: '11113111050111',
+        info: {
+          description: 'Текущий счет',
+          title: 'NYC FERRY MPOS',
+          amount: {
+            format: '###,###,###,###,##0.##', currency: 'BYN', amount: -5.5
+          },
+          icon: {
+            backgroundColorFrom: '#8976f3',
+            backgroundColorTo: '#8976f3',
+            iconUrl: 'v0/Image/52_495.SVG',
+            displayType: 'REGULAR',
+            captionColor: '#FFFFFF',
+            frameColor: '#c2b7b7'
+          }
+        },
+        date: '20190125122755',
+        cardMask: '5.1111',
+        description: 'NEW YORK USA',
+        status: 'NORMAL',
+        iban: 'BY31 ALFA 3014 111M RT00 1111 0000',
+        showReceipt: false,
+        sendReceipt: false,
+        showAddToFuture: false,
+        showRepeat: false,
+        showAddRecipient: false,
+        availableSplit: false,
+        showCompensate: false
+      },
+      expectedTransaction: {
+        date: new Date('Tue Jan 25 2019 12:27:55 GMT+0300 (Moscow Standard Time)'),
+        movements: [
+          {
+            id: '11113111050111',
+            account: { id: '6505111' },
+            invoice: null,
+            sum: -5.5,
+            fee: 0
+          }
+        ],
+        merchant: {
+          location: null,
+          mcc: null,
+          fullTitle: 'NYC FERRY MPOS'
+        },
+        comment: null,
+        hold: false,
+        bankOperation: null,
+        bankTitle: 'NYC FERRY MPOS',
+        byChildCard: false
+      }
+    },
+    {
+      name: 'USA payment in MacDonalds',
+      json: {
+        id: '11113111050111',
+        info: {
+          description: 'Текущий счет',
+          title: 'MCDONALD\'S F2813',
+          amount: {
+            format: '###,###,###,###,##0.##',
+            currency: 'BY',
+            amount: -8.91
+          },
+          icon:
+              { backgroundColorFrom: '#8976f3',
+                backgroundColorTo: '#8976f3',
+                iconUrl: 'v0/Image/52_495.SVG',
+                displayType: 'REGULAR',
+                captionColor: '#FFFFFF',
+                frameColor: '#c2b7b7' } },
+        date: '20190125122755',
+        cardMask: '5.1111',
+        description: 'NEW YORK USA',
+        status: 'NORMAL',
+        iban: 'BY31 ALFA 3014 111M RT00 1111 0000',
+        showReceipt: false,
+        sendReceipt: false,
+        showAddToFuture: false,
+        showRepeat: false,
+        showAddRecipient: false,
+        availableSplit: false,
+        showCompensate: false
+      },
+      expectedTransaction: {
+        date: new Date('Tue Jan 25 2019 12:27:55 GMT+0300 (Moscow Standard Time)'),
+        movements: [
+          {
+            id: '11113111050111',
+            account: { id: '6505111' },
+            invoice: null,
+            sum: -8.91,
+            fee: 0
+          }
+        ],
+        merchant: {
+          location: null,
+          mcc: null,
+          fullTitle: 'MCDONALD\'S F2813'
+        },
+        comment: null,
+        hold: false,
+        bankOperation: null,
+        bankTitle: 'MCDONALD\'S F2813',
         byChildCard: false
       }
     }
