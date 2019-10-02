@@ -139,7 +139,8 @@ function parseCash (transaction, json) {
       fee: 0
     })
     return true
-  } else if (json.operation === 'CURRENCYEXCHANGE') {
+  } else if (json.operation === 'CURRENCYEXCHANGE' &&
+              json.operationAmount) {
     var currency = json.operationAmount.currency
     var amount = json.operationAmount.amount
     if (json.info.amount.amount > 0) {

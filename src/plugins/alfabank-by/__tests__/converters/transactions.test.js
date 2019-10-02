@@ -245,6 +245,48 @@ describe('convertTransaction', () => {
       }
     },
     {
+      name: 'salary with exchange operation',
+      json: {
+        info: {
+          description: 'Карта №1',
+          title: 'Конвертация',
+          amount: {
+            format: '###,###,###,###,##0.##', currency: 'BYN', amount: 600 },
+          icon: { backgroundColorFrom: '#ff814f', backgroundColorTo: '#ff814f', iconUrl: 'v0/Image/50_495.SVG', displayType: 'REGULAR', captionColor: '#FFFFFF', frameColor: '#c2b7b7' }
+        },
+        date: '20190125122755',
+        description: 'ПЕРЕЧИСЛЕНИЕ ДОХОДА ОТ ПРЕДПРИНИМАТЕЛЬСКОЙ ДЕЯТЕЛЬНОСТИ ЗА АПРЕЛЬ 2019 ГОДА. ПЕТРОВ ИВАН ИВАНОВИЧ НА СЧЕТ BY16 ALFA 3014 1234 1234 12',
+        status: 'NORMAL',
+        operation: 'CURRENCYEXCHANGE',
+        iban: 'BY31 ALFA 3014 111M RT00 1111 0000',
+        showReceipt: false,
+        sendReceipt: false,
+        showAddToFuture: false,
+        showRepeat: false,
+        showAddRecipient: false,
+        availableSplit: false,
+        showCompensate: false
+      },
+      expectedTransaction: {
+        date: new Date('Tue Jan 25 2019 12:27:55 GMT+0300 (Moscow Standard Time)'),
+        movements: [
+          {
+            id: null,
+            account: { id: '6505111' },
+            invoice: null,
+            sum: 600,
+            fee: 0
+          }
+        ],
+        merchant: null,
+        comment: null,
+        hold: false,
+        bankOperation: 'CURRENCYEXCHANGE',
+        bankTitle: 'Конвертация',
+        byChildCard: false
+      }
+    },
+    {
       name: 'exchange operation',
       json: {
         id: '11113111050111',
