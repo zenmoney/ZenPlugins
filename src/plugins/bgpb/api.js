@@ -69,7 +69,7 @@ function validateResponse (response, predicate, error) {
   }
 }
 
-export function parseFullTransactionsMail (html, overdraft) {
+export function parseFullTransactionsMail (html) {
   const cheerio = require('cheerio')
   let $ = cheerio.load(html)
   $ = cheerio.load($().children()[0].children[0].Body)
@@ -102,8 +102,7 @@ export function parseFullTransactionsMail (html, overdraft) {
               currency: null,
               place: null,
               authCode: null,
-              mcc: null,
-              overdraft: overdraft
+              mcc: null
             }
           }
           switch (counter) {
@@ -151,6 +150,10 @@ export function parseFullTransactionsMailCardLimit (html) {
   let $ = cheerio.load(html)
   $ = cheerio.load($().children()[0].children[0].Body)
 
+  let titleObjects = $('title').toArray()
+  let title = titleObjects[0].children[0].data.split(' ')
+  let accountID = title[title.length - 1]
+
   let isLimit = false
   let overdraft = null
   flatMap($('table[class="section_1"] tr').toArray().slice(1), tr => {
@@ -168,7 +171,35 @@ export function parseFullTransactionsMailCardLimit (html) {
       })
     }
   })
-  return overdraft
+  return {
+    number: accountID,
+    overdraft: overdraft
+  }
+}
+
+export function parseConditionsMail (html) {
+  const cheerio = require('cheerio')
+  let $ = cheerio.load(html)
+  $ = cheerio.load($().children()[0].children[0].Body)
+
+  let isNumber = false
+  let accountNumber = null
+  flatMap($('table[class="mytd"] tr').toArray().slice(1), tr => {
+    if (tr.children.length >= 0) { // Значит это строка, а не просто форматирование
+      tr.children.forEach(function (td) {
+        if (td.children && td.children[0] && td.children[0].type === 'text') {
+          if (isNumber) {
+            accountNumber = td.children[0].data
+            isNumber = false
+          }
+          if (td.children[0].data === 'Номер счета') {
+            isNumber = true
+          }
+        }
+      })
+    }
+  })
+  return accountNumber
 }
 
 export async function login (login, password) {
@@ -256,16 +287,63 @@ export async function fetchTransactionsAccId (sid, account) {
     '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
   if (res.BS_Response.GetActions && res.BS_Response.GetActions.Action && res.BS_Response.GetActions.Action.length > 2) {
     let actions = res.BS_Response.GetActions.Action
+    let resp = {
+      transactionsAccId: null,
+      conditionsAccId: null
+    }
     for (let i = 0; i < actions.length; i++) {
-      if (actions[i].Type === 'itwg:OperationTxt') {
-        // нашли action id для выписки за период
-        return {
-          transactionsAccId: actions[i].Id
-        }
+      switch (actions[i].Type) {
+        case 'itwg:OperationTxt':
+          // нашли action id для выписки за период
+          resp.transactionsAccId = actions[i].Id
+          break
+        case 'itwg:Conditions':
+          // нашли action id для выписки за период
+          resp.conditionsAccId = actions[i].Id
+          break
       }
     }
+    return resp
   }
   return null
+}
+
+export async function fetchAccountConditions (sid, account) {
+  console.log('>>> Загрузка условий обслуживания для ' + account.title)
+
+  const response = await fetchApi('sou/xml_online.admin',
+    '<BS_Request>\r\n' +
+              '<ExecuteAction Id="' + account.conditionsAccId + '"/>\r\n' +
+              '<RequestType>ExecuteAction</RequestType>\r\n' +
+              '<Session IpAddress="10.0.2.15" Prolong="Y" SID="' + sid + '"/>\r\n' +
+              '<TerminalId>41742991</TerminalId>\r\n' +
+              '<TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+              '<Subsystem>ClientAuth</Subsystem>\r\n' +
+              '</BS_Request>', {}, response => true, message => new InvalidPreferencesError('bad request'))
+  const mailID = response.BS_Response.ExecuteAction.MailId
+
+  const mail = await fetchApi('sou/xml_online.admin',
+    '<BS_Request>\r\n' +
+      '   <MailAttachment Id="' + mailID + '" No="0"/>\r\n' +
+      '   <RequestType>MailAttachment</RequestType>\r\n' +
+      '   <Session IpAddress="10.0.2.15" Prolong="Y" SID="' + sid + '"/>\r\n' +
+      '   <TerminalId>41742991</TerminalId>\r\n' +
+      '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+      '   <Subsystem>ClientAuth</Subsystem>\r\n' +
+      '   <TerminalCapabilities>\r\n' +
+      '       <LongParameter>Y</LongParameter>\r\n' +
+      '       <ScreenWidth>99</ScreenWidth>\r\n' +
+      '       <AnyAmount>Y</AnyAmount>\r\n' +
+      '       <BooleanParameter>Y</BooleanParameter>\r\n' +
+      '       <CheckWidth>39</CheckWidth>\r\n' +
+      '       <InputDataSources>\r\n' +
+      '           <InputDataSource>Lookup</InputDataSource>\r\n' +
+      '       </InputDataSources>\r\n' +
+      '   </TerminalCapabilities>\r\n' +
+      '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
+
+  let data = mail.BS_Response.MailAttachment.Attachment
+  return parseConditionsMail(data)
 }
 
 export function createDateIntervals (fromDate, toDate) {
@@ -329,14 +407,19 @@ export async function fetchFullTransactions (sid, accounts, fromDate, toDate = n
       '   </TerminalCapabilities>\r\n' +
       '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
   }))
+  let overdrafts = []
   const transactions = await Promise.all(flatMap(mails, mail => {
     let data = mail.BS_Response.MailAttachment.Attachment
-    let overdraft = parseFullTransactionsMailCardLimit(data)
-    return parseFullTransactionsMail(data, overdraft)
+    let overdraftRes = parseFullTransactionsMailCardLimit(data)
+    overdrafts[overdraftRes.number] = overdraftRes.overdraft
+    return parseFullTransactionsMail(data)
   }))
 
   console.log(`>>> Загружено ${transactions.length} операций.`)
-  return transactions
+  return {
+    transactions: transactions,
+    overdrafts: overdrafts
+  }
 }
 
 export async function fetchLastTransactions (sid) {

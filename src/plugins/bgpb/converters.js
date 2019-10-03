@@ -25,14 +25,14 @@ export function convertAccount (ob) {
 }
 
 // функция неявно обновляет переменную accounts
-function addOverdraftInfo (accounts, account, overdraft) {
-  if (overdraft === 0 || account.creditLimit) {
-    return
-  }
-  for (let i = 0; i < accounts.length; i++) {
-    if (accounts[i].id === account.id) {
-      accounts[i].creditLimit = overdraft
-      accounts[i].balance = -(overdraft - accounts[i].balance)
+export function addOverdraftInfo (accounts, overdrafts) {
+  for (var accountNumber in overdrafts) {
+    for (let i = 0; i < accounts.length; i++) {
+      if (accounts[i].accountID === accountNumber) {
+        let overdraft = Number.parseFloat(overdrafts[accountNumber].replace(',', '.').replace(/\s/g, ''))
+        accounts[i].creditLimit = overdraft
+        accounts[i].balance = -(overdraft - accounts[i].balance)
+      }
     }
   }
 }
@@ -41,10 +41,7 @@ export function convertTransaction (apiTransaction, accounts) {
   const account = accounts.find(account => {
     return account.syncID.indexOf(apiTransaction.cardNum) !== -1
   })
-  let overdraft = Number.parseFloat(apiTransaction.overdraft.replace(',', '.').replace(/\s/g, ''))
-  addOverdraftInfo(accounts, account, overdraft)
 
-  console.log(apiTransaction)
   const transaction = {
     date: getDate(apiTransaction.date),
     movements: [ getMovement(apiTransaction, account) ],
