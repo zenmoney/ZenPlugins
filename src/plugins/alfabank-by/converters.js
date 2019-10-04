@@ -179,8 +179,10 @@ function parsePayee (transaction, json) {
       location: null,
       fullTitle: json.info.title
     }
-  } else if (json.description.split(' ').length >= 2 &&
-              json.info.title !== 'Поступление средств') {
+  } else if (json.description.split(' ').length >= 2 && [
+    'Поступление средств',
+    'Конвертация'
+  ].indexOf(json.info.title) < 0) {
     transaction.merchant = {
       mcc: null,
       location: null
