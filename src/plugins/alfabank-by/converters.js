@@ -139,7 +139,8 @@ function parseCash (transaction, json) {
       fee: 0
     })
     return true
-  } else if (json.operation === 'CURRENCYEXCHANGE') {
+  } else if (json.operation === 'CURRENCYEXCHANGE' &&
+              json.operationAmount) {
     var currency = json.operationAmount.currency
     var amount = json.operationAmount.amount
     if (json.info.amount.amount > 0) {
@@ -164,27 +165,8 @@ function parseCash (transaction, json) {
 }
 
 function parsePayee (transaction, json) {
-  if (json.description.indexOf('Покупка товара') >= 0 ||
-    json.description.split(' ').length === 2) {
-    transaction.merchant = {
-      mcc: null,
-      location: null
-    }
-    let location = json.description.split(' ')
-    var country = ''
-    if (location.length === 2) {
-      country = location[1]
-    } else {
-      country = countries[location[0].toLowerCase()]
-    }
-    if (country !== undefined) {
-      transaction.merchant.title = json.info.title
-      transaction.merchant.city = location[0]
-      transaction.merchant.country = country
-    } else {
-      transaction.merchant.fullTitle = json.info.title
-    }
-    return true
+  if (json.description.indexOf('ERIP') >= 0) {
+    return false // just skip erip processing
   } else if (json.info.title.indexOf('Комиссия') >= 0) {
     transaction.merchant = {
       mcc: null,
@@ -197,6 +179,35 @@ function parsePayee (transaction, json) {
       location: null,
       fullTitle: json.info.title
     }
+  } else if (json.description.split(' ').length >= 2 && [
+    'Поступление средств',
+    'Конвертация'
+  ].indexOf(json.info.title) < 0) {
+    transaction.merchant = {
+      mcc: null,
+      location: null
+    }
+    let descr = json.description.replace(' Покупка товара / получение услуг', '')
+    let location = descr.split(' ')
+
+    var country = ''
+    var city = ''
+    if (location.length >= 2) {
+      let lastWord = location[location.length - 1]
+      city = descr.replace(' ' + lastWord, '')
+      country = countries[city.toLocaleLowerCase()]
+    } else {
+      country = countries[location[0].toLowerCase()]
+      city = descr.replace(' ' + country, '')
+    }
+    if (country !== undefined) {
+      transaction.merchant.title = json.info.title
+      transaction.merchant.city = city
+      transaction.merchant.country = country
+    } else {
+      transaction.merchant.fullTitle = json.info.title
+    }
+    return true
   }
 }
 
