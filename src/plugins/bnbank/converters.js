@@ -140,7 +140,7 @@ function parseCash (transaction, json) {
       sum: Number.parseFloat(json.auth_amount ? json.auth_amount : json.operationAmount),
       fee: 0
     })
-    return false
+    return true
   }
 }
 
