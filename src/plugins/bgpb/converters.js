@@ -29,9 +29,7 @@ export function addOverdraftInfo (accounts, overdrafts) {
   for (var accountNumber in overdrafts) {
     for (let i = 0; i < accounts.length; i++) {
       if (accounts[i].accountID === accountNumber) {
-        let overdraft = Number.parseFloat(overdrafts[accountNumber].replace(',', '.').replace(/\s/g, ''))
-        accounts[i].creditLimit = overdraft
-        accounts[i].balance = -(overdraft - accounts[i].balance)
+        accounts[i].creditLimit = Number.parseFloat(overdrafts[accountNumber].replace(',', '.').replace(/\s/g, ''))
       }
     }
   }

@@ -407,7 +407,7 @@ export async function fetchFullTransactions (sid, accounts, fromDate, toDate = n
       '   </TerminalCapabilities>\r\n' +
       '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
   }))
-  let overdrafts = []
+  let overdrafts = {}
   const transactions = await Promise.all(flatMap(mails, mail => {
     let data = mail.BS_Response.MailAttachment.Attachment
     let overdraftRes = parseFullTransactionsMailCardLimit(data)
