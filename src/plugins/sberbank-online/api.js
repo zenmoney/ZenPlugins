@@ -206,12 +206,11 @@ export async function fetchAccounts (auth) {
   const types = ['card', 'account', 'loan', 'target', 'ima']
   return (await Promise.all(types.map(type => {
     return Promise.all(getArray(_.get(response.body, type !== 'ima' ? `${type}s.${type}` : 'imaccounts.ima')).map(async account => {
-      const params = account.mainCardId || (type === 'card' && account.type !== 'credit') || type === 'ima' || type === 'target' ||
-      (type === 'loan' && account.nextPayAmount && account.nextPayAmount.amount === '0.00')
+      const params = account.mainCardId || (type === 'card' && account.type !== 'credit') || type === 'ima' || type === 'target'
         ? null
         : { id: account.id, type }
       return {
-        account: account,
+        account,
         details: params ? await fetchAccountDetails(auth, params) : null
       }
     }))
@@ -235,6 +234,11 @@ async function fetchAccountDetails (auth, { id, type }) {
     response.body.status === '2' &&
     response.body.error &&
     response.body.error.indexOf('нет прав для просмотра объекта') >= 0) {
+    return null
+  }
+  if (type === 'loan' &&
+    response.body.error &&
+    response.body.error.indexOf('несуществующий в системе кредит') >= 0) {
     return null
   }
   validateResponse(response, response => _.get(response, 'body.detail'))
