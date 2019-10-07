@@ -37,7 +37,7 @@ describe('convertAccounts', () => {
           syncID: [
             '40817810007430488118'
           ],
-          balance: 0
+          available: 0
         }
       }
     ]

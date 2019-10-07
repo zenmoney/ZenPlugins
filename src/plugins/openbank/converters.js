@@ -3,6 +3,7 @@ import { getIntervalBetweenDates } from '../../common/momentDateUtils'
 export function convertAccounts (apiAccounts) {
   const accounts = []
   const apiCards = []
+  const apiCurrentAccounts = []
   for (const apiAccount of apiAccounts) {
     let converter
     const type = apiAccount.loan || typeof apiAccount.overdue === 'object' ? 'credit' : apiAccount.contracts ? 'deposit' : apiAccount.productType && apiAccount.productType.toLowerCase()
@@ -12,8 +13,8 @@ export function convertAccounts (apiAccounts) {
         continue
       case 'accumulation':
       case 'current':
-        converter = convertAccount
-        break
+        apiCurrentAccounts.push(apiAccount)
+        continue
       case 'metal':
         converter = convertMetalAccount
         break
@@ -31,7 +32,7 @@ export function convertAccounts (apiAccounts) {
       accounts.push(account)
     }
   }
-  accounts.push(...convertCards(apiCards))
+  accounts.push(...convertCards(apiCards.concat(apiCurrentAccounts)))
   return accounts
 }
 
@@ -144,50 +145,32 @@ function convertCard (apiAccount) {
   if (apiAccount.status.code !== 'NORMAL') {
     return null
   }
-  const syncIds = [apiAccount.maskCardNum]
+  const syncIds = []
+  if (apiAccount.maskCardNum) {
+    syncIds.push(apiAccount.maskCardNum)
+  }
   const accountNumber = apiAccount.accNum && /^[\d\s]*\d{4}$/.test(apiAccount.accNum) ? apiAccount.accNum : null
   if (accountNumber) {
     syncIds.push(accountNumber)
   }
+  const isCard = apiAccount.productType === 'CARD'
   return {
     products: [
       {
-        id: apiAccount.cardId,
-        type: 'card'
+        id: isCard ? apiAccount.cardId : apiAccount.accNum,
+        type: isCard ? 'card' : 'account'
       }
     ],
     account: {
       id: accountNumber || apiAccount.maskCardNum,
-      type: 'ccard',
-      title: apiAccount.tariffPlan.name || apiAccount.name || apiAccount.cardType,
+      type: isCard ? 'ccard' : 'checking',
+      title: (isCard ? apiAccount.tariffPlan.name : (apiAccount.productType !== 'ACCUMULATION' && apiAccount.accName)) ||
+        apiAccount.name ||
+        apiAccount.cardType,
       instrument: apiAccount.balance.currency,
       syncID: syncIds,
       available: apiAccount.balance.amount,
-      ...apiAccount.creditLimit && { creditLimit: apiAccount.creditLimit }
-    }
-  }
-}
-
-function convertAccount (apiAccount) {
-  if (apiAccount.status.code !== 'NORMAL') {
-    return null
-  }
-  return {
-    products: [
-      {
-        id: apiAccount.accNum,
-        type: 'account'
-      }
-    ],
-    account: {
-      id: apiAccount.accNum,
-      type: 'checking',
-      title: (apiAccount.productType === 'ACCUMULATION' && apiAccount.name) || apiAccount.accName,
-      instrument: apiAccount.balance.currency,
-      syncID: [
-        apiAccount.accNum
-      ],
-      balance: apiAccount.balance.amount,
+      ...apiAccount.creditLimit && { creditLimit: apiAccount.creditLimit },
       ...apiAccount.productType === 'ACCUMULATION' && { savings: true }
     }
   }
@@ -339,7 +322,8 @@ function parseOuterTransfer (transaction, apiTransaction, account, invoice, desc
   if (![
     /Перевод по номеру телефона/,
     /OPEN.RU CARD2CARD/i,
-    /Перевод СБП/
+    /Перевод СБП/,
+    /Перевод собственных средств/
   ].some(regexp => regexp.test(description))) {
     return false
   }

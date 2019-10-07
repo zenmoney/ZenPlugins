@@ -42,7 +42,7 @@ describe('convertAccounts', () => {
           syncID: [
             '40817810300003200218'
           ],
-          balance: 0.42,
+          available: 0.42,
           savings: true
         }
       }
