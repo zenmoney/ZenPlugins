@@ -2,7 +2,7 @@ import * as bank from './api'
 import * as converters from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
-  let loginData = await bank.login(preferences.isResident)
+  let loginData = await bank.login(preferences.isResident !== 'false')
   var allAccounts = mergeAllAccounts(
     await bank.fetchAccounts(loginData.deviceID, loginData.sessionID),
     await bank.fetchCards(loginData.sessionID),
