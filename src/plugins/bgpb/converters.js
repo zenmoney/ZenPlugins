@@ -24,7 +24,6 @@ export function convertAccount (ob) {
   return null
 }
 
-// функция неявно обновляет переменную accounts
 export function addOverdraftInfo (accounts, overdrafts) {
   for (var accountNumber in overdrafts) {
     for (let i = 0; i < accounts.length; i++) {
@@ -33,6 +32,7 @@ export function addOverdraftInfo (accounts, overdrafts) {
       }
     }
   }
+  return accounts
 }
 
 export function convertTransaction (apiTransaction, accounts) {

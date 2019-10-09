@@ -4,7 +4,7 @@ import * as converters from './converters'
 export async function scrape ({ preferences, fromDate, toDate }) {
   const token = await bank.login(preferences.login, preferences.password)
 
-  const accounts = await allAccounts(token)
+  var accounts = await allAccounts(token)
   if (accounts.length === 0) {
     // если активация первый раз, но карточки все еще не выпущены
     return {
@@ -14,7 +14,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   }
 
   const fullTransactionsRes = await bank.fetchFullTransactions(token, accounts, fromDate, toDate)
-  converters.addOverdraftInfo(accounts, fullTransactionsRes.overdrafts)
+  accounts = converters.addOverdraftInfo(accounts, fullTransactionsRes.overdrafts)
 
   const transactionsStatement = (fullTransactionsRes.transactions)
     .map(transaction => converters.convertTransaction(transaction, accounts))
