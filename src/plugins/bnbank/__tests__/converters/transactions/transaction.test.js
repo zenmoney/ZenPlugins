@@ -38,7 +38,7 @@ describe('convertTransaction', () => {
       },
       expectedTransaction: {
         hold: false,
-        date: new Date(1553158380000),
+        date: new Date(1553029200000),
         movements: [
           {
             id: null,
@@ -80,7 +80,7 @@ describe('convertTransaction', () => {
       },
       expectedTransaction: {
         hold: false,
-        date: new Date(1553158380000),
+        date: new Date(1553029200000),
         movements: [
           {
             id: null,
@@ -115,7 +115,7 @@ describe('convertTransaction', () => {
       },
       expectedTransaction: {
         hold: false,
-        date: new Date(1553158380000),
+        date: new Date(1553029200000),
         movements: [
           {
             id: null,
@@ -185,7 +185,7 @@ describe('convertTransaction', () => {
       },
       expectedTransaction: {
         hold: false,
-        date: new Date(1553158380000),
+        date: new Date(1553029200000),
         movements: [
           {
             id: null,
