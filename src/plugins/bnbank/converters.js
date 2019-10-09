@@ -62,7 +62,7 @@ export function convertTransaction (json, accounts) {
   })
 
   const transaction = {
-    date: new Date(json.transactionDate),
+    date: new Date(json.operationDate),
     movements: [ getMovement(json, account) ],
     merchant: null,
     comment: null,

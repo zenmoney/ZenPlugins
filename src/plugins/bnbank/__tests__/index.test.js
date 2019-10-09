@@ -72,7 +72,7 @@ describe('scrape', () => {
       },
       {
         'comment': null,
-        'date': new Date('2019-01-08T09:44:00.000Z'),
+        'date': new Date('2019-01-02T21:00:00.000Z'),
         'hold': false,
         'merchant': {
           'fullTitle': 'AWS EMEA',
@@ -91,7 +91,7 @@ describe('scrape', () => {
       },
       {
         'comment': 'Списание по операции ПЦ \'Оплата услуг в ИБ\' ',
-        'date': new Date('2019-01-08T09:13:00.000Z'),
+        'date': new Date('2019-01-06T21:00:00.000Z'),
         'hold': false,
         'merchant': null,
         'movements': [{
@@ -106,7 +106,7 @@ describe('scrape', () => {
       },
       {
         'comment': 'Списание по операции ПЦ \'Оплата услуг в ИБ\' ',
-        'date': new Date('2019-01-10T08:46:00.000Z'),
+        'date': new Date('2019-01-08T21:00:00.000Z'),
         'hold': false,
         'merchant': null,
         'movements': [{
@@ -121,7 +121,7 @@ describe('scrape', () => {
       },
       {
         'comment': 'Списание по операции ПЦ \'Оплата услуг в ИБ\' ',
-        'date': new Date('2019-01-10T08:50:00.000Z'),
+        'date': new Date('2019-01-08T21:00:00.000Z'),
         'hold': false,
         'merchant': null,
         'movements': [{
@@ -136,7 +136,7 @@ describe('scrape', () => {
       },
       {
         'comment': null,
-        'date': new Date('2019-01-09T16:29:00.000Z'),
+        'date': new Date('2019-01-08T21:00:00.000Z'),
         'hold': false,
         'merchant': null,
         'movements': [{
@@ -151,7 +151,7 @@ describe('scrape', () => {
       },
       {
         'comment': null,
-        'date': new Date('2019-01-09T18:57:00.000Z'),
+        'date': new Date('2019-01-08T21:00:00.000Z'),
         'hold': false,
         'merchant': null,
         'movements': [{
@@ -166,7 +166,7 @@ describe('scrape', () => {
       },
       {
         'comment': null,
-        'date': new Date('2019-01-10T04:46:00.000Z'),
+        'date': new Date('2019-01-09T21:00:00.000Z'),
         'hold': false,
         'merchant': null,
         'movements': [{
