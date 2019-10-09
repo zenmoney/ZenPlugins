@@ -63,6 +63,9 @@ export const calculatePasswordHash = ({ loginSalt, password }) => {
 }
 
 export async function authLogin ({ authAccessToken, clientSecret, loginSalt, login, password }) {
+  if (password.length > 16) {
+    throw new InvalidPreferencesError('Плагин поддерживает пароли только до 16-ти символов. Смените пароль.')
+  }
   const response = await fetchJson(makeApiUrl('/Authorization/Login'), {
     method: 'POST',
     body: { login, password: calculatePasswordHash({ loginSalt, password }), lang: 'RUS' },
