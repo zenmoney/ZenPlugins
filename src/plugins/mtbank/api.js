@@ -29,7 +29,8 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
     }
     if ([
       'USER_TEMP_LOCKED',
-      'INTERNAL_SERVER_ERROR'
+      'INTERNAL_SERVER_ERROR',
+      'SMS_SENDING_LOCKED'
     ].indexOf(response.body.error.code) >= 0) {
       const errorDescription = response.body.error.description || response.body.error.error_description
       const errorMessage = errorDescription + (response.body.error.lockedTime && response.body.error.lockedTime !== 'null' ? response.body.error.lockedTime : '')
