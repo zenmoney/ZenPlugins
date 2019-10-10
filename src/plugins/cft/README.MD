@@ -3,4 +3,4 @@
 https://ru.wikipedia.org/wiki/Центр_финансовых_технологий/
 
 Последняя проверка на
-Build:16 May 2019 16:39 3.38.0 (see "view-source:https://oplata.kykyryza.ru/")
+Build: 1 October 2019 14:10 3.44.2 (see "view-source:https://oplata.kykyryza.ru/")
