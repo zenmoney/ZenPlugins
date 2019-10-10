@@ -12,7 +12,7 @@ export function convertAccount (acc) {
         balance: Number.parseFloat(acc.balance.replace(/\s/g, '')),
         syncID: [acc.id],
         capitalization: true,
-        percent: Number.parseFloat(acc.details.match(/Процентная ставка:.*\s(.[0-9]*)%/i)[1]),
+        percent: Number.parseFloat(acc.details.match(/Процентная ставка:.*\s(.[0-9.]*)%/i)[1]),
         startDate: start,
         endDateOffset: depositDays,
         endDateOffsetInterval: 'day',
@@ -24,7 +24,7 @@ export function convertAccount (acc) {
         id: acc.id.replace(/\s/g, ''),
         type: 'card',
         title: 'Карта ' + acc.cardNum.slice(-4),
-        instrument: acc.currency,
+        instrument: acc.currency.substr(0, 3),
         balance: Number.parseFloat(acc.balance.replace(/\s/g, '')),
         syncID: [acc.id.replace(/\s/g, ''), acc.cardNum.slice(-4)],
         raw: acc
