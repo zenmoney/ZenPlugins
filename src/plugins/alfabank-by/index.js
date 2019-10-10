@@ -1,3 +1,4 @@
+import * as _ from 'lodash'
 import * as bank from './api'
 import * as converters from './converters'
 
@@ -71,7 +72,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   }
   return {
     accounts: accounts,
-    transactions: transactionsUnique(transactions.concat(transactionsAccSkipped))
+    transactions: _.sortBy(transactionsUnique(transactions.concat(transactionsAccSkipped)), transaction => transaction.date)
   }
 }
 

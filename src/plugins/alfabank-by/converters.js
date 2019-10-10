@@ -200,6 +200,9 @@ function parsePayee (transaction, json) {
       country = countries[location[0].toLowerCase()]
       city = descr.replace(' ' + country, '')
     }
+    if (country === 'BLR') {
+      country = 'BY'
+    }
     if (country !== undefined) {
       transaction.merchant.title = json.info.title
       transaction.merchant.city = city
