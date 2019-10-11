@@ -27,7 +27,7 @@ export function convertLoan (apiLoan) {
     endDateOffsetInterval: 'month',
     payoffStep: 1, // TODO не найдено, считаем по умолчанию
     payoffInterval: 'month', // TODO не найдено, считаем по умолчанию
-    repaymentAccount: apiLoan.repaymentAccount.number // привязанный счет для списаний
+    _repaymentAccount: apiLoan.repaymentAccount.number // привязанный счет для списаний
   }
 }
 

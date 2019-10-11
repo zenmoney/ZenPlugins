@@ -40,7 +40,7 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
   }
 
   return {
-    accounts: accounts.map(account => omit(account, ['_type', 'repaymentAccount'])),
+    accounts: accounts.map(account => omit(account, ['_type', '_repaymentAccount'])),
     transactions: flattenDeep(transactions)
   }
 }
