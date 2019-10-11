@@ -84,7 +84,7 @@ function parseOuterTransfer (transaction, apiTransaction, account) {
     /TOCHKA Card2Card/
   ].some(regexp => apiTransaction.payment_purpose.match(regexp))
   if (!isCard2Card && ![
-    /^Перевод собственных средств/,
+    /^Перевод собственных средств/
   ].some(regexp => apiTransaction.payment_purpose.match(regexp))) {
     return false
   }
