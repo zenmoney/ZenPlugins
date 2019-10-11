@@ -358,7 +358,7 @@ export async function fetchTransactions (auth, id, type, fromDate, toDate) {
   return response.body.transactions
 }
 
-function fetchLoanTransactions(auth, url, params) {
+function fetchLoanTransactions (auth, url, params) {
   // TODO ЗАгрузка транзакций по кредиту отдельно
   return [] // TODO response.body.items
 }
