@@ -2,7 +2,7 @@
  * @author Ryadnov Andrey <me@ryadnov.ru>
  */
 
-import * as main from '../cft/main'
+import * as main from '../faktura/main'
 
 const apiUri = 'https://card.ozon.ru/api/'
 
