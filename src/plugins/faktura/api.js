@@ -227,6 +227,19 @@ async function fetchWallets () {
 }
 
 async function fetchTransactions (dateFrom, contractIds) {
+  let transactions = []
+
+  for (const item of contractIds) {
+    let data = await fetchTransactionsByContractId(dateFrom, item)
+    for (const item of data) {
+      transactions.push(item)
+    }
+  }
+
+  return transactions
+}
+
+async function fetchTransactionsByContractId (dateFrom, contractId) {
   let isFirstPage = true
   let transactions = []
 
@@ -242,7 +255,7 @@ async function fetchTransactions (dateFrom, contractIds) {
   console.debug('last sync: ' + lastSyncTime + ' (' + dateFrom + ')')
 
   while (isFirstPage || pagination.offset < pagination.total) {
-    const result = await fetchTransactionsInternal(pagination.limit, lastSyncTime, searchAfter, contractIds)
+    const result = await fetchTransactionsInternal(pagination.limit, lastSyncTime, searchAfter, contractId)
 
     if (isFirstPage) {
       pagination.total = result.data.totalCount
@@ -273,7 +286,7 @@ async function fetchTransactions (dateFrom, contractIds) {
   return transactions
 }
 
-async function fetchTransactionsInternal (limit, gte, searchAfter, contractIds) {
+async function fetchTransactionsInternal (limit, gte, searchAfter, contractId) {
   const rid = generateHash()
 
   let query = {
@@ -281,7 +294,7 @@ async function fetchTransactionsInternal (limit, gte, searchAfter, contractIds) 
     lte: '',
     queryString: '',
     filters: '',
-    contractIds: contractIds.join(','),
+    contractIds: contractId,
     limit: 20
   }
 
@@ -296,20 +309,28 @@ async function fetchTransactionsInternal (limit, gte, searchAfter, contractIds) 
     sanitizeResponseLog: {}
   })
 
-  assertResponseSuccess(response, [
+  const allowedStatuses = [
     'OK',
     'OK_SYNC'
-  ])
+  ]
+  if (isResponseStatusIsSuccess(response, allowedStatuses)) {
+    return response.body
+  } else {
+    return {
+      'data': {
+        'totalCount': 0,
+        'items': []
+      }
+    }
+  }
+}
 
-  return response.body
+const isResponseStatusIsSuccess = (response, allowedStatuses = ['OK']) => {
+  return response.status === httpSuccessStatus && allowedStatuses.indexOf(response.body.status) !== -1
 }
 
 const assertResponseSuccess = (response, allowedStatuses = ['OK']) => {
-  console.assert(
-    response.status === httpSuccessStatus && allowedStatuses.indexOf(response.body.status) !== -1,
-    'non-successful response',
-    response
-  )
+  console.assert(isResponseStatusIsSuccess(response, allowedStatuses), 'non-successful response', response)
 }
 
 const generateHash = () => {
