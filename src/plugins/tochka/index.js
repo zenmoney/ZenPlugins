@@ -1,5 +1,5 @@
-import * as _ from 'lodash'
 import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
+import { adjustTransactions } from '../../common/transactionGroupHandler'
 import { fetchAccounts, fetchStatement, login } from './api'
 import { convertAccount, convertTransaction } from './converters'
 
@@ -7,20 +7,20 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
   if (!toDate) {
     toDate = new Date()
   }
-  const accounts = {}
+
+  const auth = await login(ZenMoney.getData('auth'), preferences)
+  ZenMoney.setData('auth', auth)
+  ZenMoney.saveData()
+
+  const accounts = []
   const transactions = []
 
-  let auth = await login(ZenMoney.getData('auth'), preferences)
-  const apiAccounts = await fetchAccounts(auth, preferences)
-  await Promise.all(apiAccounts.map(async apiAccount => {
+  await Promise.all((await fetchAccounts(auth, preferences)).map(async apiAccount => {
     const account = convertAccount(apiAccount)
-    if (account) {
-      accounts[account.id] = account
-    }
+    accounts.push(account)
     if (ZenMoney.isAccountSkipped(account.id)) {
       return
     }
-
     const apiStatement = await fetchStatement(auth, apiAccount, fromDate, toDate, preferences)
     // остаток на счету на конец периода в выписке
     if (apiStatement.balance_closing) {
@@ -37,9 +37,8 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
     }
   }))
 
-  ZenMoney.setData('auth', auth)
   return {
-    accounts: ensureSyncIDsAreUniqueButSanitized({ accounts: _.values(accounts), sanitizeSyncId }),
-    transactions: _.sortBy(transactions, transaction => transaction.date)
+    accounts: ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId }),
+    transactions: adjustTransactions({ transactions })
   }
 }
