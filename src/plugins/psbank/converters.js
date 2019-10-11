@@ -10,6 +10,27 @@ export function convertAccount (apiAccount) {
   }
 }
 
+export function convertLoan (apiLoan) {
+  return {
+    id: apiLoan.contractId.toString(),
+    title: apiLoan.name,
+    syncID: apiLoan.loanAccount.number.substr(-4),
+    instrument: getInstrument(apiLoan.loanAccount.currency.nameIso),
+    type: 'loan',
+    _type: 'loan',
+    balance: -apiLoan.remainedMainDebtSum,
+    startBalance: -apiLoan.issueSum,
+    capitalization: true, // TODO Требует анализа на разных типах кредитов
+    percent: apiLoan.interestRate,
+    startDate: apiLoan.beginDate,
+    endDateOffset: apiLoan.lengthMonths, // Длина кредита от старта
+    endDateOffsetInterval: 'month',
+    payoffStep: 1, // TODO не найдено, считаем по умолчанию
+    payoffInterval: 'month', // TODO не найдено, считаем по умолчанию
+    repaymentAccount: apiLoan.repaymentAccount.number // привязанный счет для списаний
+  }
+}
+
 function getAccount (apiAccount) {
   return {
     id: apiAccount.accountId.toString(),
@@ -48,9 +69,9 @@ export function convertTransaction (apiTransaction, account) {
   }
 
   // игнор операций по кредитам
-  if (apiTransaction.ground && /.*(?:выдача кредита|погашение основного долга).*/i.test(apiTransaction.ground)) {
-    return null
-  }
+  // if (apiTransaction.ground && /.*(?:выдача кредита|погашение основного долга).*/i.test(apiTransaction.ground)) {
+  //  return null
+  // }
 
   const movement = getMovement(apiTransaction, account)
   if (!movement) { return null }

@@ -255,7 +255,30 @@ export async function fetchAccounts (auth) {
   return response.body
 }
 
+export async function fetchLoans (auth) {
+  const response = await fetchApiJson(auth, 'api/loans', {
+    method: 'GET',
+    body: {
+      activeOnly: true
+    }
+  })
+  return response.body.loans
+}
+
+export async function fetchLoan (auth, loan) {
+  let uurl
+  uurl = `api/loans/${loan}`
+  const response = await fetchApiJson(auth, uurl, {
+    method: 'GET',
+    body: {
+      activeOnly: true
+    }
+  })
+  return response.body
+}
+
 export async function fetchTransactions (auth, id, type, fromDate, toDate) {
+  let response
   let url
   let params
   switch (type) {
@@ -300,17 +323,44 @@ export async function fetchTransactions (auth, id, type, fromDate, toDate) {
         PageNumber: 1
       }
       break
+
+    case 'loan':
+      url = `api/operations/requests/history`
+      params = {
+        ContractId: id,
+        StartDate: fromDate.toISOString(),
+        EndDate: toDate.toISOString(),
+        Income: true,
+        Outcome: true,
+        ProcessedOnly: false,
+        SortDirection: 2,
+        PageSize: 1000,
+        PageNumber: 1
+      }
+      break
+
+    default:
+      console.log('Новый тип счета', type)
+      break
   }
 
-  const response = await fetchApiJson(auth, url,
-    {
-      method: 'GET',
-      body: params
-    },
-    response => get(response, 'body.transactions')
-  )
-
+  if (type === 'loan') {
+    return fetchLoanTransactions(auth, url, params)
+  } else {
+    response = await fetchApiJson(auth, url,
+      {
+        method: 'GET',
+        body: params
+      },
+      response => get(response, 'body.transactions')
+    )
+  }
   return response.body.transactions
+}
+
+function fetchLoanTransactions(auth, url, params) {
+  // TODO ЗАгрузка транзакций по кредиту отдельно
+  return [] // TODO response.body.items
 }
 
 function getUrl (url) {
@@ -322,7 +372,6 @@ function getUrl (url) {
 
 async function fetchApiJson (auth, url, options = {}, predicate = null) {
   url = getUrl(url)
-
   let getParams = ''
   if (options.method === 'GET' && options.body) {
     getParams = '?' + qs.stringify(options.body)
@@ -354,7 +403,7 @@ async function fetchApiJson (auth, url, options = {}, predicate = null) {
     })
   } catch (e) {
     if (e.response && e.response.status >= 500 && e.response.status < 525) {
-      throw new TemporaryError('Информация из банка Тинькофф временно недоступна. Повторите синхронизацию через некоторое время.')
+      throw new TemporaryError('Информация из Промсвязьбанка временно недоступна. Повторите синхронизацию через некоторое время.')
     } else {
       throw e
     }
