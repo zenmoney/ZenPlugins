@@ -325,9 +325,35 @@ export async function fetchTransactions (auth, id, type, fromDate, toDate) {
       break
 
     case 'loan':
+      url = null
+      break
+
+    default:
+      url = null
+      console.log('Новый тип счета', type)
+      break
+  }
+
+  if (!url) { return [] }
+  response = await fetchApiJson(auth, url,
+    {
+      method: 'GET',
+      body: params
+    },
+    response => get(response, 'body.transactions')
+  )
+  return response.body.transactions
+}
+
+export async function fetchLoanTransactions (auth, account, fromDate, toDate) {
+  let response
+  let url
+  let params
+  switch (account._type) {
+    case 'loan':
       url = `api/operations/requests/history`
       params = {
-        ContractId: id,
+        ContractId: account.id,
         StartDate: fromDate.toISOString(),
         EndDate: toDate.toISOString(),
         Income: true,
@@ -340,27 +366,28 @@ export async function fetchTransactions (auth, id, type, fromDate, toDate) {
       break
 
     default:
-      console.log('Новый тип счета', type)
+      url = null
+      console.log('Новый тип счета', account._type)
       break
   }
+  if (!url) { return [] }
 
-  if (type === 'loan') {
-    return fetchLoanTransactions(auth, url, params)
-  } else {
-    response = await fetchApiJson(auth, url,
-      {
-        method: 'GET',
-        body: params
-      },
-      response => get(response, 'body.transactions')
-    )
+  response = await fetchApiJson(auth, url,
+    {
+      method: 'GET',
+      body: params
+    },
+    response => get(response, 'body.items')
+  )
+  let transactions = {}
+  for (const t of response.body.items) {
+    transactions[t.requestId] = {
+      id: account.id,
+      contract: account._contract,
+      bankname: account._bankname
+    }
   }
-  return response.body.transactions
-}
-
-function fetchLoanTransactions (auth, url, params) {
-  // TODO ЗАгрузка транзакций по кредиту отдельно
-  return [] // TODO response.body.items
+  return transactions
 }
 
 function getUrl (url) {
