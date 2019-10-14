@@ -68,11 +68,14 @@ export function convertTransaction (apiTransaction, account, lTransactions = {})
     // пропускаем операцию по не существующему счёту
     return null
   }
+  if (!('request' in apiTransaction)) {
+    apiTransaction.request = {}
+  }
   let transaction = {
     hold: !apiTransaction.isProcessed,
     date: new Date(apiTransaction.transactionDate),
     comment: parseComment(apiTransaction) || apiTransaction.ground,
-    payee: apiTransaction.request.senderName ? apiTransaction.request.senderName : (lTransactions[apiTransaction.request.requestId] ? lTransactions[apiTransaction.request.requestId].bankname : null),
+    payee: ('senderName' in apiTransaction.request) ? apiTransaction.request.senderName : (lTransactions[apiTransaction.request.requestId] ? lTransactions[apiTransaction.request.requestId].bankname : null),
     id: null,
     income: apiTransaction.transactionSum > 0 ? apiTransaction.transactionSum : (lTransactions[apiTransaction.request.requestId] ? -apiTransaction.transactionSum : 0),
     incomeAccount: apiTransaction.transactionSum > 0 ? account.id : (lTransactions[apiTransaction.request.requestId] ? lTransactions[apiTransaction.request.requestId].id : account.id),

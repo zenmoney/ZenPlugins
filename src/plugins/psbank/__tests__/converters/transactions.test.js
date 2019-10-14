@@ -33,19 +33,15 @@ const transactions = {
       {
         'comment': 'Зачисление (на основании реестра от работодателя) ',
         'date': new Date('2019-05-15T12:48:13Z'),
+        'fee': 0,
         'hold': false,
-        'merchant': null,
-        'movements': [
-          {
-            'account': {
-              'id': 'cardId'
-            },
-            'fee': 0,
-            'id': null,
-            'invoice': null,
-            'sum': 21974.1
-          }
-        ]
+        'id': null,
+        'income': 21974.1,
+        'incomeAccount': 'cardId',
+        'invoice': null,
+        'outcome': 0,
+        'outcomeAccount': null,
+        'payee': null
       }
     ],
     [
@@ -107,19 +103,15 @@ const transactions = {
       {
         'comment': 'Безналичное списание RUS MOSCOW PSB-RETAIL 00888890 216948',
         'date': new Date('2019-05-15T13:24:14Z'),
+        'fee': 0,
         'hold': false,
-        'merchant': null,
-        'movements': [
-          {
-            'account': {
-              'id': 'cardId'
-            },
-            'fee': 0,
-            'id': null,
-            'invoice': null,
-            'sum': -21974.1
-          }
-        ]
+        'id': null,
+        'income': 0,
+        'incomeAccount': 'cardId',
+        'invoice': null,
+        'outcome': 21974.1,
+        'outcomeAccount': 'cardId',
+        'payee': null
       }
     ]
   ]
