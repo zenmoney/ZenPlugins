@@ -16,7 +16,10 @@ async function scrape ({ fromDate, toDate, apiUri }) {
 
   api.setApiUri(apiUri)
 
-  await api.auth(cardNumber, password)
+  const isAuthorized = await api.checkSession()
+  if (!isAuthorized) {
+    await api.auth(cardNumber, password)
+  }
 
   const [cardsData, creditData, walletsData] = await Promise.all([
     api.fetchCards(),

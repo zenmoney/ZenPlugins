@@ -40,7 +40,7 @@ export async function login ({ access_token, refresh_token, expirationDateMs } =
         sanitizeResponseLog: { body: { access_token: true, refresh_token: true, sessionId: true } }
       }, null)
 
-      if (response.body && response.body.error) {
+      if (response && response.body && response.body.error) {
         response = null
         access_token = null
         refresh_token = null
@@ -50,7 +50,7 @@ export async function login ({ access_token, refresh_token, expirationDateMs } =
         return result
       }
 
-      console.assert(response.body &&
+      console.assert(response && response.body &&
         response.body.access_token &&
         response.body.refresh_token &&
         response.body.expires_in, 'non-successfull authorization', response)
@@ -186,6 +186,8 @@ export async function fetchAccounts ({ access_token } = {}, preferences) {
       Authorization: `Bearer ${access_token}`
     }
   })
+
+  console.assert(Array.isArray(response.body), 'unexpected account response')
 
   // попытаемся достать счета по данным организаций
   /* const response = await fetchJson('organization/list', {

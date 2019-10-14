@@ -5,10 +5,8 @@
 import { parse, splitCookiesString } from 'set-cookie-parser'
 import { fetchJson } from '../../common/network'
 
-const xsrfTokenInitialValue = 'undefined'
-
 let apiUri = ''
-let xXSrfToken = xsrfTokenInitialValue
+let xXSrfToken = 'undefined'
 
 const httpSuccessStatus = 200
 
@@ -24,6 +22,7 @@ const createHeaders = (rid) => {
   return {
     'channel': 'web',
     'platform': 'web',
+    'Sec-Fetch-Mode': 'cors',
     'X-Request-Id': rid,
     'X-XSRF-TOKEN': xXSrfToken,
     'Connection': 'Keep-Alive',
@@ -34,6 +33,7 @@ const createHeaders = (rid) => {
 
 async function auth (cardNumber, password) {
   let rid = generateHash()
+
   let response = await fetchJson(`${apiUri}/v0001/authentication/auth-by-secret?${makeQueryString(rid)}`, {
     log: true,
     method: 'POST',
@@ -53,88 +53,111 @@ async function auth (cardNumber, password) {
       headers: true
     }
   })
-  if (response.body.status === 'OTP_REQUIRED') {
-    const cookie = parse(splitCookiesString(response.headers['set-cookie'])).find((x) => x.name === 'XSRF-TOKEN')
-    setXXSrfToken(cookie.value)
-    const code = await ZenMoney.readLine('Введите код из SMS или push-уведомления', {
-      time: 120000,
-      inputType: 'number'
-    })
-    rid = generateHash()
-    response = await fetchJson(`${apiUri}/v0001/authentication/confirm?${makeQueryString(rid)}`, {
-      log: true,
-      method: 'POST',
-      body: {
-        principal: cardNumber,
-        otp: code
-      },
-      headers: createHeaders(rid),
-      sanitizeRequestLog: {
+
+  if (response.status === httpSuccessStatus) {
+    setTokenFromResponce(response)
+
+    const s = response.body.status
+
+    if (s === 'OTP_REQUIRED') {
+      rid = generateHash()
+
+      const code = await ZenMoney.readLine('Введите код из SMS или push-уведомления', {
+        time: 120000,
+        inputType: 'number'
+      })
+
+      const otpResponse = await fetchJson(`${apiUri}/v0001/authentication/confirm?${makeQueryString(rid)}`, {
+        log: true,
+        method: 'POST',
         body: {
-          principal: true
+          otp: code,
+          principal: cardNumber
+        },
+        headers: createHeaders(rid),
+        sanitizeRequestLog: {
+          body: {
+            otp: true,
+            principal: true
+          }
+        },
+        sanitizeResponseLog: {
+          headers: true
         }
-      },
-      sanitizeResponseLog: {
-        headers: true
+      })
+
+      assertResponseSuccess(otpResponse)
+
+      setTokenFromResponce(otpResponse)
+    } else if (s === 'OK') {
+      let reason
+      const reasonUnknownCardNumber = 'неверный номер карты'
+      const reasonWrongPassword = 'неверный номер карты или пароль'
+      const reasonLocked = 'доступ временно запрещен'
+      const reasonTechnicalWorks = 'технические работы в банке'
+
+      const statusesUnknownCardNumber = [
+        'CANNOT_FIND_SUBJECT',
+        'PRINCIPAL_IS_EMPTY',
+        'CANNOT_FOUND_AUTHENTICATION_PROVIDER',
+        'CARD_IS_ARCHIVED'
+      ]
+      const statusesWrongPassword = [
+        'AUTH_WRONG',
+        'EMPTY_SECRET_NOT_ALLOWED'
+      ]
+      const statusesLocked = [
+        'AUTH_LOCKED_TEMPORARY'
+      ]
+      const statusesTechnicalWorks = [
+        'CORE_NOT_AVAILABLE_ERROR',
+        'CORE_UNAVAILABLE'
+      ]
+
+      const codesWrongEan = [
+        'EAN_OUT_OF_RANGE',
+        'EAN_MUST_HAVE_13_SYMBOLS'
+      ]
+
+      if (statusesUnknownCardNumber.indexOf(s) !== -1) {
+        reason = reasonUnknownCardNumber
+      } else if (s === 'VALIDATION_FAIL' && codesWrongEan.indexOf(response.body.messages[0].code) !== -1) {
+        reason = reasonUnknownCardNumber
+      } else if (statusesWrongPassword.indexOf(s) !== -1) {
+        reason = reasonWrongPassword
+      } else if (statusesLocked.indexOf(s) !== -1) {
+        reason = reasonLocked
+      } else if (statusesTechnicalWorks.indexOf(s) !== -1) {
+        reason = reasonTechnicalWorks
+      } else {
+        reason = null
       }
-    })
-  }
-
-  const s = response.body.status
-
-  if (!(response.status === httpSuccessStatus && s === 'OK')) {
-    let reason
-    const reasonUnknownCardNumber = 'неверный номер карты'
-    const reasonWrongPassword = 'неверный номер карты или пароль'
-    const reasonLocked = 'доступ временно запрещен'
-    const reasonTechnicalWorks = 'технические работы в банке'
-
-    const statusesUnknownCardNumber = [
-      'CANNOT_FIND_SUBJECT',
-      'PRINCIPAL_IS_EMPTY',
-      'CANNOT_FOUND_AUTHENTICATION_PROVIDER',
-      'CARD_IS_ARCHIVED'
-    ]
-    const statusesWrongPassword = [
-      'AUTH_WRONG',
-      'EMPTY_SECRET_NOT_ALLOWED'
-    ]
-    const statusesLocked = [
-      'AUTH_LOCKED_TEMPORARY'
-    ]
-    const statusesTechnicalWorks = [
-      'CORE_NOT_AVAILABLE_ERROR',
-      'CORE_UNAVAILABLE'
-    ]
-
-    const codesWrongEan = [
-      'EAN_OUT_OF_RANGE',
-      'EAN_MUST_HAVE_13_SYMBOLS'
-    ]
-
-    if (statusesUnknownCardNumber.indexOf(s) !== -1) {
-      reason = reasonUnknownCardNumber
-    } else if (s === 'VALIDATION_FAIL' && codesWrongEan.indexOf(response.body.messages[0].code) !== -1) {
-      reason = reasonUnknownCardNumber
-    } else if (statusesWrongPassword.indexOf(s) !== -1) {
-      reason = reasonWrongPassword
-    } else if (statusesLocked.indexOf(s) !== -1) {
-      reason = reasonLocked
-    } else if (statusesTechnicalWorks.indexOf(s) !== -1) {
-      reason = reasonTechnicalWorks
-    } else {
-      reason = null
-    }
-    if (reason) {
-      throw new TemporaryError(`Не удалось авторизоваться: ${reason}`)
+      if (reason) {
+        throw new TemporaryError(`Не удалось авторизоваться: ${reason}`)
+      } else {
+        console.assert(false, 'Не удалось авторизоваться', response)
+      }
     } else {
       console.assert(false, 'Не удалось авторизоваться', response)
     }
+  } else {
+    console.assert(false, 'Не удалось авторизоваться', response)
   }
+}
 
-  const cookie = parse(splitCookiesString(response.headers['set-cookie'])).find((x) => x.name === 'XSRF-TOKEN')
+async function checkSession () {
+  const rid = generateHash()
 
-  setXXSrfToken(cookie.value)
+  const response = await fetchJson(`${apiUri}/v0001/ping/session?${makeQueryString(rid)}`, {
+    log: true,
+    headers: createHeaders(rid)
+  })
+
+  assertResponseSuccess(response)
+
+  setTokenFromResponce(response)
+
+  return response.body.data.authenticated
 }
 
 async function fetchCards () {
@@ -204,6 +227,19 @@ async function fetchWallets () {
 }
 
 async function fetchTransactions (dateFrom, contractIds) {
+  let transactions = []
+
+  for (const item of contractIds) {
+    let data = await fetchTransactionsByContractId(dateFrom, item)
+    for (const item of data) {
+      transactions.push(item)
+    }
+  }
+
+  return transactions
+}
+
+async function fetchTransactionsByContractId (dateFrom, contractId) {
   let isFirstPage = true
   let transactions = []
 
@@ -219,7 +255,7 @@ async function fetchTransactions (dateFrom, contractIds) {
   console.debug('last sync: ' + lastSyncTime + ' (' + dateFrom + ')')
 
   while (isFirstPage || pagination.offset < pagination.total) {
-    const result = await fetchTransactionsInternal(pagination.limit, lastSyncTime, searchAfter, contractIds)
+    const result = await fetchTransactionsInternal(pagination.limit, lastSyncTime, searchAfter, contractId)
 
     if (isFirstPage) {
       pagination.total = result.data.totalCount
@@ -250,7 +286,7 @@ async function fetchTransactions (dateFrom, contractIds) {
   return transactions
 }
 
-async function fetchTransactionsInternal (limit, gte, searchAfter, contractIds) {
+async function fetchTransactionsInternal (limit, gte, searchAfter, contractId) {
   const rid = generateHash()
 
   let query = {
@@ -258,7 +294,7 @@ async function fetchTransactionsInternal (limit, gte, searchAfter, contractIds) 
     lte: '',
     queryString: '',
     filters: '',
-    contractIds: contractIds.join(','),
+    contractIds: contractId,
     limit: 20
   }
 
@@ -273,20 +309,28 @@ async function fetchTransactionsInternal (limit, gte, searchAfter, contractIds) 
     sanitizeResponseLog: {}
   })
 
-  assertResponseSuccess(response, [
+  const allowedStatuses = [
     'OK',
     'OK_SYNC'
-  ])
+  ]
+  if (isResponseStatusIsSuccess(response, allowedStatuses)) {
+    return response.body
+  } else {
+    return {
+      'data': {
+        'totalCount': 0,
+        'items': []
+      }
+    }
+  }
+}
 
-  return response.body
+const isResponseStatusIsSuccess = (response, allowedStatuses = ['OK']) => {
+  return response.status === httpSuccessStatus && allowedStatuses.indexOf(response.body.status) !== -1
 }
 
 const assertResponseSuccess = (response, allowedStatuses = ['OK']) => {
-  console.assert(
-    response.status === httpSuccessStatus && allowedStatuses.indexOf(response.body.status) !== -1,
-    'non-successful response',
-    response
-  )
+  console.assert(isResponseStatusIsSuccess(response, allowedStatuses), 'non-successful response', response)
 }
 
 const generateHash = () => {
@@ -308,8 +352,14 @@ const makeQueryString = (rid, data) => {
     .join('&')
 }
 
+const setTokenFromResponce = (response) => {
+  const cookie = parse(splitCookiesString(response.headers['set-cookie'])).find((x) => x.name === 'XSRF-TOKEN')
+  setXXSrfToken(cookie.value)
+}
+
 export {
   apiUri,
+  checkSession,
   setApiUri,
   auth,
   fetchCards,
