@@ -196,7 +196,7 @@ export async function fetchCardsTransactions (acc) {
     body: body
   }, response => response.success, message => new Error(''))
 
-  let regex = /<tr class='(.[^']*)'>.[^']*">(.[0-9.]*) (.[0-9:]*)<.[^']*">(.[+-]*)<\/span.[^']*">(.[0-9 .]*)<\/span.[^']*">(.[A-Z]*)<\/span.[^']*">(.[0-9 .]*)<\/span.[^']*">(.[A-Z]*)<\/span.[^а-я]*Наименование операции: (.[^<]*)<\/span.[^а-я]*Точка обслуживания: (.[^<]*)/ig
+  let regex = /<tr class='(.[^']*)'>.[^']*">(.[0-9.]*) (.[0-9:]*)<.[^']*">(.[+-]*)<\/span.[^']*">(.[0-9 .]*)<\/span.[^']*">(.[A-Z]*)<\/span.[^']*">(.[0-9 .]*)<\/span.[^']*">(.[A-Z]*)<\/span.[^а-я]*Наименование операции: (.[^<]*)<\/span.[^а-я]*(Точка|Наименование\/MCC-код точки) обслуживания: (.[^<]*)/ig
   let m
 
   var transactions = []
@@ -215,8 +215,9 @@ export async function fetchCardsTransactions (acc) {
       inAccountSum: m[7], // В валюте счета
       inAccountCurrency: m[8],
       comment: m[9],
-      place: m[10]
+      place: m[11]
     })
   }
+  console.log(`>>> Загружено ${transactions.length} операций.`)
   return transactions
 }
