@@ -10,6 +10,28 @@ export function convertAccount (apiAccount) {
   }
 }
 
+export function convertLoan (apiLoan) {
+  return {
+    id: apiLoan.contractId.toString(),
+    title: apiLoan.name,
+    syncID: apiLoan.loanAccount.number.substr(-4),
+    instrument: getInstrument(apiLoan.loanAccount.currency.nameIso),
+    type: 'loan',
+    _type: 'loan',
+    balance: -apiLoan.remainedMainDebtSum,
+    startBalance: -apiLoan.issueSum,
+    capitalization: true, // TODO Требует анализа на разных типах кредитов
+    percent: apiLoan.interestRate,
+    startDate: apiLoan.beginDate,
+    endDateOffset: apiLoan.lengthMonths, // Длина кредита от старта
+    endDateOffsetInterval: 'month',
+    payoffStep: 1, // TODO не найдено, считаем по умолчанию
+    payoffInterval: 'month', // TODO не найдено, считаем по умолчанию
+    _contract: apiLoan.loanAccount.name,
+    _bankname: apiLoan.loanAccount.office.briefName + ' ' + apiLoan.loanAccount.office.branch.bank.briefName
+  }
+}
+
 function getAccount (apiAccount) {
   return {
     id: apiAccount.accountId.toString(),
@@ -41,60 +63,50 @@ function getCard (apiAccount) {
   return account
 }
 
-export function convertTransaction (apiTransaction, account) {
+export function convertTransaction (apiTransaction, account, lTransactions = {}) {
   if (!account) {
     // пропускаем операцию по не существующему счёту
     return null
   }
-
-  // игнор операций по кредитам
-  if (apiTransaction.ground && /.*(?:выдача кредита|погашение основного долга).*/i.test(apiTransaction.ground)) {
-    return null
+  if (!('request' in apiTransaction)) {
+    apiTransaction.request = {}
   }
-
-  const movement = getMovement(apiTransaction, account)
-  if (!movement) { return null }
-
-  const transaction = {
+  let transaction = {
+    hold: !apiTransaction.isProcessed,
     date: new Date(apiTransaction.transactionDate),
-    movements: [ movement ],
-    merchant: null,
-    comment: null,
-    hold: !apiTransaction.isProcessed
-  };
+    comment: parseComment(apiTransaction) || apiTransaction.ground,
+    payee: ('senderName' in apiTransaction.request) ? apiTransaction.request.senderName : (lTransactions[apiTransaction.request.requestId] ? lTransactions[apiTransaction.request.requestId].bankname : null),
+    id: null,
+    income: apiTransaction.transactionSum > 0 ? apiTransaction.transactionSum : (lTransactions[apiTransaction.request.requestId] ? -apiTransaction.transactionSum : 0),
+    incomeAccount: apiTransaction.transactionSum > 0 ? account.id : (lTransactions[apiTransaction.request.requestId] ? lTransactions[apiTransaction.request.requestId].id : account.id),
 
-  [
-    parseComment
-  ].some(parser => parser(transaction, apiTransaction))
-
+    outcome: apiTransaction.transactionSum < 0 ? -apiTransaction.transactionSum : (lTransactions[apiTransaction.request.requestId] ? apiTransaction.transactionSum : 0),
+    outcomeAccount: apiTransaction.transactionSum < 0 ? account.id : (lTransactions[apiTransaction.request.requestId] ? lTransactions[apiTransaction.request.requestId].id : null),
+    invoice: lTransactions[apiTransaction.request.requestId] ? lTransactions[apiTransaction.request.requestId].contract : null,
+    fee: 0
+  }
+  // TODO Требуется более точный идентификатор для процентов. На текущий момент в API банка соответствующих признаков нет.
+  if (apiTransaction.ground && /.*(?:Погашение начисленных процентов).*/i.test(apiTransaction.ground)) {
+    transaction.income = 0
+    transaction.incomeAccount = transaction.outcomeAccount
+  }
   /* if (apiTransaction.mcc) {
-    const mcc = parseInt(apiTransaction.mcc)
-    if (mcc) {
-      transaction.mcc = mcc
-    }
-  } */
-
+      const mcc = parseInt(apiTransaction.mcc)
+      if (mcc) {
+        transaction.mcc = mcc
+      }
+    } */
   return transaction
 }
 
-function getMovement (apiTransaction, account) {
-  const movement = {
-    id: null,
-    account: { id: account.id },
-    invoice: null,
-    sum: apiTransaction.transactionSum,
-    fee: 0
-  }
-
-  return movement
-}
-
 // расчёт комментария
-function parseComment (transaction, apiTransaction) {
+function parseComment (apiTransaction) {
   if (!apiTransaction.ground) { return false }
   const ground = /^(?:\d{4,}\.+\d{4,})?\s*(.*)/i.exec(apiTransaction.ground)
   if (ground) {
-    transaction.comment = ground[1]
+    return ground[1]
+  } else {
+    return null
   }
 }
 
