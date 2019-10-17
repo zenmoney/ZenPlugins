@@ -236,6 +236,53 @@ describe('convertTransaction', () => {
         },
         comment: null
       }
+    ],
+    [
+      {
+        counterparty_account_number: '30232840100500005782',
+        counterparty_bank_bic: '044525797',
+        counterparty_bank_name: 'ТОЧКА КИВИ БАНК (АО), Москва',
+        counterparty_inn: '3123011520',
+        counterparty_kpp: '',
+        counterparty_name: 'Ф Точка Банк КИВИ Банк (АО)',
+        operation_type: '17',
+        payment_amount: '-835.92',
+        payment_bank_system_id: '71;456754439',
+        payment_charge_date: '14.10.2019',
+        payment_date: '14.10.2019',
+        payment_number: '345715531',
+        payment_purpose: 'Покупка товара(Терминал:LIQPAY*inst, LIQPAY*inst,DNEPR,UA, DNEPR, UA,дата операции:12/10/2019 19:13,на сумму:317.47 980,карта 5140********1122)\n',
+        supplier_bill_id: '',
+        tax_info_document_date: '',
+        tax_info_document_number: '',
+        tax_info_kbk: '',
+        tax_info_okato: '',
+        tax_info_period: '',
+        tax_info_reason_code: '',
+        tax_info_status: '',
+        x_payment_id: '71;456754439;344311992;2'
+      },
+      {
+        hold: false,
+        date: new Date('2019-10-12T19:13:00+03:00'),
+        movements: [
+          {
+            id: '71;456754439',
+            account: { id: 'account' },
+            invoice: { instrument: 'UAH', sum: -317.47 },
+            sum: -835.92,
+            fee: 0
+          }
+        ],
+        merchant: {
+          country: 'UA',
+          city: 'DNEPR',
+          title: 'LIQPAY*inst',
+          mcc: null,
+          location: null
+        },
+        comment: null
+      }
     ]
   ])('converts outcome transaction', (apiTransaction, transaction) => {
     expect(convertTransaction(apiTransaction, { id: 'account', instrument: 'RUB' })).toEqual(transaction)

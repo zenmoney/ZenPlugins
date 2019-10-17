@@ -20,7 +20,8 @@ export function convertTransaction (apiTransaction, account) {
     const invoiceStr = match[2].trim()
     ;[
       /^([.\d]+)\s*([A-Z]{3})$/,
-      /^([.\d]+)\s*\((.*)\)$/
+      /^([.\d]+)\s*\((.*)\)$/,
+      /^([.\d]+)\s*(\d{3})$/
     ].some(regexp => {
       const invoiceMatch = invoiceStr.match(regexp)
       if (invoiceMatch) {
