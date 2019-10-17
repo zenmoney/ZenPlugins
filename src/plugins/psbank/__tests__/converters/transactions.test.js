@@ -40,7 +40,7 @@ const transactions = {
         'incomeAccount': 'cardId',
         'invoice': null,
         'outcome': 0,
-        'outcomeAccount': null,
+        'outcomeAccount': 'cardId',
         'payee': null
       }
     ],
