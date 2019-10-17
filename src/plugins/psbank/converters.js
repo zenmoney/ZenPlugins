@@ -81,7 +81,7 @@ export function convertTransaction (apiTransaction, account, lTransactions = {})
     incomeAccount: apiTransaction.transactionSum > 0 ? account.id : (lTransactions[apiTransaction.request.requestId] ? lTransactions[apiTransaction.request.requestId].id : account.id),
 
     outcome: apiTransaction.transactionSum < 0 ? -apiTransaction.transactionSum : (lTransactions[apiTransaction.request.requestId] ? apiTransaction.transactionSum : 0),
-    outcomeAccount: apiTransaction.transactionSum < 0 ? account.id : (lTransactions[apiTransaction.request.requestId] ? lTransactions[apiTransaction.request.requestId].id : null),
+    outcomeAccount: apiTransaction.transactionSum < 0 ? account.id : (lTransactions[apiTransaction.request.requestId] ? lTransactions[apiTransaction.request.requestId].id : account.id),
     invoice: lTransactions[apiTransaction.request.requestId] ? lTransactions[apiTransaction.request.requestId].contract : null,
     fee: 0
   }
