@@ -86,11 +86,8 @@ export async function login (auth, { login, password }) {
         rootJB: '1'
       }
     })
-    if (response.body.response && response.body.response.information && response.body.response.information.name === 'PinCodeReset') {
-      // let's auth by login and password
-    } else {
-      const sid = response.body.response.information.value
-      console.assert(sid, 'unexpected response')
+    const sid = response.body.response && response.body.response.information && response.body.response.information.value
+    if (sid) {
       return { sid, pin, deviceId }
     }
   }
