@@ -1,29 +1,47 @@
-//
-// TODO:
-// - Добавить поддержку депозитных счетов, счетов для процентов по депозиту, счетов учета резервов.
-//
-import { fetchAccounts, fetchTransactions, login } from './api'
+import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
+import { adjustTransactions } from '../../common/transactionGroupHandler'
+import { AuthError, fetchAccounts, fetchTransactions, login } from './api'
 import { convertAccount, convertTransaction } from './converters'
 
-export async function scrape ({ preferences, fromDate }) {
+export async function scrape ({ fromDate }) {
   let token = ZenMoney.getData('accessToken')
+  let apiAccounts = null
+  if (token) {
+    try {
+      apiAccounts = await fetchAccounts(token)
+    } catch (e) {
+      if (e instanceof AuthError) {
+        token = null
+      } else {
+        throw e
+      }
+    }
+  }
   if (!token) {
     token = await login()
     ZenMoney.setData('accessToken', token)
   }
 
-  const accounts = (await fetchAccounts(token))
-    .map(convertAccount)
-    .filter(account => account && !ZenMoney.isAccountSkipped(account.id))
-  console.log(`Всего счетов: ${accounts.length}`)
-
-  const transactions = (await fetchTransactions(token, accounts, fromDate))
-    .map(transaction => convertTransaction(transaction, accounts))
-    .filter(transaction => transaction)
-  console.log(`Всего операций: ${transactions.length}`)
+  const accounts = []
+  const transactions = []
+  await Promise.all((apiAccounts || await fetchAccounts(token)).map(async apiAccount => {
+    const account = convertAccount(apiAccount)
+    if (account) {
+      accounts.push(account)
+      if (!ZenMoney.isAccountSkipped(account.id)) {
+        const apiTransactions = await fetchTransactions(token, account, fromDate)
+        for (const apiTransaction of apiTransactions) {
+          const transaction = convertTransaction(apiTransaction, account)
+          if (transaction) {
+            transactions.push(transaction)
+          }
+        }
+      }
+    }
+  }))
 
   return {
-    accounts: accounts,
-    transactions: transactions
+    accounts: ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId }),
+    transactions: adjustTransactions({ transactions })
   }
 }
