@@ -20,6 +20,7 @@ export async function scrape ({ fromDate }) {
   if (!token) {
     token = await login()
     ZenMoney.setData('accessToken', token)
+    ZenMoney.saveData()
   }
 
   const accounts = []
