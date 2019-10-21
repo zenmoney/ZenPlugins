@@ -14,9 +14,14 @@ export function convertAccount (apiAccount) {
 }
 
 export function convertTransaction (apiTransaction, account) {
-  console.assert(['Canceled', 'Executed', 'Received'].indexOf(apiTransaction.status) >= 0, 'unexpected transaction status', apiTransaction)
+  console.assert([
+    'Canceled',
+    'Executed',
+    'Received',
+    'ClarifyRequiredOutcome'
+  ].indexOf(apiTransaction.status) >= 0, 'unexpected transaction status', apiTransaction)
   console.assert(['Debet', 'Credit'].indexOf(apiTransaction.category) >= 0, 'unexpected transaction category', apiTransaction)
-  if (apiTransaction.status === 'Canceled') {
+  if (['Canceled', 'ClarifyRequiredOutcome'].indexOf(apiTransaction.status) >= 0) {
     return null
   }
   const transaction = {
