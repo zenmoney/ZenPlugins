@@ -150,21 +150,24 @@ export function parseFullTransactionsMailCardLimit (html) {
   let $ = cheerio.load(html)
   $ = cheerio.load($().children()[0].children[0].Body)
 
-  let titleObjects = $('title').toArray()
-  let title = titleObjects[0].children[0].data.split(' ')
-  let accountID = title[title.length - 1]
-
   let isLimit = false
+  let isAccountID = false
   let overdraft = null
+  let accountID = null
   flatMap($('table[class="section_1"] tr').toArray().slice(1), tr => {
     if (tr.children.length >= 0) { // Значит это строка, а не просто форматирование
       tr.children.forEach(function (td) {
         if (td.children && td.children[0] && td.children[0].type === 'text') {
-          if (isLimit) {
+          if (isAccountID) {
+            accountID = td.children[0].data
+            isAccountID = false
+          } else if (isLimit) {
             overdraft = td.children[0].data
             isLimit = false
           }
-          if (td.children[0].data === 'Лимит овердрафта:') {
+          if (td.children[0].data === 'Номер счета:' || td.children[0].data === 'Номер карточного счета:') {
+            isAccountID = true
+          } else if (td.children[0].data === 'Лимит овердрафта:') {
             isLimit = true
           }
         }
