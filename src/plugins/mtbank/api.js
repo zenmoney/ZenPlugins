@@ -30,7 +30,8 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
     if ([
       'USER_TEMP_LOCKED',
       'INTERNAL_SERVER_ERROR',
-      'SMS_SENDING_LOCKED'
+      'SMS_SENDING_LOCKED',
+      'UNSUPPORTED_VERSION'
     ].indexOf(response.body.error.code) >= 0) {
       const errorDescription = response.body.error.description || response.body.error.error_description
       const errorMessage = errorDescription + (response.body.error.lockedTime && response.body.error.lockedTime !== 'null' ? response.body.error.lockedTime : '')
@@ -89,10 +90,10 @@ export async function login (login, password) {
   }, response => response.body.success)
   let sessionCookies = cookies(res)
 
-  res = await fetchApiJson('login/checkPassword2', {
+  res = await fetchApiJson('login/checkPassword3', {
     method: 'POST',
     headers: { 'Cookie': sessionCookies },
-    body: { 'password': password, 'version': '2.1.4' },
+    body: { 'password': password, 'version': '2.1.12' },
     sanitizeRequestLog: { body: { password: true } }
   }, response => response.body.success)
 
