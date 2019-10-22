@@ -29,6 +29,7 @@ export function addOverdraftInfo (accounts, overdrafts) {
     for (let i = 0; i < accounts.length; i++) {
       if (accounts[i].accountID === accountNumber) {
         accounts[i].creditLimit = Number.parseFloat(overdrafts[accountNumber].replace(',', '.').replace(/\s/g, ''))
+        accounts[i].balance = -(accounts[i].creditLimit - accounts[i].balance)
       }
     }
   }
@@ -101,12 +102,15 @@ export function convertLastTransaction (apiTransaction, accounts) {
 }
 
 function getMovement (apiTransaction, account) {
-  const movement = {
+  let movement = {
     id: null,
     account: { id: account.id },
     invoice: null,
     sum: getSumAmount(apiTransaction.type, apiTransaction.amount),
     fee: 0
+  }
+  if (apiTransaction.type === 'Перевод (зачисление)') {
+    movement.sum *= -1
   }
 
   if (apiTransaction.currencyReal !== account.instrument) {
@@ -120,6 +124,7 @@ function getMovement (apiTransaction, account) {
 }
 
 function parseCash (transaction, apiTransaction) {
+  console.log(apiTransaction)
   if (apiTransaction.description.indexOf('наличных на карту') > 0 ||
     apiTransaction.description === 'Пополнение' ||
     apiTransaction.description === 'Снятие наличных') {
@@ -137,6 +142,20 @@ function parseCash (transaction, apiTransaction) {
       fee: 0
     })
     return false
+  } else if (apiTransaction.description === 'Перевод (зачисление)') {
+    transaction.movements.push({
+      id: null,
+      account: {
+        company: null,
+        type: 'cash',
+        instrument: apiTransaction.currency,
+        syncIds: null
+      },
+      invoice: null,
+      sum: getSumAmount(apiTransaction.type, apiTransaction.amount),
+      fee: 0
+    })
+    return true
   }
 }
 
