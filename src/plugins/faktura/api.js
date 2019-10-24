@@ -201,7 +201,8 @@ async function fetchCredits () {
 
   assertResponseSuccess(response, [
     'OK',
-    'CREDIT_NOT_FOUND_ERROR'
+    'CREDIT_NOT_FOUND_ERROR',
+    'WRONG_CABINET' // if not supported
   ])
 
   return response.body.hasOwnProperty('data')
