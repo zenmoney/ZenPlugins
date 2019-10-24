@@ -162,6 +162,7 @@ export function convertAccountTransaction (apiTransaction, account, titleAccount
     case 'transfer_cash_in': // зачисление межбанка || Начисление процентов
     case 'cashin_commission': // комиссия за внесение наличных
     case 'spisanie':
+    case 'robin_credit_fee': // комиссия за пополнение наличными
       transaction.comment = getComment(apiTransaction)
       break
 

@@ -1730,6 +1730,63 @@ const transactions = {
         ]
       }
     ]
+  ],
+
+  'robin_credit_fee': [
+    [
+      { exchange_details: null,
+        id: 379841886,
+        status: 'confirmed',
+        comment: null,
+        tag_list: [],
+        friend_transfer_type: null,
+        receipt_url: 'https://rocketbank.ru/receipt/03c59954-1ca8a83c-642f4edd-02ab647d-ee679cbc-467a8fb4',
+        context_type: 'robin_credit_fee',
+        details: 'Комиссия за пополнение наличными',
+        has_receipt: false,
+        mimimiles: 0,
+        happened_at: 1569916670,
+        sputnik: false,
+        display_money: { amount: 150, currency_code: 'RUB' },
+        money: { amount: -150, currency_code: 'RUB' },
+        category: {
+          id: 439,
+          name: 'Комиссия',
+          display_name: 'Комиссия',
+          icon: 'commission',
+          sub_icon: '439'
+        },
+        merchant: {
+          id: 5734201,
+          name: 'Комиссия за пополнение наличными',
+          feed_icon: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/merchants/5734201/cool_small_a58a12a7-6a06-4a34-b02c-a7f785413226.png',
+          icon: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/merchants/5734201/cool_big_a58a12a7-6a06-4a34-b02c-a7f785413226.png',
+          iphone_small: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/merchants/5734201/iphone_small_a58a12a7-6a06-4a34-b02c-a7f785413226.png',
+          iphone_big: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/merchants/5734201/iphone_big_a58a12a7-6a06-4a34-b02c-a7f785413226.png',
+          android: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/merchants/5734201/android_a58a12a7-6a06-4a34-b02c-a7f785413226.png' },
+        location: { latitude: null, longitude: null, acc: null },
+        visible: true,
+        action: null
+      },
+      {
+        'comment': 'Комиссия за пополнение наличными',
+        'date': new Date('2019-10-01T07:57:50+00:00'),
+        'hold': false,
+        'merchant': null,
+        'movements': [
+          {
+            'account':
+              {
+                'id': 'cardRUB'
+              },
+            'fee': 0,
+            'id': '379841886',
+            'invoice': null,
+            'sum': -150
+          }
+        ]
+      }
+    ]
   ]
 }
 
@@ -1757,9 +1814,9 @@ describe('convertTransaction', () => {
   })
 })
 
-describe('convertOneTransaction', () => {
+xdescribe('convertOneTransaction', () => {
   initTitleAccounts()
-  const type = 'disput_charge'
+  const type = 'robin_credit_fee'
   const num = 0
   it(`should convert '${type}' ${num}`, () => {
     expect(
