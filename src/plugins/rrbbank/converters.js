@@ -119,51 +119,29 @@ function parsePayee (transaction, json) {
     mcc: null,
     fullTitle: null
   }
-  if (json.operationPlace) {
-    transaction.merchant.fullTitle = json.operationPlace
-  } else {
-    if (json.siccode) {
-      transaction.merchant.mcc = parseInt(json.siccode)
-    }
-    switch (json.operationName) {
-      case 'On-line пополнение счета из ЕРИП':
-        return false
 
-      default:
-        transaction.merchant.fullTitle = json.operationName
-        return false
-    }
+  if (json.siccode) {
+    transaction.merchant.mcc = parseInt(json.siccode)
+  }
+
+  if (json.operationName.indexOf('Service payment to card') === -1) {
+    transaction.merchant.fullTitle = json.operationName
   }
 }
 
 function parseComment (transaction, json) {
-  if (!json.operationName || json.siccode) { return false }
-  if (json.operationName.indexOf('Капитализация. Удержано подоходного налога') >= 0) {
-    transaction.comment = 'Капитализация'
-    return false
-  }
-  switch (json.operationName) {
-    // переводы между счетами полезной информации не несут, гасим сразу
-    case 'Списание по операции ПЦ "Перечисление с карты на карту" ':
-    case 'On-line пополнение договора (списание с БПК)':
-      return true
-
-    // в покупках комментарии не оставляем
+  switch (json.description) {
     case 'Покупки':
     case 'Покупки(конверсия)':
-    case 'Операция в Интернет-Банк':
-    case 'Покупка товаров и услуг':
-    case 'Оплата товаров и услуг':
-    case 'Списание по операции ПЦ "Оплата услуг в ИБ" ':
+    case 'Оплата товаров, работ или услуг':
+    case 'СДБО':
       return false
+    case '"trans.type.code.W2"':
+      transaction.comment = 'Пополнение счета'
+      break
 
     default:
-      transaction.comment = json.operationName
+      transaction.comment = json.description
       return false
   }
-}
-
-export function getLastTransactionDate (str) {
-  const [day, month, year, hour, minute, second] = str.match(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2}):(\d{2})/).slice(1)
-  return new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}+03:00`)
 }
