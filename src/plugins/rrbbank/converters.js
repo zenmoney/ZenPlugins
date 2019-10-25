@@ -58,7 +58,6 @@ export function convertAccount (json, accountType) {
 
 export function convertTransaction (json, accounts) {
   const account = accounts.find(account => {
-    console.log(json)
     return account.syncID.indexOf(json.accountNumber) !== -1
   })
 
@@ -75,7 +74,6 @@ export function convertTransaction (json, accounts) {
     parseComment,
     parsePayee
   ].some(parser => parser(transaction, json))
-
   return transaction
 }
 
@@ -116,32 +114,30 @@ function parseCash (transaction, json) {
 }
 
 function parsePayee (transaction, json) {
-  // интернет-платежи отображаем без получателя
-  if (!json.operationPlace ||
-    json.operationPlace.indexOf('BNB - OPLATA USLUG') >= 0 ||
-    json.operationPlace.indexOf('OPLATA USLUG - KOMPLAT BNB') >= 0) {
-    return false
-  }
   transaction.merchant = {
+    location: null,
     mcc: null,
-    location: null
+    fullTitle: null
   }
-  const merchant = json.operationPlace.split('>').map(str => str.trim())
-  if (merchant.length === 1) {
+  if (json.operationPlace) {
     transaction.merchant.fullTitle = json.operationPlace
-  } else if (merchant.length === 2) {
-    transaction.merchant.title = merchant[0]
-    let geo = merchant[1].split(' ')
-    transaction.merchant.city = merchant[1].replace(' ' + geo[geo.length - 1], '').trim()
-    transaction.merchant.country = geo[geo.length - 1]
   } else {
-    throw new Error('Ошибка обработки транзакции с получателем: ' + json.operationPlace)
+    if (json.siccode) {
+      transaction.merchant.mcc = parseInt(json.siccode)
+    }
+    switch (json.operationName) {
+      case 'On-line пополнение счета из ЕРИП':
+        return false
+
+      default:
+        transaction.merchant.fullTitle = json.operationName
+        return false
+    }
   }
 }
 
 function parseComment (transaction, json) {
-  if (!json.operationName) { return false }
-
+  if (!json.operationName || json.siccode) { return false }
   if (json.operationName.indexOf('Капитализация. Удержано подоходного налога') >= 0) {
     transaction.comment = 'Капитализация'
     return false
