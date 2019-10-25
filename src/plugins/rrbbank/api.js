@@ -108,7 +108,7 @@ export async function fetchTransactions (token, accounts, fromDate, toDate = new
       let accountType = ''
       switch (account.type) {
         case card:
-          url = 'products/getCardAccountFullStatementWithBlockedAmounts'
+          url = 'products/getFullStatementFromProcessing'
           accountType = '1'
           break
         case deposit:
@@ -132,7 +132,9 @@ export async function fetchTransactions (token, accounts, fromDate, toDate = new
           }
         }
       }, response => {
-        response.body.operations = response.body.operations.map(x => { return { accountNumber: account.id, ...x } })
+        if (response.body.operations) {
+          response.body.operations = response.body.operations.map(x => { return { accountNumber: account.id, ...x } })
+        }
         return response.body
       })
     })
