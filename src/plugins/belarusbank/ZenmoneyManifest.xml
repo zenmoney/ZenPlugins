@@ -10,5 +10,5 @@
         <js>index.js</js>
         <preferences>preferences.xml</preferences>
     </files>
-    <description>Чтобы подключить синхронизацию, укажите логин и 40 кодов с карты кодов.</description>
+    <description>Чтобы подключить синхронизацию, укажите логин и пароль. Для авторизации потребуется ввести 40 кодов с карты кодов, иначе активируйтесь через SMS.</description>
 </provider>
