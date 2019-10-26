@@ -217,7 +217,7 @@ function parseComment (transaction, apiTransaction) {
 
 function getSumAmount (debitFlag, strAmount) {
   const amount = Number.parseFloat(strAmount.replace(',', '.').replace(/\s/g, ''))
-  if (debitFlag === 'ЗАЧИСЛЕНИЕ' || debitFlag.indexOf('Пополнение') === 0) {
+  if (/зачисление/gi.test(debitFlag) || debitFlag.indexOf('Пополнение') === 0) {
     return amount
   }
   return -amount
