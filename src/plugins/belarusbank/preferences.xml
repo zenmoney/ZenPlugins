@@ -20,9 +20,20 @@
         negativeButtonText="Отмена"
         summary="||***********"
     />
+    <ListPreference
+        key="viaSMS"
+        title="Авторизация через SMS"
+        dialogTitle="Авторизация через SMS"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        entries="Да|Нет"
+        entryValues="true|false"
+        defaultValue="true"
+        summary="||{@s}">
+    </ListPreference>
     <EditTextPreference
         key="codes0"
-        obligatory="true"
+        obligatory="false"
         inputType="phone"
         title="Коды 1-10"
         dialogTitle="Коды 1-10"
@@ -32,7 +43,7 @@
     </EditTextPreference>
     <EditTextPreference
         key="codes1"
-        obligatory="true"
+        obligatory="false"
         inputType="phone"
         title="Коды 11-20"
         dialogTitle="Коды 11-20"
@@ -42,7 +53,7 @@
     </EditTextPreference>
     <EditTextPreference
         key="codes2"
-        obligatory="true"
+        obligatory="false"
         inputType="phone"
         title="Коды 21-30"
         dialogTitle="Коды 21-30"
@@ -52,7 +63,7 @@
     </EditTextPreference>
     <EditTextPreference
         key="codes3"
-        obligatory="true"
+        obligatory="false"
         inputType="phone"
         title="Коды 31-40"
         dialogTitle="Коды 31-40"

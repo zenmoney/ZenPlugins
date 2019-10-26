@@ -12,7 +12,7 @@ async function fetchUrl (url, options, predicate = () => true, error = (message)
     validateResponse(response, response => predicate(response), error)
   }
   let err = response.body.match(/<p id ="status_message" class="error">(.*)<\/p>/i)
-  if (err) {
+  if (err && err.indexOf('СМС-код отправлен на номер телефона') === 0) {
     throw new TemporaryError(err[1])
   }
   return response
@@ -25,6 +25,13 @@ function validateResponse (response, predicate, error) {
 }
 
 export async function login (prefs) {
+  if (prefs.viaSMS !== 'false') {
+    return loginSMS(prefs)
+  }
+  return loginCodes(prefs)
+}
+
+export async function loginCodes (prefs) {
   if (!prefs.codes0 || !/^\s*(?:\d{4}[\s+]+){9}\d{4}\s*$/.test(prefs.codes0)) {
     throw new InvalidPreferencesError('Неправильно введены коды 1-10! Необходимо ввести 10 четырехзначных кодов через пробел или +.')
   }
@@ -87,6 +94,58 @@ export async function login (prefs) {
       code_number_expire_time: true
     },
     sanitizeRequestLog: { body: { bbIbCodevalueField: true } }
+  }, response => response.success, message => new Error(''))
+
+  return res
+}
+
+export async function loginSMS (prefs) {
+  var res = await fetchUrl('/wps/portal/ibank/', {
+    method: 'GET'
+  }, response => response.success, message => new Error('Сайт не доступен'))
+
+  let url = res.body.match(/<form[^>]+action="([^"]*)"[^>]*name="LoginForm1"/i)
+  res = await fetchUrl(res.headers['content-location'] + url[1], {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: {
+      bbIbUseridField: prefs.login,
+      bbIbPasswordField: prefs.password,
+      bbIbLoginAction: 'in-action',
+      bbibCodeSMSField: 1,
+      bbibUnblockAction: '',
+      bbibChangePwdByBlockedClientAction_sendSMS: ''
+    },
+    sanitizeRequestLog: { body: { bbIbUseridField: true, bbIbPasswordField: true } }
+  }, response => response.success, message => new Error(''))
+
+  let sms = await ZenMoney.readLine('Введите код из смс', {
+    inputType: 'numberPassword',
+    time: 120000
+  })
+  if (sms === '') {
+    throw new TemporaryError('Не введён код из смс. Подключите синхронизацию ещё раз.')
+  }
+
+  url = res.body.match(/<form[^>]+action="([^"]*)"[^>]*name="LoginForm1"/i)
+  res = await fetchUrl(res.headers['content-location'] + url[1], {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: {
+      cancelindicator: false,
+      bbIbCodeSmsvalueField: sms,
+      bbIbLoginAction: 'in-action',
+      bbIbCancelAction: '',
+      field_1: res.body.match(/<input[^>]+name="field_1" value="(.[^"]*)" \/>/i)[1],
+      field_2: res.body.match(/<input[^>]+name="field_2" value="(.[^"]*)" \/>/i)[1],
+      field_7: res.body.match(/<input[^>]+name="field_7" value="(.[^"]*)" \/>/i)[1],
+      field_5: res.body.match(/<input[^>]+name="field_5" value="(.[^"]*)" \/>/i)[1]
+    },
+    sanitizeRequestLog: { body: { bbIbCodeSmsvalueField: true } }
   }, response => response.success, message => new Error(''))
 
   return res
