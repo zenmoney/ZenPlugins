@@ -326,6 +326,39 @@ describe('convertLastTransaction', () => {
             }
           ]
       }
+    },
+    {
+      name: 'cash back',
+      transaction: {
+        id: '2019-30090403',
+        acceptedTime: 1571983438000,
+        pushMessageText: 'Card1111; Зачисление на счет: 0,70 USD; 25.10.19 09:03:44; BELGAZPROMBANK,MINSK,BLR;  Dostupno: 12345,32 USD',
+        eventType: 4
+      },
+      expectedTransaction: {
+        'comment': null,
+        'date': new Date('2019-10-25T06:03:00.000Z'),
+        'hold': false,
+        'merchant': {
+          'city': 'MINSK',
+          'country': 'BLR',
+          'location': null,
+          'mcc': null,
+          'title': 'BELGAZPROMBANK'
+        },
+        'movements':
+          [
+            {
+              'account': {
+                'id': '11161311-117d11'
+              },
+              'fee': 0,
+              'id': null,
+              'invoice': null,
+              'sum': 0.70
+            }
+          ]
+      }
     }
   ]
 
