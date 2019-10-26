@@ -7,6 +7,7 @@ describe('convertAccount', () => {
       json: {
         balance: '10.18',
         cardNum: '1111********2222',
+        cardName: 'Visa',
         currency: 'EUR',
         id: 'BY75 AKBB 3014 1000 0222 3303 0000',
         transactionsData: {
@@ -25,13 +26,14 @@ describe('convertAccount', () => {
       expectedAccount: {
         id: 'BY75AKBB30141000022233030000',
         type: 'card',
-        title: 'Карта 2222',
+        title: 'Visa 2222',
         balance: 10.18,
         instrument: 'EUR',
         syncID: ['BY75AKBB30141000022233030000', '2222'],
         raw: {
           balance: '10.18',
           cardNum: '1111********2222',
+          cardName: 'Visa',
           currency: 'EUR',
           id: 'BY75 AKBB 3014 1000 0222 3303 0000',
           transactionsData: {
@@ -54,6 +56,7 @@ describe('convertAccount', () => {
       json: {
         balance: '10.18',
         cardNum: '1111********2222',
+        cardName: 'Карта',
         currency: 'USD на дату 08.10.2019',
         id: 'BY75 AKBB 3014 1000 0222 3303 0000',
         transactionsData: {
@@ -79,6 +82,7 @@ describe('convertAccount', () => {
         raw: {
           balance: '10.18',
           cardNum: '1111********2222',
+          cardName: 'Карта',
           currency: 'USD на дату 08.10.2019',
           id: 'BY75 AKBB 3014 1000 0222 3303 0000',
           transactionsData: {

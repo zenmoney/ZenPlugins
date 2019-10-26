@@ -152,27 +152,60 @@ export async function fetchCards (url) {
     method: 'GET'
   }, response => response.success, message => new Error(''))
 
-  let regex = /<form id="viewns.*action="(.[^"]*)".*name="javax\.faces\.encodedURL" value="(.[^"]*)".*cellLable">(.[^>]*)<\/div><\/td><td class="tdBalance"><div class="cellLable"><nobr>(.*)<\/nobr> (.[^"<]*)<\/div>.*return myfaces\.oam\.submitForm\((.*)\);.*<td class="tdNumber"><div class="cellLable">(.[0-9*]*)<\/div>.*id="javax\.faces\.ViewState" value="(.[^"]*)/ig
-  let m
+  var html = res.body.replace(/\r?\n|\r/g, '')
+  let formRegex = /<form id="viewns.*action="(.[^"]*)".*name="javax\.faces\.encodedURL" value="(.[^"]*).*id="javax\.faces\.ViewState" value="(.[^"]*)"/ig
+  let formData = formRegex.exec(html)
+  let formAction = formData[1]
+  let formEncodedURL = formData[2]
+  let formViewState = formData[3]
+
+  let cardNums = []
+  let cardNumRegex = /<div title="(.[^"]*)" class=".[a-zA-Z_]*"><\/div><\/td><td class="tdNumber"><div class="cellLable">(.[0-9*]*)<\/div>/ig
+  let c
+  while ((c = cardNumRegex.exec(html)) !== null) {
+    if (c.index === cardNumRegex.lastIndex) {
+      cardNumRegex.lastIndex++
+    }
+    cardNums.push({
+      name: c[1],
+      num: c[2]
+    })
+  }
+  console.log(cardNums)
+
+  let cardActions = []
+  let cardActionRegex = /<\/td><td class="tdHiddenButton"><a href="#" onclick="return myfaces.oam.submitForm\((.[^)]*)\);/ig
+  let a
+  while ((a = cardActionRegex.exec(html)) !== null) {
+    if (a.index === cardActionRegex.lastIndex) {
+      cardActionRegex.lastIndex++
+    }
+    cardActions.push(a[1])
+  }
 
   var cards = []
-  while ((m = regex.exec(res.body.replace(/\r?\n|\r/g, ''))) !== null) {
+  let regex = /cellLable">(.[^>]*)<\/div><\/td><td class="tdBalance"><div class="cellLable"><nobr>(.[^<]*)<\/nobr> (.[A-Zа-я0-9. ]*)<\/div><\/td><td class="tdNoPaddingDefault"><div title="" class="cellLable"><\/div><\/td><td class="tdHiddenButton"><a href="#" onclick="return myfaces\.oam\.submitForm\((.[^)]*)\);/ig
+  let m
+  var i = 0
+  while ((m = regex.exec(html)) !== null) {
     if (m.index === regex.lastIndex) {
       regex.lastIndex++
     }
     cards.push({
-      id: m[3],
-      balance: m[4],
-      currency: m[5],
-      cardNum: m[7],
+      id: m[1],
+      balance: m[2],
+      currency: m[3],
+      cardNum: cardNums[i].num,
+      cardName: cardNums[i].name,
       type: 'card',
       transactionsData: {
-        action: m[1],
-        encodedURL: m[2],
-        additional: m[6].match(/'(.[^']*)'/ig),
-        viewState: m[8]
+        action: formAction,
+        encodedURL: formEncodedURL,
+        additional: cardActions[i].match(/'(.[^']*)'/ig),
+        viewState: formViewState
       }
     })
+    i++
   }
   return cards
 }
