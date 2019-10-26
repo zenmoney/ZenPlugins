@@ -23,7 +23,7 @@ export function convertAccount (acc) {
       return {
         id: acc.id.replace(/\s/g, ''),
         type: 'card',
-        title: 'Карта ' + acc.cardNum.slice(-4),
+        title: acc.cardName + ' ' + acc.cardNum.slice(-4),
         instrument: acc.currency.substr(0, 3),
         balance: Number.parseFloat(acc.balance.replace(/\s/g, '')),
         syncID: [acc.id.replace(/\s/g, ''), acc.cardNum.slice(-4)],
