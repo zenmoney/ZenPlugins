@@ -109,9 +109,6 @@ function getMovement (apiTransaction, account) {
     sum: getSumAmount(apiTransaction.type, apiTransaction.amount),
     fee: 0
   }
-  if (apiTransaction.type === 'Перевод (зачисление)') {
-    movement.sum *= -1
-  }
 
   if (apiTransaction.currencyReal !== account.instrument) {
     movement.invoice = {
@@ -152,7 +149,7 @@ function parseCash (transaction, apiTransaction) {
         syncIds: null
       },
       invoice: null,
-      sum: getSumAmount(apiTransaction.type, apiTransaction.amount),
+      sum: -getSumAmount(apiTransaction.type, apiTransaction.amount),
       fee: 0
     })
     return true
