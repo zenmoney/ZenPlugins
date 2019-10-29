@@ -1,4 +1,6 @@
 import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
+import { compact } from 'lodash'
+
 export const card = 'card'
 export const deposit = 'deposit'
 
@@ -113,6 +115,10 @@ function parseCash (transaction, json) {
   }
 }
 
+const knownTransactionTypes = ['Retail', 'ATM', 'CH Debit', 'CH Payment', 'Cash', 'SOA Debit']
+
+const normalizeSpaces = (text) => compact(text.split(' ')).join(' ')
+
 function parsePayee (transaction, json) {
   transaction.merchant = {
     location: null,
@@ -125,7 +131,12 @@ function parsePayee (transaction, json) {
   }
 
   if (json.operationName.indexOf('Service payment to card') === -1) {
-    transaction.merchant.fullTitle = json.operationName
+    const type = knownTransactionTypes.find((type) => json.operationName.startsWith(type + ' '))
+    if (type) {
+      transaction.merchant.fullTitle = normalizeSpaces(json.operationName.slice(type.length))
+    } else {
+      transaction.merchant.fullTitle = normalizeSpaces(json.operationName)
+    }
   }
 }
 
