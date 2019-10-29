@@ -122,7 +122,6 @@ export async function loginSMS (prefs) {
   }, response => response.success, message => new Error(''))
 
   let sms = await ZenMoney.readLine('Введите код из смс', {
-    inputType: 'numberPassword',
     time: 120000
   })
   if (sms === '') {
