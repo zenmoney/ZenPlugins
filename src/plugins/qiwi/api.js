@@ -1,10 +1,10 @@
-import * as _ from 'lodash'
-import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
-import * as network from '../../common/network'
+import { omit } from 'lodash'
+import { fetchJson as commonFetchJson } from '../../common/network'
 import { retry } from '../../common/retry'
+import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 
 async function fetchJson (url, options) {
-  const response = await network.fetchJson(url, {
+  const response = await commonFetchJson(url, {
     method: 'GET',
     headers: {
       'Accept': 'application/json',
@@ -13,7 +13,7 @@ async function fetchJson (url, options) {
       'Host': 'edge.qiwi.com'
     },
     sanitizeRequestLog: { headers: { Authorization: true } },
-    ..._.omit(options, 'token')
+    ...omit(options, 'token')
   })
   if (response.status === 401) {
     throw new InvalidPreferencesError('Токен просрочен либо введен неверно. Настройте подключение заново.')
