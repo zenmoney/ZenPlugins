@@ -1,9 +1,17 @@
+import { defaultsDeep } from 'lodash'
 import { fetch } from '../../common/network'
 
 const baseUrl = 'https://ibank.asb.by'
 var querystring = require('querystring')
 
 async function fetchUrl (url, options, predicate = () => true, error = (message) => console.assert(false, message)) {
+  options = defaultsDeep(
+    options,
+    {
+      sanitizeRequestLog: { headers: { Cookie: true } },
+      sanitizeResponseLog: { headers: { 'set-cookie': true } }
+    }
+  )
   options.method = options.method ? options.method : 'POST'
   options.stringify = querystring.stringify
 
@@ -11,7 +19,7 @@ async function fetchUrl (url, options, predicate = () => true, error = (message)
   if (predicate) {
     validateResponse(response, response => predicate(response), error)
   }
-  let err = response.body.match(/<p id ="status_message" class="error">(.*)<\/p>/i)
+  let err = response.body.match(/<p id ="status_message" class="error">(.[^/]*)</i)
   if (err && err.indexOf('СМС-код отправлен на номер телефона') === 0) {
     throw new TemporaryError(err[1])
   }
