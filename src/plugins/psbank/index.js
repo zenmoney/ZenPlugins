@@ -5,6 +5,8 @@ import { fetchAccounts, fetchCards, fetchLoans, fetchTransactions, login } from 
 import { convertAccount, convertTransaction } from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate, isInBackground }) {
+  toDate = toDate || new Date()
+
   const auth = await login(preferences, ZenMoney.getData('auth', {}))
   const transactions = []
   const accounts = []
