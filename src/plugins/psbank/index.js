@@ -1,64 +1,41 @@
-import { login, fetchCards, fetchAccounts, fetchTransactions, fetchLoans, fetchLoan, fetchLoanTransactions } from './api'
-import { convertAccount, convertTransaction, convertLoan } from './converters'
-import { flattenDeep, omit, concat } from 'lodash'
+import { flatten } from 'lodash'
+import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
+import { adjustTransactions } from '../../common/transactionGroupHandler'
+import { fetchAccounts, fetchCards, fetchLoans, fetchTransactions, login } from './api'
+import { convertAccount, convertTransaction } from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate, isInBackground }) {
-  let auth = ZenMoney.getData('auth', {})
-  auth = await login(preferences, auth)
-
-  let accounts = []
-
-  const fetchedCards = await fetchCards(auth)
-  accounts = concat(accounts, fetchedCards.cardAccounts.map(account => convertAccount(account)))
-
-  const fetchedAccounts = await fetchAccounts(auth)
-  accounts = concat(accounts, fetchedAccounts.map(account => convertAccount(account)))
-
-  let fLoans = []
-  const fetchedLoans = await fetchLoans(auth)
-  for (const l of fetchedLoans) {
-    let loan = await fetchLoan(auth, l.contractId.toString())
-    let cloan = convertLoan(loan)
-    accounts = concat(accounts, cloan)
-    fLoans = concat(fLoans, cloan)
-  }
-
-  /* За основу работы с транзакциями кредитов взята особенность, что на каждое действие кредита создается набор операций request с единым идентификатором.
-  TODO Предположение: кредит взаимодействует только со счетами в пределах существующих счетов клиента внутри банка
-  Таким образом достаточно найти среди транзакций по обычным (карточным) счетам найти таковые с тем же идентификатором.
-  Из них мы выделяем списание процентов, оно остается транзакцией списания денег со счета, остальные становятся операциями перемещения средств
-  между кредитом и счетом  */
-  // собираем словарь соответствий: операция по кредиту - кредитный аккаунт
-  let ltransactions = {}
-  await Promise.all(
-    fLoans.map(
-      async account => {
-        const fetchedTransactions = await fetchLoanTransactions(auth, account, fromDate, toDate || new Date())
-        ltransactions = Object.assign(ltransactions, fetchedTransactions)
-      }
-    )
-  )
+  const auth = await login(preferences, ZenMoney.getData('auth', {}))
   const transactions = []
-  transactions.push(
-    await Promise.all(
-      accounts.map(
-        async account => {
-          const fetchedTransactions = await fetchTransactions(auth, account.id, account._type, fromDate, toDate || new Date())
-          return fetchedTransactions.map(transaction => convertTransaction(transaction, account, ltransactions)).filter(item => item)
-        }
-      )
-    )
-  )
+  const accounts = []
+  const accountsById = {}
+  const accountsData = flatten(await Promise.all([
+    fetchAccounts(auth),
+    fetchCards(auth),
+    fetchLoans(auth)
+  ])).map(convertAccount).filter(x => x)
+  flatten(accountsData.map(({ account }) => account.syncID)).forEach(syncId => {
+    accountsById[syncId] = true
+  })
 
-  // хранить accessToken не нужно
+  await Promise.all(accountsData.map(async ({ account, product }) => {
+    accounts.push(account)
+    if (ZenMoney.isAccountSkipped(account.id)) {
+      return
+    }
+    const apiTransactions = await fetchTransactions(auth, product, fromDate, toDate)
+    for (const apiTransaction of apiTransactions) {
+      const transaction = convertTransaction(apiTransaction, account, accountsById)
+      if (transaction) {
+        transactions.push(transaction)
+      }
+    }
+  }))
+
   delete auth.accessToken
 
-  if (!accounts || accounts.length === 0) {
-    throw new Error('Пустой список счетов')
-  }
-
   return {
-    accounts: accounts.map(account => omit(account, ['_type', '_contract', '_bankname'])),
-    transactions: flattenDeep(transactions)
+    accounts: ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId }),
+    transactions: adjustTransactions({ transactions })
   }
 }

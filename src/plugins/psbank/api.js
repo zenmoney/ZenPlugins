@@ -242,7 +242,7 @@ export async function fetchCards (auth) {
       activeOnly: true
     }
   })
-  return response.body
+  return response.body.cardAccounts
 }
 
 export async function fetchAccounts (auth) {
@@ -262,27 +262,23 @@ export async function fetchLoans (auth) {
       activeOnly: true
     }
   })
-  return response.body.loans
+  return Promise.all(response.body.loans.map(async loan => {
+    const detailsResponse = await fetchApiJson(auth, `api/loans/${loan.contractId}`, {
+      method: 'GET',
+      body: {
+        activeOnly: true
+      }
+    })
+    return detailsResponse.body
+  }))
 }
 
-export async function fetchLoan (auth, loan) {
-  let uurl
-  uurl = `api/loans/${loan}`
-  const response = await fetchApiJson(auth, uurl, {
-    method: 'GET',
-    body: {
-      activeOnly: true
-    }
-  })
-  return response.body
-}
-
-export async function fetchTransactions (auth, id, type, fromDate, toDate) {
-  let response
+export async function fetchTransactions (auth, { id, type }, fromDate, toDate) {
+  let key = 'transactions'
   let url
   let params
   switch (type) {
-    case 1: // счета
+    case 'account':
       url = `api/accounts/${id}/statement`
       params = {
         StartDate: fromDate.toISOString(),
@@ -295,8 +291,7 @@ export async function fetchTransactions (auth, id, type, fromDate, toDate) {
         PageNumber: 1
       }
       break
-
-    case 2: // карты
+    case 'card':
       url = `api/cards/accounts/${id}/statement`
       params = {
         StartDate: fromDate.toISOString(),
@@ -309,10 +304,11 @@ export async function fetchTransactions (auth, id, type, fromDate, toDate) {
         PageNumber: 1
       }
       break
-
-    case 'checking':
-      url = `api/accounts/${id}/statement`
+    case 'loan':
+      key = 'items'
+      url = 'api/operations/requests/history'
       params = {
+        ContractId: id,
         StartDate: fromDate.toISOString(),
         EndDate: toDate.toISOString(),
         Income: true,
@@ -323,71 +319,18 @@ export async function fetchTransactions (auth, id, type, fromDate, toDate) {
         PageNumber: 1
       }
       break
-
-    case 'loan':
-      url = null
-      break
-
     default:
-      url = null
-      console.log('Новый тип счета', type)
+      console.assert(false, 'unsupported account type', type)
       break
   }
-
-  if (!url) { return [] }
-  response = await fetchApiJson(auth, url,
+  const response = await fetchApiJson(auth, url,
     {
       method: 'GET',
       body: params
     },
-    response => get(response, 'body.transactions')
+    response => get(response, `body.${key}`)
   )
-  return response.body.transactions
-}
-
-export async function fetchLoanTransactions (auth, account, fromDate, toDate) {
-  let response
-  let url
-  let params
-  switch (account._type) {
-    case 'loan':
-      url = `api/operations/requests/history`
-      params = {
-        ContractId: account.id,
-        StartDate: fromDate.toISOString(),
-        EndDate: toDate.toISOString(),
-        Income: true,
-        Outcome: true,
-        ProcessedOnly: false,
-        SortDirection: 2,
-        PageSize: 1000,
-        PageNumber: 1
-      }
-      break
-
-    default:
-      url = null
-      console.log('Новый тип счета', account._type)
-      break
-  }
-  if (!url) { return [] }
-
-  response = await fetchApiJson(auth, url,
-    {
-      method: 'GET',
-      body: params
-    },
-    response => get(response, 'body.items')
-  )
-  let transactions = {}
-  for (const t of response.body.items) {
-    transactions[t.requestId] = {
-      id: account.id,
-      contract: account._contract,
-      bankname: account._bankname
-    }
-  }
-  return transactions
+  return response.body[key]
 }
 
 function getUrl (url) {
