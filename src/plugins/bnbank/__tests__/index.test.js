@@ -56,21 +56,6 @@ describe('scrape', () => {
 
     expect(result.transactions).toEqual([
       {
-        'comment': 'Зачисление дохода от предпринимательской деятельности',
-        'date': new Date('2019-01-09T07:38:00.000Z'),
-        'hold': false,
-        'merchant': null,
-        'movements': [{
-          'account': {
-            'id': '2007500000000000'
-          },
-          'fee': 0,
-          'id': null,
-          'invoice': null,
-          'sum': 3000
-        }]
-      },
-      {
         'comment': null,
         'date': new Date('2019-01-02T21:00:00.000Z'),
         'hold': false,
@@ -162,6 +147,21 @@ describe('scrape', () => {
           'id': null,
           'invoice': null,
           'sum': 206
+        }]
+      },
+      {
+        'comment': 'Зачисление дохода от предпринимательской деятельности',
+        'date': new Date('2019-01-09T07:38:00.000Z'),
+        'hold': false,
+        'merchant': null,
+        'movements': [{
+          'account': {
+            'id': '2007500000000000'
+          },
+          'fee': 0,
+          'id': null,
+          'invoice': null,
+          'sum': 3000
         }]
       },
       {
