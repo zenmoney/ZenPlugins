@@ -96,7 +96,7 @@ export function convertLastTransaction (json, accounts) {
     movements: [ getMovement(json, account) ],
     merchant: null,
     comment: null,
-    hold: false
+    hold: true
   };
 
   [

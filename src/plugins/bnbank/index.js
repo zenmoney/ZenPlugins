@@ -1,3 +1,4 @@
+import * as _ from 'lodash'
 import * as bank from './api'
 import * as converters from './converters'
 
@@ -26,6 +27,6 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     .filter(transaction => transaction !== null)
   return {
     accounts: preparedAccounts,
-    transactions: transactions.concat(lastTransactions)
+    transactions: _.sortBy(transactions.concat(lastTransactions), transaction => transaction.date)
   }
 }
