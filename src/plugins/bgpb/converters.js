@@ -121,7 +121,6 @@ function getMovement (apiTransaction, account) {
 }
 
 function parseCash (transaction, apiTransaction) {
-  console.log(apiTransaction)
   if (apiTransaction.description.indexOf('наличных на карту') > 0 ||
     apiTransaction.description === 'Пополнение' ||
     apiTransaction.description === 'Снятие наличных') {
