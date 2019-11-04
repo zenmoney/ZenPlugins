@@ -81,18 +81,20 @@ export function convertTransaction (apiTransaction, account, accountsById) {
     sum: apiTransaction.transactionSum || apiTransaction.sum,
     instrument: apiTransaction.transactionCurrency ? getInstrument(apiTransaction.transactionCurrency.nameIso) : account.instrument
   }
+  const movement = {
+    id: null,
+    account: { id: account.id },
+    invoice: invoice.instrument === account.instrument ? null : invoice,
+    sum: apiTransaction.cardSum ? (apiTransaction.cardSum - apiTransaction.cardCommissionSum) : invoice.sum,
+    fee: apiTransaction.cardCommissionSum || 0
+  }
+  if (!movement.sum) {
+    return null
+  }
   const transaction = {
     hold: Boolean(apiTransaction.cardSum && !apiTransaction.isProcessed),
     date: new Date(apiTransaction.transactionDate || apiTransaction.startTime),
-    movements: [
-      {
-        id: null,
-        account: { id: account.id },
-        invoice: invoice.instrument === account.instrument ? null : invoice,
-        sum: apiTransaction.cardSum ? (apiTransaction.cardSum - apiTransaction.cardCommissionSum) : invoice.sum,
-        fee: apiTransaction.cardCommissionSum || 0
-      }
-    ],
+    movements: [ movement ],
     merchant: null,
     comment: null
   };
