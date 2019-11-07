@@ -201,7 +201,7 @@ export async function fetchTransactions ({ id, type }, fromDate, toDate) {
   const transactions = []
   const limit = 20
   const fromDateStr = toISODateString(changeTimezoneToCurrent(fromDate, 180))
-  const toDateStr = toISODateString(changeTimezoneToCurrent(toDate, 180))
+  const toDateStr = toISODateString(changeTimezoneToCurrent(toDate, 300))
 
   let page = 0
   while (true) {
