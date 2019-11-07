@@ -135,6 +135,11 @@ export async function fetchAccounts ({ accessToken }, { inn }) {
       Authorization: `Bearer ${accessToken}`
     }
   })
+  if (response.body.errorCode === 'INVALID_DATA' && response.body.errorText && [
+    'Некорректные символы в ИНН компании'
+  ].some(str => response.body.errorText.indexOf(str) >= 0)) {
+    throw new InvalidPreferencesError('Неверный ИНН компании')
+  }
   return response.body || []
 }
 
