@@ -4,19 +4,32 @@ import { retry } from '../../common/retry'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 
 async function fetchJson (url, options) {
-  const response = await commonFetchJson(url, {
-    method: 'GET',
-    headers: {
-      'Accept': 'application/json',
-      'Content-type': 'application/json',
-      'Authorization': `Bearer ${options.token}`,
-      'Host': 'edge.qiwi.com'
-    },
-    sanitizeRequestLog: { headers: { Authorization: true } },
-    ...omit(options, 'token')
-  })
+  let token = options && options.token ? options.token.trim() : ''
+  if (!token || /[а-яА-Я\s]/.test(token)) {
+    throw new InvalidPreferencesError('Неверный токен. Создайте токен на qiwi.com/api. Подробнее читайте в инструкции к подключению.')
+  }
+  let response
+  try {
+    response = await commonFetchJson(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'Host': 'edge.qiwi.com'
+      },
+      sanitizeRequestLog: { headers: { Authorization: true } },
+      ...omit(options, 'token')
+    })
+  } catch (e) {
+    if (/Unexpected char.*in Authorization value/.test(e.toString())) {
+      throw new InvalidPreferencesError('Неверный токен. Создайте токен на qiwi.com/api. Подробнее читайте в инструкции к подключению.')
+    } else {
+      throw e
+    }
+  }
   if (response.status === 401) {
-    throw new InvalidPreferencesError('Токен просрочен либо введен неверно. Настройте подключение заново.')
+    throw new InvalidPreferencesError('Неверный токен. Создайте токен на qiwi.com/api. Подробнее читайте в инструкции к подключению.')
   }
   if (response.body && response.body.errorCode === 'internal.error') {
     throw new TemporaryError('Информация временно недоступна.')
