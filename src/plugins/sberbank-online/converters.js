@@ -1,7 +1,7 @@
 import * as _ from 'lodash'
+import { parseOuterAccountData } from '../../common/accounts'
 import { getIntervalBetweenDates } from '../../common/momentDateUtils'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
-import { parseOuterAccountData } from '../../common/accounts'
 
 export const GRAMS_IN_OZ = 31.1034768
 
@@ -36,8 +36,7 @@ export function convertTransaction (apiTransaction, account, accountsById) {
   [
     parseInnerTransfer,
     parseSum,
-    parseCashReplenishment,
-    parseCashWithdrawal,
+    parseCashTransfer,
     parseOuterIncomeTransfer,
     parseOutcomeTransfer,
     parsePayee
@@ -58,28 +57,15 @@ function parseSum (transaction, apiTransaction, account) {
   }
 }
 
-function parseCashWithdrawal (transaction, apiTransaction, account) {
-  if (apiTransaction.form !== 'ExtCardCashOut') {
-    return false
-  }
-  const invoice = transaction.movements[0].invoice || { sum: transaction.movements[0].sum, instrument: account.instrument }
-  transaction.movements.push({
-    id: null,
-    account: {
-      type: 'cash',
-      instrument: invoice.instrument,
-      company: null,
-      syncIds: null
-    },
-    invoice: null,
-    sum: -invoice.sum,
-    fee: 0
-  })
-  return true
+export function isCashTransfer (apiTransaction) {
+  return ['ExtCardCashIn', 'ExtCardCashOut'].indexOf(apiTransaction.form) >= 0 ||
+    (apiTransaction.to && [
+      /ATM/
+    ].some(regexp => regexp.test(apiTransaction.to)))
 }
 
-function parseCashReplenishment (transaction, apiTransaction, account) {
-  if (apiTransaction.form !== 'ExtCardCashIn') {
+function parseCashTransfer (transaction, apiTransaction, account) {
+  if (!isCashTransfer(apiTransaction)) {
     return false
   }
   const invoice = transaction.movements[0].invoice || { sum: transaction.movements[0].sum, instrument: account.instrument }
@@ -108,6 +94,9 @@ function parseInnerTransfer (transaction, apiTransaction, account, accountsById)
     'ExtCardTransferOut',
     'ExtCardLoanPayment'
   ].indexOf(apiTransaction.form) < 0) {
+    return false
+  }
+  if (isCashTransfer(apiTransaction)) {
     return false
   }
 

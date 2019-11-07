@@ -2,11 +2,11 @@ import { MD5 } from 'jshashes'
 import _ from 'lodash'
 import * as moment from 'moment'
 import * as qs from 'querystring'
-import { ParseError, parseXml, fetch } from '../../common/network'
-import { retry, RetryError, toNodeCallbackArguments } from '../../common/retry'
 import { parseOuterAccountData } from '../../common/accounts'
+import { fetch, ParseError, parseXml } from '../../common/network'
+import { retry, RetryError, toNodeCallbackArguments } from '../../common/retry'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
-import { formatDateSql, parseDate, parseDecimal } from './converters'
+import { formatDateSql, isCashTransfer, parseDate, parseDecimal } from './converters'
 
 const md5 = new MD5()
 
@@ -301,7 +301,8 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
         'P2PExternalBankTransfer'
       ].indexOf(transaction.form) >= 0 ||
       parseOuterAccountData(transaction.to) ||
-      transaction.to === 'Автоплатеж') {
+      transaction.to === 'Автоплатеж' ||
+      isCashTransfer(transaction)) {
       const detailsResponse = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/payments/view.do`, {
         headers: {
           ...defaultHeaders,
