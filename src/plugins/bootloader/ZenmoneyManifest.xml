@@ -3,7 +3,7 @@
     <id>bootloader</id>
     <version>1.0.0</version>
     <build>1</build>
-    <company>0</company>
+    <company>12499</company>
     <modular>true</modular>
     <files>
         <js>index.js</js>
