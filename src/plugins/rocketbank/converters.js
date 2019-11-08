@@ -167,6 +167,8 @@ export function convertAccountTransaction (apiTransaction, account, titleAccount
       break
 
     case 'internal_cash_in_request':
+    case 'warp_outcome':
+    case 'warp_income':
       fillPayee(transaction, apiTransaction)
       break
 
@@ -294,6 +296,14 @@ function getMerchant (apiTransaction) {
   let title = getFriendName(apiTransaction.friend)
   if (!title) {
     title = apiTransaction.merchant.name
+    const arrowIdx = title ? title.indexOf('→') : -1
+    if (arrowIdx >= 0 && arrowIdx < title.length - 1) {
+      if (apiTransaction.money.amount < 0) {
+        title = title.substring(arrowIdx + 1).trim()
+      } else {
+        title = title.substring(0, arrowIdx).trim()
+      }
+    }
   }
   if (!title) {
     return null

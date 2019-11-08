@@ -212,7 +212,7 @@ const transactions = {
           bank: 'Сбербанк',
           image: 'https://s3.amazonaws.com/s3.rocketbank.ru/cards/2/sberbank-card.png',
           logo: 'https://s3.amazonaws.com/s3.rocketbank.ru/cards/2/sberbank-logo.png',
-          color: '#299f2f',
+          color: '#299F2F',
           title: '',
           icon_url: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/card_card/banks/8897/icon/b3ac452b-d20c-4750-8481-83eb501c5f6e.png',
           feed_icon_url: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/card_card/banks/8897/feed_icon/252188cd-6171-40ab-92bd-f69b31472166.png',
@@ -304,7 +304,7 @@ const transactions = {
           bank: 'Росбанк',
           image: 'https://s3.amazonaws.com/s3.rocketbank.ru/cards/2/rosbank-bank.png',
           logo: 'https://s3.amazonaws.com/s3.rocketbank.ru/cards/2/rosbank-logo.png',
-          color: '#ebebeb',
+          color: '#EBEBEB',
           title: '',
           icon_url: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/card_card/banks/682/icon/0f85917d-f3b7-4963-a7c3-d6ffac506b8f.png',
           feed_icon_url: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/card_card/banks/682/feed_icon/1917b361-6731-48e7-b085-789c6d67d6b3.png',
@@ -398,7 +398,7 @@ const transactions = {
           bank: 'Сбербанк',
           image: 'https://s3.amazonaws.com/s3.rocketbank.ru/cards/2/sberbank-card.png',
           logo: 'https://s3.amazonaws.com/s3.rocketbank.ru/cards/2/sberbank-logo.png',
-          color: '#299f2f',
+          color: '#299F2F',
           title: '',
           icon_url: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/card_card/banks/8897/icon/b3ac452b-d20c-4750-8481-83eb501c5f6e.png',
           feed_icon_url: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/card_card/banks/8897/feed_icon/252188cd-6171-40ab-92bd-f69b31472166.png',
@@ -1734,7 +1734,8 @@ const transactions = {
 
   'robin_credit_fee': [
     [
-      { exchange_details: null,
+      {
+        exchange_details: null,
         id: 379841886,
         status: 'confirmed',
         comment: null,
@@ -1763,7 +1764,8 @@ const transactions = {
           icon: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/merchants/5734201/cool_big_a58a12a7-6a06-4a34-b02c-a7f785413226.png',
           iphone_small: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/merchants/5734201/iphone_small_a58a12a7-6a06-4a34-b02c-a7f785413226.png',
           iphone_big: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/merchants/5734201/iphone_big_a58a12a7-6a06-4a34-b02c-a7f785413226.png',
-          android: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/merchants/5734201/android_a58a12a7-6a06-4a34-b02c-a7f785413226.png' },
+          android: 'https://ftp.rocket-cdn.ru/public.rocketbank.ru/uploads/merchants/5734201/android_a58a12a7-6a06-4a34-b02c-a7f785413226.png'
+        },
         location: { latitude: null, longitude: null, acc: null },
         visible: true,
         action: null
@@ -1787,10 +1789,139 @@ const transactions = {
         ]
       }
     ]
+  ],
+
+  'warp_outcome': [
+    [
+      {
+        exchange_details: null,
+        id: 401039434,
+        status: 'confirmed',
+        comment: null,
+        tag_list: [],
+        friend_transfer_type: null,
+        receipt_url: 'https://rocketbank.ru/receipt/6b8927bc-ebafc4cf-17dffe32-7078a996-a33211d7-cd35d8dc',
+        context_type: 'warp_outcome',
+        details: 'Рублевая карта → Ксения Андреевна М',
+        has_receipt: true,
+        mimimiles: 0,
+        happened_at: 1573214652,
+        sputnik: false,
+        display_money: { amount: -15000, currency_code: 'RUB' },
+        money: { amount: -15000, currency_code: 'RUB' },
+        category:
+          {
+            id: 368,
+            name: 'Перевод денег',
+            display_name: 'Перевод денег',
+            icon: 'money_transfer',
+            sub_icon: '368'
+          },
+        merchant:
+          {
+            id: 7302694,
+            name: 'Рублевая карта → Ксения Андреевна М',
+            feed_icon: null,
+            icon: null,
+            iphone_small: null,
+            iphone_big: null,
+            android: null
+          },
+        location: { latitude: null, longitude: null, acc: null },
+        visible: true,
+        action: null
+      },
+      {
+        'comment': null,
+        'date': new Date(1573214652000),
+        'hold': false,
+        'merchant': {
+          country: null,
+          city: null,
+          title: 'Ксения Андреевна М',
+          mcc: null,
+          location: null
+        },
+        'movements': [
+          {
+            'account': { 'id': 'cardRUB' },
+            'fee': 0,
+            'id': '401039434',
+            'invoice': null,
+            'sum': -15000
+          }
+        ]
+      }
+    ]
+  ],
+
+  'warp_income': [
+    [
+      {
+        exchange_details: null,
+        id: 400938658,
+        status: 'confirmed',
+        comment: null,
+        tag_list: [],
+        friend_transfer_type: null,
+        receipt_url: 'https://rocketbank.ru/receipt/712be033-3dd39266-ad8d3d56-084b3971-516951f7-2ca86e18',
+        context_type: 'warp_income',
+        details: 'Ольга Валерьевна К → Рублевая карта',
+        has_receipt: true,
+        mimimiles: 0,
+        happened_at: 1573205931,
+        sputnik: false,
+        display_money: { amount: 70060, currency_code: 'RUB' },
+        money: { amount: 70060, currency_code: 'RUB' },
+        category:
+          {
+            id: 437,
+            name: 'Доход',
+            display_name: 'Доход',
+            icon: 'income',
+            sub_icon: '437'
+          },
+        merchant:
+          {
+            id: 7300014,
+            name: 'Ольга Валерьевна К → Рублевая карта',
+            feed_icon: null,
+            icon: null,
+            iphone_small: null,
+            iphone_big: null,
+            android: null
+          },
+        location: { latitude: null, longitude: null, acc: null },
+        visible: true,
+        action: null
+      },
+      {
+        'comment': null,
+        'date': new Date(1573205931000),
+        'hold': false,
+        'merchant': {
+          country: null,
+          city: null,
+          title: 'Ольга Валерьевна К',
+          mcc: null,
+          location: null
+        },
+        'movements': [
+          {
+            'account': { 'id': 'cardRUB' },
+            'fee': 0,
+            'id': '400938658',
+            'invoice': null,
+            'sum': 70060
+          }
+        ]
+      }
+    ]
   ]
 }
 
 const titleAccounts = {}
+
 function initTitleAccounts () {
   Object.keys(accounts).forEach(type => {
     const account = accounts[type]
