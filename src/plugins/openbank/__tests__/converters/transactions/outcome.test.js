@@ -78,6 +78,41 @@ describe('convertTransaction', () => {
         },
         comment: null
       }
+    ],
+    [
+      {
+        authDate: '2019-11-09T18:32:24.000+0300',
+        authAmount: { amount: 1570, currency: 'RUR' },
+        transAmount: { amount: 1570, currency: 'RUR' },
+        status: { code: 'ACCEPTED', value: 'В обработке' },
+        place: 'Retail RUS SANKT-PETERBU MCDONALDS 21032',
+        category: { code: 'RESTAURANTS_AND_CAFES', value: 'Рестораны и кафе' },
+        operationType: { code: 'R1', value: 'Оплата товаров' },
+        cardId: '8212749',
+        categoryIconUrl: 'https://ib.open.ru/webbank/image/transaction-category-icons/restaurants_and_cafes.png',
+        id: '',
+        digitalSign: false,
+        mccCode: '5814'
+      },
+      {
+        hold: true,
+        date: new Date('2019-11-09T18:32:24.000+03:00'),
+        movements: [
+          {
+            id: null,
+            account: { id: 'account' },
+            invoice: null,
+            sum: -1570,
+            fee: 0
+          }
+        ],
+        merchant: {
+          fullTitle: 'RUS SANKT-PETERBU MCDONALDS 21032',
+          mcc: 5814,
+          location: null
+        },
+        comment: null
+      }
     ]
   ])('converts outcome', (apiTransaction, transaction) => {
     const account = { id: 'account', instrument: 'RUR' }

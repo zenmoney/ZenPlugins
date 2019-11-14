@@ -252,12 +252,17 @@ export function convertTransaction (apiTransaction, account) {
   if (parseMetalInstrument(apiTransaction.transAmount.currency)) {
     sum /= GRAMS_IN_OZ
   }
+  const hold = apiTransaction.status.code === 'ACCEPTED'
+  if (hold && invoice.sum > 0 && description && /^Retail/.test(description)) {
+    invoice.sum = -invoice.sum
+    sum = -sum
+  }
   const transaction = {
-    hold: apiTransaction.status.code === 'ACCEPTED',
+    hold,
     date: parseDate(apiTransaction.authDate),
     movements: [
       {
-        id: apiTransaction.id,
+        id: apiTransaction.id || null,
         account: { id: account.id },
         invoice: invoice.instrument === account.instrument ? null : invoice,
         sum: sum,
@@ -401,6 +406,20 @@ function parsePayee (transaction, apiTransaction, account, invoice, description)
   let mcc = apiTransaction.mccCode ? parseInt(apiTransaction.mccCode) : NaN
   if (isNaN(mcc)) {
     mcc = null
+  }
+  for (const regexp of [
+    /^Retail (.*)$/
+  ]) {
+    const match = description.match(regexp)
+    const payee = match && match[1].trim()
+    if (payee) {
+      transaction.merchant = {
+        fullTitle: payee,
+        mcc,
+        location: null
+      }
+      return false
+    }
   }
   transaction.merchant = {
     country: null,
