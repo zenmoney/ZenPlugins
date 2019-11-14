@@ -77,6 +77,12 @@ function convertCurrentAccount (apiAccount) {
 }
 
 export function convertTransaction (apiTransaction, account, accountsById) {
+  if (apiTransaction.ground && [
+    'Погашение основного долга',
+    'Выдача кредита'
+  ].indexOf(apiTransaction.ground.trim()) >= 0) {
+    return null
+  }
   const invoice = {
     sum: apiTransaction.transactionSum || apiTransaction.sum,
     instrument: apiTransaction.transactionCurrency ? getInstrument(apiTransaction.transactionCurrency.nameIso) : account.instrument
