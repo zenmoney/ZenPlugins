@@ -58,6 +58,34 @@ describe('convertTransaction', () => {
       taxDocDate: '',
       payerStatus: '',
       uin: '0'
+    },
+    {
+      id: '1b2f6374-c563-464d-bfa5-aadc01e3e282',
+      companyId: '8a4d6bdb-6b11-45de-92c8-a97c028a9529',
+      status: 'RejectByBank',
+      category: 'Credit',
+      contragentName: 'ОАО "РЖД"',
+      contragentInn: '7708503727',
+      contragentKpp: '',
+      contragentBankAccountNumber: '40702810200281104189',
+      contragentBankName: 'ФИЛИАЛ БАНКА ВТБ (ПАО) В Г. ЕКАТЕРИНБУРГЕ',
+      contragentBankBic: '046577952',
+      currency: 'RUR',
+      amount: 310,
+      bankAccountNumber: '40702810370010101936',
+      paymentPurpose: '1005860460:  4 услуги с НДС. ЗА ООО "НЭО "ЛЕСТЕР ЭКСПЕРТ" ИНН 5904188926 Без НДС',
+      created: '2019-10-04T08:48:31.81',
+      docNumber: '183',
+      absId: '26228803594',
+      ibsoId: '0',
+      kbk: '',
+      oktmo: '',
+      paymentBasis: '',
+      taxCode: '',
+      taxDocNum: '',
+      taxDocDate: '',
+      payerStatus: '',
+      uin: '0'
     }
   ])('skips specific transaction', (apiTransaction) => {
     expect(convertTransaction(apiTransaction, { id: 'account', instrument: 'RUB' })).toBeNull()
