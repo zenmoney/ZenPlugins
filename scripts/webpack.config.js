@@ -104,6 +104,12 @@ module.exports = ({ production, devServer }) => ({
         options: production ? {} : {
           cacheDirectory: true
         }
+      },
+      {
+        test: /\.proto$/,
+        use: {
+          loader: require.resolve('protobufjs-loader')
+        }
       }
     ])
   },

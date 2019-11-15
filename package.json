@@ -45,6 +45,8 @@
     "object-assign": "4.1.1",
     "pad-left": "2.1.0",
     "promise": "8.0.1",
+    "protobufjs": "6.8.8",
+    "protobufjs-loader": "1.0.1",
     "react": "16.4.0",
     "react-dev-utils": "3.1.0",
     "react-dom": "16.4.0",
