@@ -218,61 +218,43 @@ export async function fetchCards (url) {
     method: 'GET'
   }, response => response.success, message => new Error(''))
 
-  var html = res.body.replace(/\r?\n|\r/g, '')
-  let formRegex = /<form id="viewns.*action="(.[^"]*)".*name="javax\.faces\.encodedURL" value="(.[^"]*).*id="javax\.faces\.ViewState" value="(.[^"]*)"/ig
-  let formData = formRegex.exec(html)
-  let formAction = formData[1]
-  let formEncodedURL = formData[2]
-  let formViewState = formData[3]
-
-  let cardNums = []
-  let cardNumRegex = /<div title="(.[^"]*)" class=".[a-zA-Z_]*"><\/div><\/td><td class="tdNumber"><div class="cellLable">(.[0-9*]*)<\/div>/ig
-  let c
-  while ((c = cardNumRegex.exec(html)) !== null) {
-    if (c.index === cardNumRegex.lastIndex) {
-      cardNumRegex.lastIndex++
-    }
-    cardNums.push({
-      name: c[1],
-      num: c[2]
-    })
-  }
-  console.log(cardNums)
-
-  let cardActions = []
-  let cardActionRegex = /<\/td><td class="tdHiddenButton"><a href="#" onclick="return myfaces.oam.submitForm\((.[^)]*)\);/ig
-  let a
-  while ((a = cardActionRegex.exec(html)) !== null) {
-    if (a.index === cardActionRegex.lastIndex) {
-      cardActionRegex.lastIndex++
-    }
-    cardActions.push(a[1])
-  }
-
   var cards = []
-  let regex = /cellLable">(.[^>]*)<\/div><\/td><td class="tdBalance"><div class="cellLable"><nobr>(.[^<]*)<\/nobr> (.[A-Zа-я0-9. ]*)<\/div><\/td><td class="tdNoPaddingDefault"><div title="" class="cellLable"><\/div><\/td><td class="tdHiddenButton"><a href="#" onclick="return myfaces\.oam\.submitForm\((.[^)]*)\);/ig
-  let m
-  var i = 0
-  while ((m = regex.exec(html)) !== null) {
-    if (m.index === regex.lastIndex) {
-      regex.lastIndex++
-    }
-    cards.push({
-      id: m[1],
-      balance: m[2],
-      currency: m[3],
-      cardNum: cardNums[i].num,
-      cardName: cardNums[i].name,
-      type: 'card',
+  var html = res.body.replace(/\r?\n|\r/g, '')
+  const cheerio = require('cheerio')
+  let $ = cheerio.load(html)
+
+  let formAction = $('form').attr('action')
+  let formEncodedUrl = $('input[name="javax.faces.encodedURL"]').attr('value')
+  let formViewState = $('input[name="javax.faces.ViewState"]').attr('value')
+  let accountBlocks = $('table[class="accountContainer"]').children('tbody').children('tr').children('td')
+  accountBlocks.each(function (i, elem) {
+    let card = {
+      type: 'account',
+      cardNum: '0000********0000',
       transactionsData: {
         action: formAction,
-        encodedURL: formEncodedURL,
-        additional: cardActions[i].match(/'(.[^']*)'/ig),
+        encodedURL: formEncodedUrl,
         viewState: formViewState
       }
-    })
-    i++
-  }
+    }
+    let accountTable = $(elem).children('table[class="accountTable"]').children('tbody').children('tr')
+    let cardTable = $(elem).children('table[class="ibTable"]').children('tbody').children('tr')
+
+    card.cardName = accountTable.children('td[class="tdAccountText"]').children('div').text()
+    card.id = accountTable.children('td[class="tdId"]').children('div').text()
+    card.balance = accountTable.children('td[class="tdBalance"]').children('div').children('nobr').text()
+    card.currency = accountTable.children('td[class="tdBalance"]').children('div').text().split(' ', 2)[1]
+    card.overdraft = $(elem).children('table[class="accountInfoTable"]').children('tbody').children('tr')
+      .children('td[class="tdAccountDetails"]').children('div').children('span[class="tdAccountOverdraft"]').children('nobr').text()
+    card.transactionsData.additional = accountTable.children('td[class="tdHiddenButton"]').children('a[class="collapseAccountLink"]')
+      .attr('onclick').replace('return myfaces.oam.submitForm(', '').replace(');', '').match(/'(.[^']*)'/ig)
+    if (cardTable.children('td').length > 1) {
+      card.type = 'card'
+      card.cardName = cardTable.children('td[class="tdNoPaddingBin"]').children('div').attr('title')
+      card.cardNum = cardTable.children('td[class="tdNumber"]').children('div').text()
+    }
+    cards.push(card)
+  })
   return cards
 }
 
