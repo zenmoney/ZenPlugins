@@ -1,4 +1,6 @@
 import { getIntervalBetweenDates } from '../../common/momentDateUtils'
+import { MD5 } from 'jshashes'
+const md5 = new MD5()
 
 export function convertAccounts (apiAccounts) {
   const types = Object.keys(apiAccounts)
@@ -47,7 +49,10 @@ export function convertAccounts (apiAccounts) {
 }
 
 function cleanSyncId (syncId) {
-  return syncId.replace(/\s+/g, '').replace(/[^\d*]/g, str => str.split('').map(c => c.charCodeAt(0) % 10).join(''))
+  return syncId.replace(/\s+/g, '').replace(/[^\d*]/g, str => {
+    const hash = md5.hex(str).replace(/[^\d*]/g, '')
+    return hash.length < str.length ? hash : hash.substring(0, str.length)
+  })
 }
 
 export function convertAccount (apiAccount) {
@@ -162,6 +167,7 @@ export function convertTransaction (apiTransaction, account) {
     comment: apiTransaction.descr || null
   };
   [
+    parseCashTransfer,
     parseOuterTransfer,
     parseInnerTransfer,
     parsePayee
@@ -171,6 +177,28 @@ export function convertTransaction (apiTransaction, account) {
 
 function getInstrument (code) {
   return code === 'RUR' ? 'RUB' : code
+}
+
+function parseCashTransfer (transaction, apiTransaction, account, invoice) {
+  if (!apiTransaction.descr || ![
+    'Операция с наличными в банкомате'
+  ].some(str => apiTransaction.descr.indexOf(str) >= 0)) {
+    return false
+  }
+  transaction.comment = null
+  transaction.movements.push({
+    id: null,
+    account: {
+      type: 'cash',
+      instrument: invoice.instrument,
+      company: null,
+      syncIds: null
+    },
+    invoice: null,
+    sum: -invoice.sum,
+    fee: 0
+  })
+  return true
 }
 
 function parseOuterTransfer (transaction, apiTransaction, account, invoice) {

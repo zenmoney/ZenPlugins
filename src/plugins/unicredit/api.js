@@ -244,7 +244,7 @@ export async function fetchHistory ({ sid }, fromDate, toDate) {
       DATEON: formatDate(toDate)
     }
   })
-  return getArray(response.body.form.stmitem)
+  return getArray(response.body.form.stmitem).reverse()
 }
 
 export async function fetchTransactions ({ sid }, { id }, fromDate, toDate) {
