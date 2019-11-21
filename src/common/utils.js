@@ -1,3 +1,5 @@
+import padLeft from 'pad-left'
+
 export function isDebug () {
   return global.ZenMoney && ZenMoney.application && ZenMoney.application.platform === 'browser'
 }
@@ -49,4 +51,23 @@ export function getByteLength (str) {
     } // trail surrogate
   }
   return s
+}
+
+let byteToHex = null
+
+export function bufferToHex (arrayBuffer) {
+  if (!byteToHex) {
+    const _byteToHex = []
+    for (let i = 0; i <= 0xff; i++) {
+      const hexOctet = padLeft(i.toString(16).toLowerCase(), 2, '0')
+      _byteToHex.push(hexOctet)
+    }
+    byteToHex = _byteToHex
+  }
+  const bytes = new Uint8Array(arrayBuffer)
+  const hexOctets = new Array(bytes.length)
+  for (let i = 0; i < bytes.length; i++) {
+    hexOctets[i] = byteToHex[bytes[i]]
+  }
+  return hexOctets.join('')
 }

@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import { IncompatibleVersionError } from '../errors'
 import { sanitize } from './sanitize'
+import { bufferToHex } from './utils'
 
 const cheerio = require('cheerio')
 
@@ -42,35 +43,33 @@ export async function fetch (url, options = {}) {
       throw e
     }
   }
-  let body = options.binaryResponse ? await response.arrayBuffer() : await response.text()
+  response = {
+    ..._.pick(response, ['ok', 'status', 'statusText', 'url']),
+    headers: response.headers.entries ? _.fromPairs([...response.headers.entries()]) : response.headers.map,
+    body: options.binaryResponse ? await response.arrayBuffer() : await response.text()
+  }
+
   let bodyParsingException = null
   if (options.parse) {
     try {
-      body = options.parse(body)
+      response.body = options.parse.call(response, response.body)
     } catch (e) {
       bodyParsingException = e
     }
   }
-  let bodyLog = body
-  if (bodyLog && _.isArrayBuffer(bodyLog)) {
-    bodyLog = Array.from(new Uint8Array(bodyLog))
-  } else if (bodyLog && _.isTypedArray(bodyLog)) {
-    bodyLog = Array.from(bodyLog)
-  }
-
-  const headers = response.headers.entries ? _.fromPairs([...response.headers.entries()]) : response.headers.map
-
-  response = {
-    ..._.pick(response, ['ok', 'status', 'statusText', 'url']),
-    body,
-    headers
+  let bodyLog = response.body
+  if (bodyLog) {
+    if (_.isTypedArray(bodyLog)) {
+      bodyLog = bodyLog.buffer
+    }
+    if (_.isArrayBuffer(bodyLog)) {
+      bodyLog = bufferToHex(bodyLog)
+    }
   }
 
   const endTicks = Date.now()
   shouldLog && console.debug('response', sanitize({
-    status: response.status,
-    url: response.url,
-    headers,
+    ..._.pick(response, ['status', 'url', 'headers']),
     body: bodyLog,
     ms: endTicks - beforeFetchTicks
   }, options.sanitizeResponseLog || false))
