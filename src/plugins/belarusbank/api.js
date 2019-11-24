@@ -20,7 +20,7 @@ async function fetchUrl (url, options, predicate = () => true, error = (message)
     validateResponse(response, response => predicate(response), error)
   }
   let err = response.body.match(/<p id ="status_message" class="error">(.[^/]*)</i)
-  if (err && err.indexOf('СМС-код отправлен на номер телефона') === 0) {
+  if (err && err[1].indexOf('СМС-код отправлен на номер телефона') === -1) {
     throw new TemporaryError(err[1])
   }
   return response
