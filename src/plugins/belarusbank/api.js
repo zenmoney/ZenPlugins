@@ -255,6 +255,7 @@ export async function fetchCards (url) {
     }
     cards.push(card)
   })
+  console.log(`>>> Загружено ${cards.length} кард.`)
   return cards
 }
 
