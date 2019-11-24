@@ -123,7 +123,8 @@ function getMovement (apiTransaction, account) {
 function parseCash (transaction, apiTransaction) {
   if (apiTransaction.description.indexOf('наличных на карту') > 0 ||
     apiTransaction.description === 'Пополнение' ||
-    apiTransaction.description === 'Снятие наличных') {
+    apiTransaction.description === 'Снятие наличных' ||
+    apiTransaction.description === 'Наличные в ПОС') {
     // добавим вторую часть перевода
     transaction.movements.push({
       id: null,
