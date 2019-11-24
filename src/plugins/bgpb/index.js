@@ -58,7 +58,9 @@ async function allAccounts (token) {
   accounts.filter(account => account.balance !== null) // Фильтруем все карты, которые еще не выпущены
 
   for (let i = 0; i < accounts.length; i++) {
-    accounts[i].accountID = await bank.fetchAccountConditions(token, accounts[i])
+    if (accounts[i].balance !== null) {
+      accounts[i].accountID = await bank.fetchAccountConditions(token, accounts[i])
+    }
   }
 
   return accounts
