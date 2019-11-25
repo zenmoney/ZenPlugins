@@ -289,6 +289,51 @@ describe('convertLastTransaction', () => {
       }
     },
     {
+      name: 'cash withdrawal in PoS',
+      transaction: {
+        acceptedTime: 1554492493000,
+        eventType: 4,
+        id: '2019-7848714',
+        pushMessageText: 'Card1111; Наличные в ПОС: 100,00 USD; 03.05.19 20:06:18; BGPB PRK-28,MINSK,BY; MCC: 6010; Dostupno: 2 000,84 USD'
+      },
+      expectedTransaction: {
+        'comment': null,
+        'date': new Date('2019-05-03T17:06:00.000Z'),
+        'hold': false,
+        'merchant': {
+          'city': 'MINSK',
+          'country': 'BY',
+          'location': null,
+          'mcc': null,
+          'title': 'BGPB PRK-28'
+        },
+        'movements':
+          [
+            {
+              'account': {
+                'id': '11161311-117d11'
+              },
+              'fee': 0,
+              'id': null,
+              'invoice': null,
+              'sum': -100
+            },
+            {
+              'account': {
+                'company': null,
+                'instrument': 'USD',
+                'syncIds': null,
+                'type': 'cash'
+              },
+              'fee': 0,
+              'id': null,
+              'invoice': null,
+              'sum': 100
+            }
+          ]
+      }
+    },
+    {
       name: 'money movement',
       transaction: {
         acceptedTime: 1554492493000,
