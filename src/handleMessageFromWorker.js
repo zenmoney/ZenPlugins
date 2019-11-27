@@ -55,7 +55,9 @@ function setCookie (cookie) {
   if (cookie.path) {
     cookieStr += '; Path=' + cookie.path
   }
-  if (cookie.expires) {
+  if (cookie.value === undefined || cookie.value === null) {
+    cookieStr += '; Expires=Thu, 01-Jan-1970 00:00:01 GMT'
+  } else if (cookie.expires) {
     cookieStr += '; Expires=' + toDate(cookie.expires).toUTCString()
   }
   document.cookie = cookieStr

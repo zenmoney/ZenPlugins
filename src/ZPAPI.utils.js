@@ -149,7 +149,9 @@ export const addCookies = (newCookies) => {
         break
       }
     }
-    cookies.push(cookie)
+    if (cookie.value !== null && cookie.value !== undefined) {
+      cookies.push(cookie)
+    }
   }
 }
 
