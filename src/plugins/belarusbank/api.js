@@ -255,8 +255,8 @@ export async function fetchCards (url) {
     }
     cards.push(card)
   })
-  console.log(`>>> Загружено ${cards.length} кард.`)
-  return cards
+  console.log(`>>> Загружено ${cards.length} карт.`)
+  return cards.filter(card => card.id !== '')
 }
 
 export async function fetchCardsTransactions (acc) {
