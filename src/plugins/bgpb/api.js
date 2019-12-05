@@ -83,10 +83,10 @@ export function parseFullTransactionsMail (html) {
   let i = 0
   let data = []
   flatMap($('table[class="section_3"] tr').toArray().slice(1), tr => {
-    if (tr.children.length >= 11) { // Значит это операция, а не просто форматирование
+    if (tr.children.length >= 12) { // Значит это операция, а не просто форматирование
       tr.children.forEach(function (td) {
         if (td.children && td.children[0] && td.children[0].type === 'text') {
-          if (counter === 11) {
+          if (counter === 12) {
             counter = 0
             i++
           }
