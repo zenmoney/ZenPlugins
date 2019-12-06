@@ -123,7 +123,7 @@ function ZPAPI ({ manifest, preferences, data }) {
   this.setOptions = notImplemented
   this.setAuthentication = notImplemented
   this.clearAuthentication = notImplemented
-  this.getCookies = notImplemented
+  this.getCookies = getCookies
   this.getCookie = notImplemented
 
   const pluginDataApi = makePluginDataApi(data)

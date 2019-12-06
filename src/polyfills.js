@@ -55,3 +55,13 @@ if (!('readLine' in ZenMoney)) {
     return ZenMoney.retrieveCode(message, imageUrl, rest)
   }
 }
+if (!('clearCookies' in ZenMoney)) {
+  ZenMoney.clearCookies = async () => {
+    const cookies = await ZenMoney.getCookies()
+    if (cookies) {
+      for (const cookie of cookies) {
+        await ZenMoney.setCookie(isDebug() ? 'localhost' : cookie.domain, cookie.name, null)
+      }
+    }
+  }
+}

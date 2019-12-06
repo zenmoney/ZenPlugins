@@ -139,7 +139,7 @@ export const processHeadersAndBody = ({ headers, body }) => {
 }
 
 const cookies = []
-export const getCookies = () => cookies
+export const getCookies = () => cookies.slice()
 export const addCookies = (newCookies) => {
   for (const cookie of newCookies) {
     for (let i = 0; i < cookies.length; i++) {
