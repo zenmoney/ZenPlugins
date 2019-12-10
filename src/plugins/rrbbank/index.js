@@ -1,5 +1,6 @@
 import * as bank from './api'
 import * as converters from './converters'
+import { uniqBy } from 'lodash'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
   const token = await bank.login(preferences.phone, preferences.password)
@@ -16,7 +17,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     preparedAccounts = cards.concat(deposits)
   }
 
-  const transactions = (await bank.fetchTransactions(token, preparedAccounts, fromDate, toDate))
+  const transactions = uniqBy(await bank.fetchTransactions(token, preparedAccounts, fromDate, toDate), (tr) => tr.cardPAN + '#' + tr.operationDate + '#' + tr.operationName + '#' + tr.operationAmount)
     .map(transaction => converters.convertTransaction(transaction, preparedAccounts))
 
   return {
