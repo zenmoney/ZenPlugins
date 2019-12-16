@@ -115,7 +115,7 @@ function parseCash (transaction, json) {
   }
 }
 
-const knownTransactionTypes = ['Retail', 'ATM', 'CH Debit', 'CH Payment', 'Cash', 'SOA Debit']
+const knownTransactionTypes = ['Retail', 'ATM', 'CH Debit', 'CH Payment', 'Cash', 'SOA Debit', 'CH Credit', 'SOA Credit']
 
 const normalizeSpaces = (text) => compact(text.split(' ')).join(' ')
 
