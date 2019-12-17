@@ -192,11 +192,75 @@ export async function fetchDeposits (url) {
     method: 'GET'
   }, response => response.success, message => new Error(''))
 
-  let regex = /<td class="tdNoPadding" ><div.[^>]*><span.[^>]*>(.*?)<\/span><span.[^>]*>(.*?)<\/span><\/div><\/td><td class="tdNoPadding" ><div.[^>]*>(.*?)<\/div><\/td><td class="tdNoPadding" ><div.[^>]*><span.[^>]*>(.*?)<\/span><\/div><\/td><td class="tdNoPadding" ><div.[^>]*>(.*?)<\/div><\/td>.*?X<\/a><div.[^>]*>(.*?)<\/div><\/div><\/div><\/td>/ig
-  let m
+  return parseDeposits(res.body)
+}
 
-  var deposits = []
-  while ((m = regex.exec(res.body.replace(/\r?\n|\r/g, ''))) !== null) {
+export async function fetchCards (url) {
+  console.log('>>> Загрузка картсчетов...')
+  let res = await fetchUrl(url, {
+    method: 'GET'
+  }, response => response.success, message => new Error(''))
+  return parseCards(res.body)
+}
+
+export function parseCards (html) {
+  html = html.replace(/\r?\n|\r/g, '')
+  const accounts = []
+  const cheerio = require('cheerio')
+  const $ = cheerio.load(html)
+
+  const formAction = $('form').attr('action')
+  const formEncodedUrl = $('input[name="javax.faces.encodedURL"]').attr('value')
+  const formViewState = $('input[name="javax.faces.ViewState"]').attr('value')
+  const accountBlocks = $('table[class="accountContainer"]').children('tbody').children('tr').children('td')
+  accountBlocks.each(function (i, elem) {
+    const account = {
+      type: 'ccard',
+      transactionsData: {
+        action: formAction,
+        encodedURL: formEncodedUrl,
+        viewState: formViewState
+      },
+      cards: []
+    }
+    const accountTable = $(elem).children('table[class="accountTable"]').children('tbody').children('tr')
+    const cardTable = $(elem).children('table[class="ibTable"]').children('tbody').children('tr')
+
+    account.accountName = accountTable.children('td[class="tdAccountText"]').children('div').text()
+    account.accountNum = accountTable.children('td[class="tdId"]').children('div').text().replace(/\s+/g, '')
+    account.balance = accountTable.children('td[class="tdBalance"]').children('div').children('nobr').text()
+    account.currency = accountTable.children('td[class="tdBalance"]').children('div').text().split(' ').pop()
+    account.overdraftBalance = $(elem).children('table[class="accountInfoTable"]').children('tbody').children('tr')
+      .children('td[class="tdAccountDetails"]').children('div').children('span[class="tdAccountOverdraft"]').children('nobr').text()
+    account.overdraftCurrency = $(elem).children('table[class="accountInfoTable"]').children('tbody').children('tr')
+      .children('td[class="tdAccountDetails"]').children('div').children('span[class="tdAccountOverdraft"]').text().split(' ').pop()
+    account.transactionsData.additional = accountTable.children('td[class="tdHiddenButton"]').children('a[class="collapseAccountLink"]')
+      .attr('onclick').replace('return myfaces.oam.submitForm(', '').replace(');', '').match(/'(.[^']*)'/ig)
+    account.accountId = account.transactionsData.additional[account.transactionsData.additional.length - 1].replace(/'/g, '')
+    if (cardTable.children('td').length > 1) {
+      cardTable.each(function (i, elem) {
+        const card = {
+          name: $(elem).children('td[class="tdNoPaddingBin"]').children('div').attr('title'),
+          number: $(elem).children('td[class="tdNumber"]').children('div').text(),
+          id: $(elem).children('td[class="tdId"]').children('div').text(),
+          isActive: Boolean($(elem).children('td[class="tdNoPadding"]').children('div').attr('class') !== 'cellLable notActiveCard')
+        }
+        account.cards.push(card)
+      })
+    } else {
+      console.assert(false, 'unsupported account type')
+    }
+    accounts.push(account)
+  })
+  console.log(`>>> Загружено ${accounts.length} карточных аккаунтов.`)
+  return accounts.filter(account => account.id !== '')
+}
+
+export function parseDeposits (response) {
+  const regex = /<td class="tdNoPadding" ><div.[^>]*><span.[^>]*>(.*?)<\/span><span.[^>]*>(.*?)<\/span><\/div><\/td><td class="tdNoPadding" ><div.[^>]*>(.*?)<\/div><\/td><td class="tdNoPadding" ><div.[^>]*><span.[^>]*>(.*?)<\/span><\/div><\/td><td class="tdNoPadding" ><div.[^>]*>(.*?)<\/div><\/td>.*?X<\/a><div.[^>]*>(.*?)<\/div><\/div><\/div><\/td>/ig
+  const deposits = []
+  let m
+  while ((m = regex.exec(response.replace(/\r?\n|\r/g, ''))) !== null) {
     if (m.index === regex.lastIndex) {
       regex.lastIndex++
     }
@@ -209,54 +273,6 @@ export async function fetchDeposits (url) {
       type: 'deposit'
     })
   }
-  return deposits
-}
-
-export async function fetchCards (url) {
-  console.log('>>> Загрузка картсчетов...')
-  let res = await fetchUrl(url, {
-    method: 'GET'
-  }, response => response.success, message => new Error(''))
-
-  var cards = []
-  var html = res.body.replace(/\r?\n|\r/g, '')
-  const cheerio = require('cheerio')
-  let $ = cheerio.load(html)
-
-  let formAction = $('form').attr('action')
-  let formEncodedUrl = $('input[name="javax.faces.encodedURL"]').attr('value')
-  let formViewState = $('input[name="javax.faces.ViewState"]').attr('value')
-  let accountBlocks = $('table[class="accountContainer"]').children('tbody').children('tr').children('td')
-  accountBlocks.each(function (i, elem) {
-    let card = {
-      type: 'account',
-      cardNum: '0000********0000',
-      transactionsData: {
-        action: formAction,
-        encodedURL: formEncodedUrl,
-        viewState: formViewState
-      }
-    }
-    let accountTable = $(elem).children('table[class="accountTable"]').children('tbody').children('tr')
-    let cardTable = $(elem).children('table[class="ibTable"]').children('tbody').children('tr')
-
-    card.cardName = accountTable.children('td[class="tdAccountText"]').children('div').text()
-    card.id = accountTable.children('td[class="tdId"]').children('div').text()
-    card.balance = accountTable.children('td[class="tdBalance"]').children('div').children('nobr').text()
-    card.currency = accountTable.children('td[class="tdBalance"]').children('div').children('nobr').empty().parent().text().split(' ', 2)[1]
-    card.overdraft = $(elem).children('table[class="accountInfoTable"]').children('tbody').children('tr')
-      .children('td[class="tdAccountDetails"]').children('div').children('span[class="tdAccountOverdraft"]').children('nobr').text()
-    card.transactionsData.additional = accountTable.children('td[class="tdHiddenButton"]').children('a[class="collapseAccountLink"]')
-      .attr('onclick').replace('return myfaces.oam.submitForm(', '').replace(');', '').match(/'(.[^']*)'/ig)
-    if (cardTable.children('td').length > 1) {
-      card.type = 'card'
-      card.cardName = cardTable.children('td[class="tdNoPaddingBin"]').children('div').attr('title')
-      card.cardNum = cardTable.children('td[class="tdNumber"]').children('div').text()
-    }
-    cards.push(card)
-  })
-  console.log(`>>> Загружено ${cards.length} карт.`)
-  return cards.filter(card => card.id !== '')
 }
 
 export async function fetchCardsTransactions (acc) {
