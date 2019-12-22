@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>sovest</id>
+    <company>0</company>
+    <description>
+        Плагин синхронизации с картами рассрочки Совесть.
+        Для подключения импорта укажите ваш номер телефона и пароль от личного абинета на сайте.
+    </description>
+    <version>1.0</version>
+    <build>1</build>
+    <modular>true</modular>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+</provider>

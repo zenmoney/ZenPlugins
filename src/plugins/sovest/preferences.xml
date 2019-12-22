@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="login"
+        obligatory="true"
+        title="Номер телефона"
+        dialogTitle="Номер телефона"
+        dialogMessage="Введите номер мобильного телефона в формате +79997775544"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|Номер телефона|{@s}"
+    />
+    <EditTextPreference
+        key="password"
+        obligatory="true"
+        inputType="textPassword"
+        title="Пароль"
+        dialogTitle="Пароль"
+        dialogMessage="Введите пароль, используемый для входа в личный кабинет"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="||***********"
+    />
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="С какой даты загружать операции"
+        defaultValue="2019-01-01"
+        dialogTitle="Дата начала загрузки"
+        dialogMessage="Введите дату, с которой загружать операции"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|startDate|{@s}"
+    />
+</PreferenceScreen>
