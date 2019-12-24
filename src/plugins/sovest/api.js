@@ -27,7 +27,9 @@ async function fetchJson (url, options = {}, predicate = () => true) {
       'Sec-Fetch-Mode': 'cors',
       'Referer': 'https://sovest.ru/',
       ...options.headers
-    }
+    },
+    sanitizeRequestLog: { body: { username: true, password: true }, headers: { Authorization: true } },
+    sanitizeResponseLog: { body: { access_token: true } }
   })
   /* console.assert(false, JSON.stringify(response)) */
   if (predicate) {
@@ -39,11 +41,6 @@ async function fetchJson (url, options = {}, predicate = () => true) {
 }
 
 export async function login (login, password) {
-  // It happens on server side
-  if (!login || !password) {
-    throw new InvalidPreferencesError('Не задан логин или пароль')
-  }
-
   // get SNODE cookie from site
   const responsehome = await network.fetch(homepage, { headers: { 'User-Agent': userAgent }, sanitizeResponseLog: { headers: true } })
 
@@ -68,16 +65,25 @@ export async function login (login, password) {
     'Cookie': cookie[0]
   }
   let options = {
-    method: 'post',
+    method: 'POST',
     body: body,
     headers: headers
   }
   const response = await fetchJson('https://oauth.sovest.ru/oauth/token', options, null)
-  if (response.body.token_type) tokenType = response.body.token_type
+  if (response.body.user_message && [
+    'еверный логин или пароль'
+  ].some(str => response.body.user_message.indexOf(str) >= 0)) {
+    throw new InvalidPreferencesError('Неверный логин или пароль')
+  }
+  if (response.body.token_type) {
+    tokenType = response.body.token_type
+  }
   userCookie = setCookie.parse(setCookie.splitCookiesString(response.headers['set-cookie']))
   if (userCookie) {
     for (const element of userCookie) {
-      if (element.name !== 'JSESSIONID' && element.name !== 'refresh_token') fullCookieString += '; ' + element.name + '=' + element.value
+      if (element.name !== 'JSESSIONID' && element.name !== 'refresh_token') {
+        fullCookieString += '; ' + element.name + '=' + element.value
+      }
     }
   }
   return response.body.access_token
@@ -117,8 +123,12 @@ export async function fetchTransactions (token, fromDate, toDate) {
   let nextTxnId = null
   let fromDateMoment = null
   let toDateMoment = null
-  if (fromDate) fromDateMoment = moment(fromDate)
-  if (toDate) toDateMoment = moment(toDate)
+  if (fromDate) {
+    fromDateMoment = moment(fromDate)
+  }
+  if (toDate) {
+    toDateMoment = moment(toDate)
+  }
   do {
     const response = await fetchTransactionPaged(token, nextTxnId, nextTxnDate)
     nextTxnDate = response.body.nextTxnDate
