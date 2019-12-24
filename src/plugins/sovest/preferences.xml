@@ -16,7 +16,7 @@
         inputType="textPassword"
         title="Пароль"
         dialogTitle="Пароль"
-        dialogMessage="Введите пароль, используемый для входа в личный кабинет"
+        dialogMessage="Введите пароль, используемый для входа в личный кабинет карты «Совесть»"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="||***********"
