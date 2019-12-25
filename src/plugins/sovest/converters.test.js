@@ -19,7 +19,7 @@ describe('convertAccount', () => {
       type: 'ccard',
       title: 'Совесть',
       instrument: 'RUB',
-      balance: 66666.66,
+      balance: -69333.34,
       creditLimit: 136000,
       syncID: [
         '9999'
