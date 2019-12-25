@@ -62,7 +62,7 @@ export async function login (login, password) {
     'Accept': 'application/json',
     'Origin': homepage,
     'Content-Type': 'application/x-www-form-urlencoded',
-    'Cookie': cookie[0]
+    'Cookie': fullCookieString
   }
   let options = {
     method: 'POST',
@@ -94,7 +94,7 @@ export async function fetchAccounts (token) {
   let method = 'GET'
   let headers = {
     'Referer': homepage + 'mycard',
-    'cookie': fullCookieString,
+    'Cookie': fullCookieString,
     'Accept': '*/*',
     'Origin': homepage,
     'Authorization': tokenType + ' ' + token
@@ -167,7 +167,7 @@ async function fetchTransactionPaged (token, nextTxnId, nextTxnDate) {
     'method': 'GET',
     headers: {
       'Referer': homepage + 'history',
-      'cookie': fullCookieString,
+      'Cookie': fullCookieString,
       'Accept': '*/*',
       'Origin': homepage,
       'Authorization': tokenType + ' ' + token
