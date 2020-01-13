@@ -361,27 +361,27 @@ const accounts = {
           ProductName: 'Кредитная карта',
           ProductType: 3,
           Contract:
-          {
-            '$id': '28',
-            Debt:
-              {
-                '$id': '29',
-                DebtDays: 0,
-                DebtAmount: 0,
-                LastPaymentDebtDays: 0
-              },
-            Properties:
-              {
-                '$id': '30',
-                NextPaymentDate: '2019-05-15T00:00:00+03:00',
-                PaymentNum: 0,
-                FirstPaymentDate: '2011-09-24T00:00:00+04:00',
-                RecPaymentDate: '2019-04-24T00:00:00+03:00',
-                RecPaymentDateShow: '2019-05-10T00:00:00+03:00',
-                SumToPay: 0
-              },
-            LastPayDate: '0001-01-01T00:00:00'
-          },
+            {
+              '$id': '28',
+              Debt:
+                {
+                  '$id': '29',
+                  DebtDays: 0,
+                  DebtAmount: 0,
+                  LastPaymentDebtDays: 0
+                },
+              Properties:
+                {
+                  '$id': '30',
+                  NextPaymentDate: '2019-05-15T00:00:00+03:00',
+                  PaymentNum: 0,
+                  FirstPaymentDate: '2011-09-24T00:00:00+04:00',
+                  RecPaymentDate: '2019-04-24T00:00:00+03:00',
+                  RecPaymentDateShow: '2019-05-10T00:00:00+03:00',
+                  SumToPay: 0
+                },
+              LastPayDate: '0001-01-01T00:00:00'
+            },
           ContractStatus: 1,
           AccountNumber: '40817810850030430052',
           CreditLimit: 45000,
@@ -400,18 +400,18 @@ const accounts = {
           IsPolza: false,
           Colour: 3,
           CreditCardGuiData:
-          {
-            '$id': '32',
-            CreditCardGuiStatus: 1,
-            ShowGauge: false,
-            DaysLeft: 0,
-            DaysLeftWordAgreement: 3,
-            DebtDaysWordAgreement: 3,
-            PaymentSystem: 1,
-            PercentAvailable: 23,
-            DisplayOrder: 0,
-            ShowTopUpWarning: false
-          },
+            {
+              '$id': '32',
+              CreditCardGuiStatus: 1,
+              ShowGauge: false,
+              DaysLeft: 0,
+              DaysLeftWordAgreement: 3,
+              DebtDaysWordAgreement: 3,
+              PaymentSystem: 1,
+              PercentAvailable: 23,
+              DisplayOrder: 0,
+              ShowTopUpWarning: false
+            },
           CardType: 1,
           IsPolzaLkAvalible: true,
           IsActivationAvailable: false,
