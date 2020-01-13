@@ -28,6 +28,8 @@ export function convertAccount (apiAccount, type) {
 
     // депозиты
     case 'deposits': // Base
+      accountData.account = convertSavingsAccount(apiAccount)
+      break
     default:
       break
 
@@ -48,7 +50,7 @@ export function convertAccount (apiAccount, type) {
 function getAccountDetails (apiAccount, type) {
   return {
     type: type,
-    title: apiAccount.productName || apiAccount.ProductName || apiAccount.accountName || apiAccount.AccountName,
+    title: apiAccount.productName || apiAccount.ProductName || apiAccount.accountName || apiAccount.AccountName || apiAccount.depositName,
     accountNumber: getAccountNumber(apiAccount),
     cardNumber: getCardNumber(apiAccount),
     contractNumber: getContractNumber(apiAccount)
@@ -184,6 +186,19 @@ function convertLoan (apiAccount) {
     res.balance = 0
   }
 
+  return res
+}
+
+function convertSavingsAccount (apiAccount) {
+  // console.log('>>> Конвертер кредита: ', apiAccount)
+  const res = {
+    id: getContractNumber(apiAccount),
+    type: 'checking',
+    syncID: [getContractNumber(apiAccount).substr(-4), apiAccount.accountNumber.substr(-4)],
+    title: apiAccount.depositName + ' ' + apiAccount.depositType + ' (' + apiAccount.accountNumber + ')',
+    instrument: apiAccount.currency,
+    balance: apiAccount.runningBalance
+  }
   return res
 }
 
