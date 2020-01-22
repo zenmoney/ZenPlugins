@@ -19,11 +19,12 @@ export function convertAccount (json) {
 export function convertTransaction (json, accounts) {
   const transaction = {
     hold: json.txnType === 1,
-    income: json.txnType === 3 || json.txnType === 7 ? json.txnAmount : 0, // 3 - поступление, 7 - кешбек
+    income: [3, 7].indexOf(json.txnType) !== -1 ? json.txnAmount : 0, // 3 - пополнение, 7 - кешбек
     incomeAccount: accounts[0].id,
-    outcome: json.txnType === 2 ? json.txnAmount : 0, // 2 - списание
+    outcome: [2, 10].indexOf(json.txnType) !== -1 ? json.txnAmount : 0, // 2 - обычное списание, 10 - перевод
     outcomeAccount: accounts[0].id,
-    payee: json.partnersName,
+    payee: [3, 7, 10].indexOf(json.txnType) !== -1 ? '' : json.partnersName,
+    comment: [3, 7, 10].indexOf(json.txnType) !== -1 ? json.partnersName : '',
     date: new Date(json.txnDate)
   }
   if (!transaction.hold) {

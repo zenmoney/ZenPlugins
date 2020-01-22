@@ -52,6 +52,7 @@ describe('convertTransaction', () => {
       hold: false,
       date: new Date('2019-12-21T12:17:53+03:00'),
       payee: 'Ozon',
+      comment: '',
       income: 0,
       incomeAccount: 'CLIENT_ID_707777',
       outcome: 369,

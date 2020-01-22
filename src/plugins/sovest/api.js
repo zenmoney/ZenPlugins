@@ -71,7 +71,8 @@ export async function login (login, password) {
   }
   const response = await fetchJson('https://oauth.sovest.ru/oauth/token', options, null)
   if (response.body.user_message && [
-    'еверный логин или пароль'
+    'еверный логин или пароль',
+    'еправильный номер телефона'
   ].some(str => response.body.user_message.indexOf(str) >= 0)) {
     throw new InvalidPreferencesError('Неверный логин или пароль')
   }
