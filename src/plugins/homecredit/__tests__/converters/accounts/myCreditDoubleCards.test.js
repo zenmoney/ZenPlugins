@@ -110,7 +110,7 @@ const accounts = {
           'creditLimit': 150000,
           'id': '2258773215',
           'instrument': 'RUB',
-          'syncID': [ '1234', '0015' ],
+          'syncID': ['1234', '0015'],
           'title': 'Карта Рассрочки',
           'type': 'ccard'
         },
@@ -230,7 +230,7 @@ const accounts = {
           'creditLimit': 150000,
           'id': '2258773215',
           'instrument': 'RUB',
-          'syncID': [ '1234', '3456' ],
+          'syncID': ['1234', '3456'],
           'title': 'Карта Рассрочки - неименная',
           'type': 'ccard'
         },
@@ -520,7 +520,7 @@ describe('collapseDoubleAccounts', () => {
           'creditLimit': 150000,
           'id': '2258773215',
           'instrument': 'RUB',
-          'syncID': [ '1234', '0015', '3456' ],
+          'syncID': ['1234', '0015', '3456'],
           'title': 'Карта Рассрочки',
           'type': 'ccard'
         },

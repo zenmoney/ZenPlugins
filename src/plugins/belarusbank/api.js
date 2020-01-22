@@ -243,7 +243,7 @@ export async function fetchCards (url) {
     card.cardName = accountTable.children('td[class="tdAccountText"]').children('div').text()
     card.id = accountTable.children('td[class="tdId"]').children('div').text()
     card.balance = accountTable.children('td[class="tdBalance"]').children('div').children('nobr').text()
-    card.currency = accountTable.children('td[class="tdBalance"]').children('div').text().split(' ', 2)[1]
+    card.currency = accountTable.children('td[class="tdBalance"]').children('div').children('nobr').empty().parent().text().split(' ', 2)[1]
     card.overdraft = $(elem).children('table[class="accountInfoTable"]').children('tbody').children('tr')
       .children('td[class="tdAccountDetails"]').children('div').children('span[class="tdAccountOverdraft"]').children('nobr').text()
     card.transactionsData.additional = accountTable.children('td[class="tdHiddenButton"]').children('a[class="collapseAccountLink"]')

@@ -5,7 +5,7 @@ export function convertAccount (json) {
     type: 'ccard',
     title: 'Совесть',
     instrument: 'RUB',
-    balance: json.amount,
+    balance: json.balance - (json.limit - json.amount),
     creditLimit: json.limit,
     syncID: []
   }

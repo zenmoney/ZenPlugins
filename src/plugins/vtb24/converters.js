@@ -250,6 +250,9 @@ export function getTransactionId (apiTransaction) {
   if (/;/.test(apiTransaction.id)) {
     // apiTransaction.id is [statementId, transactionId] pair
     const [, transactionId] = apiTransaction.id.split(';')
+    if (transactionId === '000000') {
+      return null
+    }
     return transactionId
   }
   // else apiTransaction.id is uuid
