@@ -1,6 +1,6 @@
 import { flatMap } from 'lodash'
 import { createDateIntervals as commonCreateDateIntervals } from '../../common/dateUtils'
-import { fetchJson, parseXml } from '../../common/network'
+import { fetchJson } from '../../common/network'
 import { generateRandomString } from '../../common/utils'
 import { card, deposit } from './converters'
 
@@ -26,11 +26,6 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
   }
 
   return response
-}
-
-async function fetchXMLApi (url, options, predicate = () => true, error = (message) => console.assert(false, message)) {
-  const response = await fetchApiJson(url, options, predicate, error)
-  return parseXml(response.body.komplatResponse[0].response)
 }
 
 function validateResponse (response, predicate, error) {
@@ -156,35 +151,22 @@ export async function fetchTransactions (token, accounts, fromDate, toDate = new
 
 export async function fetchLastCardTransactions (token, account) {
   console.log('>>> Загрузка списка последних транзакций для карты ' + account.title)
-  let today = new Date()
-  let monthAgo = new Date(today - 30 * 24 * 60 * 60 * 1000)
 
-  const response = await fetchXMLApi('payment/simpleExcute', {
+  const response = await fetchApiJson('products/getBlockedAmountStatement', {
     method: 'POST',
     headers: { 'session_token': token },
     body: {
-      komplatRequests: [
-        {
-          request: '<?xml version="1.0" encoding="Windows-1251" standalone="yes"?><PS_ERIP><GetExtractCardRequest><TerminalID>@{terminal_id_mb}</TerminalID><Version>3</Version><PAN Expiry="  #{' + account.cardHash + '@[card_expire]}">#{' + account.cardHash + '@[card_number]}</PAN><TypePAN>MS</TypePAN><DateFrom>' + getDate(monthAgo) + '</DateFrom> <DateTo>' + getDate(today) + '</DateTo> <MaxRecords>500</MaxRecords><RequestType>11</RequestType>/></GetExtractCardRequest></PS_ERIP>'
-        }
-      ]
+      cards: [
+        account.cardHash
+      ],
+      internalAccountId: account.internalAccountId
     }
   }, response => response.body)
-  var operations = []
-  if (response.PS_ERIP.GetExtractCardResponse.BPC.OperationList.oper && response.PS_ERIP.GetExtractCardResponse.BPC.OperationList.oper.length > 1) {
-    operations = flatMap(response.PS_ERIP.GetExtractCardResponse.BPC.OperationList.oper, d => {
-      d.accountNumber = account.id
-      return d
-    })
-  } else if (response.PS_ERIP.GetExtractCardResponse.BPC.OperationList.oper && response.PS_ERIP.GetExtractCardResponse.BPC.OperationList.oper.auth_date) {
-    operations = [response.PS_ERIP.GetExtractCardResponse.BPC.OperationList.oper]
-    operations[0].accountNumber = account.id
+  let operations = response.body.operations ? response.body.operations : []
+  for (let i = 0; i < operations.length; i++) {
+    operations[i].accountNumber = account.syncID[0]
   }
 
   console.log(`>>> Загружено ${operations.length} операций.`)
   return operations
-}
-
-function getDate (time) {
-  return String(time.getDate() + '/' + ('0' + (time.getMonth() + 1)).slice(-2) + '/' + String(time.getFullYear()) + ' ' + time.getHours() + ':' + time.getMonth() + ':' + time.getSeconds())
 }

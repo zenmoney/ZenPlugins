@@ -23,10 +23,10 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   const transactions = (await bank.fetchTransactions(token, preparedAccounts, fromDate, toDate))
     .map(transaction => converters.convertTransaction(transaction, preparedAccounts))
   lastTransactions = lastTransactions
-    .map(transaction => converters.convertLastTransaction(transaction, cards))
+    .map(transaction => converters.convertTransaction(transaction, cards))
     .filter(transaction => transaction !== null)
   return {
     accounts: preparedAccounts,
-    transactions: _.sortBy(transactions.concat(lastTransactions), transaction => transaction.date)
+    transactions: _.sortBy(converters.transactionsUnique(transactions.concat(lastTransactions)), transaction => transaction.date)
   }
 }
