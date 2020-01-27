@@ -113,7 +113,7 @@ function getMovement (json, account) {
     id: null,
     account: { id: account.id },
     invoice: null,
-    sum: json.operationCode === 3 ? -json.operationAmount : json.operationAmount,
+    sum: (json.operationCode && json.operationCode === 3) || (json.operationSign === '-1') ? -json.operationAmount : json.operationAmount,
     fee: 0
   }
   if (json.operationName.indexOf('Удержано подоходного налога') >= 0) {
@@ -198,4 +198,21 @@ function parseComment (transaction, json) {
 export function getLastTransactionDate (str) {
   const [day, month, year, hour, minute, second] = str.match(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2}):(\d{2})/).slice(1)
   return new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}+03:00`)
+}
+
+export function transactionsUnique (array) {
+  let a = array.concat()
+  for (let i = 0; i < a.length; ++i) {
+    for (let j = i + 1; j < a.length; ++j) {
+      if (a[i].date.getDate() === a[j].date.getDate() &&
+        a[i].date.getFullYear() === a[j].date.getFullYear() &&
+        a[i].date.getMonth() === a[j].date.getMonth() &&
+        a[i].movements.length === a[j].movements.length &&
+        a[i].movements[0].account.id === a[j].movements[0].account.id &&
+        a[i].movements[0].sum === a[j].movements[0].sum) {
+        a.splice(j--, 1)
+      }
+    }
+  }
+  return a
 }
