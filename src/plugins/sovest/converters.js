@@ -23,12 +23,12 @@ export function convertTransaction (json, accounts) {
     incomeAccount: accounts[0].id,
     outcome: [2, 10].indexOf(json.txnType) !== -1 ? json.txnAmount : 0, // 2 - обычное списание, 10 - перевод
     outcomeAccount: accounts[0].id,
-    payee: [3, 7, 10].indexOf(json.txnType) !== -1 ? '' : json.partnersName,
-    comment: [3, 7, 10].indexOf(json.txnType) !== -1 ? json.partnersName : '',
+    payee: ([3, 7, 10].indexOf(json.txnType) !== -1 ? '' : json.partnersName) || null,
+    comment: ([3, 7, 10].indexOf(json.txnType) !== -1 ? json.partnersName : '') || null,
     date: new Date(json.txnDate)
   }
   if (!transaction.hold) {
-    transaction.id = json.txnId
+    transaction.id = json.txnId || null
   }
   return transaction
 }
