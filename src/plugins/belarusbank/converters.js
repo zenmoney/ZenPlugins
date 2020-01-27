@@ -19,16 +19,27 @@ export function convertAccount (acc) {
         payoffStep: 1,
         payoffInterval: 'month'
       }
-    case 'card':
-      return {
-        id: acc.id.replace(/\s/g, ''),
-        type: 'card',
-        title: acc.cardName + ' ' + acc.cardNum.slice(-4),
-        instrument: acc.currency,
+    case 'ccard':
+      const cardsArray = acc.cards.filter(card => card.isActive)
+      if (cardsArray.length === 0) return false
+      const account = {
+        id: acc.accountNum, // acc.accountId,
+        type: 'ccard',
+        title: acc.accountName,
+        syncID: [],
         balance: Number.parseFloat(acc.balance.replace(/\s/g, '')),
-        syncID: [acc.id.replace(/\s/g, ''), acc.cardNum.slice(-4)],
+        instrument: acc.currency,
         raw: acc
       }
+      cardsArray.forEach(card => {
+        if (card.number) {
+          account.syncID.push(card.number)
+        }
+      })
+      if (account.syncID.indexOf(acc.accountNum) < 0) {
+        account.syncID.push(acc.accountNum)
+      }
+      return account
   }
 }
 
