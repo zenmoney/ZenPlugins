@@ -7,8 +7,8 @@ describe('parseCards', () => {
       [
         {
           type: 'ccard',
-          accountName: 'Счёт №BY95 AKBB 3014 0001 2010 6521 0000',
-          accountNum: 'BY95AKBB30140001201065210000',
+          accountName: 'Счёт №BY95 AKBB 3014 0001 2010 6543 0000',
+          accountNum: 'BY95AKBB30140001201065430000',
           accountId: '511222000145',
           transactionsData: {
             action: '/wps/myportal/ibank/!ut/p/a1/04_Sj9CPykssy0xPLMnMz0vMAfGjzOINHN1NDL39Dbz83cKMDBydDf0NTY3CjC0sTYAKIkEKcABHA3z6DQyMofqd3R09TMx9gDpMLIwMPF2cPFzMLX0NDDzNiLQftwX49Bua4tcPUkDA_nD9KLASfD6AmIEniAg5siA3NDQ0wiDT01FREQAFEhcx/dl5/d5/L2dBISEvZ0FBIS9nQSEh/pw/Z7_0AG41KO0JG4B30QMEAJVBB1444/act/id=GtI08XHNzaA/p=javax.servlet.include.path_info=QCPpagesQCPclientCardsQCPclientCardList.xhtml/437595164492/=/',
@@ -28,13 +28,13 @@ describe('parseCards', () => {
           cards: [
             {
               name: 'MasterCard',
-              number: '5470********1658',
+              number: '5470********7823',
               id: '707070707066137323',
               isActive: true
             },
             {
               name: 'VISA',
-              number: '4848********9213',
+              number: '4848********1235',
               id: '707070707066714294',
               isActive: false
             },
@@ -48,8 +48,8 @@ describe('parseCards', () => {
         },
         {
           type: 'ccard',
-          accountName: 'Счёт №BY16 AKBB 3014 0002 7322 9521 0000',
-          accountNum: 'BY16AKBB30140002732295210000',
+          accountName: 'Счёт №BY16 AKBB 3014 0002 7420 0951 0000',
+          accountNum: 'BY16AKBB30140002742009510000',
           accountId: '511004002990',
           transactionsData: {
             action: '/wps/myportal/ibank/!ut/p/a1/04_Sj9CPykssy0xPLMnMz0vMAfGjzOINHN1NDL39Dbz83cKMDBydDf0NTY3CjC0sTYAKIkEKcABHA3z6DQyMofqd3R09TMx9gDpMLIwMPF2cPFzMLX0NDDzNiLQftwX49Bua4tcPUkDA_nD9KLASfD6AmIEniAg5siA3NDQ0wiDT01FREQAFEhcx/dl5/d5/L2dBISEvZ0FBIS9nQSEh/pw/Z7_0AG41KO0JG4B30QMEAJVBB1444/act/id=GtI08XHNzaA/p=javax.servlet.include.path_info=QCPpagesQCPclientCardsQCPclientCardList.xhtml/437595164492/=/',
