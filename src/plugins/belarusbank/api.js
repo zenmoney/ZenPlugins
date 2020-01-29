@@ -273,6 +273,7 @@ export function parseDeposits (response) {
       type: 'deposit'
     })
   }
+  return deposits
 }
 
 export async function fetchCardsTransactions (acc) {
