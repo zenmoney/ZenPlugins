@@ -227,6 +227,7 @@ export function parseCards (html) {
     const cardTable = $(elem).children('table[class="ibTable"]').children('tbody').children('tr')
 
     account.accountName = accountTable.children('td[class="tdAccountText"]').children('div').text()
+    if (account.accountName.indexOf('Новые карты') >= 0) return // move to the next iteration
     account.accountNum = accountTable.children('td[class="tdId"]').children('div').text().replace(/\s+/g, '')
     account.balance = accountTable.children('td[class="tdBalance"]').children('div').children('nobr').text()
     account.currency = accountTable.children('td[class="tdBalance"]').children('div').text().split(' ').pop()
