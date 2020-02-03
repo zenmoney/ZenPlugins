@@ -8,9 +8,11 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     .map(converters.convertAccount)
     .filter(account => account !== null)
 
-  const transactionsCard = (await bank.fetchCardsTransactions(cards[0]))
-    .map(transaction => converters.convertTransaction(transaction, cards))
-    .filter(transaction => transaction !== null)
+  const transactionsCard = cards.length > 0
+    ? (await bank.fetchCardsTransactions(cards[0]))
+      .map(transaction => converters.convertTransaction(transaction, cards))
+      .filter(transaction => transaction !== null)
+    : []
   const deposits = (await bank.fetchDeposits(accountURLs.deposits))
     .map(converters.convertAccount)
     .filter(account => account !== null)
