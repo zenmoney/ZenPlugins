@@ -196,7 +196,7 @@ export async function fetchDeposits (url) {
 }
 
 export async function fetchCards (url) {
-  console.log('>>> Загрузка картсчетов...')
+  console.log('>>> Загрузка карточных/текущих аккаунтов...')
   let res = await fetchUrl(url, {
     method: 'GET'
   }, response => response.success, message => new Error(''))
@@ -215,13 +215,11 @@ export function parseCards (html) {
   const accountBlocks = $('table[class="accountContainer"]').children('tbody').children('tr').children('td')
   accountBlocks.each(function (i, elem) {
     const account = {
-      type: 'ccard',
       transactionsData: {
         action: formAction,
         encodedURL: formEncodedUrl,
         viewState: formViewState
-      },
-      cards: []
+      }
     }
     const accountTable = $(elem).children('table[class="accountTable"]').children('tbody').children('tr')
     const cardTable = $(elem).children('table[class="ibTable"]').children('tbody').children('tr')
@@ -230,7 +228,7 @@ export function parseCards (html) {
     if (account.accountName.indexOf('Новые карты') >= 0) return // move to the next iteration
     account.accountNum = accountTable.children('td[class="tdId"]').children('div').text().replace(/\s+/g, '')
     account.balance = accountTable.children('td[class="tdBalance"]').children('div').children('nobr').text()
-    account.currency = accountTable.children('td[class="tdBalance"]').children('div').text().split(' ').pop()
+    account.currency = accountTable.children('td[class="tdBalance"]').children('div').text().replace(account.balance, '').trim().split(' ')[0]
     account.overdraftBalance = $(elem).children('table[class="accountInfoTable"]').children('tbody').children('tr')
       .children('td[class="tdAccountDetails"]').children('div').children('span[class="tdAccountOverdraft"]').children('nobr').text()
     account.overdraftCurrency = $(elem).children('table[class="accountInfoTable"]').children('tbody').children('tr')
@@ -239,6 +237,8 @@ export function parseCards (html) {
       .attr('onclick').replace('return myfaces.oam.submitForm(', '').replace(');', '').match(/'(.[^']*)'/ig)
     account.accountId = account.transactionsData.additional[account.transactionsData.additional.length - 1].replace(/'/g, '')
     if (cardTable.children('td').length > 1) {
+      account.type = 'ccard'
+      account.cards = []
       cardTable.each(function (i, elem) {
         const card = {
           name: $(elem).children('td[class="tdNoPaddingBin"]').children('div').attr('title'),
@@ -249,12 +249,12 @@ export function parseCards (html) {
         account.cards.push(card)
       })
     } else {
-      console.assert(false, 'unsupported account type')
+      account.type = 'account'
     }
     accounts.push(account)
   })
-  console.log(`>>> Загружено ${accounts.length} карточных аккаунтов.`)
-  return accounts.filter(account => account.id !== '')
+  console.log(`>>> Загружено ${accounts.length} карточных/текущих аккаунтов.`)
+  return accounts
 }
 
 export function parseDeposits (response) {

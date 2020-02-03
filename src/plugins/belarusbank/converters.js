@@ -40,6 +40,16 @@ export function convertAccount (acc) {
         account.syncID.push(acc.accountNum)
       }
       return account
+    case 'account':
+      return {
+        id: acc.accountNum, // acc.accountId,
+        type: 'checking',
+        title: acc.accountName,
+        syncID: [acc.accountNum],
+        balance: Number.parseFloat(acc.balance.replace(/\s/g, '')),
+        instrument: acc.currency,
+        raw: acc
+      }
   }
 }
 
