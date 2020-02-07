@@ -246,7 +246,7 @@ export async function fetchStatement ({ access_token } = {}, apiAccount, fromDat
 
   const requestId = response.body.request_id
   let status = ''
-  const iMax = 5
+  const iMax = 10
   for (let i = 1; i <= iMax; i++) {
     console.log(`>>> Проверяем статус выписки (попытка #${i})`, requestId)
     response = await fetchJson('statement/status/' + requestId, {
