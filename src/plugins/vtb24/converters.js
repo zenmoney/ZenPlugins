@@ -473,7 +473,7 @@ export function parsePayee (apiTransaction, transaction) {
       }
     }
   }
-  
+
   if ([
     /^Карта \*\d{4} (.+)/,
     /^(.\*\*\*\*\*\*. .+)/
