@@ -506,6 +506,55 @@ describe('convertTransaction', () => {
             __type: 'ru.vtb24.mobilebanking.protocol.StatusMto',
             id: 'SUCCESS'
           }
+      },
+      {
+        __type: 'ru.vtb24.mobilebanking.protocol.statement.CardTransactionMto',
+        details: 'Карта *5698 Операция по e-mail/телефону',
+        isHold: true,
+        fullDetails: 'Операция по e-mail/телефону Australian Koala Found BRISBANE Австралия',
+        statusName: 'В обработке',
+        message: null,
+        id: 'cPMDZBnJ/O9mtRg2bcosSjkzyd0=;003914519207;894345592;',
+        stub: null,
+        ver: null,
+        debet: '<ref[13]>',
+        transactionDate: new Date('Fri Feb 07 2020 17:04:21 GMT+0300 (MSK)'),
+        processedDate: new Date('Fri Feb 07 2020 17:04:21 GMT+0300 (MSK)'),
+        transactionAmount: {
+          __type: 'ru.vtb24.mobilebanking.protocol.AmountMto',
+          sum: -20,
+          currency: {
+            __type: 'ru.vtb24.mobilebanking.protocol.CurrencyMto',
+            currencyCode: null,
+            name: null,
+            displaySymbol: null,
+            codeIso: '36',
+            detailLevel: 'Null',
+            id: null,
+            stub: null,
+            ver: null
+          }
+        },
+        feeAmount: null,
+        order: null,
+        bonus: null,
+        transactionAmountInAccountCurrency: {
+          __type: 'ru.vtb24.mobilebanking.protocol.AmountMto',
+          sum: -901.77,
+          currency: {
+            __type: 'ru.vtb24.mobilebanking.protocol.CurrencyMto',
+            currencyCode: 'RUR',
+            name: 'Рубль России',
+            displaySymbol: '₽',
+            codeIso: '810',
+            detailLevel: 'Full',
+            id: 'RUR',
+            stub: null,
+            ver: null,
+            __id: 4
+          }
+        },
+        status: '<ref[37]>'
       }
     ]
 
@@ -530,6 +579,28 @@ describe('convertTransaction', () => {
               instrument: 'USD'
             },
             sum: -501.88,
+            fee: 0
+          }
+        ]
+      },
+      {
+        comment: null,
+        date: new Date('2020-02-07T17:04:21+03:00'),
+        hold: true,
+        merchant: {
+          mcc: null,
+          location: null,
+          fullTitle: 'Australian Koala Found BRISBANE Австралия'
+        },
+        movements: [
+          {
+            id: '003914519207',
+            account: { id: 'account' },
+            invoice: {
+              sum: -20,
+              instrument: 'AUD'
+            },
+            sum: -901.77,
             fee: 0
           }
         ]

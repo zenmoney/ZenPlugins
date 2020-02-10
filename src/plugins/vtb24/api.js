@@ -100,7 +100,7 @@ async function burlapRequest (options) {
       }
     })
   } catch (e) {
-    if (e.response && e.response.status === 503) {
+    if (e.response && (e.response.status === 503 || e.response.status === 570)) {
       throw new TemporaryError('Информация из Банка ВТБ временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог разработчикам".')
     } else if (e.cause) {
       throw e.cause
@@ -162,7 +162,8 @@ export async function login (login, password) {
     'NoDBO24',
     'ExpirationDateOver',
     'CardNotFound',
-    'ThirdPersonCard'
+    'ThirdPersonCard',
+    'CrossLinkFault'
   ].some(mode => response.body.mode === mode) && response.body.description) {
     throw new TemporaryError(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: ${response.body.description}`)
   }

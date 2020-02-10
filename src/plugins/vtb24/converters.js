@@ -1,5 +1,7 @@
 import * as _ from 'lodash'
+import padLeft from 'pad-left'
 import { parseOuterAccountData } from '../../common/accounts'
+import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
 import { toISODateString } from '../../common/dateUtils'
 
 export const GRAMS_IN_OZ = 31.1034768
@@ -265,7 +267,7 @@ function convertAmount (amount) {
   }
   const zenAmount = {
     sum: amount.sum,
-    instrument: getInstrument(amount.currency.currencyCode)
+    instrument: getInstrument(amount.currency.currencyCode) || codeToCurrencyLookup[padLeft(amount.currency.codeIso, 3, '0')]
   }
   if (parseMetalInstrument(amount.currency.currencyCode)) {
     zenAmount.sum = atMostTwoDecimals(zenAmount.sum / GRAMS_IN_OZ)
@@ -456,6 +458,22 @@ export function parsePayee (apiTransaction, transaction) {
     apiTransaction.details.indexOf(detail) >= 0
   ), 'Incorrect merchant description!')
 
+  if (typeof apiTransaction.fullDetails === 'string') {
+    for (const pattern of [
+      /Операция по e-mail\/телефону (.*)/
+    ]) {
+      const match = apiTransaction.fullDetails.match(pattern)
+      if (match) {
+        transaction.merchant = {
+          mcc: null,
+          location: null,
+          fullTitle: match[1]
+        }
+        return true
+      }
+    }
+  }
+  
   if ([
     /^Карта \*\d{4} (.+)/,
     /^(.\*\*\*\*\*\*. .+)/
@@ -475,6 +493,7 @@ export function parsePayee (apiTransaction, transaction) {
   })) {
     return false
   }
+
   if (
     apiTransaction.__type === 'ru.vtb24.mobilebanking.protocol.statement.CardTransactionMto'
   ) {
