@@ -246,7 +246,7 @@ export async function fetchStatement ({ access_token } = {}, apiAccount, fromDat
 
   const requestId = response.body.request_id
   let status = ''
-  const iMax = 10
+  const iMax = 5
   for (let i = 1; i <= iMax; i++) {
     console.log(`>>> Проверяем статус выписки (попытка #${i})`, requestId)
     response = await fetchJson('statement/status/' + requestId, {
@@ -276,9 +276,9 @@ export async function fetchStatement ({ access_token } = {}, apiAccount, fromDat
       Authorization: `Bearer ${access_token}`
     }
   } /* response => _.get(response, "response.body.payments") */)
-  if (status !== 'ready') {
-    throw new Error('Не удалось дождаться ответа от сервера. Пожалуйста, попробуйте уменьшить период загрузки данных')
-  }
+  // if (status !== 'ready') {
+  //   throw new Error('Не удалось дождаться ответа от сервера. Пожалуйста, попробуйте уменьшить период загрузки данных')
+  // }
   if (response.body.message === 'Bad JSON') {
     console.log('>>> Не удалось получить выписку')
     return {}
