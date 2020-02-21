@@ -12,19 +12,12 @@ Object.assign = require('object-assign')
 require('./polyfills/array')
 require('./polyfills/math')
 
-if (!('application' in ZenMoney)) {
-  ZenMoney.application = {
-    platform: 'android',
-    version: '4.9.9',
-    build: '459'
-  }
-}
 if (!('device' in ZenMoney)) {
   ZenMoney.device = {
     id: 'PKQ1.180917.001',
-    manufacturer: 'Xiaomi',
-    model: 'Mi A1',
-    brand: 'xiaomi',
+    manufacturer: 'Zenmoney',
+    model: 'Sync',
+    brand: 'zenmoney',
     os: {
       name: 'android',
       version: '9'
