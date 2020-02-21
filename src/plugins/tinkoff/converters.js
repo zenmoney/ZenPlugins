@@ -680,7 +680,9 @@ function getCreditCard (account, initialized) {
     type: 'ccard',
     syncID: [],
     creditLimit: account.creditLimit.value,
-    instrument: account.moneyAmount.currency.name
+    instrument: account.moneyAmount.currency.name,
+    totalAmountDue: account.lastStatementDebtAmount.value,
+    gracePeriodEndDate: new Date(account.duedate.milliseconds)
   }
 
   let algorithm = ''
