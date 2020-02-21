@@ -26,13 +26,26 @@ function convertCreditApiAccount (apiAccount) {
   const {
     'Кредитный продукт и валюта': typeWithDashAndInstrument,
     'Доступный лимит': availableWithInstrument,
-    'Установленный лимит': creditLimitWithInstrument
+    'Установленный лимит': creditLimitWithInstrument,
+    'Общая задолженность': totalAmountDueAndInstrument,
+    'Дата окончания льготного периода': gracePeriodEndDateStr
   } = apiAccount.accountDetailsCreditInfo
   const instrumentPostfix = ' ' + apiAccount.currencyCode
+  let gracePeriodParams = null
+  if (gracePeriodEndDateStr && totalAmountDueAndInstrument) {
+    const totalAmountDue = parseApiAmount(trimPostfix(totalAmountDueAndInstrument, instrumentPostfix))
+    const [, day, month, year] = gracePeriodEndDateStr.match(/(\d{2})\.(\d{2})\.(\d{4})/)
+    const gracePeriodEndDate = new Date(`${year}-${month}-${day}T00:00:00+03:00`)
+    gracePeriodParams = {
+      totalAmountDue,
+      gracePeriodEndDate
+    }
+  }
   if (availableWithInstrument && creditLimitWithInstrument) {
     return {
       available: parseApiAmount(trimPostfix(availableWithInstrument, instrumentPostfix)),
-      creditLimit: parseApiAmount(trimPostfix(creditLimitWithInstrument, instrumentPostfix))
+      creditLimit: parseApiAmount(trimPostfix(creditLimitWithInstrument, instrumentPostfix)),
+      ...gracePeriodParams
     }
   } else if (
     typeWithDashAndInstrument.startsWith('Кредит наличными') ||
