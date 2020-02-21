@@ -683,6 +683,7 @@ function getDebitCard (account, initialized) {
 
 function getCreditCard (account, initialized) {
   if (account.status !== 'NORM') return null
+  const gracePeriodEndDate = account.duedate && account.duedate.milliseconds ? new Date(account.duedate.milliseconds) : null
   const result = {
     id: account.id,
     title: account.name,
@@ -690,8 +691,8 @@ function getCreditCard (account, initialized) {
     syncID: [],
     creditLimit: account.creditLimit.value,
     instrument: account.moneyAmount.currency.name,
-    totalAmountDue: account.lastStatementDebtAmount.value,
-    gracePeriodEndDate: new Date(account.duedate.milliseconds)
+    totalAmountDue: gracePeriodEndDate ? account.lastStatementDebtAmount.value : null,
+    gracePeriodEndDate
   }
 
   let algorithm = ''
