@@ -1,4 +1,5 @@
 import { convertApiAbortedTransactionToReadableTransaction, mergeTransfers } from './converters'
+import { formatCommentDateTime } from '../../common/dateUtils'
 
 const transferIncome = {
   accountId: 'test(accountId1)',
@@ -55,4 +56,33 @@ test('it merges correctly', () => {
       'comment': '(rate=2.0004)'
     }
   ])
+})
+
+describe('comment', () => {
+  const transaction = convertApiAbortedTransactionToReadableTransaction({
+    accountId: 'test(accountId)',
+    accountCurrency: 'USD',
+    abortedTransaction: {
+      amount: 75.37,
+      transAmount: 165.89,
+      transCurrIso: 'BYN',
+      transDetails: 'Retail BLR MINSK SHOP VINO VINO BPSB',
+      transDate: '2020-02-22T00:00:00+03:00',
+      transDateSpecified: true,
+      transTime: '12:34:56',
+      hce: false
+    },
+    includeDateTimeInComment: true
+  })
+  it('includes transaction datetime', () => {
+    expect(transaction.comment).toEqual(expect.stringContaining(formatCommentDateTime(transaction.date)))
+  })
+
+  it('includes transaction invoice price', () => {
+    expect(transaction.comment).toEqual(expect.stringContaining('165.89 BYN'))
+  })
+
+  it('includes transaction conversion rate', () => {
+    expect(transaction.comment).toEqual(expect.stringContaining('(rate=2.2010)'))
+  })
 })

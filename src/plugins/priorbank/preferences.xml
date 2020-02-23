@@ -33,4 +33,10 @@
         summary="|startDate|{@s}"
     >
     </EditTextPreference>
+    <CheckBoxPreference
+        key="includeDateTimeInComment"
+        title="Включать ли время транзакции в комментарий"
+        defaultValue="false"
+        summary="||{@s}">
+    </CheckBoxPreference>
 </PreferenceScreen>
