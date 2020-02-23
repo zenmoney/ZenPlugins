@@ -10,6 +10,7 @@ import {
   joinCommentLines,
   makeCashTransferMovement
 } from '../../common/converters'
+import { formatCommentDateTime } from '../../common/dateUtils'
 import { mergeTransfers as commonMergeTransfers } from '../../common/mergeTransfers'
 
 const calculateAccountId = (card) => String(card.clientObject.id)
@@ -65,7 +66,7 @@ export function chooseDistinctCards (cardsBodyResult) {
   return cardsBodyResult.filter((card) => !cardsToEvict.includes(card))
 }
 
-export const convertApiAbortedTransactionToReadableTransaction = ({ accountId, accountCurrency, abortedTransaction }) => {
+export const convertApiAbortedTransactionToReadableTransaction = ({ accountId, accountCurrency, abortedTransaction, includeDateTimeInComment }) => {
   const details = parseTransDetails(abortedTransaction.transDetails)
   const sign = Math.sign(-abortedTransaction.amount)
   const sum = sign * Math.abs(abortedTransaction.amount)
@@ -73,6 +74,7 @@ export const convertApiAbortedTransactionToReadableTransaction = ({ accountId, a
     ? null
     : { sum: sign * Math.abs(abortedTransaction.transAmount), instrument: abortedTransaction.transCurrIso }
   const fee = 0
+  const date = parseDate(abortedTransaction)
   return {
     movements: [
       {
@@ -83,7 +85,7 @@ export const convertApiAbortedTransactionToReadableTransaction = ({ accountId, a
         fee
       }
     ],
-    date: parseDate(abortedTransaction),
+    date,
     hold: true,
     merchant: details.payee ? {
       fullTitle: details.payee,
@@ -92,6 +94,42 @@ export const convertApiAbortedTransactionToReadableTransaction = ({ accountId, a
     } : null,
     comment: joinCommentLines([
       details.comment,
+      includeDateTimeInComment ? formatCommentDateTime(date) : null,
+      formatCommentFeeLine(fee, accountCurrency),
+      formatInvoiceLine(invoice),
+      formatRateLine(sum, invoice)
+    ])
+  }
+}
+
+export function convertApiRegularTransactionToReadableTransaction ({ accountId, accountCurrency, regularTransaction, includeDateTimeInComment }) {
+  const details = parseTransDetails(regularTransaction.transDetails)
+  const sum = regularTransaction.accountAmount
+  const invoice = regularTransaction.transCurrIso === accountCurrency
+    ? null
+    : { sum: extractRegularTransactionAmount({ accountCurrency, regularTransaction }), instrument: regularTransaction.transCurrIso }
+  const fee = 0
+  const date = parseDate(regularTransaction)
+  return {
+    movements: [
+      {
+        id: null,
+        account: { id: accountId },
+        invoice,
+        sum,
+        fee
+      }
+    ],
+    date,
+    hold: false,
+    merchant: details.payee ? {
+      fullTitle: details.payee,
+      mcc: null,
+      location: null
+    } : null,
+    comment: joinCommentLines([
+      details.comment,
+      includeDateTimeInComment ? formatCommentDateTime(date) : null,
       formatCommentFeeLine(fee, accountCurrency),
       formatInvoiceLine(invoice),
       formatRateLine(sum, invoice)
@@ -105,44 +143,14 @@ function parseDate (apiTransactionPayload) {
     : new Date(apiTransactionPayload.transDate)
 }
 
-const convertApiTransactionToReadableTransaction = (apiTransaction) => {
+export const convertApiTransactionToReadableTransaction = (apiTransaction, includeDateTimeInComment) => {
   const accountCurrency = apiTransaction.card.clientObject.currIso
   const accountId = calculateAccountId(apiTransaction.card)
   if (apiTransaction.type === 'abortedTransaction') {
-    return convertApiAbortedTransactionToReadableTransaction({ accountId, accountCurrency, abortedTransaction: apiTransaction.payload })
+    return convertApiAbortedTransactionToReadableTransaction({ accountId, accountCurrency, abortedTransaction: apiTransaction.payload, includeDateTimeInComment })
   }
   if (apiTransaction.type === 'regularTransaction') {
-    const regularTransaction = apiTransaction.payload
-    const details = parseTransDetails(regularTransaction.transDetails)
-    const sum = regularTransaction.accountAmount
-    const invoice = regularTransaction.transCurrIso === accountCurrency
-      ? null
-      : { sum: extractRegularTransactionAmount({ accountCurrency, regularTransaction }), instrument: regularTransaction.transCurrIso }
-    const fee = 0
-    return {
-      movements: [
-        {
-          id: null,
-          account: { id: accountId },
-          invoice,
-          sum,
-          fee
-        }
-      ],
-      date: parseDate(regularTransaction),
-      hold: false,
-      merchant: details.payee ? {
-        fullTitle: details.payee,
-        mcc: null,
-        location: null
-      } : null,
-      comment: joinCommentLines([
-        details.comment,
-        formatCommentFeeLine(fee, accountCurrency),
-        formatInvoiceLine(invoice),
-        formatRateLine(sum, invoice)
-      ])
-    }
+    return convertApiRegularTransactionToReadableTransaction({ accountId, accountCurrency, regularTransaction: apiTransaction.payload, includeDateTimeInComment })
   }
   throw new Error(`apiTransaction.type "${apiTransaction.type}" not implemented`)
 }
@@ -179,7 +187,7 @@ export function mergeTransfers ({ items }) {
   })
 }
 
-export function convertApiCardsToReadableTransactions ({ cardsBodyResultWithoutDuplicates, cardDescBodyResult }) {
+export function convertApiCardsToReadableTransactions ({ cardsBodyResultWithoutDuplicates, cardDescBodyResult, includeDateTimeInComment }) {
   const items = _.sortBy(_.flatMap(cardsBodyResultWithoutDuplicates, (card) => {
     const cardDesc = cardDescBodyResult.find((x) => x.id === card.clientObject.id)
     const abortedTransactions = _.flatMap(cardDesc.contract.abortedContractList, (x) => x.abortedTransactionList.reverse())
@@ -188,7 +196,7 @@ export function convertApiCardsToReadableTransactions ({ cardsBodyResultWithoutD
       .map((regularTransaction) => ({ type: 'regularTransaction', payload: regularTransaction, card }))
     return abortedTransactions.concat(regularTransactions)
       .map((apiTransaction) => {
-        const readableTransaction = convertApiTransactionToReadableTransaction(apiTransaction)
+        const readableTransaction = convertApiTransactionToReadableTransaction(apiTransaction, includeDateTimeInComment)
         if (['ATM', 'Cash'].includes(parseTransDetails(apiTransaction.payload.transDetails).type)) {
           return {
             apiTransaction,

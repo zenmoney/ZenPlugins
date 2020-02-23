@@ -1,5 +1,7 @@
 process.env.BABEL_ENV = 'test'
 process.env.NODE_ENV = 'test'
+process.env.TZ = 'UTC'
+
 process.on('unhandledRejection', err => {
   throw err
 })

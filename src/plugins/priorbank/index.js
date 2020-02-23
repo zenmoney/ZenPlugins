@@ -46,7 +46,11 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   const [cardsBodyResult, cardDescBodyResult] = responses.map((x) => x.body.result)
 
   const cardsBodyResultWithoutDuplicates = chooseDistinctCards(cardsBodyResult)
-  const readableTransactions = convertApiCardsToReadableTransactions({ cardsBodyResultWithoutDuplicates, cardDescBodyResult })
+  const readableTransactions = convertApiCardsToReadableTransactions({
+    cardsBodyResultWithoutDuplicates,
+    cardDescBodyResult,
+    includeDateTimeInComment: preferences.includeDateTimeInComment
+  })
 
   return {
     accounts: cardsBodyResultWithoutDuplicates.map(toZenmoneyAccount),
