@@ -1,5 +1,5 @@
-import { parseOuterAccountData } from '../../common/accounts'
-import { formatCommentDateTime } from '../../common/dateUtils'
+import { parseOuterAccountData } from '../../../common/accounts'
+import { formatCommentDateTime } from '../../../common/dateUtils'
 import { isArray, groupBy, flattenDeep, union, get, values, drop, omit } from 'lodash'
 
 export function convertAccount (account, initialized = false) {
@@ -146,6 +146,12 @@ function parseTransferGroup (transaction, apiTransaction) {
       // игнорируем
       break
 
+    case 'tcs-brok-in':
+      // Пополнение счета Тинькофф Брокер
+      comment = apiTransaction.description
+      transaction.investingTransfer = 'out'
+      break
+
     default:
       merchant = apiTransaction.description
       comment = apiTransaction.message || fieldsValues.message || apiTransaction.comment || fieldsValues.comment
@@ -208,9 +214,10 @@ function parseIncomeGroup (transaction, apiTransaction) {
       comment = apiTransaction.nomination || apiTransaction.description
       break
 
-    // входящий перевод от клиента Тинькоф
+    // входящий перевод от клиента Тинькоф или со своего брокерского счета
     case 'C4':
       title = apiTransaction.senderDetails
+      comment = apiTransaction.description
       break
 
     // перевод между своими счетами
@@ -272,6 +279,8 @@ function parseIncomeGroup (transaction, apiTransaction) {
       account.company = bank.company
     }
     transaction = addMirrorMovement(transaction, account)
+  } else if (apiTransaction.subcategory && apiTransaction.subcategory.toLowerCase().indexOf('брокер') !== -1) {
+    transaction.investingTransfer = 'in'
   }
 
   return true

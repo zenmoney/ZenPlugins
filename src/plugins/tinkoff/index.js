@@ -1,50 +1,32 @@
-import { login, fetchAccountsAndTransactions } from './api'
-import { convertAccount, convertTransactions } from './converters'
-import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
-import { isArray, values } from 'lodash'
+import { AuthService } from './api/authService'
+import { BankInfoService } from './api/bankInfoService'
+import { InvestingInfoService } from './api/investingInfoService'
+import { TransactionsPostProcessor } from './converters/transactionsPostProcessor'
+import { AccountsPostProcessor } from './converters/accountsPostProcessor'
 
 export async function scrape ({ preferences, fromDate, toDate, isInBackground }) {
-  const pinHash = ZenMoney.getData('pinHash', null)
-  const auth = await login(preferences, isInBackground, { pinHash: pinHash })
-  const fetchedData = await fetchAccountsAndTransactions(auth, fromDate, toDate)
+  const authService = new AuthService()
+  const session = await authService.getSession(preferences, isInBackground)
 
-  // обработаем счета
-  const accounts = {}
-  const initialized = ZenMoney.getData('initialized', false) // флаг первичной инициализации счетов, когда необходимо передать остатки всех счетов
-  let skippedAccounts = 0
-  await Promise.all(fetchedData.accounts.map(async account => {
-    const acc = convertAccount(account, initialized)
-    if (!acc) return
-    if (ZenMoney.isAccountSkipped(acc.id)) {
-      skippedAccounts++
-      console.log(`>>> Счёт #${acc.id} '${acc.title}' пропущен пользователем`)
-      return
-    }
+  const bankInfoService = new BankInfoService(session)
+  const bankAccounts = await bankInfoService.getAccounts(fromDate)
+  const bankTransactions = bankAccounts.flatMap(x => x.transactions)
 
-    if (isArray(acc)) {
-      acc.forEach(function (item) {
-        if (!item) return
-        accounts[item.id] = item
-      })
-    } else { accounts[acc.id] = acc }
-  }))
-  if (!initialized) {
-    ZenMoney.setData('initialized', true)
-    ZenMoney.saveData()
-  }
+  const investingInfoService = new InvestingInfoService(session)
+  const investingAccounts = await investingInfoService.getAccounts(fromDate)
+  const investingTransactions = investingAccounts.flatMap(x => x.transactions)
 
-  const resultTransactions = convertTransactions(fetchedData.transactions, accounts)
-  const resultAccounts = ensureSyncIDsAreUniqueButSanitized({ accounts: values(accounts), sanitizeSyncId })
+  let accounts = bankAccounts.concat(investingAccounts)
+  let transactions = bankTransactions.concat(investingTransactions)
 
-  if (!isArray(resultAccounts) || resultAccounts.length === 0) {
-    if (skippedAccounts > 0) {
-      throw new TemporaryError('Кажется, вы пропустили все счета. Нечего загружать. Попробуйте снова.')
-    }
-    throw new Error('Пустой список счетов')
-  }
+  const accountsPostProcessor = new AccountsPostProcessor()
+  accounts = accountsPostProcessor.process(accounts)
+
+  const transactionsPostProcessor = new TransactionsPostProcessor()
+  transactions = transactionsPostProcessor.process(transactions)
 
   return {
-    accounts: resultAccounts,
-    transactions: resultTransactions
+    accounts: accounts,
+    transactions: transactions
   }
 }
