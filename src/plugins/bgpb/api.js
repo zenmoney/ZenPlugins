@@ -47,6 +47,9 @@ async function fetchApi (url, xml, options, predicate = () => true, error = (mes
     if (errorDescription.indexOf('Неверный логин') >= 0) { throw new InvalidPreferencesError(errorMessage) }
     throw new Error(errorMessage)
   }
+  if (res.BS_Response.Session && res.BS_Response.Session.Expired) {
+    throw new InvalidPreferencesError('Сессия истекла. Повторите синхронизацию.')
+  }
   return res
 }
 
