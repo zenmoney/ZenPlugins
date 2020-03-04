@@ -12,36 +12,6 @@ import { toZenmoneyTransaction } from '../../../common/converters'
 const convertToZenmoneyTransactionForAccounts = accountsByIdLookup => readableTransaction => toZenmoneyTransaction(readableTransaction, accountsByIdLookup)
 
 describe('toZenmoneyAccount', () => {
-  it('maps api credit card account', () => {
-    expect(toZenmoneyAccount({
-      'number': '98765432109876543210',
-      'description': 'Счёт кредитной карты',
-      'amount': '15 294.21',
-      'currencyCode': 'RUR',
-      'creditInfo': {
-        'description': 'Кредитная карта',
-        'amountDebt': '1 705.79',
-        'installmentCard': false,
-        'nextPaymentAmount': '',
-        'nextPaymentDate': ''
-      },
-      'accountDetailsCreditInfo': {
-        'Доступный лимит': '15 294.21 RUR',
-        'Установленный лимит': '17 000.00 RUR'
-      }
-    })).toEqual({
-      'type': 'ccard',
-      'title': 'Счёт кредитной карты',
-      'id': '98765432109876543210',
-      'syncID': [
-        '98765432109876543210'
-      ],
-      'instrument': 'RUR',
-      'available': 15294.21,
-      'creditLimit': 17000
-    })
-  })
-
   it('maps api cash credit account', () => {
     expect(toZenmoneyAccount({
       number: '98765432109876543210',

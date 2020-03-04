@@ -19,7 +19,8 @@ export function convertAccounts (apiPortfolios) {
             { card: 'MasterAccountCardMto', account: 'MasterAccountMto' },
             { card: 'CreditCardMto', account: 'CreditCardAccountMto' },
             { card: 'DebitCardMto', account: 'DebitCardAccountMto' },
-            { card: 'MultiCurrencyDebitCardMto', account: 'DebitCardAccountMto' }
+            { card: 'MultiCurrencyDebitCardMto', account: 'DebitCardAccountMto' },
+            { card: 'DebitCardMto', account: 'SettlementCardAccountMto' }
           ]
           if (types.some(type => {
             return apiAccount.__type === `ru.vtb24.mobilebanking.protocol.product.${type.account}`
