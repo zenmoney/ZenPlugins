@@ -81,7 +81,7 @@ export class PrivatBank {
         throw new TemporaryError(`Не удалось синхронизировать данные по мерчанту ${this.merchant}. ` +
           `В настройках мерчанта в Приват24 укажите IP-адрес из настроек синхронизации.`)
       }
-      if (response.body.indexOf('invalid merchant id') >= 0) {
+      if (response.body.indexOf('invalid merchant id') >= 0 || response.body.indexOf('<error>For input string: ') >= 0) {
         throw new InvalidPreferencesError(`Не удалось синхронизировать данные по мерчанту ${this.merchant}. ` +
           `Проверьте, что вы указали верный ID мерчанта в настройках подключения к банку.`)
       }
