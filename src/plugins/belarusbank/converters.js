@@ -21,7 +21,7 @@ export function convertAccount (acc) {
       }
     case 'ccard':
       const cardsArray = acc.cards.filter(card => card.isActive)
-      if (cardsArray.length === 0) return false
+      if (cardsArray.length === 0) return null
       const account = {
         id: acc.accountNum, // acc.accountId,
         type: 'ccard',

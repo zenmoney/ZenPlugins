@@ -73,6 +73,10 @@ export async function loginCodes (prefs) {
     sanitizeRequestLog: { body: { bbIbUseridField: true, bbIbPasswordField: true } }
   }, response => response.success, message => new Error(''))
 
+  if (res.body.search(/Неправильно введён логин и\/или пароль/) >= 0) {
+    throw new InvalidPreferencesError('Неверный логин или пароль от интернет-банка Беларусбанка')
+  }
+
   let codenum = res.body.match(/Введите[^>]*>код [N№]\s*(\d+)/i)
   codenum = codenum[1] - 1 // Потому что у нас коды с 0 нумеруются
   var col = Math.floor(codenum / 10)
@@ -104,6 +108,10 @@ export async function loginCodes (prefs) {
     sanitizeRequestLog: { body: { bbIbCodevalueField: true } }
   }, response => response.success, message => new Error(''))
 
+  if (res.body.search(/Смена пароля/) >= 0) {
+    throw new InvalidPreferencesError(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: Закончился срок действия пароля. Задайте новый пароль в интернет-банке Беларусбанка`)
+  }
+
   return res
 }
 
@@ -128,6 +136,10 @@ export async function loginSMS (prefs) {
     },
     sanitizeRequestLog: { body: { bbIbUseridField: true, bbIbPasswordField: true } }
   }, response => response.success, message => new Error(''))
+
+  if (res.body.search(/Неправильно введён логин и\/или пароль/) >= 0) {
+    throw new InvalidPreferencesError('Неверный логин или пароль от интернет-банка Беларусбанка')
+  }
 
   let sms = await ZenMoney.readLine('Введите код из смс', {
     time: 120000
@@ -154,6 +166,10 @@ export async function loginSMS (prefs) {
     },
     sanitizeRequestLog: { body: { bbIbCodeSmsvalueField: true } }
   }, response => response.success, message => new Error(''))
+
+  if (res.body.search(/Смена пароля/) >= 0) {
+    throw new InvalidPreferencesError(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: Закончился срок действия пароля. Задайте новый пароль в интернет-банке Беларусбанка`)
+  }
 
   return res
 }
