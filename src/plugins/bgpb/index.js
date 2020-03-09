@@ -43,9 +43,6 @@ async function allAccounts (token) {
   const accounts = (await bank.fetchAccounts(token))
     .map(converters.convertAccount)
     .filter(account => account !== null)
-  if (accounts.length === 0) {
-    throw new Error('Не удалось загрузить счета')
-  }
   for (let i = 0; i < accounts.length; i++) {
     accounts[i].balance = await bank.fetchBalance(token, accounts[i])
     if (accounts[i].balance === null) {
