@@ -26,3 +26,7 @@ export function chunkString (str, n) {
   }
   return ret
 }
+
+export function removeExtraSpaces (str) {
+  return str.replace(/\s+/g, ' ').trim()
+}
