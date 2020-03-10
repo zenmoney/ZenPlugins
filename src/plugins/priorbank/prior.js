@@ -1,5 +1,6 @@
 import { SHA512 } from 'jshashes'
 import { fetchJson } from '../../common/network'
+import { BankMessageError, InvalidLoginOrPasswordError } from '../../errors'
 
 function isSuccessfulResponse (response) {
   return response.status === 200 && (!('success' in response.body) || response.body.success === true)
@@ -9,13 +10,13 @@ export function assertResponseSuccess (response) {
   if (response.body && response.body.success === false && response.body.errorMessage) {
     const message = response.body.errorMessage
     if (message === 'Неверный логин или пароль') {
-      throw new InvalidPreferencesError(message)
+      throw new InvalidLoginOrPasswordError()
     }
     if ([
       'Услуга временно заблокирована',
       'Ошибка на сервере'
     ].some(pattern => message.indexOf(pattern) >= 0)) {
-      throw new TemporaryError(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: ${message}`)
+      throw new BankMessageError(message)
     }
   }
   console.assert(isSuccessfulResponse(response), 'non-successful response', response)

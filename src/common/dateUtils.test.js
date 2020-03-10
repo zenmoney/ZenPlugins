@@ -1,5 +1,5 @@
 import { getIntervalBetweenDates } from './momentDateUtils'
-import { createDateIntervals, formatCommentDateTime, isValidDate, changeTimezoneToCurrent } from './dateUtils'
+import { createDateIntervals, formatCommentDateTime, isValidDate, dateInTimezone } from './dateUtils'
 
 describe('formatCommentDateTime', () => {
   it('should return stringified datetime in year-month-day hours:minutes:seconds format', () => {
@@ -123,9 +123,9 @@ describe('createDateIntervals', () => {
   })
 })
 
-describe('changeTimezoneToCurrent', () => {
-  it('moves date to current time zone', () => {
-    expect(changeTimezoneToCurrent(new Date('2019-01-01T00:00:00+06:00'), 6 * 60)).toEqual(new Date(2019, 0, 1))
-    expect(changeTimezoneToCurrent(new Date('2019-05-13T23:04:05-03:00'), -3 * 60)).toEqual(new Date(2019, 4, 13, 23, 4, 5))
+describe('dateInTimezone', () => {
+  it('moves date to specific time zone', () => {
+    expect(dateInTimezone(new Date('2019-01-01T00:00:00+06:00'), 6 * 60)).toEqual(new Date(2019, 0, 1))
+    expect(dateInTimezone(new Date('2019-05-13T23:04:05-03:00'), -3 * 60)).toEqual(new Date(2019, 4, 13, 23, 4, 5))
   })
 })

@@ -63,6 +63,6 @@ export function createDateIntervals ({ fromDate, toDate, addIntervalToDate, gapM
   return dates
 }
 
-export function changeTimezoneToCurrent (date, fromTimezoneOffsetSeconds) {
-  return new Date(date.getTime() + (date.getTimezoneOffset() + fromTimezoneOffsetSeconds) * 60000)
+export function dateInTimezone (date, timezoneOffsetSeconds) {
+  return new Date(date.getTime() + (date.getTimezoneOffset() + timezoneOffsetSeconds) * 60000)
 }

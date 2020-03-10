@@ -1,4 +1,5 @@
 import fetchMock from 'fetch-mock'
+import { InvalidLoginOrPasswordError } from '../../errors'
 import { installFetchMockDeveloperFriendlyFallback } from '../../testUtils'
 import { makePluginDataApi } from '../../ZPAPI.pluginData'
 import { scrape } from './index'
@@ -67,6 +68,5 @@ test('throws credentials mismatch as InvalidPreferencesError', async () => {
     fromDate: new Date('2018-12-01T12:00:00Z'),
     toDate: new Date('2018-12-07T12:00:00Z')
   })
-  await expect(result).rejects.toBeInstanceOf(InvalidPreferencesError)
-  await expect(result).rejects.toMatchObject({ message: 'Неверный логин или пароль' })
+  await expect(result).rejects.toBeInstanceOf(InvalidLoginOrPasswordError)
 })

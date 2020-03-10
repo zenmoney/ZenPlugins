@@ -3,6 +3,7 @@ import { defaultsDeep, flatMap } from 'lodash'
 import { createDateIntervals as commonCreateDateIntervals } from '../../common/dateUtils'
 import { fetchJson } from '../../common/network'
 import { generateRandomString } from '../../common/utils'
+import { InvalidOtpCodeError } from '../../errors'
 
 const base64 = new Base64()
 var querystring = require('querystring')
@@ -154,7 +155,7 @@ kro=
       inputType: 'number'
     })
     if (!code || !code.trim()) {
-      throw new TemporaryError('Вы не ввели код. Повторите запуск синхронизации.')
+      throw new InvalidOtpCodeError()
     }
 
     res = (await fetchApiJson(loginUrl, {

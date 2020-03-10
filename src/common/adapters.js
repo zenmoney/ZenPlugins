@@ -1,9 +1,28 @@
+import i18n from 'i18next'
 import _ from 'lodash'
-import { InvalidPreferencesError, TemporaryError, ZPAPIError } from '../errors'
+import * as ru from '../../locales/ru.json'
+import {
+  BankMessageError,
+  IncompatibleVersionError,
+  InvalidLoginOrPasswordError,
+  InvalidOtpCodeError,
+  InvalidPreferencesError,
+  PreviousSessionNotClosedError,
+  TemporaryError,
+  TemporaryUnavailableError,
+  ZPAPIError
+} from '../errors'
 import { toZenmoneyTransaction } from './converters'
 import { isValidDate } from './dateUtils'
 import { sanitize } from './sanitize'
 import { isDebug } from './utils'
+
+i18n.init({
+  resources: {
+    ru: { translation: ru }
+  },
+  fallbackLng: 'ru'
+})
 
 const MS_IN_MINUTE = 60 * 1000
 const MS_IN_DAY = 24 * 60 * MS_IN_MINUTE
@@ -133,6 +152,30 @@ function castTransactionDatesToTicks (transactions) {
 }
 
 function getPresentationError (error) {
+  let key = null
+  const params = { lng: ZenMoney.locale ? ZenMoney.locale.replace('_', '-') : 'ru' }
+  if (error instanceof BankMessageError) {
+    key = 'zenPlugin_bankMessageError'
+    params.bankMessage = error.bankMessage
+  } else if (error instanceof IncompatibleVersionError) {
+    key = 'zenPlugin_incompatibleVersionError'
+  } else if (error instanceof InvalidLoginOrPasswordError) {
+    key = 'zenPlugin_invalidLoginOrPasswordError'
+  } else if (error instanceof InvalidOtpCodeError) {
+    key = 'zenPlugin_invalidOtpCodeError'
+  } else if (error instanceof PreviousSessionNotClosedError) {
+    key = 'zenPlugin_previousSessionNotClosedError'
+  } else if (error instanceof TemporaryUnavailableError) {
+    key = 'zenPlugin_temporaryUnavailableError'
+  } else if (error instanceof InvalidPreferencesError && !error.message) {
+    key = 'zenPlugin_invalidPreferencesError'
+  }
+  if (key) {
+    const localizedMessage = i18n.t(key, params)
+    if (localizedMessage && localizedMessage !== key) {
+      error.message = localizedMessage
+    }
+  }
   const meaningfulError = error && error.message
     ? error
     : new Error('Thrown error must be an object containing message field, but was: ' + JSON.stringify(error))

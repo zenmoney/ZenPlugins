@@ -1,4 +1,5 @@
 import * as network from '../../common/network'
+import { InvalidLoginOrPasswordError } from '../../errors'
 
 const baseUrl = 'https://raw.githubusercontent.com/zenmoney/ZenPlugins/master/src/plugins/example/public/'
 
@@ -17,7 +18,7 @@ function validateResponse (response, predicate) {
 export async function login (login, password) {
   // It happens on server side
   if (login !== 'example' || password !== 'example') {
-    throw new InvalidPreferencesError('Неверный логин или пароль')
+    throw new InvalidLoginOrPasswordError()
   }
   return (await fetchJson('auth.json', null, response => response.body.access_token)).body.access_token
 }

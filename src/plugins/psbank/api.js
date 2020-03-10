@@ -3,6 +3,7 @@ import { fetchJson } from '../../common/network'
 import * as forge from 'node-forge'
 import { get } from 'lodash'
 import { stringify } from 'querystring'
+import { InvalidOtpCodeError } from '../../errors'
 
 const qs = require('querystring')
 
@@ -150,7 +151,7 @@ export async function login (preferences, auth) {
         message = `Код для входа не был введён. Попытка #${i + 2}`
       }
       if (!code) {
-        throw new InvalidPreferencesError('Код для входа не был введён. Подключение к банку остановлено.')
+        throw new InvalidOtpCodeError()
       }
     }
 

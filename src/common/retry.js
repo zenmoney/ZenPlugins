@@ -1,3 +1,5 @@
+import { delay } from './utils'
+
 export class RetryError {
   constructor (message, failedResults) {
     this.message = message
@@ -26,7 +28,7 @@ export async function retry ({
   const failedResults = []
   for (let attempt = 1; attempt <= maxAttempts; ++attempt) {
     if (delayMs > 0 && attempt > 1 && global.setTimeout) {
-      await new Promise(resolve => setTimeout(resolve, delayMs))
+      await delay(delayMs)
     }
     const getterResult = getter()
     const value = await getterResult

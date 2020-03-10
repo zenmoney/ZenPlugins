@@ -1,6 +1,7 @@
 import { defaultsDeep, flatMap } from 'lodash'
 import { createDateIntervals as commonCreateDateIntervals } from '../../common/dateUtils'
 import { fetchJson } from '../../common/network'
+import { BankMessageError } from '../../errors'
 import { getDate } from './converters'
 
 const baseUrl = 'https://mybank.by/api/v1/'
@@ -35,7 +36,7 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
     ].indexOf(response.body.error.code) >= 0) {
       const errorDescription = response.body.error.description || response.body.error.error_description
       const errorMessage = errorDescription + (response.body.error.lockedTime && response.body.error.lockedTime !== 'null' ? response.body.error.lockedTime : '')
-      throw new TemporaryError(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: ${errorMessage}`)
+      throw new BankMessageError(errorMessage)
     }
   }
 
@@ -54,8 +55,8 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
       console.log('Ответ банка: ' + errorDescription)
       return false
     }
-    const errorMessage = 'Ответ банка: ' + errorDescription + (response.body.error.lockedTime && response.body.error.lockedTime !== 'null' ? response.body.error.lockedTime : '')
-    throw new TemporaryError(errorMessage)
+    const errorMessage = errorDescription + (response.body.error.lockedTime && response.body.error.lockedTime !== 'null' ? response.body.error.lockedTime : '')
+    throw new BankMessageError(errorMessage)
   }
 
   return response

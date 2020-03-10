@@ -5,6 +5,7 @@ import { toISODateString } from '../../common/dateUtils'
 import { fetch } from '../../common/network'
 import { parseResponseBody, stringifyRequestBody } from '../../common/protocols/burlap'
 import { randomInt } from '../../common/utils'
+import { BankMessageError, InvalidLoginOrPasswordError, InvalidOtpCodeError, TemporaryUnavailableError } from '../../errors'
 
 const md5 = new MD5()
 
@@ -101,7 +102,7 @@ async function burlapRequest (options) {
     })
   } catch (e) {
     if (e.response && (e.response.status === 503 || e.response.status === 570)) {
-      throw new TemporaryError('Информация из Банка ВТБ временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог разработчикам".')
+      throw new TemporaryUnavailableError()
     } else if (e.cause) {
       throw e.cause
     } else {
@@ -116,13 +117,13 @@ async function burlapRequest (options) {
       'операцию позже',
       'временно недоступна'
     ].some(str => response.body.message.indexOf(str) >= 0)) {
-      throw new TemporaryError('Информация из Банка ВТБ временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог разработчикам".')
+      throw new TemporaryUnavailableError()
     } else if ([
       'Ошибка обращения'
     ].some(str => response.body.message.indexOf(str) >= 0)) {
       throw new Error(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: ${response.body.message}`)
     } else {
-      throw new TemporaryError(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: ${response.body.message}`)
+      throw new BankMessageError(response.body.message)
     }
   }
   return response
@@ -165,7 +166,7 @@ export async function login (login, password) {
     'ThirdPersonCard',
     'CrossLinkFault'
   ].some(mode => response.body.mode === mode) && response.body.description) {
-    throw new TemporaryError(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: ${response.body.description}`)
+    throw new BankMessageError(response.body.description)
   }
   console.assert(response.body.mode === 'Pass', 'unsupported login mode')
   response = await burlapRequest({
@@ -190,7 +191,7 @@ export async function login (login, password) {
     }
   })
   if (response.body.type === 'invalid-credentials') {
-    throw new InvalidPreferencesError('Введен неверный логин или пароль')
+    throw new InvalidLoginOrPasswordError()
   }
   console.assert(response.body.authorization.methods.find(method => method.id === 'SMS'), 'unsupported authorization method')
   await burlapRequest({
@@ -239,7 +240,7 @@ export async function login (login, password) {
     inputType: 'number'
   })
   if (!code || !code.trim()) {
-    throw new TemporaryError('Введён пустой код. Повторите подключение синхронизации ещё раз.')
+    throw new InvalidOtpCodeError()
   }
   response = await burlapRequest({
     sdkData,
@@ -261,7 +262,7 @@ export async function login (login, password) {
     }
   })
   if (response.body.type === 'invalid-sms-code') {
-    throw new TemporaryError('Введён неверный код. Повторите подключение синхронизации ещё раз.')
+    throw new InvalidOtpCodeError()
   }
   console.assert(response.body.authorization.id === '00000000-0000-0000-0000-000000000000', 'invalid response')
   return {
@@ -285,7 +286,7 @@ export async function fetchAccounts ({ login, token }) {
   //   response.body.status === 'Complete', 'missing some accounts data')
   if (response.body.executionPercent < 75) {
   // if (response.body.executionPercent !== 100 || response.body.status !== 'Complete') {
-    throw new TemporaryError('Информация из Банка ВТБ временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог разработчикам".')
+    throw new TemporaryUnavailableError()
   }
   return response.body.portfolios
 }

@@ -1,6 +1,7 @@
 import { parseStartDateString } from '../../common/adapters'
 import { fetchJson } from '../../common/network'
 import _ from 'lodash'
+import { InvalidOtpCodeError } from '../../errors'
 
 const myCreditUrl = 'https://mob.homecredit.ru/mycredit'
 const baseUri = 'https://ib.homecredit.ru/mobile/remoting'
@@ -135,7 +136,7 @@ async function readSmsCode (auth, readlineTitle = 'Введите код из С
       time: 120000,
       inputType: 'number'
     })
-    if (!code || !code.trim()) { throw new TemporaryError('Получен пустой код') }
+    if (!code || !code.trim()) { throw new InvalidOtpCodeError() }
 
     response = await fetchApiJson('Sms/ValidateSmsCode', {
       API: 4,

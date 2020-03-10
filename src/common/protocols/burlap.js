@@ -1,7 +1,7 @@
 import * as _ from 'lodash'
 import padLeft from 'pad-left'
 import { IncompatibleVersionError } from '../../errors'
-import { getByteLength } from '../utils'
+import { getByteLength } from '../stringUtils'
 
 const cheerio = require('cheerio')
 

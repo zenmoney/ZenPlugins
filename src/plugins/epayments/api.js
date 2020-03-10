@@ -1,5 +1,6 @@
 import * as _ from 'lodash'
 import * as network from '../../common/network'
+import { InvalidOtpCodeError } from '../../errors'
 import * as tools from './tools'
 import { stringify } from 'querystring'
 
@@ -29,7 +30,7 @@ export async function authenthicate (login, password) {
   async function readCode (message) {
     const otp = await ZenMoney.readLine(message, { inputType: 'number' })
     if (!otp) {
-      throw new Error('Без OTP-кода не смогу =[')
+      throw new InvalidOtpCodeError()
     } else {
       return otp
     }
@@ -75,10 +76,10 @@ export async function authenthicate (login, password) {
         const otp = await readCode('Одноразовый пароль введен неверно. Попробуйте еще раз')
         return fetchRetry(login, password, otp)
       } else if (errorCode === 'bot_detected') {
-        throw new Error('Банк заподозрил в вас бота, попробуйте зайти через браузер, потом снова проведите синхронизацию в Zenmoney')
+        throw new TemporaryError('Банк заподозрил в вас бота, попробуйте зайти через браузер, потом снова проведите синхронизацию в Zenmoney')
       } else if (errorCode === 'invalid_grant') {
         console.error(response)
-        throw new Error(_.get(response, 'body.error_description', 'Неправильный логин или пароль или ваш счет временно заблокирован'))
+        throw new InvalidPreferencesError(_.get(response, 'body.error_description', 'Неправильный логин или пароль или ваш счет временно заблокирован'))
       } else {
         console.error('Что-то пошло не так ' + JSON.stringify(response))
         throw new Error('Что-то пошло не так!')

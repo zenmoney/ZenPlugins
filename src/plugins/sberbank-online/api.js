@@ -6,6 +6,7 @@ import { parseOuterAccountData } from '../../common/accounts'
 import { fetch, ParseError, parseXml } from '../../common/network'
 import { retry, RetryError, toNodeCallbackArguments } from '../../common/retry'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
+import { InvalidOtpCodeError } from '../../errors'
 import { formatDateSql, isCashTransfer, parseDate, parseDecimal } from './converters'
 
 const md5 = new MD5()
@@ -106,7 +107,7 @@ export async function login (login, pin, auth, device) {
         inputType: 'number'
       })
       if (!code || !code.trim()) {
-        throw new TemporaryError('Введен пустой код из SMS. Повторите подключение синхронизации ещё раз.')
+        throw new InvalidOtpCodeError()
       }
       response = await fetchXml('https://online.sberbank.ru:4477/CSAMAPI/registerApp.do', {
         body: {

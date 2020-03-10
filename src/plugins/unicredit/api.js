@@ -5,6 +5,7 @@ import { stringify } from 'querystring'
 import { fetch, parseXml as parse } from '../../common/network'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { generateUUID, randomInt } from '../../common/utils'
+import { BankMessageError, InvalidLoginOrPasswordError, InvalidOtpCodeError } from '../../errors'
 
 const baseUrl = 'https://enter.unicredit.ru/v2/cgi/bsi.dll?'
 const deviceName = 'Zenmoney'
@@ -114,7 +115,7 @@ export async function login (auth, { login, password }) {
   if (response.body.response.errorlabel && response.body.response.errorlabel.caption && [
     'при вводе логина или пароля'
   ].some(str => response.body.response.errorlabel.caption.indexOf(str) >= 0)) {
-    throw new InvalidPreferencesError('Неверный логин или пароль')
+    throw new InvalidLoginOrPasswordError()
   }
 
   const sid = response.body.response.information.value
@@ -152,7 +153,7 @@ export async function login (auth, { login, password }) {
     inputType: 'number'
   })
   if (!code || !code.trim()) {
-    throw new TemporaryError('Введен пустой код из SMS. Повторите подключение синхронизации ещё раз.')
+    throw new InvalidOtpCodeError()
   }
 
   response = await callGate('RT_Android_1Common.advancedAuth', {
@@ -169,7 +170,7 @@ export async function login (auth, { login, password }) {
     }
   })
   if (response.body.form && response.body.form.id === 'error') {
-    throw new TemporaryError('Введен неверный код из SMS. Повторите подключение синхронизации ещё раз.')
+    throw new InvalidOtpCodeError()
   }
   console.assert(response.body.rule.id === 'completed2fa', 'unexpected response')
 
@@ -210,7 +211,7 @@ export async function fetchAccounts ({ sid }) {
   })
   if (response.body.form.id === 'changepass') {
     const message = 'Мы усилили меры безопасности в отношении паролей доступа в систему. В связи с этим просим вас задать новый пароль.'
-    throw new TemporaryError(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: ${message}`)
+    throw new BankMessageError(message)
   }
   const accounts = {}
   Object.keys(response.body.form).filter(key => [

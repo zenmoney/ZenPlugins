@@ -2,6 +2,7 @@
 import * as qs from 'querystring'
 import * as network from '../../common/network'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
+import { delay } from '../../common/utils'
 import { IncompatibleVersionError } from '../../errors'
 import * as config from './config'
 
@@ -260,7 +261,7 @@ export async function fetchStatement ({ access_token } = {}, apiAccount, fromDat
 
     status = response.body.status
     if (status === 'ready' || i >= iMax) break
-    await delay(3)
+    await delay(3000)
   }
   if (response.body.message === 'Bad JSON') {
     console.log('>>> Не удалось получить статус выписки')
@@ -285,10 +286,4 @@ export async function fetchStatement ({ access_token } = {}, apiAccount, fromDat
   }
 
   return response.body
-}
-
-async function delay (seconds) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, seconds * 1000)
-  })
 }

@@ -1,5 +1,6 @@
 import { defaultsDeep } from 'lodash'
 import { fetch } from '../../common/network'
+import { BankMessageError, InvalidOtpCodeError } from '../../errors'
 
 const baseUrl = 'https://ibank.asb.by'
 var querystring = require('querystring')
@@ -109,7 +110,7 @@ export async function loginCodes (prefs) {
   }, response => response.success, message => new Error(''))
 
   if (res.body.search(/Смена пароля/) >= 0) {
-    throw new InvalidPreferencesError(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: Закончился срок действия пароля. Задайте новый пароль в интернет-банке Беларусбанка`)
+    throw new BankMessageError('Закончился срок действия пароля. Задайте новый пароль в интернет-банке Беларусбанка')
   }
 
   return res
@@ -145,7 +146,7 @@ export async function loginSMS (prefs) {
     time: 120000
   })
   if (sms === '') {
-    throw new TemporaryError('Не введён код из смс. Подключите синхронизацию ещё раз.')
+    throw new InvalidOtpCodeError()
   }
 
   url = res.body.match(/<form[^>]+action="([^"]*)"[^>]*name="LoginForm1"/i)
@@ -168,7 +169,7 @@ export async function loginSMS (prefs) {
   }, response => response.success, message => new Error(''))
 
   if (res.body.search(/Смена пароля/) >= 0) {
-    throw new InvalidPreferencesError(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: Закончился срок действия пароля. Задайте новый пароль в интернет-банке Беларусбанка`)
+    throw new BankMessageError('Закончился срок действия пароля. Задайте новый пароль в интернет-банке Беларусбанка')
   }
 
   return res
