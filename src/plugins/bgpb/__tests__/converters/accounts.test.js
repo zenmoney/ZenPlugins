@@ -19,7 +19,7 @@ describe('convertAccount', () => {
   }
   it('maps bank card to zenmoney one', () => {
     expect(convertAccount(bankCard)).toEqual({
-      id: '11161311',
+      id: null,
       transactionsAccId: null,
       type: 'card',
       title: 'Расчетная карточка*1111',

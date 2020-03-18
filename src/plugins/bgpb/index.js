@@ -56,9 +56,10 @@ async function allAccounts (token) {
 
   for (let i = 0; i < accounts.length; i++) {
     if (accounts[i].balance !== null) {
-      accounts[i].accountID = await bank.fetchAccountConditions(token, accounts[i])
+      accounts[i].id = await bank.fetchAccountConditions(token, accounts[i])
     }
   }
+  accounts.filter(account => account.id !== null)
 
   return accounts
 }
