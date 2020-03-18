@@ -8,7 +8,7 @@ export function convertAccount (ob) {
   if (ob.ProductType !== 'NON_ONUS' && !ZenMoney.isAccountSkipped(id)) {
     // eslint-disable-next-line no-debugger
     return {
-      id,
+      id: null,
       transactionsAccId: null,
       type: 'card',
       title: ob.CustomName + '*' + ob.No.slice(-4),
@@ -27,7 +27,7 @@ export function convertAccount (ob) {
 export function addOverdraftInfo (accounts, overdrafts) {
   for (var accountNumber in overdrafts) {
     for (let i = 0; i < accounts.length; i++) {
-      if (accounts[i].accountID === accountNumber) {
+      if (accounts[i].id === accountNumber) {
         accounts[i].creditLimit = Number.parseFloat(overdrafts[accountNumber].replace(',', '.').replace(/\s/g, ''))
         accounts[i].balance = -(accounts[i].creditLimit - accounts[i].balance)
       }
