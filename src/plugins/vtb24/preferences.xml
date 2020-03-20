@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen>
 	<EditTextPreference
-		title="Логин или номер карты ВТБ"
-		dialogTitle="Логин или номер карты ВТБ"
+		title="Номер карты ВТБ или логин (УНК)"
+		dialogTitle="Номер карты ВТБ или логин (УНК)"
 		positiveButtonText="ОК"
 		negativeButtonText="Отмена"
 		summary="||{@s}"

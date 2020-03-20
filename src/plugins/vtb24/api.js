@@ -9,8 +9,8 @@ import { BankMessageError, InvalidLoginOrPasswordError, InvalidOtpCodeError, Tem
 
 const md5 = new MD5()
 
-const PROTOCOL_VERSION = '14.32.2'
-const APP_VERSION = '14.32.2'
+const PROTOCOL_VERSION = '14.0.0'
+const APP_VERSION = '14.35.0.8'
 const deviceName = 'Zenmoney'
 
 export function createSdkData (login) {
@@ -130,6 +130,7 @@ async function burlapRequest (options) {
 }
 
 export async function login (login, password) {
+  login = login.replace(/\s+/g, '')
   const sdkData = createSdkData(login)
   let response = await burlapRequest({
     sdkData,
@@ -146,6 +147,7 @@ export async function login (login, password) {
     },
     sanitizeResponseLog: { body: { sessionId: true, userInfo: true } }
   })
+
   const token = response.body.sessionId
   response = await burlapRequest({
     sdkData,
