@@ -40,7 +40,7 @@ function resolveAccountInstrument (accountRef, serializedAccountRef, accountsByI
   }
 }
 
-const accountTypes = ['cash', 'ccard', 'checking', 'loan', 'deposit']
+const accountTypes = ['cash', 'ccard', 'checking', 'loan', 'deposit', 'investment']
 
 function assertAccountCompanyIsValid (company) {
   if (company === null) {

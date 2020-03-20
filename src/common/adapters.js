@@ -63,14 +63,22 @@ export const parseStartDateString = (startDateString) => {
   return new Date(startDateString)
 }
 
-const calculateFromDate = (startDateString) => {
-  console.assert(startDateString, `preferences must contain "startDate"`)
-  const startDate = parseStartDateString(startDateString)
-  console.assert(isValidDate(startDate), { startDateString }, 'is not a valid date')
+const getLastSuccessDate = () => {
   const lastSuccessDateString = ZenMoney.getData(SCRAPE_LAST_SUCCESS_DATE_KEY)
   if (lastSuccessDateString) {
     const lastSuccessDate = new Date(lastSuccessDateString)
     console.assert(isValidDate(lastSuccessDate), { lastSuccessDateString }, 'is not a valid date')
+    return lastSuccessDate
+  }
+  return null
+}
+
+const calculateFromDate = (startDateString) => {
+  console.assert(startDateString, `preferences must contain "startDate"`)
+  const startDate = parseStartDateString(startDateString)
+  console.assert(isValidDate(startDate), { startDateString }, 'is not a valid date')
+  const lastSuccessDate = getLastSuccessDate()
+  if (lastSuccessDate) {
     return new Date(Math.max(lastSuccessDate.getTime() - MS_IN_WEEK, startDate.getTime()))
   }
   return startDate
@@ -128,6 +136,13 @@ export function fixDateTimezones (transaction) {
     date: new Date(date.valueOf() - date.getTimezoneOffset() * MS_IN_MINUTE),
     created: date
   }
+}
+
+export function patchAccounts (accounts) {
+  if (!ZenMoney.features.investmentAccount && accounts.some(account => account.type === 'investment')) {
+    throw new IncompatibleVersionError()
+  }
+  return accounts
 }
 
 export function patchTransactions (transactions, accounts) {
@@ -215,7 +230,7 @@ export function adaptScrapeToGlobalApi (scrape) {
       console.assert(results, 'scrape() did not return anything')
       if (Array.isArray(results.accounts) && Array.isArray(results.transactions)) {
         const zenmoneyAccounts = assertAccountIdsAreUnique(results.accounts)
-        ZenMoney.addAccount(zenmoneyAccounts)
+        ZenMoney.addAccount(patchAccounts(zenmoneyAccounts))
         ZenMoney.addTransaction(patchTransactions(results.transactions, zenmoneyAccounts))
         ZenMoney.setResult({ success: true })
         return
