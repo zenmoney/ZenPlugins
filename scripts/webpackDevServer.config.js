@@ -170,11 +170,6 @@ module.exports = ({ allowedHost, host, https }) => {
 
       // eslint-disable-next-line new-cap
       const proxy = new httpProxy.createProxyServer()
-      proxy.on('error', (err, req, res) => {
-        if (typeof res.status === 'function') {
-          res.status(502).json(convertErrorToSerializable(err))
-        }
-      })
       proxy.on('proxyRes', (proxyRes, req, res) => {
         if (proxyRes.headers['set-cookie']) {
           proxyRes.headers[TRANSFERABLE_HEADER_PREFIX + 'set-cookie'] = proxyRes.headers['set-cookie']
@@ -189,24 +184,32 @@ module.exports = ({ allowedHost, host, https }) => {
       })
 
       const wsOptions = {}
-      const wsResponsePromises = {}
+      const wsResponseResults = {}
+      proxy.on('error', (err, req, res) => {
+        if (typeof res.status === 'function') {
+          res.status(502).json(convertErrorToSerializable(err))
+        } else if (req._zpWsOptions) {
+          wsResponseResults[req._zpWsOptions.id] = [err, null]
+        }
+      })
       const cacheWebSocketResponse = (req, res) => {
         const { id, url } = req._zpWsOptions
-        wsResponsePromises[id] = new Promise((resolve, reject) => {
-          const response = {
-            url,
-            protocol: `HTTP/${res.httpVersion}`,
-            status: res.statusCode,
-            statusText: res.statusMessage,
-            headers: res.headers,
-            body: null
-          }
-          if (res.upgrade) {
-            resolve(response)
-          } else {
-            reject(new Error('non-upgrade response is not supported yet'))
-          }
-        })
+        wsResponseResults[id] = res.upgrade
+          ? [
+            null,
+            {
+              url,
+              protocol: `HTTP/${res.httpVersion}`,
+              status: res.statusCode,
+              statusText: res.statusMessage,
+              headers: res.headers,
+              body: null
+            }
+          ]
+          : [
+            new Error('non-upgrade response is not supported yet'),
+            null
+          ]
       }
       app.post(
         '/zen/ws',
@@ -221,10 +224,15 @@ module.exports = ({ allowedHost, host, https }) => {
         '/zen/ws/:id',
         (req, res) => {
           const id = req.params.id
-          const resPromise = wsResponsePromises[id]
-          delete wsResponsePromises[id]
-          if (resPromise) {
-            resPromise.then(response => res.json(response)).catch(err => res.status(500).json(convertErrorToSerializable(err)))
+          const result = wsResponseResults[id]
+          delete wsResponseResults[id]
+          if (result) {
+            const [err, response] = result
+            if (response) {
+              res.json(response)
+            } else {
+              res.status(502).json(convertErrorToSerializable(err))
+            }
           } else {
             res.status(500).json(convertErrorToSerializable(new Error('Could not found WebSocket response')))
           }

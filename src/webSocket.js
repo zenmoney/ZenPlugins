@@ -16,7 +16,7 @@ export default class WebSocket {
         this.onopen({
           target: this,
           type: 'open',
-          response: getWebSocketResponse(id) || null
+          response: (getWebSocketResponseResult(id) || [])[1] || null
         })
       }
     }
@@ -33,11 +33,16 @@ export default class WebSocket {
     }
     this._socket.onerror = (event) => {
       if (this.onerror) {
+        const result = getWebSocketResponseResult(id)
         this.onerror({
           target: this,
           type: 'error',
-          message: 'message' in event ? event.message : null,
-          response: getWebSocketResponse(id) || null
+          message: 'message' in event
+            ? event.message
+            : result && result[0] && result[0].message
+              ? result[0].message
+              : null,
+          response: (result && result[1]) || null
         })
       }
     }
@@ -122,7 +127,7 @@ function fetchSync ({ method, url, headers, body, binaryResponse }) {
   req.open(method, url, false)
 
   if (headers) {
-    Object.entries(headers).forEach(([ key, value ]) => {
+    Object.entries(headers).forEach(([key, value]) => {
       req.setRequestHeader(key, value)
     })
   }
@@ -179,14 +184,19 @@ function initWebSocket (url, options) {
   throw new Error('Could not init WebSocket. Check that dev server is running')
 }
 
-function getWebSocketResponse (id) {
+function getWebSocketResponseResult (id) {
   const res = fetchSync({
     url: `http://localhost:5000/zen/ws/${id}`,
     method: 'GET'
   })
-  if (res.status === 200) {
+  if (res.status === 200 || res.status === 502) {
     try {
-      return JSON.parse(res.body)
+      const data = JSON.parse(res.body)
+      if (res.status === 200) {
+        return [null, data]
+      } else {
+        return [data, null]
+      }
     } catch (e) {}
   }
   throw new Error('Could not fetch WebSocket response. Check that dev server is running')
