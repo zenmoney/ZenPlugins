@@ -286,7 +286,8 @@ module.exports = ({ allowedHost, host, https }) => {
         req._zpWsOptions = { id, url }
         proxy.ws(req, socket, head, {
           target: origin,
-          preserveHeaderKeyCase: true
+          preserveHeaderKeyCase: true,
+          secure: false
         })
       })
 
