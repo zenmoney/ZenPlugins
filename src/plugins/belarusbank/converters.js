@@ -57,7 +57,6 @@ export function convertTransaction (tr, accounts) {
   if (tr.status === 'operResultError') {
     return null
   }
-  console.log(tr)
   const account = accounts.find(account => {
     return account.syncID.indexOf(tr.accountID) !== -1
   })
@@ -66,7 +65,6 @@ export function convertTransaction (tr, accounts) {
     date: getFullDate(tr.date + ' ' + tr.time),
     movements: [ getMovement(tr, account) ],
     merchant: null,
-    comment: tr.comment,
     hold: tr.status !== 'operResultOk'
   };
 
@@ -84,7 +82,7 @@ function getMovement (tr, account) {
     account: { id: account.id },
     invoice: null,
     sum: getSumAmount(tr.debitFlag, tr.inAccountSum),
-    fee: 0
+    fee: Math.abs(parseFloat(tr.fee) * 100) / 100
   }
 
   if (tr.operationCurrency !== account.instrument) {
@@ -93,12 +91,11 @@ function getMovement (tr, account) {
       instrument: tr.operationCurrency
     }
   }
-
   return movement
 }
 
 function parseCash (transaction, tr) {
-  if (tr.comment.indexOf('Пополнение счета') >= 0) {
+  if (tr.comment.indexOf('Пополнение счета') >= 0 || tr.comment.indexOf('Снятие наличных') >= 0) {
     // добавим вторую часть перевода
     transaction.movements.push({
       id: null,
@@ -110,18 +107,22 @@ function parseCash (transaction, tr) {
       },
       invoice: null,
       sum: -getSumAmount(tr.debitFlag, tr.operationSum),
-      fee: 0
+      fee: Math.abs(parseFloat(tr.fee) * 100) / 100
     })
     return true
+  } else {
+    return false
   }
 }
 
 function parsePayee (transaction, tr) {
+  transaction.comment = tr.comment
   // интернет-платежи отображаем без получателя
   if (!tr.place) {
     return false
   }
 
+  tr.place = tr.place.replace(/&quot;/g, '"').replace(/&gt;/g, '>').replace(/&lt;/g, '<')
   let data = tr.place.split('/')
   var mcc = null
   var fullTitle = null
@@ -146,6 +147,7 @@ function parsePayee (transaction, tr) {
     location: null,
     fullTitle: fullTitle
   }
+  return true
 }
 
 function getSumAmount (debitFlag, strAmount) {

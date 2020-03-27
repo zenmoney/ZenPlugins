@@ -42,7 +42,8 @@ describe('convertTransaction', () => {
         operationSum: '1 280.00',
         place: 'OPLATA USLUG/4900',
         status: 'operResultOk',
-        time: '11:38:16'
+        time: '11:38:16',
+        fee: 0
       },
       expectedTransaction: {
         date: new Date('2019-06-01T08:38:16.000Z'),
@@ -77,7 +78,8 @@ describe('convertTransaction', () => {
         operationSum: '35.00',
         place: 'SMS BANKING / MTS/4814',
         status: 'operResultOk',
-        time: '11:38:16'
+        time: '11:38:16',
+        fee: 0
       },
       expectedTransaction: {
         date: new Date('2019-06-01T08:38:16.000Z'),
@@ -112,7 +114,8 @@ describe('convertTransaction', () => {
         operationSum: '0.00',
         place: 'ZH/D VOKZAL BPSB ATM/6011',
         status: 'operResultOk',
-        time: '11:38:16'
+        time: '11:38:16',
+        fee: 0
       },
       expectedTransaction: {
         date: new Date('2019-06-01T08:38:16.000Z'),
@@ -147,7 +150,8 @@ describe('convertTransaction', () => {
         operationSum: '173.18',
         place: 'Пенсия ФСЗН',
         status: 'operResultOk',
-        time: '11:38:16'
+        time: '11:38:16',
+        fee: 0
       },
       expectedTransaction: {
         date: new Date('2019-06-01T08:38:16.000Z'),
@@ -182,7 +186,8 @@ describe('convertTransaction', () => {
         operationSum: '400',
         place: 'Vasia Pupkin/6012',
         status: 'operResultOk',
-        time: '11:38:16'
+        time: '11:38:16',
+        fee: 1.23
       },
       expectedTransaction: {
         date: new Date('2019-06-01T08:38:16.000Z'),
@@ -192,7 +197,7 @@ describe('convertTransaction', () => {
             account: { id: 'BY75AKBB30141000022233030000' },
             invoice: { sum: 400, instrument: 'RUB' },
             sum: 5.64,
-            fee: 0
+            fee: 1.23
           }
         ],
         merchant: {

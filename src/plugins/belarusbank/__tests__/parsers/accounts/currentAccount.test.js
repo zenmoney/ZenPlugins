@@ -14,7 +14,12 @@ describe('parseCards', () => {
               viewState: '/s/ILIJQP0MUnb/gGBXSPx/qeFn1F2hE8dXypyYEprKzSJcic2OonnnipyXjN761vdo+ccluj+v4hQG+SraIbnxVAf1nwT1VinR4ODQM7BUNv8UYPWnpkjNrL7/jAOM8IaOMiizIzWVAlfs5ExjSUbMHVV4=',
               additional:
                 ['\'viewns_Z7_0AG41KO0J8GF30QURARU5U2O65_:ClientCardsDataForm\'',
-                  '\'viewns_Z7_0AG41KO0J8GF30QURARU5U2O65_:ClientCardsDataForm:accountContainer:0:ns_Z7_0AG41KO0J8GF30QURARU5U2O65_j_id1\'',
+                  '\'viewns_Z7_0AG41KO0J8GF30QURARU5U2O65_:ClientCardsDataForm:accountContainer:0:ns_Z7_0AG41KO0J8GF30QURARU5U2O65_j_id4\'',
+                  '\'accountNumber\'',
+                  '\'511051014537\''],
+              holdsData:
+                ['\'viewns_Z7_0AG41KO0J8GF30QURARU5U2O65_:ClientCardsDataForm\'',
+                  '\'viewns_Z7_0AG41KO0J8GF30QURARU5U2O65_:ClientCardsDataForm:accountContainer:0:ns_Z7_0AG41KO0J8GF30QURARU5U2O65_j_id5\'',
                   '\'accountNumber\'',
                   '\'511051014537\'']
             },

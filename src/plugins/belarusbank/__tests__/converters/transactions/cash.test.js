@@ -1,5 +1,4 @@
 import { convertTransaction } from '../../../converters'
-
 describe('convertTransaction', () => {
   const account = {
     id: 'BY75AKBB30141000022233030000',
@@ -27,11 +26,9 @@ describe('convertTransaction', () => {
       type: 'card'
     }
   }
-
-  let tt = [
-    {
-      name: 'parse cash',
-      json: {
+  it.each([
+    [
+      {
         accountID: 'BY75AKBB30141000022233030000',
         comment: 'Пополнение счета (дополнительный взнос)',
         date: '01.06.2019',
@@ -42,10 +39,11 @@ describe('convertTransaction', () => {
         operationSum: '1 280.00',
         place: '/',
         status: 'operResultOk',
-        time: '00:00:00'
+        time: '00:00:00',
+        fee: 0
       },
-      expectedTransaction: {
-        date: new Date('2019-05-31T21:00:00.000Z'),
+      {
+        date: new Date('2019-06-01T00:00:00+03:00'),
         movements: [
           {
             id: null,
@@ -68,15 +66,52 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: null,
-        comment: 'Пополнение счета (дополнительный взнос)',
         hold: false
       }
-    }
-  ]
-  tt.forEach(function (tc) {
-    it(tc.name, () => {
-      let transaction = convertTransaction(tc.json, [account])
-      expect(transaction).toEqual(tc.expectedTransaction)
-    })
+    ],
+    [
+      {
+        'accountID': 'BY75AKBB30141000022233030000',
+        'comment': 'Снятие наличных',
+        'date': '14.02.2020',
+        'debitFlag': '-',
+        'fee': '0.00',
+        'inAccountCurrency': 'EUR',
+        'inAccountSum': '320.00',
+        'operationCurrency': 'EUR',
+        'operationSum': '320.00',
+        'place': 'BR.400/65 ATM/6011',
+        'status': 'operResultOk',
+        'time': '11:54:00'
+      },
+      {
+        date: new Date('2020-02-14T11:54:00+03:00'),
+        movements: [
+          {
+            id: null,
+            account: { id: 'BY75AKBB30141000022233030000' },
+            invoice: null,
+            sum: -320,
+            fee: 0
+          },
+          {
+            id: null,
+            account: {
+              company: null,
+              type: 'cash',
+              instrument: 'EUR',
+              syncIds: null
+            },
+            invoice: null,
+            sum: 320,
+            fee: 0
+          }
+        ],
+        merchant: null,
+        hold: false
+      }
+    ]
+  ])('converts cash operations', (apiTransaction, transaction) => {
+    expect(convertTransaction(apiTransaction, [account])).toEqual(transaction)
   })
 })

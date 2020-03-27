@@ -1,6 +1,7 @@
 import { defaultsDeep } from 'lodash'
 import { fetch } from '../../common/network'
 import { BankMessageError, InvalidOtpCodeError } from '../../errors'
+import padLeft from 'pad-left'
 
 const baseUrl = 'https://ibank.asb.by'
 var querystring = require('querystring')
@@ -191,7 +192,9 @@ export async function fetchURLAccounts (loginRequest) {
 }
 
 function strDecoder (str) {
-  if (str === null) { return null }
+  if (str === null) {
+    return null
+  }
   var str2 = str.split(';')
   var res = ''
   str2.forEach(function (s) {
@@ -226,14 +229,13 @@ export function parseCards (html) {
   const cheerio = require('cheerio')
   const $ = cheerio.load(html)
 
-  const formAction = $('form').attr('action')
   const formEncodedUrl = $('input[name="javax.faces.encodedURL"]').attr('value')
   const formViewState = $('input[name="javax.faces.ViewState"]').attr('value')
+
   const accountBlocks = $('table[class="accountContainer"]').children('tbody').children('tr').children('td')
   accountBlocks.each(function (i, elem) {
     const account = {
       transactionsData: {
-        action: formAction,
         encodedURL: formEncodedUrl,
         viewState: formViewState
       }
@@ -250,9 +252,14 @@ export function parseCards (html) {
       .children('td[class="tdAccountDetails"]').children('div').children('span[class="tdAccountOverdraft"]').children('nobr').text()
     account.overdraftCurrency = $(elem).children('table[class="accountInfoTable"]').children('tbody').children('tr')
       .children('td[class="tdAccountDetails"]').children('div').children('span[class="tdAccountOverdraft"]').text().split(' ').pop()
-    account.transactionsData.additional = accountTable.children('td[class="tdHiddenButton"]').children('a[class="collapseAccountLink"]')
+    account.transactionsData.additional = accountTable.children('td[class="tdAccountButton"]').children('a[title="Получить отчёт об операциях по счёту"]')
       .attr('onclick').replace('return myfaces.oam.submitForm(', '').replace(');', '').match(/'(.[^']*)'/ig)
     account.accountId = account.transactionsData.additional[account.transactionsData.additional.length - 1].replace(/'/g, '')
+
+    account.transactionsData.action = $('form[id="' + account.transactionsData.additional[0].replace(/'/g, '') + '"]').attr('action')
+    account.transactionsData.holdsData = accountTable.children('td[class="tdAccountButton"]').children('a[title="Получить отчёт по заблокированным операциям"]')
+      .attr('onclick').replace('return myfaces.oam.submitForm(', '').replace(');', '').match(/'(.[^']*)'/ig)
+
     if (cardTable.children('td').length > 1) {
       account.type = 'ccard'
       account.cards = []
@@ -294,7 +301,7 @@ export function parseDeposits (response) {
   return deposits
 }
 
-export async function fetchCardsTransactions (acc) {
+export async function fetchCardsTransactions (acc, fromDate, toDate) {
   console.log('>>> Загрузка транзакций по ' + acc.title)
 
   let body = {
@@ -302,9 +309,10 @@ export async function fetchCardsTransactions (acc) {
     'accountNumber': acc.raw.transactionsData.additional[3].replace(/'/g, ''),
     'javax.faces.ViewState': acc.raw.transactionsData.viewState
   }
-  body[acc.raw.transactionsData.additional[0].replace(/'/g, '') + ':acctIdSelField'] = acc.raw.id
-  body[acc.raw.transactionsData.additional[0].replace(/'/g, '') + '_SUBMIT'] = 1
-  body[acc.raw.transactionsData.additional[0].replace(/'/g, '') + ':_idcl'] = acc.raw.transactionsData.additional[1].replace(/'/g, '')
+  let viewns = acc.raw.transactionsData.additional[0].replace(/'/g, '')
+  body[viewns + ':acctIdSelField'] = acc.raw.accountName.replace('Счёт №', '')
+  body[viewns + '_SUBMIT'] = 1
+  body[viewns + ':_idcl'] = acc.raw.transactionsData.additional[1].replace(/'/g, '')
   let res = await fetchUrl(acc.raw.transactionsData.action, {
     method: 'POST',
     headers: {
@@ -313,28 +321,231 @@ export async function fetchCardsTransactions (acc) {
     body: body
   }, response => response.success, message => new Error(''))
 
-  let regex = /<tr class='(.[^']*)'>.[^']*">(.[0-9.]*) (.[0-9:]*)<.[^']*">(.[+-]*)<\/span.[^']*">(.[0-9 .]*)<\/span.[^']*">(.[A-Z]*)<\/span.[^']*">(.[0-9 .]*)<\/span.[^']*">(.[A-Z]*)<\/span.[^а-я]*Наименование операции: (.[^<]*)<\/span.[^а-я]*(Точка|Наименование\/MCC-код точки) обслуживания: (.[^<]*)/ig
-  let m
+  viewns = viewns.replace('ClientCardsDataForm', 'accountStmtStartPageForm')
+  const cheerio = require('cheerio')
+  let $ = cheerio.load(res.body)
+  let action = $('form[id="' + viewns + '"]').attr('action')
 
-  var transactions = []
-  while ((m = regex.exec(res.body.replace(/\r?\n|\r/g, ''))) !== null) {
+  body = {
+    'javax.faces.encodedURL': $('input[name="javax.faces.encodedURL"]').attr('value'),
+    'javax.faces.ViewState': $('input[name="javax.faces.ViewState"]').attr('value')
+  }
+  body[viewns + '_SUBMIT'] = 1
+  body[viewns + ':_idcl'] = res.body.match(/ id="(.{1,200})">Продолжить<\/a>/)[1]
+
+  fromDate = new Date(fromDate.toISOString().slice(0, 10) + 'T00:00:00+00:00')
+  toDate = new Date(toDate.toISOString().slice(0, 10) + 'T00:00:00+00:00')
+  const today = new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00+00:00')
+  const days90 = 90 * 24 * 60 * 60 * 1000
+  if (today.getTime() - toDate.getTime() > days90) {
+    fromDate = new Date(today.getTime() - days90)
+    toDate = today
+  } else if (today.getTime() - fromDate.getTime() > days90) {
+    fromDate = new Date(today.getTime() - days90)
+  }
+
+  const dateStart =
+    padLeft(fromDate.getDate().toString(), 2, '0') + '.' +
+    padLeft((fromDate.getMonth() + 1).toString(), 2, '0') + '.' +
+    fromDate.getFullYear()
+  const dateEnd =
+    padLeft(toDate.getDate().toString(), 2, '0') + '.' +
+    padLeft((toDate.getMonth() + 1).toString(), 2, '0') + '.' +
+    toDate.getFullYear()
+
+  body[viewns + ':SFPCalendarFromID'] = dateStart
+  body[viewns + ':SFPCalendarToID'] = dateEnd
+  res = await fetchUrl(action, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: body
+  }, response => response.success, message => new Error(''))
+
+  const transactions = parseTransactions(res.body, acc.id, 'operResultOk')
+  let pages = res.body.match(/Страница \d+ из (\d+)/) && parseInt(res.body.match(/Страница \d+ из (\d+)/)[1])
+
+  viewns = viewns.replace('accountStmtStartPageForm', 'AccountStmtForm')
+  for (let i = 2; i <= pages; i++) {
+    $ = cheerio.load(res.body)
+    action = $('form[id="' + viewns + '"]').attr('action')
+    const encodedUrl = $('input[name="javax.faces.encodedURL"]').attr('value')
+    const viewState = $('input[name="javax.faces.ViewState"]').attr('value')
+    const idPage = 'idx' + i.toString()
+    res = await getNextPage({ action, encodedUrl, viewState, viewns, idPage })
+    const transOnPage = parseTransactions(res.body, acc.id, 'operResultOk')
+    transactions.push(...transOnPage)
+  }
+
+  // возврат к списку счетов
+  $ = cheerio.load(res.body)
+  action = $('form[id="' + viewns + '"]').attr('action')
+  body = {
+    'javax.faces.encodedURL': $('input[name="javax.faces.encodedURL"]').attr('value'),
+    'javax.faces.ViewState': $('input[name="javax.faces.ViewState"]').attr('value')
+  }
+  body[viewns + '_SUBMIT'] = 1
+  body[viewns + ':_idcl'] = res.body.match(/ id="(.{1,200})">Вернуться к списку счетов<\/a>/)[1]
+  res = await fetchUrl(action, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: body
+  }, response => response.success, message => new Error(''))
+
+  console.log('>>> Загрузка холдов по ' + acc.title)
+  $ = cheerio.load(res.body)
+  viewns = acc.raw.transactionsData.holdsData[0].replace(/'/g, '')
+  action = $('form[id="' + viewns + '"]').attr('action')
+  body = {
+    'javax.faces.encodedURL': $('input[name="javax.faces.encodedURL"]').attr('value'),
+    'accountNumber': acc.raw.transactionsData.holdsData[3].replace(/'/g, ''),
+    'javax.faces.ViewState': $('input[name="javax.faces.ViewState"]').attr('value')
+  }
+
+  body[viewns + ':acctIdSelField'] = acc.raw.accountName.replace('Счёт №', '')
+  body[viewns + '_SUBMIT'] = 1
+  body[viewns + ':_idcl'] = acc.raw.transactionsData.holdsData[1].replace(/'/g, '')
+  res = await fetchUrl(action, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: body
+  }, response => response.success, message => new Error(''))
+
+  const holds = parseTransactions(res.body, acc.id, 'hold')
+
+  pages = res.body.match(/Страница \d+ из (\d+)/) && parseInt(res.body.match(/Страница \d+ из (\d+)/)[1])
+  viewns = viewns.replace('accountStmtStartPageForm', 'AccountStmtForm')
+  for (let i = 2; i <= pages; i++) {
+    $ = cheerio.load(res.body)
+    action = $('form[id="' + viewns + '"]').attr('action')
+    const encodedUrl = $('input[name="javax.faces.encodedURL"]').attr('value')
+    const viewState = $('input[name="javax.faces.ViewState"]').attr('value')
+    const idPage = 'idx' + i.toString()
+    res = await getNextPage({ action, encodedUrl, viewState, viewns, idPage })
+    const holdsOnPage = parseTransactions(res.body, acc.id, 'hold')
+    holds.push(...holdsOnPage)
+  }
+
+  transactions.push(...holds)
+  return transactions
+}
+
+async function getNextPage ({ action, encodedUrl, viewState, viewns, idPage }) {
+  const body = {
+    'javax.faces.encodedURL': encodedUrl,
+    'javax.faces.ViewState': viewState
+  }
+  body[viewns + '_SUBMIT'] = 1
+  body[viewns + ':_idcl'] = viewns + ':scroller_BYN' + idPage
+  body[viewns + ':scroller_BYN'] = idPage
+  const res = await fetchUrl(action, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: body
+  }, response => response.success, message => new Error(''))
+  return res
+}
+
+export function parseTransactions (html, accID, operationType) {
+  const match = html.replace(/\r?\n|\r/g, '').match(/<tbody><span .*?<\/tbody>/)
+  if (!match) {
+    return []
+  }
+  const table = match[0]
+
+  const div = '(?:</?div[^>]*>)*'
+  const tr = '<span [^<]*</?tr></span>'
+  const td = '<span [^<]*</?td></span>'
+  const tdCardNumber = '<span [^<]*</?td>[^<]*</?td></span>'
+  const dateTime = '<span [^>]*>(.[0-9.]*) (.[0-9:]*)</span>'
+  const debitFlag = '<span [^>]*>(.[+-]*)</span>'
+  const sum = '<span [^>]*>(.[0-9 .]*)</span>'
+  const currency = '<span [^>]*>(.[A-Z]*)</span>'
+  const tdColspan = '<span [^<]*<td colspan=[^>]*></span>'
+  const comment = '<span [^>]*>Наименование операции: ([^<]*)</span>'
+  const place = '(?:<span [^>]*>(?:Точка|Наименование/MCC-код точки) обслуживания: ([^<]*)</span>)?'
+  const textFee = '<span [^>]*>Сумма комиссии [^<]*</span>'
+  const textFeeComment = '(?:<span [^>]*>Комиссия за: [^<]*</span>)?'
+
+  let regex
+  if (operationType === 'operResultOk') {
+    regex = new RegExp(tr + div + td + div +
+      dateTime + div +
+      td + div + td + div +
+      debitFlag + div +
+      td + div + td + div +
+      sum + div +
+      currency + div +
+      td + div + td + div +
+      sum + div +
+      currency + div +
+      td + div + tdCardNumber + div +
+      tr + div + tr + div + tdColspan + div +
+      comment + div +
+      place + div +
+      textFeeComment + div +
+      textFee + div +
+      sum + div +
+      currency + div +
+      td + div + tr,
+    'ig'
+    )
+  } else {
+    const trResult = '<span [^<]*<tr class=\'operResultProcess\'></span>'
+    const authCode = '<span [^>]*>Код авторизации: [^<]*</span>'
+    regex = new RegExp(trResult + div + td + div + td + td +
+      dateTime + div +
+      td + div + td + div +
+      debitFlag + div +
+      td + div + td + div +
+      sum + div +
+      currency + div +
+      td + div + td + div +
+      sum + div +
+      currency + div +
+      td + div + tdCardNumber + div +
+      tr + div + trResult + div + tdColspan + div +
+      comment + div +
+      place + div +
+      authCode + div +
+      textFeeComment + div +
+      textFee + div +
+      sum + div +
+      currency + div +
+      td + div + tr,
+    'ig'
+    )
+  }
+
+  let m
+  const transactions = []
+  while ((m = regex.exec(table.replace(/\r?\n|\r/g, ''))) !== null) {
     if (m.index === regex.lastIndex) {
       regex.lastIndex++
     }
     transactions.push({
-      accountID: acc.id,
-      status: m[1],
-      date: m[2],
-      time: m[3],
-      debitFlag: m[4],
-      operationSum: m[5], // В валюте операции
-      operationCurrency: m[6],
-      inAccountSum: m[7], // В валюте счета
-      inAccountCurrency: m[8],
-      comment: m[9],
-      place: m[11]
+      accountID: accID,
+      status: operationType,
+      date: m[1],
+      time: m[2],
+      debitFlag: m[3],
+      operationSum: m[4], // В валюте операции
+      operationCurrency: m[5],
+      inAccountSum: m[6], // В валюте счета
+      inAccountCurrency: m[7],
+      comment: m[8],
+      place: m[9],
+      fee: m[10]
     })
   }
-  console.log(`>>> Загружено ${transactions.length} операций.`)
+  const opType = operationType === 'operResultOk' ? 'операций' : 'холдов'
+  console.log(`>>> Загружено ${transactions.length} ${opType}.`)
   return transactions
 }
