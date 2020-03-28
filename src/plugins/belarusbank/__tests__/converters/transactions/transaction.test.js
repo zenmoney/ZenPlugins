@@ -208,6 +208,42 @@ describe('convertTransaction', () => {
         comment: 'Возврат покупки/оплаты/зачисление перевода',
         hold: false
       }
+    },
+    {
+      name: 'income with MCC NaN',
+      json: {
+        'accountID': 'BY75AKBB30141000022233030000',
+        'comment': 'Безналичное зачисление на счет',
+        'date': '23.03.2020',
+        'debitFlag': '+',
+        'fee': '0.00',
+        'inAccountCurrency': 'EUR',
+        'inAccountSum': '108.45',
+        'operationCurrency': 'EUR',
+        'operationSum': '108.45',
+        'place': 'УО &quot;ГГУ им.Ф.Скорины&quot;/',
+        'status': 'operResultOk',
+        'time': '00:00:00'
+      },
+      expectedTransaction: {
+        date: new Date('2020-03-23T00:00:00+03:00'),
+        movements: [
+          {
+            id: null,
+            account: { id: 'BY75AKBB30141000022233030000' },
+            invoice: null,
+            sum: 108.45,
+            fee: 0
+          }
+        ],
+        merchant: {
+          fullTitle: 'УО "ГГУ им.Ф.Скорины"',
+          location: null,
+          mcc: null
+        },
+        comment: 'Безналичное зачисление на счет',
+        hold: false
+      }
     }
   ]
   tt.forEach(function (tc) {

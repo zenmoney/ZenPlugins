@@ -124,8 +124,8 @@ function parsePayee (transaction, tr) {
 
   tr.place = tr.place.replace(/&quot;/g, '"').replace(/&gt;/g, '>').replace(/&lt;/g, '<')
   let data = tr.place.split('/')
-  var mcc = null
-  var fullTitle = null
+  let mcc = null
+  let fullTitle = null
   if (data.length === 0 ||
     (data[0] === '' && data[1] === '')) {
     return false
@@ -143,7 +143,7 @@ function parsePayee (transaction, tr) {
       fullTitle = data[0].trim() + '/' + data[1].trim()
   }
   transaction.merchant = {
-    mcc: mcc,
+    mcc: mcc || null,
     location: null,
     fullTitle: fullTitle
   }
