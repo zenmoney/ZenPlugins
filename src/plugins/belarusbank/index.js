@@ -1,25 +1,32 @@
-import * as bank from './api'
-import * as converters from './converters'
+import flatten from 'lodash/flatten'
+import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
+import { adjustTransactions } from '../../common/transactionGroupHandler'
+import { fetchCards, fetchCardsTransactions, fetchDeposits, fetchURLAccounts, login } from './api'
+import { convertAccount, convertTransaction } from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
   toDate = toDate || new Date()
-  let lastLoginRequest = await bank.login(preferences)
-  const accountURLs = await bank.fetchURLAccounts(lastLoginRequest)
-  const cards = (await bank.fetchCards(accountURLs.cards))
-    .map(converters.convertAccount)
-    .filter(account => account !== null)
 
+  let lastLoginRequest = await login(preferences)
+  const accountURLs = await fetchURLAccounts(lastLoginRequest)
+  const cards = (await fetchCards(accountURLs.cards))
+    .map(convertAccount)
+    .filter(account => account !== null)
   const transactionsCard = cards.length > 0
-    ? await Promise.all(cards.map(async card => (await bank.fetchCardsTransactions(card, fromDate, toDate))
-      .map(transaction => converters.convertTransaction(transaction, cards))
+    ? await Promise.all(cards.map(async card => (await fetchCardsTransactions(card, fromDate, toDate))
+      .map(transaction => convertTransaction(transaction, cards))
       .filter(transaction => transaction !== null)))
     : []
-  const deposits = (await bank.fetchDeposits(accountURLs.deposits))
-    .map(converters.convertAccount)
+  const deposits = (await fetchDeposits(accountURLs.deposits))
+    .map(convertAccount)
     .filter(account => account !== null)
   cards.forEach(card => delete card.raw)
+
+  const accounts = cards.concat(deposits)
+  const transactions = flatten(transactionsCard)
+
   return {
-    accounts: cards.concat(deposits),
-    transactions: transactionsCard
+    accounts: ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId }),
+    transactions: adjustTransactions({ transactions })
   }
 }
