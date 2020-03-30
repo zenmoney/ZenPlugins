@@ -579,7 +579,12 @@ describe('convertTransaction', () => {
           required: 'true',
           resourceType: {
             availableValues: {
-              valueItem: { value: 'card:51833625', selected: 'true', displayedValue: '5298 26** **** 3389 [MasterCard Mass]', currency: 'RUB' }
+              valueItem: {
+                value: 'card:51833625',
+                selected: 'true',
+                displayedValue: '5298 26** **** 3389 [MasterCard Mass]',
+                currency: 'RUB'
+              }
             }
           },
           title: 'Счет списания',

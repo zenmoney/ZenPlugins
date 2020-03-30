@@ -103,4 +103,54 @@ describe('convertTransaction', () => {
   ])('converts cash withdrawal', (apiTransaction, transaction) => {
     expect(convertTransaction(apiTransaction, { id: 'account', instrument: 'RUB' })).toEqual(transaction)
   })
+
+  it('converts strange cash deposit as cash withdrawal', () => {
+    expect(convertTransaction({
+      id: '24246343616',
+      ufsId: null,
+      state: 'FINANCIAL',
+      date: '06.02.2020T21:27:29',
+      from: 'Visa Classic 4276 13** **** 3486',
+      to: 'Спартак',
+      description: 'Внесение наличных',
+      operationAmount: { amount: '-450.00', currency: { code: 'RUB', name: 'руб.' } },
+      isMobilePayment: 'false',
+      copyable: 'false',
+      templatable: 'false',
+      autopayable: 'false',
+      type: 'payment',
+      invoiceSubscriptionSupported: 'false',
+      invoiceReminderSupported: 'false',
+      form: 'ExtCardCashIn',
+      nationalAmount: { amount: '-450.00', currency: { code: 'RUB', name: 'руб.' } },
+      creationChannel: 'external',
+      classificationCode: '7832'
+    }, { id: 'account', instrument: 'RUB' })).toEqual({
+      hold: false,
+      date: new Date('2020-02-06T21:27:29+03:00'),
+      movements: [
+        {
+          id: '24246343616',
+          account: { id: 'account' },
+          invoice: null,
+          sum: -450,
+          fee: 0
+        },
+        {
+          id: null,
+          account: {
+            type: 'cash',
+            instrument: 'RUB',
+            company: null,
+            syncIds: null
+          },
+          invoice: null,
+          sum: 450,
+          fee: 0
+        }
+      ],
+      merchant: null,
+      comment: null
+    })
+  })
 })

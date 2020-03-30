@@ -319,9 +319,15 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
       }
       if (detailsResponse.body.status === '1' &&
         detailsResponse.body.error &&
-        detailsResponse.body.error.indexOf('Вы не можете просмотреть данную операцию через приложение') >= 0) {
+        detailsResponse.body.error.indexOf('Вы не можете просмотреть данную операцию через ') >= 0) {
         return
       }
+      if (detailsResponse.body.status === '2' &&
+        detailsResponse.body.error &&
+        detailsResponse.body.error.indexOf('Во время выполнения операции произошла ошибка') >= 0) {
+        return
+      }
+
       validateResponse(detailsResponse, response => response.body.status === '0')
       const form = _.get(detailsResponse, 'body.document.form')
       if (form) {

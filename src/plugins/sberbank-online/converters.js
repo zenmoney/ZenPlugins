@@ -464,6 +464,7 @@ export function convertTarget (apiTarget) {
   if (apiTarget.status === 'accountDisabled') {
     return null
   }
+  const syncID = apiTarget.id.length >= 4 ? apiTarget.id : ('0000' + apiTarget.id)
   return {
     products: [
       {
@@ -480,7 +481,7 @@ export function convertTarget (apiTarget) {
       balance: parseDecimal(apiTarget.account.value.amount),
       savings: true,
       syncID: [
-        apiTarget.id
+        syncID
       ]
     }
   }

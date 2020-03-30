@@ -68,9 +68,8 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
   if (isFirstRun && ZenMoney.getData('devid')) {
     fromDate = new Date(new Date().getTime() - 7 * 24 * 3600 * 1000)
   }
-  if (!toDate) {
-    toDate = new Date()
-  }
+
+  toDate = toDate || new Date()
 
   let auth = getAuth()
   if (auth && auth.api) {
@@ -81,6 +80,8 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
   if (!auth || !auth.api) {
     auth = await login(preferences.login, preferences.pin, auth, getDevice(preferences))
   }
+
+  saveAuth(auth)
 
   const { accountData, accountsById } = convertAccounts(await fetchAccounts(auth))
 
