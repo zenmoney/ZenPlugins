@@ -30,6 +30,7 @@ describe('scrape', () => {
       title: 'Безымянная*1111',
       instrument: 'BYN',
       balance: 1213.84,
+      creditLimit: 0,
       syncID: ['1111']
     }])
 
@@ -69,7 +70,7 @@ function mockApiFetchTransactions () {
           cardNum: '**** **** **** 1111',
           cards: [
             {
-              balance: '99.90',
+              balance: '1 213.84',
               blocking: '',
               blockingCode: '',
               blockingText: '',
@@ -99,6 +100,9 @@ function mockApiFetchTransactions () {
               isVirtual: '0',
               num: '**** 1111',
               packageName: '',
+              availableAmt: '1 213.84',
+              overdraftAmt: '0',
+              freeAmt: '1 213.84',
               pimpText: '',
               status3D: 0,
               statusLimits: 0,
@@ -198,6 +202,9 @@ function mockApiFetchAccounts () {
               isVirtual: '0',
               num: '**** 1111',
               packageName: '',
+              availableAmt: '1 213.84',
+              overdraftAmt: '0',
+              freeAmt: '1 213.84',
               pimpText: '',
               status3D: 0,
               statusLimits: 0,
