@@ -386,7 +386,7 @@ export async function fetchCardsTransactions (acc, fromDate, toDate) {
     'javax.faces.ViewState': $('input[name="javax.faces.ViewState"]').attr('value')
   }
   body[viewns + '_SUBMIT'] = 1
-  body[viewns + ':_idcl'] = res.body.match(/ id="(.{1,200})">Вернуться к списку счетов<\/a>/)[1]
+  body[viewns + ':_idcl'] = res.body.match(/ id="(.{1,200})">Вернуться к списку счетов<\/a>/) ? res.body.match(/ id="(.{1,200})">Вернуться к списку счетов<\/a>/)[1] : null
   res = await fetchUrl(action, {
     method: 'POST',
     headers: {
