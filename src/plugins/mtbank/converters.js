@@ -6,7 +6,7 @@ export function convertAccount (json) {
       type: 'card',
       title: json.description,
       instrument: json.cards[0].cardCurr,
-      balance: Number.parseFloat(json.debtPayment !== null ? -json.debtPayment : json.avlBalance),
+      balance: Number.parseFloat(json.avlBalance) - Number.parseFloat(json.over) + Number.parseFloat(json.ownFunds),
       syncID: [],
       productType: json.productType,
       creditLimit: Number.parseFloat(json.over !== null ? json.over : 0)
@@ -20,8 +20,8 @@ export function convertAccount (json) {
       account.syncID.push(el.pan.slice(-4))
     })
 
-    if (json.avlLimit) {
-      account.creditLimit = Number.parseFloat(json.avlLimit)
+    if (json.over === null) {
+      account.balance = Number.parseFloat(json.avlBalance)
     }
 
     if (!account.title) {
