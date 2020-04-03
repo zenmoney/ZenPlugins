@@ -279,6 +279,8 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
     transactions.push(...batch)
   } while (batch && batch.length === limit && formatDateSql(parseDate(batch[batch.length - 1].date)) >= formatDateSql(fromDate))
 
+  transactions = filterTransactions(transactions, fromDate)
+
   await Promise.all(transactions.map(async transaction => {
     if (transaction.id === '0') {
       return
