@@ -6,7 +6,7 @@ import { parseOuterAccountData } from '../../common/accounts'
 import { fetch, ParseError, parseXml } from '../../common/network'
 import { retry, RetryError, toNodeCallbackArguments } from '../../common/retry'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
-import { InvalidOtpCodeError } from '../../errors'
+import { BankMessageError, InvalidOtpCodeError, TemporaryUnavailableError } from '../../errors'
 import { formatDateSql, isCashTransfer, parseDate, parseDecimal } from './converters'
 
 const md5 = new MD5()
@@ -94,7 +94,7 @@ export async function login (login, pin, auth, device) {
       sanitizeResponseLog: { body: { confirmRegistrationStage: { mGUID: true } } }
     }, null)
     if (response.body.status === '1' && response.body.error) {
-      throw new TemporaryError(response.body.error)
+      throw new BankMessageError(response.body.error)
     }
     validateResponse(response, response => response.body.status === '0' &&
       _.get(response, 'body.confirmRegistrationStage.mGUID'))
@@ -175,7 +175,7 @@ export async function login (login, pin, auth, device) {
     sanitizeResponseLog: { body: { person: true } }
   }, null)
   if (response.body && response.body.status === '3' && !response.body.error) {
-    throw new TemporaryError('Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог разработчикам".')
+    throw new TemporaryUnavailableError()
   }
   validateResponse(response, response => response.body.status === '0' &&
     _.get(response, 'body.loginCompleted') === 'true')
@@ -237,11 +237,13 @@ async function fetchAccountDetails (auth, { id, type }) {
     response.body.error.indexOf('нет прав для просмотра объекта') >= 0) {
     return null
   }
-  if (type === 'loan' &&
-    response.body.error &&
-    response.body.error.indexOf('несуществующий в системе кредит') >= 0) {
+  if (type === 'loan' && response.body.error && [
+    'несуществующий в системе кредит',
+    'По закрытому кредиту нельзя получить'
+  ].some(str => response.body.error.indexOf(str) >= 0)) {
     return null
   }
+
   validateResponse(response, response => _.get(response, 'body.detail'))
   return response.body
 }
@@ -276,8 +278,6 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
     offset += limit
     transactions.push(...batch)
   } while (batch && batch.length === limit && formatDateSql(parseDate(batch[batch.length - 1].date)) >= formatDateSql(fromDate))
-
-  transactions = filterTransactions(transactions, fromDate)
 
   await Promise.all(transactions.map(async transaction => {
     if (transaction.id === '0') {
@@ -349,7 +349,18 @@ export function filterTransactions (transactions, fromDate) {
   const filtered = []
   const fromDateStr = fromDate ? formatDateSql(fromDate) : null
   transactions.forEach((transaction, i) => {
-    if (['DRAFT', 'SAVED', 'REFUSED', 'INITIAL', 'INITIAL_LONG_OFFER', 'DISPATCHED'].indexOf(transaction.state) >= 0 || (transaction.description && [
+    if (!transaction) {
+      return
+    }
+    if ([
+      'DRAFT',
+      'SAVED',
+      'REFUSED',
+      'INITIAL',
+      'INITIAL_LONG_OFFER',
+      'DISPATCHED',
+      'WAIT_CONFIRM'
+    ].indexOf(transaction.state) >= 0 || (transaction.description && [
       'Создание автоплатежа',
       'Приостановка автоплатежа',
       'Редактирование автоплатежа',
@@ -503,7 +514,7 @@ async function fetchXml (url, options = {}, predicate = () => true) {
     if (e instanceof RetryError) {
       throw e.failedResults[0][0]
     } else if (e.response && typeof e.response.body === 'string') {
-      throw new TemporaryError('Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог разработчикам".')
+      throw new TemporaryUnavailableError()
     } else {
       throw e
     }
@@ -515,7 +526,7 @@ async function fetchXml (url, options = {}, predicate = () => true) {
   response.body.status = _.get(response, 'body.status.code')
 
   if (isTemporaryError(response.body.error) || (predicate && response.body.status === '3')) {
-    throw new TemporaryError('Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог разработчикам".')
+    throw new TemporaryUnavailableError()
   }
   if (response.body.status !== '0' &&
     response.body.error &&
