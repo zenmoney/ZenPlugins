@@ -37,11 +37,14 @@ export async function fetch (url, options = {}) {
   try {
     response = await global.fetch(url, init)
   } catch (e) {
+    let err
     if (e instanceof TypeError && e.cause) {
-      throw e.cause
+      err = e.cause
     } else {
-      throw e
+      err = e
     }
+    shouldLog && console.debug('response', { url, ms: Date.now() - beforeFetchTicks }, 'failed to receive due to error', err)
+    throw err
   }
   response = {
     ..._.pick(response, ['ok', 'status', 'statusText', 'url']),
