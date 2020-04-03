@@ -18,20 +18,20 @@ describe('convertTransaction', () => {
 
   it('should convert hold foreign currency transaction', () => {
     const transaction = convertTransaction({
-      'amount': '40.11',
-      'balance': '153.99',
-      'cardPan': '111111******1111',
-      'curr': 'EUR',
-      'debitFlag': '0',
-      'description': 'Оплата товаров и услуг',
-      'error': '',
-      'operationDate': '2019-02-18',
-      'orderStatus': '1',
-      'place': 'PAYPAL',
-      'status': 'T',
-      'transAmount': '97.91',
-      'transDate': '2019-02-14 00:00:00',
-      'accountId': 'BY36MTBK10110008000001111000',
+      amount: '40.11',
+      balance: '153.99',
+      cardPan: '111111******1111',
+      curr: 'EUR',
+      debitFlag: '0',
+      description: 'Оплата товаров и услуг',
+      error: '',
+      operationDate: '2019-02-18',
+      orderStatus: '1',
+      place: 'PAYPAL',
+      status: 'T',
+      transAmount: '97.91',
+      transDate: '2019-02-14 00:00:00',
+      accountId: 'BY36MTBK10110008000001111000',
       transactionId: '1111111'
     }, accounts)
 

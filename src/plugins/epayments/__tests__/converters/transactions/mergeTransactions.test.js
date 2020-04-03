@@ -13,7 +13,8 @@ describe('mergeTransactions', () => {
         id: '000-123456-USD',
         instrument: 'USD'
       },
-      { id: '000-123456-EUR',
+      {
+        id: '000-123456-EUR',
         instrument: 'EUR'
       }
     ]

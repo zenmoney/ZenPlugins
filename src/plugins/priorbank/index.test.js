@@ -6,14 +6,14 @@ import { scrape } from './index'
 import { mockGetSalt, mockLogin, mockMobileToken } from './mocks'
 
 const priorSuccessResponse = (result) => ({
-  'success': true,
-  'errorMessage': '',
-  'errorMessageOriginal': '',
-  'internalErrorCode': 0,
-  'externalErrorCode': '',
-  'token': false,
-  'tokenFields': null,
-  'result': result
+  success: true,
+  errorMessage: '',
+  errorMessageOriginal: '',
+  internalErrorCode: 0,
+  externalErrorCode: '',
+  token: false,
+  tokenFields: null,
+  result: result
 })
 
 describe('scraper happy path', () => {
@@ -31,7 +31,7 @@ describe('scraper happy path', () => {
       ...makePluginDataApi({}).methods
     }
 
-    mockGetSalt({ tokenType, accessToken, clientSecret, login, response: priorSuccessResponse({ 'salt': 'salt' }) })
+    mockGetSalt({ tokenType, accessToken, clientSecret, login, response: priorSuccessResponse({ salt: 'salt' }) })
 
     mockLogin({
       tokenType,
@@ -39,7 +39,7 @@ describe('scraper happy path', () => {
       clientSecret,
       login,
       hash: '0a610f0bbf7a92accc7e962c53ef3ed7d7d2cabb16139ae169555a6685056b405fa4a3edb041f27e6d8c29bea70eb9bd89bad9fcfcdf05e23b1b8b99ad1256a5',
-      response: priorSuccessResponse({ 'access_token': 'logged_in_access_token', 'userSession': 'userSession' })
+      response: priorSuccessResponse({ access_token: 'logged_in_access_token', userSession: 'userSession' })
     })
 
     const postAuthExpectedHeaders = {
@@ -49,36 +49,36 @@ describe('scraper happy path', () => {
     }
 
     fetchMock.once({
-      matcher: (url, { body }) => url.endsWith('/Cards') && _.isEqual(JSON.parse(body), { 'usersession': 'userSession' }),
+      matcher: (url, { body }) => url.endsWith('/Cards') && _.isEqual(JSON.parse(body), { usersession: 'userSession' }),
       method: 'POST',
       headers: postAuthExpectedHeaders,
       response: priorSuccessResponse([
         {
-          'clientObject': {
-            'id': 'BYN_ACCOUNT_ID',
-            'type': 6,
-            'currIso': 'BYN',
-            'cardContractNumber': 1,
-            'cardMaskedNumber': '************2345',
-            'defaultSynonym': 'BYNdefaultSynonym',
-            'customSynonym': null
+          clientObject: {
+            id: 'BYN_ACCOUNT_ID',
+            type: 6,
+            currIso: 'BYN',
+            cardContractNumber: 1,
+            cardMaskedNumber: '************2345',
+            defaultSynonym: 'BYNdefaultSynonym',
+            customSynonym: null
           },
-          'balance': {
-            'available': 499.99
+          balance: {
+            available: 499.99
           }
         },
         {
-          'clientObject': {
-            'id': 'USD_ACCOUNT_ID',
-            'type': 6,
-            'currIso': 'USD',
-            'cardContractNumber': 2,
-            'cardMaskedNumber': '************1234',
-            'defaultSynonym': 'USDdefaultSynonym',
-            'customSynonym': 'USDcustomSynonym'
+          clientObject: {
+            id: 'USD_ACCOUNT_ID',
+            type: 6,
+            currIso: 'USD',
+            cardContractNumber: 2,
+            cardMaskedNumber: '************1234',
+            defaultSynonym: 'USDdefaultSynonym',
+            customSynonym: 'USDcustomSynonym'
           },
-          'balance': {
-            'available': 100.50
+          balance: {
+            available: 100.50
           }
         }
       ])
@@ -86,10 +86,10 @@ describe('scraper happy path', () => {
 
     fetchMock.once({
       matcher: (url, { body }) => url.endsWith('/Cards/CardDesc') && _.isEqual(JSON.parse(body), {
-        'usersession': 'userSession',
-        'ids': [],
-        'dateFromSpecified': false,
-        'dateToSpecified': false
+        usersession: 'userSession',
+        ids: [],
+        dateFromSpecified: false,
+        dateToSpecified: false
       }),
       method: 'POST',
       headers: {
@@ -99,45 +99,45 @@ describe('scraper happy path', () => {
       },
       response: priorSuccessResponse([
         {
-          'id': 'BYN_ACCOUNT_ID',
-          'contract': {
-            'account': {
-              'transCardList': [
+          id: 'BYN_ACCOUNT_ID',
+          contract: {
+            account: {
+              transCardList: [
                 {
-                  'transCardNum': 1,
-                  'transactionList': [
+                  transCardNum: 1,
+                  transactionList: [
                     {
-                      'postingDate': '2017-01-03T00:00:00+03:00',
-                      'transDate': '2017-01-03T00:00:00+03:00',
-                      'transCurrIso': 'BYN',
-                      'amount': 10.0,
-                      'feeAmount': 0.0,
-                      'accountAmount': 10.0,
-                      'transDetails': 'Поступление на контракт клиента #ID  '
+                      postingDate: '2017-01-03T00:00:00+03:00',
+                      transDate: '2017-01-03T00:00:00+03:00',
+                      transCurrIso: 'BYN',
+                      amount: 10.0,
+                      feeAmount: 0.0,
+                      accountAmount: 10.0,
+                      transDetails: 'Поступление на контракт клиента #ID  '
                     },
                     {
-                      'postingDate': '2017-01-04T00:00:00+03:00',
-                      'transDate': '2017-01-03T00:00:00+03:00',
-                      'transCurrIso': 'BYN',
-                      'amount': -4.0,
-                      'feeAmount': 0.0,
-                      'accountAmount': -4.0,
-                      'transDetails': 'Payment From Client Contract  '
+                      postingDate: '2017-01-04T00:00:00+03:00',
+                      transDate: '2017-01-03T00:00:00+03:00',
+                      transCurrIso: 'BYN',
+                      amount: -4.0,
+                      feeAmount: 0.0,
+                      accountAmount: -4.0,
+                      transDetails: 'Payment From Client Contract  '
                     }
                   ]
                 }
               ]
             },
-            'abortedContractList': [
+            abortedContractList: [
               {
-                'abortedCard': 1,
-                'abortedTransactionList': [
+                abortedCard: 1,
+                abortedTransactionList: [
                   {
-                    'amount': 6,
-                    'transAmount': 6,
-                    'transCurrIso': 'BYN',
-                    'transDetails': 'Retail BLR',
-                    'transDate': '2017-01-09T00:00:00+03:00'
+                    amount: 6,
+                    transAmount: 6,
+                    transCurrIso: 'BYN',
+                    transDetails: 'Retail BLR',
+                    transDate: '2017-01-09T00:00:00+03:00'
                   }
                 ]
               }
@@ -145,85 +145,85 @@ describe('scraper happy path', () => {
           }
         },
         {
-          'id': 'USD_ACCOUNT_ID',
-          'contract': {
-            'account': {
-              'transCardList': [
+          id: 'USD_ACCOUNT_ID',
+          contract: {
+            account: {
+              transCardList: [
                 {
-                  'transCardNum': 2,
-                  'transactionList': [
+                  transCardNum: 2,
+                  transactionList: [
                     {
-                      'postingDate': '2017-01-02T00:00:00+03:00',
-                      'transDate': '2017-01-01T00:00:00+03:00',
-                      'transCurrIso': 'USD',
-                      'amount': 1000,
-                      'feeAmount': 0.0,
-                      'accountAmount': 1000,
-                      'transDetails': 'Поступление на контракт клиента #ID  '
+                      postingDate: '2017-01-02T00:00:00+03:00',
+                      transDate: '2017-01-01T00:00:00+03:00',
+                      transCurrIso: 'USD',
+                      amount: 1000,
+                      feeAmount: 0.0,
+                      accountAmount: 1000,
+                      transDetails: 'Поступление на контракт клиента #ID  '
                     },
                     {
-                      'postingDate': '2017-01-02T00:00:00+03:00',
-                      'transDate': '2017-01-01T00:00:00+03:00',
-                      'transCurrIso': 'BYN',
-                      'amount': 4,
-                      'feeAmount': 0.0,
-                      'accountAmount': 2,
-                      'transDetails': 'Retail BLR'
+                      postingDate: '2017-01-02T00:00:00+03:00',
+                      transDate: '2017-01-01T00:00:00+03:00',
+                      transCurrIso: 'BYN',
+                      amount: 4,
+                      feeAmount: 0.0,
+                      accountAmount: 2,
+                      transDetails: 'Retail BLR'
                     }
                   ]
                 },
                 {
-                  'transactionList': [
+                  transactionList: [
                     {
-                      'postingDate': '2017-01-10T00:00:00+03:00',
-                      'transDate': '2017-01-10T00:00:00+03:00',
-                      'transCurrIso': 'BYN',
-                      'amount': -20,
-                      'feeAmount': 0.0,
-                      'accountAmount': -10.00,
-                      'transDetails': 'Retail BLR'
+                      postingDate: '2017-01-10T00:00:00+03:00',
+                      transDate: '2017-01-10T00:00:00+03:00',
+                      transCurrIso: 'BYN',
+                      amount: -20,
+                      feeAmount: 0.0,
+                      accountAmount: -10.00,
+                      transDetails: 'Retail BLR'
                     },
                     {
-                      'postingDate': '2017-01-09T00:00:00+03:00',
-                      'transDate': '2017-01-08T00:00:00+03:00',
-                      'transCurrIso': 'USD',
-                      'amount': -200,
-                      'feeAmount': 0.0,
-                      'accountAmount': -200,
-                      'transDetails': 'Cash BLR'
+                      postingDate: '2017-01-09T00:00:00+03:00',
+                      transDate: '2017-01-08T00:00:00+03:00',
+                      transCurrIso: 'USD',
+                      amount: -200,
+                      feeAmount: 0.0,
+                      accountAmount: -200,
+                      transDetails: 'Cash BLR'
                     },
                     {
-                      'postingDate': '2017-01-09T00:00:00+03:00',
-                      'transDate': '2017-01-08T00:00:00+03:00',
-                      'transCurrIso': 'BYN',
-                      'amount': -100,
-                      'feeAmount': 0.0,
-                      'accountAmount': -50.67,
-                      'transDetails': 'ATM BLR'
+                      postingDate: '2017-01-09T00:00:00+03:00',
+                      transDate: '2017-01-08T00:00:00+03:00',
+                      transCurrIso: 'BYN',
+                      amount: -100,
+                      feeAmount: 0.0,
+                      accountAmount: -50.67,
+                      transDetails: 'ATM BLR'
                     },
                     {
-                      'postingDate': '2017-01-07T00:00:00+03:00',
-                      'transDate': '2017-01-06T00:00:00+03:00',
-                      'transCurrIso': 'USD',
-                      'amount': -2.79,
-                      'feeAmount': 0.0,
-                      'accountAmount': -2.79,
-                      'transDetails': 'Retail NLD'
+                      postingDate: '2017-01-07T00:00:00+03:00',
+                      transDate: '2017-01-06T00:00:00+03:00',
+                      transCurrIso: 'USD',
+                      amount: -2.79,
+                      feeAmount: 0.0,
+                      accountAmount: -2.79,
+                      transDetails: 'Retail NLD'
                     }
                   ]
                 }
               ]
             },
-            'abortedContractList': [
+            abortedContractList: [
               {
-                'abortedCard': 2,
-                'abortedTransactionList': [
+                abortedCard: 2,
+                abortedTransactionList: [
                   {
-                    'amount': 100,
-                    'transAmount': 202.34,
-                    'transCurrIso': 'BYN',
-                    'transDetails': 'Retail BLR',
-                    'transDate': '2017-01-10T00:00:00+03:00'
+                    amount: 100,
+                    transAmount: 202.34,
+                    transCurrIso: 'BYN',
+                    transDetails: 'Retail BLR',
+                    transDate: '2017-01-10T00:00:00+03:00'
                   }
                 ]
               }

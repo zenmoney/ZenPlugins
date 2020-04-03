@@ -18,7 +18,7 @@ test('throws credentials mismatch as InvalidPreferencesError', async () => {
     }).methods
   }
   mockCardListRequest({ response: { status: 401 } })
-  mockArchiveRequest({ 'fromDate': '20181201', 'toDate': '20181207', response: { status: 401 } })
+  mockArchiveRequest({ fromDate: '20181201', toDate: '20181207', response: { status: 401 } })
   mockLogout()
   mockLogin({
     username,

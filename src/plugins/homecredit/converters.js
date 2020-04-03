@@ -82,7 +82,7 @@ function convertAccountMyCredit (apiAccount) {
   const result = {
     id: getAccountNumber(apiAccount),
     type: 'checking',
-    syncID: [ getAccountNumber(apiAccount).substr(-4) ],
+    syncID: [getAccountNumber(apiAccount).substr(-4)],
     title: apiAccount.accountName,
     instrument: getInstrument(apiAccount.currency)
   }
@@ -96,7 +96,7 @@ function convertCard (apiAccount) {
   const result = {
     id: getContractNumber(apiAccount),
     type: 'ccard',
-    syncID: [ getAccountNumber(apiAccount).substr(-4) ],
+    syncID: [getAccountNumber(apiAccount).substr(-4)],
     title: apiAccount.productName || apiAccount.ProductName,
     instrument: getInstrument(apiAccount.currency)
   }
@@ -104,7 +104,7 @@ function convertCard (apiAccount) {
   // Добавим syncID карты
   const cardNumber = getCardNumber(apiAccount)
   if (cardNumber) {
-    result.syncID = _.union(result.syncID, [ cardNumber.substr(-4) ])
+    result.syncID = _.union(result.syncID, [cardNumber.substr(-4)])
   }
 
   // определим остаток на карте
@@ -157,7 +157,7 @@ function convertLoan (apiAccount) {
   const res = {
     id: getContractNumber(apiAccount),
     type: 'loan',
-    syncID: [ getContractNumber(apiAccount).substr(-4) ],
+    syncID: [getContractNumber(apiAccount).substr(-4)],
     title: apiAccount.productName || apiAccount.ProductName,
     instrument: 'RUB'
   }

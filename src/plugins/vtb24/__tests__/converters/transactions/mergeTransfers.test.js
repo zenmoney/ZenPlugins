@@ -369,7 +369,7 @@ describe('mergeTransfers', () => {
 
     const accountsById = {
       '9F7182936EBD42EFA77CF22D3BCE5CA2': { id: 'account1', instrument: 'RUB' },
-      'EA29B20AA8664321BDEB13F473001321': { id: 'account2', instrument: 'RUB' }
+      EA29B20AA8664321BDEB13F473001321: { id: 'account2', instrument: 'RUB' }
     }
 
     const transactions = mergeTransfers(apiTransactions.map(apiTransaction => convertTransaction(apiTransaction, accountsById[apiTransaction.debet.id])))
@@ -1570,31 +1570,31 @@ describe('mergeTransfers', () => {
     ]
 
     const accountsById = {
-      'F85CC22EFB9F414CBEBDCFEB1A4E00C9': { id: 'account1', instrument: 'RUB' },
-      'CBFDBDDEFC3A4F91A8301B2B176DE527': { id: 'account2', instrument: 'RUB' }
+      F85CC22EFB9F414CBEBDCFEB1A4E00C9: { id: 'account1', instrument: 'RUB' },
+      CBFDBDDEFC3A4F91A8301B2B176DE527: { id: 'account2', instrument: 'RUB' }
     }
 
     const transactions = mergeTransfers(apiTransactions.map(apiTransaction => convertTransaction(apiTransaction, accountsById[apiTransaction.debet.id])))
     const expectedTransactions = [
       {
-        'comment': null,
-        'date': new Date('2019-04-06T06:25:43.000Z'),
-        'hold': false,
-        'merchant': null,
-        'movements': [
+        comment: null,
+        date: new Date('2019-04-06T06:25:43.000Z'),
+        hold: false,
+        merchant: null,
+        movements: [
           {
-            'account': { 'id': 'account1' },
-            'fee': 0,
-            'id': '+p18i9x+nWUwS9AwXCv/DP2PsMA=',
-            'invoice': null,
-            'sum': -5000
+            account: { id: 'account1' },
+            fee: 0,
+            id: '+p18i9x+nWUwS9AwXCv/DP2PsMA=',
+            invoice: null,
+            sum: -5000
           },
           {
-            'account': { 'id': 'account2' },
-            'fee': 0,
-            'id': 'uMrfNzOYxeAYJRytuvlaQbGX/nI=',
-            'invoice': null,
-            'sum': 5000
+            account: { id: 'account2' },
+            fee: 0,
+            id: 'uMrfNzOYxeAYJRytuvlaQbGX/nI=',
+            invoice: null,
+            sum: 5000
           }
         ]
       }

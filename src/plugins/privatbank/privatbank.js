@@ -47,7 +47,7 @@ export class PrivatBank {
     const options = {
       method: 'POST',
       headers: {
-        'Accept': 'application/xml, text/plain, */*',
+        Accept: 'application/xml, text/plain, */*',
         'Content-Type': 'application/xml;charset=UTF-8'
       },
       body: xml,
@@ -75,25 +75,25 @@ export class PrivatBank {
       }
       if (response.body.indexOf('invalid signature') >= 0) {
         throw new InvalidPreferencesError(`Не удалось синхронизировать данные по мерчанту ${this.merchant}. ` +
-          `Неверный пароль. Проверьте, что вы указали верный пароль в настройках подключения к банку.`)
+          'Неверный пароль. Проверьте, что вы указали верный пароль в настройках подключения к банку.')
       }
       if (response.body.indexOf('invalid ip:') >= 0) {
         throw new TemporaryError(`Не удалось синхронизировать данные по мерчанту ${this.merchant}. ` +
-          `В настройках мерчанта в Приват24 укажите IP-адрес из настроек синхронизации.`)
+          'В настройках мерчанта в Приват24 укажите IP-адрес из настроек синхронизации.')
       }
       if (response.body.indexOf('invalid merchant id') >= 0 || response.body.indexOf('<error>For input string: ') >= 0) {
         throw new InvalidPreferencesError(`Не удалось синхронизировать данные по мерчанту ${this.merchant}. ` +
-          `Проверьте, что вы указали верный ID мерчанта в настройках подключения к банку.`)
+          'Проверьте, что вы указали верный ID мерчанта в настройках подключения к банку.')
       }
       if (response.body.indexOf('this card is not in merchants card') >= 0) {
         throw new InvalidPreferencesError(`Не удалось получить баланс карты по мерчанту ${this.merchant}. ` +
-          `Если карта была недавно перевыпущена, зарегистрируйте для неё новый мерчант и ` +
-          `обновите его в настройках подключения к банку.`)
+          'Если карта была недавно перевыпущена, зарегистрируйте для неё новый мерчант и ' +
+          'обновите его в настройках подключения к банку.')
       }
       if (/point\s+\/.*not allowed for merchant/.test(response.body)) {
         throw new TemporaryError(`Не удалось синхронизировать данные по мерчанту ${this.merchant}. ` +
-          `Проверьте, что в Приват24 вы поставили галочки "Баланс по счёту мерчанта физлица" и ` +
-          `"Выписка по счёту мерчанта физлица".`)
+          'Проверьте, что в Приват24 вы поставили галочки "Баланс по счёту мерчанта физлица" и ' +
+          '"Выписка по счёту мерчанта физлица".')
       }
       if (response.body.indexOf('временно недоступен') >= 0) {
         throw new TemporaryError('Информация из ПриватБанка временно недоступна. Запустите синхронизацию через некоторое время.\n\nЕсли ситуация повторится, выберите другой IP-адрес в настройках синхронизации с банком.')

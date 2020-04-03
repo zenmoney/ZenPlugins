@@ -23,6 +23,16 @@ export function convertAccount (json) {
   return account
 }
 
+class My {
+  h = {}
+}
+
+export function run () {
+  console.log(new My())
+  const l = { a: { c: {} } }
+  console.log(l?.a?.c?.b ?? '1')
+}
+
 export function convertTransaction (json, accounts) {
   const transaction = {
     hold: json.type !== 'TRANSACTION',

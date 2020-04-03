@@ -6,7 +6,7 @@ const eslintFormatter = require('react-dev-utils/eslintFormatter')
 const { paths, resolve } = require('./constants')
 const _ = require('lodash')
 const path = require('path')
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
+const TerserPlugin = require('terser-webpack-plugin')
 
 const getHtmlPlugins = ({ production, devServer }) => {
   if (!devServer) {
@@ -37,17 +37,11 @@ const getPluginsSection = ({ production, devServer }) => getHtmlPlugins({ produc
   new webpack.DefinePlugin({
     NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'development')
   }),
-  new CaseSensitivePathsPlugin(),
-  production && new UglifyJsPlugin({
-    uglifyOptions: {
-      output: {
-        comments: false
-      }
-    }
-  })
+  new CaseSensitivePathsPlugin()
 ]))
 
 module.exports = ({ production, devServer }) => ({
+  mode: production ? 'production' : 'development',
   devtool: production ? false : 'eval',
   entry: production
     ? {
@@ -63,7 +57,8 @@ module.exports = ({ production, devServer }) => ({
   output: {
     path: paths.appBuild,
     filename: '[name].js',
-    chunkFilename: '[name].chunk.js'
+    chunkFilename: '[name].chunk.js',
+    globalObject: 'this'
   },
   resolve: {
     alias: {
@@ -108,7 +103,8 @@ module.exports = ({ production, devServer }) => ({
       {
         test: /\.proto$/,
         use: {
-          loader: require.resolve('protobufjs-loader')
+          loader: require.resolve('protobufjs-loader-webpack4'),
+          options: {}
         }
       }
     ])
@@ -116,5 +112,17 @@ module.exports = ({ production, devServer }) => ({
   plugins: getPluginsSection({ production, devServer }),
   performance: {
     hints: false
+  },
+  optimization: {
+    minimize: Boolean(production),
+    minimizer: [
+      new TerserPlugin({
+        terserOptions: {
+          output: {
+            comments: false
+          }
+        }
+      })
+    ]
   }
 })

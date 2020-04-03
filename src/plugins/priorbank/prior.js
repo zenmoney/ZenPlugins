@@ -43,8 +43,8 @@ export async function getSalt ({ authAccessToken, clientSecret, login }) {
     method: 'POST',
     body: { login, lang: 'RUS' },
     headers: {
-      'Authorization': `bearer ${authAccessToken}`,
-      'client_id': clientSecret,
+      Authorization: `bearer ${authAccessToken}`,
+      client_id: clientSecret,
       'User-Agent': userAgent
     },
     sanitizeRequestLog: { body: { login: true }, headers: true },
@@ -71,8 +71,8 @@ export async function authLogin ({ authAccessToken, clientSecret, loginSalt, log
     method: 'POST',
     body: { login, password: calculatePasswordHash({ loginSalt, password }), lang: 'RUS' },
     headers: {
-      'Authorization': `bearer ${authAccessToken}`,
-      'client_id': clientSecret,
+      Authorization: `bearer ${authAccessToken}`,
+      client_id: clientSecret,
       'User-Agent': userAgent
     },
     sanitizeRequestLog: { body: { login: true, password: true }, headers: true },
@@ -91,9 +91,9 @@ export function getCards ({ accessToken, clientSecret, userSession }) {
     method: 'POST',
     body: { usersession: userSession },
     headers: {
-      'client_id': clientSecret,
+      client_id: clientSecret,
       'User-Agent': userAgent,
-      'Authorization': `bearer ${accessToken}`
+      Authorization: `bearer ${accessToken}`
     },
     sanitizeRequestLog: { body: { usersession: true }, headers: true },
     sanitizeResponseLog: { body: { result: { clientObject: { cardRBSNumber: true, contractNum: true, iban: true } } } }
@@ -119,9 +119,9 @@ export function getCardDesc ({ accessToken, clientSecret, userSession, fromDate 
     method: 'POST',
     body,
     headers: {
-      'client_id': clientSecret,
+      client_id: clientSecret,
       'User-Agent': userAgent,
-      'Authorization': `bearer ${accessToken}`
+      Authorization: `bearer ${accessToken}`
     },
     sanitizeRequestLog: { body: { usersession: true }, headers: true },
     sanitizeResponseLog: { body: { result: { contract: { addrLineA: true, addrLineB: true, addrLineC: true } } } }

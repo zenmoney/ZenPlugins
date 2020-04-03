@@ -48,7 +48,7 @@ async function allAccounts (token) {
     if (accounts[i].balance === null) {
       continue
     }
-    let accIDs = await bank.fetchTransactionsAccId(token, accounts[i])
+    const accIDs = await bank.fetchTransactionsAccId(token, accounts[i])
     accounts[i].transactionsAccId = accIDs.transactionsAccId
     accounts[i].conditionsAccId = accIDs.conditionsAccId
   }

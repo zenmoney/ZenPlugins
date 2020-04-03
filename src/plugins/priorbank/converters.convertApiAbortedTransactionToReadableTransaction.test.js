@@ -46,14 +46,14 @@ test('it merges correctly', () => {
     }))
   })).toEqual([
     {
-      'movements': [
-        { 'id': null, 'account': { 'id': 'test(accountId2)' }, 'sum': -49.99, 'invoice': { sum: -100, instrument: 'BYN' }, 'fee': 0 },
-        { 'id': null, 'account': { 'id': 'test(accountId1)' }, 'sum': 100, 'invoice': null, 'fee': 0 }
+      movements: [
+        { id: null, account: { id: 'test(accountId2)' }, sum: -49.99, invoice: { sum: -100, instrument: 'BYN' }, fee: 0 },
+        { id: null, account: { id: 'test(accountId1)' }, sum: 100, invoice: null, fee: 0 }
       ],
-      'date': new Date('2018-01-01T12:34:56+03:00'),
-      'hold': true,
-      'merchant': null,
-      'comment': '(rate=2.0004)'
+      date: new Date('2018-01-01T12:34:56+03:00'),
+      hold: true,
+      merchant: null,
+      comment: '(rate=2.0004)'
     }
   ])
 })

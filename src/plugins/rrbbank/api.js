@@ -68,7 +68,8 @@ export async function fetchAccounts (token) {
       },
       depositAccount: {}
     },
-    headers: { 'session_token': token } }, response => response.body && response.body.overviewResponse && (response.body.overviewResponse.cardAccount || response.body.overviewResponse.depositAccount || response.body.overviewResponse.currentAccount), message => new TemporaryError(message))).body.overviewResponse
+    headers: { session_token: token }
+  }, response => response.body && response.body.overviewResponse && (response.body.overviewResponse.cardAccount || response.body.overviewResponse.depositAccount || response.body.overviewResponse.currentAccount), message => new TemporaryError(message))).body.overviewResponse
 
   var cards = []
   if (products.cardAccount) {
@@ -120,7 +121,7 @@ export async function fetchTransactions (token, accounts, fromDate, toDate = new
       }
       return fetchApiJson(url, {
         method: 'POST',
-        headers: { 'session_token': token },
+        headers: { session_token: token },
         body: {
           accountType: accountType,
           cardHash: account.cardHash,

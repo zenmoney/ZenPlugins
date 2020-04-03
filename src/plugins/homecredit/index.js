@@ -79,9 +79,9 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     // отфильтруем доп.карты и пустые счета
     accountsData = Api.collapseDoubleAccounts(accountsData)
 
-    let tmpTransactions = {}
+    const tmpTransactions = {}
     transactions.forEach(function (t) {
-      if (!tmpTransactions.hasOwnProperty(t.id)) {
+      if (!Object.prototype.hasOwnProperty.call(tmpTransactions, t.id)) {
         tmpTransactions[t.id] = t
       }
     })
@@ -125,7 +125,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     transactions = _.flattenDeep(transactions)
   }
 
-  let accounts = accountsData.map(account => account.account)
+  const accounts = accountsData.map(account => account.account)
 
   return {
     accounts: ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId }),

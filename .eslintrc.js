@@ -1,5 +1,9 @@
 module.exports = {
-  'extends': ['standard', 'standard-react'],
+  'parser': 'babel-eslint',
+  'extends': [
+    'standard',
+    'plugin:import/errors'
+  ],
   'globals': {
     'console': false,
     'ZenMoney': false,
@@ -9,7 +13,10 @@ module.exports = {
   },
   'overrides': [
     {
-      'files': '**/*.test.js',
+      'files': [
+        '**/*.test.js',
+        '**/__tests__/**/*.js'
+      ],
       'plugins': ['jest'],
       'env': {
         'jest': true

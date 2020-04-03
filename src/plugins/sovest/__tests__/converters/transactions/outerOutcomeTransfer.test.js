@@ -27,16 +27,16 @@ describe('convertTransactions', () => {
             fee: 0
           },
           {
-            'id': null,
-            'account': {
-              'type': 'ccard',
-              'instrument': 'RUR',
-              'company': null,
-              'syncIds': null
+            id: null,
+            account: {
+              type: 'ccard',
+              instrument: 'RUR',
+              company: null,
+              syncIds: null
             },
-            'invoice': null,
-            'sum': 46389,
-            'fee': 0
+            invoice: null,
+            sum: 46389,
+            fee: 0
           }
         ],
         merchant: null,

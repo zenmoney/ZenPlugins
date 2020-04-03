@@ -87,7 +87,7 @@ describe('transaction converter PURCHASE', () => {
         type: 'PURCHASE'
       },
       {
-        '9870000': 'c-1230000'
+        9870000: 'c-1230000'
       }
     )
 

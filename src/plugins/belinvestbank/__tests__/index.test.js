@@ -162,8 +162,8 @@ function mockApiFetchAccounts () {
     method: 'POST',
     headers: { Cookie: '' },
     matcher: (url, { body }) => url === 'https://ibank.belinvestbank.by/app_api' && _.isEqual(body, querystring.stringify({
-      'section': 'payments',
-      'method': 'index'
+      section: 'payments',
+      method: 'index'
     })),
     response: {
       status: 200,

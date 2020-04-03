@@ -7,7 +7,7 @@ import { convertAccount, convertTransaction } from './converters'
 export async function scrape ({ preferences, fromDate, toDate }) {
   toDate = toDate || new Date()
 
-  let lastLoginRequest = await login(preferences)
+  const lastLoginRequest = await login(preferences)
   const accountURLs = await fetchURLAccounts(lastLoginRequest)
   const cards = (await fetchCards(accountURLs.cards))
     .map(convertAccount)

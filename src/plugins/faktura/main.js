@@ -27,7 +27,7 @@ async function scrape ({ fromDate, toDate, apiUri }) {
     api.fetchWallets()
   ])
 
-  let contractIds = [
+  const contractIds = [
     ...cardContractIdsFetcher(cardsData),
     ...walletContractIdsFetcher(walletsData)
   ]

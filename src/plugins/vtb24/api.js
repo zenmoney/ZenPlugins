@@ -62,12 +62,12 @@ async function burlapRequest (options) {
         'mb-app-version': APP_VERSION,
         'Content-Type': 'application/x-www-form-urlencoded',
         'User-Agent': 'Dalvik/2.1.0 (Linux; U; Android 6.0; Android SDK built for x86_64 Build/MASTER)',
-        'Host': 'mb.vtb24.ru',
-        'Connection': 'Keep-Alive',
+        Host: 'mb.vtb24.ru',
+        Connection: 'Keep-Alive',
         'Accept-Encoding': 'gzip'
       },
       body: options.body || null,
-      sanitizeRequestLog: { headers: { 'cookie': true }, body: _.get(options, 'sanitizeRequestLog.body') },
+      sanitizeRequestLog: { headers: { cookie: true }, body: _.get(options, 'sanitizeRequestLog.body') },
       sanitizeResponseLog: { headers: { 'set-cookie': true }, body: _.get(options, 'sanitizeResponseLog.body') },
       stringify: (body) => stringifyRequestBody(PROTOCOL_VERSION, {
         __type: 'com.mobiletransport.messaging.DefaultMessageImpl',
@@ -385,7 +385,7 @@ export function resolveCycles (object, cache = {}) {
     cache.count = object.__id + 1
     cache[object.__id] = copy
     for (const key in object) {
-      if (object.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(object, key)) {
         copy[key] = resolveCycles(object[key], cache)
       }
     }
@@ -407,7 +407,7 @@ export function reduceDuplicatesByTypeAndId (object, cache = {}, onlyCopyValueTo
     cachedObject = getCachedObject(object, cache)
     forEach = (fn) => {
       for (const key in object) {
-        if (object.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(object, key)) {
           fn(object[key], key)
         }
       }

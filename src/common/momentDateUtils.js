@@ -1,7 +1,5 @@
 import _ from 'lodash'
-
-// FIXME too fat and expensive dependency
-const moment = require('moment')
+import moment from 'moment'
 
 export function getIntervalBetweenDates (fromDate, toDate, intervals = ['year', 'month', 'day']) {
   const [d1, m1, y1] = toAdjustedDayMonthYearTuple(fromDate)

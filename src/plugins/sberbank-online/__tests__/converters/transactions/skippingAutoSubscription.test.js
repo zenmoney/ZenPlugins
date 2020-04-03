@@ -3,7 +3,8 @@ import { convertTransaction } from '../../../converters'
 describe('convertTransaction', () => {
   it.each([
     [
-      { id: '23297095932',
+      {
+        id: '23297095932',
         ufsId: null,
         state: 'EXECUTED',
         date: '15.02.2020T07:42:45',
@@ -20,11 +21,13 @@ describe('convertTransaction', () => {
         invoiceReminderSupported: 'false',
         form: 'AcceptAutoSubscriptionExecuteClaim',
         nationalAmount: { amount: '-340.00', currency: { code: 'RUB', name: 'руб.' } },
-        creationChannel: 'mobile' },
+        creationChannel: 'mobile'
+      },
       null
     ],
     [
-      { id: '24872053320',
+      {
+        id: '24872053320',
         ufsId: null,
         state: 'EXECUTED',
         date: '10.04.2020T11:42:29',
@@ -47,7 +50,8 @@ describe('convertTransaction', () => {
       null
     ],
     [
-      { id: '24063767016',
+      {
+        id: '24063767016',
         ufsId: null,
         state: 'EXECUTED',
         date: '11.03.2020T15:53:11',

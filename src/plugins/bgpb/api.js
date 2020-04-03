@@ -1,7 +1,8 @@
 import { flatMap } from 'lodash'
 import { createDateIntervals as commonCreateDateIntervals } from '../../common/dateUtils'
-import { fetch, fetchJson, parseXml } from '../../common/network'
+import { fetch, fetchJson } from '../../common/network'
 import { generateRandomString } from '../../common/utils'
+import { parseXml } from '../../common/xmlUtils'
 
 const baseUrl = 'https://mobapp-frontend.bgpb.by/'
 
@@ -15,9 +16,9 @@ export function terminalTime () {
 }
 
 async function fetchApi (url, xml, options, predicate = () => true, error = (message) => console.assert(false, message)) {
-  let boundary = generateBoundary()
-  let boundaryStart = '--' + boundary + '\r\n'
-  let boundaryLast = '--' + boundary + '--\r\n'
+  const boundary = generateBoundary()
+  const boundaryStart = '--' + boundary + '\r\n'
+  const boundaryLast = '--' + boundary + '--\r\n'
 
   options.method = options.method ? options.method : 'POST'
   options.headers = {
@@ -36,7 +37,7 @@ async function fetchApi (url, xml, options, predicate = () => true, error = (mes
   if (predicate) {
     validateResponse(response, response => predicate(response), error)
   }
-  let res = parseXml(response.body)
+  const res = parseXml(response.body)
 
   if (res.BS_Response.Error && res.BS_Response.Error.ErrorLine) {
     if (res.BS_Response.Error.ErrorLine === 'Ошибка авторизации: Баланс недоступен') {
@@ -73,15 +74,15 @@ export function parseFullTransactionsMail (html) {
   const cheerio = require('cheerio')
   let $ = cheerio.load(html)
   $ = cheerio.load($().children()[0].children[0].Body)
-  let tdObjects = $('table tr td[style="border: none;width:17cm;"]').toArray()
+  const tdObjects = $('table tr td[style="border: none;width:17cm;"]').toArray()
   if (tdObjects.length < 3) {
     return []
   }
-  let card = tdObjects[tdObjects.length - 1].children[0].data.split(' ')[7]
+  const card = tdObjects[tdObjects.length - 1].children[0].data.split(' ')[7]
 
   let counter = 0
   let i = 0
-  let data = []
+  const data = []
   flatMap($('table[class="section_3"] tr').toArray().slice(1), tr => {
     if (tr.children.length >= 12) { // Значит это операция, а не просто форматирование
       tr.children.forEach(function (td) {
@@ -206,7 +207,7 @@ export function parseConditionsMail (html) {
 }
 
 export async function login (login, password) {
-  let res = await fetchApi('sou/xml_online.admin?q=login',
+  const res = await fetchApi('sou/xml_online.admin?q=login',
     '<BS_Request>\r\n' +
     '   <Login Biometric="N" IpAddress="10.0.2.15" Type="PWD">\r\n' +
     '      <Parameter Id="Login">' + login + '</Parameter>\r\n' +
@@ -227,7 +228,7 @@ export async function login (login, password) {
 export async function fetchAccounts (sid) {
   console.log('>>> Загрузка списка счетов...')
 
-  let res = await fetchApi('sou/xml_online.admin',
+  const res = await fetchApi('sou/xml_online.admin',
     '<BS_Request>\r\n' +
     '   <GetProducts GetActions="N" ProductType="MS"/>\r\n' +
     '   <RequestType>GetProducts</RequestType>\r\n' +
@@ -248,7 +249,7 @@ export async function fetchAccounts (sid) {
 export async function fetchBalance (sid, account) {
   console.log('>>> Загрузка баланса для ' + account.title)
 
-  let res = await fetchApi('sou/xml_online.request',
+  const res = await fetchApi('sou/xml_online.request',
     '<BS_Request>\r\n' +
     '   <Balance Currency="' + account.currencyCode + '"/>\r\n' +
     '   <RequestType>Balance</RequestType>\r\n' +
@@ -279,7 +280,7 @@ export async function fetchBalance (sid, account) {
 export async function fetchTransactionsAccId (sid, account) {
   console.log('>>> Загрузка id аккаунта для транзакций для ' + account.title)
 
-  let res = await fetchApi('sou/xml_online.admin',
+  const res = await fetchApi('sou/xml_online.admin',
     '<BS_Request>\r\n' +
     '   <GetActions ProductId="' + account.productId + '"/>\r\n' +
     '   <RequestType>GetActions</RequestType>\r\n' +
@@ -289,8 +290,8 @@ export async function fetchTransactionsAccId (sid, account) {
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
     '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
   if (res.BS_Response.GetActions && res.BS_Response.GetActions.Action && res.BS_Response.GetActions.Action.length > 2) {
-    let actions = res.BS_Response.GetActions.Action
-    let resp = {
+    const actions = res.BS_Response.GetActions.Action
+    const resp = {
       transactionsAccId: null,
       conditionsAccId: null
     }
@@ -345,7 +346,7 @@ export async function fetchAccountConditions (sid, account) {
       '   </TerminalCapabilities>\r\n' +
       '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
 
-  let data = mail.BS_Response.MailAttachment.Attachment
+  const data = mail.BS_Response.MailAttachment.Attachment
   return parseConditionsMail(data)
 }
 
@@ -410,10 +411,10 @@ export async function fetchFullTransactions (sid, accounts, fromDate, toDate = n
       '   </TerminalCapabilities>\r\n' +
       '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
   }))
-  let overdrafts = {}
+  const overdrafts = {}
   const transactions = await Promise.all(flatMap(mails, mail => {
-    let data = mail.BS_Response.MailAttachment.Attachment
-    let overdraftRes = parseFullTransactionsMailCardLimit(data)
+    const data = mail.BS_Response.MailAttachment.Attachment
+    const overdraftRes = parseFullTransactionsMailCardLimit(data)
     if (overdraftRes.overdraft) {
       overdrafts[overdraftRes.number] = overdraftRes.overdraft
     }
@@ -432,14 +433,15 @@ export async function fetchLastTransactions (sid) {
   const transactions = (await fetchApiJson('push-history/api/andorid_5.17.1/v1/getHistory', {
     method: 'POST',
     body: {
-      'eventTypes': [
+      eventTypes: [
         4,
         8
       ],
-      'limit': 40,
-      'offset': 0,
-      'sessionId': sid
-    } }, response => response.body.errorCode && response.body.errorCode === 0 && response.body.historyRecords && response.body.historyRecords.length > 0, message => new TemporaryError(message))).body.historyRecords
+      limit: 40,
+      offset: 0,
+      sessionId: sid
+    }
+  }, response => response.body.errorCode && response.body.errorCode === 0 && response.body.historyRecords && response.body.historyRecords.length > 0, message => new TemporaryError(message))).body.historyRecords
 
   console.log(`>>> Загружено ${transactions.length} последних операций.`)
   return transactions

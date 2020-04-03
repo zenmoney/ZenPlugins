@@ -3,7 +3,7 @@ import { sanitize } from './sanitize'
 describe('sanitize', () => {
   it('should sanitize values by truthy mask', () => {
     const sampleValues = [true, false, new Date(), { key: 'secure value' }, 1, 'secure value']
-    const sanitizedValues = ['<bool>', '<bool>', '<date>', { 'key': '<string[12]>' }, '<number>', '<string[12]>']
+    const sanitizedValues = ['<bool>', '<bool>', '<date>', { key: '<string[12]>' }, '<number>', '<string[12]>']
 
     expect(sampleValues.map(value => sanitize(value, true)))
       .toEqual(sanitizedValues)

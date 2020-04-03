@@ -3,7 +3,8 @@ import { convertTransaction } from '../../../converters'
 describe('convertTransactions', () => {
   it.each([
     [
-      { txnId: 65624020,
+      {
+        txnId: 65624020,
         txnDate: '2020-04-29T19:04:05+03:00',
         txnStatus: 2,
         txnType: 3,
@@ -15,7 +16,8 @@ describe('convertTransactions', () => {
         partnersName: 'Пополнение',
         tradePointName: 'QIWI Кошелек',
         txnAcctBal: 14260.26,
-        txnDebt: 53739.74 },
+        txnDebt: 53739.74
+      },
       {
         hold: false,
         date: new Date('2020-04-29T19:04:05+03:00'),
@@ -28,16 +30,16 @@ describe('convertTransactions', () => {
             fee: 0
           },
           {
-            'id': null,
-            'account': {
-              'type': 'ccard',
-              'instrument': 'RUR',
-              'company': null,
-              'syncIds': null
+            id: null,
+            account: {
+              type: 'ccard',
+              instrument: 'RUR',
+              company: null,
+              syncIds: null
             },
-            'invoice': null,
-            'sum': -195.8,
-            'fee': 0
+            invoice: null,
+            sum: -195.8,
+            fee: 0
           }
         ],
         merchant: null,

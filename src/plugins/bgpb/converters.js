@@ -43,7 +43,7 @@ export function convertTransaction (apiTransaction, accounts) {
 
   const transaction = {
     date: getDate(apiTransaction.date),
-    movements: [ getMovement(apiTransaction, account) ],
+    movements: [getMovement(apiTransaction, account)],
     merchant: null,
     comment: null,
     hold: false
@@ -59,12 +59,12 @@ export function convertTransaction (apiTransaction, accounts) {
 }
 
 export function convertLastTransaction (apiTransaction, accounts) {
-  let message = apiTransaction.pushMessageText
+  const message = apiTransaction.pushMessageText
   if (message.slice(0, 4) !== 'Card' || message.indexOf('Смена статуса карты') >= 0) {
     // Значит это не транзакция, а просто уведомление банка
     return null
   }
-  let rawData = message.split('; ')
+  const rawData = message.split('; ')
   const account = accounts.find(account => {
     return account.syncID.indexOf(rawData[0].slice(-4)) !== -1
   })
@@ -72,9 +72,9 @@ export function convertLastTransaction (apiTransaction, accounts) {
     return null
   }
 
-  let amountData = rawData[1].split(': ')
-  let currency = amountData[1].slice(-3)
-  let amount = amountData[1].replace(' ' + currency, '')
+  const amountData = rawData[1].split(': ')
+  const currency = amountData[1].slice(-3)
+  const amount = amountData[1].replace(' ' + currency, '')
   apiTransaction.description = amountData[0]
   apiTransaction.currency = currency
   apiTransaction.type = amountData[0]
@@ -82,12 +82,12 @@ export function convertLastTransaction (apiTransaction, accounts) {
   apiTransaction.payeeLastTransaction = rawData[3]
   const transaction = {
     date: getDateFromJSON(rawData[2]),
-    movements: [ getMovement({
+    movements: [getMovement({
       type: amountData[0],
       amount: amount,
       currencyReal: currency,
       amountReal: '' // на текущий момент не понятно как нормально узнать реальное списание при использовании другой валюты, поэтому будем делать такие списания корректировками :(
-    }, account) ],
+    }, account)],
     merchant: null,
     comment: null,
     hold: false
@@ -102,7 +102,7 @@ export function convertLastTransaction (apiTransaction, accounts) {
 }
 
 function getMovement (apiTransaction, account) {
-  let movement = {
+  const movement = {
     id: null,
     account: { id: account.id },
     invoice: null,
@@ -231,7 +231,7 @@ export function getDateFromJSON (str) {
 }
 
 export function transactionsUnique (array) {
-  let a = array.concat()
+  const a = array.concat()
   for (let i = 0; i < a.length; ++i) {
     for (let j = i + 1; j < a.length; ++j) {
       if (a[i].date.getTime() === a[j].date.getTime() &&

@@ -54,25 +54,25 @@ describe('convertTransaction', () => {
           id: 'IN_PROGRESS'
         }
     }, { id: 'account', instrument: 'RUB' })).toEqual({
-      'comment': null,
-      'date': new Date('2019-05-07T00:57:58.000Z'),
-      'hold': true,
-      'merchant': {
-        'city': null,
-        'country': null,
-        'location': null,
-        'mcc': null,
-        'title': 'Card Year 2'
+      comment: null,
+      date: new Date('2019-05-07T00:57:58.000Z'),
+      hold: true,
+      merchant: {
+        city: null,
+        country: null,
+        location: null,
+        mcc: null,
+        title: 'Card Year 2'
       },
-      'movements': [
+      movements: [
         {
-          'account': {
-            'id': 'account'
+          account: {
+            id: 'account'
           },
-          'fee': 0,
-          'id': 'opaNx0RWQga2pEAClrWBZaDMByU=',
-          'invoice': null,
-          'sum': -150
+          fee: 0,
+          id: 'opaNx0RWQga2pEAClrWBZaDMByU=',
+          invoice: null,
+          sum: -150
         }
       ]
     })

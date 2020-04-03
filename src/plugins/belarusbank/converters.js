@@ -1,9 +1,9 @@
 export function convertAccount (acc) {
   switch (acc.type) {
-    case 'deposit':
-      let start = getDate(acc.details.match(/Дата открытия:\s(.[0-9.]*)/i)[1])
-      let stop = getDate(acc.details.match(/Срок возврата вклада:\s(.[0-9.]*)/i)[1])
-      let depositDays = (stop - start) / 60 / 60 / 24 / 1000
+    case 'deposit': {
+      const start = getDate(acc.details.match(/Дата открытия:\s(.[0-9.]*)/i)[1])
+      const stop = getDate(acc.details.match(/Срок возврата вклада:\s(.[0-9.]*)/i)[1])
+      const depositDays = (stop - start) / 60 / 60 / 24 / 1000
       return {
         id: acc.id,
         type: 'deposit',
@@ -19,7 +19,8 @@ export function convertAccount (acc) {
         payoffStep: 1,
         payoffInterval: 'month'
       }
-    case 'ccard':
+    }
+    case 'ccard': {
       const cardsArray = acc.cards.filter(card => card.isActive)
       if (cardsArray.length === 0) return null
       const account = {
@@ -40,6 +41,7 @@ export function convertAccount (acc) {
         account.syncID.push(acc.accountNum)
       }
       return account
+    }
     case 'account':
       return {
         id: acc.accountNum, // acc.accountId,
@@ -63,7 +65,7 @@ export function convertTransaction (tr, accounts) {
 
   const transaction = {
     date: getFullDate(tr.date + ' ' + tr.time),
-    movements: [ getMovement(tr, account) ],
+    movements: [getMovement(tr, account)],
     merchant: null,
     hold: tr.status !== 'operResultOk',
     comment: null
@@ -130,7 +132,7 @@ function parsePayee (transaction, tr) {
   }
 
   tr.place = tr.place.replace(/&quot;/g, '"').replace(/&gt;/g, '>').replace(/&lt;/g, '<')
-  let data = tr.place.split('/')
+  const data = tr.place.split('/')
   let mcc = null
   let fullTitle = null
   if (data.length === 0 ||

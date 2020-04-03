@@ -19,7 +19,7 @@ describe('convertTransaction', () => {
         status: 'success',
         type: 'payment-shop',
         group_id: 'mcc_6011',
-        spendingCategories: [ { name: 'TransferWithdraw', sum: 10000 } ]
+        spendingCategories: [{ name: 'TransferWithdraw', sum: 10000 }]
       }
     ]
 

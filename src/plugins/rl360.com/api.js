@@ -52,25 +52,25 @@ export async function login (prefs) {
 export async function fetchPolicies () {
   console.log('>>> Загрузка списка полиси...')
   var policies = []
-  let res = await fetchUrl('/SC/', { method: 'GET' }, response => response.success, message => new Error(''))
+  const res = await fetchUrl('/SC/', { method: 'GET' }, response => response.success, message => new Error(''))
   let html = res.body
   html = html.replace(/\r?\n|\r/g, '')
 
   const cheerio = require('cheerio')
   var $ = cheerio.load(html)
 
-  let policiesElements = $('div[class="level3"]').children('p').children('a[href*="../SC/servicing/summary.php?PolNumber="]')
+  const policiesElements = $('div[class="level3"]').children('p').children('a[href*="../SC/servicing/summary.php?PolNumber="]')
   var ids = []
   policiesElements.each(function (i, policyObj) {
     ids.push($(policyObj).text())
   })
 
   for (let i = 0; i < ids.length; i++) {
-    let res = await fetchUrl('/SC/servicing/summary.php?PolNumber=' + ids[i], { method: 'GET' }, response => response.success, message => new Error(''))
+    const res = await fetchUrl('/SC/servicing/summary.php?PolNumber=' + ids[i], { method: 'GET' }, response => response.success, message => new Error(''))
     let html = res.body
     html = html.replace(/\r?\n|\r/g, '')
     $ = cheerio.load(html)
-    let balance = $('div[class="rightsa2"]').children('div').children('p[class="par100"]').text().trim().split(' ')
+    const balance = $('div[class="rightsa2"]').children('div').children('p[class="par100"]').text().trim().split(' ')
 
     policies.push({
       id: ids[i],
@@ -84,9 +84,9 @@ export async function fetchPolicies () {
 export async function fetchTransactions (acc, fromDate, toDate) {
   console.log('>>> Загрузка транзакций по ' + acc.title)
   const cheerio = require('cheerio')
-  let transactions = []
+  const transactions = []
 
-  let res = await fetchUrl(
+  const res = await fetchUrl(
     '/SC/servicing/history.php?subtab=premiums&PolNumber=' + acc.id +
     '&day=' + fromDate.getDate() + '&month=' + (fromDate.getMonth() + 1) + '&year=' + fromDate.getFullYear() +
     '&eday=' + toDate.getDate() + '&emonth=' + (toDate.getMonth() + 1) + '&eyear=' + toDate.getFullYear() + '&continue=Continue',
@@ -94,9 +94,9 @@ export async function fetchTransactions (acc, fromDate, toDate) {
   let html = res.body
   html = html.replace(/\r?\n|\r/g, '')
   const $ = cheerio.load(html)
-  let rows = $('table').children('tbody').children('tr')
+  const rows = $('table').children('tbody').children('tr')
   rows.each(function (i, row) {
-    let transaction = {
+    const transaction = {
       date: $(row).children('td[id="t2header4"]').text().trim(),
       amount: $(row).children('td[id="t2header5"]').text().trim(),
       fee: $(row).children('td[id="t2header6"]').text().trim()

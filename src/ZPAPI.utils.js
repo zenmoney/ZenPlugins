@@ -58,7 +58,7 @@ export const getLastResponseParameters = () => lastRequest
 
 function urlEncodeParameters (obj) {
   let str = ''
-  for (let key in obj) {
+  for (const key in obj) {
     if (str) {
       str += '&'
     }

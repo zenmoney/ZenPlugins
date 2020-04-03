@@ -15,8 +15,8 @@ export function mockArchiveRequest ({ fromDate, toDate, response }) {
     matcher:
       (url, { body }) => url === 'https://24.bsb.by/mobile/api/archive?lang=ru' && _.isEqual(JSON.parse(body), {
         page: {
-          'pageNumber': 0,
-          'pageSize': 1000
+          pageNumber: 0,
+          pageSize: 1000
         },
         fromDate,
         toDate
@@ -49,12 +49,12 @@ export function mockLogin ({ username, password, deviceId, response }) {
   fetchMock.once({
     method: 'POST',
     matcher: (url, { body }) => url === 'https://24.bsb.by/mobile/api/authorization?lang=ru' && _.isEqual(JSON.parse(body), {
-      'username': username,
-      'password': password,
-      'deviceId': deviceId,
-      'applicationVersion': 'Web 6.0.12',
-      'osType': 3,
-      'currencyIso': 'BYN'
+      username: username,
+      password: password,
+      deviceId: deviceId,
+      applicationVersion: 'Web 6.0.12',
+      osType: 3,
+      currencyIso: 'BYN'
     }),
     response
   })

@@ -267,8 +267,8 @@ function parseOutcomeTransfer (transaction, apiTransaction, account) {
   if (details && isP2PTransfer && details.field) {
     const fields = Array.isArray(details.field) ? details.field : [details.field]
     const fieldsMapping = {
-      'receiverCardNumber': 'receiverAccount',
-      'bankID': 'paymentDetails'
+      receiverCardNumber: 'receiverAccount',
+      bankID: 'paymentDetails'
     }
     details = _.omit(details, 'field')
     for (const field of fields) {

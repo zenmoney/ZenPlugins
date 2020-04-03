@@ -35,19 +35,19 @@ describe('convertAccount', () => {
       details: null
     }
     expect(convertAccount(apiAccount)).toEqual({
-      'mainProduct': {
-        'id': '906B2678764449C99B0A49FD46D961AF',
-        'type': 'ru.vtb24.mobilebanking.protocol.product.InvestmentAccountMto'
+      mainProduct: {
+        id: '906B2678764449C99B0A49FD46D961AF',
+        type: 'ru.vtb24.mobilebanking.protocol.product.InvestmentAccountMto'
       },
-      'products': [],
-      'zenAccount': {
-        'balance': 0,
-        'id': '906B2678764449C99B0A49FD46D961AF',
-        'instrument': 'RUB',
-        'savings': true,
-        'syncID': ['30601810900000114660'],
-        'title': 'Брокерский счет в рублях',
-        'type': 'investment'
+      products: [],
+      zenAccount: {
+        balance: 0,
+        id: '906B2678764449C99B0A49FD46D961AF',
+        instrument: 'RUB',
+        savings: true,
+        syncID: ['30601810900000114660'],
+        title: 'Брокерский счет в рублях',
+        type: 'investment'
       }
     })
   })

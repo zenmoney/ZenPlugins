@@ -4,7 +4,7 @@ import { retry } from '../../common/retry'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 
 async function fetchJson (url, options) {
-  let token = options && options.token ? options.token.trim() : ''
+  const token = options && options.token ? options.token.trim() : ''
   if (!token || /[а-яА-Я\s]/.test(token)) {
     throw new InvalidPreferencesError('Неверный токен. Создайте токен на qiwi.com/api. Подробнее читайте в инструкции к подключению.')
   }
@@ -13,10 +13,10 @@ async function fetchJson (url, options) {
     response = await commonFetchJson(url, {
       method: 'GET',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-        'Host': 'edge.qiwi.com'
+        Authorization: `Bearer ${token}`,
+        Host: 'edge.qiwi.com'
       },
       sanitizeRequestLog: { headers: { Authorization: true } },
       ...omit(options, 'token')

@@ -7,7 +7,8 @@ const debetCardData = {
     instrument: 'RUR',
     syncID: '1234',
     title: 'Visa Classic – зарплатный сотрудникам',
-    type: 'ccard' },
+    type: 'ccard'
+  },
   details: {
     accountNumber: '40817810690010001234',
     cardNumber: '4454334500181234',
@@ -64,15 +65,15 @@ const transactions = [
         }
     },
     {
-      'comment': 'Поступление денежных средств на счет ',
-      'date': new Date('2019-04-15T17:26:50.000Z'),
-      'hold': false,
-      'id': '1732073919',
-      'income': 1050,
-      'incomeAccount': '7005001234',
-      'outcome': 0,
-      'outcomeAccount': '7005001234',
-      'payee': 'ИВАНОВ ИВАН ИВАНОВИЧ'
+      comment: 'Поступление денежных средств на счет ',
+      date: new Date('2019-04-15T17:26:50.000Z'),
+      hold: false,
+      id: '1732073919',
+      income: 1050,
+      incomeAccount: '7005001234',
+      outcome: 0,
+      outcomeAccount: '7005001234',
+      payee: 'ИВАНОВ ИВАН ИВАНОВИЧ'
     }
   ],
   [
@@ -114,14 +115,14 @@ const transactions = [
       valueDate: { time: 1555329507000, javaClass: 'java.util.Date' }
     },
     {
-      'date': new Date('2019-04-15T11:58:27.000Z'),
-      'hold': false,
-      'id': '1731975603',
-      'income': 0,
-      'incomeAccount': '7005001234',
-      'outcome': 20000,
-      'outcomeAccount': '7005001234',
-      'payee': 'Банк Хоум Кредит'
+      date: new Date('2019-04-15T11:58:27.000Z'),
+      hold: false,
+      id: '1731975603',
+      income: 0,
+      incomeAccount: '7005001234',
+      outcome: 20000,
+      outcomeAccount: '7005001234',
+      payee: 'Банк Хоум Кредит'
     }
   ],
   [
@@ -163,15 +164,15 @@ const transactions = [
       valueDate: { time: 1555312995000, javaClass: 'java.util.Date' }
     },
     {
-      'comment': 'Пополнение счета ',
-      'date': new Date('2019-04-15T07:23:15.000Z'),
-      'hold': false,
-      'id': '1731862301',
-      'income': 55000,
-      'incomeAccount': '7005001234',
-      'outcome': 0,
-      'outcomeAccount': '7005001234',
-      'payee': 'Банк Хоум Кредит'
+      comment: 'Пополнение счета ',
+      date: new Date('2019-04-15T07:23:15.000Z'),
+      hold: false,
+      id: '1731862301',
+      income: 55000,
+      incomeAccount: '7005001234',
+      outcome: 0,
+      outcomeAccount: '7005001234',
+      payee: 'Банк Хоум Кредит'
     }
   ]
 ]

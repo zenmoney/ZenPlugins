@@ -40,7 +40,7 @@ export function convertWallets (wallets) {
         balance: balanceItem.currentBalance,
         startBalance: 0,
         creditLimit: 0,
-        syncID: [ accountId ],
+        syncID: [accountId],
         company: null
       }
     })
@@ -71,7 +71,7 @@ export function convertTransaction (apiTransaction) {
 
   const zenTransaction = {
     // TODO: в v3 появилось поле "status", замеченные значения: [Completed, Rejected], нужно проверить какие еще статусы есть
-    movements: [ getMovement(apiTransaction, accountId) ],
+    movements: [getMovement(apiTransaction, accountId)],
     hold: apiTransaction.state === 'WaitConfirmation',
     merchant: null, // Такая информация есть только в комментарии в неудобном для парсинга виде
     date: new Date(Date.parse(apiTransaction.operation.date)),
@@ -79,7 +79,7 @@ export function convertTransaction (apiTransaction) {
   };
 
   // TODO: добавить больше операций?
-  [ parseCashWithdrawal ].some(parser => parser(apiTransaction, zenTransaction, accountId))
+  [parseCashWithdrawal].some(parser => parser(apiTransaction, zenTransaction, accountId))
 
   return zenTransaction
 }

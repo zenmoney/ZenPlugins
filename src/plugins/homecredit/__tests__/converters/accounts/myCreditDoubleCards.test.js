@@ -2,25 +2,25 @@ import { collapseDoubleAccounts } from '../../../api'
 import { convertAccount } from '../../../converters'
 
 const accounts = {
-  'CreditCardTW': [
+  CreditCardTW: [
     [
       {
-        '$id': '3',
+        $id: '3',
         Order: 7,
         ContractNumber: '2258773215',
         ProductName: 'Карта Рассрочки',
         ProductId: 0,
         ProductType: 7,
         Contract: {
-          '$id': '4',
+          $id: '4',
           Debt: {
-            '$id': '5',
+            $id: '5',
             DebtDays: 0,
             DebtAmount: 0,
             LastPaymentDebtDays: 0
           },
           Properties: {
-            '$id': '6',
+            $id: '6',
             NextPaymentDate: '2019-05-05T00:00:00',
             FirstPaymentDate: '2019-04-24T00:00:00',
             RecPaymentDate: '2019-04-14T00:00:00',
@@ -52,7 +52,7 @@ const accounts = {
         IsInstalmentProduct: true,
         CardType: 2,
         CreditCardTWGuiData: {
-          '$id': '7',
+          $id: '7',
           CreditCardTWGuiStatus: 1,
           DisplayedPayments: 0,
           ShowGauge: false,
@@ -64,7 +64,7 @@ const accounts = {
           ShowTwoBalances: false
         },
         OuterLimitInfo: {
-          '$id': '8',
+          $id: '8',
           IsOuterLimitOn: false,
           OuterCreditLimit: 0,
           OuterAvailableBalance: 0,
@@ -74,7 +74,7 @@ const accounts = {
         },
         IsActivationAvailable: false,
         PaymentDetails: {
-          '$id': '9',
+          $id: '9',
           OverdueInterest: 0,
           OverdueDebtBody: 0,
           OverduePenalties: 0,
@@ -87,12 +87,12 @@ const accounts = {
           CurrentInstallments: 0
         },
         ExtraServicesInfo: {
-          '$id': '10',
+          $id: '10',
           IsFinProtectionAvailable: false,
           IsFinProtectionOn: false
         },
         AclipInfo: {
-          '$id': '11',
+          $id: '11',
           OfferedIncrease: 0,
           IncreasedCreditLimit: 150000,
           IncreasedAvailableBalance: 150000
@@ -105,42 +105,42 @@ const accounts = {
         IsPlasticActivationAvailable: false
       },
       {
-        'account': {
-          'available': 150000,
-          'creditLimit': 150000,
-          'id': '2258773215',
-          'instrument': 'RUB',
-          'syncID': ['1234', '0015'],
-          'title': 'Карта Рассрочки',
-          'type': 'ccard'
+        account: {
+          available: 150000,
+          creditLimit: 150000,
+          id: '2258773215',
+          instrument: 'RUB',
+          syncID: ['1234', '0015'],
+          title: 'Карта Рассрочки',
+          type: 'ccard'
         },
-        'details': {
-          'accountNumber': '40817810393280001234',
-          'cardNumber': '450726XXXXXX0015',
-          'contractNumber': '2258773215',
-          'title': 'Карта Рассрочки',
-          'type': 'CreditCardTW'
+        details: {
+          accountNumber: '40817810393280001234',
+          cardNumber: '450726XXXXXX0015',
+          contractNumber: '2258773215',
+          title: 'Карта Рассрочки',
+          type: 'CreditCardTW'
         }
       }
     ],
     [
       {
-        '$id': '12',
+        $id: '12',
         Order: 7,
         ContractNumber: '2258773215',
         ProductName: 'Карта Рассрочки - неименная',
         ProductId: 0,
         ProductType: 7,
         Contract: {
-          '$id': '13',
+          $id: '13',
           Debt: {
-            '$id': '14',
+            $id: '14',
             DebtDays: 0,
             DebtAmount: 0,
             LastPaymentDebtDays: 0
           },
           Properties: {
-            '$id': '15',
+            $id: '15',
             NextPaymentDate: '2019-05-05T00:00:00',
             FirstPaymentDate: '2019-04-24T00:00:00',
             RecPaymentDate: '2019-04-14T00:00:00',
@@ -172,7 +172,7 @@ const accounts = {
         IsInstalmentProduct: true,
         CardType: 2,
         CreditCardTWGuiData: {
-          '$id': '16',
+          $id: '16',
           CreditCardTWGuiStatus: 1,
           DisplayedPayments: 0,
           ShowGauge: false,
@@ -184,7 +184,7 @@ const accounts = {
           ShowTwoBalances: false
         },
         OuterLimitInfo: {
-          '$id': '17',
+          $id: '17',
           IsOuterLimitOn: false,
           OuterCreditLimit: 0,
           OuterAvailableBalance: 0,
@@ -194,7 +194,7 @@ const accounts = {
         },
         IsActivationAvailable: false,
         PaymentDetails: {
-          '$id': '18',
+          $id: '18',
           OverdueInterest: 0,
           OverdueDebtBody: 0,
           OverduePenalties: 0,
@@ -207,12 +207,12 @@ const accounts = {
           CurrentInstallments: 0
         },
         ExtraServicesInfo: {
-          '$id': '19',
+          $id: '19',
           IsFinProtectionAvailable: false,
           IsFinProtectionOn: false
         },
         AclipInfo: {
-          '$id': '20',
+          $id: '20',
           OfferedIncrease: 0,
           IncreasedCreditLimit: 150000,
           IncreasedAvailableBalance: 150000
@@ -225,26 +225,26 @@ const accounts = {
         IsPlasticActivationAvailable: false
       },
       {
-        'account': {
-          'available': 150000,
-          'creditLimit': 150000,
-          'id': '2258773215',
-          'instrument': 'RUB',
-          'syncID': ['1234', '3456'],
-          'title': 'Карта Рассрочки - неименная',
-          'type': 'ccard'
+        account: {
+          available: 150000,
+          creditLimit: 150000,
+          id: '2258773215',
+          instrument: 'RUB',
+          syncID: ['1234', '3456'],
+          title: 'Карта Рассрочки - неименная',
+          type: 'ccard'
         },
-        'details': {
-          'accountNumber': '40817810393280001234',
-          'cardNumber': '450726XXXXXX3456',
-          'contractNumber': '2258773215',
-          'title': 'Карта Рассрочки - неименная',
-          'type': 'CreditCardTW'
+        details: {
+          accountNumber: '40817810393280001234',
+          cardNumber: '450726XXXXXX3456',
+          contractNumber: '2258773215',
+          title: 'Карта Рассрочки - неименная',
+          type: 'CreditCardTW'
         }
       }
     ]
   ],
-  'CreditLoan': [
+  CreditLoan: [
     [
       {
         $id: '3',
@@ -302,28 +302,28 @@ const accounts = {
         SmsPackService: false
       },
       {
-        'account': {
-          'balance': -13801.36,
-          'capitalization': true,
-          'endDateOffset': 24,
-          'endDateOffsetInterval': 'month',
-          'id': '2268605008',
-          'instrument': 'RUB',
-          'payoffInterval': 'month',
-          'payoffStep': 1,
-          'percent': 0.1,
-          'startBalance': 33714,
-          'startDate': '2018-04-05T03:00:00+03:00',
-          'syncID': ['5008'],
-          'title': 'Кредит на товар',
-          'type': 'loan'
+        account: {
+          balance: -13801.36,
+          capitalization: true,
+          endDateOffset: 24,
+          endDateOffsetInterval: 'month',
+          id: '2268605008',
+          instrument: 'RUB',
+          payoffInterval: 'month',
+          payoffStep: 1,
+          percent: 0.1,
+          startBalance: 33714,
+          startDate: '2018-04-05T03:00:00+03:00',
+          syncID: ['5008'],
+          title: 'Кредит на товар',
+          type: 'loan'
         },
-        'details': {
-          'accountNumber': '42301810440640097576',
-          'cardNumber': undefined,
-          'contractNumber': '2268605008',
-          'title': 'Кредит на товар',
-          'type': 'CreditLoan'
+        details: {
+          accountNumber: '42301810440640097576',
+          cardNumber: undefined,
+          contractNumber: '2268605008',
+          title: 'Кредит на товар',
+          type: 'CreditLoan'
         }
       }
     ],
@@ -384,28 +384,28 @@ const accounts = {
         SmsPackService: false
       },
       {
-        'account': {
-          'balance': -10373.93,
-          'capitalization': true,
-          'endDateOffset': 24,
-          'endDateOffsetInterval': 'month',
-          'id': '2291863337',
-          'instrument': 'RUB',
-          'payoffInterval': 'month',
-          'payoffStep': 1,
-          'percent': 0.1,
-          'startBalance': 15299,
-          'startDate': '2019-02-19T03:00:00+03:00',
-          'syncID': ['3337'],
-          'title': 'Кредит на товар',
-          'type': 'loan'
+        account: {
+          balance: -10373.93,
+          capitalization: true,
+          endDateOffset: 24,
+          endDateOffsetInterval: 'month',
+          id: '2291863337',
+          instrument: 'RUB',
+          payoffInterval: 'month',
+          payoffStep: 1,
+          percent: 0.1,
+          startBalance: 15299,
+          startDate: '2019-02-19T03:00:00+03:00',
+          syncID: ['3337'],
+          title: 'Кредит на товар',
+          type: 'loan'
         },
-        'details': {
-          'accountNumber': '42301810440640097576',
-          'cardNumber': undefined,
-          'contractNumber': '2291863337',
-          'title': 'Кредит на товар',
-          'type': 'CreditLoan'
+        details: {
+          accountNumber: '42301810440640097576',
+          cardNumber: undefined,
+          contractNumber: '2291863337',
+          title: 'Кредит на товар',
+          type: 'CreditLoan'
         }
       }
     ],
@@ -466,28 +466,28 @@ const accounts = {
         SmsPackService: false
       },
       {
-        'account': {
-          'balance': -22442,
-          'capitalization': true,
-          'endDateOffset': 36,
-          'endDateOffsetInterval': 'month',
-          'id': '2255951986',
-          'instrument': 'RUB',
-          'payoffInterval': 'month',
-          'payoffStep': 1,
-          'percent': 0.1,
-          'startBalance': 46152,
-          'startDate': '2017-09-29T03:00:00+03:00',
-          'syncID': ['1986'],
-          'title': 'Кредит на товар',
-          'type': 'loan'
+        account: {
+          balance: -22442,
+          capitalization: true,
+          endDateOffset: 36,
+          endDateOffsetInterval: 'month',
+          id: '2255951986',
+          instrument: 'RUB',
+          payoffInterval: 'month',
+          payoffStep: 1,
+          percent: 0.1,
+          startBalance: 46152,
+          startDate: '2017-09-29T03:00:00+03:00',
+          syncID: ['1986'],
+          title: 'Кредит на товар',
+          type: 'loan'
         },
-        'details': {
-          'accountNumber': '42301810440640097576',
-          'cardNumber': undefined,
-          'contractNumber': '2255951986',
-          'title': 'Кредит на товар',
-          'type': 'CreditLoan'
+        details: {
+          accountNumber: '42301810440640097576',
+          cardNumber: undefined,
+          contractNumber: '2255951986',
+          title: 'Кредит на товар',
+          type: 'CreditLoan'
         }
       }
     ]
@@ -495,8 +495,8 @@ const accounts = {
 }
 
 describe('convertAccount', () => {
-  for (let accountType in accounts) {
-    for (let accountNum in accounts[accountType]) {
+  for (const accountType in accounts) {
+    for (const accountNum in accounts[accountType]) {
       it(`should converts ${accountType} #${accountNum} account`, () => {
         expect(
           convertAccount(accounts[accountType][accountNum][0], accountType)
@@ -515,21 +515,21 @@ describe('collapseDoubleAccounts', () => {
       collapseDoubleAccounts(accounts[accountType].map(item => convertAccount(item[0], accountType)))
     ).toEqual([
       {
-        'account': {
-          'available': 150000,
-          'creditLimit': 150000,
-          'id': '2258773215',
-          'instrument': 'RUB',
-          'syncID': ['1234', '0015', '3456'],
-          'title': 'Карта Рассрочки',
-          'type': 'ccard'
+        account: {
+          available: 150000,
+          creditLimit: 150000,
+          id: '2258773215',
+          instrument: 'RUB',
+          syncID: ['1234', '0015', '3456'],
+          title: 'Карта Рассрочки',
+          type: 'ccard'
         },
-        'details': {
-          'accountNumber': '40817810393280001234',
-          'cardNumber': '450726XXXXXX0015',
-          'contractNumber': '2258773215',
-          'title': 'Карта Рассрочки',
-          'type': 'CreditCardTW'
+        details: {
+          accountNumber: '40817810393280001234',
+          cardNumber: '450726XXXXXX0015',
+          contractNumber: '2258773215',
+          title: 'Карта Рассрочки',
+          type: 'CreditCardTW'
         }
       }
     ])

@@ -11,9 +11,9 @@ const loginUrl = 'https://login.belinvestbank.by/app_api'
 const dataUrl = 'https://ibank.belinvestbank.by/app_api'
 
 export function getDevice () {
-  let deviceID = ZenMoney.getData('deviceId', generateRandomString(16))
+  const deviceID = ZenMoney.getData('deviceId', generateRandomString(16))
   ZenMoney.setData('deviceId', deviceID)
-  let deviceToken = ZenMoney.getData('token', base64.encode(generateRandomString(203)))
+  const deviceToken = ZenMoney.getData('token', base64.encode(generateRandomString(203)))
   ZenMoney.setData('token', deviceToken)
   return {
     id: deviceID,
@@ -28,8 +28,8 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'User-Agent': 'Android',
-        'DEVICE_TOKEN': 123456,
-        'Connection': 'Keep-Alive',
+        DEVICE_TOKEN: 123456,
+        Connection: 'Keep-Alive',
         'Accept-Encoding': 'gzip'
       },
       sanitizeRequestLog: { headers: { Cookie: true } },
@@ -160,7 +160,7 @@ kro=
 
     res = (await fetchApiJson(loginUrl, {
       method: 'POST',
-      headers: { 'Cookie': sessionCookies },
+      headers: { Cookie: sessionCookies },
       body: {
         section: 'account',
         method: 'signin2',
@@ -187,7 +187,7 @@ kro=
   if (isNeededSaveDevice) {
     await fetchApiJson(dataUrl, {
       method: 'POST',
-      headers: { 'Cookie': sessionCookies },
+      headers: { Cookie: sessionCookies },
       body: {
         section: 'mobile',
         method: 'setDeviceId',
@@ -202,12 +202,12 @@ kro=
 
 export async function fetchAccounts (sessionCookies) {
   console.log('>>> Загрузка списка счетов...')
-  let accounts = (await fetchApiJson(dataUrl, {
+  const accounts = (await fetchApiJson(dataUrl, {
     method: 'POST',
-    headers: { 'Cookie': sessionCookies },
+    headers: { Cookie: sessionCookies },
     body: {
-      'section': 'payments',
-      'method': 'index'
+      section: 'payments',
+      method: 'index'
     }
   }, response => response.success && response.body.status && response.body.status === 'OK',
   message => new InvalidPreferencesError('bad request')))
@@ -238,7 +238,7 @@ export async function fetchTransactions (sessionCookies, accounts, fromDate, toD
     return dates.map(dates => {
       return fetchApiJson(dataUrl, {
         method: 'POST',
-        headers: { 'Cookie': sessionCookies },
+        headers: { Cookie: sessionCookies },
         body: {
           section: 'cards',
           method: 'history',

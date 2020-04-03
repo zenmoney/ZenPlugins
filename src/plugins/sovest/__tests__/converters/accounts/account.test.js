@@ -4,14 +4,14 @@ describe('convertAccount', () => {
   it.each([
     [
       {
-        'cardNumber': '4469 **** **** 9999',
-        'monthExp': 5,
-        'yearExp': 2021,
-        'cardStatus': 'Активирована',
-        'clientId': 707777,
-        'amount': 66666.66,
-        'limit': 136000,
-        'balance': 0
+        cardNumber: '4469 **** **** 9999',
+        monthExp: 5,
+        yearExp: 2021,
+        cardStatus: 'Активирована',
+        clientId: 707777,
+        amount: 66666.66,
+        limit: 136000,
+        balance: 0
       },
       {
         id: 'CLIENT_ID_707777',
@@ -27,14 +27,14 @@ describe('convertAccount', () => {
     ],
     [
       {
-        'cardNumber': '4469 **** **** 9999',
-        'monthExp': 5,
-        'yearExp': 2021,
-        'cardStatus': 'Активирована',
-        'clientId': 707777,
-        'amount': 137000,
-        'limit': 136000,
-        'balance': 1000
+        cardNumber: '4469 **** **** 9999',
+        monthExp: 5,
+        yearExp: 2021,
+        cardStatus: 'Активирована',
+        clientId: 707777,
+        amount: 137000,
+        limit: 136000,
+        balance: 1000
       },
       {
         id: 'CLIENT_ID_707777',

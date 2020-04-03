@@ -1,7 +1,7 @@
 import { convertAccount } from '../../converters'
 
 describe('convertAccount', () => {
-  let tt = [
+  const tt = [
     {
       name: 'card',
       json: {
@@ -165,7 +165,7 @@ describe('convertAccount', () => {
   ]
   tt.forEach(function (tc) {
     it(tc.name, () => {
-      let account = convertAccount(tc.json)
+      const account = convertAccount(tc.json)
       expect(account).toEqual(tc.expectedAccount)
     })
   })

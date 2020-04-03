@@ -21,19 +21,19 @@ describe('convertAccount', () => {
       },
       {
         account: {
-          'id': '210/021234',
-          'syncID': ['1234', '5678'],
-          'title': 'Накопительный счет Срочный (42303810850640005678)',
-          'type': 'checking',
-          'instrument': 'RUR',
-          'balance': 14845.74
+          id: '210/021234',
+          syncID: ['1234', '5678'],
+          title: 'Накопительный счет Срочный (42303810850640005678)',
+          type: 'checking',
+          instrument: 'RUR',
+          balance: 14845.74
         },
         details: {
-          'accountNumber': '42303810850640005678',
-          'cardNumber': undefined,
-          'contractNumber': '210/021234',
-          'title': 'Накопительный счет',
-          'type': 'deposits'
+          accountNumber: '42303810850640005678',
+          cardNumber: undefined,
+          contractNumber: '210/021234',
+          title: 'Накопительный счет',
+          type: 'deposits'
         }
       }
     ]

@@ -35,7 +35,7 @@ const converter = (data, credits) => {
 }
 
 const contractIdsFetcher = (data) => {
-  let list = []
+  const list = []
 
   data.forEach((item) => {
     list.push(item.contractId)

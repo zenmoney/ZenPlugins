@@ -18,7 +18,7 @@ function formatComment ({ invoice, sum, fee, accountInstrument }) {
 }
 
 describe('formatComment', () => {
-  it(`should output nothing when there's no invoice`, () => {
+  it('should output nothing when there\'s no invoice', () => {
     expect(formatComment({ sum: 120, fee: 0, accountInstrument: 'USD', invoice: null }))
       .toEqual(null)
   })

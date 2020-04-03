@@ -6,17 +6,17 @@ describe('getSignature', () => {
   }
 
   it('returns valid signature', () => {
-    expect(getSignature('2.37.3', `<map><type>com.mobiletransport.messaging.DefaultMessageImpl</type><string>id</string><string>8067f11d-f27a-4fec-a2a2-b44772fb412d</string><string>theme</string><string>GetLoginModeRequest theme</string><string>sendTimestamp</string><long>1530191914049</long><string>correlationId</string><string>-992585096</string><string>timeToLive</string><long>0</long><string>payload</string><map><type>ru.vtb24.mobilebanking.protocol.security.LoginModeMto</type><string>mode</string><string>Pass</string><string>description</string><string>Вход по паролю</string></map><string>properties</string><map><type>java.util.Hashtable</type><string>request_time_to_live</string><long>30000</long><string>request_send_timestamp</string><long>1530191912259</long></map></map>`))
+    expect(getSignature('2.37.3', '<map><type>com.mobiletransport.messaging.DefaultMessageImpl</type><string>id</string><string>8067f11d-f27a-4fec-a2a2-b44772fb412d</string><string>theme</string><string>GetLoginModeRequest theme</string><string>sendTimestamp</string><long>1530191914049</long><string>correlationId</string><string>-992585096</string><string>timeToLive</string><long>0</long><string>payload</string><map><type>ru.vtb24.mobilebanking.protocol.security.LoginModeMto</type><string>mode</string><string>Pass</string><string>description</string><string>Вход по паролю</string></map><string>properties</string><map><type>java.util.Hashtable</type><string>request_time_to_live</string><long>30000</long><string>request_send_timestamp</string><long>1530191912259</long></map></map>'))
       .toEqual(getBytes('\x00\x00\x03\x05\x06'))
   })
 
   it('returns valid signature', () => {
-    expect(getSignature('2.37.3', `<map><type>com.mobiletransport.messaging.DefaultMessageImpl</type><string>id</string><string>2fa2f4f1-4f99-4bc4-a499-22666e55bb97</string><string>theme</string><string>Default theme</string><string>sendTimestamp</string><long>1530191913628</long><string>correlationId</string><string>-1388223371</string><string>timeToLive</string><long>0</long><string>payload</string><null></null><string>properties</string><map><type>java.util.Hashtable</type><string>request_time_to_live</string><long>30000</long><string>request_send_timestamp</string><long>1530191910664</long></map></map>`))
+    expect(getSignature('2.37.3', '<map><type>com.mobiletransport.messaging.DefaultMessageImpl</type><string>id</string><string>2fa2f4f1-4f99-4bc4-a499-22666e55bb97</string><string>theme</string><string>Default theme</string><string>sendTimestamp</string><long>1530191913628</long><string>correlationId</string><string>-1388223371</string><string>timeToLive</string><long>0</long><string>payload</string><null></null><string>properties</string><map><type>java.util.Hashtable</type><string>request_time_to_live</string><long>30000</long><string>request_send_timestamp</string><long>1530191910664</long></map></map>'))
       .toEqual(getBytes('\x00\x00\x02I\x06'))
   })
 
   it('returns valid signature', () => {
-    expect(getSignature('2.37.3', `<map><type>com.mobiletransport.messaging.DefaultMessageImpl</type><string>correlationId</string><string>-598424790</string><string>id</string><string>711462969</string><string>localCacheId</string><long>0</long><string>sendTimestamp</string><long>1530192194590</long><string>theme</string><string>Default theme</string><string>timeToLive</string><long>30000</long><string>payload</string><map><type>ru.vtb24.mobilebanking.protocol.ActualizeCacheTokensRequest</type></map><string>properties</string><map><type>java.util.Hashtable</type><string>PROTOVERSION</string><string>2.37.3</string><string>USER_ID</string><string>14927997</string><string>APP_VERSION</string><string>9.37.16</string><string>PLATFORM</string><string>ANDROID</string><string>DEVICE_PLATFORM</string><string>ANDROID</string><string>OS</string><string>Android OS 6.0</string><string>APPVERSION</string><string>9.37.16</string><string>DEVICE</string><string>Android SDK built for x86_64</string><string>DEVICEUSERNAME</string><string>android-build</string><string>CLIENT-TOKEN</string><string>2357418989-35085b67-1c38-4ece-b3c2-8f0d5b5420b7</string><string>DEVICE_OS</string><string>Android OS 6.0</string></map></map>`))
+    expect(getSignature('2.37.3', '<map><type>com.mobiletransport.messaging.DefaultMessageImpl</type><string>correlationId</string><string>-598424790</string><string>id</string><string>711462969</string><string>localCacheId</string><long>0</long><string>sendTimestamp</string><long>1530192194590</long><string>theme</string><string>Default theme</string><string>timeToLive</string><long>30000</long><string>payload</string><map><type>ru.vtb24.mobilebanking.protocol.ActualizeCacheTokensRequest</type></map><string>properties</string><map><type>java.util.Hashtable</type><string>PROTOVERSION</string><string>2.37.3</string><string>USER_ID</string><string>14927997</string><string>APP_VERSION</string><string>9.37.16</string><string>PLATFORM</string><string>ANDROID</string><string>DEVICE_PLATFORM</string><string>ANDROID</string><string>OS</string><string>Android OS 6.0</string><string>APPVERSION</string><string>9.37.16</string><string>DEVICE</string><string>Android SDK built for x86_64</string><string>DEVICEUSERNAME</string><string>android-build</string><string>CLIENT-TOKEN</string><string>2357418989-35085b67-1c38-4ece-b3c2-8f0d5b5420b7</string><string>DEVICE_OS</string><string>Android OS 6.0</string></map></map>'))
       .toEqual(getBytes('\x00\x00\x04\xa8\x06'))
   })
 
@@ -114,7 +114,7 @@ describe('parseXml', () => {
   })
 
   it('parses complex object', () => {
-    expect(parseXml(`<map><type>com.mobiletransport.messaging.DefaultMessageImpl</type><string>id</string><string>2fa2f4f1-4f99-4bc4-a499-22666e55bb97</string><string>theme</string><string>Default theme</string><string>sendTimestamp</string><long>1530191913628</long><string>correlationId</string><string>-1388223371</string><string>timeToLive</string><long>0</long><string>payload</string><null></null><string>properties</string><map><type>java.util.Hashtable</type><string>request_time_to_live</string><long>30000</long><string>request_send_timestamp</string><long>1530191910664</long></map></map>`)).toEqual({
+    expect(parseXml('<map><type>com.mobiletransport.messaging.DefaultMessageImpl</type><string>id</string><string>2fa2f4f1-4f99-4bc4-a499-22666e55bb97</string><string>theme</string><string>Default theme</string><string>sendTimestamp</string><long>1530191913628</long><string>correlationId</string><string>-1388223371</string><string>timeToLive</string><long>0</long><string>payload</string><null></null><string>properties</string><map><type>java.util.Hashtable</type><string>request_time_to_live</string><long>30000</long><string>request_send_timestamp</string><long>1530191910664</long></map></map>')).toEqual({
       __type: 'com.mobiletransport.messaging.DefaultMessageImpl',
       id: '2fa2f4f1-4f99-4bc4-a499-22666e55bb97',
       theme: 'Default theme',
@@ -124,12 +124,12 @@ describe('parseXml', () => {
       payload: null,
       properties: {
         __type: 'java.util.Hashtable',
-        'request_time_to_live': 30000,
-        'request_send_timestamp': 1530191910664
+        request_time_to_live: 30000,
+        request_send_timestamp: 1530191910664
       }
     })
 
-    expect(parseXml(`<map><type>com.mobiletransport.messaging.DefaultMessageImpl</type><string>id</string><string>af255651-d412-4ab7-96e3-844780652ab7</string><string>theme</string><string>SonMessagesRequest theme</string><string>sendTimestamp</string><long>1530191975935</long><string>correlationId</string><string>-309335901</string><string>timeToLive</string><long>0</long><string>payload</string><map><type>ru.vtb24.mobilebanking.protocol.son.SonMessagesResponse</type><string>messages</string><list><type></type><length>0</length></list></map><string>properties</string><map><type>java.util.Hashtable</type><string>request_time_to_live</string><long>30000</long><string>request_send_timestamp</string><long>1530191974149</long></map></map>`)).toEqual({
+    expect(parseXml('<map><type>com.mobiletransport.messaging.DefaultMessageImpl</type><string>id</string><string>af255651-d412-4ab7-96e3-844780652ab7</string><string>theme</string><string>SonMessagesRequest theme</string><string>sendTimestamp</string><long>1530191975935</long><string>correlationId</string><string>-309335901</string><string>timeToLive</string><long>0</long><string>payload</string><map><type>ru.vtb24.mobilebanking.protocol.son.SonMessagesResponse</type><string>messages</string><list><type></type><length>0</length></list></map><string>properties</string><map><type>java.util.Hashtable</type><string>request_time_to_live</string><long>30000</long><string>request_send_timestamp</string><long>1530191974149</long></map></map>')).toEqual({
       __type: 'com.mobiletransport.messaging.DefaultMessageImpl',
       id: 'af255651-d412-4ab7-96e3-844780652ab7',
       theme: 'SonMessagesRequest theme',
@@ -142,12 +142,12 @@ describe('parseXml', () => {
       },
       properties: {
         __type: 'java.util.Hashtable',
-        'request_time_to_live': 30000,
-        'request_send_timestamp': 1530191974149
+        request_time_to_live: 30000,
+        request_send_timestamp: 1530191974149
       }
     })
 
-    expect(parseXml(`<map><type>com.mobiletransport.messaging.DefaultMessageImpl</type><string>id</string><string>dbde2974-76c9-436f-890f-3bfa834d5118</string><string>theme</string><string>Default theme</string><string>sendTimestamp</string><long>1530280627107</long><string>correlationId</string><string>-1388223371</string><string>timeToLive</string><long>0</long><string>payload</string><map><type>ru.vtb24.mobilebanking.protocol.security.SessionInfoMto</type><string>sessionId</string><string>2359583739-d8544647-6204-45c2-9118-dc3432998f6c</string><string>showFirstVisitMaster</string><boolean>0</boolean><string>isRestrictedAccessEnabled</string><boolean>0</boolean><string>authorizationLevel</string><map><type>ru.vtb24.mobilebanking.protocol.security.AuthorizationLevelMto</type><string>id</string><string>ANONYMOUS</string></map><string>role</string><map><type>ru.vtb24.mobilebanking.protocol.security.TelebankRoleMto</type><string>id</string><string>UNDEFINED</string></map><string>authorization</string><null></null><string>userInfo</string><map><type>ru.vtb24.mobilebanking.protocol.UserInfoMto</type><string>id</string><string>2359583739-d8544647-6204-45c2-9118-dc3432998f6c</string><string>unc</string><null></null><string>firstName</string><null></null><string>firstNameLatin</string><null></null><string>lastName</string><null></null><string>lastNameLatin</string><null></null><string>patronymic</string><null></null><string>sex</string><null></null><string>phoneWork</string><null></null><string>phoneMobile</string><null></null><string>email</string><null></null><string>alias</string><null></null><string>teleInfo</string><boolean>0</boolean><string>birthday</string><null></null></map><string>availableAccountingSystems</string><list><type>[string</type><length>1</length><string>All</string></list><string>userSettings</string><null></null><string>sessionHistory</string><null></null><string>lastLogonInChannel</string><null></null></map><string>properties</string><map><type>java.util.Hashtable</type><string>request_time_to_live</string><long>30000</long><string>request_send_timestamp</string><long>1530280626976</long></map></map>`)).toEqual({
+    expect(parseXml('<map><type>com.mobiletransport.messaging.DefaultMessageImpl</type><string>id</string><string>dbde2974-76c9-436f-890f-3bfa834d5118</string><string>theme</string><string>Default theme</string><string>sendTimestamp</string><long>1530280627107</long><string>correlationId</string><string>-1388223371</string><string>timeToLive</string><long>0</long><string>payload</string><map><type>ru.vtb24.mobilebanking.protocol.security.SessionInfoMto</type><string>sessionId</string><string>2359583739-d8544647-6204-45c2-9118-dc3432998f6c</string><string>showFirstVisitMaster</string><boolean>0</boolean><string>isRestrictedAccessEnabled</string><boolean>0</boolean><string>authorizationLevel</string><map><type>ru.vtb24.mobilebanking.protocol.security.AuthorizationLevelMto</type><string>id</string><string>ANONYMOUS</string></map><string>role</string><map><type>ru.vtb24.mobilebanking.protocol.security.TelebankRoleMto</type><string>id</string><string>UNDEFINED</string></map><string>authorization</string><null></null><string>userInfo</string><map><type>ru.vtb24.mobilebanking.protocol.UserInfoMto</type><string>id</string><string>2359583739-d8544647-6204-45c2-9118-dc3432998f6c</string><string>unc</string><null></null><string>firstName</string><null></null><string>firstNameLatin</string><null></null><string>lastName</string><null></null><string>lastNameLatin</string><null></null><string>patronymic</string><null></null><string>sex</string><null></null><string>phoneWork</string><null></null><string>phoneMobile</string><null></null><string>email</string><null></null><string>alias</string><null></null><string>teleInfo</string><boolean>0</boolean><string>birthday</string><null></null></map><string>availableAccountingSystems</string><list><type>[string</type><length>1</length><string>All</string></list><string>userSettings</string><null></null><string>sessionHistory</string><null></null><string>lastLogonInChannel</string><null></null></map><string>properties</string><map><type>java.util.Hashtable</type><string>request_time_to_live</string><long>30000</long><string>request_send_timestamp</string><long>1530280626976</long></map></map>')).toEqual({
       __type: 'com.mobiletransport.messaging.DefaultMessageImpl',
       id: 'dbde2974-76c9-436f-890f-3bfa834d5118',
       theme: 'Default theme',
@@ -194,8 +194,8 @@ describe('parseXml', () => {
       },
       properties: {
         __type: 'java.util.Hashtable',
-        'request_time_to_live': 30000,
-        'request_send_timestamp': 1530280626976
+        request_time_to_live: 30000,
+        request_send_timestamp: 1530280626976
       }
     })
   })

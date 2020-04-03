@@ -274,77 +274,77 @@ describe('convertTransaction', () => {
     ],
     [
       {
-        'txnId': 13319571944,
-        'personId': 79881234567,
-        'date': '2018-06-21T20:02:51+03:00',
-        'errorCode': 0,
-        'error': null,
-        'status': 'SUCCESS',
-        'type': 'IN',
-        'statusText': 'Success',
-        'trmTxnId': '2911474611',
-        'account': 'Платежная система',
-        'sum': {
-          'amount': 200,
-          'currency': 643
+        txnId: 13319571944,
+        personId: 79881234567,
+        date: '2018-06-21T20:02:51+03:00',
+        errorCode: 0,
+        error: null,
+        status: 'SUCCESS',
+        type: 'IN',
+        statusText: 'Success',
+        trmTxnId: '2911474611',
+        account: 'Платежная система',
+        sum: {
+          amount: 200,
+          currency: 643
         },
-        'commission': {
-          'amount': 0,
-          'currency': 643
+        commission: {
+          amount: 0,
+          currency: 643
         },
-        'total': {
-          'amount': 200,
-          'currency': 643
+        total: {
+          amount: 200,
+          currency: 643
         },
-        'provider': {
-          'id': 26444,
-          'shortName': 'Рапида',
-          'longName': 'НКО Рапида (резиденты)',
-          'logoUrl': null,
-          'description': null,
-          'keys': null,
-          'siteUrl': null,
-          'extras': [{
-            'key': 'is_spa_form_available',
-            'value': 'true'
+        provider: {
+          id: 26444,
+          shortName: 'Рапида',
+          longName: 'НКО Рапида (резиденты)',
+          logoUrl: null,
+          description: null,
+          keys: null,
+          siteUrl: null,
+          extras: [{
+            key: 'is_spa_form_available',
+            value: 'true'
           }]
         },
-        'source': {
-          'id': 99,
-          'shortName': 'Перевод на QIWI Кошелек',
-          'longName': 'Доставляется мгновенно',
-          'logoUrl': 'https://static.qiwi.com/img/providers/logoBig/99_l.png',
-          'description': null,
-          'keys': 'пополнить, перевести, qiwi, кошелек, оплатить, онлайн, оплата, счет, способ, услуга,перевести',
-          'siteUrl': 'http://www.qiwi.com',
-          'extras': [{
-            'key': 'ceo_description',
-            'value': 'Способы пополнения QIWI кошелька онлайн. Как перевести деньги на QIWI кошелек. Оплата онлайн через электронный QIWI кошелек.'
+        source: {
+          id: 99,
+          shortName: 'Перевод на QIWI Кошелек',
+          longName: 'Доставляется мгновенно',
+          logoUrl: 'https://static.qiwi.com/img/providers/logoBig/99_l.png',
+          description: null,
+          keys: 'пополнить, перевести, qiwi, кошелек, оплатить, онлайн, оплата, счет, способ, услуга,перевести',
+          siteUrl: 'http://www.qiwi.com',
+          extras: [{
+            key: 'ceo_description',
+            value: 'Способы пополнения QIWI кошелька онлайн. Как перевести деньги на QIWI кошелек. Оплата онлайн через электронный QIWI кошелек.'
           }, {
-            'key': 'ceo_title',
-            'value': 'Пополнить QIWI кошелек - перевод и пополнение онлайн электронный QIWI кошелька'
+            key: 'ceo_title',
+            value: 'Пополнить QIWI кошелек - перевод и пополнение онлайн электронный QIWI кошелька'
           }, {
-            'key': 'is_spa_form_available',
-            'value': 'true'
+            key: 'is_spa_form_available',
+            value: 'true'
           }]
         },
-        'comment': null,
-        'currencyRate': 1,
-        'paymentExtras': [],
-        'features': {
-          'chequeReady': false,
-          'bankDocumentReady': false,
-          'regularPaymentEnabled': false,
-          'bankDocumentAvailable': false,
-          'repeatPaymentEnabled': false,
-          'favoritePaymentEnabled': false,
-          'chatAvailable': false,
-          'greetingCardAttached': false
+        comment: null,
+        currencyRate: 1,
+        paymentExtras: [],
+        features: {
+          chequeReady: false,
+          bankDocumentReady: false,
+          regularPaymentEnabled: false,
+          bankDocumentAvailable: false,
+          repeatPaymentEnabled: false,
+          favoritePaymentEnabled: false,
+          chatAvailable: false,
+          greetingCardAttached: false
         },
-        'serviceExtras': {},
-        'view': {
-          'title': 'Рапида',
-          'account': 'Платежная система'
+        serviceExtras: {},
+        view: {
+          title: 'Рапида',
+          account: 'Платежная система'
         }
       },
       {

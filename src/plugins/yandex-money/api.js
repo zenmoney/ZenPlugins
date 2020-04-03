@@ -17,7 +17,7 @@ async function fetchJson (url, options = {}, predicate = () => true) {
     ...options,
     stringify: qs.stringify,
     headers: {
-      'Host': 'money.yandex.ru',
+      Host: 'money.yandex.ru',
       'Content-Type': 'application/x-www-form-urlencoded',
       ...options.headers
     }
@@ -37,10 +37,10 @@ export async function login () {
   const { error, code } = await new Promise((resolve) => {
     const redirectUriWithoutProtocol = redirectUri.replace(/^https?:\/\//i, '')
     const url = `https://money.yandex.ru/oauth/authorize?${qs.stringify({
-      'client_id': clientId,
-      'scope': scope,
-      'redirect_uri': redirectUri,
-      'response_type': 'code'
+      client_id: clientId,
+      scope: scope,
+      redirect_uri: redirectUri,
+      response_type: 'code'
     })}`
     ZenMoney.openWebView(url, null, (request, callback) => {
       const i = request.url.indexOf(redirectUriWithoutProtocol)
@@ -61,9 +61,9 @@ export async function login () {
   console.assert(code && !error, 'non-successfull authorization', error)
   const response = await fetchJson('https://money.yandex.ru/oauth/token', {
     body: {
-      'client_id': clientId,
-      'grant_type': 'authorization_code',
-      'redirect_uri': redirectUri,
+      client_id: clientId,
+      grant_type: 'authorization_code',
+      redirect_uri: redirectUri,
       code
     },
     sanitizeRequestLog: { body: true },
@@ -78,7 +78,7 @@ export async function login () {
 export async function fetchAccount ({ accessToken }) {
   const response = await fetchJson('https://money.yandex.ru/api/account-info', {
     headers: {
-      'Authorization': `Bearer ${accessToken}`
+      Authorization: `Bearer ${accessToken}`
     }
   })
   return response.body
@@ -90,7 +90,7 @@ export async function fetchTransactions ({ accessToken }, fromDate, toDate) {
   do {
     const response = await fetchJson('https://money.yandex.ru/api/operation-history', {
       headers: {
-        'Authorization': `Bearer ${accessToken}`
+        Authorization: `Bearer ${accessToken}`
       },
       body: {
         from: fromDate.toISOString(),

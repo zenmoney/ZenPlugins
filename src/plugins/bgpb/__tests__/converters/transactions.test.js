@@ -32,38 +32,38 @@ describe('convertTransaction', () => {
         overdraft: '0,00'
       },
       expectedTransaction: {
-        'comment': null,
-        'date': new Date('2019-01-18T18:36:00.000Z'),
-        'hold': false,
-        'merchant': {
-          'city': 'MINSK',
-          'country': 'BY',
-          'location': null,
-          'mcc': null,
-          'title': 'BGPB PST-93'
+        comment: null,
+        date: new Date('2019-01-18T18:36:00.000Z'),
+        hold: false,
+        merchant: {
+          city: 'MINSK',
+          country: 'BY',
+          location: null,
+          mcc: null,
+          title: 'BGPB PST-93'
         },
-        'movements':
+        movements:
         [
           {
-            'account': {
-              'id': '11161311-117d11'
+            account: {
+              id: '11161311-117d11'
             },
-            'fee': 0,
-            'id': null,
-            'invoice': null,
-            'sum': 1600
+            fee: 0,
+            id: null,
+            invoice: null,
+            sum: 1600
           },
           {
-            'account': {
-              'company': null,
-              'instrument': 'USD',
-              'syncIds': null,
-              'type': 'cash'
+            account: {
+              company: null,
+              instrument: 'USD',
+              syncIds: null,
+              type: 'cash'
             },
-            'fee': 0,
-            'id': null,
-            'invoice': null,
-            'sum': -1600
+            fee: 0,
+            id: null,
+            invoice: null,
+            sum: -1600
           }
         ]
       }
@@ -85,29 +85,29 @@ describe('convertTransaction', () => {
         overdraft: '0,00'
       },
       expectedTransaction: {
-        'comment': null,
-        'date': new Date('2019-01-02T19:02:00.000Z'),
-        'hold': false,
-        'merchant': {
-          'city': 'DOUGLAS',
-          'country': 'GB',
-          'location': null,
-          'mcc': 1200,
-          'title': 'SHOP'
+        comment: null,
+        date: new Date('2019-01-02T19:02:00.000Z'),
+        hold: false,
+        merchant: {
+          city: 'DOUGLAS',
+          country: 'GB',
+          location: null,
+          mcc: 1200,
+          title: 'SHOP'
         },
-        'movements':
+        movements:
         [
           {
-            'account': {
-              'id': '11161311-117d11'
+            account: {
+              id: '11161311-117d11'
             },
-            'fee': 0,
-            'id': null,
-            'invoice': {
-              'instrument': 'EUR',
-              'sum': -250
+            fee: 0,
+            id: null,
+            invoice: {
+              instrument: 'EUR',
+              sum: -250
             },
-            'sum': -300
+            sum: -300
           }
         ]
       }
@@ -168,38 +168,38 @@ describe('convertLastTransaction', () => {
         pushMessageText: 'Card1111; Пополнение: 1 100,00 USD; 05.04.19 22:27:59; BGPB CASH-IN 76,MINSK,BY; Dostupno: 34,71 USD'
       },
       expectedTransaction: {
-        'comment': null,
-        'date': new Date('2019-04-05T19:27:00.000Z'),
-        'hold': false,
-        'merchant': {
-          'city': 'MINSK',
-          'country': 'BY',
-          'location': null,
-          'mcc': null,
-          'title': 'BGPB CASH-IN 76'
+        comment: null,
+        date: new Date('2019-04-05T19:27:00.000Z'),
+        hold: false,
+        merchant: {
+          city: 'MINSK',
+          country: 'BY',
+          location: null,
+          mcc: null,
+          title: 'BGPB CASH-IN 76'
         },
-        'movements':
+        movements:
           [
             {
-              'account': {
-                'id': '11161311-117d11'
+              account: {
+                id: '11161311-117d11'
               },
-              'fee': 0,
-              'id': null,
-              'invoice': null,
-              'sum': 1100
+              fee: 0,
+              id: null,
+              invoice: null,
+              sum: 1100
             },
             {
-              'account': {
-                'company': null,
-                'instrument': 'USD',
-                'syncIds': null,
-                'type': 'cash'
+              account: {
+                company: null,
+                instrument: 'USD',
+                syncIds: null,
+                type: 'cash'
               },
-              'fee': 0,
-              'id': null,
-              'invoice': null,
-              'sum': -1100
+              fee: 0,
+              id: null,
+              invoice: null,
+              sum: -1100
             }
           ]
       }
@@ -213,38 +213,38 @@ describe('convertLastTransaction', () => {
         pushMessageText: 'Card1111; Снятие наличных: 200,00 USD; 03.05.19 20:06:18; DZERZHINSKOGO 91,MINSK,BY; Dostupno: 2 000,74 USD'
       },
       expectedTransaction: {
-        'comment': null,
-        'date': new Date('2019-05-03T17:06:00.000Z'),
-        'hold': false,
-        'merchant': {
-          'city': 'MINSK',
-          'country': 'BY',
-          'location': null,
-          'mcc': null,
-          'title': 'DZERZHINSKOGO 91'
+        comment: null,
+        date: new Date('2019-05-03T17:06:00.000Z'),
+        hold: false,
+        merchant: {
+          city: 'MINSK',
+          country: 'BY',
+          location: null,
+          mcc: null,
+          title: 'DZERZHINSKOGO 91'
         },
-        'movements':
+        movements:
           [
             {
-              'account': {
-                'id': '11161311-117d11'
+              account: {
+                id: '11161311-117d11'
               },
-              'fee': 0,
-              'id': null,
-              'invoice': null,
-              'sum': -200
+              fee: 0,
+              id: null,
+              invoice: null,
+              sum: -200
             },
             {
-              'account': {
-                'company': null,
-                'instrument': 'USD',
-                'syncIds': null,
-                'type': 'cash'
+              account: {
+                company: null,
+                instrument: 'USD',
+                syncIds: null,
+                type: 'cash'
               },
-              'fee': 0,
-              'id': null,
-              'invoice': null,
-              'sum': 200
+              fee: 0,
+              id: null,
+              invoice: null,
+              sum: 200
             }
           ]
       }
@@ -258,32 +258,32 @@ describe('convertLastTransaction', () => {
         pushMessageText: 'Card1111; Снятие наличных: 100,00 USD; 03.05.19 20:06:18; ,MINSK,BLR; Dostupno: 2 000,84 USD'
       },
       expectedTransaction: {
-        'comment': null,
-        'date': new Date('2019-05-03T17:06:00.000Z'),
-        'hold': false,
-        'merchant': null,
-        'movements':
+        comment: null,
+        date: new Date('2019-05-03T17:06:00.000Z'),
+        hold: false,
+        merchant: null,
+        movements:
           [
             {
-              'account': {
-                'id': '11161311-117d11'
+              account: {
+                id: '11161311-117d11'
               },
-              'fee': 0,
-              'id': null,
-              'invoice': null,
-              'sum': -100
+              fee: 0,
+              id: null,
+              invoice: null,
+              sum: -100
             },
             {
-              'account': {
-                'company': null,
-                'instrument': 'USD',
-                'syncIds': null,
-                'type': 'cash'
+              account: {
+                company: null,
+                instrument: 'USD',
+                syncIds: null,
+                type: 'cash'
               },
-              'fee': 0,
-              'id': null,
-              'invoice': null,
-              'sum': 100
+              fee: 0,
+              id: null,
+              invoice: null,
+              sum: 100
             }
           ]
       }
@@ -297,38 +297,38 @@ describe('convertLastTransaction', () => {
         pushMessageText: 'Card1111; Наличные в ПОС: 100,00 USD; 03.05.19 20:06:18; BGPB PRK-28,MINSK,BY; MCC: 6010; Dostupno: 2 000,84 USD'
       },
       expectedTransaction: {
-        'comment': null,
-        'date': new Date('2019-05-03T17:06:00.000Z'),
-        'hold': false,
-        'merchant': {
-          'city': 'MINSK',
-          'country': 'BY',
-          'location': null,
-          'mcc': null,
-          'title': 'BGPB PRK-28'
+        comment: null,
+        date: new Date('2019-05-03T17:06:00.000Z'),
+        hold: false,
+        merchant: {
+          city: 'MINSK',
+          country: 'BY',
+          location: null,
+          mcc: null,
+          title: 'BGPB PRK-28'
         },
-        'movements':
+        movements:
           [
             {
-              'account': {
-                'id': '11161311-117d11'
+              account: {
+                id: '11161311-117d11'
               },
-              'fee': 0,
-              'id': null,
-              'invoice': null,
-              'sum': -100
+              fee: 0,
+              id: null,
+              invoice: null,
+              sum: -100
             },
             {
-              'account': {
-                'company': null,
-                'instrument': 'USD',
-                'syncIds': null,
-                'type': 'cash'
+              account: {
+                company: null,
+                instrument: 'USD',
+                syncIds: null,
+                type: 'cash'
               },
-              'fee': 0,
-              'id': null,
-              'invoice': null,
-              'sum': 100
+              fee: 0,
+              id: null,
+              invoice: null,
+              sum: 100
             }
           ]
       }
@@ -342,32 +342,32 @@ describe('convertLastTransaction', () => {
         pushMessageText: 'Card1111; Перевод (зачисление): 5,00 USD; 03.05.19 20:06:18; MOBAPP P2P REZ-BGPB-1,MINSK,BY; MCC: 6012; Dostupno: 5,87 USD'
       },
       expectedTransaction: {
-        'comment': null,
-        'date': new Date('2019-05-03T17:06:00.000Z'),
-        'hold': false,
-        'merchant': null,
-        'movements':
+        comment: null,
+        date: new Date('2019-05-03T17:06:00.000Z'),
+        hold: false,
+        merchant: null,
+        movements:
           [
             {
-              'account': {
-                'id': '11161311-117d11'
+              account: {
+                id: '11161311-117d11'
               },
-              'fee': 0,
-              'id': null,
-              'invoice': null,
-              'sum': 5
+              fee: 0,
+              id: null,
+              invoice: null,
+              sum: 5
             },
             {
-              'account': {
-                'company': null,
-                'instrument': 'USD',
-                'syncIds': null,
-                'type': 'cash'
+              account: {
+                company: null,
+                instrument: 'USD',
+                syncIds: null,
+                type: 'cash'
               },
-              'fee': 0,
-              'id': null,
-              'invoice': null,
-              'sum': -5
+              fee: 0,
+              id: null,
+              invoice: null,
+              sum: -5
             }
           ]
       }
@@ -381,26 +381,26 @@ describe('convertLastTransaction', () => {
         eventType: 4
       },
       expectedTransaction: {
-        'comment': null,
-        'date': new Date('2019-10-25T06:03:00.000Z'),
-        'hold': false,
-        'merchant': {
-          'city': 'MINSK',
-          'country': 'BLR',
-          'location': null,
-          'mcc': null,
-          'title': 'BELGAZPROMBANK'
+        comment: null,
+        date: new Date('2019-10-25T06:03:00.000Z'),
+        hold: false,
+        merchant: {
+          city: 'MINSK',
+          country: 'BLR',
+          location: null,
+          mcc: null,
+          title: 'BELGAZPROMBANK'
         },
-        'movements':
+        movements:
           [
             {
-              'account': {
-                'id': '11161311-117d11'
+              account: {
+                id: '11161311-117d11'
               },
-              'fee': 0,
-              'id': null,
-              'invoice': null,
-              'sum': 0.70
+              fee: 0,
+              id: null,
+              invoice: null,
+              sum: 0.70
             }
           ]
       }

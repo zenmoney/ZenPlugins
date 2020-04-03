@@ -6,21 +6,21 @@ import { BankMessageError, InvalidOtpCodeError } from '../../errors'
 const myCreditUrl = 'https://mob.homecredit.ru/mycredit'
 const baseUri = 'https://ib.homecredit.ru/mobile/remoting'
 const defaultMyCreditHeaders = {
-  '_ver_': '4.3.2',
-  '_os_': 1,
-  'business_process': 'register',
-  'Host': 'mob.homecredit.ru'
+  _ver_: '4.3.2',
+  _os_: 1,
+  business_process: 'register',
+  Host: 'mob.homecredit.ru'
 }
 const defaultBaseHeaders = {
-  'Host': 'ib.homecredit.ru',
+  Host: 'ib.homecredit.ru',
   'User-Agent': 'okhttp/3.10.0',
   'Content-Type': 'application/json; charset=utf-8'
 }
 const defaultArgumentsForAuth = {
-  'appVersion': '3.2.1',
-  'javaClass': 'cz.bsc.g6.components.usernamepasswordauthentication.json.services.api.mo.UsernamePasswordCredentialMo',
-  'system': 'Android',
-  'systemVersion': '5.1.1'
+  appVersion: '3.2.1',
+  javaClass: 'cz.bsc.g6.components.usernamepasswordauthentication.json.services.api.mo.UsernamePasswordCredentialMo',
+  system: 'Android',
+  systemVersion: '5.1.1'
 }
 
 export async function authMyCredit (auth, preferences) {
@@ -45,9 +45,9 @@ export async function authBase (deviceId, login, password, code) {
 
   const args = {
     ...defaultArgumentsForAuth,
-    'deviceID': deviceId,
-    'password': password,
-    'username': login
+    deviceID: deviceId,
+    password: password,
+    username: login
   }
   if (code) {
     args.code = code
@@ -55,13 +55,13 @@ export async function authBase (deviceId, login, password, code) {
   const response = await fetchApiJson(`${baseUri}/LoginService`, {
     method: 'POST',
     body: {
-      'arguments': [ args ],
-      'javaClass': 'org.springframework.remoting.support.RemoteInvocation',
-      'methodName': 'login',
-      'parameterTypes': ['cz.bsc.g6.components.usernamepasswordauthentication.json.services.api.mo.UsernamePasswordCredentialMo']
+      arguments: [args],
+      javaClass: 'org.springframework.remoting.support.RemoteInvocation',
+      methodName: 'login',
+      parameterTypes: ['cz.bsc.g6.components.usernamepasswordauthentication.json.services.api.mo.UsernamePasswordCredentialMo']
     },
     headers: defaultBaseHeaders,
-    sanitizeRequestLog: { body: { arguments: { 'deviceID': true, 'username': true, 'password': true } } }
+    sanitizeRequestLog: { body: { arguments: { deviceID: true, username: true, password: true } } }
   })
 
   // ERROR_LOGIN, BLOCK_USER_CODE
@@ -85,14 +85,14 @@ async function registerMyCreditDevice (auth, preferences) {
       'X-Device-Ident': auth.device
     },
     body: {
-      'BirthDate': date,
-      'DeviceName': 'Zenmoney',
-      'OsType': 1,
-      'PhoneNumber': auth.phone,
-      'ScreenSizeType': 4
+      BirthDate: date,
+      DeviceName: 'Zenmoney',
+      OsType: 1,
+      PhoneNumber: auth.phone,
+      ScreenSizeType: 4
     },
-    sanitizeRequestLog: { body: { 'BirthDate': true, 'PhoneNumber': true } },
-    sanitizeResponseLog: { body: { 'Result': { 'PrivateKey': true } } }
+    sanitizeRequestLog: { body: { BirthDate: true, PhoneNumber: true } },
+    sanitizeResponseLog: { body: { Result: { PrivateKey: true } } }
   })
 
   auth.key = response.body.Result.PrivateKey
@@ -147,9 +147,9 @@ async function readSmsCode (auth, readlineTitle = 'Введите код из С
         'X-Phone-Number': auth.phone
       },
       body: {
-        'SmsCode': code
+        SmsCode: code
       },
-      sanitizeRequestLog: { body: { 'SmsCode': true } }
+      sanitizeRequestLog: { body: { SmsCode: true } }
     })
 
     isValidSms = response.body.Result.IsValidSmsCode
@@ -171,7 +171,7 @@ async function checkUserPin (auth, preferences, onErrorCallback = null) {
   }
   if (auth.token) { headers['X-Auth-Token'] = auth.token }
 
-  let response = await fetchApiJson('Pin/CheckUserPin', {
+  const response = await fetchApiJson('Pin/CheckUserPin', {
     API: 4,
     ignoreErrors: !!onErrorCallback,
     headers: {
@@ -179,16 +179,16 @@ async function checkUserPin (auth, preferences, onErrorCallback = null) {
       ...headers
     },
     body: {
-      'ClientData': {
-        'Location': {
-          'Latitude': 0.0,
-          'Longitude': 0.0
+      ClientData: {
+        Location: {
+          Latitude: 0.0,
+          Longitude: 0.0
         }
       },
-      'Pin': (preferences.pin || '').trim()
+      Pin: (preferences.pin || '').trim()
     },
-    sanitizeRequestLog: { body: { 'Pin': true } },
-    sanitizeResponseLog: { body: { 'Result': { 'ClientDataResult': { 'FirstName': true } } } }
+    sanitizeRequestLog: { body: { Pin: true } },
+    sanitizeResponseLog: { body: { Result: { ClientDataResult: { FirstName: true } } } }
   })
 
   if (onErrorCallback && (response.status !== 200 || (response.body && response.body.StatusCode !== 200))) {
@@ -254,12 +254,12 @@ async function levelUp (auth, codewordOnly) {
         'X-Phone-Number': auth.phone
       },
       body: {
-        'CardDataDetail': {
-          'CardNumber': cardNumber,
-          'ExpirationDate': expirationDate
+        CardDataDetail: {
+          CardNumber: cardNumber,
+          ExpirationDate: expirationDate
         }
       },
-      sanitizeRequestLog: { body: { 'CardDataDetail': true } }
+      sanitizeRequestLog: { body: { CardDataDetail: true } }
     })
   } else {
     console.log('>>> LevelUp по кодовому слову')
@@ -274,9 +274,9 @@ async function levelUp (auth, codewordOnly) {
         'X-Phone-Number': auth.phone
       },
       body: {
-        'CodeWord': input.trim().toUpperCase()
+        CodeWord: input.trim().toUpperCase()
       },
-      sanitizeRequestLog: { body: { 'CodeWord': true } }
+      sanitizeRequestLog: { body: { CodeWord: true } }
     })
   }
 
@@ -308,10 +308,10 @@ export async function fetchBaseAccounts () {
   const response = await fetchApiJson(`${baseUri}/ProductService`, {
     method: 'POST',
     body: {
-      'arguments': [],
-      'javaClass': 'org.springframework.remoting.support.RemoteInvocation',
-      'methodName': 'getAllProducts',
-      'parameterTypes': []
+      arguments: [],
+      javaClass: 'org.springframework.remoting.support.RemoteInvocation',
+      methodName: 'getAllProducts',
+      parameterTypes: []
     },
     headers: defaultBaseHeaders
   })
@@ -319,7 +319,7 @@ export async function fetchBaseAccounts () {
   // отфильтруем лишние и не рабочие счета
   const fetchedAccounts = {};
   ['creditCards', 'debitCards', 'merchantCards', 'credits', 'deposits'].forEach(function (key) {
-    if (!response.body.hasOwnProperty(key) || !response.body[key].list || response.body[key].list.length === 0) return
+    if (!Object.prototype.hasOwnProperty.call(response.body, key) || !response.body[key].list || response.body[key].list.length === 0) return
     const list = []
     response.body[key].list.forEach(function (elem) {
       if (_.includes(['Действующий', 'Active'], elem.contractStatus) === false) {
@@ -338,7 +338,7 @@ export async function fetchBaseAccounts () {
 
   // догрузим подробную информацию по каждому счёту
   await Promise.all(['creditCards', 'debitCards', 'merchantCards', 'credits', 'deposits'].map(async type => {
-    if (!fetchedAccounts.hasOwnProperty(type)) return
+    if (!Object.prototype.hasOwnProperty.call(fetchedAccounts, type)) return
     await Promise.all(fetchedAccounts[type].map(async account => {
       let methodName
       let filterMo
@@ -374,17 +374,17 @@ export async function fetchBaseAccounts () {
         const response = await fetchApiJson(`${baseUri}/ProductService`, {
           method: 'POST',
           body: {
-            'arguments': [
+            arguments: [
               {
                 ...additionalArguments,
-                'cardNumber': account.cardNumber,
-                'contractNumber': account.contractNumber,
-                'javaClass': 'cz.bsc.g6.components.product.json.services.api.mo.' + filterMo
+                cardNumber: account.cardNumber,
+                contractNumber: account.contractNumber,
+                javaClass: 'cz.bsc.g6.components.product.json.services.api.mo.' + filterMo
               }
             ],
-            'javaClass': 'org.springframework.remoting.support.RemoteInvocation',
-            'methodName': methodName,
-            'parameterTypes': ['cz.bsc.g6.components.product.json.services.api.mo.' + filterMo]
+            javaClass: 'org.springframework.remoting.support.RemoteInvocation',
+            methodName: methodName,
+            parameterTypes: ['cz.bsc.g6.components.product.json.services.api.mo.' + filterMo]
           },
           headers: defaultBaseHeaders
         })
@@ -411,7 +411,7 @@ export async function fetchMyCreditAccounts (auth) {
       'X-Auth-Token': auth.token
     },
     body: {
-      'ReturnCachedData': true
+      ReturnCachedData: true
     }
   })
 
@@ -437,7 +437,7 @@ export async function fetchMyCreditAccounts (auth) {
         'X-Auth-Token': auth.token
       },
       body: {
-        'ApprovalContractsType': 3
+        ApprovalContractsType: 3
       }
     })
 
@@ -446,13 +446,13 @@ export async function fetchMyCreditAccounts (auth) {
       method: 'GET',
       headers: {
         ...defaultMyCreditHeaders,
-        'Authorization': 'Bearer ' + auth.token,
+        Authorization: 'Bearer ' + auth.token,
         'X-Device-Ident': auth.device,
         'X-Private-Key': auth.key,
         'X-Phone-Number': auth.phone,
         'X-Auth-Token': auth.token,
-        'Host': 'api-myc.homecredit.ru',
-        'Connection': 'Keep-Alive',
+        Host: 'api-myc.homecredit.ru',
+        Connection: 'Keep-Alive',
         'Accept-Encoding': 'gzip',
         'User-Agent': 'okhttp/3.6.0'
       }
@@ -466,13 +466,13 @@ export async function fetchMyCreditAccounts (auth) {
         method: 'GET',
         headers: {
           ...defaultMyCreditHeaders,
-          'Authorization': 'Bearer ' + auth.token,
+          Authorization: 'Bearer ' + auth.token,
           'X-Device-Ident': auth.device,
           'X-Private-Key': auth.key,
           'X-Phone-Number': auth.phone,
           'X-Auth-Token': auth.token,
-          'Host': 'api-myc.homecredit.ru',
-          'Connection': 'Keep-Alive',
+          Host: 'api-myc.homecredit.ru',
+          Connection: 'Keep-Alive',
           'Accept-Encoding': 'gzip',
           'User-Agent': 'okhttp/3.6.0'
         }
@@ -538,15 +538,15 @@ export async function fetchMyCreditAccounts (auth) {
             'X-Phone-Number': auth.phone,
             'X-Auth-Token': auth.token,
             // 'X-Client-ID': 0,
-            'Origin': 'https://api-myc.homecredit.ru',
-            'Referer': `https://api-myc.homecredit.ru/api/v1/PrepaymentPage?contractNumber=${account.ContractNumber}&selectedPrepayment=LoanBalance&isEarlyRepayment=True&isSingleContract=True`,
+            Origin: 'https://api-myc.homecredit.ru',
+            Referer: `https://api-myc.homecredit.ru/api/v1/PrepaymentPage?contractNumber=${account.ContractNumber}&selectedPrepayment=LoanBalance&isEarlyRepayment=True&isSingleContract=True`,
             'X-Requested-With': 'ru.homecredit.mycredit'
           },
           body: {
-            'contractNumber': account.ContractNumber,
-            'selectedPrepayment': 'LoanBalance',
-            'isEarlyRepayment': 'False',
-            'isSingleContract': 'True'
+            contractNumber: account.ContractNumber,
+            selectedPrepayment: 'LoanBalance',
+            isEarlyRepayment: 'False',
+            isSingleContract: 'True'
           }
         })
 
@@ -568,7 +568,7 @@ export async function fetchBaseTransactions (accountData, type, fromDate, toDate
   const listCount = 25
   let listStartPosition = 0
 
-  let transactions = []
+  const transactions = []
 
   let methodName
   let filterMo
@@ -595,32 +595,32 @@ export async function fetchBaseTransactions (accountData, type, fromDate, toDate
     return []
   }
 
-  let from = getDate(fromDate || (fromDate.setDate(fromDate.getDate() - 7))).getTime()
-  let to = getDate(toDate || new Date()).getTime()
+  const from = getDate(fromDate || (fromDate.setDate(fromDate.getDate() - 7))).getTime()
+  const to = getDate(toDate || new Date()).getTime()
   while (true) {
     const response = await fetchApiJson(`${baseUri}/ProductService`, {
       method: 'POST',
       body: {
-        'arguments': [{
-          'accountNumber': accountData.details.accountNumber,
-          'cardNumber': accountData.details.cardNumber,
-          'contractNumber': accountData.details.contractNumber,
-          'count': listCount,
-          'fromDate': {
-            'javaClass': 'java.util.Date',
-            'time': from
+        arguments: [{
+          accountNumber: accountData.details.accountNumber,
+          cardNumber: accountData.details.cardNumber,
+          contractNumber: accountData.details.contractNumber,
+          count: listCount,
+          fromDate: {
+            javaClass: 'java.util.Date',
+            time: from
           },
-          'isSort': 'false',
-          'startPosition': listStartPosition,
-          'toDate': {
-            'javaClass': 'java.util.Date',
-            'time': to
+          isSort: 'false',
+          startPosition: listStartPosition,
+          toDate: {
+            javaClass: 'java.util.Date',
+            time: to
           },
-          'javaClass': 'cz.bsc.g6.components.product.json.services.api.mo.' + filterMo
+          javaClass: 'cz.bsc.g6.components.product.json.services.api.mo.' + filterMo
         }],
-        'javaClass': 'org.springframework.remoting.support.RemoteInvocation',
-        'methodName': methodName,
-        'parameterTypes': ['cz.bsc.g6.components.product.json.services.api.mo.' + filterMo]
+        javaClass: 'org.springframework.remoting.support.RemoteInvocation',
+        methodName: methodName,
+        parameterTypes: ['cz.bsc.g6.components.product.json.services.api.mo.' + filterMo]
       },
       headers: defaultBaseHeaders
     })
@@ -660,13 +660,13 @@ export async function fetchMyCreditTransactions (auth, accountData, fromDate, to
 
   let type
   const body = {
-    'accountNumber': accountData.details.accountNumber,
-    'cardNumber': accountData.details.cardNumber,
-    'count': 0,
-    'fromDate': getFormatedDate(fromDate || (fromDate.setDate(fromDate.getDate() - 7))),
-    'isSort': false,
-    'startPosition': 0,
-    'toDate': getFormatedDate(toDate || new Date())
+    accountNumber: accountData.details.accountNumber,
+    cardNumber: accountData.details.cardNumber,
+    count: 0,
+    fromDate: getFormatedDate(fromDate || (fromDate.setDate(fromDate.getDate() - 7))),
+    isSort: false,
+    startPosition: 0,
+    toDate: getFormatedDate(toDate || new Date())
   }
 
   switch (accountData.details.type) {
@@ -694,8 +694,8 @@ export async function fetchMyCreditTransactions (auth, accountData, fromDate, to
     ignoreErrors: true,
     headers: {
       ...defaultMyCreditHeaders,
-      'Authorization': 'Bearer ' + auth.token,
-      'Host': 'ib.homecredit.ru',
+      Authorization: 'Bearer ' + auth.token,
+      Host: 'ib.homecredit.ru',
       'X-Device-Ident': auth.device,
       'X-Private-Key': auth.key,
       'X-Phone-Number': auth.phone,
@@ -714,8 +714,8 @@ async function fetchApiJson (url, options, predicate) {
   }
   let response
   const sanitizeHeaders = {
-    'Authorization': true,
-    'authorization': true,
+    Authorization: true,
+    authorization: true,
     'X-Device-Ident': true,
     'x-device-ident': true,
     'X-Private-Key': true,
@@ -785,7 +785,7 @@ function validateResponse (response, predicate, message) {
 function getErrorMessage (errors) {
   if (!errors) { return '' }
   if (!_.isArray(errors)) {
-    errors = [ errors ]
+    errors = [errors]
   } else if (errors.length === 0) {
     return ''
   }

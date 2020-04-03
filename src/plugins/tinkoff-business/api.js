@@ -54,7 +54,7 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
     if (expirationDateMs < new Date().getTime() + 300000) {
       response = await fetchJson('https://sso.tinkoff.ru/secure/token', {
         headers: {
-          'Host': 'sso.tinkoff.ru'
+          Host: 'sso.tinkoff.ru'
         },
         body: {
           grant_type: 'refresh_token',
@@ -79,9 +79,9 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
       const state = generateRandomString(16)
       const redirectUriWithoutProtocol = redirectUri.replace(/^https?:\/\//i, '')
       const url = `https://sso.tinkoff.ru/authorize?${qs.stringify({
-        'client_id': clientId,
-        'redirect_uri': redirectUri,
-        'state': state
+        client_id: clientId,
+        redirect_uri: redirectUri,
+        state: state
       })}`
       ZenMoney.openWebView(url, null, (request, callback) => {
         const i = request.url.indexOf(redirectUriWithoutProtocol)
@@ -102,8 +102,8 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
     console.assert(code && !error, 'non-successfull authorization', error)
     response = await fetchJson('https://sso.tinkoff.ru/secure/token', {
       headers: {
-        'Host': 'sso.tinkoff.ru',
-        'Authorization': `Basic ${base64.encode(`${clientId}:${clientSecret}`)}`
+        Host: 'sso.tinkoff.ru',
+        Authorization: `Basic ${base64.encode(`${clientId}:${clientSecret}`)}`
       },
       body: {
         grant_type: 'authorization_code',

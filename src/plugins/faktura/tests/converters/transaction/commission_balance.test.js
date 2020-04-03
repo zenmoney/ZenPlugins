@@ -72,7 +72,7 @@ describe('transaction converter', () => {
         status: 'DONE'
       },
       {
-        '9870000': 'c-1230000'
+        9870000: 'c-1230000'
       }
     )
 

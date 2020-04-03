@@ -13,9 +13,10 @@ describe('convertWallets', () => {
         startBalance: 0,
         creditLimit: 0,
         company: null,
-        syncID: [ '000-123456-USD' ]
+        syncID: ['000-123456-USD']
       },
-      { id: '000-123456-EUR',
+      {
+        id: '000-123456-EUR',
         title: 'EWallet 000-123456 (EUR)',
         type: 'checking',
         instrument: 'EUR',
@@ -23,9 +24,10 @@ describe('convertWallets', () => {
         startBalance: 0,
         creditLimit: 0,
         company: null,
-        syncID: [ '000-123456-EUR' ]
+        syncID: ['000-123456-EUR']
       },
-      { id: '000-123456-RUB',
+      {
+        id: '000-123456-RUB',
         title: 'EWallet 000-123456 (RUB)',
         type: 'checking',
         instrument: 'RUB',
@@ -33,7 +35,7 @@ describe('convertWallets', () => {
         startBalance: 0,
         creditLimit: 0,
         company: null,
-        syncID: [ '000-123456-RUB' ]
+        syncID: ['000-123456-RUB']
       }
     ])
   })

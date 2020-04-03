@@ -12,38 +12,38 @@ describe('convertTransactions', () => {
     const transactions = convertTransactions(xml)
     expect(transactions).toEqual([
       {
-        'outcomeBankID': '558011',
-        'date': new Date('2018-03-14T10:25:00+03:00'),
-        'income': 0,
-        'incomeAccount': '5167985500160759',
-        'outcome': 164,
-        'outcomeAccount': '5167985500160759',
-        'payee': 'Воля'
+        outcomeBankID: '558011',
+        date: new Date('2018-03-14T10:25:00+03:00'),
+        income: 0,
+        incomeAccount: '5167985500160759',
+        outcome: 164,
+        outcomeAccount: '5167985500160759',
+        payee: 'Воля'
       },
       {
-        'outcomeBankID': '162010',
-        'date': new Date('2018-03-08T09:34:00+03:00'),
-        'income': 0,
-        'incomeAccount': '5167985500160759',
-        'outcome': 126,
-        'outcomeAccount': '5167985500160759',
-        'payee': 'Рівнегаз Збут'
+        outcomeBankID: '162010',
+        date: new Date('2018-03-08T09:34:00+03:00'),
+        income: 0,
+        incomeAccount: '5167985500160759',
+        outcome: 126,
+        outcomeAccount: '5167985500160759',
+        payee: 'Рівнегаз Збут'
       },
       {
-        'date': new Date('2018-03-01T00:00:00+03:00'),
-        'income': 3.5,
-        'incomeAccount': '5168742331568802',
-        'outcome': 0,
-        'outcomeAccount': '5168742331568802',
-        'comment': 'Начисление процентов на остаток средств по договору'
+        date: new Date('2018-03-01T00:00:00+03:00'),
+        income: 3.5,
+        incomeAccount: '5168742331568802',
+        outcome: 0,
+        outcomeAccount: '5168742331568802',
+        comment: 'Начисление процентов на остаток средств по договору'
       },
       {
-        'date': new Date('2018-03-01T00:00:00+03:00'),
-        'income': 0,
-        'incomeAccount': '5168742331568802',
-        'outcome': 0.68,
-        'outcomeAccount': '5168742331568802',
-        'comment': 'Удержание налога с начисленных на остаток собственных средств на карте процентов'
+        date: new Date('2018-03-01T00:00:00+03:00'),
+        income: 0,
+        incomeAccount: '5168742331568802',
+        outcome: 0.68,
+        outcomeAccount: '5168742331568802',
+        comment: 'Удержание налога с начисленных на остаток собственных средств на карте процентов'
       }
     ])
   })
@@ -56,40 +56,40 @@ describe('convertTransactions', () => {
             <statement card="5363542602444722" appcode="960318" trandate="2018-03-17" trantime="10:49:00" amount="31.86 UAH" cardamount="-31.86 UAH" rest="122.61 UAH" terminal="" description="Ресторан: Тов КГХ АЭС, Енергодар, Промышленная, 1"/>
         </statements></info></data></response>`
     const accounts = {
-      '1': { id: '1', syncID: [] }
+      1: { id: '1', syncID: [] }
     }
     const transactions = convertTransactions(xml, accounts)
     expect(transactions).toEqual([
       {
-        'date': new Date('2018-03-21T16:35:00+03:00'),
-        'income': 380,
-        'incomeAccount': 'cash#UAH',
-        'outcome': 380,
-        'outcomeAccount': '5363542602444722',
-        'outcomeBankID': '515326'
+        date: new Date('2018-03-21T16:35:00+03:00'),
+        income: 380,
+        incomeAccount: 'cash#UAH',
+        outcome: 380,
+        outcomeAccount: '5363542602444722',
+        outcomeBankID: '515326'
       },
       {
-        'date': new Date('2018-03-19T01:27:00+03:00'),
-        'income': 0,
-        'incomeAccount': '5363542602444722',
-        'outcome': 38.65,
-        'outcomeAccount': '5363542602444722',
-        'outcomeBankID': '952321',
-        'payee': 'Магазин "Элен"'
+        date: new Date('2018-03-19T01:27:00+03:00'),
+        income: 0,
+        incomeAccount: '5363542602444722',
+        outcome: 38.65,
+        outcomeAccount: '5363542602444722',
+        outcomeBankID: '952321',
+        payee: 'Магазин "Элен"'
       },
       {
-        'date': new Date('2018-03-17T10:49:00+03:00'),
-        'income': 0,
-        'incomeAccount': '5363542602444722',
-        'outcome': 31.86,
-        'outcomeAccount': '5363542602444722',
-        'outcomeBankID': '960318',
-        'payee': 'Тов КГХ АЭС'
+        date: new Date('2018-03-17T10:49:00+03:00'),
+        income: 0,
+        incomeAccount: '5363542602444722',
+        outcome: 31.86,
+        outcomeAccount: '5363542602444722',
+        outcomeBankID: '960318',
+        payee: 'Тов КГХ АЭС'
       }
     ])
     expect(accounts).toEqual({
-      '1': { id: '1', syncID: ['5363542602444722'] },
-      '5363542602444722': { id: '1', syncID: ['5363542602444722'] }
+      1: { id: '1', syncID: ['5363542602444722'] },
+      5363542602444722: { id: '1', syncID: ['5363542602444722'] }
     })
   })
 })
@@ -119,26 +119,26 @@ describe('convertAccounts', () => {
         </info></data></response>`
     const accounts = convertAccounts(xml)
     expect(accounts).toEqual({
-      '5167985500160759': {
-        'id': '5168742331568802',
-        'type': 'ccard',
-        'title': '*0759',
-        'instrument': 'UAH',
-        'balance': 350.09,
-        'creditLimit': 0,
-        'syncID': [
+      5167985500160759: {
+        id: '5168742331568802',
+        type: 'ccard',
+        title: '*0759',
+        instrument: 'UAH',
+        balance: 350.09,
+        creditLimit: 0,
+        syncID: [
           '5168742331568802',
           '5167985500160759'
         ]
       },
-      '5168742331568802': {
-        'id': '5168742331568802',
-        'type': 'ccard',
-        'title': '*0759',
-        'instrument': 'UAH',
-        'balance': 350.09,
-        'creditLimit': 0,
-        'syncID': [
+      5168742331568802: {
+        id: '5168742331568802',
+        type: 'ccard',
+        title: '*0759',
+        instrument: 'UAH',
+        balance: 350.09,
+        creditLimit: 0,
+        syncID: [
           '5168742331568802',
           '5167985500160759'
         ]

@@ -6,17 +6,17 @@ describe('comment', () => {
     accountId: 'test(accountId)',
     accountCurrency: 'USD',
     regularTransaction: {
-      'postingDate': '2020-02-20T00:00:00+03:00',
-      'postingDateSpecified': true,
-      'transDate': '2020-02-20T00:00:00+03:00',
-      'transDateSpecified': true,
-      'transTime': '12:34:56',
-      'transCurrIso': 'BYN',
-      'amount': -37,
-      'feeAmount': 0,
-      'accountAmount': -16.82,
-      'transDetails': 'Retail BLR Minsk OOO Dzhon Dori  ',
-      'hce': false
+      postingDate: '2020-02-20T00:00:00+03:00',
+      postingDateSpecified: true,
+      transDate: '2020-02-20T00:00:00+03:00',
+      transDateSpecified: true,
+      transTime: '12:34:56',
+      transCurrIso: 'BYN',
+      amount: -37,
+      feeAmount: 0,
+      accountAmount: -16.82,
+      transDetails: 'Retail BLR Minsk OOO Dzhon Dori  ',
+      hce: false
     },
     includeDateTimeInComment: true
   })

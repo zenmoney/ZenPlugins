@@ -3,15 +3,15 @@ import { convertAccount, convertToZenMoneyTransactions, convertTransaction, pars
 describe('convertAccount', () => {
   it('converts account', () => {
     expect(convertAccount({
-      'accountNumber': '40702810610000000179',
-      'status': 'NORM',
-      'name': 'Мой счет',
-      'currency': '643',
-      'balance': {
-        'otb': 54202.31,
-        'authorized': 9952.48,
-        'pendingPayments': 0,
-        'pendingRequisitions': 0
+      accountNumber: '40702810610000000179',
+      status: 'NORM',
+      name: 'Мой счет',
+      currency: '643',
+      balance: {
+        otb: 54202.31,
+        authorized: 9952.48,
+        pendingPayments: 0,
+        pendingRequisitions: 0
       }
     })).toEqual({
       id: '40702810610000000179',
@@ -31,29 +31,29 @@ describe('convertTransaction', () => {
     accountsById[account.id] = account
 
     expect(convertTransaction({
-      'id': '',
-      'date': '2018-07-30',
-      'amount': 35257.11,
-      'drawDate': '2018-07-30',
-      'payerName': '',
-      'payerInn': '770000000082',
-      'payerAccount': '43310000000724',
-      'payerCorrAccount': '30101810900000000974',
-      'payerBic': '044525974',
-      'payerBank': 'АО «Тинькофф Банк»',
-      'chargeDate': '2018-07-30',
-      'recipient': 'Демо-компания',
-      'recipientInn': '1239537766',
-      'recipientAccount': '40101810900000000974',
-      'recipientCorrAccount': '30101810145250000974',
-      'recipientBic': '044525974',
-      'recipientBank': 'АО "ТИНЬКОФФ БАНК"',
-      'operationType': '02',
-      'uin': '',
-      'paymentPurpose': '',
-      'creatorStatus': '',
-      'payerKpp': '0',
-      'recipientKpp': '898701277'
+      id: '',
+      date: '2018-07-30',
+      amount: 35257.11,
+      drawDate: '2018-07-30',
+      payerName: '',
+      payerInn: '770000000082',
+      payerAccount: '43310000000724',
+      payerCorrAccount: '30101810900000000974',
+      payerBic: '044525974',
+      payerBank: 'АО «Тинькофф Банк»',
+      chargeDate: '2018-07-30',
+      recipient: 'Демо-компания',
+      recipientInn: '1239537766',
+      recipientAccount: '40101810900000000974',
+      recipientCorrAccount: '30101810145250000974',
+      recipientBic: '044525974',
+      recipientBank: 'АО "ТИНЬКОФФ БАНК"',
+      operationType: '02',
+      uin: '',
+      paymentPurpose: '',
+      creatorStatus: '',
+      payerKpp: '0',
+      recipientKpp: '898701277'
     }, account, accountsById)).toEqual({
       groupId: null,
       transaction: {

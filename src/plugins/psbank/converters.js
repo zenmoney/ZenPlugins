@@ -100,7 +100,7 @@ export function convertTransaction (apiTransaction, account, accountsById) {
   const transaction = {
     hold: Boolean(apiTransaction.cardSum && !apiTransaction.isProcessed),
     date: new Date(apiTransaction.transactionDate || apiTransaction.startTime),
-    movements: [ movement ],
+    movements: [movement],
     merchant: null,
     comment: null
   };

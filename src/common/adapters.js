@@ -1,6 +1,6 @@
 import i18n from 'i18next'
 import _ from 'lodash'
-import * as ru from '../../locales/ru.json'
+import ru from '../../locales/ru.json'
 import {
   BankMessageError,
   IncompatibleVersionError,
@@ -74,7 +74,7 @@ const getLastSuccessDate = () => {
 }
 
 const calculateFromDate = (startDateString) => {
-  console.assert(startDateString, `preferences must contain "startDate"`)
+  console.assert(startDateString, 'preferences must contain "startDate"')
   const startDate = parseStartDateString(startDateString)
   console.assert(isValidDate(startDate), { startDateString }, 'is not a valid date')
   const lastSuccessDate = getLastSuccessDate()
@@ -125,7 +125,7 @@ export function fixDateTimezones (transaction) {
   if (ZenMoney.features.dateProcessing) {
     return transaction
   }
-  let date = (typeof transaction.date === 'number')
+  const date = (typeof transaction.date === 'number')
     ? convertTimestampToDate(transaction.date)
     : transaction.date
   if (!(date instanceof Date)) {
@@ -220,6 +220,15 @@ function augmentErrorWithDevelopmentHints (error) {
       error.message += '\n(The message above will be displayed on production UI with [Send log] button)'
     } else {
       error.message += '\n(The message above will never be displayed on production UI; use TemporaryError or InvalidPreferencesError if you want to show meaningful message to user)'
+    }
+    if (!(error instanceof Error)) {
+      const err = new Error()
+      Object.assign(err, error)
+      err.message = error.message
+      err.stack = error.stack
+      err.fatal = error.fatal
+      err.allowRetry = error.allowRetry
+      error = err
     }
   }
   return error

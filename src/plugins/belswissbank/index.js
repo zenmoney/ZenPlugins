@@ -16,7 +16,7 @@ async function login ({ deviceId, username, password }) {
   const authStatus = await authorize(username, password, deviceId)
   switch (authStatus.userStatus) {
     case 'WAITING_CONFIRMATION':
-    case 'SMS_WAS_SENT':
+    case 'SMS_WAS_SENT': {
       const prompt = 'Для доступа к банку Вам надо ввести код, который был выслан на ваш телефон СМС сообщением.'
       const retrievedInput = await ZenMoney.readLine(prompt, { inputType: 'numberDecimal' })
       const confirmationCode = Number(retrievedInput)
@@ -25,6 +25,7 @@ async function login ({ deviceId, username, password }) {
       }
       await confirm(deviceId, confirmationCode)
       break
+    }
     case 'OK':
       break
     default:

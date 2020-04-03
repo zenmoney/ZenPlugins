@@ -3,20 +3,20 @@ import { convertAccount, convertTransaction } from './converters'
 describe('convertAccount', () => {
   it('should convert credit card account', () => {
     const account = convertAccount({
-      'id': 'B7C94FAC',
-      'currency': {
-        'shortName': 'RUB',
-        'symbol': 'руб',
-        'rate': 1
+      id: 'B7C94FAC',
+      currency: {
+        shortName: 'RUB',
+        symbol: 'руб',
+        rate: 1
       },
-      'product': 'Mastercard Credit World Premium',
-      'cba': '40817810301003402816',
-      'pan': '5536********1038',
-      'moneyAmount': {
-        'value': 145600.24
+      product: 'Mastercard Credit World Premium',
+      cba: '40817810301003402816',
+      pan: '5536********1038',
+      moneyAmount: {
+        value: 145600.24
       },
-      'accountBalance': {
-        'value': 45600.24
+      accountBalance: {
+        value: 45600.24
       }
     })
 
@@ -36,18 +36,18 @@ describe('convertAccount', () => {
 
   it('should convert checking account', () => {
     const account = convertAccount({
-      'id': '4480910C',
-      'currency': {
-        'shortName': 'USD',
-        'symbol': '$',
-        'rate': 54.60
+      id: '4480910C',
+      currency: {
+        shortName: 'USD',
+        symbol: '$',
+        rate: 54.60
       },
-      'cba': '40817840401000898597',
-      'moneyAmount': {
-        'value': 2432.19
+      cba: '40817840401000898597',
+      moneyAmount: {
+        value: 2432.19
       },
-      'accountBalance': {
-        'value': 2432.19
+      accountBalance: {
+        value: 2432.19
       }
     })
 
@@ -68,22 +68,22 @@ describe('convertAccount', () => {
 describe('convertTransaction', () => {
   it('should convert hold foreign currency transaction', () => {
     const transaction = convertTransaction({
-      'type': 'HOLD',
-      'operationTime': '2018-01-05 09:10:34 GMT+3',
-      'relation': 'CARD',
-      'relationId': 'B7C94FAC',
-      'amount': {
-        'value': -3,
-        'currency': {
-          'shortName': 'USD',
-          'symbol': '$'
+      type: 'HOLD',
+      operationTime: '2018-01-05 09:10:34 GMT+3',
+      relation: 'CARD',
+      relationId: 'B7C94FAC',
+      amount: {
+        value: -3,
+        currency: {
+          shortName: 'USD',
+          symbol: '$'
         }
       },
-      'accountAmount': {
-        'value': -164.10,
-        'currency': {
-          'shortName': 'RUB',
-          'symbol': 'руб'
+      accountAmount: {
+        value: -164.10,
+        currency: {
+          shortName: 'RUB',
+          symbol: 'руб'
         }
       }
     })
@@ -102,24 +102,24 @@ describe('convertTransaction', () => {
 
   it('should convert regular transaction', () => {
     const transaction = convertTransaction({
-      'id': '7876123',
-      'type': 'TRANSACTION',
-      'operationTime': '2018-01-04 18:44:12 GMT+3',
-      'debitingTime': '2018-01-07 12:21:07 GMT+3',
-      'relation': 'ACCOUNT',
-      'relationId': '4480910C',
-      'amount': {
-        'value': -50,
-        'currency': {
-          'shortName': 'USD',
-          'symbol': '$'
+      id: '7876123',
+      type: 'TRANSACTION',
+      operationTime: '2018-01-04 18:44:12 GMT+3',
+      debitingTime: '2018-01-07 12:21:07 GMT+3',
+      relation: 'ACCOUNT',
+      relationId: '4480910C',
+      amount: {
+        value: -50,
+        currency: {
+          shortName: 'USD',
+          symbol: '$'
         }
       },
-      'accountAmount': {
-        'value': -50,
-        'currency': {
-          'shortName': 'USD',
-          'symbol': '$'
+      accountAmount: {
+        value: -50,
+        currency: {
+          shortName: 'USD',
+          symbol: '$'
         }
       }
     })

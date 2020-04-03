@@ -22,7 +22,7 @@ const converter = (data) => {
 }
 
 const contractIdsFetcher = (data) => {
-  let list = []
+  const list = []
 
   data.forEach((item) => {
     list.push(item.contractId)

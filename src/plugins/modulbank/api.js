@@ -14,7 +14,7 @@ export async function login () {
     const url = `https://oauth.modulbank.ru/?${qs.stringify({
       clientId,
       redirectUri,
-      'scope': 'account-info operation-history'
+      scope: 'account-info operation-history'
     })}`
     ZenMoney.openWebView(url, null, (request, callback) => {
       const i = request.url.indexOf(redirectUriWithoutProtocol)
@@ -36,7 +36,7 @@ export async function login () {
   const response = await fetchJson('https://api.modulbank.ru/v1/oauth/token', {
     method: 'POST',
     headers: {
-      'Host': 'api.modulbank.ru'
+      Host: 'api.modulbank.ru'
     },
     body: {
       clientId,
@@ -55,10 +55,10 @@ export async function login () {
 }
 
 export async function fetchAccounts (token) {
-  const response = await fetchJson(`https://api.modulbank.ru/v1/account-info`, {
+  const response = await fetchJson('https://api.modulbank.ru/v1/account-info', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${token}`
+      Authorization: `Bearer ${token}`
     },
     body: {},
     sanitizeRequestLog: { headers: { Authorization: true } }
@@ -82,7 +82,7 @@ export async function fetchTransactions (token, { id }, fromDate) {
     const response = await fetchJson(`https://api.modulbank.ru/v1/operation-history/${id}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`
+        Authorization: `Bearer ${token}`
       },
       body: {
         from: fromDate.toISOString().slice(0, 10),

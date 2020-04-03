@@ -73,18 +73,18 @@ describe('convertTransaction', () => {
     ],
     [
       {
-        'accountID': 'BY75AKBB30141000022233030000',
-        'comment': 'Снятие наличных',
-        'date': '14.02.2020',
-        'debitFlag': '-',
-        'fee': '0.00',
-        'inAccountCurrency': 'EUR',
-        'inAccountSum': '320.00',
-        'operationCurrency': 'EUR',
-        'operationSum': '320.00',
-        'place': 'BR.400/65 ATM/6011',
-        'status': 'operResultOk',
-        'time': '11:54:00'
+        accountID: 'BY75AKBB30141000022233030000',
+        comment: 'Снятие наличных',
+        date: '14.02.2020',
+        debitFlag: '-',
+        fee: '0.00',
+        inAccountCurrency: 'EUR',
+        inAccountSum: '320.00',
+        operationCurrency: 'EUR',
+        operationSum: '320.00',
+        place: 'BR.400/65 ATM/6011',
+        status: 'operResultOk',
+        time: '11:54:00'
       },
       {
         date: new Date('2020-02-14T11:54:00+03:00'),
@@ -116,18 +116,18 @@ describe('convertTransaction', () => {
     ],
     [
       {
-        'accountID': 'BY75AKBB30141000022233030000',
-        'comment': 'Снятие наличных',
-        'date': '15.05.2020',
-        'debitFlag': '-',
-        'fee': '0.00',
-        'inAccountCurrency': 'EUR',
-        'inAccountSum': '10.00',
-        'operationCurrency': 'USD',
-        'operationSum': '0.00',
-        'place': 'OAO &quot;BELSHINA&quot; BR.703 ATM&gt;BOBRUISKBY/6011',
-        'status': 'operResultOk',
-        'time': '00:00:00'
+        accountID: 'BY75AKBB30141000022233030000',
+        comment: 'Снятие наличных',
+        date: '15.05.2020',
+        debitFlag: '-',
+        fee: '0.00',
+        inAccountCurrency: 'EUR',
+        inAccountSum: '10.00',
+        operationCurrency: 'USD',
+        operationSum: '0.00',
+        place: 'OAO &quot;BELSHINA&quot; BR.703 ATM&gt;BOBRUISKBY/6011',
+        status: 'operResultOk',
+        time: '00:00:00'
       },
       {
         date: new Date('2020-05-15T00:00:00+03:00'),

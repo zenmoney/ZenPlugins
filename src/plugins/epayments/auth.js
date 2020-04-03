@@ -1,9 +1,9 @@
 import * as _ from 'lodash'
+import moment from 'moment'
+import { stringify } from 'querystring'
 import * as network from '../../common/network'
 import { retry } from '../../common/retry'
 import * as errors from '../../errors'
-import { stringify } from 'querystring'
-import * as moment from 'moment'
 
 const storageValueName = 'tokens'
 const urls = new function () {
@@ -14,16 +14,16 @@ const urls = new function () {
 }()
 
 const defaultHeaders = {
-  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+  Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
   'Accept-Language': 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
-  'Connection': 'keep-alive',
+  Connection: 'keep-alive',
   'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36',
-  'Referer': 'https://my.epayments.com/'
+  Referer: 'https://my.epayments.com/'
 }
 
 const authHeaders = Object.assign({}, defaultHeaders, {
   'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-  'Authorization': 'Basic ZXBheW1lbnRzOm1ZbjZocmtnMElMcXJ0SXA4S1NE'
+  Authorization: 'Basic ZXBheW1lbnRzOm1ZbjZocmtnMElMcXJ0SXA4S1NE'
 })
 
 function panic (input) {
@@ -62,7 +62,7 @@ async function requestTokenByCredentials (login, password) {
 
   async function getSCAConfirmation (sessionId) {
     const headers = Object.assign({}, defaultHeaders, {
-      'Authorization': 'Basic ZXBheW1lbnRzOm1ZbjZocmtnMElMcXJ0SXA4S1NE'
+      Authorization: 'Basic ZXBheW1lbnRzOm1ZbjZocmtnMElMcXJ0SXA4S1NE'
     })
 
     const params = {

@@ -93,8 +93,8 @@ export async function login (login, password) {
 
   res = await fetchApiJson('login/checkPassword3', {
     method: 'POST',
-    headers: { 'Cookie': sessionCookies },
-    body: { 'password': password, 'version': '2.1.12' },
+    headers: { Cookie: sessionCookies },
+    body: { password: password, version: '2.1.12' },
     sanitizeRequestLog: { body: { password: true } }
   }, response => response.body.success)
 
@@ -112,7 +112,7 @@ export async function login (login, password) {
 export async function fetchAccounts (sessionCookies) {
   console.log('>>> Загрузка списка счетов...')
   return (await fetchApiJson('user/loadUser', {
-    headers: { 'Cookie': sessionCookies }
+    headers: { Cookie: sessionCookies }
   }, response => response.body && response.body.data && response.body.data.products,
   message => new TemporaryError(message))).body.data.products
 }
@@ -141,7 +141,7 @@ export async function fetchTransactions (sessionCookies, accounts, fromDate, toD
     return dates.map(dates => {
       return fetchApiJson('product/loadOperationStatements', {
         method: 'POST',
-        headers: { 'Cookie': sessionCookies },
+        headers: { Cookie: sessionCookies },
         body: {
           contractCode: account.id,
           accountIdenType: account.productType,

@@ -14,7 +14,7 @@ export function convertAccounts (apiPortfolios) {
       let converter = null
       let apiAccount = product.mainProduct
       switch (portfolio.id) {
-        case 'CARDS':
+        case 'CARDS': {
           const types = [
             { card: 'MasterAccountCardMto', account: 'MasterAccountMto' },
             { card: 'CreditCardMto', account: 'CreditCardAccountMto' },
@@ -35,6 +35,7 @@ export function convertAccounts (apiPortfolios) {
             apiAccount.mainCard = apiAccount.mainCard || product.mainProduct
           }
           break
+        }
         case 'SAVINGS':
           if (apiAccount.__type === 'ru.vtb24.mobilebanking.protocol.product.MetalAccountMto') {
             converter = convertMetalAccount

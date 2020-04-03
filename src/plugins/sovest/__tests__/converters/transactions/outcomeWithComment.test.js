@@ -34,7 +34,8 @@ describe('convertTransactions', () => {
       }
     ],
     [
-      { txnId: 64568183,
+      {
+        txnId: 64568183,
         txnDate: '2020-04-13T17:59:08+03:00',
         txnStatus: 2,
         txnType: 1,
@@ -43,7 +44,8 @@ describe('convertTransactions', () => {
         installmentsAmount: 0,
         ownAmount: 695.3,
         installmentsMonths: 0,
-        partnersName: 'Штраф за невнесение ежемесячного платежа' },
+        partnersName: 'Штраф за невнесение ежемесячного платежа'
+      },
       {
         hold: false,
         date: new Date('2020-04-13T17:59:08+03:00'),

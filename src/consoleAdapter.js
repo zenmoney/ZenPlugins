@@ -46,7 +46,7 @@ consoleAdapter.time = function (label) {
 
 consoleAdapter.timeEnd = function (label) {
   const labelTime = labelTimes[label]
-  if (labelTime === void 0) {
+  if (labelTime === undefined) {
     consoleAdapter.warn(`No such label '${label}' for console.timeEnd()`)
   } else {
     delete labelTimes[label]

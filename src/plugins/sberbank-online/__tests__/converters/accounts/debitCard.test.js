@@ -1,4 +1,4 @@
-import { parseXml } from '../../../../../common/network'
+import { parseXml } from '../../../../../common/xmlUtils'
 import { convertCards } from '../../../converters'
 
 describe('convertCards', () => {

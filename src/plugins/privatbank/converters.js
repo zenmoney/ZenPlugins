@@ -1,5 +1,5 @@
 import * as _ from 'lodash'
-import { parseXml } from '../../common/network'
+import { parseXml } from '../../common/xmlUtils'
 
 export function convertAccounts (xml, shouldHideBalance) {
   const accounts = {}

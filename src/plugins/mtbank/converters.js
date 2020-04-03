@@ -44,7 +44,7 @@ export function convertTransaction (json, accounts) {
 
   const transaction = {
     date: getDate(json.transDate),
-    movements: [ getMovement(json, account) ],
+    movements: [getMovement(json, account)],
     merchant: null,
     comment: null,
     hold: json.status !== 'T'

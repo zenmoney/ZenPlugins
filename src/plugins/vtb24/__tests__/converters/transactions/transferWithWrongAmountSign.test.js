@@ -260,8 +260,8 @@ describe('convertTransaction', () => {
     ]
 
     const accountsById = {
-      'F85CC22EFB9F414CBEBDCFEB1A4E00C9': { id: 'account1', instrument: 'RUB' },
-      'CBFDBDDEFC3A4F91A8301B2B176DE527': { id: 'account2', instrument: 'RUB' }
+      F85CC22EFB9F414CBEBDCFEB1A4E00C9: { id: 'account1', instrument: 'RUB' },
+      CBFDBDDEFC3A4F91A8301B2B176DE527: { id: 'account2', instrument: 'RUB' }
     }
 
     const transactions = adjustTransactions({
@@ -271,51 +271,51 @@ describe('convertTransaction', () => {
     })
     const expectedTransactions = [
       {
-        'comment': null,
-        'date': new Date('2019-04-24T12:44:06.000Z'),
-        'hold': false,
-        'merchant': null,
-        'movements': [
+        comment: null,
+        date: new Date('2019-04-24T12:44:06.000Z'),
+        hold: false,
+        merchant: null,
+        movements: [
           {
-            'account': { 'id': 'account1' },
-            'fee': 0,
-            'id': 'NvIN7THfzR5UprmUwG4e5KAP8wQ=',
-            'invoice': null,
-            'sum': -4050
+            account: { id: 'account1' },
+            fee: 0,
+            id: 'NvIN7THfzR5UprmUwG4e5KAP8wQ=',
+            invoice: null,
+            sum: -4050
           },
           {
-            'account': { 'id': 'account2' },
-            'fee': 0,
-            'id': 'P2zlAdRiTCUYtj032PCMhM9LxB4=',
-            'invoice': null,
-            'sum': 4050
+            account: { id: 'account2' },
+            fee: 0,
+            id: 'P2zlAdRiTCUYtj032PCMhM9LxB4=',
+            invoice: null,
+            sum: 4050
           }
         ]
       },
       {
-        'comment': null,
-        'date': new Date('2019-04-24T12:44:07.000Z'),
-        'hold': false,
-        'merchant': null,
-        'movements': [
+        comment: null,
+        date: new Date('2019-04-24T12:44:07.000Z'),
+        hold: false,
+        merchant: null,
+        movements: [
           {
-            'account': { 'id': 'account2' },
-            'fee': 0,
-            'id': 'hF/+aFujUQDXGNz1VWTw6jDAIpA=',
-            'invoice': null,
-            'sum': 4042.99
+            account: { id: 'account2' },
+            fee: 0,
+            id: 'hF/+aFujUQDXGNz1VWTw6jDAIpA=',
+            invoice: null,
+            sum: 4042.99
           },
           {
-            'account': {
-              'instrument': 'RUB',
-              'company': null,
-              'syncIds': ['0301'],
-              'type': 'ccard'
+            account: {
+              instrument: 'RUB',
+              company: null,
+              syncIds: ['0301'],
+              type: 'ccard'
             },
-            'fee': 0,
-            'id': null,
-            'invoice': null,
-            'sum': -4042.99
+            fee: 0,
+            id: null,
+            invoice: null,
+            sum: -4042.99
           }
         ]
       }

@@ -1,7 +1,7 @@
 import { convertTransaction } from '../../../converters'
 
 describe('convertTransaction', () => {
-  let account = {
+  const account = {
     id: 'BY75AKBB30141000022233030000',
     type: 'card',
     title: 'Карта 2222',
@@ -28,7 +28,7 @@ describe('convertTransaction', () => {
     }
   }
 
-  let tt = [
+  const tt = [
     {
       name: 'service payments',
       json: {
@@ -212,18 +212,18 @@ describe('convertTransaction', () => {
     {
       name: 'income with MCC NaN',
       json: {
-        'accountID': 'BY75AKBB30141000022233030000',
-        'comment': 'Безналичное зачисление на счет',
-        'date': '23.03.2020',
-        'debitFlag': '+',
-        'fee': '0.00',
-        'inAccountCurrency': 'EUR',
-        'inAccountSum': '108.45',
-        'operationCurrency': 'EUR',
-        'operationSum': '108.45',
-        'place': 'УО &quot;ГГУ им.Ф.Скорины&quot;/',
-        'status': 'operResultOk',
-        'time': '00:00:00'
+        accountID: 'BY75AKBB30141000022233030000',
+        comment: 'Безналичное зачисление на счет',
+        date: '23.03.2020',
+        debitFlag: '+',
+        fee: '0.00',
+        inAccountCurrency: 'EUR',
+        inAccountSum: '108.45',
+        operationCurrency: 'EUR',
+        operationSum: '108.45',
+        place: 'УО &quot;ГГУ им.Ф.Скорины&quot;/',
+        status: 'operResultOk',
+        time: '00:00:00'
       },
       expectedTransaction: {
         date: new Date('2020-03-23T00:00:00+03:00'),
@@ -248,18 +248,18 @@ describe('convertTransaction', () => {
     {
       name: 'income with 0 in different currency',
       json: {
-        'accountID': 'BY75AKBB30141000022233030000',
-        'comment': 'Отмена покупки/оплаты/перевода',
-        'date': '15.05.2020',
-        'debitFlag': '+',
-        'fee': '0.00',
-        'inAccountCurrency': 'EUR',
-        'inAccountSum': '2.45',
-        'operationCurrency': 'USD',
-        'operationSum': '0.00',
-        'place': 'GOOGLE *TEMPORARY HOLD&gt;855-836-3987US/5968',
-        'status': 'operResultOk',
-        'time': '00:00:00'
+        accountID: 'BY75AKBB30141000022233030000',
+        comment: 'Отмена покупки/оплаты/перевода',
+        date: '15.05.2020',
+        debitFlag: '+',
+        fee: '0.00',
+        inAccountCurrency: 'EUR',
+        inAccountSum: '2.45',
+        operationCurrency: 'USD',
+        operationSum: '0.00',
+        place: 'GOOGLE *TEMPORARY HOLD&gt;855-836-3987US/5968',
+        status: 'operResultOk',
+        time: '00:00:00'
       },
       expectedTransaction: {
         date: new Date('2020-05-15T00:00:00+03:00'),
@@ -284,7 +284,7 @@ describe('convertTransaction', () => {
   ]
   tt.forEach(function (tc) {
     it(tc.name, () => {
-      let transaction = convertTransaction(tc.json, [account])
+      const transaction = convertTransaction(tc.json, [account])
       expect(transaction).toEqual(tc.expectedTransaction)
     })
   })

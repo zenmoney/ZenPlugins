@@ -1,9 +1,8 @@
+import cheerio from 'cheerio'
 import * as _ from 'lodash'
 import padLeft from 'pad-left'
 import { IncompatibleVersionError } from '../../errors'
 import { getByteLength } from '../stringUtils'
-
-const cheerio = require('cheerio')
 
 export const Type = {
   Int: function (value) { this.value = value },
@@ -112,7 +111,7 @@ export function stringifyToXml (object) {
       if (key === '__type') {
         continue
       }
-      if (object.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(object, key)) {
         str += `${stringifyToXml(key)}${stringifyToXml(object[key])}`
       }
     }

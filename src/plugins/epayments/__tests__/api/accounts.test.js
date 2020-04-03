@@ -13,8 +13,8 @@ function mockUserInfoRequest (tokenType, token, ...mocks) {
     fetchMock.once({
       method: 'GET',
       headers: {
-        'Referer': 'https://my.epayments.com/',
-        'Authorization': `${tokenType} ${token}`
+        Referer: 'https://my.epayments.com/',
+        Authorization: `${tokenType} ${token}`
       },
       matcher: toMock.matcher,
       response: toMock.response

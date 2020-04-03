@@ -5,12 +5,12 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   toDate = toDate || new Date()
 
   await login(preferences)
-  let policies = (await fetchPolicies())
+  const policies = (await fetchPolicies())
     .map(convertAccount)
     .filter(account => account !== null)
-  let transactions = []
+  const transactions = []
   for (let i = 0; i < policies.length; i++) {
-    let polTransactions = (await fetchTransactions(policies[i], fromDate, toDate))
+    const polTransactions = (await fetchTransactions(policies[i], fromDate, toDate))
       .map(transaction => convertTransaction(transaction, policies[i]))
       .filter(transaction => transaction !== null)
     transactions.push(...polTransactions)

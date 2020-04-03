@@ -12,7 +12,7 @@ describe('convertCards', () => {
       startBalance: 0,
       creditLimit: 0,
       savings: false,
-      syncID: [ '5678' ]
+      syncID: ['5678']
     }])
   })
 })

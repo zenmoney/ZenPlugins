@@ -4,7 +4,8 @@ describe('convertDeposit', () => {
   it('converts deposit', () => {
     expect(convertAccounts({
       deposit: [
-        { number: '',
+        {
+          number: '',
           name: 'Вклад PRIME (PRIME Deposit)',
           ref: '00313175RURPRIM204',
           status: 'Открыт',
@@ -22,7 +23,8 @@ describe('convertDeposit', () => {
           upd: '08.07.2019 22:25:25',
           edate: '27.09.2019',
           act: 'changeparam|withdrawal',
-          hide: '0' }
+          hide: '0'
+        }
       ]
     })).toEqual([
       {

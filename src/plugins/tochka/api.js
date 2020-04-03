@@ -221,10 +221,10 @@ export async function fetchStatement ({ access_token } = {}, apiAccount, fromDat
     sandbox: preferences.server === 'sandbox',
     method: 'POST',
     headers: {
-      'Host': 'enter.tochka.com',
-      'Accept': 'application/json',
+      Host: 'enter.tochka.com',
+      Accept: 'application/json',
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${access_token}`
+      Authorization: `Bearer ${access_token}`
     },
     body: {
       account_code: apiAccount.code,
@@ -254,8 +254,8 @@ export async function fetchStatement ({ access_token } = {}, apiAccount, fromDat
       sandbox: preferences.server === 'sandbox',
       method: 'GET',
       headers: {
-        'Accept': 'application/json',
-        'Authorization': `Bearer ${access_token}`
+        Accept: 'application/json',
+        Authorization: `Bearer ${access_token}`
       }
     } /* response => _.get(response, "response.body.status") */)
 
@@ -273,7 +273,7 @@ export async function fetchStatement ({ access_token } = {}, apiAccount, fromDat
     sandbox: preferences.server === 'sandbox',
     method: 'GET',
     headers: {
-      'Accept': 'application/json',
+      Accept: 'application/json',
       Authorization: `Bearer ${access_token}`
     }
   } /* response => _.get(response, "response.body.payments") */)

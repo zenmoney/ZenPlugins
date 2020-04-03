@@ -56,7 +56,7 @@ describe('transaction converter', () => {
         type: 'DEPOSIT_PROC'
       },
       {
-        '9870000': 'c-1230000'
+        9870000: 'c-1230000'
       }
     )
 

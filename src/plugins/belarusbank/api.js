@@ -24,14 +24,14 @@ async function fetchUrl (url, options, predicate = () => true, error = (message)
   if (predicate) {
     validateResponse(response, response => predicate(response), error)
   }
-  let err = response.body.match(/<p id ="status_message" class="error">(.[^/]*)</i)
+  const err = response.body.match(/<p id ="status_message" class="error">(.[^/]*)</i)
   if (err && err[1].indexOf('СМС-код отправлен на номер телефона') === -1) {
     if (err[1].indexOf('Необходимо настроить номер телефона для получения СМС') >= 0) {
       throw new BankMessageError(err[1] + '. Это можно сделать на сайте или в приложении Беларусбанка.')
     }
     // ошибка приходит в ответе на 1й запрос loginSMS()
     if (err[1].indexOf('Выбранный способ аутентификации отключён') >= 0) {
-      throw new BankMessageError(`Аутентификация по СМС отключена. Выберите в настройках аутентификацию по кодам или включите вход по СМС в приложении или на сайте банка.`)
+      throw new BankMessageError('Аутентификация по СМС отключена. Выберите в настройках аутентификацию по кодам или включите вход по СМС в приложении или на сайте банка.')
     }
 
     if ([
@@ -106,7 +106,7 @@ export async function loginCodes (prefs) {
   if (!codes) {
     throw new InvalidPreferencesError('Не введены коды ' + (col + 1) + '1-' + (col + 2) + '0')
   }
-  let code = codes.split(/\D+/g)[idx]
+  const code = codes.split(/\D+/g)[idx]
 
   url = res.body.match(/<form[^>]+action="([^"]*)"[^>]*name="LoginForm1"/i)
   res = await fetchUrl(res.headers['content-location'] + url[1], {
@@ -162,7 +162,7 @@ export async function loginSMS (prefs) {
     throw new InvalidPreferencesError('Неверный логин или пароль от интернет-банка Беларусбанка')
   }
 
-  let sms = await ZenMoney.readLine('Введите код из смс', {
+  const sms = await ZenMoney.readLine('Введите код из смс', {
     time: 120000
   })
   if (sms === '') {
@@ -197,13 +197,13 @@ export async function loginSMS (prefs) {
 
 export async function fetchURLAccounts (loginRequest) {
   console.log('>>> Загрузка страницы счетов...')
-  let url = loginRequest.body.match(/href="\/([^"]+)">\s*Счета/i)
-  let res = await fetchUrl('/' + url[1], {
+  const url = loginRequest.body.match(/href="\/([^"]+)">\s*Счета/i)
+  const res = await fetchUrl('/' + url[1], {
     method: 'GET'
   }, response => response.success, message => new Error(''))
 
-  let urlCards = res.body.match(/<a\s*href="([^"]+)".*Счета с карточкой.*<\/a>/i)
-  let urlDeposits = res.body.match(/<a\s*href="([^"]+)".*Депозиты.*<\/a>/i)
+  const urlCards = res.body.match(/<a\s*href="([^"]+)".*Счета с карточкой.*<\/a>/i)
+  const urlDeposits = res.body.match(/<a\s*href="([^"]+)".*Депозиты.*<\/a>/i)
   return {
     cards: urlCards[1],
     deposits: urlDeposits[1]
@@ -217,7 +217,7 @@ function strDecoder (str) {
   var str2 = str.split(';')
   var res = ''
   str2.forEach(function (s) {
-    let left = s.replace(/&.[0-9]{4}/i, '')
+    const left = s.replace(/&.[0-9]{4}/i, '')
 
     res += left + String.fromCharCode(s.replace(left + '&#', ''))
   })
@@ -227,7 +227,7 @@ function strDecoder (str) {
 
 export async function fetchDeposits (url) {
   console.log('>>> Загрузка депозитов...')
-  let res = await fetchUrl(url, {
+  const res = await fetchUrl(url, {
     method: 'GET'
   }, response => response.success, message => new Error(''))
 
@@ -236,7 +236,7 @@ export async function fetchDeposits (url) {
 
 export async function fetchCards (url) {
   console.log('>>> Загрузка карточных/текущих аккаунтов...')
-  let res = await fetchUrl(url, {
+  const res = await fetchUrl(url, {
     method: 'GET'
   }, response => response.success, message => new Error(''))
   return parseCards(res.body)
@@ -327,7 +327,7 @@ export async function fetchCardsTransactions (acc, fromDate, toDate) {
 
   let body = {
     'javax.faces.encodedURL': acc.raw.transactionsData.encodedURL,
-    'accountNumber': acc.raw.transactionsData.additional[3].replace(/'/g, ''),
+    accountNumber: acc.raw.transactionsData.additional[3].replace(/'/g, ''),
     'javax.faces.ViewState': acc.raw.transactionsData.viewState
   }
   let viewns = acc.raw.transactionsData.additional[0].replace(/'/g, '')
@@ -448,7 +448,7 @@ export async function fetchCardsTransactions (acc, fromDate, toDate) {
   }
   body = {
     'javax.faces.encodedURL': $('input[name="javax.faces.encodedURL"]').attr('value'),
-    'accountNumber': acc.raw.transactionsData.holdsData[3].replace(/'/g, ''),
+    accountNumber: acc.raw.transactionsData.holdsData[3].replace(/'/g, ''),
     'javax.faces.ViewState': $('input[name="javax.faces.ViewState"]').attr('value')
   }
 

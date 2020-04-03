@@ -6,23 +6,23 @@ import { fetchJson } from '../../common/network'
 import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
 
 const transactionTypeFactors = {
-  'Возврат': 1,
-  'Vozvrat': 1,
+  Возврат: 1,
+  Vozvrat: 1,
   'Возврат средств': 1,
   'Vozvrat sredstv': 1,
-  'Пополнение': 1,
-  'Popolnenie': 1,
+  Пополнение: 1,
+  Popolnenie: 1,
   'Service payment to card': 1,
-  'Зачисление': 1,
-  'Zachislenie': 1,
-  'Списание': -1,
-  'Spisanie': -1,
+  Зачисление: 1,
+  Zachislenie: 1,
+  Списание: -1,
+  Spisanie: -1,
   'Товары и услуги': -1,
   'Tovary i uslugi': -1,
-  'Банкомат': -1,
-  'Bankomat': -1,
-  'Наличные': -1,
-  'Nalichnye': -1
+  Банкомат: -1,
+  Bankomat: -1,
+  Наличные: -1,
+  Nalichnye: -1
 }
 
 const rejectedTransactionTypes = [
@@ -81,12 +81,12 @@ const BSB_AUTH_URL = makeApiUrl('/authorization', { lang })
 const requestLogin = ({ username, password, deviceId }) => fetchJson(BSB_AUTH_URL, {
   method: 'POST',
   body: {
-    'username': username,
-    'password': password,
-    'deviceId': deviceId,
-    'applicationVersion': 'Web 6.0.12',
-    'osType': 3,
-    'currencyIso': 'BYN'
+    username: username,
+    password: password,
+    deviceId: deviceId,
+    applicationVersion: 'Web 6.0.12',
+    osType: 3,
+    currencyIso: 'BYN'
   },
   sanitizeRequestLog: { body: { username: true, password: true, deviceId: true } },
   sanitizeResponseLog: {
@@ -145,9 +145,9 @@ export function fetchPaymentsArchive ({ fromDate, toDate }) {
   return fetchJson(makeApiUrl('/archive', { lang }), {
     method: 'POST',
     body: {
-      'page': { 'pageNumber': 0, 'pageSize': 1000 },
-      'fromDate': formatBsbPaymentsApiDate(fromDate),
-      'toDate': formatBsbPaymentsApiDate(toDate || new Date())
+      page: { pageNumber: 0, pageSize: 1000 },
+      fromDate: formatBsbPaymentsApiDate(fromDate),
+      toDate: formatBsbPaymentsApiDate(toDate || new Date())
     },
     sanitizeResponseLog: {
       headers: { 'set-cookie': true },

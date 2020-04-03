@@ -70,7 +70,8 @@ export async function fetchAccounts (token) {
       },
       depositAccount: {}
     },
-    headers: { 'session_token': token } }, response => response.body && response.body.overviewResponse && (response.body.overviewResponse.cardAccount || response.body.overviewResponse.depositAccount || response.body.overviewResponse.currentAccount), message => new TemporaryError(message))).body.overviewResponse
+    headers: { session_token: token }
+  }, response => response.body && response.body.overviewResponse && (response.body.overviewResponse.cardAccount || response.body.overviewResponse.depositAccount || response.body.overviewResponse.currentAccount), message => new TemporaryError(message))).body.overviewResponse
 
   var cards = []
   if (products.cardAccount) {
@@ -122,7 +123,7 @@ export async function fetchTransactions (token, accounts, fromDate, toDate = new
       }
       return fetchApiJson(url, {
         method: 'POST',
-        headers: { 'session_token': token },
+        headers: { session_token: token },
         body: {
           accountType: accountType,
           bankCode: '288',
@@ -154,7 +155,7 @@ export async function fetchLastCardTransactions (token, account) {
 
   const response = await fetchApiJson('products/getBlockedAmountStatement', {
     method: 'POST',
-    headers: { 'session_token': token },
+    headers: { session_token: token },
     body: {
       cards: [
         account.cardHash
@@ -162,7 +163,7 @@ export async function fetchLastCardTransactions (token, account) {
       internalAccountId: account.internalAccountId
     }
   }, response => response.body)
-  let operations = response.body.operations ? response.body.operations : []
+  const operations = response.body.operations ? response.body.operations : []
   for (let i = 0; i < operations.length; i++) {
     operations[i].accountNumber = account.syncID[0]
   }

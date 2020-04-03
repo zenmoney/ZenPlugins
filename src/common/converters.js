@@ -68,7 +68,7 @@ function serializeZenmoneyAccountReference (account) {
       propsThatMakeNoDifference,
       'account props are unknown:',
       account,
-      `Either provide specific account {id} alone, or provide account weak-ref in shape {type, instrument[, syncIds, company]}`
+      'Either provide specific account {id} alone, or provide account weak-ref in shape {type, instrument[, syncIds, company]}'
     )
     console.assert(_.isString(account.id), 'account.id must be String:', account)
     console.assert(
@@ -85,7 +85,7 @@ function serializeZenmoneyAccountReference (account) {
     propsThatMakeNoDifference,
     'account props are unknown:',
     account,
-    `Either provide specific account {id} alone, or provide account weak-ref in shape {type, instrument[, syncIds, company]}`
+    'Either provide specific account {id} alone, or provide account weak-ref in shape {type, instrument[, syncIds, company]}'
   )
 
   assertAccountCompanyIsValid(company)
@@ -148,7 +148,7 @@ function assertRestIsEmpty (rest, kind, kindInstance) {
 function assertInvoiceIsNotRedundant (invoice, accountInstrument, context) {
   console.assert(
     invoice === null || invoice.instrument !== accountInstrument,
-    `invoice:{sum,instrument} must be replaced with null when it's the same as {transaction.sum,account.instrument}:`,
+    'invoice:{sum,instrument} must be replaced with null when it\'s the same as {transaction.sum,account.instrument}:',
     context
   )
 }

@@ -2,9 +2,10 @@ import { Buffer } from 'buffer'
 import { decode } from 'iconv-lite'
 import { defaultsDeep } from 'lodash'
 import { stringify } from 'querystring'
-import { fetch, parseXml as parse } from '../../common/network'
+import { fetch } from '../../common/network'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { generateUUID, randomInt } from '../../common/utils'
+import { parseXml } from '../../common/xmlUtils'
 import { BankMessageError, InvalidLoginOrPasswordError, InvalidOtpCodeError } from '../../errors'
 
 const baseUrl = 'https://enter.unicredit.ru/v2/cgi/bsi.dll?'
@@ -20,12 +21,12 @@ async function callGate (command, options) {
       if (binaryResponse) {
         str = decode(Buffer.from(str), 'utf8')
       }
-      return parse(str)
+      return parseXml(str)
     },
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-      'Host': 'enter.unicredit.ru',
-      'Connection': 'Keep-Alive'
+      Host: 'enter.unicredit.ru',
+      Connection: 'Keep-Alive'
     },
     body: {
       Console: 'android',
@@ -76,7 +77,7 @@ function parseParams (str) {
 
 export async function login (auth, { login, password }) {
   if (auth && auth.pin && auth.deviceId) {
-    let { pin, deviceId } = auth
+    const { pin, deviceId } = auth
     const response = await callGate('RT_2Auth.CL', {
       body: {
         PinHash: pin, // -1175576585,

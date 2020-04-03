@@ -20,13 +20,13 @@ const setXXSrfToken = (value) => {
 
 const createHeaders = (rid) => {
   return {
-    'channel': 'web',
-    'platform': 'web',
+    channel: 'web',
+    platform: 'web',
     'Sec-Fetch-Mode': 'cors',
     'X-Request-Id': rid,
     'X-XSRF-TOKEN': xXSrfToken,
-    'Connection': 'Keep-Alive',
-    'Referer': apiUri.match(/(https?:\/\/[^/]+)/)[1] + '/',
+    Connection: 'Keep-Alive',
+    Referer: apiUri.match(/(https?:\/\/[^/]+)/)[1] + '/',
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
   }
 }
@@ -34,7 +34,7 @@ const createHeaders = (rid) => {
 async function auth (cardNumber, password) {
   let rid = generateHash()
 
-  let response = await fetchJson(`${apiUri}/v0001/authentication/auth-by-secret?${makeQueryString(rid)}`, {
+  const response = await fetchJson(`${apiUri}/v0001/authentication/auth-by-secret?${makeQueryString(rid)}`, {
     log: true,
     method: 'POST',
     body: {
@@ -205,7 +205,7 @@ async function fetchCredits () {
     'WRONG_CABINET' // if not supported
   ])
 
-  return response.body.hasOwnProperty('data')
+  return response.body.data
     ? response.body.data
     : []
 }
@@ -222,16 +222,16 @@ async function fetchWallets () {
 
   assertResponseSuccess(response)
 
-  return response.body.hasOwnProperty('data') && response.body.data.hasOwnProperty('wallets')
+  return response.body.data && response.body.data.wallets
     ? response.body.data.wallets
     : []
 }
 
 async function fetchTransactions (dateFrom, contractIds) {
-  let transactions = []
+  const transactions = []
 
   for (const item of contractIds) {
-    let data = await fetchTransactionsByContractId(dateFrom, item)
+    const data = await fetchTransactionsByContractId(dateFrom, item)
     for (const item of data) {
       transactions.push(item)
     }
@@ -242,7 +242,7 @@ async function fetchTransactions (dateFrom, contractIds) {
 
 async function fetchTransactionsByContractId (dateFrom, contractId) {
   let isFirstPage = true
-  let transactions = []
+  const transactions = []
 
   const lastSyncTime = new Date(dateFrom).getTime()
   const pagination = {
@@ -290,7 +290,7 @@ async function fetchTransactionsByContractId (dateFrom, contractId) {
 async function fetchTransactionsInternal (limit, gte, searchAfter, contractId) {
   const rid = generateHash()
 
-  let query = {
+  const query = {
     gte: gte,
     lte: '',
     queryString: '',
@@ -318,9 +318,9 @@ async function fetchTransactionsInternal (limit, gte, searchAfter, contractId) {
     return response.body
   } else {
     return {
-      'data': {
-        'totalCount': 0,
-        'items': []
+      data: {
+        totalCount: 0,
+        items: []
       }
     }
   }
@@ -344,7 +344,7 @@ const generateHash = () => {
 const makeQueryString = (rid, data) => {
   const params = {
     ...data,
-    'rid': rid
+    rid: rid
   }
   const esc = encodeURIComponent
 

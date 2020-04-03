@@ -65,7 +65,7 @@ export function convertTransaction (json, accounts) {
 
   const transaction = {
     date: new Date(json.operationDate),
-    movements: [ getMovement(json, account) ],
+    movements: [getMovement(json, account)],
     merchant: null,
     comment: null,
     hold: false
@@ -88,7 +88,7 @@ function getMovement (json, account) {
     fee: 0
   }
   if (json.operationName.indexOf('Удержано подоходного налога') >= 0) {
-    let nameSplit = json.operationName.split(' ')
+    const nameSplit = json.operationName.split(' ')
     movement.fee = Number.parseFloat(nameSplit[nameSplit.length - 1])
   }
   return movement

@@ -175,10 +175,10 @@ module.exports = ({ allowedHost, host, https }) => {
           proxyRes.headers[TRANSFERABLE_HEADER_PREFIX + 'set-cookie'] = proxyRes.headers['set-cookie']
           proxyRes.headers['set-cookie'] = proxyRes.headers['set-cookie'].map(makeCookieAccessibleToClientSide)
         }
-        const location = proxyRes.headers['location']
+        const location = proxyRes.headers.location
         if (location && /^https?:\/\//i.test(location)) {
           const { origin, pathname, search } = new URL(location)
-          proxyRes.headers['location'] = pathname + search +
+          proxyRes.headers.location = pathname + search +
             ((search === '') ? '?' : '&') + PROXY_TARGET_HEADER + '=' + origin
         }
         proxyRes.headers = _.mapValues(proxyRes.headers, value => {

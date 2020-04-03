@@ -1,26 +1,26 @@
-import { parseXml } from './network'
+import { parseXml } from './xmlUtils'
 
 describe('parseXml', () => {
   it('parses xml plain object', () => {
-    expect(parseXml(`<?xml version="1.0" encoding="windows-1251" ?> 
-<response> 
-    <status> 
-        <code>0</code> 
-    </status> 
-        <loginCompleted>false</loginCompleted> 
-                    <confirmRegistrationStage> 
-                        <mGUID>596822784bbcef111e3e1d2e1e22cb5e</mGUID> 
-                    </confirmRegistrationStage> 
-                    <confirmInfo> 
-                        <type>smsp</type> 
-                        <smsp> 
-                            <lifeTime>597</lifeTime> 
-                            <attemptsRemain>3</attemptsRemain> 
-                        </smsp> 
-                    </confirmInfo> 
-                    <registrationParameters> 
-                        <minimumPINLength>5</minimumPINLength> 
-                    </registrationParameters> 
+    expect(parseXml(`<?xml version="1.0" encoding="windows-1251" ?>
+<response>
+    <status>
+        <code>0</code>
+    </status>
+        <loginCompleted>false</loginCompleted>
+                    <confirmRegistrationStage>
+                        <mGUID>596822784bbcef111e3e1d2e1e22cb5e</mGUID>
+                    </confirmRegistrationStage>
+                    <confirmInfo>
+                        <type>smsp</type>
+                        <smsp>
+                            <lifeTime>597</lifeTime>
+                            <attemptsRemain>3</attemptsRemain>
+                        </smsp>
+                    </confirmInfo>
+                    <registrationParameters>
+                        <minimumPINLength>5</minimumPINLength>
+                    </registrationParameters>
 </response>`)).toEqual({
       response: {
         status: {
@@ -156,28 +156,28 @@ describe('parseXml', () => {
   })
 
   it('parses CDATA', () => {
-    expect(parseXml(`<?xml version="1.0" encoding="windows-1251" ?> 
-<response> 
-    <status> 
-        <code>1</code> 
-            <errors> 
-                <error> 
-           <text> 
-               <![CDATA[ 
-                   Вы ввели неправильный идентификатор или пароль из SMS. Пожалуйста, попробуйте снова. 
-               ]]> 
-            </text> 
-        </error> 
-            </errors> 
-    </status> 
-        <loginCompleted>false</loginCompleted> 
-                    <confirmInfo> 
-                        <type>smsp</type> 
-                        <smsp> 
-                            <lifeTime>587</lifeTime> 
-                            <attemptsRemain>2</attemptsRemain> 
-                        </smsp> 
-                    </confirmInfo> 
+    expect(parseXml(`<?xml version="1.0" encoding="windows-1251" ?>
+<response>
+    <status>
+        <code>1</code>
+            <errors>
+                <error>
+           <text>
+               <![CDATA[
+                   Вы ввели неправильный идентификатор или пароль из SMS. Пожалуйста, попробуйте снова.
+               ]]>
+            </text>
+        </error>
+            </errors>
+    </status>
+        <loginCompleted>false</loginCompleted>
+                    <confirmInfo>
+                        <type>smsp</type>
+                        <smsp>
+                            <lifeTime>587</lifeTime>
+                            <attemptsRemain>2</attemptsRemain>
+                        </smsp>
+                    </confirmInfo>
 </response>`)).toEqual({
       response: {
         confirmInfo: {
@@ -201,56 +201,56 @@ describe('parseXml', () => {
   })
 
   it('parses complex xml', () => {
-    expect(parseXml(`<?xml version="1.0" encoding="windows-1251" ?> 
-<response> 
-    <status> 
-        <code>0</code> 
-    </status> 
+    expect(parseXml(`<?xml version="1.0" encoding="windows-1251" ?>
+<response>
+    <status>
+        <code>0</code>
+    </status>
                         <operations>
-                            <operation><date>04.01.2018T00:00:00</date> 
-    <sum> 
-                        <amount>+95000.00</amount> 
-    <currency> 
-        <code>RUB</code>  
-        <name>руб.</name> 
-    </currency> 
-    </sum> 
+                            <operation><date>04.01.2018T00:00:00</date>
+    <sum>
+                        <amount>+95000.00</amount>
+    <currency>
+        <code>RUB</code>
+        <name>руб.</name>
+    </currency>
+    </sum>
 <description><![CDATA[Дополнительный взнос]]></description></operation>
-                            <operation><date>05.01.2018T00:00:00</date> 
-    <sum> 
-                        <amount>-50.00</amount> 
-    <currency> 
-        <code>RUB</code>  
-        <name>руб.</name> 
-    </currency> 
-    </sum> 
+                            <operation><date>05.01.2018T00:00:00</date>
+    <sum>
+                        <amount>-50.00</amount>
+    <currency>
+        <code>RUB</code>
+        <name>руб.</name>
+    </currency>
+    </sum>
 <description><![CDATA[Частичная выдача]]></description></operation>
-                            <operation><date>17.01.2018T00:00:00</date> 
-    <sum> 
-                        <amount>-62000.00</amount> 
-    <currency> 
-        <code>RUB</code>  
-        <name>руб.</name> 
-    </currency> 
-    </sum> 
+                            <operation><date>17.01.2018T00:00:00</date>
+    <sum>
+                        <amount>-62000.00</amount>
+    <currency>
+        <code>RUB</code>
+        <name>руб.</name>
+    </currency>
+    </sum>
 <description><![CDATA[Частичная выдача]]></description></operation>
                         </operations>
-                            <balances> 
-    <openingBalance> 
-                        <amount>4657.30</amount> 
-    <currency> 
-        <code>RUB</code>  
-        <name>руб.</name> 
-    </currency> 
-    </openingBalance> 
-    <closingBalance> 
-                        <amount>1440.30</amount> 
-    <currency> 
-        <code>RUB</code>  
-        <name>руб.</name> 
-    </currency> 
-    </closingBalance> 
-                            </balances> 
+                            <balances>
+    <openingBalance>
+                        <amount>4657.30</amount>
+    <currency>
+        <code>RUB</code>
+        <name>руб.</name>
+    </currency>
+    </openingBalance>
+    <closingBalance>
+                        <amount>1440.30</amount>
+    <currency>
+        <code>RUB</code>
+        <name>руб.</name>
+    </currency>
+    </closingBalance>
+                            </balances>
 </response>`)).toEqual({
       response: {
         status: {
@@ -389,6 +389,6 @@ describe('parseXml', () => {
 
   it('fails parsing XML without root node', () => {
     expect(() => parseXml('plain text')).toThrow()
-    expect(() => parseXml(`{"key":123}`)).toThrow()
+    expect(() => parseXml('{"key":123}')).toThrow()
   })
 })

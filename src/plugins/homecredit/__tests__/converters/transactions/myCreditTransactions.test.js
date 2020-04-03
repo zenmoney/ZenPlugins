@@ -7,7 +7,8 @@ const debetCardData = {
     instrument: 'RUR',
     syncID: '1234',
     title: 'Visa Classic – зарплатный сотрудникам',
-    type: 'ccard' },
+    type: 'ccard'
+  },
   details: {
     accountNumber: '40817810690010001234',
     cardNumber: '4454334500181234',
@@ -55,15 +56,15 @@ const transactions = [
       installmentInfo: null
     },
     {
-      'id': '1757185120',
-      'hold': false,
-      'date': new Date('2019-05-14T10:25:25+03:00'),
-      'payee': 'HCFB',
-      'income': 3500,
-      'incomeAccount': '7005001234',
-      'outcome': 0,
-      'outcomeAccount': '7005001234',
-      'comment': 'Зачисление на счет (перевод) HCFB'
+      id: '1757185120',
+      hold: false,
+      date: new Date('2019-05-14T10:25:25+03:00'),
+      payee: 'HCFB',
+      income: 3500,
+      incomeAccount: '7005001234',
+      outcome: 0,
+      outcomeAccount: '7005001234',
+      comment: 'Зачисление на счет (перевод) HCFB'
     }
   ],
 
@@ -79,7 +80,7 @@ const transactions = [
       mcc: 'ATM CASH WITHDRAWAL',
       merchant: ' 000000000143222',
       shortDescription: 'Снятие денежных средств',
-      hashtagList: [ ],
+      hashtagList: [],
       movementNumber: '943168929',
       transactionTypeIBS: 2,
       paymentType: null,
@@ -105,14 +106,14 @@ const transactions = [
       installmentInfo: null
     },
     {
-      'date': new Date('2019-05-20T16:09:56+03:00'),
-      'hold': false,
-      'id': '943168929',
-      'income': 10000,
-      'incomeAccount': 'cash',
-      'outcome': 10000,
-      'outcomeAccount': '7005001234',
-      'payee': '000000000143222'
+      date: new Date('2019-05-20T16:09:56+03:00'),
+      hold: false,
+      id: '943168929',
+      income: 10000,
+      incomeAccount: 'cash',
+      outcome: 10000,
+      outcomeAccount: '7005001234',
+      payee: '000000000143222'
     }
   ]
 ]

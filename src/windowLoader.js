@@ -1,6 +1,7 @@
 /* global prompt, Worker */
 
 import _ from 'lodash'
+// eslint-disable-next-line no-unused-vars
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { fetchJson } from './common/network'
@@ -30,7 +31,7 @@ let state = {
   onPersistPluginDataConfirm: null
 }
 
-const updateUI = (UI) => ReactDOM.render(<UI {...state} />, rootElement)
+const updateUI = (Ui) => ReactDOM.render(<Ui {...state} />, rootElement)
 const setState = (transform) => {
   state = transform(state)
   return updateUI(UI)
@@ -51,7 +52,7 @@ window.dev = {
 
 function fulfillPreferences (rawPreferences, preferencesSchema) {
   const missingObligatoryPreferenceItems = preferencesSchema
-    .filter((x) => x.obligatory && !rawPreferences.hasOwnProperty(x.key))
+    .filter((x) => x.obligatory && !Object.prototype.hasOwnProperty.call(rawPreferences, x.key))
   const fulfilledPreferences = missingObligatoryPreferenceItems.reduce((extension, { key, defaultValue }) => {
     const value = prompt(`Let's fill preferences\n(located inside PLUGIN_PATH/zp_preferences.json)\n${key}:`, defaultValue)
     if (value === null) {
@@ -104,7 +105,7 @@ async function init () {
     window.__worker__ = worker // prevents worker GC - allows setting breakpoints after worker ends execution
 
     setState((state) => ({ ...state, workflowState: ':workflow-state/loading-assets' }))
-    let [rawPreferences, preferencesSchema, manifest, data] = await Promise.all([
+    const [rawPreferences, preferencesSchema, manifest, data] = await Promise.all([
       pickSuccessfulBody(fetchJson('/zen/zp_preferences.json', { log: false })),
       pickSuccessfulBody(fetchJson('/zen/zp_preferences.json/schema', { log: false })),
       pickSuccessfulBody(fetchJson('/zen/manifest', { log: false })),

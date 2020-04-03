@@ -1,4 +1,4 @@
-import * as forge from 'node-forge'
+import forge from 'node-forge'
 
 export function byteStringToByteArray (str) {
   const bytesArray = []
@@ -6,6 +6,14 @@ export function byteStringToByteArray (str) {
     bytesArray.push(str.charCodeAt(i))
   }
   return bytesArray
+}
+
+export function byteArrayToByteString (arr) {
+  let str = ''
+  for (const element of arr) {
+    str += String.fromCharCode(element)
+  }
+  return str
 }
 
 export function getByteStringFromString (str, encoding = 'utf8') {

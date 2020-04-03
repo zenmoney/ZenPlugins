@@ -63,7 +63,7 @@ export function convertTransaction (json, accounts) {
 
   const transaction = {
     date: new Date(json.operationDate),
-    movements: [ getMovement(json, account) ],
+    movements: [getMovement(json, account)],
     merchant: null,
     comment: null,
     hold: false
@@ -93,7 +93,7 @@ export function convertLastTransaction (json, accounts) {
 
   const transaction = {
     date: new Date(getLastTransactionDate(json.auth_date)),
-    movements: [ getMovement(json, account) ],
+    movements: [getMovement(json, account)],
     merchant: null,
     comment: null,
     hold: true
@@ -117,7 +117,7 @@ function getMovement (json, account) {
     fee: 0
   }
   if (json.operationName.indexOf('Удержано подоходного налога') >= 0) {
-    let nameSplit = json.operationName.split(' ')
+    const nameSplit = json.operationName.split(' ')
     movement.fee = Number.parseFloat(nameSplit[nameSplit.length - 1])
   }
   return movement
@@ -160,7 +160,7 @@ function parsePayee (transaction, json) {
     transaction.merchant.fullTitle = json.operationPlace
   } else if (merchant.length === 2) {
     transaction.merchant.title = merchant[0]
-    let geo = merchant[1].split(' ')
+    const geo = merchant[1].split(' ')
     transaction.merchant.city = merchant[1].replace(' ' + geo[geo.length - 1], '').trim()
     transaction.merchant.country = geo[geo.length - 1]
   } else {
@@ -201,7 +201,7 @@ export function getLastTransactionDate (str) {
 }
 
 export function transactionsUnique (array) {
-  let a = array.concat()
+  const a = array.concat()
   for (let i = 0; i < a.length; ++i) {
     for (let j = i + 1; j < a.length; ++j) {
       if (a[i].date.getDate() === a[j].date.getDate() &&

@@ -45,7 +45,7 @@ describe('transaction converter', () => {
         typeName: 'Перевод с карты'
       },
       {
-        '9870000': 'c-1230000'
+        9870000: 'c-1230000'
       }
     )
 

@@ -9,7 +9,7 @@ import { adjustTransactionsAndCheckBalance, convertAccounts, convertBrokerAccoun
 const md5 = new MD5()
 
 function getAuth () {
-  let guid = ZenMoney.getData('mGUID') || ZenMoney.getData('guid')
+  const guid = ZenMoney.getData('mGUID') || ZenMoney.getData('guid')
   if (guid) {
     ZenMoney.setData('mGUID', undefined)
     ZenMoney.setData('guid', undefined)

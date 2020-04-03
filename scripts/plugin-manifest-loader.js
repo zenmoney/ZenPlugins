@@ -48,8 +48,8 @@ module.exports = function (xml) {
   if (pluginManifest.modular !== 'true') {
     return pluginManifest.files
       .map((file) => `require(${JSON.stringify('!!script-loader!./' + file)});`)
-      .concat(`require("injectErrorsGlobally");`)
-      .concat(`module.exports = {main: global.main};`)
+      .concat('require("injectErrorsGlobally");')
+      .concat('module.exports = {main: global.main};')
       .join('\n')
   }
   return generateModularLoader(pluginManifest)

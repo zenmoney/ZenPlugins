@@ -1,8 +1,8 @@
-import { generateUUID, generateRandomString, generateMacAddress } from '../../common/utils'
-import { fetchJson } from '../../common/network'
-import * as forge from 'node-forge'
 import { get } from 'lodash'
+import forge from 'node-forge'
 import { stringify } from 'querystring'
+import { fetchJson } from '../../common/network'
+import { generateMacAddress, generateRandomString, generateUUID } from '../../common/utils'
 import { InvalidOtpCodeError } from '../../errors'
 
 const qs = require('querystring')
@@ -21,19 +21,19 @@ const DEFAULT_TOKEN_HEADERS = {
   Device: 'samsung SM-N900'
 }
 const DEFAUL_TOKEN_PARAMETERS = {
-  'timeZoneUTCOffset': '10800000ms',
-  'appVersion': '3.20.1 (159)',
-  'appPackage': 'logo.com.mbanking',
-  'osName': 'Android universal5420',
-  'pushAddress': '',
-  'deviceSerialNumber': null, // переопределяется перед использованием
-  'version': '2.8.0',
-  'osVersion': '5.0',
-  'deviceUid': null, // переопределяется перед использованием
-  'deviceModel': 'ZenMoney',
-  'deviceAddress': null, // переопределяется перед использованием
-  'deviceName': 'dpi',
-  'alg': 'HS256'
+  timeZoneUTCOffset: '10800000ms',
+  appVersion: '3.20.1 (159)',
+  appPackage: 'logo.com.mbanking',
+  osName: 'Android universal5420',
+  pushAddress: '',
+  deviceSerialNumber: null, // переопределяется перед использованием
+  version: '2.8.0',
+  osVersion: '5.0',
+  deviceUid: null, // переопределяется перед использованием
+  deviceModel: 'ZenMoney',
+  deviceAddress: null, // переопределяется перед использованием
+  deviceName: 'dpi',
+  alg: 'HS256'
 }
 
 export async function login (preferences, auth) {
@@ -126,8 +126,8 @@ export async function login (preferences, auth) {
               'Content-Type': 'application/json; charset=UTF-8'
             },
             body: {
-              'authorizerType': codeType === 'СМС' ? '2' : '11', // 2 - СМС, 11 - PUSH
-              'value': code
+              authorizerType: codeType === 'СМС' ? '2' : '11', // 2 - СМС, 11 - PUSH
+              value: code
             },
             sanitizeRequestLog: { body: { value: true } }
           })
@@ -225,7 +225,7 @@ export async function login (preferences, auth) {
     method: 'GET',
     stringify: JSON.stringify(),
     body: {
-      'avatarHash': null
+      avatarHash: null
     },
     sanitizeResponseLog: { body: { clientProfile: true } }
   })
@@ -415,38 +415,38 @@ function validateResponse (response, predicate, message) {
 
 function getMobileDeviceInfo ({ TimeStamp, HardwareId, SimId, AdvertiserId, DeviceModel, DeviceName, WiFiMacAddress, ApplicationKey: RsaApplicationKey, OsId }) {
   return {
-    'TIMESTAMP': TimeStamp, // '2019-08-23T10:48:13Z',
-    'HardwareID': HardwareId,
-    'SIM_ID': SimId,
-    'AdvertiserId': AdvertiserId,
-    'GeoLocationInfo': [
+    TIMESTAMP: TimeStamp, // '2019-08-23T10:48:13Z',
+    HardwareID: HardwareId,
+    SIM_ID: SimId,
+    AdvertiserId: AdvertiserId,
+    GeoLocationInfo: [
       {
-        'Timestamp': '0',
-        'Status': '1'
+        Timestamp: '0',
+        Status: '1'
       }
     ],
-    'DeviceModel': DeviceModel,
-    'MultitaskingSupported': true,
-    'DeviceName': DeviceName,
-    'DeviceSystemName': 'Android',
-    'DeviceSystemVersion': '21',
-    'Languages': 'ru',
-    'WiFiMacAddress': WiFiMacAddress,
-    'WiFiNetworksData': {
-      'BBSID': 'a4:50:46:68:5d:41',
-      'SignalStrength': '-27',
-      'SSID': 'WiFi'
+    DeviceModel: DeviceModel,
+    MultitaskingSupported: true,
+    DeviceName: DeviceName,
+    DeviceSystemName: 'Android',
+    DeviceSystemVersion: '21',
+    Languages: 'ru',
+    WiFiMacAddress: WiFiMacAddress,
+    WiFiNetworksData: {
+      BBSID: 'a4:50:46:68:5d:41',
+      SignalStrength: '-27',
+      SSID: 'WiFi'
     },
-    'CellTowerId': '6457811',
-    'LocationAreaCode': '20306',
-    'ScreenSize': '1080x1920',
-    'RSA_ApplicationKey': RsaApplicationKey,
-    'MCC': '250',
-    'MNC': '20',
-    'OS_ID': OsId,
-    'SDK_VERSION': '3.11.0',
-    'Compromised': 1,
-    'Emulator': 0
+    CellTowerId: '6457811',
+    LocationAreaCode: '20306',
+    ScreenSize: '1080x1920',
+    RSA_ApplicationKey: RsaApplicationKey,
+    MCC: '250',
+    MNC: '20',
+    OS_ID: OsId,
+    SDK_VERSION: '3.11.0',
+    Compromised: 1,
+    Emulator: 0
   }
 }
 
@@ -454,9 +454,9 @@ function getToken ({ deviceSerialNumber, deviceUid, deviceAddress }) {
   return forge.util.encode64(JSON.stringify(
     {
       ...DEFAUL_TOKEN_PARAMETERS,
-      'deviceSerialNumber': deviceSerialNumber,
-      'deviceUid': deviceUid,
-      'deviceAddress': deviceAddress
+      deviceSerialNumber: deviceSerialNumber,
+      deviceUid: deviceUid,
+      deviceAddress: deviceAddress
     }
   ))
 }

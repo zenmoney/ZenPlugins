@@ -1,11 +1,11 @@
 /**
  * @author Pavel Shapilov <pavel@shapil.ru>
  */
+import moment from 'moment'
 import * as qs from 'querystring'
+import * as setCookie from 'set-cookie-parser'
 import * as network from '../../common/network'
 import { retry } from '../../common/retry'
-import * as setCookie from 'set-cookie-parser'
-import * as moment from 'moment'
 
 const homepage = 'https://sovest.ru'
 const apiVersion = 1
@@ -25,7 +25,7 @@ async function fetchJson (url, options = {}, predicate = () => true) {
       'User-Agent': userAgent,
       'Sec-Fetch-Site': 'same-site',
       'Sec-Fetch-Mode': 'cors',
-      'Referer': 'https://sovest.ru/',
+      Referer: 'https://sovest.ru/',
       ...options.headers
     },
     sanitizeRequestLog: { body: { username: true, password: true }, headers: { Authorization: true } },
@@ -51,20 +51,20 @@ export async function login (login, password) {
     fullCookieString += 'SNODE=' + cookie[0].value
   }
 
-  let body = {
-    'client_id': 'dbo_web',
-    'grant_type': 'password',
-    'username': login,
-    'password': password,
-    'recaptcha': ''
+  const body = {
+    client_id: 'dbo_web',
+    grant_type: 'password',
+    username: login,
+    password: password,
+    recaptcha: ''
   }
-  let headers = {
-    'Accept': 'application/json',
-    'Origin': homepage,
+  const headers = {
+    Accept: 'application/json',
+    Origin: homepage,
     'Content-Type': 'application/x-www-form-urlencoded',
-    'Cookie': fullCookieString
+    Cookie: fullCookieString
   }
-  let options = {
+  const options = {
     method: 'POST',
     body: body,
     headers: headers
@@ -91,27 +91,26 @@ export async function login (login, password) {
 }
 
 export async function fetchAccounts (token) {
-  let account
-  let method = 'GET'
-  let headers = {
-    'Referer': homepage + 'mycard',
-    'Cookie': fullCookieString,
-    'Accept': '*/*',
-    'Origin': homepage,
-    'Authorization': tokenType + ' ' + token
+  const method = 'GET'
+  const headers = {
+    Referer: homepage + 'mycard',
+    Cookie: fullCookieString,
+    Accept: '*/*',
+    Origin: homepage,
+    Authorization: tokenType + ' ' + token
   }
   // получаем данные о картах
-  let responseCard = (await fetchJson(apiUrl + 'client' + apiPath + 'card', {
-    'method': method,
+  const responseCard = (await fetchJson(apiUrl + 'client' + apiPath + 'card', {
+    method: method,
     headers: headers
   }, responseCard => Array.isArray(responseCard.body)))
   // получаем баланс
-  let responseBalance = (await fetchJson(apiUrl + 'reports' + apiPath + 'client/balance', {
-    'method': method,
+  const responseBalance = (await fetchJson(apiUrl + 'reports' + apiPath + 'client/balance', {
+    method: method,
     headers: headers
   }, responseBalance => Array.isArray(responseBalance.body)))
   // обединяем данные о карте и балансе в один
-  account = Object.assign(responseCard.body, responseBalance.body)
+  const account = Object.assign(responseCard.body, responseBalance.body)
   // console.assert(false, JSON.stringify(account))
   return [account]
 }
@@ -147,7 +146,7 @@ export async function fetchTransactions (token, fromDate, toDate) {
   // фильтруем выборку по заданному интервалу fromDate toDate
   if (apiTransactions) {
     for (let i = 0; i < apiTransactions.length; i++) {
-      let txnDateMoment = moment(apiTransactions[i].txnDate)
+      const txnDateMoment = moment(apiTransactions[i].txnDate)
       // если дата не входит в интервал, удаляем ее из массива
       if (!(txnDateMoment >= fromDateMoment && txnDateMoment <= toDateMoment)) {
         delete apiTransactions[i]
@@ -165,13 +164,13 @@ export async function fetchTransactions (token, fromDate, toDate) {
 async function fetchTransactionPaged (token, nextTxnId, nextTxnDate) {
   const pageLimit = 50
   const options = {
-    'method': 'GET',
+    method: 'GET',
     headers: {
-      'Referer': homepage + 'history',
-      'Cookie': fullCookieString,
-      'Accept': '*/*',
-      'Origin': homepage,
-      'Authorization': tokenType + ' ' + token
+      Referer: homepage + 'history',
+      Cookie: fullCookieString,
+      Accept: '*/*',
+      Origin: homepage,
+      Authorization: tokenType + ' ' + token
     }
   }
   const url = apiUrl + 'reports' + apiPath + 'client/payments/history?rows=' + pageLimit +

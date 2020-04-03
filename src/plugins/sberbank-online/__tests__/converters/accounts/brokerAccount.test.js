@@ -4,17 +4,17 @@ describe('convertBrokerAccounts', () => {
   it.each([
     [
       {
-        'id': 'S004ZXS',
-        'total': {
-          'value': 71839.63, 'currency': { 'code': 'RUB', 'name': '' }
+        id: 'S004ZXS',
+        total: {
+          value: 71839.63, currency: { code: 'RUB', name: '' }
         },
-        'forecastTotal': { 'value': 71756.45, 'currency': { 'code': 'RUB', 'name': '' } },
-        'markets': [
+        forecastTotal: { value: 71756.45, currency: { code: 'RUB', name: '' } },
+        markets: [
           {
-            'marketType': 0,
-            'marketName': 'Фондовый',
-            'total': { 'value': 71839.63, 'currency': { 'code': 'RUB', 'name': '' } },
-            'forecastTotal': { 'value': 71756.45, 'currency': { 'code': 'RUB', 'name': '' } }
+            marketType: 0,
+            marketName: 'Фондовый',
+            total: { value: 71839.63, currency: { code: 'RUB', name: '' } },
+            forecastTotal: { value: 71756.45, currency: { code: 'RUB', name: '' } }
           }
         ]
       },
@@ -40,21 +40,21 @@ describe('convertBrokerAccounts', () => {
     ],
     [
       {
-        'id': '4004ZXS',
-        'total': { 'value': 0.00, 'currency': { 'code': 'RUB', 'name': '' } },
-        'forecastTotal': { 'value': 0.00, 'currency': { 'code': 'RUB', 'name': '' } },
-        'markets': [
+        id: '4004ZXS',
+        total: { value: 0.00, currency: { code: 'RUB', name: '' } },
+        forecastTotal: { value: 0.00, currency: { code: 'RUB', name: '' } },
+        markets: [
           {
-            'marketType': 0,
-            'marketName': 'Фондовый',
-            'total': { 'value': 0.00, 'currency': { 'code': 'RUB', 'name': '' } },
-            'forecastTotal': { 'value': 0.00, 'currency': { 'code': 'RUB', 'name': '' } }
+            marketType: 0,
+            marketName: 'Фондовый',
+            total: { value: 0.00, currency: { code: 'RUB', name: '' } },
+            forecastTotal: { value: 0.00, currency: { code: 'RUB', name: '' } }
           },
           {
-            'marketType': 2,
-            'marketName': 'Внебиржевой',
-            'total': { 'value': 0.00, 'currency': { 'code': 'RUB', 'name': '' } },
-            'forecastTotal': { 'value': 0.00, 'currency': { 'code': 'RUB', 'name': '' } }
+            marketType: 2,
+            marketName: 'Внебиржевой',
+            total: { value: 0.00, currency: { code: 'RUB', name: '' } },
+            forecastTotal: { value: 0.00, currency: { code: 'RUB', name: '' } }
           }
         ]
       },

@@ -13,8 +13,8 @@ function mockTransactionsRequest (tokenType, token, ...mocks) {
     fetchMock.once({
       method: 'POST',
       headers: {
-        'Referer': 'https://my.epayments.com/',
-        'Authorization': `${tokenType} ${token}`
+        Referer: 'https://my.epayments.com/',
+        Authorization: `${tokenType} ${token}`
       },
       matcher: toMock.matcher,
       response: toMock.response

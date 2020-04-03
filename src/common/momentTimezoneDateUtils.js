@@ -1,5 +1,4 @@
-const moment = require('moment')
-require('moment-timezone')
+import moment from 'moment-timezone'
 
 export function parseDateInTimezone (dateTimeString, timezoneName) {
   const m = moment.tz(dateTimeString, timezoneName)

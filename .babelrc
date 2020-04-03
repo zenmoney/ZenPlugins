@@ -1,5 +1,8 @@
 {
-    "presets": [
-        "./babel-preset.js"
-    ]
+  "plugins": [
+    "lodash"
+  ],
+  "presets": [
+    "babel-preset-react-app"
+  ]
 }
