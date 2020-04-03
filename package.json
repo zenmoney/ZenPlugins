@@ -65,7 +65,7 @@
     "mockdate": "^2.0.2"
   },
   "scripts": {
-    "start": "yarn && node scripts/start.js",
+    "start": "yarn && node --http-parser=legacy --insecure-http-parser scripts/start.js",
     "host": "yarn && node scripts/host.js",
     "build": "yarn && node scripts/build.js",
     "test": "yarn && standard && node scripts/test.js"
