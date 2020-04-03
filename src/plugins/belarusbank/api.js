@@ -241,10 +241,12 @@ export function parseCards (html) {
       }
     }
     const accountTable = $(elem).children('table[class="accountTable"]').children('tbody').children('tr')
+    // console.log(`accountTable ${accountTable}`)
     const cardTable = $(elem).children('table[class="ibTable"]').children('tbody').children('tr')
 
     account.accountName = accountTable.children('td[class="tdAccountText"]').children('div').text()
     if (account.accountName.indexOf('Новые карты') >= 0) return // move to the next iteration
+    if (!accountTable.children('td[class="tdAccountButton"]').children('a[title="Получить отчёт об операциях по счёту"]').toString()) return
     account.accountNum = accountTable.children('td[class="tdId"]').children('div').text().replace(/\s+/g, '')
     account.balance = accountTable.children('td[class="tdBalance"]').children('div').children('nobr').text()
     account.currency = accountTable.children('td[class="tdBalance"]').children('div').text().replace(account.balance, '').trim().split(' ')[0]
@@ -252,11 +254,11 @@ export function parseCards (html) {
       .children('td[class="tdAccountDetails"]').children('div').children('span[class="tdAccountOverdraft"]').children('nobr').text()
     account.overdraftCurrency = $(elem).children('table[class="accountInfoTable"]').children('tbody').children('tr')
       .children('td[class="tdAccountDetails"]').children('div').children('span[class="tdAccountOverdraft"]').text().split(' ').pop()
-    account.transactionsData.additional = accountTable.children('td[class="tdAccountButton"]').children('a[title="Получить отчёт об операциях по счёту"]')
-      .attr('onclick').replace('return myfaces.oam.submitForm(', '').replace(');', '').match(/'(.[^']*)'/ig)
+    // console.log(`${accountTable.children('td[class="tdAccountButton"]').children('a[title="Получить отчёт об операциях по счёту"]')}`)
+    account.transactionsData.additional = accountTable.children('td[class="tdAccountButton"]').children('a[title="Получить отчёт об операциях по счёту"]').attr('onclick').replace('return myfaces.oam.submitForm(', '').replace(');', '').match(/'(.[^']*)'/ig)
     account.accountId = account.transactionsData.additional[account.transactionsData.additional.length - 1].replace(/'/g, '')
 
-    account.transactionsData.action = $('form[id="' + account.transactionsData.additional[0].replace(/'/g, '') + '"]').attr('action')
+    account.transactionsData.action = $('form[id="' + account.transactionsData.additional[0].replace(/'/g, '') + '"]').attr('action') || $('form').attr('action')
     account.transactionsData.holdsData = accountTable.children('td[class="tdAccountButton"]').children('a[title="Получить отчёт по заблокированным операциям"]')
       .attr('onclick').replace('return myfaces.oam.submitForm(', '').replace(');', '').match(/'(.[^']*)'/ig)
 
@@ -363,30 +365,37 @@ export async function fetchCardsTransactions (acc, fromDate, toDate) {
     body: body
   }, response => response.success, message => new Error(''))
 
-  const transactions = parseTransactions(res.body, acc.id, 'operResultOk')
   let pages = res.body.match(/Страница \d+ из (\d+)/) && parseInt(res.body.match(/Страница \d+ из (\d+)/)[1])
-
-  viewns = viewns.replace('accountStmtStartPageForm', 'AccountStmtForm')
-  for (let i = 2; i <= pages; i++) {
-    $ = cheerio.load(res.body)
-    action = $('form[id="' + viewns + '"]').attr('action')
-    const encodedUrl = $('input[name="javax.faces.encodedURL"]').attr('value')
-    const viewState = $('input[name="javax.faces.ViewState"]').attr('value')
-    const idPage = 'idx' + i.toString()
-    res = await getNextPage({ action, encodedUrl, viewState, viewns, idPage })
-    const transOnPage = parseTransactions(res.body, acc.id, 'operResultOk')
-    transactions.push(...transOnPage)
+  const transactions = pages ? parseTransactions(res.body, acc.id, 'operResultOk') : []
+  if (pages) {
+    viewns = viewns.replace('accountStmtStartPageForm', 'AccountStmtForm')
+    for (let i = 2; i <= pages; i++) {
+      $ = cheerio.load(res.body)
+      action = $('form[id="' + viewns + '"]').attr('action')
+      const encodedUrl = $('input[name="javax.faces.encodedURL"]').attr('value')
+      const viewState = $('input[name="javax.faces.ViewState"]').attr('value')
+      const idPage = 'idx' + i.toString()
+      res = await getNextPage({ action, encodedUrl, viewState, viewns, idPage })
+      const transOnPage = parseTransactions(res.body, acc.id, 'operResultOk')
+      transactions.push(...transOnPage)
+    }
   }
 
   // возврат к списку счетов
   $ = cheerio.load(res.body)
   action = $('form[id="' + viewns + '"]').attr('action')
+  if (!action) { // нет операций в истории
+    viewns = viewns.replace('AccountStmtForm', 'accountStmtLastForm')
+    action = $('form[id="' + viewns + '"]').attr('action')
+  }
   body = {
     'javax.faces.encodedURL': $('input[name="javax.faces.encodedURL"]').attr('value'),
     'javax.faces.ViewState': $('input[name="javax.faces.ViewState"]').attr('value')
   }
   body[viewns + '_SUBMIT'] = 1
-  body[viewns + ':_idcl'] = res.body.match(/ id="(.{1,200})">Вернуться к списку счетов<\/a>/)[1]
+  body[viewns + ':_idcl'] = res.body.match(/ id="(.{1,200})">Вернуться к списку счетов<\/a>/)
+    ? res.body.match(/ id="(.{1,200})">Вернуться к списку счетов<\/a>/)[1]
+    : res.body.match(/ id="(.{1,200})">Назад<\/a>/)[1]
   res = await fetchUrl(action, {
     method: 'POST',
     headers: {
@@ -416,19 +425,20 @@ export async function fetchCardsTransactions (acc, fromDate, toDate) {
     body: body
   }, response => response.success, message => new Error(''))
 
-  const holds = parseTransactions(res.body, acc.id, 'hold')
-
   pages = res.body.match(/Страница \d+ из (\d+)/) && parseInt(res.body.match(/Страница \d+ из (\d+)/)[1])
-  viewns = viewns.replace('accountStmtStartPageForm', 'AccountStmtForm')
-  for (let i = 2; i <= pages; i++) {
-    $ = cheerio.load(res.body)
-    action = $('form[id="' + viewns + '"]').attr('action')
-    const encodedUrl = $('input[name="javax.faces.encodedURL"]').attr('value')
-    const viewState = $('input[name="javax.faces.ViewState"]').attr('value')
-    const idPage = 'idx' + i.toString()
-    res = await getNextPage({ action, encodedUrl, viewState, viewns, idPage })
-    const holdsOnPage = parseTransactions(res.body, acc.id, 'hold')
-    holds.push(...holdsOnPage)
+  const holds = pages ? parseTransactions(res.body, acc.id, 'hold') : []
+  if (pages) {
+    viewns = viewns.replace('accountStmtStartPageForm', 'AccountStmtForm')
+    for (let i = 2; i <= pages; i++) {
+      $ = cheerio.load(res.body)
+      action = $('form[id="' + viewns + '"]').attr('action')
+      const encodedUrl = $('input[name="javax.faces.encodedURL"]').attr('value')
+      const viewState = $('input[name="javax.faces.ViewState"]').attr('value')
+      const idPage = 'idx' + i.toString()
+      res = await getNextPage({ action, encodedUrl, viewState, viewns, idPage })
+      const holdsOnPage = parseTransactions(res.body, acc.id, 'hold')
+      holds.push(...holdsOnPage)
+    }
   }
 
   transactions.push(...holds)

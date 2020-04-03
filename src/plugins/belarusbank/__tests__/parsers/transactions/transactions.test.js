@@ -39,3 +39,14 @@ describe('parseTransactions', () => {
     expect(parseTransactions(html, 'accountId', 'operResultOk')).toEqual(transactions)
   })
 })
+
+describe('parseTransactions', () => {
+  it.each([
+    [
+      require('./0_transactions.html'),
+      []
+    ]
+  ])('parses 0 transactions', (html, transactions) => {
+    expect(parseTransactions(html, 'accountId', 'operResultOk')).toEqual(transactions)
+  })
+})
