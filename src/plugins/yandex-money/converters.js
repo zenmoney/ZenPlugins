@@ -22,6 +22,9 @@ export function convertTransaction (apiTransaction, account) {
   if (apiTransaction.status !== 'success') {
     return null
   }
+  if (apiTransaction.amount === 0) {
+    return null
+  }
   const invoice = {
     sum: apiTransaction.direction === 'in' ? apiTransaction.amount : -apiTransaction.amount,
     instrument: apiTransaction.amount_currency || account.instrument
