@@ -70,6 +70,7 @@ export function convertTransaction (apiTransaction) {
   }())
 
   const zenTransaction = {
+    // TODO: в v3 появилось поле "status", замеченные значения: [Completed, Rejected], нужно проверить какие еще статусы есть
     movements: [ getMovement(apiTransaction, accountId) ],
     hold: apiTransaction.state === 'WaitConfirmation',
     merchant: null, // Такая информация есть только в комментарии в неудобном для парсинга виде
