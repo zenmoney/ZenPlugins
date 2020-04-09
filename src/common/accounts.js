@@ -101,35 +101,37 @@ export function ensureSyncIDsAreUniqueButSanitized ({ accounts, sanitizeSyncId }
 }
 
 export function parseOuterAccountData (str) {
-  if (str) {
-    for (const data of [
-      { pattern: 'СБЕРБАНК', account: { type: null, company: { id: '4624' } } },
-      { pattern: 'TINKOFF BANK CARD2CARD', account: { type: 'ccard', company: { id: '4902' } } },
-      { pattern: 'Тинькофф', account: { type: null, company: { id: '4902' } } },
-      { pattern: 'Tинькoфф', account: { type: null, company: { id: '4902' } } }, // strange typing, not equal to previous line
-      { pattern: 'TINKOFF', account: { type: null, company: { id: '4902' } } },
-      { pattern: 'CARD2CARD ALFA_MOBILE', account: { type: 'ccard', company: { id: '3' } } },
-      { pattern: 'С2С ALFA_MOBILE', account: { type: 'ccard', company: { id: '3' } } },
-      { pattern: 'СовКомБанк', account: { type: null, company: { id: '4534' } } },
-      { pattern: 'Ситибанк', account: { type: null, company: { id: '4859' } } },
-      { pattern: 'Яндекс.Деньг', account: { type: null, company: { id: '15420' } } },
-      { pattern: 'YANDEX.MONEY', account: { type: null, company: { id: '15420' } } },
-      { pattern: 'Рокетбанк', account: { type: null, company: { id: '15444' } } },
-      { pattern: 'Rocketbank.ru Card2Car', account: { type: 'ccard', company: { id: '15444' } } },
-      { pattern: 'Home Credit Bank', account: { type: null, company: { id: '4412' } } },
-      { pattern: 'HCFB', account: { type: null, company: { id: '4412' } } },
-      { pattern: 'C2C R-ONLINE', account: { type: 'ccard', company: { id: '5156' } } },
-      { pattern: 'OPEN.RU CARD2CARD', account: { type: 'ccard', company: { id: '4761' } } },
-      { pattern: 'QIWI', account: { type: null, company: { id: '15592' } } },
-      { pattern: 'MONODirect', account: { type: 'ccard', company: { id: '15620' } } },
-      { pattern: 'Приват', account: { type: null, company: { id: '12574' } } },
-      { pattern: 'CREDIT EUROPE BANK', account: { type: null, company: { id: '5165' } } },
-      { pattern: 'УКРСИББАНК', account: { type: null, company: { id: '15395' } } },
-      { pattern: 'УРАЛСИБ', account: { type: null, company: { id: '4783' } } }
-    ]) {
-      if (str.toLowerCase().indexOf(data.pattern.toLowerCase()) >= 0) {
-        return data.account
+  if (!str) {
+    return null
+  }
+  for (const data of [
+    // Россия
+    { pattern: /(?:АЛЬФАБАНК|ALFA_MOBILE)/i, account: { type: null, company: { id: '3' } } },
+    { pattern: /(?:ВТБ|VTB)/i, account: { type: null, company: { id: '4637' } } },
+    { pattern: /(?:QIWI)/i, account: { type: null, company: { id: '15592' } } },
+    { pattern: /(?:CREDIT\s*EUROPE)/i, account: { type: null, company: { id: '5165' } } },
+    { pattern: /(?:Ozon[-\s]?Pay)/i, account: { type: null, company: { id: '15685' } } },
+    { pattern: /(?:Открытие|OPEN.RU)/i, account: { type: null, company: { id: '4761' } } },
+    { pattern: /(?:Рокетбанк|Rocketbank)/i, account: { type: null, company: { id: '15444' } } },
+    { pattern: /(?:Райфайзен|R-ONLINE)/i, account: { type: null, company: { id: '5156' } } },
+    { pattern: /(?:СБЕРБАНК|SBERBANK)/i, account: { type: null, company: { id: '4624' } } },
+    { pattern: /(?:СовКомБанк|Sovcombank)/i, account: { type: null, company: { id: '4534' } } },
+    { pattern: /(?:Ситибанк|Citibank)/i, account: { type: null, company: { id: '4859' } } },
+    { pattern: /(?:Тинькофф|Tинькoфф|TINKOFF)/i, account: { type: null, company: { id: '4902' } } },
+    { pattern: /(?:Home\s*Credit|Хоум\s*Кредит|HCFB)/i, account: { type: null, company: { id: '4412' } } },
+    { pattern: /(?:Яндекс.Деньги?|YANDEX.MONEY)/i, account: { type: null, company: { id: '15420' } } },
+    { pattern: /(?:УРАЛСИБ)/i, account: { type: null, company: { id: '4783' } } },
+    // Украина
+    { pattern: /(?:MONODirect)/i, account: { type: 'ccard', company: { id: '15620' } } },
+    { pattern: /(?:Приват|P24)/i, account: { type: null, company: { id: '12574' } } },
+    { pattern: /(?:УКРСИББАНК)/i, account: { type: null, company: { id: '15395' } } }
+  ]) {
+    if (data.pattern.test(str)) {
+      const account = data.account
+      if (account && !account.type && /(?:card2card?|[cс]2[cс])/i.test(str)) {
+        account.type = 'ccard'
       }
+      return account
     }
   }
   return null
