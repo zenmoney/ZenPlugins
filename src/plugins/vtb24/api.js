@@ -128,8 +128,6 @@ async function burlapRequest (options) {
       'Ошибка обращения'
     ].some(str => response.body.message.indexOf(str) >= 0)) {
       throw new BankMessageError(response.body.message)
-    } else {
-      console.assert(false, 'unexpected error', response)
     }
   }
   return response
