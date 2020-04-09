@@ -127,9 +127,9 @@ async function burlapRequest (options) {
     } else if ([
       'Ошибка обращения'
     ].some(str => response.body.message.indexOf(str) >= 0)) {
-      throw new Error(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: ${response.body.message}`)
-    } else {
       throw new BankMessageError(response.body.message)
+    } else {
+      console.assert(false, 'unexpected error', response)
     }
   }
   return response
