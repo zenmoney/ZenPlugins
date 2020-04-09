@@ -1,8 +1,9 @@
 import * as api from './api'
+import * as auth from './auth'
 import * as converters from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
-  const authInfo = await api.authenthicate(preferences.login, preferences.password)
+  const authInfo = await auth.getToken(preferences.login, preferences.password)
 
   const accounts = await api.fetchCardsAndWallets(authInfo).then(cardsAndWallets => converters.extractAccounts(cardsAndWallets))
 
