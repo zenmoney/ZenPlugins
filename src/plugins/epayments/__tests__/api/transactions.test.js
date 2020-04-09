@@ -25,7 +25,7 @@ function mockTransactionsRequest (tokenType, token, ...mocks) {
 describe('Transactions API', () => {
   it('should throw error on status code != 200', async () => {
     mockTransactionsRequest('bearer', 'example', {
-      matcher: 'https://api.epayments.com/v2/Transactions',
+      matcher: 'https://api.epayments.com/v3/Transactions',
       response: {
         status: 400,
         body: {}
@@ -37,7 +37,7 @@ describe('Transactions API', () => {
 
   it('should return transactions with count < 10', async () => {
     mockTransactionsRequest('bearer', 'example2', {
-      matcher: 'https://api.epayments.com/v2/Transactions',
+      matcher: 'https://api.epayments.com/v3/Transactions',
       response: {
         status: 200,
         body: {
@@ -56,7 +56,7 @@ describe('Transactions API', () => {
     mockTransactionsRequest('bearer', 'example3', {
       matcher: (url, { body }) => {
         const parsed = JSON.parse(body)
-        return url === 'https://api.epayments.com/v2/Transactions' &&
+        return url === 'https://api.epayments.com/v3/Transactions' &&
           parsed.skip === 0 &&
           parsed.take === 10
       },
@@ -72,7 +72,7 @@ describe('Transactions API', () => {
     }, {
       matcher: (url, { body }) => {
         const parsed = JSON.parse(body)
-        return url === 'https://api.epayments.com/v2/Transactions' &&
+        return url === 'https://api.epayments.com/v3/Transactions' &&
           parsed.skip === 10 &&
           parsed.take === 10
       },
