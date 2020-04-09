@@ -136,7 +136,11 @@ async function requestTokenByCredentials (login, password) {
         await getSCAConfirmation(sessionId)
         return requestTokenWithRetry(login, password, undefined, sessionId)
       } else if (errorCode === 'otp_code_invalid' && type2Fa === 'StrongCustomerAuthenticator') {
-        console.debug(`Сессия ${sessionId} истекла, пробуем еще раз...`)
+        if (sessionId !== '' && _.get(response, 'body.error_description', '') !== '') {
+          console.debug(response.body.error_description)
+        } else {
+          console.debug(`Сессия ${sessionId} истекла, пробуем еще раз...`)
+        }
         return requestTokenWithRetry(login, password, undefined, undefined)
       } else if (errorCode === 'otp_code_required') {
         const otp = await readCode('Введите одноразовый пароль')
