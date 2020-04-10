@@ -111,7 +111,7 @@ export async function loginCodes (prefs) {
     sanitizeRequestLog: { body: { bbIbCodevalueField: true } }
   }, response => response.success, message => new Error(''))
 
-  if (res.body.match(/Смена пароля/)) {
+  if (res.body.indexOf('Смена пароля') >= 0) {
     throw new BankMessageError('Закончился срок действия пароля. Задайте новый пароль в интернет-банке Беларусбанка')
   }
 
@@ -170,7 +170,7 @@ export async function loginSMS (prefs) {
     sanitizeRequestLog: { body: { bbIbCodeSmsvalueField: true } }
   }, response => response.success, message => new Error(''))
 
-  if (res.body.match(/Смена пароля/)) {
+  if (res.body.indexOf('Смена пароля') >= 0) {
     throw new BankMessageError('Закончился срок действия пароля. Задайте новый пароль в интернет-банке Беларусбанка')
   }
 
