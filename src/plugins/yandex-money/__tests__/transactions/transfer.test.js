@@ -86,4 +86,20 @@ describe('convertTransaction', () => {
       amount_currency: 'RUB'
     }, account)).toBeNull()
   })
+
+  it('skips transactions with amount = 0', () => {
+    expect(convertTransaction({
+      group_id: 'type_history_non_p2p_deposit',
+      operation_id: '639014474966232004',
+      title: 'Корректировка: списание бонусов',
+      amount: 0,
+      direction: 'in',
+      datetime: '2020-04-01T00:01:14Z',
+      status: 'success',
+      type: 'deposition',
+      spendingCategories: [{ name: 'Deposition', sum: 0 }],
+      amount_currency: 'RUB',
+      is_sbp_operation: false
+    }, account)).toBeNull()
+  })
 })

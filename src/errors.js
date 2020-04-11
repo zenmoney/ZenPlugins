@@ -35,6 +35,8 @@ export class InvalidLoginOrPasswordError extends InvalidPreferencesError {}
 
 export class InvalidOtpCodeError extends TemporaryError {}
 
+export class PinCodeInsteadOfPasswordError extends InvalidPreferencesError {}
+
 export class BankMessageError extends TemporaryError {
   constructor (bankMessage, forcePluginReinstall) {
     if (typeof bankMessage !== 'string' || !bankMessage) {

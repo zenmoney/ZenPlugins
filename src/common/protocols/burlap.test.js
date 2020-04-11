@@ -84,6 +84,10 @@ describe('parseXml', () => {
     expect(parseXml('<date>19791210T210000.000Z</date>')).toEqual(new Date('1979-12-10T21:00:00Z'))
   })
 
+  it('parses date < 1900', () => {
+    expect(parseXml('<date>00010102T210000.000Z</date>')).toEqual(new Date('0001-01-02T21:00:00Z'))
+  })
+
   it('parses map', () => {
     expect(parseXml('<map><type>MapType</type></map>')).toEqual({
       __type: 'MapType'

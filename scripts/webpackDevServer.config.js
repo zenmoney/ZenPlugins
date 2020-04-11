@@ -181,6 +181,15 @@ module.exports = ({ allowedHost, host, https }) => {
           proxyRes.headers['location'] = pathname + search +
             ((search === '') ? '?' : '&') + PROXY_TARGET_HEADER + '=' + origin
         }
+        proxyRes.headers = _.mapValues(proxyRes.headers, value => {
+          if (_.isArray(value)) {
+            return value.map(value => value.replace(/[^\t\x20-\x7e\x80-\xff]/g, ''))
+          } else if (_.isString(value)) {
+            return value.replace(/[^\t\x20-\x7e\x80-\xff]/g, '')
+          } else {
+            throw new Error('unexpected header value type')
+          }
+        })
       })
 
       const wsOptions = {}

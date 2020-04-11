@@ -5,7 +5,13 @@ import { toISODateString } from '../../common/dateUtils'
 import { fetch } from '../../common/network'
 import { parseResponseBody, stringifyRequestBody } from '../../common/protocols/burlap'
 import { randomInt } from '../../common/utils'
-import { BankMessageError, InvalidLoginOrPasswordError, InvalidOtpCodeError, TemporaryUnavailableError } from '../../errors'
+import {
+  BankMessageError,
+  InvalidLoginOrPasswordError,
+  InvalidOtpCodeError,
+  TemporaryUnavailableError,
+  PinCodeInsteadOfPasswordError
+} from '../../errors'
 
 const md5 = new MD5()
 
@@ -121,8 +127,6 @@ async function burlapRequest (options) {
     } else if ([
       'Ошибка обращения'
     ].some(str => response.body.message.indexOf(str) >= 0)) {
-      throw new Error(`Во время синхронизации произошла ошибка.\n\nСообщение от банка: ${response.body.message}`)
-    } else {
       throw new BankMessageError(response.body.message)
     }
   }
@@ -192,10 +196,15 @@ export async function login (login, password) {
       }
     }
   })
-  if (response.body.type === 'invalid-credentials') {
-    throw new InvalidLoginOrPasswordError()
+  if (response.body.type === 'invalid-credentials' || response.body.type === 'invalid-argument') {
+    if (password.length === 4) {
+      throw new PinCodeInsteadOfPasswordError()
+    } else {
+      throw new InvalidLoginOrPasswordError()
+    }
   }
-  console.assert(response.body.authorization.methods.find(method => method.id === 'SMS'), 'unsupported authorization method')
+
+  console.assert(response.body.authorization.methods.find(method => method.id === 'SMS') || response.body.authorization.type.id === 'SMS', 'unsupported authorization method')
   await burlapRequest({
     token,
     theme: 'SelectAuthorizationTypeRequest theme',
@@ -287,7 +296,7 @@ export async function fetchAccounts ({ login, token }) {
   // console.assert(response.body.executionPercent === 100 &&
   //   response.body.status === 'Complete', 'missing some accounts data')
   if (response.body.executionPercent < 75) {
-  // if (response.body.executionPercent !== 100 || response.body.status !== 'Complete') {
+    // if (response.body.executionPercent !== 100 || response.body.status !== 'Complete') {
     throw new TemporaryUnavailableError()
   }
   return response.body.portfolios

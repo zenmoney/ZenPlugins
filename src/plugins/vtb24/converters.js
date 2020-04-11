@@ -315,9 +315,12 @@ export function convertTransaction (apiTransaction, account) {
     invoice.sum = -Math.abs(invoice.sum)
   }
   amount.sum = Math.sign(invoice.sum) * Math.abs(amount.sum)
+  const date = new Date(apiTransaction.transactionDate).getFullYear() < 1900
+    ? new Date(apiTransaction.processedDate)
+    : new Date(apiTransaction.transactionDate)
   const transaction = {
     comment: null,
-    date: new Date(apiTransaction.transactionDate),
+    date: date,
     hold: apiTransaction.isHold,
     merchant: null,
     movements: [

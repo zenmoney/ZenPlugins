@@ -41,7 +41,8 @@
     "jest-raw-loader": "1.0.1",
     "jshashes": "1.0.7",
     "lodash": "4.17.4",
-    "moment": "2.22.2",
+    "moment": "2.24.0",
+    "moment-timezone": "0.5.28",
     "node-forge": "0.7.6",
     "object-assign": "4.1.1",
     "pad-left": "2.1.0",
@@ -65,7 +66,7 @@
     "mockdate": "^2.0.2"
   },
   "scripts": {
-    "start": "yarn && node scripts/start.js",
+    "start": "yarn && node --http-parser=legacy --insecure-http-parser scripts/start.js",
     "host": "yarn && node scripts/host.js",
     "build": "yarn && node scripts/build.js",
     "test": "yarn && standard && node scripts/test.js"

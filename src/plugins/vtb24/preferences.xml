@@ -11,8 +11,9 @@
 	</EditTextPreference>
 	<EditTextPreference
 		key="password"
-		title="Пароль"
-		dialogTitle="Пароль"
+		title="Пароль от интернет-банка"
+		dialogTitle="Пароль от интернет-банка"
+		dialogMessage="Пароль от интернет-банка и пин-код от приложения — это разные пароли. Если вы не помните пароль, восстановите его на сайте банка"
 		positiveButtonText="ОК"
 		negativeButtonText="Отмена"
 		summary="||***********"
