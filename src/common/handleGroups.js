@@ -1,7 +1,7 @@
-export function handleGroupBy (groupHandlers) {
+export function handleGroupBy (groupHandlers, options) {
   return groupItems => {
     for (const handler of groupHandlers) {
-      const items = handler(groupItems)
+      const items = handler(groupItems, options)
       if (items) {
         return items
       }
