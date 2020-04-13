@@ -203,7 +203,7 @@ function parseOuterIncomeTransfer (transaction, apiTransaction, account) {
     sum: -invoice.sum,
     fee: 0
   })
-  if (!outerAccount && ['Сбербанк Онлайн', 'Сбербанк'].indexOf(apiTransaction.to) < 0) {
+  if (apiTransaction.to && !outerAccount && ['Сбербанк Онлайн', 'Сбербанк'].indexOf(apiTransaction.to) < 0) {
     transaction.merchant = {
       country: null,
       city: null,

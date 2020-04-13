@@ -247,4 +247,133 @@ describe('convertTransaction', () => {
       comment: null
     })
   })
+
+  it('converts outer income transfer with no field to:', () => {
+    expect(convertTransaction({
+      id: '13063354624',
+      ufsId: null,
+      state: 'AUTHORIZATION',
+      date: '06.04.2020T13:57:57',
+      from: '145765620',
+      description: 'Входящий перевод',
+      operationAmount: { amount: '1790.00', currency: { code: 'RUB', name: 'руб.' } },
+      isMobilePayment: 'false',
+      copyable: 'false',
+      templatable: 'false',
+      autopayable: 'false',
+      type: 'payment',
+      invoiceSubscriptionSupported: 'false',
+      invoiceReminderSupported: 'false',
+      form: 'ExtCardTransferIn',
+      nationalAmount: { amount: '1790.00', currency: { code: 'RUB', name: 'руб.' } },
+      creationChannel: 'external',
+      classificationCode: '6536',
+      details: {
+        description:
+          {
+            name: 'description',
+            title: 'Описание',
+            type: 'string',
+            required: 'false',
+            editable: 'false',
+            visible: 'false',
+            stringType: null,
+            changed: 'false'
+          },
+        toResource:
+          {
+            name: 'toResource',
+            title: 'Счет зачисления',
+            type: 'resource',
+            required: 'true',
+            editable: 'false',
+            visible: 'true',
+            resourceType:
+              {
+                availableValues:
+                  {
+                    valueItem:
+                      {
+                        value: 'card:587203075',
+                        selected: 'true',
+                        displayedValue: '5336 69** **** 8477 [MasterCard Mass]',
+                        currency: 'RUB'
+                      }
+                  }
+              },
+            changed: 'false'
+          },
+        fromResource:
+          {
+            name: 'fromResource',
+            title: 'Счет списания',
+            type: 'string',
+            required: 'false',
+            editable: 'false',
+            visible: 'true',
+            stringType: { value: '**** 5620' },
+            changed: 'false'
+          },
+        buyAmount:
+          {
+            name: 'buyAmount',
+            title: 'Сумма зачисления',
+            type: 'money',
+            required: 'false',
+            editable: 'false',
+            visible: 'true',
+            moneyType: { value: '1790', currency: { code: 'RUB' } },
+            changed: 'false'
+          },
+        amount:
+          {
+            name: 'amount',
+            title: 'Сумма в валюте счета',
+            type: 'money',
+            required: 'false',
+            editable: 'false',
+            visible: 'false',
+            moneyType: null,
+            changed: 'false'
+          },
+        operationDate:
+          {
+            name: 'operationDate',
+            title: 'Дата и время совершения операции',
+            type: 'string',
+            required: 'false',
+            editable: 'false',
+            visible: 'true',
+            stringType: { value: '06.04.2020 13:57:57' },
+            changed: 'false'
+          }
+      }
+    }, { id: 'account', instrument: 'RUB' })).toEqual({
+      hold: true,
+      date: new Date('2020-04-06T13:57:57+03:00'),
+      movements: [
+        {
+          id: '13063354624',
+          account: { id: 'account' },
+          invoice: null,
+          sum: 1790,
+          fee: 0
+        },
+        {
+          id: null,
+          account: {
+            type: null,
+            instrument: 'RUB',
+            company: null,
+            syncIds: ['5620']
+          },
+          invoice: null,
+          sum: -1790,
+          fee: 0
+        }
+      ],
+      merchant: null,
+      comment: null
+    })
+  })
 })
