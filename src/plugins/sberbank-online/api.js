@@ -3,7 +3,7 @@ import _ from 'lodash'
 import * as moment from 'moment'
 import * as qs from 'querystring'
 import { parseOuterAccountData } from '../../common/accounts'
-import { fetch, ParseError, parseXml } from '../../common/network'
+import { fetch, ParseError, parseXml, fetchJson } from '../../common/network'
 import { retry, RetryError, toNodeCallbackArguments } from '../../common/retry'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { BankMessageError, InvalidOtpCodeError, TemporaryUnavailableError } from '../../errors'
@@ -205,7 +205,7 @@ export async function fetchAccounts (auth) {
     body: { showProductType: 'cards,accounts,imaccounts,loans' }
   })
   const types = ['card', 'account', 'loan', 'target', 'ima']
-  return (await Promise.all(types.map(type => {
+  let accounts = (await Promise.all(types.map(type => {
     return Promise.all(getArray(_.get(response.body, type !== 'ima' ? `${type}s.${type}` : 'imaccounts.ima')).map(async account => {
       const params = account.mainCardId || (type === 'card' && account.type !== 'credit') || type === 'ima' || type === 'target'
         ? null
@@ -219,6 +219,72 @@ export async function fetchAccounts (auth) {
     accounts[types[i]] = objects
     return accounts
   }, {})
+
+  const accountsIIS = await fetchAccountsIIS(auth)
+
+  accounts = ({ ...accounts, iis: accountsIIS })
+
+  return accounts
+}
+
+async function fetchAccountsIIS (auth) {
+  let response = await getTokenIIS(auth, 'ufs')
+  if (!response) {
+    return []
+  }
+  let token = response.token
+  const hostIIS = response.host
+  response = await fetchJson(`https://${hostIIS}/sm-uko/v2/session/create`, {
+    method: 'POST',
+    headers: {
+      ...defaultHeaders,
+      'Host': hostIIS,
+      'Content-Type': 'application/json;charset=UTF-8'
+    },
+    body: { token },
+    sanitizeRequestLog: { body: { token: true } }
+  })
+  const cookiesArray = response.headers['set-cookie'].split(';')
+  const ucsSessionId = cookiesArray.find(cookie => cookie.indexOf('UFS-SESSION') >= 0)
+  response = await getTokenIIS(auth, 'pfm')
+  token = response.token
+  const host = response.host
+  await fetch(`https://${host}/pfm/api/v1.40/login?token=${token}`, {
+    method: 'GET',
+    headers: {
+      ..._.omit(defaultHeaders, ['Content-Type']),
+      'Host': host
+    }
+  })
+
+  response = await fetchJson(`https://${hostIIS}/brokerage-info-mb/rest/v1.0/mobile/Banking/Product/Brokerage/Mobile/Agreements/List`, {
+    method: 'POST',
+    headers: {
+      ...defaultHeaders,
+      'Host': hostIIS,
+      'Content-Type': 'application/json;charset=UTF-8',
+      'UCS_SESSION_ID': ucsSessionId
+    },
+    body: {}
+  })
+  return (response.body.body && response.body.body.agreements) || []
+}
+
+async function getTokenIIS (auth, systemName) {
+  const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/unifiedClientSession/getToken.do`, {
+    headers: {
+      ...defaultHeaders,
+      'Host': `${auth.api.host}:4477`,
+      'Content-Type': 'application/x-www-form-urlencoded;charset=windows-1251',
+      'Cookie': auth.api.cookie
+    },
+    body: { systemName }
+  })
+  if (response.body.error && response.body.error.indexOf('Для системы ufs получение токена в данный момент недоступно')) {
+    return null
+  }
+  console.assert(response.status === 200, 'unexpected response getToken in fetchAccountsIIS', response)
+  return { token: response.body.token, host: response.body.host }
 }
 
 async function fetchAccountDetails (auth, { id, type }) {
@@ -301,21 +367,30 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
         'AccountClosingPayment',
         'IMAOpeningClaim',
         'IMAPayment',
-        'P2PExternalBankTransfer'
+        'P2PExternalBankTransfer',
+        'BrokerTransfer'
       ].indexOf(transaction.form) >= 0 ||
       parseOuterAccountData(transaction.to) ||
       transaction.to === 'Автоплатеж' ||
       isCashTransfer(transaction)) {
-      const detailsResponse = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/payments/view.do`, {
-        headers: {
-          ...defaultHeaders,
-          'Host': `${auth.api.host}:4477`,
-          'Cookie': auth.api.cookie
-        },
-        body: {
-          id: transaction.id
+      let detailsResponse
+      try {
+        detailsResponse = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/payments/view.do`, {
+          headers: {
+            ...defaultHeaders,
+            'Host': `${auth.api.host}:4477`,
+            'Cookie': auth.api.cookie
+          },
+          body: {
+            id: transaction.id
+          }
+        }, null)
+      } catch (e) {
+        if (!(e instanceof TemporaryUnavailableError)) {
+          throw e
         }
-      }, null)
+        return
+      }
       if (detailsResponse.body.status === '3') {
         return
       }
@@ -327,6 +402,11 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
       if (detailsResponse.body.status === '2' &&
         detailsResponse.body.error &&
         detailsResponse.body.error.indexOf('Во время выполнения операции произошла ошибка') >= 0) {
+        return
+      }
+      if (detailsResponse.body.status === '5' &&
+        detailsResponse.body.error &&
+        detailsResponse.body.error.indexOf('Доступ к операции запрещен') >= 0) {
         return
       }
 
@@ -421,7 +501,7 @@ export function filterTransactions (transactions, fromDate) {
 }
 
 export async function fetchTransactions (auth, { id, type, instrument }, fromDate, toDate) {
-  if (type === 'ima') {
+  if (type === 'ima' || type === 'iis') {
     return []
   }
   const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/${type !== 'ima' ? type + 's' : 'ima'}/abstract.do`, {

@@ -104,7 +104,7 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
           throw e
         }
       }
-      if (product.type !== 'loan' && product.type !== 'ima') {
+      if (product.type !== 'loan' && product.type !== 'ima' && product.type !== 'iis') {
         const apiPayments = await fetchPayments(auth, product, fromDate, toDate)
         if (isBalanceAmbiguous) {
           apiTransactions = apiPayments

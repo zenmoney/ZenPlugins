@@ -381,7 +381,7 @@ export function formatDateSql (date) {
 export function convertAccounts (apiAccountsByType) {
   const accountData = []
   const accountsById = {}
-  for (const type of ['account', 'loan', 'card', 'target', 'ima']) {
+  for (const type of ['account', 'loan', 'card', 'target', 'ima', 'iis']) {
     for (const data of convertAccountsWithType(apiAccountsByType[type], type)) {
       const dataForTheSameAccount = accountData.find(d => d.zenAccount.id === data.zenAccount.id)
       if (dataForTheSameAccount) {
@@ -428,6 +428,9 @@ function convertAccountsWithType (apiAccountsArray, type) {
         case 'ima':
           data = convertMetalAccount(apiAccount.account)
           break
+        case 'iis':
+          data = convertBrokerAccount(apiAccount)
+          break
         default:
           data = apiAccount.account.rate && apiAccount.details && apiAccount.details.detail.period && parseDecimal(apiAccount.account.rate) > 2
             ? convertDeposit(apiAccount.account, apiAccount.details)
@@ -441,6 +444,30 @@ function convertAccountsWithType (apiAccountsArray, type) {
     return accountData
   }
   return convertCards(apiAccountsArray)
+}
+
+export function convertBrokerAccount (apiAccount) {
+  let syncID = ''
+  for (let i = 0; i < apiAccount.id.length; i++) {
+    syncID += apiAccount.id.charCodeAt(i).toString()
+  }
+  return {
+    products: [
+      {
+        id: apiAccount.id,
+        type: 'iis',
+        instrument: apiAccount.total.currency.code
+      }
+    ],
+    zenAccount: {
+      id: 'iis:' + apiAccount.id,
+      type: 'investment',
+      title: `Брокерский счёт ${apiAccount.id}`,
+      instrument: apiAccount.total.currency.code,
+      balance: apiAccount.total.value,
+      syncID: [syncID]
+    }
+  }
 }
 
 function toMoscowDate (date) {
