@@ -206,6 +206,12 @@ export async function login (login, password) {
   if (response.body.message && response.body.message.indexOf('Вы четыре раза подряд неверно ввели пароль или код подтверждения') >= 0) {
     throw new BankMessageError(response.body.message)
   }
+  if (response.body.message && response.body.message.indexOf('срок действия Вашего временного пароля истек') >= 0) {
+    throw new BankMessageError(response.body.message.replace(
+      'Для восстановления доступа к ВТБ-Онлайн пройдите по ссылке',
+      'Для восстановления доступа к ВТБ-Онлайн откройте приложение банка ВТБ и пройдите по ссылке'
+    ))
+  }
 
   console.assert(response.body.authorization.methods.find(method => method.id === 'SMS') || response.body.authorization.type.id === 'SMS', 'unsupported authorization method')
   await burlapRequest({
