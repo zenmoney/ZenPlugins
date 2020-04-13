@@ -203,6 +203,9 @@ export async function login (login, password) {
       throw new InvalidLoginOrPasswordError()
     }
   }
+  if (response.body.message && response.body.message.indexOf('Вы четыре раза подряд неверно ввели пароль или код подтверждения') >= 0) {
+    throw new BankMessageError(response.body.message)
+  }
 
   console.assert(response.body.authorization.methods.find(method => method.id === 'SMS') || response.body.authorization.type.id === 'SMS', 'unsupported authorization method')
   await burlapRequest({
