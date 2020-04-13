@@ -387,6 +387,7 @@ export async function fetchCardsTransactions (acc, fromDate, toDate) {
   action = $('form[id="' + viewns + '"]').attr('action')
   if (!action) { // нет операций в истории
     viewns = viewns.replace('AccountStmtForm', 'accountStmtLastForm')
+    viewns = viewns.replace('accountStmtStartPageForm', 'accountStmtLastForm')
     action = $('form[id="' + viewns + '"]').attr('action')
   }
   body = {
