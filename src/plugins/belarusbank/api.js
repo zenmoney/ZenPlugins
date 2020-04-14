@@ -23,6 +23,9 @@ async function fetchUrl (url, options, predicate = () => true, error = (message)
   }
   let err = response.body.match(/<p id ="status_message" class="error">(.[^/]*)</i)
   if (err && err[1].indexOf('СМС-код отправлен на номер телефона') === -1) {
+    if (err[1].indexOf('Необходимо настроить номер телефона для получения СМС') >= 0) {
+      throw new BankMessageError(err[1] + '. Это можно сделать на сайте или в приложении Беларусбанка.')
+    }
     // throw new TemporaryError(err[1])
     console.assert(false, 'error fetchUrl')
   }
@@ -385,10 +388,10 @@ export async function fetchCardsTransactions (acc, fromDate, toDate) {
   // возврат к списку счетов
   $ = cheerio.load(res.body)
   action = $('form[id="' + viewns + '"]').attr('action')
-  if (!action) { // нет операций в истории
+  if (!action) { // нет операций в истории или только 1 страница в истории
     viewns = viewns.replace('AccountStmtForm', 'accountStmtLastForm')
     viewns = viewns.replace('accountStmtStartPageForm', 'accountStmtLastForm')
-    action = $('form[id="' + viewns + '"]').attr('action')
+    action = $('form[id="' + viewns + '"]').attr('action') || $('form[id="' + viewns.replace('accountStmtLastForm', 'AccountStmtForm') + '"]').attr('action')
   }
   body = {
     'javax.faces.encodedURL': $('input[name="javax.faces.encodedURL"]').attr('value'),
