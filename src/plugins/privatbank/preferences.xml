@@ -16,8 +16,7 @@
         dialogTitle="32-значный пароль мерчанта"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
-        summary="||******"
-        inputType="textPassword">
+        summary="||{@s}">
     </EditTextPreference>
     <ListPreference
         key="proxy"
