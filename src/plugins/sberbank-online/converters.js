@@ -13,6 +13,13 @@ export function convertTransaction (apiTransaction, account, accountsById) {
   if (!invoice || !invoice.sum) {
     return null
   }
+  if ([
+    'CreateAutoSubscriptionPayment', // Создание автоплатежа
+    'AcceptAutoSubscriptionExecuteClaim', // Отмена исполнения автоплатежа
+    'Редактирование автоплатежа' // Редактирование автоплатежа
+  ].indexOf(apiTransaction.form) > 0) {
+    return null
+  }
   if (parseMetalInstrument(apiTransaction.operationAmount.currency.code)) {
     invoice.sum /= GRAMS_IN_OZ
   }
