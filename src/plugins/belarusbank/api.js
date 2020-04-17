@@ -17,6 +17,8 @@ async function fetchUrl (url, options, predicate = () => true, error = (message)
   options.method = options.method ? options.method : 'POST'
   options.stringify = querystring.stringify
 
+  console.assert(url.indexOf('undefined') === -1, 'undefined in url', url)
+
   const response = await fetch(baseUrl + url, options)
   if (predicate) {
     validateResponse(response, response => predicate(response), error)
@@ -25,6 +27,17 @@ async function fetchUrl (url, options, predicate = () => true, error = (message)
   if (err && err[1].indexOf('СМС-код отправлен на номер телефона') === -1) {
     if (err[1].indexOf('Необходимо настроить номер телефона для получения СМС') >= 0) {
       throw new BankMessageError(err[1] + '. Это можно сделать на сайте или в приложении Беларусбанка.')
+    }
+    // ошибка приходит в ответе на 1й запрос loginSMS()
+    if (err[1].indexOf('Выбранный способ аутентификации отключён') >= 0) {
+      throw new BankMessageError(`Аутентификация по СМС отключена. Выберите в настройках аутентификацию по кодам или включите вход по СМС в приложении или на сайте банка.`)
+    }
+    // ошибка приходит в ответе на 1й запрос loginSMS()
+    if (err[1].indexOf('Вы заблокированы из-за трёхкратного ошибочного ввода') >= 0) {
+      throw new BankMessageError(err[1])
+    }
+    if (err[1].indexOf('Введён неправильный код') >= 0) {
+      throw new BankMessageError(err[1])
     }
     // throw new TemporaryError(err[1])
     console.assert(false, 'error fetchUrl')
@@ -327,87 +340,93 @@ export async function fetchCardsTransactions (acc, fromDate, toDate) {
     body: body
   }, response => response.success, message => new Error(''))
 
-  viewns = viewns.replace('ClientCardsDataForm', 'accountStmtStartPageForm')
+  let transactions = []
   const cheerio = require('cheerio')
-  let $ = cheerio.load(res.body)
-  let action = $('form[id="' + viewns + '"]').attr('action')
+  let $
+  let action
+  let pages
+  if (res.body.match(/ id="(.{1,200})">Продолжить<\/a>/) !== -1) {
+    viewns = viewns.replace('ClientCardsDataForm', 'accountStmtStartPageForm')
+    $ = cheerio.load(res.body)
+    action = $('form[id="' + viewns + '"]').attr('action')
 
-  body = {
-    'javax.faces.encodedURL': $('input[name="javax.faces.encodedURL"]').attr('value'),
-    'javax.faces.ViewState': $('input[name="javax.faces.ViewState"]').attr('value')
-  }
-  body[viewns + '_SUBMIT'] = 1
-  body[viewns + ':_idcl'] = res.body.match(/ id="(.{1,200})">Продолжить<\/a>/)[1]
-
-  fromDate = new Date(fromDate.toISOString().slice(0, 10) + 'T00:00:00+00:00')
-  toDate = new Date(toDate.toISOString().slice(0, 10) + 'T00:00:00+00:00')
-  const today = new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00+00:00')
-  const days90 = 90 * 24 * 60 * 60 * 1000
-  if (today.getTime() - toDate.getTime() > days90) {
-    fromDate = new Date(today.getTime() - days90)
-    toDate = today
-  } else if (today.getTime() - fromDate.getTime() > days90) {
-    fromDate = new Date(today.getTime() - days90)
-  }
-
-  const dateStart =
-    padLeft(fromDate.getDate().toString(), 2, '0') + '.' +
-    padLeft((fromDate.getMonth() + 1).toString(), 2, '0') + '.' +
-    fromDate.getFullYear()
-  const dateEnd =
-    padLeft(toDate.getDate().toString(), 2, '0') + '.' +
-    padLeft((toDate.getMonth() + 1).toString(), 2, '0') + '.' +
-    toDate.getFullYear()
-
-  body[viewns + ':SFPCalendarFromID'] = dateStart
-  body[viewns + ':SFPCalendarToID'] = dateEnd
-  res = await fetchUrl(action, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
-    },
-    body: body
-  }, response => response.success, message => new Error(''))
-
-  let pages = res.body.match(/Страница \d+ из (\d+)/) && parseInt(res.body.match(/Страница \d+ из (\d+)/)[1])
-  const transactions = pages ? parseTransactions(res.body, acc.id, 'operResultOk') : []
-  if (pages) {
-    viewns = viewns.replace('accountStmtStartPageForm', 'AccountStmtForm')
-    for (let i = 2; i <= pages; i++) {
-      $ = cheerio.load(res.body)
-      action = $('form[id="' + viewns + '"]').attr('action')
-      const encodedUrl = $('input[name="javax.faces.encodedURL"]').attr('value')
-      const viewState = $('input[name="javax.faces.ViewState"]').attr('value')
-      const idPage = 'idx' + i.toString()
-      res = await getNextPage({ action, encodedUrl, viewState, viewns, idPage })
-      const transOnPage = parseTransactions(res.body, acc.id, 'operResultOk')
-      transactions.push(...transOnPage)
+    body = {
+      'javax.faces.encodedURL': $('input[name="javax.faces.encodedURL"]').attr('value'),
+      'javax.faces.ViewState': $('input[name="javax.faces.ViewState"]').attr('value')
     }
-  }
+    body[viewns + '_SUBMIT'] = 1
+    body[viewns + ':_idcl'] = res.body.match(/ id="(.{1,200})">Продолжить<\/a>/)[1]
 
-  // возврат к списку счетов
-  $ = cheerio.load(res.body)
-  action = $('form[id="' + viewns + '"]').attr('action')
-  if (!action) { // нет операций в истории или только 1 страница в истории
-    viewns = viewns.replace('AccountStmtForm', 'accountStmtLastForm')
-    viewns = viewns.replace('accountStmtStartPageForm', 'accountStmtLastForm')
-    action = $('form[id="' + viewns + '"]').attr('action') || $('form[id="' + viewns.replace('accountStmtLastForm', 'AccountStmtForm') + '"]').attr('action')
+    fromDate = new Date(fromDate.toISOString().slice(0, 10) + 'T00:00:00+00:00')
+    toDate = new Date(toDate.toISOString().slice(0, 10) + 'T00:00:00+00:00')
+    const today = new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00+00:00')
+    const days90 = 90 * 24 * 60 * 60 * 1000
+    if (today.getTime() - toDate.getTime() > days90) {
+      fromDate = new Date(today.getTime() - days90)
+      toDate = today
+    } else if (today.getTime() - fromDate.getTime() > days90) {
+      fromDate = new Date(today.getTime() - days90)
+    }
+
+    const dateStart =
+      padLeft(fromDate.getDate().toString(), 2, '0') + '.' +
+      padLeft((fromDate.getMonth() + 1).toString(), 2, '0') + '.' +
+      fromDate.getFullYear()
+    const dateEnd =
+      padLeft(toDate.getDate().toString(), 2, '0') + '.' +
+      padLeft((toDate.getMonth() + 1).toString(), 2, '0') + '.' +
+      toDate.getFullYear()
+
+    body[viewns + ':SFPCalendarFromID'] = dateStart
+    body[viewns + ':SFPCalendarToID'] = dateEnd
+    res = await fetchUrl(action, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: body
+    }, response => response.success, message => new Error(''))
+
+    pages = res.body.match(/Страница \d+ из (\d+)/) && parseInt(res.body.match(/Страница \d+ из (\d+)/)[1])
+    transactions = pages && parseTransactions(res.body, acc.id, 'operResultOk')
+    if (pages) {
+      viewns = viewns.replace('accountStmtStartPageForm', 'AccountStmtForm')
+      for (let i = 2; i <= pages; i++) {
+        $ = cheerio.load(res.body)
+        action = $('form[id="' + viewns + '"]').attr('action')
+        const encodedUrl = $('input[name="javax.faces.encodedURL"]').attr('value')
+        const viewState = $('input[name="javax.faces.ViewState"]').attr('value')
+        const idPage = 'idx' + i.toString()
+        res = await getNextPage({ action, encodedUrl, viewState, viewns, idPage })
+        const transOnPage = parseTransactions(res.body, acc.id, 'operResultOk')
+        transactions.push(...transOnPage)
+      }
+    }
+
+    // возврат к списку счетов
+    $ = cheerio.load(res.body)
+    action = $('form[id="' + viewns + '"]').attr('action')
+    if (!action) { // нет операций в истории или только 1 страница в истории
+      viewns = viewns.replace('AccountStmtForm', 'accountStmtLastForm')
+      viewns = viewns.replace('accountStmtStartPageForm', 'accountStmtLastForm')
+      action = $('form[id="' + viewns + '"]').attr('action') || $('form[id="' + viewns.replace('accountStmtLastForm', 'AccountStmtForm') + '"]').attr('action')
+    }
+    body = {
+      'javax.faces.encodedURL': $('input[name="javax.faces.encodedURL"]').attr('value'),
+      'javax.faces.ViewState': $('input[name="javax.faces.ViewState"]').attr('value')
+    }
+    body[viewns + '_SUBMIT'] = 1
+    body[viewns + ':_idcl'] = res.body.match(/ id="(.{1,200})">Вернуться к списку счетов<\/a>/)
+      ? res.body.match(/ id="(.{1,200})">Вернуться к списку счетов<\/a>/)[1]
+      : res.body.match(/ id="(.{1,200})">Назад<\/a>/)[1]
+    res = await fetchUrl(action, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: body
+    }, response => response.success, message => new Error(''))
   }
-  body = {
-    'javax.faces.encodedURL': $('input[name="javax.faces.encodedURL"]').attr('value'),
-    'javax.faces.ViewState': $('input[name="javax.faces.ViewState"]').attr('value')
-  }
-  body[viewns + '_SUBMIT'] = 1
-  body[viewns + ':_idcl'] = res.body.match(/ id="(.{1,200})">Вернуться к списку счетов<\/a>/)
-    ? res.body.match(/ id="(.{1,200})">Вернуться к списку счетов<\/a>/)[1]
-    : res.body.match(/ id="(.{1,200})">Назад<\/a>/)[1]
-  res = await fetchUrl(action, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
-    },
-    body: body
-  }, response => response.success, message => new Error(''))
 
   console.log('>>> Загрузка холдов по ' + acc.title)
   $ = cheerio.load(res.body)
