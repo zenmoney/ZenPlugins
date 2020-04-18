@@ -170,11 +170,14 @@ export function convertAccount (apiAccount) {
     mainProduct.type = apiAccount.contract.__type
     zenAccount.id = apiAccount.contract.id
   }
-  if ([
-    'ru.vtb24.mobilebanking.protocol.product.SavingsAccountMto',
-    'ru.vtb24.mobilebanking.protocol.product.InvestmentAccountMto'
-  ].indexOf(apiAccount.__type) >= 0) {
-    zenAccount.savings = true
+  switch (apiAccount.__type) {
+    case 'ru.vtb24.mobilebanking.protocol.product.SavingsAccountMto':
+      zenAccount.savings = true
+      break
+    case 'ru.vtb24.mobilebanking.protocol.product.InvestmentAccountMto':
+      zenAccount.savings = true
+      zenAccount.type = 'investment'
+      break
   }
   return { mainProduct, products, zenAccount }
 }
