@@ -345,7 +345,7 @@ export async function fetchCardsTransactions (acc, fromDate, toDate) {
   let $
   let action
   let pages
-  if (res.body.match(/ id="(.{1,200})">Продолжить<\/a>/) !== -1) {
+  if (res.body.match(/ id="(.{1,200})">Продолжить<\/a>/) !== null) {
     viewns = viewns.replace('ClientCardsDataForm', 'accountStmtStartPageForm')
     $ = cheerio.load(res.body)
     action = $('form[id="' + viewns + '"]').attr('action')
