@@ -1,13 +1,14 @@
 import _ from 'lodash'
 import { fetchJson } from '../../common/network'
 
-const appVersion = '10.8.1'
+const appVersion = '10.95'
+const appSubVersion = '2015001494'
 const deviceName = 'Zenmoney'
 const osVersion = '7.1.1'
 const operationSystem = 'Android'
 const operationSystemVersion = '25'
 const applicationId = 'ru.alfabank.mobile.android'
-const userAgent = 'okhttp/3.8.0'
+const userAgent = 'okhttp/3.12.3'
 
 export function fetchAccessToken ({ sessionId, deviceId, refreshToken }) {
   return fetchJson('https://alfa-mobile.alfabank.ru/ALFAJMB/openid/token?refresh_token=' + refreshToken, {
@@ -43,6 +44,7 @@ export function login ({ sessionId, deviceId, accessToken }) {
         'deviceName': deviceName,
         'login': '',
         'loginType': 'token',
+        'nfcPayType': '',
         'operationSystem': operationSystem,
         'operationSystemVersion': operationSystemVersion,
         'password': ''
@@ -104,7 +106,8 @@ function assertNotServerError (response) {
     const messages = errors.map((x) => x.message).filter(Boolean)
     const allMessagesText = messages.join('\n')
     if (messages.some((x) => x.startsWith('Некорректные данные.'))) {
-      throw new InvalidPreferencesError('Неверный номер карты, срок ее действия или номер телефона')
+      // throw new InvalidPreferencesError('Неверный номер карты, срок ее действия или номер телефона')
+      console.assert(false, 'wrong data', response)
     }
     if (allMessagesText.includes('Мы обнаружили, что вы поменяли SIM-карту.')) {
       throw new TemporaryError(allMessagesText)
@@ -137,11 +140,15 @@ export async function callGate ({ sessionId, deviceId, service, body, accessToke
     'OS': operationSystem.toLowerCase(),
     'DEVICE-ID': deviceId,
     'DEVICE-MODEL': deviceName,
+    'ChannelID': 'M2',
     'applicationId': applicationId,
     'appVersion': appVersion,
     'osVersion': osVersion,
     'session_id': sessionId,
-    'User-Agent': userAgent
+    'User-Agent': userAgent,
+    'Host': 'alfa-mobile.alfabank.ru',
+    'Content-Type': 'application/octet-stream',
+    'Accept-Encoding': 'gzip'
   }
   if (accessToken) {
     headers['Authorization'] = `Bearer ${accessToken}`
@@ -159,7 +166,7 @@ export async function callGate ({ sessionId, deviceId, service, body, accessToke
 }
 
 async function getOidReference ({ queryRedirectParams, previousMultiFactorResponseParams }) {
-  const response = await fetchJson('https://sense.alfabank.ru/passport/cerberus-mini-green/dashboard-green/api/oid/reference', {
+  const response = await fetchJson('https://private.auth.alfabank.ru/passport/cerberus-mini-blue/dashboard-blue/api/oid/reference', {
     method: 'POST',
     body: {
       queryRedirectParams,
@@ -171,12 +178,11 @@ async function getOidReference ({ queryRedirectParams, previousMultiFactorRespon
   })
   assertNotServerError(response)
   console.assert(response.status === 200, 'getOidReference failed', response)
-  const { reference: { reference } } = response.body
-  return reference
+  return response.body.reference.reference
 }
 
 async function registerCustomer ({ queryRedirectParams, cardExpirationDate, cardNumber, phoneNumber }) {
-  const response = await fetchJson('https://sense.alfabank.ru/passport/cerberus-mini-green/dashboard-green/api/oid/registerCustomer', {
+  const response = await fetchJson('https://private.auth.alfabank.ru/passport/cerberus-mini-blue/dashboard-blue/api/oid/registerCustomer', {
     method: 'POST',
     body: {
       'credentials': {
@@ -195,7 +201,7 @@ async function registerCustomer ({ queryRedirectParams, cardExpirationDate, card
   assertNotServerError(response)
   console.assert(response.status === 200, 'registerCustomer failed', response)
 
-  const { params: previousMultiFactorResponseParams } = response.body
+  const previousMultiFactorResponseParams = response.body.params
   previousMultiFactorResponseParams.reference = await getOidReference({ queryRedirectParams, previousMultiFactorResponseParams })
   return { previousMultiFactorResponseParams }
 }
@@ -207,7 +213,15 @@ export async function register ({ deviceId, cardNumber, cardExpirationDate, phon
     'device_id': deviceId,
     'is_webview': 'true',
     'non_authorized_user': 'true',
-    'scope': 'openid mobile-bank'
+    'scope': 'openid mobile-bank',
+    'device_locale': 'ru_RU',
+    'device_model': deviceName,
+    'device_timezone': '+0300',
+    'device_app_version': `${appVersion} (${appSubVersion})`,
+    'device_uuid': deviceId,
+    'device_boot_time': '901234',
+    'device_name': deviceName,
+    'device_os_version': `${operationSystem} (${operationSystemVersion})`
   }
 
   const { previousMultiFactorResponseParams } = await registerCustomer({ queryRedirectParams, cardExpirationDate, cardNumber, phoneNumber })
@@ -231,14 +245,15 @@ export async function register ({ deviceId, cardNumber, cardExpirationDate, phon
 }
 
 export async function finishCustomerRegistration ({ confirmationCode, queryRedirectParams, previousMultiFactorResponseParams }) {
-  const response = await fetchJson('https://sense.alfabank.ru/passport/cerberus-mini-green/dashboard-green/api/oid/finishCustomerRegistration', {
+  const response = await fetchJson('https://private.auth.alfabank.ru/passport/cerberus-mini-blue/dashboard-blue/api/oid/finishCustomerRegistration', {
     method: 'POST',
     body: {
       'credentials': {
         code: confirmationCode,
         queryRedirectParams,
         previousMultiFactorResponseParams,
-        type: 'CARD'
+        type: 'CARD',
+        'is_push': false
       }
     },
     sanitizeRequestLog: { body: true },

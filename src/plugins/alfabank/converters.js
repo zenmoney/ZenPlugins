@@ -15,6 +15,8 @@ import { mergeTransfers } from '../../common/mergeTransfers'
 import { formatWithCustomInspectParams } from '../../consoleAdapter'
 import { parseApiAmount } from './api'
 
+export const GRAMS_IN_OZ = 31.1034768
+
 const trimPostfix = (string, postfix) => {
   if (!string.endsWith(postfix)) {
     throw new Error(`${JSON.stringify(string)} does not end with ${postfix}`)
@@ -73,16 +75,52 @@ function convertNonCreditApiAccount (apiAccount) {
 }
 
 export function toZenmoneyAccount (apiAccount) {
-  const { description, number, currencyCode, creditInfo } = apiAccount
+  const account = apiAccount.description === 'Счёт в драг. металлах'
+    ? convertMetalAccount(apiAccount)
+    : convertCardAccount(apiAccount)
+  return account
+}
+
+export function convertCardAccount (apiAccount) {
   return {
     type: 'ccard',
-    id: number,
-    title: description,
-    syncID: [number],
-    instrument: currencyCode,
-    ...creditInfo
+    id: apiAccount.number,
+    title: apiAccount.description,
+    syncID: [apiAccount.number],
+    instrument: apiAccount.currencyCode,
+    ...apiAccount.creditInfo
       ? convertCreditApiAccount(apiAccount)
       : convertNonCreditApiAccount(apiAccount)
+  }
+}
+
+export function convertMetalAccount (apiAccount) {
+  return {
+    type: 'checking',
+    id: 'ima:' + apiAccount.number,
+    title: apiAccount.description,
+    syncID: [apiAccount.number.replace(/\D/g, '$&'.charCodeAt(0))],
+    instrument: parseMetalInstrument(apiAccount.currencyCode),
+    balance: (Math.round(apiAccount.amount * 100) / 100) / GRAMS_IN_OZ
+  }
+}
+
+function parseMetalInstrument (instrument) {
+  switch (instrument) {
+    case 'AUR':
+    case 'A98':
+      return 'XAU'
+    case 'ARG':
+    case 'A99':
+      return 'XAG'
+    case 'PTR':
+    case 'A76':
+      return 'XPT'
+    case 'PDR':
+    case 'A33':
+      return 'XPD'
+    default:
+      return null
   }
 }
 
