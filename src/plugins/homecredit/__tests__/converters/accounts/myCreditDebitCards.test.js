@@ -30,7 +30,7 @@ describe('convertAccount', () => {
       },
       {
         account: {
-          'balance': 2315.25,
+          'available': 2315.25,
           'id': '7307250278',
           'instrument': 'RUB',
           'syncID': ['1234', '4567'],

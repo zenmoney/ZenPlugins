@@ -109,14 +109,15 @@ function convertCard (apiAccount) {
 
   // определим остаток на карте
   const creditLimit = apiAccount.creditLimit || apiAccount.CreditLimit
-  const availableBalance = apiAccount.availableBalance || apiAccount.AvailableBalance || apiAccount.balance || apiAccount.Balance
+  const availableBalance = apiAccount.availableBalance || apiAccount.AvailableBalance
+  const totalBalance = apiAccount.balance || apiAccount.Balance || -apiAccount.TotalIndebtedness
   if (creditLimit) {
     result.creditLimit = creditLimit
-    result.balance = Math.round((availableBalance - creditLimit) * 100) / 100
-  } else if (availableBalance) {
-    result.balance = availableBalance
-  } else {
-    result.balance = 0
+  }
+  if (availableBalance) {
+    result.available = availableBalance
+  } else if (totalBalance) {
+    result.balance = totalBalance
   }
   return result
 }

@@ -106,7 +106,7 @@ const accounts = {
       },
       {
         'account': {
-          'balance': 0,
+          'available': 150000,
           'creditLimit': 150000,
           'id': '2258773215',
           'instrument': 'RUB',
@@ -226,7 +226,7 @@ const accounts = {
       },
       {
         'account': {
-          'balance': 0,
+          'available': 150000,
           'creditLimit': 150000,
           'id': '2258773215',
           'instrument': 'RUB',
@@ -516,7 +516,7 @@ describe('collapseDoubleAccounts', () => {
     ).toEqual([
       {
         'account': {
-          'balance': 0,
+          'available': 150000,
           'creditLimit': 150000,
           'id': '2258773215',
           'instrument': 'RUB',

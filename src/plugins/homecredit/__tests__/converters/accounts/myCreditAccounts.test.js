@@ -351,93 +351,333 @@ const accounts = {
       }
     ]
   ],
-  CreditCard:
+  CreditCard: [
     [
-      [
-        {
-          '$id': '27',
-          Order: 7,
-          ContractNumber: '2124296333',
-          ProductName: 'Кредитная карта',
-          ProductType: 3,
-          Contract:
-            {
-              '$id': '28',
-              Debt:
-                {
-                  '$id': '29',
-                  DebtDays: 0,
-                  DebtAmount: 0,
-                  LastPaymentDebtDays: 0
-                },
-              Properties:
-                {
-                  '$id': '30',
-                  NextPaymentDate: '2019-05-15T00:00:00+03:00',
-                  PaymentNum: 0,
-                  FirstPaymentDate: '2011-09-24T00:00:00+04:00',
-                  RecPaymentDate: '2019-04-24T00:00:00+03:00',
-                  RecPaymentDateShow: '2019-05-10T00:00:00+03:00',
-                  SumToPay: 0
-                },
-              LastPayDate: '0001-01-01T00:00:00'
-            },
-          ContractStatus: 1,
-          AccountNumber: '40817810850030430052',
-          CreditLimit: 45000,
-          AvailableBalance: 10547.86,
-          TotalIndebtedness: 34452.14,
-          PrincipalDebtSum: 34452.14,
-          PenaltySum: 0,
-          InstalmentDebtSum: 0,
-          MinMonthDebtAmount: 0,
-          OverdueDaysNum: 0,
-          MainCardStatus: 2,
-          DateSign: '2011-08-20T04:00:00+04:00',
-          ProductSet: { '$id': '31', Code: 'Классика', Name: 'Карта "Классика"' },
-          MainCardNumber: '406364XXXXXX9567',
-          SigningChannel: 2,
-          IsPolza: false,
-          Colour: 3,
-          CreditCardGuiData:
-            {
-              '$id': '32',
-              CreditCardGuiStatus: 1,
-              ShowGauge: false,
-              DaysLeft: 0,
-              DaysLeftWordAgreement: 3,
-              DebtDaysWordAgreement: 3,
-              PaymentSystem: 1,
-              PercentAvailable: 23,
-              DisplayOrder: 0,
-              ShowTopUpWarning: false
-            },
-          CardType: 1,
-          IsPolzaLkAvalible: true,
-          IsActivationAvailable: false,
-          MainCardExpDate: '2022-06-30T03:00:00+03:00'
-        },
-        {
-          'account': {
-            'balance': -34452.14,
-            'creditLimit': 45000,
-            'id': '2124296333',
-            'instrument': 'RUB',
-            'syncID': ['0052', '9567'],
-            'title': 'Кредитная карта',
-            'type': 'ccard'
+      {
+        '$id': '27',
+        Order: 7,
+        ContractNumber: '2124296333',
+        ProductName: 'Кредитная карта',
+        ProductType: 3,
+        Contract:
+          {
+            '$id': '28',
+            Debt:
+              {
+                '$id': '29',
+                DebtDays: 0,
+                DebtAmount: 0,
+                LastPaymentDebtDays: 0
+              },
+            Properties:
+              {
+                '$id': '30',
+                NextPaymentDate: '2019-05-15T00:00:00+03:00',
+                PaymentNum: 0,
+                FirstPaymentDate: '2011-09-24T00:00:00+04:00',
+                RecPaymentDate: '2019-04-24T00:00:00+03:00',
+                RecPaymentDateShow: '2019-05-10T00:00:00+03:00',
+                SumToPay: 0
+              },
+            LastPayDate: '0001-01-01T00:00:00'
           },
-          'details': {
-            'accountNumber': '40817810850030430052',
-            'cardNumber': '406364XXXXXX9567',
-            'contractNumber': '2124296333',
-            'title': 'Кредитная карта',
-            'type': 'CreditCard'
-          }
+        ContractStatus: 1,
+        AccountNumber: '40817810850030430052',
+        CreditLimit: 45000,
+        AvailableBalance: 10547.86,
+        TotalIndebtedness: 34452.14,
+        PrincipalDebtSum: 34452.14,
+        PenaltySum: 0,
+        InstalmentDebtSum: 0,
+        MinMonthDebtAmount: 0,
+        OverdueDaysNum: 0,
+        MainCardStatus: 2,
+        DateSign: '2011-08-20T04:00:00+04:00',
+        ProductSet: { '$id': '31', Code: 'Классика', Name: 'Карта "Классика"' },
+        MainCardNumber: '406364XXXXXX9567',
+        SigningChannel: 2,
+        IsPolza: false,
+        Colour: 3,
+        CreditCardGuiData:
+          {
+            '$id': '32',
+            CreditCardGuiStatus: 1,
+            ShowGauge: false,
+            DaysLeft: 0,
+            DaysLeftWordAgreement: 3,
+            DebtDaysWordAgreement: 3,
+            PaymentSystem: 1,
+            PercentAvailable: 23,
+            DisplayOrder: 0,
+            ShowTopUpWarning: false
+          },
+        CardType: 1,
+        IsPolzaLkAvalible: true,
+        IsActivationAvailable: false,
+        MainCardExpDate: '2022-06-30T03:00:00+03:00'
+      },
+      {
+        'account': {
+          'available': 10547.86,
+          'creditLimit': 45000,
+          'id': '2124296333',
+          'instrument': 'RUB',
+          'syncID': ['0052', '9567'],
+          'title': 'Кредитная карта',
+          'type': 'ccard'
+        },
+        'details': {
+          'accountNumber': '40817810850030430052',
+          'cardNumber': '406364XXXXXX9567',
+          'contractNumber': '2124296333',
+          'title': 'Кредитная карта',
+          'type': 'CreditCard'
         }
-      ]
+      }
+    ]
+  ],
+  CreditCardTW: [
+    [
+      {
+        '$id': '51',
+        Order: 7,
+        ContractNumber: '2273851750',
+        ProductName: 'Карта Рассрочки',
+        ProductId: 1125,
+        ProductType: 7,
+        Contract: {
+          '$id': '52',
+          Debt: {
+            '$id': '53',
+            DebtDays: 0,
+            DebtAmount: 0,
+            LastPaymentDebtDays: 0
+          },
+          Properties: {
+            '$id': '54',
+            NextPaymentDate: '2020-02-15T00:00:00',
+            FirstPaymentDate: '2020-02-03T00:00:00',
+            RecPaymentDate: '2020-01-24T00:00:00',
+            RecPaymentDateShow: '2020-01-29T00:00:00',
+            SumToPay: 0,
+            ContractBillingDate: '2020-02-03T00:00:00'
+          }
+        },
+        ContractStatus: 1,
+        AccountNumber: '40817810393270007249',
+        CreditLimit: 10000,
+        AvailableBalance: 0,
+        InstalmentDebtSum: 0,
+        MinMonthDebtAmount: 0,
+        MainCardStatus: 2,
+        MainCardNumber: '450726XXXXXX8791',
+        IsPolza: false,
+        TotalIndebtedness: 7405.21,
+        PrincipalDebtSum: 10000,
+        InterestDebtSum: 0,
+        FeeDebtSum: 0,
+        PenaltySum: 0,
+        DateCreate: '2018-06-18T00:00:00',
+        DateSign: '2018-06-18T00:00:00',
+        StartPaymentPeriod: 15,
+        Colour: 3,
+        RecommendedPaymentSum: 0,
+        IsInstalmentProduct: true,
+        CardType: 2,
+        CreditCardTWGuiData: {
+          '$id': '55',
+          CreditCardTWGuiStatus: 1,
+          CreditCardTWPolzaGuiStatus: 0,
+          DisplayedPayments: 0,
+          ShowGauge: false,
+          DaysLeftWordAgreement: 0,
+          DebtDaysWordAgreement: 3,
+          PaymentSystem: 1,
+          DisplayOrder: 4,
+          PercentAvailable: 0,
+          ShowTwoBalances: false
+        },
+        OuterLimitInfo: {
+          '$id': '56',
+          IsOuterLimitOn: false,
+          OuterCreditLimit: 0,
+          OuterAvailableBalance: 0,
+          OuterCreditBalance: 0,
+          UsedOuterCreditLimit: 0,
+          UsedPartnersCreditLimit: 10000
+        },
+        IsActivationAvailable: false,
+        PaymentDetails: {
+          '$id': '57',
+          OverdueInterest: 0,
+          OverdueDebtBody: 0,
+          OverduePenalties: 0,
+          NonOverduePenalties: 0,
+          NonOverdueInterest: 0,
+          NonOverdueDebtBody: 0,
+          CurrentInstallmentsInMinPayment: 0,
+          OverdueFees: 0,
+          NonOverdueFees: 0,
+          CurrentInstallments: 0
+        },
+        ExtraServicesInfo: {
+          '$id': '58',
+          IsFinProtectionAvailable: false,
+          IsFinProtectionOn: false
+        },
+        AclipInfo: {
+          '$id': '59',
+          OfferedIncrease: 0,
+          IncreasedCreditLimit: 10000,
+          IncreasedAvailableBalance: 0
+        },
+        IsPinGenerated: true,
+        IsNoName: false,
+        IsAdditional: false,
+        MainCardMBR: 0,
+        MainCardExpDate: '2023-06-30T00:00:00',
+        IsPlasticActivationAvailable: false
+      },
+      {
+        'account': {
+          'balance': -7405.21,
+          'creditLimit': 10000,
+          'id': '2273851750',
+          'instrument': 'RUB',
+          'syncID': ['7249', '8791'],
+          'title': 'Карта Рассрочки',
+          'type': 'ccard'
+        },
+        'details': {
+          'accountNumber': '40817810393270007249',
+          'cardNumber': '450726XXXXXX8791',
+          'contractNumber': '2273851750',
+          'title': 'Карта Рассрочки',
+          'type': 'CreditCardTW'
+        }
+      }
     ],
-  CreditCardTW: []
+    [
+      {
+        '$id': '60',
+        Order: 7,
+        ContractNumber: '2273851750',
+        ProductName: 'Карта Рассрочки - неименная',
+        ProductId: 1125,
+        ProductType: 7,
+        Contract: {
+          '$id': '61',
+          Debt: {
+            '$id': '62',
+            DebtDays: 0,
+            DebtAmount: 0,
+            LastPaymentDebtDays: 0
+          },
+          Properties: {
+            '$id': '63',
+            NextPaymentDate: '2020-02-15T00:00:00',
+            FirstPaymentDate: '2020-02-03T00:00:00',
+            RecPaymentDate: '2020-01-24T00:00:00',
+            RecPaymentDateShow: '2020-01-29T00:00:00',
+            SumToPay: 0,
+            ContractBillingDate: '2020-02-03T00:00:00'
+          }
+        },
+        ContractStatus: 1,
+        AccountNumber: '40817810393270007249',
+        CreditLimit: 10000,
+        AvailableBalance: 0,
+        InstalmentDebtSum: 0,
+        MinMonthDebtAmount: 0,
+        MainCardStatus: 2,
+        MainCardNumber: '450726XXXXXX2774',
+        IsPolza: false,
+        TotalIndebtedness: 7405.21,
+        PrincipalDebtSum: 10000,
+        InterestDebtSum: 0,
+        FeeDebtSum: 0,
+        PenaltySum: 0,
+        DateCreate: '2018-06-18T00:00:00',
+        DateSign: '2018-06-18T00:00:00',
+        StartPaymentPeriod: 15,
+        Colour: 3,
+        RecommendedPaymentSum: 0,
+        IsInstalmentProduct: true,
+        CardType: 2,
+        CreditCardTWGuiData: {
+          '$id': '64',
+          CreditCardTWGuiStatus: 1,
+          CreditCardTWPolzaGuiStatus: 0,
+          DisplayedPayments: 0,
+          ShowGauge: false,
+          DaysLeftWordAgreement: 0,
+          DebtDaysWordAgreement: 3,
+          PaymentSystem: 1,
+          DisplayOrder: 5,
+          PercentAvailable: 0,
+          ShowTwoBalances: false
+        },
+        OuterLimitInfo: {
+          '$id': '65',
+          IsOuterLimitOn: false,
+          OuterCreditLimit: 0,
+          OuterAvailableBalance: 0,
+          OuterCreditBalance: 0,
+          UsedOuterCreditLimit: 0,
+          UsedPartnersCreditLimit: 10000
+        },
+        IsActivationAvailable: false,
+        PaymentDetails: {
+          '$id': '66',
+          OverdueInterest: 0,
+          OverdueDebtBody: 0,
+          OverduePenalties: 0,
+          NonOverduePenalties: 0,
+          NonOverdueInterest: 0,
+          NonOverdueDebtBody: 0,
+          CurrentInstallmentsInMinPayment: 0,
+          OverdueFees: 0,
+          NonOverdueFees: 0,
+          CurrentInstallments: 0
+        },
+        ExtraServicesInfo: {
+          '$id': '67',
+          IsFinProtectionAvailable: false,
+          IsFinProtectionOn: false
+        },
+        AclipInfo: {
+          '$id': '68',
+          OfferedIncrease: 0,
+          IncreasedCreditLimit: 10000,
+          IncreasedAvailableBalance: 0
+        },
+        IsPinGenerated: true,
+        IsNoName: true,
+        IsAdditional: false,
+        MainCardMBR: 0,
+        MainCardExpDate: '2023-05-31T00:00:00',
+        IsPlasticActivationAvailable: false
+      },
+      {
+        'account': {
+          'balance': -7405.21,
+          'creditLimit': 10000,
+          'id': '2273851750',
+          'instrument': 'RUB',
+          'syncID': ['7249', '2774'],
+          'title': 'Карта Рассрочки - неименная',
+          'type': 'ccard'
+        },
+        'details': {
+          'accountNumber': '40817810393270007249',
+          'cardNumber': '450726XXXXXX2774',
+          'contractNumber': '2273851750',
+          'title': 'Карта Рассрочки - неименная',
+          'type': 'CreditCardTW'
+        }
+      }
+    ]
+  ]
 }
 
 describe('convertAccount', () => {
