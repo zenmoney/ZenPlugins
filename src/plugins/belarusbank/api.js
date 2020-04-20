@@ -17,6 +17,7 @@ async function fetchUrl (url, options, predicate = () => true, error = (message)
   options.method = options.method ? options.method : 'POST'
   options.stringify = querystring.stringify
 
+  console.assert(url, 'NO url', url)
   console.assert(url.indexOf('undefined') === -1, 'undefined in url', url)
 
   const response = await fetch(baseUrl + url, options)
@@ -349,7 +350,10 @@ export async function fetchCardsTransactions (acc, fromDate, toDate) {
     viewns = viewns.replace('ClientCardsDataForm', 'accountStmtStartPageForm')
     $ = cheerio.load(res.body)
     action = $('form[id="' + viewns + '"]').attr('action')
-
+    if (!action) {
+      viewns = $('form').attr('id')
+      action = $('form').attr('action')
+    }
     body = {
       'javax.faces.encodedURL': $('input[name="javax.faces.encodedURL"]').attr('value'),
       'javax.faces.ViewState': $('input[name="javax.faces.ViewState"]').attr('value')
@@ -394,9 +398,14 @@ export async function fetchCardsTransactions (acc, fromDate, toDate) {
       for (let i = 2; i <= pages; i++) {
         $ = cheerio.load(res.body)
         action = $('form[id="' + viewns + '"]').attr('action')
+        if (!action) {
+          viewns = $('form').attr('id')
+          action = $('form').attr('action')
+        }
         const encodedUrl = $('input[name="javax.faces.encodedURL"]').attr('value')
         const viewState = $('input[name="javax.faces.ViewState"]').attr('value')
         const idPage = 'idx' + i.toString()
+        console.log(`>>> Загрузка транзакций по ${acc.title}. Страница ${i}`)
         res = await getNextPage({ action, encodedUrl, viewState, viewns, idPage })
         const transOnPage = parseTransactions(res.body, acc.id, 'operResultOk')
         transactions.push(...transOnPage)
@@ -407,9 +416,8 @@ export async function fetchCardsTransactions (acc, fromDate, toDate) {
     $ = cheerio.load(res.body)
     action = $('form[id="' + viewns + '"]').attr('action')
     if (!action) { // нет операций в истории или только 1 страница в истории
-      viewns = viewns.replace('AccountStmtForm', 'accountStmtLastForm')
-      viewns = viewns.replace('accountStmtStartPageForm', 'accountStmtLastForm')
-      action = $('form[id="' + viewns + '"]').attr('action') || $('form[id="' + viewns.replace('accountStmtLastForm', 'AccountStmtForm') + '"]').attr('action')
+      viewns = $('form').attr('id')
+      action = $('form').attr('action')
     }
     body = {
       'javax.faces.encodedURL': $('input[name="javax.faces.encodedURL"]').attr('value'),
@@ -419,6 +427,7 @@ export async function fetchCardsTransactions (acc, fromDate, toDate) {
     body[viewns + ':_idcl'] = res.body.match(/ id="(.{1,200})">Вернуться к списку счетов<\/a>/)
       ? res.body.match(/ id="(.{1,200})">Вернуться к списку счетов<\/a>/)[1]
       : res.body.match(/ id="(.{1,200})">Назад<\/a>/)[1]
+
     res = await fetchUrl(action, {
       method: 'POST',
       headers: {
@@ -432,6 +441,10 @@ export async function fetchCardsTransactions (acc, fromDate, toDate) {
   $ = cheerio.load(res.body)
   viewns = acc.raw.transactionsData.holdsData[0].replace(/'/g, '')
   action = $('form[id="' + viewns + '"]').attr('action')
+  if (!action) {
+    viewns = $('form').attr('id')
+    action = $('form').attr('action')
+  }
   body = {
     'javax.faces.encodedURL': $('input[name="javax.faces.encodedURL"]').attr('value'),
     'accountNumber': acc.raw.transactionsData.holdsData[3].replace(/'/g, ''),
@@ -456,9 +469,14 @@ export async function fetchCardsTransactions (acc, fromDate, toDate) {
     for (let i = 2; i <= pages; i++) {
       $ = cheerio.load(res.body)
       action = $('form[id="' + viewns + '"]').attr('action')
+      if (!action) {
+        viewns = $('form').attr('id')
+        action = $('form').attr('action')
+      }
       const encodedUrl = $('input[name="javax.faces.encodedURL"]').attr('value')
       const viewState = $('input[name="javax.faces.ViewState"]').attr('value')
       const idPage = 'idx' + i.toString()
+      console.log(`>>> Загрузка холдов по ${acc.title}. Страница ${i}`)
       res = await getNextPage({ action, encodedUrl, viewState, viewns, idPage })
       const holdsOnPage = parseTransactions(res.body, acc.id, 'hold')
       holds.push(...holdsOnPage)
