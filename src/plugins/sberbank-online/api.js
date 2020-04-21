@@ -280,7 +280,7 @@ async function getTokenIIS (auth, systemName) {
     },
     body: { systemName }
   }, null)
-  if (response.body.error && response.body.error.indexOf('Для системы ufs получение токена в данный момент недоступно')) {
+  if (response.body.error && response.body.error.indexOf('Для системы ufs получение токена в данный момент недоступно') >= 0) {
     return null
   }
   console.assert(response.body.token && response.body.host, 'unexpected response getToken in fetchAccountsIIS', response)
