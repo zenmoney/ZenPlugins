@@ -392,7 +392,7 @@ export async function fetchCardsTransactions (acc, fromDate, toDate) {
     }, response => response.success, message => new Error(''))
 
     pages = res.body.match(/Страница \d+ из (\d+)/) && parseInt(res.body.match(/Страница \d+ из (\d+)/)[1])
-    transactions = pages && parseTransactions(res.body, acc.id, 'operResultOk')
+    transactions = pages ? parseTransactions(res.body, acc.id, 'operResultOk') : []
     if (pages) {
       viewns = viewns.replace('accountStmtStartPageForm', 'AccountStmtForm')
       for (let i = 2; i <= pages; i++) {
