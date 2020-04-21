@@ -203,7 +203,10 @@ export async function login (login, password) {
       throw new InvalidLoginOrPasswordError()
     }
   }
-  if (response.body.message && response.body.message.indexOf('Вы четыре раза подряд неверно ввели пароль или код подтверждения') >= 0) {
+  if (response.body.message && [
+    'Вы четыре раза подряд неверно ввели пароль или код подтверждения',
+    'Доступ к ВТБ-Онлайн заблокирован'
+  ].some(str => response.body.message.indexOf(str) >= 0)) {
     throw new BankMessageError(response.body.message)
   }
   if (response.body.message && response.body.message.indexOf('срок действия Вашего временного пароля истек') >= 0) {
