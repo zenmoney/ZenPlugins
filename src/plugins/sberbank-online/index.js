@@ -3,6 +3,7 @@ import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common
 import { generateRandomString } from '../../common/utils'
 import { fetchAccounts, fetchPayments, fetchTransactions, login, makeTransfer as _makeTransfer } from './api'
 import { adjustTransactionsAndCheckBalance, convertAccounts, convertLoanTransaction, convertTransaction } from './converters'
+import { TemporaryUnavailableError } from '../../errors'
 
 const md5 = new MD5()
 
@@ -98,7 +99,7 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
         apiTransactions = await fetchTransactions(auth, product, fromDate, toDate)
       } catch (e) {
         apiTransactions = []
-        if (e.toString().indexOf('временно недоступна') >= 0) {
+        if (e instanceof TemporaryUnavailableError) {
           isBalanceAmbiguous = true
         } else {
           throw e
