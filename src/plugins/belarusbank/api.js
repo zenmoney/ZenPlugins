@@ -33,11 +33,12 @@ async function fetchUrl (url, options, predicate = () => true, error = (message)
     if (err[1].indexOf('Выбранный способ аутентификации отключён') >= 0) {
       throw new BankMessageError(`Аутентификация по СМС отключена. Выберите в настройках аутентификацию по кодам или включите вход по СМС в приложении или на сайте банка.`)
     }
-    // ошибка приходит в ответе на 1й запрос loginSMS()
-    if (err[1].indexOf('Вы заблокированы из-за трёхкратного ошибочного ввода') >= 0) {
-      throw new BankMessageError(err[1])
-    }
-    if (err[1].indexOf('Введён неправильный код') >= 0) {
+
+    if ([
+      'Вы заблокированы из-за трёхкратного ошибочного ввода', // ошибка приходит в ответе на 1й запрос loginSMS()
+      'Введён неправильный код',
+      'Введён неправильный СМС-код'
+    ].some(error => err[1].indexOf(error) >= 0)) {
       throw new BankMessageError(err[1])
     }
     // throw new TemporaryError(err[1])
