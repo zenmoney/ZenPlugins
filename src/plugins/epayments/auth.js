@@ -60,30 +60,6 @@ async function requestTokenByCredentials (login, password) {
     else return otp
   }
 
-  async function requestToken (login, password, otp, sessionId) {
-    const base = {
-      grant_type: 'password_otp',
-      username: login,
-      password: password
-    }
-
-    const data = Object.assign({}, base,
-      otp ? { otpcode: otp } : null,
-      sessionId ? { confirmation_session_id: sessionId } : null
-    )
-
-    const params = {
-      method: 'POST',
-      headers: authHeaders,
-      body: data,
-      stringify,
-      parse: (body) => body === '' ? undefined : JSON.parse(body),
-      sanitizeRequestLog: { body: { username: true, password: true } }
-    }
-
-    return network.fetch(urls.token, params)
-  }
-
   async function getSCAConfirmation (sessionId) {
     const headers = Object.assign({}, defaultHeaders, {
       'Authorization': 'Basic ZXBheW1lbnRzOm1ZbjZocmtnMElMcXJ0SXA4S1NE'
@@ -119,6 +95,30 @@ async function requestTokenByCredentials (login, password) {
     }
   }
 
+  async function requestToken (login, password, otp, sessionId) {
+    const base = {
+      grant_type: 'password_otp',
+      username: login,
+      password: password
+    }
+
+    const data = Object.assign({}, base,
+      otp ? { otpcode: otp } : null,
+      sessionId ? { confirmation_session_id: sessionId } : null
+    )
+
+    const params = {
+      method: 'POST',
+      headers: authHeaders,
+      body: data,
+      stringify,
+      parse: (body) => body === '' ? undefined : JSON.parse(body),
+      sanitizeRequestLog: { body: { username: true, password: true } }
+    }
+
+    return network.fetch(urls.token, params)
+  }
+
   async function requestTokenWithRetry (login, password, otp, sessionId) {
     const response = await requestToken(login, password, otp, sessionId)
 
@@ -136,12 +136,13 @@ async function requestTokenByCredentials (login, password) {
         await getSCAConfirmation(sessionId)
         return requestTokenWithRetry(login, password, undefined, sessionId)
       } else if (errorCode === 'otp_code_invalid' && type2Fa === 'StrongCustomerAuthenticator') {
-        if (sessionId !== '' && _.get(response, 'body.error_description', '') !== '') {
-          console.debug(response.body.error_description)
+        const errorDescription = _.get(response, 'body.error_description', '')
+        if (/операция временно недоступна/i.test(errorDescription) || /пожалуйста подождите/i.test(errorDescription)) {
+          throw new errors.TemporaryError(errorDescription)
         } else {
-          console.debug(`Сессия ${sessionId} истекла, пробуем еще раз...`)
+          console.debug(errorDescription)
+          return requestTokenWithRetry(login, password, undefined, undefined)
         }
-        return requestTokenWithRetry(login, password, undefined, undefined)
       } else if (errorCode === 'otp_code_required') {
         const otp = await readCode('Введите одноразовый пароль')
         return requestTokenWithRetry(login, password, otp)

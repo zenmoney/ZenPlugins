@@ -9,5 +9,12 @@
         <js>index.js</js>
         <preferences>preferences.xml</preferences>
     </files>
-    <description></description>
+    <description>
+Плагин использует логин и пароль от личного кабинета для получения информации о транзакциях,
+то есть он будет авторизироваться каждый раз при запуске синхронизации.
+
+Работа с 2FA:
+Если у вас настроен Strong Customer Authentication (https://blog.epayments.com/strong-customer-authentication/),
+то плагин будет ожидать подтверждения от устройства 3 минуты максимум. 
+Если у вас 2FA с использованием SMS или Google Authenthicator, то плагин запросит этот код.</description>
 </provider>
