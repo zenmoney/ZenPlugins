@@ -25,16 +25,16 @@ const loginMatcherWithOtp = (url, { body }) => {
     parsed.otpcode === '123456'
 }
 
-const loginMatcherWithSessionId = (url, { body }) => {
-  const parsed = parse(body)
-  console.warn('Matching session Id')
+// const loginMatcherWithSessionId = (url, { body }) => {
+//   const parsed = parse(body)
+//   console.warn('Matching session Id')
 
-  return url === 'https://api.epayments.com/token' &&
-    parsed.username === 'qwerty' &&
-    parsed.password === 'supersecret' &&
-    parsed.grant_type === 'password_otp' &&
-    parsed.confirmation_session_id === '567890'
-}
+//   return url === 'https://api.epayments.com/token' &&
+//     parsed.username === 'qwerty' &&
+//     parsed.password === 'supersecret' &&
+//     parsed.grant_type === 'password_otp' &&
+//     parsed.confirmation_session_id === '567890'
+// }
 
 function mockZenMoney () {
   global.ZenMoney = {}
@@ -138,16 +138,26 @@ describe('Login API', () => {
 
   // Не смог разобраться с этим тестом, почему-то jest виснет намертво если возвращать позитивный результат
   // it('should retry to login without OTP and wait for SCA confirmation', async () => {
-  // fetchMock.get({
-  //   matcher: (url) => {
-  //     console.warn('Matched true')
-  //     return url === 'https://api.epayments.com/v1/confirmation-sessions/567890'
-  //   },
-  //   response: {
-  //     body: { errorCode: 0, errorMsgs: [], canContinueConfirmation: true }
-  //   }
-  // })
-  // 
+  //   fetchMock.getOnce({
+  //     matcher: (url) => {
+  //       console.warn('Matched false')
+  //       return url === 'https://api.epayments.com/v1/confirmation-sessions/567890'
+  //     },
+  //     response: {
+  //       body: { errorCode: 0, errorMsgs: [], canContinueConfirmation: false }
+  //     }
+  //   })
+
+  //   fetchMock.getOnce({
+  //     matcher: (url) => {
+  //       console.warn('Matched true')
+  //       return url === 'https://api.epayments.com/v1/confirmation-sessions/567890'
+  //     },
+  //     response: {
+  //       body: { errorCode: 0, errorMsgs: [], canContinueConfirmation: true }
+  //     }
+  //   })
+
   //   mockLoginRequest({
   //     matcher: loginMatcherWithoutOtp,
   //     response: {
