@@ -5,11 +5,16 @@ import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 
 export const GRAMS_IN_OZ = 31.1034768
 
-export function convertTransaction (apiTransaction, account, accountsById) {
+function getInvoice (apiTransaction) {
   const invoice = apiTransaction.operationAmount && apiTransaction.operationAmount.amount && {
     sum: parseDecimal(apiTransaction.operationAmount.amount),
     instrument: parseInstrument(apiTransaction.operationAmount.currency.code)
   }
+  return invoice
+}
+
+export function convertTransaction (apiTransaction, account, accountsById) {
+  const invoice = getInvoice(apiTransaction)
   if (!invoice || !invoice.sum) {
     return null
   }
@@ -46,6 +51,7 @@ export function convertTransaction (apiTransaction, account, accountsById) {
     parseCashTransfer,
     parseOuterIncomeTransfer,
     parseOutcomeTransfer,
+    parseComments,
     parsePayee
   ].some(parser => parser(transaction, apiTransaction, account, accountsById))
   return transaction
@@ -75,7 +81,10 @@ function parseCashTransfer (transaction, apiTransaction, account) {
   if (!isCashTransfer(apiTransaction)) {
     return false
   }
-  const invoice = transaction.movements[0].invoice || { sum: transaction.movements[0].sum, instrument: account.instrument }
+  const invoice = transaction.movements[0].invoice || {
+    sum: transaction.movements[0].sum,
+    instrument: account.instrument
+  }
   transaction.movements.push({
     id: null,
     account: {
@@ -92,6 +101,24 @@ function parseCashTransfer (transaction, apiTransaction, account) {
 }
 
 function parseInnerTransfer (transaction, apiTransaction, account, accountsById) {
+  if ([ // для Копилки добавляем groupKeys, это входящий счет, в качестве счета для накопления можно выбрать только вклад или счет, но не карту(вроде бы)
+    'Входящий перевод на вклад/счет'
+  ].indexOf(apiTransaction.description) >= 0 || apiTransaction.to === 'Сервис Копилка') {
+    const invoice = getInvoice(apiTransaction)
+    transaction.groupKeys = [
+      `${transaction.date.toISOString().slice(0, 10)}_${invoice.instrument}_${Math.abs(invoice.sum).toString()}`
+    ]
+    transaction.movements = [
+      {
+        id: apiTransaction.id || null,
+        account: { id: account.id },
+        invoice: invoice.instrument === account.instrument ? null : invoice,
+        sum: invoice.instrument === account.instrument ? invoice.sum : null,
+        fee: 0
+      }
+    ]
+    return true
+  }
   if ([
     'InternalPayment',
     'AccountOpeningClaim',
@@ -156,14 +183,20 @@ function parseInnerTransfer (transaction, apiTransaction, account, accountsById)
     {
       id: apiTransaction.id,
       account: outcomeAccount.id ? { id: outcomeAccount.id } : outcomeAccount,
-      invoice: !isIncomeInvoice && outcomeAccount.instrument !== incomeAccount.instrument ? { sum: -income, instrument: incomeAccount.instrument } : null,
+      invoice: !isIncomeInvoice && outcomeAccount.instrument !== incomeAccount.instrument ? {
+        sum: -income,
+        instrument: incomeAccount.instrument
+      } : null,
       sum: -outcome,
       fee: 0
     },
     {
       id: apiTransaction.id,
       account: { id: incomeAccount.id },
-      invoice: isIncomeInvoice && outcomeAccount.instrument !== incomeAccount.instrument ? { sum: outcome, instrument: outcomeAccount.instrument } : null,
+      invoice: isIncomeInvoice && outcomeAccount.instrument !== incomeAccount.instrument ? {
+        sum: outcome,
+        instrument: outcomeAccount.instrument
+      } : null,
       sum: income,
       fee: 0
     }
@@ -196,7 +229,10 @@ function parseOuterIncomeTransfer (transaction, apiTransaction, account) {
   if (!match) {
     return false
   }
-  const invoice = transaction.movements[0].invoice || { sum: transaction.movements[0].sum, instrument: account.instrument }
+  const invoice = transaction.movements[0].invoice || {
+    sum: transaction.movements[0].sum,
+    instrument: account.instrument
+  }
   const outerAccount = ['Сбербанк Онлайн', 'Сбербанк'].indexOf(apiTransaction.to) >= 0 ? null : parseOuterAccountData(apiTransaction.to)
   transaction.movements.push({
     id: null,
@@ -271,7 +307,10 @@ function parseOutcomeTransfer (transaction, apiTransaction, account) {
   if (fee) {
     transaction.movements[0].fee = -Math.abs(fee)
   }
-  const invoice = transaction.movements[0].invoice || { sum: transaction.movements[0].sum, instrument: account.instrument }
+  const invoice = transaction.movements[0].invoice || {
+    sum: transaction.movements[0].sum,
+    instrument: account.instrument
+  }
   transaction.movements.push({
     id: null,
     account: {
@@ -301,22 +340,34 @@ function parseOutcomeTransfer (transaction, apiTransaction, account) {
   return true
 }
 
-function parsePayee (transaction, apiTransaction) {
+function parseComments (transaction, apiTransaction) {
   if (apiTransaction.to && [
     'Автоплатеж',
     'Sberbank platezh',
     'Зачисление зарплаты'
   ].indexOf(apiTransaction.to) >= 0) {
     transaction.comment = apiTransaction.to
-    return
+    return true
   }
+  if ([
+    'Капитализация по вкладу/счету',
+    'Комиссии',
+    'Погашение кредита'
+  ].indexOf(apiTransaction.description) >= 0) {
+    transaction.comment = apiTransaction.description
+    return true
+  }
+  return false
+}
 
+function parsePayee (transaction, apiTransaction) {
   let payee = [
     'ExtDepositCapitalization',
     'ExtDepositTransferIn',
     'ExtDepositOtherCredit',
     'ExtCardLoanPayment'
   ].indexOf(apiTransaction.form) >= 0 ? null : apiTransaction.to
+
   if (payee) {
     if (apiTransaction.form === 'RurPayJurSB') {
       const parts = payee.split(/\s\s+/)
@@ -342,14 +393,6 @@ function parsePayee (transaction, apiTransaction) {
         location: null
       }
     }
-  }
-  if ([
-    'Капитализация по вкладу/счету',
-    'Комиссии',
-    'Входящий перевод на вклад/счет',
-    'Погашение кредита'
-  ].indexOf(apiTransaction.description) >= 0) {
-    transaction.comment = apiTransaction.description
   }
 }
 
@@ -522,9 +565,11 @@ export function convertTarget (apiTarget) {
 }
 
 export function convertCards (apiCardsArray, nowDate = new Date()) {
-  apiCardsArray = _.sortBy(apiCardsArray.map((apiCard, index) => { return { apiCard, index } }),
-    obj => obj.apiCard.account.mainCardId ? 1 : 0,
-    obj => obj.index).map(obj => obj.apiCard)
+  apiCardsArray = _.sortBy(apiCardsArray.map((apiCard, index) => {
+    return { apiCard, index }
+  }),
+  obj => obj.apiCard.account.mainCardId ? 1 : 0,
+  obj => obj.index).map(obj => obj.apiCard)
 
   const dataById = {}
   const mskDate = toMoscowDate(nowDate)
@@ -780,7 +825,10 @@ export function adjustTransactionsAndCheckBalance (apiTransactions, apiPayments)
   const paymentDataArray = apiPayments.map(apiPayment => {
     return {
       ...parseDateAndDateStr(apiPayment.date),
-      amount: { sum: parseDecimal(apiPayment.operationAmount.amount), instrument: apiPayment.operationAmount.currency.code },
+      amount: {
+        sum: parseDecimal(apiPayment.operationAmount.amount),
+        instrument: apiPayment.operationAmount.currency.code
+      },
       apiTransaction: null,
       apiPayment
     }

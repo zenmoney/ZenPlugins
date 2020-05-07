@@ -220,30 +220,35 @@ export async function fetchAccounts (auth) {
     return accounts
   }, {})
 
-  const accountsIIS = await fetchAccountsIIS(auth)
-
-  accounts = ({ ...accounts, iis: accountsIIS })
-
   return accounts
 }
 
-async function fetchAccountsIIS (auth) {
-  let response = await getTokenIIS(auth, 'ufs')
+export async function fetchAccountsIIS (auth) {
+  let response
+  try {
+    response = await getTokenIIS(auth, 'ufs')
+  } catch (e) {
+    return []
+  }
   if (!response) {
     return []
   }
   let token = response.token
   const hostIIS = response.host
-  response = await fetchJson(`https://${hostIIS}/sm-uko/v2/session/create`, {
-    method: 'POST',
-    headers: {
-      ...defaultHeaders,
-      'Host': hostIIS,
-      'Content-Type': 'application/json;charset=UTF-8'
-    },
-    body: { token },
-    sanitizeRequestLog: { body: { token: true } }
-  })
+  try {
+    response = await fetchJson(`https://${hostIIS}/sm-uko/v2/session/create`, {
+      method: 'POST',
+      headers: {
+        ...defaultHeaders,
+        'Host': hostIIS,
+        'Content-Type': 'application/json;charset=UTF-8'
+      },
+      body: { token },
+      sanitizeRequestLog: { body: { token: true } }
+    })
+  } catch (e) {
+    return []
+  }
   const cookiesArray = response.headers['set-cookie'].split(';')
   const ucsSessionId = cookiesArray.find(cookie => cookie.indexOf('UFS-SESSION') >= 0)
   response = await getTokenIIS(auth, 'pfm')
@@ -336,8 +341,7 @@ export async function fetchPayments (auth, { id, type, instrument }, fromDate, t
         from: fromDateStr,
         to: toDateStr,
         includeUfs: true,
-        usedResource: `${type}:${id}`,
-        showExternal: true
+        usedResource: `${type}:${id}`
       }
     })
     batch = getArray(_.get(response, 'body.operations.operation'))

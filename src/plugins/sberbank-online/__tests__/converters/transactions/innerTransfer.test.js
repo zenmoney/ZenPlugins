@@ -387,7 +387,8 @@ describe('convertTransaction', () => {
         }
       ],
       merchant: null,
-      comment: 'Входящий перевод на вклад/счет'
+      comment: null,
+      groupKeys: ['2019-02-17_RUB_500']
     })
   })
 
@@ -595,6 +596,49 @@ describe('convertTransaction', () => {
       ],
       merchant: null,
       comment: 'Погашение кредита'
+    })
+  })
+
+  it('converts inner transfer to Kopilka', () => {
+    const account = { id: 'account', instrument: 'RUB' }
+    const accountsById = {}
+    accountsById[getId('card', '51833625')] = account
+    accountsById[getId('RUB', '428101******5370')] = { id: 'account2', instrument: 'RUB' }
+
+    expect(convertTransaction({
+      autopayable: 'true',
+      copyable: 'true',
+      date: '28.04.2020T17:17:50',
+      description: 'Перевод',
+      form: 'ExtCardTransferOut',
+      from: 'MasterCard Mass 5298 26** **** 3389',
+      id: '25306477802',
+      imageId: { staticImage: { url: null } },
+      invoiceReminderSupported: 'false',
+      invoiceSubscriptionSupported: 'false',
+      isMobilePayment: 'false',
+      operationAmount: { amount: '-100.55', currency: { code: 'RUB', name: 'руб.' } },
+      state: 'FINANCIAL',
+      templatable: 'false',
+      to: 'Сервис Копилка',
+      type: 'payment',
+      ufsId: null,
+      details: {}
+    }, account, accountsById)).toEqual({
+      hold: false,
+      date: new Date('2020-04-28T17:17:50+03:00'),
+      movements: [
+        {
+          id: '25306477802',
+          account: { id: 'account' },
+          invoice: null,
+          sum: -100.55,
+          fee: 0
+        }
+      ],
+      groupKeys: ['2020-04-28_RUB_100.55'],
+      merchant: null,
+      comment: null
     })
   })
 })

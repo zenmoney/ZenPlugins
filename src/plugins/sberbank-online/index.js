@@ -1,9 +1,10 @@
 import { MD5 } from 'jshashes'
 import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
 import { generateRandomString } from '../../common/utils'
-import { fetchAccounts, fetchPayments, fetchTransactions, login, makeTransfer as _makeTransfer } from './api'
+import { fetchAccounts, fetchAccountsIIS, fetchPayments, fetchTransactions, login, makeTransfer as _makeTransfer } from './api'
 import { adjustTransactionsAndCheckBalance, convertAccounts, convertLoanTransaction, convertTransaction } from './converters'
 import { TemporaryUnavailableError } from '../../errors'
+import { adjustTransactions } from '../../common/transactionGroupHandler'
 
 const md5 = new MD5()
 
@@ -142,11 +143,14 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
     }))
   }))
 
+  const accountDataIIS = convertAccounts(await fetchAccountsIIS(auth)).accountDataIIS
+  accountDataIIS.forEach(({ zenAccount: account }) => accounts.push(account))
+
   saveAuth(auth)
 
   return {
     accounts: ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId }),
-    transactions
+    transactions: adjustTransactions({ transactions })
   }
 }
 
