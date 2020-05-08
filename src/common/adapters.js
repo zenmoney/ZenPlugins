@@ -228,8 +228,11 @@ function augmentErrorWithDevelopmentHints (error) {
 export function adaptScrapeToGlobalApi (scrape) {
   console.assert(typeof scrape === 'function', 'argument must be function')
 
-  return function adaptedAsyncFn () {
-    const result = scrape({ preferences: ZenMoney.getPreferences() })
+  return function adaptedAsyncFn (args) {
+    const result = scrape({
+      ..._.isPlainObject(args) && args,
+      preferences: ZenMoney.getPreferences()
+    })
     console.assert(result && typeof result.then === 'function', 'scrape() did not return a promise')
     const resultHandled = result.then((results) => {
       console.assert(results, 'scrape() did not return anything')
