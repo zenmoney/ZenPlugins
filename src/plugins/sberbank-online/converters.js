@@ -424,7 +424,7 @@ export function formatDateSql (date) {
 export function convertAccounts (apiAccountsByType) {
   const accountData = []
   const accountsById = {}
-  for (const type of ['account', 'loan', 'card', 'target', 'ima', 'iis']) {
+  for (const type of ['account', 'loan', 'card', 'target', 'ima']) {
     for (const data of convertAccountsWithType(apiAccountsByType[type], type)) {
       const dataForTheSameAccount = accountData.find(d => d.zenAccount.id === data.zenAccount.id)
       if (dataForTheSameAccount) {
@@ -565,11 +565,10 @@ export function convertTarget (apiTarget) {
 }
 
 export function convertCards (apiCardsArray, nowDate = new Date()) {
-  apiCardsArray = _.sortBy(apiCardsArray.map((apiCard, index) => {
-    return { apiCard, index }
-  }),
-  obj => obj.apiCard.account.mainCardId ? 1 : 0,
-  obj => obj.index).map(obj => obj.apiCard)
+  apiCardsArray = _.sortBy(apiCardsArray.map((apiCard, index) => ({ apiCard, index })),
+    obj => obj.apiCard.account.mainCardId ? 1 : 0,
+    obj => obj.index
+  ).map(obj => obj.apiCard)
 
   const dataById = {}
   const mskDate = toMoscowDate(nowDate)

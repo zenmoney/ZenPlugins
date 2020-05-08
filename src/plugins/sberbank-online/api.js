@@ -223,24 +223,17 @@ export async function fetchAccounts (auth) {
   return accounts
 }
 
-export async function fetchAccountsIIS (auth) {
+export async function fetchBrokerAccounts (auth) {
   let response
+  let token
+  let host
   try {
-    response = await getTokenIIS(auth, 'ufs')
-  } catch (e) {
-    return []
-  }
-  if (!response) {
-    return []
-  }
-  let token = response.token
-  const hostIIS = response.host
-  try {
-    response = await fetchJson(`https://${hostIIS}/sm-uko/v2/session/create`, {
+    ({ token, host } = await getToken(auth, 'ufs'))
+    response = await fetchJson(`https://${host}/sm-uko/v2/session/create`, {
       method: 'POST',
       headers: {
         ...defaultHeaders,
-        'Host': hostIIS,
+        'Host': host,
         'Content-Type': 'application/json;charset=UTF-8'
       },
       body: { token },
@@ -249,33 +242,23 @@ export async function fetchAccountsIIS (auth) {
   } catch (e) {
     return []
   }
-  const cookiesArray = response.headers['set-cookie'].split(';')
+  const cookiesArray = response.headers['set-cookie'] ? response.headers['set-cookie'].split(';') : []
   const ucsSessionId = cookiesArray.find(cookie => cookie.indexOf('UFS-SESSION') >= 0)
-  response = await getTokenIIS(auth, 'pfm')
-  token = response.token
-  const host = response.host
-  await fetch(`https://${host}/pfm/api/v1.40/login?token=${token}`, {
-    method: 'GET',
-    headers: {
-      ..._.omit(defaultHeaders, ['Content-Type']),
-      'Host': host
-    }
-  })
-
-  response = await fetchJson(`https://${hostIIS}/brokerage-info-mb/rest/v1.0/mobile/Banking/Product/Brokerage/Mobile/Agreements/List`, {
+  console.assert(ucsSessionId, 'could not find UFS-SESSION cookie', response)
+  response = await fetchJson(`https://${host}/brokerage-info-mb/rest/v1.0/mobile/Banking/Product/Brokerage/Mobile/Agreements/List`, {
     method: 'POST',
     headers: {
       ...defaultHeaders,
-      'Host': hostIIS,
+      'Host': host,
       'Content-Type': 'application/json;charset=UTF-8',
       'UCS_SESSION_ID': ucsSessionId
     },
     body: {}
   })
-  return (response.body.body && response.body.body.agreements) || []
+  return response.body.body.agreements
 }
 
-async function getTokenIIS (auth, systemName) {
+async function getToken (auth, systemName) {
   const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/unifiedClientSession/getToken.do`, {
     headers: {
       ...defaultHeaders,
@@ -285,10 +268,7 @@ async function getTokenIIS (auth, systemName) {
     },
     body: { systemName }
   }, null)
-  if (response.body.error && response.body.error.indexOf('Для системы ufs получение токена в данный момент недоступно') >= 0) {
-    return null
-  }
-  console.assert(response.body.token && response.body.host, 'unexpected response getToken in fetchAccountsIIS', response)
+  console.assert(response.body.token && response.body.host, 'unexpected getToken response', response)
   return { token: response.body.token, host: response.body.host }
 }
 

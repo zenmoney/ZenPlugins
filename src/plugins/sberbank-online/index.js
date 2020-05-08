@@ -1,10 +1,10 @@
 import { MD5 } from 'jshashes'
 import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
-import { generateRandomString } from '../../common/utils'
-import { fetchAccounts, fetchAccountsIIS, fetchPayments, fetchTransactions, login, makeTransfer as _makeTransfer } from './api'
-import { adjustTransactionsAndCheckBalance, convertAccounts, convertLoanTransaction, convertTransaction } from './converters'
-import { TemporaryUnavailableError } from '../../errors'
 import { adjustTransactions } from '../../common/transactionGroupHandler'
+import { generateRandomString } from '../../common/utils'
+import { TemporaryUnavailableError } from '../../errors'
+import { fetchAccounts, fetchBrokerAccounts, fetchPayments, fetchTransactions, login, makeTransfer as _makeTransfer } from './api'
+import { adjustTransactionsAndCheckBalance, convertAccounts, convertBrokerAccount, convertLoanTransaction, convertTransaction } from './converters'
 
 const md5 = new MD5()
 
@@ -143,8 +143,10 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
     }))
   }))
 
-  const accountDataIIS = convertAccounts(await fetchAccountsIIS(auth)).accountDataIIS
-  accountDataIIS.forEach(({ zenAccount: account }) => accounts.push(account))
+  accounts.push(...(await fetchBrokerAccounts(auth))
+    .map(convertBrokerAccount)
+    .filter(data => data)
+    .map(({ zenAccount }) => zenAccount))
 
   saveAuth(auth)
 
