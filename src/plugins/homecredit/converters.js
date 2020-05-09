@@ -257,6 +257,7 @@ export function convertTransaction (accountData, transaction) {
 export function getMcc (code) {
   switch (code) {
     case 'CAR':
+    case 'GAS STATION':
       return 5542
     case 'HEALTH & BEAUTY':
       return 7298
@@ -266,12 +267,17 @@ export function getMcc (code) {
       return 5812
     case 'CLOTHING SHOES & ACCESSORIES':
       return 5651
+    case 'PHARMACY':
+      return 5912
 
+    case 'EDUCATION':
     case 'ELECTRONICS':
+    case 'JEWELRY':
     case 'KIDS':
     case 'OTHER':
     case 'HOBBY & LEISURE':
     case 'HOME & GARDEN':
+    case 'PETS':
     case 'PUBLIC TRANSPORTATION':
     case 'TAXES & CHARGES':
     case 'TRAVEL':

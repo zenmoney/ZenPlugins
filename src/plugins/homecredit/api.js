@@ -1,7 +1,7 @@
 import { parseStartDateString } from '../../common/adapters'
 import { fetchJson } from '../../common/network'
 import _ from 'lodash'
-import { InvalidOtpCodeError } from '../../errors'
+import { BankMessageError, InvalidOtpCodeError } from '../../errors'
 
 const myCreditUrl = 'https://mob.homecredit.ru/mycredit'
 const baseUri = 'https://ib.homecredit.ru/mobile/remoting'
@@ -191,7 +191,7 @@ async function checkUserPin (auth, preferences, onErrorCallback = null) {
     sanitizeResponseLog: { body: { 'Result': { 'ClientDataResult': { 'FirstName': true } } } }
   })
 
-  if (onErrorCallback && response.body.StatusCode !== 200) {
+  if (onErrorCallback && (response.status !== 200 || (response.body && response.body.StatusCode !== 200))) {
     auth = await onErrorCallback(auth, preferences)
     return {
       auth,
@@ -758,14 +758,14 @@ async function fetchApiJson (url, options, predicate) {
     ) {
       const message = getErrorMessage(response.body.Errors || _.get(response, 'body.errorResponseMo.errorMsg'))
       if (message) {
-        if (/.*(?:овтори\w+ попытк|еще раз|еверн\w+ код|ревышено колич).*/i.test(message)) {
-          throw new TemporaryError(message)
+        if (/.*(?:овтори\w+ попытк|еще раз|еверн\w+ код|ревышено|еверный код).*/i.test(message)) {
+          throw new BankMessageError(message)
         } else {
           if (message.indexOf('роверьте дату рождения') + 1) {
             throw new InvalidPreferencesError(message)
           } else {
             if (!options.ignoreErrors) {
-              throw new Error('Ответ банка: ' + message)
+              throw new BankMessageError(message)
             }
           }
         }
