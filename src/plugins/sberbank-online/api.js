@@ -255,6 +255,9 @@ export async function fetchBrokerAccounts (auth) {
     },
     body: {}
   })
+  if (!response.body.body || !response.body.body.agreements) {
+    return []
+  }
   return response.body.body.agreements
 }
 
