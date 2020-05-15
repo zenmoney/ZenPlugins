@@ -586,7 +586,7 @@ export function convertCards (apiCardsArray, nowDate = new Date()) {
       dataById[accountId] = data
     }
     if (apiCard.account.state !== 'active' ||
-      ['+-КАРТОЧКА ОТКРЫТА', 'K-ДЕЙСТ.ПРИОСТАНОВЛЕНО', 'X-ПЕРЕВЫП., НЕ ВЫДАНА'].indexOf(apiCard.account.statusWay4) < 0 ||
+      ['+-КАРТОЧКА ОТКРЫТА', 'K-ДЕЙСТ.ПРИОСТАНОВЛЕНО', 'X-ПЕРЕВЫП., НЕ ВЫДАНА', '+-active'].indexOf(apiCard.account.statusWay4) < 0 ||
       parseExpireDate(apiCard.account.expireDate) < minExpireDate) {
       continue
     }

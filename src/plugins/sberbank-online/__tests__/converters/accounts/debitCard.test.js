@@ -5,99 +5,99 @@ describe('convertCards', () => {
   const nowDate = new Date('2018-06-02T12:00:00Z')
 
   it('converts debit main and additional cards', () => {
-    const jsonArray = parseXml(`<response> 
-    <status> 
-        <code>0</code> 
-    </status> 
-    <cards> 
-        <status> 
-            <code>0</code> 
-        </status> 
-        <card> 
-            <id>105751883</id> 
-            <name>Maestro</name> 
-            <smsName>8802</smsName> 
-            <description>Maestro</description> 
-            <number>6390 02** **** **88 02</number> 
-            <isMain>true</isMain> 
-            <type>debit</type> 
-            <availableLimit> 
-                <amount>97,61</amount> 
-                <currency> 
-                    <code>RUB</code>  
-                    <name>руб.</name> 
-                </currency> 
-            </availableLimit> 
-            <state>active</state> 
-            <cardAccount>40817810828150008490</cardAccount> 
-            <showarrestdetail>false</showarrestdetail> 
-            <expireDate>11/2018</expireDate> 
-            <statusWay4>+-КАРТОЧКА ОТКРЫТА</statusWay4> 
-        </card> 
-        <card> 
-            <id>105751885</id> 
-            <name>Visa Classic</name> 
-            <smsName>6939</smsName> 
-            <description>Visa Classic</description> 
-            <number>4276 28** **** 6939</number> 
-            <isMain>true</isMain> 
-            <type>debit</type> 
-            <availableLimit> 
-                <amount>2434,97</amount> 
-                <currency> 
-                    <code>RUB</code>  
-                    <name>руб.</name> 
-                </currency> 
-            </availableLimit> 
-            <state>active</state> 
-            <cardAccount>40817810528150034829</cardAccount> 
-            <showarrestdetail>false</showarrestdetail> 
-            <expireDate>02/2020</expireDate> 
-            <statusWay4>+-КАРТОЧКА ОТКРЫТА</statusWay4> 
-        </card> 
-        <card> 
-            <id>105751881</id> 
-            <name>Electron</name> 
-            <smsName>7622</smsName> 
-            <description>Electron</description> 
-            <number>4276 82** **** 7622</number> 
-            <isMain>true</isMain> 
-            <type>debit</type> 
-            <availableLimit> 
-                <amount>150,00</amount> 
-                <currency> 
-                    <code>RUB</code>  
-                    <name>руб.</name> 
-                </currency> 
-            </availableLimit> 
-            <state>active</state> 
-            <showarrestdetail>false</showarrestdetail> 
-            <expireDate>08/2018</expireDate> 
-            <statusWay4>K-ДЕЙСТ.ПРИОСТАНОВЛЕНО</statusWay4> 
-        </card> 
-        <card> 
-            <id>105751882</id> 
-            <name>Electron</name> 
-            <smsName>2761</smsName> 
-            <description>Electron</description> 
-            <number>4276 82** **** 2761</number> 
-            <isMain>false</isMain> 
-            <type>debit</type> 
-            <availableLimit> 
-                <amount>150,00</amount> 
-                <currency> 
-                    <code>RUB</code>  
-                    <name>руб.</name> 
-                </currency> 
-            </availableLimit> 
-            <state>active</state> 
-            <additionalCardType>Client2Other</additionalCardType> 
-            <mainCardId>105751881</mainCardId> 
-            <showarrestdetail>false</showarrestdetail> 
-            <expireDate>08/2018</expireDate> 
-            <statusWay4>K-ДЕЙСТ.ПРИОСТАНОВЛЕНО</statusWay4> 
-        </card> 
-    </cards> 
+    const jsonArray = parseXml(`<response>
+    <status>
+        <code>0</code>
+    </status>
+    <cards>
+        <status>
+            <code>0</code>
+        </status>
+        <card>
+            <id>105751883</id>
+            <name>Maestro</name>
+            <smsName>8802</smsName>
+            <description>Maestro</description>
+            <number>6390 02** **** **88 02</number>
+            <isMain>true</isMain>
+            <type>debit</type>
+            <availableLimit>
+                <amount>97,61</amount>
+                <currency>
+                    <code>RUB</code>
+                    <name>руб.</name>
+                </currency>
+            </availableLimit>
+            <state>active</state>
+            <cardAccount>40817810828150008490</cardAccount>
+            <showarrestdetail>false</showarrestdetail>
+            <expireDate>11/2018</expireDate>
+            <statusWay4>+-КАРТОЧКА ОТКРЫТА</statusWay4>
+        </card>
+        <card>
+            <id>105751885</id>
+            <name>Visa Classic</name>
+            <smsName>6939</smsName>
+            <description>Visa Classic</description>
+            <number>4276 28** **** 6939</number>
+            <isMain>true</isMain>
+            <type>debit</type>
+            <availableLimit>
+                <amount>2434,97</amount>
+                <currency>
+                    <code>RUB</code>
+                    <name>руб.</name>
+                </currency>
+            </availableLimit>
+            <state>active</state>
+            <cardAccount>40817810528150034829</cardAccount>
+            <showarrestdetail>false</showarrestdetail>
+            <expireDate>02/2020</expireDate>
+            <statusWay4>+-КАРТОЧКА ОТКРЫТА</statusWay4>
+        </card>
+        <card>
+            <id>105751881</id>
+            <name>Electron</name>
+            <smsName>7622</smsName>
+            <description>Electron</description>
+            <number>4276 82** **** 7622</number>
+            <isMain>true</isMain>
+            <type>debit</type>
+            <availableLimit>
+                <amount>150,00</amount>
+                <currency>
+                    <code>RUB</code>
+                    <name>руб.</name>
+                </currency>
+            </availableLimit>
+            <state>active</state>
+            <showarrestdetail>false</showarrestdetail>
+            <expireDate>08/2018</expireDate>
+            <statusWay4>K-ДЕЙСТ.ПРИОСТАНОВЛЕНО</statusWay4>
+        </card>
+        <card>
+            <id>105751882</id>
+            <name>Electron</name>
+            <smsName>2761</smsName>
+            <description>Electron</description>
+            <number>4276 82** **** 2761</number>
+            <isMain>false</isMain>
+            <type>debit</type>
+            <availableLimit>
+                <amount>150,00</amount>
+                <currency>
+                    <code>RUB</code>
+                    <name>руб.</name>
+                </currency>
+            </availableLimit>
+            <state>active</state>
+            <additionalCardType>Client2Other</additionalCardType>
+            <mainCardId>105751881</mainCardId>
+            <showarrestdetail>false</showarrestdetail>
+            <expireDate>08/2018</expireDate>
+            <statusWay4>K-ДЕЙСТ.ПРИОСТАНОВЛЕНО</statusWay4>
+        </card>
+    </cards>
 </response>`).response.cards.card.map(json => {
       return { account: json }
     })
@@ -694,5 +694,64 @@ describe('convertCards', () => {
         }
       }
     ])
+  })
+
+  it.each([
+    [
+      [
+        {
+          account: {
+            id: '140333444',
+            name: 'MasterCard Сберкарта',
+            smsName: '3892',
+            description: 'MasterCard Сберкарта',
+            number: '5228 60** **** 1234',
+            isMain: 'true',
+            type: 'debit',
+            availableLimit: { amount: '4.00', currency: { code: 'RUB', name: 'руб.' } },
+            state: 'active',
+            cardAccount: '40817810762004541234',
+            showarrestdetail: 'true',
+            tokenExists: 'false',
+            expireDate: '05/2023',
+            statusWay4: '+-active',
+            isAllowedPriorityP2P: 'true',
+            options:
+              {
+                setPINAvailable: 'true',
+                closeCardAvailable: 'false',
+                setPayrollAvailable: 'false',
+                activationAvailable: 'false'
+              },
+            sbercardLevel: '3'
+          },
+          details: null
+        }
+      ],
+      [
+        {
+          products: [
+            {
+              id: '140333444',
+              type: 'card',
+              instrument: 'RUB'
+            }
+          ],
+          zenAccount: {
+            id: 'card:140333444',
+            type: 'ccard',
+            title: 'MasterCard Сберкарта',
+            instrument: 'RUB',
+            syncID: [
+              '522860******1234',
+              '40817810762004541234'
+            ],
+            available: 4
+          }
+        }
+      ]
+    ]
+  ])('converts debit card', (apiAccounts, accounts) => {
+    expect(convertCards(apiAccounts)).toEqual(accounts)
   })
 })
