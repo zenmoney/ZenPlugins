@@ -65,7 +65,8 @@ export function convertTransaction (tr, accounts) {
     date: getFullDate(tr.date + ' ' + tr.time),
     movements: [ getMovement(tr, account) ],
     merchant: null,
-    hold: tr.status !== 'operResultOk'
+    hold: tr.status !== 'operResultOk',
+    comment: null
   };
 
   [
@@ -86,9 +87,12 @@ function getMovement (tr, account) {
   }
 
   if (tr.operationCurrency !== account.instrument) {
-    movement.invoice = {
-      sum: getSumAmount(tr.debitFlag, tr.operationSum),
-      instrument: tr.operationCurrency
+    const sum = getSumAmount(tr.debitFlag, tr.operationSum)
+    if (sum !== 0) {
+      movement.invoice = {
+        sum,
+        instrument: tr.operationCurrency
+      }
     }
   }
   return movement
@@ -96,17 +100,20 @@ function getMovement (tr, account) {
 
 function parseCash (transaction, tr) {
   if (tr.comment.indexOf('Пополнение счета') >= 0 || tr.comment.indexOf('Снятие наличных') >= 0) {
+    const { sum, currency } = tr.operationSum === '0.00'
+      ? { sum: tr.inAccountSum, currency: tr.inAccountCurrency }
+      : { sum: tr.operationSum, currency: tr.operationCurrency }
     // добавим вторую часть перевода
     transaction.movements.push({
       id: null,
       account: {
         company: null,
         type: 'cash',
-        instrument: tr.operationCurrency,
+        instrument: currency,
         syncIds: null
       },
       invoice: null,
-      sum: -getSumAmount(tr.debitFlag, tr.operationSum),
+      sum: -getSumAmount(tr.debitFlag, sum),
       fee: Math.abs(parseFloat(tr.fee) * 100) / 100
     })
     return true

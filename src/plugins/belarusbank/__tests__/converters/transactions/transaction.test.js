@@ -244,6 +244,42 @@ describe('convertTransaction', () => {
         comment: 'Безналичное зачисление на счет',
         hold: false
       }
+    },
+    {
+      name: 'income with 0 in different currency',
+      json: {
+        'accountID': 'BY75AKBB30141000022233030000',
+        'comment': 'Отмена покупки/оплаты/перевода',
+        'date': '15.05.2020',
+        'debitFlag': '+',
+        'fee': '0.00',
+        'inAccountCurrency': 'EUR',
+        'inAccountSum': '2.45',
+        'operationCurrency': 'USD',
+        'operationSum': '0.00',
+        'place': 'GOOGLE *TEMPORARY HOLD&gt;855-836-3987US/5968',
+        'status': 'operResultOk',
+        'time': '00:00:00'
+      },
+      expectedTransaction: {
+        date: new Date('2020-05-15T00:00:00+03:00'),
+        movements: [
+          {
+            id: null,
+            account: { id: 'BY75AKBB30141000022233030000' },
+            invoice: null,
+            sum: 2.45,
+            fee: 0
+          }
+        ],
+        merchant: {
+          fullTitle: 'GOOGLE *TEMPORARY HOLD>855-836-3987US',
+          location: null,
+          mcc: 5968
+        },
+        comment: 'Отмена покупки/оплаты/перевода',
+        hold: false
+      }
     }
   ]
   tt.forEach(function (tc) {

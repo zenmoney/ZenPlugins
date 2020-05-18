@@ -1,4 +1,5 @@
 import { convertTransaction } from '../../../converters'
+
 describe('convertTransaction', () => {
   const account = {
     id: 'BY75AKBB30141000022233030000',
@@ -66,6 +67,7 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: null,
+        comment: null,
         hold: false
       }
     ],
@@ -108,6 +110,45 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: null,
+        comment: null,
+        hold: false
+      }
+    ],
+    [
+      {
+        'accountID': 'BY75AKBB30141000022233030000',
+        'comment': 'Снятие наличных',
+        'date': '15.05.2020',
+        'debitFlag': '-',
+        'fee': '0.00',
+        'inAccountCurrency': 'EUR',
+        'inAccountSum': '10.00',
+        'operationCurrency': 'USD',
+        'operationSum': '0.00',
+        'place': 'OAO &quot;BELSHINA&quot; BR.703 ATM&gt;BOBRUISKBY/6011',
+        'status': 'operResultOk',
+        'time': '00:00:00'
+      },
+      {
+        date: new Date('2020-05-15T00:00:00+03:00'),
+        movements: [
+          {
+            id: null,
+            account: { id: 'BY75AKBB30141000022233030000' },
+            invoice: null,
+            sum: -10.00,
+            fee: 0
+          },
+          {
+            id: null,
+            account: { company: null, type: 'cash', instrument: 'EUR', syncIds: null },
+            invoice: null,
+            sum: 10,
+            fee: 0
+          }
+        ],
+        merchant: null,
+        comment: null,
         hold: false
       }
     ]
