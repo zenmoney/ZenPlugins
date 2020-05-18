@@ -17,9 +17,9 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     if (ZenMoney.isAccountSkipped(zenAccount.id)) {
       return
     }
-    let apiTransactions = await fetchTransactions(auth, mainProduct, fromDate, toDate)
+    let apiTransactions = mainProduct ? await fetchTransactions(auth, mainProduct, fromDate, toDate) : null
     if (!apiTransactions) {
-      for (const product of products) {
+      await Promise.all(products.map(async product => {
         const batch = await fetchTransactions(auth, product, fromDate, toDate)
         if (batch) {
           if (apiTransactions) {
@@ -28,7 +28,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
             apiTransactions = batch
           }
         }
-      }
+      }))
     }
     if (apiTransactions) {
       apiTransactions.forEach(apiTransaction => {

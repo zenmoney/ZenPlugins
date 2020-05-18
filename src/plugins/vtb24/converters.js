@@ -129,15 +129,20 @@ export function convertCardAccount (apiAccount) {
         currency: cards[0].baseCurrency
       }
     }
+
     if (apiAccount.__type === 'ru.vtb24.mobilebanking.protocol.product.CreditCardAccountMto') {
-      const mainCard = apiAccount.mainCard && cards.some(card => card.id === apiAccount.mainCard.id) ? apiAccount.mainCard : cards[0]
-      mainProduct = { id: mainCard.id, type: mainCard.__type }
+      const mainCard = apiAccount.mainCard && cards.some(card => card.id === apiAccount.mainCard.id) ? apiAccount.mainCard : null
+      if (mainCard) {
+        mainProduct = { id: mainCard.id, type: mainCard.__type }
+      } else {
+        mainProduct = null
+      }
     }
     cards.forEach((card, i) => {
       if (card.number) {
         zenAccount.syncID.push(card.number.replace(/X/g, '*'))
       }
-      if (mainProduct.id === card.id && mainProduct.type === card.__type) {
+      if (mainProduct && mainProduct.id === card.id && mainProduct.type === card.__type) {
         return
       }
       products.push({
