@@ -26,7 +26,7 @@ export function convertTransaction (apiTransaction, accounts) {
     merchant: null,
     movements: [
       {
-        id: apiTransaction.txnId || null,
+        id: (apiTransaction.txnId && apiTransaction.txnId.toString()) || null,
         account: { id: accounts[0].id },
         invoice: null,
         sum: Math.round(parseFloat(apiTransaction.txnAmount) * 100) / 100,

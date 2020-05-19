@@ -22,7 +22,7 @@ describe('convertTransaction', () => {
         'merchant': null,
         'movements': [
           {
-            'id': 56647044,
+            'id': '56647044',
             'account': { 'id': 'account' },
             'invoice': null,
             'sum': -4900,

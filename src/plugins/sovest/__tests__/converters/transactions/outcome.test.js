@@ -23,7 +23,7 @@ describe('convertTransactions', () => {
         date: new Date('2020-03-26T14:48:54+03:00'),
         movements: [
           {
-            id: 63087317,
+            id: '63087317',
             account: { id: 'account' },
             invoice: null,
             sum: -99.9,
