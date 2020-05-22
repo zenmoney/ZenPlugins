@@ -1,9 +1,8 @@
 import fetchMock from 'fetch-mock'
 import _ from 'lodash'
+import { stringify } from 'querystring'
 import { scrape } from '..'
 import { makePluginDataApi } from '../../../ZPAPI.pluginData'
-
-var querystring = require('querystring')
 
 describe('scrape', () => {
   it('should hit the mocks and return results', async () => {
@@ -54,7 +53,7 @@ function mockApiFetchTransactions () {
   fetchMock.once({
     method: 'POST',
     headers: { Cookie: '' },
-    matcher: (url, { body }) => url === 'https://ibank.belinvestbank.by/app_api' && _.isEqual(body, querystring.stringify({
+    matcher: (url, { body }) => url === 'https://ibank.belinvestbank.by/app_api' && _.isEqual(body, stringify({
       section: 'cards',
       method: 'history',
       cardId: 30848200,
@@ -161,7 +160,7 @@ function mockApiFetchAccounts () {
   fetchMock.once({
     method: 'POST',
     headers: { Cookie: '' },
-    matcher: (url, { body }) => url === 'https://ibank.belinvestbank.by/app_api' && _.isEqual(body, querystring.stringify({
+    matcher: (url, { body }) => url === 'https://ibank.belinvestbank.by/app_api' && _.isEqual(body, stringify({
       section: 'payments',
       method: 'index'
     })),
@@ -246,7 +245,7 @@ function mockApiSaveDevice () {
   fetchMock.once({
     method: 'POST',
     headers: { Cookie: '' },
-    matcher: (url, { body }) => url === 'https://ibank.belinvestbank.by/app_api' && _.isEqual(body, querystring.stringify({
+    matcher: (url, { body }) => url === 'https://ibank.belinvestbank.by/app_api' && _.isEqual(body, stringify({
       section: 'mobile',
       method: 'setDeviceId',
       deviceId: 'device id',
@@ -283,7 +282,7 @@ function mockApiSaveDevice () {
 function mockApiAuthCallback () {
   fetchMock.once({
     method: 'POST',
-    matcher: (url, { body }) => url === 'https://ibank.belinvestbank.by/app_api' && _.isEqual(body, querystring.stringify({
+    matcher: (url, { body }) => url === 'https://ibank.belinvestbank.by/app_api' && _.isEqual(body, stringify({
       section: 'account',
       method: 'authCallback',
       auth_code: 'auth code'
@@ -310,7 +309,7 @@ function mockApiSmsCode () {
   fetchMock.once({
     method: 'POST',
     headers: { Cookie: '' },
-    matcher: (url, { body }) => url === 'https://login.belinvestbank.by/app_api' && _.isEqual(body, querystring.stringify({
+    matcher: (url, { body }) => url === 'https://login.belinvestbank.by/app_api' && _.isEqual(body, stringify({
       section: 'account',
       method: 'signin2',
       action: 1,
@@ -334,7 +333,7 @@ function mockApiSmsCode () {
 function mockApiCloseLastSession () {
   fetchMock.once({
     method: 'POST',
-    matcher: (url, { body }) => url === 'https://login.belinvestbank.by/app_api' && _.isEqual(body, querystring.stringify({
+    matcher: (url, { body }) => url === 'https://login.belinvestbank.by/app_api' && _.isEqual(body, stringify({
       section: 'account',
       method: 'confirmationCloseSession'
     })),
@@ -378,7 +377,7 @@ function mockApiCloseLastSession () {
 function mockApiLoginAndPass () {
   fetchMock.once({
     method: 'POST',
-    matcher: (url, { body }) => url === 'https://login.belinvestbank.by/app_api' && _.isEqual(body, querystring.stringify({
+    matcher: (url, { body }) => url === 'https://login.belinvestbank.by/app_api' && _.isEqual(body, stringify({
       section: 'account',
       method: 'signin',
       login: '123456789',

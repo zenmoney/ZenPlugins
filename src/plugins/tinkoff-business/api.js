@@ -1,6 +1,6 @@
 import { Base64 } from 'jshashes'
-import * as qs from 'querystring'
-import * as network from '../../common/network'
+import { parse, stringify } from 'querystring'
+import { fetchJson } from '../../common/network'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { generateRandomString } from '../../common/utils'
 import { IncompatibleVersionError } from '../../errors'
@@ -10,15 +10,15 @@ const base64 = new Base64()
 
 export class AuthError {}
 
-async function fetchJson (url, options = {}, predicate = () => true) {
+async function callGate (url, options = {}, predicate = () => true) {
   let response
   try {
-    response = await network.fetchJson(url, {
+    response = await fetchJson(url, {
       method: 'POST',
       sanitizeRequestLog: { headers: { Authorization: true } },
       sanitizeResponseLog: { headers: { 'set-cookie': true } },
       ...options,
-      stringify: qs.stringify,
+      stringify: stringify,
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         ...options.headers
@@ -52,7 +52,7 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
   let response
   if (accessToken) {
     if (expirationDateMs < new Date().getTime() + 300000) {
-      response = await fetchJson('https://sso.tinkoff.ru/secure/token', {
+      response = await callGate('https://sso.tinkoff.ru/secure/token', {
         headers: {
           Host: 'sso.tinkoff.ru'
         },
@@ -78,7 +78,7 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
     const { error, code } = await new Promise((resolve) => {
       const state = generateRandomString(16)
       const redirectUriWithoutProtocol = redirectUri.replace(/^https?:\/\//i, '')
-      const url = `https://sso.tinkoff.ru/authorize?${qs.stringify({
+      const url = `https://sso.tinkoff.ru/authorize?${stringify({
         client_id: clientId,
         redirect_uri: redirectUri,
         state: state
@@ -88,7 +88,7 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
         if (i < 0) {
           return
         }
-        const params = qs.parse(request.url.substring(i + redirectUriWithoutProtocol.length + 1))
+        const params = parse(request.url.substring(i + redirectUriWithoutProtocol.length + 1))
         if (params.code && params.state === state) {
           callback(null, params.code)
         } else {
@@ -100,7 +100,7 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
       throw new TemporaryError('Не удалось пройти авторизацию в Тинькофф Бизнес. Попробуйте еще раз')
     }
     console.assert(code && !error, 'non-successfull authorization', error)
-    response = await fetchJson('https://sso.tinkoff.ru/secure/token', {
+    response = await callGate('https://sso.tinkoff.ru/secure/token', {
       headers: {
         Host: 'sso.tinkoff.ru',
         Authorization: `Basic ${base64.encode(`${clientId}:${clientSecret}`)}`
@@ -128,7 +128,7 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
 }
 
 export async function fetchAccounts ({ accessToken }, { inn }) {
-  const response = await fetchJson(`https://sme-partner.tinkoff.ru/api/v1/partner/company/${inn}/accounts`, {
+  const response = await callGate(`https://sme-partner.tinkoff.ru/api/v1/partner/company/${inn}/accounts`, {
     method: 'GET',
     headers: {
       Host: 'sme-partner.tinkoff.ru',
@@ -150,7 +150,7 @@ function formatDate (date) {
 }
 
 export async function fetchTransactions ({ accessToken }, { inn }, { id }, fromDate, toDate) {
-  const response = await fetchJson(`https://sme-partner.tinkoff.ru/api/v1/partner/company/${inn}/excerpt?` +
+  const response = await callGate(`https://sme-partner.tinkoff.ru/api/v1/partner/company/${inn}/excerpt?` +
     `accountNumber=${id}` +
     `&from=${encodeURIComponent(formatDate(fromDate))}` +
     `&till=${encodeURIComponent(formatDate(toDate))}`, {

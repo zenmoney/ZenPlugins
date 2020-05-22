@@ -1,4 +1,4 @@
-import { convertTransaction, convertLastTransaction } from '../../converters'
+import { convertLastTransaction, convertTransaction } from '../../converters'
 
 describe('convertTransaction', () => {
   const accounts = [{

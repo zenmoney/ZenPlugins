@@ -1,12 +1,12 @@
 import { Base64 } from 'jshashes'
 import { defaultsDeep, flatMap } from 'lodash'
+import { stringify } from 'querystring'
 import { createDateIntervals as commonCreateDateIntervals } from '../../common/dateUtils'
 import { fetchJson } from '../../common/network'
 import { generateRandomString } from '../../common/utils'
 import { InvalidOtpCodeError } from '../../errors'
 
 const base64 = new Base64()
-var querystring = require('querystring')
 const loginUrl = 'https://login.belinvestbank.by/app_api'
 const dataUrl = 'https://ibank.belinvestbank.by/app_api'
 
@@ -34,7 +34,7 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
       },
       sanitizeRequestLog: { headers: { Cookie: true } },
       sanitizeResponseLog: { headers: { 'set-cookie': true } },
-      stringify: querystring.stringify
+      stringify: stringify
     }
   )
 

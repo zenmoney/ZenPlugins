@@ -1,11 +1,11 @@
-import * as _ from 'lodash'
-import * as bank from './api'
-import * as converters from './converters'
+import _ from 'lodash'
+import { fetchAccountConditions, fetchAccounts, fetchBalance, fetchFullTransactions, fetchLastTransactions, fetchTransactionsAccId, login } from './api'
+import { addOverdraftInfo, convertAccount, convertLastTransaction, convertTransaction, transactionsUnique } from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
-  const token = await bank.login(preferences.login, preferences.password)
+  const token = await login(preferences.login, preferences.password)
 
-  var accounts = await allAccounts(token)
+  let accounts = await allAccounts(token)
   if (accounts.length === 0) {
     // если активация первый раз, но карточки все еще не выпущены
     return {
@@ -14,13 +14,13 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     }
   }
 
-  const fullTransactionsRes = await bank.fetchFullTransactions(token, accounts, fromDate, toDate)
-  accounts = converters.addOverdraftInfo(accounts, fullTransactionsRes.overdrafts)
+  const fullTransactionsRes = await fetchFullTransactions(token, accounts, fromDate, toDate)
+  accounts = addOverdraftInfo(accounts, fullTransactionsRes.overdrafts)
 
   const transactionsStatement = (fullTransactionsRes.transactions)
-    .map(transaction => converters.convertTransaction(transaction, accounts))
-  const transactionsLast = (await bank.fetchLastTransactions(token))
-    .map(transaction => converters.convertLastTransaction(transaction, accounts))
+    .map(transaction => convertTransaction(transaction, accounts))
+  const transactionsLast = (await fetchLastTransactions(token))
+    .map(transaction => convertLastTransaction(transaction, accounts))
     .filter(function (op) {
       if (op === null) {
         // удаляем лишние уведомления
@@ -31,7 +31,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
       }
       return true
     })
-  const transactions = converters.transactionsUnique(transactionsStatement.concat(transactionsLast))
+  const transactions = transactionsUnique(transactionsStatement.concat(transactionsLast))
     .filter(transaction => transaction.movements[0].sum !== 0)
   return {
     accounts: accounts,
@@ -40,15 +40,15 @@ export async function scrape ({ preferences, fromDate, toDate }) {
 }
 
 async function allAccounts (token) {
-  const accounts = (await bank.fetchAccounts(token))
-    .map(converters.convertAccount)
+  const accounts = (await fetchAccounts(token))
+    .map(convertAccount)
     .filter(account => account !== null)
   for (let i = 0; i < accounts.length; i++) {
-    accounts[i].balance = await bank.fetchBalance(token, accounts[i])
+    accounts[i].balance = await fetchBalance(token, accounts[i])
     if (accounts[i].balance === null) {
       continue
     }
-    const accIDs = await bank.fetchTransactionsAccId(token, accounts[i])
+    const accIDs = await fetchTransactionsAccId(token, accounts[i])
     accounts[i].transactionsAccId = accIDs.transactionsAccId
     accounts[i].conditionsAccId = accIDs.conditionsAccId
   }
@@ -56,7 +56,7 @@ async function allAccounts (token) {
 
   for (let i = 0; i < accounts.length; i++) {
     if (accounts[i].balance !== null) {
-      accounts[i].accountID = await bank.fetchAccountConditions(token, accounts[i])
+      accounts[i].accountID = await fetchAccountConditions(token, accounts[i])
     }
   }
 

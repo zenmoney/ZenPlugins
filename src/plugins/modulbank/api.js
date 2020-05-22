@@ -1,4 +1,4 @@
-import * as qs from 'querystring'
+import { parse, stringify } from 'querystring'
 import { fetchJson } from '../../common/network'
 import { IncompatibleVersionError } from '../../errors'
 import { clientId, clientSecret, redirectUri } from './config'
@@ -11,7 +11,7 @@ export async function login () {
   }
   const { error, code } = await new Promise((resolve) => {
     const redirectUriWithoutProtocol = redirectUri.replace(/^https?:\/\//i, '')
-    const url = `https://oauth.modulbank.ru/?${qs.stringify({
+    const url = `https://oauth.modulbank.ru/?${stringify({
       clientId,
       redirectUri,
       scope: 'account-info operation-history'
@@ -21,7 +21,7 @@ export async function login () {
       if (i < 0) {
         return
       }
-      const params = qs.parse(request.url.substring(i + redirectUriWithoutProtocol.length + 1))
+      const params = parse(request.url.substring(i + redirectUriWithoutProtocol.length + 1))
       if (params.code) {
         callback(null, params.code)
       } else {

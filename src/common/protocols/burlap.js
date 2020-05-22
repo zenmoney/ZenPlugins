@@ -1,5 +1,5 @@
 import cheerio from 'cheerio'
-import * as _ from 'lodash'
+import _ from 'lodash'
 import padLeft from 'pad-left'
 import { IncompatibleVersionError } from '../../errors'
 import { getByteLength } from '../stringUtils'

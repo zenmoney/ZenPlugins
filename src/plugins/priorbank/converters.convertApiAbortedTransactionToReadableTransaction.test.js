@@ -1,5 +1,5 @@
-import { convertApiAbortedTransactionToReadableTransaction, mergeTransfers } from './converters'
 import { formatCommentDateTime } from '../../common/dateUtils'
+import { convertApiAbortedTransactionToReadableTransaction, mergeTransfers } from './converters'
 
 const transferIncome = {
   accountId: 'test(accountId1)',

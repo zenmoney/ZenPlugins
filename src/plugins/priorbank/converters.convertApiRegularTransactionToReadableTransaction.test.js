@@ -1,5 +1,5 @@
-import { convertApiRegularTransactionToReadableTransaction } from './converters'
 import { formatCommentDateTime } from '../../common/dateUtils'
+import { convertApiRegularTransactionToReadableTransaction } from './converters'
 
 describe('comment', () => {
   const transaction = convertApiRegularTransactionToReadableTransaction({

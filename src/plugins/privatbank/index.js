@@ -1,9 +1,9 @@
 import { convertAccountMapToArray, convertAccountSyncID } from '../../common/accounts'
 import { RetryError } from '../../common/retry'
 import { combineIntoTransferByTransferId, convertTransactionAccounts } from '../../common/transactions'
+import * as config from './config'
 import { convertAccounts, convertTransactions } from './converters'
 import { PrivatBank } from './privatbank'
-import * as config from './config'
 
 function adjustAccounts (accounts) {
   return convertAccountSyncID(convertAccountMapToArray(accounts))

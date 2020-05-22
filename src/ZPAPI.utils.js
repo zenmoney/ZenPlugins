@@ -1,8 +1,8 @@
 /* global XMLHttpRequest */
 
+import _ from 'lodash'
+import { parse as parseCookieString, splitCookiesString } from 'set-cookie-parser'
 import { getTargetUrl, PROXY_TARGET_HEADER, TRANSFERABLE_HEADER_PREFIX } from './shared'
-import * as _ from 'lodash'
-import { splitCookiesString, parse as parseCookieString } from 'set-cookie-parser'
 
 let lastRequest = null
 let lastRequestUrl = null

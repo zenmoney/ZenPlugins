@@ -1,5 +1,5 @@
-import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
 import { compact } from 'lodash'
+import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
 
 export const card = 'card'
 export const deposit = 'deposit'

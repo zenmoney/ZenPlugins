@@ -1,9 +1,9 @@
 import padLeft from 'pad-left'
-import qs from 'querystring'
+import { stringify } from 'querystring'
 import { parse, splitCookiesString } from 'set-cookie-parser'
+import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
 import { isValidDate } from '../../common/dateUtils'
 import { fetchJson } from '../../common/network'
-import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
 
 const transactionTypeFactors = {
   Возврат: 1,
@@ -74,7 +74,7 @@ export const assertResponseSuccess = function (response) {
 
 const lang = 'ru'
 
-const makeApiUrl = (path, queryParams) => `https://24.bsb.by/mobile/api${path}?${qs.stringify(queryParams)}`
+const makeApiUrl = (path, queryParams) => `https://24.bsb.by/mobile/api${path}?${stringify(queryParams)}`
 
 const BSB_AUTH_URL = makeApiUrl('/authorization', { lang })
 

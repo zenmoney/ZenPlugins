@@ -1,5 +1,5 @@
-import { mergeTransfers } from '../../common/mergeTransfers'
 import currencies from '../../common/codeToCurrencyLookup'
+import { mergeTransfers } from '../../common/mergeTransfers'
 
 export function convertAccount (apiAccount) {
   return {

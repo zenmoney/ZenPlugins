@@ -1,9 +1,9 @@
-import * as _ from 'lodash'
+import _ from 'lodash'
 import moment from 'moment'
 import { stringify } from 'querystring'
-import * as network from '../../common/network'
+import { fetch, fetchJson } from '../../common/network'
 import { retry } from '../../common/retry'
-import * as errors from '../../errors'
+import { InvalidOtpCodeError } from '../../errors'
 
 const storageValueName = 'tokens'
 const urls = new function () {
@@ -56,7 +56,7 @@ async function requestTokenByCredentials (login, password) {
   async function readCode (message) {
     const otp = await ZenMoney.readLine(message, { inputType: 'number' })
 
-    if (!otp) throw new errors.InvalidOtpCodeError()
+    if (!otp) throw new InvalidOtpCodeError()
     else return otp
   }
 
@@ -72,7 +72,7 @@ async function requestTokenByCredentials (login, password) {
     const url = `${urls.sessionConfirmation}/${sessionId}`
 
     const response = await retry({
-      getter: () => network.fetchJson(url, params),
+      getter: () => fetchJson(url, params),
       predicate: response => (response.body && (response.body.canContinueConfirmation === true || response.body.errorCode !== 0)),
       maxAttempts: 60,
       delayMs: 3000,
@@ -91,7 +91,7 @@ async function requestTokenByCredentials (login, password) {
       )
 
       console.error('confirmation-session non-200 code', additionalInfo)
-      throw new errors.ZPAPIError('Неизвестная ошибка! Отправьте лог разработчикам!', false, false)
+      throw new Error('Неизвестная ошибка! Отправьте лог разработчикам!')
     }
   }
 
@@ -116,7 +116,7 @@ async function requestTokenByCredentials (login, password) {
       sanitizeRequestLog: { body: { username: true, password: true } }
     }
 
-    return network.fetch(urls.token, params)
+    return fetch(urls.token, params)
   }
 
   async function requestTokenWithRetry (login, password, otp, sessionId) {
@@ -138,7 +138,7 @@ async function requestTokenByCredentials (login, password) {
       } else if (errorCode === 'otp_code_invalid' && type2Fa === 'StrongCustomerAuthenticator') {
         const errorDescription = _.get(response, 'body.error_description', '')
         if (/операция временно недоступна/i.test(errorDescription) || /пожалуйста подождите/i.test(errorDescription)) {
-          throw new errors.TemporaryError(errorDescription)
+          throw new TemporaryError(errorDescription)
         } else {
           console.debug(errorDescription)
           return requestTokenWithRetry(login, password, undefined, undefined)
@@ -150,10 +150,10 @@ async function requestTokenByCredentials (login, password) {
         const otp = await readCode('Одноразовый пароль введен неверно. Попробуйте еще раз')
         return requestTokenWithRetry(login, password, otp)
       } else if (errorCode === 'bot_detected') {
-        throw new errors.TemporaryError('Банк заподозрил в вас бота, попробуйте зайти через браузер, потом снова проведите синхронизацию в Zenmoney')
+        throw new TemporaryError('Банк заподозрил в вас бота, попробуйте зайти через браузер, потом снова проведите синхронизацию в Zenmoney')
       } else if (errorCode === 'invalid_grant') {
         console.error(response)
-        throw new errors.InvalidPreferencesError(_.get(response, 'body.error_description', 'Неправильный логин или пароль или ваш счет временно заблокирован'))
+        throw new InvalidPreferencesError(_.get(response, 'body.error_description', 'Неправильный логин или пароль или ваш счет временно заблокирован'))
       } else {
         panic(response)
       }
@@ -177,7 +177,7 @@ async function requestTokenByRefreshToken (refreshToken) {
     parse: (body) => body === '' ? undefined : JSON.parse(body)
   }
 
-  return network.fetch(urls.token, params)
+  return fetch(urls.token, params)
 }
 
 export async function getToken (login, password) {

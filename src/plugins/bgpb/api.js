@@ -1,3 +1,4 @@
+import cheerio from 'cheerio'
 import { flatMap } from 'lodash'
 import { createDateIntervals as commonCreateDateIntervals } from '../../common/dateUtils'
 import { fetch, fetchJson } from '../../common/network'
@@ -71,7 +72,6 @@ function validateResponse (response, predicate, error) {
 }
 
 export function parseFullTransactionsMail (html) {
-  const cheerio = require('cheerio')
   let $ = cheerio.load(html)
   $ = cheerio.load($().children()[0].children[0].Body)
   const tdObjects = $('table tr td[style="border: none;width:17cm;"]').toArray()
@@ -147,7 +147,6 @@ export function parseFullTransactionsMail (html) {
 }
 
 export function parseFullTransactionsMailCardLimit (html) {
-  const cheerio = require('cheerio')
   let $ = cheerio.load(html)
   $ = cheerio.load($().children()[0].children[0].Body)
 
@@ -182,7 +181,6 @@ export function parseFullTransactionsMailCardLimit (html) {
 }
 
 export function parseConditionsMail (html) {
-  const cheerio = require('cheerio')
   let $ = cheerio.load(html)
   $ = cheerio.load($().children()[0].children[0].Body)
 

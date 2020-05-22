@@ -1,4 +1,4 @@
-import * as _ from 'lodash'
+import _ from 'lodash'
 import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
 import { AuthError, fetchAccounts, fetchTransactions, login } from './api'
 import { convertAccount, convertToZenMoneyTransactions, convertTransaction } from './converters'

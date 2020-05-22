@@ -1,15 +1,15 @@
-import * as api from './api'
-import * as auth from './auth'
-import * as converters from './converters'
+import { fetchCardsAndWallets, fetchTransactions } from './api'
+import { getToken } from './auth'
+import { convertTransactions, extractAccounts, mergeTransactions } from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
-  const authInfo = await auth.getToken(preferences.login, preferences.password)
+  const authInfo = await getToken(preferences.login, preferences.password)
 
-  const accounts = await api.fetchCardsAndWallets(authInfo).then(cardsAndWallets => converters.extractAccounts(cardsAndWallets))
+  const accounts = await fetchCardsAndWallets(authInfo).then(cardsAndWallets => extractAccounts(cardsAndWallets))
 
-  const transactions = await api.fetchTransactions(authInfo, fromDate, toDate)
-    .then(transactions => converters.convertTransactions(transactions))
-    .then(transactions => converters.mergeTransactions(transactions, accounts))
+  const transactions = await fetchTransactions(authInfo, fromDate, toDate)
+    .then(transactions => convertTransactions(transactions))
+    .then(transactions => mergeTransactions(transactions, accounts))
 
   return {
     accounts: accounts,

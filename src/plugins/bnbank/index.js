@@ -1,32 +1,32 @@
-import * as _ from 'lodash'
-import * as bank from './api'
-import * as converters from './converters'
+import _ from 'lodash'
+import { fetchAccounts, fetchLastCardTransactions, fetchTransactions, login } from './api'
+import { convertCard, convertDeposit, convertTransaction, transactionsUnique } from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
-  const token = await bank.login(preferences.phone, preferences.password)
-  const accounts = (await bank.fetchAccounts(token))
+  const token = await login(preferences.phone, preferences.password)
+  const accounts = (await fetchAccounts(token))
   const cards = accounts.cards
-    .map(converters.convertCard)
+    .map(convertCard)
     .filter(account => account !== null)
   let lastTransactions = []
   for (let i = 0; i < cards.length; i++) {
-    lastTransactions = lastTransactions.concat(await bank.fetchLastCardTransactions(token, cards[i]))
+    lastTransactions = lastTransactions.concat(await fetchLastCardTransactions(token, cards[i]))
   }
-  var preparedAccounts = cards
+  let preparedAccounts = cards
   if (accounts.deposits) {
     const deposits = accounts.deposits
-      .map(converters.convertDeposit)
+      .map(convertDeposit)
       .filter(account => account !== null)
     preparedAccounts = cards.concat(deposits)
   }
 
-  const transactions = (await bank.fetchTransactions(token, preparedAccounts, fromDate, toDate))
-    .map(transaction => converters.convertTransaction(transaction, preparedAccounts))
+  const transactions = (await fetchTransactions(token, preparedAccounts, fromDate, toDate))
+    .map(transaction => convertTransaction(transaction, preparedAccounts))
   lastTransactions = lastTransactions
-    .map(transaction => converters.convertTransaction(transaction, cards))
+    .map(transaction => convertTransaction(transaction, cards))
     .filter(transaction => transaction !== null)
   return {
     accounts: preparedAccounts,
-    transactions: _.sortBy(converters.transactionsUnique(transactions.concat(lastTransactions)), transaction => transaction.date)
+    transactions: _.sortBy(transactionsUnique(transactions.concat(lastTransactions)), transaction => transaction.date)
   }
 }

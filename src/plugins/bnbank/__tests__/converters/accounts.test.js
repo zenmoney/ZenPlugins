@@ -1,4 +1,4 @@
-import { convertCard, convertDeposit, convertAccount } from '../../converters'
+import { convertAccount, convertCard, convertDeposit } from '../../converters'
 
 describe('convertAccount', () => {
   it('card account', () => {

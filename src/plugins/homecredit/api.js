@@ -1,6 +1,6 @@
+import _ from 'lodash'
 import { parseStartDateString } from '../../common/adapters'
 import { fetchJson } from '../../common/network'
-import _ from 'lodash'
 import { BankMessageError, InvalidOtpCodeError } from '../../errors'
 
 const myCreditUrl = 'https://mob.homecredit.ru/mycredit'

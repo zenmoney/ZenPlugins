@@ -25,7 +25,7 @@ export function convertAccount (ob) {
 }
 
 export function addOverdraftInfo (accounts, overdrafts) {
-  for (var accountNumber in overdrafts) {
+  for (const accountNumber in overdrafts) {
     for (let i = 0; i < accounts.length; i++) {
       if (accounts[i].accountID === accountNumber) {
         accounts[i].creditLimit = Number.parseFloat(overdrafts[accountNumber].replace(',', '.').replace(/\s/g, ''))

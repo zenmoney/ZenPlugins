@@ -1,4 +1,4 @@
-import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId, parseOuterAccountData } from './accounts'
+import { ensureSyncIDsAreUniqueButSanitized, parseOuterAccountData, sanitizeSyncId } from './accounts'
 
 describe('ensureSyncIDsAreUniqueButSanitized', () => {
   it('truncate syncID to last4 digits if there is no intersection between accounts', () => {

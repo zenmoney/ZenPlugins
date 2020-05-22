@@ -73,7 +73,7 @@ export async function fetchAccounts (token) {
     headers: { session_token: token }
   }, response => response.body && response.body.overviewResponse && (response.body.overviewResponse.cardAccount || response.body.overviewResponse.depositAccount || response.body.overviewResponse.currentAccount), message => new TemporaryError(message))).body.overviewResponse
 
-  var cards = []
+  let cards = []
   if (products.cardAccount) {
     cards = cards.concat(products.cardAccount)
   }

@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars,camelcase */
-import * as qs from 'querystring'
-import * as network from '../../common/network'
+import { parse, stringify } from 'querystring'
+import { fetchJson } from '../../common/network'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { delay } from '../../common/utils'
 import { IncompatibleVersionError } from '../../errors'
@@ -28,7 +28,7 @@ export async function login ({ access_token, refresh_token, expirationDateMs } =
     } else
     if (expirationDateMs < new Date().getTime()) {
       console.log('>>> Авторизация: Обновляем токен взамен устаревшего.')
-      response = await fetchJson('oauth2/token', {
+      response = await callGate('oauth2/token', {
         sandbox: clientId === 'sandbox',
         ignoreErrors: true,
         body: {
@@ -77,7 +77,7 @@ export async function login ({ access_token, refresh_token, expirationDateMs } =
       const redirectUriWithoutProtocol = (clientId === 'sandbox' ? SANDBOX_REDIRECT_URI : API_REDIRECT_URI).replace(/^https?:\/\//i, '')
       const url = clientId === 'sandbox'
         ? 'https://enter.tochka.com/sandbox/login/'
-        : `${API_URI}authorize?${qs.stringify({
+        : `${API_URI}authorize?${stringify({
           client_id: clientId,
           response_type: 'code'
         })}`
@@ -87,7 +87,7 @@ export async function login ({ access_token, refresh_token, expirationDateMs } =
         if (i < 0) {
           return
         }
-        const params = qs.parse(request.url.substring(i + redirectUriWithoutProtocol.length + 1))
+        const params = parse(request.url.substring(i + redirectUriWithoutProtocol.length + 1))
         if (params.code) {
           callback(null, params.code)
         } else {
@@ -104,7 +104,7 @@ export async function login ({ access_token, refresh_token, expirationDateMs } =
     // const code = 'QLA74GG14RomYV1UQNr5zbwkcpKSNthn'
 
     console.log('>>> Авторизация: Запрашиваем токен.')
-    response = await fetchJson('oauth2/token', {
+    response = await callGate('oauth2/token', {
       sandbox: clientId === 'sandbox',
       method: 'POST',
       body: {
@@ -130,12 +130,12 @@ export async function login ({ access_token, refresh_token, expirationDateMs } =
   }
 }
 
-async function fetchJson (url, options = {}, predicate = () => true) {
+async function callGate (url, options = {}, predicate = () => true) {
   if (url.substr(0, 4) !== 'http') { url = (options.sandbox ? SANDBOX_URI : API_URI) + url }
 
   let response
   try {
-    response = await network.fetchJson(url, {
+    response = await fetchJson(url, {
       method: 'POST',
       ...options,
       sanitizeRequestLog: {
@@ -180,7 +180,7 @@ export async function fetchAccounts ({ access_token } = {}, preferences) {
   console.log('>>> Получаем список счетов')
 
   // простой список счетов
-  const response = await fetchJson('account/list', {
+  const response = await callGate('account/list', {
     sandbox: preferences.server === 'sandbox',
     method: 'GET',
     headers: {
@@ -217,7 +217,7 @@ function formatDate (date) {
 
 export async function fetchStatement ({ access_token } = {}, apiAccount, fromDate, toDate, preferences) {
   console.log('>>> Заказываем выписку по операциям на счету', apiAccount)
-  let response = await fetchJson('statement', {
+  let response = await callGate('statement', {
     sandbox: preferences.server === 'sandbox',
     method: 'POST',
     headers: {
@@ -250,7 +250,7 @@ export async function fetchStatement ({ access_token } = {}, apiAccount, fromDat
   const iMax = 5
   for (let i = 1; i <= iMax; i++) {
     console.log(`>>> Проверяем статус выписки (попытка #${i})`, requestId)
-    response = await fetchJson('statement/status/' + requestId, {
+    response = await callGate('statement/status/' + requestId, {
       sandbox: preferences.server === 'sandbox',
       method: 'GET',
       headers: {
@@ -269,7 +269,7 @@ export async function fetchStatement ({ access_token } = {}, apiAccount, fromDat
   }
 
   console.log('>>> Запрашиваем содержимое выписки', requestId)
-  response = await fetchJson('statement/result/' + requestId, {
+  response = await callGate('statement/result/' + requestId, {
     sandbox: preferences.server === 'sandbox',
     method: 'GET',
     headers: {

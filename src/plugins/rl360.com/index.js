@@ -1,5 +1,5 @@
+import { fetchPolicies, fetchTransactions, login } from './api'
 import { convertAccount, convertTransaction } from './converters'
-import { login, fetchPolicies, fetchTransactions } from './api'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
   toDate = toDate || new Date()

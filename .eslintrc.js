@@ -24,6 +24,7 @@ module.exports = {
     }
   ],
   'rules': {
-    'eqeqeq': ['error', 'always']
+    'eqeqeq': ['error', 'always'],
+    'no-var': 'error'
   }
 }

@@ -2,9 +2,9 @@
  * @author Pavel Shapilov <pavel@shapil.ru>
  */
 import moment from 'moment'
-import * as qs from 'querystring'
+import { stringify } from 'querystring'
 import * as setCookie from 'set-cookie-parser'
-import * as network from '../../common/network'
+import { fetch, fetchJson } from '../../common/network'
 import { retry } from '../../common/retry'
 
 const homepage = 'https://sovest.ru'
@@ -17,10 +17,10 @@ let userCookie
 let cookie
 let fullCookieString = ''
 
-async function fetchJson (url, options = {}, predicate = () => true) {
-  const response = await network.fetchJson(url, {
+async function callGate (url, options = {}, predicate = () => true) {
+  const response = await fetchJson(url, {
     ...options,
-    stringify: qs.stringify,
+    stringify,
     headers: {
       'User-Agent': userAgent,
       'Sec-Fetch-Site': 'same-site',
@@ -42,7 +42,7 @@ async function fetchJson (url, options = {}, predicate = () => true) {
 
 export async function login (login, password) {
   // get SNODE cookie from site
-  const responsehome = await network.fetch(homepage, { headers: { 'User-Agent': userAgent }, sanitizeResponseLog: { headers: true } })
+  const responsehome = await fetch(homepage, { headers: { 'User-Agent': userAgent }, sanitizeResponseLog: { headers: true } })
 
   if (responsehome.headers &&
     responsehome.headers['set-cookie'] &&
@@ -69,7 +69,7 @@ export async function login (login, password) {
     body: body,
     headers: headers
   }
-  const response = await fetchJson('https://oauth.sovest.ru/oauth/token', options, null)
+  const response = await callGate('https://oauth.sovest.ru/oauth/token', options, null)
   if (response.body.user_message && [
     'еверный логин или пароль',
     'еправильный номер телефона'
@@ -100,12 +100,12 @@ export async function fetchAccounts (token) {
     Authorization: tokenType + ' ' + token
   }
   // получаем данные о картах
-  const responseCard = (await fetchJson(apiUrl + 'client' + apiPath + 'card', {
+  const responseCard = (await callGate(apiUrl + 'client' + apiPath + 'card', {
     method: method,
     headers: headers
   }, responseCard => Array.isArray(responseCard.body)))
   // получаем баланс
-  const responseBalance = (await fetchJson(apiUrl + 'reports' + apiPath + 'client/balance', {
+  const responseBalance = (await callGate(apiUrl + 'reports' + apiPath + 'client/balance', {
     method: method,
     headers: headers
   }, responseBalance => Array.isArray(responseBalance.body)))
@@ -176,7 +176,7 @@ async function fetchTransactionPaged (token, nextTxnId, nextTxnDate) {
   const url = apiUrl + 'reports' + apiPath + 'client/payments/history?rows=' + pageLimit +
     (nextTxnDate && nextTxnId ? `&txnDate=${encodeURIComponent(nextTxnDate)}&txn=${nextTxnId}` : '')
   const response = await retry({
-    getter: () => fetchJson(url, options),
+    getter: () => callGate(url, options),
     predicate: response => response.body.errorCode !== 'request.blocked',
     maxAttempts: 5
   })

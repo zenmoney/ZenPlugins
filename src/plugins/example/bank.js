@@ -1,10 +1,10 @@
-import * as network from '../../common/network'
+import { fetchJson } from '../../common/network'
 import { InvalidLoginOrPasswordError } from '../../errors'
 
 const baseUrl = 'https://raw.githubusercontent.com/zenmoney/ZenPlugins/master/src/plugins/example/public/'
 
-async function fetchJson (url, options, predicate = () => true) {
-  const response = await network.fetchJson(baseUrl + url, options || {})
+async function callGate (url, options, predicate = () => true) {
+  const response = await fetchJson(baseUrl + url, options || {})
   if (predicate) {
     validateResponse(response, response => response.body && !response.body.error && predicate(response))
   }
@@ -20,13 +20,13 @@ export async function login (login, password) {
   if (login !== 'example' || password !== 'example') {
     throw new InvalidLoginOrPasswordError()
   }
-  return (await fetchJson('auth.json', null, response => response.body.access_token)).body.access_token
+  return (await callGate('auth.json', null, response => response.body.access_token)).body.access_token
 }
 
 export async function fetchAccounts (token) {
-  return (await fetchJson('accounts.json', null, response => Array.isArray(response.body))).body
+  return (await callGate('accounts.json', null, response => Array.isArray(response.body))).body
 }
 
 export async function fetchTransactions (token, fromDate, toDate = null) {
-  return (await fetchJson('transactions.json', null, response => Array.isArray(response.body))).body
+  return (await callGate('transactions.json', null, response => Array.isArray(response.body))).body
 }

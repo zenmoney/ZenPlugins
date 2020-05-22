@@ -1,8 +1,9 @@
+import cheerio from 'cheerio'
 import { defaultsDeep } from 'lodash'
+import { stringify } from 'querystring'
 import { fetch } from '../../common/network'
 
 const baseUrl = 'https://service.rl360.com/scripts/customer.cgi'
-var querystring = require('querystring')
 
 async function fetchUrl (url, options, predicate = () => true, error = (message) => console.assert(false, message)) {
   options = defaultsDeep(
@@ -13,7 +14,7 @@ async function fetchUrl (url, options, predicate = () => true, error = (message)
     }
   )
   options.method = options.method ? options.method : 'POST'
-  options.stringify = querystring.stringify
+  options.stringify = stringify
 
   const response = await fetch(baseUrl + url, options)
   if (predicate) {
@@ -29,7 +30,7 @@ function validateResponse (response, predicate, error) {
 }
 
 export async function login (prefs) {
-  var res = await fetchUrl('?option=login', {
+  const res = await fetchUrl('?option=login', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded'
@@ -51,16 +52,15 @@ export async function login (prefs) {
 
 export async function fetchPolicies () {
   console.log('>>> Загрузка списка полиси...')
-  var policies = []
+  const policies = []
   const res = await fetchUrl('/SC/', { method: 'GET' }, response => response.success, message => new Error(''))
   let html = res.body
   html = html.replace(/\r?\n|\r/g, '')
 
-  const cheerio = require('cheerio')
-  var $ = cheerio.load(html)
+  let $ = cheerio.load(html)
 
   const policiesElements = $('div[class="level3"]').children('p').children('a[href*="../SC/servicing/summary.php?PolNumber="]')
-  var ids = []
+  const ids = []
   policiesElements.each(function (i, policyObj) {
     ids.push($(policyObj).text())
   })
@@ -83,7 +83,6 @@ export async function fetchPolicies () {
 
 export async function fetchTransactions (acc, fromDate, toDate) {
   console.log('>>> Загрузка транзакций по ' + acc.title)
-  const cheerio = require('cheerio')
   const transactions = []
 
   const res = await fetchUrl(

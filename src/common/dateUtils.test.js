@@ -1,5 +1,5 @@
+import { createDateIntervals, dateInTimezone, formatCommentDateTime, isValidDate } from './dateUtils'
 import { getIntervalBetweenDates } from './momentDateUtils'
-import { createDateIntervals, formatCommentDateTime, isValidDate, dateInTimezone } from './dateUtils'
 
 describe('formatCommentDateTime', () => {
   it('should return stringified datetime in year-month-day hours:minutes:seconds format', () => {

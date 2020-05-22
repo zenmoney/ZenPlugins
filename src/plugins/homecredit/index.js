@@ -1,7 +1,15 @@
-import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
-import * as Api from './api'
-import * as Converters from './converters'
 import _ from 'lodash'
+import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
+import {
+  authBase,
+  authMyCredit,
+  collapseDoubleAccounts,
+  fetchBaseAccounts,
+  fetchBaseTransactions,
+  fetchMyCreditAccounts,
+  fetchMyCreditTransactions
+} from './api'
+import { convertAccount, convertTransactions } from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
   let accountsData = []
@@ -25,10 +33,10 @@ export async function scrape ({ preferences, fromDate, toDate }) {
 
   if (login && password) {
     // Авторизация в базовом приложении банка ===============================================
-    const deviceId = await Api.authBase(ZenMoney.getData('device_id', null), login, password, code)
+    const deviceId = await authBase(ZenMoney.getData('device_id', null), login, password, code)
     ZenMoney.setData('device_id', deviceId)
 
-    const fetchedAccounts = await Api.fetchBaseAccounts()
+    const fetchedAccounts = await fetchBaseAccounts()
 
     if (fetchedAccounts.credits /* || fetchedAccounts.merchantCards */) {
       console.log(">>> Обнаружены кредиты, необходима синхронизация через приложение 'Мой кредит'")
@@ -39,8 +47,8 @@ export async function scrape ({ preferences, fromDate, toDate }) {
         if (fetchedAccounts.merchantCards) delete fetchedAccounts.merchantCards
       } else {
         // Авторизация в приложении "Мой кредит" ===========================================
-        const auth = await Api.authMyCredit(ZenMoney.getData('auth', null) || {}, preferences)
-        const fetchedMyCreditAccounts = await Api.fetchMyCreditAccounts(auth)
+        const auth = await authMyCredit(ZenMoney.getData('auth', null) || {}, preferences)
+        const fetchedMyCreditAccounts = await fetchMyCreditAccounts(auth)
         if (fetchedAccounts.credits) {
           fetchedAccounts.credits.forEach(function (account) {
             const loan = getLoan(fetchedMyCreditAccounts.CreditLoan, account.contractNumber)
@@ -68,16 +76,16 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     }
 
     accountsData = await Promise.all(Object.keys(fetchedAccounts).map(async type => {
-      return Promise.all(fetchedAccounts[type].map(async account => Converters.convertAccount(account, type)))
+      return Promise.all(fetchedAccounts[type].map(async account => convertAccount(account, type)))
     }))
 
     transactions = _.flattenDeep(await Promise.all(Object.keys(accountsData).map(async type => {
       return Promise.all(accountsData[type].map(async accountData =>
-        Converters.convertTransactions(accountData, await Api.fetchBaseTransactions(accountData, accountData.details.type, fromDate, toDate))))
+        convertTransactions(accountData, await fetchBaseTransactions(accountData, accountData.details.type, fromDate, toDate))))
     })))
 
     // отфильтруем доп.карты и пустые счета
-    accountsData = Api.collapseDoubleAccounts(accountsData)
+    accountsData = collapseDoubleAccounts(accountsData)
 
     const tmpTransactions = {}
     transactions.forEach(function (t) {
@@ -93,17 +101,17 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     }
 
     const newConn = auth === null
-    auth = await Api.authMyCredit(auth || {}, preferences)
+    auth = await authMyCredit(auth || {}, preferences)
 
-    const fetchedAccounts = await Api.fetchMyCreditAccounts(auth)
+    const fetchedAccounts = await fetchMyCreditAccounts(auth)
     console.log('>>> Список счетов загружен.')
 
     // счета
     accountsData = _.flattenDeep(await Promise.all(Object.keys(fetchedAccounts).map(type => {
-      return Promise.all(fetchedAccounts[type].map(async account => Converters.convertAccount(account, type)))
+      return Promise.all(fetchedAccounts[type].map(async account => convertAccount(account, type)))
     }))).filter(item => item !== null)
 
-    accountsData = Api.collapseDoubleAccounts(accountsData)
+    accountsData = collapseDoubleAccounts(accountsData)
 
     if (auth.levelup === false && accountsData.length === 0) {
       throw new InvalidPreferencesError('Для доступа к дебетовым счетам необходимо создать подключение заново и ответить на вопросы банка.')
@@ -112,7 +120,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     // фикс поступлений сегодняшнего дня (чтобы не создавать лишних корректировок)
     // если в текущих сутках были поступления, баланс счёта передаём только для нового подключения
     transactions = await Promise.all(accountsData.map(async accountData => {
-      const trans = Converters.convertTransactions(accountData, await Api.fetchMyCreditTransactions(auth, accountData, fromDate, toDate))
+      const trans = convertTransactions(accountData, await fetchMyCreditTransactions(auth, accountData, fromDate, toDate))
       const today = new Date()
       today.setHours(0, 0, 0, 0)
       const todayIncomes = _.sumBy(trans, function (tran) {

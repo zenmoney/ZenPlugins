@@ -1,5 +1,5 @@
-import * as network from '../../common/network'
-import * as tools from './tools'
+import { fetchJson } from '../../common/network'
+import { getTimestamp } from './tools'
 
 const urls = new function () {
   this.baseURL = 'https://api.epayments.com/'
@@ -29,7 +29,7 @@ export async function fetchCardsAndWallets (auth) {
     sanitizeRequestLog: { headers: { Authorization: true } }
   }
 
-  const response = await network.fetchJson(urls.userInfo, params)
+  const response = await fetchJson(urls.userInfo, params)
   if (response.status !== 200) {
     const message = 'Ошибка при загрузке информации об аккаунтах! '
     console.error(message + JSON.stringify(response))
@@ -44,7 +44,7 @@ export async function fetchCardsAndWallets (auth) {
 
 export async function fetchTransactions (auth, fromDate, toDate) {
   async function recursive (params, transactions, toFetch, isFirstPage) {
-    const response = await network.fetchJson(urls.transactions, params)
+    const response = await fetchJson(urls.transactions, params)
 
     if (response.status !== 200) {
       const message = 'Ошибка при загрузке транзакций! '
@@ -71,8 +71,8 @@ export async function fetchTransactions (auth, fromDate, toDate) {
   }
 
   const requestData = {
-    from: tools.getTimestamp(fromDate || new Date(0)),
-    till: tools.getTimestamp(toDate || new Date()),
+    from: getTimestamp(fromDate || new Date(0)),
+    till: getTimestamp(toDate || new Date()),
     skip: 0,
     take: 10 // Изменение этого числа не меняет ответ сервера
   }

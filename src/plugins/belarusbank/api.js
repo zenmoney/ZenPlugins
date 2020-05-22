@@ -1,10 +1,11 @@
+import cheerio from 'cheerio'
 import { defaultsDeep } from 'lodash'
+import padLeft from 'pad-left'
+import { stringify } from 'querystring'
 import { fetch } from '../../common/network'
 import { BankMessageError, InvalidOtpCodeError } from '../../errors'
-import padLeft from 'pad-left'
 
 const baseUrl = 'https://ibank.asb.by'
-var querystring = require('querystring')
 
 async function fetchUrl (url, options, predicate = () => true, error = (message) => console.assert(false, message)) {
   options = defaultsDeep(
@@ -15,7 +16,7 @@ async function fetchUrl (url, options, predicate = () => true, error = (message)
     }
   )
   options.method = options.method ? options.method : 'POST'
-  options.stringify = querystring.stringify
+  options.stringify = stringify
 
   console.assert(url, 'NO url', url)
   console.assert(url.indexOf('undefined') === -1, 'undefined in url', url)
@@ -73,7 +74,7 @@ export async function loginCodes (prefs) {
   if (!prefs.codes3 || !/^\s*(?:\d{4}[\s+]+){9}\d{4}\s*$/.test(prefs.codes3)) {
     throw new InvalidPreferencesError('Неправильно введены коды 31-40! Необходимо ввести 10 четырехзначных кодов через пробел или +.')
   }
-  var res = await fetchUrl('/wps/portal/ibank/', {
+  let res = await fetchUrl('/wps/portal/ibank/', {
     method: 'GET'
   }, response => response.success, message => new Error('Сайт не доступен'))
 
@@ -100,9 +101,9 @@ export async function loginCodes (prefs) {
 
   let codenum = res.body.match(/Введите[^>]*>код [N№]\s*(\d+)/i)
   codenum = codenum[1] - 1 // Потому что у нас коды с 0 нумеруются
-  var col = Math.floor(codenum / 10)
-  var idx = codenum % 10
-  var codes = prefs['codes' + col]
+  const col = Math.floor(codenum / 10)
+  const idx = codenum % 10
+  const codes = prefs['codes' + col]
   if (!codes) {
     throw new InvalidPreferencesError('Не введены коды ' + (col + 1) + '1-' + (col + 2) + '0')
   }
@@ -137,7 +138,7 @@ export async function loginCodes (prefs) {
 }
 
 export async function loginSMS (prefs) {
-  var res = await fetchUrl('/wps/portal/ibank/', {
+  let res = await fetchUrl('/wps/portal/ibank/', {
     method: 'GET'
   }, response => response.success, message => new Error('Сайт не доступен'))
 
@@ -214,8 +215,8 @@ function strDecoder (str) {
   if (str === null) {
     return null
   }
-  var str2 = str.split(';')
-  var res = ''
+  const str2 = str.split(';')
+  let res = ''
   str2.forEach(function (s) {
     const left = s.replace(/&.[0-9]{4}/i, '')
 
@@ -245,7 +246,6 @@ export async function fetchCards (url) {
 export function parseCards (html) {
   html = html.replace(/\r?\n|\r/g, '')
   const accounts = []
-  const cheerio = require('cheerio')
   const $ = cheerio.load(html)
 
   const formEncodedUrl = $('input[name="javax.faces.encodedURL"]').attr('value')
@@ -343,7 +343,6 @@ export async function fetchCardsTransactions (acc, fromDate, toDate) {
   }, response => response.success, message => new Error(''))
 
   let transactions = []
-  const cheerio = require('cheerio')
   let $
   let action
   let pages

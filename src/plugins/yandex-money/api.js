@@ -1,5 +1,5 @@
-import * as qs from 'querystring'
-import * as network from '../../common/network'
+import { parse, stringify } from 'querystring'
+import { fetchJson } from '../../common/network'
 import { IncompatibleVersionError } from '../../errors'
 import { clientId, redirectUri } from './config'
 
@@ -9,13 +9,13 @@ export function isAuthError (err) {
   return err && err.message === 'authorization error'
 }
 
-async function fetchJson (url, options = {}, predicate = () => true) {
-  const response = await network.fetchJson(url, {
+async function callGate (url, options = {}, predicate = () => true) {
+  const response = await fetchJson(url, {
     method: 'POST',
     sanitizeRequestLog: { headers: { Authorization: true } },
     sanitizeResponseLog: { headers: { 'set-cookie': true } },
     ...options,
-    stringify: qs.stringify,
+    stringify: stringify,
     headers: {
       Host: 'money.yandex.ru',
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -36,7 +36,7 @@ export async function login () {
   }
   const { error, code } = await new Promise((resolve) => {
     const redirectUriWithoutProtocol = redirectUri.replace(/^https?:\/\//i, '')
-    const url = `https://money.yandex.ru/oauth/authorize?${qs.stringify({
+    const url = `https://money.yandex.ru/oauth/authorize?${stringify({
       client_id: clientId,
       scope: scope,
       redirect_uri: redirectUri,
@@ -47,7 +47,7 @@ export async function login () {
       if (i < 0) {
         return
       }
-      const params = qs.parse(request.url.substring(i + redirectUriWithoutProtocol.length + 1))
+      const params = parse(request.url.substring(i + redirectUriWithoutProtocol.length + 1))
       if (params.code) {
         callback(null, params.code)
       } else {
@@ -59,7 +59,7 @@ export async function login () {
     throw new TemporaryError('Не удалось пройти авторизацию в Яндекс.Деньги. Попробуйте еще раз')
   }
   console.assert(code && !error, 'non-successfull authorization', error)
-  const response = await fetchJson('https://money.yandex.ru/oauth/token', {
+  const response = await callGate('https://money.yandex.ru/oauth/token', {
     body: {
       client_id: clientId,
       grant_type: 'authorization_code',
@@ -76,7 +76,7 @@ export async function login () {
 }
 
 export async function fetchAccount ({ accessToken }) {
-  const response = await fetchJson('https://money.yandex.ru/api/account-info', {
+  const response = await callGate('https://money.yandex.ru/api/account-info', {
     headers: {
       Authorization: `Bearer ${accessToken}`
     }
@@ -88,7 +88,7 @@ export async function fetchTransactions ({ accessToken }, fromDate, toDate) {
   const transactions = []
   let nextRecord = null
   do {
-    const response = await fetchJson('https://money.yandex.ru/api/operation-history', {
+    const response = await callGate('https://money.yandex.ru/api/operation-history', {
       headers: {
         Authorization: `Bearer ${accessToken}`
       },

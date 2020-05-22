@@ -1,6 +1,6 @@
 import { MD5, SHA1 } from 'jshashes'
 import { createDateIntervals as commonCreateDateIntervals } from '../../common/dateUtils'
-import * as network from '../../common/network'
+import { fetch } from '../../common/network'
 import { retry } from '../../common/retry'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 
@@ -60,7 +60,7 @@ export class PrivatBank {
     }
 
     const response = await retry({
-      getter: () => network.fetch(url, options),
+      getter: () => fetch(url, options),
       predicate: response => !(response.status === 429 || (response.body && (
         (response.status === 504 && response.body.indexOf('504 Gateway Time-out') >= 0) ||
         (response.status === 502 && response.body.indexOf('Bad Gateway') >= 0)))),

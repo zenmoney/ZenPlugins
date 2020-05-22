@@ -1,7 +1,7 @@
-import * as _ from 'lodash'
-import * as tools from './tools'
-import { mergeTransfers as commonMergeTransfers } from '../../common/mergeTransfers'
+import _ from 'lodash'
 import { getSingleReadableTransactionMovement } from '../../common/converters'
+import { mergeTransfers as commonMergeTransfers } from '../../common/mergeTransfers'
+import { cleanUpText } from './tools'
 
 export function convertCards (cards) {
   return cards.map(card => {
@@ -75,7 +75,7 @@ export function convertTransaction (apiTransaction) {
     hold: apiTransaction.state === 'WaitConfirmation',
     merchant: null, // Такая информация есть только в комментарии в неудобном для парсинга виде
     date: new Date(Date.parse(apiTransaction.operation.date)),
-    comment: tools.cleanUpText(apiTransaction.details || '')
+    comment: cleanUpText(apiTransaction.details || '')
   };
 
   // TODO: добавить больше операций?
@@ -116,7 +116,7 @@ function getMovement (apiTransaction, accountId) {
   }
 
   if (apiTransaction.txnCurrency && (apiTransaction.currency !== apiTransaction.txnCurrency)) {
-    var amount = apiTransaction.txnAmount
+    let amount = apiTransaction.txnAmount
     if ((movement.sum > 0 && amount < 0) || (movement.sum < 0 && amount > 0)) {
       amount *= -1
     }
