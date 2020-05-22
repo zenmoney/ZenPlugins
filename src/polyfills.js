@@ -8,6 +8,10 @@ global.fetch = null
 // eslint-disable-next-line import/no-webpack-loader-syntax
 global.fetch = require('imports-loader?self=>global&{default:XMLHttpRequest}=xhrViaZenApi!exports-loader?self.fetch!whatwg-fetch')
 
+if (!('self' in global)) {
+  global.self = global
+}
+
 Object.assign = require('object-assign')
 require('./polyfills/array')
 require('./polyfills/math')
