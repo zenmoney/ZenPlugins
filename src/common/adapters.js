@@ -167,7 +167,14 @@ function castTransactionDatesToTicks (transactions) {
     : transaction)
 }
 
+function isApiErrorMessage (message) {
+  return /^\[[A-Z]{3}]/.test(message)
+}
+
 function getPresentationError (error) {
+  if (typeof error === 'string' && isApiErrorMessage(error)) {
+    error = { message: error }
+  }
   let key = null
   const params = { lng: ZenMoney.locale ? ZenMoney.locale.replace('_', '-') : 'ru' }
   if (error instanceof BankMessageError) {
@@ -202,7 +209,7 @@ function getPresentationError (error) {
       return this.message
     }
   }
-  if (meaningfulError instanceof ZPAPIError || /^\[[A-Z]{3}]/.test(meaningfulError.message)) {
+  if (meaningfulError instanceof ZPAPIError || isApiErrorMessage(meaningfulError.message)) {
     return meaningfulError
   } else {
     meaningfulError.message = '[RUE] ' + meaningfulError.message
