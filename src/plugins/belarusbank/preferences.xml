@@ -36,7 +36,7 @@
         inputType="phone"
         title="Коды 1-10"
         dialogTitle="Коды 1-10"
-        dialogMessage="Введите коды, если у вас отключено подтверждение входа через SMS"
+        dialogMessage="Введите коды, если у вас отключено подтверждение входа через SMS. Коды вводятся через пробел или +"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="|Введите коды 1-10 через пробел или +|****">
