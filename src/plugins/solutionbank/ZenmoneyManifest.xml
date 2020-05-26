@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>mtbank</id>
+    <version>1.0</version>
+    <build>10</build>
+    <company></company>
+    <modular>true</modular>
+    <codeRequired>false</codeRequired>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+    <description>Чтобы подключить синхронизацию, укажите логин и пароль, с которыми вы регистрировались в приложении Банка Решение.</description>
+</provider>
