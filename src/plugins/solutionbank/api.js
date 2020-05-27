@@ -209,7 +209,7 @@ export async function fetchTransactionsMini (sessionToken, accounts, fromDate, t
   })
 
   const filteredOperations = operations.filter(function (op) {
-    return op !== undefined && op.date > fromDate
+    return op !== undefined && op.date >= fromDate
   })
 
   console.log(`>>> Загружено ${filteredOperations.length} операций.`)
@@ -253,7 +253,7 @@ export async function fetchTransactions (sessionToken, accounts, fromDate, toDat
   })
 
   const filteredOperations = operations.filter(function (op) {
-    return op !== undefined && op.sum !== 0
+    return op !== undefined && op.sum !== 0 && op.date >= fromDate
   })
 
   console.log(`>>> Загружено ${filteredOperations.length} операций.`)
