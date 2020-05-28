@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { IncompatibleVersionError } from '../errors'
-import { sanitize } from './sanitize'
+import { sanitizeUrlContainingObject } from './sanitize'
 import { bufferToHex } from './utils'
 
 export class ParseError {
@@ -20,7 +20,7 @@ export async function fetch (url, options = {}) {
 
   const beforeFetchTicks = Date.now()
   const shouldLog = options.log !== false
-  shouldLog && console.debug('request', sanitize({
+  shouldLog && console.debug('request', sanitizeUrlContainingObject({
     method: init.method || 'GET',
     url,
     headers: init.headers,
@@ -69,7 +69,7 @@ export async function fetch (url, options = {}) {
   }
 
   const endTicks = Date.now()
-  shouldLog && console.debug('response', sanitize({
+  shouldLog && console.debug('response', sanitizeUrlContainingObject({
     ..._.pick(response, ['status', 'url', 'headers']),
     body: bodyLog,
     ms: endTicks - beforeFetchTicks

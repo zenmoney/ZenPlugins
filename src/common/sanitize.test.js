@@ -1,4 +1,4 @@
-import { sanitize } from './sanitize'
+import { sanitize, sanitizeUrl, sanitizeUrlContainingObject } from './sanitize'
 
 describe('sanitize', () => {
   it('should sanitize values by truthy mask', () => {
@@ -65,5 +65,47 @@ describe('sanitize', () => {
     expect(sanitize('unexpected value', mask)).toStrictEqual(sanitizedValue)
     expect(mask.mock.calls.length).toBe(1)
     expect(mask).toBeCalledWith('unexpected value')
+  })
+})
+
+describe('sanitizeUrl', () => {
+  it.each([
+    [
+      'https://domain.com/?field1=123&secretField=jfasf&field2=lfsf',
+      { query: { secretField: true } },
+      'https://domain.com/field1=123&secretField=<string[5]>&field2=lfsf'
+    ],
+    [
+      'https://domain.com/?field1=123&secretField=jfasf&field2=lfsf',
+      { query: { secretField: true, field2: true } },
+      'https://domain.com/field1=123&secretField=<string[5]>&field2=<string[4]>'
+    ],
+    [
+      'https://domain.com/?field1=123&secretField=jfasf&field2=lfsf',
+      true,
+      '<string[60]>'
+    ]
+  ])('sanitizes url', (url, mask, result) => {
+    expect(sanitizeUrl(url, mask)).toEqual(result)
+  })
+})
+
+describe('sanitizeUrlContainingObject', () => {
+  it.each([
+    [
+      {
+        url: 'https://domain.com/?field1=123&secretField=jfasf&field2=lfsf',
+        key: 'value'
+      },
+      {
+        url: { query: { secretField: true } }
+      },
+      {
+        url: 'https://domain.com/field1=123&secretField=<string[5]>&field2=lfsf',
+        key: 'value'
+      }
+    ]
+  ])('sanitizes url containing object', (object, mask, result) => {
+    expect(sanitizeUrlContainingObject(object, mask)).toEqual(result)
   })
 })
