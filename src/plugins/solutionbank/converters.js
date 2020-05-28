@@ -7,7 +7,7 @@ export function convertAccount (json) {
       type: 'card',
       instrument: codeToCurrencyLookup[json.currency],
       instrumentCode: json.currency,
-      balance: Number.parseFloat(json.balance),
+      balance: Number.parseFloat(json.balance.replace(',', '.').replace(' ', '')),
       syncID: [],
       productType: json.productName,
       cardHash: json.cards[0].cardHash,

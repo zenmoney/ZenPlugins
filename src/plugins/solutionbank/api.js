@@ -139,17 +139,6 @@ export async function fetchAccounts (sessionToken) {
   return cardAccounts
 }
 
-export function createDateIntervals (fromDate, toDate) {
-  const interval = 10 * 24 * 60 * 60 * 1000 // 10 days interval for fetching data
-  const gapMs = 1
-  return commonCreateDateIntervals({
-    fromDate,
-    toDate,
-    addIntervalToDate: date => new Date(date.getTime() + interval - gapMs),
-    gapMs
-  })
-}
-
 export async function fetchTransactionsMini (sessionToken, accounts, fromDate, toDate = new Date()) {
   console.log('>>> Загрузка списка транзакций через минивыписку...')
   const responses = await Promise.all(flatMap(accounts, (account) => {
