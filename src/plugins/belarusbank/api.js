@@ -215,14 +215,12 @@ function strDecoder (str) {
   if (str === null) {
     return null
   }
-  const str2 = str.split(';')
   let res = ''
-  str2.forEach(function (s) {
+  for (const s of str.split(';')) {
     const left = s.replace(/&.[0-9]{4}/i, '')
 
     res += left + String.fromCharCode(s.replace(left + '&#', ''))
-  })
-
+  }
   return res
 }
 

@@ -5,9 +5,9 @@
 const mapContractToAccount = (data) => {
   const map = {}
 
-  data.forEach(function (item) {
+  for (const item of data) {
     map[item.contractId.toString()] = cardUniqueAccountId(item.id)
-  })
+  }
 
   return map
 }

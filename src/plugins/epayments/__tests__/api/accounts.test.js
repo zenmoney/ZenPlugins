@@ -9,7 +9,7 @@ afterEach(() => {
 })
 
 function mockUserInfoRequest (tokenType, token, ...mocks) {
-  mocks.forEach(toMock => {
+  for (const toMock of mocks) {
     fetchMock.once({
       method: 'GET',
       headers: {
@@ -19,7 +19,7 @@ function mockUserInfoRequest (tokenType, token, ...mocks) {
       matcher: toMock.matcher,
       response: toMock.response
     })
-  })
+  }
 }
 
 describe('Accounts API', () => {

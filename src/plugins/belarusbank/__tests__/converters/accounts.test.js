@@ -163,10 +163,10 @@ describe('convertAccount', () => {
       }
     }
   ]
-  tt.forEach(function (tc) {
+  for (const tc of tt) {
     it(tc.name, () => {
       const account = convertAccount(tc.json)
       expect(account).toEqual(tc.expectedAccount)
     })
-  })
+  }
 })

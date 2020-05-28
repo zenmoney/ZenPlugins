@@ -54,7 +54,9 @@ export async function fetchTransactions (auth, fromDate, toDate) {
 
     if (isFirstPage || params.body.skip < toFetch) {
       const body = response.body
-      body.transactions.forEach(transaction => transactions.push(transaction))
+      for (const transaction of body.transactions) {
+        transactions.push(transaction)
+      }
 
       const newSkip = params.body.skip + params.body.take
       const newToFetch = body.count

@@ -282,10 +282,10 @@ describe('convertTransaction', () => {
       }
     }
   ]
-  tt.forEach(function (tc) {
+  for (const tc of tt) {
     it(tc.name, () => {
       const transaction = convertTransaction(tc.json, [account])
       expect(transaction).toEqual(tc.expectedTransaction)
     })
-  })
+  }
 })

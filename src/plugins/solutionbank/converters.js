@@ -16,9 +16,9 @@ export function convertAccount (json) {
       rkcCode: json.rkcCode
     }
 
-    json.cards.forEach(function (el) {
+    for (const el of json.cards) {
       account.syncID.push(el.cardNumberMasked.slice(-4))
-    })
+    }
 
     if (!account.title) {
       account.title = json.productName + '*' + account.syncID[0]

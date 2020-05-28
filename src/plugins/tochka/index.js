@@ -28,12 +28,12 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
     }
     // операции по счёту из выписки
     if (apiStatement.payments) {
-      apiStatement.payments.forEach(apiTransaction => {
+      for (const apiTransaction of apiStatement.payments) {
         const transaction = convertTransaction(apiTransaction, account)
         if (transaction) {
           transactions.push(transaction)
         }
-      })
+      }
     }
   }))
 

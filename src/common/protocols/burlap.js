@@ -84,9 +84,9 @@ export function stringifyToXml (object) {
   } else if (object instanceof Type.List) {
     // List with explicitly given type
     let str = `<list><type>[${object.itemType}</type><length>${object.items.length}</length>`
-    object.items.forEach(value => {
+    for (const value of object.items) {
       str += stringifyToXml(value)
-    })
+    }
     str += '</list>'
     return str
   } else if (_.isArray(object)) {
@@ -96,9 +96,9 @@ export function stringifyToXml (object) {
       str += '[' + object[0].__type
     }
     str += `</type><length>${object.length}</length>`
-    object.forEach(object => {
-      str += stringifyToXml(object)
-    })
+    for (const obj of object) {
+      str += stringifyToXml(obj)
+    }
     str += '</list>'
     return str
   } else if (typeof object === 'object') {

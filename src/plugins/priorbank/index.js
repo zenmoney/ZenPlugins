@@ -16,7 +16,9 @@ async function refreshAuth ({ preferences: { login, password } }) {
 
 async function refreshAndPersistAuth ({ preferences }) {
   const pluginData = await refreshAuth({ preferences: normalizePreferences(preferences) })
-  Object.keys(pluginData).forEach((key) => ZenMoney.setData(key, pluginData[key]))
+  for (const key of Object.keys(pluginData)) {
+    ZenMoney.setData(key, pluginData[key])
+  }
   ZenMoney.saveData()
   return pluginData
 }
@@ -42,7 +44,9 @@ export async function scrape ({ preferences, fromDate, toDate }) {
       getCardDesc({ accessToken: pluginData.accessToken, clientSecret: pluginData.clientSecret, userSession: pluginData.userSession, fromDate, toDate })
     ])
   }
-  responses.forEach((response) => assertResponseSuccess(response))
+  for (const response of responses) {
+    assertResponseSuccess(response)
+  }
   const [cardsBodyResult, cardDescBodyResult] = responses.map((x) => x.body.result)
 
   const cardsBodyResultWithoutDuplicates = chooseDistinctCards(cardsBodyResult)

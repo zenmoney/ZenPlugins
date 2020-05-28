@@ -85,7 +85,7 @@ export function parseFullTransactionsMail (html) {
   const data = []
   flatMap($('table[class="section_3"] tr').toArray().slice(1), tr => {
     if (tr.children.length >= 12) { // Значит это операция, а не просто форматирование
-      tr.children.forEach(function (td) {
+      for (const td of tr.children) {
         if (td.children && td.children[0] && td.children[0].type === 'text') {
           if (counter === 12) {
             counter = 0
@@ -140,7 +140,7 @@ export function parseFullTransactionsMail (html) {
           }
           counter++
         }
-      })
+      }
     }
   })
   return data
@@ -156,7 +156,7 @@ export function parseFullTransactionsMailCardLimit (html) {
   let accountID = null
   flatMap($('table[class="section_1"] tr').toArray().slice(1), tr => {
     if (tr.children.length >= 0) { // Значит это строка, а не просто форматирование
-      tr.children.forEach(function (td) {
+      for (const td of tr.children) {
         if (td.children && td.children[0] && td.children[0].type === 'text') {
           if (isAccountID) {
             accountID = td.children[0].data
@@ -171,7 +171,7 @@ export function parseFullTransactionsMailCardLimit (html) {
             isLimit = true
           }
         }
-      })
+      }
     }
   })
   return {
@@ -188,7 +188,7 @@ export function parseConditionsMail (html) {
   let accountNumber = null
   flatMap($('table[class="mytd"] tr').toArray().slice(1), tr => {
     if (tr.children.length >= 0) { // Значит это строка, а не просто форматирование
-      tr.children.forEach(function (td) {
+      for (const td of tr.children) {
         if (td.children && td.children[0] && td.children[0].type === 'text') {
           if (isNumber) {
             accountNumber = td.children[0].data
@@ -198,7 +198,7 @@ export function parseConditionsMail (html) {
             isNumber = true
           }
         }
-      })
+      }
     }
   })
   return accountNumber

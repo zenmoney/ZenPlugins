@@ -12,13 +12,13 @@ export function convertAccount (json) {
       creditLimit: Number.parseFloat(json.over !== null ? json.over : 0)
     }
 
-    json.cardAccounts.forEach(function (el) {
+    for (const el of json.cardAccounts) {
       account.syncID.push(el.accountId)
       account.syncID.push(el.accountId + 'M')
-    })
-    json.cards.forEach(function (el) {
+    }
+    for (const el of json.cards) {
       account.syncID.push(el.pan.slice(-4))
-    })
+    }
 
     if (json.over === null) {
       account.balance = Number.parseFloat(json.avlBalance)

@@ -202,11 +202,11 @@ describe('convertTransaction', () => {
   ]
 
   // run all tests
-  tt.forEach(function (tc) {
+  for (const tc of tt) {
     it(tc.name, () => {
       const transaction = convertTransaction(tc.transaction, accounts)
 
       expect(transaction).toEqual(tc.expectedTransaction)
     })
-  })
+  }
 })

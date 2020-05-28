@@ -47,7 +47,7 @@ function mockZenMoney () {
 }
 
 function mockLoginRequest (...mocks) {
-  mocks.forEach(toMock => {
+  for (const toMock of mocks) {
     fetchMock.once({
       method: 'POST',
       headers: {
@@ -57,7 +57,7 @@ function mockLoginRequest (...mocks) {
       matcher: toMock.matcher,
       response: toMock.response
     })
-  })
+  }
 }
 
 afterEach(() => {

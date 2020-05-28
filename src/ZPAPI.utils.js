@@ -168,12 +168,13 @@ export const fetchRemoteSync = ({ method, url, headers, body, binaryResponse }) 
 
   const { headers: processedHeaders, body: processedBody } = processHeadersAndBody({ headers, body })
   req.setRequestHeader(PROXY_TARGET_HEADER, origin)
-  processedHeaders.forEach(({ key, value }) => {
+  for (const header of processedHeaders) {
+    const { key, value } = header
     req.setRequestHeader(TRANSFERABLE_HEADER_PREFIX + key, value)
     if (key.toLowerCase() === 'content-type') {
       req.setRequestHeader(key, value)
     }
-  })
+  }
 
   try {
     req.send(processedBody)

@@ -113,9 +113,9 @@ export default class WebSocket {
   }
 }
 
-readyStates.forEach((readyState, i) => {
-  WebSocket[readyState] = i
-})
+for (let i = 0; i < readyStates.length; i++) {
+  WebSocket[readyStates[i]] = i
+}
 
 function fetchSync ({ method, url, headers, body, binaryResponse }) {
   const req = new XMLHttpRequest()
@@ -127,9 +127,9 @@ function fetchSync ({ method, url, headers, body, binaryResponse }) {
   req.open(method, url, false)
 
   if (headers) {
-    Object.entries(headers).forEach(([key, value]) => {
+    for (const [key, value] of Object.entries(headers)) {
       req.setRequestHeader(key, value)
-    })
+    }
   }
   req.send(body)
 

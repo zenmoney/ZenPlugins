@@ -1,5 +1,8 @@
 module.exports = {
   'parser': 'babel-eslint',
+  'plugins': [
+    'github'
+  ],
   'extends': [
     'standard',
     'plugin:import/errors'
@@ -25,6 +28,8 @@ module.exports = {
   ],
   'rules': {
     'eqeqeq': ['error', 'always'],
-    'no-var': 'error'
+    'no-var': 'error',
+    'github/array-foreach': 'error',
+    'array-callback-return': 'error'
   }
 }

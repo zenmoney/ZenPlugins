@@ -27,9 +27,9 @@ export function convertAccount (json, accountType) {
           cardHash: json.cards[0].cardHash
         }
 
-        json.cards.forEach(function (el) {
+        for (const el of json.cards) {
           account.syncID.push(el.cardNumberMasked.slice(-4))
-        })
+        }
 
         return account
       }

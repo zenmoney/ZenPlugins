@@ -105,11 +105,11 @@ export function provideScrapeDates (fn) {
 }
 
 export function assertAccountIdsAreUnique (accounts) {
-  _.toPairs(_.countBy(accounts, (x) => x.id))
-    .filter(([id, count]) => count > 1)
-    .forEach(([id, count]) => {
-      throw new Error(`There are ${count} accounts with the same id=${id}`)
-    })
+  const notUniqueIdCountPairs = _.toPairs(_.countBy(accounts, (x) => x.id)).filter(([id, count]) => count > 1)
+  if (notUniqueIdCountPairs.length > 0) {
+    const [id, count] = notUniqueIdCountPairs[0]
+    throw new Error(`There are ${count} accounts with the same id=${id}`)
+  }
   return accounts
 }
 

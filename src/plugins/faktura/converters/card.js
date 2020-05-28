@@ -17,19 +17,19 @@ const converter = (data, credits) => {
     data.panTail.toString()
   ]
 
-  data.equities.forEach((equity) => {
+  for (const equity of data.equities) {
     if (equity.type === 'FUNDS') {
       account.instrument = resolveCurrencyCode(equity.currencyCode)
       account.balance = Number(equity.amount)
     }
-  })
+  }
 
-  credits.forEach((credit) => {
+  for (const credit of credits) {
     if (credit.contractId === data.contractId) {
       account.creditLimit = Number(credit.grantedAmount)
       account.balance = account.balance - account.creditLimit
     }
-  })
+  }
 
   return account
 }
@@ -37,9 +37,9 @@ const converter = (data, credits) => {
 const contractIdsFetcher = (data) => {
   const list = []
 
-  data.forEach((item) => {
+  for (const item of data) {
     list.push(item.contractId)
-  })
+  }
 
   return list
 }

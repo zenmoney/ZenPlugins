@@ -37,24 +37,24 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
     i++
   } while (!apiAccounts)
 
-  apiAccounts.forEach(apiAccount => {
+  for (const apiAccount of apiAccounts) {
     const account = convertAccount(apiAccount)
     if (account) {
       accounts.push(account)
       accountsById[account.id] = account
     }
-  })
+  }
 
   await Promise.all(accounts.map(async account => {
     if (ZenMoney.isAccountSkipped(account.id)) {
       return
     }
-    (await fetchTransactions(auth, preferences, account, fromDate, toDate)).forEach(apiTransaction => {
+    for (const apiTransaction of (await fetchTransactions(auth, preferences, account, fromDate, toDate))) {
       const data = convertTransaction(apiTransaction, account, accountsById)
       if (data) {
         transactionData.push(data)
       }
-    })
+    }
   }))
 
   ZenMoney.setData('auth', auth)

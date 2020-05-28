@@ -32,11 +32,11 @@ export function convertAccount (acc) {
         instrument: acc.currency,
         raw: acc
       }
-      cardsArray.forEach(card => {
+      for (const card of cardsArray) {
         if (card.number) {
           account.syncID.push(card.number)
         }
-      })
+      }
       if (account.syncID.indexOf(acc.accountNum) < 0) {
         account.syncID.push(acc.accountNum)
       }

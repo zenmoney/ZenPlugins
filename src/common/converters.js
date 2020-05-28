@@ -271,7 +271,8 @@ export function toZenmoneyTransaction (readableTransaction, accountsByIdLookup) 
       }
     }
   } else if (movements.length === 2) {
-    movements.forEach((movement, movementIndex) => {
+    for (let movementIndex = 0; movementIndex < movements.length; movementIndex++) {
+      const movement = movements[movementIndex]
       const context = { readableTransaction, movement, movementIndex }
       console.assert(_.isPlainObject(movement), 'movement must be Object:', context)
 
@@ -285,7 +286,7 @@ export function toZenmoneyTransaction (readableTransaction, accountsByIdLookup) 
       console.assert(_.isNumber(sum), 'movement.sum must be Number:', readableTransaction)
 
       console.assert(_.isNumber(fee), 'movement.fee must be defined Number:', readableTransaction)
-    })
+    }
     const [outcomeMovement, incomeMovement] = _.sortBy(movements, (x) => x.sum >= 0)
     const outcomeSumWithFee = outcomeMovement.sum + outcomeMovement.fee
     const incomeSumWithFee = incomeMovement.sum + incomeMovement.fee

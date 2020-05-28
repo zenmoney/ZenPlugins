@@ -68,9 +68,9 @@ export async function fetchAccounts (token) {
   }
   const companies = response.body
   const accounts = []
-  companies.forEach(company => {
+  for (const company of companies) {
     accounts.push(...company.bankAccounts)
-  })
+  }
   return accounts
 }
 

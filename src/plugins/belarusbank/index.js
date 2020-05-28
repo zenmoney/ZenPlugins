@@ -20,7 +20,9 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   const deposits = (await fetchDeposits(accountURLs.deposits))
     .map(convertAccount)
     .filter(account => account !== null)
-  cards.forEach(card => delete card.raw)
+  for (const card of cards) {
+    delete card.raw
+  }
 
   const accounts = cards.concat(deposits)
   const transactions = flatten(transactionsCard)

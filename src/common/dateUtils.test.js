@@ -8,7 +8,9 @@ describe('formatCommentDateTime', () => {
   })
 
   it('should throw on non-date', () => {
-    [undefined, null, '', 1234567890].forEach((nonDate) => expect(() => formatCommentDateTime(nonDate)).toThrow())
+    for (const nonDate of [undefined, null, '', 1234567890]) {
+      expect(() => formatCommentDateTime(nonDate)).toThrow()
+    }
   })
 })
 

@@ -9,7 +9,9 @@ describe('formatBsbCardsApiDate', () => {
   })
 
   it('should throw on non-date', () => {
-    [undefined, null, '', 1234567890].forEach((nonDate) => expect(() => formatBsbCardsApiDate(nonDate)).toThrow())
+    for (const nonDate of [undefined, null, '', 1234567890]) {
+      expect(() => formatBsbCardsApiDate(nonDate)).toThrow()
+    }
   })
 })
 
@@ -22,7 +24,9 @@ describe('formatBsbPaymentsApiDate', () => {
   })
 
   it('should throw on non-date', () => {
-    [undefined, null, '', 1234567890].forEach((nonDate) => expect(() => formatBsbCardsApiDate(nonDate)).toThrow())
+    for (const nonDate of [undefined, null, '', 1234567890]) {
+      expect(() => formatBsbCardsApiDate(nonDate)).toThrow()
+    }
   })
 })
 

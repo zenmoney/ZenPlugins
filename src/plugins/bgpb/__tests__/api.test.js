@@ -46,7 +46,7 @@ describe('transactions parsing', () => {
   ]
 
   // run all tests
-  tt.forEach(function (tc) {
+  for (const tc of tt) {
     it(tc.name, () => {
       const res = parseXml(tc.xml)
       const data = res.BS_Response.MailAttachment.Attachment
@@ -54,5 +54,5 @@ describe('transactions parsing', () => {
       expect(overdraft).toEqual(tc.expectedOverdraft)
       expect(parseFullTransactionsMail(data, overdraft)).toEqual(tc.expectedTransactions)
     })
-  })
+  }
 })

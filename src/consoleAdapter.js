@@ -30,13 +30,13 @@ const consoleAdapter = {
   dir (obj, options) {
     ZenMoney.trace(util.inspect(obj, { customInspect: false, ...options }), 'dir')
   }
-};
+}
 
-['log', 'warn', 'info', 'error', 'debug'].forEach((methodName) => {
+for (const methodName of ['log', 'warn', 'info', 'error', 'debug']) {
   consoleAdapter[methodName] = function () {
     ZenMoney.trace(formatWithCustomInspectParams(...arguments), methodName)
   }
-})
+}
 
 const labelTimes = {}
 
@@ -66,8 +66,8 @@ export const install = () => {
 }
 
 export const shapeNativeConsole = () => {
-  Object.keys(nativeConsole)
-    .filter(key => !(key in consoleAdapter))
-    .forEach(key => delete nativeConsole[key])
+  for (const key of Object.keys(nativeConsole).filter(key => !(key in consoleAdapter))) {
+    delete nativeConsole[key]
+  }
   nativeConsole.assert = consoleAdapter.assert
 }

@@ -65,7 +65,7 @@ function fulfillPreferences (rawPreferences, preferencesSchema) {
 }
 
 function clearCookies () {
-  document.cookie.split('; ').forEach(cookie => {
+  for (const cookie of document.cookie.split('; ')) {
     const d = window.location.hostname.split('.')
     while (d.length > 0) {
       const cookieBase = encodeURIComponent(cookie
@@ -79,7 +79,7 @@ function clearCookies () {
       }
       d.shift()
     }
-  })
+  }
 }
 
 async function init () {

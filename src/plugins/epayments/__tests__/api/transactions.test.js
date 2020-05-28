@@ -9,7 +9,7 @@ afterEach(() => {
 })
 
 function mockTransactionsRequest (tokenType, token, ...mocks) {
-  mocks.forEach(toMock => {
+  for (const toMock of mocks) {
     fetchMock.once({
       method: 'POST',
       headers: {
@@ -19,7 +19,7 @@ function mockTransactionsRequest (tokenType, token, ...mocks) {
       matcher: toMock.matcher,
       response: toMock.response
     })
-  })
+  }
 }
 
 describe('Transactions API', () => {

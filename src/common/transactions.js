@@ -26,12 +26,12 @@ export function combineIntoTransfer (transactions, getTransferData) {
       if (transaction2[type1 + 'Account'] === transaction1[type2 + 'Account']) {
         return transactions
       }
-      ['', 'Account', 'BankID'].forEach(postfix => {
+      for (const postfix of ['', 'Account', 'BankID']) {
         const value = transaction2[type1 + postfix]
         if (value !== undefined) {
           transaction1[type1 + postfix] = value
         }
-      })
+      }
       if ('hold' in transaction1 || 'hold' in transaction2) {
         const hold1 = 'hold' in transaction1 ? transaction1.hold : null
         const hold2 = 'hold' in transaction2 ? transaction2.hold : null
@@ -62,10 +62,10 @@ export function combineIntoTransferByTransferId (transactions) {
       return null
     }
   })
-  transactions.forEach(transaction => {
+  for (const transaction of transactions) {
     delete transaction._transferId
     delete transaction._transferType
-  })
+  }
   return transactions
 }
 
@@ -81,12 +81,12 @@ export function mapObjectsGroupedByKey (objects, keyGetter, groupMapper) {
     group.push(object)
   }
   let filtered = []
-  objectsByKey.forEach((group, key) => {
+  for (const [key, group] of objectsByKey) {
     const objects = groupMapper(group, key)
     if (objects) {
       filtered = filtered.concat(objects)
     }
-  })
+  }
   return filtered
 }
 
