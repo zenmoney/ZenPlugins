@@ -5,9 +5,7 @@ import { promptAsync } from './promptAsync'
 import WebSocket from './webSocket'
 import { makePluginDataApi } from './ZPAPI.pluginData'
 import {
-  addCookies,
   fetchRemoteSync,
-  getCookies,
   getLastError,
   getLastResponseHeader,
   getLastResponseHeaders,
@@ -123,7 +121,6 @@ function ZPAPI ({ manifest, preferences, data }) {
   this.setOptions = notImplemented
   this.setAuthentication = notImplemented
   this.clearAuthentication = notImplemented
-  this.getCookies = getCookies
   this.getCookie = notImplemented
 
   const pluginDataApi = makePluginDataApi(data)
@@ -391,6 +388,27 @@ Object.assign(ZPAPI.prototype, {
     return promptAsync(message, options)
   },
 
+  getCookies () {
+    return new Promise((resolve) => {
+      const correlationId = Date.now()
+      const messageHandler = (e) => {
+        const message = e.data
+        if (message.type !== ':events/cookies-get') {
+          return
+        }
+        if (message.payload.correlationId !== correlationId) {
+          return
+        }
+        self.removeEventListener('message', messageHandler)
+        resolve(message.payload.cookies)
+      }
+      self.addEventListener('message', messageHandler)
+      self.postMessage({
+        type: ':commands/cookies-get'
+      })
+    })
+  },
+
   setCookie (domain, name, value, params) {
     return new Promise((resolve, reject) => {
       if (typeof domain !== 'string' || typeof name !== 'string') {
@@ -415,7 +433,6 @@ Object.assign(ZPAPI.prototype, {
           return
         }
         self.removeEventListener('message', messageHandler)
-        addCookies([cookie])
         resolve()
       }
       self.addEventListener('message', messageHandler)
@@ -445,7 +462,7 @@ Object.assign(ZPAPI.prototype, {
       self.addEventListener('message', messageHandler)
       self.postMessage({
         type: ':commands/cookies-save',
-        payload: { correlationId, cookies: getCookies() }
+        payload: { correlationId }
       })
     })
   },
@@ -462,7 +479,6 @@ Object.assign(ZPAPI.prototype, {
           return
         }
         self.removeEventListener('message', messageHandler)
-        addCookies(message.payload.cookies)
         resolve()
       }
       self.addEventListener('message', messageHandler)

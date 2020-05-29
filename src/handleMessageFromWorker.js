@@ -23,14 +23,28 @@ const messageHandlers = {
 
   ':commands/cookie-set': async function ({ payload: { cookie, correlationId }, reply }) {
     setCookie(cookie)
+    const response = await fetchJson('/zen/cookies', {
+      log: false,
+      method: 'POST',
+      body: [cookie]
+    })
+    console.assert(response.status === 200)
     reply({ type: ':events/cookie-set', payload: { correlationId } })
   },
 
-  ':commands/cookies-save': async function ({ payload: { correlationId, cookies }, reply }) {
+  ':commands/cookies-get': async function ({ payload: { correlationId }, reply }) {
+    const response = await fetchJson('/zen/cookies', {
+      log: false,
+      method: 'GET'
+    })
+    console.assert(response.status === 200)
+    reply({ type: ':events/cookies-get', payload: { correlationId, cookies: response.body } })
+  },
+
+  ':commands/cookies-save': async function ({ payload: { correlationId }, reply }) {
     const response = await fetchJson('/zen/zp_cookies.json', {
       log: false,
-      method: 'POST',
-      body: cookies
+      method: 'POST'
     })
     console.assert(response.status === 200)
     reply({ type: ':events/cookies-saved', payload: { correlationId } })
@@ -46,7 +60,7 @@ const messageHandlers = {
     for (const cookie of cookies) {
       setCookie(cookie)
     }
-    reply({ type: ':events/cookies-restored', payload: { correlationId, cookies } })
+    reply({ type: ':events/cookies-restored', payload: { correlationId } })
   }
 }
 

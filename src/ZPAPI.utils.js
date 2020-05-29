@@ -1,7 +1,6 @@
 /* global XMLHttpRequest */
 
 import _ from 'lodash'
-import { parse as parseCookieString, splitCookiesString } from 'set-cookie-parser'
 import { getTargetUrl, PROXY_TARGET_HEADER, TRANSFERABLE_HEADER_PREFIX } from './shared'
 
 let lastRequest = null
@@ -138,23 +137,6 @@ export const processHeadersAndBody = ({ headers, body }) => {
   return { headers: resultHeaders, body }
 }
 
-const cookies = []
-export const getCookies = () => cookies.slice()
-export const addCookies = (newCookies) => {
-  for (const cookie of newCookies) {
-    for (let i = 0; i < cookies.length; i++) {
-      const existing = cookies[i]
-      if (existing.name === cookie.name) {
-        cookies.splice(i, 1)
-        break
-      }
-    }
-    if (cookie.value !== null && cookie.value !== undefined) {
-      cookies.push(cookie)
-    }
-  }
-}
-
 export const fetchRemoteSync = ({ method, url, headers, body, binaryResponse }) => {
   const req = new XMLHttpRequest()
   req.withCredentials = true
@@ -181,26 +163,6 @@ export const fetchRemoteSync = ({ method, url, headers, body, binaryResponse }) 
     const { pathname, search } = new URL(req.responseURL)
     lastRequest = req
     lastRequestUrl = getTargetUrl(pathname + search, origin)
-    const cookieStr = req.getResponseHeader(TRANSFERABLE_HEADER_PREFIX + 'set-cookie')
-    if (cookieStr) {
-      const now = new Date()
-      addCookies(parseCookieString(splitCookiesString(cookieStr)).map(c => {
-        const cookie = {}
-        cookie.name = c.name
-        cookie.value = c.value
-        cookie.domain = c.domain || null
-        cookie.path = c.path || null
-        cookie.persistent = true
-        cookie.secure = c.secure || false
-        const expires = c.expires ? c.expires : 'maxAge' in c ? new Date(now.getTime() + c.maxAge * 1000) : null
-        if (expires) {
-          cookie.expires = expires.toUTCString()
-        } else {
-          cookie.expires = null
-        }
-        return cookie
-      }))
-    }
     if (binaryResponse) {
       return req.response
     } else {

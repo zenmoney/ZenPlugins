@@ -9,6 +9,7 @@ const stripBOM = require('strip-bom')
 const bodyParser = require('body-parser')
 const { URL } = require('url')
 const uuid = require('uuid')
+const { parseCookies, addCookies } = require('./utils')
 
 const convertErrorToSerializable = (e) => _.pick(e, ['message', 'stack'])
 
@@ -81,16 +82,18 @@ module.exports = ({ allowedHost, host, https }) => {
     setup (app) {
       app.disable('x-powered-by')
 
+      let cookies = []
       app.get(
         '/zen/manifest',
         serializeErrors((req, res) => {
+          cookies = []
           res.set('Content-Type', 'text/xml')
-          const manifest = readPluginManifest();
-          ['id', 'build', 'files', 'version', 'preferences'].forEach((requiredProp) => {
+          const manifest = readPluginManifest()
+          for (const requiredProp of ['id', 'build', 'files', 'version', 'preferences']) {
             if (!manifest[requiredProp]) {
               throw new Error(`Wrong ZenmoneyManifest.xml: ${requiredProp} prop should be set`)
             }
-          })
+          }
           res.json(manifest)
         })
       )
@@ -153,7 +156,7 @@ module.exports = ({ allowedHost, host, https }) => {
         '/zen/zp_cookies.json',
         bodyParser.text({ type: 'application/json' }),
         serializeErrors((req, res) => {
-          fs.writeFileSync(pluginCookiesPath, req.body, 'utf8')
+          fs.writeFileSync(pluginCookiesPath, JSON.stringify(cookies), 'utf8')
           return res.json(true)
         })
       )
@@ -164,7 +167,25 @@ module.exports = ({ allowedHost, host, https }) => {
           res.set('Content-Type', 'application/json;charset=utf8')
           ensureFileExists(pluginCookiesPath, '')
           const content = readPluginFileSync(pluginCookiesPath)
-          res.send(content)
+          cookies = content ? JSON.parse(content) : []
+          res.send(cookies)
+        })
+      )
+
+      app.post(
+        '/zen/cookies',
+        bodyParser.text({ type: 'application/json' }),
+        serializeErrors((req, res) => {
+          cookies = addCookies(req.body, cookies)
+          return res.json(true)
+        })
+      )
+
+      app.get(
+        '/zen/cookies',
+        serializeErrors((req, res) => {
+          res.set('Content-Type', 'application/json;charset=utf8')
+          res.send(cookies)
         })
       )
 
@@ -172,6 +193,10 @@ module.exports = ({ allowedHost, host, https }) => {
       const proxy = new httpProxy.createProxyServer()
       proxy.on('proxyRes', (proxyRes, req, res) => {
         if (proxyRes.headers['set-cookie']) {
+          const now = new Date()
+          for (const cookieStr of proxyRes.headers['set-cookie']) {
+            cookies = addCookies(parseCookies(cookieStr, now), cookies)
+          }
           proxyRes.headers[TRANSFERABLE_HEADER_PREFIX + 'set-cookie'] = proxyRes.headers['set-cookie']
           proxyRes.headers['set-cookie'] = proxyRes.headers['set-cookie'].map(makeCookieAccessibleToClientSide)
         }
