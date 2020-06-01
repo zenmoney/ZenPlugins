@@ -54,7 +54,7 @@ describe('convertAccount', () => {
       productName: 'Visa Virtual',
       rkcCode: '701',
       rkcName: 'ЦБУ 07/01 г.Минск, ЗАО "Банк "Решение"',
-      balance: 10.0
+      balance: '10,1'
     })
 
     expect(account).toEqual({
@@ -63,7 +63,7 @@ describe('convertAccount', () => {
       type: 'card',
       instrument: 'BYN',
       instrumentCode: '933',
-      balance: 10.0,
+      balance: 10.1,
       syncID: ['1111'],
       productType: 'Visa Virtual',
       cardHash: 'h5jaI5li6snrBC2lkrLIEnCzS§l0aNIj5PaRLx6C0OGaBofDbE6_v1KfVbK4iNxT1W2RkcRrrEcLVmhDGd3jew',
