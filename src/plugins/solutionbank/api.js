@@ -1,10 +1,9 @@
 import cheerio from 'cheerio'
 import { defaultsDeep, flatMap } from 'lodash'
-import { createDateIntervals as commonCreateDateIntervals } from '../../common/dateUtils'
 import { fetchJson } from '../../common/network'
 import { generateRandomString } from '../../common/utils'
 import { parseXml } from '../../common/xmlUtils'
-import { InvalidOtpCodeError, BankMessageError } from '../../errors'
+import { BankMessageError, InvalidOtpCodeError } from '../../errors'
 import { getDate } from './converters'
 
 const baseUrl = 'https://mbank2.rbank.by/services/v2/'
