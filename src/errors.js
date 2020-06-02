@@ -49,3 +49,9 @@ export class BankMessageError extends TemporaryError {
 }
 
 export class PreviousSessionNotClosedError extends TemporaryError {}
+
+export class UserInteractionError extends TemporaryError {
+  constructor () {
+    super('[INU]')
+  }
+}
