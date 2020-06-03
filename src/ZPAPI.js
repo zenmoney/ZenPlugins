@@ -404,7 +404,8 @@ Object.assign(ZPAPI.prototype, {
       }
       self.addEventListener('message', messageHandler)
       self.postMessage({
-        type: ':commands/cookies-get'
+        type: ':commands/cookies-get',
+        payload: { correlationId }
       })
     })
   },
