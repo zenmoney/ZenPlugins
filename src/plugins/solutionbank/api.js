@@ -191,7 +191,7 @@ export async function fetchTransactionsMini (sessionToken, accounts, fromDate, t
         merchant: op.attribs.Merchant,
         currencyCode: op.attribs.Currency,
         currency: op.attribs.CurrencyAbbr,
-        sum: Number.parseFloat(op.children[0].data)
+        sum: Number.parseFloat(op.children[0].data.replace(',', '.').replace(/\s/g, ''))
       }
     })
   })
