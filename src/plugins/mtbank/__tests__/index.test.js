@@ -276,7 +276,7 @@ function mockLoadUser () {
 }
 
 function mockCheckPassword () {
-  fetchMock.once('https://mybank.by/api/v1/login/checkPassword3', {
+  fetchMock.once('https://mybank.by/api/v1/login/checkPassword4', {
     status: 200,
     body: JSON.stringify({
       ResponseType: 'ResponseOfCheckPasswordResponse',
