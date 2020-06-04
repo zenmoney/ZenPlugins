@@ -91,10 +91,10 @@ export async function login (login, password) {
   }, response => response.body.success)
   let sessionCookies = cookies(res)
 
-  res = await fetchApiJson('login/checkPassword3', {
+  res = await fetchApiJson('login/checkPassword4', {
     method: 'POST',
     headers: { Cookie: sessionCookies },
-    body: { password: password, version: '2.1.12' },
+    body: { password: password, version: '2.1.18' },
     sanitizeRequestLog: { body: { password: true } }
   }, response => response.body.success)
 
