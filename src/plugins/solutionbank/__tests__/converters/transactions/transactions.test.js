@@ -39,4 +39,18 @@ describe('convertTransaction', () => {
       comment: null
     })
   })
+
+  it('zero sum', () => {
+    const transaction = convertTransaction({
+      account_id: '00750933012345',
+      currency: 'BYN',
+      currencyCode: '933',
+      date: new Date('2019-02-14T00:00:00+03:00'),
+      merchant: 'BANK RESHENIE- OPLATA USLUG; MINSK;BY',
+      operationName: 'Оплата товаров и услуг',
+      sum: 0
+    })
+
+    expect(transaction).toEqual(null)
+  })
 })

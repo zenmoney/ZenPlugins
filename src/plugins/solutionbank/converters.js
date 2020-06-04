@@ -30,6 +30,9 @@ export function convertAccount (json) {
 }
 
 export function convertTransaction (json) {
+  if (json.sum === 0) {
+    return null
+  }
   return {
     date: json.date,
     movements: [getMovement(json)],
