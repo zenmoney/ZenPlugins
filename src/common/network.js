@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { IncompatibleVersionError } from '../errors'
 import { sanitizeUrlContainingObject } from './sanitize'
-import { bufferToHex } from './utils'
+import { bufferToHex, isDebug } from './utils'
 
 export class ParseError {
   constructor (message, response, cause) {
@@ -93,4 +93,55 @@ export async function fetchJson (url, options = {}) {
     },
     parse: (body) => body === '' ? undefined : JSON.parse(body)
   })
+}
+
+export const RequestInterceptMode = {
+  LOAD: undefined,
+  BLOCK: true,
+  OPEN_AS_DEEP_LINK: 2
+}
+
+export async function openWebViewAndInterceptRequest ({ url, headers, log, sanitizeRequestLog, intercept }) {
+  console.assert(typeof url === 'string', 'url must be string')
+  console.assert(typeof intercept === 'function', 'intercept must be a function (request) => result')
+  if (ZenMoney && ZenMoney.openWebView) {
+    return new Promise((resolve, reject) => {
+      ZenMoney.openWebView(url, headers, (request, callback) => {
+        const shouldLog = log !== false
+        shouldLog && console.debug('request', sanitizeUrlContainingObject({
+          method: request.method || 'GET',
+          url: request.url,
+          headers: request.headers || {},
+          ...request.body && { body: request.body }
+        }, sanitizeRequestLog || false))
+        try {
+          const interceptor = {}
+          const result = intercept.call(interceptor, request)
+          if (!result) {
+            return RequestInterceptMode.LOAD
+          }
+          callback(null, result)
+          return 'mode' in interceptor ? interceptor.mode : RequestInterceptMode.BLOCK
+        } catch (e) {
+          callback(e)
+          return RequestInterceptMode.BLOCK
+        }
+      }, (error, result) => {
+        if (error) {
+          reject(error)
+        } else {
+          resolve(result)
+        }
+      })
+    })
+  } else if (isDebug()) {
+    console.log(url)
+    const interceptedRequestUrl = await ZenMoney.readLine(url)
+    console.assert(interceptedRequestUrl, 'could not get intercepted request url')
+    const result = intercept({ url: interceptedRequestUrl })
+    console.assert(result, 'intercepted request url doesn\'t match expectations')
+    return result
+  } else {
+    throw new IncompatibleVersionError()
+  }
 }
