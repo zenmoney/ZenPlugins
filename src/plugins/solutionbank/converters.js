@@ -30,7 +30,7 @@ export function convertAccount (json) {
 }
 
 export function convertTransaction (json) {
-  if (json.sum === 0) {
+  if (json.sum === 0 || isNaN(json.sum)) {
     return null
   }
   return {
