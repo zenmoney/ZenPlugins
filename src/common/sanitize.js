@@ -42,7 +42,7 @@ export function sanitizeUrl (url, mask) {
   }
   const urlWithoutQuery = url.substring(0, queryIndex)
   const query = parse(url.substring(queryIndex + 1))
-  return urlWithoutQuery + stringify(sanitize(query, mask.query)).replace(/%3Cstring%5B(\d+)%5D%3E/g, '<string[$1]>')
+  return urlWithoutQuery + '?' + stringify(sanitize(query, mask.query)).replace(/%3Cstring%5B(\d+)%5D%3E/g, '<string[$1]>')
 }
 
 export function sanitizeUrlContainingObject (object, mask) {

@@ -73,12 +73,12 @@ describe('sanitizeUrl', () => {
     [
       'https://domain.com/?field1=123&secretField=jfasf&field2=lfsf',
       { query: { secretField: true } },
-      'https://domain.com/field1=123&secretField=<string[5]>&field2=lfsf'
+      'https://domain.com/?field1=123&secretField=<string[5]>&field2=lfsf'
     ],
     [
       'https://domain.com/?field1=123&secretField=jfasf&field2=lfsf',
       { query: { secretField: true, field2: true } },
-      'https://domain.com/field1=123&secretField=<string[5]>&field2=<string[4]>'
+      'https://domain.com/?field1=123&secretField=<string[5]>&field2=<string[4]>'
     ],
     [
       'https://domain.com/?field1=123&secretField=jfasf&field2=lfsf',
@@ -101,7 +101,7 @@ describe('sanitizeUrlContainingObject', () => {
         url: { query: { secretField: true } }
       },
       {
-        url: 'https://domain.com/field1=123&secretField=<string[5]>&field2=lfsf',
+        url: 'https://domain.com/?field1=123&secretField=<string[5]>&field2=lfsf',
         key: 'value'
       }
     ]
