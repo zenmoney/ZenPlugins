@@ -114,14 +114,13 @@ export async function openWebViewAndInterceptRequest ({ url, headers, log, sanit
           headers: request.headers || {},
           ...request.body && { body: request.body }
         }, sanitizeRequestLog || false))
+        const interceptor = {}
         try {
-          const interceptor = {}
           const result = intercept.call(interceptor, request)
-          if (!result) {
-            return RequestInterceptMode.LOAD
+          if (result) {
+            callback(null, result)
           }
-          callback(null, result)
-          return 'mode' in interceptor ? interceptor.mode : RequestInterceptMode.BLOCK
+          return 'mode' in interceptor ? interceptor.mode : result ? RequestInterceptMode.BLOCK : RequestInterceptMode.LOAD
         } catch (e) {
           callback(e)
           return RequestInterceptMode.BLOCK
