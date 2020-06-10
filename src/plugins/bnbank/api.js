@@ -160,7 +160,7 @@ export async function fetchLastCardTransactions (token, account) {
       cards: [
         account.cardHash
       ],
-      internalAccountId: account.internalAccountId
+      internalAccountId: account.id
     }
   }, response => response.body)
   const operations = response.body.operations ? response.body.operations : []
