@@ -33,13 +33,18 @@ export function convertTransaction (json) {
   if (json.sum === 0 || isNaN(json.sum)) {
     return null
   }
-  return {
+  const transaction = {
     date: json.date,
     movements: [getMovement(json)],
     merchant: null,
     comment: null,
     hold: false
-  }
+  };
+  [
+    parsePayee
+  ].some(parser => parser(transaction, json))
+
+  return transaction
 }
 
 function getMovement (json) {
@@ -49,6 +54,30 @@ function getMovement (json) {
     invoice: null,
     sum: json.sum,
     fee: 0
+  }
+}
+
+function parsePayee (transaction, json) {
+  // интернет-платежи отображаем без получателя
+  if (!json.merchant ||
+    json.merchant.indexOf('BANK RESHENIE- OPLATA USLUG') >= 0) {
+    return false
+  }
+  transaction.merchant = {
+    mcc: null,
+    location: null
+  }
+  const merchant = json.merchant.replace(/&quot;/g, '"').split(';').map(str => str.trim())
+  if (merchant.length === 1) {
+    transaction.merchant.title = merchant[0]
+    transaction.merchant.city = null
+    transaction.merchant.country = null
+  } else if (merchant.length === 3) {
+    transaction.merchant.title = merchant[0]
+    transaction.merchant.city = merchant[1].trim()
+    transaction.merchant.country = merchant[2].trim()
+  } else {
+    throw new Error('Ошибка обработки транзакции с получателем: ' + json.merchant)
   }
 }
 
