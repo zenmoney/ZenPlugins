@@ -29,9 +29,15 @@ export function convertAccount (json) {
   return null
 }
 
-export function convertTransaction (json) {
+export function convertTransaction (json, accounts) {
   if (json.sum === 0 || isNaN(json.sum)) {
     return null
+  }
+  const account = accounts.find(account => {
+    return account.id === json.account_id
+  })
+  if (account.instrumentCode !== json.currencyCode) {
+    return null // пока банк не отдает данные о конвертации валют, поэтому такие транзакции будем скипать
   }
   const transaction = {
     date: json.date,

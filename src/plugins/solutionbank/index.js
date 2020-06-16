@@ -12,7 +12,7 @@ export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
       await fetchTransactions(token, accounts, fromDate, toDate)
     )
   )
-    .map(transaction => convertTransaction(transaction))
+    .map(transaction => convertTransaction(transaction, accounts))
     .filter(transaction => transaction !== null)
   return {
     accounts: removeBalances(accounts, transactions, isFirstRun),
