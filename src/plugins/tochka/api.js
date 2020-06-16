@@ -1,9 +1,9 @@
 /* eslint-disable no-unused-vars,camelcase */
 import { parse, stringify } from 'querystring'
-import { fetchJson } from '../../common/network'
+import { fetchJson, openWebViewAndInterceptRequest, RequestInterceptMode } from '../../common/network'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { delay } from '../../common/utils'
-import { IncompatibleVersionError } from '../../errors'
+import { BankMessageError, IncompatibleVersionError } from '../../errors'
 import * as config from './config'
 
 const CLIENT_ID = config.clientId
@@ -18,98 +18,103 @@ export async function login ({ access_token, refresh_token, expirationDateMs } =
   let response
   const clientId = !preferences.server || preferences.server === 'tochka' ? CLIENT_ID : 'sandbox'
   const clientSecret = !preferences.server || preferences.server === 'tochka' ? CLIENT_SECRET : 'sandbox_secret'
-  // console.log('>>> Используется сервер: ' + preferences.server)
+  const sandboxMode = preferences.server ? preferences.server === 'sandbox' : clientId.indexOf('sandbox') >= 0
+  if (!preferences.server) {
+    preferences.server = sandboxMode ? 'sandbox' : 'tochka'
+  }
+  console.log('>>> Используется сервер: ' + preferences.server)
   console.log(`>>> ClientID: ${clientId.substr(0, 3)}...${clientId.substr(-3)}`)
   if (access_token) {
     if (expirationDateMs < new Date().getTime() - 30 * 60 * 60 * 24 * 1000) {
       console.log('>>> Авторизация: refresh_token устарел, получаем заново.')
       access_token = null
       refresh_token = null
-    } else
-    if (expirationDateMs < new Date().getTime()) {
-      console.log('>>> Авторизация: Обновляем токен взамен устаревшего.')
-      response = await callGate('oauth2/token', {
-        sandbox: clientId === 'sandbox',
-        ignoreErrors: true,
-        body: {
-          client_id: clientId,
-          client_secret: clientSecret,
-          grant_type: 'refresh_token',
-          refresh_token: refresh_token
-        },
-        sanitizeRequestLog: { body: { refresh_token: true, client_id: true, client_secret: true } },
-        sanitizeResponseLog: { body: { access_token: true, refresh_token: true, sessionId: true } }
-      }, null)
-
-      if (response && response.body && response.body.error) {
-        response = null
-        access_token = null
-        refresh_token = null
-        expirationDateMs = 0
-        console.log('>>> Авторизация: Не удалось обновить токен. Требуется повторный вход.')
-        const result = await login({ access_token, refresh_token, expirationDateMs }, preferences)
-        return result
-      }
-
-      console.assert(response && response.body &&
-        response.body.access_token &&
-        response.body.refresh_token &&
-        response.body.expires_in, 'non-successfull authorization', response)
-
-      return {
-        access_token: response.body.access_token,
-        refresh_token: response.body.refresh_token,
-        expirationDateMs: new Date().getTime() + response.body.expires_in * 1000
-      }
     } else {
-      console.log('>>> Авторизация: Используем действующзий токен.')
-      return arguments[0]
+      if (expirationDateMs < new Date().getTime()) {
+        console.log('>>> Авторизация: Обновляем токен взамен устаревшего.')
+        response = await callGate('oauth2/token', {
+          sandbox: sandboxMode,
+          ignoreErrors: true,
+          body: {
+            client_id: clientId,
+            client_secret: clientSecret,
+            grant_type: 'refresh_token',
+            refresh_token: refresh_token
+          },
+          sanitizeRequestLog: { body: { refresh_token: true, client_id: true, client_secret: true } },
+          sanitizeResponseLog: { body: { access_token: true, refresh_token: true, sessionId: true } }
+        }, null)
+
+        if (response && response.body && response.body.error) {
+          response = null
+          access_token = null
+          refresh_token = null
+          expirationDateMs = 0
+          console.log('>>> Авторизация: Не удалось обновить токен. Требуется повторный вход.')
+          const result = await login({ access_token, refresh_token, expirationDateMs }, preferences)
+          return result
+        }
+
+        console.assert(response && response.body &&
+          response.body.access_token &&
+          response.body.refresh_token &&
+          response.body.expires_in, 'non-successfull authorization', response)
+
+        return {
+          access_token: response.body.access_token,
+          refresh_token: response.body.refresh_token,
+          expirationDateMs: new Date().getTime() + response.body.expires_in * 1000
+        }
+      } else {
+        console.log('>>> Авторизация: Используем действующзий токен.')
+        return arguments[0]
+      }
     }
   }
   if (access_token) {
     // nothing
   } else if (ZenMoney.openWebView) {
-  // eslint-disable-next-line no-constant-condition
-  // } else if (true) { // DEBUG SANDBOX
+    // eslint-disable-next-line no-constant-condition
+    // } else if (true) { // DEBUG SANDBOX
     console.log('>>> Авторизация: Входим через интерфейс банка.')
 
-    const { error, code } = await new Promise((resolve) => {
-      const redirectUriWithoutProtocol = (clientId === 'sandbox' ? SANDBOX_REDIRECT_URI : API_REDIRECT_URI).replace(/^https?:\/\//i, '')
-      const url = clientId === 'sandbox'
-        ? 'https://enter.tochka.com/sandbox/login/'
-        : `${API_URI}authorize?${stringify({
-          client_id: clientId,
-          response_type: 'code'
-        })}`
-      console.log('>>> WebView: ' + (clientId !== 'sandbox' ? url.replace(clientId, '*****') : url))
-      ZenMoney.openWebView(url, null, (request, callback) => {
+    const redirectUriWithoutProtocol = (sandboxMode ? SANDBOX_REDIRECT_URI : API_REDIRECT_URI).replace(/^https?:\/\//i, '')
+    const url = sandboxMode
+      ? `${SANDBOX_URI}login/`
+      : `${API_URI}authorize?${stringify({
+        client_id: clientId,
+        response_type: 'code'
+      })}`
+    const params = await openWebViewAndInterceptRequest({
+      url,
+      sanitizeRequestLog: { url: { query: { client_id: true } } },
+      intercept: function (request) {
+        if (ZenMoney.application?.platform === 'android' && request.url === url) {
+          this.mode = RequestInterceptMode.OPEN_AS_DEEP_LINK
+        }
         const i = request.url.indexOf(redirectUriWithoutProtocol)
         if (i < 0) {
-          return
+          return null
         }
-        const params = parse(request.url.substring(i + redirectUriWithoutProtocol.length + 1))
-        if (params.code) {
-          callback(null, params.code)
-        } else {
-          callback(params)
-        }
-      }, (error, code) => resolve({ error, code }))
+        return parse(request.url.substring(i + redirectUriWithoutProtocol.length + 1))
+      }
     })
-    if (error && (!error.error || error.error === 'access_denied')) {
+    const code = params?.code
+    if (!code && (!params?.error || params.error === 'access_denied')) {
       throw new TemporaryError('Не удалось пройти авторизацию в банке Точка. Попробуйте еще раз')
     }
-    console.assert(code && !error, 'non-successfull authorization', error)
+    console.assert(code, 'non-successfull authorization', params)
 
     // DEBUG SANDBOX
-    // const code = 'QLA74GG14RomYV1UQNr5zbwkcpKSNthn'
+    // const code = 'kBcsiKQhwRdh2a1cggkIDnlAi1eoZAgd'
 
     console.log('>>> Авторизация: Запрашиваем токен.')
     response = await callGate('oauth2/token', {
-      sandbox: clientId === 'sandbox',
+      sandbox: sandboxMode,
       method: 'POST',
       body: {
-        client_id: clientId === 'sandbox' ? 'sandbox' : CLIENT_ID,
-        client_secret: clientId === 'sandbox' ? 'sandbox_secret' : CLIENT_SECRET,
+        client_id: sandboxMode ? 'sandbox' : CLIENT_ID,
+        client_secret: sandboxMode ? 'sandbox_secret' : CLIENT_SECRET,
         grant_type: 'authorization_code',
         code: code
       },
@@ -120,9 +125,9 @@ export async function login ({ access_token, refresh_token, expirationDateMs } =
     throw new IncompatibleVersionError()
   }
   console.assert(response.body &&
-        response.body.access_token &&
-        response.body.refresh_token &&
-        response.body.expires_in, 'non-successfull authorization', response)
+    response.body.access_token &&
+    response.body.refresh_token &&
+    response.body.expires_in, 'non-successfull authorization', response)
   return {
     access_token: response.body.access_token,
     refresh_token: response.body.refresh_token,
@@ -130,65 +135,20 @@ export async function login ({ access_token, refresh_token, expirationDateMs } =
   }
 }
 
-async function callGate (url, options = {}, predicate = () => true) {
-  if (url.substr(0, 4) !== 'http') { url = (options.sandbox ? SANDBOX_URI : API_URI) + url }
-
-  let response
-  try {
-    response = await fetchJson(url, {
-      method: 'POST',
-      ...options,
-      sanitizeRequestLog: {
-        headers: { Authorization: true },
-        ...options.sanitizeRequestLog
-      },
-      sanitizeResponseLog: {
-        headers: { 'set-cookie': true },
-        ...options.sanitizeResponseLog
-      }
-    })
-  } catch (e) {
-    if (!options.ignoreErrors) {
-      if (e.response && typeof e.response.body === 'string' && e.response.body.indexOf('internal server error') >= 0) {
-        throw new TemporaryError('Информация из банка Точка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
-      } else {
-        throw e
-      }
-    } else {
-      return response
-    }
-  }
-  /*
-  if (response.status !== 200) {
-    const message = response.body && response.body.message
-    throw new Error(response.statusText + (message ? ': ' + message : ''))
-  }
-  */
-  if (!options.ignoreErrors && response.body && response.body.error && response.body.error_description) {
-    throw new Error('Ответ банка: ' + response.body.error_description)
-  }
-  if (predicate) {
-    if (response.body && response.body.errorCode === 'AUTH_REQUIRED') {
-      throw new Error('AuthError')
-    }
-    console.assert(predicate(response), 'non-successful response')
-  }
-  return response
-}
-
 export async function fetchAccounts ({ access_token } = {}, preferences) {
   console.log('>>> Получаем список счетов')
-
   // простой список счетов
   const response = await callGate('account/list', {
+    ignoreErrors: true,
     sandbox: preferences.server === 'sandbox',
     method: 'GET',
     headers: {
+      Host: 'enter.tochka.com',
+      Accept: 'application/json',
       Authorization: `Bearer ${access_token}`
     }
   })
-
-  console.assert(Array.isArray(response.body), 'unexpected account response')
+  console.assert(response.body, 'unexpected account response')
 
   // попытаемся достать счета по данным организаций
   /* const response = await fetchJson('organization/list', {
@@ -206,13 +166,6 @@ export async function fetchAccounts ({ access_token } = {}, preferences) {
   }) */
 
   return response.body
-}
-
-function formatDate (date) {
-  return date.getUTCFullYear() + '-' +
-        toAtLeastTwoDigitsString(date.getUTCMonth() + 1) + '-' +
-        toAtLeastTwoDigitsString(date.getUTCDate())
-  // return toAtLeastTwoDigitsString(date.getUTCDate()) + "." + toAtLeastTwoDigitsString(date.getUTCMonth() + 1) + "." + date.getUTCFullYear();
 }
 
 export async function fetchStatement ({ access_token } = {}, apiAccount, fromDate, toDate, preferences) {
@@ -260,7 +213,9 @@ export async function fetchStatement ({ access_token } = {}, apiAccount, fromDat
     } /* response => _.get(response, "response.body.status") */)
 
     status = response.body.status
-    if (status === 'ready' || i >= iMax) break
+    if (status === 'ready' || i >= iMax) {
+      break
+    }
     await delay(3000)
   }
   if (response.body.message === 'Bad JSON') {
@@ -286,4 +241,56 @@ export async function fetchStatement ({ access_token } = {}, apiAccount, fromDat
   }
 
   return response.body
+}
+
+async function callGate (url, options = {}, predicate = () => true) {
+  if (url.substr(0, 4) !== 'http') { url = (options.sandbox ? SANDBOX_URI : API_URI) + url }
+
+  let response
+  try {
+    response = await fetchJson(url, {
+      method: 'POST',
+      ...options,
+      sanitizeRequestLog: {
+        headers: { Authorization: true },
+        ...options.sanitizeRequestLog
+      },
+      sanitizeResponseLog: {
+        headers: { 'set-cookie': true },
+        ...options.sanitizeResponseLog
+      }
+    })
+  } catch (e) {
+    if (!options.ignoreErrors) {
+      if (e.response && typeof e.response.body === 'string' && e.response.body.indexOf('internal server error') >= 0) {
+        throw new TemporaryError('Информация из банка Точка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
+      } else {
+        throw e
+      }
+    } else {
+      return response
+    }
+  }
+  /*
+  if (response.status !== 200) {
+    const message = response.body && response.body.message
+    throw new Error(response.statusText + (message ? ': ' + message : ''))
+  }
+  */
+  if (!options.ignoreErrors && response.body && response.body.error && response.body.error_description) {
+    throw new BankMessageError(response.body.error_description)
+  }
+  if (predicate) {
+    if (response.body && response.body.errorCode === 'AUTH_REQUIRED') {
+      throw new Error('AuthError')
+    }
+    console.assert(predicate(response), 'non-successful response')
+  }
+  return response
+}
+
+function formatDate (date) {
+  return date.getUTCFullYear() + '-' +
+    toAtLeastTwoDigitsString(date.getUTCMonth() + 1) + '-' +
+    toAtLeastTwoDigitsString(date.getUTCDate())
 }

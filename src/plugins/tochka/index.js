@@ -8,14 +8,26 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
     toDate = new Date()
   }
 
-  const auth = await login(ZenMoney.getData('auth'), preferences)
-  ZenMoney.setData('auth', auth)
-  ZenMoney.saveData()
+  let auth = await login(ZenMoney.getData('auth'), preferences)
 
   const accounts = []
   const transactions = []
 
-  await Promise.all((await fetchAccounts(auth, preferences)).map(async apiAccount => {
+  let fetchedAccounts = await fetchAccounts(auth, preferences)
+  if (fetchedAccounts.error === 'invalid_token') {
+    // если токен вдруг старый,попытаемся его разок освежить
+    auth = await login({
+      access_token: null,
+      refresh_token: null,
+      expirationDateMs: 0
+    }, preferences)
+    fetchedAccounts = await fetchAccounts(auth, preferences)
+  }
+  if (!Array.isArray(fetchedAccounts)) {
+    throw new Error('Ошибка запроса списка счетов')
+  }
+
+  await Promise.all(fetchedAccounts.map(async apiAccount => {
     const account = convertAccount(apiAccount)
     accounts.push(account)
     if (ZenMoney.isAccountSkipped(account.id)) {
@@ -36,6 +48,13 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
       }
     }
   }))
+
+  ZenMoney.setData('auth', auth)
+  ZenMoney.saveData()
+
+  if (accounts.length === 0) {
+    throw new Error('Нечего загружать')
+  }
 
   return {
     accounts: ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId }),
