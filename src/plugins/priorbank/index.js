@@ -1,4 +1,4 @@
-import { chooseDistinctCards, convertApiCardsToReadableTransactions, toZenmoneyAccount } from './converters'
+import { chooseDistinctCards, convertAccounts, convertApiCardsToReadableTransactions } from './converters'
 import { normalizePreferences } from './preferences'
 import { assertResponseSuccess, authLogin, getCardDesc, getCards, getMobileToken, getSalt } from './prior'
 
@@ -57,7 +57,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   })
 
   return {
-    accounts: cardsBodyResultWithoutDuplicates.map(toZenmoneyAccount),
+    accounts: convertAccounts(cardsBodyResultWithoutDuplicates, cardDescBodyResult),
     transactions: readableTransactions
   }
 }

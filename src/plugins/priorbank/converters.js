@@ -15,16 +15,26 @@ import { mergeTransfers as commonMergeTransfers } from '../../common/mergeTransf
 
 const calculateAccountId = (card) => String(card.clientObject.id)
 
-export function toZenmoneyAccount (card) {
+export function convertAccounts (apiAccounts, apiAccountDetails) {
+  return apiAccounts.map(apiAccount => {
+    const details = apiAccountDetails.find((x) => x.id === apiAccount.clientObject.id)
+    console.assert(details, 'could not find details for account', apiAccount)
+    return convertCard(apiAccount, details)
+  })
+}
+
+export function convertCard (card, details) {
   // card.clientObject.type === 5 for credit card (limits source unknown, thus non-specified)
   // card.clientObject.type === 6 for debit card
+  const creditLimit = details.contract.creditLimit || 0
   return {
     id: calculateAccountId(card),
     title: card.clientObject.customSynonym || card.clientObject.defaultSynonym,
     type: 'ccard',
     syncID: [card.clientObject.cardMaskedNumber.slice(-4)],
     instrument: card.clientObject.currIso,
-    balance: card.balance.available
+    balance: card.balance.available - creditLimit,
+    ...creditLimit && { creditLimit }
   }
 }
 
@@ -147,10 +157,20 @@ export const convertApiTransactionToReadableTransaction = (apiTransaction, inclu
   const accountCurrency = apiTransaction.card.clientObject.currIso
   const accountId = calculateAccountId(apiTransaction.card)
   if (apiTransaction.type === 'abortedTransaction') {
-    return convertApiAbortedTransactionToReadableTransaction({ accountId, accountCurrency, abortedTransaction: apiTransaction.payload, includeDateTimeInComment })
+    return convertApiAbortedTransactionToReadableTransaction({
+      accountId,
+      accountCurrency,
+      abortedTransaction: apiTransaction.payload,
+      includeDateTimeInComment
+    })
   }
   if (apiTransaction.type === 'regularTransaction') {
-    return convertApiRegularTransactionToReadableTransaction({ accountId, accountCurrency, regularTransaction: apiTransaction.payload, includeDateTimeInComment })
+    return convertApiRegularTransactionToReadableTransaction({
+      accountId,
+      accountCurrency,
+      regularTransaction: apiTransaction.payload,
+      includeDateTimeInComment
+    })
   }
   throw new Error(`apiTransaction.type "${apiTransaction.type}" not implemented`)
 }
