@@ -10,7 +10,7 @@ export const Type = {
   Double: function (value) { this.value = value },
   List: function (items, itemType) {
     console.assert(_.isArray(items), 'Type.List items must be array')
-    console.assert(_.isString(itemType) && itemType.length > 0, 'Type.List itemType must be non-empty string')
+    console.assert(_.isString(itemType), 'Type.List itemType must be string')
     this.items = items
     this.itemType = itemType
   }
