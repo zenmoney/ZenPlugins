@@ -138,6 +138,24 @@ export function fixDateTimezones (transaction) {
   }
 }
 
+export function fixDateTimezonesForTransactionDtoV2 (transaction) {
+  const date = (typeof transaction.date === 'number')
+    ? convertTimestampToDate(transaction.date)
+    : transaction.date
+  if (date instanceof Date &&
+    date.getTimezoneOffset() === -120 &&
+    date.getHours() === 23 &&
+    date.getMinutes() === 0 &&
+    date.getSeconds() === 0 &&
+    date.getMilliseconds() === 0) {
+    return {
+      ...transaction,
+      date: new Date(date.getTime() + 3600000)
+    }
+  }
+  return transaction
+}
+
 export function patchAccounts (accounts) {
   if (!ZenMoney.features.investmentAccount && accounts.some(account => account.type === 'investment')) {
     throw new IncompatibleVersionError()
@@ -147,7 +165,7 @@ export function patchAccounts (accounts) {
 
 export function patchTransactions (transactions, accounts) {
   if (ZenMoney.features.transactionDtoV2) {
-    return transactions
+    return transactions.map((x) => x ? fixDateTimezonesForTransactionDtoV2(x) : x)
   }
   const accountsByIdLookup = _.keyBy(accounts, (x) => x.id)
   return castTransactionDatesToTicks(transactions.map((x) =>

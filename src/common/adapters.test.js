@@ -1,5 +1,12 @@
 import _ from 'lodash'
-import { adaptScrapeToGlobalApi, convertTimestampToDate, fixDateTimezones, parseStartDateString, provideScrapeDates } from './adapters'
+import {
+  adaptScrapeToGlobalApi,
+  convertTimestampToDate,
+  fixDateTimezones,
+  fixDateTimezonesForTransactionDtoV2,
+  parseStartDateString,
+  provideScrapeDates
+} from './adapters'
 
 describe('adaptScrapeToGlobalApi', () => {
   it('should call addAccount, addTransaction, setResult', () => {
@@ -275,5 +282,38 @@ describe('test suite', () => {
 
   it('should clean up globals', () => {
     expect(global).not.toHaveProperty('ZenMoney')
+  })
+})
+
+describe('fixDateTimezonesForTransactionDtoV2', () => {
+  it('changes 23:00:00+02:00 to next midnight if current time zone is +02:00', () => {
+    expect(fixDateTimezonesForTransactionDtoV2({
+      date: Object.assign(new Date('2020-02-03T00:00:00+03:00'), {
+        getHours: () => 23,
+        getTimezoneOffset: () => -120
+      })
+    })).toEqual({
+      date: new Date('2020-02-03T00:00:00+02:00')
+    })
+  })
+
+  it('preserves time zone otherwise', () => {
+    expect(fixDateTimezonesForTransactionDtoV2({
+      date: Object.assign(new Date('2020-02-03T01:00:00+03:00'), {
+        getHours: () => 0,
+        getTimezoneOffset: () => -120
+      })
+    })).toEqual({
+      date: new Date('2020-02-03T01:00:00+03:00')
+    })
+
+    expect(fixDateTimezonesForTransactionDtoV2({
+      date: Object.assign(new Date('2020-02-03T00:00:00+03:00'), {
+        getHours: () => 22,
+        getTimezoneOffset: () => -60
+      })
+    })).toEqual({
+      date: new Date('2020-02-03T00:00:00+03:00')
+    })
   })
 })
