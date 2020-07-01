@@ -68,7 +68,12 @@ export function convertTransaction (json, accounts) {
     merchant: null,
     comment: null,
     hold: false
-  };
+  }
+
+  // пропускаем операции с нулевой суммой
+  if (transaction.movements[0].sum === 0 && transaction.movements[0].fee === 0) {
+    return null
+  }
 
   [
     parseCash,

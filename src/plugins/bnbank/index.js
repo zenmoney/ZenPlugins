@@ -22,6 +22,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
 
   const transactions = (await fetchTransactions(token, preparedAccounts, fromDate, toDate))
     .map(transaction => convertTransaction(transaction, preparedAccounts))
+    .filter(transaction => transaction !== null)
   lastTransactions = lastTransactions
     .map(transaction => convertTransaction(transaction, cards))
     .filter(transaction => transaction !== null)

@@ -130,6 +130,27 @@ describe('convertTransaction', () => {
       }
     },
     {
+      name: 'capitalization with zero procents',
+      transaction: {
+        accountType: '1',
+        concreteType: '1',
+        accountNumber: '2007549330000000',
+        operationName: 'Капитализация (%% тек.периода ко вкладу)',
+        transactionDate: 1593532140000,
+        operationDate: 1593532140000,
+        transactionAmount: 0,
+        transactionCurrency: '933',
+        operationAmount: 0,
+        operationCurrency: '933',
+        operationSign: '1',
+        actionGroup: 19,
+        clientName: 'Аседовская Майя Григорьевна',
+        operationClosingBalance: 422.79,
+        operationCode: 999
+      },
+      expectedTransaction: null
+    },
+    {
       name: 'deposit capitalization',
       transaction: {
         accountType: '0',
