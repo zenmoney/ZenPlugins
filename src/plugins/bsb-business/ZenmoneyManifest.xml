@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
-    <id>BSB business</id>
+    <id>bsb-business</id>
     <version>1.0</version>
     <build>10</build>
-    <company></company>
+    <company>15737</company>
     <modular>true</modular>
     <codeRequired>false</codeRequired>
     <files>
