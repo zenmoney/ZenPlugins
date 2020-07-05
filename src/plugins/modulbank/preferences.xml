@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen>
     <EditTextPreference
-		key="startDate"
-		obligatory="true"
-		inputType="date"
-		title="С какой даты загружать операции"
-		defaultValue="2018-01-01T00:00:00.000Z"
-		dialogTitle="С какой даты загружать операции"
-		positiveButtonText="ОК"
-		negativeButtonText="Отмена"
-		summary="|startDate|{@s}"/>
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="С какой даты загружать операции"
+        defaultValue="2018-01-01T00:00:00.000Z"
+        dialogTitle="С какой даты загружать операции"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|startDate|{@s}"/>
 </PreferenceScreen>

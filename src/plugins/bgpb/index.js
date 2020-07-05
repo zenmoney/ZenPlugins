@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import _, { flatMap } from 'lodash'
 import { fetchAccountConditions, fetchAccounts, fetchBalance, fetchFullTransactions, fetchLastTransactions, fetchTransactionsAccId, login } from './api'
 import { addOverdraftInfo, convertAccount, convertLastTransaction, convertTransaction, transactionsUnique } from './converters'
 
@@ -14,7 +14,12 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     }
   }
 
-  const fullTransactionsRes = await fetchFullTransactions(token, accounts, fromDate, toDate)
+  const accountsAvailable = flatMap(accounts, (account) => {
+    if (account.balance !== null) {
+      return account
+    }
+  })
+  const fullTransactionsRes = await fetchFullTransactions(token, accountsAvailable, fromDate, toDate)
   accounts = addOverdraftInfo(accounts, fullTransactionsRes.overdrafts)
 
   const transactionsStatement = (fullTransactionsRes.transactions)

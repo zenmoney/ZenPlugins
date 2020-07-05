@@ -1,32 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen>
-  <EditTextPreference
-    key='login'
-    summary='||{@s}'
-    title='Номер телефона или емейл'
-    dialogTitle='Номер телефона или емейл'
-    negativeButtonText='Отмена'
-    positiveButtonText='ОК'
-    obligatory='true' />
-  <EditTextPreference
-    key='password'
-    summary='||***********'
-    title='Пароль от интернет-банка'
-    dialogTitle='Пароль от интернет-банка'
-    negativeButtonText='Отмена'
-    positiveButtonText='ОК'
-    inputType='textPassword'
-    obligatory='true' />
-  <EditTextPreference
-    key='startDate'
-    obligatory='true'
-    inputType='date'
-    title='С какой даты загружать операции'
-    defaultValue='2018-01-01T00:00:00.000Z'
-    dialogTitle='Дата начала загрузки'
-    dialogMessage='Введите дату, с которой загружать операции'
-    positiveButtonText='ОК'
-    negativeButtonText='Отмена'
-    summary='|startDate|{@s}'
-  />
+    <EditTextPreference
+        key="login"
+        summary="||{@s}"
+        title="Номер телефона или емейл"
+        dialogTitle="Номер телефона или емейл"
+        negativeButtonText="Отмена"
+        positiveButtonText="ОК"
+        obligatory="true"/>
+    <EditTextPreference
+        key="password"
+        summary="||***********"
+        title="Пароль от интернет-банка"
+        dialogTitle="Пароль от интернет-банка"
+        dialogMessage="Пароль от интернет-банка и пин-код от приложения — это разные пароли. Если вы не помните пароль от интернет-банка, восстановите его на сайте банка."
+        negativeButtonText="Отмена"
+        positiveButtonText="ОК"
+        inputType="textPassword"
+        obligatory="true"/>
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="С какой даты загружать операции"
+        defaultValue="2018-01-01T00:00:00.000Z"
+        dialogTitle="Дата начала загрузки"
+        dialogMessage="Введите дату, с которой загружать операции"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|startDate|{@s}"
+    />
 </PreferenceScreen>

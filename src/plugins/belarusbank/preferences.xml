@@ -3,8 +3,8 @@
     <EditTextPreference
         key="login"
         obligatory="true"
-        title="Логин от интернет-банка"
-        dialogTitle="Логин от интернет-банка"
+        title="Логин"
+        dialogTitle="Логин"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="||{@s}"
