@@ -1,7 +1,7 @@
-import errors from '../../../locales/ru.json'
 import { fetchJson } from '../../common/network'
+import { sanitize } from '../../common/sanitize'
 import { generateRandomString } from '../../common/utils'
-import { BankMessageError, InvalidOtpCodeError, InvalidPreferencesError, TemporaryError } from '../../errors'
+import { InvalidPreferencesError } from '../../errors'
 import {
   convertAccount,
   convertAccountTransaction,
@@ -14,6 +14,14 @@ import {
 } from './converters'
 
 const baseUrl = 'https://mobile.kapitalbank.uz/api'
+
+function getPhoneNumber (str) {
+  const number = /^(?:\+?998)(\d+)$/.exec(str.trim())
+  if (number) {
+    return '998' + number[1]
+  }
+  throw new InvalidPreferencesError()
+}
 
 /**
  * Регистрирует идентификатор устройства в интернет-банке
@@ -34,11 +42,9 @@ export async function registerDevice () {
     }
   })
 
-  if (!response.ok) {
-    throw new BankMessageError(response.toString())
-  } else {
-    ZenMoney.setData('deviceId', deviceId)
-  }
+  console.assert(response.ok, 'unexpected device response', response)
+
+  ZenMoney.setData('deviceId', deviceId)
 }
 
 /**
@@ -47,7 +53,7 @@ export async function registerDevice () {
  * @param phone номер телефона клиента
  */
 export async function checkUser (phone) {
-  const endpoint = '/check-user?phone=' + phone
+  const endpoint = '/check-user?phone=' + getPhoneNumber(phone)
 
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'GET',
@@ -55,12 +61,15 @@ export async function checkUser (phone) {
       lang: 'ru',
       'app-version': 'w0.0.1',
       'device-id': ZenMoney.getData('deviceId')
-    }
+    },
+    sanitizeRequestLog: { url: { query: { phone: true } } },
+    sanitizeResponseLog: { url: { query: { phone: true } } }
   })
 
-  if (!response.ok) {
-    throw new InvalidPreferencesError(errors.zenPlugin_invalidPreferencesError)
+  if (response.body?.errorMessage === 'Пользователь не зарегистрирован') {
+    throw new InvalidPreferencesError()
   }
+  console.assert(response.ok, 'unexpected check-user response', response)
 }
 
 /**
@@ -80,15 +89,14 @@ export async function sendSmsCode (phone, password) {
       'device-id': ZenMoney.getData('deviceId')
     },
     body: {
-      phone: phone,
+      phone: getPhoneNumber(phone),
       password: password,
       reserveSms: false
-    }
+    },
+    sanitizeRequestLog: { body: { phone: true, password: true } }
   })
 
-  if (!response.ok) {
-    throw new InvalidPreferencesError(errors.zenPlugin_invalidLoginOrPasswordError)
-  }
+  console.assert(response.ok, 'unexpected login response', response)
 }
 
 /**
@@ -98,7 +106,7 @@ export async function sendSmsCode (phone, password) {
  * @param smsCode код подтверждения из СМС сообщения
  */
 export async function getToken (phone, smsCode) {
-  const endpoint = '/registration/verify/' + smsCode + '/' + phone
+  const endpoint = '/registration/verify/' + smsCode + '/' + getPhoneNumber(phone)
 
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'POST',
@@ -106,15 +114,15 @@ export async function getToken (phone, smsCode) {
       lang: 'ru',
       'app-version': 'w0.0.1',
       'device-id': ZenMoney.getData('deviceId')
-    }
+    },
+    sanitizeRequestLog: { url: url => url.replace(getPhoneNumber(phone), sanitize(getPhoneNumber(phone), true)) },
+    sanitizeResponseLog: { url: url => url.replace(getPhoneNumber(phone), sanitize(getPhoneNumber(phone), true)) }
   })
 
-  if (!response.ok) {
-    throw new InvalidOtpCodeError(errors.zenPlugin_invalidOtpCodeError)
-  } else {
-    ZenMoney.setData('token', response.body.data.token)
-    ZenMoney.setData('isFirstRun', false)
-  }
+  console.assert(response.ok, 'unexpected registration/verify response', response)
+
+  ZenMoney.setData('token', response.body.data.token)
+  ZenMoney.setData('isFirstRun', false)
 }
 
 /**
@@ -135,11 +143,9 @@ export async function getUzcardCards () {
     }
   })
 
-  if (!response.ok) {
-    throw new TemporaryError('Не удалось загрузить карты UzCard')
-  } else {
-    return response.body.data.map(convertCard)
-  }
+  console.assert(response.ok, 'unexpected uzcard response', response)
+
+  return response.body.data.map(convertCard)
 }
 
 /**
@@ -160,11 +166,9 @@ export async function getHumoCards () {
     }
   })
 
-  if (!response.ok) {
-    throw new TemporaryError('Не удалось загрузить карты UzCard')
-  } else {
-    return response.body.data.map(convertCard)
-  }
+  console.assert(response.ok, 'unexpected humo response', response)
+
+  return response.body.data.map(convertCard)
 }
 
 /**
@@ -185,11 +189,9 @@ export async function getVisaCards () {
     }
   })
 
-  if (!response.ok) {
-    throw new TemporaryError('Не удалось загрузить карты Visa')
-  } else {
-    return response.body.data.map(convertCard)
-  }
+  console.assert(response.ok, 'unexpected visa response', response)
+
+  return response.body.data.map(convertCard)
 }
 
 /**
@@ -210,11 +212,9 @@ export async function getWallets () {
     }
   })
 
-  if (!response.ok) {
-    throw new TemporaryError('Не удалось загрузить счета')
-  } else {
-    return response.body.data.map(convertWallet)
-  }
+  console.assert(response.ok, 'unexpected wallet response', response)
+
+  return response.body.data.map(convertWallet)
 }
 
 /**
@@ -235,11 +235,9 @@ export async function getAccounts () {
     }
   })
 
-  if (!response.ok) {
-    throw new TemporaryError('Не удалось загрузить счета')
-  } else {
-    return response.body.data.map(convertAccount)
-  }
+  console.assert(response.ok, 'unexpected account response', response)
+
+  return response.body.data.map(convertAccount)
 }
 
 /**
@@ -270,12 +268,10 @@ export async function getUzcardCardsTransactions (cards, fromDate, toDate) {
         }
       })
 
-      if (!response.ok) {
-        throw new TemporaryError('Не удалось загрузить операции по картам UzCard')
-      } else {
-        transactions = transactions.concat(response.body.data.data.map(transaction =>
-          convertUzcardCardTransaction(card.id, transaction)))
-      }
+      console.assert(response.ok, 'unexpected uzcard/history response', response)
+
+      transactions = transactions.concat(response.body.data.data.map(transaction =>
+        convertUzcardCardTransaction(card.id, transaction)))
     }
   }
 
@@ -310,12 +306,10 @@ export async function getHumoCardsTransactions (cards, fromDate, toDate) {
         }
       })
 
-      if (!response.ok) {
-        throw new TemporaryError('Не удалось загрузить операции по картам Humo')
-      } else {
-        transactions = transactions.concat(response.body.data.map(transaction =>
-          convertHumoCardTransaction(card.id, transaction)))
-      }
+      console.assert(response.ok, 'unexpected humo/history response', response)
+
+      transactions = transactions.concat(response.body.data.map(transaction =>
+        convertHumoCardTransaction(card.id, transaction)))
     }
   }
 
@@ -350,12 +344,10 @@ export async function getVisaCardsTransactions (cards, fromDate, toDate) {
         }
       })
 
-      if (!response.ok) {
-        throw new TemporaryError('Не удалось загрузить операции по картам Visa')
-      } else {
-        transactions = transactions.concat(response.body.data.map(transaction =>
-          convertVisaCardTransaction(card.id, transaction)))
-      }
+      console.assert(response.ok, 'unexpected visa/history response', response)
+
+      transactions = transactions.concat(response.body.data.map(transaction =>
+        convertVisaCardTransaction(card.id, transaction)))
     }
   }
 
@@ -390,12 +382,10 @@ export async function getWalletsTransactions (wallets, fromDate, toDate) {
         }
       })
 
-      if (!response.ok) {
-        throw new TemporaryError('Не удалось загрузить операции по кошелькам')
-      } else {
-        transactions = transactions.concat(response.body.data.map(transaction =>
-          convertWalletTransaction(wallet.id, transaction)))
-      }
+      console.assert(response.ok, 'unexpected wallet/history response', response)
+
+      transactions = transactions.concat(response.body.data.map(transaction =>
+        convertWalletTransaction(wallet.id, transaction)))
     }
   }
 
@@ -430,12 +420,10 @@ export async function getAccountsTransactions (accounts, fromDate, toDate) {
         }
       })
 
-      if (!response.ok) {
-        throw new TemporaryError('Не удалось загрузить операции по счетам')
-      } else {
-        transactions = transactions.concat(response.body.data.map(transaction =>
-          convertAccountTransaction(account.id, transaction)))
-      }
+      console.assert(response.ok, 'unexpected account/statement response', response)
+
+      transactions = transactions.concat(response.body.data.map(transaction =>
+        convertAccountTransaction(account.id, transaction)))
     }
   }
 

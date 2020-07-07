@@ -1,4 +1,3 @@
-import moment from 'moment'
 import {
   checkUser,
   getAccounts,
@@ -16,9 +15,7 @@ import {
   sendSmsCode
 } from './api'
 
-export async function scrape ({ preferences, fromDate, toDate }) {
-  const isFirstRun = ZenMoney.getData('isFirstRun', true)
-
+export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
   /**
    * FIRST RUN STEPS
    */
@@ -44,25 +41,8 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   /**
    * REGULAR STEPS - Get transactions
    */
-  let from, to
-
-  if (isFirstRun) {
-    from = preferences.startDate
-  } else if (ZenMoney.getData('scrape/lastSuccessDate')) {
-    from = ZenMoney.getData('scrape/lastSuccessDate')
-  } else if (fromDate) {
-    from = fromDate
-  } else {
-    from = '2020-01-01T00:00:00.000Z'
-  }
-
-  from = moment(from).valueOf()
-
-  if (toDate) {
-    to = moment(toDate, moment.ISO_8601).valueOf()
-  } else {
-    to = moment().valueOf()
-  }
+  const from = fromDate.getTime()
+  const to = (toDate || new Date()).getTime()
 
   const uzcardCardsTransactions = await getUzcardCardsTransactions(uzcardCards, from, to)
   const humoCardsTransactions = await getHumoCardsTransactions(humoCards, from, to)
