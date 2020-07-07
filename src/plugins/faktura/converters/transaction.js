@@ -47,6 +47,7 @@ const converter = (item, mapContractToAccount = {}) => {
       currency = item.money.accountAmount.currency
     }
 
+    amount = Math.abs(amount)
     transaction.outcomeAccount = accountId
     transaction.incomeAccount = accountId
     if (isIncome) {

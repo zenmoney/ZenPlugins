@@ -2,7 +2,7 @@
 <provider>
     <id>beeline</id>
     <version>3.0</version>
-    <build>10</build>
+    <build>11</build>
     <company>15449</company>
     <modular>true</modular>
     <codeRequired>false</codeRequired>

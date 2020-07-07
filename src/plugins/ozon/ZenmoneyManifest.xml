@@ -2,7 +2,7 @@
 <provider>
     <id>ozon</id>
     <version>1.0</version>
-    <build>1</build>
+    <build>2</build>
     <company>15685</company>
     <modular>true</modular>
     <codeRequired>false</codeRequired>
