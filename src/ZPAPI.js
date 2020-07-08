@@ -519,6 +519,28 @@ Object.assign(ZPAPI.prototype, {
       type: ':commands/file-select',
       payload: { correlationId, contentType: `image/${format}` }
     })
+  },
+
+  alert (message, { buttonTitle } = {}) {
+    return new Promise((resolve) => {
+      const correlationId = Date.now()
+      const messageHandler = (e) => {
+        const message = e.data
+        if (message.type !== ':events/alert-closed') {
+          return
+        }
+        if (message.payload.correlationId !== correlationId) {
+          return
+        }
+        self.removeEventListener('message', messageHandler)
+        resolve()
+      }
+      self.addEventListener('message', messageHandler)
+      self.postMessage({
+        type: ':commands/alert',
+        payload: { correlationId, message }
+      })
+    })
   }
 })
 

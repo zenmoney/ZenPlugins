@@ -29,7 +29,8 @@ const messageHandlers = {
   ':events/cookie-set': () => {},
   ':events/cookies-saved': () => {},
   ':events/cookies-restored': () => {},
-  ':events/file-selected': () => {}
+  ':events/file-selected': () => {},
+  ':events/alert-closed': () => {}
 }
 
 export async function handleMessageFromWindow ({ event }) {

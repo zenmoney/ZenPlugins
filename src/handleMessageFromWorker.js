@@ -78,6 +78,12 @@ const messageHandlers = {
     input.style.position = 'absolute'
     input.style.top = '20px'
     root.appendChild(input)
+  },
+
+  ':commands/alert': async function ({ payload: { correlationId, message }, reply }) {
+    // eslint-disable-next-line no-undef
+    alert(message)
+    reply({ type: ':events/alert-closed', payload: { correlationId } })
   }
 }
 
