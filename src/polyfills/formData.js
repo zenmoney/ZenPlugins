@@ -1,4 +1,7 @@
-const Blob = ZenMoney.Blob
+/**
+ * Based on https://github.com/jimmywarting/FormData/blob/master/FormData.js
+ */
+const Blob = global.Blob
 
 function normalizeValue ([name, value, filename]) {
   if (value instanceof Blob) {
@@ -38,7 +41,10 @@ class FormData {
    * FormData class
    */
   constructor () {
-    this._data = []
+    Object.defineProperty(this, '_data', {
+      writable: true,
+      value: []
+    })
   }
 
   /**
@@ -221,6 +227,6 @@ class FormData {
   }
 }
 
-if (!('FormData' in ZenMoney)) {
-  ZenMoney.FormData = FormData
+if (!global.FormData) {
+  global.FormData = FormData
 }

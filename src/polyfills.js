@@ -3,12 +3,18 @@ import * as consoleAdapter from './consoleAdapter'
 
 global.Promise = require('promise/lib/es6-extensions.js')
 global.Symbol = require('es6-symbol')
+
+delete global.Blob
+delete global.FormData
 require('./polyfills/blob')
 require('./polyfills/formData')
-
-global.fetch = null
+ZenMoney.Blob = global.Blob
+ZenMoney.FormData = global.FormData
+delete global.fetch
 // eslint-disable-next-line import/no-webpack-loader-syntax
 global.fetch = require('imports-loader?self=>global&{default:XMLHttpRequest}=xhrViaZenApi&Blob=>ZenMoney.Blob&FormData=>ZenMoney.FormData!exports-loader?self.fetch!whatwg-fetch')
+delete global.Blob
+delete global.FormData
 
 if (!('self' in global)) {
   global.self = global

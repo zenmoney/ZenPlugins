@@ -244,29 +244,48 @@ function Blob (chunks, opts) {
   var id = chunks.length === 1 && isBlob(chunks[0]) && chunks[0]._getType() === type ? chunks[0]._getId() : null
   var bytes = null;
 
-  this.type = type;
-  this.size = size;
-  this._getId = function () {
-    return id;
-  };
-  this._getType = function () {
-    return type;
-  };
-  this._getSize = function () {
-    return size;
-  };
-  this._getBytes = function () {
-    if (bytes === null) {
-      for (var i = 0, len = chunks.length; i < len; i++) {
-        chunks[i] = chunks[i]._getBytes();
-      }
-      bytes = global.Uint8Array
-        ? concatTypedarrays(chunks)
-        : [].concat.apply([], chunks);
-      chunks = null;
+  Object.defineProperty(this,'type', {
+    enumerable: true,
+    value: type
+  });
+  Object.defineProperty(this,'size', {
+    enumerable: true,
+    value: size
+  });
+  Object.defineProperty(this,'_getId', {
+    enumerable: false,
+    writable: true,
+    value: function () {
+      return id;
     }
-    return bytes;
-  };
+  });
+  Object.defineProperty(this,'_getType', {
+    enumerable: false,
+    value: function () {
+      return type;
+    }
+  });
+  Object.defineProperty(this,'_getSize', {
+    enumerable: false,
+    value: function () {
+      return size;
+    }
+  });
+  Object.defineProperty(this,'_getBytes', {
+    enumerable: false,
+    value: function () {
+      if (bytes === null) {
+        for (var i = 0, len = chunks.length; i < len; i++) {
+          chunks[i] = chunks[i]._getBytes();
+        }
+        bytes = global.Uint8Array
+          ? concatTypedarrays(chunks)
+          : [].concat.apply([], chunks);
+        chunks = null;
+      }
+      return bytes;
+    }
+  });
 }
 
 Blob.prototype.arrayBuffer = function () {
@@ -286,6 +305,6 @@ Blob.prototype.toString = function () {
   return "[object Blob]";
 };
 
-if (!('Blob' in ZenMoney)) {
-  ZenMoney.Blob = Blob;
+if (!global.Blob) {
+  global.Blob = Blob
 }

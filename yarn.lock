@@ -9633,9 +9633,9 @@ whatwg-fetch@>=0.10.0:
   resolved "https://registry.yarnpkg.com/whatwg-fetch/-/whatwg-fetch-3.0.0.tgz#fc804e458cc460009b1a2b966bc8817d2578aefb"
   integrity sha512-9GSJUgz1D4MfyKU7KRqwOjXCXTqWdFNvEr7eUBYchQiVc744mqK/MzXPNR2WsPkmkOa4ywfg8C2n8h+13Bey1Q==
 
-"whatwg-fetch@git+https://github.com/skvav/fetch.git#55064e902db56b5aea881d35f69160895a9c2343":
+"whatwg-fetch@git+https://github.com/skvav/fetch.git#0411932086d3fcd9d256ac22652f4e2dc6453511":
   version "2.0.3"
-  resolved "git+https://github.com/skvav/fetch.git#55064e902db56b5aea881d35f69160895a9c2343"
+  resolved "git+https://github.com/skvav/fetch.git#0411932086d3fcd9d256ac22652f4e2dc6453511"
 
 whatwg-mimetype@^2.3.0:
   version "2.3.0"

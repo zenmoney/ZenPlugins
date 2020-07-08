@@ -9,7 +9,7 @@ export const formatWithCustomInspectParams = function (...args) {
       [util.inspect.custom || 'inspect'] (recurseTimes, ctx) {
         return util.inspect(value, {
           ...ctx,
-          showHidden: true,
+          showHidden: false,
           depth: null,
           maxArrayLength: null
         })
