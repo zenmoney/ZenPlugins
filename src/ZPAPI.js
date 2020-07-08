@@ -488,6 +488,37 @@ Object.assign(ZPAPI.prototype, {
         payload: { correlationId }
       })
     })
+  },
+
+  takePicture (format, callback) {
+    const correlationId = Date.now()
+    const messageHandler = (e) => {
+      const message = e.data
+      if (message.type !== ':events/file-selected') {
+        return
+      }
+      if (message.payload.correlationId !== correlationId) {
+        return
+      }
+      self.removeEventListener('message', messageHandler)
+      const file = message.payload.file
+      file.arrayBuffer().then(buffer => {
+        const bytes = new Uint8Array(buffer)
+        file._getId = () => null
+        file._getType = () => file.type
+        file._getSize = () => bytes.length
+        file._getBytes = () => bytes
+        const blob = new ZenMoney.Blob([file], { type: file.type })
+        callback(null, blob)
+      }).catch(err => {
+        callback(err)
+      })
+    }
+    self.addEventListener('message', messageHandler)
+    self.postMessage({
+      type: ':commands/file-select',
+      payload: { correlationId, contentType: `image/${format}` }
+    })
   }
 })
 

@@ -61,6 +61,23 @@ const messageHandlers = {
       setCookie(cookie)
     }
     reply({ type: ':events/cookies-restored', payload: { correlationId } })
+  },
+
+  ':commands/file-select': async function ({ payload: { correlationId, contentType }, reply }) {
+    const root = document.getElementById('root')
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.name = 'file'
+    input.multiple = false
+    input.accept = contentType
+    input.onchange = () => {
+      root.removeChild(input)
+      const files = Array.from(input.files)
+      reply({ type: ':events/file-selected', payload: { correlationId, file: files[0] } })
+    }
+    input.style.position = 'absolute'
+    input.style.top = '20px'
+    root.appendChild(input)
   }
 }
 

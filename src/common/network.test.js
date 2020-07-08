@@ -1,3 +1,4 @@
+import { parseHeaderParameters } from './network'
 import { parseXml } from './xmlUtils'
 
 describe('parseXml', () => {
@@ -391,4 +392,17 @@ describe('parseXml', () => {
     expect(() => parseXml('plain text')).toThrow()
     expect(() => parseXml('{"key":123}')).toThrow()
   })
+})
+
+test('parseHeaderParameters', () => {
+  expect(parseHeaderParameters('multipart/form-data; boundary=12345')).toEqual([
+    ['boundary', '12345']
+  ])
+  expect(parseHeaderParameters('multipart/form-data; boundary="12345"')).toEqual([
+    ['boundary', '12345']
+  ])
+  expect(parseHeaderParameters('multipart/form-data; boundary="12345"; param2=He')).toEqual([
+    ['boundary', '12345'],
+    ['param2', 'He']
+  ])
 })

@@ -144,3 +144,16 @@ export async function openWebViewAndInterceptRequest ({ url, headers, log, sanit
     throw new IncompatibleVersionError()
   }
 }
+
+export function parseHeaderParameters (header) {
+  const pairs = []
+  const regex = /;\s*(?:([a-zA-Z0-9-!#$%&'*+.^_`{|}~]+)=(?:([a-zA-Z0-9-!#$%&'*+.^_`{|}~]+)|"([^"]*)"))?/g
+  while (true) {
+    const match = regex.exec(header)
+    if (!match) {
+      break
+    }
+    pairs.push([match[1], match[2] || match[3]])
+  }
+  return pairs
+}
