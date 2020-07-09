@@ -10,9 +10,11 @@ require('./polyfills/blob')
 require('./polyfills/formData')
 ZenMoney.Blob = global.Blob
 ZenMoney.FormData = global.FormData
-delete global.fetch
+global.fetch = null
 // eslint-disable-next-line import/no-webpack-loader-syntax
 global.fetch = require('imports-loader?self=>global&{default:XMLHttpRequest}=xhrViaZenApi&Blob=>ZenMoney.Blob&FormData=>ZenMoney.FormData!exports-loader?self.fetch!whatwg-fetch')
+global.Blob = null
+global.FormData = null
 delete global.Blob
 delete global.FormData
 
