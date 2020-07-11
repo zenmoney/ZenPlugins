@@ -39,20 +39,26 @@ export function convertWallet (wallet) {
 /**
  * Конвертер карты из формата банка в формат Дзенмани
  *
- * @param card карта в формате банка
+ * @param rawCard карта в формате банка
  * @returns карта в формате Дзенмани
  */
-export function convertCard (card) {
-  return {
-    id: String(card.id),
-    title: card.title,
-    syncID: [String(card.id), card.account, card.pan.slice(-4)],
+export function convertCard (rawCard) {
+  const card = {
+    id: String(rawCard.id),
+    title: rawCard.title,
+    syncID: [String(rawCard.id), rawCard.pan.slice(-4)],
 
-    instrument: card.currency.name,
+    instrument: rawCard.currency.name,
     type: 'ccard',
 
-    balance: card.balance / 100
+    balance: rawCard.balance / 100
   }
+
+  if (rawCard.account) {
+    card.syncID.push(rawCard.account)
+  }
+
+  return card
 }
 
 /**
