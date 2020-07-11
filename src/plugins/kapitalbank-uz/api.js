@@ -146,7 +146,7 @@ export async function getUzcardCards () {
 
   console.assert(response.ok, 'unexpected uzcard response', response)
 
-  return response.body.data.map(convertCard)
+  return response.body.data.map(convertCard).filter(card => card !== null)
 }
 
 /**
@@ -169,7 +169,7 @@ export async function getHumoCards () {
 
   console.assert(response.ok, 'unexpected humo response', response)
 
-  return response.body.data.map(convertCard)
+  return response.body.data.map(convertCard).filter(card => card !== null)
 }
 
 /**
@@ -192,7 +192,7 @@ export async function getVisaCards () {
 
   console.assert(response.ok, 'unexpected visa response', response)
 
-  return response.body.data.map(convertCard)
+  return response.body.data.map(convertCard).filter(card => card !== null)
 }
 
 /**
@@ -348,7 +348,7 @@ export async function getVisaCardsTransactions (cards, fromDate, toDate) {
       console.assert(response.ok, 'unexpected visa/history response', response)
 
       transactions = transactions.concat(response.body.data.map(transaction =>
-        convertVisaCardTransaction(card.id, transaction)))
+        convertVisaCardTransaction(card.id, transaction)).filter(transaction => transaction !== null))
     }
   }
 
