@@ -92,7 +92,7 @@ export function convertUzcardCardTransaction (cardId, rawTransaction) {
  * @returns транзакция в формате Дзенмани
  */
 export function convertHumoCardTransaction (cardId, rawTransaction) {
-  const amount = Number(rawTransaction.amount.replace(' ', '').replace(',', '.'))
+  const amount = Number(rawTransaction.amount.replaceAll(' ', '').replace(',', '.'))
 
   const transaction = {
     payee: rawTransaction.merchantName,
