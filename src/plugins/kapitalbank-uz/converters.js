@@ -134,6 +134,10 @@ export function convertHumoCardTransaction (cardId, rawTransaction) {
 export function convertVisaCardTransaction (cardId, rawTransaction) {
   const amount = Number(rawTransaction.amount)
 
+  if (amount === 0) {
+    return null
+  }
+
   const transaction = {
     payee: rawTransaction.merchantName,
     date: rawTransaction.transDate
