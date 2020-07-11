@@ -43,6 +43,10 @@ export function convertWallet (wallet) {
  * @returns карта в формате Дзенмани
  */
 export function convertCard (rawCard) {
+  if (rawCard.state !== 'ACTIVE') {
+    return null
+  }
+
   const card = {
     id: String(rawCard.id),
     title: rawCard.title,
