@@ -15,14 +15,6 @@ import {
 
 const baseUrl = 'https://mobile.kapitalbank.uz/api'
 
-function getPhoneNumber (str) {
-  const number = /^(?:\+?998)(\d+)$/.exec(str.trim())
-  if (number) {
-    return '998' + number[1]
-  }
-  throw new InvalidPreferencesError()
-}
-
 /**
  * Регистрирует идентификатор устройства в интернет-банке
  */
@@ -69,6 +61,7 @@ export async function checkUser (phone) {
   if (response.body?.errorMessage === 'Пользователь не зарегистрирован') {
     throw new InvalidPreferencesError()
   }
+
   console.assert(response.ok, 'unexpected check-user response', response)
 }
 
@@ -96,6 +89,10 @@ export async function sendSmsCode (phone, password) {
     sanitizeRequestLog: { body: { phone: true, password: true } }
   })
 
+  if (response.body?.errorMessage === 'Пользователь не зарегистрирован' || response.body?.errorMessage === 'Неправильный номер телефона или пароль') {
+    throw new InvalidPreferencesError()
+  }
+
   console.assert(response.ok, 'unexpected login response', response)
 }
 
@@ -118,6 +115,10 @@ export async function getToken (phone, smsCode) {
     sanitizeRequestLog: { url: url => url.replace(getPhoneNumber(phone), sanitize(getPhoneNumber(phone), true)) },
     sanitizeResponseLog: { url: url => url.replace(getPhoneNumber(phone), sanitize(getPhoneNumber(phone), true)) }
   })
+
+  if (response.body?.errorMessage === 'Пользователь не зарегистрирован' || response.body?.errorMessage === 'Неверный SMS-код') {
+    throw new InvalidPreferencesError()
+  }
 
   console.assert(response.ok, 'unexpected registration/verify response', response)
 
@@ -428,4 +429,20 @@ export async function getAccountsTransactions (accounts, fromDate, toDate) {
   }
 
   return transactions
+}
+
+/**
+ * Нормализация номера телефона
+ *
+ * @param rawPhoneNumber номер телефона, предоставленный пользователем
+ * @returns 12-значный номер телефона в формате 998901234567
+ */
+function getPhoneNumber (rawPhoneNumber) {
+  const normalizedPhoneNumber = /^(?:\+?998)(\d{9})$/.exec(rawPhoneNumber.trim())
+
+  if (normalizedPhoneNumber) {
+    return '998' + normalizedPhoneNumber[1]
+  }
+
+  throw new InvalidPreferencesError()
 }
