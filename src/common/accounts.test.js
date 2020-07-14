@@ -1,4 +1,4 @@
-import { ensureSyncIDsAreUniqueButSanitized, parseOuterAccountData, sanitizeSyncId } from './accounts'
+import { ensureSyncIDsAreUniqueButSanitized, parseOuterAccountData, sanitizeSyncId, trimSyncId } from './accounts'
 
 describe('ensureSyncIDsAreUniqueButSanitized', () => {
   it('truncate syncID to last4 digits if there is no intersection between accounts', () => {
@@ -77,6 +77,25 @@ describe('sanitizeSyncId', () => {
 
   it('cuts [6..12)-indexed chars if id length is 16 chars (looks like a card number)', () => {
     expect(sanitizeSyncId('1234567890123456')).toEqual('123456******3456')
+  })
+})
+
+describe('trimSyncId', () => {
+  it.each([
+    ['00000121120', '1120'],
+    ['123456789012345', '2345'],
+    ['2***438', '*438'],
+    ['2****38', '2*38'],
+    ['2*****8', '2**8'],
+    ['2625********71', '2*71'],
+    ['1234', '1234'],
+    ['*234', '*234'],
+    ['**34', '**34'],
+    ['***4', '***4'],
+    ['1***', '1***'],
+    ['1234***', '4***']
+  ])('cuts insignificant characters', (syncId, trimmedSyncId) => {
+    expect(trimSyncId(syncId)).toEqual(trimmedSyncId)
   })
 })
 

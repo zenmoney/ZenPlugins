@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import padLeft from 'pad-left'
 
 function getLast4Digits (id, ignoreCurrentSanitizing) {
   id = id.toString().trim()
@@ -17,6 +18,20 @@ export function sanitizeSyncId (id) {
     return id.slice(0, 6) + '******' + id.slice(12, 16)
   }
   return '*****' + id.substring(5)
+}
+
+export function trimSyncId (id) {
+  console.assert(id.length >= 4, 'syncID must be at least 4 characters long, but was: ' + id)
+  const match = id.match(/^([^*]*)\*+([^*]+)$/)
+  if (!match) {
+    return id.slice(-4)
+  }
+  const secondPart = match[2]
+  if (secondPart.length >= 4) {
+    return secondPart.slice(-4)
+  }
+  const firstPart = match[1].slice(0, 3 - secondPart.length)
+  return firstPart + padLeft(secondPart, 4 - firstPart.length, '*')
 }
 
 /**
@@ -85,8 +100,7 @@ export function ensureSyncIDsAreUniqueButSanitized ({ accounts, sanitizeSyncId }
       })
     })
     const flattenedAccountsByLast4Digits = _.groupBy(flattenedAccounts, (account) => {
-      console.assert(/\d{4}$/.test(account.singleSyncID), 'syncID must end with last4, but was: ' + account.singleSyncID)
-      return account.singleSyncID.slice(-4)
+      return trimSyncId(account.singleSyncID)
     })
     const syncIDReplacementPairs = _.flatMap(
       _.toPairs(flattenedAccountsByLast4Digits),
