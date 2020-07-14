@@ -31,7 +31,8 @@ export async function registerDevice () {
     body: {
       deviceId: deviceId,
       name: 'ZenMoney'
-    }
+    },
+    sanitizeRequestLog: { body: { deviceId: true } }
   })
 
   console.assert(response.ok, 'unexpected device response', response)
@@ -54,7 +55,7 @@ export async function checkUser (phone) {
       'app-version': 'w0.0.1',
       'device-id': ZenMoney.getData('deviceId')
     },
-    sanitizeRequestLog: { url: { query: { phone: true } } },
+    sanitizeRequestLog: { url: { query: { phone: true } }, headers: { 'device-id': true } },
     sanitizeResponseLog: { url: { query: { phone: true } } }
   })
 
@@ -86,7 +87,7 @@ export async function sendSmsCode (phone, password) {
       password: password,
       reserveSms: false
     },
-    sanitizeRequestLog: { body: { phone: true, password: true } }
+    sanitizeRequestLog: { body: { phone: true, password: true }, headers: { 'device-id': true } }
   })
 
   if (response.body?.errorMessage === 'Пользователь не зарегистрирован' || response.body?.errorMessage === 'Неправильный номер телефона или пароль') {
@@ -112,7 +113,7 @@ export async function getToken (phone, smsCode) {
       'app-version': 'w0.0.1',
       'device-id': ZenMoney.getData('deviceId')
     },
-    sanitizeRequestLog: { url: url => url.replace(getPhoneNumber(phone), sanitize(getPhoneNumber(phone), true)) },
+    sanitizeRequestLog: { url: url => url.replace(getPhoneNumber(phone), sanitize(getPhoneNumber(phone), true)), headers: { 'device-id': true } },
     sanitizeResponseLog: { url: url => url.replace(getPhoneNumber(phone), sanitize(getPhoneNumber(phone), true)) }
   })
 
@@ -141,7 +142,8 @@ export async function getUzcardCards () {
       'app-version': 'w0.0.1',
       'device-id': ZenMoney.getData('deviceId'),
       token: ZenMoney.getData('token')
-    }
+    },
+    sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
   })
 
   console.assert(response.ok, 'unexpected uzcard response', response)
@@ -164,7 +166,8 @@ export async function getHumoCards () {
       'app-version': 'w0.0.1',
       'device-id': ZenMoney.getData('deviceId'),
       token: ZenMoney.getData('token')
-    }
+    },
+    sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
   })
 
   console.assert(response.ok, 'unexpected humo response', response)
@@ -187,7 +190,8 @@ export async function getVisaCards () {
       'app-version': 'w0.0.1',
       'device-id': ZenMoney.getData('deviceId'),
       token: ZenMoney.getData('token')
-    }
+    },
+    sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
   })
 
   console.assert(response.ok, 'unexpected visa response', response)
@@ -210,7 +214,8 @@ export async function getWallets () {
       'app-version': 'w0.0.1',
       'device-id': ZenMoney.getData('deviceId'),
       token: ZenMoney.getData('token')
-    }
+    },
+    sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
   })
 
   console.assert(response.ok, 'unexpected wallet response', response)
@@ -233,7 +238,8 @@ export async function getAccounts () {
       'app-version': 'w0.0.1',
       'device-id': ZenMoney.getData('deviceId'),
       token: ZenMoney.getData('token')
-    }
+    },
+    sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
   })
 
   console.assert(response.ok, 'unexpected account response', response)
@@ -266,7 +272,8 @@ export async function getUzcardCardsTransactions (cards, fromDate, toDate) {
           'app-version': 'w0.0.1',
           'device-id': ZenMoney.getData('deviceId'),
           token: ZenMoney.getData('token')
-        }
+        },
+        sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
       })
 
       console.assert(response.ok, 'unexpected uzcard/history response', response)
@@ -304,7 +311,8 @@ export async function getHumoCardsTransactions (cards, fromDate, toDate) {
           'app-version': 'w0.0.1',
           'device-id': ZenMoney.getData('deviceId'),
           token: ZenMoney.getData('token')
-        }
+        },
+        sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
       })
 
       console.assert(response.ok, 'unexpected humo/history response', response)
@@ -342,7 +350,8 @@ export async function getVisaCardsTransactions (cards, fromDate, toDate) {
           'app-version': 'w0.0.1',
           'device-id': ZenMoney.getData('deviceId'),
           token: ZenMoney.getData('token')
-        }
+        },
+        sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
       })
 
       console.assert(response.ok, 'unexpected visa/history response', response)
@@ -380,7 +389,8 @@ export async function getWalletsTransactions (wallets, fromDate, toDate) {
           'app-version': 'w0.0.1',
           'device-id': ZenMoney.getData('deviceId'),
           token: ZenMoney.getData('token')
-        }
+        },
+        sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
       })
 
       console.assert(response.ok, 'unexpected wallet/history response', response)
@@ -418,7 +428,8 @@ export async function getAccountsTransactions (accounts, fromDate, toDate) {
           'app-version': 'w0.0.1',
           'device-id': ZenMoney.getData('deviceId'),
           token: ZenMoney.getData('token')
-        }
+        },
+        sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
       })
 
       console.assert(response.ok, 'unexpected account/statement response', response)
