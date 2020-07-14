@@ -92,10 +92,9 @@ export function transactionsUnique (array) {
     for (let j = i + 1; j < a.length; ++j) {
       if (a[i].date.getFullYear() === a[j].date.getFullYear() &&
         a[i].date.getMonth() === a[j].date.getMonth() &&
-        a[i].date.getDate() === a[j].date.getDate() &&
         a[i].currencyCode === a[j].currencyCode &&
         a[i].sum === a[j].sum &&
-        a[i].merchant.indexOf(a[j].merchant) >= 0 &&
+        a[i].merchant.title.indexOf(a[j].merchant.title) >= 0 &&
         a[i].account_id === a[j].account_id) {
         a.splice(j--, 1)
       }
