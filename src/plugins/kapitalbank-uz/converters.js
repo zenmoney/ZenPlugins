@@ -39,20 +39,30 @@ export function convertWallet (wallet) {
 /**
  * Конвертер карты из формата банка в формат Дзенмани
  *
- * @param card карта в формате банка
+ * @param rawCard карта в формате банка
  * @returns карта в формате Дзенмани
  */
-export function convertCard (card) {
-  return {
-    id: String(card.id),
-    title: card.title,
-    syncID: [String(card.id), card.account, card.pan.slice(-4)],
+export function convertCard (rawCard) {
+  if (rawCard.state !== 'ACTIVE') {
+    return null
+  }
 
-    instrument: card.currency.name,
+  const card = {
+    id: String(rawCard.id),
+    title: rawCard.title,
+    syncID: [String(rawCard.id), rawCard.pan.slice(-4)],
+
+    instrument: rawCard.currency.name,
     type: 'ccard',
 
-    balance: card.balance / 100
+    balance: rawCard.balance / 100
   }
+
+  if (rawCard.account) {
+    card.syncID.push(rawCard.account)
+  }
+
+  return card
 }
 
 /**
@@ -92,7 +102,7 @@ export function convertUzcardCardTransaction (cardId, rawTransaction) {
  * @returns транзакция в формате Дзенмани
  */
 export function convertHumoCardTransaction (cardId, rawTransaction) {
-  const amount = Number(rawTransaction.amount.replace(' ', '').replace(',', '.'))
+  const amount = Number(rawTransaction.amount.replaceAll(' ', '').replace(',', '.'))
 
   const transaction = {
     payee: rawTransaction.merchantName,
@@ -123,6 +133,10 @@ export function convertHumoCardTransaction (cardId, rawTransaction) {
  */
 export function convertVisaCardTransaction (cardId, rawTransaction) {
   const amount = Number(rawTransaction.amount)
+
+  if (amount === 0) {
+    return null
+  }
 
   const transaction = {
     payee: rawTransaction.merchantName,
