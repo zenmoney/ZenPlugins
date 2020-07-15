@@ -273,7 +273,7 @@ export function parseCards (html) {
       .children('td[class="tdAccountDetails"]').children('div').children('span[class="tdAccountOverdraft"]').text().split(' ').pop()
     // console.log(`${accountTable.children('td[class="tdAccountButton"]').children('a[title="Получить отчёт об операциях по счёту"]')}`)
     account.transactionsData.additional = accountTable.children('td[class="tdAccountButton"]').children('a[title="Получить отчёт об операциях по счёту"]').attr('onclick').replace('return myfaces.oam.submitForm(', '').replace(');', '').match(/'(.[^']*)'/ig)
-    account.accountId = account.transactionsData.additional[account.transactionsData.additional.length - 1].replace(/'/g, '')
+    account.accountId = account.transactionsData.additional[account.transactionsData.additional.length - 1].replace(/('|\\')/g, '')
 
     account.transactionsData.action = $('form[id="' + account.transactionsData.additional[0].replace(/'/g, '') + '"]').attr('action') || $('form').attr('action')
     account.transactionsData.holdsData = accountTable.children('td[class="tdAccountButton"]').children('a[title="Получить отчёт по заблокированным операциям"]')
