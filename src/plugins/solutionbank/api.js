@@ -172,7 +172,7 @@ export async function fetchTransactionsMini (sessionToken, accounts, fromDate, t
             }
           ]
         }
-      }, response => response.body)
+      }, response => true)
     }
   }))
 
