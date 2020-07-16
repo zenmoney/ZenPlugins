@@ -41,7 +41,7 @@
     "jest-raw-loader": "1.0.1",
     "jshashes": "1.0.8",
     "ksuid": "1.2.0",
-    "lodash": "4.17.15",
+    "lodash": "4.17.19",
     "mockdate": "2.0.2",
     "moment": "2.24.0",
     "moment-timezone": "0.5.28",
