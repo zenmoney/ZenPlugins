@@ -23,7 +23,7 @@ export function convertAccount (acc) {
     case 'ccard': {
       const cardsArray = acc.cards.filter(card => card.isActive)
       if (cardsArray.length === 0) return null
-      const creditLimit = parseFloat(acc.overdraftBalance)
+      const creditLimit = parseFloat(acc.overdraftBalance.replace(/\s/g, ''))
       const account = {
         id: acc.accountNum || acc.accountId,
         type: 'ccard',
@@ -44,16 +44,19 @@ export function convertAccount (acc) {
       }
       return account
     }
-    case 'account':
+    case 'account': {
+      const creditLimit = parseFloat(acc.overdraftBalance.replace(/\s/g, ''))
       return {
         id: acc.accountNum || acc.accountId,
-        type: 'checking',
+        type: creditLimit === 0 ? 'checking' : 'ccard',
         title: acc.accountName,
         syncID: [acc.accountNum || acc.accountId],
         balance: Number.parseFloat(acc.balance.replace(/\s/g, '')),
         instrument: acc.currency,
+        ...creditLimit !== 0 && { creditLimit },
         raw: acc
       }
+    }
   }
 }
 

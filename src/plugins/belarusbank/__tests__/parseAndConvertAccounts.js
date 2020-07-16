@@ -120,20 +120,22 @@ describe('parse cards and convert cards from raw html', () => {
         },
         {
           id: 'BY32AKBB24270000288782030000',
-          type: 'checking',
+          type: 'ccard',
           title: '10000',
           balance: 0,
           instrument: 'BYN',
+          creditLimit: 10000,
           syncID: [
             'BY32AKBB24270000288782030000'
           ]
         },
         {
           id: '795157480193537',
-          type: 'checking',
+          type: 'ccard',
           title: '8000',
           balance: 0,
           instrument: 'BYN',
+          creditLimit: 8000,
           syncID: [
             '795157480193537'
           ]
