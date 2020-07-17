@@ -27,7 +27,7 @@ export function convertAccount (acc) {
       const account = {
         id: acc.accountNum || acc.accountId,
         type: 'ccard',
-        title: acc.accountName,
+        title: acc.accountName.replace('Счёт №', '').trim() ? acc.accountName : `${cardsArray[0].name} *${cardsArray[0].number.slice(-4)}`,
         syncID: [],
         balance: Number.parseFloat(acc.balance.replace(/\s/g, '')),
         instrument: acc.currency,
@@ -39,7 +39,7 @@ export function convertAccount (acc) {
           account.syncID.push(card.number)
         }
       }
-      if (account.syncID.indexOf(acc.accountNum) < 0) {
+      if (acc.accountNum && account.syncID.indexOf(acc.accountNum) < 0) {
         account.syncID.push(acc.accountNum)
       }
       return account

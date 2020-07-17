@@ -38,12 +38,13 @@ async function fetchUrl (url, options, predicate = () => true, error = (message)
     if ([
       'Вы заблокированы из-за трёхкратного ошибочного ввода', // ошибка приходит в ответе на 1й запрос loginSMS()
       'Введён неправильный код',
-      'Введён неправильный СМС-код'
+      'Введён неправильный СМС-код',
+      'Ваша учетная запись заблокирована'
     ].some(error => err[1].indexOf(error) >= 0)) {
       throw new BankMessageError(err[1])
     }
     // throw new TemporaryError(err[1])
-    console.assert(false, 'error fetchUrl')
+    console.assert(false, 'new error in fetchUrl')
   }
   return response
 }
