@@ -33,7 +33,7 @@ export function sanitize (value, mask) {
 }
 
 export function sanitizeUrl (url, mask) {
-  if (!_.isString(url) || !_.isObject(mask)) {
+  if (!_.isString(url) || !_.isObject(mask) || _.isFunction(mask)) {
     return sanitize(url, mask)
   }
   const queryIndex = url.indexOf('?')
