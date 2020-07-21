@@ -46,6 +46,9 @@ export async function login (prefs) {
   if (res.body.search(/The system could not log you in, please try again/) >= 0) {
     throw new InvalidPreferencesError('Неверный логин или пароль')
   }
+  if (res.body.search(/Password expired/) >= 0) {
+    throw new InvalidPreferencesError('Ваш пароль устарел. Перейдите на rl360.com и обновите его.')
+  }
 
   return true
 }
