@@ -22,6 +22,19 @@ describe('convertTransaction', () => {
         title: 'VK.com',
         type: 'payment-shop'
       },
+      { // 'https://money.yandex.ru/api/operation-history'
+        group_id: 'type_history_non_p2p_deposit',
+        operation_id: '646097163642126012',
+        title: 'Дополнительное списание по операции',
+        amount: 6.71,
+        direction: 'out',
+        datetime: '2020-06-21T23:26:03Z',
+        status: 'success',
+        type: 'payment-shop',
+        spendingCategories: [{ name: 'Deposition', sum: -6.71 }],
+        amount_currency: 'RUB',
+        is_sbp_operation: false
+      },
       {
         pattern_id: 'p2p',
         operation_id: '549866839017090007',
@@ -66,6 +79,24 @@ describe('convertTransaction', () => {
             invoice: null,
             sum: -70,
             fee: 0
+          }
+        ]
+      },
+      {
+        date: new Date('2020-06-21T23:26:03.000Z'),
+        hold: false,
+        comment: 'Дополнительное списание по операции',
+        merchant: null,
+        movements: [
+          {
+            account: { id: 'account' },
+            fee: 0,
+            id: '646097163642126012',
+            invoice: {
+              instrument: 'RUB',
+              sum: -6.71
+            },
+            sum: null
           }
         ]
       },

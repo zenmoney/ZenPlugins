@@ -48,7 +48,9 @@ export function convertTransaction (apiTransaction, account) {
     parseMcc,
     parseYandexMoneyTransfer,
     parsePayee
+    // parseAddForOper
   ].some(parser => parser(apiTransaction, transaction))
+  console.log(transaction)
   return transaction
 }
 
@@ -57,7 +59,7 @@ function parseYandexMoneyTransfer (apiTransaction, transaction) {
     return false
   }
   for (const pattern of [
-    /Перевод на счет (\d+)/i,
+    /Перевод на счет (\d+)/i, // title: 'Перевод на карту 553691******2743' ????
     /Перевод от (\d+)/i
   ]) {
     const match = apiTransaction.title.match(pattern)
@@ -69,9 +71,11 @@ function parseYandexMoneyTransfer (apiTransaction, transaction) {
         mcc: (transaction.merchant && transaction.merchant.mcc) || null,
         location: null
       }
+      console.log('____??????????____')
       return true
     }
   }
+  console.log('____??????????____')
   return false
 }
 
@@ -85,6 +89,7 @@ function parseMcc (apiTransaction, transaction) {
       }
     }
   }
+  console.log('____??????????____')
   return false
 }
 
@@ -112,14 +117,22 @@ function parsePayee (apiTransaction, transaction) {
         mcc: (transaction.merchant && transaction.merchant.mcc) || null,
         location: null
       }
+      console.log('____??????????____')
       return false
     }
+    console.log('____??????????____')
   }
   if (apiTransaction.direction === 'in' || [
     /Пополнение счета (.*)/i
   ].some(pattern => apiTransaction.title.match(pattern))) {
     transaction.comment = apiTransaction.title
-  } else if (transaction.merchant && [6011].includes(transaction.merchant.mcc)) {
+    console.log('____??????????____')
+  } else if (apiTransaction.direction === 'out' && [
+    /Дополнительное (.*)/i
+  ].some(pattern => apiTransaction.title.match(pattern))) {
+    transaction.comment = apiTransaction.title
+    console.log('____??????????____')
+  } else if (transaction.merchant && [6011].includes(transaction.merchant.mcc)) { // Посмотреть сюда включить
     // mcc 6011 - cash withdrawal
     transaction.merchant = null
     transaction.comment = apiTransaction.title
@@ -137,7 +150,8 @@ function parsePayee (apiTransaction, transaction) {
         fee: 0
       }
     )
-  } else {
+    console.log('____??????????____')
+  } else { // Здесь !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     transaction.merchant = {
       country: null,
       city: null,
@@ -145,5 +159,29 @@ function parsePayee (apiTransaction, transaction) {
       mcc: (transaction.merchant && transaction.merchant.mcc) || null,
       location: null
     }
+    console.log('____??????????____')
   }
+  console.log('____??????????____')
 }
+/*
+function parseAddForOper (apiTransaction, transaction, account) {
+  if (apiTransaction.direction === 'out' && apiTransaction.title.match(/Дополнительное (.*)/i)) {
+    // ].some(pattern => apiTransaction.title.match(pattern))) {
+    transaction.merchant = null
+    /*
+    transaction.movements = [
+      {
+        id: apiTransaction.operation_id,
+        account: { id: account.id },
+        invoice: null,
+        sum: apiTransaction.direction === 'in' ? apiTransaction.amount : -apiTransaction.amount,
+        fee: 0
+      }
+    ]
+    transaction.comment = apiTransaction.title
+    console.log('____??????????____')
+  }
+  // return false
+}
+
+ */

@@ -28,6 +28,7 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
     if (transaction) {
       transactions.push(transaction)
     }
+    console.log(transactions) // HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
   }
   ZenMoney.setData('accessToken', accessToken)
   return {
