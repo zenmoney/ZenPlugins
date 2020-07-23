@@ -5,7 +5,10 @@ const toReadableTransactionForAccount = account => transaction => convertTransac
 const toZenmoneyTransactionForAccounts = accountsByIdLookup => transaction => commonToZenmoneyTransaction(transaction, accountsByIdLookup)
 
 describe('convertTransaction', () => {
-  const account = { id: 'account' }
+  const account = {
+    id: 'account',
+    instrument: 'RUB'
+  }
   const accountsByIdLookup = [account].reduce((all, acc) => ({ ...all, [acc.id]: acc }), {})
 
   it('converts outcome', () => {
@@ -22,8 +25,7 @@ describe('convertTransaction', () => {
         title: 'VK.com',
         type: 'payment-shop'
       },
-      { // 'https://money.yandex.ru/api/operation-history'
-        // account: '410015297435123',
+      {
         group_id: 'type_history_non_p2p_deposit',
         operation_id: '646097163642126012',
         title: 'Дополнительное списание по операции',
@@ -33,10 +35,10 @@ describe('convertTransaction', () => {
         status: 'success',
         type: 'payment-shop',
         spendingCategories: [{ name: 'Deposition', sum: -6.71 }],
-        // amount_currency: 'RUB',
+        amount_currency: 'RUB',
         is_sbp_operation: false
       },
-      { // 'https://money.yandex.ru/api/operation-history'
+      {
         group_id: 'type_history_non_p2p_deposit',
         operation_id: '645754267315047012',
         title: 'Дополнительное зачисление по операции',
@@ -46,7 +48,7 @@ describe('convertTransaction', () => {
         status: 'success',
         type: 'deposition',
         spendingCategories: [{ name: 'Deposition', sum: 0.31 }],
-        // amount_currency: 'RUB',
+        amount_currency: 'RUB',
         is_sbp_operation: false
       },
       {

@@ -57,7 +57,7 @@ function parseYandexMoneyTransfer (apiTransaction, transaction) {
     return false
   }
   for (const pattern of [
-    /Перевод на счет (\d+)/i, // title: 'Перевод на карту 553691******2743' ????
+    /Перевод на счет (\d+)/i,
     /Перевод от (\d+)/i
   ]) {
     const match = apiTransaction.title.match(pattern)
