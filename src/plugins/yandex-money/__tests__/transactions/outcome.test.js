@@ -33,7 +33,7 @@ describe('convertTransaction', () => {
         status: 'success',
         type: 'payment-shop',
         spendingCategories: [{ name: 'Deposition', sum: -6.71 }],
-        amount_currency: 'RUB',
+        // amount_currency: 'RUB',
         is_sbp_operation: false
       },
       { // 'https://money.yandex.ru/api/operation-history'
@@ -46,7 +46,7 @@ describe('convertTransaction', () => {
         status: 'success',
         type: 'deposition',
         spendingCategories: [{ name: 'Deposition', sum: 0.31 }],
-        amount_currency: 'RUB',
+        // amount_currency: 'RUB',
         is_sbp_operation: false
       },
       {
@@ -96,7 +96,6 @@ describe('convertTransaction', () => {
           }
         ]
       },
-      /*
       {
         date: new Date('2020-06-21T23:26:03.000Z'),
         hold: false,
@@ -104,18 +103,29 @@ describe('convertTransaction', () => {
         merchant: null,
         movements: [
           {
-            account: { id: 'account' },
-            fee: 0,
             id: '646097163642126012',
-            invoice: {
-              instrument: 'RUB',
-              sum: -6.71
-            },
-            sum: null
+            account: { id: 'account' },
+            invoice: null,
+            sum: -6.71,
+            fee: 0
           }
         ]
       },
-      */
+      {
+        date: new Date('2020-06-18T00:11:07.000Z'),
+        hold: false,
+        comment: 'Дополнительное зачисление по операции',
+        merchant: null,
+        movements: [
+          {
+            id: '645754267315047012',
+            account: { id: 'account' },
+            invoice: null,
+            sum: 0.31,
+            fee: 0
+          }
+        ]
+      },
       {
         date: new Date('2017-06-04T04:47:22Z'),
         hold: false,
@@ -172,6 +182,26 @@ describe('convertTransaction', () => {
         payee: 'VK.com',
         mcc: null,
         comment: null
+      },
+      {
+        id: '646097163642126012',
+        date: new Date('2020-06-21T23:26:03.000Z'),
+        hold: false,
+        income: 0,
+        incomeAccount: 'account',
+        outcome: 6.71,
+        outcomeAccount: 'account',
+        comment: 'Дополнительное списание по операции'
+      },
+      {
+        id: '645754267315047012',
+        date: new Date('2020-06-18T00:11:07.000Z'),
+        hold: false,
+        income: 0.31,
+        incomeAccount: 'account',
+        outcome: 0,
+        outcomeAccount: 'account',
+        comment: 'Дополнительное зачисление по операции'
       },
       {
         id: '549866839017090007',
