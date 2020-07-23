@@ -5,7 +5,10 @@ const toReadableTransactionForAccount = account => transaction => convertTransac
 const toZenmoneyTransactionForAccounts = accountsByIdLookup => transaction => commonToZenmoneyTransaction(transaction, accountsByIdLookup)
 
 describe('convertTransaction', () => {
-  const account = { id: 'account' }
+  const account = {
+    id: 'account',
+    instrument: 'RUB'
+  }
   const accountsByIdLookup = [account].reduce((all, acc) => ({ ...all, [acc.id]: acc }), {})
 
   it('converts outcome', () => {
@@ -47,6 +50,32 @@ describe('convertTransaction', () => {
         type: 'deposition',
         spendingCategories: [{ name: 'Deposition', sum: 0.31 }],
         // amount_currency: 'RUB',
+        is_sbp_operation: false
+      },
+      {
+        group_id: 'type_history_non_p2p_deposit',
+        operation_id: '646097163642126012',
+        title: 'Дополнительное списание по операции',
+        amount: 6.71,
+        direction: 'out',
+        datetime: '2020-06-21T23:26:03Z',
+        status: 'success',
+        type: 'payment-shop',
+        spendingCategories: [{ name: 'Deposition', sum: -6.71 }],
+        amount_currency: 'RUB',
+        is_sbp_operation: false
+      },
+      {
+        group_id: 'type_history_non_p2p_deposit',
+        operation_id: '645754267315047012',
+        title: 'Дополнительное зачисление по операции',
+        amount: 0.31,
+        direction: 'in',
+        datetime: '2020-06-18T00:11:07Z',
+        status: 'success',
+        type: 'deposition',
+        spendingCategories: [{ name: 'Deposition', sum: 0.31 }],
+        amount_currency: 'RUB',
         is_sbp_operation: false
       },
       {
