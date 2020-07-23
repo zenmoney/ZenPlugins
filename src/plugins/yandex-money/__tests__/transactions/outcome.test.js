@@ -23,6 +23,7 @@ describe('convertTransaction', () => {
         type: 'payment-shop'
       },
       { // 'https://money.yandex.ru/api/operation-history'
+        // account: '410015297435123',
         group_id: 'type_history_non_p2p_deposit',
         operation_id: '646097163642126012',
         title: 'Дополнительное списание по операции',
@@ -32,6 +33,19 @@ describe('convertTransaction', () => {
         status: 'success',
         type: 'payment-shop',
         spendingCategories: [{ name: 'Deposition', sum: -6.71 }],
+        amount_currency: 'RUB',
+        is_sbp_operation: false
+      },
+      { // 'https://money.yandex.ru/api/operation-history'
+        group_id: 'type_history_non_p2p_deposit',
+        operation_id: '645754267315047012',
+        title: 'Дополнительное зачисление по операции',
+        amount: 0.31,
+        direction: 'in',
+        datetime: '2020-06-18T00:11:07Z',
+        status: 'success',
+        type: 'deposition',
+        spendingCategories: [{ name: 'Deposition', sum: 0.31 }],
         amount_currency: 'RUB',
         is_sbp_operation: false
       },
@@ -82,6 +96,7 @@ describe('convertTransaction', () => {
           }
         ]
       },
+      /*
       {
         date: new Date('2020-06-21T23:26:03.000Z'),
         hold: false,
@@ -100,6 +115,7 @@ describe('convertTransaction', () => {
           }
         ]
       },
+      */
       {
         date: new Date('2017-06-04T04:47:22Z'),
         hold: false,

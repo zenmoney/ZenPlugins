@@ -103,19 +103,3 @@ export async function fetchTransactions ({ accessToken }, fromDate, toDate) {
   } while (nextRecord)
   return transactions
 }
-/*
-const transTest = { // 'https://money.yandex.ru/api/operation-history'
-  group_id: 'type_history_non_p2p_deposit',
-  operation_id: '646097320196036012',
-  title: 'Дополнительное списание по операции',
-  amount: 3.29,
-  direction: 'out',
-  datetime: '2020-06-21T23:28:40Z',
-  status: 'success',
-  type: 'payment-shop',
-  spendingCategories: [{ name: 'Deposition', sum: -3.29 }],
-  amount_currency: 'RUB',
-  is_sbp_operation: false
-}
-
- */
