@@ -5,7 +5,10 @@ const toReadableTransactionForAccount = account => transaction => convertTransac
 const toZenmoneyTransactionForAccounts = accountsByIdLookup => transaction => commonToZenmoneyTransaction(transaction, accountsByIdLookup)
 
 describe('convertTransaction', () => {
-  const account = { id: 'account' }
+  const account = {
+    id: 'account',
+    instrument: 'RUB'
+  }
   const accountsByIdLookup = [account].reduce((all, acc) => ({ ...all, [acc.id]: acc }), {})
 
   it('converts transfer to Yandex Money wallet', () => {
@@ -20,6 +23,22 @@ describe('convertTransaction', () => {
         status: 'success',
         type: 'outgoing-transfer',
         group_id: 'type_history_p2p_outgoing_all'
+      },
+      {
+        pattern_id: '4601',
+        group_id: 'pattern_4601',
+        operation_id: '645418930452788631',
+        title: 'Перевод на карту 553691******2743',
+        amount: 450.82,
+        direction: 'out',
+        datetime: '2020-06-14T15:02:13Z',
+        status: 'success',
+        type: 'payment-shop',
+        // categories: [ [length]: 0 ],
+        showcase_format: 'json',
+        spendingCategories: [{ name: 'TransferWithdraw', sum: 450.82 }],
+        amount_currency: 'RUB',
+        is_sbp_operation: false
       }
     ]
 
@@ -27,20 +46,55 @@ describe('convertTransaction', () => {
       {
         date: new Date('2017-06-14T10:30:12.000Z'),
         hold: false,
-        comment: null,
-        merchant: {
-          country: null,
-          city: null,
-          title: 'YM 4100148118398',
-          mcc: null,
-          location: null
-        },
+        // comment: null,
+        comment: 'Перевод на счет 4100148118398',
+        merchant: null,
         movements: [
           {
             id: '550751409179120010',
             account: { id: 'account' },
             invoice: null,
             sum: -100,
+            fee: 0
+          },
+          {
+            id: null,
+            account: {
+              type: null,
+              instrument: 'RUB',
+              syncIds: '4100148118398',
+              company: null
+            },
+            invoice: null,
+            sum: 100,
+            fee: 0
+          }
+        ]
+      },
+      {
+        date: new Date('2020-06-14T15:02:13.000Z'),
+        hold: false,
+        comment: 'Перевод на карту 553691******2743',
+        // comment: 'Снятие наличных в банкомате: VB24 D. 15, LIT. G, PR',
+        merchant: null,
+        movements: [
+          {
+            id: '645418930452788631',
+            account: { id: 'account' },
+            invoice: null,
+            sum: -450.82,
+            fee: 0
+          },
+          {
+            id: null,
+            account: {
+              type: null,
+              instrument: 'RUB',
+              syncIds: '2743',
+              company: null
+            },
+            invoice: null,
+            sum: 450.82,
             fee: 0
           }
         ]
@@ -59,7 +113,19 @@ describe('convertTransaction', () => {
         payee: 'YM 4100148118398',
         mcc: null,
         comment: null
+      },
+      {
+        date: new Date('2018-12-27T18:19:39.000Z'),
+        hold: false,
+        income: 10000,
+        incomeAccount: 'cash#RUB',
+        incomeBankID: null,
+        outcome: 10000,
+        outcomeAccount: 'account',
+        outcomeBankID: '599249979205221162',
+        comment: 'Снятие наличных в банкомате: VB24 D. 15, LIT. G, PR'
       }
+
     ]
 
     const toReadableTransaction = toReadableTransactionForAccount(account)
