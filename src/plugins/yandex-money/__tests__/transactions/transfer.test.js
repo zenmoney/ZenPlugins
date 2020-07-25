@@ -46,30 +46,14 @@ describe('convertTransaction', () => {
       {
         date: new Date('2017-06-14T10:30:12.000Z'),
         hold: false,
-        // comment: null,
-        comment: 'Перевод на счет 4100148118398',
-        merchant: null,
-        movements: [
-          {
-            id: '550751409179120010',
-            account: { id: 'account' },
-            invoice: null,
-            sum: -100,
-            fee: 0
-          },
-          {
-            id: null,
-            account: {
-              type: null,
-              instrument: 'RUB',
-              syncIds: '4100148118398',
-              company: null
-            },
-            invoice: null,
-            sum: 100,
-            fee: 0
-          }
-        ]
+        comment: null,
+        merchant: {
+          country: null,
+          city: null,
+          title: 'YM 4100148118398',
+          mcc: null,
+          location: null
+        }
       },
       {
         date: new Date('2020-06-14T15:02:13.000Z'),
@@ -90,7 +74,7 @@ describe('convertTransaction', () => {
             account: {
               type: null,
               instrument: 'RUB',
-              syncIds: '2743',
+              syncIds: ['2743'],
               company: null
             },
             invoice: null,
