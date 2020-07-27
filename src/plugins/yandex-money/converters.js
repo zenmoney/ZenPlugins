@@ -74,6 +74,20 @@ function parseYandexMoneyTransfer (apiTransaction, transaction) {
         mcc: (transaction.merchant && transaction.merchant.mcc) || null,
         location: null
       }
+      transaction.comment = 'Перевод на счет YM ' + match[1]
+      transaction.movements.push(
+        {
+          id: null,
+          account: {
+            type: null,
+            instrument: 'RUB',
+            syncIds: [match[1]],
+            company: null
+          },
+          invoice: null,
+          sum: apiTransaction.amount,
+          fee: 0
+        })
       console.log('____??????????____')
       return true
     }

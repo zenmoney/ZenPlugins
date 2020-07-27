@@ -321,6 +321,5 @@ export function toZenmoneyTransaction (readableTransaction, accountsByIdLookup) 
   } else {
     throw new Error('movements can be either array of [income,outcome] (order does not matter) or single-item array of [income] or [outcome]')
   }
-
   return result
 }

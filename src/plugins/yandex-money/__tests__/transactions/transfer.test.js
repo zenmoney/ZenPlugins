@@ -34,7 +34,6 @@ describe('convertTransaction', () => {
         datetime: '2020-06-14T15:02:13Z',
         status: 'success',
         type: 'payment-shop',
-        // categories: [ [length]: 0 ],
         showcase_format: 'json',
         spendingCategories: [{ name: 'TransferWithdraw', sum: 450.82 }],
         amount_currency: 'RUB',
@@ -46,20 +45,40 @@ describe('convertTransaction', () => {
       {
         date: new Date('2017-06-14T10:30:12.000Z'),
         hold: false,
-        comment: null,
+        comment: 'Перевод на счет YM 4100148118398',
         merchant: {
           country: null,
           city: null,
           title: 'YM 4100148118398',
           mcc: null,
           location: null
-        }
+        },
+        movements: [
+          {
+            id: '550751409179120010',
+            account: { id: 'account' },
+            invoice: null,
+            sum: -100,
+            fee: 0
+          },
+          {
+            id: null,
+            account: {
+              type: null,
+              instrument: 'RUB',
+              syncIds: ['4100148118398'],
+              company: null
+            },
+            invoice: null,
+            sum: 100,
+            fee: 0
+          }
+        ]
       },
       {
         date: new Date('2020-06-14T15:02:13.000Z'),
         hold: false,
         comment: 'Перевод на карту 553691******2743',
-        // comment: 'Снятие наличных в банкомате: VB24 D. 15, LIT. G, PR',
         merchant: null,
         movements: [
           {
@@ -87,27 +106,29 @@ describe('convertTransaction', () => {
 
     const expectedZenmoneyTransactions = [
       {
-        id: '550751409179120010',
+        // id: '550751409179120010',
         date: new Date('2017-06-14T10:30:12Z'),
         hold: false,
-        income: 0,
-        incomeAccount: 'account',
+        income: 100,
+        incomeAccount: 'ccard#RUB#4100148118398',
+        incomeBankID: null,
         outcome: 100,
         outcomeAccount: 'account',
+        outcomeBankID: '550751409179120010',
         payee: 'YM 4100148118398',
         mcc: null,
-        comment: null
+        comment: 'Перевод на счет YM 4100148118398'
       },
       {
-        date: new Date('2018-12-27T18:19:39.000Z'),
+        date: new Date('2020-06-14T15:02:13.000Z'),
         hold: false,
-        income: 10000,
-        incomeAccount: 'cash#RUB',
+        income: 450.82,
+        incomeAccount: 'ccard#RUB#2743',
         incomeBankID: null,
-        outcome: 10000,
+        outcome: 450.82,
         outcomeAccount: 'account',
-        outcomeBankID: '599249979205221162',
-        comment: 'Снятие наличных в банкомате: VB24 D. 15, LIT. G, PR'
+        outcomeBankID: '645418930452788631',
+        comment: 'Перевод на карту 553691******2743'
       }
 
     ]
