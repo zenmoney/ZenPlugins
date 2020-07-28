@@ -1,15 +1,12 @@
-import { toZenmoneyTransaction as commonToZenmoneyTransaction } from '../../../../common/converters'
 import { convertTransaction } from '../../converters'
 
 const toReadableTransactionForAccount = account => transaction => convertTransaction(transaction, account)
-const toZenmoneyTransactionForAccounts = accountsByIdLookup => transaction => commonToZenmoneyTransaction(transaction, accountsByIdLookup)
 
 describe('convertTransaction', () => {
   const account = {
     id: 'account',
     instrument: 'RUB'
   }
-  const accountsByIdLookup = [account].reduce((all, acc) => ({ ...all, [acc.id]: acc }), {})
 
   it('converts outcome', () => {
     const apiTransactions = [
@@ -172,72 +169,9 @@ describe('convertTransaction', () => {
       }
     ]
 
-    const expectedZenmoneyTransactions = [
-      {
-        id: '541029695812341276',
-        date: new Date('2017-02-22T10:01:38Z'),
-        hold: false,
-        income: 0,
-        incomeAccount: 'account',
-        outcome: 70,
-        outcomeAccount: 'account',
-        payee: 'VK.com',
-        mcc: null,
-        comment: null
-      },
-      {
-        id: '646097163642126012',
-        date: new Date('2020-06-21T23:26:03.000Z'),
-        hold: false,
-        income: 0,
-        incomeAccount: 'account',
-        outcome: 6.71,
-        outcomeAccount: 'account',
-        comment: 'Дополнительное списание по операции'
-      },
-      {
-        id: '645754267315047012',
-        date: new Date('2020-06-18T00:11:07.000Z'),
-        hold: false,
-        income: 0.31,
-        incomeAccount: 'account',
-        outcome: 0,
-        outcomeAccount: 'account',
-        comment: 'Дополнительное зачисление по операции'
-      },
-      {
-        id: '549866839017090007',
-        date: new Date('2017-06-04T04:47:22Z'),
-        hold: false,
-        income: 0,
-        incomeAccount: 'account',
-        outcome: 100,
-        outcomeAccount: 'account',
-        payee: 'Скрытый смысл',
-        mcc: null,
-        comment: null
-      },
-      {
-        id: '542541865986110009',
-        date: new Date('2017-03-11T10:04:34Z'),
-        hold: false,
-        income: 0,
-        incomeAccount: 'account',
-        outcome: 100,
-        outcomeAccount: 'account',
-        payee: 'BSP',
-        mcc: null,
-        comment: null
-      }
-    ]
-
     const toReadableTransaction = toReadableTransactionForAccount(account)
     const readableTransactions = apiTransactions.map(toReadableTransaction)
     expect(readableTransactions).toEqual(expectedReadableTransactions)
-
-    const toZenmoneyTransaction = toZenmoneyTransactionForAccounts(accountsByIdLookup)
-    const zenmoneyTransactions = readableTransactions.map(toZenmoneyTransaction)
-    expect(zenmoneyTransactions).toEqual(expectedZenmoneyTransactions)
   })
 
   it('converts outcome with mcc', () => {
@@ -280,28 +214,9 @@ describe('convertTransaction', () => {
       }
     ]
 
-    const expectedZenmoneyTransactions = [
-      {
-        id: '557364654240923932',
-        date: new Date('2017-08-30T11:30:53Z'),
-        hold: false,
-        income: 0,
-        incomeAccount: 'account',
-        outcome: 60,
-        outcomeAccount: 'account',
-        payee: 'PP*2649CODE',
-        mcc: 8999,
-        comment: null
-      }
-    ]
-
     const toReadableTransaction = toReadableTransactionForAccount(account)
     const readableTransactions = apiTransactions.map(toReadableTransaction)
     expect(readableTransactions).toEqual(expectedReadableTransactions)
-
-    const toZenmoneyTransaction = toZenmoneyTransactionForAccounts(accountsByIdLookup)
-    const zenmoneyTransactions = readableTransactions.map(toZenmoneyTransaction)
-    expect(zenmoneyTransactions).toEqual(expectedZenmoneyTransactions)
   })
 
   it.each([

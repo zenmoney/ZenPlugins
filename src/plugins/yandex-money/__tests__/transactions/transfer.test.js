@@ -1,15 +1,12 @@
-import { toZenmoneyTransaction as commonToZenmoneyTransaction } from '../../../../common/converters'
 import { convertTransaction } from '../../converters'
 
 const toReadableTransactionForAccount = account => transaction => convertTransaction(transaction, account)
-const toZenmoneyTransactionForAccounts = accountsByIdLookup => transaction => commonToZenmoneyTransaction(transaction, accountsByIdLookup)
 
 describe('convertTransaction', () => {
   const account = {
     id: 'account',
     instrument: 'RUB'
   }
-  const accountsByIdLookup = [account].reduce((all, acc) => ({ ...all, [acc.id]: acc }), {})
 
   it('converts transfer to Yandex Money wallet', () => {
     const apiTransactions = [
@@ -104,42 +101,9 @@ describe('convertTransaction', () => {
       }
     ]
 
-    const expectedZenmoneyTransactions = [
-      {
-        // id: '550751409179120010',
-        date: new Date('2017-06-14T10:30:12Z'),
-        hold: false,
-        income: 100,
-        incomeAccount: 'ccard#RUB#4100148118398',
-        incomeBankID: null,
-        outcome: 100,
-        outcomeAccount: 'account',
-        outcomeBankID: '550751409179120010',
-        payee: 'YM 4100148118398',
-        mcc: null,
-        comment: null
-      },
-      {
-        date: new Date('2020-06-14T15:02:13.000Z'),
-        hold: false,
-        income: 450.82,
-        incomeAccount: 'ccard#RUB#2743',
-        incomeBankID: null,
-        outcome: 450.82,
-        outcomeAccount: 'account',
-        outcomeBankID: '645418930452788631',
-        comment: 'Перевод на карту 553691******2743'
-      }
-
-    ]
-
     const toReadableTransaction = toReadableTransactionForAccount(account)
     const readableTransactions = apiTransactions.map(toReadableTransaction)
     expect(readableTransactions).toEqual(expectedReadableTransactions)
-
-    const toZenmoneyTransaction = toZenmoneyTransactionForAccounts(accountsByIdLookup)
-    const zenmoneyTransactions = readableTransactions.map(toZenmoneyTransaction)
-    expect(zenmoneyTransactions).toEqual(expectedZenmoneyTransactions)
   })
 
   it('skips in_progress transactions', () => {
