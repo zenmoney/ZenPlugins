@@ -45,7 +45,7 @@ describe('convertTransaction', () => {
       {
         date: new Date('2017-06-14T10:30:12.000Z'),
         hold: false,
-        comment: 'Перевод на счет YM 4100148118398',
+        comment: null,
         merchant: {
           country: null,
           city: null,
@@ -117,7 +117,7 @@ describe('convertTransaction', () => {
         outcomeBankID: '550751409179120010',
         payee: 'YM 4100148118398',
         mcc: null,
-        comment: 'Перевод на счет YM 4100148118398'
+        comment: null
       },
       {
         date: new Date('2020-06-14T15:02:13.000Z'),

@@ -29,7 +29,6 @@ export function convertTransaction (apiTransaction, account) {
     sum: apiTransaction.direction === 'in' ? apiTransaction.amount : -apiTransaction.amount,
     instrument: apiTransaction.amount_currency || account.instrument
   }
-  console.log('____??????????____')
   const transaction = {
     date: new Date(apiTransaction.datetime),
     hold: false,
@@ -44,15 +43,13 @@ export function convertTransaction (apiTransaction, account) {
       }
     ],
     comment: null
-  }
-  console.log('____??????????____');
+  };
   [
     parseMcc,
     parseYandexMoneyTransfer,
     parseTransfer,
     parsePayee
   ].some(parser => parser(apiTransaction, transaction))
-  console.log(transaction)
   return transaction
 }
 
@@ -65,7 +62,6 @@ function parseYandexMoneyTransfer (apiTransaction, transaction) {
     /Перевод от (\d+)/i
   ]) {
     const match = apiTransaction.title.match(pattern)
-    console.log('match3 =' + match)
     if (match) {
       transaction.merchant = {
         country: null,
@@ -74,7 +70,7 @@ function parseYandexMoneyTransfer (apiTransaction, transaction) {
         mcc: (transaction.merchant && transaction.merchant.mcc) || null,
         location: null
       }
-      transaction.comment = 'Перевод на счет YM ' + match[1]
+      transaction.comment = null
       transaction.movements.push(
         {
           id: null,
@@ -88,11 +84,9 @@ function parseYandexMoneyTransfer (apiTransaction, transaction) {
           sum: apiTransaction.amount,
           fee: 0
         })
-      console.log('____??????????____')
       return true
     }
   }
-  console.log('____??????????____')
   return false
 }
 
@@ -101,23 +95,12 @@ function parseTransfer (apiTransaction, transaction) {
     return false
   }
   for (const pattern of [
-    // /Перевод на счет (\d+)/i,
     /Перевод на карту \d+\*+(\d+)/i
     // /Перевод от (\d+)/i
   ]) {
     const match = apiTransaction.title.match(pattern)
-    console.log('match =' + match)
     if (match) {
       transaction.merchant = null
-      /*
-        {
-        country: null,
-        city: null,
-        title: `YM ${match[1]}`,
-        mcc: (transaction.merchant && transaction.merchant.mcc) || null,
-        location: null
-      }
-  */
       transaction.comment = match[0]
       transaction.movements.push(
         {
@@ -132,19 +115,15 @@ function parseTransfer (apiTransaction, transaction) {
           sum: apiTransaction.amount,
           fee: 0
         })
-      console.log('____??????????____')
       return true
     }
   }
-  console.log('____??????????____')
   return false
 }
 
 function parseMcc (apiTransaction, transaction) {
   if (apiTransaction.group_id) {
     const match = apiTransaction.group_id.match(/mcc_(\d{4})/)
-    console.log('match1 =' + match)
-    // console.log('____??????????____')
     if (match) {
       transaction.merchant = {
         ...(transaction.merchant || {}),
@@ -152,7 +131,6 @@ function parseMcc (apiTransaction, transaction) {
       }
     }
   }
-  console.log('____??????????____')
   return false
 }
 
@@ -172,8 +150,6 @@ function parsePayee (apiTransaction, transaction) {
     ]
   for (const pattern of patterns) {
     const match = apiTransaction.title.match(pattern)
-    console.log('match2 =' + match)
-    // console.log('____??????????____')
     if (match) {
       transaction.merchant = {
         country: null,
