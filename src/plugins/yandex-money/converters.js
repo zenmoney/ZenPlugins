@@ -47,6 +47,7 @@ export function convertTransaction (apiTransaction, account) {
   [
     parseMcc,
     parseYandexMoneyTransfer,
+    parseTransfer,
     parsePayee
   ].some(parser => parser(apiTransaction, transaction))
   return transaction
@@ -69,6 +70,51 @@ function parseYandexMoneyTransfer (apiTransaction, transaction) {
         mcc: (transaction.merchant && transaction.merchant.mcc) || null,
         location: null
       }
+      transaction.comment = null
+      transaction.movements.push(
+        {
+          id: null,
+          account: {
+            type: null,
+            instrument: 'RUB',
+            syncIds: [match[1]],
+            company: null
+          },
+          invoice: null,
+          sum: apiTransaction.amount,
+          fee: 0
+        })
+      return true
+    }
+  }
+  return false
+}
+
+function parseTransfer (apiTransaction, transaction) {
+  if (!apiTransaction.title) {
+    return false
+  }
+  for (const pattern of [
+    /Перевод на карту \d+\*+(\d+)/i
+    // /Перевод от (\d+)/i
+  ]) {
+    const match = apiTransaction.title.match(pattern)
+    if (match) {
+      transaction.merchant = null
+      transaction.comment = match[0]
+      transaction.movements.push(
+        {
+          id: null,
+          account: {
+            type: null,
+            instrument: 'RUB',
+            syncIds: [match[1]],
+            company: null
+          },
+          invoice: null,
+          sum: apiTransaction.amount,
+          fee: 0
+        })
       return true
     }
   }
