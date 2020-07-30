@@ -59,7 +59,7 @@ function parseYandexMoneyTransfer (apiTransaction, transaction) {
   }
   for (const pattern of [
     /Перевод на счет (\d+(\d{4}))\b/i,
-    /Перевод от (\d+)/i
+    /Перевод от (\d{4})\b/i
   ]) {
     const match = apiTransaction.title.match(pattern)
     if (match) {
