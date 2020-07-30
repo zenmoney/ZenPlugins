@@ -49,11 +49,11 @@ export function convertTransaction (apiTransaction, account) {
     parseYandexMoneyTransfer,
     parseTransfer,
     parsePayee
-  ].some(parser => parser(apiTransaction, transaction))
+  ].some(parser => parser(apiTransaction, transaction, account, invoice))
   return transaction
 }
 
-function parseYandexMoneyTransfer (apiTransaction, transaction) {
+function parseYandexMoneyTransfer (apiTransaction, transaction, account, invoice) {
   if (!apiTransaction.title) {
     return false
   }
@@ -76,12 +76,12 @@ function parseYandexMoneyTransfer (apiTransaction, transaction) {
           id: null,
           account: {
             type: null,
-            instrument: 'RUB',
+            instrument: invoice.instrument,
             syncIds: [match[1].slice(-4)],
             company: null
           },
           invoice: null,
-          sum: apiTransaction.amount,
+          sum: -invoice.sum,
           fee: 0
         })
       return true
@@ -90,7 +90,7 @@ function parseYandexMoneyTransfer (apiTransaction, transaction) {
   return false
 }
 
-function parseTransfer (apiTransaction, transaction) {
+function parseTransfer (apiTransaction, transaction, account, invoice) {
   if (!apiTransaction.title) {
     return false
   }
@@ -107,12 +107,12 @@ function parseTransfer (apiTransaction, transaction) {
           id: null,
           account: {
             type: null,
-            instrument: 'RUB',
+            instrument: invoice.instrument,
             syncIds: [match[1].slice(-4)],
             company: null
           },
           invoice: null,
-          sum: apiTransaction.amount,
+          sum: -invoice.sum,
           fee: 0
         })
       return true
@@ -134,7 +134,7 @@ function parseMcc (apiTransaction, transaction) {
   return false
 }
 
-function parsePayee (apiTransaction, transaction) {
+function parsePayee (apiTransaction, transaction, account, invoice) {
   if (!apiTransaction.title) {
     return false
   }
@@ -178,12 +178,12 @@ function parsePayee (apiTransaction, transaction) {
         id: null,
         account: {
           type: 'cash',
-          instrument: 'RUB',
+          instrument: invoice.instrument,
           syncIds: null,
           company: null
         },
         invoice: null,
-        sum: apiTransaction.amount,
+        sum: -invoice.sum,
         fee: 0
       }
     )
