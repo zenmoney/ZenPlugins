@@ -1,15 +1,9 @@
-import { toZenmoneyTransaction as commonToZenmoneyTransaction } from '../../../../common/converters'
 import { convertTransaction } from '../../converters'
 
-const toReadableTransactionForAccount = account => transaction => convertTransaction(transaction, account)
-const toZenmoneyTransactionForAccounts = accountsByIdLookup => transaction => commonToZenmoneyTransaction(transaction, accountsByIdLookup)
-
 describe('convertTransaction', () => {
-  const account = { id: 'account' }
-  const accountsByIdLookup = [account].reduce((all, acc) => ({ ...all, [acc.id]: acc }), {})
-
-  it('converts transfer to Yandex Money wallet', () => {
-    const apiTransactions = [
+  const account = { id: 'account', instrument: 'RUB' }
+  it.each([
+    [
       {
         pattern_id: 'p2p',
         operation_id: '550751409179120010',
@@ -20,10 +14,7 @@ describe('convertTransaction', () => {
         status: 'success',
         type: 'outgoing-transfer',
         group_id: 'type_history_p2p_outgoing_all'
-      }
-    ]
-
-    const expectedReadableTransactions = [
+      },
       {
         date: new Date('2017-06-14T10:30:12.000Z'),
         hold: false,
@@ -42,33 +33,73 @@ describe('convertTransaction', () => {
             invoice: null,
             sum: -100,
             fee: 0
+          },
+          {
+            id: null,
+            account: {
+              type: null,
+              instrument: 'RUB',
+              syncIds: ['8398'],
+              company: null
+            },
+            invoice: null,
+            sum: 100,
+            fee: 0
           }
         ]
       }
     ]
+  ])('converts transfer to Yandex Money wallet', (apiTransaction, transaction) => {
+    expect(convertTransaction(apiTransaction, account)).toEqual(transaction)
+  })
 
-    const expectedZenmoneyTransactions = [
+  it.each([
+    [
       {
-        id: '550751409179120010',
-        date: new Date('2017-06-14T10:30:12Z'),
+        pattern_id: '4601',
+        group_id: 'pattern_4601',
+        operation_id: '645418930452788631',
+        title: 'Перевод на карту 553691******2743',
+        amount: 450.82,
+        direction: 'out',
+        datetime: '2020-06-14T15:02:13Z',
+        status: 'success',
+        type: 'payment-shop',
+        showcase_format: 'json',
+        spendingCategories: [{ name: 'TransferWithdraw', sum: 450.82 }],
+        amount_currency: 'RUB',
+        is_sbp_operation: false
+      },
+      {
+        date: new Date('2020-06-14T15:02:13.000Z'),
         hold: false,
-        income: 0,
-        incomeAccount: 'account',
-        outcome: 100,
-        outcomeAccount: 'account',
-        payee: 'YM 4100148118398',
-        mcc: null,
-        comment: null
+        comment: 'Перевод на карту 553691******2743',
+        merchant: null,
+        movements: [
+          {
+            id: '645418930452788631',
+            account: { id: 'account' },
+            invoice: null,
+            sum: -450.82,
+            fee: 0
+          },
+          {
+            id: null,
+            account: {
+              type: null,
+              instrument: 'RUB',
+              syncIds: ['2743'],
+              company: null
+            },
+            invoice: null,
+            sum: 450.82,
+            fee: 0
+          }
+        ]
       }
     ]
-
-    const toReadableTransaction = toReadableTransactionForAccount(account)
-    const readableTransactions = apiTransactions.map(toReadableTransaction)
-    expect(readableTransactions).toEqual(expectedReadableTransactions)
-
-    const toZenmoneyTransaction = toZenmoneyTransactionForAccounts(accountsByIdLookup)
-    const zenmoneyTransactions = readableTransactions.map(toZenmoneyTransaction)
-    expect(zenmoneyTransactions).toEqual(expectedZenmoneyTransactions)
+  ])('converts transfer to card', (apiTransaction, transaction) => {
+    expect(convertTransaction(apiTransaction, account)).toEqual(transaction)
   })
 
   it('skips in_progress transactions', () => {

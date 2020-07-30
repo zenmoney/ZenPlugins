@@ -47,6 +47,7 @@ export function convertTransaction (apiTransaction, account) {
   [
     parseMcc,
     parseYandexMoneyTransfer,
+    parseTransfer,
     parsePayee
   ].some(parser => parser(apiTransaction, transaction))
   return transaction
@@ -57,8 +58,8 @@ function parseYandexMoneyTransfer (apiTransaction, transaction) {
     return false
   }
   for (const pattern of [
-    /Перевод на счет (\d+)/i,
-    /Перевод от (\d+)/i
+    /Перевод на счет ([\d*]+)/i,
+    /Перевод от ([\d*]+)/i
   ]) {
     const match = apiTransaction.title.match(pattern)
     if (match) {
@@ -69,6 +70,51 @@ function parseYandexMoneyTransfer (apiTransaction, transaction) {
         mcc: (transaction.merchant && transaction.merchant.mcc) || null,
         location: null
       }
+      transaction.comment = null
+      transaction.movements.push(
+        {
+          id: null,
+          account: {
+            type: null,
+            instrument: 'RUB',
+            syncIds: [match[1].slice(-4)],
+            company: null
+          },
+          invoice: null,
+          sum: apiTransaction.amount,
+          fee: 0
+        })
+      return true
+    }
+  }
+  return false
+}
+
+function parseTransfer (apiTransaction, transaction) {
+  if (!apiTransaction.title) {
+    return false
+  }
+  for (const pattern of [
+    /Перевод на карту ([\d*]+)/i
+    // /Перевод от (\d+)/i
+  ]) {
+    const match = apiTransaction.title.match(pattern)
+    if (match) {
+      transaction.merchant = null
+      transaction.comment = match[0]
+      transaction.movements.push(
+        {
+          id: null,
+          account: {
+            type: null,
+            instrument: 'RUB',
+            syncIds: [match[1].slice(-4)],
+            company: null
+          },
+          invoice: null,
+          sum: apiTransaction.amount,
+          fee: 0
+        })
       return true
     }
   }
@@ -117,6 +163,10 @@ function parsePayee (apiTransaction, transaction) {
   }
   if (apiTransaction.direction === 'in' || [
     /Пополнение счета (.*)/i
+  ].some(pattern => apiTransaction.title.match(pattern))) {
+    transaction.comment = apiTransaction.title
+  } else if (apiTransaction.direction === 'out' && [
+    /Дополнительное (.*)/i
   ].some(pattern => apiTransaction.title.match(pattern))) {
     transaction.comment = apiTransaction.title
   } else if (transaction.merchant && [6011].includes(transaction.merchant.mcc)) {
