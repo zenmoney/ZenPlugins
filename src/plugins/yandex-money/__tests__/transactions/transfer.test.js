@@ -39,7 +39,7 @@ describe('convertTransaction', () => {
             account: {
               type: null,
               instrument: 'RUB',
-              syncIds: ['4100148118398'],
+              syncIds: ['8398'],
               company: null
             },
             invoice: null,

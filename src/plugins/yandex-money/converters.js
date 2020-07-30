@@ -58,7 +58,7 @@ function parseYandexMoneyTransfer (apiTransaction, transaction) {
     return false
   }
   for (const pattern of [
-    /Перевод на счет (\d+)/i,
+    /Перевод на счет (\d+(\d{4}))\b/i,
     /Перевод от (\d+)/i
   ]) {
     const match = apiTransaction.title.match(pattern)
@@ -77,7 +77,7 @@ function parseYandexMoneyTransfer (apiTransaction, transaction) {
           account: {
             type: null,
             instrument: 'RUB',
-            syncIds: [match[1]],
+            syncIds: [match[2]],
             company: null
           },
           invoice: null,
@@ -95,7 +95,7 @@ function parseTransfer (apiTransaction, transaction) {
     return false
   }
   for (const pattern of [
-    /Перевод на карту \d+\*+(\d+)/i
+    /Перевод на карту \d+\*+(\d{4})\b/i
     // /Перевод от (\d+)/i
   ]) {
     const match = apiTransaction.title.match(pattern)
