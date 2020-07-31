@@ -12,5 +12,6 @@ const getTargetUrl = (pathAndSearch, targetOrigin) => {
 module.exports = {
   PROXY_TARGET_HEADER,
   TRANSFERABLE_HEADER_PREFIX: 'zp-',
+  MANUAL_REDIRECT_HEADER: 'zp-manual-redirect',
   getTargetUrl
 }

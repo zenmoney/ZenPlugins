@@ -3,7 +3,7 @@
 import _ from 'lodash'
 import { parseHeaderParameters } from './common/network'
 import { generateUUID } from './common/utils'
-import { getTargetUrl, PROXY_TARGET_HEADER, TRANSFERABLE_HEADER_PREFIX } from './shared'
+import { getTargetUrl, MANUAL_REDIRECT_HEADER, PROXY_TARGET_HEADER, TRANSFERABLE_HEADER_PREFIX } from './shared'
 
 let lastRequest = null
 let lastRequestUrl = null
@@ -17,11 +17,13 @@ export const setDefaultEncoding = value => { defaultEncoding = value }
 export const getLastError = () => lastError
 
 export const getLastStatusString = () => lastRequest
-  ? 'HTTP/1.1 ' + lastRequest.status + ' ' + lastRequest.statusText
+  ? 'HTTP/1.1 ' + (lastRequest.getResponseHeader(MANUAL_REDIRECT_HEADER) || (lastRequest.status + ' ' + lastRequest.statusText))
   : null
 
 export const getLastStatusCode = () => lastRequest
-  ? lastRequest.status
+  ? lastRequest.getResponseHeader(MANUAL_REDIRECT_HEADER)
+    ? parseInt(lastRequest.getResponseHeader(MANUAL_REDIRECT_HEADER).split(/\s/)[0])
+    : lastRequest.status
   : 0
 
 export const getLastResponseHeader = (name) => lastRequest
@@ -36,8 +38,12 @@ export const getLastResponseHeaders = function () {
   const headers = []
   for (let i = 0; i < strokes.length; i++) {
     const idx = strokes[i].indexOf(':')
+    const name = strokes[i].substring(0, idx).trim()
+    if ([MANUAL_REDIRECT_HEADER].indexOf(name.toLowerCase()) >= 0) {
+      continue
+    }
     const header = [
-      strokes[i].substring(0, idx).replace(TRANSFERABLE_HEADER_PREFIX, '').trim(),
+      name.replace(TRANSFERABLE_HEADER_PREFIX, '').trim(),
       strokes[i].substring(idx + 2)
     ]
     if (header[0].length > 0) {
@@ -170,7 +176,7 @@ export const processHeadersAndBody = ({ headers, body }) => {
   return { headers: resultHeaders, body }
 }
 
-export const fetchRemoteSync = ({ method, url, headers, body, binaryResponse }) => {
+export const fetchRemoteSync = ({ method, url, headers, body, binaryResponse, manualRedirect }) => {
   const req = new XMLHttpRequest()
   req.withCredentials = true
   if (binaryResponse) {
@@ -183,6 +189,9 @@ export const fetchRemoteSync = ({ method, url, headers, body, binaryResponse }) 
 
   const { headers: processedHeaders, body: processedBody } = processHeadersAndBody({ headers, body })
   req.setRequestHeader(PROXY_TARGET_HEADER, origin)
+  if (manualRedirect) {
+    req.setRequestHeader(MANUAL_REDIRECT_HEADER, 'true')
+  }
   for (const header of processedHeaders) {
     const { key, value } = header
     req.setRequestHeader(TRANSFERABLE_HEADER_PREFIX + key, value)

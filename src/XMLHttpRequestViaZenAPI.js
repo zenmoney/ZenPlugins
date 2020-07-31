@@ -52,6 +52,9 @@ XMLHttpRequestViaZenAPI.prototype.send = function (body) {
     if (this.responseType === 'arraybuffer' && ZenMoney.features && ZenMoney.features.binaryResponseBody) {
       options = { binaryResponse: true }
     }
+    if ((this.redirect || 'follow') !== 'follow') {
+      options = { ...options, manualRedirect: true }
+    }
     const responseBody = !method || method.toUpperCase() === 'GET'
       ? ZenMoney.requestGet(url, headers, options)
       : ZenMoney.request(method, url, body, headers, options)

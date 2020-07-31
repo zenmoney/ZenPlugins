@@ -3,7 +3,7 @@ const fs = require('fs')
 const path = require('path')
 const httpProxy = require('http-proxy')
 const _ = require('lodash')
-const { getTargetUrl, TRANSFERABLE_HEADER_PREFIX, PROXY_TARGET_HEADER } = require('../src/shared')
+const { getTargetUrl, TRANSFERABLE_HEADER_PREFIX, PROXY_TARGET_HEADER, MANUAL_REDIRECT_HEADER } = require('../src/shared')
 const { readPluginManifest, readPluginPreferencesSchema } = require('./utils')
 const stripBOM = require('strip-bom')
 const bodyParser = require('body-parser')
@@ -201,7 +201,11 @@ module.exports = ({ allowedHost, host, https }) => {
           proxyRes.headers['set-cookie'] = proxyRes.headers['set-cookie'].map(makeCookieAccessibleToClientSide)
         }
         const location = proxyRes.headers.location
-        if (location && /^https?:\/\//i.test(location)) {
+        if (req._zpManualRedirect && [301, 302, 303, 307, 308].indexOf(proxyRes.statusCode) >= 0) {
+          proxyRes.headers[MANUAL_REDIRECT_HEADER] = `${proxyRes.statusCode} ${proxyRes.statusMessage}`
+          proxyRes.statusCode = 200
+          proxyRes.statusMessage = 'OK'
+        } else if (location && /^https?:\/\//i.test(location)) {
           const { origin, pathname, search } = new URL(location)
           proxyRes.headers.location = pathname + search +
             ((search === '') ? '?' : '&') + PROXY_TARGET_HEADER + '=' + origin
@@ -335,17 +339,17 @@ module.exports = ({ allowedHost, host, https }) => {
         if (req.rawHeaders) {
           const headers = {}
           const isCookieSetExplicitly = Boolean(req.headers[TRANSFERABLE_HEADER_PREFIX + 'cookie'])
+          if (req.headers[MANUAL_REDIRECT_HEADER]) {
+            req._zpManualRedirect = true
+          }
           for (let i = 0; i < req.rawHeaders.length; i += 2) {
             let header = req.rawHeaders[i]
-            const key = header.toLowerCase()
-            if (key.trim() === 'cookie' || key.trim() === 'content-length') {
-              if (isCookieSetExplicitly) {
-                continue
-              }
+            const key = header.toLowerCase().trim()
+            if (key === 'content-length' || (key === 'cookie' && !isCookieSetExplicitly)) {
+              // forward header value as it is
+            } else if ([PROXY_TARGET_HEADER, MANUAL_REDIRECT_HEADER].indexOf(key) >= 0 || !key.startsWith(TRANSFERABLE_HEADER_PREFIX)) {
+              continue
             } else {
-              if (key === PROXY_TARGET_HEADER || !key.startsWith(TRANSFERABLE_HEADER_PREFIX)) {
-                continue
-              }
               header = header.slice(TRANSFERABLE_HEADER_PREFIX.length)
             }
             const value = req.rawHeaders[i + 1]
