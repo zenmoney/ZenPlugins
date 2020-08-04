@@ -13,24 +13,15 @@ describe('convertAccount', () => {
       balance: 252208,
       currency: { name: 'RUB', scale: 2 },
       absId: '2519691'
-      /*
-      account: '41001141885312',
-      balance: 2522.08,
-      currency: '643',
-      account_type: 'personal',
-      identified: true,
-      account_status: 'identified',
-      balance_details: { total: 2522.08, available: 2522.08 }
-      */
     })).toEqual({
       id: '145769',
       type: 'checking',
       title: 'Счёт RUB',
       instrument: 'RUB',
       syncID: [
-        '5312',
         '145769',
-        '1001'
+        '20206643099031231001',
+        '2519691'
       ],
       balance: 2522.08
     })
@@ -43,24 +34,15 @@ describe('convertAccount', () => {
       balance: 45957,
       currency: { name: 'UZS', scale: 2 },
       absId: '3291536'
-      /*
-      account: '41001141885312',
-      balance: 769.02,
-      currency: '643',
-      account_type: 'personal',
-      identified: true,
-      account_status: 'identified',
-      balance_details: { total: 769.02, available: 769.02, hold: 3500 }
-      */
     })).toEqual({
       id: '145770',
       type: 'checking',
       title: 'Счёт UZS',
       instrument: 'UZS',
       syncID: [
-        '5312',
         '145770',
-        '1001'
+        '20206000099031231001',
+        '3291536'
       ],
       balance: 459.57
     })
@@ -76,24 +58,15 @@ describe('convertWallet', () => {
       balance: 252208,
       currency: { name: 'USD', scale: 2 },
       walletId: 'USD-99031231-0001'
-      /*
-      account: '41001141885312',
-      balance: 2522.08,
-      currency: '643',
-      account_type: 'personal',
-      identified: true,
-      account_status: 'identified',
-      balance_details: { total: 2522.08, available: 2522.08 }
-      */
     })).toEqual({
       id: '84492',
       type: 'checking',
       title: 'Кошелёк USD',
       instrument: 'USD',
       syncID: [
-        '5312',
         '84492',
-        '1001'
+        '22616840199031231001',
+        'USD-99031231-0001'
       ],
       balance: 2522.08
     })
@@ -106,24 +79,15 @@ describe('convertWallet', () => {
       balance: 426902,
       currency: { name: 'UZS', scale: 2 },
       walletId: 'UZS-99031231-0001'
-      /*
-      account: '41001141885312',
-      balance: 769.02,
-      currency: '643',
-      account_type: 'personal',
-      identified: true,
-      account_status: 'identified',
-      balance_details: { total: 769.02, available: 769.02, hold: 3500 }
-      */
     })).toEqual({
       id: '84493',
       type: 'checking',
       title: 'Кошелёк UZS',
       instrument: 'UZS',
       syncID: [
-        '5312',
         '84493',
-        '1001'
+        '22616000499031231001',
+        'UZS-99031231-0001'
       ],
       balance: 4269.02
     })
@@ -141,16 +105,6 @@ describe('convertAccount', () => {
       currency: { name: 'USD', scale: 2 },
       type: 'VISA',
       balance: 1500
-      /*
-      account: '41001141885312',
-      balance: 2522.08,
-      currency: '643',
-      account_type: 'personal',
-      identified: true,
-      account_status: 'identified',
-      balance_details: { total: 2522.08, available: 2522.08 }
-
-       */
     })).toEqual({
       id: '245395',
       type: 'ccard',
@@ -159,7 +113,7 @@ describe('convertAccount', () => {
       syncID: [
         '245395',
         '1434',
-        '1901'
+        '22618840799031231901'
       ],
       balance: 15.00
     })
@@ -173,20 +127,10 @@ describe('convertAccount', () => {
       currency: { name: 'UZS', scale: 2 },
       type: 'UZCARD',
       balance: 330513221
-      /*
-      account: '41001141885312',
-      balance: 769.02,
-      currency: '643',
-      account_type: 'personal',
-      identified: true,
-      account_status: 'identified',
-      balance_details: { total: 769.02, available: 769.02, hold: 3500 }
-
-       */
     })).toEqual({
       id: '245394',
       type: 'ccard',
-      title: 'UZCARD', // ??
+      title: undefined, // 'UZCARD', // Нужно ли добавить 'UZCARD' вместо undefined ???
       instrument: 'UZS',
       syncID: [
         '245394',
