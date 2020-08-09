@@ -91,13 +91,13 @@ export function convertTransaction (json, accounts) {
     }
   } else if (json.view.direction === 'credit') {
     transaction.income = json.view.amounts.amount
-    transaction.comment = json.view.mainRequisite || json.view.descriptions.operationDescription
+    transaction.comment = json.view.descriptions.operationDescription || json.view.mainRequisite
     transaction.opIncome = json.view.amounts.amount
     transaction.opIncomeInstrument = json.view.amounts.currency
   } else if (json.view.direction === 'internal') {
     transaction.income = json.view.amounts.amount
     transaction.outcome = json.view.amounts.amount
-    transaction.comment = json.view.mainRequisite
+    transaction.comment = json.view.descriptions.operationDescription || json.view.mainRequisite
     if (json.info.operationType === 'account_transaction') {
       transaction.outcomeAccount = json.details.payeeAccount
     } else if (json.info.operationType === 'payment') {

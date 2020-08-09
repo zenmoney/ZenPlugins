@@ -192,7 +192,7 @@ describe('convertDeposit', () => {
       payoffStep: 0,
       endDateOffset: 270,
       endDateOffsetInterval: 'day',
-      syncID: ['3031']
+      syncID: ['0042']
     })
   })
 })
@@ -407,7 +407,7 @@ describe('convertTransaction', () => {
       incomeAccount: '40817810900087654321',
       outcome: 1000,
       outcomeAccount: '40817810700012345678',
-      comment: 'На "Счет Mastercard Unembossed"'
+      comment: 'Между счетами'
     })
   })
 
@@ -609,7 +609,7 @@ describe('convertTransaction', () => {
       incomeAccount: '40817810700012345678',
       outcome: 10000,
       outcomeAccount: '42305810330000000042',
-      comment: 'На "Исполнение желаний + (срочный вклад)"'
+      comment: 'Вклады: открытие вклада Исполнение желаний        +'
     })
   })
 })
