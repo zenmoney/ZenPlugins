@@ -1,43 +1,100 @@
-/*
-import { convertTransaction } from '../../converters'
+import {
+  convertUzcardCardTransaction
+  // convertHumoCardTransaction,
+  // convertVisaCardTransaction,
+  // convertWalletTransaction,
+  // convertAccountTransaction
+} from '../../converters'
 
 describe('convertTransaction', () => {
   it.each([
     [
       {
-        amount: 70,
-        categories: [],
-        datetime: '2017-02-22T10:01:38Z',
-        direction: 'out',
-        group_id: 'pattern_1721',
-        operation_id: '541029695812341276',
-        pattern_id: '1721',
-        status: 'success',
-        title: 'VK.com',
-        type: 'payment-shop'
+        hpan: '860049***2185',
+        utime: 1595668623000,
+        udate: 1595668623000,
+        terminal: '92900678',
+        resp: '-1',
+        city: 'Uzbekiston',
+        reqamt: '160 000,00',
+        merchant: '90510000205',
+        merchantName: 'CHZAKB DAVR BANK',
+        reversal: false,
+        street: 'Navoiy   Zarkaynar Blok A',
+        credit: false,
+        transType: '683',
+        utrnno: 9053825023,
+        actamt: 16000000
       },
       {
-        date: new Date('2017-02-22T10:01:38Z'),
+        date: new Date('2020-07-25T09:17:03.000Z'),
         hold: false,
         comment: null,
         merchant: {
           country: null,
-          city: null,
-          title: 'VK.com',
-          mcc: null,
-          location: null
+          city: 'Uzbekiston',
+          title: 'CHZAKB DAVR BANK',
+          // mcc: null,
+          location: 'Navoiy   Zarkaynar Blok A'
         },
         movements: [
           {
-            id: '541029695812341276',
-            account: { id: 'account' },
+            id: '9053825023',
+            // account: { id: 'account' },
             invoice: null,
-            sum: -70,
+            sum: -160000.00,
             fee: 0
           }
         ]
       }
     ],
+    [
+      {
+        hpan: '860049***2185',
+        utime: 1594792387000,
+        udate: 1594792387000,
+        terminal: '91100024',
+        resp: '-1',
+        city: '-',
+        reqamt: '2 000 000,00',
+        merchant: '90490007772',
+        merchantName: 'YASHNABADSKIY FILIAL OAKB',
+        reversal: false,
+        street: 'Toshkent shahri, Yashnobod tuma',
+        credit: true,
+        transType: '760',
+        utrnno: 8991874667,
+        actamt: 200000000
+      },
+      {
+        date: new Date('2020-07-15T05:53:07.000Z'),
+        hold: false,
+        comment: null,
+        merchant: {
+          country: null,
+          city: '-',
+          title: 'YASHNABADSKIY FILIAL OAKB',
+          // mcc: null,
+          location: 'Toshkent shahri, Yashnobod tuma'
+        },
+        movements: [
+          {
+            id: '8991874667',
+            // account: { id: 'account' },
+            invoice: null,
+            sum: 2000000.00,
+            fee: 0
+          }
+        ]
+      }
+    ]
+  ])('converts outcome', (rawTransaction, transaction) => {
+    const cardId = { id: 'cardId', instrument: 'UZS' }
+    expect(convertUzcardCardTransaction(cardId, rawTransaction)).toEqual(transaction)
+  })
+})
+
+/*
     [
       {
         group_id: 'type_history_non_p2p_deposit',

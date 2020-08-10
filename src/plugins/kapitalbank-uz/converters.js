@@ -64,6 +64,44 @@ export function convertCard (rawCard) {
 
   return card
 }
+/*
+export function convertTransaction (apiTransaction, account) {
+  if (apiTransaction.status !== 'success') { // ??
+    return null
+  }
+  if (apiTransaction.amount === 0) { // ??
+    return null
+  }
+
+  const invoice = {
+    sum: rawCard.credit === true ? rawCard.actamt / 100 : -rawCard.actamt / 100,
+    instrument: rawCard.amount_currency || account.instrument
+  }
+  const transaction = {
+    date: new Date(apiTransaction.datetime),
+    hold: false,
+    merchant: null,
+    movements: [
+      {
+        id: apiTransaction.operation_id,
+        account: { id: account.id },
+        invoice: invoice.instrument === account.instrument ? null : invoice,
+        sum: invoice.instrument === account.instrument ? invoice.sum : null,
+        fee: 0
+      }
+    ],
+    comment: null
+  };
+  [
+    parseMcc,
+    parseYandexMoneyTransfer,
+    parseTransfer,
+    parsePayee
+  ].some(parser => parser(apiTransaction, transaction, account, invoice))
+  return transaction
+}
+
+ */
 
 /**
  * Конвертер транзакции по карте платежной системы UzCard из формата банка в формат Дзенмани
@@ -73,6 +111,36 @@ export function convertCard (rawCard) {
  * @returns транзакция в формате Дзенмани
  */
 export function convertUzcardCardTransaction (cardId, rawTransaction) {
+  const invoice = {
+    sum: rawTransaction.credit === true ? rawTransaction.actamt / 100 : -rawTransaction.actamt / 100,
+    instrument: 'UZS'
+  }
+  const transaction = {
+    date: new Date(rawTransaction.utime),
+    hold: false,
+    merchant: {
+      country: null,
+      city: rawTransaction.city,
+      title: rawTransaction.merchantName,
+      // mcc: (transaction.merchant && transaction.merchant.mcc) || null,
+      location: rawTransaction.street
+    },
+    movements: [
+      {
+        id: String(rawTransaction.utrnno),
+        // account: { id: account.id },
+        invoice: invoice.instrument === cardId.instrument ? null : invoice,
+        sum: invoice.instrument === cardId.instrument ? invoice.sum : null,
+        fee: 0
+      }
+    ],
+    comment: null
+  }
+
+  return transaction
+}
+
+/*
   const transaction = {
     id: String(rawTransaction.utrnno),
     payee: rawTransaction.merchantName,
@@ -90,9 +158,7 @@ export function convertUzcardCardTransaction (cardId, rawTransaction) {
     transaction.incomeAccount = cardId
     transaction.income = 0
   }
-
-  return transaction
-}
+*/
 
 /**
  * Конвертер транзакции по карте платежной системы Humo из формата банка в формат Дзенмани
