@@ -259,7 +259,43 @@ export function convertWalletTransaction (walletId, rawTransaction) {
  * @returns транзакция в формате Дзенмани
  */
 export function convertAccountTransaction (accountId, rawTransaction) {
+  const invoice = {
+    sum: rawTransaction.amount / 100,
+    instrument: rawTransaction.currency.name
+  }
   const transaction = {
+    date: new Date(rawTransaction.date),
+    hold: false,
+    merchant: null,
+    movements: [
+      {
+        id: rawTransaction.docId,
+        // account: { id: account.id },
+        invoice: invoice.instrument === accountId.instrument ? null : invoice,
+        sum: invoice.instrument === accountId.instrument ? invoice.sum : null,
+        fee: 0 // ???
+      },
+      {
+        id: null,
+        account: {
+          type: null,
+          instrument: invoice.instrument,
+          syncIds: [rawTransaction.docId.slice(-4)], // ???
+          company: null
+        },
+        invoice: null,
+        sum: -invoice.sum,
+        fee: 0
+      }
+    ],
+    comment: rawTransaction.details
+  }
+
+  return transaction
+}
+
+/*
+const transaction = {
     id: rawTransaction.docId,
     date: rawTransaction.date
   }
@@ -278,3 +314,4 @@ export function convertAccountTransaction (accountId, rawTransaction) {
 
   return transaction
 }
+ */
