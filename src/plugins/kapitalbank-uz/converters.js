@@ -128,7 +128,7 @@ export function convertUzcardCardTransaction (cardId, rawTransaction) {
     movements: [
       {
         id: String(rawTransaction.utrnno),
-        // account: { id: account.id },
+        account: { id: cardId.id },
         invoice: invoice.instrument === cardId.instrument ? null : invoice,
         sum: invoice.instrument === cardId.instrument ? invoice.sum : null,
         fee: 0
@@ -270,7 +270,7 @@ export function convertAccountTransaction (accountId, rawTransaction) {
     movements: [
       {
         id: rawTransaction.docId,
-        // account: { id: account.id },
+        account: { id: accountId.id },
         invoice: invoice.instrument === accountId.instrument ? null : invoice,
         sum: invoice.instrument === accountId.instrument ? invoice.sum : null,
         fee: 0 // ???

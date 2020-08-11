@@ -40,7 +40,7 @@ describe('convertTransaction', () => {
         movements: [
           {
             id: '9053825023',
-            // account: { id: 'account' },
+            account: { id: 'cardId' },
             invoice: null,
             sum: -160000.00,
             fee: 0
@@ -80,7 +80,7 @@ describe('convertTransaction', () => {
         movements: [
           {
             id: '8991874667',
-            // account: { id: 'account' },
+            account: { id: 'cardId' },
             invoice: null,
             sum: 2000000.00,
             fee: 0
@@ -118,7 +118,7 @@ describe('convertTransaction', () => {
         movements: [
           {
             id: '41828390',
-            // account: { id: 'account' },
+            account: { id: 'accountId' },
             invoice: null,
             sum: 33500.00,
             fee: 0
@@ -162,7 +162,7 @@ describe('convertTransaction', () => {
         movements: [
           {
             id: '41829073',
-            // account: { id: 'account' },
+            account: { id: 'accountId' },
             invoice: null,
             sum: -33500.00,
             fee: 0
@@ -212,7 +212,7 @@ describe('convertTransaction', () => {
         movements: [
           {
             id: '41827588',
-            // account: { id: 'account' },
+            account: { id: 'accountId' },
             invoice: null,
             sum: 4300000.00,
             fee: 0
@@ -256,7 +256,7 @@ describe('convertTransaction', () => {
         movements: [
           {
             id: '17431653',
-            // account: { id: 'account' },
+            account: { id: 'accountId' },
             invoice: null,
             sum: -24540.43,
             fee: 0
