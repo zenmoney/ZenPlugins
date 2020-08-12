@@ -238,7 +238,7 @@ export function convertVisaCardTransaction (cardId, rawTransaction) { // Не п
 
   const invoice = {
     sum: amount,
-    instrument: 'UZS'
+    instrument: rawTransaction.currency.name
   }
 
   const transaction = {
@@ -246,21 +246,21 @@ export function convertVisaCardTransaction (cardId, rawTransaction) { // Не п
     hold: false,
     merchant: {
       country: null,
-      city: rawTransaction.city,
-      title: rawTransaction.merchantName,
+      // city: rawTransaction.city,
+      title: rawTransaction.merchantName
       // mcc: (transaction.merchant && transaction.merchant.mcc) || null,
-      location: rawTransaction.street
+      // location: rawTransaction.street
     },
     movements: [
       {
-        id: cardId,
+        id: rawTransaction.back === true ? rawTransaction.transCode : rawTransaction.approvalCode,
         account: { id: cardId.id },
         invoice: invoice.instrument === cardId.instrument ? null : invoice,
         sum: invoice.instrument === cardId.instrument ? invoice.sum : null,
         fee: 0
       }
     ],
-    comment: null
+    comment: rawTransaction.transType
   }
 
   return transaction

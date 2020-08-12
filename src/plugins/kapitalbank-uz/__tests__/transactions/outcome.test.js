@@ -1,7 +1,7 @@
 import {
   convertUzcardCardTransaction,
   // convertHumoCardTransaction,
-  // convertVisaCardTransaction,
+  convertVisaCardTransaction,
   // convertWalletTransaction,
   convertAccountTransaction
 } from '../../converters'
@@ -88,9 +88,91 @@ describe('convertTransaction', () => {
         ]
       }
     ]
-  ])('converts outcome', (rawTransaction, transaction) => {
+  ])('converts outcome UZS', (rawTransaction, transaction) => {
     const cardId = { id: 'cardId', instrument: 'UZS' }
     expect(convertUzcardCardTransaction(cardId, rawTransaction)).toEqual(transaction)
+  })
+
+  it.each([
+    [
+      {
+        transDate: 1593930969000,
+        amount: '-19.99',
+        merchantName: 'DRI*Adobe Systems,orderfind.co IE',
+        transType: 'Товары и услуги',
+        fee: '0.00',
+        currency: { name: 'USD', scale: 2 },
+        approvalCode: '833389',
+        back: false,
+        transCode: '000000',
+        reversed: false,
+        transAmount: '-19.99',
+        transCurrency: 'USD',
+        conversionRate: '1'
+      },
+      {
+        date: new Date('2020-07-05T06:36:09.000Z'),
+        hold: false,
+        comment: 'Товары и услуги',
+        merchant: {
+          country: null,
+          // city: undefined,
+          title: 'DRI*Adobe Systems,orderfind.co IE'
+          // mcc: null,
+          // location: undefined
+        },
+        movements: [
+          {
+            id: '833389',
+            account: { id: 'cardId' },
+            invoice: null,
+            sum: -19.99,
+            fee: 0
+          }
+        ]
+      }
+    ],
+    [
+      {
+        transDate: 1593696095000,
+        amount: '5.00',
+        merchantName: 'АКБ "Капиталбанк"',
+        transType: 'Пополнение карты',
+        fee: '0.00',
+        currency: { name: 'USD', scale: 2 },
+        approvalCode: '000000',
+        back: true,
+        transCode: '110',
+        reversed: false,
+        transAmount: '5.00',
+        transCurrency: 'USD',
+        conversionRate: '1'
+      },
+      {
+        date: new Date('2020-07-02T13:21:35.000Z'),
+        hold: false,
+        comment: 'Пополнение карты',
+        merchant: {
+          country: null,
+          // city: '-',
+          title: 'АКБ "Капиталбанк"'
+          // mcc: null,
+          // location: 'Toshkent shahri, Yashnobod tuma'
+        },
+        movements: [
+          {
+            id: '110',
+            account: { id: 'cardId' },
+            invoice: null,
+            sum: 5.00,
+            fee: 0
+          }
+        ]
+      }
+    ]
+  ])('converts outcome VISA', (rawTransaction, transaction) => {
+    const cardId = { id: 'cardId', instrument: 'USD' }
+    expect(convertVisaCardTransaction(cardId, rawTransaction)).toEqual(transaction)
   })
 
   it.each([
