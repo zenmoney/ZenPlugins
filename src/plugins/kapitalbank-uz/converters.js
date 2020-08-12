@@ -8,7 +8,7 @@ export function convertAccount (account) {
   return {
     id: String(account.id),
     title: 'Счёт ' + account.currency.name,
-    syncID: [String(account.id), account.account, account.absId],
+    syncID: [account.account],
 
     instrument: account.currency.name,
     type: 'checking',
@@ -27,7 +27,7 @@ export function convertWallet (wallet) {
   return {
     id: String(wallet.id),
     title: 'Кошелёк ' + wallet.currency.name,
-    syncID: [String(wallet.id), wallet.account, wallet.walletId],
+    syncID: [wallet.account],
 
     instrument: wallet.currency.name,
     type: 'checking',
@@ -50,7 +50,7 @@ export function convertCard (rawCard) {
   const card = {
     id: String(rawCard.id),
     title: rawCard.title,
-    syncID: [String(rawCard.id), rawCard.pan.slice(-4)],
+    syncID: [rawCard.pan],
 
     instrument: rawCard.currency.name,
     type: 'ccard',

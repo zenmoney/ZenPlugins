@@ -19,9 +19,7 @@ describe('convertAccount', () => {
       title: 'Счёт RUB',
       instrument: 'RUB',
       syncID: [
-        '145769',
-        '20206643099031231001',
-        '2519691'
+        '20206643099031231001'
       ],
       balance: 2522.08
     })
@@ -40,9 +38,7 @@ describe('convertAccount', () => {
       title: 'Счёт UZS',
       instrument: 'UZS',
       syncID: [
-        '145770',
-        '20206000099031231001',
-        '3291536'
+        '20206000099031231001'
       ],
       balance: 459.57
     })
@@ -64,9 +60,7 @@ describe('convertWallet', () => {
       title: 'Кошелёк USD',
       instrument: 'USD',
       syncID: [
-        '84492',
-        '22616840199031231001',
-        'USD-99031231-0001'
+        '22616840199031231001'
       ],
       balance: 2522.08
     })
@@ -85,9 +79,7 @@ describe('convertWallet', () => {
       title: 'Кошелёк UZS',
       instrument: 'UZS',
       syncID: [
-        '84493',
-        '22616000499031231001',
-        'UZS-99031231-0001'
+        '22616000499031231001'
       ],
       balance: 4269.02
     })
@@ -111,8 +103,7 @@ describe('convertAccount', () => {
       title: 'VISA Electron(Tr)',
       instrument: 'USD',
       syncID: [
-        '245395',
-        '1434',
+        '427833******1434',
         '22618840799031231901'
       ],
       balance: 15.00
@@ -133,8 +124,7 @@ describe('convertAccount', () => {
       title: undefined, // 'UZCARD', // Нужно ли добавить 'UZCARD' вместо undefined ???
       instrument: 'UZS',
       syncID: [
-        '245394',
-        '2185',
+        '860049******2185',
         '22618000499031231002'
       ],
       balance: 3305132.21
