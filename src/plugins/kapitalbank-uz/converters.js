@@ -167,10 +167,41 @@ export function convertUzcardCardTransaction (cardId, rawTransaction) {
  * @param rawTransaction транзакция в формате банка
  * @returns транзакция в формате Дзенмани
  */
-export function convertHumoCardTransaction (cardId, rawTransaction) {
+export function convertHumoCardTransaction (cardId, rawTransaction) { // Не проверенно тестами
   const amount = Number(rawTransaction.amount.replace(/\s/g, '').replace(',', '.'))
 
+  const invoice = {
+    sum: amount,
+    instrument: 'UZS'
+  }
+
   const transaction = {
+    date: new Date(rawTransaction.transDate),
+    hold: false,
+    merchant: {
+      country: null,
+      city: rawTransaction.city,
+      title: rawTransaction.merchantName,
+      // mcc: (transaction.merchant && transaction.merchant.mcc) || null,
+      location: rawTransaction.street
+    },
+    movements: [
+      {
+        id: cardId,
+        account: { id: cardId.id },
+        invoice: invoice.instrument === cardId.instrument ? null : invoice,
+        sum: invoice.instrument === cardId.instrument ? invoice.sum : null,
+        fee: 0
+      }
+    ],
+    comment: null
+  }
+
+  return transaction
+}
+
+/*
+const transaction = {
     payee: rawTransaction.merchantName,
     date: rawTransaction.transDate
   }
@@ -189,6 +220,7 @@ export function convertHumoCardTransaction (cardId, rawTransaction) {
 
   return transaction
 }
+ */
 
 /**
  * Конвертер транзакции по карте платежной системы Visa из формата банка в формат Дзенмани
@@ -197,14 +229,45 @@ export function convertHumoCardTransaction (cardId, rawTransaction) {
  * @param rawTransaction транзакция в формате банка
  * @returns транзакция в формате Дзенмани
  */
-export function convertVisaCardTransaction (cardId, rawTransaction) {
+export function convertVisaCardTransaction (cardId, rawTransaction) { // Не проверенно тестами
   const amount = Number(rawTransaction.amount)
 
   if (amount === 0) {
     return null
   }
 
+  const invoice = {
+    sum: amount,
+    instrument: 'UZS'
+  }
+
   const transaction = {
+    date: new Date(rawTransaction.transDate),
+    hold: false,
+    merchant: {
+      country: null,
+      city: rawTransaction.city,
+      title: rawTransaction.merchantName,
+      // mcc: (transaction.merchant && transaction.merchant.mcc) || null,
+      location: rawTransaction.street
+    },
+    movements: [
+      {
+        id: cardId,
+        account: { id: cardId.id },
+        invoice: invoice.instrument === cardId.instrument ? null : invoice,
+        sum: invoice.instrument === cardId.instrument ? invoice.sum : null,
+        fee: 0
+      }
+    ],
+    comment: null
+  }
+
+  return transaction
+}
+
+/*
+const transaction = {
     payee: rawTransaction.merchantName,
     date: rawTransaction.transDate
   }
@@ -223,6 +286,7 @@ export function convertVisaCardTransaction (cardId, rawTransaction) {
 
   return transaction
 }
+ */
 
 /**
  * Конвертер транзакции по кошельку из формата банка в формат Дзенмани
@@ -231,7 +295,37 @@ export function convertVisaCardTransaction (cardId, rawTransaction) {
  * @param rawTransaction транзакция в формате банка
  * @returns транзакция в формате Дзенмани
  */
-export function convertWalletTransaction (walletId, rawTransaction) {
+export function convertWalletTransaction (walletId, rawTransaction) { // Не проверенно тестами
+  const invoice = {
+    sum: rawTransaction.amount / 100,
+    instrument: 'UZS'
+  }
+  const transaction = {
+    date: new Date(rawTransaction.date),
+    hold: false,
+    merchant: {
+      country: null,
+      city: rawTransaction.city,
+      title: rawTransaction.merchantName,
+      // mcc: (transaction.merchant && transaction.merchant.mcc) || null,
+      location: rawTransaction.street
+    },
+    movements: [
+      {
+        id: walletId,
+        account: { id: walletId.id },
+        invoice: invoice.instrument === walletId.instrument ? null : invoice,
+        sum: invoice.instrument === walletId.instrument ? invoice.sum : null,
+        fee: 0
+      }
+    ],
+    comment: null
+  }
+
+  return transaction
+}
+
+/*
   const transaction = {
     date: rawTransaction.date
   }
@@ -250,6 +344,8 @@ export function convertWalletTransaction (walletId, rawTransaction) {
 
   return transaction
 }
+
+ */
 
 /**
  * Конвертер транзакции по счету из формата банка в формат Дзенмани
