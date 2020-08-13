@@ -171,12 +171,12 @@ export function convertUzcardCardTransaction (cardId, rawTransaction) {
  * @param rawTransaction транзакция в формате банка
  * @returns транзакция в формате Дзенмани
  */
-export function convertHumoCardTransaction (cardId, rawTransaction) { // Не проверенно тестами
+export function convertHumoCardTransaction (cardId, rawTransaction) {
   const amount = Number(rawTransaction.amount.replace(/\s/g, '').replace(',', '.'))
 
   const invoice = {
     sum: amount,
-    instrument: 'UZS'
+    instrument: rawTransaction.currency.name
   }
 
   const transaction = {
@@ -184,21 +184,21 @@ export function convertHumoCardTransaction (cardId, rawTransaction) { // Не п
     hold: false,
     merchant: {
       country: null,
-      city: rawTransaction.city,
+      city: null,
       title: rawTransaction.merchantName,
-      // mcc: (transaction.merchant && transaction.merchant.mcc) || null,
-      location: rawTransaction.street
+      mcc: null,
+      location: null
     },
     movements: [
       {
-        id: cardId,
+        id: null,
         account: { id: cardId.id },
         invoice: invoice.instrument === cardId.instrument ? null : invoice,
         sum: invoice.instrument === cardId.instrument ? invoice.sum : null,
         fee: 0
       }
     ],
-    comment: null
+    comment: rawTransaction.transType
   }
 
   return transaction
@@ -250,10 +250,10 @@ export function convertVisaCardTransaction (cardId, rawTransaction) { // Не п
     hold: false,
     merchant: {
       country: null,
-      // city: rawTransaction.city,
-      title: rawTransaction.merchantName
-      // mcc: (transaction.merchant && transaction.merchant.mcc) || null,
-      // location: rawTransaction.street
+      city: null,
+      title: rawTransaction.merchantName,
+      mcc: null,
+      location: null
     },
     movements: [
       {

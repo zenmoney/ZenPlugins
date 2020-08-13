@@ -1,6 +1,6 @@
 import {
   convertUzcardCardTransaction,
-  // convertHumoCardTransaction,
+  convertHumoCardTransaction,
   convertVisaCardTransaction,
   // convertWalletTransaction,
   convertAccountTransaction
@@ -116,10 +116,10 @@ describe('convertTransaction', () => {
         comment: 'Товары и услуги',
         merchant: {
           country: null,
-          // city: undefined,
-          title: 'DRI*Adobe Systems,orderfind.co IE'
-          // mcc: null,
-          // location: undefined
+          city: null,
+          title: 'DRI*Adobe Systems,orderfind.co IE',
+          mcc: null,
+          location: null
         },
         movements: [
           {
@@ -154,10 +154,10 @@ describe('convertTransaction', () => {
         comment: 'Пополнение карты',
         merchant: {
           country: null,
-          // city: '-',
-          title: 'АКБ "Капиталбанк"'
-          // mcc: null,
-          // location: 'Toshkent shahri, Yashnobod tuma'
+          city: null,
+          title: 'АКБ "Капиталбанк"',
+          mcc: null,
+          location: null
         },
         movements: [
           {
@@ -173,6 +173,76 @@ describe('convertTransaction', () => {
   ])('converts outcome VISA', (rawTransaction, transaction) => {
     const cardId = { id: 'cardId', instrument: 'USD' }
     expect(convertVisaCardTransaction(cardId, rawTransaction)).toEqual(transaction)
+  })
+
+  it.each([
+    [
+      {
+        transDate: 1594528142000,
+        amount: '-2 167 604,76',
+        merchantName: 'TOSHKENT SH., AT  ALOKABANK',
+        transType: 'Оплата товаров и услуг',
+        fee: '0,00',
+        currency: { name: 'UZS', scale: 2 },
+        reversed: false
+      },
+      {
+        date: new Date('2020-07-12T04:29:02.000Z'),
+        hold: false,
+        comment: 'Оплата товаров и услуг',
+        merchant: {
+          country: null,
+          city: null,
+          title: 'TOSHKENT SH., AT  ALOKABANK',
+          mcc: null,
+          location: null
+        },
+        movements: [
+          {
+            id: null,
+            account: { id: 'cardId' },
+            invoice: null,
+            sum: -2167604.76,
+            fee: 0
+          }
+        ]
+      }
+    ],
+    [
+      {
+        transDate: 1594710160000,
+        amount: '15 000,00',
+        merchantName: 'POPOL P2P ALQ UZCARD 2 HUMO',
+        transType: 'Входящий перевод',
+        fee: '0,00',
+        currency: { name: 'UZS', scale: 2 },
+        reversed: false
+      },
+      {
+        date: new Date('2020-07-14T07:02:40.000Z'),
+        hold: false,
+        comment: 'Входящий перевод',
+        merchant: {
+          country: null,
+          city: null,
+          title: 'POPOL P2P ALQ UZCARD 2 HUMO',
+          mcc: null,
+          location: null
+        },
+        movements: [
+          {
+            id: null,
+            account: { id: 'cardId' },
+            invoice: null,
+            sum: 15000.00,
+            fee: 0
+          }
+        ]
+      }
+    ]
+  ])('converts outcome HUMO', (rawTransaction, transaction) => {
+    const cardId = { id: 'cardId', instrument: 'UZS' }
+    expect(convertHumoCardTransaction(cardId, rawTransaction)).toEqual(transaction)
   })
 
   it.each([
