@@ -135,6 +135,7 @@ export function convertUzcardCardTransaction (cardId, rawTransaction) {
  */
 export function convertHumoCardTransaction (cardId, rawTransaction) {
   const amount = Number(rawTransaction.amount.replace(/\s/g, '').replace(',', '.'))
+  const fee = Number(rawTransaction.fee.replace(/\s/g, '').replace(',', '.'))
 
   const invoice = {
     sum: amount,
@@ -157,7 +158,7 @@ export function convertHumoCardTransaction (cardId, rawTransaction) {
         account: { id: cardId.id },
         invoice: invoice.instrument === cardId.instrument ? null : invoice,
         sum: invoice.instrument === cardId.instrument ? invoice.sum : null,
-        fee: 0
+        fee: fee
       }
     ],
     comment: rawTransaction.transType
@@ -181,9 +182,8 @@ export function convertHumoCardTransaction (cardId, rawTransaction) {
           },
           invoice: null,
           sum: -invoice.sum,
-          fee: 0
+          fee: fee // Или -fee  ???
         })
-      // return true
     }
   }
 
@@ -221,6 +221,7 @@ const transaction = {
  */
 export function convertVisaCardTransaction (cardId, rawTransaction) {
   const amount = Number(rawTransaction.amount)
+  const fee = Number(rawTransaction.fee)
 
   if (amount === 0) {
     return null
@@ -247,10 +248,32 @@ export function convertVisaCardTransaction (cardId, rawTransaction) {
         account: { id: cardId.id },
         invoice: invoice.instrument === cardId.instrument ? null : invoice,
         sum: invoice.instrument === cardId.instrument ? invoice.sum : null,
-        fee: 0
+        fee: fee
       }
     ],
     comment: rawTransaction.transType
+  }
+
+  for (const pattern of [
+    /Пополнение карты/i,
+    /Получение средств/i
+  ]) {
+    const match = rawTransaction.transType.match(pattern)
+    if (match) {
+      transaction.movements.push(
+        {
+          id: null,
+          account: {
+            type: 'cash',
+            instrument: invoice.instrument,
+            syncIds: [cardId.id.slice(-4)], // Что здесь надо???
+            company: null
+          },
+          invoice: null,
+          sum: -invoice.sum,
+          fee: fee // Или -fee  ???
+        })
+    }
   }
 
   return transaction

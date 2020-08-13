@@ -137,7 +137,7 @@ describe('convertTransaction', () => {
         transDate: 1593696095000,
         amount: '5.00',
         merchantName: 'АКБ "Капиталбанк"',
-        transType: 'Пополнение карты',
+        transType: 'Получение средств (P2P)',
         fee: '0.00',
         currency: { name: 'USD', scale: 2 },
         approvalCode: '000000',
@@ -151,7 +151,7 @@ describe('convertTransaction', () => {
       {
         date: new Date('2020-07-02T13:21:35.000Z'),
         hold: false,
-        comment: 'Пополнение карты',
+        comment: 'Получение средств (P2P)',
         merchant: {
           country: null,
           city: null,
@@ -165,6 +165,18 @@ describe('convertTransaction', () => {
             account: { id: 'cardId' },
             invoice: null,
             sum: 5.00,
+            fee: 0
+          },
+          {
+            id: null,
+            account: {
+              type: 'cash',
+              instrument: 'USD',
+              syncIds: ['rdId'], // ???
+              company: null
+            },
+            invoice: null,
+            sum: -5.00,
             fee: 0
           }
         ]
