@@ -131,3 +131,50 @@ describe('convertAccount', () => {
     })
   })
 })
+
+describe('convertAccount', () => {
+  it('converts account HUMO', () => {
+    expect(convertCard({
+      id: 232733,
+      maskedPan: '986019OBDZDO8587',
+      title: 'Хумо',
+      state: 'ACTIVE',
+      pan: '986019******8587',
+      currency: { name: 'UZS', scale: 2 },
+      type: 'HUMO',
+      balance: 1449400
+    })).toEqual({
+      id: '232733',
+      type: 'ccard',
+      title: 'Хумо',
+      instrument: 'UZS',
+      syncID: [
+        '986019******8587',
+        '986019OBDZDO8587'
+      ],
+      balance: 14494.00
+    })
+  })
+  it('converts account UZCARD', () => {
+    expect(convertCard({
+      id: 232783,
+      maskedPan: '986021CREBIX8092',
+      title: 'Хумo Turkiston',
+      state: 'ACTIVE',
+      pan: '986021******8092',
+      currency: { name: 'UZS', scale: 2 },
+      type: 'HUMO',
+      balance: 2114119051
+    })).toEqual({
+      id: '232783',
+      type: 'ccard',
+      title: 'Хумo Turkiston',
+      instrument: 'UZS',
+      syncID: [
+        '986021******8092',
+        '986021CREBIX8092'
+      ],
+      balance: 21141190.51
+    })
+  })
+})

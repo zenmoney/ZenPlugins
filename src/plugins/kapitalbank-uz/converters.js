@@ -62,6 +62,10 @@ export function convertCard (rawCard) {
     card.syncID.push(rawCard.account)
   }
 
+  if (rawCard.maskedPan) {
+    card.syncID.push(rawCard.maskedPan)
+  }
+
   return card
 }
 /*
