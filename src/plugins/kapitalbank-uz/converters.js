@@ -68,44 +68,6 @@ export function convertCard (rawCard) {
 
   return card
 }
-/*
-export function convertTransaction (apiTransaction, account) {
-  if (apiTransaction.status !== 'success') { // ??
-    return null
-  }
-  if (apiTransaction.amount === 0) { // ??
-    return null
-  }
-
-  const invoice = {
-    sum: rawCard.credit === true ? rawCard.actamt / 100 : -rawCard.actamt / 100,
-    instrument: rawCard.amount_currency || account.instrument
-  }
-  const transaction = {
-    date: new Date(apiTransaction.datetime),
-    hold: false,
-    merchant: null,
-    movements: [
-      {
-        id: apiTransaction.operation_id,
-        account: { id: account.id },
-        invoice: invoice.instrument === account.instrument ? null : invoice,
-        sum: invoice.instrument === account.instrument ? invoice.sum : null,
-        fee: 0
-      }
-    ],
-    comment: null
-  };
-  [
-    parseMcc,
-    parseYandexMoneyTransfer,
-    parseTransfer,
-    parsePayee
-  ].some(parser => parser(apiTransaction, transaction, account, invoice))
-  return transaction
-}
-
- */
 
 /**
  * Конвертер транзакции по карте платежной системы UzCard из формата банка в формат Дзенмани
@@ -126,7 +88,7 @@ export function convertUzcardCardTransaction (cardId, rawTransaction) {
       country: null,
       city: rawTransaction.city,
       title: rawTransaction.merchantName,
-      // mcc: (transaction.merchant && transaction.merchant.mcc) || null,
+      mcc: null,
       location: rawTransaction.street
     },
     movements: [
@@ -201,6 +163,30 @@ export function convertHumoCardTransaction (cardId, rawTransaction) {
     comment: rawTransaction.transType
   }
 
+  for (const pattern of [
+    /Входящий перевод/i,
+    /Возврат средств/i,
+    /Пополнение карты/i
+  ]) {
+    const match = rawTransaction.transType.match(pattern)
+    if (match) {
+      transaction.movements.push(
+        {
+          id: null,
+          account: {
+            type: 'cash',
+            instrument: invoice.instrument,
+            syncIds: [cardId.id.slice(-4)], // Что здесь надо???
+            company: null
+          },
+          invoice: null,
+          sum: -invoice.sum,
+          fee: 0
+        })
+      // return true
+    }
+  }
+
   return transaction
 }
 
@@ -233,7 +219,7 @@ const transaction = {
  * @param rawTransaction транзакция в формате банка
  * @returns транзакция в формате Дзенмани
  */
-export function convertVisaCardTransaction (cardId, rawTransaction) { // Не проверенно тестами
+export function convertVisaCardTransaction (cardId, rawTransaction) {
   const amount = Number(rawTransaction.amount)
 
   if (amount === 0) {
@@ -311,7 +297,7 @@ export function convertWalletTransaction (walletId, rawTransaction) { // Не п
       country: null,
       city: rawTransaction.city,
       title: rawTransaction.merchantName,
-      // mcc: (transaction.merchant && transaction.merchant.mcc) || null,
+      mcc: null,
       location: rawTransaction.street
     },
     movements: [
@@ -366,21 +352,21 @@ export function convertAccountTransaction (accountId, rawTransaction) {
   const transaction = {
     date: new Date(rawTransaction.date),
     hold: false,
-    merchant: null,
+    merchant: null, // Что здесь надо???
     movements: [
       {
         id: rawTransaction.docId,
         account: { id: accountId.id },
         invoice: invoice.instrument === accountId.instrument ? null : invoice,
         sum: invoice.instrument === accountId.instrument ? invoice.sum : null,
-        fee: 0 // ???
+        fee: 0 // Что здесь надо???
       },
       {
         id: null,
         account: {
           type: null,
           instrument: invoice.instrument,
-          syncIds: [rawTransaction.docId.slice(-4)], // ???
+          syncIds: [rawTransaction.docId.slice(-4)], // Что здесь надо???
           company: null
         },
         invoice: null,
