@@ -72,16 +72,23 @@ export function convertLastTransaction (apiTransaction, accounts) {
     return null
   }
 
-  const amountData = rawData[1].split(': ')
-  const currency = amountData[1].slice(-3)
-  const amount = amountData[1].replace(' ' + currency, '')
+  const isChangePinTransaction = rawData[1] === 'Смена PIN' // Транзакция смены pin имеет не стандартный формат
+  const amountData = isChangePinTransaction ? rawData[2].split(' ') : rawData[1].split(': ')
+  const currency = isChangePinTransaction ? amountData[2].slice(-3) : amountData[1].slice(-3)
+  const amount = isChangePinTransaction ? amountData[1] : amountData[1].replace(' ' + currency, '')
+  const date = getDateFromJSON(rawData[isChangePinTransaction ? 3 : 2])
+
   apiTransaction.description = amountData[0]
   apiTransaction.currency = currency
   apiTransaction.type = amountData[0]
   apiTransaction.amount = amount
-  apiTransaction.payeeLastTransaction = rawData[3]
+
+  if (!isChangePinTransaction) {
+    apiTransaction.payeeLastTransaction = rawData[3]
+  }
+
   const transaction = {
-    date: getDateFromJSON(rawData[2]),
+    date: date,
     movements: [getMovement({
       type: amountData[0],
       amount: amount,
