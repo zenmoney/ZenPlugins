@@ -59,6 +59,58 @@ describe('convertTransaction', () => {
           }
         ]
       }
+    ],
+    [
+      {
+        hpan: '860013***0149',
+        utime: 1580539103000,
+        udate: 1580539103000,
+        terminal: '92000056',
+        resp: '-1',
+        city: '',
+        reqamt: '248 506,00',
+        merchant: '901324875',
+        merchantName: 'CLICK P2P  888',
+        reversal: false,
+        street: 'Toshkent shakhar Nukus kuchasi',
+        credit: true,
+        transType: '760',
+        utrnno: 8080582889,
+        actamt: 24850600
+      },
+      {
+        date: new Date('2020-02-01T06:38:23.000Z'),
+        hold: false,
+        comment: null,
+        merchant: {
+          country: null,
+          city: '',
+          title: 'CLICK P2P  888',
+          mcc: null,
+          location: 'Toshkent shakhar Nukus kuchasi'
+        },
+        movements: [
+          {
+            id: '8080582889',
+            account: { id: 'cardId' },
+            invoice: null,
+            sum: 248506.00,
+            fee: 0
+          },
+          {
+            id: null,
+            account: {
+              type: 'cash',
+              instrument: 'UZS',
+              syncIds: null,
+              company: null
+            },
+            invoice: null,
+            sum: -248506.00,
+            fee: 0
+          }
+        ]
+      }
     ]
   ])('converts transfer to card UZS', (rawTransaction, transaction) => {
     const cardId = { id: 'cardId', instrument: 'UZS' }
