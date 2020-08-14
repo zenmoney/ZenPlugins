@@ -103,6 +103,27 @@ export function convertUzcardCardTransaction (cardId, rawTransaction) {
     comment: null
   }
 
+  for (const pattern of [
+    /P2P/i
+  ]) {
+    const match = rawTransaction.merchantName.match(pattern)
+    if (match) {
+      transaction.movements.push(
+        {
+          id: null,
+          account: {
+            type: 'cash',
+            instrument: invoice.instrument,
+            syncIds: null, // Что здесь надо???
+            company: null
+          },
+          invoice: null,
+          sum: -invoice.sum,
+          fee: 0 // Или -fee  ???
+        })
+    }
+  }
+
   return transaction
 }
 
@@ -177,7 +198,7 @@ export function convertHumoCardTransaction (cardId, rawTransaction) {
           account: {
             type: 'cash',
             instrument: invoice.instrument,
-            syncIds: [cardId.id.slice(-4)], // Что здесь надо???
+            syncIds: null, // Что здесь надо???
             company: null
           },
           invoice: null,
@@ -266,7 +287,7 @@ export function convertVisaCardTransaction (cardId, rawTransaction) {
           account: {
             type: 'cash',
             instrument: invoice.instrument,
-            syncIds: [cardId.id.slice(-4)], // Что здесь надо???
+            syncIds: null, // Что здесь надо???
             company: null
           },
           invoice: null,
