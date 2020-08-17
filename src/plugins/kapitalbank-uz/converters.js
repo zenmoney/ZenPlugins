@@ -89,7 +89,7 @@ export function convertUzcardCardTransaction (cardId, rawTransaction) {
       city: rawTransaction.city,
       title: rawTransaction.merchantName,
       mcc: null,
-      location: rawTransaction.street
+      location: null
     },
     movements: [
       {
@@ -101,29 +101,10 @@ export function convertUzcardCardTransaction (cardId, rawTransaction) {
       }
     ],
     comment: null
-  }
-
-  for (const pattern of [
-    /P2P/i
-  ]) {
-    const match = rawTransaction.merchantName.match(pattern)
-    if (match) {
-      transaction.movements.push(
-        {
-          id: null,
-          account: {
-            type: 'cash',
-            instrument: invoice.instrument,
-            syncIds: null, // Что здесь надо???
-            company: null
-          },
-          invoice: null,
-          sum: -invoice.sum,
-          fee: 0 // Или -fee  ???
-        })
-    }
-  }
-
+  };
+  [
+    parseOuterTransfer
+  ].some(parser => parser(rawTransaction, transaction, invoice)) // account
   return transaction
 }
 
@@ -183,31 +164,11 @@ export function convertHumoCardTransaction (cardId, rawTransaction) {
       }
     ],
     comment: rawTransaction.transType
-  }
-
-  for (const pattern of [
-    /Входящий перевод/i,
-    /Возврат средств/i,
-    /Пополнение карты/i
-  ]) {
-    const match = rawTransaction.transType.match(pattern)
-    if (match) {
-      transaction.movements.push(
-        {
-          id: null,
-          account: {
-            type: 'cash',
-            instrument: invoice.instrument,
-            syncIds: null, // Что здесь надо???
-            company: null
-          },
-          invoice: null,
-          sum: -invoice.sum,
-          fee: fee // Или -fee  ???
-        })
-    }
-  }
-
+  };
+  [
+    parseTransfer,
+    parseOuterTransfer
+  ].some(parser => parser(rawTransaction, transaction, invoice, fee)) // account
   return transaction
 }
 
@@ -273,11 +234,47 @@ export function convertVisaCardTransaction (cardId, rawTransaction) {
       }
     ],
     comment: rawTransaction.transType
-  }
+  };
+  [
+    parseTransfer,
+    parseOuterTransfer
+  ].some(parser => parser(rawTransaction, transaction, invoice, fee)) // account
+  return transaction
+}
 
+function parseOuterTransfer (rawTransaction, transaction, invoice, fee) { // account
   for (const pattern of [
-    /Пополнение карты/i,
-    /Получение средств/i
+    /P2P/i,
+    /Входящий перевод/i,
+    /Возврат средств/i
+  ]) {
+    const match = rawTransaction.merchantName.match(pattern) || rawTransaction.transType.match(pattern)
+    if (match) {
+      transaction.movements.push(
+        {
+          id: null,
+          account: {
+            type: 'card',
+            instrument: invoice.instrument,
+            syncIds: null,
+            company: null
+          },
+          invoice: null,
+          sum: -invoice.sum,
+          fee: fee || 0
+        })
+      return true
+    }
+  }
+  return false
+}
+
+function parseTransfer (rawTransaction, transaction, invoice, fee) { // account
+  for (const pattern of [
+    /Пополнение карты/i
+    // /Входящий перевод/i,
+    // /Возврат средств/i
+    // /Получение средств/i
   ]) {
     const match = rawTransaction.transType.match(pattern)
     if (match) {
@@ -287,19 +284,33 @@ export function convertVisaCardTransaction (cardId, rawTransaction) {
           account: {
             type: 'cash',
             instrument: invoice.instrument,
-            syncIds: null, // Что здесь надо???
+            syncIds: null,
             company: null
           },
           invoice: null,
           sum: -invoice.sum,
           fee: fee // Или -fee  ???
         })
+      return true
     }
   }
-
-  return transaction
+  return false
 }
 
+/*
+  function parseMcc (apiTransaction, transaction) {
+    if (apiTransaction.group_id) {
+      const match = apiTransaction.group_id.match(/mcc_(\d{4})/)
+      if (match) {
+        transaction.merchant = {
+          ...(transaction.merchant || {}),
+          mcc: parseInt(match[1], 10)
+        }
+      }
+    }
+    return false
+  }
+*/
 /*
 const transaction = {
     payee: rawTransaction.merchantName,

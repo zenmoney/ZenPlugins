@@ -35,7 +35,7 @@ describe('convertTransaction', () => {
           city: 'Toshkent',
           title: 'P2P ALOQAMOBILE 2 HUMO 0',
           mcc: null,
-          location: 'tinchlik kfi iyk ota 19'
+          location: null
         },
         movements: [
           {
@@ -48,7 +48,7 @@ describe('convertTransaction', () => {
           {
             id: null,
             account: {
-              type: 'cash',
+              type: 'card',
               instrument: 'UZS',
               syncIds: null,
               company: null
@@ -87,7 +87,7 @@ describe('convertTransaction', () => {
           city: '',
           title: 'CLICK P2P  888',
           mcc: null,
-          location: 'Toshkent shakhar Nukus kuchasi'
+          location: null
         },
         movements: [
           {
@@ -100,7 +100,7 @@ describe('convertTransaction', () => {
           {
             id: null,
             account: {
-              type: 'cash',
+              type: 'card',
               instrument: 'UZS',
               syncIds: null,
               company: null
@@ -123,7 +123,7 @@ describe('convertTransaction', () => {
         transDate: 1593696095000,
         amount: '5.00',
         merchantName: 'АКБ "Капиталбанк"',
-        transType: 'Получение средств (P2P)',
+        transType: 'Пополнение карты',
         fee: '0.00',
         currency: { name: 'USD', scale: 2 },
         approvalCode: '000000',
@@ -137,7 +137,7 @@ describe('convertTransaction', () => {
       {
         date: new Date('2020-07-02T13:21:35.000Z'),
         hold: false,
-        comment: 'Получение средств (P2P)',
+        comment: 'Пополнение карты',
         merchant: {
           country: null,
           city: null,
@@ -163,6 +163,56 @@ describe('convertTransaction', () => {
             },
             invoice: null,
             sum: -5.00,
+            fee: 0
+          }
+        ]
+      }
+    ],
+    [
+      {
+        transDate: 1593696106000,
+        amount: '19.99',
+        merchantName: 'АКБ "Капиталбанк"',
+        transType: 'Получение средств (P2P)',
+        fee: '0.00',
+        currency: { name: 'USD', scale: 2 },
+        approvalCode: '000000',
+        back: true,
+        transCode: '11M',
+        reversed: false,
+        transAmount: '19.99',
+        transCurrency: 'USD',
+        conversionRate: '1'
+      },
+      {
+        date: new Date('2020-07-02T13:21:46.000Z'),
+        hold: false,
+        comment: 'Получение средств (P2P)',
+        merchant: {
+          country: null,
+          city: null,
+          title: 'АКБ "Капиталбанк"',
+          mcc: null,
+          location: null
+        },
+        movements: [
+          {
+            id: '11M',
+            account: { id: 'cardId' },
+            invoice: null,
+            sum: 19.99,
+            fee: 0
+          },
+          {
+            id: null,
+            account: {
+              type: 'card',
+              instrument: 'USD',
+              syncIds: null,
+              company: null
+            },
+            invoice: null,
+            sum: -19.99,
             fee: 0
           }
         ]
@@ -206,7 +256,7 @@ describe('convertTransaction', () => {
           {
             id: null,
             account: {
-              type: 'cash',
+              type: 'card',
               instrument: 'UZS',
               syncIds: null,
               company: null

@@ -35,7 +35,7 @@ describe('convertTransaction', () => {
           city: 'Uzbekiston',
           title: 'CHZAKB DAVR BANK',
           mcc: null,
-          location: 'Navoiy   Zarkaynar Blok A'
+          location: null
         },
         movements: [
           {
@@ -75,7 +75,7 @@ describe('convertTransaction', () => {
           city: '-',
           title: 'YASHNABADSKIY FILIAL OAKB',
           mcc: null,
-          location: 'Toshkent shahri, Yashnobod tuma'
+          location: null
         },
         movements: [
           {
