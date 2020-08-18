@@ -1,4 +1,4 @@
-import { fetchProducts, fetchTransactions, login } from './skbbank'
+import { fetchProducts, fetchTransactions, login } from './api'
 import { convertAccount, convertCard, convertDeposit, convertTransaction } from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate }) {

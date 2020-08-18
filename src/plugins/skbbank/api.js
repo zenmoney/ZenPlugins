@@ -1,13 +1,13 @@
 import * as setCookie from 'set-cookie-parser'
 import { fetchJson } from '../../common/network'
-import { BankMessageError, InvalidLoginOrPasswordError, InvalidOtpCodeError, TemporaryUnavailableError } from '../../errors'
 import { retry } from '../../common/retry'
+import { BankMessageError, InvalidLoginOrPasswordError, InvalidOtpCodeError, TemporaryUnavailableError } from '../../errors'
 
 const baseUrl = 'https://ib.skbbank.ru/json/'
 const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36'
 
 function readCookies () {
-  const cookies = ZenMoney.getData('cookies', { })
+  const cookies = ZenMoney.getData('cookies', {})
   let cookiesString = ''
   for (const name in cookies) {
     const value = cookies[name]
@@ -20,7 +20,7 @@ function readCookies () {
 }
 
 function updateCookies (setCookieString) {
-  const cookiesObj = ZenMoney.getData('cookies', { })
+  const cookiesObj = ZenMoney.getData('cookies', {})
   const setCookies = setCookie.parse(setCookie.splitCookiesString(setCookieString))
   for (const cookie of setCookies) {
     cookiesObj[cookie.name] = cookie.value
@@ -39,7 +39,7 @@ async function fetchApiJson (url, options = {}, ignoreClientErrors = false) {
     ...cookies && { Cookie: cookies },
     ...options.headers
   }
-  options.sanitizeRequestLog = { headers: { Cookie: true } }
+  options.sanitizeRequestLog = { headers: { Cookie: true }, body: { login: true, password: true } }
   options.sanitizeResponseLog = { headers: { 'set-cookie': true } }
   const response = await retry({
     getter: () => fetchJson(baseUrl + url, options),

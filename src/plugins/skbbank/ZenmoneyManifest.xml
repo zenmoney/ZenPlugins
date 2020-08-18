@@ -2,15 +2,13 @@
 <provider>
     <id>skbbank</id>
     <company>4486</company>
-    <description>
-        Синхронизация с СКБ Банком. Понадобятся логин и пароль.
-        Сессия живет 20 минут, либо до логина на любом устройстве.
-    </description>
     <version>1.0</version>
     <build>1</build>
     <modular>true</modular>
+    <codeRequired>true</codeRequired>
     <files>
         <js>index.js</js>
         <preferences>preferences.xml</preferences>
     </files>
+    <description>Сессия живет 20 минут, либо до логина на любом устройстве.</description>
 </provider>
