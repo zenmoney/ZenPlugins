@@ -40,7 +40,7 @@ describe('convertTransaction', () => {
         movements: [
           {
             id: '8986298065',
-            account: { id: 'cardId' },
+            account: { id: 'card' },
             invoice: null,
             sum: -15000.00,
             fee: 0
@@ -92,7 +92,7 @@ describe('convertTransaction', () => {
         movements: [
           {
             id: '8080582889',
-            account: { id: 'cardId' },
+            account: { id: 'card' },
             invoice: null,
             sum: 248506.00,
             fee: 0
@@ -113,7 +113,7 @@ describe('convertTransaction', () => {
       }
     ]
   ])('converts transfer to card UZS', (rawTransaction, transaction) => {
-    const cardId = { id: 'cardId', instrument: 'UZS' }
+    const cardId = { id: 'card', instrument: 'UZS' }
     expect(convertUzcardCardTransaction(cardId, rawTransaction)).toEqual(transaction)
   })
 
@@ -142,7 +142,7 @@ describe('convertTransaction', () => {
         movements: [
           {
             id: null,
-            account: { id: 'cardId' },
+            account: { id: 'card' },
             invoice: null,
             sum: 5.00,
             fee: 0
@@ -186,7 +186,7 @@ describe('convertTransaction', () => {
         movements: [
           {
             id: null,
-            account: { id: 'cardId' },
+            account: { id: 'card' },
             invoice: null,
             sum: 19.99,
             fee: 0
@@ -207,7 +207,7 @@ describe('convertTransaction', () => {
       }
     ]
   ])('converts transfer to card VISA', (rawTransaction, transaction) => {
-    const cardId = { id: 'cardId', instrument: 'USD' }
+    const cardId = { id: 'card', instrument: 'USD' }
     expect(convertVisaCardTransaction(cardId, rawTransaction)).toEqual(transaction)
   })
 
@@ -236,7 +236,7 @@ describe('convertTransaction', () => {
         movements: [
           {
             id: null,
-            account: { id: 'cardId' },
+            account: { id: 'card' },
             invoice: null,
             sum: 15000.00,
             fee: 0
@@ -257,7 +257,7 @@ describe('convertTransaction', () => {
       }
     ]
   ])('converts transfer to card HUMO', (rawTransaction, transaction) => {
-    const cardId = { id: 'cardId', instrument: 'UZS' }
+    const cardId = { id: 'card', instrument: 'UZS' }
     expect(convertHumoCardTransaction(cardId, rawTransaction)).toEqual(transaction)
   })
 
@@ -282,11 +282,17 @@ describe('convertTransaction', () => {
         date: new Date('2020-03-12T19:00:00.000Z'),
         hold: false,
         comment: 'Отправка денежного перевода SWIFT от YERMOLAYEVA LYUDMILA ALEKSANDROVNA',
-        merchant: null,
+        merchant: {
+          country: null,
+          city: null,
+          title: 'YERMOLAYEVA LYUDMILA ALEKSANDROVNA',
+          mcc: null,
+          location: null
+        },
         movements: [
           {
             id: '41828390',
-            account: { id: 'accountId' },
+            account: { id: 'account' },
             invoice: null,
             sum: 33500.00,
             fee: 0
@@ -296,7 +302,7 @@ describe('convertTransaction', () => {
             account: {
               type: null,
               instrument: 'RUB',
-              syncIds: ['8390'], // ???
+              syncIds: ['8390'],
               company: null
             },
             invoice: null,
@@ -314,7 +320,7 @@ describe('convertTransaction', () => {
         docId: '41829073',
         docType: '01',
         docNum: '1443165',
-        details: 'Перевод средств согл пл поручен от 13.03.2020 по клиенту YERMOLAYEVA LYUDMILA ALEKSANDROVNA ',
+        details: 'Перевод средств согл пл поручен от 13.03.2020 по клиенту IVAN IVANOVICH IVANOV ',
         corrId: '26026',
         corrName: 'Обязательства по денежным переводам физических лиц. в Рубли',
         corrMfo: '01158',
@@ -325,12 +331,18 @@ describe('convertTransaction', () => {
       {
         date: new Date('2020-03-12T19:00:00.000Z'),
         hold: false,
-        comment: 'Перевод средств согл пл поручен от 13.03.2020 по клиенту YERMOLAYEVA LYUDMILA ALEKSANDROVNA ',
-        merchant: null,
+        comment: 'Перевод средств согл пл поручен от 13.03.2020 по клиенту IVAN IVANOVICH IVANOV ',
+        merchant: {
+          country: null,
+          city: null,
+          title: 'IVAN IVANOVICH IVANOV',
+          mcc: null,
+          location: null
+        },
         movements: [
           {
             id: '41829073',
-            account: { id: 'accountId' },
+            account: { id: 'account' },
             invoice: null,
             sum: -33500.00,
             fee: 0
@@ -340,7 +352,7 @@ describe('convertTransaction', () => {
             account: {
               type: null,
               instrument: 'RUB',
-              syncIds: ['9073'], // ???
+              syncIds: ['9073'],
               company: null
             },
             invoice: null,
@@ -351,7 +363,7 @@ describe('convertTransaction', () => {
       }
     ]
   ])('converts transfer to Account RUB', (rawTransaction, transaction) => {
-    const accountId = { id: 'accountId', instrument: 'RUB' }
+    const accountId = { id: 'account', instrument: 'RUB' }
     expect(convertAccountTransaction(accountId, rawTransaction)).toEqual(transaction)
   })
 
@@ -364,7 +376,7 @@ describe('convertTransaction', () => {
         docId: '41827588',
         docType: '06',
         docNum: '58379567',
-        details: 'Пополнение счета YERMOLAYEVA LYUDMILA ALEKSANDROVNA согл заяв YERMOLAYEVA LYUDMILA ALEKSANDROVNA от 13,03,2020',
+        details: 'Пополнение счета YERMOLAYEVA LYUDMILA ALEKSANDROVNA согл заяв SIDOROV SIDOR SIDOROVICH от 13,03,2020',
         corrId: '',
         corrName: 'СПК Транзитный счет по сред-м списанным с ПК физ.л',
         corrMfo: '01018',
@@ -375,12 +387,18 @@ describe('convertTransaction', () => {
       {
         date: new Date('2020-03-12T19:00:00.000Z'),
         hold: false,
-        comment: 'Пополнение счета YERMOLAYEVA LYUDMILA ALEKSANDROVNA согл заяв YERMOLAYEVA LYUDMILA ALEKSANDROVNA от 13,03,2020',
-        merchant: null,
+        comment: 'Пополнение счета YERMOLAYEVA LYUDMILA ALEKSANDROVNA согл заяв SIDOROV SIDOR SIDOROVICH от 13,03,2020',
+        merchant: {
+          country: null,
+          city: null,
+          title: 'YERMOLAYEVA LYUDMILA ALEKSANDROVNA',
+          mcc: null,
+          location: null
+        },
         movements: [
           {
             id: '41827588',
-            account: { id: 'accountId' },
+            account: { id: 'account' },
             invoice: null,
             sum: 4300000.00,
             fee: 0
@@ -390,7 +408,7 @@ describe('convertTransaction', () => {
             account: {
               type: null,
               instrument: 'UZS',
-              syncIds: ['7588'], // ???
+              syncIds: ['7588'],
               company: null
             },
             invoice: null,
@@ -420,11 +438,17 @@ describe('convertTransaction', () => {
         date: new Date('2019-09-17T19:00:00.000Z'),
         hold: false,
         comment: 'Ком. банка  0,5% от суммы 33500.00 RUB за перевод по SWIFT со счета YERMOLAYEVA LYUDMILA ALEKSANDROVNA за 18.09.2019 г.',
-        merchant: null,
+        merchant: {
+          country: null,
+          city: null,
+          title: 'YERMOLAYEVA LYUDMILA ALEKSANDROVNA',
+          mcc: null,
+          location: null
+        },
         movements: [
           {
             id: '17431653',
-            account: { id: 'accountId' },
+            account: { id: 'account' },
             invoice: null,
             sum: -24540.43,
             fee: 0
@@ -434,7 +458,7 @@ describe('convertTransaction', () => {
             account: {
               type: null,
               instrument: 'UZS',
-              syncIds: ['1653'], // ???
+              syncIds: ['1653'],
               company: null
             },
             invoice: null,
@@ -445,7 +469,7 @@ describe('convertTransaction', () => {
       }
     ]
   ])('converts transfer to Account UZS', (rawTransaction, transaction) => {
-    const accountId = { id: 'accountId', instrument: 'UZS' }
+    const accountId = { id: 'account', instrument: 'UZS' }
     expect(convertAccountTransaction(accountId, rawTransaction)).toEqual(transaction)
   })
 })

@@ -227,7 +227,7 @@ export function convertVisaCardTransaction (cardId, rawTransaction) {
       : null,
     movements: [
       {
-        id: null, // rawTransaction.back === true ? rawTransaction.transCode : rawTransaction.approvalCode,
+        id: null,
         account: { id: cardId.id },
         invoice: invoice.instrument === cardId.instrument ? null : invoice,
         sum: invoice.instrument === cardId.instrument ? invoice.sum : null,
@@ -273,9 +273,6 @@ function parseOuterTransfer (rawTransaction, transaction, invoice, fee) { // acc
 function parseTransfer (rawTransaction, transaction, invoice, fee) { // account
   for (const pattern of [
     /Пополнение карты/i
-    // /Входящий перевод/i,
-    // /Возврат средств/i
-    // /Получение средств/i
   ]) {
     const match = rawTransaction.transType.match(pattern)
     if (match) {
@@ -290,7 +287,7 @@ function parseTransfer (rawTransaction, transaction, invoice, fee) { // account
           },
           invoice: null,
           sum: -invoice.sum,
-          fee: fee // Или -fee  ???
+          fee: fee
         })
       return true
     }
@@ -298,20 +295,6 @@ function parseTransfer (rawTransaction, transaction, invoice, fee) { // account
   return false
 }
 
-/*
-  function parseMcc (apiTransaction, transaction) {
-    if (apiTransaction.group_id) {
-      const match = apiTransaction.group_id.match(/mcc_(\d{4})/)
-      if (match) {
-        transaction.merchant = {
-          ...(transaction.merchant || {}),
-          mcc: parseInt(match[1], 10)
-        }
-      }
-    }
-    return false
-  }
-*/
 /*
 const transaction = {
     payee: rawTransaction.merchantName,
@@ -405,24 +388,25 @@ export function convertAccountTransaction (accountId, rawTransaction) {
     sum: rawTransaction.amount / 100,
     instrument: rawTransaction.currency.name
   }
+
   const transaction = {
     date: new Date(rawTransaction.date),
     hold: false,
-    merchant: null, // Что здесь надо???
+    merchant: null,
     movements: [
       {
         id: rawTransaction.docId,
         account: { id: accountId.id },
         invoice: invoice.instrument === accountId.instrument ? null : invoice,
         sum: invoice.instrument === accountId.instrument ? invoice.sum : null,
-        fee: 0 // Что здесь надо???
+        fee: 0
       },
       {
         id: null,
         account: {
           type: null,
           instrument: invoice.instrument,
-          syncIds: [rawTransaction.docId.slice(-4)], // Что здесь надо???
+          syncIds: [rawTransaction.docId.slice(-4)],
           company: null
         },
         invoice: null,
@@ -431,9 +415,31 @@ export function convertAccountTransaction (accountId, rawTransaction) {
       }
     ],
     comment: rawTransaction.details
-  }
-
+  };
+  [
+    parseTitle
+  ].some(parser => parser(rawTransaction, transaction, invoice)) // account
   return transaction
+}
+
+function parseTitle (rawTransaction, transaction) {
+  for (const pattern of [
+    /(\b[A-Z]+\s[A-Z]+\s[A-Z]+\b)(.*)$/
+    // /Перевод от (\d+)/i
+  ]) {
+    const match = rawTransaction.details.match(pattern)
+    if (match) {
+      transaction.merchant = {
+        country: null,
+        city: null,
+        title: match[1],
+        mcc: null,
+        location: null
+      }
+    }
+    return true
+  }
+  return false
 }
 
 /*

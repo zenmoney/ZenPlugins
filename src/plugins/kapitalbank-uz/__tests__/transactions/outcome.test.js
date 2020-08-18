@@ -40,7 +40,7 @@ describe('convertTransaction', () => {
         movements: [
           {
             id: '9053825023',
-            account: { id: 'cardId' },
+            account: { id: 'card' },
             invoice: null,
             sum: -160000.00,
             fee: 0
@@ -80,7 +80,7 @@ describe('convertTransaction', () => {
         movements: [
           {
             id: '8991874667',
-            account: { id: 'cardId' },
+            account: { id: 'card' },
             invoice: null,
             sum: 2000000.00,
             fee: 0
@@ -89,7 +89,7 @@ describe('convertTransaction', () => {
       }
     ]
   ])('converts outcome UZS', (rawTransaction, transaction) => {
-    const cardId = { id: 'cardId', instrument: 'UZS' }
+    const cardId = { id: 'card', instrument: 'UZS' }
     expect(convertUzcardCardTransaction(cardId, rawTransaction)).toEqual(transaction)
   })
 
@@ -124,7 +124,7 @@ describe('convertTransaction', () => {
         movements: [
           {
             id: null,
-            account: { id: 'cardId' },
+            account: { id: 'card' },
             invoice: null,
             sum: -19.99,
             fee: 0
@@ -133,7 +133,7 @@ describe('convertTransaction', () => {
       }
     ]
   ])('converts outcome VISA', (rawTransaction, transaction) => {
-    const cardId = { id: 'cardId', instrument: 'USD' }
+    const cardId = { id: 'card', instrument: 'USD' }
     expect(convertVisaCardTransaction(cardId, rawTransaction)).toEqual(transaction)
   })
 
@@ -162,7 +162,7 @@ describe('convertTransaction', () => {
         movements: [
           {
             id: null,
-            account: { id: 'cardId' },
+            account: { id: 'card' },
             invoice: null,
             sum: -2167604.76,
             fee: 0
@@ -171,7 +171,7 @@ describe('convertTransaction', () => {
       }
     ]
   ])('converts outcome HUMO', (rawTransaction, transaction) => {
-    const cardId = { id: 'cardId', instrument: 'UZS' }
+    const cardId = { id: 'card', instrument: 'UZS' }
     expect(convertHumoCardTransaction(cardId, rawTransaction)).toEqual(transaction)
   })
 })
