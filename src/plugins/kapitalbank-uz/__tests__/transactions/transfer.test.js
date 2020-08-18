@@ -138,13 +138,7 @@ describe('convertTransaction', () => {
         date: new Date('2020-07-02T13:21:35.000Z'),
         hold: false,
         comment: 'Пополнение карты',
-        merchant: {
-          country: null,
-          city: null,
-          title: null,
-          mcc: null,
-          location: null
-        },
+        merchant: null,
         movements: [
           {
             id: null,
@@ -188,13 +182,7 @@ describe('convertTransaction', () => {
         date: new Date('2020-07-02T13:21:46.000Z'),
         hold: false,
         comment: 'Получение средств (P2P)',
-        merchant: {
-          country: null,
-          city: null,
-          title: null,
-          mcc: null,
-          location: null
-        },
+        merchant: null,
         movements: [
           {
             id: null,

@@ -217,13 +217,14 @@ export function convertVisaCardTransaction (cardId, rawTransaction) {
   const transaction = {
     date: new Date(rawTransaction.transDate),
     hold: false,
-    merchant: {
+    merchant: rawTransaction.back === false ? {
       country: null,
       city: null,
-      title: rawTransaction.back === false ? rawTransaction.merchantName : null,
+      title: rawTransaction.merchantName,
       mcc: null,
       location: null
-    },
+    }
+      : null,
     movements: [
       {
         id: null, // rawTransaction.back === true ? rawTransaction.transCode : rawTransaction.approvalCode,
