@@ -122,7 +122,7 @@ function getMovement (json, account) {
     sum: (json.operationCode && json.operationCode === 3) || (json.operationSign === '-1') ? -json.operationAmount : json.operationAmount,
     fee: 0
   }
-  if (json.operationName.indexOf('Удержано подоходного налога') >= 0) {
+  if (json.operationName && json.operationName.indexOf('Удержано подоходного налога') >= 0) {
     const nameSplit = json.operationName.split(' ')
     movement.fee = Number.parseFloat(nameSplit[nameSplit.length - 1])
   }
@@ -130,7 +130,8 @@ function getMovement (json, account) {
 }
 
 function parseCash (transaction, json) {
-  if (json.operationName.indexOf('наличных') > 0 ||
+  if (json.operationType === 6 ||
+    json.operationName.indexOf('наличных') > 0 ||
     json.operationName.indexOf('Снятие денег со счета') > 0 ||
     json.operationName.indexOf('Пополнение наличными') > 0) {
     // добавим вторую часть перевода
