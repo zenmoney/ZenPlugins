@@ -391,7 +391,7 @@ describe('convertTransaction', () => {
         merchant: {
           country: null,
           city: null,
-          title: 'YERMOLAYEVA LYUDMILA ALEKSANDROVNA',
+          title: 'SIDOROV SIDOR SIDOROVICH',
           mcc: null,
           location: null
         },

@@ -424,7 +424,7 @@ export function convertAccountTransaction (accountId, rawTransaction) {
 
 function parseTitle (rawTransaction, transaction) {
   for (const pattern of [
-    /(\b[A-Z]+\s[A-Z]+\s[A-Z]+\b)(.*)$/
+    /^(.*)(\b[A-Z]+\s[A-Z]+\s[A-Z]+\b)/
     // /Перевод от (\d+)/i
   ]) {
     const match = rawTransaction.details.match(pattern)
@@ -432,7 +432,7 @@ function parseTitle (rawTransaction, transaction) {
       transaction.merchant = {
         country: null,
         city: null,
-        title: match[1],
+        title: match[2],
         mcc: null,
         location: null
       }
