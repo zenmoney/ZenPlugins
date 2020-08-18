@@ -141,13 +141,13 @@ describe('convertTransaction', () => {
         merchant: {
           country: null,
           city: null,
-          title: 'АКБ "Капиталбанк"',
+          title: null,
           mcc: null,
           location: null
         },
         movements: [
           {
-            id: '110',
+            id: null,
             account: { id: 'cardId' },
             invoice: null,
             sum: 5.00,
@@ -191,13 +191,13 @@ describe('convertTransaction', () => {
         merchant: {
           country: null,
           city: null,
-          title: 'АКБ "Капиталбанк"',
+          title: null,
           mcc: null,
           location: null
         },
         movements: [
           {
-            id: '11M',
+            id: null,
             account: { id: 'cardId' },
             invoice: null,
             sum: 19.99,

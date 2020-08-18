@@ -220,13 +220,13 @@ export function convertVisaCardTransaction (cardId, rawTransaction) {
     merchant: {
       country: null,
       city: null,
-      title: rawTransaction.merchantName,
+      title: rawTransaction.back === false ? rawTransaction.merchantName : null,
       mcc: null,
       location: null
     },
     movements: [
       {
-        id: rawTransaction.back === true ? rawTransaction.transCode : rawTransaction.approvalCode,
+        id: null, // rawTransaction.back === true ? rawTransaction.transCode : rawTransaction.approvalCode,
         account: { id: cardId.id },
         invoice: invoice.instrument === cardId.instrument ? null : invoice,
         sum: invoice.instrument === cardId.instrument ? invoice.sum : null,
