@@ -121,7 +121,7 @@ describe('convertAccount', () => {
     })).toEqual({
       id: '245394',
       type: 'ccard',
-      title: undefined, // 'UZCARD', // Нужно ли добавить 'UZCARD' вместо undefined ???
+      title: 'UZCARD *2185', // 'UZCARD', // Нужно ли добавить 'UZCARD' вместо undefined ???
       instrument: 'UZS',
       syncID: [
         '860049******2185',
@@ -155,7 +155,7 @@ describe('convertAccount', () => {
       balance: 14494.00
     })
   })
-  it('converts account UZCARD', () => {
+  it('converts account HUMO', () => {
     expect(convertCard({
       id: 232783,
       maskedPan: '986021CREBIX8092',

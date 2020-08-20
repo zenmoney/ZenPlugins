@@ -84,7 +84,7 @@ describe('convertTransaction', () => {
         comment: null,
         merchant: {
           country: null,
-          city: '',
+          city: null,
           title: 'CLICK P2P  888',
           mcc: null,
           location: null

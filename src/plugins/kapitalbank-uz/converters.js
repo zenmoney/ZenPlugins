@@ -58,6 +58,10 @@ export function convertCard (rawCard) {
     balance: rawCard.balance / 100
   }
 
+  if (!rawCard.title) {
+    card.title = rawCard.type + ' *' + rawCard.pan.slice(-4)
+  }
+
   if (rawCard.account) {
     card.syncID.push(rawCard.account)
   }
@@ -86,7 +90,7 @@ export function convertUzcardCardTransaction (cardId, rawTransaction) {
     hold: false,
     merchant: {
       country: null,
-      city: rawTransaction.city,
+      city: rawTransaction.city = rawTransaction.city.match(/\w+/i) ? rawTransaction.city : null,
       title: rawTransaction.merchantName,
       mcc: null,
       location: null
@@ -104,6 +108,7 @@ export function convertUzcardCardTransaction (cardId, rawTransaction) {
   };
   [
     parseOuterTransfer
+    // parseCity
   ].some(parser => parser(rawTransaction, transaction, invoice)) // account
   return transaction
 }
