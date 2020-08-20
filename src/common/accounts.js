@@ -1,15 +1,6 @@
 import _ from 'lodash'
 import padLeft from 'pad-left'
 
-function getLast4Digits (id, ignoreCurrentSanitizing) {
-  id = id.toString().trim()
-  if (/\d\d\d\d$/.test(id) && (ignoreCurrentSanitizing || !/[^\d*]/.test(id))) {
-    return id.slice(-4)
-  } else {
-    return id
-  }
-}
-
 export function sanitizeSyncId (id) {
   if (id.includes('*') || id.length < 16) {
     return id
@@ -21,7 +12,7 @@ export function sanitizeSyncId (id) {
 }
 
 export function trimSyncId (id) {
-  console.assert(id.length >= 4, 'syncID must be at least 4 characters long, but was: ' + id)
+  console.assert(typeof id === 'string' && id.length >= 4, 'syncID must be at least 4 characters long, but was:', id)
   const match = id.match(/^([^*]*)\*+([^*]+)$/)
   if (!match) {
     return id.slice(-4)
@@ -32,54 +23,6 @@ export function trimSyncId (id) {
   }
   const firstPart = match[1].slice(0, 3 - secondPart.length)
   return firstPart + padLeft(secondPart, 4 - firstPart.length, '*')
-}
-
-/**
- * @deprecated try using stricter ensureSyncIDsAreUniqueButSanitized instead
- */
-export function convertAccountSyncID (accounts, ignoreCurrentSanitizing) {
-  const accountsByLast4Digits = {}
-  for (const account of accounts) {
-    console.assert(Array.isArray(account.syncID), 'account.syncID should be array of strings')
-    for (const id of account.syncID) {
-      console.assert(typeof id === 'number' || typeof id === 'string',
-        'account.syncID should be array of strings')
-      const key = account.instrument + '_' + getLast4Digits(id, ignoreCurrentSanitizing)
-      let group = accountsByLast4Digits[key]
-      if (!group) {
-        accountsByLast4Digits[key] = group = []
-      }
-      group.push(account)
-    }
-  }
-  for (const account of accounts) {
-    const syncID = []
-    for (let id of account.syncID) {
-      const key = account.instrument + '_' + getLast4Digits(id, ignoreCurrentSanitizing)
-      const group = accountsByLast4Digits[key]
-      id = group.length > 1 ? sanitizeSyncId(id) : getLast4Digits(id, ignoreCurrentSanitizing)
-      if (syncID.indexOf(id) < 0) {
-        syncID.push(id)
-      }
-    }
-    account.syncID = syncID
-  }
-  return accounts
-}
-
-/**
- * @deprecated no kittens will die if you inline _.toPairs(accounts).filter(([key, account]) => key === account.id) in plugin
- * (this logic is neither generic, nor it is named correctly - it actually filters stuff)
- */
-export function convertAccountMapToArray (accounts) {
-  const filtered = []
-  for (const id in accounts) {
-    const account = accounts[id]
-    if (account.id.toString() === id) {
-      filtered.push(account)
-    }
-  }
-  return filtered
 }
 
 const assertReplacementsAreUnique = (replacementPairs) => {

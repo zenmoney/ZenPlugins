@@ -1,5 +1,4 @@
 import _ from 'lodash'
-import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
 import { AuthError, fetchAccounts, fetchTransactions, login } from './api'
 import { convertAccount, convertToZenMoneyTransactions, convertTransaction } from './converters'
 
@@ -60,7 +59,7 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
   ZenMoney.setData('auth', auth)
 
   return {
-    accounts: ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId }),
+    accounts,
     transactions: _.sortBy(convertToZenMoneyTransactions(transactionData), transaction => transaction.date)
   }
 }

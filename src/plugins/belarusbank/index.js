@@ -1,5 +1,4 @@
 import flatten from 'lodash/flatten'
-import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
 import { adjustTransactions } from '../../common/transactionGroupHandler'
 import { fetchCards, fetchCardsTransactions, fetchDeposits, fetchURLAccounts, login } from './api'
 import { convertAccount, convertTransaction } from './converters'
@@ -28,7 +27,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   const transactions = flatten(transactionsCard)
 
   return {
-    accounts: ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId }),
+    accounts,
     transactions: adjustTransactions({ transactions })
   }
 }

@@ -5,7 +5,7 @@ import {
   fixDateTimezones,
   fixDateTimezonesForTransactionDtoV2,
   parseStartDateString,
-  provideScrapeDates
+  provideScrapeDates, trimTransactionTransferAccountSyncIds
 } from './adapters'
 
 describe('adaptScrapeToGlobalApi', () => {
@@ -20,13 +20,13 @@ describe('adaptScrapeToGlobalApi', () => {
       }
       const main = adaptScrapeToGlobalApi(async (args) => {
         expect(args).toEqual({ preferences: { key: 'value' } })
-        return ({ accounts: ['account'], transactions: [1, 2] })
+        return ({ accounts: [{ id: 'account', syncIds: [] }], transactions: [1, 2] })
       })
       main()
     })
     return expect(setResultCalled).resolves.toEqual({ success: true }).then(x => {
       expect(global.ZenMoney.addAccount).toHaveBeenCalledTimes(1)
-      expect(global.ZenMoney.addAccount).toHaveBeenCalledWith(['account'])
+      expect(global.ZenMoney.addAccount).toHaveBeenCalledWith([{ id: 'account', syncID: [] }])
       expect(global.ZenMoney.addTransaction).toHaveBeenCalledTimes(1)
       expect(global.ZenMoney.addTransaction).toHaveBeenCalledWith([1, 2])
     })
@@ -314,6 +314,42 @@ describe('fixDateTimezonesForTransactionDtoV2', () => {
       })
     })).toEqual({
       date: new Date('2020-02-03T00:00:00+03:00')
+    })
+  })
+})
+
+describe('trimTransactionTransferAccountSyncIds', () => {
+  it('trims movement account syncIds', () => {
+    expect(trimTransactionTransferAccountSyncIds({
+      movements: [
+        {
+          id: '1',
+          account: {
+            id: 'account'
+          }
+        },
+        {
+          id: '2',
+          account: {
+            syncIds: ['123456']
+          }
+        }
+      ]
+    })).toEqual({
+      movements: [
+        {
+          id: '1',
+          account: {
+            id: 'account'
+          }
+        },
+        {
+          id: '2',
+          account: {
+            syncIds: ['3456']
+          }
+        }
+      ]
     })
   })
 })

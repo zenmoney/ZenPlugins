@@ -1,4 +1,3 @@
-import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
 import { adjustTransactions } from '../../common/transactionGroupHandler'
 import { AuthError, fetchAccounts, fetchTransactions, login } from './api'
 import { convertAccount, convertTransaction } from './converters'
@@ -42,7 +41,7 @@ export async function scrape ({ fromDate }) {
   }))
 
   return {
-    accounts: ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId }),
+    accounts,
     transactions: adjustTransactions({ transactions })
   }
 }

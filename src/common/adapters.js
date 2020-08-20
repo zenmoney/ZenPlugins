@@ -13,6 +13,7 @@ import {
   TemporaryUnavailableError,
   ZPAPIError
 } from '../errors'
+import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId, trimSyncId } from './accounts'
 import { toZenmoneyTransaction } from './converters'
 import { isValidDate } from './dateUtils'
 import { sanitize } from './sanitize'
@@ -156,16 +157,44 @@ export function fixDateTimezonesForTransactionDtoV2 (transaction) {
   return transaction
 }
 
+export function trimTransactionTransferAccountSyncIds (transaction) {
+  if (Array.isArray(transaction.movements) && (
+    Array.isArray(transaction.movements[0]?.account?.syncIds) ||
+    Array.isArray(transaction.movements[1]?.account?.syncIds)
+  )) {
+    return {
+      ...transaction,
+      movements: transaction.movements.map(movement => ({
+        ...movement,
+        account: {
+          ...movement.account,
+          ...Array.isArray(movement.account?.syncIds) && { syncIds: movement.account.syncIds.map(syncId => trimSyncId(syncId)) }
+        }
+      }))
+    }
+  }
+  return transaction
+}
+
 export function patchAccounts (accounts) {
+  console.assert(Array.isArray(accounts), 'accounts must be array')
   if (!ZenMoney.features.investmentAccount && accounts.some(account => account.type === 'investment')) {
     throw new IncompatibleVersionError()
   }
-  return accounts
+  return ensureSyncIDsAreUniqueButSanitized({
+    sanitizeSyncId,
+    accounts: accounts.map((account) => {
+      console.assert(('syncIds' in account) !== ('syncID' in account), 'account must have either syncIds or syncID but not both')
+      return _.mapKeys(account, (_, key) => {
+        return key === 'syncIds' ? 'syncID' : key
+      })
+    })
+  })
 }
 
 export function patchTransactions (transactions, accounts) {
   if (ZenMoney.features.transactionDtoV2) {
-    return transactions.map((x) => x ? fixDateTimezonesForTransactionDtoV2(x) : x)
+    return transactions.map((x) => x ? trimTransactionTransferAccountSyncIds(fixDateTimezonesForTransactionDtoV2(x)) : x)
   }
   const accountsByIdLookup = _.keyBy(accounts, (x) => x.id)
   return castTransactionDatesToTicks(transactions.map((x) =>

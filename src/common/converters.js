@@ -181,7 +181,7 @@ export function toZenmoneyTransaction (readableTransaction, accountsByIdLookup) 
 
   console.assert(merchant === null || _.isPlainObject(merchant), 'merchant must be defined Object:', readableTransaction)
   if (merchant !== null) {
-    const { city, country, title, fullTitle, location, mcc, ...merchantRest } = merchant
+    const { city, country, title, fullTitle, location, mcc, category, ...merchantRest } = merchant
 
     assertRestIsEmpty(merchantRest, 'merchant props', readableTransaction)
     console.assert(fullTitle === undefined || (title === undefined && city === undefined && country === undefined),
