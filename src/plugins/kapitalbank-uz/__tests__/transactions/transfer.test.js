@@ -1,9 +1,9 @@
 import {
   convertUzcardCardTransaction,
   convertHumoCardTransaction,
-  convertVisaCardTransaction,
+  convertVisaCardTransaction
   // convertWalletTransaction,
-  convertAccountTransaction
+  // convertAccountTransaction
 } from '../../converters'
 
 describe('convertTransaction', () => {
@@ -259,61 +259,5 @@ describe('convertTransaction', () => {
   ])('converts transfer to card HUMO', (rawTransaction, transaction) => {
     const cardId = { id: 'card', instrument: 'UZS' }
     expect(convertHumoCardTransaction(cardId, rawTransaction)).toEqual(transaction)
-  })
-
-  it.each([
-    [
-      {
-        amount: 430000000,
-        currency: { name: 'UZS', scale: 2 },
-        date: 1584039600000,
-        docId: '41827588',
-        docType: '06',
-        docNum: '58379567',
-        details: 'Пополнение счета YERMOLAYEVA LYUDMILA ALEKSANDROVNA согл заяв SIDOROV SIDOR SIDOROVICH от 13,03,2020',
-        corrId: '',
-        corrName: 'СПК Транзитный счет по сред-м списанным с ПК физ.л',
-        corrMfo: '01018',
-        corrInn: '',
-        corrAcct: '17403000900001018001',
-        corrBank: 'ТОШКЕНТ Ш., "КАПИТАЛБАНК" АТ БАНКИНИНГ МИРЗО УЛУГБЕК ФИЛИАЛИ'
-      },
-      {
-        date: new Date('2020-03-12T19:00:00.000Z'),
-        hold: false,
-        comment: 'Пополнение счета YERMOLAYEVA LYUDMILA ALEKSANDROVNA согл заяв SIDOROV SIDOR SIDOROVICH от 13,03,2020',
-        merchant: {
-          country: null,
-          city: null,
-          title: 'SIDOROV SIDOR SIDOROVICH',
-          mcc: null,
-          location: null
-        },
-        movements: [
-          {
-            id: '41827588',
-            account: { id: 'account' },
-            invoice: null,
-            sum: 4300000.00,
-            fee: 0
-          },
-          {
-            id: null,
-            account: {
-              type: null,
-              instrument: 'UZS',
-              syncIds: ['7588'],
-              company: null
-            },
-            invoice: null,
-            sum: -4300000.00,
-            fee: 0
-          }
-        ]
-      }
-    ]
-  ])('converts transfer to Account UZS', (rawTransaction, transaction) => {
-    const accountId = { id: 'account', instrument: 'UZS' }
-    expect(convertAccountTransaction(accountId, rawTransaction)).toEqual(transaction)
   })
 })

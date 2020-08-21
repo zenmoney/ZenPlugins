@@ -342,7 +342,7 @@ export function convertWalletTransaction (walletId, rawTransaction) { // Не п
       city: rawTransaction.city,
       title: rawTransaction.merchantName,
       mcc: null,
-      location: rawTransaction.street
+      location: null
     },
     movements: [
       {
@@ -394,10 +394,19 @@ export function convertAccountTransaction (accountId, rawTransaction) {
     instrument: rawTransaction.currency.name
   }
 
+  const title = rawTransaction.details.match(/^(.*)(\b[A-Z]+\s[A-Z]+\s[A-Z]+\b)/)
+
   const transaction = {
     date: new Date(rawTransaction.date),
     hold: false,
-    merchant: null,
+    // merchant: null,
+    merchant: {
+      country: null,
+      city: null,
+      title: title[2],
+      mcc: null,
+      location: null
+    },
     movements: [
       {
         id: rawTransaction.docId,
@@ -405,31 +414,49 @@ export function convertAccountTransaction (accountId, rawTransaction) {
         invoice: invoice.instrument === accountId.instrument ? null : invoice,
         sum: invoice.instrument === accountId.instrument ? invoice.sum : null,
         fee: 0
-      },
-      {
-        id: null,
-        account: {
-          type: null,
-          instrument: invoice.instrument,
-          syncIds: [rawTransaction.docId.slice(-4)],
-          company: null
-        },
-        invoice: null,
-        sum: -invoice.sum,
-        fee: 0
       }
     ],
     comment: rawTransaction.details
   };
   [
-    parseTitle
+    parseTransferAccountTransaction
   ].some(parser => parser(rawTransaction, transaction, invoice)) // account
   return transaction
 }
 
+function parseTransferAccountTransaction (rawTransaction, transaction, invoice) { // account
+  for (const pattern of [
+    /Отправка денежного/i,
+    /Перевод средств/i,
+    /Пополнение счета/i
+  ]) {
+    const match = rawTransaction.details.match(pattern)
+    if (match) {
+      transaction.movements.push(
+        {
+          id: null,
+          account: {
+            type: null,
+            instrument: invoice.instrument,
+            syncIds: null,
+            company: null
+          },
+          invoice: null,
+          sum: -invoice.sum,
+          fee: 0
+        })
+      return true
+    }
+  }
+  return false
+}
+
+/*
 function parseTitle (rawTransaction, transaction) {
   for (const pattern of [
     /^(.*)(\b[A-Z]+\s[A-Z]+\s[A-Z]+\b)/
+    // /^(.*) по клиенту (\b[A-Z]+\s[A-Z]+\s[A-Z]+\b)/,
+    // /^(.*) cогл заяв (\b[A-Z]+\s[A-Z]+\s[A-Z]+\b)/
     // /Перевод от (\d+)/i
   ]) {
     const match = rawTransaction.details.match(pattern)
