@@ -1,9 +1,9 @@
 import {
   convertUzcardCardTransaction,
   convertHumoCardTransaction,
-  convertVisaCardTransaction
+  convertVisaCardTransaction,
   // convertWalletTransaction,
-  // convertAccountTransaction
+  convertAccountTransaction
 } from '../../converters'
 
 describe('convertTransaction', () => {
@@ -133,5 +133,49 @@ describe('convertTransaction', () => {
   ])('converts outcome HUMO', (rawTransaction, transaction) => {
     const cardId = { id: 'card', instrument: 'UZS' }
     expect(convertHumoCardTransaction(cardId, rawTransaction)).toEqual(transaction)
+  })
+
+  it.each([
+    [
+      {
+        amount: -2454043,
+        currency: { name: 'UZS', scale: 2 },
+        date: 1568746800000,
+        docId: '17431653',
+        docType: '06',
+        docNum: '1464112',
+        details: 'Ком. банка  0,5% от суммы 33500.00 RUB за перевод по SWIFT со счета YERMOLAYEVA LYUDMILA ALEKSANDROVNA за 18.09.2019 г.',
+        corrId: '104240',
+        corrName: '17*220*Ком. дох. по иностранным платежам - физ лица',
+        corrMfo: '01158',
+        corrInn: '207275139',
+        corrAcct: '45253000800001158010',
+        corrBank: 'ТОШКЕНТ Ш., "КАПИТАЛБАНК" АТ БАНКИНИНГ "КАПИТАЛ 24" ЧАКАНА БИЗНЕС ФИЛИАЛИ'
+      },
+      {
+        date: new Date('2019-09-17T19:00:00.000Z'),
+        hold: false,
+        comment: 'Ком. банка  0,5% от суммы 33500.00 RUB за перевод по SWIFT со счета YERMOLAYEVA LYUDMILA ALEKSANDROVNA за 18.09.2019 г.',
+        merchant: {
+          country: null,
+          city: null,
+          title: 'YERMOLAYEVA LYUDMILA ALEKSANDROVNA',
+          mcc: null,
+          location: null
+        },
+        movements: [
+          {
+            id: '17431653',
+            account: { id: 'account' },
+            invoice: null,
+            sum: -24540.43,
+            fee: 0
+          }
+        ]
+      }
+    ]
+  ])('converts outcome to Account UZS', (rawTransaction, transaction) => {
+    const accountId = { id: 'account', instrument: 'UZS' }
+    expect(convertAccountTransaction(accountId, rawTransaction)).toEqual(transaction)
   })
 })
