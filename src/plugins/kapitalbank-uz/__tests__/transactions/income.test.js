@@ -11,7 +11,7 @@ describe('convertTransaction', () => {
   it.each([
     [
       {
-        hpan: '860049***2185',
+        hpan: '860049***3871',
         utime: 1594792387000,
         udate: 1594792387000,
         terminal: '91100024',
@@ -50,7 +50,7 @@ describe('convertTransaction', () => {
       }
     ]
   ])('converts outcome UZS', (rawTransaction, transaction) => {
-    const cardId = { id: 'card', instrument: 'UZS' }
-    expect(convertUzcardCardTransaction(cardId, rawTransaction)).toEqual(transaction)
+    const card = { id: 'card', instrument: 'UZS' }
+    expect(convertUzcardCardTransaction(card, rawTransaction)).toEqual(transaction)
   })
 })

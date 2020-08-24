@@ -60,7 +60,7 @@ describe('convertTransaction', () => {
       }
     ]
   ])('converts outerOutcomeTransfer to Account RUB', (rawTransaction, transaction) => {
-    const accountId = { id: 'account', instrument: 'RUB' }
-    expect(convertAccountTransaction(accountId, rawTransaction)).toEqual(transaction)
+    const account = { id: 'account', instrument: 'RUB' }
+    expect(convertAccountTransaction(account, rawTransaction)).toEqual(transaction)
   })
 })

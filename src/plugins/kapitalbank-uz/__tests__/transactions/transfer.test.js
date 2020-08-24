@@ -10,7 +10,7 @@ describe('convertTransaction', () => {
   it.each([
     [
       {
-        hpan: '626247***5085',
+        hpan: '626247***4287',
         utime: 1594710157000,
         udate: 1594710157000,
         terminal: '97006284',
@@ -62,7 +62,7 @@ describe('convertTransaction', () => {
     ],
     [
       {
-        hpan: '860013***0149',
+        hpan: '860013***4287',
         utime: 1580539103000,
         udate: 1580539103000,
         terminal: '92000056',
@@ -113,8 +113,8 @@ describe('convertTransaction', () => {
       }
     ]
   ])('converts transfer to card UZS', (rawTransaction, transaction) => {
-    const cardId = { id: 'card', instrument: 'UZS' }
-    expect(convertUzcardCardTransaction(cardId, rawTransaction)).toEqual(transaction)
+    const card = { id: 'card', instrument: 'UZS' }
+    expect(convertUzcardCardTransaction(card, rawTransaction)).toEqual(transaction)
   })
 
   it.each([
@@ -207,8 +207,8 @@ describe('convertTransaction', () => {
       }
     ]
   ])('converts transfer to card VISA', (rawTransaction, transaction) => {
-    const cardId = { id: 'card', instrument: 'USD' }
-    expect(convertVisaCardTransaction(cardId, rawTransaction)).toEqual(transaction)
+    const card = { id: 'card', instrument: 'USD' }
+    expect(convertVisaCardTransaction(card, rawTransaction)).toEqual(transaction)
   })
 
   it.each([
@@ -257,7 +257,7 @@ describe('convertTransaction', () => {
       }
     ]
   ])('converts transfer to card HUMO', (rawTransaction, transaction) => {
-    const cardId = { id: 'card', instrument: 'UZS' }
-    expect(convertHumoCardTransaction(cardId, rawTransaction)).toEqual(transaction)
+    const card = { id: 'card', instrument: 'UZS' }
+    expect(convertHumoCardTransaction(card, rawTransaction)).toEqual(transaction)
   })
 })

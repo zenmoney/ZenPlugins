@@ -10,7 +10,7 @@ describe('convertTransaction', () => {
   it.each([
     [
       {
-        hpan: '860049***2185',
+        hpan: '860049***3346',
         utime: 1595668623000,
         udate: 1595668623000,
         terminal: '92900678',
@@ -49,8 +49,8 @@ describe('convertTransaction', () => {
       }
     ]
   ])('converts outcome UZS', (rawTransaction, transaction) => {
-    const cardId = { id: 'card', instrument: 'UZS' }
-    expect(convertUzcardCardTransaction(cardId, rawTransaction)).toEqual(transaction)
+    const card = { id: 'card', instrument: 'UZS' }
+    expect(convertUzcardCardTransaction(card, rawTransaction)).toEqual(transaction)
   })
 
   it.each([
@@ -73,7 +73,7 @@ describe('convertTransaction', () => {
       {
         date: new Date('2020-07-05T06:36:09.000Z'),
         hold: false,
-        comment: 'Товары и услуги',
+        comment: null,
         merchant: {
           country: null,
           city: null,
@@ -93,8 +93,8 @@ describe('convertTransaction', () => {
       }
     ]
   ])('converts outcome VISA', (rawTransaction, transaction) => {
-    const cardId = { id: 'card', instrument: 'USD' }
-    expect(convertVisaCardTransaction(cardId, rawTransaction)).toEqual(transaction)
+    const card = { id: 'card', instrument: 'USD' }
+    expect(convertVisaCardTransaction(card, rawTransaction)).toEqual(transaction)
   })
 
   it.each([
@@ -111,7 +111,7 @@ describe('convertTransaction', () => {
       {
         date: new Date('2020-07-12T04:29:02.000Z'),
         hold: false,
-        comment: 'Оплата товаров и услуг',
+        comment: null,
         merchant: {
           country: null,
           city: null,
@@ -131,8 +131,8 @@ describe('convertTransaction', () => {
       }
     ]
   ])('converts outcome HUMO', (rawTransaction, transaction) => {
-    const cardId = { id: 'card', instrument: 'UZS' }
-    expect(convertHumoCardTransaction(cardId, rawTransaction)).toEqual(transaction)
+    const card = { id: 'card', instrument: 'UZS' }
+    expect(convertHumoCardTransaction(card, rawTransaction)).toEqual(transaction)
   })
 
   it.each([
@@ -144,7 +144,7 @@ describe('convertTransaction', () => {
         docId: '17431653',
         docType: '06',
         docNum: '1464112',
-        details: 'Ком. банка  0,5% от суммы 33500.00 RUB за перевод по SWIFT со счета YERMOLAYEVA LYUDMILA ALEKSANDROVNA за 18.09.2019 г.',
+        details: 'Ком. банка  0,5% от суммы 33500.00 RUB за перевод по SWIFT со счета NIKOLAEV NIKOLAY NIKOLAEVICH за 18.09.2019 г.',
         corrId: '104240',
         corrName: '17*220*Ком. дох. по иностранным платежам - физ лица',
         corrMfo: '01158',
@@ -155,11 +155,11 @@ describe('convertTransaction', () => {
       {
         date: new Date('2019-09-17T19:00:00.000Z'),
         hold: false,
-        comment: 'Ком. банка  0,5% от суммы 33500.00 RUB за перевод по SWIFT со счета YERMOLAYEVA LYUDMILA ALEKSANDROVNA за 18.09.2019 г.',
+        comment: null,
         merchant: {
           country: null,
           city: null,
-          title: 'YERMOLAYEVA LYUDMILA ALEKSANDROVNA',
+          title: 'NIKOLAEV NIKOLAY NIKOLAEVICH',
           mcc: null,
           location: null
         },
@@ -175,7 +175,7 @@ describe('convertTransaction', () => {
       }
     ]
   ])('converts outcome to Account UZS', (rawTransaction, transaction) => {
-    const accountId = { id: 'account', instrument: 'UZS' }
-    expect(convertAccountTransaction(accountId, rawTransaction)).toEqual(transaction)
+    const account = { id: 'account', instrument: 'UZS' }
+    expect(convertAccountTransaction(account, rawTransaction)).toEqual(transaction)
   })
 })

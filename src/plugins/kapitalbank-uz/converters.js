@@ -103,35 +103,14 @@ export function convertUzcardCardTransaction (cardId, rawTransaction) {
         sum: invoice.instrument === cardId.instrument ? invoice.sum : null,
         fee: 0
       }
-    ],
-    comment: null
+    ]
   };
   [
     parseOuterTransfer
-    // parseCity
-  ].some(parser => parser(rawTransaction, transaction, invoice)) // account
+  ].some(parser => parser(rawTransaction, transaction, invoice))
+  transaction.comment = null
   return transaction
 }
-
-/*
-  const transaction = {
-    id: String(rawTransaction.utrnno),
-    payee: rawTransaction.merchantName,
-    date: rawTransaction.utime
-  }
-
-  if (rawTransaction.credit) {
-    transaction.incomeAccount = cardId
-    transaction.income = rawTransaction.actamt / 100
-    transaction.outcomeAccount = cardId
-    transaction.outcome = 0
-  } else {
-    transaction.outcomeAccount = cardId
-    transaction.outcome = rawTransaction.actamt / 100
-    transaction.incomeAccount = cardId
-    transaction.income = 0
-  }
-*/
 
 /**
  * Конвертер транзакции по карте платежной системы Humo из формата банка в формат Дзенмани
@@ -140,7 +119,7 @@ export function convertUzcardCardTransaction (cardId, rawTransaction) {
  * @param rawTransaction транзакция в формате банка
  * @returns транзакция в формате Дзенмани
  */
-export function convertHumoCardTransaction (cardId, rawTransaction) {
+export function convertHumoCardTransaction (card, rawTransaction) {
   const amount = Number(rawTransaction.amount.replace(/\s/g, '').replace(',', '.'))
   const fee = Number(rawTransaction.fee.replace(/\s/g, '').replace(',', '.'))
 
@@ -162,42 +141,20 @@ export function convertHumoCardTransaction (cardId, rawTransaction) {
     movements: [
       {
         id: null,
-        account: { id: cardId.id },
-        invoice: invoice.instrument === cardId.instrument ? null : invoice,
-        sum: invoice.instrument === cardId.instrument ? invoice.sum : null,
+        account: { id: card.id },
+        invoice: invoice.instrument === card.instrument ? null : invoice,
+        sum: invoice.instrument === card.instrument ? invoice.sum : null,
         fee: fee
       }
     ],
-    comment: rawTransaction.transType
+    comment: null
   };
   [
     parseTransfer,
     parseOuterTransfer
-  ].some(parser => parser(rawTransaction, transaction, invoice, fee)) // account
+  ].some(parser => parser(rawTransaction, transaction, invoice, fee))
   return transaction
 }
-
-/*
-const transaction = {
-    payee: rawTransaction.merchantName,
-    date: rawTransaction.transDate
-  }
-
-  if (amount > 0) {
-    transaction.incomeAccount = cardId
-    transaction.income = amount
-    transaction.outcomeAccount = cardId
-    transaction.outcome = 0
-  } else {
-    transaction.outcomeAccount = cardId
-    transaction.outcome = -amount
-    transaction.incomeAccount = cardId
-    transaction.income = 0
-  }
-
-  return transaction
-}
- */
 
 /**
  * Конвертер транзакции по карте платежной системы Visa из формата банка в формат Дзенмани
@@ -206,7 +163,7 @@ const transaction = {
  * @param rawTransaction транзакция в формате банка
  * @returns транзакция в формате Дзенмани
  */
-export function convertVisaCardTransaction (cardId, rawTransaction) {
+export function convertVisaCardTransaction (card, rawTransaction) {
   const amount = Number(rawTransaction.amount)
   const fee = Number(rawTransaction.fee)
 
@@ -233,22 +190,22 @@ export function convertVisaCardTransaction (cardId, rawTransaction) {
     movements: [
       {
         id: null,
-        account: { id: cardId.id },
-        invoice: invoice.instrument === cardId.instrument ? null : invoice,
-        sum: invoice.instrument === cardId.instrument ? invoice.sum : null,
+        account: { id: card.id },
+        invoice: invoice.instrument === card.instrument ? null : invoice,
+        sum: invoice.instrument === card.instrument ? invoice.sum : null,
         fee: fee
       }
     ],
-    comment: rawTransaction.transType
+    comment: null
   };
   [
     parseTransfer,
     parseOuterTransfer
-  ].some(parser => parser(rawTransaction, transaction, invoice, fee)) // account
+  ].some(parser => parser(rawTransaction, transaction, invoice, fee))
   return transaction
 }
 
-function parseOuterTransfer (rawTransaction, transaction, invoice, fee) { // account
+function parseOuterTransfer (rawTransaction, transaction, invoice, fee) {
   for (const pattern of [
     /P2P/i,
     /Входящий перевод/i,
@@ -256,6 +213,7 @@ function parseOuterTransfer (rawTransaction, transaction, invoice, fee) { // acc
   ]) {
     const match = rawTransaction.merchantName.match(pattern) || rawTransaction.transType.match(pattern)
     if (match) {
+      transaction.comment = rawTransaction.transType
       transaction.movements.push(
         {
           id: null,
@@ -275,12 +233,13 @@ function parseOuterTransfer (rawTransaction, transaction, invoice, fee) { // acc
   return false
 }
 
-function parseTransfer (rawTransaction, transaction, invoice, fee) { // account
+function parseTransfer (rawTransaction, transaction, invoice, fee) {
   for (const pattern of [
     /Пополнение карты/i
   ]) {
     const match = rawTransaction.transType.match(pattern)
     if (match) {
+      transaction.comment = rawTransaction.transType
       transaction.movements.push(
         {
           id: null,
@@ -300,28 +259,6 @@ function parseTransfer (rawTransaction, transaction, invoice, fee) { // account
   return false
 }
 
-/*
-const transaction = {
-    payee: rawTransaction.merchantName,
-    date: rawTransaction.transDate
-  }
-
-  if (amount > 0) {
-    transaction.incomeAccount = cardId
-    transaction.income = amount
-    transaction.outcomeAccount = cardId
-    transaction.outcome = 0
-  } else {
-    transaction.outcomeAccount = cardId
-    transaction.outcome = -amount
-    transaction.incomeAccount = cardId
-    transaction.income = 0
-  }
-
-  return transaction
-}
- */
-
 /**
  * Конвертер транзакции по кошельку из формата банка в формат Дзенмани
  *
@@ -329,7 +266,7 @@ const transaction = {
  * @param rawTransaction транзакция в формате банка
  * @returns транзакция в формате Дзенмани
  */
-export function convertWalletTransaction (walletId, rawTransaction) { // Не проверенно тестами
+export function convertWalletTransaction (wallet, rawTransaction) { // Не проверенно тестами
   const invoice = {
     sum: rawTransaction.amount / 100,
     instrument: 'UZS'
@@ -346,10 +283,10 @@ export function convertWalletTransaction (walletId, rawTransaction) { // Не п
     },
     movements: [
       {
-        id: walletId,
-        account: { id: walletId.id },
-        invoice: invoice.instrument === walletId.instrument ? null : invoice,
-        sum: invoice.instrument === walletId.instrument ? invoice.sum : null,
+        id: wallet,
+        account: { id: wallet.id },
+        invoice: invoice.instrument === wallet.instrument ? null : invoice,
+        sum: invoice.instrument === wallet.instrument ? invoice.sum : null,
         fee: 0
       }
     ],
@@ -359,28 +296,6 @@ export function convertWalletTransaction (walletId, rawTransaction) { // Не п
   return transaction
 }
 
-/*
-  const transaction = {
-    date: rawTransaction.date
-  }
-
-  if (rawTransaction.amount > 0) {
-    transaction.incomeAccount = walletId
-    transaction.income = rawTransaction.amount / 100
-    transaction.outcomeAccount = walletId
-    transaction.outcome = 0
-  } else {
-    transaction.outcomeAccount = walletId
-    transaction.outcome = -rawTransaction.amount / 100
-    transaction.incomeAccount = walletId
-    transaction.income = 0
-  }
-
-  return transaction
-}
-
- */
-
 /**
  * Конвертер транзакции по счету из формата банка в формат Дзенмани
  *
@@ -388,43 +303,35 @@ export function convertWalletTransaction (walletId, rawTransaction) { // Не п
  * @param rawTransaction транзакция в формате банка
  * @returns транзакция в формате Дзенмани
  */
-export function convertAccountTransaction (accountId, rawTransaction) {
+export function convertAccountTransaction (account, rawTransaction) {
   const invoice = {
     sum: rawTransaction.amount / 100,
     instrument: rawTransaction.currency.name
   }
 
-  const title = rawTransaction.details.match(/^(.*)(\b[A-Z]+\s[A-Z]+\s[A-Z]+\b)/)
-
   const transaction = {
     date: new Date(rawTransaction.date),
     hold: false,
-    // merchant: null,
-    merchant: {
-      country: null,
-      city: null,
-      title: title[2],
-      mcc: null,
-      location: null
-    },
+    merchant: null,
     movements: [
       {
         id: rawTransaction.docId,
-        account: { id: accountId.id },
-        invoice: invoice.instrument === accountId.instrument ? null : invoice,
-        sum: invoice.instrument === accountId.instrument ? invoice.sum : null,
+        account: { id: account.id },
+        invoice: invoice.instrument === account.instrument ? null : invoice,
+        sum: invoice.instrument === account.instrument ? invoice.sum : null,
         fee: 0
       }
     ],
-    comment: rawTransaction.details
+    comment: null
   };
   [
+    parseTitle,
     parseTransferAccountTransaction
-  ].some(parser => parser(rawTransaction, transaction, invoice)) // account
+  ].some(parser => parser(rawTransaction, transaction, invoice))
   return transaction
 }
 
-function parseTransferAccountTransaction (rawTransaction, transaction, invoice) { // account
+function parseTransferAccountTransaction (rawTransaction, transaction, invoice) {
   for (const pattern of [
     /Отправка денежного/i,
     /Перевод средств/i,
@@ -432,6 +339,7 @@ function parseTransferAccountTransaction (rawTransaction, transaction, invoice) 
   ]) {
     const match = rawTransaction.details.match(pattern)
     if (match) {
+      transaction.comment = rawTransaction.details
       transaction.movements.push(
         {
           id: null,
@@ -445,53 +353,29 @@ function parseTransferAccountTransaction (rawTransaction, transaction, invoice) 
           sum: -invoice.sum,
           fee: 0
         })
-      return true
     }
   }
   return false
 }
 
-/*
-function parseTitle (rawTransaction, transaction) {
+function parseTitle (rawTransaction, transaction, invoice) {
   for (const pattern of [
-    /^(.*)(\b[A-Z]+\s[A-Z]+\s[A-Z]+\b)/
-    // /^(.*) по клиенту (\b[A-Z]+\s[A-Z]+\s[A-Z]+\b)/,
-    // /^(.*) cогл заяв (\b[A-Z]+\s[A-Z]+\s[A-Z]+\b)/
-    // /Перевод от (\d+)/i
+    /со счета\s+(\b[A-Z]+\s[A-Z]+\s[A-Z]+\b)\s*/,
+    // /Пополнение\s+счета+.*согл\s+заяв\s+(.*)\s+от/,
+    /по клиенту\s+(\b[A-Z]+\s[A-Z]+\s[A-Z]+\b)\s*/,
+    /согл заяв\s+(\b[A-Z]+\s[A-Z]+\s[A-Z]+\b)\s*/,
+    /от\s+(\b[A-Z]+\s[A-Z]+\s[A-Z]+\b)\s*/
   ]) {
     const match = rawTransaction.details.match(pattern)
     if (match) {
       transaction.merchant = {
         country: null,
         city: null,
-        title: match[2],
+        title: match[1],
         mcc: null,
         location: null
       }
     }
-    return true
   }
   return false
 }
-
-/*
-const transaction = {
-    id: rawTransaction.docId,
-    date: rawTransaction.date
-  }
-
-  if (rawTransaction.amount > 0) {
-    transaction.incomeAccount = accountId
-    transaction.income = rawTransaction.amount / 100
-    transaction.outcomeAccount = accountId
-    transaction.outcome = 0
-  } else {
-    transaction.outcomeAccount = accountId
-    transaction.outcome = -rawTransaction.amount / 100
-    transaction.incomeAccount = accountId
-    transaction.income = 0
-  }
-
-  return transaction
-}
- */
