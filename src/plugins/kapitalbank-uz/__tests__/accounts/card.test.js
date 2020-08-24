@@ -1,6 +1,4 @@
 import {
-  // convertAccount,
-  // convertWallet,
   convertCard
 } from '../../converters'
 
@@ -39,13 +37,36 @@ describe('convertAccount', () => {
     })).toEqual({
       id: '245394',
       type: 'ccard',
-      title: 'UZCARD *4598', // 'UZCARD', // Нужно ли добавить 'UZCARD' вместо undefined ???
+      title: 'UZCARD *4598',
       instrument: 'UZS',
       syncID: [
         '860049******4598',
         '22618000499031231002'
       ],
       balance: 3305132.21
+    })
+  })
+
+  it('converts account UZCARD with Title', () => {
+    expect(convertCard({
+      id: 226355,
+      account: '22618000699052625001',
+      title: 'Туркистон Кобейдж',
+      state: 'ACTIVE',
+      pan: '626282******3612',
+      currency: { name: 'UZS', scale: 2 },
+      type: 'UZCARD',
+      balance: 25
+    })).toEqual({
+      id: '226355',
+      type: 'ccard',
+      title: 'Туркистон Кобейдж',
+      instrument: 'UZS',
+      syncID: [
+        '626282******3612',
+        '22618000699052625001'
+      ],
+      balance: 0.25
     })
   })
 })

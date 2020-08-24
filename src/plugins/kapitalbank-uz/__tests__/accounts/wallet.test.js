@@ -1,7 +1,5 @@
 import {
-  // convertAccount,
   convertWallet
-  // convertCard
 } from '../../converters'
 
 describe('convertWallet', () => {

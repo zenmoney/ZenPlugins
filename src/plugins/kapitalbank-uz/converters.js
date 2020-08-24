@@ -109,6 +109,7 @@ export function convertUzcardCardTransaction (cardId, rawTransaction) {
     parseOuterTransfer
   ].some(parser => parser(rawTransaction, transaction, invoice))
   transaction.comment = null
+
   return transaction
 }
 
@@ -153,6 +154,7 @@ export function convertHumoCardTransaction (card, rawTransaction) {
     parseTransfer,
     parseOuterTransfer
   ].some(parser => parser(rawTransaction, transaction, invoice, fee))
+
   return transaction
 }
 
@@ -202,6 +204,7 @@ export function convertVisaCardTransaction (card, rawTransaction) {
     parseTransfer,
     parseOuterTransfer
   ].some(parser => parser(rawTransaction, transaction, invoice, fee))
+
   return transaction
 }
 
@@ -328,6 +331,7 @@ export function convertAccountTransaction (account, rawTransaction) {
     parseTitle,
     parseTransferAccountTransaction
   ].some(parser => parser(rawTransaction, transaction, invoice))
+
   return transaction
 }
 
@@ -361,7 +365,6 @@ function parseTransferAccountTransaction (rawTransaction, transaction, invoice) 
 function parseTitle (rawTransaction, transaction, invoice) {
   for (const pattern of [
     /со счета\s+(\b[A-Z]+\s[A-Z]+\s[A-Z]+\b)\s*/,
-    // /Пополнение\s+счета+.*согл\s+заяв\s+(.*)\s+от/,
     /по клиенту\s+(\b[A-Z]+\s[A-Z]+\s[A-Z]+\b)\s*/,
     /согл заяв\s+(\b[A-Z]+\s[A-Z]+\s[A-Z]+\b)\s*/,
     /от\s+(\b[A-Z]+\s[A-Z]+\s[A-Z]+\b)\s*/
