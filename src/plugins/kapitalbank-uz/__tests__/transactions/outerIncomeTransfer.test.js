@@ -1,9 +1,4 @@
 import {
-  // convertUzcardCardTransaction
-  // convertUzcardCardTransaction,
-  // convertHumoCardTransaction,
-  // convertVisaCardTransaction
-  // convertWalletTransaction,
   convertAccountTransaction
 } from '../../converters'
 
