@@ -2,7 +2,6 @@ import {
   convertUzcardCardTransaction,
   convertHumoCardTransaction,
   convertVisaCardTransaction,
-  // convertWalletTransaction,
   convertAccountTransaction
 } from '../../converters'
 
@@ -155,14 +154,8 @@ describe('convertTransaction', () => {
       {
         date: new Date('2019-09-17T19:00:00.000Z'),
         hold: false,
-        comment: null,
-        merchant: {
-          country: null,
-          city: null,
-          title: 'NIKOLAEV NIKOLAY NIKOLAEVICH',
-          mcc: null,
-          location: null
-        },
+        comment: 'Ком. банка  0,5% от суммы 33500.00 RUB за перевод по SWIFT со счета NIKOLAEV NIKOLAY NIKOLAEVICH за 18.09.2019 г.',
+        merchant: null,
         movements: [
           {
             id: '17431653',

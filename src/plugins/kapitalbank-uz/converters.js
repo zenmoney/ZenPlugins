@@ -325,7 +325,7 @@ export function convertAccountTransaction (account, rawTransaction) {
         fee: 0
       }
     ],
-    comment: null
+    comment: rawTransaction.details
   };
   [
     parseTitle,
@@ -364,7 +364,6 @@ function parseTransferAccountTransaction (rawTransaction, transaction, invoice) 
 
 function parseTitle (rawTransaction, transaction, invoice) {
   for (const pattern of [
-    /со счета\s+(\b[A-Z]+\s[A-Z]+\s[A-Z]+\b)\s*/,
     /по клиенту\s+(\b[A-Z]+\s[A-Z]+\s[A-Z]+\b)\s*/,
     /согл заяв\s+(\b[A-Z]+\s[A-Z]+\s[A-Z]+\b)\s*/,
     /от\s+(\b[A-Z]+\s[A-Z]+\s[A-Z]+\b)\s*/
