@@ -1,8 +1,50 @@
 import {
+  convertWalletTransaction,
   convertAccountTransaction
 } from '../../converters'
 
 describe('convertTransaction', () => {
+  it.each([
+    [
+      {
+        amount: 1238498635,
+        date: 1593678994569,
+        operation: 'account2wallet',
+        details: 'Перевод со счета на кошелек'
+      },
+      {
+        date: new Date('2020-07-02T08:36:34.569Z'),
+        hold: false,
+        comment: 'Перевод со счета на кошелек',
+        merchant: null,
+        movements: [
+          {
+            id: null,
+            account: { id: 'wallet' },
+            invoice: null,
+            sum: 12384986.35,
+            fee: 0
+          },
+          {
+            id: null,
+            account: {
+              type: null,
+              instrument: 'UZS',
+              syncIds: null,
+              company: null
+            },
+            invoice: null,
+            sum: -12384986.35,
+            fee: 0
+          }
+        ]
+      }
+    ]
+  ])('converts outerIncomeTransfer to Wallet UZS', (rawTransaction, transaction) => {
+    const wallet = { id: 'wallet', instrument: 'UZS' }
+    expect(convertWalletTransaction(wallet, rawTransaction)).toEqual(transaction)
+  })
+
   it.each([
     [
       {

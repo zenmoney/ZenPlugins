@@ -1,8 +1,50 @@
 import {
+  convertWalletTransaction,
   convertAccountTransaction
 } from '../../converters'
 
 describe('convertTransaction', () => {
+  it.each([
+    [
+      {
+        amount: -9640664,
+        date: 1590842028913,
+        operation: 'wallet2humo',
+        details: 'Перевод с кошелька на карту'
+      },
+      {
+        date: new Date('2020-05-30T12:33:48.913Z'),
+        hold: false,
+        comment: 'Перевод с кошелька на карту',
+        merchant: null,
+        movements: [
+          {
+            id: null,
+            account: { id: 'wallet' },
+            invoice: null,
+            sum: -96406.64,
+            fee: 0
+          },
+          {
+            id: null,
+            account: {
+              type: null,
+              instrument: 'UZS',
+              syncIds: null,
+              company: null
+            },
+            invoice: null,
+            sum: 96406.64,
+            fee: 0
+          }
+        ]
+      }
+    ]
+  ])('converts outerOutcomeTransfer to Wallet UZS', (rawTransaction, transaction) => {
+    const wallet = { id: 'wallet', instrument: 'UZS' }
+    expect(convertWalletTransaction(wallet, rawTransaction)).toEqual(transaction)
+  })
+
   it.each([
     [
       {

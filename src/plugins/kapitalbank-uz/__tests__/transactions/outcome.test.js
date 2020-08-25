@@ -2,6 +2,7 @@ import {
   convertUzcardCardTransaction,
   convertHumoCardTransaction,
   convertVisaCardTransaction,
+  convertWalletTransaction,
   convertAccountTransaction
 } from '../../converters'
 
@@ -132,6 +133,35 @@ describe('convertTransaction', () => {
   ])('converts outcome HUMO', (rawTransaction, transaction) => {
     const card = { id: 'card', instrument: 'UZS' }
     expect(convertHumoCardTransaction(card, rawTransaction)).toEqual(transaction)
+  })
+
+  it.each([
+    [
+      {
+        amount: -31085595,
+        date: 1590828879142,
+        operation: 'wallet2requisite',
+        details: 'Оплата по реквизитам'
+      },
+      {
+        date: new Date('2020-05-30T08:54:39.142Z'),
+        hold: false,
+        comment: 'Оплата по реквизитам',
+        merchant: null,
+        movements: [
+          {
+            id: null,
+            account: { id: 'wallet' },
+            invoice: null,
+            sum: -310855.95,
+            fee: 0
+          }
+        ]
+      }
+    ]
+  ])('converts outerOutcome to Wallet UZS', (rawTransaction, transaction) => {
+    const wallet = { id: 'wallet', instrument: 'UZS' }
+    expect(convertWalletTransaction(wallet, rawTransaction)).toEqual(transaction)
   })
 
   it.each([

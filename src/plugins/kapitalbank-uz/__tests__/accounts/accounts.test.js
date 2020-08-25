@@ -16,7 +16,7 @@ describe('convertAccount', () => {
       type: 'checking',
       title: 'Счёт RUB',
       instrument: 'RUB',
-      syncID: [
+      syncIds: [
         '20206643099031231001'
       ],
       balance: 2522.08
@@ -35,7 +35,7 @@ describe('convertAccount', () => {
       type: 'checking',
       title: 'Счёт UZS',
       instrument: 'UZS',
-      syncID: [
+      syncIds: [
         '20206000099031231001'
       ],
       balance: 459.57
