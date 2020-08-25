@@ -8,7 +8,7 @@ export function convertAccount (account) {
   return {
     id: String(account.id),
     title: 'Счёт ' + account.currency.name,
-    syncID: [account.account],
+    syncIds: [account.account],
 
     instrument: account.currency.name,
     type: 'checking',
@@ -27,7 +27,7 @@ export function convertWallet (wallet) {
   return {
     id: String(wallet.id),
     title: 'Кошелёк ' + wallet.currency.name,
-    syncID: [wallet.account],
+    syncIds: [wallet.account],
 
     instrument: wallet.currency.name,
     type: 'checking',
@@ -50,7 +50,7 @@ export function convertCard (rawCard) {
   const card = {
     id: String(rawCard.id),
     title: rawCard.title,
-    syncID: [rawCard.pan],
+    syncIds: [rawCard.pan],
 
     instrument: rawCard.currency.name,
     type: 'ccard',
@@ -63,11 +63,11 @@ export function convertCard (rawCard) {
   }
 
   if (rawCard.account) {
-    card.syncID.push(rawCard.account)
+    card.syncIds.push(rawCard.account)
   }
 
   if (rawCard.maskedPan) {
-    card.syncID.push(rawCard.maskedPan)
+    card.syncIds.push(rawCard.maskedPan)
   }
 
   return card
@@ -269,7 +269,7 @@ function parseTransfer (rawTransaction, transaction, invoice, fee) {
  * @param rawTransaction транзакция в формате банка
  * @returns транзакция в формате Дзенмани
  */
-export function convertWalletTransaction (wallet, rawTransaction) { // Не проверенно тестами
+export function convertWalletTransaction (wallet, rawTransaction) {
   const invoice = {
     sum: rawTransaction.amount / 100,
     instrument: 'UZS'
@@ -277,26 +277,48 @@ export function convertWalletTransaction (wallet, rawTransaction) { // Не пр
   const transaction = {
     date: new Date(rawTransaction.date),
     hold: false,
-    merchant: {
-      country: null,
-      city: rawTransaction.city,
-      title: rawTransaction.merchantName,
-      mcc: null,
-      location: null
-    },
+    merchant: null,
     movements: [
       {
-        id: wallet,
+        id: null,
         account: { id: wallet.id },
         invoice: invoice.instrument === wallet.instrument ? null : invoice,
         sum: invoice.instrument === wallet.instrument ? invoice.sum : null,
         fee: 0
       }
     ],
-    comment: null
-  }
+    comment: rawTransaction.details
+  };
+  [
+    parseTransferWallet
+  ].some(parser => parser(rawTransaction, transaction, invoice))
 
   return transaction
+}
+
+function parseTransferWallet (rawTransaction, transaction, invoice, fee) {
+  for (const pattern of [
+    /Перевод/i
+  ]) {
+    const match = rawTransaction.details.match(pattern)
+    if (match) {
+      transaction.movements.push(
+        {
+          id: null,
+          account: {
+            type: null,
+            instrument: invoice.instrument,
+            syncIds: null,
+            company: null
+          },
+          invoice: null,
+          sum: -invoice.sum,
+          fee: 0
+        })
+      return true
+    }
+  }
+  return false
 }
 
 /**

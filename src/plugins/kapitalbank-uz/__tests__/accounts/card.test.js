@@ -18,7 +18,7 @@ describe('convertAccount', () => {
       type: 'ccard',
       title: 'VISA Electron(Tr)',
       instrument: 'USD',
-      syncID: [
+      syncIds: [
         '427833******3346',
         '22618840799031231901'
       ],
@@ -39,7 +39,7 @@ describe('convertAccount', () => {
       type: 'ccard',
       title: 'UZCARD *4598',
       instrument: 'UZS',
-      syncID: [
+      syncIds: [
         '860049******4598',
         '22618000499031231002'
       ],
@@ -62,7 +62,7 @@ describe('convertAccount', () => {
       type: 'ccard',
       title: 'Туркистон Кобейдж',
       instrument: 'UZS',
-      syncID: [
+      syncIds: [
         '626282******3612',
         '22618000699052625001'
       ],
@@ -87,7 +87,7 @@ describe('convertAccount', () => {
       type: 'ccard',
       title: 'Хумо',
       instrument: 'UZS',
-      syncID: [
+      syncIds: [
         '986019******2965',
         '986019OBDZDO8587'
       ],
@@ -109,7 +109,7 @@ describe('convertAccount', () => {
       type: 'ccard',
       title: 'Хумo Turkiston',
       instrument: 'UZS',
-      syncID: [
+      syncIds: [
         '986021******3871',
         '986021CREBIX8092'
       ],
