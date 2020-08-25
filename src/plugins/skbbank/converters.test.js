@@ -1,4 +1,4 @@
-import { convertCard, convertAccount, convertDeposit, convertTransaction } from './converters'
+import { convertAccount, convertCard, convertDeposit, convertTransaction } from './converters'
 
 describe('convertCard', () => {
   it('should convert debit card account', () => {
@@ -610,6 +610,64 @@ describe('convertTransaction', () => {
       outcome: 10000,
       outcomeAccount: '42305810330000000042',
       comment: 'Вклады: открытие вклада Исполнение желаний        +'
+    })
+  })
+
+  it('should convert SBP transfer', () => {
+    expect(convertTransaction({
+      info:
+        {
+          id: 855984970,
+          operationType: 'account_transaction',
+          skbPaymentOperationType: null,
+          subType: 'sbp_in',
+          hasOfdReceipt: false
+        },
+      view:
+        {
+          operationIcon: 'https://ib.delo.ru/imgcache/bankIcon_ii312846257.png',
+          descriptions:
+            {
+              operationDescription: 'Николаев Николай Николаевич',
+              productDescription: 'Счет Mastercard Unembossed',
+              productType: 'На счет карты'
+            },
+          amounts:
+            {
+              amount: 10000,
+              currency: 'RUB',
+              feeAmount: 0,
+              feeCurrency: 'RUB',
+              bonusAmount: 0,
+              bonusCurrency: 'RUB',
+              cashBackAmount: 0,
+              cashBackCurrency: 'RUB'
+            },
+          mainRequisite: 'Из АО "ТИНЬКОФФ БАНК"',
+          actions: ['sendCheck', 'print', 'reversePayment'],
+          category:
+            {
+              id: 394010366,
+              internalCode: 'replenishment',
+              name: 'Пополнения'
+            },
+          state: 'processed',
+          dateCreated: '2020-08-20T11:08:36+05:00',
+          payWallet: null,
+          direction: 'credit',
+          comment: 'Перевод с использованием Системы быстрых платежей',
+          productAccount: '40817810100015387612',
+          productCardId: null
+        }
+    })).toEqual({
+      comment: 'Николаев Николай Николаевич',
+      date: '2020-08-20T11:08:36+05:00',
+      hold: false,
+      id: '855984970',
+      income: 10000,
+      incomeAccount: '40817810100015387612',
+      outcome: 0,
+      outcomeAccount: '40817810100015387612'
     })
   })
 })

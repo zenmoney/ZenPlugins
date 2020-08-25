@@ -92,8 +92,11 @@ export function convertTransaction (json, accounts) {
   } else if (json.view.direction === 'credit') {
     transaction.income = json.view.amounts.amount
     transaction.comment = json.view.descriptions.operationDescription || json.view.mainRequisite
-    transaction.opIncome = json.view.amounts.amount
-    transaction.opIncomeInstrument = json.view.amounts.currency
+    if (json.view.amounts.currency !== 'RUB') {
+      transaction.opIncome = json.view.amounts.amount
+      transaction.opIncomeInstrument = json.view.amounts.currency
+      transaction.income = json.details.convAmount
+    }
   } else if (json.view.direction === 'internal') {
     transaction.income = json.view.amounts.amount
     transaction.outcome = json.view.amounts.amount
