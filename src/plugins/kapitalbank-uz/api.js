@@ -279,7 +279,7 @@ export async function getUzcardCardsTransactions (cards, fromDate, toDate) {
       console.assert(response.ok, 'unexpected uzcard/history response', response)
 
       transactions = transactions.concat(response.body.data.data.map(transaction =>
-        convertUzcardCardTransaction(card.id, transaction)))
+        convertUzcardCardTransaction(card, transaction)))
     }
   }
 
@@ -318,7 +318,7 @@ export async function getHumoCardsTransactions (cards, fromDate, toDate) {
       console.assert(response.ok, 'unexpected humo/history response', response)
 
       transactions = transactions.concat(response.body.data.map(transaction =>
-        convertHumoCardTransaction(card.id, transaction)))
+        convertHumoCardTransaction(card, transaction)))
     }
   }
 
@@ -357,7 +357,7 @@ export async function getVisaCardsTransactions (cards, fromDate, toDate) {
       console.assert(response.ok, 'unexpected visa/history response', response)
 
       transactions = transactions.concat(response.body.data.map(transaction =>
-        convertVisaCardTransaction(card.id, transaction)).filter(transaction => transaction !== null))
+        convertVisaCardTransaction(card, transaction)).filter(transaction => transaction !== null))
     }
   }
 
@@ -396,7 +396,7 @@ export async function getWalletsTransactions (wallets, fromDate, toDate) {
       console.assert(response.ok, 'unexpected wallet/history response', response)
 
       transactions = transactions.concat(response.body.data.map(transaction =>
-        convertWalletTransaction(wallet.id, transaction)))
+        convertWalletTransaction(wallet, transaction)))
     }
   }
 
@@ -435,7 +435,7 @@ export async function getAccountsTransactions (accounts, fromDate, toDate) {
       console.assert(response.ok, 'unexpected account/statement response', response)
 
       transactions = transactions.concat(response.body.data.map(transaction =>
-        convertAccountTransaction(account.id, transaction)))
+        convertAccountTransaction(account, transaction)))
     }
   }
 
