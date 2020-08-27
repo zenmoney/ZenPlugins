@@ -1,14 +1,13 @@
 import { fetchProducts, fetchTransactions, login } from './api'
-import { convertAccount, convertCard, convertDeposit, convertTransaction } from './converters'
+import { convertAccounts, convertTransaction, groupAccountsById } from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
   await login(preferences.login, preferences.password)
   const products = await fetchProducts()
-  let accounts = products.cards.map(convertCard).filter(x => !!x)
-  accounts = accounts.concat(products.accounts.map(convertAccount).filter(x => !!x))
-  accounts = accounts.concat(products.deposits.map(convertDeposit).filter(x => !!x))
+  const accounts = convertAccounts(products)
+  const accountsById = groupAccountsById(accounts)
   const operations = await fetchTransactions(fromDate, toDate)
-  const transactions = operations.map(transaction => convertTransaction(transaction, accounts))
+  const transactions = operations.map(transaction => convertTransaction(transaction, accountsById))
   return {
     accounts: accounts,
     transactions: transactions
