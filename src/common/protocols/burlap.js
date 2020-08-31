@@ -63,7 +63,7 @@ export function stringifyToXml (object) {
   } else if (typeof object === 'boolean') {
     return `<boolean>${object === true ? '1' : '0'}</boolean>`
   } else if (typeof object === 'string') {
-    return `<string>${object}</string>`
+    return `<string>${_.escape(object)}</string>`
   } else if (object instanceof Type.Int) {
     return `<int>${object.value.toFixed(0)}</int>`
   } else if (object instanceof Type.Long) {
