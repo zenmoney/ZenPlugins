@@ -15,7 +15,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   }
 
   const accountsAvailable = flatMap(accounts, (account) => {
-    if (account.balance !== null) {
+    if (account.balance !== null && account.transactionsAccId) {
       return account
     }
   })
