@@ -104,7 +104,8 @@ function ZPAPI ({ manifest, preferences, data }) {
     j2v8Date: true,
     dateProcessing: true,
     binaryRequestBody: true,
-    binaryResponseBody: true
+    binaryResponseBody: true,
+    investmentAccount: true
   }
   const knownAccounts = {}
   const addedAccounts = []
@@ -184,7 +185,7 @@ function ZPAPI ({ manifest, preferences, data }) {
       }
       if (account.type && typeof account.type === 'string' &&
                 account.type.length > 0) {
-        if (['card', 'ccard', 'checking', 'loan', 'deposit'].indexOf(account.type.toLowerCase()) < 0) {
+        if (['card', 'ccard', 'checking', 'loan', 'deposit', 'investment'].indexOf(account.type.toLowerCase()) < 0) {
           return handleException('[ATY] Wrong account ' + id + ". Account should have type 'card' or 'checking' or 'deposit' or 'loan'")
         }
       } else {
