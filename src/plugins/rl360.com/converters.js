@@ -10,6 +10,10 @@ export function convertAccount (acc) {
 }
 
 export function convertTransaction (tr, account) {
+  let fee = 0
+  if (tr.fee !== '(pending)') {
+    fee = -getSumAmount(tr.fee)
+  }
   return {
     date: new Date(tr.date),
     movements: [
@@ -18,12 +22,12 @@ export function convertTransaction (tr, account) {
         account: { id: account.id },
         invoice: null,
         sum: getSumAmount(tr.amount),
-        fee: -getSumAmount(tr.fee)
+        fee: fee
       }
     ],
     merchant: null,
     comment: null,
-    hold: false
+    hold: (tr.fee === '(pending)')
   }
 }
 
