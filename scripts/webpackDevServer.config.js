@@ -365,8 +365,9 @@ module.exports = ({ allowedHost, host, https }) => {
         }
 
         proxy.web(req, res, {
-          target: target,
-          changeOrigin: true,
+          target,
+          agent: /^https/.test(target) ? require('https').globalAgent : require('http').globalAgent,
+          changeOrigin: false,
           preserveHeaderKeyCase: true,
           ignorePath: true,
           secure: false,
