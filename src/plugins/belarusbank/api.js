@@ -25,9 +25,8 @@ async function fetchUrl (url, options, predicate = () => true, error = (message)
   if (predicate) {
     validateResponse(response, response => predicate(response), error)
   }
-  // <span class="bigErrorText" >Сеанс работы с порталом завершен из-за длительного простоя
   const err = response.body.match(/(?:<p id ="status_message" class="error">(.[^/]*)<|Сеанс работы с порталом завершен из-за длительного простоя)./i)
-  if (err.length === 1) { // Сеанс работы завершен
+  if (err?.length === 1) { // Сеанс работы завершен
     throw new TemporaryError('Сессия завершена из-за длительного простоя. Запустите синхронизацию с банком заново.')
   }
   if (err && err[1].indexOf('СМС-код отправлен на номер телефона') === -1) {
@@ -79,9 +78,17 @@ export async function loginCodes (prefs) {
   if (!prefs.codes3 || !/^\s*(?:\d{4}[\s+]+){9}\d{4}\s*$/.test(prefs.codes3)) {
     throw new InvalidPreferencesError('Неправильно введены коды 31-40! Необходимо ввести 10 четырехзначных кодов через пробел или +.')
   }
-  let res = await fetchUrl('/wps/portal/ibank/', {
-    method: 'GET'
-  }, response => response.success, message => new Error('Сайт не доступен'))
+  let res
+  let i = 0
+  do {
+    i++
+    res = await fetchUrl('/wps/portal/ibank/', {
+      method: 'GET'
+    }, response => response.success || response.status === 502, message => new Error('Сайт не доступен'))
+  } while (i < 5 && res.status === 502)
+  if (res.status === 502) {
+    console.assert('Сайт недоступен. Error 502')
+  }
 
   let url = res.body.match(/<form[^>]+action="([^"]*)"[^>]*name="LoginForm1"/i)
   res = await fetchUrl(res.headers['content-location'] + url[1], {
@@ -143,9 +150,17 @@ export async function loginCodes (prefs) {
 }
 
 export async function loginSMS (prefs) {
-  let res = await fetchUrl('/wps/portal/ibank/', {
-    method: 'GET'
-  }, response => response.success, message => new Error('Сайт не доступен'))
+  let res
+  let i = 0
+  do {
+    i++
+    res = await fetchUrl('/wps/portal/ibank/', {
+      method: 'GET'
+    }, response => response.success || response.status === 502, message => new Error('Сайт не доступен'))
+  } while (i < 5 && res.status === 502)
+  if (res.status === 502) {
+    console.assert('Сайт недоступен. Error 502')
+  }
 
   let url = res.body.match(/<form[^>]+action="([^"]*)"[^>]*name="LoginForm1"/i)
   res = await fetchUrl(res.headers['content-location'] + url[1], {
