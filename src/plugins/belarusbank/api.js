@@ -322,7 +322,7 @@ export function parseDeposits (response) {
 }
 
 export async function fetchCardsTransactions (acc, fromDate, toDate) {
-  console.log('>>> Загрузка транзакций по ' + acc.title)
+  console.log('>>> Выбор дат для загрузки транзакций по ' + acc.title)
 
   let body = {
     'javax.faces.encodedURL': acc.raw.transactionsData.encodedURL,
@@ -382,6 +382,8 @@ export async function fetchCardsTransactions (acc, fromDate, toDate) {
 
     body[viewns + ':SFPCalendarFromID'] = dateStart
     body[viewns + ':SFPCalendarToID'] = dateEnd
+
+    console.log('>>> Загрузка транзакций по ' + acc.title)
     res = await fetchUrl(action, {
       method: 'POST',
       headers: {
@@ -390,8 +392,9 @@ export async function fetchCardsTransactions (acc, fromDate, toDate) {
       body: body
     }, response => response.success, message => new Error(''))
 
-    pages = res.body.match(/Страница \d+ из (\d+)/) && parseInt(res.body.match(/Страница \d+ из (\d+)/)[1])
-    transactions = pages ? parseTransactions(res.body, acc.id, 'operResultOk') : []
+    const match = res.body.match(/Страница \d+ из (\d+)/)
+    pages = match ? parseInt(match[1]) : null
+    transactions = /Наименование операции/.test(res.body) ? parseTransactions(res.body, acc.id, 'operResultOk') : []
     if (pages) {
       viewns = viewns.replace('accountStmtStartPageForm', 'AccountStmtForm')
       for (let i = 2; i <= pages; i++) {
@@ -436,7 +439,7 @@ export async function fetchCardsTransactions (acc, fromDate, toDate) {
     }, response => response.success, message => new Error(''))
   }
 
-  console.log('>>> Загрузка холдов по ' + acc.title)
+  console.log('>>> Выбор дат для загрузки холдов по ' + acc.title)
   $ = cheerio.load(res.body)
   viewns = acc.raw.transactionsData.holdsData[0].replace(/'/g, '')
   action = $('form[id="' + viewns + '"]').attr('action')
@@ -453,6 +456,8 @@ export async function fetchCardsTransactions (acc, fromDate, toDate) {
   body[viewns + ':acctIdSelField'] = acc.raw.accountName.replace('Счёт №', '')
   body[viewns + '_SUBMIT'] = 1
   body[viewns + ':_idcl'] = acc.raw.transactionsData.holdsData[1].replace(/'/g, '')
+
+  console.log('>>> Загрузка холдов по ' + acc.title)
   res = await fetchUrl(action, {
     method: 'POST',
     headers: {
@@ -461,8 +466,9 @@ export async function fetchCardsTransactions (acc, fromDate, toDate) {
     body: body
   }, response => response.success, message => new Error(''))
 
-  pages = res.body.match(/Страница \d+ из (\d+)/) && parseInt(res.body.match(/Страница \d+ из (\d+)/)[1])
-  const holds = pages ? parseTransactions(res.body, acc.id, 'hold') : []
+  const match = res.body.match(/Страница \d+ из (\d+)/)
+  pages = match ? parseInt(match[1]) : null
+  const holds = /Наименование операции/.test(res.body) ? parseTransactions(res.body, acc.id, 'hold') : []
   if (pages) {
     viewns = viewns.replace('accountStmtStartPageForm', 'AccountStmtForm')
     for (let i = 2; i <= pages; i++) {

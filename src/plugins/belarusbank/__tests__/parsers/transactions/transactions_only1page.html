@@ -1,0 +1,518 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+
+
+
+
+
+
+<head>
+
+<meta content="text/html; charset=utf-8" http-equiv="content-type">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Система &laquo;Интернет-банкинг&raquo; ОАО &laquo;АСБ Беларусбанк&raquo;</title>
+
+<script type="text/javascript" src="/rd_ib_themes_main_dynamic/themes/html/js/jquery-1.9.0.js"></script>
+<script type="text/javascript" src="/rd_ib_themes_main_dynamic/themes/html/js/time.js"></script>
+<script type="text/javascript" src="/rd_ib_themes_main_dynamic/themes/html/js/number_format.js"></script>
+<script type="text/javascript" src="/rd_ib_themes_main_dynamic/themes/html/js/tooltip.js"></script>
+<script type="text/javascript" src="/rd_ib_themes_main_dynamic/themes/html/js/spin.min-1.3.3.js"></script>
+<script type="text/javascript" src="/rd_ib_themes_main_dynamic/themes/html/js/jquery.spin-1.3.3.js"></script>
+<script type="text/javascript" src="/rd_ib_themes_main_dynamic/themes/html/js/lockPageSpin.js"></script>
+<link href="/rd_ib_themes_main_dynamic/themes/html/css/style.css" rel="stylesheet" type="text/css" />
+<link href="/rd_ib_themes_main_dynamic/themes/html/css/tooltip.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="">
+
+<div id="lockLoadingBackground" class="lockLoadingBackground"></div>
+<div id="lockLoading" class="lockLoading">
+	<table>
+		<tr>
+			<td style="vertical-align:middle;" id="lockSpinnerPlace">
+				<div class="lockText"></div>
+			</td>
+		</tr>
+	</table>
+</div>
+
+<div class="wrapper themeContent">
+
+	<div class="ibpage">
+		<div id="header">
+	<div class="logo">
+		<a href="https://ibank.asb.by/wps/myportal/ibank/">
+			<img src="/rd_ib_themes_main_dynamic/themes/html/images/banking_logo2.png" width="232" height="47">
+		</a>
+	</div>
+	<div class="header_right">
+
+		<div class="bl147">
+			<a href="http://belarusbank.by/ru/press/kontakt-centr-belarusbanka#content" target="_blank"><img src="/rd_ib_themes_main_dynamic/themes/html/images/147_phones_short.png" width="96" height="49"></a>
+		</div>
+
+
+			<div class="time">
+				<span>
+					До окончания сеанса <div id="timer"></div>
+				</span>
+			</div>
+			<div class="logout">
+				<a class="button_e" id="portalLogoutLink" tabIndex="6" href='/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L3dDb1ZJQSEhL3dPb0JKTnNBLzRFS2lqaFVNV0hFIS9uc2RkOUZVTkVfM3psdm55OGI4TnByclAwal9hRkNJcnNoSjJyNDhiNHRNcU15YllRLzQ4NzQxMS9sbw!!/'>Выход</a>
+			</div>
+
+	</div>
+</div>
+
+
+
+
+
+
+
+
+
+
+	<div id="menu">
+	<ul>
+
+
+
+
+
+
+
+				<li>
+					<a href="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9GVjIwQUMxTzE1MlYzMDAz/">
+						Главная
+						<b></b>
+					</a>
+				</li>
+
+
+
+
+				<li>
+					<a href="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9GVjIwQUMxTzE1MlYzMDYw/">
+						Платежи и переводы
+						<b></b>
+					</a>
+				</li>
+
+
+
+
+				<li class="active">
+					<a href="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9GVjIwQUMxTzE1MlYzODE1/" >
+						Счета
+						<b></b>
+					</a>
+				</li>
+
+
+
+
+
+				<li>
+					<a href="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9GVjIwQUMxTzE1MlYzT0I1/">
+						История платежей
+						<b></b>
+					</a>
+				</li>
+
+
+	</ul>
+	</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+		<div id="container">
+
+<!-- this layout has two columns -->
+<div>
+	<div class='component-container leftMain ibmDndColumn id-Z7_0AG41KO0JOFV20AC1O152V3891' name='leftMain' ><a name="Z7_0AG41KO0JOFV20AC1O152V38P4"></a><table width="100%" height="100%" border="0" cellpadding="0" cellspacing="0" align="center" class="wpsPortletBody"><tr height="100%"><td width="100%" valign="top">
+
+
+
+
+<div id="leftNavMenu">
+	<ul>
+
+
+
+		 		<li class="parent active">
+		 			<a href="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9GVjIwQUMxTzE1MlYzODk0/" class="menuButton" style="cursor: pointer;"><span style="padding-top: 14px;padding-bottom: 14px;">Счета с карточкой</span><b></b></a>
+		 			<ul style="display: none;">
+
+			 				<li class="">
+
+
+
+			 							<a href="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9GVjIwQUMxTzE1MlYzOFA2/"><span style="padding-top: 14px;padding-bottom: 14px;">Заявки на оформление карточек / Дополнительные услуги</span></a>
+
+
+			 				</li>
+
+			 				<li class="">
+
+
+
+			 							<a href="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSkcxMkUwQUZQOEtJNkZHNUcw/"><span style="padding-top: 14px;padding-bottom: 14px;">История заявок</span></a>
+
+
+			 				</li>
+
+			 				<li class="">
+
+
+
+			 							<a href="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSjhMUDIwQVAzTk5NSzExOEo1/"><span style="padding-top: 14px;padding-bottom: 14px;">Заявка на овердрафт</span></a>
+
+
+			 				</li>
+
+			 				<li class="last">
+
+
+
+			 							<a href="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSjhDVTAwQUI4NzdGRjUxTzY1/"><span style="padding-top: 14px;padding-bottom: 14px;">Онлайн-заявка на овердрафт (карта рассрочки &#034;Магнит&#034;)</span></a>
+
+
+			 				</li>
+
+		 			</ul>
+		 		</li>
+
+
+
+
+
+
+		 		<li class="parent">
+		 			<a href="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9GVjIwQUMxTzE1MlYzOEQ1/" class="menuButton" style="cursor: pointer;"><span style="padding-top: 14px;padding-bottom: 14px;">Депозиты</span><b></b></a>
+		 			<ul style="display: none;">
+
+			 				<li class="">
+
+
+
+			 							<a href="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9GVjIwQUMxTzE1MlYzODM3/"><span style="padding-top: 14px;padding-bottom: 14px;">Открытие депозита</span></a>
+
+
+			 				</li>
+
+			 				<li class="">
+
+
+
+			 							<a href="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9GVjIwQUMxTzE1MlYzOEI0/"><span style="padding-top: 14px;padding-bottom: 14px;">Пополнение депозита</span></a>
+
+
+			 				</li>
+
+			 				<li class="">
+
+
+
+			 							<a href="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9LMEYwQVNCUVJLUFVIUUcx/"><span style="padding-top: 14px;padding-bottom: 14px;">Перечислить средства</span></a>
+
+
+			 				</li>
+
+			 				<li class="">
+
+
+
+			 							<a href="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9GVjIwQUMxTzE1MlYzOFI2/"><span style="padding-top: 14px;padding-bottom: 14px;">Досрочное закрытие депозита</span></a>
+
+
+			 				</li>
+
+			 				<li class="">
+
+
+
+			 							<a href="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9GVjIwQUMxTzE1MlYzODc1/"><span style="padding-top: 14px;padding-bottom: 14px;">Выписка по депозиту</span></a>
+
+
+			 				</li>
+
+			 				<li class="last">
+
+
+
+			 							<a href="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9GVjIwQUMxTzE1MlYzOE43/"><span style="padding-top: 14px;padding-bottom: 14px;">История пополнения</span></a>
+
+
+			 				</li>
+
+		 			</ul>
+		 		</li>
+
+
+
+
+
+
+		 		<li class="parent">
+		 			<a href="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9GVjIwQUMxTzE1MlYzTzQ2/" class="menuButton" style="cursor: pointer;"><span style="padding-top: 14px;padding-bottom: 14px;">Кредиты</span><b></b></a>
+		 			<ul style="display: none;">
+
+			 				<li class="">
+
+
+
+			 							<a href="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9GVjIwQUMxTzE1MlYzTzY1/"><span style="padding-top: 14px;padding-bottom: 14px;">Заявка</span></a>
+
+
+			 				</li>
+
+			 				<li class="">
+
+
+
+			 							<a href="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9GVjIwQUMxTzE1MlYzT0E1/"><span style="padding-top: 14px;padding-bottom: 14px;">Открытие</span></a>
+
+
+			 				</li>
+
+			 				<li class="last">
+
+
+
+			 							<a href="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9GVjIwQUMxTzE1MlYzT0k0/"><span style="padding-top: 14px;padding-bottom: 14px;">Погашение кредита</span></a>
+
+
+			 				</li>
+
+		 			</ul>
+		 		</li>
+
+
+
+
+
+
+		 		<li class="parent">
+		 			<a href="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9WSzMwQTU3NDFUOFAyUUQ3/" class="menuButton" style="cursor: pointer;"><span style="padding-top: 14px;padding-bottom: 14px;">Ценные бумаги</span><b></b></a>
+		 			<ul style="display: none;">
+
+			 				<li class="">
+
+
+
+			 							<a href="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9WSzMwQTU3NDFUOFAyUTM0/"><span style="padding-top: 14px;padding-bottom: 14px;">Купить облигации</span></a>
+
+
+			 				</li>
+
+			 				<li class="">
+
+
+
+			 							<a href="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9WSzMwQTU3NDFUOFAyUUo0/"><span style="padding-top: 14px;padding-bottom: 14px;">Счёт &#034;депо&#034;</span></a>
+
+
+			 				</li>
+
+			 				<li class="">
+
+
+
+			 							<a href="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2X0cxSDYxMUcwSkdFT0IwUTFKN0xJVEEyMDY0/"><span style="padding-top: 14px;padding-bottom: 14px;">Z6_G1H611G0JGEOB0Q1J7LITA2064</span></a>
+
+
+			 				</li>
+
+			 				<li class="">
+
+
+
+			 							<a href="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9WSzMwQTU3NDFUOFAyUUI0/"><span style="padding-top: 14px;padding-bottom: 14px;">Архив заявок на покупку</span></a>
+
+
+			 				</li>
+
+			 				<li class="last">
+
+
+
+			 							<a href="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2X0cxSDYxMUcwSk82TjEwUTk4UlJIQjdJUVE2/"><span style="padding-top: 14px;padding-bottom: 14px;">Z6_G1H611G0JO6N10Q98RRHB7IQQ6</span></a>
+
+
+			 				</li>
+
+		 			</ul>
+		 		</li>
+
+
+
+
+
+
+
+	 			<li class="">
+
+
+
+
+			 				<a href="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2X0cxSDYxMUcwSk82TjEwUTk4UlJIQjcyT0ky/" class="menuButton"><span style="padding-top: 14px;padding-bottom: 14px;">Избирательные счета</span></a>
+
+
+	 			</li>
+
+
+
+	</ul>
+</div></td></tr></table></div><div class='component-container contentMain ibmDndColumn id-Z7_0AG41KO0JOFV20AC1O152V3895' name='contentMain' ><a name="Z7_0AG41KO0JGA380ACLM3DL430Q1"></a><table width="100%" height="100%" border="0" cellpadding="0" cellspacing="0" align="center" class="wpsPortletBody"><tr height="100%"><td width="100%" valign="top"><div xmlns:portlet-client-model="http://www.ibm.com/xmlns/prod/websphere/portal/v6.1/portlet-client-model">
+	<portlet-client-model:init>
+		<portlet-client-model:require module="ibm.portal.xml.*"></portlet-client-model:require>
+		<portlet-client-model:require module="ibm.portal.portlet.*"></portlet-client-model:require>
+	</portlet-client-model:init><div id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:IBHelp" class="ibhelp"><div class="ibhelpURL" style="display: none;">https://ibank.asb.by/ibhelp/pages/accountsCMS/accountsAndCardsHelp.html</div><div class="ibhelp_tooltip"><a class="ibhelp_s_info" href="#" title="Справочная информация"></a><div class="question_info infoPosition_tr"><a class="close" title="Закрыть справочную информацию" href="#"></a><div class="ibhelp_content"><div class="ibhelp_loading"></div></div></div></div></div>
+
+<script type="text/javascript"><!--
+
+jQuery(document).ready(function() {
+	var formId = "#viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_\\\\:AccountStmtForm\\\\:";
+	jQuery(document).on('mouseover', '.ib-PL-dataScroller img', function(){
+		jQuery(this).attr('src',jQuery(this).attr('src').replace('Buttons','Buttons_on'));
+	});
+	jQuery(document).on('mouseout', '.ib-PL-dataScroller img', function(){
+		jQuery(this).attr('src',jQuery(this).attr('src').replace('Buttons_on','Buttons'));
+	});
+});
+
+//--></script>
+
+<style type="text/css">
+	.wrapper {
+		min-width:1050px;
+	}
+	table.ibTable td.bottomTd{
+		border-bottom-width: 3px;
+	}
+	.block table.ibTable td {
+		padding: 10px;
+	}
+</style><head id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06c61a"></head><form id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm" name="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm" method="post" action="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dBISEvZ0FBIS9nQSEh/p0/IZ7_0AG41KO0JGA380ACLM3DL430Q1=CZ6_0AG41KO0JOFV20AC1O152V3894=LArHp6nDJDuKTNEkNBrqOWPOHIAubwUniUHDIVY2kj6sSqMybYg=Ejavax.servlet.include.path_info!QCPpagesQCPclientAccountsQCPaccountStatement.xhtml==/" enctype="application/x-www-form-urlencoded"><input type="hidden" name="javax.faces.encodedURL" value="/wps/myportal/ibank/!ut/p/z1/pZDBCoJAEIYfqMPMuquux80ltRSLSN25hCeR0jxEz98SgSfXoLkNfN_Mzw8EDdDYvvquffaPsb3b3VBwRZUIdihxX-4qD1XMSuZ7FZeRgNoFIHIgh8_8rx8nKhVhjohCepjpbarDqEDMAqc__18YhT_6ywH_8i1A7ng10AdxNbB2g9ZKNjZkOAOJ4tICecF1LjieGJzBxGAyI6dNB9NwsdNgfxxub7fdsF0!/dz/d5/L2dBISEvZ0FBIS9nQSEh/p0/IZ7_0AG41KO0JGA380ACLM3DL430Q1=CZ6_0AG41KO0JOFV20AC1O152V3894=NJpagesQCPclientAccountsQCPaccountStatement.xhtml=/" />
+
+			<table class="block">
+			<tr><td class="description"><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06c633" class="Messages"><table><tr><td class="Info">Отчёт об операциях по счёту с заданными параметрами уже запрашивался. Просмотреть ранее запрошенный отчёт об операциях по счёту можно по ссылке на странице с номерами счетов и карт под списком панелей со счетами</td></tr></table></span><div id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06d8a1"><table id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06d94f"><tbody>
+<tr><td><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06d975" style="font-weight: bold;">Отчёт по счёту с 20.08.2020 по 27.08.2020</span></td></tr>
+<tr><td><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06d939"><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06d927">Владелец счёта: </span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06d9d2">Николаев Николай Николаевич</span></span></td></tr>
+<tr><td><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06d9cd"><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06d9eb">ОАО &quot;АСБ Беларусбанк&quot;, филиал/ЦБУ/BIC: </span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06d9e6">121/-/AKBBBY21121</span></span></td></tr>
+<tr><td><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06d991"><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06d9bf">Дата формирования отчёта: </span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06d9aa">28.08.2020 02:53:36</span></span></td></tr>
+<tr><td><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e643"><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e669">Счёт №</span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e664" class="accountInfo">BY14 AKBB 3014 0000 2283 8121 0012</span></span></td></tr>
+<tr><td><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e617"><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e63d">Валюта счёта: </span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e628">BYN</span></span></td></tr>
+<tr><td><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e6db"><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e6c1">Разрешённый кредит: </span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e6fc">0.00 BYN</span></span></td></tr>
+<tr><td><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e69a"><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e680">Начальный остаток на указанный период: </span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e6b3">0.00</span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e754"> BYN</span></span></td></tr>
+</tbody>
+</table>
+<table id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:hiddenStmtTable_BYN" style="display: none;">
+<tbody id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:hiddenStmtTable_BYN:tbody_element">
+<tr></tr>
+<tr></tr>
+<tr></tr>
+</tbody></table>
+
+
+
+					<table class="ibTable simple" style="width: 100%; margin: 10px 0 15px 0;">
+					<thead>
+						<tr>
+							<th><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e7ca">Дата и время операции</span></th>
+							<th><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e7c5">+/-</span></th>
+							<th><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e7f0">Сумма в валюте операции</span></th>
+							<th><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e7e3">Сумма в валюте счёта</span></th>
+							<th><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e79e">Номер карты</span></th>
+						</tr>
+					</thead>
+					<tbody><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e7b7"><tr></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e7a2"><td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e45d">21.08.2020 00:00:00</span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e476"></td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e461"><td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e41c">+</span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e40f"></td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e43a"><td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e435">427.84</span><div id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e4ce"><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e4f9">BYN</span></div><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e4f4"></td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e4e7"><td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e492">427.84</span><div id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e4ab"><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e4a6">BYN</span></div><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e551"></td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e54c"><td></td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e57f"></tr></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e56a"><tr></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e565"><td colspan='5' class='bottomTd'></span><div id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e510"><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e53e">Наименование операции: Безналичное зачисление на счет</span></div><div id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e529"><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e5d7">Наименование/MCC-код точки обслуживания: УЗ ПИНСКАЯ ДЕТСКАЯ БОЛЬНИЦА (клиент-банк/</span></div><div id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e59b"><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e581">Сумма комиссии (в валюте счёта): </span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e5bc">0.00</span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e255"> BYN</span></div><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e240"></td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:0:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e273"></tr></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e7b7"><tr></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e7a2"><td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e45d">22.08.2020 19:47:21</span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e476"></td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e461"><td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e41c">-</span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e40f"></td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e43a"><td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e435">425.85</span><div id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e4ce"><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e4f9">BYN</span></div><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e4f4"></td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e4e7"><td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e492">425.85</span><div id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e4ab"><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e4a6">BYN</span></div><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e551"></td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e54c"><td>6711********4234</td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e57f"></tr></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e56a"><tr></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e565"><td colspan='5' class='bottomTd'></span><div id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e510"><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e53e">Наименование операции: Покупка/оплата/перевод</span></div><div id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e529"><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e5d7">Наименование/MCC-код точки обслуживания: PEREVOD/6012</span></div><div id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e59b"><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e581">Сумма комиссии (в валюте счёта): </span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e5bc">0.00</span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e255"> BYN</span></div><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e240"></td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:1:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e273"></tr></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e7b7"><tr></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e7a2"><td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e45d">23.08.2020 08:19:44</span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e476"></td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e461"><td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e41c">-</span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e40f"></td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e43a"><td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e435">1.99</span><div id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e4ce"><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e4f9">BYN</span></div><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e4f4"></td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e4e7"><td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e492">1.99</span><div id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e4ab"><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e4a6">BYN</span></div><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e551"></td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e54c"><td>6711********4234</td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e57f"></tr></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e56a"><tr></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e565"><td colspan='5' class='bottomTd'></span><div id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e510"><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e53e">Наименование операции: Покупка/оплата/перевод</span></div><div id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e529"><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e5d7">Наименование/MCC-код точки обслуживания: ERIP/4900</span></div><div id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e59b"><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e581">Сумма комиссии (в валюте счёта): </span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e5bc">0.00</span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e255"> BYN</span></div><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e240"></td></span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e789:2:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e273"></tr></span>
+					</tbody>
+					</table><div id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e26e" class="pages"></div><table id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e308" style="margin-bottom: 20px; float: right;"><tbody>
+<tr><td><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e336"><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e3dc">Приход: </span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e3cf">427.84</span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e3e0"> BYN</span></span></td></tr>
+<tr><td><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e393"><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e3b9">Расход: </span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e3b4">-427.84</span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e04d"> BYN</span></span></td></tr>
+<tr><td><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e078"><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e066">Конечный остаток на указанный период: </span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e011">0.00</span><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e02a"> BYN</span></span></td></tr>
+</tbody>
+</table><div id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e0d0" style="clear: both;"></div></div>
+
+			</td></tr>
+			<tr><td class="bottom"><div id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e0c3" class="ibButton"><script type="text/javascript" src="/wps/PA_rdClientCards/faces/javax.faces.resource/oamSubmit.js?ln=org.apache.myfaces"><!--
+
+//--></script><a href="#" onclick="return myfaces.oam.submitForm('viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm','viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e0e9');" id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e0e9">Изменить период</a></div><div id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e0e4" class="ibButton"><a href="#" onclick="return myfaces.oam.submitForm('viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm','viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e082');" id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e082">Вернуться к списку счетов</a></div><div id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e0bd" class="ibButton">
+					<a href="/wps/PA_rdClientCards/statement.pdf" target="_blank"><span id="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm:ns_Z7_0AG41KO0JGA380ACLM3DL430Q1_j_id1023854171_3d06e15b">Открыть в PDF</span>
+					</a></div>
+
+			</td></tr>
+			</table><input type="hidden" name="viewns_Z7_0AG41KO0JGA380ACLM3DL430Q1_:AccountStmtForm_SUBMIT" value="1" /><input type="hidden" name="javax.faces.ViewState" id="javax.faces.ViewState" value="/s/ILIJQP0MUnb/gGBXSPx/qeFn1F2hE8dXypyYEprKzSJcic2OoniPF5yk16ZAvaWGk1O5qb1T4hQG+SraIbngj8p2MLWfZDhCGHIHkeZ4osgrp49/vcLoyIwO11LQ5l9JFKnEjYtaEwGK41mNh+OqTVhsQbo7noqFJ4Q==" /></form>
+</div></td></tr></table></div></div>
+		</div>
+
+	</div>
+
+</div>
+
+<div class="wrapper themeFooter">
+	<div class="clr"></div>
+<div id="footer">
+<a href="http://asb.by" target="_blank">
+	<div class="f_left">
+		<p>&copy; 2014, ОАО &laquo;АСБ Беларусбанк&raquo;</p>
+		<p>Минск, пр-т Дзержинского, 18</p>
+	</div>
+	<div class="f_right">
+		<p>Телефоны: 147, (017) 218-84-31</p>
+		<p>E-mail: info@belarusbank.by</p>
+	</div>
+	<div class="clr"></div>
+</a>
+</div>
+
+
+</div>
+
+
+<script language="JavaScript" type="text/javascript">
+	timer();
+</script>
+
+
+</body>
+</html>
