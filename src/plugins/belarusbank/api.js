@@ -25,7 +25,11 @@ async function fetchUrl (url, options, predicate = () => true, error = (message)
   if (predicate) {
     validateResponse(response, response => predicate(response), error)
   }
-  const err = response.body.match(/<p id ="status_message" class="error">(.[^/]*)</i)
+  // <span class="bigErrorText" >Сеанс работы с порталом завершен из-за длительного простоя
+  const err = response.body.match(/(?:<p id ="status_message" class="error">(.[^/]*)<|Сеанс работы с порталом завершен из-за длительного простоя)./i)
+  if (err.length === 1) { // Сеанс работы завершен
+    throw new TemporaryError('Сессия завершена из-за длительного простоя. Запустите синхронизацию с банком заново.')
+  }
   if (err && err[1].indexOf('СМС-код отправлен на номер телефона') === -1) {
     if (err[1].indexOf('Необходимо настроить номер телефона для получения СМС') >= 0) {
       throw new BankMessageError(err[1] + '. Это можно сделать на сайте или в приложении Беларусбанка.')
