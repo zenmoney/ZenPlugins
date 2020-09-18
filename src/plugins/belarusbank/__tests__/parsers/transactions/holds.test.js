@@ -20,8 +20,12 @@ describe('parseTransactions', () => {
           time: '11:24:31'
         }
       ]
+    ],
+    [
+      require('./holds2.html'),
+      []
     ]
-  ])('parses transactions', (html, transactions) => {
+  ])('parses holds', (html, transactions) => {
     expect(parseTransactions(html, 'accountId', 'hold')).toEqual(transactions)
   })
 })

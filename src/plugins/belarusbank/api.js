@@ -285,12 +285,13 @@ export function parseCards (html) {
     if (account.accountName.indexOf('Новые карты') >= 0) return // move to the next iteration
     if (!accountTable.children('td[class="tdAccountButton"]').children('a[title="Получить отчёт об операциях по счёту"]').toString()) return
     account.accountNum = accountTable.children('td[class="tdId"]').children('div').text().replace(/\s+/g, '')
-    account.balance = accountTable.children('td[class="tdBalance"]').children('div').children('nobr').text()
-    account.currency = accountTable.children('td[class="tdBalance"]').children('div').text().replace(account.balance, '').trim().split(' ')[0]
     account.overdraftBalance = $(elem).children('table[class="accountInfoTable"]').children('tbody').children('tr')
       .children('td[class="tdAccountDetails"]').children('div').children('span[class="tdAccountOverdraft"]').children('nobr').text()
     account.overdraftCurrency = $(elem).children('table[class="accountInfoTable"]').children('tbody').children('tr')
-      .children('td[class="tdAccountDetails"]').children('div').children('span[class="tdAccountOverdraft"]').text().split(' ').pop()
+      .children('td[class="tdAccountDetails"]').children('div').children('span[class="tdAccountOverdraft"]').text().split(' ').pop() || 'BYN'
+    account.balance = accountTable.children('td[class="tdBalance"]').children('div').children('nobr').text() || null
+    const currencyText = accountTable.children('td[class="tdBalance"]').children('div').text()
+    account.currency = /Остаток временно недоступен/.test(currencyText) ? account.overdraftCurrency : currencyText.replace(account.balance, '').trim().split(' ')[0]
     // console.log(`${accountTable.children('td[class="tdAccountButton"]').children('a[title="Получить отчёт об операциях по счёту"]')}`)
     account.transactionsData.additional = accountTable.children('td[class="tdAccountButton"]').children('a[title="Получить отчёт об операциях по счёту"]').attr('onclick').replace('return myfaces.oam.submitForm(', '').replace(');', '').match(/'(.[^']*)'/ig)
     account.accountId = account.transactionsData.additional[account.transactionsData.additional.length - 1].replace(/('|\\')/g, '')
@@ -414,6 +415,9 @@ export async function fetchCardsTransactions (acc, fromDate, toDate) {
     const match = res.body.match(/Страница \d+ из (\d+)/)
     pages = match ? parseInt(match[1]) : null
     transactions = /Наименование операции/.test(res.body) ? parseTransactions(res.body, acc.id, 'operResultOk') : []
+    if (transactions.length === 0) {
+      console.log('>>> Транзакции на 1й странице не найдены')
+    }
     if (pages) {
       viewns = viewns.replace('accountStmtStartPageForm', 'AccountStmtForm')
       for (let i = 2; i <= pages; i++) {
@@ -433,7 +437,7 @@ export async function fetchCardsTransactions (acc, fromDate, toDate) {
       }
     }
 
-    // возврат к списку счетов
+    console.log('>>> Возврат к списку счетов')
     $ = cheerio.load(res.body)
     action = $('form[id="' + viewns + '"]').attr('action')
     if (!action) { // нет операций в истории или только 1 страница в истории
@@ -488,6 +492,9 @@ export async function fetchCardsTransactions (acc, fromDate, toDate) {
   const match = res.body.match(/Страница \d+ из (\d+)/)
   pages = match ? parseInt(match[1]) : null
   const holds = /Наименование операции/.test(res.body) ? parseTransactions(res.body, acc.id, 'hold') : []
+  if (holds.length === 0) {
+    console.log('>>> Холды на 1й странице не найдены')
+  }
   if (pages) {
     viewns = viewns.replace('accountStmtStartPageForm', 'AccountStmtForm')
     for (let i = 2; i <= pages; i++) {
@@ -532,6 +539,7 @@ async function getNextPage ({ action, encodedUrl, viewState, viewns, idPage }) {
 export function parseTransactions (html, accID, operationType) {
   const match = html.replace(/\r?\n|\r/g, '').match(/<tbody><span .*?<\/tbody>/)
   if (!match) {
+    console.log('>>> No matching transacions/holds!')
     return []
   }
   const table = match[0]
@@ -621,7 +629,7 @@ export function parseTransactions (html, accID, operationType) {
       fee: m[10]
     })
   }
-  const opType = operationType === 'operResultOk' ? 'операций' : 'холдов'
+  const opType = operationType === 'operResultOk' ? 'транзакций' : 'холдов'
   console.log(`>>> Загружено ${transactions.length} ${opType}.`)
   return transactions
 }

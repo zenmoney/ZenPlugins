@@ -29,7 +29,7 @@ export function convertAccount (acc) {
         type: 'ccard',
         title: acc.accountName.replace('Счёт №', '').trim() ? acc.accountName : `${cardsArray[0].name} *${cardsArray[0].number.slice(-4)}`,
         syncID: [],
-        balance: Number.parseFloat(acc.balance.replace(/\s/g, '')),
+        balance: acc.balance ? Number.parseFloat(acc.balance.replace(/\s/g, '')) : null,
         instrument: acc.currency,
         ...creditLimit !== 0 && { creditLimit },
         raw: acc
@@ -49,9 +49,9 @@ export function convertAccount (acc) {
       return {
         id: acc.accountNum || acc.accountId,
         type: creditLimit === 0 ? 'checking' : 'ccard',
-        title: acc.accountName,
+        title: acc.accountName === 'Счёт №' ? 'Текущий счет' : acc.accountName,
         syncID: [acc.accountNum || acc.accountId],
-        balance: Number.parseFloat(acc.balance.replace(/\s/g, '')),
+        balance: acc.balance ? Number.parseFloat(acc.balance.replace(/\s/g, '')) : null,
         instrument: acc.currency,
         ...creditLimit !== 0 && { creditLimit },
         raw: acc
