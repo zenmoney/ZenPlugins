@@ -1,9 +1,19 @@
 import flatten from 'lodash/flatten'
 import { adjustTransactions } from '../../common/transactionGroupHandler'
+import { ZPAPIError } from '../../errors'
 import { fetchCards, fetchCardsTransactions, fetchDeposits, fetchURLAccounts, login } from './api'
 import { convertAccount, convertTransaction } from './converters'
 
-export async function scrape ({ preferences, fromDate, toDate }) {
+export async function scrape (args) {
+  try {
+    return await scrapeImpl(args)
+  } catch (e) {
+    console.assert(e instanceof ZPAPIError, 'network error', e)
+    throw e
+  }
+}
+
+async function scrapeImpl ({ preferences, fromDate, toDate }) {
   toDate = toDate || new Date()
 
   const lastLoginRequest = await login(preferences)
