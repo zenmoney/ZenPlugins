@@ -4,9 +4,15 @@
 
 import { parse, splitCookiesString } from 'set-cookie-parser'
 import { fetchJson } from '../../common/network'
+import { generateRandomString, generateUUID } from '../../common/utils'
+import { InvalidLoginOrPasswordError, InvalidOtpCodeError, UserInteractionError } from '../../errors'
 
 let apiUri = ''
-let xXSrfToken = 'undefined'
+let xXSrfToken = null
+
+const APP_VERSION = '5010'
+const DEVICE_MANUFACTURER = ZenMoney.device?.manufacturer.toLowerCase() || 'zenmoney'
+const DEVICE_MODEL = ZenMoney.device?.model || 'Sync'
 
 const httpSuccessStatus = 200
 
@@ -18,63 +24,76 @@ const setXXSrfToken = (value) => {
   xXSrfToken = value
 }
 
-const createHeaders = (rid) => {
+function getPhoneNumber (str) {
+  str = str.trim()
+  const number = /^(?:\+?7|8|)(\d{10})$/.exec(str)
+  if (number) {
+    return '+7' + number[1]
+  }
+  return str
+}
+
+const createHeaders = (rid, deviceId, instanceId) => {
   return {
-    channel: 'web',
-    platform: 'web',
-    'Sec-Fetch-Mode': 'cors',
     'X-Request-Id': rid,
-    'X-XSRF-TOKEN': xXSrfToken,
-    Connection: 'Keep-Alive',
-    Referer: apiUri.match(/(https?:\/\/[^/]+)/)[1] + '/',
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
+    ...xXSrfToken && { 'X-XSRF-TOKEN': xXSrfToken },
+    Host: apiUri.match(/https?:\/\/([^/]+)\/?/),
+    'Accept-Encoding': 'gzip',
+    'User-Agent': `Dalvik/2.1.0 (Linux; U; Android 8.0.0; ${DEVICE_MODEL} Build/R16NW)`,
+    'os-version': '26',
+    'device-model': DEVICE_MODEL,
+    'X-Device-ID': deviceId,
+    'instance-id': instanceId,
+    vendor: DEVICE_MANUFACTURER,
+    channel: 'mobile',
+    platform: 'android',
+    'Client-Version': APP_VERSION
   }
 }
 
-async function auth (cardNumber, password) {
+async function auth (login, password, authParams, isInBackground) {
+  if (Object.keys(authParams).length === 0 && isInBackground) {
+    throw new UserInteractionError()
+  }
+  const deviceId = authParams.deviceId || generateRandomString(16, '0123456789abcdef')
+  const instanceId = authParams.instanceId || generateUUID()
   let rid = generateHash()
-
   const response = await fetchJson(`${apiUri}/v0001/authentication/auth-by-secret?${makeQueryString(rid)}`, {
     log: true,
     method: 'POST',
+    headers: {
+      ...createHeaders(rid, deviceId, instanceId),
+      'login-method': 'api-pwd'
+    },
     body: {
-      principal: cardNumber,
+      principal: getPhoneNumber(login),
       secret: password,
       type: 'AUTO'
     },
-    headers: createHeaders(rid),
-    sanitizeRequestLog: {
-      body: {
-        principal: true,
-        secret: true
-      }
-    },
-    sanitizeResponseLog: {
-      headers: true
-    }
+    sanitizeRequestLog: { body: { principal: true, secret: true } },
+    sanitizeResponseLog: { headers: true }
   })
 
   if (response.status === httpSuccessStatus) {
-    setTokenFromResponce(response)
-
     const s = response.body.status
 
     if (s === 'OTP_REQUIRED') {
+      setTokenFromResponse(response)
       rid = generateHash()
-
       const code = await ZenMoney.readLine('Введите код из SMS или push-уведомления', {
         time: 120000,
         inputType: 'number'
       })
+      if (!code) { throw new InvalidOtpCodeError() }
 
       const otpResponse = await fetchJson(`${apiUri}/v0001/authentication/confirm?${makeQueryString(rid)}`, {
         log: true,
         method: 'POST',
         body: {
           otp: code,
-          principal: cardNumber
+          principal: login
         },
-        headers: createHeaders(rid),
+        headers: createHeaders(rid, deviceId, instanceId),
         sanitizeRequestLog: {
           body: {
             otp: true,
@@ -87,85 +106,59 @@ async function auth (cardNumber, password) {
       })
 
       assertResponseSuccess(otpResponse)
-
-      setTokenFromResponce(otpResponse)
+      setTokenFromResponse(otpResponse)
+      return { deviceId, instanceId }
     } else if (s === 'OK') {
-      let reason
-      const reasonUnknownCardNumber = 'неверный номер карты'
-      const reasonWrongPassword = 'неверный номер карты или пароль'
-      const reasonLocked = 'доступ временно запрещен'
-      const reasonTechnicalWorks = 'технические работы в банке'
-
-      const statusesUnknownCardNumber = [
+      setTokenFromResponse(response)
+      return authParams
+    } else {
+      if ([
         'CANNOT_FIND_SUBJECT',
         'PRINCIPAL_IS_EMPTY',
         'CANNOT_FOUND_AUTHENTICATION_PROVIDER',
         'CARD_IS_ARCHIVED'
-      ]
-      const statusesWrongPassword = [
+      ].some(str => s === str)) {
+        throw new InvalidLoginOrPasswordError() // statusesUnknownCardNumber
+      }
+      if ([
         'AUTH_WRONG',
         'EMPTY_SECRET_NOT_ALLOWED'
-      ]
-      const statusesLocked = [
+      ].some(str => s === str)) {
+        throw new InvalidLoginOrPasswordError() // statusesWrongPassword
+      }
+      if (s === 'VALIDATION_FAIL' &&
+        [
+          'EAN_OUT_OF_RANGE',
+          'EAN_MUST_HAVE_13_SYMBOLS'
+        ].some(str => response.body.messages[0].code === str)) {
+        throw new InvalidLoginOrPasswordError() // statusesUnknownCardNumber
+      }
+
+      if ([
         'AUTH_LOCKED_TEMPORARY'
-      ]
-      const statusesTechnicalWorks = [
+      ].some(str => s === str)) {
+        throw new TemporaryError('Не удалось авторизоваться: доступ временно запрещен')
+      }
+      if ([
         'CORE_NOT_AVAILABLE_ERROR',
         'CORE_UNAVAILABLE'
-      ]
-
-      const codesWrongEan = [
-        'EAN_OUT_OF_RANGE',
-        'EAN_MUST_HAVE_13_SYMBOLS'
-      ]
-
-      if (statusesUnknownCardNumber.indexOf(s) !== -1) {
-        reason = reasonUnknownCardNumber
-      } else if (s === 'VALIDATION_FAIL' && codesWrongEan.indexOf(response.body.messages[0].code) !== -1) {
-        reason = reasonUnknownCardNumber
-      } else if (statusesWrongPassword.indexOf(s) !== -1) {
-        reason = reasonWrongPassword
-      } else if (statusesLocked.indexOf(s) !== -1) {
-        reason = reasonLocked
-      } else if (statusesTechnicalWorks.indexOf(s) !== -1) {
-        reason = reasonTechnicalWorks
-      } else {
-        reason = null
+      ].some(str => s === str)) {
+        throw new TemporaryError('Не удалось авторизоваться: технические работы в банке')
       }
-      if (reason) {
-        throw new TemporaryError(`Не удалось авторизоваться: ${reason}`)
-      } else {
-        console.assert(false, 'Не удалось авторизоваться', response)
-      }
-    } else {
+
       console.assert(false, 'Не удалось авторизоваться', response)
     }
-  } else {
+  } else { // (response.status !== httpSuccessStatus)
     console.assert(false, 'Не удалось авторизоваться', response)
   }
 }
 
-async function checkSession () {
-  const rid = generateHash()
-
-  const response = await fetchJson(`${apiUri}/v0001/ping/session?${makeQueryString(rid)}`, {
-    log: true,
-    headers: createHeaders(rid)
-  })
-
-  assertResponseSuccess(response)
-
-  setTokenFromResponce(response)
-
-  return response.body.data.authenticated
-}
-
-async function fetchCards () {
+async function fetchCards (auth) {
   const rid = generateHash()
 
   const response = await fetchJson(`${apiUri}/v0002/cards?${makeQueryString(rid)}`, {
     log: true,
-    headers: createHeaders(rid),
+    headers: createHeaders(rid, auth.deviceId, auth.instanceId),
     sanitizeRequestLog: {},
     sanitizeResponseLog: {
       body: {
@@ -182,12 +175,12 @@ async function fetchCards () {
   return response.body.data
 }
 
-async function fetchCredits () {
+async function fetchCredits (auth) {
   const rid = generateHash()
 
   const response = await fetchJson(`${apiUri}/v0001/credit?${makeQueryString(rid)}`, {
     log: true,
-    headers: createHeaders(rid),
+    headers: createHeaders(rid, auth.deviceId, auth.instanceId),
     sanitizeRequestLog: {},
     sanitizeResponseLog: {
       body: {
@@ -210,12 +203,12 @@ async function fetchCredits () {
     : []
 }
 
-async function fetchWallets () {
+async function fetchWallets (auth) {
   const rid = generateHash()
 
   const response = await fetchJson(`${apiUri}/v0001/wallets?${makeQueryString(rid)}`, {
     log: true,
-    headers: createHeaders(rid),
+    headers: createHeaders(rid, auth.deviceId, auth.instanceId),
     sanitizeRequestLog: {},
     sanitizeResponseLog: {}
   })
@@ -227,11 +220,11 @@ async function fetchWallets () {
     : []
 }
 
-async function fetchTransactions (dateFrom, contractIds) {
+async function fetchTransactions (dateFrom, contractIds, auth) {
   const transactions = []
 
   for (const item of contractIds) {
-    const data = await fetchTransactionsByContractId(dateFrom, item)
+    const data = await fetchTransactionsByContractId(dateFrom, item, auth)
     for (const item of data) {
       transactions.push(item)
     }
@@ -240,7 +233,7 @@ async function fetchTransactions (dateFrom, contractIds) {
   return transactions
 }
 
-async function fetchTransactionsByContractId (dateFrom, contractId) {
+async function fetchTransactionsByContractId (dateFrom, contractId, auth) {
   let isFirstPage = true
   const transactions = []
 
@@ -256,7 +249,7 @@ async function fetchTransactionsByContractId (dateFrom, contractId) {
   console.debug('last sync: ' + lastSyncTime + ' (' + dateFrom + ')')
 
   while (isFirstPage || pagination.offset < pagination.total) {
-    const result = await fetchTransactionsInternal(pagination.limit, lastSyncTime, searchAfter, contractId)
+    const result = await fetchTransactionsInternal(pagination.limit, lastSyncTime, searchAfter, contractId, auth)
 
     if (isFirstPage) {
       pagination.total = result.data.totalCount
@@ -287,7 +280,7 @@ async function fetchTransactionsByContractId (dateFrom, contractId) {
   return transactions
 }
 
-async function fetchTransactionsInternal (limit, gte, searchAfter, contractId) {
+async function fetchTransactionsInternal (limit, gte, searchAfter, contractId, auth) {
   const rid = generateHash()
 
   const query = {
@@ -305,7 +298,7 @@ async function fetchTransactionsInternal (limit, gte, searchAfter, contractId) {
 
   const response = await fetchJson(`${apiUri}/v0003/timeline/list?${makeQueryString(rid, query)}`, {
     log: true,
-    headers: createHeaders(rid),
+    headers: createHeaders(rid, auth.deviceId, auth.instanceId),
     sanitizeRequestLog: {},
     sanitizeResponseLog: {}
   })
@@ -335,10 +328,7 @@ const assertResponseSuccess = (response, allowedStatuses = ['OK']) => {
 }
 
 const generateHash = () => {
-  return Array.apply(null, { length: 16 })
-    .map(() => Number(Math.floor(Math.random() * 16)).toString(16))
-    .join('')
-    .substring(0, 13)
+  return generateRandomString(16, '0123456789abcdef')
 }
 
 const makeQueryString = (rid, data) => {
@@ -353,14 +343,14 @@ const makeQueryString = (rid, data) => {
     .join('&')
 }
 
-const setTokenFromResponce = (response) => {
+const setTokenFromResponse = (response) => {
   const cookie = parse(splitCookiesString(response.headers['set-cookie'])).find((x) => x.name === 'XSRF-TOKEN')
   setXXSrfToken(cookie.value)
 }
 
 export {
   apiUri,
-  checkSession,
+  // checkSession,
   setApiUri,
   auth,
   fetchCards,

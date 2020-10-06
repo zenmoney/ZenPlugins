@@ -3,155 +3,207 @@
  */
 
 import _ from 'lodash'
-import { TYPES as TYPE } from '../constants/transactions'
-import { entity } from '../zenmoney_entity/transaction'
 import * as helper from './helpers'
 
-const converter = (item, mapContractToAccount = {}) => {
-  const commentLines = []
+function getInvoice (apiTransaction) {
+  const sign = apiTransaction.money.income ? 1 : -1
+  return {
+    sum: sign * Math.abs(Math.round(parseFloat(apiTransaction.money.amount) * 100) / 100),
+    instrument: apiTransaction.money.currency
+  }
+}
 
-  const transaction = entity()
-  transaction.id = item.id.toString()
-  transaction.date = item.date
-
-  const accountId = resolveAccountId(item, mapContractToAccount)
-  const isIncome = item.money.income
-
-  if (item.type === TYPE.WALLET) {
-    if (isIncome) {
-      transaction.income = item.money.amount
-      transaction.incomeAccount = helper.walletUniqueAccountId(item.walletId)
-      transaction.outcome = item.money.accountAmount.amount
-      transaction.outcomeAccount = accountId
-    } else {
-      transaction.income = item.money.accountAmount.amount
-      transaction.incomeAccount = accountId
-      transaction.outcome = item.money.amount
-      transaction.outcomeAccount = helper.walletUniqueAccountId(item.walletId)
-    }
-  } else if (item.type === TYPE.ZKDP) { // Перевод «Золотая Корона»
-    transaction.outcomeAccount = helper.walletUniqueAccountId(item.walletId)
-    transaction.incomeAccount = 'cash#' + helper.resolveCurrencyCode(item.money.currency)
-    transaction.outcome = item.money.amount
-    transaction.income = item.money.amount
-  } else {
-    let amount = item.money.amount
-    let currency = item.money.currency
-
-    if (_.has(item, 'money.amountDetail.amount' && item.money.amountDetail.amount > 0)) {
-      amount = item.money.amountDetail.amount
-    }
-
-    if (_.has(item, 'money.accountAmount') && item.money.accountAmount.amount > 0) {
-      amount = item.money.accountAmount.amount
-      currency = item.money.accountAmount.currency
-    }
-
-    amount = Math.abs(amount)
-    transaction.outcomeAccount = accountId
-    transaction.incomeAccount = accountId
-    if (isIncome) {
-      transaction.income = amount
-    } else {
-      transaction.outcome = amount
-    }
-
-    /**
-     * Операция совершена в валюте отличной от валюты карты
-     */
-    if (currency !== item.money.currency) {
-      if (isIncome) {
-        transaction.opIncome = item.money.amount
-        transaction.opIncomeInstrument = helper.resolveCurrencyCode(item.money.currency)
-      } else {
-        transaction.opOutcome = item.money.amount
-        transaction.opOutcomeInstrument = helper.resolveCurrencyCode(item.money.currency)
+const converter = (apiTransaction, mapContractToAccount = {}) => {
+  const invoice = getInvoice(apiTransaction)
+  const sign = apiTransaction.money.income ? 1 : -1
+  const accountId = resolveAccountId(apiTransaction, mapContractToAccount)
+  const transaction = {
+    comment: null,
+    date: new Date(apiTransaction.date),
+    hold: !/DONE/.test(apiTransaction.status),
+    merchant: null,
+    movements: [
+      {
+        id: apiTransaction.id.toString() || null,
+        account: { id: accountId },
+        invoice: apiTransaction.money.accountAmount?.currency && invoice.instrument !== apiTransaction.money.accountAmount.currency
+          ? invoice
+          : null,
+        sum: sign * Math.abs(Math.round(parseFloat(apiTransaction.money.accountAmount?.amount || apiTransaction.money.amount) * 100) / 100),
+        fee: 0
       }
-    }
-
-    if (item.type === TYPE.RECHARGE && isIncome) {
-      transaction.outcome = transaction.income
-      if (_.has(item, 'typeName')) {
-        transaction.outcomeAccount = item.typeName === 'Пополнение наличными'
-          ? 'cash#' + helper.resolveCurrencyCode(currency)
-          : 'checking#' + helper.resolveCurrencyCode(currency)
-      } else {
-        transaction.outcomeAccount = item.title.substring(0, 18) === 'Пополнение с карты'
-          ? 'checking#' + helper.resolveCurrencyCode(currency)
-          : 'cash#' + helper.resolveCurrencyCode(currency)
-      }
-    }
-
-    if (item.type === TYPE.CASH && !isIncome) { // снятие наличных
-      transaction.income = transaction.outcome
-      transaction.incomeAccount = 'cash#' + helper.resolveCurrencyCode(currency)
-    }
-
-    if (item.type === TYPE.TRANSFER || item.type === TYPE.FDT_RBS_COMMISSION) {
-      if (isIncome) {
-        transaction.outcome = transaction.income
-        transaction.outcomeAccount = 'checking#' + helper.resolveCurrencyCode(currency)
-      } else {
-        transaction.income = transaction.outcome
-        transaction.incomeAccount = 'checking#' + helper.resolveCurrencyCode(currency)
-      }
-    }
-  }
-
-  if (item.type !== TYPE.CASH) {
-    if (_.has(item, 'paymentDetail.depositBankName')) {
-      transaction.payee = item.paymentDetail.depositBankName
-    } else if (_.has(item, 'description')) {
-      transaction.payee = item.description
-    }
-  }
-
-  if (_.has(item, 'mcc.code')) {
-    transaction.mcc = Number(item.mcc.code)
-  }
-
-  commentLines.push(resolveFirstCommentLine(item))
-  if (item.type === TYPE.ZKDP && _.has(item, 'paymentDetail.transferKey')) {
-    commentLines.push('Код: ' + item.paymentDetail.transferKey)
-  }
-  if (item.type === TYPE.FDT_RBS_COMMISSION && _.has(item, 'paymentDetail.payee')) {
-    commentLines.push('Получатель: ' + item.paymentDetail.payee)
-  }
-  if (_.has(item, 'comment')) {
-    commentLines.push(item.comment)
-  }
-  if (commentLines.length > 0) {
-    transaction.comment = commentLines.join('\n')
-  }
-
+    ]
+  };
+  [
+    parseCashTransfer,
+    parseInnerTransfer,
+    parseOuterTransfer,
+    parseComment,
+    parsePayee
+    // parseAll
+  ].some(parser => parser(transaction, apiTransaction, accountId, invoice))
   return transaction
 }
 
-/**
- * @param item
- * @returns {string}
- */
-const resolveFirstCommentLine = (item) => {
-  let string1 = ''
-  let string2 = ''
+function parseCashTransfer (transaction, apiTransaction, accountId, invoice) {
+  if (!(apiTransaction.type === 'CASH' ||
+    (apiTransaction.type === 'RECHARGE' &&
+      (apiTransaction.typeName === 'Пополнение наличными' || apiTransaction.title === 'Пополнение')))) { return false }
+  transaction.movements.push({
+    id: null,
+    account: {
+      type: 'cash',
+      instrument: invoice.instrument,
+      company: null,
+      syncIds: null
+    },
+    invoice: null,
+    sum: -invoice.sum,
+    fee: 0
+  })
+  transaction.comment = apiTransaction.description || apiTransaction.title.replace('Пополнение', '') || null
+  return true
+}
 
-  if (item.type === TYPE.CASH && ('mcc' in item) && ('description' in item.mcc)) {
-    string1 = item.mcc.description
-  } else {
-    string1 = ('typeName' in item) ? item.typeName : ''
+function parseInnerTransfer (transaction, apiTransaction, accountId, invoice) {
+  if (apiTransaction.type !== 'WALLET') { return false }
+  transaction.movements[0].sum = -transaction.movements[0].sum
+  if (transaction.movements[0].invoice) { transaction.movements[0].invoice.sum = -transaction.movements[0].invoice.sum }
+  transaction.movements.push({
+    id: null,
+    account: { id: helper.walletUniqueAccountId(apiTransaction.walletId) },
+    invoice: null,
+    sum: -invoice.sum,
+    fee: 0
+  })
+  transaction.comment = `${apiTransaction.typeName} ${apiTransaction.title}`
+  return true
+}
+
+function parseOuterTransfer (transaction, apiTransaction, accountId, invoice) {
+  if (!([
+    'ZKDP', // Перевод «Золотая Корона»
+    'FDT_RBS_COMMISSION', // Исходящий
+    'TRANSFER'
+  ].some(str => str === apiTransaction.type) ||
+    (apiTransaction.type === 'RECHARGE' &&
+      (/(Перевод|Пополнение) с карты/.test(apiTransaction.typeName) || /(Перевод|Пополнение) с карты/.test(apiTransaction.title)))
+  )) {
+    return false
   }
 
-  if (item.type === TYPE.CASH && ('description' in item)) {
-    string2 += item.description
-  } else if (item.type === TYPE.FDT_RBS_COMMISSION && ('paymentDetail' in item) && ('payeeBankName' in item.paymentDetail)) {
-    string2 += item.paymentDetail.payeeBankName
-  } else if (item.type === TYPE.DEPOSIT_PROC && ('typeName' in item)) {
-    // nothing
-  } else {
-    string2 += item.title
+  let title
+
+  switch (apiTransaction.type) {
+    case 'TRANSFER':
+      if (apiTransaction.typeName) {
+        title = `${apiTransaction.typeName} ${apiTransaction.title}`
+      }
+      break
+    case 'ZKDP':
+      transaction.movements[0].account = { id: helper.walletUniqueAccountId(apiTransaction.walletId) }
+      title = apiTransaction.title
+      transaction.comment = apiTransaction.typeName
+      break
+    case 'FDT_RBS_COMMISSION':
+      title = apiTransaction.paymentDetail?.payee || apiTransaction.paymentDetail?.purposePayment || apiTransaction.title
+      if (apiTransaction.paymentDetail?.payeeBankName) {
+        transaction.comment = apiTransaction.paymentDetail.payeeBankName
+      }
+      break
+    case 'RECHARGE':
+      title = apiTransaction.title.replace(/(Перевод|Пополнение) с карты:?/, '').replace(/(MASTERCARD|VISA)/i, '').trim()
   }
 
-  return string1 + (string1.length > 0 && string2.length > 0 ? ': ' : '') + string2
+  let country = null
+  let city = null
+  if (apiTransaction.paymentDetail?.city?.indexOf(',') >= 0) {
+    const cityArray = apiTransaction.paymentDetail.city.split(',')
+    if (cityArray.length > 1) {
+      country = cityArray[0].trim()
+      city = cityArray[1].trim()
+    } else {
+      city = cityArray[1].trim()
+    }
+  }
+  if (title || city || country) {
+    transaction.merchant = {
+      country,
+      city,
+      title,
+      mcc: null,
+      location: null
+    }
+  }
+
+  transaction.movements.push({
+    id: null,
+    account: {
+      type: 'ccard',
+      instrument: invoice.instrument,
+      company: null,
+      syncIds: null
+    },
+    invoice: null,
+    sum: -invoice.sum,
+    fee: 0
+  })
+  return true
+}
+
+function parseComment (transaction, apiTransaction, accountId, invoice) {
+  if ([
+    /Комиссия за/
+  ].some(regex => regex.test(apiTransaction.typeName))) {
+    transaction.comment = apiTransaction.typeName
+    if (apiTransaction.description) { transaction.comment += ` ${apiTransaction.description}` }
+    return true
+  }
+
+  if ([
+    'DEPOSIT_PROC'
+  ].some(str => str === apiTransaction.type)) {
+    transaction.comment = apiTransaction.typeName ? apiTransaction.typeName : apiTransaction.title
+    if (apiTransaction.paymentDetail?.depositBankName) {
+      transaction.comment += ` ${apiTransaction.paymentDetail.depositBankName}`
+    }
+    return true
+  }
+  if ([
+    /Начисление процентов/i
+  ].some(regex => regex.test(apiTransaction.title))) {
+    transaction.comment = apiTransaction.title
+    if (apiTransaction.description) { transaction.comment += ` ${apiTransaction.description}` }
+    return true
+  }
+  return false
+}
+
+function parsePayee (transaction, apiTransaction, accountId, invoice) {
+  if (![
+    'PURCHASE',
+    'PAYMENT',
+    'REFUND'
+  ].some(str => str === apiTransaction.type)) {
+    return false
+  }
+
+  let city = apiTransaction.description?.indexOf(',') >= 0 ? apiTransaction.description.split(',')[1].trim() : null
+  if (/\.(com|net|ru|ua|by)$/i.test(city)) { city = null }
+  transaction.merchant = {
+    country: null,
+    city,
+    title: apiTransaction.title,
+    mcc: apiTransaction.mcc?.code ? parseInt(apiTransaction.mcc.code) : null,
+    location: null
+  }
+  if (/Возврат платежа:/.test(apiTransaction.title)) {
+    transaction.merchant.title = transaction.merchant.title.replace('Возврат платежа:', '').trim()
+    transaction.comment = 'Возврат платежа'
+  } else if (apiTransaction.type === 'REFUND') {
+    transaction.comment = apiTransaction.typeName
+  }
+  return true
 }
 
 /**
