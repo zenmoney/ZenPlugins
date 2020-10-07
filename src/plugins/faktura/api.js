@@ -213,7 +213,10 @@ async function fetchWallets (auth) {
     sanitizeResponseLog: {}
   })
 
-  assertResponseSuccess(response)
+  assertResponseSuccess(response, [
+    'OK',
+    'FEATURE_IS_RESTRICTED_FOR_SUBJECT' // if not supported
+  ])
 
   return response.body.data && response.body.data.wallets
     ? response.body.data.wallets
