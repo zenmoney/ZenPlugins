@@ -37,7 +37,7 @@ const createHeaders = (rid, deviceId, instanceId) => {
   return {
     'X-Request-Id': rid,
     ...xXSrfToken && { 'X-XSRF-TOKEN': xXSrfToken },
-    Host: apiUri.match(/https?:\/\/([^/]+)\/?/),
+    Host: apiUri.match(/https?:\/\/([^/]+)\/?/)[1],
     'Accept-Encoding': 'gzip',
     'User-Agent': `Dalvik/2.1.0 (Linux; U; Android 8.0.0; ${DEVICE_MODEL} Build/R16NW)`,
     'os-version': '26',
