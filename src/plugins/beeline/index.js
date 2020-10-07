@@ -6,8 +6,8 @@ import * as main from '../faktura/main'
 
 const apiUri = 'https://bank.beeline.ru/api'
 
-async function scrape ({ fromDate, toDate }) {
-  return main.scrape({ fromDate, toDate, apiUri })
+async function scrape (args) {
+  return main.scrape({ ...args, apiUri })
 }
 
 export {
