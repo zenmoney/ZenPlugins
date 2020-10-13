@@ -74,15 +74,15 @@ const getLastSuccessDate = () => {
   return null
 }
 
-const calculateFromDate = (startDateString) => {
+const calculateFromDate = (startDateString, now = new Date()) => {
   console.assert(startDateString, 'preferences must contain "startDate"')
   const startDate = parseStartDateString(startDateString)
   console.assert(isValidDate(startDate), { startDateString }, 'is not a valid date')
   const lastSuccessDate = getLastSuccessDate()
-  if (lastSuccessDate) {
-    return new Date(Math.max(lastSuccessDate.getTime() - MS_IN_WEEK, startDate.getTime()))
-  }
-  return startDate
+  const fromDate = lastSuccessDate
+    ? new Date(Math.max(lastSuccessDate.getTime() - MS_IN_WEEK, startDate.getTime()))
+    : startDate
+  return fromDate.getTime() < now.getTime() ? fromDate : now
 }
 
 export function provideScrapeDates (fn) {
