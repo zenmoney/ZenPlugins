@@ -76,6 +76,10 @@ function parsePayee (transaction, json) {
     transaction.merchant.title = merchant[0]
     transaction.merchant.city = merchant[1].trim()
     transaction.merchant.country = merchant[2].trim()
+  } else if (merchant.length === 4) {
+    transaction.merchant.title = merchant[0].trim() + '; ' + merchant[1].trim()
+    transaction.merchant.city = merchant[2].trim()
+    transaction.merchant.country = merchant[3].trim()
   } else {
     throw new Error('Ошибка обработки транзакции с получателем: ' + json.merchant)
   }

@@ -190,6 +190,40 @@ describe('convertTransaction', () => {
     })
   })
 
+  it('merchant parsing Udemy', () => {
+    const transaction = convertTransaction({
+      account_id: '00750933012345',
+      currency: 'BYN',
+      currencyCode: '933',
+      date: new Date('2019-02-14T00:00:00+03:00'),
+      merchant: 'UDEMY; ONLINE COURSES; SAN FRANCISC; US',
+      operationName: 'Оплата товаров и услуг',
+      sum: -18
+    })
+
+    expect(transaction).toEqual({
+      hold: false,
+      date: new Date('2019-02-14T00:00:00+03:00'),
+      movements: [
+        {
+          id: null,
+          account: { id: account.id },
+          sum: -18,
+          invoice: null,
+          fee: 0
+        }
+      ],
+      merchant: {
+        city: 'SAN FRANCISC',
+        country: 'US',
+        location: null,
+        mcc: null,
+        title: 'UDEMY; ONLINE COURSES'
+      },
+      comment: null
+    })
+  })
+
   it('merchant parsing without country', () => {
     const transaction = convertTransaction({
       account_id: '00750933012345',
