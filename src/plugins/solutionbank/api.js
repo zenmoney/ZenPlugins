@@ -99,7 +99,7 @@ export async function fetchAccounts (sessionToken) {
       depositAccount: {}
     }
   }, response => response.body && response.body.overviewResponse && response.body.overviewResponse.cardAccount,
-  message => new TemporaryError(message))).body.overviewResponse.cardAccount
+    message => new TemporaryError(message))).body.overviewResponse.cardAccount
 
   for (let i = 0; i < cardAccounts.length; i++) {
     const balanceRes = await fetchApiJson('payment/simpleExcute', {
@@ -116,16 +116,16 @@ export async function fetchAccounts (sessionToken) {
               '<TerminalTime>@{pay_date}</TerminalTime>' +
               '<TerminalId>@{terminal_id_mb}</TerminalId>' +
               '<TerminalCapabilities>' +
-                '<BooleanParameter>Y</BooleanParameter>' +
-                '<LongParameter>Y</LongParameter>' +
-                '<AnyAmount>Y</AnyAmount>' +
-                '<ScreenWidth>99</ScreenWidth>' +
-                '<CheckWidth DoubleHeightSymbol="Y" DoubleWidthSymbol="N" InverseSymbol="Y">40</CheckWidth>' +
+              '<BooleanParameter>Y</BooleanParameter>' +
+              '<LongParameter>Y</LongParameter>' +
+              '<AnyAmount>Y</AnyAmount>' +
+              '<ScreenWidth>99</ScreenWidth>' +
+              '<CheckWidth DoubleHeightSymbol="Y" DoubleWidthSymbol="N" InverseSymbol="Y">40</CheckWidth>' +
               '</TerminalCapabilities>' +
               '<Balance Currency="933">' +
-                '<AuthorizationDetails Count="1">' +
-                  '<Parameter Idx="1" Name="Срок действия карточки">#{' + cardAccounts[i].cards[0].cardHash + '@[card_expire]}</Parameter>' +
-                '</AuthorizationDetails>' +
+              '<AuthorizationDetails Count="1">' +
+              '<Parameter Idx="1" Name="Срок действия карточки">#{' + cardAccounts[i].cards[0].cardHash + '@[card_expire]}</Parameter>' +
+              '</AuthorizationDetails>' +
               '</Balance></BS_Request>'
           }
         ]
@@ -179,21 +179,24 @@ export async function fetchTransactionsMini (sessionToken, accounts, fromDate, t
   let $, account
   let i = 0
   const operations = flatMap(responses, response => {
-    $ = cheerio.load(response.body.komplatResponse[0].response, {
-      xmlMode: true
-    })
-    account = accounts[i++]
-    return flatMap($('Operation'), op => {
-      return {
-        account_id: account.id,
-        date: getDate(op.attribs.Date),
-        operationName: op.attribs.Type,
-        merchant: op.attribs.Merchant,
-        currencyCode: op.attribs.Currency,
-        currency: op.attribs.CurrencyAbbr,
-        sum: Number.parseFloat(op.children[0].data.replace(',', '.').replace(/\s/g, ''))
-      }
-    })
+    if (response.body !== undefined) {
+      $ = cheerio.load(response.body.komplatResponse[0].response, {
+        xmlMode: true
+      })
+      account = accounts[i++]
+      return flatMap($('Operation'), op => {
+        return {
+          account_id: account.id,
+          date: getDate(op.attribs.Date),
+          operationName: op.attribs.Type,
+          merchant: op.attribs.Merchant,
+          currencyCode: op.attribs.Currency,
+          currency: op.attribs.CurrencyAbbr,
+          sum: Number.parseFloat(op.children[0].data.replace(',', '.').replace(/\s/g, ''))
+        }
+      })
+    }
+    return undefined
   })
 
   const filteredOperations = operations.filter(function (op) {
