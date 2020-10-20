@@ -55,3 +55,5 @@ export class UserInteractionError extends TemporaryError {
     super('[INU]')
   }
 }
+
+export class PasswordExpiredError extends InvalidPreferencesError {}

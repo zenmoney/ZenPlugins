@@ -7,6 +7,7 @@ import {
   InvalidLoginOrPasswordError,
   InvalidOtpCodeError,
   InvalidPreferencesError,
+  PasswordExpiredError,
   PinCodeInsteadOfPasswordError,
   PreviousSessionNotClosedError,
   TemporaryError,
@@ -239,6 +240,8 @@ function getPresentationError (error) {
     key = 'zenPlugin_temporaryUnavailableError'
   } else if (error instanceof PinCodeInsteadOfPasswordError) {
     key = 'zenPlugin_pinCodeInsteadOfPasswordError'
+  } else if (error instanceof PasswordExpiredError) {
+    key = 'zenPlugin_passwordExpiredError'
   } else if (error instanceof InvalidPreferencesError && !error.message) {
     key = 'zenPlugin_invalidPreferencesError'
   }
