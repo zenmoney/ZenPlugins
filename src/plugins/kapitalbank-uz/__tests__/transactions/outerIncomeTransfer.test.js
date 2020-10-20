@@ -24,18 +24,6 @@ describe('convertTransaction', () => {
             invoice: null,
             sum: 12384986.35,
             fee: 0
-          },
-          {
-            id: null,
-            account: {
-              type: null,
-              instrument: 'UZS',
-              syncIds: null,
-              company: null
-            },
-            invoice: null,
-            sum: -12384986.35,
-            fee: 0
           }
         ]
       }
@@ -80,18 +68,6 @@ describe('convertTransaction', () => {
             invoice: null,
             sum: 33500.00,
             fee: 0
-          },
-          {
-            id: null,
-            account: {
-              type: null,
-              instrument: 'RUB',
-              syncIds: null,
-              company: null
-            },
-            invoice: null,
-            sum: -33500.00,
-            fee: 0
           }
         ]
       }
@@ -135,18 +111,6 @@ describe('convertTransaction', () => {
             account: { id: 'account' },
             invoice: null,
             sum: 4300000.00,
-            fee: 0
-          },
-          {
-            id: null,
-            account: {
-              type: null,
-              instrument: 'UZS',
-              syncIds: null,
-              company: null
-            },
-            invoice: null,
-            sum: -4300000.00,
             fee: 0
           }
         ]

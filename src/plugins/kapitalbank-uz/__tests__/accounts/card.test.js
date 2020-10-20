@@ -88,8 +88,7 @@ describe('convertAccount', () => {
       title: 'Хумо',
       instrument: 'UZS',
       syncIds: [
-        '986019******2965',
-        '986019OBDZDO8587'
+        '986019******2965'
       ],
       balance: 14494.00
     })
@@ -110,8 +109,7 @@ describe('convertAccount', () => {
       title: 'Хумo Turkiston',
       instrument: 'UZS',
       syncIds: [
-        '986021******3871',
-        '986021CREBIX8092'
+        '986021******3871'
       ],
       balance: 21141190.51
     })

@@ -66,10 +66,6 @@ export function convertCard (rawCard) {
     card.syncIds.push(rawCard.account)
   }
 
-  if (rawCard.maskedPan) {
-    card.syncIds.push(rawCard.maskedPan)
-  }
-
   return card
 }
 
@@ -86,6 +82,7 @@ export function convertUzcardCardTransaction (cardId, rawTransaction) {
     instrument: 'UZS'
   }
   const transaction = {
+    comment: null,
     date: new Date(rawTransaction.utime),
     hold: false,
     merchant: {
@@ -106,9 +103,9 @@ export function convertUzcardCardTransaction (cardId, rawTransaction) {
     ]
   };
   [
+    parseInnerTransfer,
     parseOuterTransfer
   ].some(parser => parser(rawTransaction, transaction, invoice))
-  transaction.comment = null
 
   return transaction
 }
@@ -151,7 +148,7 @@ export function convertHumoCardTransaction (card, rawTransaction) {
     comment: null
   };
   [
-    parseTransfer,
+    parseInnerTransfer,
     parseOuterTransfer
   ].some(parser => parser(rawTransaction, transaction, invoice, fee))
 
@@ -201,7 +198,7 @@ export function convertVisaCardTransaction (card, rawTransaction) {
     comment: null
   };
   [
-    parseTransfer,
+    parseInnerTransfer,
     parseOuterTransfer
   ].some(parser => parser(rawTransaction, transaction, invoice, fee))
 
@@ -209,56 +206,16 @@ export function convertVisaCardTransaction (card, rawTransaction) {
 }
 
 function parseOuterTransfer (rawTransaction, transaction, invoice, fee) {
-  for (const pattern of [
-    /P2P/i,
-    /Входящий перевод/i,
-    /Возврат средств/i
-  ]) {
-    const match = rawTransaction.merchantName.match(pattern) || rawTransaction.transType.match(pattern)
-    if (match) {
-      transaction.comment = rawTransaction.transType
-      transaction.movements.push(
-        {
-          id: null,
-          account: {
-            type: 'card',
-            instrument: invoice.instrument,
-            syncIds: null,
-            company: null
-          },
-          invoice: null,
-          sum: -invoice.sum,
-          fee: fee || 0
-        })
-      return true
-    }
+  if (rawTransaction.transType && ![
+    /^\d+$/,
+    /товар.* и услуг/i
+  ].some(regexp => regexp.test(rawTransaction.transType))) {
+    transaction.comment = rawTransaction.transType
   }
   return false
 }
 
-function parseTransfer (rawTransaction, transaction, invoice, fee) {
-  for (const pattern of [
-    /Пополнение карты/i
-  ]) {
-    const match = rawTransaction.transType.match(pattern)
-    if (match) {
-      transaction.comment = rawTransaction.transType
-      transaction.movements.push(
-        {
-          id: null,
-          account: {
-            type: 'cash',
-            instrument: invoice.instrument,
-            syncIds: null,
-            company: null
-          },
-          invoice: null,
-          sum: -invoice.sum,
-          fee: fee
-        })
-      return true
-    }
-  }
+function parseInnerTransfer (rawTransaction, transaction, invoice, fee) {
   return false
 }
 
@@ -290,35 +247,11 @@ export function convertWalletTransaction (wallet, rawTransaction) {
     comment: rawTransaction.details
   };
   [
-    parseTransferWallet
+    parseInnerTransfer,
+    parseOuterTransfer
   ].some(parser => parser(rawTransaction, transaction, invoice))
 
   return transaction
-}
-
-function parseTransferWallet (rawTransaction, transaction, invoice, fee) {
-  for (const pattern of [
-    /Перевод/i
-  ]) {
-    const match = rawTransaction.details.match(pattern)
-    if (match) {
-      transaction.movements.push(
-        {
-          id: null,
-          account: {
-            type: null,
-            instrument: invoice.instrument,
-            syncIds: null,
-            company: null
-          },
-          invoice: null,
-          sum: -invoice.sum,
-          fee: 0
-        })
-      return true
-    }
-  }
-  return false
 }
 
 /**
@@ -350,41 +283,15 @@ export function convertAccountTransaction (account, rawTransaction) {
     comment: rawTransaction.details
   };
   [
-    parseTitle,
-    parseTransferAccountTransaction
+    parsePayee,
+    parseInnerTransfer,
+    parseOuterTransfer
   ].some(parser => parser(rawTransaction, transaction, invoice))
 
   return transaction
 }
 
-function parseTransferAccountTransaction (rawTransaction, transaction, invoice) {
-  for (const pattern of [
-    /Отправка денежного/i,
-    /Перевод средств/i,
-    /Пополнение счета/i
-  ]) {
-    const match = rawTransaction.details.match(pattern)
-    if (match) {
-      transaction.comment = rawTransaction.details
-      transaction.movements.push(
-        {
-          id: null,
-          account: {
-            type: null,
-            instrument: invoice.instrument,
-            syncIds: null,
-            company: null
-          },
-          invoice: null,
-          sum: -invoice.sum,
-          fee: 0
-        })
-    }
-  }
-  return false
-}
-
-function parseTitle (rawTransaction, transaction, invoice) {
+function parsePayee (rawTransaction, transaction, invoice) {
   for (const pattern of [
     /по клиенту\s+(\b[A-Z]+\s[A-Z]+\s[A-Z]+\b)\s*/,
     /согл заяв\s+(\b[A-Z]+\s[A-Z]+\s[A-Z]+\b)\s*/,

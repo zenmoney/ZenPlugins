@@ -42,18 +42,6 @@ describe('convertTransaction', () => {
             invoice: null,
             sum: -15000.00,
             fee: 0
-          },
-          {
-            id: null,
-            account: {
-              type: 'card',
-              instrument: 'UZS',
-              syncIds: null,
-              company: null
-            },
-            invoice: null,
-            sum: 15000.00,
-            fee: 0
           }
         ]
       }
@@ -94,18 +82,6 @@ describe('convertTransaction', () => {
             invoice: null,
             sum: 248506.00,
             fee: 0
-          },
-          {
-            id: null,
-            account: {
-              type: 'card',
-              instrument: 'UZS',
-              syncIds: null,
-              company: null
-            },
-            invoice: null,
-            sum: -248506.00,
-            fee: 0
           }
         ]
       }
@@ -144,18 +120,6 @@ describe('convertTransaction', () => {
             invoice: null,
             sum: 5.00,
             fee: 0
-          },
-          {
-            id: null,
-            account: {
-              type: 'cash',
-              instrument: 'USD',
-              syncIds: null,
-              company: null
-            },
-            invoice: null,
-            sum: -5.00,
-            fee: 0
           }
         ]
       }
@@ -187,18 +151,6 @@ describe('convertTransaction', () => {
             account: { id: 'card' },
             invoice: null,
             sum: 19.99,
-            fee: 0
-          },
-          {
-            id: null,
-            account: {
-              type: 'card',
-              instrument: 'USD',
-              syncIds: null,
-              company: null
-            },
-            invoice: null,
-            sum: -19.99,
             fee: 0
           }
         ]
@@ -237,18 +189,6 @@ describe('convertTransaction', () => {
             account: { id: 'card' },
             invoice: null,
             sum: 15000.00,
-            fee: 0
-          },
-          {
-            id: null,
-            account: {
-              type: 'card',
-              instrument: 'UZS',
-              syncIds: null,
-              company: null
-            },
-            invoice: null,
-            sum: -15000.00,
             fee: 0
           }
         ]
