@@ -99,7 +99,7 @@ export async function fetchAccounts (sessionToken) {
       depositAccount: {}
     }
   }, response => response.body && response.body.overviewResponse && response.body.overviewResponse.cardAccount,
-    message => new TemporaryError(message))).body.overviewResponse.cardAccount
+  message => new TemporaryError(message))).body.overviewResponse.cardAccount
 
   for (let i = 0; i < cardAccounts.length; i++) {
     const balanceRes = await fetchApiJson('payment/simpleExcute', {
