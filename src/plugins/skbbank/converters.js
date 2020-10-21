@@ -107,8 +107,7 @@ function convertLoan (apiAccounts) {
     const toDate = new Date(parseDate(apiLoan.endDate))
     const { interval, count } = getIntervalBetweenDates(fromDate, toDate)
     const account = {
-      id: apiLoan.repaymentAccount,
-      mainAccount: apiLoan.mainAccount,
+      id: apiLoan.mainAccount,
       type: 'loan',
       title: apiLoan.name,
       instrument: apiLoan.currency,
