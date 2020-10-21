@@ -64,7 +64,7 @@ async function loginReq (login, password, smsCode) {
   ZenMoney.setData('device_id', deviceID)
 
   const body = {
-    applicID: '1.37.1',
+    applicID: '1.40.1',
     browser: 'generic_x86',
     browserVersion: 'Android SDK built for x86 (sdk_google_phone_x86)',
     clientKind: '0',
