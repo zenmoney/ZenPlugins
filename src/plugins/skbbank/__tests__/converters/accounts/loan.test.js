@@ -133,14 +133,88 @@ describe('convertLoan', () => {
           type: 'loan',
           title: 'ПЕРСОНАЛЬНОЕ ПРЕДЛОЖЕНИЕ (потребительский кредит)',
           instrument: 'RUB',
-          balance: -216300,
+          balance: -20878.61,
           capitalization: true,
           percent: 26.9,
           startDate: new Date('2014-03-12T21:00:00.000Z'),
+          startBalance: 216300,
           endDateOffset: 116,
           endDateOffsetInterval: 'month',
           syncIds: [
             '45507810939900624978'
+          ]
+        }
+      ]
+    ],
+    [
+      {
+        loans:
+          [
+            {
+              id: 882303514,
+              bank_system_id: '17028760',
+              productName: '«Простой и удобный» (ГЭБ)',
+              productCode: '2550',
+              customName: false,
+              name: '«Простой и удобный» (ГЭБ)',
+              amount: 182000,
+              currency: 'RUB',
+              interestRate: 14.9,
+              psk: 14.89,
+              contractDate: '07.10.2020',
+              contractNumber: '24916798236',
+              openDate: '07.10.2020',
+              endDate: '07.10.2025',
+              allowPaymentAmount: 183111.39,
+              partialPaymentDate: '25.11.2020',
+              planPaymentAmount: 4300,
+              mainAccount: '10098810824900236214',
+              repaymentAccount: '40817810900016440959',
+              recommendedPaymentAmount: 4300,
+              partialPaymentAmount: null,
+              prepayment: true,
+              overdueDebtAmount: 0,
+              overdraft: false,
+              startPaymentPeriod: null,
+              gracePeriodDate: null,
+              creditLimit: null,
+              availableLimit: null,
+              prepaymentApplication: true,
+              changeDate: true,
+              ownFounds: null,
+              changeRepaymentAccount: false,
+              partialPaymentMarker: false,
+              reduceLimit: false,
+              closeLimit: false,
+              prepaymentAmount: null,
+              prepaymentId: null,
+              prepaymentType: null,
+              loanHolder: 'ПАО "СКБ-банк"',
+              paymentsDelay: false,
+              paymentsDelayId: null,
+              scheduleChanged: false,
+              mortgage: false,
+              onlineRepayment: false,
+              petitionId: null,
+              minLimit: null
+            }
+          ]
+      },
+      [
+        {
+          id: '10098810824900236214',
+          type: 'loan',
+          title: '«Простой и удобный» (ГЭБ)',
+          instrument: 'RUB',
+          balance: -183111.39,
+          capitalization: true,
+          percent: 14.9,
+          startDate: new Date('2020-10-06T21:00:00.000Z'),
+          startBalance: 182000,
+          endDateOffset: 5,
+          endDateOffsetInterval: 'year',
+          syncIds: [
+            '10098810824900236214'
           ]
         }
       ]

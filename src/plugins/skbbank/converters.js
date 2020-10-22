@@ -9,14 +9,14 @@ export function convertAccounts (apiAccounts) {
 
 function convertAccountCard (apiAccounts) {
   if (!apiAccounts.accounts) {
-    return null
+    return []
   }
 
   let accounts = []
   for (let i = 0; i < apiAccounts.accounts.length; i++) {
     const apiAccount = apiAccounts.accounts[i]
     if (apiAccount.category !== 'account') {
-      return null
+      continue
     }
     const account = {
       id: apiAccount.number,
@@ -43,14 +43,14 @@ function convertAccountCard (apiAccounts) {
 
 function convertDeposit (apiAccounts) {
   if (!apiAccounts.deposits) {
-    return null
+    return []
   }
 
   let accounts = []
   for (let i = 0; i < apiAccounts.deposits.length; i++) {
     const apiDeposit = apiAccounts.deposits[i]
     if (!apiDeposit.contract_number) {
-      return null
+      continue
     }
     let payoffInterval = {}
     for (const pattern of [
@@ -64,7 +64,7 @@ function convertDeposit (apiAccounts) {
     }
     if (payoffInterval === undefined) {
       console.log('Unexpected percentPaidPeriod ' + apiDeposit.percentPaydPeriod)
-      return null
+      continue
     }
     let payoffStep = 1
     if (payoffInterval === null) {
@@ -93,14 +93,14 @@ function convertDeposit (apiAccounts) {
 
 function convertLoan (apiAccounts) {
   if (!apiAccounts.loans) {
-    return null
+    return []
   }
 
   let accounts = []
   for (let i = 0; i < apiAccounts.loans.length; i++) {
     const apiLoan = apiAccounts.loans[i]
     if (!apiLoan.mainAccount) {
-      return null
+      continue
     }
 
     const fromDate = new Date(parseDate(apiLoan.openDate))
@@ -111,10 +111,11 @@ function convertLoan (apiAccounts) {
       type: 'loan',
       title: apiLoan.name,
       instrument: apiLoan.currency,
-      balance: -apiLoan.amount,
+      balance: -apiLoan.allowPaymentAmount,
       capitalization: apiLoan.capitalization || true,
       percent: apiLoan.interestRate,
       startDate: fromDate,
+      startBalance: apiLoan.amount,
       endDateOffset: count,
       endDateOffsetInterval: interval,
       syncIds: [
