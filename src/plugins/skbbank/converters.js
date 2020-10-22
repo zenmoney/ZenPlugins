@@ -52,23 +52,17 @@ function convertDeposit (apiAccounts) {
     if (!apiDeposit.contract_number) {
       continue
     }
-    let payoffInterval = {}
-    for (const pattern of [
-      /В конце срока/i,
-      /Ежеквартально/i
+    let payoffInterval = 'month'
+    for (const pair of [
+      [/В конце срока/i, null],
+      [/Ежеквартально/i, 'month']
     ]) {
-      const match = apiDeposit.percentPaidPeriod.match(pattern)
+      const [regexp, interval] = pair
+      const match = apiDeposit.percentPaidPeriod.match(regexp)
       if (match) {
-        payoffInterval = null
+        payoffInterval = interval
+        break
       }
-    }
-    if (payoffInterval === undefined) {
-      console.log('Unexpected percentPaidPeriod ' + apiDeposit.percentPaydPeriod)
-      continue
-    }
-    let payoffStep = 1
-    if (payoffInterval === null) {
-      payoffStep = 0
     }
     const account = {
       id: apiDeposit.account,
@@ -80,10 +74,10 @@ function convertDeposit (apiAccounts) {
       percent: apiDeposit.rate,
       startDate: new Date(parseDate(apiDeposit.open_date)),
       startBalance: apiDeposit.opening_balance,
-      endDateOffset: Number(apiDeposit.duration),
-      endDateOffsetInterval: 'day',
+      endDateOffset: Number(apiDeposit.duration) || 1,
+      endDateOffsetInterval: Number(apiDeposit.duration) ? 'day' : 'year',
       payoffInterval: payoffInterval,
-      payoffStep: payoffStep,
+      payoffStep: payoffInterval === 'month' ? 1 : 0,
       syncIds: [apiDeposit.account]
     }
     accounts = accounts.concat(account)

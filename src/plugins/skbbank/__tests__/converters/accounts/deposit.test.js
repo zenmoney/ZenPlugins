@@ -75,8 +75,79 @@ describe('convertDeposit', () => {
           syncIds: ['42305810330000000042']
         }
       ]
+    ],
+    [
+      {
+        deposits: [
+          {
+            id: 251784059,
+            bank_system_id: '1925799',
+            contract_number: '9132536530',
+            contract_date: '24.04.2008',
+            close_account: null,
+            capitalization: false,
+            currency: 'RUB',
+            opening_balance: 0,
+            min_balance: 0,
+            balance: 0,
+            percentPaidPeriod: 'Ежеквартально',
+            duration: null,
+            open_date: '24.04.2008',
+            end_date: null,
+            early_close: true,
+            rate: 0.01,
+            ratePeriods: [],
+            balanceRub: 0,
+            account: '42301810922701195580',
+            branch_id: 69508,
+            allow_out_payments: true,
+            allow_in_payments: true,
+            percent_manageable: false,
+            capital_manageable: false,
+            percent_account: '42301810922701195580',
+            auto_prolongation: false,
+            state: 'open',
+            state_description: 'Действующий',
+            customName: false,
+            name: 'Вклад до востребования',
+            productName: 'Вклад до востребования',
+            percent_paid: 0,
+            percent_accrued: 0,
+            requisites:
+              {
+                bankName: 'ПАО "СКБ-БАНК"',
+                address: 'Россия, 628611, Ханты-Мансийский Автономный округ - Югра АО, Нижневартовск г, Нефтяников ул, д.68',
+                bic: '046577756',
+                inn: '6608003052',
+                kpp: '668501001',
+                corrAccount: '30101810800000000756'
+              },
+            petitionId: null,
+            interestType: null,
+            charity: 'forbidden'
+          }
+        ]
+      },
+      [
+        {
+          id: '42301810922701195580',
+          type: 'deposit',
+          title: 'Вклад до востребования',
+          instrument: 'RUB',
+          balance: 0,
+          capitalization: false,
+          percent: 0.01,
+          startDate: new Date('2008-04-23T21:00:00.000Z'),
+          startBalance: 0,
+          payoffInterval: 'month',
+          payoffStep: 1,
+          endDateOffset: 1,
+          endDateOffsetInterval: 'year',
+          syncIds: ['42301810922701195580']
+        }
+      ]
     ]
-  ])('converts Deposit', (rawTransaction, transaction) => {
+  ])('converts deposit', (rawTransaction, transaction) => {
     expect(convertAccounts(rawTransaction)).toEqual(transaction)
   })
 })
