@@ -138,6 +138,8 @@ describe('convertLoan', () => {
           percent: 26.9,
           startDate: new Date('2014-03-12T21:00:00.000Z'),
           startBalance: 216300,
+          payoffStep: 1,
+          payoffInterval: 'month',
           endDateOffset: 116,
           endDateOffsetInterval: 'month',
           syncIds: [
@@ -211,6 +213,8 @@ describe('convertLoan', () => {
           percent: 14.9,
           startDate: new Date('2020-10-06T21:00:00.000Z'),
           startBalance: 182000,
+          payoffStep: 1,
+          payoffInterval: 'month',
           endDateOffset: 5,
           endDateOffsetInterval: 'year',
           syncIds: [

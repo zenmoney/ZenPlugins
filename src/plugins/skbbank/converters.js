@@ -72,7 +72,7 @@ function convertDeposit (apiAccounts) {
       balance: apiDeposit.balance,
       capitalization: apiDeposit.capitalization,
       percent: apiDeposit.rate,
-      startDate: new Date(parseDate(apiDeposit.open_date)),
+      startDate: parseDate(apiDeposit.open_date),
       startBalance: apiDeposit.opening_balance,
       endDateOffset: Number(apiDeposit.duration) || 1,
       endDateOffsetInterval: Number(apiDeposit.duration) ? 'day' : 'year',
@@ -97,8 +97,8 @@ function convertLoan (apiAccounts) {
       continue
     }
 
-    const fromDate = new Date(parseDate(apiLoan.openDate))
-    const toDate = new Date(parseDate(apiLoan.endDate))
+    const fromDate = parseDate(apiLoan.openDate)
+    const toDate = parseDate(apiLoan.endDate)
     const { interval, count } = getIntervalBetweenDates(fromDate, toDate)
     const account = {
       id: apiLoan.mainAccount,
@@ -110,6 +110,8 @@ function convertLoan (apiAccounts) {
       percent: apiLoan.interestRate,
       startDate: fromDate,
       startBalance: apiLoan.amount,
+      payoffStep: 1,
+      payoffInterval: 'month',
       endDateOffset: count,
       endDateOffsetInterval: interval,
       syncIds: [
