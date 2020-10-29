@@ -18,7 +18,7 @@ describe('convertAccount', () => {
       type: 'checking',
       title: 'Мой счет',
       instrument: 'RUB',
-      balance: 64154.79,
+      available: 64154.79,
       syncID: ['40702810610000000179']
     })
   })
