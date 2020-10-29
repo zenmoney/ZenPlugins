@@ -81,7 +81,9 @@ export default class WebSocket {
    * @private
    */
   getErrorFromCloseEvent (event) {
-    return this._socket === null && event.wasClean ? new TemporaryError('[NER]') : new Error(this._errorMessage || 'error')
+    return this._socket === null || event.wasClean
+      ? new TemporaryError('[NER] WebSocket closed')
+      : new Error(this._errorMessage || 'Unexpected WebSocket error')
   }
 
   /**
