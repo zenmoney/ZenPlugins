@@ -10,6 +10,8 @@ const base64 = new Base64()
 const loginUrl = 'https://login.belinvestbank.by/app_api'
 const dataUrl = 'https://ibank.belinvestbank.by/app_api'
 
+const APP_VERSION = '2.1.29'
+
 export function getDevice () {
   const deviceID = ZenMoney.getData('deviceId', generateRandomString(16))
   ZenMoney.setData('deviceId', deviceID)
@@ -128,7 +130,7 @@ kro=
       login: login,
       password: password,
       deviceId: device.id,
-      versionApp: '2.1.7',
+      versionApp: APP_VERSION,
       os: 'Android',
       device_token: device.token,
       device_token_type: 'ANDROID'
