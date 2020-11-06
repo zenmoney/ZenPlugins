@@ -178,7 +178,7 @@ export function trimTransactionTransferAccountSyncIds (transaction) {
 }
 
 export function patchAccounts (accounts) {
-  console.assert(Array.isArray(accounts), 'accounts must be array')
+  console.assert(Array.isArray(accounts) && accounts.length > 0, 'accounts must be non-empty array')
   if (!ZenMoney.features.investmentAccount && accounts.some(account => account.type === 'investment')) {
     throw new IncompatibleVersionError()
   }
