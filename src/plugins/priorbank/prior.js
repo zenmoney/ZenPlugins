@@ -14,6 +14,7 @@ export function assertResponseSuccess (response) {
     }
     if ([
       'Услуга временно заблокирована',
+      'Услуга заблокирована до активации',
       'Ошибка на сервере'
     ].some(pattern => message.indexOf(pattern) >= 0)) {
       throw new BankMessageError(message)

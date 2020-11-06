@@ -1,26 +1,28 @@
 import _ from 'lodash'
-import {
-  addMovement,
-  formatCalculatedRateLine,
-  formatCommentFeeLine,
-  formatInvoiceLine,
-  formatRate,
-  formatRateLine,
-  getSingleReadableTransactionMovement,
-  joinCommentLines,
-  makeCashTransferMovement
-} from '../../common/converters'
-import { formatCommentDateTime } from '../../common/dateUtils'
-import { mergeTransfers as commonMergeTransfers } from '../../common/mergeTransfers'
-
-const calculateAccountId = (card) => String(card.clientObject.id)
+import { formatCommentFeeLine, joinCommentLines } from '../../common/converters'
 
 export function convertAccounts (apiAccounts, apiAccountDetails) {
-  return apiAccounts.map(apiAccount => {
+  const accounts = []
+  for (const apiAccount of apiAccounts) {
+    const foundedAccount = accounts.find(account => account.account.syncID.some(syncID => syncID === apiAccount.clientObject.cardContractNumber))
+    if (foundedAccount) {
+      foundedAccount.account.syncID.push(apiAccount.clientObject.cardMaskedNumber.slice(-4))
+      foundedAccount.products.push({
+        id: apiAccount.clientObject.id.toString(),
+        type: 'card'
+      })
+      continue
+    }
     const details = apiAccountDetails.find((x) => x.id === apiAccount.clientObject.id)
     console.assert(details, 'could not find details for account', apiAccount)
-    return convertCard(apiAccount, details)
-  })
+    const account = convertCard(apiAccount, details)
+    const product = {
+      id: apiAccount.clientObject.id.toString(),
+      type: 'card'
+    }
+    accounts.push({ account, products: [product] })
+  }
+  return accounts
 }
 
 export function convertCard (card, details) {
@@ -28,41 +30,28 @@ export function convertCard (card, details) {
   // card.clientObject.type === 6 for debit card
   const creditLimit = details.contract.creditLimit || 0
   return {
-    id: calculateAccountId(card),
+    id: card.clientObject.id.toString(),
     title: card.clientObject.customSynonym || card.clientObject.defaultSynonym,
     type: 'ccard',
-    syncID: [card.clientObject.cardMaskedNumber.slice(-4)],
+    syncID: [card.clientObject.cardContractNumber, card.clientObject.cardMaskedNumber.slice(-4)],
     instrument: card.clientObject.currIso,
     balance: card.balance.available - creditLimit,
     ...creditLimit && { creditLimit }
   }
 }
 
-const knownTransactionTypes = ['Retail', 'ATM', 'CH Debit', 'CH Payment', 'Cash']
-
-const normalizeSpaces = (text) => _.compact(text.split(' ')).join(' ')
-
-function parseTransDetails (transDetails) {
-  const type = knownTransactionTypes.find((type) => transDetails.startsWith(type + ' '))
-  if (type) {
-    return { type, payee: normalizeSpaces(transDetails.slice(type.length)), comment: null }
-  } else {
-    return { type: null, payee: null, comment: normalizeSpaces(transDetails) || null }
+const extractRegularTransactionAmount = ({ accountCurrency, apiTransaction }) => {
+  if (accountCurrency === apiTransaction.transCurrIso) {
+    return apiTransaction.accountAmount
   }
-}
-
-const extractRegularTransactionAmount = ({ accountCurrency, regularTransaction }) => {
-  if (accountCurrency === regularTransaction.transCurrIso) {
-    return regularTransaction.accountAmount
-  }
-  if (regularTransaction.amount === 0) {
-    if (regularTransaction.feeAmount !== 0) {
-      return regularTransaction.feeAmount
+  if (apiTransaction.amount === 0) {
+    if (apiTransaction.feeAmount !== 0) {
+      return apiTransaction.feeAmount
     }
-    console.error({ accountCurrency, regularTransaction })
+    console.error({ accountCurrency, apiTransaction })
     throw new Error('Cannot handle corrupted transaction amounts')
   }
-  return Math.sign(regularTransaction.accountAmount) * Math.abs(regularTransaction.amount)
+  return Math.sign(apiTransaction.accountAmount) * Math.abs(apiTransaction.amount)
 }
 
 export function chooseDistinctCards (cardsBodyResult) {
@@ -76,51 +65,34 @@ export function chooseDistinctCards (cardsBodyResult) {
   return cardsBodyResult.filter((card) => !cardsToEvict.includes(card))
 }
 
-export const convertApiAbortedTransactionToReadableTransaction = ({ accountId, accountCurrency, abortedTransaction, includeDateTimeInComment }) => {
-  const details = parseTransDetails(abortedTransaction.transDetails)
-  const sign = Math.sign(-abortedTransaction.amount)
-  const sum = sign * Math.abs(abortedTransaction.amount)
-  const invoice = abortedTransaction.transCurrIso === accountCurrency
-    ? null
-    : { sum: sign * Math.abs(abortedTransaction.transAmount), instrument: abortedTransaction.transCurrIso }
-  const fee = 0
-  const date = parseDate(abortedTransaction)
-  return {
-    movements: [
-      {
-        id: null,
-        account: { id: accountId },
-        invoice,
-        sum,
-        fee
-      }
-    ],
-    date,
-    hold: true,
-    merchant: details.payee ? {
-      fullTitle: details.payee,
-      mcc: null,
-      location: null
-    } : null,
-    comment: joinCommentLines([
-      details.comment,
-      includeDateTimeInComment ? formatCommentDateTime(date) : null,
-      formatCommentFeeLine(fee, accountCurrency),
-      formatInvoiceLine(invoice),
-      formatRateLine(sum, invoice)
-    ])
-  }
+function parseDate (apiTransactionPayload) {
+  return apiTransactionPayload.transTime
+    ? new Date(apiTransactionPayload.transDate.substring(0, 11) + apiTransactionPayload.transTime + apiTransactionPayload.transDate.substring(19))
+    : new Date(apiTransactionPayload.transDate)
 }
 
-export function convertApiRegularTransactionToReadableTransaction ({ accountId, accountCurrency, regularTransaction, includeDateTimeInComment }) {
-  const details = parseTransDetails(regularTransaction.transDetails)
-  const sum = regularTransaction.accountAmount
-  const invoice = regularTransaction.transCurrIso === accountCurrency
+export function convertTransaction (apiTransaction, mainAccount, isRegularTransaction) {
+  apiTransaction.transDetails = apiTransaction.transDetails.trim()
+  const accountCurrency = mainAccount.account.instrument
+  const accountId = mainAccount.account.id
+
+  let sum
+  let invoiceSum
+  if (isRegularTransaction) {
+    sum = apiTransaction.accountAmount
+    invoiceSum = extractRegularTransactionAmount({ accountCurrency, apiTransaction })
+  } else {
+    const sign = Math.sign(-apiTransaction.amount)
+    sum = sign * Math.abs(apiTransaction.amount)
+    invoiceSum = sign * Math.abs(apiTransaction.transAmount)
+  }
+  const invoice = apiTransaction.transCurrIso === accountCurrency
     ? null
-    : { sum: extractRegularTransactionAmount({ accountCurrency, regularTransaction }), instrument: regularTransaction.transCurrIso }
+    : { sum: invoiceSum, instrument: apiTransaction.transCurrIso }
+
   const fee = 0
-  const date = parseDate(regularTransaction)
-  return {
+  const date = parseDate(apiTransaction)
+  const transaction = {
     movements: [
       {
         id: null,
@@ -132,99 +104,155 @@ export function convertApiRegularTransactionToReadableTransaction ({ accountId, 
     ],
     date,
     hold: false,
-    merchant: details.payee ? {
-      fullTitle: details.payee,
+    merchant: null,
+    comment: null
+  };
+  [
+    parseInnerTransfer,
+    parseCashTransfer,
+    parseOuterTransfer,
+    parsePayee,
+    parseComment
+  ].some(parser => parser(transaction, apiTransaction, invoice))
+
+  transaction.comment = joinCommentLines([
+    transaction.comment,
+    formatCommentFeeLine(fee || apiTransaction.feeAmount || 0, accountCurrency)
+  ])
+  return transaction
+}
+
+function parseCashTransfer (transaction, apiTransaction, invoice) {
+  let regex
+  if ([
+    /^ATM/,
+    /^Cash/,
+    /^Credit .* CASH-IN( \d+| )?$/
+  ].some(regexp => {
+    regex = regexp
+    return regexp.test(apiTransaction.transDetails)
+  })) {
+    transaction.merchant = null
+    transaction.movements.push({
+      id: null,
+      account: {
+        type: 'cash',
+        instrument: apiTransaction.transCurrIso,
+        company: null,
+        syncIds: null
+      },
+      invoice: null,
+      sum: invoice ? -invoice.sum : -transaction.movements[0].sum,
+      fee: 0
+    })
+    if (regex.toString().startsWith('/^Credit ')) {
+      regex = /^Credit/
+    }
+    transaction.comment = apiTransaction.transDetails.replace(regex, '').trim()
+    return true
+  }
+  return false
+}
+
+function parseInnerTransfer (transaction, apiTransaction, invoice) {
+  if (![
+    /^CH Debit .*P2P( |_)SDBO/,
+    /^CH Payment .*P2P( |_)SDBO/,
+    /.* SOU INTERNETBANK$/ // под вопросом
+  ].some(regexp => regexp.test(apiTransaction.transDetails))) {
+    return false
+  }
+  const sum = invoice ? -invoice.sum : -transaction.movements[0].sum
+  transaction.groupKeys = [`${apiTransaction.transDate.slice(0, 10)}_${apiTransaction.transTime}_${Math.abs(sum)}_${apiTransaction.transCurrIso}`]
+  return true
+}
+
+function parseOuterTransfer (transaction, apiTransaction, invoice) {
+  let regex
+  if ([
+    /^Перевод с карты на счет/,
+    /^CH Debit/,
+    /^CH Payment/,
+    /.* MOBILE BANK$/
+  ].some(regexp => {
+    regex = regexp
+    return regexp.test(apiTransaction.transDetails)
+  })) {
+    transaction.movements.push({
+      id: null,
+      account: {
+        type: null,
+        instrument: apiTransaction.transCurrIso,
+        company: null,
+        syncIds: null
+      },
+      invoice: null,
+      sum: invoice ? -invoice.sum : -transaction.movements[0].sum,
+      fee: 0
+    })
+    if (!regex.test(' MOBILE BANK')) {
+      transaction.comment = apiTransaction.transDetails.replace(regex, '').replace('. Перевод не связан с предпринимательской деятельностью.', '').trim()
+    }
+    return true
+  }
+  return false
+}
+
+function parsePayee (transaction, apiTransaction, invoice) {
+  let regex
+  if (![
+    /^Retail /
+  ].some(regexp => {
+    regex = regexp
+    return regexp.test(apiTransaction.transDetails)
+  })) {
+    return false
+  }
+  transaction.merchant = {
+    fullTitle: apiTransaction.transDetails.replace(regex, '').trim(),
+    mcc: null,
+    location: null
+  }
+  return true
+}
+
+function parseComment (transaction, apiTransaction, invoice) {
+  let regex
+  if ([
+    /^Credit /,
+    /^Reversal. Retail /
+  ].some(regexp => {
+    regex = regexp
+    return regexp.test(apiTransaction.transDetails)
+  })) {
+    transaction.merchant = {
+      fullTitle: apiTransaction.transDetails.replace(regex, '').trim(),
       mcc: null,
       location: null
-    } : null,
-    comment: joinCommentLines([
-      details.comment,
-      includeDateTimeInComment ? formatCommentDateTime(date) : null,
-      formatCommentFeeLine(fee, accountCurrency),
-      formatInvoiceLine(invoice),
-      formatRateLine(sum, invoice)
-    ])
+    }
+    return true
   }
+  transaction.comment = apiTransaction.transDetails
+  return true
 }
 
-function parseDate (apiTransactionPayload) {
-  return apiTransactionPayload.transTime
-    ? new Date(apiTransactionPayload.transDate.substring(0, 11) + apiTransactionPayload.transTime + apiTransactionPayload.transDate.substring(19))
-    : new Date(apiTransactionPayload.transDate)
-}
-
-export const convertApiTransactionToReadableTransaction = (apiTransaction, includeDateTimeInComment) => {
-  const accountCurrency = apiTransaction.card.clientObject.currIso
-  const accountId = calculateAccountId(apiTransaction.card)
-  if (apiTransaction.type === 'abortedTransaction') {
-    return convertApiAbortedTransactionToReadableTransaction({
-      accountId,
-      accountCurrency,
-      abortedTransaction: apiTransaction.payload,
-      includeDateTimeInComment
-    })
-  }
-  if (apiTransaction.type === 'regularTransaction') {
-    return convertApiRegularTransactionToReadableTransaction({
-      accountId,
-      accountCurrency,
-      regularTransaction: apiTransaction.payload,
-      includeDateTimeInComment
-    })
-  }
-  throw new Error(`apiTransaction.type "${apiTransaction.type}" not implemented`)
-}
-
-const isTransferItem = ({ apiTransaction }) =>
-  apiTransaction.payload.transDetails.includes('P2P SDBO') ||
-  apiTransaction.payload.transDetails.includes('P2P_SDBO')
-
-function formatMovementPartialDetails (outcome, income) {
-  const movement = outcome.movement
-  const accountInstrument = outcome.item.apiTransaction.card.clientObject.currIso
-  return joinCommentLines([
-    formatCommentFeeLine(movement.fee, accountInstrument),
-    outcome.item.apiTransaction.card.clientObject.currIso === income.item.apiTransaction.card.clientObject.currIso
-      ? null
-      : formatCalculatedRateLine(formatRate({ invoiceSum: income.movement.sum, sum: Math.abs(outcome.movement.sum) }))
-  ])
-}
-
-export function mergeTransfers ({ items }) {
-  return commonMergeTransfers({
-    items,
-    selectReadableTransaction: (item) => item.readableTransaction,
-    makeGroupKey: ({ readableTransaction, apiTransaction }) => {
-      if (!isTransferItem({ apiTransaction })) {
-        return null
-      }
-      const movement = getSingleReadableTransactionMovement(readableTransaction)
-      const sum = movement.invoice === null ? movement.sum : movement.invoice.sum
-      const instrument = movement.invoice === null ? apiTransaction.card.clientObject.currIso : movement.invoice.instrument
-      return `${Math.abs(sum)} ${instrument} @ ${apiTransaction.payload.transDate} ${apiTransaction.payload.transTime}`
-    },
-    mergeComments: formatMovementPartialDetails
-  })
-}
-
-export function convertApiCardsToReadableTransactions ({ cardsBodyResultWithoutDuplicates, cardDescBodyResult, includeDateTimeInComment }) {
-  const items = _.sortBy(_.flatMap(cardsBodyResultWithoutDuplicates, (card) => {
-    const cardDesc = cardDescBodyResult.find((x) => x.id === card.clientObject.id)
+export function convertTransactions ({ apiAccountsWithoutDuplicates, apiAccountDetails, accounts }) {
+  const items = _.flatMap(apiAccountsWithoutDuplicates, (apiAccount) => {
+    const mainAccount = accounts.find(account => account.products.some(product => product.id === apiAccount.clientObject.id.toString()))
+    console.assert(mainAccount, 'could not find mainAccount for account', apiAccount)
+    const cardDesc = apiAccountDetails.find((x) => x.id === apiAccount.clientObject.id)
     const abortedTransactions = _.flatMap(cardDesc.contract.abortedContractList, (x) => x.abortedTransactionList.reverse())
-      .map((abortedTransaction) => ({ type: 'abortedTransaction', payload: abortedTransaction, card }))
     const regularTransactions = _.flatMap(cardDesc.contract.account.transCardList, (x) => x.transactionList.reverse())
-      .map((regularTransaction) => ({ type: 'regularTransaction', payload: regularTransaction, card }))
-    return abortedTransactions.concat(regularTransactions)
-      .map((apiTransaction) => {
-        const readableTransaction = convertApiTransactionToReadableTransaction(apiTransaction, includeDateTimeInComment)
-        if (['ATM', 'Cash'].includes(parseTransDetails(apiTransaction.payload.transDetails).type)) {
-          return {
-            apiTransaction,
-            readableTransaction: addMovement(readableTransaction, makeCashTransferMovement(readableTransaction, apiTransaction.card.clientObject.currIso))
-          }
-        }
-        return { apiTransaction, readableTransaction }
-      })
-  }), x => x.readableTransaction.date)
-  return mergeTransfers({ items })
+    const readableAbortedTransactions = abortedTransactions.map(apiTransaction => {
+      return convertTransaction(apiTransaction, mainAccount, false)
+    })
+    const readableRegularTransactions = regularTransactions.map(apiTransaction => {
+      return convertTransaction(apiTransaction, mainAccount, true)
+    })
+    return [
+      ...readableAbortedTransactions,
+      ...readableRegularTransactions
+    ]
+  })
+  return items
 }

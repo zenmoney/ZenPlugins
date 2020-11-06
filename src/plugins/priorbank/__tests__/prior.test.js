@@ -1,4 +1,4 @@
-import { calculatePasswordHash } from './prior'
+import { calculatePasswordHash } from '../prior'
 
 describe('calculatePasswordHash', () => {
   it('should trim password to 16 chars due to implicit password size limit', () => {

@@ -1,9 +1,9 @@
 import fetchMock from 'fetch-mock'
-import { InvalidLoginOrPasswordError } from '../../errors'
-import { installFetchMockDeveloperFriendlyFallback } from '../../testUtils'
-import { makePluginDataApi } from '../../ZPAPI.pluginData'
-import { scrape } from './index'
-import { mockGetSalt, mockLogin, mockMobileToken } from './mocks'
+import { InvalidLoginOrPasswordError } from '../../../errors'
+import { installFetchMockDeveloperFriendlyFallback } from '../../../testUtils'
+import { makePluginDataApi } from '../../../ZPAPI.pluginData'
+import { scrape } from '../index'
+import { mockGetSalt, mockLogin, mockMobileToken } from '../mocks'
 
 installFetchMockDeveloperFriendlyFallback(fetchMock)
 

@@ -1,4 +1,4 @@
-import { chooseDistinctCards } from './converters'
+import { chooseDistinctCards } from '../converters'
 
 describe('chooseDistinctCards', () => {
   it('prefers active card', () => {
@@ -174,7 +174,7 @@ describe('chooseDistinctCards', () => {
           cardRBSNumber: '<string[30]>',
           dopNonDop: 2,
           cardBin: 0,
-          cardColor: '#70a0b8',
+          cardColor: '#70A0B8',
           isCardMain: 0,
           contractNum: '<string[19]>',
           contractTypeInt: 0,
@@ -239,7 +239,7 @@ describe('chooseDistinctCards', () => {
           cardRBSNumber: '<string[30]>',
           dopNonDop: 2,
           cardBin: 0,
-          cardColor: '#efd066',
+          cardColor: '#EFD066',
           isCardMain: 1,
           contractNum: '<string[19]>',
           contractTypeInt: 0,
@@ -304,7 +304,7 @@ describe('chooseDistinctCards', () => {
           cardRBSNumber: '<string[30]>',
           dopNonDop: 2,
           cardBin: 0,
-          cardColor: '#70a0b8',
+          cardColor: '#70A0B8',
           isCardMain: 0,
           contractNum: '<string[19]>',
           contractTypeInt: 0,

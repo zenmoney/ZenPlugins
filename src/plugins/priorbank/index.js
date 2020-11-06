@@ -1,5 +1,5 @@
-import { chooseDistinctCards, convertAccounts, convertApiCardsToReadableTransactions } from './converters'
-import { normalizePreferences } from './preferences'
+import { adjustTransactions } from '../../common/transactionGroupHandler'
+import { chooseDistinctCards, convertAccounts, convertTransactions } from './converters'
 import { assertResponseSuccess, authLogin, getCardDesc, getCards, getMobileToken, getSalt } from './prior'
 
 async function refreshAuth ({ preferences: { login, password } }) {
@@ -15,7 +15,7 @@ async function refreshAuth ({ preferences: { login, password } }) {
 }
 
 async function refreshAndPersistAuth ({ preferences }) {
-  const pluginData = await refreshAuth({ preferences: normalizePreferences(preferences) })
+  const pluginData = await refreshAuth({ preferences })
   for (const key of Object.keys(pluginData)) {
     ZenMoney.setData(key, pluginData[key])
   }
@@ -24,6 +24,7 @@ async function refreshAndPersistAuth ({ preferences }) {
 }
 
 export async function scrape ({ preferences, fromDate, toDate }) {
+  preferences.login = preferences.login.trim()
   let pluginData = {
     registered: ZenMoney.getData('registered', false),
     accessToken: ZenMoney.getData('accessToken', null),
@@ -31,14 +32,14 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     userSession: ZenMoney.getData('userSession', null)
   }
   if (!pluginData.registered) {
-    pluginData = await refreshAndPersistAuth({ preferences: normalizePreferences(preferences) })
+    pluginData = await refreshAndPersistAuth({ preferences })
   }
   let responses = await Promise.all([
     getCards({ accessToken: pluginData.accessToken, clientSecret: pluginData.clientSecret, userSession: pluginData.userSession }),
     getCardDesc({ accessToken: pluginData.accessToken, clientSecret: pluginData.clientSecret, userSession: pluginData.userSession, fromDate, toDate })
   ])
   if (responses.some((response) => response.status === 401)) {
-    pluginData = await refreshAndPersistAuth({ preferences: normalizePreferences(preferences) })
+    pluginData = await refreshAndPersistAuth({ preferences })
     responses = await Promise.all([
       getCards({ accessToken: pluginData.accessToken, clientSecret: pluginData.clientSecret, userSession: pluginData.userSession }),
       getCardDesc({ accessToken: pluginData.accessToken, clientSecret: pluginData.clientSecret, userSession: pluginData.userSession, fromDate, toDate })
@@ -47,17 +48,18 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   for (const response of responses) {
     assertResponseSuccess(response)
   }
-  const [cardsBodyResult, cardDescBodyResult] = responses.map((x) => x.body.result)
-
-  const cardsBodyResultWithoutDuplicates = chooseDistinctCards(cardsBodyResult)
-  const readableTransactions = convertApiCardsToReadableTransactions({
-    cardsBodyResultWithoutDuplicates,
-    cardDescBodyResult,
-    includeDateTimeInComment: preferences.includeDateTimeInComment
+  const [apiAccounts, apiAccountDetails] = responses.map((x) => x.body.result)
+  const accounts = convertAccounts(apiAccounts, apiAccountDetails)
+  const apiAccountsWithoutDuplicates = chooseDistinctCards(apiAccounts)
+  const transactions = convertTransactions({
+    apiAccountsWithoutDuplicates,
+    apiAccountDetails,
+    accounts
+    // includeDateTimeInComment: preferences.includeDateTimeInComment
   })
 
   return {
-    accounts: convertAccounts(cardsBodyResultWithoutDuplicates, cardDescBodyResult),
-    transactions: readableTransactions
+    accounts: accounts.map(account => account.account),
+    transactions: adjustTransactions({ transactions })
   }
 }
