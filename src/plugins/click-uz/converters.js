@@ -1,4 +1,5 @@
 import { sanitizeSyncId } from '../../common/accounts'
+import { dateInTimezone } from '../../common/dateUtils'
 
 /**
  * Конвертер счета из формата платежной системы в формат Дзенмани
@@ -35,7 +36,7 @@ export function convertTransaction (rawTransaction) {
   const sign = rawTransaction.credit === 0 ? -1 : 1
 
   const transaction = {
-    date: new Date(rawTransaction.created_timestamp * 1000),
+    date: dateInTimezone(new Date(rawTransaction.created_timestamp * 1000), 0),
     hold: false,
     merchant: {
       country: null,
