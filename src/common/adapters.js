@@ -258,6 +258,9 @@ function getPresentationError (error) {
     meaningfulError.message = '[RUE] ' + meaningfulError.message
   }
   meaningfulError.toString = new ZPAPIError().toString
+  meaningfulError.fatal = meaningfulError.fatal || false
+  meaningfulError.allowRetry = meaningfulError.allowRetry || false
+  meaningfulError.allow_retry = meaningfulError.allowRetry || false
   return meaningfulError
 }
 
@@ -311,11 +314,7 @@ export function adaptScrapeToGlobalApi (scrape) {
       throw augmentErrorWithDevelopmentHints(getPresentationError(value))
     } else if (state === 'pending') {
       resultHandled.catch((e) => {
-        const error = augmentErrorWithDevelopmentHints(getPresentationError(e))
-        if (error.allowRetry) {
-          error.allow_retry = true
-        }
-        ZenMoney.setResult(error)
+        ZenMoney.setResult(augmentErrorWithDevelopmentHints(getPresentationError(e)))
       })
     }
   }
