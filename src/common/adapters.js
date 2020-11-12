@@ -140,12 +140,14 @@ export function fixDateTimezones (transaction) {
   }
 }
 
+function isValidInt32Date (date) {
+  return isValidDate(date) && date.getTime() > 0 && date.getTime() <= 2147483647000
+}
+
 export function fixDateTimezonesForTransactionDtoV2 (transaction) {
-  const date = (typeof transaction.date === 'number')
-    ? convertTimestampToDate(transaction.date)
-    : transaction.date
-  if (date instanceof Date &&
-    date.getTimezoneOffset() === -120 &&
+  console.assert(isValidInt32Date(transaction.date), 'transaction.date must be valid Date object', transaction)
+  const date = transaction.date
+  if (date.getTimezoneOffset() === -120 &&
     date.getHours() === 23 &&
     date.getMinutes() === 0 &&
     date.getSeconds() === 0 &&
@@ -185,7 +187,8 @@ export function patchAccounts (accounts) {
   return ensureSyncIDsAreUniqueButSanitized({
     sanitizeSyncId,
     accounts: accounts.map((account) => {
-      console.assert(('syncIds' in account) !== ('syncID' in account), 'account must have either syncIds or syncID but not both')
+      console.assert(('syncIds' in account) !== ('syncID' in account), 'account must have either syncIds or syncID but not both', account)
+      console.assert(account.startDate === undefined || isValidInt32Date(account.startDate), 'account.startDate must be valid Date object', account)
       return _.mapKeys(account, (_, key) => {
         return key === 'syncIds' ? 'syncID' : key
       })
