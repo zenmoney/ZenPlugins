@@ -213,7 +213,14 @@ export default class ClickPluginApi {
     console.assert(response.body.data[0][0].error === 0, 'unexpected login response', response)
 
     return response.body.data[1].map(transaction => {
-      if (!accountsInPlainArray.includes(transaction.account_id)) {
+      /*
+        Если это операция пополнение кошелька (-6) или в идентификаторе счета указан неизвестный счет (скорее всего, мерчанта),
+        то ставим идентификатор счета равным идентификатору кошелька, потому что по факту производится оплата с кошелька или зачисление на кошелек.
+
+        Вообще по-хорошему нужно выявить и пройтись по всем минусовым `service_id`, сделать check'и и связки.
+        Например, пополнение кошелька (-6) невозможно без прикрепленной карты, а значит это перевод и нужно это соответственно оформить, но у меня времени нет.
+      */
+      if ((transaction.service_id === -6 && transaction.credit === 1) || !accountsInPlainArray.includes(transaction.account_id)) {
         transaction.account_id = accounts.find(account => account.type === 'checking').id
       }
 
