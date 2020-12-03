@@ -11,7 +11,7 @@ export function convertAccount (json) {
 }
 
 export function convertTransaction (json, accounts) {
-  if (json.status !== 'ПРОВЕДЕНО' && json.status !== 'ЗАБЛОКИРОВАНО') {
+  if ((json.status !== 'ПРОВЕДЕНО' && json.status !== 'ЗАБЛОКИРОВАНО') || json.accountAmt === '') {
     return null
   }
   const account = accounts.find(account => {
@@ -22,7 +22,15 @@ export function convertTransaction (json, accounts) {
 
   const transaction = {
     date: getDate(json.date),
-    movements: [getMovement(json, account)],
+    movements: [
+      {
+        id: null,
+        account: { id: account.id },
+        invoice: null,
+        sum: getSumAmount(json),
+        fee: 0
+      }
+    ],
     merchant: null,
     comment: null,
     hold: json.status === 'ЗАБЛОКИРОВАНО'
@@ -30,20 +38,34 @@ export function convertTransaction (json, accounts) {
 
   [
     parseCash,
+    parseOuterTransfer,
     parsePayee
   ].some(parser => parser(transaction, json))
 
   return transaction
 }
 
-function getMovement (json, account) {
-  return {
-    id: null,
-    account: { id: account.id },
-    invoice: null,
-    sum: getSumAmount(json.type, json.accountAmt),
-    fee: 0
+function parseOuterTransfer (transaction, json) {
+  for (const pattern of [
+    /^Перевод /
+  ]) {
+    const match = json.type?.match(pattern)
+    if (match) {
+      makeOuterTransfer(transaction, json)
+      return true
+    }
   }
+
+  for (const pattern of [
+    /P2P/
+  ]) {
+    const match = json.cardAcceptor?.match(pattern)
+    if (match) {
+      makeOuterTransfer(transaction, json)
+      return true
+    }
+  }
+  return false
 }
 
 function parseCash (transaction, json) {
@@ -54,15 +76,15 @@ function parseCash (transaction, json) {
       account: {
         company: null,
         type: 'cash',
-        instrument: json.accountAmtCurrency !== '' ? json.accountAmtCurrency : 'BYN',
+        instrument: json.accountAmtCurrency || 'BYN',
         syncIds: null
       },
       invoice: null,
-      sum: -getSumAmount(json.type, json.accountAmt),
+      sum: -getSumAmount(json),
       fee: 0
     })
-    return false
   }
+  return false
 }
 
 function parsePayee (transaction, json) {
@@ -95,9 +117,31 @@ function parsePayee (transaction, json) {
   }
 }
 
-function getSumAmount (debitFlag, strAmount) {
-  const amount = Number.parseFloat(strAmount.replace(',', '.').replace(' ', ''))
-  return debitFlag === 'ПОПОЛНЕНИЕ' ? amount : -amount
+function getSumAmount (json) {
+  const amount = Number.parseFloat(json.accountAmt.replace(',', '.').replace(' ', ''))
+  let sum = null
+  if (json.sign) {
+    sum = json.sign === '+' ? amount : -amount
+  } else {
+    sum = json.type === 'ПОПОЛНЕНИЕ' ? amount : -amount
+  }
+  return sum
+}
+
+function makeOuterTransfer (transaction, json) {
+  transaction.merchant = null
+  transaction.movements.push({
+    id: null,
+    account: {
+      company: null,
+      type: 'ccard',
+      instrument: json.accountAmtCurrency || 'BYN',
+      syncIds: null
+    },
+    invoice: null,
+    sum: -getSumAmount(json),
+    fee: 0
+  })
 }
 
 export function getDate (str) {
