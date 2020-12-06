@@ -17,6 +17,7 @@ const transactionTypeFactors = {
   Zachislenie: 1,
   Списание: -1,
   Spisanie: -1,
+  'Комиссия банка': -1,
   'Товары и услуги': -1,
   'Tovary i uslugi': -1,
   Банкомат: -1,
