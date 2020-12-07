@@ -36,6 +36,35 @@ describe('convertTransaction', () => {
   it.each([
     [
       {
+        amount: -2424,
+        date: 1607162132997,
+        operation: 'wallet2visa',
+        details: 'Перевод с кошелька на карту'
+      },
+      {
+        date: new Date('2020-12-05T09:55:32.997Z'),
+        hold: false,
+        comment: 'Перевод с кошелька на карту',
+        merchant: null,
+        movements: [
+          {
+            id: null,
+            account: { id: 'wallet' },
+            invoice: null,
+            sum: -24.24,
+            fee: 0
+          }
+        ]
+      }
+    ]
+  ])('converts outerOutcomeTransfer to Wallet USD', (rawTransaction, transaction) => {
+    const wallet = { id: 'wallet', instrument: 'USD' }
+    expect(convertWalletTransaction(wallet, rawTransaction)).toEqual(transaction)
+  })
+
+  it.each([
+    [
+      {
         amount: -3350000,
         currency: { name: 'RUB', scale: 2 },
         date: 1584039600000,

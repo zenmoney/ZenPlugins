@@ -229,7 +229,7 @@ function parseInnerTransfer (rawTransaction, transaction, invoice, fee) {
 export function convertWalletTransaction (wallet, rawTransaction) {
   const invoice = {
     sum: rawTransaction.amount / 100,
-    instrument: 'UZS'
+    instrument: wallet.instrument
   }
   const transaction = {
     date: new Date(rawTransaction.date),

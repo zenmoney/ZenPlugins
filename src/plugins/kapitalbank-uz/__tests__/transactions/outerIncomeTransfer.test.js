@@ -36,6 +36,35 @@ describe('convertTransaction', () => {
   it.each([
     [
       {
+        amount: 616,
+        date: 1606949859000,
+        operation: 'depositDecrease2wallet',
+        details: 'Выплата со вклада на кошелек'
+      },
+      {
+        date: new Date('2020-12-02T22:57:39.000Z'),
+        hold: false,
+        comment: 'Выплата со вклада на кошелек',
+        merchant: null,
+        movements: [
+          {
+            id: null,
+            account: { id: 'wallet' },
+            invoice: null,
+            sum: 6.16,
+            fee: 0
+          }
+        ]
+      }
+    ]
+  ])('converts outerIncomeTransfer to Wallet USD', (rawTransaction, transaction) => {
+    const wallet = { id: 'wallet', instrument: 'USD' }
+    expect(convertWalletTransaction(wallet, rawTransaction)).toEqual(transaction)
+  })
+
+  it.each([
+    [
+      {
         amount: 3350000,
         currency: { name: 'RUB', scale: 2 },
         date: 1584039600000,
