@@ -1,12 +1,22 @@
 import WebSocket from '../../common/protocols/webSocket'
 import { generateUUID, generateRandomString } from '../../common/utils'
-import { IncompatibleVersionError } from '../../errors'
+import { IncompatibleVersionError, InvalidPreferencesError } from '../../errors'
 import { SHA512, MD5 } from 'jshashes'
-import { convertAccount, convertTransaction } from './converters'
+import { convertAccounts, convertTransaction } from './converters'
 
 const baseUrl = 'api.click.uz:8443'
 const sha512 = new SHA512()
 const md5 = new MD5()
+
+function getPhoneNumber (rawPhoneNumber) {
+  const normalizedPhoneNumber = /^(?:\+?998)(\d{9})$/.exec(rawPhoneNumber.trim())
+
+  if (normalizedPhoneNumber) {
+    return '998' + normalizedPhoneNumber[1]
+  }
+
+  throw new InvalidPreferencesError()
+}
 
 export default class ClickPluginApi {
   constructor () {
@@ -70,7 +80,7 @@ export default class ClickPluginApi {
 
     const response = await this.callGate(method, {
       parameters: {
-        phone_num: phone,
+        phone_num: getPhoneNumber(phone),
         imei: imei,
         datetime: deviceRegisterDateTime,
         device_info: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36',
@@ -97,7 +107,7 @@ export default class ClickPluginApi {
 
     const response = await this.callGate(method, {
       parameters: {
-        phone_num: phone,
+        phone_num: getPhoneNumber(phone),
         device_id: ZenMoney.getData('deviceId'),
         device_remember: 1,
         sms_code: smsCode
@@ -126,7 +136,7 @@ export default class ClickPluginApi {
         datetime: datetime,
         device_id: ZenMoney.getData('deviceId'),
         password: password,
-        phone_num: phone
+        phone_num: getPhoneNumber(phone)
       },
       sanitizeRequestLog: { parameters: { device_id: true, password: true, phone_num: true } }
     })
@@ -148,7 +158,7 @@ export default class ClickPluginApi {
     const accounts = await this.callGate(getAccountsMethod, {
       parameters: {
         session_key: ZenMoney.getData('sessionKey'),
-        phone_num: phone
+        phone_num: getPhoneNumber(phone)
       },
       sanitizeRequestLog: { parameters: { session_key: true, phone_num: true } }
     })
@@ -166,24 +176,13 @@ export default class ClickPluginApi {
     const balances = await this.callGate(getBalancesMethod, {
       parameters: {
         session_key: ZenMoney.getData('sessionKey'),
-        phone_num: phone,
+        phone_num: getPhoneNumber(phone),
         accounts: accountsForBalanceRequests
       },
       sanitizeRequestLog: { parameters: { session_key: true, phone_num: true } }
     })
-
     console.assert(balances.body.data[0][0].error === 0, 'unexpected get balances response', balances)
-
-    const map = new Map()
-    for (const account of accounts.body.data[1]) {
-      map.set(account.id, account)
-    }
-    for (const balance of balances.body.data[1]) {
-      map.set(balance.account_id, { ...map.get(balance.account_id), ...balance })
-    }
-    const response = Array.from(map.values())
-
-    return response.map(convertAccount)
+    return convertAccounts(accounts.body.data[1], balances.body.data[1])
   }
 
   /**
@@ -201,7 +200,7 @@ export default class ClickPluginApi {
     const response = await this.callGate(method, {
       parameters: {
         session_key: ZenMoney.getData('sessionKey'),
-        phone_num: phone,
+        phone_num: getPhoneNumber(phone),
         page_number: 1,
         page_size: 999,
         date_start: fromDate.toISOString().split('T')[0],

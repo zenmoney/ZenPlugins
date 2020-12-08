@@ -8,10 +8,6 @@ import { dateInTimezone } from '../../common/dateUtils'
  * @returns счет в формате Дзенмани
  */
 export function convertAccount (rawAccount) {
-  if (rawAccount.card_status === 0) {
-    return null
-  }
-
   const account = {
     id: String(rawAccount.id),
     title: rawAccount.description,
@@ -58,4 +54,17 @@ export function convertTransaction (rawTransaction) {
   }
 
   return transaction
+}
+
+export function convertAccounts (accounts, balances) {
+  const map = new Map()
+  for (const account of accounts) {
+    map.set(account.id, account)
+  }
+  for (const balance of balances) {
+    map.set(balance.account_id, { ...map.get(balance.account_id), ...balance })
+  }
+  const response = Array.from(map.values())
+
+  return response.map(convertAccount)
 }
