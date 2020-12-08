@@ -25,8 +25,63 @@ describe('convertTransaction', () => {
             invoice: null,
             sum: 100,
             fee: 0
+          },
+          {
+            id: null,
+            account: {
+              type: null,
+              instrument: 'RUB',
+              syncIds: null,
+              company: { id: '4624' }
+            },
+            invoice: null,
+            sum: -100,
+            fee: 0
           }
         ]
+      }
+    ],
+    [
+      {
+        group_id: 'type_history_non_p2p_deposit',
+        operation_id: '660146946405002112',
+        title: 'Сбербанк, пополнение',
+        amount: 9000,
+        direction: 'in',
+        datetime: '2020-12-01T14:09:06Z',
+        status: 'success',
+        type: 'deposition',
+        spendingCategories: [{ name: 'Deposition', sum: 9000 }],
+        amount_currency: 'RUB',
+        is_sbp_operation: false
+      },
+      {
+        date: new Date('2020-12-01T14:09:06.000Z'),
+        hold: false,
+        merchant: null,
+        movements:
+          [
+            {
+              id: '660146946405002112',
+              account: { id: 'account' },
+              invoice: null,
+              sum: 9000,
+              fee: 0
+            },
+            {
+              id: null,
+              account: {
+                type: null,
+                instrument: 'RUB',
+                syncIds: null,
+                company: { id: '4624' }
+              },
+              invoice: null,
+              sum: -9000,
+              fee: 0
+            }
+          ],
+        comment: 'Сбербанк, пополнение'
       }
     ],
     [
@@ -51,6 +106,18 @@ describe('convertTransaction', () => {
             account: { id: 'account' },
             invoice: null,
             sum: 1404.94,
+            fee: 0
+          },
+          {
+            id: null,
+            account: {
+              type: null,
+              instrument: 'RUB',
+              syncIds: null,
+              company: null
+            },
+            invoice: null,
+            sum: -1404.94,
             fee: 0
           }
         ]
@@ -78,6 +145,18 @@ describe('convertTransaction', () => {
             account: { id: 'account' },
             invoice: null,
             sum: 900,
+            fee: 0
+          },
+          {
+            id: null,
+            account: {
+              type: null,
+              instrument: 'RUB',
+              syncIds: null,
+              company: null
+            },
+            invoice: null,
+            sum: -900,
             fee: 0
           }
         ]

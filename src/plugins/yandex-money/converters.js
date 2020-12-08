@@ -1,3 +1,4 @@
+import { parseOuterAccountData } from '../../common/accounts'
 import currencies from '../../common/codeToCurrencyLookup'
 
 export function convertAccount (apiAccount) {
@@ -96,7 +97,6 @@ function parseTransfer (apiTransaction, transaction, account, invoice) {
   }
   for (const pattern of [
     /Перевод на карту ([\d*]+)/i
-    // /Перевод от (\d+)/i
   ]) {
     const match = apiTransaction.title.match(pattern)
     if (match) {
@@ -106,10 +106,36 @@ function parseTransfer (apiTransaction, transaction, account, invoice) {
         {
           id: null,
           account: {
+            company: null,
             type: null,
             instrument: invoice.instrument,
-            syncIds: [match[1].slice(-4)],
-            company: null
+            syncIds: [match[1].slice(-4)]
+          },
+          invoice: null,
+          sum: -invoice.sum,
+          fee: 0
+        })
+      return true
+    }
+  }
+
+  for (const pattern of [
+    /пополнение/i
+  ]) {
+    const match = apiTransaction.title.match(pattern)
+    if (match) {
+      const accountData = parseOuterAccountData(apiTransaction.title)
+      transaction.merchant = null
+      transaction.comment = apiTransaction.title
+      transaction.movements.push(
+        {
+          id: null,
+          account: {
+            company: null,
+            ...accountData,
+            type: null,
+            instrument: invoice.instrument,
+            syncIds: null
           },
           invoice: null,
           sum: -invoice.sum,
