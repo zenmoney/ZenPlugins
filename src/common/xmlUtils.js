@@ -1,4 +1,5 @@
 import cheerio from 'cheerio'
+import { decodeHtmlSpecialCharacters } from './stringUtils'
 
 export function parseXml (xml) {
   const $ = cheerio.load(xml, {
@@ -46,6 +47,7 @@ function parseXmlNode (root) {
       } else if (node.children.length === 1 &&
         node.children[0].type === 'text') {
         value = node.children[0].data.trim()
+        value = decodeHtmlSpecialCharacters(value)
         if (value === '') {
           value = null
         }

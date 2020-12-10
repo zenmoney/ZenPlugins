@@ -9,7 +9,11 @@ export function getIntervalBetweenDates (fromDate, toDate, intervals = ['year', 
     const count = moment(toDate).diff(moment(fromDate), interval, i < intervals.length - 1)
     if (_.isInteger(count)) {
       return { interval, count }
-    } else if (interval === 'year') {
+    }
+    if (Math.round(count) < 1) {
+      continue
+    }
+    if (interval === 'year') {
       const date1 = new Date(Math.min(y1, y2), m1, d1)
       const date2 = new Date(Math.min(y1, y2), m2, d2)
       if (Math.abs(date2.getTime() - date1.getTime()) < 36 * 3600 * 1000) {
@@ -36,7 +40,7 @@ function toAdjustedDayMonthYearTuple (date) {
 function isLastDayInMonth (day, month) {
   switch (month) {
     case 1:
-      return day === 28
+      return day >= 27
     case 0:
     case 2:
     case 4:
@@ -44,8 +48,8 @@ function isLastDayInMonth (day, month) {
     case 7:
     case 9:
     case 11:
-      return day === 31
+      return day >= 30
     default:
-      return day === 30
+      return day >= 29
   }
 }

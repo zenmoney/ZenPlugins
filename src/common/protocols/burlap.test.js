@@ -205,7 +205,7 @@ describe('stringifyToXml', () => {
   it('preserves explicit number type', () => {
     expect(stringifyToXml(new Type.Int(10))).toEqual('<int>10</int>')
     expect(stringifyToXml(new Type.Long(10))).toEqual('<long>10</long>')
-    expect(stringifyToXml(new Type.Double(10))).toEqual('<double>10</double>')
+    expect(stringifyToXml(new Type.Double(10))).toEqual('<double>10.0</double>')
   })
 
   it('implicitly chooses number type', () => {

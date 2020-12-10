@@ -30,3 +30,13 @@ export function chunkString (str, n) {
 export function removeExtraSpaces (str) {
   return str.replace(/\s+/g, ' ').trim()
 }
+
+export function decodeHtmlSpecialCharacters (str) {
+  return str
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, '\'')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&#(\d{3});/g, (match, p1) => String.fromCharCode(parseInt(p1)))
+}

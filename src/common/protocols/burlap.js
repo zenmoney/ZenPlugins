@@ -63,17 +63,21 @@ export function stringifyToXml (object) {
   } else if (typeof object === 'boolean') {
     return `<boolean>${object === true ? '1' : '0'}</boolean>`
   } else if (typeof object === 'string') {
-    return `<string>${_.escape(object)}</string>`
+    return `<string>${object
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+    }</string>`
   } else if (object instanceof Type.Int) {
     return `<int>${object.value.toFixed(0)}</int>`
   } else if (object instanceof Type.Long) {
     return `<long>${object.value.toFixed(0)}</long>`
   } else if (object instanceof Type.Double) {
-    return `<double>${object.value}</double>`
+    return `<double>${Number.isInteger(object.value) ? object.value.toFixed(1) : object.value}</double>`
   } else if (typeof object === 'number' && Number.isInteger(object)) {
     return `<long>${object.toFixed(0)}</long>`
   } else if (typeof object === 'number') {
-    return `<double>${object}</double>`
+    return `<double>${Number.isInteger(object) ? object.toFixed(1) : object}</double>`
   } else if (object instanceof Date) {
     return '<date>' + object.getUTCFullYear() +
       padLeft(object.getUTCMonth() + 1, 2, '0') +
@@ -83,7 +87,7 @@ export function stringifyToXml (object) {
       padLeft(object.getUTCSeconds(), 2, '0') + '.000Z</date>'
   } else if (object instanceof Type.List) {
     // List with explicitly given type
-    let str = `<list><type>[${object.itemType}</type><length>${object.items.length}</length>`
+    let str = `<list><type>${object.itemType ? '[' + object.itemType : ''}</type><length>${object.items.length}</length>`
     for (const value of object.items) {
       str += stringifyToXml(value)
     }
