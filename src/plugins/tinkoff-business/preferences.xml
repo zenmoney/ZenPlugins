@@ -12,8 +12,9 @@
     </EditTextPreference>
     <EditTextPreference
         key="kpp"
-        title="КПП компании (если есть)"
-        dialogTitle="КПП компании (если есть)"
+        title="КПП компании"
+        dialogTitle="КПП компании"
+        dialogMessage="Оставьте поле пустым, если у компании нет КПП"
         inputType="number"
         summary="||{@s}"
         positiveButtonText="ОК"

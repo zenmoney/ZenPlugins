@@ -159,6 +159,11 @@ export async function fetchAccounts ({ accessToken }, { inn }) {
   ].some(str => response.body.errorText.indexOf(str) >= 0)) {
     throw new InvalidPreferencesError('Неверный ИНН компании')
   }
+  if (response.body.errorCode === 'FORBIDDEN' && response.body.errorText && [
+    'Компания с такими данными не найдена'
+  ].some(str => response.body.errorText.indexOf(str) >= 0)) {
+    throw new InvalidPreferencesError('Неверный ИНН или КПП компании')
+  }
   return response.body || []
 }
 
