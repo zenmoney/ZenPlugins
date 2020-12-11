@@ -60,7 +60,7 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
           grant_type: 'refresh_token',
           refresh_token: refreshToken
         },
-        sanitizeRequestLog: { body: { refresh_token: true } },
+        sanitizeRequestLog: { headers: { Authorization: true }, body: { refresh_token: true } },
         sanitizeResponseLog: { body: { access_token: true, refresh_token: true, sessionId: true, id_token: true } }
       }, null)
       if (response.body && response.body.error) {
@@ -85,7 +85,17 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
     })}`
     const { error, code } = await openWebViewAndInterceptRequest({
       url,
-      sanitizeRequestLog: { url: { query: true } },
+      sanitizeRequestLog: {
+        url: {
+          query: {
+            client_id: true,
+            redirect_uri: true,
+            scope_parameters: true,
+            code: true,
+            session_state: true
+          }
+        }
+      },
       intercept: request => {
         const i = request.url.indexOf(redirectUriWithoutProtocol)
         if (i < 0) {
@@ -113,7 +123,7 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
         code,
         redirect_uri: redirectUri
       },
-      sanitizeRequestLog: { body: { code: true } },
+      sanitizeRequestLog: { headers: { Authorization: true }, body: { code: true, redirect_uri: true } },
       sanitizeResponseLog: { body: { access_token: true, refresh_token: true, sessionId: true, id_token: true } }
     }, null)
   }
