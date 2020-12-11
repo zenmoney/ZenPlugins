@@ -74,30 +74,47 @@ export function mergeTransfersHandler (transactions, {
   if (shouldFillIncomeSum || shouldFillOutcomeSum) {
     console.assert(_.isPlainObject(rest.accountsById), 'when shouldFillIncomeSum/shouldFillOutcomeSum option is set accounts array must be passed as well')
   }
-  if (transactions.length !== 2 ||
+  if (transactions.length < 2 ||
+    transactions.length % 2 !== 0 ||
     transactions.some(transaction => transaction.movements.filter(isMainMovement).length > 1)) {
     return null
   }
-  const [outcome, income] = _.sortBy(transactions.map(transaction => ({
-    transaction,
-    movement: transaction.movements.find(isMainMovement)
-  })), item => getMovementSign(item.movement))
-  if (getMovementSign(outcome.movement) < 0 && getMovementSign(income.movement) > 0 &&
-    (outcome.movement.account.id || income.movement.account.id) &&
-    (outcome.movement.account.id !== income.movement.account.id)) {
+  const incomes = transactions.filter(transaction => getMovementSign(transaction.movements.find(isMainMovement)) > 0)
+  const outcomes = transactions.filter(transaction => getMovementSign(transaction.movements.find(isMainMovement)) < 0)
+  if (outcomes.length !== incomes.length) {
+    return null
+  }
+  if (areQuiteDifferentTransactions(incomes) || areQuiteDifferentTransactions(outcomes)) {
+    return null
+  }
+  if (incomes[0].movements.find(isMainMovement).account.id === outcomes[0].movements.find(isMainMovement).account.id) {
+    return null
+  }
+  const sortedIncomes = _.sortBy(incomes, 'date')
+  const sortedOutcomes = _.sortBy(outcomes, 'date')
+  return sortedOutcomes.map((transaction, i) => {
+    const [outcome, income] = [transaction, sortedIncomes[i]].map(transaction => ({
+      transaction,
+      movement: transaction.movements.find(isMainMovement)
+    }))
     const outcomeMovement = fillSumIfNeeded(outcome, income.movement, shouldFillOutcomeSum, rest.accountsById)
     const incomeMovement = fillSumIfNeeded(income, outcome.movement, shouldFillIncomeSum, rest.accountsById)
-    return [
-      {
-        movements: [outcomeMovement, incomeMovement],
-        date: new Date(Math.min(outcome.transaction.date.getTime(), income.transaction.date.getTime())),
-        hold: outcome.transaction.hold === income.transaction.hold ? outcome.transaction.hold : null,
-        merchant: null,
-        comment: mergeComments === null
-          ? outcome.transaction.comment || income.transaction.comment
-          : mergeComments(outcome, income)
-      }
-    ]
-  }
-  return null
+    return {
+      movements: [outcomeMovement, incomeMovement],
+      date: new Date(Math.min(outcome.transaction.date.getTime(), income.transaction.date.getTime())),
+      hold: outcome.transaction.hold === income.transaction.hold ? outcome.transaction.hold : null,
+      merchant: null,
+      comment: mergeComments === null
+        ? outcome.transaction.comment || income.transaction.comment
+        : mergeComments(outcome, income)
+    }
+  })
+}
+
+function areQuiteDifferentTransactions (transactions) {
+  const exampleMovement = _.omit(transactions[0].movements.find(isMainMovement), ['id'])
+  return transactions.some(transaction => {
+    const movement = transaction.movements.find(isMainMovement)
+    return !_.isEqual(exampleMovement, _.omit(movement, ['id']))
+  })
 }
