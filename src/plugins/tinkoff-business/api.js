@@ -1,9 +1,8 @@
 import { Base64 } from 'jshashes'
 import { parse, stringify } from 'querystring'
-import { fetchJson } from '../../common/network'
+import { fetchJson, openWebViewAndInterceptRequest } from '../../common/network'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { generateRandomString } from '../../common/utils'
-import { IncompatibleVersionError } from '../../errors'
 import { clientId, clientSecret, redirectUri } from './config'
 
 const base64 = new Base64()
@@ -48,61 +47,65 @@ async function callGate (url, options = {}, predicate = () => true) {
   return response
 }
 
-export async function login ({ accessToken, refreshToken, expirationDateMs } = {}) {
+export async function login ({ accessToken, refreshToken, expirationDateMs } = {}, { inn, kpp }, isInBackground) {
   let response
   if (accessToken) {
     if (expirationDateMs < new Date().getTime() + 300000) {
-      response = await callGate('https://sso.tinkoff.ru/secure/token', {
+      response = await callGate('https://id.tinkoff.ru/auth/token', {
         headers: {
-          Host: 'sso.tinkoff.ru'
+          Host: 'id.tinkoff.ru',
+          Authorization: `Basic ${base64.encode(`${clientId}:${clientSecret}`)}`
         },
         body: {
           grant_type: 'refresh_token',
-          refresh_token: refreshToken,
-          fingerprint: '{}'
+          refresh_token: refreshToken
         },
         sanitizeRequestLog: { body: { refresh_token: true } },
-        sanitizeResponseLog: { body: { access_token: true, refresh_token: true, sessionId: true } }
+        sanitizeResponseLog: { body: { access_token: true, refresh_token: true, sessionId: true, id_token: true } }
       }, null)
       if (response.body && response.body.error) {
         response = null
-        accessToken = null
       }
     } else {
       return arguments[0]
     }
   }
-  if (accessToken) {
-    // nothing
-  } else if (ZenMoney.openWebView) {
-    const { error, code } = await new Promise((resolve) => {
-      const state = generateRandomString(16)
-      const redirectUriWithoutProtocol = redirectUri.replace(/^https?:\/\//i, '')
-      const url = `https://sso.tinkoff.ru/authorize?${stringify({
-        client_id: clientId,
-        redirect_uri: redirectUri,
-        state: state
-      })}`
-      ZenMoney.openWebView(url, null, (request, callback) => {
+  if (!response) {
+    const state = generateRandomString(16)
+    const redirectUriWithoutProtocol = redirectUri.replace(/^https?:\/\//i, '')
+    const url = `https://id.tinkoff.ru/auth/authorize?${stringify({
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      state: state,
+      response_type: 'code',
+      scope_parameters: JSON.stringify({
+        inn,
+        kpp
+      })
+    })}`
+    const { error, code } = await openWebViewAndInterceptRequest({
+      url,
+      sanitizeRequestLog: { url: { query: true } },
+      intercept: request => {
         const i = request.url.indexOf(redirectUriWithoutProtocol)
         if (i < 0) {
-          return
+          return null
         }
         const params = parse(request.url.substring(i + redirectUriWithoutProtocol.length + 1))
         if (params.code && params.state === state) {
-          callback(null, params.code)
+          return { code: params.code }
         } else {
-          callback(params)
+          return { error: params }
         }
-      }, (error, code) => resolve({ error, code }))
+      }
     })
     if (error && (!error.error || error.error === 'access_denied')) {
       throw new TemporaryError('Не удалось пройти авторизацию в Тинькофф Бизнес. Попробуйте еще раз')
     }
     console.assert(code && !error, 'non-successfull authorization', error)
-    response = await callGate('https://sso.tinkoff.ru/secure/token', {
+    response = await callGate('https://id.tinkoff.ru/auth/token', {
       headers: {
-        Host: 'sso.tinkoff.ru',
+        Host: 'id.tinkoff.ru',
         Authorization: `Basic ${base64.encode(`${clientId}:${clientSecret}`)}`
       },
       body: {
@@ -113,13 +116,19 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
       sanitizeRequestLog: { body: { code: true } },
       sanitizeResponseLog: { body: { access_token: true, refresh_token: true, sessionId: true, id_token: true } }
     }, null)
-  } else {
-    throw new IncompatibleVersionError()
   }
   console.assert(response.body &&
     response.body.access_token &&
     response.body.refresh_token &&
     response.body.expires_in, 'non-successfull authorization', response)
+  if (response.body.scope) {
+    if ([
+      `opensme/inn/[${inn}]/kpp/[${kpp}]/bank-statements/get`,
+      `opensme/inn/[${inn}]/kpp/[${kpp}]/bank-accounts/get`
+    ].some(scope => response.body.scope.indexOf(scope) < 0)) {
+      throw new TemporaryError('Недостаточно прав для просмотра счетов и операций. Попробуйте подключить синхронизацию заново.')
+    }
+  }
   return {
     accessToken: response.body.access_token,
     refreshToken: response.body.refresh_token,
@@ -128,10 +137,10 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
 }
 
 export async function fetchAccounts ({ accessToken }, { inn }) {
-  const response = await callGate(`https://sme-partner.tinkoff.ru/api/v1/partner/company/${inn}/accounts`, {
+  const response = await callGate('https://business.tinkoff.ru/openapi/api/v2/bank-accounts', {
     method: 'GET',
     headers: {
-      Host: 'sme-partner.tinkoff.ru',
+      Host: 'business.tinkoff.ru',
       Authorization: `Bearer ${accessToken}`
     }
   })
@@ -146,17 +155,17 @@ export async function fetchAccounts ({ accessToken }, { inn }) {
 function formatDate (date) {
   return date.getUTCFullYear() + '-' +
     toAtLeastTwoDigitsString(date.getUTCMonth() + 1) + '-' +
-    toAtLeastTwoDigitsString(date.getUTCDate()) + '+00:00:00'
+    toAtLeastTwoDigitsString(date.getUTCDate())
 }
 
 export async function fetchTransactions ({ accessToken }, { inn }, { id }, fromDate, toDate) {
-  const response = await callGate(`https://sme-partner.tinkoff.ru/api/v1/partner/company/${inn}/excerpt?` +
+  const response = await callGate('https://business.tinkoff.ru/openapi/api/v1/bank-statement?' +
     `accountNumber=${id}` +
     `&from=${encodeURIComponent(formatDate(fromDate))}` +
     `&till=${encodeURIComponent(formatDate(toDate))}`, {
     method: 'GET',
     headers: {
-      Host: 'sme-partner.tinkoff.ru',
+      Host: 'business.tinkoff.ru',
       Authorization: `Bearer ${accessToken}`
     }
   })

@@ -11,6 +11,16 @@
         obligatory="true">
     </EditTextPreference>
     <EditTextPreference
+        key="kpp"
+        title="КПП компании (если есть)"
+        dialogTitle="КПП компании (если есть)"
+        inputType="number"
+        summary="||{@s}"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        obligatory="false">
+    </EditTextPreference>
+    <EditTextPreference
         key="startDate"
         obligatory="true"
         inputType="date"

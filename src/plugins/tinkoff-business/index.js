@@ -7,6 +7,7 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
     toDate = new Date()
   }
   preferences.inn = preferences.inn.toString().replace(/[^\d]/g, '')
+  preferences.kpp = preferences.kpp?.toString().replace(/[^\d]/g, '') || '0'
 
   const accountsById = {}
   const accounts = []
@@ -17,7 +18,7 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
   let apiAccounts = null
   const isFirstRun = !auth
   do {
-    auth = await login(auth)
+    auth = await login(auth, preferences, isInBackground)
     try {
       apiAccounts = await fetchAccounts(auth, preferences)
     } catch (e) {
@@ -27,7 +28,7 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
         } else if (!isFirstRun && i === 1) {
           auth = undefined
         } else {
-          throw new TemporaryError('Недостаточно прав для просмотра счетов. Попробуйте подключить синхронизацию заново.')
+          throw new TemporaryError('Недостаточно прав для просмотра счетов и операций. Попробуйте подключить синхронизацию заново.')
         }
       } else {
         throw e
