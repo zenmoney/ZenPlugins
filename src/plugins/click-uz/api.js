@@ -1,6 +1,6 @@
 import WebSocket from '../../common/protocols/webSocket'
 import { generateUUID, generateRandomString } from '../../common/utils'
-import { IncompatibleVersionError, InvalidPreferencesError } from '../../errors'
+import { IncompatibleVersionError, InvalidOtpCodeError, InvalidPreferencesError } from '../../errors'
 import { SHA512, MD5 } from 'jshashes'
 import { convertAccounts, convertTransaction } from './converters'
 
@@ -114,6 +114,12 @@ export default class ClickPluginApi {
       },
       sanitizeRequestLog: { parameters: { phone_num: true, device_id: true, sms_code: true } }
     })
+    // eslint-disable-next-line camelcase
+    if (response.body?.data?.[0]?.[0]?.error_code && [
+      /Неверный СМС код/
+    ].some(pattern => pattern.test(response.body.data[0][0].error_code))) {
+      throw new InvalidOtpCodeError()
+    }
 
     console.assert(response.body.data[0][0].error === 0, 'unexpected confirm device response', response)
   }
@@ -140,6 +146,13 @@ export default class ClickPluginApi {
       },
       sanitizeRequestLog: { parameters: { device_id: true, password: true, phone_num: true } }
     })
+
+    // eslint-disable-next-line camelcase
+    if (response.body?.data?.[0]?.[0]?.error_note && [
+      /CLICK-PIN/
+    ].some(pattern => pattern.test(response.body.data[0][0].error_note))) {
+      throw new InvalidPreferencesError('Неверно введен CLICK-PIN')
+    }
 
     console.assert(response.body.data[0][0].error === 0, 'unexpected login response', response)
 
