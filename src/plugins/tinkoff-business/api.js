@@ -154,15 +154,22 @@ export async function fetchAccounts ({ accessToken }, { inn }) {
       Authorization: `Bearer ${accessToken}`
     }
   })
-  if (response.body.errorCode === 'INVALID_DATA' && response.body.errorText && [
+  const errorMessage = response.body.errorText || response.body.errorMessage
+  if (response.body.errorCode === 'INVALID_DATA' && errorMessage && [
     'Некорректные символы в ИНН компании'
-  ].some(str => response.body.errorText.indexOf(str) >= 0)) {
+  ].some(str => errorMessage.indexOf(str) >= 0)) {
     throw new InvalidPreferencesError('Неверный ИНН компании')
   }
-  if (response.body.errorCode === 'FORBIDDEN' && response.body.errorText && [
+  if (response.body.errorCode === 'FORBIDDEN' && errorMessage && [
     'Компания с такими данными не найдена'
-  ].some(str => response.body.errorText.indexOf(str) >= 0)) {
+  ].some(str => errorMessage.indexOf(str) >= 0)) {
     throw new InvalidPreferencesError('Неверный ИНН или КПП компании')
+  }
+  if (response.body.errorCode === 'FORBIDDEN' && errorMessage && [
+    'Недостаточно прав на совершаемое действие',
+    'У вас неподходящие скопы для данной операции'
+  ].some(str => errorMessage.indexOf(str) >= 0)) {
+    throw new TemporaryError('Недостаточно прав для просмотра счетов и операций. Попробуйте подключить синхронизацию заново.')
   }
   return response.body || []
 }
