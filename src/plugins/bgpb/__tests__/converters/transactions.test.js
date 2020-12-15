@@ -1,18 +1,20 @@
 import { convertLastTransaction, convertTransaction } from '../../converters'
 
 describe('convertTransaction', () => {
-  const accounts = [{
-    id: '11161311-117d11',
-    transactionsAccId: null,
-    type: 'card',
-    title: 'Расчетная карточка*1111',
-    currencyCode: '840',
-    cardNumber: '529911******1111',
-    instrument: 'USD',
-    balance: 0,
-    syncID: ['1111'],
-    productType: 'MS'
-  }]
+  const accounts = [
+    {
+      id: '11161311-117d11',
+      transactionsAccId: null,
+      type: 'card',
+      title: 'Расчетная карточка*1111',
+      currencyCode: '840',
+      cardNumber: '529911******1111',
+      instrument: 'USD',
+      balance: 0,
+      syncID: ['1111'],
+      productType: 'MS'
+    }
+  ]
 
   const tt = [
     {
@@ -43,29 +45,29 @@ describe('convertTransaction', () => {
           title: 'BGPB PST-93'
         },
         movements:
-        [
-          {
-            account: {
-              id: '11161311-117d11'
+          [
+            {
+              account: {
+                id: '11161311-117d11'
+              },
+              fee: 0,
+              id: null,
+              invoice: null,
+              sum: 1600
             },
-            fee: 0,
-            id: null,
-            invoice: null,
-            sum: 1600
-          },
-          {
-            account: {
-              company: null,
-              instrument: 'USD',
-              syncIds: null,
-              type: 'cash'
-            },
-            fee: 0,
-            id: null,
-            invoice: null,
-            sum: -1600
-          }
-        ]
+            {
+              account: {
+                company: null,
+                instrument: 'USD',
+                syncIds: null,
+                type: 'cash'
+              },
+              fee: 0,
+              id: null,
+              invoice: null,
+              sum: -1600
+            }
+          ]
       }
     },
     {
@@ -96,20 +98,20 @@ describe('convertTransaction', () => {
           title: 'SHOP'
         },
         movements:
-        [
-          {
-            account: {
-              id: '11161311-117d11'
-            },
-            fee: 0,
-            id: null,
-            invoice: {
-              instrument: 'EUR',
-              sum: -250
-            },
-            sum: -300
-          }
-        ]
+          [
+            {
+              account: {
+                id: '11161311-117d11'
+              },
+              fee: 0,
+              id: null,
+              invoice: {
+                instrument: 'EUR',
+                sum: -250
+              },
+              sum: -300
+            }
+          ]
       }
     }
   ]
@@ -125,18 +127,20 @@ describe('convertTransaction', () => {
 })
 
 describe('convertLastTransaction', () => {
-  const accounts = [{
-    id: '11161311-117d11',
-    transactionsAccId: null,
-    type: 'card',
-    title: 'Расчетная карточка*1111',
-    currencyCode: '840',
-    cardNumber: '529911******1111',
-    instrument: 'USD',
-    balance: 0,
-    syncID: ['1111'],
-    productType: 'MS'
-  }]
+  const accounts = [
+    {
+      id: '11161311-117d11',
+      transactionsAccId: null,
+      type: 'card',
+      title: 'Расчетная карточка*1111',
+      currencyCode: '840',
+      cardNumber: '529911******1111',
+      instrument: 'USD',
+      balance: 0,
+      syncID: ['1111'],
+      productType: 'MS'
+    }
+  ]
 
   const tt = [
     {
@@ -145,7 +149,7 @@ describe('convertLastTransaction', () => {
         acceptedTime: 1554541890000,
         eventType: 4,
         id: '2019-7871636',
-        pushMessageText: 'Card7592; Смена статуса карты; 04.04.19 17:31:40;'
+        pushMessageText: 'Card1111; Смена статуса карты; 04.04.19 17:31:40;' //  Смена
       },
       expectedTransaction: null
     },
@@ -362,14 +366,17 @@ describe('convertLastTransaction', () => {
                 company: null,
                 instrument: 'USD',
                 syncIds: null,
-                type: 'cash'
+                type: 'ccard'
               },
               fee: 0,
               id: null,
               invoice: null,
               sum: -5
             }
-          ]
+          ],
+        groupKeys: [
+          '2019-05-03_USD_5'
+        ]
       }
     },
     {
@@ -403,6 +410,86 @@ describe('convertLastTransaction', () => {
               sum: 0.70
             }
           ]
+      }
+    },
+    {
+      name: 'card P2P In',
+      transaction: {
+        id: '2020-57982197',
+        acceptedTime: 1606485231000,
+        pushMessageText: 'Card1111; Пополнение карты: 268,00 USD; 27.11.20 16:53:30; EPAYMENT P2P CR,MINSK,BY; MCC: 6010; Dostupno: 3 000,95 USD',
+        eventType: 4
+      },
+      expectedTransaction: {
+        comment: null,
+        date: new Date('2020-11-27T13:53:00.000Z'),
+        hold: false,
+        merchant: null,
+        movements:
+          [
+            {
+              id: null,
+              account: { id: '11161311-117d11' },
+              invoice: null,
+              sum: 268,
+              fee: 0
+            },
+            {
+              account: {
+                company: null,
+                instrument: 'USD',
+                syncIds: null,
+                type: 'ccard'
+              },
+              fee: 0,
+              id: null,
+              invoice: null,
+              sum: -268
+            }
+          ],
+        groupKeys: [
+          '2020-11-27_USD_268'
+        ]
+      }
+    },
+    {
+      name: 'card P2P Out',
+      transaction: {
+        id: '2020-57982166',
+        acceptedTime: 1606485213000,
+        pushMessageText: 'Card1111; Оплата: 268,00 USD; 27.11.20 16:53:30; EPAYMENT P2P DB,MINSK,BY; MCC: 6012; Dostupno: 237,98 USD',
+        eventType: 4
+      },
+      expectedTransaction: {
+        comment: null,
+        date: new Date('2020-11-27T13:53:00.000Z'),
+        hold: false,
+        merchant: null,
+        movements:
+          [
+            {
+              id: null,
+              account: { id: '11161311-117d11' },
+              invoice: null,
+              sum: -268,
+              fee: 0
+            },
+            {
+              account: {
+                company: null,
+                instrument: 'USD',
+                syncIds: null,
+                type: 'ccard'
+              },
+              fee: 0,
+              id: null,
+              invoice: null,
+              sum: 268
+            }
+          ],
+        groupKeys: [
+          '2020-11-27_USD_268'
+        ]
       }
     }
   ]

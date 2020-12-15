@@ -59,33 +59,40 @@ export function convertTransaction (apiTransaction, accounts) {
 }
 
 export function convertLastTransaction (apiTransaction, accounts) {
-  const message = apiTransaction.pushMessageText
-  if (message.slice(0, 4) !== 'Card' || message.indexOf('Смена статуса карты') >= 0) {
+  const rawData = apiTransaction.pushMessageText.split('; ')
+
+  if (rawData[0].slice(0, 4) !== 'Card' || rawData[1] === 'Смена статуса карты') {
     // Значит это не транзакция, а просто уведомление банка
     return null
   }
-  const rawData = message.split('; ')
+
   const account = accounts.find(account => {
     return account.syncID.indexOf(rawData[0].slice(-4)) !== -1
   })
   if (!account) {
     return null
   }
+  let amountData = rawData[1].split(': ')
+  let currency = amountData[1].slice(-3)
+  let amount = amountData[1].replace(' ' + currency, '')
+  let date = getDateFromJSON(rawData[2])
+  let dateDate = getDateJSON(rawData[2])
+  apiTransaction.payeeLastTransaction = rawData[3]
 
-  const isChangePinTransaction = rawData[1] === 'Смена PIN' // Транзакция смены pin имеет не стандартный формат
-  const amountData = isChangePinTransaction ? rawData[2].split(' ') : rawData[1].split(': ')
-  const currency = isChangePinTransaction ? amountData[2].slice(-3) : amountData[1].slice(-3)
-  const amount = isChangePinTransaction ? amountData[1] : amountData[1].replace(' ' + currency, '')
-  const date = getDateFromJSON(rawData[isChangePinTransaction ? 3 : 2])
+  const isChangePinTransaction = rawData[1] === 'Смена PIN' // Транзакция смены pin имеет не стандартный формат. Нет ни одного теста !!!
+  if (isChangePinTransaction) {
+    amountData = rawData[2].split(' ')
+    currency = amountData[2].slice(-3)
+    amount = amountData[1]
+    date = getDateFromJSON(rawData[3])
+    dateDate = getDateJSON(rawData[3])
+  }
 
   apiTransaction.description = amountData[0]
   apiTransaction.currency = currency
   apiTransaction.type = amountData[0]
   apiTransaction.amount = amount
-
-  if (!isChangePinTransaction) {
-    apiTransaction.payeeLastTransaction = rawData[3]
-  }
+  apiTransaction.dateDate = dateDate
 
   const transaction = {
     date: date,
@@ -101,6 +108,7 @@ export function convertLastTransaction (apiTransaction, accounts) {
   };
 
   [
+    parseP2P,
     parseCash,
     parsePayee
   ].some(parser => parser(transaction, apiTransaction))
@@ -161,6 +169,38 @@ function parseCash (transaction, apiTransaction) {
     })
     return true
   }
+}
+
+function parseP2P (transaction, apiTransaction) {
+  if (!apiTransaction.payeeLastTransaction) {
+    return false
+  }
+
+  for (const pattern of [
+    /P2P/
+  ]) {
+    const match = apiTransaction.payeeLastTransaction.match(pattern)
+    if (match) {
+      transaction.groupKeys = [
+        `${apiTransaction.dateDate}_${apiTransaction.currency}_${Math.abs(getSumAmount(apiTransaction.type, apiTransaction.amount)).toString()}`
+      ]
+      transaction.merchant = null
+      transaction.movements.push({
+        id: null,
+        account: {
+          company: null,
+          type: 'ccard',
+          instrument: apiTransaction.currency,
+          syncIds: null
+        },
+        invoice: null,
+        sum: -getSumAmount(apiTransaction.type, apiTransaction.amount),
+        fee: 0
+      })
+      return true
+    }
+  }
+  return false
 }
 
 function parsePayee (transaction, apiTransaction) {
@@ -227,14 +267,19 @@ function getSumAmount (debitFlag, strAmount) {
   return -amount
 }
 
-export function getDate (str) {
+function getDate (str) {
   const [day, month, year, hour, minute] = str.match(/(\d{2}).(\d{2}).(\d{4}) (\d{2}):(\d{2})/).slice(1)
   return new Date(`${year}-${month}-${day}T${hour}:${minute}:00+03:00`)
 }
 
-export function getDateFromJSON (str) {
+function getDateFromJSON (str) {
   const [day, month, year, hour, minute] = str.match(/(\d{2}).(\d{2}).(\d{2}) (\d{2}):(\d{2}):\d{2}/).slice(1)
   return new Date(`20${year}-${month}-${day}T${hour}:${minute}:00+03:00`)
+}
+
+function getDateJSON (str) {
+  const [day, month, year] = str.match(/(\d{2}).(\d{2}).(\d{2})/).slice(1)
+  return (`20${year}-${month}-${day}`)
 }
 
 export function transactionsUnique (array) {
