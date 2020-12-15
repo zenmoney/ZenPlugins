@@ -338,4 +338,31 @@ describe('convertTransaction', () => {
 
     expect(transaction).toEqual(null)
   })
+
+  it('should return null if there is no amount', () => {
+    const transaction = convertTransaction({
+      amount: null,
+      balance: '705.32',
+      cardPan: null,
+      curr: null,
+      debitFlag: '0',
+      description: 'Погашение основного долга по договору № 42009206 от 18.01.2019. Кредитополучатель: Собко Ольга Васильевна',
+      error: null,
+      operationDate: '2020-12-07',
+      orderStatus: null,
+      place: null,
+      country: null,
+      city: null,
+      status: 'T',
+      transAmount: null,
+      transDate: '2020-12-05 19:02:25',
+      mcc: null,
+      transactionId: null,
+      rrn: null,
+      approvalCode: null,
+      accountId: 'BY76MTBK30140008999900143576'
+    }, accounts)
+
+    expect(transaction).toEqual(null)
+  })
 })

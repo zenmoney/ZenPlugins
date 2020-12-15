@@ -35,7 +35,8 @@ export function convertAccount (json) {
 }
 
 export function convertTransaction (json, accounts) {
-  if (json.amount === '' || json.transAmount === '0.00') { // skip frozen and verification operations
+  if (json.amount === '' || json.transAmount === '0.00' ||
+    json.amount === null || json.transAmount === null) { // skip frozen and verification operations
     return null
   }
   const account = accounts.find(account => {
