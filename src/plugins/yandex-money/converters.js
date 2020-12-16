@@ -96,7 +96,8 @@ function parseTransfer (apiTransaction, transaction, account, invoice) {
     return false
   }
   for (const pattern of [
-    /Перевод на карту ([\d*]+)/i
+    /Перевод на карту ([\d*]+)/i,
+    /Пополнение с карты ([\d*]+)/i
   ]) {
     const match = apiTransaction.title.match(pattern)
     if (match) {

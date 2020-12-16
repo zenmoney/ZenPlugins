@@ -161,6 +161,50 @@ describe('convertTransaction', () => {
           }
         ]
       }
+    ],
+    [
+      {
+        group_id: 'type_history_non_p2p_deposit',
+        operation_id: '660635021483002312',
+        title: 'Пополнение с карты ****1190',
+        amount: 1470,
+        direction: 'in',
+        datetime: '2020-12-07T05:43:41Z',
+        label: '928654:1784845819',
+        status: 'success',
+        type: 'deposition',
+        spendingCategories: [{ name: 'Deposition', sum: 1470 }],
+        amount_currency: 'RUB',
+        is_sbp_operation: false
+      },
+      {
+        date: new Date('2020-12-07T05:43:41.000Z'),
+        hold: false,
+        comment: 'Пополнение с карты ****1190',
+        merchant: null,
+        movements:
+          [
+            {
+              id: '660635021483002312',
+              account: { id: 'account' },
+              invoice: null,
+              sum: 1470,
+              fee: 0
+            },
+            {
+              id: null,
+              account: {
+                type: null,
+                instrument: 'RUB',
+                syncIds: ['1190'],
+                company: null
+              },
+              invoice: null,
+              sum: -1470,
+              fee: 0
+            }
+          ]
+      }
     ]
   ])('converts replenishment', (apiTransaction, transaction) => {
     const account = { id: 'account', instrument: 'RUB' }
