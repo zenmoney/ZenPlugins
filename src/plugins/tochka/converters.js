@@ -1,4 +1,12 @@
+import { uniqBy } from 'lodash'
 import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
+
+export function convertAccounts (apiAccounts) {
+  return uniqBy(apiAccounts, apiAccount => apiAccount.code).map(apiAccount => ({
+    account: convertAccount(apiAccount),
+    product: apiAccount
+  }))
+}
 
 export function convertAccount (apiAccount) {
   return {

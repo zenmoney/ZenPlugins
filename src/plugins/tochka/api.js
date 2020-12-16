@@ -137,9 +137,7 @@ export async function login ({ access_token, refresh_token, expirationDateMs } =
 
 export async function fetchAccounts ({ access_token } = {}, preferences) {
   console.log('>>> Получаем список счетов')
-  // простой список счетов
   const response = await callGate('account/list', {
-    ignoreErrors: true,
     sandbox: preferences.server === 'sandbox',
     method: 'GET',
     headers: {
@@ -149,22 +147,6 @@ export async function fetchAccounts ({ access_token } = {}, preferences) {
     }
   })
   console.assert(response.body, 'unexpected account response')
-
-  // попытаемся достать счета по данным организаций
-  /* const response = await fetchJson('organization/list', {
-    ignoreErrors: true,
-    sandbox: preferences.server === 'sandbox',
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${access_token}`
-    }
-  })
-
-  const result = []
-  response.body.organizations.forEach(function (org) {
-    if (org.accounts) result.concat(org.accounts)
-  }) */
-
   return response.body
 }
 

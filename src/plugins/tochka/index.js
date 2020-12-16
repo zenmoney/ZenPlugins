@@ -1,6 +1,6 @@
 import { adjustTransactions } from '../../common/transactionGroupHandler'
 import { fetchAccounts, fetchStatement, login } from './api'
-import { convertAccount, convertTransaction } from './converters'
+import { convertAccounts, convertTransaction } from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate, isInBackground }) {
   if (!toDate) {
@@ -26,13 +26,12 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
     throw new Error('Ошибка запроса списка счетов')
   }
 
-  await Promise.all(fetchedAccounts.map(async apiAccount => {
-    const account = convertAccount(apiAccount)
+  await Promise.all(convertAccounts(fetchedAccounts).map(async ({ account, product }) => {
     accounts.push(account)
     if (ZenMoney.isAccountSkipped(account.id)) {
       return
     }
-    const apiStatement = await fetchStatement(auth, apiAccount, fromDate, toDate, preferences)
+    const apiStatement = await fetchStatement(auth, product, fromDate, toDate, preferences)
     // остаток на счету на конец периода в выписке
     if (apiStatement.balance_closing) {
       account.balance = Number(apiStatement.balance_closing)
@@ -50,10 +49,6 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
 
   ZenMoney.setData('auth', auth)
   ZenMoney.saveData()
-
-  if (accounts.length === 0) {
-    throw new Error('Нечего загружать')
-  }
 
   return {
     accounts,
