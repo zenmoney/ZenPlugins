@@ -37,9 +37,11 @@ async function callGate (url, options = {}, predicate = () => true) {
     throw new TemporaryError('Информация из Тинькофф Бизнес временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
   }
   if (predicate) {
-    if (response.body && (
-      response.body.errorCode === 'AUTH_REQUIRED' ||
-      response.body.errorCode === 'ACCESS_DENIED')) {
+    if (response.body && [
+      'ACCESS_DENIED',
+      'AUTH_REQUIRED',
+      'UNAUTHORIZED'
+    ].indexOf(response.body.errorCode) >= 0) {
       throw new AuthError()
     }
     console.assert(predicate(response), 'non-successful response')

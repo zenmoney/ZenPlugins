@@ -36,6 +36,8 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
     }
     i++
   } while (!apiAccounts)
+  ZenMoney.setData('auth', auth)
+  ZenMoney.saveData()
 
   for (const apiAccount of apiAccounts) {
     const account = convertAccount(apiAccount)
@@ -56,8 +58,6 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
       }
     }
   }))
-
-  ZenMoney.setData('auth', auth)
 
   return {
     accounts,
