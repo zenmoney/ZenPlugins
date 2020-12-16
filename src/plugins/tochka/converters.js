@@ -80,6 +80,8 @@ function parseInstrument (accountNumber) {
 function parseInnerTransfer (transaction, apiTransaction) {
   if (![
     /^Перевод средств с транзитного/,
+    /^Перевод средств в счёт накоплений/,
+    /^Перевод средств на сейф-счёт/,
     /^Продажа [A-Z]{3} за [A-Z]{3}/
   ].some(regexp => apiTransaction.payment_purpose.match(regexp))) {
     return false
