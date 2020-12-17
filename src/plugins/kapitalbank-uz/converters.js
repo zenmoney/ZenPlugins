@@ -1,3 +1,5 @@
+import { dateInTimezone, toISODateString } from '../../common/dateUtils'
+
 /**
  * Конвертер счета из формата банка в формат Дзенмани
  *
@@ -178,13 +180,14 @@ export function convertVisaCardTransaction (card, rawTransaction) {
   const transaction = {
     date: new Date(rawTransaction.transDate),
     hold: false,
-    merchant: rawTransaction.back === false ? {
-      country: null,
-      city: null,
-      title: rawTransaction.merchantName,
-      mcc: null,
-      location: null
-    }
+    merchant: rawTransaction.back === false
+      ? {
+        country: null,
+        city: null,
+        title: rawTransaction.merchantName,
+        mcc: null,
+        location: null
+      }
       : null,
     movements: [
       {
@@ -281,7 +284,15 @@ export function convertAccountTransaction (account, rawTransaction) {
       }
     ],
     comment: rawTransaction.details
-  };
+  }
+  for (const regexp of [
+    /Взнос ср-в на СКС/
+  ]) {
+    const match = rawTransaction.details.match(regexp)
+    if (match) {
+      transaction.groupKeys = [`${toISODateString(dateInTimezone(transaction.date, 300))}_${invoice.instrument}_${Math.abs(invoice.sum).toString()}`]
+    }
+  }
   [
     parsePayee,
     parseInnerTransfer,
