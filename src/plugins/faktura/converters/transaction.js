@@ -76,6 +76,14 @@ function parseInnerTransfer (transaction, apiTransaction, accountId, invoice) {
     sum: -invoice.sum,
     fee: 0
   })
+  if (apiTransaction.serviceCode === 'WLT_CLOSE') {
+    transaction.movements[1].account = {
+      type: 'ccard',
+      instrument: invoice.instrument,
+      company: null,
+      syncIds: null
+    }
+  }
   transaction.comment = `${apiTransaction.typeName} ${apiTransaction.title}`
   return true
 }
@@ -92,6 +100,7 @@ function parseOuterTransfer (transaction, apiTransaction, accountId, invoice) {
     return false
   }
 
+  const commission = apiTransaction.money.amountDetail.commission
   let title
 
   switch (apiTransaction.type) {
@@ -101,7 +110,10 @@ function parseOuterTransfer (transaction, apiTransaction, accountId, invoice) {
       }
       break
     case 'ZKDP':
-      transaction.movements[0].account = { id: helper.walletUniqueAccountId(apiTransaction.walletId) }
+      if (apiTransaction.serviceCode === 'DP2Wallet') {
+        transaction.movements[0].account = { id: helper.walletUniqueAccountId(apiTransaction.walletId) }
+      }
+      transaction.movements[0].fee = commission > 0 ? -commission : 0
       title = apiTransaction.title
       transaction.comment = apiTransaction.typeName
       break
@@ -145,7 +157,7 @@ function parseOuterTransfer (transaction, apiTransaction, accountId, invoice) {
       syncIds: null
     },
     invoice: null,
-    sum: -invoice.sum,
+    sum: commission ? -commission - invoice.sum : -invoice.sum,
     fee: 0
   })
   return true
@@ -214,12 +226,10 @@ function parsePayee (transaction, apiTransaction, accountId, invoice) {
 const resolveAccountId = (item, contractToAccount) => {
   let accountId = null
 
-  if (_.has(item, 'cardId')) {
+  if (_.has(item, 'contractId')) {
+    accountId = contractToAccount[item.contractId]
+  } else if (_.has(item, 'cardId')) {
     accountId = helper.cardUniqueAccountId(item.cardId)
-  } else {
-    if (_.has(item, 'contractId') && _.has(contractToAccount, item.contractId)) {
-      accountId = contractToAccount[item.contractId]
-    }
   }
 
   return accountId

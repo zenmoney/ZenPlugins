@@ -89,4 +89,79 @@ describe('transaction converter', () => {
   ])('converts sale dollars', (apiTransaction, transaction) => {
     expect(converter(apiTransaction, { 9870000: 'c-1230000' })).toEqual(transaction)
   })
+
+  it.each([
+    [
+      {
+        date: 1605125443000,
+        walletId: 403872,
+        itemType: 'OPERATION',
+        serviceCode: 'WLT_CLOSE',
+        typeName: 'Продажа валюты',
+        channel: 'MOBILE',
+        movements:
+          [
+            {
+              date: 1605125443000,
+              income: false,
+              amount: 184.99,
+              currency: 'USD',
+              id: '472348711#910263109',
+              type: 'WITHDRAW'
+            },
+            {
+              date: 1605125443001,
+              income: true,
+              amount: 14164.68,
+              currency: 'RUR',
+              id: '472348711#910263109#income',
+              type: 'INCOME'
+            }
+          ],
+        title: 'Курс 1$ = 76.5700₽',
+        type: 'WALLET',
+        actor: 'CONSUMER',
+        counterpartyCode: 'usd',
+        money:
+          {
+            income: false,
+            amount: 184.99,
+            amountDetail: { amount: 14164.68, own: 14164.68, commission: 0 },
+            currency: 'USD',
+            accountAmount: { amount: 14164.68, currency: 'RUR' }
+          },
+        rate: { date: 1605125443000, amount: '76.5700', type: 'PURCHASE' },
+        cardId: 3208453,
+        contractId: 2248303,
+        id: 472348711,
+        statisticGroup: { name: 'Прочее', code: 'income-undefined-operations' },
+        status: '0#DONE'
+      },
+      {
+        comment: 'Продажа валюты Курс 1$ = 76.5700₽',
+        date: new Date('2020-11-11T20:10:43.000Z'),
+        hold: false,
+        merchant: null,
+        movements:
+          [
+            {
+              id: '472348711',
+              account: { id: 'c-3208453' },
+              invoice: { sum: 184.99, instrument: 'USD' },
+              sum: 14164.68,
+              fee: 0
+            },
+            {
+              id: null,
+              account: { type: 'ccard', instrument: 'USD', company: null, syncIds: null },
+              invoice: null,
+              sum: -184.99,
+              fee: 0
+            }
+          ]
+      }
+    ]
+  ])('converts sale dollars from closed wallet', (apiTransaction, transaction) => {
+    expect(converter(apiTransaction, { 224830: 'c-320845', 2248303: 'c-3208453', 22483: 'c-32084' })).toEqual(transaction)
+  })
 })
