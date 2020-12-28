@@ -105,8 +105,11 @@ async function auth (login, password, authParams, isInBackground) {
         }
       })
 
+      if (otpResponse.body.status === 'AUTH_WRONG') { throw new InvalidOtpCodeError() }
+
       assertResponseSuccess(otpResponse)
       setTokenFromResponse(otpResponse)
+
       return { deviceId, instanceId }
     } else if (s === 'OK') {
       setTokenFromResponse(response)

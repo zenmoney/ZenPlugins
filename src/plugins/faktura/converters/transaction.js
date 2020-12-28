@@ -195,7 +195,8 @@ function parsePayee (transaction, apiTransaction, accountId, invoice) {
   if (![
     'PURCHASE',
     'PAYMENT',
-    'REFUND'
+    'REFUND',
+    'EXTERNAL_PARTNER'
   ].some(str => str === apiTransaction.type)) {
     return false
   }

@@ -647,6 +647,79 @@ describe('convertTransactions', () => {
         },
         comment: null
       }
+    ],
+    [
+      {
+        date: 1608742600000,
+        itemType: 'OPERATION',
+        authCode: '193954',
+        bonus:
+          {
+            income: true,
+            amount: 143.27,
+            incomeDate: 1608742600000,
+            availabilityDate: 1609952200000,
+            currency: 'BAL',
+            details: []
+          },
+        description: 'ozon.ru, Москва, Пресненская наб., д. 10, блок C',
+        movements:
+          [
+            {
+              date: 1608742600000,
+              income: false,
+              amount: 3114.42,
+              currency: 'RUR',
+              id: '488055376#7bd8a02e-fc2b-437b-8e76-50b2150a6a85',
+              type: 'WITHDRAW'
+            },
+            {
+              date: 1608742600000,
+              income: true,
+              amount: 143.27,
+              currency: 'BAL',
+              id: '488055376#7bd8a02e-fc2b-437b-8e76-50b2150a6a85',
+              type: 'BONUS_INCOME'
+            }
+          ],
+        title: 'Ozon',
+        mcc: { groupDescription: 'Магазины', groupCode: 'shops' },
+        type: 'EXTERNAL_PARTNER',
+        counterpartyCode: 'ozon-ru',
+        money:
+          {
+            income: false,
+            amount: 3114.42,
+            amountDetail: { amount: 3114.42, commission: 0 },
+            currency: 'RUR'
+          },
+        contractId: 3353117,
+        id: 488055376,
+        statisticGroup: { code: 'mcc-group#shops', name: 'Магазины' },
+        status: 'DONE'
+      },
+      {
+        comment: null,
+        date: new Date(1608742600000),
+        hold: false,
+        merchant: {
+          country: null,
+          city: 'Москва',
+          title: 'Ozon',
+          mcc: null,
+          location: null
+        },
+        movements:
+          [
+            {
+              id: '488055376',
+              account: { id: 'c-3702600' },
+              invoice: null,
+              sum: -3114.42,
+              fee: 0
+            }
+          ]
+      }
     ]
   ])('converts outcome spending', (apiTransaction, transaction) => {
     expect(converter(apiTransaction, { 3353117: 'c-3702600' })).toEqual(transaction)
