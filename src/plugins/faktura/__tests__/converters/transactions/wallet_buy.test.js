@@ -90,4 +90,78 @@ describe('transaction converter', () => {
   ])('converts buy dollars', (apiTransaction, transaction) => {
     expect(converter(apiTransaction, { 9870000: 'c-1230000' })).toEqual(transaction)
   })
+
+  it.each([
+    [
+      {
+        date: 1508164789000,
+        walletId: 297926,
+        itemType: 'OPERATION',
+        serviceCode: 'WLT_C2W',
+        typeName: 'Покупка валюты',
+        channel: 'MOBILE',
+        movements:
+          [
+            {
+              date: 1508164789000,
+              income: false,
+              amount: 4069.8,
+              currency: 'RUR',
+              id: '194268638#300896792',
+              type: 'WITHDRAW'
+            },
+            {
+              date: 1508164789001,
+              income: true,
+              amount: 60,
+              currency: 'EUR',
+              id: '194268638#300896792#income',
+              type: 'INCOME'
+            }
+          ],
+        title: 'Курс 1€ = 67.8300₽',
+        type: 'WALLET',
+        actor: 'CONSUMER',
+        money:
+          {
+            income: true,
+            amount: 60,
+            amountDetail: { amount: 4069.8, own: 4069.8, commission: 0, credit: 0 },
+            currency: 'EUR',
+            accountAmount: { amount: 4069.8, currency: 'RUR' }
+          },
+        rate: { date: 1508164789000, amount: '67.8300', type: 'SALE' },
+        cardId: 943996,
+        contractId: 772898,
+        id: 194268638,
+        statisticGroup: { code: 'wallet-operations', name: 'Покупка валюты' },
+        status: '0#DONE'
+      },
+      {
+        date: new Date(1508164789000),
+        movements:
+          [
+            {
+              id: '194268638',
+              account: { id: 'c-2098804' },
+              invoice: { sum: -60, instrument: 'EUR' },
+              sum: -4069.8,
+              fee: 0
+            },
+            {
+              id: null,
+              account: { id: 'w-297926' },
+              invoice: null,
+              sum: 60,
+              fee: 0
+            }
+          ],
+        hold: false,
+        merchant: null,
+        comment: 'Покупка валюты Курс 1€ = 67.8300₽'
+      }
+    ]
+  ])('converts buy euro', (apiTransaction, transaction) => {
+    expect(converter(apiTransaction, { 772898: 'c-2098804', 1750460: 'w-297926' })).toEqual(transaction)
+  })
 })

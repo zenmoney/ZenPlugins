@@ -235,6 +235,19 @@ const resolveAccountId = (item, contractToAccount) => {
   return accountId
 }
 
+export function filterDuplicates (transactions) {
+  const transactionIds = {}
+  const filtered = []
+  for (const transaction of transactions) {
+    const key = transaction.movements[0].id + '_' + Math.abs(transaction.movements[0].sum)
+    if (!transactionIds[key]) {
+      transactionIds[key] = true
+      filtered.push(transaction)
+    }
+  }
+  return filtered
+}
+
 export {
   converter
 }

@@ -5,7 +5,7 @@
 import * as api from './api'
 import { contractIdsFetcher as cardContractIdsFetcher, converter as cardDataToZenmoneyAccount } from './converters/card'
 import { mapContractToAccount } from './converters/helpers'
-import { converter as transactionsDataToZenmoneyTransaction } from './converters/transaction'
+import { converter as transactionsDataToZenmoneyTransaction, filterDuplicates } from './converters/transaction'
 import { contractIdsFetcher as walletContractIdsFetcher, converter as walletDataToZenmoneyAccount } from './converters/wallet'
 
 async function scrape ({ preferences, fromDate, toDate, isInBackground, apiUri }) {
@@ -34,7 +34,7 @@ async function scrape ({ preferences, fromDate, toDate, isInBackground, apiUri }
   const wallets = walletsData.map(walletDataToZenmoneyAccount)
 
   const map = mapContractToAccount(cardsData)
-  const transactions = transactionsData.map((data) => transactionsDataToZenmoneyTransaction(data, map))
+  const transactions = filterDuplicates(transactionsData.map((data) => transactionsDataToZenmoneyTransaction(data, map)))
   const accounts = [].concat(cards, wallets)
 
   return {
