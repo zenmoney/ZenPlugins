@@ -1,4 +1,5 @@
 import ClickPluginApi from './api'
+import { convertAccounts, convertTransactions } from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
   const api = new ClickPluginApi()
@@ -21,8 +22,9 @@ export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
   const from = fromDate
   const to = toDate || new Date()
   await api.login(preferences.phone, preferences.password)
-  const accounts = await api.getAccountsWithBalances(preferences.phone)
-  const transactions = await api.getTransactions(preferences.phone, from, to, accounts)
+  const apiAccounts = await api.getAccounts(preferences.phone)
+  const accounts = convertAccounts(apiAccounts, await api.getAccountsBalances(preferences.phone, apiAccounts))
+  const transactions = convertTransactions(await api.getTransactions(preferences.phone, from, to), accounts)
 
   /**
    * LAST STEP - Unloading

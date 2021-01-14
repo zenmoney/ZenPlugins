@@ -2,7 +2,6 @@ import WebSocket from '../../common/protocols/webSocket'
 import { generateUUID, generateRandomString } from '../../common/utils'
 import { IncompatibleVersionError, InvalidOtpCodeError, InvalidPreferencesError } from '../../errors'
 import { SHA512, MD5 } from 'jshashes'
-import { convertAccounts, convertTransaction } from './converters'
 
 const baseUrl = 'api.click.uz:8443'
 const sha512 = new SHA512()
@@ -159,25 +158,7 @@ export default class ClickPluginApi {
     ZenMoney.setData('sessionKey', response.body.data[1][0].session_key)
   }
 
-  /**
-   * Получить список счетов и их баланс
-   *
-   * @param phone номер телефона
-   */
-  async getAccountsWithBalances (phone) {
-    const getAccountsMethod = 'get.accounts'
-    const getBalancesMethod = 'get.balance.multiple'
-
-    const accounts = await this.callGate(getAccountsMethod, {
-      parameters: {
-        session_key: ZenMoney.getData('sessionKey'),
-        phone_num: getPhoneNumber(phone)
-      },
-      sanitizeRequestLog: { parameters: { session_key: true, phone_num: true } }
-    })
-
-    console.assert(accounts.body.data[0][0].error === 0, 'unexpected get accounts response', accounts)
-
+  async getAccountsBalances (phone, accounts) {
     const accountsForBalanceRequests = accounts.body.data[1].map(account => {
       return {
         account_id: account.id,
@@ -186,7 +167,7 @@ export default class ClickPluginApi {
       }
     })
 
-    const balances = await this.callGate(getBalancesMethod, {
+    const balances = await this.callGate('get.balance.multiple', {
       parameters: {
         session_key: ZenMoney.getData('sessionKey'),
         phone_num: getPhoneNumber(phone),
@@ -194,8 +175,23 @@ export default class ClickPluginApi {
       },
       sanitizeRequestLog: { parameters: { session_key: true, phone_num: true } }
     })
+
     console.assert(balances.body.data[0][0].error === 0, 'unexpected get balances response', balances)
-    return convertAccounts(accounts.body.data[1], balances.body.data[1])
+
+    return balances.body.data[1]
+  }
+
+  async getAccounts (phone) {
+    const accounts = await this.callGate('get.accounts', {
+      parameters: {
+        session_key: ZenMoney.getData('sessionKey'),
+        phone_num: getPhoneNumber(phone)
+      },
+      sanitizeRequestLog: { parameters: { session_key: true, phone_num: true } }
+    })
+
+    console.assert(accounts.body.data[0][0].error === 0, 'unexpected get accounts response', accounts)
+    return accounts.body.data[1]
   }
 
   /**
@@ -206,9 +202,8 @@ export default class ClickPluginApi {
    * @param toDate дата по которую нужно выгружать транзакции
    * @param accounts список счетов в формате Дзенмани
    */
-  async getTransactions (phone, fromDate, toDate, accounts) {
+  async getTransactions (phone, fromDate, toDate) {
     const method = 'get.payment.list'
-    const accountsInPlainArray = accounts.map(account => Number(account.id))
 
     const response = await this.callGate(method, {
       parameters: {
@@ -224,19 +219,6 @@ export default class ClickPluginApi {
 
     console.assert(response.body.data[0][0].error === 0, 'unexpected login response', response)
 
-    return response.body.data[1].map(transaction => {
-      /*
-        Если это операция пополнение кошелька (-6) или в идентификаторе счета указан неизвестный счет (скорее всего, мерчанта),
-        то ставим идентификатор счета равным идентификатору кошелька, потому что по факту производится оплата с кошелька или зачисление на кошелек.
-
-        Вообще по-хорошему нужно выявить и пройтись по всем минусовым `service_id`, сделать check'и и связки.
-        Например, пополнение кошелька (-6) невозможно без прикрепленной карты, а значит это перевод и нужно это соответственно оформить, но у меня времени нет.
-      */
-      if ((transaction.service_id === -6 && transaction.credit === 1) || !accountsInPlainArray.includes(transaction.account_id)) {
-        transaction.account_id = accounts.find(account => account.type === 'checking').id
-      }
-
-      return transaction
-    }).map(convertTransaction)
+    return response.body.data[1]
   }
 }

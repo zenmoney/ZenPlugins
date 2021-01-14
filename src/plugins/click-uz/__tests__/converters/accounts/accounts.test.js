@@ -1,4 +1,4 @@
-import { convertAccounts } from '../../converters'
+import { convertAccounts } from '../../../converters'
 
 describe('convertAccount', () => {
   it.each([
@@ -155,7 +155,7 @@ describe('convertAccount', () => {
         }
       ]
     ]
-  ])('converts broker account', (apiAccounts, apiBalances, accounts) => {
+  ])('converts broker accounts', (apiAccounts, apiBalances, accounts) => {
     expect(convertAccounts(apiAccounts, apiBalances)).toEqual(accounts)
   })
 })
