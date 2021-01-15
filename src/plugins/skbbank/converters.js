@@ -33,6 +33,9 @@ function convertAccountCard (apiAccounts) {
       for (let i = 0; i < apiAccounts.cards.length; i++) {
         if (apiAccount.cards.indexOf(apiAccounts.cards[i].storedId) >= 0) {
           account.syncIds.push(apiAccounts.cards[i].pan)
+          if (apiAccounts.cards[i].loan_funds && apiAccounts.cards[i].loan_funds > 0) {
+            account.creditLimit = apiAccounts.cards[i].loan_funds
+          }
         }
       }
     }
@@ -93,10 +96,13 @@ function convertLoan (apiAccounts) {
   let accounts = []
   for (let i = 0; i < apiAccounts.loans.length; i++) {
     const apiLoan = apiAccounts.loans[i]
-    if (!apiLoan.mainAccount) {
+    if (!apiLoan.mainAccount || apiLoan.productName?.match(/(card|карта)/i)) {
       continue
     }
 
+    if (!apiLoan.openDate || !apiLoan.endDate) {
+      console.log(apiLoan)
+    }
     const fromDate = parseDate(apiLoan.openDate)
     const toDate = parseDate(apiLoan.endDate)
     const { interval, count } = getIntervalBetweenDates(fromDate, toDate)
