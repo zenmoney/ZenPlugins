@@ -17,18 +17,16 @@ const converter = (data, credits) => {
     data.panTail.toString()
   ]
 
-  for (const equity of data.equities) {
-    if (equity.type === 'FUNDS') {
-      account.instrument = resolveCurrencyCode(equity.currencyCode)
-      account.balance = Number(equity.amount)
-    }
-  }
-
   for (const credit of credits) {
     if (credit.contractId === data.contractId) {
       account.creditLimit = Number(credit.grantedAmount)
-      account.balance = account.balance - account.creditLimit
     }
+  }
+  const funds = data.equities.find(equity => equity.type === 'FUNDS')
+  const balance = funds || data.equities.find(equity => equity.type === 'OWN_AMOUNT_REMAINING')
+  if (balance) {
+    account.instrument = resolveCurrencyCode(balance.currencyCode)
+    account.balance = Number(balance.amount) - (funds ? account.creditLimit : 0)
   }
 
   return account

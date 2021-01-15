@@ -58,4 +58,70 @@ describe('card converter', () => {
       ]
     }))
   })
+
+  it('should return zenmoney account object when funds equity is missing', () => {
+    const accountData = {
+      id: 236465,
+      ean: '2960021593517',
+      contractId: 141083,
+      isRechargeable: true,
+      equities:
+        [
+          { amount: '0', currencyCode: 'BNS', type: 'BNS' },
+          { amount: '0', currencyCode: 'BNS', type: 'BNS_AVAILABLE' },
+          { amount: '0', currencyCode: 'BNS', type: 'BNS_DELAY' },
+          {
+            amount: '0',
+            currencyCode: 'RUR',
+            type: 'CREDIT_LIMIT_AMOUNT_REMAINING'
+          },
+          {
+            amount: '0',
+            currencyCode: 'RUR',
+            type: 'OWN_AMOUNT_REMAINING'
+          },
+          { amount: '0', currencyCode: 'BNS', type: 'BNS_DEBT' },
+          {
+            amount: '92.7',
+            currencyCode: 'RUR',
+            type: 'UNPROCESSED_AMOUNT'
+          }
+        ],
+      bankInfo:
+        {
+          bic: '<string[9]>',
+          corrAccNum: '<string[20]>',
+          accNum: '<string[20]>',
+          ownerName: '<string[44]>',
+          inn: '<string[10]>',
+          kpp: '<string[9]>',
+          payee: '<string[28]>',
+          purpose: '<string[135]>'
+        },
+      panTail: '5190',
+      cardType: 'DEFAULT',
+      plasticType: 'MU04',
+      phone: '<string[11]>',
+      isBlocked: false,
+      isExpired: true,
+      expirationDate: '09/13',
+      name: 'Карта Standard',
+      paypassOrderStatus: 'NOT_ISSUED',
+      hasBoundedFunctional: false,
+      isHidden: false,
+      isDefault: false,
+      pyramidStatus: 'FORBIDDEN',
+      isPyramidPilot: true
+    }
+
+    expect(converter(accountData, [])).toEqual(Object.assign({}, entity(), {
+      id: 'c-236465',
+      type: 'ccard',
+      title: 'Карта Standard',
+      instrument: 'RUB',
+      syncID: ['2960021593517', '5190'],
+      balance: 0,
+      creditLimit: 0
+    }))
+  })
 })
