@@ -149,6 +149,17 @@ export function groupAccountsById (accounts) {
   return accountsById
 }
 
+export function convertTransactions (apiTransactions, accountsById) {
+  const transactions = []
+  for (const apiTransaction of apiTransactions) {
+    const transaction = convertTransaction(apiTransaction, accountsById)
+    if (transaction) {
+      transactions.push(transaction)
+    }
+  }
+  return transactions
+}
+
 export function convertTransaction (rawTransaction, accountsById) {
   if (rawTransaction.view.state === 'rejected' || rawTransaction.info.subType === 'loan-repayment') {
     return null
@@ -161,6 +172,9 @@ export function convertTransaction (rawTransaction, accountsById) {
   let account = accountsById[rawTransaction.view.productAccount] || accountsById[rawTransaction.view.productCardId]
   if (!account && rawTransaction.info.operationType === 'payment') {
     account = accountsById[rawTransaction.details['payee-card']]
+  }
+  if (!account) {
+    return null
   }
   const instrument = account.instrument
 

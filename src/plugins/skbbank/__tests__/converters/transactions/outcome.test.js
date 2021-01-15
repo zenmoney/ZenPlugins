@@ -1,4 +1,4 @@
-import { convertTransaction } from '../../../converters'
+import { convertTransaction, convertTransactions } from '../../../converters'
 
 describe('convertTransaction', () => {
   it.each([
@@ -193,5 +193,120 @@ describe('convertTransaction', () => {
     ]
   ])('should convert usual payment', (rawTransaction, accountsById, transaction) => {
     expect(convertTransaction(rawTransaction, accountsById)).toEqual(transaction)
+  })
+
+  it.each([
+    [
+      [{
+        info: {
+          id: 912719894,
+          operationType: 'account_transaction',
+          skbPaymentOperationType: null,
+          subType: 'bonus',
+          hasOfdReceipt: false
+        },
+        view: {
+          operationIcon: 'https://ib.delo.ru/json/icon/394009712v1',
+          descriptions: {
+            operationDescription: 'Компенсация бонусами',
+            productDescription: 'Счет Mastercard Unembossed',
+            productType: 'На счет карты'
+          },
+          amounts: {
+            amount: 1408.48,
+            currency: 'RUB',
+            feeAmount: 0,
+            feeCurrency: 'RUB',
+            bonusAmount: 0,
+            bonusCurrency: 'RUB',
+            cashBackAmount: 0,
+            cashBackCurrency: 'RUB'
+          },
+          mainRequisite: null,
+          actions: ['sendCheck', 'print'],
+          category: {
+            id: 394010366,
+            internalCode: 'replenishment',
+            name: 'Пополнения'
+          },
+          state: 'processed',
+          dateCreated: '2020-12-01T11:43:44+05:00',
+          payWallet: null,
+          direction: 'credit',
+          comment: null,
+          productAccount: '40817810700015912174',
+          productCardId: null
+        }
+      },
+      {
+        info: {
+          id: 912618150,
+          operationType: 'card_transaction',
+          skbPaymentOperationType: null,
+          subType: 'purchase',
+          hasOfdReceipt: false
+        },
+        view: {
+          operationIcon: 'https://ib.delo.ru/json/icon/394009718v1',
+          descriptions: {
+            operationDescription: 'Krasniy yar KYa11',
+            productDescription: 'Mastercard Unembossed',
+            productType: 'С карты'
+          },
+          amounts: {
+            amount: 62.49,
+            currency: 'RUB',
+            feeAmount: 0,
+            feeCurrency: 'RUB',
+            bonusAmount: 1.87,
+            bonusCurrency: 'RUB',
+            cashBackAmount: 0,
+            cashBackCurrency: 'RUB',
+            cashAmount: null,
+            cashCurrency: null,
+            bonusAmountMin: 0,
+            bonusAmountMax: 0
+          },
+          mainRequisite: 'МСС: 5411',
+          actions: ['sendCheck', 'print', 'dispute'],
+          category: {
+            id: 394010344,
+            internalCode: 'supermarket',
+            name: 'Супермаркеты'
+          },
+          state: 'processed',
+          dateCreated: '2020-12-01T09:49:25+05:00',
+          payWallet: false,
+          direction: 'debit',
+          comment: null,
+          productAccount: '40817810827415912174',
+          productCardId: 626698911
+        }
+      }],
+      {
+        '40817810827415912174': { id: 'account', instrument: 'RUB' }
+      },
+      [{
+        comment: null,
+        date: new Date('2020-12-01T09:49:25+05:00'),
+        hold: false,
+        merchant: {
+          city: null,
+          country: null,
+          location: null,
+          mcc: 5411,
+          title: 'Krasniy yar KYa11'
+        },
+        movements: [{
+          account: { id: 'account' },
+          fee: 0,
+          id: '912618150',
+          invoice: null,
+          sum: -62.49
+        }]
+      }]
+    ]
+  ])('should convert usual payment', (rawTransaction, accountsById, transaction) => {
+    expect(convertTransactions(rawTransaction, accountsById)).toEqual(transaction)
   })
 })
