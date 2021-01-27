@@ -159,7 +159,7 @@ export default class ClickPluginApi {
   }
 
   async getAccountsBalances (phone, accounts) {
-    const accountsForBalanceRequests = accounts.body.data[1].map(account => {
+    const accountsForBalanceRequests = accounts.map(account => {
       return {
         account_id: account.id,
         card_num_crypted: account.card_num_crypted,
