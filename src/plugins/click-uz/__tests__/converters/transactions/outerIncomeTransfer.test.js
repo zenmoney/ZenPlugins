@@ -86,7 +86,7 @@ describe('convertTransactions', () => {
             fee: -4500
           }
         ],
-        comment: 'Зачисление на карту'
+        comment: 'Перевод с карты на карту'
       }
     ]
   ])('converts outer income transaction with unknown account_id', (apiTransaction, accounts, transaction) => {

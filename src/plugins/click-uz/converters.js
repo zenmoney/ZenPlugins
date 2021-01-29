@@ -32,27 +32,17 @@ export function convertAccounts (accounts, balances) {
 }
 
 function getApiTransactionAccount (transaction, accounts) {
-  let result = {}
-  const accountsIds = []
-  const accountsSyncIdsHash = {}
+  let transactionAccount = accounts.find(account => Number(account.id) === transaction.account_id)
 
-  for (const account of accounts) {
-    accountsIds.push(Number(account.id))
-    for (const syncId of account.syncIds) {
-      accountsSyncIdsHash[syncId.replace(/\*{6}/, '****')] = account.id
+  if (!transactionAccount) {
+    const accountsSyncIdsHash = {}
+
+    for (const account of accounts) {
+      for (const syncId of account.syncIds) {
+        accountsSyncIdsHash[syncId.replace(/\*{6}/, '****')] = account.id
+      }
     }
-  }
 
-  const isUnknownAccount = !accountsIds.includes(transaction.account_id)
-
-  /**
-   * Если это операция пополнение кошелька (-6) или в идентификаторе счета указан неизвестный счет (скорее всего, мерчанта),
-   * то ставим идентификатор счета равным идентификатору кошелька, потому что по факту производится оплата с кошелька или зачисление на кошелек.
-   * @todo выявить и пройтись по всем минусовым `service_id`, сделать check'и и связки.
-   * Например, пополнение кошелька (-6) невозможно без прикрепленной карты, а значит это перевод, и нужно это соответственно оформить
-   */
-  if ((transaction.service_id === -6 && transaction.credit === 1) || isUnknownAccount) {
-    const checkingAccount = accounts.find(account => account.type === 'checking')
     const txParamsKeys = ['cntrg_info_param2', 'cntrg_info_param3', 'cntrg_info_param4', 'cntrg_info_param5']
     let accountId
     txParamsKeys.find(paramName => {
@@ -63,13 +53,11 @@ function getApiTransactionAccount (transaction, accounts) {
     })
 
     if (accountId) {
-      result = accounts.find(account => account.id === accountId)
-    } else if (checkingAccount) {
-      result = checkingAccount
+      transactionAccount = accounts.find(account => account.id === accountId)
     }
   }
 
-  return result
+  return transactionAccount
 }
 
 /**
@@ -80,14 +68,17 @@ function getApiTransactionAccount (transaction, accounts) {
  * @returns транзакция в формате Дзенмани
  */
 export function convertTransaction (apiTransaction, accounts) {
-  const sign = apiTransaction.credit === 0 ? -1 : 1
-  const amount = sign * Number(apiTransaction.amount.replace(/\s/g, ''))
-  let fee = 0
-  if (sign === -1 && apiTransaction.comission_amount) {
-    fee = sign * apiTransaction.comission_amount
+  let transactionAccount = getApiTransactionAccount(apiTransaction, accounts)
+  if (!transactionAccount) {
+    /**
+     * Если аккаунт не найден, то ставим идентификатор счета равным идентификатору кошелька,
+     * потому что по факту производится оплата с кошелька или зачисление на кошелек.
+     * @todo выявить и пройтись по всем минусовым `service_id`, сделать check'и и связки.
+     * Например, пополнение кошелька (-6) невозможно без прикрепленной карты, а значит это перевод, и нужно это соответственно оформить
+     */
+    transactionAccount = accounts.find(account => account.type === 'checking')
   }
-
-  const transactionAccount = getApiTransactionAccount(apiTransaction, accounts)
+  console.assert(transactionAccount && transactionAccount.id, 'Could not find transaction account')
 
   const transaction = {
     date: dateInTimezone(new Date(apiTransaction.created_timestamp * 1000), 0),
@@ -100,36 +91,69 @@ export function convertTransaction (apiTransaction, accounts) {
       location: null
     } : null,
     movements: [
-      {
-        id: String(apiTransaction.payment_id),
-        account: { id: String(transactionAccount.id) },
-        invoice: null,
-        sum: amount,
-        fee
-      }
+      makeMovement(apiTransaction, transactionAccount, false)
     ],
-    comment: apiTransaction.transType_desc
-  }
-
-  if (
-    apiTransaction.transType_desc === 'Зачисление на карту' &&
-    apiTransaction.bank_sender !== apiTransaction.bank_recipient
-  ) {
-    transaction.movements.push({
-      id: null,
-      account: {
-        type: apiTransaction.service_name === 'Перевод с карты на карту' ? 'ccard' : 'checking',
-        instrument: transactionAccount.instrument,
-        company: null,
-        syncIds: null
-      },
-      invoice: null,
-      sum: -1 * amount,
-      fee: sign && apiTransaction.comission_amount ? -1 * apiTransaction.comission_amount : 0
-    })
-  }
+    comment: apiTransaction.service_name || apiTransaction.transType_desc
+  };
+  [
+    parseInnerTransfer,
+    parseOuterTransfer
+  ].some(parser => parser(transaction, apiTransaction, transactionAccount, accounts))
 
   return transaction
+}
+
+function parseInnerTransfer (transaction, apiTransaction, transactionAccount, accounts) {
+  const secondTransactionAcc = getApiTransactionAccount({
+    ...apiTransaction,
+    account_id: null
+  }, accounts)
+
+  if (secondTransactionAcc && secondTransactionAcc.id !== transactionAccount.id) {
+    transaction.groupKeys = [
+      `${apiTransaction.created}_${secondTransactionAcc.instrument}_${Math.round(Math.abs(transaction.movements[0]?.sum) * 100) / 100}`
+    ]
+    return true
+  }
+  return false
+}
+
+function parseOuterTransfer (transaction, apiTransaction, transactionAccount) {
+  if (apiTransaction.bank_sender !== apiTransaction.bank_recipient) {
+    const movement = makeMovement(apiTransaction, transactionAccount, true)
+    transaction.movements.push(movement)
+    return true
+  }
+  return false
+}
+
+function makeMovement (apiTransaction, transactionAccount, isOuter) {
+  let sign = apiTransaction.credit === 0 ? -1 : 1
+  if (isOuter) {
+    sign = -1 * sign
+  }
+  const amount = sign * Number(apiTransaction.amount.replace(/\s/g, ''))
+  let fee = 0
+  if (sign === -1 && apiTransaction.comission_amount) {
+    fee = sign * apiTransaction.comission_amount
+  }
+
+  const account = isOuter ? {
+    type: apiTransaction.service_name === 'Перевод с карты на карту' ? 'ccard' : 'checking',
+    instrument: transactionAccount.instrument,
+    company: null,
+    syncIds: null
+  } : {
+    id: String(transactionAccount.id)
+  }
+
+  return {
+    id: isOuter ? null : String(apiTransaction.payment_id),
+    account,
+    invoice: null,
+    sum: amount,
+    fee
+  }
 }
 
 export function convertTransactions (apiTransactions, accounts) {
