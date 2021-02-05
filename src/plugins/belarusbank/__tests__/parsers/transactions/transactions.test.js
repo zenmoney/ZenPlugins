@@ -36,7 +36,7 @@ describe('parseTransactions', () => {
       ]
     ]
   ])('parses transactions with page count', (html, transactions) => {
-    expect(parseTransactions(html, 'accountId', 'operResultOk')).toEqual(transactions)
+    expect(parseTransactions(html, 'accountId', 'transaction')).toEqual(transactions)
   })
 
   it.each([
@@ -88,7 +88,7 @@ describe('parseTransactions', () => {
       ]
     ]
   ])('parses transactions without page count', (html, transactions) => {
-    expect(parseTransactions(html, 'accountId', 'operResultOk')).toEqual(transactions)
+    expect(parseTransactions(html, 'accountId', 'transaction')).toEqual(transactions)
   })
 
   it.each([
@@ -97,6 +97,6 @@ describe('parseTransactions', () => {
       []
     ]
   ])('parses 0 transactions', (html, transactions) => {
-    expect(parseTransactions(html, 'accountId', 'operResultOk')).toEqual(transactions)
+    expect(parseTransactions(html, 'accountId', 'transaction')).toEqual(transactions)
   })
 })

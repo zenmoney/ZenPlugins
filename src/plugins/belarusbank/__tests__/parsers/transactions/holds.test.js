@@ -15,8 +15,8 @@ describe('parseTransactions', () => {
           inAccountSum: '2.73',
           operationCurrency: 'BYN',
           operationSum: '2.73',
-          place: 'STOLOVAYA N1&gt;GRODNOBY/5812',
-          status: 'hold',
+          place: 'STOLOVAYA N1>GRODNOBY/5812',
+          status: 'operResultProcess',
           time: '11:24:31'
         }
       ]

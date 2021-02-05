@@ -1,5 +1,5 @@
 import cheerio from 'cheerio'
-import { defaultsDeep } from 'lodash'
+import { defaultsDeep, chunk } from 'lodash'
 import padLeft from 'pad-left'
 import { stringify } from 'querystring'
 import { fetch } from '../../common/network'
@@ -414,7 +414,7 @@ export async function fetchCardsTransactions (acc, fromDate, toDate) {
 
     const match = res.body.match(/Страница \d+ из (\d+)/)
     pages = match ? parseInt(match[1]) : null
-    transactions = /Наименование операции/.test(res.body) ? parseTransactions(res.body, acc.id, 'operResultOk') : []
+    transactions = /Наименование операции/.test(res.body) ? parseTransactions(res.body, acc.id, 'transaction') : []
     if (transactions.length === 0) {
       console.log('>>> Транзакции на 1й странице не найдены')
     }
@@ -432,7 +432,7 @@ export async function fetchCardsTransactions (acc, fromDate, toDate) {
         const idPage = 'idx' + i.toString()
         console.log(`>>> Загрузка транзакций по ${acc.title}. Страница ${i}`)
         res = await getNextPage({ action, encodedUrl, viewState, viewns, idPage })
-        const transOnPage = parseTransactions(res.body, acc.id, 'operResultOk')
+        const transOnPage = parseTransactions(res.body, acc.id, 'transaction')
         transactions.push(...transOnPage)
       }
     }
@@ -542,94 +542,83 @@ export function parseTransactions (html, accID, operationType) {
     console.log('>>> No matching transacions/holds!')
     return []
   }
-  const table = match[0]
 
-  const div = '(?:</?div[^>]*>)*'
-  const tr = '<span [^<]*</?tr></span>'
-  const td = '<span [^<]*</?td></span>'
-  const tdCardNumber = '<span [^<]*</?td>[^<]*</?td></span>'
-  const dateTime = '<span [^>]*>(.[0-9.]*) (.[0-9:]*)</span>'
-  const debitFlag = '<span [^>]*>(.[+-]*)</span>'
-  const sum = '<span [^>]*>(.[0-9 .]*)</span>'
-  const currency = '<span [^>]*>(.[A-Z]*)</span>'
-  const tdColspan = '<span [^<]*<td colspan=[^>]*></span>'
-  const comment = '<span [^>]*>Наименование операции: ([^<]*)</span>'
-  const place = '(?:<span [^>]*>(?:Точка|Наименование/MCC-код точки) обслуживания: ([^<]*)</span>)?'
-  const textFee = '<span [^>]*>Сумма комиссии [^<]*</span>'
-  const textFeeComment = '(?:<span [^>]*>Комиссия за: [^<]*</span>)?'
+  const $ = cheerio.load(html)
+  const $table = $('table[class="ibTable simple"]').children('tbody')
 
-  let regex
-  if (operationType === 'operResultOk') {
-    regex = new RegExp(tr + div + td + div +
-      dateTime + div +
-      td + div + td + div +
-      debitFlag + div +
-      td + div + td + div +
-      sum + div +
-      currency + div +
-      td + div + td + div +
-      sum + div +
-      currency + div +
-      td + div + tdCardNumber + div +
-      tr + div + tr + div + tdColspan + div +
-      comment + div +
-      place + div +
-      textFeeComment + div +
-      textFee + div +
-      sum + div +
-      currency + div +
-      td + div + tr,
-    'ig'
-    )
-  } else {
-    const trResult = '<span [^<]*<tr class=\'operResultProcess\'></span>'
-    const authCode = '<span [^>]*>Код авторизации: [^<]*</span>'
-    regex = new RegExp(trResult + div + td + div + td + td +
-      dateTime + div +
-      td + div + td + div +
-      debitFlag + div +
-      td + div + td + div +
-      sum + div +
-      currency + div +
-      td + div + td + div +
-      sum + div +
-      currency + div +
-      td + div + tdCardNumber + div +
-      tr + div + trResult + div + tdColspan + div +
-      comment + div +
-      place + div +
-      authCode + div +
-      textFeeComment + div +
-      textFee + div +
-      sum + div +
-      currency + div +
-      td + div + tr,
-    'ig'
-    )
+  const operationsClassHash = {
+    transaction: 'operResultOk',
+    hold: 'operResultProcess'
   }
-
-  let m
-  const transactions = []
-  while ((m = regex.exec(table.replace(/\r?\n|\r/g, ''))) !== null) {
-    if (m.index === regex.lastIndex) {
-      regex.lastIndex++
-    }
-    transactions.push({
-      accountID: accID,
-      status: operationType,
-      date: m[1],
-      time: m[2],
-      debitFlag: m[3],
-      operationSum: m[4], // В валюте операции
-      operationCurrency: m[5],
-      inAccountSum: m[6], // В валюте счета
-      inAccountCurrency: m[7],
-      comment: m[8],
-      place: m[9],
-      fee: m[10]
+  let transactionsBlocks = $table.children(`tr[class="${operationsClassHash[operationType]}"]`)
+  if (!transactionsBlocks.length) {
+    transactionsBlocks = $table.children('tr').toArray().filter(tr => {
+      const filteredByOperationType = !tr.attribs.class ||
+        tr.attribs.class.indexOf(operationsClassHash[operationType]) > -1
+      return filteredByOperationType && !$(tr).children('td')?.children('table[class=clarOtherTable]')?.length
     })
   }
-  const opType = operationType === 'operResultOk' ? 'транзакций' : 'холдов'
+
+  const thead = $('table[class="ibTable simple"]').children('thead').children('tr').children('th')
+  const firstColumnIndex = $(thead).length && $(thead[0]).children('span')?.text() ? 0 : 1
+  const transactions = chunk(transactionsBlocks, 2).map((holdBlock) => {
+    const transaction = $(holdBlock[0]).children('td').toArray()
+      .slice(firstColumnIndex, firstColumnIndex + 4)
+      .reduce((accum, txDataPart, index) => {
+        let dateTime
+        switch (index) {
+          case 0:
+            dateTime = $(txDataPart).children('span').text().split(' ')
+            accum.date = dateTime[0]
+            accum.time = dateTime[1]
+            break
+          case 1:
+            accum.debitFlag = $(txDataPart).children('span').text()
+            break
+          case 2:
+            accum.operationSum = $(txDataPart).children('span').text()
+            accum.operationCurrency = $(txDataPart).children('div').children('span').text()
+            break
+          case 3:
+            accum.inAccountSum = $(txDataPart).children('span').text()
+            accum.inAccountCurrency = $(txDataPart).children('div').children('span').text()
+            break
+          default:
+            break
+        }
+        return accum
+      }, {
+        accountID: accID,
+        status: operationsClassHash[operationType]
+      })
+    const additionalInfo = $(holdBlock[1]).children('td').children('div').toArray()
+    for (const txDataPart of additionalInfo) {
+      if (!transaction.comment) {
+        const comment = $(txDataPart).children('span').text()?.match(/Наименование операции: (.+)/i)
+        if (comment && comment.length > 1) {
+          transaction.comment = comment[1]
+          continue
+        }
+      }
+      if (!transaction.place) {
+        const place = $(txDataPart).children('span').text()?.match(/точк. обслуживания: (.+)/i)
+        if (place && place.length > 1) {
+          transaction.place = place[1]
+          continue
+        }
+      }
+      if (!transaction.fee) {
+        const fee = $(txDataPart).children('span').text()?.match(/Сумма комиссии[^:]+: ?([0-9.,]+)/i)
+        if (fee && fee.length > 1) {
+          transaction.fee = fee[1]
+          continue
+        }
+      }
+    }
+    return transaction
+  })
+
+  const opType = operationType === 'transaction' ? 'транзакций' : 'холдов'
   console.log(`>>> Загружено ${transactions.length} ${opType}.`)
   return transactions
 }
