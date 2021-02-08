@@ -33,7 +33,9 @@ export function convertCard (card, details) {
     id: card.clientObject.id.toString(),
     title: card.clientObject.customSynonym || card.clientObject.defaultSynonym,
     type: 'ccard',
-    syncID: [card.clientObject.cardContractNumber, card.clientObject.cardMaskedNumber.slice(-4)],
+    syncID: card.clientObject.cardContractNumber !== card.clientObject.cardMaskedNumber.slice(-4)
+      ? [card.clientObject.cardContractNumber, card.clientObject.cardMaskedNumber.slice(-4)]
+      : [card.clientObject.cardMaskedNumber.slice(-4)],
     instrument: card.clientObject.currIso,
     balance: card.balance.available - creditLimit,
     ...creditLimit && { creditLimit }
@@ -164,7 +166,13 @@ function parseInnerTransfer (transaction, apiTransaction, invoice) {
   }
   const sum = invoice ? -invoice.sum : -transaction.movements[0].sum
   transaction.groupKeys = [`${apiTransaction.transDate.slice(0, 10)}_${apiTransaction.transTime}_${Math.abs(sum)}_${apiTransaction.transCurrIso}`]
-  return true
+  if ([
+    /.* SOU INTERNETBANK$/
+  ].some(regexp => regexp.test(apiTransaction.transDetails))) {
+    return false
+  } else {
+    return true
+  }
 }
 
 function parseOuterTransfer (transaction, apiTransaction, invoice) {

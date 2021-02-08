@@ -161,6 +161,169 @@ describe('convertAccounts', () => {
             }
         }
       ]
+    ],
+    [
+      [
+        {
+          status:
+            {
+              respClass: '',
+              respCode: 0,
+              respText: '',
+              module: 11,
+              messageForClient: ''
+            },
+          clientObject:
+            {
+              id: 69265245,
+              prodType: 2,
+              subSystemInstanceId: 4,
+              contract_id: '',
+              externalId: '35077564',
+              identifier: '6437',
+              card_type: '2',
+              cardTypeName: 'VISA CLASSIC',
+              type: 6,
+              typeName: 'Дебетовая карта',
+              openDate: '2020-08-19T11:33:40+03:00',
+              openDateSpecified: true,
+              closeDateSpecified: false,
+              expDate: '2024-08-31T00:00:00+03:00',
+              expDateSpecified: true,
+              lastComment: 'Доступны все операции Статус карты: Активна, cтатус картсчёта: 51',
+              currCode: 978,
+              currIso: 'EUR',
+              accessStatus: 2,
+              cardStatus: 1,
+              cardStatusName: 'Активна',
+              cardAccStatus: 51,
+              isOpen: 1,
+              isLocked: 0,
+              corNonCor: 2,
+              corNonCorName: 'Некорпоративная',
+              pkgName: 'NO_PACK',
+              cardMaskedNumber: '************6437',
+              cardContractNumber: '6437',
+              cardRBSNumber: '<string[30]>',
+              dopNonDop: 2,
+              cardBin: 0,
+              cardColor: '#70A0B8',
+              isCardMain: 0,
+              contractNum: '<string[19]>',
+              contractTypeInt: 0,
+              contractTypeName: '',
+              defaultSynonym: 'DK6437',
+              customSynonym: '',
+              contractOpenDateSpecified: false,
+              contractCloseDate: '0001-01-01T00:00:00',
+              cContractCloseDateSpecified: false,
+              dealTerm: 0,
+              rate: 0,
+              elContractCloseDateSpecified: false,
+              minAmount: 0,
+              contractRest: 0,
+              description: '',
+              isStCashCard: 0,
+              stCashCardContractId: '',
+              isElDeposit: false,
+              secure3D: 2,
+              secure3DText: 'Есть',
+              smsNotify: 6,
+              smsNotifyText: 'Только бесплатные SMS',
+              savings: 0,
+              orderValue: 0,
+              iban: '<string[28]>',
+              bic: 'PJCBBY2X',
+              contractNumberReplenishment: '6000091008276',
+              contractNumberRedemption: '',
+              haveDopCards: false,
+              pinAttempts: { maxPINAttempts: 3, currentPINAttempts: 0 },
+              isVirtual: 0,
+              isEpin: -1
+            },
+          balance:
+            {
+              balance: 0,
+              blocked: 0,
+              available: 0,
+              ownBlance: 0,
+              ovl: 0,
+              totalBalance: 0,
+              crLimit: 0,
+              addLimit: 0,
+              finLimit: 0,
+              creditBalance: { sum: 0, sumTotal: 0 }
+            },
+          equivalents:
+            [
+              { amount: 0, currencyCode: 933, currency: 'BYN' },
+              { amount: 0, currencyCode: 840, currency: 'USD' },
+              { amount: 0, currencyCode: 643, currency: 'RUB' }
+            ],
+          reissueFormId: '',
+          expiringStatus: 0
+        }
+      ],
+      [
+        {
+          id: 69265245,
+          identifier: '6437',
+          contract:
+            {
+              prodNum: 0,
+              prodType: 'D',
+              cardType: 'VISA CLASSIC',
+              contractCurrIso: 'EUR',
+              contractNumber: '6437',
+              creditLimit: 0,
+              totalBlocked: 0,
+              amountAvailable: 0,
+              addrLineA: '<string[12]>',
+              addrLineB: '<string[0]>',
+              addrLineC: '<string[69]>',
+              message: { messageDateSpecified: false, messageString: '' },
+              account:
+                {
+                  transCardList: [],
+                  endBalance: 0,
+                  beginBalance: 0,
+                  plusContracr: 0,
+                  minusContracr: 0,
+                  feeContracr: 0
+                },
+              abortedContractList: []
+            },
+          monthDebit:
+            {
+              interest: 0,
+              ovd: 0,
+              due: 0,
+              monthlyFee: 0,
+              dueDateSpecified: false,
+              total: 0
+            },
+          currentDebit: { due: 0, ovdField: 0, interest: 0, monthlyFee: 0, total: 0 }
+        }
+      ],
+      [
+        {
+          products: [
+            {
+              id: '69265245',
+              type: 'card'
+            }
+          ],
+          account:
+            {
+              id: '69265245',
+              title: 'DK6437',
+              type: 'ccard',
+              syncID: ['6437'],
+              instrument: 'EUR',
+              balance: 0
+            }
+        }
+      ]
     ]
   ])('converts credit card', (apiAccounts, apiAccountDetails, accounts) => {
     expect(convertAccounts(apiAccounts, apiAccountDetails)).toEqual(accounts)

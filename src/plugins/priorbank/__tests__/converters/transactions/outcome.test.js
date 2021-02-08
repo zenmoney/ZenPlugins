@@ -73,4 +73,42 @@ describe('convertTransaction', () => {
   ])('converts payee', (apiTransaction, transaction) => {
     expect(convertTransaction(apiTransaction, { account: { instrument: 'BYN', id: 'account' } }, true)).toEqual(transaction)
   })
+
+  it.each([
+    [
+      {
+        amount: 24.44,
+        transAmount: 24.44,
+        transCurrIso: 'BYN',
+        transDetails: 'Retail BLR MINSK SOU INTERNETBANK',
+        transDate: '2021-02-08T00:00:00+03:00',
+        transDateSpecified: true,
+        transTime: '08:47:56',
+        hce: false
+      },
+      {
+        movements:
+          [
+            {
+              id: null,
+              account: { id: 'account' },
+              invoice: null,
+              sum: -24.44,
+              fee: 0
+            }
+          ],
+        date: new Date('2021-02-08T08:47:56+0300'), // Mon Feb 08 2021 08:47:56 GMT+0300 (+03),
+        hold: false,
+        groupKeys: ['2021-02-08_08:47:56_24.44_BYN'],
+        merchant: {
+          fullTitle: 'BLR MINSK SOU INTERNETBANK',
+          mcc: null,
+          location: null
+        },
+        comment: null
+      }
+    ]
+  ])('converts payee', (apiTransaction, transaction) => {
+    expect(convertTransaction(apiTransaction, { account: { instrument: 'BYN', id: 'account' } }, false)).toEqual(transaction)
+  })
 })

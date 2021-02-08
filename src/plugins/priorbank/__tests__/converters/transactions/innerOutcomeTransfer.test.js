@@ -60,7 +60,11 @@ describe('convertTransaction', () => {
           }
         ],
         groupKeys: ['2020-09-08_16:56:01_13.5_BYN'],
-        merchant: null,
+        merchant: {
+          fullTitle: 'BLR MINSK SOU INTERNETBANK',
+          mcc: null,
+          location: null
+        },
         comment: null
       }
     ]
