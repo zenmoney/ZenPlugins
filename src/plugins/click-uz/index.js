@@ -1,6 +1,5 @@
 import ClickPluginApi from './api'
 import { convertAccounts, convertTransactions } from './converters'
-import { adjustTransactions } from '../../common/transactionGroupHandler'
 
 export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
   const api = new ClickPluginApi()
@@ -33,6 +32,6 @@ export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
   await api.disconnect()
   return {
     accounts: accounts,
-    transactions: adjustTransactions({ transactions })
+    transactions: transactions
   }
 }

@@ -1,5 +1,6 @@
 import { sanitizeSyncId } from '../../common/accounts'
 import { dateInTimezone } from '../../common/dateUtils'
+import { groupBy } from 'lodash'
 
 /**
  * Конвертер счета из формата платежной системы в формат Дзенмани
@@ -63,12 +64,12 @@ function getApiTransactionAccount (transaction, accounts) {
 /**
  * Конвертер транзакции из формата платежной системы в формат Дзенмани
  *
- * @param apiTransaction транзакция в формате платежной системы
+ * @param groupedApiTransaction массив операций в формате платежной системы
  * @param accounts аккаунты в формате Дзенмани
  * @returns транзакция в формате Дзенмани
  */
-export function convertTransaction (apiTransaction, accounts) {
-  let transactionAccount = getApiTransactionAccount(apiTransaction, accounts)
+export function convertTransaction (groupedApiTransaction, accounts) {
+  let transactionAccount = getApiTransactionAccount(groupedApiTransaction[0], accounts)
   if (!transactionAccount) {
     /**
      * Если аккаунт не найден, то ставим идентификатор счета равным идентификатору кошелька,
@@ -81,87 +82,118 @@ export function convertTransaction (apiTransaction, accounts) {
   console.assert(transactionAccount && transactionAccount.id, 'Could not find transaction account')
 
   const transaction = {
-    date: dateInTimezone(new Date(apiTransaction.created_timestamp * 1000), 0),
-    hold: apiTransaction.state === 2 ? false : null,
-    merchant: apiTransaction.card_sender ? {
-      country: null,
-      city: null,
-      title: apiTransaction.card_sender,
-      mcc: null,
-      location: null
-    } : null,
-    movements: [
-      makeMovement(apiTransaction, transactionAccount, false)
-    ],
-    comment: apiTransaction.service_name || apiTransaction.transType_desc
-  };
+    date: dateInTimezone(new Date(groupedApiTransaction[0].created_timestamp * 1000), 0),
+    hold: groupedApiTransaction[0].state === 2 ? false : null,
+    merchant: getMerchant(groupedApiTransaction)
+  }
+  if (!transaction.merchant) {
+    transaction.comment = groupedApiTransaction[0].service_name || groupedApiTransaction[0].transType_desc
+  }
   [
     parseInnerTransfer,
-    parseOuterTransfer
-  ].some(parser => parser(transaction, apiTransaction, transactionAccount, accounts))
+    parseOuterTransfer,
+    parsePayment
+  ].some(parser => parser(transaction, groupedApiTransaction, transactionAccount, accounts))
 
   return transaction
 }
 
-function parseInnerTransfer (transaction, apiTransaction, transactionAccount, accounts) {
-  const secondTransactionAcc = getApiTransactionAccount({
-    ...apiTransaction,
-    account_id: null
-  }, accounts)
+function getMerchant (groupedApiTransaction) {
+  let merchant = null
+  if (groupedApiTransaction.length === 1) {
+    const hasServiceName = groupedApiTransaction[0].service_name &&
+      [-4, -6, -9].indexOf(groupedApiTransaction[0].service_id) === -1
+    if (hasServiceName || groupedApiTransaction[0].card_sender) {
+      merchant = {
+        country: null,
+        city: null,
+        title: hasServiceName ? groupedApiTransaction[0].service_name : groupedApiTransaction[0].card_sender,
+        mcc: null,
+        location: null
+      }
+    }
+  }
 
-  if (secondTransactionAcc && secondTransactionAcc.id !== transactionAccount.id) {
-    transaction.groupKeys = [
-      `${apiTransaction.created}_${secondTransactionAcc.instrument}_${Math.round(Math.abs(transaction.movements[0]?.sum) * 100) / 100}`
+  return merchant
+}
+
+function parseInnerTransfer (transaction, groupedApiTransaction, transactionAccount, accounts) {
+  let secondTransactionAcc
+  if (groupedApiTransaction.length === 2) {
+    secondTransactionAcc = getApiTransactionAccount(
+      groupedApiTransaction[0],
+      accounts.filter(account => account.id !== transactionAccount.id)
+    )
+
+    if (secondTransactionAcc) {
+      transaction.movements = [transactionAccount, secondTransactionAcc].map((account) => {
+        const movementTransaction = groupedApiTransaction.find(
+          apiTx => (account.type === 'checking' && apiTx.credit === 1) ||
+            (account.type === 'ccard' && apiTx.credit === 0)
+        )
+        return makeMovement(movementTransaction, account)
+      })
+
+      return true
+    }
+  }
+
+  return false
+}
+
+function parseOuterTransfer (transaction, groupedApiTransaction, transactionAccount) {
+  if (
+    groupedApiTransaction.length === 1 &&
+    groupedApiTransaction[0].bank_sender !== groupedApiTransaction[0].bank_recipient
+  ) {
+    transaction.movements = [
+      makeMovement(groupedApiTransaction[0], transactionAccount),
+      makeMovement(groupedApiTransaction[0], null, transactionAccount.instrument)
     ]
     return true
   }
   return false
 }
 
-function parseOuterTransfer (transaction, apiTransaction, transactionAccount) {
-  if (apiTransaction.bank_sender !== apiTransaction.bank_recipient) {
-    const movement = makeMovement(apiTransaction, transactionAccount, true)
-    transaction.movements.push(movement)
-    return true
-  }
-  return false
+function parsePayment (transaction, groupedApiTransaction, transactionAccount) {
+  transaction.movements = [makeMovement(groupedApiTransaction[0], transactionAccount)]
+  return true
 }
 
-function makeMovement (apiTransaction, transactionAccount, isOuter) {
+function makeMovement (apiTransaction, transactionAccount, instrument) {
   let sign = apiTransaction.credit === 0 ? -1 : 1
-  if (isOuter) {
+  if (!transactionAccount) {
     sign = -1 * sign
   }
-  const amount = sign * Number(apiTransaction.amount.replace(/\s/g, ''))
+  const sum = sign * Number(apiTransaction.amount.replace(/\s/g, ''))
   let fee = 0
   if (sign === -1 && apiTransaction.comission_amount) {
     fee = sign * apiTransaction.comission_amount
   }
 
-  const account = isOuter ? {
+  const account = transactionAccount ? { id: String(transactionAccount.id) } : {
     type: apiTransaction.service_name === 'Перевод с карты на карту' ? 'ccard' : 'checking',
-    instrument: transactionAccount.instrument,
+    instrument,
     company: null,
     syncIds: null
-  } : {
-    id: String(transactionAccount.id)
   }
 
   return {
-    id: isOuter ? null : String(apiTransaction.payment_id),
+    id: transactionAccount ? String(apiTransaction.payment_id) : null,
     account,
     invoice: null,
-    sum: amount,
+    sum,
     fee
   }
 }
 
-export function convertTransactions (apiTransactions, accounts) {
-  return apiTransactions.reduce((accumulator, apiTransaction) => {
-    if (apiTransaction.state !== -1) {
-      accumulator.push(convertTransaction(apiTransaction, accounts))
-    }
+export function preprocessApiTransactions (apiTransactions) {
+  const notRejectedTransactions = apiTransactions.filter(apiTransaction => apiTransaction.state !== -1)
+  return Object.values(groupBy(notRejectedTransactions, apiTransaction => apiTransaction.payment_id))
+}
 
-    return accumulator
-  }, [])
+export function convertTransactions (apiTransactions, accounts) {
+  return preprocessApiTransactions(apiTransactions).map(
+    groupedApiTransaction => convertTransaction(groupedApiTransaction, accounts)
+  )
 }
