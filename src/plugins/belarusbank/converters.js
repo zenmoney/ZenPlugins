@@ -135,32 +135,27 @@ function parsePayee (transaction, tr) {
   if (!tr.place) {
     return false
   }
+  const replacements = [
+    [/\s\/\s/, '/'],
+    [/&quot;/g, '"'],
+    [/&gt;/g, '>'],
+    [/&lt;/g, '<']
+  ]
+  for (const replacement of replacements) {
+    tr.place = tr.place.replace(replacement[0], replacement[1])
+  }
+  const parsedPayee = tr.place.match(/(.+)\/([0-9]{4})?/)
+  const fullTitle = parsedPayee && parsedPayee[1] ? parsedPayee[1] : tr.place
+  const mcc = parsedPayee && parsedPayee[2] ? parseInt(parsedPayee[2], 10) : null
 
-  tr.place = tr.place.replace(/&quot;/g, '"').replace(/&gt;/g, '>').replace(/&lt;/g, '<')
-  const data = tr.place.split('/')
-  let mcc = null
-  let fullTitle = null
-  if (data.length === 0 ||
-    (data[0] === '' && data[1] === '')) {
-    return false
+  if (fullTitle || mcc) {
+    transaction.merchant = {
+      mcc: mcc || null,
+      location: null,
+      fullTitle: fullTitle.trim()
+    }
   }
-  switch (data.length) {
-    case 1:
-      fullTitle = tr.place
-      break
-    case 2:
-      mcc = Number.parseInt(data[1])
-      fullTitle = data[0].trim()
-      break
-    case 3:
-      mcc = Number.parseInt(data[2])
-      fullTitle = data[0].trim() + '/' + data[1].trim()
-  }
-  transaction.merchant = {
-    mcc: mcc || null,
-    location: null,
-    fullTitle: fullTitle
-  }
+
   return true
 }
 

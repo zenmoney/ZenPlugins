@@ -280,6 +280,42 @@ describe('convertTransaction', () => {
         comment: 'Отмена покупки/оплаты/перевода',
         hold: false
       }
+    },
+    {
+      name: 'payment with merchant',
+      json: {
+        accountID: 'BY75AKBB30141000022233030000',
+        status: 'operResultProcess',
+        date: '07.02.2021',
+        time: '14:07:58',
+        debitFlag: '-',
+        operationSum: '0.00',
+        operationCurrency: 'RUB',
+        inAccountSum: '24.43',
+        inAccountCurrency: 'BYN',
+        comment: 'Покупка/оплата/перевод',
+        place: 'HTTP://WWW.ROBOKASSA.R>MOSKVARU/5734',
+        fee: '0.00'
+      },
+      expectedTransaction: {
+        date: new Date('2021-02-07T14:07:58+03:00'),
+        movements: [
+          {
+            id: null,
+            account: { id: 'BY75AKBB30141000022233030000' },
+            invoice: null,
+            sum: -24.43,
+            fee: 0
+          }
+        ],
+        merchant: {
+          mcc: 5734,
+          location: null,
+          fullTitle: 'HTTP://WWW.ROBOKASSA.R>MOSKVARU'
+        },
+        hold: true,
+        comment: 'Покупка/оплата/перевод'
+      }
     }
   ]
   for (const tc of tt) {
