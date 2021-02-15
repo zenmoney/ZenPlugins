@@ -23,29 +23,35 @@ describe('scrape', () => {
       }
     )
 
-    expect(result.accounts).toEqual([{
-      id: '30848200',
-      type: 'card',
-      title: 'Безымянная*1111',
-      instrument: 'BYN',
-      balance: 1213.84,
-      creditLimit: 0,
-      syncID: ['1111']
-    }])
+    expect(result.accounts).toEqual([
+      {
+        id: '30848200',
+        type: 'card',
+        title: 'Безымянная*1111',
+        instrument: 'BYN',
+        balance: 1213.84,
+        creditLimit: 0,
+        syncID: ['1111']
+      }
+    ])
 
-    expect(result.transactions).toEqual([{
-      hold: false,
-      date: new Date('2019-01-01T10:12:13+03:00'),
-      movements: [{
-        id: null,
-        invoice: null,
-        account: { id: '30848200' },
-        sum: 10.13,
-        fee: 0
-      }],
-      merchant: null,
-      comment: null
-    }])
+    expect(result.transactions).toEqual([
+      {
+        hold: false,
+        date: new Date('2019-01-01T10:12:13+03:00'),
+        movements: [
+          {
+            id: null,
+            invoice: null,
+            account: { id: '30848200' },
+            sum: 10.13,
+            fee: 0
+          }
+        ],
+        merchant: null,
+        comment: null
+      }
+    ])
   })
 })
 

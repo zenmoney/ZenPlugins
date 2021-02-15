@@ -10,15 +10,10 @@ export function convertAccount (json) {
   }
 }
 
-export function convertTransaction (json, accounts) {
+export function convertTransaction (json, account) {
   if ((json.status !== 'ПРОВЕДЕНО' && json.status !== 'ЗАБЛОКИРОВАНО') || json.accountAmt === '') {
     return null
   }
-  const account = accounts.find(account => {
-    return account.syncID.indexOf(json.cardNum.slice(-4)) !== -1 ||
-      account.syncID.indexOf(json.cardNum.slice(-8, -4)) !== -1 || // При пополнении может указываться родительская и дочерняя карточка
-      account.instrument === json.balanceAmtCurrency // На случай, если у карточки есть копия, выбираем первый счет по этой же валюте, чтоб не потерять транзакцию
-  })
 
   const transaction = {
     date: getDate(json.date),
@@ -106,7 +101,7 @@ function parsePayee (transaction, json) {
     }
   } else if (merchant.length === 2) {
     transaction.merchant.city = merchant[1].split(' ')[0].trim()
-    transaction.merchant.country = merchant[1].slice(-4).trim()
+    transaction.merchant.country = merchant[1].slice(-3).trim()
     transaction.merchant.title = merchant[0]
     if (merchant[0] === 'SMS OPOVESCHENIE') {
       transaction.comment = merchant[0]

@@ -1,16 +1,14 @@
 import { convertTransaction } from '../../converters'
 
 describe('convertTransaction', () => {
-  const accounts = [
-    {
-      id: '30848200',
-      type: 'card',
-      title: 'Безымянная*1111',
-      instrument: 'BYN',
-      balance: 999.9,
-      syncID: ['1111']
-    }
-  ]
+  const account = {
+    id: '30848200',
+    type: 'card',
+    title: 'Безымянная*1111',
+    instrument: 'BYN',
+    balance: 999.9,
+    syncID: ['1111']
+  }
 
   const tt = [
     {
@@ -299,9 +297,69 @@ describe('convertTransaction', () => {
   // run all tests
   for (const tc of tt) {
     it(tc.name, () => {
-      const transaction = convertTransaction(tc.transaction, accounts)
+      const transaction = convertTransaction(tc.transaction, account)
 
       expect(transaction).toEqual(tc.expectedTransaction)
     })
   }
+
+  it.each([
+    [
+      {
+        date: '2021-02-05 22:00:25',
+        dateResp: '2021-02-06 12:18:20',
+        type: 'ВОЗВРАТ',
+        cardAcceptor: 'SHOP "WWW.BELAVIA.BY" BPSB>MINSK BY',
+        transactionAmt: '',
+        transactionAmtCurrency: '',
+        accountAmt: '288,2',
+        accountAmtCurrency: 'USD',
+        feeAmt: 0,
+        feeAmtCurrency: '',
+        reflectedAccountAmt: '288,2',
+        reflectedAccountAmtCurrency: 'USD',
+        reflectedFeeCurrency: '',
+        reflectedFeeIssuer: 0,
+        reflectedFeeIssuerCurrency: '',
+        reflectedFeeAcquirer: 0,
+        reflectedFeeAcquirerCurrency: '',
+        balanceAmt: '',
+        balanceAmtCurrency: '',
+        status: 'ПРОВЕДЕНО',
+        sign: '+',
+        mcc: '4511',
+        operationColor: '_green',
+        cardNum: '**** 8824',
+        trnType: 'Наличный',
+        appId: '—',
+        reflectedFee: 0,
+        historyKey: 0
+      },
+      { id: 'account1', instrument: 'USD' },
+      {
+        date: new Date('2021-02-05T19:00:25.000Z'),
+        movements:
+          [
+            {
+              id: null,
+              account: { id: 'account1' },
+              invoice: null,
+              sum: 288.2,
+              fee: 0
+            }
+          ],
+        merchant: {
+          country: 'BY',
+          city: 'MINSK',
+          title: 'SHOP "WWW.BELAVIA.BY" BPSB',
+          mcc: null,
+          location: null
+        },
+        comment: null,
+        hold: false
+      }
+    ]
+  ])('refund from another card', (apiTransaction, account, transaction) => {
+    expect(convertTransaction(apiTransaction, account)).toEqual(transaction)
+  })
 })

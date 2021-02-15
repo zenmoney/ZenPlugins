@@ -231,27 +231,24 @@ export function createDateIntervals (fromDate, toDate) {
   })
 }
 
-export async function fetchTransactions (sessionCookies, accounts, fromDate, toDate = new Date()) {
+export async function fetchTransactions (sessionCookies, account, fromDate, toDate = new Date()) {
   console.log('>>> Загрузка списка транзакций...')
   toDate = toDate || new Date()
 
   const dates = createDateIntervals(fromDate, toDate)
-  const responses = await Promise.all(flatMap(accounts, (account) => {
-    return dates.map(dates => {
-      return fetchApiJson(dataUrl, {
-        method: 'POST',
-        headers: { Cookie: sessionCookies },
-        body: {
-          section: 'cards',
-          method: 'history',
-          cardId: account.id,
-          dateFrom: formatDate(dates[0]),
-          dateTo: formatDate(dates[1])
-        }
-      }, response => response.body && response.body.values && response.body.values.history && response.body.values.history.length > 0,
-      message => new InvalidPreferencesError('bad request'))
-    })
-  }))
+  const responses = await Promise.all(dates.map(dates => fetchApiJson(dataUrl, {
+    method: 'POST',
+    headers: { Cookie: sessionCookies },
+    body: {
+      section: 'cards',
+      method: 'history',
+      cardId: account.id,
+      dateFrom: formatDate(dates[0]),
+      dateTo: formatDate(dates[1])
+    }
+  }, response => response.body && response.body.values && response.body.values.history && response.body.values.history.length > 0,
+  message => new InvalidPreferencesError('bad request'))
+  ))
 
   const operations = flatMap(responses, response => {
     return flatMap(response.body.values.history, op => {
