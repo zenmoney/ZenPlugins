@@ -3,7 +3,7 @@ import { defaultsDeep, chunk } from 'lodash'
 import padLeft from 'pad-left'
 import { stringify } from 'querystring'
 import { fetch } from '../../common/network'
-import { BankMessageError, InvalidOtpCodeError } from '../../errors'
+import { BankMessageError, InvalidOtpCodeError, TemporaryUnavailableError } from '../../errors'
 
 const baseUrl = 'https://ibank.asb.by'
 
@@ -25,29 +25,22 @@ async function fetchUrl (url, options, predicate = () => true, error = (message)
   if (predicate) {
     validateResponse(response, response => predicate(response), error)
   }
-  const err = response.body.match(/(?:<p id ="status_message" class="error">(.[^/]*)<|Сеанс работы с порталом завершен из-за длительного простоя)./i)
-  if (err?.length === 1) { // Сеанс работы завершен
+  const $ = cheerio.load(response.body)
+  const err = $('div[class="res"]')?.children('p#status_message.error')?.text() || ''
+
+  if (err.indexOf('еанс работы с порталом завершен из-за длительного простоя') > -1) { // Сеанс работы завершен
     throw new TemporaryError('Сессия завершена из-за длительного простоя. Запустите синхронизацию с банком заново.')
   }
-  if (err && err[1].indexOf('СМС-код отправлен на номер телефона') === -1) {
-    if (err[1].indexOf('Необходимо настроить номер телефона для получения СМС') >= 0) {
-      throw new BankMessageError(err[1] + '. Это можно сделать на сайте или в приложении Беларусбанка.')
+  if (err && err.indexOf('СМС-код отправлен на номер телефона') === -1) {
+    if (err.indexOf('Необходимо настроить номер телефона для получения СМС') >= 0) {
+      throw new BankMessageError(err + '. Это можно сделать на сайте или в приложении Беларусбанка.')
     }
     // ошибка приходит в ответе на 1й запрос loginSMS()
-    if (err[1].indexOf('Выбранный способ аутентификации отключён') >= 0) {
+    if (err.indexOf('Выбранный способ аутентификации отключён') >= 0) {
       throw new BankMessageError('Аутентификация по СМС отключена. Выберите в настройках аутентификацию по кодам или включите вход по СМС в приложении или на сайте банка.')
     }
 
-    if ([
-      'Вы заблокированы из-за трёхкратного ошибочного ввода', // ошибка приходит в ответе на 1й запрос loginSMS()
-      'Введён неправильный код',
-      'Введён неправильный СМС-код',
-      'Ваша учетная запись заблокирована'
-    ].some(error => err[1].indexOf(error) >= 0)) {
-      throw new BankMessageError(err[1])
-    }
-    // throw new TemporaryError(err[1])
-    console.assert(false, 'new error in fetchUrl')
+    throw new BankMessageError(err)
   }
   return response
 }
@@ -66,18 +59,21 @@ export async function login (prefs) {
 }
 
 export async function loginCodes (prefs) {
-  if (!prefs.codes0 || !/^\s*(?:\d{4}[\s+]+){9}\d{4}\s*$/.test(prefs.codes0)) {
-    throw new InvalidPreferencesError('Неправильно введены коды 1-10! Необходимо ввести 10 четырехзначных кодов через пробел или +.')
+  let wrongCodes
+  const codesRegexp = /^\s*(?:\d{4}[\s+]+){9}\d{4}\s*$/
+  if (!prefs.codes0 || !codesRegexp.test(prefs.codes0)) {
+    wrongCodes = '1-10'
+  } else if (!prefs.codes1 || !codesRegexp.test(prefs.codes1)) {
+    wrongCodes = '11-20'
+  } else if (!prefs.codes2 || !codesRegexp.test(prefs.codes2)) {
+    wrongCodes = '21-30'
+  } else if (!prefs.codes3 || !codesRegexp.test(prefs.codes3)) {
+    wrongCodes = '31-40'
   }
-  if (!prefs.codes1 || !/^\s*(?:\d{4}[\s+]+){9}\d{4}\s*$/.test(prefs.codes1)) {
-    throw new InvalidPreferencesError('Неправильно введены коды 11-20! Необходимо ввести 10 четырехзначных кодов через пробел или +.')
+  if (wrongCodes) {
+    throw new InvalidPreferencesError(`Неправильно введены коды ${wrongCodes}! Необходимо ввести 10 четырехзначных кодов через пробел или +.`)
   }
-  if (!prefs.codes2 || !/^\s*(?:\d{4}[\s+]+){9}\d{4}\s*$/.test(prefs.codes2)) {
-    throw new InvalidPreferencesError('Неправильно введены коды 21-30! Необходимо ввести 10 четырехзначных кодов через пробел или +.')
-  }
-  if (!prefs.codes3 || !/^\s*(?:\d{4}[\s+]+){9}\d{4}\s*$/.test(prefs.codes3)) {
-    throw new InvalidPreferencesError('Неправильно введены коды 31-40! Необходимо ввести 10 четырехзначных кодов через пробел или +.')
-  }
+
   let res
   let i = 0
   do {
@@ -87,10 +83,11 @@ export async function loginCodes (prefs) {
     }, response => response.success || response.status === 502, message => new Error('Сайт не доступен'))
   } while (i < 5 && res.status === 502)
   if (res.status === 502) {
-    console.assert('Сайт недоступен. Error 502')
+    throw new TemporaryUnavailableError()
   }
 
   let url = res.body.match(/<form[^>]+action="([^"]*)"[^>]*name="LoginForm1"/i)
+
   res = await fetchUrl(res.headers['content-location'] + url[1], {
     method: 'POST',
     headers: {
