@@ -144,7 +144,7 @@ function parseCash (transaction, json) {
         syncIds: null
       },
       invoice: null,
-      sum: Number.parseFloat(json.auth_amount ? json.auth_amount : json.operationAmount),
+      sum: Number.parseFloat(json.auth_amount ? json.auth_amount : ((json.operationSign === '1') ? -json.operationAmount : json.operationAmount)),
       fee: 0
     })
     return true
