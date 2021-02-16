@@ -319,21 +319,23 @@ export function parseCards (html) {
 }
 
 export function parseDeposits (response) {
-  const regex = /<td class="tdNoPadding" ><div.[^>]*><span.[^>]*>(.*?)<\/span><span.[^>]*>(.*?)<\/span><\/div><\/td><td class="tdNoPadding" ><div.[^>]*>(.*?)<\/div><\/td><td class="tdNoPadding" ><div.[^>]*><span.[^>]*>(.*?)<\/span><\/div><\/td><td class="tdNoPadding" ><div.[^>]*>(.*?)<\/div><\/td>.*?X<\/a><div.[^>]*>(.*?)<\/div><\/div><\/div><\/td>/ig
+  const regex = /<td class="tdNoPadding" ><div.[^>]*><span.[^>]*>(.*?)<\/span><span.[^>]*>(.*?)<\/span><\/div><\/td><td class="tdNoPadding" ><div.[^>]*>(.*?)<\/div><\/td><td class="tdNoPadding" ><div.[^>]*><span.[^>]*>(.*?)<\/span><\/div><\/td><td class="tdNoPadding" ><div.[^>]*>(.*?)<\/div><\/td><td class="tdNoPadding" ><div.[^>]*>(.*?)<\/div><\/td>.*?X<\/a><div.[^>]*>(.*?)<\/div><\/div><\/div><\/td>/ig
   const deposits = []
   let m
   while ((m = regex.exec(response.replace(/\r?\n|\r/g, ''))) !== null) {
     if (m.index === regex.lastIndex) {
       regex.lastIndex++
     }
-    deposits.push({
-      id: (m[1] + m[2]).replace(/\s/g, ''),
-      name: strDecoder(m[3]),
-      balance: m[4],
-      currency: m[5],
-      details: strDecoder(m[6]),
-      type: 'deposit'
-    })
+    if (/открыт/i.test(strDecoder(m[6]))) {
+      deposits.push({
+        id: (m[1] + m[2]).replace(/\s/g, ''),
+        name: strDecoder(m[3]),
+        balance: m[4],
+        currency: m[5],
+        details: strDecoder(m[7]),
+        type: 'deposit'
+      })
+    }
   }
   return deposits
 }
