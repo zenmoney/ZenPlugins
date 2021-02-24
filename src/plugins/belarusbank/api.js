@@ -3,6 +3,7 @@ import { defaultsDeep, chunk } from 'lodash'
 import padLeft from 'pad-left'
 import { stringify } from 'querystring'
 import { fetch } from '../../common/network'
+import { retry, RetryError } from '../../common/retry'
 import { BankMessageError, InvalidOtpCodeError, TemporaryUnavailableError } from '../../errors'
 
 const baseUrl = 'https://ibank.asb.by'
@@ -15,13 +16,28 @@ async function fetchUrl (url, options, predicate = () => true, error = (message)
       sanitizeResponseLog: { headers: { 'set-cookie': true } }
     }
   )
-  options.method = options.method ? options.method : 'POST'
+  options.method = options.method || 'POST'
   options.stringify = stringify
 
   console.assert(url, 'NO url', url)
   console.assert(url.indexOf('undefined') === -1, 'undefined in url', url)
 
-  const response = await fetch(baseUrl + url, options)
+  let response
+
+  try {
+    response = await retry({
+      getter: () => fetch(baseUrl + url, options),
+      predicate: response => response.status < 500,
+      maxAttempts: 3,
+      delayMs: 4000
+    })
+  } catch (e) {
+    if (e instanceof RetryError || /\[NTI]|\[NER]/.test(e.message)) {
+      throw new TemporaryUnavailableError()
+    } else {
+      throw e
+    }
+  }
   if (predicate) {
     validateResponse(response, response => predicate(response), error)
   }
@@ -206,7 +222,7 @@ export async function loginSMS (prefs) {
     sanitizeRequestLog: { body: { bbIbCodeSmsvalueField: true } }
   }, response => response.success, message => new Error(''))
 
-  if (res.body.match(/Cмена пароля[^,]/)) {
+  if (/мена пароля[^,]/.test(res.body)) {
     throw new BankMessageError('Закончился срок действия пароля. Задайте новый пароль в интернет-банке Беларусбанка')
   }
 
@@ -278,7 +294,7 @@ export function parseCards (html) {
     // console.log(`accountTable ${accountTable}`)
     const cardTable = $(elem).children('table[class="ibTable"]').children('tbody').children('tr')
 
-    account.accountName = accountTable.children('td[class="tdAccountText"]').children('div').text()
+    account.accountName = accountTable.children('td[class="tdAccountText"]').children('div').text()?.trim()
     if (account.accountName.indexOf('Новые карты') >= 0) return // move to the next iteration
     if (!accountTable.children('td[class="tdAccountButton"]').children('a[title="Получить отчёт об операциях по счёту"]').toString()) return
     account.accountNum = accountTable.children('td[class="tdId"]').children('div').text().replace(/\s+/g, '')
@@ -303,8 +319,8 @@ export function parseCards (html) {
       cardTable.each(function (i, elem) {
         const card = {
           name: $(elem).children('td[class="tdNoPaddingBin"]').children('div').attr('title'),
-          number: $(elem).children('td[class="tdNumber"]').children('div').text(),
-          id: $(elem).children('td[class="tdId"]').children('div').text(),
+          number: $(elem).children('td[class="tdNumber"]').children('div').text()?.trim(),
+          id: $(elem).children('td[class="tdId"]').children('div').text()?.trim(),
           isActive: Boolean($(elem).children('td[class="tdNoPadding"]').children('div').attr('class') !== 'cellLable notActiveCard')
         }
         account.cards.push(card)
