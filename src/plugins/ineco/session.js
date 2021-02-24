@@ -1,6 +1,6 @@
 import { stringify } from 'querystring'
 import * as setCookie from 'set-cookie-parser'
-import { fetch } from './network'
+import { fetch } from '../../common/network'
 
 /**
  * Session is used for auto storing cookies within all requests
