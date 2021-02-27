@@ -1,5 +1,8 @@
+import cheerio from 'cheerio'
 import moment from 'moment'
 import { parseCSV } from './helpers'
+
+const getAccountType = (type) => type === 'Card' ? 'ccard' : 'checking'
 
 const dateRegexp = /^.*(\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2}).*$/
 const currencyConversionRegexp = /^.* ([0-9.]+) ([A-Z]+) \/.* ([0-9.]+) ([A-Z]+).*$/
@@ -18,6 +21,41 @@ const parseTransactionDate = (details, date) => {
   }
 
   return moment(dtls[1], 'DD/MM/YYYY hh:mm:ss').valueOf()
+}
+
+export const parseAccounts = (html) => {
+  html = html.replace(/\r?\n|\r/g, '')
+  const $ = cheerio.load(html)
+  const accounts = []
+
+  $('#gvOverviewAccounts').find('.dxgvDataRow_Youthful').each((i, elm) => {
+    const tds = Array.from($(elm).find('td'))
+    const id = $(tds[0]).text()
+
+    if (!id) {
+      return
+    }
+
+    const title = $('td.colProdName', elm)
+    const balance = $(tds[3]).text().trim().split(' ')
+    const type = title.attr('title')
+
+    if (!balance[1]) {
+      return
+    }
+
+    accounts.push({
+      id: id,
+      title: title.text(),
+      syncID: [id.slice(id.length - 4)],
+
+      instrument: balance[1],
+      type: getAccountType(type),
+      balance: Number(balance[0].replace(/[^\d.-]/g, ''))
+    })
+  })
+
+  return accounts
 }
 
 /**

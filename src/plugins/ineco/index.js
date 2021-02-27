@@ -1,14 +1,9 @@
 /**
  * @author Karpov Anton <anton@karpoff.pro>
  */
-import cheerio from 'cheerio'
 import { Session } from './session'
-import { parseTransactions, processTransactions } from './converters'
+import { parseAccounts, parseTransactions, processTransactions } from './converters'
 import { AccountHelper } from './helpers'
-
-const getAccountType = (type) => {
-  return type === 'Card' ? 'ccard' : 'checking'
-}
 
 const formatNumber = value => {
   const str = `${value}`
@@ -49,43 +44,13 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     }
   })
 
-  let html = await session.postForm('/User/LogOn', {
+  const html = await session.postForm('/User/LogOn', {
     UserName: preferences.login,
     Password: preferences.password
   })
 
-  html = html.replace(/\r?\n|\r/g, '')
-  const $ = cheerio.load(html)
-  const accounts = []
   let transactions = []
-
-  $('#gvOverviewAccounts').find('.dxgvDataRow_Youthful').each((i, elm) => {
-    const tds = Array.from($(elm).find('td'))
-    const id = $(tds[0]).text()
-
-    if (!id) {
-      return
-    }
-
-    const title = $('td.colProdName', elm)
-    const balance = $(tds[3]).text().trim().split(' ')
-    const type = title.attr('title')
-
-    if (!balance[1]) {
-      return
-    }
-
-    accounts.push({
-      id: id,
-      title: title.text(),
-      syncID: [id.slice(id.length - 4)],
-
-      instrument: balance[1],
-      type: getAccountType(type),
-      balance: Number(balance[0].replace(/[^\d.-]/g, ''))
-    })
-  })
-
+  const accounts = parseAccounts(html)
   const ah = new AccountHelper(accounts)
 
   for (const account of accounts) {
