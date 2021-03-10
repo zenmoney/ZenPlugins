@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="login"
+        summary="||{@s}"
+        title="Логин для входа в интернет-банк"
+        dialogTitle="Логин для входа в интернет-банк"
+        negativeButtonText="Отмена"
+        positiveButtonText="ОК"
+        inputType="text"
+        obligatory="true"
+    >
+    </EditTextPreference>
+    <EditTextPreference
+        key="password"
+        summary="||***********"
+        title="Пароль от интернет-банка"
+        dialogTitle="Пароль от интернет-банка"
+        negativeButtonText="Отмена"
+        positiveButtonText="ОК"
+        inputType="textPassword"
+        obligatory="true"
+    >
+    </EditTextPreference>
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="С какой даты загружать операции"
+        defaultValue="2010-06-01T12:00:00.000Z"
+        dialogTitle="С какой даты загружать операции"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|startDate|{@s}"
+    >
+    </EditTextPreference>
+</PreferenceScreen>
