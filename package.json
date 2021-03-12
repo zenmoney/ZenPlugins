@@ -53,7 +53,7 @@
     "protobufjs": "6.8.8",
     "protobufjs-loader-webpack4": "git+https://github.com/maximtop/protobufjs-loader.git#657d9604f40c24108fd4550613f4df4eded92222",
     "react": "16.4.0",
-    "react-dev-utils": "4.2.3",
+    "react-dev-utils": "11.0.4",
     "react-dom": "16.4.0",
     "script-loader": "0.7.0",
     "set-cookie-parser": "2.2.1",
