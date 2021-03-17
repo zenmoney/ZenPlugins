@@ -288,7 +288,7 @@ export async function fetchTransactionsAccId (sid, account) {
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
     '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
   if (res.BS_Response.GetActions && res.BS_Response.GetActions.Action && res.BS_Response.GetActions.Action.length > 2) {
-    const actions = res.BS_Response.GetActions.Action
+    const actions = res.BS_Response.GetActions.Action.filter((action) => action !== null)
     const resp = {
       transactionsAccId: null,
       conditionsAccId: null
