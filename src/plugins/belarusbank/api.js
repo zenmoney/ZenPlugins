@@ -38,15 +38,22 @@ async function fetchUrl (url, options, predicate = () => true, error = (message)
       throw e
     }
   }
+
   if (predicate) {
     validateResponse(response, response => predicate(response), error)
   }
   const $ = cheerio.load(response.body)
+
   const err = $('div[class="res"]')?.children('p#status_message.error')?.text() || ''
 
   if (err.indexOf('еанс работы с порталом завершен из-за длительного простоя') > -1) { // Сеанс работы завершен
     throw new TemporaryError('Сессия завершена из-за длительного простоя. Запустите синхронизацию с банком заново.')
   }
+
+  if (err.indexOf('неправильный СМС-код') > -1) {
+    throw new InvalidOtpCodeError()
+  }
+
   if (err && err.indexOf('СМС-код отправлен на номер телефона') === -1) {
     if (err.indexOf('Необходимо настроить номер телефона для получения СМС') >= 0) {
       throw new BankMessageError(err + '. Это можно сделать на сайте или в приложении Беларусбанка.')
