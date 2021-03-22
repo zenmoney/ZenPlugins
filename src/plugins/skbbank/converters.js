@@ -178,6 +178,8 @@ export function convertTransaction (rawTransaction, accountsById) {
   let account = accountsById[rawTransaction.view.productAccount] || accountsById[rawTransaction.view.productCardId]
   if (!account && rawTransaction.info.operationType === 'payment') {
     account = accountsById[rawTransaction.details['payee-card']]
+  } else if (!account && rawTransaction.view.direction === 'internal') {
+    account = accountsById[rawTransaction.details.payeeAccount]
   }
   if (!account) {
     return null
@@ -221,35 +223,50 @@ export function convertTransaction (rawTransaction, accountsById) {
 }
 
 function parseInnerTransfer (rawTransaction, transaction, invoice, accountsById) {
-  if (rawTransaction.view.direction === 'internal' && rawTransaction.info.operationType === 'payment') {
-    const account1 = accountsById[rawTransaction.details['payer-account']]
-    const account2 = accountsById[rawTransaction.details['payee-account']]
-    transaction.comment = null
-    transaction.merchant = null
-    transaction.movements[0].account.id = account2.id
-    transaction.movements.push(
-      {
-        id: transaction.movements[0].id,
-        account: { id: account1.id },
-        invoice: null,
-        sum: -invoice.sum,
-        fee: 0
-      })
-  } else if (rawTransaction.view.direction === 'internal' && rawTransaction.info.operationType === 'account_transaction') {
-    const account1 = accountsById[rawTransaction.details.payerAccount]
-    const account2 = accountsById[rawTransaction.details.payeeAccount]
-    transaction.comment = null
-    transaction.merchant = null
-    transaction.movements[0].account.id = account2.id
-    transaction.movements.push(
-      {
-        id: transaction.movements[0].id,
-        account: { id: account1.id },
-        invoice: null,
-        sum: -invoice.sum,
-        fee: 0
-      })
+  if (rawTransaction.view.direction !== 'internal') {
+    return false
   }
+  let account1
+  let account2
+  if (rawTransaction.info.operationType === 'payment') {
+    account1 = accountsById[rawTransaction.details['payer-account']]
+    account2 = accountsById[rawTransaction.details['payee-account']]
+  } else if (rawTransaction.info.operationType === 'account_transaction') {
+    account1 = accountsById[rawTransaction.details.payerAccount]
+    account2 = accountsById[rawTransaction.details.payeeAccount]
+  }
+  if (!account1 || !account2) {
+    transaction.movements[0].sum = !account2 ? -invoice.sum : invoice.sum
+    transaction.comment = rawTransaction.view.descriptions.operationDescription
+    transaction.merchant = null
+    transaction.movements.push(
+      {
+        id: null,
+        account: {
+          type: null,
+          instrument: invoice.instrument,
+          syncIds: !account1 ? [rawTransaction.details.payerAccount] : !account2 ? [rawTransaction.details.payeeAccount] : null,
+          company: null
+        },
+        invoice: null,
+        sum: !account2 ? invoice.sum : -invoice.sum,
+        fee: 0
+      })
+    return transaction
+  }
+
+  transaction.comment = null
+  transaction.merchant = null
+  transaction.movements[0].account.id = account2.id
+  transaction.movements.push(
+    {
+      id: transaction.movements[0].id,
+      account: { id: account1.id },
+      invoice: null,
+      sum: -invoice.sum,
+      fee: 0
+    })
+
   return false
 }
 

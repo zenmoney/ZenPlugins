@@ -292,6 +292,111 @@ describe('convertTransaction', () => {
           }
         ]
       }
+    ],
+    [
+      {
+        info:
+          {
+            id: 969744689,
+            operationType: 'account_transaction',
+            skbPaymentOperationType: null,
+            subType: 'transfer-own',
+            hasOfdReceipt: false
+          },
+        view:
+          {
+            operationIcon: 'https://ib.delo.ru/json/icon/394009711v1',
+            descriptions:
+              {
+                operationDescription: 'Вклады: открытие вклада Исполнение желаний +',
+                productDescription: 'Счет Mastercard Unembossed',
+                productType: 'Со счета карты'
+              },
+            amounts:
+              {
+                amount: 425686.13,
+                currency: 'RUB',
+                feeAmount: 0,
+                feeCurrency: 'RUB',
+                bonusAmount: 0,
+                bonusCurrency: 'RUB',
+                cashBackAmount: 0,
+                cashBackCurrency: 'RUB'
+              },
+            mainRequisite: 'На "Исполнение желаний + (срочный вклад)"',
+            category: { id: 394010367, internalCode: 'transfer', name: 'Переводы' },
+            state: 'processed',
+            dateCreated: '2021-03-02T18:04:08+05:00',
+            payWallet: null,
+            direction: 'internal',
+            comment: null,
+            productAccount: '40817810825715720880',
+            productCardId: null
+          },
+        details: {
+          actions: ['sendCheck', 'print'],
+          amount: 425686.13,
+          bankSystemId: '7079293128',
+          category: { id: 394010367, internalCode: 'transfer', name: 'Переводы' },
+          chargeDate: '2021-03-02T18:04:21+05:00',
+          comment: 'Перевод между счетами через систему ДБО',
+          convAmount: null,
+          convCurrency: null,
+          currency: 'RUB',
+          dateCreated: '2021-03-02T18:04:08+05:00',
+          descriptions:
+            {
+              operationDescription: 'Вклады: открытие вклада Исполнение желаний +',
+              productDescription: 'Счет Mastercard Unembossed',
+              productType: 'Со счета карты'
+            },
+          direction: 'internal',
+          feeAmount: 0,
+          feeCurrency: 'RUB',
+          firstCurrency: null,
+          id: 969744689,
+          mainRequisite: 'На "Исполнение желаний + (срочный вклад)"',
+          operationIcon: 'https://ib.delo.ru/json/icon/394009711v1',
+          orderedRequisites: [],
+          payeeAccount: '42305810725700366005',
+          payeeBic: '046577756',
+          payerAccount: '40817810825715720880',
+          payerBic: '046577756',
+          productAccount: '40817810825715720880',
+          productCardId: null,
+          rate: null,
+          requisites: {},
+          secondCurrency: null,
+          state: 'processed',
+          transactionType: 'transfer-own'
+        }
+      },
+      {
+        '40817810825715720880': { id: 'account1', instrument: 'RUB' },
+        '42305810725700366005': { id: 'account2', instrument: 'RUB' }
+      },
+      {
+        date: new Date('2021-03-02T18:04:08+0500'),
+        hold: false,
+        comment: null,
+        merchant: null,
+        movements: [
+          {
+            id: '969744689',
+            account: { id: 'account2' },
+            invoice: null,
+            sum: 425686.13,
+            fee: 0
+          },
+          {
+            id: '969744689',
+            account: { id: 'account1' },
+            invoice: null,
+            sum: -425686.13,
+            fee: 0
+          }
+        ]
+      }
     ]
   ])('should convert account transaction', (rawTransaction, accountsById, transaction) => {
     expect(convertTransaction(rawTransaction, accountsById)).toEqual(transaction)

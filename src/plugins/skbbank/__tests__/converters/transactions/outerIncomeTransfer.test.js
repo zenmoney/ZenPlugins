@@ -360,6 +360,118 @@ describe('convertTransaction', () => {
           }
         ]
       }
+    ],
+    [
+      {
+        info:
+          {
+            id: 969644936,
+            operationType: 'account_transaction',
+            skbPaymentOperationType: null,
+            subType: 'transfer-own',
+            hasOfdReceipt: false
+          },
+        view:
+          {
+            operationIcon: 'https://ib.delo.ru/json/icon/394009711v1',
+            descriptions:
+              {
+                operationDescription: 'Досрочное закрытие вклада',
+                productDescription: 'Обыкновенное чудо!!',
+                productType: 'Со вклада'
+              },
+            amounts:
+              {
+                amount: 425686.13,
+                currency: 'RUB',
+                feeAmount: 0,
+                feeCurrency: 'RUB',
+                bonusAmount: 0,
+                bonusCurrency: 'RUB',
+                cashBackAmount: 0,
+                cashBackCurrency: 'RUB'
+              },
+            mainRequisite: 'На "Счет Mastercard Unembossed"',
+            category: { id: 394010367, internalCode: 'transfer', name: 'Переводы' },
+            state: 'processed',
+            dateCreated: '2021-03-02T15:58:38+05:00',
+            payWallet: null,
+            direction: 'internal',
+            comment: null,
+            productAccount: '42306810925701652119',
+            productCardId: null
+          },
+        details: {
+          actions: ['sendCheck', 'print'],
+          amount: 425686.13,
+          bankSystemId: '7079140845',
+          category: { id: 394010367, internalCode: 'transfer', name: 'Переводы' },
+          chargeDate: '2021-03-02T15:58:45+05:00',
+          comment: 'Списание суммы на связанный договор при закрытии',
+          convAmount: null,
+          convCurrency: null,
+          currency: 'RUB',
+          dateCreated: '2021-03-02T15:58:38+05:00',
+          descriptions:
+            {
+              operationDescription: 'Досрочное закрытие вклада',
+              productDescription: 'Обыкновенное чудо!!',
+              productType: 'Со вклада'
+            },
+          direction: 'internal',
+          feeAmount: 0,
+          feeCurrency: 'RUB',
+          firstCurrency: null,
+          id: 969644936,
+          mainRequisite: 'На "Счет Mastercard Unembossed"',
+          operationIcon: 'https://ib.delo.ru/json/icon/394009711v1',
+          orderedRequisites: [],
+          payeeAccount: '40817810825715720880',
+          payeeBic: '046577756',
+          payerAccount: '42306810925701652119',
+          payerBic: '046577756',
+          productAccount: '42306810925701652119',
+          productCardId: null,
+          rate: null,
+          requisites: {},
+          secondCurrency: null,
+          state: 'processed',
+          transactionType: 'transfer-own'
+        }
+      },
+      {
+        '42305810725700366005': { id: 'account1', instrument: 'RUB' },
+        '40817810825715720880': { id: 'account2', instrument: 'RUB' }
+      },
+      {
+        date: new Date('2021-03-02T15:58:38+05:00'),
+        hold: false,
+        comment: 'Досрочное закрытие вклада',
+        merchant: null,
+        movements: [
+          {
+            id: '969644936',
+            account: { id: 'account2' },
+            invoice: null,
+            sum: 425686.13,
+            fee: 0
+          },
+          {
+            id: null,
+            account: {
+              type: null,
+              instrument: 'RUB',
+              syncIds: [
+                '42306810925701652119'
+              ],
+              company: null
+            },
+            invoice: null,
+            sum: -425686.13,
+            fee: 0
+          }
+        ]
+      }
     ]
   ])('should convert outer income transfer', (rawTransaction, accountsById, transaction) => {
     expect(convertTransaction(rawTransaction, accountsById)).toEqual(transaction)
