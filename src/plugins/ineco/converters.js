@@ -134,7 +134,9 @@ export const parseTransactions = (ah, account, csv) => {
     trans.push(tr)
   }
 
-  console.log(`scraped ${trans.length} transactions for account ${account.id}`)
+  console.log(`scraped ${trans.length} transactions for account ${account.id}`, {
+    csv: csv.substr(0, 100)
+  })
 
   return trans
 }

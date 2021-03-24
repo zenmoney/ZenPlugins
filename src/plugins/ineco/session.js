@@ -35,7 +35,8 @@ export class Session {
       redirect: 'manual',
       stringify: stringify,
       headers: this._prepareHeaders({
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
+        'Accept-Charset': 'utf-8;'
       }),
       body: data
     })
