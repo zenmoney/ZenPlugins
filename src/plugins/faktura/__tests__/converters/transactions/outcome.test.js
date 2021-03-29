@@ -720,6 +720,79 @@ describe('convertTransactions', () => {
             }
           ]
       }
+    ],
+    [
+      {
+        date: 1615884408000,
+        itemType: 'OPERATION',
+        authCode: '503455',
+        bonus: { incomeExpectations: true, details: [] },
+        channel: 'POS',
+        description: '10 LET OKTYABRYA,, IZHEVSK',
+        movements:
+          [
+            {
+              date: 1615884408000,
+              income: false,
+              amount: 870,
+              currency: 'RUR',
+              id: '511139872#976501636',
+              type: 'AUTHORIZATION_HOLD'
+            }
+          ],
+        title: '10 LET OKTYABRYA,',
+        mcc:
+          {
+            code: '8062',
+            groupDescription: 'Здоровье',
+            description: 'Больницы',
+            groupCode: 'health'
+          },
+        type: 'PURCHASE',
+        actor: 'CONSUMER',
+        money:
+          {
+            income: false,
+            amount: 870,
+            amountDetail:
+              {
+                amount: 870,
+                acquirerCommission: 0,
+                own: 870,
+                commission: 0,
+                credit: 0
+              },
+            currency: 'RUR',
+            accountAmount: { amount: 870, currency: 'RUR' }
+          },
+        contractId: 3353117,
+        id: 511139872,
+        statisticGroup: { code: 'mcc-group#health', name: 'Здоровье' },
+        status: 'HOLD'
+      },
+      {
+        comment: null,
+        date: new Date(1615884408000),
+        hold: true,
+        merchant:
+          {
+            country: null,
+            city: null,
+            title: '10 LET OKTYABRYA,',
+            mcc: 8062,
+            location: null
+          },
+        movements:
+          [
+            {
+              id: '511139872',
+              account: { id: 'c-3702600' },
+              invoice: null,
+              sum: -870,
+              fee: 0
+            }
+          ]
+      }
     ]
   ])('converts outcome spending', (apiTransaction, transaction) => {
     expect(converter(apiTransaction, { 3353117: 'c-3702600' })).toEqual(transaction)

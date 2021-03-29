@@ -202,7 +202,7 @@ function parsePayee (transaction, apiTransaction, accountId, invoice) {
   }
 
   let city = apiTransaction.description?.indexOf(',') >= 0 ? apiTransaction.description.split(',')[1].trim() : null
-  if (/\.(com|net|ru|ua|by)$/i.test(city)) { city = null }
+  if (/\.(com|net|ru|ua|by)$/i.test(city) || city === '') { city = null }
   transaction.merchant = {
     country: null,
     city,
