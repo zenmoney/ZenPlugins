@@ -26,7 +26,7 @@ export class Session {
 
     this._storeCookies(response)
 
-    return this._returnResponseBody(response, options)
+    return this._returnResponseBody(response)
   }
 
   async postForm (url, data = {}) {
@@ -97,6 +97,15 @@ export class Session {
       return this.get(response.headers.location.replace(this._domain, ''))
     }
 
-    return response.body
+    let body = response.body
+
+    if (response.headers['content-disposition'] && response.headers['content-disposition'].substr(0, 11) === 'attachment;') {
+      /* for some reasons on mobile devices posting form for a file gives unexpected '\u0000'
+       * after every body char in response. deleting them
+       */
+      body = body.replace(/\\u0000/g, '')
+    }
+
+    return body
   }
 }
