@@ -13,7 +13,7 @@ function getInvoice (apiTransaction) {
   }
 }
 
-const converter = (apiTransaction, mapContractToAccount = {}) => {
+const converter = (apiTransaction, mapContractToAccount = {}, accountsById) => {
   const invoice = getInvoice(apiTransaction)
   const sign = apiTransaction.money.income ? 1 : -1
   const accountId = resolveAccountId(apiTransaction, mapContractToAccount)
@@ -41,7 +41,7 @@ const converter = (apiTransaction, mapContractToAccount = {}) => {
     parseComment,
     parsePayee
     // parseAll
-  ].some(parser => parser(transaction, apiTransaction, accountId, invoice))
+  ].some(parser => parser(transaction, apiTransaction, accountId, invoice, accountsById))
   return transaction
 }
 
@@ -65,13 +65,26 @@ function parseCashTransfer (transaction, apiTransaction, accountId, invoice) {
   return true
 }
 
-function parseInnerTransfer (transaction, apiTransaction, accountId, invoice) {
+function parseInnerTransfer (transaction, apiTransaction, accountId, invoice, accountsById) {
   if (apiTransaction.type !== 'WALLET') { return false }
   transaction.movements[0].sum = -transaction.movements[0].sum
   if (transaction.movements[0].invoice) { transaction.movements[0].invoice.sum = -transaction.movements[0].invoice.sum }
+  const transferAccountId = helper.walletUniqueAccountId(apiTransaction.walletId)
+  const transferAccount = accountsById[transferAccountId]
+  let account = {}
+  if (transferAccount) {
+    account = { id: transferAccountId }
+  } else if (!transferAccount) {
+    account = {
+      type: 'ccard',
+      instrument: invoice.instrument,
+      company: null,
+      syncIds: null
+    }
+  }
   transaction.movements.push({
     id: null,
-    account: { id: helper.walletUniqueAccountId(apiTransaction.walletId) },
+    account,
     invoice: null,
     sum: -invoice.sum,
     fee: 0

@@ -33,8 +33,17 @@ async function scrape ({ preferences, fromDate, toDate, isInBackground, apiUri }
   const cards = cardsData.map((data) => cardDataToZenmoneyAccount(data, creditData))
   const wallets = walletsData.map(walletDataToZenmoneyAccount)
 
+  const accountsById = {}
+  for (const card of cards) {
+    const { account } = card
+    accountsById[account.id] = account
+  }
+  for (const wallet of wallets) {
+    const { account } = wallet
+    accountsById[account.id] = account
+  }
   const map = mapContractToAccount(cardsData)
-  const transactions = filterDuplicates(transactionsData.map((data) => transactionsDataToZenmoneyTransaction(data, map)))
+  const transactions = filterDuplicates(transactionsData.map((data) => transactionsDataToZenmoneyTransaction(data, map, accountsById)))
   const accounts = [].concat(cards, wallets)
 
   return {

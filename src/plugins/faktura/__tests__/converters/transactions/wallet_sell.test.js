@@ -87,7 +87,7 @@ describe('transaction converter', () => {
       }
     ]
   ])('converts sale dollars', (apiTransaction, transaction) => {
-    expect(converter(apiTransaction, { 9870000: 'c-1230000' })).toEqual(transaction)
+    expect(converter(apiTransaction, { 9870000: 'c-1230000' }, { 'w-88410': { id: 'account' } })).toEqual(transaction)
   })
 
   it.each([
@@ -162,6 +162,6 @@ describe('transaction converter', () => {
       }
     ]
   ])('converts sale dollars from closed wallet', (apiTransaction, transaction) => {
-    expect(converter(apiTransaction, { 224830: 'c-320845', 2248303: 'c-3208453', 22483: 'c-32084' })).toEqual(transaction)
+    expect(converter(apiTransaction, { 224830: 'c-320845', 2248303: 'c-3208453', 22483: 'c-32084' }, {})).toEqual(transaction)
   })
 })
