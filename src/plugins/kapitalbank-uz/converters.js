@@ -173,7 +173,7 @@ export function convertVisaCardTransaction (card, rawTransaction) {
   }
 
   const invoice = {
-    sum: amount,
+    sum: amount + fee,
     instrument: rawTransaction.currency.name
   }
 
@@ -194,8 +194,8 @@ export function convertVisaCardTransaction (card, rawTransaction) {
         id: null,
         account: { id: card.id },
         invoice: invoice.instrument === card.instrument ? null : invoice,
-        sum: invoice.instrument === card.instrument ? invoice.sum : null,
-        fee: fee
+        sum: invoice.instrument === card.instrument ? invoice.sum + fee : null,
+        fee: 0
       }
     ],
     comment: null
