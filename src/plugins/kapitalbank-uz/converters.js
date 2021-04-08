@@ -195,7 +195,7 @@ export function convertVisaCardTransaction (card, rawTransaction) {
         account: { id: card.id },
         invoice: invoice.instrument === card.instrument ? null : invoice,
         sum: invoice.instrument === card.instrument ? invoice.sum + fee : null,
-        fee: fee
+        fee: 0
       }
     ],
     comment: null
