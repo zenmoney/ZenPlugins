@@ -1,6 +1,6 @@
 import WebSocket from '../../common/protocols/webSocket'
 import { generateUUID, generateRandomString } from '../../common/utils'
-import { IncompatibleVersionError, InvalidOtpCodeError, InvalidPreferencesError } from '../../errors'
+import { IncompatibleVersionError, InvalidOtpCodeError, InvalidPreferencesError, BankMessageError } from '../../errors'
 import { SHA512, MD5 } from 'jshashes'
 
 const baseUrl = 'api.click.uz:8443'
@@ -147,10 +147,16 @@ export default class ClickPluginApi {
     })
 
     // eslint-disable-next-line camelcase
-    if (response.body?.data?.[0]?.[0]?.error_note && [
-      /CLICK-PIN/
-    ].some(pattern => pattern.test(response.body.data[0][0].error_note))) {
-      throw new InvalidPreferencesError('Неверно введен CLICK-PIN')
+    if (response.body?.data?.[0]?.[0]?.error_note) {
+      if ([
+        /CLICK-PIN/
+      ].some(pattern => pattern.test(response.body.data[0][0].error_note))) {
+        throw new InvalidPreferencesError('Неверно введен CLICK-PIN')
+      }
+
+      if (response.body.data[0][0].error_note === 'Клиент не зарегестрирован') {
+        throw new BankMessageError(response.body.data[0][0].error_note)
+      }
     }
 
     console.assert(response.body.data[0][0].error === 0, 'unexpected login response', response)
