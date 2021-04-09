@@ -165,15 +165,26 @@ export function convertHumoCardTransaction (card, rawTransaction) {
  * @returns транзакция в формате Дзенмани
  */
 export function convertVisaCardTransaction (card, rawTransaction) {
-  const amount = Number(rawTransaction.amount)
-  const fee = Number(rawTransaction.fee)
+  let amount = Number(rawTransaction.amount)
+  let fee = Number(rawTransaction.fee)
 
   if (amount === 0) {
     return null
   }
 
+  /*
+    Если сумма `amount` положительная, т.е. доходная, то минусуем комиссию, таким образом сумма пополнения уменьшится
+    Если сумма `amount` отрицательная, т.е. расходная, то тоже минисуем комиссию, таким образом сумма расхода увеличится
+
+    Вообще сумма `fee` возвращается всегда положительной с API, т.е. это точно не кэшбек, а расход, но всё равно на всякий случай берем модуль числа
+  */
+  if (Math.abs(fee) > Math.abs(amount)) {
+    amount -= Math.abs(fee)
+    fee = 0
+  }
+
   const invoice = {
-    sum: amount + fee,
+    sum: amount,
     instrument: rawTransaction.currency.name
   }
 
@@ -194,8 +205,8 @@ export function convertVisaCardTransaction (card, rawTransaction) {
         id: null,
         account: { id: card.id },
         invoice: invoice.instrument === card.instrument ? null : invoice,
-        sum: invoice.instrument === card.instrument ? invoice.sum + fee : null,
-        fee: 0
+        sum: invoice.instrument === card.instrument ? invoice.sum : null,
+        fee: fee ? -fee : 0
       }
     ],
     comment: null
