@@ -118,21 +118,19 @@ function getMerchant (groupedApiTransaction) {
 }
 
 function parseInnerTransfer (transaction, groupedApiTransaction, transactionAccount, accounts) {
-  let secondTransactionAcc
   if (groupedApiTransaction.length === 2) {
-    secondTransactionAcc = getApiTransactionAccount(
+    const secondTransactionAcc = getApiTransactionAccount(
       groupedApiTransaction[0],
       accounts.filter(account => account.id !== transactionAccount.id)
     )
-
+    const transaction1 = groupedApiTransaction[0].credit === 0 ? groupedApiTransaction[0] : groupedApiTransaction[1]
+    const transaction2 = groupedApiTransaction[0].credit === 1 ? groupedApiTransaction[0] : groupedApiTransaction[1]
     if (secondTransactionAcc) {
-      transaction.movements = [transactionAccount, secondTransactionAcc].map((account) => {
-        const movementTransaction = groupedApiTransaction.find(
-          apiTx => (account.type === 'checking' && apiTx.credit === 1) ||
-            (account.type === 'ccard' && apiTx.credit === 0)
-        )
-        return makeMovement(movementTransaction, account)
-      })
+      transaction.movements = [
+        makeMovement(transaction1, transactionAccount),
+        makeMovement(transaction2, secondTransactionAcc)
+      ]
+      transaction.movements[0].fee = transaction.movements[1].fee = 0
 
       return true
     }

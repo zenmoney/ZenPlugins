@@ -56,7 +56,7 @@ describe('convertTransactions', () => {
         }
       ],
       {
-        date: new Date('2020-12-31T14:17:57.000Z'),
+        date: new Date('2020-12-31 14:17:57'),
         hold: false,
         merchant: {
           country: null,
