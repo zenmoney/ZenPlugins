@@ -181,8 +181,6 @@ export function convertVisaCardTransaction (card, rawTransaction) {
   if (Math.abs(fee) > Math.abs(amount)) {
     amount -= Math.abs(fee)
     fee = 0
-  } else {
-    fee *= -1
   }
 
   const invoice = {
@@ -208,7 +206,7 @@ export function convertVisaCardTransaction (card, rawTransaction) {
         account: { id: card.id },
         invoice: invoice.instrument === card.instrument ? null : invoice,
         sum: invoice.instrument === card.instrument ? invoice.sum : null,
-        fee: fee ? fee : 0
+        fee: fee ? -fee : 0
       }
     ],
     comment: null
