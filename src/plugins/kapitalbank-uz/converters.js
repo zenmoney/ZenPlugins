@@ -171,9 +171,22 @@ export function convertVisaCardTransaction (card, rawTransaction) {
   if (amount === 0) {
     return null
   }
+  
+  /*
+    Если сумма `amount` положительная, т.е. доходная, то минусуем комиссию, таким образом сумма пополнения уменьшится
+    Если сумма `amount` отрицательная, т.е. расходная, то тоже минисуем комиссию, таким образом сумма расхода увеличится
+
+    Вообще сумма `fee` возвращается всегда положительной с API, т.е. это точно не кэшбек, а расход, но всё равно на всякий случай берем модуль числа
+  */
+  if (Math.abs(fee) > Math.abs(amount)) {
+    amount -= Math.abs(fee)
+    fee = 0
+  } else {
+    fee *= -1
+  }
 
   const invoice = {
-    sum: amount + fee,
+    sum: amount,
     instrument: rawTransaction.currency.name
   }
 
@@ -194,8 +207,8 @@ export function convertVisaCardTransaction (card, rawTransaction) {
         id: null,
         account: { id: card.id },
         invoice: invoice.instrument === card.instrument ? null : invoice,
-        sum: invoice.instrument === card.instrument ? invoice.sum + fee : null,
-        fee: 0
+        sum: invoice.instrument === card.instrument ? invoice.sum : null,
+        fee: fee
       }
     ],
     comment: null
