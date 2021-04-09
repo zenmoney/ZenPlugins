@@ -165,8 +165,8 @@ export function convertHumoCardTransaction (card, rawTransaction) {
  * @returns транзакция в формате Дзенмани
  */
 export function convertVisaCardTransaction (card, rawTransaction) {
-  const amount = Number(rawTransaction.amount)
-  const fee = Number(rawTransaction.fee)
+  let amount = Number(rawTransaction.amount)
+  let fee = Number(rawTransaction.fee)
 
   if (amount === 0) {
     return null
