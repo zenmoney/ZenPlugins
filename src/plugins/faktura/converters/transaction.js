@@ -92,7 +92,8 @@ function parseOuterTransfer (transaction, apiTransaction, accountId, invoice) {
   if (!([
     'ZKDP', // Перевод «Золотая Корона»
     'FDT_RBS_COMMISSION', // Исходящий
-    'TRANSFER'
+    'TRANSFER',
+    'SBP' // СБП
   ].some(str => str === apiTransaction.type) ||
     (apiTransaction.type === 'RECHARGE' &&
       (/(Перевод|Пополнение) с карты/.test(apiTransaction.typeName) || /(Перевод|Пополнение) с карты/.test(apiTransaction.title)))
@@ -125,6 +126,12 @@ function parseOuterTransfer (transaction, apiTransaction, accountId, invoice) {
       break
     case 'RECHARGE':
       title = apiTransaction.title.replace(/(Перевод|Пополнение) с карты:?/, '').replace(/(MASTERCARD|VISA)/i, '').trim()
+      break
+    case 'SBP':
+      title = apiTransaction.paymentDetail?.payee || apiTransaction.paymentDetail?.purposePayment || apiTransaction.title
+      if (apiTransaction.paymentDetail?.payeeBankName) {
+        transaction.comment = apiTransaction.paymentDetail.payeeBankName
+      }
   }
 
   let country = null

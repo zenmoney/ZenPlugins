@@ -169,6 +169,91 @@ describe('convertTransactions', () => {
         },
         comment: null
       }
+    ],
+    [
+      {
+        date: 1617607792000,
+        itemType: 'OPERATION',
+        serviceCode: 'SBP',
+        bonus:
+          {
+            bonuslessReason: 'OTHER',
+            incomeExpectations: false,
+            details: []
+          },
+        forwardingKey: 'SBP_1999019860',
+        typeName: 'Перевод из АО "ТИНЬКОФФ БАНК"',
+        channel: 'POS',
+        movements:
+          [
+            {
+              date: 1617607792000,
+              income: true,
+              amount: 3000,
+              currency: 'RUR',
+              id: '516996973#926214851',
+              type: 'INCOME'
+            }
+          ],
+        title: 'Николай Николаевич Н',
+        type: 'SBP',
+        actor: 'CONSUMER',
+        counterpartyCode: 'tinkoff',
+        connector: ':',
+        money:
+          {
+            income: true,
+            amount: 3000,
+            amountDetail: { amount: 3000, own: 3000, commission: 0, credit: 0 },
+            currency: 'RUR',
+            accountAmount: { amount: 3000, currency: 'RUR' }
+          },
+        paymentDetail:
+          {
+            payerBankName: 'АО "ТИНЬКОФФ БАНК"',
+            payerPhone: '9212222222',
+            payer: 'Николай Николаевич Н'
+          },
+        contractId: 3353117,
+        id: 516996973,
+        statisticGroup: { code: 'income-transfers', name: 'Переводы' },
+        status: 'DONE'
+      },
+      {
+        date: new Date(1617607792000),
+        hold: false,
+        movements:
+          [
+            {
+              id: '516996973',
+              account: { id: 'account' },
+              invoice: null,
+              sum: 3000,
+              fee: 0
+            },
+            {
+              id: null,
+              account: {
+                type: 'ccard',
+                instrument: 'RUR',
+                company: null,
+                syncIds: null
+              },
+              invoice: null,
+              sum: -3000,
+              fee: 0
+            }
+          ],
+        merchant: {
+          country: null,
+          city: null,
+          title: 'Николай Николаевич Н',
+          mcc: null,
+          location: null
+        },
+        comment: null
+      }
+
     ]
   ])('converts outer income transfer', (apiTransaction, transaction) => {
     expect(converter(apiTransaction, { 3353117: 'account' })).toEqual(transaction)
