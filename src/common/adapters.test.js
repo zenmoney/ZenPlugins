@@ -149,9 +149,9 @@ describe('provideScrapeDates', () => {
     expect(scrape).toHaveBeenCalledWith({ preferences: {}, fromDate: new Date(startDate), toDate: null, isFirstRun: true })
   })
 
-  it('should provide scrape fromDate equal to lastSuccessDate minus 1 week', () => {
+  it('should provide scrape fromDate equal to lastSuccessDate minus 2 week', () => {
     const lastSuccessDate = '2015-06-07T08:09:10.000Z'
-    const expectedFromDate = '2015-05-31T08:09:10.000Z'
+    const expectedFromDate = new Date(2015, 4, 24, 0, 0, 0, 0)
     const startDate = '2010-01-01T01:01:01.000Z'
     global.ZenMoney = {
       getData: jest.fn().mockReturnValue(lastSuccessDate),

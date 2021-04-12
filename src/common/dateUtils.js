@@ -66,3 +66,10 @@ export function createDateIntervals ({ fromDate, toDate, addIntervalToDate, gapM
 export function dateInTimezone (date, timezoneOffsetSeconds) {
   return new Date(date.getTime() + (date.getTimezoneOffset() + timezoneOffsetSeconds) * 60000)
 }
+
+export function getMidnight (date, offset) {
+  const midnight = new Date(date.getTime())
+  midnight.setDate(midnight.getDate() + offset)
+  midnight.setHours(0, 0, 0, 0)
+  return midnight
+}

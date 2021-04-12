@@ -16,7 +16,7 @@ import {
 } from '../errors'
 import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId, trimSyncId } from './accounts'
 import { toZenmoneyTransaction } from './converters'
-import { isValidDate } from './dateUtils'
+import { getMidnight, isValidDate } from './dateUtils'
 import { sanitize } from './sanitize'
 import { isDebug } from './utils'
 
@@ -28,8 +28,6 @@ i18n.init({
 })
 
 const MS_IN_MINUTE = 60 * 1000
-const MS_IN_DAY = 24 * 60 * MS_IN_MINUTE
-const MS_IN_WEEK = 7 * MS_IN_DAY
 
 const SCRAPE_LAST_SUCCESS_DATE_KEY = 'scrape/lastSuccessDate'
 
@@ -81,7 +79,7 @@ const calculateFromDate = (startDateString, now = new Date()) => {
   console.assert(isValidDate(startDate), { startDateString }, 'is not a valid date')
   const lastSuccessDate = getLastSuccessDate()
   const fromDate = lastSuccessDate
-    ? new Date(Math.max(lastSuccessDate.getTime() - MS_IN_WEEK, startDate.getTime()))
+    ? new Date(Math.max(getMidnight(lastSuccessDate, -14).getTime(), startDate.getTime()))
     : startDate
   return fromDate.getTime() < now.getTime() ? fromDate : now
 }
