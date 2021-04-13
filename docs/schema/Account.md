@@ -5,7 +5,7 @@ Account {
     syncID: [String]
 
     instrument: ('RUB' | 'руб.' | 'USD' | '$' | ...)
-    type: ('ccard' | 'checking' | 'loan' | 'deposit')
+    type: ('card' | 'checking' | 'loan' | 'deposit')
 
     balance:      Double?
     startBalance: Double?
