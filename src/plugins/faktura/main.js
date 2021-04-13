@@ -34,12 +34,10 @@ async function scrape ({ preferences, fromDate, toDate, isInBackground, apiUri }
   const wallets = walletsData.map(walletDataToZenmoneyAccount)
 
   const accountsById = {}
-  for (const card of cards) {
-    const { account } = card
+  for (const account of cards) {
     accountsById[account.id] = account
   }
-  for (const wallet of wallets) {
-    const { account } = wallet
+  for (const account of wallets) {
     accountsById[account.id] = account
   }
   const map = mapContractToAccount(cardsData)
