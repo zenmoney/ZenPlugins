@@ -69,7 +69,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
       continue
     }
 
-    const transactionScraper = account.type === 'ccard' ? scrapeCardTransactions : scrapeAccountTransactions
+    const transactionScraper = account.type === 'card' ? scrapeCardTransactions : scrapeAccountTransactions
     const trans = await transactionScraper(ah, account, accountKey, session, fromDate, toDate || new Date())
 
     transactions = [...transactions, ...trans]
