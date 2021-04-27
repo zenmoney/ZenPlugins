@@ -1,8 +1,8 @@
 import fetchMock from 'fetch-mock'
-import { installFetchMockDeveloperFriendlyFallback } from '../../testUtils'
-import { makePluginDataApi } from '../../ZPAPI.pluginData'
-import { scrape } from './index'
-import { mockArchiveRequest, mockCardListRequest, mockLogin, mockLogout } from './mocks'
+import { installFetchMockDeveloperFriendlyFallback } from '../../../testUtils'
+import { makePluginDataApi } from '../../../ZPAPI.pluginData'
+import { scrape } from '../index'
+import { mockArchiveRequest, mockCardListRequest, mockLogin, mockLogout } from '../mocks'
 
 installFetchMockDeveloperFriendlyFallback(fetchMock)
 

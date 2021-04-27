@@ -1,4 +1,4 @@
-import { figureOutAccountRestsDelta, formatBsbCardsApiDate, formatBsbPaymentsApiDate, isRejectedTransaction } from './BSB'
+import { figureOutAccountRestsDelta, formatBsbCardsApiDate, formatBsbPaymentsApiDate, isRejectedTransaction } from '../BSB'
 
 describe('formatBsbCardsApiDate', () => {
   it('should return DD.MM.YYYY string considering bank UTC+3 timezone shift', () => {

@@ -5,27 +5,6 @@ import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
 import { isValidDate } from '../../common/dateUtils'
 import { fetchJson } from '../../common/network'
 
-const transactionTypeFactors = {
-  Возврат: 1,
-  Vozvrat: 1,
-  'Возврат средств': 1,
-  'Vozvrat sredstv': 1,
-  Пополнение: 1,
-  Popolnenie: 1,
-  'Service payment to card': 1,
-  Зачисление: 1,
-  Zachislenie: 1,
-  Списание: -1,
-  Spisanie: -1,
-  'Комиссия банка': -1,
-  'Товары и услуги': -1,
-  'Tovary i uslugi': -1,
-  Банкомат: -1,
-  Bankomat: -1,
-  Наличные: -1,
-  Nalichnye: -1
-}
-
 const rejectedTransactionTypes = [
   'Отказ',
   'Otkaz'
@@ -41,7 +20,32 @@ const cashTransferTransactionTypes = [
 ]
 
 export const getTransactionFactor = (transaction) => {
-  const factor = transactionTypeFactors[transaction.transactionType]
+  const transactionTypeFactors = {
+    Возврат: 1,
+    Vozvrat: 1,
+    'Возврат средств': 1,
+    'Vozvrat sredstv': 1,
+    Пополнение: 1,
+    Popolnenie: 1,
+    'Service payment to card': 1,
+    Зачисление: 1,
+    Zachislenie: 1,
+    Списание: -1,
+    Spisanie: -1,
+    'Комиссия банка': -1,
+    'Товары и услуги': -1,
+    'Tovary i uslugi': -1,
+    Банкомат: -1,
+    Bankomat: -1,
+    Наличные: -1,
+    Nalichnye: -1
+  }
+  let factor = transactionTypeFactors[transaction.transactionType]
+  if (!factor) {
+    if (/Комиссия за .*обслуживание/i.test(transaction.transactionType)) {
+      factor = -1
+    }
+  }
   console.assert(factor !== undefined, 'unknown transactionType in transaction:', transaction)
   return factor
 }
