@@ -2,6 +2,18 @@ import { stringify } from 'querystring'
 import * as setCookie from 'set-cookie-parser'
 import { fetch } from '../../common/network'
 
+function arrayBufferToString (buffer) {
+  let binaryString = ''
+  const bytes = new Uint16Array(buffer)
+  const length = bytes.length
+
+  for (let i = 0; i < length; i++) {
+    binaryString += String.fromCharCode(bytes[i])
+  }
+
+  return binaryString
+}
+
 /**
  * Session is used for auto storing cookies within all requests
  * It also provide simple interfaces for major request types
@@ -44,6 +56,24 @@ export class Session {
     this._storeCookies(response)
 
     return this._returnResponseBody(response)
+  }
+
+  async postFormBinary (url, data = {}) {
+    const response = await fetch(this._url(url), {
+      method: 'POST',
+      redirect: 'manual',
+      stringify: stringify,
+      headers: this._prepareHeaders({
+        'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
+        'Accept-Charset': 'utf-8;'
+      }),
+      body: data,
+      binaryResponse: true
+    })
+
+    this._storeCookies(response)
+
+    return arrayBufferToString(response.body)
   }
 
   async request (url, options = {}) {
@@ -97,15 +127,6 @@ export class Session {
       return this.get(response.headers.location.replace(this._domain, ''))
     }
 
-    let body = response.body
-
-    if (response.headers['content-disposition'] && response.headers['content-disposition'].substr(0, 11) === 'attachment;') {
-      /* for some reasons on mobile devices posting form for a file gives unexpected '\u0000'
-       * after every body char in response. deleting them
-       */
-      body = body.replace(/\\u0000/g, '')
-    }
-
-    return body
+    return response.body
   }
 }

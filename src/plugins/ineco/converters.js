@@ -2,7 +2,7 @@ import cheerio from 'cheerio'
 import moment from 'moment'
 import { parseCSV } from './helpers'
 
-const getAccountType = (type) => type === 'Card' ? 'ccard' : 'checking'
+const getAccountType = (type) => type === 'Card' ? 'card' : 'checking'
 
 const dateRegexp = /^.*(\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2}).*$/
 const currencyConversionRegexp = /^.* ([0-9.]+) ([A-Z]+) \/.* ([0-9.]+) ([A-Z]+).*$/
@@ -135,7 +135,8 @@ export const parseTransactions = (ah, account, csv) => {
   }
 
   console.log(`scraped ${trans.length} transactions for account ${account.id}`, {
-    csv: csv.substr(0, 100)
+    csv: csv.substr(0, 100),
+    trans
   })
 
   return trans

@@ -16,7 +16,7 @@ const formatDate = date => `${formatNumber(date.getDate())}/${formatNumber(date.
 const scrapeAccountTransactions = async (ah, account, accountKey, session, fromDate, toDate) => {
   console.log(`fetching transactions for ${account.id} (${accountKey}) savings account`, { fromDate, toDate })
 
-  const response = await session.postForm('/AccountStatement/Export', {
+  const response = await session.postFormBinary('/AccountStatement/Export', {
     export_filter: `${formatDate(fromDate)};${formatDate(toDate)};${accountKey};3`,
     export_sorting: '',
     btnExportCsv: 'btnExportCsv'
@@ -28,7 +28,7 @@ const scrapeAccountTransactions = async (ah, account, accountKey, session, fromD
 const scrapeCardTransactions = async (ah, account, accountKey, session, fromDate, toDate) => {
   console.log(`fetching transactions for ${account.id} (${accountKey}) card account`, { fromDate, toDate })
 
-  const response = await session.postForm('/CardStatement/Export', {
+  const response = await session.postFormBinary('/CardStatement/Export', {
     export_filter: `${formatDate(fromDate)};${formatDate(toDate)};${accountKey};3`,
     export_sorting: '',
     btnExportCsv: 'btnExportCsv'
@@ -69,7 +69,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
       continue
     }
 
-    const transactionScraper = account.type === 'ccard' ? scrapeCardTransactions : scrapeAccountTransactions
+    const transactionScraper = account.type === 'card' ? scrapeCardTransactions : scrapeAccountTransactions
     const trans = await transactionScraper(ah, account, accountKey, session, fromDate, toDate || new Date())
 
     transactions = [...transactions, ...trans]

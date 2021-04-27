@@ -63,5 +63,5 @@ export function parseCSV (str) {
     // Otherwise, append the current character to the current column
     arr[row][col] += cc
   }
-  return arr
+  return arr.map(line => line.map(col => col ? col.trim() : ''))
 }
