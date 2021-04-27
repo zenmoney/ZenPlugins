@@ -74,6 +74,9 @@ function parseDate (apiTransactionPayload) {
 }
 
 export function convertTransaction (apiTransaction, mainAccount, isRegularTransaction) {
+  if (apiTransaction.amount === 0 || apiTransaction.accountAmount === 0) {
+    return null
+  }
   apiTransaction.transDetails = apiTransaction.transDetails.trim()
   const accountCurrency = mainAccount.account.instrument
   const accountId = mainAccount.account.id
@@ -176,14 +179,13 @@ function parseInnerTransfer (transaction, apiTransaction, invoice) {
 }
 
 function parseOuterTransfer (transaction, apiTransaction, invoice) {
-  let regex
   if ([
     /^Перевод с карты на счет/,
     /^CH Debit/,
     /^CH Payment/,
-    /.* MOBILE BANK$/
+    /.* MOBILE BANK$/,
+    /Unique RUS MOSCOW YANDEX.MONEY\s*$/
   ].some(regexp => {
-    regex = regexp
     return regexp.test(apiTransaction.transDetails)
   })) {
     transaction.movements.push({
@@ -198,9 +200,9 @@ function parseOuterTransfer (transaction, apiTransaction, invoice) {
       sum: invoice ? -invoice.sum : -transaction.movements[0].sum,
       fee: 0
     })
-    if (!regex.test(' MOBILE BANK')) {
-      transaction.comment = apiTransaction.transDetails.replace(regex, '').replace('. Перевод не связан с предпринимательской деятельностью.', '').trim()
-    }
+    transaction.comment = apiTransaction.transDetails
+      .replace(/^Перевод с карты на счет/, '')
+      .replace('. Перевод не связан с предпринимательской деятельностью.', '').trim() || null
     return true
   }
   return false

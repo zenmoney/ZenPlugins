@@ -69,6 +69,77 @@ describe('convertTransaction', () => {
         },
         comment: '0.19 BYN cashback'
       }
+    ],
+    [
+      {
+        postingDate: '2021-04-22T00:00:00+03:00',
+        postingDateSpecified: true,
+        transDate: '2021-04-21T00:00:00+03:00',
+        transDateSpecified: true,
+        transTime: '00:00:00',
+        transCurrIso: 'BYN',
+        amount: -174.4,
+        feeAmount: 0,
+        accountAmount: -174.4,
+        transDetails: 'Retail BLR MINSK INTERNET-MAGAZIN"FIZCULT" ',
+        hce: false
+      },
+      {
+        movements:
+          [
+            {
+              id: null,
+              account: { id: 'account' },
+              invoice: null,
+              sum: -174.4,
+              fee: 0
+            }
+          ],
+        date: new Date('2021-04-21T00:00:00+03:00'),
+        hold: false,
+        merchant:
+          {
+            fullTitle: 'BLR MINSK INTERNET-MAGAZIN"FIZCULT"',
+            mcc: null,
+            location: null
+          },
+        comment: null
+      }
+    ],
+    [
+      {
+        postingDate: '2021-04-22T00:00:00+03:00',
+        postingDateSpecified: true,
+        transDate: '2021-04-20T00:00:00+03:00',
+        transDateSpecified: true,
+        transTime: '00:00:00',
+        transCurrIso: 'RUB',
+        amount: -357,
+        feeAmount: 0,
+        accountAmount: -12.17,
+        transDetails: 'Retail RUS PODOLSK WB ',
+        hce: false
+      },
+      {
+        movements:
+          [
+            {
+              id: null,
+              account: { id: 'account' },
+              invoice: { sum: -357, instrument: 'RUB' },
+              sum: -12.17,
+              fee: 0
+            }
+          ],
+        date: new Date('2021-04-20T00:00:00+03:00'),
+        hold: false,
+        merchant: {
+          fullTitle: 'RUS PODOLSK WB',
+          mcc: null,
+          location: null
+        },
+        comment: null
+      }
     ]
   ])('converts payee', (apiTransaction, transaction) => {
     expect(convertTransaction(apiTransaction, { account: { instrument: 'BYN', id: 'account' } }, true)).toEqual(transaction)
@@ -97,7 +168,7 @@ describe('convertTransaction', () => {
               fee: 0
             }
           ],
-        date: new Date('2021-02-08T08:47:56+0300'), // Mon Feb 08 2021 08:47:56 GMT+0300 (+03),
+        date: new Date('2021-02-08T08:47:56+0300'),
         hold: false,
         groupKeys: ['2021-02-08_08:47:56_24.44_BYN'],
         merchant: {

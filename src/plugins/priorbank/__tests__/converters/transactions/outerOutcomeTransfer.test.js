@@ -83,8 +83,67 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: null,
-        comment: null
+        comment: 'Retail BLR MINSK MOBILE BANK'
       }
+    ],
+    [
+      {
+        postingDate: '2021-04-20T00:00:00+03:00',
+        postingDateSpecified: true,
+        transDate: '2021-04-18T00:00:00+03:00',
+        transDateSpecified: true,
+        transTime: '00:00:00',
+        transCurrIso: 'RUB',
+        amount: -1000,
+        feeAmount: 0,
+        accountAmount: -34.9,
+        transDetails: 'Unique RUS MOSCOW YANDEX.MONEY ',
+        hce: false
+      },
+      {
+        movements:
+          [
+            {
+              id: null,
+              account: { id: 'account' },
+              invoice: { sum: -1000, instrument: 'RUB' },
+              sum: -34.9,
+              fee: 0
+            },
+            {
+              id: null,
+              account: {
+                type: null,
+                instrument: 'RUB',
+                company: null,
+                syncIds: null
+              },
+              invoice: null,
+              sum: 1000,
+              fee: 0
+            }
+          ],
+        date: new Date('2021-04-18T00:00:00+03:00'),
+        hold: false,
+        merchant: null,
+        comment: 'Unique RUS MOSCOW YANDEX.MONEY'
+      }
+    ],
+    [
+      {
+        postingDate: '2021-04-20T00:00:00+03:00',
+        postingDateSpecified: true,
+        transDate: '2021-04-18T00:00:00+03:00',
+        transDateSpecified: true,
+        transTime: '00:00:00',
+        transCurrIso: 'RUB',
+        amount: 0,
+        feeAmount: 0,
+        accountAmount: 0,
+        transDetails: 'Unique RUS MOSCOW YANDEX.MONEY ',
+        hce: false
+      },
+      null
     ]
   ])('converts outer outcome transfer', (apiTransaction, transaction) => {
     expect(convertTransaction(apiTransaction, { account: { instrument: 'BYN', id: 'account' } }, true)).toEqual(transaction)
@@ -127,8 +186,21 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: null,
-        comment: null
+        comment: 'Retail BLR MINSK MOBILE BANK'
       }
+    ],
+    [
+      {
+        amount: 0,
+        transAmount: 0,
+        transCurrIso: 'BYN',
+        transDetails: 'Retail BLR GOMEL I.-R. MOB.PRIL.DRIVEAN',
+        transDate: '2021-04-28T00:00:00+03:00',
+        transDateSpecified: true,
+        transTime: '08:31:15',
+        hce: false
+      },
+      null
     ]
   ])('converts outer outcome transfer (aborting operations)', (apiTransaction, transaction) => {
     expect(convertTransaction(apiTransaction, { account: { instrument: 'USD', id: 'account' } }, false)).toEqual(transaction)
