@@ -1,7 +1,17 @@
 export const convertAccount = (apiAccount) => {
   const { iban } = apiAccount.account
 
-  return {
+  const checkingAccountTypes = ['CA']
+  const savingsAccountTypes = ['DAS', 'SA']
+  const supportedAccountTypes = [...checkingAccountTypes, ...savingsAccountTypes]
+
+  const accountType = apiAccount.account.accountType.key
+  if (!(supportedAccountTypes.includes(accountType))) {
+    console.log(`Unsupported account type: ${accountType} - ${apiAccount.account.accountType.text}`)
+    return null
+  }
+
+  const result = {
     id: iban || apiAccount.accountId,
     title: `${apiAccount.account.accountType.text} (***${iban.slice(-4)})`,
     syncID: [iban, apiAccount.accountId].filter(Boolean),
@@ -10,6 +20,17 @@ export const convertAccount = (apiAccount) => {
     balance: Number(apiAccount.balance.value),
     startBalance: 0
   }
+
+  if (savingsAccountTypes.includes(accountType)) {
+    result.savings = true
+  }
+
+  const creditLimit = Number(apiAccount.account.creditLimit.value)
+  if (creditLimit > 0) {
+    result.creditLimit = Number(creditLimit)
+  }
+
+  return result
 }
 
 const parseRemittance = (text) => {
@@ -22,9 +43,11 @@ const parseRemittance = (text) => {
 
   while (cursor < text.length) {
     fieldCount += 1
-    const verificationNumber = parseInt(text.substr(cursor, NUM_FIELD_CHARS), 10)
-    if (verificationNumber !== fieldCount) {
-      throw new Error(`Error parsing remittance info ${text}`)
+    const actualString = text.substr(cursor, NUM_FIELD_CHARS)
+    const controlString = (fieldCount < 10 ? '0' : '') + fieldCount
+
+    if (controlString !== actualString) {
+      throw new Error(`Error parsing remittance info ${text}. Should've encountered ${controlString} at position ${cursor + 1}. Instead got ${actualString}`)
     }
     cursor += NUM_FIELD_CHARS
     result += text.substr(cursor, TEXT_FIELD_CHARS)
@@ -43,7 +66,7 @@ const parseRemittance = (text) => {
 }
 
 const getComment = (apiTransaction) => {
-  return `${apiTransaction.transactionType.text} ${parseRemittance(apiTransaction.remittanceInfo)}`
+  return `[${apiTransaction.transactionType.text}] ${parseRemittance(apiTransaction.remittanceInfo)}`
 }
 
 export const convertTransaction = (apiTransaction, accountId) => {
@@ -51,15 +74,21 @@ export const convertTransaction = (apiTransaction, accountId) => {
   const income = value > 0 ? value : 0
   const outcome = value < 0 ? Math.abs(value) : 0
 
-  return {
+  const result = {
     id: apiTransaction.reference,
     incomeAccount: accountId,
     outcomeAccount: accountId,
     income,
     outcome,
-    payee: (apiTransaction.creditor || apiTransaction.remitter || {}).holderName,
     date: apiTransaction.bookingDate,
     hold: apiTransaction.bookingStatus === 'NOTBOOKED',
     comment: getComment(apiTransaction)
   }
+
+  const payeeInfo = apiTransaction.creditor || apiTransaction.remitter
+  if (payeeInfo) {
+    result.payee = payeeInfo.holderName
+  }
+
+  return result
 }
