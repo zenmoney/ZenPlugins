@@ -80,7 +80,7 @@ export const convertTransaction = (apiTransaction, accountId) => {
     outcomeAccount: accountId,
     income,
     outcome,
-    date: apiTransaction.bookingDate,
+    date: new Date(apiTransaction.bookingDate),
     hold: apiTransaction.bookingStatus === 'NOTBOOKED',
     comment: getComment(apiTransaction)
   }
