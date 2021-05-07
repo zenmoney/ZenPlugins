@@ -355,6 +355,7 @@ const quickLogin = () => {
 }
 
 const confirmTan = async (validationInfo) => {
+  console.log('Validation info: ', validationInfo)
   console.log('Available auth types: ', validationInfo.availableTypes)
   const moreTypes = validationInfo.availableTypes.filter((type) => type !== validationInfo.typ)
   let message
