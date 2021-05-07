@@ -355,9 +355,12 @@ const quickLogin = () => {
 }
 
 const confirmTan = async (validationInfo) => {
+  console.log('Validation info: ', validationInfo)
+  console.log('Available auth types: ', validationInfo.availableTypes)
   const moreTypes = validationInfo.availableTypes.filter((type) => type !== validationInfo.typ)
   let message
   let imageUrl
+  let requireUserInput = true
 
   switch (validationInfo.typ) {
     case 'M_TAN':
@@ -368,7 +371,8 @@ const confirmTan = async (validationInfo) => {
       imageUrl = `data:image/png;base64,${validationInfo.challenge}`
       break
     case 'P_TAN_PUSH':
-      message = 'Подтвердите вход в приложении photoTAN, после чего нажмите кнопку "Готово".'
+      message = 'Подтвердите вход в приложении photoTAN, после чего нажмите кнопку "OK".'
+      requireUserInput = false
       break
     default:
       message = `Данный тип активации сессии (${validationInfo.typ}) не поддерживается. Мы попробуем активировать сессию, но ничего не гарантируем. Если у вас есть TAN активации, введите его в поле ниже.`
@@ -376,13 +380,20 @@ const confirmTan = async (validationInfo) => {
 
   if (moreTypes.length) {
     message = `${message}\n\nТекущий тип активации сессии: ${validationInfo.typ}. Если вы хотите его сменить, введите в поле одно из следующих значений: ${moreTypes.join(', ')}`
+    requireUserInput = true
+  }
+
+  if (!requireUserInput) {
+    await ZenMoney.alert(message)
+    return {}
   }
 
   // user input might be TAN, might be auth method to switch to, might be empty
-  const options = { buttonTitle: 'Готово' }
+  const options = {}
   if (imageUrl) {
-    options.imagetUrl = imageUrl
+    options.imageUrl = imageUrl
   }
+
   const userInput = await ZenMoney.readLine(message, options)
 
   const inputUppercase = (userInput || '').toUpperCase()

@@ -37,7 +37,7 @@ describe('convertTransaction', () => {
       outcomeAccount: 'DE50500105177141441838',
       income: 0,
       outcome: 119.99,
-      date: '2020-01-13',
+      date: new Date('2020-01-13'),
       hold: false,
       comment: '[Transfer] Goods and services',
       payee: 'Goerlizter Park Drogerie'
@@ -72,7 +72,7 @@ describe('convertTransaction', () => {
 
     expect(convertTransaction(apiTransaction, accountId)).toEqual({
       comment: '[Transfer] Refund for a broken helmet F892251',
-      date: '2020-06-02',
+      date: new Date('2020-06-02'),
       hold: false,
       id: '3E83B8AF2E7E97E8/1',
       income: 158.8,
@@ -116,7 +116,7 @@ describe('convertTransaction', () => {
       income: 0,
       outcome: 29.99,
       payee: 'German Germany Atta Ta-Ta-Da',
-      date: '2020-05-18',
+      date: new Date('2020-05-18'),
       hold: false,
       comment: '[Direct Debit] Kd-Nr.: 5103930823, Rg-Nr.: 7810712580/6, Ihre Superrechnung'
     })
@@ -152,7 +152,7 @@ describe('convertTransaction', () => {
       outcomeAccount: 'DE50500105177141441838',
       income: 0.05,
       outcome: 0,
-      date: '2020-04-28',
+      date: new Date('2020-04-28'),
       hold: false,
       comment: '[Interest / Dividends] ERTRAEGNISGUTSCHRIFT VOM 27.04.20 | DEPOTBESTAND: | 83 | GIERIGER KATER AG DL -,06 | 899960 | USD 0,01 | Abr.Betrag Brutto 0,06 EUR | Steuerabzug 0,01- EUR'
     })
