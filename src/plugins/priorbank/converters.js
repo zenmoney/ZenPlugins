@@ -263,6 +263,6 @@ export function convertTransactions ({ apiAccountsWithoutDuplicates, apiAccountD
       ...readableAbortedTransactions,
       ...readableRegularTransactions
     ]
-  })
+  }).filter(x => x)
   return items
 }
