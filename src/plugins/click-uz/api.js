@@ -1,7 +1,8 @@
+import { MD5, SHA512 } from 'jshashes'
+import { dateInTimezone, toISODateString } from '../../common/dateUtils'
 import WebSocket from '../../common/protocols/webSocket'
-import { generateUUID, generateRandomString } from '../../common/utils'
-import { IncompatibleVersionError, InvalidOtpCodeError, InvalidPreferencesError, BankMessageError } from '../../errors'
-import { SHA512, MD5 } from 'jshashes'
+import { generateRandomString, generateUUID } from '../../common/utils'
+import { BankMessageError, IncompatibleVersionError, InvalidOtpCodeError, InvalidPreferencesError } from '../../errors'
 
 const baseUrl = 'api.click.uz:8443'
 const sha512 = new SHA512()
@@ -217,8 +218,8 @@ export default class ClickPluginApi {
         phone_num: getPhoneNumber(phone),
         page_number: 1,
         page_size: 999,
-        date_start: fromDate.toISOString().split('T')[0],
-        date_end: toDate.toISOString().split('T')[0]
+        date_start: toISODateString(dateInTimezone(fromDate, 300)),
+        date_end: toISODateString(dateInTimezone(toDate, 300))
       },
       sanitizeRequestLog: { parameters: { session_key: true, phone_num: true } }
     })
