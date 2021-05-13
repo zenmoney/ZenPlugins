@@ -44,8 +44,6 @@ const fetchApi = async (url, { giveFullResponse, sanitizeWholeResponse, ...optio
     },
     sanitizeResponseLog: {
       body: sanitizeWholeResponse || {
-        values: true,
-        aggregated: true,
         access_token: true,
         refresh_token: true
       },
