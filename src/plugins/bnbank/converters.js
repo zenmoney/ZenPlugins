@@ -2,6 +2,7 @@ import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
 
 export const card = 'card'
 export const deposit = 'deposit'
+export const checking = 'checking'
 
 export function convertCard (json) {
   return convertAccount(json, card)
@@ -9,6 +10,10 @@ export function convertCard (json) {
 
 export function convertDeposit (json) {
   return convertAccount(json, deposit)
+}
+
+export function convertCheckingAccount (json) {
+  return convertAccount(json, checking)
 }
 
 export function convertAccount (json, accountType) {
@@ -21,7 +26,7 @@ export function convertAccount (json, accountType) {
           title: json.productName,
           currencyCode: json.currency,
           instrument: codeToCurrencyLookup[json.currency],
-          balance: Number.parseFloat(json.cards[0].balance),
+          balance: Number.parseFloat(json.cards[0].balance || 0),
           syncID: [json.internalAccountId],
           rkcCode: json.rkcCode,
           cardHash: json.cards[0].cardHash
@@ -50,6 +55,17 @@ export function convertAccount (json, accountType) {
         percent: json.interestRate,
         payoffInterval: 'month',
         payoffStep: 1,
+        rkcCode: json.rkcCode
+      }
+    case checking:
+      return {
+        id: json.internalAccountId,
+        type: checking,
+        title: json.productName,
+        currencyCode: json.currency,
+        instrument: codeToCurrencyLookup[json.currency],
+        balance: Number.parseFloat(json.balanceAmount || 0),
+        syncID: [json.internalAccountId],
         rkcCode: json.rkcCode
       }
     default:
