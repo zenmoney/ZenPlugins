@@ -6,18 +6,32 @@ const CommentLine = ({children}) => <div style={{fontSize: 9}}><BreakingPre>{chi
 
 const Payee = ({children}) => <div style={{fontSize: 10}}>{children}</div>;
 
-const AccountAmount = ({account, amount}) => (
+const AccountAmount = ({account, amount, opAmount, opInstrument}) => (
     <div style={{clear: "both", overflow: "hidden"}}>
         <div style={{float: "left"}}>{account.title}</div>
-        <div style={{float: "right", color: amount > 0 ? zenmoneyGreenColor : zenmoneyRedColor}}>{amount > 0 ? "+" + amount : amount} {account.instrument}</div>
+        <div style={{float: "right", color: (opAmount || amount) > 0 ? zenmoneyGreenColor : zenmoneyRedColor}}>
+            {amount ? (amount > 0 ? "+" : "") + amount + " " + account.instrument : ""}
+            {opAmount ? " (" + (opAmount > 0 ? "+" : "") + opAmount + " " + opInstrument + ")" : ""}
+        </div>
     </div>
 );
 
-const Transaction = ({payee, outcome, outcomeAccount, income, incomeAccount, comment}) => {
+const Transaction = ({
+    payee,
+    outcome,
+    outcomeAccount,
+    income,
+    incomeAccount,
+    opOutcome,
+    opOutcomeInstrument,
+    opIncome,
+    opIncomeInstrument,
+    comment
+}) => {
     return (
         <div style={{margin: 10}}>
-            {outcome !== 0 && <AccountAmount account={outcomeAccount} amount={-outcome} />}
-            {income !== 0 && <AccountAmount account={incomeAccount} amount={income} />}
+            {(outcome || opOutcome) && <AccountAmount account={outcomeAccount} amount={-outcome} opAmount={-opOutcome} opInstrument={opOutcomeInstrument}/>}
+            {(income || opIncome) && <AccountAmount account={incomeAccount} amount={income} opAmount={opIncome} opInstrument={opIncomeInstrument}/>}
             {payee && <Payee>{payee}</Payee>}
             {comment && <CommentLine>{comment}</CommentLine>}
         </div>
@@ -31,10 +45,17 @@ export class DayTransactions extends React.PureComponent {
             <React.Fragment>
                 <div style={{padding: "5px 10px", fontSize: 9, backgroundColor: accountRectangleColor}}>{day}</div>
                 {transactions.map(({
-                    payee, comment,
-                    outcome, outcomeAccount: outcomeAccountRef,
-                    income, incomeAccount: incomeAccountRef,
-                    ...rest
+                    payee,
+                    outcome,
+                    outcomeAccount: outcomeAccountRef,
+                    income,
+                    incomeAccount: incomeAccountRef,
+                    opOutcome,
+                    opOutcomeInstrument,
+                    opIncome,
+                    opIncomeInstrument,
+                    comment,
+                  ...rest
                 }, i) => (
                     <div key={i} style={{borderBottom: border}} title={JSON.stringify(rest)}>
                         <Transaction
@@ -43,6 +64,10 @@ export class DayTransactions extends React.PureComponent {
                             outcomeAccount={resolveAccount(outcomeAccountRef)}
                             income={income}
                             incomeAccount={resolveAccount(incomeAccountRef)}
+                            opOutcome={opOutcome}
+                            opOutcomeInstrument={opOutcomeInstrument}
+                            opIncome={opIncome}
+                            opIncomeInstrument={opIncomeInstrument}
                             comment={comment}
                         />
                     </div>
