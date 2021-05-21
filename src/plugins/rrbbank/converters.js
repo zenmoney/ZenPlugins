@@ -136,7 +136,7 @@ function parsePayee (transaction, json) {
       fullTitle = normalizeSpaces(json.operationName)
     }
   }
-  if (fullTitle || mcc) {
+  if (fullTitle) {
     transaction.merchant = { mcc, fullTitle, location: null }
   }
 }
