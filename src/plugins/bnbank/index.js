@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { fetchAccounts, fetchLastCardTransactions, fetchTransactions, login } from './api'
-import { convertCard, convertDeposit, convertTransaction, transactionsUnique } from './converters'
+import { convertCard, convertDeposit, convertCheckingAccount, convertTransaction, transactionsUnique } from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
   const token = await login(preferences.phone, preferences.password)
@@ -18,6 +18,12 @@ export async function scrape ({ preferences, fromDate, toDate }) {
       .map(convertDeposit)
       .filter(account => account !== null)
     preparedAccounts = cards.concat(deposits)
+  }
+  if (accounts.checkingAccounts) {
+    const checkingAccounts = accounts.checkingAccounts
+      .map(convertCheckingAccount)
+      .filter(account => account !== null)
+    preparedAccounts = cards.concat(checkingAccounts)
   }
 
   const transactions = (await fetchTransactions(token, preparedAccounts, fromDate, toDate))
