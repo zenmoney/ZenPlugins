@@ -1,12 +1,11 @@
 export function convertAccount (json) {
-  if (json.cards && json.cards.length > 0 && json.transAmount !== '0.00' &&
-    json.cardAccounts && json.cardAccounts.length > 0) { // only loading card accounts
+  if (json.transAmount !== '0.00' && json.cardAccounts && json.cardAccounts.length > 0) { // only loading card accounts
     const account = {
       id: json.accountId,
       type: 'card',
       title: json.description,
-      instrument: json.cards[0].cardCurr,
-      balance: Number.parseFloat(json.avlBalance) - Number.parseFloat(json.over) + Number.parseFloat(json.ownFunds),
+      instrument: (json.cards && json.cards.length > 0) ? json.cards[0].cardCurr : json.cardAccounts[0].currencyCode,
+      balance: Math.round((Number.parseFloat(json.avlBalance) - Number.parseFloat(json.over) + Number.parseFloat(json.ownFunds)) * 100) / 100,
       syncID: [],
       productType: json.productType,
       creditLimit: Number.parseFloat(json.over !== null ? json.over : 0)
@@ -16,10 +15,11 @@ export function convertAccount (json) {
       account.syncID.push(el.accountId)
       account.syncID.push(el.accountId + 'M')
     }
-    for (const el of json.cards) {
-      account.syncID.push(el.pan.slice(-4))
+    if (json.cards && json.cards.length > 0) {
+      for (const el of json.cards) {
+        account.syncID.push(el.pan.slice(-4))
+      }
     }
-
     if (json.over === null) {
       account.balance = Number.parseFloat(json.avlBalance)
     }

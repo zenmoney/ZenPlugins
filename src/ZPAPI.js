@@ -299,8 +299,8 @@ function ZPAPI ({ manifest, preferences, data }) {
   function addTransactionObject (transaction) {
     const id = transaction.id || '(null)'
 
-    if (typeof transaction.income !== 'number' || transaction.income < 0 ||
-            typeof transaction.outcome !== 'number' || transaction.outcome < 0) {
+    if ((typeof transaction.income !== 'number' && (transaction.income !== null || !transaction.opIncome)) || transaction.income < 0 ||
+      (typeof transaction.outcome !== 'number' && (transaction.outcome !== null || !transaction.opOutcome)) || transaction.outcome < 0) {
       return handleException('[TSN] Wrong transaction ' + id + '. Income and outcome should be non-negative')
     }
     if (transaction.income === 0 && transaction.outcome === 0) {

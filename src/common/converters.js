@@ -232,20 +232,20 @@ export function toZenmoneyTransaction (readableTransaction, accountsByIdLookup) 
 
     assertInvoiceIsNotRedundant(invoice, resolveAccountInstrument(accountRef, serializedAccountRef, accountsByIdLookup), readableTransaction)
 
-    console.assert(_.isNumber(sum), 'movement.sum must be Number:', readableTransaction)
+    console.assert(sum === null || _.isNumber(sum), 'movement.sum must be null or Number:', readableTransaction)
 
     console.assert(_.isNumber(fee), 'movement.fee must be Number:', readableTransaction)
-    const sumWithFee = sum + fee
+    const sign = sum > 0 || invoice?.sum > 0 ? 1 : -1
 
-    if (sumWithFee >= 0) {
-      result.income = Math.abs(sumWithFee)
+    if (sign >= 0) {
+      result.income = sum === null ? null : Math.abs(sum + fee)
       result.incomeAccount = serializedAccountRef
       result.outcome = 0
       result.outcomeAccount = serializedAccountRef
     } else {
       result.income = 0
       result.incomeAccount = serializedAccountRef
-      result.outcome = Math.abs(sumWithFee)
+      result.outcome = sum === null ? null : Math.abs(sum + fee)
       result.outcomeAccount = serializedAccountRef
     }
 
@@ -259,9 +259,9 @@ export function toZenmoneyTransaction (readableTransaction, accountsByIdLookup) 
       console.assert(_.isString(invoiceInstrument), 'invoice.instrument must be String:', readableTransaction)
       assertRestIsEmpty(invoiceRest, 'invoice props', readableTransaction)
 
-      console.assert(Math.sign(invoiceSum) === Math.sign(sumWithFee), 'invoice.sum and sumWithFee have contradictory signs:', readableTransaction)
+      console.assert(Math.sign(invoiceSum) === Math.sign(sign), 'invoice.sum and sumWithFee have contradictory signs:', readableTransaction)
 
-      if (sumWithFee >= 0) {
+      if (sign >= 0) {
         result.opIncome = Math.abs(invoiceSum)
         result.opIncomeInstrument = invoiceInstrument
       } else {

@@ -85,18 +85,28 @@ describe('convertTransaction', () => {
           shortName: 'RUB',
           symbol: 'руб'
         }
-      }
+      },
+      description: 'DE BERLIN MCDONALDS'
     })
 
     expect(transaction).toEqual({
       hold: true,
       date: new Date('2018-01-05T06:10:34.000Z'),
-      income: 0,
-      incomeAccount: 'B7C94FAC',
-      outcome: 164.10,
-      outcomeAccount: 'B7C94FAC',
-      opOutcome: 3,
-      opOutcomeInstrument: 'USD'
+      movements: [
+        {
+          id: null,
+          account: { id: 'B7C94FAC' },
+          invoice: { sum: -3, instrument: 'USD' },
+          sum: -164.10,
+          fee: 0
+        }
+      ],
+      merchant: {
+        fullTitle: 'DE BERLIN MCDONALDS',
+        mcc: null,
+        location: null
+      },
+      comment: null
     })
   })
 
@@ -125,13 +135,19 @@ describe('convertTransaction', () => {
     })
 
     expect(transaction).toEqual({
-      id: '7876123',
       hold: false,
       date: new Date('2018-01-04T15:44:12.000Z'),
-      income: 0,
-      incomeAccount: '4480910C',
-      outcome: 50,
-      outcomeAccount: '4480910C'
+      movements: [
+        {
+          id: '7876123',
+          account: { id: '4480910C' },
+          invoice: null,
+          sum: -50,
+          fee: 0
+        }
+      ],
+      merchant: null,
+      comment: null
     })
   })
 })
