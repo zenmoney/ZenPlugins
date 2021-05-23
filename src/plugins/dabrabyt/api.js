@@ -1,11 +1,13 @@
-import { defaultsDeep } from 'lodash'
+import { defaultsDeep, flatMap } from 'lodash'
 import { fetchJson } from '../../common/network'
 import { generateRandomString } from '../../common/utils'
 import { BankMessageError, InvalidOtpCodeError } from '../../errors'
 
 // transaction - операция прошедшая по карте, operation - операция по счёту
 
-const baseUrl = 'https://online.bankdabrabyt.by/services/v2/'
+const BASE_URL = 'https://online.bankdabrabyt.by/services/v2/'
+const CARD_BALANCE_URL = 'card/getBalance'
+const CARD_STATEMENT_URL = 'products/getCardAccountFullStatement'
 
 function generateDeviceID () {
   return generateRandomString(16)
@@ -18,7 +20,7 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
       sanitizeRequestLog: { headers: { session_token: true } }
     }
   )
-  const response = await fetchJson(baseUrl + url, options)
+  const response = await fetchJson(BASE_URL + url, options)
 
   if (predicate) {
     validateResponse(response, response => predicate(response), error)
@@ -99,57 +101,75 @@ export async function fetchAccounts (sessionToken) {
       additionCardAccount: {}
     }
   }, response => response.body && response.body.overviewResponse,
-  message => new TemporaryError(message))).body.overviewResponse.cardAccount
+  message => new TemporaryError(message))).body.overviewResponse
+
+  const cardAccounts = accounts.cardAccount
+
+  for (let i = 0; i < cardAccounts.length; i++) {
+    cardAccounts[i].balance = await fetchCardAccountBalance(sessionToken, cardAccounts[i].cards[0].cardHash)
+  }
 
   return accounts
 }
 
-// export async function fetchOperations (sessionToken, accounts, fromDate, toDate) {
-//   // Этот запрос показывает информацию только по проведенным операциям, т.е. через 2-3 дня
-//   console.log('>>> Загрузка списка транзакций через полную выписку...')
-//   toDate = toDate || new Date()
-//   const responses = await Promise.all(flatMap(accounts, (account) => {
-//     return fetchApiJson('products/getCardAccountFullStatement', {
-//       method: 'POST',
-//       headers: { session_token: sessionToken },
-//       body: {
-//         accountType: account.accountType,
-//         bankCode: account.bankCode,
-//         cardHash: account.cardHash,
-//         currencyCode: account.instrumentCode,
-//         internalAccountId: account.id,
-//         reportData: {
-//           from: fromDate.getTime(),
-//           till: toDate.getTime()
-//         },
-//         rkcCode: account.rkcCode
-//       }
-//     }, response => response.body)
-//   }))
+export async function fetchCardAccountBalance (sessionToken, cardHash) {
+  console.log('>>> Загрузка баланса карточного счёта')
+  const accountBalance = (await fetchApiJson(CARD_BALANCE_URL, {
+    method: 'POST',
+    headers: { session_token: sessionToken },
+    body: {
+      cardHash
+    }
+  }, response => response.body && response.body.balance,
+  message => new TemporaryError(message))).body.balance
 
-//   const operations = flatMap(responses, response => {
-//     return flatMap(response.body.operations, op => {
-//       const operationSign = Number.parseInt(op.operationSign)
-//       return {
-//         id: op.transactionAuthCode,
-//         account_id: op.accountNumber,
-//         operationName: op.operationName,
-//         operationDate: new Date(op.transactionDate),
-//         operationCurrencyCode: op.operationCurrency,
-//         operationAmount: op.operationAmount * operationSign,
-//         transactionDate: new Date(op.operationDate),
-//         transactionAmount: op.transactionAmount * operationSign,
-//         transactionCurrencyCode: op.transactionCurrency,
-//         merchant: op.operationPlace,
-//         hold: false
-//       }
-//     })
-//   })
+  return Number.parseFloat(accountBalance)
+}
 
-//   const filteredOperations = operations.filter(function (op) {
-//     return op !== undefined && op.operationAmount !== 0 && op.transactionDate >= fromDate
-//   })
+export async function fetchCardTransactions (sessionToken, accounts, fromDate, toDate) {
+  console.log('Загрузка списка транзакций...')
+  toDate = toDate || new Date()
+  const responses = await Promise.all(flatMap(accounts, (account) => {
+    return fetchApiJson(CARD_STATEMENT_URL, {
+      method: 'POST',
+      headers: { session_token: sessionToken },
+      body: {
+        accountType: account.accountType,
+        cardHash: account.cardHash,
+        currencyCode: account.instrumentCode,
+        internalAccountId: account.id,
+        reportData: {
+          from: fromDate.getTime(),
+          till: toDate.getTime()
+        },
+        rkcCode: account.rkcCode
+      }
+    }, response => response.body)
+  }))
 
-//   console.log(`>>> Загружено ${filteredOperations.length} операций.`)
-//   return filteredOperations
-// }
+  const operations = flatMap(responses, response => {
+    let counter = 1
+    return flatMap(response.body.operations, op => {
+      const operationSign = Number.parseInt(op.operationSign)
+      return {
+        id: op.transactionAuthCode || counter++,
+        account_id: op.accountNumber,
+        operationName: op.operationName,
+        operationDate: new Date(op.transactionDate), // подумать надо ли
+        operationCurrencyCode: op.operationCurrency, // подумать надо ли
+        operationAmount: op.operationAmount * operationSign, // подумать надо ли
+        transactionDate: new Date(op.operationDate), // подумать надо ли
+        transactionAmount: op.transactionAmount * operationSign, // подумать надо ли
+        transactionCurrencyCode: op.transactionCurrency,
+        merchant: op.operationPlace || null,
+        hold: false // надо проверить
+      }
+    })
+  })
+
+  const filteredOperations = operations.filter(op => op !== undefined && op.operationAmount !== 0 && op.transactionDate >= fromDate)
+
+  console.log(`Загружено ${filteredOperations.length} операций.`)
+
+  return filteredOperations
+}

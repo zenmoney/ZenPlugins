@@ -1,74 +1,124 @@
 import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
-// const MS_PER_DAY = 1000 * 60 * 60 * 24
+const MS_PER_DAY = 1000 * 60 * 60 * 24
 
 export function processAccounts (json) {
-  if (json.cards && json.cards.length > 0) { // only loading card accounts
-    const account = {
-      id: json.cardAccountNumber,
-      type: 'card',
-      instrument: codeToCurrencyLookup[json.currency],
-      instrumentCode: json.currency,
-      balance: Number.parseFloat(json.availableAmount),
-      syncID: [],
-      productType: json.productName,
-      cardHash: json.cards[0].cardHash,
-      bankCode: json.bankCode,
-      accountType: json.accountType,
-      rkcCode: json.rkcCode
+  const accounts = []
+  let skipAccount = 0
+  for (const accountsGroup in json) {
+    switch (accountsGroup) {
+      case 'cardAccount':
+        accounts.push(...json[accountsGroup].map(parseCardAccount))
+        break
+      case 'depositAccount':
+        accounts.push(...json[accountsGroup].map(parseDepositAccount))
+        break
+      case 'status':
+        break
+      case 'currentAccount':
+        accounts.push(...json[accountsGroup].map(parseCheckingAccount))
+        break
+      default:
+        skipAccount += json[accountsGroup].length
     }
+  }
 
-    for (const el of json.cards) {
-      account.syncID.push(el.cardNumberMasked.slice(-4))
-    }
+  console.log(`Не обработано ${skipAccount} счетов. Неизвестный тип счёта`)
 
-    if (!account.title) {
-      account.title = json.productName + '*' + account.syncID[0]
-    }
+  return accounts
+}
 
-    return account
+function parseCheckingAccount (account) {
+  return {
+    id: account.internalAccountId,
+    title: `Текущий ${account.personalizedName || account.productName}`,
+    syncID: [account.internalAccountId.slice(-4)],
+
+    instrument: codeToCurrencyLookup[account.currency],
+    type: 'checking',
+
+    balance: Number.parseFloat(account.balanceAmount),
+    rkcCode: account.rkcCode
+  }
+}
+
+function parseDepositAccount (account) {
+  return {
+    id: account.internalAccountId,
+    title: `Депозит ${account.personalizedName || account.productName}`,
+    syncID: [account.internalAccountId.slice(-4)],
+
+    instrument: codeToCurrencyLookup[account.currency],
+    type: 'deposit',
+
+    balance: Number.parseFloat(account.balanceAmount),
+
+    capitalization: true,
+    percent: account.interestRate,
+    startDate: new Date(account.openDate),
+    endDateOffset: (new Date(account.endDate).getTime() - new Date(account.openDate).getTime()) / MS_PER_DAY,
+    endDateOffsetInterval: 'day',
+    payoffStep: 1,
+    payoffInterval: 'month',
+
+    rkcCode: account.rkcCode
+  }
+}
+
+function parseCardAccount (account) {
+  const card = (account.cards && account.cards[0]) || {}
+
+  if (!card.cardHash) {
+    return null
+  }
+
+  return {
+    id: account.internalAccountId,
+    type: 'card',
+    instrument: codeToCurrencyLookup[account.currency],
+    instrumentCode: account.currency,
+    title: card.personalizedName || account.productName,
+    balance: account.balance,
+    syncID: [...account.cards.map(card => card.cardNumberMasked.slice(-4))],
+    cardHash: card.cardHash,
+    rkcCode: account.rkcCode
+  }
+}
+
+export function convertTransaction (json) {
+  json.sum = json.operationAmount || json.transactionAmount
+
+  const transaction = {
+    date: json.transactionDate,
+    movements: [getMovement(json)],
+    merchant: null,
+    comment: getComment(json),
+    hold: json.hold
+  }
+  // [
+  //   parsePayee
+  // ].some(parser => parser(transaction, json))
+
+  return transaction
+}
+
+function getMovement (json) {
+  return {
+    id: `${json.id}` || null,
+    account: { id: json.account_id },
+    invoice: null,
+    sum: json.sum,
+    fee: 0
+  }
+}
+
+function getComment (json) {
+  const operationCurrencyCode = (json.operationCurrencyCode || json.accountCurrencyCode)
+  if (json.transactionCurrencyCode !== operationCurrencyCode) {
+    const transactionInfo = `Транзакция: ${json.transactionAmount} ${codeToCurrencyLookup[json.transactionCurrencyCode]}`
+    return transactionInfo
   }
   return null
 }
-
-// export function convertTransaction (json) {
-//   json.sum = json.operationAmount || json.transactionAmount
-
-//   const transaction = {
-//     date: json.transactionDate,
-//     movements: [getMovement(json)],
-//     merchant: null,
-//     comment: getComment(json),
-//     hold: json.hold
-//   };
-//   [
-//     parsePayee
-//   ].some(parser => parser(transaction, json))
-
-//   return transaction
-// }
-
-// function getMovement (json) {
-//   return {
-//     id: json.id || null,
-//     account: { id: json.account_id },
-//     invoice: null,
-//     sum: json.sum,
-//     fee: 0
-//   }
-// }
-
-// function getComment (json) {
-//   const operationCurrencyCode = (json.operationCurrencyCode || json.accountCurrencyCode)
-//   if (json.transactionCurrencyCode !== operationCurrencyCode) {
-//     const transactionInfo = `Транзакция: ${json.transactionAmount} ${codeToCurrencyLookup[json.transactionCurrencyCode]}`
-//     return json.hold ? `Внимание, невозможно расчитать корректный курс конверсии. ${transactionInfo}` : transactionInfo
-//   }
-
-//   if (json.operationName && json.operationName.indexOf('Зачисление CashBack') === 0) {
-//     return 'Зачисление CashBack'
-//   }
-//   return null
-// }
 
 // function parsePayee (transaction, json) {
 //   // интернет-платежи отображаем без получателя
