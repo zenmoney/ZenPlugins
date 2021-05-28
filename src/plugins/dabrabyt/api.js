@@ -7,13 +7,14 @@ import { BankMessageError, InvalidOtpCodeError } from '../../errors'
 
 const BASE_URL = 'https://online.bankdabrabyt.by/services/v2/'
 const CARD_BALANCE_URL = 'card/getBalance'
-const CARD_STATEMENT_URL = 'products/getCardAccountFullStatement'
+const CARD_STATEMENT_URL = 'products/getCardAccountFullStatementWithBlockedAmounts'
+const DEPOSIT_STATEMENT_URL = 'products/getDepositAccountStatement'
 
 function generateDeviceID () {
   return generateRandomString(16)
 }
 
-async function fetchApiJson (url, options, predicate = () => true, error = (message) => console.assert(false, message)) {
+async function fetchApiJson (url, options, predicate = () => true, normalizeResponse = res => res.body, error = (message) => console.assert(false, message)) {
   options = defaultsDeep(
     options,
     {
@@ -26,7 +27,7 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
     validateResponse(response, response => predicate(response), error)
   }
 
-  return response
+  return normalizeResponse(response)
 }
 
 function validateResponse (response, predicate, error = (message) => console.assert(false, message)) {
@@ -36,9 +37,9 @@ function validateResponse (response, predicate, error = (message) => console.ass
 }
 
 export async function login (login, password) {
-  let res = await loginReq(login, password)
+  let body = await loginReq(login, password)
   let code = ''
-  switch (res.body.errorInfo.error) {
+  switch (body.errorInfo.error) {
     case '10415':
       code = await ZenMoney.readLine('Введите код из СМС', {
         time: 120000,
@@ -47,17 +48,17 @@ export async function login (login, password) {
       if (!code || !code.trim()) {
         throw new InvalidOtpCodeError()
       }
-      res = await loginReq(login, password, code)
+      body = await loginReq(login, password, code)
       break
     case '10004':
       throw new InvalidPreferencesError('Неверный логин или пароль')
     case '0':
       break
     default:
-      throw new BankMessageError(res.body.errorInfo.errorText)
+      throw new BankMessageError(body.errorInfo.errorText)
   }
 
-  return res.body.sessionToken
+  return body.sessionToken
 }
 
 async function loginReq (login, password, smsCode) {
@@ -82,7 +83,7 @@ async function loginReq (login, password, smsCode) {
     body: body,
     sanitizeRequestLog: { body: { login: true, password: true, deviceUDID: true, confirmationData: true } },
     sanitizeResponseLog: { body: { sessionToken: true } }
-  }, response => response.success, message => new InvalidPreferencesError('bad request'))
+  }, response => response.success, res => res.body, () => new InvalidPreferencesError('bad request'))
 }
 
 export async function fetchAccounts (sessionToken) {
@@ -101,7 +102,8 @@ export async function fetchAccounts (sessionToken) {
       additionCardAccount: {}
     }
   }, response => response.body && response.body.overviewResponse,
-  message => new TemporaryError(message))).body.overviewResponse
+  res => res.body,
+  message => new TemporaryError(message))).overviewResponse
 
   const cardAccounts = accounts.cardAccount
 
@@ -121,13 +123,14 @@ export async function fetchCardAccountBalance (sessionToken, cardHash) {
       cardHash
     }
   }, response => response.body && response.body.balance,
-  message => new TemporaryError(message))).body.balance
+  res => res.body,
+  message => new TemporaryError(message))).balance
 
   return Number.parseFloat(accountBalance)
 }
 
 export async function fetchCardTransactions (sessionToken, accounts, fromDate, toDate) {
-  console.log('Загрузка списка транзакций...')
+  console.log('Загрузка списка транзакций по картам...')
   toDate = toDate || new Date()
   const responses = await Promise.all(flatMap(accounts, (account) => {
     return fetchApiJson(CARD_STATEMENT_URL, {
@@ -136,7 +139,7 @@ export async function fetchCardTransactions (sessionToken, accounts, fromDate, t
       body: {
         accountType: account.accountType,
         cardHash: account.cardHash,
-        currencyCode: account.instrumentCode,
+        currencyCode: account.currencyCode,
         internalAccountId: account.id,
         reportData: {
           from: fromDate.getTime(),
@@ -144,30 +147,72 @@ export async function fetchCardTransactions (sessionToken, accounts, fromDate, t
         },
         rkcCode: account.rkcCode
       }
-    }, response => response.body)
+    }, response => response.body, response => ({ accountNumber: account.id, ...response.body }), message => new TemporaryError(message))
   }))
 
   const operations = flatMap(responses, response => {
-    let counter = 1
-    return flatMap(response.body.operations, op => {
+    return flatMap(response.operations, op => {
       const operationSign = Number.parseInt(op.operationSign)
+      const isProcessed = !!op.transactionDate
       return {
-        id: op.transactionAuthCode || counter++,
-        account_id: op.accountNumber,
-        operationName: op.operationName,
-        operationDate: new Date(op.transactionDate), // подумать надо ли
-        operationCurrencyCode: op.operationCurrency, // подумать надо ли
-        operationAmount: op.operationAmount * operationSign, // подумать надо ли
-        transactionDate: new Date(op.operationDate), // подумать надо ли
-        transactionAmount: op.transactionAmount * operationSign, // подумать надо ли
-        transactionCurrencyCode: op.transactionCurrency,
+        id: op.transactionAuthCode,
+        accountId: response.accountNumber,
+        operationName: op.operationName || '',
+        operationDate: isProcessed ? new Date(op.transactionDate) : null,
+        operationCurrency: isProcessed ? op.operationCurrency : op.transactionCurrency,
+        operationAmount: (isProcessed ? op.operationAmount : op.transactionAmount) * operationSign,
+        transactionDate: new Date(op.operationDate),
+        transactionAmount: (isProcessed ? op.transactionAmount : op.operationAmount) * operationSign,
+        transactionCurrency: isProcessed ? op.transactionCurrency : op.operationCurrency,
         merchant: op.operationPlace || null,
-        hold: false // надо проверить
+        mcc: op.mcc || op.merchantId || null,
+        hold: !isProcessed
       }
     })
   })
 
   const filteredOperations = operations.filter(op => op !== undefined && op.operationAmount !== 0 && op.transactionDate >= fromDate)
+
+  console.log(`Загружено ${filteredOperations.length} операций.`)
+
+  return filteredOperations
+}
+
+export async function fetchDepositTransactions (sessionToken, accounts, fromDate, toDate) {
+  console.log('Загрузка списка транзакций по депозитам...')
+  toDate = toDate || new Date()
+  const responses = await Promise.all(flatMap(accounts, (account) => {
+    return fetchApiJson(DEPOSIT_STATEMENT_URL, {
+      method: 'POST',
+      headers: { session_token: sessionToken },
+      body: {
+        accountType: account.accountType,
+        currencyCode: account.currencyCode,
+        internalAccountId: account.id,
+        reportData: {
+          from: fromDate.getTime(),
+          till: toDate.getTime()
+        }
+      }
+    }, response => response.body, res => res.body, message => new TemporaryError(message))
+  }))
+
+  const operations = flatMap(responses, response => {
+    return flatMap(response.operations, op => {
+      const operationSign = Number.parseInt(op.operationSign)
+      return {
+        id: op.transactionAuthCode,
+        accountId: response.accountNumber,
+        operationName: op.operationName,
+        operationDate: new Date(op.transactionDate),
+        operationCurrency: op.operationCurrency,
+        operationAmount: op.operationAmount * operationSign,
+        hold: !!op.transactionDate
+      }
+    })
+  })
+
+  const filteredOperations = operations.filter(op => op !== undefined && op.operationAmount !== 0 && op.operationDate >= fromDate)
 
   console.log(`Загружено ${filteredOperations.length} операций.`)
 

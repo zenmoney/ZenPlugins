@@ -1,5 +1,8 @@
 import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
+import { MD5 } from 'jshashes'
+
 const MS_PER_DAY = 1000 * 60 * 60 * 24
+const md5 = new MD5()
 
 export function processAccounts (json) {
   const accounts = []
@@ -60,7 +63,8 @@ function parseDepositAccount (account) {
     payoffStep: 1,
     payoffInterval: 'month',
 
-    rkcCode: account.rkcCode
+    accountType: account.accountType,
+    currencyCode: account.currency
   }
 }
 
@@ -75,7 +79,7 @@ function parseCardAccount (account) {
     id: account.internalAccountId,
     type: 'card',
     instrument: codeToCurrencyLookup[account.currency],
-    instrumentCode: account.currency,
+    currencyCode: account.currency,
     title: card.personalizedName || account.productName,
     balance: account.balance,
     syncID: [...account.cards.map(card => card.cardNumberMasked.slice(-4))],
@@ -88,78 +92,67 @@ export function convertTransaction (json) {
   json.sum = json.operationAmount || json.transactionAmount
 
   const transaction = {
-    date: json.transactionDate,
+    date: json.operationDate || json.transactionDate,
     movements: [getMovement(json)],
-    merchant: null,
+    merchant: getMerchant(json),
     comment: getComment(json),
     hold: json.hold
   }
-  // [
-  //   parsePayee
-  // ].some(parser => parser(transaction, json))
 
   return transaction
 }
 
 function getMovement (json) {
   return {
-    id: `${json.id}` || null,
-    account: { id: json.account_id },
+    id: json.id || generateMovementId(json),
+    account: { id: json.accountId },
     invoice: null,
     sum: json.sum,
     fee: 0
   }
 }
 
-function getComment (json) {
-  const operationCurrencyCode = (json.operationCurrencyCode || json.accountCurrencyCode)
-  if (json.transactionCurrencyCode !== operationCurrencyCode) {
-    const transactionInfo = `Транзакция: ${json.transactionAmount} ${codeToCurrencyLookup[json.transactionCurrencyCode]}`
-    return transactionInfo
-  }
-  return null
+function generateMovementId (json) {
+  return md5.hex(`${json.accountId}-${json.operationDate || json.transactionDate}-
+  ${json.operationPlace || json.operationName}-${json.operationAmount || json.transactionAmount}-
+  ${json.operationCurrency || json.transactionCurrency}`)
 }
 
-// function parsePayee (transaction, json) {
-//   // интернет-платежи отображаем без получателя
-//   if (!json.merchant ||
-//     json.merchant.indexOf('BANK RESHENIE- OPLATA USLUG') >= 0) {
-//     return false
-//   }
-//   transaction.merchant = {
-//     mcc: null,
-//     location: null
-//   }
-//   const merchant = json.merchant.replace(/&quot;/g, '"').split(';').map(str => str.trim())
-//   if (merchant.length === 1) {
-//     transaction.merchant.title = merchant[0]
-//     transaction.merchant.city = null
-//     transaction.merchant.country = null
-//   } else if (merchant.length === 3) {
-//     transaction.merchant.title = merchant[0]
-//     transaction.merchant.city = merchant[1].trim()
-//     transaction.merchant.country = merchant[2].trim()
-//   } else if (merchant.length === 4) {
-//     transaction.merchant.title = merchant[0].trim() + '; ' + merchant[1].trim()
-//     transaction.merchant.city = merchant[2].trim()
-//     transaction.merchant.country = merchant[3].trim()
-//   } else {
-//     throw new Error('Ошибка обработки транзакции с получателем: ' + json.merchant)
-//   }
-// }
+function getComment (json) {
+  if (json.transactionCurrency !== json.operationCurrency) {
+    const transactionInfo = `Транзакция: ${json.transactionAmount} ${json.transactionCurrency}`
+    return transactionInfo
+  }
 
-// export function merge (transactions, operations) {
-//   const merged = operations
-//   for (const tr of transactions) {
-//     tr.hold = !operations.some((operation) => {
-//       return Math.abs(operation.transactionDate - tr.transactionDate) < MS_PER_DAY &&
-//       operation.transactionAmount === tr.transactionAmount &&
-//       operation.transactionCurrencyCode === tr.transactionCurrencyCode &&
-//       operation.account_id === tr.account_id
-//     })
-//     if (tr.hold) {
-//       merged.push(tr)
-//     }
-//   }
-//   return merged
-// }
+  if (!json.operationName) {
+    return null
+  }
+
+  if (json.operationName === 'Оплата товаров/услуг в ОТС') {
+    return null
+  }
+
+  if (json.operationName.indexOf('Перевод средств на карточку') >= 0) {
+    return json.merchant
+  }
+
+  return json.operationName
+}
+
+function getMerchant (json) {
+  if (!json.merchant) {
+    return null
+  }
+  if (json.merchant.indexOf('DABRABYT ERIP PAYMENTS') >= 0) {
+    return null
+  }
+  if (json.merchant.indexOf('PEREVOD NA') >= 0) {
+    return null
+  }
+
+  return {
+    fullTitle: json.merchant,
+    mcc: json.mcc ? Number.parseInt(json.mcc) : null,
+    location: null
+  }
+}
