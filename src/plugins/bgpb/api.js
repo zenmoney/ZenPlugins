@@ -135,7 +135,7 @@ export function parseFullTransactionsMail (html) {
               data[i].authCode = td.children[0].data
               break
             case 10:
-              data[i].mcc = td.children[0].data
+              data[i].mcc = td.children[0].data?.match(/\d{4}/) ? td.children[0].data : null
               break
           }
           counter++
@@ -151,33 +151,23 @@ export function parseFullTransactionsMailCardLimit (html) {
   $ = cheerio.load($().children()[0].children[0].Body)
 
   let isLimit = false
-  let isAccountID = false
   let overdraft = null
-  let accountID = null
   flatMap($('table[class="section_1"] tr').toArray().slice(1), tr => {
     if (tr.children.length >= 0) { // Значит это строка, а не просто форматирование
       for (const td of tr.children) {
         if (td.children && td.children[0] && td.children[0].type === 'text') {
-          if (isAccountID) {
-            accountID = td.children[0].data
-            isAccountID = false
-          } else if (isLimit) {
+          if (isLimit) {
             overdraft = td.children[0].data
             isLimit = false
           }
-          if (td.children[0].data === 'Номер счета:' || td.children[0].data === 'Номер карточного счета:') {
-            isAccountID = true
-          } else if (td.children[0].data === 'Лимит овердрафта:') {
+          if (td.children[0].data === 'Лимит овердрафта:') {
             isLimit = true
           }
         }
       }
     }
   })
-  return {
-    number: accountID,
-    overdraft: overdraft
-  }
+  return overdraft
 }
 
 export function parseConditionsMail (html) {
@@ -315,34 +305,34 @@ export async function fetchAccountConditions (sid, account) {
 
   const response = await fetchApi('sou/xml_online.admin',
     '<BS_Request>\r\n' +
-              '<ExecuteAction Id="' + account.conditionsAccId + '"/>\r\n' +
-              '<RequestType>ExecuteAction</RequestType>\r\n' +
-              '<Session IpAddress="10.0.2.15" Prolong="Y" SID="' + sid + '"/>\r\n' +
-              '<TerminalId>41742991</TerminalId>\r\n' +
-              '<TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
-              '<Subsystem>ClientAuth</Subsystem>\r\n' +
-              '</BS_Request>', {}, response => true, message => new InvalidPreferencesError('bad request'))
+    '<ExecuteAction Id="' + account.conditionsAccId + '"/>\r\n' +
+    '<RequestType>ExecuteAction</RequestType>\r\n' +
+    '<Session IpAddress="10.0.2.15" Prolong="Y" SID="' + sid + '"/>\r\n' +
+    '<TerminalId>41742991</TerminalId>\r\n' +
+    '<TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+    '<Subsystem>ClientAuth</Subsystem>\r\n' +
+    '</BS_Request>', {}, response => true, message => new InvalidPreferencesError('bad request'))
   const mailID = response.BS_Response.ExecuteAction.MailId
 
   const mail = await fetchApi('sou/xml_online.admin',
     '<BS_Request>\r\n' +
-      '   <MailAttachment Id="' + mailID + '" No="0"/>\r\n' +
-      '   <RequestType>MailAttachment</RequestType>\r\n' +
-      '   <Session IpAddress="10.0.2.15" Prolong="Y" SID="' + sid + '"/>\r\n' +
-      '   <TerminalId>41742991</TerminalId>\r\n' +
-      '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
-      '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-      '   <TerminalCapabilities>\r\n' +
-      '       <LongParameter>Y</LongParameter>\r\n' +
-      '       <ScreenWidth>99</ScreenWidth>\r\n' +
-      '       <AnyAmount>Y</AnyAmount>\r\n' +
-      '       <BooleanParameter>Y</BooleanParameter>\r\n' +
-      '       <CheckWidth>39</CheckWidth>\r\n' +
-      '       <InputDataSources>\r\n' +
-      '           <InputDataSource>Lookup</InputDataSource>\r\n' +
-      '       </InputDataSources>\r\n' +
-      '   </TerminalCapabilities>\r\n' +
-      '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
+    '   <MailAttachment Id="' + mailID + '" No="0"/>\r\n' +
+    '   <RequestType>MailAttachment</RequestType>\r\n' +
+    '   <Session IpAddress="10.0.2.15" Prolong="Y" SID="' + sid + '"/>\r\n' +
+    '   <TerminalId>41742991</TerminalId>\r\n' +
+    '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+    '   <Subsystem>ClientAuth</Subsystem>\r\n' +
+    '   <TerminalCapabilities>\r\n' +
+    '       <LongParameter>Y</LongParameter>\r\n' +
+    '       <ScreenWidth>99</ScreenWidth>\r\n' +
+    '       <AnyAmount>Y</AnyAmount>\r\n' +
+    '       <BooleanParameter>Y</BooleanParameter>\r\n' +
+    '       <CheckWidth>39</CheckWidth>\r\n' +
+    '       <InputDataSources>\r\n' +
+    '           <InputDataSource>Lookup</InputDataSource>\r\n' +
+    '       </InputDataSources>\r\n' +
+    '   </TerminalCapabilities>\r\n' +
+    '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
 
   const data = mail.BS_Response.MailAttachment.Attachment
   return parseConditionsMail(data)
@@ -363,32 +353,29 @@ function transactionDate (date) {
   return String(date.getDate() + '.' + ('0' + (date.getMonth() + 1)).slice(-2) + '.' + String(date.getFullYear()))
 }
 
-export async function fetchFullTransactions (sid, accounts, fromDate, toDate = new Date()) {
+export async function fetchFullTransactions (sid, account, fromDate, toDate = new Date()) {
   console.log('>>> Загрузка списка транзакций...')
   toDate = toDate || new Date()
 
   const dates = createDateIntervals(fromDate, toDate)
-  const responses = await Promise.all(flatMap(accounts, (account) => {
-    return dates.map(date => {
-      return fetchApi('sou/xml_online.admin',
-        '<BS_Request>\r\n' +
-        '   <ExecuteAction Id="' + account.transactionsAccId + '">\r\n' +
-        '      <Parameter Id="DateFrom">' + transactionDate(date[0]) + '</Parameter>\r\n' +
-        '      <Parameter Id="DateTill">' + transactionDate(date[1]) + '</Parameter>\r\n' +
-        '   </ExecuteAction>\r\n' +
-        '   <RequestType>ExecuteAction</RequestType>\r\n' +
-        '   <Session IpAddress="10.0.2.15" Prolong="Y" SID="' + sid + '"/>\r\n' +
-        '   <TerminalId>41742991</TerminalId>\r\n' +
-        '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
-        '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-        '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
-    })
+  const responses = await Promise.all(dates.map(async date => {
+    return fetchApi('sou/xml_online.admin',
+      '<BS_Request>\r\n' +
+      '   <ExecuteAction Id="' + account.transactionsAccId + '">\r\n' +
+      '      <Parameter Id="DateFrom">' + transactionDate(date[0]) + '</Parameter>\r\n' +
+      '      <Parameter Id="DateTill">' + transactionDate(date[1]) + '</Parameter>\r\n' +
+      '   </ExecuteAction>\r\n' +
+      '   <RequestType>ExecuteAction</RequestType>\r\n' +
+      '   <Session IpAddress="10.0.2.15" Prolong="Y" SID="' + sid + '"/>\r\n' +
+      '   <TerminalId>41742991</TerminalId>\r\n' +
+      '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+      '   <Subsystem>ClientAuth</Subsystem>\r\n' +
+      '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
   }))
-  const mailIDs = flatMap(responses, response => {
+  const mailIDs = responses.map(response => {
     return response.BS_Response.ExecuteAction.MailId
   })
-
-  const mails = await Promise.all(flatMap(mailIDs, (mailId) => {
+  return await Promise.all(flatMap(mailIDs, (mailId) => {
     return fetchApi('sou/xml_online.admin',
       '<BS_Request>\r\n' +
       '   <MailAttachment Id="' + mailId + '" No="0"/>\r\n' +
@@ -409,20 +396,20 @@ export async function fetchFullTransactions (sid, accounts, fromDate, toDate = n
       '   </TerminalCapabilities>\r\n' +
       '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
   }))
-  const overdrafts = {}
-  const transactions = await Promise.all(flatMap(mails, mail => {
-    const data = mail.BS_Response.MailAttachment.Attachment
-    const overdraftRes = parseFullTransactionsMailCardLimit(data)
-    if (overdraftRes.overdraft) {
-      overdrafts[overdraftRes.number] = overdraftRes.overdraft
-    }
-    return parseFullTransactionsMail(data)
-  }))
+}
 
+export function parseTransactionsAndOverdraft (mails) {
+  let overdraft = null
+  const transactions = flatMap(mails, mail => {
+    const mailObj = typeof mail === 'string' ? parseXml(mail) : mail
+    const data = mailObj.BS_Response.MailAttachment.Attachment
+    overdraft = parseFullTransactionsMailCardLimit(data) || overdraft
+    return parseFullTransactionsMail(data)
+  })
   console.log(`>>> Загружено ${transactions.length} операций.`)
   return {
-    transactions: transactions,
-    overdrafts: overdrafts
+    overdraft,
+    transactions
   }
 }
 

@@ -24,23 +24,18 @@ export function convertAccount (ob) {
   return null
 }
 
-export function addOverdraftInfo (accounts, overdrafts) {
-  for (const accountNumber in overdrafts) {
-    for (let i = 0; i < accounts.length; i++) {
-      if (accounts[i].accountID === accountNumber) {
-        accounts[i].creditLimit = Number.parseFloat(overdrafts[accountNumber].replace(',', '.').replace(/\s/g, ''))
-        accounts[i].balance = -(accounts[i].creditLimit - accounts[i].balance)
-      }
+export function addOverdraftInfo (account, overdraft) {
+  const creditLimit = Number(overdraft.replace(',', '.').replace(/\s/g, ''))
+  return !isNaN(creditLimit) && creditLimit > 0
+    ? {
+      ...account,
+      creditLimit,
+      balance: -Math.round((creditLimit - account.balance) * 100) / 100
     }
-  }
-  return accounts
+    : account
 }
 
-export function convertTransaction (apiTransaction, accounts) {
-  const account = accounts.find(account => {
-    return account.syncID.indexOf(apiTransaction.cardNum) !== -1
-  })
-
+export function convertTransaction (apiTransaction, account) {
   const transaction = {
     date: getDate(apiTransaction.date),
     movements: [getMovement(apiTransaction, account)],
@@ -96,12 +91,14 @@ export function convertLastTransaction (apiTransaction, accounts) {
 
   const transaction = {
     date: date,
-    movements: [getMovement({
-      type: amountData[0],
-      amount: amount,
-      currencyReal: currency,
-      amountReal: '' // на текущий момент не понятно как нормально узнать реальное списание при использовании другой валюты, поэтому будем делать такие списания корректировками :(
-    }, account)],
+    movements: [
+      getMovement({
+        type: amountData[0],
+        amount: amount,
+        currencyReal: currency,
+        amountReal: '' // на текущий момент не понятно как нормально узнать реальное списание при использовании другой валюты, поэтому будем делать такие списания корректировками :(
+      }, account)
+    ],
     merchant: null,
     comment: null,
     hold: false
@@ -220,8 +217,8 @@ function parsePayee (transaction, apiTransaction) {
       transaction.merchant = null
     } else if (merchant.length > 1) {
       transaction.merchant.title = merchant[0]
-      transaction.merchant.city = merchant[1]
-      transaction.merchant.country = merchant[2]
+      transaction.merchant.city = merchant[1] !== '' ? merchant[1] : null
+      transaction.merchant.country = merchant[2] !== '' ? merchant[2] : null
     } else {
       throw new Error('Ошибка обработки транзакции с получателем: ' + apiTransaction.place)
     }
@@ -287,8 +284,8 @@ export function transactionsUnique (array) {
   for (let i = 0; i < a.length; ++i) {
     for (let j = i + 1; j < a.length; ++j) {
       if (a[i].date.getTime() === a[j].date.getTime() &&
-      a[i].movements.length === a[j].movements.length &&
-      a[i].movements[0].account.id === a[j].movements[0].account.id &&
+        a[i].movements.length === a[j].movements.length &&
+        a[i].movements[0].account.id === a[j].movements[0].account.id &&
         a[i].movements[0].sum === a[j].movements[0].sum) {
         a.splice(j--, 1)
       }

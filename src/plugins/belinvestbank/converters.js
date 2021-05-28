@@ -101,7 +101,7 @@ function parsePayee (transaction, json) {
     }
   } else if (merchant.length === 2) {
     const country = merchant[1].split(/\s+/)[1]?.trim()
-    transaction.merchant.city = merchant[1].split(/\s+/)[0].trim()
+    transaction.merchant.city = merchant[1].split(/\s+/)[0].trim() || null
     transaction.merchant.country = country || null
     transaction.merchant.title = merchant[0]
     if (merchant[0] === 'SMS OPOVESCHENIE') {

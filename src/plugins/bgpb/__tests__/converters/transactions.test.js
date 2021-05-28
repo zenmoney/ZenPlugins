@@ -1,20 +1,18 @@
 import { convertLastTransaction, convertTransaction } from '../../converters'
 
 describe('convertTransaction', () => {
-  const accounts = [
-    {
-      id: '11161311-117d11',
-      transactionsAccId: null,
-      type: 'card',
-      title: 'Расчетная карточка*1111',
-      currencyCode: '840',
-      cardNumber: '529911******1111',
-      instrument: 'USD',
-      balance: 0,
-      syncID: ['1111'],
-      productType: 'MS'
-    }
-  ]
+  const account = {
+    id: '11161311-117d11',
+    transactionsAccId: null,
+    type: 'card',
+    title: 'Расчетная карточка*1111',
+    currencyCode: '840',
+    cardNumber: '529911******1111',
+    instrument: 'USD',
+    balance: 0,
+    syncID: ['1111'],
+    productType: 'MS'
+  }
 
   const tt = [
     {
@@ -119,7 +117,7 @@ describe('convertTransaction', () => {
   // run all tests
   for (const tc of tt) {
     it(tc.name, () => {
-      const transaction = convertTransaction(tc.transaction, accounts)
+      const transaction = convertTransaction(tc.transaction, account)
 
       expect(transaction).toEqual(tc.expectedTransaction)
     })
@@ -490,6 +488,39 @@ describe('convertLastTransaction', () => {
         groupKeys: [
           '2020-11-27_USD_268'
         ]
+      }
+    },
+    {
+      name: 'merchant.country: "" ',
+      transaction: {
+        id: '2021-23876315',
+        acceptedTime: 1619513263000,
+        pushMessageText: 'Card1111; Оплата: 326,85 USD; 27.04.21 11:47:24; Lamoda,Minskiy r-n,,BLR; MCC: 5651; Dostupno: 1 496,43 BYN',
+        eventType: 4
+      },
+      expectedTransaction: {
+        date: new Date('2021-04-27T11:47:00+0300'),
+        movements:
+          [
+            {
+              id: null,
+              account: { id: '11161311-117d11' },
+              invoice: null,
+              sum: -326.85,
+              fee: 0
+            }
+          ],
+        merchant:
+          {
+            mcc: null,
+            location: null,
+            title: 'Lamoda',
+            city: 'Minskiy r-n',
+            country: null
+          },
+        comment: null,
+        hold: false
+
       }
     }
   ]
