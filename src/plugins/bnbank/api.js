@@ -2,7 +2,7 @@ import { flatMap } from 'lodash'
 import { createDateIntervals as commonCreateDateIntervals } from '../../common/dateUtils'
 import { fetchJson } from '../../common/network'
 import { generateRandomString } from '../../common/utils'
-import { card, deposit } from './converters'
+import { card, deposit, checking } from './converters'
 
 const baseUrl = 'https://mb.bnb.by/services/v2/'
 
@@ -74,6 +74,7 @@ export async function fetchAccounts (token) {
   }, response => response.body && response.body.overviewResponse && (response.body.overviewResponse.cardAccount || response.body.overviewResponse.depositAccount || response.body.overviewResponse.currentAccount), message => new TemporaryError(message))).body.overviewResponse
 
   let cards = []
+  let checkingAccounts = []
   if (products.cardAccount) {
     cards = cards.concat(products.cardAccount)
   }
@@ -81,10 +82,11 @@ export async function fetchAccounts (token) {
     cards = cards.concat(products.corpoCardAccount)
   }
   if (products.currentAccount) {
-    cards = cards.concat(products.currentAccount)
+    checkingAccounts = [...products.currentAccount]
   }
   return {
-    cards: cards,
+    cards,
+    checkingAccounts,
     deposits: products.depositAccount
   }
 }
@@ -117,6 +119,10 @@ export async function fetchTransactions (token, accounts, fromDate, toDate = new
         case deposit:
           url = 'products/getDepositAccountStatement'
           accountType = '0'
+          break
+        case checking:
+          url = 'products/getCurrentAccountStatement'
+          accountType = '5'
           break
         default:
           return null
