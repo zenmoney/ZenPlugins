@@ -120,23 +120,24 @@ const knownTransactionTypes = ['Retail', 'ATM', 'CH Debit', 'CH Payment', 'Cash'
 const normalizeSpaces = (text) => compact(text.split(' ')).join(' ')
 
 function parsePayee (transaction, json) {
-  transaction.merchant = {
-    location: null,
-    mcc: null,
-    fullTitle: null
-  }
+  transaction.merchant = null
+  let mcc = null
+  let fullTitle = null
 
   if (json.siccode) {
-    transaction.merchant.mcc = parseInt(json.siccode)
+    mcc = parseInt(json.siccode)
   }
 
   if (json.operationName.indexOf('Service payment to card') === -1) {
     const type = knownTransactionTypes.find((type) => json.operationName.startsWith(type + ' '))
     if (type) {
-      transaction.merchant.fullTitle = normalizeSpaces(json.operationName.slice(type.length))
+      fullTitle = normalizeSpaces(json.operationName.slice(type.length))
     } else {
-      transaction.merchant.fullTitle = normalizeSpaces(json.operationName)
+      fullTitle = normalizeSpaces(json.operationName)
     }
+  }
+  if (fullTitle) {
+    transaction.merchant = { mcc, fullTitle, location: null }
   }
 }
 
