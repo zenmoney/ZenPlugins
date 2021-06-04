@@ -31,30 +31,30 @@ export function convertAccount (json) {
 }
 
 export function convertTransaction (json) {
-  json.sum = json.operationAmount || json.transactionAmount
-
+  const sum = json.operationAmount || json.transactionAmount || json.sum
+  if (!sum) {
+    return null
+  }
   const transaction = {
-    date: json.transactionDate,
-    movements: [getMovement(json)],
+    hold: json.hold || false,
+    date: json.transactionDate || json.date,
+    movements: [
+      {
+        id: json.id || null,
+        account: { id: json.account_id },
+        invoice: null,
+        sum,
+        fee: 0
+      }
+    ],
     merchant: null,
-    comment: getComment(json),
-    hold: json.hold
+    comment: getComment(json)
   };
   [
     parsePayee
   ].some(parser => parser(transaction, json))
 
   return transaction
-}
-
-function getMovement (json) {
-  return {
-    id: json.id || null,
-    account: { id: json.account_id },
-    invoice: null,
-    sum: json.sum,
-    fee: 0
-  }
 }
 
 function getComment (json) {
