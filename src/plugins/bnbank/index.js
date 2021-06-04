@@ -17,13 +17,13 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     const deposits = accounts.deposits
       .map(convertDeposit)
       .filter(account => account !== null)
-    preparedAccounts = cards.concat(deposits)
+    preparedAccounts = preparedAccounts.concat(deposits)
   }
   if (accounts.checkingAccounts) {
     const checkingAccounts = accounts.checkingAccounts
       .map(convertCheckingAccount)
       .filter(account => account !== null)
-    preparedAccounts = cards.concat(checkingAccounts)
+    preparedAccounts = preparedAccounts.concat(checkingAccounts)
   }
 
   const transactions = (await fetchTransactions(token, preparedAccounts, fromDate, toDate))
