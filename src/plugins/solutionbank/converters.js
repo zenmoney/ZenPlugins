@@ -1,4 +1,5 @@
 import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
+const MS_PER_DAY = 1000 * 60 * 60 * 24
 
 export function convertAccount (json) {
   if (json.cards && json.cards.length > 0) { // only loading card accounts
@@ -7,7 +8,7 @@ export function convertAccount (json) {
       type: 'card',
       instrument: codeToCurrencyLookup[json.currency],
       instrumentCode: json.currency,
-      balance: Number.parseFloat(json.balance.replace(',', '.').replace(/\s/g, '')),
+      balance: Number.parseFloat(json.availableAmount),
       syncID: [],
       productType: json.productName,
       cardHash: json.cards[0].cardHash,
@@ -30,15 +31,14 @@ export function convertAccount (json) {
 }
 
 export function convertTransaction (json) {
-  if (json.sum === 0 || isNaN(json.sum)) {
-    return null
-  }
+  json.sum = json.operationAmount || json.transactionAmount
+
   const transaction = {
-    date: json.date,
+    date: json.transactionDate,
     movements: [getMovement(json)],
     merchant: null,
-    comment: null,
-    hold: false
+    comment: getComment(json),
+    hold: json.hold
   };
   [
     parsePayee
@@ -49,12 +49,25 @@ export function convertTransaction (json) {
 
 function getMovement (json) {
   return {
-    id: null,
+    id: json.id || null,
     account: { id: json.account_id },
     invoice: null,
     sum: json.sum,
     fee: 0
   }
+}
+
+function getComment (json) {
+  const operationCurrencyCode = (json.operationCurrencyCode || json.accountCurrencyCode)
+  if (json.transactionCurrencyCode !== operationCurrencyCode) {
+    const transactionInfo = `Транзакция: ${json.transactionAmount} ${codeToCurrencyLookup[json.transactionCurrencyCode]}`
+    return json.hold ? `Внимание, невозможно расчитать корректный курс конверсии. ${transactionInfo}` : transactionInfo
+  }
+
+  if (json.operationName && json.operationName.indexOf('Зачисление CashBack') === 0) {
+    return 'Зачисление CashBack'
+  }
+  return null
 }
 
 function parsePayee (transaction, json) {
@@ -90,19 +103,18 @@ export function getDate (str) {
   return new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}+03:00`)
 }
 
-export function transactionsUnique (array) {
-  const a = array.concat()
-  for (let i = 0; i < a.length; ++i) {
-    for (let j = i + 1; j < a.length; ++j) {
-      if (a[i].date.getFullYear() === a[j].date.getFullYear() &&
-        a[i].date.getMonth() === a[j].date.getMonth() &&
-        a[i].currencyCode === a[j].currencyCode &&
-        a[i].sum === a[j].sum &&
-        a[i].merchant.indexOf(a[j].merchant) >= 0 &&
-        a[i].account_id === a[j].account_id) {
-        a.splice(j--, 1)
-      }
+export function merge (transactions, operations) {
+  const merged = operations
+  for (const tr of transactions) {
+    tr.hold = !operations.some((operation) => {
+      return Math.abs(operation.transactionDate - tr.transactionDate) < MS_PER_DAY &&
+      operation.transactionAmount === tr.transactionAmount &&
+      operation.transactionCurrencyCode === tr.transactionCurrencyCode &&
+      operation.account_id === tr.account_id
+    })
+    if (tr.hold) {
+      merged.push(tr)
     }
   }
-  return a
+  return merged
 }
