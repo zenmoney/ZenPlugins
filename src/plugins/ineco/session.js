@@ -30,11 +30,11 @@ export class Session {
     this._cookies = cookies || {}
 
     if (cookieKey) {
-      this._cookieKey = cookieKey
+      this._cookieKey = 'scrape/' + cookieKey
 
-      const stored = ZenMoney.getData(cookieKey)
+      const stored = ZenMoney.getData(this._cookieKey)
 
-      console.log('got key from storage', cookieKey, stored)
+      console.log('got key from storage', this._cookieKey, stored)
 
       if (stored) {
         try {

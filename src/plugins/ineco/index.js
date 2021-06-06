@@ -1,7 +1,7 @@
 /**
  * @author Karpov Anton <anton@karpoff.pro>
  */
-import { InvalidOtpCodeError } from '../../errors'
+import { InvalidOtpCodeError, TemporaryError } from '../../errors'
 import { Session } from './session'
 import { parseAccounts, parseTransactions, processTransactions } from './converters'
 import { AccountHelper, parseFormData } from './helpers'
@@ -55,9 +55,15 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     Password: preferences.password
   })
 
-  const tokenForm = parseFormData(html, '[action="/User/LogOnSecurityToken"]')
+  let accounts = parseAccounts(html)
 
-  if (tokenForm) {
+  if (!accounts.length) {
+    const tokenForm = parseFormData(html, '[action="/User/LogOnSecurityToken"]')
+
+    if (!tokenForm) {
+      throw new TemporaryError('incorrect flow, need to fix scraper')
+    }
+
     console.log('need auth token')
 
     await session.postForm('/User/_TokenSMS_CallBackPanel', {
@@ -80,10 +86,15 @@ export async function scrape ({ preferences, fromDate, toDate }) {
       ...tokenForm.inputs,
       Token: sms
     })
+
+    accounts = parseAccounts(html)
+  }
+
+  if (!accounts.length) {
+    throw new TemporaryError('no accounts found')
   }
 
   let transactions = []
-  const accounts = parseAccounts(html)
   const ah = new AccountHelper(accounts)
 
   console.log(`got ${accounts.length}`, { accounts })
