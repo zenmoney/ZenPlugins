@@ -9,6 +9,7 @@ const BASE_URL = 'https://online.bankdabrabyt.by/services/v2/'
 const CARD_BALANCE_URL = 'card/getBalance'
 const CARD_STATEMENT_URL = 'products/getCardAccountFullStatementWithBlockedAmounts'
 const DEPOSIT_STATEMENT_URL = 'products/getDepositAccountStatement'
+const CHECKING_STATEMENT_URL = 'products/getCurrentAccountStatement'
 
 function generateDeviceID () {
   return generateRandomString(16)
@@ -150,7 +151,7 @@ export async function fetchCardTransactions (sessionToken, accounts, fromDate, t
     }, response => response.body, response => ({ accountNumber: account.id, ...response.body }), message => new TemporaryError(message))
   }))
 
-  const operations = flatMap(responses, response => {
+  const transactions = flatMap(responses, response => {
     return flatMap(response.operations, op => {
       const operationSign = Number.parseInt(op.operationSign)
       const isProcessed = !!op.transactionDate
@@ -171,18 +172,19 @@ export async function fetchCardTransactions (sessionToken, accounts, fromDate, t
     })
   })
 
-  const filteredOperations = operations.filter(op => op !== undefined && op.operationAmount !== 0 && op.transactionDate >= fromDate)
+  const filteredTransactions = transactions.filter(op => op !== undefined && op.operationAmount !== 0 && op.transactionDate >= fromDate)
 
-  console.log(`Загружено ${filteredOperations.length} операций.`)
+  console.log(`Загружено ${filteredTransactions.length} операций.`)
 
-  return filteredOperations
+  return filteredTransactions
 }
 
-export async function fetchDepositTransactions (sessionToken, accounts, fromDate, toDate) {
+export async function fetchOperations (sessionToken, accounts, fromDate, toDate) {
   console.log('Загрузка списка транзакций по депозитам...')
   toDate = toDate || new Date()
   const responses = await Promise.all(flatMap(accounts, (account) => {
-    return fetchApiJson(DEPOSIT_STATEMENT_URL, {
+    const requestURL = account.type === 'deposit' ? DEPOSIT_STATEMENT_URL : CHECKING_STATEMENT_URL
+    return fetchApiJson(requestURL, {
       method: 'POST',
       headers: { session_token: sessionToken },
       body: {
@@ -206,6 +208,7 @@ export async function fetchDepositTransactions (sessionToken, accounts, fromDate
         operationName: op.operationName,
         operationDate: new Date(op.transactionDate),
         operationCurrency: op.operationCurrency,
+        transactionCurrency: op.transactionCurrency,
         operationAmount: op.operationAmount * operationSign,
         hold: !!op.transactionDate
       }

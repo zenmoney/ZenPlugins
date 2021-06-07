@@ -15,10 +15,10 @@ export function processAccounts (json) {
       case 'depositAccount':
         accounts.push(...json[accountsGroup].map(parseDepositAccount))
         break
-      case 'status':
-        break
       case 'currentAccount':
         accounts.push(...json[accountsGroup].map(parseCheckingAccount))
+        break
+      case 'status':
         break
       default:
         skipAccount += json[accountsGroup].length
@@ -33,21 +33,23 @@ export function processAccounts (json) {
 function parseCheckingAccount (account) {
   return {
     id: account.internalAccountId,
-    title: `Текущий ${account.personalizedName || account.productName}`,
+    title: ` ${account.personalizedName || account.productName}`,
     syncID: [account.internalAccountId.slice(-4)],
 
     instrument: codeToCurrencyLookup[account.currency],
     type: 'checking',
 
     balance: Number.parseFloat(account.balanceAmount),
-    rkcCode: account.rkcCode
+
+    accountType: account.accountType,
+    currencyCode: account.currency
   }
 }
 
 function parseDepositAccount (account) {
   return {
     id: account.internalAccountId,
-    title: `Депозит ${account.personalizedName || account.productName}`,
+    title: `${account.personalizedName || account.productName}`,
     syncID: [account.internalAccountId.slice(-4)],
 
     instrument: codeToCurrencyLookup[account.currency],
@@ -77,7 +79,7 @@ function parseCardAccount (account) {
 
   return {
     id: account.internalAccountId,
-    type: 'card',
+    type: 'ccard',
     instrument: codeToCurrencyLookup[account.currency],
     currencyCode: account.currency,
     title: card.personalizedName || account.productName,
@@ -92,7 +94,7 @@ export function convertTransaction (json) {
   json.sum = json.operationAmount || json.transactionAmount
 
   const transaction = {
-    date: json.operationDate || json.transactionDate,
+    date: json.transactionDate || json.operationDate,
     movements: [getMovement(json)],
     merchant: getMerchant(json),
     comment: getComment(json),
