@@ -10,6 +10,7 @@ const CARD_BALANCE_URL = 'card/getBalance'
 const CARD_STATEMENT_URL = 'products/getCardAccountFullStatementWithBlockedAmounts'
 const DEPOSIT_STATEMENT_URL = 'products/getDepositAccountStatement'
 const CHECKING_STATEMENT_URL = 'products/getCurrentAccountStatement'
+const CREDIT_STATEMENT_URL = 'products/getCreditAccountStatement'
 
 function generateDeviceID () {
   return generateRandomString(16)
@@ -183,7 +184,7 @@ export async function fetchOperations (sessionToken, accounts, fromDate, toDate)
   console.log('Загрузка списка транзакций по депозитам...')
   toDate = toDate || new Date()
   const responses = await Promise.all(flatMap(accounts, (account) => {
-    const requestURL = account.type === 'deposit' ? DEPOSIT_STATEMENT_URL : CHECKING_STATEMENT_URL
+    const requestURL = getRequestURL(account.type)
     return fetchApiJson(requestURL, {
       method: 'POST',
       headers: { session_token: sessionToken },
@@ -220,4 +221,17 @@ export async function fetchOperations (sessionToken, accounts, fromDate, toDate)
   console.log(`Загружено ${filteredOperations.length} операций.`)
 
   return filteredOperations
+}
+
+function getRequestURL (accountType) {
+  switch (accountType) {
+    case 'deposit':
+      return DEPOSIT_STATEMENT_URL
+    case 'checking':
+      return CHECKING_STATEMENT_URL
+    case 'loan':
+      return CREDIT_STATEMENT_URL
+    default:
+      return new TemporaryError('Unknown account type')
+  }
 }

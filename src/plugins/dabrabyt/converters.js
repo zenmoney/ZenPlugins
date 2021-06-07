@@ -6,17 +6,22 @@ const md5 = new MD5()
 
 export function processAccounts (json) {
   const accounts = []
+  const cards = []
+  const credits = []
   let skipAccount = 0
   for (const accountsGroup in json) {
     switch (accountsGroup) {
       case 'cardAccount':
-        accounts.push(...json[accountsGroup].map(parseCardAccount))
+        cards.push(...json[accountsGroup].map(parseCardAccount))
         break
       case 'depositAccount':
         accounts.push(...json[accountsGroup].map(parseDepositAccount))
         break
       case 'currentAccount':
         accounts.push(...json[accountsGroup].map(parseCheckingAccount))
+        break
+      case 'creditAccount':
+        credits.push(...json[accountsGroup].map(parseCreditAccount))
         break
       case 'status':
         break
@@ -25,9 +30,27 @@ export function processAccounts (json) {
     }
   }
 
+  accounts.push(...creditCardsProcessing(cards, credits)) // перед тем как мержить - надо достать только уникальные
+
   console.log(`Не обработано ${skipAccount} счетов. Неизвестный тип счёта`)
 
   return accounts
+}
+
+function creditCardsProcessing (cards, credits) {
+  if (credits.length === 0) {
+    return cards
+  }
+
+  for (const card of cards) {
+    const linkedCreditIndex = credits.findIndex(credit => card.id === credit.id)
+    card.creditLimit = credits[linkedCreditIndex].limit
+    if (linkedCreditIndex >= 0) {
+      credits.splice(linkedCreditIndex, 1)
+    }
+  }
+
+  return [...cards, ...credits]
 }
 
 function parseCheckingAccount (account) {
@@ -40,6 +63,31 @@ function parseCheckingAccount (account) {
     type: 'checking',
 
     balance: Number.parseFloat(account.balanceAmount),
+
+    accountType: account.accountType,
+    currencyCode: account.currency
+  }
+}
+
+function parseCreditAccount (account) {
+  return {
+    id: account.internalAccountId,
+    title: `${account.personalizedName || account.productName}`,
+    syncID: [account.internalAccountId.slice(-4)],
+
+    instrument: codeToCurrencyLookup[account.currency],
+    type: 'loan',
+
+    balance: Number.parseFloat(account.balanceAmount),
+    limit: Number.parseFloat(account.limit),
+
+    capitalization: true,
+    percent: account.interestRate || 0,
+    startDate: new Date(account.openDate),
+    endDateOffset: (new Date(account.plannedEndDate).getTime() - new Date(account.openDate).getTime()) / MS_PER_DAY,
+    endDateOffsetInterval: 'day',
+    payoffStep: 1,
+    payoffInterval: 'month',
 
     accountType: account.accountType,
     currencyCode: account.currency
@@ -66,6 +114,7 @@ function parseDepositAccount (account) {
     payoffInterval: 'month',
 
     accountType: account.accountType,
+    rkcCode: account.rkcCode,
     currencyCode: account.currency
   }
 }
