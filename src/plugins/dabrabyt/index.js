@@ -8,7 +8,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     .filter(account => account !== null && !ZenMoney.isAccountSkipped(account))
   const transactions = [
     ...await fetchCardTransactions(token, accounts.filter(acc => acc.type === 'ccard'), fromDate, toDate),
-    ...await fetchOperations(token, accounts.filter(acc => acc.type === 'deposit' || acc.type === 'checking'), fromDate, toDate)
+    ...await fetchOperations(token, accounts.filter(acc => acc.type !== 'ccard'), fromDate, toDate)
   ]
     .map(convertTransaction)
   return {
