@@ -291,6 +291,63 @@ describe('convertTransaction', () => {
         comment: null,
         hold: false
       }
+    },
+    {
+      name: 'P2P_Transfer',
+      transaction: {
+        date: '2021-05-25 17:52:36',
+        dateResp: '2021-05-27 09:49:24',
+        type: 'Оплата',
+        cardAcceptor: 'FOOD.BOLT.EU /C/210525165>TALLINN ',
+        transactionAmt: '130',
+        transactionAmtCurrency: 'CZK',
+        accountAmt: '15,73',
+        accountAmtCurrency: 'BYN',
+        feeAmt: 0,
+        feeAmtCurrency: 'BYN',
+        reflectedAccountAmt: '15,73',
+        reflectedAccountAmtCurrency: 'BYN',
+        reflectedFeeCurrency: 'BYN',
+        reflectedFeeIssuer: 0,
+        reflectedFeeIssuerCurrency: 'BYN',
+        reflectedFeeAcquirer: 0,
+        reflectedFeeAcquirerCurrency: 'BYN',
+        balanceAmt: '4191,87',
+        balanceAmtCurrency: 'BYN',
+        status: 'ПРОВЕДЕНО',
+        sign: '-',
+        mcc: '5812',
+        operationColor: '_red',
+        cardNum: '**** 0175',
+        trnType: 'Безналичный',
+        appId: '781634',
+        statusCode: '2',
+        reflectedFee: 0,
+        historyKey: 1
+      },
+      expectedTransaction: {
+        date: new Date('2021-05-25T17:52:36+0300'), // Tue May 25 2021 17:52:36 GMT+0300 (+03),
+        movements:
+          [
+            {
+              id: null,
+              account: { id: '30848200' },
+              invoice: null,
+              sum: -15.73,
+              fee: 0
+            }
+          ],
+        merchant:
+          {
+            mcc: null,
+            location: null,
+            city: 'TALLINN',
+            country: null,
+            title: 'FOOD.BOLT.EU /C/210525165'
+          },
+        comment: null,
+        hold: false
+      }
     }
   ]
 

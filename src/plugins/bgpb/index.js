@@ -1,5 +1,15 @@
-import _, { flatMap } from 'lodash'
-import { fetchAccountConditions, fetchAccounts, fetchBalance, fetchFullTransactions, fetchLastTransactions, fetchTransactionsAccId, login } from './api'
+import _ from 'lodash'
+import { adjustTransactions } from '../../common/transactionGroupHandler'
+import {
+  fetchAccountConditions,
+  fetchAccounts,
+  fetchBalance,
+  fetchFullTransactions,
+  fetchLastTransactions,
+  fetchTransactionsAccId,
+  login,
+  parseTransactionsAndOverdraft
+} from './api'
 import { addOverdraftInfo, convertAccount, convertLastTransaction, convertTransaction, transactionsUnique } from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
@@ -14,16 +24,22 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     }
   }
 
-  const accountsAvailable = flatMap(accounts, (account) => {
-    if (account.balance !== null && account.transactionsAccId) {
-      return account
+  const transactionsStatement = []
+  accounts = await Promise.all(accounts.map(async account => {
+    if (account.transactionsAccId) {
+      const mails = await fetchFullTransactions(token, account, fromDate, toDate)
+      const { overdraft, transactions } = parseTransactionsAndOverdraft(mails)
+      account = addOverdraftInfo(account, overdraft)
+      for (const apiTransaction of transactions) {
+        const transaction = convertTransaction(apiTransaction, account)
+        if (transaction) {
+          transactionsStatement.push(transaction)
+        }
+      }
     }
-  })
-  const fullTransactionsRes = await fetchFullTransactions(token, accountsAvailable, fromDate, toDate)
-  accounts = addOverdraftInfo(accounts, fullTransactionsRes.overdrafts)
+    return account
+  }))
 
-  const transactionsStatement = (fullTransactionsRes.transactions)
-    .map(transaction => convertTransaction(transaction, accounts))
   const transactionsLast = (await fetchLastTransactions(token))
     .map(transaction => convertLastTransaction(transaction, accounts))
     .filter(function (op) {
@@ -40,7 +56,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     .filter(transaction => transaction.movements[0].sum !== 0)
   return {
     accounts: accounts,
-    transactions: _.sortBy(transactions, transaction => transaction.date)
+    transactions: adjustTransactions({ transactions: _.sortBy(transactions, transaction => transaction.date) })
   }
 }
 
@@ -57,7 +73,6 @@ async function allAccounts (token) {
     accounts[i].transactionsAccId = accIDs.transactionsAccId
     accounts[i].conditionsAccId = accIDs.conditionsAccId
   }
-  accounts.filter(account => account.balance !== null) // Фильтруем все карты, которые еще не выпущены
 
   for (let i = 0; i < accounts.length; i++) {
     if (accounts[i].balance !== null && accounts[i].conditionsAccId !== null) {

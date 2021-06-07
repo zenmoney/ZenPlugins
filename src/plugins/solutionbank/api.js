@@ -2,9 +2,10 @@ import cheerio from 'cheerio'
 import { defaultsDeep, flatMap } from 'lodash'
 import { fetchJson } from '../../common/network'
 import { generateRandomString } from '../../common/utils'
-import { parseXml } from '../../common/xmlUtils'
 import { BankMessageError, InvalidOtpCodeError } from '../../errors'
 import { getDate } from './converters'
+
+// transaction - операция прошедшая по карте, operation - операция по счёту
 
 const baseUrl = 'https://mbank2.rbank.by/services/v2/'
 
@@ -99,46 +100,12 @@ export async function fetchAccounts (sessionToken) {
       depositAccount: {}
     }
   }, response => response.body && response.body.overviewResponse && response.body.overviewResponse.cardAccount,
-  message => new TemporaryError(message))).body.overviewResponse.cardAccount.filter(cardAccount => cardAccount.cards)
-
-  for (let i = 0; i < cardAccounts.length; i++) {
-    const balanceRes = await fetchApiJson('payment/simpleExcute', {
-      method: 'POST',
-      headers: { session_token: sessionToken },
-      body: {
-        komplatRequests: [
-          {
-            request: '<BS_Request>' +
-              '<Version>@{version}</Version>' +
-              '<RequestType>Balance</RequestType>' +
-              '<ClientId IdType="MS">#{' + cardAccounts[i].cards[0].cardHash + '@[card_number]}</ClientId>' +
-              '<AuthClientId IdType="MS">#{' + cardAccounts[i].cards[0].cardHash + '@[card_number]}</AuthClientId>' +
-              '<TerminalTime>@{pay_date}</TerminalTime>' +
-              '<TerminalId>@{terminal_id_mb}</TerminalId>' +
-              '<TerminalCapabilities>' +
-              '<BooleanParameter>Y</BooleanParameter>' +
-              '<LongParameter>Y</LongParameter>' +
-              '<AnyAmount>Y</AnyAmount>' +
-              '<ScreenWidth>99</ScreenWidth>' +
-              '<CheckWidth DoubleHeightSymbol="Y" DoubleWidthSymbol="N" InverseSymbol="Y">40</CheckWidth>' +
-              '</TerminalCapabilities>' +
-              '<Balance Currency="933">' +
-              '<AuthorizationDetails Count="1">' +
-              '<Parameter Idx="1" Name="Срок действия карточки">#{' + cardAccounts[i].cards[0].cardHash + '@[card_expire]}</Parameter>' +
-              '</AuthorizationDetails>' +
-              '</Balance></BS_Request>'
-          }
-        ]
-      }
-    })
-    const balanceXml = parseXml(balanceRes.body.komplatResponse[0].response)
-    cardAccounts[i].balance = balanceXml.BS_Response.Balance.Amount
-  }
+  message => new TemporaryError(message))).body.overviewResponse.cardAccount
 
   return cardAccounts
 }
 
-export async function fetchTransactionsMini (sessionToken, accounts, fromDate, toDate = new Date()) {
+export async function fetchTransactions (sessionToken, accounts, fromDate) {
   console.log('>>> Загрузка списка транзакций через минивыписку...')
   const responses = await Promise.all(flatMap(accounts, (account) => {
     // Минивыписки бесплатны на виртуальных карточках, либо на карточках в EUR/USD
@@ -178,7 +145,7 @@ export async function fetchTransactionsMini (sessionToken, accounts, fromDate, t
 
   let $, account
   let i = 0
-  const operations = flatMap(responses, response => {
+  const transactions = flatMap(responses, response => {
     if (response.body !== undefined) {
       $ = cheerio.load(response.body.komplatResponse[0].response, {
         xmlMode: true
@@ -187,27 +154,26 @@ export async function fetchTransactionsMini (sessionToken, accounts, fromDate, t
       return flatMap($('Operation'), op => {
         return {
           account_id: account.id,
-          date: getDate(op.attribs.Date),
-          operationName: op.attribs.Type,
+          accountCurrencyCode: account.instrumentCode,
+          transactionDate: getDate(op.attribs.Date),
+          transactionName: op.attribs.Type,
+          transactionCurrencyCode: op.attribs.Currency,
+          transactionAmount: Number.parseFloat(op.children[0].data.replace(',', '.').replace(/\s/g, '')),
           merchant: op.attribs.Merchant,
-          currencyCode: op.attribs.Currency,
-          currency: op.attribs.CurrencyAbbr,
-          sum: Number.parseFloat(op.children[0].data.replace(',', '.').replace(/\s/g, ''))
+          hold: true
         }
       })
     }
     return undefined
   })
 
-  const filteredOperations = operations.filter(function (op) {
-    return op !== undefined && op.date >= fromDate
-  })
+  const filteredTransactions = transactions.filter(tr => tr !== undefined && tr.transactionDate >= fromDate && tr.transactionAmount !== 0)
 
-  console.log(`>>> Загружено ${filteredOperations.length} операций.`)
-  return filteredOperations
+  console.log(`>>> Загружено ${filteredTransactions.length} транзакций из мини-выписки.`)
+  return filteredTransactions
 }
 
-export async function fetchTransactions (sessionToken, accounts, fromDate, toDate = new Date()) {
+export async function fetchOperations (sessionToken, accounts, fromDate, toDate) {
   // Этот запрос показывает информацию только по проведенным операциям, т.е. через 2-3 дня
   console.log('>>> Загрузка списка транзакций через полную выписку...')
   toDate = toDate || new Date()
@@ -232,19 +198,25 @@ export async function fetchTransactions (sessionToken, accounts, fromDate, toDat
 
   const operations = flatMap(responses, response => {
     return flatMap(response.body.operations, op => {
+      const operationSign = Number.parseInt(op.operationSign)
       return {
+        id: op.transactionAuthCode,
         account_id: op.accountNumber,
-        date: new Date(op.operationDate),
         operationName: op.operationName,
+        operationDate: new Date(op.transactionDate),
+        operationCurrencyCode: op.operationCurrency,
+        operationAmount: op.operationAmount * operationSign,
+        transactionDate: new Date(op.operationDate),
+        transactionAmount: op.transactionAmount * operationSign,
+        transactionCurrencyCode: op.transactionCurrency,
         merchant: op.operationPlace,
-        currencyCode: op.transactionCurrency,
-        sum: op.transactionAmount * op.operationSign
+        hold: false
       }
     })
   })
 
   const filteredOperations = operations.filter(function (op) {
-    return op !== undefined && op.sum !== 0 && op.date >= fromDate
+    return op !== undefined && op.operationAmount !== 0 && op.transactionDate >= fromDate
   })
 
   console.log(`>>> Загружено ${filteredOperations.length} операций.`)
