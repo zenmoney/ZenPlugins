@@ -173,7 +173,7 @@ export async function fetchCardTransactions (sessionToken, accounts, fromDate, t
     })
   })
 
-  const filteredTransactions = transactions.filter(op => op !== undefined && op.operationAmount !== 0 && op.transactionDate >= fromDate)
+  const filteredTransactions = transactions.filter(tr => tr.operationAmount !== 0 && tr.transactionDate >= fromDate)
 
   console.log(`Загружено ${filteredTransactions.length} операций.`)
 

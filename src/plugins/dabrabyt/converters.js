@@ -30,7 +30,7 @@ export function processAccounts (json) {
     }
   }
 
-  accounts.push(...creditCardsProcessing(cards, credits)) // перед тем как мержить - надо достать только уникальные
+  accounts.push(...creditCardsProcessing(cards, credits))
 
   console.log(`Не обработано ${skipAccount} счетов. Неизвестный тип счёта`)
 
@@ -56,7 +56,7 @@ function creditCardsProcessing (cards, credits) {
 function parseCheckingAccount (account) {
   return {
     id: account.internalAccountId,
-    title: ` ${account.personalizedName || account.productName}`,
+    title: `${account.personalizedName || account.productName}`,
     syncID: [account.internalAccountId.slice(-4)],
 
     instrument: codeToCurrencyLookup[account.currency],
@@ -164,9 +164,9 @@ function getMovement (json) {
 }
 
 function generateMovementId (json) {
-  return md5.hex(`${json.accountId}-${json.operationDate || json.transactionDate}-
-  ${json.operationPlace || json.operationName}-${json.operationAmount || json.transactionAmount}-
-  ${json.operationCurrency || json.transactionCurrency}`)
+  return md5.hex(`${json.accountId}-${json.operationDate}-
+  ${json.operationPlace || json.operationName}-${json.operationAmount}-
+  ${json.operationCurrency}`)
 }
 
 function getComment (json) {
