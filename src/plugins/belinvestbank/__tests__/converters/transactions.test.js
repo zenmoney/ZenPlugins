@@ -348,6 +348,62 @@ describe('convertTransaction', () => {
         comment: null,
         hold: false
       }
+    },
+    {
+      name: 'cardAcceptor',
+      transaction: {
+        date: '2021-06-06 19:06:28',
+        dateResp: '',
+        type: 'Оплата',
+        cardAcceptor: 'ATU TUNISIE SARL >EN>FIDHA TN', // Страна Тунис, город Энфида
+        transactionAmt: '3104,1',
+        transactionAmtCurrency: 'TND',
+        accountAmt: '113,7',
+        accountAmtCurrency: 'USD',
+        feeAmt: 0,
+        feeAmtCurrency: 'TND',
+        reflectedAccountAmt: '',
+        reflectedAccountAmtCurrency: 'USD',
+        reflectedFeeCurrency: 'TND',
+        reflectedFeeIssuer: 0,
+        reflectedFeeIssuerCurrency: 'TND',
+        reflectedFeeAcquirer: 0,
+        reflectedFeeAcquirerCurrency: 'TND',
+        balanceAmt: '2749,81',
+        balanceAmtCurrency: 'USD',
+        status: 'ЗАБЛОКИРОВАНО',
+        sign: '-',
+        mcc: '5309',
+        operationColor: '_red',
+        cardNum: '**** 3395',
+        trnType: 'Безналичный',
+        appId: '946795',
+        statusCode: '1',
+        reflectedFee: 0,
+        historyKey: 0
+      },
+      expectedTransaction: {
+        date: new Date('2021-06-06T19:06:28+0300'),
+        movements:
+          [
+            {
+              id: null,
+              account: { id: '30848200' },
+              invoice: null,
+              sum: -113.7,
+              fee: 0
+            }
+          ],
+        merchant: {
+          country: 'TN',
+          city: 'ENFIDHA',
+          title: 'ATU TUNISIE SARL',
+          mcc: null,
+          location: null
+        },
+        comment: null,
+        hold: true
+      }
     }
   ]
 

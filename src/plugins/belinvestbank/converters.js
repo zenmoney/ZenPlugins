@@ -108,6 +108,14 @@ function parsePayee (transaction, json) {
       transaction.comment = merchant[0]
       transaction.merchant = null
     }
+  } else if (merchant.length === 3) {
+    transaction.merchant.city = merchant[1] + merchant[2].split(' ')[0].trim()
+    transaction.merchant.country = merchant[2].slice(-3).trim()
+    transaction.merchant.title = merchant[0].trim()
+    if (merchant[0] === 'SMS OPOVESCHENIE') {
+      transaction.comment = merchant[0]
+      transaction.merchant = null
+    }
   } else {
     throw new Error('Ошибка обработки транзакции с получателем: ' + json.cardAcceptor)
   }
