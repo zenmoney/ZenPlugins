@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>dabrabyt</id>
+    <company>15436</company>
+    <description>
+        Пример синхронизации с банком Дабрабыт.
+        Для подключения импорта укажите ваш логин и пароль от интернет-банка.
+    </description>
+    <version>1.0</version>
+    <build>1</build>
+    <modular>true</modular>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+</provider>
