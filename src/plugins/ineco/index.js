@@ -1,9 +1,10 @@
 /**
  * @author Karpov Anton <anton@karpoff.pro>
  */
+import { InvalidOtpCodeError, TemporaryError } from '../../errors'
 import { Session } from './session'
 import { parseAccounts, parseTransactions, processTransactions } from './converters'
-import { AccountHelper } from './helpers'
+import { AccountHelper, parseFormData } from './helpers'
 
 const formatNumber = value => {
   const str = `${value}`
@@ -45,16 +46,55 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     },
     cookies: {
       _iob_culture: 'en-US'
-    }
+    },
+    cookieKey: 'session'
   })
 
-  const html = await session.postForm('/User/LogOn', {
+  let html = await session.postForm('/User/LogOn', {
     UserName: preferences.login,
     Password: preferences.password
   })
 
+  let accounts = parseAccounts(html)
+
+  if (!accounts.length) {
+    const tokenForm = parseFormData(html, '[action="/User/LogOnSecurityToken"]')
+
+    if (!tokenForm) {
+      throw new TemporaryError('incorrect flow, need to fix scraper')
+    }
+
+    console.log('need auth token')
+
+    await session.postForm('/User/_TokenSMS_CallBackPanel', {
+      DXCallbackName: 'cbpTokenSMS',
+      DXCallbackArgument: 'c0:',
+      UserName: tokenForm.inputs.UserName,
+      Password: tokenForm.inputs.Password,
+      ProviderAction: 1
+    })
+
+    const sms = await ZenMoney.readLine('Введите код из смс', {
+      time: 120000
+    })
+
+    if (sms === '') {
+      throw new InvalidOtpCodeError()
+    }
+
+    html = await session.postForm('/User/LogOnSecurityToken', {
+      ...tokenForm.inputs,
+      Token: sms
+    })
+
+    accounts = parseAccounts(html)
+  }
+
+  if (!accounts.length) {
+    throw new TemporaryError('no accounts found')
+  }
+
   let transactions = []
-  const accounts = parseAccounts(html)
   const ah = new AccountHelper(accounts)
 
   console.log(`got ${accounts.length}`, { accounts })

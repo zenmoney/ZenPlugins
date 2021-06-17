@@ -1,3 +1,4 @@
+import cheerio from 'cheerio'
 
 export class AccountHelper {
   constructor (accounts) {
@@ -64,4 +65,21 @@ export function parseCSV (str) {
     arr[row][col] += cc
   }
   return arr.map(line => line.map(col => col ? col.trim() : ''))
+}
+
+export const parseFormData = (html, selector) => {
+  const $ = cheerio.load(html)
+
+  const form = $('form' + selector ? ` ${selector}` : '')
+
+  if (!form) {
+    return null
+  }
+  const out = { attr: form.attr(), inputs: {} }
+
+  $(form).eq(0).find('input').each((i, elm) => {
+    out.inputs[elm.attribs.name] = elm.attribs.value
+  })
+
+  return out
 }

@@ -22,11 +22,31 @@ export class Session {
   _domain;
   _cookies = {};
   _headers = {};
+  _cookieKey;
 
-  constructor (domain, { headers, cookies } = {}) {
+  constructor (domain, { headers, cookies, cookieKey } = {}) {
     this._domain = domain
     this._headers = headers || {}
     this._cookies = cookies || {}
+
+    if (cookieKey) {
+      this._cookieKey = 'scrape/' + cookieKey
+
+      const stored = ZenMoney.getData(this._cookieKey)
+
+      console.log('got key from storage', this._cookieKey, stored)
+
+      if (stored) {
+        try {
+          this._cookies = {
+            ...JSON.parse(stored),
+            ...this._cookies
+          }
+        } catch {
+          console.log('error parsing stored key', stored)
+        }
+      }
+    }
   }
 
   async get (url, options = {}) {
@@ -95,6 +115,11 @@ export class Session {
 
     for (const cookie of cookies) {
       this._cookies[cookie.name] = cookie.value
+    }
+
+    if (this._cookieKey) {
+      ZenMoney.setData(this._cookieKey, JSON.stringify(this._cookies))
+      ZenMoney.saveData()
     }
   }
 
