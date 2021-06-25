@@ -15,7 +15,7 @@ import { addOverdraftInfo, convertAccount, convertLastTransaction, convertTransa
 export async function scrape ({ preferences, fromDate, toDate }) {
   const token = await login(preferences.login, preferences.password)
 
-  let accounts = await allAccounts(token)
+  let accounts = (await allAccounts(token)).filter(acc => !ZenMoney.isAccountSkipped(acc.id))
   if (accounts.length === 0) {
     // если активация первый раз, но карточки все еще не выпущены
     return {

@@ -14,7 +14,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     const deposits = accounts.deposits
       .map(convertDeposit)
       .filter(account => account !== null)
-    preparedAccounts = cards.concat(deposits)
+    preparedAccounts = cards.concat(deposits).filter(acc => !ZenMoney.isAccountSkipped(acc.id))
   }
 
   const transactions = uniqBy(await fetchTransactions(token, preparedAccounts, fromDate, toDate), (tr) => tr.cardPAN + '#' + tr.operationDate + '#' + tr.operationName + '#' + tr.operationAmount)
