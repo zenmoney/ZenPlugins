@@ -49,7 +49,7 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
     const errorDescription = response.body.message
     const errorMessage = 'Ответ банка: ' + errorDescription
     if (errorDescription.indexOf('введены неверно') >= 0) { throw new InvalidPreferencesError(errorMessage) }
-    throw new TemporaryError(errorMessage)
+    console.assert(false, 'unexpected response', response)
   }
 
   return response
