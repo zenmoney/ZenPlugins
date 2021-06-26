@@ -2,6 +2,7 @@ import cheerio from 'cheerio'
 import { defaultsDeep, flatMap } from 'lodash'
 import { fetchJson } from '../../common/network'
 import { generateRandomString } from '../../common/utils'
+import { parseXml } from '../../common/xmlUtils'
 import { BankMessageError, InvalidOtpCodeError } from '../../errors'
 import { getDate } from './converters'
 
@@ -100,7 +101,41 @@ export async function fetchAccounts (sessionToken) {
       depositAccount: {}
     }
   }, response => response.body && response.body.overviewResponse && response.body.overviewResponse.cardAccount,
-  message => new TemporaryError(message))).body.overviewResponse.cardAccount
+  message => new TemporaryError(message))).body.overviewResponse.cardAccount.filter(cardAccount => cardAccount.cards)
+
+  for (let i = 0; i < cardAccounts.length; i++) {
+    const balanceRes = await fetchApiJson('payment/simpleExcute', {
+      method: 'POST',
+      headers: { session_token: sessionToken },
+      body: {
+        komplatRequests: [
+          {
+            request: '<BS_Request>' +
+              '<Version>@{version}</Version>' +
+              '<RequestType>Balance</RequestType>' +
+              '<ClientId IdType="MS">#{' + cardAccounts[i].cards[0].cardHash + '@[card_number]}</ClientId>' +
+              '<AuthClientId IdType="MS">#{' + cardAccounts[i].cards[0].cardHash + '@[card_number]}</AuthClientId>' +
+              '<TerminalTime>@{pay_date}</TerminalTime>' +
+              '<TerminalId>@{terminal_id_mb}</TerminalId>' +
+              '<TerminalCapabilities>' +
+              '<BooleanParameter>Y</BooleanParameter>' +
+              '<LongParameter>Y</LongParameter>' +
+              '<AnyAmount>Y</AnyAmount>' +
+              '<ScreenWidth>99</ScreenWidth>' +
+              '<CheckWidth DoubleHeightSymbol="Y" DoubleWidthSymbol="N" InverseSymbol="Y">40</CheckWidth>' +
+              '</TerminalCapabilities>' +
+              '<Balance Currency="' + cardAccounts[i].cards[0].currency + '">' +
+              '<AuthorizationDetails Count="1">' +
+              '<Parameter Idx="1" Name="Срок действия карточки">#{' + cardAccounts[i].cards[0].cardHash + '@[card_expire]}</Parameter>' +
+              '</AuthorizationDetails>' +
+              '</Balance></BS_Request>'
+          }
+        ]
+      }
+    })
+    const balanceXml = parseXml(balanceRes.body.komplatResponse[0].response)
+    cardAccounts[i].balance = balanceXml.BS_Response.Balance.Amount
+  }
 
   return cardAccounts
 }
