@@ -44,8 +44,9 @@ function creditCardsProcessing (cards, credits) {
 
   for (const card of cards) {
     const linkedCreditIndex = credits.findIndex(credit => card.id === credit.id)
-    card.creditLimit = credits[linkedCreditIndex].limit
     if (linkedCreditIndex >= 0) {
+      card.creditLimit = credits[linkedCreditIndex].limit
+      card.balance -= card.creditLimit
       credits.splice(linkedCreditIndex, 1)
     }
   }
