@@ -2,32 +2,29 @@ import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
 const MS_PER_DAY = 1000 * 60 * 60 * 24
 
 export function convertAccount (json) {
-  if (json.cards && json.cards.length > 0) { // only loading card accounts
-    const account = {
-      id: json.cardAccountNumber,
-      type: 'card',
-      instrument: codeToCurrencyLookup[json.currency],
-      instrumentCode: json.currency,
-      balance: Number.parseFloat(json.availableAmount),
-      syncID: [],
-      productType: json.productName,
-      cardHash: json.cards[0].cardHash,
-      bankCode: json.bankCode,
-      accountType: json.accountType,
-      rkcCode: json.rkcCode
-    }
-
-    for (const el of json.cards) {
-      account.syncID.push(el.cardNumberMasked.slice(-4))
-    }
-
-    if (!account.title) {
-      account.title = json.productName + '*' + account.syncID[0]
-    }
-
-    return account
+  const account = {
+    id: json.cardAccountNumber,
+    type: 'card',
+    instrument: codeToCurrencyLookup[json.currency],
+    instrumentCode: json.currency,
+    balance: Number.parseFloat(json.balance.replace(',', '.').replace(/\s/g, '')),
+    syncID: [],
+    productType: json.productName,
+    cardHash: json.cards[0].cardHash,
+    bankCode: json.bankCode,
+    accountType: json.accountType,
+    rkcCode: json.rkcCode
   }
-  return null
+
+  for (const el of json.cards) {
+    account.syncID.push(el.cardNumberMasked.slice(-4))
+  }
+
+  if (!account.title) {
+    account.title = json.productName + '*' + account.syncID[0]
+  }
+
+  return account
 }
 
 export function convertTransaction (json) {

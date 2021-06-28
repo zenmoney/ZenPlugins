@@ -63,7 +63,7 @@ describe('convertAccount', () => {
       type: 'card',
       instrument: 'BYN',
       instrumentCode: '933',
-      balance: 10,
+      balance: 10.1,
       syncID: ['1111'],
       productType: 'Visa Virtual',
       cardHash: 'h5jaI5li6snrBC2lkrLIEnCzS§l0aNIj5PaRLx6C0OGaBofDbE6_v1KfVbK4iNxT1W2RkcRrrEcLVmhDGd3jew',
