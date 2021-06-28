@@ -11,16 +11,22 @@ const parseTransactionDate = (details, date) => {
   const dtls = details.match(dateRegexp)
 
   if (!dtls) {
-    const dateParts = date.split('/')
+    let dateParts = date.split('/')
 
     if (dateParts.length >= 3 && dateParts[0] && dateParts[1] && dateParts[2]) {
-      return `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`
+      return new Date(parseInt(dateParts[2]), parseInt(dateParts[1]), dateParts[0])
+    }
+
+    dateParts = date.split('.')
+
+    if (dateParts.length >= 3 && dateParts[0] && dateParts[1] && dateParts[2]) {
+      return new Date(parseInt(dateParts[2]), parseInt(dateParts[1]), dateParts[0])
     }
 
     return undefined
   }
 
-  return moment(dtls[1], 'DD/MM/YYYY hh:mm:ss').valueOf()
+  return moment(dtls[1], 'DD/MM/YYYY hh:mm:ss').toDate()
 }
 
 export const parseAccounts = (html) => {
