@@ -7,21 +7,23 @@ const getAccountType = (type) => type === 'Card' ? 'card' : 'checking'
 const dateRegexp = /^.*(\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2}).*$/
 const currencyConversionRegexp = /^.* ([0-9.]+) ([A-Z]+) \/.* ([0-9.]+) ([A-Z]+).*$/
 const parseAmount = amount => parseFloat(amount.replace(/\s/g, '').replace(/,/g, ''))
-const parseTransactionDate = (details, date) => {
+export const parseTransactionDate = (details, date) => {
   const dtls = details.match(dateRegexp)
 
   if (!dtls) {
     let dateParts = date.split('/')
 
     if (dateParts.length >= 3 && dateParts[0] && dateParts[1] && dateParts[2]) {
-      return new Date(parseInt(dateParts[2]), parseInt(dateParts[1]), dateParts[0])
+      return new Date(parseInt(dateParts[2]), parseInt(dateParts[1]) - 1, dateParts[0])
     }
 
     dateParts = date.split('.')
 
     if (dateParts.length >= 3 && dateParts[0] && dateParts[1] && dateParts[2]) {
-      return new Date(parseInt(dateParts[2]), parseInt(dateParts[1]), dateParts[0])
+      return new Date(parseInt(dateParts[2]), parseInt(dateParts[1]) - 1, dateParts[0])
     }
+
+    console.error('cant parse date', details, date)
 
     return undefined
   }

@@ -1,4 +1,4 @@
-import { parseTransactions, processTransactions } from './converters'
+import { parseTransactionDate, parseTransactions, processTransactions } from './converters'
 import { AccountHelper } from './helpers'
 
 const ACCOUNT1 = '123400001'
@@ -116,5 +116,25 @@ describe('processTransactions', () => {
     ])
 
     expect(result).toEqual([getTransaction()])
+  })
+})
+
+describe('parseTransactionDate', () => {
+  it('get date from details', () => {
+    const result = parseTransactionDate('some text 17/03/2020 14:13:12 with date', '')
+
+    expect(result).toEqual(new Date(2020, 2, 17, 14, 13, 12))
+  })
+
+  it('get date from date with dots', () => {
+    const result = parseTransactionDate('some text 1703/2020 14:13:12 with date', '04.05.2019')
+
+    expect(result).toEqual(new Date(2019, 4, 4))
+  })
+
+  it('get date from date with dots', () => {
+    const result = parseTransactionDate('some text 17/03/202014:13:12 with date', '04/04/2019')
+
+    expect(result).toEqual(new Date(2019, 3, 4))
   })
 })
