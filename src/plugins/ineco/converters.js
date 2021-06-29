@@ -14,13 +14,13 @@ const parseTransactionDate = (details, date) => {
     let dateParts = date.split('/')
 
     if (dateParts.length >= 3 && dateParts[0] && dateParts[1] && dateParts[2]) {
-      return new Date(parseInt(dateParts[2]), parseInt(dateParts[1]), dateParts[0])
+      return new Date(parseInt(dateParts[2]), parseInt(dateParts[1]) - 1, dateParts[0])
     }
 
     dateParts = date.split('.')
 
     if (dateParts.length >= 3 && dateParts[0] && dateParts[1] && dateParts[2]) {
-      return new Date(parseInt(dateParts[2]), parseInt(dateParts[1]), dateParts[0])
+      return new Date(parseInt(dateParts[2]), parseInt(dateParts[1]) - 1, dateParts[0])
     }
 
     return undefined
