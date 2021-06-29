@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        title="Логин"
+        positiveButtonText="ОК"
+        summary="||{@s}"
+        dialogTitle="Логин"
+        negativeButtonText="Отмена"
+        obligatory="true"
+        key="login">
+    </EditTextPreference>
+    <EditTextPreference
+        positiveButtonText="ОК"
+        key="password"
+        dialogTitle="Пароль"
+        negativeButtonText="Отмена"
+        title="Пароль"
+        summary="||***********"
+        obligatory="true"
+        inputType="textPassword">
+    </EditTextPreference>
+    <ListPreference
+        positiveButtonText="ОК"
+        key="confirmation_type"
+        dialogTitle="Метод подтверждения входа"
+        negativeButtonText="Отмена"
+        title="Метод подтверждения входа"
+        entries="СМС|ОТП-Токен|Нет" entryValues="sms|otp|none"
+        defaultValue="sms"
+        summary="|sms|{@s}">
+    </ListPreference>
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="С какой даты загружать операции"
+        defaultValue="2020-01-01T00:00:00.000Z"
+        dialogTitle="С какой даты загружать операции"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|startDate|{@s}">
+    </EditTextPreference>
+</PreferenceScreen>
