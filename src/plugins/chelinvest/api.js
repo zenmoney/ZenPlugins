@@ -48,7 +48,7 @@ export async function login ({ login, password, confirmation_type }, auth) {
   if (response.status !== 200) {
     throw new InvalidPreferencesError()
   }
-  auth = response.headers['Set-Cookie'].split(';').find(cookie => cookie.startsWith('_session_id'))
+  auth = (response.headers['Set-Cookie'] || response.headers['set-cookie']).split(';').find(cookie => cookie.startsWith('_session_id'))
 
   // eslint-disable-next-line camelcase
   if (confirmation_type && confirmation_type !== 'none') {
