@@ -5,16 +5,15 @@
 Для получения данных из банка по сети есть стандартизированный async
 [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API).
 
-Есть собственный неглобальный декоратор fetch API
-[fetchJson](https://github.com/zenmoney/ZenPlugins/blob/master/src/common/network.js#L4),
-который за вас может сделать:
+Рекомендуется использовать неглобальный декоратор [fetch](https://github.com/zenmoney/ZenPlugins/blob/master/src/common/network.js#L15), который:
+- автоматически логирует запросы
+- позволяет задать parse/stringify функции для преобразования сырых данных в объекты
+- позволяет задать sanitizeRequestLog/sanitizeResponseLog маски для скрытия приватных данных из логов
 
--   serialize/parse json,
 
--   залогировать request/response через `console.debug()`.
+Так же есть [fetchJson](https://github.com/zenmoney/ZenPlugins/blob/master/src/common/network.js#L85), который автоматически преобразует сырые данные в json и обратно.
 
-`TODO:` _описать наше отношение к персональным данным и необходимость зачищать
-ненужные разработчику плагина поля, привести примеры работы `sanitize()`._
+По умолчанию ответы от сервера преобразуются в строку прежде чем попадают в parse. Чтобы получить непосредственно байты надо вызывать fetch(url, { binaryResponse: true }).
 
 ## Логирование
 
@@ -27,13 +26,13 @@
 Например,
 
 ```js
-console.log("что-то тут не так", {deadBodies: 999});
+console.log('что-то тут не так', { deadBodies: 999 })
 ```
 
 напишет в лог работы плагина
 
 ```
-[log] что-то тут не так {deadBodies: 999}
+[log] что-то тут не так { deadBodies: 999 }
 ```
 
 Логи с мобильных устройств пользователи отправляют в случае, если что-то пошло
@@ -48,12 +47,18 @@ console.log("что-то тут не так", {deadBodies: 999});
 Вызов
 
 ```js
-console.assert(response.status === 200, "Не удалось получить транзакции", {response});
+console.assert(response.status === 200, 'Не удалось получить транзакции', { response })
 ```
 
-прервёт выполнение и пользователь на UI увидит
+прервёт выполнение и запишет в лог
 
-`Не удалось получить транзакции {response: { status: ... } }
+`Не удалось получить транзакции { response: { status: ... } }`
+
+а пользователь увидит на UI сообщение
+
+`Ошибка в импорте из банка. Отправьте отчёт, чтобы мы смогли найти и исправить ошибку.`
+
+с предложением отправить лог разработчику.
 
 ## Ошибки
 
@@ -63,40 +68,59 @@ console.assert(response.status === 200, "Не удалось получить т
 throw new Error("Всё не так =[");
 ```
 
+Текст ошибки пользователю не показывается, а только логируется. Пользователь увидит на UI сообщение
+
+`Ошибка в импорте из банка. Отправьте отчёт, чтобы мы смогли найти и исправить ошибку.`
+
+с предложением отправить лог разработчику.
+
 Также есть возможность подсказать мобильному приложению, как обрабатывать
-ошибку, используя `ZenMoney.Error` как конструктор ошибки:
+ошибку, используя `ZPAPIError` как конструктор ошибки:
 
-`ZenMoney.Error(message: String?, logIsNotImportant: Bool?, forcePluginReinstall: Bool?)`
+`ZPAPIError(message: String?, logIsNotImportant: Bool?, forcePluginReinstall: Bool?)`
 
-Мы пока можем представить два юзкейса, когда это может понадобиться:
+Рекомендуется использовать готовые классы ошибок для случаев:
 
-1.  Ошибка временная (сеть пропала, уборщица уронила сервер банка) и мы явно об
-    этом знаем, и ничего не можем с этим поделать (пробовали делать retry), и
-    просто не хотим, чтобы пользователь слал нам такие ошибки.
+- Пользователь неправильно ввёл логин или пароль.
+```js
+throw new InvalidLoginOrPasswordError()
+```
 
-    В таком случае мы используем:
+- Пользователь неправильно ввёл пароль, возможно это был пин-код от приложения банка вместо нужного пароля от интернет-банка.
+```js
+throw new PinCodeInsteadOfPasswordError()
+```
 
-    ```js
-    throw new ZenMoney.Error("ДОКОЛЕ!", true /*logIsNotImportant*/, false);
-    ```
+- Пользователь неправильно заполнил прочие настройки плагина.
+```js
+throw new InvalidPreferencesError()
+```
 
-    и на UI у пользователя не показывается кнопка "Отправить лог разработчикам"
+- Пользователь ввел неверный код подтверждения.
+```js
+throw new InvalidOtpCodeError()
+```
 
-2.  Настройки пользователя неверны (логин/пароль неверный) и мы не видим смысла
-    запускать плагин еще раз с теми же самыми настройками.
+- Пользователь не завершил предыдущую сессию в банке, и поэтому банк не пускает плагин.
+```js
+throw new PreviousSessionNotClosedError()
+```
 
-    В таком случае мы используем:
+- Ошибка временная (сеть пропала, уборщица уронила сервер банка) и мы явно об
+  этом знаем, и ничего не можем с этим поделать (пробовали делать retry), и
+  просто не хотим, чтобы пользователь слал нам такие ошибки.
+```js
+throw new TemporaryUnavailableError()
+```
 
-    ```js
-    throw new ZenMoney.Error("Поправь настройки: неверные учетные данные!", false, /* forcePluginReinstall*/ true);
-    ```
-
-    и на UI пользователь видит ошибку и перенаправляется в окно настроек.
+- Банк хочет что-то важное сказать пользователю, что пользователь должен поправить.
+```js
+throw new BankMessageError(message)
+```
 
 ## Получение введённых пользователем настроек
 
-`ZenMoney.getPreferences()` возвращает введённые пользователем настройки
-плагина.
+Одним из аргументов scrape из [index.js](./files/index.js.md) является preferences - настройки плагина, которые были заполнены пользователем.
 
 Ключами объекта являются значения `key` из
 [preferences.xml](./files/preferences.xml.md)
@@ -106,7 +130,7 @@ throw new Error("Всё не так =[");
 // <EditTextPreference key="login" ... />
 // <EditTextPreference key="password" ... />
 // Получаем так:
-const {login, password} = ZenMoney.getPreferences();
+const { login, password } = preferences
 ```
 
 ## Получение текстового ввода от пользователя в момент работы плагина
@@ -114,43 +138,12 @@ const {login, password} = ZenMoney.getPreferences();
 Например, для аутентификации понадобился SMS код, который банк прислал
 владельцу аккаунта.
 
-### Async API
-
 ```js
 const smsCode = await ZenMoney.readLine("Введите код из СМС сообщения");
 if (!smsCode) {
     throw new Error("Без SMS-кода не смогу =[");
 }
 ```
-
-### (deprecated) Sync API
-
-`ZenMoney.retrieveCode(message, imageUrl, options: {time, inputType})`
-
-`options.time: Int?` - время, через которое ввод станет неактуальным и окно
-закроется, вернув `null`.
-
-`options.inputType: ('text' | 'textPassword' | 'number' | 'numberDecimal' | 'numberPassword' | 'phone' | 'textEmailAddress')?` -
-тип текстового ввода. Набор значений тот же, что и у `EditTextPreference` в
-[preferences.xml](docs/files/preferences.xml.md).
-
-```js
-const smsCode = ZenMoney.retrieveCode("Введите код из СМС сообщения");
-if (!smsCode) {
-    throw new Error("Без SMS-кода не смогу =[");
-}
-```
-
-Функция `ZenMoney.retrieveCode` в браузерном отладчике реализована не очень
-хорошо: она читает значение файла `zp_pipe.txt` в папке плагина до тех пор,
-пока файл пустой.
-
-После каждого использования этой функции рекомендуется опустошить файл
-`zp_pipe.txt`, иначе retrieveCode будет возвращать устаревший пользовательский
-ввод.
-
-Когда-нибудь мы заменим этот костыль на браузерный
-[confirm](https://developer.mozilla.org/en-US/docs/Web/API/Window/confirm)
 
 ## Сохранение данных между вызовами плагина
 
@@ -184,7 +177,3 @@ if (!smsCode) {
 
 Необходимо его использовать для фильтрации полученных из банка счетов, до того
 как запрашивать по ним транзакции.
-
-## Документация по устаревшему API для не-modular плагинов
-
-Можно найти [здесь](./deprecatedApi.md)
