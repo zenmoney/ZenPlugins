@@ -1,46 +1,56 @@
-export function convertAccount (json) {
-  const account = {
-    id: json.id,
-    type: 'card',
-    title: json.product,
-    instrument: json.currency.shortName,
-    balance: json.accountBalance.value,
-    creditLimit: 0,
-    syncID: []
+export function convertAccounts (apiAccounts) {
+  const accountsByCba = {}
+  const accounts = []
+  for (const apiAccount of apiAccounts) {
+    const product = { id: apiAccount.id, transactionNode: apiAccount.transactionNode }
+    let account = accountsByCba[apiAccount.cba]
+    if (!account) {
+      account = {
+        products: [],
+        account: {
+          id: apiAccount.cba,
+          type: 'card',
+          title: apiAccount.product || apiAccount.cba,
+          instrument: apiAccount.currency.shortName,
+          balance: apiAccount.accountBalance.value,
+          creditLimit: 0,
+          syncIds: [
+            apiAccount.cba
+          ]
+        }
+      }
+      accounts.push(account)
+      accountsByCba[apiAccount.cba] = account
+    }
+    account.products.push(product)
+    if (apiAccount.pan) {
+      account.account.syncIds.push(apiAccount.pan)
+    }
+    if (apiAccount.moneyAmount && apiAccount.moneyAmount.value > apiAccount.accountBalance.value) {
+      account.account.creditLimit = apiAccount.moneyAmount.value - apiAccount.accountBalance.value
+    }
   }
-  if (json.pan) {
-    account.syncID.push(json.pan.slice(-4))
-  }
-  if (json.cba) {
-    account.syncID.push(json.cba.slice(-4))
-  }
-  if (json.moneyAmount && json.moneyAmount.value > json.accountBalance.value) {
-    account.creditLimit = json.moneyAmount.value - json.accountBalance.value
-  }
-  if (!account.title) {
-    account.title = '*' + account.syncID[0]
-  }
-  return account
+  return accounts
 }
 
-export function convertTransaction (json) {
+export function convertTransaction (apiTransaction, account) {
   return {
-    hold: json.type !== 'TRANSACTION',
-    date: new Date(json.operationTime),
+    hold: apiTransaction.type !== 'TRANSACTION',
+    date: new Date(apiTransaction.operationTime),
     movements: [
       {
-        id: json.id || null,
-        account: { id: json.relationId },
-        invoice: json.accountAmount.currency.shortName === json.amount.currency.shortName ? null : {
-          sum: json.amount.value,
-          instrument: json.amount.currency.shortName
+        id: apiTransaction.id || null,
+        account: { id: account.id },
+        invoice: apiTransaction.accountAmount.currency.shortName === apiTransaction.amount.currency.shortName ? null : {
+          sum: apiTransaction.amount.value,
+          instrument: apiTransaction.amount.currency.shortName
         },
-        sum: json.accountAmount.value,
+        sum: apiTransaction.accountAmount.value,
         fee: 0
       }
     ],
-    merchant: json.description ? {
-      fullTitle: json.description,
+    merchant: apiTransaction.description ? {
+      fullTitle: apiTransaction.description,
       mcc: null,
       location: null
     } : null,
