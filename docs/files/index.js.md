@@ -7,9 +7,15 @@
 
 ```typescript
 interface ScrapeFunc {
-    (fromDate: Date, toDate: Date | null, preferences: any, isFirstRun: boolean, isInBackground: boolean): Promise<{
-        accounts: Array<Account>;
-        transactions: Array<Transaction>;
+    (args: {
+        fromDate: Date,
+        toDate: Date | null,
+        preferences: { string: any },
+        isFirstRun: boolean,
+        isInBackground: boolean
+    }): Promise<{
+        accounts: Array<Account>,
+        transactions: Array<Transaction>
     }>;
 }
 ```
