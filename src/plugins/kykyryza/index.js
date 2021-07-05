@@ -4,7 +4,7 @@
 
 import * as main from '../faktura/main'
 
-const apiUri = 'https://oplata.kykyryza.ru/api'
+const apiUri = 'https://oplata.plus.svyaznoy.ru/api'
 
 async function scrape (args) {
   return main.scrape({ ...args, apiUri })
