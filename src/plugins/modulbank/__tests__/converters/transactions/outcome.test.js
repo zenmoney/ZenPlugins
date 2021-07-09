@@ -149,6 +149,58 @@ describe('convertTransaction', () => {
         },
         comment: 'Авансовый платеж УСН за I квартал 2019 года Сумма 7 475,00р. НДС не облагается'
       }
+    ],
+    [
+      {
+        id: '84220741-6229-4579-b826-ad5e03bd0c28',
+        companyId: '9f9c863e-df81-44e0-b717-a57401fd2948',
+        status: 'SendToBank',
+        category: 'Credit',
+        contragentName: 'Николаев Николай Николаевич',
+        contragentInn: '680101920308',
+        contragentKpp: '',
+        contragentBankAccountNumber: '40817810300006445768',
+        contragentBankCorrAccount: '30101810145250000974',
+        contragentBankName: 'АО "ТИНЬКОФФ БАНК"',
+        contragentBankBic: '044525974',
+        currency: 'RUR',
+        amount: 9114.19,
+        bankAccountNumber: '40802810670110000249',
+        paymentPurpose: 'ЗП Модульбухгалтер. Для зачисления на счет Николаева Николая Николаевича Заработная плата за Июнь 2021 г. Сумма 9114-19 Без налога (НДС)',
+        created: '2021-07-07T00:00:00',
+        docNumber: '26040',
+        absId: '59142157091',
+        ibsoId: '0',
+        kbk: '',
+        oktmo: '',
+        paymentBasis: '',
+        taxCode: '',
+        taxDocNum: '',
+        taxDocDate: '',
+        payerStatus: '',
+        uin: '0'
+      },
+      {
+        date: new Date('2021-07-06T21:00:00.000Z'),
+        hold: true,
+        merchant: {
+          city: null,
+          country: null,
+          title: 'Николаев Николай Николаевич',
+          location: null,
+          mcc: null
+        },
+        movements: [
+          {
+            id: '84220741-6229-4579-b826-ad5e03bd0c28',
+            account: { id: 'account' },
+            fee: 0,
+            invoice: null,
+            sum: -9114.19
+          }
+        ],
+        comment: 'ЗП Модульбухгалтер. Для зачисления на счет Николаева Николая Николаевича Заработная плата за Июнь 2021 г. Сумма 9114-19 Без налога (НДС)'
+      }
     ]
   ])('converts outcome', (apiTransaction, transaction) => {
     expect(convertTransaction(apiTransaction, { id: 'account', instrument: 'RUB' })).toEqual(transaction)

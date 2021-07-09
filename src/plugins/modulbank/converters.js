@@ -19,7 +19,8 @@ export function convertTransaction (apiTransaction, account) {
     'Executed',
     'Received',
     'ClarifyRequiredOutcome',
-    'RejectByBank'
+    'RejectByBank',
+    'SendToBank'
   ].indexOf(apiTransaction.status) >= 0, 'unexpected transaction status', apiTransaction)
   console.assert(['Debet', 'Credit'].indexOf(apiTransaction.category) >= 0, 'unexpected transaction category', apiTransaction)
   if ([
@@ -30,8 +31,9 @@ export function convertTransaction (apiTransaction, account) {
     return null
   }
   const transaction = {
-    hold: false,
-    date: new Date(apiTransaction.executed + '+03:00'),
+    hold: apiTransaction.status === 'SendToBank',
+    date: apiTransaction.status !== 'SendToBank' ? new Date(apiTransaction.executed + '+03:00')
+      : new Date(apiTransaction.created + '+03:00'),
     movements: [
       {
         id: apiTransaction.id,
