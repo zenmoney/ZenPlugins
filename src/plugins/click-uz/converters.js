@@ -9,12 +9,13 @@ import { groupBy } from 'lodash'
  * @returns счет в формате Дзенмани
  */
 export function convertAccount (rawAccount) {
+  const typeCard = rawAccount.removable === 1 || rawAccount.description.match(/VISA/i) // || rawAccount.accno.match(/\s\*{4}\s/)
   return {
     id: String(rawAccount.id),
     title: rawAccount.description,
     syncIds: [sanitizeSyncId(rawAccount.accno.replace(/\s/g, ''))],
     instrument: rawAccount.currency_code,
-    type: rawAccount.removable === 0 ? 'checking' : 'ccard',
+    type: typeCard ? 'ccard' : 'checking',
     balance: rawAccount.balance
   }
 }
