@@ -122,7 +122,9 @@ function parsePayee (transaction, json) {
 }
 
 function getSumAmount (json) {
-  const amount = Number.parseFloat(json.accountAmt.replace(',', '.').replace(' ', ''))
+  const amountAccount = Number.parseFloat(json.accountAmt.replace(',', '.').replace(' ', ''))
+  const amountReflected = Number.parseFloat(json.reflectedAccountAmt?.replace(',', '.').replace(' ', ''))
+  const amount = amountAccount === 0 && amountReflected !== 0 ? amountReflected : amountAccount
   let sum = null
   if (json.sign) {
     sum = json.sign === '+' ? amount : -amount

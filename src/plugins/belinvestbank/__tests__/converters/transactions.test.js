@@ -326,7 +326,7 @@ describe('convertTransaction', () => {
         historyKey: 1
       },
       expectedTransaction: {
-        date: new Date('2021-05-25T17:52:36+0300'), // Tue May 25 2021 17:52:36 GMT+0300 (+03),
+        date: new Date('2021-05-25T17:52:36+0300'),
         movements:
           [
             {
@@ -403,6 +403,63 @@ describe('convertTransaction', () => {
         },
         comment: null,
         hold: true
+      }
+    },
+    {
+      name: 'cardAcceptor',
+      transaction: {
+        date: '2021-07-15 12:35:13',
+        dateResp: '2021-07-16 09:58:03',
+        type: 'Оплата',
+        cardAcceptor: 'GOOGLE*CLOUDMOSA INC>INTERNET US',
+        transactionAmt: '1',
+        transactionAmtCurrency: 'USD',
+        accountAmt: '0.00',
+        accountAmtCurrency: 'BYN',
+        feeAmt: 0,
+        feeAmtCurrency: 'BYN',
+        reflectedAccountAmt: '2,57',
+        reflectedAccountAmtCurrency: 'BYN',
+        reflectedFeeCurrency: 'BYN',
+        reflectedFeeIssuer: 0,
+        reflectedFeeIssuerCurrency: 'BYN',
+        reflectedFeeAcquirer: 0,
+        reflectedFeeAcquirerCurrency: 'BYN',
+        balanceAmt: '0.00',
+        balanceAmtCurrency: 'BYN',
+        status: 'ПРОВЕДЕНО',
+        sign: '-',
+        mcc: '7372',
+        operationColor: '_red',
+        cardNum: '**** 2272',
+        trnType: 'Безналичный',
+        appId: '332785',
+        statusCode: '2',
+        reflectedFee: 0,
+        historyKey: 9
+      },
+      expectedTransaction: {
+        date: new Date('2021-07-15T12:35:13+03:00'),
+        movements:
+          [
+            {
+              id: null,
+              account: { id: '30848200' },
+              invoice: null,
+              sum: -2.57,
+              fee: 0
+            }
+          ],
+        merchant:
+          {
+            mcc: null,
+            location: null,
+            city: 'INTERNET',
+            country: 'US',
+            title: 'GOOGLE*CLOUDMOSA INC'
+          },
+        comment: null,
+        hold: false
       }
     }
   ]
