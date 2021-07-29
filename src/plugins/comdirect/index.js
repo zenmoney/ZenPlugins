@@ -18,7 +18,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
 
       transactions = [
         ...transactions,
-        ...apiTransactions.map(apiTransaction => convertTransaction(apiTransaction, account.id))
+        ...apiTransactions.map(apiTransaction => convertTransaction(apiTransaction, account))
       ]
     }
   }

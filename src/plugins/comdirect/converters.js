@@ -47,8 +47,9 @@ const parseRemittance = (text) => {
     const controlString = (fieldCount < 10 ? '0' : '') + fieldCount
 
     if (controlString !== actualString) {
-      throw new Error(`Error parsing remittance info ${text}. Should've encountered ${controlString} at position ${cursor + 1}. Instead got ${actualString}`)
+      // throw new Error(`Error parsing remittance info ${text}. Should've encountered ${controlString} at position ${cursor + 1}. Instead got ${actualString}`)
     }
+
     cursor += NUM_FIELD_CHARS
     result += text.substr(cursor, TEXT_FIELD_CHARS)
     cursor += TEXT_FIELD_CHARS
@@ -69,26 +70,123 @@ const getComment = (apiTransaction) => {
   return `[${apiTransaction.transactionType.text}] ${parseRemittance(apiTransaction.remittanceInfo)}`
 }
 
-export const convertTransaction = (apiTransaction, accountId) => {
-  const value = Number(apiTransaction.amount.value)
-  const income = value > 0 ? value : 0
-  const outcome = value < 0 ? Math.abs(value) : 0
+function parseDate (apiTransaction) {
+  let date = new Date(apiTransaction.bookingDate)
+  let dateInfo = ''
+  if (apiTransaction.bookingStatus === 'NOTBOOKED') {
+    dateInfo = apiTransaction.remittanceInfo?.match(/(.*)\s(\d{4}-\d{2}-\d{2}T\d+:\d+:\d+)/i)
+    // date = dateInfo ? new Date(dateInfo[2]) : new Date(apiTransaction.bookingDate)
+  } else if (apiTransaction.bookingStatus === 'BOOKED') {
+    dateInfo = apiTransaction.remittanceInfo?.match(/(.*)\s*\d{2}(\d{4}-\d{2}-\d{2}T\d+:\d+:\d+)/i)
+    // date = dateInfo ? new Date(dateInfo[2]) : new Date(apiTransaction.bookingDate)
+  }
+  if (dateInfo && dateInfo[2]) {
+    date = new Date(dateInfo[2] + '.000Z')
+  }
+  return date
+}
 
-  const result = {
-    id: apiTransaction.reference,
-    incomeAccount: accountId,
-    outcomeAccount: accountId,
-    income,
-    outcome,
-    date: new Date(apiTransaction.bookingDate),
-    hold: apiTransaction.bookingStatus === 'NOTBOOKED',
+export function convertTransaction (apiTransaction, account) {
+  const invoice = {
+    instrument: apiTransaction.amount.unit,
+    sum: Number(apiTransaction.amount.value)
+  }
+  const transaction = {
+    hold: apiTransaction.bookingStatus === 'BOOKED',
+    date: parseDate(apiTransaction),
+    movements: [
+      {
+        id: apiTransaction.reference !== ' ' ? apiTransaction.reference : null,
+        account: { id: account.id },
+        invoice: invoice.instrument !== account.instrument ? invoice : null,
+        sum: invoice.instrument !== account.instrument ? invoice.sum : invoice.sum,
+        fee: 0
+      }
+    ],
+    merchant: null,
     comment: getComment(apiTransaction)
+  };
+  [
+    parsePayee,
+    parseOuterTransfer,
+    parseCashTransfer
+  ].some(parser => parser(transaction, apiTransaction, account, invoice))
+  return transaction
+}
+
+function parseOuterTransfer (transaction, apiTransaction, account, invoice) {
+  if (![
+    /TRANSFER/i,
+    /CARD_TRANSACTION/i
+  ].some(regex => regex.test(apiTransaction.transactionType?.key))) {
+    return false
   }
 
-  const payeeInfo = apiTransaction.creditor || apiTransaction.remitter
-  if (payeeInfo) {
-    result.payee = payeeInfo.holderName
+  const syncIds = apiTransaction.creditor?.iban
+  transaction.movements.push({
+    id: null,
+    account: {
+      company: null,
+      instrument: invoice.instrument,
+      syncIds: syncIds ? [syncIds] : null,
+      type: 'ccard'
+    },
+    invoice: null,
+    sum: -invoice.sum,
+    fee: 0
+  })
+
+  return true
+}
+
+function parseCashTransfer (transaction, apiTransaction, account, invoice) {
+  if (![
+    /ATM_WITHDRAWAL/i
+  ].some(regex => regex.test(apiTransaction.transactionType?.key))) {
+    return false
   }
 
-  return result
+  transaction.movements.push({
+    id: null,
+    account: {
+      company: null,
+      instrument: invoice.instrument,
+      syncIds: null,
+      type: 'cash'
+    },
+    invoice: null,
+    sum: -invoice.sum,
+    fee: 0
+  })
+
+  return true
+}
+
+function parsePayee (transaction, apiTransaction) {
+  const fullTitle = apiTransaction.creditor?.holderName || apiTransaction.remitter?.holderName
+  if (fullTitle) {
+    transaction.merchant = {
+      fullTitle: fullTitle,
+      location: null,
+      mcc: null
+    }
+  }
+  let remittanceInfo = ''
+  if (apiTransaction.bookingStatus === 'NOTBOOKED') {
+    remittanceInfo = apiTransaction.remittanceInfo?.match(/(.*)\s((\d{4}-\d{2}-\d{2})T\d+:\d+:\d+)/i)
+    transaction.comment = null
+  } else if (apiTransaction.bookingStatus === 'BOOKED') {
+    remittanceInfo = apiTransaction.remittanceInfo?.match(/(.*)\s*\d{2}(\d{4}-\d{2}-\d{2}T\d+:\d+:\d+)/i)
+  } else {
+    remittanceInfo = apiTransaction.remittanceInfo?.match(/^\d{2}(.*)\/\/.*/i)
+  }
+  if (remittanceInfo) {
+    transaction.merchant = {
+      fullTitle: remittanceInfo[1].trim(),
+      location: null,
+      mcc: null
+    }
+    transaction.comment = null
+  }
+  // return true
 }
