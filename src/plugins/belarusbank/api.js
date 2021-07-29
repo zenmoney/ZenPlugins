@@ -1,5 +1,5 @@
 import cheerio from 'cheerio'
-import { defaultsDeep, chunk, isEqual, uniqWith } from 'lodash'
+import { chunk, defaultsDeep, isEqual, uniqWith } from 'lodash'
 import padLeft from 'pad-left'
 import { stringify } from 'querystring'
 import { fetch } from '../../common/network'
@@ -12,6 +12,10 @@ async function fetchUrl (url, options, predicate = () => true, error = (message)
   options = defaultsDeep(
     options,
     {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
+        'Accept-Language': 'ru'
+      },
       sanitizeRequestLog: { headers: { Cookie: true } },
       sanitizeResponseLog: { headers: { 'set-cookie': true } }
     }
@@ -42,30 +46,21 @@ async function fetchUrl (url, options, predicate = () => true, error = (message)
   if (predicate) {
     validateResponse(response, response => predicate(response), error)
   }
-  const $ = cheerio.load(response.body)
 
-  const err = $('div[class="res"]')?.children('p#status_message.error')?.text() || ''
-
-  if (err.indexOf('еанс работы с порталом завершен из-за длительного простоя') > -1) { // Сеанс работы завершен
+  const err = parseErrorMessage(response.body)
+  if (err.indexOf('еанс работы с порталом завершен из-за длительного простоя') > -1) {
     throw new TemporaryError('Сессия завершена из-за длительного простоя. Запустите синхронизацию с банком заново.')
   }
-
-  if (err.indexOf('неправильный СМС-код') > -1) {
-    throw new InvalidOtpCodeError()
-  }
-
-  if (err && err.indexOf('СМС-код отправлен на номер телефона') === -1) {
-    if (err.indexOf('Необходимо настроить номер телефона для получения СМС') >= 0) {
-      throw new BankMessageError(`${err}. Это можно сделать на сайте или в приложении Беларусбанка.`)
-    }
-    // ошибка приходит в ответе на 1й запрос loginSMS()
-    if (err.indexOf('Выбранный способ аутентификации отключён') >= 0) {
-      throw new BankMessageError('Аутентификация по СМС отключена. Выберите в настройках аутентификацию по кодам или включите вход по СМС в приложении или на сайте банка.')
-    }
-
+  if (err.indexOf('Вы заблокированы из-за трёхкратного ошибочного ввод') >= 0) {
     throw new BankMessageError(err)
   }
+
   return response
+}
+
+function parseErrorMessage (html) {
+  const $ = cheerio.load(html)
+  return $('div[class="res"]')?.children('p#status_message.error')?.text() || ''
 }
 
 function validateResponse (response, predicate, error) {
@@ -162,9 +157,9 @@ export async function loginCodes (prefs) {
     sanitizeRequestLog: { body: { bbIbCodevalueField: true } }
   }, response => response.success, message => new Error(''))
 
-  if (res.body.match(/Cмена пароля[^,]/)) {
-    throw new BankMessageError('Закончился срок действия пароля. Задайте новый пароль в интернет-банке Беларусбанка')
-  }
+  // if (res.body.match(/Cмена пароля[^,]/)) {
+  //   throw new BankMessageError('Закончился срок действия пароля. Задайте новый пароль в интернет-банке Беларусбанка')
+  // }
 
   return res
 }
@@ -198,7 +193,13 @@ export async function loginSMS (prefs) {
     },
     sanitizeRequestLog: { body: { bbIbUseridField: true, bbIbPasswordField: true } }
   }, response => response.success, message => new Error(''))
-
+  let err = parseErrorMessage(res.body)
+  if (err.indexOf('Необходимо настроить номер телефона для получения СМС') >= 0) {
+    throw new BankMessageError(`${err}. Это можно сделать на сайте или в приложении Беларусбанка.`)
+  }
+  if (err.indexOf('Выбранный способ аутентификации отключён') >= 0) {
+    throw new BankMessageError('Аутентификация по СМС отключена. Выберите в настройках аутентификацию по кодам или включите вход по СМС в приложении или на сайте банка.')
+  }
   if (res.body.search(/Неправильно введён логин и\/или пароль/) >= 0) {
     throw new InvalidPreferencesError('Неверный логин или пароль от интернет-банка Беларусбанка')
   }
@@ -228,10 +229,14 @@ export async function loginSMS (prefs) {
     },
     sanitizeRequestLog: { body: { bbIbCodeSmsvalueField: true } }
   }, response => response.success, message => new Error(''))
-
-  if (/мена пароля[^,]/.test(res.body)) {
-    throw new BankMessageError('Закончился срок действия пароля. Задайте новый пароль в интернет-банке Беларусбанка')
+  err = parseErrorMessage(res.body)
+  if (err.indexOf('неправильный СМС-код') > -1) {
+    throw new InvalidOtpCodeError()
   }
+
+  // if (/мена пароля[^,]/.test(res.body)) {
+  //   throw new BankMessageError('Закончился срок действия пароля. Задайте новый пароль в интернет-банке Беларусбанка')
+  // }
 
   return res
 }
