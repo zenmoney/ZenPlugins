@@ -11,11 +11,6 @@ export function convertAccounts ({ accounts, deposits, credits }) {
   for (let i = 0; i < accounts.length; i++) {
     const account = accounts[i]
 
-    if (ZenMoney.isAccountSkipped(String(account.id)) || account.hidden || account.closed) {
-      console.log('Пропускаем карту/счёт: \'' + account.displayTitle + '\'', 'skip')
-      continue
-    }
-
     console.log('Обрабатываем карту/счёт: \'' + account.displayTitle + '\', id ' + account.id, 'account')
 
     // Карта
@@ -23,21 +18,21 @@ export function convertAccounts ({ accounts, deposits, credits }) {
       accList.push({
         id: String(account.id),
         title: account.displayTitle,
-        syncID: cardPan(account),
+        syncIds: cardPan(account),
         instrument: currency[account.currencyIsoCode],
         type: 'ccard',
         balance: parseFloat(account.balance),
-        creditLimit: parseFloat(account.loanAmount)
+        creditLimit: parseFloat(account.loanAmount) !== 0 ? parseFloat(account.loanAmount) : 0
       })
     } else if (account.productType === 'Products::RevolverCredit') {
       accList.push({
         id: String(account.id),
         title: account.displayTitle,
-        syncID: cardPan(account),
+        syncIds: cardPan(account),
         instrument: currency[account.currencyIsoCode],
         type: 'ccard',
         balance: parseFloat(account.creditAmount) > 0 ? parseFloat(account.creditAmount) * (-1) : parseFloat(account.balance),
-        creditLimit: parseFloat(account.loanAmount)
+        creditLimit: parseFloat(account.loanAmount) !== 0 ? parseFloat(account.loanAmount) : 0
       })
     } else if (account.productType === 'Products::Deposit') {
       const deposit = findDeposit(deposits, account.id)
@@ -51,13 +46,13 @@ export function convertAccounts ({ accounts, deposits, credits }) {
       accList.push({
         id: String(account.id),
         title: account.displayTitle,
-        syncID: cardPan(account),
+        syncIds: cardPan(account),
         instrument: currency[account.currencyIsoCode],
         type: 'deposit',
         balance: parseFloat(account.balance),
-        creditLimit: parseFloat(account.loanAmount),
+        creditLimit: parseFloat(account.loanAmount) !== 0 ? parseFloat(account.loanAmount) : 0,
         capitalization: true,
-        startDate: deposit.openingDate,
+        startDate: new Date(deposit.openingDate),
         endDateOffset: offset,
         endDateOffsetInterval: 'day',
         payoffStep: 1,
@@ -82,13 +77,13 @@ export function convertAccounts ({ accounts, deposits, credits }) {
       accList.push({
         id: String(account.id),
         title: account.displayTitle,
-        syncID: cardPan(account),
+        syncIds: cardPan(account),
         instrument: currency[account.currencyIsoCode],
         type: 'loan',
         balance: parseFloat(account.balance),
         creditLimit: parseFloat(account.loanAmount),
         capitalization: true,
-        startDate: credit.openingDate,
+        startDate: new Date(credit.openingDate),
         endDateOffset: offset,
         endDateOffsetInterval: 'day',
         payoffStep: 1,
@@ -105,93 +100,17 @@ export function convertAccounts ({ accounts, deposits, credits }) {
   return accList
 }
 
-export function convertTransaction (apiTransaction, account) {
-  const t = {}
-
-  t.id = String(apiTransaction.id)
-  let amount = parseFloat(apiTransaction.amount)
-  t.date = new Date(apiTransaction.date) / 1000
-  t.incomeBankID = t.id
-  t.outcomeBankID = t.id
-
-  let re = /(\d+|\d+\.\d+) (USD|EUR|RUB|GBP) = (\d+|\d+\.\d+) (USD|EUR|RUB|GBP)/
-  const exch = apiTransaction.event.description.match(re) // Конвертация валют
-
-  re = /Пополнение(.|[\r\n])+Пункт/m
-  const cashIn = apiTransaction.event.description.match(re) // Пополнение наличными
-
-  re = /ВЫДАЧА НАЛИЧНЫХ/
-  const cashOut = apiTransaction.event.description.match(re) // Выдача наличных
-
-  re = /Место совершения транзакции: .+?\S+\\\S+\\(.+\\\S+)/
-  const payee = apiTransaction.event.description.match(re) // Место совершения транзацкии
-
-  if (payee) {
-    t.payee = payee[1].replace('\\', ', ')
-  }
-
-  if (amount < 0) {
-    amount = Math.abs(amount)
-
-    if (exch) {
-      t.opOutcome = Number((amount * exch[3] / exch[1]).toFixed(2))
-      t.opOutcomeInstrument = exch[4]
-    }
-
-    // Перевод между счетами?
-    if (apiTransaction.event.destinationCardOrAccount) {
-      t.incomeAccount = String(apiTransaction.event.destinationCardOrAccount.id)
-      t.income = t.opOutcome ? t.opOutcome : amount
-    } else if (cashOut) { // Снятие наличных?
-      t.incomeAccount = 'cash#' + (exch ? t.opOutcomeInstrument : currency[apiTransaction.account.currencyIsoCode])
-      t.income = amount
-    } else {
-      t.incomeAccount = account.id
-      t.income = 0
-    }
-
-    t.outcomeAccount = account.id
-    t.outcome = amount
-  } else {
-    t.incomeAccount = account.id
-    t.income = amount
-
-    if (exch) {
-      t.opIncome = Number((amount * exch[1] / exch[3]).toFixed(2))
-      t.opIncomeInstrument = exch[2]
-    }
-
-    // Перевод между счетами?
-    if (apiTransaction.event.destinationCardOrAccount) {
-      t.outcomeAccount = String(apiTransaction.event.destinationCardOrAccount.id)
-      t.outcome = t.opIncome ? t.opIncome : amount
-    } else if (cashIn) { // Пополнение наличными?
-      t.outcomeAccount = 'cash#' + (exch ? t.opIncomeInstrument : currency[apiTransaction.account.currencyIsoCode])
-      t.outcome = amount
-    } else {
-      t.outcomeAccount = account.id
-      t.outcome = 0
-    }
-  }
-
-  return t
-}
-
 // Заполенине SyncID
 function cardPan (account) {
-  let pan = []
+  const pan = [account.number]
   const cards = account.cards
 
   for (let i = 0; i < cards.length; i++) {
     const card = cards[i]
 
     if (card.state === 'active') {
-      pan.push(card.number.substr(-4))
+      pan.push(card.number)
     }
-  }
-
-  if (pan.length === 0) {
-    pan = [account.number.substr(-4)]
   }
 
   return pan
@@ -217,4 +136,111 @@ function findCredit (its, id) {
       return it
     }
   }
+}
+
+export function convertTransaction (apiTransaction, account) {
+  const invoice = {
+    sum: parseFloat(apiTransaction.amount),
+    instrument: currency[apiTransaction.event.currencyIsoCode]
+  }
+  const fee = 0
+  const transaction = {
+    movements: [
+      {
+        id: String(apiTransaction.id),
+        account: { id: account.id },
+        invoice: invoice.instrument === account.instrument ? null : invoice,
+        sum: invoice.instrument === account.instrument ? invoice.sum : parseFloat(apiTransaction.amount),
+        fee
+      }
+    ],
+    date: new Date(apiTransaction.date),
+    hold: apiTransaction.state !== 'paid',
+    merchant: null,
+    comment: apiTransaction.comment || null
+  };
+  [
+    parseComments,
+    parseOuterTransfer,
+    parsePayee
+  ].some(parser => parser(transaction, apiTransaction, account, invoice))
+  return transaction
+}
+
+function parseComments (transaction, apiTransaction, account, invoice) {
+  if (![
+    /Сообщение:/i,
+    /Оплата услуг/i
+  ].some(regexp => regexp.test(apiTransaction.event.description))) {
+    return false
+  }
+  const comment = apiTransaction.event.description.match(/.*Сообщение:(\W+).*/i) ||
+    apiTransaction.event.description.match(/.*(Платеж №\d+).*/i)
+  if (comment) {
+    transaction.comment = comment[1].trim() || null
+  }
+  return false
+}
+
+function parseOuterTransfer (transaction, apiTransaction, account, invoice) {
+  if (![
+    /Зачисление средств от СБП/i
+  ].some(regexp => regexp.test(apiTransaction.event.description)) &&
+    ![
+      /Расчеты с/i
+    ].some(regexp => regexp.test(apiTransaction.event.name))) {
+    return false
+  }
+  const title = apiTransaction.event.description.match(/.*Абонент:(\W+)\n.*/i) || apiTransaction.event.name.match(/\(Расчеты с(.+)\)/)
+  if (title) {
+    transaction.merchant = {
+      country: null,
+      city: null,
+      title: title[1].trim(),
+      mcc: null,
+      location: null
+    }
+  } else {
+    transaction.merchant = null
+  }
+  transaction.movements.push({
+    id: null,
+    account: {
+      company: null,
+      instrument: invoice.instrument,
+      syncIds: null,
+      type: 'ccard'
+    },
+    invoice: null,
+    sum: -invoice.sum,
+    fee: 0
+  })
+  return true
+}
+
+function parsePayee (transaction, apiTransaction, account, invoice) {
+  if (![
+    /Место совершения транзакции:/i
+  ].some(regexp => regexp.test(apiTransaction.event.description))) {
+    return false
+  }
+  const payee = apiTransaction.event.description.match(/Место совершения транзакции:(.+),(.+). Дата:(.*)./)
+  if (payee[2]) {
+    transaction.merchant = {
+      country: null,
+      city: payee[1].trim(),
+      title: payee[2].trim(),
+      mcc: null,
+      location: null
+    }
+    const date = payee[3].match(/(\d{2}).(\d{2}).(\d{2,4})\s([\d:]+)/)
+    transaction.date = new Date('20' + date[3] + '-' + date[2] + '-' + date[1] + 'T' + date[4] + 'Z')
+  } else {
+    transaction.merchant = {
+      fullTitle: payee[1].trim(),
+      mcc: null,
+      location: null
+    }
+  }
+  return true
 }
