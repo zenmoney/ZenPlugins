@@ -1,6 +1,6 @@
 import { parse, stringify } from 'querystring'
 import { fetchJson } from '../../common/network'
-import { IncompatibleVersionError } from '../../errors'
+import { IncompatibleVersionError, TemporaryUnavailableError } from '../../errors'
 import { clientId, clientSecret, redirectUri } from './config'
 
 export class AuthError {}
@@ -94,6 +94,9 @@ export async function fetchTransactions (token, { id }, fromDate) {
       throw new AuthError()
     }
     batch = response.body
+    if (batch.message === 'apierror') {
+      throw new TemporaryUnavailableError()
+    }
     transactions.push(...batch)
     skip += batch.length
   } while (batch.length)
