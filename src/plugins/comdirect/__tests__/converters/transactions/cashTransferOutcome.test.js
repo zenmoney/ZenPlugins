@@ -44,7 +44,7 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: {
-          fullTitle: '01Bargeldauszahlung 02Deutsche Bank//Berlin/DE',
+          fullTitle: '01Bargeldauszahlung 02Deutsche Bank//Berlin/DE 03',
           location: null,
           mcc: null
         },
@@ -99,6 +99,52 @@ describe('convertTransaction', () => {
         },
         comment: null
       }
+    ],
+    [
+      {
+        reference: ' ',
+        bookingStatus: 'NOTBOOKED',
+        bookingDate: null,
+        amount: { value: '-400', unit: 'EUR' },
+        remitter: {},
+        deptor: null,
+        creditor: null,
+        valutaDate: null,
+        directDebitCreditorId: null,
+        directDebitMandateId: null,
+        endToEndReference: null,
+        newTransaction: false,
+        remittanceInfo: 'REISEB MUENCHEN-HBF III MUENCHEN DE2021-08-08T14:34:23 ',
+        transactionType: { key: 'ATM_WITHDRAWAL', text: 'ATM withdrawal' }
+      },
+      {
+        hold: false,
+        date: new Date('2021-08-08T14:34:23.000Z'), // Thu Jan 01 1970 01:00:00 GMT+0100 (CET),
+        movements:
+          [
+            {
+              id: null,
+              account: { id: 'account' },
+              invoice: null,
+              sum: -400,
+              fee: 0
+            },
+            {
+              id: null,
+              account: { company: null, instrument: 'EUR', syncIds: null, type: 'cash' },
+              invoice: null,
+              sum: 400,
+              fee: 0
+            }
+          ],
+        merchant: {
+          fullTitle: 'REISEB MUENCHEN-HBF III MUENCHEN DE',
+          location: null,
+          mcc: null
+        },
+        comment: null
+      }
+
     ]
   ])('converts cash transfer outcome', (apiTransaction, transaction) => {
     expect(convertTransaction(apiTransaction, { id: 'account', instrument: 'EUR' })).toEqual(transaction)

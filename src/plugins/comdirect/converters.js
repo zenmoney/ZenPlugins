@@ -72,14 +72,7 @@ const getComment = (apiTransaction) => {
 
 function parseDate (apiTransaction) {
   let date = new Date(apiTransaction.bookingDate)
-  let dateInfo = ''
-  if (apiTransaction.bookingStatus === 'NOTBOOKED') {
-    dateInfo = apiTransaction.remittanceInfo?.match(/(.*)\s(\d{4}-\d{2}-\d{2}T\d+:\d+:\d+)/i)
-    // date = dateInfo ? new Date(dateInfo[2]) : new Date(apiTransaction.bookingDate)
-  } else if (apiTransaction.bookingStatus === 'BOOKED') {
-    dateInfo = apiTransaction.remittanceInfo?.match(/(.*)\s*\d{2}(\d{4}-\d{2}-\d{2}T\d+:\d+:\d+)/i)
-    // date = dateInfo ? new Date(dateInfo[2]) : new Date(apiTransaction.bookingDate)
-  }
+  const dateInfo = apiTransaction.remittanceInfo?.match(/(.*)\s*(\d{4}-\d{2}-\d{2}T\d+:\d+:\d+)/i)
   if (dateInfo && dateInfo[2]) {
     date = new Date(dateInfo[2] + '.000Z')
   }
@@ -171,15 +164,7 @@ function parsePayee (transaction, apiTransaction) {
       mcc: null
     }
   }
-  let remittanceInfo = ''
-  if (apiTransaction.bookingStatus === 'NOTBOOKED') {
-    remittanceInfo = apiTransaction.remittanceInfo?.match(/(.*)\s((\d{4}-\d{2}-\d{2})T\d+:\d+:\d+)/i)
-    transaction.comment = null
-  } else if (apiTransaction.bookingStatus === 'BOOKED') {
-    remittanceInfo = apiTransaction.remittanceInfo?.match(/(.*)\s*\d{2}(\d{4}-\d{2}-\d{2}T\d+:\d+:\d+)/i)
-  } else {
-    remittanceInfo = apiTransaction.remittanceInfo?.match(/^\d{2}(.*)\/\/.*/i)
-  }
+  const remittanceInfo = apiTransaction.remittanceInfo?.match(/(.*)\s*((\d{4}-\d{2}-\d{2})T\d+:\d+:\d+)/i)
   if (remittanceInfo) {
     transaction.merchant = {
       fullTitle: remittanceInfo[1].trim(),

@@ -255,7 +255,7 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: {
-          fullTitle: '01SUMUP .DOAN RESTAURANT -//BERLIN/D',
+          fullTitle: '01SUMUP .DOAN RESTAURANT -//BERLIN/D02',
           location: null,
           mcc: null
         },
