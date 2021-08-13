@@ -1,4 +1,4 @@
-import { defaultsDeep, flatMap } from 'lodash'
+import { defaultsDeep } from 'lodash'
 import { fetchJson } from '../../common/network'
 import { generateRandomString } from '../../common/utils'
 import { BankMessageError, InvalidOtpCodeError } from '../../errors'
@@ -110,7 +110,10 @@ export async function fetchAccounts (sessionToken) {
   const cardAccounts = accounts.cardAccount
 
   for (let i = 0; i < cardAccounts.length; i++) {
-    cardAccounts[i].balance = await fetchCardAccountBalance(sessionToken, cardAccounts[i].cards[0].cardHash)
+    const cardHash = cardAccounts[i].cards?.[0].cardHash
+    if (cardHash) {
+      cardAccounts[i].balance = await fetchCardAccountBalance(sessionToken, cardHash)
+    }
   }
 
   return accounts
@@ -131,98 +134,6 @@ export async function fetchCardAccountBalance (sessionToken, cardHash) {
   return Number.parseFloat(accountBalance)
 }
 
-export async function fetchCardTransactions (sessionToken, accounts, fromDate, toDate) {
-  console.log('Загрузка списка транзакций по картам...')
-  toDate = toDate || new Date()
-  const responses = await Promise.all(flatMap(accounts, (account) => {
-    return fetchApiJson(CARD_STATEMENT_URL, {
-      method: 'POST',
-      headers: { session_token: sessionToken },
-      body: {
-        accountType: account.accountType,
-        cardHash: account.cardHash,
-        currencyCode: account.currencyCode,
-        internalAccountId: account.id,
-        reportData: {
-          from: fromDate.getTime(),
-          till: toDate.getTime()
-        },
-        rkcCode: account.rkcCode
-      }
-    }, response => response.body, response => ({ accountNumber: account.id, ...response.body }), message => new TemporaryError(message))
-  }))
-
-  const transactions = flatMap(responses, response => {
-    return flatMap(response.operations, op => {
-      const operationSign = Number.parseInt(op.operationSign)
-      const isProcessed = !!op.transactionDate
-      return {
-        id: op.transactionAuthCode,
-        accountId: response.accountNumber,
-        operationName: op.operationName || '',
-        operationDate: isProcessed ? new Date(op.transactionDate) : null,
-        operationCurrency: isProcessed ? op.operationCurrency : op.transactionCurrency,
-        operationAmount: (isProcessed ? op.operationAmount : op.transactionAmount) * operationSign,
-        transactionDate: new Date(op.operationDate),
-        transactionAmount: (isProcessed ? op.transactionAmount : op.operationAmount) * operationSign,
-        transactionCurrency: isProcessed ? op.transactionCurrency : op.operationCurrency,
-        merchant: op.operationPlace || null,
-        mcc: op.mcc || op.merchantId || null,
-        hold: !isProcessed
-      }
-    })
-  })
-
-  const filteredTransactions = transactions.filter(tr => tr.operationAmount !== 0 && tr.transactionDate >= fromDate)
-
-  console.log(`Загружено ${filteredTransactions.length} операций.`)
-
-  return filteredTransactions
-}
-
-export async function fetchOperations (sessionToken, accounts, fromDate, toDate) {
-  console.log('Загрузка списка транзакций по депозитам...')
-  toDate = toDate || new Date()
-  const responses = await Promise.all(flatMap(accounts, (account) => {
-    const requestURL = getRequestURL(account.type)
-    return fetchApiJson(requestURL, {
-      method: 'POST',
-      headers: { session_token: sessionToken },
-      body: {
-        accountType: account.accountType,
-        currencyCode: account.currencyCode,
-        internalAccountId: account.id,
-        reportData: {
-          from: fromDate.getTime(),
-          till: toDate.getTime()
-        }
-      }
-    }, response => response.body, res => res.body, message => new TemporaryError(message))
-  }))
-
-  const operations = flatMap(responses, response => {
-    return flatMap(response.operations, op => {
-      const operationSign = Number.parseInt(op.operationSign)
-      return {
-        id: op.transactionAuthCode,
-        accountId: response.accountNumber,
-        operationName: op.operationName,
-        operationDate: new Date(op.transactionDate),
-        operationCurrency: op.operationCurrency,
-        transactionCurrency: op.transactionCurrency,
-        operationAmount: op.operationAmount * operationSign,
-        hold: !!op.transactionDate
-      }
-    })
-  })
-
-  const filteredOperations = operations.filter(op => op !== undefined && op.operationAmount !== 0 && op.operationDate >= fromDate)
-
-  console.log(`Загружено ${filteredOperations.length} операций.`)
-
-  return filteredOperations
-}
-
 function getRequestURL (accountType) {
   switch (accountType) {
     case 'deposit':
@@ -233,5 +144,50 @@ function getRequestURL (accountType) {
       return CREDIT_STATEMENT_URL
     default:
       return new TemporaryError('Unknown account type')
+  }
+}
+
+export async function fetchTransactions (sessionToken, product, fromDate, toDate) {
+  switch (product.type) {
+    case 'ccard': {
+      const response = await fetchApiJson(CARD_STATEMENT_URL, {
+        method: 'POST',
+        headers: { session_token: sessionToken },
+        body: {
+          accountType: product.accountType, // Нужен ли???, в запросе "body: { accountType: undefined, cardHash: '45BOYg ..." все работает
+          cardHash: product.cardHash,
+          currencyCode: product.currencyCode,
+          internalAccountId: product.id,
+          reportData: {
+            from: fromDate.getTime(),
+            till: toDate.getTime()
+          },
+          rkcCode: product.rkcCode
+        }
+      }, response => response.body.operations, response => response.body.operations, message => new TemporaryError(message))
+      return response.body?.operations || []
+    }
+    case 'deposit':
+    case 'checking':
+    case 'loan': {
+      const requestURL = getRequestURL(product.type)
+      const response = await fetchApiJson(requestURL, {
+        method: 'POST',
+        headers: { session_token: sessionToken },
+        body: {
+          accountType: product.accountType,
+          currencyCode: product.currencyCode,
+          internalAccountId: product.id,
+          reportData: {
+            from: fromDate.getTime(),
+            till: toDate.getTime()
+          }
+        }
+      }, response => response.body.operations, res => res.body.operations, message => new TemporaryError(message))
+      return response.body?.operations
+    }
+    default: {
+      console.assert(false, 'unknown account type')
+    }
   }
 }
