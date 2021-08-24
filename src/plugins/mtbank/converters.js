@@ -5,7 +5,7 @@ export function convertAccount (json) {
       type: 'card',
       title: json.description,
       instrument: (json.cards && json.cards.length > 0) ? json.cards[0].cardCurr : json.cardAccounts[0].currencyCode,
-      balance: Math.round((Number.parseFloat(json.avlBalance) - Number.parseFloat(json.over) + Number.parseFloat(json.ownFunds)) * 100) / 100,
+      balance: Math.round((Number.parseFloat(json.avlBalance) - Number.parseFloat(json.over)) * 100) / 100,
       syncID: [],
       productType: json.productType,
       creditLimit: Number.parseFloat(json.over !== null ? json.over : 0)
