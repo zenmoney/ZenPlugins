@@ -1,4 +1,4 @@
-import { convertTransaction, convertTransactions } from '../../../converters'
+import { convertTransaction } from '../../../converters'
 
 describe('convertTransaction', () => {
   it.each([
@@ -197,47 +197,6 @@ describe('convertTransaction', () => {
 
   it.each([
     [
-      [{
-        info: {
-          id: 912719894,
-          operationType: 'account_transaction',
-          skbPaymentOperationType: null,
-          subType: 'bonus',
-          hasOfdReceipt: false
-        },
-        view: {
-          operationIcon: 'https://ib.delo.ru/json/icon/394009712v1',
-          descriptions: {
-            operationDescription: 'Компенсация бонусами',
-            productDescription: 'Счет Mastercard Unembossed',
-            productType: 'На счет карты'
-          },
-          amounts: {
-            amount: 1408.48,
-            currency: 'RUB',
-            feeAmount: 0,
-            feeCurrency: 'RUB',
-            bonusAmount: 0,
-            bonusCurrency: 'RUB',
-            cashBackAmount: 0,
-            cashBackCurrency: 'RUB'
-          },
-          mainRequisite: null,
-          actions: ['sendCheck', 'print'],
-          category: {
-            id: 394010366,
-            internalCode: 'replenishment',
-            name: 'Пополнения'
-          },
-          state: 'processed',
-          dateCreated: '2020-12-01T11:43:44+05:00',
-          payWallet: null,
-          direction: 'credit',
-          comment: null,
-          productAccount: '40817810700015912174',
-          productCardId: null
-        }
-      },
       {
         info: {
           id: 912618150,
@@ -282,11 +241,11 @@ describe('convertTransaction', () => {
           productAccount: '40817810827415912174',
           productCardId: 626698911
         }
-      }],
+      },
       {
         '40817810827415912174': { id: 'account', instrument: 'RUB' }
       },
-      [{
+      {
         comment: null,
         date: new Date('2020-12-01T09:49:25+05:00'),
         hold: false,
@@ -297,16 +256,281 @@ describe('convertTransaction', () => {
           mcc: 5411,
           title: 'Krasniy yar KYa11'
         },
-        movements: [{
-          account: { id: 'account' },
-          fee: 0,
-          id: '912618150',
-          invoice: null,
-          sum: -62.49
-        }]
-      }]
+        movements: [
+          {
+            account: { id: 'account' },
+            fee: 0,
+            id: '912618150',
+            invoice: null,
+            sum: -62.49
+          }
+        ]
+      }
+    ],
+    [
+      {
+        info:
+          {
+            id: 898264024,
+            operationType: 'account_transaction',
+            skbPaymentOperationType: null,
+            subType: 'fee-out',
+            hasOfdReceipt: false
+          },
+        view:
+          {
+            operationIcon: 'https://ib.delo.ru/json/icon/394009721v1',
+            descriptions:
+              {
+                operationDescription: 'Списание комиссии',
+                productDescription: 'Счет Mastercard Unembossed',
+                productType: 'Со счета карты'
+              },
+            amounts:
+              {
+                amount: 30,
+                currency: 'RUB',
+                feeAmount: 0,
+                feeCurrency: 'RUB',
+                bonusAmount: 0,
+                bonusCurrency: 'RUB',
+                cashBackAmount: 0,
+                cashBackCurrency: 'RUB'
+              },
+            mainRequisite: null,
+            category: { id: 394010370, internalCode: 'services', name: 'Услуги банка' },
+            state: 'processed',
+            dateCreated: '2020-11-01T23:37:13+05:00',
+            payWallet: null,
+            direction: 'debit',
+            comment: null,
+            productAccount: '40817810624615409538',
+            productCardId: null
+          }
+      },
+      {
+        '40817810624615409538': { id: 'account', instrument: 'RUB' }
+      },
+      {
+        comment: 'Списание комиссии',
+        date: new Date('2020-11-01T23:37:13+05:00'),
+        hold: false,
+        merchant: null,
+        movements: [
+          {
+            account: { id: 'account' },
+            fee: 0,
+            id: '898264024',
+            invoice: null,
+            sum: -30
+          }
+        ]
+      }
+    ],
+    [
+      {
+        info:
+          {
+            id: 1066231277,
+            operationType: 'payment',
+            skbPaymentOperationType: 'external_corporate',
+            subType: 'external_corporate',
+            hasOfdReceipt: false
+          },
+        view:
+          {
+            operationIcon: 'https://ib.delo.ru/json/icon/312846344v2',
+            descriptions:
+              {
+                operationDescription: 'ООО УК "Каменный цветок"',
+                productDescription: 'Счет Visa Classic',
+                productType: 'Со счета карты'
+              },
+            amounts:
+              {
+                amount: 1236.99,
+                currency: 'RUB',
+                feeAmount: 0,
+                feeCurrency: 'RUB',
+                bonusAmount: 0,
+                bonusCurrency: null,
+                cashBackAmount: 0,
+                cashBackCurrency: null
+              },
+            mainRequisite: null,
+            category: { id: 394010367, internalCode: 'transfer', name: 'Переводы' },
+            state: 'processed',
+            dateCreated: '2021-07-23T08:44:38+05:00',
+            payWallet: false,
+            direction: 'debit',
+            comment: null,
+            productAccount: '40817810711724042935',
+            productCardId: null
+          }
+      },
+      {
+        '40817810711724042935': { id: 'account', instrument: 'RUB' }
+      },
+      {
+        date: new Date('2021-07-23T08:44:38+05:00'),
+        hold: false,
+        comment: null,
+        merchant: {
+          city: null,
+          country: null,
+          location: null,
+          mcc: null,
+          title: 'ООО УК "Каменный цветок"'
+        },
+        movements: [
+          {
+            id: '1066231277',
+            account: { id: 'account' },
+            invoice: null,
+            sum: -1236.99,
+            fee: 0
+          }
+        ]
+      }
+    ],
+    [
+      {
+        info:
+          {
+            id: 1059219063,
+            operationType: 'payment',
+            skbPaymentOperationType: 'service_payment',
+            subType: 'service_payment',
+            hasOfdReceipt: false
+          },
+        view:
+          {
+            operationIcon: 'https://ib.delo.ru/json/icon/6179951v1',
+            descriptions:
+              {
+                operationDescription: 'МТС',
+                productDescription: 'Счет Visa Classic',
+                productType: 'Со счета карты'
+              },
+            amounts:
+              {
+                amount: 370.34,
+                currency: 'RUB',
+                feeAmount: 0,
+                feeCurrency: 'RUB',
+                bonusAmount: 0,
+                bonusCurrency: null,
+                cashBackAmount: 0,
+                cashBackCurrency: null
+              },
+            mainRequisite: null,
+            category:
+              {
+                id: 394010350,
+                internalCode: 'communication',
+                name: 'Связь, интернет'
+              },
+            state: 'processed',
+            dateCreated: '2021-07-13T23:03:32+05:00',
+            payWallet: false,
+            direction: 'debit',
+            comment: null,
+            productAccount: '40817810711724042935',
+            productCardId: null
+          }
+      },
+      {
+        '40817810711724042935': { id: 'account', instrument: 'RUB' }
+      },
+      {
+        date: new Date('2021-07-13T23:03:32+05:00'),
+        hold: false,
+        comment: null,
+        merchant: {
+          city: null,
+          country: null,
+          location: null,
+          mcc: null,
+          title: 'МТС'
+        },
+        movements: [
+          {
+            id: '1059219063',
+            account: { id: 'account' },
+            invoice: null,
+            sum: -370.34,
+            fee: 0
+          }
+        ]
+      }
+    ],
+    [
+      {
+        info:
+          {
+            id: 1034997491,
+            operationType: 'payment',
+            skbPaymentOperationType: 'external_budgetary',
+            subType: 'external_budgetary',
+            hasOfdReceipt: false
+          },
+        view:
+          {
+            operationIcon: 'https://ib.delo.ru/json/icon/1056698187v0',
+            descriptions:
+              {
+                operationDescription: 'Финансовое управление Администрации Сысертского городского округа (МАДОУ №38)',
+                productDescription: 'Счет Visa Classic',
+                productType: 'Со счета карты'
+              },
+            amounts:
+              {
+                amount: 1501.82,
+                currency: 'RUB',
+                feeAmount: 0,
+                feeCurrency: 'RUB',
+                bonusAmount: 0,
+                bonusCurrency: null,
+                cashBackAmount: 0,
+                cashBackCurrency: null
+              },
+            mainRequisite: null,
+            category: { id: 394010364, internalCode: 'budget', name: 'Бюджет РФ' },
+            state: 'processed',
+            dateCreated: '2021-06-09T14:43:37+05:00',
+            payWallet: false,
+            direction: 'debit',
+            comment: null,
+            productAccount: '40817810711724042935',
+            productCardId: null
+          }
+      },
+      {
+        '40817810711724042935': { id: 'account', instrument: 'RUB' }
+      },
+      {
+        date: new Date('2021-06-09T14:43:37+05:00'),
+        hold: false,
+        comment: null,
+        merchant: {
+          city: null,
+          country: null,
+          location: null,
+          mcc: null,
+          title: 'Финансовое управление Администрации Сысертского городского округа (МАДОУ №38)'
+        },
+        movements: [
+          {
+            id: '1034997491',
+            account: { id: 'account' },
+            invoice: null,
+            sum: -1501.82,
+            fee: 0
+          }
+        ]
+      }
     ]
-  ])('should convert usual payment', (rawTransaction, accountsById, transaction) => {
-    expect(convertTransactions(rawTransaction, accountsById)).toEqual(transaction)
+  ])('should convert outcome', (rawTransaction, accountsById, transaction) => {
+    expect(convertTransaction(rawTransaction, accountsById)).toEqual(transaction)
   })
 })

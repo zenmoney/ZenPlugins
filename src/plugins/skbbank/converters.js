@@ -189,13 +189,7 @@ export function convertTransaction (rawTransaction, accountsById) {
   const transaction = {
     date: new Date(rawTransaction.view.dateCreated),
     hold: rawTransaction.view.state !== 'processed',
-    merchant: {
-      country: rawTransaction.details?.purpose?.slice(-3) || null,
-      city: rawTransaction.details?.terminal?.city || null,
-      title: rawTransaction.view.descriptions.operationDescription || rawTransaction.view.mainRequisite,
-      mcc: null,
-      location: null
-    },
+    merchant: null,
     movements: [
       {
         id: rawTransaction.info.id.toString(),
@@ -208,15 +202,11 @@ export function convertTransaction (rawTransaction, accountsById) {
     ],
     comment: null
   }
-  if (rawTransaction.view.mainRequisite) {
-    const mcc = rawTransaction.view.mainRequisite.match('МСС: (\\d+)')
-    if (mcc) {
-      transaction.merchant.mcc = Number(mcc[1])
-    }
-  }
   ;[
     parseInnerTransfer,
-    parseOuterTransfer
+    parseOuterTransfer,
+    parseCashTransfer,
+    parsePayee
   ].some(parser => parser(rawTransaction, transaction, invoice, accountsById))
 
   return transaction
@@ -238,12 +228,11 @@ function parseInnerTransfer (rawTransaction, transaction, invoice, accountsById)
   if (!account1 || !account2) {
     transaction.movements[0].sum = !account2 ? -invoice.sum : invoice.sum
     transaction.comment = rawTransaction.view.descriptions.operationDescription
-    transaction.merchant = null
     transaction.movements.push(
       {
         id: null,
         account: {
-          type: null,
+          type: rawTransaction.info.operationType === 'account_transaction' ? 'checking' : 'ccard',
           instrument: invoice.instrument,
           syncIds: !account1 ? [rawTransaction.details.payerAccount] : !account2 ? [rawTransaction.details.payeeAccount] : null,
           company: null
@@ -267,24 +256,26 @@ function parseInnerTransfer (rawTransaction, transaction, invoice, accountsById)
       fee: 0
     })
 
-  return false
+  return true
 }
 
 function parseOuterTransfer (rawTransaction, transaction, invoice, accountsById) {
   for (const pattern of [
     /p2p/i,
     /sbp_in/i,
-    /transfer-in/i
+    /transfer-in/i,
+    /internal_physical_phone_number/i,
+    /external_sbp_c2c/i,
+    /internal_physical_card/i
   ]) {
-    const match = rawTransaction.info.subType.match(pattern)
+    const match = rawTransaction.info.subType?.match(pattern)
     if (match) {
       transaction.comment = rawTransaction.view.comment || rawTransaction.view.mainRequisite
-      transaction.merchant = null
       transaction.movements.push(
         {
           id: null,
           account: {
-            type: null,
+            type: rawTransaction.info.operationType === 'account_transaction' ? 'checking' : 'ccard',
             instrument: invoice.instrument,
             syncIds: null,
             company: null
@@ -297,9 +288,70 @@ function parseOuterTransfer (rawTransaction, transaction, invoice, accountsById)
         transaction.comment = rawTransaction.view.descriptions.operationDescription
         transaction.movements[1].account.syncIds = [rawTransaction.details['payer-card-mask-pan']]
       } else if (rawTransaction.info.subType === 'transfer-in') {
-        transaction.comment = rawTransaction.view.descriptions.productType
+        transaction.comment = rawTransaction.view.descriptions.operationDescription || rawTransaction.view.descriptions.productType
       }
       return true
+    }
+  }
+  return false
+}
+
+function parseCashTransfer (rawTransaction, transaction, invoice, accountsById) {
+  for (const pattern of [
+    /cash-in/i,
+    /cash-out/i
+  ]) {
+    const match = rawTransaction.info.subType?.match(pattern)
+    if (match) {
+      transaction.movements.push({
+        id: null,
+        account: {
+          type: 'cash',
+          instrument: invoice.instrument,
+          company: null,
+          syncIds: null
+        },
+        invoice: null,
+        sum: -invoice.sum,
+        fee: 0
+      })
+    }
+  }
+  return false
+}
+
+function parsePayee (rawTransaction, transaction, invoice, accountsById) {
+  for (const pattern of [
+    /cash-back/i,
+    /bonus/i,
+    /interest/i,
+    /fee-out/i
+  ]) {
+    const match = rawTransaction.info.subType?.match(pattern)
+    if (match) {
+      transaction.comment = rawTransaction.view.descriptions.operationDescription
+      return false
+    }
+  }
+
+  let title = rawTransaction.view.descriptions.operationDescription || rawTransaction.view.mainRequisite
+  const titleCash = title.match(/(Внесение|Снятие) наличных (.*)/)
+  if (titleCash) {
+    title = titleCash[2]
+  }
+  if (title) {
+    transaction.merchant = {
+      country: rawTransaction.details?.purpose?.slice(-3) || null,
+      city: rawTransaction.details?.terminal?.city || null,
+      title: title,
+      mcc: null,
+      location: null
+    }
+    if (rawTransaction.view.mainRequisite) {
+      const mcc = rawTransaction.view.mainRequisite.match('МСС: (\\d+)')
+      if (mcc) {
+        transaction.merchant.mcc = Number(mcc[1])
+      }
     }
   }
   return false

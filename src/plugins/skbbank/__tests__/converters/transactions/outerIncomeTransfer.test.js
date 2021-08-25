@@ -68,7 +68,7 @@ describe('convertTransaction', () => {
           {
             id: null,
             account: {
-              type: null,
+              type: 'checking',
               instrument: 'RUB',
               syncIds: null,
               company: null
@@ -269,7 +269,7 @@ describe('convertTransaction', () => {
           {
             id: null,
             account: {
-              type: null,
+              type: 'ccard',
               instrument: 'RUB',
               syncIds: [
                 '427681******4617'
@@ -336,7 +336,7 @@ describe('convertTransaction', () => {
       {
         date: new Date('2020-07-13T05:47:02+05:00'),
         hold: false,
-        comment: 'На счет',
+        comment: 'ВАСИЛЬЕВ ВАСИЛИЙ ВАСИЛЬЕВИЧ',
         merchant: null,
         movements: [
           {
@@ -349,13 +349,90 @@ describe('convertTransaction', () => {
           {
             id: null,
             account: {
-              type: null,
+              type: 'checking',
               instrument: 'RUB',
               syncIds: null,
               company: null
             },
             invoice: null,
             sum: -6000,
+            fee: 0
+          }
+        ]
+      }
+    ],
+    [
+      {
+        info:
+          {
+            id: 1057749001,
+            operationType: 'account_transaction',
+            skbPaymentOperationType: null,
+            subType: 'transfer-in',
+            hasOfdReceipt: false
+          },
+        view:
+          {
+            operationIcon: 'https://ib.delo.ru/json/icon/1056698187v0',
+            descriptions:
+              {
+                operationDescription: 'ГУ-СВЕРДЛОВСКОЕ РО ФОНДА СОЦИАЛЬНОГО СТРАХОВАНИЯ РОССИЙСКОЙ ФЕДЕРАЦИИ (ГУ-СВЕРДЛОВСКОЕ РО ФОНДА СОЦИАЛЬНОГО СТРАХОВАНИЯ РОССИЙСКОЙ ФЕДЕРАЦИИ)',
+                productDescription: 'Счет Visa Classic',
+                productType: 'На счет карты'
+              },
+            amounts:
+              {
+                amount: 5428.6,
+                currency: 'RUB',
+                feeAmount: 0,
+                feeCurrency: 'RUB',
+                bonusAmount: 0,
+                bonusCurrency: 'RUB',
+                cashBackAmount: 0,
+                cashBackCurrency: 'RUB'
+              },
+            mainRequisite: null,
+            category:
+              {
+                id: 394010366,
+                internalCode: 'replenishment',
+                name: 'Пополнения'
+              },
+            state: 'processed',
+            dateCreated: '2021-07-12T11:09:46+05:00',
+            payWallet: null,
+            direction: 'credit',
+            comment: null,
+            productAccount: '40817810711724042935',
+            productCardId: null
+          }
+      },
+      {
+        '40817810711724042935': { id: 'account', instrument: 'RUB' }
+      },
+      {
+        comment: 'ГУ-СВЕРДЛОВСКОЕ РО ФОНДА СОЦИАЛЬНОГО СТРАХОВАНИЯ РОССИЙСКОЙ ФЕДЕРАЦИИ (ГУ-СВЕРДЛОВСКОЕ РО ФОНДА СОЦИАЛЬНОГО СТРАХОВАНИЯ РОССИЙСКОЙ ФЕДЕРАЦИИ)',
+        date: new Date('2021-07-12T11:09:46+05:00'),
+        hold: false,
+        merchant: null,
+        movements: [
+          {
+            account: { id: 'account' },
+            fee: 0,
+            id: '1057749001',
+            invoice: null,
+            sum: 5428.6
+          },
+          {
+            id: null,
+            account: {
+              type: 'checking',
+              instrument: 'RUB',
+              syncIds: null,
+              company: null
+            },
+            invoice: null,
+            sum: -5428.6,
             fee: 0
           }
         ]
@@ -459,7 +536,7 @@ describe('convertTransaction', () => {
           {
             id: null,
             account: {
-              type: null,
+              type: 'checking',
               instrument: 'RUB',
               syncIds: [
                 '42306810925701652119'
