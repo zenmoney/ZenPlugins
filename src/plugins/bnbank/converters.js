@@ -146,10 +146,10 @@ function getMovement (json, account) {
 }
 
 function parseCash (transaction, json) {
-  if (json.operationType === 6 ||
+  if (json.operationType === 6 || (!!json.operationName && (
     json.operationName.indexOf('наличных') > 0 ||
     json.operationName.indexOf('Снятие денег со счета') > 0 ||
-    json.operationName.indexOf('Пополнение наличными') > 0) {
+    json.operationName.indexOf('Пополнение наличными') > 0))) {
     // добавим вторую часть перевода
     transaction.movements.push({
       id: null,
