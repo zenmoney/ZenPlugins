@@ -179,6 +179,145 @@ describe('convertAccount', () => {
           'BY46MTBK30140008999900089237M'
         ]
       }
+    ],
+    [
+      {
+        productType: 'PC',
+        accountId: 'BY08MTBK30140008999900559572',
+        id: 1,
+        productCode: 'BY08MTBK30140008999900559572|PC',
+        show: true,
+        variationId: 'CRD.5702',
+        contractCardCode: '1158.1406544095',
+        accruedInterest: null,
+        avlBalance: '408.33',
+        avlLimit: '355.25',
+        cardAccounts:
+          [
+            {
+              accType: null,
+              accountId: 'BY08MTBK30140008999900559572',
+              accountIdenType: 'IBN',
+              availableBalance: '408.33',
+              contractCode: '1158.1406544095',
+              currencyCode: 'BYN',
+              isArest: false,
+              productType: 'PC'
+            }
+          ],
+        cardContract:
+          [
+            {
+              productType: 'MTBANK_CARD',
+              closeDate: '2023-08-31',
+              contractNum: '32472991',
+              openDate: '2021-01-11',
+              cardTerm: '08/23',
+              rateBal: null,
+              servicePaySum: null,
+              servicePayTerm: null,
+              smsNotification: null,
+              tariffPlan: 'Халва MAX instant'
+            }
+          ],
+        cards:
+          [
+            {
+              blockReason: '',
+              cardCurr: 'BYN',
+              commisDate: null,
+              commisSum: null,
+              description: 'MasterCard World 3Y',
+              embossedName: 'KIRIL RADYNO',
+              isOfAccntHolder: '1',
+              limits: [],
+              mainCard: '1',
+              over: '403.88',
+              pan: '535104_7450',
+              smsNotification: '0',
+              status: 'A',
+              term: '08/23',
+              type: 'MasterCard World 3Y',
+              vpan: '1453510407883964',
+              rbs: '4346272',
+              pinPhoneNumber: '+375296919126',
+              corpCard: false,
+              cardHolder: true
+            }
+          ],
+        debtPayment: null,
+        debtPaymentSumCom: null,
+        description: 'Халва MAX instant',
+        gracePeriodAvalDays: null,
+        gracePeriodEnd: null,
+        gracePeriodLength: null,
+        gracePeriodOutRateCashless: null,
+        gracePeriodRateCashless: null,
+        gracePeriodStart: null,
+        isActive: true,
+        isOverdraft: true,
+        loanContractDate: null,
+        loanContractNumber: null,
+        loanNextPaymentAmmount: null,
+        loanNextPaymentDate: null,
+        minPaymentFee: null,
+        minPaymentMainDebt: null,
+        minPaymentOverFee: null,
+        minPaymentOverMainDebt: null,
+        minPaymentOverPer: null,
+        minPaymentPenalty: null,
+        minPaymentPer: null,
+        minPaymentStandardOper: null,
+        minPaymentStandardOperPer: null,
+        minPaymentStateDue: null,
+        minPaymentUBS: null,
+        over: '1450',
+        overStandardOperationRate: null,
+        overdueDebts: false,
+        isAvailableAddInstallments: null,
+        ownFunds: '53.08',
+        points: '0',
+        pointsDate: null,
+        productIdenType: 'CRP',
+        rate: null,
+        rateAvalInstalment: null,
+        rateCash: null,
+        rateCashHistory: null,
+        rateCashless: null,
+        rateCashlessHistory: null,
+        rateChangingHistory: null,
+        rateExpirPayment: null,
+        standardOperationRate: null,
+        overCashlessOperationsRate: null,
+        overCashOperationsRate: null,
+        loanContractDateTo: null,
+        addInstallmentsRate: null,
+        nameOfRateForAddInstallments: null,
+        cashLimitAmount: null,
+        rateStandartOperation: null,
+        canTurnOnCash: null,
+        avlLimitCash: null,
+        limitOverStandartOperation: null,
+        floatRateRatio: null,
+        overnightRateRatio: null,
+        installmentTerm: null,
+        cashWithdrawalRateRatio: null
+      },
+      {
+        id: 'BY08MTBK30140008999900559572',
+        type: 'card',
+        title: 'Халва MAX instant',
+        instrument: 'BYN',
+        balance: -1041.67,
+        syncID:
+          [
+            'BY08MTBK30140008999900559572',
+            'BY08MTBK30140008999900559572M',
+            '7450'
+          ],
+        productType: 'PC',
+        creditLimit: 1450
+      }
     ]
   ])('converts account', (apiAccount, account) => {
     expect(convertAccount(apiAccount)).toEqual(account)
