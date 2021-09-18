@@ -4,7 +4,7 @@ import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
 const MS_PER_DAY = 1000 * 60 * 60 * 24
 const md5 = new MD5()
 
-export function processAccounts (json) {
+export function convertAccounts (json) {
   const accounts = []
   const cards = []
   const credits = []
@@ -43,10 +43,10 @@ function creditCardsProcessing (cards, credits) {
   }
 
   for (const card of cards) {
-    const linkedCreditIndex = credits.findIndex(credit => card.id === credit.id)
+    const linkedCreditIndex = credits.findIndex(credit => card.account.id === credit.account.id)
     if (linkedCreditIndex >= 0) {
-      card.creditLimit = credits[linkedCreditIndex].limit
-      card.balance -= card.creditLimit
+      card.account.creditLimit = credits[linkedCreditIndex].account.limit
+      card.account.balance -= card.account.creditLimit
       credits.splice(linkedCreditIndex, 1)
     }
   }
@@ -91,7 +91,7 @@ function parseCreditAccount (apiAccount) {
       instrument: codeToCurrencyLookup[apiAccount.currency],
       syncIds: [apiAccount.internalAccountId],
       balance: Number.parseFloat(apiAccount.balanceAmount),
-      limit: Number.parseFloat(apiAccount.limit),
+      limit: Number.parseFloat(apiAccount.limit) || 0,
       startDate: new Date(apiAccount.openDate),
       startBalance: Number.parseFloat(apiAccount.balanceAmount),
       capitalization: true,
@@ -140,7 +140,7 @@ function parseCardAccount (apiAccount) {
     product: {
       id: apiAccount.internalAccountId,
       cardHash: card.cardHash,
-      type: 'ccard',
+      accountType: 'ccard',
       currencyCode: apiAccount.currency,
       rkcCode: apiAccount.rkcCode
     },

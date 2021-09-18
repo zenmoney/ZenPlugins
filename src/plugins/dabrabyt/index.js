@@ -1,14 +1,16 @@
 import { sortBy } from 'lodash'
 import { fetchAccounts, fetchTransactions, login } from './api' // fetchCardTransactions, fetchOperations,
-import { convertTransaction, processAccounts } from './converters'
+import { convertTransaction, convertAccounts } from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
   toDate = toDate || new Date()
   const token = await login(preferences.login, preferences.password)
   const transactions = []
-  const accounts = processAccounts(await fetchAccounts(token))
-    .filter(account => account !== null && !ZenMoney.isAccountSkipped(account))
-  await Promise.all(accounts.map(async ({ product, account }) => {
+  const accounts = []
+  const accountsData = convertAccounts(await fetchAccounts(token))
+    .filter(account => account.account !== null)
+  await Promise.all(accountsData.map(async ({ product, account }) => {
+    accounts.push(account)
     if (ZenMoney.isAccountSkipped(account.id)) {
       return
     }
@@ -22,7 +24,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   }))
 
   return {
-    accounts: accounts,
+    accounts,
     transactions: sortBy(transactions, transaction => transaction.date)
   }
 }
