@@ -15,6 +15,9 @@ function getInvoice (apiTransaction) {
 
 const converter = (apiTransaction, mapContractToAccount = {}, accountsById) => {
   const invoice = getInvoice(apiTransaction)
+  if (!invoice || !invoice.sum) {
+    return null
+  }
   const sign = apiTransaction.money.income ? 1 : -1
   const accountId = resolveAccountId(apiTransaction, mapContractToAccount)
   const transaction = {
