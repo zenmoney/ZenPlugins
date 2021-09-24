@@ -351,6 +351,7 @@ describe('processAccounts', () => {
           product: {
             id: '15740000155',
             accountType: '0',
+            type: 'deposit',
             currencyCode: '840'
           },
           account: {
@@ -376,6 +377,7 @@ describe('processAccounts', () => {
           product: {
             id: '15680000738',
             accountType: '0',
+            type: 'deposit',
             currencyCode: '933'
           },
           account: {
@@ -401,6 +403,7 @@ describe('processAccounts', () => {
           product: {
             id: '1030004194',
             accountType: '5',
+            type: 'checking',
             currencyCode: '840'
           },
           account: {
@@ -423,6 +426,7 @@ describe('processAccounts', () => {
           product: {
             id: '1030004645',
             accountType: '5',
+            type: 'checking',
             currencyCode: '643'
           },
           account: {
@@ -445,6 +449,7 @@ describe('processAccounts', () => {
           product: {
             id: '0030009044',
             accountType: '5',
+            type: 'checking',
             currencyCode: '933'
           },
           account: {
@@ -467,7 +472,8 @@ describe('processAccounts', () => {
           product: {
             id: '5010002939',
             cardHash: 'SfqwCdDKhPV9RICHwbbzwXA1Kbaox-d_lL8Tw0vMxlgT1Wz_-MrvYfinXOvwhiSAAx-Aj7jY24CJ96XOtIL8AQ',
-            accountType: 'ccard',
+            accountType: '1',
+            type: 'ccard',
             currencyCode: '933',
             rkcCode: '1'
           },
@@ -487,7 +493,8 @@ describe('processAccounts', () => {
           product: {
             id: '6000078901',
             cardHash: 'mL6GRkaVnsKiHqso99M25zWT4biOk34YWl3YyxRitZaeNziyqlliCKRDxiYvqbQnt_KK_2tiigDGlD_fe-FibQ',
-            accountType: 'ccard',
+            accountType: '1',
+            type: 'ccard',
             currencyCode: '840',
             rkcCode: '10'
           },
@@ -578,7 +585,8 @@ describe('processAccounts', () => {
             cardHash: '45BOYgj663x47b29hzLbVvNZs2BaoTUkbsW-HtdiWGSiNojcp4p72929J8OclqE608gjNBD60ga3sariIb4GQg',
             currencyCode: '933',
             rkcCode: '112',
-            accountType: 'ccard'
+            accountType: '1',
+            type: 'ccard'
           },
           account: {
             id: '5020028311',
@@ -748,7 +756,8 @@ describe('processAccounts', () => {
             cardHash: 'D77wHhvHapGnfxwfGpDCFQeHISg_-WtOu2wqxW2Nc7jK2vbCD5kB23eOynBs8VP0OJsts4aTNWPUfhpulVAMww',
             currencyCode: '933',
             rkcCode: '10',
-            accountType: 'ccard'
+            accountType: '1',
+            type: 'ccard'
           },
           account: {
             id: '5000019048',
@@ -765,7 +774,8 @@ describe('processAccounts', () => {
             cardHash: 'WRr0sHdJDt6it-ejIDzb-akG-By2CCJHUraJOgJAUl5BOsTnRjltEMTKry35a2vgUCn4tbH2ON7QS8n7cnu2VQ',
             currencyCode: '933',
             rkcCode: '1',
-            accountType: 'ccard'
+            accountType: '1',
+            type: 'ccard'
           },
           account: {
             id: '5910000253',
@@ -1021,6 +1031,7 @@ describe('processAccounts', () => {
         {
           product: {
             accountType: '5',
+            type: 'checking',
             currencyCode: '933',
             id: '0030008297'
           },
@@ -1044,7 +1055,8 @@ describe('processAccounts', () => {
             currencyCode: '933',
             id: '5000019640',
             rkcCode: '10',
-            accountType: 'ccard'
+            accountType: '1',
+            type: 'ccard'
           },
           account: {
             balance: 4.85,
@@ -1061,7 +1073,8 @@ describe('processAccounts', () => {
             currencyCode: '933',
             id: '5020028683',
             rkcCode: '15',
-            accountType: 'ccard'
+            accountType: '1',
+            type: 'ccard'
           },
           account: {
             balance: 0,
@@ -1074,11 +1087,12 @@ describe('processAccounts', () => {
         },
         {
           product: {
+            id: '6370005252',
             cardHash: 'LTgTPAHKxepqqEoE86rbe5_ERaM7g1-Y1Ns2-G7SnxgDTD4VPMWCb3ZkBtcP-xg90L9f1BEEpVZ1KWhYlQQSew',
             currencyCode: '933',
-            id: '6370005252',
             rkcCode: '10',
-            accountType: 'ccard'
+            accountType: '1',
+            type: 'ccard'
           },
           account: {
             balance: 0,
@@ -1091,9 +1105,10 @@ describe('processAccounts', () => {
         },
         {
           product: {
+            id: '555344100666',
             accountType: '50',
-            currencyCode: '933',
-            id: '555344100666'
+            type: 'loan',
+            currencyCode: '933'
           },
           account: {
             balance: 606.32,
@@ -1111,6 +1126,95 @@ describe('processAccounts', () => {
             syncIds: ['555344100666'],
             title: '5300_Легкий 18 мес Партнеры',
             type: 'loan'
+          }
+        }
+      ]
+    ],
+    [
+      {
+        cardAccount:
+          [
+            {
+              internalAccountId: '600-584 USD',
+              balance: 636.59,
+              currencyCode: 840,
+              currency: '840',
+              openDate: 1217538000000,
+              accountNumber: 'BY10MMBN30140000840008400000',
+              cardAccountNumber: '027200116000000584',
+              productCode: '600',
+              productName: 'Личная USD',
+              contractId: '56168172',
+              interestRate: 0.0001,
+              accountStatus: 'OPEN',
+              cards:
+                [
+                  {
+                    cardNumberMasked: '4*** **** **** 5793',
+                    cardHash: 'dR9yiP-m9e3R_B0I_MlCo_nSueCz6n5ksIxMcXcwK2XdzGW1SrqVCEfV1p5P-AYsw5A1k5hbQ6o-Et9PeLjVcw',
+                    cardType:
+                      {
+                        value: 26,
+                        name: 'Visa Classic',
+                        imageUri: 'https://alseda.by/media/public/Visa_Classic_zp.png',
+                        paySysImageUri: 'https://alseda.by/media/public/credit_card_str_visa.png',
+                        textColor: 'ffffffff',
+                        paySystemName: 'VISA'
+                      },
+                    cardStatus: 'OPEN',
+                    expireDate: 1727643600000,
+                    owner: 'NIKOLAY NIKOLAEV',
+                    tariffName: 'Без платы.БГПБ Visa Classic USD.Пакет Классический',
+                    notDisplayNotification: 0,
+                    processing: '2',
+                    payment: '0',
+                    status: { code: '0' },
+                    stateSignature: 'BETRAY',
+                    numberDaysBeforeCardExpiry: 1105,
+                    additionalCardType: 2,
+                    canChange3D: true,
+                    cardDepartmentName: 'Офис "На Танка" (Закрыто с 01.11.2020)',
+                    cardDepartmentAddress: 'г. Минск;ул. Танка 10а',
+                    canChangeStatus: true,
+                    retailCardId: 206164267,
+                    applePaySupported: true,
+                    pinDeliveryType: 0,
+                    canReissueOldExpire: true,
+                    canReissueNewExpire: true
+                  }
+                ],
+              bankCode: '288',
+              rkcCode: '102',
+              rkcName: 'Офис "На Танка" (Закрыто с 01.11.2020)',
+              accountType: '1',
+              ibanNum: 'BY19MMBN30140102006000000584',
+              canSell: false,
+              canCloseSameCurrency: false,
+              canCloseOtherCurrency: false,
+              canClose: false,
+              canRefillSameCurrency: false,
+              canRefillOtherCurrency: false,
+              canRefill: false
+            }
+          ]
+      },
+      [
+        {
+          product: {
+            id: '600-584 USD',
+            accountType: '1',
+            type: 'ccard',
+            cardHash: 'dR9yiP-m9e3R_B0I_MlCo_nSueCz6n5ksIxMcXcwK2XdzGW1SrqVCEfV1p5P-AYsw5A1k5hbQ6o-Et9PeLjVcw',
+            currencyCode: '840',
+            rkcCode: '102'
+          },
+          account: {
+            id: '600-584 USD',
+            balance: 636.59,
+            instrument: 'USD',
+            syncIds: ['4***********5793'],
+            title: 'Личная USD',
+            type: 'ccard'
           }
         }
       ]

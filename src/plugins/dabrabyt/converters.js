@@ -59,6 +59,7 @@ function parseCheckingAccount (apiAccount) {
     product: {
       id: apiAccount.internalAccountId,
       accountType: apiAccount.accountType,
+      type: 'checking',
       currencyCode: apiAccount.currency
     },
     account: {
@@ -82,6 +83,7 @@ function parseCreditAccount (apiAccount) {
     product: {
       id: apiAccount.internalAccountId,
       accountType: apiAccount.accountType,
+      type: 'loan',
       currencyCode: apiAccount.currency
     },
     account: {
@@ -109,6 +111,7 @@ function parseDepositAccount (apiAccount) {
     product: {
       id: apiAccount.internalAccountId,
       accountType: apiAccount.accountType,
+      type: 'deposit',
       currencyCode: apiAccount.currency
     },
     account: {
@@ -140,7 +143,8 @@ function parseCardAccount (apiAccount) {
     product: {
       id: apiAccount.internalAccountId,
       cardHash: card.cardHash,
-      accountType: 'ccard',
+      accountType: apiAccount.accountType,
+      type: 'ccard',
       currencyCode: apiAccount.currency,
       rkcCode: apiAccount.rkcCode
     },
