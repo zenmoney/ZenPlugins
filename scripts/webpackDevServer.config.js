@@ -38,6 +38,7 @@ const makeCookieAccessibleToClientSide = (value) => {
     .replace(/\s?HttpOnly(;|\s*$)/ig, '')
     .replace(/\s?Secure(;|\s*$)/ig, '')
     .replace(/\s?Domain=[^;]*(;|\s*$)/ig, '')
+    .replace(/\s?SameSite=[^;]*(;|\s*$)/ig, '')
 }
 
 const readPluginFileSync = (filepath) => stripBOM(fs.readFileSync(filepath, 'utf8'))
