@@ -1218,6 +1218,199 @@ describe('processAccounts', () => {
           }
         }
       ]
+    ],
+    [
+      {
+        cardAccount:
+          [
+            {
+              internalAccountId: '5240034533',
+              currency: '933',
+              balance: 54.48,
+              currencyCode: 933,
+              openDate: 1627246800000,
+              accountNumber: 'BY93MMBN30140000974009330000',
+              cardAccountNumber: '027200205240034533',
+              productCode: '524',
+              productName: 'Зарплатная BYN',
+              contractId: '307108272',
+              interestRate: 0.0001,
+              accountStatus: 'OPEN',
+              cards:
+                [
+                  {
+                    cardNumberMasked: '4*** **** **** 9416',
+                    cardHash: '-K6Vvu_JKf01uHyDFv6oQxdfxreduoVQe5_YrUgjH8oLZE7jRNBeYlTdnYqYs-gUkjbB8C52VN6YMgZ8tHFjtA',
+                    cardType:
+                      {
+                        value: 62,
+                        name: 'БГПБ Visa Classic',
+                        imageUri: 'https://alseda.by/media/public/ePWX_Bij.png',
+                        paySysImageUri: 'https://alseda.by/media/public/credit_card_str_visa.png',
+                        textColor: 'ffffffff',
+                        paySystemName: 'VISA'
+                      },
+                    cardStatus: 'OPEN',
+                    expireDate: 1722373200000,
+                    owner: 'NIKOLAY NIKOLAEV',
+                    tariffName: 'БГПБ Visa Classic BYN.Пакет Зарплатный классик с манибэк',
+                    notDisplayNotification: 0,
+                    processing: '2',
+                    payment: '0',
+                    status: { code: '0' },
+                    stateSignature: 'BETRAY',
+                    numberDaysBeforeCardExpiry: 1040,
+                    canChange3D: true,
+                    cardDepartmentName: 'Управление по Гродненской области',
+                    cardDepartmentAddress: 'г. Гродно;ул. Б.Троицкая 1',
+                    canChangeStatus: true,
+                    retailCardId: 307108274,
+                    applePaySupported: true,
+                    pinDeliveryType: 1,
+                    canReissueOldExpire: true,
+                    canReissueNewExpire: true
+                  }
+                ],
+              bankCode: '288',
+              rkcCode: '2',
+              rkcName: 'Управление по Гродненской области',
+              accountType: '1',
+              ibanNum: 'BY95MMBN30140002005240034533',
+              canSell: false,
+              canCloseSameCurrency: false,
+              canCloseOtherCurrency: false,
+              canClose: false,
+              canRefillSameCurrency: false,
+              canRefillOtherCurrency: false,
+              canRefill: false
+            }
+          ],
+        currentAccount:
+          [
+            {
+              internalAccountId: '0030008294',
+              currency: '933',
+              openDate: 1626728400000,
+              accountNumber: 'BY79MMBN30140000000009330000',
+              productCode: '3',
+              productName: 'Текущий счет BYN',
+              balanceAmount: 0,
+              contractId: '306451946',
+              interestRate: 0.0001,
+              accountStatus: 'OPEN',
+              rkcCode: '10',
+              rkcName: 'СДБО физических лиц',
+              accountType: '5',
+              ibanNum: 'BY82MMBN30140010000030008294',
+              canSell: false,
+              canCloseSameCurrency: false,
+              canCloseOtherCurrency: false,
+              canClose: false,
+              canRefillSameCurrency: true,
+              canRefillOtherCurrency: true,
+              canRefill: true
+            }
+          ],
+        corporateCardAccount: // Нужно ли обрабатывать ???
+          [
+            {
+              internalAccountId: '8000001185',
+              productCode: '800',
+              accountStatus: 'OPEN',
+              corpoCards:
+                [
+                  {
+                    cardNumberMasked: '4*** **** **** 7120',
+                    cardHash: 'jupXHU9UqJg6Rt5awPeSxHyfdK3F_N_oCQJvC3cRoggWVUdFA_DGQ2UnM0RZJBhAK1gvF43N2tI3LM4wiKEbtg',
+                    cardType:
+                      {
+                        value: 60,
+                        name: 'Корпоративный',
+                        imageUri: 'https://alseda.by/media/public/Visa_Classic_corpo.png',
+                        paySysImageUri: 'https://alseda.by/media/public/credit_card_str_visa.png',
+                        textColor: 'ffffffff',
+                        paySystemName: 'VISA'
+                      },
+                    cardStatus: 'OPEN',
+                    expireDate: 1690750800000,
+                    owner: 'NIKOLAY NIKOLAEV',
+                    notDisplayNotification: 0,
+                    processing: '2',
+                    payment: '0',
+                    currency: '933',
+                    status: { code: '0' },
+                    stateSignature: 'BETRAY',
+                    numberDaysBeforeCardExpiry: 674,
+                    canChange3D: true,
+                    canChangeStatus: true,
+                    applePaySupported: true,
+                    pinDeliveryType: 1,
+                    cardAccountCurrency: [933]
+                  }
+                ],
+              accountUNP: '591037595'
+            }
+          ]
+      },
+      [
+        {
+          product: {
+            accountType: '5',
+            currencyCode: '933',
+            id: '0030008294',
+            type: 'checking'
+          },
+          account: {
+            available: 0,
+            balance: 0,
+            creditLimit: 0,
+            gracePeriodEndDate: null,
+            id: '0030008294',
+            instrument: 'BYN',
+            savings: false,
+            syncIds: ['0030008294'],
+            title: 'Текущий счет BYN',
+            totalAmountDue: null,
+            type: 'checking'
+          }
+        },
+        {
+          product: {
+            accountType: '1',
+            cardHash: '-K6Vvu_JKf01uHyDFv6oQxdfxreduoVQe5_YrUgjH8oLZE7jRNBeYlTdnYqYs-gUkjbB8C52VN6YMgZ8tHFjtA',
+            currencyCode: '933',
+            id: '5240034533',
+            rkcCode: '2',
+            type: 'ccard'
+          },
+          account: {
+            balance: 54.48,
+            id: '5240034533',
+            instrument: 'BYN',
+            syncIds: ['4***********9416'],
+            title: 'Зарплатная BYN',
+            type: 'ccard'
+          }
+        },
+        {
+          product: {
+            accountType: '1', // ???
+            cardHash: 'jupXHU9UqJg6Rt5awPeSxHyfdK3F_N_oCQJvC3cRoggWVUdFA_DGQ2UnM0RZJBhAK1gvF43N2tI3LM4wiKEbtg',
+            currencyCode: '933',
+            id: '8000001185',
+            rkcCode: '2', // ???
+            type: 'ccard'
+          },
+          account: {
+            balance: undefined, // ??? После Запроса баланса
+            id: '8000001185',
+            instrument: 'BYN',
+            syncIds: ['4***********7120'],
+            title: 'Корпоративный',
+            type: 'ccard'
+          }
+        }
+      ]
     ]
   ])('converts account', (apiAccounts, accounts) => {
     expect(convertAccounts(apiAccounts)).toEqual(accounts)

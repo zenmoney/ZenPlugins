@@ -16,7 +16,7 @@ function generateDeviceID () {
   return generateRandomString(16)
 }
 
-async function fetchApiJson (url, options, predicate = () => true, normalizeResponse = res => res.body, error = (message) => console.assert(false, message)) {
+async function fetchApiJson (url, options, predicate = () => true, error = (message) => console.assert(false, message)) {
   options = defaultsDeep(
     options,
     {
@@ -29,7 +29,7 @@ async function fetchApiJson (url, options, predicate = () => true, normalizeResp
     validateResponse(response, response => predicate(response), error)
   }
 
-  return normalizeResponse(response)
+  return response
 }
 
 function validateResponse (response, predicate, error = (message) => console.assert(false, message)) {
@@ -80,12 +80,12 @@ async function loginReq (login, password, smsCode) {
   if (smsCode !== '') {
     body.confirmationData = smsCode
   }
-  return fetchApiJson('session/login', {
+  return (await fetchApiJson('session/login', {
     method: 'POST',
     body: body,
     sanitizeRequestLog: { body: { login: true, password: true, deviceUDID: true, confirmationData: true } },
     sanitizeResponseLog: { body: { sessionToken: true } }
-  }, response => response.success, res => res.body, () => new InvalidPreferencesError('bad request'))
+  }, response => response.success, () => new InvalidPreferencesError('bad request'))).body
 }
 
 export async function fetchAccounts (sessionToken) {
@@ -104,8 +104,7 @@ export async function fetchAccounts (sessionToken) {
       additionCardAccount: {}
     }
   }, response => response.body && response.body.overviewResponse,
-  res => res.body,
-  message => new TemporaryError(message))).overviewResponse
+  message => new TemporaryError(message))).body.overviewResponse
 
   const cardAccounts = accounts.cardAccount
 
@@ -113,6 +112,15 @@ export async function fetchAccounts (sessionToken) {
     const cardHash = cardAccounts[i].cards?.[0].cardHash
     if (cardHash) {
       cardAccounts[i].balance = await fetchCardAccountBalance(sessionToken, cardHash)
+    }
+  }
+
+  const corporateCardAccount = accounts.corporateCardAccount
+
+  for (let i = 0; i < corporateCardAccount.length; i++) {
+    const cardHash = corporateCardAccount[i].corpoCards?.[0].cardHash
+    if (cardHash) {
+      corporateCardAccount[i].balance = await fetchCardAccountBalance(sessionToken, cardHash)
     }
   }
 
@@ -128,8 +136,7 @@ export async function fetchCardAccountBalance (sessionToken, cardHash) {
       cardHash
     }
   }, response => response.body && response.body.balance,
-  res => res.body,
-  message => new TemporaryError(message))).balance
+  message => new TemporaryError(message))).body.balance
 
   return Number.parseFloat(accountBalance)
 }
@@ -154,7 +161,7 @@ export async function fetchTransactions (sessionToken, product, fromDate, toDate
         method: 'POST',
         headers: { session_token: sessionToken },
         body: {
-          accountType: product.accountType, // Нужен ли???, в запросе "body: { accountType: undefined, cardHash: '45BOYg ..." все работает
+          accountType: product.accountType,
           cardHash: product.cardHash,
           currencyCode: product.currencyCode,
           internalAccountId: product.id,
@@ -164,7 +171,7 @@ export async function fetchTransactions (sessionToken, product, fromDate, toDate
           },
           rkcCode: product.rkcCode
         }
-      }, response => response.body.operations, response => response.body.operations, message => new TemporaryError(message))
+      }, response => response.body.operations, message => new TemporaryError(message))
       return response.body?.operations || []
     }
     case 'deposit':
@@ -183,7 +190,7 @@ export async function fetchTransactions (sessionToken, product, fromDate, toDate
             till: toDate.getTime()
           }
         }
-      }, response => response.body.operations, res => res.body.operations, message => new TemporaryError(message))
+      }, response => response.body.operations, message => new TemporaryError(message))
       return response.body?.operations
     }
     default: {
