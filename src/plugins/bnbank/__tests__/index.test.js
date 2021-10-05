@@ -8,6 +8,10 @@ describe('scrape', () => {
     const deviceId = generateDeviceID()
     global.ZenMoney = {
       device_id: deviceId,
+      device: {
+        manufacturer: 'Zenmoney',
+        model: 'Sync'
+      },
       ...makePluginDataApi({
         deviceId
       }).methods
