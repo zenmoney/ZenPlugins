@@ -47,6 +47,25 @@ describe('convertApiTransactionsToReadableTransactions', () => {
             accountRestDate: 1618272420000,
             colour: 2,
             last4: '<string[25]>'
+          },
+          {
+            cardTransactionId: 92110853,
+            docId: 792006,
+            openwayId: 57400498,
+            transactionDate: 1633000020000,
+            transactionType: 'Зачисление с конверсией',
+            transactionCategory: 'Request',
+            transactionResult: 'Успешно',
+            transactionAmount: 4826.26,
+            transactionCurrency: 'BYN',
+            transactionDetails: '5563.59 BYN',
+            city: '',
+            countryCode: '',
+            accountRest: null,
+            accountCurrency: '',
+            accountRestDate: 1633000020000,
+            colour: 1,
+            last4: '6737, NIKOLAY NIKOLAEV'
           }
         ]
       }
@@ -92,6 +111,29 @@ describe('convertApiTransactionsToReadableTransactions', () => {
             id: '83870553',
             invoice: null,
             sum: -14
+          }
+        ]
+      },
+      {
+        comment: formatCommentDateTime(new Date('2021-09-30T11:07:00.000Z')),
+        date: new Date('2021-09-30T11:07:00.000Z'),
+        hold: null,
+        merchant: {
+          city: null,
+          country: null,
+          location: null,
+          mcc: null,
+          title: '5563.59 BYN'
+        },
+        movements: [
+          {
+            account: {
+              id: 'account'
+            },
+            fee: 0,
+            id: '92110853',
+            invoice: null,
+            sum: 4826.26
           }
         ]
       }

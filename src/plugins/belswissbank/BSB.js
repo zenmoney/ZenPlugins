@@ -38,7 +38,8 @@ export const getTransactionFactor = (transaction) => {
     Банкомат: -1,
     Bankomat: -1,
     Наличные: -1,
-    Nalichnye: -1
+    Nalichnye: -1,
+    'Зачисление с конверсией': 1
   }
   let factor = transactionTypeFactors[transaction.transactionType]
   if (!factor) {
