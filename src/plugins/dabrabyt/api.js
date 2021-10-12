@@ -106,21 +106,21 @@ export async function fetchAccounts (sessionToken) {
   }, response => response.body && response.body.overviewResponse,
   message => new TemporaryError(message))).body.overviewResponse
 
-  const cardAccounts = accounts.cardAccount
+  const cardAccounts = accounts.cardAccount || []
 
-  for (let i = 0; i < cardAccounts.length; i++) {
-    const cardHash = cardAccounts[i].cards?.[0].cardHash
+  for (const acc of cardAccounts) {
+    const cardHash = acc.cards?.[0].cardHash
     if (cardHash) {
-      cardAccounts[i].balance = await fetchCardAccountBalance(sessionToken, cardHash)
+      acc.balance = await fetchCardAccountBalance(sessionToken, cardHash)
     }
   }
 
-  const corporateCardAccount = accounts.corporateCardAccount
+  const corporateCardAccount = accounts.corporateCardAccount || []
 
-  for (let i = 0; i < corporateCardAccount.length; i++) {
-    const cardHash = corporateCardAccount[i].corpoCards?.[0].cardHash
+  for (const acc of corporateCardAccount) {
+    const cardHash = acc.corpoCards?.[0].cardHash
     if (cardHash) {
-      corporateCardAccount[i].balance = await fetchCardAccountBalance(sessionToken, cardHash)
+      acc.balance = await fetchCardAccountBalance(sessionToken, cardHash)
     }
   }
 
