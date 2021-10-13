@@ -111,6 +111,47 @@ describe('convertTransaction', () => {
             }
           ]
       }
+    },
+    {
+      name: 'transfer add',
+      transaction: {
+        amount: '1 131,76',
+        amountReal: '1 131,76',
+        authCode: '375860',
+        cardNum: '1111',
+        currency: 'USD',
+        currencyReal: 'USD',
+        date: '24.09.2021 19:22',
+        description: 'Перевод средств (пополнение)',
+        mcc: null,
+        place: 'BY POPOLNENIE ERIP, MINSK',
+        type: 'ЗАЧИСЛЕНИЕ',
+        overdraft: '0,00'
+      },
+      expectedTransaction: {
+        comment: 'Перевод средств (пополнение)',
+        date: new Date('2021-09-24T16:22:00.000Z'),
+        hold: false,
+        merchant: {
+          city: 'MINSK',
+          country: 'BY',
+          location: null,
+          mcc: null,
+          title: 'POPOLNENIE ERIP'
+        },
+        movements:
+          [
+            {
+              account: {
+                id: '11161311-117d11'
+              },
+              fee: 0,
+              id: null,
+              invoice: null,
+              sum: 1131.76
+            }
+          ]
+      }
     }
   ]
 
@@ -306,7 +347,7 @@ describe('convertLastTransaction', () => {
           city: 'MINSK',
           country: 'BY',
           location: null,
-          mcc: null,
+          mcc: 6010,
           title: 'BGPB PRK-28'
         },
         movements:
@@ -512,7 +553,7 @@ describe('convertLastTransaction', () => {
           ],
         merchant:
           {
-            mcc: null,
+            mcc: 5651,
             location: null,
             title: 'Lamoda',
             city: 'Minskiy r-n',
@@ -520,7 +561,6 @@ describe('convertLastTransaction', () => {
           },
         comment: null,
         hold: false
-
       }
     }
   ]

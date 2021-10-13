@@ -36,21 +36,41 @@ export function addOverdraftInfo (account, overdraft) {
 }
 
 export function convertTransaction (apiTransaction, account) {
+  const invoice = {
+    sum: getSumAmount(apiTransaction.type, apiTransaction.amountReal),
+    instrument: apiTransaction.currencyReal
+  }
   const transaction = {
-    date: getDate(apiTransaction.date),
-    movements: [getMovement(apiTransaction, account)],
+    date: new Date(getDate(apiTransaction.date)),
+    movements: [
+      {
+        id: null,
+        account: { id: account.id },
+        invoice: invoice.instrument === account.instrument ? null : invoice,
+        sum: invoice.instrument === account.instrument ? invoice.sum : getSumAmount(apiTransaction.type, apiTransaction.amount),
+        fee: 0
+      }
+    ],
     merchant: null,
     comment: null,
     hold: false
   };
-
   [
+    parseInnerTransfer,
     parseCash,
     parsePayee,
     parseComment
-  ].some(parser => parser(transaction, apiTransaction))
+  ].some(parser => parser(transaction, apiTransaction, account, invoice))
 
   return transaction
+}
+
+function parseInnerTransfer (transaction, apiTransaction, account, invoice) {
+  if (apiTransaction?.description.match('Перевод с карты на карту')) {
+    transaction.groupKeys = [`${getDate(apiTransaction.date).slice(0, 16)}_${invoice.instrument}_${Math.abs(invoice.sum).toString()}`]
+    return true
+  }
+  return false
 }
 
 export function convertLastTransaction (apiTransaction, accounts) {
@@ -67,15 +87,22 @@ export function convertLastTransaction (apiTransaction, accounts) {
   if (!account) {
     return null
   }
-  let amountData = rawData[1].split(': ')
-  let currency = amountData[1].slice(-3)
-  let amount = amountData[1].replace(' ' + currency, '')
-  let date = getDateFromJSON(rawData[2])
-  let dateDate = getDateJSON(rawData[2])
-  apiTransaction.payeeLastTransaction = rawData[3]
-
+  let amountData
+  let currency
+  let amount
+  let date
+  let dateDate
   const isChangePinTransaction = rawData[1] === 'Смена PIN' // Транзакция смены pin имеет не стандартный формат. Нет ни одного теста !!!
-  if (isChangePinTransaction) {
+  if (!isChangePinTransaction) {
+    amountData = rawData[1].split(': ')
+    currency = amountData[1].slice(-3)
+    amount = amountData[1].replace(' ' + currency, '')
+    date = getDateFromJSON(rawData[2])
+    dateDate = getDateJSON(rawData[2])
+    const mcc = rawData[4].match(/MCC: (\d{4})/i)
+    apiTransaction.mcc = mcc ? mcc[1] : null
+    apiTransaction.payeeLastTransaction = rawData[3]
+  } else {
     amountData = rawData[2].split(' ')
     currency = amountData[2].slice(-3)
     amount = amountData[1]
@@ -88,19 +115,24 @@ export function convertLastTransaction (apiTransaction, accounts) {
   apiTransaction.type = amountData[0]
   apiTransaction.amount = amount
   apiTransaction.dateDate = dateDate
+  const invoice = {
+    sum: getSumAmount(apiTransaction.type, apiTransaction.amount),
+    instrument: apiTransaction.currency
+  }
 
   const transaction = {
     date: date,
     movements: [
-      getMovement({
-        type: amountData[0],
-        amount: amount,
-        currencyReal: currency,
-        amountReal: '' // на текущий момент не понятно как нормально узнать реальное списание при использовании другой валюты, поэтому будем делать такие списания корректировками :(
-      }, account)
+      {
+        id: null,
+        account: { id: account.id },
+        invoice: invoice.instrument === account.instrument ? null : invoice,
+        sum: invoice.instrument === account.instrument ? invoice.sum : null,
+        fee: 0
+      }
     ],
     merchant: null,
-    comment: null,
+    comment: isChangePinTransaction ? 'Смена PIN' : null,
     hold: false
   };
 
@@ -111,25 +143,6 @@ export function convertLastTransaction (apiTransaction, accounts) {
   ].some(parser => parser(transaction, apiTransaction))
 
   return transaction
-}
-
-function getMovement (apiTransaction, account) {
-  const movement = {
-    id: null,
-    account: { id: account.id },
-    invoice: null,
-    sum: getSumAmount(apiTransaction.type, apiTransaction.amount),
-    fee: 0
-  }
-
-  if (apiTransaction.currencyReal !== account.instrument) {
-    movement.invoice = {
-      sum: getSumAmount(apiTransaction.type, apiTransaction.amountReal),
-      instrument: apiTransaction.currencyReal
-    }
-  }
-
-  return movement
 }
 
 function parseCash (transaction, apiTransaction) {
@@ -266,7 +279,7 @@ function getSumAmount (debitFlag, strAmount) {
 
 function getDate (str) {
   const [day, month, year, hour, minute] = str.match(/(\d{2}).(\d{2}).(\d{4}) (\d{2}):(\d{2})/).slice(1)
-  return new Date(`${year}-${month}-${day}T${hour}:${minute}:00+03:00`)
+  return `${year}-${month}-${day}T${hour}:${minute}:00+03:00`
 }
 
 function getDateFromJSON (str) {
