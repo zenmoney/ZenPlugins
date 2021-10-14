@@ -92,7 +92,8 @@ export function convertTransaction (json, accounts) {
   }
 
   [
-    parseCash,
+    parseCashTransfer,
+    parseOuterTransfer,
     parseComment,
     parsePayee
   ].some(parser => parser(transaction, json))
@@ -104,36 +105,6 @@ export function convertTransaction (json, accounts) {
       transaction.comment
     ].join(' ').trim()
   }
-
-  return transaction
-}
-
-export function convertLastTransaction (json, accounts) {
-  const account = accounts.find(account => {
-    return account.syncID.indexOf(json.accountNumber) !== -1
-  })
-  if (json.trans_iso_currency !== account.instrument) {
-    // Пока не понятно как конверсировать валюты, поэтому такие платежи вносим корректировками
-    return null
-  }
-  json.operationPlace = json.card_acceptor
-  json.operationCode = 3
-  json.operationAmount = Number.parseFloat(json.auth_amount)
-  json.operationName = json.transac_type === '1' ? 'Снятие наличных' : ''
-
-  const transaction = {
-    date: new Date(getLastTransactionDate(json.auth_date)),
-    movements: [getMovement(json, account)],
-    merchant: null,
-    comment: null,
-    hold: true
-  };
-
-  [
-    parseCash,
-    parseComment,
-    parsePayee
-  ].some(parser => parser(transaction, json))
 
   return transaction
 }
@@ -153,11 +124,11 @@ function getMovement (json, account) {
   return movement
 }
 
-function parseCash (transaction, json) {
+function parseCashTransfer (transaction, json) {
   if (json.operationCode === 6 || (!!json.operationName && (
-    json.operationName.indexOf('наличных') > 0 ||
-    json.operationName.indexOf('Снятие денег со счета') > 0 ||
-    json.operationName.indexOf('Пополнение наличными') > 0))) {
+    json.operationName.indexOf('наличны') >= 0 ||
+    json.operationName.indexOf('Снятие денег со счета') >= 0 ||
+    json.operationName.indexOf('Пополнение наличными') >= 0))) {
     // добавим вторую часть перевода
     transaction.movements.push({
       id: null,
@@ -175,12 +146,32 @@ function parseCash (transaction, json) {
   }
 }
 
+function parseOuterTransfer (transaction, json) {
+  if (!!json.operationPlace && (
+    json.operationPlace?.indexOf('POPOLNENIE KARTY') >= 0)) {
+    // добавим вторую часть перевода
+    transaction.movements.push({
+      id: null,
+      account: {
+        company: null,
+        type: 'ccard',
+        instrument: json.trans_iso_currency ? json.trans_iso_currency : codeToCurrencyLookup[json.operationCurrency],
+        syncIds: null
+      },
+      invoice: null,
+      sum: Number.parseFloat(json.auth_amount ? json.auth_amount : ((json.operationSign === '1') ? -json.operationAmount : json.operationAmount)),
+      fee: 0
+    })
+    return true
+  }
+}
+
 function parsePayee (transaction, json) {
   // интернет-платежи отображаем без получателя
   if (!json.operationPlace ||
-    json.operationPlace.indexOf('BNB - OPLATA USLUG') > 0 ||
-    json.operationPlace.indexOf('Оплата услуг в интернет(мобильном) банкинге') > 0 ||
-    json.operationPlace.indexOf('OPLATA USLUG - KOMPLAT BNB') > 0) {
+    json.operationPlace.indexOf('BNB - OPLATA USLUG') >= 0 ||
+    json.operationPlace.indexOf('Оплата услуг в интернет(мобильном) банкинге') >= 0 ||
+    json.operationPlace.indexOf('OPLATA USLUG - KOMPLAT BNB') >= 0) {
     return false
   }
   transaction.merchant = {
