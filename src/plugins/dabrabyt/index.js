@@ -8,6 +8,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   const transactions = []
   const accounts = []
   const accountsData = convertAccounts(await fetchAccounts(token))
+    .filter(account => account !== null)
     .filter(account => account.account !== null)
   await Promise.all(accountsData.map(async ({ product, account }) => {
     accounts.push(account)
