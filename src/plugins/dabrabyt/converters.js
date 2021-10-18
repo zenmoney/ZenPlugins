@@ -194,8 +194,9 @@ export function convertTransaction (apiTransaction, account) {
   }
   const invoice = {
     sum: apiTransaction.operationAmount * Number.parseInt(apiTransaction.operationSign),
-    instrument: apiTransaction.operationCurrency
+    instrument: Number.isInteger(+apiTransaction.operationCurrency) ? codeToCurrencyLookup[apiTransaction.operationCurrency] : apiTransaction.operationCurrency
   }
+
   const transaction = {
     hold: !apiTransaction.transactionDate,
     date: new Date(apiTransaction.operationDate),
