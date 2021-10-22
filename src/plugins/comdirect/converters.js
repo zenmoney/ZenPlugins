@@ -34,6 +34,9 @@ export const convertAccount = (apiAccount) => {
 }
 
 const parseRemittance = (text) => {
+  if (!text) {
+    return false
+  }
   const NUM_FIELD_CHARS = 2
   const TEXT_FIELD_CHARS = 35
   let result = ''
@@ -70,8 +73,8 @@ const getComment = (apiTransaction) => {
   return `[${apiTransaction.transactionType.text}] ${parseRemittance(apiTransaction.remittanceInfo)}`
 }
 
-function parseDate (apiTransaction) {
-  let date = new Date(apiTransaction.bookingDate)
+function parseDate (apiTransaction, dateTest) {
+  let date = apiTransaction.bookingDate ? new Date(apiTransaction.bookingDate) : dateTest ? new Date(dateTest) : new Date()
   const dateInfo = apiTransaction.remittanceInfo?.match(/(.*)\s*(\d{4}-\d{2}-\d{2}T\d+:\d+:\d+)/i)
   if (dateInfo && dateInfo[2]) {
     date = new Date(dateInfo[2] + '.000Z')
@@ -79,14 +82,14 @@ function parseDate (apiTransaction) {
   return date
 }
 
-export function convertTransaction (apiTransaction, account) {
+export function convertTransaction (apiTransaction, account, dateTest) {
   const invoice = {
     instrument: apiTransaction.amount.unit,
     sum: Number(apiTransaction.amount.value)
   }
   const transaction = {
     hold: apiTransaction.bookingStatus === 'BOOKED',
-    date: parseDate(apiTransaction),
+    date: parseDate(apiTransaction, dateTest),
     movements: [
       {
         id: apiTransaction.reference !== ' ' ? apiTransaction.reference : null,
@@ -155,8 +158,9 @@ function parseCashTransfer (transaction, apiTransaction, account, invoice) {
   return true
 }
 
-function parsePayee (transaction, apiTransaction) {
-  const fullTitle = apiTransaction.creditor?.holderName || apiTransaction.remitter?.holderName
+function parsePayee (transaction, apiTransaction, account, invoice) {
+  const fullTitle = Number(apiTransaction.amount.value) < 0 ? apiTransaction.remitter?.holderName || apiTransaction.creditor?.holderName
+    : apiTransaction.remitter?.holderName || apiTransaction.deptor?.holderName
   if (fullTitle) {
     transaction.merchant = {
       fullTitle: fullTitle,

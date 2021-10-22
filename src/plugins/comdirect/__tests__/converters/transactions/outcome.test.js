@@ -124,6 +124,6 @@ describe('convertTransaction', () => {
       }
     ]
   ])('should convert a Direct Debit transaction', (apiTransaction, transaction) => {
-    expect(convertTransaction(apiTransaction, { id: 'account', instrument: 'EUR' })).toEqual(transaction)
+    expect(convertTransaction(apiTransaction, { id: 'account', instrument: 'EUR' }, '2021-05-18')).toEqual(transaction)
   })
 })
