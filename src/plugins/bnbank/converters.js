@@ -97,6 +97,14 @@ export function convertTransaction (json, accounts) {
     parsePayee
   ].some(parser => parser(transaction, json))
 
+  // добавляем к коментарию сумму и валюту операции (для случая когда валюта операции отличается)
+  if (json.operationCurrency !== account.currencyCode) {
+    transaction.comment = [
+      `${json.operationAmount} ${codeToCurrencyLookup[json.operationCurrency]}`,
+      transaction.comment
+    ].join(' ').trim()
+  }
+
   return transaction
 }
 
@@ -135,7 +143,7 @@ function getMovement (json, account) {
     id: null,
     account: { id: account.id },
     invoice: null,
-    sum: (json.operationCode && json.operationCode === 3) || (json.operationSign === '-1') ? -json.operationAmount : json.operationAmount,
+    sum: (json.operationCode && json.operationCode === 3) || (json.operationSign === '-1') ? -json.transactionAmount : json.transactionAmount,
     fee: 0
   }
   if (json.operationName && json.operationName.indexOf('Удержано подоходного налога') >= 0) {

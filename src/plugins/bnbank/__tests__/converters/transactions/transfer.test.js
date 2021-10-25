@@ -6,7 +6,7 @@ describe('convertTransaction', () => {
     id: '2007549330000000',
     type: card,
     title: 'Личные, BYN - "Maxima Plus"',
-    currencyCode: 933,
+    currencyCode: '933',
     instrument: codeToCurrencyLookup[933],
     balance: 99.9,
     syncID: ['2007549330000000'],
