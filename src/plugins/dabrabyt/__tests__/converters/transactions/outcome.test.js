@@ -139,6 +139,43 @@ describe('processAccounts', () => {
         },
         comment: null
       }
+    ],
+    [
+      {
+        operationName: 'Плата за перевод средств в Дабрабыт-онлайн (Плата за осуществление перевода средств в MMBANK-Online между карточками разных клиентов)',
+        transactionDate: 1623675300000,
+        operationDate: 1623416100000,
+        transactionAmount: 0,
+        transactionCurrency: 'BYN',
+        operationAmount: 12.14,
+        operationCurrency: 'BYN',
+        operationSign: '-1',
+        actionGroup: 1802,
+        clientName: '"БАНК ДАБРАБЫТ" ОТКРЫТОЕ АКЦИОНЕРНОЕ ОБЩЕСТВО',
+        operationClosingBalance: 1072.71,
+        cardPAN: '5127227260553330',
+        operationCode: 15301
+      },
+      { id: '5020028311', type: 'ccard', instrument: 'BYN' },
+      {
+        hold: false,
+        date: new Date('2021-06-11T12:55:00.000Z'),
+        movements: [
+          {
+            id: 'baaa2462de6b85c9a83a53436aebef2d',
+            account: { id: '5020028311' },
+            invoice: null,
+            sum: -12.14,
+            fee: 0
+          }
+        ],
+        merchant: {
+          fullTitle: '"БАНК ДАБРАБЫТ" ОТКРЫТОЕ АКЦИОНЕРНОЕ ОБЩЕСТВО',
+          mcc: null,
+          location: null
+        },
+        comment: 'Плата за перевод средств в Дабрабыт-онлайн (Плата за осуществление перевода средств в MMBANK-Online между карточками разных клиентов)'
+      }
     ]
   ])('converts outcome transactions', (apiTransaction, account, transaction) => {
     expect(convertTransaction(apiTransaction, account)).toEqual(transaction)
