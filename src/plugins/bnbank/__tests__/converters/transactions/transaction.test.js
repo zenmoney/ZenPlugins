@@ -6,7 +6,7 @@ describe('convertTransaction', () => {
     id: '2007549330000000',
     type: card,
     title: 'Личные, BYN - "Maxima Plus"',
-    currencyCode: 933,
+    currencyCode: '933',
     instrument: codeToCurrencyLookup[933],
     balance: 99.9,
     syncID: ['2007549330000000'],
@@ -218,6 +218,42 @@ describe('convertTransaction', () => {
         ],
         merchant: null,
         comment: null
+      }
+    },
+    {
+      name: 'operation in USD',
+      transaction: {
+        accountNumber: '2007549330000000',
+        accountType: '1',
+        cardPAN: '1*** **** **** 1234',
+        merchantId: '1234',
+        operationAmount: 3.49,
+        operationCurrency: '840',
+        operationDate: 1635058305000,
+        operationPlace: 'APPLE.COM/BILL',
+        operationSign: '-1',
+        transactionAmount: 8.64,
+        transactionAuthCode: '342346',
+        transactionCurrency: '933'
+      },
+      expectedTransaction: {
+        hold: false,
+        date: new Date(1635058305000),
+        movements: [
+          {
+            id: null,
+            account: { id: '2007549330000000' },
+            sum: -8.64,
+            fee: 0,
+            invoice: null
+          }
+        ],
+        merchant: {
+          fullTitle: 'APPLE.COM/BILL',
+          location: null,
+          mcc: null,
+        },
+        comment: '3.49 USD'
       }
     }
   ]
