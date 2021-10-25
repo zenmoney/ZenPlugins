@@ -131,13 +131,16 @@ export function convertLastTransaction (json, accounts) {
 }
 
 function getMovement (json, account) {
+  const operationAmount = (json.operationCode && json.operationCode === 3) || (json.operationSign === '-1') ? -json.operationAmount : json.operationAmount
+  const transactionAmount = json.transactionAmount && ((json.operationCode && json.operationCode === 3) || (json.operationSign === '-1')) ? -json.transactionAmount : json.transactionAmount
   const movement = {
     id: null,
     account: { id: account.id },
-    invoice: null,
-    sum: (json.operationCode && json.operationCode === 3) || (json.operationSign === '-1') ? -json.operationAmount : json.operationAmount,
+    invoice: (codeToCurrencyLookup[json.operationCurrency] !== account.instrument) ? { sum: json.operationAmount, instrument: codeToCurrencyLookup[json.operationCurrency] } : null,
+    sum: null,
     fee: 0
   }
+  movement.sum = (movement.invoice && transactionAmount) ? transactionAmount : operationAmount
   if (json.operationName && json.operationName.indexOf('Удержано подоходного налога') >= 0) {
     const nameSplit = json.operationName.split(' ')
     movement.fee = Number.parseFloat(nameSplit[nameSplit.length - 1])
