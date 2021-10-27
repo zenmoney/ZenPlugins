@@ -76,11 +76,10 @@ export async function login (login, password) {
 
 export async function fetchAccounts (sid) {
   console.log('>>> Загрузка списка счетов...')
-
   const res = await fetchApi('.admin',
     '<BS_Request>\r\n' +
     '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
-    '   <GetProducts GetActions="N" ProductType="MS"/>\r\n' +
+    '   <GetProducts ProductType="MS" GetActions="Y" GetBalance="Y"/>\r\n' +
     '   <RequestType>GetProducts</RequestType>\r\n' +
     '   <Session SID="' + sid + '"/>\r\n' +
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
@@ -93,64 +92,6 @@ export async function fetchAccounts (sid) {
     return res.BS_Response.GetProducts.Product
   }
   return []
-}
-
-export async function fetchBalance (sid, account) {
-  console.log('>>> Загрузка баланса для ' + account.title)
-
-  const res = await fetchApi('.request',
-    '<BS_Request>\r\n' +
-    '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
-    '   <AuthClientId IdType="' + account.productType + '">' + account.cardNumber + '</AuthClientId>\r\n' +
-    '   <Balance Currency="' + account.currencyCode + '"/>\r\n' +
-    '   <RequestType>Balance</RequestType>\r\n' +
-    '   <Session SID="' + sid + '"/>\r\n' +
-    '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-    '   <TerminalCapabilities>\r\n' +
-    '      <ScreenWidth>99</ScreenWidth>\r\n' +
-    '      <AnyAmount>Y</AnyAmount>\r\n' +
-    '      <BooleanParameter>Y</BooleanParameter>\r\n' +
-    '      <LongParameter>Y</LongParameter>\r\n' +
-    '   </TerminalCapabilities>\r\n' +
-    '   <TerminalId Version="1.9.12">Android</TerminalId>\r\n' +
-    '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
-  if (res === null) {
-    return null
-  }
-  if (res.BS_Response.Balance && res.BS_Response.Balance.Amount) {
-    return Number.parseFloat(res.BS_Response.Balance.Amount.replace(/,/g, '.'))
-  }
-  return 0
-}
-
-export async function fetchTransactionsAccId (sid, account) {
-  console.log('>>> Загрузка id аккаунта для транзакций для ' + account.title)
-
-  const res = await fetchApi('.admin',
-    '<BS_Request>\r\n' +
-    '   <GetActions ProductId="' + account.productId + '"/>\r\n' +
-    '   <RequestType>GetActions</RequestType>\r\n' +
-    '   <Session SID="' + sid + '"/>\r\n' +
-    '   <TerminalId Version="1.9.12">Android</TerminalId>\r\n' +
-    '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
-    '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-    '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
-  if (res.BS_Response.GetActions && res.BS_Response.GetActions.Action && res.BS_Response.GetActions.Action.length > 2) {
-    const actions = res.BS_Response.GetActions.Action.filter((action) => action !== null)
-    const resp = {
-      transactionsAccId: null,
-      latestDepositsAccId: null
-    }
-    for (let i = 0; i < actions.length; i++) {
-      if (actions[i].Name === 'Выписка по карте') {
-        resp.transactionsAccId = actions[i].Id
-      } else if (actions[i].Name === 'Последние операции') {
-        resp.latestDepositsAccId = actions[i].Id
-      }
-    }
-    return resp
-  }
-  return null
 }
 
 export function createDateIntervals (fromDate, toDate) {
@@ -290,3 +231,105 @@ export function parseFullTransactionsMail (html) {
   })
   return data
 }
+
+// Экспорт пополнений карточки
+
+// export async function fetchDeposits (sid) {
+//   console.log('>>> Загрузка списка пополнений...')
+//   const response = await fetchApi('.admin',
+//     '<BS_Request>\r\n' +
+//     '   <Mail Direction="O" PageSize="1"/>' +
+//     '   <RequestType>Mail</RequestType>\r\n' +
+//     '   <Session SID="' + sid + '"/>\r\n' +
+//     '   <TerminalId Version="1.9.12">Android</TerminalId>\r\n' +
+//     '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+//     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
+//     '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
+//   console.log(response)
+//   return await fetchApi('.admin',
+//     '<BS_Request>\r\n' +
+//     '   <MailAttachment Id="' + response.BS_Response.ExecuteAction.MailId + '" No="0"/>\r\n' +
+//     '   <RequestType>MailAttachment</RequestType>\r\n' +
+//     '   <Session SID="' + sid + '"/>\r\n' +
+//     '   <TerminalId Version="1.9.12">Android</TerminalId>\r\n' +
+//     '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+//     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
+//     '   <TerminalCapabilities>\r\n' +
+//     '       <LongParameter>Y</LongParameter>\r\n' +
+//     '       <ScreenWidth>99</ScreenWidth>\r\n' +
+//     '       <AnyAmount>Y</AnyAmount>\r\n' +
+//     '       <BooleanParameter>Y</BooleanParameter>\r\n' +
+//     '       <CheckWidth>39</CheckWidth>\r\n' +
+//     '       <InputDataSources>\r\n' +
+//     '           <InputDataSource>Lookup</InputDataSource>\r\n' +
+//     '       </InputDataSources>\r\n' +
+//     '   </TerminalCapabilities>\r\n' +
+//     '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
+// }
+
+// export function parseDeposits (mail) {
+//   const data = mail.BS_Response.MailAttachment.Attachment.Body
+//   const transactions = parseDepositsMail(data)
+//   console.log(`>>> Загружено ${transactions.length} пополнений.`)
+//   return transactions
+// }
+
+// export function parseDepositsMail (html) {
+//   let $ = cheerio.load(html)
+//   $ = cheerio.load($().children()[0].children[0].Body)
+//   const head = $('p [style="margin-right:auto;text-align:center;"]').toArray()[0]
+//   const card = head.data.split(' ')[-1]
+//   if (!card) {
+//     return []
+//   }
+//   let counter = 0
+//   let i = 0
+//   const data = []
+//   flatMap($('table[class="section_1"] tr').toArray().slice(1), tr => {
+//     if (tr.children.length >= 7) { // Значит это операция, а не просто форматирование
+//       for (const td of tr.children) {
+//         if (td.children && td.children[0] && td.children[0].type === 'text') {
+//           if (counter === 7) {
+//             counter = 0
+//             i++
+//           }
+//           if (counter === 0) {
+//             data[i] = {
+//               cardNum: card,
+//               date: null,
+//               description: null,
+//               type: null,
+//               amountReal: null,
+//               currencyReal: null,
+//               amount: null,
+//               currency: null,
+//               place: null,
+//               authCode: null,
+//               mcc: null
+//             }
+//           }
+//           switch (counter) {
+//             case 0:
+//               data[i].date = td.children[0].data
+//               break
+//             case 2:
+//               data[i].description = td.children[0].data
+//               break
+//             case 3:
+//               data[i].type = td.children[0].data
+//               break
+//             case 4:
+//               data[i].amountReal = td.children[0].data.split(' ')[0].replace(/,/g, '.')
+//               data[i].currencyReal = td.children[0].data.split(' ')[1]
+//               break
+//             case 6:
+//               data[i].place = td.children[0].data
+//               break
+//           }
+//           counter++
+//         }
+//       }
+//     }
+//   })
+//   return data
+// }

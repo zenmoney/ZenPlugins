@@ -1,11 +1,11 @@
 // import { convertTransaction, convertAccounts } from './converters'
 import {
   fetchAccounts,
-  fetchBalance,
   fetchFullTransactions,
-  fetchTransactionsAccId,
   login,
   parseTransactions
+  // fetchDeposits,
+  // parseDeposits
 } from './api'
 import { convertAccount, convertTransaction } from './converters'
 
@@ -33,6 +33,8 @@ export async function scrape ({ preferences, fromDate, toDate }) {
           transactionsStatement.push(transaction)
         }
       }
+      // const mail = await fetchDeposits(token)
+      // const transaction = parseDeposits(mail)
     }
     return account
   }))
@@ -46,21 +48,6 @@ async function allAccounts (token) {
   const accounts = (await fetchAccounts(token))
     .map(convertAccount)
     .filter(account => account !== null)
-  for (let i = 0; i < accounts.length; i++) {
-    accounts[i].balance = await fetchBalance(token, accounts[i])
-    if (accounts[i].balance === null) {
-      continue
-    }
-    const accIDs = await fetchTransactionsAccId(token, accounts[i])
-    accounts[i].transactionsAccId = accIDs.transactionsAccId
-    accounts[i].latestDepositsAccId = accIDs.latestDepositsAccId
-  }
-
-  for (let i = 0; i < accounts.length; i++) {
-    if (accounts[i].balance !== null) {
-      accounts[i].accountID = accounts[i].bankId
-    }
-  }
 
   return accounts
 }

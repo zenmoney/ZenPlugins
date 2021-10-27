@@ -6,21 +6,21 @@ export function convertAccount (ob) {
   }
   const id = ob.Id.split('-')[0]
   if (!ZenMoney.isAccountSkipped(id)) {
-    // eslint-disable-next-line no-debugger
+    const transactionsAccId = ob.Action.filter((action) => action !== null).filter((action) => action.Type === 'B735:GetOrdering2')[0]
     return {
       id,
-      transactionsAccId: null,
-      latestDepositsAccId: null,
+      transactionsAccId: transactionsAccId.Id,
       type: 'card',
       title: ob.CustomName + '*' + ob.No.slice(-4),
       currencyCode: ob.Currency,
       cardNumber: ob.No,
       instrument: codeToCurrencyLookup[ob.Currency],
-      balance: 0,
+      balance: Number.parseFloat((ob.Balance.replace(/,/g, '.') || 0.0)),
       syncID: [ob.No.slice(-4)],
       productId: ob.Id,
       productType: ob.ProductType,
-      bankId: Number(ob.BankId.split('-')[-1])
+      accountID: Number(ob.BankId.split('-')[-1]),
+      latestTrID: null
     }
   }
   return null
