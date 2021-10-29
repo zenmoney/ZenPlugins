@@ -171,7 +171,7 @@ export function parseFullTransactionsMail (html) {
   let i = 0
   const data = []
   flatMap($('table[class="table-schet"] tr').toArray().slice(1), tr => {
-    if (tr.children.length >= 10) { // Значит это операция, а не просто форматирование
+    if (tr.children.length >= 9) { // Значит это операция, а не просто форматирование
       for (const td of tr.children) {
         if (td.children && td.children[0] && td.children[0].type === 'text') {
           if (counter === 9) {
@@ -287,7 +287,7 @@ export function parseDepositsMail (html) {
   let i = 0
   const data = []
   flatMap($('table[class="section_1"] tr').toArray().slice(1), tr => {
-    if (tr.children.length >= 15) { // Значит это операция, а не просто форматирование
+    if (tr.children.length >= 7) { // Значит это операция, а не просто форматирование
       for (const td of tr.children) {
         if (td.children && td.children[0] && td.children[0].type === 'text') {
           if (counter === 6) {
