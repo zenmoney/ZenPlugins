@@ -1,11 +1,10 @@
-// import { convertTransaction, convertAccounts } from './converters'
 import {
   fetchAccounts,
   fetchFullTransactions,
   login,
-  parseTransactions
-  // fetchDeposits,
-  // parseDeposits
+  parseTransactions,
+  fetchDeposits,
+  parseDeposits
 } from './api'
 import { convertAccount, convertTransaction } from './converters'
 
@@ -33,8 +32,16 @@ export async function scrape ({ preferences, fromDate, toDate }) {
           transactionsStatement.push(transaction)
         }
       }
-      // const mail = await fetchDeposits(token)
-      // const transaction = parseDeposits(mail)
+    }
+    if (account.latestTrID) {
+      const mails = await fetchDeposits(token, account)
+      const transactions = parseDeposits(mails, fromDate)
+      for (const apiTransaction of transactions) {
+        const transaction = convertTransaction(apiTransaction, account)
+        if (transaction) {
+          transactionsStatement.push(transaction)
+        }
+      }
     }
     return account
   }))
@@ -48,6 +55,5 @@ async function allAccounts (token) {
   const accounts = (await fetchAccounts(token))
     .map(convertAccount)
     .filter(account => account !== null)
-
   return accounts
 }

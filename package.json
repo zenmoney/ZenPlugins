@@ -63,7 +63,8 @@
     "util": "0.10.3",
     "webpack": "4.43.0",
     "webpack-dev-server": "3.10.3",
-    "whatwg-fetch": "git+https://github.com/skvav/fetch.git#e232caddc2a945135e2e3bb5d3cfff666c2dc6d0"
+    "whatwg-fetch": "git+https://github.com/skvav/fetch.git#e232caddc2a945135e2e3bb5d3cfff666c2dc6d0",
+    "xml2js": "^0.4.23"
   },
   "scripts": {
     "start": "yarn && node --http-parser=legacy --insecure-http-parser scripts/start.js",

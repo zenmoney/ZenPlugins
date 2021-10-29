@@ -1,40 +1,31 @@
-import { generateRandomString } from '../../common/utils'
 import { createDateIntervals as commonCreateDateIntervals } from '../../common/dateUtils'
 import { parseXml } from '../../common/xmlUtils'
 import { flatMap } from 'lodash'
 import cheerio from 'cheerio'
+import xml2js from 'xml2js'
 
 const BASE_URL = 'https://stb24.by/mobile/xml_online'
-
-export function generateBoundary () {
-  return generateRandomString(8) + '-' + generateRandomString(4) + '-' + generateRandomString(4) + '-' + generateRandomString(4) + '-' + generateRandomString(12)
-}
 
 export function terminalTime () {
   const now = new Date()
   return String(now.getFullYear()) + ('0' + (now.getMonth() + 1)).slice(-2) + ('0' + now.getDate()).slice(-2) + ('0' + now.getHours()).slice(-2) + ('0' + now.getMinutes()).slice(-2) + ('0' + now.getSeconds()).slice(-2)
 }
 
-async function fetchApi (url, xml, options, predicate = () => true, error = (message) => console.assert(false, message)) {
-  const boundary = generateBoundary()
-  const boundaryStart = '--' + boundary + '\r\n'
-  const boundaryLast = '--' + boundary + '--\r\n'
-
+async function fetchApi (url, xml, options, predicate = () => true, error = (message) => console.assert(false, message), rawResp = false) {
   options.method = options.method ? options.method : 'POST'
   options.headers = {
-    'Content-Type': 'multipart/form-data; boundary=' + boundary
+    'Content-Type': 'multipart/x-www-form-urlencoded',
+    'Accept-Encoding': 'gzip',
+    'User-Agent': 'Dalvik/2.1.0 (Linux; U; Android 12; sdk_gphone64_arm64 Build/SPB5.210812.003)'
   }
-  options.body = boundaryStart +
-    'Content-Disposition: form-data; name="XML"\r\n' +
-    'Content-Transfer-Encoding: binary\r\n' +
-    'Content-Type: application/xml; charset=windows-1251\r\n' +
-    'Content-Length: ' + xml.length + '\r\n\r\n' +
-    xml +
-    boundaryLast
+  options.body = 'XML=' + xml
 
   const response = await fetch(BASE_URL + url, options)
   if (predicate) {
     validateResponse(response, response => predicate(response), error)
+  }
+  if (rawResp) {
+    return response._bodyText
   }
   const res = parseXml(response._bodyText)
   if (res.BS_Response.Error && res.BS_Response.Error.ErrorLine) {
@@ -76,7 +67,7 @@ export async function login (login, password) {
 
 export async function fetchAccounts (sid) {
   console.log('>>> Загрузка списка счетов...')
-  const res = await fetchApi('.admin',
+  const rawResponse = await fetchApi('.admin',
     '<BS_Request>\r\n' +
     '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
     '   <GetProducts ProductType="MS" GetActions="Y" GetBalance="Y"/>\r\n' +
@@ -84,14 +75,19 @@ export async function fetchAccounts (sid) {
     '   <Session SID="' + sid + '"/>\r\n' +
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
     '   <TerminalId Version="1.9.12">Android</TerminalId>\r\n' +
-    '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
-  if (res.BS_Response.GetProducts && res.BS_Response.GetProducts.Product && !Array.isArray(res.BS_Response.GetProducts.Product)) {
-    // Обрабатываем особенность парсинга xml.
-    return [res.BS_Response.GetProducts.Product]
-  } else if (res.BS_Response.GetProducts && res.BS_Response.GetProducts.Product && res.BS_Response.GetProducts.Product.length > 0) {
-    return res.BS_Response.GetProducts.Product
+    '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'), true)
+  let resp = null
+  xml2js.parseString(rawResponse, { mergeAttrs: true }, (err, result) => {
+    resp = err ? null : result
+  })
+  const accounts = []
+  if (resp) {
+    for (const account of resp.BS_Response.GetProducts[0].Product) {
+      accounts.push(account)
+    }
   }
-  return []
+  console.log(`>>> Загружено ${accounts.length} счетов.`)
+  return accounts
 }
 
 export function createDateIntervals (fromDate, toDate) {
@@ -234,102 +230,104 @@ export function parseFullTransactionsMail (html) {
 
 // Экспорт пополнений карточки
 
-// export async function fetchDeposits (sid) {
-//   console.log('>>> Загрузка списка пополнений...')
-//   const response = await fetchApi('.admin',
-//     '<BS_Request>\r\n' +
-//     '   <Mail Direction="O" PageSize="1"/>' +
-//     '   <RequestType>Mail</RequestType>\r\n' +
-//     '   <Session SID="' + sid + '"/>\r\n' +
-//     '   <TerminalId Version="1.9.12">Android</TerminalId>\r\n' +
-//     '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
-//     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-//     '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
-//   console.log(response)
-//   return await fetchApi('.admin',
-//     '<BS_Request>\r\n' +
-//     '   <MailAttachment Id="' + response.BS_Response.ExecuteAction.MailId + '" No="0"/>\r\n' +
-//     '   <RequestType>MailAttachment</RequestType>\r\n' +
-//     '   <Session SID="' + sid + '"/>\r\n' +
-//     '   <TerminalId Version="1.9.12">Android</TerminalId>\r\n' +
-//     '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
-//     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-//     '   <TerminalCapabilities>\r\n' +
-//     '       <LongParameter>Y</LongParameter>\r\n' +
-//     '       <ScreenWidth>99</ScreenWidth>\r\n' +
-//     '       <AnyAmount>Y</AnyAmount>\r\n' +
-//     '       <BooleanParameter>Y</BooleanParameter>\r\n' +
-//     '       <CheckWidth>39</CheckWidth>\r\n' +
-//     '       <InputDataSources>\r\n' +
-//     '           <InputDataSource>Lookup</InputDataSource>\r\n' +
-//     '       </InputDataSources>\r\n' +
-//     '   </TerminalCapabilities>\r\n' +
-//     '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
-// }
+export async function fetchDeposits (sid, account) {
+  console.log('>>> Загрузка списка пополнений...')
+  const response = await fetchApi('.admin',
+    '<BS_Request>\r\n' +
+    '   <ExecuteAction Id="' + account.latestTrID + '"/>\r\n' +
+    '   <RequestType>ExecuteAction</RequestType>\r\n' +
+    '   <Session SID="' + sid + '"/>\r\n' +
+    '   <TerminalId Version="1.9.12">Android</TerminalId>\r\n' +
+    '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+    '   <Subsystem>ClientAuth</Subsystem>\r\n' +
+    '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
+  return await fetchApi('.admin',
+    '<BS_Request>\r\n' +
+    '   <MailAttachment Id="' + response.BS_Response.ExecuteAction.MailId + '" No="0"/>\r\n' +
+    '   <RequestType>MailAttachment</RequestType>\r\n' +
+    '   <Session SID="' + sid + '"/>\r\n' +
+    '   <TerminalId Version="1.9.12">Android</TerminalId>\r\n' +
+    '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+    '   <Subsystem>ClientAuth</Subsystem>\r\n' +
+    '   <TerminalCapabilities>\r\n' +
+    '       <LongParameter>Y</LongParameter>\r\n' +
+    '       <ScreenWidth>99</ScreenWidth>\r\n' +
+    '       <AnyAmount>Y</AnyAmount>\r\n' +
+    '       <BooleanParameter>Y</BooleanParameter>\r\n' +
+    '       <CheckWidth>39</CheckWidth>\r\n' +
+    '       <InputDataSources>\r\n' +
+    '           <InputDataSource>Lookup</InputDataSource>\r\n' +
+    '       </InputDataSources>\r\n' +
+    '   </TerminalCapabilities>\r\n' +
+    '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
+}
 
-// export function parseDeposits (mail) {
-//   const data = mail.BS_Response.MailAttachment.Attachment.Body
-//   const transactions = parseDepositsMail(data)
-//   console.log(`>>> Загружено ${transactions.length} пополнений.`)
-//   return transactions
-// }
+export function parseDeposits (mail, fromDate) {
+  const data = mail.BS_Response.MailAttachment.Attachment.Body
+  const transactions = parseDepositsMail(data).filter((transaction) => transaction.amountReal > 0).filter((transaction) => {
+    const [day, month, year] = transaction.date.match(/(\d{2}).(\d{2}).(\d{4})/).slice(1)
+    return (new Date(`${year}-${month}-${day}`) > fromDate)
+  })
+  console.log(`>>> Загружено ${transactions.length} пополнений.`)
+  return transactions
+}
 
-// export function parseDepositsMail (html) {
-//   let $ = cheerio.load(html)
-//   $ = cheerio.load($().children()[0].children[0].Body)
-//   const head = $('p [style="margin-right:auto;text-align:center;"]').toArray()[0]
-//   const card = head.data.split(' ')[-1]
-//   if (!card) {
-//     return []
-//   }
-//   let counter = 0
-//   let i = 0
-//   const data = []
-//   flatMap($('table[class="section_1"] tr').toArray().slice(1), tr => {
-//     if (tr.children.length >= 7) { // Значит это операция, а не просто форматирование
-//       for (const td of tr.children) {
-//         if (td.children && td.children[0] && td.children[0].type === 'text') {
-//           if (counter === 7) {
-//             counter = 0
-//             i++
-//           }
-//           if (counter === 0) {
-//             data[i] = {
-//               cardNum: card,
-//               date: null,
-//               description: null,
-//               type: null,
-//               amountReal: null,
-//               currencyReal: null,
-//               amount: null,
-//               currency: null,
-//               place: null,
-//               authCode: null,
-//               mcc: null
-//             }
-//           }
-//           switch (counter) {
-//             case 0:
-//               data[i].date = td.children[0].data
-//               break
-//             case 2:
-//               data[i].description = td.children[0].data
-//               break
-//             case 3:
-//               data[i].type = td.children[0].data
-//               break
-//             case 4:
-//               data[i].amountReal = td.children[0].data.split(' ')[0].replace(/,/g, '.')
-//               data[i].currencyReal = td.children[0].data.split(' ')[1]
-//               break
-//             case 6:
-//               data[i].place = td.children[0].data
-//               break
-//           }
-//           counter++
-//         }
-//       }
-//     }
-//   })
-//   return data
-// }
+export function parseDepositsMail (html) {
+  const $ = cheerio.load(html)
+  const head = $('p[style="margin-right:auto;text-align:center;"]').toArray()[0]
+  if (head.children.length < 3) {
+    return []
+  }
+  const info = head.children[1]
+  if (info.children.length < 3) {
+    return []
+  }
+  const card = info.children[2].data.split(' ')[2]
+  let counter = 0
+  let i = 0
+  const data = []
+  flatMap($('table[class="section_1"] tr').toArray().slice(1), tr => {
+    if (tr.children.length >= 15) { // Значит это операция, а не просто форматирование
+      for (const td of tr.children) {
+        if (td.children && td.children[0] && td.children[0].type === 'text') {
+          if (counter === 6) {
+            counter = 0
+            i++
+          }
+          if (counter === 0) {
+            data[i] = {
+              cardNum: card,
+              date: null,
+              description: null,
+              type: null,
+              amountReal: null,
+              currencyReal: null,
+              amount: null,
+              currency: null,
+              place: null,
+              authCode: null,
+              mcc: null
+            }
+          }
+          switch (counter) {
+            case 0:
+              data[i].date = td.children[0].data
+              break
+            case 1:
+              data[i].type = td.children[0].data
+              break
+            case 2:
+              data[i].amountReal = Number(parseFloat(td.children[0].data.split(' ')[0].replace(/,/g, '.')))
+              data[i].currencyReal = td.children[0].data.split(' ')[1]
+              break
+            case 5:
+              data[i].place = td.children[0].data
+              break
+          }
+          counter++
+        }
+      }
+    }
+  })
+  return data
+}

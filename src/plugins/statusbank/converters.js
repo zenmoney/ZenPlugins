@@ -1,26 +1,28 @@
 import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
 
 export function convertAccount (ob) {
-  if (ob.Enabled && ob.Enabled === 'N') {
+  if (ob.Enabled && ob.Enabled[0] === 'N') {
     return null
   }
-  const id = ob.Id.split('-')[0]
+  const id = ob.Id[0].split('-')[0]
   if (!ZenMoney.isAccountSkipped(id)) {
-    const transactionsAccId = ob.Action.filter((action) => action !== null).filter((action) => action.Type === 'B735:GetOrdering2')[0]
+    const transactionsAccId = ob.Action.filter((action) => action !== null).filter((action) => action.Type[0] === 'B735:GetOrdering2')[0]
+    const latestTrID = ob.Action.filter((action) => action !== null).filter((action) => action.Type[0] === 'wsig:LastTrx2')[0]
+
     return {
       id,
-      transactionsAccId: transactionsAccId.Id,
+      transactionsAccId: transactionsAccId.Id[0],
       type: 'card',
-      title: ob.CustomName + '*' + ob.No.slice(-4),
-      currencyCode: ob.Currency,
-      cardNumber: ob.No,
-      instrument: codeToCurrencyLookup[ob.Currency],
-      balance: Number.parseFloat((ob.Balance.replace(/,/g, '.') || 0.0)),
-      syncID: [ob.No.slice(-4)],
-      productId: ob.Id,
-      productType: ob.ProductType,
-      accountID: Number(ob.BankId.split('-')[-1]),
-      latestTrID: null
+      title: ob.ProductTypeName[0] + '*' + ob.No[0].slice(-4),
+      currencyCode: ob.Currency[0],
+      cardNumber: ob.No[0],
+      instrument: codeToCurrencyLookup[ob.Currency[0]],
+      balance: Number.parseFloat((ob.Balance[0].replace(/,/g, '.') || 0.0)),
+      syncID: [ob.No[0].slice(-4)],
+      productId: ob.Id[0],
+      productType: ob.ProductType[0],
+      accountID: Number(ob.BankId[0].split('-')[-1]),
+      latestTrID: latestTrID.Id[0]
     }
   }
   return null
@@ -50,7 +52,7 @@ function getMovement (apiTransaction, account) {
     id: null,
     account: { id: account.id },
     invoice: null,
-    sum: apiTransaction.amount,
+    sum: apiTransaction.amount || apiTransaction.amountReal,
     fee: 0
   }
 
@@ -65,7 +67,7 @@ function getMovement (apiTransaction, account) {
 }
 
 function parseCash (transaction, apiTransaction) {
-  if (apiTransaction.type.indexOf('наличных на карту') > 0 ||
+  if (apiTransaction.type.includes('POPOLNENIYE') > 0 ||
     apiTransaction.type === 'Снятие наличных') {
     // добавим вторую часть перевода
     transaction.movements.push({
@@ -73,11 +75,11 @@ function parseCash (transaction, apiTransaction) {
       account: {
         company: null,
         type: 'cash',
-        instrument: apiTransaction.currency,
+        instrument: apiTransaction.currency || apiTransaction.currencyReal,
         syncIds: null
       },
       invoice: null,
-      sum: apiTransaction.amount,
+      sum: -(apiTransaction.amount || apiTransaction.amountReal),
       fee: 0
     })
     return false
@@ -87,11 +89,11 @@ function parseCash (transaction, apiTransaction) {
       account: {
         company: null,
         type: 'cash',
-        instrument: apiTransaction.currency,
+        instrument: apiTransaction.currency || apiTransaction.currencyReal,
         syncIds: null
       },
       invoice: null,
-      sum: apiTransaction.amount,
+      sum: apiTransaction.amount || apiTransaction.amountReal,
       fee: 0
     })
     return true
@@ -126,6 +128,8 @@ function parsePayee (transaction, apiTransaction) {
   const merchant = apiTransaction.place.split(', ')
   if (merchant.length === 1) {
     transaction.merchant.fullTitle = apiTransaction.place
+  } else if (merchant.length === 3) {
+    transaction.merchant.fullTitle = apiTransaction.place.split(', ')[2]
   } else if (merchant.length > 1) {
     const [country, title, city] = apiTransaction.place.match(/([a-zA-Z]{2}) (.*), (.*)/).slice(1)
     transaction.merchant.title = title
