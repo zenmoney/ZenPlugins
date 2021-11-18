@@ -66,6 +66,25 @@ describe('convertApiTransactionsToReadableTransactions', () => {
             accountRestDate: 1633000020000,
             colour: 1,
             last4: '6737, NIKOLAY NIKOLAEV'
+          },
+          {
+            cardTransactionId: 94158492,
+            docId: 2807936,
+            openwayId: 59448136,
+            transactionDate: 1636535220000,
+            transactionType: 'Покупка валюты за б/н рубли',
+            transactionCategory: 'Request',
+            transactionResult: 'Успешно',
+            transactionAmount: 3076.6,
+            transactionCurrency: 'BYN',
+            transactionDetails: 'BSB Bank',
+            city: 'MINSK',
+            countryCode: 'BLR',
+            accountRest: 2051.08,
+            accountCurrency: 'BYN',
+            accountRestDate: 1636535220000,
+            colour: 1,
+            last4: '8280, NIKOLAY NIKOLAEV'
           }
         ]
       }
@@ -134,6 +153,29 @@ describe('convertApiTransactionsToReadableTransactions', () => {
             id: '92110853',
             invoice: null,
             sum: 4826.26
+          }
+        ]
+      },
+      {
+        comment: formatCommentDateTime(new Date('2021-11-10T09:07:00.000Z')),
+        date: new Date('2021-11-10T09:07:00.000Z'),
+        hold: null,
+        merchant: {
+          city: 'MINSK',
+          country: 'BLR',
+          location: null,
+          mcc: null,
+          title: 'BSB Bank'
+        },
+        movements: [
+          {
+            account: {
+              id: 'account'
+            },
+            fee: 0,
+            id: '94158492',
+            invoice: null,
+            sum: -3076.6
           }
         ]
       }
