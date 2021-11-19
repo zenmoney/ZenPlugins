@@ -1,6 +1,7 @@
 import { createDateIntervals as commonCreateDateIntervals } from '../../common/dateUtils'
 import { parseXml } from '../../common/xmlUtils'
 import { flatMap } from 'lodash'
+import { fetch } from '../../common/network'
 import cheerio from 'cheerio'
 import xml2js from 'xml2js'
 
