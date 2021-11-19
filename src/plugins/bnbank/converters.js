@@ -146,7 +146,7 @@ function getMovement (json, account) {
 }
 
 function parseCash (transaction, json) {
-  if (json.operationType === 6 || (!!json.operationName && (
+  if (json.operationCode === 6 || (!!json.operationName && (
     json.operationName.indexOf('наличных') > 0 ||
     json.operationName.indexOf('Снятие денег со счета') > 0 ||
     json.operationName.indexOf('Пополнение наличными') > 0))) {
@@ -170,8 +170,9 @@ function parseCash (transaction, json) {
 function parsePayee (transaction, json) {
   // интернет-платежи отображаем без получателя
   if (!json.operationPlace ||
-    json.operationPlace.indexOf('BNB - OPLATA USLUG') >= 0 ||
-    json.operationPlace.indexOf('OPLATA USLUG - KOMPLAT BNB') >= 0) {
+    json.operationPlace.indexOf('BNB - OPLATA USLUG') > 0 ||
+    json.operationPlace.indexOf('Оплата услуг в интернет(мобильном) банкинге') > 0 ||
+    json.operationPlace.indexOf('OPLATA USLUG - KOMPLAT BNB') > 0) {
     return false
   }
   transaction.merchant = {
