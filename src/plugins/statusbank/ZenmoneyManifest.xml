@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>statusbank</id>
+    <company>15613</company>
+    <description>
+        Пример синхронизации со СтатусБанком.
+        Для подключения импорта укажите ваш логин и пароль от интернет-банка.
+        На данный момент существует неприятный баг от самого СтатусБанка - 
+        каждая синхронизация сопровождается смс от банка
+    </description>
+    <version>1.0</version>
+    <build>1</build>
+    <modular>true</modular>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+</provider>
