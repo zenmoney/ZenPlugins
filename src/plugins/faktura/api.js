@@ -28,7 +28,7 @@ function getPhoneNumber (str) {
   str = str.trim()
   const number = /^(?:\+?7|8|)(\d{10})$/.exec(str)
   if (number) {
-    return '+7' + number[1]
+    return number[1]
   }
   return str
 }
