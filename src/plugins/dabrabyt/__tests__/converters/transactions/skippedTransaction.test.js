@@ -34,7 +34,7 @@ describe('processAccounts', () => {
         operationCurrency: '933',
         operationSign: '1',
         actionGroup: 19,
-        clientName: 'Селявко Виктор Викторович',
+        clientName: 'Николаев Николай Николаевич',
         operationClosingBalance: 0,
         operationCode: 1001
       },

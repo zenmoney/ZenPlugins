@@ -278,4 +278,83 @@ describe('convertTransactions', () => {
     ]
     expect(convertTransaction(apiTransaction, accounts)).toEqual(transaction)
   })
+
+  it.each([
+    [
+      [
+        {
+          id: '2',
+          payment_id: '1525527100',
+          utrnno: '0',
+          amount: '12 805.54',
+          cntrg_info_param2: '22871943796644',
+          cntrg_info_param3: null,
+          cntrg_info_param4: null,
+          cntrg_info_param5: null,
+          status_note: 'Успешно проведен',
+          state: 2,
+          paydoc_state: 2,
+          service_name: 'Агентство государственных услуг',
+          created: '2021-08-20 19:31:18',
+          created_timestamp: 1629487878,
+          abs_type: 'HUMO ',
+          account_id: 22222222,
+          error: null,
+          service_id: 13188,
+          is_invoice: 0,
+          parameter_name: null,
+          parameter_id: 0,
+          comission_amount: 126.79,
+          image: 'https://cdn.click.uz/app/rev2/service/300x230/logo_13188.png',
+          is_indoor: 0,
+          qr_image: null,
+          qr_header: null,
+          qr_footer: null,
+          nds: 0,
+          card_num: null,
+          credit: 0,
+          transType: 683,
+          transType_desc: 'Онлайн оплата/перевод',
+          card_sender: null,
+          bank_sender: null,
+          card_recipient: null,
+          bank_recipient: null
+        }
+      ],
+      {
+        date: new Date('2021-08-20 19:31:18'),
+        hold: false,
+        merchant:
+          {
+            country: null,
+            city: null,
+            title: 'Агентство государственных услуг',
+            mcc: null,
+            location: null
+          },
+        movements:
+          [
+            {
+              id: '1525527100',
+              account: { id: '22222222' },
+              invoice: null,
+              sum: -12678.75,
+              fee: -126.79
+            }
+          ]
+      }
+    ]
+  ])('converts outer outcome transactions', (apiTransaction, transaction) => {
+    const accounts1 = [
+      {
+        id: '22222222',
+        title: 'Карта HUMO',
+        syncIds: ['222222******2222'],
+        instrument: 'UZS',
+        type: 'ccard',
+        balance: 87000
+      }
+    ]
+    expect(convertTransaction(apiTransaction, accounts1)).toEqual(transaction)
+  })
 })

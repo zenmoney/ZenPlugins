@@ -164,10 +164,14 @@ function makeMovement (apiTransaction, transactionAccount, instrument) {
   if (!transactionAccount) {
     sign = -1 * sign
   }
-  const sum = sign * Number(apiTransaction.amount.replace(/\s/g, ''))
+  const absType = apiTransaction.abs_type.trim()
+  let sum = sign * Number(apiTransaction.amount.replace(/\s/g, ''))
   let fee = 0
   if (sign === -1 && apiTransaction.comission_amount) {
     fee = sign * apiTransaction.comission_amount
+  }
+  if (absType === 'HUMO') {
+    sum = sum - fee
   }
 
   const account = transactionAccount ? { id: String(transactionAccount.id) } : {

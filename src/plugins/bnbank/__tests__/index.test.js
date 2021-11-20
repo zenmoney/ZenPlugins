@@ -75,7 +75,7 @@ describe('scrape', () => {
           fee: 0,
           id: null,
           invoice: null,
-          sum: -1.4
+          sum: -0.64
         }]
       },
       {
@@ -120,7 +120,7 @@ describe('scrape', () => {
           fee: 0,
           id: null,
           invoice: null,
-          sum: -437
+          sum: -200
         }]
       },
       {
@@ -287,7 +287,7 @@ function mockCardAccountStatement () {
           operationName: 'Зачисление дохода от предпринимательской деятельности',
           transactionDate: 1547019480000,
           operationDate: 1547019480000,
-          transactionAmount: 0.0,
+          transactionAmount: 3000.0,
           transactionCurrency: '933',
           operationAmount: 3000.0,
           operationCurrency: '933',

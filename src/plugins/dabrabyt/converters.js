@@ -1,5 +1,6 @@
 import { MD5 } from 'jshashes'
 import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
+import { toISODateString, dateInTimezone } from '../../common/dateUtils'
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24
 const md5 = new MD5()
@@ -213,15 +214,89 @@ export function convertTransaction (apiTransaction, account) {
     comment: null
   };
   [
-    parseCashTransfer,
-    parsePayee
+    parsePayee,
+    parseInnerTransfer,
+    parseOuterTransfer,
+    parseCashTransfer
   ].some(parser => parser(transaction, apiTransaction, account, invoice))
   return transaction
 }
 
+function parseInnerTransfer (transaction, apiTransaction, account, invoice) {
+  if (![
+    /Перевод средств между своими карточками/i,
+    /перевода с карточки/i
+  ].some(regexp => apiTransaction.operationName?.match(regexp))) {
+    return false
+  }
+  const syncIdsData = apiTransaction.operationPlace.match(/(\d+\*+\d+)/)
+  const dateStr = toISODateString(dateInTimezone(transaction.date, 180)).substring(0, 10)
+  let groupInstrument
+  let groupSum
+  let groupIdsData
+  if (Number.parseInt(apiTransaction.operationSign) < 0) {
+    groupInstrument = apiTransaction.transactionCurrency
+    groupSum = -apiTransaction.transactionAmount
+    groupIdsData = syncIdsData ? [syncIdsData[1]] : null
+  } else {
+    groupInstrument = invoice.instrument
+    groupSum = invoice.sum
+    groupIdsData = apiTransaction.cardPAN.substring(0, 6) + '******' + apiTransaction.cardPAN.slice(-4)
+  }
+  transaction.groupKeys = [
+    `${dateStr}_${groupInstrument}_${Math.abs(groupSum).toString()}_${groupIdsData}`
+  ]
+  transaction.movements.push({
+    id: null,
+    account: {
+      type: 'ccard',
+      instrument: apiTransaction.transactionCurrency,
+      company: null,
+      syncIds: syncIdsData ? [syncIdsData[1]] : null
+    },
+    invoice: invoice.instrument === apiTransaction.transactionCurrency ? null
+      : { sum: -invoice.sum, instrument: invoice.instrument },
+    sum: -Number.parseInt(apiTransaction.operationSign) * apiTransaction.transactionAmount,
+    fee: 0
+  })
+  transaction.merchant = null
+  transaction.comment = apiTransaction.operationPlace
+
+  return true
+}
+
+function parseOuterTransfer (transaction, apiTransaction, account, invoice) {
+  if (([
+    /Перевод средств.*другому клиенту/i
+  ].some(regexp => apiTransaction.operationName?.match(regexp))) ||
+    ([
+      /P2P/i
+    ].some(regexp => apiTransaction.operationPlace?.match(regexp)))) {
+    const syncIdsData = apiTransaction.operationPlace.match(/(\d+\*+\d+)/)
+    transaction.movements.push({
+      id: null,
+      account: {
+        type: 'ccard',
+        instrument: apiTransaction.transactionCurrency,
+        company: null,
+        syncIds: syncIdsData ? [syncIdsData[1]] : null
+      },
+      invoice: invoice.instrument === apiTransaction.transactionCurrency ? null
+        : { sum: -invoice.sum, instrument: invoice.instrument },
+      sum: -Number.parseInt(apiTransaction.operationSign) * apiTransaction.transactionAmount,
+      fee: 0
+    })
+    transaction.merchant = null
+    transaction.comment = apiTransaction.operationPlace
+
+    return true
+  }
+  return false
+}
+
 function parseCashTransfer (transaction, apiTransaction, account, invoice) {
   if (![
-    /снятие наличных/i
+    /наличных/i
   ].some(regexp => apiTransaction.operationName?.match(regexp))) {
     return false
   }
@@ -230,13 +305,14 @@ function parseCashTransfer (transaction, apiTransaction, account, invoice) {
     account: {
       type: 'cash',
       instrument: invoice.instrument,
-      company: apiTransaction.operationPlace || null,
+      company: null,
       syncIds: null
     },
     invoice: null,
     sum: -invoice.sum,
     fee: 0
   })
+
   return true
 }
 
@@ -247,13 +323,23 @@ function parsePayee (transaction, apiTransaction) {
       mcc: Number.parseInt(apiTransaction.mcc) || null,
       location: null
     }
-    transaction.comment = apiTransaction.salaryOrganizationName ? apiTransaction.operationName : null
+    transaction.comment = (apiTransaction.salaryOrganizationName || apiTransaction.operationName === 'Возврат (refund)') ? apiTransaction.operationName : null
+  } else if ([
+    /Плата за перевод/i,
+    /On-line пополнение/i
+  ].some(regexp => apiTransaction.operationName?.match(regexp))) {
+    transaction.merchant = {
+      fullTitle: apiTransaction.clientName?.trim(),
+      mcc: Number.parseInt(apiTransaction.mcc) || null,
+      location: null
+    }
+    transaction.comment = apiTransaction.operationName || null
   } else {
     transaction.comment = apiTransaction.operationName
   }
 }
 
-function generateMovementId (apiTransaction) { // Нужно ли ???
+function generateMovementId (apiTransaction) {
   return md5.hex(`${apiTransaction.accountId}-${apiTransaction.operationDate}-
   ${apiTransaction.operationPlace || apiTransaction.operationName}-${apiTransaction.operationAmount}-
   ${apiTransaction.operationCurrency}`)

@@ -16,7 +16,8 @@ const cashTransferTransactionTypes = [
   'Банкомат',
   'Bankomat',
   'Наличные',
-  'Nalichnye'
+  'Nalichnye',
+  'Пополнение счета наличными (по паспорту)'
 ]
 
 export const getTransactionFactor = (transaction) => {
@@ -39,7 +40,9 @@ export const getTransactionFactor = (transaction) => {
     Bankomat: -1,
     Наличные: -1,
     Nalichnye: -1,
-    'Зачисление с конверсией': 1
+    'Зачисление с конверсией': 1,
+    'Покупка валюты за б/н рубли': -1,
+    'Пополнение счета наличными (по паспорту)': 1
   }
   let factor = transactionTypeFactors[transaction.transactionType]
   if (!factor) {

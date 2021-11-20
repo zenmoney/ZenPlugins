@@ -37,7 +37,7 @@ describe('processAccounts', () => {
             account: {
               type: 'cash',
               instrument: 'BYN',
-              company: 'ATMALF HO16 TROPINKA',
+              company: null,
               syncIds: null
             },
             invoice: null,
@@ -45,7 +45,11 @@ describe('processAccounts', () => {
             fee: 0
           }
         ],
-        merchant: null,
+        merchant: {
+          fullTitle: 'ATMALF HO16 TROPINKA',
+          mcc: null,
+          location: null
+        },
         comment: null
       }
     ],
@@ -84,7 +88,7 @@ describe('processAccounts', () => {
             account: {
               type: 'cash',
               instrument: 'BYN',
-              company: 'MTB INSTITUTION',
+              company: null,
               syncIds: null
             },
             invoice: null,
@@ -92,11 +96,66 @@ describe('processAccounts', () => {
             fee: 0
           }
         ],
-        merchant: null,
+        merchant: {
+          fullTitle: 'MTB INSTITUTION',
+          mcc: null,
+          location: null
+        },
+        comment: null
+      }
+    ],
+    [
+      {
+        operationName: 'Внесение наличных в ПВН',
+        operationPlace: 'GOLOVNOY OFIS',
+        merchantId: '340340671020',
+        transactionAuthCode: '362838',
+        transactionDate: 1623670620000,
+        operationDate: 1623358800000,
+        transactionAmount: 2280,
+        transactionCurrency: 'BYN',
+        operationAmount: 2280,
+        operationCurrency: 'BYN',
+        operationSign: '1',
+        actionGroup: 1802,
+        operationClosingBalance: 2318.31,
+        cardPAN: '5127227260553330',
+        operationCode: 2
+      },
+      { id: '5020028311', type: 'ccard', instrument: 'BYN' },
+      {
+        hold: false,
+        date: new Date('2021-06-10T21:00:00.000Z'),
+        movements: [
+          {
+            id: '362838',
+            account: { id: '5020028311' },
+            invoice: null,
+            sum: 2280,
+            fee: 0
+          },
+          {
+            id: null,
+            account: {
+              type: 'cash',
+              instrument: 'BYN',
+              company: null,
+              syncIds: null
+            },
+            invoice: null,
+            sum: -2280,
+            fee: 0
+          }
+        ],
+        merchant: {
+          fullTitle: 'GOLOVNOY OFIS',
+          mcc: null,
+          location: null
+        },
         comment: null
       }
     ]
-  ])('converts transactions', (apiTransaction, account, transaction) => {
+  ])('converts cashWithdrawal transactions', (apiTransaction, account, transaction) => {
     expect(convertTransaction(apiTransaction, account)).toEqual(transaction)
   })
 })

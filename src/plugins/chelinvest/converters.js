@@ -170,12 +170,14 @@ export function convertTransaction (apiTransaction, account) {
 function parseComments (transaction, apiTransaction, account, invoice) {
   if (![
     /Сообщение:/i,
-    /Оплата услуг/i
+    /Оплата услуг/i,
+    /КЭШБЭК/i
   ].some(regexp => regexp.test(apiTransaction.event.description))) {
     return false
   }
   const comment = apiTransaction.event.description.match(/.*Сообщение:(\W+).*/i) ||
-    apiTransaction.event.description.match(/.*(Платеж №\d+).*/i)
+    apiTransaction.event.description.match(/.*(Платеж №\d+).*/i) ||
+    apiTransaction.event.description.match(/(КЭШБЭК.*)\. Место совершения/i)
   if (comment) {
     transaction.comment = comment[1].trim() || null
   }
@@ -220,7 +222,7 @@ function parseOuterTransfer (transaction, apiTransaction, account, invoice) {
 
 function parsePayee (transaction, apiTransaction, account, invoice) {
   if (![
-    /Место совершения транзакции:/i
+    /ПЛАТЕЖ .* Место совершения транзакции:/i
   ].some(regexp => regexp.test(apiTransaction.event.description))) {
     return false
   }

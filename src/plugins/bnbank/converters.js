@@ -92,40 +92,19 @@ export function convertTransaction (json, accounts) {
   }
 
   [
-    parseCash,
+    parseCashTransfer,
+    parseOuterTransfer,
     parseComment,
     parsePayee
   ].some(parser => parser(transaction, json))
 
-  return transaction
-}
-
-export function convertLastTransaction (json, accounts) {
-  const account = accounts.find(account => {
-    return account.syncID.indexOf(json.accountNumber) !== -1
-  })
-  if (json.trans_iso_currency !== account.instrument) {
-    // Пока не понятно как конверсировать валюты, поэтому такие платежи вносим корректировками
-    return null
+  // добавляем к коментарию сумму и валюту операции (для случая когда валюта операции отличается)
+  if (json.operationCurrency !== account.currencyCode) {
+    transaction.comment = [
+      `${json.operationAmount} ${codeToCurrencyLookup[json.operationCurrency]}`,
+      transaction.comment
+    ].join(' ').trim()
   }
-  json.operationPlace = json.card_acceptor
-  json.operationCode = 3
-  json.operationAmount = Number.parseFloat(json.auth_amount)
-  json.operationName = json.transac_type === '1' ? 'Снятие наличных' : ''
-
-  const transaction = {
-    date: new Date(getLastTransactionDate(json.auth_date)),
-    movements: [getMovement(json, account)],
-    merchant: null,
-    comment: null,
-    hold: true
-  };
-
-  [
-    parseCash,
-    parseComment,
-    parsePayee
-  ].some(parser => parser(transaction, json))
 
   return transaction
 }
@@ -135,7 +114,7 @@ function getMovement (json, account) {
     id: null,
     account: { id: account.id },
     invoice: null,
-    sum: (json.operationCode && json.operationCode === 3) || (json.operationSign === '-1') ? -json.operationAmount : json.operationAmount,
+    sum: (json.operationCode && json.operationCode === 3) || (json.operationSign === '-1') ? -json.transactionAmount : json.transactionAmount,
     fee: 0
   }
   if (json.operationName && json.operationName.indexOf('Удержано подоходного налога') >= 0) {
@@ -145,11 +124,11 @@ function getMovement (json, account) {
   return movement
 }
 
-function parseCash (transaction, json) {
-  if (json.operationType === 6 || (!!json.operationName && (
-    json.operationName.indexOf('наличных') > 0 ||
-    json.operationName.indexOf('Снятие денег со счета') > 0 ||
-    json.operationName.indexOf('Пополнение наличными') > 0))) {
+function parseCashTransfer (transaction, json) {
+  if (json.operationCode === 6 || (!!json.operationName && (
+    json.operationName.indexOf('наличны') >= 0 ||
+    json.operationName.indexOf('Снятие денег со счета') >= 0 ||
+    json.operationName.indexOf('Пополнение наличными') >= 0))) {
     // добавим вторую часть перевода
     transaction.movements.push({
       id: null,
@@ -167,10 +146,31 @@ function parseCash (transaction, json) {
   }
 }
 
+function parseOuterTransfer (transaction, json) {
+  if (!!json.operationPlace && (
+    json.operationPlace?.indexOf('POPOLNENIE KARTY') >= 0)) {
+    // добавим вторую часть перевода
+    transaction.movements.push({
+      id: null,
+      account: {
+        company: null,
+        type: 'ccard',
+        instrument: json.trans_iso_currency ? json.trans_iso_currency : codeToCurrencyLookup[json.operationCurrency],
+        syncIds: null
+      },
+      invoice: null,
+      sum: Number.parseFloat(json.auth_amount ? json.auth_amount : ((json.operationSign === '1') ? -json.operationAmount : json.operationAmount)),
+      fee: 0
+    })
+    return true
+  }
+}
+
 function parsePayee (transaction, json) {
   // интернет-платежи отображаем без получателя
   if (!json.operationPlace ||
     json.operationPlace.indexOf('BNB - OPLATA USLUG') >= 0 ||
+    json.operationPlace.indexOf('Оплата услуг в интернет(мобильном) банкинге') >= 0 ||
     json.operationPlace.indexOf('OPLATA USLUG - KOMPLAT BNB') >= 0) {
     return false
   }

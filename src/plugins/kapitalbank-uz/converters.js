@@ -80,7 +80,7 @@ export function convertCard (rawCard) {
  */
 export function convertUzcardCardTransaction (cardId, rawTransaction) {
   const invoice = {
-    sum: rawTransaction.credit === true ? rawTransaction.actamt / 100 : -rawTransaction.actamt / 100,
+    sum: rawTransaction.credit === true || rawTransaction.reversal === true ? rawTransaction.actamt / 100 : -rawTransaction.actamt / 100,
     instrument: 'UZS'
   }
   const transaction = {

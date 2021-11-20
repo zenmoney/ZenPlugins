@@ -37,6 +37,11 @@ export function convertTransaction (apiTransaction, account) {
           sum: Math.sign(apiTransaction.payment_amount) * Math.abs(parseFloat(invoiceMatch[1])),
           instrument: codeToCurrencyLookup[invoiceMatch[2]] || invoiceMatch[2]
         }
+      } else {
+        invoice = {
+          sum: parseFloat(apiTransaction.payment_amount),
+          instrument: account.instrument
+        }
       }
       return invoiceMatch
     })
@@ -126,6 +131,14 @@ function parsePayee (transaction, apiTransaction) {
         country: parts[parts.length - 1].trim() || null,
         city: parts[parts.length - 2].trim() || null,
         title: parts[0].trim(),
+        mcc: null,
+        location: null
+      }
+      return false
+    }
+    if (apiTransaction.payment_purpose.match(/^Возврат/)) {
+      transaction.merchant = {
+        fullTitle: match[1].trim(),
         mcc: null,
         location: null
       }

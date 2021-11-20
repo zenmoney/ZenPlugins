@@ -411,7 +411,7 @@ describe('convertTransaction', () => {
                   minimalBalance: '0.0',
                   currencyId: 16,
                   currencyIsoCode: 'rur',
-                  cardholder: 'EVGENII GOSTEV',
+                  cardholder: 'NIKOLAY NIKOLAEV',
                   number: '406149******6621',
                   authLimit: '78000000000000535626',
                   title: 'Visa Classic - Зарплатная - 5 лет - 0% - руб.',
