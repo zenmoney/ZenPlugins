@@ -26,9 +26,9 @@ async function fetchApi (url, xml, options, predicate = () => true, error = (mes
     validateResponse(response, response => predicate(response), error)
   }
   if (rawResp) {
-    return response._bodyText
+    return response.body
   }
-  const res = parseXml(response._bodyText)
+  const res = parseXml(response.body)
   if (res.BS_Response.Error && res.BS_Response.Error.ErrorLine) {
     if (res.BS_Response.Error.ErrorLine === 'Ошибка авторизации: Баланс недоступен') {
       return null
