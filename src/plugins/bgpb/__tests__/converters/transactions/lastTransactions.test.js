@@ -181,6 +181,22 @@ describe('convertLastTransaction', () => {
         comment: null,
         hold: false
       }
+    ],
+    [
+      {
+        id: '2021-76370567',
+        acceptedTime: 1637420781000,
+        pushMessageText: 'Card1111; Проверка карты: 0,00 USD; 20.11.21 18:06:15; Visa Provisioning Service,,BY; MCC: 6012; Dostupno: 1 248,36 BYN',
+        eventType: 4
+      },
+      [
+        {
+          id: 'account',
+          instrument: 'BYN',
+          syncID: ['1111']
+        }
+      ],
+      null
     ]
   ])('converts last transactions', (apiTransaction, accounts, transaction) => {
     expect(convertLastTransaction(apiTransaction, accounts)).toEqual(transaction)
