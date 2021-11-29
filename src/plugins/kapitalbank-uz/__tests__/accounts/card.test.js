@@ -19,8 +19,7 @@ describe('convertAccount', () => {
       title: 'VISA Electron(Tr)',
       instrument: 'USD',
       syncIds: [
-        '427833******3346',
-        '22618840799031231901'
+        '427833******3346'
       ],
       balance: 15.00
     })
@@ -40,8 +39,7 @@ describe('convertAccount', () => {
       title: 'UZCARD *4598',
       instrument: 'UZS',
       syncIds: [
-        '860049******4598',
-        '22618000499031231002'
+        '860049******4598'
       ],
       balance: 3305132.21
     })
@@ -63,8 +61,7 @@ describe('convertAccount', () => {
       title: 'Туркистон Кобейдж',
       instrument: 'UZS',
       syncIds: [
-        '626282******3612',
-        '22618000699052625001'
+        '626282******3612'
       ],
       balance: 0.25
     })
