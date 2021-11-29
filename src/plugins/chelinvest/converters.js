@@ -175,7 +175,7 @@ function parseComments (transaction, apiTransaction, account, invoice) {
   ].some(regexp => regexp.test(apiTransaction.event.description))) {
     return false
   }
-  const comment = apiTransaction.event.description.match(/.*Сообщение:(\W+).*/i) ||
+  const comment = apiTransaction.event.description.match(/.*Сообщение:(.*)/i) ||
     apiTransaction.event.description.match(/.*(Платеж №\d+).*/i) ||
     apiTransaction.event.description.match(/(КЭШБЭК.*)\. Место совершения/i)
   if (comment) {
@@ -226,22 +226,27 @@ function parsePayee (transaction, apiTransaction, account, invoice) {
   ].some(regexp => regexp.test(apiTransaction.event.description))) {
     return false
   }
-  const payee = apiTransaction.event.description.match(/Место совершения транзакции:(.+),(.+). Дата:(.*)./)
-  if (payee[2]) {
-    transaction.merchant = {
-      country: null,
-      city: payee[1].trim(),
-      title: payee[2].trim(),
-      mcc: null,
-      location: null
+  const payee = apiTransaction.event.description.match(/Место совершения транзакции:(.+) Дата:(.*)./)
+  if (payee) {
+    const title = payee[1].match(/(.+),(.+)./)
+    if (title) {
+      transaction.merchant = {
+        country: null,
+        city: title[1].trim(),
+        title: title[2].trim(),
+        mcc: null,
+        location: null
+      }
+    } else {
+      transaction.merchant = {
+        fullTitle: payee[1].trim(),
+        mcc: null,
+        location: null
+      }
     }
-    const date = payee[3].match(/(\d{2}).(\d{2}).(\d{2,4})\s([\d:]+)/)
-    transaction.date = new Date('20' + date[3] + '-' + date[2] + '-' + date[1] + 'T' + date[4] + 'Z')
-  } else {
-    transaction.merchant = {
-      fullTitle: payee[1].trim(),
-      mcc: null,
-      location: null
+    const date = payee[2].match(/(\d{2}).(\d{2}).\d{0,2}(\d{2})\s([\d:]+)/)
+    if (date) {
+      transaction.date = new Date('20' + date[3] + '-' + date[2] + '-' + date[1] + 'T' + date[4] + 'Z')
     }
   }
   return true
