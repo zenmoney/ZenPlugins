@@ -191,7 +191,7 @@ export async function fetchTransactions (sessionToken, product, fromDate, toDate
           }
         }
       }, response => response.body.operations, message => new TemporaryError(message))
-      return response.body?.operations
+      return response.body?.operations || []
     }
     default: {
       console.assert(false, 'unknown account type')
