@@ -138,7 +138,7 @@ export default class ClickPluginApi {
 
     const response = await this.callGate(method, {
       parameters: {
-        app_version: '5.9.0',
+        app_version: '6.4.0',
         datetime: datetime,
         device_id: ZenMoney.getData('deviceId'),
         password: password,
