@@ -11,10 +11,8 @@ export function convertAccount (account) {
     id: String(account.id),
     title: 'Счёт ' + account.currency.name,
     syncIds: [account.account],
-
     instrument: account.currency.name,
     type: 'checking',
-
     balance: account.balance / 100
   }
 }
@@ -29,11 +27,9 @@ export function convertWallet (wallet) {
   return {
     id: String(wallet.id),
     title: 'Кошелёк ' + wallet.currency.name,
-    syncIds: [wallet.account],
-
+    syncIds: [wallet.account || String(wallet.id)],
     instrument: wallet.currency.name,
     type: 'checking',
-
     balance: wallet.balance / 100
   }
 }
@@ -53,10 +49,8 @@ export function convertCard (rawCard) {
     id: String(rawCard.id),
     title: rawCard.title,
     syncIds: [rawCard.pan],
-
     instrument: rawCard.currency.name,
     type: 'ccard',
-
     balance: rawCard.balance / 100
   }
 
