@@ -400,6 +400,252 @@ describe('convertTransaction', () => {
         },
         comment: null
       }
+    ],
+    [
+      {
+        id: 294548455,
+        balanceBefore: '220.0',
+        date: '2021-10-29T03:22:25Z',
+        createdAt: '2021-10-29T03:22:25Z',
+        state: 'paid',
+        cashbackAmount: null,
+        comment: null,
+        balanceAfter: '10.03',
+        amount: '-209.97',
+        brand: 'aliexpress',
+        mcid: '49033',
+        card:
+          {
+            id: 354474,
+            title: 'Maestro-MIR Cobadge Contactless 5 RUR',
+            displayTitle: 'Maestro-MIR Cobadge Contactless 5 RUR',
+            state: 'active',
+            displayIcon: 'assets/cardicons/MC_MAESTRO.png'
+          },
+        canRepeat: false,
+        account: { id: 240987, currencyId: 16, currencyIsoCode: 'rur' },
+        geoInfo:
+          {
+            address: 'СИНГАПУР, Singapore, YM *aliexpres, YM *aliexpress.',
+            longitude: null,
+            latitude: null
+          },
+        categoryId: 1733814,
+        operation: 'ПАО "ЧЕЛЯБИНВЕСТБАНК" ПЛАТЕЖ по карте *8519. Место совершения транзакции: СИНГАПУР, Singapore, YM *aliexpres, YM *aliexpress. Дата: 27.10.21 11:48:40. 30232810890000001545 -209.97',
+        cardOrAccount:
+          {
+            id: 354474,
+            accountId: 240987,
+            balance: '0.01',
+            minimalBalance: '0.0',
+            currencyId: 16,
+            currencyIsoCode: 'rur',
+            cardholder: 'TIMUR NIGMATZIANOV',
+            number: '677384******8519',
+            authLimit: '78000000000000601911',
+            title: 'Maestro-MIR Cobadge Contactless 5 RUR',
+            displayTitle: 'Maestro-MIR Cobadge Contactless 5 RUR',
+            state: 'active',
+            issueAt: '2020-07-14',
+            expirationAt: '2025-07-31',
+            expiresIn: 1350,
+            unaffordable: false,
+            lastOperationDate: '2021-11-15T06:16:03Z',
+            firstOperationDate: '2020-08-10T06:56:07Z',
+            blockedByDate: false,
+            hidden: false,
+            blankImageUrl: '/assets/cardblanks/mir_maestro.jpg',
+            imageUrl: '/assets/cardimage/mir_maestro.png',
+            iconUrl: '/assets/cardicons/MC_MAESTRO.png',
+            keychain: null,
+            svId: 683839,
+            isIbs: true,
+            cardType: { keyword: 'MC_MAESTRO' },
+            canReissue: true,
+            canBlock: true,
+            isExpiring: false,
+            canTokenized: true,
+            canTokenizedMir: true,
+            canP2p: true
+          },
+        cardOrAccountId: 'card_354474',
+        event:
+          {
+            orderNumber: 1450780342,
+            operationDate: '2021-10-29T03:22:25Z',
+            orderDate: '2021-10-30',
+            name: 'ПАО "ЧЕЛЯБИНВЕСТБАНК"',
+            description: 'ПЛАТЕЖ по карте *8519. Место совершения транзакции: СИНГАПУР, Singapore, YM *aliexpres, YM *aliexpress. Дата: 27.10.21 11:48:40.',
+            state: 'paid',
+            stateDescription: 'Документ проведен',
+            fk: 'ibs_id|1|547018035',
+            documentNumber: 561,
+            operationKindId: '01',
+            paymentPriority: '5',
+            incomeDate: '2021-10-29T03:22:25Z',
+            amount: '209.97',
+            currencyIsoCode: 'rur',
+            account: '30232810890000001545',
+            srcInn: '744719589676',
+            srcKpp: '0',
+            srcName: 'НИГМАТЗЯНОВ ТИМУР РАШИДОВИЧ',
+            srcAccount: '40817810300880010554',
+            srcBank: 'ПАО "ЧЕЛЯБИНВЕСТБАНК"',
+            srcAddress: 'Г. ЧЕЛЯБИНСК',
+            srcBic: '047501779',
+            srcCorrespondentAccount: '30101810400000000779',
+            destinationInn: '7421000200',
+            destinationKpp: '745101001',
+            destinationName: 'ПАО "ЧЕЛЯБИНВЕСТБАНК"',
+            destinationAccount: '30232810890000001545',
+            destinationBank: 'ПАО "ЧЕЛЯБИНВЕСТБАНК" Г ЧЕЛЯБИНСК',
+            destinationBic: '047501779',
+            destinationCorrespondentAccount: '30101810400000000779'
+          }
+      },
+      {
+        date: new Date('2021-10-27T11:48:40.000Z'),
+        hold: false,
+        movements: [
+          {
+            account: { id: '206329' },
+            fee: 0,
+            id: '294548455',
+            invoice: null,
+            sum: -209.97
+          }
+        ],
+        merchant: {
+          city: 'СИНГАПУР, Singapore, YM *aliexpres',
+          country: null,
+          location: null,
+          mcc: null,
+          title: 'YM *aliexpress'
+        },
+        comment: null
+      }
+    ],
+    [
+      {
+        id: 302327495,
+        balanceBefore: '6026.62',
+        date: '2021-11-13T01:43:29Z',
+        createdAt: '2021-11-13T01:43:29Z',
+        state: 'paid',
+        cashbackAmount: null,
+        comment: null,
+        balanceAfter: '4026.72',
+        amount: '-1999.9',
+        brand: '',
+        mcid: '49031',
+        card:
+          {
+            id: 354474,
+            title: 'Maestro-MIR Cobadge Contactless 5 RUR',
+            displayTitle: 'Maestro-MIR Cobadge Contactless 5 RUR',
+            state: 'active',
+            displayIcon: 'assets/cardicons/MC_MAESTRO.png'
+          },
+        canRepeat: false,
+        account: { id: 240987, currencyId: 16, currencyIsoCode: 'rur' },
+        geoInfo:
+          {
+            address: 'Gorod Sankt-P, GPNBONUS.',
+            longitude: null,
+            latitude: null
+          },
+        categoryId: 1733812,
+        operation: 'ПАО "ЧЕЛЯБИНВЕСТБАНК" ПЛАТЕЖ по карте *8519. Место совершения транзакции: Gorod Sankt-P, GPNBONUS. Дата: 10.11.21 19:06:12. 30232810890000001545 -1999.9',
+        cardOrAccount:
+          {
+            id: 354474,
+            accountId: 240987,
+            balance: '0.01',
+            minimalBalance: '0.0',
+            currencyId: 16,
+            currencyIsoCode: 'rur',
+            cardholder: 'TIMUR NIGMATZIANOV',
+            number: '677384******8519',
+            authLimit: '78000000000000601911',
+            title: 'Maestro-MIR Cobadge Contactless 5 RUR',
+            displayTitle: 'Maestro-MIR Cobadge Contactless 5 RUR',
+            state: 'active',
+            issueAt: '2020-07-14',
+            expirationAt: '2025-07-31',
+            expiresIn: 1350,
+            unaffordable: false,
+            lastOperationDate: '2021-11-15T06:16:03Z',
+            firstOperationDate: '2020-08-10T06:56:07Z',
+            blockedByDate: false,
+            hidden: false,
+            blankImageUrl: '/assets/cardblanks/mir_maestro.jpg',
+            imageUrl: '/assets/cardimage/mir_maestro.png',
+            iconUrl: '/assets/cardicons/MC_MAESTRO.png',
+            keychain: null,
+            svId: 683839,
+            isIbs: true,
+            cardType: { keyword: 'MC_MAESTRO' },
+            canReissue: true,
+            canBlock: true,
+            isExpiring: false,
+            canTokenized: true,
+            canTokenizedMir: true,
+            canP2p: true
+          },
+        cardOrAccountId: 'card_354474',
+        event:
+          {
+            orderNumber: 1481423497,
+            operationDate: '2021-11-13T01:43:29Z',
+            orderDate: '2021-11-15',
+            name: 'ПАО "ЧЕЛЯБИНВЕСТБАНК"',
+            description: 'ПЛАТЕЖ по карте *8519. Место совершения транзакции: Gorod Sankt-P GPNBONUS. Дата: 10.11.21 19:06:12.',
+            state: 'paid',
+            stateDescription: 'Документ проведен',
+            fk: 'ibs_id|1|549628477',
+            documentNumber: 32,
+            operationKindId: '01',
+            paymentPriority: '5',
+            incomeDate: '2021-11-13T01:43:29Z',
+            amount: '1999.9',
+            currencyIsoCode: 'rur',
+            account: '30232810890000001545',
+            srcInn: '744719589676',
+            srcKpp: '0',
+            srcName: 'НИГМАТЗЯНОВ ТИМУР РАШИДОВИЧ',
+            srcAccount: '40817810300880010554',
+            srcBank: 'ПАО "ЧЕЛЯБИНВЕСТБАНК"',
+            srcAddress: 'Г. ЧЕЛЯБИНСК',
+            srcBic: '047501779',
+            srcCorrespondentAccount: '30101810400000000779',
+            destinationInn: '7421000200',
+            destinationKpp: '745101001',
+            destinationName: 'ПАО "ЧЕЛЯБИНВЕСТБАНК"',
+            destinationAccount: '30232810890000001545',
+            destinationBank: 'ПАО "ЧЕЛЯБИНВЕСТБАНК" Г ЧЕЛЯБИНСК',
+            destinationBic: '047501779',
+            destinationCorrespondentAccount: '30101810400000000779'
+          }
+      },
+      {
+        date: new Date('2021-11-10T19:06:12.000Z'),
+        hold: false,
+        movements: [
+          {
+            account: { id: '206329' },
+            fee: 0,
+            id: '302327495',
+            invoice: null,
+            sum: -1999.9
+          }
+        ],
+        merchant: {
+          fullTitle: 'Gorod Sankt-P GPNBONUS.',
+          mcc: null,
+          location: null
+        },
+        comment: null
+      }
     ]
   ])('converts outcome', (apiTransaction, transaction) => {
     expect(convertTransaction(apiTransaction, { id: '206329', instrument: 'RUB' })).toEqual(transaction)

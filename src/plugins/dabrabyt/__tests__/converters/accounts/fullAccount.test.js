@@ -1411,6 +1411,277 @@ describe('processAccounts', () => {
           }
         }
       ]
+    ],
+    [
+      {
+        cardAccount:
+          [
+            {
+              internalAccountId: '5020034798',
+              currency: '933',
+              balance: 0,
+              currencyCode: 933,
+              openDate: 1633294800000,
+              accountNumber: 'BY93MMBN30140000974009330000',
+              cardAccountNumber: '027200105020034798',
+              productCode: '502',
+              productName: 'Зарплатная МТС/Исключительная',
+              contractId: '318173203',
+              interestRate: 0.0001,
+              accountStatus: 'OPEN',
+              cards:
+                [
+                  {
+                    cardNumberMasked: '5*** **** **** 6291',
+                    cardHash: '9kiqaCe4N93X5nfF82yO1n9ghyTnIC2i2I6Iz2jEo0psK4I1tOqfCw9riijgF1OcSGcGoFfhK4zfcRKSCRBMzA',
+                    cardType:
+                      {
+                        value: 64,
+                        name: 'Masterсard Standard. Пакет Исключительный Специальный',
+                        imageUri: 'https://alseda.by/media/public/Mastercard_Standard_D_MC_ST_BLUE.png',
+                        paySysImageUri: 'https://alseda.by/media/public/credit_card_str_mastercard.png',
+                        textColor: 'ffffffff',
+                        paySystemName: 'Mastercard'
+                      },
+                    cardStatus: 'OPEN',
+                    expireDate: 1730322000000,
+                    owner: 'NIKOLAY NIKOLAEV',
+                    tariffName: 'БГПБ Masterсard Standard BYN. Пакет Исключительный Специальный',
+                    notDisplayNotification: 0,
+                    processing: '2',
+                    payment: '0',
+                    status: { code: '0' },
+                    stateSignature: 'BETRAY',
+                    numberDaysBeforeCardExpiry: 1069,
+                    canChange3D: true,
+                    cardDepartmentName: 'Центральное отделение',
+                    cardDepartmentAddress: 'г. Минск;ул. Коммунистическая 49',
+                    canChangeStatus: true,
+                    retailCardId: 318173205,
+                    applePaySupported: true,
+                    pinDeliveryType: 1,
+                    canReissueOldExpire: true,
+                    canReissueNewExpire: true
+                  }
+                ],
+              bankCode: '288',
+              rkcCode: '1',
+              rkcName: 'Центральное отделение',
+              accountType: '1',
+              ibanNum: 'BY52MMBN30140001005020034798',
+              canSell: false,
+              canCloseSameCurrency: false,
+              canCloseOtherCurrency: false,
+              canClose: false,
+              canRefillSameCurrency: false,
+              canRefillOtherCurrency: false,
+              canRefill: false
+            },
+            {
+              internalAccountId: '6110013726',
+              currency: '978',
+              balance: 0,
+              currencyCode: 978,
+              openDate: 1633467600000,
+              accountNumber: 'BY36MMBN30140000978009780000',
+              cardAccountNumber: '027201006110013726',
+              productCode: '611',
+              productName: 'Личная EUR',
+              contractId: '318472123',
+              interestRate: 0.0001,
+              accountStatus: 'OPEN',
+              cards:
+                [
+                  {
+                    cardNumberMasked: '5*** **** **** 2972',
+                    cardHash: 'swlLTWq18-LMw4H7FtrUPVIokBR5cna3qzHDDw2N0oLLyqJAr7LBgnpcWPbLZU2D5ohe621KDJhyI2b-gJqHKg',
+                    cardType:
+                      {
+                        value: 64,
+                        name: 'Mastercard Standard. Пакет Классический',
+                        imageUri: 'https://alseda.by/media/public/Mastercard_Standard_D_MC_ST_BLUE.png',
+                        paySysImageUri: 'https://alseda.by/media/public/credit_card_str_mastercard.png',
+                        textColor: 'ffffffff',
+                        paySystemName: 'Mastercard'
+                      },
+                    cardStatus: 'OPEN',
+                    expireDate: 1793394000000,
+                    owner: 'NIKOLAY NIKOLAEV',
+                    tariffName: 'Без Платы.БГПБ Masterсard Standard EUR.Пакет Классический',
+                    notDisplayNotification: 0,
+                    processing: '2',
+                    payment: '0',
+                    status: { code: '0' },
+                    stateSignature: 'BETRAY',
+                    numberDaysBeforeCardExpiry: 1799,
+                    canChange3D: true,
+                    cardDepartmentName: 'Центральное отделение',
+                    cardDepartmentAddress: 'г. Минск;ул. Коммунистическая 49',
+                    canChangeStatus: true,
+                    retailCardId: 318472125,
+                    applePaySupported: true,
+                    pinDeliveryType: 1,
+                    canReissueOldExpire: true,
+                    canReissueNewExpire: true
+                  }
+                ],
+              bankCode: '288',
+              rkcCode: '10',
+              rkcName: 'СДБО физических лиц',
+              accountType: '1',
+              ibanNum: 'BY80MMBN30140010006110013726',
+              canSell: false,
+              canCloseSameCurrency: false,
+              canCloseOtherCurrency: false,
+              canClose: false,
+              canRefillSameCurrency: false,
+              canRefillOtherCurrency: false,
+              canRefill: false
+            }
+          ],
+        depositAccount:
+          [
+            {
+              internalAccountId: '15700000793',
+              currency: '978',
+              openDate: 1633640400000,
+              endDate: 1641589200000,
+              accountNumber: 'BY96MMBN34140000000009780000',
+              productCode: '1570',
+              productName: 'Вклад "Шчодры" в USD,EUR,RUB',
+              balanceAmount: 425.86,
+              contractId: '318889107',
+              interestRate: 3.65,
+              accountStatus: 'OPEN',
+              bankCode: '288',
+              rkcCode: '10',
+              rkcName: 'СДБО физических лиц',
+              accountType: '0',
+              ibanNum: 'BY33MMBN34140010015700000793',
+              canSell: false,
+              canCloseSameCurrency: true,
+              canCloseOtherCurrency: true,
+              canClose: false,
+              canRefillSameCurrency: true,
+              canRefillOtherCurrency: true,
+              canRefill: true,
+              plannedEndDate: 1641589200000,
+              bare: false,
+              canOnlineWithdrawPercentsToAnotherAccountWithSameCurrency: true,
+              canOnlineWithdrawPercentsToAnotherAccountWithAnotherCurrency: true,
+              irrevocable: false
+            }
+          ],
+        currentAccount:
+          [
+            {
+              internalAccountId: '0030009507',
+              currency: '933',
+              openDate: 1629147600000,
+              accountNumber: 'BY79MMBN30140000000009330000',
+              productCode: '3',
+              productName: 'Текущий счет BYN',
+              balanceAmount: 0,
+              contractId: '310419561',
+              interestRate: 0.0001,
+              accountStatus: 'OPEN',
+              rkcCode: '10',
+              rkcName: 'СДБО физических лиц',
+              accountType: '5',
+              ibanNum: 'BY20MMBN30140010000030009507',
+              canSell: false,
+              canCloseSameCurrency: false,
+              canCloseOtherCurrency: false,
+              canClose: false,
+              canRefillSameCurrency: true,
+              canRefillOtherCurrency: true,
+              canRefill: true
+            }
+          ]
+      },
+      [
+        {
+          product: {
+            accountType: '0',
+            currencyCode: '978',
+            id: '15700000793',
+            type: 'deposit'
+          },
+          account: {
+            balance: 425.86,
+            capitalization: true,
+            endDateOffset: 92,
+            endDateOffsetInterval: 'day',
+            id: '15700000793',
+            instrument: 'EUR',
+            payoffInterval: 'month',
+            payoffStep: 1,
+            percent: 3.65,
+            startBalance: 425.86,
+            startDate: new Date('2021-10-07T21:00:00.000Z'),
+            syncIds: ['15700000793'],
+            title: 'Вклад "Шчодры" в USD,EUR,RUB',
+            type: 'deposit'
+          }
+        },
+        {
+          product: {
+            accountType: '5',
+            currencyCode: '933',
+            id: '0030009507',
+            type: 'checking'
+          },
+          account: {
+            available: 0,
+            balance: 0,
+            creditLimit: 0,
+            gracePeriodEndDate: null,
+            id: '0030009507',
+            instrument: 'BYN',
+            savings: false,
+            syncIds: ['0030009507'],
+            title: 'Текущий счет BYN',
+            totalAmountDue: null,
+            type: 'checking'
+          }
+        },
+        {
+          product: {
+            accountType: '1',
+            cardHash: '9kiqaCe4N93X5nfF82yO1n9ghyTnIC2i2I6Iz2jEo0psK4I1tOqfCw9riijgF1OcSGcGoFfhK4zfcRKSCRBMzA',
+            currencyCode: '933',
+            id: '5020034798',
+            rkcCode: '1',
+            type: 'ccard'
+          },
+          account: {
+            balance: 0,
+            id: '5020034798',
+            instrument: 'BYN',
+            syncIds: ['5***********6291'],
+            title: 'Зарплатная МТС/Исключительная',
+            type: 'ccard'
+          }
+        },
+        {
+          product: {
+            accountType: '1',
+            cardHash: 'swlLTWq18-LMw4H7FtrUPVIokBR5cna3qzHDDw2N0oLLyqJAr7LBgnpcWPbLZU2D5ohe621KDJhyI2b-gJqHKg',
+            currencyCode: '978',
+            id: '6110013726',
+            rkcCode: '10',
+            type: 'ccard'
+          },
+          account: {
+            balance: 0,
+            id: '6110013726',
+            instrument: 'EUR',
+            syncIds: ['5***********2972'],
+            title: 'Личная EUR',
+            type: 'ccard'
+          }
+        }
+      ]
     ]
   ])('converts account', (apiAccounts, accounts) => {
     expect(convertAccounts(apiAccounts)).toEqual(accounts)

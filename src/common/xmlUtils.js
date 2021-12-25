@@ -37,20 +37,21 @@ function parseXmlNode (root) {
         object = {}
       }
       const key = node.name
+      const singleTextChildNode = node.children.length === 1 && node.children[0].type === 'text'
+        ? node.children[0]
+        : null
+      const text = singleTextChildNode
+        ? decodeHtmlSpecialCharacters(singleTextChildNode.data.trim())
+        : ''
       let value
-      if (!node.children || !node.children.length) {
+      if (!node.children || !node.children.length || (singleTextChildNode && !text)) {
         if (node.attribs && Object.keys(node.attribs).length > 0) {
           value = {}
         } else {
           value = null
         }
-      } else if (node.children.length === 1 &&
-        node.children[0].type === 'text') {
-        value = node.children[0].data.trim()
-        value = decodeHtmlSpecialCharacters(value)
-        if (value === '') {
-          value = null
-        }
+      } else if (singleTextChildNode) {
+        value = text || null
       } else {
         value = parseXmlNode(node)
       }

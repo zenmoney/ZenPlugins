@@ -57,4 +57,31 @@ describe('convertWallet', () => {
       balance: 4269.02
     })
   })
+  it('converts wallet UZS', () => {
+    expect(convertWallet({
+      ownerName: 'MUXAMMADAYUB SIDDIKOV',
+      state: 'ACTIVE',
+      currency: { name: 'UZS', scale: 2 },
+      walletId: 'UZS-90841333-0001',
+      private: true,
+      isPrivate: true,
+      id: 331248,
+      account: null,
+      bankName: 'АКБ "Капиталбанк"',
+      balance: 0,
+      visible: true,
+      absId: null,
+      safeMode: 'NONE',
+      mfo: '01158'
+    })).toEqual({
+      id: '331248',
+      title: 'Кошелёк UZS',
+      syncIds: [
+        '331248'
+      ],
+      instrument: 'UZS',
+      type: 'checking',
+      balance: 0
+    })
+  })
 })

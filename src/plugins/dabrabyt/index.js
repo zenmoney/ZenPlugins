@@ -1,5 +1,5 @@
-import { sortBy } from 'lodash'
-import { fetchAccounts, fetchTransactions, login } from './api' // fetchCardTransactions, fetchOperations,
+import { adjustTransactions } from '../../common/transactionGroupHandler'
+import { fetchAccounts, fetchTransactions, login } from './api'
 import { convertTransaction, convertAccounts } from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
@@ -26,6 +26,6 @@ export async function scrape ({ preferences, fromDate, toDate }) {
 
   return {
     accounts,
-    transactions: sortBy(transactions, transaction => transaction.date)
+    transactions: adjustTransactions({ transactions })
   }
 }

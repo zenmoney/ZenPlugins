@@ -76,7 +76,7 @@ function parseInnerTransfer (transaction, apiTransaction, account, invoice) {
 export function convertLastTransaction (apiTransaction, accounts) {
   const rawData = apiTransaction.pushMessageText.split('; ')
 
-  if (rawData[0].slice(0, 4) !== 'Card' || rawData[1] === 'Смена статуса карты') {
+  if (rawData[0].slice(0, 4) !== 'Card' || rawData[1] === 'Смена статуса карты' || rawData[1].match(/Проверка карты/i)) {
     // Значит это не транзакция, а просто уведомление банка
     return null
   }

@@ -1,5 +1,6 @@
 import { parse, stringify } from 'querystring'
 import { fetchJson } from '../../common/network'
+import { retry, RetryError } from '../../common/retry'
 import { IncompatibleVersionError, TemporaryUnavailableError } from '../../errors'
 import { clientId, clientSecret, redirectUri } from './config'
 
@@ -79,24 +80,34 @@ export async function fetchTransactions (token, { id }, fromDate) {
   let skip = 0
   let batch
   do {
-    const response = await fetchJson(`https://api.modulbank.ru/v1/operation-history/${id}`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`
-      },
-      body: {
-        from: fromDate.toISOString().slice(0, 10),
-        skip
-      },
-      sanitizeRequestLog: { headers: { Authorization: true } }
-    })
+    let response
+    try {
+      response = await retry({
+        getter: async () => await fetchJson(`https://api.modulbank.ru/v1/operation-history/${id}`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+          body: {
+            from: fromDate.toISOString().slice(0, 10),
+            skip,
+            records: 50
+          },
+          sanitizeRequestLog: { headers: { Authorization: true } }
+        }),
+        predicate: response => response.body.message !== 'apierror',
+        maxAttempts: 5,
+        delayMs: 2000
+      })
+    } catch (e) {
+      if (e instanceof RetryError) {
+        throw new TemporaryUnavailableError()
+      }
+    }
     if (response.status === 401) {
       throw new AuthError()
     }
     batch = response.body
-    if (batch.message === 'apierror') {
-      throw new TemporaryUnavailableError()
-    }
     transactions.push(...batch)
     skip += batch.length
   } while (batch.length)
