@@ -48,7 +48,7 @@ async function fetchUrl (url, options, predicate = () => true, error = (message)
   }
 
   const err = parseErrorMessage(response.body)
-  if (err.indexOf('еанс работы с порталом завершен из-за длительного простоя') > -1) {
+  if (err.indexOf('Сеанс работы с порталом завершен из-за длительного простоя') > -1) {
     throw new TemporaryError('Сессия завершена из-за длительного простоя. Запустите синхронизацию с банком заново.')
   }
   if (err.indexOf('Вы заблокированы из-за трёхкратного ошибочного ввод') >= 0) {
