@@ -29,7 +29,7 @@ export function convertAccount (acc) {
         type: 'ccard',
         title: acc.accountName.replace('Счёт №', '').trim() ? acc.accountName : `${cardsArray[0].name} *${cardsArray[0].number.slice(-4)}`,
         syncID: [],
-        balance: acc.balance ? Number.parseFloat(acc.balance.replace(/\s/g, '')) : null,
+        balance: acc.balance ? (Number.parseFloat(acc.balance.replace(/\s/g, '')) - creditLimit) : null,
         instrument: acc.currency,
         ...creditLimit !== 0 && { creditLimit },
         raw: acc
