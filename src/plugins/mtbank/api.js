@@ -1,7 +1,7 @@
 import { defaultsDeep, flatMap } from 'lodash'
 import { createDateIntervals as commonCreateDateIntervals } from '../../common/dateUtils'
 import { fetchJson } from '../../common/network'
-import { BankMessageError } from '../../errors'
+import { BankMessageError, InvalidOtpCodeError } from '../../errors'
 import { getDate } from './converters'
 
 const baseUrl = 'https://mybank.by/api/v1/'
@@ -86,25 +86,58 @@ export async function login (login, password) {
   let res = await fetchApiJson('login/userIdentityByPhone', {
     method: 'POST',
     body: { phoneNumber: login, loginWay: '1' },
-    sanitizeRequestLog: { body: { phoneNumber: true } },
-    sanitizeResponseLog: { body: { data: { smsCode: { phone: true } } } }
+    sanitizeRequestLog: { body: { phoneNumber: true } }
   }, response => response.body.success)
-  let sessionCookies = cookies(res)
+  const sessionCookies = cookies(res)
 
-  res = await fetchApiJson('login/checkPassword4', {
-    method: 'POST',
-    headers: { Cookie: sessionCookies },
-    body: { password: password, version: '2.1.18' },
-    sanitizeRequestLog: { body: { password: true } }
-  }, response => response.body.success)
+  res = await fetchApiJson(
+    'login/checkPassword4',
+    {
+      method: 'POST',
+      headers: { Cookie: sessionCookies },
+      body: { password: password, version: '2.1.18' },
+      sanitizeRequestLog: { body: { password: true } },
+      sanitizeResponseLog: {
+        body: {
+          data: {
+            smsInfo: {
+              phone: true
+            },
+            userInfo: true
+          }
+        }
+      }
+    },
+    (response) => response.body.success
+  )
 
-  sessionCookies = cookies(res)
+  const smsCode = await ZenMoney.readLine('Введите код из СМС сообщения', {
+    time: 30000
+  })
+  if (smsCode === '') {
+    throw new InvalidOtpCodeError()
+  }
 
-  await fetchApiJson('user/userRole', {
-    method: 'POST',
-    body: res.body.data.userInfo.dboContracts[0],
-    sanitizeResponseLog: { body: { data: { userInfo: true } } }
-  }, response => response.body.success)
+  await fetchApiJson(
+    'login/checkSms',
+    {
+      method: 'POST',
+      headers: { Cookie: sessionCookies },
+      body: { smsCode: smsCode },
+      sanitizeRequestLog: { body: { smsCode: true } }
+    },
+    (response) => response.body.success
+  )
+
+  await fetchApiJson(
+    'user/userRole',
+    {
+      method: 'POST',
+      body: res.body.data.userInfo.dboContracts[0],
+      sanitizeRequestLog: { body: true }
+    },
+    (response) => response.body.success
+  )
 
   return sessionCookies
 }
