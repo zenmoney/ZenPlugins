@@ -111,23 +111,25 @@ export async function login (login, password) {
     (response) => response.body.success
   )
 
-  const smsCode = await ZenMoney.readLine('Введите код из СМС сообщения', {
-    time: 30000
-  })
-  if (smsCode === '') {
-    throw new InvalidOtpCodeError()
+  if (res.body.data.nextOperation === 'SMS') {
+    // SMS-code confirmation needed
+    const smsCode = await ZenMoney.readLine('Введите код из СМС сообщения', {
+      time: 30000
+    })
+    if (!smsCode) {
+      throw new InvalidOtpCodeError()
+    }
+    await fetchApiJson(
+      'login/checkSms',
+      {
+        method: 'POST',
+        headers: { Cookie: sessionCookies },
+        body: { smsCode: smsCode },
+        sanitizeRequestLog: { body: { smsCode: true } }
+      },
+      (response) => response.body.success
+    )
   }
-
-  await fetchApiJson(
-    'login/checkSms',
-    {
-      method: 'POST',
-      headers: { Cookie: sessionCookies },
-      body: { smsCode: smsCode },
-      sanitizeRequestLog: { body: { smsCode: true } }
-    },
-    (response) => response.body.success
-  )
 
   await fetchApiJson(
     'user/userRole',
