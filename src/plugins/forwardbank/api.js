@@ -26,16 +26,11 @@ export async function login ({ login, password }, auth) {
       'Accept-Language': 'en-ua',
       'Cache-Control': 'no-cache'
     },
-    body:
-      new URLSearchParams({
-        client_id: 'FORWARD_ONLINE_IOS',
-        phone_number: login,
-        grant_type: 'password',
-        password: password,
-        mode: 'bio',
-        device: ''
-      }).toString(),
-    method: 'POST'
+    body: `client_id=FORWARD_ONLINE_IOS&phone_number=${login}&grant_type=password&password=${password}&mode=bio&device=`,
+    method: 'POST',
+    log: true,
+    sanitizeRequestLog: { body: true },
+    sanitizeResponseLog: { body: true }
   }
 
   return (await fetchApi('/auth/token', options, response => response.body.access_token)).body.access_token
