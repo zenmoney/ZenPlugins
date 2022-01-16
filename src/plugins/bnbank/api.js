@@ -41,7 +41,7 @@ export async function login (login, password) {
   const res = await fetchApiJson('session/login', {
     method: 'POST',
     body: {
-      applicID: '1.21',
+      applicID: '1.53',
       clientKind: '0',
       browser: ZenMoney.device.manufacturer, // Build.DEVICE
       browserVersion: `${ZenMoney.device.model} (${ZenMoney.device.manufacturer})`, // Build.MODEL + " (" + Build.PRODUCT + ")"
