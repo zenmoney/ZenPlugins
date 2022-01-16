@@ -50,7 +50,7 @@ export function convertAccounts (apiAccounts) {
     const product = {
       id: apiAccount.CardId
     }
-    const balance = (apiAccount.PassiveAmount + apiAccount.AvailableAmount) / 100
+    const balance = apiAccount.PassiveAmount / 100
     const creditLimit = apiAccount.AvailableAmount / 100
     const title = apiAccount.ProductName || apiAccount.CardNumber
 
@@ -209,13 +209,13 @@ function parseTransactionMerchantFullTitle (apiTransaction) {
 function parseTransactionComment (apiTransaction) {
   const chunks = []
 
-  if (apiTransaction.CategoryName) {
-    chunks.push(apiTransaction.CategoryName)
-  }
+  // if (apiTransaction.CategoryName) {
+  //   chunks.push(apiTransaction.CategoryName)
+  // }
 
-  if (apiTransaction.Name && !['Purchase'].includes(apiTransaction.Name)) {
-    chunks.push(apiTransaction.Name)
-  }
+  // if (apiTransaction.Name && !['Purchase'].includes(apiTransaction.Name)) {
+  //   chunks.push(apiTransaction.Name)
+  // }
 
   if (apiTransaction.StatusMessage &&
     !['Переказ грошових коштів.'].includes(apiTransaction.StatusMessage) &&

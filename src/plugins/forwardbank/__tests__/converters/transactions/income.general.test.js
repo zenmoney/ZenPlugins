@@ -50,7 +50,7 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: null,
-        comment: 'Cash back. Зарахування кешбеку'
+        comment: null
       }
     ]
   ])('converts income internal', (apiTransaction, account, transaction) => {

@@ -64,7 +64,7 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: null,
-        comment: 'Переказ коштів. На картку 000000******0000'
+        comment: null
       }
     ]
   ])('converts income internal', (apiTransaction, account, transaction) => {

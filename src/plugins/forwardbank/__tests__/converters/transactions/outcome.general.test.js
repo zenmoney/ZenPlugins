@@ -56,7 +56,7 @@ describe('convertTransaction', () => {
           title: 'Ашан',
           mcc: 5411
         },
-        comment: 'Продукти та супермаркети'
+        comment: null
       }
     ]
   ])('converts income internal', (apiTransaction, account, transaction) => {

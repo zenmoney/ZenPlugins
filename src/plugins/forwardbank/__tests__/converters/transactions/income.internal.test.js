@@ -59,7 +59,7 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: null,
-        comment: 'Поповнення картки. З рахунку UA000000000000000000000000001'
+        comment: null
       }
     ]
   ])('converts income internal', (apiTransaction, account, transaction) => {
