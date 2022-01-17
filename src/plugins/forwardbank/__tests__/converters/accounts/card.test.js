@@ -90,7 +90,7 @@ describe('convertAccounts', () => {
               '10000001',
               '516800******0000'
             ],
-            balance: 1500.00,
+            balance: 500.00,
             creditLimit: 1000
           }
         }
