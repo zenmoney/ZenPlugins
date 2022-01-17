@@ -30,7 +30,18 @@ async function fetchApi (url, xml, options, predicate = () => true, error = (mes
   }
   const res = parseXml(response.body)
   if (res.BS_Response.Error && res.BS_Response.Error.ErrorLine) {
+    // not good code, but in case of 'includes' - we should not use switch
     if (res.BS_Response.Error.ErrorLine === 'Ошибка авторизации: Баланс недоступен') {
+      return null
+    }
+    if (res.BS_Response.Error.ErrorLine === 'Нет данных для отчёта') {
+      return null
+    }
+    if (res.BS_Response.Error.ErrorLine.includes('Окончание периода - допустимый диапазон значений')) {
+      // return the last available date to parse transactions
+      return res.BS_Response.Error.ErrorLine.match(/\d{2}.\d{2}.\d{4}/)[0]
+    }
+    if (res.BS_Response.Error.ErrorLine.includes('Окончание периода - неверная длина')) {
       return null
     }
     const errorDescription = res.BS_Response.Error.ErrorLine
@@ -106,30 +117,42 @@ function transactionDate (date) {
   return String(('0' + date.getDate()).slice(-2) + '.' + ('0' + (date.getMonth() + 1)).slice(-2) + '.' + String(date.getFullYear()))
 }
 
+async function getTransactions (accountId, fromDate, toDate, sid) {
+  return await fetchApi('.admin',
+    '<BS_Request>\r\n' +
+  '   <ExecuteAction Id="' + accountId + '">\r\n' +
+  '      <Parameter Id="DateFrom">' + fromDate + '</Parameter>\r\n' +
+  '      <Parameter Id="DateTo">' + toDate + '</Parameter>\r\n' +
+  '   </ExecuteAction>\r\n' +
+  '   <RequestType>ExecuteAction</RequestType>\r\n' +
+  '   <Session SID="' + sid + '"/>\r\n' +
+  '   <TerminalId Version="1.9.12">Android</TerminalId>\r\n' +
+  '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+  '   <Subsystem>ClientAuth</Subsystem>\r\n' +
+  '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
+}
+
 export async function fetchFullTransactions (sid, account, fromDate, toDate = new Date()) {
   console.log('>>> Загрузка списка транзакций...')
   toDate = toDate || new Date()
-  toDate.setDate(toDate.getDate() - 1)
+  toDate.setDate(toDate.getDate())
 
   const dates = createDateIntervals(fromDate, toDate)
   const responses = await Promise.all(dates.map(async date => {
-    return fetchApi('.admin',
-      '<BS_Request>\r\n' +
-      '   <ExecuteAction Id="' + account.transactionsAccId + '">\r\n' +
-      '      <Parameter Id="DateFrom">' + transactionDate(date[0]) + '</Parameter>\r\n' +
-      '      <Parameter Id="DateTo">' + transactionDate(date[1]) + '</Parameter>\r\n' +
-      '   </ExecuteAction>\r\n' +
-      '   <RequestType>ExecuteAction</RequestType>\r\n' +
-      '   <Session SID="' + sid + '"/>\r\n' +
-      '   <TerminalId Version="1.9.12">Android</TerminalId>\r\n' +
-      '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
-      '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-      '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
+    let response = await getTransactions(account.transactionsAccId, transactionDate(date[0]), transactionDate(date[1]), sid)
+    // if the response is failed by incorrect toDate we're recalculating it
+    if (/\d{2}.\d{2}.\d{4}/.test(response)) {
+      response = await getTransactions(account.transactionsAccId, transactionDate(date[0]), response, sid)
+    }
+    return response
   }))
   const mailIDs = responses.map(response => {
+    if (response === null) {
+      return null
+    }
     return response.BS_Response.ExecuteAction.MailId
   })
-  return await Promise.all(flatMap(mailIDs, (mailId) => {
+  return await Promise.all(flatMap(mailIDs.filter(Boolean), (mailId) => {
     return fetchApi('.admin',
       '<BS_Request>\r\n' +
       '   <MailAttachment Id="' + mailId + '" No="0"/>\r\n' +
@@ -242,8 +265,9 @@ export async function fetchDeposits (sid, account) {
     '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
     '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
-  return await fetchApi('.admin',
-    '<BS_Request>\r\n' +
+  if (response) {
+    return await fetchApi('.admin',
+      '<BS_Request>\r\n' +
     '   <MailAttachment Id="' + response.BS_Response.ExecuteAction.MailId + '" No="0"/>\r\n' +
     '   <RequestType>MailAttachment</RequestType>\r\n' +
     '   <Session SID="' + sid + '"/>\r\n' +
@@ -261,6 +285,8 @@ export async function fetchDeposits (sid, account) {
     '       </InputDataSources>\r\n' +
     '   </TerminalCapabilities>\r\n' +
     '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
+  }
+  return null
 }
 
 export function parseDeposits (mail, fromDate) {
