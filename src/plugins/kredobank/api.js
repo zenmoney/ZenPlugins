@@ -18,11 +18,7 @@ function parseCookies (response) {
   }
 }
 
-export async function login ({ login, password }, auth) {
-  if (auth) {
-    return auth
-  }
-
+export async function login ({ login, password }) {
   const res = await fetchJson(
     baseUrl + 'v1/individual/light/auth/login/login-password',
     {
@@ -36,8 +32,6 @@ export async function login ({ login, password }, auth) {
     },
     response => response.body.success
   )
-
-  console.log(res)
 
   if (!res) {
     throw new InvalidLoginOrPasswordError()

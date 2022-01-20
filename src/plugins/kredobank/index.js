@@ -15,9 +15,7 @@ function createDateIntervals (fromDate, toDate) {
 }
 
 export async function scrape ({ preferences, fromDate, toDate }) {
-  const auth = await login(preferences, ZenMoney.getData('auth'))
-  ZenMoney.setData('auth', auth)
-  ZenMoney.saveData()
+  const auth = await login(preferences)
 
   const accounts = await Promise.all(['card', 'credit', 'deposit'].map(type => fetchAccounts(auth, type)))
     .then(contracts => {
@@ -26,7 +24,6 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     })
 
   const transactions = []
-
   toDate = toDate || new Date()
 
   await Promise.all(accounts.map(async (account) => {
@@ -36,16 +33,14 @@ export async function scrape ({ preferences, fromDate, toDate }) {
 
     const dates = createDateIntervals(fromDate, toDate)
 
-    const apiTransactions = await Promise.all(dates.map(date => {
+    return Promise.all(dates.map(async (date) => {
       return fetchTransactions(auth, account, date[0], date[1])
     }))
-
-    for (const apiTransaction of apiTransactions.flat()) {
-      const transaction = convertTransaction(apiTransaction, account)
-      if (transaction) {
-        transactions.push(transaction)
-      }
-    }
+      .then(apiTransactions => {
+        transactions.push(
+          ...flatten(apiTransactions).map(apiTransaction => convertTransaction(apiTransaction, account))
+        )
+      })
   }))
 
   return {
