@@ -33,7 +33,7 @@ export async function login ({ login, password }) {
     response => response.body.success
   )
 
-  if (!res) {
+  if (!res || res.status !== 200) {
     throw new InvalidLoginOrPasswordError()
   }
 
