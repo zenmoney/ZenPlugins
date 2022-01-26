@@ -25,7 +25,7 @@ export function convertAccount (ob) {
 }
 
 export function addOverdraftInfo (account, overdraft) {
-  const creditLimit = Number(overdraft.replace(',', '.').replace(/\s/g, ''))
+  const creditLimit = overdraft ? Number(overdraft.replace(',', '.').replace(/\s/g, '')) : null
   return !isNaN(creditLimit) && creditLimit > 0
     ? {
         ...account,
