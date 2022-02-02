@@ -84,8 +84,8 @@ function convertCredit (apiAccount) {
 
 function convertDeposit (apiAccount) {
   const startDate = parseDate(apiAccount.startDate)
-  const endDate = parseDate(apiAccount.endDate)
-  const { interval, count } = getIntervalBetweenDates(startDate, endDate)
+  const endDate = apiAccount.endDate ? parseDate(apiAccount.endDate) : null
+  const { interval, count } = endDate ? getIntervalBetweenDates(startDate, endDate) : { interval: 'month', count: 1 }
   let payoffInterval = 'month'
   let payoffStep = 1
   if (!apiAccount.regularInterestPayment) {
@@ -122,7 +122,7 @@ function getProducts (apiAccount) {
 
 export function convertTransaction (apiTransaction, account) {
   const transaction = {
-    hold: !apiTransaction.finalizationDate,
+    hold: apiTransaction.holdMarker === 'holdMarker' || !apiTransaction.finalizationDate,
     date: new Date(apiTransaction.operationDate), // parse in UTC
     movements: [
       {
@@ -152,11 +152,13 @@ export function convertTransaction (apiTransaction, account) {
 
 function parseMerchant (transaction, apiTransaction, account) {
   const sourceOrDest = apiTransaction.source || apiTransaction.dest || null
+  const idSourceOrDest = account.syncIds.find(item => item.startsWith(sourceOrDest.accountNumber))
   let merchant
-  if (sourceOrDest && account.syncIds.indexOf(sourceOrDest.accountNumber) === -1) {
+  if (sourceOrDest && !idSourceOrDest) {
     merchant = sourceOrDest.name || null
   } else {
     merchant = apiTransaction.description
+    transaction.comment = null
   }
 
   transaction.merchant = {

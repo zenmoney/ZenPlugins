@@ -54,7 +54,7 @@ describe('convertAccount', () => {
           replenishmentPurpose: 'Погашення кредиту згідно кредитного договору № CL-323273 від 29.07.2021',
           rateId: '',
           bankId: '325365',
-          ownerName: 'Качало Богдан Ігорович',
+          ownerName: 'Николаев Николай Николаевич',
           unUsedAmount: '275726',
           fine: '0',
           ibanForReplenishment: 'UA18 325365 00000 29098270103013',

@@ -8,7 +8,7 @@ describe('convertTransaction', () => {
         externalId: '102043180899',
         source: {
           accountNumber: '26205011376033',
-          name: 'Роман Олегович Антонов',
+          name: 'Николаев Николай Николаевич',
           currency: 'UAH'
         },
         amountInCents: -4014,
@@ -21,7 +21,7 @@ describe('convertTransaction', () => {
       },
       { id: '1337', instrument: 'UAH', syncIds: ['26205011376033'] },
       {
-        comment: 'APTEKA',
+        comment: null,
         date: new Date('2021-04-29T08:51:10.000Z'),
         hold: false,
         merchant: {
@@ -58,11 +58,11 @@ describe('convertTransaction', () => {
         localAmountInCents: -132000,
         operationDate: 1631491200000,
         finalizationDate: 1631518393000,
-        description: '*;101;3280909674;Єдиний соціальний внесок ФОП Антонов Роман Олегович за серпень 2021 р.;;;'
+        description: '*;101;3280909674;Єдиний соціальний внесок ФОП Николаев Николай Николаевич за серпень 2021 р.;;;'
       },
       { id: '1337', instrument: 'UAH', syncIds: ['UA253253650000000260020009840'] },
       {
-        comment: '*;101;3280909674;Єдиний соціальний внесок ФОП Антонов Роман Олегович за серпень 2021 р.;;;',
+        comment: '*;101;3280909674;Єдиний соціальний внесок ФОП Николаев Николай Николаевич за серпень 2021 р.;;;',
         date: new Date('2021-09-13T00:00:00.000Z'),
         hold: false,
         merchant: {
@@ -81,6 +81,85 @@ describe('convertTransaction', () => {
             sum: -1320
           }
         ]
+      }
+    ],
+    [
+      {
+        id: '220111_230556_2022-01-11T23:05:56.000+02:00',
+        externalId: '795507368',
+        source:
+          {
+            accountNumber: '5168*',
+            name: 'Николаев Николай Николаевич',
+            currency: 'UAH'
+          },
+        amountInCents: -819421,
+        approvalCode: '507368',
+        currency: 'UAH',
+        localAmountInCents: -819421,
+        operationDate: 1641935156000,
+        finalizationDate: 1641935156000,
+        description: 'PZU UKRAINE',
+        cardId: '4028243',
+        holdMarker: 'holdMarker'
+      },
+      { id: '1337', instrument: 'UAH', syncIds: ['26200011493739', '5168********3152'] },
+      {
+        hold: true,
+        date: new Date('2022-01-11T21:05:56.000Z'),
+        movements:
+          [
+            {
+              id: '220111_230556_2022-01-11T23:05:56.000+02:00',
+              account: { id: '1337' },
+              invoice: null,
+              sum: -8194.21,
+              fee: 0
+            }
+          ],
+        merchant:
+          {
+            fullTitle: 'PZU UKRAINE',
+            mcc: null,
+            location: null
+          },
+        comment: null
+      }
+    ],
+    [
+      {
+        id: '211230_190525_102343596282',
+        externalId: '102343596282',
+        source:
+          {
+            accountNumber: '26200011493739',
+            name: 'Николаев Николай Николаевич',
+            currency: 'UAH'
+          },
+        amountInCents: -2000000,
+        currency: 'UAH',
+        localAmountInCents: -2000000,
+        operationDate: 1640883925000,
+        finalizationDate: 1640920322000,
+        description: 'KREDOBANK',
+        cardId: '4028243'
+      },
+      { id: '1337', instrument: 'UAH', syncIds: ['26200011493739', '5168********3152'] },
+      {
+        hold: false,
+        date: new Date('2021-12-30T17:05:25.000Z'),
+        movements:
+          [
+            {
+              id: '211230_190525_102343596282',
+              account: { id: '1337' },
+              invoice: null,
+              sum: -20000,
+              fee: 0
+            }
+          ],
+        merchant: { fullTitle: 'KREDOBANK', mcc: null, location: null },
+        comment: null
       }
     ]
   ])('convert outcome transactions', (apiTransaction, account, transaction) => {

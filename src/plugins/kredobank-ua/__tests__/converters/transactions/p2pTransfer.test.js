@@ -8,7 +8,7 @@ describe('convertTransaction', () => {
         externalId: '102042203453',
         source: {
           accountNumber: '26205011376033',
-          name: 'Роман Олегович Антонов',
+          name: 'Николаев Николай Николаевич',
           currency: 'UAH'
         },
         amountInCents: -366798,
@@ -20,7 +20,7 @@ describe('convertTransaction', () => {
         cardId: '3632841'
       },
       {
-        comment: 'PAY FORCE P2P',
+        comment: null,
         date: new Date('2021-04-26T08:34:00.000Z'),
         hold: false,
         merchant: {

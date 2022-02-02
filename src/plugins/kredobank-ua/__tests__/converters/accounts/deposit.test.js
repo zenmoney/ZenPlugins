@@ -35,7 +35,7 @@ describe('convertAccount', () => {
           isDebitBlocked: 'false',
           replenishmentPurpose: 'Поповнення депозиту за Угодою № 2630/155/800612 від 17.05.2016',
           regularInterestPaymentTermType: 'INSTANT',
-          ownerName: 'САВЕНКО ВАЛЕРІЙ ОЛЕКСІЙОВИЧ',
+          ownerName: 'Николаев Николай Николаевич',
           preTermCloseEnabled: 'true',
           earlyWithdrawlAllowed: false,
           term: { type: 'MONTH', value: 1 },
@@ -91,7 +91,7 @@ describe('convertAccount', () => {
               isDebitBlocked: 'false',
               replenishmentPurpose: 'Поповнення депозиту за Угодою № 2630/155/800612 від 17.05.2016',
               regularInterestPaymentTermType: 'INSTANT',
-              ownerName: 'САВЕНКО ВАЛЕРІЙ ОЛЕКСІЙОВИЧ',
+              ownerName: 'Николаев Николай Николаевич',
               preTermCloseEnabled: 'true',
               earlyWithdrawlAllowed: false,
               term: { type: 'MONTH', value: 1 },
@@ -180,7 +180,7 @@ describe('convertAccount', () => {
           isDebitBlocked: 'false',
           replenishmentPurpose: 'Поповнення депозиту за Угодою № 2630/05/875855 від 21.05.2018',
           regularInterestPaymentTermType: 'MONTH',
-          ownerName: 'БІЛИЙ МАКСИМ МИКОЛАЙОВИЧ',
+          ownerName: 'Николаев Николай Николаевич',
           preTermCloseEnabled: 'true',
           earlyWithdrawlAllowed: false,
           term: { type: 'MONTH', value: 24 },
@@ -236,7 +236,7 @@ describe('convertAccount', () => {
               isDebitBlocked: 'false',
               replenishmentPurpose: 'Поповнення депозиту за Угодою № 2630/05/875855 від 21.05.2018',
               regularInterestPaymentTermType: 'MONTH',
-              ownerName: 'БІЛИЙ МАКСИМ МИКОЛАЙОВИЧ',
+              ownerName: 'Николаев Николай Николаевич',
               preTermCloseEnabled: 'true',
               earlyWithdrawlAllowed: false,
               term: { type: 'MONTH', value: 24 },
@@ -289,6 +289,146 @@ describe('convertAccount', () => {
               id: '8532672'
             }
           ]
+        }
+      ]
+    ],
+    [
+      [
+        {
+          id: '2825631',
+          providerId: 'deposit',
+          legalNumber: '2630/05/512858',
+          subproductCode: 'individualK_5603',
+          mainAccountNumber: '26200890125723',
+          mainAccountCurrency: 'EUR',
+          balance: 1515,
+          startDate: '2011-07-19',
+          productTitle: 'Кишеня (EUR)',
+          productSystemKey: 'individual_deposit',
+          iban: 'UA673253650000026200890125723',
+          currentInterestRate: 0.1,
+          showAndOperationRule:
+            {
+              mainScreenShowAllowed: true,
+              redirectToParentObjectAllowed: true,
+              debitAllowed: true,
+              debitAllowedAtOperationsList: ['CONTRACT_TO_CONTRACT', 'MAKE_CONTRACT'],
+              creditAllowed: true,
+              creditAllowedAtOperationsList: ['CONTRACT_TO_CONTRACT', 'MAKE_CONTRACT']
+            },
+          isBtnReplenishAvailable: 'true',
+          minRefillAmount: 0,
+          isBtnProlongationAvailable: 'true',
+          description: 'Кишеня (EUR)',
+          bankName: 'АТ "КРЕДОБАНК"',
+          isDebitBlocked: 'false',
+          replenishmentPurpose: 'Поповнення депозиту за Угодою № 2630/05/512858 від 19.07.2011',
+          regularInterestPaymentTermType: 'MONTH',
+          ownerName: 'Николаев Николай Николаевич',
+          preTermCloseEnabled: 'true',
+          earlyWithdrawlAllowed: true,
+          term: { type: 'INSTANT', value: 0 },
+          autoProlongationAvailable: 'true',
+          refillAllowed: true,
+          isBtnWithdrawalAvailable: 'true',
+          depTypeId: '5603',
+          dealAmount: null,
+          ownerTaxId: '2973117416',
+          maxRefillAmount: null,
+          earlyWithdrawlLimit: 515,
+          accruedInterest: 120,
+          tabCloseUseMessageNumber: '1',
+          autoProlongationEnabled: false,
+          bankId: '325365',
+          isDealAgreementAvailable: 'false',
+          capitalization: true,
+          initialAmount: '14000',
+          ibanForReplenishment: 'UA67 325365 00000 26200890125723',
+          isBtnCloseAvailable: 'false',
+          regularInterestPayment: false,
+          isActiveProduct: 'true',
+          details: {
+            id: '2825631',
+            providerId: 'deposit',
+            legalNumber: '2630/05/512858',
+            subproductCode: 'individualK_5603',
+            mainAccountNumber: '26200890125723',
+            mainAccountCurrency: 'EUR',
+            balance: 1515,
+            startDate: '2011-07-19',
+            productTitle: 'Кишеня (EUR)',
+            productSystemKey: 'individual_deposit',
+            iban: 'UA673253650000026200890125723',
+            currentInterestRate: 0.1,
+            showAndOperationRule:
+              {
+                mainScreenShowAllowed: true,
+                redirectToParentObjectAllowed: true,
+                debitAllowed: true,
+                debitAllowedAtOperationsList: ['CONTRACT_TO_CONTRACT', 'MAKE_CONTRACT'],
+                creditAllowed: true,
+                creditAllowedAtOperationsList: ['CONTRACT_TO_CONTRACT', 'MAKE_CONTRACT']
+              },
+            isBtnReplenishAvailable: 'true',
+            minRefillAmount: 0,
+            isBtnProlongationAvailable: 'true',
+            description: 'Кишеня (EUR)',
+            bankName: 'АТ "КРЕДОБАНК"',
+            isDebitBlocked: 'false',
+            replenishmentPurpose: 'Поповнення депозиту за Угодою № 2630/05/512858 від 19.07.2011',
+            regularInterestPaymentTermType: 'MONTH',
+            ownerName: 'Николаев Николай Николаевич',
+            preTermCloseEnabled: 'true',
+            earlyWithdrawlAllowed: true,
+            term: { type: 'INSTANT', value: 0 },
+            autoProlongationAvailable: 'true',
+            refillAllowed: true,
+            isBtnWithdrawalAvailable: 'true',
+            depTypeId: '5603',
+            dealAmount: null,
+            ownerTaxId: '2973117416',
+            maxRefillAmount: null,
+            earlyWithdrawlLimit: 515,
+            accruedInterest: 120,
+            tabCloseUseMessageNumber: '1',
+            autoProlongationEnabled: false,
+            bankId: '325365',
+            isDealAgreementAvailable: 'false',
+            capitalization: true,
+            initialAmount: '14000',
+            ibanForReplenishment: 'UA67 325365 00000 26200890125723',
+            isBtnCloseAvailable: 'false',
+            regularInterestPayment: false,
+            isActiveProduct: 'true'
+          }
+        }
+      ],
+      [
+        {
+          products: [
+            {
+              contractType: 'deposit',
+              id: '2825631'
+            }
+          ],
+          account: {
+            balance: 15.15,
+            capitalization: true,
+            endDateOffset: 1,
+            endDateOffsetInterval: 'month',
+            id: '2825631',
+            instrument: 'EUR',
+            payoffInterval: 'month',
+            payoffStep: 1,
+            percent: 0.1,
+            startBalance: 140,
+            startDate: new Date('2011-07-18T21:00:00.000Z'),
+            syncIds: [
+              'UA673253650000026200890125723'
+            ],
+            title: 'Кишеня (EUR)',
+            type: 'deposit'
+          }
         }
       ]
     ]

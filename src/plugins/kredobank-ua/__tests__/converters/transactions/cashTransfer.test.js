@@ -8,7 +8,7 @@ describe('convertTransaction', () => {
         externalId: '101830982480',
         destination: {
           accountNumber: '26205011376033',
-          name: 'Роман Олегович Антонов',
+          name: 'Николаев Николай Николаевич',
           currency: 'UAH'
         },
         amountInCents: 400000,
