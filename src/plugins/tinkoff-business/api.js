@@ -3,7 +3,7 @@ import { parse, stringify } from 'querystring'
 import { fetchJson, openWebViewAndInterceptRequest } from '../../common/network'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { generateRandomString } from '../../common/utils'
-import { clientId, clientSecret, redirectUri } from './config'
+import config from './config'
 
 const base64 = new Base64()
 
@@ -56,7 +56,7 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
       response = await callGate('https://id.tinkoff.ru/auth/token', {
         headers: {
           Host: 'id.tinkoff.ru',
-          Authorization: `Basic ${base64.encode(`${clientId}:${clientSecret}`)}`
+          Authorization: `Basic ${base64.encode(`${config.clientId}:${config.clientSecret}`)}`
         },
         body: {
           grant_type: 'refresh_token',
@@ -74,10 +74,10 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
   }
   if (!response) {
     const state = generateRandomString(16)
-    const redirectUriWithoutProtocol = redirectUri.replace(/^https?:\/\//i, '')
+    const redirectUriWithoutProtocol = config.redirectUri.replace(/^https?:\/\//i, '')
     const url = `https://id.tinkoff.ru/auth/authorize?${stringify({
-      client_id: clientId,
-      redirect_uri: redirectUri,
+      client_id: config.clientId,
+      redirect_uri: config.redirectUri,
       state,
       response_type: 'code',
       scope_parameters: JSON.stringify({
@@ -118,12 +118,12 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
     response = await callGate('https://id.tinkoff.ru/auth/token', {
       headers: {
         Host: 'id.tinkoff.ru',
-        Authorization: `Basic ${base64.encode(`${clientId}:${clientSecret}`)}`
+        Authorization: `Basic ${base64.encode(`${config.clientId}:${config.clientSecret}`)}`
       },
       body: {
         grant_type: 'authorization_code',
         code,
-        redirect_uri: redirectUri
+        redirect_uri: config.redirectUri
       },
       sanitizeRequestLog: { headers: { Authorization: true }, body: { code: true, redirect_uri: true } },
       sanitizeResponseLog: { body: { access_token: true, refresh_token: true, sessionId: true, id_token: true } }
