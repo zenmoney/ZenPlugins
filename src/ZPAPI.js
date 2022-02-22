@@ -21,8 +21,8 @@ import {
 
 function sleepSync (durationMs) {
   const startMs = Date.now()
-  for (let i = 0; i < 30000000; i++) {
-  }
+  // eslint-disable-next-line no-empty
+  for (let i = 0; i < 30000000; i++) {}
   const nowMs = Date.now()
   if (nowMs - startMs < durationMs) {
     sleepSync(durationMs - nowMs + startMs)
@@ -445,7 +445,7 @@ Object.assign(ZPAPI.prototype, {
     })
   },
 
-  WebSocket: WebSocket,
+  WebSocket,
 
   saveCookies () {
     return new Promise((resolve, reject) => {

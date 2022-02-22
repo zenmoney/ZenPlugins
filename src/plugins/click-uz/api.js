@@ -35,8 +35,8 @@ export default class ClickPluginApi {
     const id = generateUUID()
     return this._socket.send(id, {
       body: {
-        method: method,
-        parameters: parameters,
+        method,
+        parameters,
         request_id: id
       },
       sanitizeRequestLog,
@@ -81,7 +81,7 @@ export default class ClickPluginApi {
     const response = await this.callGate(method, {
       parameters: {
         phone_num: getPhoneNumber(phone),
-        imei: imei,
+        imei,
         datetime: deviceRegisterDateTime,
         device_info: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36',
         device_name: 'ZenMoney',
@@ -139,9 +139,9 @@ export default class ClickPluginApi {
     const response = await this.callGate(method, {
       parameters: {
         app_version: '6.4.0',
-        datetime: datetime,
+        datetime,
         device_id: ZenMoney.getData('deviceId'),
-        password: password,
+        password,
         phone_num: getPhoneNumber(phone)
       },
       sanitizeRequestLog: { parameters: { device_id: true, password: true, phone_num: true } }

@@ -39,7 +39,7 @@ export async function login ({ access_token, refresh_token, expirationDateMs } =
             client_id: clientId,
             client_secret: clientSecret,
             grant_type: 'refresh_token',
-            refresh_token: refresh_token
+            refresh_token
           },
           sanitizeRequestLog: { body: { refresh_token: true, client_id: true, client_secret: true } },
           sanitizeResponseLog: { body: { access_token: true, refresh_token: true, sessionId: true } }
@@ -116,7 +116,7 @@ export async function login ({ access_token, refresh_token, expirationDateMs } =
         client_id: sandboxMode ? 'sandbox' : CLIENT_ID,
         client_secret: sandboxMode ? 'sandbox_secret' : CLIENT_SECRET,
         grant_type: 'authorization_code',
-        code: code
+        code
       },
       sanitizeRequestLog: { body: { client_id: true, client_secret: true, code: true } },
       sanitizeResponseLog: { body: { access_token: true, refresh_token: true } }

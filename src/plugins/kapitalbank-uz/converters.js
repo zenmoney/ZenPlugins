@@ -143,7 +143,7 @@ export function convertHumoCardTransaction (card, rawTransaction) {
         account: { id: card.id },
         invoice: invoice.instrument === card.instrument ? null : invoice,
         sum: invoice.instrument === card.instrument ? invoice.sum : null,
-        fee: fee
+        fee
       }
     ],
     comment: null
@@ -192,12 +192,12 @@ export function convertVisaCardTransaction (card, rawTransaction) {
     hold: false,
     merchant: rawTransaction.back === false
       ? {
-        country: null,
-        city: null,
-        title: rawTransaction.merchantName,
-        mcc: null,
-        location: null
-      }
+          country: null,
+          city: null,
+          title: rawTransaction.merchantName,
+          mcc: null,
+          location: null
+        }
       : null,
     movements: [
       {

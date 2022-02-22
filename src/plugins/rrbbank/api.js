@@ -42,8 +42,8 @@ export async function login (login, password) {
       applicID: '1',
       clientKind: '5',
       deviceUDID: deviceID,
-      login: login,
-      password: password
+      login,
+      password
     },
     sanitizeRequestLog: { body: { login: true, password: true } }
   }, response => response.success, message => new InvalidPreferencesError('Неверный логин или пароль'))
@@ -82,7 +82,7 @@ export async function fetchAccounts (token) {
     cards = cards.concat(products.currentAccount)
   }
   return {
-    cards: cards,
+    cards,
     deposits: products.depositAccount
   }
 }
@@ -123,7 +123,7 @@ export async function fetchTransactions (token, accounts, fromDate, toDate = new
         method: 'POST',
         headers: { session_token: token },
         body: {
-          accountType: accountType,
+          accountType,
           cardHash: account.cardHash,
           currencyCode: account.currencyCode,
           internalAccountId: account.id,

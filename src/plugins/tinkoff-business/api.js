@@ -17,7 +17,7 @@ async function callGate (url, options = {}, predicate = () => true) {
       sanitizeRequestLog: { headers: { Authorization: true } },
       sanitizeResponseLog: { headers: { 'set-cookie': true } },
       ...options,
-      stringify: stringify,
+      stringify,
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         ...options.headers
@@ -78,7 +78,7 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
     const url = `https://id.tinkoff.ru/auth/authorize?${stringify({
       client_id: clientId,
       redirect_uri: redirectUri,
-      state: state,
+      state,
       response_type: 'code',
       scope_parameters: JSON.stringify({
         inn,

@@ -53,7 +53,7 @@ export const parseAccounts = (html) => {
     }
 
     accounts.push({
-      id: id,
+      id,
       title: title.text(),
       syncID: [id.slice(id.length - 4)],
 

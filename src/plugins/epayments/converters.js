@@ -17,12 +17,12 @@ export function convertCards (cards) {
       id: card.id,
       title: 'Карта ' + instrument,
       type: 'ccard',
-      instrument: instrument,
+      instrument,
       balance: card.balance,
       startBalance: 0,
       creditLimit: 0,
       savings: false,
-      syncID: syncID
+      syncID
     }
   })
 }
@@ -111,7 +111,7 @@ function getMovement (apiTransaction, accountId) {
     account: { id: accountId },
     invoice: null,
     sum: apiTransaction.direction === 'Out' ? -sum : sum,
-    fee: fee,
+    fee,
     _type: type
   }
 

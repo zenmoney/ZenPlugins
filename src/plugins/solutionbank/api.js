@@ -71,8 +71,8 @@ async function loginReq (login, password, smsCode) {
     browserVersion: 'Unknown Device',
     clientKind: '1',
     deviceUDID: deviceID,
-    login: login,
-    password: password,
+    login,
+    password,
     platform: 'iOS',
     platformVersion: '15.0.2'
   }
@@ -81,7 +81,7 @@ async function loginReq (login, password, smsCode) {
   }
   return fetchApiJson('session/login', {
     method: 'POST',
-    body: body,
+    body,
     sanitizeRequestLog: { body: { login: true, password: true, deviceUDID: true, confirmationData: true } },
     sanitizeResponseLog: { body: { sessionToken: true } }
   }, response => response.success, message => new InvalidPreferencesError('bad request'))

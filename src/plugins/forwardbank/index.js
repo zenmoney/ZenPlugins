@@ -27,7 +27,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   console.log(JSON.stringify(transactions, null, 2))
 
   return {
-    accounts: accounts,
-    transactions: transactions
+    accounts,
+    transactions
   }
 }

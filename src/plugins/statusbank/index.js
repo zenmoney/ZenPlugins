@@ -48,7 +48,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     return account
   }))
   return {
-    accounts: accounts,
+    accounts,
     transactions: transactionsStatement
   }
 }

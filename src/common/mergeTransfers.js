@@ -24,15 +24,17 @@ export function mergeTransfers ({
         }
         return item.transaction
       }), {
-        mergeComments: mergeComments === null ? null : (outcome, income) => {
-          return mergeComments({
-            ...outcome,
-            item: items.find(item => item.transaction === outcome.transaction).item
-          }, {
-            ...income,
-            item: items.find(item => item.transaction === income.transaction).item
-          })
-        }
+        mergeComments: mergeComments === null
+          ? null
+          : (outcome, income) => {
+              return mergeComments({
+                ...outcome,
+                item: items.find(item => item.transaction === outcome.transaction).item
+              }, {
+                ...income,
+                item: items.find(item => item.transaction === income.transaction).item
+              })
+            }
       })
       return transactions ? transactions.map(transaction => ({ transaction })) : null
     }

@@ -29,7 +29,7 @@ export async function registerDevice () {
       'app-version': 'w0.0.1'
     },
     body: {
-      deviceId: deviceId,
+      deviceId,
       name: 'ZenMoney'
     },
     sanitizeRequestLog: { body: { deviceId: true } }
@@ -84,7 +84,7 @@ export async function sendSmsCode (phone, password) {
     },
     body: {
       phone: getPhoneNumber(phone),
-      password: password,
+      password,
       reserveSms: false
     },
     sanitizeRequestLog: { body: { phone: true, password: true }, headers: { 'device-id': true } }

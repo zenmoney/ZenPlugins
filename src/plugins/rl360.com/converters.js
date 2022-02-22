@@ -22,7 +22,7 @@ export function convertTransaction (tr, account) {
         account: { id: account.id },
         invoice: null,
         sum: getSumAmount(tr.amount),
-        fee: fee
+        fee
       }
     ],
     merchant: null,

@@ -33,7 +33,7 @@ describe('convertAccounts', () => {
           account: {
             id: '40817840401000898597',
             title: 'Mastercard World Premium',
-            type: 'card',
+            type: 'ccard',
             instrument: 'USD',
             syncIds: [
               '40817840401000898597'

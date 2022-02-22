@@ -12,7 +12,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     .then(transactions => mergeTransactions(transactions, accounts))
 
   return {
-    accounts: accounts,
-    transactions: transactions
+    accounts,
+    transactions
   }
 }

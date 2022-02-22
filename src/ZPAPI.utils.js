@@ -57,10 +57,10 @@ export const getLastUrl = () => lastRequestUrl
 
 export const getLastResponseParameters = () => lastRequest
   ? {
-    url: getLastUrl(),
-    status: getLastStatusString(),
-    headers: getLastResponseHeaders()
-  }
+      url: getLastUrl(),
+      status: getLastStatusString(),
+      headers: getLastResponseHeaders()
+    }
   : null
 
 function urlEncodeParameters (obj) {

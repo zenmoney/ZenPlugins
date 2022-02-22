@@ -1,128 +1,183 @@
-const webpack = require('webpack')
-const HtmlWebpackPlugin = require('html-webpack-plugin')
-const HtmlWebpackExcludeAssetsPlugin = require('html-webpack-exclude-assets-plugin')
+const { DefinePlugin } = require('webpack')
 const CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin')
-const eslintFormatter = require('react-dev-utils/eslintFormatter')
-const { paths, resolve } = require('./constants')
-const _ = require('lodash')
-const path = require('path')
+const ESLintPlugin = require('eslint-webpack-plugin')
+const {
+  resolvePlugin,
+  resolveFromRoot,
+  resolveCommonFiles
+} = require('./pathResolvers')
+const fs = require('fs')
 const TerserPlugin = require('terser-webpack-plugin')
+const WebpackObfuscator = require('webpack-obfuscator')
+const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+const WebsocketServer = require('./debugServers/wsServer')
+const { setupProxyServer } = require('./debugServers/proxyServer')
+const { setupWebServer } = require('./debugServers/webServer')
+const os = require('os')
 
-const getHtmlPlugins = ({ production, devServer }) => {
-  if (!devServer) {
-    return []
-  }
-  if (production) {
-    return [
-      new HtmlWebpackPlugin({
-        inject: false,
-        template: paths.hostedPluginHtml
-      })
-    ]
-  } else {
-    return [
-      new HtmlWebpackPlugin({
-        inject: true,
-        template: paths.windowLoaderHtml,
-        excludeAssets: [/workerLoader/]
-      }),
-      new HtmlWebpackExcludeAssetsPlugin()
-    ]
+const readLogPrivateKey = () => {
+  try {
+    return JSON.stringify(fs.readFileSync(process.env.LOG_PRIVATE_KEY, { encoding: 'utf8' }))
+  } catch (e) {
+    throw new Error('Could not read file at LOG_PRIVATE_KEY path')
   }
 }
 
-const getPluginsSection = ({ production, devServer }) => getHtmlPlugins({ production, devServer }).concat(_.compact([
-  new webpack.NamedModulesPlugin(),
-  !production && new webpack.HotModuleReplacementPlugin(),
-  new webpack.DefinePlugin({
-    NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'development')
-  }),
-  new CaseSensitivePathsPlugin()
-]))
+function generatePluginConfig (production, server, pluginName, outputPath) {
+  const paths = resolveCommonFiles()
+  const pluginPaths = resolvePlugin(pluginName)
+  if (!pluginPaths) {
+    throw new Error(`cant resolve plugin "${pluginName}"`)
+  }
 
-module.exports = ({ production, devServer }) => ({
-  mode: production ? 'production' : 'development',
-  devtool: production ? false : 'eval',
-  entry: production
-    ? {
-      index: paths.pluginJs
-    }
-    : {
-      windowLoader: [
-        !production && require.resolve('react-dev-utils/webpackHotDevClient'),
-        paths.windowLoaderJs
-      ],
-      workerLoader: paths.workerLoaderJs
+  return {
+    mode: production ? 'production' : 'development',
+    devtool: production ? false : 'eval',
+    entry: production
+      ? { index: pluginPaths.js }
+      : { windowLoader: [paths.windowLoaderJs] },
+    output: {
+      path: outputPath,
+      filename: '[name].js',
+      chunkFilename: '[name].chunk.js',
+      globalObject: 'this'
     },
-  output: {
-    path: paths.appBuild,
-    filename: '[name].js',
-    chunkFilename: '[name].chunk.js',
-    globalObject: 'this'
-  },
-  resolve: {
-    alias: {
-      'asap/raw': resolve('src/asapRawMock'),
-      polyfills: resolve('src/polyfills'),
-      injectErrorsGlobally: resolve('src/injectErrorsGlobally'),
-      adapters: resolve('src/common/adapters'),
-      currentPluginManifest: paths.pluginJs,
-      xhrViaZenApi: resolve('src/XMLHttpRequestViaZenAPI')
-    }
-  },
-  module: {
-    strictExportPresence: true,
-    rules: _.compact([
-      {
-        test: /ZenmoneyManifest.xml$/,
-        include: paths.pluginJs,
-        loader: path.resolve(__dirname, './plugin-manifest-loader.js')
+    resolve: {
+      alias: {
+        'asap/raw$': resolveFromRoot('src/asapRawMock'),
+        polyfills$: resolveFromRoot('src/polyfills'),
+        injectErrorsGlobally$: resolveFromRoot('src/injectErrorsGlobally'),
+        adapters$: resolveFromRoot('src/common/adapters'),
+        currentPluginManifest$: pluginPaths.manifest,
+        xhrViaZenApi$: resolveFromRoot('src/XMLHttpRequestViaZenAPI')
       },
-      {
-        test: /\.js$/,
-        enforce: 'pre',
-        use: [
-          {
-            options: {
-              formatter: eslintFormatter,
-              eslintPath: require.resolve('eslint')
-            },
-            loader: require.resolve('eslint-loader')
-          }
-        ],
-        include: paths.appSrc
-      },
-      {
-        test: /\.js$/,
-        include: paths.appSrc,
-        loader: require.resolve('babel-loader'),
-        options: production ? {} : {
-          cacheDirectory: true
+      extensions: ['.js', '.ts', '.json']
+    },
+    module: {
+      rules: [
+        {
+          test: /ZenmoneyManifest.xml$/,
+          include: pluginPaths.manifest,
+          loader: resolveFromRoot('scripts/plugin-manifest-loader.js')
+        },
+        {
+          test: /\.(js|ts)$/,
+          include: paths.appSrc,
+          loader: require.resolve('babel-loader'),
+          options: production
+            ? {}
+            : { cacheDirectory: true }
         }
-      },
-      {
-        test: /\.proto$/,
-        use: {
-          loader: require.resolve('protobufjs-loader-webpack4'),
-          options: {}
+      ],
+      parser: {
+        javascript: {
+          exportsPresence: 'error',
+          importExportsPresence: 'error'
         }
       }
-    ])
-  },
-  plugins: getPluginsSection({ production, devServer }),
-  performance: {
-    hints: false
-  },
-  optimization: {
-    minimize: Boolean(production),
-    minimizer: [
-      new TerserPlugin({
-        terserOptions: {
-          output: {
-            comments: false
+    },
+    plugins: [
+      ...server
+        ? [new HtmlWebpackPlugin(production
+            ? {
+                inject: false,
+                template: paths.hostedPluginHtml
+              }
+            : {
+                inject: true,
+                template: paths.windowLoaderHtml
+              })]
+        : [],
+      new ESLintPlugin({
+        context: paths.appSrc,
+        eslintPath: require.resolve('eslint')
+      }),
+      new DefinePlugin({
+        ...!production && process.env.LOG_PRIVATE_KEY && { LOG_PRIVATE_KEY: readLogPrivateKey() }
+      }),
+      new NodePolyfillPlugin({
+        excludeAliases: ['console', 'process', 'buffer']
+      }), // need for some dependencies, eg cheerio
+      new CaseSensitivePathsPlugin(),
+      ...production
+        ? [
+            new TerserPlugin({
+              minify: TerserPlugin.uglifyJsMinify,
+              terserOptions: {
+                v8: true,
+                webkit: true
+              }
+            }),
+            new WebpackObfuscator({
+              optionsPreset: 'low-obfuscation',
+              seed: 1985603785,
+              disableConsoleOutput: false,
+
+              identifierNamesGenerator: 'mangled',
+              transformObjectKeys: true,
+              stringArrayCallsTransformThreshold: 1,
+              stringArrayWrappersCount: 2
+            })
+          ]
+        : []
+    ],
+    ...server && {
+      devServer: {
+        static: {
+          directory: paths.appPublic
+        },
+        devMiddleware: {
+          publicPath: '/'
+        },
+        host: 'local-ip',
+        port: 'auto',
+        webSocketServer: WebsocketServer,
+
+        setupMiddlewares (middlewares, devServer) {
+          const state = {
+            cookies: [],
+            wsResponseResults: {},
+            wsOptions: {}
           }
+
+          const app = devServer.app
+          app.disable('x-powered-by')
+
+          const proxy = setupProxyServer(state)
+          setupWebServer({
+            state,
+            app,
+            proxy,
+            pluginPaths
+          })
+
+          return middlewares
         }
-      })
-    ]
+      }
+    },
+    performance: {
+      hints: false
+    },
+    optimization: {
+      minimize: false
+    }
   }
-})
+}
+
+module.exports = (env, argv) => {
+  const server = env.WEBPACK_SERVE
+  const production = argv.mode === 'production'
+  const pluginsNames = env.PLUGIN.split(',')
+  if (server && pluginsNames.length > 1) {
+    throw new Error('Cant debug multiple plugins!')
+  }
+  const genPath = (pluginName) => pluginsNames.length === 1 ? resolveFromRoot('build') : resolveFromRoot(`build/${pluginName}`)
+
+  const plugins = pluginsNames.map(x => generatePluginConfig(production, server, x, genPath(x)))
+  if (plugins.length === 1) {
+    return plugins[0]
+  }
+  plugins.parallelism = os.cpus().length
+  return plugins
+}

@@ -32,7 +32,8 @@ export function convertTransaction (apiTransaction, account) {
   }
   const transaction = {
     hold: apiTransaction.status === 'SendToBank',
-    date: apiTransaction.status !== 'SendToBank' ? new Date(apiTransaction.executed + '+03:00')
+    date: apiTransaction.status !== 'SendToBank'
+      ? new Date(apiTransaction.executed + '+03:00')
       : new Date(apiTransaction.created + '+03:00'),
     movements: [
       {

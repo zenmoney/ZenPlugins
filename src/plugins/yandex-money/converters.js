@@ -167,14 +167,14 @@ function parsePayee (apiTransaction, transaction, account, invoice) {
   }
   const patterns = apiTransaction.direction === 'in'
     ? [
-      /Зачисление: (.*)/i,
-      /Возврат: (.*)/i
-    ]
+        /Зачисление: (.*)/i,
+        /Возврат: (.*)/i
+      ]
     : [
-      /Поддержка проекта [«"]?([^"»]*)["»]?/i,
-      /Благодарность проекту [«"]?([^"»]*)["»]?/i,
-      /Оплата услуг (.*)/i
-    ]
+        /Поддержка проекта [«"]?([^"»]*)["»]?/i,
+        /Благодарность проекту [«"]?([^"»]*)["»]?/i,
+        /Оплата услуг (.*)/i
+      ]
   for (const pattern of patterns) {
     const match = apiTransaction.title.match(pattern)
     if (match) {

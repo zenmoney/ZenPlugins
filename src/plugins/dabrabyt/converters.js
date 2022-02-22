@@ -254,7 +254,8 @@ function parseInnerTransfer (transaction, apiTransaction, account, invoice) {
       company: null,
       syncIds: syncIdsData ? [syncIdsData[1]] : null
     },
-    invoice: invoice.instrument === apiTransaction.transactionCurrency ? null
+    invoice: invoice.instrument === apiTransaction.transactionCurrency
+      ? null
       : { sum: -invoice.sum, instrument: invoice.instrument },
     sum: -Number.parseInt(apiTransaction.operationSign) * apiTransaction.transactionAmount,
     fee: 0
@@ -281,7 +282,8 @@ function parseOuterTransfer (transaction, apiTransaction, account, invoice) {
         company: null,
         syncIds: syncIdsData ? [syncIdsData[1]] : null
       },
-      invoice: invoice.instrument === apiTransaction.transactionCurrency ? null
+      invoice: invoice.instrument === apiTransaction.transactionCurrency
+        ? null
         : { sum: -invoice.sum, instrument: invoice.instrument },
       sum: -Number.parseInt(apiTransaction.operationSign) * apiTransaction.transactionAmount,
       fee: 0

@@ -32,7 +32,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     }))
   }))
   return {
-    accounts: accounts,
-    transactions: transactions
+    accounts,
+    transactions
   }
 }

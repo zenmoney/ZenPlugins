@@ -12,7 +12,7 @@ describe('ensureSyncIDsAreUniqueButSanitized', () => {
       { syncID: ['0002', '2222'] },
       { syncID: ['0003'] }
     ]
-    expect(ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId: sanitizeSyncId })).toEqual(expected)
+    expect(ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId })).toEqual(expected)
   })
 
   it('truncates syncID to last 4 digits if there is intersection between accounts with different instruments', () => {
@@ -26,7 +26,7 @@ describe('ensureSyncIDsAreUniqueButSanitized', () => {
       { syncID: ['0002', '1120'], instrument: 'USD' },
       { syncID: ['0003'] }
     ]
-    expect(ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId: sanitizeSyncId })).toEqual(expected)
+    expect(ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId })).toEqual(expected)
   })
 
   it('doesn\'t trim, but sanitizes syncID to guarantee id uniqueness between accounts with the same instrument', () => {
@@ -54,7 +54,7 @@ describe('ensureSyncIDsAreUniqueButSanitized', () => {
       { syncID: ['0002', '111120'], instrument: 'RUB' },
       { syncID: ['0003'] }
     ]
-    expect(ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId: sanitizeSyncId })).toEqual(expected)
+    expect(ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId })).toEqual(expected)
   })
 })
 

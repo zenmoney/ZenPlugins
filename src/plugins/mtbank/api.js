@@ -95,7 +95,7 @@ export async function login (login, password) {
     {
       method: 'POST',
       headers: { Cookie: sessionCookies },
-      body: { password: password, version: '2.1.18' },
+      body: { password, version: '2.1.18' },
       sanitizeRequestLog: { body: { password: true } },
       sanitizeResponseLog: {
         body: {
@@ -124,7 +124,7 @@ export async function login (login, password) {
       {
         method: 'POST',
         headers: { Cookie: sessionCookies },
-        body: { smsCode: smsCode },
+        body: { smsCode },
         sanitizeRequestLog: { body: { smsCode: true } }
       },
       (response) => response.body.success

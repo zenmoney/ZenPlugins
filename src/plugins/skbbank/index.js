@@ -13,7 +13,7 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
   const operations = await fetchTransactions(fromDate, toDate)
   const transactions = operations.map(transaction => convertTransaction(transaction, accountsById)).filter(x => x)
   return {
-    accounts: accounts,
-    transactions: transactions
+    accounts,
+    transactions
   }
 }

@@ -48,8 +48,8 @@ export async function login (login, password) {
       platform: 'Android',
       platformVersion: '10',
       deviceUDID: deviceID,
-      login: login,
-      password: password
+      login,
+      password
     },
     sanitizeRequestLog: { body: { login: true, password: true } }
   }, response => response.success, message => new InvalidPreferencesError('Неверный логин или пароль'))
@@ -135,7 +135,7 @@ export async function fetchTransactions (token, accounts, fromDate, toDate = new
         method: 'POST',
         headers: { session_token: token },
         body: {
-          accountType: accountType,
+          accountType,
           bankCode: '288',
           currencyCode: account.currencyCode,
           internalAccountId: account.id,

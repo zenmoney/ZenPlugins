@@ -1,8 +1,11 @@
 {
   "plugins": [
-    "lodash"
+    "lodash",
+    "@babel/plugin-transform-runtime"
   ],
   "presets": [
-    "babel-preset-react-app"
+    "@babel/preset-env",
+    "@babel/preset-typescript",
+    "@babel/preset-react"
   ]
 }

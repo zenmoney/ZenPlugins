@@ -15,7 +15,7 @@ async function callGate (url, options = {}, predicate = () => true) {
     sanitizeRequestLog: { headers: { Authorization: true } },
     sanitizeResponseLog: { headers: { 'set-cookie': true } },
     ...options,
-    stringify: stringify,
+    stringify,
     headers: {
       Host: 'money.yandex.ru',
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -38,7 +38,7 @@ export async function login () {
     const redirectUriWithoutProtocol = redirectUri.replace(/^https?:\/\//i, '')
     const url = `https://money.yandex.ru/oauth/authorize?${stringify({
       client_id: clientId,
-      scope: scope,
+      scope,
       redirect_uri: redirectUri,
       response_type: 'code'
     })}`

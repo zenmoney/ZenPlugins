@@ -28,10 +28,10 @@ export function addOverdraftInfo (account, overdraft) {
   const creditLimit = Number(overdraft.replace(',', '.').replace(/\s/g, ''))
   return !isNaN(creditLimit) && creditLimit > 0
     ? {
-      ...account,
-      creditLimit,
-      balance: -Math.round((creditLimit - account.balance) * 100) / 100
-    }
+        ...account,
+        creditLimit,
+        balance: -Math.round((creditLimit - account.balance) * 100) / 100
+      }
     : account
 }
 
@@ -121,7 +121,7 @@ export function convertLastTransaction (apiTransaction, accounts) {
   }
 
   const transaction = {
-    date: date,
+    date,
     movements: [
       {
         id: null,

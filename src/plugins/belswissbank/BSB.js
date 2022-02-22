@@ -90,9 +90,9 @@ const BSB_AUTH_URL = makeApiUrl('/authorization', { lang })
 const requestLogin = ({ username, password, deviceId }) => fetchJson(BSB_AUTH_URL, {
   method: 'POST',
   body: {
-    username: username,
-    password: password,
-    deviceId: deviceId,
+    username,
+    password,
+    deviceId,
     applicationVersion: 'Web 6.0.12',
     osType: 3,
     currencyIso: 'BYN'

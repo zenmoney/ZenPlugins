@@ -1,4 +1,5 @@
 import { convertTransaction } from '../../../converters'
+import { Account } from '../../../../../types/zenmoney'
 
 describe('convertTransaction', () => {
   it.each([
@@ -86,6 +87,6 @@ describe('convertTransaction', () => {
       }
     ]
   ])('converts outcome', (apiTransaction, account, transaction) => {
-    expect(convertTransaction(apiTransaction, account)).toEqual(transaction)
+    expect(convertTransaction(apiTransaction, account as Account)).toEqual(transaction)
   })
 })

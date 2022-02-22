@@ -290,7 +290,7 @@ async function fetchTransactionsInternal (limit, gte, searchAfter, contractId, a
   const rid = generateHash()
 
   const query = {
-    gte: gte,
+    gte,
     lte: '',
     queryString: '',
     filters: '',
@@ -340,7 +340,7 @@ const generateHash = () => {
 const makeQueryString = (rid, data) => {
   const params = {
     ...data,
-    rid: rid
+    rid
   }
   const esc = encodeURIComponent
 

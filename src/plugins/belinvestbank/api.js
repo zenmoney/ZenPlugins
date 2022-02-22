@@ -36,7 +36,7 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
       },
       sanitizeRequestLog: { headers: { Cookie: true } },
       sanitizeResponseLog: { headers: { 'set-cookie': true } },
-      stringify: stringify
+      stringify
     }
   )
 
@@ -127,8 +127,8 @@ kro=
     body: {
       section: 'account',
       method: 'signin',
-      login: login,
-      password: password,
+      login,
+      password,
       deviceId: device.id,
       versionApp: APP_VERSION,
       os: 'Android',

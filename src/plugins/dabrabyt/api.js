@@ -74,15 +74,15 @@ async function loginReq (login, password, smsCode) {
     applicID: '1.37',
     clientKind: 1,
     deviceUDID: deviceID,
-    login: login,
-    password: password
+    login,
+    password
   }
   if (smsCode !== '') {
     body.confirmationData = smsCode
   }
   return (await fetchApiJson('session/login', {
     method: 'POST',
-    body: body,
+    body,
     sanitizeRequestLog: { body: { login: true, password: true, deviceUDID: true, confirmationData: true } },
     sanitizeResponseLog: { body: { sessionToken: true } }
   }, response => response.success, () => new InvalidPreferencesError('bad request'))).body

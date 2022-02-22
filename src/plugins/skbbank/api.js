@@ -69,8 +69,8 @@ export async function login (login, password) {
     method: 'POST',
     body: {
       bank: 'SKB',
-      login: login,
-      password: password,
+      login,
+      password,
       osType: 'web'
     }
   })

@@ -128,10 +128,12 @@ export function convertTransaction (apiTransaction, account) {
       {
         id: apiTransaction.id || null,
         account: { id: account.id },
-        invoice: apiTransaction.currency === account.instrument ? null : {
-          sum: getMoney(apiTransaction.amountInCents),
-          instrument: apiTransaction.currency
-        },
+        invoice: apiTransaction.currency === account.instrument
+          ? null
+          : {
+              sum: getMoney(apiTransaction.amountInCents),
+              instrument: apiTransaction.currency
+            },
         sum: getMoney(apiTransaction.localAmountInCents),
         fee: 0
       }
@@ -185,7 +187,7 @@ function invertedMovement (movement, account, type) {
     id: null,
     account: {
       company: null,
-      type: type,
+      type,
       instrument: movement.invoice?.instrument || account.instrument,
       syncIds: null
     },

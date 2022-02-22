@@ -55,7 +55,7 @@ describe('convertAccounts', () => {
           ],
           account: {
             id: '40817810301003402816',
-            type: 'card',
+            type: 'ccard',
             title: 'Mastercard Credit World Premium',
             instrument: 'RUB',
             syncIds: [

@@ -474,7 +474,7 @@ async function getAccountsListPage (html, viewns) {
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded'
     },
-    body: body
+    body
   }, response => response.success, message => new Error(''))
 }
 
@@ -502,7 +502,7 @@ async function processHolds (html, viewns, acc) {
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded'
     },
-    body: body
+    body
   }, response => response.success, message => new Error(''))
   return await processPages(viewns, res.body, acc)
 }

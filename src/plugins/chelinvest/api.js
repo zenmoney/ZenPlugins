@@ -40,8 +40,9 @@ export async function login ({ login, password, confirmation_type }, auth) {
     auth,
     body: {
       email: login,
-      password: password,
-      confirmation_type: confirmation_type
+      password,
+      // eslint-disable-next-line camelcase
+      confirmation_type
     },
     sanitizeRequestLog: { body: { email: true, password: true } }
   })

@@ -159,11 +159,12 @@ function parseCashTransfer (transaction, apiTransaction, account, invoice) {
 }
 
 function parsePayee (transaction, apiTransaction, account, invoice) {
-  const fullTitle = Number(apiTransaction.amount.value) < 0 ? apiTransaction.remitter?.holderName || apiTransaction.creditor?.holderName
+  const fullTitle = Number(apiTransaction.amount.value) < 0
+    ? apiTransaction.remitter?.holderName || apiTransaction.creditor?.holderName
     : apiTransaction.remitter?.holderName || apiTransaction.deptor?.holderName
   if (fullTitle) {
     transaction.merchant = {
-      fullTitle: fullTitle,
+      fullTitle,
       location: null,
       mcc: null
     }

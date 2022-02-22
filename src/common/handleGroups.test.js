@@ -19,7 +19,7 @@ describe('handleGroups', () => {
   it('returns the same items if groupKeys is null', () => {
     const items = [1, 2, 3, 4, 5]
     expect(handleGroups({
-      items: items,
+      items,
       makeGroupKeys: () => null
     })).toEqual(items)
   })
@@ -28,7 +28,7 @@ describe('handleGroups', () => {
     const items = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     const handleGroup = jest.fn(items => items)
     expect(handleGroups({
-      items: items,
+      items,
       makeGroupKeys: n => [
         n % 4 === 0 ? 'x4' : null,
         n % 2 === 0 ? 'x2' : null
@@ -43,7 +43,7 @@ describe('handleGroups', () => {
   it('preserve items without group keys', () => {
     const items = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     expect(handleGroups({
-      items: items,
+      items,
       makeGroupKeys: n => n % 2 === 0 ? ['even'] : null,
       handleGroup: items => [items.join(',')]
     })).toEqual([1, '2,4,6,8,10', 3, 5, 7, 9])

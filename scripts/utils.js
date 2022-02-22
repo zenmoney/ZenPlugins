@@ -1,4 +1,5 @@
-const { params } = require('./constants')
+const _ = require('lodash')
+const stripBOM = require('strip-bom')
 const fs = require('fs')
 const cheerio = require('cheerio')
 const { parse: parseCookieString, splitCookiesString } = require('set-cookie-parser')
@@ -26,13 +27,13 @@ const convertManifestXmlToJs = (xml) => {
     }, {})
 }
 
-const readPluginManifest = () => {
-  const xml = fs.readFileSync(`${params.pluginPath}/ZenmoneyManifest.xml`)
+const readPluginManifest = (manifestPath) => {
+  const xml = fs.readFileSync(manifestPath)
   return convertManifestXmlToJs(xml)
 }
 
-const readPluginPreferencesSchema = () => {
-  const xml = fs.readFileSync(`${params.pluginPath}/${readPluginManifest().preferences}`)
+const readPluginPreferencesSchema = (xmlPreferencesPath) => {
+  const xml = fs.readFileSync(xmlPreferencesPath)
   const $ = cheerio.load(xml)
   return $('EditTextPreference').toArray().map((preference) => {
     const $preference = $(preference)
@@ -78,10 +79,64 @@ const parseCookies = (cookieStr, now) => parseCookieString(splitCookiesString(co
   return cookie
 })
 
+const convertErrorToSerializable = (e) => _.pick(e, ['message', 'stack'])
+
+const makeCookieAccessibleToClientSide = (value) => {
+  return value
+    .replace(/\s?HttpOnly(;|\s*$)/ig, '')
+    .replace(/\s?Secure(;|\s*$)/ig, '')
+    .replace(/\s?Domain=[^;]*(;|\s*$)/ig, '')
+    .replace(/\s?SameSite=[^;]*(;|\s*$)/ig, '')
+}
+
+const serializeErrors = (handler) => {
+  return function (req, res) {
+    try {
+      handler.apply(this, arguments)
+    } catch (e) {
+      res.status(500).json(convertErrorToSerializable(e))
+    }
+  }
+}
+
+const readJsonSync = (file) => {
+  const content = readPluginFileSync(file)
+  try {
+    return JSON.parse(content)
+  } catch (e) {
+    e.message += ` in ${file}`
+    throw e
+  }
+}
+
+const readPluginFileSync = (filepath) => stripBOM(fs.readFileSync(filepath, 'utf8'))
+
+const ensureFileExists = (filepath, defaultContent) => {
+  try {
+    fs.writeFileSync(filepath, defaultContent, { encoding: 'utf8', flag: 'wx' })
+  } catch (e) {
+    if (e.code !== 'EEXIST') {
+      throw e
+    }
+  }
+}
+
+const isWebSocketHeader = (header) => {
+  const key = header.toLowerCase()
+  return key.startsWith('sec-websocket-') || ['connection', 'upgrade'].indexOf(key) >= 0
+}
+
 module.exports = {
   convertManifestXmlToJs,
   readPluginManifest,
   readPluginPreferencesSchema,
   parseCookies,
-  addCookies
+  addCookies,
+  convertErrorToSerializable,
+  makeCookieAccessibleToClientSide,
+  serializeErrors,
+  readJsonSync,
+  readPluginFileSync,
+  ensureFileExists,
+  isWebSocketHeader
 }

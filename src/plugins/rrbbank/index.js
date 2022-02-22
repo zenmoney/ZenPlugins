@@ -22,6 +22,6 @@ export async function scrape ({ preferences, fromDate, toDate }) {
 
   return {
     accounts: preparedAccounts,
-    transactions: transactions
+    transactions
   }
 }

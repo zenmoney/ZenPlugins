@@ -191,7 +191,7 @@ describe('Login API', () => {
       }
     })
 
-    expect(auth.getToken('qwerty', 'supersecret')).rejects.toThrow()
+    await expect(auth.getToken('qwerty', 'supersecret')).rejects.toBeTruthy() // because ZPAPIError doesnt extend Error
   })
 
   it('should throw an error if ivalid grant', async () => {
@@ -203,6 +203,6 @@ describe('Login API', () => {
       }
     })
 
-    expect(auth.getToken('qwerty', 'supersecret')).rejects.toThrow()
+    await expect(auth.getToken('qwerty', 'supersecret')).rejects.toBeTruthy()
   })
 })

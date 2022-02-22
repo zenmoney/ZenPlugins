@@ -36,13 +36,15 @@ export function convertTransaction (apiTransaction, account, accountsById) {
       }
     ],
     comment: apiTransaction.paymentPurpose || null,
-    merchant: payee ? {
-      title: payee,
-      city: null,
-      country: null,
-      mcc: null,
-      location: null
-    } : null
+    merchant: payee
+      ? {
+          title: payee,
+          city: null,
+          country: null,
+          mcc: null,
+          location: null
+        }
+      : null
   };
   [
     parseCashWithdrawal,

@@ -172,7 +172,7 @@ function initWebSocket (url, options) {
       },
       body: JSON.stringify({
         ...options,
-        url: url
+        url
       })
     }).body).id
   } catch (e) {

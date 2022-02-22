@@ -79,7 +79,7 @@ function convertDeposit (apiAccounts) {
       startBalance: apiDeposit.opening_balance,
       endDateOffset: Number(apiDeposit.duration) || 1,
       endDateOffsetInterval: Number(apiDeposit.duration) ? 'day' : 'year',
-      payoffInterval: payoffInterval,
+      payoffInterval,
       payoffStep: payoffInterval === 'month' ? 1 : 0,
       syncIds: [apiDeposit.account]
     }
@@ -195,7 +195,8 @@ export function convertTransaction (rawTransaction, accountsById) {
         id: rawTransaction.info.id.toString(),
         account: { id: account.id },
         invoice: invoice.instrument === instrument ? null : invoice,
-        sum: invoice.instrument === instrument ? invoice.sum
+        sum: invoice.instrument === instrument
+          ? invoice.sum
           : rawTransaction.view.direction === 'debit' ? -rawTransaction.details.convAmount : rawTransaction.details.convAmount,
         fee: 0
       }
@@ -343,7 +344,7 @@ function parsePayee (rawTransaction, transaction, invoice, accountsById) {
     transaction.merchant = {
       country: rawTransaction.details?.purpose?.slice(-3) || null,
       city: rawTransaction.details?.terminal?.city || null,
-      title: title,
+      title,
       mcc: null,
       location: null
     }

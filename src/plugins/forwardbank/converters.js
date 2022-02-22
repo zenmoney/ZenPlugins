@@ -61,10 +61,10 @@ export function convertAccounts (apiAccounts) {
         account: {
           id: apiAccount.AccountNumber,
           type: 'ccard',
-          title: title,
+          title,
           instrument: apiAccount.Currency,
-          balance: balance,
-          creditLimit: creditLimit,
+          balance,
+          creditLimit,
           syncIds: [apiAccount.AccountNumber + '']
         }
       }

@@ -18,6 +18,6 @@ export async function scrape ({ preferences, fromDate, toDate }) {
 
   return {
     accounts: policies,
-    transactions: transactions
+    transactions
   }
 }

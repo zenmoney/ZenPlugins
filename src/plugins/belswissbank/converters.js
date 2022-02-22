@@ -79,7 +79,7 @@ export function convertApiTransactionsToReadableTransactions (apiTransactionsByA
               id: apiTransaction.cardTransactionId.toString(),
               account: { id: account.id },
               invoice,
-              sum: sum,
+              sum,
               fee
             }
           ],

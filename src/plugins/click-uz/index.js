@@ -31,7 +31,7 @@ export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
    */
   await api.disconnect()
   return {
-    accounts: accounts,
-    transactions: transactions
+    accounts,
+    transactions
   }
 }

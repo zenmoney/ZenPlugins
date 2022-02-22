@@ -64,8 +64,8 @@ export function parseOuterAccountData (str) {
   for (const data of [
     // Россия
     { pattern: /(?:Авангард|Avangard)/i, account: { type: null, company: { id: '4986' } } },
-    { pattern: /(?:АЛЬФА[-\s]?БАНК|ALFA_MOBILE)/i, account: { type: null, company: { id: '3' } } },
-    { pattern: /(?:ВТБ|VTB|VB24)/i, account: { type: null, company: { id: '4637' } } },
+    { pattern: /(?:АЛЬФА[-\s]?БАНК|ALFA_MOBILE|ALFABANK RUS)/i, account: { type: null, company: { id: '3' } } },
+    { pattern: /(?:ВТБ|(?:^|[^.])VTB|VB24)/i, account: { type: null, company: { id: '4637' } } },
     { pattern: /(?:QIWI)/i, account: { type: null, company: { id: '15592' } } },
     { pattern: /(?:CREDIT\s*EUROPE)/i, account: { type: null, company: { id: '5165' } } },
     { pattern: /(?:Ozon[-\s]?Pay)/i, account: { type: null, company: { id: '15685' } } },

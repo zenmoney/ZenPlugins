@@ -10,7 +10,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     .map(transaction => convertTransaction(transaction, accounts))
     .filter(transaction => transaction !== null)
   return {
-    accounts: accounts,
-    transactions: transactions
+    accounts,
+    transactions
   }
 }

@@ -67,7 +67,7 @@ async function requestTokenByCredentials (login, password) {
 
     const params = {
       method: 'GET',
-      headers: headers
+      headers
     }
     const url = `${urls.sessionConfirmation}/${sessionId}`
 
@@ -99,7 +99,7 @@ async function requestTokenByCredentials (login, password) {
     const base = {
       grant_type: 'password_otp',
       username: login,
-      password: password
+      password
     }
 
     const data = Object.assign({}, base,

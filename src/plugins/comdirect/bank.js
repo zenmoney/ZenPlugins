@@ -99,7 +99,7 @@ const getInitialLogin = async (preferences) => {
   return {
     accessToken: response.access_token,
     refreshToken: response.refresh_token,
-    expires: expires
+    expires
   }
 }
 
@@ -123,7 +123,7 @@ const getSecondaryLogin = async ({ accessToken }, preferences) => {
   return {
     accessToken: response.access_token,
     refreshToken: response.refresh_token,
-    expires: expires
+    expires
   }
 }
 
@@ -147,7 +147,7 @@ const refreshToken = async ({ refreshToken }, preferences) => {
   return {
     accessToken: response.access_token,
     refreshToken: response.refresh_token,
-    expires: expires
+    expires
   }
 }
 
@@ -324,7 +324,7 @@ const loginFlow = async (preferences) => {
   console.log(`Session id obtained: length ${sessionId.length}`)
   const { activationId, tanInput } = await validateSessionAndCollectTan(auth)
   const { identifier, ...activationStatus } = await confirmActivation(auth, {
-    activationId: activationId,
+    activationId,
     userInput: tanInput
   })
   console.log('Your session activation status is', activationStatus)

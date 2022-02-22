@@ -38,7 +38,7 @@ export async function fetchAccounts (token) {
   console.log('>>> Загрузка списка аккаунтов')
   const res = await fetchApiJson('accounts', {
     body: {
-      token: token
+      token
     }
   }, response => response.body, message => new Error('Сайт не доступен'))
 
@@ -50,7 +50,7 @@ export async function fetchTransactions (token, acc, fromDate, toDate) {
 
   const res = await fetchApiJson('accounts/' + acc.id + '/' + acc.currencyCode + '/statement', {
     body: {
-      token: token,
+      token,
       fromDate: dateFormat(fromDate),
       toDate: dateFormat(toDate),
       showTarget: true,

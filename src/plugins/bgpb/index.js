@@ -55,7 +55,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   const transactions = transactionsUnique(transactionsStatement.concat(transactionsLast))
     .filter(transaction => transaction.movements[0].sum !== 0)
   return {
-    accounts: accounts,
+    accounts,
     transactions: adjustTransactions({ transactions: _.sortBy(transactions, transaction => transaction.date) })
   }
 }

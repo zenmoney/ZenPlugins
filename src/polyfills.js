@@ -12,7 +12,11 @@ ZenMoney.Blob = global.Blob
 ZenMoney.FormData = global.FormData
 global.fetch = null
 // eslint-disable-next-line import/no-webpack-loader-syntax
-global.fetch = require('imports-loader?self=>global&{default:XMLHttpRequest}=xhrViaZenApi&Blob=>ZenMoney.Blob&FormData=>ZenMoney.FormData!exports-loader?self.fetch!whatwg-fetch')
+global.fetch = require('imports-loader?type=commonjs&imports=single|xhrViaZenApi|{default:XMLHttpRequest}=XMLHttpRequest' + '&' +
+                                      'additionalCode=var%20self%20=%20global;%0A' +
+                                      'var%20Blob%20=%20ZenMoney.Blob;%0A' +
+                                      'var%20FormData%20=%20ZenMoney.FormData;' + '!' +
+                       'exports-loader?type=commonjs&exports=single|self.fetch!whatwg-fetch')
 global.Blob = null
 global.FormData = null
 delete global.Blob

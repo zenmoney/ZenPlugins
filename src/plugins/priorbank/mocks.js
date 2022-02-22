@@ -9,7 +9,7 @@ export function mockLogin ({ tokenType, accessToken, clientSecret, login, hash, 
       client_id: clientSecret
     },
     matcher: (url, { body }) => url === 'https://www.prior.by/api3/api/Authorization/Login' && _.isEqual(JSON.parse(body), {
-      login: login,
+      login,
       password: hash,
       lang: 'RUS'
     }),
@@ -25,7 +25,7 @@ export function mockGetSalt ({ tokenType, accessToken, clientSecret, login, resp
       client_id: clientSecret
     },
     matcher: (url, { body }) => url === 'https://www.prior.by/api3/api/Authorization/GetSalt' && _.isEqual(JSON.parse(body), {
-      login: login,
+      login,
       lang: 'RUS'
     }),
     response

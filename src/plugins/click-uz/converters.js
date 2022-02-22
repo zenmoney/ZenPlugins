@@ -174,12 +174,14 @@ function makeMovement (apiTransaction, transactionAccount, instrument) {
     sum = sum - fee
   }
 
-  const account = transactionAccount ? { id: String(transactionAccount.id) } : {
-    type: apiTransaction.service_name === 'Перевод с карты на карту' ? 'ccard' : 'checking',
-    instrument,
-    company: null,
-    syncIds: null
-  }
+  const account = transactionAccount
+    ? { id: String(transactionAccount.id) }
+    : {
+        type: apiTransaction.service_name === 'Перевод с карты на карту' ? 'ccard' : 'checking',
+        instrument,
+        company: null,
+        syncIds: null
+      }
 
   return {
     id: transactionAccount ? String(apiTransaction.payment_id) : null,

@@ -13,7 +13,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     .map(transaction => convertTransaction(transaction))
     .filter(transaction => transaction !== null)
   return {
-    accounts: accounts,
+    accounts,
     transactions: _.sortBy(transactions, transaction => transaction.date)
   }
 }

@@ -64,7 +64,7 @@ export function stringifyToXml (object) {
     return `<boolean>${object === true ? '1' : '0'}</boolean>`
   } else if (typeof object === 'string') {
     return `<string>${object
-      .replace(/&/g, '&amp;')
+      .replace(/&(?!#\d{2,3};)/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
     }</string>`

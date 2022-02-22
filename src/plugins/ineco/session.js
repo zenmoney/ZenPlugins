@@ -19,10 +19,10 @@ function arrayBufferToString (buffer) {
  * It also provide simple interfaces for major request types
  */
 export class Session {
-  _domain;
-  _cookies = {};
-  _headers = {};
-  _cookieKey;
+  _domain
+  _cookies = {}
+  _headers = {}
+  _cookieKey
 
   constructor (domain, { headers, cookies, cookieKey } = {}) {
     this._domain = domain
@@ -65,7 +65,7 @@ export class Session {
     const response = await fetch(this._url(url), {
       method: 'POST',
       redirect: 'manual',
-      stringify: stringify,
+      stringify,
       headers: this._prepareHeaders({
         'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
         'Accept-Charset': 'utf-8;'
@@ -82,7 +82,7 @@ export class Session {
     const response = await fetch(this._url(url), {
       method: 'POST',
       redirect: 'manual',
-      stringify: stringify,
+      stringify,
       headers: this._prepareHeaders({
         'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
         'Accept-Charset': 'utf-8;'
