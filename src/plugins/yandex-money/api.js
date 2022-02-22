@@ -1,7 +1,7 @@
 import { parse, stringify } from 'querystring'
 import { fetchJson } from '../../common/network'
 import { IncompatibleVersionError } from '../../errors'
-import { clientId, redirectUri } from './config'
+import config from './config'
 
 const scope = 'operation-history account-info'
 
@@ -35,11 +35,11 @@ export async function login () {
     throw new IncompatibleVersionError()
   }
   const { error, code } = await new Promise((resolve) => {
-    const redirectUriWithoutProtocol = redirectUri.replace(/^https?:\/\//i, '')
+    const redirectUriWithoutProtocol = config.redirectUri.replace(/^https?:\/\//i, '')
     const url = `https://money.yandex.ru/oauth/authorize?${stringify({
-      client_id: clientId,
+      client_id: config.clientId,
       scope,
-      redirect_uri: redirectUri,
+      redirect_uri: config.redirectUri,
       response_type: 'code'
     })}`
     ZenMoney.openWebView(url, null, (request, callback) => {
@@ -61,9 +61,9 @@ export async function login () {
   console.assert(code && !error, 'non-successfull authorization', error)
   const response = await callGate('https://money.yandex.ru/oauth/token', {
     body: {
-      client_id: clientId,
+      client_id: config.clientId,
       grant_type: 'authorization_code',
-      redirect_uri: redirectUri,
+      redirect_uri: config.redirectUri,
       code
     },
     sanitizeRequestLog: { body: true },
