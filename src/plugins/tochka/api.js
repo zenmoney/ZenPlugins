@@ -4,7 +4,7 @@ import { fetchJson, openWebViewAndInterceptRequest, RequestInterceptMode } from 
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { delay } from '../../common/utils'
 import { BankMessageError, IncompatibleVersionError } from '../../errors'
-import * as config from './config'
+import config from './config'
 
 const CLIENT_ID = config.clientId
 const CLIENT_SECRET = config.clientSecret
