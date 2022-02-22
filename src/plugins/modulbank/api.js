@@ -2,7 +2,7 @@ import { parse, stringify } from 'querystring'
 import { fetchJson } from '../../common/network'
 import { retry, RetryError } from '../../common/retry'
 import { IncompatibleVersionError, TemporaryUnavailableError } from '../../errors'
-import { clientId, clientSecret, redirectUri } from './config'
+import config from './config'
 
 export class AuthError {}
 
@@ -11,10 +11,10 @@ export async function login () {
     throw new IncompatibleVersionError()
   }
   const { error, code } = await new Promise((resolve) => {
-    const redirectUriWithoutProtocol = redirectUri.replace(/^https?:\/\//i, '')
+    const redirectUriWithoutProtocol = config.redirectUri.replace(/^https?:\/\//i, '')
     const url = `https://oauth.modulbank.ru/?${stringify({
-      clientId,
-      redirectUri,
+      clientId: config.clientId,
+      redirectUri: config.redirectUri,
       scope: 'account-info operation-history'
     })}`
     ZenMoney.openWebView(url, null, (request, callback) => {
@@ -40,9 +40,9 @@ export async function login () {
       Host: 'api.modulbank.ru'
     },
     body: {
-      clientId,
-      clientSecret,
-      redirectUri,
+      clientId: config.clientId,
+      clientSecret: config.clientSecret,
+      redirectUri: config.redirectUri,
       code
     },
     sanitizeRequestLog: { body: true },
