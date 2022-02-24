@@ -4899,10 +4899,10 @@ istanbul-reports@^3.1.3:
     html-escaper "^2.0.0"
     istanbul-lib-report "^3.0.0"
 
-javascript-obfuscator@3.2.5:
-  version "3.2.5"
-  resolved "https://registry.yarnpkg.com/javascript-obfuscator/-/javascript-obfuscator-3.2.5.tgz#8a8aa58e15a8c5a5de212538a1aa3b92a3f22d6e"
-  integrity sha512-z+DhQEB66PQztPNPsIdjcWK9OcWBvxiKqL6fR4gC3uAaq9+4N3rsv1WYnCcPjY3L+xa6rJnMHuoYsGZAkSajZg==
+javascript-obfuscator@4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/javascript-obfuscator/-/javascript-obfuscator-4.0.0.tgz#9c1dd209f8b1ef4e49b7a0f20b95bffa6a6b2e79"
+  integrity sha512-vS/8w/9eKISzwXNLd+OLMCCwjD+dFMdOlCDOo919iR/MWdBs+7u1ybpwRoWOmODToPQKVYw5GasvZoIiPs5nPw==
   dependencies:
     "@javascript-obfuscator/escodegen" "2.3.0"
     "@javascript-obfuscator/estraverse" "5.4.0"
@@ -5731,9 +5731,9 @@ minimalistic-crypto-utils@^1.0.0, minimalistic-crypto-utils@^1.0.1:
   integrity sha1-9sAMHAsIIkblxNmd+4x8CDsrWCo=
 
 minimatch@^3.0.4:
-  version "3.0.5"
-  resolved "https://registry.yarnpkg.com/minimatch/-/minimatch-3.0.5.tgz#4da8f1290ee0f0f8e83d60ca69f8f134068604a3"
-  integrity sha512-tUpxzX0VAzJHjLu0xUfFv1gwVp9ba3IOuRAVH2EGuRW8a5emA2FlACLqiT/lDVtS1W+TGNwqz3sWaNyLgDJWuw==
+  version "3.1.2"
+  resolved "https://registry.yarnpkg.com/minimatch/-/minimatch-3.1.2.tgz#19cd194bfd3e428f049a70817c038d89ab4be35b"
+  integrity sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==
   dependencies:
     brace-expansion "^1.1.7"
 
@@ -7728,10 +7728,10 @@ webpack-merge@^5.7.3:
     clone-deep "^4.0.1"
     wildcard "^2.0.0"
 
-webpack-obfuscator@3.5.0:
-  version "3.5.0"
-  resolved "https://registry.yarnpkg.com/webpack-obfuscator/-/webpack-obfuscator-3.5.0.tgz#33d02216258398c7dc52baa84c525e36a7ef5b2f"
-  integrity sha512-4/r6y8Dsa1Mg05RhheJ30+5IgnNLc6zP0ncTF/LiWONSJiorFkQZeKw9Blk8WNRQatZqZY73bd3im4DoDaCBCw==
+webpack-obfuscator@3.5.1:
+  version "3.5.1"
+  resolved "https://registry.yarnpkg.com/webpack-obfuscator/-/webpack-obfuscator-3.5.1.tgz#8ad73745f2d7c8e476e8f700622d251fdeec74c2"
+  integrity sha512-vztsD8oNdkX9FY/K4GTuylNWLGlc0n07vt7sCa+SlixKe/8iGejlxb/ZiKARmaZ2c8AbiBZcB/5hYqeNPydVZA==
   dependencies:
     loader-utils "^2.0.0"
     multi-stage-sourcemap "^0.3.1"

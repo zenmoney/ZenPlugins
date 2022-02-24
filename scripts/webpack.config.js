@@ -102,13 +102,7 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
       new CaseSensitivePathsPlugin(),
       ...production
         ? [
-            new TerserPlugin({
-              minify: TerserPlugin.uglifyJsMinify,
-              terserOptions: {
-                v8: true,
-                webkit: true
-              }
-            }),
+            new TerserPlugin({}),
             new WebpackObfuscator({
               optionsPreset: 'low-obfuscation',
               seed: 1985603785,
