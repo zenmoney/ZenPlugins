@@ -1,6 +1,6 @@
 declare namespace ZenMoney {
   function setData (name: string, data: unknown): void
-  function getData (name: string): unknown
+  function getData (name: string, defaultValue?: unknown): unknown
   function saveData (): void
   function clearData (): void
   function isAccountSkipped (id: string): boolean

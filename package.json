@@ -5,6 +5,8 @@
   "dependencies": {
     "@babel/runtime": "7.17.2",
     "@types/lodash": "4.14.178",
+    "@types/node-forge": "0.9.1",
+    "@types/uuid": "8.3.2",
     "big-integer": "1.6.47",
     "body-parser": "1.18.0",
     "cheerio": "1.0.0-rc.3",
@@ -33,6 +35,7 @@
     "thrift": "0.15.0",
     "util": "0.10.3",
     "whatwg-fetch": "git+https://github.com/skvav/fetch.git#e232caddc2a945135e2e3bb5d3cfff666c2dc6d0",
+    "xml-js": "1.6.11",
     "xml2js": "0.4.23"
   },
   "devDependencies": {
