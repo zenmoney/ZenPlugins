@@ -30,6 +30,7 @@
     "polyfill-crypto.getrandomvalues": "1.0.0",
     "promise": "8.0.1",
     "protobufjs": "6.11.2",
+    "querystring-browser": "1.0.4",
     "set-cookie-parser": "2.2.1",
     "strip-bom": "3.0.0",
     "thrift": "0.15.0",

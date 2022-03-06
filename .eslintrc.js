@@ -58,7 +58,9 @@ module.exports = {
           allowNullableNumber: false,
           allowAny: true
         }],
-        '@typescript-eslint/no-throw-literal': 'off'
+        '@typescript-eslint/no-throw-literal': 'off',
+        '@typescript-eslint/no-non-null-assertion': 'off',
+        '@typescript-eslint/restrict-template-expressions': 'off'
       }
     }
   ],

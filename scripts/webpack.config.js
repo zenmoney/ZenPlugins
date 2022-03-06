@@ -50,7 +50,8 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
         injectErrorsGlobally$: resolveFromRoot('src/injectErrorsGlobally'),
         adapters$: resolveFromRoot('src/common/adapters'),
         currentPluginManifest$: pluginPaths.manifest,
-        xhrViaZenApi$: resolveFromRoot('src/XMLHttpRequestViaZenAPI')
+        xhrViaZenApi$: resolveFromRoot('src/XMLHttpRequestViaZenAPI'),
+        querystring: 'querystring-browser'
       },
       extensions: ['.js', '.ts', '.json']
     },
@@ -97,7 +98,7 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
         ...!production && process.env.LOG_PRIVATE_KEY && { LOG_PRIVATE_KEY: readLogPrivateKey() }
       }),
       new NodePolyfillPlugin({
-        excludeAliases: ['console', 'process', 'buffer']
+        excludeAliases: ['console', 'process', 'buffer', 'querystring']
       }), // need for some dependencies, eg cheerio
       new CaseSensitivePathsPlugin(),
       ...production

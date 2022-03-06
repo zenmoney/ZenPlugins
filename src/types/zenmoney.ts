@@ -90,6 +90,7 @@ export interface Transaction {
   movements: [Movement] | [Movement, Movement]
   merchant: Merchant | NonParsedMerchant | null
   comment: string | null
+  groupKeys?: string[]
 }
 
 export type ScrapeFunc<T> = (args: {
