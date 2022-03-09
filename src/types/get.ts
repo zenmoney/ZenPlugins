@@ -4,26 +4,37 @@ export default function get (obj: unknown, path: string, defaultValue?: unknown)
   return _get(obj, path, defaultValue)
 }
 
-export function getNumber (obj: unknown, path: string, defaultValue?: number): number {
-  const result = get(obj, path)
-  console.assert(isNumber(result) || defaultValue !== undefined, `cant getNumber(${path}) from ${obj}`)
-  return (result ?? defaultValue) as number
+const checkNumber = { check: isNumber, typeName: 'number' }
+const checkString = { check: isString, typeName: 'string' }
+const checkBoolean = { check: isBoolean, typeName: 'boolean' }
+const checkArray = { check: isArray, typeName: 'array' }
+
+export const getNumber = typeCast(checkNumber)
+export const getString = typeCast(checkString)
+export const getBoolean = typeCast(checkBoolean)
+export const getArray = typeCast(checkArray)
+
+export const getOptNumber = optTypeCast(checkNumber)
+export const getOptString = optTypeCast(checkString)
+export const getOptBoolean = optTypeCast(checkBoolean)
+export const getOptArray = optTypeCast(checkArray)
+
+interface TypeCheck<T> {
+  check: (value: unknown) => value is T
+  typeName: string
 }
 
-export function getString (obj: unknown, path: string, defaultValue?: string): string {
-  const result = get(obj, path)
-  console.assert(isString(result) || defaultValue !== undefined, `cant getString(${path}) from ${obj}`)
-  return (result ?? defaultValue) as string
+function optTypeCast<Output> (isType: TypeCheck<Output>): (obj: unknown, path: string) => Output | undefined {
+  return (obj: unknown, path: string) => {
+    const result = get(obj, path)
+    return isType.check(result) ? result : undefined
+  }
 }
 
-export function getBoolean (obj: unknown, path: string, defaultValue?: boolean): boolean {
-  const result = get(obj, path)
-  console.assert(isBoolean(result) || defaultValue !== undefined, `cant getBoolean(${path}) from ${obj}`)
-  return (result ?? defaultValue) as boolean
-}
-
-export function getArray (obj: unknown, path: string, defaultValue?: unknown[]): unknown[] {
-  const result = get(obj, path)
-  console.assert(isArray(result) || defaultValue !== undefined, `cant getArray(${path}) from ${obj}`)
-  return (result ?? defaultValue) as unknown[]
+function typeCast<Output> (isType: TypeCheck<Output>): (obj: unknown, path: string) => Output {
+  return (obj: unknown, path: string) => {
+    const result = get(obj, path)
+    console.assert(isType.check(result), `cant get ${isType.typeName} at "${path}" from ${obj}`)
+    return result as Output
+  }
 }
