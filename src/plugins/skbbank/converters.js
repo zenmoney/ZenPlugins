@@ -247,13 +247,29 @@ function parseInnerTransfer (rawTransaction, transaction, invoice, accountsById)
 
   transaction.comment = null
   transaction.merchant = null
-  transaction.movements[0].account.id = account2.id
+  transaction.movements[0] = {
+    id: rawTransaction.info.id.toString(),
+    account: { id: account2.id },
+    invoice: invoice.instrument === account2.instrument ? null : invoice,
+    sum: invoice.instrument === account2.instrument
+      ? invoice.sum
+      : rawTransaction.details.convAmount,
+    fee: 0
+  }
+
   transaction.movements.push(
     {
       id: transaction.movements[0].id,
       account: { id: account1.id },
-      invoice: null,
-      sum: -invoice.sum,
+      invoice: invoice.instrument === account1.instrument
+        ? null
+        : {
+            sum: -rawTransaction.view.amounts.amount,
+            instrument: rawTransaction.view.amounts.currency
+          },
+      sum: invoice.instrument === account1.instrument
+        ? -invoice.sum
+        : -rawTransaction.details.convAmount,
       fee: 0
     })
 

@@ -149,9 +149,18 @@ describe('convertTransaction', () => {
         }
       },
       {
-        '40817810900087654321': { id: 'account1', instrument: 'RUB' },
-        '40817810900016392697': { id: 'account', instrument: 'RUB' },
-        '40817810700012345678': { id: 'account2', instrument: 'RUB' }
+        '40817810900087654321': {
+          id: 'account1',
+          instrument: 'RUB'
+        },
+        '40817810900016392697': {
+          id: 'account',
+          instrument: 'RUB'
+        },
+        '40817810700012345678': {
+          id: 'account2',
+          instrument: 'RUB'
+        }
       },
       {
         date: new Date('2020-08-09T14:23:32.000Z'),
@@ -263,8 +272,14 @@ describe('convertTransaction', () => {
         }
       },
       {
-        '40817810700012345678': { id: 'account1', instrument: 'RUB' },
-        '42305810330000000042': { id: 'account2', instrument: 'RUB' }
+        '40817810700012345678': {
+          id: 'account1',
+          instrument: 'RUB'
+        },
+        '42305810330000000042': {
+          id: 'account2',
+          instrument: 'RUB'
+        }
       },
       {
         date: new Date('2020-08-07T11:16:16.000Z'),
@@ -324,7 +339,11 @@ describe('convertTransaction', () => {
                 cashBackCurrency: 'RUB'
               },
             mainRequisite: 'На "Исполнение желаний + (срочный вклад)"',
-            category: { id: 394010367, internalCode: 'transfer', name: 'Переводы' },
+            category: {
+              id: 394010367,
+              internalCode: 'transfer',
+              name: 'Переводы'
+            },
             state: 'processed',
             dateCreated: '2021-03-02T18:04:08+05:00',
             payWallet: null,
@@ -337,7 +356,11 @@ describe('convertTransaction', () => {
           actions: ['sendCheck', 'print'],
           amount: 425686.13,
           bankSystemId: '7079293128',
-          category: { id: 394010367, internalCode: 'transfer', name: 'Переводы' },
+          category: {
+            id: 394010367,
+            internalCode: 'transfer',
+            name: 'Переводы'
+          },
           chargeDate: '2021-03-02T18:04:21+05:00',
           comment: 'Перевод между счетами через систему ДБО',
           convAmount: null,
@@ -372,8 +395,14 @@ describe('convertTransaction', () => {
         }
       },
       {
-        '40817810825715720880': { id: 'account1', instrument: 'RUB' },
-        '42305810725700366005': { id: 'account2', instrument: 'RUB' }
+        '40817810825715720880': {
+          id: 'account1',
+          instrument: 'RUB'
+        },
+        '42305810725700366005': {
+          id: 'account2',
+          instrument: 'RUB'
+        }
       },
       {
         date: new Date('2021-03-02T18:04:08+0500'),
@@ -397,8 +426,224 @@ describe('convertTransaction', () => {
           }
         ]
       }
+    ],
+    [
+      {
+        info:
+          {
+            id: 1222757182,
+            operationType: 'payment',
+            skbPaymentOperationType: 'transfer_currency',
+            subType: 'transfer_currency',
+            hasOfdReceipt: false
+          },
+        view:
+          {
+            operationIcon: 'https://ib.delo.ru/json/icon/628293674v0',
+            descriptions:
+              {
+                operationDescription: 'Между счетами',
+                productDescription: 'Счет Mastercard Unembossed',
+                productType: 'Со счета карты'
+              },
+            amounts:
+              {
+                amount: 1000,
+                currency: 'EUR',
+                feeAmount: 0,
+                feeCurrency: 'RUB',
+                bonusAmount: 0,
+                bonusCurrency: null,
+                cashBackAmount: 0,
+                cashBackCurrency: null
+              },
+            mainRequisite: 'На "Саша"',
+            category: {
+              id: 394010367,
+              internalCode: 'transfer',
+              name: 'Переводы'
+            },
+            state: 'processed',
+            dateCreated: '2022-02-15T20:25:02+05:00',
+            payWallet: false,
+            direction: 'internal',
+            comment: null,
+            productAccount: '40817810623215495862',
+            productCardId: null
+          },
+        details: {
+          actions: ['sendCheck', 'print', 'toFavorite', 'repeatable'],
+          amount: 1000,
+          'another-person-payment': null,
+          bankSystemId: '7507095252',
+          bonusAmount: null,
+          category: {
+            id: 394010367,
+            name: 'Переводы'
+          },
+          charge: '2022-02-15T00:00:00+05:00',
+          comment: null,
+          controlValue: null,
+          convAmount: 86900,
+          convCurrency: 'RUB',
+          counterpartyId: null,
+          'create-date': '2022-02-15T20:25:02+05:00',
+          currency: 'EUR',
+          data_contacts: {},
+          dateCreated: '2022-02-15T20:25:02+05:00',
+          'debtor-city': null,
+          'debtor-flat': null,
+          'debtor-house': null,
+          'debtor-inn': null,
+          'debtor-kpp': null,
+          'debtor-lastname': null,
+          'debtor-middlename': null,
+          'debtor-name': null,
+          'debtor-nonResident': null,
+          'debtor-street': null,
+          'debtor-type': null,
+          deliveryDate: null,
+          direction: 'internal',
+          ekassir: false,
+          feeAmount: 0,
+          feeCurrency: 'RUB',
+          fields: {},
+          firstCurrency: 'EUR',
+          icon:
+            {
+              hash: '1a751336e99fa57c3295ab785571db69',
+              url: '/imgcache/bankData628293674_1a751336e99fa57c3295ab785571db69.png'
+            },
+          internalCode: null,
+          kvvo: null,
+          limit: null,
+          linked_document_id: 1222757079,
+          linked_document_type: 'ru.infosysco.ibank.model.CurrencyExchangeRequest',
+          mainRequisite: 'На "Саша"',
+          messageId: null,
+          nds: 20,
+          ndsType: '3',
+          operationDescription: 'Между счетами',
+          operationIcon: 'https://ib.delo.ru/json/icon/628293674v0',
+          'order-date': '2022-02-15',
+          orderedRequisites: [],
+          originalRegistry: null,
+          outdated: true,
+          'payee-account': '40817978100016682342',
+          'payee-bank-account': '30101810800000000756',
+          'payee-bank-bic': '046577756',
+          'payee-bank-name': 'ПАО "СКБ-БАНК"',
+          'payee-card': null,
+          'payee-card-id': null,
+          'payee-card-mask-pan': null,
+          'payee-inn': null,
+          'payee-kpp': null,
+          'payee-member-id': null,
+          'payee-name': 'Иванов Иван Иванович',
+          'payee-phone': null,
+          'payer-account': '40817810623215495862',
+          'payer-bank-account': '30101810800000000756',
+          'payer-bank-bic': '046577756',
+          'payer-bank-name': 'ПАО "СКБ-БАНК"',
+          'payer-card': null,
+          'payer-card-mask-pan': null,
+          'payer-inn': null,
+          'payer-kpp': null,
+          'payment-date': null,
+          'payment-kind': null,
+          'payment-number': '127',
+          'payment-operation-type': 'transfer',
+          'payment-type': null,
+          payout: null,
+          'payout.date': null,
+          'payout.type': null,
+          pointOfInitiationMethod: null,
+          prepaymentReturnDate: null,
+          priority: '5',
+          productAccount: '40817810623215495862',
+          productCardId: null,
+          productDescription: 'Счет Mastercard Unembossed',
+          productType: 'Со счета карты',
+          profit: null,
+          purpose: ' Покупка иностранной валюты по договору на покупку-продажу валюты N 11 от 15.02.2022 по курсу банка 86.9000 RUB/EUR',
+          purposeCode: null,
+          qrIdentifier: null,
+          rate: 86.9,
+          reason: null,
+          registryPaidAmount: null,
+          registryParentId: null,
+          relatedRegistryPayment: false,
+          repeatable: true,
+          requisites: {},
+          'rest-amount': null,
+          revokeRejectReason: null,
+          secondCurrency: 'RUB',
+          signature: null,
+          skbPaymentOperationType: 'transfer_currency',
+          state: 'processed',
+          'tax-101': null,
+          'tax-104': null,
+          'tax-105': null,
+          'tax-106': null,
+          'tax-107': null,
+          'tax-108': null,
+          'tax-109': null,
+          'tax-110': null,
+          uin: null,
+          'zhkkh.communalPayment': null,
+          'zhkkh.consumerApartment': null,
+          'zhkkh.consumerInn': null,
+          'zhkkh.consumerMName': null,
+          'zhkkh.consumerName': null,
+          'zhkkh.consumerPlacement': null,
+          'zhkkh.consumerSName': null,
+          'zhkkh.documentId': null,
+          'zhkkh.fiasCode': null,
+          'zhkkh.payDate': null,
+          'zhkkh.perfDocNumber': null,
+          'zhkkh.personalAccount': null,
+          'zhkkh.singlePersonalAcc': null,
+          'zhkkh.type': null
+        }
+      },
+      {
+        '40817810623215495862': {
+          id: 'account1',
+          instrument: 'RUB'
+        },
+        '40817978100016682342': {
+          id: 'account2',
+          instrument: 'EUR'
+        }
+      },
+      {
+        date: new Date('2022-02-15T18:25:02+03:00'),
+        hold: false,
+        merchant: null,
+        movements:
+          [
+            {
+              id: '1222757182',
+              account: { id: 'account2' }, // Получатель 'EUR'
+              invoice: null,
+              sum: 1000,
+              fee: 0
+            },
+            {
+              id: '1222757182',
+              account: { id: 'account1' }, // Отправитель 'RUB'
+              invoice: {
+                sum: -1000,
+                instrument: 'EUR'
+              },
+              sum: -86900,
+              fee: 0
+            }
+          ],
+        comment: null
+      }
     ]
-  ])('should convert account transaction', (rawTransaction, accountsById, transaction) => {
+  ])('should convert inner transfer', (rawTransaction, accountsById, transaction) => {
     expect(convertTransaction(rawTransaction, accountsById)).toEqual(transaction)
   })
 })
