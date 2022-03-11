@@ -73,132 +73,127 @@ export function convertAccount (json, accountType) {
   }
 }
 
-export function convertTransaction (json, accounts) {
+export function convertTransaction (apiTransaction, accounts) {
   const account = accounts.find(account => {
-    return account.syncID.indexOf(json.accountNumber) !== -1
+    return account.syncID.indexOf(apiTransaction.accountNumber) !== -1
   })
-
+  const sign = (apiTransaction.operationCode && apiTransaction.operationCode === 3) || (apiTransaction.operationSign === '-1') ? -1 : 1
+  const invoice = {
+    sum: sign * apiTransaction.transactionAmount,
+    instrument: codeToCurrencyLookup[apiTransaction.transactionCurrency]
+  }
+  let fee = 0
+  if (apiTransaction.operationName && apiTransaction.operationName.indexOf('Удержано подоходного налога') >= 0) {
+    const nameSplit = apiTransaction.operationName.split(' ')
+    fee = Number.parseFloat(nameSplit[nameSplit.length - 1])
+  }
+  if (apiTransaction.transactionAmount === 0 && fee === 0) {
+    return null
+  }
   const transaction = {
-    date: new Date(json.operationDate),
-    movements: [getMovement(json, account)],
+    date: new Date(apiTransaction.operationDate),
+    movements: [
+      {
+        id: apiTransaction.transactionAuthCode ? apiTransaction.transactionAuthCode : null,
+        account: { id: account.id },
+        invoice: invoice.instrument === account.instrument ? null : invoice,
+        sum: invoice.instrument === account.instrument ? invoice.sum : sign * apiTransaction.operationAmount,
+        fee: fee
+      }
+    ],
     merchant: null,
     comment: null,
     hold: false
-  }
-
-  // пропускаем операции с нулевой суммой
-  if (transaction.movements[0].sum === 0 && transaction.movements[0].fee === 0) {
-    return null
-  }
-
+  };
   [
     parseCashTransfer,
     parseOuterTransfer,
     parseComment,
     parsePayee
-  ].some(parser => parser(transaction, json))
-
-  // добавляем к коментарию сумму и валюту операции (для случая когда валюта операции отличается)
-  if (json.operationCurrency !== account.currencyCode) {
-    transaction.comment = [
-      `${json.operationAmount} ${codeToCurrencyLookup[json.operationCurrency]}`,
-      transaction.comment
-    ].join(' ').trim()
-  }
+  ].some(parser => parser(transaction, apiTransaction, account, invoice))
 
   return transaction
 }
 
-function getMovement (json, account) {
-  const movement = {
-    id: null,
-    account: { id: account.id },
-    invoice: null,
-    sum: (json.operationCode && json.operationCode === 3) || (json.operationSign === '-1') ? -json.transactionAmount : json.transactionAmount,
-    fee: 0
-  }
-  if (json.operationName && json.operationName.indexOf('Удержано подоходного налога') >= 0) {
-    const nameSplit = json.operationName.split(' ')
-    movement.fee = Number.parseFloat(nameSplit[nameSplit.length - 1])
-  }
-  return movement
-}
-
-function parseCashTransfer (transaction, json) {
-  if (json.operationCode === 6 || (!!json.operationName && (
-    json.operationName.indexOf('наличны') >= 0 ||
-    json.operationName.indexOf('Снятие денег со счета') >= 0 ||
-    json.operationName.indexOf('Пополнение наличными') >= 0))) {
+function parseCashTransfer (transaction, apiTransaction, account, invoice) {
+  if (apiTransaction.operationCode === 6 || (!!apiTransaction.operationName && (
+    apiTransaction.operationName.indexOf('наличны') >= 0 ||
+    apiTransaction.operationName.indexOf('Снятие денег со счета') >= 0 ||
+    apiTransaction.operationName.indexOf('Пополнение наличными') >= 0))) {
     // добавим вторую часть перевода
     transaction.movements.push({
       id: null,
       account: {
         company: null,
         type: 'cash',
-        instrument: json.trans_iso_currency ? json.trans_iso_currency : codeToCurrencyLookup[json.operationCurrency],
+        instrument: invoice.instrument,
         syncIds: null
       },
       invoice: null,
-      sum: Number.parseFloat(json.auth_amount ? json.auth_amount : ((json.operationSign === '1') ? -json.operationAmount : json.operationAmount)),
+      sum: -invoice.sum,
       fee: 0
     })
     return true
   }
 }
 
-function parseOuterTransfer (transaction, json) {
-  if (!!json.operationPlace && (
-    json.operationPlace?.indexOf('POPOLNENIE KARTY') >= 0)) {
+function parseOuterTransfer (transaction, apiTransaction, account, invoice) {
+  if (!!apiTransaction.operationPlace && (
+    apiTransaction.operationPlace?.indexOf('POPOLNENIE KARTY') >= 0)) {
     // добавим вторую часть перевода
     transaction.movements.push({
       id: null,
       account: {
         company: null,
         type: 'ccard',
-        instrument: json.trans_iso_currency ? json.trans_iso_currency : codeToCurrencyLookup[json.operationCurrency],
+        instrument: invoice.instrument,
         syncIds: null
       },
       invoice: null,
-      sum: Number.parseFloat(json.auth_amount ? json.auth_amount : ((json.operationSign === '1') ? -json.operationAmount : json.operationAmount)),
+      sum: -invoice.sum,
       fee: 0
     })
     return true
   }
 }
 
-function parsePayee (transaction, json) {
+function parsePayee (transaction, apiTransaction) {
   // интернет-платежи отображаем без получателя
-  if (!json.operationPlace ||
-    json.operationPlace.indexOf('BNB - OPLATA USLUG') >= 0 ||
-    json.operationPlace.indexOf('Оплата услуг в интернет(мобильном) банкинге') >= 0 ||
-    json.operationPlace.indexOf('OPLATA USLUG - KOMPLAT BNB') >= 0) {
+  if (!apiTransaction.operationPlace ||
+    apiTransaction.operationPlace.indexOf('BNB - OPLATA USLUG') >= 0 ||
+    apiTransaction.operationPlace.indexOf('Оплата услуг в интернет(мобильном) банкинге') >= 0 ||
+    apiTransaction.operationPlace.indexOf('OPLATA USLUG - KOMPLAT BNB') >= 0) {
     return false
   }
   transaction.merchant = {
     mcc: null,
     location: null
   }
-  const merchant = json.operationPlace.split('>').map(str => str.trim())
+  const merchant = apiTransaction.operationPlace.split('>').map(str => str.trim())
   if (merchant.length === 1) {
-    transaction.merchant.fullTitle = json.operationPlace
+    transaction.merchant.fullTitle = apiTransaction.operationPlace
   } else if (merchant.length === 2) {
     transaction.merchant.title = merchant[0]
     const geo = merchant[1].split(' ')
     transaction.merchant.city = merchant[1].replace(' ' + geo[geo.length - 1], '').trim()
     transaction.merchant.country = geo[geo.length - 1]
   } else {
-    throw new Error('Ошибка обработки транзакции с получателем: ' + json.operationPlace)
+    throw new Error('Ошибка обработки транзакции с получателем: ' + apiTransaction.operationPlace)
   }
 }
 
-function parseComment (transaction, json) {
-  if (!json.operationName) { return false }
+function parseComment (transaction, apiTransaction, account) {
+  if (apiTransaction.operationCurrency !== account.currencyCode) {
+    transaction.comment = `${apiTransaction.operationAmount} ${codeToCurrencyLookup[apiTransaction.operationCurrency]}`
+    return false
+  }
+  if (!apiTransaction.operationName) { return false }
 
-  if (json.operationName.indexOf('Капитализация. Удержано подоходного налога') >= 0) {
+  if (apiTransaction.operationName.indexOf('Капитализация. Удержано подоходного налога') >= 0) {
     transaction.comment = 'Капитализация'
     return false
   }
-  switch (json.operationName) {
+  switch (apiTransaction.operationName) {
     // переводы между счетами полезной информации не несут, гасим сразу
     case 'Списание по операции ПЦ "Перечисление с карты на карту" ':
     case 'On-line пополнение договора (списание с БПК)':
@@ -213,7 +208,7 @@ function parseComment (transaction, json) {
       return false
 
     default:
-      transaction.comment = json.operationName
+      transaction.comment = apiTransaction.operationName
       return false
   }
 }

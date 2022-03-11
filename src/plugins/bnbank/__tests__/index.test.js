@@ -73,9 +73,12 @@ describe('scrape', () => {
             id: '2007500000000000'
           },
           fee: 0,
-          id: null,
-          invoice: null,
-          sum: -0.64
+          id: '939000',
+          invoice: {
+            instrument: 'USD',
+            sum: -0.64
+          },
+          sum: -1.4
         }]
       },
       {
@@ -88,7 +91,7 @@ describe('scrape', () => {
             id: '2007500000000000'
           },
           fee: 0,
-          id: null,
+          id: '161000',
           invoice: null,
           sum: -2.17
         }]
@@ -103,7 +106,7 @@ describe('scrape', () => {
             id: '2007500000000000'
           },
           fee: 0,
-          id: null,
+          id: '163000',
           invoice: null,
           sum: -2.16
         }]
@@ -118,9 +121,13 @@ describe('scrape', () => {
             id: '2007500000000000'
           },
           fee: 0,
-          id: null,
-          invoice: null,
-          sum: -200
+          id: '957000',
+          invoice:
+            {
+              instrument: 'USD',
+              sum: -200
+            },
+          sum: -437
         }]
       },
       {

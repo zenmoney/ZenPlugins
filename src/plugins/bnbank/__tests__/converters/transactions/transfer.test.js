@@ -40,7 +40,7 @@ describe('convertTransaction', () => {
       date: new Date(1553029200000),
       movements: [
         {
-          id: null,
+          id: '791000',
           account: { id: '2007549330000000' },
           sum: -3900,
           fee: 0,
@@ -84,7 +84,7 @@ describe('convertTransaction', () => {
       date: new Date(1633886340000),
       movements: [
         {
-          id: null,
+          id: '496154',
           account: { id: '2007549330000000' },
           sum: 100,
           fee: 0,
@@ -124,7 +124,7 @@ describe('convertTransaction', () => {
       date: new Date(1634108020000),
       movements: [
         {
-          id: null,
+          id: '756342',
           account: { id: '2007549330000000' },
           sum: 200,
           fee: 0,

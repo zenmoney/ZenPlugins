@@ -43,7 +43,7 @@ describe('convertTransaction', () => {
         date: new Date(1553029200000),
         movements: [
           {
-            id: null,
+            id: '791000',
             account: { id: '2007549330000000' },
             sum: -3900,
             fee: 0,
@@ -85,7 +85,7 @@ describe('convertTransaction', () => {
         date: new Date(1553029200000),
         movements: [
           {
-            id: null,
+            id: '791000',
             account: { id: '2007549330000000' },
             sum: -3900,
             fee: 0,
@@ -223,42 +223,6 @@ describe('convertTransaction', () => {
       }
     },
     {
-      name: 'operation in USD',
-      transaction: {
-        accountNumber: '2007549330000000',
-        accountType: '1',
-        cardPAN: '1*** **** **** 1234',
-        merchantId: '1234',
-        operationAmount: 3.49,
-        operationCurrency: '840',
-        operationDate: 1635058305000,
-        operationPlace: 'APPLE.COM/BILL',
-        operationSign: '-1',
-        transactionAmount: 8.64,
-        transactionAuthCode: '342346',
-        transactionCurrency: '933'
-      },
-      expectedTransaction: {
-        hold: false,
-        date: new Date(1635058305000),
-        movements: [
-          {
-            id: null,
-            account: { id: '2007549330000000' },
-            sum: -8.64,
-            fee: 0,
-            invoice: null
-          }
-        ],
-        merchant: {
-          fullTitle: 'APPLE.COM/BILL',
-          location: null,
-          mcc: null
-        },
-        comment: '3.49 USD'
-      }
-    },
-    {
       name: 'add money to deposit',
       transaction: {
         accountNumber: '2007549330000000',
@@ -279,7 +243,7 @@ describe('convertTransaction', () => {
         date: new Date(1634116455000),
         movements: [
           {
-            id: null,
+            id: '927182',
             account: { id: '2007549330000000' },
             sum: -10,
             fee: 0,
