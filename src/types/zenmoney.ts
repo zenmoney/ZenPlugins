@@ -3,12 +3,13 @@ export enum AccountType {
   ccard = 'ccard',
   checking = 'checking',
   deposit = 'deposit',
-  loan = 'loan'
+  loan = 'loan',
+  investment = 'investment'
 }
 
 export interface AccountOrCard {
   id: string
-  type: AccountType.ccard | AccountType.checking
+  type: AccountType.ccard | AccountType.checking | AccountType.investment
   title: string
   instrument: string
   syncIds: string[]
