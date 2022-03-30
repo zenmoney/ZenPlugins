@@ -17,7 +17,7 @@
         inputType="textPassword"
         title="CLICK-PIN код"
         dialogTitle="CLICK-PIN код"
-        dialogMessage="CLICK-PIN код и пин-код от приложения — это разные пароли. Если вы не помните CLICK-PIN код, восстановите его на сайте банка."
+        dialogMessage="CLICK-PIN код"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="||***********"
