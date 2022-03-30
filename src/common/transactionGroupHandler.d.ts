@@ -1,10 +1,10 @@
-import { Account, Movement, Transaction } from '../types/zenmoney'
+import { Account, ExtendedTransaction, Movement, Transaction } from '../types/zenmoney'
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export type GroupHandler = (transactions: Transaction[], options: any) => void
 
 export declare function adjustTransactions (args: {
-  transactions: Transaction[]
+  transactions: ExtendedTransaction[]
   groupHandlers?: GroupHandler[]
 }): Transaction[]
 

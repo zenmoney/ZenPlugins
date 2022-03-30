@@ -13,5 +13,6 @@ console.assert = function (condition, ...args) {
     throw new Error(formatWithCustomInspectParams(...args))
   }
 }
+global.assert = console.assert
 global.TemporaryError = TemporaryError
 global.InvalidPreferencesError = InvalidPreferencesError

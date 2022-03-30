@@ -63,6 +63,7 @@ export const isNativeConsoleImplemented = () => {
 
 export const install = () => {
   global.console = consoleAdapter
+  global.assert = consoleAdapter.assert
 }
 
 export const shapeNativeConsole = () => {

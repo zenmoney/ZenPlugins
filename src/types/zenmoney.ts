@@ -19,6 +19,7 @@ export interface AccountOrCard {
   creditLimit?: number | null
   totalAmountDue?: number | null
   gracePeriodEndDate?: Date | null
+  archived?: boolean
 }
 
 export interface DepositOrLoan {
@@ -36,6 +37,7 @@ export interface DepositOrLoan {
   endDateOffset: number
   payoffInterval: 'month' | null
   payoffStep: number
+  archived?: boolean
 }
 
 export type Account = AccountOrCard | DepositOrLoan
@@ -91,6 +93,9 @@ export interface Transaction {
   movements: [Movement] | [Movement, Movement]
   merchant: Merchant | NonParsedMerchant | null
   comment: string | null
+}
+
+export interface ExtendedTransaction extends Transaction {
   groupKeys?: string[]
 }
 

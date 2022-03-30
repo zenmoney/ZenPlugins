@@ -4,7 +4,7 @@ declare namespace ZenMoney {
   function saveData (): void
   function clearData (): void
   function isAccountSkipped (id: string): boolean
-  function readLine (text: string, options?: { inputType?: 'number' | 'text', time?: number }): Promise<string>
+  function readLine (text: string, options?: { inputType?: 'number' | 'text', time?: number }): Promise<string | null>
 
   function setCookie (
     domain: string,
@@ -41,3 +41,5 @@ declare namespace ZenMoney {
     build: string
   }
 }
+
+declare function assert (condition: boolean, ...args: unknown[]): asserts condition
