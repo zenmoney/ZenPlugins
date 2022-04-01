@@ -190,7 +190,7 @@ function parseCorporateCardAccount (apiAccount) {
 }
 
 export function convertTransaction (apiTransaction, account) {
-  if (apiTransaction.operationAmount === 0 && apiTransaction.transactionAmount === 0) {
+  if ((apiTransaction.operationAmount === 0 && apiTransaction.transactionAmount === 0) || Number.parseInt(apiTransaction.operationSign) === 0) {
     return false
   }
   const invoice = {
