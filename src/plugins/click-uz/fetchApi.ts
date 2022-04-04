@@ -41,6 +41,8 @@ async function fetchApi (method: string, params: unknown, auth: { sessionKey?: s
       method,
       params
     },
+    stringify: JSON.stringify,
+    parse: JSON.parse,
     sanitizeRequestLog: defaultsDeep({
       headers: { 'device-id': true, 'session-key': true }
     }, sanitizeOptions.sanitizeRequestLog),
