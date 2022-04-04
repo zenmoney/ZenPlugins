@@ -19,7 +19,7 @@ function validatePreferences (rawPreferences: Preferences): Preferences {
   if (phone === null) {
     throw new InvalidPreferencesError('Неверный формат номера телефона')
   }
-  if (!rawPreferences.password.match(/^d{5}$/)) {
+  if (!rawPreferences.password.match(/^\d{5}$/)) {
     throw new InvalidPreferencesError('CLICK-PIN должен состоять из 5 цифр')
   }
 
