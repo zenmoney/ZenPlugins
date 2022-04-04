@@ -48,6 +48,7 @@ if (isDebug() && consoleAdapter.isNativeConsoleImplemented()) {
 } else {
   consoleAdapter.install()
 }
+global.assert = console.assert
 
 if (!('isAccountSkipped' in ZenMoney)) {
   ZenMoney.isAccountSkipped = (accountId) => false
