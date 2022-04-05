@@ -88,7 +88,7 @@ export async function fetchLogin (phone: string, pin: string, auth: { deviceId: 
     app_version: APP_VERSION,
     datetime: time,
     device_id: auth.deviceId,
-    password: encryptPinCode(pin, auth.authToken, time.toString()),
+    password: encryptPinCode(auth.authToken, pin, time.toString()),
     phone_number: phone
   }, auth, {
     sanitizeRequestLog: { body: { params: { datetime: true, device_id: true, password: true, phone_number: true } } },
