@@ -22,7 +22,7 @@
     "jshashes": "1.0.8",
     "ksuid": "1.2.0",
     "lodash": "4.17.21",
-    "moment": "2.24.0",
+    "moment": "2.29.2",
     "moment-timezone": "0.5.28",
     "node-forge": "0.9.1",
     "object-assign": "4.1.1",
