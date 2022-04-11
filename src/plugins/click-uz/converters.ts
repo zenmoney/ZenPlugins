@@ -39,6 +39,9 @@ export function convertTransaction (apiTransaction: unknown, account: Account): 
   const amount = getNumber(apiTransaction, 'amount') - fee
   const currency = getString(apiTransaction, 'currency')
   assert(currency === account.instrument, 'invoice transaction found', apiTransaction)
+  if (amount === 0) {
+    return
+  }
 
   const transaction: ExtendedTransaction = {
     hold: state === 0,
