@@ -3,9 +3,12 @@ import { getBoolean, getNumber, getString } from '../../types/get'
 import { FetchedAccounts } from './models'
 import { find } from 'lodash'
 
-function getBalance (apiAccount: unknown, balances: unknown[]): number {
+function getBalance (apiAccount: unknown, balances: unknown[]): number | null {
   const id = getNumber(apiAccount, 'id')
   const result = find(balances, { account_id: id })
+  if (getNumber(apiAccount, 'card_status') === -999) {
+    return null
+  }
   assert(result !== undefined, `cant find balance for id=${id}`, balances)
   return getNumber(result, 'balance')
 }
@@ -14,7 +17,7 @@ export function convertAccounts (apiAccounts: FetchedAccounts): Account[] {
   return apiAccounts.cards.map(apiAccount => convertAccount(apiAccount, getBalance(apiAccount, apiAccounts.balances)))
 }
 
-function convertAccount (apiAccount: unknown, balance: number): AccountOrCard {
+function convertAccount (apiAccount: unknown, balance: number | null): AccountOrCard {
   return {
     id: getNumber(apiAccount, 'id').toString(),
     type: getString(apiAccount, 'card_type') === 'WALLET' ? AccountType.checking : AccountType.ccard,

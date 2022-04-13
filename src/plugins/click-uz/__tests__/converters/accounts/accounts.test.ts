@@ -110,16 +110,68 @@ describe('convertAccount', () => {
               button_set: 'VISA',
               display_type: 'VISA'
             }
+          },
+          {
+            id: 18291234,
+            bank_code: '062',
+            bank_name: 'TBC Банк',
+            bank_short_name: 'TBC',
+            card_name: 'Humo от TBC',
+            card_number: '9860 43** **** 1234',
+            card_expire_date: '0625',
+            card_status: -999,
+            card_status_text: 'Профилактика',
+            card_token: null,
+            card_type: 'HUMO',
+            font_color: 'FFFFFFFF',
+            monitoring_status: 0,
+            is_default: false,
+            card_number_hash: 'A5CAB4A5319FC6B32816AA669CE955639399C47E761EF8F1EEB5400692212345',
+            cardholder: 'ANTONOV ANTOV ANTONOVICH',
+            currency_code: 'UZS',
+            click: false,
+            details: false,
+            securecode_available: false,
+            securecode_status: false,
+            permission:
+              {
+                payment: 1,
+                transfer: ['SMARTV', 'WALLET', 'HUMO'],
+                clickpass: 1,
+                blockable: false,
+                activation: false,
+                copy_number: true,
+                removable: 1
+              },
+            images:
+              {
+                background: 'https://cdn.click.uz/app/evo/card/humo/tbc-bg_v1.png',
+                logo: 'https://cdn.click.uz/app/evo/card/humo/tbc-logo_v1.png',
+                mini_logo: 'https://cdn.click.uz/app/evo/card/humo/tbc-mini-logo_v1.png',
+                cardtype: 'https://cdn.click.uz/app/evo/card/types/humo_v1.png',
+                cardtype_mini: 'https://cdn.click.uz/app/evo/card/types/humo_small_v1.png'
+              },
+            transfer_limits:
+              {
+                send_min_limit: 1000,
+                send_max_limit: 13000000,
+                receive_min_limit: 1000,
+                receive_max_limit: 5000000,
+                percent: 0.8
+              },
+            options: { is_masked: true, button_set: 'HUMO', display_type: 'HUMO' }
           }
         ],
-        balances: [{
-          account_id: 16448770,
-          balance: 5001.36
-        },
-        {
-          account_id: 23946997,
-          balance: 0
-        }]
+        balances: [
+          {
+            account_id: 16448770,
+            balance: 5001.36
+          },
+          {
+            account_id: 23946997,
+            balance: 0
+          }
+        ]
       },
       [
         {
@@ -142,6 +194,18 @@ describe('convertAccount', () => {
             '418780******1337'
           ],
           title: 'VISA-карта',
+          type: 'ccard'
+        },
+        {
+          archived: true,
+          balance: null,
+          id: '18291234',
+          instrument: 'UZS',
+          savings: false,
+          syncIds: [
+            '986043******1234'
+          ],
+          title: 'Humo от TBC',
           type: 'ccard'
         }
       ]
