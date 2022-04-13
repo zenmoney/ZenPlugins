@@ -70,4 +70,22 @@ describe('convertAccount', () => {
       ExtraData: 'cb727d83-2d8a-4c54-898f-6d45f0eba713'
     })).toBeNull()
   })
+
+  it('blocked card', () => {
+    expect(convertAccount({
+      Id: '57075669-926e47',
+      No: '428621******1234',
+      Blocked: 'Y',
+      ProductType: 'MS',
+      ProductTypeName: 'Карточка',
+      Subclass: 'Расчетная карточка &quot;Премиальная&quot; MasterCard World скидка 60%',
+      Expired: '20230531',
+      Currency: '933',
+      CustomName: 'Расчетная карточка',
+      Icon: 'NFC_MC_BDW',
+      BankId: '1949525',
+      ExtraData: 'c8fc2f32-d7de-4920-a71b-eb1731874932',
+      ExtraData2: '529922'
+    })).toBeNull()
+  })
 })

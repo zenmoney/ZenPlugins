@@ -1,7 +1,7 @@
 import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
 
 export function convertAccount (ob) {
-  if (ob.Enabled && ob.Enabled === 'N') {
+  if ((ob.Enabled && ob.Enabled === 'N') || (ob.Blocked && ob.Blocked === 'Y')) {
     return null
   }
   const id = ob.Id.split('-')[0]
