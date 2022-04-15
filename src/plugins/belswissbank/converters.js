@@ -3,22 +3,37 @@ import {
   addMovement,
   formatCalculatedRateLine,
   formatCommentFeeLine,
-  formatInvoiceLine,
   formatRate,
-  formatRateLine,
   getSingleReadableTransactionMovement,
   joinCommentLines,
   makeCashTransferMovement
 } from '../../common/converters'
 import { formatCommentDateTime } from '../../common/dateUtils'
 import { mergeTransfers } from '../../common/mergeTransfers'
-import { figureOutAccountRestsDelta, getTransactionFactor, isCashTransferTransaction, isElectronicTransferTransaction, isRejectedTransaction } from './BSB'
+import {
+  currencyCodeToIsoCurrency,
+  figureOutAccountRestsDelta, getTransactionFactor,
+  isCashTransferTransaction,
+  isElectronicTransferTransaction,
+  isRejectedTransaction
+} from './BSB'
+
+export function convertToZenMoneyAccount (apiCard) {
+  return {
+    id: apiCard.cardId.toString(),
+    title: apiCard.name || apiCard.brand,
+    type: 'ccard',
+    syncID: [apiCard.maskedCardNumber.slice(-4)],
+    instrument: currencyCodeToIsoCurrency(apiCard.currency),
+    balance: apiCard.amount
+  }
+}
 
 function formatDetails ({ transaction, matchedPayment }) {
   if (matchedPayment) {
     return {
-      country: null,
-      city: null,
+      country: transaction.countryCode || null,
+      city: transaction.city || null,
       payee: [matchedPayment.name, matchedPayment.target].filter(Boolean).join(', '),
       comment: matchedPayment.comment || null
     }
@@ -57,7 +72,7 @@ export function convertApiTransactionsToReadableTransactions (apiTransactionsByA
         const sum = apiTransaction.transactionCurrency === account.instrument
           ? invoiceSum
           : figureOutAccountRestsDelta({ transactions, index, accountCurrency: account.instrument })
-        if (sum === null) {
+        if (!sum) {
           console.debug('sum is unknown, ignored transaction', { transaction: apiTransaction })
           return null
         }
@@ -87,12 +102,8 @@ export function convertApiTransactionsToReadableTransactions (apiTransactionsByA
           hold: null,
           merchant: details.payee ? { country: details.country, city: details.city, title: details.payee, mcc: null, location: null } : null,
           comment: _.compact([
-            details.comment,
-            formatCommentDateTime(date),
-            formatCommentFeeLine(fee, account.instrument),
-            formatInvoiceLine(invoice),
-            formatRateLine(sum, invoice)
-          ]).join('\n') || null
+            details.comment
+          ]).join('\n') || apiTransaction.transactionType || null
         }
         if (isCashTransferTransaction(apiTransaction) && !isElectronicTransferTransaction(apiTransaction)) {
           return { readableTransaction: addMovement(readableTransaction, makeCashTransferMovement(readableTransaction, account.instrument)), account }

@@ -1,4 +1,3 @@
-import { formatCommentDateTime } from '../../../common/dateUtils'
 import { convertApiTransactionsToReadableTransactions } from '../converters'
 
 describe('convertApiTransactionsToReadableTransactions', () => {
@@ -85,6 +84,25 @@ describe('convertApiTransactionsToReadableTransactions', () => {
             accountRestDate: 1636535220000,
             colour: 1,
             last4: '8280, NIKOLAY NIKOLAEV'
+          },
+          {
+            cardTransactionId: 92463665,
+            docId: 1129139,
+            openwayId: 57753310,
+            transactionDate: 1633604820000,
+            transactionType: 'Зачисление Money-back',
+            transactionCategory: 'Request',
+            transactionResult: 'Успешно',
+            transactionAmount: 0.88,
+            transactionCurrency: 'BYN',
+            transactionDetails: '49.50 BYN',
+            city: '',
+            countryCode: '',
+            accountRest: null,
+            accountCurrency: '',
+            accountRestDate: 1633604820000,
+            colour: 1,
+            last4: '7992, KATSIARYNA BARANAVA'
           }
         ]
       }
@@ -108,10 +126,10 @@ describe('convertApiTransactionsToReadableTransactions', () => {
           mcc: null,
           location: null
         },
-        comment: formatCommentDateTime(new Date('2019-04-01T09:04:00.000Z'))
+        comment: 'Товары и услуги'
       },
       {
-        comment: formatCommentDateTime(new Date('2021-04-13T00:07:00.000Z')),
+        comment: 'Комиссия за годовое обслуживание осн. Карточки',
         date: new Date('2021-04-13T00:07:00.000Z'),
         hold: null,
         merchant: {
@@ -134,7 +152,7 @@ describe('convertApiTransactionsToReadableTransactions', () => {
         ]
       },
       {
-        comment: formatCommentDateTime(new Date('2021-09-30T11:07:00.000Z')),
+        comment: 'Зачисление с конверсией',
         date: new Date('2021-09-30T11:07:00.000Z'),
         hold: null,
         merchant: {
@@ -157,7 +175,30 @@ describe('convertApiTransactionsToReadableTransactions', () => {
         ]
       },
       {
-        comment: formatCommentDateTime(new Date('2021-11-10T09:07:00.000Z')),
+        comment: 'Зачисление Money-back',
+        date: new Date('2021-10-07T11:07:00.000Z'),
+        hold: null,
+        merchant: {
+          city: null,
+          country: null,
+          location: null,
+          mcc: null,
+          title: '49.50 BYN'
+        },
+        movements: [
+          {
+            account: {
+              id: 'account'
+            },
+            fee: 0,
+            id: '92463665',
+            invoice: null,
+            sum: 0.88
+          }
+        ]
+      },
+      {
+        comment: 'Покупка валюты за б/н рубли',
         date: new Date('2021-11-10T09:07:00.000Z'),
         hold: null,
         merchant: {
@@ -175,7 +216,7 @@ describe('convertApiTransactionsToReadableTransactions', () => {
             fee: 0,
             id: '94158492',
             invoice: null,
-            sum: -3076.6
+            sum: 3076.6
           }
         ]
       }

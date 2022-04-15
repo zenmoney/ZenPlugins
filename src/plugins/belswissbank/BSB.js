@@ -17,7 +17,8 @@ const cashTransferTransactionTypes = [
   'Bankomat',
   'Наличные',
   'Nalichnye',
-  'Пополнение счета наличными (по паспорту)'
+  'Пополнение счета наличными (по паспорту)',
+  'Пополнение счета наличными'
 ]
 
 export const getTransactionFactor = (transaction) => {
@@ -41,13 +42,20 @@ export const getTransactionFactor = (transaction) => {
     Наличные: -1,
     Nalichnye: -1,
     'Зачисление с конверсией': 1,
-    'Покупка валюты за б/н рубли': -1,
-    'Пополнение счета наличными (по паспорту)': 1
+    'Покупка валюты за б/н рубли': 1,
+    'Пополнение счета наличными (по паспорту)': 1,
+    'Плата за замену карточки': -1,
+    'Годовая плата за дополнительную карточку': -1,
+    'Зачисление Money-back': 1
   }
   let factor = transactionTypeFactors[transaction.transactionType]
   if (!factor) {
     if (/Комиссия за .*обслуживание/i.test(transaction.transactionType)) {
       factor = -1
+    } else if (transaction.colour === 2) {
+      factor = -1
+    } else if (transaction.colour === 1) {
+      factor = 1
     }
   }
   console.assert(factor !== undefined, 'unknown transactionType in transaction:', transaction)

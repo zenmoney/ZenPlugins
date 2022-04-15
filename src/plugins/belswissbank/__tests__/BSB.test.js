@@ -39,14 +39,14 @@ describe('isRejectedTransaction', () => {
 describe('figureOutAccountRestsDelta', () => {
   it('should do its best in aggressive environment with null accountRest', () => {
     const transactions = [
-      { accountRest: 900, transactionCurrency: 'USD', transactionAmount: 100, transactionType: 'Товары и услуги' },
-      { accountRest: null, transactionCurrency: 'USD', transactionAmount: 200, transactionType: 'Товары и услуги' },
-      { accountRest: null, transactionCurrency: 'USD', transactionAmount: 300, transactionType: 'Товары и услуги' },
-      { accountRest: 0, transactionCurrency: 'USD', transactionAmount: 400, transactionType: 'Товары и услуги' },
-      { accountRest: null, transactionCurrency: 'USD', transactionAmount: 1000, transactionType: 'Зачисление' },
-      { accountRest: 750, transactionCurrency: 'EUR', transactionAmount: 200, transactionType: 'Товары и услуги' },
-      { accountRest: null, transactionCurrency: 'EUR', transactionAmount: 300, transactionType: 'Товары и услуги' },
-      { accountRest: 0, transactionCurrency: 'USD', transactionAmount: 400, transactionType: 'Товары и услуги' }
+      { accountRest: 900, transactionCurrency: 'USD', transactionAmount: 100, transactionType: 'Товары и услуги', colour: 2 },
+      { accountRest: null, transactionCurrency: 'USD', transactionAmount: 200, transactionType: 'Товары и услуги', colour: 2 },
+      { accountRest: null, transactionCurrency: 'USD', transactionAmount: 300, transactionType: 'Товары и услуги', colour: 2 },
+      { accountRest: 0, transactionCurrency: 'USD', transactionAmount: 400, transactionType: 'Товары и услуги', colour: 2 },
+      { accountRest: null, transactionCurrency: 'USD', transactionAmount: 1000, transactionType: 'Зачисление', colour: 1 },
+      { accountRest: 750, transactionCurrency: 'EUR', transactionAmount: 200, transactionType: 'Товары и услуги', colour: 2 },
+      { accountRest: null, transactionCurrency: 'EUR', transactionAmount: 300, transactionType: 'Товары и услуги', colour: 2 },
+      { accountRest: 0, transactionCurrency: 'USD', transactionAmount: 400, transactionType: 'Товары и услуги', colour: 2 }
     ]
     const accountCurrency = 'USD'
     expect(figureOutAccountRestsDelta({ index: 0, transactions, accountCurrency })).toBe(null)

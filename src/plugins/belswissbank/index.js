@@ -4,13 +4,12 @@ import {
   assertResponseSuccess,
   authorize,
   confirm,
-  currencyCodeToIsoCurrency,
   extractPaymentsArchive,
   fetchCards,
   fetchPaymentsArchive,
   fetchTransactions
 } from './BSB'
-import { convertApiTransactionsToReadableTransactions } from './converters'
+import { convertApiTransactionsToReadableTransactions, convertToZenMoneyAccount } from './converters'
 
 async function login ({ deviceId, username, password }) {
   const authStatus = await authorize(username, password, deviceId)
@@ -34,17 +33,6 @@ async function login ({ deviceId, username, password }) {
 }
 
 const calculateAccountId = (card) => card.cardId.toString()
-
-function convertToZenMoneyAccount (card) {
-  return {
-    id: calculateAccountId(card),
-    title: card.name,
-    type: 'ccard',
-    syncID: [card.maskedCardNumber.slice(-4)],
-    instrument: currencyCodeToIsoCurrency(card.currency),
-    balance: card.amount
-  }
-}
 
 const sessionTimeoutMs = 15 * 60 * 1000
 
