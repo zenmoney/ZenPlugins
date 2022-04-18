@@ -161,6 +161,58 @@ describe('convertAccount', () => {
         percent: 6.75,
         startDate: new Date('2019-05-31T21:00:00.000Z')
       }
+    },
+    {
+      name: 'deposit without percents',
+      json: {
+        balance: '938.30',
+        currency: 'USD',
+        details: '&ltb&gtДополнительная информация&lt/b&gt&ltbr/&gtДата открытия: 27.02.2022&ltbr/&gtСрок возврата вклада: 27.08.2022&ltbr/&gt',
+        id: 'BY93AKBB34141005395990070000',
+        name: '"Беларусбанк-Онл@йн" безотзывный (ИВ) 3, 6, 9, 13, 18, 24, 36 месяцев (капитализацией)',
+        type: 'deposit'
+      },
+      expectedAccount: {
+        balance: 938.3,
+        capitalization: true,
+        endDateOffset: 181,
+        endDateOffsetInterval: 'day',
+        id: 'BY93AKBB34141005395990070000',
+        instrument: 'USD',
+        payoffInterval: 'month',
+        payoffStep: 1,
+        percent: 0.01,
+        startDate: new Date('2022-02-26T21:00:00.000Z'),
+        syncID: ['BY93AKBB34141005395990070000'],
+        title: '"Беларусбанк-Онл@йн" безотзывный (ИВ) 3, 6, 9, 13, 18, 24, 36 месяцев (капитализацией)',
+        type: 'deposit'
+      }
+    },
+    {
+      name: 'deposit without a deposit refund period',
+      json: {
+        balance: '0.28',
+        currency: 'USD',
+        details: '&ltb&gtДополнительная информация&lt/b&gt&ltbr/&gtДата открытия: 21.09.2015&ltbr/&gtСрок возврата вклада: &ltbr/&gt',
+        id: 'BY03AKBB34040000001201020128',
+        name: 'Р/До востребования USD(01.08.96)',
+        type: 'deposit'
+      },
+      expectedAccount: {
+        balance: 0.28,
+        capitalization: true,
+        endDateOffset: 1,
+        endDateOffsetInterval: 'month',
+        id: 'BY03AKBB34040000001201020128',
+        instrument: 'USD',
+        payoffInterval: 'month',
+        payoffStep: 1,
+        percent: 0.01,
+        startDate: new Date('2015-09-20T21:00:00.000Z'),
+        syncID: ['BY03AKBB34040000001201020128'],
+        title: 'Р/До востребования USD(01.08.96)',
+        type: 'deposit'
+      }
     }
   ]
   for (const tc of tt) {

@@ -1,0 +1,1278 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="ru">
+
+
+
+
+
+
+
+<head>
+
+  <meta content="text/html; charset=utf-8" http-equiv="content-type">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Система &laquo;Интернет-банкинг&raquo; ОАО &laquo;АСБ Беларусбанк&raquo;</title>
+
+  <script type="text/javascript" src="/rd_ib_themes_main_dynamic/themes/html/js/jquery-1.9.0.js"></script>
+  <script type="text/javascript" src="/rd_ib_themes_main_dynamic/themes/html/js/time20200713.js"></script>
+  <script type="text/javascript" src="/rd_ib_themes_main_dynamic/themes/html/js/number_format.js"></script>
+  <script type="text/javascript" src="/rd_ib_themes_main_dynamic/themes/html/js/tooltip.js"></script>
+  <script type="text/javascript" src="/rd_ib_themes_main_dynamic/themes/html/js/spin.min-1.3.3.js"></script>
+  <script type="text/javascript" src="/rd_ib_themes_main_dynamic/themes/html/js/jquery.spin-1.3.3.js"></script>
+  <script type="text/javascript" src="/rd_ib_themes_main_dynamic/themes/html/js/lockPageSpin.js"></script>
+  <script type="text/javascript" src="/rd_ib_themes_main_dynamic/themes/html/js/collect.js"></script>
+  <link href="/rd_ib_themes_main_dynamic/themes/html/css/style20200713.css" rel="stylesheet" type="text/css" />
+  <link href="/rd_ib_themes_main_dynamic/themes/html/css/tooltip.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="">
+
+<div id="lockLoadingBackground" class="lockLoadingBackground"></div>
+<div id="lockLoading" class="lockLoading">
+  <table>
+    <tr>
+      <td style="vertical-align:middle;" id="lockSpinnerPlace">
+        <div class="lockText"></div>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<div id="lockLogout" class="cc_confirmDialog">
+  <div class="tabTop">
+		<span>
+			&#x412;&#x43D;&#x438;&#x43C;&#x430;&#x43D;&#x438;&#x435;!
+		</span>
+  </div>
+  <div class="tabContent">
+    <div style="width: 100%">
+      <div class="confirmMessage">
+        <p>
+					<span>
+						&#x412;&#x440;&#x435;&#x43C;&#x44F; &#x412;&#x430;&#x448;&#x435;&#x439; &#x441;&#x435;&#x441;&#x441;&#x438;&#x438; &#x438;&#x441;&#x442;&#x435;&#x43A;&#x430;&#x435;&#x442; &#x447;&#x435;&#x440;&#x435;&#x437; 30 &#x441;&#x435;&#x43A;&#x443;&#x43D;&#x434;. &#x416;&#x435;&#x43B;&#x430;&#x435;&#x442;&#x435; &#x43F;&#x440;&#x43E;&#x434;&#x43E;&#x43B;&#x436;&#x438;&#x442;&#x44C; &#x440;&#x430;&#x431;&#x43E;&#x442;&#x443; &#x432; &#x441;&#x438;&#x441;&#x442;&#x435;&#x43C;&#x435;?
+					</span>
+        </p>
+      </div>
+      <div class="confirmButtons">
+        <table style="width: 100%;">
+          <tbody>
+          <tr>
+            <td>
+              <div class="ibButton">
+                <a href="#" onclick="hideLogoutPromptReload()">
+                  &#x414;&#x430;
+                </a>
+              </div>
+              <div class="ibButton lastRightBtn">
+                <a href="#" onclick="hideLogoutPromptLogout()">
+                  &#x41D;&#x435;&#x442;
+                </a>
+              </div>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wrapper themeContent">
+
+  <div class="ibpage">
+    <div id="header">
+      <div class="logo">
+        <a href="https://ibank.asb.by/wps/myportal/ibank/">
+          <img src="/rd_ib_themes_main_dynamic/themes/html/images/banking_logo2.png" width="232" height="47">
+        </a>
+      </div>
+      <div class="header_right">
+
+        <div class="bl147">
+          <a href="http://belarusbank.by/ru/press/kontakt-centr-belarusbanka#content" target="_blank"><img src="/rd_ib_themes_main_dynamic/themes/html/images/147_phones_short.png" width="96" height="49"></a>
+        </div>
+
+
+        <div class="time">
+				<span>
+					До окончания сеанса <div id="timer"></div>
+				</span>
+        </div>
+        <div class="logout">
+          <a class="button_e" id="portalLogoutLink" tabIndex="6" href='/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L3dDb1ZJQSEhL3dPb0JKTnNBLzRFS2lqaFVNV0hFIS8wb3pnRGRBRHVYa3dIbXh2M2t2aWdoVGtUSjJOdlQ0cmJfMERwM1pWcEliUVFOZzJnLzE3Mzk2Mzc2L2xv/'>Выход</a>
+        </div>
+
+      </div>
+    </div>
+
+
+
+
+
+
+
+
+
+
+    <div id="menu">
+      <ul>
+
+
+
+
+
+
+
+        <li>
+          <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9GVjIwQUMxTzE1MlYzMDAz/">
+            Главная
+            <b></b>
+          </a>
+        </li>
+
+
+
+
+        <li>
+          <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9GVjIwQUMxTzE1MlYzMDYw/">
+            Платежи и переводы
+            <b></b>
+          </a>
+        </li>
+
+
+
+
+        <li class="active">
+          <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9GVjIwQUMxTzE1MlYzODE1/" >
+            Счета
+            <b></b>
+          </a>
+        </li>
+
+
+
+
+
+        <li>
+          <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9GVjIwQUMxTzE1MlYzT0I1/">
+            История платежей
+            <b></b>
+          </a>
+        </li>
+
+
+      </ul>
+    </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="container">
+
+      <!-- this layout has two columns -->
+      <div>
+        <div class='component-container ibmDndColumn leftMain id-Z7_EHEO9SN0BV48RNT3B0BCKLBSQ3' name='leftMain' ><a name="Z7_G1H611G0JO6N10Q98RRHB7IAJ1"></a><table width="100%" height="100%" border="0" cellpadding="0" cellspacing="0" align="center" class="wpsPortletBody"><tr height="100%"><td width="100%" valign="top">
+
+
+
+
+          <div id="leftNavMenu">
+            <ul>
+
+
+
+              <li class="parent">
+                <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9GVjIwQUMxTzE1MlYzODk0/" class="menuButton" style="cursor: pointer;"><span style="padding-top: 14px;padding-bottom: 14px;">Счета с карточкой </span><b></b></a>
+                <ul style="display: none;">
+
+                  <li class="">
+
+
+
+                    <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2X0cxSDYxMUcwSk82TDMwUVI3S0dVVkIzT1Qw/"><span style="padding-top: 14px;padding-bottom: 14px;">Подобрать карточку</span></a>
+
+
+                  </li>
+
+                  <li class="">
+
+
+
+                    <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2X0cxSDYxMUcwSk82TDMwUVI3S0dVVkIzTzMx/"><span style="padding-top: 14px;padding-bottom: 14px;">История заявок, поданных через подбор карточек</span></a>
+
+
+                  </li>
+
+                  <li class="">
+
+
+
+                    <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9GVjIwQUMxTzE1MlYzOFA2/"><span style="padding-top: 14px;padding-bottom: 14px;">Заявки на оформление карточек / Дополнительные услуги</span></a>
+
+
+                  </li>
+
+                  <li class="">
+
+
+
+                    <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSkcxMkUwQUZQOEtJNkZHNUcw/"><span style="padding-top: 14px;padding-bottom: 14px;">История заявок</span></a>
+
+
+                  </li>
+
+                  <li class="last">
+
+
+
+                    <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2X0cxSDYxMUcwSjBPMzQwUUZCVkNOSVYwRVAx/"><span style="padding-top: 14px;padding-bottom: 14px;">Заказ справок по счетам и депозитам</span></a>
+
+
+                  </li>
+
+                </ul>
+              </li>
+
+
+
+
+
+
+              <li class="parent">
+                <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2X0cxSDYxMUcwSjAwUTAwUU5NN1BFOTYzTE8w/" class="menuButton" style="cursor: pointer;"><span style="padding-top: 14px;padding-bottom: 14px;">Текущие счета</span><b></b></a>
+                <ul style="display: none;">
+
+                  <li class="">
+
+
+
+                    <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2X0cxSDYxMUcwSjAwUTAwUU5NN1BFOTYzTDQw/"><span style="padding-top: 14px;padding-bottom: 14px;">Открыть текущий счет</span></a>
+
+
+                  </li>
+
+                  <li class="last">
+
+
+
+                    <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2X0cxSDYxMUcwSjAwUTAwUU5NN1BFOTYzTEsw/"><span style="padding-top: 14px;padding-bottom: 14px;">Пополнение счета не владельцем по IBAN</span></a>
+
+
+                  </li>
+
+                </ul>
+              </li>
+
+
+
+
+
+
+              <li class="parent active">
+                <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2X0cxSDYxMUcwSk82TjEwUTk4UlJIQjdJQTMz/" class="menuButton" style="cursor: pointer;"><span style="padding-top: 14px;padding-bottom: 14px;">Депозиты (вклады)</span><b></b></a>
+                <ul style="display: none;">
+
+                  <li class="">
+
+
+
+                    <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2X0cxSDYxMUcwSk82TjEwUTk4UlJIQjdJQUIw/"><span style="padding-top: 14px;padding-bottom: 14px;">Открытие Онл@йн-депозита</span></a>
+
+
+                  </li>
+
+                  <li class="">
+
+
+
+                    <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9GVjIwQUMxTzE1MlYzOEI0/"><span style="padding-top: 14px;padding-bottom: 14px;">Пополнение депозита</span></a>
+
+
+                  </li>
+
+                  <li class="last">
+
+
+
+                    <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9GVjIwQUMxTzE1MlYzODc1/"><span style="padding-top: 14px;padding-bottom: 14px;">Выписка по депозиту</span></a>
+
+
+                  </li>
+
+                </ul>
+              </li>
+
+
+
+
+
+
+              <li class="parent">
+                <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9GVjIwQUMxTzE1MlYzTzQ2/" class="menuButton" style="cursor: pointer;"><span style="padding-top: 14px;padding-bottom: 14px;">Кредиты</span><b></b></a>
+                <ul style="display: none;">
+
+                  <li class="">
+
+
+
+                    <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9GVjIwQUMxTzE1MlYzTzY1/"><span style="padding-top: 14px;padding-bottom: 14px;">Заявка на кредит</span></a>
+
+
+                  </li>
+
+                  <li class="">
+
+
+
+                    <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9GVjIwQUMxTzE1MlYzT0E1/"><span style="padding-top: 14px;padding-bottom: 14px;">Заключение кредитного договора</span></a>
+
+
+                  </li>
+
+                  <li class="">
+
+
+
+                    <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9GVjIwQUMxTzE1MlYzT0k0/"><span style="padding-top: 14px;padding-bottom: 14px;">Погашение кредита</span></a>
+
+
+                  </li>
+
+                  <li class="">
+
+
+
+                    <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2X0cxSDYxMUcwSjBNUEIwUURNUVMzMlUxSUgw/"><span style="padding-top: 14px;padding-bottom: 14px;">Анкета поручителя</span></a>
+
+
+                  </li>
+
+                  <li class="">
+
+
+
+                    <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2X0cxSDYxMUcwSjBNUEIwUURNUVMzMlUxSUgz/"><span style="padding-top: 14px;padding-bottom: 14px;">Заключение договоров поручительства</span></a>
+
+
+                  </li>
+
+                  <li class="last">
+
+
+
+                    <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2X0cxSDYxMUcwSjgxS0YwUUxDNDFTTzgwS0ow/"><span style="padding-top: 14px;padding-bottom: 14px;">Справки и другая информация по потребительским кредитам/овердрафту</span></a>
+
+
+                  </li>
+
+                </ul>
+              </li>
+
+
+
+
+
+
+              <li class="parent">
+                <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9WSzMwQTU3NDFUOFAyUUQ3/" class="menuButton" style="cursor: pointer;"><span style="padding-top: 14px;padding-bottom: 14px;">Ценные бумаги</span><b></b></a>
+                <ul style="display: none;">
+
+                  <li class="">
+
+
+
+                    <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9WSzMwQTU3NDFUOFAyUTM0/"><span style="padding-top: 14px;padding-bottom: 14px;">Купить ценные бумаги</span></a>
+
+
+                  </li>
+
+                  <li class="">
+
+
+
+                    <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9WSzMwQTU3NDFUOFAyUUo0/"><span style="padding-top: 14px;padding-bottom: 14px;">Счёт &#034;депо&#034;</span></a>
+
+
+                  </li>
+
+                  <li class="">
+
+
+
+                    <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2X0cxSDYxMUcwSkdFT0IwUTFKN0xJVEEyMDY0/"><span style="padding-top: 14px;padding-bottom: 14px;">Доверительное управление</span></a>
+
+
+                  </li>
+
+                  <li class="">
+
+
+
+                    <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2XzBBRzQxS08wSk9WSzMwQTU3NDFUOFAyUUI0/"><span style="padding-top: 14px;padding-bottom: 14px;">Архив заявок</span></a>
+
+
+                  </li>
+
+                  <li class="last">
+
+
+
+                    <a href="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dJQSEvUUt3QS80TmxFL1o2X0cxSDYxMUcwSk82TjEwUTk4UlJIQjdJUVE2/"><span style="padding-top: 14px;padding-bottom: 14px;">Оплата за депозитарное обслуживание</span></a>
+
+
+                  </li>
+
+                </ul>
+              </li>
+
+
+
+
+            </ul>
+          </div></td></tr></table></div><div class='component-container ibmDndColumn contentMain id-Z7_84UUIPU76N07018BEQILE99GH6' name='contentMain' ><a name="Z7_G1H611G0JO6N10Q98RRHB7IAJ3"></a><table width="100%" height="100%" border="0" cellpadding="0" cellspacing="0" align="center" class="wpsPortletBody"><tr height="100%"><td width="100%" valign="top">
+
+
+
+
+
+
+
+
+
+
+        <script type="text/javascript"
+                src="/wps/PA_rdDepisitsCSRUB/theme/js/javascripts.js">
+        </script>
+
+
+        <div id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:IBHelp" class="ibhelp"><div class="ibhelpURL" style="display: none;">https://ibank.asb.by/ibhelp/pages/depositsCSRUB/depositsCSRUBHelp.html</div><div class="ibhelp_tooltip"><a class="ibhelp_s_info" href="#" title="&#1057;&#1087;&#1088;&#1072;&#1074;&#1086;&#1095;&#1085;&#1072;&#1103; &#1080;&#1085;&#1092;&#1086;&#1088;&#1084;&#1072;&#1094;&#1080;&#1103;"></a><div class="question_info infoPosition_tr"><a class="close" title="&#1047;&#1072;&#1082;&#1088;&#1099;&#1090;&#1100; &#1089;&#1087;&#1088;&#1072;&#1074;&#1086;&#1095;&#1085;&#1091;&#1102; &#1080;&#1085;&#1092;&#1086;&#1088;&#1084;&#1072;&#1094;&#1080;&#1102;" href="#"></a><div class="ibhelp_content"><div class="ibhelp_loading"></div></div></div></div></div>
+
+
+        <script type="text/javascript" src="/wps/PA_rdDepisitsCSRUB/theme/js/jquery.selectric.js"></script>
+        <link rel="stylesheet" type="text/css" title="Style" href='/wps/PA_rdDepisitsCSRUB/theme/css/selectric.css'/>
+
+        <style>
+          .wrapper {
+            min-width: 1200px;
+          }
+        </style>
+
+        <script type='text/javascript'>
+
+          jQuery(document).ready(function(){
+            var idPrefixDep = "viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_\:CsrubDepositListForm\:";
+            var linkElemDep = document.getElementById(idPrefixDep + "linkExpandDep");
+
+            if (showOrHideDepLink()) {
+              if (linkElemDep != null) {
+                document.getElementById(idPrefixDep + "ibDepositList").style.marginBottom='0px';
+                linkElemDep.onclick = showOrHideClosedDeposits;
+                if(document.getElementById(idPrefixDep + "closedDepoActive").value == "true"){
+                  document.getElementById(idPrefixDep + "linkActiveClosed").style.display='none';
+                  document.getElementById(idPrefixDep + "linkHideClosed").style.display='';
+                } else{
+                  document.getElementById(idPrefixDep + "linkActiveClosed").style.display='';
+                  document.getElementById(idPrefixDep + "linkHideClosed").style.display='none';
+                }
+              }
+            }
+
+            getPdfContract();
+
+            applyAfterAjaxFixes();
+
+          });
+
+          function applyAfterAjaxFixes() {
+            $('select:not(.default)').selectric();
+            $('select').on('selectric-open', function(event, element, selectric) {
+              setSelRow(event, element, selectric);
+            });
+          };
+
+          function getPdfContract() {
+
+          };
+
+          function showOrHideDepLink() {
+            var idPrefixDep = "viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_\:CsrubDepositListForm\:";
+            var depTblId = idPrefixDep + "ibDepositList";
+
+            var depositTable = document.getElementById(depTblId);
+            var markAsClosed = document.getElementById(idPrefixDep + "markAsClosed");
+            var includeClosed = false;
+            if (!depositTable) {
+              document.getElementById("linkShowClosedDep").style.display='none';
+              return false;
+            }
+            for (var i=1;i<depositTable.rows.length;i++){
+              var selRow = depositTable.rows[i];
+              var statusTd = selRow.cells[selRow.cells.length - 4];
+              if (statusTd && statusTd.lastChild && statusTd.lastChild.innerHTML.replace(/^\s+|\s+$/g,'') == markAsClosed.value.replace(/^\s+|\s+$/g,'')){
+                includeClosed = true;
+                if (document.getElementById(idPrefixDep + "closedDepoActive").value != "true") {
+                  selRow.style.display='none';
+                }
+              }
+            }
+            if (includeClosed){
+              if (document.getElementById(idPrefixDep + "closedDepoActive").value != "true") {
+                document.getElementById("linkShowClosedDep").className='spler';
+              }
+              document.getElementById("linkShowClosedDep").style.display='';
+            } else{
+              document.getElementById("linkShowClosedDep").style.display='none';
+            }
+            return includeClosed;
+          }
+
+          showOrHideClosedDeposits = function() {
+            var idPrefixDep = "viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_\:CsrubDepositListForm\:";
+            var depTblId = idPrefixDep + "ibDepositList";
+            var depositTable = document.getElementById(depTblId);
+            var markAsClosed = document.getElementById(idPrefixDep + "markAsClosed");
+            for (var i=0;i<depositTable.rows.length;i++){
+              var selRow = depositTable.rows[i];
+              var statusTd = selRow.cells[selRow.cells.length - 4];
+              if (statusTd && statusTd.lastChild && statusTd.lastChild.innerHTML.replace(/^\s+|\s+$/g,'') == markAsClosed.value.replace(/^\s+|\s+$/g,'')){
+                if(document.getElementById(idPrefixDep + "closedDepoActive").value=="true"){
+                  selRow.style.display='none';
+                } else{
+                  selRow.style.display='';
+                }
+
+              }
+            }
+            if(document.getElementById(idPrefixDep + "closedDepoActive").value=="true"){
+              document.getElementById("linkShowClosedDep").className='spler';
+              document.getElementById(idPrefixDep + "linkActiveClosed").style.display='';
+              document.getElementById(idPrefixDep + "linkHideClosed").style.display='none';
+              document.getElementById(idPrefixDep + "closedDepoActive").value="false";
+            } else{
+              document.getElementById("linkShowClosedDep").className='spler active';
+              document.getElementById(idPrefixDep + "linkActiveClosed").style.display='none';
+              document.getElementById(idPrefixDep + "linkHideClosed").style.display='';
+              document.getElementById(idPrefixDep + "closedDepoActive").value="true";
+            }
+          };
+
+          function selectOperation(elem){
+            //set selected deposit
+            var depositTr = $(elem).closest('td.tdDepositDropdown').parent();
+            $(depositTr).closest('.depositListContainer').find('input[id$="ibSDTSelField"]').val($.trim(depositTr.find('.tdId div').html()));
+            //submit
+            if ($.trim($(elem).val()) !== '') {
+              showProgressLoadingWithMessage();
+              $(elem).closest('form').submit();
+            }
+          };
+
+          function setSelRow(event, element, selectric) {
+            var targetElem = event.target;
+            var cell = $(targetElem).closest('.cellLable')[0];
+            cell.onclick.apply(cell);
+          };
+
+        </script>
+
+
+
+
+        <form id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm" method="post" action="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dBISEvZ0FBIS9nQSEh/p0/IZ7_G1H611G0JO6N10Q98RRHB7IAJ3=CZ6_G1H611G0JO6N10Q98RRHB7IA33=LAF3NWecgrQDKRK0JzelHMQDKH_VZXf4E1X7tHoQFBOr0odymL7QFBQFBNhAg=Ejavax.servlet.include.path_info!QCPpagesQCPdepositCsrubListQCPclientDepositList.jsp==/#Z7_G1H611G0JO6N10Q98RRHB7IAJ3" enctype="application/x-www-form-urlencoded">
+
+
+          <span id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:CsrubDepositsMessages" class="Messages"><table></table></span>
+
+          <div class="depositListContainer">
+
+            <span id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:title"><p><b>Депозиты</b></p></span>
+
+            <span id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:DepositList"><span id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ib69cf2042-4"><script type='text/javascript'>{if(!window['ibSDTSelUpdater']){window['ibSDTSelUpdater']=function(tblId,rowIdx){var tbl=document.getElementById(tblId);if(tbl){var bdy=tbl.getElementsByTagName('tbody')[0];if(bdy){var rows=bdy.rows;for(var i=0; i<rows.length; i++){if(i==rowIdx){var cn=rows[i]['className'];if (cn.length == 0) {rows[i]['className']='line_checked';var td = rows[i].firstChild;var tbody = td.getElementsByTagName('tbody')[0];if (tbody != null) {var tr = tbody.firstChild;var cells = tr.cells;td = cells[0];var label = td.lastChild;var input = label.firstChild;if (!input || !input.nodeName || input.nodeName.toUpperCase() != 'INPUT'){input = td.firstChild;}input.onclick();}}} else {var cn=rows[i]['className'];if (cn.length > 0)rows[i]['className']='';}}}}try {afterIBTableRowSelect(tblId,rowIdx);} catch(e){}}}if(!window['ibSDTSelHandler']){window['ibSDTSelHandler']=function(fldId,cardId,tblId,rowIdx){var fld=document.getElementById(fldId);if(fld){fld.value=cardId;}window['ibSDTSelUpdater'](tblId,rowIdx);}}}</script><input id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibSDTSelField" type="hidden" name="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibSDTSelField" value="" /><table id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList" class="ibTable" border="0" cellpadding="0" cellspacing="0" ><thead ><tr ><th ><div id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:_10605000112270705011602020" class="num">
+</div></th><th ><div id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:_10605000112270705011602060">
+&#1053;&#1086;&#1084;&#1077;&#1088; &#1076;&#1077;&#1087;&#1086;&#1079;&#1080;&#1090;&#1085;&#1086;&#1075;&#1086; &#1089;&#1095;&#1105;&#1090;&#1072;</div></th><th ><div id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:_10605000112270705011602022">
+&#1053;&#1072;&#1080;&#1084;&#1077;&#1085;&#1086;&#1074;&#1072;&#1085;&#1080;&#1077; &#1074;&#1080;&#1076;&#1072; &#1074;&#1082;&#1083;&#1072;&#1076;&#1072;</div></th><th ><div id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:_10605000112270705011603020">
+&#1054;&#1089;&#1090;&#1072;&#1090;&#1086;&#1082;</div></th><th ><div id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:_10605000112270705011603050">
+&#1042;&#1072;&#1083;&#1102;&#1090;&#1072;</div></th><th ><div id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:_10605000112270705011603011">
+&#1057;&#1090;&#1072;&#1090;&#1091;&#1089;</div></th><th style="display: none; padding: 0px; margin: 0px;" ><div id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:_10605000112270705011604010">
+</div></th><th ><img src="/wps/PA_rdDepisitsCSRUB/.ibmjsfres/img/1x1.gif" ></img></th><th ><div id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:_10605000112270705011604070">
+</div></th></tr>
+</thead><tbody >
+<tr ><td class="tdNumNoPadding" ><div id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:0:_10605000112270705011602040" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibSDTSelField','795001740017449_USD','viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList',0)" class="cellLable">
+<table id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:0:_10605000112270705011602030">
+	<tr>
+<td>
+<label><input type="radio" name="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:0:_10605000112270705011602030" value="" onclick="depositTableRadioButton(this)" /></label></td>
+	</tr>
+</table></div></td>
+<td class="tdNoPadding" ><div id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:0:_10605000112270705011602070" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibSDTSelField','795001740017449_USD','viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList',0)" class="cellLable">
+<span id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:0:ibcf4845c9-9" style="white-space:nowrap;">BY03 AKBB 3404 0000</span><span id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:0:ib2b1314ce-3"> 0012 0102 0128</span></div></td>
+<td class="tdNoPadding" ><div id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:0:_10605000112270705011603000" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibSDTSelField','795001740017449_USD','viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList',0)" class="cellLable">
+&#1056;/&#1044;&#1086; &#1074;&#1086;&#1089;&#1090;&#1088;&#1077;&#1073;&#1086;&#1074;&#1072;&#1085;&#1080;&#1103; USD(01.08.96)</div></td>
+<td class="tdNoPadding" ><div id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:0:_10605000112270705011603030" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibSDTSelField','795001740017449_USD','viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList',0)" class="cellLable">
+<span id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:0:ibc5b265e8-3" style="white-space:nowrap;">0.28</span></div></td>
+<td class="tdNoPadding" ><div id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:0:_10605000112270705011603060" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibSDTSelField','795001740017449_USD','viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList',0)" class="cellLable">
+USD</div></td>
+<td class="tdNoPadding" ><div id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:0:_10605000112270705011603022" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibSDTSelField','795001740017449_USD','viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList',0)" class="cellLable">
+&#1054;&#1090;&#1082;&#1088;&#1099;&#1090;</div></td>
+<td style="display: none; padding: 0px; margin: 0px;" class="tdId" ><div id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:0:_10605000112270705011604020" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibSDTSelField','795001740017449_USD','viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList',0)" class="cellLable">
+795001740017449_USD</div></td>
+<td class="tdDepositDropdown" ><div id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:0:_10605000112270705011604040" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibSDTSelField','795001740017449_USD','viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList',0)" class="cellLable depositOpers">
+<select id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:0:_10605000112270705011604050" name="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:0:_10605000112270705011604050" class="inpName" size="1" onchange="selectOperation(this);">	<option value="" selected="selected">&#1054;&#1087;&#1077;&#1088;&#1072;&#1094;&#1080;&#1080;</option>
+	<option value="getContract;795001740017449;795001740017449_USD">&#1044;&#1086;&#1075;&#1086;&#1074;&#1086;&#1088;</option>
+	<option value="getContractToEmail;795001740017449;795001740017449_USD">&#1044;&#1086;&#1075;&#1086;&#1074;&#1086;&#1088; &#1085;&#1072; &#1087;&#1086;&#1095;&#1090;&#1091;</option>
+	<option value="getStatement;795001740017449;795001740017449_USD">&#1042;&#1099;&#1087;&#1080;&#1089;&#1082;&#1072;</option>
+	<option value="getInterestHistory;795001740017449;795001740017449_USD">&#1048;&#1089;&#1090;&#1086;&#1088;&#1080;&#1103; &#1087;&#1088;&#1086;&#1094;&#1077;&#1085;&#1090;&#1086;&#1074;</option>
+</select></div></td>
+<td class="tdNoPaddingInfo" ><div id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:0:_10605000112270705011604022" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibSDTSelField','795001740017449_USD','viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList',0)" style="z-index:3" class="tooltip">
+<a id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:0:_10605000112270705011605000" href="#" onclick="clearFormHiddenParams_viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3__CsrubDepositListForm('viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm');document.forms['viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm']['viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:_idcl'].value='viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:0:_10605000112270705011605000'; document.forms['viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm'].submit(); return false;" class="s_info_small">i</a><div id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:0:_10605000112270705011605010" class="question_info infoPosition_tr">
+<a id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:0:_10605000112270705011605020" href="#" onclick="clearFormHiddenParams_viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3__CsrubDepositListForm('viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm');document.forms['viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm']['viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:_idcl'].value='viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:0:_10605000112270705011605020'; document.forms['viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm'].submit(); return false;" class="close">X</a><div id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList:0:_10605000112270705011605030">
+&lt;b&gt;&#1044;&#1086;&#1087;&#1086;&#1083;&#1085;&#1080;&#1090;&#1077;&#1083;&#1100;&#1085;&#1072;&#1103; &#1080;&#1085;&#1092;&#1086;&#1088;&#1084;&#1072;&#1094;&#1080;&#1103;&lt;/b&gt;&lt;br/&gt;&#1044;&#1072;&#1090;&#1072; &#1086;&#1090;&#1082;&#1088;&#1099;&#1090;&#1080;&#1103;: 21.09.2015&lt;br/&gt;&#1057;&#1088;&#1086;&#1082; &#1074;&#1086;&#1079;&#1074;&#1088;&#1072;&#1090;&#1072; &#1074;&#1082;&#1083;&#1072;&#1076;&#1072;: &lt;br/&gt;</div></div></div></td>
+</tr>
+</tbody>
+</table>
+<script type="text/javascript">{window['ibSDTSelUpdater']('viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibDepositList',-1);}</script></span><span id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:ibf3e15e3d-0"></span></span>
+
+            <div id="linkShowClosedDep" class="spler active" style="margin-bottom: 15px">
+
+
+
+
+              <a id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:linkExpandDep" href="#" onclick="clearFormHiddenParams_viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3__CsrubDepositListForm('viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm');document.forms['viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm']['viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:_idcl'].value='viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:linkExpandDep'; document.forms['viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm'].submit(); return false;" class="button_green lpay"><span id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:linkActiveClosed">&#1055;&#1086;&#1082;&#1072;&#1079;&#1072;&#1090;&#1100; &#1079;&#1072;&#1082;&#1088;&#1099;&#1090;&#1099;&#1077; &#1076;&#1077;&#1087;&#1086;&#1079;&#1080;&#1090;&#1099;</span><span id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:linkHideClosed">&#1057;&#1082;&#1088;&#1099;&#1090;&#1100; &#1079;&#1072;&#1082;&#1088;&#1099;&#1090;&#1099;&#1077; &#1076;&#1077;&#1087;&#1086;&#1079;&#1080;&#1090;&#1099;</span><s></s><i></i></a>
+            </div>
+            <input id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:closedDepoActive" type="hidden" name="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:closedDepoActive" value="false" />
+            <input id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:markAsClosed" type="hidden" name="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:markAsClosed" value="&#1047;&#1072;&#1082;&#1088;&#1099;&#1090;" />
+
+          </div>
+
+          <table class="buttons" style="width: 100%;">
+            <tr class="bottom">
+              <td>
+
+                <div id="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:btnRedirectToOpenDepositPage" onclick=" document.forms['viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm']['viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:_idcl'].value='viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:btnRedirectToOpenDepositPage'; document.forms['viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm'].submit(); return false; " onkeypress="var charCode = (event.which) ? event.which : event.keyCode;if(charCode==13){ document.forms['viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm']['viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:_idcl'].value='viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:btnRedirectToOpenDepositPage'; document.forms['viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm'].submit(); return false; }" class="ibButton"><a>Открыть депозит</a></div>
+              </td>
+            </tr>
+          </table>
+
+          <input type="hidden" name="com.sun.faces.VIEW" id="com.sun.faces.VIEW" value="_id43931:_id43932" /><input type="hidden" name="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm" value="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm" /><input type="hidden" name="viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:_idcl" />
+          <script type="text/javascript">
+            <!--
+            function clearFormHiddenParams_viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3__CsrubDepositListForm(curFormName) {
+              var curForm = document.forms[curFormName];
+              curForm.elements['viewns_Z7_G1H611G0JO6N10Q98RRHB7IAJ3_:CsrubDepositListForm:_idcl'].value = null;
+            }
+            //-->
+          </script>
+        </form>
+
+
+
+
+
+      </td></tr></table><a name="Z7_G1H611G0J0O340QFBVCNIV06R3"></a><table width="100%" height="100%" border="0" cellpadding="0" cellspacing="0" align="center" class="wpsPortletBody"><tr height="100%"><td width="100%" valign="top">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        <!--<link rel="stylesheet" type="text/css"-->
+        <!--	href="/wps/PA_rdDepositsCSDlist/theme/commonStyle.css">-->
+        <!--<link rel="stylesheet" type="text/css"-->
+        <!--	href="/wps/PA_rdDepositsCSDlist/theme/new/styles.css">-->
+        <script type="text/javascript"
+                src="/wps/PA_rdDepositsCSDlist/theme/javascripts.js">
+        </script>
+
+
+        <div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:IBHelp" class="ibhelp"><div class="ibhelpURL" style="display: none;">https://ibank.asb.by/ibhelp/pages/deposits/depositCsdListHelp.html</div><div class="ibhelp_tooltip"><a class="ibhelp_s_info" href="#" title="&#1057;&#1087;&#1088;&#1072;&#1074;&#1086;&#1095;&#1085;&#1072;&#1103; &#1080;&#1085;&#1092;&#1086;&#1088;&#1084;&#1072;&#1094;&#1080;&#1103;"></a><div class="question_info infoPosition_tr"><a class="close" title="&#1047;&#1072;&#1082;&#1088;&#1099;&#1090;&#1100; &#1089;&#1087;&#1088;&#1072;&#1074;&#1086;&#1095;&#1085;&#1091;&#1102; &#1080;&#1085;&#1092;&#1086;&#1088;&#1084;&#1072;&#1094;&#1080;&#1102;" href="#"></a><div class="ibhelp_content"><div class="ibhelp_loading"></div></div></div></div></div>
+
+
+
+        <!--<script language="JavaScript" src='/wps/PA_rdDepositsCSDlist/theme/js/jquery-1.9.1.js'></script>-->
+
+
+
+        <style type="text/css">
+
+          .wrapper {
+            min-width: 1200px;
+          }
+          .replenishable {
+            font-weight: bold !important;
+          }
+          a.s_info_small {
+            margin-top:1px;
+          }
+        </style>
+        <script type='text/javascript'>
+          function endsWith(tblId, end) {
+            return tblId.indexOf(end, tblId.length - end.length) !== -1;
+          }
+
+          function afterIBTableRowSelect(tblId, rowIdx) {
+            if (tblId && endsWith(tblId, 'ibDepositList')) {
+              afterDepositSelect();
+            } else if (tblId && endsWith(tblId, 'ibDepositsCsdList')) {
+              afterDepositCsdSelect();
+            }
+          }
+
+          function afterDepositCsdSelect(){
+            highlightReplenishableDeposits();
+
+            var formId = "#viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_\\:DepositCSDListForm";
+            var id = formId + "\\:";
+
+            var selectedField = $(id + "ibSDTSelField");
+            //alert("selectedField value = " + selectedField.val());
+
+            $.ajax({
+              url: "/wps/PA_rdDepositsCSDlist/SelectDepositCsdServlet",
+              type: "POST",
+              data: {
+                depositUniqueId: selectedField.val(),
+                lifeTimeInMinutes: 10
+              }
+            });
+
+
+          };
+
+          function highlightReplenishableDeposits(){
+            try{
+              var depCsdTblId = "viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_\:DepositCSDListForm\:ibDepositsCsdList";
+              var depositTable = document.getElementById(depCsdTblId);
+              if (!depositTable) return;
+              for (var i=0;i<depositTable.rows.length;i++){
+                var selRow = depositTable.rows[i];
+                var penultTd = selRow.cells[selRow.cells.length - 2];
+                if (penultTd && penultTd.lastChild && penultTd.lastChild.innerHTML &&
+                  penultTd.lastChild.innerHTML.replace(/^\s+|\s+$/g,'').toUpperCase() == 'TRUE'){
+                  for (var j=0;j<selRow.cells.length;j++){
+                    if(!hasClass(selRow.cells[j], "replenishable")){
+                      selRow.cells[j].className += " replenishable";
+                    }
+                  }
+                }
+              }
+            } catch(ex){}
+          };
+
+          function hasClass(element, cls) {
+            return (' ' + element.className + ' ').indexOf(' ' + cls + ' ') > -1;
+          }
+
+          function showLink(){
+            var idPrefix = "viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_\:DepositCSDListForm\:";
+            var depCsdTblId = idPrefix + "ibDepositsCsdList";
+            var depositTable = document.getElementById(depCsdTblId);
+            var includeClosed = false;
+            if (!depositTable) {
+              document.getElementById("linkShowClosed").style.display='none';
+              return false;
+            }
+
+            for (var i=0;i<depositTable.rows.length;i++){
+              var selRow = depositTable.rows[i];
+              var lastTd = selRow.cells[selRow.cells.length - 1];
+              if (lastTd && lastTd.lastChild && lastTd.lastChild.innerHTML &&
+                lastTd.lastChild.innerHTML.replace(/^\s+|\s+$/g,'').toUpperCase() == 'CLOSED'){
+                includeClosed = true;
+                if (document.getElementById(idPrefix + "closedDepoActive").value != "true") {
+                  selRow.style.display='none';
+                }
+              }
+            }
+            if (includeClosed){
+              if (document.getElementById(idPrefix + "closedDepoActive").value != "true") {
+                document.getElementById("linkShowClosed").className='spler';
+              }
+              document.getElementById("linkShowClosed").style.display='';
+            } else{
+              document.getElementById("linkShowClosed").style.display='none';
+            }
+            return includeClosed;
+          }
+
+          showClosedDeposits = function(){
+            var idPrefix = "viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_\:DepositCSDListForm\:";
+            var depCsdTblId = idPrefix + "ibDepositsCsdList";
+            var depositTable = document.getElementById(depCsdTblId);
+            for (var i=0;i<depositTable.rows.length;i++){
+              var selRow = depositTable.rows[i];
+              var lastTd = selRow.cells[selRow.cells.length - 1];
+              if (lastTd && lastTd.lastChild && lastTd.lastChild.innerHTML &&
+                lastTd.lastChild.innerHTML.replace(/^\s+|\s+$/g,'').toUpperCase() == 'CLOSED'){
+                if(document.getElementById(idPrefix + "closedDepoActive").value=="true"){
+                  selRow.style.display='none';
+                } else{
+                  selRow.style.display='';
+                }
+
+              }
+            }
+            if(document.getElementById(idPrefix + "closedDepoActive").value=="true"){
+              document.getElementById("linkShowClosed").className='spler';
+              document.getElementById(idPrefix + "linkActiveClosed").style.display='';
+              document.getElementById(idPrefix + "linkHideClosed").style.display='none';
+              document.getElementById(idPrefix + "closedDepoActive").value="false";
+            } else{
+              document.getElementById("linkShowClosed").className='spler active';
+              document.getElementById(idPrefix + "linkActiveClosed").style.display='none';
+              document.getElementById(idPrefix + "linkHideClosed").style.display='';
+              document.getElementById(idPrefix + "closedDepoActive").value="true";
+            }
+          }
+
+          jQuery(document).ready(function(){
+            var idPrefix = "viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_\:DepositCSDListForm\:";
+            var linkElem = document.getElementById(idPrefix + "linkExpand");
+
+            if(showLink()){
+              if (linkElem != null){
+                document.getElementById(idPrefix + "ibDepositsCsdList").style.marginBottom='0px';
+                linkElem.onclick = showClosedDeposits;
+                if(document.getElementById(idPrefix + "closedDepoActive").value == "true"){
+                  document.getElementById(idPrefix + "linkActiveClosed").style.display='none';
+                  document.getElementById(idPrefix + "linkHideClosed").style.display='';
+                } else{
+                  document.getElementById(idPrefix + "linkActiveClosed").style.display='';
+                  document.getElementById(idPrefix + "linkHideClosed").style.display='none';
+                }
+              }
+            }
+
+            jQuery(".ibButton.buttonCSD").on('click', function(){
+              showProgressLoadingWithMessage();
+            });
+
+          });
+
+        </script>
+
+
+
+
+        <form id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm" method="post" action="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dBISEvZ0FBIS9nQSEh/p0/IZ7_G1H611G0J0O340QFBVCNIV06R3=CZ6_G1H611G0JO6N10Q98RRHB7IA33=LA1lpZu21JoGd19iJ7LIkKoPg3dCVy7zKtj9ctNEcrdQFBCQFBQFBNhAw=Ejavax.servlet.include.path_info!QCPpagesQCPuserDepositCSDList.jsp==/#Z7_G1H611G0J0O340QFBVCNIV06R3" enctype="application/x-www-form-urlencoded">
+
+
+          <span id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:DepositCSDMessagesId" class="Messages"><table></table></span>
+
+          <div>
+
+            <span id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:DepositsCSDField"><p><b>Депозиты в филиалах ОАО «АСБ Беларусбанк»</b></p></span>
+
+            <span id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:DepositCSDList"><span id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibff302f87-1"><script type='text/javascript'>{if(!window['ibSDTSelUpdater']){window['ibSDTSelUpdater']=function(tblId,rowIdx){var tbl=document.getElementById(tblId);if(tbl){var bdy=tbl.getElementsByTagName('tbody')[0];if(bdy){var rows=bdy.rows;for(var i=0; i<rows.length; i++){if(i==rowIdx){var cn=rows[i]['className'];if (cn.length == 0) {rows[i]['className']='line_checked';var td = rows[i].firstChild;var tbody = td.getElementsByTagName('tbody')[0];if (tbody != null) {var tr = tbody.firstChild;var cells = tr.cells;td = cells[0];var label = td.lastChild;var input = label.firstChild;if (!input || !input.nodeName || input.nodeName.toUpperCase() != 'INPUT'){input = td.firstChild;}input.onclick();}}} else {var cn=rows[i]['className'];if (cn.length > 0)rows[i]['className']='';}}}}try {afterIBTableRowSelect(tblId,rowIdx);} catch(e){}}}if(!window['ibSDTSelHandler']){window['ibSDTSelHandler']=function(fldId,cardId,tblId,rowIdx){var fld=document.getElementById(fldId);if(fld){fld.value=cardId;}window['ibSDTSelUpdater'](tblId,rowIdx);}}}</script><input id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibSDTSelField" type="hidden" name="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibSDTSelField" value="0017449_174_795_1005" /><table id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList" class="ibTable" border="0" cellpadding="0" cellspacing="0" ><thead ><tr ><th ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:_10605000112270705011700011" class="num">
+</div></th><th ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:_10605000112270705011701020">
+&#1053;&#1086;&#1084;&#1077;&#1088; &#1089;&#1095;&#1105;&#1090;&#1072;</div></th><th ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:_10605000112270705011701050">
+&#1044;&#1077;&#1087;&#1086;&#1079;&#1080;&#1090;</div></th><th ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:_10605000112270705011701011">
+&#1042;&#1072;&#1083;&#1102;&#1090;&#1072;</div></th><th ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:_10605000112270705011702010">
+&#1054;&#1089;&#1090;&#1072;&#1090;&#1086;&#1082;</div></th><th ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:_10605000112270705011702030">
+</div></th><th style="display: none; padding: 0px; margin: 0px;" ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:_10605000112270705011703010">
+</div></th><th style="display: none; padding: 0px; margin: 0px;" ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:_10605000112270705011703040">
+</div></th></tr>
+</thead><tbody >
+<tr ><td class="tdNumNoPadding" ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:0:_10605000112270705011701000" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibSDTSelField','0017449_174_795_1005','viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList',0)" class="cellLable">
+<table id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:0:_10605000112270705011700022">
+	<tr>
+<td>
+<label><input type="radio" name="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:0:_10605000112270705011700022" value="" onclick="tableRadioButton(this)" /></label></td>
+	</tr>
+</table></div></td>
+<td class="tdNoPadding" ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:0:_10605000112270705011701030" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibSDTSelField','0017449_174_795_1005','viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList',0)" class="cellLable">
+0017449</div></td>
+<td class="tdNoPadding" ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:0:_10605000112270705011701060" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibSDTSelField','0017449_174_795_1005','viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList',0)" class="cellLable">
+&#1056;/&#1044;&#1086; &#1074;&#1086;&#1089;&#1090;&#1088;&#1077;&#1073;&#1086;&#1074;&#1072;&#1085;&#1080;&#1103; USD(01.08.96)</div></td>
+<td class="tdNoPadding" ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:0:_10605000112270705011701022" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibSDTSelField','0017449_174_795_1005','viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList',0)" class="cellLable">
+USD</div></td>
+<td class="tdNoPadding" ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:0:_10605000112270705011702020" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibSDTSelField','0017449_174_795_1005','viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList',0)" style="white-space:nowrap;" class="ibButton buttonCSD">
+<a id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:0:ib1be34ec9-5" href="#" onclick="clearFormHiddenParams_viewns_Z7_G1H611G0J0O340QFBVCNIV06R3__DepositCSDListForm('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm');document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm']['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:_idcl'].value='viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:0:ib1be34ec9-5';document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm']['depositUniqueId'].value='0017449_174_795_1005'; document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm'].submit(); return false;">Получить</a></div></td>
+<td class="tdNoPaddingInfo" ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:0:_10605000112270705011702050" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibSDTSelField','0017449_174_795_1005','viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList',0)" style="z-index:3" class="tooltip">
+<a id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:0:_10605000112270705011702060" href="#" onclick="clearFormHiddenParams_viewns_Z7_G1H611G0J0O340QFBVCNIV06R3__DepositCSDListForm('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm');document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm']['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:_idcl'].value='viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:0:_10605000112270705011702060'; document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm'].submit(); return false;" class="s_info_small">i</a><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:0:_10605000112270705011702070" class="question_info infoPosition_tr">
+<a id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:0:_10605000112270705011702011" href="#" onclick="clearFormHiddenParams_viewns_Z7_G1H611G0J0O340QFBVCNIV06R3__DepositCSDListForm('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm');document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm']['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:_idcl'].value='viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:0:_10605000112270705011702011'; document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm'].submit(); return false;" class="close">X</a><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:0:_10605000112270705011702022">
+&lt;b&gt;&#1044;&#1086;&#1087;&#1086;&#1083;&#1085;&#1080;&#1090;&#1077;&#1083;&#1100;&#1085;&#1072;&#1103; &#1080;&#1085;&#1092;&#1086;&#1088;&#1084;&#1072;&#1094;&#1080;&#1103;&lt;/b&gt;&lt;br/&gt;&#1053;&#1086;&#1084;&#1077;&#1088; &#1089;&#1095;&#1105;&#1090;&#1072; &#1074; &#1092;&#1086;&#1088;&#1084;&#1072;&#1090;&#1077; IBAN: BY03 AKBB 3404 0000 0012 0102 0128&lt;br&gt;&#1060;&#1080;&#1083;&#1080;&#1072;&#1083;: 795&lt;br&gt;&#1054;&#1090;&#1076;&#1077;&#1083;&#1077;&#1085;&#1080;&#1077;: 1005&lt;br&gt;&#1041;&#1072;&#1085;&#1082;&#1086;&#1074;&#1089;&#1082;&#1080;&#1081; &#1080;&#1076;&#1077;&#1085;&#1090;&#1080;&#1092;&#1080;&#1082;&#1072;&#1094;&#1080;&#1086;&#1085;&#1085;&#1099;&#1081; &#1082;&#1086;&#1076;: AKBBBY2X&lt;br&gt;&#1044;&#1072;&#1090;&#1072; &#1086;&#1090;&#1082;&#1088;&#1099;&#1090;&#1080;&#1103;: 21.09.2015&lt;br&gt;</div></div></div></td>
+<td style="display: none; padding: 0px; margin: 0px;" class="tdNumNoPadding" ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:0:_10605000112270705011703020" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibSDTSelField','0017449_174_795_1005','viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList',0)" class="cellLable">
+true</div></td>
+<td style="display: none; padding: 0px; margin: 0px;" class="tdNoPadding" ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:0:_10605000112270705011703050" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibSDTSelField','0017449_174_795_1005','viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList',0)" class="cellLable">
+true</div></td>
+</tr>
+<tr ><td class="tdNumNoPadding" ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:1:_10605000112270705011701000" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibSDTSelField','118_174_100_128','viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList',1)" class="cellLable">
+<table id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:1:_10605000112270705011700022">
+	<tr>
+<td>
+<label><input type="radio" name="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:1:_10605000112270705011700022" value="" onclick="tableRadioButton(this)" /></label></td>
+	</tr>
+</table></div></td>
+<td class="tdNoPadding" ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:1:_10605000112270705011701030" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibSDTSelField','118_174_100_128','viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList',1)" class="cellLable">
+118</div></td>
+<td class="tdNoPadding" ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:1:_10605000112270705011701060" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibSDTSelField','118_174_100_128','viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList',1)" class="cellLable">
+&#1044;&#1086; &#1074;&#1086;&#1089;&#1090;&#1088;&#1077;&#1073;&#1086;&#1074;&#1072;&#1085;&#1080;&#1103; / (USD, &#1086;&#1090;&#1082;&#1088;&#1099;&#1090;&#1099;&#1077; &#1089; 01.08.96), &#1082;&#1086;&#1076; &#1074;&#1082;&#1083;&#1072;&#1076;&#1072;: 174</div></td>
+<td class="tdNoPadding" ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:1:_10605000112270705011701022" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibSDTSelField','118_174_100_128','viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList',1)" class="cellLable">
+USD</div></td>
+<td class="tdNoPadding" ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:1:_10605000112270705011702020" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibSDTSelField','118_174_100_128','viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList',1)" style="white-space:nowrap;" class="ibButton buttonCSD">
+<a id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:1:ib1be34ec9-5" href="#" onclick="clearFormHiddenParams_viewns_Z7_G1H611G0J0O340QFBVCNIV06R3__DepositCSDListForm('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm');document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm']['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:_idcl'].value='viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:1:ib1be34ec9-5';document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm']['depositUniqueId'].value='118_174_100_128'; document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm'].submit(); return false;">Получить</a></div></td>
+<td class="tdNoPaddingInfo" ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:1:_10605000112270705011702050" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibSDTSelField','118_174_100_128','viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList',1)" style="z-index:3" class="tooltip">
+<a id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:1:_10605000112270705011702060" href="#" onclick="clearFormHiddenParams_viewns_Z7_G1H611G0J0O340QFBVCNIV06R3__DepositCSDListForm('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm');document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm']['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:_idcl'].value='viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:1:_10605000112270705011702060'; document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm'].submit(); return false;" class="s_info_small">i</a><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:1:_10605000112270705011702070" class="question_info infoPosition_tr">
+<a id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:1:_10605000112270705011702011" href="#" onclick="clearFormHiddenParams_viewns_Z7_G1H611G0J0O340QFBVCNIV06R3__DepositCSDListForm('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm');document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm']['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:_idcl'].value='viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:1:_10605000112270705011702011'; document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm'].submit(); return false;" class="close">X</a><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:1:_10605000112270705011702022">
+&lt;b&gt;&#1044;&#1086;&#1087;&#1086;&#1083;&#1085;&#1080;&#1090;&#1077;&#1083;&#1100;&#1085;&#1072;&#1103; &#1080;&#1085;&#1092;&#1086;&#1088;&#1084;&#1072;&#1094;&#1080;&#1103;&lt;/b&gt;&lt;br/&gt;&#1053;&#1086;&#1084;&#1077;&#1088; &#1089;&#1095;&#1105;&#1090;&#1072; &#1074; &#1092;&#1086;&#1088;&#1084;&#1072;&#1090;&#1077; IBAN: &lt;br&gt;&#1060;&#1080;&#1083;&#1080;&#1072;&#1083;: 100&lt;br&gt;&#1054;&#1090;&#1076;&#1077;&#1083;&#1077;&#1085;&#1080;&#1077;: 128&lt;br&gt;&#1041;&#1072;&#1085;&#1082;&#1086;&#1074;&#1089;&#1082;&#1080;&#1081; &#1080;&#1076;&#1077;&#1085;&#1090;&#1080;&#1092;&#1080;&#1082;&#1072;&#1094;&#1080;&#1086;&#1085;&#1085;&#1099;&#1081; &#1082;&#1086;&#1076;: AKBBBY21100&lt;br&gt;&#1044;&#1072;&#1090;&#1072; &#1086;&#1090;&#1082;&#1088;&#1099;&#1090;&#1080;&#1103;: 29.06.2015&lt;br&gt;&#1044;&#1072;&#1090;&#1072; &#1079;&#1072;&#1082;&#1088;&#1099;&#1090;&#1080;&#1103;: 14.07.2015&lt;br&gt;</div></div></div></td>
+<td style="display: none; padding: 0px; margin: 0px;" class="tdNumNoPadding" ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:1:_10605000112270705011703020" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibSDTSelField','118_174_100_128','viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList',1)" class="cellLable">
+false</div></td>
+<td style="display: none; padding: 0px; margin: 0px;" class="tdNoPadding" ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:1:_10605000112270705011703050" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibSDTSelField','118_174_100_128','viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList',1)" class="cellLable">
+closed</div></td>
+</tr>
+<tr ><td class="tdNumNoPadding" ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:2:_10605000112270705011701000" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibSDTSelField','42009162_5_500_230','viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList',2)" class="cellLable">
+<table id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:2:_10605000112270705011700022">
+	<tr>
+<td>
+<label><input type="radio" name="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:2:_10605000112270705011700022" value="" onclick="tableRadioButton(this)" /></label></td>
+	</tr>
+</table></div></td>
+<td class="tdNoPadding" ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:2:_10605000112270705011701030" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibSDTSelField','42009162_5_500_230','viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList',2)" class="cellLable">
+42009162</div></td>
+<td class="tdNoPadding" ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:2:_10605000112270705011701060" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibSDTSelField','42009162_5_500_230','viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList',2)" class="cellLable">
+&#1044;&#1086; &#1074;&#1086;&#1089;&#1090;&#1088;&#1077;&#1073;&#1086;&#1074;&#1072;&#1085;&#1080;&#1103; &#1079;&#1072;&#1088;&#1087;&#1083;&#1072;&#1090;&#1085;&#1099;&#1081; / (&#1041;&#1077;&#1083;. &#1088;&#1091;&#1073;.), &#1082;&#1086;&#1076; &#1074;&#1082;&#1083;&#1072;&#1076;&#1072;: 5</div></td>
+<td class="tdNoPadding" ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:2:_10605000112270705011701022" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibSDTSelField','42009162_5_500_230','viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList',2)" class="cellLable">
+BYR</div></td>
+<td class="tdNoPadding" ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:2:_10605000112270705011702020" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibSDTSelField','42009162_5_500_230','viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList',2)" style="white-space:nowrap;" class="ibButton buttonCSD">
+<a id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:2:ib1be34ec9-5" href="#" onclick="clearFormHiddenParams_viewns_Z7_G1H611G0J0O340QFBVCNIV06R3__DepositCSDListForm('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm');document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm']['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:_idcl'].value='viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:2:ib1be34ec9-5';document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm']['depositUniqueId'].value='42009162_5_500_230'; document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm'].submit(); return false;">Получить</a></div></td>
+<td class="tdNoPaddingInfo" ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:2:_10605000112270705011702050" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibSDTSelField','42009162_5_500_230','viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList',2)" style="z-index:3" class="tooltip">
+<a id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:2:_10605000112270705011702060" href="#" onclick="clearFormHiddenParams_viewns_Z7_G1H611G0J0O340QFBVCNIV06R3__DepositCSDListForm('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm');document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm']['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:_idcl'].value='viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:2:_10605000112270705011702060'; document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm'].submit(); return false;" class="s_info_small">i</a><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:2:_10605000112270705011702070" class="question_info infoPosition_tr">
+<a id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:2:_10605000112270705011702011" href="#" onclick="clearFormHiddenParams_viewns_Z7_G1H611G0J0O340QFBVCNIV06R3__DepositCSDListForm('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm');document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm']['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:_idcl'].value='viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:2:_10605000112270705011702011'; document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm'].submit(); return false;" class="close">X</a><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:2:_10605000112270705011702022">
+&lt;b&gt;&#1044;&#1086;&#1087;&#1086;&#1083;&#1085;&#1080;&#1090;&#1077;&#1083;&#1100;&#1085;&#1072;&#1103; &#1080;&#1085;&#1092;&#1086;&#1088;&#1084;&#1072;&#1094;&#1080;&#1103;&lt;/b&gt;&lt;br/&gt;&#1053;&#1086;&#1084;&#1077;&#1088; &#1089;&#1095;&#1105;&#1090;&#1072; &#1074; &#1092;&#1086;&#1088;&#1084;&#1072;&#1090;&#1077; IBAN: &lt;br&gt;&#1060;&#1080;&#1083;&#1080;&#1072;&#1083;: 500&lt;br&gt;&#1054;&#1090;&#1076;&#1077;&#1083;&#1077;&#1085;&#1080;&#1077;: 230&lt;br&gt;&#1041;&#1072;&#1085;&#1082;&#1086;&#1074;&#1089;&#1082;&#1080;&#1081; &#1080;&#1076;&#1077;&#1085;&#1090;&#1080;&#1092;&#1080;&#1082;&#1072;&#1094;&#1080;&#1086;&#1085;&#1085;&#1099;&#1081; &#1082;&#1086;&#1076;: AKBBBY21500&lt;br&gt;&#1044;&#1072;&#1090;&#1072; &#1086;&#1090;&#1082;&#1088;&#1099;&#1090;&#1080;&#1103;: 01.07.2008&lt;br&gt;&#1044;&#1072;&#1090;&#1072; &#1079;&#1072;&#1082;&#1088;&#1099;&#1090;&#1080;&#1103;: 23.01.2010&lt;br&gt;</div></div></div></td>
+<td style="display: none; padding: 0px; margin: 0px;" class="tdNumNoPadding" ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:2:_10605000112270705011703020" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibSDTSelField','42009162_5_500_230','viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList',2)" class="cellLable">
+false</div></td>
+<td style="display: none; padding: 0px; margin: 0px;" class="tdNoPadding" ><div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList:2:_10605000112270705011703050" onclick="window['ibSDTSelHandler']('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibSDTSelField','42009162_5_500_230','viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList',2)" class="cellLable">
+closed</div></td>
+</tr>
+</tbody>
+</table>
+<script type="text/javascript">{window['ibSDTSelUpdater']('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ibDepositsCsdList',0);}</script></span><span id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:ib57eb587c-8"></span></span>
+            <div id="linkShowClosed" class="spler active" style="margin-bottom: 15px">
+
+
+
+
+              <a id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:linkExpand" href="#" onclick="clearFormHiddenParams_viewns_Z7_G1H611G0J0O340QFBVCNIV06R3__DepositCSDListForm('viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm');document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm']['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:_idcl'].value='viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:linkExpand'; document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm'].submit(); return false;" class="button_green lpay"><span id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:linkActiveClosed">&#1055;&#1086;&#1082;&#1072;&#1079;&#1072;&#1090;&#1100; &#1079;&#1072;&#1082;&#1088;&#1099;&#1090;&#1099;&#1077; &#1076;&#1077;&#1087;&#1086;&#1079;&#1080;&#1090;&#1099;</span><span id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:linkHideClosed">&#1057;&#1082;&#1088;&#1099;&#1090;&#1100; &#1079;&#1072;&#1082;&#1088;&#1099;&#1090;&#1099;&#1077; &#1076;&#1077;&#1087;&#1086;&#1079;&#1080;&#1090;&#1099;</span><s></s><i></i></a>
+            </div>
+            <input id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:closedDepoActive" type="hidden" name="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:closedDepoActive" value="false" />
+
+
+            <div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:btnStmt" onclick="if (!this.disabled) {this.disabled=true; document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm']['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:_idcl'].value='viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:btnStmt';document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm']['pageId'].value='DepositCsdStatementPageID'; document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm'].submit(); return false; }" onkeypress="var charCode = (event.which) ? event.which : event.keyCode;if(charCode==13){if (!this.disabled) {this.disabled=true; document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm']['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:_idcl'].value='viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:btnStmt';document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm']['pageId'].value='DepositCsdStatementPageID'; document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm'].submit(); return false; }}" class="ibButton"><a>Получить выписку</a></div>
+
+
+            <div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:btnRefill" onclick="if (!this.disabled) {this.disabled=true; document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm']['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:_idcl'].value='viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:btnRefill';document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm']['pageId'].value='RefillDepositCsdPageID'; document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm'].submit(); return false; }" onkeypress="var charCode = (event.which) ? event.which : event.keyCode;if(charCode==13){if (!this.disabled) {this.disabled=true; document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm']['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:_idcl'].value='viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:btnRefill';document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm']['pageId'].value='RefillDepositCsdPageID'; document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm'].submit(); return false; }}" class="ibButton"><a>Пополнить</a></div>
+
+            <div id="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:btnDetail" onclick=" document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm']['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:_idcl'].value='viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:btnDetail'; document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm'].submit(); return false; " onkeypress="var charCode = (event.which) ? event.which : event.keyCode;if(charCode==13){ document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm']['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:_idcl'].value='viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:btnDetail'; document.forms['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm'].submit(); return false; }" class="ibButton"><a>Подробнее</a></div>
+
+          </div>
+
+          <input type="hidden" name="com.sun.faces.VIEW" id="com.sun.faces.VIEW" value="_id18225:_id18226" /><input type="hidden" name="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm" value="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm" /><input type="hidden" name="depositUniqueId" /><input type="hidden" name="pageId" /><input type="hidden" name="viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:_idcl" />
+          <script type="text/javascript">
+            <!--
+            function clearFormHiddenParams_viewns_Z7_G1H611G0J0O340QFBVCNIV06R3__DepositCSDListForm(curFormName) {
+              var curForm = document.forms[curFormName];
+              curForm.elements['depositUniqueId'].value = null;
+              curForm.elements['pageId'].value = null;
+              curForm.elements['viewns_Z7_G1H611G0J0O340QFBVCNIV06R3_:DepositCSDListForm:_idcl'].value = null;
+            }
+            //-->
+          </script>
+        </form>
+
+
+
+      </td></tr></table><a name="Z7_G1H611G0J0O340QFBVCNIV0M80"></a><table width="100%" height="100%" border="0" cellpadding="0" cellspacing="0" align="center" class="wpsPortletBody"><tr height="100%"><td width="100%" valign="top">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        <!--<link rel="stylesheet" type="text/css"-->
+        <!--	href="/wps/PA_rdDepositsList/theme/commonStyle.css">-->
+        <!--<link rel="stylesheet" type="text/css"-->
+        <!--	href="/wps/PA_rdDepositsList/theme/new/styles.css">-->
+        <script type="text/javascript"
+                src="/wps/PA_rdDepositsList/theme/javascripts.js">
+        </script>
+
+
+
+
+
+
+        <!--<script language="JavaScript" src='/wps/PA_rdDepositsList/theme/js/jquery-1.7.2.min.js'></script>-->
+        <!--<script language="JavaScript" src='/wps/PA_rdDepositsList/theme/js/info.js'></script>-->
+        <!--<link rel="stylesheet" type="text/css" title="Style" href='/wps/PA_rdDepositsList/theme/css/info.css'/>-->
+
+
+
+        <style>
+          .wrapper {
+            min-width: 1200px;
+          }
+        </style>
+
+        <script type='text/javascript'>
+          function endsWith(tblId, end) {
+            return tblId.indexOf(end, tblId.length - end.length) !== -1;
+          }
+
+          function afterIBTableRowSelect(tblId, rowIdx) {
+            if (tblId && endsWith(tblId, 'ibDepositList')) {
+              afterDepositSelect();
+            } else if (tblId && endsWith(tblId, 'ibDepositsCsdList')) {
+              afterDepositCsdSelect();
+            }
+          }
+
+          function afterDepositSelect(){
+            var depFormId = "#viewns_Z7_G1H611G0J0O340QFBVCNIV0M80_\\:DepositListForm";
+            var selectedField = $(depFormId + "\\:" + "ibSDTSelField");
+            //alert("selectedField value = " + selectedField.val());
+
+            $.ajax({
+              url: "/wps/PA_rdDepositsList/SelectDepositServlet",
+              type: "POST",
+              data: {
+                depositUid: selectedField.val(),
+                lifeTimeInMinutes: 10
+              }
+            });
+          };
+
+          function showOrHideDepLink(){
+            var idPrefixDep = "viewns_Z7_G1H611G0J0O340QFBVCNIV0M80_\:DepositListForm\:";
+            var depTblId = idPrefixDep + "ibDepositList";
+
+            var depositTable = document.getElementById(depTblId);
+            var markAsClosed = document.getElementById(idPrefixDep + "markAsClosed");
+            var includeClosed = false;
+            if (!depositTable) {
+              document.getElementById("linkShowClosedDep").style.display='none';
+              return false;
+            }
+            for (var i=1;i<depositTable.rows.length;i++){
+              var selRow = depositTable.rows[i];
+              var statusTd = selRow.cells[selRow.cells.length - 2];
+              if (statusTd && statusTd.lastChild && statusTd.lastChild.innerHTML.replace(/^\s+|\s+$/g,'') == markAsClosed.value.replace(/^\s+|\s+$/g,'')){
+                includeClosed = true;
+                if (document.getElementById(idPrefixDep + "closedDepoActive").value != "true") {
+                  selRow.style.display='none';
+                }
+              }
+            }
+            if (includeClosed){
+              if (document.getElementById(idPrefixDep + "closedDepoActive").value != "true") {
+                document.getElementById("linkShowClosedDep").className='spler';
+              }
+              document.getElementById("linkShowClosedDep").style.display='';
+            } else{
+              document.getElementById("linkShowClosedDep").style.display='none';
+            }
+            return includeClosed;
+          }
+
+          showOrHideClosedDeposits = function(){
+            var idPrefixDep = "viewns_Z7_G1H611G0J0O340QFBVCNIV0M80_\:DepositListForm\:";
+            var depTblId = idPrefixDep + "ibDepositList";
+            var depositTable = document.getElementById(depTblId);
+            var markAsClosed = document.getElementById(idPrefixDep + "markAsClosed");
+            for (var i=0;i<depositTable.rows.length;i++){
+              var selRow = depositTable.rows[i];
+              var statusTd = selRow.cells[selRow.cells.length - 2];
+              if (statusTd && statusTd.lastChild && statusTd.lastChild.innerHTML.replace(/^\s+|\s+$/g,'') == markAsClosed.value.replace(/^\s+|\s+$/g,'')){
+                if(document.getElementById(idPrefixDep + "closedDepoActive").value=="true"){
+                  selRow.style.display='none';
+                } else{
+                  selRow.style.display='';
+                }
+
+              }
+            }
+            if(document.getElementById(idPrefixDep + "closedDepoActive").value=="true"){
+              document.getElementById("linkShowClosedDep").className='spler';
+              document.getElementById(idPrefixDep + "linkActiveClosed").style.display='';
+              document.getElementById(idPrefixDep + "linkHideClosed").style.display='none';
+              document.getElementById(idPrefixDep + "closedDepoActive").value="false";
+            } else{
+              document.getElementById("linkShowClosedDep").className='spler active';
+              document.getElementById(idPrefixDep + "linkActiveClosed").style.display='none';
+              document.getElementById(idPrefixDep + "linkHideClosed").style.display='';
+              document.getElementById(idPrefixDep + "closedDepoActive").value="true";
+            }
+          }
+
+          jQuery(document).ready(function(){
+            var idPrefixDep = "viewns_Z7_G1H611G0J0O340QFBVCNIV0M80_\:DepositListForm\:";
+            var linkElemDep = document.getElementById(idPrefixDep + "linkExpandDep");
+
+            if(showOrHideDepLink()){
+              if (linkElemDep != null){
+                document.getElementById(idPrefixDep + "ibDepositList").style.marginBottom='0px';
+                linkElemDep.onclick = showOrHideClosedDeposits;
+                if(document.getElementById(idPrefixDep + "closedDepoActive").value == "true"){
+                  document.getElementById(idPrefixDep + "linkActiveClosed").style.display='none';
+                  document.getElementById(idPrefixDep + "linkHideClosed").style.display='';
+                } else{
+                  document.getElementById(idPrefixDep + "linkActiveClosed").style.display='';
+                  document.getElementById(idPrefixDep + "linkHideClosed").style.display='none';
+                }
+              }
+            }
+          });
+
+        </script>
+
+
+
+
+        <form id="viewns_Z7_G1H611G0J0O340QFBVCNIV0M80_:DepositListForm" method="post" action="/wps/myportal/ibank/!ut/p/z1/jZDNDoIwEISfxSfoLIVSjgViW_-IJALuxXAyJIoejM8vIV75mdtm59udjGDRCO7bb3dvP92rbx_DfGV1s-QUkcWuUCfCOdFl6dLYGylFPRpgbEj7YjBsqwAmo4KioJKAFDy91hT9-cwaF8YHAKEO4PPU5XFyBLwa-eX_EzJYyU8HXMXPGHg-Xi14tMw1sHSDl0p-Py-DGnTebH7Eh-GT/dz/d5/L2dBISEvZ0FBIS9nQSEh/p0/IZ7_G1H611G0J0O340QFBVCNIV0M80=CZ6_G1H611G0JO6N10Q98RRHB7IA33=LALl82yVMyyGEi_CiKQFBGgBTxbbfFxgb61CMbAS0jQDKrtakQFBQFBNhBw=Ejavax.servlet.include.path_info!QCPpagesQCPuserDepositList.jsp==/#Z7_G1H611G0J0O340QFBVCNIV0M80" enctype="application/x-www-form-urlencoded">
+
+
+          <span id="viewns_Z7_G1H611G0J0O340QFBVCNIV0M80_:DepositListForm:DepositMessagesId" class="Messages"><table><tr class="Error"><td>	 </td></tr></table></span>
+
+
+
+
+
+
+
+          <div id="linkShowClosedDep" class="spler active" style="margin-bottom: 15px">
+
+
+
+
+
+          </div>
+
+
+
+          <!-- Buttons -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          <input type="hidden" name="com.sun.faces.VIEW" id="com.sun.faces.VIEW" value="_id18225:_id18226" /><input type="hidden" name="viewns_Z7_G1H611G0J0O340QFBVCNIV0M80_:DepositListForm" value="viewns_Z7_G1H611G0J0O340QFBVCNIV0M80_:DepositListForm" />
+          <script type="text/javascript">
+            <!--
+            function clearFormHiddenParams_viewns_Z7_G1H611G0J0O340QFBVCNIV0M80__DepositListForm(curFormName) {
+              var curForm = document.forms[curFormName];
+            }
+            //-->
+          </script>
+        </form>
+
+
+
+      </td></tr></table></div></div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<div class="wrapper themeFooter">
+  <div class="clr"></div>
+  <div id="footer">
+    <a href="http://asb.by" target="_blank">
+      <div class="f_left">
+        <p>&copy; 2014, ОАО &laquo;АСБ Беларусбанк&raquo;</p>
+        <p>Минск, пр-т Дзержинского, 18</p>
+      </div>
+      <div class="f_right">
+        <p>Телефоны: 147, (017) 218-84-31</p>
+        <p>E-mail: info@belarusbank.by</p>
+      </div>
+      <div class="clr"></div>
+    </a>
+  </div>
+
+
+</div>
+
+
+<script language="JavaScript" type="text/javascript">
+  timer();
+  promptTimer();
+</script>
+
+
+</body>
+</html>

@@ -1,9 +1,14 @@
 export function convertAccount (acc) {
   switch (acc.type) {
     case 'deposit': {
-      const start = getDate(acc.details.match(/Дата открытия:\s(.[0-9.]*)/i)[1])
-      const stop = getDate(acc.details.match(/Срок возврата вклада:\s(.[0-9.]*)/i)[1])
-      const depositDays = (stop - start) / 60 / 60 / 24 / 1000
+      const start = getDate(acc.details.match(/Дата открытия:\s([0-9.]*)/i)[1])
+      let stop
+      const refund = acc.details.match(/Срок возврата вклада:\s([0-9.]*)/i)
+      if (refund && refund[1]) {
+        stop = getDate(refund[1])
+      }
+      const depositDays = stop ? (stop - start) / 60 / 60 / 24 / 1000 : 1
+      const percent = acc.details.match(/Процентная ставка:.*\s(.[0-9.]*)%/i)
       return {
         id: acc.id,
         type: 'deposit',
@@ -12,10 +17,10 @@ export function convertAccount (acc) {
         balance: Number.parseFloat(acc.balance.replace(/\s/g, '')),
         syncID: [acc.id],
         capitalization: true,
-        percent: Number.parseFloat(acc.details.match(/Процентная ставка:.*\s(.[0-9.]*)%/i)[1]),
+        percent: percent && percent[1] ? Number.parseFloat(percent[1]) : 0.01,
         startDate: start,
         endDateOffset: depositDays,
-        endDateOffsetInterval: 'day',
+        endDateOffsetInterval: stop ? 'day' : 'month',
         payoffStep: 1,
         payoffInterval: 'month'
       }
@@ -108,8 +113,14 @@ function getMovement (tr, account) {
 function parseCash (transaction, tr) {
   if (tr.comment.indexOf('Пополнение счета') >= 0 || tr.comment.indexOf('Снятие наличных') >= 0) {
     const { sum, currency } = tr.operationSum === '0.00'
-      ? { sum: tr.inAccountSum, currency: tr.inAccountCurrency }
-      : { sum: tr.operationSum, currency: tr.operationCurrency }
+      ? {
+          sum: tr.inAccountSum,
+          currency: tr.inAccountCurrency
+        }
+      : {
+          sum: tr.operationSum,
+          currency: tr.operationCurrency
+        }
     // добавим вторую часть перевода
     transaction.movements.push({
       id: null,
