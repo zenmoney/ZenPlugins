@@ -14,7 +14,7 @@ import {
   currencyCodeToIsoCurrency,
   figureOutAccountRestsDelta, getTransactionFactor,
   isCashTransferTransaction,
-  isElectronicTransferTransaction,
+  isElectronicTransferTransaction, isRegularSpendTransaction,
   isRejectedTransaction
 } from './BSB'
 
@@ -102,8 +102,9 @@ export function convertApiTransactionsToReadableTransactions (apiTransactionsByA
           hold: null,
           merchant: details.payee ? { country: details.country, city: details.city, title: details.payee, mcc: null, location: null } : null,
           comment: _.compact([
-            details.comment
-          ]).join('\n') || apiTransaction.transactionType || null
+            details.comment,
+            isRegularSpendTransaction(apiTransaction) ? null : apiTransaction.transactionType
+          ]).join('\n') || null
         }
         if (isCashTransferTransaction(apiTransaction) && !isElectronicTransferTransaction(apiTransaction)) {
           return { readableTransaction: addMovement(readableTransaction, makeCashTransferMovement(readableTransaction, account.instrument)), account }

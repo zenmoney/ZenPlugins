@@ -66,6 +66,8 @@ export const isElectronicTransferTransaction = (transaction) => transaction.tran
 
 export const isCashTransferTransaction = (transaction) => cashTransferTransactionTypes.indexOf(transaction.transactionType) !== -1
 
+export const isRegularSpendTransaction = (t) => t.transactionType === 'Товары и услуги' || t.transactionType === 'Tovary i uslugi'
+
 export const isRejectedTransaction = (transaction) => rejectedTransactionTypes.indexOf(transaction.transactionType.trim()) !== -1
 
 function patchTimezone (userDate) {

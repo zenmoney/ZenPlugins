@@ -491,7 +491,7 @@ describe('convertTransaction', () => {
       ],
       [
         {
-          comment: 'Товары и услуги',
+          comment: null,
           date: new Date('2022-04-02T09:44:00.000Z'),
           hold: null,
           merchant: {
