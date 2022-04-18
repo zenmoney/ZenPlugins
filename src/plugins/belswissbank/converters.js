@@ -46,8 +46,6 @@ function formatDetails ({ transaction, matchedPayment }) {
   }
 }
 
-const floorToMinutes = (ticks) => new Date(Math.floor(ticks / 60000) * 60000).valueOf()
-
 function formatMovementPartialDetails (outcome, income) {
   const movement = outcome.movement
   const account = outcome.item.account
@@ -56,13 +54,31 @@ function formatMovementPartialDetails (outcome, income) {
     formatCommentFeeLine(movement.fee, account.instrument),
     outcome.item.account.instrument === income.item.account.instrument
       ? null
-      : formatCalculatedRateLine(formatRate({ invoiceSum: income.movement.sum, sum: Math.abs(outcome.movement.sum) }))
+      : formatCalculatedRateLine(formatRate({
+        invoiceSum: income.movement.sum,
+        sum: Math.abs(outcome.movement.sum)
+      }))
   ])
 }
 
+function makeRelevantArchivePaymentsGetter (paymentsArchive) {
+  const ROUNDING_TICKS = 2 * 60000
+  const roundDate = (ticks) => Math.round(ticks / ROUNDING_TICKS) * ROUNDING_TICKS
+  const paymentsGroupedByTransactionDate = _.groupBy(paymentsArchive, (payment) => roundDate(payment.paymentDate))
+  return (apiTransaction) => {
+    if (apiTransaction.transactionDetails === 'INTERNET-BANKING BSB' || apiTransaction.transactionDetails === 'PERSON TO PERSON I-B BSB') {
+      return paymentsGroupedByTransactionDate[roundDate(apiTransaction.transactionDate)] || []
+    }
+    return []
+  }
+}
+
 export function convertApiTransactionsToReadableTransactions (apiTransactionsByAccount, paymentsArchive) {
-  const paymentsGroupedByTransactionDate = _.groupBy(paymentsArchive, (payment) => floorToMinutes(payment.paymentDate))
-  const items = _.flatMap(apiTransactionsByAccount, ({ apiTransactions, account }) => {
+  const getRelevantPayments = makeRelevantArchivePaymentsGetter(paymentsArchive)
+  const items = _.flatMap(apiTransactionsByAccount, ({
+    apiTransactions,
+    account
+  }) => {
     return _.sortBy(
       apiTransactions.filter((transaction) => !isRejectedTransaction(transaction) && transaction.transactionAmount > 0),
       (x) => x.cardTransactionId
@@ -76,7 +92,7 @@ export function convertApiTransactionsToReadableTransactions (apiTransactionsByA
           console.debug('sum is unknown, ignored transaction', { transaction: apiTransaction })
           return null
         }
-        const relevantPayments = paymentsGroupedByTransactionDate[apiTransaction.transactionDate] || []
+        const relevantPayments = getRelevantPayments(apiTransaction)
         const matchedPayment = relevantPayments.find((payment) =>
           (apiTransaction.last4.startsWith(payment.last4) || payment.target.slice(0, 4) === apiTransaction.last4.slice(0, 4)) &&
           payment.currencyIso === apiTransaction.transactionCurrency &&
