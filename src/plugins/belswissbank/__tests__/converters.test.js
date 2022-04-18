@@ -126,7 +126,7 @@ describe('convertApiTransactionsToReadableTransactions', () => {
           mcc: null,
           location: null
         },
-        comment: 'Товары и услуги'
+        comment: null
       },
       {
         comment: 'Комиссия за годовое обслуживание осн. Карточки',

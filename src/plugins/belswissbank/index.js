@@ -50,18 +50,21 @@ export async function scrape ({ preferences: { username, password }, fromDate, t
   if (pluginData.sessionId) {
     ZenMoney.setCookie('24.bsb.by', 'JSESSIONID', pluginData.sessionId)
   }
+
+  const fetchProbe = () => Promise.all([
+    fetchCards(),
+    fetchPaymentsArchive({
+      fromDate,
+      toDate
+    })
+  ])
+
   let probe = pluginData.scrapeLastSuccessDate.valueOf() + sessionTimeoutMs > Date.now()
-    ? await Promise.all([
-      fetchCards(),
-      fetchPaymentsArchive({ fromDate, toDate })
-    ])
+    ? await fetchProbe()
     : null
   if (probe === null || probe.some((x) => x.status === 401)) {
     await login({ deviceId: pluginData.deviceId, username, password })
-    probe = await Promise.all([
-      fetchCards(),
-      fetchPaymentsArchive({ fromDate, toDate })
-    ])
+    probe = await fetchProbe()
   }
   const [cardsResponse, paymentsResponse] = probe
   assertResponseSuccess(cardsResponse)
