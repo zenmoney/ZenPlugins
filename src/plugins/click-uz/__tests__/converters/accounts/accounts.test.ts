@@ -209,6 +209,152 @@ describe('convertAccount', () => {
           type: 'ccard'
         }
       ]
+    ],
+    [
+      {
+        cards: [
+          {
+            id: 8189532,
+            bank_code: '014',
+            bank_name: 'Ипак Йули Банк',
+            bank_short_name: 'IPAK',
+            card_name: 'Карта UZCARD',
+            card_number: '8600 14** **** 1234',
+            card_expire_date: '1019',
+            card_status: -100,
+            card_status_text: 'Карта не найдена/Неверный срок',
+            card_token: '5bcec838ca57d707583a77e0',
+            card_type: 'SMARTV',
+            font_color: 'FFFFFFFF',
+            monitoring_status: 0,
+            is_default: false,
+            card_number_hash: '5F028E19AFF1F66BDD162C4C82C5FAF00F5BF377EC3C20C2611003B50A87FC4C',
+            cardholder: 'ANTONOV ANTOV ANTONOVICH',
+            currency_code: 'UZS',
+            click: false,
+            details: false,
+            securecode_available: false,
+            securecode_status: false,
+            permission:
+              {
+                payment: 1,
+                transfer: ['SMARTV', 'WALLET', 'HUMO'],
+                clickpass: 1,
+                blockable: false,
+                activation: false,
+                copy_number: false,
+                removable: 1
+              },
+            images:
+              {
+                background: 'https://cdn.click.uz/app/evo/card/uzcard/ipak-bg_v1.png',
+                logo: 'https://cdn.click.uz/app/evo/card/uzcard/ipak-logo_v1.png',
+                mini_logo: 'https://cdn.click.uz/app/evo/card/uzcard/ipak-mini-logo_v1.png',
+                cardtype: 'https://cdn.click.uz/app/evo/card/types/uzcard_v1.png',
+                cardtype_mini: 'https://cdn.click.uz/app/evo/card/types/uzcard_small_v1.png'
+              },
+            transfer_limits:
+              {
+                send_min_limit: 5000,
+                send_max_limit: 10000000000,
+                receive_min_limit: 5000,
+                receive_max_limit: 10000000000,
+                percent: 1
+              },
+            options: { is_masked: true, button_set: 'SMARTV', display_type: 'SMARTV' }
+          }
+        ],
+        balances: [
+          { account_id: 22787386, balance: 5458.02 },
+          { account_id: 12745888, balance: 149355.44 }
+        ]
+      },
+      [
+        {
+          archived: true,
+          balance: null,
+          id: '8189532',
+          instrument: 'UZS',
+          savings: false,
+          syncIds: ['860014******1234'],
+          title: 'Карта UZCARD',
+          type: 'ccard'
+        }
+      ]
+    ],
+    [
+      {
+        cards:
+          [
+            {
+              id: 23946997,
+              bank_code: '004',
+              bank_name: 'Агробанк',
+              bank_short_name: 'AGRO',
+              card_name: 'VISA-карта',
+              card_number: '4187 80** **** 1234',
+              card_expire_date: '----',
+              card_status: 1,
+              card_status_text: 'Активна',
+              card_token: '418780TUVFAW0110',
+              card_type: 'AGRVISAUSD',
+              font_color: 'FFFFFFFF',
+              monitoring_status: 0,
+              is_default: false,
+              card_number_hash: 'E31CC70BA9D13EF6D40B7FDD5606F9E4006922A516B57399C47E761EF8F1EEB5',
+              cardholder: 'ANTONOV ANTOV ANTONOVICH',
+              currency_code: 'USD',
+              click: false,
+              details: true,
+              securecode_available: false,
+              securecode_status: false,
+              permission:
+                {
+                  payment: 0,
+                  transfer: [],
+                  clickpass: 0,
+                  blockable: true,
+                  activation: false,
+                  copy_number: true,
+                  removable: 1
+                },
+              images:
+                {
+                  background: 'https://cdn.click.uz/app/evo/card/agrvisausd/agro-bg_v1.png',
+                  logo: 'https://cdn.click.uz/app/evo/card/agrvisausd/agro-logo_v1.png',
+                  mini_logo: 'https://cdn.click.uz/app/evo/card/agrvisausd/agro-mini-logo_v1.png',
+                  cardtype: 'https://cdn.click.uz/app/evo/card/types/agrvisausd_v1.png',
+                  cardtype_mini: 'https://cdn.click.uz/app/evo/card/types/agrvisausd_small_v1.png'
+                },
+              transfer_limits:
+                {
+                  send_min_limit: 1000,
+                  send_max_limit: 10000000000,
+                  receive_min_limit: 1000,
+                  receive_max_limit: 10000000000,
+                  percent: 0
+                },
+              options: { is_masked: true, button_set: 'VISA', display_type: 'VISA' }
+            }
+          ],
+        balances: [
+          { account_id: 22787386, balance: 5458.02 },
+          { account_id: 12745888, balance: 149355.44 }
+        ]
+      },
+      [
+        {
+          balance: null,
+          id: '23946997',
+          instrument: 'USD',
+          savings: false,
+          syncIds: [
+            '418780******1234'
+          ],
+          title: 'VISA-карта',
+          type: 'ccard'
+        }
+      ]
     ]
   ])('convert accounts', (apiAccounts: FetchedAccounts, accounts) => {
     expect(convertAccounts(apiAccounts)).toEqual(accounts)
