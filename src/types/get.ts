@@ -34,7 +34,7 @@ function optTypeCast<Output> (isType: TypeCheck<Output>): (obj: unknown, path: s
 function typeCast<Output> (isType: TypeCheck<Output>): (obj: unknown, path: string) => Output {
   return (obj: unknown, path: string) => {
     const result = get(obj, path)
-    console.assert(isType.check(result), `cant get ${isType.typeName} at "${path}" from ${obj}`)
+    console.assert(isType.check(result), `cant get ${isType.typeName} at "${path}" from `, obj)
     return result as Output
   }
 }

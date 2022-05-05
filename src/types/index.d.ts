@@ -24,6 +24,7 @@ declare namespace ZenMoney {
   }>>
   function restoreCookies (): Promise<void>
   function saveCookies (): Promise<void>
+  function clearCookies (): Promise<void>
 
   const device: {
     id: string
