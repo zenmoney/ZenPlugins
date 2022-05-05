@@ -57,11 +57,13 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: {
-          fullTitle: 'OPLATA USLUG',
-          location: null,
-          mcc: 4900
+          country: null,
+          city: null,
+          title: 'OPLATA USLUG',
+          mcc: 4900,
+          location: null
         },
-        comment: 'Покупка/оплата/перевод',
+        comment: null,
         hold: false
       }
     },
@@ -93,11 +95,13 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: {
-          fullTitle: 'SMS BANKING/MTS',
-          location: null,
-          mcc: 4814
+          country: null,
+          city: null,
+          title: 'SMS BANKING/MTS',
+          mcc: 4814,
+          location: null
         },
-        comment: 'Покупка/оплата/перевод',
+        comment: null,
         hold: false
       }
     },
@@ -129,9 +133,11 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: {
-          fullTitle: 'ZH/D VOKZAL BPSB ATM',
-          location: null,
-          mcc: 6011
+          country: null,
+          city: null,
+          title: 'ZH/D VOKZAL BPSB ATM',
+          mcc: 6011,
+          location: null
         },
         comment: 'Плата за просмотр баланса (доступн. остатка)',
         hold: false
@@ -165,9 +171,11 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: {
-          fullTitle: 'Пенсия ФСЗН',
-          location: null,
-          mcc: null
+          country: null,
+          city: null,
+          title: 'Пенсия ФСЗН',
+          mcc: null,
+          location: null
         },
         comment: 'Платежи в счет (пенсия)',
         hold: false
@@ -201,9 +209,11 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: {
-          fullTitle: 'Vasia Pupkin',
-          location: null,
-          mcc: 6012
+          country: null,
+          city: null,
+          title: 'Vasia Pupkin',
+          mcc: 6012,
+          location: null
         },
         comment: 'Возврат покупки/оплаты/зачисление перевода',
         hold: false
@@ -237,11 +247,13 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: {
-          fullTitle: 'УО "ГГУ им.Ф.Скорины"',
-          location: null,
-          mcc: null
+          country: null,
+          city: null,
+          title: 'УО "ГГУ им.Ф.Скорины"',
+          mcc: null,
+          location: null
         },
-        comment: 'Безналичное зачисление на счет',
+        comment: null,
         hold: false
       }
     },
@@ -273,9 +285,11 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: {
-          fullTitle: 'GOOGLE *TEMPORARY HOLD>855-836-3987US',
-          location: null,
-          mcc: 5968
+          country: null,
+          city: null,
+          title: 'GOOGLE *TEMPORARY HOLD>855-836-3987US',
+          mcc: 5968,
+          location: null
         },
         comment: 'Отмена покупки/оплаты/перевода',
         hold: false
@@ -309,12 +323,14 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: {
+          country: null,
+          city: null,
+          title: 'HTTP://WWW.ROBOKASSA.R>MOSKVARU',
           mcc: 5734,
-          location: null,
-          fullTitle: 'HTTP://WWW.ROBOKASSA.R>MOSKVARU'
+          location: null
         },
         hold: true,
-        comment: 'Покупка/оплата/перевод'
+        comment: null
       }
     }
   ]

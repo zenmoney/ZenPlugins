@@ -69,6 +69,9 @@ export function convertTransaction (tr, accounts) {
   if (tr.status === 'operResultError') {
     return null
   }
+  if (tr.inAccountSum === '0.00' && tr.operationSum === '0.00') {
+    return null
+  }
   const account = accounts.find(account => {
     return account.syncID.indexOf(tr.accountID) !== -1
   })
@@ -156,15 +159,23 @@ function parsePayee (transaction, tr) {
     tr.place = tr.place.replace(replacement[0], replacement[1])
   }
   const parsedPayee = tr.place.match(/(.+)\/([0-9]{4})?/)
-  const fullTitle = parsedPayee && parsedPayee[1] ? parsedPayee[1] : tr.place
+  const title = parsedPayee && parsedPayee[1] ? parsedPayee[1] : tr.place
   const mcc = parsedPayee && parsedPayee[2] ? parseInt(parsedPayee[2], 10) : null
 
-  if (fullTitle || mcc) {
+  if (title) {
     transaction.merchant = {
+      country: null,
+      city: null,
+      title: title.trim(),
       mcc: mcc || null,
-      location: null,
-      fullTitle: fullTitle.trim()
+      location: null
     }
+  }
+  if ([
+    /Покупка\/оплата\/перевод/i,
+    /Безналичное зачисление на счет/i
+  ].some(regexp => tr.comment?.match(regexp))) {
+    transaction.comment = null
   }
 
   return true
