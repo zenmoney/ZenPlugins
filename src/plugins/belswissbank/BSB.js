@@ -21,7 +21,7 @@ const cashTransferTransactionTypes = [
   'Пополнение счета наличными'
 ]
 
-export const getTransactionFactor = (transaction) => {
+export const getTransactionFactor = (smsTx) => {
   const transactionTypeFactors = {
     Возврат: 1,
     Vozvrat: 1,
@@ -48,43 +48,32 @@ export const getTransactionFactor = (transaction) => {
     'Годовая плата за дополнительную карточку': -1,
     'Зачисление Money-back': 1
   }
-  let factor = transactionTypeFactors[transaction.transactionType]
+  let factor = transactionTypeFactors[smsTx.transactionType]
   if (!factor) {
-    if (/Комиссия за .*обслуживание/i.test(transaction.transactionType)) {
+    if (/Комиссия за .*обслуживание/i.test(smsTx.transactionType)) {
       factor = -1
-    } else if (transaction.colour === 2) {
+    } else if (smsTx.colour === 2) {
       factor = -1
-    } else if (transaction.colour === 1) {
+    } else if (smsTx.colour === 1) {
       factor = 1
     }
   }
-  console.assert(factor !== undefined, 'unknown transactionType in transaction:', transaction)
+  console.assert(factor !== undefined, 'unknown factor:', smsTx)
   return factor
 }
 
-export const isElectronicTransferTransaction = (transaction) => transaction.transactionDetails === 'PERSON TO PERSON I-B BSB'
+export const isElectronicTransferTransaction = (smsTx) => smsTx.transactionDetails === 'PERSON TO PERSON I-B BSB'
 
-export const isCashTransferTransaction = (transaction) => cashTransferTransactionTypes.indexOf(transaction.transactionType) !== -1
+export const isCashTransferTransaction = (smsTx) => cashTransferTransactionTypes.indexOf(smsTx.transactionType) !== -1
 
-export const isRegularSpendTransaction = (t) => t.transactionType === 'Товары и услуги' || t.transactionType === 'Tovary i uslugi'
+export const isRegularSpendTransaction = (smsTx) => smsTx.transactionType === 'Товары и услуги' || smsTx.transactionType === 'Tovary i uslugi'
 
-export const isRejectedTransaction = (transaction) => rejectedTransactionTypes.indexOf(transaction.transactionType.trim()) !== -1
+export const isRejectedTransaction = (smsTx) => rejectedTransactionTypes.indexOf(smsTx.transactionType.trim()) !== -1
+
+const bankTimezone = 3 * 3600 * 1000
 
 function patchTimezone (userDate) {
-  const bankTimezone = 3 * 3600 * 1000
   return new Date(userDate.valueOf() + bankTimezone)
-}
-
-export function formatBsbCardsApiDate (userDate) {
-  if (!isValidDate(userDate)) {
-    throw new Error('valid date should be provided')
-  }
-  const date = patchTimezone(userDate)
-  return [
-    date.getUTCDate(),
-    date.getUTCMonth() + 1,
-    date.getUTCFullYear()
-  ].map((number) => padLeft(number, 2, '0')).join('.')
 }
 
 export const assertResponseSuccess = function (response) {
@@ -97,7 +86,11 @@ const makeApiUrl = (path, queryParams) => `https://24.bsb.by/mobile/api${path}?$
 
 const BSB_AUTH_URL = makeApiUrl('/authorization', { lang })
 
-const requestLogin = ({ username, password, deviceId }) => fetchJson(BSB_AUTH_URL, {
+const requestLogin = ({
+  username,
+  password,
+  deviceId
+}) => fetchJson(BSB_AUTH_URL, {
   method: 'POST',
   body: {
     username,
@@ -107,15 +100,32 @@ const requestLogin = ({ username, password, deviceId }) => fetchJson(BSB_AUTH_UR
     osType: 3,
     currencyIso: 'BYN'
   },
-  sanitizeRequestLog: { body: { username: true, password: true, deviceId: true } },
+  sanitizeRequestLog: {
+    body: {
+      username: true,
+      password: true,
+      deviceId: true
+    }
+  },
   sanitizeResponseLog: {
     headers: { 'set-cookie': true },
-    body: { birthDate: true, eripId: true, fio: true, mobilePhone: true, sessionId: true, username: true }
+    body: {
+      birthDate: true,
+      eripId: true,
+      fio: true,
+      mobilePhone: true,
+      sessionId: true,
+      username: true
+    }
   }
 })
 
 export async function authorize (username, password, deviceId) {
-  const loginResponse = await requestLogin({ username, password, deviceId })
+  const loginResponse = await requestLogin({
+    username,
+    password,
+    deviceId
+  })
   if (loginResponse.status === 403 && loginResponse.body.error === 'Неверные учетные данные') {
     throw new InvalidPreferencesError(loginResponse.body.error)
   }
@@ -138,17 +148,26 @@ export async function confirm (deviceId, confirmationCode) {
   console.assert(response.body.deviceStatus === 'CONFIRMED', 'confirmation failed:', response)
 }
 
-export function fetchCards () {
-  return fetchJson(makeApiUrl('/cards', { nocache: true, lang }), {
+export async function fetchCards () {
+  return fetchJson(makeApiUrl('/cards', {
+    nocache: true,
+    lang
+  }), {
     method: 'GET',
     sanitizeResponseLog: {
       headers: { 'set-cookie': true },
-      body: { contract: true, maskedCardNumber: true, ownerName: true, ownerNameLat: true, rbsContract: true }
+      body: {
+        contract: true,
+        maskedCardNumber: true,
+        ownerName: true,
+        ownerNameLat: true,
+        rbsContract: true
+      }
     }
   })
 }
 
-export function formatBsbPaymentsApiDate (userDate) {
+export function formatBsbArchiveApiDate (userDate) {
   if (!isValidDate(userDate)) {
     throw new Error('valid date should be provided')
   }
@@ -160,13 +179,29 @@ export function formatBsbPaymentsApiDate (userDate) {
   ].map((number) => padLeft(number, 2, '0')).join('')
 }
 
-export function fetchPaymentsArchive ({ fromDate, toDate }) {
-  return fetchJson(makeApiUrl('/archive', { lang }), {
+export function unpackArchiveTransactions (response) {
+  assertResponseSuccess(response)
+  const {
+    archives,
+    hasNext
+  } = response.body
+  console.assert(!hasNext, 'fetchPaymentsArchive paging is not implemented')
+  return archives
+}
+
+export async function fetchArchiveTransactionsResponse ({
+  fromDate,
+  toDate
+}) {
+  return await fetchJson(makeApiUrl('/archive', { lang }), {
     method: 'POST',
     body: {
-      page: { pageNumber: 0, pageSize: 1000 },
-      fromDate: formatBsbPaymentsApiDate(fromDate),
-      toDate: formatBsbPaymentsApiDate(toDate || new Date())
+      page: {
+        pageNumber: 0,
+        pageSize: 2147483647
+      },
+      fromDate: formatBsbArchiveApiDate(fromDate),
+      toDate: formatBsbArchiveApiDate(toDate || new Date())
     },
     sanitizeResponseLog: {
       headers: { 'set-cookie': true },
@@ -175,19 +210,25 @@ export function fetchPaymentsArchive ({ fromDate, toDate }) {
   })
 }
 
-export function extractPaymentsArchive (response) {
-  assertResponseSuccess(response)
-  const { archives, hasNext } = response.body
-  console.assert(!hasNext, 'fetchPaymentsArchive paging is not implemented')
-  return archives
+export function formatBsbSmsApiDate (userDate) {
+  if (!isValidDate(userDate)) {
+    throw new Error('valid date should be provided')
+  }
+  const date = patchTimezone(userDate)
+  return [
+    date.getUTCDate(),
+    date.getUTCMonth() + 1,
+    date.getUTCFullYear()
+  ].map((number) => padLeft(number, 2, '0')).join('.')
 }
 
-export async function fetchTransactions (cardId, fromDate, toDate) {
+export async function fetchSmsTransactions (cardId, fromDate, toDate) {
+  const dateSeparator = '.'
   const response = await fetchJson(makeApiUrl(`/cards/${cardId}/sms`, { lang }), {
     method: 'POST',
     body: {
-      fromDate: formatBsbCardsApiDate(fromDate),
-      toDate: formatBsbCardsApiDate(toDate || new Date())
+      fromDate: formatBsbSmsApiDate(fromDate, dateSeparator),
+      toDate: formatBsbSmsApiDate(toDate || new Date(), dateSeparator)
     },
     sanitizeResponseLog: {
       headers: { 'set-cookie': true },
@@ -198,12 +239,44 @@ export async function fetchTransactions (cardId, fromDate, toDate) {
   return response.body
 }
 
+export function formatBsbStatementApiDate (userDate) {
+  if (!isValidDate(userDate)) {
+    throw new Error('valid date should be provided')
+  }
+  const date = patchTimezone(userDate)
+  return [
+    date.getUTCFullYear(),
+    date.getUTCMonth() + 1,
+    date.getUTCDate()
+  ].map((number) => padLeft(number, 2, '0')).join('')
+}
+
+export async function fetchStatementTransactions (cardId, fromDate, toDate) {
+  const dateSeparator = ''
+  const response = await fetchJson(makeApiUrl(`/cards/${cardId}/statement`, { lang }), {
+    method: 'POST',
+    body: {
+      fromDate: formatBsbStatementApiDate(fromDate, dateSeparator),
+      toDate: formatBsbStatementApiDate(toDate || new Date(), dateSeparator)
+    },
+    sanitizeResponseLog: {
+      headers: { 'set-cookie': true }
+    }
+  })
+  assertResponseSuccess(response)
+  return response.body.transactions
+}
+
 export function currencyCodeToIsoCurrency (currencyCode) {
   console.assert(currencyCode in codeToCurrencyLookup, 'unknown currency', currencyCode)
   return codeToCurrencyLookup[currencyCode]
 }
 
-function getAccountRest ({ transactions, index, accountCurrency }) {
+function getAccountRest ({
+  transactions,
+  index,
+  accountCurrency
+}) {
   console.assert(index >= 0 && index < transactions.length, 'index out of range')
   const transaction = transactions[index]
   if (transaction.accountRest === null) {
@@ -221,13 +294,25 @@ function getAccountRest ({ transactions, index, accountCurrency }) {
   return transaction.accountRest
 }
 
-export function figureOutAccountRestsDelta ({ transactions, index, accountCurrency }) {
+export function figureOutAccountRestsDelta ({
+  transactions,
+  index,
+  accountCurrency
+}) {
   console.assert(index >= 0 && index < transactions.length, 'index out of range')
   if (index === 0) {
     return null
   }
-  const previousAccountRest = getAccountRest({ transactions, index: index - 1, accountCurrency })
-  const currentAccountRest = getAccountRest({ transactions, index, accountCurrency })
+  const previousAccountRest = getAccountRest({
+    transactions,
+    index: index - 1,
+    accountCurrency
+  })
+  const currentAccountRest = getAccountRest({
+    transactions,
+    index,
+    accountCurrency
+  })
   if (previousAccountRest === null || currentAccountRest === null) {
     return null
   }

@@ -1,14 +1,15 @@
-import { convertApiTransactionsToReadableTransactions } from '../converters'
+import { convertBSBToZenMoneyTransactions } from '../converters'
 
 describe('convertApiTransactionsToReadableTransactions', () => {
   it('converts outcome with payee and city', () => {
-    expect(convertApiTransactionsToReadableTransactions([
+    expect(convertBSBToZenMoneyTransactions([
       {
         account: {
           id: 'account',
           instrument: 'BYN'
         },
-        apiTransactions: [
+        statementTxs: [],
+        smsTxs: [
           {
             cardTransactionId: 55330580,
             docId: 1015956,
@@ -109,7 +110,7 @@ describe('convertApiTransactionsToReadableTransactions', () => {
     ])).toEqual([
       {
         date: new Date('2019-04-01T09:04:00.000Z'),
-        hold: null,
+        hold: true,
         movements: [
           {
             id: '55330580',
@@ -131,7 +132,7 @@ describe('convertApiTransactionsToReadableTransactions', () => {
       {
         comment: 'Комиссия за годовое обслуживание осн. Карточки',
         date: new Date('2021-04-13T00:07:00.000Z'),
-        hold: null,
+        hold: true,
         merchant: {
           city: 'MINSK',
           country: 'BLR',
@@ -154,7 +155,7 @@ describe('convertApiTransactionsToReadableTransactions', () => {
       {
         comment: 'Зачисление с конверсией',
         date: new Date('2021-09-30T11:07:00.000Z'),
-        hold: null,
+        hold: true,
         merchant: {
           city: null,
           country: null,
@@ -177,7 +178,7 @@ describe('convertApiTransactionsToReadableTransactions', () => {
       {
         comment: 'Зачисление Money-back',
         date: new Date('2021-10-07T11:07:00.000Z'),
-        hold: null,
+        hold: true,
         merchant: {
           city: null,
           country: null,
@@ -200,7 +201,7 @@ describe('convertApiTransactionsToReadableTransactions', () => {
       {
         comment: 'Покупка валюты за б/н рубли',
         date: new Date('2021-11-10T09:07:00.000Z'),
-        hold: null,
+        hold: true,
         merchant: {
           city: 'MINSK',
           country: 'BLR',

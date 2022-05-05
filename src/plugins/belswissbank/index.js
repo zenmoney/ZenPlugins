@@ -1,17 +1,21 @@
-import _ from 'lodash'
 import { generateUUID } from '../../common/utils'
 import {
   assertResponseSuccess,
   authorize,
   confirm,
-  extractPaymentsArchive,
   fetchCards,
-  fetchPaymentsArchive,
-  fetchTransactions
+  fetchArchiveTransactionsResponse,
+  fetchSmsTransactions,
+  fetchStatementTransactions,
+  unpackArchiveTransactions
 } from './BSB'
-import { convertApiTransactionsToReadableTransactions, convertToZenMoneyAccount } from './converters'
+import { convertBSBToZenMoneyTransactions, convertToZenMoneyAccount } from './converters'
 
-async function login ({ deviceId, username, password }) {
+async function login ({
+  deviceId,
+  username,
+  password
+}) {
   const authStatus = await authorize(username, password, deviceId)
   switch (authStatus.userStatus) {
     case 'WAITING_CONFIRMATION':
@@ -36,7 +40,14 @@ const calculateAccountId = (card) => card.cardId.toString()
 
 const sessionTimeoutMs = 15 * 60 * 1000
 
-export async function scrape ({ preferences: { username, password }, fromDate, toDate }) {
+export async function scrape ({
+  preferences: {
+    username,
+    password
+  },
+  fromDate,
+  toDate
+}) {
   const pluginData = {
     deviceId: ZenMoney.getData('deviceId'),
     sessionId: ZenMoney.getData('sessionId'),
@@ -53,7 +64,7 @@ export async function scrape ({ preferences: { username, password }, fromDate, t
 
   const fetchProbe = () => Promise.all([
     fetchCards(),
-    fetchPaymentsArchive({
+    fetchArchiveTransactionsResponse({
       fromDate,
       toDate
     })
@@ -63,22 +74,34 @@ export async function scrape ({ preferences: { username, password }, fromDate, t
     ? await fetchProbe()
     : null
   if (probe === null || probe.some((x) => x.status === 401)) {
-    await login({ deviceId: pluginData.deviceId, username, password })
+    await login({
+      deviceId: pluginData.deviceId,
+      username,
+      password
+    })
     probe = await fetchProbe()
   }
-  const [cardsResponse, paymentsResponse] = probe
+  const [cardsResponse, archiveResponse] = probe
   assertResponseSuccess(cardsResponse)
-  const paymentsArchive = extractPaymentsArchive(paymentsResponse)
+  const archiveTxs = unpackArchiveTransactions(archiveResponse)
+
   const accounts = cardsResponse.body
     .filter((card) => !ZenMoney.isAccountSkipped(calculateAccountId(card)))
     .map((card) => convertToZenMoneyAccount(card))
-  const apiTransactionsByAccount = _.flatten(await Promise.all(accounts.map(async (account) => ({
-    account,
-    apiTransactions: await fetchTransactions(account.id, fromDate, toDate)
-  }))))
-  const readableTransactions = convertApiTransactionsToReadableTransactions(apiTransactionsByAccount, paymentsArchive)
+  const accountsWithTxs = await Promise.all(accounts.map(async (account) => {
+    const [smsTxs, statementTxs] = await Promise.all([
+      fetchSmsTransactions(account.id, fromDate, toDate),
+      fetchStatementTransactions(account.id, fromDate, toDate)
+    ])
+    return {
+      account,
+      smsTxs,
+      statementTxs
+    }
+  }))
+  const transactions = convertBSBToZenMoneyTransactions(accountsWithTxs, archiveTxs)
   return {
     accounts,
-    transactions: readableTransactions
+    transactions
   }
 }

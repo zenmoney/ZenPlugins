@@ -9,14 +9,18 @@ export function mockCardListRequest ({ response }) {
   })
 }
 
-export function mockArchiveRequest ({ fromDate, toDate, response }) {
+export function mockArchiveRequest ({
+  fromDate,
+  toDate,
+  response
+}) {
   fetchMock.once({
     method: 'POST',
     matcher:
       (url, { body }) => url === 'https://24.bsb.by/mobile/api/archive?lang=ru' && _.isEqual(JSON.parse(body), {
         page: {
           pageNumber: 0,
-          pageSize: 1000
+          pageSize: 2147483647
         },
         fromDate,
         toDate
@@ -25,7 +29,12 @@ export function mockArchiveRequest ({ fromDate, toDate, response }) {
   })
 }
 
-export function mockTransactionsRequest ({ id, fromDate, toDate, response }) {
+export function mockCardSmsTxsRequest ({
+  id,
+  fromDate,
+  toDate,
+  response
+}) {
   fetchMock.once({
     method: 'POST',
     matcher:
@@ -33,6 +42,26 @@ export function mockTransactionsRequest ({ id, fromDate, toDate, response }) {
         fromDate,
         toDate
       }),
+    response
+  })
+}
+
+export function mockCardStatementTxsRequest ({
+  id,
+  fromDate,
+  toDate,
+  response
+}) {
+  fetchMock.once({
+    method: 'POST',
+    headers: {
+      Accept: 'application/json, text/plain, */*',
+      'Content-Type': 'application/json;charset=UTF-8'
+    },
+    matcher: (url, { body }) => url === `https://24.bsb.by/mobile/api/cards/${id}/statement?lang=ru` && _.isEqual(JSON.parse(body), {
+      fromDate,
+      toDate
+    }),
     response
   })
 }
@@ -45,7 +74,12 @@ export function mockLogout () {
   })
 }
 
-export function mockLogin ({ username, password, deviceId, response }) {
+export function mockLogin ({
+  username,
+  password,
+  deviceId,
+  response
+}) {
   fetchMock.once({
     method: 'POST',
     matcher: (url, { body }) => url === 'https://24.bsb.by/mobile/api/authorization?lang=ru' && _.isEqual(JSON.parse(body), {
