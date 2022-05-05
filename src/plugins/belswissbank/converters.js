@@ -1,20 +1,12 @@
 import _ from 'lodash'
-import {
-  addMovement,
-  formatCalculatedRateLine,
-  formatCommentFeeLine,
-  formatRate,
-  getSingleReadableTransactionMovement,
-  joinCommentLines,
-  makeCashTransferMovement
-} from '../../common/converters'
-import { formatCommentDateTime } from '../../common/dateUtils'
+import { addMovement, formatCommentFeeLine, getSingleReadableTransactionMovement, makeCashTransferMovement } from '../../common/converters'
 import { mergeTransfers } from '../../common/mergeTransfers'
 import {
   currencyCodeToIsoCurrency,
-  figureOutAccountRestsDelta, getTransactionFactor,
+  getTransactionFactor,
   isCashTransferTransaction,
-  isElectronicTransferTransaction, isRegularSpendTransaction,
+  isElectronicTransferTransaction,
+  isRegularSpendTransaction,
   isRejectedTransaction
 } from './BSB'
 
@@ -29,123 +21,166 @@ export function convertToZenMoneyAccount (apiCard) {
   }
 }
 
-function formatDetails ({ transaction, matchedPayment }) {
-  if (matchedPayment) {
-    return {
-      country: transaction.countryCode || null,
-      city: transaction.city || null,
-      payee: [matchedPayment.name, matchedPayment.target].filter(Boolean).join(', '),
-      comment: matchedPayment.comment || null
-    }
-  }
-  return {
-    country: transaction.countryCode || null,
-    city: transaction.city || null,
-    payee: transaction.transactionDetails,
-    comment: null
-  }
-}
-
-function formatMovementPartialDetails (outcome, income) {
-  const movement = outcome.movement
-  const account = outcome.item.account
-  return joinCommentLines([
-    formatCommentDateTime(outcome.transaction.date),
-    formatCommentFeeLine(movement.fee, account.instrument),
-    outcome.item.account.instrument === income.item.account.instrument
-      ? null
-      : formatCalculatedRateLine(formatRate({
-        invoiceSum: income.movement.sum,
-        sum: Math.abs(outcome.movement.sum)
-      }))
-  ])
-}
-
-function makeRelevantArchivePaymentsGetter (paymentsArchive) {
+function makeArchiveTransactionsJoiner (archiveTxs) {
   const ROUNDING_TICKS = 2 * 60000
-  const roundDate = (ticks) => Math.round(ticks / ROUNDING_TICKS) * ROUNDING_TICKS
-  const paymentsGroupedByTransactionDate = _.groupBy(paymentsArchive, (payment) => roundDate(payment.paymentDate))
-  return (apiTransaction) => {
-    if (apiTransaction.transactionDetails === 'INTERNET-BANKING BSB' || apiTransaction.transactionDetails === 'PERSON TO PERSON I-B BSB') {
-      return paymentsGroupedByTransactionDate[roundDate(apiTransaction.transactionDate)] || []
+  const roundTicks = (ticks) => Math.round(ticks / ROUNDING_TICKS) * ROUNDING_TICKS
+  const txsByRoundedTicks = _.groupBy(archiveTxs, (archiveTx) => roundTicks(archiveTx.paymentDate))
+
+  const joinArchiveTx = (smsTx) => {
+    if (smsTx.transactionDetails === 'INTERNET-BANKING BSB' || smsTx.transactionDetails === 'PERSON TO PERSON I-B BSB') {
+      const items = txsByRoundedTicks[roundTicks(smsTx.transactionDate)]
+      if (items) {
+        const matchIndex = items.findIndex((archiveTx) =>
+          (smsTx.last4.startsWith(archiveTx.last4) || archiveTx.target.slice(0, 4) === smsTx.last4.slice(0, 4)) &&
+          smsTx.transactionCurrency === archiveTx.currencyIso &&
+          smsTx.transactionAmount === archiveTx.amount
+        )
+        if (matchIndex !== -1) {
+          const match = items[matchIndex]
+          items.splice(matchIndex, 1)
+          return match
+        }
+      }
     }
-    return []
+    return null
   }
+
+  return [
+    joinArchiveTx,
+    () => _.flatten(Object.values(txsByRoundedTicks))
+  ]
 }
 
-export function convertApiTransactionsToReadableTransactions (apiTransactionsByAccount, paymentsArchive) {
-  const getRelevantPayments = makeRelevantArchivePaymentsGetter(paymentsArchive)
-  const items = _.flatMap(apiTransactionsByAccount, ({
-    apiTransactions,
-    account
+function parseStatementTxDate (dateString) {
+  // e.g. "20220127 12:00:00"
+  return new Date(dateString.replace(/^(\d{4})(\d{2})(\d{2}) /, (_, y, M, d) => `${y}-${M}-${d}T`))
+}
+
+function makeStatementTransactionsJoiner (statementTxs) {
+  const statementTxsByInvoice = _.groupBy(statementTxs, (statementTx) => {
+    return statementTx.currencyIso + statementTx.transactionAmount.toFixed(2)
+  })
+
+  const orphanSmsTxs = []
+  const joinStatementTx = (smsTx) => {
+    const key = smsTx.transactionCurrency + smsTx.transactionAmount.toFixed(2)
+    const candidates = statementTxsByInvoice[key]
+    if (candidates && candidates.length > 0) {
+      const calcTicksDistance = (statementTx) => Math.abs(parseStatementTxDate(statementTx.realDate).valueOf() - smsTx.transactionDate)
+      const minDateDiffCandidate = _.minBy(candidates, statementTx => calcTicksDistance(statementTx))
+      const distanceDays = calcTicksDistance(minDateDiffCandidate) / (1000 * 3600 * 24)
+      if (distanceDays < 1) {
+        candidates.splice(candidates.indexOf(minDateDiffCandidate), 1)
+        return minDateDiffCandidate
+      }
+    }
+    orphanSmsTxs.push(smsTx)
+    return null
+  }
+  return [
+    joinStatementTx,
+    () => _.flatten(Object.values(statementTxsByInvoice)),
+    () => orphanSmsTxs
+  ]
+}
+
+export function convertBSBToZenMoneyTransactions (accountsWithTxs, archiveTxs) {
+  const [joinArchiveTx, getOrphanArchiveTxs] = makeArchiveTransactionsJoiner(archiveTxs)
+  const items = _.flatMap(accountsWithTxs, ({
+    account,
+    smsTxs,
+    statementTxs
   }) => {
-    return _.sortBy(
-      apiTransactions.filter((transaction) => !isRejectedTransaction(transaction) && transaction.transactionAmount > 0),
+    const [joinStatementTx, getOrphanStatementTxs, getOrphanStatementSmsTxs] = makeStatementTransactionsJoiner(statementTxs.filter(x => x.amount > 0))
+    const result = _.sortBy(
+      smsTxs.filter((smsTx) => !isRejectedTransaction(smsTx) && smsTx.transactionAmount > 0),
       (x) => x.cardTransactionId
     )
-      .map((apiTransaction, index, transactions) => {
-        const invoiceSum = getTransactionFactor(apiTransaction) * apiTransaction.transactionAmount
-        const sum = apiTransaction.transactionCurrency === account.instrument
-          ? invoiceSum
-          : figureOutAccountRestsDelta({ transactions, index, accountCurrency: account.instrument })
-        if (!sum) {
-          console.debug('sum is unknown, ignored transaction', { transaction: apiTransaction })
-          return null
-        }
-        const relevantPayments = getRelevantPayments(apiTransaction)
-        const matchedPayment = relevantPayments.find((payment) =>
-          (apiTransaction.last4.startsWith(payment.last4) || payment.target.slice(0, 4) === apiTransaction.last4.slice(0, 4)) &&
-          payment.currencyIso === apiTransaction.transactionCurrency &&
-          apiTransaction.transactionAmount === payment.amount
-        )
-        const details = formatDetails({ transaction: apiTransaction, matchedPayment })
-        const invoice = account.instrument === apiTransaction.transactionCurrency
-          ? null
-          : { sum: invoiceSum, instrument: apiTransaction.transactionCurrency }
-        const date = new Date(apiTransaction.transactionDate)
+      .map((smsTx) => {
+        const sign = getTransactionFactor(smsTx)
+        const archiveTx = joinArchiveTx(smsTx)
+        const statementTx = joinStatementTx(smsTx)
+        const date = new Date(smsTx.transactionDate)
         const fee = 0
-        const readableTransaction = {
+        const merchantTitle = archiveTx
+          ? [archiveTx.name, archiveTx.target].filter(Boolean).join(', ')
+          : smsTx.transactionDetails || statementTx?.place
+        const transaction = {
           movements: [
             {
-              id: apiTransaction.cardTransactionId.toString(),
+              id: smsTx.cardTransactionId.toString(),
               account: { id: account.id },
-              invoice,
-              sum,
+              invoice: smsTx.transactionCurrency === account.instrument
+                ? null
+                : {
+                    sum: sign * smsTx.transactionAmount,
+                    instrument: smsTx.transactionCurrency
+                  },
+              sum: smsTx.transactionCurrency === account.instrument
+                ? sign * smsTx.transactionAmount
+                : statementTx
+                  ? sign * statementTx.amount
+                  : null,
               fee
             }
           ],
           date,
-          hold: null,
-          merchant: details.payee ? { country: details.country, city: details.city, title: details.payee, mcc: null, location: null } : null,
-          comment: _.compact([
-            details.comment,
-            isRegularSpendTransaction(apiTransaction) ? null : apiTransaction.transactionType
-          ]).join('\n') || null
+          hold: !statementTx,
+          merchant: merchantTitle
+            ? {
+                country: smsTx.countryCode || null,
+                city: smsTx.city || null,
+                title: merchantTitle,
+                mcc: null,
+                location: null
+              }
+            : null,
+          comment: [
+            archiveTx ? archiveTx.comment || null : null,
+            isRegularSpendTransaction(smsTx) ? null : smsTx.transactionType
+          ].filter(Boolean).join('\n') || null
         }
-        if (isCashTransferTransaction(apiTransaction) && !isElectronicTransferTransaction(apiTransaction)) {
-          return { readableTransaction: addMovement(readableTransaction, makeCashTransferMovement(readableTransaction, account.instrument)), account }
+        return {
+          account,
+          transaction: isCashTransferTransaction(smsTx) && !isElectronicTransferTransaction(smsTx)
+            ? addMovement(transaction, makeCashTransferMovement(transaction, account.instrument))
+            : transaction,
+          smsTx
         }
-        return { readableTransaction, apiTransaction, account }
       })
-      .filter(Boolean)
+
+    console.debug({
+      account,
+      orphanStatementTxs: getOrphanStatementTxs(),
+      orphanStatementSmsTxs: getOrphanStatementSmsTxs()
+    })
+
+    return result
   })
+
+  console.debug({ orphanArchiveTxs: getOrphanArchiveTxs() })
+
   return mergeTransfers({
     items,
-    makeGroupKey: ({ readableTransaction, apiTransaction, account }) => {
-      if (readableTransaction.movements.length > 1) {
-        return null
-      }
-      if (!isElectronicTransferTransaction(apiTransaction)) {
-        return null
-      }
-      const movement = getSingleReadableTransactionMovement(readableTransaction)
+    makeGroupKey: ({
+      transaction,
+      account,
+      smsTx = null
+    }) => {
+      if (transaction.movements.length > 1) return null
+      if (!isElectronicTransferTransaction(smsTx)) return null
+      const movement = getSingleReadableTransactionMovement(transaction)
       return [
-        readableTransaction.date.toISOString(),
+        transaction.date.toISOString(),
         movement.invoice === null ? Math.abs(movement.sum) : Math.abs(movement.invoice.sum),
         movement.invoice === null ? account.instrument : movement.invoice.instrument
       ].join('|')
     },
-    selectReadableTransaction: (x) => x.readableTransaction,
-    mergeComments: formatMovementPartialDetails
+    selectReadableTransaction: (x) => x.transaction,
+    mergeComments: (outcome, income) => {
+      const movement = outcome.movement
+      const account = outcome.item.account
+      return formatCommentFeeLine(movement.fee, account.instrument)
+    }
   })
 }

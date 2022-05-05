@@ -15,7 +15,7 @@ import {
   ZPAPIError
 } from '../errors'
 import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId, trimSyncId } from './accounts'
-import { toZenmoneyTransaction } from './converters'
+import { toZenMoneyTransaction } from './converters'
 import { getMidnight, isValidDate } from './dateUtils'
 import { sanitize } from './sanitize'
 import { isDebug } from './utils'
@@ -201,7 +201,7 @@ export function patchTransactions (transactions, accounts) {
   const accountsByIdLookup = _.keyBy(accounts, (x) => x.id)
   return castTransactionDatesToTicks(transactions.map((x) =>
     x.movements
-      ? fixDateTimezones(toZenmoneyTransaction(x, accountsByIdLookup))
+      ? fixDateTimezones(toZenMoneyTransaction(x, accountsByIdLookup))
       : fixDateTimezones(x)
   ))
 }

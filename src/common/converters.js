@@ -1,27 +1,8 @@
 import _ from 'lodash'
 import { isValidDate } from './dateUtils'
 
-export function formatRate ({ invoiceSum, sum }) {
-  const rate = invoiceSum / sum
-  return rate < 1
-    ? `1/${(1 / rate).toFixed(4)}`
-    : rate.toFixed(4)
-}
-
 export function formatCommentFeeLine (fee, instrument) {
   return fee === 0 ? null : `${Math.abs(fee).toFixed(2)} ${instrument} ${fee > 0 ? 'cashback' : 'fee'}`
-}
-
-export function formatInvoiceLine (invoice) {
-  return invoice === null ? null : `${Math.abs(invoice.sum).toFixed(2)} ${invoice.instrument}`
-}
-
-export function formatCalculatedRateLine (rate) {
-  return rate === null ? null : `(rate=${rate})`
-}
-
-export function formatRateLine (sum, invoice) {
-  return invoice === null ? null : formatCalculatedRateLine(formatRate({ invoiceSum: invoice.sum, sum }))
 }
 
 export function joinCommentLines (lines) {
@@ -78,7 +59,13 @@ function serializeZenmoneyAccountReference (account) {
     return account.id
   }
 
-  const { type: t, instrument, syncIds, company, ...rest } = account
+  const {
+    type: t,
+    instrument,
+    syncIds,
+    company,
+    ...rest
+  } = account
   const propsThatMakeNoDifference = Object.keys(rest)
   console.assert(
     propsThatMakeNoDifference.length === 0,
@@ -152,7 +139,7 @@ function assertInvoiceIsNotRedundant (invoice, accountInstrument, context) {
   )
 }
 
-export function toZenmoneyTransaction (readableTransaction, accountsByIdLookup) {
+export function toZenMoneyTransaction (readableTransaction, accountsByIdLookup) {
   const {
     movements,
     date,
@@ -180,7 +167,16 @@ export function toZenmoneyTransaction (readableTransaction, accountsByIdLookup) 
 
   console.assert(merchant === null || _.isPlainObject(merchant), 'merchant must be defined Object:', readableTransaction)
   if (merchant !== null) {
-    const { city, country, title, fullTitle, location, mcc, category, ...merchantRest } = merchant
+    const {
+      city,
+      country,
+      title,
+      fullTitle,
+      location,
+      mcc,
+      category,
+      ...merchantRest
+    } = merchant
 
     assertRestIsEmpty(merchantRest, 'merchant props', readableTransaction)
     console.assert(fullTitle === undefined || (title === undefined && city === undefined && country === undefined),
@@ -205,7 +201,11 @@ export function toZenmoneyTransaction (readableTransaction, accountsByIdLookup) 
     )
 
     if (location !== null) {
-      const { latitude, longitude, ...locationRest } = location
+      const {
+        latitude,
+        longitude,
+        ...locationRest
+      } = location
       assertRestIsEmpty(locationRest, 'merchant.location props', readableTransaction)
 
       console.assert(_.isNumber(latitude), 'merchant.location.latitude must be Number:', readableTransaction)
@@ -220,7 +220,14 @@ export function toZenmoneyTransaction (readableTransaction, accountsByIdLookup) 
     const movement = movements[0]
     console.assert(_.isPlainObject(movement), 'movement must be Object:', readableTransaction)
 
-    const { id, account: accountRef, invoice, sum, fee, ...movementRest } = movement
+    const {
+      id,
+      account: accountRef,
+      invoice,
+      sum,
+      fee,
+      ...movementRest
+    } = movement
     assertRestIsEmpty(movementRest, 'movement props', readableTransaction)
 
     console.assert(id === null || _.isString(id), 'movement.id must be defined String:', readableTransaction)
@@ -232,9 +239,11 @@ export function toZenmoneyTransaction (readableTransaction, accountsByIdLookup) 
 
     assertInvoiceIsNotRedundant(invoice, resolveAccountInstrument(accountRef, serializedAccountRef, accountsByIdLookup), readableTransaction)
 
-    console.assert(sum === null || _.isNumber(sum), 'movement.sum must be null or Number:', readableTransaction)
+    const accountSumIsUnknown = sum === null && invoice !== null
+    console.assert(accountSumIsUnknown || _.isNumber(sum), 'movement .sum can be either null while .invoice is present or be Number:', readableTransaction)
 
     console.assert(_.isNumber(fee), 'movement.fee must be Number:', readableTransaction)
+
     const sign = sum > 0 || invoice?.sum > 0 ? 1 : -1
 
     if (sign >= 0) {
@@ -272,38 +281,83 @@ export function toZenmoneyTransaction (readableTransaction, accountsByIdLookup) 
   } else if (movements.length === 2) {
     for (let movementIndex = 0; movementIndex < movements.length; movementIndex++) {
       const movement = movements[movementIndex]
-      const context = { readableTransaction, movement, movementIndex }
+      const context = {
+        readableTransaction,
+        movement,
+        movementIndex
+      }
       console.assert(_.isPlainObject(movement), 'movement must be Object:', context)
 
-      const { id, account, invoice, sum, fee, ...movementRest } = movement
+      const {
+        id,
+        account,
+        invoice,
+        sum,
+        fee,
+        ...movementRest
+      } = movement
       assertRestIsEmpty(movementRest, 'movement props', context)
 
       console.assert(id === null || _.isString(id), 'movement.id must be defined String:', readableTransaction)
 
       console.assert(invoice === null || _.isPlainObject(invoice), 'invoice must be defined Object:', readableTransaction)
 
-      console.assert(_.isNumber(sum), 'movement.sum must be Number:', readableTransaction)
+      const accountSumIsUnknown = sum === null && invoice !== null
+      console.assert(accountSumIsUnknown || _.isNumber(sum), 'movement .sum can be either null while .invoice is present or be Number:', readableTransaction)
 
-      console.assert(_.isNumber(fee), 'movement.fee must be defined Number:', readableTransaction)
+      console.assert(_.isNumber(fee), 'movement.fee must be Number:', readableTransaction)
     }
-    const [outcomeMovement, incomeMovement] = _.sortBy(movements, (x) => x.sum >= 0)
-    const outcomeSumWithFee = outcomeMovement.sum + outcomeMovement.fee
-    const incomeSumWithFee = incomeMovement.sum + incomeMovement.fee
-    console.assert(
-      outcomeSumWithFee < 0 && incomeSumWithFee >= 0,
-      'movements array[2] must contain both income (sum >= 0) and outcome (sum < 0)',
-      { readableTransaction, outcomeSumWithFee, incomeSumWithFee }
-    )
+    const [outcomeMovement, incomeMovement] = _.sortBy(movements, (x) => x.sum === null ? x.invoice.sum >= 0 : x.sum >= 0)
+    const outcome = (() => {
+      if (outcomeMovement.sum === null) {
+        console.assert(outcomeMovement.invoice.sum < 0, 'outcome movement with null sum must have invoice.sum < 0', {
+          readableTransaction,
+          outcomeMovement
+        })
+        return null
+      }
+
+      const outcomeSumWithFee = outcomeMovement.sum + outcomeMovement.fee
+      console.assert(
+        outcomeSumWithFee < 0,
+        'movements for transfer must contain outcome (sum < 0)',
+        {
+          readableTransaction,
+          outcomeMovement,
+          outcomeSumWithFee
+        }
+      )
+      return Math.abs(outcomeSumWithFee)
+    })()
+    const income = (() => {
+      if (incomeMovement.sum === null) {
+        console.assert(outcomeMovement.invoice.sum >= 0, 'income movement with null sum must have invoice.sum >= 0', {
+          readableTransaction,
+          incomeMovement
+        })
+        return null
+      }
+      const incomeSumWithFee = incomeMovement.sum + incomeMovement.fee
+      console.assert(
+        incomeSumWithFee >= 0,
+        'movements for transfer must contain income (sum >= 0)',
+        {
+          readableTransaction,
+          incomeMovement,
+          incomeSumWithFee
+        }
+      )
+      return Math.abs(incomeSumWithFee)
+    })()
+
     const serializedOutcomeAccountRef = serializeZenmoneyAccountReference(outcomeMovement.account)
     const serializedIncomeAccountRef = serializeZenmoneyAccountReference(incomeMovement.account)
 
-    result.outcome = Math.abs(outcomeSumWithFee)
-
+    result.outcome = outcome
     result.outcomeAccount = serializedOutcomeAccountRef
     result.outcomeBankID = outcomeMovement.id
 
-    result.income = Math.abs(incomeSumWithFee)
-
+    result.income = income
     result.incomeAccount = serializedIncomeAccountRef
     result.incomeBankID = incomeMovement.id
 
