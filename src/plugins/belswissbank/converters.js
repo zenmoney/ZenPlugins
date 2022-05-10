@@ -3,6 +3,7 @@ import { addMovement, formatCommentFeeLine, getSingleReadableTransactionMovement
 import { mergeTransfers } from '../../common/mergeTransfers'
 import {
   currencyCodeToIsoCurrency,
+  figureOutAccountRestsDelta,
   getTransactionFactor,
   isCashTransferTransaction,
   isElectronicTransferTransaction,
@@ -96,7 +97,7 @@ export function convertBSBToZenMoneyTransactions (accountsWithTxs, archiveTxs) {
       smsTxs.filter((smsTx) => !isRejectedTransaction(smsTx) && smsTx.transactionAmount > 0),
       (x) => x.cardTransactionId
     )
-      .map((smsTx) => {
+      .map((smsTx, index, smsTxs) => {
         const sign = getTransactionFactor(smsTx)
         const archiveTx = joinArchiveTx(smsTx)
         const statementTx = joinStatementTx(smsTx)
@@ -105,6 +106,12 @@ export function convertBSBToZenMoneyTransactions (accountsWithTxs, archiveTxs) {
         const merchantTitle = archiveTx
           ? [archiveTx.name, archiveTx.target].filter(Boolean).join(', ')
           : smsTx.transactionDetails || statementTx?.place
+        const invoiceSum = sign * smsTx.transactionAmount
+        const sum = smsTx.transactionCurrency === account.instrument
+          ? invoiceSum
+          : statementTx
+            ? sign * statementTx.amount
+            : figureOutAccountRestsDelta({ transactions: smsTxs, index, accountCurrency: account.instrument })
         const transaction = {
           movements: [
             {
@@ -112,15 +119,8 @@ export function convertBSBToZenMoneyTransactions (accountsWithTxs, archiveTxs) {
               account: { id: account.id },
               invoice: smsTx.transactionCurrency === account.instrument
                 ? null
-                : {
-                    sum: sign * smsTx.transactionAmount,
-                    instrument: smsTx.transactionCurrency
-                  },
-              sum: smsTx.transactionCurrency === account.instrument
-                ? sign * smsTx.transactionAmount
-                : statementTx
-                  ? sign * statementTx.amount
-                  : null,
+                : { sum: invoiceSum, instrument: smsTx.transactionCurrency },
+              sum,
               fee
             }
           ],
