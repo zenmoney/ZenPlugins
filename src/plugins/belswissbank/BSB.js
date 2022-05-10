@@ -271,3 +271,55 @@ export function currencyCodeToIsoCurrency (currencyCode) {
   console.assert(currencyCode in codeToCurrencyLookup, 'unknown currency', currencyCode)
   return codeToCurrencyLookup[currencyCode]
 }
+
+function getAccountRest ({
+  transactions,
+  index,
+  accountCurrency
+}) {
+  console.assert(index >= 0 && index < transactions.length, 'index out of range')
+  const transaction = transactions[index]
+  if (transaction.accountRest === null) {
+    if (transaction.transactionCurrency === accountCurrency && index > 0) {
+      const previousAccountRest = getAccountRest({
+        transactions,
+        index: index - 1,
+        accountCurrency
+      })
+      if (previousAccountRest !== null) {
+        return previousAccountRest + getTransactionFactor(transactions[index]) * transactions[index].transactionAmount
+      }
+    }
+  }
+  return transaction.accountRest
+}
+
+export function figureOutAccountRestsDelta ({
+  transactions,
+  index,
+  accountCurrency
+}) {
+  console.assert(index >= 0 && index < transactions.length, 'index out of range')
+  if (index === 0) {
+    return null
+  }
+  const previousAccountRest = getAccountRest({
+    transactions,
+    index: index - 1,
+    accountCurrency
+  })
+  const currentAccountRest = getAccountRest({
+    transactions,
+    index,
+    accountCurrency
+  })
+  if (previousAccountRest === null || currentAccountRest === null) {
+    return null
+  }
+  const accountDelta = currentAccountRest - previousAccountRest
+  const transactionDelta = getTransactionFactor(transactions[index]) * transactions[index].transactionAmount
+  if (Math.sign(transactionDelta) !== Math.sign(accountDelta)) {
+    return null
+  }
+  return accountDelta
+}
