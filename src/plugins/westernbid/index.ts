@@ -35,6 +35,7 @@ export const scrape: ScrapeFunc<{ login: string, auth: string }> =
       first, ...await Promise.all(range(2, getNumber(first, 'TotalPages') + 1)
         .map(async page => { return await fetchPage(page) }))
     ]
+    const transactions = [].concat(...pages.map(page => getArray(page, 'Data')))
     return {
       accounts: [
         {
@@ -45,8 +46,7 @@ export const scrape: ScrapeFunc<{ login: string, auth: string }> =
           syncIds: ['0000']
         }
       ],
-      transactions: pages
-        .flatMap(page => getArray(page, 'Data'))
+      transactions: transactions
         .map(transaction => {
           let fee = getNumber(transaction, 'amtFee') + getNumber(transaction, 'MBISFee')
           fee = Math.round(fee * 100) / 100
