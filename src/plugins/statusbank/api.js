@@ -120,16 +120,16 @@ function transactionDate (date) {
 async function getTransactions (accountId, fromDate, toDate, sid) {
   return await fetchApi('.admin',
     '<BS_Request>\r\n' +
-  '   <ExecuteAction Id="' + accountId + '">\r\n' +
-  '      <Parameter Id="DateFrom">' + fromDate + '</Parameter>\r\n' +
-  '      <Parameter Id="DateTo">' + toDate + '</Parameter>\r\n' +
-  '   </ExecuteAction>\r\n' +
-  '   <RequestType>ExecuteAction</RequestType>\r\n' +
-  '   <Session SID="' + sid + '"/>\r\n' +
-  '   <TerminalId Version="1.9.12">Android</TerminalId>\r\n' +
-  '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
-  '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-  '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
+    '   <ExecuteAction Id="' + accountId + '">\r\n' +
+    '      <Parameter Id="DateFrom">' + fromDate + '</Parameter>\r\n' +
+    '      <Parameter Id="DateTo">' + toDate + '</Parameter>\r\n' +
+    '   </ExecuteAction>\r\n' +
+    '   <RequestType>ExecuteAction</RequestType>\r\n' +
+    '   <Session SID="' + sid + '"/>\r\n' +
+    '   <TerminalId Version="1.9.12">Android</TerminalId>\r\n' +
+    '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+    '   <Subsystem>ClientAuth</Subsystem>\r\n' +
+    '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
 }
 
 export async function fetchFullTransactions (sid, account, fromDate, toDate = new Date()) {
@@ -268,23 +268,23 @@ export async function fetchDeposits (sid, account) {
   if (response) {
     return await fetchApi('.admin',
       '<BS_Request>\r\n' +
-    '   <MailAttachment Id="' + response.BS_Response.ExecuteAction.MailId + '" No="0"/>\r\n' +
-    '   <RequestType>MailAttachment</RequestType>\r\n' +
-    '   <Session SID="' + sid + '"/>\r\n' +
-    '   <TerminalId Version="1.9.12">Android</TerminalId>\r\n' +
-    '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
-    '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-    '   <TerminalCapabilities>\r\n' +
-    '       <LongParameter>Y</LongParameter>\r\n' +
-    '       <ScreenWidth>99</ScreenWidth>\r\n' +
-    '       <AnyAmount>Y</AnyAmount>\r\n' +
-    '       <BooleanParameter>Y</BooleanParameter>\r\n' +
-    '       <CheckWidth>39</CheckWidth>\r\n' +
-    '       <InputDataSources>\r\n' +
-    '           <InputDataSource>Lookup</InputDataSource>\r\n' +
-    '       </InputDataSources>\r\n' +
-    '   </TerminalCapabilities>\r\n' +
-    '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
+      '   <MailAttachment Id="' + response.BS_Response.ExecuteAction.MailId + '" No="0"/>\r\n' +
+      '   <RequestType>MailAttachment</RequestType>\r\n' +
+      '   <Session SID="' + sid + '"/>\r\n' +
+      '   <TerminalId Version="1.9.12">Android</TerminalId>\r\n' +
+      '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+      '   <Subsystem>ClientAuth</Subsystem>\r\n' +
+      '   <TerminalCapabilities>\r\n' +
+      '       <LongParameter>Y</LongParameter>\r\n' +
+      '       <ScreenWidth>99</ScreenWidth>\r\n' +
+      '       <AnyAmount>Y</AnyAmount>\r\n' +
+      '       <BooleanParameter>Y</BooleanParameter>\r\n' +
+      '       <CheckWidth>39</CheckWidth>\r\n' +
+      '       <InputDataSources>\r\n' +
+      '           <InputDataSource>Lookup</InputDataSource>\r\n' +
+      '       </InputDataSources>\r\n' +
+      '   </TerminalCapabilities>\r\n' +
+      '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
   }
   return null
 }
@@ -310,51 +310,35 @@ export function parseDepositsMail (html) {
     return []
   }
   const card = info.children[2].data.split(' ')[2]
-  let counter = 0
-  let i = 0
   const data = []
-  flatMap($('table[class="section_1"] tr').toArray().slice(1), tr => {
-    if (tr.children.length >= 7) { // Значит это операция, а не просто форматирование
-      for (const td of tr.children) {
-        if (td.children && td.children[0] && td.children[0].type === 'text') {
-          if (counter === 6) {
-            counter = 0
-            i++
-          }
-          if (counter === 0) {
-            data[i] = {
-              cardNum: card,
-              date: null,
-              description: null,
-              type: null,
-              amountReal: null,
-              currencyReal: null,
-              amount: null,
-              currency: null,
-              place: null,
-              authCode: null,
-              mcc: null
-            }
-          }
-          switch (counter) {
-            case 0:
-              data[i].date = td.children[0].data
-              break
-            case 1:
-              data[i].type = td.children[0].data
-              break
-            case 2:
-              data[i].amountReal = Number(parseFloat(td.children[0].data.split(' ')[0].replace(/,/g, '.')))
-              data[i].currencyReal = td.children[0].data.split(' ')[1]
-              break
-            case 5:
-              data[i].place = td.children[0].data
-              break
-          }
-          counter++
-        }
+  const arrTrans = $('table.section_1').toArray()[0].children.slice(1)
+  for (const arrTran of arrTrans) {
+    const arrTranChildrens = arrTran.children[0].children
+    if (arrTranChildrens.length >= 7) { // Значит это операция, а не просто форматирование
+      const child = arrTranChildrens[0].parent.children
+      const date = child[0].children[0].data
+      const type = child[2].children[0].data
+      const amountReal = Number(parseFloat(child[3].children[0].data.split(' ')[0].replace(/,/g, '.')))
+      const currencyReal = child[3].children[0].data.split(' ')[1]
+      const place = child[6].children[0].data
+      if (!date || !type || !amountReal || !currencyReal || !place || isNaN(amountReal)) {
+        throw new Error('unexpected receipt')
       }
+      const dataTran = {
+        cardNum: card,
+        date: date,
+        description: null,
+        type: type,
+        amountReal: amountReal,
+        currencyReal: currencyReal,
+        amount: null,
+        currency: null,
+        place: place,
+        authCode: null,
+        mcc: null
+      }
+      data.push(dataTran)
     }
-  })
+  }
   return data
 }
