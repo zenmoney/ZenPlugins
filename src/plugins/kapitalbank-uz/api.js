@@ -13,7 +13,10 @@ import {
   convertWalletTransaction
 } from './converters'
 
-const baseUrl = 'https://mobile.kapitalbank.uz/api'
+const lang = 'ru'
+const appVersion = 'w0.0.2'
+const baseUrl = 'https://online.kapitalbank.uz/api'
+const baseUrlV2 = baseUrl + '/v2'
 
 /**
  * Регистрирует идентификатор устройства в интернет-банке
@@ -25,8 +28,8 @@ export async function registerDevice () {
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'POST',
     headers: {
-      lang: 'ru',
-      'app-version': 'w0.0.1'
+      lang,
+      'app-version': appVersion
     },
     body: {
       deviceId,
@@ -51,8 +54,8 @@ export async function checkUser (phone) {
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'GET',
     headers: {
-      lang: 'ru',
-      'app-version': 'w0.0.1',
+      lang,
+      'app-version': appVersion,
       'device-id': ZenMoney.getData('deviceId')
     },
     sanitizeRequestLog: { url: { query: { phone: true } }, headers: { 'device-id': true } },
@@ -72,18 +75,19 @@ export async function checkUser (phone) {
  * @param phone номер телефона
  * @param password пароль
  */
-export async function sendSmsCode (phone, password) {
+export async function sendSmsCode (pan, expiry, password) {
   const endpoint = '/login'
 
-  const response = await fetchJson(baseUrl + endpoint, {
+  const response = await fetchJson(baseUrlV2 + endpoint, {
     method: 'POST',
     headers: {
-      lang: 'ru',
-      'app-version': 'w0.0.1',
+      lang,
+      'app-version': appVersion,
       'device-id': ZenMoney.getData('deviceId')
     },
     body: {
-      phone: getPhoneNumber(phone),
+      pan,
+      expiry,
       password,
       reserveSms: false
     },
@@ -109,8 +113,8 @@ export async function getToken (phone, smsCode) {
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'POST',
     headers: {
-      lang: 'ru',
-      'app-version': 'w0.0.1',
+      lang,
+      'app-version': appVersion,
       'device-id': ZenMoney.getData('deviceId')
     },
     sanitizeRequestLog: { url: url => url.replace(getPhoneNumber(phone), sanitize(getPhoneNumber(phone), true)), headers: { 'device-id': true } },
@@ -138,8 +142,8 @@ export async function getUzcardCards () {
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'GET',
     headers: {
-      lang: 'ru',
-      'app-version': 'w0.0.1',
+      lang,
+      'app-version': appVersion,
       'device-id': ZenMoney.getData('deviceId'),
       token: ZenMoney.getData('token')
     },
@@ -162,8 +166,8 @@ export async function getHumoCards () {
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'GET',
     headers: {
-      lang: 'ru',
-      'app-version': 'w0.0.1',
+      lang,
+      'app-version': appVersion,
       'device-id': ZenMoney.getData('deviceId'),
       token: ZenMoney.getData('token')
     },
@@ -186,8 +190,8 @@ export async function getVisaCards () {
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'GET',
     headers: {
-      lang: 'ru',
-      'app-version': 'w0.0.1',
+      lang,
+      'app-version': appVersion,
       'device-id': ZenMoney.getData('deviceId'),
       token: ZenMoney.getData('token')
     },
@@ -210,8 +214,8 @@ export async function getWallets () {
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'GET',
     headers: {
-      lang: 'ru',
-      'app-version': 'w0.0.1',
+      lang,
+      'app-version': appVersion,
       'device-id': ZenMoney.getData('deviceId'),
       token: ZenMoney.getData('token')
     },
@@ -234,8 +238,8 @@ export async function getAccounts () {
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'GET',
     headers: {
-      lang: 'ru',
-      'app-version': 'w0.0.1',
+      lang,
+      'app-version': appVersion,
       'device-id': ZenMoney.getData('deviceId'),
       token: ZenMoney.getData('token')
     },
@@ -268,8 +272,8 @@ export async function getUzcardCardsTransactions (cards, fromDate, toDate) {
       const response = await fetchJson(baseUrl + endpoint, {
         method: 'GET',
         headers: {
-          lang: 'ru',
-          'app-version': 'w0.0.1',
+          lang,
+          'app-version': appVersion,
           'device-id': ZenMoney.getData('deviceId'),
           token: ZenMoney.getData('token')
         },
@@ -307,8 +311,8 @@ export async function getHumoCardsTransactions (cards, fromDate, toDate) {
       const response = await fetchJson(baseUrl + endpoint, {
         method: 'GET',
         headers: {
-          lang: 'ru',
-          'app-version': 'w0.0.1',
+          lang,
+          'app-version': appVersion,
           'device-id': ZenMoney.getData('deviceId'),
           token: ZenMoney.getData('token')
         },
@@ -346,8 +350,8 @@ export async function getVisaCardsTransactions (cards, fromDate, toDate) {
       const response = await fetchJson(baseUrl + endpoint, {
         method: 'GET',
         headers: {
-          lang: 'ru',
-          'app-version': 'w0.0.1',
+          lang,
+          'app-version': appVersion,
           'device-id': ZenMoney.getData('deviceId'),
           token: ZenMoney.getData('token')
         },
@@ -385,8 +389,8 @@ export async function getWalletsTransactions (wallets, fromDate, toDate) {
       const response = await fetchJson(baseUrl + endpoint, {
         method: 'GET',
         headers: {
-          lang: 'ru',
-          'app-version': 'w0.0.1',
+          lang,
+          'app-version': appVersion,
           'device-id': ZenMoney.getData('deviceId'),
           token: ZenMoney.getData('token')
         },
@@ -424,8 +428,8 @@ export async function getAccountsTransactions (accounts, fromDate, toDate) {
       const response = await fetchJson(baseUrl + endpoint, {
         method: 'GET',
         headers: {
-          lang: 'ru',
-          'app-version': 'w0.0.1',
+          lang,
+          'app-version': appVersion,
           'device-id': ZenMoney.getData('deviceId'),
           token: ZenMoney.getData('token')
         },
