@@ -12,6 +12,28 @@
         summary="||{@s}"
     />
     <EditTextPreference
+        key="pan"
+        obligatory="true"
+        inputType="card"
+        title="Номер карты"
+        dialogTitle="Номер карты"
+        dialogMessage="Формат: 1234567812345678"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="||{@s}"
+    />
+    <EditTextPreference
+        key="expiry"
+        obligatory="true"
+        inputType="card"
+        title="Срок действия карты"
+        dialogTitle="Срок действия карты"
+        dialogMessage="Формат MMYY, например 1128"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="||{@s}"
+    />
+    <EditTextPreference
         key="password"
         obligatory="true"
         inputType="textPassword"
