@@ -44,35 +44,44 @@ export async function registerDevice () {
 }
 
 /**
- * Проверка на существование клиента в банке
+ * Проверка на существование клиента в банке и получение номера телефона
  *
- * @param phone номер телефона клиента
+ * @param pan номер карты клиента
+ * @param expiry срок действия карты клиента
+ * @returns номер телефона клиента
  */
-export async function checkUser (phone) {
-  const endpoint = '/check-user?phone=' + getPhoneNumber(phone)
+export async function checkUser (pan, expiry) {
+  const endpoint = '/check-client-card'
 
   const response = await fetchJson(baseUrl + endpoint, {
-    method: 'GET',
+    method: 'POST',
     headers: {
       lang,
       'app-version': appVersion,
       'device-id': ZenMoney.getData('deviceId')
     },
-    sanitizeRequestLog: { url: { query: { phone: true } }, headers: { 'device-id': true } },
+    body: {
+      pan,
+      expiry
+    },
+    sanitizeRequestLog: { url: { query: { pan: true, expiry: true } }, headers: { 'device-id': true } },
     sanitizeResponseLog: { url: { query: { phone: true } } }
   })
 
-  if (response.body?.errorMessage === 'Пользователь не зарегистрирован') {
+  if (!response.body?.data?.client) {
     throw new InvalidPreferencesError()
   }
 
   console.assert(response.ok, 'unexpected check-user response', response)
+
+  return response.body.data.phone
 }
 
 /**
  * Вызвать отправку СМС кода на мобильный телефон
  *
- * @param phone номер телефона
+ * @param pan номер карты клиента
+ * @param expiry срок действия карты клиента
  * @param password пароль
  */
 export async function sendSmsCode (pan, expiry, password) {
@@ -91,7 +100,7 @@ export async function sendSmsCode (pan, expiry, password) {
       password,
       reserveSms: false
     },
-    sanitizeRequestLog: { body: { phone: true, password: true }, headers: { 'device-id': true } }
+    sanitizeRequestLog: { body: { pan: true, expiry: true, password: true }, headers: { 'device-id': true } }
   })
 
   if (response.body?.errorMessage === 'Пользователь не зарегистрирован' || response.body?.errorMessage === 'Неправильный номер телефона или пароль') {
