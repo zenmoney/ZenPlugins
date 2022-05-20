@@ -21,12 +21,12 @@ export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
    */
   if (isFirstRun) {
     await registerDevice()
-    await checkUser(preferences.phone)
+    const phone = await checkUser(preferences.pan, preferences.expiry)
     await sendSmsCode(preferences.pan, preferences.expiry, preferences.password)
 
     const smsCode = await ZenMoney.readLine('Введите код из СМС сообщения')
 
-    await getToken(preferences.phone, smsCode)
+    await getToken(phone, smsCode)
   }
 
   /**
