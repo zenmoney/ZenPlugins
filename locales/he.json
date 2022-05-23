@@ -1,0 +1,7 @@
+{
+  "zenPlugin_invalidPreferencesError": "אחד או יותר מהפרטים שהוזנו שגוי",
+  "zenPlugin_invalidLoginOrPasswordError": "שם משתמש או סיסמא שגויים",
+  "zenPlugin_invalidOtpCodeError": "הזנת קוד שגוי. נסה שוב את חיבור הסינכרון.",
+  "zenPlugin_temporaryUnavailableError": "המידע אינו זמין באופן זמני. חזור על הסינכרון לאחר זמן מה.\n\nאם השגיאה נמשכת, גש להגדרות הסינכרון ולחץ על \"העברת קובץ יומן הרישום לתמיכה\".",
+  "zenPlugin_passwordExpiredError": "The password has expired. Change it in the bank application, and then update it in the connection settings.",
+  "zenPlugin_previousSessionNotClosedError": "הסינכרון נכשל. הבנק אינו מאפשר סינכרון אם יישום הבנק פעיל. לחץ על \"יציאה\" ביישום הבנק והתחל את הסינכרון ב- Zenmoney שוב."}

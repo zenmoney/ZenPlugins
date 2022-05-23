@@ -1,0 +1,5 @@
+{
+  "zenPlugin_invalidLoginOrPasswordError": "Incorrect login or password",
+  "zenPlugin_invalidOtpCodeError": "The code you entered is incorrect. Try to connect the bank again.",
+  "zenPlugin_passwordExpiredError": "The password has expired. Change it in the bank application, and then update it in the connection settings."
+}

@@ -29,6 +29,7 @@ if (!('self' in global)) {
 Object.assign = require('object-assign')
 require('./polyfills/array')
 require('./polyfills/math')
+require('./polyfills/crypto')
 
 if (!('device' in ZenMoney)) {
   ZenMoney.device = {

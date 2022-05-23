@@ -22,6 +22,9 @@ zp_pipe.txt
 
 # VSCode project files
 /.vscode
+.vs/slnx.sqlite
+.vs/VSWorkspaceState.json
+.vs/plugins/v16/.suo
 
 # OS-specific files
 .DS_Store
