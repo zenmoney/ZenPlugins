@@ -1,5 +1,9 @@
 import i18n from 'i18next'
 import _ from 'lodash'
+import en from '../../locales/en.json'
+import es from '../../locales/es.json'
+import he from '../../locales/he.json'
+import pt from '../../locales/pt.json'
 import ru from '../../locales/ru.json'
 import {
   BankMessageError,
@@ -22,6 +26,10 @@ import { isDebug } from './utils'
 
 i18n.init({
   resources: {
+    en: { translation: en },
+    es: { translation: es },
+    he: { translation: he },
+    pt: { translation: pt },
     ru: { translation: ru }
   },
   fallbackLng: 'ru'

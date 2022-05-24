@@ -1,0 +1,8 @@
+{
+  "zenPlugin_bankMessageError": "Se produjo un error durante la sincronización.\n\nMensaje del Banco: {{bankMessage}}",
+  "zenPlugin_incompatibleVersionError": "Tienes una versión anterior de la aplicación Zenmoney. Para que la sincronización funcione correctamente, actualice la aplicación a la última versión.",
+  "zenPlugin_invalidLoginOrPasswordError": "Usuario o contraseña inválidos",
+  "zenPlugin_invalidPreferencesError": "Por favor, verificá los datos ingresados.",
+  "zenPlugin_previousSessionNotClosedError": "La sincronización no pasó. El banco no permite iniciar la sincronización si la aplicación del banco se está ejecutando. Haga clic en Salir en la aplicación del banco e inicie la sincronización en Zenmoney una vez más.",
+  "zenPlugin_temporaryUnavailableError": "La información no está disponible temporalmente. Repita la sincronización después de un tiempo.\n\nSi el error persiste, abra la Configuración de sincronización y haga clic en \"Enviar el log a los desarrolladores\"."
+}

@@ -95,7 +95,7 @@ XMLHttpRequestViaZenAPI.prototype.setRequestHeader = function (key, value) {
     throw new Error('Header key should be truthy')
   }
   if (!value) {
-    throw new Error('Header value should be truthy')
+    throw new Error('Header value should be truthy ' + key)
   }
   this._requestHeaders[key] = value
 }
