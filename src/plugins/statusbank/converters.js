@@ -29,7 +29,7 @@ export function convertAccount (ob) {
 }
 
 export function convertTransaction (apiTransaction, account) {
-  if (apiTransaction.amount !== 0) {
+  if ((apiTransaction.amount && apiTransaction.amount !== 0) || (apiTransaction.amountReal && apiTransaction.amountReal !== 0)) {
     const transaction = {
       date: getDate(apiTransaction.date),
       movements: [getMovement(apiTransaction, account)],
@@ -44,6 +44,8 @@ export function convertTransaction (apiTransaction, account) {
     ].some(parser => parser(transaction, apiTransaction))
 
     return transaction
+  } else {
+    return false
   }
 }
 

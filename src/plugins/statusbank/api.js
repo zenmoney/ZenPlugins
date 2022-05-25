@@ -321,7 +321,7 @@ export function parseDepositsMail (html) {
       const amountReal = Number(parseFloat(child[3].children[0].data.split(' ')[0].replace(/,/g, '.')))
       const currencyReal = child[3].children[0].data.split(' ')[1]
       const place = child[6].children[0].data
-      if (!date || !type || !amountReal || !currencyReal || !place || isNaN(amountReal)) {
+      if (!date || !type || !currencyReal || !place || isNaN(amountReal)) {
         throw new Error('unexpected receipt')
       }
       const dataTran = {
