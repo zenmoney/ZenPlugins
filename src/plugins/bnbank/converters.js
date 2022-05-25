@@ -78,9 +78,11 @@ export function convertTransaction (apiTransaction, accounts) {
     return account.syncID.indexOf(apiTransaction.accountNumber) !== -1
   })
   const sign = (apiTransaction.operationCode && apiTransaction.operationCode === 3) || (apiTransaction.operationSign === '-1') ? -1 : 1
+  const currency = apiTransaction.transactionCurrency
+  const transactionCurrency = currency.length === 3 ? currency : currency.length === 2 ? `0${currency}` : `00${currency}`
   const invoice = {
     sum: sign * apiTransaction.transactionAmount,
-    instrument: codeToCurrencyLookup[apiTransaction.transactionCurrency]
+    instrument: codeToCurrencyLookup[transactionCurrency]
   }
   let fee = 0
   if (apiTransaction.operationName && apiTransaction.operationName.indexOf('Удержано подоходного налога') >= 0) {
