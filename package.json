@@ -5,6 +5,7 @@
   "dependencies": {
     "@babel/runtime": "7.17.2",
     "@types/cheerio": "0.22.31",
+    "@types/jsrsasign": "10.5.1",
     "@types/lodash": "4.14.178",
     "@types/node-forge": "0.9.1",
     "@types/uuid": "8.3.2",
@@ -21,6 +22,7 @@
     "i18next": "19.1.0",
     "iconv-lite": "0.4.18",
     "jshashes": "1.0.8",
+    "jsrsasign": "10.5.20",
     "ksuid": "1.2.0",
     "lodash": "4.17.21",
     "moment": "2.24.0",
