@@ -12,68 +12,49 @@ function getCurrencyName (id) {
 }
 
 /**
- * Обработка типов счета
- * Спасибо Дмитрию Васильеву (jonny3D) за CodeReview
- *
- * @param rawCard карта/счёт в формате банка
- * @returns карта в формате Дзенмани
- */
-export function handleCardType (rawCard) {
-  // это счёт
-  if (rawCard.type === 7 && rawCard.productAccount.cards.length === 0) {
-    return convertChecking(rawCard)
-  } else if (rawCard.type === 7) { // это карта
-    return convertCard(rawCard)
-  } else throw new Error()
-}
-
-/**
  * Конвертер карты из формата банка в формат Дзенмани
  *
  * @param rawCard карта в формате банка
  * @returns карта в формате Дзенмани
  */
 export function convertCard (rawCard) {
-  const ids = []
-  // eslint-disable-next-line github/array-foreach
-  rawCard.productAccount.cards.forEach((item) => {
-    ids.push(item.number.slice(-4))
-  })
-  const card = {
-    id: String(rawCard.id),
-    title: rawCard.name,
-    syncIds: ids,
-    instrument: getCurrencyName(rawCard.currency),
-    type: 'ccard',
-    balance: parseFloat(rawCard.amount.value)
+  if (rawCard.type !== 7) {
+    return null
   }
+  if (rawCard.productAccount.cards.length === 0) {
+    const account = {
+      id: String(rawCard.id),
+      title: rawCard.name,
+      syncIds: ['null'],
+      instrument: getCurrencyName(rawCard.currency),
+      type: 'checking',
+      balance: parseFloat(rawCard.amount.value)
+    }
 
-  if (!rawCard.name) {
-    card.name = 'Карта KapitalBank ' + ids[0]
-  }
-  return card
-}
+    if (!rawCard.name) {
+      account.title = 'Cчёт KapitalBank ' + getCurrencyName(rawCard.currency)
+    }
+    return account
+  } else {
+    const ids = []
+    // eslint-disable-next-line github/array-foreach
+    rawCard.productAccount.cards.forEach((item) => {
+      ids.push(item.number.slice(-4))
+    })
+    const card = {
+      id: String(rawCard.id),
+      title: rawCard.name,
+      syncIds: ids,
+      instrument: getCurrencyName(rawCard.currency),
+      type: 'ccard',
+      balance: parseFloat(rawCard.amount.value)
+    }
 
-/**
- * Конвертер счёта из формата банка в формат Дзенмани
- *
- * @param rawChecking счёт в формате банка
- * @returns карта в формате Дзенмани
- */
-export function convertChecking (rawChecking) {
-  const account = {
-    id: String(rawChecking.id),
-    title: rawChecking.name,
-    syncIds: [rawChecking.name],
-    instrument: getCurrencyName(rawChecking.currency),
-    type: 'checking',
-    balance: parseFloat(rawChecking.amount.value)
+    if (!rawCard.name) {
+      card.name = 'Карта KapitalBank ' + ids[0]
+    }
+    return card
   }
-
-  if (!rawChecking.name) {
-    account.title = 'Cчёт KapitalBank ' + getCurrencyName(rawChecking.currency)
-  }
-  return account
 }
 
 /**
