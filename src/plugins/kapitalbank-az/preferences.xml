@@ -6,7 +6,11 @@
         inputType="phone"
         title="Номер телефона"
         dialogTitle="Номер телефона"
+<<<<<<< HEAD
         dialogMessage="Формат: 994507777777"
+=======
+        dialogMessage="Формат: 998967777777"
+>>>>>>> [kapitalbank-az] first commit
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="||{@s}"
