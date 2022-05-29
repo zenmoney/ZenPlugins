@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>kapitalbank-az</id>
+    <company>15642</company>
+    <description>ВНИМАНИЕ! Перед авторизацией, надо обязательно войти в приложение BirBank, чтобы интернет-банк зарегистрировал ваше устройство, иначе банк выдаст ошибку!</description>
+    <version>1.0</version>
+    <build>1</build>
+    <modular>true</modular>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+    <codeRequired>false</codeRequired>
+</provider>
