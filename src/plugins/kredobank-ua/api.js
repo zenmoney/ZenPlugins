@@ -48,7 +48,7 @@ async function fetchApi (url, options, auth) {
 }
 
 async function coldAuth ({ login, password }, auth) {
-  const response = await fetchApi(`/v1/individual/light/auth/login/login-password/${auth.device.deviceId}`, {
+  let response = await fetchApi(`/v1/individual/light/auth/login/login-password/${auth.device.deviceId}`, {
     method: 'POST',
     body: {
       deviceDescription: getDeviceDescription(auth),
@@ -67,7 +67,18 @@ async function coldAuth ({ login, password }, auth) {
     throw new InvalidLoginOrPasswordError()
   }
 
-  console.assert(response.body.isAuthCompleted, 'expected authed', response)
+  if (!response.body.isAuthCompleted) {
+    const username = response.body.userInfo.name
+    const authorization = response.headers.authorization
+    console.assert(username && authorization, '2fa cant get params', username, authorization)
+    response = await fetchApi(`https://online.kredobank.com.ua/ibank/api/v1/individual/light/auth/login/otp_sms/challenge?userName=${username}`, {
+      method: 'GET',
+      headers: {
+        Authorization: authorization
+      }
+    })
+    console.assert(false, 'next step', response)
+  }
 
   auth.accessToken = response.headers.authorization
 }
