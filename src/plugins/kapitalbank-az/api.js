@@ -1,64 +1,13 @@
 import { fetchJson } from '../../common/network'
-<<<<<<< HEAD
-import { BankMessageError, InvalidLoginOrPasswordError, InvalidOtpCodeError, InvalidPreferencesError } from '../../errors'
-import {
-  convertCardTransaction, handleCardType
-=======
 import { generateRandomString } from '../../common/utils'
 import { BankMessageError, InvalidLoginOrPasswordError, InvalidOtpCodeError, InvalidPreferencesError } from '../../errors'
 import {
   convertCard, convertCardTransaction
->>>>>>> [kapitalbank-az] first commit
 } from './converters'
 
 const baseUrl = 'https://bankapi.kapitalbank.az/api'
 
 /**
-<<<<<<< HEAD
- * Чтобы избежать засорение девайсами в банке, добавил псевдо-генерацию по номеру телефона.
- * Спасибо Дмитрию Васильеву (jonny3D) за CodeReview
- *
- * @param phone номер телефона
- */
-function generateDeviceIdByPhone (phone) {
-  let result = ''
-  const generator = function (s) {
-    switch (s) {
-      case '+':
-        return 'p'
-      case '0':
-        return 'q'
-      case '1':
-        return '1'
-      case '2':
-        return '2'
-      case '3':
-        return 'g'
-      case '4':
-        return 'l'
-      case '5':
-        return 'm'
-      case '6':
-        return 'r'
-      case '7':
-        return 'e'
-      case '8':
-        return '8'
-      case '9':
-        return 's'
-      default:
-        return 'n'
-    }
-  }
-
-  for (let i = 0; i < phone.length; i++) { result += generator(phone[i]) }
-
-  return result + '_android'
-}
-
-/**
-=======
->>>>>>> [kapitalbank-az] first commit
  * Регистрирует идентификатор устройства в интернет-банке
  *
  * @param phone номер телефона
@@ -82,22 +31,14 @@ export const uA = {
  */
 export async function startRegistrationByIB (phone, password) {
   const endpoint = '/0.3/registration/startRegistrationByIB'
-<<<<<<< HEAD
-  const deviceId = generateDeviceIdByPhone(phone)
-=======
   const deviceId = generateRandomString(16) + '_android'
->>>>>>> [kapitalbank-az] first commit
 
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'POST',
     headers: {},
     body: {
       login: getPhoneNumber(phone),
-<<<<<<< HEAD
-      password,
-=======
       password: password,
->>>>>>> [kapitalbank-az] first commit
       dId: deviceId,
       dt: 'android',
       lang: 'ru',
@@ -129,11 +70,7 @@ export async function getRegistrationData (otp) {
     method: 'POST',
     headers: {},
     body: {
-<<<<<<< HEAD
-      otp,
-=======
       otp: otp,
->>>>>>> [kapitalbank-az] first commit
       registrationId: ZenMoney.getData('registrationId'),
       dId: ZenMoney.getData('deviceId'),
       dt: 'android',
@@ -164,11 +101,7 @@ export async function finalizeRegistration (phone, password) {
     method: 'POST',
     headers: {},
     body: {
-<<<<<<< HEAD
-      password,
-=======
       password: password,
->>>>>>> [kapitalbank-az] first commit
       registrationId: ZenMoney.getData('registrationId'),
       dId: ZenMoney.getData('deviceId'),
       dt: 'android',
@@ -203,11 +136,7 @@ export async function login (phone, password) {
     headers: {},
     body: {
       login: getPhoneNumber(phone),
-<<<<<<< HEAD
-      password,
-=======
       password: password,
->>>>>>> [kapitalbank-az] first commit
       dId: ZenMoney.getData('deviceId'),
       dt: 'android',
       lang: 'ru',
@@ -254,19 +183,11 @@ export async function getProducts () {
 
   console.assert(response.ok, 'unexpected response', response)
 
-<<<<<<< HEAD
-  return response.body.data.map(handleCardType).filter(card => card !== null)
-}
-
-/**
- * Получить список транзакций
-=======
   return response.body.data.map(convertCard).filter(card => card !== null)
 }
 
 /**
  * Получить список транзакций по картам платежной системы UzCard
->>>>>>> [kapitalbank-az] first commit
  *
  * @param cards массив карт
  * @param fromDate дата в формате ISO8601, с которой нужно выгружать транзакции
