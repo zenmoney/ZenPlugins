@@ -6,7 +6,7 @@
         inputType="phone"
         title="Номер телефона"
         dialogTitle="Номер телефона"
-        dialogMessage="Формат: 998967777777"
+        dialogMessage="Формат: 994507777777"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="||{@s}"
