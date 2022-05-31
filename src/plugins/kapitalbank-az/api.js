@@ -1,11 +1,52 @@
 import { fetchJson } from '../../common/network'
-import { generateRandomString } from '../../common/utils'
 import { BankMessageError, InvalidLoginOrPasswordError, InvalidOtpCodeError, InvalidPreferencesError } from '../../errors'
 import {
   convertCard, convertCardTransaction
 } from './converters'
 
 const baseUrl = 'https://bankapi.kapitalbank.az/api'
+
+/**
+ * Чтобы избежать засорение девайсами в банке, добавил псевдо-генерацию по номеру телефона.
+ * Спасибо Дмитрию Васильеву (jonny3D) за CodeReview
+ *
+ * @param phone номер телефона
+ */
+function generateDeviceIdByPhone (phone) {
+  let result = ''
+  const generator = function (s) {
+    switch (s) {
+      case '+':
+        return 'p'
+      case '0':
+        return 'q'
+      case '1':
+        return '1'
+      case '2':
+        return '2'
+      case '3':
+        return 'g'
+      case '4':
+        return 'l'
+      case '5':
+        return 'm'
+      case '6':
+        return 'r'
+      case '7':
+        return 'e'
+      case '8':
+        return '8'
+      case '9':
+        return 's'
+      default:
+        return 'n'
+    }
+  }
+
+  for (let i = 0; i < phone.length; i++) { result += generator(phone[i]) }
+
+  return result + '_android'
+}
 
 /**
  * Регистрирует идентификатор устройства в интернет-банке
@@ -31,7 +72,7 @@ export const uA = {
  */
 export async function startRegistrationByIB (phone, password) {
   const endpoint = '/0.3/registration/startRegistrationByIB'
-  const deviceId = generateRandomString(16) + '_android'
+  const deviceId = generateDeviceIdByPhone(phone)
 
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'POST',
