@@ -1,7 +1,7 @@
 import { fetchJson } from '../../common/network'
 import { BankMessageError, InvalidLoginOrPasswordError, InvalidOtpCodeError, InvalidPreferencesError } from '../../errors'
 import {
-  convertCard, convertCardTransaction
+  convertCardTransaction, handleCardType
 } from './converters'
 
 const baseUrl = 'https://bankapi.kapitalbank.az/api'
@@ -224,11 +224,11 @@ export async function getProducts () {
 
   console.assert(response.ok, 'unexpected response', response)
 
-  return response.body.data.map(convertCard).filter(card => card !== null)
+  return response.body.data.map(handleCardType).filter(card => card !== null)
 }
 
 /**
- * Получить список транзакций по картам платежной системы UzCard
+ * Получить список транзакций
  *
  * @param cards массив карт
  * @param fromDate дата в формате ISO8601, с которой нужно выгружать транзакции
