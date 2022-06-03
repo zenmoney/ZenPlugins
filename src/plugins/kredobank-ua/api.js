@@ -71,7 +71,7 @@ async function coldAuth ({ login, password }, auth) {
     const username = response.body.userInfo.name
     const authorization = response.headers.authorization
     console.assert(username && authorization, '2fa cant get params', username, authorization)
-    response = await fetchApi(`https://online.kredobank.com.ua/ibank/api/v1/individual/light/auth/login/otp_sms/challenge?userName=${username}`, {
+    response = await fetchApi(`/v1/individual/light/auth/login/otp_sms/challenge?userName=${username}`, {
       method: 'GET',
       headers: {
         Authorization: authorization
