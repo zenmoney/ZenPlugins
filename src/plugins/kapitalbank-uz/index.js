@@ -21,14 +21,25 @@ export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
    */
   if (isFirstRun) {
     await registerDevice()
-    const phone = await checkUser(preferences.pan, preferences.expiry)
-    await sendSmsCode(preferences.pan, preferences.expiry, preferences.password)
-
-    const smsCode = await ZenMoney.readLine('Введите код из СМС сообщения')
-
-    await getToken(phone, smsCode)
+    await updateToken(preferences.pan, preferences.expiry, preferences.password)
   }
 
+  try {
+    return await doScrape(fromDate, toDate)
+  } catch {
+    await updateToken(preferences.pan, preferences.expiry, preferences.password)
+    return await doScrape(fromDate, toDate)
+  }
+}
+
+async function updateToken (pan, expiry, password) {
+  const phone = await checkUser(pan, expiry)
+  await sendSmsCode(pan, expiry, password)
+  const smsCode = await ZenMoney.readLine('Введите код из СМС сообщения')
+  await getToken(phone, smsCode)
+}
+
+async function doScrape (fromDate, toDate) {
   /**
    * REGULAR STEPS - Get accounts
    */
