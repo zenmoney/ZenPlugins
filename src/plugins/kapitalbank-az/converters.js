@@ -108,7 +108,8 @@ export function convertCardTransaction (card, rawTransaction) {
           city: null,
           title: rawTransaction.destinationCustom.name,
           mcc: null,
-          location: null
+          location: null,
+          category: rawTransaction.categoryName
         },
     movements: [
       {
