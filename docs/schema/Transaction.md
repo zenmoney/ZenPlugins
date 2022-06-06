@@ -47,6 +47,7 @@ interface Merchant {
     title: string;
     mcc: number | null; // https://ru.wikipedia.org/wiki/Merchant_Category_Code
     location: Location | null;
+    category: string; // Если банк не передаёт MCC, но передаёт название категории
 }
 
 interface NonParsedMerchant {
