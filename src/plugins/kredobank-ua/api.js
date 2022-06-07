@@ -4,11 +4,19 @@ import { createDateIntervals, dateInTimezone } from '../../common/dateUtils'
 import { fetch } from '../../common/network'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { generateRandomString } from '../../common/utils'
-import { InvalidLoginOrPasswordError } from '../../errors'
+import { InvalidLoginOrPasswordError, InvalidOtpCodeError } from '../../errors'
 
 const BASE_URL = 'https://online.kredobank.com.ua/ibank/api'
 const COMMON_HEADERS = {
   'User-Agent': 'okhttp/4.8.1'
+}
+
+async function askOtpCode () {
+  const otp = await ZenMoney.readLine('Введите код из смс', { inputType: 'number' })
+  if (!otp) {
+    throw new InvalidOtpCodeError()
+  }
+  return otp
 }
 
 export function generateDevice () {
@@ -71,15 +79,36 @@ async function coldAuth ({ login, password }, auth) {
     const username = response.body.userInfo.name
     const authorization = response.headers.authorization
     console.assert(username && authorization, '2fa cant get params', username, authorization)
+
     response = await fetchApi(`/v1/individual/light/auth/login/otp_sms/challenge?userName=${username}`, {
       method: 'GET',
       headers: {
         Authorization: authorization
+      },
+      sanitizeRequestLog: { url: { query: { userName: true } }, headers: { Authorization: true } },
+      sanitizeResponseLog: { url: { query: { userName: true } } }
+    })
+    const challengeId = response.body.challengeId
+    console.assert(challengeId, 'cant get challenge id', response)
+
+    response = await fetchApi('/v1/individual/light/auth/login/otp_sms/response', {
+      method: 'POST',
+      headers: {
+        Authorization: authorization
+      },
+      body: {
+        authValue: await askOtpCode(),
+        challenge: { challengeId }
+      },
+      sanitizeRequestLog: { headers: { Authorization: true }, body: { authValue: true, challenge: true } },
+      sanitizeResponseLog: {
+        headers: { authorization: true },
+        body: { profileAttributes: true, userInfo: true }
       }
     })
-    console.assert(false, 'next step', response)
+    console.assert(response.body.isAuthCompleted, 'auth not completed after otp', response)
   }
-
+  console.assert(response.headers.authorization, 'cant get auth token', response)
   auth.accessToken = response.headers.authorization
 }
 
