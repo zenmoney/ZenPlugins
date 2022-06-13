@@ -1,9 +1,14 @@
 export function convertAccount (acc) {
   switch (acc.type) {
     case 'deposit': {
-      const start = getDate(acc.details.match(/Дата открытия:\s(.[0-9.]*)/i)[1])
-      const stop = getDate(acc.details.match(/Срок возврата вклада:\s(.[0-9.]*)/i)[1])
-      const depositDays = (stop - start) / 60 / 60 / 24 / 1000
+      const start = getDate(acc.details.match(/Дата открытия:\s([0-9.]*)/i)[1])
+      let stop
+      const refund = acc.details.match(/Срок возврата вклада:\s([0-9.]*)/i)
+      if (refund && refund[1]) {
+        stop = getDate(refund[1])
+      }
+      const depositDays = stop ? (stop - start) / 60 / 60 / 24 / 1000 : 1
+      const percent = acc.details.match(/Процентная ставка:.*\s(.[0-9.]*)%/i)
       return {
         id: acc.id,
         type: 'deposit',
@@ -12,10 +17,10 @@ export function convertAccount (acc) {
         balance: Number.parseFloat(acc.balance.replace(/\s/g, '')),
         syncID: [acc.id],
         capitalization: true,
-        percent: Number.parseFloat(acc.details.match(/Процентная ставка:.*\s(.[0-9.]*)%/i)[1]),
+        percent: percent && percent[1] ? Number.parseFloat(percent[1]) : 0.01,
         startDate: start,
         endDateOffset: depositDays,
-        endDateOffsetInterval: 'day',
+        endDateOffsetInterval: stop ? 'day' : 'month',
         payoffStep: 1,
         payoffInterval: 'month'
       }
@@ -64,6 +69,9 @@ export function convertTransaction (tr, accounts) {
   if (tr.status === 'operResultError') {
     return null
   }
+  if (tr.inAccountSum === '0.00' && tr.operationSum === '0.00') {
+    return null
+  }
   const account = accounts.find(account => {
     return account.syncID.indexOf(tr.accountID) !== -1
   })
@@ -108,8 +116,14 @@ function getMovement (tr, account) {
 function parseCash (transaction, tr) {
   if (tr.comment.indexOf('Пополнение счета') >= 0 || tr.comment.indexOf('Снятие наличных') >= 0) {
     const { sum, currency } = tr.operationSum === '0.00'
-      ? { sum: tr.inAccountSum, currency: tr.inAccountCurrency }
-      : { sum: tr.operationSum, currency: tr.operationCurrency }
+      ? {
+          sum: tr.inAccountSum,
+          currency: tr.inAccountCurrency
+        }
+      : {
+          sum: tr.operationSum,
+          currency: tr.operationCurrency
+        }
     // добавим вторую часть перевода
     transaction.movements.push({
       id: null,
@@ -145,15 +159,23 @@ function parsePayee (transaction, tr) {
     tr.place = tr.place.replace(replacement[0], replacement[1])
   }
   const parsedPayee = tr.place.match(/(.+)\/([0-9]{4})?/)
-  const fullTitle = parsedPayee && parsedPayee[1] ? parsedPayee[1] : tr.place
+  const title = parsedPayee && parsedPayee[1] ? parsedPayee[1] : tr.place
   const mcc = parsedPayee && parsedPayee[2] ? parseInt(parsedPayee[2], 10) : null
 
-  if (fullTitle || mcc) {
+  if (title) {
     transaction.merchant = {
+      country: null,
+      city: null,
+      title: title.trim(),
       mcc: mcc || null,
-      location: null,
-      fullTitle: fullTitle.trim()
+      location: null
     }
+  }
+  if ([
+    /Покупка\/оплата\/перевод/i,
+    /Безналичное зачисление на счет/i
+  ].some(regexp => tr.comment?.match(regexp))) {
+    transaction.comment = null
   }
 
   return true

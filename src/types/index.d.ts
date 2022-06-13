@@ -5,6 +5,7 @@ declare namespace ZenMoney {
   function clearData (): void
   function isAccountSkipped (id: string): boolean
   function readLine (text: string, options?: { inputType?: 'number' | 'text', time?: number }): Promise<string | null>
+  function alert (text: string): Promise<void>
 
   function setCookie (
     domain: string,

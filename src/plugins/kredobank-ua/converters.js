@@ -151,8 +151,8 @@ export function convertTransaction (apiTransaction, account) {
 }
 
 function parseMerchant (transaction, apiTransaction, account) {
-  const sourceOrDest = apiTransaction.source || apiTransaction.dest || null
-  const idSourceOrDest = account.syncIds.find(item => item.startsWith(sourceOrDest.accountNumber))
+  const sourceOrDest = apiTransaction.source || apiTransaction.destination || null
+  const idSourceOrDest = sourceOrDest ? account.syncIds.find(item => item.startsWith(sourceOrDest.accountNumber)) : null
   let merchant
   if (sourceOrDest && !idSourceOrDest) {
     merchant = sourceOrDest.name || null
