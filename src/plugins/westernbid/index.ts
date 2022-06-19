@@ -3,8 +3,8 @@
  */
 import { AccountType, ScrapeFunc } from '../../types/zenmoney'
 import { fetchJson } from '../../common/network'
-import { getArray, getNumber, getString } from '../../types/get'
-import { range } from 'lodash'
+import { getArray, getNumber, getOptString, getString } from '../../types/get'
+import { flatten, range } from 'lodash'
 
 export const scrape: ScrapeFunc<{ login: string, auth: string }> =
   async ({ preferences, fromDate, toDate }) => {
@@ -35,7 +35,7 @@ export const scrape: ScrapeFunc<{ login: string, auth: string }> =
       first, ...await Promise.all(range(2, getNumber(first, 'TotalPages') + 1)
         .map(async page => { return await fetchPage(page) }))
     ]
-    const transactions = [].concat(...pages.map(page => getArray(page, 'Data')))
+    const transactions = flatten(pages.map(page => getArray(page, 'Data')))
     return {
       accounts: [
         {
@@ -55,7 +55,7 @@ export const scrape: ScrapeFunc<{ login: string, auth: string }> =
             movements: [
               {
                 account: { id: '0' },
-                id: transaction.TransactionId || null,
+                id: getOptString(transaction, 'TransactionId') ?? null,
                 sum: getNumber(transaction, 'amtNet'),
                 fee: 0,
                 invoice: null
