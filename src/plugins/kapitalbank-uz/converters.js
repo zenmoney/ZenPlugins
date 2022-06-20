@@ -187,10 +187,15 @@ export function convertVisaCardTransaction (card, rawTransaction) {
     instrument: rawTransaction.currency.name
   }
 
+  const merchantIgnoreTransactionCodes = [
+    '11M',
+    '110'
+  ]
+
   const transaction = {
     date: new Date(rawTransaction.transDate),
     hold: false,
-    merchant: rawTransaction.back === false
+    merchant: merchantIgnoreTransactionCodes.indexOf(rawTransaction.transCode) < 0
       ? {
           country: null,
           city: null,
@@ -221,7 +226,8 @@ export function convertVisaCardTransaction (card, rawTransaction) {
 function parseOuterTransfer (rawTransaction, transaction, invoice, fee) {
   if (rawTransaction.transType && ![
     /^\d+$/,
-    /товар.* и услуг/i
+    /товар.* и услуг/i,
+    /покупки/i
   ].some(regexp => regexp.test(rawTransaction.transType))) {
     transaction.comment = rawTransaction.transType
   }
