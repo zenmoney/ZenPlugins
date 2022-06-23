@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>monobank-business</id>
+    <company>15620</company>
+    <description>
+        Токен API можно получить по ссылке https://api.monobank.ua/
+		Период получения выписки - последние 30 дней, обновление не чаще раза в минуту
+    </description>
+    <version>1.0</version>
+    <build>1</build>
+    <modular>true</modular>
+    <codeRequired>false</codeRequired>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+</provider>
