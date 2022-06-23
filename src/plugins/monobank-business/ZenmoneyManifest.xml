@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>westernbid</id>
+    <company>15890</company>
+    <description>
+        Как получить ключ API от WesternBid
+        1. В личном кабинете WesternBid выбрать раздел “Служба поддержки” - тему “Подключение к API” и отправить запрос.
+        2. После подтверждения запроса, вам станет доступна генерация ключа API. Находится в самом низу страницы "Мой профиль" личного кабинета WesternBid
+    </description>
+    <version>1.0</version>
+    <build>1</build>
+    <modular>true</modular>
+    <codeRequired>false</codeRequired>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+</provider>
