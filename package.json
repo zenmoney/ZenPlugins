@@ -33,7 +33,7 @@
     "pad-left": "2.1.0",
     "polyfill-crypto.getrandomvalues": "1.0.0",
     "promise": "8.0.1",
-    "protobufjs": "6.11.2",
+    "protobufjs": "6.11.3",
     "querystring-browser": "1.0.4",
     "set-cookie-parser": "2.2.1",
     "sha3": "2.1.4",
