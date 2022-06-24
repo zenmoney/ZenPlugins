@@ -42,6 +42,7 @@ declare namespace ZenMoney {
     version: string
     build: string
   }
+  let locale: string
 }
 
 declare function assert (condition: boolean, ...args: unknown[]): asserts condition
