@@ -22,7 +22,7 @@
     "i18next": "19.1.0",
     "iconv-lite": "0.4.18",
     "jshashes": "1.0.8",
-    "jsrsasign": "10.5.20",
+    "jsrsasign": "10.5.25",
     "ksuid": "1.2.0",
     "lodash": "4.17.21",
     "moment": "2.24.0",
