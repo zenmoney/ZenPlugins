@@ -11,6 +11,7 @@ export interface FetchOptions {
   body?: unknown
   stringify?: unknown
   parse?: unknown
+  redirect?: 'follow' | 'manual'
   binaryResponse?: boolean
   sanitizeRequestLog?: unknown
   sanitizeResponseLog?: unknown
