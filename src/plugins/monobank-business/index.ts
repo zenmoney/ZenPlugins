@@ -41,7 +41,18 @@ export const scrape: ScrapeFunc<{ token: string }> =
           syncIds: [getString(account, 'id')]
         }
         return accountOrCard
-      })
+      }).concat(getArray(info, 'jars')
+        .map(jar => {
+          const currency = currencies[getNumber(jar, 'currencyCode')]
+          const accountOrCard: AccountOrCard = {
+            id: getString(jar, 'id'),
+            type: AccountType.checking,
+            title: getString(jar, 'title') + ' (' + currency + ')',
+            instrument: currency,
+            syncIds: [getString(jar, 'id')]
+          }
+          return accountOrCard
+        }))
     return {
       accounts,
       transactions: ([] as Transaction[]).concat(
