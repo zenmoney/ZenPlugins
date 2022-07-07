@@ -1,5 +1,5 @@
 import { Account, AccountOrCard, AccountType, ExtendedTransaction } from '../../types/zenmoney'
-import { getBoolean, getNumber, getString } from '../../types/get'
+import { getBoolean, getNumber, getOptString, getString } from '../../types/get'
 import { FetchedAccounts } from './models'
 import { find } from 'lodash'
 
@@ -7,7 +7,7 @@ function getBalance (apiAccount: unknown, balances: unknown[]): number | null {
   const id = getNumber(apiAccount, 'id')
   const result = find(balances, { account_id: id })
   if (!result && (getNumber(apiAccount, 'card_status') === -999 || getNumber(apiAccount, 'card_status') === -100 ||
-    getString(apiAccount, 'card_expire_date') === '----')) { // getNumber(apiAccount, 'card_status') !== 1 ???
+    getOptString(apiAccount, 'card_expire_date') === '----' || getOptString(apiAccount, 'card_expire_date') === undefined)) { // getNumber(apiAccount, 'card_status') !== 1 ???
     return null
   }
   assert(result !== undefined, `cant find balance for id=${id}`, balances)
