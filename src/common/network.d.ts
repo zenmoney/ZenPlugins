@@ -13,6 +13,7 @@ export interface FetchOptions {
   parse?: unknown
   redirect?: 'follow' | 'manual'
   binaryResponse?: boolean
+  pfx?: Uint8Array | null
   sanitizeRequestLog?: unknown
   sanitizeResponseLog?: unknown
 }
