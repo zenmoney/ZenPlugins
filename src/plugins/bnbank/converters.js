@@ -73,7 +73,7 @@ export function convertAccount (json, accountType) {
   }
 }
 
-export function convertTransaction (apiTransaction, accounts) {
+export function convertTransaction (apiTransaction, accounts, hold = false) {
   const account = accounts.find(account => {
     return account.syncID.indexOf(apiTransaction.accountNumber) !== -1
   })
@@ -105,7 +105,7 @@ export function convertTransaction (apiTransaction, accounts) {
     ],
     merchant: null,
     comment: null,
-    hold: false
+    hold
   };
   [
     parseCashTransfer,
@@ -164,7 +164,8 @@ function parsePayee (transaction, apiTransaction) {
   if (!apiTransaction.operationPlace ||
     apiTransaction.operationPlace.indexOf('BNB - OPLATA USLUG') >= 0 ||
     apiTransaction.operationPlace.indexOf('Оплата услуг в интернет(мобильном) банкинге') >= 0 ||
-    apiTransaction.operationPlace.indexOf('OPLATA USLUG - KOMPLAT BNB') >= 0) {
+    apiTransaction.operationPlace.indexOf('OPLATA USLUG - KOMPLAT BNB') >= 0 ||
+    apiTransaction.operationPlace.indexOf('BLR MINSK') >= 0) {
     return false
   }
   transaction.merchant = {
