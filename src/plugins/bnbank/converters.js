@@ -100,7 +100,7 @@ export function convertTransaction (apiTransaction, accounts, hold = false) {
         account: { id: account.id },
         invoice: invoice.instrument === account.instrument ? null : invoice,
         sum: invoice.instrument === account.instrument ? invoice.sum : sign * apiTransaction.operationAmount,
-        fee: fee
+        fee
       }
     ],
     merchant: null,

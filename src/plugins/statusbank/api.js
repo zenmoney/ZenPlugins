@@ -326,14 +326,14 @@ export function parseDepositsMail (html) {
       }
       const dataTran = {
         cardNum: card,
-        date: date,
+        date,
         description: null,
-        type: type,
-        amountReal: amountReal,
-        currencyReal: currencyReal,
+        type,
+        amountReal,
+        currencyReal,
         amount: null,
         currency: null,
-        place: place,
+        place,
         authCode: null,
         mcc: null
       }

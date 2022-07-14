@@ -79,7 +79,7 @@ export async function startRegistrationByIB (phone, password) {
     headers: {},
     body: {
       login: getPhoneNumber(phone),
-      password: password,
+      password,
       dId: deviceId,
       dt: 'android',
       lang: 'ru',
@@ -111,7 +111,7 @@ export async function getRegistrationData (otp) {
     method: 'POST',
     headers: {},
     body: {
-      otp: otp,
+      otp,
       registrationId: ZenMoney.getData('registrationId'),
       dId: ZenMoney.getData('deviceId'),
       dt: 'android',
@@ -142,7 +142,7 @@ export async function finalizeRegistration (phone, password) {
     method: 'POST',
     headers: {},
     body: {
-      password: password,
+      password,
       registrationId: ZenMoney.getData('registrationId'),
       dId: ZenMoney.getData('deviceId'),
       dt: 'android',
@@ -177,7 +177,7 @@ export async function login (phone, password) {
     headers: {},
     body: {
       login: getPhoneNumber(phone),
-      password: password,
+      password,
       dId: ZenMoney.getData('deviceId'),
       dt: 'android',
       lang: 'ru',
