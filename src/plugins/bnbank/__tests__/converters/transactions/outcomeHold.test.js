@@ -1,9 +1,21 @@
 import { convertTransaction } from '../../../converters'
 
+const accounts = [
+  {
+    balance: 952.93,
+    currencyCode: '933',
+    id: '3001779330081234',
+    instrument: 'BYN',
+    rkcCode: '5761',
+    syncID: ['1234'],
+    title: 'Цифровая карта 1-2-3, BYN',
+    type: 'card'
+  }
+]
+
 describe('convertTransaction', () => {
   it.each([
     [
-      // холд
       {
         operationPlace: 'BLR MINSK.R-N ',
         merchantId: '5411',
@@ -15,26 +27,8 @@ describe('convertTransaction', () => {
         operationCurrency: '933',
         operationSign: '-1',
         operationType: 6,
-        cardPAN: '5*** **** **** 1234',
-        accountNumber: '3001779330085555'
+        cardPAN: '5*** **** **** 1234'
       },
-      [
-        {
-          balance: 952.93,
-          cardHash: 'aqnytX6wrixe76-CvJlnpPWOtilM4UryO-MmvcsMykxrQaMH46Yvt1dE0FixgRu9AFGAI4j_GstJa1bZGwMOGw',
-          currencyCode: '933',
-          id: '3001779330085555',
-          instrument: 'BYN',
-          rkcCode: '5761',
-          syncID: [
-            '3001779330085555',
-            '1234',
-            '4567'
-          ],
-          title: 'Цифровая карта 1-2-3, BYN',
-          type: 'card'
-        }
-      ],
       {
         comment: null,
         date: new Date('2022-07-07T16:13:19.000Z'),
@@ -43,7 +37,7 @@ describe('convertTransaction', () => {
         movements: [
           {
             account: {
-              id: '3001779330085555'
+              id: '3001779330081234'
             },
             fee: 0,
             id: '343839',
@@ -52,8 +46,75 @@ describe('convertTransaction', () => {
           }
         ]
       }
+    ],
+    [
+      {
+        operationPlace: 'BLR  MINSK.R-N ',
+        merchantId: '5411',
+        transactionAuthCode: '019578',
+        operationDate: 1657725260000,
+        transactionAmount: 24.76,
+        transactionCurrency: '933',
+        operationAmount: 24.76,
+        operationCurrency: '933',
+        operationSign: '-1',
+        operationType: 6,
+        cardPAN: '5*** **** **** 1234'
+      },
+      {
+        comment: null,
+        date: new Date('2022-07-13T15:14:20.000Z'),
+        hold: true,
+        merchant: null,
+        movements: [
+          {
+            account: {
+              id: '3001779330081234'
+            },
+            fee: 0,
+            id: '019578',
+            invoice: null,
+            sum: -24.76
+          }
+        ]
+      }
+    ],
+    [
+      {
+        operationPlace: 'BLR  MINSK ',
+        merchantId: '5411',
+        transactionAuthCode: '663417',
+        operationDate: 1657705642000,
+        transactionAmount: 8.69,
+        transactionCurrency: '933',
+        operationAmount: 8.69,
+        operationCurrency: '933',
+        operationSign: '-1',
+        operationType: 6,
+        cardPAN: '5*** **** **** 1234'
+      },
+      {
+        comment: null,
+        date: new Date('2022-07-13T09:47:22.000Z'),
+        hold: true,
+        merchant: null,
+        movements: [
+          {
+            account: {
+              id: '3001779330081234'
+            },
+            fee: 0,
+            id: '663417',
+            invoice: null,
+            sum: -8.69
+          }
+        ]
+      }
     ]
-  ])('converts outcome', (apiTransaction, accounts, transaction) => {
-    expect(convertTransaction(apiTransaction, accounts, true)).toEqual(transaction)
+  ])('converts outcome', (apiTransaction, transaction) => {
+    expect(convertTransaction({
+      accountNumber: '1234',
+      ...apiTransaction
+    }, accounts, true)).toEqual(transaction)
   })
 })

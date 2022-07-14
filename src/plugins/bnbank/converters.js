@@ -165,7 +165,7 @@ function parsePayee (transaction, apiTransaction) {
     apiTransaction.operationPlace.indexOf('BNB - OPLATA USLUG') >= 0 ||
     apiTransaction.operationPlace.indexOf('Оплата услуг в интернет(мобильном) банкинге') >= 0 ||
     apiTransaction.operationPlace.indexOf('OPLATA USLUG - KOMPLAT BNB') >= 0 ||
-    apiTransaction.operationPlace.indexOf('BLR MINSK') >= 0) {
+    /\bBLR\s+MINSK\b/.test(apiTransaction.operationPlace)) {
     return false
   }
   transaction.merchant = {
