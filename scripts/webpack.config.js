@@ -135,8 +135,7 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
         devMiddleware: {
           publicPath: '/'
         },
-        host: 'localhost', // available on your dev machine only
-        // host: 'local-ip', // available on local network — use with caution: opens security hole allowing credentials leak
+        host: 'localhost',
         port: 'auto',
         webSocketServer: WebsocketServer,
 
