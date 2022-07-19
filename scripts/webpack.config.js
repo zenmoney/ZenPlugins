@@ -11,7 +11,6 @@ const TerserPlugin = require('terser-webpack-plugin')
 const WebpackObfuscator = require('webpack-obfuscator')
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
-const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin')
 const WebsocketServer = require('./debugServers/wsServer')
 const { setupProxyServer } = require('./debugServers/proxyServer')
 const { setupWebServer } = require('./debugServers/webServer')
@@ -91,15 +90,6 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
                 template: paths.windowLoaderHtml
               })]
         : [],
-      new ForkTsCheckerWebpackPlugin({
-        typescript: {
-          diagnosticOptions: {
-            semantic: true,
-            syntactic: true
-          },
-          mode: 'write-references'
-        }
-      }),
       new ESLintPlugin({
         context: paths.appSrc,
         eslintPath: require.resolve('eslint')
