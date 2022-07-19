@@ -1,10 +1,14 @@
 export function convertAccount (json) {
+  let balance = Number.parseFloat(json.freeAmt.replace(/\s/g, ''))
+  if (json.isOverdraft) {
+    balance = Number.parseFloat(json.availableAmt !== null ? json.availableAmt.replace(/\s/g, '') : 0) - Number.parseFloat(json.overdraftAmt.replace(/\s/g, ''))
+  }
   return {
     id: json.id,
     type: 'card',
     title: json.finalName + '*' + json.num.slice(-4),
     instrument: json.currency,
-    balance: Number.parseFloat(json.freeAmt.replace(/\s/g, '')),
+    balance: Math.round(balance * 100) / 100,
     creditLimit: Number.parseFloat(json.availableAmt !== null ? json.availableAmt.replace(/\s/g, '') : 0) -
       Number.parseFloat(json.freeAmt.replace(/\s/g, '')),
     syncID: [json.num.slice(-4)]
