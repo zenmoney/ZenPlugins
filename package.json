@@ -35,6 +35,7 @@
     "promise": "8.0.1",
     "protobufjs": "6.11.2",
     "querystring-browser": "1.0.4",
+    "random-js": "2.1.0",
     "set-cookie-parser": "2.2.1",
     "sha3": "2.1.4",
     "strip-bom": "3.0.0",
