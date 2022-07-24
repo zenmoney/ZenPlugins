@@ -1,17 +1,5 @@
 import fetchMock from 'fetch-mock'
 import { AccountResponse, BlockNoResponse, Preferences, TransactionResponse } from '../api'
-import { EthereumTransaction } from '../types'
-
-const baseOperation: EthereumTransaction = {
-  gasUsed: '21000',
-  hash: '0x90bb0dcbe8fa38387145aa17d6ad99f57da91d4c6d4b65b5f7cf56454f73234b',
-  from: 'ACCOUNT',
-  to: 'OTHER_ACCOUNT',
-  value: '870728990000000000',
-  gasPrice: '15402961964',
-  isError: '0',
-  timeStamp: '1658608646'
-}
 
 export const preferencesMock: Preferences = {
   apiKey: 'API_KEY',
