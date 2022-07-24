@@ -4,7 +4,7 @@ import {
   Transaction
 } from '../../types/zenmoney'
 import { fetchAccounts, fetchAccountTransactions, fetchBlockNoByTime, Preferences } from './api'
-import { convertAccounts, convertTransactions } from './converters'
+import { convertAccounts, convertTransactions, mergetTransferTransactions } from './converters'
 
 export const scrape: ScrapeFunc<Preferences> = async ({
   preferences,
@@ -37,6 +37,6 @@ export const scrape: ScrapeFunc<Preferences> = async ({
 
   return {
     accounts,
-    transactions
+    transactions: mergetTransferTransactions(transactions)
   }
 }

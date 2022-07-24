@@ -73,35 +73,22 @@ describe('scrape', () => {
       {
         hold: null,
         date: new Date('2015-07-30T15:26:28.000Z'),
-        movements: [{
-          id: '3',
-          account: { id: '1' },
-          invoice: null,
-          sum: -1000000,
-          fee: -323
-        }],
-        merchant: {
-          fullTitle: '2',
-          mcc: null,
-          location: null
-        },
-        comment: null
-      },
-      {
-        hold: null,
-        date: new Date('2015-07-30T15:26:28.000Z'),
-        movements: [{
-          id: '3',
-          account: { id: '2' },
-          invoice: null,
-          sum: 1000000,
-          fee: 0
-        }],
-        merchant: {
-          fullTitle: '1',
-          mcc: null,
-          location: null
-        },
+        movements: [
+          {
+            id: '3',
+            account: { id: '1' },
+            invoice: null,
+            sum: -1000000,
+            fee: -323
+          }, {
+            id: '3',
+            account: { id: '2' },
+            invoice: null,
+            sum: 1000000,
+            fee: 0
+          }
+        ],
+        merchant: null,
         comment: null
       }
     ])
