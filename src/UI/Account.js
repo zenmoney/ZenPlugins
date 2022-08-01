@@ -30,7 +30,17 @@ export const Account = ({title, ...rest}) => {
                 float: "right",
             }}
         >
-            <div style={{margin: 5, color: zenmoneyRedColor}}>{title}</div>
+            <div 
+                style={{
+                    margin: 5, 
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis', 
+                    color: zenmoneyRedColor
+                }}
+            >
+                {title}
+            </div>
             <Balance>{calculateBalanceText(rest)}</Balance>
         </div>
     );
