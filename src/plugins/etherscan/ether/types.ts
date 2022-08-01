@@ -1,3 +1,17 @@
+import { Response } from '../common/types'
+
+export interface AccountResponse extends Response {
+  result: EthereumAccount[]
+}
+
+export interface BlockNoResponse extends Response {
+  result: string
+}
+
+export interface TransactionResponse extends Response {
+  result: EthereumTransaction[]
+}
+
 export interface EthereumAccount {
   account: string
   balance: string

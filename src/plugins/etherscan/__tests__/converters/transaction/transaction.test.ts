@@ -1,5 +1,5 @@
-import { convertTransaction } from '../../../converters'
-import { EthereumTransaction } from '../../../types'
+import { convertTransaction } from '../../../ether/converters'
+import { EthereumTransaction } from '../../../ether/types'
 
 const OWN_ACCOUNT = 'ACCOUNT_ID'
 const baseMock: EthereumTransaction = {

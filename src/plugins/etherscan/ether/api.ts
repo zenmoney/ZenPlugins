@@ -1,47 +1,6 @@
-import { stringify } from 'querystring'
-import { fetchJson } from '../../common/network'
-import { TemporaryError } from '../../errors'
-import { EthereumAccount, EthereumTransaction } from './types'
-
-const baseUrl = 'https://api.etherscan.io/api'
-
-export type Auth = string
-
-export interface Preferences {
-  apiKey: string
-  account: string
-}
-
-interface Response {
-  status: string
-  message: string
-}
-
-export interface AccountResponse extends Response {
-  result: EthereumAccount[]
-}
-
-export interface BlockNoResponse extends Response {
-  result: string
-}
-
-export interface TransactionResponse extends Response {
-  result: EthereumTransaction[]
-}
-
-async function fetch<T extends Response> (params: Record<string, string | number>): Promise<T> {
-  const query = stringify(params)
-
-  const response = await fetchJson(`${baseUrl}?${query}`)
-
-  const data = response.body as T
-
-  if (data.message === 'OK') {
-    return data
-  }
-
-  throw new TemporaryError(data.message)
-}
+import { fetch } from '../common'
+import { AccountResponse, BlockNoResponse, EthereumAccount, EthereumTransaction, TransactionResponse } from './types'
+import { Preferences } from '../common/types'
 
 export async function fetchAccounts (
   preferences: Preferences

@@ -1,5 +1,6 @@
 import fetchMock from 'fetch-mock'
-import { AccountResponse, BlockNoResponse, Preferences, TransactionResponse } from '../api'
+import { Preferences } from '../common'
+import { AccountResponse, BlockNoResponse, TransactionResponse } from '../ether/types'
 
 export const preferencesMock: Preferences = {
   apiKey: 'API_KEY',

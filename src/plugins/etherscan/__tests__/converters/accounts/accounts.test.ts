@@ -1,5 +1,5 @@
 import { AccountType } from '../../../../../types/zenmoney'
-import { convertAccounts } from '../../../converters'
+import { convertAccounts } from '../../../ether/converters'
 
 describe('convertAccounts', () => {
   it.each([

@@ -1,4 +1,5 @@
-import { Account, AccountType, Transaction } from '../../types/zenmoney'
+import { Account, AccountType, Transaction } from '../../../types/zenmoney'
+
 import { EthereumAccount, EthereumTransaction } from './types'
 
 function convertWeiToUETH (value: number): number {
@@ -59,7 +60,7 @@ export function convertTransaction (account: string, transaction: EthereumTransa
   }
 }
 
-export function mergetTransferTransactions (transactions: Transaction[]): Transaction[] {
+export function mergeTransferTransactions (transactions: Transaction[]): Transaction[] {
   const list = transactions.reduce<{[key in string]?: Transaction}>((acc, item) => {
     const movementId = item.movements[0].id!
     const existingItem = acc[movementId]
