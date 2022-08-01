@@ -6,7 +6,10 @@ import type { Response, Preferences } from './types'
 
 const baseUrl = 'https://api.etherscan.io/api'
 
-export async function fetch<T extends Response> (params: Record<string, string | number>): Promise<T> {
+const MAX_CONCURRENCY = 5
+let activeList: Array<Promise<unknown>> = []
+
+async function fetchInner<T extends Response> (params: Record<string, string | number>): Promise<T> {
   const query = stringify(params)
 
   const response = await fetchJson(`${baseUrl}?${query}`)
@@ -18,6 +21,19 @@ export async function fetch<T extends Response> (params: Record<string, string |
   }
 
   throw new TemporaryError(data.message)
+}
+
+export async function fetch<T extends Response> (params: Record<string, string | number>): Promise<T> {
+  if (activeList.length < MAX_CONCURRENCY) {
+    const fetcher = fetchInner<T>(params)
+    activeList.push(fetcher)
+    const result = await fetcher
+    activeList = activeList.filter(item => item !== fetcher)
+    return result
+  }
+
+  await Promise.race(activeList)
+  return await fetch<T>(params)
 }
 
 export { Response, Preferences }
