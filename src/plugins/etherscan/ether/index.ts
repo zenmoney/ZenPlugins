@@ -1,24 +1,17 @@
-import { Account, ScrapeFunc, Transaction } from '../../../types/zenmoney'
-import { Preferences } from '../common'
-import { fetchAccounts, fetchAccountTransactions, fetchBlockNoByTime } from './api'
-import { convertAccounts, convertTransactions, mergeTransferTransactions } from './converters'
+import { Account, Transaction } from '../../../types/zenmoney'
+import { Scrape } from '../types'
+import { fetchAccounts, fetchAccountTransactions } from './api'
+import { mergeTransferTransactions } from '../common/converters'
+import { convertAccounts, convertTransactions } from './converters'
 
-export const scrape: ScrapeFunc<Preferences> = async ({
+export const scrape: Scrape = async ({
   preferences,
-  fromDate,
-  toDate
+  startBlock,
+  endBlock
 }) => {
   const transactions: Transaction[] = []
 
-  const [accountsResponse, startBlock, endBlock] = await Promise.all([
-    fetchAccounts(preferences),
-    fetchBlockNoByTime(preferences, {
-      timestamp: Math.floor(fromDate.valueOf() / 1000)
-    }),
-    fetchBlockNoByTime(preferences, {
-      timestamp: Math.floor((toDate ?? new Date()).valueOf() / 1000)
-    })
-  ])
+  const accountsResponse = await fetchAccounts(preferences)
 
   const accounts: Account[] = convertAccounts(accountsResponse)
 

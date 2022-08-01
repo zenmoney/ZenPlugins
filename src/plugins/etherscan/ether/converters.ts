@@ -60,30 +60,6 @@ export function convertTransaction (account: string, transaction: EthereumTransa
   }
 }
 
-export function mergeTransferTransactions (transactions: Transaction[]): Transaction[] {
-  const list = transactions.reduce<{[key in string]?: Transaction}>((acc, item) => {
-    const movementId = item.movements[0].id!
-    const existingItem = acc[movementId]
-
-    if (!existingItem) {
-      acc[movementId] = item
-    } else {
-      acc[movementId] = {
-        ...existingItem,
-        movements: [
-          existingItem.movements[0],
-          item.movements[0]
-        ],
-        merchant: null
-      }
-    }
-
-    return acc
-  }, {})
-
-  return Object.values(list) as Transaction[]
-}
-
 export function convertTransactions (account: string, transactions: EthereumTransaction[]): Transaction[] {
   const list = transactions
     .map((transaction) => convertTransaction(account, transaction))

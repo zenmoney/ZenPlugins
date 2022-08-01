@@ -1,6 +1,6 @@
 import { fetch } from '../common'
-import { AccountResponse, BlockNoResponse, EthereumAccount, EthereumTransaction, TransactionResponse } from './types'
-import { Preferences } from '../common/types'
+import { Preferences } from '../types'
+import { AccountResponse, EthereumAccount, EthereumTransaction, TransactionResponse } from './types'
 
 export async function fetchAccounts (
   preferences: Preferences
@@ -14,21 +14,6 @@ export async function fetchAccounts (
   })
 
   return response.result
-}
-
-export async function fetchBlockNoByTime (
-  preferences: Preferences,
-  { timestamp }: { timestamp: number }
-): Promise<number> {
-  const response = await fetch<BlockNoResponse>({
-    module: 'block',
-    action: 'getblocknobytime',
-    closest: 'before',
-    timestamp,
-    apiKey: preferences.apiKey
-  })
-
-  return Number(response.result)
 }
 
 interface AccountTransactionsOptions {

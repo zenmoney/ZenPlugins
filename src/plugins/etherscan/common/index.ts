@@ -1,8 +1,9 @@
 import { stringify } from 'querystring'
 import { fetchJson } from '../../../common/network'
 import { TemporaryError } from '../../../errors'
+import { Preferences } from '../types'
 
-import type { Response, Preferences } from './types'
+import type { Response, BlockNoResponse } from './types'
 
 const baseUrl = 'https://api.etherscan.io/api'
 
@@ -36,4 +37,19 @@ export async function fetch<T extends Response> (params: Record<string, string |
   return await fetch<T>(params)
 }
 
-export { Response, Preferences }
+export async function fetchBlockNoByTime (
+  preferences: Preferences,
+  { timestamp }: { timestamp: number }
+): Promise<number> {
+  const response = await fetch<BlockNoResponse>({
+    module: 'block',
+    action: 'getblocknobytime',
+    closest: 'before',
+    timestamp,
+    apiKey: preferences.apiKey
+  })
+
+  return Number(response.result)
+}
+
+export { Response }
