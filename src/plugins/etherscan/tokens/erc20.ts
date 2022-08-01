@@ -1,4 +1,4 @@
-import { fetch, Response } from '../common'
+import { fetch } from '../common'
 import { Preferences } from '../types'
 
 import { AccountResponse, TokenAccount, TokenTransaction, TokenTransactionResponse } from './types'

@@ -1,7 +1,6 @@
-import {
-  ScrapeFunc
-} from '../../types/zenmoney'
-import { fetchBlockNoByTime, Preferences } from './common'
+import { ScrapeFunc } from '../../types/zenmoney'
+import { fetchBlockNoByTime } from './common'
+import { Preferences } from './types'
 
 import { scrape as scrapeEther } from './ether'
 import { scrape as scrapeTokens } from './tokens'
