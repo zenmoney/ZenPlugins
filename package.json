@@ -5,6 +5,7 @@
   "dependencies": {
     "@babel/runtime": "7.17.2",
     "@types/cheerio": "0.22.31",
+    "@types/fetch-mock": "^7.3.5",
     "@types/jsrsasign": "10.5.1",
     "@types/lodash": "4.14.178",
     "@types/node-forge": "0.9.1",
@@ -98,7 +99,7 @@
     "start": "yarn && node ./scripts/wrapper.js \"webpack serve --config ./scripts/webpack.config.js --env PLUGIN=\"",
     "host": "yarn && node ./scripts/wrapper.js \"webpack serve --config ./scripts/webpack.config.js --mode=production --env PLUGIN=\"",
     "build": "yarn && node ./scripts/wrapper.js \"webpack build --config ./scripts/webpack.config.js --mode=production --env PLUGIN=\"",
-    "test": "eslint ./src && tsc --noEmit && node ./scripts/wrapper.js \"jest \""
+    "test": "eslint ./src && tsc --noEmit && node ./scripts/wrapper.js \"jest --watch \""
   },
   "jest": {
     "preset": "ts-jest",
