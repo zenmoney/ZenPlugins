@@ -1,5 +1,5 @@
-import { scrape } from '../..'
 import { AccountType } from '../../../../types/zenmoney'
+import { scrape } from '../../ether'
 import { mockEndPoints, preferencesMock } from '../../mocks'
 
 describe('scrape', () => {
@@ -9,8 +9,8 @@ describe('scrape', () => {
     const result = await scrape(
       {
         preferences: preferencesMock,
-        fromDate: new Date('2021-12-27T00:00:00.000+03:00'),
-        toDate: new Date('2022-01-02T00:00:00.000+03:00'),
+        startBlock: 1,
+        endBlock: 99999999,
         isFirstRun: false,
         isInBackground: false
       }
