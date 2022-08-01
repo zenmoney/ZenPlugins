@@ -99,7 +99,7 @@
     "start": "yarn && node ./scripts/wrapper.js \"webpack serve --config ./scripts/webpack.config.js --env PLUGIN=\"",
     "host": "yarn && node ./scripts/wrapper.js \"webpack serve --config ./scripts/webpack.config.js --mode=production --env PLUGIN=\"",
     "build": "yarn && node ./scripts/wrapper.js \"webpack build --config ./scripts/webpack.config.js --mode=production --env PLUGIN=\"",
-    "test": "eslint ./src && tsc --noEmit && node ./scripts/wrapper.js \"jest --watch \""
+    "test": "eslint ./src && tsc --noEmit && node ./scripts/wrapper.js \"jest \""
   },
   "jest": {
     "preset": "ts-jest",
