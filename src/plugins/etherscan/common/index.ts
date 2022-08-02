@@ -1,12 +1,13 @@
 import { stringify } from 'querystring'
 import { fetchJson } from '../../../common/network'
+import { delay } from '../../../common/utils'
 import { Preferences } from '../types'
 
 import type { Response, BlockNoResponse } from './types'
 
 const baseUrl = 'https://api.etherscan.io/api'
 
-const MAX_CONCURRENCY = 5
+const MAX_RPS = 5
 let activeList: Array<Promise<unknown>> = []
 
 async function fetchInner<T extends Response> (params: Record<string, string | number>): Promise<T> {
@@ -24,11 +25,19 @@ async function fetchInner<T extends Response> (params: Record<string, string | n
 }
 
 export async function fetch<T extends Response> (params: Record<string, string | number>): Promise<T> {
-  if (activeList.length < MAX_CONCURRENCY) {
-    const fetcher = fetchInner<T>(params)
-    activeList.push(fetcher)
-    const result = await fetcher
-    activeList = activeList.filter(item => item !== fetcher)
+  if (activeList.length < MAX_RPS) {
+    const request = fetchInner<T>(params)
+
+    const waiter = request
+      .then(async () => await delay(1000))
+      .catch(async () => await delay(1000))
+      .then(() => { // eslint-disable-line @typescript-eslint/no-floating-promises
+        activeList = activeList.filter(item => item !== waiter)
+      })
+    activeList.push(waiter)
+
+    const result = await request
+
     return result
   }
 
