@@ -88,7 +88,7 @@ export async function fetchAccountTransactions (
 
     return transactions
   } catch (error: any) { // eslint-disable-line
-    if (error.message === 'No transactions found') {
+    if (error?.body?.message === 'No transactions found') {
       return []
     }
 

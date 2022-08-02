@@ -1,6 +1,5 @@
 import { stringify } from 'querystring'
 import { fetchJson } from '../../../common/network'
-import { TemporaryError } from '../../../errors'
 import { Preferences } from '../types'
 
 import type { Response, BlockNoResponse } from './types'
@@ -21,7 +20,7 @@ async function fetchInner<T extends Response> (params: Record<string, string | n
     return data
   }
 
-  throw new TemporaryError(data.message)
+  throw response
 }
 
 export async function fetch<T extends Response> (params: Record<string, string | number>): Promise<T> {
