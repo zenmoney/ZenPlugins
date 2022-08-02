@@ -31,29 +31,37 @@ export async function fetchAccountTransactions (
 ): Promise<EthereumTransaction[]> {
   const { account, startBlock, endBlock, page = 1 } = options
 
-  const response = await fetch<TransactionResponse>({
-    module: 'account',
-    action: 'txlist',
-    address: account,
-    startblock: startBlock,
-    endblock: endBlock,
-    page,
-    offset: PAGE_SIZE,
-    sort: 'desc',
-    apikey: preferences.apiKey
-  })
+  try {
+    const response = await fetch<TransactionResponse>({
+      module: 'account',
+      action: 'txlist',
+      address: account,
+      startblock: startBlock,
+      endblock: endBlock,
+      page,
+      offset: PAGE_SIZE,
+      sort: 'desc',
+      apikey: preferences.apiKey
+    })
 
-  const transactions = response.result
+    const transactions = response.result
 
-  if (response.result.length === PAGE_SIZE) {
-    return [
-      ...transactions,
-      ...await fetchAccountTransactions(preferences, {
-        ...options,
-        page: page + 1
-      })
-    ]
+    if (response.result.length === PAGE_SIZE) {
+      return [
+        ...transactions,
+        ...await fetchAccountTransactions(preferences, {
+          ...options,
+          page: page + 1
+        })
+      ]
+    }
+
+    return transactions
+  } catch (error: any) { // eslint-disable-line
+    if (error?.body?.message === 'No transactions found') {
+      return []
+    }
+
+    throw error
   }
-
-  return transactions
 }
