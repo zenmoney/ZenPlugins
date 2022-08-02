@@ -7,7 +7,7 @@
         Для синхронизации укажите ApiKey и адреса кошельков.
     </description>
     <version>1.0</version>
-    <build>2</build>
+    <build>3</build>
     <modular>true</modular>
     <files>
         <js>index.js</js>
