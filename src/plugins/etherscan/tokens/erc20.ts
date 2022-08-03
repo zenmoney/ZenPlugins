@@ -1,3 +1,4 @@
+import flatten from 'lodash/flatten'
 import { fetch } from '../common'
 import { Preferences } from '../types'
 
@@ -42,7 +43,7 @@ export async function fetchAccounts (
     return tokensAccounts
   }))
 
-  return result.flat()
+  return flatten(result)
 }
 
 const PAGE_SIZE = 100
