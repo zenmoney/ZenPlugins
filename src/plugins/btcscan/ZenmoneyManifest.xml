@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
-    <id>etherscan</id>
-    <company>0</company>
+    <id>btcscan</id>
+    <company>15944</company>
     <description>
         Плагин для синхронизации BTC с помощью btcscan.
         Для синхронизации укажите адрес кошелька.
