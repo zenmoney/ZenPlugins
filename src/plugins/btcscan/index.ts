@@ -1,3 +1,5 @@
+
+import flatten from 'lodash/flatten'
 import {
   ScrapeFunc
 } from '../../types/zenmoney'
@@ -21,6 +23,6 @@ export const scrape: ScrapeFunc<Preferences> = async ({
 
   return {
     accounts,
-    transactions: mergeTransferTransactions(transactions.flat())
+    transactions: mergeTransferTransactions(flatten(transactions))
   }
 }
