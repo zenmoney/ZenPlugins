@@ -7978,9 +7978,9 @@ whatwg-fetch@>=0.10.0:
   resolved "https://registry.yarnpkg.com/whatwg-fetch/-/whatwg-fetch-3.6.2.tgz#dced24f37f2624ed0281725d51d0e2e3fe677f8c"
   integrity sha512-bJlen0FcuU/0EMLrdbJ7zOnW6ITZLrZMIarMUVmdKtsGvZna8vxKYaexICWPfZ8qwf9fzNq+UEIZrnSaApt6RA==
 
-"whatwg-fetch@git+https://github.com/skvav/fetch.git#e232caddc2a945135e2e3bb5d3cfff666c2dc6d0":
+"whatwg-fetch@git+https://github.com/skvav/fetch.git#c7664274b2a520f777d2bedc7bbd8f10bef5c5a9":
   version "2.0.3"
-  resolved "git+https://github.com/skvav/fetch.git#e232caddc2a945135e2e3bb5d3cfff666c2dc6d0"
+  resolved "git+https://github.com/skvav/fetch.git#c7664274b2a520f777d2bedc7bbd8f10bef5c5a9"
 
 which-boxed-primitive@^1.0.2:
   version "1.0.2"
