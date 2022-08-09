@@ -42,7 +42,7 @@
     "strip-bom": "3.0.0",
     "thrift": "0.15.0",
     "util": "0.10.3",
-    "whatwg-fetch": "git+https://github.com/skvav/fetch.git#e232caddc2a945135e2e3bb5d3cfff666c2dc6d0",
+    "whatwg-fetch": "git+https://github.com/skvav/fetch.git#c7664274b2a520f777d2bedc7bbd8f10bef5c5a9",
     "xml-js": "1.6.11",
     "xml2js": "0.4.23"
   },

@@ -55,6 +55,9 @@ XMLHttpRequestViaZenAPI.prototype.send = function (body) {
     if ((this.redirect || 'follow') !== 'follow') {
       options = { ...options, manualRedirect: true }
     }
+    if (this.pfx) {
+      options = { ...options, pfx: this.pfx }
+    }
     const responseBody = !method || method.toUpperCase() === 'GET'
       ? ZenMoney.requestGet(url, headers, options)
       : ZenMoney.request(method, url, body, headers, options)
