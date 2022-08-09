@@ -28,6 +28,7 @@ declare namespace ZenMoney {
   function clearCookies (): Promise<void>
 
   function setClientPfx (pfx: Uint8Array | null, domain: string): void
+  function trustCertificates (certs: string[]): void
 
   const device: {
     id: string
