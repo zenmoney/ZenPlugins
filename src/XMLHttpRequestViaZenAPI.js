@@ -55,6 +55,9 @@ XMLHttpRequestViaZenAPI.prototype.send = function (body) {
     if ((this.redirect || 'follow') !== 'follow') {
       options = { ...options, manualRedirect: true }
     }
+    if (this.pfx) {
+      options = { ...options, pfx: this.pfx }
+    }
     const responseBody = !method || method.toUpperCase() === 'GET'
       ? ZenMoney.requestGet(url, headers, options)
       : ZenMoney.request(method, url, body, headers, options)
@@ -94,7 +97,7 @@ XMLHttpRequestViaZenAPI.prototype.setRequestHeader = function (key, value) {
   if (!key) {
     throw new Error('Header key should be truthy')
   }
-  if (!value) {
+  if (!value && value !== '') {
     throw new Error('Header value should be truthy ' + key)
   }
   this._requestHeaders[key] = value

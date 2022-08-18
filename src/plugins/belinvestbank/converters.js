@@ -5,7 +5,8 @@ export function convertAccount (json) {
     title: json.finalName + '*' + json.num.slice(-4),
     instrument: json.currency,
     balance: Number.parseFloat(json.freeAmt.replace(/\s/g, '')),
-    creditLimit: Number.parseFloat(json.overdraftAmt !== null ? json.overdraftAmt.replace(/\s/g, '') : 0),
+    creditLimit: Number.parseFloat(json.availableAmt !== null ? json.availableAmt.replace(/\s/g, '') : 0) -
+      Number.parseFloat(json.freeAmt.replace(/\s/g, '')),
     syncID: [json.num.slice(-4)]
   }
 }

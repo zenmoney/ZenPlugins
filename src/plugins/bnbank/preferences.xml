@@ -3,8 +3,9 @@
     <EditTextPreference
         key="phone"
         obligatory="true"
-        title="Номер телефона"
-        dialogTitle="Номер телефона"
+        title="Логин или номер телефона"
+        dialogTitle="Логин или номер телефона"
+        dialogMessage="Логин или номер телефона без плюса"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="||{@s}"

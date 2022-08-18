@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
-    <id>comdirect</id>
-    <company>15525</company>
-    <description></description>
-    <version>1.0</version>
-    <build>1</build>
+    <id>inecobank-am</id>
+    <version>3.0</version>
+    <build>11</build>
+    <company>15777</company>
     <modular>true</modular>
+    <codeRequired>false</codeRequired>
     <files>
         <js>index.js</js>
         <preferences>preferences.xml</preferences>
     </files>
+    <description></description>
 </provider>

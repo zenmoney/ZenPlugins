@@ -64,7 +64,7 @@ describe('convertTransaction', () => {
         currency: { name: 'USD', scale: 2 },
         approvalCode: '833389',
         back: false,
-        transCode: '000000',
+        transCode: '205',
         reversed: false,
         transAmount: '-19.99',
         transCurrency: 'USD',
@@ -87,6 +87,47 @@ describe('convertTransaction', () => {
             account: { id: 'card' },
             invoice: null,
             sum: -19.99,
+            fee: 0
+          }
+        ]
+      }
+    ],
+    [
+      {
+        transDate: 1652554800000,
+        amount: '-4.99',
+        merchantName: 'SPOTIFY AB',
+        transType: 'Покупки',
+        fee: '0.00',
+        currency: {
+          name: 'USD',
+          scale: 2
+        },
+        approvalCode: '291517',
+        back: true,
+        transCode: '205',
+        reversed: false,
+        transAmount: '-4.99',
+        transCurrency: 'USD',
+        conversionRate: '1'
+      },
+      {
+        date: new Date('2022-05-14T19:00:00.000Z'),
+        hold: false,
+        comment: null,
+        merchant: {
+          country: null,
+          city: null,
+          title: 'SPOTIFY AB',
+          mcc: null,
+          location: null
+        },
+        movements: [
+          {
+            id: null,
+            account: { id: 'card' },
+            invoice: null,
+            sum: -4.99,
             fee: 0
           }
         ]

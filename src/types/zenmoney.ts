@@ -71,12 +71,14 @@ export interface Merchant {
   title: string
   mcc: number | null // https://ru.wikipedia.org/wiki/Merchant_Category_Code
   location: Location | null
+  category?: string
 }
 
 export interface NonParsedMerchant {
   fullTitle: string
   mcc: number | null
   location: Location | null
+  category?: string
 }
 
 export interface Movement {

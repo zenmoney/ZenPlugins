@@ -263,7 +263,7 @@ function getPresentationError (error) {
   const meaningfulError = error && error.message
     ? error
     : new Error('Thrown error must be an object containing message field, but was: ' + JSON.stringify(error))
-  if (!(meaningfulError instanceof ZPAPIError) && !isApiErrorMessage(meaningfulError.message)) {
+  if (/^\[(NCE|NCL)]/.test(meaningfulError.message) || (!(meaningfulError instanceof ZPAPIError) && !isApiErrorMessage(meaningfulError.message))) {
     meaningfulError.message = '[RUE] ' + meaningfulError.message
   }
   meaningfulError.toString = new ZPAPIError().toString

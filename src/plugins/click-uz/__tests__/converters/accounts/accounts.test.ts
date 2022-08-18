@@ -355,6 +355,85 @@ describe('convertAccount', () => {
           type: 'ccard'
         }
       ]
+    ],
+    [
+      {
+        cards:
+          [
+            {
+              id: 18953765,
+              bank_code: '880',
+              bank_name: 'CLICK',
+              bank_short_name: 'CLICK',
+              card_name: 'Kham1dch1kk',
+              card_number: '8801703211773840',
+              card_expire_date: null,
+              card_status: 0,
+              card_status_text: 'Не активна',
+              card_token: null,
+              card_type: 'WALLET',
+              font_color: 'FFFFFFFF',
+              monitoring_status: 0,
+              is_default: false,
+              card_number_hash: 'B4ECD1CB0352CDF2045526A016FF00FF5A831C05F42E9A76F9BD9AF33B37CA84',
+              cardholder: 'CLICK-Кошелек',
+              currency_code: 'UZS',
+              click: false,
+              details: false,
+              securecode_available: false,
+              securecode_status: false,
+              permission:
+                {
+                  payment: 1,
+                  transfer: ['SMARTV', 'WALLET'],
+                  clickpass: 1,
+                  blockable: false,
+                  activation: true,
+                  copy_number: false,
+                  removable: 1
+                },
+              images:
+                {
+                  background: 'https://cdn.click.uz/app/evo/card/wallet/light-bg_v1.png',
+                  logo: 'https://cdn.click.uz/app/evo/card/wallet/light-logo_v3.png',
+                  mini_logo: 'https://cdn.click.uz/app/evo/card/wallet/light-mini-logo_v3.png',
+                  cardtype: null,
+                  cardtype_mini: 'https://cdn.click.uz/app/evo/card/wallet/light-mini-logo_v3.png'
+                },
+              transfer_limits:
+                {
+                  send_min_limit: 1000,
+                  send_max_limit: 999999999,
+                  receive_min_limit: 1000,
+                  receive_max_limit: 1497632.5,
+                  percent: 0
+                },
+              options:
+                {
+                  is_masked: false,
+                  button_set: 'WALLET',
+                  display_type: 'WALLET'
+                }
+            }
+          ],
+        balances: [
+          { account_id: 25700072, balance: 692197.5 },
+          { account_id: 25699681, balance: 177824.23 },
+          { account_id: 25700054, balance: 339268.41 }
+        ]
+      },
+      [
+        {
+          archived: true,
+          balance: null,
+          id: '18953765',
+          instrument: 'UZS',
+          savings: false,
+          syncIds: ['8801703211773840'],
+          title: 'Kham1dch1kk',
+          type: 'checking'
+        }
+      ]
     ]
   ])('convert accounts', (apiAccounts: FetchedAccounts, accounts) => {
     expect(convertAccounts(apiAccounts)).toEqual(accounts)

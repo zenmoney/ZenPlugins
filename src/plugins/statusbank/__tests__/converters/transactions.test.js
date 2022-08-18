@@ -93,6 +93,24 @@ describe('convertTransaction', () => {
             }
           ]
       }
+    },
+    {
+      name: 'internet expense',
+      transaction: {
+        amount: null,
+        amountReal: 0,
+        authCode: null,
+        cardNum: '521058******8691',
+        currency: null,
+        currencyReal: 'BYN',
+        date: '21.05.2022 21:49:40',
+        description: null,
+        mcc: null,
+        place: '899920, EPOS, Term from STATUS STB',
+        type: 'SMENA STATUSA'
+      },
+      expectedTransaction:
+        false
     }
   ]
 

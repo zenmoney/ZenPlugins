@@ -313,6 +313,64 @@ describe('deposits parsing', () => {
           type: 'ZACHISLENIE NA SCHET'
         }
       ]
+    },
+    {
+      name: 'deposit-3',
+      html: '<html><head> <meta http-equiv="Content-Type" content="text/html; charset=windows-1251"> <title>Список операций</title> <style>body{padding:5px;margin:0;font-family:Arial,sans-serif;font-size: 10pt;width:22cm;}table{font-family:Arial,sans-serif;font-size: 8pt;border-collapse: collapse;}thead{background-color: #F1F5F9;}tbody{font-size: 11px;}.section_1{width: 100%;margin: 0;padding: 0;color: #333;font: 12px/16px Arial, Helvetica, sans-serif;font-size: 10px;line-height: 10pt;}.section_1 th{border-bottom: 1px solid #e4e4e4;height: 1cm;margin: 0 auto;}.section_1 td{margin: 0.1cm;padding: 0.1cm;}.section_1 td+td{border-left:1px solid #e4e4e4;}.section_1 tr{margin: 0;padding: 0;}.section_1 tr:last-of-type{border-bottom: 1px solid #e4e4e4;}.col2,.col5 {word-break: normal;}.col1,.col3, .col4 {width: 3cm;}.col2 {width:0.5cm;}.col5 {width: 1.4cm;}.right {float: right;}.summ {text-align: right;}.center {text-align: center;}.disable {color: lightgray} </style></head><body> <table style="font-size:10pt; width:100%;"> <tr> <td><b>ОАО "СтатусБанк"</b></td> <td style="text-align: right;"><b>24.05.2022 20:14:14</b></td> </tr> </table> <p style="margin-right:auto;text-align:center;"> <b>Список операций<br>по карточке 521058******8691</b><br> </p><table class="section_1" cellspacing="0"><thead> <tr><th class="col1">Дата <br>операции</th><th class="col2">От-<br>мена</th><th class="col3">Операция</th><th class="col4 summ">Сумма <br>операции</th><th class="col5">Код авто-<br>ризации</th><th class="col6">RRN</th><th class="col7">Место совершения</th> </tr></thead><tbody><tr ><td class="col1">22.05.2022 16:52:49</td><td class="col2 center"></td><td class="col3">OPLATA</td><td class="col4 summ">-6,14 BYN</td><td class="col5 center">954615</td><td class="col6 center">214216254680</td><td class="col7">SHS10181, POS, SHOP "SOSEDI"</td></tr></tbody><tbody><tr ><td class="col1">22.05.2022 14:06:49</td><td class="col2 center"></td><td class="col3">ZACHISLENIE NA SCHET</td><td class="col4 summ">7,00 BYN</td><td class="col5 center">809351</td><td class="col6 center">001309808041</td><td class="col7">899997, EPOS, STATUSBANK ABS</td></tr></tbody><tbody><tr ><td class="col1">22.05.2022 14:04:44</td><td class="col2 center"></td><td class="col3">ZACHISLENIE NA SCHET</td><td class="col4 summ">53,79 BYN</td><td class="col5 center">807517</td><td class="col6 center">001309806207</td><td class="col7">899997, EPOS, STATUSBANK ABS</td></tr></tbody><tbody><tr ><td class="col1">21.05.2022 21:49:40</td><td class="col2 center"></td><td class="col3">SMENA STATUSA</td><td class="col4 summ">0,00 BYN</td><td class="col5 center">436517</td><td class="col6 center">001309435207</td><td class="col7">899920, EPOS, Term from STATUS STB</td></tr></tbody></table> <p style="margin-right:auto;text-align:center;"> <b>По любым вопросам, касающимся операций по карточке,<br>просим обращаться в офис банка.<br>Для экстренной блокировки карточки звоните по телефону 375(17)360-00-44</b></p></body></html>',
+      expectedTransactions: [
+        {
+          amount: null,
+          amountReal: -6.14,
+          authCode: null,
+          cardNum: '521058******8691',
+          currency: null,
+          currencyReal: 'BYN',
+          date: '22.05.2022 16:52:49',
+          description: null,
+          mcc: null,
+          place: 'SHS10181, POS, SHOP "SOSEDI"',
+          type: 'OPLATA'
+        },
+        {
+          amount: null,
+          amountReal: 7,
+          authCode: null,
+          cardNum: '521058******8691',
+          currency: null,
+          currencyReal: 'BYN',
+          date: '22.05.2022 14:06:49',
+          description: null,
+          mcc: null,
+          place: '899997, EPOS, STATUSBANK ABS',
+          type: 'ZACHISLENIE NA SCHET'
+        },
+        {
+          amount: null,
+          amountReal: 53.79,
+          authCode: null,
+          cardNum: '521058******8691',
+          currency: null,
+          currencyReal: 'BYN',
+          date: '22.05.2022 14:04:44',
+          description: null,
+          mcc: null,
+          place: '899997, EPOS, STATUSBANK ABS',
+          type: 'ZACHISLENIE NA SCHET'
+        },
+        {
+          amount: null,
+          amountReal: 0,
+          authCode: null,
+          cardNum: '521058******8691',
+          currency: null,
+          currencyReal: 'BYN',
+          date: '21.05.2022 21:49:40',
+          description: null,
+          mcc: null,
+          place: '899920, EPOS, Term from STATUS STB',
+          type: 'SMENA STATUSA'
+        }
+      ]
     }
   ]
 

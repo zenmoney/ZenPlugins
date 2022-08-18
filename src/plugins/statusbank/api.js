@@ -311,29 +311,29 @@ export function parseDepositsMail (html) {
   }
   const card = info.children[2].data.split(' ')[2]
   const data = []
-  const arrTrans = $('table.section_1').toArray()[0].children.slice(1)
+  const arrTrans = $('table.section_1').toArray()[0].children.filter((tableRow) => { return tableRow.name === 'tbody' })
   for (const arrTran of arrTrans) {
     const arrTranChildrens = arrTran.children[0].children
     if (arrTranChildrens.length >= 7) { // Значит это операция, а не просто форматирование
-      const child = arrTranChildrens[0].parent.children
+      const child = arrTranChildrens[0].parent.children.filter((tableRow) => { return tableRow.name === 'td' })
       const date = child[0].children[0].data
       const type = child[2].children[0].data
       const amountReal = Number(parseFloat(child[3].children[0].data.split(' ')[0].replace(/,/g, '.')))
       const currencyReal = child[3].children[0].data.split(' ')[1]
       const place = child[6].children[0].data
-      if (!date || !type || !amountReal || !currencyReal || !place || isNaN(amountReal)) {
+      if (!date || !type || !currencyReal || !place || isNaN(amountReal)) {
         throw new Error('unexpected receipt')
       }
       const dataTran = {
         cardNum: card,
-        date: date,
+        date,
         description: null,
-        type: type,
-        amountReal: amountReal,
-        currencyReal: currencyReal,
+        type,
+        amountReal,
+        currencyReal,
         amount: null,
         currency: null,
-        place: place,
+        place,
         authCode: null,
         mcc: null
       }

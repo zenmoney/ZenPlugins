@@ -162,6 +162,68 @@ describe('convertTransaction', () => {
         },
         comment: '3.49 USD'
       }
+    ],
+    [
+      {
+        accountType: '1',
+        concreteType: '1',
+        accountNumber: '3001788400000904',
+        operationName: 'Оплата товаров, работ или услуг',
+        operationPlace: 'GOOGLE *YouTubePremium',
+        merchantId: '249057000020254',
+        transactionAuthCode: '925039',
+        transactionDate: 1647518940000,
+        operationDate: 1647376500000,
+        transactionAmount: 119,
+        transactionCurrency: '32',
+        operationAmount: 1.2,
+        operationCurrency: '840',
+        operationSign: '-1',
+        actionGroup: 1802,
+        operationClosingBalance: 4.33,
+        cardPAN: '5265520002109409',
+        operationCode: 3
+      },
+      [
+        {
+          id: '3001788400000904',
+          type: 'card',
+          title: 'Цифровая карта 1-2-3, USD',
+          currencyCode: '840',
+          instrument: 'USD',
+          balance: 22.65,
+          syncID: [
+            '3001788400000904',
+            '9409'
+          ],
+          rkcCode: '5761'
+        }
+      ],
+      {
+        date: new Date('2022-03-15T20:35:00.000Z'),
+        movements:
+          [
+            {
+              id: '925039',
+              account: { id: '3001788400000904' },
+              invoice: {
+                sum: -119,
+                instrument: 'ARS'
+              },
+              sum: -1.2,
+              fee: 0
+            }
+          ],
+        merchant:
+          {
+            mcc: null,
+            location: null,
+            fullTitle: 'GOOGLE *YouTubePremium'
+          },
+        comment: 'Оплата товаров, работ или услуг',
+        hold: false
+      }
+
     ]
   ])('converts outcome', (apiTransaction, accounts, transaction) => {
     expect(convertTransaction(apiTransaction, accounts)).toEqual(transaction)

@@ -9,7 +9,7 @@ export default class WebSocket {
     const id = initWebSocket(url, options)
     const { pathname } = new URL(url)
     this._url = url
-    this._socket = new global.WebSocket(`ws://localhost:5000${pathname}?${PROXY_TARGET_HEADER}=${id}`, protocols)
+    this._socket = new global.WebSocket(`ws://${global.location.host}${pathname}?${PROXY_TARGET_HEADER}=${id}`, protocols)
     this._socket.binaryType = 'arraybuffer'
     this._socket.onopen = () => {
       if (this.onopen) {
@@ -165,7 +165,7 @@ function initWebSocket (url, options) {
   let id
   try {
     id = JSON.parse(fetchSync({
-      url: 'http://localhost:5000/zen/ws',
+      url: '/zen/ws',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json;charset=UTF-8'
@@ -186,7 +186,7 @@ function initWebSocket (url, options) {
 
 function getWebSocketResponseResult (id) {
   const res = fetchSync({
-    url: `http://localhost:5000/zen/ws/${id}`,
+    url: `/zen/ws/${id}`,
     method: 'GET'
   })
   if (res.status === 200 || res.status === 502) {

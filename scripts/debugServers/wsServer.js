@@ -25,11 +25,11 @@ module.exports = class WebsocketServer extends BaseServer {
     (this.server.server).on(
       'upgrade',
       (req, sock, head) => {
-        if (!this.implementation.shouldHandle(req)) {
-          return
-        }
         if (req.url.indexOf(PROXY_TARGET_HEADER) >= 0) {
           this.server.app.emit('upgradeRequest', req, sock, head)
+          return
+        }
+        if (!this.implementation.shouldHandle(req)) {
           return
         }
 

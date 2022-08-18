@@ -117,7 +117,7 @@ export async function sendSmsCode (pan, expiry, password) {
  * @param smsCode код подтверждения из СМС сообщения
  */
 export async function getToken (phone, smsCode) {
-  const endpoint = '/registration/verify/' + smsCode + '/' + getPhoneNumber(phone)
+  const endpoint = '/registration/verify/' + smsCode + '/' + phone
 
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'POST',
@@ -126,8 +126,8 @@ export async function getToken (phone, smsCode) {
       'app-version': appVersion,
       'device-id': ZenMoney.getData('deviceId')
     },
-    sanitizeRequestLog: { url: url => url.replace(getPhoneNumber(phone), sanitize(getPhoneNumber(phone), true)), headers: { 'device-id': true } },
-    sanitizeResponseLog: { url: url => url.replace(getPhoneNumber(phone), sanitize(getPhoneNumber(phone), true)) }
+    sanitizeRequestLog: { url: url => url.replace(phone, sanitize(phone, true)), headers: { 'device-id': true } },
+    sanitizeResponseLog: { url: url => url.replace(phone, sanitize(phone, true)) }
   })
 
   if (response.body?.errorMessage === 'Пользователь не зарегистрирован' || response.body?.errorMessage === 'Неверный SMS-код') {
@@ -453,20 +453,4 @@ export async function getAccountsTransactions (accounts, fromDate, toDate) {
   }
 
   return transactions
-}
-
-/**
- * Нормализация номера телефона
- *
- * @param rawPhoneNumber номер телефона, предоставленный пользователем
- * @returns 12-значный номер телефона в формате 998901234567
- */
-function getPhoneNumber (rawPhoneNumber) {
-  const normalizedPhoneNumber = /^(?:\+?998)(\d{9})$/.exec(rawPhoneNumber.trim())
-
-  if (normalizedPhoneNumber) {
-    return '998' + normalizedPhoneNumber[1]
-  }
-
-  throw new InvalidPreferencesError()
 }

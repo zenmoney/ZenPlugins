@@ -73,14 +73,16 @@ export function convertAccount (json, accountType) {
   }
 }
 
-export function convertTransaction (apiTransaction, accounts) {
+export function convertTransaction (apiTransaction, accounts, hold = false) {
   const account = accounts.find(account => {
     return account.syncID.indexOf(apiTransaction.accountNumber) !== -1
   })
   const sign = (apiTransaction.operationCode && apiTransaction.operationCode === 3) || (apiTransaction.operationSign === '-1') ? -1 : 1
+  const currency = apiTransaction.transactionCurrency
+  const transactionCurrency = currency.length === 3 ? currency : currency.length === 2 ? `0${currency}` : `00${currency}`
   const invoice = {
     sum: sign * apiTransaction.transactionAmount,
-    instrument: codeToCurrencyLookup[apiTransaction.transactionCurrency]
+    instrument: codeToCurrencyLookup[transactionCurrency]
   }
   let fee = 0
   if (apiTransaction.operationName && apiTransaction.operationName.indexOf('Удержано подоходного налога') >= 0) {
@@ -98,12 +100,12 @@ export function convertTransaction (apiTransaction, accounts) {
         account: { id: account.id },
         invoice: invoice.instrument === account.instrument ? null : invoice,
         sum: invoice.instrument === account.instrument ? invoice.sum : sign * apiTransaction.operationAmount,
-        fee: fee
+        fee
       }
     ],
     merchant: null,
     comment: null,
-    hold: false
+    hold
   };
   [
     parseCashTransfer,
@@ -162,7 +164,8 @@ function parsePayee (transaction, apiTransaction) {
   if (!apiTransaction.operationPlace ||
     apiTransaction.operationPlace.indexOf('BNB - OPLATA USLUG') >= 0 ||
     apiTransaction.operationPlace.indexOf('Оплата услуг в интернет(мобильном) банкинге') >= 0 ||
-    apiTransaction.operationPlace.indexOf('OPLATA USLUG - KOMPLAT BNB') >= 0) {
+    apiTransaction.operationPlace.indexOf('OPLATA USLUG - KOMPLAT BNB') >= 0 ||
+    apiTransaction.operationPlace.indexOf('BLR MINSK') >= 0) {
     return false
   }
   transaction.merchant = {

@@ -12,7 +12,7 @@ export function sanitize (value, mask) {
     return value
   }
   if (_.isString(value)) {
-    return '<string[' + value.length + ']>'
+    return `<string[${value.length}]>`
   }
   if (_.isNumber(value)) {
     return '<number>'
@@ -22,6 +22,10 @@ export function sanitize (value, mask) {
   }
   if (_.isBoolean(value)) {
     return '<bool>'
+  }
+  if (_.isTypedArray(value)) {
+    const arrayTypeName = Object.prototype.toString.call(value).match(/^\[object (.*)]$/i)[1]
+    return `<${arrayTypeName}[${value.length}]>`
   }
   if (_.isArray(value)) {
     return value.map((item) => sanitize(item, mask))

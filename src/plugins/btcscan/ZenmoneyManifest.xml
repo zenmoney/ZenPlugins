@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>btcscan</id>
+    <company>15944</company>
+    <description>
+        Плагин для синхронизации BTC с помощью btcscan.
+        Для синхронизации укажите адрес кошелька.
+    </description>
+    <version>1.0</version>
+    <build>2</build>
+    <modular>true</modular>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+</provider>

@@ -27,6 +27,9 @@ declare namespace ZenMoney {
   function saveCookies (): Promise<void>
   function clearCookies (): Promise<void>
 
+  function setClientPfx (pfx: Uint8Array | null, domain: string): void
+  function trustCertificates (certs: string[]): void
+
   const device: {
     id: string
     manufacturer: string
@@ -42,6 +45,7 @@ declare namespace ZenMoney {
     version: string
     build: string
   }
+  let locale: string
 }
 
 declare function assert (condition: boolean, ...args: unknown[]): asserts condition

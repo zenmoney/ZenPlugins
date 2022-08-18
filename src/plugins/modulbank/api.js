@@ -56,17 +56,9 @@ export async function login () {
 }
 
 export async function fetchAccounts (token) {
-  const response = await fetchJson('https://api.modulbank.ru/v1/account-info', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`
-    },
-    body: {},
-    sanitizeRequestLog: { headers: { Authorization: true } }
+  const response = await callGate('https://api.modulbank.ru/v1/account-info', token, {
+    body: {}
   })
-  if (response.status === 401) {
-    throw new AuthError()
-  }
   const companies = response.body
   const accounts = []
   for (const company of companies) {
@@ -83,17 +75,12 @@ export async function fetchTransactions (token, { id }, fromDate) {
     let response
     try {
       response = await retry({
-        getter: async () => await fetchJson(`https://api.modulbank.ru/v1/operation-history/${id}`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`
-          },
+        getter: async () => await callGate(`https://api.modulbank.ru/v1/operation-history/${id}`, token, {
           body: {
             from: fromDate.toISOString().slice(0, 10),
             skip,
             records: 50
-          },
-          sanitizeRequestLog: { headers: { Authorization: true } }
+          }
         }),
         predicate: response => response.body.message !== 'apierror',
         maxAttempts: 5,
@@ -112,4 +99,21 @@ export async function fetchTransactions (token, { id }, fromDate) {
     skip += batch.length
   } while (batch.length)
   return transactions
+}
+
+async function callGate (url, token, options = {}) {
+  const response = await fetchJson(url, {
+    method: 'POST',
+    headers: {
+      Company: 'Zenmoney',
+      Authorization: `Bearer ${token}`
+    },
+    body: options.body,
+    sanitizeRequestLog: { headers: { Authorization: true } }
+  })
+  switch (response.status) {
+    case 401: throw new AuthError()
+    case 404: throw new Error()
+  }
+  return response
 }
