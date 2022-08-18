@@ -1,11 +1,52 @@
 import { fetchJson } from '../../common/network'
-import { generateRandomString } from '../../common/utils'
 import { BankMessageError, InvalidLoginOrPasswordError, InvalidOtpCodeError, InvalidPreferencesError } from '../../errors'
 import {
   convertCardTransaction, handleCardType
 } from './converters'
 
 const baseUrl = 'https://bankapi.kapitalbank.az/api'
+
+/**
+ * Чтобы избежать засорение девайсами в банке, добавил псевдо-генерацию по номеру телефона.
+ * Спасибо Дмитрию Васильеву (jonny3D) за CodeReview
+ *
+ * @param phone номер телефона
+ */
+function generateDeviceIdByPhone (phone) {
+  let result = ''
+  const generator = function (s) {
+    switch (s) {
+      case '+':
+        return 'p'
+      case '0':
+        return 'q'
+      case '1':
+        return '1'
+      case '2':
+        return '2'
+      case '3':
+        return 'g'
+      case '4':
+        return 'l'
+      case '5':
+        return 'm'
+      case '6':
+        return 'r'
+      case '7':
+        return 'e'
+      case '8':
+        return '8'
+      case '9':
+        return 's'
+      default:
+        return 'n'
+    }
+  }
+
+  for (let i = 0; i < phone.length; i++) { result += generator(phone[i]) }
+
+  return result + '_android'
+}
 
 /**
  * Регистрирует идентификатор устройства в интернет-банке
@@ -15,13 +56,11 @@ const baseUrl = 'https://bankapi.kapitalbank.az/api'
  */
 
 export const uA = {
-  uA: {
-    r: true,
-    m: 'ZenMoney',
-    os: 'android',
-    osV: '11',
-    v: '2.19.1'
-  }
+  r: true,
+  m: 'ZenMoney',
+  os: 'android',
+  osV: '11',
+  v: '2.19.1'
 }
 
 /**
@@ -31,14 +70,14 @@ export const uA = {
  */
 export async function startRegistrationByIB (phone, password) {
   const endpoint = '/0.3/registration/startRegistrationByIB'
-  const deviceId = generateRandomString(16) + '_android'
+  const deviceId = generateDeviceIdByPhone(phone)
 
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'POST',
     headers: {},
     body: {
       login: getPhoneNumber(phone),
-      password: password,
+      password,
       dId: deviceId,
       dt: 'android',
       lang: 'ru',
@@ -70,7 +109,7 @@ export async function getRegistrationData (otp) {
     method: 'POST',
     headers: {},
     body: {
-      otp: otp,
+      otp,
       registrationId: ZenMoney.getData('registrationId'),
       dId: ZenMoney.getData('deviceId'),
       dt: 'android',
@@ -101,7 +140,7 @@ export async function finalizeRegistration (phone, password) {
     method: 'POST',
     headers: {},
     body: {
-      password: password,
+      password,
       registrationId: ZenMoney.getData('registrationId'),
       dId: ZenMoney.getData('deviceId'),
       dt: 'android',
@@ -130,13 +169,12 @@ export async function finalizeRegistration (phone, password) {
  */
 export async function login (phone, password) {
   const endpoint = '/0.3/authentication/login'
-
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'POST',
     headers: {},
     body: {
       login: getPhoneNumber(phone),
-      password: password,
+      password,
       dId: ZenMoney.getData('deviceId'),
       dt: 'android',
       lang: 'ru',

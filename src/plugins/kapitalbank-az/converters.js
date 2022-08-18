@@ -12,7 +12,6 @@ function getCurrencyName (id) {
 }
 
 /**
-<<<<<<< HEAD
  * Обработка типов счета
  * Спасибо Дмитрию Васильеву (jonny3D) за CodeReview
  *
@@ -29,15 +28,12 @@ export function handleCardType (rawCard) {
 }
 
 /**
-=======
->>>>>>> [kapitalbank-az] first commit
  * Конвертер карты из формата банка в формат Дзенмани
  *
  * @param rawCard карта в формате банка
  * @returns карта в формате Дзенмани
  */
 export function convertCard (rawCard) {
-<<<<<<< HEAD
   const ids = []
   // eslint-disable-next-line github/array-foreach
   rawCard.productAccount.cards.forEach((item) => {
@@ -78,45 +74,6 @@ export function convertChecking (rawChecking) {
     account.title = 'Cчёт KapitalBank ' + getCurrencyName(rawChecking.currency)
   }
   return account
-=======
-  if (rawCard.type !== 7) {
-    return null
-  }
-  if (rawCard.productAccount.cards.length === 0) {
-    const account = {
-      id: String(rawCard.id),
-      title: rawCard.name,
-      syncIds: ['null'],
-      instrument: getCurrencyName(rawCard.currency),
-      type: 'checking',
-      balance: parseFloat(rawCard.amount.value)
-    }
-
-    if (!rawCard.name) {
-      account.title = 'Cчёт KapitalBank ' + getCurrencyName(rawCard.currency)
-    }
-    return account
-  } else {
-    const ids = []
-    // eslint-disable-next-line github/array-foreach
-    rawCard.productAccount.cards.forEach((item) => {
-      ids.push(item.number.slice(-4))
-    })
-    const card = {
-      id: String(rawCard.id),
-      title: rawCard.name,
-      syncIds: ids,
-      instrument: getCurrencyName(rawCard.currency),
-      type: 'ccard',
-      balance: parseFloat(rawCard.amount.value)
-    }
-
-    if (!rawCard.name) {
-      card.name = 'Карта KapitalBank ' + ids[0]
-    }
-    return card
-  }
->>>>>>> [kapitalbank-az] first commit
 }
 
 /**
@@ -151,12 +108,8 @@ export function convertCardTransaction (card, rawTransaction) {
           city: null,
           title: rawTransaction.destinationCustom.name,
           mcc: null,
-<<<<<<< HEAD
           location: null,
           category: rawTransaction.categoryName
-=======
-          location: null
->>>>>>> [kapitalbank-az] first commit
         },
     movements: [
       {
