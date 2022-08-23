@@ -144,7 +144,7 @@ export const processHeadersAndBody = ({ headers, body }) => {
 
   const resultHeaders = Object.entries(headers || {})
     .map(([key, v]) => {
-      if (!key || !v) {
+      if (!key || (!v && v !== '')) {
         handleException(`[NHE] Wrong header ${JSON.stringify({ key, value: v })}`)
         return null
       }
