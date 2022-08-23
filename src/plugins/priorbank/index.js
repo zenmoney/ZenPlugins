@@ -38,7 +38,9 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     getCards({ accessToken: pluginData.accessToken, clientSecret: pluginData.clientSecret, userSession: pluginData.userSession }),
     getCardDesc({ accessToken: pluginData.accessToken, clientSecret: pluginData.clientSecret, userSession: pluginData.userSession, fromDate, toDate })
   ])
-  if (responses.some((response) => response.status === 401)) {
+  if (responses.some((response) => response.status === 401 || [
+    /^Необходимо авторизоваться$/
+  ].some((regexp) => regexp.test(response.body?.errorMessage)))) {
     pluginData = await refreshAndPersistAuth({ preferences })
     responses = await Promise.all([
       getCards({ accessToken: pluginData.accessToken, clientSecret: pluginData.clientSecret, userSession: pluginData.userSession }),

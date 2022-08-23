@@ -75,7 +75,10 @@ describe('convertAccounts', () => {
             contractNumberReplenishment: '',
             contractNumberRedemption: '1714011162950',
             haveDopCards: false,
-            pinAttempts: { maxPINAttempts: 3, currentPINAttempts: 0 },
+            pinAttempts: {
+              maxPINAttempts: 3,
+              currentPINAttempts: 0
+            },
             isVirtual: 0,
             isEpin: 0
           },
@@ -89,12 +92,27 @@ describe('convertAccounts', () => {
             crLimit: 0,
             addLimit: 0,
             finLimit: 0,
-            creditBalance: { sum: 0, sumTotal: 0 }
+            creditBalance: {
+              sum: 0,
+              sumTotal: 0
+            }
           },
           equivalents: [
-            { amount: 1021.92, currencyCode: 840, currency: 'USD' },
-            { amount: 937.38, currencyCode: 978, currency: 'EUR' },
-            { amount: 71594, currencyCode: 643, currency: 'RUB' }
+            {
+              amount: 1021.92,
+              currencyCode: 840,
+              currency: 'USD'
+            },
+            {
+              amount: 937.38,
+              currencyCode: 978,
+              currency: 'EUR'
+            },
+            {
+              amount: 71594,
+              currencyCode: 643,
+              currency: 'RUB'
+            }
           ],
           reissueFormId: '',
           expiringStatus: 0
@@ -117,7 +135,10 @@ describe('convertAccounts', () => {
               addrLineA: '<string[16]>',
               addrLineB: '<string[114]>',
               addrLineC: '<string[40]>',
-              message: { messageDateSpecified: false, messageString: '' },
+              message: {
+                messageDateSpecified: false,
+                messageString: ''
+              },
               account:
                 {
                   transCardList: [],
@@ -138,7 +159,13 @@ describe('convertAccounts', () => {
               dueDateSpecified: false,
               total: 0
             },
-          currentDebit: { due: 0, ovdField: 0, interest: 0, monthlyFee: 0, total: 0 }
+          currentDebit: {
+            due: 0,
+            ovdField: 0,
+            interest: 0,
+            monthlyFee: 0,
+            total: 0
+          }
         }
       ],
       [
@@ -237,7 +264,10 @@ describe('convertAccounts', () => {
               contractNumberReplenishment: '6000091008276',
               contractNumberRedemption: '',
               haveDopCards: false,
-              pinAttempts: { maxPINAttempts: 3, currentPINAttempts: 0 },
+              pinAttempts: {
+                maxPINAttempts: 3,
+                currentPINAttempts: 0
+              },
               isVirtual: 0,
               isEpin: -1
             },
@@ -252,13 +282,28 @@ describe('convertAccounts', () => {
               crLimit: 0,
               addLimit: 0,
               finLimit: 0,
-              creditBalance: { sum: 0, sumTotal: 0 }
+              creditBalance: {
+                sum: 0,
+                sumTotal: 0
+              }
             },
           equivalents:
             [
-              { amount: 0, currencyCode: 933, currency: 'BYN' },
-              { amount: 0, currencyCode: 840, currency: 'USD' },
-              { amount: 0, currencyCode: 643, currency: 'RUB' }
+              {
+                amount: 0,
+                currencyCode: 933,
+                currency: 'BYN'
+              },
+              {
+                amount: 0,
+                currencyCode: 840,
+                currency: 'USD'
+              },
+              {
+                amount: 0,
+                currencyCode: 643,
+                currency: 'RUB'
+              }
             ],
           reissueFormId: '',
           expiringStatus: 0
@@ -281,7 +326,10 @@ describe('convertAccounts', () => {
               addrLineA: '<string[12]>',
               addrLineB: '<string[0]>',
               addrLineC: '<string[69]>',
-              message: { messageDateSpecified: false, messageString: '' },
+              message: {
+                messageDateSpecified: false,
+                messageString: ''
+              },
               account:
                 {
                   transCardList: [],
@@ -302,7 +350,13 @@ describe('convertAccounts', () => {
               dueDateSpecified: false,
               total: 0
             },
-          currentDebit: { due: 0, ovdField: 0, interest: 0, monthlyFee: 0, total: 0 }
+          currentDebit: {
+            due: 0,
+            ovdField: 0,
+            interest: 0,
+            monthlyFee: 0,
+            total: 0
+          }
         }
       ],
       [
@@ -404,7 +458,10 @@ describe('convertAccounts', () => {
               contractNumberReplenishment: '1110081070518',
               contractNumberRedemption: '',
               haveDopCards: true,
-              pinAttempts: { maxPINAttempts: 3, currentPINAttempts: 0 },
+              pinAttempts: {
+                maxPINAttempts: 3,
+                currentPINAttempts: 0
+              },
               isVirtual: 0,
               isEpin: 1
             },
@@ -419,13 +476,28 @@ describe('convertAccounts', () => {
               crLimit: 0,
               addLimit: 0,
               finLimit: 0,
-              creditBalance: { sum: 0, sumTotal: 0 }
+              creditBalance: {
+                sum: 0,
+                sumTotal: 0
+              }
             },
           equivalents:
             [
-              { amount: 433.5, currencyCode: 840, currency: 'USD' },
-              { amount: 365.78, currencyCode: 978, currency: 'EUR' },
-              { amount: 32284, currencyCode: 643, currency: 'RUB' }
+              {
+                amount: 433.5,
+                currencyCode: 840,
+                currency: 'USD'
+              },
+              {
+                amount: 365.78,
+                currencyCode: 978,
+                currency: 'EUR'
+              },
+              {
+                amount: 32284,
+                currencyCode: 643,
+                currency: 'RUB'
+              }
             ],
           reissueFormId: '',
           expiringStatus: 0
@@ -503,7 +575,10 @@ describe('convertAccounts', () => {
               contractNumberReplenishment: '1110081070518',
               contractNumberRedemption: '',
               haveDopCards: true,
-              pinAttempts: { maxPINAttempts: 3, currentPINAttempts: 0 },
+              pinAttempts: {
+                maxPINAttempts: 3,
+                currentPINAttempts: 0
+              },
               isVirtual: 0,
               isEpin: 1
             },
@@ -518,13 +593,28 @@ describe('convertAccounts', () => {
               crLimit: 0,
               addLimit: 0,
               finLimit: 0,
-              creditBalance: { sum: 0, sumTotal: 0 }
+              creditBalance: {
+                sum: 0,
+                sumTotal: 0
+              }
             },
           equivalents:
             [
-              { amount: 433.5, currencyCode: 840, currency: 'USD' },
-              { amount: 365.78, currencyCode: 978, currency: 'EUR' },
-              { amount: 32284, currencyCode: 643, currency: 'RUB' }
+              {
+                amount: 433.5,
+                currencyCode: 840,
+                currency: 'USD'
+              },
+              {
+                amount: 365.78,
+                currencyCode: 978,
+                currency: 'EUR'
+              },
+              {
+                amount: 32284,
+                currencyCode: 643,
+                currency: 'RUB'
+              }
             ],
           reissueFormId: '',
           expiringStatus: 0
@@ -547,7 +637,10 @@ describe('convertAccounts', () => {
               addrLineA: '<string[14]>',
               addrLineB: '<string[0]>',
               addrLineC: '<string[66]>',
-              message: { messageDateSpecified: false, messageString: '' },
+              message: {
+                messageDateSpecified: false,
+                messageString: ''
+              },
               account:
                 {
                   transCardList:
@@ -602,7 +695,13 @@ describe('convertAccounts', () => {
               dueDateSpecified: false,
               total: 0
             },
-          currentDebit: { due: 0, ovdField: 0, interest: 0, monthlyFee: 0, total: 0 }
+          currentDebit: {
+            due: 0,
+            ovdField: 0,
+            interest: 0,
+            monthlyFee: 0,
+            total: 0
+          }
         }
       ],
       [
@@ -709,7 +808,10 @@ describe('convertAccounts', () => {
               contractNumberReplenishment: '1130081007980',
               contractNumberRedemption: '',
               haveDopCards: true,
-              pinAttempts: { maxPINAttempts: 3, currentPINAttempts: 0 },
+              pinAttempts: {
+                maxPINAttempts: 3,
+                currentPINAttempts: 0
+              },
               isVirtual: 0,
               isEpin: 1
             },
@@ -724,13 +826,28 @@ describe('convertAccounts', () => {
               crLimit: 0,
               addLimit: 0,
               finLimit: 0,
-              creditBalance: { sum: 0, sumTotal: 0 }
+              creditBalance: {
+                sum: 0,
+                sumTotal: 0
+              }
             },
           equivalents:
             [
-              { amount: 453.5, currencyCode: 840, currency: 'USD' },
-              { amount: 381.67, currencyCode: 978, currency: 'EUR' },
-              { amount: 34586, currencyCode: 643, currency: 'RUB' }
+              {
+                amount: 453.5,
+                currencyCode: 840,
+                currency: 'USD'
+              },
+              {
+                amount: 381.67,
+                currencyCode: 978,
+                currency: 'EUR'
+              },
+              {
+                amount: 34586,
+                currencyCode: 643,
+                currency: 'RUB'
+              }
             ],
           reissueFormId: '',
           expiringStatus: 0
@@ -808,7 +925,10 @@ describe('convertAccounts', () => {
               contractNumberReplenishment: '1030091013544',
               contractNumberRedemption: '',
               haveDopCards: false,
-              pinAttempts: { maxPINAttempts: 3, currentPINAttempts: 0 },
+              pinAttempts: {
+                maxPINAttempts: 3,
+                currentPINAttempts: 0
+              },
               isVirtual: 0,
               isEpin: 1
             },
@@ -823,13 +943,28 @@ describe('convertAccounts', () => {
               crLimit: 0,
               addLimit: 0,
               finLimit: 0,
-              creditBalance: { sum: 0, sumTotal: 0 }
+              creditBalance: {
+                sum: 0,
+                sumTotal: 0
+              }
             },
           equivalents:
             [
-              { amount: 12.36, currencyCode: 933, currency: 'BYN' },
-              { amount: 4.02, currencyCode: 978, currency: 'EUR' },
-              { amount: 367.08, currencyCode: 643, currency: 'RUB' }
+              {
+                amount: 12.36,
+                currencyCode: 933,
+                currency: 'BYN'
+              },
+              {
+                amount: 4.02,
+                currencyCode: 978,
+                currency: 'EUR'
+              },
+              {
+                amount: 367.08,
+                currencyCode: 643,
+                currency: 'RUB'
+              }
             ],
           reissueFormId: '',
           expiringStatus: 0
@@ -852,7 +987,10 @@ describe('convertAccounts', () => {
               addrLineA: '<string[19]>',
               addrLineB: '<string[0]>',
               addrLineC: '<string[70]>',
-              message: { messageDateSpecified: false, messageString: '' },
+              message: {
+                messageDateSpecified: false,
+                messageString: ''
+              },
               account:
                 {
                   transCardList: [],
@@ -883,7 +1021,13 @@ describe('convertAccounts', () => {
               dueDateSpecified: false,
               total: 0
             },
-          currentDebit: { due: 0, ovdField: 0, interest: 0, monthlyFee: 0, total: 0 }
+          currentDebit: {
+            due: 0,
+            ovdField: 0,
+            interest: 0,
+            monthlyFee: 0,
+            total: 0
+          }
         },
         {
           id: 68962222,
@@ -901,7 +1045,10 @@ describe('convertAccounts', () => {
               addrLineA: '<string[19]>',
               addrLineB: '<string[0]>',
               addrLineC: '<string[70]>',
-              message: { messageDateSpecified: false, messageString: '' },
+              message: {
+                messageDateSpecified: false,
+                messageString: ''
+              },
               account:
                 {
                   transCardList: [],
@@ -922,7 +1069,13 @@ describe('convertAccounts', () => {
               dueDateSpecified: false,
               total: 0
             },
-          currentDebit: { due: 0, ovdField: 0, interest: 0, monthlyFee: 0, total: 0 }
+          currentDebit: {
+            due: 0,
+            ovdField: 0,
+            interest: 0,
+            monthlyFee: 0,
+            total: 0
+          }
         }
       ],
       [
@@ -963,6 +1116,138 @@ describe('convertAccounts', () => {
       ]
     ]
   ])('converts 2 different credit cards', (apiAccounts, apiAccountDetails, accounts) => {
+    expect(convertAccounts(apiAccounts, apiAccountDetails)).toEqual(accounts)
+  })
+
+  it.each([
+    [
+      [
+        {
+          status:
+            {
+              respClass: 'error',
+              respCode: -9999,
+              respText: 'This function is not allowed for fund card',
+              module: 11,
+              messageForClient: ''
+            },
+          clientObject:
+            {
+              id: 69942240,
+              prodType: 2,
+              subSystemInstanceId: 123,
+              contract_id: '',
+              externalId: '',
+              identifier: '0135',
+              card_type: '4',
+              cardTypeName: 'MASTERCARD',
+              type: 8,
+              typeName: 'Карта другого банка',
+              openDate: '2022-05-12T14:40:03+03:00',
+              openDateSpecified: true,
+              closeDateSpecified: false,
+              expDate: '2023-02-28T00:00:00+03:00',
+              expDateSpecified: true,
+              lastComment: 'Доступны все операции',
+              currCode: 933,
+              currIso: 'BYN',
+              accessStatus: 2,
+              cardStatus: 1,
+              cardStatusName: 'Активна',
+              cardAccStatus: 0,
+              isOpen: 1,
+              isLocked: 0,
+              corNonCor: 2,
+              corNonCorName: 'Некорпоративная',
+              pkgName: 'NO_PACK',
+              cardMaskedNumber: '520813******0135',
+              cardContractNumber: '',
+              cardRBSNumber: '<string[0]>',
+              dopNonDop: 2,
+              cardBin: 520813,
+              cardColor: '#F15B2E',
+              isCardMain: 0,
+              contractNum: '<string[0]>',
+              contractTypeInt: 0,
+              contractTypeName: '',
+              defaultSynonym: 'FK0135',
+              customSynonym: 'Alfa (BYN)',
+              contractOpenDateSpecified: false,
+              contractCloseDate: '0001-01-01T00:00:00',
+              cContractCloseDateSpecified: false,
+              dealTerm: 0,
+              rate: 0,
+              elContractCloseDateSpecified: false,
+              minAmount: 0,
+              contractRest: 0,
+              description: '',
+              isStCashCard: 0,
+              stCashCardContractId: '',
+              isElDeposit: false,
+              secure3D: 0,
+              secure3DText: '',
+              smsNotify: 0,
+              smsNotifyText: '',
+              savings: 0,
+              orderValue: 0,
+              iban: '<string[0]>',
+              bic: '',
+              contractNumberReplenishment: '',
+              contractNumberRedemption: '',
+              haveDopCards: false,
+              pinAttempts: {
+                maxPINAttempts: 0,
+                currentPINAttempts: 0
+              },
+              isVirtual: 0,
+              isEpin: 0,
+              currentPercent: 0,
+              paymentDate: '',
+              repaymentProgress: 0,
+              cardExpirationDateExtended: 0
+            },
+          balance:
+            {
+              balance: 0,
+              blocked: 0,
+              available: 0,
+              ownBlance: 0,
+              ovl: 0,
+              totalBalance: 0,
+              crLimit: 0,
+              addLimit: 0,
+              finLimit: 0,
+              creditBalance: {
+                sum: 0,
+                sumTotal: 0
+              }
+            },
+          equivalents:
+            [
+              {
+                amount: 0,
+                currencyCode: 840,
+                currency: 'USD'
+              },
+              {
+                amount: 0,
+                currencyCode: 978,
+                currency: 'EUR'
+              },
+              {
+                amount: 0,
+                currencyCode: 643,
+                currency: 'RUB'
+              }
+            ],
+          reissueFormId: '',
+          expiringStatus: 0
+        }
+      ],
+      [],
+      []
+    ]
+  ])('converts Card of another bank', (apiAccounts, apiAccountDetails, accounts) => {
     expect(convertAccounts(apiAccounts, apiAccountDetails)).toEqual(accounts)
   })
 })

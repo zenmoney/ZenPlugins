@@ -4,6 +4,7 @@ import { formatCommentFeeLine, joinCommentLines } from '../../common/converters'
 export function convertAccounts (apiAccounts, apiAccountDetails) {
   const accounts = []
   for (const apiAccount of apiAccounts) {
+    if (apiAccount.status?.respCode === -9999) { continue } // Card of another bank
     const foundedAccount = accounts.find(account => account.account.syncID.some(syncID => syncID === apiAccount.clientObject.cardContractNumber))
     if (foundedAccount) {
       foundedAccount.account.syncID.push(apiAccount.clientObject.cardMaskedNumber.slice(-4))
