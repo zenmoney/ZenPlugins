@@ -1,4 +1,4 @@
-import { get as _get, isArray, isBoolean, isNumber, isString } from 'lodash'
+import { get as _get, isArray as _isArray, isBoolean, isNumber, isString } from 'lodash'
 
 export default function get (obj: unknown, path: string, defaultValue?: unknown): unknown {
   return _get(obj, path, defaultValue)
@@ -7,7 +7,7 @@ export default function get (obj: unknown, path: string, defaultValue?: unknown)
 const checkNumber = { check: isNumber, typeName: 'number' }
 const checkString = { check: isString, typeName: 'string' }
 const checkBoolean = { check: isBoolean, typeName: 'boolean' }
-const checkArray = { check: isArray, typeName: 'array' }
+const checkArray = { check: (x?: unknown): x is unknown[] => _isArray(x), typeName: 'array' }
 
 export const getNumber = typeCast(checkNumber)
 export const getString = typeCast(checkString)
