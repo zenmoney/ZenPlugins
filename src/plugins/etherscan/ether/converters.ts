@@ -17,7 +17,7 @@ function convertAccount ({ account, balance }: EthereumAccount): Account {
     id: account,
     type: AccountType.checking,
     title: account,
-    instrument: 'ETH',
+    instrument: 'μETH',
     balance: convertWeiToUETH(Number(balance)),
     syncIds: [account]
   }
