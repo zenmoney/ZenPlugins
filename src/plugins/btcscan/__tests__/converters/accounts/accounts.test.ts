@@ -31,7 +31,7 @@ describe('convertAccounts', () => {
           id: '1',
           type: AccountType.checking,
           title: '1',
-          instrument: 'BTC',
+          instrument: 'μBTC',
           balance: 40,
           syncIds: ['1']
         },
@@ -39,7 +39,7 @@ describe('convertAccounts', () => {
           id: '2',
           type: AccountType.checking,
           title: '2',
-          instrument: 'BTC',
+          instrument: 'μBTC',
           balance: 0,
           syncIds: ['2']
         }

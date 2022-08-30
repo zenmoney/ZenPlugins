@@ -10,7 +10,7 @@ export function convertAccount (addressInfo: BitcoinAddressInfo): Account {
     id: addressInfo.address,
     type: AccountType.checking,
     title: addressInfo.address,
-    instrument: 'BTC',
+    instrument: 'μBTC',
     balance: convertSatoshiToUBTC(addressInfo.chain_stats.funded_txo_sum - addressInfo.chain_stats.spent_txo_sum),
     syncIds: [addressInfo.address]
   }
