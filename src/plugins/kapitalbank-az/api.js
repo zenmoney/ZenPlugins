@@ -56,13 +56,11 @@ function generateDeviceIdByPhone (phone) {
  */
 
 export const uA = {
-  uA: {
-    r: true,
-    m: 'ZenMoney',
-    os: 'android',
-    osV: '11',
-    v: '2.19.1'
-  }
+  r: true,
+  m: 'ZenMoney',
+  os: 'android',
+  osV: '11',
+  v: '2.19.1'
 }
 
 /**
@@ -171,7 +169,6 @@ export async function finalizeRegistration (phone, password) {
  */
 export async function login (phone, password) {
   const endpoint = '/0.3/authentication/login'
-
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'POST',
     headers: {},
