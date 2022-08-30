@@ -5,7 +5,10 @@ import {
   fixDateTimezones,
   fixDateTimezonesForTransactionDtoV2,
   parseStartDateString,
-  provideScrapeDates, trimTransactionTransferAccountSyncIds
+  patchAccounts,
+  patchTransactions,
+  provideScrapeDates,
+  trimTransactionTransferAccountSyncIds
 } from './adapters'
 
 describe('adaptScrapeToGlobalApi', () => {
@@ -351,5 +354,176 @@ describe('trimTransactionTransferAccountSyncIds', () => {
         }
       ]
     })
+  })
+})
+
+describe('patchAccounts', () => {
+  it('should adjust account balance', () => {
+    global.ZenMoney = { features: {} }
+    expect(patchAccounts([
+      {
+        id: '1',
+        type: 'checking',
+        title: 'Account',
+        instrument: 'XAU',
+        syncIds: ['1111'],
+        balance: 1
+      },
+      {
+        id: '2',
+        type: 'card',
+        title: 'Card',
+        instrument: 'RUB',
+        syncIds: ['2222'],
+        balance: 1
+      },
+      {
+        id: '3',
+        type: 'deposit',
+        title: 'Deposit',
+        instrument: 'BTC',
+        syncIds: ['3333'],
+        available: 0.0004289
+      }
+    ])).toEqual([
+      {
+        id: '1',
+        type: 'checking',
+        title: 'Account',
+        instrument: 'A98',
+        syncID: ['1111'],
+        balance: 31.1034768
+      },
+      {
+        id: '2',
+        type: 'card',
+        title: 'Card',
+        instrument: 'RUB',
+        syncID: ['2222'],
+        balance: 1
+      },
+      {
+        id: '3',
+        type: 'deposit',
+        title: 'Deposit',
+        instrument: 'BTC',
+        syncID: ['3333'],
+        available: 0.0004289 * 1000000
+      }
+    ])
+  })
+})
+
+describe('patchTransactions', () => {
+  it('should adjust transaction amount', () => {
+    global.ZenMoney = { features: { transactionDtoV2: true } }
+    expect(patchTransactions([
+      {
+        hold: true,
+        date: new Date('2022-08-30'),
+        movements: [
+          {
+            id: '1',
+            account: { id: '1' },
+            invoice: null,
+            sum: -1,
+            fee: 0
+          }
+        ],
+        merchant: null,
+        comment: null
+      },
+      {
+        hold: false,
+        date: new Date('2022-08-28'),
+        movements: [
+          {
+            id: '2',
+            account: { id: '2' },
+            invoice: { sum: -3, instrument: 'XPT' },
+            sum: -1,
+            fee: 0
+          }
+        ],
+        merchant: null,
+        comment: null
+      },
+      {
+        hold: false,
+        date: new Date('2022-08-28'),
+        income: 3,
+        incomeAccount: '2',
+        outcome: 4,
+        outcomeAccount: 'cash#XAU',
+        merchant: null,
+        comment: null
+      }
+    ], [
+      {
+        id: '1',
+        type: 'checking',
+        title: 'Account',
+        instrument: 'XAU',
+        syncIds: ['1111'],
+        balance: 1
+      },
+      {
+        id: '2',
+        type: 'card',
+        title: 'Card',
+        instrument: 'RUB',
+        syncIds: ['2222'],
+        balance: 1
+      },
+      {
+        id: '3',
+        type: 'deposit',
+        title: 'Deposit',
+        instrument: 'BTC',
+        syncIds: ['3333'],
+        available: 0.0004289
+      }
+    ])).toEqual([
+      {
+        hold: true,
+        date: new Date('2022-08-30'),
+        movements: [
+          {
+            id: '1',
+            account: { id: '1' },
+            invoice: null,
+            sum: -1 * 31.1034768,
+            fee: 0
+          }
+        ],
+        merchant: null,
+        comment: null
+      },
+      {
+        hold: false,
+        date: new Date('2022-08-28'),
+        movements: [
+          {
+            id: '2',
+            account: { id: '2' },
+            invoice: { sum: -3 * 31.1034768, instrument: 'A76' },
+            sum: -1,
+            fee: 0
+          }
+        ],
+        merchant: null,
+        comment: null
+      },
+      {
+        hold: false,
+        date: new Date('2022-08-28'),
+        income: 3,
+        incomeAccount: '2',
+        outcome: 4 * 31.1034768,
+        outcomeAccount: 'cash#A98',
+        merchant: null,
+        comment: null
+      }
+    ])
   })
 })

@@ -52,7 +52,10 @@ const unsealSyncPromise = (promise) => {
       value = rejectValue
     }
   )
-  return { state, value }
+  return {
+    state,
+    value
+  }
 }
 
 const manualDateInputRegExp = /^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/
@@ -186,32 +189,158 @@ export function trimTransactionTransferAccountSyncIds (transaction) {
 }
 
 export function patchAccounts (accounts) {
-  console.assert(Array.isArray(accounts) && accounts.length > 0, 'accounts must be non-empty array')
+  console.assert(Array.isArray(accounts) && accounts.length > 0 && !accounts.some((x) => !x), 'accounts must be non-empty array of objects')
   if (!ZenMoney.features.investmentAccount && accounts.some(account => account.type === 'investment')) {
     throw new IncompatibleVersionError()
   }
   return ensureSyncIDsAreUniqueButSanitized({
     sanitizeSyncId,
-    accounts: accounts.map((account) => {
+    accounts: assertAccountIdsAreUnique(accounts).map((account) => {
       console.assert(('syncIds' in account) !== ('syncID' in account), 'account must have either syncIds or syncID but not both', account)
       console.assert(account.startDate === undefined || isValidInt32Date(account.startDate), 'account.startDate must be valid Date object', account)
-      return _.mapKeys(account, (_, key) => {
-        return key === 'syncIds' ? 'syncID' : key
+      const balance = patchAmount({
+        sum: account.balance,
+        instrument: account.instrument
       })
+      const available = patchAmount({
+        sum: account.available,
+        instrument: account.instrument
+      })
+      const creditLimit = patchAmount({
+        sum: account.creditLimit,
+        instrument: account.instrument
+      })
+      const startBalance = patchAmount({
+        sum: account.startBalance,
+        instrument: account.instrument
+      })
+      return {
+        ..._.mapKeys(account, (_, key) => {
+          return key === 'syncIds' ? 'syncID' : key
+        }),
+        instrument: balance.instrument,
+        balance: balance.sum,
+        available: available.sum,
+        creditLimit: creditLimit.sum,
+        startBalance: startBalance.sum
+      }
     })
   })
 }
 
 export function patchTransactions (transactions, accounts) {
-  if (ZenMoney.features.transactionDtoV2) {
-    return transactions.map((x) => x ? trimTransactionTransferAccountSyncIds(fixDateTimezonesForTransactionDtoV2(x)) : x)
-  }
+  console.assert(Array.isArray(transactions) && !transactions.some((x) => !x), 'transactions must be array of objects')
   const accountsByIdLookup = _.keyBy(accounts, (x) => x.id)
-  return castTransactionDatesToTicks(transactions.map((x) =>
+  if (ZenMoney.features.transactionDtoV2) {
+    return transactions.map((x) => patchTransactionAmount(
+      trimTransactionTransferAccountSyncIds(fixDateTimezonesForTransactionDtoV2(x)),
+      accountsByIdLookup
+    ))
+  }
+  return castTransactionDatesToTicks(transactions.map((x) => patchTransactionAmount(
     x.movements
       ? fixDateTimezones(toZenMoneyTransaction(x, accountsByIdLookup))
-      : fixDateTimezones(x)
-  ))
+      : fixDateTimezones(x),
+    accountsByIdLookup
+  )))
+}
+
+function patchTransactionAmount (transaction, accountsByIdLookup) {
+  if (Array.isArray(transaction.movements)) {
+    return {
+      ...transaction,
+      movements: transaction.movements.map((movement) => {
+        const instrument = accountsByIdLookup[movement.account?.id]?.instrument || movement.account?.instrument
+        return {
+          ...movement,
+          invoice: movement.invoice ? patchAmount(movement.invoice) : null,
+          sum: patchAmount({
+            sum: movement.sum,
+            instrument
+          }).sum,
+          fee: patchAmount({
+            sum: movement.fee,
+            instrument
+          }).sum
+        }
+      })
+    }
+  }
+  if (transaction.incomeAccount && transaction.outcomeAccount) {
+    return {
+      ...transaction,
+      ...[true, false].reduce((obj, isIncome) => {
+        const sumKey = isIncome ? 'income' : 'outcome'
+        const accountKey = `${sumKey}Account`
+        const accountId = transaction[accountKey]
+        const accountIdParts = accountId?.split('#')
+        const account = accountsByIdLookup[accountId]
+        const invoiceSumKey = isIncome ? 'opIncome' : 'opOutcome'
+        const invoiceInstrumentKey = `${invoiceSumKey}Instrument`
+        const amount = patchAmount({
+          sum: transaction[sumKey],
+          instrument: account?.instrument || accountIdParts?.[1]
+        })
+        const invoice = patchAmount({
+          sum: transaction[invoiceSumKey],
+          instrument: transaction[invoiceInstrumentKey]
+        })
+        return {
+          ...obj,
+          [sumKey]: amount.sum,
+          [accountKey]: account ? accountId : accountIdParts?.map((x, i) => (i === 1 ? amount.instrument : '') || x).join('#'),
+          [invoiceSumKey]: invoice.sum,
+          [invoiceInstrumentKey]: invoice.instrument
+        }
+      }, {})
+    }
+  }
+  return transaction
+}
+
+function patchAmount ({ sum, instrument }) {
+  const GRAMS_IN_OUNCE = 31.1034768
+  let rate = 1
+  switch (instrument) {
+    case 'XAU':
+      rate = GRAMS_IN_OUNCE
+      instrument = 'A98'
+      break
+    case 'XAG':
+      rate = GRAMS_IN_OUNCE
+      instrument = 'A99'
+      break
+    case 'XPT':
+      rate = GRAMS_IN_OUNCE
+      instrument = 'A76'
+      break
+    case 'XPD':
+      rate = GRAMS_IN_OUNCE
+      instrument = 'A33'
+      break
+    case 'BTC':
+    case 'ETH':
+    case 'LTC':
+    case 'DASH':
+    case 'XMR':
+    case 'BCH':
+      rate = 1000000
+      break
+    case 'μBTC':
+    case 'μETH':
+    case 'μLTC':
+    case 'μDASH':
+    case 'μXMR':
+    case 'μBCH':
+      instrument = instrument.slice(1)
+      break
+    default:
+      break
+  }
+  if (sum !== null && sum !== undefined && rate !== 1) {
+    sum *= rate
+  }
+  return { sum, instrument }
 }
 
 function castTransactionDatesToTicks (transactions) {
@@ -220,7 +349,10 @@ function castTransactionDatesToTicks (transactions) {
     return transactions
   }
   return transactions.map((transaction) => transaction.date instanceof Date
-    ? { ...transaction, date: transaction.date.getTime() }
+    ? {
+        ...transaction,
+        date: transaction.date.getTime()
+      }
     : transaction)
 }
 
@@ -309,16 +441,18 @@ export function adaptScrapeToGlobalApi (scrape) {
     const resultHandled = result.then((results) => {
       console.assert(results, 'scrape() did not return anything')
       if (Array.isArray(results.accounts) && Array.isArray(results.transactions)) {
-        const zenmoneyAccounts = assertAccountIdsAreUnique(results.accounts)
-        ZenMoney.addAccount(patchAccounts(zenmoneyAccounts))
-        ZenMoney.addTransaction(patchTransactions(results.transactions, zenmoneyAccounts))
+        ZenMoney.addAccount(patchAccounts(results.accounts))
+        ZenMoney.addTransaction(patchTransactions(results.transactions, results.accounts))
         ZenMoney.setResult({ success: true })
         return
       }
       throw new Error('scrape should return {accounts[], transactions[]}')
     })
 
-    const { state, value } = unsealSyncPromise(resultHandled)
+    const {
+      state,
+      value
+    } = unsealSyncPromise(resultHandled)
     if (state === 'rejected') {
       throw augmentErrorWithDevelopmentHints(getPresentationError(value))
     } else if (state === 'pending') {
