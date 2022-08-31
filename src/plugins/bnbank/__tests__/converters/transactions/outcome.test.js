@@ -223,7 +223,6 @@ describe('convertTransaction', () => {
         comment: 'Оплата товаров, работ или услуг',
         hold: false
       }
-
     ]
   ])('converts outcome', (apiTransaction, accounts, transaction) => {
     expect(convertTransaction(apiTransaction, accounts)).toEqual(transaction)

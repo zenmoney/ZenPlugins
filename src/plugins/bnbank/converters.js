@@ -228,6 +228,7 @@ export function transactionsUnique (array) {
       if (a[i].date.getDate() === a[j].date.getDate() &&
         a[i].date.getFullYear() === a[j].date.getFullYear() &&
         a[i].date.getMonth() === a[j].date.getMonth() &&
+        a[i].date.getHours() === a[j].date.getHours() &&
         a[i].movements.length === a[j].movements.length &&
         a[i].movements[0].account.id === a[j].movements[0].account.id &&
         a[i].movements[0].sum === a[j].movements[0].sum) {
@@ -236,4 +237,15 @@ export function transactionsUnique (array) {
     }
   }
   return a
+}
+
+export function convertTestTransactions (apiTransactions, accounts, hold = false) {
+  const transactions = []
+  for (const apiTransaction of apiTransactions) {
+    const transaction = convertTransaction(apiTransaction, accounts, hold = false)
+    if (transaction) {
+      transactions.push(transaction)
+    }
+  }
+  return transactionsUnique(transactions)
 }
