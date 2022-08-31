@@ -27,7 +27,7 @@
     "ksuid": "1.2.0",
     "lodash": "4.17.21",
     "moment": "2.24.0",
-    "moment-timezone": "0.5.28",
+    "moment-timezone": "0.5.35",
     "node-forge": "0.9.1",
     "node-jose": "2.1.1",
     "object-assign": "4.1.1",
