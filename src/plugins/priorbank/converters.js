@@ -250,7 +250,10 @@ function parseComment (transaction, apiTransaction, invoice) {
 export function convertTransactions ({ apiAccountsWithoutDuplicates, apiAccountDetails, accounts }) {
   const items = _.flatMap(apiAccountsWithoutDuplicates, (apiAccount) => {
     const mainAccount = accounts.find(account => account.products.some(product => product.id === apiAccount.clientObject.id.toString()))
-    console.assert(mainAccount, 'could not find mainAccount for account', apiAccount)
+    if (!mainAccount) {
+      console.log('could not find mainAccount for account', apiAccount)
+      return []
+    }
     const cardDesc = apiAccountDetails.find((x) => x.id === apiAccount.clientObject.id)
     const abortedTransactions = _.flatMap(cardDesc.contract.abortedContractList, (x) => x.abortedTransactionList.reverse())
     const regularTransactions = _.flatMap(cardDesc.contract.account.transCardList, (x) => x.transactionList.reverse())
