@@ -32,7 +32,6 @@
     "node-jose": "2.1.1",
     "object-assign": "4.1.1",
     "pad-left": "2.1.0",
-    "polyfill-crypto.getrandomvalues": "1.0.0",
     "promise": "8.0.1",
     "protobufjs": "6.11.2",
     "querystring-browser": "1.0.4",
