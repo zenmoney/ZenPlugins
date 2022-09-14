@@ -17,7 +17,7 @@ async function callGate (url, options = {}, predicate = () => true) {
     ...options,
     stringify,
     headers: {
-      Host: 'money.yandex.ru',
+      Host: 'yoomoney.ru',
       'Content-Type': 'application/x-www-form-urlencoded',
       ...options.headers
     }
@@ -36,7 +36,7 @@ export async function login () {
   }
   const { error, code } = await new Promise((resolve) => {
     const redirectUriWithoutProtocol = config.redirectUri.replace(/^https?:\/\//i, '')
-    const url = `https://money.yandex.ru/oauth/authorize?${stringify({
+    const url = `https://yoomoney.ru/oauth/authorize?${stringify({
       client_id: config.clientId,
       scope,
       redirect_uri: config.redirectUri,
@@ -59,7 +59,7 @@ export async function login () {
     throw new TemporaryError('Не удалось пройти авторизацию в Яндекс.Деньги. Попробуйте еще раз')
   }
   console.assert(code && !error, 'non-successfull authorization', error)
-  const response = await callGate('https://money.yandex.ru/oauth/token', {
+  const response = await callGate('https://yoomoney.ru/oauth/token', {
     body: {
       client_id: config.clientId,
       grant_type: 'authorization_code',
@@ -76,7 +76,7 @@ export async function login () {
 }
 
 export async function fetchAccount ({ accessToken }) {
-  const response = await callGate('https://money.yandex.ru/api/account-info', {
+  const response = await callGate('https://yoomoney.ru/api/account-info', {
     headers: {
       Authorization: `Bearer ${accessToken}`
     }
@@ -88,7 +88,7 @@ export async function fetchTransactions ({ accessToken }, fromDate, toDate) {
   const transactions = []
   let nextRecord = null
   do {
-    const response = await callGate('https://money.yandex.ru/api/operation-history', {
+    const response = await callGate('https://yoomoney.ru/api/operation-history', {
       headers: {
         Authorization: `Bearer ${accessToken}`
       },
