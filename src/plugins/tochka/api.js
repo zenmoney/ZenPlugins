@@ -209,8 +209,14 @@ export async function login (auth = {}, preferences) {
 export async function fetchAccounts ({ accessToken } = {}) {
   console.log('>>> Получаем список счетов')
   const response = await callGate('accounts', accessToken, {
+    ignoreErrors: true,
     method: 'GET'
   })
+  if (response.status === 403) {
+    // message: 'Forbidden by consent'
+    console.log('>>> !!! Нет прав получить список счетов')
+    return null
+  }
   const accounts = response.body?.Data?.Account
   console.assert(accounts, 'unexpected accounts list response')
   return accounts
@@ -305,8 +311,9 @@ async function callGate (url, accessToken, options = {}) {
       return response
     }
   }
-  if (!options.ignoreErrors && response.body?.Errors?.message) {
-    throw new BankMessageError(response.body.Errors.message)
+  if (!options.ignoreErrors && response.body?.Errors) {
+    const message = response.body?.Errors.message || response.body?.Errors[0]?.message
+    if (message) { throw new BankMessageError(message) }
   }
   return response
 }
