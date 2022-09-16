@@ -20,7 +20,7 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
     // нет прав, необходимо перелогиниться
     if (isInBackground) { throw new UserInteractionError('Background running authorization forbidden') }
     auth = await login({}, preferences)
-    console.assert(auth.accessToken, 'incorrect access token')
+    console.assert(auth.accessToken, 'incorrect second try access token')
     fetchedAccounts = await fetchAccounts(auth)
     if (!fetchedAccounts) { throw new Error('Empty account list') }
   }

@@ -78,8 +78,12 @@ export async function login (auth = {}, preferences) {
           expirationDateMs: new Date().getTime() + response.body.expires_in * 1000
         }
       } else {
-        console.log('>>> Авторизация: Используем действующзий токен.')
-        return arguments[0]
+        console.log('>>> Авторизация: Используем действующий токен.')
+        return {
+          accessToken,
+          refreshToken,
+          expirationDateMs
+        }
       }
     }
   }
