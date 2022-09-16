@@ -1,68 +1,80 @@
-/* eslint-disable no-unused-vars,camelcase */
-import { parse, stringify } from 'querystring'
-import { fetchJson, openWebViewAndInterceptRequest, RequestInterceptMode } from '../../common/network'
+import { omit } from 'lodash'
+import { fetch, fetchJson, openWebViewAndInterceptRequest, RequestInterceptMode } from '../../common/network'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { delay } from '../../common/utils'
+import { parse, stringify } from 'querystring'
 import { BankMessageError, IncompatibleVersionError } from '../../errors'
 import config from './config'
 
-const CLIENT_ID = config.clientId
-const CLIENT_SECRET = config.clientSecret
 const API_REDIRECT_URI = config.redirectUri
 
-const SANDBOX_REDIRECT_URI = 'https://localhost:8000/'
-const API_URI = 'https://enter.tochka.com/api/v1/'
-const SANDBOX_URI = 'https://enter.tochka.com/sandbox/v1/'
+const BASE_URI = 'https://enter.tochka.com'
+const API_URI = `${BASE_URI}/uapi/open-banking/v1.0/`
+const SANDBOX_URI = `${BASE_URI}/sandbox/v2/open-banking/v1.0/`
+function getApiUri (sandbox = false) {
+  return sandbox ? SANDBOX_URI : API_URI
+}
 
-export async function login ({ access_token, refresh_token, expirationDateMs } = {}, preferences) {
+export async function login (auth = {}, preferences) {
+  let accessToken = auth.accessToken || auth.access_token
+  let refreshToken = auth.refreshToken || auth.refresh_token
+  let expirationDateMs = auth.expirationDateMs
+
   let response
-  const clientId = !preferences.server || preferences.server === 'tochka' ? CLIENT_ID : 'sandbox'
-  const clientSecret = !preferences.server || preferences.server === 'tochka' ? CLIENT_SECRET : 'sandbox_secret'
-  const sandboxMode = preferences.server ? preferences.server === 'sandbox' : clientId.indexOf('sandbox') >= 0
-  if (!preferences.server) {
-    preferences.server = sandboxMode ? 'sandbox' : 'tochka'
+  if (config.clientId.indexOf('sandbox') >= 0) {
+    throw new Error('Unexpected sandbox token in release')
+    /* return {
+      accessToken: 'working_token',
+      refreshToken: null,
+      expirationDateMs: null
+    } */
   }
-  console.log('>>> Используется сервер: ' + preferences.server)
-  console.log(`>>> ClientID: ${clientId.substr(0, 3)}...${clientId.substr(-3)}`)
-  if (access_token) {
+
+  if (accessToken) {
     if (expirationDateMs < new Date().getTime() - 30 * 60 * 60 * 24 * 1000) {
       console.log('>>> Авторизация: refresh_token устарел, получаем заново.')
-      access_token = null
-      refresh_token = null
+      accessToken = null
+      refreshToken = null
     } else {
       if (expirationDateMs < new Date().getTime()) {
         console.log('>>> Авторизация: Обновляем токен взамен устаревшего.')
-        response = await callGate('oauth2/token', {
-          sandbox: sandboxMode,
-          ignoreErrors: true,
-          body: {
-            client_id: clientId,
-            client_secret: clientSecret,
-            grant_type: 'refresh_token',
-            refresh_token
+        response = await fetch(`${BASE_URI}/connect/token`, {
+          method: 'POST',
+          headers: {
+            Host: 'enter.tochka.com',
+            'Content-Type': 'application/x-www-form-urlencoded'
           },
-          sanitizeRequestLog: { body: { refresh_token: true, client_id: true, client_secret: true } },
-          sanitizeResponseLog: { body: { access_token: true, refresh_token: true, sessionId: true } }
+          body: {
+            client_id: config.clientId,
+            client_secret: config.clientSecret,
+            grant_type: 'refresh_token',
+            refresh_token: refreshToken
+          },
+          stringify,
+          parse: JSON.parse,
+          sanitizeRequestLog: { body: { client_id: true, client_secret: true, refresh_token: true } },
+          sanitizeResponseLog: { body: { access_token: true, refresh_token: true } }
         }, null)
-
-        if (response && response.body && response.body.error) {
+        if (response.body?.error) {
           response = null
-          access_token = null
-          refresh_token = null
+          accessToken = null
+          refreshToken = null
           expirationDateMs = 0
           console.log('>>> Авторизация: Не удалось обновить токен. Требуется повторный вход.')
-          const result = await login({ access_token, refresh_token, expirationDateMs }, preferences)
-          return result
+          return await login({
+            accessToken,
+            refreshToken,
+            expirationDateMs
+          }, preferences)
         }
 
         console.assert(response && response.body &&
           response.body.access_token &&
           response.body.refresh_token &&
           response.body.expires_in, 'non-successfull authorization', response)
-
         return {
-          access_token: response.body.access_token,
-          refresh_token: response.body.refresh_token,
+          accessToken: response.body.access_token,
+          refreshToken: response.body.refresh_token,
           expirationDateMs: new Date().getTime() + response.body.expires_in * 1000
         }
       } else {
@@ -71,23 +83,73 @@ export async function login ({ access_token, refresh_token, expirationDateMs } =
       }
     }
   }
-  if (access_token) {
-    // nothing
-  } else if (ZenMoney.openWebView) {
-    // eslint-disable-next-line no-constant-condition
-    // } else if (true) { // DEBUG SANDBOX
+
+  if (!accessToken && ZenMoney.openWebView) {
     console.log('>>> Авторизация: Входим через интерфейс банка.')
 
-    const redirectUriWithoutProtocol = (sandboxMode ? SANDBOX_REDIRECT_URI : API_REDIRECT_URI).replace(/^https?:\/\//i, '')
-    const url = sandboxMode
-      ? `${SANDBOX_URI}login/`
-      : `${API_URI}authorize?${stringify({
-        client_id: clientId,
-        response_type: 'code'
-      })}`
+    response = await fetch(`${BASE_URI}/connect/token`, {
+      method: 'POST',
+      headers: {
+        Host: 'enter.tochka.com',
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: {
+        client_id: config.clientId,
+        client_secret: config.clientSecret,
+        grant_type: 'client_credentials',
+        scope: 'accounts',
+        state: 'qwe'
+      },
+      stringify,
+      parse: JSON.parse,
+      sanitizeRequestLog: { body: { client_id: true, client_secret: true } },
+      sanitizeResponseLog: { body: { access_token: true, refresh_token: true } }
+    })
+    const token = response.body?.access_token
+    console.assert(token, 'non-successfull authorization access_token', response)
+
+    const needPermissions = [
+      'ReadAccountsBasic',
+      'ReadAccountsDetail',
+      'ReadBalances',
+      'ReadTransactionsBasic',
+      'ReadTransactionsDetail',
+      'ReadTransactionsCredits',
+      'ReadTransactionsDebits',
+      'ReadStatements'
+    ]
+    response = await callGate('consents', null, {
+      ignoreErrors: true,
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + token,
+        'Content-Type': 'application/json'
+      },
+      body: {
+        Data: {
+          permissions: needPermissions
+        }
+      },
+      sanitizeRequestLog: { headers: { Authorization: true } },
+      sanitizeResponseLog: { body: { Data: { clientId: true, consumerId: true, consentId: true } } }
+    })
+    const consentId = response.body?.Data?.consentId
+    const permissions = response.body?.Data?.permissions
+    console.assert(consentId && Array.isArray(permissions), 'non-successfull authorization consent', response)
+    console.assert(needPermissions.findIndex(permission => permissions.indexOf(permission) < 0) < 0, 'non-successfull permissions granted', response)
+
+    const redirectUriWithoutProtocol = API_REDIRECT_URI.replace(/^https?:\/\//i, '')
+    const url = `${BASE_URI}/connect/authorize?${stringify({
+      client_id: config.clientId,
+      response_type: 'code',
+      state: 'zenmoney',
+      redirect_uri: config.redirectUri,
+      scope: 'accounts',
+      consent_id: consentId
+    })}`
     const params = await openWebViewAndInterceptRequest({
       url,
-      sanitizeRequestLog: { url: { query: { client_id: true } } },
+      sanitizeRequestLog: { url: { query: { client_id: true, consent_id: true } } },
       intercept: function (request) {
         if (ZenMoney.application?.platform === 'android' && request.url === url) {
           this.mode = RequestInterceptMode.OPEN_AS_DEEP_LINK
@@ -103,136 +165,126 @@ export async function login ({ access_token, refresh_token, expirationDateMs } =
     if (!code && (!params?.error || params.error === 'access_denied')) {
       throw new TemporaryError('Не удалось пройти авторизацию в банке Точка. Попробуйте еще раз')
     }
-    console.assert(code, 'non-successfull authorization', params)
-
-    // DEBUG SANDBOX
-    // const code = 'kBcsiKQhwRdh2a1cggkIDnlAi1eoZAgd'
+    console.assert(code, 'non-successfull authorization code', params)
 
     console.log('>>> Авторизация: Запрашиваем токен.')
-    response = await callGate('oauth2/token', {
-      sandbox: sandboxMode,
+    response = await fetch(`${BASE_URI}/connect/token`, {
       method: 'POST',
-      body: {
-        client_id: sandboxMode ? 'sandbox' : CLIENT_ID,
-        client_secret: sandboxMode ? 'sandbox_secret' : CLIENT_SECRET,
-        grant_type: 'authorization_code',
-        code
+      headers: {
+        Host: 'enter.tochka.com',
+        'Content-Type': 'application/x-www-form-urlencoded'
       },
+      body: {
+        client_id: config.clientId,
+        client_secret: config.clientSecret,
+        grant_type: 'authorization_code',
+        scope: 'accounts',
+        code,
+        redirect_uri: config.redirectUri
+      },
+      stringify,
+      parse: JSON.parse,
       sanitizeRequestLog: { body: { client_id: true, client_secret: true, code: true } },
       sanitizeResponseLog: { body: { access_token: true, refresh_token: true } }
-    }, null)
+    })
+
+    console.assert(response.body &&
+      response.body.access_token &&
+      response.body.refresh_token &&
+      response.body.expires_in, 'non-successfull authorization', response)
+    accessToken = response.body.access_token
+    refreshToken = response.body.refresh_token
+    expirationDateMs = new Date().getTime() + response.body.expires_in * 1000
   } else {
     throw new IncompatibleVersionError()
   }
-  console.assert(response.body &&
-    response.body.access_token &&
-    response.body.refresh_token &&
-    response.body.expires_in, 'non-successfull authorization', response)
+
   return {
-    access_token: response.body.access_token,
-    refresh_token: response.body.refresh_token,
-    expirationDateMs: new Date().getTime() + response.body.expires_in * 1000
+    accessToken,
+    refreshToken,
+    expirationDateMs
   }
 }
 
-export async function fetchAccounts ({ access_token } = {}, preferences) {
+export async function fetchAccounts ({ accessToken } = {}) {
   console.log('>>> Получаем список счетов')
-  const response = await callGate('account/list', {
-    sandbox: preferences.server === 'sandbox',
-    method: 'GET',
-    headers: {
-      Host: 'enter.tochka.com',
-      Accept: 'application/json',
-      Authorization: `Bearer ${access_token}`
+  const response = await callGate('accounts', accessToken, {
+    method: 'GET'
+  })
+  const accounts = response.body?.Data?.Account
+  console.assert(accounts, 'unexpected accounts list response')
+  return accounts
+}
+
+export async function fetchBalance ({ accessToken } = {}, accountId) {
+  console.log('>>> Получаем остатки по счёту ', accountId)
+  const response = await callGate(`accounts/${accountId}/balances`, accessToken, {
+    method: 'GET'
+  })
+  const balances = response.body?.Data?.Balance
+  console.assert(balances, 'unexpected account balances response')
+  return balances
+}
+
+export async function fetchTransactions ({ accessToken } = {}, apiAccount, fromDate, toDate) {
+  console.log('>>> Заказываем выписку по операциям на счету', apiAccount.accountId)
+  let response = await callGate('statements', accessToken, {
+    method: 'POST',
+    body: {
+      Data: {
+        Statement: {
+          accountId: apiAccount.accountId,
+          startDateTime: formatDate(fromDate),
+          endDateTime: formatDate(toDate)
+        }
+      }
     }
   })
-  console.assert(response.body, 'unexpected account response')
-  return response.body
-}
+  let statement = {}
+  const statementId = response.body.Data?.Statement?.statementId
+  const status = response.body.Data?.Statement?.status
+  console.assert(statementId && status, 'unexpected statement response')
 
-export async function fetchStatement ({ access_token } = {}, apiAccount, fromDate, toDate, preferences) {
-  console.log('>>> Заказываем выписку по операциям на счету', apiAccount)
-  let response = await callGate('statement', {
-    sandbox: preferences.server === 'sandbox',
-    method: 'POST',
-    headers: {
-      Host: 'enter.tochka.com',
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${access_token}`
-    },
-    body: {
-      account_code: apiAccount.code,
-      bank_code: apiAccount.bank_code,
-      date_start: formatDate(fromDate),
-      date_end: formatDate(toDate)
-    }
-  } /* response => _.get(response, "response.body.request_id") */)
-
-  if (response.body.message === 'Bad JSON') {
-    console.log(`>>> Не удалось создать выписку операций '${apiAccount.code}'`)
-    return {}
-  }
-
-  // проверим возможность получения выписки
-  if (!response.body.request_id) {
-    console.log(`>>> Не удалось получить выписку операций '${apiAccount.code}':`, response.body)
-    return {}
-  }
-
-  const requestId = response.body.request_id
-  let status = ''
   const iMax = 5
   for (let i = 1; i <= iMax; i++) {
-    console.log(`>>> Проверяем статус выписки (попытка #${i})`, requestId)
-    response = await callGate('statement/status/' + requestId, {
-      sandbox: preferences.server === 'sandbox',
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${access_token}`
+    console.log(`>>> Проверяем статус выписки (#${i}) по счёту`, apiAccount.accountId)
+    response = await callGate(`accounts/${apiAccount.accountId}/statements/${statementId}`, accessToken, {
+      ignoreErrors: true,
+      method: 'GET'
+    })
+    if (!response.body.Errors) {
+      statement = response.body.Data?.Statement?.[0]
+      console.assert(statement, 'unexpected statement data')
+      if (statement.status === 'Ready') {
+        break
       }
-    } /* response => _.get(response, "response.body.status") */)
-
-    status = response.body.status
-    if (status === 'ready' || i >= iMax) {
-      break
     }
     await delay(3000)
   }
-  if (response.body.message === 'Bad JSON') {
-    console.log('>>> Не удалось получить статус выписки')
-    return {}
+  // console.assert(statement.status === 'Ready', 'unexpected nor ready statement status')
+  if (statement.status !== 'Ready') {
+    console.log('>>> Не удалось получить выписку по счёту ', apiAccount.accountId)
+    return []
   }
-
-  console.log('>>> Запрашиваем содержимое выписки', requestId)
-  response = await callGate('statement/result/' + requestId, {
-    sandbox: preferences.server === 'sandbox',
-    method: 'GET',
-    headers: {
-      Accept: 'application/json',
-      Authorization: `Bearer ${access_token}`
-    }
-  } /* response => _.get(response, "response.body.payments") */)
-  // if (status !== 'ready') {
-  //   throw new Error('Не удалось дождаться ответа от сервера. Пожалуйста, попробуйте уменьшить период загрузки данных')
-  // }
-  if (response.body.message === 'Bad JSON') {
-    console.log('>>> Не удалось получить выписку')
-    return {}
-  }
-
-  return response.body
+  return statement.Transaction
 }
 
-async function callGate (url, options = {}, predicate = () => true) {
-  if (url.substr(0, 4) !== 'http') { url = (options.sandbox ? SANDBOX_URI : API_URI) + url }
-
+async function callGate (url, accessToken, options = {}) {
+  if (url.substr(0, 4) !== 'http') { url = getApiUri(options.sandbox || accessToken === 'working_token') + url }
   let response
+  const headers = {
+    Host: 'enter.tochka.com',
+    ...options.headers
+  }
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`
+  }
+
   try {
     response = await fetchJson(url, {
       method: 'POST',
-      ...options,
+      headers,
+      ...omit(options, ['headers', 'sanitizeRequestLog', 'sanitizeResponseLog']),
       sanitizeRequestLog: {
         headers: { Authorization: true },
         ...options.sanitizeRequestLog
@@ -253,20 +305,8 @@ async function callGate (url, options = {}, predicate = () => true) {
       return response
     }
   }
-  /*
-  if (response.status !== 200) {
-    const message = response.body && response.body.message
-    throw new Error(response.statusText + (message ? ': ' + message : ''))
-  }
-  */
-  if (!options.ignoreErrors && response.body && response.body.error && response.body.error_description) {
-    throw new BankMessageError(response.body.error_description)
-  }
-  if (predicate) {
-    if (response.body && response.body.errorCode === 'AUTH_REQUIRED') {
-      throw new Error('AuthError')
-    }
-    console.assert(predicate(response), 'non-successful response')
+  if (!options.ignoreErrors && response.body?.Errors?.message) {
+    throw new BankMessageError(response.body.Errors.message)
   }
   return response
 }

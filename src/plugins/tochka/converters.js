@@ -1,21 +1,105 @@
-import { uniqBy } from 'lodash'
 import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
 
-export function convertAccounts (apiAccounts) {
-  return uniqBy(apiAccounts, apiAccount => apiAccount.code).map(apiAccount => ({
-    account: convertAccount(apiAccount),
-    product: apiAccount
-  }))
+export function convertAccount (apiAccount, apiBalances) {
+  console.assert(apiAccount.accountId, 'incorrect API account structure', apiAccount)
+
+  const balance = apiBalances.find(item => item.type === 'ClosingAvailable')
+  console.assert(balance.Amount?.amount >= 0 && balance.Amount?.currency, 'incorrect API account balance structure', apiBalances)
+
+  return {
+    id: apiAccount.accountId,
+    type: 'checking',
+    title: apiAccount.accountDetails.find(item => item.schemeName === 'RU.CBR.AccountNumber')?.name || apiAccount.accountId,
+    balance: balance.Amount.amount,
+    instrument: balance.Amount.currency,
+    syncID: [apiAccount.accountId]
+  }
 }
 
-export function convertAccount (apiAccount) {
-  return {
-    id: apiAccount.code,
-    type: 'checking',
-    title: apiAccount.code,
-    instrument: parseInstrument(apiAccount.code),
-    syncID: [apiAccount.code]
+export function convertTransactionNew (apiTransaction, account) {
+  console.assert(account.instrument === apiTransaction.Amount.currency, 'unexpected currency transaction', apiTransaction, account)
+
+  const dc = apiTransaction.creditDebitIndicator === 'Debit' ? -1.0 : 1.0
+  const transaction = {
+    hold: null,
+    date: new Date(apiTransaction.documentProcessDate),
+    movements: [
+      {
+        id: apiTransaction.transactionId,
+        account: { id: account.id },
+        invoice: null,
+        sum: dc * apiTransaction.Amount.amount,
+        fee: 0
+      }
+    ],
+    merchant: null,
+    comment: null
   }
+  ;[
+    parseBreak,
+    parsePurchase,
+    parseSbp,
+    parseDescription
+  ].some(parser => parser(transaction, apiTransaction, account))
+
+  return transaction
+}
+
+function parseBreak (transaction, apiTransaction) {
+  if (apiTransaction.description.startsWith('P2P Перевод')) {
+    return true
+  }
+  return false
+}
+function parsePurchase (transaction, apiTransaction) {
+  if (!apiTransaction.description.startsWith('Покупка товара')) {
+    return false
+  }
+
+  const match = apiTransaction.description.match(/^[^(]+\(Терминал:\s*(.+?)\s*,дата операции/)
+  if (match) {
+    const parts = match[1].split(',')
+    let merchant = null
+    if (parts.length >= 3) {
+      merchant = {
+        country: parts[parts.length - 1].trim() || null,
+        city: parts[parts.length - 2].trim() || null,
+        title: parts[0].trim(),
+        mcc: null,
+        location: null
+      }
+    } else {
+      merchant = {
+        fullTitle: match[1],
+        mcc: null,
+        location: null
+      }
+    }
+    transaction.merchant = merchant
+    return true
+  }
+  return false
+}
+
+function parseSbp (transaction, apiTransaction) {
+  if (!apiTransaction.description.startsWith('Перевод по номеру')) {
+    return false
+  }
+
+  const match = apiTransaction.description.match(/Получатель:?\s+(.+?) через СБП/)
+  if (match) {
+    transaction.merchant = {
+      fullTitle: match[1],
+      mcc: null,
+      location: null
+    }
+    return true
+  }
+  return false
+}
+
+function parseDescription (transaction, apiTransaction) {
+  transaction.comment = apiTransaction.description
 }
 
 export function convertTransaction (apiTransaction, account) {
@@ -76,10 +160,6 @@ export function convertTransaction (apiTransaction, account) {
     parseComment
   ].some(parser => parser(transaction, apiTransaction, account, invoice))
   return transaction
-}
-
-function parseInstrument (accountNumber) {
-  return codeToCurrencyLookup[accountNumber.substr(5, 3)]
 }
 
 function parseInnerTransfer (transaction, apiTransaction) {
