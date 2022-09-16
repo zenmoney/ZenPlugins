@@ -1,10 +1,11 @@
+import { isNumber } from 'lodash'
 import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
 
 export function convertAccount (apiAccount, apiBalances) {
   console.assert(apiAccount.accountId, 'incorrect API account structure', apiAccount)
 
   const balance = apiBalances.find(item => item.type === 'ClosingAvailable')
-  console.assert(balance.Amount?.amount >= 0 && balance.Amount?.currency, 'incorrect API account balance structure', apiBalances)
+  console.assert(isNumber(balance.Amount?.amount) && balance.Amount?.currency, 'incorrect API account balance structure', apiBalances)
 
   return {
     id: apiAccount.accountId,
