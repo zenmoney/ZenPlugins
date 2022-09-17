@@ -155,7 +155,7 @@ export async function login (auth = {}, preferences) {
       url,
       sanitizeRequestLog: { url: { query: { client_id: true, consent_id: true } } },
       intercept: function (request) {
-        if (ZenMoney.application?.platform === 'android' && request.url === url) {
+        if (request.url === url) {
           this.mode = RequestInterceptMode.OPEN_AS_DEEP_LINK
         }
         const i = request.url.indexOf(redirectUriWithoutProtocol)
