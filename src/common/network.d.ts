@@ -14,6 +14,7 @@ export interface FetchOptions {
   redirect?: 'follow' | 'manual'
   binaryResponse?: boolean
   pfx?: Uint8Array | null
+  log?: boolean
   sanitizeRequestLog?: unknown
   sanitizeResponseLog?: unknown
 }
