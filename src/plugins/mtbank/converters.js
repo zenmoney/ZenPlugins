@@ -44,7 +44,7 @@ export function convertTransaction (json, accounts) {
   })
 
   const transaction = {
-    date: getDate(json.transDate),
+    date: json.transDate ? getDate(json.transDate) : getDate(`${json.operationDate} 00:00:00`),
     movements: [getMovement(json, account)],
     merchant: null,
     comment: null,
@@ -159,4 +159,18 @@ function getSumAmount (debitFlag, strAmount) {
 export function getDate (str) {
   const [year, month, day, hour, minute, second] = str.match(/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})/).slice(1)
   return new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}+03:00`)
+}
+
+export function filterDuplicates (transactions) {
+  const transactionIds = {}
+  const filtered = []
+  for (const transaction of transactions) {
+    const key = transaction.movements[0].id + '_' + Math.abs(transaction.movements[0].sum)
+    if (transactionIds[key]) { //
+    } else {
+      transactionIds[key] = true
+      filtered.push(transaction)
+    }
+  }
+  return filtered
 }

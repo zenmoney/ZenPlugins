@@ -117,6 +117,21 @@ function mockLoadOperationStatements () {
               transAmount: '29.68',
               transDate: '2018-12-29 01:07:39',
               transactionId: '1111112'
+            }, {
+              amount: '29.68',
+              balance: '531.57',
+              cardPan: '111111******1111',
+              curr: 'BYN',
+              debitFlag: '0',
+              description: 'Оплата товаров и услуг',
+              error: '',
+              operationDate: '2019-01-02',
+              orderStatus: '1',
+              place: 'Магазин',
+              status: 'T',
+              transAmount: '29.68',
+              transDate: '2018-12-29 01:07:39',
+              transactionId: '1111112'
             }
           ],
           outgoingBalance: '999.9',

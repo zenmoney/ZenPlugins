@@ -167,6 +167,53 @@ describe('convertTransaction', () => {
     })
   })
 
+  it('payment of income under the loyalty program', () => {
+    const transaction = convertTransaction({
+      accountId: 'BY36MTBK10110008000001111000',
+      amount: '209.00',
+      balance: '1319.59',
+      cardPan: '535104******0480',
+      curr: 'BYN',
+      debitFlag: '1',
+      description: 'Выплата дохода физ.лицу в рамках программы лояльности, RRN 226711841395',
+      error: null,
+      operationDate: '2022-09-26',
+      orderStatus: null,
+      place: '3467.shop.onliner.by',
+      country: 'BY',
+      city: 'Minsk',
+      status: 'T',
+      transAmount: '148.92',
+      transDate: null,
+      mcc: '5732',
+      transactionId: '3023266775',
+      rrn: '226711841395',
+      approvalCode: '009430'
+    }, accounts)
+
+    expect(transaction).toEqual({
+      hold: false,
+      date: new Date('2022-09-26T00:00:00+03:00'),
+      movements: [
+        {
+          id: '3023266775',
+          account: { id: '1113333' },
+          sum: 148.92,
+          fee: 0,
+          invoice: null
+        }
+      ],
+      merchant: {
+        country: 'BY',
+        city: 'Minsk',
+        title: '3467.shop.onliner.by',
+        location: null,
+        mcc: 5732
+      },
+      comment: 'Выплата дохода физ.лицу в рамках программы лояльности, RRN 226711841395'
+    })
+  })
+
   it('should convert internet-bank transaction', () => {
     const transaction = convertTransaction({
       accountId: 'BY36MTBK10110008000001111000',
