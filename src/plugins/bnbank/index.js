@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { adjustTransactions } from '../../common/transactionGroupHandler'
 import { fetchAccounts, fetchLastCardTransactions, fetchTransactions, login } from './api'
 import { convertCard, convertDeposit, convertCheckingAccount, convertTransaction, transactionsUnique } from './converters'
 
@@ -32,8 +33,9 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   lastTransactions = lastTransactions
     .map(transaction => convertTransaction(transaction, cards, true))
     .filter(transaction => transaction !== null)
+  const allTransactions = _.sortBy(transactionsUnique(transactions.concat(lastTransactions)), transaction => transaction.date)
   return {
     accounts: preparedAccounts,
-    transactions: _.sortBy(transactionsUnique(transactions.concat(lastTransactions)), transaction => transaction.date)
+    transactions: adjustTransactions({ transactions: allTransactions })
   }
 }

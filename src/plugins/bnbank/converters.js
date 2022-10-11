@@ -1,4 +1,5 @@
 import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
+import { toISODateString } from '../../common/dateUtils'
 
 export const card = 'card'
 export const deposit = 'deposit'
@@ -109,6 +110,7 @@ export function convertTransaction (apiTransaction, accounts, hold = false) {
   };
   [
     parseCashTransfer,
+    parseInnerTransfer,
     parseOuterTransfer,
     parseComment,
     parsePayee
@@ -137,6 +139,24 @@ function parseCashTransfer (transaction, apiTransaction, account, invoice) {
     })
     return true
   }
+}
+
+function parseInnerTransfer (transaction, apiTransaction, account, invoice) {
+  if ((apiTransaction.operationPlace && [
+    'BNB PEREVOD'
+  ].indexOf(apiTransaction.operationPlace) >= 0) ||
+    (apiTransaction.operationName && [
+      'Выдача части на другой счет'
+    ].indexOf(apiTransaction.operationName) >= 0)
+  ) {
+    transaction.groupKeys = [
+      `${toISODateString(transaction.date)}_` +
+      `${invoice.instrument}_` +
+      `${Math.abs(invoice.sum)}`
+    ]
+    return true
+  }
+  return false
 }
 
 function parseOuterTransfer (transaction, apiTransaction, account, invoice) {
