@@ -1,0 +1,6 @@
+{
+  "zenPlugin_nordigenNoAccountsToSyncError": "Alle synchronisierten Konten bei dieser Bank sind geschlossen oder vorübergehend inaktiv. Verknüpfen Sie die Bank erneut und wählen Sie neue Konten für die Synchronisierung aus.",
+  "zenPlugin_nordigenRequestLimitExceededError": "Die Bank begrenzt die Anzahl der Aktualisierungen pro Tag. Die nächste Aktualisierung ist morgen möglich.",
+  "zenPlugin_notImplementedError": "Diese Verbindung ist noch nicht aktiv, aber wir arbeiten daran. Sie können uns dabei unterstützen, indem Sie uns ein Fehlerprotokoll senden.",
+  "zenPlugin_pinCodeInsteadOfPasswordError": "Es sieht so aus, als hätten Sie statt eines Passworts eine PIN eingegeben. Das Passwort und der PIN-Code aus der Bank-App stimmen nicht überein. Wenn Sie Ihr Passwort vergessen haben, stellen Sie es bitte auf der Website der Bank wieder her."
+}

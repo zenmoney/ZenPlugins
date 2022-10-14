@@ -1,7 +1,21 @@
 {
-  "zenPlugin_invalidPreferencesError": "אחד או יותר מהפרטים שהוזנו שגוי",
+  "zenPlugin_bankMessageError": "אירעה שגיאה במהלך הסינכרון.\\n\\nהודעה מהבנק: %1$s",
+  "zenPlugin_fetchError": "אירעה שגיאה בעת טעינת תוספים. חוזר על הפעולה מאוחר יותר.",
+  "zenPlugin_fetchingDataError": "שגיאה בטעינת נתונים",
+  "zenPlugin_finished": "הסינכרון עם הבנק הושלם. אין פעולות חדשות.",
+  "zenPlugin_finishedWithCount": "הסינכרון עם הבנק הושלם. פעולות חדשות: %1$d",
+  "zenPlugin_incompatibleVersionError": "ברשותך גרסה ישנה של אפליקציית Zenmoney. כדי שהתוסף יפעל כראוי, עדכן את היישום לגירסה האחרונה.",
   "zenPlugin_invalidLoginOrPasswordError": "שם משתמש או סיסמא שגויים",
   "zenPlugin_invalidOtpCodeError": "הזנת קוד שגוי. נסה שוב את חיבור הסינכרון.",
-  "zenPlugin_temporaryUnavailableError": "המידע אינו זמין באופן זמני. חזור על הסינכרון לאחר זמן מה.\n\nאם השגיאה נמשכת, גש להגדרות הסינכרון ולחץ על \"העברת קובץ יומן הרישום לתמיכה\".",
-  "zenPlugin_passwordExpiredError": "The password has expired. Change it in the bank application, and then update it in the connection settings.",
-  "zenPlugin_previousSessionNotClosedError": "הסינכרון נכשל. הבנק אינו מאפשר סינכרון אם יישום הבנק פעיל. לחץ על \"יציאה\" ביישום הבנק והתחל את הסינכרון ב- Zenmoney שוב."}
+  "zenPlugin_invalidPreferencesError": "בדוק בבקשה את הנתונים שהזנת.",
+  "zenPlugin_keychainError": "הבנק אינו מחובר מכיוון שהגישה למאגר הנתונים המוצפן בטלפון חסומה. אתחל את הטלפון כדי לשחזר את הגישה, וחבר שוב את הבנק.",
+  "zenPlugin_keychainErrorIos": "אחסון נתונים מאובטח אינו זמין. סגור את היישום (לחץ פעמיים על לחצן הבית והחלק את הישום כלפי מעלה) ואתחל אותו מחדש.",
+  "zenPlugin_networkError": "אין גישה לרשת או לשרת הבנק. נסה להתחיל את היבוא מאוחר יותר.",
+  "zenPlugin_noAccountsError": "הסינכרון עם הבנק אינו מחובר. חזור על תהליך החיבור ובחר לפחות חשבון אחד לסינכרון.",
+  "zenPlugin_obligatoryFieldsNotFilled": "מלא שדות חובה",
+  "zenPlugin_pluginError": "שגיאה בייבוא נתונים מהבנק. שלח דוח כדי שנוכל לאתר את השגיאה ולטפל בה.",
+  "zenPlugin_previousSessionNotClosedError": "הסינכרון נכשל. הבנק אינו מאפשר סינכרון אם יישום הבנק פעיל. לחץ על \"יציאה\" ביישום הבנק והתחל את הסינכרון ב- Zenmoney שוב.",
+  "zenPlugin_reportError": "שלח יומן",
+  "zenPlugin_severalAccountsLinkingError": "מספר חשבונות מהבנק משויכים לחשבון אחד ב-Zenmoney. על מנת לסנכרן כראוי, כל חשבון בנק חייב להיות משויך לחשבון נפרד ב-Zenmoney. פתח את הגדרות החשבונות שיובאו מהבנק ומחק מספרי חשבונות. לאחר מכן הפעל את הסינכרון והתאם מחדש את חשבונות הבנק עם החשבונות ב- Zenmoney.",
+  "zenPlugin_temporaryUnavailableError": "המידע אינו זמין באופן זמני. חזור על הסינכרון לאחר זמן מה.\\n\\nאם השגיאה נמשכת, גש להגדרות הסינכרון ולחץ על \"העברת קובץ יומן הרישום לתמיכה\"."
+}

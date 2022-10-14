@@ -1,8 +1,20 @@
 {
-  "zenPlugin_bankMessageError": "Se produjo un error durante la sincronización.\n\nMensaje del Banco: {{bankMessage}}",
+  "zenPlugin_bankMessageError": "Se produjo un error durante la sincronización.\\n\\nMensaje del Banco: %1$s",
+  "zenPlugin_fetchError": "Error al cargar los plugins. Intente más tarde.",
+  "zenPlugin_fetchingDataError": "Error al cargar los datos",
+  "zenPlugin_finished": "La sincronización con el banco está completa. No hay nuevas operaciones.",
+  "zenPlugin_finishedWithCount": "Se completó la sincronización con el banco. Nuevas operaciones:%1$d",
   "zenPlugin_incompatibleVersionError": "Tienes una versión anterior de la aplicación Zenmoney. Para que la sincronización funcione correctamente, actualice la aplicación a la última versión.",
-  "zenPlugin_invalidLoginOrPasswordError": "Usuario o contraseña inválidos",
+  "zenPlugin_invalidLoginOrPasswordError": "Nombre de usuario o contraseña del banco incorrectos",
   "zenPlugin_invalidPreferencesError": "Por favor, verificá los datos ingresados.",
+  "zenPlugin_keychainError": "Error al conectar la importación desde el banco. Esta versión de Android no funciona con almacenamiento de datos cifrados.",
+  "zenPlugin_networkError": "Ningún acceso a la red o servidor bancario no está disponible. Intente iniciar la sincronización más tarde.",
+  "zenPlugin_noAccountsError": "La sincronización con el banco está desactivada. Repita el proceso de conexión y seleccione al menos una cuenta para sincronizar.",
+  "zenPlugin_obligatoryFieldsNotFilled": "Por favor completa todos los campos requeridos.",
+  "zenPlugin_passwordExpiredError": "La contraseña ha caducado. Cámbialo en la aplicación del banco y actualízalo en los ajustes de conexión.",
+  "zenPlugin_pluginError": "Error en la importación desde el banco. Envíenos un informe para que podamos encontrar y corregir el error.",
   "zenPlugin_previousSessionNotClosedError": "La sincronización no pasó. El banco no permite iniciar la sincronización si la aplicación del banco se está ejecutando. Haga clic en Salir en la aplicación del banco e inicie la sincronización en Zenmoney una vez más.",
-  "zenPlugin_temporaryUnavailableError": "La información no está disponible temporalmente. Repita la sincronización después de un tiempo.\n\nSi el error persiste, abra la Configuración de sincronización y haga clic en \"Enviar el log a los desarrolladores\"."
+  "zenPlugin_reportError": "Reportar el error",
+  "zenPlugin_severalAccountsLinkingError": "Varias cuentas del banco están asociadas con una cuenta en Zenmoney. Para una correcta sincronización, cada cuenta del banco debe estar asociada con una cuenta individual en Zenmoney. Abra la configuración de las cuentas importadas de este banco y elimine los números de las cuentas. Luego inicie la sincronización y conecte las cuentas del banco con las cuentas en Zenmoney",
+  "zenPlugin_temporaryUnavailableError": "El banco no responde temporalmente. Vuelva a intentar la sincronización después de un tiempo.\\n\\nSi el error vuelve a ocurrir, vaya a Cuentas, toque su tarjeta bancaria y haga clic en \"Enviar registro\"."
 }

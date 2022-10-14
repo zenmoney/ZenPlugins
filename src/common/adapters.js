@@ -1,10 +1,13 @@
 import i18n from 'i18next'
 import _ from 'lodash'
+import de from '../../locales/de.json'
 import en from '../../locales/en.json'
 import es from '../../locales/es.json'
 import he from '../../locales/he.json'
+import pl from '../../locales/pl.json'
 import pt from '../../locales/pt.json'
 import ru from '../../locales/ru.json'
+import uk from '../../locales/uk.json'
 import {
   BankMessageError,
   IncompatibleVersionError,
@@ -26,13 +29,16 @@ import { isDebug } from './utils'
 
 i18n.init({
   resources: {
+    de: { translation: de },
     en: { translation: en },
     es: { translation: es },
     he: { translation: he },
+    pl: { translation: pl },
     pt: { translation: pt },
-    ru: { translation: ru }
+    ru: { translation: ru },
+    uk: { translation: uk }
   },
-  fallbackLng: 'ru'
+  fallbackLng: 'en'
 })
 
 const MS_IN_MINUTE = 60 * 1000

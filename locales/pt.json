@@ -1,3 +1,26 @@
 {
-  "zenPlugin_invalidOtpCodeError": "Código inválido. Tente novamente a conexão de sincronização."
+  "zenPlugin_bankMessageError": "Erro de sincronização. Mensagem do banco: %1$s",
+  "zenPlugin_fetchError": "A lista de bancos está temporariamente indisponível. Tente mais tarde.",
+  "zenPlugin_fetchingDataError": "Esta conexão bancária está temporariamente indisponível. Por favor, tente mais tarde.",
+  "zenPlugin_finished": "A sincronização está concluída. Não há novas operações.",
+  "zenPlugin_finishedWithCount": "Novas operações sincronizadas: %1$d",
+  "zenPlugin_incompatibleVersionError": "Você tem uma versão antiga do aplicativo Zenmoney. Para que tudo funcione corretamente, atualize o aplicativo para a versão mais recente.",
+  "zenPlugin_invalidLoginOrPasswordError": "Login ou senha do banco incorreta",
+  "zenPlugin_invalidOtpCodeError": "O código está incorreto. Tente novamente: toque em Conectar e digite um novo código.",
+  "zenPlugin_invalidPreferencesError": "Por favor, verifique os dados inseridos.",
+  "zenPlugin_keychainError": "Não foi possível sincronizar com o banco. Reinicie seu telefone e tente novamente.",
+  "zenPlugin_keychainErrorIos": "Não foi possível sincronizar com o banco. Reinicie seu telefone e tente novamente.",
+  "zenPlugin_networkError": "Não há acesso à rede ou o servidor do banco está indisponível. Tente executar a sincronização mais tarde.",
+  "zenPlugin_noAccountsError": "O banco não está conectado porque nenhuma conta foi selecionada. Repita o processo de conexão e selecione pelo menos uma conta bancária.",
+  "zenPlugin_nordigenNoAccountsToSyncError": "Todas as contas sincronizadas deste banco estão fechadas ou temporariamente inativas. Vincule o banco novamente e selecione novas contas para sincronizar.",
+  "zenPlugin_nordigenRequestLimitExceededError": "O banco limita o número de atualizações por dia. Você poderá obter uma atualização amanhã.",
+  "zenPlugin_notImplementedError": "Esta conexão ainda não está ativa, mas estamos trabalhando nisso. Se você enviar um relatório de erros, vai nos ajudar muito!",
+  "zenPlugin_obligatoryFieldsNotFilled": "Preencha todos os campos obrigatórios.",
+  "zenPlugin_passwordExpiredError": "A senha expirou. Altere-a no aplicativo do banco e depois atualize-a nas configurações de conexão.",
+  "zenPlugin_pinCodeInsteadOfPasswordError": "Você digitou um PIN em vez de uma senha. A senha do banco da Internet e o código PIN do aplicativo são senhas diferentes. Caso não lembre sua senha, recupere-a no site do seu banco.",
+  "zenPlugin_pluginError": "Ocorreu um erro ao sincronizar com o banco. Envie o relatório de erros para que possamos localizar e corrigir o erro.",
+  "zenPlugin_previousSessionNotClosedError": "O banco não permite a sincronização com o Zenmoney se o aplicativo do banco estiver aberto. Feche o app do banco, aguarde 10 minutos e inicie a sincronização no Zenmoney novamente.",
+  "zenPlugin_reportError": "Enviar relatório de erros",
+  "zenPlugin_severalAccountsLinkingError": "Várias contas bancárias estão associadas a sua conta Zenmoney. Para a sincronização correta, cada conta bancária deve estar associada a uma única conta Zenmoney separadamente. Abra as configurações das contas importadas deste banco e exclua os números da conta. Em seguida, inicie a sincronização e reconcilie as contas do banco com as contas no Zenmoney.",
+  "zenPlugin_temporaryUnavailableError": "Temporariamente impossibilitado de receber dados do banco. Tente sincronizar novamente depois de um tempo.\\n\\nSe o erro persistir, vá para Contas, toque no cartão do banco e depois em “Enviar relatório de erros para os desenvolvedores”."
 }

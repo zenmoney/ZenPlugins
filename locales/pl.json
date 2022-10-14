@@ -1,0 +1,22 @@
+{
+  "zenPlugin_bankMessageError": "Błąd synchronizacji.\\n\\nWiadomość z banku: %1$s",
+  "zenPlugin_fetchError": "Lista banków jest chwilowo niedostępna. Spróbuj później.",
+  "zenPlugin_fetchingDataError": "Połączenie z bankiem jest chwilowo niedostępne. Spróbuj później.",
+  "zenPlugin_finished": "Synchronizacja zakończona. Nie ma nowych transakcji.",
+  "zenPlugin_finishedWithCount": "Nowe zsynchronizowane transakcje: %1$d",
+  "zenPlugin_invalidLoginOrPasswordError": "Nieprawidłowy login lub hasło do banku",
+  "zenPlugin_invalidOtpCodeError": "Błędny kod. Spróbuj ponownie, wybierając opcję „Połącz” i wpisując nowy kod.",
+  "zenPlugin_invalidPreferencesError": "Sprawdź wprowadzone dane.",
+  "zenPlugin_keychainError": "Nie można zsynchronizować danych bankowych. Uruchom ponownie telefon i spróbuj jeszcze raz.",
+  "zenPlugin_networkError": "Brak połączenia z internetem lub serwer banku jest niedostępny. Spróbuj rozpocząć synchronizację później.",
+  "zenPlugin_noAccountsError": "Nie udało się połączyć z bankiem, ponieważ nie wybrano żadnego konta. Zacznij proces łączenia od nowa i wybierz co najmniej jedno konto bankowe.",
+  "zenPlugin_nordigenNoAccountsToSyncError": "Wszystkie zsynchronizowane konta w tym banku są zamknięte lub czasowo nieaktywne. Połącz się z bankiem ponownie, aby wybrać nowe konta do zsynchronizowania.",
+  "zenPlugin_nordigenRequestLimitExceededError": "Bank ogranicza liczbę dziennych aktualizacji. Następną aktualizację możesz otrzymać jutro.",
+  "zenPlugin_notImplementedError": "To połączenie jest na razie nieaktywne, ale próbujemy to naprawić. Jeśli przyślesz nam log, bardzo nam to pomoże.",
+  "zenPlugin_obligatoryFieldsNotFilled": "Wypełnij wszystkie wymagane pola.",
+  "zenPlugin_passwordExpiredError": "Hasło jest nieaktualne. Zmień je w aplikacji bankowej, a potem zaktualizuj je w ustawieniach połączenia.",
+  "zenPlugin_pluginError": "Błąd synchronizacji danych bankowych. Prześlij do nas log, abyśmy mogli znaleźć i usunąć błąd.",
+  "zenPlugin_previousSessionNotClosedError": "Bank nie zezwala na synchronizację danych z Zenmoney, gdy aplikacja bankowa jest otwarta. Zamknij ją, zaczekaj 10 minut i rozpocznij synchronizację z Zenmoney od nowa.",
+  "zenPlugin_reportError": "Wyślij log",
+  "zenPlugin_temporaryUnavailableError": "W tej chwili nie można odebrać danych z banku. Odczekaj chwilę i spróbuj zacząć synchronizację od nowa.\\n\\nJeśli błąd będzie się powtarzać, przejdź do obszaru Konta, stuknij kartę bankową i wybierz opcję „Wyślij log deweloperom”."
+}
