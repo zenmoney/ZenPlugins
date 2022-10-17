@@ -214,6 +214,53 @@ describe('convertTransaction', () => {
     })
   })
 
+  it('payment of income Refund of funds', () => {
+    const transaction = convertTransaction({
+      accountId: 'BY36MTBK10110008000001111000',
+      amount: '15.17',
+      balance: '216.82',
+      cardPan: '464990******1000',
+      curr: 'BYN',
+      debitFlag: '1',
+      description: 'Возврат денежных средств',
+      error: null,
+      operationDate: '2022-10-03',
+      orderStatus: null,
+      place: 'I.-SHOP"WWW.PASS.RW.BY"',
+      country: 'BY',
+      city: 'MINSK',
+      status: 'T',
+      transAmount: '15.17',
+      transDate: null,
+      mcc: '4112',
+      transactionId: '3037680892',
+      rrn: '213674316635',
+      approvalCode: '085813'
+    }, accounts)
+
+    expect(transaction).toEqual({
+      hold: false,
+      date: new Date('2022-10-03T00:00:00+03:00'),
+      movements: [
+        {
+          id: '3037680892',
+          account: { id: '1113333' },
+          sum: 15.17,
+          fee: 0,
+          invoice: null
+        }
+      ],
+      merchant: {
+        country: 'BY',
+        city: 'MINSK',
+        title: 'I.-SHOP"WWW.PASS.RW.BY"',
+        location: null,
+        mcc: 4112
+      },
+      comment: 'Возврат денежных средств'
+    })
+  })
+
   it('should convert internet-bank transaction', () => {
     const transaction = convertTransaction({
       accountId: 'BY36MTBK10110008000001111000',

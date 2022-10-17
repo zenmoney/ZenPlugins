@@ -63,6 +63,26 @@ describe('scrape', () => {
         mcc: null
       },
       comment: null
+    }, {
+      hold: false,
+      date: new Date('2022-10-03T00:00:00+03:00'),
+      movements: [
+        {
+          id: '3037680892',
+          account: { id: '1111111' },
+          sum: 15.17,
+          fee: 0,
+          invoice: null
+        }
+      ],
+      merchant: {
+        country: 'BY',
+        city: 'MINSK',
+        title: 'I.-SHOP"WWW.PASS.RW.BY"',
+        location: null,
+        mcc: 4112
+      },
+      comment: 'Возврат денежных средств'
     }])
   })
 })
@@ -132,6 +152,26 @@ function mockLoadOperationStatements () {
               transAmount: '29.68',
               transDate: '2018-12-29 01:07:39',
               transactionId: '1111112'
+            }, {
+              amount: '15.17',
+              balance: '216.82',
+              cardPan: '464990******1000',
+              curr: 'BYN',
+              debitFlag: '1',
+              description: 'Возврат денежных средств',
+              error: null,
+              operationDate: '2022-10-03',
+              orderStatus: null,
+              place: 'I.-SHOP"WWW.PASS.RW.BY"',
+              country: 'BY',
+              city: 'MINSK',
+              status: 'T',
+              transAmount: '15.17',
+              transDate: null,
+              mcc: '4112',
+              transactionId: '3037680892',
+              rrn: '213674316635',
+              approvalCode: '085813'
             }
           ],
           outgoingBalance: '999.9',

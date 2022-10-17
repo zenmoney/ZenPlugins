@@ -203,7 +203,8 @@ export async function fetchTransactions (sessionCookies, accounts, fromDate, toD
   })
 
   const filteredOperations = operations.filter(function (op) {
-    return op !== undefined && op.status !== 'E' && getDate(op.transDate) > fromDate && !op.description.includes('Гашение кредита в виде "овердрафт" по договору')
+    const date = op.transDate ? getDate(op.transDate) : getDate(`${op.operationDate} 00:00:00`)
+    return op !== undefined && op.status !== 'E' && date > fromDate && !op.description.includes('Гашение кредита в виде "овердрафт" по договору')
   })
   console.log(filteredOperations)
 
