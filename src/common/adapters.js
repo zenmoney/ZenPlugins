@@ -28,16 +28,28 @@ import { sanitize } from './sanitize'
 import { isDebug } from './utils'
 
 i18n.init({
-  resources: {
-    de: { translation: de },
-    en: { translation: en },
-    es: { translation: es },
-    he: { translation: he },
-    pl: { translation: pl },
-    pt: { translation: pt },
-    ru: { translation: ru },
-    uk: { translation: uk }
-  },
+  resources: _.fromPairs([
+    ['de', de],
+    ['en', en],
+    ['es', es],
+    ['he', he],
+    ['pl', pl],
+    ['pt', pt],
+    ['ru', ru],
+    ['uk', uk]
+  ].map(([lang, translation]) => [
+    lang,
+    {
+      translation: _.mapValues(translation, value => {
+        const paramRegExp = /%(\d)\$[sd]/g
+        let result
+        while ((result = paramRegExp.exec(value)) !== null) {
+          value = value.replace(result[0], `{{${parseInt(result[1], 10) - 1}}}`)
+        }
+        return value
+      })
+    }
+  ])),
   fallbackLng: 'en'
 })
 
@@ -304,7 +316,10 @@ function patchTransactionAmount (transaction, accountsByIdLookup) {
   return transaction
 }
 
-function patchAmount ({ sum, instrument }) {
+function patchAmount ({
+  sum,
+  instrument
+}) {
   const GRAMS_IN_OUNCE = 31.1034768
   let rate = 1
   switch (instrument) {
@@ -346,7 +361,10 @@ function patchAmount ({ sum, instrument }) {
   if (sum !== null && sum !== undefined && rate !== 1) {
     sum *= rate
   }
-  return { sum, instrument }
+  return {
+    sum,
+    instrument
+  }
 }
 
 function castTransactionDatesToTicks (transactions) {
@@ -374,7 +392,7 @@ function getPresentationError (error) {
   const params = { lng: ZenMoney.locale ? ZenMoney.locale.replace('_', '-') : 'ru' }
   if (error instanceof BankMessageError) {
     key = 'zenPlugin_bankMessageError'
-    params.bankMessage = error.bankMessage
+    params[0] = error.bankMessage
   } else if (error instanceof IncompatibleVersionError) {
     key = 'zenPlugin_incompatibleVersionError'
   } else if (error instanceof InvalidLoginOrPasswordError) {

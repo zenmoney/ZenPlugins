@@ -1,5 +1,5 @@
 {
-  "zenPlugin_bankMessageError": "Se produjo un error durante la sincronización.\\n\\nMensaje del Banco: %1$s",
+  "zenPlugin_bankMessageError": "Se produjo un error durante la sincronización.\n\nMensaje del Banco: %1$s",
   "zenPlugin_fetchError": "Error al cargar los plugins. Intente más tarde.",
   "zenPlugin_fetchingDataError": "Error al cargar los datos",
   "zenPlugin_finished": "La sincronización con el banco está completa. No hay nuevas operaciones.",
@@ -16,5 +16,5 @@
   "zenPlugin_previousSessionNotClosedError": "La sincronización no pasó. El banco no permite iniciar la sincronización si la aplicación del banco se está ejecutando. Haga clic en Salir en la aplicación del banco e inicie la sincronización en Zenmoney una vez más.",
   "zenPlugin_reportError": "Reportar el error",
   "zenPlugin_severalAccountsLinkingError": "Varias cuentas del banco están asociadas con una cuenta en Zenmoney. Para una correcta sincronización, cada cuenta del banco debe estar asociada con una cuenta individual en Zenmoney. Abra la configuración de las cuentas importadas de este banco y elimine los números de las cuentas. Luego inicie la sincronización y conecte las cuentas del banco con las cuentas en Zenmoney",
-  "zenPlugin_temporaryUnavailableError": "El banco no responde temporalmente. Vuelva a intentar la sincronización después de un tiempo.\\n\\nSi el error vuelve a ocurrir, vaya a Cuentas, toque su tarjeta bancaria y haga clic en \"Enviar registro\"."
+  "zenPlugin_temporaryUnavailableError": "El banco no responde temporalmente. Vuelva a intentar la sincronización después de un tiempo.\n\nSi el error vuelve a ocurrir, vaya a Cuentas, toque su tarjeta bancaria y haga clic en \"Enviar registro\"."
 }

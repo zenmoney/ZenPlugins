@@ -1,5 +1,5 @@
 {
-  "zenPlugin_bankMessageError": "Błąd synchronizacji.\\n\\nWiadomość z banku: %1$s",
+  "zenPlugin_bankMessageError": "Błąd synchronizacji.\n\nWiadomość z banku: %1$s",
   "zenPlugin_fetchError": "Lista banków jest chwilowo niedostępna. Spróbuj później.",
   "zenPlugin_fetchingDataError": "Połączenie z bankiem jest chwilowo niedostępne. Spróbuj później.",
   "zenPlugin_finished": "Synchronizacja zakończona. Nie ma nowych transakcji.",
@@ -18,5 +18,5 @@
   "zenPlugin_pluginError": "Błąd synchronizacji danych bankowych. Prześlij do nas log, abyśmy mogli znaleźć i usunąć błąd.",
   "zenPlugin_previousSessionNotClosedError": "Bank nie zezwala na synchronizację danych z Zenmoney, gdy aplikacja bankowa jest otwarta. Zamknij ją, zaczekaj 10 minut i rozpocznij synchronizację z Zenmoney od nowa.",
   "zenPlugin_reportError": "Wyślij log",
-  "zenPlugin_temporaryUnavailableError": "W tej chwili nie można odebrać danych z banku. Odczekaj chwilę i spróbuj zacząć synchronizację od nowa.\\n\\nJeśli błąd będzie się powtarzać, przejdź do obszaru Konta, stuknij kartę bankową i wybierz opcję „Wyślij log deweloperom”."
+  "zenPlugin_temporaryUnavailableError": "W tej chwili nie można odebrać danych z banku. Odczekaj chwilę i spróbuj zacząć synchronizację od nowa.\n\nJeśli błąd będzie się powtarzać, przejdź do obszaru Konta, stuknij kartę bankową i wybierz opcję „Wyślij log deweloperom”."
 }

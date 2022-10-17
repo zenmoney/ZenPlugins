@@ -22,5 +22,5 @@
   "zenPlugin_previousSessionNotClosedError": "O banco não permite a sincronização com o Zenmoney se o aplicativo do banco estiver aberto. Feche o app do banco, aguarde 10 minutos e inicie a sincronização no Zenmoney novamente.",
   "zenPlugin_reportError": "Enviar relatório de erros",
   "zenPlugin_severalAccountsLinkingError": "Várias contas bancárias estão associadas a sua conta Zenmoney. Para a sincronização correta, cada conta bancária deve estar associada a uma única conta Zenmoney separadamente. Abra as configurações das contas importadas deste banco e exclua os números da conta. Em seguida, inicie a sincronização e reconcilie as contas do banco com as contas no Zenmoney.",
-  "zenPlugin_temporaryUnavailableError": "Temporariamente impossibilitado de receber dados do banco. Tente sincronizar novamente depois de um tempo.\\n\\nSe o erro persistir, vá para Contas, toque no cartão do banco e depois em “Enviar relatório de erros para os desenvolvedores”."
+  "zenPlugin_temporaryUnavailableError": "Temporariamente impossibilitado de receber dados do banco. Tente sincronizar novamente depois de um tempo.\n\nSe o erro persistir, vá para Contas, toque no cartão do banco e depois em “Enviar relatório de erros para os desenvolvedores”."
 }
