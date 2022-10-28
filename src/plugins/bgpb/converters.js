@@ -73,6 +73,17 @@ function parseInnerTransfer (transaction, apiTransaction, account, invoice) {
   return false
 }
 
+export function convertTestLastTransactions (apiTransactions, accounts) {
+  const transactions = []
+  for (const apiTransaction of apiTransactions) {
+    const transaction = convertLastTransaction(apiTransaction, accounts)
+    if (transaction) {
+      transactions.push(transaction)
+    }
+  }
+  return transactions
+}
+
 export function convertLastTransaction (apiTransaction, accounts) {
   const rawData = apiTransaction.pushMessageText.split('; ')
 
@@ -99,9 +110,9 @@ export function convertLastTransaction (apiTransaction, accounts) {
     amount = amountData[1].replace(' ' + currency, '')
     date = getDateFromJSON(rawData[2])
     dateDate = getDateJSON(rawData[2])
-    const mcc = rawData[4].match(/MCC: (\d{4})/i)
+    const mcc = rawData[4] ? rawData[4].match(/MCC: (\d{4})/i) : null
     apiTransaction.mcc = mcc ? mcc[1] : null
-    apiTransaction.payeeLastTransaction = rawData[3]
+    apiTransaction.payeeLastTransaction = rawData[4] ? rawData[3] : rawData[3].split(';')[0]
   } else {
     amountData = rawData[2].split(' ')
     currency = amountData[2].slice(-3)
@@ -242,10 +253,17 @@ function parsePayee (transaction, apiTransaction) {
   if (merchant.length === 1) {
     transaction.merchant.fullTitle = apiTransaction.place
   } else if (merchant.length > 1) {
-    const [country, title, city] = apiTransaction.place.match(/([a-zA-Z]{2}) (.*), (.*)/).slice(1)
-    transaction.merchant.title = title
-    transaction.merchant.city = city
-    transaction.merchant.country = country
+    const match = merchant[0].match(/^([a-zA-Z]{2})\s.*/)
+    if (match) {
+      const [country, title, city] = apiTransaction.place.match(/([a-zA-Z]{2}) (.*), (.*)/).slice(1)
+      transaction.merchant.title = title
+      transaction.merchant.city = city
+      transaction.merchant.country = country
+    } else {
+      transaction.merchant.title = merchant[0]
+      transaction.merchant.city = merchant[1]
+      transaction.merchant.country = null
+    }
   } else {
     throw new Error('Ошибка обработки транзакции с получателем: ' + apiTransaction.place)
   }

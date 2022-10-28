@@ -1,4 +1,4 @@
-import { convertLastTransaction } from '../../../converters'
+import { convertLastTransaction, convertTestLastTransactions } from '../../../converters'
 
 describe('convertLastTransaction', () => {
   it.each([
@@ -200,5 +200,105 @@ describe('convertLastTransaction', () => {
     ]
   ])('converts last transactions', (apiTransaction, accounts, transaction) => {
     expect(convertLastTransaction(apiTransaction, accounts)).toEqual(transaction)
+  })
+})
+
+describe('convertLastTransactions', () => {
+  it.each([
+    [
+      [
+        {
+          id: '2022-92834438',
+          acceptedTime: 1669805411000,
+          pushMessageText: 'Card1111; Оплата в сети Интернет: 20,00 BYN; 30.11.22 13:50:03; BGPB MOB.APP_4,INTERNET,BY; MCC: 6012;Dostupno: 5,65 BYN',
+          eventType: 4
+        },
+        {
+          id: '2022-92559072',
+          acceptedTime: 1669719789000,
+          pushMessageText: 'Card1111; Пополнение счета: 2,23 BYN; 29.11.22 14:02:52; BELGAZPROMBANK,MOSCOW,RU;Dostupno: 25,52 BYN',
+          eventType: 4
+        },
+        {
+          id: '2022-92112871',
+          acceptedTime: 1669621845000,
+          pushMessageText: 'Card1111; Пополнение счета: 0,53 BYN; 28.11.22 10:50:35; BELGAZPROMBANK,MINSK,BLR; Dostupno: 49,05 BYN',
+          eventType: 4
+        }
+      ],
+      [
+        {
+          comment: null,
+          date: new Date('2022-11-30T10:50:00.000Z'),
+          hold: false,
+          merchant: {
+            city: 'INTERNET',
+            country: 'BY',
+            location: null,
+            mcc: 6012,
+            title: 'BGPB MOB.APP_4'
+          },
+          movements: [
+            {
+              account: { id: 'account' },
+              fee: 0,
+              id: null,
+              invoice: null,
+              sum: -20
+            }
+          ]
+        },
+        {
+          comment: null,
+          date: new Date('2022-11-29T11:02:00.000Z'),
+          hold: false,
+          merchant: {
+            city: 'MOSCOW',
+            country: 'RU',
+            location: null,
+            mcc: null,
+            title: 'BELGAZPROMBANK'
+          },
+          movements: [
+            {
+              account: { id: 'account' },
+              fee: 0,
+              id: null,
+              invoice: null,
+              sum: 2.23
+            }
+          ]
+        },
+        {
+          comment: null,
+          date: new Date('2022-11-28T07:50:00.000Z'),
+          hold: false,
+          merchant: {
+            city: 'MINSK',
+            country: 'BLR',
+            location: null,
+            mcc: null,
+            title: 'BELGAZPROMBANK'
+          },
+          movements: [
+            {
+              account: { id: 'account' },
+              fee: 0,
+              id: null,
+              invoice: null,
+              sum: 0.53
+            }
+          ]
+        }
+      ]
+    ]
+  ])('converts last transactions', (apiTransactions, transactions) => {
+    expect(convertTestLastTransactions(apiTransactions, [
+      {
+        id: 'account',
+        instrument: 'BYN',
+        syncID: ['1111']
+      }
+    ])).toEqual(transactions)
   })
 })

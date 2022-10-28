@@ -42,34 +42,33 @@ describe('convertTransaction', () => {
           mcc: null,
           title: 'BGPB PST-93'
         },
-        movements:
-          [
-            {
-              account: {
-                id: '11161311-117d11'
-              },
-              fee: 0,
-              id: null,
-              invoice: null,
-              sum: 1600
+        movements: [
+          {
+            account: {
+              id: '11161311-117d11'
             },
-            {
-              account: {
-                company: null,
-                instrument: 'USD',
-                syncIds: null,
-                type: 'cash'
-              },
-              fee: 0,
-              id: null,
-              invoice: null,
-              sum: -1600
-            }
-          ]
+            fee: 0,
+            id: null,
+            invoice: null,
+            sum: 1600
+          },
+          {
+            account: {
+              company: null,
+              instrument: 'USD',
+              syncIds: null,
+              type: 'cash'
+            },
+            fee: 0,
+            id: null,
+            invoice: null,
+            sum: -1600
+          }
+        ]
       }
     },
     {
-      name: 'internet pay',
+      name: 'internet pay-1',
       transaction: {
         amount: '300,00',
         amountReal: '250,00',
@@ -95,21 +94,61 @@ describe('convertTransaction', () => {
           mcc: 1200,
           title: 'SHOP'
         },
-        movements:
-          [
-            {
-              account: {
-                id: '11161311-117d11'
-              },
-              fee: 0,
-              id: null,
-              invoice: {
-                instrument: 'EUR',
-                sum: -250
-              },
-              sum: -300
-            }
-          ]
+        movements: [
+          {
+            account: {
+              id: '11161311-117d11'
+            },
+            fee: 0,
+            id: null,
+            invoice: {
+              instrument: 'EUR',
+              sum: -250
+            },
+            sum: -300
+          }
+        ]
+      }
+    },
+    {
+      name: 'internet pay-2',
+      transaction: {
+        amount: '30,16',
+        amountReal: '30,16',
+        authCode: '400818',
+        cardNum: '5452',
+        currency: 'USD',
+        currencyReal: 'EUR',
+        date: '12.10.2022 13:41',
+        description: 'Безналичная оплата (страна ЕЭЗ)',
+        mcc: '4131',
+        place: 'Flixbus, Berlin',
+        type: 'СПИСАНИЕ',
+        overdraft: '0,00'
+      },
+      expectedTransaction: {
+        comment: 'Безналичная оплата (страна ЕЭЗ)',
+        date: new Date('2022-10-12T10:41:00.000Z'),
+        hold: false,
+        merchant: {
+          city: 'Berlin',
+          country: null,
+          location: null,
+          mcc: 4131,
+          title: 'Flixbus'
+        },
+        movements: [
+          {
+            account: { id: '11161311-117d11' },
+            fee: 0,
+            id: null,
+            invoice: {
+              instrument: 'EUR',
+              sum: -30.16
+            },
+            sum: -30.16
+          }
+        ]
       }
     },
     {
