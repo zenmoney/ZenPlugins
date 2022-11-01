@@ -1,4 +1,4 @@
-import { convertTransaction } from '../../../converters'
+import { convertTransaction, convertTransactionNew } from '../../../converters'
 
 describe('convertTransaction', () => {
   it.each([
@@ -179,6 +179,70 @@ describe('convertTransaction', () => {
       }
     ]
   ])('converts inner outcome transfer', (apiTransaction, transaction) => {
-    expect(convertTransaction(apiTransaction, { id: 'account', instrument: 'RUB' })).toEqual(transaction)
+    expect(convertTransaction(apiTransaction, {
+      id: 'account',
+      instrument: 'RUB'
+    })).toEqual(transaction)
+  })
+})
+
+describe('convertTransactionNew', () => {
+  it.each([
+    [
+      {
+        transactionId: '1202971298;1',
+        creditDebitIndicator: 'Debit',
+        status: 'Booked',
+        documentNumber: '153',
+        transactionTypeCode: 'Платежное поручение',
+        documentProcessDate: '2022-09-07',
+        description: 'Перевод личных средств Без НДС',
+        Amount: {
+          amount: 21520,
+          amountNat: 21520,
+          currency: 'RUB'
+        },
+        CreditorParty: {
+          inn: '526300059348',
+          name: 'Николаев Николай Николаевич'
+        },
+        CreditorAccount:
+          {
+            schemeName: 'RU.CBR.PAN',
+            identification: '40817810701270000023'
+          },
+        CreditorAgent:
+          {
+            schemeName: 'RU.CBR.BIK',
+            identification: '044525999',
+            accountIdentification: '30101810845250000999',
+            name: 'ТОЧКА ПАО БАНКА "ФК ОТКРЫТИЕ"'
+          }
+      },
+      {
+        hold: null,
+        date: new Date('2022-09-07T00:00:00.000Z'),
+        movements:
+          [
+            {
+              id: '1202971298;1',
+              account: { id: 'account' },
+              invoice: null,
+              sum: -21520,
+              fee: 0
+            }
+          ],
+        merchant: null,
+        comment: null,
+        groupKeys: [
+          '1202971298;1'
+        ]
+      }
+    ]
+  ])('converts new inner outcome transfer', (apiTransaction, transaction) => {
+    expect(convertTransactionNew(apiTransaction, {
+      id: 'account',
+      instrument: 'RUB'
+    })).toEqual(transaction)
   })
 })

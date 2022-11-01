@@ -38,6 +38,8 @@ export function convertTransactionNew (apiTransaction, account) {
   }
   ;[
     parseBreak,
+    parseInnerTransferNew,
+    parseCashTransfer,
     parsePurchase,
     parseSbp,
     parseDescription
@@ -52,31 +54,77 @@ function parseBreak (transaction, apiTransaction) {
   }
   return false
 }
-function parsePurchase (transaction, apiTransaction) {
-  if (!apiTransaction.description.startsWith('Покупка товара')) {
-    return false
-  }
 
-  const match = apiTransaction.description.match(/^[^(]+\(Терминал:\s*(.+?)\s*,дата операции/)
-  if (match) {
-    const parts = match[1].split(',')
-    let merchant = null
-    if (parts.length >= 3) {
-      merchant = {
-        country: parts[parts.length - 1].trim() || null,
-        city: parts[parts.length - 2].trim() || null,
-        title: parts[0].trim(),
-        mcc: null,
-        location: null
+function parseInnerTransferNew (transaction, apiTransaction) {
+  if ([
+    /^Перевод личных средств/
+  ].some(regexp => apiTransaction.description.match(regexp))) {
+    transaction.groupKeys = [transaction.movements[0].id]
+    return true
+  }
+  return false
+}
+
+function parseCashTransfer (transaction, apiTransaction, account) {
+  if ([
+    /наличных денег в банкомате/i
+  ].some(regexp => apiTransaction.description.match(regexp))) {
+    transaction.movements.push({
+      id: null,
+      account: {
+        company: null,
+        instrument: account.instrument,
+        syncIds: null,
+        type: 'cash'
+      },
+      invoice: null,
+      sum: -transaction.movements[0].sum,
+      fee: 0
+    })
+    // return false
+  }
+  return false
+}
+
+function parsePurchase (transaction, apiTransaction) {
+  if ([
+    /^Покупка товара/i,
+    /^Выдача наличных/i
+  ].some(regexp => apiTransaction.description.match(regexp))) {
+    const match = apiTransaction.description.match(/^[^(]+\(Терминал:\s*(.+?)\s*,дата операции/)
+    if (match) {
+      const parts = match[1].split(',')
+      let merchant = null
+      if (parts.length >= 3) {
+        merchant = {
+          country: parts[parts.length - 1].trim() || null,
+          city: parts[parts.length - 2].trim() || null,
+          title: parts[0].trim(),
+          mcc: null,
+          location: null
+        }
+      } else {
+        merchant = {
+          fullTitle: match[1],
+          mcc: null,
+          location: null
+        }
       }
-    } else {
-      merchant = {
-        fullTitle: match[1],
-        mcc: null,
-        location: null
-      }
+      transaction.merchant = merchant
     }
-    transaction.merchant = merchant
+    return true
+  }
+  if (apiTransaction.transactionTypeCode === 'Платежное поручение') {
+    const title = apiTransaction.creditDebitIndicator === 'Debit' ? apiTransaction.CreditorParty.name : apiTransaction.DebtorParty.name
+    transaction.merchant = title
+      ? {
+          city: null,
+          country: null,
+          location: null,
+          mcc: null,
+          title
+        }
+      : null
     return true
   }
   return false
