@@ -34,10 +34,6 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
   return {
     mode: production ? 'production' : 'development',
     devtool: production ? false : 'eval',
-    cache: {
-      type: production ? 'filesystem' : 'memory',
-      ...production && { name: pluginName }
-    },
     entry: production
       ? { index: pluginPaths.js }
       : { windowLoader: [paths.windowLoaderJs] },
