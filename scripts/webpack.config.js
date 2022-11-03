@@ -36,7 +36,7 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
     devtool: production ? false : 'eval',
     cache: {
       type: production ? 'filesystem' : 'memory',
-      ...production && { name: pluginName }
+      ...production && { name: pluginName, allowCollectingMemory: true }
     },
     entry: production
       ? { index: pluginPaths.js }
