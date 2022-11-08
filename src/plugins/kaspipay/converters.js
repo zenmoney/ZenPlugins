@@ -1,3 +1,5 @@
+// import currencies from './currencies'
+
 export async function convertAccount (account) {
   return {
     id: account.id,
@@ -11,36 +13,42 @@ export async function convertAccount (account) {
   }
 }
 
-export function convertTransaction (transaction, account) {
-  let amount = transaction.amount
-  amount = amount.split(' ')
-  let newAmount = ''
+export async function convertTransaction (transaction, account) {
+  let amount = transaction.tranAmount
 
-  amount.map(item => {
-    if (item === '+' && item === '-') {
-      newAmount += item
-    } else if (typeof item === 'number') {
-      newAmount += item
-    }
-    return newAmount
-  })
+  const number = amount.match(/\d+/g).join('')
+
+  amount = amount.split(' ')
+
+  const newAmount = amount[0] + number
+
+  // const currency = currencies[amount[amount.length - 1]]
 
   return {
     hold: transaction.status !== 'OK',
-    date: new Date(transaction.tranDate),
+    date: await getDate(transaction.tranDate),
     movements: [
       {
-        id: transaction.id,
+        id: transaction.tranId,
         account: { id: account.id },
-        sum: newAmount,
+        invoice: null,
+        sum: Number(newAmount),
         fee: 0
       }
     ],
     merchant: {
-      title: transaction.purpose,
-      mcc: transaction.knp,
+      country: null,
+      city: null,
+      location: null,
+      title: transaction.contragentName,
+      mcc: Number(transaction.knp),
       category: transaction.tranType
     },
-    comment: null
+    comment: transaction.purpose
   }
+}
+
+const getDate = async (date) => {
+  const [day, month, year, hour, minute, second] = date.match(/(\d{2}).(\d{2}).(\d{2}) (\d{2}):(\d{2}):(\d{2})/).slice(1)
+  return new Date(`20${year}-${month}-${day}T${hour}:${minute}:${second}+06:00`)
 }

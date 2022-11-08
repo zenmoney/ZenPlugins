@@ -1,36 +1,48 @@
 import { fetch } from '../../common/network'
-import { InvalidLoginOrPasswordError } from '../../errors'
+import { InvalidLoginOrPasswordError, TemporaryError } from '../../errors'
 import { load } from 'cheerio'
+import setCookie from 'set-cookie-parser'
 
 const baseUrl = 'https://pay.kaspi.kz/'
 
-async function fetchUrl (url, options, predicate = () => true, error = (message) => console.assert(false, message)) {
+function readCookies () {
+  const cookies = ZenMoney.getData('cookies', {})
+  let cookiesString = ''
+  for (const name in cookies) {
+    const value = cookies[name]
+    if (cookiesString) {
+      cookiesString += '; '
+    }
+    cookiesString += name + '=' + value
+  }
+  return cookiesString
+}
+
+function updateCookies (setCookieString) {
+  const cookiesObj = ZenMoney.getData('cookies', {})
+  const setCookies = setCookie.parse(setCookie.splitCookiesString(setCookieString))
+  for (const cookie of setCookies) {
+    cookiesObj[cookie.name] = cookie.value
+  }
+  ZenMoney.setData('cookies', cookiesObj)
+  ZenMoney.saveData()
+}
+
+async function fetchUrl (url, options) {
+  const cookies = readCookies()
   const response = await fetch(baseUrl + url, options ?? {
+    sanitizeResponseLog: { headers: { 'set-cookie': true } },
     headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36'
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36',
+      ...cookies && { Cookie: cookies }
     }
   })
 
-  if (predicate) {
-    validateResponse(response, response => predicate(response), error)
-  }
-
-  if (response.body.success === false) {
-    const errorDescription = response.body.message
-    const errorMessage = 'Ответ банка: ' + errorDescription
-    if (errorDescription.indexOf('Неправильный номер или пароль') >= 0) {
-      throw new InvalidLoginOrPasswordError(errorMessage)
-    }
-    throw new TemporaryError(errorMessage)
+  if (response.headers && response.headers['set-cookie']) {
+    updateCookies(response.headers['set-cookie'])
   }
 
   return response
-}
-
-function validateResponse (response, predicate, error) {
-  if (!predicate || !predicate(response)) {
-    error('non-successful response')
-  }
 }
 
 export async function fetchLogin ({ login, password }) {
@@ -41,19 +53,10 @@ export async function fetchLogin ({ login, password }) {
   const $ = load(responseFirst.body)
   let csrfToken = $('input[id="csrfToken"]').attr('value')
 
-  let cookies = await responseFirst.headers['set-cookie']
-
-  login = ZenMoney.getData('login') ? ZenMoney.getData('login') : login
-  ZenMoney.setData('login', login)
-  password = ZenMoney.getData('password') ? ZenMoney.getData('password') : password
-  ZenMoney.setData('password', password)
-  ZenMoney.saveData()
-
   const responseSignIn = await fetchUrl('api/auth/sign-in', {
     method: 'POST',
     headers: {
       'X-Csrf-Token': csrfToken,
-      Cookie: cookies,
       'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
     },
     body: `Login=${login}&Password=${password}`
@@ -73,23 +76,28 @@ export async function fetchLogin ({ login, password }) {
     method: 'POST',
     headers: {
       'X-CSRF-Token': csrfToken,
-      Cookie: cookies,
       'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
     },
     body: `ProfileId=${profileId}`
-  }, response => response.success, message => new TemporaryError(message))
+  }, response => response.success === false)
 
-  cookies = await response.headers['set-cookie']
+  const resObj = JSON.parse(response.body)
+
+  if (resObj.success === false) {
+    throw new TemporaryError(resObj.message)
+  }
 
   return {
-    'X-CSRF-Token': csrfToken,
-    Cookie: cookies
+    'X-CSRF-Token': csrfToken
   }
 }
 
-export async function fetchAccounts () {
+export async function fetchAccounts (auth) {
   const response = await fetchUrl('', {
-    method: 'GET'
+    method: 'GET',
+    headers: {
+      'X-CSRF-Token': auth['X-CSRF-Token']
+    }
   }, response => response.status === 200)
 
   const accounts = []
@@ -123,30 +131,63 @@ export async function fetchAccounts () {
   return accounts
 }
 
-export async function fetchTransactions (auth, account, startDate, endDate, TransactionType, LastTransactionId) {
-  if (LastTransactionId === undefined) {
-    const response = await fetchUrl(account, {
-      method: 'GET',
-      headers: {
-        'X-CSRF-Token': auth['X-CSRF-Token'],
-        Cookie: auth.Cookie,
-        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-      },
-      body: `period=custom&url=account&startDate=${startDate}&endDate=${endDate}&accountId=${account}&TransactionType=${TransactionType}`
-    }, response => response.status === 200)
+const getTransactions = async (auth, startDate, endDate, account, lastTransactionId) => {
+  const response = await fetchUrl('api/statement/account', {
+    method: 'POST',
+    headers: {
+      'X-CSRF-Token': auth['X-CSRF-Token'],
+      'X-Requested-With': 'XMLHttpRequest',
+      'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+    },
+    body: `period=custom&url=account&startDate=${await formatDate(startDate)}&endDate=${await formatDate(endDate)}&accountId=${account.id}&TransactionType=&LastTransactionId=${lastTransactionId}`
+  })
+  return JSON.parse(await response.body)
+}
 
-    return response
-  } else {
-    const response = await fetchUrl(account, {
-      method: 'GET',
-      headers: {
-        'X-CSRF-Token': auth['X-CSRF-Token'],
-        Cookie: auth.Cookie,
-        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-      },
-      body: `period=custom&url=account&startDate=${startDate}&endDate=${endDate}&accountId=${account}&TransactionType=${TransactionType}LastTransactionId=${LastTransactionId}`
-    }, response => response.status === 200)
+export async function fetchTransactions (auth, account, startDate, endDate) {
+  const chuncSize = 20
+  const transactions = []
+  const lastTransactionId = ''
 
-    return response
+  const response = await getTransactions(auth, startDate, endDate, account, lastTransactionId)
+
+  const remnantCount = response.remnantCount
+
+  for (const transaction of response.transactions) {
+    transactions.push(transaction)
   }
+
+  if (response.remnantCount >= chuncSize) {
+    let lastId = ''
+    for (let i = 0; i <= remnantCount; i += chuncSize) {
+      const temp = await getTransactions(auth, startDate, endDate, account, lastId)
+      if (lastId === '') {
+        lastId = temp.transactions.at(-1).tranId
+        for (const transaction of temp.transactions) {
+          transactions.push(transaction)
+        }
+      } else {
+        let transactionsArray = temp.transactions.map(transaction => transaction.tranId)
+        transactionsArray = [...new Set(transactionsArray)]
+        lastId = transactionsArray.at(-1)
+        for (const transaction of temp.transactions) {
+          transactions.push(transaction)
+        }
+      }
+    }
+  }
+
+  return transactions
+}
+
+async function padTo2Digits (num) {
+  return num.toString().padStart(2, '0')
+}
+
+async function formatDate (date) {
+  return [
+    await padTo2Digits(date.getDate()),
+    await padTo2Digits(date.getMonth() + 1),
+    date.getFullYear()
+  ].join('.')
 }
