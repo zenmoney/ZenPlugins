@@ -1,4 +1,5 @@
 import { fetch } from '../../common/network'
+import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { InvalidLoginOrPasswordError, TemporaryError } from '../../errors'
 import { load } from 'cheerio'
 import setCookie from 'set-cookie-parser'
@@ -181,7 +182,7 @@ export async function fetchTransactions (auth, account, startDate, endDate) {
 }
 
 async function padTo2Digits (num) {
-  return num.toString().padStart(2, '0')
+  return toAtLeastTwoDigitsString(num.toString())
 }
 
 async function formatDate (date) {
