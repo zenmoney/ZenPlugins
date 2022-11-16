@@ -36,6 +36,9 @@ export function convertTransaction (account: string, transaction: EthereumTransa
   if (transaction.isError === '1') {
     return null
   }
+  if (operationValue === 0) {
+    return null
+  }
 
   return {
     hold: null,
