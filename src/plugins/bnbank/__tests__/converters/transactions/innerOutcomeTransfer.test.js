@@ -16,7 +16,7 @@ describe('convertTransaction', () => {
         operationCurrency: '933',
         operationSign: '-1',
         actionGroup: 3,
-        clientName: 'Васильев Дмитрий Григорьевич',
+        clientName: 'Николаев Николай Николаевич',
         operationClosingBalance: 0,
         operationCode: 3
       },

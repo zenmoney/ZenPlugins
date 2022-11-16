@@ -58,6 +58,52 @@ describe('convertTransaction', () => {
         comment: 'Возврат (refund) в устройствах других банков',
         hold: false
       }
+    ],
+    [
+      {
+        accountType: '0',
+        concreteType: '0',
+        accountNumber: '1107239780000085',
+        operationName: 'Капитализация. Удержано подоходного налога 3.13',
+        transactionDate: 1668485142000,
+        operationDate: 1668485142000,
+        transactionAmount: 24.08,
+        transactionCurrency: '978',
+        operationAmount: 24.08,
+        operationCurrency: '978',
+        operationSign: '1',
+        actionGroup: 19,
+        clientName: 'Николаев Николай Николаевич',
+        operationClosingBalance: 8279.47,
+        operationCode: 999
+      },
+      [
+        {
+          id: '1107239780000085',
+          type: 'deposit',
+          title: 'Депозит Безотзывный online-вклад',
+          currencyCode: '978',
+          instrument: 'EUR',
+          balance: 8279.47,
+          syncID: ['1107239780000085']
+        }
+      ],
+      {
+        date: new Date('2022-11-15T04:05:42.000Z'),
+        movements:
+          [
+            {
+              id: null,
+              account: { id: '1107239780000085' },
+              invoice: null,
+              sum: 20.95,
+              fee: 3.13
+            }
+          ],
+        merchant: null,
+        comment: 'Капитализация',
+        hold: false
+      }
     ]
   ])('converts income', (apiTransaction, accounts, transaction) => {
     expect(convertTransaction(apiTransaction, accounts)).toEqual(transaction)

@@ -81,10 +81,6 @@ export function convertTransaction (apiTransaction, accounts, hold = false) {
   const sign = (apiTransaction.operationCode && apiTransaction.operationCode === 3) || (apiTransaction.operationSign === '-1') ? -1 : 1
   const currency = apiTransaction.transactionCurrency
   const transactionCurrency = currency.length === 3 ? currency : currency.length === 2 ? `0${currency}` : `00${currency}`
-  const invoice = {
-    sum: sign * apiTransaction.transactionAmount,
-    instrument: codeToCurrencyLookup[transactionCurrency]
-  }
   let fee = 0
   if (apiTransaction.operationName && apiTransaction.operationName.indexOf('Удержано подоходного налога') >= 0) {
     const nameSplit = apiTransaction.operationName.split(' ')
@@ -92,6 +88,10 @@ export function convertTransaction (apiTransaction, accounts, hold = false) {
   }
   if (apiTransaction.transactionAmount === 0 && fee === 0) {
     return null
+  }
+  const invoice = {
+    sum: sign * Math.round((apiTransaction.transactionAmount - fee) * 100) / 100,
+    instrument: codeToCurrencyLookup[transactionCurrency]
   }
   const transaction = {
     date: new Date(apiTransaction.operationDate),

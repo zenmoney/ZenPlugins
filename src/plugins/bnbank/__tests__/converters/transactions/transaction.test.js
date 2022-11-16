@@ -146,7 +146,7 @@ describe('convertTransaction', () => {
         operationCurrency: '933',
         operationSign: '1',
         actionGroup: 19,
-        clientName: 'Аседовская Майя Григорьевна',
+        clientName: 'Николаев Николай Николаевич',
         operationClosingBalance: 422.79,
         operationCode: 999
       },
@@ -178,7 +178,7 @@ describe('convertTransaction', () => {
           {
             id: null,
             account: { id: '2007549330000000' },
-            sum: 1.6,
+            sum: 1.39,
             fee: 0.21,
             invoice: null
           }
