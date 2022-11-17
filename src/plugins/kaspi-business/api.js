@@ -3,6 +3,7 @@ import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { InvalidLoginOrPasswordError, TemporaryError } from '../../errors'
 import { load } from 'cheerio'
 import setCookie from 'set-cookie-parser'
+import { parseAccounts } from './converters'
 
 const baseUrl = 'https://pay.kaspi.kz/'
 
@@ -100,36 +101,7 @@ export async function fetchAccounts (auth) {
       'X-CSRF-Token': auth['X-CSRF-Token']
     }
   }, response => response.status === 200)
-
-  const accounts = []
-
-  const $ = load(await response.body)
-  $('a[id="hlAccountDetails"]').each((i, el) => {
-    const accountId = $(el).attr('href').split('/')[1]
-    const accountBallance = $(el).find('span').text().trim().split(' ')[0]
-    let accountCurrency = $(el).find('span').text().trim().split(' ')[1]
-    if (accountCurrency === '₸') {
-      accountCurrency = 'KZT'
-    } else if ($(el).find('span').text().trim().split(' ')[1] === '$') {
-      accountCurrency = 'USD'
-    } else if ($(el).find('span').text().trim().split(' ')[1] === '€') {
-      accountCurrency = 'EUR'
-    } else if ($(el).find('span').text().trim().split(' ')[1] === '£') {
-      accountCurrency = 'GBP'
-    } else if ($(el).find('span').text().trim().split(' ')[1] === '₽') {
-      accountCurrency = 'RUB'
-    }
-    const accountTitle = $(el).find('div[class="account-widget-item-number"]').text().trim()
-    const account = {
-      id: accountId,
-      balance: accountBallance,
-      currency: accountCurrency,
-      title: accountTitle
-    }
-    accounts.push(account)
-  })
-
-  return accounts
+  return parseAccounts(await response.body)
 }
 
 const getTransactions = async (auth, startDate, endDate, account, lastTransactionId) => {

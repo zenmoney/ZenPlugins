@@ -1,5 +1,5 @@
-import { fetchLogin, fetchAccounts, fetchTransactions } from './api'
-import { convertTransaction, convertAccount } from './converters'
+import { fetchAccounts, fetchLogin, fetchTransactions } from './api'
+import { convertAccount, convertTransaction } from './converters'
 
 export const scrape = async ({ preferences, fromDate, toDate }) => {
   if (!toDate) {
@@ -14,13 +14,13 @@ export const scrape = async ({ preferences, fromDate, toDate }) => {
   await Promise.all((await fetchAccounts(auth)).map(async account => {
     ZenMoney.setData('accounts', accounts)
     ZenMoney.saveData()
-    accounts.push(await convertAccount(account))
+    accounts.push(convertAccount(account))
     if (ZenMoney.isAccountSkipped(account)) {
       return
     }
     const operations = await fetchTransactions(auth, account, fromDate, toDate)
     for (const operation of operations) {
-      transactions.push(await convertTransaction(operation, account))
+      transactions.push(convertTransaction(operation, account))
     }
   }))
   return {
