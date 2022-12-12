@@ -61,7 +61,10 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
         xhrViaZenApi$: resolveFromRoot('src/XMLHttpRequestViaZenAPI'),
         querystring: 'querystring-browser'
       },
-      extensions: ['.js', '.ts', '.json']
+      extensions: ['.js', '.ts', '.json'],
+      fallback: {
+        fs: false
+      }
     },
     module: {
       rules: [
