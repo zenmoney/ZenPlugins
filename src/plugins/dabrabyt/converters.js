@@ -27,6 +27,9 @@ export function convertAccounts (json) {
       case 'creditAccount':
         credits.push(...json[accountsGroup].map(parseCreditAccount))
         break
+      case 'additionalCardAccount':
+        cards.push(...json[accountsGroup].map(parseAdditionalCardAccount))
+        break
       case 'status':
         break
       default:
@@ -184,6 +187,32 @@ function parseCorporateCardAccount (apiAccount) {
       title: card.personalizedName || apiAccount.productName || card.cardType.name, // ???
       instrument: codeToCurrencyLookup[card.currency], // ??? После запроса баланса понять
       syncIds: [...apiAccount.corpoCards.map(card => card.cardNumberMasked.replace(/\s/g, ''))],
+      balance: apiAccount.balance // ??? После запроса баланса понять
+    }
+  }
+}
+
+function parseAdditionalCardAccount (apiAccount) {
+  const card = (apiAccount.additionalCards && apiAccount.additionalCards[0]) || {}
+  if (!card.cardHash) {
+    return null
+  }
+
+  return {
+    product: {
+      id: apiAccount.internalAccountId,
+      cardHash: card.cardHash,
+      accountType: '1', // apiAccount.accountType,
+      type: 'ccard',
+      currencyCode: card.currency, // apiAccount.currency,
+      rkcCode: '2' // apiAccount.rkcCode
+    },
+    account: {
+      id: apiAccount.internalAccountId,
+      type: 'ccard',
+      title: card.personalizedName || apiAccount.productName || card.cardType.name, // ???
+      instrument: codeToCurrencyLookup[card.currency], // ??? После запроса баланса понять
+      syncIds: [...apiAccount.additionalCards.map(card => card.cardNumberMasked.replace(/\s/g, ''))],
       balance: apiAccount.balance // ??? После запроса баланса понять
     }
   }

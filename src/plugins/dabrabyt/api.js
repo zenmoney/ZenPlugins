@@ -124,6 +124,15 @@ export async function fetchAccounts (sessionToken) {
     }
   }
 
+  const additionalCardAccount = accounts.additionalCardAccount || []
+
+  for (const acc of additionalCardAccount) {
+    const cardHash = acc.additionalCards?.[0].cardHash
+    if (cardHash) {
+      acc.balance = await fetchCardAccountBalance(sessionToken, cardHash)
+    }
+  }
+
   return accounts
 }
 

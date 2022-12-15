@@ -1682,6 +1682,70 @@ describe('processAccounts', () => {
           }
         }
       ]
+    ],
+    [
+      {
+        additionalCardAccount: [
+          {
+            internalAccountId: '5240027422',
+            productCode: '524',
+            contractId: '5240027422',
+            accountStatus: 'OPEN',
+            additionalCards: [
+              {
+                cardNumberMasked: '5*** **** **** 7906',
+                cardHash: 'YISOej_EDWJWudvC-mJ-PlgxR-80QHFJD5c-7nqyfevtVhOfyXHA5os9_6XxauodGwvLW7VE3oPgo1eCoJufEw',
+                cardType:
+                  {
+                    value: 30,
+                    name: 'Mastercard Standard',
+                    imageUri: 'https://alseda.by/media/public/MasterCard_Standard_zp1.png',
+                    paySysImageUri: 'https://alseda.by/media/public/credit_card_str_mastercard.png',
+                    textColor: 'ffffffff',
+                    paySystemName: 'Mastercard'
+                  },
+                cardStatus: 'OPEN',
+                expireDate: 1696021200000,
+                owner: 'NIKOLAY NIKOLAEV',
+                notDisplayNotification: 0,
+                processing: '2',
+                payment: '0',
+                currency: '933',
+                status: { code: '0' },
+                stateSignature: 'BETRAY',
+                canChange3D: true,
+                canChangeStatus: true,
+                applePaySupported: true,
+                pinDeliveryType: 1,
+                cardAccountCurrency: [933],
+                numberDaysBeforeCardExpiry: 345,
+                virtual: false,
+                aliasSupport: true
+              }
+            ]
+          }
+        ]
+      },
+      [
+        {
+          product: {
+            accountType: '1', // ???
+            cardHash: 'YISOej_EDWJWudvC-mJ-PlgxR-80QHFJD5c-7nqyfevtVhOfyXHA5os9_6XxauodGwvLW7VE3oPgo1eCoJufEw',
+            currencyCode: '933',
+            id: '5240027422',
+            rkcCode: '2', // ???
+            type: 'ccard'
+          },
+          account: {
+            balance: undefined, // ??? После Запроса баланса
+            id: '5240027422',
+            instrument: 'BYN',
+            syncIds: ['5***********7906'],
+            title: 'Mastercard Standard',
+            type: 'ccard'
+          }
+        }
+      ]
     ]
   ])('converts account', (apiAccounts, accounts) => {
     expect(convertAccounts(apiAccounts)).toEqual(accounts)
