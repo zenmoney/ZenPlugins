@@ -1,97 +1,27 @@
-# Zenmoney Plugins
+<p align="center">
+  <a href="https://zenmoney.app"><img src="./docs/assets/logo.png" alt="Zenmoney logo"/></a>
+</p>
 
-Этот репозиторий содержит плагины, позволяющие ZenMoney получать данные о
-транзакциях из различных банков. Создать плагин может каждый, для этого важно
-знать окружение (API) и то, каким и в каком виде должен быть результат работы
-плагина.
+Zenmoney brings together data from all of your accounts and cards to create a complete picture.
+These plugins do the job.
 
-## Какие инструменты нужны для разработки
+---
+- Plugins in this repository are developed by the community.
+- All new plugins must be created in TypeScript according to our guidelines.
+- In simple words, the plugin requests the bank to get your accounts and transactions,
+then converts them into our unified format.
+- Plugins are downloaded to the app and run entirely on your device.
+  Thus, your bank credentials are stored securely and do not leave your device.
 
-Понадобятся:
+Some banks have an open API with documentation. For example, in Europe,
+there is PSD2 Directive, so all European banks have a standardized API.
+In all other cases, we have to reverse-engineer banking websites
+or mobile apps to create a JS plugin.
 
--   свежая версия [Node.js](https://nodejs.org/en/download/package-manager/)
-    (>= 8.10.0)
+## Contribution
+We are always looking to expand the coverage of our plugins, but
+if your bank is still unsupported, and you have skills in TypeScript + basic reverse engineering,
+you can help us — create a plugin by yourself.
+So after a successful merge, all users will be able to use it.
 
--   пакетный менеджер [yarn](https://yarnpkg.com/en/docs/install) (альтернатива
-    npm) (мы знаем, что npm5.x уже работает не хуже yarn, так что мы
-    обязательно на него переедем, чтобы пререквизитов стало меньше!)
-
--   IDE или просто текстовый редактор для JavaScript (мы используем
-    [WebStorm](https://www.jetbrains.com/webstorm/))
-
-## Пример, с которого стоит начать
-
-[Пример плагина, который можно скопировать и начать разработку](src/plugins/example)
-
-Вовсе необязательно идти рассматривать плагин на GitHub, можно запустить
-локально.
-
-```sh
-git clone git@github.com:zenmoney/ZenPlugins.git
-cd ZenPlugins
-yarn start example
-```
-
-Останется только открыть корень репозитория в IDE.
-
-## Анатомия плагина
-
-Минимальные требования к плагину - это отдельная папка, в которой присутствуют
-файлы:
-
--   [ZenmoneyManifest.xml](docs/files/ZenmoneyManifest.xml.md)
-
--   [preferences.xml](docs/files/preferences.xml.md)
-
--   [index.js](docs/files/index.js.md)
-
-## Что стоит еще почитать
-
--   [Документация API](docs/api.md)
-
--   [Браузерный отладчик](docs/browser.md)
-
--   [На каком языке писать](docs/language.md)
-
-## Тестирование
-
-Мы используем [Jest](https://facebook.github.io/jest/) (он клёвый).
-
-Для запуска тестов всех плагинов нужно запустить:
-
-```
-yarn test
-```
-
-Запуск тестов, находящихся в папке `src/plugins/example`:
-
-```
-yarn test src/plugins/example
-```
-
-Мы призываем вас, помимо наличия модульных тестов на части плагина, написать
-хотя бы один интеграционный тест (тестирующий функцию scrape, мокая сеть
-минимально вариативными данными).
-
-## Интеграция
-
-В `master` ветку изменения попадают через
-[pull request с fork-а](https://help.github.com/articles/creating-a-pull-request-from-a-fork/).
-
-Любые изменения (создание плагина, фикс багов) проходят
-[code review](https://github.com/features/code-review).
-
-## Публикация
-
-Делается вручную [Костей](https://github.com/skvav) по факту мержа Pull Request
-с плагином в `master` ветку.
-
-Развернуть новую версию можно и для конкретного пользователя (к примеру, для
-тестирования корректной работы небольшой группой бета-тестировщиков на
-мобильном устройстве, например, вами :) ).
-
-Как только новая версия плагина опубликована, она автоматически обновляется и
-используется при следующей синхронизации мобильным приложением.
-
-Текущую используемую на мобильном девайсе версию плагина можно увидеть в окошке
-настроек подключения.
+To get started, look at our [documentation](./docs/README.md).

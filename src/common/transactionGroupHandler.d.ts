@@ -3,6 +3,7 @@ import { Account, ExtendedTransaction, Movement, Transaction } from '../types/ze
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export type GroupHandler = (transactions: Transaction[], options: any) => void
 
+// The most popular usage is matching transfers using groupKeys field
 export declare function adjustTransactions (args: {
   transactions: ExtendedTransaction[]
   groupHandlers?: GroupHandler[]

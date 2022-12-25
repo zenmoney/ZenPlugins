@@ -8,6 +8,7 @@ export declare class RetryError {
 
 export declare function toNodeCallbackArguments (getter: () => Promise<unknown>): () => Promise<[null, unknown] | [unknown, null]>
 
+// Retry getter until maxAttempts or predicate becomes true
 export declare function retry (args: {
   getter: () => Promise<unknown>
   predicate: (x: unknown) => boolean

@@ -5,6 +5,17 @@ export interface WebSocketOpenResponse {
   body: unknown
 }
 
+// WebSocket interface for request-response model
+// It matches responses to requests by id,
+// the first argument of send in request with result of getResponseId(body)
+//
+// Example usage:
+// const socket = new WebSocket()
+// socket.getResponseId = (body) => getString(body, 'requestId')
+// const response1 = await socket.open('wss://example/ws2', {})
+// const response2 = await socket.send(id, { body: { requestId: id } })
+// await socket.close()
+//
 export default class WebSocket {
   getResponseId (body: unknown): string
   onUnexpectedMessage (body: unknown): void

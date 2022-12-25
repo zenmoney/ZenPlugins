@@ -1,10 +1,18 @@
 declare namespace ZenMoney {
   function setData (name: string, data: unknown): void
   function getData (name: string, defaultValue?: unknown): unknown
+  // Persist data after setData
   function saveData (): void
+  // Clear persistent storage
   function clearData (): void
+  // User can choose to skip loading transactions on specific accounts (in settings)
+  // So we can check it before loading transactions and optimize that useless work
   function isAccountSkipped (id: string): boolean
+  // Ask user some additional data, with message text
+  // inputType defaults to text
+  // expiration time in milliseconds, after expiration returns null
   function readLine (text: string, options?: { inputType?: 'number' | 'text', time?: number }): Promise<string | null>
+  // Alert with some message
   function alert (text: string): Promise<void>
 
   function setCookie (
@@ -27,7 +35,9 @@ declare namespace ZenMoney {
   function saveCookies (): Promise<void>
   function clearCookies (): Promise<void>
 
+  // mTLS authentication
   function setClientPfx (pfx: Uint8Array | null, domain: string): void
+  // enforce trust to TLS certificates
   function trustCertificates (certs: string[]): void
 
   const device: {
