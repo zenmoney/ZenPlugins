@@ -3,6 +3,7 @@ import qs from 'querystring'
 import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
 import { generateUUID } from '../../common/utils'
 import get from '../../types/get'
+import { sanitize } from './utils/sanitize'
 
 export type Session = {
   clientId: string
@@ -91,15 +92,21 @@ export class DenizBankApi {
         }
       : {}
 
+    const sanitizeOptions: Pick<FetchOptions, 'sanitizeRequestLog' | 'sanitizeResponseLog'> = {
+      sanitizeRequestLog: (obj: unknown) => sanitize(obj, ['url']),
+      sanitizeResponseLog: (obj: unknown) => sanitize(obj, ['url'])
+    }
+
     const mergedOptions = options
       ? {
+          ...sanitizeOptions,
           ...options,
           headers: {
             ...(typeof options.headers === 'object' && options.headers != null ? options.headers : {}),
             ...sessionHeaders
           }
         }
-      : { headers: sessionHeaders }
+      : { ...sanitizeOptions, headers: sessionHeaders }
 
     const response = await fetchJson(this.baseUrl + url, mergedOptions)
 
@@ -114,7 +121,7 @@ export class DenizBankApi {
   }
 
   public async login ({ login, password }: Preferences, isInBackground: boolean, session?: Session): Promise<Session> {
-    console.debug('login', { session })
+    console.debug('login', sanitize({ session }))
     if (session && 'createdDate' in session) {
       const expirationDate = new Date(session.createdDate.valueOf() + session.timeoutSeconds * 1000)
       console.debug('login', { expirationDate })
@@ -221,7 +228,7 @@ export class DenizBankApi {
       'encryptionKey' in res.body
     }) as {body: {token: string, encryptionKey: string}}
 
-    console.debug('getInitialToken', response.body)
+    console.debug('getInitialToken', sanitize(response.body))
 
     return response.body
   }
@@ -237,7 +244,7 @@ export class DenizBankApi {
       }
     }) as FetchResponse & {body: {currentTime: string, sessionTimeout: number}}
 
-    console.debug('sendCredentials', response.body)
+    console.debug('sendCredentials', sanitize(response.body))
 
     return {
       currentTime: new Date(response.body.currentTime),
@@ -259,7 +266,7 @@ export class DenizBankApi {
       'maskedPhoneNumber' in res.body
     }) as {body: {pushSentId: string, maskedPhoneNumber: string}}
 
-    console.debug('sendPush', response.body)
+    console.debug('sendPush', sanitize(response.body))
 
     return response.body
   }
@@ -272,7 +279,7 @@ export class DenizBankApi {
       }
     }) as FetchResponse & {body: {isSuccess: boolean}, headers: {'x-token': string}}
 
-    console.debug('verifyPush', { body: response.body, headers: response.headers })
+    console.debug('verifyPush', sanitize({ body: response.body, headers: response.headers }))
 
     if (!response.body.isSuccess) {
       return { pushVerified: false }
@@ -295,7 +302,7 @@ export class DenizBankApi {
       undefined,
       (res) => typeof res.body === 'object' && res.body != null
     ) as FetchResponse & {body: Record<string, unknown>}
-    console.debug('fetchCards', response.body)
+    console.debug('fetchCards', sanitize(response.body))
 
     const cardIds = Object.values(response.body).reduce<CardInfo[]>((acc, cardResponse) => {
       if (typeof cardResponse === 'object' && cardResponse != null) {
@@ -318,7 +325,7 @@ export class DenizBankApi {
       return acc
     }, [])
 
-    console.debug('fetchCards', { cardIds })
+    console.debug('fetchCards', sanitize({ cardIds }))
 
     return cardIds
   }
@@ -342,7 +349,7 @@ export class DenizBankApi {
       }
     }
 
-    console.debug('fetchCardTransactions', response.body)
+    console.debug('fetchCardTransactions', sanitize(response.body))
 
     return response.body.selectedCardIntermRecordList.intermRecordList.map(t => ({
       currency: t.currency as string,
@@ -361,7 +368,7 @@ export class DenizBankApi {
       undefined,
       (res) => typeof res.body === 'object' && res.body != null && 'accounts' in res.body
     ) as FetchResponse & {body: {accounts: Array<Record<string, unknown>>}}
-    console.debug('fetchAccounts', response.body)
+    console.debug('fetchAccounts', sanitize(response.body))
     return response.body.accounts.map(a => ({
       id: a.id as string,
       iban: a.iban as string,
@@ -380,7 +387,7 @@ export class DenizBankApi {
     })}`,
     session) as FetchResponse & {body: {activities: Array<Record<string, unknown>>}}
 
-    console.debug('fetchTransactions', respose.body)
+    console.debug('fetchTransactions', sanitize(respose.body))
 
     return respose.body.activities.map(t => ({
       id: t.uniqueTransactionId as string,

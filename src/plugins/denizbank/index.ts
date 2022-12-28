@@ -32,7 +32,6 @@ function parseSessionData (data: unknown): Session | undefined {
 
 export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, toDate, isInBackground }) => {
   let session = parseSessionData(ZenMoney.getData('session'))
-  console.debug('session', session)
   session = await denizBankApi.login(preferences, isInBackground, session)
 
   ZenMoney.setData('session', session)
