@@ -19,14 +19,10 @@ describe('convertTransaction', () => {
     expect(convertTransaction(accountTransaction, account as Account))
       .toMatchInlineSnapshot(`
       Object {
-        "comment": null,
+        "comment": "Harcama - AVKAN ECZANESI ANTALYA TR  (POS - ****9753)",
         "date": 2022-12-22T21:01:48.000Z,
         "hold": false,
-        "merchant": Object {
-          "fullTitle": "Harcama - AVKAN ECZANESI ANTALYA TR  (POS - ****9753)",
-          "location": null,
-          "mcc": null,
-        },
+        "merchant": null,
         "movements": Array [
           Object {
             "account": Object {
@@ -75,11 +71,11 @@ describe('convertTransaction', () => {
       )
     ).toMatchInlineSnapshot(`
       Object {
-        "comment": "Card Description",
+        "comment": "Harcama - AVKAN ECZANESI ANTALYA TR  (POS - ****9753)",
         "date": 2022-12-22T21:01:48.000Z,
         "hold": false,
         "merchant": Object {
-          "fullTitle": "Harcama - AVKAN ECZANESI ANTALYA TR  (POS - ****9753)",
+          "fullTitle": "Card Description",
           "location": null,
           "mcc": null,
         },
