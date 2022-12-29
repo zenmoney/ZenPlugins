@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>denizbank-tr</id>
+    <version>1.0</version>
+    <build>1</build>
+    <company>15639</company>
+    <modular>true</modular>
+    <codeRequired>false</codeRequired>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+    <description>В настройках интернет-банка увеличьте время сессии до 30 минут.</description>
+</provider>
