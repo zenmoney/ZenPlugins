@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>example</id>
+    <company>0</company>
+    <description>
+        Для подключения импорта укажите ваш логин и пароль от интернет-банка.
+        В настройках интернет-банка увеличьте время сессии до 30 минут.
+    </description>
+    <version>1.0</version>
+    <build>1</build>
+    <modular>true</modular>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+</provider>
