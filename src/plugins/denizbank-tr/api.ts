@@ -95,7 +95,7 @@ export class DenizBankApi {
 
     const sanitizeOptions: Pick<FetchOptions, 'sanitizeRequestLog' | 'sanitizeResponseLog'> = {
       sanitizeRequestLog: (obj: unknown) => sanitize(obj, ['url']),
-      sanitizeResponseLog: (obj: unknown) => sanitize(obj, ['url'])
+      sanitizeResponseLog: (obj: unknown) => sanitize(obj, ['url', 'Message'])
     }
 
     const mergedOptions = options
