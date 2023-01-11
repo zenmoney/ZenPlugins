@@ -65,6 +65,88 @@ describe('convertTransactions', () => {
             invoice: null,
             sum: 25072.3
           }
+        ],
+        groupKeys: [
+          '2022-03-05_UZS_25072.3'
+        ]
+      }
+    ],
+    [
+      {
+        id: 35,
+        payment_id: 2247788891,
+        service_id: -4,
+        amount: 119180,
+        comission_amount: 1180,
+        state: 1,
+        payment_status: 2,
+        payment_status_description: null,
+        service_name: 'Перевод с карты на карту',
+        datetime: 1672306648,
+        account_id: 22897874,
+        image: 'https://cdn.click.uz/app/evo/service/payment/p2p_debit.png',
+        barcode_url: 'https://my.click.uz/clickp2p/DB1C12BB6C5849D33EC7741807AF5755D59CAC1FCA7ABEAE202C0994F89C5F12?amount=118000.00',
+        card_num: '418780******1337',
+        credit: false,
+        repeatable: false,
+        favorite_permission: false,
+        myhome_permission: null,
+        receipt: false,
+        cancel_permission: false,
+        service_type: 'default',
+        currency: 'UZS',
+        ofd_barcode_data: 'https://ofd.soliq.uz/epi?t=EP000000000026&r=2199763298&c=20221229143728&s=555732125803',
+        ofd_available: true,
+        barcode: {},
+        data:
+          [
+            { key: 'ФИО отправителя', value: 'TEMUR TEMUROV', main: false },
+            {
+              key: 'Номер карты получателя',
+              value: '626275****1234',
+              main: true
+            },
+            {
+              key: 'ФИО получателя',
+              value: 'ANNA ANNOVNA',
+              main: false
+            }
+          ]
+      },
+      {
+        hold: false,
+        date: new Date('2022-12-29T14:37:28+0500'),
+        movements:
+          [
+            {
+              id: '2247788891',
+              account: { id: '19615128' },
+              invoice: null,
+              sum: -118000,
+              fee: -1180
+            },
+            {
+              id: null,
+              account: {
+                type: 'ccard',
+                instrument: 'UZS',
+                company: null,
+                syncIds: ['626275****1234']
+              },
+              invoice: null,
+              sum: 118000,
+              fee: 0
+            }
+          ],
+        merchant:
+          {
+            fullTitle: 'ANNA ANNOVNA',
+            mcc: null,
+            location: null
+          },
+        comment: null,
+        groupKeys: [
+          '2022-12-29_UZS_118000'
         ]
       }
     ]
