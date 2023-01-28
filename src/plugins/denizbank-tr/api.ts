@@ -178,11 +178,15 @@ export class DenizBankApi {
 
     let userHasVerifiedPush = false
     let pushTimeout = 90
+    let timeStart = new Date()
+    const delayTimeout = 1
 
     while (!userHasVerifiedPush && pushTimeout > 0) {
-      const timeStart = new Date()
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
+      const spentTime = (new Date().valueOf() - timeStart.valueOf()) / 1000
+      if (spentTime < delayTimeout) {
+        continue
+      }
+      timeStart = new Date()
       const pushIdEncrypted = crypto.AES.encrypt(
         pushSentId,
         cryptoKey,
