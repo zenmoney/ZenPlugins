@@ -30,7 +30,7 @@
     "moment": "2.24.0",
     "moment-timezone": "0.5.28",
     "node-forge": "0.9.1",
-    "node-jose": "2.1.1",
+    "node-jose": "2.2.0",
     "object-assign": "4.1.1",
     "pad-left": "2.1.0",
     "promise": "8.0.1",
