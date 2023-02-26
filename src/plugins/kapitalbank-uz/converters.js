@@ -194,7 +194,7 @@ export function convertVisaCardTransaction (card, rawTransaction) {
 
   const transaction = {
     date: new Date(rawTransaction.transDate),
-    hold: false,
+    hold: !rawTransaction.back,
     merchant: merchantIgnoreTransactionCodes.indexOf(rawTransaction.transCode) < 0
       ? {
           country: null,
