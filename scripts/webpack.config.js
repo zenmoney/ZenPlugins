@@ -41,7 +41,11 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
       path: outputPath,
       filename: '[name].js',
       chunkFilename: '[name].chunk.js',
-      globalObject: 'this'
+      globalObject: 'this',
+      ...production && server && {
+        globalObject: 'self',
+        publicPath: '/'
+      }
     },
     resolve: {
       alias: {
@@ -126,6 +130,10 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
           publicPath: '/'
         },
         host: 'localhost',
+        ...production && server && {
+          host: 'local-ip',
+          client: false
+        },
         port: 'auto',
         webSocketServer: WebsocketServer,
 
