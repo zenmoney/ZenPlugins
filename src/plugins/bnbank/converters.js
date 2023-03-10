@@ -75,6 +75,10 @@ export function convertAccount (json, accountType) {
 }
 
 export function convertTransaction (apiTransaction, accounts, hold = false) {
+  if (apiTransaction.accountNumber.length > 16) {
+    apiTransaction.accountNumber = apiTransaction.accountNumber.slice(-16)
+  }
+
   const account = accounts.find(account => {
     return account.syncID.indexOf(apiTransaction.accountNumber) !== -1
   })
