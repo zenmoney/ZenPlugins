@@ -4,6 +4,7 @@ import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
 import { sanitize } from '../../common/sanitize'
 import { generateUUID } from '../../common/utils'
 import get from '../../types/get'
+import { InvalidPreferencesError } from '../../errors'
 
 export type Session = {
   clientId: string
@@ -242,9 +243,13 @@ export class DenizBankApi {
         grantType: 'username',
         applicationVersion: 'JanusIB-20221213.669-PeWXxk52Md5mb5aXPI5J'
       }
-    }) as FetchResponse & {body: {currentTime: string, sessionTimeout: number}}
+    }) as FetchResponse & {body: {currentTime: string, sessionTimeout: number, Message?: string | null}}
 
     console.debug('sendCredentials', sanitize(response.body, true))
+
+    if (response.body.Message?.match(/.*girdiğiniz.*bilgil.*/i) != null) {
+      throw new InvalidPreferencesError()
+    }
 
     return {
       currentTime: new Date(response.body.currentTime),
