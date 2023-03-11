@@ -42,7 +42,10 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
 
   for (const card of cards) {
     const transactions = await denizBankApi.fetchCardTransactions(session, card.guid, fromDate, toDate)
-    cardTransactions.push(...transactions.map(t => ({ ...t, cardLastFourDigits: card.maskedCardNumber.slice(-4) })))
+
+    if (transactions) {
+      cardTransactions.push(...transactions.map(t => ({ ...t, cardLastFourDigits: card.maskedCardNumber.slice(-4) })))
+    }
   }
 
   const accounts: Account[] = convertAccounts(await denizBankApi.fetchAccounts(session))

@@ -334,7 +334,7 @@ export class DenizBankApi {
     session: Session,
     cardId: string,
     fromDate: Date,
-    toDate?: Date): Promise<CardTransaction[]> {
+    toDate?: Date): Promise<CardTransaction[] | undefined> {
     const response = await this.fetchApi(
       `cards/new-debitcard-transactions/${cardId}?${qs.stringify({
         startTime: fromDate.toISOString(),
@@ -351,7 +351,7 @@ export class DenizBankApi {
 
     console.debug('fetchCardTransactions', sanitize(response.body, true))
 
-    return response.body.selectedCardIntermRecordList.intermRecordList.map(t => ({
+    return response.body.selectedCardIntermRecordList?.intermRecordList.map(t => ({
       currency: t.currency as string,
       amount: -(t.transactionAmount as number),
       description: t.description as string,
