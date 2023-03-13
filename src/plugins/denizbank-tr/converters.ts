@@ -28,9 +28,9 @@ export function convertTransaction (accountTransaction: AccountTransaction, acco
   }
 
   let merchant = null
-  if (accountTransaction.description != null) {
+  if (cardTransaction != null) {
     merchant = {
-      fullTitle: accountTransaction.description,
+      fullTitle: cardTransaction.description,
       mcc: null,
       location: null
     }
@@ -49,6 +49,6 @@ export function convertTransaction (accountTransaction: AccountTransaction, acco
       }
     ],
     merchant,
-    comment: cardTransaction ? cardTransaction.description : null
+    comment: accountTransaction.description
   }
 }
