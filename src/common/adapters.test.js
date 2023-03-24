@@ -412,9 +412,91 @@ describe('patchAccounts', () => {
       }
     ])
   })
+  it.each([
+    [
+      {
+        id: '123456',
+        type: 'card',
+        title: 'Безымянная*1111',
+        instrument: 'BYN',
+        balance: NaN,
+        creditLimit: NaN,
+        syncID: ['1111']
+      },
+      'balance sum should be a number, got NaN'
+    ],
+    [
+      {
+        id: '123456',
+        type: 'card',
+        title: 'Безымянная*1111',
+        instrument: 'BYN',
+        balance: 1200,
+        creditLimit: NaN,
+        syncID: ['1111']
+      },
+      'creditLimit sum should be a number, got NaN'
+    ],
+    [
+      {
+        id: '123456',
+        type: 'card',
+        title: 'Безымянная*1111',
+        instrument: 'BYN',
+        balance: 1200,
+        creditLimit: 1200,
+        available: NaN,
+        syncID: ['1111']
+      },
+      'available sum should be a number, got NaN'
+    ],
+    [
+      {
+        id: '123456',
+        type: 'card',
+        title: 'Безымянная*1111',
+        instrument: 'BYN',
+        balance: 1200,
+        startBalance: NaN,
+        syncID: ['1111']
+      },
+      'startBalance sum should be a number, got NaN'
+    ]
+  ])('should throw error if any of sum values is NaN', (account, message) => {
+    global.ZenMoney = { features: {} }
+    expect(() => {
+      patchAccounts([account])
+    }).toThrow(message)
+  })
 })
 
 describe('patchTransactions', () => {
+  const accounts = [
+    {
+      id: '1',
+      type: 'checking',
+      title: 'Account',
+      instrument: 'XAU',
+      syncIds: ['1111'],
+      balance: 1
+    },
+    {
+      id: '2',
+      type: 'card',
+      title: 'Card',
+      instrument: 'RUB',
+      syncIds: ['2222'],
+      balance: 1
+    },
+    {
+      id: '3',
+      type: 'deposit',
+      title: 'Deposit',
+      instrument: 'BTC',
+      syncIds: ['3333'],
+      available: 0.0004289
+    }
+  ]
   it('should adjust transaction amount', () => {
     global.ZenMoney = { features: { transactionDtoV2: true } }
     expect(patchTransactions([
@@ -458,32 +540,7 @@ describe('patchTransactions', () => {
         merchant: null,
         comment: null
       }
-    ], [
-      {
-        id: '1',
-        type: 'checking',
-        title: 'Account',
-        instrument: 'XAU',
-        syncIds: ['1111'],
-        balance: 1
-      },
-      {
-        id: '2',
-        type: 'card',
-        title: 'Card',
-        instrument: 'RUB',
-        syncIds: ['2222'],
-        balance: 1
-      },
-      {
-        id: '3',
-        type: 'deposit',
-        title: 'Deposit',
-        instrument: 'BTC',
-        syncIds: ['3333'],
-        available: 0.0004289
-      }
-    ])).toEqual([
+    ], accounts)).toEqual([
       {
         hold: true,
         date: new Date('2022-08-30'),
@@ -525,5 +582,48 @@ describe('patchTransactions', () => {
         comment: null
       }
     ])
+  })
+  it.each([
+    [
+      {
+        hold: false,
+        date: new Date('2022-08-28'),
+        movements: [
+          {
+            id: '2',
+            account: { id: '2' },
+            invoice: { sum: -3, instrument: 'XPT' },
+            sum: NaN,
+            fee: 0
+          }
+        ],
+        merchant: null,
+        comment: null
+      },
+      'outcome sum should be a number, got NaN'
+    ],
+    [
+      {
+        hold: false,
+        date: new Date('2022-08-28'),
+        movements: [
+          {
+            id: '2',
+            account: { id: '2' },
+            invoice: { sum: -3, instrument: 'XPT' },
+            sum: -1,
+            fee: NaN
+          }
+        ],
+        merchant: null,
+        comment: null
+      },
+      'outcome sum should be a number, got NaN'
+    ]
+  ])('should throw error if any of sum values is NaN', (transaction, message) => {
+    global.ZenMoney = { features: {} }
+    expect(() => {
+      patchTransactions([transaction], accounts)
+    }).toThrow(message)
   })
 })
