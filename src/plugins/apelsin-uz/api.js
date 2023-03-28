@@ -18,6 +18,18 @@ const appVersion = 'Av1.9.0'
 const userAgent = 'okhttp/5.0.0-alpha.7'
 const deviceName = 'ZenMoney'
 
+export class AuthError {}
+
+export async function coldAuth (preferences) {
+  await registerDevice()
+  await checkUser(preferences.phone)
+  await sendSmsCode(preferences.phone, preferences.password)
+
+  const smsCode = await ZenMoney.readLine('Введите код из СМС сообщения')
+
+  await getToken(preferences.phone, smsCode)
+}
+
 /**
  * Регистрирует идентификатор устройства в интернет-банке
  */
@@ -159,6 +171,11 @@ export async function getUzcardCards () {
     },
     sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
   })
+  if ([
+    'Неверный ключ'
+  ].indexOf(response.body?.errorMessage) >= 0) {
+    throw new AuthError()
+  }
 
   console.assert(response.ok, 'unexpected uzcard response', response)
 
