@@ -25,36 +25,59 @@ export function trimSyncId (id) {
   return firstPart + padLeft(secondPart, 4 - firstPart.length, '*')
 }
 
-const assertReplacementsAreUnique = (replacementPairs) => {
-  const duplicates = _.toPairs(_.countBy(replacementPairs, ([syncID, replacement]) => replacement))
-    .filter(([replacement, count]) => count !== 1)
-  console.assert(duplicates.length === 0, 'invariant: syncID replacementPairs have duplicates', { duplicates })
+const groupReplacementPairsByReplacement = (replacementPairs) => {
+  return _.toPairs(_.groupBy(replacementPairs, ([, replacement]) => replacement))
+}
+
+const ensureReplacementsAreUnique = (replacementPairsByInstrument) => {
+  return _.mapValues(replacementPairsByInstrument, (replacementPairs) => {
+    return _.flatMap(groupReplacementPairsByReplacement(replacementPairs), ([, pairs]) => {
+      return pairs.length === 1
+        ? pairs
+        : []
+    })
+  })
 }
 
 export function ensureSyncIDsAreUniqueButSanitized ({ accounts, sanitizeSyncId }) {
   console.assert(Array.isArray(accounts), 'accounts must be array')
   console.assert(typeof sanitizeSyncId === 'function', 'sanitizeSyncId must be function')
-  const replacementsByInstrument = _.mapValues(_.groupBy(accounts, (x) => x.instrument), (accounts) => {
+  const replacementPairsByInstrument = _.mapValues(_.groupBy(accounts, (x) => x.instrument), (accounts) => {
     const flattenedAccounts = _.flatMap(accounts, ({ syncID, ...rest }) => {
-      console.assert(Array.isArray(syncID), 'account.syncID must be array')
+      console.assert(Array.isArray(syncID) && syncID.length > 0, 'account.syncIds must be array of non-empty strings')
       return syncID.map((singleSyncID) => {
-        console.assert(typeof singleSyncID === 'string', 'account.syncID must be array of strings, met not a string: ' + JSON.stringify(singleSyncID))
+        console.assert(typeof singleSyncID === 'string' && singleSyncID.length > 0, 'account.syncIds must be array of non-empty strings, met not a valid string: ' + JSON.stringify(singleSyncID))
         return ({ singleSyncID, ...rest })
       })
     })
     const flattenedAccountsByLast4Digits = _.groupBy(flattenedAccounts, (account) => {
       return trimSyncId(account.singleSyncID)
     })
-    const syncIDReplacementPairs = _.flatMap(
+    return _.flatMap(
       _.toPairs(flattenedAccountsByLast4Digits),
       ([last4, flattenedAccountsSharingKey]) => flattenedAccountsSharingKey.length === 1
         ? [[flattenedAccountsSharingKey[0].singleSyncID, last4]]
         : flattenedAccountsSharingKey.map((x) => [x.singleSyncID, sanitizeSyncId(x.singleSyncID)])
     )
-    assertReplacementsAreUnique(syncIDReplacementPairs)
-    return _.fromPairs(syncIDReplacementPairs)
   })
-  return accounts.map((account) => ({ ...account, syncID: account.syncID.map((syncID) => replacementsByInstrument[account.instrument][syncID] || syncID) }))
+  const replacementsByInstrument = _.mapValues(
+    ensureReplacementsAreUnique(replacementPairsByInstrument),
+    (replacementPairs) => _.fromPairs(replacementPairs)
+  )
+  return accounts.map((account) => {
+    const syncIds = account.syncID
+      .map((syncId) => replacementsByInstrument[account.instrument][syncId])
+      .filter((syncId) => syncId)
+    console.assert(syncIds.length > 0, 'invariant: syncId replacementPairs have duplicates', {
+      duplicates: groupReplacementPairsByReplacement(replacementPairsByInstrument[account.instrument])
+        .filter(([, pairs]) => pairs.length > 1)
+        .map(([replacement, pair]) => [replacement, pair.length])
+    })
+    return {
+      ...account,
+      syncID: syncIds
+    }
+  })
 }
 
 export function parseOuterAccountData (str) {
