@@ -3,16 +3,52 @@ import { ensureSyncIDsAreUniqueButSanitized, parseOuterAccountData, sanitizeSync
 describe('ensureSyncIDsAreUniqueButSanitized', () => {
   it('truncate syncID to last4 digits if there is no intersection between accounts', () => {
     const accounts = [
-      { syncID: ['0001', '111120'] },
-      { syncID: ['0002', '2222'] },
-      { syncID: ['0003'] }
+      { syncID: ['0001', '111120'], instrument: 'RUB' },
+      { syncID: ['0002', '2222'], instrument: 'RUB' },
+      { syncID: ['0003'], instrument: 'RUB' }
     ]
     const expected = [
-      { syncID: ['0001', '1120'] },
-      { syncID: ['0002', '2222'] },
-      { syncID: ['0003'] }
+      { syncID: ['0001', '1120'], instrument: 'RUB' },
+      { syncID: ['0002', '2222'], instrument: 'RUB' },
+      { syncID: ['0003'], instrument: 'RUB' }
     ]
     expect(ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId })).toEqual(expected)
+  })
+
+  it('remove syncIDs from array when it have sanitized duplicates and account.syncID.length > 1', () => {
+    const accounts = [
+      { syncID: ['553691******8014', '220070******2770', '5246653686'], instrument: 'RUB' },
+      { syncID: ['220070******2676', '220070******2770', '5044139205'], instrument: 'RUB' },
+      { syncID: ['5536914782328014', '220070******2770', '5246653686'], instrument: 'USD' },
+      { syncID: ['5536914797388014', '220070******2234', '5044139205'], instrument: 'USD' },
+      { syncID: ['553691******0112', '220070******2313', '5246653686'], instrument: 'EUR' },
+      { syncID: ['553691******3872', '220070******2789', '5044139205'], instrument: 'EUR' }
+    ]
+    const expected = [
+      { syncID: ['8014', '3686'], instrument: 'RUB' },
+      { syncID: ['2676', '9205'], instrument: 'RUB' },
+      { syncID: ['2770', '3686'], instrument: 'USD' },
+      { syncID: ['2234', '9205'], instrument: 'USD' },
+      { syncID: ['0112', '2313', '3686'], instrument: 'EUR' },
+      { syncID: ['3872', '2789', '9205'], instrument: 'EUR' }
+    ]
+    expect(ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId })).toEqual(expected)
+  })
+
+  it('throw error when it have sanitized duplicates and account.syncID.length === 1', () => {
+    const accounts = [
+      { syncID: ['220070******2770'], instrument: 'RUB' },
+      { syncID: ['220070******2770'], instrument: 'RUB' }
+    ]
+    expect(() => ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId })).toThrow()
+  })
+
+  it('throw error when it have sanitized duplicates and account.syncID.length equals 1 and 2', () => {
+    const accounts = [
+      { syncID: ['220070******2770', '220070******2773'], instrument: 'RUB' },
+      { syncID: ['220070******2770'], instrument: 'RUB' }
+    ]
+    expect(() => ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId })).toThrow()
   })
 
   it('truncates syncID to last 4 digits if there is intersection between accounts with different instruments', () => {
