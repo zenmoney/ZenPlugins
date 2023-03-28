@@ -13,24 +13,31 @@ import {
   convertWalletTransaction
 } from './converters'
 
-const baseUrl = 'https://mobile.kapitalbank.uz/api'
+const baseUrl = 'https://mobile.apelsin.uz/api'
+const appVersion = 'Av1.9.0'
+const userAgent = 'okhttp/5.0.0-alpha.7'
+const deviceName = 'ZenMoney'
 
 /**
  * Регистрирует идентификатор устройства в интернет-банке
  */
 export async function registerDevice () {
-  const endpoint = '/device'
-  const deviceId = generateRandomString(32)
-
+  const endpoint = '/device/register'
+  const deviceId = generateRandomString(16)
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'POST',
     headers: {
       lang: 'ru',
-      'app-version': 'w0.0.1'
+      'app-version': appVersion,
+      'User-Agent': userAgent,
+      'device-name': deviceName,
+      'device-id': deviceId
     },
     body: {
       deviceId,
-      name: 'ZenMoney'
+      name: deviceName,
+      isEmulator: false,
+      isRooted: false
     },
     sanitizeRequestLog: { body: { deviceId: true } }
   })
@@ -52,7 +59,9 @@ export async function checkUser (phone) {
     method: 'GET',
     headers: {
       lang: 'ru',
-      'app-version': 'w0.0.1',
+      'app-version': appVersion,
+      'User-Agent': userAgent,
+      'device-name': deviceName,
       'device-id': ZenMoney.getData('deviceId')
     },
     sanitizeRequestLog: { url: { query: { phone: true } }, headers: { 'device-id': true } },
@@ -79,7 +88,9 @@ export async function sendSmsCode (phone, password) {
     method: 'POST',
     headers: {
       lang: 'ru',
-      'app-version': 'w0.0.1',
+      'app-version': appVersion,
+      'User-Agent': userAgent,
+      'device-name': deviceName,
       'device-id': ZenMoney.getData('deviceId')
     },
     body: {
@@ -110,7 +121,9 @@ export async function getToken (phone, smsCode) {
     method: 'POST',
     headers: {
       lang: 'ru',
-      'app-version': 'w0.0.1',
+      'app-version': appVersion,
+      'User-Agent': userAgent,
+      'device-name': deviceName,
       'device-id': ZenMoney.getData('deviceId')
     },
     sanitizeRequestLog: { url: url => url.replace(getPhoneNumber(phone), sanitize(getPhoneNumber(phone), true)), headers: { 'device-id': true } },
@@ -122,7 +135,6 @@ export async function getToken (phone, smsCode) {
   }
 
   console.assert(response.ok, 'unexpected registration/verify response', response)
-
   ZenMoney.setData('token', response.body.data.token)
   ZenMoney.setData('isFirstRun', false)
 }
@@ -139,7 +151,9 @@ export async function getUzcardCards () {
     method: 'GET',
     headers: {
       lang: 'ru',
-      'app-version': 'w0.0.1',
+      'app-version': appVersion,
+      'User-Agent': userAgent,
+      'device-name': deviceName,
       'device-id': ZenMoney.getData('deviceId'),
       token: ZenMoney.getData('token')
     },
@@ -163,7 +177,9 @@ export async function getHumoCards () {
     method: 'GET',
     headers: {
       lang: 'ru',
-      'app-version': 'w0.0.1',
+      'app-version': appVersion,
+      'User-Agent': userAgent,
+      'device-name': deviceName,
       'device-id': ZenMoney.getData('deviceId'),
       token: ZenMoney.getData('token')
     },
@@ -187,7 +203,9 @@ export async function getVisaCards () {
     method: 'GET',
     headers: {
       lang: 'ru',
-      'app-version': 'w0.0.1',
+      'app-version': appVersion,
+      'User-Agent': userAgent,
+      'device-name': deviceName,
       'device-id': ZenMoney.getData('deviceId'),
       token: ZenMoney.getData('token')
     },
@@ -211,7 +229,9 @@ export async function getWallets () {
     method: 'GET',
     headers: {
       lang: 'ru',
-      'app-version': 'w0.0.1',
+      'app-version': appVersion,
+      'User-Agent': userAgent,
+      'device-name': deviceName,
       'device-id': ZenMoney.getData('deviceId'),
       token: ZenMoney.getData('token')
     },
@@ -235,7 +255,9 @@ export async function getAccounts () {
     method: 'GET',
     headers: {
       lang: 'ru',
-      'app-version': 'w0.0.1',
+      'app-version': appVersion,
+      'User-Agent': userAgent,
+      'device-name': deviceName,
       'device-id': ZenMoney.getData('deviceId'),
       token: ZenMoney.getData('token')
     },
@@ -269,7 +291,9 @@ export async function getUzcardCardsTransactions (cards, fromDate, toDate) {
         method: 'GET',
         headers: {
           lang: 'ru',
-          'app-version': 'w0.0.1',
+          'app-version': appVersion,
+          'User-Agent': userAgent,
+          'device-name': deviceName,
           'device-id': ZenMoney.getData('deviceId'),
           token: ZenMoney.getData('token')
         },
@@ -308,7 +332,9 @@ export async function getHumoCardsTransactions (cards, fromDate, toDate) {
         method: 'GET',
         headers: {
           lang: 'ru',
-          'app-version': 'w0.0.1',
+          'app-version': appVersion,
+          'User-Agent': userAgent,
+          'device-name': deviceName,
           'device-id': ZenMoney.getData('deviceId'),
           token: ZenMoney.getData('token')
         },
@@ -347,7 +373,9 @@ export async function getVisaCardsTransactions (cards, fromDate, toDate) {
         method: 'GET',
         headers: {
           lang: 'ru',
-          'app-version': 'w0.0.1',
+          'app-version': appVersion,
+          'User-Agent': userAgent,
+          'device-name': deviceName,
           'device-id': ZenMoney.getData('deviceId'),
           token: ZenMoney.getData('token')
         },
@@ -386,7 +414,9 @@ export async function getWalletsTransactions (wallets, fromDate, toDate) {
         method: 'GET',
         headers: {
           lang: 'ru',
-          'app-version': 'w0.0.1',
+          'app-version': appVersion,
+          'User-Agent': userAgent,
+          'device-name': deviceName,
           'device-id': ZenMoney.getData('deviceId'),
           token: ZenMoney.getData('token')
         },
@@ -425,7 +455,9 @@ export async function getAccountsTransactions (accounts, fromDate, toDate) {
         method: 'GET',
         headers: {
           lang: 'ru',
-          'app-version': 'w0.0.1',
+          'app-version': appVersion,
+          'User-Agent': userAgent,
+          'device-name': deviceName,
           'device-id': ZenMoney.getData('deviceId'),
           token: ZenMoney.getData('token')
         },
