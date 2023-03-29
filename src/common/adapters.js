@@ -208,8 +208,8 @@ export function trimTransactionTransferAccountSyncIds (transaction) {
 
 function assertSumIsAValidNumber (sum, key) {
   console.assert(
-    (typeof sum === 'number' && !isNaN(sum)) || ['null', 'undefined'].includes(typeof sum),
-    `${key} sum should be a number, got ` + (isNaN(sum) ? 'NaN' : JSON.stringify(sum))
+    (typeof sum === 'number' && !isNaN(sum) && isFinite(sum)) || sum === null || sum === undefined,
+    `${key} should be a number, got ` + (typeof sum === 'number' ? sum : JSON.stringify(sum))
   )
 }
 

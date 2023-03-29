@@ -423,7 +423,7 @@ describe('patchAccounts', () => {
         creditLimit: NaN,
         syncID: ['1111']
       },
-      'balance sum should be a number, got NaN'
+      'balance should be a number, got NaN'
     ],
     [
       {
@@ -435,7 +435,7 @@ describe('patchAccounts', () => {
         creditLimit: NaN,
         syncID: ['1111']
       },
-      'creditLimit sum should be a number, got NaN'
+      'creditLimit should be a number, got NaN'
     ],
     [
       {
@@ -448,7 +448,7 @@ describe('patchAccounts', () => {
         available: NaN,
         syncID: ['1111']
       },
-      'available sum should be a number, got NaN'
+      'available should be a number, got NaN'
     ],
     [
       {
@@ -460,9 +460,9 @@ describe('patchAccounts', () => {
         startBalance: NaN,
         syncID: ['1111']
       },
-      'startBalance sum should be a number, got NaN'
+      'startBalance should be a number, got NaN'
     ]
-  ])('should throw error if any of sum values is NaN', (account, message) => {
+  ])('should throw error if any of values is NaN', (account, message) => {
     global.ZenMoney = { features: {} }
     expect(() => {
       patchAccounts([account])
@@ -600,7 +600,7 @@ describe('patchTransactions', () => {
         merchant: null,
         comment: null
       },
-      'outcome sum should be a number, got NaN'
+      'outcome should be a number, got NaN'
     ],
     [
       {
@@ -618,9 +618,9 @@ describe('patchTransactions', () => {
         merchant: null,
         comment: null
       },
-      'outcome sum should be a number, got NaN'
+      'outcome should be a number, got NaN'
     ]
-  ])('should throw error if any of sum values is NaN', (transaction, message) => {
+  ])('should throw error if any of values is NaN', (transaction, message) => {
     global.ZenMoney = { features: {} }
     expect(() => {
       patchTransactions([transaction], accounts)
