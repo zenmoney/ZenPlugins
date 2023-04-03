@@ -112,7 +112,7 @@ export interface Transaction {
 }
 
 export interface ExtendedTransaction extends Transaction {
-  groupKeys?: string[]
+  groupKeys?: Array<string | null>
 }
 
 // Plugin entrypoint function
