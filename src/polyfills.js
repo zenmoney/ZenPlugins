@@ -1,5 +1,6 @@
 import { isDebug } from './common/utils'
 import * as consoleAdapter from './consoleAdapter'
+import { IncompatibleVersionError } from './errors'
 
 global.Promise = require('promise/lib/es6-extensions.js')
 global.Symbol = require('es6-symbol')
@@ -13,10 +14,10 @@ ZenMoney.FormData = global.FormData
 global.fetch = null
 // eslint-disable-next-line import/no-webpack-loader-syntax
 global.fetch = require('imports-loader?type=commonjs&imports=single|xhrViaZenApi|{default:XMLHttpRequest}=XMLHttpRequest' + '&' +
-                                      'additionalCode=var%20self%20=%20global;%0A' +
-                                      'var%20Blob%20=%20ZenMoney.Blob;%0A' +
-                                      'var%20FormData%20=%20ZenMoney.FormData;' + '!' +
-                       'exports-loader?type=commonjs&exports=single|self.fetch!whatwg-fetch')
+  'additionalCode=var%20self%20=%20global;%0A' +
+  'var%20Blob%20=%20ZenMoney.Blob;%0A' +
+  'var%20FormData%20=%20ZenMoney.FormData;' + '!' +
+  'exports-loader?type=commonjs&exports=single|self.fetch!whatwg-fetch')
 global.Blob = null
 global.FormData = null
 delete global.Blob
@@ -64,7 +65,10 @@ if (!('readLine' in ZenMoney)) {
     if (typeof message !== 'string') {
       throw new Error('message must be string')
     }
-    const { imageUrl = null, ...rest } = options
+    const {
+      imageUrl = null,
+      ...rest
+    } = options
     return ZenMoney.retrieveCode(message, imageUrl, rest)
   }
 }
@@ -76,5 +80,24 @@ if (!('clearCookies' in ZenMoney)) {
         await ZenMoney.setCookie(isDebug() ? 'localhost' : cookie.domain, cookie.name, null)
       }
     }
+  }
+}
+
+if (!ZenMoney._isPickDocumentsPolyfilled) {
+  const pickDocuments = ZenMoney.pickDocuments
+  ZenMoney._isPickDocumentsPolyfilled = true
+  ZenMoney.pickDocuments = async (mimeTypes, allowMultipleSelection) => {
+    return new Promise((resolve, reject) => {
+      if (typeof pickDocuments !== 'function') {
+        return reject(new IncompatibleVersionError())
+      }
+      pickDocuments.call(ZenMoney, { mimeTypes, allowMultipleSelection }, (err, blobs) => {
+        if (err) {
+          reject(err)
+        } else {
+          resolve(blobs)
+        }
+      })
+    })
   }
 }
