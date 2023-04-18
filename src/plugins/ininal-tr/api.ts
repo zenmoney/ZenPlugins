@@ -340,13 +340,17 @@ export class IninalApi {
     return generateUUID().toUpperCase()
   }
 
+  // ininal API accepts date in Turkey time zone
   private formatDateRangeBoundary (date: Date): string {
-    const year = date.getUTCFullYear()
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0')
-    const day = String(date.getUTCDate()).padStart(2, '0')
-    const hours = String(date.getUTCHours()).padStart(2, '0')
-    const minutes = String(date.getUTCMinutes()).padStart(2, '0')
-    const seconds = String(date.getUTCSeconds()).padStart(2, '0')
+    const timeZone = 'Europe/Istanbul'
+    const locale = 'en-US'
+
+    const year = date.toLocaleString(locale, { timeZone, year: 'numeric' })
+    const month = date.toLocaleString(locale, { timeZone, month: '2-digit' })
+    const day = date.toLocaleString(locale, { timeZone, day: '2-digit' })
+    const hours = date.toLocaleString(locale, { timeZone, hour: '2-digit', hour12: false })
+    const minutes = date.toLocaleString(locale, { timeZone, minute: '2-digit' })
+    const seconds = date.toLocaleString(locale, { timeZone, second: '2-digit' })
     const milliseconds = String(date.getUTCMilliseconds()).padStart(3, '0')
 
     return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}`
