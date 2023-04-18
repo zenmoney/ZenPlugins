@@ -1,4 +1,4 @@
-export type Session = {
+export interface Session {
   deviceId: string
   userId?: string
   accessToken?: string

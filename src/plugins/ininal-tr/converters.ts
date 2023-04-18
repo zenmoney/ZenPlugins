@@ -1,7 +1,7 @@
 import { Account, AccountType, AccountOrCard, Transaction } from '../../types/zenmoney'
 import { AccountInfo, AccountTransaction } from './models'
 
-export function convertAccount(apiAccount: AccountInfo): AccountOrCard {
+export function convertAccount (apiAccount: AccountInfo): AccountOrCard {
   return {
     id: apiAccount.number,
     type: AccountType.ccard,
@@ -11,12 +11,12 @@ export function convertAccount(apiAccount: AccountInfo): AccountOrCard {
     creditLimit: 0,
     syncIds: [
       apiAccount.number,
-      ...apiAccount.cardNumbers,
+      ...apiAccount.cardNumbers
     ]
   }
 }
 
-export function convertTransaction(accountTransaction: AccountTransaction, account: Account): Transaction {
+export function convertTransaction (accountTransaction: AccountTransaction, account: Account): Transaction {
   return {
     hold: false,
     date: accountTransaction.date,

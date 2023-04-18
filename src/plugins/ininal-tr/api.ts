@@ -3,8 +3,7 @@ import { generateUUID } from '../../common/utils'
 import { sanitize } from '../../common/sanitize'
 import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
 import get from '../../types/get'
-import { InvalidPreferencesError } from '../../errors'
-import { InvalidOtpCodeError } from '../../errors'
+import { InvalidPreferencesError, InvalidOtpCodeError } from '../../errors'
 
 export class IninalApi {
   private readonly baseUrl: string
@@ -12,11 +11,11 @@ export class IninalApi {
   private readonly authDeviceName: string
   private readonly userAgent: string
 
-  constructor(options: {
-    baseUrl: string,
-    anonymousToken: string,
-    authDeviceName: string,
-    userAgent: string,
+  constructor (options: {
+    baseUrl: string
+    anonymousToken: string
+    authDeviceName: string
+    userAgent: string
   }) {
     this.baseUrl = options.baseUrl
     this.anonymousToken = options.anonymousToken
@@ -24,21 +23,21 @@ export class IninalApi {
     this.userAgent = options.userAgent
   }
 
-  private async fetchApi(
+  private async fetchApi (
     url: string,
     session?: Session,
     options?: FetchOptions,
     predicate?: (x: FetchResponse) => boolean
   ): Promise<FetchResponse> {
     const sessionHeaders = {
-      'Authorization': `Bearer ${
+      Authorization: `Bearer ${
         (session && 'accessToken' in session)
         ? session.accessToken
         : this.anonymousToken}`
     }
 
     const commonHeaders = {
-      'User-Agent': this.userAgent,
+      'User-Agent': this.userAgent
     }
 
     const sanitizeOptions: Pick<FetchOptions, 'sanitizeRequestLog' | 'sanitizeResponseLog'> = {
@@ -48,30 +47,30 @@ export class IninalApi {
 
     const mergedOptions = options
       ? {
-        ...sanitizeOptions,
-        ...options,
-        headers: {
-          ...(typeof options.headers === 'object' && options.headers != null ? options.headers : {}),
-          ...sessionHeaders,
-          ...commonHeaders
+          ...sanitizeOptions,
+          ...options,
+          headers: {
+            ...(typeof options.headers === 'object' && options.headers != null ? options.headers : {}),
+            ...sessionHeaders,
+            ...commonHeaders
+          }
         }
-      }
       : { ...sanitizeOptions, headers: sessionHeaders }
 
     const response = await fetchJson(this.baseUrl + url, mergedOptions)
 
     if (predicate) {
-      this.validateResponse(response, response => (get(response.body, 'httpCode') == 200) && predicate(response))
+      this.validateResponse(response, response => (get(response.body, 'httpCode') === 200) && predicate(response))
     }
 
     return response
   }
 
-  private validateResponse(response: FetchResponse, predicate?: (x: FetchResponse) => boolean): void {
+  private validateResponse (response: FetchResponse, predicate?: (x: FetchResponse) => boolean): void {
     console.assert(!predicate || predicate(response), 'non-successful response')
   }
 
-  public async login(preferences: Preferences, isInBackground: boolean, session?: Session): Promise<Session> {
+  public async login (preferences: Preferences, isInBackground: boolean, session?: Session): Promise<Session> {
     console.debug('login', sanitize({ session }, true))
 
     if (!session) {
@@ -80,58 +79,58 @@ export class IninalApi {
       }
     }
 
-    session.deviceId = session?.deviceId || this.generateDeviceID();
+    session.deviceId = session?.deviceId !== '' ? session?.deviceId : this.generateDeviceID()
 
     if ('accessToken' in session && 'userId' in session) {
       // try to fetch user info to check auth
-      let userResponse = await this.fetchApi(
+      const userResponse = await this.fetchApi(
         `v3.0/users/${session.userId}`,
         session,
         {
-          method: 'GET',
+          method: 'GET'
         }
       ) as FetchResponse & { body: { httpCode: number, response: { customerToken: string } } }
       // if ok, session is fine -- return it
-      if (userResponse.body.httpCode == 200 && userResponse.body.response.customerToken == session.userId) {
+      if (userResponse.body.httpCode === 200 && userResponse.body.response.customerToken === session.userId) {
         return session
       }
     }
 
     // remove session accessToken now -- it's not valid for sure
     if ('accessToken' in session) {
-      delete session.accessToken;
+      delete session.accessToken
     }
 
-    let confirmationToken = await this.authSignin(preferences, session);
+    const confirmationToken = await this.authSignin(preferences, session)
 
-    let { authToken, userId, needOtp } = await this.authCheckPassword(confirmationToken, preferences, session);
+    const { authToken, userId, needOtp } = await this.authCheckPassword(confirmationToken, preferences, session)
 
-    session.userId = userId;
+    session.userId = userId
     // if got auth token, return session now
-    if (authToken) {
-      session.accessToken = authToken;
-      return session;
+    if (authToken != null) {
+      session.accessToken = authToken
+      return session
     }
 
     // check if authToken is needed because of OTP missing
     if (needOtp) {
-      const smsCode = await ZenMoney.readLine('Enter SMS OTP Code');
-      console.assert(smsCode, 'OTP Code is missing');
+      const smsCode = await ZenMoney.readLine('Enter SMS OTP Code')
+      console.assert(smsCode, 'OTP Code is missing')
 
-      let { authToken, userId } = await this.authVerifyDevice(confirmationToken, smsCode as string, session);
+      const { authToken, userId } = await this.authVerifyDevice(confirmationToken, smsCode as string, session)
 
-      session.userId = userId;
-      session.accessToken = authToken;
+      session.userId = userId
+      session.accessToken = authToken
 
-      return session;
+      return session
     }
 
     // otherwise, authCheckPassword failed -- no token and otp is missing
     throw new InvalidPreferencesError()
   }
 
-  private async authVerifyDevice(confirmationToken: string, otpCode: string, session: Session): Promise<{ authToken: string, userId: string }> {
-    let rawResponse = await this.fetchApi(
+  private async authVerifyDevice (confirmationToken: string, otpCode: string, session: Session): Promise<{ authToken: string, userId: string }> {
+    const rawResponse = await this.fetchApi(
       'v3.1/auth/verify/device',
       undefined,
       {
@@ -139,25 +138,25 @@ export class IninalApi {
         body: {
           confirmationToken,
           otp: otpCode,
-          deviceId: session.deviceId!,
+          deviceId: session.deviceId,
           saveDevice: true,
-          deviceName: this.authDeviceName,
+          deviceName: this.authDeviceName
         }
       },
       (res) => {
-        return (res.body as { response?: { customerStatus?: string } })?.response?.customerStatus == "ACTIVE"
+        return (res.body as { response?: { customerStatus?: string } })?.response?.customerStatus === 'ACTIVE'
       }
     ) as FetchResponse & {
       body: {
         response: {
-          token: string,
-          userToken: string,
-          accessToken: boolean,
+          token: string
+          userToken: string
+          accessToken: boolean
         }
       }
     }
 
-    const response = rawResponse.body.response;
+    const response = rawResponse.body.response
 
     if (!response.accessToken) {
       throw new InvalidOtpCodeError()
@@ -165,12 +164,12 @@ export class IninalApi {
 
     return {
       authToken: response.token,
-      userId: response.userToken,
+      userId: response.userToken
     }
   }
 
-  private async authCheckPassword(confirmationToken: string, { password }: Preferences, session: Session): Promise<{ authToken: string | null, userId: string, needOtp: boolean }> {
-    let rawResponse = await this.fetchApi(
+  private async authCheckPassword (confirmationToken: string, { password }: Preferences, session: Session): Promise<{ authToken: string | null, userId: string, needOtp: boolean }> {
+    const rawResponse = await this.fetchApi(
       'v3.1/auth/check/password',
       undefined,
       {
@@ -178,53 +177,53 @@ export class IninalApi {
         body: {
           confirmationToken,
           password,
-          deviceId: session.deviceId!,
+          deviceId: session.deviceId
         }
       },
       (res) => {
-        return (res.body as { response?: { customerStatus?: string } })?.response?.customerStatus == "ACTIVE"
+        return (res.body as { response?: { customerStatus?: string } })?.response?.customerStatus === 'ACTIVE'
       }
     ) as FetchResponse & {
       body: {
         response: {
-          token: string,
-          userToken: string,
-          otp: boolean,
-          accessToken: boolean,
+          token: string
+          userToken: string
+          otp: boolean
+          accessToken: boolean
         }
       }
     }
 
-    const response = rawResponse.body.response;
+    const response = rawResponse.body.response
 
     return {
       authToken: response.accessToken ? response.token : null,
       userId: response.userToken,
-      needOtp: response.otp,
+      needOtp: response.otp
     }
   }
 
-  private async authSignin({ login }: Preferences, session: Session): Promise<string> {
-    let response = await this.fetchApi(
+  private async authSignin ({ login }: Preferences, session: Session): Promise<string> {
+    const response = await this.fetchApi(
       'v3.1/auth/signin',
       undefined,
       {
         method: 'POST',
         body: {
-          loginCredential: login,
+          loginCredential: login
         }
       },
       (res) => {
-        return (res.body as { response?: { customerStatus?: string } })?.response?.customerStatus == "ACTIVE"
+        return (res.body as { response?: { customerStatus?: string } })?.response?.customerStatus === 'ACTIVE'
       }
     ) as FetchResponse & { body: { response: { token: string } } }
 
-    return response.body.response.token;
+    return response.body.response.token
   }
 
   // fetchAccounts returns list of accounts, but also refreshes session token
-  public async fetchAccounts(session: Session): Promise<{session?: Session, accounts: AccountInfo[]}> {
-    let rawResponse = await this.fetchApi(
+  public async fetchAccounts (session: Session): Promise<{session?: Session, accounts: AccountInfo[]}> {
+    const rawResponse = await this.fetchApi(
       `v3.2/users/${session.userId}/cardaccount`,
       session,
       {
@@ -234,41 +233,41 @@ export class IninalApi {
         body: {}
       },
       (res) => {
-        let resp = (res.body as { response?: { accountListResponse?: unknown[] } })?.response;
-        return !!(resp && 'accountListResponse' in resp);
+        const resp = (res.body as { response?: { accountListResponse?: unknown[] } })?.response
+        return !!(resp && 'accountListResponse' in resp)
       }
     ) as FetchResponse & {
       body: {
         response: {
           accountListResponse: Array<{
-            accountNumber: string,
-            accountName: string,
-            accountStatus: string,
-            accountBalance: number,
-            isFavorite: boolean,
-            currency: string,
+            accountNumber: string
+            accountName: string
+            accountStatus: string
+            accountBalance: number
+            isFavorite: boolean
+            currency: string
             cardListResponse: Array<{
-              cardId: string,
-              productCode: string,
-              cardStatus: string,
-              cardType: string,
-              barcodeNumber: string,
-              cardNumber: string,
-              cardToken: string,
-            }>,
-          }>,
-          accessToken?: string,
+              cardId: string
+              productCode: string
+              cardStatus: string
+              cardType: string
+              barcodeNumber: string
+              cardNumber: string
+              cardToken: string
+            }>
+          }>
+          accessToken?: string
         }
       }
     }
 
-    const response = rawResponse.body.response;
+    const response = rawResponse.body.response
 
     // if there is accessToken in response, update the session
-    let newSession: Session | undefined;
-    if (response.accessToken) {
-      session.accessToken = response.accessToken;
-      newSession = session;
+    let newSession: Session | undefined
+    if ((response?.accessToken) !== null) {
+      session.accessToken = response.accessToken
+      newSession = session
     }
 
     const accounts = response.accountListResponse.map((apiAccount): AccountInfo => ({
@@ -278,24 +277,24 @@ export class IninalApi {
       currency: apiAccount.currency,
 
       // filter out blocked and fake cards which would have cardStatus STOPLIST
-      cardNumbers: apiAccount.cardListResponse.filter(card => card.cardStatus === "A").map(card => card.cardNumber),
+      cardNumbers: apiAccount.cardListResponse.filter(card => card.cardStatus === 'A').map(card => card.cardNumber)
     }))
 
     return {
       session: newSession,
-      accounts,
+      accounts
     }
   }
 
-  public async fetchAccountTransactions(session: Session, accountNumber: string, fromDate: Date, toDate?: Date): Promise<AccountTransaction[]> {
+  public async fetchAccountTransactions (session: Session, accountNumber: string, fromDate: Date, toDate?: Date): Promise<AccountTransaction[]> {
     // if toDate is not provided, set it to start of the next day
     if (!toDate) {
-      toDate = new Date();
-      toDate.setDate(toDate.getDate() + 1);
-      toDate.setHours(0, 0, 0, 0);
+      toDate = new Date()
+      toDate.setDate(toDate.getDate() + 1)
+      toDate.setHours(0, 0, 0, 0)
     }
 
-    let rawResponse = await this.fetchApi(
+    const rawResponse = await this.fetchApi(
       `v3.1/users/${session.userId}/transactions/${accountNumber}`,
       session,
       {
@@ -303,24 +302,24 @@ export class IninalApi {
         body: {
           startDate: this.formatDateRangeBoundary(fromDate),
           endDate: this.formatDateRangeBoundary(toDate),
-          resultLimit: null,
-        },
+          resultLimit: null
+        }
       },
       (res) => {
-        let resp = (res.body as { response?: { transactionList?: unknown[] } })?.response;
-        return !!(resp && 'transactionList' in resp);
+        const resp = (res.body as { response?: { transactionList?: unknown[] } })?.response
+        return !!(resp && 'transactionList' in resp)
       }
     ) as FetchResponse & {
       body: {
         response: {
           transactionList: Array<{
-            transactionDate: string,
-            description: string,
-            referenceNo: string,
-            amount: number,
-            currency: string,
-            icon: string,
-            transactionType: string,
+            transactionDate: string
+            description: string
+            referenceNo: string
+            amount: number
+            currency: string
+            icon: string
+            transactionType: string
           }>
         }
       }
@@ -333,24 +332,24 @@ export class IninalApi {
       amount: t.amount,
       currency: t.currency,
       icon: t.icon,
-      transactionType: t.transactionType,
+      transactionType: t.transactionType
     }))
   }
 
-  private generateDeviceID(): string {
-    return generateUUID().toUpperCase();
+  private generateDeviceID (): string {
+    return generateUUID().toUpperCase()
   }
 
-  private formatDateRangeBoundary(date: Date): string {
-    const year = date.getUTCFullYear();
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(date.getUTCDate()).padStart(2, '0');
-    const hours = String(date.getUTCHours()).padStart(2, '0');
-    const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-    const seconds = String(date.getUTCSeconds()).padStart(2, '0');
-    const milliseconds = String(date.getUTCMilliseconds()).padStart(3, '0');
+  private formatDateRangeBoundary (date: Date): string {
+    const year = date.getUTCFullYear()
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0')
+    const day = String(date.getUTCDate()).padStart(2, '0')
+    const hours = String(date.getUTCHours()).padStart(2, '0')
+    const minutes = String(date.getUTCMinutes()).padStart(2, '0')
+    const seconds = String(date.getUTCSeconds()).padStart(2, '0')
+    const milliseconds = String(date.getUTCMilliseconds()).padStart(3, '0')
 
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}`;
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}`
   }
 }
 
@@ -363,5 +362,5 @@ export const ininalApi = new IninalApi({
   // this one expires at Dec 12 2024
   anonymousToken: 'eyJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE1NzYyMjAxNjMsInN1YiI6ImluaW5hbCIsImlzcyI6ImluaW5hbCIsInNjb3BlIjoiU0lHTklOLFJFR0lTVEVSLFVTRVJTX0dFVF9XSVRIX0RFVklDRVMsVVNFUlNfUE9TVF9ERVZJQ0UsT1RQX1JFU0VORCxVU0VSU19GT1JHT1RfUEFTU1dPUkQsVVNFUlNfU1RBVFVTX1BVVCxVU0VSU19FTUFJTF9FWElTVCIsImlzVXNlciI6ZmFsc2UsImNoYW5uZWxJZCI6MSwiY29tcGFueUlkIjoxLCJleHAiOjE3MzQwMDQ5MjN9.mZxNZQk0pxY2qPxMrk3Y1CMh2KUlO7uihPozTrnIyWw',
   authDeviceName: 'iPhone10,1',
-  userAgent: 'ininal/3.4.91 (com.ngier.ininalwallet; build:1; iOS 16.3.1) Alamofire/5.4.4',
+  userAgent: 'ininal/3.4.91 (com.ngier.ininalwallet; build:1; iOS 16.3.1) Alamofire/5.4.4'
 })

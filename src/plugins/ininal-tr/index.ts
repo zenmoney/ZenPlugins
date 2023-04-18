@@ -11,7 +11,7 @@ function parseSessionData (data: unknown): Session | undefined {
   const {
     deviceId,
     userId,
-    accessToken,
+    accessToken
   } = data as {
     deviceId: string
     userId: string
@@ -31,29 +31,28 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
 
   // not saving yet since session might get refreshed on fetchAccounts
 
-  const { session: newSession, accounts: accountInfos } = await ininalApi.fetchAccounts(session);
-  let accounts = accountInfos.map(convertAccount);
+  const { session: newSession, accounts: accountInfos } = await ininalApi.fetchAccounts(session)
+  const accounts = accountInfos.map(convertAccount)
 
   // refresh saved session if available
   if (newSession) {
-    session = newSession;
+    session = newSession
   }
 
   ZenMoney.setData('session', session)
   ZenMoney.saveData()
 
-  let transactionsByAccount = await Promise.all(accounts.map(async (account): Promise<Transaction[]> => {
+  const transactionsByAccount = await Promise.all(accounts.map(async (account): Promise<Transaction[]> => {
     if (ZenMoney.isAccountSkipped(account.id)) {
-      return [];
+      return []
     }
 
-    const accountTransactions = await ininalApi.fetchAccountTransactions(session!, account.id, fromDate, toDate);
-    return accountTransactions.map(t => convertTransaction(t, account));
+    const accountTransactions = await ininalApi.fetchAccountTransactions(session!, account.id, fromDate, toDate)
+    return accountTransactions.map(t => convertTransaction(t, account))
   }))
-  
 
   return {
     accounts: accountInfos.map(convertAccount),
-    transactions: transactionsByAccount.flat(),
+    transactions: transactionsByAccount.flat()
   }
 }
