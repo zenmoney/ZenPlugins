@@ -287,11 +287,10 @@ export class IninalApi {
   }
 
   public async fetchAccountTransactions (session: Session, accountNumber: string, fromDate: Date, toDate?: Date): Promise<AccountTransaction[]> {
-    // if toDate is not provided, set it to start of the next day
+    // if toDate is not provided, set it to the end of the current day
     if (!toDate) {
       toDate = new Date()
-      toDate.setDate(toDate.getDate() + 1)
-      toDate.setHours(0, 0, 0, 0)
+      toDate.setHours(23, 59, 59, 999)
     }
 
     const rawResponse = await this.fetchApi(
