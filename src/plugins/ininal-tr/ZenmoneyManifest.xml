@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
-    <id>ininial</id>
-    <company>0</company>
-    <description>
-        ininal.com syncronization plugin.
-        enter your phone and password, and enter your SMS code if needed.
-    </description>
+    <id>ininal-tr</id>
+    <company>16004</company>
+    <description></description>
     <version>1.0</version>
     <build>1</build>
     <modular>true</modular>
