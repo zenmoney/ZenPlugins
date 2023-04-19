@@ -345,7 +345,7 @@ export class IninalApi {
   private formatDateRangeBoundary (date: Date): string {
     const timezoneOffset = 3 * 60 // Europe/Istanbul - +3
     const d = dateInTimezone(date, timezoneOffset)
-    const pad = (num: number, padNum = 2) => padLeft(String(num), padNum, '0')
+    const pad = (num: number, padNum = 2): string => padLeft(String(num), padNum, '0')
 
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T` +
       `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.` +
