@@ -1689,6 +1689,11 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-18.11.18.tgz#8dfb97f0da23c2293e554c5a50d61ef134d7697f"
   integrity sha512-DHQpWGjyQKSHj3ebjFI/wRKcqQcdR+MoFBygntYOZytCqNfkd2ZC4ARDJ2DQqhjH5p85Nnd3jhUJIXrszFX/JA==
 
+"@types/pad-left@2.1.0":
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/@types/pad-left/-/pad-left-2.1.0.tgz#646bacc2124e13109c2903830c594db987531053"
+  integrity sha512-qiyjAPuwex3GGzlxTEh3RneQRdsFtd2u8VU3vGyK/18t4beRcdXRvjxDNn2+DHs/tr0w+MJ1/NaEzH6j6iXTyw==
+
 "@types/prettier@^2.1.5":
   version "2.7.2"
   resolved "https://registry.yarnpkg.com/@types/prettier/-/prettier-2.7.2.tgz#6c2324641cc4ba050a8c710b2b251b377581fbf0"
