@@ -5,6 +5,7 @@ import { dateInTimezone } from '../../common/dateUtils'
 import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
 import get from '../../types/get'
 import { InvalidPreferencesError, InvalidOtpCodeError } from '../../errors'
+import padLeft from 'pad-left'
 
 export class IninalApi {
   private readonly baseUrl: string
@@ -341,19 +342,14 @@ export class IninalApi {
   }
 
   // ininal API accepts date in Turkey time zone
-  private formatDateRangeBoundary (localDate: Date): string {
-    const timezoneOffset = 3*60; // Europe/Istanbul - +3
-    const date = dateInTimezone(localDate, timezoneOffset);
+  private formatDateRangeBoundary (date: Date): string {
+    const timezoneOffset = 3 * 60 // Europe/Istanbul - +3
+    const d = dateInTimezone(date, timezoneOffset)
+    const pad = (num: number, padNum = 2) => padLeft(String(num), padNum, '0')
 
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    const hours = String(date.getHours()).padStart(2, '0')
-    const minutes = String(date.getMinutes()).padStart(2, '0')
-    const seconds = String(date.getSeconds()).padStart(2, '0')
-    const milliseconds = String(date.getMilliseconds()).padStart(3, '0')
-
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}`
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T` +
+      `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.` +
+      pad(d.getMilliseconds(), 3)
   }
 }
 
