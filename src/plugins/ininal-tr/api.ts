@@ -1,6 +1,7 @@
 import { Preferences, Session, AccountInfo, AccountTransaction } from './models'
 import { generateUUID } from '../../common/utils'
 import { sanitize } from '../../common/sanitize'
+import { dateInTimezone } from '../../common/dateUtils'
 import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
 import get from '../../types/get'
 import { InvalidPreferencesError, InvalidOtpCodeError } from '../../errors'
@@ -340,17 +341,17 @@ export class IninalApi {
   }
 
   // ininal API accepts date in Turkey time zone
-  private formatDateRangeBoundary (date: Date): string {
-    const timeZone = 'Europe/Istanbul'
-    const locale = 'en-US'
+  private formatDateRangeBoundary (localDate: Date): string {
+    const timezoneOffset = 3*60; // Europe/Istanbul - +3
+    const date = dateInTimezone(localDate, timezoneOffset);
 
-    const year = date.toLocaleString(locale, { timeZone, year: 'numeric' })
-    const month = date.toLocaleString(locale, { timeZone, month: '2-digit' })
-    const day = date.toLocaleString(locale, { timeZone, day: '2-digit' })
-    const hours = date.toLocaleString(locale, { timeZone, hour: '2-digit', hour12: false })
-    const minutes = date.toLocaleString(locale, { timeZone, minute: '2-digit' })
-    const seconds = date.toLocaleString(locale, { timeZone, second: '2-digit' })
-    const milliseconds = String(date.getUTCMilliseconds()).padStart(3, '0')
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    const seconds = String(date.getSeconds()).padStart(2, '0')
+    const milliseconds = String(date.getMilliseconds()).padStart(3, '0')
 
     return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}`
   }
