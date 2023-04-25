@@ -22,7 +22,7 @@
 ## Авторизация <a name="auth"></a>
 Происходит через протокол [OAuth 2.0](https://habrahabr.ru/company/mailru/blog/115163/).
 
-Зарегистрировать свой клиент можно с помощью скрипта на [странице](http://developers.zenmoney.ru/index.html) старой документации. После этого используем полученные consumer_key, consumer_secret и введенный OAuth callback point url в качестве соответственно client_id, client_secret и redirect_uri протокола OAuth 2.0
+Зарегистрировать свой клиент можно, заполнив форму на [этой странице](https://docs.google.com/forms/d/e/1FAIpQLSf6ZL9wA3lo-vFLnjspBY47byqz4xGJtgDAC3Xe6yMDlOMdBg/viewform). После этого используем полученные consumer_key, consumer_secret и введенный OAuth callback point url в качестве соответственно client_id, client_secret и redirect_uri протокола OAuth 2.0 
 
 Основные URL авторизации:
 
