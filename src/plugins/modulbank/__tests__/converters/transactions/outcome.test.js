@@ -201,8 +201,62 @@ describe('convertTransaction', () => {
         ],
         comment: 'ЗП Модульбухгалтер. Для зачисления на счет Николаева Николая Николаевича Заработная плата за Июнь 2021 г. Сумма 9114-19 Без налога (НДС)'
       }
+    ],
+    [
+      {
+        id: '3b889b57-07ad-4265-ad22-afe304059e9d',
+        companyId: '3be703a2-5852-427a-bd90-cce2d0f55dae',
+        status: 'Executed',
+        category: 'Credit',
+        contragentName: 'МОСКОВСКИЙ ФИЛИАЛ АО КБ "МОДУЛЬБАНК"',
+        contragentInn: '2204000595',
+        contragentKpp: '771543001',
+        contragentBankAccountNumber: '47423810770010468894',
+        contragentBankCorrAccount: '30101810645250000092',
+        contragentBankName: 'МОСКОВСКИЙ ФИЛИАЛ АО КБ "МОДУЛЬБАНК"',
+        contragentBankBic: '044525092',
+        currency: 'RUR',
+        amount: 448.8,
+        bankAccountNumber: '40802810870010359829',
+        paymentPurpose: 'Комиссия за зачисление денежных средств в ин. валюте по пл.пор. № 53 от 13/04/2023. Без НДС. ',
+        created: '2023-04-13T00:00:00',
+        docNumber: '1111200',
+        absId: '101339069134',
+        ibsoId: '-1',
+        kbk: '',
+        oktmo: '',
+        paymentBasis: '',
+        taxCode: '',
+        taxDocNum: '',
+        taxDocDate: '',
+        payerStatus: '',
+        uin: '0',
+        sbpOperId: '',
+        sbpOperIdForRefund: '',
+        rcvQrcId: '',
+        partialPayAmount: 448.8
+      },
+      {
+        hold: false,
+        date: new Date('2023-04-12T21:00:00.000Z'),
+        movements:
+          [
+            {
+              id: '3b889b57-07ad-4265-ad22-afe304059e9d',
+              account: { id: 'account' },
+              invoice: null,
+              sum: -448.8,
+              fee: 0
+            }
+          ],
+        merchant: null,
+        comment: 'Комиссия за зачисление денежных средств в ин. валюте по пл.пор. № 53 от 13/04/2023. Без НДС. '
+      }
     ]
   ])('converts outcome', (apiTransaction, transaction) => {
-    expect(convertTransaction(apiTransaction, { id: 'account', instrument: 'RUB' })).toEqual(transaction)
+    expect(convertTransaction(apiTransaction, {
+      id: 'account',
+      instrument: 'RUB'
+    })).toEqual(transaction)
   })
 })
