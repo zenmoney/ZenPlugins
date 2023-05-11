@@ -1,4 +1,4 @@
-const { DefinePlugin } = require('webpack')
+const { DefinePlugin, optimize: { LimitChunkCountPlugin } } = require('webpack')
 const CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin')
 const ESLintPlugin = require('eslint-webpack-plugin')
 const {
@@ -46,9 +46,8 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
       filename: '[name].js',
       chunkFilename: '[name].chunk.js',
       globalObject: 'this',
-      ...production && server && {
-        globalObject: 'self',
-        publicPath: '/'
+      ...production && {
+        asyncChunks: false
       }
     },
     resolve: {
@@ -124,6 +123,9 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
               transformObjectKeys: true,
               stringArrayCallsTransformThreshold: 1,
               stringArrayWrappersCount: 2
+            }),
+            new LimitChunkCountPlugin({
+              maxChunks: 1
             })
           ]
         : []
@@ -137,9 +139,11 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
           publicPath: '/'
         },
         host: 'localhost',
-        ...production && server && {
+        ...production && {
           host: 'local-ip',
-          client: false
+          client: false,
+          hot: false,
+          liveReload: false
         },
         port: 'auto',
         webSocketServer: WebsocketServer,
