@@ -40,7 +40,7 @@ async function fetchLogin (login, password, auth, smsCode) {
       login,
       password,
       deviceUDID: auth.deviceUDID,
-      applicID: '3.33',
+      applicID: '3.42',
       clientKind: '0',
       platform: ZenMoney.application?.platform || 'Android',
       platformVersion: '8.0.0',
