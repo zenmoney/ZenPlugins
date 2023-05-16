@@ -96,7 +96,11 @@ function convertAccount (apiAccount) {
     }
   }
   const accounts = []
-  for (const balance of apiAccount.subAccountBalances) {
+  let subBalances = apiAccount.subAccountAvailableBalances
+  if (!subBalances || subBalances.length === 0) {
+    subBalances = apiAccount.subAccountBalances
+  }
+  for (const balance of subBalances) {
     accounts.push({
       id: id + '-' + balance.currency,
       type,
