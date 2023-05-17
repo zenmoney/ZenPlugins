@@ -10,6 +10,7 @@ import {
   unpackArchiveTransactions
 } from './BSB'
 import { convertBSBToZenMoneyTransactions, convertToZenMoneyAccount } from './converters'
+import _ from 'lodash'
 
 async function login ({
   deviceId,
@@ -85,13 +86,13 @@ export async function scrape ({
   assertResponseSuccess(cardsResponse)
   const archiveTxs = unpackArchiveTransactions(archiveResponse)
 
-  const accounts = cardsResponse.body
-    .filter((card) => !ZenMoney.isAccountSkipped(calculateAccountId(card)))
-    .map((card) => convertToZenMoneyAccount(card))
-  const accountsWithTxs = await Promise.all(accounts.map(async (account) => {
+  const cardsWithoutSkipped = cardsResponse.body.filter((card) => !ZenMoney.isAccountSkipped(calculateAccountId(card)))
+  const accountsWithTxs = await Promise.all(Object.entries(_.groupBy(cardsWithoutSkipped, x => x.iban)).map(async ([iban, allCardsForIban]) => {
+    const latestCardForAccount = _.orderBy(allCardsForIban, x => x.expiryDate, 'desc')[0]
+    const account = convertToZenMoneyAccount(latestCardForAccount)
     const [smsTxs, statementTxs] = await Promise.all([
-      fetchSmsTransactions(account.id, fromDate, toDate),
-      fetchStatementTransactions(account.id, fromDate, toDate)
+      Promise.all(allCardsForIban.map(card => fetchSmsTransactions(card.cardId, fromDate, toDate))).then(x => _.flatten(x)),
+      fetchStatementTransactions(latestCardForAccount.cardId, fromDate, toDate)
     ])
     return {
       account,
@@ -99,6 +100,7 @@ export async function scrape ({
       statementTxs
     }
   }))
+  const accounts = accountsWithTxs.map(x => x.account)
   const transactions = convertBSBToZenMoneyTransactions(accountsWithTxs, archiveTxs)
   return {
     accounts,
