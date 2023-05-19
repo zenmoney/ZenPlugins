@@ -8,10 +8,12 @@ function parseDecimal (str: string): number {
 
 export function parseAmount (amount: string): Amount {
   // 200 401,09 ₸
-  const parts = amount.split(/\s+/).map(s => s.trim()).filter(s => s)
+  // $100.00
+  const instrumentMatch = amount.match(/[^\d\s.,]+/)
+  assert(typeof instrumentMatch?.[0] === 'string', 'Can not parse instrument')
   return {
-    sum: parseDecimal(parts.slice(0, parts.length - 1).join('')),
-    instrument: mapInstrument(parts[parts.length - 1])
+    sum: parseDecimal(amount.replace(/[^\d\s.,]+/g, '').replace(/\s+/g, '').replace(',', '.')),
+    instrument: mapInstrument(instrumentMatch[0])
   }
 }
 

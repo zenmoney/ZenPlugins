@@ -9,7 +9,7 @@ it.each([
       id: 'KZ11111',
       instrument: 'KZT',
       title: 'KASPI GOLD *0111',
-      date: new Date('2022-10-31T21:00:00.000Z')
+      date: '2022-10-31T00:00:00.000'
     },
     {
       account: {
@@ -20,7 +20,7 @@ it.each([
         syncIds: ['KZ11111'],
         type: AccountType.ccard
       },
-      date: new Date('2022-10-31T21:00:00.000Z')
+      date: new Date('2022-10-31T00:00:00.000')
     }
   ]
 ])('converts account parsed from pdf statement', (rawAccount: StatementAccount, account: unknown) => {

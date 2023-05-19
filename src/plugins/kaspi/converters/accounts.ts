@@ -11,6 +11,6 @@ export function convertPdfStatementAccount (rawAccount: StatementAccount): Conve
       title: rawAccount.title,
       type: AccountType.ccard
     },
-    date: rawAccount.date
+    date: new Date(rawAccount.date)
   }
 }

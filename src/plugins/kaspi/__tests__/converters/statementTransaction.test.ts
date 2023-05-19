@@ -6,7 +6,7 @@ it.each([
   [
     {
       hold: false,
-      date: new Date('2023-01-14T21:00:00.000Z'),
+      date: '2023-01-14T00:00:00.000',
       originalAmount: '(-17 EGP)',
       amount: '- 271,52 ',
       description: 'UBER *TRIP HELP.UBER.COM',
@@ -16,7 +16,7 @@ it.each([
       statementUid: 'a31336ea-6a68-4760-91a9-5ea78977a3c5',
       transaction: {
         hold: false,
-        date: new Date('2023-01-14T21:00:00.000Z'),
+        date: new Date('2023-01-14T00:00:00.000'),
         comment: null,
         movements: [
           {
@@ -43,7 +43,7 @@ it.each([
   [
     {
       hold: false,
-      date: new Date('2022-11-24T21:00:00.000Z'),
+      date: '2022-11-24T00:00:00.000',
       originalAmount: null,
       amount: '+ 108 213,06 ',
       description: 'по номеру счета PAYDALA LLP',
@@ -65,7 +65,7 @@ it.each([
           }
         ],
         hold: false,
-        date: new Date('2022-11-24T21:00:00.000Z'),
+        date: new Date('2022-11-24T00:00:00.000'),
         merchant: {
           fullTitle: 'PAYDALA LLP',
           mcc: null,
@@ -77,7 +77,7 @@ it.each([
   [
     {
       hold: false,
-      date: new Date('2022-10-31T21:00:00.000Z'),
+      date: '2022-10-31T00:00:00.000',
       originalAmount: null,
       amount: '+ 22 000,00 ',
       description: 'В Kaspi Банкомате',
@@ -99,7 +99,7 @@ it.each([
           }
         ],
         hold: false,
-        date: new Date('2022-10-31T21:00:00.000Z'),
+        date: new Date('2022-10-31T00:00:00.000'),
         merchant: null
       }
     }

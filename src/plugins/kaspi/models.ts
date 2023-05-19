@@ -16,12 +16,12 @@ export interface StatementAccount {
   title: string
   balance: number
   instrument: string
-  date: Date
+  date: string
 }
 
 export interface StatementTransaction {
   hold: boolean
-  date: Date
+  date: string
   originalAmount: string | null
   amount: string
   description: string | null
@@ -40,4 +40,15 @@ export interface ConvertedTransaction {
 
 export interface ObjectWithAnyProps {
   [key: string]: unknown
+}
+
+export interface AccountTypeHash {
+  deposit: string
+  gold: string
+}
+
+export interface AccountTypeByLocale {
+  ru: AccountTypeHash
+  en: AccountTypeHash
+  kz: AccountTypeHash
 }

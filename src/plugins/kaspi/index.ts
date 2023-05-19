@@ -6,7 +6,7 @@ import { convertPdfStatementTransaction } from './converters/transactions'
 import { isEqual, omit, uniqBy } from 'lodash'
 import { generateRandomString } from '../../common/utils'
 
-export const scrape: ScrapeFunc<Preferences> = async () => {
+export const scrape: ScrapeFunc<Preferences> = async ({ fromDate }) => {
   let auth = ZenMoney.getData('auth') as Auth | undefined
   if (!auth || auth.deviceId === '') {
     auth = {
@@ -15,7 +15,7 @@ export const scrape: ScrapeFunc<Preferences> = async () => {
   }
   ZenMoney.setData('auth', auth)
   ZenMoney.saveData()
-  const rawAccountsAndTransactions: null | Array<{ account: StatementAccount, transactions: StatementTransaction[] }> = await parsePdfStatements(auth)
+  const rawAccountsAndTransactions: null | Array<{ account: StatementAccount, transactions: StatementTransaction[] }> = await parsePdfStatements()
   const result: {
     accounts: ConvertedAccount[]
     transactions: ConvertedTransaction[]
@@ -26,7 +26,14 @@ export const scrape: ScrapeFunc<Preferences> = async () => {
   if (rawAccountsAndTransactions !== null) {
     for (const { account: rawAccount, transactions: rawTransactions } of rawAccountsAndTransactions) {
       const account = convertPdfStatementAccount(rawAccount)
-      const transactions = rawTransactions.map(transaction => convertPdfStatementTransaction(transaction, account))
+      const initialValue: ConvertedTransaction[] = []
+      const transactions = rawTransactions.reduce((convertedTransactions, item) => {
+        const transaction = convertPdfStatementTransaction(item, account)
+        if (transaction.transaction.date.getTime() - fromDate.getTime() >= 0) {
+          convertedTransactions.push(transaction)
+        }
+        return convertedTransactions
+      }, initialValue)
       result.accounts.push(account)
       if (result.transactions.length === 0) {
         result.transactions = result.transactions.concat(transactions)
