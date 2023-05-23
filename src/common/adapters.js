@@ -17,13 +17,14 @@ import {
   PasswordExpiredError,
   PinCodeInsteadOfPasswordError,
   PreviousSessionNotClosedError,
+  SubscriptionRequiredError,
   TemporaryError,
   TemporaryUnavailableError,
   ZPAPIError
 } from '../errors'
 import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId, trimSyncId } from './accounts'
 import { toZenMoneyTransaction } from './converters'
-import { getMidnight, isValidDate } from './dateUtils'
+import { getMidnight, isValidDate, toISODateString } from './dateUtils'
 import { sanitize } from './sanitize'
 import { isDebug } from './utils'
 
@@ -415,6 +416,8 @@ function getPresentationError (error) {
     key = 'zenPlugin_pinCodeInsteadOfPasswordError'
   } else if (error instanceof PasswordExpiredError) {
     key = 'zenPlugin_passwordExpiredError'
+  } else if (error instanceof SubscriptionRequiredError) {
+    key = 'zenPlugin_subscriptionRequiredError'
   } else if (error instanceof InvalidPreferencesError && !error.message) {
     key = 'zenPlugin_invalidPreferencesError'
   }
@@ -521,4 +524,21 @@ export function traceFunctionCalls (fn) {
   }
 }
 
-export const adaptScrapeToMain = (scrape) => adaptScrapeToGlobalApi(provideScrapeDates(traceFunctionCalls(scrape)))
+function checkSubscription (fn) {
+  return async function (args) {
+    if (toISODateString(new Date()) < '2023-06-01') {
+      return fn(args)
+    }
+    if (ZenMoney.manifest.isSubscriptionRequired) {
+      if (!ZenMoney.user || !ZenMoney.user.subscription || typeof ZenMoney.user.subscription.endDate !== 'number') {
+        throw new IncompatibleVersionError()
+      }
+      if ((ZenMoney.user?.subscription?.endDate || 0) <= new Date().getTime()) {
+        throw new SubscriptionRequiredError()
+      }
+    }
+    return fn(args)
+  }
+}
+
+export const adaptScrapeToMain = (scrape) => adaptScrapeToGlobalApi(provideScrapeDates(traceFunctionCalls(checkSubscription(scrape))))

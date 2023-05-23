@@ -22,5 +22,6 @@
   "zenPlugin_previousSessionNotClosedError": "The bank doesn't allow sync with Zenmoney if the bank app is open. Close the bank app, wait 10 minutes and start the sync in Zenmoney again.",
   "zenPlugin_reportError": "Send log",
   "zenPlugin_severalAccountsLinkingError": "Several bank accounts are linked with one account in Zenmoney. For correct synchronization, each bank account must be associated with a separate account in Zenmoney. Open the account settings imported from this bank and delete the account numbers. Then run the sync and link accounts from the bank with accounts in Zenmoney.",
-  "zenPlugin_temporaryUnavailableError": "Temporarily unable to receive data from the bank. Try syncing again after a while.\n\nIf you still get the error, go to Accounts, tap the bank card and then — \"Send log to developers\"."
+  "zenPlugin_temporaryUnavailableError": "Temporarily unable to receive data from the bank. Try syncing again after a while.\n\nIf you still get the error, go to Accounts, tap the bank card and then — \"Send log to developers\".",
+  "zenPlugin_subscriptionRequiredError": "This bank synchronization is not available on a free plan."
 }

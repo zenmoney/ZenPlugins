@@ -8,7 +8,7 @@ const expectedModularManifestFilesSection = `<files>
 
 const repositoryUri = 'https://github.com/zenmoney/ZenPlugins/blob/master'
 
-function generateModularLoader ({ files, preferences }) {
+function generateModularLoader ({ id, build, company, files, preferences, subscriptionRequired, codeRequired, api }) {
   if (!_.isEqual(files, ['index.js']) || preferences !== 'preferences.xml') {
     throw new Error('modular ZenMoneyManifest.xml files section must be exactly equal to:\n' + expectedModularManifestFilesSection)
   }
@@ -30,7 +30,16 @@ if (result.scrape && result.main || !result.scrape && !result.main) {
 if (result.scrape) {
     var adaptScrapeToMain = require("adapters").adaptScrapeToMain;
     result.main = adaptScrapeToMain(result.scrape);
+    delete result.scrape;
 }
+ZenMoney.manifest = ${JSON.stringify({
+  id,
+  api: api || 'private',
+  build: parseInt(build),
+  company,
+  isSubscriptionRequired: subscriptionRequired === 'true',
+  isUserInputRequiredOnEveryRun: codeRequired === 'true'
+})};
 
 for (var key in result) {
     if (result.hasOwnProperty(key)) {

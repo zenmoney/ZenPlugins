@@ -5,7 +5,9 @@ const cheerio = require('cheerio')
 const { parse: parseCookieString, splitCookiesString } = require('set-cookie-parser')
 
 const convertManifestXmlToJs = (xml) => {
-  const $ = cheerio.load(xml)
+  const $ = cheerio.load(xml, {
+    xmlMode: true
+  })
   return $('provider').children().toArray()
     .reduce((memo, node) => {
       const key = node.tagName
