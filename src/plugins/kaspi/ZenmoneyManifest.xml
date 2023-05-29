@@ -6,6 +6,7 @@
     <company>15416</company>
     <modular>true</modular>
     <codeRequired>false</codeRequired>
+    <api>public</api>
     <files>
         <js>index.js</js>
         <preferences>preferences.xml</preferences>

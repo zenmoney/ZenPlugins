@@ -11,6 +11,7 @@
     <build>1</build>
     <modular>true</modular>
     <codeRequired>false</codeRequired>
+    <api>public</api>
     <files>
         <js>index.js</js>
         <preferences>preferences.xml</preferences>

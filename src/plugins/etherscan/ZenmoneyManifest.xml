@@ -9,6 +9,7 @@
     <version>1.0</version>
     <build>4</build>
     <modular>true</modular>
+    <api>public</api>
     <files>
         <js>index.js</js>
         <preferences>preferences.xml</preferences>

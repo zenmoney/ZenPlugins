@@ -6,11 +6,13 @@
     <company>15465</company>
     <modular>true</modular>
     <codeRequired>false</codeRequired>
+    <api>public</api>
+    <subscriptionRequired>true</subscriptionRequired>
     <files>
         <js>index.js</js>
         <preferences>preferences.xml</preferences>
     </files>
     <description>Чтобы подключить синхронизацию, нажмите «Подключить» и авторизуйтесь в Точке.
-	
+
 На следующем шаге в окне назначения прав разрешите получение выписок операций по счетам.</description>
 </provider>
