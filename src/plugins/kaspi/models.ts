@@ -26,6 +26,7 @@ export interface StatementTransaction {
   amount: string
   description: string | null
   statementUid: string
+  originString: string
 }
 
 export interface ConvertedAccount {
