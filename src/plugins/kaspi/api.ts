@@ -219,20 +219,21 @@ function parseTransactions (text: string, accountType: string, statementUid: str
     descriptionRegExpIndex = 5
   }
   const transactionStrings = text.match(new RegExp(baseRegexp, 'gm'))
-  assert(transactionStrings !== null && transactionStrings?.length !== 0, 'No transactions found')
-  return transactionStrings.map((str) => {
-    const match = str.match(new RegExp(baseRegexp, 'm'))
-    assert(match !== null, 'Can\'t parse transaction ', str)
-    return {
-      hold: false,
-      date: parseDateFromPdfText(str),
-      originalAmount: [undefined, ''].includes(match[originalAmountRegExpIndex]) ? null : match[originalAmountRegExpIndex],
-      amount: match[2],
-      description: [undefined, ''].includes(match[descriptionRegExpIndex]) ? null : match[descriptionRegExpIndex],
-      statementUid,
-      originString: match[0]
-    }
-  })
+  return transactionStrings !== null && transactionStrings?.length !== 0
+    ? transactionStrings.map((str) => {
+      const match = str.match(new RegExp(baseRegexp, 'm'))
+      assert(match !== null, 'Can\'t parse transaction ', str)
+      return {
+        hold: false,
+        date: parseDateFromPdfText(str),
+        originalAmount: [undefined, ''].includes(match[originalAmountRegExpIndex]) ? null : match[originalAmountRegExpIndex],
+        amount: match[2],
+        description: [undefined, ''].includes(match[descriptionRegExpIndex]) ? null : match[descriptionRegExpIndex],
+        statementUid,
+        originString: match[0]
+      }
+    })
+    : []
 }
 
 export function parseSinglePdfString (text: string, statementUid?: string): { account: StatementAccount, transactions: StatementTransaction[] } {
