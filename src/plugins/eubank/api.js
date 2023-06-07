@@ -175,7 +175,7 @@ export async function fetchAccounts (auth) {
     } else if (account.type === 'CURR') {
       accountType = 'current'
     } else if (account.type === 'BONS') {
-      return
+      accountType = 'bonus'
     } else {
       console.assert(false, 'Unknown account type')
     }
@@ -197,7 +197,7 @@ export async function fetchAccounts (auth) {
 }
 
 export async function fetchTransactions (auth, account, fromDate, toDate) {
-  if (account.type === 'credit') {
+  if (account.type === 'credit' || account.type === 'bonus') {
     return []
   }
   const step = 50
