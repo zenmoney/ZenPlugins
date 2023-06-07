@@ -60,7 +60,7 @@ describe('convertAccount', () => {
               type: 'bonus'
             },
             account: {
-              id: 67890123,
+              id: '67890123',
               type: 'investment',
               title: 'BONUS-645357268914',
               instrument: 'KZT',
@@ -73,7 +73,7 @@ describe('convertAccount', () => {
         ],
         accountsByNumber: {
           'BONUS-645357268914': {
-            id: 67890123,
+            id: '67890123',
             type: 'investment',
             title: 'BONUS-645357268914',
             instrument: 'KZT',

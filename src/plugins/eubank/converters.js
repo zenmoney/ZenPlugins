@@ -79,7 +79,7 @@ function convertBonus (apiAccount) {
     },
     account: {
       ...account.account,
-      id: apiAccount.id,
+      id: String(apiAccount.id),
       type: 'investment',
       balance: apiAccount.actualBalance,
       instrument: 'KZT',
