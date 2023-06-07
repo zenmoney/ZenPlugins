@@ -38,10 +38,11 @@ function parseBalance (text: string): Amount {
     /На Депозите\s*(\d\d\.?){3}:(\$?[-\d\s,.]+)([^а-яА-Я]*)/
   ], text)
   assert(typeof match?.[2] === 'string', 'Can\'t parse balance from account statement')
-  return parseAmount([
+  const amountStr = [
     match[2].replace(',', '.').replace(/\s/g, ''),
     match[3].trim()
-  ].filter(str => str !== '').join(' '))
+  ].filter(str => str !== '').join(' ')
+  return parseAmount(amountStr)
 }
 
 function getStatementDate (text: string): string {
@@ -176,17 +177,7 @@ function parseDepositTransactions (text: string, statementUid: string): Statemen
         if (match?.[2] == null) {
           return str
         }
-        let description = null
-        if ((match?.[3]) != null) {
-          description = match[3]
-          for (const str of ['Пополнение', 'Перевод', 'Вознаграждение', '₸', /\$?\d{1,3}\s?[.,₸]?/]) {
-            description = description.replace(str, '')
-          }
-          description = description.trim()
-          if (description.length === 0) {
-            description = null
-          }
-        }
+        const description = (match?.[3]) != null ? match[3] : null
         assert(match !== null, 'Can\'t parse transaction ', str)
         const item = {
           hold: false,
@@ -198,7 +189,8 @@ function parseDepositTransactions (text: string, statementUid: string): Statemen
               ? commentStrings[index]
               : null
             : description,
-          statementUid
+          statementUid,
+          originString: match[0]
         }
         result.push(item)
         return item
@@ -218,28 +210,30 @@ function parseTransactions (text: string, accountType: string, statementUid: str
   let originalAmountRegExpIndex = 5
   let descriptionRegExpIndex = 4
   if (locale === 'en') {
-    baseRegexp = /(\d{2}\.?){3}([-+]\s?[\d\s.,]+)\W+(\w+)\s+(.+)\s?(\([-+]?[\d.,]+\s?[A-Z]{3}\))?/
+    baseRegexp = /^(\d{2}\.?){3}([-+]\s?[\d\s.,]+)\W+(\w+)\s+(.+)\s?(\([-+]?[\d.,]+\s?[A-Z]{3}\))?/
   } else if (locale === 'ru') {
-    baseRegexp = /(\d{2}\.?){3}([-+]\s?[\d\s.,]+)[^а-яА-Я]+([а-яА-Я]+)\s+(.+)\s?(\([-+]?[\d.,]+\s?[A-Z]{3}\))?/
+    baseRegexp = /^(\d{2}\.?){3}([-+]\s?[\d\s.,]+)[^а-яА-Я]+([а-яА-Я]+)\s+(.+)\s?(\([-+]?[\d.,]+\s?[A-Z]{3}\))?/
   } else {
-    baseRegexp = /(\d{2}\.?){3}([-+]\s?[\d\s.,]+)[^а-яА-Я\s]+\s{2,}((\S+\s)+)\s{2,}((\S+ {0,2})+)(\s\([^)]+\))?/
+    baseRegexp = /^(\d{2}\.?){3}([-+]\s?[\d\s.,]+)[^а-яА-Я\s]+\s{2,}((\S+\s)+)\s{2,}((\S+ {0,2})+)(\s\([^)]+\))?/
     originalAmountRegExpIndex = 7
     descriptionRegExpIndex = 5
   }
   const transactionStrings = text.match(new RegExp(baseRegexp, 'gm'))
-  assert(transactionStrings !== null && transactionStrings?.length !== 0, 'No transactions found')
-  return transactionStrings.map((str) => {
-    const match = str.match(new RegExp(baseRegexp, 'm'))
-    assert(match !== null, 'Can\'t parse transaction ', str)
-    return {
-      hold: false,
-      date: parseDateFromPdfText(str),
-      originalAmount: [undefined, ''].includes(match[originalAmountRegExpIndex]) ? null : match[originalAmountRegExpIndex],
-      amount: match[2],
-      description: [undefined, ''].includes(match[descriptionRegExpIndex]) ? null : match[descriptionRegExpIndex],
-      statementUid
-    }
-  })
+  return transactionStrings !== null && transactionStrings?.length !== 0
+    ? transactionStrings.map((str) => {
+      const match = str.match(new RegExp(baseRegexp, 'm'))
+      assert(match !== null, 'Can\'t parse transaction ', str)
+      return {
+        hold: false,
+        date: parseDateFromPdfText(str),
+        originalAmount: [undefined, ''].includes(match[originalAmountRegExpIndex]) ? null : match[originalAmountRegExpIndex],
+        amount: match[2],
+        description: [undefined, ''].includes(match[descriptionRegExpIndex]) ? null : match[descriptionRegExpIndex],
+        statementUid,
+        originString: match[0]
+      }
+    })
+    : []
 }
 
 export function parseSinglePdfString (text: string, statementUid?: string): { account: StatementAccount, transactions: StatementTransaction[] } {

@@ -10,7 +10,8 @@ it.each([
       originalAmount: '(-17 EGP)',
       amount: '- 271,52 ',
       description: 'UBER *TRIP HELP.UBER.COM',
-      statementUid: 'a31336ea-6a68-4760-91a9-5ea78977a3c5'
+      statementUid: 'a31336ea-6a68-4760-91a9-5ea78977a3c5',
+      originString: '15.01.23- 271,52 ₸   Покупка      UBER *TRIP HELP.UBER.COM\n(-17 EGP)'
     },
     {
       statementUid: 'a31336ea-6a68-4760-91a9-5ea78977a3c5',
@@ -47,7 +48,8 @@ it.each([
       originalAmount: null,
       amount: '+ 108 213,06 ',
       description: 'по номеру счета PAYDALA LLP',
-      statementUid: '8bea793d-6645-4fb4-ab99-d3e1fe4a267e'
+      statementUid: '8bea793d-6645-4fb4-ab99-d3e1fe4a267e',
+      originString: '25.11.22+ 108 213,06 ₸   Пополнение      по номеру счета PAYDALA LLP\n'
     },
     {
       statementUid: '8bea793d-6645-4fb4-ab99-d3e1fe4a267e',
@@ -81,7 +83,8 @@ it.each([
       originalAmount: null,
       amount: '+ 22 000,00 ',
       description: 'В Kaspi Банкомате',
-      statementUid: '8bea793d-6645-4fb4-ab99-d3e1fe4a267e'
+      statementUid: '8bea793d-6645-4fb4-ab99-d3e1fe4a267e',
+      originString: '01.11.22+ 22 000,00 ₸   Пополнение      В Kaspi Банкомате\n'
     },
     {
       statementUid: '8bea793d-6645-4fb4-ab99-d3e1fe4a267e',
@@ -96,11 +99,70 @@ it.each([
             invoice: null,
             sum: 22000,
             fee: 0
+          },
+          {
+            id: null,
+            account: {
+              company: null,
+              instrument: 'KZT',
+              syncIds: null,
+              type: 'cash'
+            },
+            invoice: null,
+            sum: -22000,
+            fee: 0
           }
         ],
         hold: false,
         date: new Date('2022-10-31T00:00:00.000'),
         merchant: null
+      }
+    }
+  ],
+  [
+    {
+      hold: false,
+      date: '2023-04-29T00:00:00.000',
+      originalAmount: null,
+      amount: '- 2 000,00 ',
+      description: 'Банкомат VN Akbulak 31 Miras Store',
+      statementUid: '8bea793d-6645-4fb4-ab99-d3e1fe4a267e',
+      originString: '29.04.23- 2 000,00 ₸ Снятие Банкомат VN Akbulak 31 Miras Store\n'
+    },
+    {
+      statementUid: '8bea793d-6645-4fb4-ab99-d3e1fe4a267e',
+      transaction: {
+        comment: null,
+        movements: [
+          {
+            id: null,
+            account: {
+              id: 'KZ11111'
+            },
+            invoice: null,
+            sum: -2000,
+            fee: 0
+          },
+          {
+            id: null,
+            account: {
+              instrument: 'KZT',
+              company: null,
+              syncIds: null,
+              type: 'cash'
+            },
+            invoice: null,
+            sum: 2000,
+            fee: 0
+          }
+        ],
+        hold: false,
+        date: new Date('2023-04-29T00:00:00.000'),
+        merchant: {
+          fullTitle: 'Банкомат VN Akbulak Miras Store',
+          location: null,
+          mcc: null
+        }
       }
     }
   ]

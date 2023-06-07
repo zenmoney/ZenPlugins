@@ -78,6 +78,9 @@ export function convertCard (rawCard) {
  * @returns транзакция в формате Дзенмани
  */
 export function convertUzcardCardTransaction (cardId, rawTransaction) {
+  if (rawTransaction.actamt < 0.0001) {
+    return null
+  }
   const invoice = {
     sum: rawTransaction.credit === true || rawTransaction.reversal === true ? rawTransaction.actamt / 100 : -rawTransaction.actamt / 100,
     instrument: 'UZS'

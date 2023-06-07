@@ -87,8 +87,11 @@ export function convertTestLastTransactions (apiTransactions, accounts) {
 export function convertLastTransaction (apiTransaction, accounts) {
   const rawData = apiTransaction.pushMessageText.split('; ')
 
-  if (rawData[0].slice(0, 4) !== 'Card' || rawData[1] === 'Смена статуса карты' || rawData[1].match(/Проверка карты/i)) {
-    // Значит это не транзакция, а просто уведомление банка
+  if (rawData[0].slice(0, 4) !== 'Card' || [
+    /Смена статуса карты/i,
+    /Проверка карты/i,
+    /Neuspeshno/i
+  ].some(regexp => regexp.test(apiTransaction.pushMessageText))) { // Значит это не транзакция, а просто уведомление банка
     return null
   }
 
