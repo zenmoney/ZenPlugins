@@ -13,6 +13,8 @@ export function convertAccounts (apiAccounts) {
       accounts.push(convertDeposit(apiAccount.details))
     } else if (apiAccount.account.type === 'CRED') {
       accounts.push(convertLoan(apiAccount.details))
+    } else if (apiAccount.account.type === 'BONS') {
+      accounts.push(convertBonus(apiAccount.details))
     } else {
       console.assert(false, 'Don\'t know how to convert account')
     }
@@ -64,6 +66,24 @@ function convertLoan (apiAccount) {
       balance: -apiAccount.balance,
       startBalance: apiAccount.amount,
       percent: apiAccount.interestRate * 100
+    }
+  }
+}
+
+function convertBonus (apiAccount) {
+  const account = convertAccount(apiAccount)
+  return {
+    mainProduct: {
+      ...account.mainProduct,
+      type: 'bonus'
+    },
+    account: {
+      ...account.account,
+      id: String(apiAccount.id),
+      type: 'investment',
+      balance: apiAccount.actualBalance,
+      instrument: 'KZT',
+      title: apiAccount.contractNo
     }
   }
 }
