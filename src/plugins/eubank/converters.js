@@ -556,7 +556,8 @@ function parseOuterTransfer (transaction, apiTransaction, account, invoice) {
 function parseCashTransfer (transaction, apiTransaction, account, invoice) {
   if (![
     /^.*ATM.*$/i,
-    /^.*Note Acceptance.*$/i
+    /^.*Note Acceptance.*$/i,
+    /^Cash.*$/i
   ].some(regexp => regexp.test(apiTransaction.purpose))) {
     return false
   }
