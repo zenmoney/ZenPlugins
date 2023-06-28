@@ -6,7 +6,7 @@ import { convertPdfStatementTransaction } from './converters/transactions'
 import { isEqual, omit, uniqBy } from 'lodash'
 import { generateRandomString } from '../../common/utils'
 
-export const scrape: ScrapeFunc<Preferences> = async ({ fromDate }) => {
+export const scrape: ScrapeFunc<Preferences> = async ({ fromDate, isFirstRun }) => {
   let auth = ZenMoney.getData('auth') as Auth | undefined
   if (!auth || auth.deviceId === '') {
     auth = {
@@ -29,7 +29,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ fromDate }) => {
       const initialValue: ConvertedTransaction[] = []
       const transactions = rawTransactions.reduce((convertedTransactions, item) => {
         const transaction = convertPdfStatementTransaction(item, account)
-        if (transaction.transaction.date.getTime() - fromDate.getTime() >= 0) {
+        if (!isFirstRun || (transaction.transaction.date.getTime() - fromDate.getTime() >= 0)) {
           convertedTransactions.push(transaction)
         }
         return convertedTransactions
