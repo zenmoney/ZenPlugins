@@ -101,3 +101,9 @@ if (!ZenMoney._isPickDocumentsPolyfilled) {
     })
   }
 }
+
+if (!ZenMoney.locale) {
+  ZenMoney.locale = ZenMoney.user?.locale
+    ? ZenMoney.user.locale.replace('_', '-')
+    : 'ru'
+}
