@@ -1746,6 +1746,94 @@ describe('processAccounts', () => {
           }
         }
       ]
+    ],
+    [
+      {
+        cardAccount: [
+          {
+            internalAccountId: '502-1363 BYR',
+            currency: '933',
+            openDate: 1252011600000,
+            accountNumber: 'BY93MMBN30140000974009330000',
+            cardAccountNumber: '027200115020001363',
+            productCode: '597',
+            productName: 'Исключительный (VIP)',
+            contractId: '55866539',
+            interestRate: 2,
+            accountStatus: 'OPEN',
+            cards: [
+              {
+                cardNumberMasked: '4*** **** **** 8942',
+                cardHash: 'baj6G0jJHU0a5E_0QjQrNgeF28EUaanb9HWQLSzv7Er6r4pxStujDwc564WbF9RU-B-PVR2lETWCyYhb16YA4g',
+                cardType:
+                  {
+                    value: 61,
+                    name: ' ',
+                    imageUri: 'https://alseda.by/media/public/VG_LCH_2.png',
+                    paySysImageUri: 'https://alseda.by/media/public/credit_card_str_visa.png',
+                    textColor: 'ffffffff',
+                    paySystemName: 'VISA'
+                  },
+                cardStatus: 'OPEN',
+                expireDate: 1711832400000,
+                owner: 'NIKOLAY NIKOLAEV',
+                tariffName: 'БГПБ Visa Gold BYN. Пакет Исключительный Премиум',
+                personalizedName: 'Visa Gold',
+                notDisplayNotification: 0,
+                processing: '2',
+                payment: '1',
+                status: { code: '0' },
+                stateSignature: 'BETRAY',
+                additionalCardType: 2,
+                canChange3D: true,
+                cardDepartmentName: 'Доставка почтой',
+                cardDepartmentAddress: 'г. Минск и другие города РБ; По почте',
+                canChangeStatus: true,
+                numberDaysBeforeCardExpiry: 305,
+                retailCardId: 288878484,
+                applePaySupported: true,
+                pinDeliveryType: 1,
+                canReissueOldExpire: true,
+                canReissueNewExpire: true,
+                virtual: false,
+                aliasSupport: true
+              }
+            ],
+            bankCode: '288',
+            rkcCode: '1',
+            rkcName: 'Центральное отделение',
+            accountType: '1',
+            ibanNum: 'BY18MMBN30140001005020001363',
+            canSell: false,
+            canCloseSameCurrency: false,
+            canCloseOtherCurrency: false,
+            canClose: false,
+            canRefillSameCurrency: false,
+            canRefillOtherCurrency: false,
+            canRefill: false
+          }
+        ]
+      },
+      [
+        {
+          product: {
+            accountType: '1',
+            cardHash: 'baj6G0jJHU0a5E_0QjQrNgeF28EUaanb9HWQLSzv7Er6r4pxStujDwc564WbF9RU-B-PVR2lETWCyYhb16YA4g',
+            currencyCode: '933',
+            id: '502-1363 BYR',
+            rkcCode: '1',
+            type: 'ccard'
+          },
+          account: {
+            balance: null,
+            id: '502-1363 BYR',
+            instrument: 'BYN',
+            syncIds: ['4***********8942'],
+            title: 'Visa Gold',
+            type: 'ccard'
+          }
+        }
+      ]
     ]
   ])('converts account', (apiAccounts, accounts) => {
     expect(convertAccounts(apiAccounts)).toEqual(accounts)
