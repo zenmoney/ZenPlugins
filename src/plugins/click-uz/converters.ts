@@ -146,7 +146,7 @@ function parseInnerAndOuterTransfer (transaction: ExtendedTransaction, apiTransa
     /Перевод с карты на карту/i
   ].some(regexp => regexp.test(getString(apiTransaction, 'service_name')))) {
     const data: unknown[] = getArray(apiTransaction, 'data')
-    const result = find(data, { key: 'Номер карты получателя' })
+    const result = find(data, { key: 'Номер карты получателя' }) || find(data, { key: 'Карта получателя' })
     const syncIds = getString(result, 'value') ?? null
     const merchant = find(data, { key: 'ФИО получателя' })
     if (find(data, { key: 'ФИО получателя' })) {

@@ -38,7 +38,7 @@ describe('convertTransactions', () => {
               value: '860013****1234',
               main: true
             },
-            { key: 'ФИО получателя', value: 'TEMUR TEMUROV', main: false }
+            { key: 'ФИО получателя', value: 'SHUXRAT SHUXRATOV', main: false }
           ]
       },
       {
@@ -68,7 +68,7 @@ describe('convertTransactions', () => {
           ],
         merchant:
           {
-            fullTitle: 'TEMUR TEMUROV',
+            fullTitle: 'SHUXRAT SHUXRATOV',
             mcc: null,
             location: null
           },
