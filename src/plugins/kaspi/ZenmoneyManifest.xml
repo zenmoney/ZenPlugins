@@ -5,7 +5,7 @@
     <build>1</build>
     <company>15416</company>
     <modular>true</modular>
-    <codeRequired>false</codeRequired>
+    <codeRequired>true</codeRequired>
     <api>public</api>
     <files>
         <js>index.js</js>

@@ -17,6 +17,11 @@ export interface StatementAccount {
   balance: number
   instrument: string
   date: string
+  type: string
+  startDate: string | null
+  startBalance: number | null
+  capitalization: string | null
+  endDate: string | null
 }
 
 export interface StatementTransaction {

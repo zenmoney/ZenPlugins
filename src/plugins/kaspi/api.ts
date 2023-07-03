@@ -56,6 +56,29 @@ function getStatementDate (text: string): string {
   return parseDateFromPdfText(match[1])
 }
 
+function getDepositStartDate (text: string): string {
+  const match = getRegexpMatch([
+    /Дата открытия:\s?(\d{2}.\d{2}.\d{4})/
+  ], text)
+  assert(typeof match?.[1] === 'string', 'Can\'t parse deposit start date from account statement')
+  return parseDateFromPdfText(match[1])
+}
+
+function getDepositEndDate (text: string): string {
+  const match = getRegexpMatch([
+    /Дата пролонгации:\s?(\d{2}.\d{2}.\d{4})/
+  ], text)
+  assert(typeof match?.[1] === 'string', 'Can\'t parse deposit end date from account statement')
+  return parseDateFromPdfText(match[1])
+}
+
+function getDepositCapitalizationInfo (text: string): string {
+  const match = getRegexpMatch([
+    /вознаграждения:(\d+%)/
+  ], text)
+  return match?.[1] != null ? match?.[1] : ''
+}
+
 function parseInstrument (text: string): string {
   const match = getRegexpMatch([
     /Валюта счета:\s?(\S+)/,
@@ -244,7 +267,12 @@ export function parseSinglePdfString (text: string, statementUid?: string): { ac
     id: parseAccountId(text),
     instrument: balanceAmount.instrument !== '' ? balanceAmount.instrument : parseInstrument(text),
     title: parseAccountTitle(text, accountType),
-    date: getStatementDate(text)
+    date: getStatementDate(text),
+    type: accountType,
+    startDate: accountType === 'deposit' ? getDepositStartDate(text) : null,
+    startBalance: accountType === 'deposit' ? 0 : null,
+    capitalization: accountType === 'deposit' ? getDepositCapitalizationInfo(text) : null,
+    endDate: accountType === 'deposit' ? getDepositEndDate(text) : null
   }
   const rawTransactions = parseTransactions(text, accountType, statementUid ?? generateUUID())
   const parsedContent = {
