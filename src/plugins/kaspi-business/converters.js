@@ -15,6 +15,16 @@ export function convertAccount (account) {
 
 export function convertTransaction (apiTransaction, account) {
   const invoice = parseAmount(apiTransaction.tranAmount)
+  const merchant = apiTransaction.contragentName.match(/KASPI BANK/i)
+    ? null
+    : {
+        country: null,
+        city: null,
+        location: null,
+        title: apiTransaction.contragentName,
+        mcc: null,
+        category: Number(apiTransaction.knp)
+      }
 
   return {
     hold: apiTransaction.status !== 'OK',
@@ -28,14 +38,7 @@ export function convertTransaction (apiTransaction, account) {
         fee: 0
       }
     ],
-    merchant: {
-      country: null,
-      city: null,
-      location: null,
-      title: apiTransaction.contragentName,
-      mcc: null,
-      category: Number(apiTransaction.knp)
-    },
+    merchant,
     comment: apiTransaction.purpose
   }
 }
