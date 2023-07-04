@@ -39,7 +39,7 @@ it.each([
       startDate: '2022-03-05T00:00:00.000',
       startBalance: 0,
       capitalization: '1%',
-      endDate: '2022-03-08T00:00:00.000'
+      endDate: '2022-06-08T00:00:00.000'
     },
     {
       account: {
@@ -52,10 +52,9 @@ it.each([
         startDate: new Date('2022-03-05T00:00:00.000'),
         startBalance: 0,
         capitalization: true,
-        endDate: new Date('2022-03-08T00:00:00.000'),
         percent: 1,
-        endDateOffsetInterval: 'year',
-        endDateOffset: 1,
+        endDateOffsetInterval: 'month',
+        endDateOffset: 3,
         payoffInterval: null,
         payoffStep: 0
       },

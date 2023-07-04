@@ -18,7 +18,12 @@ it.each([
         id: 'KZ111111',
         instrument: 'KZT',
         title: 'Kaspi Gold *0475',
-        date: '2023-04-04T00:00:00.000'
+        date: '2023-04-04T00:00:00.000',
+        capitalization: null,
+        endDate: null,
+        startBalance: null,
+        startDate: null,
+        type: 'gold'
       },
       transactions: [
         {
@@ -676,7 +681,12 @@ it.each([
         id: 'KZ111111',
         instrument: 'KZT',
         title: 'Kaspi Gold *0475',
-        date: '2023-04-17T00:00:00.000'
+        date: '2023-04-17T00:00:00.000',
+        capitalization: null,
+        endDate: null,
+        startBalance: null,
+        startDate: null,
+        type: 'gold'
       },
       transactions: [
         {
@@ -1345,7 +1355,12 @@ it.each([
         id: 'KZ111111',
         instrument: 'KZT',
         title: 'Kaspi Gold *0475',
-        date: '2023-04-17T00:00:00.000'
+        date: '2023-04-17T00:00:00.000',
+        capitalization: null,
+        endDate: null,
+        startBalance: null,
+        startDate: null,
+        type: 'gold'
       },
       transactions: [
         {
@@ -2037,7 +2052,12 @@ it.each([
         id: 'KZ200001',
         instrument: 'KZT',
         title: 'Депозит *0001',
-        date: '2023-05-12T00:00:00.000'
+        date: '2023-05-12T00:00:00.000',
+        capitalization: '15%',
+        endDate: '2024-02-08T00:00:00.000',
+        startBalance: 0,
+        startDate: '2023-02-06T00:00:00.000',
+        type: 'deposit'
       },
       transactions: [
         {
@@ -2132,7 +2152,12 @@ it.each([
         id: 'KZ3927',
         instrument: 'USD',
         title: 'Депозит *3927',
-        date: '2023-05-13T00:00:00.000'
+        date: '2023-05-13T00:00:00.000',
+        capitalization: '1%',
+        endDate: '2024-04-09T00:00:00.000',
+        startBalance: 0,
+        startDate: '2021-04-04T00:00:00.000',
+        type: 'deposit'
       },
       transactions: [
         {
@@ -2254,7 +2279,12 @@ it.each([
         id: 'KZ1234567',
         instrument: 'KZT',
         title: 'Депозит *4567',
-        date: '2023-05-13T00:00:00.000'
+        date: '2023-05-13T00:00:00.000',
+        capitalization: '15%',
+        endDate: '2024-03-10T00:00:00.000',
+        startBalance: 0,
+        startDate: '2018-03-10T00:00:00.000',
+        type: 'deposit'
       },
       transactions: [
         {
@@ -2457,7 +2487,12 @@ it.each([
         id: 'KZ3856',
         instrument: 'KZT',
         title: 'Kaspi Gold *8629',
-        date: '2023-05-25T00:00:00.000'
+        date: '2023-05-25T00:00:00.000',
+        capitalization: null,
+        endDate: null,
+        startBalance: null,
+        startDate: null,
+        type: 'gold'
       },
       transactions: [
         {

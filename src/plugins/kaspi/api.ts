@@ -58,7 +58,7 @@ function getStatementDate (text: string): string {
 
 function getDepositStartDate (text: string): string {
   const match = getRegexpMatch([
-    /Дата открытия:\s?(\d{2}.\d{2}.\d{4})/
+    /Дата открытия:\s*(\d{2}.\d{2}.\d{4})/
   ], text)
   assert(typeof match?.[1] === 'string', 'Can\'t parse deposit start date from account statement')
   return parseDateFromPdfText(match[1])
@@ -66,7 +66,7 @@ function getDepositStartDate (text: string): string {
 
 function getDepositEndDate (text: string): string {
   const match = getRegexpMatch([
-    /Дата пролонгации:\s?(\d{2}.\d{2}.\d{4})/
+    /Дата пролонгации:\s*(\d{2}.\d{2}.\d{4})/
   ], text)
   assert(typeof match?.[1] === 'string', 'Can\'t parse deposit end date from account statement')
   return parseDateFromPdfText(match[1])
@@ -105,9 +105,9 @@ function getStatementLocale (text: string): string {
 }
 
 function parseDateFromPdfText (text: string): string {
-  const match = text.match(/^(\d{2}).(\d{2}).(\d{2})/)
+  const match = text.match(/^(\d{2}).(\d{2}).(\d{2,4})/)
   assert(match !== null, 'Can\'t parse date from pdf string', text)
-  return `20${match[3]}-${match[2]}-${match[1]}T00:00:00.000`
+  return `${match[3].length === 2 ? '20' + match[3] : match[3]}-${match[2]}-${match[1]}T00:00:00.000`
 }
 
 function parseAccountType (text: string): string {
