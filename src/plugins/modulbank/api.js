@@ -91,6 +91,9 @@ export async function fetchTransactions (token, { id }, fromDate) {
         throw new TemporaryUnavailableError()
       }
     }
+    if (response.status === 504) {
+      throw new TemporaryUnavailableError()
+    }
     if (response.status === 401) {
       throw new AuthError()
     }
