@@ -3,7 +3,7 @@ import { fetchJson } from '../../common/network'
 import { retry } from '../../common/retry'
 import { BankMessageError, InvalidLoginOrPasswordError, InvalidOtpCodeError, TemporaryUnavailableError } from '../../errors'
 
-const baseUrl = 'https://ib.skbbank.ru/json/'
+const baseUrl = 'https://ib.sinara.ru/json/'
 const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36'
 
 function readCookies () {
@@ -35,7 +35,7 @@ async function fetchApiJson (url, options = {}, ignoreClientErrors = false) {
     'User-Agent': userAgent,
     'Sec-Fetch-Site': 'same-site',
     'Sec-Fetch-Mode': 'cors',
-    Referer: 'https://ib.skbbank.ru/',
+    Referer: 'https://ib.sinara.ru/',
     ...cookies && { Cookie: cookies },
     ...options.headers
   }
