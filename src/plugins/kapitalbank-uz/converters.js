@@ -164,8 +164,10 @@ export function convertHumoCardTransaction (card, rawTransaction) {
  * @returns транзакция в формате Дзенмани
  */
 export function convertVisaCardTransaction (card, rawTransaction) {
-  let amount = Number(rawTransaction.amount)
-  let fee = Number(rawTransaction.fee)
+  const amount = Number(rawTransaction.amount)
+  const fee = card.instrument === rawTransaction.transCurrency
+    ? -Math.abs(Number(rawTransaction.fee))
+    : -Math.abs(Math.round(Number(rawTransaction.fee) * Number(rawTransaction.conversionRate) * 100) / 100)
 
   if (amount === 0) {
     return null
@@ -177,10 +179,11 @@ export function convertVisaCardTransaction (card, rawTransaction) {
 
     Вообще сумма `fee` возвращается всегда положительной с API, т.е. это точно не кэшбек, а расход, но всё равно на всякий случай берем модуль числа
   */
-  if (Math.abs(fee) > Math.abs(amount)) {
-    amount -= Math.abs(fee)
-    fee = 0
-  }
+  //
+  // if (Math.abs(fee) > Math.abs(amount)) {
+  //   amount -= Math.abs(fee)
+  //   fee = 0
+  // }
 
   const invoice = {
     sum: amount,
@@ -192,14 +195,15 @@ export function convertVisaCardTransaction (card, rawTransaction) {
     '110'
   ]
 
+  const title = rawTransaction.merchantName?.match(/^(.*),(.*) ([A-Z]{2,3}$)/)
   const transaction = {
     date: new Date(rawTransaction.transDate),
     hold: false,
     merchant: merchantIgnoreTransactionCodes.indexOf(rawTransaction.transCode) < 0
       ? {
-          country: null,
-          city: null,
-          title: rawTransaction.merchantName,
+          country: title ? title[3] : null,
+          city: title ? title[2] : null,
+          title: title ? title[1] : rawTransaction.merchantName,
           mcc: null,
           location: null
         }
@@ -209,8 +213,8 @@ export function convertVisaCardTransaction (card, rawTransaction) {
         id: null,
         account: { id: card.id },
         invoice: invoice.instrument === card.instrument ? null : invoice,
-        sum: invoice.instrument === card.instrument ? invoice.sum : null,
-        fee: fee ? -fee : 0
+        sum: invoice.instrument === card.instrument ? Math.round((invoice.sum - fee) * 100) / 100 : null,
+        fee: fee || 0
       }
     ],
     comment: null
