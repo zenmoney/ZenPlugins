@@ -3,7 +3,7 @@ import { Auth, Preferences, StatementTransaction, StatementAccount, ConvertedTra
 import { parsePdfStatements } from './api'
 import { convertPdfStatementAccount } from './converters/accounts'
 import { convertPdfStatementTransaction } from './converters/transactions'
-import { isEqual, omit, uniqBy } from 'lodash'
+import { isEqual, omit, uniqBy, groupBy, toPairs } from 'lodash'
 import { generateRandomString } from '../../common/utils'
 
 export const scrape: ScrapeFunc<Preferences> = async ({ fromDate, isFirstRun }) => {
@@ -49,6 +49,12 @@ export const scrape: ScrapeFunc<Preferences> = async ({ fromDate, isFirstRun }) 
       }
     }
   }
+  const groupedTransactions = toPairs(groupBy(result.transactions.map(({ transaction }) => transaction), 'date'))
+    .sort((a, b) => a[0] > b[0] ? -1 : 1)
+  const sortedTransactions = []
+  for (const pair of groupedTransactions) {
+    sortedTransactions.push(...pair[1].reverse())
+  }
   return {
     accounts: uniqBy(
       result.accounts
@@ -56,6 +62,6 @@ export const scrape: ScrapeFunc<Preferences> = async ({ fromDate, isFirstRun }) 
         .map(({ account }) => account),
       'id'
     ),
-    transactions: result.transactions.map(({ transaction }) => transaction)
+    transactions: sortedTransactions
   }
 }
