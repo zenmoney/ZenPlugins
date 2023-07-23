@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="wallet"
+        obligatory="true"
+        title="Wallet address"
+        dialogTitle="Wallet address"
+        dialogMessage="Адрес вашего кошелька"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|wallet|{@s}"
+    />
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="С какой даты загружать операции"
+        defaultValue="2022-01-01T00:00:00.000Z"
+        dialogTitle="Дата начала загрузки"
+        dialogMessage="Введите дату, с которой загружать операции"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|startDate|{@s}"
+    />
+</PreferenceScreen>
