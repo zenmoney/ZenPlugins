@@ -6,7 +6,7 @@ export function convertAccount (tokenInfo: TokenInfo): AccountOrCard {
     id: tokenInfo.tokenId,
     type: AccountType.ccard,
     title: tokenInfo.tokenName,
-    instrument: 'USD',
+    instrument: 'USDT',
     balance: tokenInfo.quantity,
     available: tokenInfo.quantity,
     creditLimit: 0,
