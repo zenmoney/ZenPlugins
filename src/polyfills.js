@@ -107,3 +107,7 @@ if (!ZenMoney.locale) {
     ? ZenMoney.user.locale.replace('_', '-')
     : 'ru'
 }
+
+if (!ZenMoney.logEvent) {
+  ZenMoney.logEvent = () => {}
+}

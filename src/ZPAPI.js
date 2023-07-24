@@ -559,7 +559,11 @@ Object.assign(ZPAPI.prototype, {
     })
   },
 
-  pickDocuments
+  pickDocuments,
+
+  logEvent (type, data) {
+    console.log('[analytics]', { type, data })
+  }
 })
 
 export { ZPAPI }
