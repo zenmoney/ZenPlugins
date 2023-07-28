@@ -318,8 +318,9 @@ export function parseDepositsMail (html) {
       const child = arrTranChildrens[0].parent.children.filter((tableRow) => { return tableRow.name === 'td' })
       const date = child[0].children[0].data
       const type = child[2].children[0].data
-      const amountReal = Number(parseFloat(child[3].children[0].data.split(' ')[0].replace(/,/g, '.')))
-      const currencyReal = child[3].children[0].data.split(' ')[1]
+      const amountRealMatch = child[3].children[0].data.match(/([-\d\s,]*)\s([A-Z]+)/)
+      const amountReal = Number(parseFloat(amountRealMatch[1].replace(/\s/g, '').replace(/,/g, '.')))
+      const currencyReal = amountRealMatch[2]
       const place = child[6].children[0].data
       if (!date || !type || !currencyReal || !place || isNaN(amountReal)) {
         throw new Error('unexpected receipt')
