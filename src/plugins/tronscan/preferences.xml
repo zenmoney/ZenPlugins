@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen>
     <EditTextPreference
-        key="wallet"
+        key="wallets"
         obligatory="true"
-        title="Wallet address"
-        dialogTitle="Wallet address"
-        dialogMessage="Адрес вашего кошелька"
+        title="Wallets address"
+        dialogTitle="Wallets address"
+        dialogMessage="Адреса ваших кошельков (через запятую)"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
-        summary="|wallet|{@s}"
+        summary="|wallets|{@s}"
     />
     <EditTextPreference
         key="startDate"

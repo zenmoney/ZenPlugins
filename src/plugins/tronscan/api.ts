@@ -4,7 +4,7 @@ import get from '../../types/get'
 import { SUPPORTED_TOKENS } from './config'
 
 export interface Preferences {
-  wallet: string
+  wallets: string
 }
 
 export interface TokenInfo {
