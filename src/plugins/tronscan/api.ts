@@ -94,7 +94,7 @@ export class TronscanApi {
         tokenInfo: t.tokenInfo as TokenInfo
       })))
 
-      if (transfers.length >= response.body.total) {
+      if (start + limit >= response.body.total) {
         break
       }
 
