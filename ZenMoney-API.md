@@ -22,7 +22,9 @@
 ## Авторизация <a name="auth"></a>
 Происходит через протокол [OAuth 2.0](https://habrahabr.ru/company/mailru/blog/115163/).
 
-Зарегистрировать свой клиент можно, заполнив форму на [этой странице](https://docs.google.com/forms/d/e/1FAIpQLSf6ZL9wA3lo-vFLnjspBY47byqz4xGJtgDAC3Xe6yMDlOMdBg/viewform). После этого используем полученные consumer_key, consumer_secret и введенный OAuth callback point url в качестве соответственно client_id, client_secret и redirect_uri протокола OAuth 2.0 
+Подать заявку на регистрацию можно, заполнив форму на [этой странице](https://docs.google.com/forms/d/e/1FAIpQLSf6ZL9wA3lo-vFLnjspBY47byqz4xGJtgDAC3Xe6yMDlOMdBg/viewform). Заранее предупредим, что регистрируем мы только реальные проекты, удовлетворяющие протоколу OAuth 2.0 авторизации, игнорируя все остальные. После обработки вашей заявки мы вышлем вам на почту consumer_key и consumer_secret, которые вы сможете использовать вместе с введенным вами OAuth callback point url в качестве соответственно client_id, client_secret и redirect_uri протокола OAuth 2.0
+
+Если вам нужен просто токен для работы с API Дзен-мани без регистрации, взять его вы можете у любого из ранее зарегистрированного в Дзен-мани сервиса. Например, отсюда – [Zerro.app](https://zerro.app/token).
 
 Основные URL авторизации:
 
