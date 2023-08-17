@@ -49,6 +49,7 @@ test('throws credentials mismatch as InvalidPreferencesError', async () => {
     clientSecret,
     login,
     hash: '6a123a0cbfd5439b87ce4e204a5b65e6728dac2a94f03b6963048db2d5764d70d4b4e1fdac85ed5538473c96070e8d20ff726c9237104427f9393fb8030d2957',
+    hash2: '2ZZmYjksouPn/MH95BzgBqO7tYoCAn98QTZjP4xSpJz6eTQ+JKwkb2AoF4rLP9VPxKEtAk6zToTnyEwg4XQvRHNhbHRzYWx0c2FsdHNhbHRzYWx0c2FsdHNhbHRzYWx0',
     response: {
       status: 200,
       body: {

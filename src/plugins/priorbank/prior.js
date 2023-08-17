@@ -1,6 +1,7 @@
 import { SHA512 } from 'jshashes'
 import { fetchJson } from '../../common/network'
 import { BankMessageError, InvalidLoginOrPasswordError } from '../../errors'
+const crypto = require('crypto')
 
 function isSuccessfulResponse (response) {
   return response.status === 200 && (!('success' in response.body) || response.body.success === true)
@@ -24,7 +25,7 @@ export function assertResponseSuccess (response) {
 }
 
 const makeApiUrl = (path) => `https://www.prior.by/api3/api${path}`
-const userAgent = 'PriorMobile3/3.42.5 (Android 24; versionCode 37)'
+const userAgent = 'PriorMobile3/3.44.3 (Android 30; versionCode 136)'
 
 export async function getMobileToken () {
   const response = await fetchJson(makeApiUrl('/Authorization/MobileToken'), {
@@ -64,19 +65,39 @@ export const calculatePasswordHash = ({ loginSalt, password }) => {
     : passwordHash
 }
 
+export function calculatePassword2Hash ({ loginSalt, password }) {
+  const messageDigest = crypto.createHash('sha512')
+  messageDigest.update(password, 'utf8')
+  messageDigest.update(loginSalt, 'utf8')
+  const d = messageDigest.digest()
+  const s = Buffer.from(loginSalt, 'utf8')
+
+  const result = Buffer.concat([d, s])
+
+  return result.toString('base64')
+}
+
 export async function authLogin ({ authAccessToken, clientSecret, loginSalt, login, password }) {
   if (password.length > 16) {
     throw new InvalidPreferencesError('Плагин поддерживает пароли только до 16-ти символов. Смените пароль.')
   }
   const response = await fetchJson(makeApiUrl('/Authorization/Login'), {
     method: 'POST',
-    body: { login, password: calculatePasswordHash({ loginSalt, password }), lang: 'RUS' },
+    body: {
+      login,
+      password: calculatePasswordHash({ loginSalt, password }),
+      deviceInfo: {
+        precognitiveSessionId: ''
+      },
+      password2: calculatePassword2Hash({ loginSalt, password }),
+      lang: 'RUS'
+    },
     headers: {
       Authorization: `bearer ${authAccessToken}`,
       client_id: clientSecret,
       'User-Agent': userAgent
     },
-    sanitizeRequestLog: { body: { login: true, password: true }, headers: true },
+    sanitizeRequestLog: { body: { login: true, password: true, password2: true }, headers: true },
     sanitizeResponseLog: { body: { result: true } }
   })
   assertResponseSuccess(response)

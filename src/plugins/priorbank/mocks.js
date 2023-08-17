@@ -1,7 +1,7 @@
 import fetchMock from 'fetch-mock'
 import _ from 'lodash'
 
-export function mockLogin ({ tokenType, accessToken, clientSecret, login, hash, response }) {
+export function mockLogin ({ tokenType, accessToken, clientSecret, login, hash, hash2, response }) {
   fetchMock.once({
     method: 'POST',
     headers: {
@@ -11,6 +11,10 @@ export function mockLogin ({ tokenType, accessToken, clientSecret, login, hash, 
     matcher: (url, { body }) => url === 'https://www.prior.by/api3/api/Authorization/Login' && _.isEqual(JSON.parse(body), {
       login,
       password: hash,
+      deviceInfo: {
+        precognitiveSessionId: ''
+      },
+      password2: hash2,
       lang: 'RUS'
     }),
     response
