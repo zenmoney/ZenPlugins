@@ -146,16 +146,18 @@ function parseInnerAndOuterTransfer (transaction: ExtendedTransaction, apiTransa
     /Перевод с карты на карту/i
   ].some(regexp => regexp.test(getString(apiTransaction, 'service_name')))) {
     const data: unknown[] = getArray(apiTransaction, 'data')
-    const result = find(data, { key: 'Номер карты получателя' }) || find(data, { key: 'Карта получателя' })
-    const syncIds = getString(result, 'value') ?? null
+    const syncIdData = find(data, { key: 'Номер карты получателя' }) || find(data, { key: 'Карта получателя' })
+    const syncIds = syncIdData !== undefined ? getString(syncIdData, 'value') : null
     const merchant = find(data, { key: 'ФИО получателя' })
-    if (find(data, { key: 'ФИО получателя' })) {
+    if (merchant !== undefined) {
       transaction.merchant = {
         fullTitle: getString(merchant, 'value'),
         mcc: null,
         location: null
       }
-    } else { transaction.merchant = null }
+    } else {
+      transaction.merchant = null
+    }
     transaction.movements.push({
       fee: 0,
       invoice: null,

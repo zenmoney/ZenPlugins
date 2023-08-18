@@ -294,6 +294,78 @@ describe('convertTransactions', () => {
           '2023-04-13_UZS_25000'
         ]
       }
+    ],
+    [
+      {
+        id: 3,
+        payment_id: 2685298881,
+        service_id: -31,
+        amount: 216200,
+        comission_amount: 0,
+        state: 1,
+        payment_status: 2,
+        payment_status_description: null,
+        service_name: 'Perevod s karti na kartu',
+        datetime: 1692289720,
+        account_id: 21002931,
+        image: 'https://cdn.click.uz/app/evo/service/payment/-31_v1.png',
+        barcode_url: 'https://my.click.uz/clickp2p/4E52655376CD95181F4348140AEA4668597C53230EADDC80223686BE19617F6D?amount=216200.00',
+        card_num: '986003******2400',
+        credit: false,
+        repeatable: false,
+        favorite_permission: false,
+        myhome_permission: null,
+        receipt: false,
+        cancel_permission: false,
+        service_type: 'default',
+        currency: 'UZS',
+        ofd_barcode_data: null,
+        ofd_available: true,
+        barcode: {},
+        data:
+          [
+            {
+              key: 'ФИО отправителя',
+              value: 'NIKOLAY NIKOLAEV',
+              main: false
+            },
+            { key: 'ФИО получателя', value: 'ANTONOV ANTON', main: false }
+          ]
+      },
+      {
+        date: new Date('2023-08-17T16:28:40.000Z'),
+        hold: false,
+        merchant: {
+          fullTitle: 'ANTONOV ANTON',
+          location: null,
+          mcc: null
+        },
+        movements: [
+          {
+            account: { id: '19615128' },
+            fee: 0,
+            id: '2685298881',
+            invoice: null,
+            sum: -216200
+          },
+          {
+            account: {
+              company: null,
+              instrument: 'UZS',
+              syncIds: null,
+              type: 'ccard'
+            },
+            fee: 0,
+            id: null,
+            invoice: null,
+            sum: 216200
+          }
+        ],
+        comment: null,
+        groupKeys: [
+          '2023-08-17_UZS_216200'
+        ]
+      }
     ]
   ])('converts outer outcome transaction', (apiTransaction, transaction) => {
     const account: Account = {
