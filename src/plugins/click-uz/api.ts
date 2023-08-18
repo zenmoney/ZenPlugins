@@ -1,8 +1,8 @@
 import { Auth, FetchedAccounts, Preferences } from './models'
 import { fetchConfirmRegister, fetchDeviceRegister, fetchGetBalance, fetchGetCards, fetchHistory, fetchLogin, getAuthToken } from './fetchApi'
-import { generateRandomString } from '../../common/utils'
 import { InvalidOtpCodeError, InvalidPreferencesError } from '../../errors'
-import { getNumber } from '../../types/get'
+import { getNumber, getOptString } from '../../types/get'
+import forge from 'node-forge'
 
 function getPhoneNumber (rawPhoneNumber: string): string | null {
   const normalizedPhoneNumber = /^(?:\+?998)(\d{9})$/.exec(rawPhoneNumber.trim())
@@ -37,7 +37,7 @@ async function askSmsCode (): Promise<string> {
 export async function login (rawPreferences: Preferences, auth?: Auth): Promise<Auth> {
   const { phone, password } = validatePreferences(rawPreferences)
   if (!auth) {
-    const imei = generateRandomString(16, '0123456789abcdef')
+    const imei = forge.md.md5.create().update(`${phone}_imei`, 'utf8').digest().toHex().slice(0, 16)
     const deviceId = await fetchDeviceRegister(phone, imei)
     const smsCode = await askSmsCode()
     await fetchConfirmRegister(phone, smsCode, { deviceId })
@@ -53,6 +53,13 @@ export async function login (rawPreferences: Preferences, auth?: Auth): Promise<
 export async function fetchAccounts (auth: Auth): Promise<FetchedAccounts> {
   const cards = await fetchGetCards(auth)
   const balances = await fetchGetBalance(cards.map(x => getNumber(x, 'id')), auth)
+  if (balances.some((balance) => [
+    /Ошибка при получении баланса/
+  ].some(regex => regex.test(getOptString(balance, 'error') ?? ''))) || cards.some((card) => [
+    /Доступ ограничен/
+  ].some(regex => regex.test(getOptString(card, 'card_name') ?? '')))) {
+    await ZenMoney.alert('Click блокирует работу синхронизации. Напишите в службу поддержки Click и попросите разблокировать устройство Zenmoney Sync.')
+  }
   return { cards, balances }
 }
 
