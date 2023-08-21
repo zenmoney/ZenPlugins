@@ -19,7 +19,17 @@ export interface WebSocketOpenResponse {
 export default class WebSocket {
   getResponseId (body: unknown): string
   onUnexpectedMessage (body: unknown): void
-  open (url: string, options?: { headers?: unknown, sanitizeRequestLog?: unknown, sanitizeResponseLog?: unknown }): Promise<WebSocketOpenResponse>
-  send (id: string, options: { body: unknown, sanitizeRequestLog?: unknown, sanitizeResponseLog?: unknown }): Promise<{body: unknown}>
+  open (url: string, options?: {
+    headers?: unknown
+    log?: boolean
+    sanitizeRequestLog?: unknown
+    sanitizeResponseLog?: unknown
+  }): Promise<WebSocketOpenResponse>
+  send (id: string, options: {
+    body: unknown
+    log?: boolean
+    sanitizeRequestLog?: unknown
+    sanitizeResponseLog?: unknown
+  }): Promise<{body: unknown}>
   close (): Promise<void>
 }
