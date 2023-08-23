@@ -142,7 +142,8 @@ function ZPAPI ({ manifest, preferences, data }) {
     dateProcessing: true,
     binaryRequestBody: true,
     binaryResponseBody: true,
-    investmentAccount: true
+    investmentAccount: true,
+    networkCallbacks: true
   }
   const knownAccounts = {}
   const addedAccounts = []
