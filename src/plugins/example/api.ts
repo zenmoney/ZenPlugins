@@ -1,44 +1,18 @@
-import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
-import { InvalidLoginOrPasswordError } from '../../errors'
-import get from '../../types/get'
-import { Product } from './converters'
+import { Auth, Preferences, Product, Session } from './models'
+import { fetchAllAccounts, fetchAuthorization, fetchProductTransactions } from './fetchApi'
 
-const baseUrl = 'https://raw.githubusercontent.com/zenmoney/ZenPlugins/master/src/plugins/example/public/'
-
-export type Auth = string
-
-export interface Preferences {
-  login: string
-  password: string
-}
-
-async function fetchApi (url: string, options?: FetchOptions, predicate?: (x: FetchResponse) => boolean): Promise<FetchResponse> {
-  const response = await fetchJson(baseUrl + url, options ?? {})
-  if (predicate) {
-    validateResponse(response, response => !get(response.body, 'error') && predicate(response))
-  }
-  return response
-}
-
-function validateResponse (response: FetchResponse, predicate?: (x: FetchResponse) => boolean): void {
-  console.assert(!predicate || predicate(response), 'non-successful response')
-}
-
-export async function login ({ login, password }: Preferences, auth?: Auth): Promise<Auth> {
+export async function login (preferences: Preferences, auth?: Auth): Promise<Session> {
   if (auth != null) {
-    return auth
+    return { auth }
   }
-  // It happens on server side
-  if (login !== 'example' || password !== 'example') {
-    throw new InvalidLoginOrPasswordError()
-  }
-  return get((await fetchApi('auth.json', undefined, response => !!get(response.body, 'access_token'))).body, 'access_token') as Auth
+
+  return { auth: await fetchAuthorization(preferences) }
 }
 
-export async function fetchAccounts (auth: Auth): Promise<unknown[]> {
-  return (await fetchApi('accounts.json', undefined, response => Array.isArray(response.body))).body as unknown[]
+export async function fetchAccounts (session: Session): Promise<unknown[]> {
+  return await fetchAllAccounts(session)
 }
 
-export async function fetchTransactions (auth: Auth, { id, transactionNode }: Product, fromDate: Date, toDate?: Date): Promise<unknown[]> {
-  return (await fetchApi(`transactions_${transactionNode}${id}.json`, undefined, response => Array.isArray(response.body))).body as unknown[]
+export async function fetchTransactions (session: Session, product: Product, fromDate: Date, toDate: Date): Promise<unknown[]> {
+  return await fetchProductTransactions(product, session)
 }

@@ -291,6 +291,23 @@ describe('convertLastTransactions', () => {
           ]
         }
       ]
+    ],
+    [
+      [
+        {
+          id: '2023-28804763',
+          acceptedTime: 1680964581000,
+          pushMessageText: 'Card1111; Смена PIN; Neuspeshno; 08.04.23 17:36:08',
+          eventType: 4
+        },
+        {
+          id: '2023-28803559',
+          acceptedTime: 1680964306000,
+          pushMessageText: 'Neuspeshno; Card1111; Пополнение наличными: 800,00 BYN; 08.04.23 17:31:32; UL.CHKALOVA, 35,VITEBSK,BY;Dostupno: 5,00 USD',
+          eventType: 4
+        }
+      ],
+      []
     ]
   ])('converts last transactions', (apiTransactions, transactions) => {
     expect(convertTestLastTransactions(apiTransactions, [

@@ -1,4 +1,4 @@
-const { DefinePlugin } = require('webpack')
+const { DefinePlugin, optimize: { LimitChunkCountPlugin } } = require('webpack')
 const CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin')
 const ESLintPlugin = require('eslint-webpack-plugin')
 const {
@@ -34,6 +34,10 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
   return {
     mode: production ? 'production' : 'development',
     devtool: production ? false : 'eval',
+    cache: {
+      type: production ? 'filesystem' : 'memory',
+      ...production && { name: pluginName }
+    },
     entry: production
       ? { index: pluginPaths.js }
       : { windowLoader: [paths.windowLoaderJs] },
@@ -41,7 +45,10 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
       path: outputPath,
       filename: '[name].js',
       chunkFilename: '[name].chunk.js',
-      globalObject: 'this'
+      globalObject: 'this',
+      ...production && {
+        asyncChunks: false
+      }
     },
     resolve: {
       alias: {
@@ -53,7 +60,10 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
         xhrViaZenApi$: resolveFromRoot('src/XMLHttpRequestViaZenAPI'),
         querystring: 'querystring-browser'
       },
-      extensions: ['.js', '.ts', '.json']
+      extensions: ['.js', '.ts', '.json'],
+      fallback: {
+        fs: false
+      }
     },
     module: {
       rules: [
@@ -113,6 +123,9 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
               transformObjectKeys: true,
               stringArrayCallsTransformThreshold: 1,
               stringArrayWrappersCount: 2
+            }),
+            new LimitChunkCountPlugin({
+              maxChunks: 1
             })
           ]
         : []
@@ -126,6 +139,12 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
           publicPath: '/'
         },
         host: 'localhost',
+        ...production && {
+          host: 'local-ip',
+          client: false,
+          hot: false,
+          liveReload: false
+        },
         port: 'auto',
         webSocketServer: WebsocketServer,
 

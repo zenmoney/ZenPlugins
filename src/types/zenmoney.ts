@@ -8,13 +8,21 @@ export enum AccountType {
 }
 
 export interface AccountOrCard {
+  // Unique (within synchronization) account id
+  // Transactions linked to account by this id in AccountReferenceById
   id: string
   type: AccountType.ccard | AccountType.checking | AccountType.investment
   title: string
   instrument: string
+  // Persistent unique account ids
+  // Used to match accounts between synchronizations
+  // Usually card number/IBAN can be
   syncIds: string[]
+  // Is it savings account
   savings?: boolean
+  // Can be null if can't be determined exactly
   balance?: number | null
+  // available = balance + creditLimit
   available?: number | null
   creditLimit?: number | null
   totalAmountDue?: number | null
@@ -31,12 +39,15 @@ export interface DepositOrLoan {
   balance: number | null
   startDate: Date
   startBalance: number
+  // deposit: is there capitalization
+  // loan: is it annuity
   capitalization: boolean
   percent: number
   endDateOffsetInterval: 'month' | 'year' | 'day'
   endDateOffset: number
   payoffInterval: 'month' | null
   payoffStep: number
+  // not active account
   archived?: boolean
 }
 
@@ -78,6 +89,9 @@ export interface NonParsedMerchant {
   fullTitle: string
   mcc: number | null
   location: Location | null
+  // Additional field, if there is no mcc
+  // but there is some classification from bank
+  // you can put this classification id here
   category?: string
 }
 
@@ -98,12 +112,14 @@ export interface Transaction {
 }
 
 export interface ExtendedTransaction extends Transaction {
-  groupKeys?: string[]
+  groupKeys?: Array<string | null>
 }
 
+// Plugin entrypoint function
+// Should parse all accounts and transactions between fromDate and toDate
 export type ScrapeFunc<T> = (args: {
   fromDate: Date
-  toDate?: Date
+  toDate?: Date // nullish means parse till now
   preferences: T
   isFirstRun: boolean
   isInBackground: boolean

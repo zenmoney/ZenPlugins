@@ -1,3 +1,4 @@
+import { generateRequestLogId } from '../network'
 import { sanitize } from '../sanitize'
 import { generateUUID } from '../utils'
 
@@ -10,10 +11,14 @@ export default class WebSocket {
 
   }
 
-  async open (url, { headers = {}, sanitizeRequestLog, sanitizeResponseLog } = {}) {
+  async open (url, { headers = {}, sanitizeRequestLog, sanitizeResponseLog, log } = {}) {
     console.assert(!this._socket, 'previous connection must be closed before opening new connection')
+    const beforeFetchTicks = Date.now()
+    const shouldLog = log !== false
+    const id = shouldLog && generateRequestLogId()
     return new Promise((resolve, reject) => {
-      console.debug('request', sanitize({
+      shouldLog && console.debug('request', sanitize({
+        id,
         url,
         headers
       }, sanitizeRequestLog))
@@ -23,9 +28,11 @@ export default class WebSocket {
       }
       this._socket.onopen = (event) => {
         const response = event.response
-        console.debug('response', sanitize({
-          status: response.status,
+        shouldLog && console.debug('response', sanitize({
+          id,
+          ms: Date.now() - beforeFetchTicks,
           url: response.url,
+          status: response.status,
           headers: response.headers,
           body: response.body
         }, sanitizeResponseLog))
@@ -38,18 +45,28 @@ export default class WebSocket {
     })
   }
 
-  async send (id, { body, sanitizeRequestLog, sanitizeResponseLog }) {
+  async send (id, { body, sanitizeRequestLog, sanitizeResponseLog, log }) {
     console.assert(this._socket && this._socket.readyState === ZenMoney.WebSocket.OPEN, 'connection must be opened before sending request')
+    const beforeFetchTicks = Date.now()
+    const shouldLog = log !== false
+    const logId = shouldLog && generateRequestLogId()
     return new Promise((resolve, reject) => {
       this.putCallback(id, (err, body) => {
         if (err) {
           return reject(err)
         }
         const response = { body }
-        console.debug('response', sanitize(response, sanitizeResponseLog))
+        shouldLog && console.debug('response', sanitize({
+          id: logId,
+          ms: Date.now() - beforeFetchTicks,
+          body
+        }, sanitizeResponseLog))
         resolve(response)
       })
-      console.debug('request', sanitize({ body }, sanitizeRequestLog))
+      shouldLog && console.debug('request', sanitize({
+        id: logId,
+        body
+      }, sanitizeRequestLog))
       this._socket.send(JSON.stringify(body))
     })
   }

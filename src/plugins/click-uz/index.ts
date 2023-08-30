@@ -1,5 +1,5 @@
 import { Account, ScrapeFunc, Transaction } from '../../types/zenmoney'
-import { convertAccounts, convertTransaction } from './converters'
+import { convertAccounts, convertTransactions } from './converters'
 import { Auth, Preferences } from './models'
 import { adjustTransactions } from '../../common/transactionGroupHandler'
 import { fetchAccounts, fetchTransactions, login } from './api'
@@ -31,12 +31,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
       return
     }
     const apiTransactions = await fetchTransactions(account.id, fromDate, toDate!, auth)
-    for (const apiTransaction of apiTransactions) {
-      const transaction = convertTransaction(apiTransaction, account)
-      if (transaction) {
-        transactions.push(transaction)
-      }
-    }
+    transactions.push(...convertTransactions(apiTransactions, account))
   }))
   return {
     accounts,

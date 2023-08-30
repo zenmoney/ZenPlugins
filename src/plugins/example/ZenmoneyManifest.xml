@@ -3,8 +3,8 @@
     <id>example</id>
     <company>0</company>
     <description>
-        Пример плагина синхронизации.
-        Для подключения импорта укажите ваш логин и пароль от интернет-банка.
+        Synchronization plugin example.
+        Input your login and password from the bank.
     </description>
     <version>1.0</version>
     <build>1</build>

@@ -17,13 +17,14 @@ import {
   PasswordExpiredError,
   PinCodeInsteadOfPasswordError,
   PreviousSessionNotClosedError,
+  SubscriptionRequiredError,
   TemporaryError,
   TemporaryUnavailableError,
   ZPAPIError
 } from '../errors'
 import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId, trimSyncId } from './accounts'
 import { toZenMoneyTransaction } from './converters'
-import { getMidnight, isValidDate } from './dateUtils'
+import { getMidnight, isValidDate, toISODateString } from './dateUtils'
 import { sanitize } from './sanitize'
 import { isDebug } from './utils'
 
@@ -206,6 +207,13 @@ export function trimTransactionTransferAccountSyncIds (transaction) {
   return transaction
 }
 
+function assertSumIsAValidNumber (sum, key) {
+  console.assert(
+    (typeof sum === 'number' && !isNaN(sum) && isFinite(sum)) || sum === null || sum === undefined,
+    `${key} should be a number, got ` + (typeof sum === 'number' ? sum : JSON.stringify(sum))
+  )
+}
+
 export function patchAccounts (accounts) {
   console.assert(Array.isArray(accounts) && accounts.length > 0 && !accounts.some((x) => !x), 'accounts must be non-empty array of objects')
   if (!ZenMoney.features.investmentAccount && accounts.some(account => account.type === 'investment')) {
@@ -219,19 +227,19 @@ export function patchAccounts (accounts) {
       const balance = patchAmount({
         sum: account.balance,
         instrument: account.instrument
-      })
+      }, 'balance')
       const available = patchAmount({
         sum: account.available,
         instrument: account.instrument
-      })
+      }, 'available')
       const creditLimit = patchAmount({
         sum: account.creditLimit,
         instrument: account.instrument
-      })
+      }, 'creditLimit')
       const startBalance = patchAmount({
         sum: account.startBalance,
         instrument: account.instrument
-      })
+      }, 'startBalance')
       return {
         ..._.mapKeys(account, (_, key) => {
           return key === 'syncIds' ? 'syncID' : key
@@ -271,15 +279,15 @@ function patchTransactionAmount (transaction, accountsByIdLookup) {
         const instrument = accountsByIdLookup[movement.account?.id]?.instrument || movement.account?.instrument
         return {
           ...movement,
-          invoice: movement.invoice ? patchAmount(movement.invoice) : null,
+          invoice: movement.invoice ? patchAmount(movement.invoice, 'invoice') : null,
           sum: patchAmount({
             sum: movement.sum,
             instrument
-          }).sum,
+          }, 'sum').sum,
           fee: patchAmount({
             sum: movement.fee,
             instrument
-          }).sum
+          }, 'fee').sum
         }
       })
     }
@@ -298,11 +306,11 @@ function patchTransactionAmount (transaction, accountsByIdLookup) {
         const amount = patchAmount({
           sum: transaction[sumKey],
           instrument: account?.instrument || accountIdParts?.[1]
-        })
+        }, sumKey)
         const invoice = patchAmount({
           sum: transaction[invoiceSumKey],
           instrument: transaction[invoiceInstrumentKey]
-        })
+        }, invoiceSumKey)
         return {
           ...obj,
           [sumKey]: amount.sum,
@@ -319,7 +327,7 @@ function patchTransactionAmount (transaction, accountsByIdLookup) {
 function patchAmount ({
   sum,
   instrument
-}) {
+}, key) {
   const GRAMS_IN_OUNCE = 31.1034768
   let rate = 1
   switch (instrument) {
@@ -358,6 +366,7 @@ function patchAmount ({
     default:
       break
   }
+  assertSumIsAValidNumber(sum, key)
   if (sum !== null && sum !== undefined && rate !== 1) {
     sum *= rate
   }
@@ -407,6 +416,8 @@ function getPresentationError (error) {
     key = 'zenPlugin_pinCodeInsteadOfPasswordError'
   } else if (error instanceof PasswordExpiredError) {
     key = 'zenPlugin_passwordExpiredError'
+  } else if (error instanceof SubscriptionRequiredError) {
+    key = 'zenPlugin_subscriptionRequiredError'
   } else if (error instanceof InvalidPreferencesError && !error.message) {
     key = 'zenPlugin_invalidPreferencesError'
   }
@@ -513,4 +524,21 @@ export function traceFunctionCalls (fn) {
   }
 }
 
-export const adaptScrapeToMain = (scrape) => adaptScrapeToGlobalApi(provideScrapeDates(traceFunctionCalls(scrape)))
+function checkSubscription (fn) {
+  return async function (args) {
+    if (toISODateString(new Date()) < '2023-06-01') {
+      return fn(args)
+    }
+    if (ZenMoney.manifest.isSubscriptionRequired) {
+      if (!ZenMoney.user || !ZenMoney.user.subscription || typeof ZenMoney.user.subscription.endDate !== 'number') {
+        throw new IncompatibleVersionError()
+      }
+      if ((ZenMoney.user?.subscription?.endDate || 0) <= new Date().getTime()) {
+        throw new SubscriptionRequiredError()
+      }
+    }
+    return fn(args)
+  }
+}
+
+export const adaptScrapeToMain = (scrape) => adaptScrapeToGlobalApi(provideScrapeDates(traceFunctionCalls(checkSubscription(scrape))))

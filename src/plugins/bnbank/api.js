@@ -4,14 +4,15 @@ import { fetchJson } from '../../common/network'
 import { generateRandomString } from '../../common/utils'
 import { card, deposit, checking } from './converters'
 
-const baseUrl = 'https://mb.bnb.by/services/v2/'
+const BASE_URL = 'https://mb.bnb.by/services/v2/'
+const APP_VERSION = '1.53.1'
 
 export function generateDeviceID () {
   return generateRandomString(16)
 }
 
 async function fetchApiJson (url, options, predicate = () => true, error = (message) => console.assert(false, message)) {
-  const response = await fetchJson(baseUrl + url, options)
+  const response = await fetchJson(BASE_URL + url, options)
   if (predicate) {
     validateResponse(response, response => predicate(response), error)
   }
@@ -34,14 +35,20 @@ function validateResponse (response, predicate, error) {
   }
 }
 
-export async function login (login, password) {
+export async function login (phone, password) {
+  let login = (phone || '').trim()
+  if (!login) { throw new InvalidPreferencesError('Некорректный логин или номер телефона') }
+  if (/\+\d+/.test(login)) {
+    login = login.substring(1)
+  }
+
   const deviceID = ZenMoney.getData('device_id') ? ZenMoney.getData('device_id') : generateDeviceID()
   ZenMoney.setData('device_id', deviceID)
 
   const res = await fetchApiJson('session/login', {
     method: 'POST',
     body: {
-      applicID: '1.53.1',
+      applicID: APP_VERSION,
       clientKind: '0',
       browser: ZenMoney.device.manufacturer, // Build.DEVICE
       browserVersion: `${ZenMoney.device.model} (${ZenMoney.device.manufacturer})`, // Build.MODEL + " (" + Build.PRODUCT + ")"

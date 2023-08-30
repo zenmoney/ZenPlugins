@@ -43,9 +43,6 @@ describe('convertTransactions', () => {
       {
         comment: null,
         date: new Date('2022-02-28T01:58:22.000Z'),
-        groupKeys: [
-          '1763675599'
-        ],
         hold: false,
         merchant: {
           fullTitle: 'Uzmobile (GSM)',
@@ -62,6 +59,9 @@ describe('convertTransactions', () => {
             invoice: null,
             sum: -15000
           }
+        ],
+        groupKeys: [
+          '2022-02-28_UZS_15000'
         ]
       }
     ]

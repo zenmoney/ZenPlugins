@@ -1,18 +1,16 @@
 import {
-  checkUser,
+  AuthError,
+  coldAuth,
   getAccounts,
   getAccountsTransactions,
   getHumoCards,
   getHumoCardsTransactions,
-  getToken,
   getUzcardCards,
   getUzcardCardsTransactions,
   getVisaCards,
   getVisaCardsTransactions,
   getWallets,
-  getWalletsTransactions,
-  registerDevice,
-  sendSmsCode
+  getWalletsTransactions
 } from './api'
 
 export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
@@ -20,19 +18,23 @@ export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
    * FIRST RUN STEPS
    */
   if (isFirstRun) {
-    await registerDevice()
-    await checkUser(preferences.phone)
-    await sendSmsCode(preferences.phone, preferences.password)
-
-    const smsCode = await ZenMoney.readLine('Введите код из СМС сообщения')
-
-    await getToken(preferences.phone, smsCode)
+    await coldAuth(preferences)
   }
 
   /**
    * REGULAR STEPS - Get accounts
    */
-  const uzcardCards = await getUzcardCards()
+  let uzcardCards
+  try {
+    uzcardCards = await getUzcardCards()
+  } catch (e) {
+    if (e instanceof AuthError) {
+      await coldAuth(preferences)
+      uzcardCards = await getUzcardCards()
+    } else {
+      throw e
+    }
+  }
   const humoCards = await getHumoCards()
   const visaCards = await getVisaCards()
   const wallets = await getWallets()

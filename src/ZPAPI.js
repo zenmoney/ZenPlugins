@@ -98,6 +98,43 @@ const notImplemented = () => {
   throw new Error('API method is not implemented')
 }
 
+function pickDocuments ({ mimeTypes, allowMultipleSelection }, callback) {
+  const correlationId = Date.now()
+  const messageHandler = async (e) => {
+    const message = e.data
+    if (message.type !== ':events/file-selected') {
+      return
+    }
+    if (message.payload.correlationId !== correlationId) {
+      return
+    }
+    self.removeEventListener('message', messageHandler)
+    try {
+      const blobs = await Promise.all(message.payload.files.map(async (file) => {
+        const buffer = await file.arrayBuffer()
+        const bytes = new Uint8Array(buffer)
+        file._getId = () => null
+        file._getType = () => file.type
+        file._getSize = () => bytes.length
+        file._getBytes = () => bytes
+        return new ZenMoney.Blob([file], { type: file.type })
+      }))
+      callback(null, blobs)
+    } catch (err) {
+      callback(err)
+    }
+  }
+  self.addEventListener('message', messageHandler)
+  self.postMessage({
+    type: ':commands/file-select',
+    payload: {
+      correlationId,
+      contentTypes: mimeTypes,
+      allowMultipleSelection
+    }
+  })
+}
+
 function ZPAPI ({ manifest, preferences, data }) {
   this.application = { platform: 'browser', version: '1', build: '1' }
   this.features = {
@@ -105,7 +142,8 @@ function ZPAPI ({ manifest, preferences, data }) {
     dateProcessing: true,
     binaryRequestBody: true,
     binaryResponseBody: true,
-    investmentAccount: true
+    investmentAccount: true,
+    networkCallbacks: true
   }
   const knownAccounts = {}
   const addedAccounts = []
@@ -492,33 +530,11 @@ Object.assign(ZPAPI.prototype, {
   },
 
   takePicture (format, callback) {
-    const correlationId = Date.now()
-    const messageHandler = (e) => {
-      const message = e.data
-      if (message.type !== ':events/file-selected') {
-        return
-      }
-      if (message.payload.correlationId !== correlationId) {
-        return
-      }
-      self.removeEventListener('message', messageHandler)
-      const file = message.payload.file
-      file.arrayBuffer().then(buffer => {
-        const bytes = new Uint8Array(buffer)
-        file._getId = () => null
-        file._getType = () => file.type
-        file._getSize = () => bytes.length
-        file._getBytes = () => bytes
-        const blob = new ZenMoney.Blob([file], { type: file.type })
-        callback(null, blob)
-      }).catch(err => {
-        callback(err)
-      })
-    }
-    self.addEventListener('message', messageHandler)
-    self.postMessage({
-      type: ':commands/file-select',
-      payload: { correlationId, contentType: `image/${format}` }
+    pickDocuments({
+      mimeTypes: [`image/${format}`],
+      allowMultipleSelection: false
+    }, (err, blobs) => {
+      callback(err, err ? null : blobs[0])
     })
   },
 
@@ -542,6 +558,12 @@ Object.assign(ZPAPI.prototype, {
         payload: { correlationId, message }
       })
     })
+  },
+
+  pickDocuments,
+
+  logEvent (type, data) {
+    console.log('[analytics]', { type, data })
   }
 })
 

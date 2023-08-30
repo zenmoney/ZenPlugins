@@ -57,3 +57,9 @@ export class UserInteractionError extends TemporaryError {
 }
 
 export class PasswordExpiredError extends InvalidPreferencesError {}
+
+export class SubscriptionRequiredError extends TemporaryError {
+  constructor () {
+    super('[SUR]')
+  }
+}

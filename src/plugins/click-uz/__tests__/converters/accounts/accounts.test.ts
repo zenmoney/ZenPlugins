@@ -434,6 +434,290 @@ describe('convertAccount', () => {
           type: 'checking'
         }
       ]
+    ],
+    [
+      {
+        cards:
+          [
+            {
+              id: 26686775,
+              bank_code: '004',
+              bank_name: 'Агробанк',
+              bank_short_name: 'AGRO',
+              card_name: 'VISA-карта',
+              card_number: '4187 18** **** 1234',
+              card_expire_date: '----',
+              card_status: 1,
+              card_status_text: 'Активна',
+              card_token: '418781VMEEQE6956',
+              card_type: 'AGRVISASUM',
+              font_color: 'FFFFFFFF',
+              monitoring_status: 0,
+              is_default: false,
+              card_number_hash: '0BA3F923FE18996D9A50EBEAA5D8E9539603816D10DD059F1D1EF428C5A74540',
+              cardholder: 'ANTONOV ANTOV ANTONOVICH',
+              currency_code: 'UZS',
+              click: true,
+              details: true,
+              securecode_available: false,
+              securecode_status: false,
+              is_identified: null,
+              permission:
+                {
+                  payment: 0,
+                  transfer: [],
+                  clickpass: 0,
+                  blockable: true,
+                  activation: false,
+                  copy_number: true,
+                  removable: 1
+                },
+              images:
+                {
+                  background: 'https://cdn.click.uz/app/evo/card/agrvisasum/agro-bg_v1.png',
+                  logo: 'https://cdn.click.uz/app/evo/card/agrvisasum/agro-logo_v3.png',
+                  mini_logo: 'https://cdn.click.uz/app/evo/card/agrvisasum/agro-mini-logo_v2.png',
+                  cardtype: 'https://cdn.click.uz/app/evo/card/types/agrvisasum_v1.png',
+                  cardtype_mini: 'https://cdn.click.uz/app/evo/card/types/agrvisasum_small_v1.png',
+                  badge_url: 'https://cdn.click.uz/app/evo/card/badges/click_v1.png'
+                },
+              transfer_limits:
+                {
+                  send_min_limit: 1000,
+                  send_max_limit: 10000000000,
+                  receive_min_limit: 1000,
+                  receive_max_limit: 10000000000,
+                  percent: 0
+                },
+              options: { is_masked: true, button_set: 'VISA', display_type: 'VISA' }
+            },
+            {
+              id: 19619132,
+              bank_code: '062',
+              bank_name: 'TBC Банк',
+              bank_short_name: 'TBC',
+              card_name: '8684 TBC Humo',
+              card_number: '9860 53** **** 1234',
+              card_expire_date: '1222',
+              card_status: -99,
+              card_status_text: 'Срок действия карты истек',
+              card_token: null,
+              card_type: 'HUMO',
+              font_color: 'FFFFFFFF',
+              monitoring_status: 0,
+              is_default: false,
+              card_number_hash: '959B18611385F776730B1F33008C21DA45D206513B4C04E29A7BCBB7B0FC6005',
+              cardholder: 'ANTONOV ANTOV ANTONOVICH',
+              currency_code: 'UZS',
+              click: false,
+              details: false,
+              securecode_available: false,
+              securecode_status: false,
+              is_identified: null,
+              permission:
+                {
+                  payment: 1,
+                  transfer: ['SMARTV', 'WALLET', 'HUMO'],
+                  clickpass: 1,
+                  blockable: false,
+                  activation: false,
+                  copy_number: false,
+                  removable: 1
+                },
+              images:
+                {
+                  background: 'https://cdn.click.uz/app/evo/card/humo/tbc-bg_v1.png',
+                  logo: 'https://cdn.click.uz/app/evo/card/humo/tbc-logo_v1.png',
+                  mini_logo: 'https://cdn.click.uz/app/evo/card/humo/tbc-mini-logo_v1.png',
+                  cardtype: 'https://cdn.click.uz/app/evo/card/types/humo_v1.png',
+                  cardtype_mini: 'https://cdn.click.uz/app/evo/card/types/humo_small_v1.png',
+                  badge_url: null
+                },
+              transfer_limits:
+                {
+                  send_min_limit: 1000,
+                  send_max_limit: 15000000,
+                  receive_min_limit: 1000,
+                  receive_max_limit: 100000000,
+                  percent: 0.8
+                },
+              options: { is_masked: true, button_set: 'HUMO', display_type: 'HUMO' }
+            }
+          ],
+        balances: [
+          { account_id: 26686775, balance: 7001 },
+          { account_id: 25699681, balance: 177824.23 },
+          { account_id: 25700054, balance: 339268.41 }
+        ]
+      },
+      [
+        {
+          balance: 7001,
+          id: '26686775',
+          instrument: 'UZS',
+          savings: false,
+          syncIds: [
+            '418718******1234'
+          ],
+          title: 'VISA-карта',
+          type: 'ccard'
+        },
+        {
+          archived: true,
+          balance: null,
+          id: '19619132',
+          instrument: 'UZS',
+          savings: false,
+          syncIds: [
+            '986053******1234'
+          ],
+          title: '8684 TBC Humo',
+          type: 'ccard'
+        }
+      ]
+    ],
+    [
+      {
+        cards: [
+          {
+            id: 25790409,
+            bank_code: '000',
+            bank_name: '***',
+            bank_short_name: '***',
+            card_name: 'Доступ ограничен',
+            card_number: '8801106220537122',
+            card_expire_date: null,
+            card_status: 1,
+            card_status_text: 'Активна',
+            card_token: null,
+            card_type: 'WALLET',
+            font_color: 'FFFFFFFF',
+            monitoring_status: 0,
+            is_default: false,
+            card_number_hash: '4823CC5CD77388FB5F8FA6B79F1FF69B1CA2E2C7937BAD064285E9BC48FF0DE3',
+            cardholder: 'CLICK-Кошелек',
+            currency_code: 'UZS',
+            click: false,
+            details: false,
+            securecode_available: false,
+            securecode_status: false,
+            is_identified: true,
+            permission:
+              {
+                payment: 1,
+                transfer: ['SMARTV', 'WALLET'],
+                clickpass: 1,
+                blockable: false,
+                activation: false,
+                copy_number: true,
+                removable: 0
+              },
+            images:
+              {
+                background: 'https://cdn.click.uz/app/evo/card/wallet/premium-bg_v1.png',
+                logo: 'https://cdn.click.uz/app/evo/card/wallet/premium-logo_v4.png',
+                mini_logo: 'https://cdn.click.uz/app/evo/card/wallet/premium-mini-logo_v4.png',
+                cardtype: null,
+                cardtype_mini: 'https://cdn.click.uz/app/evo/card/wallet/premium-mini-logo_v4.png',
+                badge_url: 'https://cdn.click.uz/app/evo/card/badges/premium_v1.png'
+              },
+            transfer_limits:
+              {
+                send_min_limit: 1000,
+                send_max_limit: 999999999,
+                receive_min_limit: 1000,
+                receive_max_limit: 0,
+                percent: 0
+              },
+            options:
+              {
+                is_masked: false,
+                button_set: 'WALLET',
+                display_type: 'WALLET'
+              }
+          },
+          {
+            id: 32816933,
+            bank_code: '000',
+            bank_name: '***',
+            bank_short_name: '***',
+            card_name: 'Доступ ограничен',
+            card_number: '8600 **** **** 5459',
+            card_expire_date: '0827',
+            card_status: 1,
+            card_status_text: 'Активна',
+            card_token: '55A8A1441FCF4D0BE2F6CD233526E456',
+            card_type: 'SMARTV',
+            font_color: 'FFFFFFFF',
+            monitoring_status: 0,
+            is_default: true,
+            card_number_hash: 'DDAFC6D5CA461B0F2828913F6EC15AE3C018910BFF61C1027D09F6C60BB68FD7',
+            cardholder: 'ANTONOV ANTOV ANTONOVICH',
+            currency_code: 'UZS',
+            click: false,
+            details: false,
+            securecode_available: false,
+            securecode_status: false,
+            is_identified: null,
+            permission:
+              {
+                payment: 1,
+                transfer: ['SMARTV', 'WALLET', 'HUMO'],
+                clickpass: 1,
+                blockable: false,
+                activation: false,
+                copy_number: true,
+                removable: 1
+              },
+            images:
+              {
+                background: 'https://cdn.click.uz/app/evo/card/[type]/nologo-bg_v1.png',
+                logo: 'https://cdn.click.uz/app/evo/card/[type]/nologo-logo_v1.png',
+                mini_logo: 'https://cdn.click.uz/app/evo/card/[type]/nologo-mini-logo_v1.png',
+                cardtype: 'https://cdn.click.uz/app/evo/card/types/uzcard_v1.png',
+                cardtype_mini: 'https://cdn.click.uz/app/evo/card/types/uzcard_small_v1.png',
+                badge_url: null
+              },
+            transfer_limits:
+              {
+                send_min_limit: 1000,
+                send_max_limit: 10000000000,
+                receive_min_limit: 1000,
+                receive_max_limit: 10000000000,
+                percent: 1
+              },
+            options: { is_masked: true, button_set: 'SMARTV', display_type: 'SMARTV' }
+          }
+        ],
+        balances: [
+          { account_id: 25790409, error: 'Ошибка при получении баланса' },
+          { account_id: 32816933, error: 'Ошибка при получении баланса' }
+        ]
+      },
+      [
+        {
+          balance: null,
+          id: '25790409',
+          instrument: 'UZS',
+          savings: false,
+          syncIds: [
+            '8801106220537122'
+          ],
+          title: 'Доступ ограничен',
+          type: 'checking'
+        },
+        {
+          balance: null,
+          id: '32816933',
+          instrument: 'UZS',
+          savings: false,
+          syncIds: [
+            '8600********5459'
+          ],
+          title: 'Доступ ограничен',
+          type: 'ccard'
+        }
+      ]
     ]
   ])('convert accounts', (apiAccounts: FetchedAccounts, accounts) => {
     expect(convertAccounts(apiAccounts)).toEqual(accounts)
