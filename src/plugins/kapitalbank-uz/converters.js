@@ -1,4 +1,5 @@
 import { dateInTimezone, toISODateString } from '../../common/dateUtils'
+import { getIntervalBetweenDates } from '../../common/momentDateUtils'
 
 /**
  * Конвертер счета из формата банка в формат Дзенмани
@@ -68,6 +69,31 @@ export function convertCard (rawCard) {
   */
 
   return card
+}
+
+/**
+ * Конвертер вклада из формата банка в формат Дзенмани
+ *
+ * @param deposit вклад в формате банка
+ * @returns вклад в формате Дзенмани
+ */
+export function convertDeposit (deposit) {
+  const endDateInterval = getIntervalBetweenDates(new Date(deposit.openDate), new Date(deposit.closeDate))
+  return {
+    id: deposit.absId,
+    title: 'Депозит ' + deposit.name,
+    syncIds: [deposit.absId],
+    instrument: deposit.currency.name,
+    type: 'deposit',
+    balance: deposit.balance / 100,
+    startDate: new Date(deposit.openDate),
+    percent: Number(deposit.rate),
+    endDateOffsetInterval: endDateInterval.interval,
+    endDateOffset: endDateInterval.count,
+    payoffStep: 0,
+    payoffInterval: null,
+    capitalization: false
+  }
 }
 
 /**
@@ -305,6 +331,52 @@ export function convertAccountTransaction (account, rawTransaction) {
     ],
     comment: rawTransaction.details
   }
+  for (const regexp of [
+    /Взнос ср-в на СКС/
+  ]) {
+    const match = rawTransaction.details.match(regexp)
+    if (match) {
+      transaction.groupKeys = [`${toISODateString(dateInTimezone(transaction.date, 300))}_${invoice.instrument}_${Math.abs(invoice.sum).toString()}`]
+    }
+  }
+  [
+    parsePayee,
+    parseInnerTransfer,
+    parseOuterTransfer
+  ].some(parser => parser(rawTransaction, transaction, invoice))
+
+  return transaction
+}
+
+/**
+ * Конвертер транзакции по вкладу из формата банка в формат Дзенмани
+ *
+ * @param accountId идентификатор вкладу
+ * @param rawTransaction транзакция в формате банка
+ * @returns транзакция в формате Дзенмани
+ */
+export function convertDepositTransaction (account, rawTransaction) {
+  const invoice = {
+    sum: rawTransaction.amount / 100,
+    instrument: rawTransaction.currency.name
+  }
+
+  const transaction = {
+    date: new Date(rawTransaction.valueDate), // есть еще bookingDate и docDate
+    hold: false,
+    merchant: null,
+    movements: [
+      {
+        id: rawTransaction.docId,
+        account: { id: account.id },
+        invoice: invoice.instrument === account.instrument ? null : invoice,
+        sum: invoice.instrument === account.instrument ? invoice.sum : null,
+        fee: 0
+      }
+    ],
+    comment: rawTransaction.details
+  }
+
   for (const regexp of [
     /Взнос ср-в на СКС/
   ]) {

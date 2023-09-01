@@ -10,7 +10,9 @@ import {
   convertUzcardCardTransaction,
   convertVisaCardTransaction,
   convertWallet,
-  convertWalletTransaction
+  convertWalletTransaction,
+  convertDeposit,
+  convertDepositTransaction
 } from './converters'
 
 const lang = 'ru'
@@ -261,6 +263,30 @@ export async function getAccounts () {
 }
 
 /**
+ * Получить список вкладов
+ *
+ * @returns массив вкладов в формате Дзенмани
+ */
+export async function getDeposits () {
+  const endpoint = '/deposit'
+
+  const response = await fetchJson(baseUrl + endpoint, {
+    method: 'GET',
+    headers: {
+      lang,
+      'app-version': appVersion,
+      'device-id': ZenMoney.getData('deviceId'),
+      token: ZenMoney.getData('token')
+    },
+    sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
+  })
+
+  console.assert(response.ok, 'unexpected account response', response)
+
+  return response.body.data.map(convertDeposit)
+}
+
+/**
  * Получить список транзакций по картам платежной системы UzCard
  *
  * @param cards массив карт платежной системы UzCard
@@ -449,6 +475,47 @@ export async function getAccountsTransactions (accounts, fromDate, toDate) {
 
       transactions = transactions.concat(response.body.data.map(transaction =>
         convertAccountTransaction(account, transaction)))
+    }
+  }
+
+  return transactions
+}
+
+/**
+ * Получить список транзакций по вкладам
+ *
+ * @param accounts массив счетов
+ * @param fromDate дата в формате ISO8601, с которой нужно выгружать транзакции
+ * @param toDate дата в формате ISO8601, по которую нужно выгружать транзакции
+ * @returns массив транзакций в формате Дзенмани
+ */
+export async function getDepositsTransactions (accounts, fromDate, toDate) {
+  let transactions = []
+
+  for (const account of accounts) {
+    if (!ZenMoney.isAccountSkipped(account.id)) {
+      const endpoint = '/deposit/statement?' +
+        'absId=' + account.id + '&' +
+        'startDate=' + fromDate + '&' +
+        'endDate=' + toDate
+
+      const response = await fetchJson(baseUrl + endpoint, {
+        method: 'GET',
+        headers: {
+          lang,
+          'app-version': appVersion,
+          'device-id': ZenMoney.getData('deviceId'),
+          token: ZenMoney.getData('token')
+        },
+        sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
+      })
+
+      console.assert(response.ok, 'unexpected account/statement response', response)
+
+      transactions = transactions.concat(response.body.data
+        .filter(tx => tx.mvmtType !== '5') // код выплат ежедневных процентов на целевой счет
+        .map(tx => convertDepositTransaction(account, tx))
+      )
     }
   }
 
