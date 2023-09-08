@@ -208,7 +208,7 @@ export const fetchRemoteSync = ({ method, url, headers, body, binaryResponse, ma
   }
 
   const onResponse = () => {
-    const { pathname, search } = new URL(req.responseURL)
+    const { pathname, search } = new URL(req.responseURL || url)
     lastRequest = req
     lastRequestUrl = getTargetUrl(pathname + search, origin)
     const body = binaryResponse
