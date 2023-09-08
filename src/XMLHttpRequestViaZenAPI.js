@@ -58,7 +58,7 @@ XMLHttpRequestViaZenAPI.prototype.send = function (body) {
     options = { ...options, pfx: this.pfx }
   }
   const callback = (err, responseBody) => onResponse.call(this, err, responseBody, Boolean(options && options.binaryResponse))
-  const async = Boolean(ZenMoney.features && ZenMoney.features.networkCallbacks)
+  const async = Boolean(ZenMoney.features && ZenMoney.features.networkCallbacks) && this._request.async
   if (async) {
     options = { ...options, callback: ({ error, content }) => callback(error, content) }
   }
