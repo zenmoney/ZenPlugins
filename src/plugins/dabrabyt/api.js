@@ -159,7 +159,7 @@ function getRequestURL (accountType) {
     case 'loan':
       return CREDIT_STATEMENT_URL
     default:
-      return new TemporaryError('Unknown account type')
+      console.assert(false, 'Unknown account type', accountType)
   }
 }
 

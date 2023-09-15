@@ -3,7 +3,7 @@ import { fetch, fetchJson, openWebViewAndInterceptRequest, RequestInterceptMode 
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { delay } from '../../common/utils'
 import { parse, stringify } from 'querystring'
-import { BankMessageError, IncompatibleVersionError } from '../../errors'
+import { BankMessageError, IncompatibleVersionError, TemporaryUnavailableError } from '../../errors'
 import config from './config'
 
 const API_REDIRECT_URI = config.redirectUri
@@ -307,7 +307,7 @@ async function callGate (url, accessToken, options = {}) {
   } catch (e) {
     if (!options.ignoreErrors) {
       if (e.response && typeof e.response.body === 'string' && e.response.body.indexOf('internal server error') >= 0) {
-        throw new TemporaryError('Информация из банка Точка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
+        throw new TemporaryUnavailableError()
       } else {
         throw e
       }

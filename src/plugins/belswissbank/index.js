@@ -1,4 +1,5 @@
 import { generateUUID } from '../../common/utils'
+import { InvalidOtpCodeError } from '../../errors'
 import {
   assertResponseSuccess,
   authorize,
@@ -25,7 +26,7 @@ async function login ({
       const retrievedInput = await ZenMoney.readLine(prompt, { inputType: 'numberDecimal' })
       const confirmationCode = Number(retrievedInput)
       if (isNaN(retrievedInput)) {
-        throw new TemporaryError(`Ожидался числовой код из СМС, а вы ввели ${JSON.stringify(retrievedInput)}`)
+        throw new InvalidOtpCodeError(`Ожидался числовой код из СМС, а вы ввели ${JSON.stringify(retrievedInput)}`)
       }
       await confirm(deviceId, confirmationCode)
       break
