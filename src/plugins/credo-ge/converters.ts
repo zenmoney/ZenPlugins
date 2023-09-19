@@ -17,20 +17,51 @@ export function convertAccounts (apiAccounts: CredoAccount[]): Account[] {
 function convertAccount (apiAccount: CredoAccount): Account {
   const accountId = getNumber(apiAccount, 'accountId').toString()
   const apiAccountType = getString(apiAccount, 'type')
+  const accountType = apiAccountType === CredoAccountType.current.valueOf() ? AccountType.ccard : AccountType.deposit
   const accountNumber = getString(apiAccount, 'accountNumber')
   const currency = getString(apiAccount, 'currency')
   const syncId = [accountNumber, currency].join('')
   const availableBalance = getNumber(apiAccount, 'availableBalance')
-  return {
-    'id': accountId,
-    /* 'type': apiAccountType === CredoAccountType.current ? AccountType.ccard : AccountType.deposit, */
-    'type': AccountType.ccard,
-    'title': syncId,
-    'instrument': currency,
-    'syncIds': [syncId],
-    'savings': apiAccountType === CredoAccountType.saving,
-    'balance': availableBalance,
-    'available': availableBalance,
+  /* Deposit or loan */
+  const startDate = new Date('2022-01-01')
+  const startBalance = 0
+  const capitalization = false
+  const percent = 3
+  const endDateOffsetInterval = 'month'
+  const endDateOffset = 1
+  const payoffInterval = null
+  const payoffStep = 1
+  // TODO: AccountType.loan!
+
+  if (accountType === AccountType.ccard) {
+    return {
+      id: accountId,
+      type: accountType,
+      title: syncId,
+      instrument: currency,
+      syncIds: [syncId],
+      savings: apiAccountType === CredoAccountType.saving,
+      balance: availableBalance,
+      available: availableBalance
+    }
+  } else {
+    /* Deposit or loan */
+    return {
+      id: accountId,
+      type: accountType,
+      title: syncId,
+      instrument: currency,
+      syncIds: [syncId],
+      balance: availableBalance,
+      startDate,
+      startBalance,
+      capitalization,
+      percent,
+      endDateOffsetInterval,
+      endDateOffset,
+      payoffInterval,
+      payoffStep
+    }
   }
 }
 
@@ -67,13 +98,20 @@ export function convertTransaction (apiTransaction: CredoTransaction, account: A
 
 export function strippDescription(description: string): string {
   /* cleanup description from invoice data, date and non-meaningful info */
-  const strippedDescriptionRegex = / - (.*) [0-9]+\.[0-9]{2} [A-Z]{3}\1/g;
-  const found = description.match(strippedDescriptionRegex)
-  if (found && found.groups) {
-    /* return found[1] ? found[1] : found[2] */
-    return found.groups[1]? found.groups[1] : found.groups[2]
+  const spaceDashSeparatorRegex = / - /g;
+  const separatorFound = description.match(spaceDashSeparatorRegex)
+
+  if(!separatorFound) {
+    return description
   }
-  return description
+
+  const valuebleDescription = description.split(' - ')[1]
+  const amountIntsrumentDataRegex = /\d+\.\d{2} [A-Z]{3} \d{2}\.\d{2}\.\d{4}/g;
+  const amountInstrumentDataFound = valuebleDescription.match(amountIntsrumentDataRegex)
+  if (amountInstrumentDataFound) {
+    return valuebleDescription.split(' ').slice(0, -3).join(' ')
+  }
+  return valuebleDescription
 }
 
 export function getAmountFromDescription (description: string | undefined): Amount | null {
