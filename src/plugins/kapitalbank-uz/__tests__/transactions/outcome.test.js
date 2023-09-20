@@ -78,7 +78,7 @@ describe('convertTransaction', () => {
       },
       {
         date: new Date('2020-07-05T06:36:09.000Z'),
-        hold: false,
+        hold: true,
         comment: null,
         merchant: {
           country: 'IE',
@@ -160,7 +160,7 @@ describe('convertTransaction', () => {
       },
       {
         date: new Date('2023-07-13T10:52:29+05:00'),
-        hold: false,
+        hold: true,
         merchant: {
           city: 'Amsterdam',
           country: 'NL',
@@ -192,7 +192,7 @@ describe('convertTransaction', () => {
           scale: 2
         },
         approvalCode: '191242',
-        back: false,
+        back: true,
         transCode: '000000',
         reversed: false,
         transAmount: '-21000.00',
@@ -242,7 +242,7 @@ describe('convertTransaction', () => {
       },
       {
         date: new Date('2023-07-16T12:59:30+03:00'),
-        hold: false,
+        hold: true,
         merchant: {
           city: 'TASHKENT',
           country: 'UZ',

@@ -2,6 +2,8 @@ import {
   checkUser,
   getAccounts,
   getAccountsTransactions,
+  getDeposits,
+  getDepositsTransactions,
   getHumoCards,
   getHumoCardsTransactions,
   getToken,
@@ -48,6 +50,7 @@ async function doScrape (fromDate, toDate) {
   const visaCards = await getVisaCards()
   const wallets = await getWallets()
   const accounts = await getAccounts()
+  const deposits = await getDeposits()
 
   /**
    * REGULAR STEPS - Get transactions
@@ -60,6 +63,7 @@ async function doScrape (fromDate, toDate) {
   const visaCardsTransactions = await getVisaCardsTransactions(visaCards, from, to)
   const walletTransactions = await getWalletsTransactions(wallets, from, to)
   const accountTransactions = await getAccountsTransactions(accounts, from, to)
+  const depositTransactions = await getDepositsTransactions(deposits, from, to)
 
   /**
    * LAST STEP - Unloading
@@ -70,14 +74,16 @@ async function doScrape (fromDate, toDate) {
       ...humoCards,
       ...visaCards,
       ...wallets,
-      ...accounts
+      ...accounts,
+      ...deposits
     ],
     transactions: [
       ...uzcardCardsTransactions,
       ...humoCardsTransactions,
       ...visaCardsTransactions,
       ...walletTransactions,
-      ...accountTransactions
+      ...accountTransactions,
+      ...depositTransactions
     ]
   }
 }
