@@ -3,6 +3,8 @@ import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
 import get from '../../types/get'
 import { SUPPORTED_TOKENS } from './config'
 
+const MAX_RPS = 3;
+
 export interface Preferences {
   wallets: string
 }
@@ -25,27 +27,66 @@ export interface TokenTransfer {
 }
 
 export class TronscanApi {
-  private readonly baseUrl: string
+  private readonly baseUrl: string;
+  private activeList: Array<Promise<unknown>> = [];
 
   constructor (options: {baseUrl: string}) {
     this.baseUrl = options.baseUrl
   }
 
-  private async fetchApi (
+   private async fetchApi(
     url: string,
     options?: FetchOptions,
     predicate?: (x: FetchResponse) => boolean
   ): Promise<FetchResponse> {
-    const response = await fetchJson(this.baseUrl + url, options)
+    if (this.activeList.length < MAX_RPS) {
 
-    if (predicate) {
-      this.validateResponse(response, response => !get(response.body, 'error') && predicate(response))
-    }
-    return response
+		const request = this.fetchInner(url, options, predicate);
+
+		const waiter = request
+		  .then(async () => await this.delay(1000))
+		  .catch(async () => await this.delay(1000))
+		  .then(() => {
+			this.activeList = this.activeList.filter(item => item !== waiter);
+		  });
+
+		this.activeList.push(waiter);
+		
+		const result = await request
+
+		return result
+	}
+
+	await Promise.race(this.activeList);
+    return await this.fetchApi(url, options, predicate);
   }
 
-  private validateResponse (response: FetchResponse, predicate?: (x: FetchResponse) => boolean): void {
-    console.assert(!predicate || predicate(response), 'non-successful response')
+  private async fetchInner(
+    url: string,
+    options?: FetchOptions,
+    predicate?: (x: FetchResponse) => boolean
+  ): Promise<FetchResponse> {
+    const response = await fetchJson(this.baseUrl + url, options);
+
+    if (predicate) {
+      this.validateResponse(
+        response,
+        response => !get(response.body, 'error') && predicate(response)
+      );
+    }
+
+    return response;
+  }
+
+  private validateResponse(
+    response: FetchResponse,
+    predicate?: (x: FetchResponse) => boolean
+  ): void {
+    console.assert(!predicate || predicate(response), 'non-successful response');
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   public async fetchTokens (wallet: string): Promise<TokenInfo[]> {
