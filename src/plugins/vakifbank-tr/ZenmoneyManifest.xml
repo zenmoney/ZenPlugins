@@ -3,9 +3,9 @@
     <id>vakifbank-tr</id>
     <version>1.0</version>
     <build>1</build>
-    <company>0</company>
+    <company>15901</company>
     <modular>true</modular>
-    <codeRequired>true</codeRequired>
+    <codeRequired>false</codeRequired>
     <api>public</api>
     <files>
         <js>index.js</js>

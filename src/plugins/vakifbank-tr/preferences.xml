@@ -2,12 +2,13 @@
 <PreferenceScreen>
     <EditTextPreference
         key="startDate"
-        title="С какой даты загружать операции"
-        dialogTitle="С какой даты загружать операции"
-        positiveButtonText="ОК"
-        negativeButtonText="Отмена"
+        obligatory="true"
         inputType="date"
-        summary="|гггг-мм-дд|{@s}"
-        obligatory="true">
+        title="From what date to load transactions"
+        dialogTitle="From what date to load transactions"
+        defaultValue="2022-06-01T00:00:00.000Z"
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="|startDate|{@s}">
     </EditTextPreference>
 </PreferenceScreen>
