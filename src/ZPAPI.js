@@ -137,6 +137,14 @@ function pickDocuments ({ mimeTypes, allowMultipleSelection }, callback) {
 
 function ZPAPI ({ manifest, preferences, data }) {
   this.application = { platform: 'browser', version: '1', build: '1' }
+  this.user = {
+    id: '0',
+    locale: 'en_US',
+    subscription: {
+      id: '1MonthSubscription',
+      endDate: new Date().getTime() + 30 * 24 * 3600 * 1000
+    }
+  }
   this.features = {
     j2v8Date: true,
     dateProcessing: true,
