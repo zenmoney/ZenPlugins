@@ -1,12 +1,10 @@
 import { TemporaryError } from '../../errors'
-import { openWebViewAndInterceptRequest } from '../../common/network'
 
-import { VakifStatementAccount, VakifStatementTransaction, ObjectWithAnyProps } from './models'
+import { VakifStatementAccount, VakifStatementTransaction } from './models'
 import { parsePdfFromBlob } from './pdfToStr'
 import { parseDateAndTimeFromPdfText, parseDateFromPdfText, parseFormattedNumber } from './converters'
 
 export async function parsePdfVakifStatement (): Promise<null | Array<{ account: VakifStatementAccount, transactions: VakifStatementTransaction[] }>> {
-  await showHowTo()
   const blob = await ZenMoney.pickDocuments(['application/pdf'], true)
   if (!blob || !blob.length) {
     throw new TemporaryError('Выберите один или несколько файлов в формате .pdf')
@@ -32,26 +30,6 @@ export async function parsePdfVakifStatement (): Promise<null | Array<{ account:
     }
   }
   return result
-}
-
-async function showHowTo (): Promise<ObjectWithAnyProps> {
-  let result
-  if (ZenMoney.getData('showHowTo') !== false) {
-    const url = 'https://api.zenmoney.app/plugins/kaspi/how-to/'
-    try {
-      result = await openWebViewAndInterceptRequest({
-        url,
-        intercept: (request) => {
-          console.log('Intercepted url: ', request.url)
-          return request.url.includes('plugins/kaspi/callback/')
-        }
-      })
-      ZenMoney.setData('showHowTo', false)
-    } catch (e) {
-      console.debug(e)
-    }
-  }
-  return { shouldPickDocs: result }
 }
 
 export function parseSinglePdfString (text: string, statementUid?: string): { account: VakifStatementAccount, transactions: VakifStatementTransaction[] } {
