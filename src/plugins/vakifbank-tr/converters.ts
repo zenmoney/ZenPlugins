@@ -65,7 +65,7 @@ export function convertVakifPdfStatementTransaction (accountId: string, rawTrans
           movements: [
             {
               account: { id: accountId },
-              fee: feeTransaction == null ? 0 : (parseFormattedNumber(feeTransaction.amount) * -1),
+              fee: feeTransaction == null ? 0 : parseFormattedNumber(feeTransaction.amount),
               id: transaction.statementUid,
               sum: parseFormattedNumber(transaction.amount),
               invoice: null
