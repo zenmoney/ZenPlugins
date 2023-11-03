@@ -118,7 +118,7 @@ const testCases: Array<[VakifStatementTransaction[], TransactionWithId[]]> = [
           movements: [
             {
               account: { id: '1234567890' },
-              fee: 1.32,
+              fee: -1.32,
               id: '2023006306315713',
               sum: -200,
               invoice: null
