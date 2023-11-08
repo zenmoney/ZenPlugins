@@ -26,7 +26,7 @@ describe('convertTransaction', () => {
         date: new Date('2022-11-14T17:59:59.000Z'),
         hold: false,
         merchant: {
-          category: 851,
+          // category: 851,
           city: null,
           country: null,
           location: null,
@@ -103,7 +103,7 @@ describe('convertTransaction', () => {
         date: new Date('2022-11-10T05:34:52.000Z'),
         hold: false,
         merchant: {
-          category: 343,
+          // category: 343,
           city: null,
           country: null,
           location: null,

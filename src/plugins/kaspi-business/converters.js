@@ -22,8 +22,7 @@ export function convertTransaction (apiTransaction, account) {
         city: null,
         location: null,
         title: apiTransaction.contragentName,
-        mcc: null,
-        category: Number(apiTransaction.knp)
+        mcc: null
       }
 
   return {
