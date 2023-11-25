@@ -1,7 +1,4 @@
 import { fetchJson } from '../../common/network'
-import { sanitize } from '../../common/sanitize'
-import { generateRandomString } from '../../common/utils'
-import { InvalidPreferencesError } from '../../errors'
 import {
   convertAccount,
   convertAccountTransaction,
@@ -14,142 +11,18 @@ import {
 } from './converters'
 
 const baseUrl = 'https://mobile.apelsin.uz/api'
-const appVersion = 'Av1.9.0'
-const userAgent = 'okhttp/5.0.0-alpha.7'
+const appVersion = 'Av1.13.7'
+const userAgent = 'okhttp/5.0.0-alpha.11'
 const deviceName = 'ZenMoney'
 
+const defaultHeaders = {
+  lang: 'ru',
+  'app-version': appVersion,
+  'User-Agent': userAgent,
+  'device-name': deviceName
+}
+
 export class AuthError {}
-
-export async function coldAuth (preferences) {
-  await registerDevice()
-  await checkUser(preferences.phone)
-  await sendSmsCode(preferences.phone, preferences.password)
-
-  const smsCode = await ZenMoney.readLine('Введите код из СМС сообщения')
-
-  await getToken(preferences.phone, smsCode)
-}
-
-/**
- * Регистрирует идентификатор устройства в интернет-банке
- */
-export async function registerDevice () {
-  const endpoint = '/device/register'
-  const deviceId = generateRandomString(16)
-  const response = await fetchJson(baseUrl + endpoint, {
-    method: 'POST',
-    headers: {
-      lang: 'ru',
-      'app-version': appVersion,
-      'User-Agent': userAgent,
-      'device-name': deviceName,
-      'device-id': deviceId
-    },
-    body: {
-      deviceId,
-      name: deviceName,
-      isEmulator: false,
-      isRooted: false
-    },
-    sanitizeRequestLog: { body: { deviceId: true } }
-  })
-
-  console.assert(response.ok, 'unexpected device response', response)
-
-  ZenMoney.setData('deviceId', deviceId)
-}
-
-/**
- * Проверка на существование клиента в банке
- *
- * @param phone номер телефона клиента
- */
-export async function checkUser (phone) {
-  const endpoint = '/check-user?phone=' + getPhoneNumber(phone)
-
-  const response = await fetchJson(baseUrl + endpoint, {
-    method: 'GET',
-    headers: {
-      lang: 'ru',
-      'app-version': appVersion,
-      'User-Agent': userAgent,
-      'device-name': deviceName,
-      'device-id': ZenMoney.getData('deviceId')
-    },
-    sanitizeRequestLog: { url: { query: { phone: true } }, headers: { 'device-id': true } },
-    sanitizeResponseLog: { url: { query: { phone: true } } }
-  })
-
-  if (response.body?.errorMessage === 'Пользователь не зарегистрирован') {
-    throw new InvalidPreferencesError()
-  }
-
-  console.assert(response.ok, 'unexpected check-user response', response)
-}
-
-/**
- * Вызвать отправку СМС кода на мобильный телефон
- *
- * @param phone номер телефона
- * @param password пароль
- */
-export async function sendSmsCode (phone, password) {
-  const endpoint = '/login'
-
-  const response = await fetchJson(baseUrl + endpoint, {
-    method: 'POST',
-    headers: {
-      lang: 'ru',
-      'app-version': appVersion,
-      'User-Agent': userAgent,
-      'device-name': deviceName,
-      'device-id': ZenMoney.getData('deviceId')
-    },
-    body: {
-      phone: getPhoneNumber(phone),
-      password,
-      reserveSms: false
-    },
-    sanitizeRequestLog: { body: { phone: true, password: true }, headers: { 'device-id': true } }
-  })
-
-  if (response.body?.errorMessage === 'Пользователь не зарегистрирован' || response.body?.errorMessage === 'Неправильный номер телефона или пароль') {
-    throw new InvalidPreferencesError()
-  }
-
-  console.assert(response.ok, 'unexpected login response', response)
-}
-
-/**
- * Получаем токен
- *
- * @param phone номер телефона
- * @param smsCode код подтверждения из СМС сообщения
- */
-export async function getToken (phone, smsCode) {
-  const endpoint = '/registration/verify/' + smsCode + '/' + getPhoneNumber(phone)
-
-  const response = await fetchJson(baseUrl + endpoint, {
-    method: 'POST',
-    headers: {
-      lang: 'ru',
-      'app-version': appVersion,
-      'User-Agent': userAgent,
-      'device-name': deviceName,
-      'device-id': ZenMoney.getData('deviceId')
-    },
-    sanitizeRequestLog: { url: url => url.replace(getPhoneNumber(phone), sanitize(getPhoneNumber(phone), true)), headers: { 'device-id': true } },
-    sanitizeResponseLog: { url: url => url.replace(getPhoneNumber(phone), sanitize(getPhoneNumber(phone), true)) }
-  })
-
-  if (response.body?.errorMessage === 'Пользователь не зарегистрирован' || response.body?.errorMessage === 'Неверный SMS-код') {
-    throw new InvalidPreferencesError()
-  }
-
-  console.assert(response.ok, 'unexpected registration/verify response', response)
-  ZenMoney.setData('token', response.body.data.token)
-  ZenMoney.setData('isFirstRun', false)
-}
 
 /**
  * Получить список карт платежной системы UzCard
@@ -158,22 +31,21 @@ export async function getToken (phone, smsCode) {
  */
 export async function getUzcardCards () {
   const endpoint = '/uzcard'
+  const requestHeaders = {
+    authorization: 'Bearer ' + ZenMoney.getData('apiAccessToken'),
+    'device-id': ZenMoney.getData('deviceId')
+  }
 
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'GET',
     headers: {
-      lang: 'ru',
-      'app-version': appVersion,
-      'User-Agent': userAgent,
-      'device-name': deviceName,
-      'device-id': ZenMoney.getData('deviceId'),
-      token: ZenMoney.getData('token')
+      ...defaultHeaders,
+      ...requestHeaders
     },
-    sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
+    sanitizeRequestLog: { headers: { 'device-id': true, authorization: true } }
   })
-  if ([
-    'Неверный ключ'
-  ].indexOf(response.body?.errorMessage) >= 0) {
+
+  if (response.status === 401) {
     throw new AuthError()
   }
 
@@ -189,18 +61,18 @@ export async function getUzcardCards () {
  */
 export async function getHumoCards () {
   const endpoint = '/humo'
+  const requestHeaders = {
+    authorization: 'Bearer ' + ZenMoney.getData('apiAccessToken'),
+    'device-id': ZenMoney.getData('deviceId')
+  }
 
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'GET',
     headers: {
-      lang: 'ru',
-      'app-version': appVersion,
-      'User-Agent': userAgent,
-      'device-name': deviceName,
-      'device-id': ZenMoney.getData('deviceId'),
-      token: ZenMoney.getData('token')
+      ...defaultHeaders,
+      ...requestHeaders
     },
-    sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
+    sanitizeRequestLog: { headers: { 'device-id': true, authorization: true } }
   })
 
   console.assert(response.ok, 'unexpected humo response', response)
@@ -215,18 +87,18 @@ export async function getHumoCards () {
  */
 export async function getVisaCards () {
   const endpoint = '/visa'
+  const requestHeaders = {
+    authorization: 'Bearer ' + ZenMoney.getData('apiAccessToken'),
+    'device-id': ZenMoney.getData('deviceId')
+  }
 
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'GET',
     headers: {
-      lang: 'ru',
-      'app-version': appVersion,
-      'User-Agent': userAgent,
-      'device-name': deviceName,
-      'device-id': ZenMoney.getData('deviceId'),
-      token: ZenMoney.getData('token')
+      ...defaultHeaders,
+      ...requestHeaders
     },
-    sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
+    sanitizeRequestLog: { headers: { 'device-id': true, authorization: true } }
   })
 
   console.assert(response.ok, 'unexpected visa response', response)
@@ -241,18 +113,18 @@ export async function getVisaCards () {
  */
 export async function getWallets () {
   const endpoint = '/wallet'
+  const requestHeaders = {
+    authorization: 'Bearer ' + ZenMoney.getData('apiAccessToken'),
+    'device-id': ZenMoney.getData('deviceId')
+  }
 
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'GET',
     headers: {
-      lang: 'ru',
-      'app-version': appVersion,
-      'User-Agent': userAgent,
-      'device-name': deviceName,
-      'device-id': ZenMoney.getData('deviceId'),
-      token: ZenMoney.getData('token')
+      ...defaultHeaders,
+      ...requestHeaders
     },
-    sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
+    sanitizeRequestLog: { headers: { 'device-id': true, authorization: true } }
   })
 
   console.assert(response.ok, 'unexpected wallet response', response)
@@ -267,18 +139,18 @@ export async function getWallets () {
  */
 export async function getAccounts () {
   const endpoint = '/account'
+  const requestHeaders = {
+    authorization: 'Bearer ' + ZenMoney.getData('apiAccessToken'),
+    'device-id': ZenMoney.getData('deviceId')
+  }
 
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'GET',
     headers: {
-      lang: 'ru',
-      'app-version': appVersion,
-      'User-Agent': userAgent,
-      'device-name': deviceName,
-      'device-id': ZenMoney.getData('deviceId'),
-      token: ZenMoney.getData('token')
+      ...defaultHeaders,
+      ...requestHeaders
     },
-    sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
+    sanitizeRequestLog: { headers: { 'device-id': true, authorization: true } }
   })
 
   console.assert(response.ok, 'unexpected account response', response)
@@ -296,6 +168,10 @@ export async function getAccounts () {
  */
 export async function getUzcardCardsTransactions (cards, fromDate, toDate) {
   let transactions = []
+  const requestHeaders = {
+    authorization: 'Bearer ' + ZenMoney.getData('apiAccessToken'),
+    'device-id': ZenMoney.getData('deviceId')
+  }
 
   for (const card of cards) {
     if (!ZenMoney.isAccountSkipped(card.id)) {
@@ -307,14 +183,10 @@ export async function getUzcardCardsTransactions (cards, fromDate, toDate) {
       const response = await fetchJson(baseUrl + endpoint, {
         method: 'GET',
         headers: {
-          lang: 'ru',
-          'app-version': appVersion,
-          'User-Agent': userAgent,
-          'device-name': deviceName,
-          'device-id': ZenMoney.getData('deviceId'),
-          token: ZenMoney.getData('token')
+          ...defaultHeaders,
+          ...requestHeaders
         },
-        sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
+        sanitizeRequestLog: { headers: { 'device-id': true, authorization: true } }
       })
 
       console.assert(response.ok, 'unexpected uzcard/history response', response)
@@ -337,6 +209,10 @@ export async function getUzcardCardsTransactions (cards, fromDate, toDate) {
  */
 export async function getHumoCardsTransactions (cards, fromDate, toDate) {
   let transactions = []
+  const requestHeaders = {
+    authorization: 'Bearer ' + ZenMoney.getData('apiAccessToken'),
+    'device-id': ZenMoney.getData('deviceId')
+  }
 
   for (const card of cards) {
     if (!ZenMoney.isAccountSkipped(card.id)) {
@@ -348,14 +224,10 @@ export async function getHumoCardsTransactions (cards, fromDate, toDate) {
       const response = await fetchJson(baseUrl + endpoint, {
         method: 'GET',
         headers: {
-          lang: 'ru',
-          'app-version': appVersion,
-          'User-Agent': userAgent,
-          'device-name': deviceName,
-          'device-id': ZenMoney.getData('deviceId'),
-          token: ZenMoney.getData('token')
+          ...defaultHeaders,
+          ...requestHeaders
         },
-        sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
+        sanitizeRequestLog: { headers: { 'device-id': true, authorization: true } }
       })
 
       console.assert(response.ok, 'unexpected humo/history response', response)
@@ -378,6 +250,10 @@ export async function getHumoCardsTransactions (cards, fromDate, toDate) {
  */
 export async function getVisaCardsTransactions (cards, fromDate, toDate) {
   let transactions = []
+  const requestHeaders = {
+    authorization: 'Bearer ' + ZenMoney.getData('apiAccessToken'),
+    'device-id': ZenMoney.getData('deviceId')
+  }
 
   for (const card of cards) {
     if (!ZenMoney.isAccountSkipped(card.id)) {
@@ -389,14 +265,10 @@ export async function getVisaCardsTransactions (cards, fromDate, toDate) {
       const response = await fetchJson(baseUrl + endpoint, {
         method: 'GET',
         headers: {
-          lang: 'ru',
-          'app-version': appVersion,
-          'User-Agent': userAgent,
-          'device-name': deviceName,
-          'device-id': ZenMoney.getData('deviceId'),
-          token: ZenMoney.getData('token')
+          ...defaultHeaders,
+          ...requestHeaders
         },
-        sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
+        sanitizeRequestLog: { headers: { 'device-id': true, authorization: true } }
       })
 
       console.assert(response.ok, 'unexpected visa/history response', response)
@@ -419,6 +291,10 @@ export async function getVisaCardsTransactions (cards, fromDate, toDate) {
  */
 export async function getWalletsTransactions (wallets, fromDate, toDate) {
   let transactions = []
+  const requestHeaders = {
+    authorization: 'Bearer ' + ZenMoney.getData('apiAccessToken'),
+    'device-id': ZenMoney.getData('deviceId')
+  }
 
   for (const wallet of wallets) {
     if (!ZenMoney.isAccountSkipped(wallet.id)) {
@@ -430,14 +306,10 @@ export async function getWalletsTransactions (wallets, fromDate, toDate) {
       const response = await fetchJson(baseUrl + endpoint, {
         method: 'GET',
         headers: {
-          lang: 'ru',
-          'app-version': appVersion,
-          'User-Agent': userAgent,
-          'device-name': deviceName,
-          'device-id': ZenMoney.getData('deviceId'),
-          token: ZenMoney.getData('token')
+          ...defaultHeaders,
+          ...requestHeaders
         },
-        sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
+        sanitizeRequestLog: { headers: { 'device-id': true, authorization: true } }
       })
 
       console.assert(response.ok, 'unexpected wallet/history response', response)
@@ -460,6 +332,10 @@ export async function getWalletsTransactions (wallets, fromDate, toDate) {
  */
 export async function getAccountsTransactions (accounts, fromDate, toDate) {
   let transactions = []
+  const requestHeaders = {
+    authorization: 'Bearer ' + ZenMoney.getData('apiAccessToken'),
+    'device-id': ZenMoney.getData('deviceId')
+  }
 
   for (const account of accounts) {
     if (!ZenMoney.isAccountSkipped(account.id)) {
@@ -471,14 +347,10 @@ export async function getAccountsTransactions (accounts, fromDate, toDate) {
       const response = await fetchJson(baseUrl + endpoint, {
         method: 'GET',
         headers: {
-          lang: 'ru',
-          'app-version': appVersion,
-          'User-Agent': userAgent,
-          'device-name': deviceName,
-          'device-id': ZenMoney.getData('deviceId'),
-          token: ZenMoney.getData('token')
+          ...defaultHeaders,
+          ...requestHeaders
         },
-        sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
+        sanitizeRequestLog: { headers: { 'device-id': true, authorization: true } }
       })
 
       console.assert(response.ok, 'unexpected account/statement response', response)
@@ -489,20 +361,4 @@ export async function getAccountsTransactions (accounts, fromDate, toDate) {
   }
 
   return transactions
-}
-
-/**
- * Нормализация номера телефона
- *
- * @param rawPhoneNumber номер телефона, предоставленный пользователем
- * @returns 12-значный номер телефона в формате 998901234567
- */
-function getPhoneNumber (rawPhoneNumber) {
-  const normalizedPhoneNumber = /^(?:\+?998)(\d{9})$/.exec(rawPhoneNumber.trim())
-
-  if (normalizedPhoneNumber) {
-    return '998' + normalizedPhoneNumber[1]
-  }
-
-  throw new InvalidPreferencesError()
 }

@@ -1,6 +1,5 @@
 import {
   AuthError,
-  coldAuth,
   getAccounts,
   getAccountsTransactions,
   getHumoCards,
@@ -12,6 +11,7 @@ import {
   getWallets,
   getWalletsTransactions
 } from './api'
+import { coldAuth, refreshToken } from './auth'
 
 export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
   /**
@@ -29,8 +29,19 @@ export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
     uzcardCards = await getUzcardCards()
   } catch (e) {
     if (e instanceof AuthError) {
-      await coldAuth(preferences)
-      uzcardCards = await getUzcardCards()
+      try {
+        console.info('try to refresh token')
+        await refreshToken(ZenMoney.getData('authRefreshToken'))
+        uzcardCards = await getUzcardCards()
+      } catch (ex) {
+        if (e instanceof AuthError) {
+          console.info('try to do cold auth')
+          await coldAuth(preferences)
+          uzcardCards = await getUzcardCards()
+        } else {
+          throw e
+        }
+      }
     } else {
       throw e
     }
