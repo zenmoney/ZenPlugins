@@ -314,6 +314,47 @@ describe('convertTransaction', () => {
         ],
         comment: null
       }
+    ],
+    [
+      {
+        transDate: 1699943744000,
+        amount: '-2.00',
+        merchantName: 'VISA DIRECT',
+        transType: 'Покупки',
+        fee: '2.00',
+        currency: {
+          name: 'USD',
+          scale: 2
+        },
+        approvalCode: '974628',
+        back: true,
+        transCode: '205',
+        reversed: false,
+        transAmount: '-2.00',
+        transCurrency: 'USD',
+        conversionRate: '1'
+      },
+      {
+        date: new Date(1699943744000),
+        hold: false,
+        merchant: {
+          city: null,
+          country: null,
+          location: null,
+          mcc: null,
+          title: 'VISA DIRECT'
+        },
+        movements: [
+          {
+            account: { id: 'card' },
+            fee: 0,
+            id: null,
+            invoice: null,
+            sum: -2
+          }
+        ],
+        comment: null
+      }
     ]
   ])('converts outcome VISA', (rawTransaction, transaction) => {
     const card = {

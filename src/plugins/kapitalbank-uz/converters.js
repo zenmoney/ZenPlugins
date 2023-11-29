@@ -194,13 +194,17 @@ export function convertVisaCardTransaction (card, rawTransaction) {
   if (amount === 0) {
     return null
   }
-  const fee = card.instrument === rawTransaction.transCurrency
+  let fee = card.instrument === rawTransaction.transCurrency
     ? -Math.abs(Number(rawTransaction.fee))
     : -Math.abs(Math.round(Number(rawTransaction.fee) * Number(rawTransaction.conversionRate) * 100) / 100)
   if (fee) {
-    amount = Math.round((amount - fee) * 100) / 100
+    const amountWithoutFee = Math.round((amount - fee) * 100) / 100
+    if (Math.abs(amountWithoutFee) >= 0.01) {
+      amount = amountWithoutFee
+    } else {
+      fee = 0
+    }
   }
-
   const invoice = rawTransaction.transAmount && rawTransaction.transCurrency && rawTransaction.transCurrency !== rawTransaction.currency.name
     ? {
         sum: parseFloat(rawTransaction.transAmount),
