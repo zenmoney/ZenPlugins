@@ -150,7 +150,7 @@ export async function fetchAccountTransactions (accountNumber: string, productCo
     apiTransaction.Details = await fetchTransactionDetails(apiTransaction.TransactionID, auth)
   }
 
-  return response.body.length > 0 ? response.body[0] : []
+  return apiTransactions
 }
 
 async function fetchTransactionDetails (transactionId: string, auth: Auth): Promise<GetTransactionDetailsResponse> {
