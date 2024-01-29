@@ -17,7 +17,7 @@ describe('RSD in progress', () => {
       '265057000005597777')).toEqual(
       {
         comment: null,
-        date: new Date('2024-01-18T17:33:32+0100'),
+        date: new Date('2024-01-18T17:33:32'),
         hold: true,
         merchant: {
           fullTitle: 'AROMA 7                  Beograd      RS',

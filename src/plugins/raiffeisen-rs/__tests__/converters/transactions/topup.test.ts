@@ -181,7 +181,7 @@ describe('Account topup', () => {
       }
     })).toEqual({
       comment: 'Uplata na avista devizni račun 265057000005597777 uplatilac  LUCKY MAN',
-      date: new Date('2023-12-29T23:00:00.000Z'),
+      date: new Date('2023-12-30T00:00:00'),
       hold: false,
       merchant: {
         fullTitle: 'Uplata avista depozita',

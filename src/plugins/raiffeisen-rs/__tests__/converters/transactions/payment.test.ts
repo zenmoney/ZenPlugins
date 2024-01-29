@@ -181,7 +181,7 @@ describe('FX payment', () => {
       }
     })).toEqual({
       comment: null,
-      date: new Date('2024-01-06T23:00:00.000Z'),
+      date: new Date('2024-01-07T00:00:00'),
       hold: false,
       merchant: {
         fullTitle: 'CLESS TICKET ATM MILANO ITA MILANO',

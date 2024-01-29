@@ -359,7 +359,7 @@ describe('FX exchange', () => {
       }
     })).toEqual({
       comment: 'EB 1138317777 - kupoprodaja efektive preko WEB-a',
-      date: new Date('2024-01-24T23:00:00.000Z'),
+      date: new Date('2024-01-25T00:00:00'),
       hold: false,
       merchant: {
         fullTitle: 'Elektronsko bankarstvo - prodaja efektive',
