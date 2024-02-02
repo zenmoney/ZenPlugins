@@ -150,7 +150,7 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
 }
 
 export async function fetchAccounts ({ accessToken }, { inn }) {
-  const response = await callGate('https://business.tinkoff.ru/openapi/api/v2/bank-accounts', {
+  const response = await callGate('https://business.tinkoff.ru/openapi/api/v4/bank-accounts', {
     method: 'GET',
     headers: {
       Host: 'business.tinkoff.ru',
