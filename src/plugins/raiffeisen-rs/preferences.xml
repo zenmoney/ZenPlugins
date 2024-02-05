@@ -15,7 +15,6 @@
         inputType="textPassword"
         title="Password"
         dialogTitle="Password"
-        dialogMessage="The password from the bank and the pin code from the application are different passwords. If you do not remember your Internet banking password, restore it on the bank's website."
         positiveButtonText="OK"
         negativeButtonText="Cancel"
         summary="||***********"
