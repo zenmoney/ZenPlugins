@@ -1,5 +1,5 @@
 import '../../polyfills/webAssembly'
-import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
+import { fetch, fetchJson, FetchOptions, FetchResponse } from '../../common/network'
 import { InvalidLoginOrPasswordError } from '../../errors'
 import { parse, splitCookiesString } from 'set-cookie-parser'
 import { AccountBalanceResponse, Auth, GetAccountTransactionsResponse, GetTransactionDetailsResponse, LoginResponse, Preferences } from './models'
@@ -27,11 +27,11 @@ async function getSaltedPassword (login: string, password: string): Promise<stri
 }
 
 export async function fetchAuthorization ({ login, password }: Preferences): Promise<Auth> {
-  const isPasswordSalted = (await fetchApi('RetailLoginService.svc/SaltedPassword', {
+  const isPasswordSalted = (await fetch(baseUrl + 'RetailLoginService.svc/SaltedPassword', {
     method: 'POST',
-    body: {
+    body: JSON.stringify({
       userName: login
-    },
+    }),
     sanitizeRequestLog: {
       body: {
         userName: true
@@ -40,7 +40,7 @@ export async function fetchAuthorization ({ login, password }: Preferences): Pro
     sanitizeResponseLog: {
       headers: { 'set-cookie': true }
     }
-  })).body === true
+  })).body === 'true'
 
   const response = await fetchApi('RetailMobileLoginService.svc/Login', {
     method: 'POST',
