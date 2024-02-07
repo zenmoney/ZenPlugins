@@ -1,3 +1,4 @@
+import '../../polyfills/webAssembly'
 import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
 import { InvalidLoginOrPasswordError } from '../../errors'
 import { parse, splitCookiesString } from 'set-cookie-parser'
