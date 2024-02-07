@@ -1,5 +1,5 @@
 import '../../polyfills/webAssembly'
-import { fetch, fetchJson, FetchOptions, FetchResponse } from '../../common/network'
+import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
 import { InvalidLoginOrPasswordError } from '../../errors'
 import { parse, splitCookiesString } from 'set-cookie-parser'
 import { AccountBalanceResponse, Auth, GetAccountTransactionsResponse, GetTransactionDetailsResponse, LoginResponse, Preferences } from './models'
@@ -10,7 +10,13 @@ import moment from 'moment'
 const baseUrl = 'https://rol.raiffeisenbank.rs/Retail/Protected/Services/'
 
 async function fetchApi (url: string, options?: FetchOptions): Promise<FetchResponse> {
-  return await fetchJson(baseUrl + url, options ?? {})
+  return await fetchJson(baseUrl + url,
+    {
+      // needs for android,
+      // for some reason it fails to farse JSON with whitespaces in the beginning
+      parse: (body: string) => JSON.parse(body.trim()),
+      ...options
+    })
 }
 
 async function getSaltedPassword (login: string, password: string): Promise<string> {
@@ -27,11 +33,11 @@ async function getSaltedPassword (login: string, password: string): Promise<stri
 }
 
 export async function fetchAuthorization ({ login, password }: Preferences): Promise<Auth> {
-  const isPasswordSalted = (await fetch(baseUrl + 'RetailLoginService.svc/SaltedPassword', {
+  const isPasswordSalted = (await fetchApi('RetailLoginService.svc/SaltedPassword', {
     method: 'POST',
-    body: JSON.stringify({
+    body: {
       userName: login
-    }),
+    },
     sanitizeRequestLog: {
       body: {
         userName: true
@@ -40,7 +46,7 @@ export async function fetchAuthorization ({ login, password }: Preferences): Pro
     sanitizeResponseLog: {
       headers: { 'set-cookie': true }
     }
-  })).body === 'true'
+  })).body === true
 
   const response = await fetchApi('RetailMobileLoginService.svc/Login', {
     method: 'POST',
