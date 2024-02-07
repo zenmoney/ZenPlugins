@@ -74,7 +74,7 @@ export async function fetchAuthorization ({ login, password }: Preferences): Pro
     }
   }) as FetchResponse & { body: LoginResponse, headers: { 'set-cookie': string } }
 
-  if (response.body.Ticket === null || response.body.Ticket.length === 0) {
+  if (response.body.Ticket == null || response.body.Ticket.length === 0) {
     throw new InvalidLoginOrPasswordError()
   }
 
