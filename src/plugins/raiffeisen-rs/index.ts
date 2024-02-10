@@ -1,6 +1,6 @@
 import { ScrapeFunc, Transaction } from '../../types/zenmoney'
 import { fetchAllAccounts, fetchAccountTransactions, fetchAuthorization, fetchTransactionsInProgress } from './fetchApi'
-import { convertAccounts, convertTransaction, convertTransfer, convertTransactionInProgress } from './converters'
+import { convertAccounts, convertTransactionInProgress, convertTransactions } from './converters'
 import { Auth, GetAccountTransactionsResponse, Preferences, RaiffAccount } from './models'
 
 export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, toDate }) => {
@@ -30,19 +30,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
     }
   }
 
-  for (const apiTransaction of apiTransactions) {
-    const pairTransactionIndex = apiTransaction.Details.DebtorAccount !== null &&
-    apiTransaction.Details.DebtorAccount?.length > 0
-      ? apiTransactions.findIndex((t) => t.TransactionID !== apiTransaction.TransactionID &&
-          t.Details.s_OrderNumber === apiTransaction.Details.s_OrderNumber)
-      : -1
-    if (pairTransactionIndex !== -1) {
-      transactions.push(convertTransfer(apiTransaction, apiTransactions[pairTransactionIndex]))
-      apiTransactions.splice(pairTransactionIndex, 1)
-    } else {
-      transactions.push(convertTransaction(apiTransaction))
-    }
-  }
+  transactions.push(...convertTransactions(apiTransactions))
 
   return {
     accounts,
