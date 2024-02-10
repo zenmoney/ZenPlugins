@@ -2,6 +2,8 @@ import { AccountType, Transaction } from '../../types/zenmoney'
 import { AccountBalanceResponse, GetAccountTransactionsResponse, RaiffAccount } from './models'
 import moment from 'moment'
 
+const TRANSFER_TRANSACTION_TYPES = ['ExchSell', 'ExchBuy']
+
 export function convertAccounts (apiAccounts: AccountBalanceResponse[]): RaiffAccount[] {
   const accounts: RaiffAccount[] = []
   for (const apiAccount of apiAccounts) {
@@ -133,4 +135,26 @@ export function convertTransactionInProgress (transaction: string[], accountNumb
       : null,
     comment: null
   }
+}
+
+export function convertTransactions (apiTransactions: GetAccountTransactionsResponse[]): Transaction[] {
+  const transactions: Transaction[] = []
+  for (const apiTransaction of apiTransactions) {
+    const hasPairTransaction = TRANSFER_TRANSACTION_TYPES.includes(apiTransaction.TransactionType) &&
+      apiTransaction.Details.DebtorAccount !== null &&
+      apiTransaction.Details.DebtorAccount?.length > 0
+    const pairTransactionIndex = hasPairTransaction
+      ? apiTransactions.findIndex((t) => t.TransactionID !== apiTransaction.TransactionID &&
+          t.Details.s_OrderNumber === apiTransaction.Details.s_OrderNumber)
+      : -1
+
+    if (pairTransactionIndex !== -1) {
+      transactions.push(convertTransfer(apiTransaction, apiTransactions[pairTransactionIndex]))
+      apiTransactions.splice(pairTransactionIndex, 1)
+    } else {
+      transactions.push(convertTransaction(apiTransaction))
+    }
+  }
+
+  return transactions
 }

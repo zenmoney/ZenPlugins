@@ -91,7 +91,7 @@ export interface GetTransactionDetailsResponse {
   c_AuthorizationID: string | null
   s_CurrencyCode: string
   c_Reference: number | null
-  s_PaymentBasis: number
+  s_PaymentBasis: number | null
   s_Group: string
   c_Date_tx: string | null
   s_ConfirmationDate: string
