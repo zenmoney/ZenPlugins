@@ -10,7 +10,7 @@ async function fetchUrl (url: string, options: Record<string, unknown>): Promise
     ...{
       sanitizeResponseLog: { headers: { 'set-cookie': true } },
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
       }
     }
   }) as FetchResponse & { headers: Record<string, string> }
