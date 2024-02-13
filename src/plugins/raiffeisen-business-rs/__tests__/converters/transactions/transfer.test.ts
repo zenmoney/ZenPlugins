@@ -109,7 +109,7 @@ describe('Test transfer', () => {
       )).toEqual([
       {
         hold: false,
-        date: new Date('2024-01-02T23:00:00.000Z'),
+        date: new Date('2024-01-03T00:00:00'),
         movements: [
           {
             id: '5897240037389539',
