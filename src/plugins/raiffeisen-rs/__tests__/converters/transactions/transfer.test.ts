@@ -890,7 +890,7 @@ describe('Test transfer', () => {
       )).toEqual([
       {
         hold: false,
-        date: new Date('2024-02-01T23:00:00.000Z'),
+        date: new Date('2024-02-02T00:00:00'),
         movements: [
           {
             id: '1941240332404852#7#12#93212325063',
@@ -911,7 +911,7 @@ describe('Test transfer', () => {
       },
       {
         hold: false,
-        date: new Date('2024-02-01T23:00:00.000Z'),
+        date: new Date('2024-02-02T00:00:00'),
         movements: [
           {
             id: '1941240332404852#3#12#93212325063',
@@ -932,7 +932,7 @@ describe('Test transfer', () => {
       },
       {
         hold: false,
-        date: new Date('2024-02-01T23:00:00.000Z'),
+        date: new Date('2024-02-02T00:00:00'),
         movements: [
           {
             id: '1941240332395195#11##',
@@ -962,7 +962,7 @@ describe('Test transfer', () => {
       },
       {
         hold: false,
-        date: new Date('2024-02-01T23:00:00.000Z'),
+        date: new Date('2024-02-02T00:00:00'),
         movements: [
           {
             id: '1941240338338940#1#12#93212325063',
