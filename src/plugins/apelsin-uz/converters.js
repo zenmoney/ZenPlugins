@@ -236,6 +236,68 @@ function parseInnerTransfer (rawTransaction, transaction, invoice, fee) {
 }
 
 /**
+ * Конвертер транзакции по карте платежной системы Mastercard из формата банка в формат Дзенмани
+ *
+ * @param cardId идентификатор карты
+ * @param rawTransaction транзакция в формате банка
+ * @returns транзакция в формате Дзенмани
+ */
+export function convertMasterCardTransaction (card, rawTransaction) {
+  let amount = Number(rawTransaction.amount)
+  let fee = Number(rawTransaction.fee)
+
+  if (amount === 0) {
+    return null
+  }
+
+  /*
+    Если сумма `amount` положительная, т.е. доходная, то минусуем комиссию, таким образом сумма пополнения уменьшится
+    Если сумма `amount` отрицательная, т.е. расходная, то тоже минисуем комиссию, таким образом сумма расхода увеличится
+
+    Вообще сумма `fee` возвращается всегда положительной с API, т.е. это точно не кэшбек, а расход, но всё равно на всякий случай берем модуль числа
+  */
+  if (Math.abs(fee) > Math.abs(amount)) {
+    amount -= Math.abs(fee)
+    fee = 0
+  }
+
+  const invoice = {
+    sum: amount,
+    instrument: rawTransaction.currency.name
+  }
+
+  const transaction = {
+    date: new Date(rawTransaction.transDate),
+    hold: false,
+    merchant: rawTransaction.back === false
+      ? {
+          country: null,
+          city: null,
+          title: rawTransaction.merchantName,
+          mcc: null,
+          location: null
+        }
+      : null,
+    movements: [
+      {
+        id: null,
+        account: { id: card.id },
+        invoice: invoice.instrument === card.instrument ? null : invoice,
+        sum: invoice.instrument === card.instrument ? invoice.sum : null,
+        fee: fee ? -fee : 0
+      }
+    ],
+    comment: null
+  };
+  [
+    parseInnerTransfer,
+    parseOuterTransfer
+  ].some(parser => parser(rawTransaction, transaction, invoice, fee))
+
+  return transaction
+}
+
+/**
  * Конвертер транзакции по кошельку из формата банка в формат Дзенмани
  *
  * @param walletId идентификатор кошелька

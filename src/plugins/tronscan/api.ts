@@ -2,6 +2,9 @@ import qs from 'querystring'
 import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
 import get from '../../types/get'
 import { SUPPORTED_TOKENS } from './config'
+import { delay } from '../../common/utils'
+
+const MAX_RPS = 3
 
 export interface Preferences {
   wallets: string
@@ -26,8 +29,9 @@ export interface TokenTransfer {
 
 export class TronscanApi {
   private readonly baseUrl: string
+  private activeList: Array<Promise<unknown>> = []
 
-  constructor (options: {baseUrl: string}) {
+  constructor (options: { baseUrl: string }) {
     this.baseUrl = options.baseUrl
   }
 
@@ -36,15 +40,48 @@ export class TronscanApi {
     options?: FetchOptions,
     predicate?: (x: FetchResponse) => boolean
   ): Promise<FetchResponse> {
+    if (this.activeList.length < MAX_RPS) {
+      const request = this.fetchInner(url, options, predicate)
+
+      const waiter = request
+        .then(async () => await delay(1000))
+        .catch(async () => await delay(1000))
+        .then(() => {
+          this.activeList = this.activeList.filter(item => item !== waiter)
+        })
+
+      this.activeList.push(waiter)
+
+      const result = await request
+
+      return result
+    }
+
+    await Promise.race(this.activeList)
+    return await this.fetchApi(url, options, predicate)
+  }
+
+  private async fetchInner (
+    url: string,
+    options?: FetchOptions,
+    predicate?: (x: FetchResponse) => boolean
+  ): Promise<FetchResponse> {
     const response = await fetchJson(this.baseUrl + url, options)
 
     if (predicate) {
-      this.validateResponse(response, response => !get(response.body, 'error') && predicate(response))
+      this.validateResponse(
+        response,
+        response => !get(response.body, 'error') && predicate(response)
+      )
     }
+
     return response
   }
 
-  private validateResponse (response: FetchResponse, predicate?: (x: FetchResponse) => boolean): void {
+  private validateResponse (
+    response: FetchResponse,
+    predicate?: (x: FetchResponse) => boolean
+  ): void {
     console.assert(!predicate || predicate(response), 'non-successful response')
   }
 
@@ -56,7 +93,7 @@ export class TronscanApi {
       })}`,
       undefined,
       (res) => typeof res.body === 'object' && res.body != null && 'data' in res.body
-    ) as FetchResponse & {body: {data: Array<Record<string, unknown>>}}
+    ) as FetchResponse & { body: { data: Array<Record<string, unknown>> } }
 
     return response.body.data
       .filter(t => SUPPORTED_TOKENS.includes(t.tokenAbbr as string))
@@ -76,14 +113,14 @@ export class TronscanApi {
 
     while (true) {
       const response = await this.fetchApi(
-    `token_trc20/transfers?${qs.stringify({
-      relatedAddress: wallet,
-      start_timestamp: fromDate.valueOf(),
-      end_timestamp: toDate?.valueOf(),
-      limit,
-      start,
-      sort: '-timestamp'
-    })}`) as FetchResponse & {body: {total: number, token_transfers: Array<Record<string, unknown>>}}
+        `token_trc20/transfers?${qs.stringify({
+          relatedAddress: wallet,
+          start_timestamp: fromDate.valueOf(),
+          end_timestamp: toDate?.valueOf(),
+          limit,
+          start,
+          sort: '-timestamp'
+        })}`) as FetchResponse & { body: { total: number, token_transfers: Array<Record<string, unknown>> } }
 
       transfers.push(...response.body.token_transfers.map(t => ({
         transaction_id: t.transaction_id as string,

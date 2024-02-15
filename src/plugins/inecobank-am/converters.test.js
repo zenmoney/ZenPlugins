@@ -63,7 +63,7 @@ n/n,Number,Date,Currency,Income,Expense,Receiver/Payer Account,Receiver/Payer,De
     expect(result).toEqual([{
       _fromAccount: ACCOUNT1,
       comment: 'int, trans, InecoOnline, 08/02/2021 12:24:25',
-      date: new Date(1612787065000),
+      date: new Date('2021-02-08T12:24:25'),
       id: '498536382',
       income: 30000,
       incomeAccount: ACCOUNT1,
@@ -73,7 +73,7 @@ n/n,Number,Date,Currency,Income,Expense,Receiver/Payer Account,Receiver/Payer,De
     }, {
       _fromAccount: '123400001',
       comment: 'int, trans, InecoOnline, 05/02/2021 18:43:09',
-      date: new Date(1612550589000),
+      date: new Date('2021-02-05T18:43:09'),
       id: '498277410',
       income: 49733.7,
       incomeAccount: ACCOUNT1,
@@ -89,7 +89,7 @@ n/n,Number,Date,Currency,Income,Expense,Receiver/Payer Account,Receiver/Payer,De
     expect(result).toEqual([{
       _fromAccount: ACCOUNT1,
       comment: 'int, trans 779890.10 AMD / 521 = 1496.91 USD, InecoOnline, 29/01/2021 13:35:32',
-      date: new Date(1611927332000),
+      date: new Date('2021-01-29T13:35:32'),
       id: '495501315',
       income: 1496.91,
       incomeAccount: ACCOUNT_USD,

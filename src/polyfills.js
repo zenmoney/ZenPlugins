@@ -111,3 +111,10 @@ if (!ZenMoney.locale) {
 if (!ZenMoney.logEvent) {
   ZenMoney.logEvent = () => {}
 }
+
+if (ZenMoney.features?.networkCallbacks && (
+  !ZenMoney.application?.platform ||
+  (ZenMoney.application?.platform === 'ios' && !(parseInt(ZenMoney.application?.build) >= 489)) ||
+  (ZenMoney.application?.platform === 'android' && !(parseInt(ZenMoney.application?.build) >= 875)))) {
+  ZenMoney.features.networkCallbacks = false
+}
