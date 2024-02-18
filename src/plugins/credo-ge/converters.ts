@@ -3,13 +3,16 @@ import { getNumber, getOptNumber, getOptString, getString, getBoolean } from '..
 import { ConvertResult, Account as CredoAccount, AccountType as CredoAccountType, Transaction as CredoTransaction, TransactionType as CredoTransactionType } from './models'
 
 export function convertAccounts (apiAccounts: CredoAccount[]): Account[] {
+  console.log('>>> Converting accounts')
   const accounts: Account[] = []
 
   for (const apiAccount of apiAccounts) {
     const res = convertAccount(apiAccount)
-    if (res != null) {
-      accounts.push(res)
+    if (!res) {
+      console.error('Error converting account: ' + apiAccount)
+      throw new TemporaryError('Error converting account!')
     }
+    accounts.push(res)
   }
   return accounts
 }
@@ -67,18 +70,18 @@ function convertAccount (apiAccount: CredoAccount): Account {
 
 export function convertTransaction (apiTransaction: CredoTransaction, account: Account): Transaction {
   const description = getOptString(apiTransaction, 'description')
-  const credit = getNumber(apiTransaction, 'credit')
-  const debit = getNumber(apiTransaction, 'debit')
+  const credit = apiTransaction.credit ? getNumber(apiTransaction, 'credit') : null
+  const debit = apiTransaction.debit ? getNumber(apiTransaction, 'debit') : null
   const amount = credit ? credit : -1*debit
   const invoice = getAmountFromDescription(description)  // TODO: rewrite getAmountFromDescription
   const isCardBlock = getBoolean(apiTransaction, 'isCardBlock')
 
   return {
     hold: isCardBlock,
-    date: new Date(getString(apiTransaction, 'operationTime')),
+    date: new Date(getString(apiTransaction, 'operationDateTime')),
     movements: [
       {
-        id: getOptString(apiTransaction, 'id') ?? null,
+        id: getOptString(apiTransaction, 'transactionId') ?? null,
         account: { id: account.id },
         invoice: invoice ? invoice : null,
         sum: amount,

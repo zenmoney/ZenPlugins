@@ -27,5 +27,6 @@ export async function fetchAccounts (session: Session): Promise<unknown[]> {
 }
 
 export async function fetchTransactions (session: Session, product: Product, fromDate: Date, toDate: Date): Promise<unknown[]> {
-  return await fetchProductTransactions(product, session)
+  console.log('>>> Fethching transactions')
+  return await fetchProductTransactions(product, session, fromDate, toDate)
 }

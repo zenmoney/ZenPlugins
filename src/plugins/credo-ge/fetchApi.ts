@@ -44,12 +44,51 @@ export async function fetchAllAccounts (session: Session): Promise<unknown[]> {
   return accounts
 }
 
-export async function fetchProductTransactions ({ id, transactionNode }: Product, session: Session): Promise<unknown[]> {
-/*   const response = await fetchApi(`transactions_${transactionNode}${id}.json`)
- *    *
- *   assert(isArray(response.body), 'cant get transactions array', response)
- *   return response.body */
-  return ['transaction1', 'transaction2']
+export async function fetchProductTransactions ({ id, transactionNode }: Product, session: Session, fromDate: Date, toDate: Date): Promise<unknown[]> {
+  /*
+  {
+    "operationName": "transactionPagingList",
+    "query": "query transactionPagingList($data: TransactionFilterGType!) {transactionPagingList(data: $data) {  pageCount  totalItemCount  itemList {    credit    currency    transactionType    transactionId    debit    description    isCardBlock    operationDateTime    stmtEntryId    canRepeat    canReverse    amountEquivalent    operationType    operationTypeId  }}\n}\n",
+    "variables": {
+      "data": {
+        "accountIdList": [
+          27793452
+        ],
+        "dateFrom": "2024-02-17T06:03:27.000Z",
+        "dateTo": "2024-02-17T06:03:27.000Z",
+        "onlyCanBeReversedOrRepeated": false,
+        "pageNumber": 1,
+        "pageSize": 15
+      }
+    }
+  }
+   */
+  const fetchOptions: FetchOptions = {
+    method: 'POST',
+    headers: {Authorization: 'Bearer ' + session.auth.accessToken},
+    body: {
+      operationName: 'transactionPagingList',
+      query: 'query transactionPagingList($data: TransactionFilterGType!) {transactionPagingList(data: $data) { pageCount totalItemCount itemList { credit currency transactionType transactionId debit description isCardBlock operationDateTime stmtEntryId canRepeat canReverse amountEquivalent operationType operationTypeId }} }',
+      variables: {
+        data: {
+          accountIdList: [
+            Number(id)
+          ],
+          dateFrom: fromDate,
+          dateTo: toDate,
+          onlyCanBeReversedOrRepeated: false,
+          pageNumber: 1,
+          pageSize: 30
+        }
+      }
+    }
+  }
+  const response = await fetchApi(graphqlPath, fetchOptions)
+
+  const transactions = response.body?.data?.transactionPagingList?.itemList
+  assert(isArray(transactions), 'cant get transactions array', response)
+  console.log('Transactions: ', transactions)
+  return transactions
 }
 
 export async function authInitiate({login, password}: Preferences): Promise<AuthInitiateResponse> {
