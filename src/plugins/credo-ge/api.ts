@@ -8,8 +8,9 @@ export async function login (preferences: Preferences, auth?: Auth): Promise<Ses
   }
   /* const access_token = await ZenMoney.readLine("Enter JWT access_token from 'Authorization' header") */
 
-  preferences.login = await ZenMoney.readLine('Credo Bank username')
-  preferences.password = await ZenMoney.readLine('Credo Bank password')
+  if(!preferences.login || !preferences.password) {
+    throw new InvalidLoginOrPasswordError()
+  }
   const initiate_response = await authInitiate(preferences)
   const operationId = initiate_response.data.operationId
   const init_2fa_response = await initiate2FA(operationId)
@@ -26,7 +27,7 @@ export async function fetchAccounts (session: Session): Promise<unknown[]> {
   return await fetchAllAccounts(session)
 }
 
-export async function fetchTransactions (session: Session, product: Product, fromDate: Date, toDate: Date): Promise<unknown[]> {
+export async function fetchTransactions (session: Session, account_id: string, fromDate: Date, toDate: Date): Promise<unknown[]> {
   console.log('>>> Fethching transactions')
-  return await fetchProductTransactions(product, session, fromDate, toDate)
+  return await fetchProductTransactions(account_id, session, fromDate, toDate)
 }

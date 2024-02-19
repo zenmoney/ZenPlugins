@@ -1,6 +1,4 @@
 import { fetchJson, FetchOptions, FetchResponse} from '../../common/network'
-import { getString } from '../../types/get'
-import { InvalidLoginOrPasswordError } from '../../errors'
 import { generateRandomString } from '../../common/utils'
 import { Preferences, Product, Session, AuthInitiatePayload, LanguageType, AuthOperationSendChallengeResponse, AuthConfirmResponse } from './models'
 import { isArray } from 'lodash'
@@ -18,15 +16,6 @@ async function fetchApi (url: string, options?: FetchOptions): Promise<FetchResp
   return await fetchJson(IEBaseUrl + url, options ?? {})
 }
 
-export async function fetchAuthorization ({ login, password }: Preferences): Promise<{accessToken: string}> {
-  // It happens on server side
-  if (login !== 'example' || password !== 'example') {
-    throw new InvalidLoginOrPasswordError()
-  }
-  const response = await fetchApi('auth.json')
-  return { accessToken: getString(response.body, 'access_token') }
-}
-
 export async function fetchAllAccounts (session: Session): Promise<unknown[]> {
   const fetch_options: FetchOptions = {
     method: 'POST',
@@ -40,11 +29,11 @@ export async function fetchAllAccounts (session: Session): Promise<unknown[]> {
 
   const accounts = response.body?.data?.accounts
   assert(isArray(accounts), 'cant get accounts array', response)
-  console.log('Accounts: ', accounts)
+  /* console.log('Accounts: ', accounts) */
   return accounts
 }
 
-export async function fetchProductTransactions ({ id, transactionNode }: Product, session: Session, fromDate: Date, toDate: Date): Promise<unknown[]> {
+export async function fetchProductTransactions (account_id: string, session: Session, fromDate: Date, toDate: Date): Promise<unknown[]> {
   /*
   {
     "operationName": "transactionPagingList",
@@ -63,31 +52,43 @@ export async function fetchProductTransactions ({ id, transactionNode }: Product
     }
   }
    */
-  const fetchOptions: FetchOptions = {
-    method: 'POST',
-    headers: {Authorization: 'Bearer ' + session.auth.accessToken},
-    body: {
-      operationName: 'transactionPagingList',
-      query: 'query transactionPagingList($data: TransactionFilterGType!) {transactionPagingList(data: $data) { pageCount totalItemCount itemList { credit currency transactionType transactionId debit description isCardBlock operationDateTime stmtEntryId canRepeat canReverse amountEquivalent operationType operationTypeId }} }',
-      variables: {
-        data: {
-          accountIdList: [
-            Number(id)
-          ],
-          dateFrom: fromDate,
-          dateTo: toDate,
-          onlyCanBeReversedOrRepeated: false,
-          pageNumber: 1,
-          pageSize: 30
+  const chunkSize = 30
+  let fetchOptions: FetchOptions
+  let pageNumber = 1
+  let transactions = []
+
+  while (true) {
+    fetchOptions = {
+      method: 'POST',
+      headers: {Authorization: 'Bearer ' + session.auth.accessToken},
+      body: {
+        operationName: 'transactionPagingList',
+        query: 'query transactionPagingList($data: TransactionFilterGType!) {transactionPagingList(data: $data) { pageCount totalItemCount itemList { credit currency transactionType transactionId debit description isCardBlock operationDateTime stmtEntryId canRepeat canReverse amountEquivalent operationType operationTypeId }} }',
+        variables: {
+          data: {
+            accountIdList: [
+              Number(account_id)
+            ],
+            dateFrom: fromDate,
+            dateTo: toDate,
+            onlyCanBeReversedOrRepeated: false,
+            pageNumber: pageNumber,
+            pageSize: chunkSize
+          }
         }
       }
     }
-  }
-  const response = await fetchApi(graphqlPath, fetchOptions)
+    const response = await fetchApi(graphqlPath, fetchOptions)
 
-  const transactions = response.body?.data?.transactionPagingList?.itemList
-  assert(isArray(transactions), 'cant get transactions array', response)
-  console.log('Transactions: ', transactions)
+    const chunkTransactions = response.body?.data?.transactionPagingList?.itemList
+
+    assert(isArray(chunkTransactions), 'cant get transactions array', response)
+    transactions = transactions.concat(chunkTransactions)
+    if(chunkTransactions.length < chunkSize) {
+      break
+    }
+    pageNumber++
+  }
   return transactions
 }
 
