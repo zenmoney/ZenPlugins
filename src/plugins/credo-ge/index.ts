@@ -28,7 +28,5 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
 
   console.log('scrape result: ', { accounts, transactions })
 
-  throw new TemporaryError({accounts})
-
   return { accounts, transactions }
 }
