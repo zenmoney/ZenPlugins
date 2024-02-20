@@ -6,7 +6,7 @@ import { parseDateAndTimeFromPdfText, parseDateFromPdfText, parseFormattedNumber
 
 export async function parsePdfVakifStatement (): Promise<null | Array<{ account: VakifStatementAccount, transactions: VakifStatementTransaction[] }>> {
   const blob = await ZenMoney.pickDocuments(['application/pdf'], true)
-  if (!blob || !blob.length) {
+  if (blob == null || !blob.length) {
     throw new TemporaryError('Выберите один или несколько файлов в формате .pdf')
   }
   for (const { size, type } of blob) {

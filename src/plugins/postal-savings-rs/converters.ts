@@ -11,13 +11,17 @@ function parseSum (s: string): number {
 }
 
 function descriptionCleanup (s: string): string {
+  const substrToRemove = ['ISPLATA VISA', 'UPLATA VISA']
+
   const decode = function (str: string): string {
     return str.replace(/&#(\d+);/g, function (match: string, dec): string {
       return String.fromCharCode(dec)
     })
   }
+  const decodedStr = decode(s).replace('&nbsp;', ' ').trim()
+  const strWithoutGarbage = substrToRemove.reduce((acc, s) => acc.replace(s, ''), decodedStr).trim()
 
-  return decode(s).replace('&nbsp;', ' ').replace('ISPLATA VISA', '').replace('UPLATA VISA', '').trim()
+  return strWithoutGarbage.length > 0 ? strWithoutGarbage : decodedStr
 }
 
 export function convertAccount (account: AccountDetails, data: string): Account {
