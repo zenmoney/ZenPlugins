@@ -1,6 +1,5 @@
-export declare class ZPAPIError {
+export declare class ZPAPIError extends Error {
   message: string
-  stack: unknown[]
   fatal: boolean
   allowRetry: boolean
   toString (): string

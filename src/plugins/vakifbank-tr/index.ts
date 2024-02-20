@@ -10,7 +10,7 @@ import { parsePdfVakifStatement } from './api'
 export const scrape: ScrapeFunc<Preferences> = async ({ fromDate, isFirstRun }) => {
   console.log(fromDate)
   let auth = ZenMoney.getData('auth') as Auth | undefined
-  if (!auth || auth.deviceId === '') {
+  if (auth == null || auth.deviceId === '') {
     auth = {
       deviceId: generateRandomString(16, '0123456789abcdef')
     }
