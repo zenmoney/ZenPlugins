@@ -23,7 +23,8 @@ export async function fetchAllAccounts (session: Session): Promise<unknown[]> {
     body: {
       query: "{accounts {hasActiveWallet  accountId  accountNumber  account  currency  categoryId  category  hasCard  status  type  cssAccountId  availableBalance  currencyPriority  availableBalanceEqu  isDefault  isHidden  rate  activationDate  allowedOperations}}",
       variables: {}
-    }
+    },
+    sanitizeRequestLog: {headers: {Authorization: true}}
   }
   const response = await fetchApi(graphqlPath, fetch_options)
 
@@ -76,7 +77,8 @@ export async function fetchProductTransactions (account_id: string, session: Ses
             pageSize: chunkSize
           }
         }
-      }
+      },
+      sanitizeRequestLog: {headers: {Authorization: true}}
     }
     const response = await fetchApi(graphqlPath, fetchOptions)
 
@@ -114,7 +116,8 @@ export async function authInitiate({login, password}: Preferences): Promise<Auth
   console.log('>>> Starting authInitiate')
   const response = await fetchJson(IEBaseUrl + initiatePath, {
     method: 'POST',
-    body: payload
+    body: payload,
+    sanitizeRequestLog: {body: {username: true, password: true}}
   })
   if(response.status != 200) {
     throw new TemporaryError('AuthInitiate failed!')
@@ -147,7 +150,8 @@ export async function authConfirm(otp: string, operationId: string): Promise<Aut
   console.log('>>> Starting 2FA confirmation')
   const response = await fetchJson(IEBaseUrl + confirmPath, {
     method: 'POST',
-    body: payload
+    body: payload,
+    sanitizeResponseLog: { body: { data: { operationData: { token: true } } } }
   })
   if(response.status != 200) {
     throw new TemporaryError('2FA challenge failed!')

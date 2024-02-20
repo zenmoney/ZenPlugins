@@ -42,7 +42,7 @@ function convertAccount (apiAccount: CredoAccount): Account {
       type: accountType,
       title: syncId,
       instrument: currency,
-      syncIds: [syncId],
+      syncIds: [accountId, syncId],
       savings: apiAccountType === CredoAccountType.saving,
       balance: availableBalance,
       available: availableBalance
@@ -54,7 +54,7 @@ function convertAccount (apiAccount: CredoAccount): Account {
       type: accountType,
       title: syncId,
       instrument: currency,
-      syncIds: [syncId],
+      syncIds: [accountId, syncId],
       balance: availableBalance,
       startDate,
       startBalance,

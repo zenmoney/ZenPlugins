@@ -1,16 +1,26 @@
 import { Auth, Preferences, Product, Session } from './models'
 import { en_json, workflow, fetchAllAccounts, fetchAuthorization, fetchProductTransactions, authInitiate, fetchCloudFlareCookie, initiate2FA, authConfirm, getMyIp } from './fetchApi'
 
+function parseJwt (token: string) {
+    return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+}
+
 export async function login (preferences: Preferences, auth?: Auth): Promise<Session> {
   console.log('>>> Login')
   if (auth != null) {
-    return { auth }
+    const tokenPayload = parseJwt(auth.accessToken)
+    const nowTimestamp = Math.floor(Date.now() / 1000);
+
+    if(tokenPayload.exp > nowTimestamp) {
+      return { auth }
+    }
+    /* return { auth } */
   }
-  /* const access_token = await ZenMoney.readLine("Enter JWT access_token from 'Authorization' header") */
 
   if(!preferences.login || !preferences.password) {
     throw new InvalidLoginOrPasswordError()
   }
+
   const initiate_response = await authInitiate(preferences)
   const operationId = initiate_response.data.operationId
   const init_2fa_response = await initiate2FA(operationId)

@@ -9,13 +9,10 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
   ZenMoney.setData('auth', session.auth)
   ZenMoney.saveData()
 
-  /* const accounts: Account[] = [] */
   const transactions: Transaction[] = []
 
   const credoAccounts = await fetchAccounts(session)
   const accounts = convertAccounts(credoAccounts)
-
-  console.log('scrape_accounts: ', accounts)
 
   for (const account of accounts) {
     console.log(account)
@@ -28,6 +25,10 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
       transactions.push(convertTransaction(apiTransaction, account))
     }
   }
+
+  console.log('scrape result: ', { accounts, transactions })
+
+  throw new TemporaryError({accounts})
 
   return { accounts, transactions }
 }
