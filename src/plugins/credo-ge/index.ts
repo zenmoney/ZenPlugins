@@ -12,7 +12,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
   const transactions: Transaction[] = []
 
   const credoAccounts = await fetchAccounts(session)
-  const accounts = convertAccounts(credoAccounts)
+  const accounts: Account[] = convertAccounts(credoAccounts)
 
   for (const account of accounts) {
     console.log(account)
@@ -20,7 +20,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
       continue
     }
     console.log('>>> Getting transactions for account: ' + account.id)
-    const apiTransactions = await fetchTransactions(session, account.id, fromDate, toDate!)
+    const apiTransactions = await fetchTransactions(session, account.id, fromDate, toDate)
     for (const apiTransaction of apiTransactions) {
       transactions.push(convertTransaction(apiTransaction, account))
     }

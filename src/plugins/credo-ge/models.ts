@@ -5,12 +5,71 @@ export interface Auth {
   accessToken: string
 }
 
+/*
+{
+  "alg": "RS256",
+  "kid": "86a048ff5bb5636fd0da1f78730ded6c",
+  "typ": "JWT"
+}
+{
+  "nbf": 1708332948,
+  "exp": 1708334748,
+  "iss": "https://identitysso.mycredo.ge",
+  "aud": [
+    "https://identitysso.mycredo.ge/resources",
+    "credo_api",
+    "credo_legal_api"
+  ],
+  "client_id": "ang_client",
+  "sub": "449855",
+  "auth_time": 1708332948,
+  "idp": "local",
+  "UserName": "username",
+  "AccessType": "full",
+  "CustomerId": "1234567",
+  "PersonalNumber": "434334342",
+  "Phone": "5991212",
+  "HasTempPassword": "False",
+  "Channel": "WEB",
+  "TraceId": "DQvzNVWzjPqJCJwAFzjqqfo/twjr6QqO7laU8Tu0Bgk=",
+  "scope": [
+    "openid",
+    "profile",
+    "credo_api",
+    "credo_legal_api",
+    "offline_access"
+  ],
+  "amr": [
+    "pwd"
+  ]
+}
+*/
+export interface accessTokenPayload {
+  nbf: number
+  exp: number
+  iss: string
+  aud: string[]
+  client_id: string
+  sub: string
+  auth_time: number
+  idp: string
+  UserName: string
+  AccessType: string
+  CustomerId: string
+  PersonalNumber: string
+  Phone: string
+  HasTempPassword: boolean
+  Channel: string
+  TraceId: string
+  scope: string[]
+  amr: string[]
+}
+
 // Consists of everything that is needed in
 // authorized requests, e.g. socket handles, session tokens
 // Not stored!
 export interface Session {
   auth: Auth
-  operationId: string
 }
 
 // Input preferences from schema in preferences.xml
@@ -110,7 +169,7 @@ export interface AuthConfirmResponseData {
     refreshToken: string
     userId: number
     deviceHistoryId: string
-  },
+  }
   status: string /* Pending */
 }
 
@@ -126,7 +185,6 @@ export enum OperationStatus {
   pending = 'PENDING',
   approved = 'APPROVED'
 }
-
 
 export interface InitiateAddBindedDeviceResponse {
   data: {
@@ -159,17 +217,16 @@ export interface CardsAccounts {
   }
 }
 
-
 export enum CurrencyCode {
-  gel = "GEL",
-  usd = "USD",
-  rub = "RUB",
-  eur = "EUR",
+  gel = 'GEL',
+  usd = 'USD',
+  rub = 'RUB',
+  eur = 'EUR',
 }
 
 export enum AccountType {
-  current = "CURRENT",
-  saving = "SAVING",
+  current = 'CURRENT',
+  saving = 'SAVING',
 }
 
 export interface Card {
@@ -180,7 +237,7 @@ export interface Card {
   cardImageId: string
   cardImageAddress: string
   cardStatusId: number
-  cardProduct: string  // "Debit Card"
+  cardProduct: string // "Debit Card"
   cardAvailableAmount: number
   cardBlockedAmount: number
   cardExpireShortDate: string // "03/25"
@@ -231,25 +288,25 @@ export enum TransactionType {
 export interface Transaction {
   credit: number | null
   currency: CurrencyCode
-  transactionType: TransactionType | null  // can be null on Accrued interest payment
-  transactionId: string  // on blocked transaction differs from all others
+  transactionType: TransactionType | null // can be null on Accrued interest payment
+  transactionId: string // on blocked transaction differs from all others
   debit: number | null
-  description: string  // 'გადახდა - WWW.GENKI.WORLD 54.60 EUR 20.05.2023'
+  description: string // 'გადახდა - WWW.GENKI.WORLD 54.60 EUR 20.05.2023'
   isCardBlock: boolean
-  operationDateTime: string  // '2023-05-24 11:54:00'
-  stmtEntryId: string  //	"202338292542841.120001"
+  operationDateTime: string // '2023-05-24 11:54:00'
+  stmtEntryId: string // "202338292542841.120001"
   canRepeat: boolean
   canReverse: boolean
   amountEquivalent: number
-  operationType: string  // OperationType
+  operationType: string // OperationType
   operationTypeId: null
 }
 
 export interface TransactionListResponse {
   data: {
     transactionPagingList: {
-      pageCount: number,
-      totalItemCount: number,
+      pageCount: number
+      totalItemCount: number
       itemList: Transaction[]
     }
   }
