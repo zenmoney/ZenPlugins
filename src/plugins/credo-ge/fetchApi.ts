@@ -1,7 +1,7 @@
 import { TemporaryError } from '../../errors'
 import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
 import { generateRandomString } from '../../common/utils'
-import { AuthInitiateResponse, Preferences, Session, AuthInitiatePayload, LanguageType, AuthOperationSendChallengeResponse, AuthConfirmResponse, Account as CredoAccount, Transaction as CredoTransaction } from './models'
+import { AuthInitiateResponse, Preferences, Session, AuthInitiatePayload, LanguageType, AuthOperationSendChallengeResponse, AuthConfirmResponse, Account as CredoAccount, Transaction as CredoTransaction, AccountsResponse, TransactionListResponse } from './models'
 import { isArray } from 'lodash'
 
 const IEBaseUrl = 'https://mycredo.ge:8443'
@@ -26,7 +26,8 @@ export async function fetchAllAccounts (session: Session): Promise<CredoAccount[
   }
   const response = await fetchApi(graphqlPath, fetchOptions)
 
-  const accounts = response.body?.data?.accounts
+  const accountsResponse = response.body as AccountsResponse
+  const accounts = accountsResponse.data.accounts
   assert(isArray(accounts), 'cant get accounts array', response)
   return accounts
 }
@@ -53,7 +54,7 @@ export async function fetchProductTransactions (accountId: string, session: Sess
   const chunkSize = 30
   let fetchOptions: FetchOptions
   let pageNumber = 1
-  let transactions = []
+  let transactions: CredoTransaction[] = []
 
   while (true) {
     fetchOptions = {
@@ -79,7 +80,8 @@ export async function fetchProductTransactions (accountId: string, session: Sess
     }
     const response = await fetchApi(graphqlPath, fetchOptions)
 
-    const chunkTransactions = response.body?.data?.transactionPagingList?.itemList
+    const transactionsResponse = response.body as TransactionListResponse
+    const chunkTransactions = transactionsResponse.data.transactionPagingList.itemList
 
     assert(isArray(chunkTransactions), 'cant get transactions array', response)
     transactions = transactions.concat(chunkTransactions)
@@ -92,7 +94,7 @@ export async function fetchProductTransactions (accountId: string, session: Sess
 }
 
 export async function authInitiate ({ login, password }: Preferences): Promise<AuthInitiateResponse> {
-  let deviceId = ZenMoney.getData('deviceId', null)
+  let deviceId = ZenMoney.getData('deviceId', null) as string
   console.log('deviceId is ', deviceId)
   if (deviceId == null) {
     deviceId = generateRandomString(16)
@@ -120,7 +122,8 @@ export async function authInitiate ({ login, password }: Preferences): Promise<A
     throw new TemporaryError('AuthInitiate failed!')
   }
   console.log('AuthInitiate response', response)
-  return response.body
+  const result = response.body as AuthInitiateResponse
+  return result
 }
 
 export async function initiate2FA (operationId: string): Promise<AuthOperationSendChallengeResponse> {
@@ -137,7 +140,8 @@ export async function initiate2FA (operationId: string): Promise<AuthOperationSe
     throw new TemporaryError('Initiating 2FA failed!')
   }
   console.log('2FA challenge response', response)
-  return response.body
+  const result = response.body as AuthOperationSendChallengeResponse
+  return result
 }
 
 export async function authConfirm (otp: string | null, operationId: string): Promise<AuthConfirmResponse> {
@@ -152,10 +156,11 @@ export async function authConfirm (otp: string | null, operationId: string): Pro
     throw new TemporaryError('2FA challenge failed!')
   }
   console.log('2FA confirmation response', response)
-  return response.body
+  const result = response.body as AuthConfirmResponse
+  return result
 }
-
-export async function getMyIp (): Promise<string> {
-  const response = await fetchJson('https://api.ipify.org/?format=json')
-  return response.body.ip
-}
+/*
+ * export async function getMyIp (): Promise<string> {
+ *   const response = await fetchJson('https://api.ipify.org/?format=json')
+ *   return response.body.ip
+ * } */

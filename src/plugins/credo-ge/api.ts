@@ -1,5 +1,5 @@
 import { InvalidLoginOrPasswordError } from '../../errors'
-import { Auth, Preferences, Session, accessTokenPayload } from './models'
+import { Auth, Preferences, Session, accessTokenPayload, Account as CredoAccount, Transaction as CredoTransaction } from './models'
 import { fetchAllAccounts, fetchProductTransactions, authInitiate, initiate2FA, authConfirm } from './fetchApi'
 
 function parseJwt (token: string): accessTokenPayload {
@@ -33,11 +33,11 @@ export async function login (preferences: Preferences, auth?: Auth): Promise<Ses
   return { auth: { accessToken: confirmResponse.data.operationData.token } }
 }
 
-export async function fetchAccounts (session: Session): Promise<unknown[]> {
+export async function fetchAccounts (session: Session): Promise<CredoAccount[]> {
   return await fetchAllAccounts(session)
 }
 
-export async function fetchTransactions (session: Session, accountId: string, fromDate: Date, toDate: Date): Promise<unknown[]> {
+export async function fetchTransactions (session: Session, accountId: string, fromDate: Date, toDate: Date): Promise<CredoTransaction[]> {
   console.log('>>> Fethching transactions')
   return await fetchProductTransactions(accountId, session, fromDate, toDate)
 }
