@@ -1,10 +1,8 @@
 import { TemporaryError } from '../../errors'
-import { fetchJson, FetchOptions, FetchResponse} from '../../common/network'
+import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
 import { generateRandomString } from '../../common/utils'
-import { Preferences, Product, Session, AuthInitiatePayload, LanguageType, AuthOperationSendChallengeResponse, AuthConfirmResponse, Account as CredoAccount, Transaction as CredoTransaction } from './models'
+import { AuthInitiateResponse, Preferences, Session, AuthInitiatePayload, LanguageType, AuthOperationSendChallengeResponse, AuthConfirmResponse, Account as CredoAccount, Transaction as CredoTransaction } from './models'
 import { isArray } from 'lodash'
-
-import { AuthInitiateResponse } from './models'
 
 const IEBaseUrl = 'https://mycredo.ge:8443'
 const initiatePath = '/api/Auth/Initiate'
@@ -101,7 +99,7 @@ export async function authInitiate ({ login, password }: Preferences): Promise<A
     ZenMoney.setData('deviceId', deviceId)
     ZenMoney.saveData()
   }
-  let payload: AuthInitiatePayload = {
+  const payload: AuthInitiatePayload = {
     username: login,
     password,
     channel: 508,
