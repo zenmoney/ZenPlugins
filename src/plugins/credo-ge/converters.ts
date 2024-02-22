@@ -28,7 +28,7 @@ function convertAccount (apiAccount: CredoAccount): Account {
   const percent = 3
   const endDateOffsetInterval = 'month'
   const endDateOffset = 1
-  const payoffInterval = null
+  const payoffInterval = 'month'
   const payoffStep = 1
   // TODO: AccountType.loan!
 
@@ -76,7 +76,7 @@ export function convertTransaction (apiTransaction: CredoTransaction, account: A
     debit = getNumber(apiTransaction, 'debit')
     amount = -1 * debit
   }
-  const invoice = getAmountFromDescription(description) // TODO: rewrite getAmountFromDescription
+  const invoice = getAmountFromDescription(description, Math.sign(amount)) // TODO: rewrite getAmountFromDescription
   const isCardBlock = getBoolean(apiTransaction, 'isCardBlock')
 
   return {
@@ -114,13 +114,13 @@ export function strippDescription (description: string): string {
   const valuebleDescription = description.split(' - ')[1]
   const amountIntsrumentDataRegex = /\d+\.\d{2} [A-Z]{3} \d{2}\.\d{2}\.\d{4}/g
   const amountInstrumentDataFound = valuebleDescription.match(amountIntsrumentDataRegex)
-  if (amountInstrumentDataFound === null) {
+  if (amountInstrumentDataFound !== null) {
     return valuebleDescription.split(' ').slice(0, -3).join(' ')
   }
   return valuebleDescription
 }
 
-export function getAmountFromDescription (description: string | undefined): Amount | null {
+export function getAmountFromDescription (description: string | undefined, sumSign: number): Amount | null {
   if (description == null || description === undefined) {
     return null
   }
@@ -129,7 +129,7 @@ export function getAmountFromDescription (description: string | undefined): Amou
   const found = description.match(amountAndInstrumentRegexp)
   if (found != null) {
     const foundItems = found[0].split(' ')
-    const sum = parseFloat(foundItems[0])
+    const sum = parseFloat(foundItems[0]) * sumSign
     const instrument = foundItems[1]
     return { sum, instrument }
   }
