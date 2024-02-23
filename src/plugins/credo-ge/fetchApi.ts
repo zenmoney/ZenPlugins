@@ -1,7 +1,25 @@
 import { TemporaryError } from '../../errors'
 import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
 import { generateRandomString } from '../../common/utils'
-import { AuthInitiateResponse, Preferences, Session, AuthInitiatePayload, LanguageType, AuthOperationSendChallengeResponse, AuthConfirmResponse, Account as CredoAccount, Transaction as CredoTransaction, AccountsResponse, TransactionListResponse } from './models'
+import {
+  AuthInitiateResponse,
+  Preferences,
+  Session,
+  AuthInitiatePayload,
+  LanguageType,
+  AuthOperationSendChallengeResponse,
+  AuthConfirmResponse,
+  Account as CredoAccount,
+  Card as CredoCard,
+  Deposit as CredoDeposit,
+  Loan as CredoLoan,
+  Transaction as CredoTransaction,
+  AccountsResponse,
+  CardsResponse,
+  TransactionListResponse,
+  DepositsResponse,
+  LoansResponse
+} from './models'
 import { isArray } from 'lodash'
 
 const IEBaseUrl = 'https://mycredo.ge:8443'
@@ -14,71 +32,89 @@ async function fetchApi (url: string, options?: FetchOptions): Promise<FetchResp
   return await fetchJson(IEBaseUrl + url, options ?? {})
 }
 
-export async function fetchAllAccounts (session: Session): Promise<CredoAccount[]> {
+async function fetchGraphQL (session: Session, body: object): Promise<FetchResponse> {
   const fetchOptions: FetchOptions = {
     method: 'POST',
     headers: { Authorization: 'Bearer ' + session.auth.accessToken },
-    body: {
-      query: '{accounts {hasActiveWallet  accountId  accountNumber  account  currency  categoryId  category  hasCard  status  type  cssAccountId  availableBalance  currencyPriority  availableBalanceEqu  isDefault  isHidden  rate  activationDate  allowedOperations}}',
-      variables: {}
-    },
+    body,
     sanitizeRequestLog: { headers: { Authorization: true } }
   }
-  const response = await fetchApi(graphqlPath, fetchOptions)
+  return await fetchApi(graphqlPath, fetchOptions)
 
+}
+
+export async function fetchAllAccounts (session: Session): Promise<CredoAccount[]> {
+  const body = {
+    query: '{accounts {hasActiveWallet  accountId  accountNumber  account  currency  categoryId  category  hasCard  status  type  cssAccountId  availableBalance  currencyPriority  availableBalanceEqu  isDefault  isHidden  rate  activationDate  allowedOperations}}',
+    variables: {}
+  }
+  const response = await fetchGraphQL(session, body)
   const accountsResponse = response.body as AccountsResponse
   const accounts = accountsResponse.data.accounts
   assert(isArray(accounts), 'cant get accounts array', response)
   return accounts
 }
 
-export async function fetchProductTransactions (accountId: string, session: Session, fromDate: Date, toDate: Date): Promise<CredoTransaction[]> {
-  /*
-  {
-    "operationName": "transactionPagingList",
-    "query": "query transactionPagingList($data: TransactionFilterGType!) {transactionPagingList(data: $data) {  pageCount  totalItemCount  itemList {    credit    currency    transactionType    transactionId    debit    description    isCardBlock    operationDateTime    stmtEntryId    canRepeat    canReverse    amountEquivalent    operationType    operationTypeId  }}\n}\n",
-    "variables": {
-      "data": {
-        "accountIdList": [
-          27793452
-        ],
-        "dateFrom": "2024-02-17T06:03:27.000Z",
-        "dateTo": "2024-02-17T06:03:27.000Z",
-        "onlyCanBeReversedOrRepeated": false,
-        "pageNumber": 1,
-        "pageSize": 15
-      }
-    }
+export async function fetchCards (session: Session): Promise<CredoCard[]> {
+  const body = {
+    query: '{ cards { cardId cardNumber cardCurrency cardNickName cardImageId cardImageAddress cardStatusId cardProduct cardAvailableAmount cardBlockedAmount cardExpireShortDate cardStatus cardExpireDate accountNumber isDigitalCard }}',
+    variables: {}
   }
-   */
+  const response = await fetchGraphQL(session, body)
+  const cardsResponse = response.body as CardsResponse
+  const cards = cardsResponse.data.cards
+  assert(isArray(cards), 'can not get cards array', response)
+  return cards
+}
+
+export async function fetchDeposits (session: Session): Promise<CredoDeposit[]> {
+    const body = {
+      query: '{ customer { deposits { targetingImageUrl targetingName targetingId targetingCardUrl hasActiveWallet availableToTopUp balanceEqu depositNickName depositType depositBalance depositCurrency accruedInterestAmount contractN depositInterestRate relatedAccount openningDate closeDate interestAmountIfCanceled productId type prolongationType type isProlongable t24AccountId cssAccountId } }}',
+      variables: {}
+    }
+  const response = await fetchGraphQL(session, body)
+  const depositsResponse = response.body as DepositsResponse
+  const deposits = depositsResponse.data.customer.deposits
+  assert(isArray(deposits), 'can not get deposits array', response)
+  return deposits
+}
+
+export async function fetchLoans (session: Session): Promise<CredoLoan[]> {
+    const body = {
+      query: '{ customer { loans { id loanBalance loanBalanceEqu currency productId product nickname nextPaymentDate nextPaymentAmount contractN relatedAccount } }',
+      variables: {}
+    }
+  const response = await fetchGraphQL(session, body)
+  const loansResponse = response.body as LoansResponse
+  const loans = loansResponse.data.customer.loans
+  assert(isArray(loans), 'can not get loans array', response)
+  return loans
+}
+
+export async function fetchProductTransactions (accountId: string, session: Session, fromDate: Date, toDate: Date): Promise<CredoTransaction[]> {
   const chunkSize = 30
-  let fetchOptions: FetchOptions
+  let body: object
   let pageNumber = 1
   let transactions: CredoTransaction[] = []
 
   while (true) {
-    fetchOptions = {
-      method: 'POST',
-      headers: { Authorization: 'Bearer ' + session.auth.accessToken },
-      body: {
-        operationName: 'transactionPagingList',
-        query: 'query transactionPagingList($data: TransactionFilterGType!) {transactionPagingList(data: $data) { pageCount totalItemCount itemList { credit currency transactionType transactionId debit description isCardBlock operationDateTime stmtEntryId canRepeat canReverse amountEquivalent operationType operationTypeId }} }',
-        variables: {
-          data: {
-            accountIdList: [
-              Number(accountId)
-            ],
-            dateFrom: fromDate,
-            dateTo: toDate,
-            onlyCanBeReversedOrRepeated: false,
-            pageNumber,
-            pageSize: chunkSize
-          }
+    body = {
+      operationName: 'transactionPagingList',
+      query: 'query transactionPagingList($data: TransactionFilterGType!) {transactionPagingList(data: $data) { pageCount totalItemCount itemList { credit currency transactionType transactionId debit description isCardBlock operationDateTime stmtEntryId canRepeat canReverse amountEquivalent operationType operationTypeId }} }',
+      variables: {
+        data: {
+          accountIdList: [
+            Number(accountId)
+          ],
+          dateFrom: fromDate,
+          dateTo: toDate,
+          onlyCanBeReversedOrRepeated: false,
+          pageNumber,
+          pageSize: chunkSize
         }
-      },
-      sanitizeRequestLog: { headers: { Authorization: true } }
+      }
     }
-    const response = await fetchApi(graphqlPath, fetchOptions)
+    const response = await fetchGraphQL(session, body)
 
     const transactionsResponse = response.body as TransactionListResponse
     const chunkTransactions = transactionsResponse.data.transactionPagingList.itemList
@@ -150,7 +186,7 @@ export async function authConfirm (otp: string | null, operationId: string): Pro
   const response = await fetchJson(IEBaseUrl + confirmPath, {
     method: 'POST',
     body: payload,
-    sanitizeResponseLog: { body: { data: { operationData: { token: true } } } }
+    sanitizeResponseLog: { body: { data: { operationData: { token: true, refreshToken: true } } } }
   })
   if (response.status !== 200) {
     throw new TemporaryError('2FA challenge failed!')

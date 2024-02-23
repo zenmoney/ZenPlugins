@@ -205,18 +205,6 @@ export interface BindDeviceConfirmResponse {
   }
 }
 
-export interface AccountNumber {
-  accountNumber: string
-}
-
-export interface CardsAccounts {
-  data: {
-    customer: {
-      cards: AccountNumber[]
-    }
-  }
-}
-
 export enum CurrencyCode {
   gel = 'GEL',
   usd = 'USD',
@@ -246,6 +234,10 @@ export interface Card {
   isDigitalCard: boolean
 }
 
+export interface CardsResponse {
+  data: { cards: Card[] }
+}
+
 export interface Account {
   accountId: number
   accountNumber: string // ex: "GE12CD0360000012345678" looks like IBAN
@@ -261,11 +253,42 @@ export interface Account {
   availableBalanceEqu: number // ex: 5208.01
   isDefault: boolean
   isHidden: boolean
-  cards: Card[]
+  cssAccountId: number // same as for Deposit
 }
 
 export interface AccountsResponse {
   data: { accounts: Account[] }
+}
+
+export interface Deposit {
+    balanceEqu: number
+    depositNickName: string
+    depositType: string // მოთხოვნამდე ანაბარი
+    depositBalance: number
+    depositCurrency: CurrencyCode
+    accruedInterestAmount: number
+    contractN: string // IBAN
+    depositInterestRate: number // 0.5
+    openningDate: Date // 2022-04-19T16:39:10
+    closeDate: Date | null
+    interestAmountIfCanceled: number | null
+    type: string // SAVING_DEPOSIT
+    prolongationType: string // NONE
+    isProlongable: boolean
+    t24AccountId: number
+    cssAccountId: number
+}
+
+export interface DepositsResponse {
+  data: { customer: { deposits: Deposit[] }}
+}
+
+// TODO: Can we get result of LoansResponse and accounts related to loans?
+export interface Loan {
+}
+
+export interface LoansResponse {
+  data: { customer: { loans: Loan[] } }
 }
 
 export enum TransactionType {
@@ -273,6 +296,7 @@ export enum TransactionType {
   Transferbetweenownaccounts = 'Transferbetweenownaccounts',
   CurrencyExchange = 'CurrencyExchange',
   CardBlockedTransaction = 'CardBlockedTransaction',
+  Otherexpenses = 'Otherexpenses'
 }
 
 // Отображение транзакции для пользователя. Меняется при смене языка

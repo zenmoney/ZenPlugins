@@ -1,5 +1,6 @@
 import { Account, ScrapeFunc, Transaction } from '../../types/zenmoney'
 import { fetchAccounts, fetchTransactions, login } from './api'
+import { fetchCards, fetchDeposits, fetchLoans } from './fetchApi'
 import { convertAccounts, convertTransaction } from './converters'
 import { Auth, Preferences } from './models'
 
@@ -12,6 +13,9 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
   const transactions: Transaction[] = []
 
   const credoAccounts = await fetchAccounts(session)
+  const credoCards = await fetchCards(session)
+  const credoDeposits = await fetchDeposits(session)
+  const credoLoans = await fetchLoans(session)
   const accounts: Account[] = convertAccounts(credoAccounts)
 
   for (const account of accounts) {

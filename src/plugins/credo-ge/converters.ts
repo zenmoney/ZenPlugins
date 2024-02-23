@@ -1,6 +1,6 @@
-import { Account, AccountType, Amount, Transaction } from '../../types/zenmoney'
+import { Account, AccountType, Amount, ExtendedTransaction } from '../../types/zenmoney'
 import { getNumber, getOptString, getString, getBoolean } from '../../types/get'
-import { Account as CredoAccount, AccountType as CredoAccountType, Transaction as CredoTransaction } from './models'
+import { Account as CredoAccount, AccountType as CredoAccountType, Transaction as CredoTransaction, TransactionType } from './models'
 
 export function convertAccounts (apiAccounts: CredoAccount[]): Account[] {
   console.log('>>> Converting accounts')
@@ -64,8 +64,31 @@ function convertAccount (apiAccount: CredoAccount): Account {
   }
 }
 
-export function convertTransaction (apiTransaction: CredoTransaction, account: Account): Transaction {
-  const description = getOptString(apiTransaction, 'description')
+export function convertTransaction (apiTransaction: CredoTransaction, account: Account): ExtendedTransaction {
+  const transactionId = getOptString(apiTransaction, 'transactionId') ?? null
+  const transactionType = getOptString(apiTransaction, 'transactionType') as TransactionType
+  const isMovement = transactionType === TransactionType.Transferbetweenownaccounts || transactionType === TransactionType.CurrencyExchange
+  let description = getOptString(apiTransaction, 'description')
+  description = description ? description : ''
+  const strippedDescription = strippDescription(description)
+  let comment = null
+  let merchant = null
+
+  if (
+    !transactionType ||
+    transactionType === TransactionType.Otherexpenses ||
+    transactionType === TransactionType.Transferbetweenownaccounts ||
+    transactionType === TransactionType.CurrencyExchange
+  ) {
+    comment = description
+  } else {
+    merchant = {
+      fullTitle: strippedDescription,
+      mcc: null,
+      location: null
+    }
+  }
+
   let amount = 0
   let credit = null
   let debit = null
@@ -79,27 +102,27 @@ export function convertTransaction (apiTransaction: CredoTransaction, account: A
   const invoice = getAmountFromDescription(description, Math.sign(amount)) // TODO: rewrite getAmountFromDescription
   const isCardBlock = getBoolean(apiTransaction, 'isCardBlock')
 
-  return {
+  console.log(transactionId, 'isMovement:', isMovement, 'apiTransType:', apiTransaction.transactionType, 'transactionType:', transactionType)
+
+  const convertedTransaction = {
     hold: isCardBlock,
     date: new Date(getString(apiTransaction, 'operationDateTime')),
     movements: [
       {
-        id: getOptString(apiTransaction, 'transactionId') ?? null,
+        id: transactionId,
         account: { id: account.id },
         invoice,
         sum: amount,
         fee: 0
       }
     ],
-    merchant: description != null
-      ? {
-          fullTitle: strippDescription(description),
-          mcc: null,
-          location: null
-        }
-      : null,
-    comment: null
-  }
+    merchant,
+    comment,
+    groupKeys: isMovement ? [transactionId] : [null]
+  } as ExtendedTransaction
+
+  console.log('> convertedTransaction: ', convertedTransaction)
+  return convertedTransaction
 }
 
 export function strippDescription (description: string): string {
