@@ -1,5 +1,9 @@
 import { AccountOrCard } from '../../types/zenmoney'
 
+export interface IpifyResponse {
+  ip: string
+}
+
 // Stored in persistent storage
 export interface Auth {
   accessToken: string
@@ -111,6 +115,7 @@ export interface AuthInitiatePayload {
   loggedInWith: number
   deviceName: string
   languageType: LanguageType
+  WebDevicePublicId?: string
 }
 
 export interface AuthResponse {
@@ -188,10 +193,12 @@ export enum OperationStatus {
 
 export interface InitiateAddBindedDeviceResponse {
   data: {
-    operationId: string
-    status: OperationStatus
-    requires2FA: boolean
-    requiresAuthentification: boolean
+    initiateAddBindedDevice: {
+      operationId: string
+      status: OperationStatus
+      requires2FA: boolean
+      requiresAuthentification: boolean
+    }
   }
 }
 

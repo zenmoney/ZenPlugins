@@ -1,6 +1,9 @@
 import { InvalidLoginOrPasswordError } from '../../errors'
-import { Auth, Preferences, Session, accessTokenPayload, Account as CredoAccount, Transaction as CredoTransaction } from './models'
-import { fetchAllAccounts, fetchProductTransactions, authInitiate, initiate2FA, authConfirm } from './fetchApi'
+import {
+  Auth, AuthInitiateResponse, LanguageType,
+  OperationStatus,
+  Preferences, Session, accessTokenPayload, Account as CredoAccount, Transaction as CredoTransaction } from './models'
+import { fetchAllAccounts, fetchProductTransactions, authInitiate, initiate2FA, initiateAddBindedDevice, authConfirm , confirmDeviceBinding } from './fetchApi'
 
 function parseJwt (token: string): accessTokenPayload {
   return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString())
@@ -18,19 +21,28 @@ export async function login (preferences: Preferences, auth?: Auth): Promise<Ses
   }
 
   if (preferences.login.length === 0 || preferences.password.length === 0) {
-    throw new InvalidLoginOrPasswordError()
+    throw new InvalidLoginOrPasswordError('Username or password can not be empty string')
   }
 
-  const initiateResponse = await authInitiate(preferences)
+  let session: Session = { auth: { accessToken: '' } }
+  const initiateResponse: AuthInitiateResponse = await authInitiate(preferences)
   const operationId = initiateResponse.data.operationId
-  await initiate2FA(operationId)
-  const otp1 = await ZenMoney.readLine('Enter OTP from Credo Bank SMS')
-  const confirmResponse = await authConfirm(otp1, operationId)
-  /* TODO: implement simple login (without 2FA):
-   *   + additional confirm with 2FA and ip/deviceId saving
-  const myIp = await getMyIp()
-  */
-  return { auth: { accessToken: confirmResponse.data.operationData.token } }
+
+  if (initiateResponse.data.requires2FA) {
+    await initiate2FA(operationId)
+    const otp1 = await ZenMoney.readLine('Enter OTP from Credo Bank SMS')
+    const confirmResponse = await authConfirm(otp1, operationId)
+    session.auth.accessToken = confirmResponse.data.operationData.token
+    const addBindedDeviceResponse = await initiateAddBindedDevice(session, LanguageType.english)
+    const deviceBindingOperationId = addBindedDeviceResponse.data.initiateAddBindedDevice.operationId
+    await initiate2FA(deviceBindingOperationId)
+    const otp2 = await ZenMoney.readLine('Enter OTP from Credo Bank SMS')
+    await confirmDeviceBinding(session, deviceBindingOperationId, otp2)
+  } else {
+    const confirmResponse = await authConfirm(null, operationId)
+    session.auth.accessToken = confirmResponse.data.operationData.token
+  }
+  return session
 }
 
 export async function fetchAccounts (session: Session): Promise<CredoAccount[]> {

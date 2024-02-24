@@ -10,7 +10,7 @@ import {
   TransactionType
 } from './models'
 
-function getAccountToCardMapping(cards: CredoCard[]): Map<string, string> {
+function getAccountToCardMapping (cards: CredoCard[]): Map<string, string> {
   const accountToCardMapping = new Map()
   for (const card of cards) {
     accountToCardMapping.set(card.accountNumber, card.cardNumber)
@@ -18,7 +18,7 @@ function getAccountToCardMapping(cards: CredoCard[]): Map<string, string> {
   return accountToCardMapping
 }
 
-function getCssAccountToDepositMapping(deposits: CredoDeposit[]): Map<number, CredoDeposit> {
+function getCssAccountToDepositMapping (deposits: CredoDeposit[]): Map<number, CredoDeposit> {
   const cssAccountToDepositMapping = new Map()
   for (const deposit of deposits) {
     cssAccountToDepositMapping.set(deposit.cssAccountId, deposit)
@@ -26,7 +26,7 @@ function getCssAccountToDepositMapping(deposits: CredoDeposit[]): Map<number, Cr
   return cssAccountToDepositMapping
 }
 
-function getDepositsWithoutAccounts(accountToDepositMapping: Map<number, CredoDeposit>): Account[] {
+function getDepositsWithoutAccounts (accountToDepositMapping: Map<number, CredoDeposit>): Account[] {
   const deposits: Account[] = []
 
   for (const deposit of accountToDepositMapping.values()) {
@@ -35,7 +35,7 @@ function getDepositsWithoutAccounts(accountToDepositMapping: Map<number, CredoDe
   return deposits
 }
 
-function convertDeposit(deposit: CredoDeposit): Account {
+function convertDeposit (deposit: CredoDeposit): Account {
   return {
     id: deposit.cssAccountId.toString(),
     type: AccountType.deposit,

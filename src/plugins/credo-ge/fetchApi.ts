@@ -1,8 +1,12 @@
-import { TemporaryError } from '../../errors'
+import { TemporaryError, InvalidLoginOrPasswordError } from '../../errors'
 import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
 import { generateRandomString } from '../../common/utils'
 import {
   AuthInitiateResponse,
+  InitiateAddBindedDeviceResponse,
+  IpifyResponse,
+  BindDeviceConfirmResponse,
+  OperationStatus,
   Preferences,
   Session,
   AuthInitiatePayload,
@@ -130,22 +134,19 @@ export async function fetchProductTransactions (accountId: string, session: Sess
 }
 
 export async function authInitiate ({ login, password }: Preferences): Promise<AuthInitiateResponse> {
-  let deviceId = ZenMoney.getData('deviceId', null) as string
-  console.log('deviceId is ', deviceId)
-  if (deviceId == null) {
-    deviceId = generateRandomString(16)
-    ZenMoney.setData('deviceId', deviceId)
-    ZenMoney.saveData()
-  }
   const payload: AuthInitiatePayload = {
     username: login,
     password,
     channel: 508,
-    deviceId,
+    deviceId: null,
     refreshToken: null,
     loggedInWith: 4,
     deviceName: 'Mozilla Firefox',
     languageType: LanguageType.english
+  }
+  const deviceId = ZenMoney.getData('deviceId', null) as string
+  if (deviceId !== null) {
+    payload.WebDevicePublicId = deviceId
   }
   console.log('deviceId is ', deviceId)
   console.log('>>> Starting authInitiate')
@@ -155,7 +156,7 @@ export async function authInitiate ({ login, password }: Preferences): Promise<A
     sanitizeRequestLog: { body: { username: true, password: true } }
   })
   if (response.status !== 200) {
-    throw new TemporaryError('AuthInitiate failed!')
+    throw new InvalidLoginOrPasswordError('Invalid username or password!')
   }
   console.log('AuthInitiate response', response)
   const result = response.body as AuthInitiateResponse
@@ -180,6 +181,60 @@ export async function initiate2FA (operationId: string): Promise<AuthOperationSe
   return result
 }
 
+export async function getMyIp (): Promise<string> {
+  const response = await fetchJson('https://api.ipify.org/?format=json')
+  const responseBody = response.body as IpifyResponse
+  return responseBody.ip
+}
+
+export async function initiateAddBindedDevice (session: Session, languageType: LanguageType): Promise<InitiateAddBindedDeviceResponse> {
+  let deviceId = ZenMoney.getData('deviceId', null) as string
+  if (deviceId === null) {
+    deviceId = generateRandomString(16)
+    ZenMoney.setData('deviceId', deviceId)
+    ZenMoney.saveData()
+  }
+  const userIP = await getMyIp()
+
+  if (deviceId === null) {
+    throw new TemporaryError('Device ID does not exist. Delete and add Credo Bank connection again!')
+  }
+  const clientName = 'Mozilla Firefox'
+  const body = {
+    query: 'mutation ($data: AddBindedDeviceInput!) { initiateAddBindedDevice(data: $data) { operationId status requires2FA requiresAuthentification }}',
+    variables: { data: { deviceId, languageType, name: clientName, userIP } }
+  }
+
+  console.log('>>> Initiating device binding')
+  const response = await fetchGraphQL(session, body)
+  console.log('Binding device response: ', response)
+
+  if (response.status !== 200) {
+    throw new TemporaryError('Device binding failed!')
+  }
+  const result = response.body as InitiateAddBindedDeviceResponse
+  return result
+}
+
+export async function confirmDeviceBinding (session: Session, operationId: string, otp: string | null): Promise<BindDeviceConfirmResponse> {
+  const body = {
+    query: 'mutation ($operationId: String, $twoFactorHandle: String) { operationConfirm( operationId: $operationId twoFactorHandle: $twoFactorHandle authenticatedWith: NONE ) { operationId operationData status }}',
+    variables: {
+      authenticatedWith: 'NONE',
+      operationId,
+      twoFactorHandle: otp
+    }
+  }
+  const response = await fetchGraphQL(session, body)
+  console.log('Confirm device binding response:', response)
+  const result = response.body as BindDeviceConfirmResponse
+
+  if (response.status !== 200 || result.data?.operationConfirm?.status !== OperationStatus.approved) {
+    throw new TemporaryError('Device binding failed!')
+  }
+  return result
+}
+
 export async function authConfirm (otp: string | null, operationId: string): Promise<AuthConfirmResponse> {
   const payload = { OperationId: operationId, TraceId: null, TwoFactorHandle: otp }
   console.log('>>> Starting 2FA confirmation')
@@ -195,8 +250,3 @@ export async function authConfirm (otp: string | null, operationId: string): Pro
   const result = response.body as AuthConfirmResponse
   return result
 }
-/*
- * export async function getMyIp (): Promise<string> {
- *   const response = await fetchJson('https://api.ipify.org/?format=json')
- *   return response.body.ip
- * } */
