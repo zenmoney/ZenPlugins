@@ -69,7 +69,7 @@ export async function fetchCards (session: Session): Promise<CredoCard[]> {
 
 export async function fetchDeposits (session: Session): Promise<CredoDeposit[]> {
     const body = {
-      query: '{ customer { deposits { targetingImageUrl targetingName targetingId targetingCardUrl hasActiveWallet availableToTopUp balanceEqu depositNickName depositType depositBalance depositCurrency accruedInterestAmount contractN depositInterestRate relatedAccount openningDate closeDate interestAmountIfCanceled productId type prolongationType type isProlongable t24AccountId cssAccountId } }}',
+      query: '{ customer { deposits { targetingImageUrl targetingName targetingId targetingCardUrl hasActiveWallet availableToTopUp balanceEqu depositNickName depositType depositBalance depositCurrency accruedInterestAmount contractN depositInterestRate relatedAccount openningDate closeDate interestAmountIfCanceled productId type prolongationType type isProlongable t24AccountId cssAccountId } } }',
       variables: {}
     }
   const response = await fetchGraphQL(session, body)
@@ -81,7 +81,7 @@ export async function fetchDeposits (session: Session): Promise<CredoDeposit[]> 
 
 export async function fetchLoans (session: Session): Promise<CredoLoan[]> {
     const body = {
-      query: '{ customer { loans { id loanBalance loanBalanceEqu currency productId product nickname nextPaymentDate nextPaymentAmount contractN relatedAccount } }',
+      query: '{ customer { loans { id loanBalance loanBalanceEqu currency productId product nickname nextPaymentDate nextPaymentAmount contractN relatedAccount } } }',
       variables: {}
     }
   const response = await fetchGraphQL(session, body)

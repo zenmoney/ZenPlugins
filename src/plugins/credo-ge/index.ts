@@ -16,7 +16,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
   const credoCards = await fetchCards(session)
   const credoDeposits = await fetchDeposits(session)
   const credoLoans = await fetchLoans(session)
-  const accounts: Account[] = convertAccounts(credoAccounts)
+  const accounts: Account[] = convertAccounts(credoAccounts, credoCards, credoDeposits, credoLoans)
 
   for (const account of accounts) {
     console.log(account)

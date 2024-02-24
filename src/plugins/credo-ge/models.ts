@@ -219,6 +219,7 @@ export enum AccountType {
 
 export interface Card {
   cardId: number
+  accountNumber: string // IBAN
   cardNumber: string
   cardCurrency: CurrencyCode
   cardNickName: string
@@ -261,22 +262,22 @@ export interface AccountsResponse {
 }
 
 export interface Deposit {
-    balanceEqu: number
-    depositNickName: string
-    depositType: string // მოთხოვნამდე ანაბარი
-    depositBalance: number
-    depositCurrency: CurrencyCode
-    accruedInterestAmount: number
-    contractN: string // IBAN
-    depositInterestRate: number // 0.5
-    openningDate: Date // 2022-04-19T16:39:10
-    closeDate: Date | null
-    interestAmountIfCanceled: number | null
-    type: string // SAVING_DEPOSIT
-    prolongationType: string // NONE
-    isProlongable: boolean
-    t24AccountId: number
-    cssAccountId: number
+  balanceEqu: number
+  depositNickName: string
+  depositType: string // მოთხოვნამდე ანაბარი
+  depositBalance: number
+  depositCurrency: CurrencyCode
+  accruedInterestAmount: number
+  contractN: string // IBAN
+  depositInterestRate: number // 0.5
+  openningDate: Date // 2022-04-19T16:39:10
+  closeDate: Date | null
+  interestAmountIfCanceled: number | null
+  type: string // SAVING_DEPOSIT
+  prolongationType: string // NONE
+  isProlongable: boolean
+  t24AccountId: number
+  cssAccountId: number
 }
 
 export interface DepositsResponse {
