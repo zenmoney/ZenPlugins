@@ -1,9 +1,9 @@
 import { InvalidLoginOrPasswordError } from '../../errors'
 import {
   Auth, AuthInitiateResponse, LanguageType,
-  OperationStatus,
-  Preferences, Session, accessTokenPayload, Account as CredoAccount, Transaction as CredoTransaction } from './models'
-import { fetchAllAccounts, fetchProductTransactions, authInitiate, initiate2FA, initiateAddBindedDevice, authConfirm , confirmDeviceBinding } from './fetchApi'
+  Preferences, Session, accessTokenPayload, Account as CredoAccount, Transaction as CredoTransaction
+} from './models'
+import { fetchAllAccounts, fetchProductTransactions, authInitiate, initiate2FA, initiateAddBindedDevice, authConfirm, confirmDeviceBinding } from './fetchApi'
 
 function parseJwt (token: string): accessTokenPayload {
   return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString())
@@ -24,7 +24,7 @@ export async function login (preferences: Preferences, auth?: Auth): Promise<Ses
     throw new InvalidLoginOrPasswordError('Username or password can not be empty string')
   }
 
-  let session: Session = { auth: { accessToken: '' } }
+  const session: Session = { auth: { accessToken: '' } }
   const initiateResponse: AuthInitiateResponse = await authInitiate(preferences)
   const operationId = initiateResponse.data.operationId
 

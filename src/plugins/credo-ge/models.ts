@@ -1,9 +1,5 @@
 import { AccountOrCard } from '../../types/zenmoney'
 
-export interface IpifyResponse {
-  ip: string
-}
-
 // Stored in persistent storage
 export interface Auth {
   accessToken: string
@@ -293,6 +289,7 @@ export interface DepositsResponse {
 
 // TODO: Can we get result of LoansResponse and accounts related to loans?
 export interface Loan {
+  openingDate?: Date
 }
 
 export interface LoansResponse {

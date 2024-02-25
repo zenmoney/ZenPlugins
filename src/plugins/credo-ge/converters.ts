@@ -84,8 +84,8 @@ function convertAccount (
   const currency = getString(apiAccount, 'currency')
   const accountSyncId = [accountNumber, currency].join('')
   const cardNumber = accountToCardNumber.get(accountId)
-  let syncIds = [accountSyncId, accountId]
-  if (cardNumber) { syncIds.push(cardNumber) }
+  const syncIds = [accountSyncId, accountId]
+  if (cardNumber !== null && cardNumber !== undefined) { syncIds.push(cardNumber) }
   const availableBalance = getNumber(apiAccount, 'availableBalance')
   /* Deposit or loan */
   const deposit = cssAccountToDeposits.get(apiAccount.cssAccountId)
@@ -104,10 +104,10 @@ function convertAccount (
   } else {
     /* Deposit or loan */
     // TODO: AccountType.loan!
-    const startDate = deposit ? new Date(deposit.openningDate) : new Date('2000-01-01')
+    const startDate = deposit !== null && deposit !== undefined ? new Date(deposit.openningDate) : new Date('2000-01-01')
     const startBalance = 0
     const capitalization = false
-    const percent = deposit ? deposit.depositInterestRate : 1
+    const percent = deposit !== null && deposit !== undefined ? deposit.depositInterestRate : 1
     const endDateOffsetInterval = 'month'
     const endDateOffset = 1
     const payoffInterval = 'month'

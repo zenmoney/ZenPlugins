@@ -44,7 +44,6 @@ async function fetchGraphQL (session: Session, body: object): Promise<FetchRespo
     sanitizeRequestLog: { headers: { Authorization: true } }
   }
   return await fetchApi(graphqlPath, fetchOptions)
-
 }
 
 export async function fetchAllAccounts (session: Session): Promise<CredoAccount[]> {
@@ -72,10 +71,10 @@ export async function fetchCards (session: Session): Promise<CredoCard[]> {
 }
 
 export async function fetchDeposits (session: Session): Promise<CredoDeposit[]> {
-    const body = {
-      query: '{ customer { deposits { targetingImageUrl targetingName targetingId targetingCardUrl hasActiveWallet availableToTopUp balanceEqu depositNickName depositType depositBalance depositCurrency accruedInterestAmount contractN depositInterestRate relatedAccount openningDate closeDate interestAmountIfCanceled productId type prolongationType type isProlongable t24AccountId cssAccountId } } }',
-      variables: {}
-    }
+  const body = {
+    query: '{ customer { deposits { targetingImageUrl targetingName targetingId targetingCardUrl hasActiveWallet availableToTopUp balanceEqu depositNickName depositType depositBalance depositCurrency accruedInterestAmount contractN depositInterestRate relatedAccount openningDate closeDate interestAmountIfCanceled productId type prolongationType type isProlongable t24AccountId cssAccountId } } }',
+    variables: {}
+  }
   const response = await fetchGraphQL(session, body)
   const depositsResponse = response.body as DepositsResponse
   const deposits = depositsResponse.data.customer.deposits
@@ -84,10 +83,10 @@ export async function fetchDeposits (session: Session): Promise<CredoDeposit[]> 
 }
 
 export async function fetchLoans (session: Session): Promise<CredoLoan[]> {
-    const body = {
-      query: '{ customer { loans { id loanBalance loanBalanceEqu currency productId product nickname nextPaymentDate nextPaymentAmount contractN relatedAccount } } }',
-      variables: {}
-    }
+  const body = {
+    query: '{ customer { loans { id loanBalance loanBalanceEqu currency productId product nickname nextPaymentDate nextPaymentAmount contractN relatedAccount } } }',
+    variables: {}
+  }
   const response = await fetchGraphQL(session, body)
   const loansResponse = response.body as LoansResponse
   const loans = loansResponse.data.customer.loans
