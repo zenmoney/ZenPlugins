@@ -49,7 +49,7 @@ export async function fetchAccounts (session: Session): Promise<CredoAccount[]> 
   return await fetchAllAccounts(session)
 }
 
-export async function fetchTransactions (session: Session, accountId: string, fromDate: Date, toDate: Date): Promise<CredoTransaction[]> {
+export async function fetchTransactions (session: Session, accountId: string, fromDate: Date): Promise<CredoTransaction[]> {
   console.log('>>> Fethching transactions')
-  return await fetchProductTransactions(accountId, session, fromDate, toDate)
+  return await fetchProductTransactions(accountId, session, fromDate)
 }

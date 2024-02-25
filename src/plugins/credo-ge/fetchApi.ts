@@ -95,7 +95,7 @@ export async function fetchLoans (session: Session): Promise<CredoLoan[]> {
   return loans
 }
 
-export async function fetchProductTransactions (accountId: string, session: Session, fromDate: Date, toDate: Date): Promise<CredoTransaction[]> {
+export async function fetchProductTransactions (accountId: string, session: Session, fromDate: Date): Promise<CredoTransaction[]> {
   const chunkSize = 30
   let body: object
   let pageNumber = 1
@@ -111,7 +111,6 @@ export async function fetchProductTransactions (accountId: string, session: Sess
             Number(accountId)
           ],
           dateFrom: fromDate,
-          dateTo: toDate,
           onlyCanBeReversedOrRepeated: false,
           pageNumber,
           pageSize: chunkSize

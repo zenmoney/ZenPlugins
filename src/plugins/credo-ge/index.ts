@@ -24,7 +24,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
       continue
     }
     console.log('>>> Getting transactions for account: ' + account.id)
-    const apiTransactions = await fetchTransactions(session, account.id, fromDate, toDate)
+    const apiTransactions = await fetchTransactions(session, account.id, fromDate)
     for (const apiTransaction of apiTransactions) {
       transactions.push(convertTransaction(apiTransaction, account))
     }
