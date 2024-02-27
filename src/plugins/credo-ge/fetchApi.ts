@@ -22,7 +22,7 @@ import {
   CardsResponse,
   TransactionListResponse,
   DepositsResponse,
-  LoansResponse
+  LoansResponse,
   TransactionDetail,
   TransactionDetailResponse
 } from './models'
