@@ -11,7 +11,6 @@ import {
   OperationType
 } from './models'
 
-
 export function getAccountNumberToAccountMapping (accounts: Account[]): Map <string, Account> {
   const numberToId = new Map()
   for (const account of accounts) {
@@ -128,7 +127,7 @@ function convertAccount (
     return {
       id: accountId,
       type: accountType,
-      title: depositNickName ? depositNickName + ' ' + accountSyncId : accountSyncId,
+      title: depositNickName !== undefined  ? depositNickName + ' ' + accountSyncId : accountSyncId,
       instrument: currency,
       syncIds,
       balance: availableBalance,
@@ -149,7 +148,7 @@ export function convertTransaction (apiTransaction: CredoTransaction, account: A
   const transactionType = getOptString(apiTransaction, 'transactionType')
   const operationDateTime = getString(apiTransaction, 'operationDateTime')
   const operationType = getOptString(apiTransaction, 'operationType')
-  const isConversion = operationType === OperationType.ConversionKa || operationType === OperationType.ConversionEn || operationType == OperationType.ConversionRu
+  const isConversion = operationType === OperationType.ConversionKa || operationType === OperationType.ConversionEn || operationType === OperationType.ConversionRu
   const isMovement = transactionType === TransactionType.Transferbetweenownaccounts || transactionType === TransactionType.CurrencyExchange || isConversion
   const description = getOptString(apiTransaction, 'description') ?? ''
   const strippedDescription = strippDescription(description)
@@ -159,7 +158,7 @@ export function convertTransaction (apiTransaction: CredoTransaction, account: A
   const groupKeys = []
   if (isConversion && operationDateTime !== undefined) {
     const timestamp = new Date(operationDateTime).getTime()
-    groupKeys.push('conversion_' + timestamp)
+    groupKeys.push('conversion_' + timestamp.toString())
   } else if (isMovement) {
     groupKeys.push(transactionId)
   } else {

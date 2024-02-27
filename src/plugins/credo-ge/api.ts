@@ -11,8 +11,6 @@ import {
   initiateAddBindedDevice,
   authConfirm,
   confirmDeviceBinding,
-  fetchBlockedTransactions,
-  getTransactionDetail
 } from './fetchApi'
 
 function parseJwt (token: string): accessTokenPayload {

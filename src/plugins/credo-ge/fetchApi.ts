@@ -102,14 +102,12 @@ export async function getTransactionDetail (session: Session, stmtEntryId: strin
     operationName: 'transaction',
     query: 'query transaction($stmtEntryId: String) { customer { transactions(stmtEntryId: $stmtEntryId) { amount transactionId operationId transactionType operationType debit debitEquivalent credit creditEquivalent description operationPerson currency amountEquivalent accountNumber contragentAccount contragentFullName contragentCurrency contragentAmount isCardBlock operationDateTime canRepeat canReverse transactionRate details { cardNumber debitAmount creditBank treasuryCode debitAmountEquivalent creditAmount creditAmountEquivalent debitCurrency creditCurrency accountNumber debitFullName creditFullName debitAccount creditAccount description rate thirdPartyFullName thirdPartyPersonalNumber utilityProviderName utilityServiceName utilityComment treasuryCode p2pFee } p2POperationStatements { amount country currency dateCreated description operationId operationStatusTypeId operationTypeId personId receiverCardLastFourDigits senderCardLastFourDigits senderCardType senderCardTypeName serviceProvider ufcTransactionId } } cards { cardNumber cardNickName cardImageAddress } }}',
     variables: {
-      stmtEntryId: stmtEntryId
+      stmtEntryId
     }
   }
   const response = await fetchGraphQL(session, body)
   const transactionDetailResponse = response.body as TransactionDetailResponse
   const transactions = transactionDetailResponse.data.customer.transactions as TransactionDetail[]
-
-  assert(isArray(transactions), 'can not get transaction details', response)
 
   return transactions[0]
 }
@@ -160,7 +158,6 @@ export async function fetchBlockedTransactions (session: Session, fromDate: Date
   }
   return blockedTransactions
 }
-
 
 export async function fetchProductTransactions (accountId: string, session: Session, fromDate: Date): Promise<CredoTransaction[]> {
   const chunkSize = 30
@@ -303,7 +300,7 @@ export async function authConfirm (otp: string | null, operationId: string): Pro
   const response = await fetchJson(IEBaseUrl + confirmPath, {
     method: 'POST',
     body: payload,
-    sanitizeResponseLog: { body: { data: { operationData: true  } } }
+    sanitizeResponseLog: { body: { data: { operationData: true  }}}
   })
   if (response.status !== 200) {
     throw new TemporaryError('2FA challenge failed!')

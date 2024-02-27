@@ -33,7 +33,6 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
         blockedTransactionsByAccountId.set(account.id, transactionsList.concat(t))
       } else {
         blockedTransactionsByAccountId.set(account.id, [t])
-
       }
     }
   }
