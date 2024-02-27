@@ -10,7 +10,7 @@ import {
   initiate2FA,
   initiateAddBindedDevice,
   authConfirm,
-  confirmDeviceBinding,
+  confirmDeviceBinding
 } from './fetchApi'
 
 function parseJwt (token: string): accessTokenPayload {

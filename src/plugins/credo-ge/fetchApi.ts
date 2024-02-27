@@ -107,7 +107,7 @@ export async function getTransactionDetail (session: Session, stmtEntryId: strin
   }
   const response = await fetchGraphQL(session, body)
   const transactionDetailResponse = response.body as TransactionDetailResponse
-  const transactions = transactionDetailResponse.data.customer.transactions as TransactionDetail[]
+  const transactions = transactionDetailResponse.data.customer.transactions
 
   return transactions[0]
 }
@@ -300,7 +300,7 @@ export async function authConfirm (otp: string | null, operationId: string): Pro
   const response = await fetchJson(IEBaseUrl + confirmPath, {
     method: 'POST',
     body: payload,
-    sanitizeResponseLog: { body: { data: { operationData: true  }}}
+    sanitizeResponseLog: { body: { data: { operationData: true } } }
   })
   if (response.status !== 200) {
     throw new TemporaryError('2FA challenge failed!')

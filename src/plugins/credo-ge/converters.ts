@@ -127,7 +127,7 @@ function convertAccount (
     return {
       id: accountId,
       type: accountType,
-      title: depositNickName !== undefined  ? depositNickName + ' ' + accountSyncId : accountSyncId,
+      title: depositNickName !== undefined ? depositNickName + ' ' + accountSyncId : accountSyncId,
       instrument: currency,
       syncIds,
       balance: availableBalance,
