@@ -136,6 +136,7 @@ function convertAccount (
 export function convertTransaction (apiTransaction: CredoTransaction, account: Account): ExtendedTransaction {
   const transactionId = getOptString(apiTransaction, 'transactionId') ?? null
   const transactionType = getOptString(apiTransaction, 'transactionType')
+  const operationDateTime = getOptString(apiTransaction, 'operationDateTime')
   const operationType = getOptString(apiTransaction, 'operationType')
   const isConversion = operationType === OperationType.ConversionKa || operationType === OperationType.ConversionEn || operationType == OperationType.ConversionRu
   const isMovement = transactionType === TransactionType.Transferbetweenownaccounts || transactionType === TransactionType.CurrencyExchange || isConversion
@@ -144,6 +145,16 @@ export function convertTransaction (apiTransaction: CredoTransaction, account: A
   let comment = null
   let merchant = null
 
+  const groupKeys = []
+  if (isConversion && operationDateTime !== undefined) {
+    const timestamp = new Date(operationDateTime).getTime()
+    groupKeys.push('conversion_' + timestamp)
+  } else if (isMovement) {
+    groupKeys.push(transactionId)
+  } else {
+    groupKeys.push(null)
+  }
+
   if (
     transactionType === null ||
     transactionType === undefined ||
@@ -151,7 +162,7 @@ export function convertTransaction (apiTransaction: CredoTransaction, account: A
     transactionType === TransactionType.Transferbetweenownaccounts ||
     transactionType === TransactionType.CurrencyExchange
   ) {
-    comment = operationType
+    comment = operationType ?? description
   } else {
     merchant = {
       fullTitle: strippedDescription,
@@ -189,7 +200,7 @@ export function convertTransaction (apiTransaction: CredoTransaction, account: A
     ],
     merchant,
     comment,
-    groupKeys: isMovement ? [transactionId] : [null]
+    groupKeys
   }
 
   console.log('> convertedTransaction: ', convertedTransaction)
