@@ -23,6 +23,8 @@ import {
   TransactionListResponse,
   DepositsResponse,
   LoansResponse
+  TransactionDetail,
+  TransactionDetailResponse
 } from './models'
 import { isArray } from 'lodash'
 
@@ -36,10 +38,10 @@ async function fetchApi (url: string, options?: FetchOptions): Promise<FetchResp
   return await fetchJson(IEBaseUrl + url, options ?? {})
 }
 
-async function fetchGraphQL (session: Session, body: object): Promise<FetchResponse> {
+async function fetchGraphQL (session: Session, body: object, language: LanguageType = LanguageType.english): Promise<FetchResponse> {
   const fetchOptions: FetchOptions = {
     method: 'POST',
-    headers: { Authorization: 'Bearer ' + session.auth.accessToken },
+    headers: { Authorization: 'Bearer ' + session.auth.accessToken, Language: language },
     body,
     sanitizeRequestLog: { headers: { Authorization: true } }
   }
@@ -94,6 +96,61 @@ export async function fetchLoans (session: Session): Promise<CredoLoan[]> {
   return loans
 }
 
+export async function getAccountNumberFromTransactionDetail (session: Session, transactionId: string): Promise<string> {
+  const body = {
+    operationName: 'transaction',
+    query: 'query transaction($stmtEntryId: String) { customer { transactions(stmtEntryId: $stmtEntryId) { amount transactionId operationId transactionType operationType debit debitEquivalent credit creditEquivalent description operationPerson currency amountEquivalent accountNumber contragentAccount contragentFullName contragentCurrency contragentAmount isCardBlock operationDateTime canRepeat canReverse printForm transactionRate details { cardNumber debitAmount creditBank treasuryCode debitAmountEquivalent creditAmount creditAmountEquivalent debitCurrency creditCurrency accountNumber debitFullName creditFullName debitAccount creditAccount description rate thirdPartyFullName thirdPartyPersonalNumber utilityProviderName utilityServiceName utilityComment treasuryCode p2pFee } p2POperationStatements { amount country currency dateCreated description operationId operationStatusTypeId operationTypeId personId receiverCardLastFourDigits senderCardLastFourDigits senderCardType senderCardTypeName serviceProvider ufcTransactionId } } cards { cardNumber cardNickName cardImageAddress } }}',
+    variables: {
+      stmtEntryId: transactionId
+    }
+  }
+  const response = await fetchGraphQL(session, body)
+  const transactionDetailResponse = response.body as TransactionDetailResponse
+  const transactions = transactionDetailResponse.data.customer.transactions as TransactionDetail[]
+
+  assert(isArray(transactions), 'can not get transaction details', response)
+
+  const transactionDetails = transactions[0]
+
+  return transactionDetails.accountNumber + transactionDetails.currency
+}
+
+export async function fetchBlockedTransactions (accountId: string, session: Session, fromDate: Date): Promise<CredoTransaction[]> {
+  const chunkSize = 30
+  let body: object
+  let pageNumber = 1
+  let transactions: CredoTransaction[] = []
+
+  while (true) {
+    body = {
+      operationName: 'transactionPagingList',
+      query: 'query transactionPagingList($data: TransactionFilterGType!) {transactionPagingList(data: $data) { pageCount totalItemCount itemList { credit currency transactionType transactionId debit description isCardBlock operationDateTime stmtEntryId canRepeat canReverse amountEquivalent operationType operationTypeId }} }',
+      variables: {
+        data: {
+          onlyCanBeReversedOrRepeated: false,
+          pageNumber,
+          pageSize: chunkSize
+        }
+      }
+    }
+    const response = await fetchGraphQL(session, body)
+
+    const transactionsResponse = response.body as TransactionListResponse
+    const chunkTransactions = transactionsResponse.data.transactionPagingList.itemList
+
+    assert(isArray(chunkTransactions), 'cant get blocked transactions array', response)
+    transactions = transactions.concat(chunkTransactions)
+
+    const latestTransactionDate = new Date(chunkTransactions[-1].operationDateTime)
+    if (latestTransactionDate > fromDate) {
+      break
+    }
+    pageNumber++
+  }
+  return transactions
+}
+
+
 export async function fetchProductTransactions (accountId: string, session: Session, fromDate: Date): Promise<CredoTransaction[]> {
   const chunkSize = 30
   let body: object
@@ -140,7 +197,7 @@ export async function authInitiate ({ login, password }: Preferences): Promise<A
     refreshToken: null,
     loggedInWith: 4,
     deviceName: 'Mozilla Firefox',
-    languageType: LanguageType.english
+    languageType: 'ENGLISH'
   }
   const deviceId = ZenMoney.getData('deviceId', null) as string
   if (deviceId !== null) {
@@ -156,7 +213,6 @@ export async function authInitiate ({ login, password }: Preferences): Promise<A
   if (response.status !== 200) {
     throw new InvalidLoginOrPasswordError('Invalid username or password!')
   }
-  console.log('AuthInitiate response', response)
   const result = response.body as AuthInitiateResponse
   return result
 }
@@ -174,7 +230,6 @@ export async function initiate2FA (operationId: string): Promise<AuthOperationSe
   if (response.status !== 200) {
     throw new TemporaryError('Initiating 2FA failed!')
   }
-  console.log('2FA challenge response', response)
   const result = response.body as AuthOperationSendChallengeResponse
   return result
 }
@@ -200,12 +255,11 @@ export async function initiateAddBindedDevice (session: Session, languageType: L
   const clientName = 'Mozilla Firefox'
   const body = {
     query: 'mutation ($data: AddBindedDeviceInput!) { initiateAddBindedDevice(data: $data) { operationId status requires2FA requiresAuthentification }}',
-    variables: { data: { deviceId, languageType, name: clientName, userIP } }
+    variables: { data: { deviceId, languageType: languageType.toUpperCase(), name: clientName, userIP } }
   }
 
   console.log('>>> Initiating device binding')
   const response = await fetchGraphQL(session, body)
-  console.log('Binding device response: ', response)
 
   if (response.status !== 200) {
     throw new TemporaryError('Device binding failed!')
@@ -224,7 +278,6 @@ export async function confirmDeviceBinding (session: Session, operationId: strin
     }
   }
   const response = await fetchGraphQL(session, body)
-  console.log('Confirm device binding response:', response)
   const result = response.body as BindDeviceConfirmResponse
 
   if (response.status !== 200 || result.data?.operationConfirm?.status !== OperationStatus.approved) {
@@ -239,12 +292,11 @@ export async function authConfirm (otp: string | null, operationId: string): Pro
   const response = await fetchJson(IEBaseUrl + confirmPath, {
     method: 'POST',
     body: payload,
-    sanitizeResponseLog: { body: { data: { operationData: { token: true, refreshToken: true } } } }
+    sanitizeResponseLog: { body: { data: { operationData: true  } } }
   })
   if (response.status !== 200) {
     throw new TemporaryError('2FA challenge failed!')
   }
-  console.log('2FA confirmation response', response)
   const result = response.body as AuthConfirmResponse
   return result
 }

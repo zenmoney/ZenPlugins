@@ -7,7 +7,8 @@ import {
   Loan as CredoLoan,
   Card as CredoCard,
   Transaction as CredoTransaction,
-  TransactionType
+  TransactionType,
+  OperationType
 } from './models'
 
 function getAccountToCardMapping (cards: CredoCard[]): Map<string, string> {
@@ -89,6 +90,7 @@ function convertAccount (
   const availableBalance = getNumber(apiAccount, 'availableBalance')
   /* Deposit or loan */
   const deposit = cssAccountToDeposits.get(apiAccount.cssAccountId)
+  const depositNickName = getOptString(deposit, 'depositNickName')
 
   if (accountType === AccountType.ccard) {
     return {
@@ -115,7 +117,7 @@ function convertAccount (
     return {
       id: accountId,
       type: accountType,
-      title: accountSyncId,
+      title: depositNickName ? depositNickName + ' ' + accountSyncId : accountSyncId,
       instrument: currency,
       syncIds,
       balance: availableBalance,
@@ -134,7 +136,9 @@ function convertAccount (
 export function convertTransaction (apiTransaction: CredoTransaction, account: Account): ExtendedTransaction {
   const transactionId = getOptString(apiTransaction, 'transactionId') ?? null
   const transactionType = getOptString(apiTransaction, 'transactionType')
-  const isMovement = transactionType === TransactionType.Transferbetweenownaccounts || transactionType === TransactionType.CurrencyExchange
+  const operationType = getOptString(apiTransaction, 'operationType')
+  const isConversion = operationType === OperationType.ConversionKa || operationType === OperationType.ConversionEn || operationType == OperationType.ConversionRu
+  const isMovement = transactionType === TransactionType.Transferbetweenownaccounts || transactionType === TransactionType.CurrencyExchange || isConversion
   const description = getOptString(apiTransaction, 'description') ?? ''
   const strippedDescription = strippDescription(description)
   let comment = null
@@ -147,7 +151,7 @@ export function convertTransaction (apiTransaction: CredoTransaction, account: A
     transactionType === TransactionType.Transferbetweenownaccounts ||
     transactionType === TransactionType.CurrencyExchange
   ) {
-    comment = description
+    comment = operationType
   } else {
     merchant = {
       fullTitle: strippedDescription,
@@ -169,7 +173,7 @@ export function convertTransaction (apiTransaction: CredoTransaction, account: A
   const invoice = getAmountFromDescription(description, Math.sign(amount)) // TODO: rewrite getAmountFromDescription
   const isCardBlock = getBoolean(apiTransaction, 'isCardBlock')
 
-  console.log(transactionId, 'isMovement:', isMovement, 'apiTransType:', apiTransaction.transactionType, 'transactionType:', transactionType)
+  console.log(transactionId, 'isMovement:', isMovement, 'transactionType:', transactionType)
 
   const convertedTransaction: ExtendedTransaction = {
     hold: isCardBlock,

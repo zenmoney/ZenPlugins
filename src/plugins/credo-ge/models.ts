@@ -89,9 +89,9 @@ export interface ConvertResult {
 }
 
 export enum LanguageType {
-  english = 'ENGLISH',
-  russian = 'RUSSIAN',
-  georgian = 'GEORGIAN'
+  english = 'English',
+  russian = 'Russian',
+  georgian = 'Georgian'
 }
 
 export enum State {
@@ -110,7 +110,7 @@ export interface AuthInitiatePayload {
   refreshToken: string | null
   loggedInWith: number
   deviceName: string
-  languageType: LanguageType
+  languageType: string // LanguageType capitalized
   WebDevicePublicId?: string
 }
 
@@ -304,6 +304,12 @@ export enum TransactionType {
   Otherexpenses = 'Otherexpenses'
 }
 
+export enum OperationType {
+  ConversionRu = 'Безналичная конвертация',
+  ConversionKa = 'უნაღდო კონვერტაცია',
+  ConversionEn = 'Currency conversion'
+}
+
 // Отображение транзакции для пользователя. Меняется при смене языка
 /* export enum OperationType {
  *   CardTransaction = "Card transaction",
@@ -337,6 +343,67 @@ export interface TransactionListResponse {
       pageCount: number
       totalItemCount: number
       itemList: Transaction[]
+    }
+  }
+}
+
+export interface TransactionDetail {
+  amount: number
+  transactionId: string | null
+  operationId: string | null
+  transactionType: TransactionType
+  operationType: string
+  debit: number
+  debitEquivalent: number | null
+  credit: number | null
+  creditEquivalent: number | null
+  description: string
+  operationPerson: string | null
+  currency: CurrencyCode
+  amountEquivalent: number
+  accountNumber: string // IBAN
+  contragentAccount: null
+  contragentFullName: null
+  contragentCurrency: null
+  contragentAmount: null
+  isCardBlock: boolean
+  operationDateTime: string
+  canRepeat: boolean
+  canReverse: boolean
+  printForm: string
+  transactionRate: number
+  p2POperationStatements: null
+  details: {
+    cardNumber: string
+    debitAmount: number
+    creditBank: string | null
+    treasuryCode: string | null
+    debitAmountEquivalent: number | null
+    creditAmount: number | null
+    creditAmountEquivalent: number | null
+    debitCurrency: CurrencyCode | null
+    creditCurrency: CurrencyCode | null
+    accountNumber: string // IBAN
+    debitFullName: string | null // ალეკსეი ლუკომსკი
+    creditFullName: string | null
+    debitAccount: string | null // IBAN
+    creditAccount: string | null // IBAN
+    description: string
+    rate: number | null
+    thirdPartyFullName: string | null
+    thirdPartyPersonalNumber: string | null
+    utilityProviderName: string | null
+    utilityServiceName: string | null
+    utilityComment: string | null
+    p2pFee: string | null
+  }
+}
+
+export interface TransactionDetailResponse {
+  data: {
+    customer: {
+      transactions: TransactionDetail[]
+      cards: Card[]
     }
   }
 }

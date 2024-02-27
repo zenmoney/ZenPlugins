@@ -30,7 +30,5 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
     }
   }
 
-  console.log('scrape result: ', { accounts, transactions })
-
   return { accounts, transactions }
 }
