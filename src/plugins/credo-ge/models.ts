@@ -370,7 +370,6 @@ export interface TransactionDetail {
   operationDateTime: string
   canRepeat: boolean
   canReverse: boolean
-  printForm: string
   transactionRate: number
   p2POperationStatements: null
   details: {

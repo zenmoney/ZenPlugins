@@ -1,6 +1,7 @@
 import { TemporaryError, InvalidLoginOrPasswordError } from '../../errors'
 import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
 import { generateRandomString } from '../../common/utils'
+import { getOptString } from '../../types/get'
 import {
   AuthInitiateResponse,
   InitiateAddBindedDeviceResponse,
@@ -96,12 +97,12 @@ export async function fetchLoans (session: Session): Promise<CredoLoan[]> {
   return loans
 }
 
-export async function getAccountNumberFromTransactionDetail (session: Session, transactionId: string): Promise<string> {
+export async function getTransactionDetail (session: Session, stmtEntryId: string): Promise<TransactionDetail> {
   const body = {
     operationName: 'transaction',
-    query: 'query transaction($stmtEntryId: String) { customer { transactions(stmtEntryId: $stmtEntryId) { amount transactionId operationId transactionType operationType debit debitEquivalent credit creditEquivalent description operationPerson currency amountEquivalent accountNumber contragentAccount contragentFullName contragentCurrency contragentAmount isCardBlock operationDateTime canRepeat canReverse printForm transactionRate details { cardNumber debitAmount creditBank treasuryCode debitAmountEquivalent creditAmount creditAmountEquivalent debitCurrency creditCurrency accountNumber debitFullName creditFullName debitAccount creditAccount description rate thirdPartyFullName thirdPartyPersonalNumber utilityProviderName utilityServiceName utilityComment treasuryCode p2pFee } p2POperationStatements { amount country currency dateCreated description operationId operationStatusTypeId operationTypeId personId receiverCardLastFourDigits senderCardLastFourDigits senderCardType senderCardTypeName serviceProvider ufcTransactionId } } cards { cardNumber cardNickName cardImageAddress } }}',
+    query: 'query transaction($stmtEntryId: String) { customer { transactions(stmtEntryId: $stmtEntryId) { amount transactionId operationId transactionType operationType debit debitEquivalent credit creditEquivalent description operationPerson currency amountEquivalent accountNumber contragentAccount contragentFullName contragentCurrency contragentAmount isCardBlock operationDateTime canRepeat canReverse transactionRate details { cardNumber debitAmount creditBank treasuryCode debitAmountEquivalent creditAmount creditAmountEquivalent debitCurrency creditCurrency accountNumber debitFullName creditFullName debitAccount creditAccount description rate thirdPartyFullName thirdPartyPersonalNumber utilityProviderName utilityServiceName utilityComment treasuryCode p2pFee } p2POperationStatements { amount country currency dateCreated description operationId operationStatusTypeId operationTypeId personId receiverCardLastFourDigits senderCardLastFourDigits senderCardType senderCardTypeName serviceProvider ufcTransactionId } } cards { cardNumber cardNickName cardImageAddress } }}',
     variables: {
-      stmtEntryId: transactionId
+      stmtEntryId: stmtEntryId
     }
   }
   const response = await fetchGraphQL(session, body)
@@ -110,16 +111,14 @@ export async function getAccountNumberFromTransactionDetail (session: Session, t
 
   assert(isArray(transactions), 'can not get transaction details', response)
 
-  const transactionDetails = transactions[0]
-
-  return transactionDetails.accountNumber + transactionDetails.currency
+  return transactions[0]
 }
 
-export async function fetchBlockedTransactions (accountId: string, session: Session, fromDate: Date): Promise<CredoTransaction[]> {
+export async function fetchBlockedTransactions (session: Session, fromDate: Date): Promise<CredoTransaction[]> {
   const chunkSize = 30
   let body: object
   let pageNumber = 1
-  let transactions: CredoTransaction[] = []
+  const blockedTransactions: CredoTransaction[] = []
 
   while (true) {
     body = {
@@ -133,21 +132,33 @@ export async function fetchBlockedTransactions (accountId: string, session: Sess
         }
       }
     }
+    console.log('>> fetching blocked transactions')
     const response = await fetchGraphQL(session, body)
 
     const transactionsResponse = response.body as TransactionListResponse
     const chunkTransactions = transactionsResponse.data.transactionPagingList.itemList
 
     assert(isArray(chunkTransactions), 'cant get blocked transactions array', response)
-    transactions = transactions.concat(chunkTransactions)
 
-    const latestTransactionDate = new Date(chunkTransactions[-1].operationDateTime)
-    if (latestTransactionDate > fromDate) {
+    for (const t of chunkTransactions) {
+      if (t.isCardBlock) {
+        blockedTransactions.push(t)
+      }
+    }
+    const latestTransaction = chunkTransactions[chunkTransactions.length - 1]
+    const operationDateTime = getOptString(latestTransaction, 'operationDateTime')
+    if (operationDateTime === undefined) {
+      console.log('>>> transaction without operationDateTime: ', latestTransaction)
+      break
+    }
+    const latestTransactionDate = new Date(operationDateTime)
+    console.log('> latest transaction datetime: ', latestTransactionDate)
+    if (latestTransactionDate < fromDate) {
       break
     }
     pageNumber++
   }
-  return transactions
+  return blockedTransactions
 }
 
 

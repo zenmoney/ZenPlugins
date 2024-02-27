@@ -3,7 +3,17 @@ import {
   Auth, AuthInitiateResponse, LanguageType,
   Preferences, Session, accessTokenPayload, Account as CredoAccount, Transaction as CredoTransaction
 } from './models'
-import { fetchAllAccounts, fetchProductTransactions, authInitiate, initiate2FA, initiateAddBindedDevice, authConfirm, confirmDeviceBinding } from './fetchApi'
+import {
+  fetchAllAccounts,
+  fetchProductTransactions,
+  authInitiate,
+  initiate2FA,
+  initiateAddBindedDevice,
+  authConfirm,
+  confirmDeviceBinding,
+  fetchBlockedTransactions,
+  getTransactionDetail
+} from './fetchApi'
 
 function parseJwt (token: string): accessTokenPayload {
   return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString())

@@ -11,6 +11,17 @@ import {
   OperationType
 } from './models'
 
+
+export function getAccountNumberToAccountMapping (accounts: Account[]): Map <string, Account> {
+  const numberToId = new Map()
+  for (const account of accounts) {
+    for (const syncId of account.syncIds) {
+      numberToId.set(syncId, account)
+    }
+  }
+  return numberToId
+}
+
 function getAccountToCardMapping (cards: CredoCard[]): Map<string, string> {
   const accountToCardMapping = new Map()
   for (const card of cards) {
@@ -136,7 +147,7 @@ function convertAccount (
 export function convertTransaction (apiTransaction: CredoTransaction, account: Account): ExtendedTransaction {
   const transactionId = getOptString(apiTransaction, 'transactionId') ?? null
   const transactionType = getOptString(apiTransaction, 'transactionType')
-  const operationDateTime = getOptString(apiTransaction, 'operationDateTime')
+  const operationDateTime = getString(apiTransaction, 'operationDateTime')
   const operationType = getOptString(apiTransaction, 'operationType')
   const isConversion = operationType === OperationType.ConversionKa || operationType === OperationType.ConversionEn || operationType == OperationType.ConversionRu
   const isMovement = transactionType === TransactionType.Transferbetweenownaccounts || transactionType === TransactionType.CurrencyExchange || isConversion
@@ -188,7 +199,7 @@ export function convertTransaction (apiTransaction: CredoTransaction, account: A
 
   const convertedTransaction: ExtendedTransaction = {
     hold: isCardBlock,
-    date: new Date(getString(apiTransaction, 'operationDateTime')),
+    date: new Date(operationDateTime),
     movements: [
       {
         id: transactionId,
