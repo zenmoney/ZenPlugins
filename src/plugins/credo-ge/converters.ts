@@ -149,7 +149,7 @@ export function convertTransaction (apiTransaction: CredoTransaction, account: A
   const transactionId = getOptString(apiTransaction, 'transactionId') ?? null
   const transactionType = getOptString(apiTransaction, 'transactionType')
   const operationDateTime = getString(apiTransaction, 'operationDateTime')
-  const operationType = getOptString(apiTransaction, 'operationType')
+  const operationType = getOptString(apiTransaction, 'operationType') ?? ''
   const isConversion = operationType === OperationType.ConversionKa || operationType === OperationType.ConversionEn || operationType === OperationType.ConversionRu
   const isMovement = transactionType === TransactionType.Transferbetweenownaccounts || transactionType === TransactionType.CurrencyExchange || isConversion
   const description = getOptString(apiTransaction, 'description') ?? ''
@@ -174,7 +174,7 @@ export function convertTransaction (apiTransaction: CredoTransaction, account: A
     transactionType === TransactionType.Transferbetweenownaccounts ||
     transactionType === TransactionType.CurrencyExchange
   ) {
-    comment = operationType ?? description
+    comment = operationType ?? strippedDescription
   } else {
     merchant = {
       fullTitle: strippedDescription,
@@ -190,7 +190,7 @@ export function convertTransaction (apiTransaction: CredoTransaction, account: A
     credit = getNumber(apiTransaction, 'credit')
     amount = credit
     if (!isMovement) {
-      comment = comment + ' | ' + description
+      comment = comment + ' | ' + strippedDescription
     }
   } else {
     debit = getNumber(apiTransaction, 'debit')
