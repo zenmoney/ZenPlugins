@@ -71,6 +71,7 @@ export function convertAccounts (apiAccounts: CredoAccount[], cards: CredoCard[]
   console.log('>> deposits:', deposits)
   const accounts: Account[] = []
   const accountToCardNumber = getAccountToCardMapping(cards)
+  console.log('accountToCardNumber:', accountToCardNumber)
   const accountToDepositMapping = getCssAccountToDepositMapping(deposits)
 
   for (const apiAccount of apiAccounts) {
@@ -94,8 +95,9 @@ function convertAccount (
   const accountNumber = getString(apiAccount, 'accountNumber')
   const currency = getString(apiAccount, 'currency')
   const accountSyncId = [accountNumber, currency].join('')
-  const cardNumber = accountToCardNumber.get(accountId)
+  const cardNumber = accountToCardNumber.get(accountNumber)
   const syncIds = [accountSyncId, accountId]
+  console.log('accountId:', accountId, 'accountNumber:', accountNumber, 'cardNumber:', cardNumber)
   if (cardNumber !== null && cardNumber !== undefined) { syncIds.push(cardNumber) }
   const availableBalance = getNumber(apiAccount, 'availableBalance')
   /* Deposit or loan */
@@ -187,6 +189,9 @@ export function convertTransaction (apiTransaction: CredoTransaction, account: A
   if (apiTransaction.credit !== null) {
     credit = getNumber(apiTransaction, 'credit')
     amount = credit
+    if (!isMovement) {
+      comment = comment + ' | ' + description
+    }
   } else {
     debit = getNumber(apiTransaction, 'debit')
     amount = -1 * debit
