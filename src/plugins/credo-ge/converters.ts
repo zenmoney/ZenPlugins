@@ -190,7 +190,7 @@ export function convertTransaction (apiTransaction: CredoTransaction, account: A
     credit = getNumber(apiTransaction, 'credit')
     amount = credit
     if (!isMovement) {
-      comment = `$String(comment) | $String(strippedDescription)`
+      comment = `${String(comment)} | ${String(strippedDescription)}`
     }
   } else {
     debit = getNumber(apiTransaction, 'debit')
