@@ -9,7 +9,7 @@ describe('strippDescription', () => {
     ['გადახდა - NAVRATNA UDUPI PURE VEG 380.00 INR 20.02.2024', 'NAVRATNA UDUPI PURE VEG'],
     ['გადახდა - WWW.GENKI.WORLD', 'WWW.GENKI.WORLD'],
     ['უნაღდო კონვერტაცია', 'უნაღდო კონვერტაცია'],
-    ['Personal Transfer.', 'Personal Transfer. '],
+    ['Personal Transfer.', 'Personal Transfer.'],
     ['/RFB/235AD12277H32B65///POP Service s.', '/RFB/235AD12277H32B65///POP Service s.']
   ])('get description free of additional data', (description, strippedDescription) => {
     expect(strippDescription(description)).toEqual(strippedDescription)
