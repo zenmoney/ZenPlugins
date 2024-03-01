@@ -18,18 +18,6 @@ import { retry } from '../../../common/retry'
 
 async function fetchApi (url: string, options: FetchOptions): Promise<FetchResponse> {
   let response: FetchResponse
-  if (!options.sanitizeRequestLog) {
-    options.sanitizeRequestLog = {}
-  }
-  // @ts-expect-error Disallowing cookies in request logs
-  options.sanitizeRequestLog.headers = { Cookie: true }
-  if (!options.sanitizeResponseLog) {
-    options.sanitizeResponseLog = {}
-  }
-  // @ts-expect-error Disallowing cookies in response logs
-  options.sanitizeResponseLog.headers = { 'set-cookie': true }
-  console.log('sanitized request', options.sanitizeRequestLog)
-  console.log('sanitized response', options.sanitizeResponseLog)
   try {
     response = await fetch(url, options)
   } catch (e) {

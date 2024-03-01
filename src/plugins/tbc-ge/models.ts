@@ -222,14 +222,14 @@ export class TransactionTaxV2 {
   }
 }
 
-export class TransactionCustomMobileV2 {
+export class TransactionUtilPayV2 {
   transaction: TransactionRecordV2
   merchant: string
   merchantCountry: string
   amount: number
 
-  static isCustomMobile (transaction: TransactionRecordV2): boolean {
-    return transaction.subTitle === 'Mobile' && transaction.title.startsWith('Cellfie')
+  static isUtilPay (transaction: TransactionRecordV2): boolean {
+    return transaction.categoryCode === 'UTIL_PAY' && !transaction.title.startsWith('POS')
   }
 
   constructor (transaction: TransactionRecordV2) {
@@ -240,14 +240,16 @@ export class TransactionCustomMobileV2 {
 
     this.transaction = transaction
     try {
-      // title is in format 'Cellfie;599000111;თანხა:10.00'
+      // title is in format
+      // Cellfie;599000111;თანხა:10.00
+      // SERVICENET;1009;2273000;თანხა:60.00
       const arr = transaction.title.split(';')
       this.merchant = arr[0]
       this.merchantCountry = 'Georgia'
-      this.amount = -Number.parseFloat(arr[2].split(':')[1])
+      this.amount = -Number.parseFloat(arr[arr.length - 1].split(':')[1])
     } catch ({ message }) {
       console.error(transaction)
-      throw new Error(`Error parsing title "${transaction.title}" in TransactionCustomMobileV2: ${message}`)
+      throw new Error(`Error parsing title "${transaction.title}" in TransactionUtilPayV2: ${message}`)
     }
   }
 }

@@ -6,9 +6,11 @@ import {
   FetchHistoryV2Data,
   PreparedAccountV2,
   PreparedCardV2,
-  TransactionBlockedV2, TransactionCustomMobileV2,
+  TransactionBlockedV2,
+  TransactionUtilPayV2,
   TransactionsByDateV2,
-  TransactionStandardMovementV2, TransactionTaxV2,
+  TransactionStandardMovementV2,
+  TransactionTaxV2,
   TransactionTransferV2
 } from './models'
 import { padStart } from 'lodash'
@@ -65,70 +67,85 @@ export function convertTransactionsV2 (transactionRecordsByDate: TransactionsByD
       if (transactionRecord.currency !== data.currency) {
         continue
       }
-      let amount: number
+      let amount: number | null = null
       let merchant: Merchant | null = null
       let secondMovement: Movement | null = null
       let comment: string | null = null
       let invoice: Amount | null = null
-      let id: string
+      let id: string | null = null
       let dateNum: number | null = null
-      if (transactionRecord.entryType === 'BlockedTransaction') {
-        const blockedTransaction = new TransactionBlockedV2(transactionRecord, transactionRecords.date)
-        id = blockedTransaction.id
-        amount = blockedTransaction.amount
-        // TODO add invoice
-        if (blockedTransaction.isCash()) {
-          secondMovement = createCashMovement(blockedTransaction.transaction.currency, -amount)
-        } else {
-          merchant = {
-            city: blockedTransaction.city,
-            country: blockedTransaction.countryCode,
-            title: blockedTransaction.merchant,
-            mcc: null,
-            location: null
-          }
-        }
-      } else {
-        amount = transactionRecord.amount
-        id = transactionRecord.movementId!
-        if (TransactionTransferV2.isTransfer(transactionRecord)) {
-          const transfer = new TransactionTransferV2(transactionRecord)
-          comment = transfer.transaction.title
-          merchant = null
-        } else if (TransactionCustomMobileV2.isCustomMobile(transactionRecord)) {
-          const mobile = new TransactionCustomMobileV2(transactionRecord)
-          id = transactionRecord.movementId!
-          amount = mobile.amount
-          merchant = {
-            city: null,
-            country: mobile.merchantCountry,
-            title: mobile.merchant,
-            mcc: null,
-            location: null
-          }
-        } else if (TransactionTaxV2.isTax(transactionRecord)) {
-          const tax = new TransactionTaxV2(transactionRecord)
-          id = tax.transaction.movementId!
-          amount = tax.transaction.amount
-          comment = tax.transaction.title
-          merchant = tax.merchant
-        } else {
-          const movement = new TransactionStandardMovementV2(transactionRecord)
-          dateNum = movement.date.getTime()
-          if (movement.needInvoice()) {
-            invoice = movement.invoice!
-          }
-          if (movement.isCash()) {
-            secondMovement = createCashMovement(movement.transaction.currency, -amount)
+      try {
+        if (transactionRecord.entryType === 'BlockedTransaction') {
+          const blockedTransaction = new TransactionBlockedV2(transactionRecord, transactionRecords.date)
+          id = blockedTransaction.id
+          amount = blockedTransaction.amount
+          // TODO add invoice
+          if (blockedTransaction.isCash()) {
+            secondMovement = createCashMovement(blockedTransaction.transaction.currency, -amount)
           } else {
             merchant = {
-              city: null,
-              country: null,
-              title: movement.merchant,
-              mcc: Number.isNaN(movement.mcc) ? null : movement.mcc,
+              city: blockedTransaction.city,
+              country: blockedTransaction.countryCode,
+              title: blockedTransaction.merchant,
+              mcc: null,
               location: null
             }
           }
+        } else {
+          amount = transactionRecord.amount
+          id = transactionRecord.movementId!
+          if (TransactionTransferV2.isTransfer(transactionRecord)) {
+            const transfer = new TransactionTransferV2(transactionRecord)
+            comment = transfer.transaction.title
+            merchant = null
+          } else if (TransactionUtilPayV2.isUtilPay(transactionRecord)) {
+            const mobile = new TransactionUtilPayV2(transactionRecord)
+            id = transactionRecord.movementId!
+            amount = mobile.amount
+            merchant = {
+              city: null,
+              country: mobile.merchantCountry,
+              title: mobile.merchant,
+              mcc: null,
+              location: null
+            }
+          } else if (TransactionTaxV2.isTax(transactionRecord)) {
+            const tax = new TransactionTaxV2(transactionRecord)
+            id = tax.transaction.movementId!
+            amount = tax.transaction.amount
+            comment = tax.transaction.title
+            merchant = tax.merchant
+          } else {
+            const movement = new TransactionStandardMovementV2(transactionRecord)
+            dateNum = movement.date.getTime()
+            if (movement.needInvoice()) {
+              invoice = movement.invoice!
+            }
+            if (movement.isCash()) {
+              secondMovement = createCashMovement(movement.transaction.currency, -amount)
+            } else {
+              merchant = {
+                city: null,
+                country: null,
+                title: movement.merchant,
+                mcc: Number.isNaN(movement.mcc) ? null : movement.mcc,
+                location: null
+              }
+            }
+          }
+        }
+      } catch ({ message }) {
+        // use default values
+        console.error(message)
+        if (id == null) {
+          const idLine = `${transactionRecord.title}${transactionRecord.subTitle}${transactionRecord.amount}${transactionRecord.categoryCode}${transactionRecord.subCategoryCode}`
+          id = Buffer.from(idLine).toString('base64')
+        }
+        if (amount == null) {
+          amount = transactionRecord.amount
+        }
+        if (comment == null) {
+          comment = transactionRecord.title
         }
       }
 
@@ -175,6 +192,7 @@ export function convertTransactionsV2 (transactionRecordsByDate: TransactionsByD
   }
   return transactions
 }
+
 export function parsePOSDateString (dateString: string): Date {
   const dateParts = dateString.trim().split(/\s+/)
   assert(dateParts.length === 4, 'cant parse pos date', dateString)

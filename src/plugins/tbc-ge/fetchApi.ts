@@ -29,8 +29,6 @@ async function fetchApi (url: string, options: FetchOptions): Promise<FetchRespo
   }
   // @ts-expect-error Disallowing cookies in response logs
   options.sanitizeResponseLog.headers = { 'set-cookie': true }
-  console.log('sanitized request', options.sanitizeRequestLog)
-  console.log('sanitized response', options.sanitizeResponseLog)
   try {
     response = await fetch(url, options)
   } catch (e) {

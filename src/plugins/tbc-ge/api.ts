@@ -65,15 +65,7 @@ function getOtpLoginCodeTextV2 (device: OtpDeviceV2): string {
  * @param device
  */
 function getOtpTrustCodeTextV2 (device: OtpDeviceV2): string {
-  return `Enter the second code from ${getOtpDeviceName(device)} to trust the device`
-}
-
-/**
- * Get the text for the last OTP code, for trusting the device again
- * @param device
- */
-function getOtpTrustAgainCodeTextV2 (device: OtpDeviceV2): string {
-  return `Enter the last code from ${getOtpDeviceName(device)} to trust the device again`
+  return `Enter the code from ${getOtpDeviceName(device)} to trust the device`
 }
 
 function generateDeviceInfo (): DeviceInfo {
@@ -244,10 +236,9 @@ WxdnLbK6zKx6+4WL9qWhGu6R+7HNPAaKOb7KXEwjV2ekr6FVZneKRFe/XivMk66O
 
     trustId = await fetchConfirmTrustedDeviceV2(code, orderId, cookies)
     if (trustId == null) {
-      await ZenMoney.alert('Device was already trusted, but we don\'t have the trustedDeviceId. We need to untrust the device and trust it again')
       await fetchUnTrustDeviceV2(deviceData, sessionId, cookies)
       orderId = await fetchTrustDeviceV2(deviceData, sessionId, cookies)
-      code = await askOtpCodeV2(getOtpTrustAgainCodeTextV2(otpDevice))
+      code = await askOtpCodeV2(getOtpTrustCodeTextV2(otpDevice))
       trustId = await fetchConfirmTrustedDeviceV2(code, orderId, cookies)
     }
 
