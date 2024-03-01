@@ -1,4 +1,4 @@
-import { convertTransaction } from '../../../converters'
+import { convertTransaction } from '../../../legacy/converters'
 import { debitCardUSD, depositGEL } from '../../../common-tests/accounts'
 
 describe('convertTransaction', () => {

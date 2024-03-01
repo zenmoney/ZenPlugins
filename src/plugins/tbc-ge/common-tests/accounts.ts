@@ -1,5 +1,6 @@
-import { ConvertedProduct } from '../models'
+
 import { AccountType } from '../../../types/zenmoney'
+import { ConvertedProduct } from '../legacy/models'
 
 export const savingUSD: ConvertedProduct = {
   account: {

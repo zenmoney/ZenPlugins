@@ -1,4 +1,4 @@
-import { convertBlockedMovementTransaction } from '../../../converters'
+import { convertBlockedMovementTransaction } from '../../../legacy/converters'
 import { debitCardGEL } from '../../../common-tests/accounts'
 
 it.each([

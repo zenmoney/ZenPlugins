@@ -1,5 +1,5 @@
-import { convertTransaction } from '../../../converters'
 import { debitCardGEL, debitCardUSD } from '../../../common-tests/accounts'
+import { convertTransaction } from '../../../legacy/converters'
 
 describe('convertTransaction', () => {
   it.each([

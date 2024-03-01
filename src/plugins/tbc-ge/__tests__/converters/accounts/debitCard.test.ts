@@ -1,5 +1,5 @@
-import { convertAccounts } from '../../../converters'
-import { FetchedAccounts } from '../../../models'
+import { convertAccounts } from '../../../legacy/converters'
+import { FetchedAccounts } from '../../../legacy/models'
 
 it.each([
   [

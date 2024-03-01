@@ -1,4 +1,4 @@
-import { encryptPasscode, hashPasscodeRequest, hashPassword, hashPasswordRequest, hmacRequest } from '../../utils'
+import { encryptPasscode, hashPasscodeRequest, hashPassword, hashPasswordRequest, hmacRequest } from '../../legacy/utils'
 import forge from 'node-forge'
 
 test('hash password', () => {

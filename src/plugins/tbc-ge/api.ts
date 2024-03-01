@@ -1,34 +1,37 @@
-import { Auth, ConvertedProduct, Device, FetchedAccount, FetchedAccounts, OtpDevice, Preferences, Session } from './models'
 import {
-  fetchAccountsList,
-  fetchCertifyLoginByPasscode,
-  fetchCertifyLoginBySms,
-  fetchConfirmTrustedDevice,
-  fetchDashboard,
-  fetchDepositDetails,
-  fetchDeposits,
-  fetchDepositStatements,
-  fetchGetLoginSalt,
-  fetchGetRequestSalt,
-  fetchHistory,
-  fetchInitHeaders,
-  fetchInitTrustedDevice,
-  fetchLoans,
-  fetchLoginByPasscode,
-  fetchLoginByPassword,
-  fetchRegisterDevice
+  APP_VERSION,
+  AuthV2,
+  CardProductV2,
+  CardsAndAccounts,
+  DeviceData,
+  DeviceInfo,
+  FetchHistoryV2Data,
+  LoginResponse,
+  OtpDeviceV2,
+  PASSCODE,
+  Preferences,
+  SessionV2,
+  TransactionsByDateV2
+} from './models'
+import {
+  fetchApiDepositsV2,
+  fetchApiLoansV2,
+  fetchCardAndAccountsDashboardV2,
+  fetchCardsListV2,
+  fetchCertifyLoginBySmsV2,
+  fetchConfirmTrustedDeviceV2,
+  fetchGetSessionIdV2,
+  fetchHistoryV2,
+  fetchLoginByPasscodeV2,
+  fetchLoginByPasswordV2,
+  fetchRegisterDeviceV2,
+  fetchTrustDeviceV2,
+  fetchUnTrustDeviceV2
 } from './fetchApi'
-import { generateRandomString } from '../../common/utils'
 import { InvalidOtpCodeError } from '../../errors'
-import { getNumber, getString } from '../../types/get'
 
-async function askOtpCode (smsPrefix: string, mode: OtpDevice): Promise<string> {
-  const deviceMap: Record<OtpDevice, string> = {
-    SMS_OTP: `${smsPrefix}text message (SMS)`,
-    TOKEN_GEMALTO: 'TBC Pass App',
-    TOKEN_VASCO: 'VASCO token'
-  }
-  const sms = await ZenMoney.readLine(`Enter verification code from ${deviceMap[mode]}`,
+async function askOtpCodeV2 (prompt: string): Promise<string> {
+  const sms = await ZenMoney.readLine(prompt,
     { inputType: 'number' })
   if (sms == null) {
     throw new InvalidOtpCodeError()
@@ -36,25 +39,75 @@ async function askOtpCode (smsPrefix: string, mode: OtpDevice): Promise<string> 
   return sms.trim()
 }
 
-function generateDevice (): Device {
-  return {
-    androidId: generateRandomString(16, '0123456789abcdef'),
-    device: ZenMoney.device.model.replace(/\s/g, '_').toLowerCase(), // Build.DEVICE
-    manufacturer: ZenMoney.device.manufacturer,
-    model: ZenMoney.device.model
+function getOtpDeviceName (device: OtpDeviceV2): string {
+  switch (device) {
+    case OtpDeviceV2.SMS:
+      return 'SMS'
+    case OtpDeviceV2.GEMALTO:
+      return 'TBC Pass App'
+    case OtpDeviceV2.VASCO:
+      return 'VASCO token'
+    default:
+      throw new Error(`Unknown device ${device}`)
   }
 }
 
-async function tempPatchClearCookies (): Promise<void> {
-  await ZenMoney.clearCookies()
-  const cookies = await ZenMoney.getCookies()
-  for (const cookie of cookies) {
-    await ZenMoney.setCookie(cookie.domain, cookie.name, '')
+/**
+ * Get the text for the first OTP code, for login
+ * @param device
+ */
+function getOtpLoginCodeTextV2 (device: OtpDeviceV2): string {
+  return `Enter the code from ${getOtpDeviceName(device)}`
+}
+
+/**
+ * Get the text for the second OTP code, for trusting the device
+ * @param device
+ */
+function getOtpTrustCodeTextV2 (device: OtpDeviceV2): string {
+  return `Enter the second code from ${getOtpDeviceName(device)} to trust the device`
+}
+
+/**
+ * Get the text for the last OTP code, for trusting the device again
+ * @param device
+ */
+function getOtpTrustAgainCodeTextV2 (device: OtpDeviceV2): string {
+  return `Enter the last code from ${getOtpDeviceName(device)} to trust the device again`
+}
+
+function generateDeviceInfo (): DeviceInfo {
+  // replace all . with empty string
+  const deviceId = ZenMoney.device.id.replace(/\./g, '_')
+  return new DeviceInfo(APP_VERSION, deviceId, ZenMoney.device.manufacturer, ZenMoney.device.model, `${ZenMoney.device.os.name} ${ZenMoney.device.os.version}`)
+}
+
+function generateDeviceData (deviceInfo: DeviceInfo): DeviceData {
+  return DeviceData.fromDeviceInfo(deviceInfo, ZenMoney.device.os.name, ZenMoney.device.os.version)
+}
+
+/**
+ * Get the first possible challenge regen type or signature type. If there is none, return SMS
+ * @param loginInfo
+ * @param throwError If true, throw an error if no possible challenge regen types are found
+ */
+function getOtpDevice (loginInfo: LoginResponse, throwError = false): OtpDeviceV2 {
+  if (loginInfo.possibleChallengeRegenTypes != null && loginInfo.possibleChallengeRegenTypes.length !== 0) {
+    return loginInfo.possibleChallengeRegenTypes[0] as OtpDeviceV2
+  } else if (loginInfo.signatures != null && loginInfo.signatures.length !== 0) {
+    return loginInfo.signatures[0].type as OtpDeviceV2
+  } else {
+    if (throwError) {
+      console.error(loginInfo)
+      throw new Error('No possible challenge regen types found in signatures and possibleChallengeRegenTypes')
+    }
+    return OtpDeviceV2.SMS
   }
 }
 
-export async function login ({ login, password }: Preferences, auth?: Auth): Promise<Session> {
-  ZenMoney.trustCertificates([
+export async function loginV2 ({ login, password }: Preferences, isInBackground: boolean, auth?: AuthV2): Promise<SessionV2> {
+  if (ZenMoney.trustCertificates != null && typeof (ZenMoney.trustCertificates) !== 'undefined') {
+    ZenMoney.trustCertificates([
       `-----BEGIN CERTIFICATE-----
 MIIGkTCCBXmgAwIBAgIJAM73sA/bbKMmMA0GCSqGSIb3DQEBCwUAMIG0MQswCQYD
 VQQGEwJVUzEQMA4GA1UECBMHQXJpem9uYTETMBEGA1UEBxMKU2NvdHRzZGFsZTEa
@@ -131,80 +184,99 @@ if/oa9jtmJBtq8EDPJG/iK0Pd0JCdKMMX3oDIHnZO7t5oLGC/m1qAHOl17/SIXx7
 WxdnLbK6zKx6+4WL9qWhGu6R+7HNPAaKOb7KXEwjV2ekr6FVZneKRFe/XivMk66O
 7LluVHo=
 -----END CERTIFICATE-----`
-  ])
-
-  let session: Session
-  const requestSalt = await fetchGetRequestSalt()
-  if (auth == null) {
-    const device = generateDevice()
-    const loginSaltInfo = await fetchGetLoginSalt(login)
-    const loginInfo = await fetchLoginByPassword({ login, password },
-      {
-        loginSalt: loginSaltInfo.salt,
-        loginHashMethod: loginSaltInfo.hashMethod,
-        requestSalt
-      }, device)
-    const ibsAccessToken = await fetchCertifyLoginBySms(await askOtpCode('', loginInfo.otpDevice), loginInfo)
-    const lightSession = { auth: { device, passcode: generateRandomString(5, '0123456789') }, ibsAccessToken }
-    const registrationId = await fetchRegisterDevice(lightSession.auth)
-    // /mbs-json/remoting/ endpoints require a JSESSIONID from login, others require it from initHeaders
-    await tempPatchClearCookies()
-    await fetchInitHeaders(lightSession)
-    const tmpSession = { auth: { ...lightSession.auth, registrationId }, ibsAccessToken }
-
-    const trustedInitInfo = await fetchInitTrustedDevice(tmpSession)
-    const trustedRegistrationId = await fetchConfirmTrustedDevice(await askOtpCode('the second ', trustedInitInfo.otpDevice), trustedInitInfo, tmpSession)
-    session = { auth: { ...tmpSession.auth, trustedRegistrationId }, ibsAccessToken }
-  } else {
-    const loginInfo = await fetchLoginByPasscode(requestSalt, auth)
-    const ibsAccessToken = await fetchCertifyLoginByPasscode(loginInfo, auth)
-    session = { auth, ibsAccessToken }
-    await tempPatchClearCookies()
-    await fetchInitHeaders(session)
+    ])
   }
+  let session: SessionV2
+  let cookies
+  let deviceTrusted = false
+  let loginInfo: LoginResponse
+  let otpDevice: OtpDeviceV2 | null = null
+  const deviceInfo = generateDeviceInfo()
+  const deviceData = generateDeviceData(deviceInfo)
+  if (auth == null) {
+    if (isInBackground) {
+      throw new Error('Second phase required, cannot proceed in background mode.')
+    }
+    loginInfo = await fetchLoginByPasswordV2({ username: login, password, deviceInfo, deviceData })
+    if (loginInfo.secondPhaseRequired) {
+      otpDevice = getOtpDevice(loginInfo, true)
+      cookies = await fetchCertifyLoginBySmsV2(await askOtpCodeV2(getOtpLoginCodeTextV2(otpDevice)), loginInfo.transactionId)
+    } else {
+      otpDevice = getOtpDevice(loginInfo)
+      deviceTrusted = true
+      cookies = loginInfo.cookies
+    }
+    const registrationId = await fetchRegisterDeviceV2({ deviceName: deviceInfo.manufacturer, passcode: PASSCODE, deviceId: deviceInfo.deviceId })
+    session = {
+      cookies,
+      auth: {
+        username: login,
+        passcode: PASSCODE,
+        registrationId
+      }
+    }
+  } else {
+    loginInfo = await fetchLoginByPasscodeV2(auth, deviceInfo, deviceData)
+    if (loginInfo.secondPhaseRequired) {
+      otpDevice = getOtpDevice(loginInfo, true)
+      if (isInBackground) {
+        throw new Error('Second phase required, cannot proceed in background mode.')
+      }
+      cookies = await fetchCertifyLoginBySmsV2(await askOtpCodeV2(getOtpLoginCodeTextV2(otpDevice)), loginInfo.transactionId)
+    } else {
+      otpDevice = getOtpDevice(loginInfo)
+      deviceTrusted = true
+      cookies = loginInfo.cookies
+    }
+    session = {
+      cookies,
+      auth
+    }
+  }
+  const sessionId = await fetchGetSessionIdV2(cookies)
+  if (!deviceTrusted) {
+    if (isInBackground) {
+      throw new Error('Second phase required, cannot proceed in background mode.')
+    }
+    let orderId = await fetchTrustDeviceV2(deviceData, sessionId, cookies)
+    let code = await askOtpCodeV2(getOtpTrustCodeTextV2(otpDevice))
+    let trustId: string | null = null
+
+    trustId = await fetchConfirmTrustedDeviceV2(code, orderId, cookies)
+    if (trustId == null) {
+      await ZenMoney.alert('Device was already trusted, but we don\'t have the trustedDeviceId. We need to untrust the device and trust it again')
+      await fetchUnTrustDeviceV2(deviceData, sessionId, cookies)
+      orderId = await fetchTrustDeviceV2(deviceData, sessionId, cookies)
+      code = await askOtpCodeV2(getOtpTrustAgainCodeTextV2(otpDevice))
+      trustId = await fetchConfirmTrustedDeviceV2(code, orderId, cookies)
+    }
+
+    if (trustId == null) {
+      throw new InvalidOtpCodeError('Device trust failed')
+    }
+
+    session.auth.trustedDeviceId = trustId
+  }
+
   return session
 }
 
-export async function fetchAccounts (session: Session): Promise<FetchedAccounts> {
-  const accounts = await fetchAccountsList(session)
-  const deposits = await fetchDeposits(session)
-  const loans = await fetchLoans(session)
-
-  return {
-    ...await fetchDashboard(session),
-    accounts: [
-      ...await Promise.all(accounts.map(async (account): Promise<FetchedAccount> => {
-        const accountType = getString(account, 'accountMatrixCategorisations[0]')
-        if (accountType === 'DEPOSITS') {
-          const externalAccountId = parseInt(getString(account, 'externalAccountId'))
-          const depositProduct = deposits.find(x => getNumber(x, 'externalAccountId') === externalAccountId)
-          assert(depositProduct != null, 'cant find deposit product', account, deposits)
-          const depositId = getNumber(depositProduct, 'id')
-          const details = await fetchDepositDetails(depositId, session)
-          return { tag: 'deposit', product: account, depositProduct, details }
-        } else {
-          return { tag: 'account', product: account }
-        }
-      })),
-      ...loans.map((x): {tag: 'loan', product: unknown} => {
-        return { tag: 'loan', product: x }
-      })]
-  }
+export async function fetchDepositsV2 (session: SessionV2): Promise<unknown> {
+  return await fetchApiDepositsV2(session)
 }
 
-export async function fetchTransactions (
-  product: ConvertedProduct,
-  fromDate: Date,
-  toDate: Date,
-  session: Session
-): Promise<unknown[]> {
-  switch (product.tag) {
-    case 'card':
-    case 'account':
-      return await fetchHistory(product.coreAccountId, session, fromDate, toDate)
-    case 'deposit':
-      return await fetchDepositStatements(product.depositId, session)
-    case 'loan':
-      return []
-  }
+export async function fetchLoansV2 (session: SessionV2): Promise<unknown> {
+  return await fetchApiLoansV2(session)
+}
+
+export async function fetchTransactionsV2 (session: SessionV2, fromDate: Date, data: FetchHistoryV2Data): Promise<TransactionsByDateV2[]> {
+  return await fetchHistoryV2(session, fromDate, data)
+}
+
+export async function fetchCardsV2 (session: SessionV2): Promise<CardProductV2[]> {
+  return await fetchCardsListV2(session)
+}
+
+export async function fetchAccountsV2 (session: SessionV2): Promise<CardsAndAccounts> {
+  return await fetchCardAndAccountsDashboardV2(session)
 }
