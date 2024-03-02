@@ -1,8 +1,8 @@
-import { convertTransaction } from '../../../converters'
+import { convertCashTransaction } from '../../../converters'
 
 describe('Account topup', () => {
   it('Account topup', () => {
-    expect(convertTransaction({
+    expect(convertCashTransaction({
       CurrencyCode: 'USD',
       ID: -1,
       TransactionID: '10152214197777#2#81#320042687777',
@@ -197,6 +197,18 @@ describe('Account topup', () => {
           id: '10152214197777#2#81#320042687777',
           invoice: null,
           sum: 10000
+        },
+        {
+          account: {
+            company: null,
+            instrument: 'USD',
+            syncIds: null,
+            type: 'cash'
+          },
+          fee: 0,
+          id: '10152214197777#2#81#320042687777',
+          invoice: null,
+          sum: -10000
         }]
     })
   })
