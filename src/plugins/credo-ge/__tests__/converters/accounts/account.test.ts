@@ -160,7 +160,7 @@ describe('convertAccounts', () => {
           payoffStep: 1,
           percent: 0.5,
           startBalance: 1120.89,
-          startDate: new Date('2022-04-19T11:09:10.000Z'),
+          startDate: new Date('2022-04-19T16:39:10'),
           syncIds: [
             '2046760',
             'GE02CD1360030027791234'

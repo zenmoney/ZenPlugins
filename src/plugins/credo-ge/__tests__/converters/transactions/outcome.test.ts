@@ -125,7 +125,7 @@ describe('convertTransaction', () => {
       {
         hold: true,
         comment: null,
-        date: new Date('2024-03-01T02:27:20.000Z'),
+        date: new Date('2024-03-01 07:57:20'),
         groupKeys: [null],
         merchant: {
           fullTitle: 'PRIME ONE>GOA                         IN',
@@ -174,7 +174,7 @@ describe('convertTransaction', () => {
       {
         hold: false,
         comment: 'Foreign currency incoming transfer | TOPUP Services.',
-        date: new Date('2024-02-14T08:37:00.000Z'),
+        date: new Date('2024-02-14 14:07:00'),
         groupKeys: [null],
         merchant: null,
         movements: [
@@ -219,7 +219,7 @@ describe('convertTransaction', () => {
       {
         hold: false,
         comment: 'Transfer between own accounts',
-        date: new Date('2024-02-29T01:53:00.000Z'),
+        date: new Date('2024-02-29 07:23:00'),
         groupKeys: ['FT24060TFMQ2'],
         merchant: null,
         movements: [
@@ -264,8 +264,8 @@ describe('convertTransaction', () => {
       {
         hold: false,
         comment: 'Currency conversion',
-        date: new Date('2024-02-26T07:18:00.000Z'),
-        groupKeys: ['conversion_1708931880000'],
+        date: new Date('2024-02-26 12:48:00'),
+        groupKeys: [`conversion_${new Date('2024-02-26 12:48:00').getTime()}`],
         merchant: null,
         movements: [
           {
