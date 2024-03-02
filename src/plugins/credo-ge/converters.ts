@@ -66,12 +66,11 @@ function convertDeposit (deposit: CredoDeposit): Account {
 }
 
 export function convertAccounts (apiAccounts: CredoAccount[], cards: CredoCard[], deposits: CredoDeposit[], loans: CredoLoan[]): Account[] {
-  console.log('>>> Converting accounts')
-  console.log('>> cards:', cards)
-  console.log('>> deposits:', deposits)
+  console.log('>>> Converting accounts, cards, deposits, loans')
+  assert(loans.length === 0, 'Loans is not supported yet. Send your log to support, please!', loans) // TODO: must be implemented when loans format will be available
+
   const accounts: Account[] = []
   const accountToCardNumber = getAccountToCardMapping(cards)
-  console.log('accountToCardNumber:', accountToCardNumber)
   const accountToDepositMapping = getCssAccountToDepositMapping(deposits)
 
   for (const apiAccount of apiAccounts) {
@@ -86,8 +85,7 @@ export function convertAccounts (apiAccounts: CredoAccount[], cards: CredoCard[]
 function convertAccount (
   apiAccount: CredoAccount,
   accountToCardNumber: Map<string, string>,
-  cssAccountToDeposits: Map<number, CredoDeposit>,
-  loans?: CredoLoan[]
+  cssAccountToDeposits: Map<number, CredoDeposit>
 ): Account {
   const accountId = getNumber(apiAccount, 'accountId').toString()
   const apiAccountType = getString(apiAccount, 'type')
@@ -97,7 +95,6 @@ function convertAccount (
   const accountSyncId = [accountNumber, currency].join('')
   const cardNumber = accountToCardNumber.get(accountNumber)
   const syncIds = [accountSyncId, accountId]
-  console.log('accountId:', accountId, 'accountNumber:', accountNumber, 'cardNumber:', cardNumber)
   if (cardNumber !== null && cardNumber !== undefined) { syncIds.push(cardNumber) }
   const availableBalance = getNumber(apiAccount, 'availableBalance')
   /* Deposit or loan */
@@ -199,8 +196,6 @@ export function convertTransaction (apiTransaction: CredoTransaction, account: A
   const invoice = getAmountFromDescription(description, Math.sign(amount)) // TODO: rewrite getAmountFromDescription
   const isCardBlock = getBoolean(apiTransaction, 'isCardBlock')
 
-  console.log(transactionId, 'isMovement:', isMovement, 'transactionType:', transactionType)
-
   const convertedTransaction: ExtendedTransaction = {
     hold: isCardBlock,
     date: new Date(operationDateTime),
@@ -218,7 +213,6 @@ export function convertTransaction (apiTransaction: CredoTransaction, account: A
     groupKeys
   }
 
-  console.log('> convertedTransaction: ', convertedTransaction)
   return convertedTransaction
 }
 

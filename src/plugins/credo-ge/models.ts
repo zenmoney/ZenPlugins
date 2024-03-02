@@ -208,13 +208,6 @@ export interface BindDeviceConfirmResponse {
   }
 }
 
-export enum CurrencyCode {
-  gel = 'GEL',
-  usd = 'USD',
-  rub = 'RUB',
-  eur = 'EUR',
-}
-
 export enum AccountType {
   current = 'CURRENT',
   saving = 'SAVING',
@@ -224,7 +217,7 @@ export interface Card {
   cardId: number
   accountNumber: string // IBAN
   cardNumber: string
-  cardCurrency: CurrencyCode
+  cardCurrency: string // USD, INR, RUB, ...
   cardNickName: string
   cardImageId: string
   cardImageAddress: string
@@ -246,12 +239,12 @@ export interface Account {
   accountId: number
   accountNumber: string // ex: "GE12CD0360000012345678" looks like IBAN
   account: string
-  currency: CurrencyCode
+  currency: string // USD, INR, RUB, ...
   categoryId: number
   category: string
   hasCard: boolean
   status: string
-  type: AccountType
+  type: string // AccountType
   availableBalance: number // ex: 5208.01
   currencyPriority: number
   availableBalanceEqu: number // ex: 5208.01
@@ -269,7 +262,7 @@ export interface Deposit {
   depositNickName: string
   depositType: string // მოთხოვნამდე ანაბარი
   depositBalance: number
-  depositCurrency: CurrencyCode
+  depositCurrency: string // USD, INR, RUB, ...
   accruedInterestAmount: number
   contractN: string // IBAN
   depositInterestRate: number // 0.5
@@ -322,8 +315,8 @@ export enum OperationType {
 
 export interface Transaction {
   credit: number | null
-  currency: CurrencyCode
-  transactionType: TransactionType | null // can be null on Accrued interest payment
+  currency: string // USD, INR, RUB, EUR, ...
+  transactionType: TransactionType | null //  can be null on Accrued interest payment
   transactionId: string // on blocked transaction differs from all others
   debit: number | null
   description: string // 'გადახდა - WWW.GENKI.WORLD 54.60 EUR 20.05.2023'
@@ -333,7 +326,7 @@ export interface Transaction {
   canRepeat: boolean
   canReverse: boolean
   amountEquivalent: number
-  operationType: string // OperationType
+  operationType: OperationType
   operationTypeId: null
 }
 
@@ -359,7 +352,7 @@ export interface TransactionDetail {
   creditEquivalent: number | null
   description: string
   operationPerson: string | null
-  currency: CurrencyCode
+  currency: string // USD, INR, RUB, ...
   amountEquivalent: number
   accountNumber: string // IBAN
   contragentAccount: null
@@ -380,8 +373,8 @@ export interface TransactionDetail {
     debitAmountEquivalent: number | null
     creditAmount: number | null
     creditAmountEquivalent: number | null
-    debitCurrency: CurrencyCode | null
-    creditCurrency: CurrencyCode | null
+    debitCurrency: string | null // USD, INR, RUB, ...
+    creditCurrency: string | null // USD, INR, RUB, ...
     accountNumber: string // IBAN
     debitFullName: string | null // ალეკსეი ლუკომსკი
     creditFullName: string | null
