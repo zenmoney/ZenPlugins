@@ -58,6 +58,5 @@ export async function fetchAccounts (session: Session): Promise<CredoAccount[]> 
 }
 
 export async function fetchTransactions (session: Session, accountId: string, fromDate: Date): Promise<CredoTransaction[]> {
-  console.log('>>> Fethching transactions')
   return await fetchProductTransactions(accountId, session, fromDate)
 }

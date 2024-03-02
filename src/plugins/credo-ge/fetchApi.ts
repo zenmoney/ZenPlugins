@@ -118,6 +118,7 @@ export async function fetchBlockedTransactions (session: Session, fromDate: Date
   let pageNumber = 1
   const blockedTransactions: CredoTransaction[] = []
 
+  console.log('>> fetching blocked transactions')
   while (true) {
     body = {
       operationName: 'transactionPagingList',
@@ -130,7 +131,6 @@ export async function fetchBlockedTransactions (session: Session, fromDate: Date
         }
       }
     }
-    console.log('>> fetching blocked transactions')
     const response = await fetchGraphQL(session, body)
 
     const transactionsResponse = response.body as TransactionListResponse
@@ -150,7 +150,6 @@ export async function fetchBlockedTransactions (session: Session, fromDate: Date
       break
     }
     const latestTransactionDate = new Date(operationDateTime)
-    console.log('> latest transaction datetime: ', latestTransactionDate)
     if (latestTransactionDate < fromDate) {
       break
     }

@@ -18,7 +18,6 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
   const credoLoans = await fetchLoans(session)
   const accounts: Account[] = convertAccounts(credoAccounts, credoCards, credoDeposits, credoLoans)
   const numberToAccount = getAccountNumberToAccountMapping(accounts)
-  console.log('>> numberToAccount', numberToAccount)
 
   const blockedTransactions = await fetchBlockedTransactions(session, fromDate)
   const blockedTransactionsByAccountId = new Map()
@@ -36,10 +35,8 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
       }
     }
   }
-  console.log('>> blockedTransactionsByAccountId: ', blockedTransactionsByAccountId)
 
   for (const account of accounts) {
-    console.log(account)
     if (ZenMoney.isAccountSkipped(account.id)) {
       continue
     }
@@ -51,7 +48,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
     console.log('>>> converting blocked transactions')
     const transactionsBlockedForAccount = blockedTransactionsByAccountId.get(account.id)
     if (transactionsBlockedForAccount) {
-      console.log('>> transactionsBlockedForAccount', transactionsBlockedForAccount)
+      console.log(`>> found ${transactionsBlockedForAccount.length} blocked transactions for account ${account.id}`)
       for (const blockedTransaction of transactionsBlockedForAccount) {
         transactions.push(convertTransaction(blockedTransaction, account))
       }
