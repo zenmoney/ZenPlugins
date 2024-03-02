@@ -4,9 +4,9 @@
     <company>0</company>
     <description>
         Synchronization plugin for Credo Bank (Georgia) https://credobank.ge.
-        Input your login and password from the bank.
+        Input your login and password from the online banking app at https://mycredo.ge.
     </description>
-    <version>0.1</version>
+    <version>1.0.0</version>
     <build>1</build>
     <modular>true</modular>
     <files>
