@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="login"
+        title="Login"
+        dialogTitle="Login"
+        summary="||{@s}"
+        positiveButtonText="ОК"
+        negativeButtonText="Cancel"
+        obligatory="true">
+    </EditTextPreference>
+    <EditTextPreference
+        key="password"
+        title="Password"
+        dialogTitle="Password"
+        inputType="textPassword"
+        summary="||***********"
+        positiveButtonText="ОК"
+        negativeButtonText="Cancel"
+        obligatory="true">
+    </EditTextPreference>
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="From what date to load transactions"
+        defaultValue="2022-03-01T00:00:00.000Z"
+        dialogTitle="From what date to load transactions"
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="|startDate|{@s}"
+    />
+</PreferenceScreen>
