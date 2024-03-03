@@ -3,6 +3,8 @@ import {
   AuthV2,
   CardProductV2,
   CardsAndAccounts,
+  DepositDataV2,
+  DepositStatementV2,
   DeviceData,
   DeviceInfo,
   FetchHistoryV2Data,
@@ -20,6 +22,8 @@ import {
   fetchCardsListV2,
   fetchCertifyLoginBySmsV2,
   fetchConfirmTrustedDeviceV2,
+  fetchDepositDetailsV2,
+  fetchApiDepositStatementsV2,
   fetchGetSessionIdV2,
   fetchHistoryV2,
   fetchLoginByPasscodeV2,
@@ -28,7 +32,8 @@ import {
   fetchTrustDeviceV2,
   fetchUnTrustDeviceV2
 } from './fetchApi'
-import { InvalidOtpCodeError } from '../../errors'
+import { InvalidLoginOrPasswordError, InvalidOtpCodeError } from '../../errors'
+import { generateRandomString } from '../../common/utils'
 
 async function askOtpCodeV2 (prompt: string): Promise<string> {
   const sms = await ZenMoney.readLine(prompt,
@@ -68,14 +73,27 @@ function getOtpTrustCodeTextV2 (device: OtpDeviceV2): string {
   return `Enter the code from ${getOtpDeviceName(device)} to trust the device`
 }
 
-function generateDeviceInfo (): DeviceInfo {
-  // replace all . with empty string
-  const deviceId = ZenMoney.device.id.replace(/\./g, '_')
-  return new DeviceInfo(APP_VERSION, deviceId, ZenMoney.device.manufacturer, ZenMoney.device.model, `${ZenMoney.device.os.name} ${ZenMoney.device.os.version}`)
+function generateDeviceInfo (deviceId: string | null): DeviceInfo {
+  if (deviceId == null) {
+    deviceId = generateRandomString(16, '0123456789abcdef')
+  }
+  return new DeviceInfo(APP_VERSION, deviceId, ZenMoney.device.manufacturer, ZenMoney.device.model + 'ZM', `${ZenMoney.device.os.name} ${ZenMoney.device.os.version}`)
 }
 
 function generateDeviceData (deviceInfo: DeviceInfo): DeviceData {
   return DeviceData.fromDeviceInfo(deviceInfo, ZenMoney.device.os.name, ZenMoney.device.os.version)
+}
+
+function getPrioritizedDevice (devices: OtpDeviceV2[]): OtpDeviceV2 {
+  if (devices.includes(OtpDeviceV2.SMS)) {
+    return OtpDeviceV2.SMS
+  } else if (devices.includes(OtpDeviceV2.GEMALTO)) {
+    return OtpDeviceV2.GEMALTO
+  } else if (devices.includes(OtpDeviceV2.VASCO)) {
+    throw new Error('VASCO token is not supported')
+  } else {
+    throw new Error('No known otp devices found')
+  }
 }
 
 /**
@@ -85,9 +103,9 @@ function generateDeviceData (deviceInfo: DeviceInfo): DeviceData {
  */
 function getOtpDevice (loginInfo: LoginResponse, throwError = false): OtpDeviceV2 {
   if (loginInfo.possibleChallengeRegenTypes != null && loginInfo.possibleChallengeRegenTypes.length !== 0) {
-    return loginInfo.possibleChallengeRegenTypes[0] as OtpDeviceV2
+    return getPrioritizedDevice(loginInfo.possibleChallengeRegenTypes)
   } else if (loginInfo.signatures != null && loginInfo.signatures.length !== 0) {
-    return loginInfo.signatures[0].type as OtpDeviceV2
+    return getPrioritizedDevice(loginInfo.signatures.map(signature => signature.type))
   } else {
     if (throwError) {
       console.error(loginInfo)
@@ -97,7 +115,7 @@ function getOtpDevice (loginInfo: LoginResponse, throwError = false): OtpDeviceV
   }
 }
 
-export async function loginV2 ({ login, password }: Preferences, isInBackground: boolean, auth?: AuthV2): Promise<SessionV2> {
+export async function loginV2 ({ login, password }: Preferences, auth?: AuthV2, loop = true): Promise<SessionV2> {
   if (ZenMoney.trustCertificates != null && typeof (ZenMoney.trustCertificates) !== 'undefined') {
     ZenMoney.trustCertificates([
       `-----BEGIN CERTIFICATE-----
@@ -183,12 +201,9 @@ WxdnLbK6zKx6+4WL9qWhGu6R+7HNPAaKOb7KXEwjV2ekr6FVZneKRFe/XivMk66O
   let deviceTrusted = false
   let loginInfo: LoginResponse
   let otpDevice: OtpDeviceV2 | null = null
-  const deviceInfo = generateDeviceInfo()
+  const deviceInfo = generateDeviceInfo(auth?.deviceId ?? null)
   const deviceData = generateDeviceData(deviceInfo)
   if (auth == null) {
-    if (isInBackground) {
-      throw new Error('Second phase required, cannot proceed in background mode.')
-    }
     loginInfo = await fetchLoginByPasswordV2({ username: login, password, deviceInfo, deviceData })
     if (loginInfo.secondPhaseRequired) {
       otpDevice = getOtpDevice(loginInfo, true)
@@ -204,16 +219,14 @@ WxdnLbK6zKx6+4WL9qWhGu6R+7HNPAaKOb7KXEwjV2ekr6FVZneKRFe/XivMk66O
       auth: {
         username: login,
         passcode: PASSCODE,
-        registrationId
+        registrationId,
+        deviceId: deviceInfo.deviceId
       }
     }
   } else {
     loginInfo = await fetchLoginByPasscodeV2(auth, deviceInfo, deviceData)
     if (loginInfo.secondPhaseRequired) {
       otpDevice = getOtpDevice(loginInfo, true)
-      if (isInBackground) {
-        throw new Error('Second phase required, cannot proceed in background mode.')
-      }
       cookies = await fetchCertifyLoginBySmsV2(await askOtpCodeV2(getOtpLoginCodeTextV2(otpDevice)), loginInfo.transactionId)
     } else {
       otpDevice = getOtpDevice(loginInfo)
@@ -225,11 +238,18 @@ WxdnLbK6zKx6+4WL9qWhGu6R+7HNPAaKOb7KXEwjV2ekr6FVZneKRFe/XivMk66O
       auth
     }
   }
+  if (session.auth.deviceId == null) {
+    session.auth.deviceId = deviceInfo.deviceId
+  }
   const sessionId = await fetchGetSessionIdV2(cookies)
-  if (!deviceTrusted) {
-    if (isInBackground) {
-      throw new Error('Second phase required, cannot proceed in background mode.')
+  if (sessionId == null) {
+    if (loop) {
+      return await loginV2({ login, password }, undefined, false)
+    } else {
+      throw new InvalidLoginOrPasswordError('Unauthorized, check login and password')
     }
+  }
+  if (!deviceTrusted) {
     let orderId = await fetchTrustDeviceV2(deviceData, sessionId, cookies)
     let code = await askOtpCodeV2(getOtpTrustCodeTextV2(otpDevice))
     let trustId: string | null = null
@@ -252,8 +272,22 @@ WxdnLbK6zKx6+4WL9qWhGu6R+7HNPAaKOb7KXEwjV2ekr6FVZneKRFe/XivMk66O
   return session
 }
 
-export async function fetchDepositsV2 (session: SessionV2): Promise<unknown> {
-  return await fetchApiDepositsV2(session)
+export async function fetchDepositsV2 (session: SessionV2): Promise<DepositDataV2[]> {
+  const result: DepositDataV2[] = []
+  const deposits = await fetchApiDepositsV2(session)
+  for (const deposit of deposits.items) {
+    const id = deposit.id
+    const details = await fetchDepositDetailsV2(id, session)
+    result.push({
+      deposit,
+      details
+    })
+  }
+  return result
+}
+
+export async function fetchDepositStatementsV2 (id: number, session: SessionV2): Promise<DepositStatementV2[]> {
+  return await fetchApiDepositStatementsV2(id, session)
 }
 
 export async function fetchLoansV2 (session: SessionV2): Promise<unknown> {

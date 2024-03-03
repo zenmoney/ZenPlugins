@@ -13,7 +13,7 @@ import {
   LoginResponse,
   OS_VERSION,
   PasswordLoginRequestV2, CardProductV2,
-  SessionV2, TransactionsByDateV2, FetchHistoryV2Data
+  SessionV2, TransactionsByDateV2, FetchHistoryV2Data, DepositsV2, DepositDetailsV2, DepositStatementV2
 } from './models'
 import { getCookies } from './utils'
 
@@ -96,7 +96,17 @@ export async function fetchLoginByPasscodeV2 (auth: AuthV2, deviceInfo: DeviceIn
     method: 'POST',
     stringify: JSON.stringify,
     parse: JSON.parse,
-    sanitizeRequestLog: { body: { userName: true, passcode: true, registrationId: true, deviceInfo: true, deviceData: true, deviceId: true, trustedDeviceId: true } }
+    sanitizeRequestLog: {
+      body: {
+        userName: true,
+        passcode: true,
+        registrationId: true,
+        deviceInfo: true,
+        deviceData: true,
+        deviceId: true,
+        trustedDeviceId: true
+      }
+    }
   })
   const loginResponse = response.body as LoginResponse
   loginResponse.cookies = getCookies(response)
@@ -140,21 +150,23 @@ export async function fetchCertifyLoginBySmsV2 (code: string, transactionId: str
 /**
  * Fetches user info
  * @param cookies
- * @returns sessionId
+ * @returns sessionId or null if not logged in
  */
-export async function fetchGetSessionIdV2 (cookies: string[]): Promise<string> {
+export async function fetchGetSessionIdV2 (cookies: string[]): Promise<string | null> {
   const user = await fetchApi('https://rmbgwauth.tbconline.ge/v2/usermanagement/userinfo', {
     headers: {
       'User-Agent': `TBC a${APP_VERSION} (Android; Android ${OS_VERSION}; ANDROID_PHONE)`,
       Cookie: cookies.join('; ')
     },
     method: 'GET',
-    parse: JSON.parse,
     sanitizeResponseLog: {
       body: true
     }
   })
-  return getString(user.body, 'sessionId')
+  if (user.status === 401) {
+    return null
+  }
+  return getString(JSON.parse(user.body as string), 'sessionId')
 }
 
 /**
@@ -311,7 +323,35 @@ export async function fetchConfirmTrustedDeviceV2 (authorizationCode: string, or
   return getString(response.body, 'trustId')
 }
 
-export async function fetchApiDepositsV2 (session: SessionV2): Promise<unknown> {
+export async function fetchDepositDetailsV2 (id: number, session: SessionV2): Promise<DepositDetailsV2> {
+  const result = await fetchApi(`https://rmbgw.tbconline.ge/deposits/api/v1/deposits/${id}/details`, {
+    method: 'GET',
+    headers: {
+      'User-Agent': `TBC a${APP_VERSION} (Android; Android ${OS_VERSION}; ANDROID_PHONE)`,
+      Cookie: session.cookies.join('; '),
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Accept-Language': 'en-us'
+    },
+    parse: JSON.parse
+  })
+  return result.body as DepositDetailsV2
+}
+
+export async function fetchApiDepositStatementsV2 (id: number, session: SessionV2): Promise<DepositStatementV2[]> {
+  const response = await fetchApi(`https://rmbgw.tbconline.ge/deposits/api/v1/statements/${id}`, {
+    method: 'GET',
+    headers: {
+      'User-Agent': `TBC a${APP_VERSION} (Android; Android ${OS_VERSION}; ANDROID_PHONE)`,
+      Cookie: session.cookies.join('; '),
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Accept-Language': 'en-us'
+    },
+    parse: JSON.parse
+  })
+  return response.body as DepositStatementV2[]
+}
+
+export async function fetchApiDepositsV2 (session: SessionV2): Promise<DepositsV2> {
   const response = await fetchApi('https://rmbgw.tbconline.ge/deposits/api/v1/deposits', {
     method: 'GET',
     headers: {
@@ -323,7 +363,9 @@ export async function fetchApiDepositsV2 (session: SessionV2): Promise<unknown> 
     parse: JSON.parse
   })
 
-  return response.body
+  const deposits = response.body as DepositsV2
+  assert(deposits.nextPageId == null, 'unknown param nextPageId', response)
+  return deposits
 }
 
 export async function fetchApiLoansV2 (session: SessionV2): Promise<unknown> {

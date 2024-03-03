@@ -1,9 +1,10 @@
 import { Account, ExtendedTransaction, ScrapeFunc } from '../../types/zenmoney'
-import { fetchAccountsV2, fetchCardsV2, fetchDepositsV2, fetchLoansV2, fetchTransactionsV2, loginV2 } from './api'
-import { convertAccountsV2, convertCardsV2, convertTransactionsV2 } from './converters'
+import { fetchAccountsV2, fetchCardsV2, fetchDepositStatementsV2, fetchDepositsV2, fetchLoansV2, fetchTransactionsV2, loginV2 } from './api'
+import { convertAccountsV2, convertCardsV2, convertDepositV2, convertStatementV2, convertTransactionsV2 } from './converters'
 import { AuthV2, FetchHistoryV2Data, Preferences } from './models'
 import { adjustTransactions } from '../../common/transactionGroupHandler'
 import { validateAuth } from './utils'
+import { TemporaryError } from '../../errors'
 
 export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, toDate, isInBackground }) => {
   ZenMoney.locale = 'en'
@@ -11,13 +12,15 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
   if (auth && !validateAuth(auth)) {
     auth = undefined
   }
-  const session = await loginV2(preferences, isInBackground, auth)
+  const session = await loginV2(preferences, auth)
   ZenMoney.setData('auth', session.auth)
   ZenMoney.saveData()
 
   const accounts: Account[] = []
-  await fetchLoansV2(session)
-  await fetchDepositsV2(session)
+  const loans = await fetchLoansV2(session)
+  if (Array.isArray(loans) && loans.length > 0) {
+    throw new TemporaryError('Loans are not supported yet, please send data to the developer')
+  }
   const transactionsById = new Map<string, ExtendedTransaction>()
   const fetchHistoryV2Data: FetchHistoryV2Data[] = []
   const accountToSyncIds = new Map<string, string[]>()
@@ -65,6 +68,20 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
     }
   }
   const transactions = Array.from(transactionsById.values())
+  const deposits = await fetchDepositsV2(session)
+  for (const deposit of deposits) {
+    const depostitAccount = convertDepositV2(deposit)
+    if (ZenMoney.isAccountSkipped(depostitAccount.id)) {
+      console.log(`Account ${depostitAccount.id} is skipped`)
+      continue
+    }
+    accounts.push(depostitAccount)
+    const statements = await fetchDepositStatementsV2(deposit.deposit.id, session)
+    for (const statement of statements) {
+      const transaction = convertStatementV2(statement, depostitAccount)
+      transactions.push(transaction)
+    }
+  }
   return {
     accounts,
     transactions: adjustTransactions({ transactions })

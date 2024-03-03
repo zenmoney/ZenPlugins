@@ -8,7 +8,7 @@ export interface Signature {
   authenticationAccessToken: null
   authenticationCode: null
   signer: null
-  type: string
+  type: OtpDeviceV2
   authenticationCodeRsaPublicKey: null
   id: null
   otpId: string
@@ -60,6 +60,72 @@ export interface AccountV2 {
   currency: string
   overdraftCheckDate: null
   overdraftAmount: null
+}
+
+export interface DepositDataV2 {
+  deposit: DepositV2
+  details: DepositDetailsV2
+}
+
+export interface DepositsV2 {
+  items: DepositV2[]
+  nextPageId: null
+}
+export interface DepositV2 {
+  id: number
+  subType: number
+  typeText: string
+  subTypeText: string
+  friendlyName: string
+  currentAmount: number
+  targetAmount: number | null
+  currency: string
+  externalAccountId: number
+  accountNo: string
+  targetAmountIsReached: boolean | null
+  currentAmountInGel: number
+  addAmountPossibility: boolean
+  closingInProgress: boolean
+}
+
+export interface DepositDetailsV2 {
+  depositDetails: {
+    id: number
+    date: number
+    startDate: number
+    endDate: number
+    plannedTotalInterestAmount: number
+    guardName: null
+    addAmountPossibility: null
+    rollOver: boolean
+    accountNo: string
+    existingEffectiveInterestRate: number
+    coreAccountId: number
+    paymentOperationTypeContexts: null
+  }
+  interestCalculation: {
+    interestRate: number
+    plannedTotalInterestAmount: number
+    accruedInterest: number
+    paidInterest: null
+    interestPaymentFrequency: number
+  }
+  interestCalculationUponCancellation: {
+    interestRate: number
+    annulmentInterestRate: number
+    annulmentInterest: number
+    currentInterest: number
+    amount: number
+    totalAmount: number
+  }
+}
+
+export interface DepositStatementV2 {
+  movementDate: number
+  depositAmount: number
+  interestedAmount: number
+  withdrawnDepositAmount: number
+  balance: number
 }
 
 export interface FetchHistoryV2Data {
@@ -377,7 +443,7 @@ export interface LoginResponse {
   userSelectionRequired: boolean
   transactionId: string
   linkedProfiles: null
-  possibleChallengeRegenTypes: string[]
+  possibleChallengeRegenTypes: OtpDeviceV2[]
   cookies: string[]
 }
 
@@ -445,6 +511,7 @@ export class DeviceData extends DeviceInfo {
 export interface AuthV2 {
   username: string
   passcode: string
+  deviceId: string | null
   registrationId: string
   trustedDeviceId?: string
 }
