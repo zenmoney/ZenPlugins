@@ -1,4 +1,4 @@
-import { AccountType, Amount, ExtendedTransaction, Merchant, Movement } from '../../types/zenmoney'
+import { Account, AccountType, Amount, ExtendedTransaction, Merchant, Movement, Transaction } from '../../types/zenmoney'
 import {
   CardProductV2,
   CardsAndAccounts,
@@ -11,9 +11,12 @@ import {
   TransactionsByDateV2,
   TransactionStandardMovementV2,
   TransactionTaxV2,
-  TransactionTransferV2
+  TransactionTransferV2,
+  DepositDataV2,
+  DepositStatementV2
 } from './models'
 import { padStart } from 'lodash'
+import { getIntervalBetweenDates } from '../../common/momentDateUtils'
 
 export function convertAccountsV2 (cardsAndAccounts: CardsAndAccounts): PreparedAccountV2[] {
   const accounts: PreparedAccountV2[] = []
@@ -37,6 +40,49 @@ export function convertAccountsV2 (cardsAndAccounts: CardsAndAccounts): Prepared
   return accounts
 }
 
+export function convertStatementV2 (statement: DepositStatementV2, account: Account): Transaction {
+  const movement: Movement = {
+    id: Buffer.from(`${account.id}:${statement.depositAmount}:${statement.movementDate}`).toString('base64'),
+    account: {
+      id: account.id
+    },
+    sum: statement.depositAmount,
+    fee: 0,
+    invoice: null
+  }
+  return {
+    date: new Date(statement.movementDate),
+    movements: [movement],
+    merchant: null,
+    hold: false,
+    comment: null
+  }
+}
+
+export function convertDepositV2 (apiAccount: DepositDataV2): Account {
+  const coreAccountId = apiAccount.deposit.externalAccountId
+  const startDate = new Date(apiAccount.details.depositDetails.startDate)
+  const endDate = new Date(apiAccount.details.depositDetails.endDate)
+  const { interval: endDateOffsetInterval, count: endDateOffset } = getIntervalBetweenDates(startDate, endDate)
+  return {
+    id: coreAccountId.toString(),
+    type: AccountType.deposit,
+    title: apiAccount.deposit.friendlyName,
+    instrument: apiAccount.deposit.currency,
+    syncIds: [
+      apiAccount.deposit.accountNo
+    ],
+    balance: apiAccount.deposit.currentAmount,
+    startDate,
+    startBalance: apiAccount.details.interestCalculationUponCancellation.amount,
+    capitalization: true,
+    percent: apiAccount.details.depositDetails.existingEffectiveInterestRate,
+    endDateOffsetInterval,
+    endDateOffset,
+    payoffInterval: 'month',
+    payoffStep: 1
+  }
+}
 export function convertCardsV2 (apiAccounts: CardProductV2[]): PreparedCardV2[] {
   const accounts: PreparedCardV2[] = []
   for (const apiAccount of apiAccounts) {
