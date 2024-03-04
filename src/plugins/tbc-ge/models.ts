@@ -510,7 +510,7 @@ export class DeviceData extends DeviceInfo {
 
 export interface AuthV2 {
   username: string
-  passcode: string
+  passcode: string | null
   deviceId: string | null
   registrationId: string
   trustedDeviceId?: string

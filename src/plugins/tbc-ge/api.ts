@@ -20,7 +20,7 @@ import {
   fetchApiLoansV2,
   fetchCardAndAccountsDashboardV2,
   fetchCardsListV2,
-  fetchCertifyLoginBySmsV2,
+  fetchCertifyLoginByOtpDeviceV2,
   fetchConfirmTrustedDeviceV2,
   fetchDepositDetailsV2,
   fetchApiDepositStatementsV2,
@@ -35,11 +35,16 @@ import {
 import { InvalidLoginOrPasswordError, InvalidOtpCodeError } from '../../errors'
 import { generateRandomString } from '../../common/utils'
 
-async function askOtpCodeV2 (prompt: string): Promise<string> {
+async function askOtpCodeV2 (prompt: string, timeout = 3000): Promise<string> {
   const sms = await ZenMoney.readLine(prompt,
     { inputType: 'number' })
   if (sms == null) {
     throw new InvalidOtpCodeError()
+  }
+  if (timeout > 0) {
+    // Wait for the timeout to prevent the user from entering the code too fast
+    // The bank needs some time to process the request
+    await new Promise(resolve => setTimeout(resolve, timeout))
   }
   return sms.trim()
 }
@@ -75,7 +80,7 @@ function getOtpTrustCodeTextV2 (device: OtpDeviceV2): string {
 
 function generateDeviceInfo (deviceId: string | null): DeviceInfo {
   if (deviceId == null) {
-    deviceId = generateRandomString(16, '0123456789abcdef')
+    deviceId = generateRandomString(16, '0123456789abcdef') + '_ZM'
   }
   return new DeviceInfo(APP_VERSION, deviceId, ZenMoney.device.manufacturer, ZenMoney.device.model + 'ZM', `${ZenMoney.device.os.name} ${ZenMoney.device.os.version}`)
 }
@@ -203,11 +208,11 @@ WxdnLbK6zKx6+4WL9qWhGu6R+7HNPAaKOb7KXEwjV2ekr6FVZneKRFe/XivMk66O
   let otpDevice: OtpDeviceV2 | null = null
   const deviceInfo = generateDeviceInfo(auth?.deviceId ?? null)
   const deviceData = generateDeviceData(deviceInfo)
-  if (auth == null) {
+  if (auth == null || auth.passcode == null) {
     loginInfo = await fetchLoginByPasswordV2({ username: login, password, deviceInfo, deviceData })
     if (loginInfo.secondPhaseRequired) {
       otpDevice = getOtpDevice(loginInfo, true)
-      cookies = await fetchCertifyLoginBySmsV2(await askOtpCodeV2(getOtpLoginCodeTextV2(otpDevice)), loginInfo.transactionId)
+      cookies = await fetchCertifyLoginByOtpDeviceV2(await askOtpCodeV2(getOtpLoginCodeTextV2(otpDevice)), loginInfo.transactionId, otpDevice)
     } else {
       otpDevice = getOtpDevice(loginInfo)
       deviceTrusted = true
@@ -227,7 +232,7 @@ WxdnLbK6zKx6+4WL9qWhGu6R+7HNPAaKOb7KXEwjV2ekr6FVZneKRFe/XivMk66O
     loginInfo = await fetchLoginByPasscodeV2(auth, deviceInfo, deviceData)
     if (loginInfo.secondPhaseRequired) {
       otpDevice = getOtpDevice(loginInfo, true)
-      cookies = await fetchCertifyLoginBySmsV2(await askOtpCodeV2(getOtpLoginCodeTextV2(otpDevice)), loginInfo.transactionId)
+      cookies = await fetchCertifyLoginByOtpDeviceV2(await askOtpCodeV2(getOtpLoginCodeTextV2(otpDevice)), loginInfo.transactionId, otpDevice)
     } else {
       otpDevice = getOtpDevice(loginInfo)
       deviceTrusted = true
@@ -244,7 +249,8 @@ WxdnLbK6zKx6+4WL9qWhGu6R+7HNPAaKOb7KXEwjV2ekr6FVZneKRFe/XivMk66O
   const sessionId = await fetchGetSessionIdV2(cookies)
   if (sessionId == null) {
     if (loop) {
-      return await loginV2({ login, password }, undefined, false)
+      session.auth.passcode = null
+      return await loginV2({ login, password }, session.auth, false)
     } else {
       throw new InvalidLoginOrPasswordError('Unauthorized, check login and password')
     }

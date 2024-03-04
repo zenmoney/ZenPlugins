@@ -13,7 +13,7 @@ import {
   LoginResponse,
   OS_VERSION,
   PasswordLoginRequestV2, CardProductV2,
-  SessionV2, TransactionsByDateV2, FetchHistoryV2Data, DepositsV2, DepositDetailsV2, DepositStatementV2
+  SessionV2, TransactionsByDateV2, FetchHistoryV2Data, DepositsV2, DepositDetailsV2, DepositStatementV2, OtpDeviceV2
 } from './models'
 import { getCookies } from './utils'
 
@@ -63,7 +63,7 @@ export async function fetchLoginByPasswordV2 ({ username, password, deviceInfo, 
       stringify: JSON.stringify,
       parse: JSON.parse,
       method: 'POST',
-      sanitizeRequestLog: { body: { username: true, password: true } }
+      sanitizeRequestLog: { body: { username: true, password: true, deviceInfo: true, deviceDate: true, deviceId: true } }
     })
 
   if (response.status === 401) {
@@ -78,7 +78,7 @@ export async function fetchLoginByPasswordV2 ({ username, password, deviceInfo, 
 export async function fetchLoginByPasscodeV2 (auth: AuthV2, deviceInfo: DeviceInfo, deviceData: DeviceData): Promise<LoginResponse> {
   const body: EasyLoginRequestV2 = {
     userName: auth.username,
-    passcode: auth.passcode,
+    passcode: auth?.passcode ?? '',
     registrationId: auth.registrationId,
     deviceInfo: deviceInfo.toBase64(),
     deviceData: deviceData.toBase64(),
@@ -113,14 +113,14 @@ export async function fetchLoginByPasscodeV2 (auth: AuthV2, deviceInfo: DeviceIn
   return loginResponse
 }
 
-export async function fetchCertifyLoginBySmsV2 (code: string, transactionId: string): Promise<string[]> {
+export async function fetchCertifyLoginByOtpDeviceV2 (code: string, transactionId: string, otpDevice: OtpDeviceV2): Promise<string[]> {
   const body = {
     transactionId,
     language: 'en',
     signature: {
       response: code,
       status: 'CHALLENGE',
-      type: 'SMS_OTP',
+      type: otpDevice,
       otpId: 'NONE'
     }
   }
