@@ -3,11 +3,13 @@ import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
 import { InvalidLoginOrPasswordError } from '../../errors'
 import { parse, splitCookiesString } from 'set-cookie-parser'
 import { AccountBalanceResponse, Auth, GetAccountTransactionsResponse, GetTransactionDetailsResponse, LoginResponse, Preferences } from './models'
-import { isArray } from 'lodash'
+import { isArray, chunk } from 'lodash'
 import * as argon2 from 'argon2-browser'
 import moment from 'moment'
 
 const baseUrl = 'https://rol.raiffeisenbank.rs/Retail/Protected/Services/'
+const concurrentFetchOps = 10
+const delayBetweenFetches = 500
 
 async function fetchApi (url: string, options?: FetchOptions): Promise<FetchResponse> {
   return await fetchJson(baseUrl + url,
@@ -153,14 +155,16 @@ export async function fetchAccountTransactions (accountNumber: string, productCo
 
   const apiTransactions = response.body.length > 0 ? response.body[0] : []
 
-  for (const apiTransaction of apiTransactions) {
-    apiTransaction.Details = await fetchTransactionDetails(apiTransaction.TransactionID, auth)
+  for (const apiTransactionsChunk of chunk(apiTransactions, concurrentFetchOps)) {
+    // eslint-disable-next-line @typescript-eslint/return-await
+    await Promise.all(apiTransactionsChunk.map(async apiTransaction => fetchTransactionDetails(apiTransaction, auth)))
+    await new Promise(resolve => setTimeout(resolve, delayBetweenFetches))
   }
 
   return apiTransactions
 }
 
-async function fetchTransactionDetails (transactionId: string, auth: Auth): Promise<GetTransactionDetailsResponse> {
+async function fetchTransactionDetails (transaction: GetAccountTransactionsResponse, auth: Auth): Promise<void> {
   const response = await fetchApi('DataService.svc/getAllTransactionalDetails', {
     method: 'POST',
     headers: {
@@ -168,7 +172,7 @@ async function fetchTransactionDetails (transactionId: string, auth: Auth): Prom
     },
     body: {
       filterParam: {
-        TransactionID: transactionId
+        TransactionID: transaction.TransactionID
       }
     },
     sanitizeRequestLog: {
@@ -190,7 +194,7 @@ async function fetchTransactionDetails (transactionId: string, auth: Auth): Prom
 
   assert(isArray(response.body), 'cant get transaction details', response)
 
-  return response.body[0]
+  transaction.Details = response.body[0]
 }
 
 export async function fetchTransactionsInProgress (accountNumber: string, auth: Auth): Promise<string[][]> {

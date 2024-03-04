@@ -1,8 +1,9 @@
-import { AccountType, Transaction } from '../../types/zenmoney'
-import { AccountBalanceResponse, GetAccountTransactionsResponse, RaiffAccount } from './models'
+import { AccountType, Amount, Transaction } from '../../types/zenmoney'
+import { AccountBalanceResponse, GetAccountTransactionsResponse, GetTransactionDetailsResponse, RaiffAccount } from './models'
 import moment from 'moment'
 
 const TRANSFER_TRANSACTION_TYPES = ['ExchSell', 'ExchBuy']
+const CASH_TRANSACTION_TYPES = ['PmtDom', 'IncomeCash', 'ATM', 'Other']
 
 export function convertAccounts (apiAccounts: AccountBalanceResponse[]): RaiffAccount[] {
   const accounts: RaiffAccount[] = []
@@ -34,18 +35,11 @@ function convertAccount (apiAccount: AccountBalanceResponse): RaiffAccount | nul
 export function convertTransaction (t1: GetAccountTransactionsResponse): Transaction {
   const description = t1.Description
   const details = t1.Details
-  const invoice = details.c_CurrencyCode_tx !== null &&
-    details.c_CurrencyCode_tx.length > 0 &&
-    details.c_CurrencyCode_tx !== details.s_CurrencyCode
-    ? {
-        sum: -details.c_Amount_tx!,
-        instrument: details.c_CurrencyCode_tx
-      }
-    : null
+  const invoice = makeInvoice(details)
   return {
     hold: false,
-    date: t1.Details.c_Date_tx !== null && t1.Details.c_Date_tx.length > 0
-      ? new Date(t1.Details.c_Date_tx)
+    date: details?.c_Date_tx !== null && details?.c_Date_tx?.length > 0
+      ? new Date(details.c_Date_tx)
       : new Date(t1.ProcessedDate),
     movements: [
       {
@@ -63,8 +57,55 @@ export function convertTransaction (t1: GetAccountTransactionsResponse): Transac
           location: null
         }
       : null,
-    comment: description !== details.s_Note_st ? details.s_Note_st : null
+    comment: details !== undefined && description !== details.s_Note_st ? details.s_Note_st : null
   }
+}
+
+export function convertCashTransaction (t1: GetAccountTransactionsResponse): Transaction {
+  const description = t1.Description
+  const details = t1.Details
+  const invoice = makeInvoice(details)
+  return {
+    hold: false,
+    date: details?.c_Date_tx !== null && details?.c_Date_tx?.length > 0
+      ? new Date(details.c_Date_tx)
+      : new Date(t1.ProcessedDate),
+    movements: [
+      {
+        id: t1.TransactionID ?? null,
+        account: { id: t1.AccountNumber + t1.CurrencyCode },
+        invoice,
+        sum: t1.CreditAmount - t1.DebitAmount,
+        fee: 0
+      },
+      {
+        id: t1.TransactionID ?? null,
+        account: { type: AccountType.cash, instrument: t1.CurrencyCode, syncIds: null, company: null },
+        invoice,
+        sum: t1.DebitAmount - t1.CreditAmount,
+        fee: 0
+      }
+    ],
+    merchant: description != null
+      ? {
+          fullTitle: description,
+          mcc: null,
+          location: null
+        }
+      : null,
+    comment: details !== undefined && description !== details.s_Note_st ? details.s_Note_st : null
+  }
+}
+
+function makeInvoice (details: GetTransactionDetailsResponse): Amount | null {
+  return details?.c_CurrencyCode_tx !== null &&
+    details?.c_CurrencyCode_tx?.length > 0 &&
+    details?.c_CurrencyCode_tx !== details?.s_CurrencyCode
+    ? {
+        sum: -details.c_Amount_tx!,
+        instrument: details.c_CurrencyCode_tx
+      }
+    : null
 }
 
 export function convertTransfer (t1: GetAccountTransactionsResponse, t2: GetAccountTransactionsResponse): Transaction {
@@ -145,12 +186,14 @@ export function convertTransactions (apiTransactions: GetAccountTransactionsResp
       apiTransaction.Details.DebtorAccount?.length > 0
     const pairTransactionIndex = hasPairTransaction
       ? apiTransactions.findIndex((t) => t.TransactionID !== apiTransaction.TransactionID &&
-          t.Details.s_OrderNumber === apiTransaction.Details.s_OrderNumber)
+          t.Details?.s_OrderNumber === apiTransaction.Details?.s_OrderNumber)
       : -1
 
     if (pairTransactionIndex !== -1) {
       transactions.push(convertTransfer(apiTransaction, apiTransactions[pairTransactionIndex]))
       apiTransactions.splice(pairTransactionIndex, 1)
+    } else if (CASH_TRANSACTION_TYPES.includes(apiTransaction.TransactionType)) {
+      transactions.push(convertCashTransaction(apiTransaction))
     } else {
       transactions.push(convertTransaction(apiTransaction))
     }
