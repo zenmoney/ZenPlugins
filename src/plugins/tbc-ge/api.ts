@@ -229,7 +229,13 @@ WxdnLbK6zKx6+4WL9qWhGu6R+7HNPAaKOb7KXEwjV2ekr6FVZneKRFe/XivMk66O
       }
     }
   } else {
-    loginInfo = await fetchLoginByPasscodeV2(auth, deviceInfo, deviceData)
+    const info = await fetchLoginByPasscodeV2(auth, deviceInfo, deviceData)
+    if (info == null) {
+      auth.passcode = null
+      return await loginV2({ login, password }, auth, false)
+    } else {
+      loginInfo = info
+    }
     if (loginInfo.secondPhaseRequired) {
       otpDevice = getOtpDevice(loginInfo, true)
       cookies = await fetchCertifyLoginByOtpDeviceV2(await askOtpCodeV2(getOtpLoginCodeTextV2(otpDevice)), loginInfo.transactionId, otpDevice)
@@ -256,17 +262,13 @@ WxdnLbK6zKx6+4WL9qWhGu6R+7HNPAaKOb7KXEwjV2ekr6FVZneKRFe/XivMk66O
     }
   }
   if (!deviceTrusted) {
-    let orderId = await fetchTrustDeviceV2(deviceData, sessionId, cookies)
-    let code = await askOtpCodeV2(getOtpTrustCodeTextV2(otpDevice))
+    // untrust before trust to avoid errors
+    await fetchUnTrustDeviceV2(deviceData, sessionId, cookies)
+    const orderId = await fetchTrustDeviceV2(deviceData, sessionId, cookies)
+    const code = await askOtpCodeV2(getOtpTrustCodeTextV2(otpDevice))
     let trustId: string | null = null
 
     trustId = await fetchConfirmTrustedDeviceV2(code, orderId, cookies)
-    if (trustId == null) {
-      await fetchUnTrustDeviceV2(deviceData, sessionId, cookies)
-      orderId = await fetchTrustDeviceV2(deviceData, sessionId, cookies)
-      code = await askOtpCodeV2(getOtpTrustCodeTextV2(otpDevice))
-      trustId = await fetchConfirmTrustedDeviceV2(code, orderId, cookies)
-    }
 
     if (trustId == null) {
       throw new InvalidOtpCodeError('Device trust failed')
