@@ -5,15 +5,22 @@ import { InvalidLoginOrPasswordError, InvalidOtpCodeError, TemporaryUnavailableE
 import {
   APP_VERSION,
   AuthV2,
+  CardProductV2,
   CardsAndAccounts,
   CertifyLoginResponseV2,
+  DepositDetailsV2,
+  DepositStatementV2,
+  DepositsV2,
   DeviceData,
   DeviceInfo,
   EasyLoginRequestV2,
+  FetchHistoryV2Data,
   LoginResponse,
   OS_VERSION,
-  PasswordLoginRequestV2, CardProductV2,
-  SessionV2, TransactionsByDateV2, FetchHistoryV2Data, DepositsV2, DepositDetailsV2, DepositStatementV2, OtpDeviceV2
+  OtpDeviceV2,
+  PasswordLoginRequestV2,
+  SessionV2,
+  TransactionsByDateV2
 } from './models'
 import { getCookies } from './utils'
 
@@ -75,7 +82,7 @@ export async function fetchLoginByPasswordV2 ({ username, password, deviceInfo, 
   return loginResp
 }
 
-export async function fetchLoginByPasscodeV2 (auth: AuthV2, deviceInfo: DeviceInfo, deviceData: DeviceData): Promise<LoginResponse> {
+export async function fetchLoginByPasscodeV2 (auth: AuthV2, deviceInfo: DeviceInfo, deviceData: DeviceData): Promise<LoginResponse | null> {
   const body: EasyLoginRequestV2 = {
     userName: auth.username,
     passcode: auth?.passcode ?? '',
@@ -108,6 +115,9 @@ export async function fetchLoginByPasscodeV2 (auth: AuthV2, deviceInfo: DeviceIn
       }
     }
   })
+  if (response.status === 500) {
+    return null
+  }
   const loginResponse = response.body as LoginResponse
   loginResponse.cookies = getCookies(response)
   return loginResponse
@@ -220,6 +230,7 @@ export async function fetchUnTrustDeviceV2 (deviceData: DeviceData, sessionId: s
     'DEVICE-TYPE': 'ANDROID_PHONE',
     Cookie: cookies.join('; ')
   }
+
   const response = await fetchApi('https://rmbgwauth.tbconline.ge/devicemanagement/api/v1/device/order', {
     body,
     headers,
@@ -246,6 +257,10 @@ export async function fetchUnTrustDeviceV2 (deviceData: DeviceData, sessionId: s
       body: { sessionId: true }
     }
   })
+
+  if (confirmResponse.status === 400 && getString(confirmResponse.body, 'code') === 'DeviceNotTrusted') {
+    return true
+  }
 
   const returnDeviceId = getString(confirmResponse.body, 'deviceId')
   return returnDeviceId === deviceData.deviceId
@@ -304,7 +319,8 @@ export async function fetchConfirmTrustedDeviceV2 (authorizationCode: string, or
     body,
     headers: {
       'User-Agent': `TBC a${APP_VERSION} (Android; Android ${OS_VERSION}; ANDROID_PHONE)`,
-      'Content-Type': 'application/json; charset=UTF-8'
+      'Content-Type': 'application/json; charset=UTF-8',
+      Cookie: cookies.join('; ')
     },
     method: 'POST',
     stringify: JSON.stringify,
@@ -316,6 +332,12 @@ export async function fetchConfirmTrustedDeviceV2 (authorizationCode: string, or
   if (response.status === 500) {
     const title = get(response.body, 'title', null)
     if (title === 'Already trusted') {
+      return null
+    }
+  }
+
+  if (response.status === 400) {
+    if (get(response.body, 'detail', null) === 'Already trusted') {
       return null
     }
   }
