@@ -4,7 +4,6 @@ import { convertAccountsV2, convertCardsV2, convertDepositV2, convertStatementV2
 import { AuthV2, FetchHistoryV2Data, Preferences } from './models'
 import { adjustTransactions } from '../../common/transactionGroupHandler'
 import { validateAuth } from './utils'
-import { TemporaryError } from '../../errors'
 
 export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, toDate, isInBackground }) => {
   ZenMoney.locale = 'en'
@@ -19,7 +18,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
   const accounts: Account[] = []
   const loans = await fetchLoansV2(session)
   if (Array.isArray(loans) && loans.length > 0) {
-    throw new TemporaryError('Loans are not supported yet, please send data to the developer')
+    throw new Error('Loans are not supported yet, please send data to the developer')
   }
   const transactionsById = new Map<string, ExtendedTransaction>()
   const fetchHistoryV2Data: FetchHistoryV2Data[] = []

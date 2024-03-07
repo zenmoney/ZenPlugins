@@ -32,14 +32,14 @@ import {
   fetchTrustDeviceV2,
   fetchUnTrustDeviceV2
 } from './fetchApi'
-import { InvalidLoginOrPasswordError, InvalidOtpCodeError } from '../../errors'
+import { InvalidLoginOrPasswordError } from '../../errors'
 import { generateRandomString } from '../../common/utils'
 
 async function askOtpCodeV2 (prompt: string, timeout = 3000): Promise<string> {
   const sms = await ZenMoney.readLine(prompt,
     { inputType: 'number' })
   if (sms == null) {
-    throw new InvalidOtpCodeError()
+    throw new Error()
   }
   if (timeout > 0) {
     // Wait for the timeout to prevent the user from entering the code too fast
@@ -108,8 +108,18 @@ function getPrioritizedDevice (devices: OtpDeviceV2[]): OtpDeviceV2 {
  */
 function getOtpDevice (loginInfo: LoginResponse, throwError = false): OtpDeviceV2 {
   if (loginInfo.possibleChallengeRegenTypes != null && loginInfo.possibleChallengeRegenTypes.length !== 0) {
+    if (loginInfo.possibleChallengeRegenTypes.length > 1) {
+      console.error('possibleChallengeRegenTypes', loginInfo.possibleChallengeRegenTypes)
+      console.error('signatures', loginInfo.signatures)
+      throw new Error('Multiple possible challenge regen types found')
+    }
     return getPrioritizedDevice(loginInfo.possibleChallengeRegenTypes)
   } else if (loginInfo.signatures != null && loginInfo.signatures.length !== 0) {
+    if (loginInfo.signatures.length > 1) {
+      console.error('possibleChallengeRegenTypes', loginInfo.possibleChallengeRegenTypes)
+      console.error('signatures', loginInfo.signatures)
+      throw new Error('Multiple signatures found')
+    }
     return getPrioritizedDevice(loginInfo.signatures.map(signature => signature.type))
   } else {
     if (throwError) {
@@ -271,7 +281,7 @@ WxdnLbK6zKx6+4WL9qWhGu6R+7HNPAaKOb7KXEwjV2ekr6FVZneKRFe/XivMk66O
     trustId = await fetchConfirmTrustedDeviceV2(code, orderId, cookies)
 
     if (trustId == null) {
-      throw new InvalidOtpCodeError('Device trust failed')
+      throw new Error('Device trust failed')
     }
 
     session.auth.trustedDeviceId = trustId
