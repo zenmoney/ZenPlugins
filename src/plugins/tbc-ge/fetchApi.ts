@@ -1,7 +1,7 @@
 import { fetch, FetchOptions, FetchResponse, ParseError } from '../../common/network'
 import { isArray } from 'lodash'
-import get, { getBoolean, getNumber, getString } from '../../types/get'
-import { InvalidLoginOrPasswordError, InvalidOtpCodeError, TemporaryUnavailableError } from '../../errors'
+import get, { getBoolean, getNumber, getOptString, getString } from '../../types/get'
+import { InvalidLoginOrPasswordError, TemporaryUnavailableError } from '../../errors'
 import {
   APP_VERSION,
   AuthV2,
@@ -152,7 +152,7 @@ export async function fetchCertifyLoginByOtpDeviceV2 (code: string, transactionI
   })
   const data = response.body as CertifyLoginResponseV2
   if (!data?.success) {
-    throw new InvalidOtpCodeError()
+    throw new Error(`Error in fetchCertifyLoginByOtpDeviceV2\n${JSON.stringify(data)}`)
   }
   return getCookies(response)
 }
@@ -204,7 +204,7 @@ export async function fetchRegisterDeviceV2 (auth: { deviceName: string, passcod
   })
   const success = getBoolean(response.body, 'success')
   if (!success) {
-    throw new InvalidOtpCodeError()
+    throw new Error(`Error in fetchRegisterDeviceV2\n${JSON.stringify(response.body)}`)
   }
   return getString(response.body, 'registrationId')
 }
@@ -258,8 +258,11 @@ export async function fetchUnTrustDeviceV2 (deviceData: DeviceData, sessionId: s
     }
   })
 
-  if (confirmResponse.status === 400 && getString(confirmResponse.body, 'code') === 'DeviceNotTrusted') {
-    return true
+  if (confirmResponse.status === 400) {
+    if (getOptString(confirmResponse.body, 'code') === 'DeviceNotTrusted' || getOptString(confirmResponse.body, 'code') === 'ObjectNotFound') {
+      return true
+    }
+    throw new Error(`Error in fetchUnTrustDeviceV2\n${JSON.stringify(confirmResponse.body)}`)
   }
 
   const returnDeviceId = getString(confirmResponse.body, 'deviceId')
