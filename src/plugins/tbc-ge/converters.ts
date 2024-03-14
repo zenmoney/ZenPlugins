@@ -219,7 +219,7 @@ export function convertTransactionsV2 (transactionRecordsByDate: TransactionsByD
         dateNum = transactionRecords.date
       }
 
-      const date = new Date(dateNum)
+      const date = new Date(convertToLocalTimezone(dateNum))
 
       if (date < fromDate) {
         continue
@@ -299,4 +299,18 @@ function parsePOSMonth (month: string): number {
     default:
       assert(false, 'cant parse pos month', month)
   }
+}
+
+// TBC API returns transaction date as midnight in UTC+4
+// But ZM uses the user's local timezone to set a date for operations
+// This causes a problem if the user is in a different timezone
+// That is also not a 100% correct solution,
+// but it should decrease the amount of operations with incorrect date
+export function convertToLocalTimezone (data: number): number {
+  const date = new Date()
+  const offset = date.getTimezoneOffset()
+  const minutesOffsetFromGeorgianTime = offset + 240
+  const offsetFromGeorgianTime = minutesOffsetFromGeorgianTime * 60 * 1000
+
+  return data + offsetFromGeorgianTime
 }
