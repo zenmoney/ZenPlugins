@@ -170,7 +170,19 @@ export async function fetchGetSessionIdV2 (cookies: string[]): Promise<string | 
     },
     method: 'GET',
     sanitizeResponseLog: {
-      body: true
+      body: {
+        sessionId: true,
+        firstNameEn: true,
+        firstNameGe: true,
+        lastNameEn: true,
+        lastNameGe: true,
+        birthday: true,
+        email: true,
+        mobilePhoneForSms: true,
+        username: true,
+        clientNameEn: true,
+        clientNameGe: true
+      }
     }
   })
   if (user.status === 401) {

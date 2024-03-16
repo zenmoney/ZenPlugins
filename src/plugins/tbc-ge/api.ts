@@ -54,9 +54,9 @@ function getOtpDeviceName (device: OtpDeviceV2): string {
     case OtpDeviceV2.SMS:
       return 'SMS'
     case OtpDeviceV2.GEMALTO:
-      return 'TBC Pass App'
+      return 'email'
     case OtpDeviceV2.VASCO:
-      return 'VASCO token'
+      return 'TBC Pass App'
     default:
       throw new Error(`Unknown device ${device}`)
   }
@@ -90,12 +90,14 @@ function generateDeviceData (deviceInfo: DeviceInfo): DeviceData {
 }
 
 function getPrioritizedDevice (devices: OtpDeviceV2[]): OtpDeviceV2 {
+  if (devices.includes(OtpDeviceV2.VASCO)) {
+    return OtpDeviceV2.VASCO // assume that Vasco is TBC PASS
+  }
   if (devices.includes(OtpDeviceV2.SMS)) {
     return OtpDeviceV2.SMS
-  } else if (devices.includes(OtpDeviceV2.GEMALTO)) {
-    return OtpDeviceV2.GEMALTO
-  } else if (devices.includes(OtpDeviceV2.VASCO)) {
-    throw new Error('VASCO token is not supported')
+  }
+  if (devices.includes(OtpDeviceV2.GEMALTO)) {
+    throw new Error('Gemalto is not supported')
   } else {
     throw new Error('No known otp devices found')
   }
@@ -241,8 +243,9 @@ WxdnLbK6zKx6+4WL9qWhGu6R+7HNPAaKOb7KXEwjV2ekr6FVZneKRFe/XivMk66O
   } else {
     const info = await fetchLoginByPasscodeV2(auth, deviceInfo, deviceData)
     if (info == null) {
-      auth.passcode = null
-      return await loginV2({ login, password }, auth, false)
+      const newAuth = { ...auth }
+      newAuth.passcode = null
+      return await loginV2({ login, password }, newAuth, false)
     } else {
       loginInfo = info
     }
