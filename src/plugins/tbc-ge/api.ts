@@ -109,20 +109,10 @@ function getPrioritizedDevice (devices: OtpDeviceV2[]): OtpDeviceV2 {
  * @param throwError If true, throw an error if no possible challenge regen types are found
  */
 function getOtpDevice (loginInfo: LoginResponse, throwError = false): OtpDeviceV2 {
-  if (loginInfo.possibleChallengeRegenTypes != null && loginInfo.possibleChallengeRegenTypes.length !== 0) {
-    if (loginInfo.possibleChallengeRegenTypes.length > 1) {
-      console.error('possibleChallengeRegenTypes', loginInfo.possibleChallengeRegenTypes)
-      console.error('signatures', loginInfo.signatures)
-      throw new Error('Multiple possible challenge regen types found')
-    }
-    return getPrioritizedDevice(loginInfo.possibleChallengeRegenTypes)
-  } else if (loginInfo.signatures != null && loginInfo.signatures.length !== 0) {
-    if (loginInfo.signatures.length > 1) {
-      console.error('possibleChallengeRegenTypes', loginInfo.possibleChallengeRegenTypes)
-      console.error('signatures', loginInfo.signatures)
-      throw new Error('Multiple signatures found')
-    }
+  if (loginInfo.signatures != null && loginInfo.signatures.length !== 0) {
     return getPrioritizedDevice(loginInfo.signatures.map(signature => signature.type))
+  } else if (loginInfo.possibleChallengeRegenTypes != null && loginInfo.possibleChallengeRegenTypes.length !== 0) {
+    return getPrioritizedDevice(loginInfo.possibleChallengeRegenTypes)
   } else {
     if (throwError) {
       console.error(loginInfo)
