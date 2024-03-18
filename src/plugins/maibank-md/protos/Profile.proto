@@ -1,0 +1,228 @@
+syntax = "proto3";
+
+package md.maib.app.profile;
+
+import "Settings.proto";
+import "PredefinedCredit.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "ProfileProto";
+option java_package = "md.maib.app.proto.profile";
+
+message Profile {
+    repeated Card card = 1;
+    ProfileSettings settings = 2;
+    PersonalInfo personalInfo = 3;
+    repeated Account account = 4;
+    repeated DepositAccount depositAccount = 5;
+    repeated CreditAccount creditAccount = 6;
+    repeated CardCreditAccount cardCreditAccount = 7;
+    repeated Card creditCard = 8;
+    AccountsFetchInfo fetchInfo = 9;
+    CreditInfo offerCredit = 10;
+    CashbackInfo cashbackInfo = 11;
+    CreditInfo offerCreditLimit = 12;
+}
+
+message CashbackInfo {
+    bool isCashbackSupported = 1;
+}
+
+message AccountsFetchInfo {
+    bool isAccountsListEmpty = 1;
+    bool isDepositsListEmpty = 2;
+    bool isCreditsListEmpty = 3;
+    bool isCardCreditsListEmpty = 4;
+}
+
+message AccountsRequest {
+    repeated AccountType types = 1;
+}
+
+message AccountsResponse {
+    repeated Account account = 1;
+    repeated DepositAccount depositAccount = 2;
+    repeated CreditAccount creditAccount = 3;
+    repeated CardCreditAccount cardCreditAccount = 4;
+    AccountsFetchInfo fetchInfo = 5;
+}
+
+message Card {
+    string id = 1;
+    string last4Digits = 2;
+    double balance = 3;
+    int32 expMonth = 4;
+    int32 expYear = 5;
+    string ccy = 6;
+    string cardHolder = 7;
+    CardType cardType = 8;
+    bool isBlocked = 9;
+    VisibilitySetting visibility = 10;
+    string bank_account = 11;
+    string card_name = 12;
+    string qrCode = 13;
+    string bank_title = 14;
+    string bic = 15;
+    string iban = 16;
+    string pan = 17;
+    bool needsActivation = 18;
+    bool activationIsPending = 19;
+    bool isExpired = 20;
+    bool isIssuedInApp = 21;
+    bool isCashbackSupported = 22;
+    bool isCreditLimit = 23;
+    CardCreditLimitInfo limitInfo = 24;
+}
+
+message CardCreditLimitInfo {
+    double limitAmount = 1;
+    double usedLimitAmount = 2;
+    double ownMoney = 3;
+}
+
+message ProfileSettings {
+    NotificationsSettings notifications = 1;
+    P2PContactsSettings p2pSettings = 2;
+}
+
+message NotificationsSettings {
+    bool sendSpendNotification = 1;
+    bool sendSupplyNotification = 2;
+    bool sendOtherNotification = 3;
+    bool dummy_true = 4;
+}
+
+message PersonalInfo {
+    string IDNP = 1;
+    string fullName = 2;
+    string address = 3;
+    string email = 4;
+    string residence = 5;
+    string phone = 6;
+    int64 birthDate = 7;
+}
+
+message P2PContactsSettings {
+    bool showMaibContacts = 1;
+    bool showMeAsMaibCustomer = 2;
+    uint64 defaultCardId = 3;
+    bool dummy_true = 4;
+}
+
+message Account {
+    string synt = 1;
+    string account = 2;
+    string iban = 3;
+    string currency = 4;
+    double amount = 5;
+    double blockedAmount = 6;
+    bool isActive = 7;
+    VisibilitySetting visibility = 8;
+    bool isCardAccount = 9;
+    string bic = 10;
+    bool openedInApp = 11;
+    int64 openedDate = 12;
+    string accountName = 13;
+}
+
+message DepositAccount {
+    string account = 1;
+    int64 dateStart = 2;
+    int64 dateEnd = 3;
+    double amount = 4;
+    string currency = 5;
+    double minimalAmount = 6;
+    double blockedAmount = 7;
+    bool permitAdd = 8;
+    bool permitPay = 9;
+    bool isActive = 10;
+    VisibilitySetting visibility = 11;
+    string iban = 12;
+    string bic = 13;
+    string depositName = 14;
+    string accountName = 15;
+}
+
+message CreditAccount {
+    string account = 1;
+    double amount = 2;
+    double actualAmount = 3;
+    string currency = 4;
+    double overdueAmount = 5;
+    int64 agreeDate = 6;
+    int64 endDate = 7;
+    int64 dueDate = 8;
+    VisibilitySetting visibility = 9;
+    string iban = 10;
+    string bic = 11;
+    int32 period = 12;
+    string name = 13;
+    bool openedInApp = 14;
+    string interestAccount = 15;
+    string interestIban = 16;
+    double totalDebtAmount = 17;
+    double baseDebtAmount = 18;
+    double interestDebtAmount = 19;
+    double penaltyDebtAmount = 20;
+    bool hasDebt = 21;
+    int32 penaltyDaysCount = 22;
+}
+
+message CardCreditAccount {
+    string account = 1;
+    double amount = 2;
+    string currency = 3;
+    double actualLimit = 4;
+    int64 agreeDate = 5;
+    int64 endDate = 6;
+    VisibilitySetting visibility = 7;
+    string iban = 8;
+    string bic = 9;
+    string name = 10;
+}
+
+message CreditInfo {
+    bool offerExist = 1;
+    int64 offerId = 2;
+    double maxAmountLimit = 3;
+    string ccy = 4;
+    predefinedCredit.BannerSettings banner = 5;
+}
+
+message RenameAccountRequest {
+    string account = 1;
+    string newName = 2;
+}
+
+message RenameAccountResponse {
+    Result result = 1;
+    enum Result {
+        UNKNOWN = 0;
+        OK = 1;
+        WRONG_INPUT = 2;
+        UNSUPPORTED_TYPE = 3;
+        NOT_FOUND = 4;
+    }
+}
+
+enum AccountType {
+    ACC_TYPE_UNKNOWN = 0;
+    CURRENT = 1;
+    DEPOSIT = 2;
+    CREDIT = 3;
+    CREDIT_CARD = 4;
+}
+
+enum CardType {
+    VISA = 0;
+    MASTERCARD = 1;
+    MAESTRO = 2;
+    ELECTRON = 3;
+    DISCOVER = 4;
+    DINERS = 5;
+    UNIONPAY = 6;
+    AMERICAN_EXPRESS = 7;
+    UNKNOWN = 8;
+    CIRRUS = 9;
+    LUNCH = 10;
+}

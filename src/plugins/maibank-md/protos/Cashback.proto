@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package md.maib.app.cashback;
+
+option java_multiple_files = true;
+option java_outer_classname = "CashbackProto";
+option java_package = "md.maib.app.proto.cashback";
+
+message CashbackPayoutResponse {
+    double previousAmount = 1;
+    CashbackPayoutStatus status = 2;
+    double currentAmount = 3;
+}
+
+message CashbackPayoutOptions {
+    repeated int64 cards = 1;
+    repeated string accounts = 2;
+    
+    oneof selectedAccount {
+        int64 cardId = 3;
+        string accountNumber = 4;
+    }
+}
+
+message CashbackOptionsChangeRequest {
+    oneof account {
+        int64 cardId = 1;
+        string accountNumber = 2;
+    }
+}
+
+message CashbackOptionsChangeResponse {
+    Result result = 1;
+    enum Result {
+        UNKNOWN_RESULT = 0;
+        OK = 1;
+        UNSUPPORTED_ACCOUNT = 2;
+        NOT_FOUND = 3;
+    }
+}
+
+enum CashbackType {
+    UNKNOWN_TYPE = 0;
+    GUARANTEED = 1;
+    PARTNER = 2;
+}
+
+enum CashbackPayoutStatus {
+    UNKNOWN_STATUS = 0;
+    CALCULATED = 1;
+    TRANSFERRED = 2;
+}

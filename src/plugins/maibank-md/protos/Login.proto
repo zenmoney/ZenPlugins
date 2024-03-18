@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package md.maib.app.login;
+
+import "Util.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "LoginProto";
+option java_package = "md.maib.app.proto.login";
+
+message LoginInitRequest {
+    string pan = 1;
+    string pin5 = 2;
+    bool send_to_email = 3;
+}
+
+message LoginInitResponse {
+    Result result = 1;
+    enum Result {
+        UNKNOWN = 0;
+        OK = 1;
+        WRONG_INPUT = 2;
+        EXCEEDED_OTP_LIMIT = 3;
+        PHONE_NOT_FOUND = 4;
+        SERVER_ERROR = 5;
+        INVALID_PROFILE_STATE = 6;
+        PROFILE_BLOCKED = 7;
+        CARD_BLOCKED = 8;
+        EXCEEDED_PIN_LIMIT = 9;
+        CARD_NOT_ACTIVE = 10;
+    }
+    
+    string masked_phone = 2;
+    bool can_send_otp_to_email = 3;
+    string masked_email = 4;
+}
+
+message LoginConfirmRequest {
+    string pan = 1;
+    string pin5 = 2;
+    string otp = 3;
+    util.OtpType otp_type = 4;
+}
+
+message LoginConfirmResponse {
+    string token = 1;
+    
+    Result result = 2;
+    enum Result {
+        UNKNOWN = 0;
+        OK = 1;
+        WRONG_INPUT = 2;
+        WRONG_OTP = 3;
+        OTP_INVALIDATED = 4;
+        SERVER_ERROR = 5;
+    }
+    
+    util.OptionalBool is_onboarded = 3;
+    util.OptionalBool login_limited = 4;
+}

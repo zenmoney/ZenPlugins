@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="accountNumber"
+        title="Номер карты для входа в интернет-банк"
+        dialogTitle="Номер карты для входа в интернет-банк"
+        summary="||{@s}"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        obligatory="true">
+    </EditTextPreference>
+    <EditTextPreference
+        key="pin"
+        title="Пин-код от приложения MAIBank"
+        dialogTitle="Пин-код от приложения MAIBank"
+        dialogMessage="Введите пин-код от мобильного приложения MAIBank"
+        inputType="numberPassword"
+        summary="||*****"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        obligatory="true">
+    </EditTextPreference>
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="С какой даты загружать операции"
+        dialogTitle="С какой даты загружать операции"
+        defaultValue="2018-04-01T00:00:00.000Z"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|startDate|{@s}">
+    </EditTextPreference>
+</PreferenceScreen>
