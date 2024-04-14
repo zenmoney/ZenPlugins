@@ -1,4 +1,5 @@
 import { FetchResponse, fetch } from '../../common/network'
+import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { InvalidLoginOrPasswordError } from '../../errors'
 import { AccountDetails, Preferences } from './models'
 
@@ -100,6 +101,23 @@ export async function fetchAccountData (account: AccountDetails): Promise<string
   const response = await fetchUrl('racsta.jsp', {
     method: 'POST',
     body: `RACUNPSTIP=${account.type}&racun=${account.id}`
+  })
+
+  return response.body as string
+}
+
+export async function fetchCardTransactions (cardNumber: string, fromDate: Date, toDate: Date): Promise<string> {
+  fromDate = fromDate.getFullYear() >= toDate.getFullYear() ? fromDate : new Date(toDate.getFullYear(), 0, 1)
+
+  const fromDay = toAtLeastTwoDigitsString(fromDate.getDate())
+  const fromMonth = toAtLeastTwoDigitsString(fromDate.getMonth() + 1)
+  const toDay = toAtLeastTwoDigitsString(toDate.getDate())
+  const toMonth = toAtLeastTwoDigitsString(toDate.getMonth() + 1)
+  const year = toDate.getFullYear()
+
+  const response = await fetchUrl('karttrn.jsp', {
+    method: 'POST',
+    body: `KOM=K3&H1=${cardNumber}&IRADIO=I2&oddan=${fromDay}&odmes=${fromMonth}&dodan=${toDay}&domes=${toMonth}&god=${year}`
   })
 
   return response.body as string

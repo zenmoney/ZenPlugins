@@ -1,6 +1,7 @@
-import { accountDetailsToId, convertAccount } from './converters'
+import { accountDetailsToId, convertAccount, convertCardTransactions, convertTransactions } from './converters'
 import { AccountDetails, PSAccount } from './models'
-import { fetchAccountData } from './fetchApi'
+import { fetchAccountData, fetchCardTransactions } from './fetchApi'
+import { Transaction } from '../../types/zenmoney'
 
 function accountCardKey (accountId: string): string {
   return `account/${accountId}/card`
@@ -40,4 +41,18 @@ async function readCardNumber (prompt: string): Promise<string | null> {
     }
   }
   return cardNumber === '' || cardNumber === '0' ? null : cardNumber
+}
+
+export async function fetchTransactions (account: PSAccount, fromDate: Date, toDate: Date): Promise<Transaction[]> {
+  const accountTransactions = convertTransactions(account.id, account.rawData)
+
+  if (account.cardNumber !== null) {
+    const cardTransactions = await fetchCardTransactions(account.cardNumber, fromDate, toDate)
+
+    // TODO: Remove after debug
+    console.log(cardTransactions)
+    console.log(convertCardTransactions(cardTransactions))
+  }
+
+  return accountTransactions.filter(transaction => transaction.date >= fromDate && transaction.date <= toDate)
 }

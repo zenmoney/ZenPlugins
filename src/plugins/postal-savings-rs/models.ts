@@ -1,4 +1,4 @@
-import { AccountOrCard } from '../../types/zenmoney'
+import { AccountOrCard, Amount } from '../../types/zenmoney'
 
 // Input preferences from schema in preferences.xml
 export interface Preferences {
@@ -21,4 +21,11 @@ export interface AccountDetails {
 export interface PSAccount extends AccountOrCard {
   cardNumber: string | null
   rawData: string
+}
+
+export interface CardTransaction {
+  date: Date
+  authorizationDate: Date | null
+  amount: Amount
+  merchant: string
 }

@@ -1,5 +1,5 @@
 import { AccountOrCard, AccountType, Transaction } from '../../types/zenmoney'
-import { AccountDetails } from './models'
+import { AccountDetails, CardTransaction } from './models'
 import moment from 'moment'
 
 export function accountDetailsToId (account: AccountDetails): string {
@@ -8,6 +8,16 @@ export function accountDetailsToId (account: AccountDetails): string {
 
 function parseSum (s: string): number {
   return parseFloat(s.replace(' ', '').replace('.', '').replace(',', '.'))
+}
+
+function parseDate (s: string): Date {
+  return moment(s, 'DD.MM.YYYY').toDate()
+}
+
+function tableLineRegexp (columns: number): RegExp {
+  const cellPattern = '<td[^>]*>([^<]+)<\\/td>\\s+'
+  const regexStr = `<tr>\\s+${cellPattern.repeat(columns)}<\\/tr>`
+  return new RegExp(regexStr, 'g')
 }
 
 function descriptionCleanup (s: string): string {
@@ -22,6 +32,11 @@ function descriptionCleanup (s: string): string {
   const strWithoutGarbage = substrToRemove.reduce((acc, s) => acc.replace(s, ''), decodedStr).trim()
 
   return strWithoutGarbage.length > 0 ? strWithoutGarbage : decodedStr
+}
+
+// 'TRGOCENTAR DOO           BEOGR' -> 'TRGOCENTAR DOO'
+function stripLocationSuffix (line: string): string {
+  return line.slice(0, -5).trim()
 }
 
 export function convertAccount (account: AccountDetails, data: string): AccountOrCard {
@@ -44,22 +59,47 @@ export function convertAccount (account: AccountDetails, data: string): AccountO
   }
 }
 
-export function convertTransactions (account: AccountDetails, data: string): Transaction[] {
+export function convertCardTransactions (data: string): CardTransaction[] {
+  const transactions: CardTransaction[] = []
+
+  const matches = data.matchAll(tableLineRegexp(6))
+
+  for (const t of matches) {
+    const [, date, sum, currency, authorizationDate, desc] = t
+
+    const transaction: CardTransaction = {
+      date: parseDate(date),
+      authorizationDate: (authorizationDate.trim() !== '') ? parseDate(authorizationDate) : null,
+      amount: {
+        // Amount sign is not true for unauthorized transaction so ignore it.
+        // We will restore the sign later according to a corresponding account transaction's sign
+        sum: Math.abs(parseSum(sum)),
+        instrument: currency
+      },
+      merchant: descriptionCleanup(stripLocationSuffix(desc))
+    }
+
+    transactions.push(transaction)
+  }
+
+  return transactions.reverse()
+}
+
+export function convertTransactions (accountId: string, data: string): Transaction[] {
   const transactions: Transaction[] = []
 
-  const regexp = /<tr>\s+<td[^>]+>([\d.]+)<\/td>\s+<td[^>]+>([^<]+)<\/td>\s+<td[^>]+>(\w+)\s\d+<\/td>\s+<td[^>]+>\+?([-\d,.]+)<\/td>/g
-  const matches = data.matchAll(regexp)
+  const matches = data.matchAll(tableLineRegexp(6))
 
   for (const t of matches) {
     const [, date, desc, , sum] = t
 
     transactions.push({
       hold: false,
-      date: moment(date, 'DD.MM.YYYY').toDate(),
+      date: parseDate(date),
       movements: [
         {
           id: null,
-          account: { id: accountDetailsToId(account) },
+          account: { id: accountId },
           // TODO: parse from /kartizv.jsp
           invoice: null,
           sum: parseSum(sum),
