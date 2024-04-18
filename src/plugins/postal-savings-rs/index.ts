@@ -16,7 +16,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
     const rawAccountData = await fetchAccountData(account)
     accounts.push(convertAccount(account, rawAccountData))
     const filteredTransactions = convertTransactions(account, rawAccountData)
-      .filter(transaction => transaction.date >= fromDate && transaction.date <= toDate)
+      .filter(transaction => transaction.date >= fromDate && (toDate == null || transaction.date <= toDate))
     transactions.push(...filteredTransactions)
   }
 
