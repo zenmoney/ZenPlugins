@@ -6,14 +6,14 @@
         Synchronization plugin for Credo Bank (Georgia) https://credobank.ge.
         Input your login and password from the online banking app at https://mycredo.ge.
     </description>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <build>1</build>
     <modular>true</modular>
     <files>
         <js>index.js</js>
         <preferences>preferences.xml</preferences>
     </files>
-    <codeRequired>true</codeRequired> <!--optional (default true),
+    <codeRequired>false</codeRequired> <!--optional (default true),
         true means that plugin needs some interaction with user
         during every synchronization (eg. get code from sms)
     Setting it to false gives ability to set up automatic synchronization in background-->
