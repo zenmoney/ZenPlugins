@@ -3,7 +3,7 @@ import { AccountBalanceResponse, GetAccountTransactionsResponse, GetTransactionD
 import moment from 'moment'
 
 const TRANSFER_TRANSACTION_TYPES = ['ExchSell', 'ExchBuy']
-const CASH_TRANSACTION_TYPES = ['PmtDom', 'IncomeCash', 'ATM', 'Other']
+const CASH_TRANSACTION_TYPES = ['IncomeCash', 'ATM', 'Other'] // 'PmtDom',
 
 export function convertAccounts (apiAccounts: AccountBalanceResponse[]): RaiffAccount[] {
   const accounts: RaiffAccount[] = []
@@ -33,7 +33,7 @@ function convertAccount (apiAccount: AccountBalanceResponse): RaiffAccount | nul
 }
 
 export function convertTransaction (t1: GetAccountTransactionsResponse): Transaction {
-  const description = t1.Description
+  const description = t1.TransactionType !== 'PmtDom' ? t1.Description : t1.TransactionBeneficiary
   const details = t1.Details
   const invoice = makeInvoice(details)
   return {
@@ -57,7 +57,11 @@ export function convertTransaction (t1: GetAccountTransactionsResponse): Transac
           location: null
         }
       : null,
-    comment: details !== undefined && description !== details.s_Note_st ? details.s_Note_st : null
+    comment: t1.TransactionType === 'PmtDom'
+      ? t1.Description
+      : details !== undefined && description !== details.s_Note_st
+        ? details.s_Note_st
+        : null
   }
 }
 
