@@ -1,8 +1,8 @@
-import { AccountType, Transaction, Account } from '../../types/zenmoney'
+import { AccountOrCard, AccountType, Transaction } from '../../types/zenmoney'
 import { AccountDetails } from './models'
 import moment from 'moment'
 
-function accountDetailsToId (account: AccountDetails): string {
+export function accountDetailsToId (account: AccountDetails): string {
   return `${account.id}${account.type}`
 }
 
@@ -24,7 +24,7 @@ function descriptionCleanup (s: string): string {
   return strWithoutGarbage.length > 0 ? strWithoutGarbage : decodedStr
 }
 
-export function convertAccount (account: AccountDetails, data: string): Account {
+export function convertAccount (account: AccountDetails, data: string): AccountOrCard {
   const id = accountDetailsToId(account)
 
   const descriptionPattern = /<td>([\w\s]+):<\/td>\s+<td>\d+<\/td>/

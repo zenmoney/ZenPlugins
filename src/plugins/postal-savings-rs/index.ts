@@ -1,7 +1,8 @@
 import { ScrapeFunc, Transaction, Account } from '../../types/zenmoney'
-import { fetchAllAccounts, fetchAuthorization, fetchAccountData } from './fetchApi'
+import { fetchAllAccounts, fetchAuthorization } from './fetchApi'
 import { Preferences } from './models'
-import { convertAccount, convertTransactions } from './converters'
+import { accountDetailsToId, convertTransactions } from './converters'
+import { fetchAccount } from './api'
 
 export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, toDate }) => {
   toDate = toDate ?? new Date()
@@ -12,11 +13,15 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
   const accounts: Account[] = []
   const transactions: Transaction[] = []
 
-  for (const account of fetchedAccounts) {
-    const rawAccountData = await fetchAccountData(account)
-    accounts.push(convertAccount(account, rawAccountData))
-    const filteredTransactions = convertTransactions(account, rawAccountData)
+  for (const accountDetails of fetchedAccounts) {
+    if (ZenMoney.isAccountSkipped(accountDetailsToId(accountDetails))) {
+      continue
+    }
+
+    const account = await fetchAccount(accountDetails)
+    const filteredTransactions = convertTransactions(accountDetails, account.rawData)
       .filter(transaction => transaction.date >= fromDate && (toDate == null || transaction.date <= toDate))
+    accounts.push(account)
     transactions.push(...filteredTransactions)
   }
 

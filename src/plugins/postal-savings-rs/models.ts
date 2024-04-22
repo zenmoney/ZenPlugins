@@ -1,3 +1,5 @@
+import { AccountOrCard } from '../../types/zenmoney'
+
 // Input preferences from schema in preferences.xml
 export interface Preferences {
   login: string
@@ -14,4 +16,9 @@ export enum AccountType {
 export interface AccountDetails {
   id: number
   type: AccountType
+}
+
+export interface PSAccount extends AccountOrCard {
+  cardNumber: string | null
+  rawData: string
 }
