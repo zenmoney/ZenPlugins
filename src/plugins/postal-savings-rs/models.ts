@@ -29,3 +29,5 @@ export interface CardTransaction {
   amount: Amount
   merchant: string
 }
+
+export type ExchangeRatesMap = Map<string, number>

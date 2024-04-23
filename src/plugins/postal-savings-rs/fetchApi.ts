@@ -2,6 +2,7 @@ import { FetchResponse, fetch } from '../../common/network'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { InvalidLoginOrPasswordError } from '../../errors'
 import { AccountDetails, Preferences } from './models'
+import moment from 'moment'
 
 const baseUrl = 'https://hb.posted.co.rs/posted/en/'
 
@@ -118,6 +119,16 @@ export async function fetchCardTransactions (cardNumber: string, fromDate: Date,
   const response = await fetchUrl('karttrn.jsp', {
     method: 'POST',
     body: `KOM=K3&H1=${cardNumber}&IRADIO=I2&oddan=${fromDay}&odmes=${fromMonth}&dodan=${toDay}&domes=${toMonth}&god=${year}`
+  })
+
+  return response.body as string
+}
+
+export async function fetchExchangeRates (date: Date | null): Promise<string> {
+  const formattedDate = date !== null ? moment(date).format('DD.MM.YYYY') : ''
+  const response = await fetchUrl('kursl.jsp', {
+    method: 'POST',
+    body: `DATUM=${formattedDate}&check1=on`
   })
 
   return response.body as string

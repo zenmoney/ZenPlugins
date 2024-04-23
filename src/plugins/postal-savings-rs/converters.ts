@@ -1,5 +1,5 @@
 import { AccountOrCard, AccountType, Transaction } from '../../types/zenmoney'
-import { AccountDetails, CardTransaction } from './models'
+import { AccountDetails, CardTransaction, ExchangeRatesMap } from './models'
 import moment from 'moment'
 
 export function accountDetailsToId (account: AccountDetails): string {
@@ -14,9 +14,10 @@ function parseDate (s: string): Date {
   return moment(s, 'DD.MM.YYYY').toDate()
 }
 
-function tableLineRegexp (columns: number): RegExp {
-  const cellPattern = '<td[^>]*>([^<]+)<\\/td>\\s+'
-  const regexStr = `<tr>\\s+${cellPattern.repeat(columns)}<\\/tr>`
+function tableLineRegexp (columns: number, cellContentPattern?: string): RegExp {
+  cellContentPattern = cellContentPattern ?? '([^<]+)'
+  const cellPattern = `<td[^>]*>${cellContentPattern}<\\/td>\\s+`
+  const regexStr = `<tr[^>]*>\\s+${cellPattern.repeat(columns)}<\\/tr>`
   return new RegExp(regexStr, 'g')
 }
 
@@ -118,4 +119,19 @@ export function convertTransactions (accountId: string, data: string): Transacti
   }
 
   return transactions.reverse()
+}
+
+export function convertExchangeRates (data: string): ExchangeRatesMap {
+  const exchangeRates: ExchangeRatesMap = new Map()
+
+  const cellContentPattern = '(?:<img[^<]+/>)?([^<]+)(?:<br></br>)?'
+  const matches = data.matchAll(tableLineRegexp(9, cellContentPattern))
+
+  for (const t of matches) {
+    // Currency code, Currency designation, Country, Unit, Buying rate, Middle rate, Selling rate, Buying rate (cash), Selling rate (cash)
+    const [, , currency, , , , middleRate] = t
+    exchangeRates.set(currency, parseFloat(middleRate.trim()))
+  }
+
+  return exchangeRates
 }

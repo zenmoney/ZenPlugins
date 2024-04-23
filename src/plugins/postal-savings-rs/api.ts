@@ -1,7 +1,8 @@
-import { accountDetailsToId, convertAccount, convertCardTransactions, convertTransactions } from './converters'
-import { AccountDetails, PSAccount } from './models'
-import { fetchAccountData, fetchCardTransactions } from './fetchApi'
-import { Transaction } from '../../types/zenmoney'
+import { accountDetailsToId, convertAccount, convertCardTransactions, convertExchangeRates, convertTransactions } from './converters'
+import { AccountDetails, ExchangeRatesMap, PSAccount } from './models'
+import { fetchAccountData, fetchCardTransactions, fetchExchangeRates } from './fetchApi'
+import { Amount, Transaction } from '../../types/zenmoney'
+import moment from 'moment'
 
 function accountCardKey (accountId: string): string {
   return `account/${accountId}/card`
@@ -55,4 +56,33 @@ export async function fetchTransactions (account: PSAccount, fromDate: Date, toD
   }
 
   return accountTransactions.filter(transaction => transaction.date >= fromDate && transaction.date <= toDate)
+}
+
+async function getExchangeRate (date: Date, currency: string): Promise<number | undefined> {
+  if (currency === 'RSD') {
+    return 1
+  }
+
+  const exchangeRates = await getExchangeRates(date)
+  return exchangeRates.get(currency)
+}
+
+const exchangeRatesByDate = new Map<string, ExchangeRatesMap>()
+
+async function getExchangeRates (date: Date | null): Promise<ExchangeRatesMap> {
+  const dateKey = date !== null ? moment(date).format('DD.MM.YYYY') : 'latest'
+  let exchangeRates = exchangeRatesByDate.get(dateKey)
+  if (exchangeRates === undefined) {
+    const rawData = await fetchExchangeRates(date)
+    exchangeRates = convertExchangeRates(rawData)
+
+    // The bank can just not update exchange rates at holidays.
+    // Use the latest known exchange rate in this case.
+    if (exchangeRates.size === 0) {
+      exchangeRates = await getExchangeRates(null)
+    }
+    exchangeRatesByDate.set(dateKey, exchangeRates)
+  }
+
+  return exchangeRates
 }
