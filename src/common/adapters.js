@@ -518,7 +518,7 @@ export function adaptScrapeToGlobalApi (scrape) {
       value
     } = unsealSyncPromise(resultHandled)
     if (state === 'rejected') {
-      throw augmentErrorWithDevelopmentHints(getPresentationError(value, isFirstRun))
+      ZenMoney.setResult(augmentErrorWithDevelopmentHints(getPresentationError(value, isFirstRun)))
     } else if (state === 'pending') {
       resultHandled.catch((e) => {
         ZenMoney.setResult(augmentErrorWithDevelopmentHints(getPresentationError(e, isFirstRun)))
