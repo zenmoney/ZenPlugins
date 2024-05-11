@@ -119,7 +119,13 @@ export async function fetchAllAccounts (auth: Auth): Promise<AccountBalanceRespo
 }
 
 export async function fetchAccountTransactions (accountNumber: string, productCoreID: string, auth: Auth, fromDate: Date, toDate: Date): Promise<GetAccountTransactionsResponse[]> {
-  const response = await fetchApi('DataService.svc/GetTransactionalAccountTurnover', {
+  // FIXME: find a better way to check if that's a time deposit
+  const TIMED_DEPOSIT_PRODUCT_CORE_IDS = ['21']
+  const requestURL = 'DataService.svc/' +
+    (TIMED_DEPOSIT_PRODUCT_CORE_IDS.includes(productCoreID)
+      ? 'GetTimeDepositAccountTurnover'
+      : 'GetTransactionalAccountTurnover')
+  const response = await fetchApi(requestURL, {
     method: 'POST',
     headers: {
       Cookie: auth.cookie
