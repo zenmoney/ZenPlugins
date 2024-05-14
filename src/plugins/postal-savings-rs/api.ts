@@ -48,14 +48,42 @@ export async function fetchTransactions (account: PSAccount, fromDate: Date, toD
   const accountTransactions = convertTransactions(account.id, account.rawData)
 
   if (account.cardNumber !== null) {
-    const cardTransactions = await fetchCardTransactions(account.cardNumber, fromDate, toDate)
+    const cardTransactions = convertCardTransactions(await fetchCardTransactions(account.cardNumber, fromDate, toDate))
 
+    for (const transaction of cardTransactions) {
+      // Calculate amount in account currency to be able to match account and card transactions
+      const accountCurrencyAmount = await convertAmount(
+        transaction.authorizationDate ?? transaction.date,
+        transaction.amount,
+        account.instrument
+      )
+      transaction.accountSum = accountCurrencyAmount?.sum
+    }
     // TODO: Remove after debug
     console.log(cardTransactions)
-    console.log(convertCardTransactions(cardTransactions))
   }
 
   return accountTransactions.filter(transaction => transaction.date >= fromDate && transaction.date <= toDate)
+}
+
+async function convertAmount (date: Date, amount: Amount, targetCurrency: string): Promise<Amount | undefined> {
+  if (amount.instrument === targetCurrency) {
+    return amount
+  }
+
+  const sourceRate = await getExchangeRate(date, amount.instrument)
+  if (sourceRate === undefined) {
+    return undefined
+  }
+  const targetRate = await getExchangeRate(date, targetCurrency)
+  if (targetRate === undefined) {
+    return undefined
+  }
+
+  return {
+    sum: amount.sum * sourceRate / targetRate,
+    instrument: targetCurrency
+  }
 }
 
 async function getExchangeRate (date: Date, currency: string): Promise<number | undefined> {

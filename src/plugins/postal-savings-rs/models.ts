@@ -27,6 +27,7 @@ export interface CardTransaction {
   date: Date
   authorizationDate: Date | null
   amount: Amount
+  accountSum?: number
   merchant: string
 }
 
