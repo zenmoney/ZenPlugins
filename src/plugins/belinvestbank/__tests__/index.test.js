@@ -389,7 +389,7 @@ function mockApiLoginAndPass () {
       login: '123456789',
       password: 'pass',
       deviceId: 'device id',
-      versionApp: '2.15.2',
+      versionApp: '2.19.0',
       os: 'Android',
       device_token: 'device token',
       device_token_type: 'ANDROID'
