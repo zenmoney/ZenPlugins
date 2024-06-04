@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package md.maib.app.lockscreen;
+
+option java_multiple_files = true;
+option java_outer_classname = "LockscreenProto";
+option java_package = "md.maib.app.proto.lockscreen";
+
+message LockscreenUnlockAttemptsRequest {
+    repeated UnlockAttempt unlock_attempts = 1;
+}
+
+message UnlockAttempt {
+    int64 date = 1;
+    bool successful = 2;
+    LockscreenType lockscreen_type = 3;
+}
+
+enum LockscreenType {
+    UNKNOWN = 0;
+    BIOMETRIC = 1;
+    PIN5 = 2;
+}

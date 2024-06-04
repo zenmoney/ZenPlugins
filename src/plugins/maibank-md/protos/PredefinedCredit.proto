@@ -1,0 +1,153 @@
+syntax = "proto3";
+
+package md.maib.app.predefinedCredit;
+
+import "Util.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "PredefinedCreditProto";
+option java_package = "md.maib.app.proto.predefinedCredit";
+
+message OfferInfoResponse {
+    int64 creditRequestId = 1;
+    string productName = 2;
+    string creditCcy = 3;
+    double minLimitAmount = 4;
+    double maxLimitAmount = 5;
+    int32 minTerm = 6;
+    int32 maxTerm = 7;
+    float interestRate = 8;
+    double maxAvailableMonthPay = 9;
+    BannerSettings banner = 10;
+    int64 dateFirstPay = 11;
+    CreditCalcInfo calcInfo = 12;
+    string errorMessage = 13;
+    
+    Result result = 14;
+    enum Result {
+        UNKNOWN = 0;
+        OK = 1;
+        NOT_FOUND = 2;
+        OFFER_IS_NOT_ACTIVE = 4;
+        CALC_ERROR = 5;
+        USER_CANT_TAKE_CREDIT = 6;
+        TODAY_IS_NOT_OPER_DAY = 7;
+        SERVER_ERROR = 8;
+        EXCEEDED_PAY_MONTH = 9;
+    }
+    
+    repeated string availableBins = 15;
+}
+
+message BannerSettings {
+    bytes image = 1;
+    string text = 2;
+    int32 textSize = 3;
+    string textColor = 4;
+    string navigationBarColor = 5;
+    string bottomText = 6;
+    int32 bottomTextSize = 7;
+    string bottomTextColor = 8;
+}
+
+message CreditCalcRequest {
+    int64 requestId = 1;
+    double amount = 2;
+    int32 period = 3;
+    int64 dateFirstPay = 4;
+}
+
+message CreditCalcResponse {
+    CreditCalcInfo calcInfo = 1;
+    
+    Result result = 2;
+    enum Result {
+        UNKNOWN = 0;
+        OK = 1;
+        NOT_FOUND = 2;
+        WRONG_INPUT = 3;
+        EXCEEDED_PAY_MONTH = 4;
+        SERVER_ERROR = 5;
+    }
+}
+
+message CreditCalcInfo {
+    float daeRate = 1;
+    double ordinaryAmountFee = 2;
+    double maxMonthPay = 3;
+    double amountCreditCard = 4;
+    double totalPaymentCredit = 5;
+}
+
+message PreContractResponse {
+    bytes preContract = 1;
+    
+    Result result = 2;
+    enum Result {
+        UNKNOWN = 0;
+        OK = 1;
+        NOT_FOUND = 2;
+        SERVER_ERROR = 3;
+    }
+}
+
+message TakeCreditInitRequest {
+    int64 requestId = 1;
+    string cardAccount = 2;
+    int64 cardId = 3;
+    string interestAccount = 4;
+    bool confirmPreContract = 5;
+    bool confirmConsentBIC = 6;
+    string promoCode = 7;
+}
+
+message TakeCreditInitResponse {
+    bytes contract = 1;
+    
+    Result result = 2;
+    enum Result {
+        UNKNOWN = 0;
+        OK = 1;
+        WRONG_INPUT = 2;
+        EXCEEDED_OTP_LIMIT = 3;
+        NOT_FOUND = 4;
+        OFFER_IS_NOT_ACTIVE = 5;
+        GPS_REQUIRED = 6;
+    }
+}
+
+message TakeCreditConfirmRequest {
+    int64 requestId = 1;
+    string otp = 2;
+    util.OtpType otpType = 3;
+}
+
+message TakeCreditConfirmResponse {
+    string errorMessage = 1;
+    
+    Result result = 2;
+    enum Result {
+        UNKNOWN = 0;
+        OK = 1;
+        SERVER_ERROR = 2;
+        WRONG_OTP = 3;
+        OTP_SUBMIT_LIMIT_EXCEEDED = 4;
+        OFFER_IS_NOT_ACTIVE = 5;
+        CERBER_REJECT = 6;
+        SENT_TO_CC = 7;
+    }
+    
+    bool retryAttempt = 3;
+}
+
+message PaymentScheduleAdminRequest {
+    int64 customerId = 1;
+    string creditAccount = 2;
+}
+
+enum PreContractType {
+    UNKNOWN_CONTRACT_TYPE = 0;
+    CALC = 1;
+    BIC = 2;
+    PRECONTRACT_INFO = 3;
+}

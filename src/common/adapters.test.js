@@ -49,12 +49,10 @@ describe('adaptScrapeToGlobalApi', () => {
     })).resolves.toBe(testError)
   })
 
-  it('should throw out errors thrown inside sync promise', () => {
+  it('should fallback to setResult(error) when error thrown in sync promise context', async () => {
     global.ZenMoney = {
       getPreferences: jest.fn(),
-      setResult: () => {
-        throw new Error('setResult should not be called in sync promise context')
-      }
+      setResult: jest.fn()
     }
     const error = new Error('test error')
     const main = adaptScrapeToGlobalApi(() => {
@@ -72,7 +70,9 @@ describe('adaptScrapeToGlobalApi', () => {
         }
       }
     })
-    return expect(() => main()).toThrow(error)
+    await main()
+    expect(global.ZenMoney.setResult).toHaveBeenCalledTimes(1)
+    expect(global.ZenMoney.setResult).toHaveBeenCalledWith(error)
   })
 
   it('should handle invalid usages synchronously', () => {

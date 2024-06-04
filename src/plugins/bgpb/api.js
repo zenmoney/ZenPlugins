@@ -5,7 +5,12 @@ import { fetch, fetchJson } from '../../common/network'
 import { generateRandomString } from '../../common/utils'
 import { parseXml } from '../../common/xmlUtils'
 
-const baseUrl = 'https://mobapp-frontend.bgpb.by/'
+const BASE_URL = 'https://mobapp-frontend.bgpb.by/'
+const TERMINAL_ID = 41742969
+const APP_VERSION = '9.1.0'
+
+const SOU_ADMIN_ENDPOINT = 'sou2/xml_online.admin'
+const SOU_REQUEST_ENDPOINT = 'sou2/xml_online.request'
 
 export function generateBoundary () {
   return generateRandomString(8) + '-' + generateRandomString(4) + '-' + generateRandomString(4) + '-' + generateRandomString(4) + '-' + generateRandomString(12)
@@ -23,7 +28,7 @@ async function fetchApi (url, xml, options, predicate = () => true, error = (mes
 
   options.method = options.method ? options.method : 'POST'
   options.headers = {
-    'User-Agent': 'BGPB mobile/5.17.1 (Android; unknownAndroidSDKbuiltforx86; Android 6.0)',
+    'User-Agent': `BGPB mobile/${APP_VERSION} (Android; unknownAndroidSDKbuiltforx86; Android 10)`,
     'Content-Type': 'multipart/form-data; boundary=' + boundary
   }
   options.body = boundaryStart +
@@ -34,7 +39,7 @@ async function fetchApi (url, xml, options, predicate = () => true, error = (mes
     xml +
     boundaryLast
 
-  const response = await fetch(baseUrl + url, options)
+  const response = await fetch(BASE_URL + url, options)
   if (predicate) {
     validateResponse(response, response => predicate(response), error)
   }
@@ -53,7 +58,7 @@ async function fetchApi (url, xml, options, predicate = () => true, error = (mes
 }
 
 async function fetchApiJson (url, options, predicate = () => true, error = (message) => console.assert(false, message)) {
-  const response = await fetchJson(baseUrl + url, options)
+  const response = await fetchJson(BASE_URL + url, options)
   if (predicate) {
     validateResponse(response, response => predicate(response), error)
   }
@@ -195,14 +200,14 @@ export function parseConditionsMail (html) {
 }
 
 export async function login (login, password) {
-  const res = await fetchApi('sou/xml_online.admin?q=login',
+  const res = await fetchApi(SOU_ADMIN_ENDPOINT,
     '<BS_Request>\r\n' +
     '   <Login Biometric="N" IpAddress="10.0.2.15" Type="PWD">\r\n' +
     '      <Parameter Id="Login">' + login + '</Parameter>\r\n' +
     '      <Parameter Id="Password">' + password + '</Parameter>\r\n' +
     '   </Login>\r\n' +
     '   <RequestType>Login</RequestType>\r\n' +
-    '   <TerminalId>41742991</TerminalId>\r\n' +
+    `   <TerminalId>${TERMINAL_ID}</TerminalId>\r\n` +
     '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
     '</BS_Request>\r\n', { sanitizeRequestLog: { body: true } }, response => true, message => new InvalidPreferencesError('Неверный логин или пароль'))
@@ -216,12 +221,12 @@ export async function login (login, password) {
 export async function fetchAccounts (sid) {
   console.log('>>> Загрузка списка счетов...')
 
-  const res = await fetchApi('sou/xml_online.admin',
+  const res = await fetchApi(SOU_ADMIN_ENDPOINT,
     '<BS_Request>\r\n' +
     '   <GetProducts GetActions="N" ProductType="MS"/>\r\n' +
     '   <RequestType>GetProducts</RequestType>\r\n' +
     '   <Session IpAddress="10.0.2.15" Prolong="Y" SID="' + sid + '"/>\r\n' +
-    '   <TerminalId>41742991</TerminalId>\r\n' +
+    `   <TerminalId>${TERMINAL_ID}</TerminalId>\r\n` +
     '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
     '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
@@ -237,12 +242,12 @@ export async function fetchAccounts (sid) {
 export async function fetchBalance (sid, account) {
   console.log('>>> Загрузка баланса для ' + account.title)
 
-  const res = await fetchApi('sou/xml_online.request',
+  const res = await fetchApi(SOU_REQUEST_ENDPOINT,
     '<BS_Request>\r\n' +
     '   <Balance Currency="' + account.currencyCode + '"/>\r\n' +
     '   <RequestType>Balance</RequestType>\r\n' +
     '   <Session IpAddress="10.0.2.15" Prolong="Y" SID="' + sid + '"/>\r\n' +
-    '   <TerminalId>41742991</TerminalId>\r\n' +
+    `   <TerminalId>${TERMINAL_ID}</TerminalId>\r\n` +
     '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
     '   <ClientId IdType="' + account.productType + '">' + account.cardNumber + '</ClientId>\r\n' +
     '   <TerminalCapabilities>\r\n' +
@@ -268,12 +273,12 @@ export async function fetchBalance (sid, account) {
 export async function fetchTransactionsAccId (sid, account) {
   console.log('>>> Загрузка id аккаунта для транзакций для ' + account.title)
 
-  const res = await fetchApi('sou/xml_online.admin',
+  const res = await fetchApi(SOU_ADMIN_ENDPOINT,
     '<BS_Request>\r\n' +
     '   <GetActions ProductId="' + account.productId + '"/>\r\n' +
     '   <RequestType>GetActions</RequestType>\r\n' +
     '   <Session IpAddress="10.0.2.15" Prolong="Y" SID="' + sid + '"/>\r\n' +
-    '   <TerminalId>41742991</TerminalId>\r\n' +
+    `   <TerminalId>${TERMINAL_ID}</TerminalId>\r\n` +
     '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
     '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
@@ -303,23 +308,23 @@ export async function fetchTransactionsAccId (sid, account) {
 export async function fetchAccountConditions (sid, account) {
   console.log('>>> Загрузка условий обслуживания для ' + account.title)
 
-  const response = await fetchApi('sou/xml_online.admin',
+  const response = await fetchApi(SOU_ADMIN_ENDPOINT,
     '<BS_Request>\r\n' +
     '<ExecuteAction Id="' + account.conditionsAccId + '"/>\r\n' +
     '<RequestType>ExecuteAction</RequestType>\r\n' +
     '<Session IpAddress="10.0.2.15" Prolong="Y" SID="' + sid + '"/>\r\n' +
-    '<TerminalId>41742991</TerminalId>\r\n' +
+    `<TerminalId>${TERMINAL_ID}</TerminalId>\r\n` +
     '<TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
     '<Subsystem>ClientAuth</Subsystem>\r\n' +
     '</BS_Request>', {}, response => true, message => new InvalidPreferencesError('bad request'))
   const mailID = response.BS_Response.ExecuteAction.MailId
 
-  const mail = await fetchApi('sou/xml_online.admin',
+  const mail = await fetchApi(SOU_ADMIN_ENDPOINT,
     '<BS_Request>\r\n' +
     '   <MailAttachment Id="' + mailID + '" No="0"/>\r\n' +
     '   <RequestType>MailAttachment</RequestType>\r\n' +
     '   <Session IpAddress="10.0.2.15" Prolong="Y" SID="' + sid + '"/>\r\n' +
-    '   <TerminalId>41742991</TerminalId>\r\n' +
+    `   <TerminalId>${TERMINAL_ID}</TerminalId>\r\n` +
     '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
     '   <TerminalCapabilities>\r\n' +
@@ -359,7 +364,7 @@ export async function fetchFullTransactions (sid, account, fromDate, toDate = ne
 
   const dates = createDateIntervals(fromDate, toDate)
   const responses = await Promise.all(dates.map(async date => {
-    return fetchApi('sou/xml_online.admin',
+    return fetchApi(SOU_ADMIN_ENDPOINT,
       '<BS_Request>\r\n' +
       '   <ExecuteAction Id="' + account.transactionsAccId + '">\r\n' +
       '      <Parameter Id="DateFrom">' + transactionDate(date[0]) + '</Parameter>\r\n' +
@@ -367,7 +372,7 @@ export async function fetchFullTransactions (sid, account, fromDate, toDate = ne
       '   </ExecuteAction>\r\n' +
       '   <RequestType>ExecuteAction</RequestType>\r\n' +
       '   <Session IpAddress="10.0.2.15" Prolong="Y" SID="' + sid + '"/>\r\n' +
-      '   <TerminalId>41742991</TerminalId>\r\n' +
+      `   <TerminalId>${TERMINAL_ID}</TerminalId>\r\n` +
       '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
       '   <Subsystem>ClientAuth</Subsystem>\r\n' +
       '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
@@ -376,12 +381,12 @@ export async function fetchFullTransactions (sid, account, fromDate, toDate = ne
     return response.BS_Response.ExecuteAction.MailId
   })
   return await Promise.all(flatMap(mailIDs, (mailId) => {
-    return fetchApi('sou/xml_online.admin',
+    return fetchApi(SOU_ADMIN_ENDPOINT,
       '<BS_Request>\r\n' +
       '   <MailAttachment Id="' + mailId + '" No="0"/>\r\n' +
       '   <RequestType>MailAttachment</RequestType>\r\n' +
       '   <Session IpAddress="10.0.2.15" Prolong="Y" SID="' + sid + '"/>\r\n' +
-      '   <TerminalId>41742991</TerminalId>\r\n' +
+      `   <TerminalId>${TERMINAL_ID}</TerminalId>\r\n` +
       '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
       '   <Subsystem>ClientAuth</Subsystem>\r\n' +
       '   <TerminalCapabilities>\r\n' +

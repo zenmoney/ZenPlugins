@@ -1,9 +1,9 @@
 import {
-  convertUzcardCardTransaction,
+  convertAccountTransaction,
   convertHumoCardTransaction,
+  convertUzcardCardTransaction,
   convertVisaCardTransaction,
-  convertWalletTransaction,
-  convertAccountTransaction
+  convertWalletTransaction
 } from '../../converters'
 
 describe('convertTransaction', () => {
@@ -172,7 +172,10 @@ describe('convertTransaction', () => {
           {
             id: null,
             account: { id: 'card' },
-            invoice: null,
+            invoice: {
+              sum: -11000,
+              instrument: 'UZS'
+            },
             sum: -0.96,
             fee: -0.01
           }
@@ -213,7 +216,10 @@ describe('convertTransaction', () => {
           {
             account: { id: 'card' },
             id: null,
-            invoice: null,
+            invoice: {
+              sum: -21000,
+              instrument: 'UZS'
+            },
             sum: -1.83,
             fee: -0.02
           }
@@ -255,8 +261,96 @@ describe('convertTransaction', () => {
             account: { id: 'card' },
             fee: -0.07,
             id: null,
-            invoice: null,
+            invoice: {
+              sum: -85000,
+              instrument: 'UZS'
+            },
             sum: -7.4
+          }
+        ],
+        comment: null
+      }
+    ],
+    [
+      {
+        transDate: 1701186566000,
+        amount: '-35130.80',
+        merchantName: 'IP "KERIMQUL",ALMATY , KZ',
+        transType: 'Товары и услуги',
+        fee: '0.00',
+        currency: {
+          name: 'UZS',
+          scale: 2
+        },
+        approvalCode: '949579',
+        back: false,
+        transCode: '000000',
+        reversed: false,
+        transAmount: '-1290.00',
+        transCurrency: 'KZT',
+        conversionRate: '27.233178'
+      },
+      {
+        date: new Date(1701186566000),
+        hold: true,
+        merchant: {
+          city: 'ALMATY',
+          country: 'KZ',
+          location: null,
+          mcc: null,
+          title: 'IP "KERIMQUL"'
+        },
+        movements: [
+          {
+            account: { id: 'card' },
+            fee: 0,
+            id: null,
+            invoice: {
+              sum: -1290,
+              instrument: 'KZT'
+            },
+            sum: -35130.80
+          }
+        ],
+        comment: null
+      }
+    ],
+    [
+      {
+        transDate: 1699943744000,
+        amount: '-2.00',
+        merchantName: 'VISA DIRECT',
+        transType: 'Покупки',
+        fee: '2.00',
+        currency: {
+          name: 'USD',
+          scale: 2
+        },
+        approvalCode: '974628',
+        back: true,
+        transCode: '205',
+        reversed: false,
+        transAmount: '-2.00',
+        transCurrency: 'USD',
+        conversionRate: '1'
+      },
+      {
+        date: new Date(1699943744000),
+        hold: false,
+        merchant: {
+          city: null,
+          country: null,
+          location: null,
+          mcc: null,
+          title: 'VISA DIRECT'
+        },
+        movements: [
+          {
+            account: { id: 'card' },
+            fee: 0,
+            id: null,
+            invoice: null,
+            sum: -2
           }
         ],
         comment: null

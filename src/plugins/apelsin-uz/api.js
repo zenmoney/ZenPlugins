@@ -7,7 +7,8 @@ import {
   convertUzcardCardTransaction,
   convertVisaCardTransaction,
   convertWallet,
-  convertWalletTransaction
+  convertWalletTransaction,
+  convertMasterCardTransaction
 } from './converters'
 
 const baseUrl = 'https://mobile.apelsin.uz/api'
@@ -102,6 +103,32 @@ export async function getVisaCards () {
   })
 
   console.assert(response.ok, 'unexpected visa response', response)
+
+  return response.body.data.map(convertCard).filter(card => card !== null)
+}
+
+/**
+ * Получить список карт платежной системы Mastercard
+ *
+ * @returns массив карт платежной системы Mastercard в формате Дзенмани
+ */
+export async function getMastercardCards () {
+  const endpoint = '/master'
+  const requestHeaders = {
+    authorization: 'Bearer ' + ZenMoney.getData('apiAccessToken'),
+    'device-id': ZenMoney.getData('deviceId')
+  }
+
+  const response = await fetchJson(baseUrl + endpoint, {
+    method: 'GET',
+    headers: {
+      ...defaultHeaders,
+      ...requestHeaders
+    },
+    sanitizeRequestLog: { headers: { 'device-id': true, authorization: true } }
+  })
+
+  console.assert(response.ok, 'unexpected master response', response)
 
   return response.body.data.map(convertCard).filter(card => card !== null)
 }
@@ -275,6 +302,47 @@ export async function getVisaCardsTransactions (cards, fromDate, toDate) {
 
       transactions = transactions.concat(response.body.data.map(transaction =>
         convertVisaCardTransaction(card, transaction)).filter(transaction => transaction !== null))
+    }
+  }
+
+  return transactions
+}
+
+/**
+ * Получить список транзакций по картам платежной системы Mastercard
+ *
+ * @param cards массив карт платежной системы Mastercard
+ * @param fromDate дата в формате ISO8601, с которой нужно выгружать транзакции
+ * @param toDate дата в формате ISO8601, по которую нужно выгружать транзакции
+ * @returns массив транзакций в формате Дзенмани
+ */
+export async function getMastercardCardsTransactions (cards, fromDate, toDate) {
+  let transactions = []
+  const requestHeaders = {
+    authorization: 'Bearer ' + ZenMoney.getData('apiAccessToken'),
+    'device-id': ZenMoney.getData('deviceId')
+  }
+
+  for (const card of cards) {
+    if (!ZenMoney.isAccountSkipped(card.id)) {
+      const endpoint = '/master/history?' +
+        'cardId=' + card.id + '&' +
+        'dateFrom=' + fromDate + '&' +
+        'dateTo=' + toDate
+
+      const response = await fetchJson(baseUrl + endpoint, {
+        method: 'GET',
+        headers: {
+          ...defaultHeaders,
+          ...requestHeaders
+        },
+        sanitizeRequestLog: { headers: { 'device-id': true, authorization: true } }
+      })
+
+      console.assert(response.ok, 'unexpected master/history response', response)
+
+      transactions = transactions.concat(response.body.data.map(transaction =>
+        convertMasterCardTransaction(card, transaction)).filter(transaction => transaction !== null))
     }
   }
 

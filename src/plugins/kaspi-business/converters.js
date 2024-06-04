@@ -69,7 +69,7 @@ function parseAmount (sumInstrument) {
   }
   return {
     sum: parseFloat(match[1].replace(/\s/g, '').replace(',', '.')),
-    instrument: instrument
+    instrument
   }
 }
 

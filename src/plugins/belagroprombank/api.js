@@ -1,5 +1,5 @@
 import { fetchJson } from '../../common/network'
-import { generateUUID } from '../../common/utils'
+import { generateRandomString } from '../../common/utils'
 import { parseXml } from '../../common/xmlUtils'
 import { BankMessageError, InvalidLoginOrPasswordError, InvalidOtpCodeError, TemporaryUnavailableError, UserInteractionError } from '../../errors'
 
@@ -7,7 +7,7 @@ const host = 'ibank.belapb.by:4443'
 
 export function generateAuth () {
   return {
-    deviceUDID: generateUUID().replace('-', '')
+    deviceUDID: generateRandomString(16)
   }
 }
 
@@ -40,10 +40,12 @@ async function fetchLogin (login, password, auth, smsCode) {
       login,
       password,
       deviceUDID: auth.deviceUDID,
-      applicID: '3.42',
+      applicID: '3.46',
       clientKind: '0',
+      deviceConformationType: '0',
       platform: ZenMoney.application?.platform || 'Android',
-      platformVersion: '8.0.0',
+      platformVersion: '11',
+      typeOfVersion: 'STANDARD',
       browser: ZenMoney.device.model, // 'generic_x86',
       browserVersion: ZenMoney.device.model, // 'Android SDK built for x86 (sdk_phone_x86)'
       ...smsCode && { confirmationData: smsCode }

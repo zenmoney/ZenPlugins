@@ -190,46 +190,45 @@ export function convertHumoCardTransaction (card, rawTransaction) {
  * @returns транзакция в формате Дзенмани
  */
 export function convertVisaCardTransaction (card, rawTransaction) {
-  const amount = Number(rawTransaction.amount)
-  const fee = card.instrument === rawTransaction.transCurrency
-    ? -Math.abs(Number(rawTransaction.fee))
-    : -Math.abs(Math.round(Number(rawTransaction.fee) * Number(rawTransaction.conversionRate) * 100) / 100)
-
+  let amount = Number(rawTransaction.amount)
   if (amount === 0) {
     return null
   }
-
-  /*
-    Если сумма `amount` положительная, т.е. доходная, то минусуем комиссию, таким образом сумма пополнения уменьшится
-    Если сумма `amount` отрицательная, т.е. расходная, то тоже минисуем комиссию, таким образом сумма расхода увеличится
-
-    Вообще сумма `fee` возвращается всегда положительной с API, т.е. это точно не кэшбек, а расход, но всё равно на всякий случай берем модуль числа
-  */
-  //
-  // if (Math.abs(fee) > Math.abs(amount)) {
-  //   amount -= Math.abs(fee)
-  //   fee = 0
-  // }
-
-  const invoice = {
-    sum: amount,
-    instrument: rawTransaction.currency.name
+  let fee = card.instrument === rawTransaction.transCurrency
+    ? -Math.abs(Number(rawTransaction.fee))
+    : -Math.abs(Math.round(Number(rawTransaction.fee) * Number(rawTransaction.conversionRate) * 100) / 100)
+  if (fee) {
+    const amountWithoutFee = Math.round((amount - fee) * 100) / 100
+    if (Math.abs(amountWithoutFee) >= 0.01) {
+      amount = amountWithoutFee
+    } else {
+      fee = 0
+    }
   }
+  const invoice = rawTransaction.transAmount && rawTransaction.transCurrency && rawTransaction.transCurrency !== rawTransaction.currency.name
+    ? {
+        sum: parseFloat(rawTransaction.transAmount),
+        instrument: rawTransaction.transCurrency
+      }
+    : {
+        sum: amount,
+        instrument: rawTransaction.currency.name
+      }
 
   const merchantIgnoreTransactionCodes = [
     '11M',
     '110'
   ]
 
-  const title = rawTransaction.merchantName?.match(/^(.*),(.*) ([A-Z]{2,3}$)/)
+  const match = rawTransaction.merchantName?.match(/^([^,]*),([^,]*)\s*,?\s*([A-Z]{2,3})$/)
   const transaction = {
     date: new Date(rawTransaction.transDate),
     hold: !rawTransaction.back,
     merchant: merchantIgnoreTransactionCodes.indexOf(rawTransaction.transCode) < 0
       ? {
-          country: title ? title[3] : null,
-          city: title ? title[2] : null,
-          title: title ? title[1] : rawTransaction.merchantName,
+          country: match?.[3]?.trim() || null,
+          city: match?.[2]?.trim() || null,
+          title: match?.[1]?.trim() || rawTransaction.merchantName,
           mcc: null,
           location: null
         }
@@ -239,7 +238,7 @@ export function convertVisaCardTransaction (card, rawTransaction) {
         id: null,
         account: { id: card.id },
         invoice: invoice.instrument === card.instrument ? null : invoice,
-        sum: invoice.instrument === card.instrument ? Math.round((invoice.sum - fee) * 100) / 100 : null,
+        sum: amount,
         fee: fee || 0
       }
     ],

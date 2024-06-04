@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package md.maib.app.util;
+
+option java_multiple_files = true;
+option java_outer_classname = "UtilProto";
+option java_package = "md.maib.app.proto.util";
+
+message OptionalLong {
+    bool is_present = 1;
+    int64 value = 2;
+}
+
+message GeoLocation {
+    double longitude = 1;
+    double latitude = 2;
+}
+
+enum OptionalBool {
+    UNSPECIFIED = 0;
+    TRUE = 1;
+    FALSE = 2;
+}
+
+enum OtpType {
+    UNKNOWN = 0;
+    AUTOMATIC = 1;
+    MANUAL = 2;
+}
+
+enum RemoteControlState {
+    UNKNOWN_CONTROL = 0;
+    CLEAN = 1;
+    INSTALLED = 2;
+    RUNNING = 3;
+}
