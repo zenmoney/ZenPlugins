@@ -4,7 +4,7 @@ import { InvalidPreferencesError } from '../../errors'
 
 const baseUrl = 'https://id.uzum.uz/api'
 const apelsinApiBaseUrl = 'https://mobile.apelsin.uz/api'
-const userAgent = 'Uzum/Bank/Android/1.13.7(363); com.android.vending; (samsung; SM-G991B; SDK 33; Android 13)'
+const userAgent = 'Uzum/Bank/Android/1.22.1(548); com.android.vending; (samsung; SM-G991B; SDK 33; Android 13)'
 const deviceName = 'ZenMoney'
 const defaultHeaders = {
   'User-Agent': userAgent,
