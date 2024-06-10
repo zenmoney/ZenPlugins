@@ -1,7 +1,7 @@
 import { omit } from 'lodash'
 import { fetch, fetchJson, openWebViewAndInterceptRequest, RequestInterceptMode } from '../../common/network'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
-import { delay } from '../../common/utils'
+import { delay, generateUUID } from '../../common/utils'
 import { parse, stringify } from 'querystring'
 import { BankMessageError, IncompatibleVersionError, TemporaryUnavailableError } from '../../errors'
 import config from './config'
@@ -143,28 +143,36 @@ export async function login (auth = {}, preferences) {
     console.assert(needPermissions.findIndex(permission => permissions.indexOf(permission) < 0) < 0, 'non-successfull permissions granted', response)
 
     const redirectUriWithoutProtocol = API_REDIRECT_URI.replace(/^https?:\/\//i, '')
+    const state = generateUUID()
     const url = `${BASE_URI}/connect/authorize?${stringify({
       client_id: config.clientId,
       response_type: 'code',
-      state: 'zenmoney',
+      state,
       redirect_uri: config.redirectUri,
       scope: 'accounts',
       consent_id: consentId
     })}`
-    const params = await openWebViewAndInterceptRequest({
-      url,
-      sanitizeRequestLog: { url: { query: { client_id: true, consent_id: true } } },
-      intercept: function (request) {
-        if (request.url === url) {
-          this.mode = RequestInterceptMode.OPEN_AS_DEEP_LINK
+    let params
+    try {
+      params = await openWebViewAndInterceptRequest({
+        url,
+        sanitizeRequestLog: { url: { query: { client_id: true, consent_id: true } } },
+        intercept: function (request) {
+          if (request.url === url) {
+            this.mode = RequestInterceptMode.OPEN_AS_DEEP_LINK
+          }
+          const i = request.url.indexOf(redirectUriWithoutProtocol)
+          if (i < 0) {
+            return null
+          }
+          return parse(request.url.substring(i + redirectUriWithoutProtocol.length + 1))
         }
-        const i = request.url.indexOf(redirectUriWithoutProtocol)
-        if (i < 0) {
-          return null
-        }
-        return parse(request.url.substring(i + redirectUriWithoutProtocol.length + 1))
-      }
-    })
+      })
+    } catch (err) {
+      params = (await fetchJson(`${API_REDIRECT_URI.replace(/\/+$/, '')}/result/${state}/`, {
+        log: false
+      })).body
+    }
     const code = params?.code
     if (!code && (!params?.error || params.error === 'access_denied')) {
       throw new TemporaryError('Не удалось пройти авторизацию в банке Точка. Попробуйте еще раз')
