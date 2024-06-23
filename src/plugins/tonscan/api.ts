@@ -10,19 +10,32 @@ export interface Preferences {
   wallets: string
 }
 
+export interface RawJettons {
+  jetton_wallets: Array<{ address: string, jetton: string, balance: number }>
+}
+
 export interface JettonInfo {
   address: string
-  ownerWithJettonType: string
   jetton: string
   jettonType: string
+  title: string
   owner: string
   balance: number
   decimals: number
 }
 
+export interface RawWallet {
+  balance: number
+}
+
 export interface WalletInfo {
   address: string
   balance: number
+}
+
+export interface TonRawTransactions {
+  transactions: Array<{ in_msg: Msg, out_msgs: Msg[] }>
+  address_book: AddressBook
 }
 
 export interface TonTransaction {
@@ -34,11 +47,13 @@ export interface TonTransaction {
 }
 
 export interface RawJettonTransfer {
-  transaction_hash: string
-  source: string
-  destination: string
-  amount: number
-  transaction_now: number
+  jetton_transfers: Array<{
+    transaction_hash: string
+    source: string
+    destination: string
+    amount: number
+    transaction_now: number
+  }>
 }
 
 export interface JettonTransfer {
@@ -64,10 +79,14 @@ export interface AddressBook {
 
 export class TonscanApi {
   private readonly baseUrl: string
+  private readonly requestsDelay: number
+  private readonly maxRps: number
   private activeList: Array<Promise<unknown>> = []
 
-  constructor (options: { baseUrl: string}) {
+  constructor (options: { baseUrl: string, requestsDelay?: number, maxRps?: number}) {
     this.baseUrl = options.baseUrl
+    this.requestsDelay = options.requestsDelay ?? 1300
+    this.maxRps = options.maxRps ?? MAX_RPS
   }
 
   private async fetchApi (
@@ -75,12 +94,12 @@ export class TonscanApi {
     options?: FetchOptions,
     predicate?: (x: FetchResponse) => boolean
   ): Promise<FetchResponse> {
-    if (this.activeList.length < MAX_RPS) {
+    if (this.activeList.length < this.maxRps) {
       const request = this.fetchInner(url, options, predicate)
 
       const waiter = request
-        .then(async () => await delay(1300))
-        .catch(async () => await delay(1300))
+        .then(async () => await delay(this.requestsDelay))
+        .catch(async () => await delay(this.requestsDelay))
         .then(() => {
           this.activeList = this.activeList.filter(item => item !== waiter)
         })
@@ -127,18 +146,20 @@ export class TonscanApi {
       })}`,
       undefined,
       (res) => typeof res.body === 'object' && res.body != null && 'jetton_wallets' in res.body
-    ) as FetchResponse & { body: { jetton_wallets: Array<Record<string, unknown>> } }
+    ) as FetchResponse & { body: RawJettons }
 
-    return response.body.jetton_wallets
-      .filter(t => Object.keys(SUPPORTED_JETTONS).includes(t.jetton as string))
+    const filteredJettons = response.body.jetton_wallets.filter(t => Object.keys(SUPPORTED_JETTONS).includes(t.jetton))
+    const jettonsAddressBook = await this.fetchAddressBook(filteredJettons.map(t => t.address))
+
+    return filteredJettons
       .map(t => ({
-        address: t.address as string,
-        jetton: t.jetton as string,
-        jettonType: SUPPORTED_JETTONS[t.jetton as string].ticker,
-        decimals: SUPPORTED_JETTONS[t.jetton as string].decimals,
+        address: jettonsAddressBook[t.address].user_friendly,
+        jetton: t.jetton,
+        jettonType: SUPPORTED_JETTONS[t.jetton].ticker,
+        title: SUPPORTED_JETTONS[t.jetton].title,
+        decimals: SUPPORTED_JETTONS[t.jetton].decimals,
         owner: ownerWalletAddress,
-        ownerWithJettonType: `${ownerWalletAddress}_${SUPPORTED_JETTONS[t.jetton as string].ticker}`,
-        balance: t.balance as number
+        balance: t.balance
       }))
   }
 
@@ -149,11 +170,11 @@ export class TonscanApi {
       })}`,
       undefined,
       (res) => typeof res.body === 'object' && res.body != null && 'balance' in res.body
-    ) as FetchResponse & { body: { balance: string } }
+    ) as FetchResponse & { body: RawWallet }
 
     return {
       address: wallet,
-      balance: parseFloat(response.body.balance)
+      balance: response.body.balance
     }
   }
 
@@ -183,7 +204,7 @@ export class TonscanApi {
           limit,
           offset,
           sort: 'desc'
-        })}`) as FetchResponse & { body: { transactions: Array<{ in_msg: Msg, out_msgs: Msg[] }>, address_book: AddressBook } }
+        })}`) as FetchResponse & { body: TonRawTransactions }
 
       const incomeTransactions = response.body.transactions.filter(t => t.in_msg?.value > 1)
       const outcomeTransactions = response.body.transactions.flatMap(t => t.out_msgs).filter(msg => msg.value > 1)
@@ -233,7 +254,7 @@ export class TonscanApi {
             limit,
             offset,
             sort: 'desc'
-          })}`) as FetchResponse & { body: { jetton_transfers: RawJettonTransfer[] } }
+          })}`) as FetchResponse & { body: RawJettonTransfer }
 
         transfers.push(...response.body.jetton_transfers.map(t => ({
           jettonAddress: jetton.address,
@@ -269,7 +290,3 @@ export class TonscanApi {
     return updatedTransfers
   }
 }
-
-export const tonscanApi = new TonscanApi({
-  baseUrl: 'https://toncenter.com/api/'
-})

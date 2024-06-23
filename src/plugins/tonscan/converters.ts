@@ -1,8 +1,20 @@
 import { AccountOrCard, AccountType, Transaction } from '../../types/zenmoney'
 import { WalletInfo, JettonInfo, TonTransaction, JettonTransfer } from './api'
 
+const TRUNCATE_THRESHOLD = 0.01
+
 function convertTonFromNano (balance: number): number {
-  return balance / (10 ** 9)
+  return keepTwoDigitsAfterPoint(balance / (10 ** 9))
+}
+
+function convertJettonBalanceFromDecimals (jettonInfo: JettonInfo): number {
+  return keepTwoDigitsAfterPoint(jettonInfo.balance / (10 ** jettonInfo.decimals))
+}
+
+function keepTwoDigitsAfterPoint (value: number): number {
+  // zenmoney can store only 2 digits after the point
+  // truncating number without rounding
+  return Math.floor(value * 100) / 100
 }
 
 export function convertWalletToAccount (wallet: WalletInfo): AccountOrCard {
@@ -20,24 +32,24 @@ export function convertWalletToAccount (wallet: WalletInfo): AccountOrCard {
 
 export function convertJettonToAccount (jettonInfo: JettonInfo): AccountOrCard {
   return {
-    id: jettonInfo.ownerWithJettonType,
+    id: jettonInfo.address,
     type: AccountType.ccard,
-    title: jettonInfo.ownerWithJettonType,
+    title: jettonInfo.title,
     instrument: jettonInfo.jettonType,
-    balance: jettonInfo.balance / (10 ** jettonInfo.decimals),
-    available: jettonInfo.balance / (10 ** jettonInfo.decimals),
+    balance: convertJettonBalanceFromDecimals(jettonInfo),
+    available: convertJettonBalanceFromDecimals(jettonInfo),
     creditLimit: 0,
-    syncIds: [jettonInfo.ownerWithJettonType]
+    syncIds: [jettonInfo.address]
   }
 }
 
 export function convertTonTransaction (transaction: TonTransaction, walletInfo: WalletInfo): Transaction | null {
   const operationSign = transaction.fromAddress === walletInfo.address ? -1 : 1
-  const sum = convertTonFromNano(operationSign * Number(transaction.quantity))
+  const sum = operationSign * convertTonFromNano(transaction.quantity)
   const merchantName = transaction.fromAddress === walletInfo.address ? transaction.toAddress : transaction.fromAddress
 
   // Skip trash transactions
-  if (Math.abs(sum) < 0.000001) {
+  if (Math.abs(sum) < TRUNCATE_THRESHOLD) {
     return null
   }
 
@@ -69,11 +81,11 @@ export function convertJettonTransfer (transfer: JettonTransfer, jettons: Jetton
     }
 
     const operationSign = transfer.fromAddress === jetton.owner ? -1 : 1
-    const sum = (operationSign * Number(transfer.quantity)) / (10 ** jetton.decimals)
+    const sum = operationSign * keepTwoDigitsAfterPoint((transfer.quantity) / (10 ** jetton.decimals))
     const merchantName = transfer.fromAddress === jetton.owner ? transfer.toAddress : transfer.fromAddress
 
     // Skip trash transactions
-    if (Math.abs(sum) < 0.00001) {
+    if (Math.abs(sum) < TRUNCATE_THRESHOLD) {
       continue
     }
 
@@ -84,7 +96,7 @@ export function convertJettonTransfer (transfer: JettonTransfer, jettons: Jetton
         movements: [
           {
             id: transfer.transactionId,
-            account: { id: jetton.ownerWithJettonType },
+            account: { id: jetton.address },
             sum,
             fee: 0,
             invoice: null

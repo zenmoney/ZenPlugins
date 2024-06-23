@@ -1,10 +1,15 @@
 import { Account, ScrapeFunc, Transaction } from '../../types/zenmoney'
-import { Preferences, tonscanApi } from './api'
+import { Preferences, TonscanApi } from './api'
+import { MAX_RPS } from './config'
 import { convertWalletToAccount, convertJettonToAccount, convertTonTransaction, convertJettonTransfer } from './converters'
 
 export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, toDate }) => {
   const accounts: Account[] = []
   const transactions: Transaction[] = []
+  const tonscanApi = new TonscanApi({
+    baseUrl: 'https://toncenter.com/api/',
+    maxRps: MAX_RPS
+  })
 
   await Promise.all(
     preferences.wallets
