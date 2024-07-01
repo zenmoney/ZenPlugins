@@ -14,8 +14,8 @@ describe('scrape', () => {
     const result = await scrape(
       {
         preferences: preferencesMock,
-        fromDate: new Date('2024-06-01T00:00:00'),
-        toDate: new Date('2024-06-20T23:59:59'),
+        fromDate: new Date('2024-06-01T00:00:00+04:00'),
+        toDate: new Date('2024-06-20T23:59:59+04:00'),
         isFirstRun: false,
         isInBackground: false
       }
