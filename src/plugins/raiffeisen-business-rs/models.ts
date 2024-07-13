@@ -80,7 +80,8 @@ export interface GetAccountTransactionsResponse {
   DebitAmount: number
   Description: string | null
   Note: string | null
-  DebtorCreditorName: string
+  DebtorCreditorName: string | null
+  Trnben: string | null
   ValueDate: string
   CurrencyCode: string
   CurrencyCodeNumeric: string

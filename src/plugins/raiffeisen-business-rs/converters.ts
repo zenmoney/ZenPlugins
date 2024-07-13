@@ -45,7 +45,7 @@ export function convertTransaction (t1: GetAccountTransactionsResponse): Transac
       }
     ],
     merchant: {
-      fullTitle: t1.DebtorCreditorName,
+      fullTitle: t1.DebtorCreditorName ?? t1.Trnben ?? 'Unknown',
       mcc: null,
       location: null
     },
