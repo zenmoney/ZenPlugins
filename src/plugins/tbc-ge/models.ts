@@ -1,4 +1,4 @@
-import { Account, AccountOrCard, AccountType, Amount, Merchant, Movement, Transaction } from '../../types/zenmoney'
+import { Account, AccountOrCard, AccountType, Amount, DepositOrLoan, Merchant, Movement, Transaction } from '../../types/zenmoney'
 import { parsePOSDateString } from './converters'
 export interface Signature {
   response: null
@@ -173,6 +173,10 @@ export interface PreparedCardV2 {
   code: string // TODO GET from https://rmbgw.tbconline.ge/wallet/api/v1/cards
   id: number
   iban: string
+}
+
+export interface PreparedLoanV2 {
+  account: DepositOrLoan
 }
 
 export interface PreparedAccountV2 {
@@ -428,6 +432,28 @@ export interface CardProductV2 {
   hasPrefix: boolean
   cards: CardV2[]
   accounts: AccountV2[]
+}
+
+export interface LoanProductV2 {
+  id: string
+  customerRole: string
+  totalLoanAmount: number
+  currencyCode: string
+  approvementDate: number
+  typeCode: string
+  typeText: string
+  endDate: number
+  lastPaymentDate: number
+  outstandingPrincipalAmount: number
+  outstandingPrincipalAmountInGel: number
+  statusCode: string
+  statusText: string
+  unusedAmount: number
+  friendlyName: string
+  hasDebt: boolean
+  showPaymentDayExplanationMark: boolean
+  activateRepayment: boolean
+  isBNPL: boolean
 }
 
 export interface LoginResponse {

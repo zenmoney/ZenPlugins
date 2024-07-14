@@ -272,7 +272,7 @@ function ZPAPI ({ manifest, preferences, data }) {
         account.payoffInterval = castInterval(account.payoffInterval)
         account.endDateOffsetInterval = castInterval(account.endDateOffsetInterval)
 
-        if (typeof account.percent !== 'number' ||
+        if ((account.percent !== null && typeof account.percent !== 'number') ||
                     typeof account.capitalization !== 'boolean' ||
                     typeof account.endDateOffset !== 'number' ||
                     typeof account.payoffStep !== 'number' ||

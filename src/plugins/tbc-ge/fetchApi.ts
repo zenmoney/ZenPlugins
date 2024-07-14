@@ -15,6 +15,7 @@ import {
   DeviceInfo,
   EasyLoginRequestV2,
   FetchHistoryV2Data,
+  LoanProductV2,
   LoginResponse,
   OS_VERSION,
   OtpDeviceV2,
@@ -405,7 +406,7 @@ export async function fetchApiDepositsV2 (session: SessionV2): Promise<DepositsV
   return deposits
 }
 
-export async function fetchApiLoansV2 (session: SessionV2): Promise<unknown> {
+export async function fetchApiLoansV2 (session: SessionV2): Promise<LoanProductV2[]> {
   const response = await fetchApi('https://rmbgw.tbconline.ge/loans/api/v1/list?ClientRoles=CoBorrower&ShowCards=false', {
     method: 'GET',
     headers: {
@@ -416,7 +417,7 @@ export async function fetchApiLoansV2 (session: SessionV2): Promise<unknown> {
     },
     parse: JSON.parse
   })
-  return response.body
+  return response.body as LoanProductV2[]
 }
 
 export async function fetchCardsListV2 (session: SessionV2): Promise<CardProductV2[]> {

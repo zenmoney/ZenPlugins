@@ -1,11 +1,13 @@
 import { Account, AccountType, Amount, ExtendedTransaction, Merchant, Movement, Transaction } from '../../types/zenmoney'
 import {
   CardProductV2,
+  LoanProductV2,
   CardsAndAccounts,
   createCashMovement,
   FetchHistoryV2Data,
   PreparedAccountV2,
   PreparedCardV2,
+  PreparedLoanV2,
   TransactionBlockedV2,
   TransactionUtilPayV2,
   TransactionsByDateV2,
@@ -106,6 +108,37 @@ export function convertCardsV2 (apiAccounts: CardProductV2[]): PreparedCardV2[] 
   }
   return accounts
 }
+
+export function convertLoansV2 (apiLoans: LoanProductV2[]): PreparedLoanV2[] {
+  const loans: PreparedLoanV2[] = []
+  for (const apiLoan of apiLoans) {
+    const startDate = new Date(apiLoan.approvementDate)
+    const endDate = new Date(apiLoan.endDate)
+    const { interval: endDateOffsetInterval, count: endDateOffset } = getIntervalBetweenDates(startDate, endDate)
+
+    const loan: PreparedLoanV2 = {
+      account: {
+        id: apiLoan.id,
+        type: AccountType.loan, // replace with actual constant for 'loan'
+        title: apiLoan.friendlyName ?? apiLoan.typeText,
+        instrument: apiLoan.currencyCode,
+        syncIds: [apiLoan.id],
+        balance: -apiLoan.outstandingPrincipalAmount,
+        startDate,
+        startBalance: apiLoan.totalLoanAmount,
+        capitalization: true,
+        percent: null,
+        endDateOffsetInterval,
+        endDateOffset,
+        payoffInterval: 'month',
+        payoffStep: 1
+      }
+    }
+    loans.push(loan)
+  }
+  return loans
+}
+
 export function convertTransactionsV2 (transactionRecordsByDate: TransactionsByDateV2[], fromDate: Date, data: FetchHistoryV2Data): ExtendedTransaction[] {
   const transactions: ExtendedTransaction[] = []
   for (const transactionRecords of transactionRecordsByDate) {
