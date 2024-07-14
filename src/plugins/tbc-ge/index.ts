@@ -1,6 +1,6 @@
 import { Account, ExtendedTransaction, ScrapeFunc } from '../../types/zenmoney'
 import { fetchAccountsV2, fetchCardsV2, fetchDepositStatementsV2, fetchDepositsV2, fetchLoansV2, fetchTransactionsV2, loginV2 } from './api'
-import { convertAccountsV2, convertCardsV2, convertDepositV2, convertStatementV2, convertTransactionsV2 } from './converters'
+import { convertLoansV2, convertAccountsV2, convertCardsV2, convertDepositV2, convertStatementV2, convertTransactionsV2 } from './converters'
 import { AuthV2, FetchHistoryV2Data, Preferences } from './models'
 import { adjustTransactions } from '../../common/transactionGroupHandler'
 import { validateAuth } from './utils'
@@ -16,10 +16,16 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
   ZenMoney.saveData()
 
   const accounts: Account[] = []
-  const loans = await fetchLoansV2(session)
-  if (Array.isArray(loans) && loans.length > 0) {
-    throw new Error('Loans are not supported yet, please send data to the developer')
-  }
+  await Promise.all(convertLoansV2(await fetchLoansV2(session)).map(async preparedLoan => {
+    const account = preparedLoan.account
+
+    if (ZenMoney.isAccountSkipped(account.id)) {
+      console.log(`Account ${account.id} is skipped`)
+      return
+    }
+    accounts.push(account)
+  }))
+
   const transactionsById = new Map<string, ExtendedTransaction>()
   const fetchHistoryV2Data: FetchHistoryV2Data[] = []
   const accountToSyncIds = new Map<string, string[]>()

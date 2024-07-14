@@ -8,6 +8,7 @@ import {
   DeviceData,
   DeviceInfo,
   FetchHistoryV2Data,
+  LoanProductV2,
   LoginResponse,
   OtpDeviceV2,
   PASSCODE,
@@ -301,7 +302,7 @@ export async function fetchDepositStatementsV2 (id: number, session: SessionV2):
   return await fetchApiDepositStatementsV2(id, session)
 }
 
-export async function fetchLoansV2 (session: SessionV2): Promise<unknown> {
+export async function fetchLoansV2 (session: SessionV2): Promise<LoanProductV2[]> {
   return await fetchApiLoansV2(session)
 }
 
