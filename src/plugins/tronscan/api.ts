@@ -1,7 +1,7 @@
 import qs from 'querystring'
-import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
+import { fetchJson, FetchResponse } from '../../common/network'
 import get from '../../types/get'
-import { SUPPORTED_TOKENS } from './config'
+import { isSupportedToken, SupportedTokenInfo, TokenInfo } from './config'
 import { delay } from '../../common/utils'
 
 const MAX_RPS = 3
@@ -10,15 +10,28 @@ export interface Preferences {
   wallets: string
 }
 
-export interface TokenInfo {
-  tokenId: string
-  tokenName: string
-  tokenAbbr: string
-  tokenDecimal: number
-  quantity: number
+interface TronTransfer {
+  hash: string
+  block_timestamp: number
+  from: string
+  to: string
+  amount: string
 }
 
-export interface TokenTransfer {
+interface TransactionCost {
+  energy_fee: number
+  fee: number
+}
+
+export interface TronTransaction {
+  hash: string
+  timestamp: number
+  ownerAddress: string
+  toAddress: string
+  cost: TransactionCost
+}
+
+export interface Transfer {
   transaction_id: string
   block_ts: number
   from_address: string
@@ -35,13 +48,13 @@ export class TronscanApi {
     this.baseUrl = options.baseUrl
   }
 
-  private async fetchApi (
+  private async fetchApi<T>(
     url: string,
-    options?: FetchOptions,
+    params?: Record<string, string | number | boolean | undefined>,
     predicate?: (x: FetchResponse) => boolean
-  ): Promise<FetchResponse> {
+  ): Promise<FetchResponse & { body: T }> {
     if (this.activeList.length < MAX_RPS) {
-      const request = this.fetchInner(url, options, predicate)
+      const request = this.fetchInner(`${url}?${qs.stringify(params)}`, predicate)
 
       const waiter = request
         .then(async () => await delay(1000))
@@ -54,19 +67,18 @@ export class TronscanApi {
 
       const result = await request
 
-      return result
+      return result as FetchResponse & { body: T }
     }
 
     await Promise.race(this.activeList)
-    return await this.fetchApi(url, options, predicate)
+    return await this.fetchApi(url, params, predicate)
   }
 
   private async fetchInner (
     url: string,
-    options?: FetchOptions,
     predicate?: (x: FetchResponse) => boolean
   ): Promise<FetchResponse> {
-    const response = await fetchJson(this.baseUrl + url, options)
+    const response = await fetchJson(this.baseUrl + url)
 
     if (predicate) {
       this.validateResponse(
@@ -85,53 +97,110 @@ export class TronscanApi {
     console.assert(!predicate || predicate(response), 'non-successful response')
   }
 
-  public async fetchTokens (wallet: string): Promise<TokenInfo[]> {
-    const response = await this.fetchApi(
-      `account/tokens?${qs.stringify({
-        address: wallet,
-        limit: 999
-      })}`,
-      undefined,
-      (res) => typeof res.body === 'object' && res.body != null && 'data' in res.body
-    ) as FetchResponse & { body: { data: Array<Record<string, unknown>> } }
+  public async fetchTokens (wallet: string): Promise<SupportedTokenInfo[]> {
+    const response = await this.fetchApi<{ data: TokenInfo[] }>('account/tokens', {
+      address: wallet,
+      limit: 999
+    },
+    (res) => typeof res.body === 'object' && res.body != null && 'data' in res.body
+    )
 
-    return response.body.data
-      .filter(t => SUPPORTED_TOKENS.includes(t.tokenAbbr as string))
-      .map(t => ({
-        tokenId: t.tokenId as string,
-        tokenName: t.tokenName as string,
-        tokenAbbr: t.tokenAbbr as string,
-        tokenDecimal: t.tokenDecimal as number,
-        quantity: t.quantity as number
-      }))
+    return response.body.data.filter(isSupportedToken)
   }
 
-  public async fetchTransfers (wallet: string, fromDate: Date, toDate?: Date): Promise<TokenTransfer[]> {
-    const transfers: TokenTransfer[] = []
+  public async fetchTransactions (wallet: string, fromDate: Date, toDate?: Date): Promise<Map<string, TronTransaction>> {
+    const transactions = new Map<string, TronTransaction>()
     let start = 0
     const limit = 50
 
     while (true) {
-      const response = await this.fetchApi(
-        `token_trc20/transfers?${qs.stringify({
-          relatedAddress: wallet,
+      const response = await this.fetchApi<{ data: TronTransaction[], total: number }>('transaction', {
+        address: wallet,
+        start_timestamp: fromDate.valueOf(),
+        end_timestamp: toDate?.valueOf(),
+        limit,
+        start,
+        sort: '-timestamp'
+      })
+
+      for (const transaction of response.body.data) {
+        transactions.set(transaction.hash, transaction)
+      }
+
+      if (start + limit >= response.body.total) {
+        break
+      }
+
+      start += limit
+    }
+
+    return transactions
+  }
+
+  public async fetchTokenTransfers (wallet: string, fromDate: Date, toDate?: Date): Promise<Transfer[]> {
+    const transfers: Transfer[] = []
+    let start = 0
+    const limit = 50
+
+    while (true) {
+      const response = await this.fetchApi<{ total: number, token_transfers: Transfer[] }>('token_trc20/transfers', {
+        relatedAddress: wallet,
+        start_timestamp: fromDate.valueOf(),
+        end_timestamp: toDate?.valueOf(),
+        limit,
+        start,
+        sort: '-timestamp'
+      })
+
+      for (const t of response.body.token_transfers) {
+        transfers.push({
+          transaction_id: t.transaction_id,
+          block_ts: t.block_ts,
+          from_address: t.from_address,
+          to_address: t.to_address,
+          quant: t.quant,
+          tokenInfo: t.tokenInfo
+        })
+      }
+
+      if (start + limit >= response.body.total) {
+        break
+      }
+
+      start += limit
+    }
+
+    return transfers
+  }
+
+  public async fetchTronTransfers (wallet: string, fromDate: Date, toDate?: Date): Promise<Transfer[]> {
+    const transfers: Transfer[] = []
+    let start = 0
+    const limit = 50
+
+    while (true) {
+      const response = await this.fetchApi<{ tokenInfo: TokenInfo, page_size: number, data: TronTransfer[] }>(
+        'transfer/trx', {
+          direction: 0,
+          address: wallet,
           start_timestamp: fromDate.valueOf(),
           end_timestamp: toDate?.valueOf(),
           limit,
-          start,
-          sort: '-timestamp'
-        })}`) as FetchResponse & { body: { total: number, token_transfers: Array<Record<string, unknown>> } }
+          start
+        })
 
-      transfers.push(...response.body.token_transfers.map(t => ({
-        transaction_id: t.transaction_id as string,
-        block_ts: t.block_ts as number,
-        from_address: t.from_address as string,
-        to_address: t.to_address as string,
-        quant: t.quant as string,
-        tokenInfo: t.tokenInfo as TokenInfo
-      })))
+      for (const t of response.body.data) {
+        transfers.push({
+          transaction_id: t.hash,
+          block_ts: t.block_timestamp,
+          from_address: t.from,
+          to_address: t.to,
+          quant: t.amount,
+          tokenInfo: response.body.tokenInfo
+        })
+      }
 
-      if (start + limit >= response.body.total) {
+      if (response.body.page_size < limit) {
         break
       }
 
