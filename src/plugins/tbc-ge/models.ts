@@ -1,5 +1,5 @@
 import { Account, AccountOrCard, AccountType, Amount, DepositOrLoan, Merchant, Movement, Transaction } from '../../types/zenmoney'
-import { parsePOSDateString } from './converters'
+import { isInvoiceString, isPOSDateCorrect, parsePOSDateString } from './converters'
 export interface Signature {
   response: null
   status: string
@@ -213,7 +213,9 @@ export class TransactionBlockedV2 {
   id: string
 
   isCash (): boolean {
-    return this.transaction.title.includes('ATM ') // TODO add cash in
+    // title of cash in operation has next formatted:
+    // 00000000,12/01/2024,ანგარიშზე თანხის შეტანა,GEL
+    return this.transaction.title.includes('ATM ') || this.transaction.title.includes('ანგარიშზე თანხის შეტანა')
   }
 
   constructor (transaction: TransactionRecordV2, date: number) {
@@ -303,23 +305,36 @@ export class TransactionUtilPayV2 {
   }
 
   constructor (transaction: TransactionRecordV2) {
-    if (transaction.subTitle !== 'Mobile') {
-      console.error(transaction)
-      throw new Error('Transaction is not mobile, the subtitle is ' + transaction.subTitle)
-    }
-
     this.transaction = transaction
-    try {
-      // title is in format
-      // Cellfie;599000111;თანხა:10.00
-      // SERVICENET;1009;2273000;თანხა:60.00
-      const arr = transaction.title.split(';')
-      this.merchant = arr[0]
-      this.merchantCountry = 'Georgia'
-      this.amount = -Number.parseFloat(arr[arr.length - 1].split(':')[1])
-    } catch ({ message }) {
-      console.error(transaction)
-      throw new Error(`Error parsing title "${transaction.title}" in TransactionUtilPayV2: ${message}`)
+    this.merchantCountry = 'Georgia'
+    if (transaction.subCategoryCode === 'TELEPHONE_MOBILE') {
+      try {
+        // title is in format
+        // Cellfie;599000111;თანხა:10.00
+        // SERVICENET;1009;2273000;თანხა:60.00
+        const arr = transaction.title.split(';')
+        this.merchant = arr[0]
+        this.amount = -Number.parseFloat(arr[arr.length - 1].split(':')[1])
+      } catch ({ message }) {
+        console.error(transaction)
+        throw new Error(`Error parsing title "${transaction.title}" in TransactionUtilPayV2: ${message}`)
+      }
+    } else if (transaction.subCategoryCode === 'TV_INTERNET') {
+      try {
+        // TV_Internet is in format
+        // CITYCOM;82157580;თანხა:64.65;საკ.:0.50
+        const arr = transaction.title.split(';')
+        this.merchant = arr[0]
+        this.amount = -Number.parseFloat(arr[arr.length - 2].split(':')[1])
+      } catch ({ message }) {
+        console.error(transaction)
+        throw new Error(`Error parsing title "${transaction.title}" in TransactionUtilPayV2: ${message}`)
+      }
+    } else {
+      // There are might be other util payment subCategories (ex: GAS)
+      // Set default values for other sub categories
+      this.amount = transaction.amount
+      this.merchant = transaction.title.split(';')[0]
     }
   }
 }
@@ -329,12 +344,16 @@ export class TransactionStandardMovementV2 {
   merchant: string
   amount: number
   date: Date
-  cardNum: string
-  mcc: number
+  cardNum: string | null
+  mcc: number | null
   invoice: Amount | null
 
   isCash (): boolean {
-    return this.transaction.categoryCode === 'CASHOUT' // TODO add cash in
+    if (this.transaction.categoryCode === 'INCOME') {
+      // title of cash in operation has next formatted:
+      // 00000000,12/01/2024,ანგარიშზე თანხის შეტანა,GEL
+      return this.transaction.title.includes('ანგარიშზე თანხის შეტანა')
+    } else return this.transaction.categoryCode === 'CASHOUT'
   }
 
   needInvoice (): boolean {
@@ -347,7 +366,7 @@ export class TransactionStandardMovementV2 {
     return Math.abs(this.invoice.sum) !== Math.abs(this.amount)
   }
 
-  constructor (transaction: TransactionRecordV2) {
+  constructor (transaction: TransactionRecordV2, defaultDate: number) {
     if (transaction.entryType !== 'StandardMovement') {
       console.error(transaction)
       throw new Error('Invalid transaction entryType, expected StandardMovement')
@@ -358,15 +377,24 @@ export class TransactionStandardMovementV2 {
     }
     try {
       this.transaction = transaction
+      this.amount = transaction.amount
       const arr = transaction.title.split(',')
+      if (arr.length < 2) {
+        // Unparsable title - set default values and return
+        this.merchant = transaction.title
+        this.date = new Date(defaultDate)
+        this.cardNum = null
+        this.mcc = null
+        this.invoice = null
+        return
+      }
       let invoice: { sum: number, instrument: string } | undefined
       let sumIndex = 0
-      this.amount = transaction.amount
       for (let i = 0; i < arr.length; i++) {
         const str = arr[i].trim()
-        if (str.startsWith('თანხა') || str.startsWith('ტრანზაქციის თანხა')) {
+        if (isInvoiceString(str)) {
           sumIndex = i
-          // format is თანხა 10.00 USD
+          // format is თანხა 10.00 USD or ტრანზაქციის თანხა 10.00 USD or 10.00 USD
           const invoiceStr = str.split(' ')
           invoice = {
             sum: Number.parseFloat(invoiceStr[invoiceStr.length - 2]),
@@ -393,9 +421,9 @@ export class TransactionStandardMovementV2 {
         .trim()
 
       const dateTimeString = arr[sumIndex + 1].trim()
-      this.date = parsePOSDateString(dateTimeString)
+      this.date = isPOSDateCorrect(dateTimeString) ? parsePOSDateString(dateTimeString) : new Date(defaultDate)
       this.cardNum = arr[arr.length - 1].trim().slice(-4)
-      this.mcc = Number.parseInt(arr[arr.length - 3].replace('MCC:', '').trim())
+      this.mcc = arr.length >= 3 ? Number.parseInt(arr[arr.length - 3].replace('MCC:', '').trim()) : null
     } catch ({ message }) {
       console.error(transaction)
       throw new Error(`Error parsing title "${transaction.title}" in TransactionStandardMovementV2: ${message}`)
