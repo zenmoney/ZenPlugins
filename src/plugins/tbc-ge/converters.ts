@@ -178,13 +178,13 @@ export function convertTransactionsV2 (transactionRecordsByDate: TransactionsByD
             comment = transfer.transaction.title
             merchant = null
           } else if (TransactionUtilPayV2.isUtilPay(transactionRecord)) {
-            const mobile = new TransactionUtilPayV2(transactionRecord)
+            const utilPayV2 = new TransactionUtilPayV2(transactionRecord)
             id = transactionRecord.movementId!
-            amount = mobile.amount
+            amount = utilPayV2.amount
             merchant = {
               city: null,
-              country: mobile.merchantCountry,
-              title: mobile.merchant,
+              country: utilPayV2.merchantCountry,
+              title: utilPayV2.merchant,
               mcc: null,
               location: null
             }
@@ -195,7 +195,7 @@ export function convertTransactionsV2 (transactionRecordsByDate: TransactionsByD
             comment = tax.transaction.title
             merchant = tax.merchant
           } else {
-            const movement = new TransactionStandardMovementV2(transactionRecord)
+            const movement = new TransactionStandardMovementV2(transactionRecord, transactionRecords.date)
             dateNum = movement.date.getTime()
             if (movement.needInvoice()) {
               invoice = movement.invoice!
@@ -270,6 +270,16 @@ export function convertTransactionsV2 (transactionRecordsByDate: TransactionsByD
     }
   }
   return transactions
+}
+
+export function isInvoiceString (invoiceString: string): boolean {
+  const invoiceRegex = /\d+\.\d{2} [A-Z]{3}$/
+  return invoiceRegex.test(invoiceString)
+}
+
+export function isPOSDateCorrect (dateString: string): boolean {
+  const posDateTimeRegex = /^[A-Za-z]{3}\s+\d{1,2}\s+\d{4}\s+\s*\d{1,2}:\d{2}(AM|PM)$/
+  return posDateTimeRegex.test(dateString)
 }
 
 export function parsePOSDateString (dateString: string): Date {
