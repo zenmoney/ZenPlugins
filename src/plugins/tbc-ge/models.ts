@@ -364,7 +364,7 @@ export class TransactionStandardMovementV2 {
       this.amount = transaction.amount
       for (let i = 0; i < arr.length; i++) {
         const str = arr[i].trim()
-        if (str.startsWith('თანხა') || str.startsWith('ტრანზაქციის თანხა')) {
+        if (str.startsWith('თანხა') || str.startsWith('ტრანზაქციის თანხა') || str.match(/\d+\.\d+ [A-Z]{3}/)) {
           sumIndex = i
           // format is თანხა 10.00 USD
           const invoiceStr = str.split(' ')

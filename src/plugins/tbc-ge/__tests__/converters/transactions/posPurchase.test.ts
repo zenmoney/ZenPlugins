@@ -115,6 +115,63 @@ describe('convertTransaction', () => {
           '1647720000000_GEL_4612'
         ]
       }
+    ],
+    [
+      {
+        id: 3429409015,
+        externalTransactionId: '6699183805',
+        date: 1647720000000,
+        // description: 'POS - EL AL, ბარათი VISA, თანხა 4612.00 GEL, Mar 18 2022 12:21AM, კონვერტაცია, მოგზაურობა, დასვენება, MCC: 4511',
+        description: 'POS - 213 - MAXI 744, 2091.89 RSD, Aug 3 2024 12:00AM, საყიდლები, MCC: 5331, VISA, 431571******0973',
+        status: '3',
+        subcategories:
+          [
+            {
+              id: 43,
+              clientSubcategory: false,
+              text: 'Transportation',
+              color: '#16A4E3',
+              smallIcon: 593155,
+              largeIcon: null,
+              categoryCode: 'TRAVEL_LEISURE',
+              subcategoryCode: 'TRANSPORTATION'
+            }
+          ],
+        amount: -2091.89,
+        currency: 'GEL',
+        transactionType: 'CURR_EXCHANGE',
+        transactionSubType: '30',
+        clientAccountNumber: 'GE72TB7846645063400001',
+        partnerAccountName: 'თიბისი ბანკის VISA ბარათებით სავაჭრო ობიექტებში სხვა ბანკის ტერმინალებში შესრულებული ტრანზაქციები',
+        clientAccountExternalId: null,
+        displayAsHidden: false,
+        parentExternalTransactionId: null
+      },
+      {
+        comment: null,
+        date: new Date('2024-08-02T20:00:00.000Z'),
+        hold: false,
+        merchant: {
+          city: null,
+          country: null,
+          location: null,
+          mcc: 5331,
+          title: '213 - MAXI 744'
+        },
+        movements: [
+          {
+            account: { id: '10971234' },
+            fee: 0,
+            id: null,
+            invoice: null,
+            sum: -2091.89
+          }
+        ],
+        groupKeys: [
+          '6699183805',
+          '1647720000000_GEL_2091.89'
+        ]
+      }
     ]
   ])('convert pos transactions', (apiTransaction: unknown, transaction: unknown) => {
     expect(convertTransaction(apiTransaction, debitCardGEL)).toEqual(transaction)
