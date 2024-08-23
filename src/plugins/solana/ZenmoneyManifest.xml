@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
     <id>solana</id>
-    <company>0</company>
+    <company>16067</company>
     <description>
         Плагин для синхронизации Solana.
         Для синхронизации укажите адрес кошелька.
