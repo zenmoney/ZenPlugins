@@ -461,7 +461,7 @@ export async function fetchHistoryV2 (session: SessionV2, fromDate: Date, data: 
   const result: TransactionsByDateV2[] = []
   let lastSortColKey: number | null = null
   let lastBlockedMovementDate: number | null = null
-  const pageSize = 100
+  const pageSize = 10
   const coreAccountIds = [
     {
       currency: data.currency,
