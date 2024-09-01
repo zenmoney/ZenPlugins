@@ -258,6 +258,10 @@ export function convertTransactionsV2 (transactionRecordsByDate: TransactionsByD
         continue
       }
 
+      if (merchant && (merchant.title === undefined || merchant.title === '')) {
+        merchant = null
+      }
+
       const transaction: ExtendedTransaction = {
         hold: transactionRecord.dispute ?? false,
         date,
