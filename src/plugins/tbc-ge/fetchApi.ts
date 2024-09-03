@@ -25,8 +25,8 @@ import {
 } from './models'
 import { getCookies } from './utils'
 
-async function fetchApi (url: string, options: FetchOptions): Promise<FetchResponse> {
-  let response: FetchResponse
+async function fetchApi (url: string, options: FetchOptions): Promise<FetchResponse | null> {
+  let response: FetchResponse | null = null
   if (!options.sanitizeRequestLog) {
     options.sanitizeRequestLog = {}
   }
@@ -40,10 +40,14 @@ async function fetchApi (url: string, options: FetchOptions): Promise<FetchRespo
   try {
     response = await fetch(url, options)
   } catch (e) {
+    console.error(e)
+    if (response !== null) {
+      console.error(response)
+    }
     if (e instanceof ParseError && e.response.status === 502) {
       throw new TemporaryUnavailableError()
     }
-    throw e
+    return null
   }
   return response
 }
@@ -73,6 +77,10 @@ export async function fetchLoginByPasswordV2 ({ username, password, deviceInfo, 
       method: 'POST',
       sanitizeRequestLog: { body: { username: true, password: true, deviceInfo: true, deviceDate: true, deviceId: true } }
     })
+
+  if (!response) {
+    throw new TemporaryUnavailableError()
+  }
 
   if (response.status === 401) {
     throw new InvalidLoginOrPasswordError()
@@ -116,6 +124,11 @@ export async function fetchLoginByPasscodeV2 (auth: AuthV2, deviceInfo: DeviceIn
       }
     }
   })
+
+  if (!response) {
+    return null
+  }
+
   if (response.status === 500) {
     return null
   }
@@ -151,6 +164,9 @@ export async function fetchCertifyLoginByOtpDeviceV2 (code: string, transactionI
       }
     }
   })
+  if (!response) {
+    throw new Error('Error in fetchCertifyLoginByOtpDeviceV2: response is null')
+  }
   const data = response.body as CertifyLoginResponseV2
   if (!data?.success) {
     throw new Error(`Error in fetchCertifyLoginByOtpDeviceV2\n${JSON.stringify(data)}`)
@@ -186,6 +202,9 @@ export async function fetchGetSessionIdV2 (cookies: string[]): Promise<string | 
       }
     }
   })
+  if (!user) {
+    return null
+  }
   if (user.status === 401) {
     return null
   }
@@ -215,6 +234,9 @@ export async function fetchRegisterDeviceV2 (auth: { deviceName: string, passcod
     sanitizeRequestLog: { body: { passcode: true } },
     sanitizeResponseLog: { body: { registrationId: true } }
   })
+  if (!response) {
+    throw new Error('Error in fetchRegisterDeviceV2: response is null')
+  }
   const success = getBoolean(response.body, 'success')
   if (!success) {
     throw new Error(`Error in fetchRegisterDeviceV2\n${JSON.stringify(response.body)}`)
@@ -255,6 +277,10 @@ export async function fetchUnTrustDeviceV2 (deviceData: DeviceData, sessionId: s
     }
   })
 
+  if (!response) {
+    throw new Error('Error in fetchUnTrustDeviceV2: response is null')
+  }
+
   const orderId = getNumber(response.body, 'orderId')
 
   const confirmResponse = await fetchApi('https://rmbgwauth.tbconline.ge/devicemanagement/api/v1/device/order/confirm', {
@@ -270,6 +296,10 @@ export async function fetchUnTrustDeviceV2 (deviceData: DeviceData, sessionId: s
       body: { sessionId: true }
     }
   })
+
+  if (!confirmResponse) {
+    throw new Error('Error in fetchUnTrustDeviceV2: confirmResponse is null')
+  }
 
   if (confirmResponse.status === 400) {
     if (getOptString(confirmResponse.body, 'code') === 'DeviceNotTrusted' || getOptString(confirmResponse.body, 'code') === 'ObjectNotFound') {
@@ -316,6 +346,9 @@ export async function fetchTrustDeviceV2 (deviceData: DeviceData, sessionId: str
     parse: JSON.parse,
     sanitizeRequestLog: { body: { sessionId: true } }
   })
+  if (!response) {
+    throw new Error('Error in fetchTrustDeviceV2: response is null')
+  }
   return getNumber(response.body, 'orderId')
 }
 
@@ -345,6 +378,10 @@ export async function fetchConfirmTrustedDeviceV2 (authorizationCode: string, or
     sanitizeResponseLog: { body: { trustId: true } }
   })
 
+  if (!response) {
+    throw new Error('Error in fetchConfirmTrustedDeviceV2: response is null')
+  }
+
   if (response.status === 500) {
     const title = get(response.body, 'title', null)
     if (title === 'Already trusted') {
@@ -361,7 +398,7 @@ export async function fetchConfirmTrustedDeviceV2 (authorizationCode: string, or
   return getString(response.body, 'trustId')
 }
 
-export async function fetchDepositDetailsV2 (id: number, session: SessionV2): Promise<DepositDetailsV2> {
+export async function fetchDepositDetailsV2 (id: number, session: SessionV2): Promise<DepositDetailsV2 | null> {
   const result = await fetchApi(`https://rmbgw.tbconline.ge/deposits/api/v1/deposits/${id}/details`, {
     method: 'GET',
     headers: {
@@ -372,6 +409,9 @@ export async function fetchDepositDetailsV2 (id: number, session: SessionV2): Pr
     },
     parse: JSON.parse
   })
+  if (!result) {
+    return null
+  }
   return result.body as DepositDetailsV2
 }
 
@@ -386,10 +426,13 @@ export async function fetchApiDepositStatementsV2 (id: number, session: SessionV
     },
     parse: JSON.parse
   })
+  if (!response) {
+    return []
+  }
   return response.body as DepositStatementV2[]
 }
 
-export async function fetchApiDepositsV2 (session: SessionV2): Promise<DepositsV2> {
+export async function fetchApiDepositsV2 (session: SessionV2): Promise<DepositsV2 | null> {
   const response = await fetchApi('https://rmbgw.tbconline.ge/deposits/api/v1/deposits', {
     method: 'GET',
     headers: {
@@ -400,6 +443,9 @@ export async function fetchApiDepositsV2 (session: SessionV2): Promise<DepositsV
     },
     parse: JSON.parse
   })
+  if (!response) {
+    return null
+  }
 
   const deposits = response.body as DepositsV2
   assert(deposits.nextPageId == null, 'unknown param nextPageId', response)
@@ -417,6 +463,9 @@ export async function fetchApiLoansV2 (session: SessionV2): Promise<LoanProductV
     },
     parse: JSON.parse
   })
+  if (!response) {
+    return []
+  }
   return response.body as LoanProductV2[]
 }
 
@@ -440,10 +489,13 @@ export async function fetchCardsListV2 (session: SessionV2): Promise<CardProduct
       ]
     }
   })
+  if (!response) {
+    return []
+  }
   return response.body as CardProductV2[]
 }
 
-export async function fetchCardAndAccountsDashboardV2 (session: SessionV2): Promise<CardsAndAccounts> {
+export async function fetchCardAndAccountsDashboardV2 (session: SessionV2): Promise<CardsAndAccounts | null> {
   const response = await fetchApi('https://rmbgw.tbconline.ge/dashboard/api/v1/cards-and-accounts', {
     method: 'GET',
     headers: {
@@ -454,6 +506,9 @@ export async function fetchCardAndAccountsDashboardV2 (session: SessionV2): Prom
     },
     parse: JSON.parse
   })
+  if (!response) {
+    return null
+  }
   return response.body as CardsAndAccounts
 }
 
@@ -495,7 +550,9 @@ export async function fetchHistoryV2 (session: SessionV2, fromDate: Date, data: 
       parse: JSON.parse,
       stringify: JSON.stringify
     })
-
+    if (!response) {
+      break
+    }
     const transactionsByDate = response.body as TransactionsByDateV2[]
     assert(isArray(transactionsByDate), 'unexpected response', transactionsByDate)
     if (transactionsByDate.length === 0) {
