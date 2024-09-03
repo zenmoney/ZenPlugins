@@ -287,9 +287,15 @@ WxdnLbK6zKx6+4WL9qWhGu6R+7HNPAaKOb7KXEwjV2ekr6FVZneKRFe/XivMk66O
 export async function fetchDepositsV2 (session: SessionV2): Promise<DepositDataV2[]> {
   const result: DepositDataV2[] = []
   const deposits = await fetchApiDepositsV2(session)
+  if (deposits == null) {
+    return result
+  }
   for (const deposit of deposits.items) {
     const id = deposit.id
     const details = await fetchDepositDetailsV2(id, session)
+    if (details == null) {
+      continue
+    }
     result.push({
       deposit,
       details
