@@ -320,6 +320,6 @@ export async function fetchCardsV2 (session: SessionV2): Promise<CardProductV2[]
   return await fetchCardsListV2(session)
 }
 
-export async function fetchAccountsV2 (session: SessionV2): Promise<CardsAndAccounts> {
+export async function fetchAccountsV2 (session: SessionV2): Promise<CardsAndAccounts | null> {
   return await fetchCardAndAccountsDashboardV2(session)
 }

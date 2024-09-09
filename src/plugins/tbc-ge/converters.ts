@@ -20,8 +20,11 @@ import {
 import { padStart } from 'lodash'
 import { getIntervalBetweenDates } from '../../common/momentDateUtils'
 
-export function convertAccountsV2 (cardsAndAccounts: CardsAndAccounts): PreparedAccountV2[] {
+export function convertAccountsV2 (cardsAndAccounts: CardsAndAccounts | null): PreparedAccountV2[] {
   const accounts: PreparedAccountV2[] = []
+  if (cardsAndAccounts == null) {
+    return accounts
+  }
   for (const apiAccount of cardsAndAccounts.accountsAndDebitCards) {
     if (apiAccount.type === 'Card') {
       continue
