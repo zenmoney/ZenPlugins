@@ -461,6 +461,7 @@ function getPresentationError (error, isFirstRun) {
   ) {
     meaningfulError.message = '[RUE] ' + meaningfulError.message
   }
+  Object.defineProperty(meaningfulError, 'message', { value: meaningfulError.message, enumerable: true })
   meaningfulError.toString = new ZPAPIError().toString
   meaningfulError.fatal = Boolean(forceFatal || meaningfulError.fatal || false)
   meaningfulError.allowRetry = Boolean(meaningfulError.allowRetry || false)
@@ -570,4 +571,4 @@ function checkSubscription (fn) {
   }
 }
 
-export const adaptScrapeToMain = (scrape) => adaptScrapeToGlobalApi(provideScrapeDates(traceFunctionCalls(checkSubscription(scrape))))
+export const adaptScrapeToMain = (scrape) => adaptScrapeToGlobalApi(provideScrapeDates(checkSubscription(traceFunctionCalls(scrape))))
