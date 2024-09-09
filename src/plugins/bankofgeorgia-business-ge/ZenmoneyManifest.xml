@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>bankofgeorgia-business-ge</id>
+    <company>0</company>
+    <description>
+        Bank of Georgia Business Plugin
+
+        You to use this integration, you will need Client ID, Client Secret and account number you want to sync (e.g. GE06BG0000000000000000).
+
+        To get Client ID and Client Secret:
+        - Log in at https://bonline.bog.ge/
+        - Visit https://bonline.bog.ge/admin/api/
+        - Find the "API Clients" section
+        - Click "+ ADD NEW"
+        - Select "Client Credentials Flow"
+        - Name it "ZenMoney Integration"
+        - Choose yourself as Internetbank user
+        - Enter the one-time password sent to your device
+        - You'll receive a Client ID and Client Secret
+    </description>
+    <version>1.0</version>
+    <build>1</build>
+    <modular>true</modular>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+    <codeRequired>false</codeRequired>
+</provider>
