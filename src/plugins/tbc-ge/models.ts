@@ -140,8 +140,8 @@ export interface TransactionRecordV2 {
   accountId: number | null // null if blocked
   entryType: 'StandardMovement' | 'BlockedTransaction'
   movementId: string | null // null if blocked
-  // transactionDate: null // always null
-  // localTime: null // always null
+  transactionDate: null // always null
+  localTime: null // always null
   repeatTransaction: null | boolean
   setAutomaticTransfer: null | boolean
   payback: null | boolean
@@ -309,23 +309,24 @@ export class TransactionUtilPayV2 {
     this.merchantCountry = 'Georgia'
     if (transaction.subCategoryCode === 'TELEPHONE_MOBILE') {
       try {
-        // title is in format
+        // Title is in format:
         // Cellfie;599000111;თანხა:10.00
         // SERVICENET;1009;2273000;თანხა:60.00
         const arr = transaction.title.split(';')
         this.merchant = arr[0]
-        this.amount = -Number.parseFloat(arr[arr.length - 1].split(':')[1])
+        this.amount = transaction.amount
       } catch ({ message }) {
         console.error(transaction)
         throw new Error(`Error parsing title "${transaction.title}" in TransactionUtilPayV2: ${message}`)
       }
     } else if (transaction.subCategoryCode === 'TV_INTERNET') {
       try {
-        // TV_Internet is in format
+        // Title is in format:
         // CITYCOM;82157580;თანხა:64.65;საკ.:0.50
+        // Silk-ID;1014;301102120;თანხა:35.00
         const arr = transaction.title.split(';')
         this.merchant = arr[0]
-        this.amount = -Number.parseFloat(arr[arr.length - 2].split(':')[1])
+        this.amount = transaction.amount
       } catch ({ message }) {
         console.error(transaction)
         throw new Error(`Error parsing title "${transaction.title}" in TransactionUtilPayV2: ${message}`)
