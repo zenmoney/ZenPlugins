@@ -170,6 +170,8 @@ export async function fetchGetSessionIdV2 (cookies: string[]): Promise<string | 
       Cookie: cookies.join('; ')
     },
     method: 'GET',
+    stringify: JSON.stringify,
+    parse: JSON.parse,
     sanitizeResponseLog: {
       body: {
         sessionId: true,
@@ -182,14 +184,15 @@ export async function fetchGetSessionIdV2 (cookies: string[]): Promise<string | 
         mobilePhoneForSms: true,
         username: true,
         clientNameEn: true,
-        clientNameGe: true
+        clientNameGe: true,
+        externalClientId: true
       }
     }
   })
   if (user.status === 401) {
     return null
   }
-  return getString(JSON.parse(user.body as string), 'sessionId')
+  return getString(user.body, 'sessionId')
 }
 
 /**
