@@ -1,5 +1,5 @@
 import { AccountType, Amount, Transaction } from '../../types/zenmoney'
-import { AccountBalanceResponse, GetAccountTransactionsResponse, GetTransactionDetailsResponse, RaiffAccount } from './models'
+import { AccountBalanceResponse, GetAccountTransactionsResponse, RaiffAccount } from './models'
 import moment from 'moment'
 
 const TRANSFER_TRANSACTION_TYPES = ['ExchSell', 'ExchBuy']
@@ -35,7 +35,7 @@ function convertAccount (apiAccount: AccountBalanceResponse): RaiffAccount | nul
 export function convertTransaction (t1: GetAccountTransactionsResponse): Transaction {
   const description = t1.TransactionType !== 'PmtDom' ? t1.Description : t1.TransactionBeneficiary
   const details = t1.Details
-  const invoice = makeInvoice(details)
+  const invoice = makeInvoice(t1)
   return {
     hold: false,
     date: details?.c_Date_tx !== null && details?.c_Date_tx?.length > 0
@@ -68,7 +68,7 @@ export function convertTransaction (t1: GetAccountTransactionsResponse): Transac
 export function convertCashTransaction (t1: GetAccountTransactionsResponse): Transaction {
   const description = t1.Description
   const details = t1.Details
-  const invoice = makeInvoice(details)
+  const invoice = makeInvoice(t1)
   return {
     hold: false,
     date: details?.c_Date_tx !== null && details?.c_Date_tx?.length > 0
@@ -101,12 +101,14 @@ export function convertCashTransaction (t1: GetAccountTransactionsResponse): Tra
   }
 }
 
-function makeInvoice (details: GetTransactionDetailsResponse): Amount | null {
+function makeInvoice (t: GetAccountTransactionsResponse): Amount | null {
+  const details = t.Details
+  const isRefund = t.CreditAmount > t.DebitAmount
   return details?.c_CurrencyCode_tx !== null &&
     details?.c_CurrencyCode_tx?.length > 0 &&
     details?.c_CurrencyCode_tx !== details?.s_CurrencyCode
     ? {
-        sum: -details.c_Amount_tx!,
+        sum: isRefund ? details.c_Amount_tx! : -details.c_Amount_tx!,
         instrument: details.c_CurrencyCode_tx
       }
     : null

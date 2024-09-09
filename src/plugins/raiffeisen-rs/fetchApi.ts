@@ -22,7 +22,7 @@ async function fetchApi (url: string, options?: FetchOptions): Promise<FetchResp
 }
 
 async function getSaltedPassword (login: string, password: string): Promise<string> {
-  const salt = login.padEnd(8, '\0')
+  const salt = login.toLowerCase().padEnd(8, '\0')
   const saltedPassword = await argon2.hash({
     pass: password,
     salt,
