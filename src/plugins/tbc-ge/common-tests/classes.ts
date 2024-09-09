@@ -5,6 +5,8 @@ export class TransactionRecordV2Class implements TransactionRecordV2 {
   accountId: number | null // null if blocked
   entryType: 'StandardMovement' | 'BlockedTransaction'
   movementId: string | null // null if blocked
+  transactionDate = null
+  localTime = null
   repeatTransaction: null | boolean
   setAutomaticTransfer: null | boolean
   payback: null | boolean
