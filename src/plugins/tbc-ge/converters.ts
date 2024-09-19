@@ -130,7 +130,7 @@ export function convertLoansV2 (apiLoans: LoanProductV2[]): PreparedLoanV2[] {
         startDate,
         startBalance: apiLoan.totalLoanAmount,
         capitalization: true,
-        percent: null,
+        percent: 0, // TBC API does not return interest rate for loans but it is required
         endDateOffsetInterval,
         endDateOffset,
         payoffInterval: 'month',
