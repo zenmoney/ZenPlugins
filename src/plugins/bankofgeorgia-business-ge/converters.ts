@@ -29,7 +29,7 @@ function createCounterpartyMovement (record: AccountRecord, sum: number, fee = 0
     account: {
       type: AccountType.checking,
       instrument: record.DocumentDestinationCurrency,
-      company: { id: counterparty.Name },
+      company: counterparty.Name === '' ? null : { id: counterparty.Name },
       syncIds: [counterparty.AccountNumber]
     },
     sum,
@@ -61,7 +61,7 @@ export function convertToZenMoneyTransaction (record: AccountRecord, allRecords:
     hold: false,
     date: new Date(record.EntryDate),
     movements: [createMovement(record, record.EntryAmount)],
-    merchant: { city: null, country: null, mcc, title: record.BeneficiaryDetails.Name, location: null },
+    merchant: record.BeneficiaryDetails.Name === '' ? null : { city: null, country: null, mcc, title: record.BeneficiaryDetails.Name, location: null },
     comment: record.EntryComment
   }
 
