@@ -302,7 +302,7 @@ describe('convertToZenMoneyTransaction', () => {
           invoice: null
         }
       ],
-      merchant: { city: null, country: null, location: null, title: '', mcc: null },
+      merchant: null,
       comment: 'Business package service fee'
     }]
   ])('converts %s', (_, accountRecord, expectedTransaction) => {
