@@ -156,6 +156,7 @@ export function convertTransactionsV2 (transactionRecordsByDate: TransactionsByD
       let invoice: Amount | null = null
       let id: string | null = null
       let dateNum: number | null = null
+      let groupKeys: string[] = []
       try {
         if (transactionRecord.entryType === 'BlockedTransaction') {
           const blockedTransaction = new TransactionBlockedV2(transactionRecord, transactionRecords.date)
@@ -180,6 +181,10 @@ export function convertTransactionsV2 (transactionRecordsByDate: TransactionsByD
             const transfer = new TransactionTransferV2(transactionRecord)
             comment = transfer.transaction.title
             merchant = null
+            groupKeys = [
+              transactionRecord.transactionId.toString(),
+              transactionRecord.title
+            ]
           } else if (TransactionUtilPayV2.isUtilPay(transactionRecord)) {
             const utilPayV2 = new TransactionUtilPayV2(transactionRecord)
             id = transactionRecord.movementId!
@@ -271,7 +276,7 @@ export function convertTransactionsV2 (transactionRecordsByDate: TransactionsByD
         movements,
         merchant,
         comment,
-        groupKeys: []
+        groupKeys
       }
       transactions.push(transaction)
     }
