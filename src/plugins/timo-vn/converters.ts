@@ -69,7 +69,7 @@ export function convertTransaction (apiTransaction: unknown, account: Account): 
     date: timoDateToIso(getString(apiTransaction, 'txnTime')),
     movements: [
       {
-        id: getOptString(apiTransaction, 'bankXID') ?? null,
+        id: getOptString(apiTransaction, 'refNo') ?? null,
         account: { id: account.id },
         invoice: accountAmount.instrument === invoice.instrument ? null : invoice,
         sum: invoice.sum,

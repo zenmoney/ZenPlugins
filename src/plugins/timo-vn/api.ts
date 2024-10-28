@@ -1,32 +1,47 @@
-import { Auth, Preferences, Product, Session } from './models'
+import { Auth, Preferences, Product, Session, ApiResponseCode } from './models'
 import { fetchAllAccounts, fetchAuthorization, fetchProductTransactions, fetchRequestOtp, fetchSendOtp } from './fetchApi'
-import { generateRandomString } from '../../common/utils'
+import { getString } from '../../types/get'
+import forge from 'node-forge'
+import { ZPAPIError } from '../../../ZenPlugins/src/errors'
+import { TemporaryError } from '../../errors'
 
-
-
-/**
- * Device registration
- */
-export async function registerDevice (preferences: Preferences) {
-  let auth = {
-    accessToken: '',
-    deviceKey: '',
-    refNo: '',
-    deviceReg:  '',
-    passwordSha512: ''
-  }
-  auth.deviceReg = generateRandomString(32, 'abcdef0123456789') + ':WEB:WEB:246:WEB:desktop:zenmoney'
-  
-  console.log(auth.passwordSha512)
-  auth = await fetchRequestOtp(preferences, auth)
-  const otpCode = await ZenMoney.readLine('Введите OTP-код из СМС/email/приложения')
-  auth = await fetchSendOtp(preferences, auth, otpCode)
-  
-  return auth
-}
 
 export async function login (preferences: Preferences, auth: Auth): Promise<Session> {
-  return { auth: await fetchAuthorization(preferences, auth) }
+  let session: Session = {
+    auth: auth,
+    token: '',
+    refNo: '',
+    deviceKey: ''
+  }
+
+  const passwordSha512 = forge.md.sha512.create().update(preferences.password, 'utf8').digest().toHex()
+  let response = await fetchAuthorization(preferences, auth, passwordSha512)
+  
+  switch(response.body.code as Number){
+
+    case ApiResponseCode.SUCCESS:
+      session.token = getString(response.body, 'data.token')
+      session.deviceKey = getString(response.body, 'data.timoDeviceId') + ':WEB:WEB:246:WEB:desktop:zenmoney'
+      break;
+
+    case ApiResponseCode.OTP_REQUIRED:
+      const refNo: string = getString(response.body, 'data.refNo')
+      let token = getString(response.body, 'data.token')
+      const otpCode = await ZenMoney.readLine('Enter OTP-code')
+      response = await fetchSendOtp(auth, otpCode, token, refNo)
+
+      session.token = getString(response.body, 'data.token')
+      session.deviceKey = getString(response.body, 'data.timoDeviceId') + ':WEB:WEB:246:WEB:desktop:zenmoney'
+      break;
+    
+    case ApiResponseCode.TECHNICAL_DIFFICULT:
+      throw new TemporaryError('Connection to bank is temporary unavailable')  
+
+    default:
+      throw new ZPAPIError('Authorization failed', false, false)
+  }
+  
+  return session
 }
 
 export async function fetchAccounts (session: Session): Promise<unknown[]> {

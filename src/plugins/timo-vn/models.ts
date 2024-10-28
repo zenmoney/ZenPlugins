@@ -2,11 +2,7 @@ import { AccountOrCard } from '../../types/zenmoney'
 
 // Stored in persistent storage
 export interface Auth {
-  accessToken: string
-  deviceKey: string
-  refNo: string
   deviceReg: string
-  passwordSha512: string
 }
 
 // Consists of everything that is needed in
@@ -14,6 +10,9 @@ export interface Auth {
 // Not stored!
 export interface Session {
   auth: Auth
+  token: string
+  refNo: string
+  deviceKey: string
 }
 
 // Input preferences from schema in preferences.xml
@@ -30,4 +29,21 @@ export interface Product {
 export interface ConvertResult {
   products: Product[]
   account: AccountOrCard
+}
+
+export enum ApiResponseCode {
+  SUCCESS = 200,
+  TECHNICAL_DIFFICULT = 500,
+  OTP_REQUIRED = 6001,
+}
+
+export enum AccountType {
+  SpendAccount = '1025',
+  GoalSave = '1026',
+  TermDeposit = '1027',
+  MoneyPot = '1028',
+  CreditCard = '9999',
+  CreditCardOnline = '8888',
+  SplitBill = '1910',
+  SchedulePaymnet = '1909',
 }

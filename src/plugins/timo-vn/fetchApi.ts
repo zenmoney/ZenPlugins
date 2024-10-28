@@ -11,8 +11,8 @@ async function fetchApi (url: string, options?: FetchOptions): Promise<FetchResp
   return await fetchJson(baseUrl + url, options ?? {})
 }
 
-export async function fetchAuthorization ({ username, password}: Preferences, auth: Auth): Promise<Auth> {
-  const response = await fetchApi('login',
+export async function fetchAuthorization ({ username, password}: Preferences, auth: Auth, passwordSha512: string): Promise<FetchResponse> {
+  return await fetchApi('login',
     {
       method: 'POST',
       headers: {
@@ -20,55 +20,30 @@ export async function fetchAuthorization ({ username, password}: Preferences, au
       },
       body: {
         username,
-        'password': ZenMoney.getData('passwordSha512'),
+        'password': passwordSha512,
         'lang': 'en'
       }
     }
   )
-  auth.accessToken = getString(response.body, 'data.token')
-  auth.deviceKey = getString(response.body, 'data.timoDeviceId')
-  return auth
 }
 
-export async function fetchRequestOtp ({ username, password }: Preferences, auth: Auth): Promise<Auth> {
-  const response = await fetchApi('login',
+export async function fetchSendOtp (auth: Auth, otpCode: string | null, token: string, refNo: string): Promise<FetchResponse> {
+  return await fetchApi('login/commit',
     {
       method: 'POST',
       headers: {
-        'X-Timo-Devicereg': auth.deviceReg
-      },
-      body: {
-        username,
-        'password': ZenMoney.getData('passwordSha512'),
-        'lang': 'en'
-      }
-    }
-  )
-  auth.accessToken = getString(response.body, 'data.token')
-  auth.refNo = getString(response.body, 'data.refNo')
-  return auth
-}
-
-export async function fetchSendOtp ({ username, password }: Preferences, auth: Auth, otpCode: string | null): Promise<Auth> {
-  const response = await fetchApi('login/commit',
-    {
-      method: 'POST',
-      headers: {
-        'Token': auth.accessToken,
+        'Token': token,
         'X-Timo-Devicereg': auth.deviceReg
       },
       body: {
         'lang': 'en',
         'otp': otpCode,
-        'refNo': auth.refNo,
+        'refNo': refNo,
         'securityChallenge': otpCode,
         'securityCode': otpCode
       }
     }
   )
-  auth.accessToken = getString(response.body, 'data.token')
-  auth.deviceKey = getString(response.body, 'data.timoDeviceId') + ':WEB:WEB:246:WEB:desktop:zenmoney'
-  return auth
 }
 
 export async function fetchAllAccounts (session: Session): Promise<unknown[]> {
@@ -76,7 +51,7 @@ export async function fetchAllAccounts (session: Session): Promise<unknown[]> {
     {
       method: 'GET',
       headers: {
-        'Token': session.auth.accessToken,
+        'Token': session.token,
         'X-Timo-Devicekey': session.auth.deviceReg
       }
     }
@@ -96,7 +71,7 @@ export async function fetchProductTransactions ({ id, accountType }: Product, se
     {
       method: 'POST',
       headers: {
-        'Token': session.auth.accessToken,
+        'Token': session.token,
         'X-Timo-Devicekey': session.auth.deviceReg
       },
       body: {
