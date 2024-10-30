@@ -2,6 +2,7 @@ import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
 import { getArray } from '../../types/get'
 import { Auth, Preferences, Product, Session } from './models'
 
+
 const baseUrl = 'https://app2.timo.vn/'
 
 async function fetchApi (url: string, options?: FetchOptions): Promise<FetchResponse> {
