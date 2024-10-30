@@ -5,6 +5,7 @@ import { Preferences, Product, Session, Auth } from './models'
 import { isArray } from 'lodash'
 import { generateRandomString } from '../../common/utils'
 
+
 const baseUrl = 'https://app2.timo.vn/'
 
 async function fetchApi (url: string, options?: FetchOptions): Promise<FetchResponse> {
@@ -62,11 +63,6 @@ export async function fetchAllAccounts (session: Session): Promise<unknown[]> {
 }
 
 export async function fetchProductTransactions ({ id, accountType }: Product, session: Session, fromDate: Date, toDate: Date): Promise<unknown[]> {
-  const options: Intl.DateTimeFormatOptions = {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }
   const response = await fetchApi(`user/account/transaction/list`,
     {
       method: 'POST',
@@ -77,12 +73,20 @@ export async function fetchProductTransactions ({ id, accountType }: Product, se
       body: {
         'accountNo': id,
         'accountType': accountType,
-        'fromDate': fromDate.toLocaleDateString('en-GB', options),
-        'toDate': toDate.toLocaleDateString('en-GB', options)
+        'fromDate': formatDate(fromDate),
+        'toDate': formatDate(toDate)
       }
     }
   )
 
   //assert(isArray(response.body.data.items), 'cant get transactions array', response)
   return response.body.data.items
+}
+
+function formatDate(date: Date): string {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+
+  return `${day}/${month}/${year}`;
 }
