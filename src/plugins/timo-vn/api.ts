@@ -1,9 +1,8 @@
 import { Auth, Preferences, Product, Session, ApiResponseCode } from './models'
-import { fetchAllAccounts, fetchAuthorization, fetchProductTransactions, fetchRequestOtp, fetchSendOtp } from './fetchApi'
+import { fetchAllAccounts, fetchAuthorization, fetchProductTransactions, fetchSendOtp } from './fetchApi'
 import { getString } from '../../types/get'
 import forge from 'node-forge'
-import { ZPAPIError } from '../../../ZenPlugins/src/errors'
-import { TemporaryError } from '../../errors'
+import { TemporaryError, ZPAPIError } from '../../errors'
 
 
 export async function login (preferences: Preferences, auth: Auth): Promise<Session> {
