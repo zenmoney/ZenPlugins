@@ -39,7 +39,6 @@ export async function login (preferences: Preferences, auth: Auth): Promise<Sess
     default:
       throw new ZPAPIError('Authorization failed', false, false)
   }
-
   return session
 }
 
