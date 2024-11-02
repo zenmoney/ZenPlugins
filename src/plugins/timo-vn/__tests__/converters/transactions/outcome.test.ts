@@ -13,7 +13,7 @@ describe('convertTransaction', () => {
       { id: '9021808997832', instrument: 'VND' },
       {
         hold: true,
-        date: new Date('2024-11-02T13:27:00.000Z'),
+        date: new Date('2024-11-02T16:27:00.000Z'),
         movements: [
           {
             id: null,
