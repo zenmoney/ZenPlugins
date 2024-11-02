@@ -5,66 +5,39 @@ describe('convertAccounts', () => {
     [
       [
         {
-          id: 'B7C94FAC',
-          transactionNode: 's',
-          currency: {
-            shortName: 'RUB',
-            symbol: 'руб',
-            rate: 1
-          },
-          product: 'Mastercard Credit World Premium',
-          cba: '40817810301003402816',
-          pan: '5536********1038',
-          moneyAmount: {
-            value: 145600.24
-          },
-          accountBalance: {
-            value: 45600.24
-          }
-        },
-        {
-          id: 'FFA73280',
-          transactionNode: 'l',
-          currency: {
-            shortName: 'RUB',
-            symbol: 'руб',
-            rate: 1
-          },
-          product: 'Maestro',
-          cba: '40817810301003402816',
-          pan: '5536********7427',
-          moneyAmount: {
-            value: 145600.24
-          },
-          accountBalance: {
-            value: 45600.24
-          }
+          no: '9021808997832',
+          accountType: '1025',
+          name: 'Spend Account',
+          balance: 2432632,
+          limitAmount: 0,
+          accountBalance: 2432632,
+          workingBalance: 2432632,
+          availableAmount: 2432632,
+          quantity: 0,
+          order: 1,
+          products: [],
+          aliasType: 'Account',
+          isOverDraftUser: false
         }
       ],
       [
         {
           products: [
             {
-              id: 'B7C94FAC',
-              transactionNode: 's'
-            },
-            {
-              id: 'FFA73280',
-              transactionNode: 'l'
+              id: '9021808997832',
+              accountType: '1025'
             }
           ],
           account: {
-            id: '40817810301003402816',
+            id: '9021808997832',
+            title: 'Spend Account',
             type: 'ccard',
-            title: 'Mastercard Credit World Premium',
-            instrument: 'RUB',
+            instrument: 'VND',
             syncIds: [
-              '40817810301003402816',
-              '5536********1038',
-              '5536********7427'
+              '9021808997832'
             ],
-            balance: 45600.24,
-            creditLimit: 100000
+            balance: 2432632,
+            creditLimit: 0
           }
         }
       ]
