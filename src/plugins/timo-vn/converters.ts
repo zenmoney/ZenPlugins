@@ -1,5 +1,5 @@
 import { Account, AccountType, Amount, Transaction } from '../../types/zenmoney'
-import { getNumber, getOptNumber, getOptString, getString } from '../../types/get'
+import { getNumber, getOptString, getString } from '../../types/get'
 import { ConvertResult } from './models'
 
 export function convertAccounts (apiAccounts: unknown[]): ConvertResult[] {
@@ -7,14 +7,12 @@ export function convertAccounts (apiAccounts: unknown[]): ConvertResult[] {
   const accounts: ConvertResult[] = []
 
   for (const apiAccount of apiAccounts) {
-    if(getString(apiAccount, 'no') != "" && getString(apiAccount, 'name') != ""){
+    if (getString(apiAccount, 'no') !== '' && getString(apiAccount, 'name') !== '') {
       const res = convertAccount(apiAccount, accountsByCba)
       if (res != null) {
         accounts.push(res)
       }
     }
-    
-    
   }
   return accounts
 }
@@ -95,8 +93,8 @@ function parseAmount (data: unknown, path: string): Amount {
 }
 
 function timoDateToIso (timoDate: string): Date {
-  const [day, month, year] = timoDate.split(' ')[0].split('/').map(Number);
-  const [hours, minutes, seconds] = timoDate.split(' ')[1].split(':').map(Number);
-  const isoDate = new Date(year, month - 1, day, hours, minutes, seconds);
+  const [day, month, year] = timoDate.split(' ')[0].split('/').map(Number)
+  const [hours, minutes, seconds] = timoDate.split(' ')[1].split(':').map(Number)
+  const isoDate = new Date(year, month - 1, day, hours, minutes, seconds)
   return isoDate
 }
