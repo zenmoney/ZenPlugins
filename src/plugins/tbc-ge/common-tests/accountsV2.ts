@@ -21,3 +21,14 @@ export const creditCardUsdV2: Account = {
   title: 'My Account',
   type: AccountType.ccard
 }
+
+export const creditCardEurV2: Account = {
+  balance: 48.48,
+  id: '10FAKE-EUR36',
+  instrument: 'EUR',
+  syncIds: [
+    'GE00TB0000000001111002'
+  ],
+  title: 'My Account',
+  type: AccountType.ccard
+}
