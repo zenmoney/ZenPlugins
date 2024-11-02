@@ -59,7 +59,7 @@ function convertAccount (apiAccount: unknown, accountsByCba: Record<string, Conv
 
 export function convertTransaction (apiTransaction: unknown, account: Account): Transaction {
   const description = getOptString(apiTransaction, 'timoDesc2')
-  const accountAmount = parseAmount(apiTransaction, 'remainingAmount')
+  const accountAmount = parseAmount(apiTransaction, 'txnAmount')
   const invoice = parseAmount(apiTransaction, 'txnAmount')
 
   return {
