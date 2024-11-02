@@ -16,13 +16,26 @@ function checkCommitRules () {
   const pluginPrefixRegex = /\[(.*?)]/g
   let match
   const commitPlugins = []
+  let isCoreCommitted = false
 
   while ((match = pluginPrefixRegex.exec(commitMessage)) !== null) {
-    commitPlugins.push(match[1])
+    let pluginName = match[1]
+    if ([
+      'core',
+      'dx'
+    ].includes(pluginName)) {
+      isCoreCommitted = true
+      continue
+    }
+    commitPlugins.push(pluginName)
+  }
+  if (commitPlugins.length === 0) {
+    isCoreCommitted = true
   }
 
   console.log('Plugins in commit:', commitPlugins.join(', '))
   const checkedPlugins = new Set()
+  let isCoreChanged = false
 
   const errors = []
   for (const file of changedFiles) {
@@ -38,26 +51,22 @@ function checkCommitRules () {
         errors.push(`Error: detected changes in plugin '${pluginName}', but [${pluginName}] is not mentioned in commit message.`)
       }
     } else {
-      if (!checkedPlugins.has('core')) {
-        checkedPlugins.add('core')
-      } else {
+      if (isCoreChanged) {
         continue
       }
-      console.log('Changes in core')
-      if (!commitPlugins.includes('core')) {
-        errors.push('Error: for changes outside of plugins [core] should be mentioned in commit name.')
+      isCoreChanged = true
+      console.log('Changes outside of plugins')
+      if (!isCoreCommitted) {
+        errors.push('Error: for changes outside of plugins [core] or [dx] or no tag at all should be mentioned in commit name.')
       }
     }
   }
 
-  for (const commitPlugin of commitPlugins) {
-    if (commitPlugin === 'core') {
-      if (!changedFiles.some(file => !file.startsWith('src/plugins/'))) {
-        errors.push('Error: commit mentions [core], but no changes outside of plugins found.')
-      }
-      continue
-    }
+  if (isCoreCommitted && !changedFiles.some(file => !file.startsWith('src/plugins/'))) {
+    errors.push('Error: commit mentions changes outside of plugins, but no changes outside of plugins found.')
+  }
 
+  for (const commitPlugin of commitPlugins) {
     const exists = existsSync(`src/plugins/${commitPlugin}`)
     if (!exists) {
       errors.push(`Error: commit mentions plugin [${commitPlugin}], but no such plugin found in src/plugins/`)
