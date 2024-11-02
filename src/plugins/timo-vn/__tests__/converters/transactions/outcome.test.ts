@@ -5,84 +5,29 @@ describe('convertTransaction', () => {
   it.each([
     [
       {
-        type: 'HOLD',
-        operationTime: '2018-01-05 09:10:34 GMT+3',
-        relation: 'CARD',
-        relationId: 'B7C94FAC',
-        amount: {
-          value: -3,
-          currency: {
-            shortName: 'USD',
-            symbol: '$'
-          }
-        },
-        accountAmount: {
-          value: -164.10,
-          currency: {
-            shortName: 'RUB',
-            symbol: 'руб'
-          }
-        },
-        description: 'DE BERLIN MCDONALDS'
+        txnType: 'OutgoingTransfer',
+        txnTime: '02/11/2024 16:27:00',
+        txnAmount: -450000,
+        timoDesc2: 'Sent from my Timo'
       },
-      { id: 'B7C94FAC', instrument: 'RUB' },
+      { id: '9021808997832', instrument: 'VND' },
       {
         hold: true,
-        date: new Date('2018-01-05T06:10:34.000Z'),
+        date: new Date('2024-11-02T13:27:00.000Z'),
         movements: [
           {
             id: null,
-            account: { id: 'B7C94FAC' },
-            invoice: { sum: -3, instrument: 'USD' },
-            sum: -164.10,
+            account: { id: '9021808997832' },
+            invoice: null,
+            sum: -450000,
             fee: 0
           }
         ],
         merchant: {
-          fullTitle: 'DE BERLIN MCDONALDS',
+          fullTitle: 'Sent from my Timo',
           mcc: null,
           location: null
         },
-        comment: null
-      }
-    ],
-    [
-      {
-        id: '7876123',
-        type: 'TRANSACTION',
-        operationTime: '2018-01-04 18:44:12 GMT+3',
-        debitingTime: '2018-01-07 12:21:07 GMT+3',
-        relation: 'ACCOUNT',
-        relationId: '4480910C',
-        amount: {
-          value: -50,
-          currency: {
-            shortName: 'USD',
-            symbol: '$'
-          }
-        },
-        accountAmount: {
-          value: -50,
-          currency: {
-            shortName: 'USD',
-            symbol: '$'
-          }
-        }
-      },
-      { id: '4480910C', instrument: 'USD' },
-      {
-        hold: false,
-        date: new Date('2018-01-04T15:44:12.000Z'),
-        movements: [
-          {
-            id: '7876123',
-            account: { id: '4480910C' },
-            invoice: null,
-            sum: -50,
-            fee: 0
-          }
-        ],
-        merchant: null,
         comment: null
       }
     ]
