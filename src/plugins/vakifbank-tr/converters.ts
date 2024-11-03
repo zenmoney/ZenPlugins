@@ -1,6 +1,6 @@
 import { groupBy, maxBy, minBy } from 'lodash'
 
-import { Amount, AccountType, NonParsedMerchant, AccountOrCard } from '../../types/zenmoney'
+import { Amount, AccountType, NonParsedMerchant, AccountOrCard, Transaction } from '../../types/zenmoney'
 import { TransactionWithId, VakifStatementAccount, VakifStatementTransaction } from './models'
 
 export function parseFormattedNumber (value: string): number {
@@ -55,27 +55,25 @@ export function convertVakifPdfStatementTransaction (accountId: string, rawTrans
         comment = (transaction.description1 ?? '') + ': ' + (transaction.description2 ?? '')
       }
 
-      result.push({
-        statementUid: transaction.statementUid,
-        transaction: {
-          comment,
-          date: new Date(transaction.date),
-          hold: false,
-          merchant,
-          movements: [
-            {
-              account: { id: accountId },
-              fee: feeTransaction == null ? 0 : parseFormattedNumber(feeTransaction.amount),
-              id: transaction.statementUid,
-              sum: parseFormattedNumber(transaction.amount),
-              invoice: null
-            }
-          ]
-        }
-      })
+      const resultedTransaction: Transaction = {
+        comment,
+        date: new Date(transaction.date),
+        hold: false,
+        merchant,
+        movements: [
+          {
+            account: { id: accountId },
+            fee: feeTransaction == null ? 0 : parseFormattedNumber(feeTransaction.amount),
+            id: transaction.statementUid,
+            sum: parseFormattedNumber(transaction.amount),
+            invoice: null
+          }
+        ]
+      }
+
       if (transaction.description1 === 'ATM Withdrawal') {
-        result[0].transaction.comment = transaction.description2
-        result[0].transaction.movements.push({
+        resultedTransaction.comment = transaction.description2
+        resultedTransaction.movements.push({
           account: {
             company: null,
             instrument: 'TL',
@@ -88,6 +86,11 @@ export function convertVakifPdfStatementTransaction (accountId: string, rawTrans
           invoice: null
         })
       }
+
+      result.push({
+        statementUid: transaction.statementUid,
+        transaction: resultedTransaction
+      })
     }
   }
 
