@@ -93,7 +93,7 @@ function extractMerchantInfo (transaction: VakifStatementTransaction): NonParsed
   const merchanTitleMatch = MERCHANT_TITLE_REGEX.exec(transaction.description2 ?? '')
   const merchantMccMatch = MERCHANT_MCC_REGEX.exec(transaction.description2 ?? '')
 
-  if (merchanTitleMatch || merchantMccMatch) {
+  if (merchanTitleMatch != null || merchantMccMatch != null) {
     return {
       location: null,
       fullTitle: merchanTitleMatch?.[2] ?? '',
