@@ -3,6 +3,9 @@ import { groupBy, maxBy, minBy } from 'lodash'
 import { Amount, AccountType, NonParsedMerchant, AccountOrCard, Transaction } from '../../types/zenmoney'
 import { TransactionWithId, VakifStatementAccount, VakifStatementTransaction } from './models'
 
+const MERCHANT_TITLE_REGEX = /ISLEM NO :\s*(\d{4})?-(.*?)\s\s(.*?)\*\*\*\*/
+const MERCHANT_MCC_REGEX = /Mcc: (\d{4})/
+
 export function parseFormattedNumber (value: string): number {
   return parseFloat(value.replace(/\./g, '').replace(',', '.'))
 }
@@ -35,66 +38,69 @@ export function convertVakifPdfStatementTransaction (accountId: string, rawTrans
     if (transactions.length === 1 || transactions.length === 2) {
       const mainTransaction = maxBy(transactions, x => Math.abs(parseFormattedNumber(x.amount)))
       const feeTransaction = transactions.length === 1 ? null : minBy(transactions, x => Math.abs(parseFormattedNumber(x.amount)))
-      const transaction = mainTransaction
-      if (transaction == null) { throw new Error('InvalidState') }
-      let merchant: NonParsedMerchant | null = null
-      let comment: string | null = null
+      if (mainTransaction == null) { throw new Error('InvalidState') }
 
-      const merchanTitleRegEx = /ISLEM NO :\s*(\d{4})?-(.*?)\s\s(.*?)\*\*\*\*/
-      const merchantMccRegEx = /Mcc: (\d{4})/
-      const merchanTitleMatch = merchanTitleRegEx.exec(transaction.description2 ?? '')
-      const merchantMccMatch = merchantMccRegEx.exec(transaction.description2 ?? '')
+      const merchant = extractMerchantInfo(mainTransaction)
+      const comment = merchant ? null : `${mainTransaction.description1 ?? ''}: ${mainTransaction.description2 ?? ''}`
 
-      if (merchanTitleMatch != null || merchantMccMatch != null) {
-        merchant = {
-          location: null,
-          fullTitle: merchanTitleMatch?.[2] ?? '',
-          mcc: merchantMccMatch == null ? null : parseInt(merchantMccMatch[1], 10)
-        }
-      } else {
-        comment = (transaction.description1 ?? '') + ': ' + (transaction.description2 ?? '')
-      }
-
-      const resultedTransaction: Transaction = {
+      const transaction: Transaction = {
         comment,
-        date: new Date(transaction.date),
+        date: new Date(mainTransaction.date),
         hold: false,
         merchant,
         movements: [
           {
             account: { id: accountId },
             fee: feeTransaction == null ? 0 : parseFormattedNumber(feeTransaction.amount),
-            id: transaction.statementUid,
-            sum: parseFormattedNumber(transaction.amount),
+            id: mainTransaction.statementUid,
+            sum: parseFormattedNumber(mainTransaction.amount),
             invoice: null
           }
         ]
       }
 
-      if (transaction.description1 === 'ATM Withdrawal') {
-        resultedTransaction.comment = transaction.description2
-        resultedTransaction.movements.push({
-          account: {
-            company: null,
-            instrument: 'TL',
-            syncIds: null,
-            type: AccountType.cash
-          },
-          fee: 0,
-          id: transaction.statementUid,
-          sum: parseFormattedNumber(transaction.amount) * -1,
-          invoice: null
-        })
+      if (mainTransaction.description1 === 'ATM Withdrawal') {
+        transaction.comment = mainTransaction.description2
+        transaction.movements.push(createATMWithdrawalMovement(mainTransaction))
       }
 
       result.push({
-        statementUid: transaction.statementUid,
-        transaction: resultedTransaction
+        statementUid: mainTransaction.statementUid,
+        transaction
       })
     }
   }
 
   return result
+}
+
+function createATMWithdrawalMovement (transaction: VakifStatementTransaction): Transaction['movements'][number] {
+  return {
+    account: {
+      company: null,
+      instrument: 'TL',
+      syncIds: null,
+      type: AccountType.cash
+    },
+    fee: 0,
+    id: transaction.statementUid,
+    sum: parseFormattedNumber(transaction.amount) * -1,
+    invoice: null
+  }
+}
+
+function extractMerchantInfo (transaction: VakifStatementTransaction): NonParsedMerchant | null {
+  const merchanTitleMatch = MERCHANT_TITLE_REGEX.exec(transaction.description2 ?? '')
+  const merchantMccMatch = MERCHANT_MCC_REGEX.exec(transaction.description2 ?? '')
+
+  if (merchanTitleMatch || merchantMccMatch) {
+    return {
+      location: null,
+      fullTitle: merchanTitleMatch?.[2] ?? '',
+      mcc: merchantMccMatch ? parseInt(merchantMccMatch[1], 10) : null
+    }
+  }
+  return null
 }
 
 export function convertPdfStatementAccount (rawAccount: VakifStatementAccount): AccountOrCard {
