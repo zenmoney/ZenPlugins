@@ -1,4 +1,5 @@
 import { AccountType } from '../../../types/zenmoney'
+import { extractInstrument } from '../api'
 
 import { convertVakifPdfStatementTransaction } from '../converters'
 import { TransactionWithId, VakifStatementTransaction } from '../models'
@@ -169,4 +170,9 @@ const testCases: Array<[VakifStatementTransaction[], TransactionWithId[]]> = [
 
 it.each(testCases)('converts transaction parsed from pdf statement', (rawTransaction: VakifStatementTransaction[], transaction: TransactionWithId[]) => {
   expect(convertVakifPdfStatementTransaction('1234567890', rawTransaction)).toEqual(transaction)
+})
+
+it('can extract account instrument code', () => {
+  expect(extractInstrument(' Account Type:VADESİZ USDNickname: ')).toEqual('USD')
+  expect(extractInstrument(' Account Type:VADESİZ TLNickname: ')).toEqual('TL')
 })
