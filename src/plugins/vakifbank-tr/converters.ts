@@ -35,52 +35,79 @@ export function convertVakifPdfStatementTransaction (accountId: string, rawTrans
 
   const chunks = chunksByStatementUid(rawTransaction)
   for (const transactions of chunks) {
-    if (transactions.length === 1 || transactions.length === 2) {
-      const mainTransaction = maxBy(transactions, x => Math.abs(parseFormattedNumber(x.amount)))
-      const feeTransaction = transactions.length === 1 ? null : minBy(transactions, x => Math.abs(parseFormattedNumber(x.amount)))
-      if (mainTransaction == null) { throw new Error('InvalidState') }
+    if (transactions.length !== 1 && transactions.length !== 2) continue
 
-      const merchant = extractMerchantInfo(mainTransaction)
-      const comment = merchant ? null : `${mainTransaction.description1 ?? ''}: ${mainTransaction.description2 ?? ''}`
-
-      const transaction: Transaction = {
-        comment,
-        date: new Date(mainTransaction.date),
-        hold: false,
-        merchant,
-        movements: [
-          {
-            account: { id: accountId },
-            fee: feeTransaction == null ? 0 : parseFormattedNumber(feeTransaction.amount),
-            id: mainTransaction.statementUid,
-            sum: parseFormattedNumber(mainTransaction.amount),
-            invoice: null
-          }
-        ]
-      }
-
-      if (mainTransaction.description1 === 'ATM Withdrawal') {
-        transaction.comment = mainTransaction.description2
-        transaction.movements.push(createATMWithdrawalMovement(mainTransaction))
-      }
-
-      result.push({
-        statementUid: mainTransaction.statementUid,
-        transaction
-      })
-    }
+    const transaction = buildTransaction(accountId, transactions)
+    result.push(transaction)
   }
 
   return result
 }
 
-function createATMWithdrawalMovement (transaction: VakifStatementTransaction): Transaction['movements'][number] {
+function buildTransaction (accountId: string, transactions: VakifStatementTransaction[]): TransactionWithId {
+  const mainTransaction = getMainTransaction(transactions)
+  const feeAmount = getFeeAmount(transactions)
+  const merchant = extractMerchantInfo(mainTransaction)
+  const comment = merchant ? null : `${mainTransaction.description1 ?? ''}: ${mainTransaction.description2 ?? ''}`
+
+  const transaction: Transaction = {
+    comment,
+    date: new Date(mainTransaction.date),
+    hold: false,
+    merchant,
+    movements: [
+      createMainMovement(accountId, mainTransaction, feeAmount)
+    ]
+  }
+
+  if (mainTransaction.description1 === 'ATM Withdrawal' || mainTransaction.description1 === 'ATM QR Withdrawal') {
+    transaction.comment = mainTransaction.description2
+    transaction.movements.push(createOppositeMovement(mainTransaction, AccountType.cash))
+  }
+
+  return {
+    statementUid: mainTransaction.statementUid,
+    transaction
+  }
+}
+
+function getMainTransaction (transactions: VakifStatementTransaction[]): VakifStatementTransaction {
+  const mainTransaction = maxBy(transactions, x => Math.abs(parseFormattedNumber(x.amount)))
+  if (!mainTransaction) throw new Error('InvalidState')
+  return mainTransaction
+}
+
+function getFeeAmount (transactions: VakifStatementTransaction[]): number {
+  if (transactions.length !== 2) return 0
+
+  const feeTransaction = minBy(transactions, x => Math.abs(parseFormattedNumber(x.amount)))
+  return feeTransaction ? parseFormattedNumber(feeTransaction.amount) : 0
+}
+
+function createMainMovement (
+  accountId: string,
+  transaction: VakifStatementTransaction,
+  feeAmount: number
+): Transaction['movements'][number] {
+  return {
+    account: { id: accountId },
+    fee: feeAmount,
+    id: transaction.statementUid,
+    sum: parseFormattedNumber(transaction.amount),
+    invoice: null
+  }
+}
+
+function createOppositeMovement (
+  transaction: VakifStatementTransaction,
+  accountType: AccountType
+): Transaction['movements'][number] {
   return {
     account: {
       company: null,
       instrument: 'TL',
       syncIds: null,
-      type: AccountType.cash
+      type: accountType
     },
     fee: 0,
     id: transaction.statementUid,
