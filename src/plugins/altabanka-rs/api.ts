@@ -4,6 +4,8 @@ import { InvalidPreferencesError } from '../../errors'
 import { parseAccountInfo, parseLoginResult, parseRequestVerificationToken, parseTransactions } from './parsers'
 import { AccountInfo, AccountTransaction, Preferences } from './types'
 import moment from 'moment'
+// @ts-expect-error no types for package
+import * as qs from 'querystring-browser'
 
 export class AltaBankaApi {
   private readonly baseUrl: string
@@ -13,12 +15,13 @@ export class AltaBankaApi {
   }
 
   public async login ({ login, password }: Preferences, isInBackground: boolean): Promise<void> {
-    const formData = new URLSearchParams()
-    formData.append('Username_ID', login)
-    formData.append('Password_ID', password)
-    formData.append('ActiveLoginMethod', 'usernamepassword')
-    formData.append('workitemid', 'v2bdQSMgtKTpqU8qDDR9iQ==')
-    formData.append('X-Requested-With', 'XMLHttpRequest')
+    const formData = {
+      Username_ID: login,
+      Password_ID: password,
+      ActiveLoginMethod: 'usernamepassword',
+      workitemid: 'v2bdQSMgtKTpqU8qDDR9iQ==',
+      'X-Requested-With': 'XMLHttpRequest'
+    }
 
     const response = await fetch(
       this.baseUrl + 'Identity/Login',
@@ -27,7 +30,8 @@ export class AltaBankaApi {
         headers: {
           'content-type': 'application/x-www-form-urlencoded'
         },
-        body: formData.toString()
+        body: qs.stringify(formData),
+        sanitizeRequestLog: true
       }) as FetchResponse & {body: string}
 
     if (!parseLoginResult(response.body)) {
@@ -71,16 +75,17 @@ export class AltaBankaApi {
     fromDate: Date,
     toDate?: Date
   ): Promise<AccountTransaction[]> {
-    const formData = new URLSearchParams()
-    formData.append('Accounts_ID', accountId)
-    formData.append('__RequestVerificationToken', token)
-    formData.append('DateFrom_ID', moment(fromDate).format('DD/MM/YYYY'))
-    if (toDate) {
-      formData.append('DateTo_ID', moment(toDate).format('DD/MM/YYYY'))
+    const formData: Record<string, string> = {
+      Accounts_ID: accountId,
+      __RequestVerificationToken: token,
+      DateFrom_ID: moment(fromDate).format('DD/MM/YYYY'),
+      SortOrder_ID: 'asc',
+      PageSize: '100',
+      PageNumber: page.toString()
     }
-    formData.append('SortOrder_ID', 'asc')
-    formData.append('PageSize', '100')
-    formData.append('PageNumber', page.toString())
+    if (toDate) {
+      formData.DateTo_ID = moment(toDate).format('DD/MM/YYYY')
+    }
 
     const response = await fetch(
       this.baseUrl + 'AccountData/Transactions/List',
@@ -89,7 +94,7 @@ export class AltaBankaApi {
         headers: {
           'content-type': 'application/x-www-form-urlencoded'
         },
-        body: formData.toString()
+        body: qs.stringify(formData)
       }
     ) as FetchResponse & {body: string}
 
@@ -107,17 +112,18 @@ export class AltaBankaApi {
     fromDate: Date,
     toDate?: Date
   ): Promise<AccountTransaction[]> {
-    const formData = new URLSearchParams()
-    formData.append('Accounts_ID', accountId)
-    formData.append('__RequestVerificationToken', token)
-    formData.append('DateFrom_ID', moment(fromDate).format('DD/MM/YYYY'))
-    if (toDate) {
-      formData.append('DateTo_ID', moment(toDate).format('DD/MM/YYYY'))
+    const formData: Record<string, string> = {
+      Accounts_ID: accountId,
+      __RequestVerificationToken: token,
+      DateFrom_ID: moment(fromDate).format('DD/MM/YYYY'),
+      SortOrder_ID: 'asc',
+      PageSize: '100',
+      PageNumber: page.toString(),
+      Statuses_ID: 'p'
     }
-    formData.append('SortOrder_ID', 'asc')
-    formData.append('PageSize', '100')
-    formData.append('PageNumber', page.toString())
-    formData.append('Statuses_ID', 'p')
+    if (toDate) {
+      formData.DateTo_ID = moment(toDate).format('DD/MM/YYYY')
+    }
 
     const response = await fetch(
       this.baseUrl + 'AccountData/Transactions/CardTransactionsList',
@@ -126,7 +132,7 @@ export class AltaBankaApi {
         headers: {
           'content-type': 'application/x-www-form-urlencoded'
         },
-        body: formData.toString()
+        body: qs.stringify(formData)
       }
     ) as FetchResponse & {body: string}
 

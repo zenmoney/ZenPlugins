@@ -38,7 +38,13 @@ export function parseTransactions (body: string): AccountTransaction[] {
     const html = cheerio.load(transactionHtml)
 
     const transactionHref = (transactionHtml as cheerio.TagElement).attribs['data-href'].trim()
-    const transactionUrl = new URL(transactionHref, 'https://www.altabanka.rs')
+    const transactionUrl = 'https://www.altabanka.rs' + transactionHref
+    const queryParams = transactionUrl.split('?')[1]
+    const params = queryParams.split('&').reduce<Record<string, string>>((acc, param) => {
+      const [key, value] = param.split('=')
+      acc[key] = value
+      return acc
+    }, {})
 
     const [dateHtml, , descriptionHtml, amountHtml] = html('div').children('div').toArray()
 
@@ -48,7 +54,7 @@ export function parseTransactions (body: string): AccountTransaction[] {
     const [amount, currency] = cheerio.load(amountHtml)('p').text().trim().split(' ') ?? []
 
     return {
-      id: transactionUrl.searchParams.get('q') ?? '',
+      id: params.q ?? '',
       date,
       address,
       amount: direction * Number(amount.replace(/,/g, '')),
