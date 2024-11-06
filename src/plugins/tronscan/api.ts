@@ -27,7 +27,7 @@ export interface TronTransaction {
   hash: string
   timestamp: number
   ownerAddress: string
-  toAddress: string
+  toAddress: null | string
   cost: TransactionCost
 }
 

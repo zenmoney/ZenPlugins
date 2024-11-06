@@ -12,14 +12,14 @@ function getAccountId (wallet: string, tokenId: string): string {
 
 export function convertAccount (tokenInfo: SupportedTokenInfo, wallet: string): AccountOrCard {
   const accountId = getAccountId(wallet, tokenInfo.tokenId)
-  const config = TOKENS_CONFIG[tokenInfo.tokenAbbr]
+  const { title, currency, balanceProperty } = TOKENS_CONFIG[tokenInfo.tokenAbbr]
 
   return {
     id: accountId,
     type: AccountType.ccard,
-    title: config.title ?? tokenInfo.tokenName,
-    instrument: config.currency,
-    balance: Number(tokenInfo.quantity ?? 0),
+    title: title ?? tokenInfo.tokenName,
+    instrument: currency,
+    balance: Number(tokenInfo[balanceProperty] ?? 0),
     available: Number(tokenInfo.quantity ?? 0),
     creditLimit: 0,
     syncIds: [accountId]
@@ -77,7 +77,7 @@ export function convertTokenTransaction (transfer: Transfer, wallet: string, tra
   return tokenTransaction
 }
 
-function getCostTransaction (transaction: TronTransaction): Transaction {
+export function getCostTransaction (transaction: TronTransaction): Transaction {
   const accountId = getAccountId(transaction.ownerAddress, '_')
   const sum = Number(transaction.cost.fee) / (10 ** 6) * -1
 
@@ -93,11 +93,13 @@ function getCostTransaction (transaction: TronTransaction): Transaction {
         invoice: null
       }
     ],
-    merchant: {
-      fullTitle: transaction.toAddress,
-      mcc: null,
-      location: null
-    },
+    merchant: transaction.toAddress !== null && transaction.toAddress !== ''
+      ? {
+          fullTitle: transaction.toAddress,
+          mcc: null,
+          location: null
+        }
+      : null,
     comment: null
   }
 }

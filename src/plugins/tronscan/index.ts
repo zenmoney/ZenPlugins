@@ -1,7 +1,7 @@
 import { Account, ScrapeFunc, Transaction } from '../../types/zenmoney'
 import { Preferences, tronscanApi } from './api'
 import { isSupportedToken } from './config'
-import { convertAccount, convertTransaction, convertTokenTransaction } from './converters'
+import { convertAccount, convertTransaction, convertTokenTransaction, getCostTransaction } from './converters'
 
 export const scrape: ScrapeFunc<Preferences> = async ({
   preferences,
@@ -30,6 +30,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({
         const trxTransactions = trxTransfers
           .map((transfer) => {
             const transaction = walletTransactions.get(transfer.transaction_id)
+            walletTransactions.delete(transfer.transaction_id)
             return convertTransaction(transfer, wallet, transaction)
           })
           .filter(
@@ -38,11 +39,25 @@ export const scrape: ScrapeFunc<Preferences> = async ({
         const tokenTransactions = transfers
           .flatMap((transfer) => {
             const transaction = walletTransactions.get(transfer.transaction_id)
+            walletTransactions.delete(transfer.transaction_id)
             return convertTokenTransaction(transfer, wallet, transaction)
           })
           .filter(
             (transaction): transaction is Transaction => transaction !== null
           )
+
+        // This transactions are unknown, but we still can have fee
+        for (const transaction of walletTransactions.values()) {
+          if (transaction.ownerAddress !== wallet) {
+            continue
+          }
+
+          if (transaction.cost.fee === 0) {
+            continue
+          }
+
+          transactions.push(getCostTransaction(transaction))
+        }
 
         accounts.push(...walletAccounts)
         transactions.push(...trxTransactions)
