@@ -107,6 +107,7 @@ export class AltaBankaApi {
 
   public async fetchCardTransactions (
     accountId: string,
+    cardNumber: string,
     token: string,
     page: number,
     fromDate: Date,
@@ -121,8 +122,13 @@ export class AltaBankaApi {
       PageNumber: page.toString(),
       Statuses_ID: 'p'
     }
+
     if (toDate) {
       formData.DateTo_ID = moment(toDate).format('DD/MM/YYYY')
+    }
+
+    if (cardNumber !== '') {
+      formData.Cards_ID = cardNumber
     }
 
     const response = await fetch(

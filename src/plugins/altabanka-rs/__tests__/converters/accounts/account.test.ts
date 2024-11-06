@@ -8,7 +8,9 @@ describe('convertAccounts', () => {
         id: 'GTqs0fbZAP4rVJNP3KU2GaTRZEG9aJ5qodGQBp6Rek8',
         balance: 6471.0,
         name: 'ACCOUNT NAME',
-        currency: 'TRY'
+        currency: 'TRY',
+        cardNumber: '0011',
+        accountNumber: '0022'
       }
     ]
 

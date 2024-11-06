@@ -2,6 +2,8 @@ import cheerio from 'cheerio'
 import { AccountInfo, AccountTransaction } from './types'
 import moment from 'moment'
 
+const exchangeRateRegex = /\d+\.\d+ \w{3} Kurs:.+/
+
 export function parseLoginResult (body: string): boolean {
   return body.includes('location.href = action;')
 }
@@ -15,6 +17,8 @@ export function parseAccountInfo (body: string): AccountInfo[] {
 
     return {
       id: (accountHtml as cheerio.TagElement).attribs['data-accountnumber'].trim(),
+      cardNumber: (accountHtml as cheerio.TagElement).attribs['data-cardno'].trim(),
+      accountNumber: (accountHtml as cheerio.TagElement).attribs['data-accno'].trim(),
       // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
       name: html('.acc-name').text().trim() || html('.acc-nr').text().trim(),
       currency: html('.main-balance option').text().trim(),
@@ -38,8 +42,7 @@ export function parseTransactions (body: string): AccountTransaction[] {
     const html = cheerio.load(transactionHtml)
 
     const transactionHref = (transactionHtml as cheerio.TagElement).attribs['data-href'].trim()
-    const transactionUrl = 'https://www.altabanka.rs' + transactionHref
-    const queryParams = transactionUrl.split('?')[1]
+    const queryParams = transactionHref.split('?')[1]
     const params = queryParams.split('&').reduce<Record<string, string>>((acc, param) => {
       const [key, value] = param.split('=')
       acc[key] = value
@@ -50,15 +53,19 @@ export function parseTransactions (body: string): AccountTransaction[] {
 
     const direction = cheerio.load(dateHtml)('div.tag').hasClass('up') ? -1 : 1
     const date = moment(cheerio.load(dateHtml)('p').text()?.trim(), 'DD.MM.YYYY').toDate()
-    const address = cheerio.load(descriptionHtml)('span').text()?.trim().replace(/ {2}/g, '').replace('Kartica: ', '')
+    let address = cheerio.load(descriptionHtml)('span').text()?.trim().replace(/ {2}/g, '').replace('Kartica: ', '')
     const [amount, currency] = cheerio.load(amountHtml)('p').text().trim().split(' ') ?? []
 
+    const description = address?.match(exchangeRateRegex)?.[0] ?? ''
+    address = address?.replace(description ?? '', '').trim()
+
     return {
-      id: params.q ?? '',
+      id: 'id_' + params.q,
       date,
       address,
       amount: direction * Number(amount.replace(/,/g, '')),
-      currency
+      currency,
+      description
     }
   })
 }

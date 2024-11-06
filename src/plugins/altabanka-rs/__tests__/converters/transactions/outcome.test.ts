@@ -1,6 +1,5 @@
 import { convertTransaction } from '../../../converters'
-import { Account } from '../../../../../types/zenmoney'
-import { AccountTransaction } from '../../../types'
+import { AccountInfo, AccountTransaction } from '../../../types'
 
 describe('convertTransaction', () => {
   it('should convert basic transaction', () => {
@@ -9,15 +8,23 @@ describe('convertTransaction', () => {
       address: 'Harcama - AVKAN ECZANESI ANTALYA TR  (POS - ****9753)',
       amount: -40.36,
       currency: 'TRY',
-      id: 'transaction_123'
+      id: 'transaction_123',
+      description: 'Description'
     }
 
-    const account = { id: 'B7C94FAC', instrument: 'RUB' }
+    const account: AccountInfo = {
+      id: 'B7C94FAC',
+      currency: 'RUB',
+      cardNumber: '0011',
+      accountNumber: '0022',
+      name: 'Name',
+      balance: 100
+    }
 
-    expect(convertTransaction(accountTransaction, account as Account))
+    expect(convertTransaction(accountTransaction, account))
       .toMatchInlineSnapshot(`
       Object {
-        "comment": null,
+        "comment": "Description",
         "date": 2022-12-22T21:01:48.000Z,
         "hold": false,
         "merchant": Object {
@@ -44,27 +51,31 @@ describe('convertTransaction', () => {
   })
 
   it('should convert transaction with card in another currency', () => {
-    const account: Pick<Account, 'id' | 'instrument'> = {
+    const account: AccountInfo = {
       id: 'B7C94FAC',
-      instrument: 'RUB'
+      currency: 'RUB',
+      cardNumber: '0011',
+      accountNumber: '0022',
+      name: 'Name',
+      balance: 100
     }
 
     const cardTransaction: AccountTransaction = {
       date: new Date('2022-12-23T00:01:49.0000000+03:00'),
-      address: 'Card Description',
+      address: 'Address',
       amount: -2,
       currency: 'USD',
-      id: 'transaction_123'
+      id: 'transaction_123',
+      description: 'Description'
     }
 
-    expect(convertTransaction(cardTransaction, account as Account))
-      .toMatchInlineSnapshot(`
+    expect(convertTransaction(cardTransaction, account)).toMatchInlineSnapshot(`
       Object {
-        "comment": null,
+        "comment": "Description",
         "date": 2022-12-22T21:01:49.000Z,
         "hold": false,
         "merchant": Object {
-          "fullTitle": "Card Description",
+          "fullTitle": "Address",
           "location": null,
           "mcc": null,
         },

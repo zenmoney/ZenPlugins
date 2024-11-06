@@ -5,6 +5,8 @@ export interface Preferences {
 
 export interface AccountInfo {
   id: string
+  cardNumber: string
+  accountNumber: string
   name: string
   currency: string
   balance: number
@@ -16,4 +18,5 @@ export interface AccountTransaction {
   address: string
   amount: number
   currency: string
+  description: string
 }

@@ -1,4 +1,4 @@
-import { Account, AccountOrCard, AccountType, Transaction } from '../../types/zenmoney'
+import { AccountOrCard, AccountType, Transaction } from '../../types/zenmoney'
 import { AccountInfo, AccountTransaction } from './types'
 
 export function convertAccounts (apiAccounts: AccountInfo[]): AccountOrCard[] {
@@ -16,10 +16,10 @@ export function convertAccounts (apiAccounts: AccountInfo[]): AccountOrCard[] {
   })
 }
 
-export function convertTransaction (accountTransaction: AccountTransaction, account: Account, hold = false): Transaction {
+export function convertTransaction (accountTransaction: AccountTransaction, account: AccountInfo, hold = false): Transaction {
   let invoice = null
 
-  if (accountTransaction.currency !== account.instrument) {
+  if (accountTransaction.currency !== account.currency) {
     invoice = {
       sum: accountTransaction.amount,
       instrument: accountTransaction.currency
@@ -45,6 +45,6 @@ export function convertTransaction (accountTransaction: AccountTransaction, acco
       }
     ],
     merchant,
-    comment: null
+    comment: accountTransaction.description
   }
 }
