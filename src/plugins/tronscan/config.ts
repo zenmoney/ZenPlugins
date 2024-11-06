@@ -1,19 +1,24 @@
-export const TOKENS_CONFIG: Record<string, { currency: string, title?: string }> = {
+export const TOKENS_CONFIG: Record<string, { currency: string, title?: string, balanceProperty: keyof TokenInfo }> = {
   trx: {
     currency: 'TRX',
-    title: 'TRON'
+    title: 'TRON',
+    balanceProperty: 'amount'
   },
   USDT: {
-    currency: 'USDT'
+    currency: 'USDT',
+    balanceProperty: 'quantity'
   },
   TUSD: {
-    currency: 'USDT'
+    currency: 'USDT',
+    balanceProperty: 'quantity'
   },
   USDD: {
-    currency: 'USDT'
+    currency: 'USDT',
+    balanceProperty: 'quantity'
   },
   USDC: {
-    currency: 'USDT'
+    currency: 'USDT',
+    balanceProperty: 'quantity'
   }
 }
 
@@ -24,6 +29,7 @@ export interface TokenInfo {
   tokenName: string
   tokenAbbr: string
   tokenDecimal: number
+  amount?: number | string
   quantity?: number | string
 }
 

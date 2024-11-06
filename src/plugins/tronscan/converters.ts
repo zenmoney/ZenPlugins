@@ -12,14 +12,14 @@ function getAccountId (wallet: string, tokenId: string): string {
 
 export function convertAccount (tokenInfo: SupportedTokenInfo, wallet: string): AccountOrCard {
   const accountId = getAccountId(wallet, tokenInfo.tokenId)
-  const config = TOKENS_CONFIG[tokenInfo.tokenAbbr]
+  const { title, currency, balanceProperty } = TOKENS_CONFIG[tokenInfo.tokenAbbr]
 
   return {
     id: accountId,
     type: AccountType.ccard,
-    title: config.title ?? tokenInfo.tokenName,
-    instrument: config.currency,
-    balance: Number(tokenInfo.quantity ?? 0),
+    title: title ?? tokenInfo.tokenName,
+    instrument: currency,
+    balance: Number(tokenInfo[balanceProperty] ?? 0),
     available: Number(tokenInfo.quantity ?? 0),
     creditLimit: 0,
     syncIds: [accountId]
