@@ -77,7 +77,7 @@ export function convertTokenTransaction (transfer: Transfer, wallet: string, tra
   return tokenTransaction
 }
 
-function getCostTransaction (transaction: TronTransaction): Transaction {
+export function getCostTransaction (transaction: TronTransaction): Transaction {
   const accountId = getAccountId(transaction.ownerAddress, '_')
   const sum = Number(transaction.cost.fee) / (10 ** 6) * -1
 
@@ -93,11 +93,13 @@ function getCostTransaction (transaction: TronTransaction): Transaction {
         invoice: null
       }
     ],
-    merchant: {
-      fullTitle: transaction.toAddress,
-      mcc: null,
-      location: null
-    },
+    merchant: transaction.toAddress !== null && transaction.toAddress !== ''
+      ? {
+          fullTitle: transaction.toAddress,
+          mcc: null,
+          location: null
+        }
+      : null,
     comment: null
   }
 }
