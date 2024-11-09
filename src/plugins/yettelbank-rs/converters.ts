@@ -1,5 +1,5 @@
-import { Account, AccountType, Amount, Transaction } from '../../types/zenmoney'
-import { getNumber, getOptNumber, getOptString, getString } from '../../types/get'
+import { Account, AccountType, Transaction } from '../../types/zenmoney'
+import { getOptNumber, getOptString } from '../../types/get'
 import { AccountInfo, ConvertResult, TransactionInfo } from './models'
 
 export function convertAccount (account: AccountInfo): Account {

@@ -2,12 +2,13 @@ import { fetch, FetchOptions, FetchResponse } from '../../common/network'
 import { InvalidLoginOrPasswordError } from '../../errors'
 import { getCookies, checkResponseAndSetCookies, checkResponseSuccess } from './helpers'
 import { AccountInfo, Preferences, Product, Session, TransactionInfo } from './models'
-import { isArray } from 'lodash'
+import { mockedAccountsResponse, mockedTransactionsResponse } from './mocked_responses'
 import cheerio from 'cheerio';
-import { convertAccount } from './converters'
 import { AccountsInfoNotFound } from './exceptions'
+import { mock } from 'fetch-mock'
 
 const baseUrl = 'https://online.mobibanka.rs/'
+const mockResponses = true
 
 async function fetchApi (url: string, options?: FetchOptions): Promise<FetchResponse> {
   return await fetch(baseUrl + url, options ?? {})
@@ -20,6 +21,10 @@ async function initAuthorizationWorkflow (url: string): Promise<string> {
     const $ = cheerio.load(body as string);
     return $('#WorkflowId').val();
   };
+
+  if (mockResponses){
+    return "673d394c-a31c-4e59-8b55-11b0b05958f3"
+  }
 
   const response = await fetchApi(baseUrl + url, {
     method: 'GET',
@@ -45,6 +50,9 @@ function sendAuthRequest(url: string, workflowId: string, username: string, pass
 
 // POST request with empty passwords to fetch auth cookies
 async function fetchAuth (url: string, workflowId: string, username: string) {
+  if (mockResponses){
+    return
+  }
   const response = await sendAuthRequest(url, workflowId, username, '')
 
   checkResponseAndSetCookies(response)
@@ -52,6 +60,10 @@ async function fetchAuth (url: string, workflowId: string, username: string) {
 
 // Send POST request with login and password
 async function fetchLogin (url: string, workflowId: string, username: string, password: string) {
+  if (mockResponses){
+    return
+  }
+
   const checkErrorInResponse = (body: unknown): string =>
     {
       const $ = cheerio.load(body as string);
@@ -109,6 +121,10 @@ function parseAccounts(body: unknown): AccountInfo[] {
 }
 
 async function fetchAccounts(): Promise<AccountInfo[]>{
+  if (mockResponses){
+    return mockedAccountsResponse
+  }
+  
   const response = await fetchApi('', {
     method: 'GET',
     headers: {
@@ -149,6 +165,10 @@ function parseTransactions(body: unknown, pending: boolean): TransactionInfo[]{
 }
 
 async function fetchTransactions(account_id: string, status: string): Promise<TransactionInfo[]>{
+  if (mockResponses){
+    return mockedTransactionsResponse
+  }
+
   const response = await fetchApi(`CustomerAccount/Accounts/Transactions?accountid=${account_id}&status=${status}`, {
     method: 'GET',
     headers: {
