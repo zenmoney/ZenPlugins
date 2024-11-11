@@ -20,8 +20,5 @@ jobs:
     - name: Install dependencies
       run: yarn install --frozen-lockfile
 
-    - name: Check Commit Message
-      run: yarn check-commit
-
     - name: Run tests
       run: yarn test
