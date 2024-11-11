@@ -5,21 +5,16 @@ import { parsePdfFromBlob } from './pdfToStr'
 import { parseDateAndTimeFromPdfText, parseDateFromPdfText, parseFormattedNumber } from './converters'
 
 export async function parsePdfVakifStatement (): Promise<null | Array<{ account: VakifStatementAccount, transactions: VakifStatementTransaction[] }>> {
-  const blob = await ZenMoney.pickDocuments(['application/pdf'], true)
-  if (blob == null || !blob.length) {
-    throw new TemporaryError('Выберите один или несколько файлов в формате .pdf')
-  }
-  for (const { size, type } of blob) {
-    if (type !== 'application/pdf') {
-      throw new TemporaryError('Выписка должна быть в расширении .pdf')
-    } else if (size >= 1000 * 1000) {
-      throw new TemporaryError('Максимальный размер файла - 1 мб')
-    }
-  }
+  const blob = await getPdfDocuments()
+  validateDocuments(blob)
   const pdfStrings = await parsePdfFromBlob({ blob })
+  return parsePdfStatements(pdfStrings)
+}
+
+export function parsePdfStatements (pdfStrings: string[]): Array<{ account: VakifStatementAccount, transactions: VakifStatementTransaction[] }> {
   const result = []
   for (const textItem of pdfStrings) {
-    if (!/www.vakifbank.com.tr/i.test(textItem)) {
+    if (!isVakifBankStatement(textItem)) {
       throw new TemporaryError('Похоже, это не выписка VakifBank')
     }
     try {
@@ -32,12 +27,34 @@ export async function parsePdfVakifStatement (): Promise<null | Array<{ account:
   return result
 }
 
+function isVakifBankStatement (text: string): boolean {
+  return /www.vakifbank.com.tr/i.test(text)
+}
+
+export function validateDocuments (blob: Blob[]): void {
+  for (const { size, type } of blob) {
+    if (type !== 'application/pdf') {
+      throw new TemporaryError('Выписка должна быть в расширении .pdf')
+    } else if (size >= 1000 * 1000) {
+      throw new TemporaryError('Максимальный размер файла - 1 мб')
+    }
+  }
+}
+
+async function getPdfDocuments (): Promise<Blob[]> {
+  const blob = await ZenMoney.pickDocuments(['application/pdf'], true)
+  if (blob == null || !blob.length) {
+    throw new TemporaryError('Выберите один или несколько файлов в формате .pdf')
+  }
+  return blob
+}
+
 export function parseSinglePdfString (text: string, statementUid?: string): { account: VakifStatementAccount, transactions: VakifStatementTransaction[] } {
   const balanceAmount = extractBalance(text)
   const rawAccount: VakifStatementAccount = {
     balance: balanceAmount,
     id: extractAccountId(text),
-    instrument: 'TL',
+    instrument: extractInstrument(text),
     title: 'Vakifbank *' + extractAccountId(text).slice(-4),
     date: extractStatementDate(text)
   }
@@ -47,6 +64,11 @@ export function parseSinglePdfString (text: string, statementUid?: string): { ac
     transactions: rawTransactions
   }
   return parsedContent
+}
+
+export function extractInstrument (text: string): string {
+  const match = text.match(/Account Type:VADESİZ\s+([A-Z]{2,3})Nickname:/)
+  return match ? match[1] : 'TL' // Default to 'TL' if no match found
 }
 
 function extractAccountId (text: string): string {
