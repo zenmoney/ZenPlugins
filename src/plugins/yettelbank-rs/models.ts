@@ -29,16 +29,16 @@ export interface ConvertResult {
 }
 
 export interface AccountInfo {
-  id: string,
-  name: string,
-  currency: string,
+  id: string
+  name: string
+  currency: string
   balance: number
 }
 
 export interface TransactionInfo {
   isPending: boolean
-  date: Date,
-  title: string,
+  date: Date
+  title: string
   amount: number
   currency: string
 }

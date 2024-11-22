@@ -1,24 +1,23 @@
-import { isPOSDateCorrect } from '../tbc-ge/converters'
-import { AccountInfo, Preferences, Product, Session, TransactionInfo } from './models'
+import { AccountInfo, TransactionInfo } from './models'
 
-export const mockedAccountsResponse = [{
-    id: '4815162342',
-    name: 'Main account',
-    currency: 'RSD',
-    balance: 777
-} as AccountInfo]
+export const mockedAccountsResponse: AccountInfo[] = [{
+  id: '4815162342',
+  name: 'Main account',
+  currency: 'RSD',
+  balance: 777
+}]
 
-export const mockedTransactionsResponse = [{
-    isPending: false,
-    date: new Date(),
-    title: 'Biba',
-    amount: 10,
-    currency: 'RSD'
-} as TransactionInfo,
+export const mockedTransactionsResponse: TransactionInfo[] = [{
+  isPending: false,
+  date: new Date(),
+  title: 'Biba',
+  amount: 10,
+  currency: 'RSD'
+},
 {
-    isPending: false,
-    date: new Date(),
-    title: 'Boba',
-    amount: 1000,
-    currency: 'RSD'
+  isPending: false,
+  date: new Date(),
+  title: 'Boba',
+  amount: 1000,
+  currency: 'RSD'
 }]
