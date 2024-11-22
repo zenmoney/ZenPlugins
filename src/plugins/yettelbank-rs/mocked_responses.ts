@@ -2,7 +2,7 @@ import { isPOSDateCorrect } from '../tbc-ge/converters'
 import { AccountInfo, Preferences, Product, Session, TransactionInfo } from './models'
 
 export const mockedAccountsResponse = [{
-    id: '42',
+    id: '4815162342',
     name: 'Main account',
     currency: 'RSD',
     balance: 777

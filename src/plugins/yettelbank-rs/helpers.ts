@@ -4,7 +4,7 @@ import { TemporaryUnavailableError } from '../../errors'
 export function mergeCookies(currentCookieHeader: string, newCookieHeaders: string): string {
     const parseCookies = (cookieString: string): Record<string, string> => {
         return cookieString
-            .split(';')
+            .split(/,|;/)
             .map(cookie => cookie.trim())
             .filter(cookie => cookie.includes('='))
             .reduce((acc, cookie) => {

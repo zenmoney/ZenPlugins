@@ -1,14 +1,16 @@
 import { fetch, FetchOptions, FetchResponse } from '../../common/network'
-import { InvalidLoginOrPasswordError } from '../../errors'
+import { InvalidLoginOrPasswordError, ZPAPIError } from '../../errors'
 import { getCookies, checkResponseAndSetCookies, checkResponseSuccess } from './helpers'
 import { AccountInfo, Preferences, Product, Session, TransactionInfo } from './models'
 import { mockedAccountsResponse, mockedTransactionsResponse } from './mocked_responses'
 import cheerio from 'cheerio';
-import { AccountsInfoNotFound } from './exceptions'
-import { mock } from 'fetch-mock'
 
 const baseUrl = 'https://online.mobibanka.rs/'
-const mockResponses = true
+const mockResponses = false 
+
+declare class AccountsInfoNotFound extends ZPAPIError {
+  constructor (message?: string)
+}
 
 async function fetchApi (url: string, options?: FetchOptions): Promise<FetchResponse> {
   return await fetch(baseUrl + url, options ?? {})
@@ -26,9 +28,11 @@ async function initAuthorizationWorkflow (url: string): Promise<string> {
     return "673d394c-a31c-4e59-8b55-11b0b05958f3"
   }
 
-  const response = await fetchApi(baseUrl + url, {
+  const response = await fetchApi(url, {
     method: 'GET',
-    headers: {'Accept': '*/*', 'X-Requested-With': 'XMLHttpRequest'},
+    headers: {
+      'Content-Type': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7'
+    },
     sanitizeResponseLog: { headers: { 'set-cookie': true } }
   });
 
@@ -37,13 +41,14 @@ async function initAuthorizationWorkflow (url: string): Promise<string> {
 }
 
 function sendAuthRequest(url: string, workflowId: string, username: string, password: string){
-  return fetchApi(baseUrl + url, {
+  const request_body = `UserName=${username}&Password=${password}&WorkflowId=${workflowId}&X-Requested-With=XMLHttpRequest`
+  return fetchApi(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
       'X-Requested-With': 'XMLHttpRequest',
       'Cookie': getCookies()},
-    body: `UserName=${username}&Password=${password}&WorkflowId=${workflowId}&X-Requested-With=XMLHttpRequest`,
+    body: request_body,
     sanitizeResponseLog: { headers: { 'set-cookie': true } }
   })
 }
@@ -84,7 +89,7 @@ function extractAccountInfo(loaded_cheerio: cheerio.Root, accountId: string): Ac
   const accountElement = loaded_cheerio(`#pie-stats-${accountId}`);
   
   if (accountElement.length === 0) {
-      console.log('Account not found');
+      console.debug(`Account ${accountId} not found`);
       return null;
   }
 
@@ -185,11 +190,6 @@ async function fetchTransactions(account_id: string, status: string): Promise<Tr
 // ################################################
 
 export async function fetchAuthorization ({ login, password }: Preferences): Promise<{cookieHeader: string}> {
-  // It happens on server side
-  if (login !== 'example' || password !== 'example') {
-    throw new InvalidLoginOrPasswordError()
-  }
-
   const workflowId = await initAuthorizationWorkflow('Identity')
 
   await fetchAuth('Identity', workflowId, login)

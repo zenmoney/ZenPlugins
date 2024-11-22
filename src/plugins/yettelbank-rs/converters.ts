@@ -76,7 +76,7 @@ export function convertTransaction (apiTransaction: TransactionInfo, account: Ac
       {
         id: getOptString(apiTransaction, 'id') ?? null,
         account: { id: account.id },
-        invoice: { sum: amount, instrument: apiTransaction.currency},
+        invoice: null,
         sum: amount,
         fee: 0
       }
