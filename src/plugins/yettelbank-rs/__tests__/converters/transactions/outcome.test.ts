@@ -1,45 +1,36 @@
 import { convertTransaction } from '../../../converters'
 import { Account } from '../../../../../types/zenmoney'
+import { mockedTransactionsResponse, mockedAccountsResponse } from '../../../mocked_responses'
 
 describe('convertTransaction', () => {
   it.each([
     [
+      mockedTransactionsResponse[0],
       {
-        type: 'HOLD',
-        operationTime: '2018-01-05 09:10:34 GMT+3',
-        relation: 'CARD',
-        relationId: 'B7C94FAC',
-        amount: {
-          value: -3,
-          currency: {
-            shortName: 'USD',
-            symbol: '$'
-          }
-        },
-        accountAmount: {
-          value: -164.10,
-          currency: {
-            shortName: 'RUB',
-            symbol: 'руб'
-          }
-        },
-        description: 'DE BERLIN MCDONALDS'
+        id: mockedAccountsResponse[0].id,
+        title: mockedAccountsResponse[0].name,
+        type: 'ccard',
+        instrument: mockedAccountsResponse[0].currency,
+        syncIds: [
+          mockedAccountsResponse[0].id
+        ],
+        balance: mockedAccountsResponse[0].balance,
+        creditLimit: 0
       },
-      { id: 'B7C94FAC', instrument: 'RUB' },
       {
-        hold: true,
-        date: new Date('2018-01-05T06:10:34.000Z'),
+        hold: mockedTransactionsResponse[0].isPending,
+        date: mockedTransactionsResponse[0].date,
         movements: [
           {
             id: null,
-            account: { id: 'B7C94FAC' },
-            invoice: { sum: -3, instrument: 'USD' },
-            sum: -164.10,
+            account: { id: mockedAccountsResponse[0].id },
+            invoice: null,
+            sum: mockedTransactionsResponse[0].amount,
             fee: 0
           }
         ],
         merchant: {
-          fullTitle: 'DE BERLIN MCDONALDS',
+          fullTitle: mockedTransactionsResponse[0].title,
           mcc: null,
           location: null
         },
@@ -47,42 +38,35 @@ describe('convertTransaction', () => {
       }
     ],
     [
+      mockedTransactionsResponse[1],
       {
-        id: '7876123',
-        type: 'TRANSACTION',
-        operationTime: '2018-01-04 18:44:12 GMT+3',
-        debitingTime: '2018-01-07 12:21:07 GMT+3',
-        relation: 'ACCOUNT',
-        relationId: '4480910C',
-        amount: {
-          value: -50,
-          currency: {
-            shortName: 'USD',
-            symbol: '$'
-          }
-        },
-        accountAmount: {
-          value: -50,
-          currency: {
-            shortName: 'USD',
-            symbol: '$'
-          }
-        }
+        id: mockedAccountsResponse[0].id,
+        title: mockedAccountsResponse[0].name,
+        type: 'ccard',
+        instrument: mockedAccountsResponse[0].currency,
+        syncIds: [
+          mockedAccountsResponse[0].id
+        ],
+        balance: mockedAccountsResponse[0].balance,
+        creditLimit: 0
       },
-      { id: '4480910C', instrument: 'USD' },
       {
-        hold: false,
-        date: new Date('2018-01-04T15:44:12.000Z'),
+        hold: mockedTransactionsResponse[1].isPending,
+        date: mockedTransactionsResponse[1].date,
         movements: [
           {
-            id: '7876123',
-            account: { id: '4480910C' },
+            id: null,
+            account: { id: mockedAccountsResponse[0].id },
             invoice: null,
-            sum: -50,
+            sum: mockedTransactionsResponse[1].amount,
             fee: 0
           }
         ],
-        merchant: null,
+        merchant: {
+          fullTitle: mockedTransactionsResponse[1].title,
+          mcc: null,
+          location: null
+        },
         comment: null
       }
     ]

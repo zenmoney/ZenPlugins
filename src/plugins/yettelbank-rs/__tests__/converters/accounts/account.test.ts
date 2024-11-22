@@ -1,44 +1,27 @@
 import { convertAccounts } from '../../../converters'
+import { mockedAccountsResponse } from '../../../mocked_responses'
 
 describe('convertAccounts', () => {
   it.each([
     [
-      [
-        {
-          id: '4480910C',
-          transactionNode: 'p',
-          currency: {
-            shortName: 'USD',
-            symbol: '$',
-            rate: 54.60
-          },
-          product: 'Mastercard World Premium',
-          cba: '40817840401000898597',
-          moneyAmount: {
-            value: 2432.19
-          },
-          accountBalance: {
-            value: 2432.19
-          }
-        }
-      ],
+      mockedAccountsResponse,
       [
         {
           products: [
             {
-              id: '4480910C',
-              transactionNode: 'p'
+              id: mockedAccountsResponse[0].id,
+              transactionNode: ''
             }
           ],
           account: {
-            id: '40817840401000898597',
-            title: 'Mastercard World Premium',
+            id: mockedAccountsResponse[0].id,
+            title: mockedAccountsResponse[0].name,
             type: 'ccard',
-            instrument: 'USD',
+            instrument: mockedAccountsResponse[0].currency,
             syncIds: [
-              '40817840401000898597'
+              mockedAccountsResponse[0].id
             ],
-            balance: 2432.19,
+            balance: mockedAccountsResponse[0].balance,
             creditLimit: 0
           }
         }
