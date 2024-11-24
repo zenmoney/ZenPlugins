@@ -1,16 +1,20 @@
 import { FetchResponse } from '../../common/network'
-import { TemporaryUnavailableError } from '../../errors'
+import { TemporaryUnavailableError, TemporaryError } from '../../errors'
+import cheerio from 'cheerio'
 import * as fs from 'fs'
 import * as path from 'path'
 
 export function mergeCookies (currentCookieHeader: string, newCookieHeaders: string): string {
   const parseCookies = (cookieString: string): Record<string, string> => {
-    return cookieString.split(/,|;/).map(cookie => cookie.trim()).filter(cookie => cookie.includes('='))
-      .reduce<Record<string, string>>((acc, cookie) => {
-      const [name, value] = cookie.split('=')
-      acc[name.trim()] = value.trim()
-      return acc
-    }, {})
+    if (cookieString !== undefined && cookieString !== null && cookieString !== '') {
+      return cookieString.split(/,|;/).map(cookie => cookie.trim()).filter(cookie => cookie.includes('='))
+        .reduce<Record<string, string>>((acc, cookie) => {
+        const [name, value] = cookie.split('=')
+        acc[name.trim()] = value.trim()
+        return acc
+      }, {})
+    }
+    return {}
   }
 
   const cookies1 = parseCookies(currentCookieHeader)
@@ -43,9 +47,18 @@ export function checkResponseAndSetCookies (response: FetchResponse): void {
   setCookies(response)
 }
 
+const checkErrorInResponse = (body: unknown): string => {
+  const $ = cheerio.load(body as string)
+  return $('.common-error-msg').val()
+}
+
 export function checkResponseSuccess (response: FetchResponse): void {
   if (response.status !== 200) {
     throw new TemporaryUnavailableError()
+  }
+  const error = checkErrorInResponse(response.body)
+  if (error !== undefined && error !== null && error !== '') {
+    throw new TemporaryError(error)
   }
 }
 

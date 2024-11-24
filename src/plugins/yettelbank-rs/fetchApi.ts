@@ -1,5 +1,5 @@
 import { fetch, FetchOptions, FetchResponse } from '../../common/network'
-import { InvalidLoginOrPasswordError, ZPAPIError } from '../../errors'
+import { InvalidLoginOrPasswordError, TemporaryError } from '../../errors'
 import { getCookies, checkResponseAndSetCookies, checkResponseSuccess } from './helpers'
 import { AccountInfo, Preferences, Session, TransactionInfo } from './models'
 import { mockedAccountsResponse, mockedTransactionsResponse } from './mocked_responses'
@@ -7,10 +7,6 @@ import cheerio from 'cheerio'
 
 const baseUrl = 'https://online.mobibanka.rs/'
 const mockResponses = false
-
-export declare class AccountsInfoNotFound extends ZPAPIError {
-  constructor (message?: string)
-}
 
 async function fetchApi (url: string, options?: FetchOptions): Promise<FetchResponse> {
   return await fetch(baseUrl + url, options ?? {})
@@ -60,7 +56,14 @@ async function fetchAuth (url: string, workflowId: string, username: string): Pr
   }
   const response = await sendAuthRequest(url, workflowId, username, '')
 
-  checkResponseAndSetCookies(response)
+  try {
+    checkResponseAndSetCookies(response)
+  } catch (e) {
+    if (e instanceof TemporaryError) {
+      throw new InvalidLoginOrPasswordError(e.message)
+    }
+    throw e
+  }
 }
 
 // Send POST request with login and password
@@ -69,18 +72,15 @@ async function fetchLogin (url: string, workflowId: string, username: string, pa
     return
   }
 
-  const checkErrorInResponse = (body: unknown): string => {
-    const $ = cheerio.load(body as string)
-    return $('.common-error-msg').val()
-  }
-
   const response = await sendAuthRequest(url, workflowId, username, password)
 
-  checkResponseAndSetCookies(response)
-
-  const error = checkErrorInResponse(response.body)
-  if (error === '') {
-    throw new InvalidLoginOrPasswordError(error)
+  try {
+    checkResponseAndSetCookies(response)
+  } catch (e) {
+    if (e instanceof TemporaryError) {
+      throw new InvalidLoginOrPasswordError(e.message)
+    }
+    throw e
   }
 }
 
@@ -115,10 +115,9 @@ export function parseAccounts (body: unknown): AccountInfo[] {
       accountIds.push(accountNumber as string)
     }
   })
-
   const accounts = accountIds.map(id => extractAccountInfo($, id)).filter(Boolean)
   if (accounts.length === 0) {
-    throw new AccountsInfoNotFound('No accounts have been parsed')
+    throw new Error('No accounts have been parsed')
   }
   return accounts as AccountInfo[]
 }
