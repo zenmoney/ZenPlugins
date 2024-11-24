@@ -1,5 +1,7 @@
 import { FetchResponse } from '../../common/network'
 import { TemporaryUnavailableError } from '../../errors'
+import * as fs from 'fs'
+import * as path from 'path'
 
 export function mergeCookies (currentCookieHeader: string, newCookieHeaders: string): string {
   const parseCookies = (cookieString: string): Record<string, string> => {
@@ -44,5 +46,16 @@ export function checkResponseAndSetCookies (response: FetchResponse): void {
 export function checkResponseSuccess (response: FetchResponse): void {
   if (response.status !== 200) {
     throw new TemporaryUnavailableError()
+  }
+}
+
+export const loadHtmlFile = (fileName: string): string => {
+  const filePath = path.join(__dirname, fileName)
+  try {
+    const htmlString = fs.readFileSync(filePath, 'utf-8')
+    return htmlString
+  } catch (error) {
+    console.error('Error reading HTML file:', error)
+    return ''
   }
 }

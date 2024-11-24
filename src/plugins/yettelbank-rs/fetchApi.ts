@@ -8,7 +8,7 @@ import cheerio from 'cheerio'
 const baseUrl = 'https://online.mobibanka.rs/'
 const mockResponses = false
 
-declare class AccountsInfoNotFound extends ZPAPIError {
+export declare class AccountsInfoNotFound extends ZPAPIError {
   constructor (message?: string)
 }
 
@@ -86,7 +86,6 @@ async function fetchLogin (url: string, workflowId: string, username: string, pa
 
 function extractAccountInfo (loadedCheerio: cheerio.Root, accountId: string): AccountInfo | null {
   const accountElement = loadedCheerio(`#pie-stats-${accountId}`)
-
   if (accountElement.length === 0) {
     console.debug(`Account ${accountId} not found`)
     return null
@@ -106,20 +105,20 @@ function extractAccountInfo (loadedCheerio: cheerio.Root, accountId: string): Ac
   }
 }
 
-function parseAccounts (body: unknown): AccountInfo[] {
+export function parseAccounts (body: unknown): AccountInfo[] {
   const accountIds: string[] = []
   const $ = cheerio.load(body as string)
 
   $('#AccountPicker option').each((_, element) => {
     const accountNumber = $(element).attr('value')
-    if (accountNumber === null && accountNumber !== '') {
-      accountIds.push(accountNumber)
+    if (accountNumber !== null && accountNumber !== '') {
+      accountIds.push(accountNumber as string)
     }
   })
 
   const accounts = accountIds.map(id => extractAccountInfo($, id)).filter(Boolean)
   if (accounts.length === 0) {
-    throw new AccountsInfoNotFound()
+    throw new AccountsInfoNotFound('No accounts have been parsed')
   }
   return accounts as AccountInfo[]
 }
@@ -141,7 +140,7 @@ async function fetchAccounts (): Promise<AccountInfo[]> {
   return parseAccounts(response.body)
 }
 
-function parseTransactions (body: unknown, pending: boolean): TransactionInfo[] {
+export function parseTransactions (body: unknown, pending: boolean): TransactionInfo[] {
   function parseDate (dateString: string): Date {
     const [day, month, year] = dateString.split('.').map(Number)
     return new Date(year, month - 1, day)
