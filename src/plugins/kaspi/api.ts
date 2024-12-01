@@ -31,18 +31,35 @@ function parseAccountId (text: string): string {
 }
 
 function parseBalance (text: string): Amount {
-  const match = getRegexpMatch([
-    /Доступно на (\d\d\.?){3}:([-\d\s,.]+)([^а-яА-Я]*)/,
-    /Card balance (\d\d\.?){3}:([-\d\s,.]+)([^a-zA-Z]*)/,
-    /(\d\d\.?){3}ж. қолжетімді:([-\d\s,.]+)([^а-яА-Я]*)/,
-    /На Депозите\s*(\d\d\.?){3}:(\$?[-\d\s,.]+)([^а-яА-Я]*)/
+  let match = getRegexpMatch([
+    /Доступно\s+на\s+(\d{2}[-./]\d{2}[-./]\d{2,4}):\s*(?:\+\s)?(-?[\d\s.,]*\d)\s*([а-яА-Яa-zA-Z]{1,3}|\W)/,
+    /Card\s+balance\s+(\d{2}[-./]\d{2}[-./]\d{2,4}):\s*(?:\+\s)?(-?[\d\s.,]*\d)\s*([а-яА-Яa-zA-Z]{1,3}|\W)/,
+    /(\d{2}[-./]\d{2}[-./]\d{2,4})ж. қолжетімді:\s*(?:\+\s)?(-?[\d\s.,]*\d)\s*([а-яА-Яa-zA-Z]{1,3}|\W)/,
+    /На\s+Депозите\s*(\d{2}[-./]\d{2}[-./]\d{2,4}):\s*(?:\+\s)?(-?[\d\s.,]*\d)\s*([а-яА-Яa-zA-Z]{1,3}|\W)/
   ], text)
-  assert(typeof match?.[2] === 'string', 'Can\'t parse balance from account statement')
-  const amountStr = [
-    match[2].replace(',', '.').replace(/\s/g, ''),
-    match[3].trim()
-  ].filter(str => str !== '').join(' ')
-  return parseAmount(amountStr)
+  if (match?.[2] !== undefined) {
+    const amountStr = [
+      match[2].replace(',', '.').replace(/\s/g, ''),
+      match[3].trim()
+    ].filter(str => str !== '').join(' ')
+    return parseAmount(amountStr)
+  }
+
+  match = getRegexpMatch([
+    /Доступно\s+на\s+(\d{2}[-./]\d{2}[-./]\d{2,4}):\s*(?:\+\s)?([а-яА-Яa-zA-Z]{1,3}|\W)\s*(-?[\d\s.,]*\d)/,
+    /Card\s+balance\s+(\d{2}[-./]\d{2}[-./]\d{2,4}):\s*(?:\+\s)?([а-яА-Яa-zA-Z]{1,3}|\W)\s*(-?[\d\s.,]*\d)/,
+    /(\d{2}[-./]\d{2}[-./]\d{2,4})ж. қолжетімді:\s*(?:\+\s)?([а-яА-Яa-zA-Z]{1,3}|\W)\s*(-?[\d\s.,]*\d)/,
+    /На\s+Депозите\s*(\d{2}[-./]\d{2}[-./]\d{2,4}):\s*(?:\+\s)?([а-яА-Яa-zA-Z]{1,3}|\W)\s*(-?[\d\s.,]*\d)/
+  ], text)
+  if (match?.[3] !== undefined) {
+    const amountStr = [
+      match[3].replace(',', '.').replace(/\s/g, ''),
+      match[2].trim()
+    ].filter(str => str !== '').join(' ')
+    return parseAmount(amountStr)
+  }
+
+  assert(false, 'Can\'t parse balance from account statement')
 }
 
 function getStatementDate (text: string): string {
