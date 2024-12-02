@@ -155,11 +155,18 @@ export function parseTransactions (body: unknown, pending: boolean): Transaction
       const date = $(transactionTable).find('.transaction-date').text().trim()
       const [amount, currency] = $(transactionTable).find('.transaction-amount').text().trim().split(' ')
 
+      let transactionAmount = parseFloat(amount.replace(/,/g, ''))
+
+      const transactionArrowClass = $(transactionTable).find('.transaction-arrow').attr('class')
+      if (transactionArrowClass !== undefined && transactionArrowClass !== '' && transactionArrowClass.includes('expense')) {
+        transactionAmount *= -1
+      }
+
       transactions.push({
         isPending: pending,
         date: parseDate(date),
         title: title,
-        amount: parseFloat(amount.replace(/,/g, '')),
+        amount: transactionAmount,
         currency: currency
       })
     })
