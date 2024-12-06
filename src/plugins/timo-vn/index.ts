@@ -11,7 +11,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
     const auth: Auth = {
       deviceReg: ''
     }
-    auth.deviceReg = generateRandomString(32, 'abcdef0123456789') + ':WEB:WEB:246:WEB:desktop:zenmoney'
+    auth.deviceReg = generateRandomString(32, 'abcdef0123456789') + ':WEB:WEB:250:WEB:desktop:zenmoney'
     ZenMoney.setData('auth', auth)
     ZenMoney.saveData()
   }
