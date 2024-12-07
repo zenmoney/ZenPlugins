@@ -35,8 +35,8 @@ export async function login (preferences: Preferences, auth: Auth): Promise<Sess
 
     case ApiResponseCode.TECHNICAL_DIFFICULT:
       throw new TemporaryError('Connection to bank is temporary unavailable')
-    
-    case ApiResponseCode.TECHNICAL_DIFFICULT:
+
+    case ApiResponseCode.NEED_UPGRADE_APP_VERSION:
       throw new TemporaryError('NEED UPGRADE APP VERSION')
 
     default:
