@@ -18,7 +18,7 @@ export async function login (preferences: Preferences, auth: Auth): Promise<Sess
   switch (getNumber(response.body, 'code')) {
     case ApiResponseCode.SUCCESS: {
       session.token = getString(response.body, 'data.token')
-      session.deviceKey = getString(response.body, 'data.timoDeviceId') + ':WEB:WEB:246:WEB:desktop:zenmoney'
+      session.deviceKey = getString(response.body, 'data.timoDeviceId') + ':WEB:WEB:250:WEB:desktop:zenmoney'
       break
     }
 
@@ -29,12 +29,15 @@ export async function login (preferences: Preferences, auth: Auth): Promise<Sess
       response = await fetchSendOtp(auth, otpCode, token, refNo)
 
       session.token = getString(response.body, 'data.token')
-      session.deviceKey = getString(response.body, 'data.timoDeviceId') + ':WEB:WEB:246:WEB:desktop:zenmoney'
+      session.deviceKey = getString(response.body, 'data.timoDeviceId') + ':WEB:WEB:250:WEB:desktop:zenmoney'
       break
     }
 
     case ApiResponseCode.TECHNICAL_DIFFICULT:
       throw new TemporaryError('Connection to bank is temporary unavailable')
+
+    case ApiResponseCode.NEED_UPGRADE_APP_VERSION:
+      throw new TemporaryError('NEED UPGRADE APP VERSION')
 
     default:
       throw new ZPAPIError('Authorization failed', false, false)

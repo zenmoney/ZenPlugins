@@ -35,6 +35,7 @@ export enum ApiResponseCode {
   SUCCESS = 200,
   TECHNICAL_DIFFICULT = 500,
   OTP_REQUIRED = 6001,
+  NEED_UPGRADE_APP_VERSION = 6777,
 }
 
 export enum AccountType {
