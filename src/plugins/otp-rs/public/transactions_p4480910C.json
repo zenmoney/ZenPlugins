@@ -1,0 +1,24 @@
+[
+  {
+    "id": "7876123",
+    "type": "TRANSACTION",
+    "operationTime": "2018-01-04 18:44:12 GMT+3",
+    "debitingTime": "2018-01-07 12:21:07 GMT+3",
+    "relation": "ACCOUNT",
+    "relationId": "4480910C",
+    "amount": {
+      "value": -50,
+      "currency": {
+        "shortName": "USD",
+        "symbol": "$"
+      }
+    },
+    "accountAmount": {
+      "value": -50,
+      "currency": {
+        "shortName": "USD",
+        "symbol": "$"
+      }
+    }
+  }
+]

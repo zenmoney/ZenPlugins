@@ -1,0 +1,23 @@
+[
+  {
+    "type": "HOLD",
+    "operationTime": "2018-01-05 09:10:34 GMT+3",
+    "relation": "CARD",
+    "relationId": "B7C94FAC",
+    "amount": {
+      "value": -3,
+      "currency": {
+        "shortName": "USD",
+        "symbol": "$"
+      }
+    },
+    "accountAmount": {
+      "value": -164.10,
+      "currency": {
+        "shortName": "RUB",
+        "symbol": "руб"
+      }
+    },
+    "description": "DE BERLIN MCDONALDS"
+  }
+]
