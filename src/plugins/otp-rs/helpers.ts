@@ -1,3 +1,4 @@
+import { FetchResponse } from "../../common/network"
 import { TemporaryUnavailableError } from "../../errors"
 import { setCookies } from "../yettelbank-rs/helpers"
 

@@ -1,11 +1,9 @@
 import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
-import { getString } from '../../types/get'
-import { InvalidLoginOrPasswordError } from '../../errors'
-import { Preferences, Product, Session } from './models'
-import { isArray } from 'lodash'
-import { getCookies, setCookies } from '../yettelbank-rs/helpers'
+import { OtpTransaction, Preferences, Session } from './models'
+import { getCookies } from '../yettelbank-rs/helpers'
 import { checkResponseAndSetCookies } from './helpers'
-import { parseAccounts } from './converters'
+import { parseAccounts, parseTransactions } from './converters'
+import { OtpAccount } from './models'
 
 const baseUrl = 'https://ebank.otpbanka.rs/RetailV4/Protected/Services/'
 
@@ -27,9 +25,7 @@ async function fetchLogin (username: string, otp: string) {
   checkResponseAndSetCookies(response)
 }
 
-
-
-async function fetchAccounts(login: string) {
+async function fetchAccounts(login: string):  Promise<OtpAccount[]> {
   const response = await fetchApi("DataService.svc/GetAllAccountBalance", 
     {
       method: 'POST',
@@ -47,18 +43,43 @@ async function fetchAccounts(login: string) {
     return parseAccounts(response.body as string[][])
 }
 
+async function fetchTransactions(accountNumber: string, currencyCode: string): Promise<OtpTransaction[]> {
+  const response = await fetchApi("DataService.svc/GetTransactionalAccountTurnover", 
+    {
+      method: 'POST',
+      body: {
+        "accountNumber": accountNumber,
+        "productCoreID": "1",
+        "filterParam": {
+            "CurrencyCodeNumeric": currencyCode,
+            "FromDate": "17.11.2024", // todo get fetching period from preferences
+            "ToDate": "17.12.2024",
+            "ItemType": "",
+            "ItemCount": "",
+            "FromAmount": 0,
+            "ToAmount": 0
+        },
+        "gridName": "RetailAccountTurnoverTransactionPreviewMasterDetail-L"
+    },
+      headers: {
+        Cookies: getCookies()
+      },
+      sanitizeResponseLog: { headers: { 'set-cookie': true } }
+    })
+    
+    checkResponseAndSetCookies(response)
+    return parseTransactions(response.body as string[][])
+}
+
 export async function fetchAuthorization ({ login, password }: Preferences): Promise<{cookieHeader: string, login: string}> {
   await fetchLogin(login, password)
   return { cookieHeader: getCookies(), login: login.slice(3) }
 }
 
-export async function fetchAllAccounts (session: Session): Promise<unknown[]> {
+export async function fetchAllAccounts (session: Session): Promise<OtpAccount[]> {
   return await fetchAccounts(session.login)
 }
 
-export async function fetchProductTransactions ({ id, transactionNode }: Product, session: Session): Promise<unknown[]> {
-  const response = await fetchApi(`transactions_${transactionNode}${id}.json`)
-
-  assert(isArray(response.body), 'cant get transactions array', response)
-  return response.body
+export async function fetchProductTransactions (accountNumber: string, currencyCode: string, session: Session): Promise<unknown[]> {
+  return await fetchTransactions(accountNumber, currencyCode)
 }
