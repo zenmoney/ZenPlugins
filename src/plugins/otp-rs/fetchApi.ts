@@ -4,6 +4,8 @@ import { InvalidLoginOrPasswordError } from '../../errors'
 import { Preferences, Product, Session } from './models'
 import { isArray } from 'lodash'
 import { getCookies, setCookies } from '../yettelbank-rs/helpers'
+import { checkResponseAndSetCookies } from './helpers'
+import { parseAccounts } from './converters'
 
 const baseUrl = 'https://ebank.otpbanka.rs/RetailV4/Protected/Services/'
 
@@ -11,8 +13,8 @@ async function fetchApi (url: string, options?: FetchOptions): Promise<FetchResp
   return await fetchJson(baseUrl + url, options ?? {})
 }
 
-async function fetchLogin (url: string, username: string, otp: string) {
-  const response = await fetchApi(url, {
+async function fetchLogin (username: string, otp: string) {
+  const response = await fetchApi("RetailLoginService.svc/LoginUO", {
     method: 'POST',
     body: {
       'username': username,
@@ -22,33 +24,36 @@ async function fetchLogin (url: string, username: string, otp: string) {
     },
     sanitizeResponseLog: { headers: { 'set-cookie': true } }
   })
-  setCookies(response)
+  checkResponseAndSetCookies(response)
 }
 
 
 
-async function fetchAccounts(url: string, username: string) {
-  const response = await fetchApi(url, 
+async function fetchAccounts(login: string) {
+  const response = await fetchApi("DataService.svc/GetAllAccountBalance", 
     {
       method: 'POST',
+      body: {
+          "sid": login,
+          "gridName": "RetailAccountBalancePreviewFlat-L"
+      },
       headers: {
         Cookies: getCookies()
-      }
-    }
-
-  )
+      },
+      sanitizeResponseLog: { headers: { 'set-cookie': true } }
+    })
+    
+    checkResponseAndSetCookies(response)
+    return parseAccounts(response.body as string[][])
 }
 
 export async function fetchAuthorization ({ login, password }: Preferences): Promise<{cookieHeader: string, login: string}> {
-  await fetchLogin("RetailLoginService.svc/LoginUO", login, password)
+  await fetchLogin(login, password)
   return { cookieHeader: getCookies(), login: login.slice(3) }
 }
 
 export async function fetchAllAccounts (session: Session): Promise<unknown[]> {
-  const resp = await fetchApi('accounts.json')
-  assert(isArray(resp.body), 'cant get accounts array', resp)
-  return resp.body
-  //return await fetchAccounts("DataService.svc/GetAllAccountBalance", session.login)
+  return await fetchAccounts(session.login)
 }
 
 export async function fetchProductTransactions ({ id, transactionNode }: Product, session: Session): Promise<unknown[]> {
