@@ -1,6 +1,7 @@
 import { Account, ScrapeFunc, Transaction } from '../../types/zenmoney'
-import {  login } from './api'
+import {  fetchAccounts, fetchTransactions, login } from './api'
 import { convertAccounts, convertTransaction } from './converters'
+import { Currency } from './helpers'
 import { Auth, Preferences } from './models'
 
 export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, toDate }) => {
@@ -11,18 +12,18 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
 
   const accounts: Account[] = []
   const transactions: Transaction[] = []
-  // await Promise.all(convertAccounts(await fetchAccounts(session)).map(async ({ account, products }) => {
-  //   accounts.push(account)
-  //   if (ZenMoney.isAccountSkipped(account.id)) {
-  //     return
-  //   }
-  //   await Promise.all(products.map(async product => {
-  //     const apiTransactions = await fetchTransactions(session, product, fromDate, toDate!)
-  //     for (const apiTransaction of apiTransactions) {
-  //       transactions.push(convertTransaction(apiTransaction, account))
-  //     }
-  //   }))
-  // }))
+  await Promise.all(convertAccounts(await fetchAccounts(session)).map(async ({ account, products }) => {
+    accounts.push(account)
+    if (ZenMoney.isAccountSkipped(account.id)) {
+      return
+    }
+    await Promise.all(products.map(async product => {
+      const apiTransactions = await fetchTransactions(session, product.id, account.instrument as keyof typeof Currency, fromDate, toDate!)
+      for (const apiTransaction of apiTransactions) {
+        transactions.push(convertTransaction(apiTransaction, account))
+      }
+    }))
+  }))
   return {
     accounts,
     transactions

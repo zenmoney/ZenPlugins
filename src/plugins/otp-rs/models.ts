@@ -29,11 +29,6 @@ export interface ConvertResult {
   account: AccountOrCard
 }
 
-enum Currency {
-  RSD = "941",
-  EUR = "978",
-}
-
 export interface OtpAccount extends AccountOrCard {
   CurrencyCode: string
   CurrencyCodeNumeric: string

@@ -1,7 +1,7 @@
 import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
 import { OtpTransaction, Preferences, Session } from './models'
 import { getCookies } from '../yettelbank-rs/helpers'
-import { checkResponseAndSetCookies } from './helpers'
+import { checkResponseAndSetCookies, Currency, getCurrencyCodeNumeric } from './helpers'
 import { parseAccounts, parseTransactions } from './converters'
 import { OtpAccount } from './models'
 
@@ -80,6 +80,6 @@ export async function fetchAllAccounts (session: Session): Promise<OtpAccount[]>
   return await fetchAccounts(session.login)
 }
 
-export async function fetchProductTransactions (accountNumber: string, currencyCode: string, session: Session): Promise<unknown[]> {
-  return await fetchTransactions(accountNumber, currencyCode)
+export async function fetchProductTransactions (session: Session, accountNumber: string, currency: keyof typeof Currency, fromDate: Date, toDate: Date): Promise<OtpTransaction[]> {
+  return await fetchTransactions(accountNumber, getCurrencyCodeNumeric(currency))
 }

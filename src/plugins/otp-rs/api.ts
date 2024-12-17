@@ -1,6 +1,7 @@
-import { Auth, Preferences, Session } from './models'
+import { Auth, OtpAccount, OtpTransaction, Preferences, Session } from './models'
 import { fetchAllAccounts, fetchAuthorization, fetchProductTransactions } from './fetchApi'
 import { InvalidLoginOrPasswordError } from '../../errors'
+import { Currency } from './helpers'
 
 export async function login (preferences: Preferences, auth?: Auth): Promise<Session> {
   if (auth != null) {
@@ -17,10 +18,10 @@ export async function login (preferences: Preferences, auth?: Auth): Promise<Ses
   return { auth:  { cookieHeader: authorization.cookieHeader} , login: authorization.login}
 }
 
-// export async function fetchAccounts (session: Session): Promise<AccountInfo[]> {
-//   return await fetchAllAccounts(session)
-// }
+export async function fetchAccounts (session: Session): Promise<OtpAccount[]> {
+  return await fetchAllAccounts(session)
+}
 
-// export async function fetchTransactions (session: Session, accountId: string, fromDate: Date, toDate: Date): Promise<TransactionInfo[]> {
-//   return await fetchProductTransactions(, session)
-// }
+export async function fetchTransactions (session: Session, accountNumber: string, currency: keyof typeof Currency, fromDate: Date, toDate: Date): Promise<OtpTransaction[]> {
+  return await fetchProductTransactions(session, accountNumber, currency, fromDate, toDate)
+}

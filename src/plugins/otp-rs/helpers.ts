@@ -9,3 +9,11 @@ export function checkResponseAndSetCookies (response: FetchResponse): void {
     setCookies(response)
   }
 
+export enum Currency  {
+    EUR = "978",
+    RSD = "941",
+}
+
+export function getCurrencyCodeNumeric (currency: keyof typeof Currency): string {
+    return Currency[currency]
+}
