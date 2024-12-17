@@ -139,3 +139,55 @@ function parseTransaction (apiTransaction: string[]): OtpTransaction {
   }
   return otpTransaction
 }
+
+// CHATGPT
+
+export function convertAccount (account: any[]): ZenmoneyAccount {
+  return {
+    id: account[1], // Уникальный идентификатор
+    title: account[2], // Название аккаунта
+    balance: parseFloat(account[4]), // Баланс
+    currency: account[3], // Валюта
+    type: 'checking', // По умолчанию "checking"
+    syncID: [account[1]] // Дополнительный идентификатор для синхронизации
+  }
+}
+
+/**
+ * Метод для перебора массива ответа и конвертации всех аккаунтов
+ * @param apiResponse - Ответ от эндпоинта получения аккаунтов
+ * @returns Массив аккаунтов в формате Zenmoney
+ */
+export function convertAllAccounts (apiResponse: any[][]): ZenmoneyAccount[] {
+  return apiResponse.map(convertAccount)
+}
+
+export function convertTransaction (transaction: any[]): ZenmoneyTransaction {
+  return {
+    id: transaction[8], // Уникальный идентификатор
+    date: transaction[3], // Дата транзакции
+    description: transaction[4], // Описание транзакции
+    amount: parseFloat(transaction[9]) * -1, // Сумма транзакции (в отрицательном виде для расходов)
+    currency: transaction[2], // Валюта транзакции
+    accountId: transaction[17], // ID аккаунта
+    payee: transaction[25] || '', // Получатель (если есть)
+    category: transaction[27] || 'Не указано' // Категория (если есть)
+  }
+}
+
+/**
+ * Конвертация массива транзакций
+ * @param transactionsResponse - Массив массивов данных о транзакциях
+ * @returns Массив ZenmoneyTransaction
+ */
+export function convertAllTransactions (transactionsResponse: any[][][]): ZenmoneyTransaction[] {
+  const transactions: ZenmoneyTransaction[] = []
+
+  transactionsResponse.forEach((group) => {
+    group.forEach((transaction) => {
+      transactions.push(convertTransaction(transaction))
+    })
+  })
+
+  return transactions
+}
