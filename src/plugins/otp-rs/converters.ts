@@ -1,6 +1,6 @@
 import { Account, AccountType, Amount, Transaction } from '../../types/zenmoney'
 import { getNumber, getOptNumber, getOptString, getString } from '../../types/get'
-import { AccountBalanceResponse, ConvertResult, OtpAccount } from './models'
+import { AccountBalanceResponse, ConvertResult, OtpAccount, OtpTransaction } from './models'
 
 export function convertAccounts (apiAccounts: unknown[]): ConvertResult[] {
   const accountsByCba: Record<string, ConvertResult | undefined> = {}
@@ -90,6 +90,17 @@ function parseAmount (data: unknown, path: string): Amount {
   }
 }
 
+export function parseAccounts (apiAccounts: string[][]): OtpAccount[] {
+  const accounts: OtpAccount[] = []
+  for (const apiAccount of apiAccounts) {
+    const res = parseAccount(apiAccount)
+    if (res != null) {
+      accounts.push(res)
+    }
+  }
+  return accounts
+}
+
 function parseAccount (apiAccount: string[]): OtpAccount {
   const account: OtpAccount = {
     IBANNumber: apiAccount[1],
@@ -106,4 +117,25 @@ function parseAccount (apiAccount: string[]): OtpAccount {
     title: apiAccount[2]
   }
   return account
+}
+
+export function parseTransactions (apiTransactions: string[][]): OtpTransaction[] {
+  const transactions: OtpTransaction[] = []
+  for (const apiTransaction of apiTransactions[1]) {
+    const res = parseTransaction(apiTransaction)
+    if (res != null) {
+      transactions.push(res)
+    }
+  }
+  return transactions
+}
+
+function parseTransaction (apiTransaction: string[]): OtpTransaction {
+  const otpTransaction: OtpTransaction = {
+    date: Date.parse(apiTransaction[3]),
+    title: apiTransaction[4],
+    amount: parseInt(apiTransaction[9]),
+    currency: apiTransaction[2]
+  }
+  return otpTransaction
 }

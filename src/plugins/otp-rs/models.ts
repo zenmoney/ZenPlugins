@@ -1,4 +1,4 @@
-import { AccountOrCard } from '../../types/zenmoney'
+import { AccountOrCard, Transaction } from '../../types/zenmoney'
 
 // Stored in persistent storage
 export interface Auth {
@@ -39,6 +39,9 @@ export interface OtpAccount extends AccountOrCard {
   AccountNumber: string
   Description: string | null
   AvailableBalance: number
+}
+
+export interface OtpTransaction extends Transaction{
 }
 
 export interface AccountBalanceResponse {
