@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
-    <id>example</id>
+    <id>otp-rs</id>
     <company>0</company>
     <description>
-        Synchronization plugin example.
-        Input your login and password from the bank.
+        Use your login and one-time-password from ebank.otpbanka.rs
     </description>
     <version>1.0</version>
     <build>1</build>
