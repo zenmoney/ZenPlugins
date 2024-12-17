@@ -9,7 +9,7 @@ export interface Auth {
 // authorized requests, e.g. socket handles, session tokens
 // Not stored!
 export interface Session {
-  auth: Auth,
+  auth: Auth
   login: string
 }
 
@@ -27,4 +27,47 @@ export interface Product {
 export interface ConvertResult {
   products: Product[]
   account: AccountOrCard
+}
+
+export interface OtpAccount extends AccountOrCard {
+  CurrencyCode: string
+  CurrencyCodeNumeric: string
+  BlockedAmount: number | null
+  IBANNumber: string | null
+  AccountID: number
+  Balance: number
+  AccountNumber: string
+  Description: string | null
+  AvailableBalance: number
+}
+
+export interface AccountBalanceResponse {
+  CurrencyCode: string
+  // AccountType: string
+  // IsEbankingAccount: string
+  // LastChangeAmount: number
+  // ID: number
+  CurrencyCodeNumeric: string
+  // LastChangeType: string
+  // LastChangeDate: string
+  BlockedAmount: number | null
+  // AccountCustomName: string | null
+  // SubsystemProductID: number | null
+  // fwStatus: number
+  // IsCASRegistrationForbidden: number
+  IBANNumber: string | null
+  // fwNamespace: string
+  // ProductOrder: string | null
+  // Alias: string | null
+  AccountID: number
+  // BansExist: number
+  Balance: number
+  AccountNumber: string
+  // IsOwner: boolean
+  Description: string | null
+  // Blocked: string
+  // FPAccountAllowed: boolean
+  // ProductCodeCore: string
+  AvailableBalance: number
+  // fwType: string
 }

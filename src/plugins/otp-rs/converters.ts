@@ -1,6 +1,6 @@
 import { Account, AccountType, Amount, Transaction } from '../../types/zenmoney'
 import { getNumber, getOptNumber, getOptString, getString } from '../../types/get'
-import { ConvertResult } from './models'
+import { AccountBalanceResponse, ConvertResult, OtpAccount } from './models'
 
 export function convertAccounts (apiAccounts: unknown[]): ConvertResult[] {
   const accountsByCba: Record<string, ConvertResult | undefined> = {}
@@ -88,4 +88,22 @@ function parseAmount (data: unknown, path: string): Amount {
     sum: getNumber(data, `${path}.value`),
     instrument: getString(data, `${path}.currency.shortName`)
   }
+}
+
+function parseAccount (apiAccount: string[]): OtpAccount {
+  const account: OtpAccount = {
+    IBANNumber: apiAccount[1],
+    AccountID: parseInt(apiAccount[1]),
+    AccountNumber: apiAccount[1],
+    CurrencyCode: apiAccount[3],
+    Balance: parseInt(apiAccount[4]),
+    AvailableBalance: parseInt(apiAccount[5]),
+    BlockedAmount: parseInt(apiAccount[19]),
+    Description: apiAccount[2],
+    CurrencyCodeNumeric: apiAccount[14],
+    id: apiAccount[1],
+    type: AccountType.checking,
+    title: apiAccount[2]
+  }
+  return account
 }
