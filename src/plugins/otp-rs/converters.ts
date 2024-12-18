@@ -103,25 +103,18 @@ export function parseAccounts (apiAccounts: string[][]): OtpAccount[] {
 
 function parseAccount (apiAccount: string[]): OtpAccount {
   const account: OtpAccount = {
-    IBANNumber: apiAccount[1],
-    AccountID: parseInt(apiAccount[1]),
-    AccountNumber: apiAccount[1],
-    CurrencyCode: apiAccount[3],
-    Balance: parseInt(apiAccount[4]),
-    AvailableBalance: parseInt(apiAccount[5]),
-    BlockedAmount: parseInt(apiAccount[19]),
-    Description: apiAccount[2],
-    CurrencyCodeNumeric: apiAccount[14],
-    id: apiAccount[1],
-    type: AccountType.checking,
-    title: apiAccount[2]
+    accountNumber: apiAccount[1],
+    description: apiAccount[2],
+    currencyCode: apiAccount[3],
+    balance: parseFloat(apiAccount[5]),
+    currencyCodeNumeric: apiAccount[14]
   }
   return account
 }
 
 export function parseTransactions (apiTransactions: string[][]): OtpTransaction[] {
   const transactions: OtpTransaction[] = []
-  for (const apiTransaction of apiTransactions[1]) {
+  for (const apiTransaction of apiTransactions) {
     const res = parseTransaction(apiTransaction)
     if (res != null) {
       transactions.push(res)
@@ -131,63 +124,18 @@ export function parseTransactions (apiTransactions: string[][]): OtpTransaction[
 }
 
 function parseTransaction (apiTransaction: string[]): OtpTransaction {
+  const parseDate = (dateString: string): Date => {
+    const [datePart, _] = dateString.split(" ");
+    const [day, month, year] = datePart.split(".").map(Number);
+    return new Date(year, month - 1, day);
+  };
+
   const otpTransaction: OtpTransaction = {
-    date: Date.parse(apiTransaction[3]),
+    date: parseDate(apiTransaction[3]),
     title: apiTransaction[4],
-    amount: parseInt(apiTransaction[9]),
-    currency: apiTransaction[2]
+    amount: parseFloat(apiTransaction[9]),
+    currencyCode: apiTransaction[2],
+    currencyCodeNumeric: apiTransaction[1]
   }
   return otpTransaction
-}
-
-// CHATGPT
-
-export function convertAccount (account: any[]): ZenmoneyAccount {
-  return {
-    id: account[1], // Уникальный идентификатор
-    title: account[2], // Название аккаунта
-    balance: parseFloat(account[4]), // Баланс
-    currency: account[3], // Валюта
-    type: 'checking', // По умолчанию "checking"
-    syncID: [account[1]] // Дополнительный идентификатор для синхронизации
-  }
-}
-
-/**
- * Метод для перебора массива ответа и конвертации всех аккаунтов
- * @param apiResponse - Ответ от эндпоинта получения аккаунтов
- * @returns Массив аккаунтов в формате Zenmoney
- */
-export function convertAllAccounts (apiResponse: any[][]): ZenmoneyAccount[] {
-  return apiResponse.map(convertAccount)
-}
-
-export function convertTransaction (transaction: any[]): ZenmoneyTransaction {
-  return {
-    id: transaction[8], // Уникальный идентификатор
-    date: transaction[3], // Дата транзакции
-    description: transaction[4], // Описание транзакции
-    amount: parseFloat(transaction[9]) * -1, // Сумма транзакции (в отрицательном виде для расходов)
-    currency: transaction[2], // Валюта транзакции
-    accountId: transaction[17], // ID аккаунта
-    payee: transaction[25] || '', // Получатель (если есть)
-    category: transaction[27] || 'Не указано' // Категория (если есть)
-  }
-}
-
-/**
- * Конвертация массива транзакций
- * @param transactionsResponse - Массив массивов данных о транзакциях
- * @returns Массив ZenmoneyTransaction
- */
-export function convertAllTransactions (transactionsResponse: any[][][]): ZenmoneyTransaction[] {
-  const transactions: ZenmoneyTransaction[] = []
-
-  transactionsResponse.forEach((group) => {
-    group.forEach((transaction) => {
-      transactions.push(convertTransaction(transaction))
-    })
-  })
-
-  return transactions
 }

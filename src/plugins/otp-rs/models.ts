@@ -29,19 +29,20 @@ export interface ConvertResult {
   account: AccountOrCard
 }
 
-export interface OtpAccount extends AccountOrCard {
-  CurrencyCode: string
-  CurrencyCodeNumeric: string
-  BlockedAmount: number | null
-  IBANNumber: string | null
-  AccountID: number
-  Balance: number
-  AccountNumber: string
-  Description: string | null
-  AvailableBalance: number
+export interface OtpAccount {
+  accountNumber: string
+  description: string
+  currencyCode: string
+  currencyCodeNumeric: string
+  balance: number
 }
 
-export interface OtpTransaction extends Transaction{
+export interface OtpTransaction {
+  title: string,
+  currencyCode: string, 
+  currencyCodeNumeric: string,
+  date: Date,
+  amount: number
 }
 
 export interface AccountBalanceResponse {
