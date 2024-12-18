@@ -1,8 +1,8 @@
-import { Account, AccountType, Amount, Transaction } from '../../types/zenmoney'
-import { getNumber, getOptNumber, getOptString, getString } from '../../types/get'
-import { AccountBalanceResponse, ConvertResult, OtpAccount, OtpTransaction } from './models'
+import { Account, AccountType, Transaction } from '../../types/zenmoney'
+import { getOptNumber, getOptString } from '../../types/get'
+import { ConvertResult, OtpAccount, OtpTransaction } from './models'
 
-export function convertAccounts (apiAccounts: unknown[]): ConvertResult[] {
+export function convertAccounts (apiAccounts: OtpAccount[]): ConvertResult[] {
   const accountsByCba: Record<string, ConvertResult | undefined> = {}
   const accounts: ConvertResult[] = []
 
@@ -15,9 +15,9 @@ export function convertAccounts (apiAccounts: unknown[]): ConvertResult[] {
   return accounts
 }
 
-function convertAccount (apiAccount: unknown, accountsByCba: Record<string, ConvertResult | undefined>): ConvertResult | null {
-  const cba = getString(apiAccount, 'cba')
-  const balance = getNumber(apiAccount, 'accountBalance.value')
+function convertAccount (apiAccount: OtpAccount, accountsByCba: Record<string, ConvertResult | undefined>): ConvertResult | null {
+  const cba = apiAccount.accountNumber
+  const balance = apiAccount.balance
   let newAccount = false
   let account = accountsByCba[cba]
   if (!account) {
@@ -26,8 +26,8 @@ function convertAccount (apiAccount: unknown, accountsByCba: Record<string, Conv
       account: {
         id: cba,
         type: AccountType.ccard,
-        title: getOptString(apiAccount, 'product') ?? cba,
-        instrument: getString(apiAccount, 'currency.shortName'),
+        title: apiAccount.description ?? cba,
+        instrument: apiAccount.currencyCode,
         balance,
         creditLimit: 0,
         syncIds: [
@@ -39,8 +39,8 @@ function convertAccount (apiAccount: unknown, accountsByCba: Record<string, Conv
     newAccount = true
   }
   account.products.push({
-    id: getString(apiAccount, 'id'),
-    transactionNode: getString(apiAccount, 'transactionNode')
+    id: apiAccount.accountNumber,
+    transactionNode: ''
   })
 
   const pan = getOptString(apiAccount, 'pan')
@@ -55,20 +55,19 @@ function convertAccount (apiAccount: unknown, accountsByCba: Record<string, Conv
   return newAccount ? account : null
 }
 
-export function convertTransaction (apiTransaction: unknown, account: Account): Transaction {
-  const description = getOptString(apiTransaction, 'description')
-  const accountAmount = parseAmount(apiTransaction, 'accountAmount')
-  const invoice = parseAmount(apiTransaction, 'amount')
+export function convertTransaction (apiTransaction: OtpTransaction, account: Account): Transaction {
+  const description = apiTransaction.title
+  const accountAmount = apiTransaction.amount
 
   return {
-    hold: getString(apiTransaction, 'type') !== 'TRANSACTION',
-    date: new Date(getString(apiTransaction, 'operationTime')),
+    hold: false, // todo can be parsed from transactions response
+    date: apiTransaction.date,
     movements: [
       {
         id: getOptString(apiTransaction, 'id') ?? null,
         account: { id: account.id },
-        invoice: accountAmount.instrument === invoice.instrument ? null : invoice,
-        sum: accountAmount.sum,
+        invoice: null,
+        sum: apiTransaction.amount,
         fee: 0
       }
     ],
@@ -80,12 +79,5 @@ export function convertTransaction (apiTransaction: unknown, account: Account): 
         }
       : null,
     comment: null
-  }
-}
-
-function parseAmount (data: unknown, path: string): Amount {
-  return {
-    sum: getNumber(data, `${path}.value`),
-    instrument: getString(data, `${path}.currency.shortName`)
   }
 }
