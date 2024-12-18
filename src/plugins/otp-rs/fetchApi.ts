@@ -12,6 +12,7 @@ async function fetchApi (url: string, options?: FetchOptions): Promise<FetchResp
 }
 
 async function fetchLogin (username: string, otp: string) {
+  // otp = '2128506'
   const response = await fetchApi("RetailLoginService.svc/LoginUO", {
     method: 'POST',
     body: {
@@ -22,6 +23,7 @@ async function fetchLogin (username: string, otp: string) {
     },
     sanitizeResponseLog: { headers: { 'set-cookie': true } }
   })
+  console.log("Login response: ", response.body)
   checkResponseAndSetCookies(response)
 }
 
@@ -38,7 +40,7 @@ async function fetchAccounts(login: string):  Promise<OtpAccount[]> {
       },
       sanitizeResponseLog: { headers: { 'set-cookie': true } }
     })
-    
+    console.log("Accounts response: ", response.body)
     checkResponseAndSetCookies(response)
     return parseAccounts(response.body as string[][])
 }
@@ -69,6 +71,7 @@ async function fetchTransactions(accountNumber: string, currencyCode: string): P
     checkResponseAndSetCookies(response)
     
     const responseBody: string[][][][] = response.body as string[][][][]
+    console.log("Transactions response: ", responseBody)
     return parseTransactions(responseBody[0][1])
 }
 
