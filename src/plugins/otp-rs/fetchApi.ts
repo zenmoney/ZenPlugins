@@ -2,7 +2,7 @@ import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
 import { OtpTransaction, Preferences, Session } from './models'
 import { getCookies } from '../yettelbank-rs/helpers'
 import { checkResponseAndSetCookies, Currency, getCurrencyCodeNumeric } from './helpers'
-import { parseAccounts, parseTransactions } from './converters'
+import { parseAccounts, parseTransactions } from './parsers'
 import { OtpAccount } from './models'
 
 const baseUrl = 'https://ebank.otpbanka.rs/RetailV4/Protected/Services/'
@@ -66,9 +66,10 @@ async function fetchTransactions(accountNumber: string, currencyCode: string): P
       },
       sanitizeResponseLog: { headers: { 'set-cookie': true } }
     })
-    
     checkResponseAndSetCookies(response)
-    return parseTransactions(response.body as string[][])
+    
+    const responseBody: string[][][][] = response.body as string[][][][]
+    return parseTransactions(responseBody[0][1])
 }
 
 export async function fetchAuthorization ({ login, password }: Preferences): Promise<{cookieHeader: string, login: string}> {
