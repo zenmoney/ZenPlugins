@@ -21,7 +21,6 @@ async function fetchLogin (username: string, otp: string): Promise<void> {
     },
     sanitizeResponseLog: { headers: { 'set-cookie': true } }
   })
-  console.log('Login response: ', response.body)
   checkResponseAndSetCookies(response)
 }
 
@@ -37,7 +36,6 @@ async function fetchAccounts (login: string): Promise<OtpAccount[]> {
     },
     sanitizeResponseLog: { headers: { 'set-cookie': true } }
   })
-  console.log('Accounts response: ', response.body)
   checkResponseAndSetCookies(response)
   return parseAccounts(response.body as string[][])
 }
@@ -67,7 +65,6 @@ async function fetchTransactions (accountNumber: string, currencyCode: string): 
   checkResponseAndSetCookies(response)
 
   const responseBody = response.body as string[][][][]
-  console.log('Transactions response: ', responseBody)
   return parseTransactions(responseBody[0][1])
 }
 
