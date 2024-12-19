@@ -1,5 +1,5 @@
 import { Account, ScrapeFunc, Transaction } from '../../types/zenmoney'
-import {  fetchAccounts, fetchTransactions, login } from './api'
+import { fetchAccounts, fetchTransactions, login } from './api'
 import { convertAccounts, convertTransaction } from './converters'
 import { Currency } from './helpers'
 import { Auth, Preferences } from './models'

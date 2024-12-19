@@ -30,9 +30,7 @@ function convertAccount (apiAccount: OtpAccount, accountsByCba: Record<string, C
         instrument: apiAccount.currencyCode,
         balance,
         creditLimit: 0,
-        syncIds: [
-          cba
-        ]
+        syncIds: [cba]
       }
     }
     accountsByCba[cba] = account
@@ -57,10 +55,9 @@ function convertAccount (apiAccount: OtpAccount, accountsByCba: Record<string, C
 
 export function convertTransaction (apiTransaction: OtpTransaction, account: Account): Transaction {
   const description = apiTransaction.title
-  const accountAmount = apiTransaction.amount
 
   return {
-    hold: false, // todo can be parsed from transactions response
+    hold: false,
     date: apiTransaction.date,
     movements: [
       {

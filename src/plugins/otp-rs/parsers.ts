@@ -35,22 +35,22 @@ export function parseTransactions (apiTransactions: string[][]): OtpTransaction[
 
 function parseTransaction (apiTransaction: string[]): OtpTransaction {
   const parseDate = (dateString: string): Date => {
-    const [datePart, _] = dateString.split(' ')
+    const [datePart] = dateString.split(' ')
     const [day, month, year] = datePart.split('.').map(Number)
     return new Date(year, month - 1, day)
   }
-  let transaction_amount = 0
+  let transactionAmount = 0
 
   if (apiTransaction[9] !== '') {
-    transaction_amount = -parseFloat(apiTransaction[9])
+    transactionAmount = -parseFloat(apiTransaction[9])
   } else if (apiTransaction[10] !== '') {
-    transaction_amount = parseFloat(apiTransaction[10])
+    transactionAmount = parseFloat(apiTransaction[10])
   }
 
   const otpTransaction: OtpTransaction = {
     date: parseDate(apiTransaction[3]),
     title: apiTransaction[4],
-    amount: transaction_amount,
+    amount: transactionAmount,
     currencyCode: apiTransaction[2],
     currencyCodeNumeric: apiTransaction[1]
   }

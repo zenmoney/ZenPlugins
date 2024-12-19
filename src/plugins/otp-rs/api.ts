@@ -15,13 +15,19 @@ export async function login (preferences: Preferences, auth?: Auth): Promise<Ses
 
   const authorization = await fetchAuthorization(preferences)
 
-  return { auth:  { cookieHeader: authorization.cookieHeader} , login: authorization.login}
+  return { auth: { cookieHeader: authorization.cookieHeader }, login: authorization.login }
 }
 
 export async function fetchAccounts (session: Session): Promise<OtpAccount[]> {
   return await fetchAllAccounts(session)
 }
 
-export async function fetchTransactions (session: Session, accountNumber: string, currency: keyof typeof Currency, fromDate: Date, toDate: Date): Promise<OtpTransaction[]> {
+export async function fetchTransactions (
+  session: Session,
+  accountNumber: string,
+  currency: keyof typeof Currency,
+  fromDate: Date,
+  toDate: Date
+): Promise<OtpTransaction[]> {
   return await fetchProductTransactions(session, accountNumber, currency, fromDate, toDate)
 }

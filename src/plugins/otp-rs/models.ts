@@ -1,4 +1,4 @@
-import { AccountOrCard, Transaction } from '../../types/zenmoney'
+import { AccountOrCard } from '../../types/zenmoney'
 
 // Stored in persistent storage
 export interface Auth {
@@ -33,45 +33,26 @@ export interface OtpAccount {
   accountNumber: string
   description: string
   currencyCode: string
-  currencyCodeNumeric: string
   balance: number
+  currencyCodeNumeric: string
 }
 
 export interface OtpTransaction {
-  title: string,
-  currencyCode: string, 
-  currencyCodeNumeric: string,
-  date: Date,
+  date: Date
+  title: string
   amount: number
+  currencyCode: string
+  currencyCodeNumeric: string
 }
 
 export interface AccountBalanceResponse {
   CurrencyCode: string
-  // AccountType: string
-  // IsEbankingAccount: string
-  // LastChangeAmount: number
-  // ID: number
   CurrencyCodeNumeric: string
-  // LastChangeType: string
-  // LastChangeDate: string
   BlockedAmount: number | null
-  // AccountCustomName: string | null
-  // SubsystemProductID: number | null
-  // fwStatus: number
-  // IsCASRegistrationForbidden: number
   IBANNumber: string | null
-  // fwNamespace: string
-  // ProductOrder: string | null
-  // Alias: string | null
   AccountID: number
-  // BansExist: number
   Balance: number
   AccountNumber: string
-  // IsOwner: boolean
   Description: string | null
-  // Blocked: string
-  // FPAccountAllowed: boolean
-  // ProductCodeCore: string
   AvailableBalance: number
-  // fwType: string
 }
