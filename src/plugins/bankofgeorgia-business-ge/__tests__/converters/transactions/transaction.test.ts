@@ -153,7 +153,7 @@ describe('convertToZenMoneyTransaction', () => {
             syncIds: ['GE00BG0000000000000001USD']
           },
           invoice: null,
-          sum: -100,
+          sum: 0,
           fee: 0
         }
       ],

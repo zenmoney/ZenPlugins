@@ -109,7 +109,7 @@ export function convertToZenMoneyTransaction (record: AccountRecord, allRecords:
 
     case 'PMI': // Transfer of a foreign currency
       transaction.movements.push(
-        createCounterpartyMovement(record, record.EntryAmountDebit)
+        createCounterpartyMovement(record, record.EntryAmountDebit, undefined, true)
       )
       break
 
