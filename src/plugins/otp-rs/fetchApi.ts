@@ -3,6 +3,7 @@ import { OtpTransaction, Preferences, Session, OtpAccount } from './models'
 import { getCookies } from '../yettelbank-rs/helpers'
 import { checkResponseAndSetCookies, Currency, getCurrencyCodeNumeric } from './helpers'
 import { parseAccounts, parseTransactions } from './parsers'
+import moment from 'moment'
 
 const baseUrl = 'https://ebank.otpbanka.rs/RetailV4/Protected/Services/'
 
@@ -40,7 +41,8 @@ async function fetchAccounts (login: string): Promise<OtpAccount[]> {
   return parseAccounts(response.body as string[][])
 }
 
-async function fetchTransactions (accountNumber: string, currencyCode: string): Promise<OtpTransaction[]> {
+async function fetchTransactions (accountNumber: string, currencyCode: string, fromDate: Date, toDate: Date): Promise<OtpTransaction[]> {
+  if (toDate === null) toDate = new Date()
   const response = await fetchApi('DataService.svc/GetTransactionalAccountTurnover', {
     method: 'POST',
     body: {
@@ -48,8 +50,8 @@ async function fetchTransactions (accountNumber: string, currencyCode: string): 
       productCoreID: '1',
       filterParam: {
         CurrencyCodeNumeric: currencyCode,
-        FromDate: '17.11.2024', // todo get fetching period from preferences
-        ToDate: '17.12.2024',
+        FromDate: moment(fromDate).format('DD.MM.YYYY'),
+        ToDate: moment(toDate).format('DD.MM.YYYY'),
         ItemType: '',
         ItemCount: '',
         FromAmount: 0,
@@ -65,7 +67,7 @@ async function fetchTransactions (accountNumber: string, currencyCode: string): 
   checkResponseAndSetCookies(response)
 
   const responseBody = response.body as string[][][][]
-  return parseTransactions(responseBody[0][1])
+  return responseBody.length !== 0 ? parseTransactions(responseBody[0][1]) : []
 }
 
 export async function fetchAuthorization ({ login, password }: Preferences): Promise<{ cookieHeader: string, login: string }> {
@@ -78,5 +80,5 @@ export async function fetchAllAccounts (session: Session): Promise<OtpAccount[]>
 }
 
 export async function fetchProductTransactions (session: Session, accountNumber: string, currency: keyof typeof Currency, fromDate: Date, toDate: Date): Promise<OtpTransaction[]> {
-  return await fetchTransactions(accountNumber, getCurrencyCodeNumeric(currency))
+  return await fetchTransactions(accountNumber, getCurrencyCodeNumeric(currency), fromDate, toDate)
 }
