@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
-    <id>otp-rs</id>
-    <company>0</company>
+    <id>otpbank-rs</id>
+    <company>15973</company>
     <description>
         Use your login and mToken from OTP Banka app
     </description>
