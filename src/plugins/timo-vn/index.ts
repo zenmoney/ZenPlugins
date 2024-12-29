@@ -7,14 +7,19 @@ import { generateRandomString } from '../../common/utils'
 export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, toDate, isFirstRun }) => {
   toDate = toDate ?? new Date()
 
+  const auth: Auth = {
+    deviceUUID: '',
+    appVersion: '253',
+    deviceReg: ''
+  }
+
   if (isFirstRun) {
-    const auth: Auth = {
-      deviceReg: ''
-    }
-    auth.deviceReg = generateRandomString(32, 'abcdef0123456789') + ':WEB:WEB:250:WEB:desktop:zenmoney'
+    auth.deviceUUID = generateRandomString(32, 'abcdef0123456789')
     ZenMoney.setData('auth', auth)
     ZenMoney.saveData()
   }
+
+  auth.deviceReg = auth.deviceUUID + ':WEB:WEB:' + auth.appVersion + ':WEB:desktop:zenmoney'
   const session = await login(preferences, ZenMoney.getData('auth') as Auth)
 
   const accounts: Account[] = []
