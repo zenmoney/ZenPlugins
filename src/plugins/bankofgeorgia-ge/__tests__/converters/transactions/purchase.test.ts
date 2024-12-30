@@ -107,7 +107,7 @@ describe('convertTransaction', () => {
             },
             fee: 0,
             id: '28673866172',
-            invoice: null,
+            invoice: { instrument: 'GEL', sum: -11 },
             sum: -11
           }
         ]
@@ -217,7 +217,7 @@ describe('convertTransaction', () => {
             },
             fee: 0,
             id: '28403593963',
-            invoice: null,
+            invoice: { instrument: 'GEL', sum: -23.2 },
             sum: -23.2
           }
         ]
@@ -541,7 +541,7 @@ describe('convertTransaction', () => {
             },
             fee: 0,
             id: '31187576494',
-            invoice: null,
+            invoice: { instrument: 'GEL', sum: -22.82 },
             sum: -22.82
           }
         ]
@@ -641,7 +641,7 @@ describe('convertTransaction', () => {
             {
               id: '31679675376',
               account: { id: '1337' },
-              invoice: null,
+              invoice: { instrument: 'TRY', sum: -40 },
               sum: -7.02,
               fee: 0
             }
@@ -751,7 +751,7 @@ describe('convertTransaction', () => {
             account: { id: '1337' },
             fee: 0,
             id: '31699353607',
-            invoice: null,
+            invoice: { instrument: 'BYN', sum: -50 },
             sum: -58.45
           }
         ],
@@ -860,7 +860,7 @@ describe('convertTransaction', () => {
             account: { id: '1337' },
             fee: 0,
             id: '30286011908',
-            invoice: null,
+            invoice: { instrument: 'GEL', sum: -35 },
             sum: -35
           }
         ],
@@ -961,7 +961,7 @@ describe('convertTransaction', () => {
             {
               id: '33128066018',
               account: { id: '1337' },
-              invoice: null,
+              invoice: { instrument: 'ILS', sum: -50 },
               sum: -43.32,
               fee: 0
             }
@@ -1187,7 +1187,7 @@ describe('convertTransaction', () => {
           {
             id: '52795765971',
             account: { id: '1338' },
-            invoice: null,
+            invoice: { instrument: 'USD', sum: -33.88 },
             sum: -33.88,
             fee: 0
           }
