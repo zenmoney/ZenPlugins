@@ -7,6 +7,7 @@
         Input your API token from https://secure.splitwise.com/apps.
 
         This plugin synchronizes your Splitwise expenses with ZenMoney.
+        After first sync update Splitwise Account balances manually.
 
         ## How it works
 

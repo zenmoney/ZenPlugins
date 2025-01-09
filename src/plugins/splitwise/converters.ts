@@ -1,11 +1,22 @@
 import { AccountType, Account, Transaction } from '../../types/zenmoney'
 import { SplitwiseExpense } from './models'
 
-export function convertAccounts (expenses: SplitwiseExpense[], balances: Record<string, number>): Account[] {
+export function convertAccounts (expenses: SplitwiseExpense[]): Account[] {
   // Get currencies only from expenses where user was involved
   const currencies = new Set(expenses
     .filter((expense) => expense.users.some((user) => parseFloat(user.owed_share) > 0))
     .map((expense) => expense.currency_code))
+
+  // Calculate balances from expenses
+  const balances: Record<string, number> = {}
+  for (const expense of expenses) {
+    for (const user of expense.users) {
+      const owedShare = parseFloat(user.owed_share)
+      if (owedShare > 0) {
+        balances[expense.currency_code] = (balances[expense.currency_code] ?? 0) - owedShare
+      }
+    }
+  }
 
   return Array.from(currencies).map((currency) => ({
     id: currency,

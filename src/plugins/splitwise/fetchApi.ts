@@ -1,7 +1,10 @@
 import { Auth, SplitwiseExpense, SplitwiseUser } from './models'
 
 async function fetchApi (path: string, auth: Auth, params: Record<string, string | number> = {}): Promise<unknown> {
-  const response = await fetch(`https://secure.splitwise.com/api/v3.0${path}`, {
+  const queryString = new URLSearchParams(params as Record<string, string>).toString()
+  const url = `https://secure.splitwise.com/api/v3.0${path}${queryString ? '?' + queryString : ''}`
+
+  const response = await fetch(url, {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${auth.token}`
@@ -16,7 +19,20 @@ async function fetchApi (path: string, auth: Auth, params: Record<string, string
     throw new Error(`HTTP error! status: ${response.status}`)
   }
 
-  return await response.json()
+  return response.json()
+}
+
+function formatDate (date: Date): string {
+  // Ensure we have a valid date
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    date = new Date()
+  }
+  
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  
+  return `${year}-${month}-${day}`
 }
 
 export async function fetchCurrentUser (auth: Auth): Promise<SplitwiseUser> {
@@ -25,10 +41,13 @@ export async function fetchCurrentUser (auth: Auth): Promise<SplitwiseUser> {
 }
 
 export async function fetchExpenses (auth: Auth, fromDate: Date, toDate: Date): Promise<SplitwiseExpense[]> {
-  const response = await fetchApi('/get_expenses', auth, {
-    dated_after: fromDate.toISOString().split('T')[0],
+  const params: Record<string, string | number> = {
+    dated_after: formatDate(fromDate),
+    dated_before: formatDate(toDate),
     limit: 0
-  })
+  }
+
+  const response = await fetchApi('/get_expenses', auth, params)
   const expenses = (response as { expenses: SplitwiseExpense[] }).expenses
   return expenses.length > 0 ? expenses : []
 }
