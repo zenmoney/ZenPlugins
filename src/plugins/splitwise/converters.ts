@@ -29,15 +29,18 @@ export function convertAccounts (expenses: SplitwiseExpense[]): Account[] {
 }
 
 export function convertTransaction (expense: SplitwiseExpense, currentUserId: number): Transaction | null {
-  const currentUser = expense.users.find((user) => user.user_id === currentUserId)
+  // Skip deleted expenses - ZenMoney will handle them automatically
+  if (expense.deleted_at) {
+    return null
+  }
 
+  const currentUser = expense.users.find((user) => user.user_id === currentUserId)
   if (!currentUser) {
     return null
   }
 
   const owedShare = parseFloat(currentUser.owed_share)
-
-  // Only create transaction if user owes money
+  // Skip if user doesn't owe money
   if (owedShare <= 0) {
     return null
   }

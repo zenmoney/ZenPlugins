@@ -17,6 +17,7 @@ export interface SplitwiseExpense {
   date: string
   created_at: string
   updated_at: string
+  deleted_at?: string
   currency_code: string
   users: Array<{
     user_id: number

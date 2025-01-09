@@ -28,13 +28,13 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
 
   const currentUser = await fetchCurrentUser(auth)
 
-  // Get all expenses to create accounts
+  // Get all expenses including deleted ones
   const allExpenses = await fetchExpenses(auth, fromDate)
-  const accounts = convertAccounts(allExpenses)
+  const accounts = convertAccounts(allExpenses.filter(e => !e.deleted_at))
 
   // Get expenses for the sync period
   const apiExpenses = fromDate.getTime() === new Date(auth.startDate).getTime()
-    ? allExpenses // Reuse expenses if it's initial sync
+    ? allExpenses
     : await fetchExpenses(auth, fromDate)
 
   const transactions = apiExpenses
