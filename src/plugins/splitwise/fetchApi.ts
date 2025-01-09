@@ -40,10 +40,9 @@ export async function fetchCurrentUser (auth: Auth): Promise<SplitwiseUser> {
   return (response as { user: SplitwiseUser }).user
 }
 
-export async function fetchExpenses (auth: Auth, fromDate: Date, toDate: Date): Promise<SplitwiseExpense[]> {
+export async function fetchExpenses (auth: Auth, fromDate: Date): Promise<SplitwiseExpense[]> {
   const params: Record<string, string | number> = {
     dated_after: formatDate(fromDate),
-    dated_before: formatDate(toDate),
     limit: 0
   }
 
