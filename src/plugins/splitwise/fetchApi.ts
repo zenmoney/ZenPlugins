@@ -2,7 +2,7 @@ import { Auth, SplitwiseExpense, SplitwiseUser } from './models'
 
 async function fetchApi (path: string, auth: Auth, params: Record<string, string | number> = {}): Promise<unknown> {
   const queryString = new URLSearchParams(params as Record<string, string>).toString()
-  const url = `https://secure.splitwise.com/api/v3.0${path}${queryString ? '?' + queryString : ''}`
+  const url = `https://secure.splitwise.com/api/v3.0${path}${(queryString !== '') ? '?' + queryString : ''}`
 
   const response = await fetch(url, {
     method: 'GET',
@@ -19,7 +19,7 @@ async function fetchApi (path: string, auth: Auth, params: Record<string, string
     throw new Error(`HTTP error! status: ${response.status}`)
   }
 
-  return response.json()
+  return await response.json()
 }
 
 function formatDate (date: Date): string {
@@ -27,11 +27,9 @@ function formatDate (date: Date): string {
   if (!(date instanceof Date) || isNaN(date.getTime())) {
     date = new Date()
   }
-  
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
-  
   return `${year}-${month}-${day}`
 }
 

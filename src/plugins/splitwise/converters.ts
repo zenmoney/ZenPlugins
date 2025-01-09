@@ -30,7 +30,7 @@ export function convertAccounts (expenses: SplitwiseExpense[]): Account[] {
 
 export function convertTransaction (expense: SplitwiseExpense, currentUserId: number): Transaction | null {
   // Skip deleted expenses - ZenMoney will handle them automatically
-  if (expense.deleted_at) {
+  if (expense.deleted_at != null) {
     return null
   }
 

@@ -5,7 +5,7 @@ import { Auth, Preferences } from './models'
 import { InvalidPreferencesError } from '../../errors'
 
 export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, toDate }) => {
-  if (!preferences.token) {
+  if (preferences.token === '') {
     throw new InvalidPreferencesError('Token is required')
   }
 
@@ -30,7 +30,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
 
   // Get all expenses including deleted ones
   const allExpenses = await fetchExpenses(auth, fromDate)
-  const accounts = convertAccounts(allExpenses.filter(e => !e.deleted_at))
+  const accounts = convertAccounts(allExpenses.filter(e => e.deleted_at == null))
 
   // Get expenses for the sync period
   const apiExpenses = fromDate.getTime() === new Date(auth.startDate).getTime()
