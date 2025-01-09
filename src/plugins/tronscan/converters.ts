@@ -70,7 +70,7 @@ export function convertTokenTransaction (transfer: Transfer, wallet: string, tra
     return null
   }
 
-  if (operationSign === -1 && transaction) {
+  if (operationSign === -1 && transaction && transaction.cost.fee !== 0) {
     return [tokenTransaction, getCostTransaction(transaction)]
   }
 
