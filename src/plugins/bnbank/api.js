@@ -3,6 +3,7 @@ import { createDateIntervals as commonCreateDateIntervals } from '../../common/d
 import { fetchJson } from '../../common/network'
 import { generateRandomString } from '../../common/utils'
 import { card, deposit, checking } from './converters'
+import { TemporaryError } from '../../errors'
 
 const BASE_URL = 'https://mb.bnb.by/services/v2/'
 const APP_VERSION = '1.53.1'
@@ -22,6 +23,9 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
     const errorMessage = 'Ответ банка: ' + errorDescription
     if (errorDescription.indexOf('Некорректно введен логин или пароль') >= 0) {
       throw new InvalidPreferencesError(errorMessage)
+    }
+    if (errorDescription.indexOf('Для авторизации на устройстве необходимо ввести код, отправленный на доверенное устройство') >= 0) {
+      return response
     }
     throw new TemporaryError(errorMessage)
   }
@@ -101,7 +105,35 @@ HQJpK9udyGXyYGc=
       password
     },
     sanitizeRequestLog: { body: { login: true, password: true } }
-  }, response => response.success, message => new InvalidPreferencesError('Неверный логин или пароль'))
+  }, response => response.success || (response.body.errorInfo && response.body.errorInfo.error === '10027'), message => new TemporaryError(message))
+
+  if (res.body.errorInfo && res.body.errorInfo.error === '10027') {
+    // SMS-code confirmation needed
+    const smsCode = await ZenMoney.readLine('Подтвердите вход из приложения BNB Bank, после чего введите код из СМС', {
+      time: 30000
+    })
+    if (!smsCode) {
+      throw new TemporaryError('No SMS Code received')
+    }
+    const res = await fetchApiJson('session/login', {
+      method: 'POST',
+      body: {
+        applicID: APP_VERSION,
+        clientKind: '0',
+        browser: ZenMoney.device.manufacturer, // Build.DEVICE
+        browserVersion: `${ZenMoney.device.model} (${ZenMoney.device.manufacturer})`, // Build.MODEL + " (" + Build.PRODUCT + ")"
+        platform: 'Android',
+        platformVersion: '10',
+        agreement: true,
+        deviceUDID: deviceID,
+        login,
+        password,
+        confirmationData: smsCode
+      },
+      sanitizeRequestLog: { body: { login: true, password: true } }
+    }, response => response.success, message => new TemporaryError(message))
+    return res.body.sessionToken
+  }
 
   return res.body.sessionToken
 }
