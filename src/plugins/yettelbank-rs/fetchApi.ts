@@ -4,6 +4,7 @@ import { getCookies, checkResponseAndSetCookies, checkResponseSuccess } from './
 import { AccountInfo, Preferences, Session, TransactionInfo } from './models'
 import { mockedAccountsResponse, mockedTransactionsResponse } from './mocked_responses'
 import cheerio from 'cheerio'
+import moment from 'moment'
 
 const baseUrl = 'https://online.mobibanka.rs/'
 const mockResponses = false
@@ -175,21 +176,55 @@ export function parseTransactions (body: unknown, pending: boolean): Transaction
   return transactions
 }
 
-async function fetchTransactions (accountId: string, status: string): Promise<TransactionInfo[]> {
+async function fetchTransactionsInternal (accountId: string, status: string, fromDate: Date, toDate: Date, pageNumber = 0): Promise<FetchResponse> {
+  const dateFrom = moment(fromDate).format('DD%2FMM%2FYYYY')
+  const dateTo = moment(toDate).format('DD%2FMM%2FYYYY')
+  const requestBody = `PageNumber=${pageNumber}&PageSize=&Report=&PaymentDescription=&DateFrom=${dateFrom}&DateTo=${dateTo}&CurrencyList_input=All+currencies&CurrencyList=&AmountFrom=&AmountTo=&Direction=&TransactionType=-1&AccountPicker=${accountId}&RelatedCardPicker=-1&CounterParty=&StandingOrderId=&SortBy=ValueDate&SortAsc=Desc&GeoLatitude=&GeoLongitude=&Radius=2&StatusPicker=${status}&ViewPicker=List&X-Requested-With=XMLHttpRequest`
+
+  const response = await fetchApi('CustomerAccount/Accounts/Transactions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+      Referer: `https://online.mobibanka.rs/CustomerAccount/Accounts/Transactions?accountid=${accountId}&status=${status}`,
+      'Referrer-Policy': 'strict-origin-when-cross-origin',
+      'X-Requested-With': 'XMLHttpRequest',
+      Cookie: getCookies()
+    },
+    body: requestBody,
+    sanitizeResponseLog: { headers: { 'set-cookie': true } }
+  })
+
+  checkResponseSuccess(response)
+  return response
+}
+
+async function fetchTransactions (accountId: string, status: string, fromDate: Date, toDate: Date): Promise<TransactionInfo[]> {
   if (mockResponses) {
     return mockedTransactionsResponse
   }
 
-  const response = await fetchApi(`CustomerAccount/Accounts/Transactions?accountid=${accountId}&status=${status}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-      Cookie: getCookies()
+  function parseTotalPages (body: unknown): number {
+    const $ = cheerio.load(body as string)
+    const pageInfo = $('.current-page').text().trim()
+    const match = pageInfo.match(/Page \d+ from (\d+)/)
+    const totalPages = match?.[1]
+    if (totalPages !== undefined && totalPages !== null && totalPages !== '') {
+      return parseInt(totalPages, 10)
     }
-  })
+    throw new Error('Failed to parse total pages')
+  }
 
-  checkResponseSuccess(response)
-  return parseTransactions(response.body, status === 'Pending')
+  const response = await fetchTransactionsInternal(accountId, status, fromDate, toDate)
+  const totalPages = parseTotalPages(response.body)
+
+  const transactions: TransactionInfo[] = parseTransactions(response.body, status === 'Pending')
+
+  for (let page = 1; page < totalPages - 1; page++) {
+    const pageResponse = await fetchTransactionsInternal(accountId, status, fromDate, toDate, page)
+    transactions.push(...parseTransactions(pageResponse.body, status === 'Pending'))
+  }
+
+  return transactions
 }
 
 // ################################################
@@ -198,7 +233,7 @@ async function fetchTransactions (accountId: string, status: string): Promise<Tr
 
 export async function fetchAuthorization ({ login, password }: Preferences): Promise<{cookieHeader: string}> {
   const workflowId = await initAuthorizationWorkflow('Identity')
-
+  console.log('Initializing auth')
   await fetchAuth('Identity', workflowId, login)
   await fetchLogin('Identity', workflowId, login, password)
 
@@ -209,8 +244,8 @@ export async function fetchAllAccounts (session: Session): Promise<AccountInfo[]
   return await fetchAccounts()
 }
 
-export async function fetchProductTransactions (accountId: string, session: Session): Promise<TransactionInfo[]> {
-  const executedTransactions = await fetchTransactions(accountId, 'Executed')
-  const pendingTransactions = await fetchTransactions(accountId, 'Pending')
+export async function fetchProductTransactions (accountId: string, session: Session, fromDate: Date, toDate: Date): Promise<TransactionInfo[]> {
+  const executedTransactions = await fetchTransactions(accountId, 'Executed', fromDate, toDate)
+  const pendingTransactions = await fetchTransactions(accountId, 'Pending', fromDate, toDate)
   return [...executedTransactions, ...pendingTransactions]
 }
