@@ -233,7 +233,7 @@ async function fetchTransactions (accountId: string, status: string, fromDate: D
 
 export async function fetchAuthorization ({ login, password }: Preferences): Promise<{cookieHeader: string}> {
   const workflowId = await initAuthorizationWorkflow('Identity')
-  console.log('Initializing auth')
+
   await fetchAuth('Identity', workflowId, login)
   await fetchLogin('Identity', workflowId, login, password)
 
