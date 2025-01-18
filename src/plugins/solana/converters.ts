@@ -20,24 +20,19 @@ export function convertAccount (address: string, balance: number): Account {
 
 function findTransactionMovement (account: string, transaction: Transaction): Movement | null {
   const accountKeys = transaction.transaction.message.accountKeys
-  const accountIndex = accountKeys.indexOf(account)
+  const accountIndex = accountKeys.findIndex(accountKey => accountKey.pubkey === account)
   const diffBalances = transaction.meta.postBalances.map((item, index) => item - transaction.meta.preBalances[index])
-  const accountDiff = diffBalances[accountIndex]
 
-  if (accountDiff === 0) {
+  // if fee was paid by "account" -- it's already in the accountDiff, and accountDiff has to be adjusted
+  // otherwise fee should be considered zero since it's paid by other signer
+  const accountFee = (accountKeys[accountIndex].signer) ? -transaction.meta.fee : 0
+  const accountDiff = diffBalances[accountIndex] - accountFee
+
+  const convertedAccountDiff = convertLamportToSolana(accountDiff)
+  const convertedAccountFee = convertLamportToSolana(accountFee)
+
+  if (convertedAccountDiff === 0 && convertedAccountFee === 0) {
     return null
-  }
-
-  if (accountDiff > 0) {
-    return {
-      id: transaction.transaction.signatures[0],
-      account: {
-        id: account
-      },
-      invoice: null,
-      sum: convertLamportToSolana(accountDiff),
-      fee: 0
-    }
   }
 
   return {
@@ -46,8 +41,8 @@ function findTransactionMovement (account: string, transaction: Transaction): Mo
       id: account
     },
     invoice: null,
-    sum: convertLamportToSolana(accountDiff),
-    fee: convertLamportToSolana(transaction.meta.fee)
+    sum: convertedAccountDiff,
+    fee: convertedAccountFee
   }
 }
 
