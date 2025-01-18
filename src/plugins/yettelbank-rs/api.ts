@@ -4,8 +4,7 @@ import { InvalidLoginOrPasswordError } from '../../errors'
 
 export async function login (preferences: Preferences, auth?: Auth): Promise<Session> {
   if (auth != null) {
-    console.log('Auth is not null')
-    return { auth }
+    console.log('Auth is not null, but procceeding with login')
   }
 
   if (preferences.login.length === 0 || preferences.password.length === 0) {
@@ -20,5 +19,8 @@ export async function fetchAccounts (session: Session): Promise<AccountInfo[]> {
 }
 
 export async function fetchTransactions (session: Session, accountId: string, fromDate: Date, toDate: Date): Promise<TransactionInfo[]> {
-  return await fetchProductTransactions(accountId, session)
+  if (toDate === null) {
+    toDate = new Date()
+  }
+  return await fetchProductTransactions(accountId, session, fromDate, toDate)
 }
