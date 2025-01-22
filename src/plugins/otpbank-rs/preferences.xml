@@ -10,17 +10,6 @@
         summary="|User id or login|{@s}"
     />
     <EditTextPreference
-        key="password"
-        obligatory="true"
-        inputType="textPassword"
-        title="Token"
-        dialogTitle="Token"
-        dialogMessage="The one time password (token) from the bank application"
-        positiveButtonText="OK"
-        negativeButtonText="Cancel"
-        summary="||***********"
-    />
-    <EditTextPreference
         key="startDate"
         obligatory="true"
         inputType="date"
