@@ -2,12 +2,20 @@ import currencies from '../../common/codeToCurrencyLookup'
 import { mergeTransfers } from '../../common/mergeTransfers'
 
 export function convertAccount (apiAccount) {
+  const balance = typeof apiAccount.balance.balance === 'number'
+    ? {
+        balance: apiAccount.balance.balance,
+        creditLimit: Math.round((apiAccount.balance.otb - apiAccount.balance.balance) * 100) / 100
+      }
+    : {
+        available: Math.round((apiAccount.balance.otb + apiAccount.balance.authorized) * 100) / 100
+      }
   return {
     id: apiAccount.accountNumber,
     type: 'checking',
     title: apiAccount.name ? apiAccount.name : ('Счёт ' + currencies[apiAccount.currency]),
     instrument: currencies[apiAccount.currency],
-    available: Math.round((apiAccount.balance.otb + apiAccount.balance.authorized) * 100) / 100,
+    ...balance,
     syncID: [apiAccount.accountNumber]
   }
 }
@@ -55,7 +63,10 @@ export function convertTransaction (apiTransaction, account, accountsById) {
   const groupId = apiTransaction.id && accountsById[apiTransaction.payerAccount] && accountsById[apiTransaction.recipientAccount]
     ? `${apiTransaction.id}-${apiTransaction.payerAccount}-${apiTransaction.recipientAccount}-${apiTransaction.date}`
     : null
-  return { transaction, groupId }
+  return {
+    transaction,
+    groupId
+  }
 }
 
 function parseCashWithdrawal (transaction, account) {
@@ -126,7 +137,11 @@ export function parseMerchant (str) {
       country = parts[parts.length - 1]
     }
   }
-  return { title, city, country }
+  return {
+    title,
+    city,
+    country
+  }
 }
 
 function parsePayeeInComment (transaction, account) {
