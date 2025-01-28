@@ -4,18 +4,30 @@ import { InvalidLoginOrPasswordError } from '../../errors'
 import { Currency } from './helpers'
 
 export async function login (preferences: Preferences, auth?: Auth): Promise<Session> {
-  if (auth != null) {
-    console.log('Auth is not null')
-    return { auth, login: '' }
+  // Ignore any passed auth
+  if (preferences.login === '') {
+    throw new InvalidLoginOrPasswordError('Username cannot be empty')
   }
 
-  if (preferences.login.length === 0 || preferences.password.length === 0) {
-    throw new InvalidLoginOrPasswordError('Username or password can not be empty')
+  // Request password every time
+  const password = await ZenMoney.readLine('Enter your mBank token:', {
+    inputType: 'text',
+    time: 120000
+  })
+
+  if (!password) {
+    throw new InvalidLoginOrPasswordError('Password cannot be empty')
   }
 
-  const authorization = await fetchAuthorization(preferences)
+  const authorization = await fetchAuthorization({
+    login: preferences.login,
+    password
+  })
 
-  return { auth: { cookieHeader: authorization.cookieHeader }, login: authorization.login }
+  return {
+    auth: { cookieHeader: authorization.cookieHeader },
+    login: authorization.login
+  }
 }
 
 export async function fetchAccounts (session: Session): Promise<OtpAccount[]> {
