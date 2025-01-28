@@ -90,7 +90,7 @@ describe('convertTransaction', () => {
         isCarTemplateAllowed: false
       },
       {
-        comment: null,
+        comment: 'Cash withdrawal',
         date: new Date('2022-04-04T14:47:00.000+04:00'),
         hold: true,
         merchant: {
@@ -212,7 +212,7 @@ describe('convertTransaction', () => {
         isCarTemplateAllowed: false
       },
       {
-        comment: null,
+        comment: 'Cash deposit via Payment Machine , depositor: Anton Antonov',
         date: new Date('2022-05-31T17:00:54.000+04:00'),
         hold: false,
         merchant: null,
@@ -358,7 +358,7 @@ describe('convertTransaction', () => {
             sum: 1000
           }
         ],
-        comment: null
+        comment: 'Cash withdrawal'
       }
     ],
     [
@@ -478,7 +478,7 @@ describe('convertTransaction', () => {
           location: null,
           mcc: 6011
         },
-        comment: null
+        comment: 'Cash withdrawal'
       }
     ]
   ])('converts cash transfer', (apiTransaction, transaction) => {
@@ -577,7 +577,13 @@ describe('convertTransaction', () => {
       {
         date: new Date('2023-07-21T09:53:00+04:00'),
         hold: true,
-        merchant: null,
+        merchant: {
+          city: 'Tbilisi',
+          country: null,
+          location: null,
+          mcc: 6011,
+          title: 'Bank Of Georgia'
+        },
         movements: [
           {
             account: { id: '1338' },
@@ -599,7 +605,7 @@ describe('convertTransaction', () => {
             sum: 500
           }
         ],
-        comment: null
+        comment: 'Cash withdrawal'
       }
     ]
   ])('converts cash transfer', (apiTransaction, transaction) => {

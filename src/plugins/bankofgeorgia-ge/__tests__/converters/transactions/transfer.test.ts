@@ -497,7 +497,7 @@ describe('convertTransaction', () => {
           location: null,
           mcc: null
         },
-        comment: null
+        comment: 'Cash withdrawal'
       }
     ],
     [

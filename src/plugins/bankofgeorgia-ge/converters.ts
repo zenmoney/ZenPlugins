@@ -145,6 +145,7 @@ function convertLoan (apiAccount: FetchedAccount): ConvertedLoan {
 
 export function convertTransaction (apiTransaction: unknown, product: ConvertedProduct): ExtendedTransaction | null {
   const printFormType = getString(apiTransaction, 'printFormType')
+  const entryType = getString(apiTransaction, 'entryType')
   const entryGroupDKey = getString(apiTransaction, 'entryGroupDKey')
   const instrument = getString(apiTransaction, 'ccy')
   let date = new Date(getNumber(apiTransaction, 'inpSysdate'))
@@ -212,18 +213,40 @@ export function convertTransaction (apiTransaction: unknown, product: ConvertedP
       }
       break
     }
-    case 'CASH_DEPOSIT':
-    case 'CASH_WITHDRAWAL': {
+    case 'CASH_DEPOSIT': {
+      const title: string | undefined = getOptString(apiTransaction, 'merchantNameInt') ?? getOptString(apiTransaction, 'beneficiary')
+      if (title !== undefined) {
+        transaction.merchant = parseMerchant(title, getString(apiTransaction, 'nominationOriginal'))
+      }
       transaction.movements[0].invoice = cashAmount ? { sum: cashAmount.sum * getSignByPrintFormType(printFormType), instrument: cashAmount.instrument } : null
       transaction.movements.push(
         invertMovement(transaction.movements[0], product.account, { type: AccountType.cash })
       )
+      const nominationOriginal = getOptString(apiTransaction, 'nominationOriginal')
+      transaction.comment = nominationOriginal ?? 'Cash deposit'
+      break
+    }
+    case 'CASH_WITHDRAWAL': {
+      const title: string | undefined = getOptString(apiTransaction, 'merchantNameInt') ?? getOptString(apiTransaction, 'beneficiary')
+      if (title !== undefined) {
+        transaction.merchant = parseMerchant(title, getString(apiTransaction, 'nominationOriginal'))
+      }
+
+      if (entryType === 'COM') { // cash withdrawal fee
+        transaction.comment = 'Cash withdrawal comission / ' + getString(apiTransaction, 'nominationOriginal')
+      } else {
+        transaction.comment = 'Cash withdrawal'
+        transaction.movements[0].invoice = cashAmount ? { sum: cashAmount.sum * getSignByPrintFormType(printFormType), instrument: cashAmount.instrument } : null
+        transaction.movements.push(
+          invertMovement(transaction.movements[0], product.account, { type: AccountType.cash })
+        )
+      }
       break
     }
     case 'OTHER': {
       switch (entryGroupDKey) {
         case 'text.entry.group.name.widthroval': {
-          if (getString(apiTransaction, 'entryType') === 'COM') { // cash withdrawal fee
+          if (entryType === 'COM') { // cash withdrawal fee
             transaction.comment = 'cash withdrawal fee'
             break
           }
@@ -245,6 +268,7 @@ export function convertTransaction (apiTransaction: unknown, product: ConvertedP
           if (title !== undefined) {
             transaction.merchant = parseMerchant(title, getString(apiTransaction, 'nominationOriginal'))
           }
+          transaction.comment = 'Cash withdrawal'
           break
         }
         case 'text.entry.group.name.FEE': {
