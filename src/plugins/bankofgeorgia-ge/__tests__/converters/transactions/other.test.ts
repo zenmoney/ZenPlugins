@@ -736,6 +736,116 @@ describe('convertTransaction', () => {
         ],
         comment: 'Loan disbursement'
       }
+    ],
+    [
+      {
+        statmentId: 32432123143243,
+        acctKey: 11579489835,
+        entryId: 89993651519,
+        docKey: 25521517507,
+        essId: null,
+        nomination: 'Withdrawal - Amount: MAD3,850.00; ATM: 0000011619, Morocco; MCC:6011; Date: 15/01/2025 15:37; Card No: ****2285; Payment transaction amount and currency: 390.47 USD; Bank conversion commission fee: 7.66 USD; Card scheme conversion rate  (USD-MAD): 10.0572',
+        entryGroup: null,
+        merchantId: 'EDMA0214',
+        postDate: '2025-01-16T00:00:00', // 1736971200000
+        authDateStr: '15/01/2025 15:37',
+        inpSysdate: 1654859614000, // 1737035610000
+        operationDate: '2025-01-15T15:37:00', // 1736941020000
+        amount: 21.79,
+        oppositeAmount: null,
+        ccy: 'GEL',
+        clientComment: null,
+        canCopy: 'N',
+        status: 'P',
+        groupDescription: null,
+        groupType: null,
+        docNomination: null,
+        beneficiary: null,
+        bonusPoint: null,
+        merchantName: '0000011619, მაროკო',
+        merchantNameInt: '0000011619, Morocco',
+        amountBase: 21.79,
+        entryGroupDKey: 'text.entry.group.name.widthroval',
+        entryGroupDValue: null,
+        entryGroupNameId: 1,
+        bonusInfo: null,
+        essServiceId: null,
+        merchantClientId: null,
+        cashbackAmount: null,
+        groupImageId: '35623075',
+        nominationOriginal: 'Withdrawal - Amount: MAD3,850.00; ATM: 0000011619, Morocco; MCC:6011; Date: 15/01/2025 15:37; Card No: ****2285; Payment transaction amount and currency: 390.47 USD; Bank conversion commission fee: 7.66 USD; Card scheme conversion rate  (USD-MAD): 10.0572',
+        productName: null,
+        prodGroup: 'PLC',
+        entryType: 'COM',
+        printSwift: 'N',
+        isPrintable: 'Y',
+        printFormType: 'CASH_WITHDRAWAL',
+        hasTransferBack: 'N',
+        benefProfileId: null,
+        positiveSum: null,
+        negativeSum: null,
+        isInternalOperation: 'N',
+        transferBankBic: null,
+        deviceType: 'A',
+        swiftGpiFlag: 'N',
+        counterPartyClientKey: null,
+        authDate: 1736884800000,
+        bonusPointType: null,
+        attachmentFileBase64: null,
+        isRepeatAllowed: false,
+        isTemplateAllowed: false,
+        isDDSTOAlllowed: false,
+        isStatementAllowed: true,
+        isPrintAllowed: true,
+        isReversalAvailable: false,
+        entryIconBase64: null,
+        merchantIconBase64: null,
+        providerIconUrl: null,
+        groupImageUrl: '<dummy>',
+        imageUrl: '<dummy>',
+        benefProfilePicture: null,
+        operationTitle: '0000011619, Morocco',
+        entryDetailType: null,
+        pfmId: 12398819414,
+        pfmForecast: false,
+        pfmCatId: 540, // 'text.pfm.child.category.bank.fees'
+        pfmCatName: null,
+        pfmParentCatId: 520,
+        pfmParentCatName: null,
+        pfmRecurring: false,
+        pfmSplit: false,
+        pfmParentOpId: null,
+        pfmTagId: null,
+        pfmTagName: null,
+        pfmTags: null,
+        pfmComputable: true,
+        isRuleCreationEnabled: false,
+        canSplit: true,
+        isCarTemplateAllowed: false
+      },
+      {
+        comment: 'Cash withdrawal comission / Withdrawal - Amount: MAD3,850.00; ATM: 0000011619, Morocco; MCC:6011; Date: 15/01/2025 15:37; Card No: ****2285; Payment transaction amount and currency: 390.47 USD; Bank conversion commission fee: 7.66 USD; Card scheme conversion rate  (USD-MAD): 10.0572',
+        date: new Date('2025-01-15T15:37:00+04:00'),
+        hold: false,
+        merchant: {
+          city: null,
+          country: 'Morocco',
+          location: null,
+          mcc: 6011,
+          title: '0000011619'
+        },
+        movements: [
+          {
+            account: {
+              id: '1337'
+            },
+            fee: 0,
+            id: '32432123143243',
+            invoice: null,
+            sum: -21.79
+          }
+        ]
+      }
     ]
   ])('converts other', (apiTransaction, transaction) => {
     expect(convertTransaction(apiTransaction, accountGel)).toEqual(transaction)
