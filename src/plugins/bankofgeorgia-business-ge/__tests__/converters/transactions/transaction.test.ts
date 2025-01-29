@@ -233,7 +233,7 @@ describe('convertToZenMoneyTransaction', () => {
             instrument: 'USD',
             company: { id: 'GE00BG0000000000000000GEL' },
             syncIds: null
-           },
+          },
           sum: 40,
           fee: 0,
           invoice: null
