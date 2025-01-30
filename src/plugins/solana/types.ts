@@ -2,6 +2,11 @@ export interface GetBalanceResponse {
   value: number
 }
 
+export interface AccountKeys {
+  pubkey: string
+  signer: boolean
+}
+
 export interface Transaction {
   blockTime: number
   meta: {
@@ -11,7 +16,7 @@ export interface Transaction {
   }
   transaction: {
     message: {
-      accountKeys: string[]
+      accountKeys: AccountKeys[]
     }
     signatures: string[]
   }

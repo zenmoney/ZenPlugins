@@ -76,8 +76,13 @@ export async function fetchBalance (address: string): Promise<number> {
 }
 
 const fetchTransaction = rateLimit(2, async function (signature: string): Promise<Transaction> {
-  const response = await fetch<Transaction>('getTransaction', [signature, 'json'])
-
+  const response = await fetch<Transaction>('getTransaction', [
+    signature,
+    {
+      encoding: 'jsonParsed',
+      maxSupportedTransactionVersion: 0
+    }
+  ])
   return response
 })
 
