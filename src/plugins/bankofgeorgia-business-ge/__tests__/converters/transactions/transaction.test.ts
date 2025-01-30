@@ -231,8 +231,8 @@ describe('convertToZenMoneyTransaction', () => {
           account: {
             type: AccountType.checking,
             instrument: 'USD',
-            company: { id: 'GE00BG0000000000000000GEL' },
-            syncIds: null
+            company: null,
+            syncIds: ['GE00BG0000000000000000USD']
           },
           sum: 40,
           fee: 0,
