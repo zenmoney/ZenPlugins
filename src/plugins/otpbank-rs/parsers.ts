@@ -1,4 +1,5 @@
 import { OtpAccount, OtpTransaction } from './models'
+import { decode } from 'html-entities'
 
 export function parseAccounts (apiAccounts: string[][]): OtpAccount[] {
   const accounts: OtpAccount[] = []
@@ -49,7 +50,7 @@ function parseTransaction (apiTransaction: string[]): OtpTransaction {
 
   const otpTransaction: OtpTransaction = {
     date: parseDate(apiTransaction[3]),
-    title: apiTransaction[4],
+    title: decode(apiTransaction[4]),
     amount: transactionAmount,
     currencyCode: apiTransaction[2],
     currencyCodeNumeric: apiTransaction[1]
