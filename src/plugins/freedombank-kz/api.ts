@@ -1,5 +1,4 @@
 import { generateUUID } from '../../common/utils'
-import { chunk } from 'lodash'
 import { StatementTransaction, ObjectWithAnyProps } from './models'
 import { parsePdfFromBlob } from './pdfToStr'
 import { Amount, AccountOrCard, AccountType } from '../../types/zenmoney'
@@ -17,17 +16,18 @@ function getRegexpMatch (regExps: RegExp[], text: string, flags?: string): RegEx
 }
 
 function parseAccountId (text: string): string {
+  // Валюта счета:KZT, USD, EUR, RUB, CNY, TRY, AED Дата:01.01.2025 Номер счётаВалютаОстаток KZ123456789012345KZTKZT19,455.00 ₸
   const match = getRegexpMatch([
-    /([A-Z]{2}\d{2}[A-Z0-9]{13,32})/
+    /([A-Z]{2}\d{2}[A-Z0-9]{13})/
   ], text)
   assert(typeof match?.[1] === 'string', 'Can\'t parse accountId from account statement')
-  return match[1]
+  return match[1] // KZ123456789012345
 }
 
 function parseBalance (text: string): Amount {
   // Пример: Доступно на 02.01.202519,455.00₸
-  let match = getRegexpMatch([
-    /Доступно\s+на\s+(\d{2}[-./]\d{2}[-./]\d{4})(\d{1,3}(?:[\s.,]\d{3})*(?:[.,]\d+)?)([₸])/,
+  const match = getRegexpMatch([
+    /Доступно\s+на\s+(\d{2}[-./]\d{2}[-./]\d{4})(\d{1,3}(?:[\s.,]\d{3})*(?:[.,]\d+)?)([₸])/
   ], text)
   if (match?.[2] !== undefined) {
     const amountStr = [
@@ -56,28 +56,28 @@ function parseCardNumber (text: string): string {
   return text.match(/Номер карты:\*\*(\d{4})/)?.[1] ?? ''
 }
 
-function parseTransactions(text: string, statementUid: string): StatementTransaction[] {
-  const baseRegexp = /^(\d{2}\.\d{2}\.\d{4})([-+]\s?[\d.,]+)\s?₸(KZT)([а-яА-ЯA-Za-z\s"“”'‘’]+)?\s?(.+)?$/gm;
+function parseTransactions (text: string, statementUid: string): StatementTransaction[] {
+  const baseRegexp = /^(\d{2}\.\d{2}\.\d{4})([-+]\s?[\d.,]+)\s?₸(KZT)([а-яА-ЯA-Za-z\s"“”'‘’]+)?\s?(.+)?$/gm
 
-  const transactionStrings = text.match(baseRegexp);
+  const transactionStrings = text.match(baseRegexp)
 
   if (!transactionStrings || transactionStrings.length === 0) {
-    return [];
+    return []
   }
 
   return transactionStrings.map((str) => {
-    const match = str.match(/^(\d{2}\.\d{2}\.\d{4})([-+]\s?[\d.,]+)\s?₸(KZT)([а-яА-ЯA-Za-z\s"“”'‘’]+)?\s?(.+)?$/);
+    const match = str.match(/^(\d{2}\.\d{2}\.\d{4})([-+]\s?[\d.,]+)\s?₸(KZT)([а-яА-ЯA-Za-z\s"“”'‘’]+)?\s?(.+)?$/)
 
-    assert(match !== null, `Can't parse transaction: ${str}`);
+    assert(match !== null, `Can't parse transaction: ${str}`)
 
-    const date = parseDateFromPdfText(match[1]);
-    const amount = match[2]?.replace(/\s/g, '').replace(',', '') || ''; // Убираем пробелы и запятые
-    let description = `${match[4] || ''}${match[5] || ''}`.trim(); // Объединение полей для полного описания
+    const date = parseDateFromPdfText(match[1])
+    const amount = match[2] !== undefined ? match[2].replace(/\s/g, '').replace(',', '') : '' // Убираем пробелы и запятые
+    let description = `${match[4] !== undefined ? match[4] : ''}${match[5] !== undefined ? match[5] : ''}`.trim() // Объединение полей для полного описания
 
     // Удаление ключевых слов, таких как "Покупка", и всех кавычек
-    description = description.replace(/(Покупка|Пополнение|Перевод|Возврат)/gi, '').replace(/["'“”‘’]/g, '').trim();
+    description = description.replace(/(Покупка|Пополнение|Перевод|Возврат)/gi, '').replace(/["'“”‘’]/g, '').trim()
 
-    const originString = match[0];
+    const originString = match[0]
 
     return {
       hold: false,
@@ -87,8 +87,8 @@ function parseTransactions(text: string, statementUid: string): StatementTransac
       description,
       statementUid,
       originString
-    };
-  });
+    }
+  })
 }
 
 export function parseSinglePdfString (text: string, statementUid?: string): { account: AccountOrCard, transactions: StatementTransaction[] } {
@@ -101,7 +101,7 @@ export function parseSinglePdfString (text: string, statementUid?: string): { ac
     title: parseAccountTitle(text),
     type: accountType,
     savings: false,
-    syncIds: [parseCardNumber(text)],
+    syncIds: [parseCardNumber(text)]
   }
   const rawTransactions = parseTransactions(text, statementUid ?? generateUUID())
   const parsedContent = {

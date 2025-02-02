@@ -16,7 +16,7 @@ const transactionTypeStrings = {
   CASH: ['Снятие', 'Withdrawals', 'Ақша алу']
 }
 
-function parseTransactionType(text: string): string | null {
+function parseTransactionType (text: string): string | null {
   if (transactionTypeStrings.OUTCOME.some(str => text.includes(str)) || /плата/i.test(text)) {
     return transactionType.OUTCOME
   }
@@ -32,28 +32,37 @@ function parseTransactionType(text: string): string | null {
   return null
 }
 
-function cleanMerchantTitle(text: string | null): string | null {
-  if (!text) return null
+function cleanMerchantTitle (text: string | null): string | null {
+  if (text == null || text.trim() === '') return null
 
   const keywordsToRemove = [...flatten(Object.values(transactionTypeStrings)), '₸']
   let cleanedText = text
 
-  keywordsToRemove.forEach(keyword => {
+  for (const keyword of keywordsToRemove) {
     cleanedText = cleanedText.replace(new RegExp(keyword, 'gi'), '')
-  })
+  }
 
   cleanedText = cleanedText.replace(/\s{2,}/g, ' ').trim() // Убираем лишние пробелы
+
+  // Remove trailing periods and text after the first period
+  cleanedText = cleanedText.replace(/\.\s*.*$/, '')
+
   return cleanedText.length > 0 ? cleanedText : null
 }
 
-export function convertPdfStatementTransaction(rawTransaction: StatementTransaction, rawAccount: AccountOrCard): ConvertedTransaction {
+export function convertPdfStatementTransaction (rawTransaction: StatementTransaction, rawAccount: AccountOrCard): ConvertedTransaction {
   const sum = parseFloat(rawTransaction.amount.replace(',', '.').replace(/[\s+$]/g, ''))
-  const instrument = rawTransaction.originalAmount?.match(/[A-Z]{3}/)?.[0] || rawAccount.instrument || 'KZT'
+  let instrument = 'KZT'
+  if (rawTransaction.originalAmount !== null) {
+    instrument = rawTransaction.originalAmount?.match(/[A-Z]{3}/)?.[0] ?? 'KZT'
+  } else if (rawAccount.instrument !== null) {
+    instrument = rawAccount.instrument
+  }
 
-  let invoice = rawTransaction.originalAmount
+  let invoice = rawTransaction.originalAmount !== null
     ? {
         sum: parseFloat(rawTransaction.originalAmount.replace(',', '.').replace(/[^\d.-]/g, '')),
-        instrument: instrument
+        instrument
       }
     : null
 
@@ -72,12 +81,20 @@ export function convertPdfStatementTransaction(rawTransaction: StatementTransact
   const parsedType = parseTransactionType(rawTransaction.originString)
   let movements: [Movement] | [Movement, Movement]
 
-  if (parsedType && [transactionType.CASH, transactionType.TRANSFER].includes(parsedType)) {
+  if (parsedType !== null && [transactionType.CASH, transactionType.TRANSFER].includes(parsedType)) {
+    let type
+    if (parsedType === transactionType.CASH) {
+      type = AccountType.cash
+    } else if (parsedType === transactionType.TRANSFER && rawTransaction.description !== null && rawTransaction.description?.includes('KOPILKA')) {
+      type = AccountType.deposit
+    } else {
+      type = AccountType.ccard
+    }
     const secondMovement: Movement = {
       id: null,
       account: {
-        type: parsedType === transactionType.CASH ? AccountType.cash : AccountType.ccard,
-        instrument: instrument,
+        type,
+        instrument,
         company: null,
         syncIds: null
       },
@@ -93,7 +110,7 @@ export function convertPdfStatementTransaction(rawTransaction: StatementTransact
   const merchantFullTitle = cleanMerchantTitle(rawTransaction.description)
   let comment = null
 
-  if (merchantFullTitle) {
+  if (merchantFullTitle !== null) {
     const commentStrs = ['по номеру счета', 'by account number']
     for (const commentStr of commentStrs) {
       if (merchantFullTitle.includes(commentStr)) {
@@ -110,7 +127,7 @@ export function convertPdfStatementTransaction(rawTransaction: StatementTransact
       movements,
       hold: rawTransaction.hold,
       date: new Date(rawTransaction.date),
-      merchant: merchantFullTitle
+      merchant: merchantFullTitle !== null
         ? {
             fullTitle: merchantFullTitle,
             mcc: null,

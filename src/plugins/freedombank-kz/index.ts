@@ -23,7 +23,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ fromDate, isFirstRun }) 
     transactions: []
   }
   if (rawAccountsAndTransactions !== null) {
-    for (const { account: account, transactions: rawTransactions } of rawAccountsAndTransactions) {
+    for (const { account, transactions: rawTransactions } of rawAccountsAndTransactions) {
       const initialValue: ConvertedTransaction[] = []
       const transactions = rawTransactions.reduce((convertedTransactions, item) => {
         const transaction = convertPdfStatementTransaction(item, account)
