@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package md.maib.app.profile;
+
+option java_multiple_files = true;
+option java_outer_classname = "SettingsProto";
+option java_package = "md.maib.app.proto.settings";
+
+message Pin5ChangeRequest {
+    string old_pin5 = 1;
+    string new_pin5 = 2;
+}
+
+message Pin5ChangeResponse {
+    Result result = 1;
+    enum Result {
+        UNKNOWN = 0;
+        OK = 1;
+        WRONG_INPUT = 2;
+        SERVER_ERROR = 3;
+    }
+}
+
+message AccountVisibilityRequest {
+    bool dummy_true = 1;
+    repeated VisibilitySetting card_settings = 2;
+    repeated VisibilitySetting current_account_settings = 3;
+    repeated VisibilitySetting deposit_account_settings = 4;
+    repeated VisibilitySetting credit_account_settings = 5;
+    repeated VisibilitySetting credit_card_account_settings = 6;
+}
+
+message VisibilitySetting {
+    string id = 1;
+    bool visible_for_operations = 2;
+    bool visible_statement = 3;
+}
+
+message BiometricSettingsRequest {
+    bool is_biometrics_enabled = 1;
+}
+
+message SaveLanguageRequest {
+    SettingsLanguage language = 1;
+}
+
+message SettingsLanguage {
+    Language language = 1;
+    enum Language {
+        UNKNOWN = 0;
+        RO = 1;
+        RU = 2;
+        EN = 3;
+    }
+}

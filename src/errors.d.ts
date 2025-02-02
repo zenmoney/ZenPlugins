@@ -1,6 +1,5 @@
-export declare class ZPAPIError {
+export declare class ZPAPIError extends Error {
   message: string
-  stack: unknown[]
   fatal: boolean
   allowRetry: boolean
   toString (): string
@@ -25,11 +24,11 @@ export declare class TemporaryUnavailableError extends TemporaryError {
 }
 
 export declare class InvalidLoginOrPasswordError extends InvalidPreferencesError {
-  constructor ()
+  constructor (message?: string)
 }
 
 export declare class InvalidOtpCodeError extends TemporaryError {
-  constructor ()
+  constructor (message?: string)
 }
 
 export declare class PinCodeInsteadOfPasswordError extends InvalidPreferencesError {

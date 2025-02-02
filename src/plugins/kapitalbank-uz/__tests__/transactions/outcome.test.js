@@ -1,9 +1,9 @@
 import {
-  convertUzcardCardTransaction,
+  convertAccountTransaction,
   convertHumoCardTransaction,
+  convertUzcardCardTransaction,
   convertVisaCardTransaction,
-  convertWalletTransaction,
-  convertAccountTransaction
+  convertWalletTransaction
 } from '../../converters'
 
 describe('convertTransaction', () => {
@@ -49,7 +49,10 @@ describe('convertTransaction', () => {
       }
     ]
   ])('converts outcome UZS', (rawTransaction, transaction) => {
-    const card = { id: 'card', instrument: 'UZS' }
+    const card = {
+      id: 'card',
+      instrument: 'UZS'
+    }
     expect(convertUzcardCardTransaction(card, rawTransaction)).toEqual(transaction)
   })
 
@@ -61,7 +64,10 @@ describe('convertTransaction', () => {
         merchantName: 'DRI*Adobe Systems,orderfind.co IE',
         transType: 'Товары и услуги',
         fee: '0.00',
-        currency: { name: 'USD', scale: 2 },
+        currency: {
+          name: 'USD',
+          scale: 2
+        },
         approvalCode: '833389',
         back: false,
         transCode: '205',
@@ -72,12 +78,12 @@ describe('convertTransaction', () => {
       },
       {
         date: new Date('2020-07-05T06:36:09.000Z'),
-        hold: false,
+        hold: true,
         comment: null,
         merchant: {
-          country: null,
-          city: null,
-          title: 'DRI*Adobe Systems,orderfind.co IE',
+          country: 'IE',
+          city: 'orderfind.co',
+          title: 'DRI*Adobe Systems',
           mcc: null,
           location: null
         },
@@ -132,9 +138,229 @@ describe('convertTransaction', () => {
           }
         ]
       }
+    ],
+    [
+      {
+        transDate: 1689227549000,
+        amount: '-0.97',
+        merchantName: 'Yandex Go,Amsterdam NL',
+        transType: 'Товары и услуги',
+        fee: '115.93',
+        currency: {
+          name: 'USD',
+          scale: 2
+        },
+        approvalCode: '482738',
+        back: false,
+        transCode: '000000',
+        reversed: false,
+        transAmount: '-11000.00',
+        transCurrency: 'UZS',
+        conversionRate: '0.000087'
+      },
+      {
+        date: new Date('2023-07-13T10:52:29+05:00'),
+        hold: true,
+        merchant: {
+          city: 'Amsterdam',
+          country: 'NL',
+          location: null,
+          mcc: null,
+          title: 'Yandex Go'
+        },
+        movements: [
+          {
+            id: null,
+            account: { id: 'card' },
+            invoice: {
+              sum: -11000,
+              instrument: 'UZS'
+            },
+            sum: -0.96,
+            fee: -0.01
+          }
+        ],
+        comment: null
+      }
+    ],
+    [
+      {
+        transDate: 1689252570000,
+        amount: '-1.85',
+        merchantName: 'Yandex Go,Amsterdam NL',
+        transType: 'Товары и услуги',
+        fee: '231.86',
+        currency: {
+          name: 'USD',
+          scale: 2
+        },
+        approvalCode: '191242',
+        back: true,
+        transCode: '000000',
+        reversed: false,
+        transAmount: '-21000.00',
+        transCurrency: 'UZS',
+        conversionRate: '0.000087'
+      },
+      {
+        date: new Date('2023-07-13T15:49:30+03:00'),
+        hold: false,
+        merchant: {
+          city: 'Amsterdam',
+          country: 'NL',
+          location: null,
+          mcc: null,
+          title: 'Yandex Go'
+        },
+        movements: [
+          {
+            account: { id: 'card' },
+            id: null,
+            invoice: {
+              sum: -21000,
+              instrument: 'UZS'
+            },
+            sum: -1.83,
+            fee: -0.02
+          }
+        ],
+        comment: null
+      }
+    ],
+    [
+      {
+        transDate: 1689501570000,
+        amount: '-7.47',
+        merchantName: 'OOO PENTAZONE 5,TASHKENT UZ',
+        transType: 'Товары и услуги',
+        fee: '810.75',
+        currency: {
+          name: 'USD',
+          scale: 2
+        },
+        approvalCode: '342723',
+        back: false,
+        transCode: '000000',
+        reversed: false,
+        transAmount: '-85000.00',
+        transCurrency: 'UZS',
+        conversionRate: '0.000087'
+      },
+      {
+        date: new Date('2023-07-16T12:59:30+03:00'),
+        hold: true,
+        merchant: {
+          city: 'TASHKENT',
+          country: 'UZ',
+          location: null,
+          mcc: null,
+          title: 'OOO PENTAZONE 5'
+        },
+        movements: [
+          {
+            account: { id: 'card' },
+            fee: -0.07,
+            id: null,
+            invoice: {
+              sum: -85000,
+              instrument: 'UZS'
+            },
+            sum: -7.4
+          }
+        ],
+        comment: null
+      }
+    ],
+    [
+      {
+        transDate: 1701186566000,
+        amount: '-35130.80',
+        merchantName: 'IP "KERIMQUL",ALMATY , KZ',
+        transType: 'Товары и услуги',
+        fee: '0.00',
+        currency: {
+          name: 'UZS',
+          scale: 2
+        },
+        approvalCode: '949579',
+        back: false,
+        transCode: '000000',
+        reversed: false,
+        transAmount: '-1290.00',
+        transCurrency: 'KZT',
+        conversionRate: '27.233178'
+      },
+      {
+        date: new Date(1701186566000),
+        hold: true,
+        merchant: {
+          city: 'ALMATY',
+          country: 'KZ',
+          location: null,
+          mcc: null,
+          title: 'IP "KERIMQUL"'
+        },
+        movements: [
+          {
+            account: { id: 'card' },
+            fee: 0,
+            id: null,
+            invoice: {
+              sum: -1290,
+              instrument: 'KZT'
+            },
+            sum: -35130.80
+          }
+        ],
+        comment: null
+      }
+    ],
+    [
+      {
+        transDate: 1699943744000,
+        amount: '-2.00',
+        merchantName: 'VISA DIRECT',
+        transType: 'Покупки',
+        fee: '2.00',
+        currency: {
+          name: 'USD',
+          scale: 2
+        },
+        approvalCode: '974628',
+        back: true,
+        transCode: '205',
+        reversed: false,
+        transAmount: '-2.00',
+        transCurrency: 'USD',
+        conversionRate: '1'
+      },
+      {
+        date: new Date(1699943744000),
+        hold: false,
+        merchant: {
+          city: null,
+          country: null,
+          location: null,
+          mcc: null,
+          title: 'VISA DIRECT'
+        },
+        movements: [
+          {
+            account: { id: 'card' },
+            fee: 0,
+            id: null,
+            invoice: null,
+            sum: -2
+          }
+        ],
+        comment: null
+      }
     ]
   ])('converts outcome VISA', (rawTransaction, transaction) => {
-    const card = { id: 'card', instrument: 'USD' }
+    const card = {
+      id: 'card',
+      instrument: 'USD'
+    }
     expect(convertVisaCardTransaction(card, rawTransaction)).toEqual(transaction)
   })
 
@@ -146,7 +372,10 @@ describe('convertTransaction', () => {
         merchantName: 'TOSHKENT SH., AT  ALOKABANK',
         transType: 'Оплата товаров и услуг',
         fee: '0,00',
-        currency: { name: 'UZS', scale: 2 },
+        currency: {
+          name: 'UZS',
+          scale: 2
+        },
         reversed: false
       },
       {
@@ -172,7 +401,10 @@ describe('convertTransaction', () => {
       }
     ]
   ])('converts outcome HUMO', (rawTransaction, transaction) => {
-    const card = { id: 'card', instrument: 'UZS' }
+    const card = {
+      id: 'card',
+      instrument: 'UZS'
+    }
     expect(convertHumoCardTransaction(card, rawTransaction)).toEqual(transaction)
   })
 
@@ -201,7 +433,10 @@ describe('convertTransaction', () => {
       }
     ]
   ])('converts outerOutcome to Wallet UZS', (rawTransaction, transaction) => {
-    const wallet = { id: 'wallet', instrument: 'UZS' }
+    const wallet = {
+      id: 'wallet',
+      instrument: 'UZS'
+    }
     expect(convertWalletTransaction(wallet, rawTransaction)).toEqual(transaction)
   })
 
@@ -209,7 +444,10 @@ describe('convertTransaction', () => {
     [
       {
         amount: -2454043,
-        currency: { name: 'UZS', scale: 2 },
+        currency: {
+          name: 'UZS',
+          scale: 2
+        },
         date: 1568746800000,
         docId: '17431653',
         docType: '06',
@@ -239,7 +477,10 @@ describe('convertTransaction', () => {
       }
     ]
   ])('converts outcome to Account UZS', (rawTransaction, transaction) => {
-    const account = { id: 'account', instrument: 'UZS' }
+    const account = {
+      id: 'account',
+      instrument: 'UZS'
+    }
     expect(convertAccountTransaction(account, rawTransaction)).toEqual(transaction)
   })
 })

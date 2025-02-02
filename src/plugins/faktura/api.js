@@ -5,7 +5,7 @@
 import { parse, splitCookiesString } from 'set-cookie-parser'
 import { fetchJson } from '../../common/network'
 import { generateRandomString, generateUUID } from '../../common/utils'
-import { InvalidLoginOrPasswordError, InvalidOtpCodeError, UserInteractionError } from '../../errors'
+import { InvalidLoginOrPasswordError, InvalidOtpCodeError, TemporaryUnavailableError, UserInteractionError } from '../../errors'
 
 let apiUri = ''
 let xXSrfToken = null
@@ -140,13 +140,13 @@ async function auth (login, password, authParams, isInBackground) {
       if ([
         'AUTH_LOCKED_TEMPORARY'
       ].some(str => s === str)) {
-        throw new TemporaryError('Не удалось авторизоваться: доступ временно запрещен')
+        throw new TemporaryUnavailableError()
       }
       if ([
         'CORE_NOT_AVAILABLE_ERROR',
         'CORE_UNAVAILABLE'
       ].some(str => s === str)) {
-        throw new TemporaryError('Не удалось авторизоваться: технические работы в банке')
+        throw new TemporaryUnavailableError()
       }
 
       console.assert(false, 'Не удалось авторизоваться', response)

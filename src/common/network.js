@@ -12,17 +12,24 @@ export class ParseError {
   }
 }
 
+let n = -1
+
+export function generateRequestLogId () {
+  return `${++n}`
+}
+
 export async function fetch (url, options = {}) {
   const init = {
     ..._.omit(options, ['sanitizeRequestLog', 'sanitizeResponseLog', 'log', 'stringify', 'parse']),
     ...options.body && { body: options.stringify ? options.stringify(options.body) : options.body }
   }
-
   const beforeFetchTicks = Date.now()
   const shouldLog = options.log !== false
+  const id = shouldLog && generateRequestLogId()
   shouldLog && console.debug('request', sanitizeUrlContainingObject({
-    method: init.method || 'GET',
+    id,
     url,
+    method: init.method || 'GET',
     headers: init.headers,
     ...options.body && { body: options.body }
   }, options.sanitizeRequestLog || false))
@@ -41,7 +48,11 @@ export async function fetch (url, options = {}) {
     } else {
       err = e
     }
-    shouldLog && console.debug('response', { url, ms: Date.now() - beforeFetchTicks }, 'failed to receive due to error', err)
+    shouldLog && console.debug('response', {
+      id,
+      ms: Date.now() - beforeFetchTicks,
+      url
+    }, 'failed to receive due to error', err)
     throw err
   }
   response = {
@@ -68,11 +79,13 @@ export async function fetch (url, options = {}) {
     }
   }
 
-  const endTicks = Date.now()
   shouldLog && console.debug('response', sanitizeUrlContainingObject({
-    ..._.pick(response, ['status', 'url', 'headers']),
-    body: bodyLog,
-    ms: endTicks - beforeFetchTicks
+    id,
+    ms: Date.now() - beforeFetchTicks,
+    url: response.url,
+    status: response.status,
+    headers: response.headers,
+    body: bodyLog
   }, options.sanitizeResponseLog || false))
 
   if (bodyParsingException) {
@@ -85,13 +98,13 @@ export async function fetch (url, options = {}) {
 export async function fetchJson (url, options = {}) {
   return fetch(url, {
     stringify: JSON.stringify,
+    parse: (body) => body === '' ? undefined : JSON.parse(body),
     ...options,
     headers: {
       Accept: 'application/json, text/plain, */*',
       ...options.body && { 'Content-Type': 'application/json;charset=UTF-8' },
       ...options.headers
-    },
-    parse: (body) => body === '' ? undefined : JSON.parse(body)
+    }
   })
 }
 
@@ -107,10 +120,12 @@ export async function openWebViewAndInterceptRequest ({ url, headers, log, sanit
   if (ZenMoney && ZenMoney.openWebView) {
     return new Promise((resolve, reject) => {
       ZenMoney.openWebView(url, headers, (request, callback) => {
+        const id = generateRequestLogId()
         const shouldLog = log !== false
         shouldLog && console.debug('request', sanitizeUrlContainingObject({
-          method: request.method || 'GET',
+          id,
           url: request.url,
+          method: request.method || 'GET',
           headers: request.headers || {},
           ...request.body && { body: request.body }
         }, sanitizeRequestLog || false))

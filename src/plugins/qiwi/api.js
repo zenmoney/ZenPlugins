@@ -2,6 +2,7 @@ import { omit } from 'lodash'
 import { fetchJson as commonFetchJson } from '../../common/network'
 import { retry } from '../../common/retry'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
+import { TemporaryUnavailableError } from '../../errors'
 
 async function fetchJson (url, options) {
   const token = options && options.token ? options.token.trim() : ''
@@ -32,7 +33,7 @@ async function fetchJson (url, options) {
     throw new InvalidPreferencesError('Неверный токен. Создайте токен на qiwi.com/api. Подробнее читайте в инструкции к подключению.')
   }
   if (response.body && response.body.errorCode === 'internal.error') {
-    throw new TemporaryError('Информация временно недоступна.')
+    throw new TemporaryUnavailableError()
   }
   return response
 }

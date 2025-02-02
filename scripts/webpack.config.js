@@ -62,11 +62,26 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
       },
       extensions: ['.js', '.ts', '.json'],
       fallback: {
-        fs: false
+        path: false,
+        fs: false,
+        Buffer: false,
+        process: false,
       }
     },
     module: {
+      noParse: /\.wasm$/,
       rules: [
+          {
+            test: /\.wasm$/,
+            // Tells WebPack that this module should be included as
+            // base64-encoded binary file and not as code
+            loader: 'base64-loader',
+            // Disables WebPack's opinion where WebAssembly should be,
+            // makes it think that it's not WebAssembly
+            //
+            // Error: WebAssembly module is included in initial chunk.
+            type: 'javascript/auto',
+        },
         {
           test: /ZenmoneyManifest.xml$/,
           include: pluginPaths.manifest,
@@ -175,7 +190,10 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
     },
     optimization: {
       minimize: false
-    }
+    },
+    experiments: {
+      asyncWebAssembly: true,
+    },
   }
 }
 

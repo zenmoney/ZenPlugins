@@ -176,16 +176,23 @@ export const processHeadersAndBody = ({ headers, body }) => {
   return { headers: resultHeaders, body }
 }
 
-export const fetchRemoteSync = ({ method, url, headers, body, binaryResponse, manualRedirect }) => {
+export const fetchRemoteSync = ({ method, url, headers, body, binaryResponse, manualRedirect, callback }) => {
+  try {
+    url = new URL(url)
+  } catch (e) {
+    handleException(`[NUR] Wrong URL. ${e}`)
+    return null
+  }
+
   const req = new XMLHttpRequest()
   req.withCredentials = true
   if (binaryResponse) {
     req.responseType = 'arraybuffer'
   }
 
-  const { origin, pathname, search } = new URL(url)
+  const { origin, pathname, search } = url
   const pathWithQueryParams = pathname + search
-  req.open(method, pathWithQueryParams, false)
+  req.open(method, pathWithQueryParams, Boolean(callback))
 
   const { headers: processedHeaders, body: processedBody } = processHeadersAndBody({ headers, body })
   req.setRequestHeader(PROXY_TARGET_HEADER, origin)
@@ -200,18 +207,67 @@ export const fetchRemoteSync = ({ method, url, headers, body, binaryResponse, ma
     }
   }
 
-  try {
-    req.send(processedBody)
-    const { pathname, search } = new URL(req.responseURL)
+  const onResponse = () => {
+    const { pathname, search } = new URL(req.responseURL || url)
     lastRequest = req
     lastRequestUrl = getTargetUrl(pathname + search, origin)
-    if (binaryResponse) {
-      return req.response
-    } else {
-      return req.responseText
+    const body = binaryResponse
+      ? req.response
+      : req.responseText
+    if (/"message"/.test(req.responseText) && /"stack"/.test(req.responseText)) {
+      try {
+        const parsedBody = JSON.parse(req.responseText)
+        if (typeof parsedBody.message === 'string' && typeof parsedBody.stack === 'string') {
+          let message = parsedBody.message
+          if (/getaddrinfo ENOTFOUND/.test(message)) {
+            message = `[NER] Connection error. ${message}`
+          } else if (/certificate has expired/.test(message)) {
+            message = `[NCE] Wrong server certificate. ${message}`
+          } else if (/socket hang up/.test(message)) {
+            message = `[NTI] Request timed out. ${message}`
+          }
+          return { error: new Error(message) }
+        }
+      } catch (e) {}
     }
+    return { body }
+  }
+
+  if (callback) {
+    req.onerror = (e) => {
+      onResponse()
+      // eslint-disable-next-line n/no-callback-literal
+      callback({ error: `[NER] Connection error. ${e}` })
+    }
+    req.onload = () => {
+      if (req.readyState === 4) {
+        const { body, error } = onResponse()
+        if (error) {
+          // eslint-disable-next-line n/no-callback-literal
+          callback({ error })
+        } else {
+          // eslint-disable-next-line n/no-callback-literal
+          callback({ content: body })
+        }
+      }
+    }
+  }
+  try {
+    req.send(processedBody)
   } catch (e) {
-    handleException('[NER] Connection error. ' + e)
+    onResponse()
+    handleException(`[NER] Connection error. ${e}`)
     return null
+  }
+  if (callback) {
+    return null
+  } else {
+    const { body, error } = onResponse()
+    if (error) {
+      handleException(error.message || error)
+      return null
+    } else {
+      return body
+    }
   }
 }

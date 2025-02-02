@@ -1,9 +1,9 @@
 import { omit } from 'lodash'
 import { fetch, fetchJson, openWebViewAndInterceptRequest, RequestInterceptMode } from '../../common/network'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
-import { delay } from '../../common/utils'
+import { delay, generateUUID } from '../../common/utils'
 import { parse, stringify } from 'querystring'
-import { BankMessageError, IncompatibleVersionError } from '../../errors'
+import { BankMessageError, IncompatibleVersionError, TemporaryUnavailableError } from '../../errors'
 import config from './config'
 
 const API_REDIRECT_URI = config.redirectUri
@@ -19,6 +19,47 @@ export async function login (auth = {}, preferences) {
   let accessToken = auth.accessToken || auth.access_token
   let refreshToken = auth.refreshToken || auth.refresh_token
   let expirationDateMs = auth.expirationDateMs
+
+  if (ZenMoney.trustCertificates) {
+    ZenMoney.trustCertificates([
+      `-----BEGIN CERTIFICATE-----
+MIIGUzCCBTugAwIBAgIMMjVN6wK9zLt8V+MHMA0GCSqGSIb3DQEBCwUAMFUxCzAJ
+BgNVBAYTAkJFMRkwFwYDVQQKExBHbG9iYWxTaWduIG52LXNhMSswKQYDVQQDEyJH
+bG9iYWxTaWduIEdDQyBSNiBBbHBoYVNTTCBDQSAyMDIzMB4XDTI0MDcwODA4MDYx
+OVoXDTI1MDgwOTA4MDYxOFowGzEZMBcGA1UEAxMQZW50ZXIudG9jaGthLmNvbTCC
+ASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBANTO1wd2lKXPDUF+i7PJsEHN
+FL1U0SIIGF1iBLJiNQ91gC7yJnuTgdYPXwZzhHorH8IarpEX7I8CE2mGia8Hiirv
+4Xz4A5ZWuJ6lNXVMLhFk9dURXnKyL2d9wA9Md7VgIzAu2FAnA8Qw5WRGmjMey3Gj
+ISPKjaFPupyOeaDTfVjjgAOMqu8pqzMF7jz650N5W4ezrIU5BfW3V5RqkyJmEj5W
+0/Cz1jjtmkkf4xVu2mQ8nW02ph0OVd8mkyXTT8o2tXjWMEllaTAqfRVOgmAHfI1q
+6ES5sdjRxWqd61W7jeiKQZ6MT7Hi9F67FZ8LH3/xOMAgg/OXHPxOjVV3JZRlSncC
+AwEAAaOCA1swggNXMA4GA1UdDwEB/wQEAwIFoDAMBgNVHRMBAf8EAjAAMIGZBggr
+BgEFBQcBAQSBjDCBiTBJBggrBgEFBQcwAoY9aHR0cDovL3NlY3VyZS5nbG9iYWxz
+aWduLmNvbS9jYWNlcnQvZ3NnY2NyNmFscGhhc3NsY2EyMDIzLmNydDA8BggrBgEF
+BQcwAYYwaHR0cDovL29jc3AuZ2xvYmFsc2lnbi5jb20vZ3NnY2NyNmFscGhhc3Ns
+Y2EyMDIzMFcGA1UdIARQME4wCAYGZ4EMAQIBMEIGCisGAQQBoDIKAQMwNDAyBggr
+BgEFBQcCARYmaHR0cHM6Ly93d3cuZ2xvYmFsc2lnbi5jb20vcmVwb3NpdG9yeS8w
+RAYDVR0fBD0wOzA5oDegNYYzaHR0cDovL2NybC5nbG9iYWxzaWduLmNvbS9nc2dj
+Y3I2YWxwaGFzc2xjYTIwMjMuY3JsMBsGA1UdEQQUMBKCEGVudGVyLnRvY2hrYS5j
+b20wHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMB8GA1UdIwQYMBaAFL0F
+t/OKkzxzy3n6D4USoXeWGJF0MB0GA1UdDgQWBBSPWyt3T/8sx1sHOJrA2xeCbcI9
+KDCCAX4GCisGAQQB1nkCBAIEggFuBIIBagFoAHYArxgaKNaMo+CpikycZ6sJ+Lu8
+IrquvLE4o6Gd0/m2Aw0AAAGQkWEp9wAABAMARzBFAiBfFcOh470c6HFi8wd+fCAW
+iE6+nOQi1hUQhtlJ9WBc+wIhAK/+yD5I9PsjLVJeh73wQX16RNDXCJBeKyk8ipa5
+l0QRAHYAEvFONL1TckyEBhnDjz96E/jntWKHiJxtMAWE6+WGJjoAAAGQkWEp3QAA
+BAMARzBFAiB9Dr8zeYqTrwEF3iJ980axpJ84KM5tVOl99f+6fMD4ogIhAJXJITTV
+zt+jQBkxj7CkcLMZfqUAyTDmRw2P6zxzxlbmAHYADeHyMCvTDcFAYhIJ6lUu/Ed0
+fLHX6TDvDkIetH5OqjQAAAGQkWEp/QAABAMARzBFAiEAj3BCjfQOVCljfjs6InGA
+wUstEtouOtJxCy9jVAIgUXkCIEIz3/kywd13UQpiT9A7iwj5YsD/AL0gVAdCk75o
+RjMVMA0GCSqGSIb3DQEBCwUAA4IBAQDLXeIr9bEsb2+TuT/PNURnpAwy1BZdxKL5
+Q6RcwHG07ikzigUT+lY11L6arAD9GbTmBzJOrMCT+hQjZOiy0EbKxgaYgKouB1ig
+6FpqIK9Qx4emJxrZrqgzvkiQsw6rC0gEDfyS6yndMVanEivvYIlStL55qMIxNGdI
+hVwAQKXIj2/U8cR+ClWgxhPQ0/CgJzVDd2gYxzKXAGiRksfGOi+/6QixE4YqwYzm
+i1Kc/v0LekFbZrs+dwytvpmwtJEbbhpcugSdgLHsClAjOKw1BZWznuZuv3M+vv6f
+xXjsrTU9N3+9kpxGWFuklY31V4BH5kxtqoM5H0PMb6DPZmR9GhFI
+-----END CERTIFICATE-----`
+    ])
+  }
 
   let response
   if (config.clientId.indexOf('sandbox') >= 0) {
@@ -143,28 +184,36 @@ export async function login (auth = {}, preferences) {
     console.assert(needPermissions.findIndex(permission => permissions.indexOf(permission) < 0) < 0, 'non-successfull permissions granted', response)
 
     const redirectUriWithoutProtocol = API_REDIRECT_URI.replace(/^https?:\/\//i, '')
+    const state = generateUUID()
     const url = `${BASE_URI}/connect/authorize?${stringify({
       client_id: config.clientId,
       response_type: 'code',
-      state: 'zenmoney',
+      state,
       redirect_uri: config.redirectUri,
       scope: 'accounts',
       consent_id: consentId
     })}`
-    const params = await openWebViewAndInterceptRequest({
-      url,
-      sanitizeRequestLog: { url: { query: { client_id: true, consent_id: true } } },
-      intercept: function (request) {
-        if (request.url === url) {
-          this.mode = RequestInterceptMode.OPEN_AS_DEEP_LINK
+    let params
+    try {
+      params = await openWebViewAndInterceptRequest({
+        url,
+        sanitizeRequestLog: { url: { query: { client_id: true, consent_id: true } } },
+        intercept: function (request) {
+          if (request.url === url) {
+            this.mode = RequestInterceptMode.OPEN_AS_DEEP_LINK
+          }
+          const i = request.url.indexOf(redirectUriWithoutProtocol)
+          if (i < 0) {
+            return null
+          }
+          return parse(request.url.substring(i + redirectUriWithoutProtocol.length + 1))
         }
-        const i = request.url.indexOf(redirectUriWithoutProtocol)
-        if (i < 0) {
-          return null
-        }
-        return parse(request.url.substring(i + redirectUriWithoutProtocol.length + 1))
-      }
-    })
+      })
+    } catch (err) {
+      params = (await fetchJson(`${API_REDIRECT_URI.replace(/\/+$/, '')}/result/${state}/`, {
+        log: false
+      })).body
+    }
     const code = params?.code
     if (!code && (!params?.error || params.error === 'access_denied')) {
       throw new TemporaryError('Не удалось пройти авторизацию в банке Точка. Попробуйте еще раз')
@@ -307,7 +356,7 @@ async function callGate (url, accessToken, options = {}) {
   } catch (e) {
     if (!options.ignoreErrors) {
       if (e.response && typeof e.response.body === 'string' && e.response.body.indexOf('internal server error') >= 0) {
-        throw new TemporaryError('Информация из банка Точка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
+        throw new TemporaryUnavailableError()
       } else {
         throw e
       }

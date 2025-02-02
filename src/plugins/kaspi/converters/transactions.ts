@@ -53,7 +53,7 @@ export function convertPdfStatementTransaction (rawTransaction: StatementTransac
         instrument: rawTransaction.originalAmount.replace(/[^A-Z]/g, '')
       }
     : null
-  const sum = parseFloat(rawTransaction.amount.replace(',', '.').replace(/[\s+]/g, ''))
+  const sum = parseFloat(rawTransaction.amount.replace(',', '.').replace(/[\s+$]/g, ''))
   const movements: [Movement] = [
     {
       id: null,

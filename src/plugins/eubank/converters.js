@@ -150,8 +150,8 @@ function adjustAccounts (apiTransactions) {
   const pairedTransactionsById = []
   for (let i = 1, n = innerTransfers.length; i < n; i++) {
     if ((new Date(innerTransfers[i - 1].transactionDate)).getTime() - (new Date(innerTransfers[i].transactionDate)).getTime() <= 106400000 &&
-    ((innerTransfers[i - 1].purpose.match(/списание/i) && innerTransfers[i].purpose.match(/зачисл/i)) ||
-    (innerTransfers[i].purpose.match(/списание/i) && innerTransfers[i - 1].purpose.match(/зачисл/i)))) { // if it has been less than 24 hours between transactions and these transactions are parts od one
+      ((innerTransfers[i - 1].purpose.match(/списание/i) && innerTransfers[i].purpose.match(/зачисл/i)) ||
+        (innerTransfers[i].purpose.match(/списание/i) && innerTransfers[i - 1].purpose.match(/зачисл/i)))) { // if it has been less than 24 hours between transactions and these transactions are parts od one
       pairedTransactionsById[innerTransfers[i - 1].id] = true
       unwantedTransactionsById[innerTransfers[i].id] = true
       i++
@@ -221,10 +221,7 @@ function convertTransaction (apiTransaction, accountData, accountsByNumber) {
   if ((apiTransaction.amount === 0 && apiTransaction.totalAmount === 0) || apiTransaction.status === 'REJECTED') {
     return null
   }
-  if (((apiTransaction.amount > 0 && apiTransaction.totalAmount < 0) || (apiTransaction.amount < 0 && apiTransaction.totalAmount > 0)) &&
-    !apiTransaction.purpose.match(/^.*CH .* Acc KAZ Almaty Perevod s karty na kartu.*$/i) && !apiTransaction.purpose.match(/^.*CH.*Credit Acc.*$/i)) {
-    return null
-  }
+  const hasBonus = ((apiTransaction.amount > 0 && apiTransaction.totalAmount < 0) || (apiTransaction.amount < 0 && apiTransaction.totalAmount > 0))
   console.assert(['RESERVED', 'DONE', 'IN_PROCESS'].indexOf(apiTransaction.status) >= 0, 'Неизвестный статус транзакции', apiTransaction.id)
   let account = accountData
   if (Array.isArray(account)) {
@@ -251,7 +248,7 @@ function convertTransaction (apiTransaction, accountData, accountsByNumber) {
       {
         id: apiTransaction.id,
         account: { id: account.id },
-        invoice: invoice.instrument === account.instrument ? null : invoice,
+        invoice: invoice.instrument === account.instrument || hasBonus ? null : invoice,
         sum: invoice.instrument === account.instrument ? invoice.sum : ((apiTransaction.totalAmount !== 0) && (apiTransaction.totalAmountCurrency === account.instrument)) ? apiTransaction.totalAmount : null,
         fee
       }

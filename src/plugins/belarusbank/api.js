@@ -4,7 +4,7 @@ import padLeft from 'pad-left'
 import { stringify } from 'querystring'
 import { fetch } from '../../common/network'
 import { retry, RetryError } from '../../common/retry'
-import { BankMessageError, InvalidOtpCodeError, TemporaryUnavailableError } from '../../errors'
+import { BankMessageError, InvalidOtpCodeError, InvalidPreferencesError, TemporaryError, TemporaryUnavailableError } from '../../errors'
 
 const baseUrl = 'https://ibank.asb.by'
 

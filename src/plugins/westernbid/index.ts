@@ -18,7 +18,7 @@ export const scrape: ScrapeFunc<{ login: string, auth: string }> =
         `?request.pageNr=${page}` +
         `&request.pageSize=${500}` +
         `&request.fromUtc=${dateToString(fromDate)}` +
-        (toDate ? `&request.toUtc=${dateToString(toDate)}` : ''),
+        (toDate != null ? `&request.toUtc=${dateToString(toDate)}` : ''),
         {
           headers: {
             Login: preferences.login,

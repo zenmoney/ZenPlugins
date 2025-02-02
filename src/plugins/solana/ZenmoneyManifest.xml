@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>solana</id>
+    <company>16067</company>
+    <description>
+        Плагин для синхронизации Solana.
+        Для синхронизации укажите адрес кошелька.
+    </description>
+    <version>1.0</version>
+    <build>2</build>
+    <modular>true</modular>
+    <api>public</api>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+</provider>

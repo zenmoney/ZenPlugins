@@ -1,0 +1,165 @@
+syntax = "proto3";
+
+package md.maib.app.tx;
+
+import "Util.proto";
+import "Cashback.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "TxProto";
+option java_package = "md.maib.app.proto.tx";
+
+message TxResponse {
+    repeated Tx transactions = 1;
+}
+
+message Tx {
+    string id = 1;
+    double amount = 2;
+    int64 date = 3;
+    string cardLast4digits = 4;
+    string ccy = 5;
+    string description = 6;
+    string iconUrl = 7;
+    TxType type = 8;
+    string details = 9;
+    string bankAcc = 10;
+    double balanceAfter = 11;
+    double amountInCardCurrency = 12;
+    double exchangeRate = 13;
+    Origin origin = 14;
+    string categoryId = 15;
+    string name = 16;
+    string rrn = 17;
+    string approvalCode = 18;
+    util.OptionalLong mdl_amount_cents = 19;
+    string notes = 20;
+    
+    ChargebackState chargebackState = 21;
+    enum ChargebackState {
+        UNKNOWN_STATE = 0;
+        CAN_BE_CHARGED_BACK = 1;
+        CAN_NOT_BE_CHARGED_BACK = 2;
+        ALREADY_CHARGED_BACK = 3;
+    }
+    
+    string chargebackMessage = 22;
+    double feeAmount = 23;
+    string feeCcy = 24;
+    
+    Status status = 25;
+    enum Status {
+        UNKNOWN_STATUS = 0;
+        IN_PROCESSING = 1;
+        FINAL = 2;
+        DELETED = 3;
+    }
+    
+    CashbackTxInfo cashback = 26;
+    
+    CommissionType commissionType = 27;
+    enum CommissionType {
+        UNKNOWN_TYPE = 0;
+        C_TYPE = 1;
+        D_TYPE = 2;
+    }
+}
+
+message TxProcessingRequest {
+    repeated string ids = 1;
+}
+
+message CashbackTxInfo {
+    string id = 1;
+    double amount = 2;
+    float rate = 3;
+    cashback.CashbackType type = 4;
+    cashback.CashbackPayoutStatus status = 5;
+}
+
+message TxNameUpdateRequest {
+    string id = 1;
+    string name = 2;
+}
+
+message TxNameUpdateResponse {
+    Result result = 1;
+    enum Result {
+        UNKNOWN = 0;
+        OK = 1;
+    }
+}
+
+message TxCategory {
+    string id = 1;
+    string category_code = 2;
+    int64 when_created = 3;
+}
+
+message TxCategoryResponse {
+    repeated TxCategory categories = 2;
+}
+
+message TxUpdateCategoryRequest {
+    string id = 1;
+    string category_id = 2;
+}
+
+message TxUpdateCategoryResponse {
+    Result result = 1;
+    enum Result {
+        UNKNOWN = 0;
+        OK = 1;
+        WRONG_CATEGORY = 2;
+    }
+}
+
+message TxNotesUpdateRequest {
+    string id = 1;
+    string notes = 2;
+}
+
+message TxNotesUpdateResponse {
+    Result result = 1;
+    enum Result {
+        UNKNOWN = 0;
+        OK = 1;
+        TOO_LONG_NOTE = 2;
+    }
+}
+
+message Origin {
+    string device_name = 1;
+}
+
+message TxChargebackRequest {
+    string id = 1;
+    string message = 2;
+}
+
+message TxChargebackResponse {
+    Result result = 1;
+    enum Result {
+        UNKNOWN_RESULT = 0;
+        OK = 1;
+        VALIDATION_ERROR = 2;
+        ALREADY_CHARGED_BACK = 3;
+        NOT_FOUND = 4;
+        TYPE_NOT_SUPPORTED = 5;
+    }
+}
+
+enum TxType {
+    SUPPLY = 0;
+    SPEND = 1;
+    TRANSFER = 2;
+    WITHDRAW = 3;
+    MERCHANT = 4;
+    SPEND_REVERT = 5;
+    SUPPLY_REVERT = 6;
+    CARD_TO_ACCOUNT = 7;
+    ACCOUNT_TO_CARD = 8;
+    INSTALLMENT_PURCHASE = 9;
+    PAGED_PAYMENT = 10;
+    IBAN_PAYMENT = 11;
+}

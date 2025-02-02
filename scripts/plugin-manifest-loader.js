@@ -30,7 +30,11 @@ if (result.scrape && result.main || !result.scrape && !result.main) {
 if (result.scrape) {
     var adaptScrapeToMain = require("adapters").adaptScrapeToMain;
     result.main = adaptScrapeToMain(result.scrape);
-    delete result.scrape;
+    result = {
+        main: result.main,
+        makeTransfer: result.makeTransfer,
+        scrape: undefined
+    };
 }
 ZenMoney.manifest = ${JSON.stringify({
   id,

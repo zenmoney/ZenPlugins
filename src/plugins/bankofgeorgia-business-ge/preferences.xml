@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="clientId"
+        obligatory="true"
+        title="Client ID"
+        dialogTitle="Client ID"
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="||{@s}"
+    />
+    <EditTextPreference
+        key="clientSecret"
+        obligatory="true"
+        inputType="textPassword"
+        title="Client Secret"
+        dialogTitle="Client Secret"
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="||***********"
+    />
+    <EditTextPreference
+        key="accounts"
+        obligatory="true"
+        title="Accounts"
+        dialogTitle="Accounts"
+        dialogMessage="Enter your account numbers separated by commas (e.g., GE06BG0000000538407835,GE06BG0000000538407836GEL)"
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="||{@s}"
+    />
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="From what date to load transactions"
+        defaultValue="2018-01-01T00:00:00.000Z"
+        dialogTitle="From what date to load transactions"
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="|startDate|{@s}"
+    />
+</PreferenceScreen>

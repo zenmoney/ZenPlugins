@@ -46,6 +46,55 @@ describe('convertTransaction', () => {
     [
       [
         {
+          id: 'RESERVED_AMOUNT_9032932014',
+          type: 'RESERVED_AMOUNT',
+          executionDate: 0,
+          status: 'RESERVED',
+          dateCreated: 1588399266000,
+          personId: 0,
+          urgent: false,
+          template: false,
+          parentOrderId: 0,
+          accountName: '',
+          receiverPhone: '',
+          receiverBic: '',
+          message: '',
+          knpId: '',
+          dateSigned: null,
+          secoId: '',
+          transferMethodId: '',
+          amount: -80.09,
+          amountCurrency: 'USD',
+          totalAmount: 1096.05,
+          totalAmountCurrency: 'KZT',
+          purpose: 'Retail ESP Celra Tradeinn Retal Service'
+        }
+      ],
+      [
+        {
+          hold: true,
+          date: new Date(1588399266000),
+          movements: [
+            {
+              id: 'RESERVED_AMOUNT_9032932014',
+              account: { id: 'account' },
+              invoice: null,
+              sum: 1096.05,
+              fee: 0
+            }
+          ],
+          merchant: {
+            fullTitle: 'ESP Celra Tradeinn Retal Service',
+            location: null,
+            mcc: null
+          },
+          comment: null
+        }
+      ]
+    ],
+    [
+      [
+        {
           id: 'MOVEMENT_3797748924',
           type: 'MOVEMENT',
           executionDate: 1588199940000,

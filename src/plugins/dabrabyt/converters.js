@@ -161,7 +161,7 @@ function parseCardAccount (apiAccount) {
       title: card.personalizedName || apiAccount.productName,
       instrument: codeToCurrencyLookup[apiAccount.currency],
       syncIds: [...apiAccount.cards.map(card => card.cardNumberMasked.replace(/\s/g, ''))],
-      balance: apiAccount.balance
+      balance: Number.isFinite(apiAccount.balance) ? apiAccount.balance : null
     }
   }
 }

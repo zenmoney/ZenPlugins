@@ -1,6 +1,28 @@
 import { convertPdfStatementTransaction } from '../../converters/transactions'
-import { StatementTransaction } from '../../models'
+import { StatementTransaction, ConvertedAccount } from '../../models'
 import { AccountType } from '../../../../types/zenmoney'
+
+const deposit: ConvertedAccount = {
+  date: new Date(),
+  account: {
+    id: 'KZ2222',
+    balance: 1112.06,
+    instrument: 'USD',
+    syncIds: [
+      'KZ2222'
+    ],
+    title: 'Депозит *7777',
+    type: AccountType.deposit,
+    endDateOffsetInterval: 'year',
+    startDate: new Date('2022-03-04T21:00:00.000Z'),
+    startBalance: 0,
+    endDateOffset: 1,
+    capitalization: true,
+    percent: 1,
+    payoffInterval: null,
+    payoffStep: 0
+  }
+}
 
 it.each([
   [
@@ -39,7 +61,8 @@ it.each([
           location: null
         }
       }
-    }
+    },
+    null
   ],
   [
     {
@@ -74,7 +97,8 @@ it.each([
           location: null
         }
       }
-    }
+    },
+    null
   ],
   [
     {
@@ -117,7 +141,8 @@ it.each([
         date: new Date('2022-10-31T00:00:00.000'),
         merchant: null
       }
-    }
+    },
+    null
   ],
   [
     {
@@ -164,21 +189,55 @@ it.each([
           mcc: null
         }
       }
-    }
+    },
+    null
+  ],
+  [
+    {
+      hold: false,
+      date: '2022-03-05T00:00:00.000',
+      originalAmount: null,
+      amount: '+ 200,00',
+      description: 'Пополнение',
+      statementUid: '8bea793d-6645-4fb4-ab99-d3e1fe4a267e',
+      originString: '05.03.22+ $200,00Пополнение$200,00'
+    },
+    {
+      statementUid: '8bea793d-6645-4fb4-ab99-d3e1fe4a267e',
+      transaction: {
+        comment: null,
+        movements: [
+          {
+            id: null,
+            account: {
+              id: 'KZ2222'
+            },
+            invoice: null,
+            sum: 200,
+            fee: 0
+          }
+        ],
+        hold: false,
+        date: new Date('2022-03-05T00:00:00.000'),
+        merchant: null
+      }
+    },
+    deposit
   ]
-])('converts transaction parsed from pdf statement', (rawTransaction: StatementTransaction, transaction: unknown) => {
+])('converts transaction parsed from pdf statement', (rawTransaction: StatementTransaction, transaction: unknown, account: ConvertedAccount | null) => {
+  const defaultAccount: ConvertedAccount = {
+    date: new Date(),
+    account: {
+      balance: 80995.97,
+      id: 'KZ11111',
+      instrument: 'KZT',
+      title: 'KASPI GOLD *0111',
+      syncIds: ['KZ11111'],
+      type: AccountType.ccard
+    }
+  }
   expect(convertPdfStatementTransaction(
     rawTransaction,
-    {
-      date: new Date(),
-      account: {
-        balance: 80995.97,
-        id: 'KZ11111',
-        instrument: 'KZT',
-        title: 'KASPI GOLD *0111',
-        syncIds: ['KZ11111'],
-        type: AccountType.ccard
-      }
-    }
+    account ?? defaultAccount
   )).toEqual(transaction)
 })

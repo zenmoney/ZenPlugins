@@ -26,7 +26,7 @@ describe('convertTransaction', () => {
         date: new Date('2022-11-14T17:59:59.000Z'),
         hold: false,
         merchant: {
-          category: 851,
+          // category: 851,
           city: null,
           country: null,
           location: null,
@@ -67,14 +67,7 @@ describe('convertTransaction', () => {
         comment: 'Продажи с Kaspi.kz за 14/11/2022',
         date: new Date('2022-11-14T17:59:59.000Z'),
         hold: false,
-        merchant: {
-          category: 190,
-          city: null,
-          country: null,
-          location: null,
-          mcc: null,
-          title: 'АО "KASPI BANK"'
-        },
+        merchant: null,
         movements: [
           {
             account: { id: 'account' },
@@ -110,7 +103,7 @@ describe('convertTransaction', () => {
         date: new Date('2022-11-10T05:34:52.000Z'),
         hold: false,
         merchant: {
-          category: 343,
+          // category: 343,
           city: null,
           country: null,
           location: null,
@@ -126,6 +119,41 @@ describe('convertTransaction', () => {
             sum: -700000
           }
         ]
+      }
+    ],
+    [
+      {
+        status: 'OK',
+        tranId: '121770582178',
+        tranNumber: '23358005',
+        tranDate: '15.05.23 01:15:42',
+        tranAmount: '- 25 343,82 ₸',
+        isCredit: false,
+        tranSign: 'D',
+        contragentName: 'АО "KASPI BANK"',
+        showContragentBin: true,
+        contragentBin: '971240001315',
+        showContragentDetails: true,
+        contragentBik: '',
+        contragentIban: 'KZ07722S000009038758',
+        purpose: 'Погашение Бизнес Кредита по Договору № "13383846/KB-18" от 21.04.23г. 10.8% от продаж с Kaspi.kz',
+        knp: '421',
+        tranType: 'Платежный ордер'
+      },
+      {
+        hold: false,
+        date: new Date('2023-05-15T01:15:42+06:00'),
+        movements: [
+          {
+            id: '121770582178',
+            account: { id: 'account' },
+            invoice: null,
+            sum: -25343.82,
+            fee: 0
+          }
+        ],
+        merchant: null,
+        comment: 'Погашение Бизнес Кредита по Договору № "13383846/KB-18" от 21.04.23г. 10.8% от продаж с Kaspi.kz'
       }
     ]
   ])('converts transaction', (apiTransaction, transaction) => {

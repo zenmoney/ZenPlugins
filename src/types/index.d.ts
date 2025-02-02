@@ -68,6 +68,8 @@ declare namespace ZenMoney {
   let locale: string
 
   function pickDocuments (mimeTypes: string[], allowMultipleSelection: boolean): Promise<Blob[]>
+
+  function logEvent (type: string, data?: Record<string, unknown>): void
 }
 
 declare function assert (condition: boolean, ...args: unknown[]): asserts condition

@@ -42,7 +42,7 @@ export interface DepositOrLoan {
   // deposit: is there capitalization
   // loan: is it annuity
   capitalization: boolean
-  percent: number
+  percent: number | null
   endDateOffsetInterval: 'month' | 'year' | 'day'
   endDateOffset: number
   payoffInterval: 'month' | null

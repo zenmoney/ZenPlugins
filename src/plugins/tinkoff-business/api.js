@@ -3,6 +3,7 @@ import { parse, stringify } from 'querystring'
 import { fetchJson, openWebViewAndInterceptRequest } from '../../common/network'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { generateRandomString } from '../../common/utils'
+import { TemporaryUnavailableError } from '../../errors'
 import config from './config'
 
 const base64 = new Base64()
@@ -25,7 +26,7 @@ async function callGate (url, options = {}, predicate = () => true) {
     })
   } catch (e) {
     if (e.response && typeof e.response.body === 'string' && e.response.body.indexOf('internal server error') >= 0) {
-      throw new TemporaryError('Информация из Тинькофф Бизнес временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
+      throw new TemporaryUnavailableError()
     } else {
       throw e
     }
@@ -34,7 +35,7 @@ async function callGate (url, options = {}, predicate = () => true) {
     'попробуйте позже',
     'временно не доступен'
   ].some(str => response.body.errorMessage.indexOf(str) >= 0)) {
-    throw new TemporaryError('Информация из Тинькофф Бизнес временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
+    throw new TemporaryUnavailableError()
   }
   if (predicate) {
     if (response.body && [
@@ -149,7 +150,7 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
 }
 
 export async function fetchAccounts ({ accessToken }, { inn }) {
-  const response = await callGate('https://business.tinkoff.ru/openapi/api/v2/bank-accounts', {
+  const response = await callGate('https://business.tinkoff.ru/openapi/api/v4/bank-accounts', {
     method: 'GET',
     headers: {
       Host: 'business.tinkoff.ru',

@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package md.maib.app.token;
+
+option java_multiple_files = true;
+option java_outer_classname = "TokenProto";
+option java_package = "md.maib.app.proto.token";
+
+message TokenResponse {
+    string token = 1;
+}

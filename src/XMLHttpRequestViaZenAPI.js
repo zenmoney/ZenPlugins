@@ -47,32 +47,47 @@ XMLHttpRequestViaZenAPI.prototype.send = function (body) {
 
   this.readyState = XMLHttpRequestViaZenAPI.LOADING
 
+  let options = null
+  if (this.responseType === 'arraybuffer' && ZenMoney.features && ZenMoney.features.binaryResponseBody) {
+    options = { binaryResponse: true }
+  }
+  if ((this.redirect || 'follow') !== 'follow') {
+    options = { ...options, manualRedirect: true }
+  }
+  if (this.pfx) {
+    options = { ...options, pfx: this.pfx }
+  }
+  const callback = (err, responseBody) => onResponse.call(this, err, responseBody, Boolean(options && options.binaryResponse))
+  const async = Boolean(ZenMoney.features && ZenMoney.features.networkCallbacks) && this._request.async
+  if (async) {
+    options = { ...options, callback: ({ error, content }) => callback(error, content) }
+  }
   try {
-    let options = null
-    if (this.responseType === 'arraybuffer' && ZenMoney.features && ZenMoney.features.binaryResponseBody) {
-      options = { binaryResponse: true }
-    }
-    if ((this.redirect || 'follow') !== 'follow') {
-      options = { ...options, manualRedirect: true }
-    }
-    if (this.pfx) {
-      options = { ...options, pfx: this.pfx }
-    }
     const responseBody = !method || method.toUpperCase() === 'GET'
       ? ZenMoney.requestGet(url, headers, options)
       : ZenMoney.request(method, url, body, headers, options)
-    if (options && options.binaryResponse && responseBody && typeof responseBody !== 'string') {
-      if ('buffer' in responseBody) {
-        this.response = responseBody.buffer
-      } else {
-        this.response = responseBody
-      }
-    } else {
-      this.responseText = responseBody
+    if (!async) {
+      callback(null, responseBody)
     }
   } catch (e) {
-    this.onerror(e)
+    callback(e)
+  }
+}
+
+function onResponse (err, responseBody, isBinaryBody) {
+  if (err) {
+    this.onerror(err)
     return
+  }
+
+  if (isBinaryBody && responseBody && typeof responseBody !== 'string') {
+    if ('buffer' in responseBody) {
+      this.response = responseBody.buffer
+    } else {
+      this.response = responseBody
+    }
+  } else {
+    this.responseText = responseBody
   }
 
   this.responseURL = ZenMoney.getLastUrl()

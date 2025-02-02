@@ -1,0 +1,98 @@
+<div class="dashboard-content" data-method="animateDashboard">
+    <div class="col col-right currentBalance disable-owl-swipe currency-RSD" >
+        <div class="piechart-container" id="piechart-container4815162342-RSD">
+            <div class="pie-chart" id="piechart-4815162342-RSD"></div>
+            <div class="pie-stats" id="pie-stats-4815162342">
+
+                    <div class="total-available-balance-stat default-stat first-stat active disable-owl-swipe" id="total available-balance-stat-4815162342-RSD">
+                        <div class="input-group" id="stat-4815162342">
+                            <label for="balance-4815162342">Total available balance in</label>
+                            <select name="balance-4815162342" id="balance-4815162342" class="currency-selector">
+                                    <option value="RSD" selected=selected>RSD</option>
+                                    <option value="EUR" >EUR</option>
+                            </select>
+                        </div>
+                        <div class="amount-stats big-nr">
+                            <p>39,367.79<span></span></p>
+                        </div>
+                        <p class="stat-name">Current account</p>
+                    </div>
+                        <div class="available-balance-stat default-stat disable-owl-swipe" id="available-balance-stat-4815162342-RSD">
+                            <div class="input-group" id="stat-4815162342">
+                                <label for="balance-4815162342">Available balance in</label>
+                                <select name="balance-4815162342" id="balance-4815162342" class="currency-selector">
+                                        <option value="RSD" selected=selected>RSD</option>
+                                        <option value="EUR" >EUR</option>
+                                </select>
+                            </div>
+                            <div class="amount-stats big-nr">
+                                <p>39,367.79<span></span></p>
+                            </div>
+                            <p class="stat-name">Current account</p>
+                        </div>
+
+            </div>
+        </div>
+    </div>
+    <div class="col col-right currentBalance disable-owl-swipe currency-EUR" style=display:none;>
+        <div class="piechart-container" id="piechart-container4815162342-EUR">
+            <div class="pie-chart" id="piechart-4815162342-EUR"></div>
+            <div class="pie-stats" id="pie-stats-4815162342">
+
+                    <div class="total-available-balance-stat default-stat first-stat active disable-owl-swipe" id="total available-balance-stat-4815162342-EUR">
+                        <div class="input-group" id="stat-4815162342">
+                            <label for="balance-4815162342">Total available balance in</label>
+                            <select name="balance-4815162342" id="balance-4815162342" class="currency-selector">
+                                    <option value="RSD" selected=selected>RSD</option>
+                                    <option value="EUR" >EUR</option>
+                            </select>
+                        </div>
+                        <div class="amount-stats big-nr">
+                            <p>0.00<span></span></p>
+                        </div>
+                        <p class="stat-name">Current account</p>
+                    </div>
+                        <div class="available-balance-stat default-stat disable-owl-swipe" id="available-balance-stat-4815162342-EUR">
+                            <div class="input-group" id="stat-4815162342">
+                                <label for="balance-4815162342">Available balance in</label>
+                                <select name="balance-4815162342" id="balance-4815162342" class="currency-selector">
+                                        <option value="RSD" selected=selected>RSD</option>
+                                        <option value="EUR" >EUR</option>
+                                </select>
+                            </div>
+                            <div class="amount-stats big-nr">
+                                <p>0.00<span></span></p>
+                            </div>
+                            <p class="stat-name">Current account</p>
+                        </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<form action="/CustomerAccount/Accounts/TransactionsOverviewWidget" data-ajax="true" data-ajax-begin="onAjaxBegin" data-ajax-failure="onAjaxFailure" data-ajax-method="post" data-ajax-mode="replace" data-ajax-success="onAjaxSuccess" data-ajax-update="#TransactionsOverviewFilter_UpdateContainer" id="form_TransactionsOverviewFilter" method="post">        <table>
+
+    <input type="hidden" name="PageNumber" id="PageNumber"/>
+
+    <input type="hidden" name="PageSize" id="PageSize" value="3"/>
+
+    <input type="hidden" name="DetailsView" id="DetailsView" value="0"/>
+
+    <input type="hidden" name="SelectedItem" id="SelectedItem"/>
+    <input type="hidden" name="PageId" id="PageId" value="" />
+    <div class="select-inner">
+        <select class="select-list"                 name="AccountPicker" id="AccountPicker" >
+                    <option data-desc="" data-alt="" data-name="4815162342"   selected          value="4815162342">
+                             4815162342
+                    </option>
+                    <option data-desc="" data-alt="" data-name="90000000001"  value="90000000001">
+                        90000000001
+                    </option>
+                    <option data-desc="" data-alt="" data-name="900000000012"  value="900000000012">
+                        900000000012
+                    </option>
+        </select>
+    </div>
+
+</form>

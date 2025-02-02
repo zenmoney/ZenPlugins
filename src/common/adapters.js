@@ -114,6 +114,10 @@ const calculateFromDate = (startDateString, now = new Date()) => {
   return fromDate.getTime() < now.getTime() ? fromDate : now
 }
 
+const getIsFirstRun = () => {
+  return Boolean(typeof ZenMoney?.getData === 'function' && !ZenMoney.getData(SCRAPE_LAST_SUCCESS_DATE_KEY))
+}
+
 export function provideScrapeDates (fn) {
   console.assert(typeof fn === 'function', 'provideScrapeDates argument should be a function')
 
@@ -124,7 +128,7 @@ export function provideScrapeDates (fn) {
       preferences: _.omit(args.preferences, ['startDate']),
       fromDate: calculateFromDate(args.preferences.startDate),
       toDate: null,
-      isFirstRun: !ZenMoney.getData(SCRAPE_LAST_SUCCESS_DATE_KEY)
+      isFirstRun: getIsFirstRun()
     })
     return scrapeResult.then((x) => {
       ZenMoney.setData(SCRAPE_LAST_SUCCESS_DATE_KEY, successAttemptDate)
@@ -389,13 +393,32 @@ function castTransactionDatesToTicks (transactions) {
     : transaction)
 }
 
-function isApiErrorMessage (message) {
-  return /^\[[A-Z]{3}]/.test(message)
+function getApiErrorCode (message) {
+  return message?.match(/^\[([A-Z]{3})]/)?.[1]
 }
 
-function getPresentationError (error) {
-  if (typeof error === 'string' && isApiErrorMessage(error)) {
+function getPresentationError (error, isFirstRun) {
+  if (typeof error === 'string' && getApiErrorCode(error)) {
     error = { message: error }
+  }
+  const code = getApiErrorCode(error?.message)
+  let forceFatal = false
+  if (isFirstRun && (
+    (typeof error === 'object' && Object.getPrototypeOf(error) === TemporaryError.prototype) ||
+    error instanceof InvalidOtpCodeError ||
+    error instanceof InvalidPreferencesError ||
+    error instanceof PreviousSessionNotClosedError ||
+    [
+      'AAS',
+      'ASE',
+      'IIE',
+      'NER',
+      'NTI',
+      'PER',
+      'PSC'
+    ].indexOf(code) >= 0
+  )) {
+    forceFatal = true
   }
   let key = null
   const params = { lng: ZenMoney.locale ? ZenMoney.locale.replace('_', '-') : 'ru' }
@@ -418,10 +441,10 @@ function getPresentationError (error) {
     key = 'zenPlugin_passwordExpiredError'
   } else if (error instanceof SubscriptionRequiredError) {
     key = 'zenPlugin_subscriptionRequiredError'
-  } else if (error instanceof InvalidPreferencesError && !error.message) {
+  } else if (error instanceof InvalidPreferencesError) {
     key = 'zenPlugin_invalidPreferencesError'
   }
-  if (key) {
+  if (key && !error.message) {
     const localizedMessage = i18n.t(key, params)
     if (localizedMessage && localizedMessage !== key) {
       error.message = localizedMessage
@@ -430,26 +453,32 @@ function getPresentationError (error) {
   const meaningfulError = error && error.message
     ? error
     : new Error('Thrown error must be an object containing message field, but was: ' + JSON.stringify(error))
-  if (/^\[(NCE|NCL)]/.test(meaningfulError.message) || (!(meaningfulError instanceof ZPAPIError) && !isApiErrorMessage(meaningfulError.message))) {
+  if ((!(meaningfulError instanceof ZPAPIError) && !code) ||
+    [
+      'NCE',
+      'NCL'
+    ].indexOf(code) >= 0
+  ) {
     meaningfulError.message = '[RUE] ' + meaningfulError.message
   }
+  Object.defineProperty(meaningfulError, 'message', { value: meaningfulError.message, enumerable: true })
   meaningfulError.toString = new ZPAPIError().toString
-  meaningfulError.fatal = meaningfulError.fatal || false
-  meaningfulError.allowRetry = meaningfulError.allowRetry || false
-  meaningfulError.allow_retry = meaningfulError.allowRetry || false
+  meaningfulError.fatal = Boolean(forceFatal || meaningfulError.fatal || false)
+  meaningfulError.allowRetry = Boolean(meaningfulError.allowRetry || false)
+  meaningfulError.allow_retry = Boolean(meaningfulError.allowRetry || false)
   return meaningfulError
 }
 
 function augmentErrorWithDevelopmentHints (error) {
   if (isDebug()) {
-    if (error instanceof InvalidPreferencesError) {
-      error.message += '\nInvalidPreferencesError: user will be forced into preferences screen and will see the message above on production UI without [Send log] button.'
-    } else if (error instanceof TemporaryError) {
-      error.message += '\n(TemporaryError: the message above will be displayed on production UI without [Send log] button)'
-    } else if (error instanceof ZPAPIError) {
-      error.message += '\n(The message above will be displayed on production UI with [Send log] button)'
-    } else {
-      error.message += '\n(The message above will never be displayed on production UI; use TemporaryError or InvalidPreferencesError if you want to show meaningful message to user)'
+    if (!(error instanceof ZPAPIError)) {
+      error.message += '\n(The message above will never be displayed on production UI; use specific ZPAPIError child class from errors.js if you want to show meaningful message to user)'
+    }
+    if (error.allowRetry || error.allow_retry) {
+      error.message += '\n(logIsNotImportant = true: the message above will be displayed on production UI without [Send log] button)'
+    }
+    if (error.fatal) {
+      error.message += '\n(forcePluginReinstall = true: user will be forced into preferences screen)'
     }
     if (!(error instanceof Error)) {
       const err = new Error()
@@ -468,6 +497,7 @@ export function adaptScrapeToGlobalApi (scrape) {
   console.assert(typeof scrape === 'function', 'argument must be function')
 
   return function adaptedAsyncFn (args) {
+    const isFirstRun = getIsFirstRun()
     const result = scrape({
       ..._.isPlainObject(args) && args,
       preferences: ZenMoney.getPreferences()
@@ -489,10 +519,10 @@ export function adaptScrapeToGlobalApi (scrape) {
       value
     } = unsealSyncPromise(resultHandled)
     if (state === 'rejected') {
-      throw augmentErrorWithDevelopmentHints(getPresentationError(value))
+      ZenMoney.setResult(augmentErrorWithDevelopmentHints(getPresentationError(value, isFirstRun)))
     } else if (state === 'pending') {
       resultHandled.catch((e) => {
-        ZenMoney.setResult(augmentErrorWithDevelopmentHints(getPresentationError(e)))
+        ZenMoney.setResult(augmentErrorWithDevelopmentHints(getPresentationError(e, isFirstRun)))
       })
     }
   }
@@ -541,4 +571,4 @@ function checkSubscription (fn) {
   }
 }
 
-export const adaptScrapeToMain = (scrape) => adaptScrapeToGlobalApi(provideScrapeDates(traceFunctionCalls(checkSubscription(scrape))))
+export const adaptScrapeToMain = (scrape) => adaptScrapeToGlobalApi(provideScrapeDates(checkSubscription(traceFunctionCalls(scrape))))

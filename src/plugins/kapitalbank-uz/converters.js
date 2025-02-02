@@ -1,4 +1,5 @@
 import { dateInTimezone, toISODateString } from '../../common/dateUtils'
+import { getIntervalBetweenDates } from '../../common/momentDateUtils'
 
 /**
  * Конвертер счета из формата банка в формат Дзенмани
@@ -68,6 +69,31 @@ export function convertCard (rawCard) {
   */
 
   return card
+}
+
+/**
+ * Конвертер вклада из формата банка в формат Дзенмани
+ *
+ * @param deposit вклад в формате банка
+ * @returns вклад в формате Дзенмани
+ */
+export function convertDeposit (deposit) {
+  const endDateInterval = getIntervalBetweenDates(new Date(deposit.openDate), new Date(deposit.closeDate))
+  return {
+    id: deposit.absId,
+    title: 'Депозит ' + deposit.name,
+    syncIds: [deposit.absId],
+    instrument: deposit.currency.name,
+    type: 'deposit',
+    balance: deposit.balance / 100,
+    startDate: new Date(deposit.openDate),
+    percent: Number(deposit.rate),
+    endDateOffsetInterval: endDateInterval.interval,
+    endDateOffset: endDateInterval.count,
+    payoffStep: 0,
+    payoffInterval: null,
+    capitalization: false
+  }
 }
 
 /**
@@ -165,41 +191,44 @@ export function convertHumoCardTransaction (card, rawTransaction) {
  */
 export function convertVisaCardTransaction (card, rawTransaction) {
   let amount = Number(rawTransaction.amount)
-  let fee = Number(rawTransaction.fee)
-
   if (amount === 0) {
     return null
   }
-
-  /*
-    Если сумма `amount` положительная, т.е. доходная, то минусуем комиссию, таким образом сумма пополнения уменьшится
-    Если сумма `amount` отрицательная, т.е. расходная, то тоже минисуем комиссию, таким образом сумма расхода увеличится
-
-    Вообще сумма `fee` возвращается всегда положительной с API, т.е. это точно не кэшбек, а расход, но всё равно на всякий случай берем модуль числа
-  */
-  if (Math.abs(fee) > Math.abs(amount)) {
-    amount -= Math.abs(fee)
-    fee = 0
+  let fee = card.instrument === rawTransaction.transCurrency
+    ? -Math.abs(Number(rawTransaction.fee))
+    : -Math.abs(Math.round(Number(rawTransaction.fee) * Number(rawTransaction.conversionRate) * 100) / 100)
+  if (fee) {
+    const amountWithoutFee = Math.round((amount - fee) * 100) / 100
+    if (Math.abs(amountWithoutFee) >= 0.01) {
+      amount = amountWithoutFee
+    } else {
+      fee = 0
+    }
   }
-
-  const invoice = {
-    sum: amount,
-    instrument: rawTransaction.currency.name
-  }
+  const invoice = rawTransaction.transAmount && rawTransaction.transCurrency && rawTransaction.transCurrency !== rawTransaction.currency.name
+    ? {
+        sum: parseFloat(rawTransaction.transAmount),
+        instrument: rawTransaction.transCurrency
+      }
+    : {
+        sum: amount,
+        instrument: rawTransaction.currency.name
+      }
 
   const merchantIgnoreTransactionCodes = [
     '11M',
     '110'
   ]
 
+  const match = rawTransaction.merchantName?.match(/^([^,]*),([^,]*)\s*,?\s*([A-Z]{2,3})$/)
   const transaction = {
     date: new Date(rawTransaction.transDate),
-    hold: false,
+    hold: !rawTransaction.back,
     merchant: merchantIgnoreTransactionCodes.indexOf(rawTransaction.transCode) < 0
       ? {
-          country: null,
-          city: null,
-          title: rawTransaction.merchantName,
+          country: match?.[3]?.trim() || null,
+          city: match?.[2]?.trim() || null,
+          title: match?.[1]?.trim() || rawTransaction.merchantName,
           mcc: null,
           location: null
         }
@@ -209,8 +238,8 @@ export function convertVisaCardTransaction (card, rawTransaction) {
         id: null,
         account: { id: card.id },
         invoice: invoice.instrument === card.instrument ? null : invoice,
-        sum: invoice.instrument === card.instrument ? invoice.sum : null,
-        fee: fee ? -fee : 0
+        sum: amount,
+        fee: fee || 0
       }
     ],
     comment: null
@@ -301,6 +330,52 @@ export function convertAccountTransaction (account, rawTransaction) {
     ],
     comment: rawTransaction.details
   }
+  for (const regexp of [
+    /Взнос ср-в на СКС/
+  ]) {
+    const match = rawTransaction.details.match(regexp)
+    if (match) {
+      transaction.groupKeys = [`${toISODateString(dateInTimezone(transaction.date, 300))}_${invoice.instrument}_${Math.abs(invoice.sum).toString()}`]
+    }
+  }
+  [
+    parsePayee,
+    parseInnerTransfer,
+    parseOuterTransfer
+  ].some(parser => parser(rawTransaction, transaction, invoice))
+
+  return transaction
+}
+
+/**
+ * Конвертер транзакции по вкладу из формата банка в формат Дзенмани
+ *
+ * @param accountId идентификатор вкладу
+ * @param rawTransaction транзакция в формате банка
+ * @returns транзакция в формате Дзенмани
+ */
+export function convertDepositTransaction (account, rawTransaction) {
+  const invoice = {
+    sum: rawTransaction.amount / 100,
+    instrument: rawTransaction.currency.name
+  }
+
+  const transaction = {
+    date: new Date(rawTransaction.valueDate), // есть еще bookingDate и docDate
+    hold: false,
+    merchant: null,
+    movements: [
+      {
+        id: rawTransaction.docId,
+        account: { id: account.id },
+        invoice: invoice.instrument === account.instrument ? null : invoice,
+        sum: invoice.instrument === account.instrument ? invoice.sum : null,
+        fee: 0
+      }
+    ],
+    comment: rawTransaction.details
+  }
+
   for (const regexp of [
     /Взнос ср-в на СКС/
   ]) {

@@ -31,18 +31,35 @@ function parseAccountId (text: string): string {
 }
 
 function parseBalance (text: string): Amount {
-  const match = getRegexpMatch([
-    /Доступно на (\d\d\.?){3}:([-\d\s,.]+)([^а-яА-Я]*)/,
-    /Card balance (\d\d\.?){3}:([-\d\s,.]+)([^a-zA-Z]*)/,
-    /(\d\d\.?){3}ж. қолжетімді:([-\d\s,.]+)([^а-яА-Я]*)/,
-    /На Депозите\s*(\d\d\.?){3}:(\$?[-\d\s,.]+)([^а-яА-Я]*)/
+  let match = getRegexpMatch([
+    /Доступно\s+на\s+(\d{2}[-./]\d{2}[-./]\d{2,4}):\s*(?:\+\s)?(-?[\d\s.,]*\d)\s*([а-яА-Яa-zA-Z]{1,3}|\W)/,
+    /Card\s+balance\s+(\d{2}[-./]\d{2}[-./]\d{2,4}):\s*(?:\+\s)?(-?[\d\s.,]*\d)\s*([а-яА-Яa-zA-Z]{1,3}|\W)/,
+    /(\d{2}[-./]\d{2}[-./]\d{2,4})ж. қолжетімді:\s*(?:\+\s)?(-?[\d\s.,]*\d)\s*([а-яА-Яa-zA-Z]{1,3}|\W)/,
+    /На\s+Депозите\s*(\d{2}[-./]\d{2}[-./]\d{2,4}):\s*(?:\+\s)?(-?[\d\s.,]*\d)\s*([а-яА-Яa-zA-Z]{1,3}|\W)/
   ], text)
-  assert(typeof match?.[2] === 'string', 'Can\'t parse balance from account statement')
-  const amountStr = [
-    match[2].replace(',', '.').replace(/\s/g, ''),
-    match[3].trim()
-  ].filter(str => str !== '').join(' ')
-  return parseAmount(amountStr)
+  if (match?.[2] !== undefined) {
+    const amountStr = [
+      match[2].replace(',', '.').replace(/\s/g, ''),
+      match[3].trim()
+    ].filter(str => str !== '').join(' ')
+    return parseAmount(amountStr)
+  }
+
+  match = getRegexpMatch([
+    /Доступно\s+на\s+(\d{2}[-./]\d{2}[-./]\d{2,4}):\s*(?:\+\s)?([а-яА-Яa-zA-Z]{1,3}|\W)\s*(-?[\d\s.,]*\d)/,
+    /Card\s+balance\s+(\d{2}[-./]\d{2}[-./]\d{2,4}):\s*(?:\+\s)?([а-яА-Яa-zA-Z]{1,3}|\W)\s*(-?[\d\s.,]*\d)/,
+    /(\d{2}[-./]\d{2}[-./]\d{2,4})ж. қолжетімді:\s*(?:\+\s)?([а-яА-Яa-zA-Z]{1,3}|\W)\s*(-?[\d\s.,]*\d)/,
+    /На\s+Депозите\s*(\d{2}[-./]\d{2}[-./]\d{2,4}):\s*(?:\+\s)?([а-яА-Яa-zA-Z]{1,3}|\W)\s*(-?[\d\s.,]*\d)/
+  ], text)
+  if (match?.[3] !== undefined) {
+    const amountStr = [
+      match[3].replace(',', '.').replace(/\s/g, ''),
+      match[2].trim()
+    ].filter(str => str !== '').join(' ')
+    return parseAmount(amountStr)
+  }
+
+  assert(false, 'Can\'t parse balance from account statement')
 }
 
 function getStatementDate (text: string): string {
@@ -54,6 +71,29 @@ function getStatementDate (text: string): string {
   ], text)
   assert(typeof match?.[1] === 'string', 'Can\'t parse date from account statement')
   return parseDateFromPdfText(match[1])
+}
+
+function getDepositStartDate (text: string): string {
+  const match = getRegexpMatch([
+    /Дата открытия:\s*(\d{2}.\d{2}.\d{4})/
+  ], text)
+  assert(typeof match?.[1] === 'string', 'Can\'t parse deposit start date from account statement')
+  return parseDateFromPdfText(match[1])
+}
+
+function getDepositEndDate (text: string): string {
+  const match = getRegexpMatch([
+    /Дата пролонгации:\s*(\d{2}.\d{2}.\d{4})/
+  ], text)
+  assert(typeof match?.[1] === 'string', 'Can\'t parse deposit end date from account statement')
+  return parseDateFromPdfText(match[1])
+}
+
+function getDepositCapitalizationInfo (text: string): string {
+  const match = getRegexpMatch([
+    /вознаграждения:(\d+%)/
+  ], text)
+  return match?.[1] != null ? match?.[1] : ''
 }
 
 function parseInstrument (text: string): string {
@@ -82,9 +122,9 @@ function getStatementLocale (text: string): string {
 }
 
 function parseDateFromPdfText (text: string): string {
-  const match = text.match(/^(\d{2}).(\d{2}).(\d{2})/)
+  const match = text.match(/^(\d{2}).(\d{2}).(\d{2,4})/)
   assert(match !== null, 'Can\'t parse date from pdf string', text)
-  return `20${match[3]}-${match[2]}-${match[1]}T00:00:00.000`
+  return `${match[3].length === 2 ? '20' + match[3] : match[3]}-${match[2]}-${match[1]}T00:00:00.000`
 }
 
 function parseAccountType (text: string): string {
@@ -244,7 +284,12 @@ export function parseSinglePdfString (text: string, statementUid?: string): { ac
     id: parseAccountId(text),
     instrument: balanceAmount.instrument !== '' ? balanceAmount.instrument : parseInstrument(text),
     title: parseAccountTitle(text, accountType),
-    date: getStatementDate(text)
+    date: getStatementDate(text),
+    type: accountType,
+    startDate: accountType === 'deposit' ? getDepositStartDate(text) : null,
+    startBalance: accountType === 'deposit' ? 0 : null,
+    capitalization: accountType === 'deposit' ? getDepositCapitalizationInfo(text) : null,
+    endDate: accountType === 'deposit' ? getDepositEndDate(text) : null
   }
   const rawTransactions = parseTransactions(text, accountType, statementUid ?? generateUUID())
   const parsedContent = {

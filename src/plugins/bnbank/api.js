@@ -3,6 +3,7 @@ import { createDateIntervals as commonCreateDateIntervals } from '../../common/d
 import { fetchJson } from '../../common/network'
 import { generateRandomString } from '../../common/utils'
 import { card, deposit, checking } from './converters'
+import { TemporaryError } from '../../errors'
 
 const BASE_URL = 'https://mb.bnb.by/services/v2/'
 const APP_VERSION = '1.53.1'
@@ -23,6 +24,9 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
     if (errorDescription.indexOf('Некорректно введен логин или пароль') >= 0) {
       throw new InvalidPreferencesError(errorMessage)
     }
+    if (errorDescription.indexOf('Для авторизации на устройстве необходимо ввести код, отправленный на доверенное устройство') >= 0) {
+      return response
+    }
     throw new TemporaryError(errorMessage)
   }
 
@@ -36,6 +40,47 @@ function validateResponse (response, predicate, error) {
 }
 
 export async function login (phone, password) {
+  if (ZenMoney.trustCertificates) {
+    ZenMoney.trustCertificates([
+      `-----BEGIN CERTIFICATE-----
+MIIGNzCCBR+gAwIBAgIMDIP82kEtgeH+7zKiMA0GCSqGSIb3DQEBCwUAMEwxCzAJ
+BgNVBAYTAkJFMRkwFwYDVQQKExBHbG9iYWxTaWduIG52LXNhMSIwIAYDVQQDExlB
+bHBoYVNTTCBDQSAtIFNIQTI1NiAtIEc0MB4XDTIzMDYwNTEwMDczMVoXDTI0MDcw
+NjEwMDczMFowEzERMA8GA1UEAwwIKi5ibmIuYnkwggEiMA0GCSqGSIb3DQEBAQUA
+A4IBDwAwggEKAoIBAQDPM3/YX0sPYaLUZsnOci6POa+VP/3jkorC977rZCEk9XI4
+dfHbXoidVEOSD9ygnIcAaGW5kWp+QwGUz4la0U9Z4D7IotVg/R8bQCupOV6aOpJx
+kA+LGl9VaRsxDiI1a5DLcS9jv2pi+XiPGbgpSwuH3zpvhsQTc2NjyaS4goGWjTH0
+yPG/OEtpusWogiMV9r8qafJDWJcU2X+LLz9ifLNtp/VOeTYj4rIXvjvRCa1FqX1y
+KRONpgoBrPnrXvkuhsVIK+vr+F54yuTF+9cxhmXnbRFtsUE+5hFN6xqVfEkal+4I
+rBwux5zsKkBMAUIxcIyT9kiuBnZ6FKacWWb2rlnZAgMBAAGjggNQMIIDTDAOBgNV
+HQ8BAf8EBAMCBaAwgZMGCCsGAQUFBwEBBIGGMIGDMEYGCCsGAQUFBzAChjpodHRw
+Oi8vc2VjdXJlLmdsb2JhbHNpZ24uY29tL2NhY2VydC9hbHBoYXNzbGNhc2hhMjU2
+ZzQuY3J0MDkGCCsGAQUFBzABhi1odHRwOi8vb2NzcC5nbG9iYWxzaWduLmNvbS9h
+bHBoYXNzbGNhc2hhMjU2ZzQwVwYDVR0gBFAwTjAIBgZngQwBAgEwQgYKKwYBBAGg
+MgoBAzA0MDIGCCsGAQUFBwIBFiZodHRwczovL3d3dy5nbG9iYWxzaWduLmNvbS9y
+ZXBvc2l0b3J5LzAJBgNVHRMEAjAAMEEGA1UdHwQ6MDgwNqA0oDKGMGh0dHA6Ly9j
+cmwuZ2xvYmFsc2lnbi5jb20vYWxwaGFzc2xjYXNoYTI1Nmc0LmNybDAbBgNVHREE
+FDASgggqLmJuYi5ieYIGYm5iLmJ5MB0GA1UdJQQWMBQGCCsGAQUFBwMBBggrBgEF
+BQcDAjAfBgNVHSMEGDAWgBRPy6yowu+r3YNva7/OmD1cWCV2FTAdBgNVHQ4EFgQU
+Am5xfUxljla7HefOKdrBeGnGH/kwggF/BgorBgEEAdZ5AgQCBIIBbwSCAWsBaQB2
+AO7N0GTV2xrOxVy3nbTNE6Iyh0Z8vOzew1FIWUZxH7WbAAABiIsGu/QAAAQDAEcw
+RQIgZs2ByvgC4RUPbRxtiBM0dEfYPgtiKkiXt7BUrNX9wr0CIQDFPpGjo9p4QlC3
+01Lr32QkCwfmFBFP/WI/uGpl8uRY1wB2AEiw42vapkc0D+VqAvqdMOscUgHLVt0s
+gdm7v6s52IRzAAABiIsGvAUAAAQDAEcwRQIhAKg3o40qgzmFRVBw7KMuiRDdP1m5
+NaCRcZNr+Y84rslEAiBZFboKw0Lj/47gVUhZg6k/sGJQcw1PeYlvaFd+anaWQwB3
+ANq2v2s/tbYin5vCu1xr6HCRcWy7UYSFNL2kPTBI1/urAAABiIsGvDIAAAQDAEgw
+RgIhAKzLjHls2KyGyWAmssILJtXJzTfPzCrXrp+1Wyjt/xhWAiEAxXvI9aLvJJJi
+coyI+RGbm70cdz6mBtSE9X7ikIwqRqEwDQYJKoZIhvcNAQELBQADggEBAIpgVKgM
+cMweq+lw/X7/PGf/qpyQkCP0h1w+GCx2Oo7eLY1LIzSr0n8gNMbPhxLVwQbXRpKr
+GP5HuF1IpjG0n2PtzwTqW0veLT3Re0af0ho//0k9HyuZ3/7gclI9n7uRafTUKYlj
+Xxf3+XmH4WeSAv3sTZUNgV8hy2yAC2nRGpvn7LIo0auAyD6al/7CAxpmSRIJWQrr
+vz859BJ4hcKHEZjRj1tYQIlWOWc0PoEn17S/mmOO6/LPLb6ltEmNP1usf+0o0MYa
+jVkxkvT5Zf5bWDz+c0CBiRUiUDUgM9dnpV9mxFWlBcD6N7s6faHvYxqLa19oC2e4
+HQJpK9udyGXyYGc=
+-----END CERTIFICATE-----`
+    ])
+  }
+
   let login = (phone || '').trim()
   if (!login) { throw new InvalidPreferencesError('Некорректный логин или номер телефона') }
   if (/\+\d+/.test(login)) {
@@ -60,7 +105,35 @@ export async function login (phone, password) {
       password
     },
     sanitizeRequestLog: { body: { login: true, password: true } }
-  }, response => response.success, message => new InvalidPreferencesError('Неверный логин или пароль'))
+  }, response => response.success || (response.body.errorInfo && response.body.errorInfo.error === '10027'), message => new TemporaryError(message))
+
+  if (res.body.errorInfo && res.body.errorInfo.error === '10027') {
+    // SMS-code confirmation needed
+    const smsCode = await ZenMoney.readLine('Подтвердите вход из приложения BNB Bank, после чего введите код из СМС', {
+      time: 30000
+    })
+    if (!smsCode) {
+      throw new TemporaryError('No SMS Code received')
+    }
+    const res = await fetchApiJson('session/login', {
+      method: 'POST',
+      body: {
+        applicID: APP_VERSION,
+        clientKind: '0',
+        browser: ZenMoney.device.manufacturer, // Build.DEVICE
+        browserVersion: `${ZenMoney.device.model} (${ZenMoney.device.manufacturer})`, // Build.MODEL + " (" + Build.PRODUCT + ")"
+        platform: 'Android',
+        platformVersion: '10',
+        agreement: true,
+        deviceUDID: deviceID,
+        login,
+        password,
+        confirmationData: smsCode
+      },
+      sanitizeRequestLog: { body: { login: true, password: true } }
+    }, response => response.success, message => new TemporaryError(message))
+    return res.body.sessionToken
+  }
 
   return res.body.sessionToken
 }
