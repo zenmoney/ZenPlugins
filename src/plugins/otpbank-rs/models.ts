@@ -38,11 +38,14 @@ export interface OtpAccount {
 }
 
 export interface OtpTransaction {
+  id: string
   date: Date
-  title: string
   amount: number
   currencyCode: string
   currencyCodeNumeric: string
+  title: string
+  status?: string
+  merchant: string
 }
 
 export interface AccountBalanceResponse {
