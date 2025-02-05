@@ -57,7 +57,7 @@ function parseCardNumber (text: string): string {
 }
 
 function parseTransactions (text: string, statementUid: string): StatementTransaction[] {
-  const baseRegexp = /^(\d{2}\.\d{2}\.\d{4})([-+]\s?[\d.,]+)\s?₸(KZT)([а-яА-ЯA-Za-z\s"“”'‘’]+)?\s?(.+)?$/gm
+  const baseRegexp = /^(\d{2}\.\d{2}\.\d{4})([-+]\s?[\d.,]+)\s?([₸$€£¥₺₽])\s?([A-Z]{3})([а-яА-ЯA-Za-z\s"“”'‘’]+)?\s?(.+)?$/gm
 
   const transactionStrings = text.match(baseRegexp)
 
@@ -66,13 +66,15 @@ function parseTransactions (text: string, statementUid: string): StatementTransa
   }
 
   return transactionStrings.map((str) => {
-    const match = str.match(/^(\d{2}\.\d{2}\.\d{4})([-+]\s?[\d.,]+)\s?₸(KZT)([а-яА-ЯA-Za-z\s"“”'‘’]+)?\s?(.+)?$/)
+    const match = str.match(/^(\d{2}\.\d{2}\.\d{4})([-+]\s?[\d.,]+)\s?([₸$€£¥₺₽])([A-Z]{3})([а-яА-ЯA-Za-z\s"“”'‘’]+)?\s?(.+)?$/)
+    // const currency = match?.[3] ?? ''
+    const currencyCode = match?.[4] ?? ''
 
     assert(match !== null, `Can't parse transaction: ${str}`)
 
     const date = parseDateFromPdfText(match[1])
     const amount = match[2] !== undefined ? match[2].replace(/\s/g, '').replace(',', '') : '' // Убираем пробелы и запятые
-    let description = `${match[4] !== undefined ? match[4] : ''}${match[5] !== undefined ? match[5] : ''}`.trim() // Объединение полей для полного описания
+    let description = `${match[5] !== undefined ? match[5] : ''}${match[6] !== undefined ? match[6] : ''}`.trim() // Объединение полей для полного описания
 
     // Удаление ключевых слов, таких как "Покупка", и всех кавычек
     description = description.replace(/(Покупка|Пополнение|Перевод|Возврат)/gi, '').replace(/["'“”‘’]/g, '').trim()
@@ -82,7 +84,7 @@ function parseTransactions (text: string, statementUid: string): StatementTransa
     return {
       hold: false,
       date,
-      originalAmount: amount,
+      originalAmount: amount + ' ' + currencyCode,
       amount,
       description,
       statementUid,

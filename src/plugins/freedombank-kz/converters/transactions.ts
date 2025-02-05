@@ -44,14 +44,34 @@ function cleanMerchantTitle (text: string | null): string | null {
 
   cleanedText = cleanedText.replace(/\s{2,}/g, ' ').trim() // Убираем лишние пробелы
 
-  // Remove trailing periods and text after the first period
-  cleanedText = cleanedText.replace(/\.\s*.*$/, '')
+  // Remove trailing periods and text after the last period
+  if (cleanedText.includes('.')) {
+    const parts = cleanedText.split('.')
+    cleanedText = parts.slice(0, parts.length - 1).join('.').trim()
+  }
 
   return cleanedText.length > 0 ? cleanedText : null
 }
 
+function convertCurrency (amount: number, fromCurrency: string, toCurrency: string): number {
+  // костыль, но хоть что-то
+  const exchangeRates: { [key: string]: number } = {
+    USD_KZT: 519.25
+  }
+  if (fromCurrency === toCurrency) {
+    return amount
+  }
+
+  const rate = exchangeRates[fromCurrency + '_' + toCurrency]
+  if (rate === undefined || rate === null || isNaN(rate)) {
+    throw new Error(`Нет курса для конвертации из ${fromCurrency} в ${toCurrency}`)
+  }
+
+  return amount * rate
+}
+
 export function convertPdfStatementTransaction (rawTransaction: StatementTransaction, rawAccount: AccountOrCard): ConvertedTransaction {
-  const sum = parseFloat(rawTransaction.amount.replace(',', '.').replace(/[\s+$]/g, ''))
+  let sum = parseFloat(rawTransaction.amount.replace(',', '.').replace(/[\s+$]/g, ''))
   let instrument = 'KZT'
   if (rawTransaction.originalAmount !== null) {
     instrument = rawTransaction.originalAmount?.match(/[A-Z]{3}/)?.[0] ?? 'KZT'
@@ -65,6 +85,10 @@ export function convertPdfStatementTransaction (rawTransaction: StatementTransac
         instrument
       }
     : null
+
+  if (invoice !== null) {
+    sum = convertCurrency(sum, invoice.instrument, 'KZT')
+  }
 
   if (invoice && invoice.sum === sum && instrument === rawAccount.instrument) {
     invoice = null

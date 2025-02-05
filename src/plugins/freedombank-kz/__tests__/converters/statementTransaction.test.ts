@@ -135,7 +135,7 @@ it.each([
         hold: false,
         date: new Date('2025-02-01T00:00:00.000'),
         merchant: {
-          fullTitle: 'Vasia V',
+          fullTitle: 'Vasia V.',
           mcc: null,
           location: null
         }
@@ -234,6 +234,45 @@ it.each([
           fullTitle: 'IVAN IVANOV>ALMATY KZ',
           location: null,
           mcc: null
+        }
+      }
+    },
+    account
+  ],
+  [
+    {
+      hold: false,
+      date: '2025-02-01T00:00:00.000',
+      originalAmount: '-51.65 USD',
+      amount: '-51.65',
+      description: 'Www.Gruzi.Com Bapb. Разное',
+      statementUid: '03474da2-3644-47b2-895a-2384b6c935ad',
+      originString: '01.02.2025-51.65 $USDПокупкаWww.Gruzi.Com Bapb. Разное'
+    },
+    {
+      statementUid: '03474da2-3644-47b2-895a-2384b6c935ad',
+      transaction: {
+        hold: false,
+        date: new Date('2025-02-01T00:00:00.000'),
+        comment: null,
+        movements: [
+          {
+            id: null,
+            account: {
+              id: 'KZ123456789012345'
+            },
+            invoice: {
+              instrument: 'USD',
+              sum: -51.65
+            },
+            sum: -26819.2625,
+            fee: 0
+          }
+        ],
+        merchant: {
+          fullTitle: 'Www.Gruzi.Com Bapb',
+          mcc: null,
+          location: null
         }
       }
     },
