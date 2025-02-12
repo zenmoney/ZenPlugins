@@ -31,16 +31,32 @@ export function parseDateAndTimeFromPdfText (dateStr: string, timeStr: string): 
 }
 
 export function convertVakifPdfStatementTransaction (accountId: string, rawTransaction: VakifStatementTransaction[]): TransactionWithId[] {
+  console.log(`Converting ${rawTransaction.length} raw transactions for account ID: ${accountId}`)
+
   const result: TransactionWithId[] = []
-
   const chunks = chunksByStatementUid(rawTransaction)
-  for (const transactions of chunks) {
-    if (transactions.length !== 1 && transactions.length !== 2) continue
+  console.log(`Identified ${chunks.length} transaction chunks`)
 
-    const transaction = buildTransaction(accountId, transactions)
-    result.push(transaction)
+  for (const [index, transactions] of chunks.entries()) {
+    console.log(`Processing chunk ${index + 1}/${chunks.length}: ${transactions.length} transactions`)
+
+    if (transactions.length !== 1 && transactions.length !== 2) {
+      console.log(`Skipping chunk ${index + 1} due to unexpected length: ${transactions.length}`)
+      continue
+    }
+
+    try {
+      console.log('Start converting transaction', transactions[0].originString.slice(0, 100), '...')
+      const transaction = buildTransaction(accountId, transactions)
+      result.push(transaction)
+      console.log(`Successfully built transaction ${transaction.statementUid}`)
+    } catch (error) {
+      // better ignore 1 transaction rather than fail completely.
+      console.error(`Error processing chunk ${index + 1} for account ${accountId}:`, error)
+    }
   }
 
+  console.log(`Finished conversion: ${result.length} transactions created for account ${accountId}`)
   return result
 }
 
