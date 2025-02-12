@@ -18,14 +18,22 @@ export const scrape: ScrapeFunc<Preferences> = async ({ fromDate, isFirstRun }) 
   ZenMoney.setData('auth', auth)
   ZenMoney.saveData()
   const rawAccountsAndTransactions: null | Array<{ account: VakifStatementAccount, transactions: VakifStatementTransaction[] }> = await parsePdfVakifStatement()
+  console.log(`Parsed ${rawAccountsAndTransactions ? rawAccountsAndTransactions.length : 0} statements from PDF`)
 
   const transactions: TransactionWithId[] = []
   const accounts: Account[] = []
 
   if (rawAccountsAndTransactions !== null) {
-    for (const { account: rawAccount, transactions: rawTransactions } of rawAccountsAndTransactions) {
+    for (const [index, { account: rawAccount, transactions: rawTransactions }] of rawAccountsAndTransactions.entries()) {
+      console.log(`Processing account ${index + 1}: ID ${rawAccount.id}`)
+
       const account = convertPdfStatementAccount(rawAccount)
+      console.log('Converted account:', account)
+
       const currentTransactions = convertVakifPdfStatementTransaction(rawAccount.id, rawTransactions).filter(x => x.transaction.date.getTime() - fromDate.getTime() >= 0)
+
+      console.log(`Converted to ${currentTransactions.length} transactions`)
+
       accounts.push(account)
       transactions.push(...currentTransactions)
     }

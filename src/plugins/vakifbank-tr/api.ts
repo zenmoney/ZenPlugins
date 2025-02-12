@@ -6,21 +6,26 @@ import { parseDateAndTimeFromPdfText, parseDateFromPdfText, parseFormattedNumber
 
 export async function parsePdfVakifStatement (): Promise<null | Array<{ account: VakifStatementAccount, transactions: VakifStatementTransaction[] }>> {
   const blob = await getPdfDocuments()
+  console.log('Validate documents')
   validateDocuments(blob)
   const pdfStrings = await parsePdfFromBlob({ blob })
+  console.log('Start parsing pdfStrings')
   return parsePdfStatements(pdfStrings)
 }
 
 export function parsePdfStatements (pdfStrings: string[]): Array<{ account: VakifStatementAccount, transactions: VakifStatementTransaction[] }> {
   const result = []
-  for (const textItem of pdfStrings) {
+  for (const [index, textItem] of pdfStrings.entries()) {
+    console.log(`Processing statement ${index + 1} of ${pdfStrings.length}`)
+
     if (!isVakifBankStatement(textItem)) {
       throw new TemporaryError('Похоже, это не выписка VakifBank')
     }
+
     try {
       result.push(parseSinglePdfString(textItem))
     } catch (e) {
-      console.error(e)
+      console.error(`Error processing statement ${index + 1}:`, e)
       throw e
     }
   }
@@ -51,6 +56,7 @@ async function getPdfDocuments (): Promise<Blob[]> {
 
 export function parseSinglePdfString (text: string, statementUid?: string): { account: VakifStatementAccount, transactions: VakifStatementTransaction[] } {
   const balanceAmount = extractBalance(text)
+
   const rawAccount: VakifStatementAccount = {
     balance: balanceAmount,
     id: extractAccountId(text),
@@ -58,7 +64,11 @@ export function parseSinglePdfString (text: string, statementUid?: string): { ac
     title: 'Vakifbank *' + extractAccountId(text).slice(-4),
     date: extractStatementDate(text)
   }
+  console.log('Formatted account info:', rawAccount)
+
   const rawTransactions = extractTransactions(text)
+  console.log(`Extracted ${rawTransactions.length} transactions`)
+
   const parsedContent = {
     account: rawAccount,
     transactions: rawTransactions
