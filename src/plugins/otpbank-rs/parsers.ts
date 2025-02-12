@@ -1,4 +1,5 @@
 import { OtpAccount, OtpTransaction } from './models'
+import { decode } from 'html-entities'
 
 export function parseAccounts (apiAccounts: string[][]): OtpAccount[] {
   const accounts: OtpAccount[] = []
@@ -33,7 +34,7 @@ export function parseTransactions (apiTransactions: string[][]): OtpTransaction[
   return transactions
 }
 
-function parseTransaction (apiTransaction: string[]): OtpTransaction {
+export function parseTransaction (apiTransaction: string[]): OtpTransaction {
   const parseDate = (dateString: string): Date => {
     const [datePart] = dateString.split(' ')
     const [day, month, year] = datePart.split('.').map(Number)
@@ -48,11 +49,14 @@ function parseTransaction (apiTransaction: string[]): OtpTransaction {
   }
 
   const otpTransaction: OtpTransaction = {
+    id: apiTransaction[8],
     date: parseDate(apiTransaction[3]),
-    title: apiTransaction[4],
+    status: apiTransaction[18],
+    title: decode(apiTransaction[4]),
     amount: transactionAmount,
     currencyCode: apiTransaction[2],
-    currencyCodeNumeric: apiTransaction[1]
+    currencyCodeNumeric: apiTransaction[1],
+    merchant: apiTransaction[30]
   }
   return otpTransaction
 }
