@@ -1,10 +1,10 @@
 import { generateUUID } from '../../common/utils'
 import { StatementTransaction, ObjectWithAnyProps } from './models'
-import { parsePdfFromBlob } from './pdfToStr'
 import { Amount, AccountOrCard, AccountType } from '../../types/zenmoney'
 import { parseAmount } from './converters/converterUtils'
 import { openWebViewAndInterceptRequest } from '../../common/network'
 import { TemporaryError } from '../../errors'
+import { parsePdf } from '../../common/pdfUtils'
 
 function getRegexpMatch (regExps: RegExp[], text: string, flags?: string): RegExpMatchArray | null {
   let match = null
@@ -119,7 +119,7 @@ export function parseSinglePdfString (text: string, statementUid?: string): { ac
 async function showHowTo (): Promise<ObjectWithAnyProps> {
   let result
   if (ZenMoney.getData('showHowTo') !== false) {
-    const url = 'https://api.zenmoney.app/plugins/freedombank-kz/how-to/'
+    const url = 'https://api.zenmoney.app/plugins/ffin-kz/how-to/'
     try {
       result = await openWebViewAndInterceptRequest({
         url,
@@ -149,7 +149,22 @@ export async function parsePdfStatements (): Promise<null | Array<{ account: Acc
       throw new TemporaryError('Максимальный размер файла - 1 мб')
     }
   }
-  const pdfStrings = await parsePdfFromBlob({ blob })
+  const pdfStrings = await Promise.all(blob.map(async (blob) => {
+    const { text } = await parsePdf(blob)
+
+    const splitPoint = text.search(/\d{2}\.\d{2}\.\d{4}/)
+    const header = text.slice(0, splitPoint).trim()
+    const transactions = text.slice(splitPoint).trim()
+
+    // Обработка транзакций
+    const transactionsText = transactions
+      .replace(/(\d{2}\.\d{2}\.\d{4}[^\n]*?)\n([A-Za-zА-Яа-я])/g, '$1 $2') // Объединение строк одной записи
+      .replace(/([а-яА-Яa-zA-Z.,])\n([а-яА-Яa-zA-Z])/g, '$1 $2') // Удаление переносов строк внутри деталей
+      .replace(/\s{2,}/g, ' ') // Удаление двойных пробелов
+      .replace(/\n{2,}/g, '\n') // Удаление двойных переводов строк
+
+    return `${header}\n\n${transactionsText}`
+  }))
   const result = []
   for (const textItem of pdfStrings) {
     console.log(textItem)
