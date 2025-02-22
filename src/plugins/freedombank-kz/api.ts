@@ -24,10 +24,10 @@ function parseAccountId (text: string): string {
   return match[1] // KZ123456789012345
 }
 
-function parseBalance (text: string): Amount {
+export function parseBalance (text: string): Amount {
   // Пример: Доступно на 02.01.202519,455.00₸
   const match = getRegexpMatch([
-    /Доступно\s+на\s+(\d{2}[-./]\d{2}[-./]\d{4})(\d{1,3}(?:[\s.,]\d{3})*(?:[.,]\d+)?)([₸])/
+    /Доступно\s+на\s+(\d{2}[-./]\d{2}[-./]\d{4})\s?(\d{1,3}(?:[\s.,]\d{3})*(?:[.,]\d+)?)([₸])/
   ], text)
   if (match?.[2] !== undefined) {
     const amountStr = [
