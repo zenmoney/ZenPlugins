@@ -24,10 +24,10 @@ function parseAccountId (text: string): string {
   return match[1] // KZ123456789012345
 }
 
-function parseBalance (text: string): Amount {
+export function parseBalance (text: string): Amount {
   // Пример: Доступно на 02.01.202519,455.00₸
   const match = getRegexpMatch([
-    /Доступно\s+на\s+(\d{2}[-./]\d{2}[-./]\d{4})(\d{1,3}(?:[\s.,]\d{3})*(?:[.,]\d+)?)([₸])/
+    /Доступно\s+на\s+(\d{2}[-./]\d{2}[-./]\d{4})\s?(\d{1,3}(?:[\s.,]\d{3})*(?:[.,]\d+)?)([₸])/
   ], text)
   if (match?.[2] !== undefined) {
     const amountStr = [
@@ -53,11 +53,14 @@ function parseAccountTitle (text: string): string {
 
 function parseCardNumber (text: string): string {
   // Пример: Номер карты:**1234
-  return text.match(/Номер карты:\*\*(\d{4})/)?.[1] ?? ''
+  // Пример: Номер карты: **6218
+  return text.match(/Номер карты:\s*\*\*(\d{4})/)?.[1] ?? ''
 }
 
 function parseTransactions (text: string, statementUid: string): StatementTransaction[] {
-  const baseRegexp = /^(\d{2}\.\d{2}\.\d{4})([-+]\s?[\d.,]+)\s?([₸$€£¥₺₽])\s?([A-Z]{3})([а-яА-ЯA-Za-z\s"“”'‘’]+)?\s?(.+)?$/gm
+  // Пример: 01.01.2025-600.00 ₸KZTПокупка Airba Fresh Minimarket. Продукты и супермаркет
+  // Пример: 01.02.2025 -9,480.00 ₸ KZT Покупка Sensilyo Coffee House. Кафе и рестораны
+  const baseRegexp = /^(\d{2}\.\d{2}\.\d{4})\s?([-+]\s?[\d.,]+)\s?([₸$€£¥₺₽])?\s?([A-Z]{3})\s?([а-яА-ЯA-Za-z\s"“”'‘’]+)?\s?(.+)?$/gm
 
   const transactionStrings = text.match(baseRegexp)
 
@@ -66,7 +69,7 @@ function parseTransactions (text: string, statementUid: string): StatementTransa
   }
 
   return transactionStrings.map((str) => {
-    const match = str.match(/^(\d{2}\.\d{2}\.\d{4})([-+]\s?[\d.,]+)\s?([₸$€£¥₺₽])([A-Z]{3})([а-яА-ЯA-Za-z\s"“”'‘’]+)?\s?(.+)?$/)
+    const match = str.match(/^(\d{2}\.\d{2}\.\d{4})\s?([-+]\s?[\d.,]+)\s?([₸$€£¥₺₽])?\s?([A-Z]{3})\s?([а-яА-ЯA-Za-z\s"“”'‘’]+)?\s?(.+)?$/)
     // const currency = match?.[3] ?? ''
     const currencyCode = match?.[4] ?? ''
 
