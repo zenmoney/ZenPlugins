@@ -1,28 +1,4 @@
-import { convertAccount, convertToZenMoneyTransactions, convertTransaction, parseMerchant } from './converters'
-
-describe('convertAccount', () => {
-  it('converts account', () => {
-    expect(convertAccount({
-      accountNumber: '40702810610000000179',
-      status: 'NORM',
-      name: 'Мой счет',
-      currency: '643',
-      balance: {
-        otb: 54202.31,
-        authorized: 9952.48,
-        pendingPayments: 0,
-        pendingRequisitions: 0
-      }
-    })).toEqual({
-      id: '40702810610000000179',
-      type: 'checking',
-      title: 'Мой счет',
-      instrument: 'RUB',
-      available: 64154.79,
-      syncID: ['40702810610000000179']
-    })
-  })
-})
+import { convertToZenMoneyTransactions, convertTransaction, parseMerchant } from '../../../converters'
 
 describe('convertTransaction', () => {
   it('converts income transaction', () => {

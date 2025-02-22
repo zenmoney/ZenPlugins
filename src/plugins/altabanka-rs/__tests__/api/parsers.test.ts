@@ -20,50 +20,212 @@ describe('parsers', () => {
     expect(parseLoginResult('some other text')).toBe(false)
   })
 
-  it('should parse accounts', async () => {
+  it('should parse accounts-1', async () => {
     const mockBody = fs.readFileSync(
-      path.resolve(__dirname, './__mocks__/accounts.html'),
+      path.resolve(__dirname, './__mocks__/accounts-1.html'),
       'utf8'
     )
 
     const response = parseAccountInfo(mockBody)
 
-    expect(response).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "accountNumber": "0001000512876",
-          "balance": 249233.58,
-          "cardNumber": "0xC4952DBB2BB24ECAFF9655505605F0F0",
-          "currency": "RSD",
-          "id": "0001000512876-0xC4952DBB2BB24ECAFF9655505605F0F0",
-          "name": "4242XXXXXXXX4061",
+    expect(response).toEqual(
+      [
+        {
+          accountNumber: '0001000512876',
+          balance: 249233.58,
+          cardNumber: '0xC4952DBB2BB24ECAFF9655505605F0F0',
+          currency: 'RSD',
+          id: '0001000512876-0xC4952DBB2BB24ECAFF9655505605F0F0',
+          name: '4242XXXXXXXX4061'
         },
-        Object {
-          "accountNumber": "0001000512876",
-          "balance": 249233.58,
-          "cardNumber": "0x3A7A78AB70965C9C2323270A293FA54F",
-          "currency": "RSD",
-          "id": "0001000512876-0x3A7A78AB70965C9C2323270A293FA54F",
-          "name": "9891XXXXXXXX6625",
+        {
+          accountNumber: '0001000512876',
+          balance: 249233.58,
+          cardNumber: '0x3A7A78AB70965C9C2323270A293FA54F',
+          currency: 'RSD',
+          id: '0001000512876-0x3A7A78AB70965C9C2323270A293FA54F',
+          name: '9891XXXXXXXX6625'
         },
-        Object {
-          "accountNumber": "0001000512876",
-          "balance": 249233.58,
-          "cardNumber": "",
-          "currency": "RSD",
-          "id": "0001000512876",
-          "name": "Tekući račun",
+        {
+          accountNumber: '0001000512876',
+          balance: 249233.58,
+          cardNumber: '',
+          currency: 'RSD',
+          id: '0001000512876',
+          name: 'Tekući račun'
         },
-        Object {
-          "accountNumber": "0001000512877",
-          "balance": 2979.07,
-          "cardNumber": "",
-          "currency": "EUR",
-          "id": "0001000512877",
-          "name": "Štedni račun",
-        },
+        {
+          accountNumber: '0001000512877',
+          balance: 2979.07,
+          cardNumber: '',
+          currency: 'EUR',
+          id: '0001000512877',
+          name: 'Štedni račun'
+        }
       ]
-    `)
+    )
+  })
+
+  it('should parse accounts-2', async () => {
+    const mockBody = fs.readFileSync(
+      path.resolve(__dirname, './__mocks__/accounts-2.html'),
+      'utf8'
+    )
+
+    const response = parseAccountInfo(mockBody)
+
+    expect(response).toEqual(
+      [
+        {
+          accountNumber: '0001000210460',
+          balance: 450968.42,
+          cardNumber: '0xC4952DBB2BB21FC5D03DD70479E08E9D',
+          currency: 'RSD',
+          id: '0001000210460-0xC4952DBB2BB21FC5D03DD70479E08E9D',
+          name: '4242XXXXXXXX6963'
+        },
+        {
+          accountNumber: '0001000210460',
+          balance: 450968.42,
+          cardNumber: '0x3A7A78AB7096C7A1A4D47503D17609AF',
+          currency: 'RSD',
+          id: '0001000210460-0x3A7A78AB7096C7A1A4D47503D17609AF',
+          name: '9891XXXXXXXX3864'
+        },
+        {
+          accountNumber: '0001000210460',
+          balance: 450968.42,
+          cardNumber: '',
+          currency: 'RSD',
+          id: '0001000210460',
+          name: 'Tekući račun'
+        },
+        {
+          accountNumber: '0031000248471',
+          balance: 0,
+          cardNumber: '',
+          currency: 'RUB',
+          id: '0031000248471RUB',
+          name: 'Štedni račun'
+        },
+        {
+          accountNumber: '0031000248471',
+          balance: 0,
+          cardNumber: '',
+          currency: 'EUR',
+          id: '0031000248471EUR',
+          name: 'Štedni račun'
+        }
+      ]
+    )
+  })
+
+  it('should parse accounts-3', async () => {
+    const mockBody = fs.readFileSync(
+      path.resolve(__dirname, './__mocks__/accounts-3.html'),
+      'utf8'
+    )
+
+    const response = parseAccountInfo(mockBody)
+
+    expect(response).toEqual(
+      [
+        {
+          accountNumber: '0001000105593',
+          balance: 0,
+          cardNumber: '0xC4952DBB2BB2101319F376C48E5602EB',
+          currency: 'RSD',
+          id: '0001000105593-0xC4952DBB2BB2101319F376C48E5602EB',
+          name: '4242XXXXXXXX5934'
+        },
+        {
+          accountNumber: '0001000105593',
+          balance: 0,
+          cardNumber: '0x3A7A78AB70967AB07B514CB30E5FE563',
+          currency: 'RSD',
+          id: '0001000105593-0x3A7A78AB70967AB07B514CB30E5FE563',
+          name: '9891XXXXXXXX6217'
+        },
+        {
+          accountNumber: '0001000105593',
+          balance: 0,
+          cardNumber: '',
+          currency: 'RSD',
+          id: '0001000105593',
+          name: 'Tekući račun'
+        },
+        {
+          accountNumber: '0031000138757',
+          balance: 0,
+          cardNumber: '',
+          currency: 'CNY',
+          id: '0031000138757CNY',
+          name: 'Štedni račun'
+        },
+        {
+          accountNumber: '0031000138757',
+          balance: 0,
+          cardNumber: '',
+          currency: 'RUB',
+          id: '0031000138757RUB',
+          name: 'Štedni račun'
+        },
+        {
+          accountNumber: '0031000138757',
+          balance: 542.80,
+          cardNumber: '',
+          currency: 'EUR',
+          id: '0031000138757EUR',
+          name: 'Štedni račun'
+        }
+      ]
+    )
+  })
+
+  it('should parse accounts-4', async () => {
+    const mockBody = fs.readFileSync(
+      path.resolve(__dirname, './__mocks__/accounts-4.html'),
+      'utf8'
+    )
+
+    const response = parseAccountInfo(mockBody)
+
+    expect(response).toEqual(
+      [
+        {
+          accountNumber: '0001000328053',
+          balance: 1780241.23,
+          cardNumber: '0x8B6259B7CF1CDD4FDF47D31FD86B3C88',
+          currency: 'RSD',
+          id: '0001000328053-0x8B6259B7CF1CDD4FDF47D31FD86B3C88',
+          name: '4029XXXXXXXX4561'
+        },
+        {
+          accountNumber: '0001000328053',
+          balance: 1780241.23,
+          cardNumber: '0x3A7A78AB70968A5B862BE543D64756ED',
+          currency: 'RSD',
+          id: '0001000328053-0x3A7A78AB70968A5B862BE543D64756ED',
+          name: '9891XXXXXXXX4652'
+        },
+        {
+          accountNumber: '0001000328053',
+          balance: 1780241.23,
+          cardNumber: '',
+          currency: 'RSD',
+          id: '0001000328053',
+          name: 'Tekući račun'
+        },
+        {
+          accountNumber: '0031000384634',
+          balance: 892.43,
+          cardNumber: '',
+          currency: 'EUR',
+          id: '0031000384634',
+          name: 'Štedni račun'
+        }
+      ]
+    )
   })
 
   it('should parse verification token', async () => {

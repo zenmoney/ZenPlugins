@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<!--[if IE 8 ]><html lang="hr" class="no-js ie8"> <![endif]-->
+<!--[if IE 9 ]><html lang="hr" class="no-js ie9"> <![endif]-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Altabanka Srbija</title>
+  <link rel="shortcut icon" href="/altaonline/Themes/ALTA/img/icons/favicon.ico">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="/altaonline/Themes/ALTA/css/vendors/selectize.default.css?bundleVirtualPath=%7e%2fbundles%2fvendorcss" rel="stylesheet"/>
+  <link href="/altaonline/Themes/ALTA/css/vendors/ddslick.css?bundleVirtualPath=%7e%2fbundles%2fvendorcss" rel="stylesheet"/>
+  <link href="/altaonline/Themes/ALTA/css/vendors/introjs.css?bundleVirtualPath=%7e%2fbundles%2fvendorcss" rel="stylesheet"/>
+  <link href="/altaonline/Themes/ALTA/css/vendors/fancySelect.css?bundleVirtualPath=%7e%2fbundles%2fvendorcss" rel="stylesheet"/>
+  <link href="/altaonline/Themes/ALTA/css/vendors/jquery-ui.css?bundleVirtualPath=%7e%2fbundles%2fvendorcss" rel="stylesheet"/>
+  <link href="/altaonline/Themes/ALTA/css/vendors/jquery.ui.timepicker.css?bundleVirtualPath=%7e%2fbundles%2fvendorcss" rel="stylesheet"/>
+  <link href="/altaonline/Themes/ALTA/css/vendors/jquery.mCustomScrollbar.css?bundleVirtualPath=%7e%2fbundles%2fvendorcss" rel="stylesheet"/>
+  <link href="/altaonline/Themes/ALTA/css/vendors/slick.css?bundleVirtualPath=%7e%2fbundles%2fvendorcss" rel="stylesheet"/>
+  <link href="/altaonline/Themes/ALTA/css/vendors/uikit.css?bundleVirtualPath=%7e%2fbundles%2fvendorcss" rel="stylesheet"/>
+  <link href="/altaonline/Themes/ALTA/css/vendors/keyboard.css?bundleVirtualPath=%7e%2fbundles%2fvendorcss" rel="stylesheet"/>
+  <link href="/altaonline/Themes/ALTA/css/vendors/ol.css?bundleVirtualPath=%7e%2fbundles%2fvendorcss" rel="stylesheet"/>
+  <link href="/altaonline/Themes/ALTA/css/vendors/olstyles.css?bundleVirtualPath=%7e%2fbundles%2fvendorcss" rel="stylesheet"/>
+  <link href="/altaonline/Themes/ALTA/css/core/style.css?bundleVirtualPath=%7e%2fbundles%2fcorecss" rel="stylesheet"/>
+  <link href="/altaonline/Themes/ALTA/css/core/1200.css?bundleVirtualPath=%7e%2fbundles%2fcorecss" rel="stylesheet"/>
+  <link href="/altaonline/Themes/ALTA/css/core/980.css?bundleVirtualPath=%7e%2fbundles%2fcorecss" rel="stylesheet"/>
+  <link href="/altaonline/Themes/ALTA/css/core/720.css?bundleVirtualPath=%7e%2fbundles%2fcorecss" rel="stylesheet"/>
+  <link href="/altaonline/Themes/ALTA/css/core/600.css?bundleVirtualPath=%7e%2fbundles%2fcorecss" rel="stylesheet"/>
+  <link href="/altaonline/Themes/ALTA/css/core/450.css?bundleVirtualPath=%7e%2fbundles%2fcorecss" rel="stylesheet"/>
+  <link href="/altaonline/Themes/ALTA/css/core/deweb.css?bundleVirtualPath=%7e%2fbundles%2fcorecss" rel="stylesheet"/>
+
+  <link href="//fonts.googleapis.com/css?family=Open+Sans:300,400,400italic,700" rel="stylesheet" type="text/css">
+  <script src="//maps.googleapis.com/maps/api/js?key=AIzaSyBjyVOAqV7RQQOObrFttQqUOg6YXbEcw4U"></script>
+
+  <script src="/altaonline/Themes/ALTA/js/vendors/jquery-3.6.1.js?bundleVirtualPath=%7e%2fbundles%2fvendorjs"></script>
+  <script src="/altaonline/Themes/ALTA/js/vendors/jquery.blockUI.js?bundleVirtualPath=%7e%2fbundles%2fvendorjs"></script>
+  <script src="/altaonline/Themes/ALTA/js/vendors/jquery.pjax.js?bundleVirtualPath=%7e%2fbundles%2fvendorjs"></script>
+  <script src="/altaonline/Themes/ALTA/js/vendors/selectize.min.js?bundleVirtualPath=%7e%2fbundles%2fvendorjs"></script>
+  <script src="/altaonline/Themes/ALTA/js/vendors/jquery.unobtrusive-ajax.min.js?bundleVirtualPath=%7e%2fbundles%2fvendorjs"></script>
+  <script src="/altaonline/Themes/ALTA/js/vendors/jquery-ui.js?bundleVirtualPath=%7e%2fbundles%2fvendorjs"></script>
+  <script src="/altaonline/Themes/ALTA/js/vendors/jquery-ui.customcombobox.js?bundleVirtualPath=%7e%2fbundles%2fvendorjs"></script>
+  <script src="/altaonline/Themes/ALTA/js/vendors/jquery.touch.punch.js?bundleVirtualPath=%7e%2fbundles%2fvendorjs"></script>
+  <script src="/altaonline/Themes/ALTA/js/vendors/jquery.screwdefaultbuttonsV2.js?bundleVirtualPath=%7e%2fbundles%2fvendorjs"></script>
+  <script src="/altaonline/Themes/ALTA/js/vendors/jquery.ui.sortable-animation.js?bundleVirtualPath=%7e%2fbundles%2fvendorjs"></script>
+  <script src="/altaonline/Themes/ALTA/js/vendors/jquery.mCustomScrollbar.min.js?bundleVirtualPath=%7e%2fbundles%2fvendorjs"></script>
+  <script src="/altaonline/Themes/ALTA/js/vendors/jquery.keyboard.js?bundleVirtualPath=%7e%2fbundles%2fvendorjs"></script>
+  <script src="/altaonline/Themes/ALTA/js/vendors/intro.js?bundleVirtualPath=%7e%2fbundles%2fvendorjs"></script>
+  <script src="/altaonline/Themes/ALTA/js/vendors/ddslick.js?bundleVirtualPath=%7e%2fbundles%2fvendorjs"></script>
+  <script src="/altaonline/Themes/ALTA/js/vendors/object-fit-polyfill.js?bundleVirtualPath=%7e%2fbundles%2fvendorjs"></script>
+  <script src="/altaonline/Themes/ALTA/js/vendors/ol.js?bundleVirtualPath=%7e%2fbundles%2fvendorjs"></script>
+  <script src="/altaonline/Themes/ALTA/js/vendors/slick.min.js?bundleVirtualPath=%7e%2fbundles%2fvendorjs"></script>
+  <script src="/altaonline/Themes/ALTA/js/vendors/smooth-scroll.js?bundleVirtualPath=%7e%2fbundles%2fvendorjs"></script>
+  <script src="/altaonline/Themes/ALTA/js/vendors/moxie.min.js?bundleVirtualPath=%7e%2fbundles%2fvendorjs"></script>
+  <script src="/altaonline/Themes/ALTA/js/vendors/plupload.min.js?bundleVirtualPath=%7e%2fbundles%2fvendorjs"></script>
+  <script src="/altaonline/Themes/ALTA/js/vendors/fancy-select.js?bundleVirtualPath=%7e%2fbundles%2fvendorjs"></script>
+  <script src="/altaonline/Themes/ALTA/js/vendors/autoNumeric.js?bundleVirtualPath=%7e%2fbundles%2fvendorjs"></script>
+  <script src="/altaonline/Themes/ALTA/js/vendors/dropkick.js?bundleVirtualPath=%7e%2fbundles%2fvendorjs"></script>
+  <script src="/altaonline/Themes/ALTA/js/vendors/infobox.js?bundleVirtualPath=%7e%2fbundles%2fvendorjs"></script>
+  <script src="/altaonline/Themes/ALTA/js/core/regional.js?bundleVirtualPath=%7e%2fbundles%2fcorejs"></script>
+  <script src="/altaonline/Themes/ALTA/js/core/deweb.js?bundleVirtualPath=%7e%2fbundles%2fcorejs"></script>
+  <script src="/altaonline/Areas/Product/Scripts/Product.DeWeb.js?bundleVirtualPath=%7e%2fbundles%2fcorejs"></script>
+  <script src="/altaonline/Areas/Offer/Scripts/Offer.DeWeb.js?bundleVirtualPath=%7e%2fbundles%2fcorejs"></script>
+  <script src="/altaonline/Areas/Payment/Scripts/Payment.DeWeb.js?bundleVirtualPath=%7e%2fbundles%2fcorejs"></script>
+  <script src="/altaonline/Areas/Payment/Scripts/Payment.DeWeb.ALTA.js?bundleVirtualPath=%7e%2fbundles%2fcorejs"></script>
+  <script src="/altaonline/Areas/Order/Scripts/Order.DeWeb.js?bundleVirtualPath=%7e%2fbundles%2fcorejs"></script>
+  <script src="/altaonline/Areas/Location/Scripts/Location.DeWeb.js?bundleVirtualPath=%7e%2fbundles%2fcorejs"></script>
+  <script src="/altaonline/Areas/Location/Scripts/Location.DeWeb.ALTA.js?bundleVirtualPath=%7e%2fbundles%2fcorejs"></script>
+  <script src="/altaonline/Areas/Identity/Scripts/Identity.DeWeb.js?bundleVirtualPath=%7e%2fbundles%2fcorejs"></script>
+  <script src="/altaonline/Areas/Entitlements/Scripts/Entitlements.DeWeb.js?bundleVirtualPath=%7e%2fbundles%2fcorejs"></script>
+  <script src="/altaonline/Areas/Dialog/Scripts/Dialog.DeWeb.js?bundleVirtualPath=%7e%2fbundles%2fcorejs"></script>
+  <script src="/altaonline/Areas/CurrentAccount/Scripts/CurrentAccount.DeWeb.js?bundleVirtualPath=%7e%2fbundles%2fcorejs"></script>
+  <script src="/altaonline/Areas/Correspondence/Scripts/Correspondence.DeWeb.js?bundleVirtualPath=%7e%2fbundles%2fcorejs"></script>
+  <script src="/altaonline/Areas/Correspondence/Scripts/Correspondence.DeWeb.ALTA.js?bundleVirtualPath=%7e%2fbundles%2fcorejs"></script>
+  <script src="/altaonline/Areas/Campaign/Scripts/Campaign.DeWeb.js?bundleVirtualPath=%7e%2fbundles%2fcorejs"></script>
+  <script src="/altaonline/Areas/BillPresentment/Scripts/BillPresentment.DeWeb.js?bundleVirtualPath=%7e%2fbundles%2fcorejs"></script>
+  <script src="/altaonline/Areas/Exchange/Scripts/Exchange.DeWeb.js?bundleVirtualPath=%7e%2fbundles%2fcorejs"></script>
+  <script src="/altaonline/Areas/Applications/Scripts/Applications.DeWeb.js?bundleVirtualPath=%7e%2fbundles%2fcorejs"></script>
+  <script src="/altaonline/Areas/AccountData/Scripts/AccountData.DeWeb.js?bundleVirtualPath=%7e%2fbundles%2fcorejs"></script>
+  <script src="/altaonline/Areas/AccountData/Scripts/AccountData.DeWeb.ALTA.js?bundleVirtualPath=%7e%2fbundles%2fcorejs"></script>
+
+  <meta name="description" content="">
+  <meta name="keywords" content="">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta property="og:site_name" content="">
+  <meta property="og:title" content="">
+  <meta property="og:image" content="">
+  <meta property="og:description" content="">
+  <meta name="referrer" content="origin" />
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+  <!--[if lt IE 9]>
+  <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+</head>
+<body class="" data-utility="dewebInit" data-is-priority="true" data-decimal-sep="," data-group-sep="." data-date-format="d.M.yyyy." data-default-container="page-content" data-default-popup-content="page-content" data-base-path="/altaonline/" data-google-api-key="AIzaSyB1JnhcKkBfcj_UUQ-faxRLo9369ShkDtk" data-google-client-id="251764576235-jagrajau7cv3pi1t068h9l2m9q0egpb2.apps.googleusercontent.com" data-culture="sr-Latn-RS">
+
+
+
+
+<div class="mobile-menu">
+  <div class="profile-bar">
+    <div class="profile-img">
+      <div class="img-box" onclick="Redirect('/altaonline/Identity/SelfCare/MyProfile')" style="cursor: pointer;">
+        <img src="/altaonline/Themes/Standard/img/demo/profile-1.jpg" alt="profile-img" />
+      </div>
+      <span class="unread-notifications" style="display:none"></span>
+    </div>
+    <div class="profile-icons">
+      <a href="/altaonline/Correspondence/MailboxMessages" class="icon-mail-3"></a>
+      <a href="/altaonline/Identity/Logout" class="icon-out-1"></a>
+    </div>
+  </div>
+  <ul class="main-nav">
+    <li class="">
+      <a class=" " data-utility="" href="/altaonline/Home">
+        <i class="icon-dashboard-1"></i>
+        Početna strana
+      </a>
+    </li>
+    <li class="has-menu">
+      <a class=" subnav-trigger" data-utility="subnavMobile" href="#">
+        <i class="icon-safe-1"></i>
+        Računi
+      </a>
+      <ul class="submenu">
+        <li class="">
+          <a href="/altaonline/AccountData/Accounts">
+            Detalji računa
+          </a>
+        </li>
+        <li class="">
+          <a href="/altaonline/AccountData/Transactions/List">
+            Lista transakcija
+          </a>
+        </li>
+        <li class="">
+          <a href="/altaonline/AccountData/Statements/GetList">
+            Lista izvoda
+          </a>
+        </li>
+      </ul>
+    </li>
+    <li class="has-menu">
+      <a class=" subnav-trigger" data-utility="subnavMobile" href="#">
+        <i class="icon-card-1"></i>
+        Kartice
+      </a>
+      <ul class="submenu">
+        <li class="">
+          <a href="/altaonline/Order/Cards/GetList">
+            Detalji kartice
+          </a>
+        </li>
+        <li class="">
+          <a href="/altaonline/AccountData/Transactions/CardTransactionsList">
+            Lista transakcija
+          </a>
+        </li>
+        <li class="">
+          <a href="/altaonline/AccountData/Statements/StatementsCardList">
+            Lista izvoda
+          </a>
+        </li>
+      </ul>
+    </li>
+    <li class="has-menu">
+      <a class=" subnav-trigger" data-utility="subnavMobile" href="#">
+        <i class="icon-money-1"></i>
+        Plaćanja
+      </a>
+      <ul class="submenu">
+        <li class="">
+          <a href="/altaonline/Payment/BalanceTransfers">
+            Interna transakcija
+          </a>
+        </li>
+        <li class="">
+          <a href="/altaonline/Payment/CreditTransfers">
+            Dinarsko plaćanje
+          </a>
+        </li>
+        <li class="">
+          <a href="/altaonline/Payment/Drafts/GetList">
+            Šabloni i primaoci
+          </a>
+        </li>
+        <li class="">
+          <a href="/altaonline/Payment/Transfers/GetList">
+            Lista transfera
+          </a>
+        </li>
+      </ul>
+    </li>
+    <li class="has-menu">
+      <a class=" subnav-trigger" data-utility="subnavMobile" href="#">
+        <i class="icon-exchange-1"></i>
+        Menjačnica
+      </a>
+      <ul class="submenu">
+        <li class="">
+          <a href="/altaonline/Exchange/ExchangeRateLists/GetForDate">
+            Kursna lista
+          </a>
+        </li>
+        <li class="">
+          <a href="/altaonline/Exchange/ExchangeOrders">
+            Menjačnica
+          </a>
+        </li>
+        <li class="">
+          <a href="/altaonline/Exchange/ExchangeOrders/GetList">
+            Lista transakcija
+          </a>
+        </li>
+      </ul>
+    </li>
+    <li class="">
+      <a class=" " data-utility="" href="/altaonline/Dialog/Contacts/GetList">
+        <i class="icon-contact-1"></i>
+        Kontakt
+      </a>
+    </li>
+  </ul>
+</div>
+
+<div id="wrapper">
+  <!-- Notifications -->
+  <script type="text/template" id="notification-template">
+    <div id="{notification-id}" class="notification {color}">
+      <p>
+        <i class="{icon-class}"></i>
+        <strong>{notification-title}</strong>
+        {notification-content}
+      </p>
+      <a href="#" class="close-btn" data-utility="closeNotification"></a>
+    </div>
+  </script>
+
+
+
+  <header id="page-header" role="banner">
+    <div class="container-menu">
+      <div class="site-branding" style="margin-top:12px">
+        <h1 class="site-logo">
+          <a href="https://www.altabanka.rs/" target="_blank" title="Altabanka Srbija">Altabanka Srbija"</a>
+        </h1>
+      </div>
+      <ul class="main-nav" style="padding: 25px 0 0 30px">
+        <li class="">
+          <a class=" " data-utility="" href="/altaonline/Home" style="">
+            <i class="icon-dashboard-1"></i>
+            Početna strana
+          </a>
+
+        </li>
+        <li class="has-menu">
+          <a class=" subnav-trigger" data-utility="subnavTrigger" href="#" style="">
+            <i class="icon-safe-1"></i>
+            Računi
+          </a>
+
+          <ul class="submenu">
+            <li class="">
+              <a href="/altaonline/AccountData/Accounts">
+                Detalji računa
+              </a>
+            </li>
+            <li class="">
+              <a href="/altaonline/AccountData/Transactions/List">
+                Lista transakcija
+              </a>
+            </li>
+            <li class="">
+              <a href="/altaonline/AccountData/Statements/GetList">
+                Lista izvoda
+              </a>
+            </li>
+          </ul>
+        </li>
+        <li class="has-menu">
+          <a class=" subnav-trigger" data-utility="subnavTrigger" href="#" style="">
+            <i class="icon-card-1"></i>
+            Kartice
+          </a>
+
+          <ul class="submenu">
+            <li class="">
+              <a href="/altaonline/Order/Cards/GetList">
+                Detalji kartice
+              </a>
+            </li>
+            <li class="">
+              <a href="/altaonline/AccountData/Transactions/CardTransactionsList">
+                Lista transakcija
+              </a>
+            </li>
+            <li class="">
+              <a href="/altaonline/AccountData/Statements/StatementsCardList">
+                Lista izvoda
+              </a>
+            </li>
+          </ul>
+        </li>
+        <li class="has-menu">
+          <a class=" subnav-trigger" data-utility="subnavTrigger" href="#" style="">
+            <i class="icon-money-1"></i>
+            Plaćanja
+          </a>
+
+          <ul class="submenu">
+            <li class="">
+              <a href="/altaonline/Payment/BalanceTransfers">
+                Interna transakcija
+              </a>
+            </li>
+            <li class="">
+              <a href="/altaonline/Payment/CreditTransfers">
+                Dinarsko plaćanje
+              </a>
+            </li>
+            <li class="">
+              <a href="/altaonline/Payment/Drafts/GetList">
+                Šabloni i primaoci
+              </a>
+            </li>
+            <li class="">
+              <a href="/altaonline/Payment/Transfers/GetList">
+                Lista transfera
+              </a>
+            </li>
+          </ul>
+        </li>
+        <li class="has-menu">
+          <a class=" subnav-trigger" data-utility="subnavTrigger" href="#" style="">
+            <i class="icon-exchange-1"></i>
+            Menjačnica
+          </a>
+
+          <ul class="submenu">
+            <li class="">
+              <a href="/altaonline/Exchange/ExchangeRateLists/GetForDate">
+                Kursna lista
+              </a>
+            </li>
+            <li class="">
+              <a href="/altaonline/Exchange/ExchangeOrders">
+                Menjačnica
+              </a>
+            </li>
+            <li class="">
+              <a href="/altaonline/Exchange/ExchangeOrders/GetList">
+                Lista transakcija
+              </a>
+            </li>
+          </ul>
+        </li>
+        <li class="">
+          <a class=" " data-utility="" href="/altaonline/Dialog/Contacts/GetList" style="">
+            <i class="icon-contact-1"></i>
+            Kontakt
+          </a>
+
+        </li>
+      </ul>
+      <div class="profile-bar">
+        <div class="profile-img">
+          <div class="img-box" onclick="Redirect('/altaonline/Identity/SelfCare/MyProfile')" style="cursor: pointer;">
+            <img src="/altaonline/Themes/ALTA/img/photos/no-pic-avatar.png" alt="">
+          </div>
+          <span class="unread-notifications" style="display:none"></span>
+        </div>
+        <a href="/altaonline/Correspondence/MailboxMessages" class="icon-mail-3 unread">
+ <span class="unread-notifications" data-update-url="/altaonline/Correspondence/MailboxMessages/GetListJson" data-utility="messagesCount" data-additional-text="you_have_priority_messages" data-additional-title="New_messages">
+ </span>
+        </a>
+        <a href="/altaonline/Identity/Logout" class="icon-out-1"></a>
+
+
+      </div>
+      <div class="menu-btn with-notify" data-utility="menuTrigger">
+        <ul>
+          <li class="first"></li>
+          <li class="second"></li>
+          <li class="third"></li>
+        </ul>
+      </div>
+    </div>
+  </header>
+
+
+  <div class="login-main -prelogin-autoheight">
+    <div class="page-cover inner-video video-cover img-overlay">
+      <img class="desktop-img promo-bg-0 slide-active" id="prelogin-slider-cover" src="/altaonline/Themes/ALTA/img/bg/prelogin-slider-1.jpg" alt="cover" data-object-fit="cover">
+      <img class="mobile-img" id="prelogin-slider-cover-mobile" src="/altaonline/Themes/ALTA/img/bg/prelogin-slider-1.jpg" alt="cover" data-object-fit="cover">
+    </div>
+    <div id="prelogin-content" class="prelogin-full prelogin-full-resotre">
+
+
+      <form action="/altaonline/Home/Accounts" data-ajax="true" data-ajax-begin="DeWeb.AjaxForms.OnAjaxBegin(&#39;accountsPicker&#39;, typeof(xhr) != &#39;undefined&#39; ? xhr : undefined)" data-ajax-complete="DeWeb.AjaxForms.OnAjaxComplete(&#39;accountsPicker&#39;)" data-ajax-failure="DeWeb.AjaxForms.OnAjaxFailure(&#39;accountsPicker&#39;)" data-ajax-method="post" data-ajax-mode="replace" data-ajax-success="DeWeb.AjaxForms.OnAjaxSuccess(&#39;accountsPicker&#39;)" data-ajax-update="#accountsPicker" data-filter-form="True" data-utility="formInit" id="form_" method="post"> <div class="accounts-widget" id="promo-dashboard" data-utility="accountWidgetSize">
+        <div class="bg-overlay overlay-1"></div>
+        <input type="hidden" id="selected-account" value="0031000384634" />
+        <input type="hidden" id="selected-card" value="" />
+
+        <ul class="list-options-side" style="z-index: 5">
+          <li class="option-slider active" data-tab="1">slider</li>
+          <li class="option-list " data-tab="2">list</li>
+        </ul>
+        <div id="account-slider" name="slider" class="swiper-container account-tab tab-1 account-slider" data-utility="accountSlider showSlideDetails" style="min-height:170px" data-accsel="selected-account" data-cardsel="selected-card">
+          <!-- Slides -->
+          <div class="slide" data-accountnumber="0001000328053-0x8B6259B7CF1CDD4FDF47D31FD86B3C88" data-cardno="0x8B6259B7CF1CDD4FDF47D31FD86B3C88" data-acckind="debit-card" data-accno="0001000328053"
+               data-url="/altaonline/Order/Cards/GetList?q=IVsv3RmwaWyh%2FKqOWQB6RVUZjjjDM0SkwKV%2FwZH4OW%2FrI7Xt9eLElNh8SimbMHO2">
+            <div class="account-box account-bg-1" style="min-height: 255px">
+              <div class="widget-options">
+                <ul class="trigger" data-utility="optionsTrigger">
+                  <li></li>
+                  <li></li>
+                  <li></li>
+                </ul>
+                <ul class="options-list">
+                  <li>
+                    <a href="/altaonline/Order/Cards/GetList">Detalji računa</a>
+                  </li>
+                  <li>
+                    <a href="/altaonline/AccountData/Transactions/List?q=bd9YX3Kl%2F7nq3HEg1zS2a%2BT36fhwfogpRaxls44eMLpW5TxWK5PMJ%2F2hc%2Binle1Ht%2BRYpEkXRSJ0rD81hu6ZAkHhBganMy8a">Lista transakcija</a>
+                  </li>
+                  <li>
+                    <a href="#" data-utility="popupFromLink" data-popup-type="wide" data-href="/altaonline/AccountData/Accounts/ChangeImage?q=oKy0qJ9r2xuXeBwyd8zSj3ru4VK3831U8o8NDTgcaqQ%3D">Promeni sliku računa</a>
+                  </li>
+                  <li>
+                    <a href="#" data-utility="popupFromLink" data-popup-type="wide" data-href="/altaonline/AccountData/Accounts/ChangeNickname?q=oKy0qJ9r2xuXeBwyd8zSj3ru4VK3831UmDNI1OW5hl5JtARD%2FoBAohJSpP2Fk28G">Promeni naziv računa</a>
+                  </li>
+                </ul>
+              </div>
+              <div class="account-main">
+                <div class="card-logo">
+                  <img class="active" data-image-for-account="0001000328053" src="/altaonline/Themes/ALTA/img/Cards/active/visa.png">
+                  <img class="inactive" data-image-for-account="0001000328053" src="/altaonline/Themes/ALTA/img/Cards/inactive/visa.png">
+                </div>
+                <p class="acc-nr">4029XXXXXXXX4561</p>
+                <p class="acc-name">
+                </p>
+              </div>
+
+              <div class="balance-slat">
+                <p class="acc-balance-txt">Raspoloživo stanje:</p>
+                <div class="main-balance">
+                  <div class="select-2">
+                    <select data-utility="customselectMenu">
+                      <option data-last-change-date="24.01.2025" data-amount="1.780.241,23" data-accountnumber="0001000328053" value="RSD">RSD</option>
+
+                    </select>
+                  </div>
+                  <p id="0001000328053" name="available-amount"> 1.780.241,23</p>
+                </div>
+                <p id="last-change-date" class="transaction-txt">Poslednja transakcija|<span>24.01.2025</span></p>
+              </div>
+              <a href="/altaonline/Payment/BalanceTransfers?q=G1e%2F3v1JTXJcd5FT%2B2BL5oXrXSWSbuZpEm3tou9xtwU%3D" class="account-btn icon-money-2"></a>
+            </div>
+          </div>
+          <div class="slide" data-accountnumber="0001000328053-0x3A7A78AB70968A5B862BE543D64756ED" data-cardno="0x3A7A78AB70968A5B862BE543D64756ED" data-acckind="debit-card" data-accno="0001000328053"
+               data-url="/altaonline/Order/Cards/GetList?q=IVsv3RmwaWzLsEy9ZdXnIO%2Fr%2Bl49nE6JDmxzBy%2FmEMzDwfeKe%2F%2BgeCXi8S7J5TT2">
+            <div class="account-box account-bg-1" style="min-height: 255px">
+              <div class="widget-options">
+                <ul class="trigger" data-utility="optionsTrigger">
+                  <li></li>
+                  <li></li>
+                  <li></li>
+                </ul>
+                <ul class="options-list">
+                  <li>
+                    <a href="/altaonline/Order/Cards/GetList">Detalji računa</a>
+                  </li>
+                  <li>
+                    <a href="/altaonline/AccountData/Transactions/List?q=bd9YX3Kl%2F7nq3HEg1zS2a%2BT36fhwfogpRaxls44eMLrE4nHVS%2FWzWGH%2BfM%2B3K767VRmTv8yBuQ5Mz%2FM0k3EpyN9KtoC9txn3">Lista transakcija</a>
+                  </li>
+                  <li>
+                    <a href="#" data-utility="popupFromLink" data-popup-type="wide" data-href="/altaonline/AccountData/Accounts/ChangeImage?q=oKy0qJ9r2xuXeBwyd8zSj3ru4VK3831U8o8NDTgcaqQ%3D">Promeni sliku računa</a>
+                  </li>
+                  <li>
+                    <a href="#" data-utility="popupFromLink" data-popup-type="wide" data-href="/altaonline/AccountData/Accounts/ChangeNickname?q=oKy0qJ9r2xuXeBwyd8zSj3ru4VK3831UmDNI1OW5hl5JtARD%2FoBAohJSpP2Fk28G">Promeni naziv računa</a>
+                  </li>
+                </ul>
+              </div>
+              <div class="account-main">
+                <div class="card-logo">
+                  <img class="active" data-image-for-account="0001000328053" src="/altaonline/Themes/ALTA/img/Cards/active/dina card.png">
+                  <img class="inactive" data-image-for-account="0001000328053" src="/altaonline/Themes/ALTA/img/Cards/inactive/dina card.png">
+                </div>
+                <p class="acc-nr">9891XXXXXXXX4652</p>
+                <p class="acc-name">
+                </p>
+              </div>
+
+              <div class="balance-slat">
+                <p class="acc-balance-txt">Raspoloživo stanje:</p>
+                <div class="main-balance">
+                  <div class="select-2">
+                    <select data-utility="customselectMenu">
+                      <option data-last-change-date="24.01.2025" data-amount="1.780.241,23" data-accountnumber="0001000328053" value="RSD">RSD</option>
+
+                    </select>
+                  </div>
+                  <p id="0001000328053" name="available-amount"> 1.780.241,23</p>
+                </div>
+                <p id="last-change-date" class="transaction-txt">Poslednja transakcija|<span>24.01.2025</span></p>
+              </div>
+              <a href="/altaonline/Payment/BalanceTransfers?q=G1e%2F3v1JTXJcd5FT%2B2BL5oXrXSWSbuZpEm3tou9xtwU%3D" class="account-btn icon-money-2"></a>
+            </div>
+          </div>
+          <div class="slide" data-accountnumber="0001000328053" data-acckind="current-account" data-accno="0001000328053" data-cardno="" data-debitcards="True"
+               data-url="/altaonline/AccountData/Accounts?q=bd9YX3Kl%2F7nq3HEg1zS2a%2BHjRiq7Yu7Q" data-utility="showDetails">
+            <div class="account-box account-bg-1" style="min-height:255px">
+              <div class="widget-options">
+                <ul class="trigger" data-utility="optionsTrigger">
+                  <li></li>
+                  <li></li>
+                  <li></li>
+                </ul>
+                <ul class="options-list" style="z-index:22">
+                  <li>
+                    <a href="/altaonline/AccountData/Accounts?q=bd9YX3Kl%2F7nq3HEg1zS2a%2BHjRiq7Yu7Q">Detalji računa</a>
+                  </li>
+                  <li>
+                    <a href="/altaonline/AccountData/Transactions/List?q=bd9YX3Kl%2F7nq3HEg1zS2a%2BHjRiq7Yu7Q">Lista transakcija</a>
+                  </li>
+                  <li>
+                    <a href="#" data-utility="popupFromLink" data-popup-type="wide" data-href="/altaonline/AccountData/Accounts/ChangeImage?q=oKy0qJ9r2xuXeBwyd8zSj3ru4VK3831U8o8NDTgcaqQ%3D">Promeni sliku računa</a>
+                  </li>
+                  <li>
+                    <a href="#" data-utility="popupFromLink" data-popup-type="wide" data-href="/altaonline/AccountData/Accounts/ChangeNickname?q=oKy0qJ9r2xuXeBwyd8zSj3ru4VK3831UmDNI1OW5hl5JtARD%2FoBAohJSpP2Fk28G">Promeni naziv računa</a>
+                  </li>
+                </ul>
+              </div>
+              <div class="account-main">
+
+
+
+                <div class="acc-img">
+                  <img data-image-for-account="0001000328053" src="/altaonline/Media/AccountImage/0001000328053" alt="account-image">
+                </div>
+
+                <p class="acc-nr" data-text-for="account">IVANOV IVAN</p>
+                <p class="acc-nr" data-text-for="account">190-0001000328053-82</p>
+
+
+                <p class="acc-name" data-text-for="account" data-nickname-for-account="0001000328053">
+                  &nbsp;
+                  Tekući račun
+                </p>
+              </div>
+              <div class="balance-slat">
+                <p class="acc-balance-txt">Raspoloživo stanje:</p>
+                <div class="main-balance">
+                  <div class="select-2">
+                    <select data-utility="customselectMenu">
+                      <option data-last-change-date="24.01.2025" data-amount="1.780.241,23" data-accountnumber="0001000328053" value="RSD">RSD</option>
+
+                    </select>
+                  </div>
+                  <p id="0001000328053" name="available-amount"> 1.780.241,23</p>
+                </div>
+                <p id="last-change-date" class="transaction-txt">Poslednja transakcija|<span>24.01.2025</span></p>
+              </div>
+
+              <a href="/altaonline/Payment/CreditTransfers?q=G1e%2F3v1JTXJcd5FT%2B2BL5oXrXSWSbuZpEm3tou9xtwU%3D" class="account-btn icon-money-2"></a>
+            </div>
+          </div>
+          <div class="slide" data-accountnumber="0031000384634" data-acckind="demand-deposit-account" data-accno="0031000384634" data-cardno="" data-debitcards="False"
+               data-url="/altaonline/AccountData/Accounts?q=bd9YX3Kl%2F7k5sphJLyXFhc5NFZtjC7HJ" data-utility="showDetails">
+            <div class="account-box account-bg-1" style="min-height:255px">
+              <div class="widget-options">
+                <ul class="trigger" data-utility="optionsTrigger">
+                  <li></li>
+                  <li></li>
+                  <li></li>
+                </ul>
+                <ul class="options-list" style="z-index:22">
+                  <li>
+                    <a href="/altaonline/AccountData/Accounts?q=bd9YX3Kl%2F7k5sphJLyXFhc5NFZtjC7HJ">Detalji računa</a>
+                  </li>
+                  <li>
+                    <a href="/altaonline/AccountData/Transactions/List?q=bd9YX3Kl%2F7k5sphJLyXFhc5NFZtjC7HJ">Lista transakcija</a>
+                  </li>
+                  <li>
+                    <a href="#" data-utility="popupFromLink" data-popup-type="wide" data-href="/altaonline/AccountData/Accounts/ChangeImage?q=oKy0qJ9r2xuXeBwyd8zSj5fB0uCvXUSDaQLYtaDWjAA%3D">Promeni sliku računa</a>
+                  </li>
+                  <li>
+                    <a href="#" data-utility="popupFromLink" data-popup-type="wide" data-href="/altaonline/AccountData/Accounts/ChangeNickname?q=oKy0qJ9r2xuXeBwyd8zSj5fB0uCvXUSD%2Fk3nrZwSVbZHTmkWJBg16I0mcBHVAwP%2F">Promeni naziv računa</a>
+                  </li>
+                </ul>
+              </div>
+              <div class="account-main">
+
+
+
+                <div class="acc-img">
+                  <img data-image-for-account="0031000384634" src="/altaonline/Media/AccountImage/0031000384634" alt="account-image">
+                </div>
+
+                <p class="acc-nr" data-text-for="account">IVANOV IVAN</p>
+                <p class="acc-nr" data-text-for="account">003100038463.4</p>
+
+
+                <p class="acc-name" data-text-for="account" data-nickname-for-account="0031000384634">
+                  &nbsp;
+                  Štedni račun
+                </p>
+              </div>
+              <div class="balance-slat">
+                <p class="acc-balance-txt">Raspoloživo stanje:</p>
+                <div class="main-balance">
+                  <div class="select-2">
+                    <select data-utility="customselectMenu">
+                      <option data-last-change-date="23.01.2025" data-amount="892,43" data-accountnumber="0031000384634" value="EUR">EUR</option>
+
+                    </select>
+                  </div>
+                  <p id="0031000384634" name="available-amount"> 892,43</p>
+                </div>
+                <p id="last-change-date" class="transaction-txt">Poslednja transakcija|<span>23.01.2025</span></p>
+              </div>
+
+              <a href="/altaonline/Payment/BalanceTransfers?q=G1e%2F3v1JTXJcd5FT%2B2BL5jVZBsDGNMk46QErL6OHzo4%3D" class="account-btn icon-money-2"></a>
+            </div>
+          </div>
+
+        </div>
+
+        <div id="account-list" class="gridster account-gridster account-tab tab-2" data-utility="accountList showAccDetails" style="position: relative; display: none; margin-top:-100px">
+
+          <ul class="account-list ui-sortable">
+            <li class="list-item" data-utility="listRemove showDetails" data-row="1" data-col="1" data-sizex="1" data-sizey="1" data-accountnumber="0001000328053" data-acckind="debit-card" data-debitcards="True"
+                data-url="/altaonline/Order/Cards/GetList?q=IVsv3RmwaWyh%2FKqOWQB6RVUZjjjDM0SkwKV%2FwZH4OW%2FrI7Xt9eLElNh8SimbMHO2">
+              <div class="inner list-bg-1">
+                <div class="col col-1">
+                  <div class="widget-options-list">
+                    <ul class="drag trigger" data-utility="optionsTriggerList">
+                      <li></li>
+                      <li></li>
+                      <li></li>
+                    </ul>
+                    <ul class="options-list">
+                      <li>
+                        <a href="/altaonline/AccountData/Accounts/Details?q=bd9YX3Kl%2F7nq3HEg1zS2a%2BHjRiq7Yu7Q">Detalji računa</a>
+                      </li>
+
+                      <li>
+                        <a href="/altaonline/AccountData/Transactions/List?q=bd9YX3Kl%2F7nq3HEg1zS2a%2BHjRiq7Yu7Q">Lista transakcija</a>
+                      </li>
+                      <li>
+                        <a href="#" data-utility="popupFromLink" data-popup-type="wide" data-href="/altaonline/AccountData/Accounts/ChangeImage?q=oKy0qJ9r2xuXeBwyd8zSj3ru4VK3831U8o8NDTgcaqQ%3D">Promeni sliku računa</a>
+                      </li>
+                      <li>
+                        <a href="#" data-utility="popupFromLink" data-popup-type="wide" data-href="/altaonline/AccountData/Accounts/ChangeNickname?q=oKy0qJ9r2xuXeBwyd8zSj3ru4VK3831UmDNI1OW5hl5JtARD%2FoBAohJSpP2Fk28G">Promeni naziv računa</a>
+                      </li>
+                    </ul>
+                  </div>
+                  <img data-image-for-account="0001000328053" src="/altaonline/Media/AccountImage/0001000328053" alt="account-image">
+                  <h2>
+                  </h2>
+                  <p>4029XXXXXXXX4561</p>
+                </div>
+                <div class="col col-2">
+                  <a class="balance-link" href="/altaonline/Payment/BalanceTransfers?q=G1e%2F3v1JTXJcd5FT%2B2BL5oXrXSWSbuZpEm3tou9xtwU%3D">
+                    <div class="account-btn">
+                      <div class="icon-wrap">
+                        <i class="icon-money-2"></i>
+                      </div>
+                    </div>
+                  </a>
+                  <div class="select-2" style="width: 10px;float: right; margin-right: 50px;">
+                    <div class="fancy-select">
+                      <select data-utility="customselectMenu">
+                        <option data-amount="1.780.241,23" data-accountnumber="0001000328053" value="RSD">RSD</option>
+                      </select>
+                    </div>
+
+                  </div>
+                  <p id="0001000328053" class="amount" name="available-amount" style="margin-right: 10px;"> 1.780.241,23</p>
+                </div>
+              </div>
+            </li>
+            <li class="list-item" data-utility="listRemove showDetails" data-row="1" data-col="1" data-sizex="1" data-sizey="1" data-accountnumber="0001000328053" data-acckind="debit-card" data-debitcards="True"
+                data-url="/altaonline/Order/Cards/GetList?q=IVsv3RmwaWzLsEy9ZdXnIO%2Fr%2Bl49nE6JDmxzBy%2FmEMzDwfeKe%2F%2BgeCXi8S7J5TT2">
+              <div class="inner list-bg-1">
+                <div class="col col-1">
+                  <div class="widget-options-list">
+                    <ul class="drag trigger" data-utility="optionsTriggerList">
+                      <li></li>
+                      <li></li>
+                      <li></li>
+                    </ul>
+                    <ul class="options-list">
+                      <li>
+                        <a href="/altaonline/AccountData/Accounts/Details?q=bd9YX3Kl%2F7nq3HEg1zS2a%2BHjRiq7Yu7Q">Detalji računa</a>
+                      </li>
+
+                      <li>
+                        <a href="/altaonline/AccountData/Transactions/List?q=bd9YX3Kl%2F7nq3HEg1zS2a%2BHjRiq7Yu7Q">Lista transakcija</a>
+                      </li>
+                      <li>
+                        <a href="#" data-utility="popupFromLink" data-popup-type="wide" data-href="/altaonline/AccountData/Accounts/ChangeImage?q=oKy0qJ9r2xuXeBwyd8zSj3ru4VK3831U8o8NDTgcaqQ%3D">Promeni sliku računa</a>
+                      </li>
+                      <li>
+                        <a href="#" data-utility="popupFromLink" data-popup-type="wide" data-href="/altaonline/AccountData/Accounts/ChangeNickname?q=oKy0qJ9r2xuXeBwyd8zSj3ru4VK3831UmDNI1OW5hl5JtARD%2FoBAohJSpP2Fk28G">Promeni naziv računa</a>
+                      </li>
+                    </ul>
+                  </div>
+                  <img data-image-for-account="0001000328053" src="/altaonline/Media/AccountImage/0001000328053" alt="account-image">
+                  <h2>
+                  </h2>
+                  <p>9891XXXXXXXX4652</p>
+                </div>
+                <div class="col col-2">
+                  <a class="balance-link" href="/altaonline/Payment/BalanceTransfers?q=G1e%2F3v1JTXJcd5FT%2B2BL5oXrXSWSbuZpEm3tou9xtwU%3D">
+                    <div class="account-btn">
+                      <div class="icon-wrap">
+                        <i class="icon-money-2"></i>
+                      </div>
+                    </div>
+                  </a>
+                  <div class="select-2" style="width: 10px;float: right; margin-right: 50px;">
+                    <div class="fancy-select">
+                      <select data-utility="customselectMenu">
+                        <option data-amount="1.780.241,23" data-accountnumber="0001000328053" value="RSD">RSD</option>
+                      </select>
+                    </div>
+
+                  </div>
+                  <p id="0001000328053" class="amount" name="available-amount" style="margin-right: 10px;"> 1.780.241,23</p>
+                </div>
+              </div>
+            </li>
+            <li class="list-item" data-utility="listRemove" data-row="1" data-col="1" data-sizex="1" data-sizey="1" data-accountnumber="0001000328053" data-acckind="current-account" data-debitcards="True"
+                data-url="/altaonline/AccountData/Accounts?q=bd9YX3Kl%2F7nq3HEg1zS2a%2BHjRiq7Yu7Q">
+              <div class="inner list-bg-1">
+                <div class="col col-1">
+                  <div class="widget-options-list">
+                    <ul class="drag trigger" data-utility="optionsTriggerList">
+                      <li></li>
+                      <li></li>
+                      <li></li>
+                    </ul>
+                    <ul class="options-list">
+                      <li>
+                        <a href="/altaonline/AccountData/Accounts?q=bd9YX3Kl%2F7nq3HEg1zS2a%2BHjRiq7Yu7Q">Detalji računa</a>
+                      </li>
+
+                      <li>
+                        <a href="/altaonline/AccountData/Transactions/List?q=bd9YX3Kl%2F7nq3HEg1zS2a%2BHjRiq7Yu7Q">Lista transakcija</a>
+                      </li>
+                      <li>
+                        <a href="#" data-utility="popupFromLink" data-popup-type="wide" data-href="/altaonline/AccountData/Accounts/ChangeImage?q=oKy0qJ9r2xuXeBwyd8zSj3ru4VK3831U8o8NDTgcaqQ%3D">Promeni sliku računa</a>
+                      </li>
+                      <li>
+                        <a href="#" data-utility="popupFromLink" data-popup-type="wide" data-href="/altaonline/AccountData/Accounts/ChangeNickname?q=oKy0qJ9r2xuXeBwyd8zSj3ru4VK3831UmDNI1OW5hl5JtARD%2FoBAohJSpP2Fk28G">Promeni naziv računa</a>
+                      </li>
+                    </ul>
+                  </div>
+                  <img data-image-for-account="0001000328053" src="/altaonline/Media/AccountImage/0001000328053">
+                  <h2 data-nickname-for-account="0001000328053">
+                    Tekući račun </h2>
+                  <p>190-0001000328053-82</p>
+                </div>
+                <div class="col col-2">
+                  <a class="balance-link" href="/altaonline/Payment/CreditTransfers?q=G1e%2F3v1JTXJcd5FT%2B2BL5oXrXSWSbuZpEm3tou9xtwU%3D">
+                    <div class="account-btn">
+                      <div class="icon-wrap">
+                        <i class="icon-money-2"></i>
+                      </div>
+                    </div>
+                  </a>
+
+                  <div class="select-2" style="width: 10px;float: right; margin-right: 50px;">
+                    <div class="fancy-select">
+                      <select data-utility="customselectMenu">
+                        <option data-amount="1.780.241,23" data-accountnumber="0001000328053" value="RSD">RSD</option>
+                      </select>
+                    </div>
+
+                  </div>
+                  <p id="0001000328053" class="amount" name="available-amount" style="margin-right: 10px;"> 1.780.241,23</p>
+                </div>
+              </div>
+            </li>
+            <li class="list-item" data-utility="listRemove" data-row="2" data-col="1" data-sizex="1" data-sizey="1" data-accountnumber="0031000384634" data-acckind="demand-deposit-account" data-debitcards="False"
+                data-url="/altaonline/AccountData/Accounts?q=bd9YX3Kl%2F7k5sphJLyXFhc5NFZtjC7HJ">
+              <div class="inner list-bg-1">
+                <div class="col col-1">
+                  <div class="widget-options-list">
+                    <ul class="drag trigger" data-utility="optionsTriggerList">
+                      <li></li>
+                      <li></li>
+                      <li></li>
+                    </ul>
+                    <ul class="options-list">
+                      <li>
+                        <a href="/altaonline/AccountData/Accounts?q=bd9YX3Kl%2F7k5sphJLyXFhc5NFZtjC7HJ">Detalji računa</a>
+                      </li>
+
+                      <li>
+                        <a href="/altaonline/AccountData/Transactions/List?q=bd9YX3Kl%2F7k5sphJLyXFhc5NFZtjC7HJ">Lista transakcija</a>
+                      </li>
+                      <li>
+                        <a href="#" data-utility="popupFromLink" data-popup-type="wide" data-href="/altaonline/AccountData/Accounts/ChangeImage?q=oKy0qJ9r2xuXeBwyd8zSj5fB0uCvXUSDaQLYtaDWjAA%3D">Promeni sliku računa</a>
+                      </li>
+                      <li>
+                        <a href="#" data-utility="popupFromLink" data-popup-type="wide" data-href="/altaonline/AccountData/Accounts/ChangeNickname?q=oKy0qJ9r2xuXeBwyd8zSj5fB0uCvXUSD%2Fk3nrZwSVbZHTmkWJBg16I0mcBHVAwP%2F">Promeni naziv računa</a>
+                      </li>
+                    </ul>
+                  </div>
+                  <img data-image-for-account="0031000384634" src="/altaonline/Media/AccountImage/0031000384634">
+                  <h2 data-nickname-for-account="0031000384634">
+                    Štedni račun </h2>
+                  <p>190-0031000384634-36</p>
+                </div>
+                <div class="col col-2">
+                  <a class="balance-link" href="/altaonline/Payment/BalanceTransfers?q=G1e%2F3v1JTXJcd5FT%2B2BL5jVZBsDGNMk46QErL6OHzo4%3D">
+                    <div class="account-btn">
+                      <div class="icon-wrap">
+                        <i class="icon-money-2"></i>
+                      </div>
+                    </div>
+                  </a>
+
+                  <div class="select-2" style="width: 10px;float: right; margin-right: 50px;">
+                    <div class="fancy-select">
+                      <select data-utility="customselectMenu">
+                        <option data-amount="892,43" data-accountnumber="0031000384634" value="EUR">EUR</option>
+                      </select>
+                    </div>
+
+                  </div>
+                  <p id="0031000384634" class="amount" name="available-amount" style="margin-right: 10px;"> 892,43</p>
+                </div>
+              </div>
+            </li>
+          </ul>
+          <div class="more-list" data-utility="showOrHide" data-command="show" data-show-label="Prikaži" data-hide-label="Sakriti">
+            <span id="title">Prikaži</span>
+            <span class="arrow" style="background-size: 10px, 7px;"></span>
+          </div>
+        </div>
+
+
+        <div name="slider" class="slider-button-prev"></div>
+        <div name="slider" class="slider-button-next"></div>
+        <div name="slider">
+          <ul class="slider-tabs">
+
+            <li class="active" id="all-account-types" data-accountkind="" data-group="acc-filters">
+              <a href="#">Svi računi</a>
+            </li>
+            <li data-accountkind="current-account" data-group="acc-filters">
+              <a href="#">Tekući računi</a>
+            </li>
+            <li data-accountkind="demand-deposit-account,term-deposit-account" data-group="acc-filters">
+              <a href="#">Štedni računi</a>
+            </li>
+            <li data-accountkind="credit-card-account,debit-card,credit-facility-account" data-group="acc-filters">
+              <a href="#">Kartice</a>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+      </form>
+
+
+
+
+
+
+
+      <script>
+        $('.balance-link').click(function (evt) {
+          if (!$(this).parent().parent().parent().hasClass('selected')) {
+            $(this).parent().parent().parent().siblings().removeClass('selected');
+            $(this).parent().parent().parent().addClass('selected');
+            evt.preventDefault();
+            return false;
+          }
+        });
+
+        $('.widget-options-list').click(function (evt) {
+          if (!$(this).parent().parent().parent().hasClass('selected')) {
+            $(this).parent().parent().parent().siblings().removeClass('selected');
+            $(this).parent().parent().parent().addClass('selected');
+          }
+        });
+      </script>
+
+
+
+
+    </div>
+    <div class="login-footer">
+      <div class="inner" id="containerinfo">
+        <ul class="lang-nav">
+          <li class=""><a href="/altaonline/Home/Accounts?language=en-GB">EN</a></li>
+          <li class="active"><a href="/altaonline/Home/Accounts?language=sr-Latn-RS">SRB</a></li>
+        </ul>
+
+
+        <ul class="social">
+
+          <li class="linkedin">
+            <a href="https://www.linkedin.com/company/951929/?viewAsMember=true" class="icon-linkedin" target="_blank">Bank_Linkedin</a>
+          </li>
+
+
+
+          <li class="facebook">
+            <a href="https://www.facebook.com/altabanka" target="_blank" class="icon-facebook">Facebook</a>
+          </li>
+
+
+          <li class="twitter">
+            <a href="https://twitter.com/AltaBanka" target="_blank" class="icon-twitter">Twitter</a>
+          </li>
+
+
+
+          <li class="instagram">
+            <a href="https://www.instagram.com/altabanka/" class="icon-instagram icon-instagram-prelogin" target="_blank">Instagram</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-container">
+  <div class="modal-inner">
+    <div class="popup-box popup-wide popup-1" id="popup-content-narrow"></div>
+    <div class="popup-box popup-3" id="popup-content-wide"></div>
+  </div>
+</div>
+
+<div class="modal-container-test" style="display:none;">
+  <div class="modal-inner">
+    <div class="popup-box popup-3" id="popup-content-test">
+    </div>
+  </div>
+</div>
+
+
+<div class="side-modal" style="display: none">
+  <div class="side-modal-inner">
+    <div id="popup-content-side" class="side-modal-popup">
+    </div>
+  </div>
+</div>
+</body>
+</html>

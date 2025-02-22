@@ -1,13 +1,16 @@
 import { TemporaryError } from '../../errors'
 
 import { VakifStatementAccount, VakifStatementTransaction } from './models'
-import { parsePdfFromBlob } from './pdfToStr'
 import { parseDateAndTimeFromPdfText, parseDateFromPdfText, parseFormattedNumber } from './converters'
+import { parsePdf } from '../../common/pdfUtils'
 
 export async function parsePdfVakifStatement (): Promise<null | Array<{ account: VakifStatementAccount, transactions: VakifStatementTransaction[] }>> {
   const blob = await getPdfDocuments()
   validateDocuments(blob)
-  const pdfStrings = await parsePdfFromBlob({ blob })
+  const pdfStrings = await Promise.all(blob.map(async (blob) => {
+    const { text } = await parsePdf(blob)
+    return text
+  }))
   return parsePdfStatements(pdfStrings)
 }
 

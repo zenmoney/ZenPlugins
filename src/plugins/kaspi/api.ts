@@ -5,11 +5,11 @@ import {
   StatementTransaction,
   ObjectWithAnyProps, AccountTypeByLocale, AccountTypeHash
 } from './models'
-import { parsePdfFromBlob } from './pdfToStr'
 import { Amount } from '../../types/zenmoney'
 import { parseAmount } from './converters/converterUtils'
 import { openWebViewAndInterceptRequest } from '../../common/network'
 import { TemporaryError } from '../../errors'
+import { parsePdf } from '../../common/pdfUtils'
 
 function getRegexpMatch (regExps: RegExp[], text: string, flags?: string): RegExpMatchArray | null {
   let match = null
@@ -335,7 +335,10 @@ export async function parsePdfStatements (): Promise<null | Array<{ account: Sta
       throw new TemporaryError('Максимальный размер файла - 1 мб')
     }
   }
-  const pdfStrings = await parsePdfFromBlob({ blob })
+  const pdfStrings = await Promise.all(blob.map(async (blob) => {
+    const { text } = await parsePdf(blob)
+    return text
+  }))
   const result = []
   for (const textItem of pdfStrings) {
     console.log(textItem)
