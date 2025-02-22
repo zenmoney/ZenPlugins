@@ -250,11 +250,11 @@ function parseTransactions (text: string, accountType: string, statementUid: str
   let originalAmountRegExpIndex = 5
   let descriptionRegExpIndex = 4
   if (locale === 'en') {
-    baseRegexp = /^(\d{2}\.?){3}([-+]\s?[\d\s.,]+)\W+(\w+)\s+(.+)\s?(\([-+]?[\d.,]+\s?[A-Z]{3}\))?/
+    baseRegexp = /^(\d{2}\.\d{2}\.\d{2})\s*([+-]\s?[\d\s.,]+)\s*\W+(\w+)\s+(.+)\s?(\([-+]?[\d.,]+\s?[A-Z]{3}\))?/
   } else if (locale === 'ru') {
-    baseRegexp = /^(\d{2}\.?){3}([-+]\s?[\d\s.,]+)[^а-яА-Я]+([а-яА-Я]+)\s+(.+)\s?(\([-+]?[\d.,]+\s?[A-Z]{3}\))?/
+    baseRegexp = /^(\d{2}\.\d{2}\.\d{2})\s*([+-]\s?[\d\s.,]+)\s*[^а-яА-Я]+([а-яА-Я]+)\s+(.+)\s?(\([-+]?[\d.,]+\s?[A-Z]{3}\))?/
   } else {
-    baseRegexp = /^(\d{2}\.?){3}([-+]\s?[\d\s.,]+)[^а-яА-Я\s]+\s{2,}((\S+\s)+)\s{2,}((\S+ {0,2})+)(\s\([^)]+\))?/
+    baseRegexp = /^(\d{2}\.\d{2}\.\d{2})\s*([+-]\s?[\d\s.,]+)\s*[^а-яА-Я\s]+\s{2,}((\S+\s)+)\s{2,}((\S+ {0,2})+)(\s\([^)]+\))?/
     originalAmountRegExpIndex = 7
     descriptionRegExpIndex = 5
   }
