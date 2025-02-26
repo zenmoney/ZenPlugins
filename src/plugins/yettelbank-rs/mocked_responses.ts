@@ -19,10 +19,17 @@ export const mockedTransactionsResponse: TransactionInfo[] = [
     currency: 'RSD'
   },
   {
+    isPending: true,
+    date: new Date('2023-01-02'),
+    title: 'Pending Payment',
+    amount: -50,
+    currency: 'RSD'
+  },
+  {
     isPending: false,
-    date: new Date(),
-    title: 'Boba With Long Name',
-    amount: 1000.234,
-    currency: 'EUR'
+    date: new Date('2023-01-03'),
+    title: 'Deposit',
+    amount: 200,
+    currency: 'RSD'
   }
 ]
