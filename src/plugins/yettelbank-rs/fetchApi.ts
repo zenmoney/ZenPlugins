@@ -100,9 +100,9 @@ function extractAccountInfo (loadedCheerio: cheerio.Root, accountId: string): Ac
 
   return {
     id: accountId,
-    name,
-    currency,
-    balance
+    name: name,
+    currency: currency,
+    balance: balance
   }
 }
 
@@ -166,9 +166,9 @@ export function parseTransactions (body: unknown, pending: boolean): Transaction
       transactions.push({
         isPending: pending,
         date: parseDate(date),
-        title,
+        title: title,
         amount: transactionAmount,
-        currency
+        currency: currency
       })
     })
   })
