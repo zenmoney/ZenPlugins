@@ -70,33 +70,33 @@ export function parseSinglePdfString (text: string, statementUid?: string): { ac
 }
 
 export function extractInstrument (text: string): string {
-  const match = text.match(/Account Type:VADESİZ\s+([A-Z]{2,3})Nickname:/)
+  const match = text.match(/Account Type\s*:\s*VADESİZ\s+([A-Z]{2,3})\s*Nickname\s*:/)
   return match ? match[1] : 'TL' // Default to 'TL' if no match found
 }
 
 function extractAccountId (text: string): string {
-  const accountNumRegex = /Account No: (\d{17})/
+  const accountNumRegex = /Account No\s*: (\d{17})/
   const match = accountNumRegex.exec(text)
   assert(typeof match?.[1] === 'string', 'Can\'t parse accountId from account statement')
   return match[1]
 }
 
 function extractBalance (text: string): number {
-  const balanceRegex = /Balance:(-?[\d.]+,\d\d)/
+  const balanceRegex = /Balance\s*:\s*(-?[\d.]+,\d\d)/
   const match = balanceRegex.exec(text)
   assert(typeof match?.[1] === 'string', 'Can\'t parse balance from account statement')
   return parseFormattedNumber(match?.[1])
 }
 
 function extractStatementDate (text: string): string {
-  const statementDateRegex = /Account No: \d{17}(\d\d\.\d\d\.\d\d\d\d)/
+  const statementDateRegex = /Account No\s*: \d{17}\s*(\d\d\.\d\d\.\d\d\d\d)/
   const match = statementDateRegex.exec(text)
   assert(typeof match?.[1] === 'string', 'Can\'t parse statement date from account statement')
   return parseDateFromPdfText(match?.[1])
 }
 
 function extractTransactions (text: string): VakifStatementTransaction[] {
-  const transactionRegex = /(\d\d\.\d\d\.20\d\d)(\d\d:\d\d)(\d{16})(-?[\d.]+,\d\d)(-?[\d.]+,\d\d)(.*?)[\r\n]{1,2}((.|[\r\n])*?)([\r\n][\r\n]|$|[\r\n](?=\d\d\.\d\d\.202\d\d\d:\d\d))/ig
+  const transactionRegex = /(\d\d\.\d\d\.20\d\d)\s+(\d\d:\d\d)\s+(\d{16})\s+(-?[\d.]+,\d\d)\s+(-?[\d.]+,\d\d)\s+(.*?)[\r\n]{1,2}((.|[\r\n])*?)([\r\n][\r\n]|$|[\r\n](?=\d\d\.\d\d\.202\d\s+\d\d:\d\d))/ig
   let match
   const result: VakifStatementTransaction[] = []
   while ((match = transactionRegex.exec(text)) != null) {
