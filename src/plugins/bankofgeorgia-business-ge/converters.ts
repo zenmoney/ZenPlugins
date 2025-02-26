@@ -88,13 +88,12 @@ export function convertToZenMoneyTransaction (record: AccountRecord, allRecords:
         {
           id: null,
           account: {
-            id: record.BeneficiaryDetails.AccountNumber !== record.AccountID
-              ? record.BeneficiaryDetails.AccountNumber
-              : record.SenderDetails.AccountNumber
+            type: AccountType.checking,
+            instrument: record.DocumentSourceCurrency,
+            company: null,
+            syncIds: [record.SenderDetails.AccountNumber]
           },
-          sum: record.EntryAmount !== -record.DocumentDestinationAmount
-            ? -record.DocumentDestinationAmount
-            : record.DocumentSourceAmount,
+          sum: record.DocumentSourceAmount,
           fee: 0,
           invoice: null
         }

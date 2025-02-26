@@ -11,20 +11,36 @@ export function parseLoginResult (body: string): boolean {
 export function parseAccountInfo (body: string): AccountInfo[] {
   const html = cheerio.load(body)
   const accountsHtml = html('#account-slider').find('.slide')
+  const accounts: AccountInfo[] = []
 
-  return accountsHtml.toArray().map(accountHtml => {
-    const html = cheerio.load(accountHtml)
+  // eslint-disable-next-line array-callback-return
+  accountsHtml.toArray().map(accountHtml => {
+    const $ = cheerio.load(accountHtml)
 
-    return {
-      id: (accountHtml as cheerio.TagElement).attribs['data-accountnumber'].trim(),
-      cardNumber: (accountHtml as cheerio.TagElement).attribs['data-cardno'].trim(),
-      accountNumber: (accountHtml as cheerio.TagElement).attribs['data-accno'].trim(),
-      // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-      name: html('.acc-name').text().trim() || html('.acc-nr').text().trim(),
-      currency: html('.main-balance option').text().trim(),
-      balance: parseFloat(html('.main-balance option').data('amount')?.replace('.', '')?.replace(',', '.'))
+    const invoiceAccounts: Array<{ currency: string, balance: string | undefined }> = []
+    $('select[data-utility="customselectMenu"] option').each((index, element) => {
+      const currency = $(element).text().trim() // Валюта
+      const balance = $(element).attr('data-amount') // Баланс
+      invoiceAccounts.push({ currency, balance })
+    })
+
+    for (const invoiceAccount of invoiceAccounts) {
+      const id = (accountHtml as cheerio.TagElement).attribs['data-accountnumber'].trim()
+      const account = {
+        id: invoiceAccounts.length > 1 ? id + invoiceAccount.currency : id,
+        cardNumber: (accountHtml as cheerio.TagElement).attribs['data-cardno'].trim(),
+        accountNumber: (accountHtml as cheerio.TagElement).attribs['data-accno'].trim(),
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        name: $('.acc-name').text().trim() || $('.acc-nr').text().trim(),
+        currency: invoiceAccount.currency,
+        balance: invoiceAccount.balance !== undefined
+          ? parseFloat(invoiceAccount.balance.replace(/\./g, '').replace(',', '.'))
+          : 0
+      }
+      accounts.push(account)
     }
   })
+  return accounts
 }
 
 export function parseRequestVerificationToken (body: string): string {

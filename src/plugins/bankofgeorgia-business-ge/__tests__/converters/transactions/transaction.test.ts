@@ -198,9 +198,9 @@ describe('convertToZenMoneyTransaction', () => {
       },
       DocumentNomination: 'Conversion',
       DocumentInformation: 'Conversion',
-      DocumentSourceAmount: 100.0,
-      DocumentSourceCurrency: 'GEL',
-      DocumentDestinationAmount: 40.00,
+      DocumentSourceAmount: 40.0,
+      DocumentSourceCurrency: 'USD',
+      DocumentDestinationAmount: 100.00,
       DocumentDestinationCurrency: 'USD',
       DocumentReceiveDate: '2023-01-03T00:00:00',
       DocumentBranch: '000',
@@ -228,8 +228,13 @@ describe('convertToZenMoneyTransaction', () => {
         },
         {
           id: null,
-          account: { id: 'GE00BG0000000000000000USD' },
-          sum: -40,
+          account: {
+            type: AccountType.checking,
+            instrument: 'USD',
+            company: null,
+            syncIds: ['GE00BG0000000000000000USD']
+          },
+          sum: 40,
           fee: 0,
           invoice: null
         }
