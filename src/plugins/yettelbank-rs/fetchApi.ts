@@ -100,9 +100,9 @@ function extractAccountInfo (loadedCheerio: cheerio.Root, accountId: string): Ac
 
   return {
     id: accountId,
-    name,
-    currency,
-    balance
+    name: name,
+    currency: currency,
+    balance: balance
   }
 }
 
@@ -166,9 +166,9 @@ export function parseTransactions (body: unknown, pending: boolean): Transaction
       transactions.push({
         isPending: pending,
         date: parseDate(date),
-        title,
+        title: title,
         amount: transactionAmount,
-        currency
+        currency: currency
       })
     })
   })
@@ -205,46 +205,21 @@ async function fetchTransactions (accountId: string, status: string, fromDate: D
 
   function parseTotalPages (body: unknown): number {
     const $ = cheerio.load(body as string)
-
-    if ($.html().includes('There are no transactions for this search criteria') ||
-        $.html().includes('Нет данных для отображения') ||
-        $.html().includes('No data to display') ||
-        $.html().includes('Nema podataka za prikaz')) {
-      return 0
-    }
-
     const pageInfo = $('.current-page').text().trim()
     const match = pageInfo.match(/Page \d+ from (\d+)/)
-
-    if ((match?.[1]) != null) {
-      return parseInt(match[1], 10)
+    const totalPages = match?.[1]
+    if (totalPages !== undefined && totalPages !== null && totalPages !== '') {
+      return parseInt(totalPages, 10)
     }
-
-    const paginationText = $('.pagination').text().trim()
-    const altMatch = paginationText.match(/Page \d+ from (\d+)/) ??
-                    paginationText.match(/Страница \d+ из (\d+)/)
-
-    if ((altMatch?.[1]) != null) {
-      return parseInt(altMatch[1], 10)
-    }
-
-    if ($('.transactions-table table').length > 0) {
-      return 1
-    }
-
-    return 0
+    throw new Error('Failed to parse total pages')
   }
 
   const response = await fetchTransactionsInternal(accountId, status, fromDate, toDate)
   const totalPages = parseTotalPages(response.body)
 
-  if (totalPages === 0) {
-    return []
-  }
-
   const transactions: TransactionInfo[] = parseTransactions(response.body, status === 'Pending')
 
-  for (let page = 1; page < totalPages; page++) {
+  for (let page = 1; page < totalPages - 1; page++) {
     const pageResponse = await fetchTransactionsInternal(accountId, status, fromDate, toDate, page)
     transactions.push(...parseTransactions(pageResponse.body, status === 'Pending'))
   }
