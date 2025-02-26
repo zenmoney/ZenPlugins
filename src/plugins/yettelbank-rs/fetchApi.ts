@@ -92,17 +92,17 @@ function extractAccountInfo (loadedCheerio: cheerio.Root, accountId: string): Ac
     return null
   }
 
-  const currency = accountElement.find('option[selected="selected"]').val()
-  const availableBalanceAccount = accountElement.find(`#available-balance-stat-${accountId}-${currency}`)
-  const name = availableBalanceAccount.find('.stat-name').text().trim()
+  const accountCurrency = accountElement.find('option[selected="selected"]').val()
+  const availableBalanceAccount = accountElement.find(`#available-balance-stat-${accountId}-${accountCurrency}`)
+  const accountName = availableBalanceAccount.find('.stat-name').text().trim()
   const balanceText = availableBalanceAccount.find('.amount-stats.big-nr p').first().text().trim()
-  const balance = parseFloat(balanceText.replace(/,/g, ''))
+  const accountBalance = parseFloat(balanceText.replace(/,/g, ''))
 
   return {
     id: accountId,
-    name: name,
-    currency: currency,
-    balance: balance
+    name: accountName,
+    currency: accountCurrency,
+    balance: accountBalance
   }
 }
 
@@ -152,23 +152,23 @@ export function parseTransactions (body: unknown, pending: boolean): Transaction
 
   $('.transactions-table').each((_, table) => {
     $(table).find('table').each((_, transactionTable) => {
-      const title = $(transactionTable).find('.transaction-title').text().trim()
+      const parsedTitle = $(transactionTable).find('.transaction-title').text().trim()
       const date = $(transactionTable).find('.transaction-date').text().trim()
-      const [amount, currency] = $(transactionTable).find('.transaction-amount').text().trim().split(' ')
+      const [amount, parsedCurrency] = $(transactionTable).find('.transaction-amount').text().trim().split(' ')
 
-      let transactionAmount = parseFloat(amount.replace(/,/g, ''))
+      let parsedTransactionAmount = parseFloat(amount.replace(/,/g, ''))
 
       const transactionArrowClass = $(transactionTable).find('.transaction-arrow').attr('class')
       if (transactionArrowClass !== undefined && transactionArrowClass !== '' && transactionArrowClass.includes('expense')) {
-        transactionAmount *= -1
+        parsedTransactionAmount *= -1
       }
 
       transactions.push({
         isPending: pending,
         date: parseDate(date),
-        title: title,
-        amount: transactionAmount,
-        currency: currency
+        title: parsedTitle,
+        amount: parsedTransactionAmount,
+        currency: parsedCurrency
       })
     })
   })
