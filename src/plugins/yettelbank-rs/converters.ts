@@ -6,9 +6,10 @@ export function convertAccount (account: AccountInfo): Account {
   return {
     id: account.id,
     type: AccountType.ccard,
-    title: account.name,
+    title: account.title,
     instrument: account.currency,
-    syncIds: [account.id]
+    syncIds: account.syncIds,
+    balance: account.balance
   }
 }
 
@@ -36,7 +37,7 @@ function convertAccountInternal (apiAccount: AccountInfo, accountsByCba: Record<
       account: {
         id: cba,
         type: AccountType.ccard,
-        title: apiAccount.name ?? cba,
+        title: apiAccount.title ?? cba,
         instrument: apiAccount.currency,
         balance,
         creditLimit: 0,
@@ -65,29 +66,35 @@ function convertAccountInternal (apiAccount: AccountInfo, accountsByCba: Record<
   return newAccount ? account : null
 }
 
-export function convertTransaction (apiTransaction: TransactionInfo, account: Account): Transaction {
-  const description = apiTransaction.title
-  const amount = apiTransaction.amount
-
+export function convertTransaction (transaction: TransactionInfo, apiAccount: AccountInfo): Transaction {
   return {
-    hold: apiTransaction.isPending,
-    date: apiTransaction.date,
+    hold: transaction.isPending,
+    date: transaction.date,
     movements: [
       {
-        id: getOptString(apiTransaction, 'id') ?? null,
-        account: { id: account.id },
+        id: null,
+        account: { id: apiAccount.id },
         invoice: null,
-        sum: amount,
+        sum: transaction.amount,
         fee: 0
       }
     ],
-    merchant: description != null
-      ? {
-          fullTitle: description,
-          mcc: null,
-          location: null
-        }
-      : null,
+    merchant: {
+      fullTitle: transaction.title,
+      mcc: null,
+      location: null
+    },
     comment: null
+  }
+}
+
+export function convertAccountWithCba (apiAccount: AccountInfo, cba: string): Account {
+  return {
+    id: apiAccount.id,
+    type: AccountType.ccard,
+    title: apiAccount.title ?? cba,
+    instrument: apiAccount.currency,
+    syncIds: apiAccount.syncIds,
+    balance: apiAccount.balance
   }
 }

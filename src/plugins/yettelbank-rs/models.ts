@@ -16,6 +16,7 @@ export interface Session {
 export interface Preferences {
   login: string
   password: string
+  startDate: string
 }
 
 export interface Product {
@@ -30,8 +31,9 @@ export interface ConvertResult {
 
 export interface AccountInfo {
   id: string
-  name: string
+  title: string
   currency: string
+  syncIds: string[]
   balance: number
 }
 

@@ -1,76 +1,121 @@
 import { convertTransaction } from '../../../converters'
-import { Account } from '../../../../../types/zenmoney'
+import { Transaction } from '../../../../../types/zenmoney'
 import { mockedTransactionsResponse, mockedAccountsResponse } from '../../../mocked_responses'
+import { AccountInfo, TransactionInfo } from '../../../models'
 
 describe('convertTransaction', () => {
-  it.each([
-    [
-      mockedTransactionsResponse[0],
-      {
-        id: mockedAccountsResponse[0].id,
-        title: mockedAccountsResponse[0].name,
-        type: 'ccard',
-        instrument: mockedAccountsResponse[0].currency,
-        syncIds: [
-          mockedAccountsResponse[0].id
-        ],
-        balance: mockedAccountsResponse[0].balance,
-        creditLimit: 0
+  // Test each transaction from mockedTransactionsResponse
+  it.each(mockedTransactionsResponse.map((transaction, index) => [
+    transaction,
+    mockedAccountsResponse[0],
+    {
+      hold: transaction.isPending,
+      date: transaction.date,
+      movements: [
+        {
+          id: null,
+          account: { id: mockedAccountsResponse[0].id },
+          invoice: null,
+          sum: transaction.amount,
+          fee: 0
+        }
+      ],
+      merchant: {
+        fullTitle: transaction.title,
+        mcc: null,
+        location: null
       },
-      {
-        hold: mockedTransactionsResponse[0].isPending,
-        date: mockedTransactionsResponse[0].date,
-        movements: [
-          {
-            id: null,
-            account: { id: mockedAccountsResponse[0].id },
-            invoice: null,
-            sum: mockedTransactionsResponse[0].amount,
-            fee: 0
-          }
-        ],
-        merchant: {
-          fullTitle: mockedTransactionsResponse[0].title,
-          mcc: null,
-          location: null
-        },
-        comment: null
-      }
-    ],
-    [
-      mockedTransactionsResponse[1],
-      {
-        id: mockedAccountsResponse[0].id,
-        title: mockedAccountsResponse[0].name,
-        type: 'ccard',
-        instrument: mockedAccountsResponse[0].currency,
-        syncIds: [
-          mockedAccountsResponse[0].id
-        ],
-        balance: mockedAccountsResponse[0].balance,
-        creditLimit: 0
+      comment: null
+    }
+  ]))('converts transaction %#', (apiTransaction, account, expectedTransaction) => {
+    const result = convertTransaction(
+      apiTransaction as unknown as TransactionInfo,
+      account as unknown as AccountInfo
+    )
+    expect(result).toEqual(expectedTransaction)
+  })
+
+  it('should convert regular transaction', () => {
+    const transaction = convertTransaction(mockedTransactionsResponse[0], mockedAccountsResponse[0])
+
+    const expectedTransaction: Transaction = {
+      hold: false,
+      date: new Date('2023-01-01'),
+      movements: [
+        {
+          id: null,
+          account: {
+            id: mockedAccountsResponse[0].id
+          },
+          invoice: null,
+          sum: 100,
+          fee: 0
+        }
+      ],
+      merchant: {
+        fullTitle: 'Payment',
+        mcc: null,
+        location: null
       },
-      {
-        hold: mockedTransactionsResponse[1].isPending,
-        date: mockedTransactionsResponse[1].date,
-        movements: [
-          {
-            id: null,
-            account: { id: mockedAccountsResponse[0].id },
-            invoice: null,
-            sum: mockedTransactionsResponse[1].amount,
-            fee: 0
-          }
-        ],
-        merchant: {
-          fullTitle: mockedTransactionsResponse[1].title,
-          mcc: null,
-          location: null
-        },
-        comment: null
-      }
-    ]
-  ])('converts outcome', (apiTransaction, account, transaction) => {
-    expect(convertTransaction(apiTransaction, account as Account)).toEqual(transaction)
+      comment: null
+    }
+
+    expect(transaction).toEqual(expectedTransaction)
+  })
+
+  it('should convert pending transaction', () => {
+    const transaction = convertTransaction(mockedTransactionsResponse[1], mockedAccountsResponse[0])
+
+    const expectedTransaction: Transaction = {
+      hold: true,
+      date: new Date('2023-01-02'),
+      movements: [
+        {
+          id: null,
+          account: {
+            id: mockedAccountsResponse[0].id
+          },
+          invoice: null,
+          sum: -50,
+          fee: 0
+        }
+      ],
+      merchant: {
+        fullTitle: 'Pending Payment',
+        mcc: null,
+        location: null
+      },
+      comment: null
+    }
+
+    expect(transaction).toEqual(expectedTransaction)
+  })
+
+  it('should convert deposit transaction', () => {
+    const transaction = convertTransaction(mockedTransactionsResponse[2], mockedAccountsResponse[0])
+
+    const expectedTransaction: Transaction = {
+      hold: false,
+      date: new Date('2023-01-03'),
+      movements: [
+        {
+          id: null,
+          account: {
+            id: mockedAccountsResponse[0].id
+          },
+          invoice: null,
+          sum: 200,
+          fee: 0
+        }
+      ],
+      merchant: {
+        fullTitle: 'Deposit',
+        mcc: null,
+        location: null
+      },
+      comment: null
+    }
+
+    expect(transaction).toEqual(expectedTransaction)
   })
 })
