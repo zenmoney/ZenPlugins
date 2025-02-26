@@ -100,9 +100,9 @@ function extractAccountInfo (loadedCheerio: cheerio.Root, accountId: string): Ac
 
   return {
     id: accountId,
-    name: name,
-    currency: currency,
-    balance: balance
+    name,
+    currency,
+    balance
   }
 }
 
@@ -166,9 +166,9 @@ export function parseTransactions (body: unknown, pending: boolean): Transaction
       transactions.push({
         isPending: pending,
         date: parseDate(date),
-        title: title,
+        title,
         amount: transactionAmount,
-        currency: currency
+        currency
       })
     })
   })
@@ -211,7 +211,7 @@ async function fetchTransactions (accountId: string, status: string, fromDate: D
     if (totalPages !== undefined && totalPages !== null && totalPages !== '') {
       return parseInt(totalPages, 10)
     }
-    throw new Error('Failed to parse total pages')
+    return 0
   }
 
   const response = await fetchTransactionsInternal(accountId, status, fromDate, toDate)
