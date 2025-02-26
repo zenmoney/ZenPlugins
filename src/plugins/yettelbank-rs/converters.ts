@@ -7,7 +7,7 @@ export function convertAccount (account: AccountInfo): Account {
     id: account.id,
     type: AccountType.ccard,
     title: account.title,
-    instrument: account.instrument,
+    instrument: account.currency,
     syncIds: account.syncIds,
     balance: account.balance
   }
@@ -38,7 +38,7 @@ function convertAccountInternal (apiAccount: AccountInfo, accountsByCba: Record<
         id: cba,
         type: AccountType.ccard,
         title: apiAccount.title ?? cba,
-        instrument: apiAccount.instrument,
+        instrument: apiAccount.currency,
         balance,
         creditLimit: 0,
         syncIds: [
@@ -93,7 +93,7 @@ export function convertAccountWithCba (apiAccount: AccountInfo, cba: string): Ac
     id: apiAccount.id,
     type: AccountType.ccard,
     title: apiAccount.title ?? cba,
-    instrument: apiAccount.instrument,
+    instrument: apiAccount.currency,
     syncIds: apiAccount.syncIds,
     balance: apiAccount.balance
   }

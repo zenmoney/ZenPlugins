@@ -13,11 +13,11 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
   const processedTransactions = new Set<string>() // Track processed transactions to avoid duplicates
 
   for (const account of accounts) {
-    const startDate = fromDate ?? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Default to 30 days ago
+    const startDate = fromDate ?? new Date(preferences.startDate)
     const endDate = toDate ?? new Date()
 
     // Create a unique account ID that includes the currency
-    const uniqueAccountId = account.id + '-' + account.instrument
+    const uniqueAccountId = account.id + '-' + account.currency
 
     const accountTransactions = await fetchProductTransactions(uniqueAccountId, session, startDate, endDate)
 
@@ -42,10 +42,10 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
 
 function convertAccount (account: AccountInfo): Account {
   return {
-    id: account.id + '-' + account.instrument,
+    id: account.id + '-' + account.currency,
     type: AccountType.ccard,
-    title: account.id + '-' + account.instrument,
-    instrument: account.instrument,
+    title: account.id + '-' + account.currency,
+    instrument: account.currency,
     syncIds: account.syncIds,
     balance: Math.round(account.balance * 100) / 100
   }
@@ -58,7 +58,7 @@ function convertTransaction (transaction: TransactionInfo, account: AccountInfo)
     movements: [
       {
         id: null,
-        account: { id: account.id + '-' + account.instrument },
+        account: { id: account.id + '-' + account.currency },
         invoice: null,
         sum: Math.round(transaction.amount * 100) / 100, // Round to 2 decimal places
         fee: 0

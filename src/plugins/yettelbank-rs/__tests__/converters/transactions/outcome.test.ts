@@ -11,7 +11,7 @@ describe('convertTransaction', () => {
         id: mockedAccountsResponse[0].id,
         title: mockedAccountsResponse[0].title,
         type: 'ccard',
-        instrument: mockedAccountsResponse[0].instrument,
+        instrument: mockedAccountsResponse[0].currency,
         syncIds: [
           mockedAccountsResponse[0].id
         ],
@@ -44,7 +44,7 @@ describe('convertTransaction', () => {
         id: mockedAccountsResponse[0].id,
         title: mockedAccountsResponse[0].title,
         type: 'ccard',
-        instrument: mockedAccountsResponse[0].instrument,
+        instrument: mockedAccountsResponse[0].currency,
         syncIds: [
           mockedAccountsResponse[0].id
         ],
@@ -76,7 +76,7 @@ describe('convertTransaction', () => {
     const accountInfo: AccountInfo = {
       id: account.id,
       title: account.title,
-      instrument: account.instrument,
+      currency: account.instrument,
       syncIds: account.syncIds,
       balance: account.balance
     }

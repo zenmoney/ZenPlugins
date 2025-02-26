@@ -20,7 +20,7 @@ describe('parseAccounts', () => {
     expect(accounts[0]).toEqual({
       id: '115038161634943632',
       title: '115038161634943632-RSD',
-      instrument: 'RSD',
+      currency: 'RSD',
       syncIds: ['115038161634943632'],
       balance: 5
     })
@@ -52,7 +52,7 @@ describe('parseAccounts', () => {
     expect(accounts[0]).toEqual({
       id: '115038161634943632',
       title: '115038161634943632-RSD',
-      instrument: 'RSD',
+      currency: 'RSD',
       syncIds: ['115038161634943632'],
       balance: 5
     })
@@ -60,7 +60,7 @@ describe('parseAccounts', () => {
     expect(accounts[1]).toEqual({
       id: '115038161634943632',
       title: '115038161634943632-EUR',
-      instrument: 'EUR',
+      currency: 'EUR',
       syncIds: ['115038161634943632'],
       balance: 10
     })
@@ -84,7 +84,7 @@ describe('parseAccounts', () => {
     expect(accounts[0]).toEqual({
       id: '115038161634943632',
       title: '115038161634943632-RSD',
-      instrument: 'RSD',
+      currency: 'RSD',
       syncIds: ['115038161634943632'],
       balance: 5
     })

@@ -122,7 +122,7 @@ function extractAccountInfo ($: cheerio.Root, accountId: string): AccountInfo | 
     return {
       id: accountId,
       title: `${accountId}-RSD`,
-      instrument: 'RSD',
+      currency: 'RSD',
       syncIds: [accountId],
       balance
     }
@@ -185,7 +185,7 @@ export function parseAccounts (body: unknown): AccountInfo[] {
       accounts.push({
         id: accountId,
         title: `${accountId}-${currency}`,
-        instrument: currency,
+        currency,
         syncIds: [accountId],
         balance
       })
@@ -419,7 +419,7 @@ export async function fetchProductTransactions (accountId: string, session: Sess
   if (currencySuffix != null) {
     // If we have a currency suffix, find the account with matching ID and currency
     requestedAccount = accounts.find(account =>
-      account.id === baseAccountId && account.instrument === currencySuffix
+      account.id === baseAccountId && account.currency === currencySuffix
     )
   } else {
     // If no currency suffix, just match the ID
@@ -439,7 +439,7 @@ export async function fetchProductTransactions (accountId: string, session: Sess
   const allTransactions = [...executedTransactions, ...pendingTransactions]
 
   // Filter transactions to only include those matching the account's currency
-  const targetCurrency = requestedAccount.instrument
+  const targetCurrency = requestedAccount.currency
 
   const filteredTransactions = allTransactions.filter(transaction => {
     const match = transaction.currency === targetCurrency

@@ -11,7 +11,7 @@ describe('account converter', () => {
       type: AccountType.ccard,
       title: mockedAccountsResponse[0].title,
       syncIds: mockedAccountsResponse[0].syncIds,
-      instrument: mockedAccountsResponse[0].instrument,
+      instrument: mockedAccountsResponse[0].currency,
       balance: mockedAccountsResponse[0].balance
     }
 
