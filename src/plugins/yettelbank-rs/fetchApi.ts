@@ -85,42 +85,132 @@ async function fetchLogin (url: string, workflowId: string, username: string, pa
   }
 }
 
-function extractAccountInfo (loadedCheerio: cheerio.Root, accountId: string): AccountInfo | null {
-  const accountElement = loadedCheerio(`#pie-stats-${accountId}`)
-  if (accountElement.length === 0) {
-    console.debug(`Account ${accountId} not found`)
+function extractAccountInfo ($: cheerio.Root, accountId: string): AccountInfo | null {
+  try {
+    const slide = $(`.slide.${accountId}`)
+    if (slide.length === 0) return null
+
+    // Default to RSD currency (most common)
+    const currencyElement = slide.find('.currentBalance.currency-RSD')
+    if (currencyElement.length === 0) return null
+
+    // Try to get balance directly from the span element
+    let balance = 0
+
+    // Find all child nodes and look for text nodes with numeric content
+    currencyElement.find('*').each((_, element) => {
+      const text = $(element).text().trim()
+      if (/^\d+(\.\d+)?$/.test(text)) {
+        const parsedValue = parseFloat(text)
+        if (!isNaN(parsedValue)) {
+          balance = parsedValue
+        }
+      }
+    })
+
+    // If we didn't find it in child elements, try direct text content
+    if (balance === 0) {
+      const directText = currencyElement.text().trim()
+      const matches = directText.match(/\d+(\.\d+)?/)
+      if (matches) {
+        balance = parseFloat(matches[0])
+      }
+    }
+
+    if (balance === 0) return null
+
+    return {
+      id: accountId,
+      title: `${accountId}-RSD`,
+      instrument: 'RSD',
+      syncIds: [accountId],
+      balance
+    }
+  } catch (e) {
     return null
-  }
-
-  const accountCurrency = accountElement.find('option[selected="selected"]').val()
-  const availableBalanceAccount = accountElement.find(`#available-balance-stat-${accountId}-${accountCurrency}`)
-  const accountName = availableBalanceAccount.find('.stat-name').text().trim()
-  const balanceText = availableBalanceAccount.find('.amount-stats.big-nr p').first().text().trim()
-  const accountBalance = parseFloat(balanceText.replace(/,/g, ''))
-
-  return {
-    id: accountId,
-    name: accountName,
-    currency: accountCurrency,
-    balance: accountBalance
   }
 }
 
 export function parseAccounts (body: unknown): AccountInfo[] {
-  const accountIds: string[] = []
   const $ = cheerio.load(body as string)
+  const accounts: AccountInfo[] = []
 
-  $('#AccountPicker option').each((_, element) => {
-    const accountNumber = $(element).attr('value')
-    if (accountNumber !== null && accountNumber !== '') {
-      accountIds.push(accountNumber as string)
+  // Find all account slides
+  $('.dashboarad-slider .slide').each((_, slideElement) => {
+    const accountId = $(slideElement).attr('data-accountid')
+    if (accountId == null) return
+
+    // Process each currency for this account
+    const currencies: string[] = []
+
+    // First, collect all available currencies for this account
+    $(slideElement).find('.col-right.currentBalance').each((_, currencyElement) => {
+      const currencyClass = $(currencyElement).attr('class') ?? ''
+      const currencyMatch = currencyClass.match(/currency-([A-Z]{3})/)
+      if (currencyMatch) {
+        currencies.push(currencyMatch[1])
+      }
+    })
+
+    // Now process each currency
+    for (const currency of currencies) {
+      const currencyElement = $(slideElement).find(`.col-right.currentBalance.currency-${currency}`)
+      if (currencyElement.length === 0) continue
+
+      // Try to get balance directly from the span element
+      let balance = 0
+
+      // Find all child nodes and look for text nodes with numeric content
+      currencyElement.find('*').each((_, element) => {
+        const text = $(element).text().trim()
+        if (/^\d+(\.\d+)?$/.test(text)) {
+          const parsedValue = parseFloat(text)
+          if (!isNaN(parsedValue)) {
+            balance = parsedValue
+          }
+        }
+      })
+
+      // If we didn't find it in child elements, try direct text content
+      if (balance === 0) {
+        const directText = currencyElement.text().trim()
+        const matches = directText.match(/\d+(\.\d+)?/)
+        if (matches) {
+          balance = parseFloat(matches[0])
+        }
+      }
+
+      if (balance === 0) continue
+
+      accounts.push({
+        id: accountId,
+        title: `${accountId}-${currency}`,
+        instrument: currency,
+        syncIds: [accountId],
+        balance
+      })
     }
   })
-  const accounts = accountIds.map(id => extractAccountInfo($, id)).filter(Boolean)
+
+  // Fallback to the old method if no accounts were found
   if (accounts.length === 0) {
-    throw new Error('No accounts have been parsed')
+    const accountIds: string[] = []
+
+    $('#AccountPicker option').each((_, element) => {
+      const accountNumber = $(element).attr('value')
+      if (accountNumber !== null && accountNumber !== '') {
+        accountIds.push(accountNumber as string)
+      }
+    })
+
+    const oldAccounts = accountIds.map(id => extractAccountInfo($, id)).filter(Boolean)
+    if (oldAccounts.length === 0) {
+      throw new Error('No accounts have been parsed')
+    }
+    return oldAccounts as AccountInfo[]
   }
-  return accounts as AccountInfo[]
+
+  return accounts
 }
 
 async function fetchAccounts (): Promise<AccountInfo[]> {
@@ -141,12 +231,33 @@ async function fetchAccounts (): Promise<AccountInfo[]> {
 }
 
 export function parseTransactions (body: unknown, pending: boolean): TransactionInfo[] {
+  // Check if there are no transactions
+  const $ = cheerio.load(body as string)
+
+  // Check for specific messages indicating no transactions
+  const noTransactionsMessages = [
+    'No transactions for selected period',
+    'Нет транзакций за выбранный период',
+    'Nema transakcija za izabrani period'
+  ]
+
+  const messageElement = $('.no-results')
+  if (messageElement.length > 0) {
+    const message = messageElement.text().trim()
+    if (noTransactionsMessages.some(noTransMsg => message.includes(noTransMsg))) {
+      return []
+    }
+  }
+
+  // Check if transactions table is empty
+  if ($('.transactions-table').length === 0) {
+    return []
+  }
+
   function parseDate (dateString: string): Date {
     const [day, month, year] = dateString.split('.').map(Number)
     return new Date(year, month - 1, day)
   }
-
-  const $ = cheerio.load(body as string)
 
   const transactions: TransactionInfo[] = []
 
@@ -154,9 +265,26 @@ export function parseTransactions (body: unknown, pending: boolean): Transaction
     $(table).find('table').each((_, transactionTable) => {
       const parsedTitle = $(transactionTable).find('.transaction-title').text().trim()
       const date = $(transactionTable).find('.transaction-date').text().trim()
-      const [amount, parsedCurrency] = $(transactionTable).find('.transaction-amount').text().trim().split(' ')
+      const amountText = $(transactionTable).find('.transaction-amount').text().trim()
 
-      let parsedTransactionAmount = parseFloat(amount.replace(/,/g, ''))
+      if ((date === '') || (amountText === '')) {
+        return
+      }
+
+      // Extract currency using regex to handle different formats
+      const currencyMatch = amountText.match(/([A-Z]{3})$/)
+      if (!currencyMatch) {
+        return
+      }
+
+      const parsedCurrency = currencyMatch[1]
+      // Remove currency from amount text and parse
+      const amountWithoutCurrency = amountText.replace(parsedCurrency, '').trim()
+      let parsedTransactionAmount = parseFloat(amountWithoutCurrency.replace(/,/g, ''))
+
+      if (isNaN(parsedTransactionAmount)) {
+        return
+      }
 
       const transactionArrowClass = $(transactionTable).find('.transaction-arrow').attr('class')
       if (transactionArrowClass !== undefined && transactionArrowClass !== '' && transactionArrowClass.includes('expense')) {
@@ -174,6 +302,45 @@ export function parseTransactions (body: unknown, pending: boolean): Transaction
   })
 
   return transactions
+}
+
+export function parseTotalPages (body: unknown): number {
+  const $ = cheerio.load(body as string)
+
+  // Check for specific messages indicating no transactions
+  const noTransactionsMessages = [
+    'No transactions for selected period',
+    'Нет транзакций за выбранный период',
+    'Nema transakcija za izabrani period'
+  ]
+
+  const messageElement = $('.no-results')
+  if (messageElement.length > 0) {
+    const message = messageElement.text().trim()
+    if (noTransactionsMessages.some(noTransMsg => message.includes(noTransMsg))) {
+      return 0
+    }
+  }
+
+  // Check if transactions table is empty
+  if ($('.transactions-table').length === 0) {
+    return 0
+  }
+
+  // Check for pagination
+  const pageInfo = $('.current-page').text().trim()
+  const match = pageInfo.match(/Page \d+ from (\d+)/)
+
+  if ((match?.[1]) != null) {
+    return parseInt(match[1], 10)
+  }
+
+  // If there are transactions but no pagination, return 1
+  if ($('.transactions-table').length > 0) {
+    return 1
+  }
+
+  return 0
 }
 
 async function fetchTransactionsInternal (accountId: string, status: string, fromDate: Date, toDate: Date, pageNumber = 0): Promise<FetchResponse> {
@@ -203,23 +370,17 @@ async function fetchTransactions (accountId: string, status: string, fromDate: D
     return mockedTransactionsResponse
   }
 
-  function parseTotalPages (body: unknown): number {
-    const $ = cheerio.load(body as string)
-    const pageInfo = $('.current-page').text().trim()
-    const match = pageInfo.match(/Page \d+ from (\d+)/)
-    const totalPages = match?.[1]
-    if (totalPages !== undefined && totalPages !== null && totalPages !== '') {
-      return parseInt(totalPages, 10)
-    }
-    return 0
-  }
-
   const response = await fetchTransactionsInternal(accountId, status, fromDate, toDate)
   const totalPages = parseTotalPages(response.body)
 
+  // If no transactions, return empty array
+  if (totalPages === 0) {
+    return []
+  }
+
   const transactions: TransactionInfo[] = parseTransactions(response.body, status === 'Pending')
 
-  for (let page = 1; page < totalPages - 1; page++) {
+  for (let page = 1; page < totalPages; page++) {
     const pageResponse = await fetchTransactionsInternal(accountId, status, fromDate, toDate, page)
     transactions.push(...parseTransactions(pageResponse.body, status === 'Pending'))
   }
@@ -245,7 +406,48 @@ export async function fetchAllAccounts (session: Session): Promise<AccountInfo[]
 }
 
 export async function fetchProductTransactions (accountId: string, session: Session, fromDate: Date, toDate: Date): Promise<TransactionInfo[]> {
-  const executedTransactions = await fetchTransactions(accountId, 'Executed', fromDate, toDate)
-  const pendingTransactions = await fetchTransactions(accountId, 'Pending', fromDate, toDate)
-  return [...executedTransactions, ...pendingTransactions]
+  // Extract the base account ID if it contains a currency suffix
+  const baseAccountId = accountId.split('-')[0]
+  const currencySuffix = accountId.includes('-') ? accountId.split('-')[1] : null
+
+  // Get the account info to determine which currency we're requesting
+  const accounts = await fetchAccounts()
+
+  // Find the specific account we're requesting transactions for
+  let requestedAccount: AccountInfo | undefined
+
+  if (currencySuffix != null) {
+    // If we have a currency suffix, find the account with matching ID and currency
+    requestedAccount = accounts.find(account =>
+      account.id === baseAccountId && account.instrument === currencySuffix
+    )
+  } else {
+    // If no currency suffix, just match the ID
+    requestedAccount = accounts.find(account => account.id === accountId)
+  }
+
+  if (!requestedAccount) {
+    return [] // If account not found, return empty array
+  }
+
+  // Only fetch transactions once, using the base account ID
+  const executedTransactions = await fetchTransactions(baseAccountId, 'Executed', fromDate, toDate)
+
+  const pendingTransactions = await fetchTransactions(baseAccountId, 'Pending', fromDate, toDate)
+
+  // Combine all transactions
+  const allTransactions = [...executedTransactions, ...pendingTransactions]
+
+  // Filter transactions to only include those matching the account's currency
+  const targetCurrency = requestedAccount.instrument
+
+  const filteredTransactions = allTransactions.filter(transaction => {
+    const match = transaction.currency === targetCurrency
+    if (!match) {
+      console.log(`Skipping transaction with currency ${transaction.currency} (account currency is ${targetCurrency})`)
+    }
+    return match
+  })
+
+  return filteredTransactions
 }

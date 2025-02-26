@@ -30,8 +30,9 @@ export interface ConvertResult {
 
 export interface AccountInfo {
   id: string
-  name: string
-  currency: string
+  title: string
+  instrument: string
+  syncIds: string[]
   balance: number
 }
 

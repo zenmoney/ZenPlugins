@@ -1,6 +1,7 @@
 import { convertTransaction } from '../../../converters'
-import { Account } from '../../../../../types/zenmoney'
+import { Transaction } from '../../../../../types/zenmoney'
 import { mockedTransactionsResponse, mockedAccountsResponse } from '../../../mocked_responses'
+import { AccountInfo } from '../../../models'
 
 describe('convertTransaction', () => {
   it.each([
@@ -8,9 +9,9 @@ describe('convertTransaction', () => {
       mockedTransactionsResponse[0],
       {
         id: mockedAccountsResponse[0].id,
-        title: mockedAccountsResponse[0].name,
+        title: mockedAccountsResponse[0].title,
         type: 'ccard',
-        instrument: mockedAccountsResponse[0].currency,
+        instrument: mockedAccountsResponse[0].instrument,
         syncIds: [
           mockedAccountsResponse[0].id
         ],
@@ -38,12 +39,12 @@ describe('convertTransaction', () => {
       }
     ],
     [
-      mockedTransactionsResponse[1],
+      mockedTransactionsResponse[0],
       {
         id: mockedAccountsResponse[0].id,
-        title: mockedAccountsResponse[0].name,
+        title: mockedAccountsResponse[0].title,
         type: 'ccard',
-        instrument: mockedAccountsResponse[0].currency,
+        instrument: mockedAccountsResponse[0].instrument,
         syncIds: [
           mockedAccountsResponse[0].id
         ],
@@ -51,19 +52,19 @@ describe('convertTransaction', () => {
         creditLimit: 0
       },
       {
-        hold: mockedTransactionsResponse[1].isPending,
-        date: mockedTransactionsResponse[1].date,
+        hold: mockedTransactionsResponse[0].isPending,
+        date: mockedTransactionsResponse[0].date,
         movements: [
           {
             id: null,
             account: { id: mockedAccountsResponse[0].id },
             invoice: null,
-            sum: mockedTransactionsResponse[1].amount,
+            sum: mockedTransactionsResponse[0].amount,
             fee: 0
           }
         ],
         merchant: {
-          fullTitle: mockedTransactionsResponse[1].title,
+          fullTitle: mockedTransactionsResponse[0].title,
           mcc: null,
           location: null
         },
@@ -71,6 +72,75 @@ describe('convertTransaction', () => {
       }
     ]
   ])('converts outcome', (apiTransaction, account, transaction) => {
-    expect(convertTransaction(apiTransaction, account as Account)).toEqual(transaction)
+    // Convert the account to AccountInfo type for the test
+    const accountInfo: AccountInfo = {
+      id: account.id,
+      title: account.title,
+      instrument: account.instrument,
+      syncIds: account.syncIds,
+      balance: account.balance
+    }
+    expect(convertTransaction(apiTransaction, accountInfo)).toEqual(transaction)
+  })
+
+  it('should convert transaction', () => {
+    const transaction = convertTransaction(mockedTransactionsResponse[0], mockedAccountsResponse[0])
+
+    const expectedTransaction: Transaction = {
+      hold: false,
+      date: new Date('2023-01-01'),
+      movements: [
+        {
+          id: null,
+          account: {
+            id: mockedAccountsResponse[0].id
+          },
+          invoice: null,
+          sum: 100,
+          fee: 0
+        }
+      ],
+      merchant: {
+        fullTitle: mockedTransactionsResponse[0].title,
+        mcc: null,
+        location: null
+      },
+      comment: null
+    }
+
+    expect(transaction).toEqual(expectedTransaction)
+  })
+
+  it('should convert pending transaction', () => {
+    const pendingTransaction = {
+      ...mockedTransactionsResponse[0],
+      isPending: true
+    }
+
+    const transaction = convertTransaction(pendingTransaction, mockedAccountsResponse[0])
+
+    const expectedTransaction: Transaction = {
+      hold: true,
+      date: new Date('2023-01-01'),
+      movements: [
+        {
+          id: null,
+          account: {
+            id: mockedAccountsResponse[0].id
+          },
+          invoice: null,
+          sum: 100,
+          fee: 0
+        }
+      ],
+      merchant: {
+        fullTitle: mockedTransactionsResponse[0].title,
+        mcc: null,
+        location: null
+      },
+      comment: null
+    }
+
+    expect(transaction).toEqual(expectedTransaction)
   })
 })

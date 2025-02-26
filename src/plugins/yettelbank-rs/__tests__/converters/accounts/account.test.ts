@@ -1,33 +1,20 @@
-import { convertAccounts } from '../../../converters'
+import { convertAccount } from '../../../converters'
 import { mockedAccountsResponse } from '../../../mocked_responses'
+import { Account, AccountType } from '../../../../../types/zenmoney'
 
-describe('convertAccounts', () => {
-  it.each([
-    [
-      mockedAccountsResponse,
-      [
-        {
-          products: [
-            {
-              id: mockedAccountsResponse[0].id,
-              transactionNode: ''
-            }
-          ],
-          account: {
-            id: mockedAccountsResponse[0].id,
-            title: mockedAccountsResponse[0].name,
-            type: 'ccard',
-            instrument: mockedAccountsResponse[0].currency,
-            syncIds: [
-              mockedAccountsResponse[0].id
-            ],
-            balance: mockedAccountsResponse[0].balance,
-            creditLimit: 0
-          }
-        }
-      ]
-    ]
-  ])('converts current account', (apiAccounts, accounts) => {
-    expect(convertAccounts(apiAccounts)).toEqual(accounts)
+describe('account converter', () => {
+  it('should convert account', () => {
+    const account = convertAccount(mockedAccountsResponse[0])
+
+    const expectedAccount: Account = {
+      id: mockedAccountsResponse[0].id,
+      type: AccountType.ccard,
+      title: mockedAccountsResponse[0].title,
+      syncIds: mockedAccountsResponse[0].syncIds,
+      instrument: mockedAccountsResponse[0].instrument,
+      balance: mockedAccountsResponse[0].balance
+    }
+
+    expect(account).toEqual(expectedAccount)
   })
 })
