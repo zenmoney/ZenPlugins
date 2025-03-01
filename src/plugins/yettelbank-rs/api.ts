@@ -18,9 +18,9 @@ export async function fetchAccounts (session: Session): Promise<AccountInfo[]> {
   return await fetchAllAccounts(session)
 }
 
-export async function fetchTransactions (session: Session, accountId: string, fromDate: Date, toDate: Date): Promise<TransactionInfo[]> {
+export async function fetchTransactions (session: Session, accountId: string, currency: string, fromDate: Date, toDate: Date): Promise<TransactionInfo[]> {
   if (toDate === null) {
     toDate = new Date()
   }
-  return await fetchProductTransactions(accountId, session, fromDate, toDate)
+  return await fetchProductTransactions(accountId, currency, session, fromDate, toDate)
 }
