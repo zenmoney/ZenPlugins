@@ -85,7 +85,7 @@ async function fetchLogin (url: string, workflowId: string, username: string, pa
   }
 }
 
-function* extractAccountInfo (loadedCheerio: cheerio.Root, accountId: string): Generator<AccountInfo | null> {
+function * extractAccountInfo (loadedCheerio: cheerio.Root, accountId: string): Generator<AccountInfo | null> {
   const accountElements = loadedCheerio(`#pie-stats-${accountId}`)
   if (accountElements.length === 0) {
     console.debug(`Account ${accountId} not found`)
@@ -94,18 +94,18 @@ function* extractAccountInfo (loadedCheerio: cheerio.Root, accountId: string): G
 
   for (const el of accountElements.toArray()) {
     const $accountElement = loadedCheerio(el)
-    const balanceDiv = $accountElement.find(`div[id^="total available-balance-stat-${accountId}-"]`).first();
+    const balanceDiv = $accountElement.find(`div[id^="total available-balance-stat-${accountId}-"]`).first()
 
-    if (balanceDiv.length) {
-      const fullId = balanceDiv.attr('id');
-  
-      if (fullId) {
-        const accountName = fullId.replace(`total available-balance-stat-`, '');
-        const accountCurrency = accountName.split('-')[1];
-        const balanceText = balanceDiv.find('.amount-stats.big-nr p').first().text().trim();
+    if (balanceDiv.length !== 0) {
+      const fullId = balanceDiv.attr('id')
+
+      if (fullId !== null && fullId !== undefined) {
+        const accountName = fullId.replace('total available-balance-stat-', '')
+        const accountCurrency = accountName.split('-')[1]
+        const balanceText = balanceDiv.find('.amount-stats.big-nr p').first().text().trim()
         const activeCurrency = balanceDiv.find('option[selected="selected"]').val()
         // for backward compatibility
-        const newAccountId = activeCurrency === accountCurrency ? accountId : `${accountId}-${accountCurrency}`;
+        const newAccountId = activeCurrency === accountCurrency ? accountId : `${accountId}-${accountCurrency}`
 
         yield {
           id: newAccountId,
@@ -225,11 +225,11 @@ async function fetchTransactions (accountId: string, currency: string, status: s
     if (totalPages !== undefined && totalPages !== null && totalPages !== '') {
       return parseInt(totalPages, 10)
     }
-    return 0;
+    return 0
   }
 
   // getting raw accountId for parsing
-  const rawAccountId = accountId.replace(`-${currency}`, '');
+  const rawAccountId = accountId.replace(`-${currency}`, '')
 
   const response = await fetchTransactionsInternal(rawAccountId, status, fromDate, toDate)
   const totalPages = parseTotalPages(response.body)
