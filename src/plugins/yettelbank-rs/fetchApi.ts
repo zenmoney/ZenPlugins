@@ -85,24 +85,36 @@ async function fetchLogin (url: string, workflowId: string, username: string, pa
   }
 }
 
-function extractAccountInfo (loadedCheerio: cheerio.Root, accountId: string): AccountInfo | null {
-  const accountElement = loadedCheerio(`#pie-stats-${accountId}`)
-  if (accountElement.length === 0) {
+function * extractAccountInfo (loadedCheerio: cheerio.Root, accountId: string): Generator<AccountInfo | null> {
+  const accountElements = loadedCheerio(`#pie-stats-${accountId}`)
+  if (accountElements.length === 0) {
     console.debug(`Account ${accountId} not found`)
     return null
   }
 
-  const accountCurrency = accountElement.find('option[selected="selected"]').val()
-  const availableBalanceAccount = accountElement.find(`#available-balance-stat-${accountId}-${accountCurrency}`)
-  const accountName = availableBalanceAccount.find('.stat-name').text().trim()
-  const balanceText = availableBalanceAccount.find('.amount-stats.big-nr p').first().text().trim()
-  const accountBalance = parseFloat(balanceText.replace(/,/g, ''))
+  for (const el of accountElements.toArray()) {
+    const $accountElement = loadedCheerio(el)
+    const balanceDiv = $accountElement.find(`div[id^="total available-balance-stat-${accountId}-"]`).first()
 
-  return {
-    id: accountId,
-    name: accountName,
-    currency: accountCurrency,
-    balance: accountBalance
+    if (balanceDiv.length !== 0) {
+      const fullId = balanceDiv.attr('id')
+
+      if (fullId !== null && fullId !== undefined) {
+        const accountName = fullId.replace('total available-balance-stat-', '')
+        const accountCurrency = accountName.split('-')[1]
+        const balanceText = balanceDiv.find('.amount-stats.big-nr p').first().text().trim()
+        const activeCurrency = balanceDiv.find('option[selected="selected"]').val()
+        // for backward compatibility
+        const newAccountId = activeCurrency === accountCurrency ? accountId : `${accountId}-${accountCurrency}`
+
+        yield {
+          id: newAccountId,
+          name: `${accountId}-${accountCurrency}`,
+          currency: accountCurrency,
+          balance: parseFloat(balanceText.replace(/,/g, ''))
+        }
+      }
+    }
   }
 }
 
@@ -116,10 +128,11 @@ export function parseAccounts (body: unknown): AccountInfo[] {
       accountIds.push(accountNumber as string)
     }
   })
-  const accounts = accountIds.map(id => extractAccountInfo($, id)).filter(Boolean)
+  const accounts = accountIds.flatMap(id => Array.from(extractAccountInfo($, id))).filter(Boolean)
   if (accounts.length === 0) {
     throw new Error('No accounts have been parsed')
   }
+
   return accounts as AccountInfo[]
 }
 
@@ -140,7 +153,7 @@ async function fetchAccounts (): Promise<AccountInfo[]> {
   return parseAccounts(response.body)
 }
 
-export function parseTransactions (body: unknown, pending: boolean): TransactionInfo[] {
+export function parseTransactions (body: unknown, pending: boolean, currencyFilter: string): TransactionInfo[] {
   function parseDate (dateString: string): Date {
     const [day, month, year] = dateString.split('.').map(Number)
     return new Date(year, month - 1, day)
@@ -162,14 +175,15 @@ export function parseTransactions (body: unknown, pending: boolean): Transaction
       if (transactionArrowClass !== undefined && transactionArrowClass !== '' && transactionArrowClass.includes('expense')) {
         parsedTransactionAmount *= -1
       }
-
-      transactions.push({
-        isPending: pending,
-        date: parseDate(date),
-        title: parsedTitle,
-        amount: parsedTransactionAmount,
-        currency: parsedCurrency
-      })
+      if (parsedCurrency === currencyFilter) {
+        transactions.push({
+          isPending: pending,
+          date: parseDate(date),
+          title: parsedTitle,
+          amount: parsedTransactionAmount,
+          currency: parsedCurrency
+        })
+      }
     })
   })
 
@@ -198,7 +212,7 @@ async function fetchTransactionsInternal (accountId: string, status: string, fro
   return response
 }
 
-async function fetchTransactions (accountId: string, status: string, fromDate: Date, toDate: Date): Promise<TransactionInfo[]> {
+async function fetchTransactions (accountId: string, currency: string, status: string, fromDate: Date, toDate: Date): Promise<TransactionInfo[]> {
   if (mockResponses) {
     return mockedTransactionsResponse
   }
@@ -214,14 +228,17 @@ async function fetchTransactions (accountId: string, status: string, fromDate: D
     return 0
   }
 
-  const response = await fetchTransactionsInternal(accountId, status, fromDate, toDate)
+  // getting raw accountId for parsing
+  const rawAccountId = accountId.replace(`-${currency}`, '')
+
+  const response = await fetchTransactionsInternal(rawAccountId, status, fromDate, toDate)
   const totalPages = parseTotalPages(response.body)
 
-  const transactions: TransactionInfo[] = parseTransactions(response.body, status === 'Pending')
+  const transactions: TransactionInfo[] = parseTransactions(response.body, status === 'Pending', currency)
 
   for (let page = 1; page < totalPages - 1; page++) {
-    const pageResponse = await fetchTransactionsInternal(accountId, status, fromDate, toDate, page)
-    transactions.push(...parseTransactions(pageResponse.body, status === 'Pending'))
+    const pageResponse = await fetchTransactionsInternal(rawAccountId, status, fromDate, toDate, page)
+    transactions.push(...parseTransactions(pageResponse.body, status === 'Pending', currency))
   }
 
   return transactions
@@ -244,8 +261,8 @@ export async function fetchAllAccounts (session: Session): Promise<AccountInfo[]
   return await fetchAccounts()
 }
 
-export async function fetchProductTransactions (accountId: string, session: Session, fromDate: Date, toDate: Date): Promise<TransactionInfo[]> {
-  const executedTransactions = await fetchTransactions(accountId, 'Executed', fromDate, toDate)
-  const pendingTransactions = await fetchTransactions(accountId, 'Pending', fromDate, toDate)
+export async function fetchProductTransactions (accountId: string, currency: string, session: Session, fromDate: Date, toDate: Date): Promise<TransactionInfo[]> {
+  const executedTransactions = await fetchTransactions(accountId, currency, 'Executed', fromDate, toDate)
+  const pendingTransactions = await fetchTransactions(accountId, currency, 'Pending', fromDate, toDate)
   return [...executedTransactions, ...pendingTransactions]
 }
