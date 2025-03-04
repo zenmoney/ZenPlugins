@@ -132,6 +132,7 @@ async function showHowTo (): Promise<ObjectWithAnyProps> {
         }
       })
       ZenMoney.setData('showHowTo', false)
+      ZenMoney.saveData()
     } catch (e) {
       console.debug(e)
     }
