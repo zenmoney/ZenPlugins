@@ -10,9 +10,15 @@ describe('parseAccounts', () => {
       [
         {
           id: '4815162342',
-          name: 'Current account',
+          name: '4815162342-RSD',
           currency: 'RSD',
           balance: 39367.79
+        },
+        {
+          id: '4815162342-EUR',
+          name: '4815162342-EUR',
+          currency: 'EUR',
+          balance: 0
         }
       ]
     ]

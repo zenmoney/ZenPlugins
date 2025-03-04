@@ -3,7 +3,7 @@ import { loadHtmlFile } from '../../helpers'
 
 const transactionsBody = loadHtmlFile('__tests__/parsers/transactions.html')
 
-describe('parseTransactions', () => {
+describe('parseRsdTransactions', () => {
   it.each([
     [
       transactionsBody,
@@ -17,13 +17,6 @@ describe('parseTransactions', () => {
         },
         {
           isPending: false,
-          date: new Date(2024, 8, 10),
-          title: 'ApplePay SHIO-RAMEN, TBILISI',
-          amount: -8.08,
-          currency: 'EUR'
-        },
-        {
-          isPending: false,
           date: new Date(2024, 10, 30),
           title: 'FRIENDLY DONATE',
           amount: 15000,
@@ -32,6 +25,38 @@ describe('parseTransactions', () => {
       ]
     ]
   ])('parses transactions', (transactionsBody, transactionsArray) => {
-    expect(parseTransactions(transactionsBody, false)).toEqual(transactionsArray)
+    expect(parseTransactions(transactionsBody, false, 'RSD')).toEqual(transactionsArray)
+  })
+})
+
+describe('parseEurTransactions', () => {
+  it.each([
+    [
+      transactionsBody,
+      [
+        {
+          isPending: false,
+          date: new Date(2024, 8, 10),
+          title: 'ApplePay SHIO-RAMEN, TBILISI',
+          amount: -8.08,
+          currency: 'EUR'
+        }
+      ]
+    ]
+  ])('parses transactions', (transactionsBody, transactionsArray) => {
+    expect(parseTransactions(transactionsBody, false, 'EUR')).toEqual(transactionsArray)
+  })
+})
+
+const noTransactionsBody = loadHtmlFile('__tests__/parsers/transactions-empty.html')
+
+describe('parseNoTransactionsShouldNotThrow', () => {
+  it.each([
+    [
+      noTransactionsBody,
+      []
+    ]
+  ])('parses transactions', (transactionsBody, transactionsArray) => {
+    expect(parseTransactions(transactionsBody, false, 'EUR')).toEqual(transactionsArray)
   })
 })
