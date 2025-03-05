@@ -48,7 +48,7 @@ export function convertCard (rawCard) {
  */
 export function convertDeposit (deposit) {
   try {
-    const closeDate = new Date(deposit.closeDate.replace('+', ''))
+    const closeDate = new Date(deposit.closeDate.replace('+', '') + 'Z')
     const openDate = moment(closeDate).subtract(deposit.period, 'months').toDate()
     const endDateInterval = getIntervalBetweenDates(openDate, closeDate)
     return {
@@ -87,7 +87,7 @@ export function convertCardOrAccountTransaction (account, rawTransaction) {
     instrument: rawTransaction.currency.name
   }
 
-  let comment = ''
+  let comment = null
   switch (rawTransaction.module) {
     case 'CONVERSION':
       comment = 'Обмен валюты'
@@ -105,8 +105,8 @@ export function convertCardOrAccountTransaction (account, rawTransaction) {
 
   const transaction = {
     hold: false, // авторизация средств или подтвержденная транзакция
-    date: new Date(rawTransaction.transactionDate.replace('+', '')),
-    merchant: (rawTransaction.module === 'PROCESSING' || rawTransaction.module === 'P2P') && rawTransaction.transactionType === 'DEBIT'
+    date: new Date(rawTransaction.transactionDate.replace('+', '') + 'Z'),
+    merchant: (rawTransaction.module === 'PROCESSING' || rawTransaction.module === 'P2P')
       ? { fullTitle: rawTransaction.name, mcc: null, location: null }
       : null,
     movements: [
@@ -158,7 +158,7 @@ export function convertDepositTransaction (deposit, rawTransaction) {
   const hash = hashString(stringToHash)
 
   const transaction = {
-    date: new Date(rawTransaction.paymentDate.replace('+', '')),
+    date: new Date(rawTransaction.paymentDate.replace('+', '') + 'Z'),
     hold: false,
     merchant: null,
     movements: [
