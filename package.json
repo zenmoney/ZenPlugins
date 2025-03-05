@@ -27,6 +27,7 @@
     "futoin-hkdf": "1.3.2",
     "i18next": "19.1.0",
     "iconv-lite": "0.4.18",
+    "image-js": "^0.36.0",
     "jshashes": "1.0.8",
     "jsrsasign": "10.5.20",
     "ksuid": "1.2.0",
