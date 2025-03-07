@@ -169,7 +169,8 @@ STORE
           description: 'Операция оплаты у коммерсанта DIONA SHOP',
           expense: '-5 129,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '-8 138,00',
@@ -178,7 +179,8 @@ STORE
           description: 'Операция оплаты у коммерсанта GASTRONOM SUPERMARKET',
           expense: '-8 138,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '-1 355,00',
@@ -187,7 +189,8 @@ STORE
           description: 'Операция оплаты у коммерсанта GALMART SUPERMARKET KASS',
           expense: '-1 355,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '-380,00',
@@ -196,7 +199,8 @@ STORE
           description: 'Операция оплаты у коммерсанта SMALL SUPERMARKET AST33',
           expense: '-380,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '-11 990,00',
@@ -205,7 +209,8 @@ STORE
           description: 'Операция оплаты у коммерсанта MARWIN BOUTIQUE',
           expense: '-11 990,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '-30,00',
@@ -214,7 +219,8 @@ STORE
           description: 'Операция оплаты у коммерсанта MARWIN BOUTIQUE',
           expense: '-30,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '-5 610,00',
@@ -223,7 +229,8 @@ STORE
           description: 'Операция оплаты у коммерсанта VKUS MART SUPERMARKET CA',
           expense: '-5 610,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '-2 645,00',
@@ -232,7 +239,8 @@ STORE
           description: 'Операция оплаты у коммерсанта FFPAY*OLX.KZ',
           expense: '-2 645,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '-4 575,00',
@@ -241,7 +249,8 @@ STORE
           description: 'Операция оплаты у коммерсанта GALMART SUPERMARKET KASS',
           expense: '-4 575,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '-1 940,00',
@@ -250,7 +259,8 @@ STORE
           description: 'Операция оплаты у коммерсанта GLOBAL COFFEE KOFEINYA',
           expense: '-1 940,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '-7 922,00',
@@ -259,7 +269,8 @@ STORE
           description: 'Операция оплаты у коммерсанта OZON.KZ',
           expense: '-7 922,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '-11 270,00',
@@ -268,7 +279,8 @@ STORE
           description: 'Операция оплаты у коммерсанта WILDBERRIES',
           expense: '-11 270,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '40 000,00',
@@ -277,7 +289,8 @@ STORE
           description: 'Зачисление с депозита',
           expense: '0,00',
           fee: '0,00',
-          income: '40 000,00'
+          income: '40 000,00',
+          accountNumber: 'KZ396010012001119324'
         },
         {
           amount: '-12 837,00',
@@ -286,7 +299,8 @@ STORE
           description: 'Операция оплаты у коммерсанта OZON',
           expense: '-12 837,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '-6 719,00',
@@ -295,7 +309,8 @@ STORE
           description: 'Операция оплаты у коммерсанта OZON.KZ',
           expense: '-6 719,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '0,00',
@@ -304,7 +319,8 @@ STORE
           description: 'Ежемесячная комиссия за обслуживание карточки Regular Charge',
           expense: '0,00',
           fee: '-150,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '-6 580,00',
@@ -313,7 +329,8 @@ STORE
           description: 'Операция оплаты у коммерсанта OZON.KZ',
           expense: '-6 580,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '500 000,00',
@@ -322,7 +339,8 @@ STORE
           description: 'Поступление перевода',
           expense: '0,00',
           fee: '0,00',
-          income: '500 000,00'
+          income: '500 000,00',
+          accountNumber: 'KZ396010012001119324'
         },
         {
           amount: '304 426,00',
@@ -331,7 +349,8 @@ STORE
           description: 'Поступление перевода',
           expense: '0,00',
           fee: '0,00',
-          income: '304 426,00'
+          income: '304 426,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '-150 000,00',
@@ -340,7 +359,8 @@ STORE
           description: 'Перевод на другую карту',
           expense: '-150 150,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '-500 000,00',
@@ -349,7 +369,8 @@ STORE
           description: 'Перевод на депозит',
           expense: '-500 000,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: 'KZ396010012001119324'
         },
         {
           amount: '-130 000,00',
@@ -358,7 +379,8 @@ STORE
           description: 'Перевод на другую карту',
           expense: '-130 150,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '-7 850,00',
@@ -367,7 +389,8 @@ STORE
           description: 'Операция оплаты у коммерсанта FOOD SOLUTIONS KZ RESTAUR',
           expense: '-7 850,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '100 000,00',
@@ -376,7 +399,8 @@ STORE
           description: 'Зачисление с депозита',
           expense: '0,00',
           fee: '0,00',
-          income: '100 000,00'
+          income: '100 000,00',
+          accountNumber: 'KZ396010012001119324'
         },
         {
           amount: '-100 000,00',
@@ -385,7 +409,8 @@ STORE
           description: 'Перевод на другую карту',
           expense: '-100 150,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '-8 447,00',
@@ -394,7 +419,8 @@ STORE
           description: 'Операция оплаты у коммерсанта OZON.KZ',
           expense: '-8 447,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '-3 075,00',
@@ -403,7 +429,8 @@ STORE
           description: 'Операция оплаты у коммерсанта OZON.KZ',
           expense: '-3 075,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '-16 500,00',
@@ -412,7 +439,8 @@ STORE
           description: 'Перевод на другую карту',
           expense: '-16 650,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '20 000,00',
@@ -421,7 +449,8 @@ STORE
           description: 'Зачисление с депозита',
           expense: '0,00',
           fee: '0,00',
-          income: '20 000,00'
+          income: '20 000,00',
+          accountNumber: 'KZ396010012001119324'
         },
         {
           amount: '-1 690,00',
@@ -430,7 +459,8 @@ STORE
           description: 'Операция оплаты у коммерсанта WHOOPIE CAKES CAFE',
           expense: '-1 690,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: 'KZ396010012001119324'
         },
         {
           amount: '60 000,00',
@@ -439,7 +469,8 @@ STORE
           description: 'Зачисление с депозита',
           expense: '0,00',
           fee: '0,00',
-          income: '60 000,00'
+          income: '60 000,00',
+          accountNumber: 'KZ396010012001119324'
         },
         {
           amount: '-60 000,00',
@@ -448,7 +479,8 @@ STORE
           description: 'Перевод на другую карту',
           expense: '-60 000,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: 'KZ396010012001119324'
         },
         {
           amount: '0,00',
@@ -457,7 +489,8 @@ STORE
           description: 'Ежемесячная комиссия за обслуживание карточки Regular Charge',
           expense: '0,00',
           fee: '-150,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '500 000,00',
@@ -466,7 +499,8 @@ STORE
           description: 'Поступление перевода',
           expense: '0,00',
           fee: '0,00',
-          income: '500 000,00'
+          income: '500 000,00',
+          accountNumber: 'KZ396010012001119324'
         },
         {
           amount: '-90 000,00',
@@ -475,7 +509,8 @@ STORE
           description: 'Перевод на другую карту',
           expense: '-90 150,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '-400 000,00',
@@ -484,7 +519,8 @@ STORE
           description: 'Перевод на депозит',
           expense: '-400 000,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: 'KZ396010012001119324'
         },
         {
           amount: '-2 070,00',
@@ -493,7 +529,8 @@ STORE
           description: 'Операция оплаты у коммерсанта NASH MAGAZIN SHOP',
           expense: '-2 070,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: 'KZ396010012001119324'
         },
         {
           amount: '-220,00',
@@ -502,7 +539,8 @@ STORE
           description: 'Операция оплаты у коммерсанта NASH MAGAZIN SHOP',
           expense: '-220,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: 'KZ396010012001119324'
         },
         {
           amount: '-8 200,00',
@@ -511,7 +549,8 @@ STORE
           description: 'Операция оплаты у коммерсанта TOO "TA FARM"',
           expense: '-8 200,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '25 000,00',
@@ -520,7 +559,8 @@ STORE
           description: 'Зачисление с депозита',
           expense: '0,00',
           fee: '0,00',
-          income: '25 000,00'
+          income: '25 000,00',
+          accountNumber: 'KZ396010012001119324'
         },
         {
           amount: '-25 591,00',
@@ -529,7 +569,8 @@ STORE
           description: 'Операция оплаты у коммерсанта MAGNUM.AF21.KASSA- 2',
           expense: '-25 591,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: 'KZ396010012001119324'
         },
         {
           amount: '-1 790,00',
@@ -538,7 +579,8 @@ STORE
           description: 'Операция оплаты у коммерсанта 250- DRUG STORE',
           expense: '-1 790,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: 'KZ396010012001119324'
         },
         {
           amount: '301 270,00',
@@ -547,7 +589,8 @@ STORE
           description: 'Поступление перевода',
           expense: '0,00',
           fee: '0,00',
-          income: '301 270,00'
+          income: '301 270,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '-290 000,00',
@@ -556,7 +599,8 @@ STORE
           description: 'Перевод на другую карту',
           expense: '-290 150,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '26 000,00',
@@ -565,7 +609,8 @@ STORE
           description: 'Зачисление с депозита',
           expense: '0,00',
           fee: '0,00',
-          income: '26 000,00'
+          income: '26 000,00',
+          accountNumber: 'KZ396010012001119324'
         },
         {
           amount: '-26 550,00',
@@ -574,7 +619,8 @@ STORE
           description: 'Перевод на другую карту',
           expense: '-26 700,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: '440563******4384'
         },
         {
           amount: '40 000,00',
@@ -583,7 +629,8 @@ STORE
           description: 'Поступление перевода',
           expense: '0,00',
           fee: '0,00',
-          income: '40 000,00'
+          income: '40 000,00',
+          accountNumber: 'KZ396010012001119324'
         },
         {
           amount: '-40 000,00',
@@ -592,7 +639,8 @@ STORE
           description: 'Перевод на депозит',
           expense: '-40 000,00',
           fee: '0,00',
-          income: '0,00'
+          income: '0,00',
+          accountNumber: 'KZ396010012001119324'
         }
       ]
     ]
