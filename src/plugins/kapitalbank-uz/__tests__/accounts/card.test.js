@@ -2,113 +2,68 @@ import {
   convertCard
 } from '../../converters'
 
-describe('convertAccount', () => {
-  it('converts account VISA', () => {
+describe('converCard', () => {
+  it('converts VISA card without cardName', () => {
     expect(convertCard({
-      id: 245395,
-      account: '22618840799031231901',
-      title: 'VISA Electron(Tr)',
-      state: 'ACTIVE',
-      pan: '427833******3346',
-      currency: { name: 'USD', scale: 2 },
-      type: 'VISA',
-      balance: 1500
+      guid: 'CP-2ab15c0d-0000-0000-0000-863c1c2a06a3',
+      bankId: '09049',
+      isMain: false,
+      coverId: 'VISA_09049_002',
+      cardName: null,
+      productId: '002',
+      maskedPan: '427832******0001',
+      cardType: 'PHYSICAL',
+      productCode: 'VSUSKBMPXX',
+      isInternal: true,
+      isFavourite: true,
+      currency: {
+        name: 'USD',
+        scale: 2
+      },
+      cardOwnerName: 'FIRSTNAME LASTNAME',
+      orderFavourite: 1,
+      processingType: 'VISA',
+      isNewRegistered: false
     })).toEqual({
-      id: '245395',
+      id: 'CP-2ab15c0d-0000-0000-0000-863c1c2a06a3',
       type: 'ccard',
-      title: 'VISA Electron(Tr)',
+      title: 'VISA *0001',
       instrument: 'USD',
       syncIds: [
-        '427833******3346'
-      ],
-      balance: 15.00
-    })
-  })
-  it('converts account UZCARD', () => {
-    expect(convertCard({
-      id: 245394,
-      account: '22618000499031231002',
-      state: 'ACTIVE',
-      pan: '860049******4598',
-      currency: { name: 'UZS', scale: 2 },
-      type: 'UZCARD',
-      balance: 330513221
-    })).toEqual({
-      id: '245394',
-      type: 'ccard',
-      title: 'UZCARD *4598',
-      instrument: 'UZS',
-      syncIds: [
-        '860049******4598'
-      ],
-      balance: 3305132.21
+        '427832******0001'
+      ]
     })
   })
 
-  it('converts account UZCARD with Title', () => {
+  it('converts HUMO card with cardName', () => {
     expect(convertCard({
-      id: 226355,
-      account: '22618000699052625001',
-      title: 'Туркистон Кобейдж',
-      state: 'ACTIVE',
-      pan: '626282******3612',
-      currency: { name: 'UZS', scale: 2 },
-      type: 'UZCARD',
-      balance: 25
+      guid: 'CP-42e7c669-0000-0000-0000-ef3445e40682',
+      bankId: '09049',
+      isMain: false,
+      coverId: 'HUMO_09049_8888',
+      cardName: 'KS Humo',
+      productId: '8888',
+      maskedPan: '986010******9424',
+      cardType: 'PHYSICAL',
+      productCode: 'HMUZKBMPXX',
+      isInternal: true,
+      isFavourite: true,
+      currency: {
+        name: 'UZS',
+        scale: 2
+      },
+      cardOwnerName: 'FIRSTNAME LASTNAME',
+      orderFavourite: 1,
+      processingType: 'HUMO',
+      isNewRegistered: false
     })).toEqual({
-      id: '226355',
+      id: 'CP-42e7c669-0000-0000-0000-ef3445e40682',
       type: 'ccard',
-      title: 'Туркистон Кобейдж',
+      title: 'KS Humo',
       instrument: 'UZS',
       syncIds: [
-        '626282******3612'
-      ],
-      balance: 0.25
-    })
-  })
-})
-
-describe('convertAccount', () => {
-  it('converts account HUMO', () => {
-    expect(convertCard({
-      id: 232733,
-      maskedPan: '986019OBDZDO8587',
-      title: 'Хумо',
-      state: 'ACTIVE',
-      pan: '986019******2965',
-      currency: { name: 'UZS', scale: 2 },
-      type: 'HUMO',
-      balance: 1449400
-    })).toEqual({
-      id: '232733',
-      type: 'ccard',
-      title: 'Хумо',
-      instrument: 'UZS',
-      syncIds: [
-        '986019******2965'
-      ],
-      balance: 14494.00
-    })
-  })
-  it('converts account HUMO', () => {
-    expect(convertCard({
-      id: 232783,
-      maskedPan: '986021CREBIX8092',
-      title: 'Хумo Turkiston',
-      state: 'ACTIVE',
-      pan: '986021******3871',
-      currency: { name: 'UZS', scale: 2 },
-      type: 'HUMO',
-      balance: 2114119051
-    })).toEqual({
-      id: '232783',
-      type: 'ccard',
-      title: 'Хумo Turkiston',
-      instrument: 'UZS',
-      syncIds: [
-        '986021******3871'
-      ],
-      balance: 21141190.51
+        '986010******9424'
+      ]
     })
   })
 })

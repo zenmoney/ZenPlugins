@@ -1,89 +1,128 @@
+import { Image } from 'image-js'
+import { delay, generateRandomString, takePicture } from '../../common/utils'
+import { InvalidLoginOrPasswordError } from '../../errors'
 import {
-  checkUser,
+  authByPhoneNumber,
+  authByPassword,
+  verifySmsCode,
+  myIdIdentify,
+  myIdVerifyResult,
+  getCards,
   getAccounts,
-  getAccountsTransactions,
   getDeposits,
-  getDepositsTransactions,
-  getHumoCards,
-  getHumoCardsTransactions,
-  getToken,
-  getUzcardCards,
-  getUzcardCardsTransactions,
-  getVisaCards,
-  getVisaCardsTransactions,
-  getWallets,
-  getWalletsTransactions,
-  registerDevice,
-  sendSmsCode
+  getAllTransactions
 } from './api'
 
 export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
-  /**
-   * FIRST RUN STEPS
-   */
+  // FIRST RUN STEPS
   if (isFirstRun) {
-    await registerDevice()
-    await updateToken(preferences.pan, preferences.expiry, preferences.password)
+    const deviceId = generateRandomString(16)
+    ZenMoney.setData('deviceId', deviceId)
+    ZenMoney.setData('sessionId', generateRandomString(16))
+    ZenMoney.setData('requestId', generateRandomString(16))
+    ZenMoney.saveData()
+
+    const authPhone = await authByPhoneNumber(preferences.phone)
+    if (!authPhone) {
+      throw new InvalidLoginOrPasswordError('Для указанного номера телефона не найден аккаунт')
+    }
+
+    await updateToken(preferences.phone, preferences.password, preferences.isResident, preferences.pinfl, preferences.bday)
   }
+
+  // try {
+  //   return await doScrape(fromDate, toDate)
+  // } catch {
+  //   return {
+  //     accounts: [],
+  //     transactions: []
+  //   }
+  // }
 
   try {
     return await doScrape(fromDate, toDate)
   } catch {
-    await updateToken(preferences.pan, preferences.expiry, preferences.password)
+    await updateToken(preferences.phone, preferences.password, preferences.isResident, preferences.pinfl, preferences.bday)
     return await doScrape(fromDate, toDate)
   }
 }
 
-async function updateToken (pan, expiry, password) {
-  const phone = await checkUser(pan, expiry)
-  await sendSmsCode(pan, expiry, password)
-  const smsCode = await ZenMoney.readLine('Введите код из СМС сообщения')
-  await getToken(phone, smsCode)
+async function blobToBase64WithResolution (blob, targetWidth, targetHeight) {
+  const buffer = Buffer.from(await blob.arrayBuffer())
+  const image = await Image.load(buffer)
+  const resizedImage = image.resize({ width: targetWidth, height: targetHeight })
+  const base64String = `data:image/jpeg;base64,${resizedImage.toBase64('image/jpeg')}`
+  return base64String
+}
+
+async function updateToken (phone, password, isResident, pinfl, birthDate) {
+  try {
+    const verificationCode = await authByPassword(phone, password)
+    const smsCode = await ZenMoney.readLine('Введите код из СМС сообщения')
+    await verifySmsCode(verificationCode, smsCode)
+  } catch (e) {
+    if (e instanceof TemporaryError) {
+      // todo необходимо пройти идентификацию через myid.uz
+      await completeIdentificationOrThrow(isResident, pinfl, birthDate)
+
+      const verificationCode = await authByPassword(phone, password)
+      const smsCode = await ZenMoney.readLine('Введите код из СМС сообщения')
+      await verifySmsCode(verificationCode, smsCode)
+    } else {
+      throw new TemporaryError('Problems with identification')
+    }
+  }
+}
+
+async function completeIdentificationOrThrow (isResident, pinfl, birthDate) {
+  const photoFromCamera = await takePicture('jpeg')
+  const base64Image = await blobToBase64WithResolution(photoFromCamera, 480, 640)
+  const jobId = await myIdIdentify(isResident, pinfl, birthDate, base64Image)
+  await delay(2000)
+  let verifyResult = await myIdVerifyResult(jobId)
+  if (!verifyResult.success) {
+    await delay(5000)
+    verifyResult = await myIdVerifyResult(jobId)
+    if (!verifyResult.success) {
+      throw new TemporaryError(verifyResult.errorDetail)
+    }
+  }
 }
 
 async function doScrape (fromDate, toDate) {
-  /**
-   * REGULAR STEPS - Get accounts
-   */
-  const uzcardCards = await getUzcardCards()
-  const humoCards = await getHumoCards()
-  const visaCards = await getVisaCards()
-  const wallets = await getWallets()
+  console.log(`Starting to scrape data from ${fromDate.toISOString()} to ${toDate ? toDate.toISOString() : 'now'}`)
+
+  // Get accounts
+  const cards = await getCards()
   const accounts = await getAccounts()
   const deposits = await getDeposits()
 
-  /**
-   * REGULAR STEPS - Get transactions
-   */
+  // Get transactions
   const from = fromDate.getTime()
   const to = (toDate || new Date()).getTime()
 
-  const uzcardCardsTransactions = await getUzcardCardsTransactions(uzcardCards, from, to)
-  const humoCardsTransactions = await getHumoCardsTransactions(humoCards, from, to)
-  const visaCardsTransactions = await getVisaCardsTransactions(visaCards, from, to)
-  const walletTransactions = await getWalletsTransactions(wallets, from, to)
-  const accountTransactions = await getAccountsTransactions(accounts, from, to)
-  const depositTransactions = await getDepositsTransactions(deposits, from, to)
+  const cardsAndAccountsTransactions = []
+  for (const cardOrAccount of cards.concat(accounts)) {
+    const transactions = await getAllTransactions(cardOrAccount, from, to, false)
+    cardsAndAccountsTransactions.push(...transactions)
+  }
 
-  /**
-   * LAST STEP - Unloading
-   */
+  const depositsTransactions = []
+  for (const deposit of deposits) {
+    const transactions = await getAllTransactions(deposit, from, to, true)
+    depositsTransactions.push(...transactions)
+  }
+
+  // return data
   return {
     accounts: [
-      ...uzcardCards,
-      ...humoCards,
-      ...visaCards,
-      ...wallets,
+      ...cards,
       ...accounts,
       ...deposits
     ],
     transactions: [
-      ...uzcardCardsTransactions,
-      ...humoCardsTransactions,
-      ...visaCardsTransactions,
-      ...walletTransactions,
-      ...accountTransactions,
-      ...depositTransactions
+      ...cardsAndAccountsTransactions,
+      ...depositsTransactions
     ]
   }
 }
