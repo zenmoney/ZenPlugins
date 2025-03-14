@@ -67,9 +67,16 @@ if (!('readLine' in ZenMoney)) {
     }
     const {
       imageUrl = null,
+      image = null,
       ...rest
     } = options
-    return ZenMoney.retrieveCode(message, imageUrl, rest)
+    if (image && !ZenMoney.features?.readLineWithImage) {
+      throw new IncompatibleVersionError()
+    }
+    if (image && imageUrl) {
+      throw new Error('imageUrl and image cannot be used together')
+    }
+    return ZenMoney.retrieveCode(message, image || imageUrl, rest)
   }
 }
 if (!('clearCookies' in ZenMoney)) {
