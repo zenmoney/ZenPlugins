@@ -177,13 +177,15 @@ function parseAccountTitle (text: string, type: string): string {
 
 function parseDepositTransactions (text: string, statementUid: string): StatementTransaction[] {
   const headerStringByLocale = {
-    ru: 'ДатаСуммаОперацияДеталиНа Депозите'
+    ru: /Дата\s?Сумма\s?Операция\s?Детали\s?На Депозите/
   }
-  const startIndex = text.indexOf(headerStringByLocale.ru)
+  const headerMatch = text.match(headerStringByLocale.ru)
+  assert(headerMatch?.[0] != null, 'Can\'t find header for deposit account')
+  const startIndex = text.indexOf(headerMatch?.[0])
   assert(startIndex >= 0, 'Can\'t parse transactions for deposit account')
   text = text.slice(startIndex)
   const pages = text.split(headerStringByLocale.ru).filter(str => str !== '')
-  const transactionRegExp = /^(\d{2}\.\d{2}\.\d{2})([-+]\s?[$\d\s.,]+)?([^а-яА-Я]*[^$\d]+)((\$?\d{1,3}\s?){1}(\d{3}\s?)*,\d{2}(\s₸)?)?/
+  const transactionRegExp = /^(\d{2}\.\d{2}\.\d{2})\s?([-+]\s?[$\d\s.,]+)?\s?([^а-яА-Я]*[^$\d]+)\s?((\$?\d{1,3}\s?){1}(\d{3}\s?)*,\d{2}(\s₸)?)?/
   const result: StatementTransaction[] = []
   for (const page of pages) {
     const transactionStrings = page.match(new RegExp(transactionRegExp, 'gm'))
