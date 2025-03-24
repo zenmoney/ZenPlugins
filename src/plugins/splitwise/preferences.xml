@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="token"
+        obligatory="true"
+        title="API Token"
+        dialogTitle="API Token"
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="||{@s}"
+    />
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="From what date to load transactions"
+        dialogTitle="From what date to load transactions"
+        defaultValue="2023-01-01T00:00:00.000Z"
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="|startDate|{@s}"
+    />
+</PreferenceScreen>
