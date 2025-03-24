@@ -1,4 +1,4 @@
-import { Image } from 'image-js'
+import { Jimp } from 'jimp'
 import { delay, generateRandomString, takePicture } from '../../common/utils'
 import { InvalidLoginOrPasswordError } from '../../errors'
 import {
@@ -14,6 +14,11 @@ import {
 } from './api'
 
 export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
+  const photoFromCamera = await takePicture('jpeg')
+  console.log(typeof photoFromCamera)
+  console.log(photoFromCamera)
+  await blobToBase64WithResolution(photoFromCamera, 480, 640)
+  console.log('toBase64 complete')
   // FIRST RUN STEPS
   if (isFirstRun) {
     const deviceId = generateRandomString(16)
@@ -48,10 +53,19 @@ export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
 }
 
 async function blobToBase64WithResolution (blob, targetWidth, targetHeight) {
+  console.log('Buffer.from begins')
   const buffer = Buffer.from(await blob.arrayBuffer())
-  const image = await Image.load(buffer)
-  const resizedImage = image.resize({ width: targetWidth, height: targetHeight })
-  const base64String = `data:image/jpeg;base64,${resizedImage.toBase64('image/jpeg')}`
+  console.log('fromBuffer begin')
+  const image = await Jimp.fromBuffer(buffer)
+  console.log('fromBuffer complete')
+  const resizedImage = image.resize({ w: targetWidth, h: targetHeight })
+  console.log('resize complete')
+  const base64String = await resizedImage.getBase64('image/jpeg')
+  console.log('getBase64 complete')
+  // const image = await Image.load(buffer)
+  // const resizedImage = image.resize({ width: targetWidth, height: targetHeight })
+  // const base64String = `data:image/jpeg;base64,${resizedImage.toBase64('image/jpeg')}`
+  // return base64String
   return base64String
 }
 
