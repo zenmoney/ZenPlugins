@@ -84,9 +84,14 @@ export function convertCashTransaction (t1: GetAccountTransactionsResponse): Tra
       },
       {
         id: t1.TransactionID ?? null,
-        account: { type: AccountType.cash, instrument: t1.CurrencyCode, syncIds: null, company: null },
+        account: {
+          type: AccountType.cash,
+          instrument: invoice === null ? t1.CurrencyCode : invoice.instrument,
+          syncIds: null,
+          company: null
+        },
         invoice: null,
-        sum: t1.DebitAmount - t1.CreditAmount,
+        sum: invoice === null ? t1.DebitAmount - t1.CreditAmount : -invoice.sum,
         fee: 0
       }
     ],
