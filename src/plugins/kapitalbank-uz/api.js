@@ -1,523 +1,291 @@
 import { fetchJson } from '../../common/network'
-import { sanitize } from '../../common/sanitize'
-import { generateRandomString } from '../../common/utils'
-import { InvalidPreferencesError } from '../../errors'
+import { InvalidLoginOrPasswordError, TemporaryError } from '../../errors'
 import {
-  convertAccount,
-  convertAccountTransaction,
   convertCard,
-  convertHumoCardTransaction,
-  convertUzcardCardTransaction,
-  convertVisaCardTransaction,
-  convertWallet,
-  convertWalletTransaction,
+  convertAccount,
   convertDeposit,
+  convertCardOrAccountTransaction,
   convertDepositTransaction
 } from './converters'
 
-const lang = 'ru'
-const appVersion = 'w0.0.2'
-const baseUrl = 'https://online.kapitalbank.uz/api'
-const baseUrlV2 = baseUrl + '/v2'
+const appVersion = '3.1.1'
+const baseUrl = 'https://b2c-api.kapitalbank.uz/api/v1'
 
-/**
- * Регистрирует идентификатор устройства в интернет-банке
- */
-export async function registerDevice () {
-  const endpoint = '/device'
-  const deviceId = generateRandomString(32)
+function getDefaultHeaders () {
+  return {
+    'Content-Type': 'application/json',
+    'Accept-Encoding': 'gzip',
+    'Accept-Language': 'ru-RU',
+    Connection: 'Keep-Alive',
+    DeviceId: ZenMoney.getData('deviceId'),
+    Host: 'b2c-api.kapitalbank.uz',
+    'User-Agent': 'okhttp/4.12.0',
+    'X-App-Version': 'Android; ' + appVersion,
+    'X-Device-Info': 'Android; 13; samsung; o1s; ' + appVersion + '; XXHDPI; ' + ZenMoney.getData('deviceId'),
+    'X-Device-OS': 'ANDROID',
+    'X-Trace-Info': 'sessionId=' + ZenMoney.getData('sessionId') + '; requestId=' + ZenMoney.getData('requestId')
+  }
+}
+
+function getDefaultHeadersWithToken () {
+  return {
+    ...getDefaultHeaders(),
+    Authorization: 'Bearer ' + ZenMoney.getData('accessToken')
+  }
+}
+
+export async function authByPhoneNumber (phone) {
+  const endpoint = '/auth/phone-number/' + phone
+
+  const response = await fetchJson(baseUrl + endpoint, {
+    method: 'GET',
+    headers: getDefaultHeaders(),
+    sanitizeRequestLog: { body: { phone: true, password: true } }
+  })
+
+  console.assert(response.ok, 'unexpected auth response', response)
+
+  return response.body.exist
+}
+
+export async function authByPassword (phone, password) {
+  const endpoint = '/auth/by-password'
 
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'POST',
-    headers: {
-      lang,
-      'app-version': appVersion
-    },
+    headers: getDefaultHeaders(),
     body: {
-      deviceId,
-      name: 'ZenMoney'
+      phoneNumber: phone,
+      password
     },
-    sanitizeRequestLog: { body: { deviceId: true } }
+    sanitizeRequestLog: { body: { phone: true, password: true } }
   })
 
-  console.assert(response.ok, 'unexpected device response', response)
+  // нужно пройти процесс идентификации через myid.uz
+  if (response.status === 403) {
+    throw new TemporaryError(response.body.errorDetail)
+  }
 
-  ZenMoney.setData('deviceId', deviceId)
+  if (response.status === 400) {
+    throw new InvalidLoginOrPasswordError(response.body.errorDetail)
+  }
+
+  // we get verification code here
+  return response.body.verificationCode
 }
 
-/**
- * Проверка на существование клиента в банке и получение номера телефона
- *
- * @param pan номер карты клиента
- * @param expiry срок действия карты клиента
- * @returns номер телефона клиента
- */
-export async function checkUser (pan, expiry) {
-  const endpoint = '/check-client-card'
+export async function verifySmsCode (verificationCode, otpCode) {
+  const endpoint = '/auth/verify-by-password'
 
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'POST',
-    headers: {
-      lang,
-      'app-version': appVersion,
-      'device-id': ZenMoney.getData('deviceId')
-    },
+    headers: getDefaultHeaders(),
     body: {
-      pan,
-      expiry
+      verificationCode,
+      otpCode
     },
-    sanitizeRequestLog: { url: { query: { pan: true, expiry: true } }, headers: { 'device-id': true } },
-    sanitizeResponseLog: { url: { query: { phone: true } } }
+    sanitizeRequestLog: { body: { verificationCode: true, otpCode: true } }
   })
 
-  if (!response.body?.data?.client) {
-    throw new InvalidPreferencesError()
-  }
+  // todo обработать неверный код подтверждения
+  console.assert(response.ok, 'unexpected auth response', response)
 
-  console.assert(response.ok, 'unexpected check-user response', response)
-
-  return response.body.data.phone
-}
-
-/**
- * Вызвать отправку СМС кода на мобильный телефон
- *
- * @param pan номер карты клиента
- * @param expiry срок действия карты клиента
- * @param password пароль
- */
-export async function sendSmsCode (pan, expiry, password) {
-  const endpoint = '/login'
-
-  const response = await fetchJson(baseUrlV2 + endpoint, {
-    method: 'POST',
-    headers: {
-      lang,
-      'app-version': appVersion,
-      'device-id': ZenMoney.getData('deviceId')
-    },
-    body: {
-      pan,
-      expiry,
-      password,
-      reserveSms: false
-    },
-    sanitizeRequestLog: { body: { pan: true, expiry: true, password: true }, headers: { 'device-id': true } }
-  })
-
-  if (response.body?.errorMessage === 'Пользователь не зарегистрирован' || response.body?.errorMessage === 'Неправильный номер телефона или пароль') {
-    throw new InvalidPreferencesError()
-  }
-
-  console.assert(response.ok, 'unexpected login response', response)
-}
-
-/**
- * Получаем токен
- *
- * @param phone номер телефона
- * @param smsCode код подтверждения из СМС сообщения
- */
-export async function getToken (phone, smsCode) {
-  const endpoint = '/registration/verify/' + smsCode + '/' + phone
-
-  const response = await fetchJson(baseUrl + endpoint, {
-    method: 'POST',
-    headers: {
-      lang,
-      'app-version': appVersion,
-      'device-id': ZenMoney.getData('deviceId')
-    },
-    sanitizeRequestLog: { url: url => url.replace(phone, sanitize(phone, true)), headers: { 'device-id': true } },
-    sanitizeResponseLog: { url: url => url.replace(phone, sanitize(phone, true)) }
-  })
-
-  if (response.body?.errorMessage === 'Пользователь не зарегистрирован' || response.body?.errorMessage === 'Неверный SMS-код') {
-    throw new InvalidPreferencesError()
-  }
-
-  console.assert(response.ok, 'unexpected registration/verify response', response)
-
-  ZenMoney.setData('token', response.body.data.token)
+  ZenMoney.setData('guid', response.body.guid)
+  ZenMoney.setData('accessToken', response.body.accessToken)
+  ZenMoney.setData('refreshToken', response.body.refreshToken)
   ZenMoney.setData('isFirstRun', false)
 }
 
-/**
- * Получить список карт платежной системы UzCard
- *
- * @returns массив карт платежной системы UzCard в формате Дзенмани
- */
-export async function getUzcardCards () {
-  const endpoint = '/uzcard'
+export async function refreshToken () {
+  const endpoint = '/auth/tokens/re-creation'
+
+  const response = await fetchJson(baseUrl + endpoint, {
+    method: 'POST',
+    headers: {
+      ...getDefaultHeaders(),
+      Authorization: 'Bearer ' + ZenMoney.getData('refreshToken')
+    },
+    sanitizeRequestLog: { body: { verificationCode: true, otpCode: true } }
+  })
+
+  // todo обработать неверный код подтверждения
+  console.assert(response.ok, 'unexpected auth response', response)
+
+  ZenMoney.setData('guid', response.body.guid)
+  ZenMoney.setData('accessToken', response.body.accessToken)
+  ZenMoney.setData('refreshToken', response.body.refreshToken)
+  ZenMoney.setData('isFirstRun', false)
+}
+
+export async function myIdIdentify (isResident, pinfl, birthDate, photoFromCamera) {
+  const endpoint = '/identification/my-id/identify'
+
+  const response = await fetchJson(baseUrl + endpoint, {
+    method: 'POST',
+    headers: getDefaultHeaders(),
+    body: {
+      isResident,
+      pinfl,
+      passportSerial: null,
+      passportNumber: null,
+      birthDate,
+      photoFromCamera: {
+        front: photoFromCamera
+      }
+    },
+    sanitizeRequestLog: { body: { isResident: true, pinfl: true, passportSerial: true, passportNumber: true, birthDate: true, photoFromCamera: true } }
+  })
+
+  console.assert(response.ok, 'unexpected myIdIdentify response', response)
+
+  return response.body.jobId
+}
+
+export async function myIdVerifyResult (jobId) {
+  const endpoint = '/identification/my-id/verify-result/' + jobId
 
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'GET',
-    headers: {
-      lang,
-      'app-version': appVersion,
-      'device-id': ZenMoney.getData('deviceId'),
-      token: ZenMoney.getData('token')
-    },
-    sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
+    headers: getDefaultHeaders()
   })
 
-  console.assert(response.ok, 'unexpected uzcard response', response)
+  console.assert(response.ok, 'unexpected myIdVerifyResult response', response)
+  if (response.status === 400 || response.status === 404) {
+    return { success: false, ...response.body?.errorDetail }
+  }
 
-  return response.body.data.map(convertCard).filter(card => card !== null)
+  return { success: true }
 }
 
-/**
- * Получить список карт платежной системы Humo
- *
- * @returns массив карт платежной системы Humo в формате Дзенмани
- */
-export async function getHumoCards () {
-  const endpoint = '/humo'
+export async function getCards () {
+  const endpoint = '/cards?processing=HUMO%2CUZCARD%2CVISA%2CMASTERCARD&currency=UZS%2CUSD%2CEUR&bankType=ALL&favouriteCardType=ALL&cardType=PHYSICAL%2CCORPORATE%2CRETIREMENT'
 
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'GET',
-    headers: {
-      lang,
-      'app-version': appVersion,
-      'device-id': ZenMoney.getData('deviceId'),
-      token: ZenMoney.getData('token')
-    },
-    sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
+    headers: getDefaultHeadersWithToken(),
+    sanitizeRequestLog: { headers: { Authorization: true } }
   })
 
-  console.assert(response.ok, 'unexpected humo response', response)
+  console.assert(response.ok, 'unexpected getCards response', response)
 
-  return response.body.data.map(convertCard).filter(card => card !== null)
+  const cards = response.body.map(convertCard).filter(card => card !== null)
+  for (const card of cards) {
+    card.balance = await getCardBalance(card.id)
+  }
+
+  return cards
 }
 
-/**
- * Получить список карт платежной системы Visa
- *
- * @returns массив карт платежной системы Visa в формате Дзенмани
- */
-export async function getVisaCards () {
-  const endpoint = '/visa'
+export async function getCardBalance (cardId) {
+  const endpoint = '/cards/balance/' + cardId
 
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'GET',
-    headers: {
-      lang,
-      'app-version': appVersion,
-      'device-id': ZenMoney.getData('deviceId'),
-      token: ZenMoney.getData('token')
-    },
-    sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
+    headers: getDefaultHeadersWithToken(),
+    sanitizeRequestLog: { headers: { Authorization: true } }
   })
 
-  console.assert(response.ok, 'unexpected visa response', response)
+  console.assert(response.ok, 'unexpected getCardBalance response', response)
 
-  return response.body.data.map(convertCard).filter(card => card !== null)
+  return response.body.balance / Math.pow(10, response.body.currency.scale)
 }
 
-/**
- * Получить список кошельков
- *
- * @returns массив кошельков в формате Дзенмани
- */
-export async function getWallets () {
-  const endpoint = '/wallet'
-
-  const response = await fetchJson(baseUrl + endpoint, {
-    method: 'GET',
-    headers: {
-      lang,
-      'app-version': appVersion,
-      'device-id': ZenMoney.getData('deviceId'),
-      token: ZenMoney.getData('token')
-    },
-    sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
-  })
-
-  console.assert(response.ok, 'unexpected wallet response', response)
-
-  return response.body.data.map(convertWallet)
-}
-
-/**
- * Получить список счетов
- *
- * @returns массив счетов в формате Дзенмани
- */
 export async function getAccounts () {
-  const endpoint = '/account'
+  const endpoint = '/accounts'
 
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'GET',
-    headers: {
-      lang,
-      'app-version': appVersion,
-      'device-id': ZenMoney.getData('deviceId'),
-      token: ZenMoney.getData('token')
-    },
-    sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
+    headers: getDefaultHeadersWithToken(),
+    sanitizeRequestLog: { headers: { Authorization: true } }
   })
 
-  console.assert(response.ok, 'unexpected account response', response)
+  console.assert(response.ok, 'unexpected getAccounts response', response)
 
-  return response.body.data.map(convertAccount)
+  const accounts = response.body.map(convertAccount).filter(account => account !== null)
+
+  return accounts
 }
 
-/**
- * Получить список вкладов
- *
- * @returns массив вкладов в формате Дзенмани
- */
 export async function getDeposits () {
-  const endpoint = '/deposit'
+  const endpoint = '/deposits'
 
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'GET',
-    headers: {
-      lang,
-      'app-version': appVersion,
-      'device-id': ZenMoney.getData('deviceId'),
-      token: ZenMoney.getData('token')
-    },
-    sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
+    headers: getDefaultHeadersWithToken(),
+    sanitizeRequestLog: { headers: { Authorization: true } }
   })
 
-  console.assert(response.ok, 'unexpected account response', response)
+  console.assert(response.ok, 'unexpected getDeposits response', response)
 
-  return response.body.data.map(convertDeposit)
+  const deposits = response.body.map(convertDeposit).filter(deposit => deposit !== null)
+
+  return deposits
 }
 
-/**
- * Получить список транзакций по картам платежной системы UzCard
- *
- * @param cards массив карт платежной системы UzCard
- * @param fromDate дата в формате ISO8601, с которой нужно выгружать транзакции
- * @param toDate дата в формате ISO8601, по которую нужно выгружать транзакции
- * @returns массив транзакций в формате Дзенмани
- */
-export async function getUzcardCardsTransactions (cards, fromDate, toDate) {
-  let transactions = []
+export async function getAllTransactions (account, fromDate, toDate, isDeposit = false) {
+  let allTransactions = []
+  let page = 0
+  let hasMorePages = true
 
-  for (const card of cards) {
-    if (!ZenMoney.isAccountSkipped(card.id)) {
-      const endpoint = '/uzcard/history?' +
-        'cardId=' + card.id + '&' +
-        'dateFrom=' + fromDate + '&' +
-        'dateTo=' + toDate
+  while (hasMorePages) {
+    const response = isDeposit
+      ? await getDepositTransactions(account, page)
+      : await getCardOrAccountTransactions(account, fromDate, toDate, page)
 
-      const response = await fetchJson(baseUrl + endpoint, {
-        method: 'GET',
-        headers: {
-          lang,
-          'app-version': appVersion,
-          'device-id': ZenMoney.getData('deviceId'),
-          token: ZenMoney.getData('token')
-        },
-        sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
-      })
+    if (response.transactions && response.transactions.length > 0) {
+      allTransactions = allTransactions.concat(response.transactions)
 
-      console.assert(response.ok, 'unexpected uzcard/history response', response)
-
-      transactions = transactions.concat(response.body.data.data.map(transaction =>
-        convertUzcardCardTransaction(card, transaction)))
+      // Check if we need to fetch more pages
+      hasMorePages = page < response.totalPages - 1
+      page++
+    } else {
+      hasMorePages = false
     }
   }
 
-  return transactions
+  return allTransactions
 }
 
-/**
- * Получить список транзакций по картам платежной системы Humo
- *
- * @param cards массив карт платежной системы Humo
- * @param fromDate дата в формате ISO8601, с которой нужно выгружать транзакции
- * @param toDate дата в формате ISO8601, по которую нужно выгружать транзакции
- * @returns массив транзакций в формате Дзенмани
- */
-export async function getHumoCardsTransactions (cards, fromDate, toDate) {
-  let transactions = []
+async function getCardOrAccountTransactions (account, fromDate, toDate, page = 0, size = 20) {
+  // /history/transactions?page=0&size=20&productGuid=AP-9e7c97ad-89af-4f21-b1f2-a82ef4d8f308&dateFrom=2024-02-27&dateTo=2025-02-27
+  const fromDateStr = new Date(fromDate).toISOString().split('T')[0]
+  const toDateStr = new Date(toDate).toISOString().split('T')[0]
+  const endpoint = `/history/transactions?page=${page}&size=${size}&productGuid=${account.id}&dateFrom=${fromDateStr}&dateTo=${toDateStr}`
 
-  for (const card of cards) {
-    if (!ZenMoney.isAccountSkipped(card.id)) {
-      const endpoint = '/humo/history?' +
-        'cardId=' + card.id + '&' +
-        'dateFrom=' + fromDate + '&' +
-        'dateTo=' + toDate
+  const response = await fetchJson(baseUrl + endpoint, {
+    method: 'GET',
+    headers: getDefaultHeadersWithToken(),
+    sanitizeRequestLog: { headers: { Authorization: true } }
+  })
 
-      const response = await fetchJson(baseUrl + endpoint, {
-        method: 'GET',
-        headers: {
-          lang,
-          'app-version': appVersion,
-          'device-id': ZenMoney.getData('deviceId'),
-          token: ZenMoney.getData('token')
-        },
-        sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
-      })
+  console.assert(response.ok, 'unexpected getCardOrAccountTransactions response', response)
+  const transactions = response.body.content
+    .map(rawTransaction => convertCardOrAccountTransaction(account, rawTransaction))
+    .filter(x => x !== null)
 
-      console.assert(response.ok, 'unexpected humo/history response', response)
-
-      transactions = transactions.concat(response.body.data.map(transaction =>
-        convertHumoCardTransaction(card, transaction)))
-    }
+  return {
+    totalPages: response.body.totalPages,
+    transactions
   }
-
-  return transactions
 }
 
-/**
- * Получить список транзакций по картам платежной системы Visa
- *
- * @param cards массив карт платежной системы Visa
- * @param fromDate дата в формате ISO8601, с которой нужно выгружать транзакции
- * @param toDate дата в формате ISO8601, по которую нужно выгружать транзакции
- * @returns массив транзакций в формате Дзенмани
- */
-export async function getVisaCardsTransactions (cards, fromDate, toDate) {
-  let transactions = []
+async function getDepositTransactions (deposit, page = 0, size = 15) {
+  // /deposits/history/DP-444fe2fb-20ac-474d-a1bc-92efd25f3b81?page=2&size=15
+  const endpoint = `/deposits/history/${deposit.id}?page=${page}&size=${size}`
 
-  for (const card of cards) {
-    if (!ZenMoney.isAccountSkipped(card.id)) {
-      const endpoint = '/visa/history?' +
-        'cardId=' + card.id + '&' +
-        'dateFrom=' + fromDate + '&' +
-        'dateTo=' + toDate
+  const response = await fetchJson(baseUrl + endpoint, {
+    method: 'GET',
+    headers: getDefaultHeadersWithToken(),
+    sanitizeRequestLog: { headers: { Authorization: true } }
+  })
 
-      const response = await fetchJson(baseUrl + endpoint, {
-        method: 'GET',
-        headers: {
-          lang,
-          'app-version': appVersion,
-          'device-id': ZenMoney.getData('deviceId'),
-          token: ZenMoney.getData('token')
-        },
-        sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
-      })
+  console.assert(response.ok, 'unexpected getDepositTransactions response', response)
+  const transactions = response.body.content
+    .map(rawTransaction => convertDepositTransaction(deposit, rawTransaction))
+    .filter(x => x !== null)
 
-      console.assert(response.ok, 'unexpected visa/history response', response)
-
-      transactions = transactions.concat(response.body.data.map(transaction =>
-        convertVisaCardTransaction(card, transaction)).filter(transaction => transaction !== null))
-    }
+  return {
+    totalPages: response.body.totalPages,
+    transactions
   }
-
-  return transactions
-}
-
-/**
- * Получить список транзакций по кошелькам
- *
- * @param wallets массив кошельков
- * @param fromDate дата в формате ISO8601, с которой нужно выгружать транзакции
- * @param toDate дата в формате ISO8601, по которую нужно выгружать транзакции
- * @returns массив транзакций в формате Дзенмани
- */
-export async function getWalletsTransactions (wallets, fromDate, toDate) {
-  let transactions = []
-
-  for (const wallet of wallets) {
-    if (!ZenMoney.isAccountSkipped(wallet.id)) {
-      const endpoint = '/wallet/history?' +
-        'id=' + wallet.id + '&' +
-        'startDate=' + fromDate + '&' +
-        'endDate=' + toDate
-
-      const response = await fetchJson(baseUrl + endpoint, {
-        method: 'GET',
-        headers: {
-          lang,
-          'app-version': appVersion,
-          'device-id': ZenMoney.getData('deviceId'),
-          token: ZenMoney.getData('token')
-        },
-        sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
-      })
-
-      console.assert(response.ok, 'unexpected wallet/history response', response)
-
-      transactions = transactions.concat(response.body.data.map(transaction =>
-        convertWalletTransaction(wallet, transaction)))
-    }
-  }
-
-  return transactions
-}
-
-/**
- * Получить список транзакций по счетам
- *
- * @param accounts массив счетов
- * @param fromDate дата в формате ISO8601, с которой нужно выгружать транзакции
- * @param toDate дата в формате ISO8601, по которую нужно выгружать транзакции
- * @returns массив транзакций в формате Дзенмани
- */
-export async function getAccountsTransactions (accounts, fromDate, toDate) {
-  let transactions = []
-
-  for (const account of accounts) {
-    if (!ZenMoney.isAccountSkipped(account.id)) {
-      const endpoint = '/account/statement?' +
-        'id=' + account.id + '&' +
-        'startDate=' + fromDate + '&' +
-        'endDate=' + toDate
-
-      const response = await fetchJson(baseUrl + endpoint, {
-        method: 'GET',
-        headers: {
-          lang,
-          'app-version': appVersion,
-          'device-id': ZenMoney.getData('deviceId'),
-          token: ZenMoney.getData('token')
-        },
-        sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
-      })
-
-      console.assert(response.ok, 'unexpected account/statement response', response)
-
-      transactions = transactions.concat(response.body.data.map(transaction =>
-        convertAccountTransaction(account, transaction)))
-    }
-  }
-
-  return transactions
-}
-
-/**
- * Получить список транзакций по вкладам
- *
- * @param accounts массив счетов
- * @param fromDate дата в формате ISO8601, с которой нужно выгружать транзакции
- * @param toDate дата в формате ISO8601, по которую нужно выгружать транзакции
- * @returns массив транзакций в формате Дзенмани
- */
-export async function getDepositsTransactions (accounts, fromDate, toDate) {
-  let transactions = []
-
-  for (const account of accounts) {
-    if (!ZenMoney.isAccountSkipped(account.id)) {
-      const endpoint = '/deposit/statement?' +
-        'absId=' + account.id + '&' +
-        'startDate=' + fromDate + '&' +
-        'endDate=' + toDate
-
-      const response = await fetchJson(baseUrl + endpoint, {
-        method: 'GET',
-        headers: {
-          lang,
-          'app-version': appVersion,
-          'device-id': ZenMoney.getData('deviceId'),
-          token: ZenMoney.getData('token')
-        },
-        sanitizeRequestLog: { headers: { 'device-id': true, token: true } }
-      })
-
-      console.assert(response.ok, 'unexpected account/statement response', response)
-
-      transactions = transactions.concat(response.body.data
-        .filter(tx => tx.mvmtType !== '5') // код выплат ежедневных процентов на целевой счет
-        .map(tx => convertDepositTransaction(account, tx))
-      )
-    }
-  }
-
-  return transactions
 }

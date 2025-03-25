@@ -1,23 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen>
     <EditTextPreference
-        key="pan"
+        key="phone"
         obligatory="true"
-        inputType="card"
-        title="Номер карты"
-        dialogTitle="Номер карты"
-        dialogMessage="Формат: 1234567812345678"
-        positiveButtonText="ОК"
-        negativeButtonText="Отмена"
-        summary="||{@s}"
-    />
-    <EditTextPreference
-        key="expiry"
-        obligatory="true"
-        inputType="card"
-        title="Срок действия карты"
-        dialogTitle="Срок действия карты"
-        dialogMessage="Формат MMYY, например 1128"
+        inputType="phone"
+        title="Номер телефона"
+        dialogTitle="Номер телефона"
+        dialogMessage="Формат: 998967777777"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="||{@s}"
@@ -28,10 +17,43 @@
         inputType="textPassword"
         title="Пароль от интернет-банка"
         dialogTitle="Пароль от интернет-банка"
-        dialogMessage="Пароль от интернет-банка и пин-код от приложения — это разные пароли. Если вы не помните пароль от интернет-банка, восстановите его на сайте банка."
+        dialogMessage="Пароль от интернет-банка и пин-код от приложения — это разные пароли. Если вы не помните пароль от интернет-банка, восстановите его в приложении банка."
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="||***********"
+    />
+    <CheckBoxPreference
+        key="isResident"
+        obligatory="true"
+        inputType="checkbox"
+        title="являетесь ли вы резидинтом Республики Узбекистан (есть гражданство или вид на жительство)"
+        dialogTitle="являетесь ли вы резидинтом Республики Узбекистан (есть гражданство или вид на жительство)"
+        dialogMessage="Так как банк теперь требует прохождение идентификации через myid.uz на каждом новом устройстве, введите номер паспорта или ПИНФЛ"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="||{@s}"
+    />
+    <EditTextPreference
+        key="pinfl"
+        obligatory="true"
+        inputType="text"
+        title="ПИНФЛ"
+        dialogTitle="ПИНФЛ"
+        dialogMessage="Так как банк теперь требует прохождение идентификации через myid.uz на каждом новом устройстве, введите ПИНФЛ"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="||{@s}"
+    />
+    <EditTextPreference
+        key="bday"
+        obligatory="true"
+        inputType="date"
+        title="Дата рождения"
+        dialogTitle="Дата рождения"
+        dialogMessage="Формат DDMMYYYY, например 01011990"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="||{@s}"
     />
     <EditTextPreference
         key="startDate"
