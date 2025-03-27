@@ -1,5 +1,5 @@
 import { Account, AccountType, Amount, Transaction } from '../../types/zenmoney'
-import { getNumber, getOptString, getString } from '../../types/get'
+import { getNumber, getOptString, getString, getOptNumber } from '../../types/get'
 import { ConvertResult } from './models'
 
 export function convertAccounts (apiAccounts: unknown[]): ConvertResult[] {
@@ -7,7 +7,7 @@ export function convertAccounts (apiAccounts: unknown[]): ConvertResult[] {
   const accounts: ConvertResult[] = []
 
   for (const apiAccount of apiAccounts) {
-    if (getString(apiAccount, 'no') !== '' && getString(apiAccount, 'name') !== '') {
+    if (getString(apiAccount, 'no') !== '' && getString(apiAccount, 'name') !== '' && getOptNumber(apiAccount, 'accountBalance') !== undefined) {
       const res = convertAccount(apiAccount, accountsByCba)
       if (res != null) {
         accounts.push(res)
