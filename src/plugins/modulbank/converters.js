@@ -20,13 +20,18 @@ export function convertTransaction (apiTransaction, account) {
     'Received',
     'ClarifyRequiredOutcome',
     'RejectByBank',
-    'SendToBank'
+    'SendToBank',
+    'RejectByBeneficiary',
+    'UnderControl',
+    'PayReceived'
   ].indexOf(apiTransaction.status) >= 0, 'unexpected transaction status', apiTransaction)
   console.assert(['Debet', 'Credit'].indexOf(apiTransaction.category) >= 0, 'unexpected transaction category', apiTransaction)
   if ([
     'Canceled',
     'ClarifyRequiredOutcome',
-    'RejectByBank'
+    'RejectByBank',
+    'RejectByBeneficiary',
+    'UnderControl'
   ].indexOf(apiTransaction.status) >= 0) {
     return null
   }
@@ -90,7 +95,8 @@ function parseInnerTransfer (transaction, apiTransaction) {
   if (![
     'Возврат депозита',
     'Перевод между счетами',
-    'Взнос во вклад'
+    'Взнос во вклад',
+    'Перевод средств между счетами'
   ].some(str => apiTransaction.paymentPurpose.indexOf(str) >= 0)) {
     return false
   }

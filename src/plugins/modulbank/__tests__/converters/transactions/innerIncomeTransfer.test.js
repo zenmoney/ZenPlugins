@@ -98,6 +98,60 @@ describe('convertTransaction', () => {
           '2959'
         ]
       }
+    ],
+    [
+      {
+        id: 'a6c059ba-43cf-4ecd-b563-b20a032ca4cf',
+        companyId: 'd95a037f-50c9-4e44-b5ee-e959a5a9ca91',
+        status: 'PayReceived',
+        category: 'Debet',
+        contragentName: 'Индивидуальный предприниматель Николаев Николай Николаевич',
+        contragentInn: '690403986647',
+        contragentKpp: '',
+        contragentBankAccountNumber: '40802810670013001206',
+        contragentBankCorrAccount: '30101810645250000092',
+        contragentBankName: 'МОСКОВСКИЙ ФИЛИАЛ АО КБ "МОДУЛЬБАНК"',
+        contragentBankBic: '044525092',
+        currency: 'RUR',
+        amount: 1305794.9,
+        bankAccountNumber: '40802810770010387221',
+        paymentPurpose: 'Перевод средств между счетами. НДС не облагается.\n',
+        executed: '2024-10-15T00:00:00',
+        created: '2024-10-15T00:00:00',
+        docNumber: '41939',
+        absId: '136658093795',
+        ibsoId: '136674173130',
+        kbk: '',
+        oktmo: '',
+        paymentBasis: '',
+        taxCode: '',
+        taxDocNum: '',
+        taxDocDate: '',
+        payerStatus: '',
+        uin: '0',
+        sbpOperId: '',
+        sbpOperIdForRefund: '',
+        rcvQrcId: '',
+        Oid: ''
+      },
+      {
+        date: new Date('2024-10-15T00:00:00.000+03:00'),
+        hold: false,
+        merchant: null,
+        movements: [
+          {
+            account: { id: 'account' },
+            fee: 0,
+            id: 'a6c059ba-43cf-4ecd-b563-b20a032ca4cf',
+            invoice: null,
+            sum: 1305794.9
+          }
+        ],
+        comment: null,
+        groupKeys: [
+          '41939'
+        ]
+      }
     ]
   ])('converts inner income transfer', (apiTransaction, transaction) => {
     expect(convertTransaction(apiTransaction, { id: 'account', instrument: 'RUB' })).toEqual(transaction)
