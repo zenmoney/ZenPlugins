@@ -49,4 +49,5 @@ export enum AccountType {
   CreditCardOnline = '8888',
   SplitBill = '1910',
   SchedulePaymnet = '1909',
+  ChubbInsurance = '6511',
 }
