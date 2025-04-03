@@ -104,6 +104,44 @@ describe('convertApiTransactionsToReadableTransactions', () => {
             accountRestDate: 1633604820000,
             colour: 1,
             last4: '7992, KATSIARYNA BARANAVA'
+          },
+          {
+            cardTransactionId: 172994059,
+            docId: 3258441,
+            openwayId: 138284335,
+            transactionDate: -60398491440000,
+            transactionType: 'Банкомат',
+            transactionCategory: 'Request',
+            transactionResult: 'Успешно',
+            transactionAmount: 1750,
+            transactionCurrency: 'BYN',
+            transactionDetails: 'ATMALF HO84 BONUS',
+            city: 'MINSK',
+            countryCode: 'BLR',
+            accountRest: 3037.57,
+            accountCurrency: 'BYN',
+            accountRestDate: 1738142160000,
+            colour: 2,
+            last4: '<string[21]>'
+          },
+          {
+            cardTransactionId: 172993959,
+            docId: 3258341,
+            openwayId: 138284235,
+            transactionDate: 1738142100000,
+            transactionType: 'Банкомат',
+            transactionCategory: 'Request',
+            transactionResult: 'Успешно',
+            transactionAmount: 1750,
+            transactionCurrency: 'BYN',
+            transactionDetails: 'ATMALF HO84 BONUS',
+            city: 'MINSK',
+            countryCode: 'BLR',
+            accountRest: 4787.57,
+            accountCurrency: 'BYN',
+            accountRestDate: 1738142100000,
+            colour: 2,
+            last4: '<string[21]>'
           }
         ]
       }
@@ -220,6 +258,72 @@ describe('convertApiTransactionsToReadableTransactions', () => {
             sum: 3076.6
           }
         ]
+      },
+      {
+        date: new Date('2025-01-29T09:15:00.000Z'),
+        hold: true,
+        movements: [
+          {
+            id: null,
+            account: {
+              type: 'cash',
+              instrument: 'BYN',
+              syncIds: null,
+              company: null
+            },
+            invoice: null,
+            sum: 1750,
+            fee: 0
+          },
+          {
+            id: '172993959',
+            account: { id: 'account' },
+            invoice: null,
+            sum: -1750,
+            fee: 0
+          }
+        ],
+        merchant: {
+          country: 'BLR',
+          city: 'MINSK',
+          title: 'ATMALF HO84 BONUS',
+          mcc: null,
+          location: null
+        },
+        comment: 'Банкомат'
+      },
+      {
+        date: new Date('2025-01-29T09:16:00.000Z'),
+        hold: true,
+        movements: [
+          {
+            id: null,
+            account: {
+              type: 'cash',
+              instrument: 'BYN',
+              syncIds: null,
+              company: null
+            },
+            invoice: null,
+            sum: 1750,
+            fee: 0
+          },
+          {
+            id: '172994059',
+            account: { id: 'account' },
+            invoice: null,
+            sum: -1750,
+            fee: 0
+          }
+        ],
+        merchant: {
+          country: 'BLR',
+          city: 'MINSK',
+          title: 'ATMALF HO84 BONUS',
+          mcc: null,
+          location: null
+        },
+        comment: 'Банкомат'
       }
     ])
   })

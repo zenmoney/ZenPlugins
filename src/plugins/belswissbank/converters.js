@@ -101,7 +101,7 @@ export function convertBSBToZenMoneyTransactions (accountsWithTxs, archiveTxs) {
         const sign = getTransactionFactor(smsTx)
         const archiveTx = joinArchiveTx(smsTx)
         const statementTx = joinStatementTx(smsTx)
-        const date = new Date(smsTx.transactionDate)
+        const date = smsTx.transactionDate > 0 ? new Date(smsTx.transactionDate) : new Date(smsTx.accountRestDate)
         const fee = 0
         const merchantTitle = archiveTx
           ? [archiveTx.name, archiveTx.target].filter(Boolean).join(', ')
