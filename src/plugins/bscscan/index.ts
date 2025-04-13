@@ -2,7 +2,7 @@ import { ScrapeFunc } from '../../types/zenmoney'
 import { fetchBlockNoByTime } from './common'
 import { Preferences } from './types'
 
-import { scrape as scrapeEther } from './bnb'
+import { scrape as scrapeBnb } from './bnb'
 import { scrape as scrapeTokens } from './tokens'
 
 export const scrape: ScrapeFunc<Preferences> = async ({
@@ -21,8 +21,8 @@ export const scrape: ScrapeFunc<Preferences> = async ({
     })
   ])
 
-  const [ether, tokens] = await Promise.all([
-    scrapeEther({
+  const [bnb, tokens] = await Promise.all([
+    scrapeBnb({
       preferences,
       startBlock,
       endBlock,
@@ -39,7 +39,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({
   ])
 
   return {
-    accounts: [...ether.accounts, ...tokens.accounts],
-    transactions: [...ether.transactions, ...tokens.transactions]
+    accounts: [...bnb.accounts, ...tokens.accounts],
+    transactions: [...bnb.transactions, ...tokens.transactions]
   }
 }
