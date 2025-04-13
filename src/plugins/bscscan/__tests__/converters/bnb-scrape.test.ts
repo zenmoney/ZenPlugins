@@ -21,7 +21,7 @@ describe('scrape', () => {
         id: '1',
         type: AccountType.checking,
         title: '1',
-        instrument: 'μETH',
+        instrument: 'bnb',
         balance: 2000000,
         syncIds: ['1']
       },
@@ -29,7 +29,7 @@ describe('scrape', () => {
         id: '2',
         type: AccountType.checking,
         title: '2',
-        instrument: 'μETH',
+        instrument: 'bnb',
         balance: 10000000,
         syncIds: ['2']
       }

@@ -17,7 +17,7 @@ function convertAccount ({ account, balance }: BNBAccount): Account {
     id: account,
     type: AccountType.checking,
     title: account,
-    instrument: 'μETH',
+    instrument: 'bnb',
     balance: convertWeiToUETH(Number(balance)),
     syncIds: [account]
   }
