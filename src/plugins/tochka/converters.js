@@ -37,8 +37,9 @@ export function convertTransactionNew (apiTransaction, account) {
     comment: null
   }
   ;[
-    parseBreak,
+    // parseBreak,
     parseInnerTransferNew,
+    parseOuterTransfer,
     parseCashTransfer,
     parsePurchase,
     parseSbp,
@@ -47,14 +48,14 @@ export function convertTransactionNew (apiTransaction, account) {
 
   return transaction
 }
-
+/*
 function parseBreak (transaction, apiTransaction) {
   if (apiTransaction.description.startsWith('P2P Перевод')) {
     return true
   }
   return false
 }
-
+*/
 function parseInnerTransferNew (transaction, apiTransaction) {
   if ([
     /^Перевод личных средств/
@@ -130,21 +131,32 @@ function parsePurchase (transaction, apiTransaction) {
   return false
 }
 
-function parseSbp (transaction, apiTransaction) {
+function parseSbp (transaction, apiTransaction, account) {
   if (!apiTransaction.description.startsWith('Перевод по номеру')) {
     return false
   }
-
-  const match = apiTransaction.description.match(/Получатель:?\s+(.+?) через СБП/)
+  const match = apiTransaction.description.match(/Получатель:?\s+(.+?) через СБП(.*Сообщение получателю:?\s+(.*))?/)
   if (match) {
     transaction.merchant = {
       fullTitle: match[1],
       mcc: null,
       location: null
     }
-    return true
+    transaction.comment = match[3] ? match[3] : null
   }
-  return false
+  transaction.movements.push({
+    id: null,
+    account: {
+      company: null,
+      instrument: account.instrument,
+      syncIds: null,
+      type: 'ccard'
+    },
+    invoice: null,
+    sum: -transaction.movements[0].sum,
+    fee: 0
+  })
+  return true
 }
 
 function parseDescription (transaction, apiTransaction) {
@@ -226,29 +238,38 @@ function parseInnerTransfer (transaction, apiTransaction) {
 
 function parseOuterTransfer (transaction, apiTransaction, account) {
   const isCard2Card = [
-    /TOCHKA Card2Card/
-  ].some(regexp => apiTransaction.payment_purpose.match(regexp))
-  if (!isCard2Card && ![
+    /Card2Card/
+  ].some(regexp => apiTransaction.payment_purpose?.match(regexp) || apiTransaction.description?.match(regexp))
+  if (isCard2Card || [
     /^Перевод собственных средств/
-  ].some(regexp => apiTransaction.payment_purpose.match(regexp))) {
-    return false
+  ].some(regexp => apiTransaction.payment_purpose?.match(regexp))) {
+    const descriptionMatch = apiTransaction.description?.match(/дата операции:([\d/\s:]+).*карта\s([\d*]+)/)
+    let syncIds = null
+    let dateStr
+    if (descriptionMatch) {
+      syncIds = [descriptionMatch[2]] || null
+      const [, day, month, year, time] = descriptionMatch[1].match(/(\d{2})\/(\d{2})\/(\d{4})\s+([\d:]+)/)
+      dateStr = `${year}-${month}-${day}T${time}:00+03:00`
+      transaction.date = new Date(dateStr)
+    }
+    transaction.movements.push({
+      id: null,
+      account: {
+        type: isCard2Card ? 'ccard' : null,
+        instrument: account.instrument,
+        company: null,
+        syncIds
+      },
+      invoice: null,
+      sum: -transaction.movements[0].sum,
+      fee: 0
+    })
+    if (isCard2Card) {
+      transaction.merchant = null
+    }
+    return true
   }
-  transaction.movements.push({
-    id: null,
-    account: {
-      type: isCard2Card ? 'ccard' : null,
-      instrument: account.instrument,
-      company: null,
-      syncIds: null
-    },
-    invoice: null,
-    sum: -transaction.movements[0].sum,
-    fee: 0
-  })
-  if (isCard2Card) {
-    transaction.merchant = null
-  }
-  return true
+  return false
 }
 
 function parsePayee (transaction, apiTransaction) {
