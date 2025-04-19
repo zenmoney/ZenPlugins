@@ -106,7 +106,7 @@ function parseMerchant (title: string, merchantTitle: unknown = null): Merchant 
   }
 
   const [merchantName, location] = title.split('/')
-  if (location !== '') {
+  if (location != null && location !== '') {
     return {
       title: merchantName.trim(),
       city: location.trim(),
