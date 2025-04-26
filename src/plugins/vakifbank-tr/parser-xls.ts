@@ -22,7 +22,7 @@ const HEAD = {
     'i̇şlem numarası',
     'islem numarasi'
   ]
-} as const
+}
 
 export function parseXlsStatements (
   buffers: ArrayBuffer[]
@@ -48,7 +48,7 @@ export function parseXlsStatements (
       if (instrument === 'TL' && a.startsWith('account type')) {
         const val = (r[1] ?? '').toString()
         const maybe = val.split(/\s+/).pop()
-        if (maybe) instrument = maybe.toUpperCase()
+        if (maybe != null) instrument = maybe.toUpperCase()
       }
       if (statementDate === '' && /date range/i.test(a)) {
         const m = (r.join(' ')).match(/(\d{2}\.\d{2}\.\d{4})/)

@@ -12,7 +12,7 @@ export function parseFormattedNumber (value: string): number {
   const cleaned = value
     .trim()
     .replace(/[-–−]/g, '-') // all minus‐like chars → ASCII -
-    .replace(/[^\d,.\-]/g, '') // strip everything except digits, dot, comma, minus
+    .replace(/[^\d,.-]/g, '') // strip everything except digits, dot, comma, minus
     .replace(/[.,](?=.*[.,])/g, '') // drop every thousands sep → leave last one as decimal
     .replace(',', '.') // decimal comma → dot
 
