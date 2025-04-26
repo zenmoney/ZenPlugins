@@ -4,16 +4,33 @@ import { VakifStatementAccount, VakifStatementTransaction } from './models'
 import { parseDateAndTimeFromPdfText, parseDateFromPdfText, parseFormattedNumber } from './converters'
 import { parsePdf } from '../../common/pdfUtils'
 
-export async function parsePdfVakifStatement (): Promise<null | Array<{ account: VakifStatementAccount, transactions: VakifStatementTransaction[] }>> {
-  const blob = await getPdfDocuments()
-  validateDocuments(blob)
-  const pdfStrings = await Promise.all(blob.map(async (blob) => {
-    const { text } = await parsePdf(blob)
-    return text
-  }))
-  return parsePdfStatements(pdfStrings)
+export async function pickStatementDocuments (): Promise<Blob[]> {
+  const blobs = await ZenMoney.pickDocuments(
+    ['application/pdf'], // XLS types will be added in Step 2
+    true // allow multiple selection
+  )
+
+  if (!blobs || blobs.length === 0) {
+    throw new TemporaryError('Выберите один или несколько файлов в формате .pdf')
+  }
+  return blobs
 }
 
+export async function parseVakifStatementFromFiles (
+  blobs: Blob[]
+): Promise<null | Array<{ account: VakifStatementAccount, transactions: VakifStatementTransaction[] }>> {
+  validateDocuments(blobs)
+
+  // (Step 2 will branch by mime-type; for now everything is PDF)
+  const pdfStrings = await Promise.all(
+    blobs.map(async (blob) => {
+      const { text } = await parsePdf(blob)
+      return text
+    })
+  )
+
+  return parsePdfStatements(pdfStrings)
+}
 export function parsePdfStatements (pdfStrings: string[]): Array<{ account: VakifStatementAccount, transactions: VakifStatementTransaction[] }> {
   const result = []
   for (const textItem of pdfStrings) {
