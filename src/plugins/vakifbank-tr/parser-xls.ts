@@ -1,6 +1,6 @@
 import * as XLSX from 'xlsx'
 import { assert } from './lib/assert'
-import { VakifStatementAccount, VakifStatementTransaction } from './models'
+import { RawAccountAndTransactions, VakifStatementAccount, VakifStatementTransaction } from './models'
 import { parseDateAndTimeFromPdfText, parseDateFromPdfText, parseFormattedNumber } from './converters'
 
 /** Normalise cell text for header matching */
@@ -26,8 +26,8 @@ const HEAD = {
 
 export function parseXlsStatements (
   buffers: ArrayBuffer[]
-): Array<{ account: VakifStatementAccount, transactions: VakifStatementTransaction[] }> {
-  const out: Array<{ account: VakifStatementAccount, transactions: VakifStatementTransaction[] }> = []
+): RawAccountAndTransactions {
+  const out: RawAccountAndTransactions = []
 
   for (const buf of buffers) {
     const wb = XLSX.read(buf, { type: 'array', cellDates: false })
