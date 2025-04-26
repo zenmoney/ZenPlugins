@@ -56,8 +56,8 @@ function cleanMerchantTitle (text: string | null): string | null {
 function convertCurrency (amount: number, fromCurrency: string, toCurrency: string): number {
   // костыль, но хоть что-то
   const exchangeRates: { [key: string]: number } = {
-    USD_KZT: 519.25,
-    EUR_KZT: 532.38,
+    USD_KZT: 505.91,
+    EUR_KZT: 529.41,
     RUB_KZT: 5.31,
     CNY_KZT: 70.49,
     TRY_KZT: 14.32,

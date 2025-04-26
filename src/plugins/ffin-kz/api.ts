@@ -1,10 +1,10 @@
 import { generateUUID } from '../../common/utils'
 import { StatementTransaction, ObjectWithAnyProps } from './models'
-import { parsePdfFromBlob } from './pdfToStr'
 import { Amount, AccountOrCard, AccountType } from '../../types/zenmoney'
 import { parseAmount } from './converters/converterUtils'
 import { openWebViewAndInterceptRequest } from '../../common/network'
 import { TemporaryError } from '../../errors'
+import { parsePdf } from '../../common/pdfUtils'
 
 function getRegexpMatch (regExps: RegExp[], text: string, flags?: string): RegExpMatchArray | null {
   let match = null
@@ -24,10 +24,10 @@ function parseAccountId (text: string): string {
   return match[1] // KZ123456789012345
 }
 
-function parseBalance (text: string): Amount {
+export function parseBalance (text: string): Amount {
   // Пример: Доступно на 02.01.202519,455.00₸
   const match = getRegexpMatch([
-    /Доступно\s+на\s+(\d{2}[-./]\d{2}[-./]\d{4})(\d{1,3}(?:[\s.,]\d{3})*(?:[.,]\d+)?)([₸])/
+    /Доступно\s+на\s+(\d{2}[-./]\d{2}[-./]\d{4})\s?(\d{1,3}(?:[\s.,]\d{3})*(?:[.,]\d+)?)([₸])/
   ], text)
   if (match?.[2] !== undefined) {
     const amountStr = [
@@ -53,11 +53,14 @@ function parseAccountTitle (text: string): string {
 
 function parseCardNumber (text: string): string {
   // Пример: Номер карты:**1234
-  return text.match(/Номер карты:\*\*(\d{4})/)?.[1] ?? ''
+  // Пример: Номер карты: **6218
+  return text.match(/Номер карты:\s*\*\*(\d{4})/)?.[1] ?? ''
 }
 
 function parseTransactions (text: string, statementUid: string): StatementTransaction[] {
-  const baseRegexp = /^(\d{2}\.\d{2}\.\d{4})([-+]\s?[\d.,]+)\s?([₸$€£¥₺₽])\s?([A-Z]{3})([а-яА-ЯA-Za-z\s"“”'‘’]+)?\s?(.+)?$/gm
+  // Пример: 01.01.2025-600.00 ₸KZTПокупка Airba Fresh Minimarket. Продукты и супермаркет
+  // Пример: 01.02.2025 -9,480.00 ₸ KZT Покупка Sensilyo Coffee House. Кафе и рестораны
+  const baseRegexp = /^(\d{2}\.\d{2}\.\d{4})\s?([-+]\s?[\d.,]+)\s?([₸$€£¥₺₽])?\s?([A-Z]{3})\s?([а-яА-ЯA-Za-z\s"“”'‘’]+)?\s?(.+)?$/gm
 
   const transactionStrings = text.match(baseRegexp)
 
@@ -66,7 +69,7 @@ function parseTransactions (text: string, statementUid: string): StatementTransa
   }
 
   return transactionStrings.map((str) => {
-    const match = str.match(/^(\d{2}\.\d{2}\.\d{4})([-+]\s?[\d.,]+)\s?([₸$€£¥₺₽])([A-Z]{3})([а-яА-ЯA-Za-z\s"“”'‘’]+)?\s?(.+)?$/)
+    const match = str.match(/^(\d{2}\.\d{2}\.\d{4})\s?([-+]\s?[\d.,]+)\s?([₸$€£¥₺₽])?\s?([A-Z]{3})\s?([а-яА-ЯA-Za-z\s"“”'‘’]+)?\s?(.+)?$/)
     // const currency = match?.[3] ?? ''
     const currencyCode = match?.[4] ?? ''
 
@@ -119,16 +122,17 @@ export function parseSinglePdfString (text: string, statementUid?: string): { ac
 async function showHowTo (): Promise<ObjectWithAnyProps> {
   let result
   if (ZenMoney.getData('showHowTo') !== false) {
-    const url = 'https://api.zenmoney.app/plugins/freedombank-kz/how-to/'
+    const url = 'https://api.zenmoney.app/plugins/ffin-kz/how-to/'
     try {
       result = await openWebViewAndInterceptRequest({
         url,
         intercept: (request) => {
           console.log('Intercepted url: ', request.url)
-          return request.url.includes('plugins/freedombank-kz/callback/')
+          return request.url.includes('plugins/ffin-kz/callback/')
         }
       })
       ZenMoney.setData('showHowTo', false)
+      ZenMoney.saveData()
     } catch (e) {
       console.debug(e)
     }
@@ -149,7 +153,22 @@ export async function parsePdfStatements (): Promise<null | Array<{ account: Acc
       throw new TemporaryError('Максимальный размер файла - 1 мб')
     }
   }
-  const pdfStrings = await parsePdfFromBlob({ blob })
+  const pdfStrings = await Promise.all(blob.map(async (blob) => {
+    const { text } = await parsePdf(blob)
+
+    const splitPoint = text.search(/\d{2}\.\d{2}\.\d{4}/)
+    const header = text.slice(0, splitPoint).trim()
+    const transactions = text.slice(splitPoint).trim()
+
+    // Обработка транзакций
+    const transactionsText = transactions
+      .replace(/(\d{2}\.\d{2}\.\d{4}[^\n]*?)\n([A-Za-zА-Яа-я])/g, '$1 $2') // Объединение строк одной записи
+      .replace(/([а-яА-Яa-zA-Z.,])\n([а-яА-Яa-zA-Z])/g, '$1 $2') // Удаление переносов строк внутри деталей
+      .replace(/\s{2,}/g, ' ') // Удаление двойных пробелов
+      .replace(/\n{2,}/g, '\n') // Удаление двойных переводов строк
+
+    return `${header}\n\n${transactionsText}`
+  }))
   const result = []
   for (const textItem of pdfStrings) {
     console.log(textItem)

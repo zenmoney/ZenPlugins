@@ -79,11 +79,18 @@ function findTransactionMovement (account: string, transaction: Transaction): Mo
   const accountFee = (accountKeys[accountIndex].signer) ? -transaction.meta.fee : 0
   const accountDiff = diffBalances[accountIndex] - accountFee
 
-  const convertedAccountDiff = convertLamportToSolana(accountDiff)
-  const convertedAccountFee = convertLamportToSolana(accountFee)
+  let convertedAccountDiff = convertLamportToSolana(accountDiff)
+  let convertedAccountFee = convertLamportToSolana(accountFee)
 
-  if (convertedAccountDiff === 0 && convertedAccountFee === 0) {
-    return null
+  if (convertedAccountDiff === 0) {
+    // if both diff and fee are zero -- skip this txn
+    if (convertedAccountFee === 0) {
+      return null
+    }
+
+    // if diff is zero -- use fee as diff to avoid TSN check failure in the app
+    convertedAccountDiff = convertedAccountFee
+    convertedAccountFee = 0
   }
 
   return {

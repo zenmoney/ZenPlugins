@@ -5,11 +5,11 @@ import {
   StatementTransaction,
   ObjectWithAnyProps, AccountTypeByLocale, AccountTypeHash
 } from './models'
-import { parsePdfFromBlob } from './pdfToStr'
 import { Amount } from '../../types/zenmoney'
 import { parseAmount } from './converters/converterUtils'
 import { openWebViewAndInterceptRequest } from '../../common/network'
 import { TemporaryError } from '../../errors'
+import { parsePdf } from '../../common/pdfUtils'
 
 function getRegexpMatch (regExps: RegExp[], text: string, flags?: string): RegExpMatchArray | null {
   let match = null
@@ -177,13 +177,15 @@ function parseAccountTitle (text: string, type: string): string {
 
 function parseDepositTransactions (text: string, statementUid: string): StatementTransaction[] {
   const headerStringByLocale = {
-    ru: 'ДатаСуммаОперацияДеталиНа Депозите'
+    ru: /Дата\s?Сумма\s?Операция\s?Детали\s?На Депозите/
   }
-  const startIndex = text.indexOf(headerStringByLocale.ru)
+  const headerMatch = text.match(headerStringByLocale.ru)
+  assert(headerMatch?.[0] != null, 'Can\'t find header for deposit account')
+  const startIndex = text.indexOf(headerMatch?.[0])
   assert(startIndex >= 0, 'Can\'t parse transactions for deposit account')
   text = text.slice(startIndex)
   const pages = text.split(headerStringByLocale.ru).filter(str => str !== '')
-  const transactionRegExp = /^(\d{2}\.\d{2}\.\d{2})([-+]\s?[$\d\s.,]+)?([^а-яА-Я]*[^$\d]+)((\$?\d{1,3}\s?){1}(\d{3}\s?)*,\d{2}(\s₸)?)?/
+  const transactionRegExp = /^(\d{2}\.\d{2}\.\d{2})\s?([-+]\s?[$\d\s.,]+)?\s?([^а-яА-Я]*[^$\d]+)\s?((\$?\d{1,3}\s?){1}(\d{3}\s?)*,\d{2}(\s₸)?)?/
   const result: StatementTransaction[] = []
   for (const page of pages) {
     const transactionStrings = page.match(new RegExp(transactionRegExp, 'gm'))
@@ -250,11 +252,11 @@ function parseTransactions (text: string, accountType: string, statementUid: str
   let originalAmountRegExpIndex = 5
   let descriptionRegExpIndex = 4
   if (locale === 'en') {
-    baseRegexp = /^(\d{2}\.?){3}([-+]\s?[\d\s.,]+)\W+(\w+)\s+(.+)\s?(\([-+]?[\d.,]+\s?[A-Z]{3}\))?/
+    baseRegexp = /^(\d{2}\.\d{2}\.\d{2})\s*([+-]\s?[\d\s.,]+)\s*\W+(\w+)\s+(.+)\s?(\([-+]?[\d.,]+\s?[A-Z]{3}\))?/
   } else if (locale === 'ru') {
-    baseRegexp = /^(\d{2}\.?){3}([-+]\s?[\d\s.,]+)[^а-яА-Я]+([а-яА-Я]+)\s+(.+)\s?(\([-+]?[\d.,]+\s?[A-Z]{3}\))?/
+    baseRegexp = /^(\d{2}\.\d{2}\.\d{2})\s*([+-]\s?[\d\s.,]+)\s*[^а-яА-Я]+([а-яА-Я]+)\s+(.+)\s?(\([-+]?[\d.,]+\s?[A-Z]{3}\))?/
   } else {
-    baseRegexp = /^(\d{2}\.?){3}([-+]\s?[\d\s.,]+)[^а-яА-Я\s]+\s{2,}((\S+\s)+)\s{2,}((\S+ {0,2})+)(\s\([^)]+\))?/
+    baseRegexp = /^(\d{2}\.\d{2}\.\d{2})\s*([+-]\s?[\d\s.,]+)\s*[^а-яА-Я\s]+\s{2,}((\S+\s)+)\s{2,}((\S+ {0,2})+)(\s\([^)]+\))?/
     originalAmountRegExpIndex = 7
     descriptionRegExpIndex = 5
   }
@@ -335,7 +337,10 @@ export async function parsePdfStatements (): Promise<null | Array<{ account: Sta
       throw new TemporaryError('Максимальный размер файла - 1 мб')
     }
   }
-  const pdfStrings = await parsePdfFromBlob({ blob })
+  const pdfStrings = await Promise.all(blob.map(async (blob) => {
+    const { text } = await parsePdf(blob)
+    return text
+  }))
   const result = []
   for (const textItem of pdfStrings) {
     console.log(textItem)
