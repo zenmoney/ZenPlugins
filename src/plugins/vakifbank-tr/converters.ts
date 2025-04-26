@@ -6,8 +6,19 @@ import { TransactionWithId, VakifStatementAccount, VakifStatementTransaction } f
 const MERCHANT_TITLE_REGEX = /ISLEM NO :\s*(\d{4})?-(.*?)\s\s(.*?)\*\*\*\*/
 const MERCHANT_MCC_REGEX = /Mcc: (\d{4})/
 
+// converters.ts
 export function parseFormattedNumber (value: string): number {
-  return parseFloat(value.replace(/\./g, '').replace(',', '.'))
+  // 1. Trim & normalise minus sign variants (-, – , − → -)
+  const cleaned = value
+    .trim()
+    .replace(/[-–−]/g, '-') // all minus‐like chars → ASCII -
+    .replace(/[^\d,.-]/g, '') // strip everything except digits, dot, comma, minus
+    .replace(/[.,](?=.*[.,])/g, '') // drop every thousands sep → leave last one as decimal
+    .replace(',', '.') // decimal comma → dot
+
+  if (cleaned === '' || cleaned === '-' || cleaned === '.') { return NaN } // caller can decide what to do with bad cells
+
+  return parseFloat(cleaned)
 }
 
 export function parseAmount (amount: string): Amount {

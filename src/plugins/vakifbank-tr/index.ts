@@ -3,9 +3,9 @@ import { uniqBy } from 'lodash'
 import { Account, ScrapeFunc } from '../../types/zenmoney'
 import { generateRandomString } from '../../common/utils'
 
-import { Auth, Preferences, VakifStatementTransaction, VakifStatementAccount, TransactionWithId } from './models'
+import { Auth, Preferences, TransactionWithId } from './models'
 import { convertPdfStatementAccount, convertVakifPdfStatementTransaction } from './converters'
-import { parsePdfVakifStatement } from './api'
+import { parseVakifStatementFromFiles, pickStatementDocuments } from './api'
 
 export const scrape: ScrapeFunc<Preferences> = async ({ fromDate, isFirstRun }) => {
   let auth = ZenMoney.getData('auth') as Auth | undefined
@@ -16,7 +16,9 @@ export const scrape: ScrapeFunc<Preferences> = async ({ fromDate, isFirstRun }) 
   }
   ZenMoney.setData('auth', auth)
   ZenMoney.saveData()
-  const rawAccountsAndTransactions: null | Array<{ account: VakifStatementAccount, transactions: VakifStatementTransaction[] }> = await parsePdfVakifStatement()
+
+  const blobs = await pickStatementDocuments()
+  const rawAccountsAndTransactions = await parseVakifStatementFromFiles(blobs)
 
   const transactions: TransactionWithId[] = []
   const accounts: Account[] = []

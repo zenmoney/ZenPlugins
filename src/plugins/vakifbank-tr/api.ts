@@ -1,17 +1,54 @@
 import { TemporaryError } from '../../errors'
 
-import { VakifStatementAccount, VakifStatementTransaction } from './models'
+import { RawAccountAndTransactions, VakifStatementAccount, VakifStatementTransaction } from './models'
 import { parseDateAndTimeFromPdfText, parseDateFromPdfText, parseFormattedNumber } from './converters'
 import { parsePdf } from '../../common/pdfUtils'
+import { parseXlsStatements } from './parser-xls'
 
-export async function parsePdfVakifStatement (): Promise<null | Array<{ account: VakifStatementAccount, transactions: VakifStatementTransaction[] }>> {
-  const blob = await getPdfDocuments()
-  validateDocuments(blob)
-  const pdfStrings = await Promise.all(blob.map(async (blob) => {
-    const { text } = await parsePdf(blob)
-    return text
-  }))
-  return parsePdfStatements(pdfStrings)
+const SUPPORTED_MIME_TYPES = [
+  'application/pdf',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+]
+
+export async function pickStatementDocuments (): Promise<Blob[]> {
+  const blobs = await ZenMoney.pickDocuments(SUPPORTED_MIME_TYPES, true)
+
+  if (!blobs || blobs.length === 0) {
+    throw new TemporaryError('Выберите один или несколько файлов в формате .pdf или .xls/.xlsx')
+  }
+  return blobs
+}
+
+export async function parseVakifStatementFromFiles (
+  blobs: Blob[]
+): Promise<null | RawAccountAndTransactions> {
+  validateDocuments(blobs)
+
+  const pdfBlobs = blobs.filter(b => b.type === 'application/pdf')
+  const xlsBlobs = blobs.filter(
+    b => b.type === 'application/vnd.ms-excel' ||
+         b.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  )
+
+  const statements: RawAccountAndTransactions = []
+
+  if (pdfBlobs.length > 0) {
+    const pdfStrings = await Promise.all(
+      pdfBlobs.map(async (blob) => {
+        const { text } = await parsePdf(blob)
+        return text
+      })
+    )
+    statements.push(...parsePdfStatements(pdfStrings))
+  }
+
+  if (xlsBlobs.length > 0) {
+    const buffers = await Promise.all(xlsBlobs.map(async b => await b.arrayBuffer()))
+    statements.push(...parseXlsStatements(buffers))
+  }
+
+  return (statements.length > 0) ? statements : null
 }
 
 export function parsePdfStatements (pdfStrings: string[]): Array<{ account: VakifStatementAccount, transactions: VakifStatementTransaction[] }> {
@@ -37,19 +74,13 @@ function isVakifBankStatement (text: string): boolean {
 export function validateDocuments (blob: Blob[]): void {
   for (const { size, type } of blob) {
     if (type !== 'application/pdf') {
-      throw new TemporaryError('Выписка должна быть в расширении .pdf')
+      if (!SUPPORTED_MIME_TYPES.includes(type)) {
+        throw new TemporaryError('Файл должен быть в формате .pdf или .xls/.xlsx')
+      }
     } else if (size >= 1000 * 1000) {
       throw new TemporaryError('Максимальный размер файла - 1 мб')
     }
   }
-}
-
-async function getPdfDocuments (): Promise<Blob[]> {
-  const blob = await ZenMoney.pickDocuments(['application/pdf'], true)
-  if (blob == null || !blob.length) {
-    throw new TemporaryError('Выберите один или несколько файлов в формате .pdf')
-  }
-  return blob
 }
 
 export function parseSinglePdfString (text: string, statementUid?: string): { account: VakifStatementAccount, transactions: VakifStatementTransaction[] } {
