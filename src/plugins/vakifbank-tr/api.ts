@@ -1,8 +1,9 @@
 import { TemporaryError } from '../../errors'
 
-import { VakifStatementAccount, VakifStatementTransaction } from './models'
+import { RawAccountAndTransactions, VakifStatementAccount, VakifStatementTransaction } from './models'
 import { parseDateAndTimeFromPdfText, parseDateFromPdfText, parseFormattedNumber } from './converters'
 import { parsePdf } from '../../common/pdfUtils'
+import { parseXlsStatements } from './parser-xls'
 
 const SUPPORTED_MIME_TYPES = [
   'application/pdf',
@@ -21,27 +22,33 @@ export async function pickStatementDocuments (): Promise<Blob[]> {
 
 export async function parseVakifStatementFromFiles (
   blobs: Blob[]
-): Promise<null | Array<{ account: VakifStatementAccount, transactions: VakifStatementTransaction[] }>> {
+): Promise<null | RawAccountAndTransactions> {
   validateDocuments(blobs)
 
   const pdfBlobs = blobs.filter(b => b.type === 'application/pdf')
-  const xlsBlobs = blobs.filter(b => b.type !== 'application/pdf')
-
-  if (xlsBlobs.length > 0) {
-    // Step 3 will handle these; keeping current run functional
-    console.info(`[Vakif] XLS/XLSX файлов выбрано: ${xlsBlobs.length}. Будут обработаны на следующем шаге.`)
-  }
-
-  if (pdfBlobs.length === 0) return null
-
-  const pdfStrings = await Promise.all(
-    pdfBlobs.map(async (blob) => {
-      const { text } = await parsePdf(blob)
-      return text
-    })
+  const xlsBlobs = blobs.filter(
+    b => b.type === 'application/vnd.ms-excel' ||
+         b.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   )
 
-  return parsePdfStatements(pdfStrings)
+  const statements: RawAccountAndTransactions = []
+
+  if (pdfBlobs.length > 0) {
+    const pdfStrings = await Promise.all(
+      pdfBlobs.map(async (blob) => {
+        const { text } = await parsePdf(blob)
+        return text
+      })
+    )
+    statements.push(...parsePdfStatements(pdfStrings))
+  }
+
+  if (xlsBlobs.length > 0) {
+    const buffers = await Promise.all(xlsBlobs.map(async b => await b.arrayBuffer()))
+    statements.push(...parseXlsStatements(buffers))
+  }
+
+  return (statements.length > 0) ? statements : null
 }
 
 export function parsePdfStatements (pdfStrings: string[]): Array<{ account: VakifStatementAccount, transactions: VakifStatementTransaction[] }> {
