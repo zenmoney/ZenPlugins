@@ -82,6 +82,4 @@ if (!global.TextDecoder) {
   }
 }
 
-if (!global.WebAssembly || global.ZenMoney?.application?.platform === 'android') {
-  global.WebAssembly = WebAssembly
-}
+global.WebAssembly = WebAssembly
