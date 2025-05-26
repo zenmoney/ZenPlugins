@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
     <id>bscscan</id>
-    <company>15936</company>
+    <company>16078</company>
     <description>
         Плагин для синхронизации BNB Smart Chain с помощью bscscan.
         Для синхронизации укажите ApiKey и адреса кошельков.
