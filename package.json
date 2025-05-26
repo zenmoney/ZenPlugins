@@ -50,6 +50,7 @@
     "thrift": "0.15.0",
     "util": "0.10.3",
     "whatwg-fetch": "skvav/fetch#c7664274b2a520f777d2bedc7bbd8f10bef5c5a9",
+    "xlsx": "^0.18.5",
     "xml-js": "1.6.11",
     "xml2js": "0.4.23"
   },
