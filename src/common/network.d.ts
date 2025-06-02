@@ -1,3 +1,13 @@
+export interface FetchResponseHeaders {
+  entries: () => IterableIterator<[string, string]>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  forEach: (callback: (value: string, key: string, headers: FetchResponseHeaders) => void, thisArg?: any) => void
+  get: (name: string) => string | null
+  has: (name: string) => boolean
+  keys: () => IterableIterator<string>
+  values: () => IterableIterator<string>
+}
+
 export interface FetchResponse {
   status: number
   url: string
