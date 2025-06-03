@@ -44,6 +44,8 @@ export declare interface InterceptedRequest {
   headers?: unknown
 }
 
+export declare type FetchFunc = (url: string, options?: FetchOptions) => Promise<FetchResponse>
+
 // * Almost the same as browser's fetch.
 // * Automatically log requests & responses.
 // * Use parse/stringify parameters to log only
