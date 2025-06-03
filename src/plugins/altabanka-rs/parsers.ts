@@ -1,6 +1,7 @@
 import cheerio from 'cheerio'
 import { AccountInfo, AccountTransaction } from './types'
 import moment from 'moment'
+import { isValidDate } from '../../common/dateUtils'
 
 const exchangeRateRegex = /\d+\.\d+ \w{3} Kurs:.+/
 
@@ -50,7 +51,7 @@ export function parseRequestVerificationToken (body: string): string {
   return token
 }
 
-export function parseTransactions (body: string): AccountTransaction[] {
+export function parseTransactions (body: string, fromDate: Date): AccountTransaction[] {
   const html = cheerio.load(body)
   const transactionsHtml = html('#transaction-view-content').find('.pageable-content')
 
@@ -77,7 +78,7 @@ export function parseTransactions (body: string): AccountTransaction[] {
 
     return {
       id: 'id_' + params.q,
-      date,
+      date: isValidDate(date) ? date : fromDate,
       address,
       amount: direction * Number(amount.replace(/,/g, '')),
       currency,

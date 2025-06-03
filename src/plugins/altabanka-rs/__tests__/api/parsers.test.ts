@@ -247,7 +247,8 @@ describe('parsers', () => {
       'utf8'
     )
 
-    const response = parseTransactions(mockBody)
+    const fromDate: Date = new Date('2025-02-24T00:00:00')
+    const response = parseTransactions(mockBody, fromDate)
 
     expect(response).toEqual(
       [
@@ -341,7 +342,8 @@ describe('parsers', () => {
       'utf8'
     )
 
-    const response = parseTransactions(mockBody)
+    const fromDate: Date = new Date('2025-02-24T00:00:00')
+    const response = parseTransactions(mockBody, fromDate)
 
     expect(response).toEqual(
       [
@@ -496,6 +498,45 @@ describe('parsers', () => {
           date: new Date('2024-02-08T00:00:00'),
           description: '',
           id: 'id_%2Bh5Bxj5lBGydLNdInhh39oT8MEW0Tovt7fQH97F17VRFy%2Bhp83GjBFWKCZW4nBSOdTuweS8HjHs%3D'
+        }
+      ]
+    )
+  })
+
+  it('should parse account transactions', async () => {
+    const mockBody = fs.readFileSync(
+      path.resolve(__dirname, './__mocks__/transactions-post-3.html'),
+      'utf8'
+    )
+
+    const fromDate: Date = new Date('2025-02-24T00:00:00')
+    const response = parseTransactions(mockBody, fromDate)
+
+    expect(response).toEqual(
+      [
+        {
+          address: ';Komunalne usluge',
+          amount: -14662.59,
+          currency: 'RSD',
+          date: new Date('2025-02-24T00:00:00'),
+          description: '',
+          id: 'id_JeQgbNVlylR9evhxQ6bT4S354kfl3Va7ZE5JAFRD3TXy1TOuxC9P9Q%3D%3D'
+        },
+        {
+          address: '- provizija',
+          amount: -20,
+          currency: 'RSD',
+          date: new Date('2025-02-24T00:00:00'),
+          description: '',
+          id: 'id_JeQgbNVlylR9evhxQ6bT4S354kfl3Va7ZE5JAFRD3TXy1TOuxC9P9Q%3D%3D'
+        },
+        {
+          address: 'Uplata sa racuna NIKOLAY NIKOLAEV PR NOVI SAD , GAJEVA 25, Novi Sad',
+          amount: 141871.43,
+          currency: 'RSD',
+          date: new Date('2025-05-28T00:00:00'),
+          description: '',
+          id: 'id_JeQgbNVlylRxBirFVpseyEaLXmInxqJoarpEY6oJ3ZWWfMZvyfnnDdAoIWY3BAMN0X%2BrxL3EZ0s%3D'
         }
       ]
     )
