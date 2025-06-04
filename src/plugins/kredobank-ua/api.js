@@ -156,12 +156,13 @@ export async function login (preferences, auth) {
 
 async function fetchProductDetails (product, contractType, auth) {
   if (contractType === 'card' && product.cardsList?.length > 0) {
-    await Promise.all(product.cardsList.map(async card => {
-      const cardDetailsResponse = await fetchApi(`/v1/individual/light/contract/card/${product.id}/detailed?cardId=${card.id}`, {
-        method: 'GET'
-      }, auth)
-      card.details = cardDetailsResponse.body
-    }))
+    await Promise.all(product.cardsList.filter(card => card.showAndOperationRule.mainScreenShowAllowed !== false)
+      .map(async card => {
+        const cardDetailsResponse = await fetchApi(`/v1/individual/light/contract/card/${product.id}/detailed?cardId=${card.id}`, {
+          method: 'GET'
+        }, auth)
+        card.details = cardDetailsResponse.body
+      }))
   } else {
     const detailsResponse = await fetchApi(`/v1/individual/light/contract/${contractType}/${product.id}/detailed`, {
       method: 'GET'
@@ -179,8 +180,8 @@ export async function fetchAccounts (auth) {
     }, auth)
     console.assert(isArray(response.body.contracts), 'unexpected response', response)
 
-    return await Promise.all(response.body.contracts.filter(product => (product.providerId === 'card' && product.accountStateCodeName === '1') ||
-      product.providerId !== 'card').map(async product => {
+    return await Promise.all(response.body.contracts.filter(product => ((product.providerId === 'card' && product.accountStateCodeName === '1') ||
+      product.providerId !== 'card') && product.showAndOperationRule.mainScreenShowAllowed !== false).map(async product => {
       await fetchProductDetails(product, contractType, auth)
       return product
     }))
