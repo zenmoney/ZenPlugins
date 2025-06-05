@@ -1,5 +1,5 @@
 import { convertTransaction } from '../../../converters'
-import { accountGel, accountUsd } from '../../../tests-common/accounts'
+import { accountGel, accountUsd, accountEur } from '../../../tests-common/accounts'
 
 describe('convertTransaction', () => {
   it.each([
@@ -481,7 +481,7 @@ describe('convertTransaction', () => {
         comment: 'Cash withdrawal'
       }
     ]
-  ])('converts cash transfer', (apiTransaction, transaction) => {
+  ])('converts cash transfer accountGel', (apiTransaction, transaction) => {
     expect(convertTransaction(apiTransaction, accountGel)).toEqual(transaction)
   })
 
@@ -608,7 +608,134 @@ describe('convertTransaction', () => {
         comment: 'Cash withdrawal'
       }
     ]
-  ])('converts cash transfer', (apiTransaction, transaction) => {
+  ])('converts cash transfer accountUsd', (apiTransaction, transaction) => {
     expect(convertTransaction(apiTransaction, accountUsd)).toEqual(transaction)
+  })
+
+  it.each([
+    [
+      {
+        statmentId: 90123390423,
+        acctKey: 11569893001,
+        entryId: 96831064244,
+        docKey: 27612451382,
+        essId: null,
+        nomination: 'Withdrawal - Amount: EUR507.00; ATM: LA CAIXA 8447>SEVILLA ES, Spain; MCC:6011; Date: 02/06/2025 19:18; Card No: ****6697; Payment transaction amount and currency: 517.14 EUR',
+        entryGroup: null,
+        merchantId: '84470015',
+        postDate: 1748894400000,
+        authDateStr: '02/06/2025 19:18',
+        inpSysdate: 1748884680000,
+        operationDate: 1748877480000,
+        amount: 517.14,
+        oppositeAmount: null,
+        ccy: 'EUR',
+        clientComment: null,
+        canCopy: 'N',
+        status: 'F',
+        groupDescription: null,
+        groupType: null,
+        docNomination: null,
+        beneficiary: null,
+        bonusPoint: 0,
+        merchantName: 'LA CAIXA 8447>SEVILLA ES, ესპანეთი',
+        merchantNameInt: 'LA CAIXA 8447>SEVILLA ES, Spain',
+        amountBase: 1601.53,
+        entryGroupDKey: 'text.entry.group.name.widthroval',
+        entryGroupDValue: null,
+        entryGroupNameId: 1,
+        bonusInfo: 'PLUS Points: 0.00',
+        essServiceId: null,
+        merchantClientId: null,
+        cashbackAmount: null,
+        groupImageId: 35623075,
+        nominationOriginal: 'Withdrawal - Amount: EUR507.00; ATM: LA CAIXA 8447>SEVILLA ES, Spain; MCC:6011; Date: 02/06/2025 19:18; Card No: ****6697; Payment transaction amount and currency: 517.14 EUR',
+        productName: null,
+        prodGroup: 'PLC',
+        entryType: 'GCE',
+        printSwift: 'N',
+        isPrintable: 'Y',
+        printFormType: 'CASH_WITHDRAWAL',
+        hasTransferBack: 'N',
+        benefProfileId: null,
+        positiveSum: null,
+        negativeSum: null,
+        isInternalOperation: 'N',
+        transferBankBic: null,
+        deviceType: 'A',
+        swiftGpiFlag: 'N',
+        counterPartyClientKey: null,
+        gifUrl: null,
+        gifId: null,
+        authDate: 1748808000000,
+        bonusPointType: 'PLUS',
+        attachmentFileBase64: null,
+        isRepeatAllowed: false,
+        isTemplateAllowed: false,
+        isDDSTOAlllowed: false,
+        isStatementAllowed: true,
+        isPrintAllowed: true,
+        isReversalAvailable: false,
+        entryIconBase64: null,
+        merchantIconBase64: null,
+        providerIconUrl: null,
+        groupImageUrl: 'serviceId=COMMON_GET_FILE&channel=MOBILE&id=35623075&hashCode=D2617C8163F094FEA7E491FC27535EFA',
+        imageUrl: 'serviceId=COMMON_GET_FILE&channel=MOBILE&id=35623075&hashCode=D2617C8163F094FEA7E491FC27535EFA',
+        benefProfilePicture: null,
+        operationTitle: 'LA CAIXA 8447>SEVILLA ES, Spain',
+        entryDetailType: null,
+        pfmId: null,
+        pfmForecast: null,
+        pfmCatId: null,
+        pfmCatName: null,
+        pfmParentCatId: null,
+        pfmParentCatName: null,
+        pfmRecurring: null,
+        pfmSplit: null,
+        pfmParentOpId: null,
+        pfmTagId: null,
+        pfmTagName: null,
+        pfmTags: null,
+        pfmComputable: null,
+        isRuleCreationEnabled: null,
+        canSplit: true,
+        isCarTemplateAllowed: false
+      },
+      {
+        hold: true,
+        date: new Date('2025-06-02T19:18:00+04:00'),
+        movements: [
+          {
+            id: '90123390423',
+            account: { id: '1339' },
+            invoice: null,
+            sum: -507,
+            fee: -10.14
+          },
+          {
+            id: null,
+            account: {
+              type: 'cash',
+              instrument: 'EUR',
+              company: null,
+              syncIds: null
+            },
+            invoice: null,
+            sum: 507,
+            fee: 0
+          }
+        ],
+        merchant: {
+          country: 'Spain',
+          city: 'SEVILLA ES',
+          title: 'LA CAIXA 8447',
+          mcc: 6011,
+          location: null
+        },
+        comment: 'Cash withdrawal'
+      }
+    ]
+  ])('converts cash transfer accountEur', (apiTransaction, transaction) => {
+    expect(convertTransaction(apiTransaction, accountEur)).toEqual(transaction)
   })
 })

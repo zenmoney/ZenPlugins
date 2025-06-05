@@ -240,7 +240,17 @@ export function convertTransaction (apiTransaction: unknown, product: ConvertedP
         transaction.comment = 'Cash withdrawal comission / ' + getString(apiTransaction, 'nominationOriginal')
       } else {
         transaction.comment = 'Cash withdrawal'
-        transaction.movements[0].invoice = invoiceNeeded ? { sum: cashAmount.sum * getSignByPrintFormType(printFormType), instrument: cashAmount.instrument } : null
+        const txAmount = getNumber(apiTransaction, 'amount')
+        if (cashAmount) {
+          if (cashAmount.instrument !== product.account.instrument) {
+            transaction.movements[0].invoice = { sum: -cashAmount.sum, instrument: cashAmount.instrument }
+            transaction.movements[0].sum = -txAmount
+          } else {
+            const fee = txAmount - cashAmount.sum
+            transaction.movements[0].sum = -(txAmount - fee)
+            transaction.movements[0].fee = fee !== 0 ? -Math.abs(Math.round(fee * 100) / 100) : 0
+          }
+        }
         transaction.movements.push(
           invertMovement(transaction.movements[0], product.account, { type: AccountType.cash })
         )

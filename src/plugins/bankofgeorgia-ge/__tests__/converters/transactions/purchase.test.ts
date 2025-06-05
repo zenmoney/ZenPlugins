@@ -1067,7 +1067,7 @@ describe('convertTransaction', () => {
       },
       {
         comment: null,
-        date: new Date('2025-03-15T14:51:00'),
+        date: new Date('2025-03-15T18:51:00+04:00'),
         hold: false,
         merchant: {
           city: 'Tbilisi',

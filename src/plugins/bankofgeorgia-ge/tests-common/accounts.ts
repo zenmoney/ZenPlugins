@@ -27,6 +27,19 @@ export const accountUsd: ConvertedAccount = {
   }
 }
 
+export const accountEur: ConvertedAccount = {
+  tag: 'account',
+  acctKey: '1339',
+  account: {
+    id: '1339',
+    type: AccountType.ccard,
+    title: 'Universal Account',
+    instrument: 'EUR',
+    balance: -514.78,
+    syncIds: []
+  }
+}
+
 export const depositGel: ConvertedAccount = {
   account: {
     balance: 100.05,
