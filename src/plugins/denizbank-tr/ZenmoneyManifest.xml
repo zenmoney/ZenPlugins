@@ -2,10 +2,10 @@
 <provider>
     <id>denizbank-tr</id>
     <version>1.0</version>
-    <build>1</build>
+    <build>2</build>
     <company>15639</company>
     <modular>true</modular>
-    <codeRequired>false</codeRequired>
+    <codeRequired>true</codeRequired>
     <files>
         <js>index.js</js>
         <preferences>preferences.xml</preferences>
