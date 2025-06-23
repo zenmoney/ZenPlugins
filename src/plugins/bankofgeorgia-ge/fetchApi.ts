@@ -27,7 +27,7 @@ interface SessionData {
   }
 }
 
-async function fetchAccountApi (request: AccountApiRequest, session: SessionData): Promise<unknown> {
+async function fetchAccountApi(request: AccountApiRequest, session: SessionData): Promise<unknown> {
   const now = new Date()
   const response = await fetch('https://account-api.bog.ge/account-api-1.0/graphql', {
     method: 'POST',
@@ -77,7 +77,7 @@ async function fetchAccountApi (request: AccountApiRequest, session: SessionData
   return errors != null && errors.length > 0 ? errors[0] : get(response.body, 'data')
 }
 
-export async function fetchAuth (session: SessionData): Promise<{ authorizationBearer: string }> {
+export async function fetchAuth(session: SessionData): Promise<{ authorizationBearer: string }> {
   const response = await fetchAccountApi({
     operationName: 'auth',
     operationId: 'ce6334938ad3bb9c266d76a18cfa4d89308bb49fc5fb56f23ce0cd51d1fa58b8',
@@ -89,7 +89,7 @@ export async function fetchAuth (session: SessionData): Promise<{ authorizationB
   return { authorizationBearer: getString(response, 'auth.token') }
 }
 
-export async function fetchRegisterDevice (data: { publicKey: string },
+export async function fetchRegisterDevice(data: { publicKey: string },
   session: { authorizationBearer: string, auth: { device: Device } }): Promise<{ extCustomerId: string, extDeviceId: string }> {
   const response = await fetchAccountApi({
     operationName: 'registerDevice',
@@ -116,7 +116,7 @@ export async function fetchRegisterDevice (data: { publicKey: string },
   }
 }
 
-export async function fetchLogIn (preferences: Preferences,
+export async function fetchLogIn(preferences: Preferences,
   session: { authorizationBearer: string, auth: { device: Device, extCustomerId: string, extDeviceId: string } }): Promise<{ processReference: string }> {
   const response = await fetchAccountApi({
     operationName: 'logInQuery',
@@ -142,7 +142,7 @@ export interface Contact {
   contactType: string
 }
 
-export async function fetchGetUserContacts ({ processReference }: { processReference: string },
+export async function fetchGetUserContacts({ processReference }: { processReference: string },
   session: { authorizationBearer: string, auth: { device: Device, extCustomerId: string, extDeviceId: string } }): Promise<Contact[]> {
   const response = await fetchAccountApi({
     operationName: 'getUserContactsQuery',
@@ -162,11 +162,11 @@ export async function fetchGetUserContacts ({ processReference }: { processRefer
   })
 }
 
-export async function fetchRequestOTP ({
+export async function fetchRequestOTP({
   processReference,
   contact
 }: { processReference: string, contact: Contact },
-session: { authorizationBearer: string, auth: { device: Device, extCustomerId: string, extDeviceId: string } }): Promise<void> {
+  session: { authorizationBearer: string, auth: { device: Device, extCustomerId: string, extDeviceId: string } }): Promise<void> {
   const response = await fetchAccountApi({
     operationName: 'requestOTP',
     operationId: '49d18bf00c84f1d112bd898e88e403807a6342306a99112762772eda4e9568a8',
@@ -183,7 +183,7 @@ session: { authorizationBearer: string, auth: { device: Device, extCustomerId: s
   assert(get(response, 'commonServices.requestOTP') === null, 'unexpected response', response)
 }
 
-export async function fetchVerifyOTP ({ smsCode, processReference }: { smsCode: string, processReference: string },
+export async function fetchVerifyOTP({ smsCode, processReference }: { smsCode: string, processReference: string },
   session: { authorizationBearer: string, auth: { device: Device, extCustomerId: string, extDeviceId: string } }): Promise<void> {
   const response = await fetchAccountApi({
     operationName: 'verifyOTP',
@@ -199,7 +199,7 @@ export async function fetchVerifyOTP ({ smsCode, processReference }: { smsCode: 
   assert(get(response, 'commonServices.verifyOTP') === null, 'unexpected response', response)
 }
 
-export async function fetchGetToken ({ processReference }: { processReference: string },
+export async function fetchGetToken({ processReference }: { processReference: string },
   session: { authorizationBearer: string, auth: { device: Device, extCustomerId: string, extDeviceId: string } }): Promise<{ accessToken: string, refreshToken: string }> {
   const response = await fetchAccountApi({
     operationName: 'getTokenQuery',
@@ -215,7 +215,7 @@ export async function fetchGetToken ({ processReference }: { processReference: s
   }
 }
 
-export async function fetchSaveUserOnDevice (session: { authorizationBearer: string, accessToken: string, auth: { device: Device, extCustomerId: string, extDeviceId: string } }): Promise<void> {
+export async function fetchSaveUserOnDevice(session: { authorizationBearer: string, accessToken: string, auth: { device: Device, extCustomerId: string, extDeviceId: string } }): Promise<void> {
   const response = await fetchAccountApi({
     operationName: 'saveUserOnDevice',
     operationId: 'da13b80d2e2098e78dc884a6f3b941b8ae7851f7966bb38184531368d625bf5c',
@@ -235,7 +235,7 @@ export async function fetchSaveUserOnDevice (session: { authorizationBearer: str
   assert(get(response, 'commonServices.saveUserOnDevice') === null, 'unexpected response', response)
 }
 
-export async function fetchGetClientInfo ({ processReference }: { processReference: string },
+export async function fetchGetClientInfo({ processReference }: { processReference: string },
   session: { authorizationBearer: string, accessToken: string, auth: { device: Device, extCustomerId: string, extDeviceId: string } }): Promise<{ userName: string }> {
   const response = await fetchAccountApi({
     operationName: 'getClientInfo',
@@ -249,7 +249,7 @@ export async function fetchGetClientInfo ({ processReference }: { processReferen
   return { userName: getString(response, 'commonServices.getClientInfo.username') }
 }
 
-export async function fetchRefreshToken (refreshToken: string, processReference: string,
+export async function fetchRefreshToken(refreshToken: string, processReference: string,
   session: { authorizationBearer: string, accessToken: string, auth: { device: Device, extCustomerId: string, extDeviceId: string } }): Promise<{ accessToken: string, refreshToken: string }> {
   const response = await fetchAccountApi({
     operationName: 'refreshToken',
@@ -268,7 +268,7 @@ export async function fetchRefreshToken (refreshToken: string, processReference:
   }
 }
 
-export async function fetchCheckOperation ({ passCode, processReference }: { passCode: string, processReference: string },
+export async function fetchCheckOperation({ passCode, processReference }: { passCode: string, processReference: string },
   session: { authorizationBearer: string, accessToken: string, auth: { device: Device, extCustomerId: string, extDeviceId: string } }): Promise<{ operationReference: string }> {
   const response = await fetchAccountApi({
     operationName: 'checkOperationQuery',
@@ -294,7 +294,7 @@ export async function fetchCheckOperation ({ passCode, processReference }: { pas
   return { operationReference: getString(response, 'scaServices.checkOperation.operationReference') }
 }
 
-export async function fetchPerformScaQuery ({ smsCode, operationReference }: { smsCode: string, operationReference: string },
+export async function fetchPerformScaQuery({ smsCode, operationReference }: { smsCode: string, operationReference: string },
   session: { authorizationBearer: string, accessToken: string, auth: { device: Device, extCustomerId: string, extDeviceId: string } }): Promise<{ scaAuthCode: string }> {
   const response = await fetchAccountApi({
     operationName: 'performScaQuery',
@@ -314,7 +314,7 @@ export async function fetchPerformScaQuery ({ smsCode, operationReference }: { s
   return { scaAuthCode: getString(response, 'scaServices.performSca') }
 }
 
-export async function fetchSetupSecurityParameters (data: { passCode: string, operationReference: string, processReference: string, scaAuthCode: string },
+export async function fetchSetupSecurityParameters(data: { passCode: string, operationReference: string, processReference: string, scaAuthCode: string },
   session: { authorizationBearer: string, accessToken: string, auth: { device: Device, extCustomerId: string, extDeviceId: string, privateKey: string } }): Promise<{ passcodeAuthToken: string }> {
   const response = await fetchAccountApi({
     operationName: 'setupSecurityParametersQuery',
@@ -338,7 +338,7 @@ export async function fetchSetupSecurityParameters (data: { passCode: string, op
   return { passcodeAuthToken: getString(response, 'loginServices.setupSecurityParameters.passcodeAuthToken') }
 }
 
-export async function fetchGetCustomerDeviceInfoQuery ({ username }: { username: string },
+export async function fetchGetCustomerDeviceInfoQuery({ username }: { username: string },
   session: { authorizationBearer: string, auth: { device: Device, extCustomerId: string, extDeviceId: string } }): Promise<void> {
   const response = await fetchAccountApi({
     operationName: 'getCustomerDeviceInfoQuery',
@@ -353,7 +353,7 @@ export async function fetchGetCustomerDeviceInfoQuery ({ username }: { username:
   assert(getString(response, 'deviceManagementServices.getCustomerDeviceInfo.isTrusted') === 'Y', 'device should be trusted')
 }
 
-export async function fetchPasscodeLogin (data: { username: string }, session: { auth: Auth, authorizationBearer: string }): Promise<{ processReference: string }> {
+export async function fetchPasscodeLogin(data: { username: string }, session: { auth: Auth, authorizationBearer: string }): Promise<{ processReference: string }> {
   const response = await fetchAccountApi({
     operationName: 'passcodeLoginQuery',
     operationId: 'b63a56186be120a8f8178ca33c8afb8a6a93882f26f2017a966e3ba9d41a2bc4',
@@ -373,8 +373,12 @@ export async function fetchPasscodeLogin (data: { username: string }, session: {
   return { processReference: getString(response, 'loginServices.login.processReference') }
 }
 
-async function fetchApiConnector (serviceId: string, params: Record<string, unknown>,
-  session: {accessToken: string, requestIndex: number, auth: {device: Device}}): Promise<unknown> {
+// async function fetchClientKey(session: { accessToken: string, requestIndex: number, auth: { device: Device } }) Promise<string>: {
+//   return "60588505"
+// }
+
+async function fetchApiConnector(serviceId: string, params: Record<string, unknown>,
+  session: { accessToken: string, requestIndex: number, auth: { device: Device } }): Promise<unknown> {
   const query = {
     appVersion: APP_BUILD,
     channel: 'MOBILE',
@@ -403,7 +407,7 @@ async function fetchApiConnector (serviceId: string, params: Record<string, unkn
   return response.body
 }
 
-export async function fetchTriggerLogin (session: {accessToken: string, requestIndex: number, auth: {extCustomerId: string, device: Device}}): Promise<void> {
+export async function fetchTriggerLogin(session: { accessToken: string, requestIndex: number, auth: { extCustomerId: string, device: Device } }): Promise<void> {
   const response = await fetchApiConnector('COMMON_TRIGGER_LOGIN_CHANGES', {
     deviceId: session.auth.extCustomerId,
     extCustomerId: session.auth.extCustomerId
@@ -411,7 +415,7 @@ export async function fetchTriggerLogin (session: {accessToken: string, requestI
   assert(getNumber(response, 'code') === 0, 'unsuccessful login trigger', response)
 }
 
-export async function fetchAccountsWithDetails (session: Session): Promise<FetchedChecking[]> {
+export async function fetchAccountsWithDetails(session: Session): Promise<FetchedChecking[]> {
   const response = await fetchApiConnector('ACCOUNTS_GET_ACCOUNTS_AND_DETAILS', {}, session)
   const accounts = getArray(response, 'result.accounts.accounts')
   const accountsDetails = getArray(response, 'result.details')
@@ -424,14 +428,14 @@ export async function fetchAccountsWithDetails (session: Session): Promise<Fetch
   })
 }
 
-export async function fetchCards (session: Session): Promise<unknown> {
+export async function fetchCards(session: Session): Promise<unknown> {
   const response = await fetchApiConnector('CARDS_GET_CARDS_AND_DETAILS', {}, session)
   const cards = get(response, 'result.cards')
   assert(cards != null, 'cant get cards', response)
   return cards
 }
 
-export async function fetchDepositsAndBondsWithDetails (session: Session): Promise<FetchedLoanDeposit[]> {
+export async function fetchDepositsAndBondsWithDetails(session: Session): Promise<FetchedLoanDeposit[]> {
   const response = await fetchApiConnector('COLLECTOR_GET_DEPOSITS_AND_BONDS_DETAILS', {}, session)
   const bonds = getArray(response, 'result.bonds.bonds.bonds')
   const bondsDetails = getArray(response, 'result.bonds.details')
@@ -447,7 +451,7 @@ export async function fetchDepositsAndBondsWithDetails (session: Session): Promi
   })
 }
 
-export async function fetchLoans (session: Session): Promise<FetchedLoanDeposit[]> {
+export async function fetchLoans(session: Session): Promise<FetchedLoanDeposit[]> {
   const response = await fetchApiConnector('LOANS_GET_LOANS_WITH_DETAILS', {}, session)
   const loans = getArray(response, 'result.loans')
   const loansDetails = getArray(response, 'result.details')
@@ -460,7 +464,7 @@ export async function fetchLoans (session: Session): Promise<FetchedLoanDeposit[
   })
 }
 
-export async function fetchAccountOperations (acctKey: string, fromDate: Date, toDate: Date, session: Session): Promise<unknown[]> {
+export async function fetchAccountOperations(acctKey: string, fromDate: Date, toDate: Date, session: Session): Promise<unknown[]> {
   const batchSize = 20
   let current = 0
   const result = []
@@ -481,4 +485,42 @@ export async function fetchAccountOperations (acctKey: string, fromDate: Date, t
     }
   }
   return result
+}
+
+export async function fetchStatements(clientKey: string, fromDate: Date, toDate: Date,
+  session: { accessToken: string, requestIndex: number, auth: { device: Device } }): Promise<unknown> {
+  const query = {
+    clientKey,
+    operationDateTimeUpperBound: toDate.getTime().toString(),
+    operationDateTimeLowerBound: fromDate.getTime().toString(),
+    lastOperationsFlag: "Y",
+    limit: 10,
+    isInternalOperation: "N",
+    includeAggregations: "docDirection",
+    pfmComputable: "1",
+    includeFields: "canSplitUntil,clientKey,prodGroup,docKey,entryId,essId,operationTitle,nominationOriginal,beneficiary,docNomination,nomination,merchantId,essServiceId,groupImageId,postDate,authDate,operationDate,bonusPoint,status,canCopy,amount,ccy,merchantName,entryGroupNameId,sourceEntryGroup,cashbackAmount,productName,prodGroup,entryType,printSwift,isInternalOperation,transferBankBic,printFormType,sourceEntryGroup,merchantNameInt,counterPartyClient,hasTransferBack,essId,bonusInfo,essServiceId,bonusPoint,amountBase,pfmId,pfmTags,pfmSplit,pfmTagId,pfmTagName,pfmCatName,pfmForecast,pfmRecurring,pfmComputable,pfmParentCatId,pfmParentCatName,pfmCatId,bonusType,accountKey,bonusPoint,bonusType,beneficiaryAccount,bonusType,bonusPoint,authDate,merchantClientId,printAccountNo,mccCode",
+    // amountLowerBound: 0,
+    // amountUpperBound: 10,
+    // nomination: "",
+    // accountKeys: "",
+    // cardIds: "",
+    // pfmCatIds: "",
+    // ccys: "",
+    // searchAndSort: "",
+    printAccountNos: "Y",
+  }
+  const response = await fetch(`https://rb-api.bog.ge/transactional/statements?${qs.stringify(query)}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${session.accessToken}`,
+      "Lang-Code": "EN",
+      "Accept-Encoding": "gzip",
+      "User-Agent": "okhttp/4.12.0"
+    },
+    parse: JSON.parse,
+    sanitizeRequestLog: { headers: { Authorization: true } },
+    sanitizeResponseLog: { headers: { Authorization: true } }
+  })
+
+  return response.body
 }
