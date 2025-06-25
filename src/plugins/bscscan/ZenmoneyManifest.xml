@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>bscscan</id>
+    <company>16078</company>
+    <description>
+        Плагин для синхронизации BNB Smart Chain с помощью bscscan.
+        Для синхронизации укажите ApiKey и адреса кошельков.
+    </description>
+    <version>1.0</version>
+    <build>1</build>
+    <modular>true</modular>
+    <api>public</api>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+</provider>

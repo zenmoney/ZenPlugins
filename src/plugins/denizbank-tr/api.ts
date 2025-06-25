@@ -4,7 +4,7 @@ import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
 import { sanitize } from '../../common/sanitize'
 import { generateUUID } from '../../common/utils'
 import get from '../../types/get'
-import { InvalidPreferencesError } from '../../errors'
+import { InvalidOtpCodeError, InvalidPreferencesError } from '../../errors'
 
 export type Session = {
   clientId: string
@@ -149,6 +149,10 @@ export class DenizBankApi {
       token
     }
 
+    const { id: captchaId, captchaByteData } = await this.getCaptcha(session)
+
+    const captchaData = await this.askForCaptcha(captchaByteData)
+
     const cryptoKey = crypto.AES.decrypt(
       session.encryptionKey,
       this.encryptionStaticKey,
@@ -167,7 +171,13 @@ export class DenizBankApi {
       this.getCipherOption(cryptoKey)
     ).toString()
 
-    const { currentTime, sessionTimeout } = await this.sendCredentials(session, loginEncrypted, passwordEncrypted)
+    const captchaIdEncrypted = crypto.AES.encrypt(
+      captchaId,
+      cryptoKey,
+      this.getCipherOption(cryptoKey)
+    ).toString()
+
+    const { currentTime, sessionTimeout } = await this.sendCredentials(session, loginEncrypted, passwordEncrypted, captchaIdEncrypted, captchaData)
     session = {
       ...session,
       createdDate: currentTime,
@@ -202,14 +212,33 @@ export class DenizBankApi {
     return session
   }
 
+  private async getCaptcha (session: Session): Promise<{id: string, captchaByteData: string}> {
+    const response = await this.fetchApi('auth/captcha-create', session, {
+      method: 'GET'
+    }) as FetchResponse & {body: {id: string, captchaByteData: string}}
+
+    console.log('getCaptcha', response.body)
+
+    return response.body
+  }
+
+  private async askForCaptcha (captchaByteData: string): Promise<string> {
+    const image = new Uint8Array(Buffer.from(captchaByteData, 'base64'))
+    const code = await ZenMoney.readLine('Введите код с картинки', { image })
+    if (!code) {
+      throw new InvalidOtpCodeError()
+    }
+    return code
+  }
+
   private async getInitialToken (session: Session): Promise<{token: string, encryptionKey: string}> {
     const response = await this.fetchApi('auth/token', undefined, {
       method: 'POST',
       body: {
         browserAgent:
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36',
         browserName: 'Chrome',
-        browserVersion: '107.0.0.0',
+        browserVersion: '136.0.0.0',
         clientDate: new Date()
           .toISOString()
           .replace(/(\d{4}-\d{2}-\d{2}).*/, '$1'),
@@ -234,14 +263,16 @@ export class DenizBankApi {
     return response.body
   }
 
-  private async sendCredentials (session: Session, loginEncrypted: string, passwordEncrypted: string): Promise<{currentTime: Date, sessionTimeout: number}> {
+  private async sendCredentials (session: Session, loginEncrypted: string, passwordEncrypted: string, captchaIdEncrypted: string, captchaData: string): Promise<{currentTime: Date, sessionTimeout: number}> {
     const response = await this.fetchApi('auth/token', session, {
       method: 'PATCH',
       body: {
         identifier: loginEncrypted,
+        captchaId: captchaIdEncrypted,
         secret: passwordEncrypted,
         grantType: 'username',
-        applicationVersion: 'JanusIB-20221213.669-PeWXxk52Md5mb5aXPI5J'
+        applicationVersion: 'JanusIB-20250527.3652-gD2GnZwbfqRyrb3xeCZ2',
+        captchaData
       }
     }) as FetchResponse & {body: {currentTime: string, sessionTimeout: number, Message?: string | null}}
 

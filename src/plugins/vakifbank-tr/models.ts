@@ -35,3 +35,8 @@ export interface Preferences {
   login: string
   password: string
 }
+
+export type RawAccountAndTransactions = Array<{
+  account: VakifStatementAccount
+  transactions: VakifStatementTransaction[]
+}>

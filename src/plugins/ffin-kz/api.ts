@@ -128,7 +128,7 @@ async function showHowTo (): Promise<ObjectWithAnyProps> {
         url,
         intercept: (request) => {
           console.log('Intercepted url: ', request.url)
-          return request.url.includes('plugins/freedombank-kz/callback/')
+          return request.url.includes('plugins/ffin-kz/callback/')
         }
       })
       ZenMoney.setData('showHowTo', false)

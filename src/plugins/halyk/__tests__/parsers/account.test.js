@@ -1,7 +1,7 @@
 /* eslint-disable no-irregular-whitespace */
-import { parseAccount } from '../../api'
+import { parseAccounts } from '../../api'
 
-describe('parseAccount', () => {
+describe('parseAccounts', () => {
   it.each([
     [
       `Выписка по счету: KZ396010012008472873 1
@@ -32,16 +32,71 @@ describe('parseAccount', () => {
 Расшифровка заблокированных сумм:
 По операциям 0,00
 По требованиям третьих лиц 0,00`,
-      {
-        accountNumber: 'KZ396010012008472873',
-        available: '27 479,64',
-        balance: '27 479,64',
-        cardNumber: '440563******6723',
-        currency: 'KZT',
-        statementDate: '03.10.2024'
-      }
+      [
+        {
+          accountNumber: 'KZ396010012008472873',
+          available: '27 479,64',
+          balance: '27 479,64',
+          cardNumber: '440563******6723',
+          currency: 'KZT',
+          statementDate: '03.10.2024'
+        }
+      ]
+    ],
+    [
+      `Выписка по счету: Мультивалютный договор No012- TOP- MC2914461 1
+АО "Народный Банк Казахстана"
+Филиал: Головной Банк
+Адрес: ул. Аль- Фараби, 40
+Телефон: Контакт- центр для г.Алматы 8- 727- 259- 07- 77
+для других городов 8- 8000- 8000- 59, www.halykbank.kz
+БИК: HSBKKZKX
+Выписка по счету
+Клиент
+ФИО: ИВАНОВ ИВАН ИВАНОВИЧ Дата формирования выписки: 26.02.2025
+ИИН: 981003350840 Период выписки: с 26.08.2024 по 26.02.2025
+Тип счета: Текущий счет в карточной базе («Зарплата»)
+Номер счета KZT: KZ176010002027980475
+Номер счета USD: KZ876010002027980476
+Номер счета EUR: KZ606010002027980477
+Номер карточки:
+Входящий остаток: 30,16 KZT; 0,00 USD; 0,00 EUR;
+Исходящий остаток: 0,00 KZT; 0,35 USD; 0,00 EUR;
+Доступная сумма с учетом кредитного лимита
+на дату формирования выписки: 172,49 KZT, в валюте: 0,00
+KZT; 0,35 USD; 0,00 EUR;
+Установленный кредитный лимит: 0,00
+Доступный кредитный лимит: 0,00
+Платеж по кредитному лимиту: 0,00
+Дата платежа:
+Расшифровка заблокированных сумм:
+По операциям 0,00 KZT; 0,00 USD; 0,00 EUR;
+По требованиям третьих лиц 0,00 KZT;`,
+      [
+        {
+          accountNumber: 'KZ176010002027980475',
+          available: '0,00',
+          balance: '0,00',
+          currency: 'KZT',
+          statementDate: '26.02.2025'
+        },
+        {
+          accountNumber: 'KZ876010002027980476',
+          available: '0,35',
+          balance: '0,35',
+          currency: 'USD',
+          statementDate: '26.02.2025'
+        },
+        {
+          accountNumber: 'KZ606010002027980477',
+          available: '0,00',
+          balance: '0,00',
+          currency: 'EUR',
+          statementDate: '26.02.2025'
+        }
+      ]
     ]
-  ])('parses account', (text, account) => {
-    expect(parseAccount(text)).toEqual(account)
+  ])('parses accounts', (text, accounts) => {
+    expect(parseAccounts(text)).toEqual(accounts)
   })
 })

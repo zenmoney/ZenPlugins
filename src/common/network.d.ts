@@ -1,3 +1,13 @@
+export interface FetchResponseHeaders {
+  entries: () => IterableIterator<[string, string]>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  forEach: (callback: (value: string, key: string, headers: FetchResponseHeaders) => void, thisArg?: any) => void
+  get: (name: string) => string | null
+  has: (name: string) => boolean
+  keys: () => IterableIterator<string>
+  values: () => IterableIterator<string>
+}
+
 export interface FetchResponse {
   status: number
   url: string
@@ -33,6 +43,8 @@ export declare interface InterceptedRequest {
   url: string
   headers?: unknown
 }
+
+export declare type FetchFunc = (url: string, options?: FetchOptions) => Promise<FetchResponse>
 
 // * Almost the same as browser's fetch.
 // * Automatically log requests & responses.

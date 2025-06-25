@@ -470,7 +470,8 @@ export async function fetchAccountOperations (acctKey: string, fromDate: Date, t
       count: batchSize.toString(),
       startDate: fromDate.getTime().toString(),
       endDate: toDate.getTime().toString(),
-      from: current.toString()
+      from: current.toString(),
+      useLastOperationsMode: '1'
     }, session)
     const operations = getArray(response, 'result.myOperations')
     result.push(...operations)

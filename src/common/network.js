@@ -55,9 +55,40 @@ export async function fetch (url, options = {}) {
     }, 'failed to receive due to error', err)
     throw err
   }
+
+  const _headers = response.headers
+  const headers = _headers.entries
+    ? _.fromPairs([..._headers.entries()])
+    : _headers.map
+  if (headers) {
+    for (const key of [
+      'entries',
+      'get',
+      'has',
+      'keys',
+      'values'
+    ]) {
+      if (!(key in headers)) {
+        Object.defineProperty(headers, key, {
+          enumerable: false,
+          value: function () {
+            return _headers[key](...arguments)
+          }
+        })
+      }
+    }
+    if (!('forEach' in headers)) {
+      Object.defineProperty(headers, 'forEach', {
+        enumerable: false,
+        // eslint-disable-next-line github/array-foreach
+        value: (callback, thisArg) => _headers.forEach((value, key) => callback.call(thisArg, value, key, headers))
+      })
+    }
+  }
+
   response = {
     ..._.pick(response, ['ok', 'status', 'statusText', 'url']),
-    headers: response.headers.entries ? _.fromPairs([...response.headers.entries()]) : response.headers.map,
+    headers,
     body: options.binaryResponse ? await response.arrayBuffer() : await response.text()
   }
 

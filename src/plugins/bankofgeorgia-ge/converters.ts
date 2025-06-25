@@ -178,7 +178,10 @@ export function convertTransaction (apiTransaction: unknown, product: ConvertedP
     case 'UTILITY_PAYMENT':
     case 'PAYMENT': {
       const title: string | undefined = getOptString(apiTransaction, 'merchantNameInt')
-      transaction.movements[0].invoice = cashAmount ? { sum: cashAmount.sum * getSignByPrintFormType(printFormType), instrument: cashAmount.instrument } : null
+      // Bank fees transaction contains original payment info in description, so we shouldn't parse it
+      if (entryGroupDKey !== 'text.entry.group.name.FEE') {
+        transaction.movements[0].invoice = cashAmount ? { sum: cashAmount.sum * getSignByPrintFormType(printFormType), instrument: cashAmount.instrument } : null
+      }
       if (title !== undefined) {
         transaction.merchant = parseMerchant(title, getString(apiTransaction, 'nominationOriginal'))
       } else {

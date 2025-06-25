@@ -54,7 +54,8 @@ export async function fetchAuthorization ({ login, password }: Preferences): Pro
     method: 'POST',
     body: {
       username: login,
-      password: isPasswordSalted ? await getSaltedPassword(login, password) : password
+      password: isPasswordSalted ? await getSaltedPassword(login, password) : password,
+      sessionID: 1
     },
     sanitizeRequestLog: {
       body: {
