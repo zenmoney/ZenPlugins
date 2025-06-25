@@ -2,7 +2,8 @@ const currency = {
   rur: 'RUB',
   usd: 'USD',
   eur: 'EUR',
-  gbp: 'GBP'
+  gbp: 'GBP',
+  kzt: 'KZT'
 }
 
 export function convertAccounts ({ accounts, deposits, credits }) {

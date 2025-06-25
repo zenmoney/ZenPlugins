@@ -208,6 +208,55 @@ describe('convertAccounts', () => {
           ]
         }
       ]
+    ],
+    [
+      {
+        accounts:
+          [
+            {
+              id: 479671,
+              number: '40817398690000052935',
+              title: 'ЧИБ *2935',
+              displayTitle: 'ЧИБ *2935',
+              currencyId: 12,
+              currencyIsoCode: 'kzt',
+              reservedBalance: '0.0',
+              arestedBalance: '0.0',
+              closeDate: null,
+              hidden: false,
+              withdraw: false,
+              withdrawWithoutBalance: true,
+              refund: true,
+              productType: null,
+              dogovType: null,
+              cashback: false,
+              conditionsPlugOnCashback: 'standard',
+              closed: false,
+              balance: 0,
+              ownAmount: 0,
+              creditAmount: 0,
+              totalAmount: '0.0',
+              creditAvail: '-0.0',
+              loanAmount: '-0.0',
+              cards: []
+            }
+          ],
+        deposits:
+          [],
+        revolverCredits: [],
+        singleCredits: []
+      },
+      [
+        {
+          id: '479671',
+          title: 'ЧИБ *2935',
+          syncIds: ['40817398690000052935'],
+          instrument: 'KZT',
+          type: 'ccard',
+          balance: 0,
+          creditLimit: 0
+        }
+      ]
     ]
   ])('converts current account', (apiAccount, accounts) => {
     expect(convertAccounts(apiAccount)).toEqual(accounts)
