@@ -1,6 +1,6 @@
 import { ScrapeFunc, AccountOrCard } from '../../types/zenmoney'
 import { Auth, Preferences, StatementTransaction, ConvertedTransaction } from './models'
-import { parsePdfStatements } from './api'
+import { getMobileExchangeRates, parsePdfStatements } from './api'
 import { convertPdfStatementTransaction } from './converters/transactions'
 import { isEqual, omit, groupBy, toPairs } from 'lodash'
 import { generateRandomString } from '../../common/utils'
@@ -22,12 +22,16 @@ export const scrape: ScrapeFunc<Preferences> = async ({ fromDate, isFirstRun }) 
     accounts: [],
     transactions: []
   }
+  const currencyRates = await getMobileExchangeRates()
+  if (Object.keys(currencyRates).length === 0) {
+    console.warn('Не удалось получить курсы валют, проверьте подключение к интернету')
+  }
   if (rawAccountsAndTransactions !== null) {
     for (const { account, transactions: rawTransactions } of rawAccountsAndTransactions) {
       const initialValue: ConvertedTransaction[] = []
       const transactions = rawTransactions.reduce((convertedTransactions, item) => {
-        const transaction = convertPdfStatementTransaction(item, account)
-        if (!isFirstRun || (transaction.transaction.date.getTime() - fromDate.getTime() >= 0)) {
+        const transaction = convertPdfStatementTransaction(item, account, currencyRates)
+        if (transaction && (!isFirstRun || (transaction.transaction.date.getTime() - fromDate.getTime() >= 0))) {
           convertedTransactions.push(transaction)
         }
         return convertedTransactions
