@@ -1,6 +1,7 @@
 import { flatten } from 'lodash'
 import { Movement, AccountType, AccountOrCard } from '../../../types/zenmoney'
 import { ConvertedTransaction, StatementTransaction } from '../models'
+import { ExchangeRate } from '../api'
 
 export const transactionType = {
   INCOME: 'income',
@@ -10,14 +11,14 @@ export const transactionType = {
 }
 
 const transactionTypeStrings = {
-  TRANSFER: ['Перевод', 'Между своими счетами', 'С карты другого банка', 'Со счета другого банка', 'From an account in another bank', 'Басқа банктің шотынан'],
+  TRANSFER: ['Перевод', 'Между своими счетами', 'С карты другого банка', 'Выплата вклада по Договору', 'Со счета другого банка', 'Прием вклада по договору', 'Басқа банктің шотынан'],
   INCOME: ['Пополнение', 'Вознаграждение', 'Replenishment', 'Толықтыру'],
-  OUTCOME: ['Покупка', 'Purchases', 'Зат сатып алу'],
+  OUTCOME: ['Покупка', 'Платеж'],
   CASH: ['Снятие', 'Withdrawals', 'Ақша алу']
 }
 
 function parseTransactionType (text: string): string | null {
-  if (transactionTypeStrings.OUTCOME.some(str => text.includes(str)) || /плата/i.test(text)) {
+  if (transactionTypeStrings.OUTCOME.some(str => text.includes(str))) {
     return transactionType.OUTCOME
   }
   if (transactionTypeStrings.TRANSFER.some(str => text.includes(str)) || /(\w|[^\d\s])+\s[^\d\s]\./.test(text)) {
@@ -35,6 +36,17 @@ function parseTransactionType (text: string): string | null {
 function cleanMerchantTitle (text: string | null): string | null {
   if (text == null || text.trim() === '') return null
 
+  // Удаляем сообщения типа "Другое Плательщик:... Получатель:... Назначение: ..."
+  if (/^Другое\s+Плательщик:.*Получатель:.*Назначение:/i.test(text)) {
+    return null
+  }
+  if (/^с карты на карту/i.test(text)) {
+    return null
+  }
+  if (/^Принят.*/i.test(text)) {
+    return null
+  }
+
   const keywordsToRemove = [...flatten(Object.values(transactionTypeStrings)), '₸']
   let cleanedText = text
 
@@ -44,39 +56,49 @@ function cleanMerchantTitle (text: string | null): string | null {
 
   cleanedText = cleanedText.replace(/\s{2,}/g, ' ').trim() // Убираем лишние пробелы
 
-  // Remove trailing periods and text after the last period
-  if (cleanedText.includes('.')) {
-    const parts = cleanedText.split('.')
-    cleanedText = parts.slice(0, parts.length - 1).join('.').trim()
-  }
-
   return cleanedText.length > 0 ? cleanedText : null
 }
 
-function convertCurrency (amount: number, fromCurrency: string, toCurrency: string): number {
-  // костыль, но хоть что-то
-  const exchangeRates: { [key: string]: number } = {
-    USD_KZT: 505.91,
-    EUR_KZT: 529.41,
-    RUB_KZT: 5.31,
-    CNY_KZT: 70.49,
-    TRY_KZT: 14.32,
-    GBP_KZT: 635.79,
-    AED_KZT: 139.90
-  }
+function convertCurrency (currencyRates: Record<string, ExchangeRate>, amount: number, fromCurrency: string, toCurrency: string): number {
+  const rates: Record<string, ExchangeRate> = currencyRates
   if (fromCurrency === toCurrency) {
     return amount
   }
+  const key = `${fromCurrency}_${toCurrency}`
+  const reverseKey = `${toCurrency}_${fromCurrency}`
 
-  const rate = exchangeRates[fromCurrency + '_' + toCurrency]
-  if (rate === undefined || rate === null || isNaN(rate)) {
-    throw new Error(`Нет курса для конвертации из ${fromCurrency} в ${toCurrency}`)
+  if (Object.prototype.hasOwnProperty.call(rates, key) && rates[key] !== undefined) {
+    // Покупаем toCurrency за fromCurrency, используем sellRate
+    return amount * rates[key].sellRate
   }
-
-  return amount * rate
+  if (Object.prototype.hasOwnProperty.call(rates, reverseKey) && rates[reverseKey] !== undefined) {
+    // Продаём toCurrency за fromCurrency, используем buyRate
+    return amount / rates[reverseKey].buyRate
+  }
+  throw new Error(`Нет курса для конвертации из ${fromCurrency} в ${toCurrency}`)
 }
 
-export function convertPdfStatementTransaction (rawTransaction: StatementTransaction, rawAccount: AccountOrCard): ConvertedTransaction {
+function isTransactionToSkip (rawTransaction: StatementTransaction): boolean {
+  if (rawTransaction.description === null || rawTransaction.description.trim() === '') {
+    return false
+  }
+  // Пропускаем транзакции с описанием "ETN_SUPERAPP продажа"
+  if (rawTransaction.description.includes('ETN_SUPERAPP продажа')) {
+    return true
+  }
+
+  // Пропускаем только те "Прием вклада по договору", где сумма вклада имеет тыины (дробная часть)
+  if (/Прием вклада по договору.*в сумме\s\d+\.\d{1,2}\s*KZT/i.test(rawTransaction.description)) {
+    return true // есть тыины, пропускаем
+  }
+
+  return false
+}
+
+export function convertPdfStatementTransaction (rawTransaction: StatementTransaction, rawAccount: AccountOrCard, currencyRates: Record<string, ExchangeRate>): ConvertedTransaction | null {
+  if (isTransactionToSkip(rawTransaction)) {
+    return null
+  }
   let sum = parseFloat(rawTransaction.amount.replace(',', '.').replace(/[\s+$]/g, ''))
   let instrument = 'KZT'
   if (rawTransaction.originalAmount !== null) {
@@ -93,7 +115,7 @@ export function convertPdfStatementTransaction (rawTransaction: StatementTransac
     : null
 
   if (invoice !== null) {
-    sum = convertCurrency(sum, invoice.instrument, 'KZT')
+    sum = convertCurrency(currencyRates, sum, invoice.instrument, 'KZT')
   }
 
   if (invoice && invoice.sum === sum && instrument === rawAccount.instrument) {
@@ -109,14 +131,22 @@ export function convertPdfStatementTransaction (rawTransaction: StatementTransac
   }
 
   const parsedType = parseTransactionType(rawTransaction.originString)
+  if (parsedType === null) {
+    console.warn('Unknown transaction type for', rawTransaction.originString)
+  }
   let movements: [Movement] | [Movement, Movement]
 
   if (parsedType !== null && [transactionType.CASH, transactionType.TRANSFER].includes(parsedType)) {
     let type
+    let syncIds = null
     if (parsedType === transactionType.CASH) {
       type = AccountType.cash
-    } else if (parsedType === transactionType.TRANSFER && rawTransaction.description !== null && rawTransaction.description?.includes('KOPILKA')) {
+    } else if (parsedType === transactionType.TRANSFER && rawTransaction.description !== null) {
       type = AccountType.deposit
+      const syncIdMatch = rawTransaction.description.match(/KZ[A-Z0-9]{15}/)
+      if (syncIdMatch) {
+        syncIds = [syncIdMatch[0]]
+      }
     } else {
       type = AccountType.ccard
     }
@@ -126,7 +156,7 @@ export function convertPdfStatementTransaction (rawTransaction: StatementTransac
         type,
         instrument,
         company: null,
-        syncIds: null
+        syncIds
       },
       invoice: null,
       sum: -sum,
