@@ -1,7 +1,6 @@
 import { generateUUID } from '../../common/utils'
 import { StatementTransaction, ObjectWithAnyProps } from './models'
-import { Amount, AccountOrCard, AccountType } from '../../types/zenmoney'
-import { parseAmount } from './converters/converterUtils'
+import { AccountOrCard, AccountType } from '../../types/zenmoney'
 import { openWebViewAndInterceptRequest } from '../../common/network'
 import { TemporaryError } from '../../errors'
 import { parsePdf } from '../../common/pdfUtils'
@@ -24,22 +23,6 @@ function parseAccountId (text: string): string {
   return match[1] // KZ123456789012345
 }
 
-export function parseBalance (text: string): Amount {
-  // Пример: Доступно на 02.01.202519,455.00₸
-  const match = getRegexpMatch([
-    /Доступно\s+на\s+(\d{2}[-./]\d{2}[-./]\d{4})\s?(\d{1,3}(?:[\s.,]\d{3})*(?:[.,]\d+)?)([₸])/
-  ], text)
-  if (match?.[2] !== undefined) {
-    const amountStr = [
-      match[2].replace(',', '').replace(/\s/g, ''),
-      match[3].trim()
-    ].filter(str => str !== '').join(' ')
-    return parseAmount(amountStr)
-  }
-
-  assert(false, 'Can\'t parse balance from account statement')
-}
-
 function parseDateFromPdfText (text: string): string {
   const match = text.match(/^(\d{2}).(\d{2}).(\d{2,4})/)
   assert(match !== null, 'Can\'t parse date from pdf string', text)
@@ -58,9 +41,8 @@ function parseCardNumber (text: string): string {
 }
 
 function parseTransactions (text: string, statementUid: string): StatementTransaction[] {
-  // Пример: 01.01.2025-600.00 ₸KZTПокупка Airba Fresh Minimarket. Продукты и супермаркет
-  // Пример: 01.02.2025 -9,480.00 ₸ KZT Покупка Sensilyo Coffee House. Кафе и рестораны
-  const baseRegexp = /^(\d{2}\.\d{2}\.\d{4})\s?([-+]\s?[\d.,]+)\s?([₸$€£¥₺₽])?\s?([A-Z]{3})\s?([а-яА-ЯA-Za-z\s"“”'‘’]+)?\s?(.+)?$/gm
+  // Регулярка для строк транзакций: дата, сумма (с + или -), валюта (символ и/или код), далее описание
+  const baseRegexp = /^(\d{2}\.\d{2}\.\d{4}\s*[+-]\s*[\d.,]+\s*[₸$€£¥₺₽]?\s*[A-Z]{3} .+)$/gm
 
   const transactionStrings = text.match(baseRegexp)
 
@@ -96,13 +78,51 @@ function parseTransactions (text: string, statementUid: string): StatementTransa
   })
 }
 
+export interface ExchangeRate {
+  buyRate: number
+  sellRate: number
+}
+
+interface ExchangeRatesResponse {
+  success: boolean
+  message: string | null
+  data: {
+    cash: Array<Omit<ExchangeRate, 'buyRate' | 'sellRate'> & { buyRate: string, sellRate: string, buyCode: string, sellCode: string }>
+    mobile: Array<Omit<ExchangeRate, 'buyRate' | 'sellRate'> & { buyRate: string, sellRate: string, buyCode: string, sellCode: string }>
+    non_cash: Array<Omit<ExchangeRate, 'buyRate' | 'sellRate'> & { buyRate: string, sellRate: string, buyCode: string, sellCode: string }>
+  }
+  status: number
+}
+
+export async function getMobileExchangeRates (): Promise<Record<string, ExchangeRate>> {
+  const mobileRatesMap: Record<string, ExchangeRate> = {}
+
+  const response = await fetch('https://bankffin.kz/api/exchange-rates/getRates')
+  if (!response.ok) {
+    return mobileRatesMap
+  }
+  const json: ExchangeRatesResponse = await response.json()
+  if (!json.success || !Array.isArray(json.data?.mobile) || json.data.mobile.length === 0) {
+    return mobileRatesMap
+  }
+
+  for (const rate of json.data.mobile) {
+    const key = `${rate.buyCode}_${rate.sellCode}`
+    mobileRatesMap[key] = {
+      buyRate: parseFloat(rate.buyRate.replace(',', '.')),
+      sellRate: parseFloat(rate.sellRate.replace(',', '.'))
+    }
+  }
+
+  return mobileRatesMap
+}
+
 export function parseSinglePdfString (text: string, statementUid?: string): { account: AccountOrCard, transactions: StatementTransaction[] } {
-  const balanceAmount = parseBalance(text)
   const accountType = AccountType.ccard
   const rawAccount: AccountOrCard = {
-    balance: balanceAmount.sum,
+    balance: 0,
     id: parseAccountId(text),
-    instrument: balanceAmount.instrument,
+    instrument: 'KZT',
     title: parseAccountTitle(text),
     type: accountType,
     savings: false,
@@ -114,7 +134,7 @@ export function parseSinglePdfString (text: string, statementUid?: string): { ac
     transactions: rawTransactions
   }
   if (typeof statementUid !== 'string') {
-    console.log('Pdf successfully parsed', parsedContent)
+    console.log('PDF successfully parsed', parsedContent)
   }
   return parsedContent
 }
@@ -156,31 +176,41 @@ export async function parsePdfStatements (): Promise<null | Array<{ account: Acc
   const pdfStrings = await Promise.all(blob.map(async (blob) => {
     const { text } = await parsePdf(blob)
 
-    const splitPoint = text.search(/\d{2}\.\d{2}\.\d{4}/)
+    // Разделяем на части: Дата Сумма Валюта Операция Детали
+    // Ищем первую строку, где начинается таблица с транзакциями (по заголовку "Дата Сумма Валюта Операция Детали")
+    const splitPoint = text.search(/^Дата\s+Сумма\s+Валюта\s+Операция\s+Детали/m)
     const header = text.slice(0, splitPoint).trim()
     const transactions = text.slice(splitPoint).trim()
 
     // Обработка транзакций
-    const transactionsText = transactions
-      .replace(/(\d{2}\.\d{2}\.\d{4}[^\n]*?)\n([A-Za-zА-Яа-я])/g, '$1 $2') // Объединение строк одной записи
-      .replace(/([а-яА-Яa-zA-Z.,])\n([а-яА-Яa-zA-Z])/g, '$1 $2') // Удаление переносов строк внутри деталей
-      .replace(/\s{2,}/g, ' ') // Удаление двойных пробелов
-      .replace(/\n{2,}/g, '\n') // Удаление двойных переводов строк
+    // Cначала разбиваем на строки по датам, затем чистим каждую строку отдельно
+    // Удаляем служебный текст и заголовок таблицы
+    const cleanedTransactions = transactions
+      .replace(/Подлинность справки можете проверить\nпросканировав QR-код или перейдите по ссылке:\nhttps:\/\/bankffin\.kz\/ru\/check-receipt.*/g, '')
+      .replace(/^Дата\s+Сумма\s+Валюта\s+Операция\s+Детали\s*/gm, '')
+
+    const transactionLines = cleanedTransactions
+      .split(/(?=\d{2}\.\d{2}\.\d{4}\s*[-+]\s*[\d.,]+\s*[₸$€£¥₺₽]?)/) // Разделяем по дате и сумме
+      .map(line =>
+        line
+          .replace(/([а-яА-Яa-zA-Z.,])\n([а-яА-Яa-zA-Z])/g, '$1 $2') // Удаление переносов строк внутри деталей
+          .replace(/-\n\s*/g, '-') // Удаление переноса строки после дефиса
+          .replace(/\n(?=(Плательщик:|Получатель:|Назначение:|Вкладчик:))/g, ' ') // Объединение строк, если следующая строка начинается с ключевым словом
+          .replace(/\n/g, ' ') // Удаление всех остальных переносов строк
+          .replace(/\s{2,}/g, ' ') // Удаление двойных пробелов
+          .trim()
+      )
+      .filter(line => line.length > 0)
+    const transactionsText = transactionLines.join('\n')
 
     return `${header}\n\n${transactionsText}`
   }))
   const result = []
   for (const textItem of pdfStrings) {
-    console.log(textItem)
     if (!/Фридом Банк Казахстан/i.test(textItem)) {
       throw new TemporaryError('Похоже, это не выписка Freedom Bank KZ')
     }
-    try {
-      result.push(parseSinglePdfString(textItem))
-    } catch (e) {
-      console.error(e)
-      throw e
-    }
+    result.push(parseSinglePdfString(textItem))
   }
   return result
 }
