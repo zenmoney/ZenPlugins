@@ -141,7 +141,7 @@ export function convertPdfStatementTransaction (rawTransaction: StatementTransac
     let syncIds = null
     if (parsedType === transactionType.CASH) {
       type = AccountType.cash
-    } else if (parsedType === transactionType.TRANSFER && rawTransaction.description !== null) {
+    } else if (parsedType === transactionType.TRANSFER && rawTransaction.description !== null && rawTransaction.description.includes('KZ')) {
       type = AccountType.deposit
       const syncIdMatch = rawTransaction.description.match(/KZ[A-Z0-9]{15}/)
       if (syncIdMatch) {
