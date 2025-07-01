@@ -14,13 +14,17 @@ function getRegexpMatch (regExps: RegExp[], text: string, flags?: string): RegEx
   return match
 }
 
-function parseAccountId (text: string): string {
+function parseAccountIdAndBalance (text: string): { accountId: string, balance: number } {
   // Валюта счета:KZT, USD, EUR, RUB, CNY, TRY, AED Дата:01.01.2025 Номер счётаВалютаОстаток KZ123456789012345KZTKZT19,455.00 ₸
   const match = getRegexpMatch([
-    /([A-Z]{2}\d{2}[A-Z0-9]{13})/
+    /([A-Z]{2}\d{2}[A-Z0-9]{13})KZT\s+KZT\s+([0-9,.\s]+)/
   ], text)
   assert(typeof match?.[1] === 'string', 'Can\'t parse accountId from account statement')
-  return match[1] // KZ123456789012345
+  assert(typeof match?.[2] === 'string', 'Can\'t parse balance from account statement')
+  return {
+    accountId: match[1],
+    balance: parseFloat(match[2].replace(/\s/g, '').replace(',', ''))
+  } // KZ123456789012345, 19,455.00 ₸
 }
 
 function parseDateFromPdfText (text: string): string {
@@ -119,9 +123,10 @@ export async function getMobileExchangeRates (): Promise<Record<string, Exchange
 
 export function parseSinglePdfString (text: string, statementUid?: string): { account: AccountOrCard, transactions: StatementTransaction[] } {
   const accountType = AccountType.ccard
+  const { accountId, balance } = parseAccountIdAndBalance(text)
   const rawAccount: AccountOrCard = {
-    balance: 0,
-    id: parseAccountId(text),
+    balance,
+    id: accountId,
     instrument: 'KZT',
     title: parseAccountTitle(text),
     type: accountType,
