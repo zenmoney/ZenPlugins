@@ -21,7 +21,10 @@ function parseAccountIdAndBalance (text: string): { accountId: string, balance: 
   ], text)
   assert(typeof match?.[1] === 'string', 'Can\'t parse accountId from account statement')
   assert(typeof match?.[2] === 'string', 'Can\'t parse balance from account statement')
-  return { accountId: match[1], balance: parseFloat(match[2].replace(/\s/g, '').replace(',', '')) } // KZ123456789012345, 19,455.00 ₸
+  return {
+    accountId: match[1],
+    balance: parseFloat(match[2].replace(/\s/g, '').replace(',', ''))
+  } // KZ123456789012345, 19,455.00 ₸
 }
 
 function parseDateFromPdfText (text: string): string {
