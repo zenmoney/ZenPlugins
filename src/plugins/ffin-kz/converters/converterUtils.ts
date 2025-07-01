@@ -22,5 +22,5 @@ function mapInstrument (tag: string): string {
 }
 
 export function parseAsKzTime (data: string): Date {
-  return new Date(data.replace('Z', '+06:00'))
+  return new Date(data.replace('Z', '+05:00'))
 }

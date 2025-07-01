@@ -46,6 +46,9 @@ function cleanMerchantTitle (text: string | null): string | null {
   if (/^Принят.*/i.test(text)) {
     return null
   }
+  if (/ETN_SUPERAPP продажа ЦБ/i.test(text)) {
+    return null
+  }
 
   const keywordsToRemove = [...flatten(Object.values(transactionTypeStrings)), '₸']
   let cleanedText = text
@@ -82,8 +85,8 @@ function isTransactionToSkip (rawTransaction: StatementTransaction): boolean {
   if (rawTransaction.description === null || rawTransaction.description.trim() === '') {
     return false
   }
-  // Пропускаем транзакции с описанием "ETN_SUPERAPP продажа"
-  if (rawTransaction.description.includes('ETN_SUPERAPP продажа')) {
+  // Пропускаем транзакции возврата денег с технического депозита для карт
+  if (/Выплата вклада с депозитного договора/i.test(rawTransaction.description)) {
     return true
   }
 
