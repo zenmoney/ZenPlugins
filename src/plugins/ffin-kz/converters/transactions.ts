@@ -86,6 +86,10 @@ function isTransactionToSkip (rawTransaction: StatementTransaction): boolean {
   if (rawTransaction.description.includes('ETN_SUPERAPP продажа')) {
     return true
   }
+  // Пропускаем транзакции возврата денег с технического депозита для карт
+  if (/Выплата вклада с депозитного договора/i.test(rawTransaction.description)) {
+    return true
+  }
 
   // Пропускаем только те "Прием вклада по договору", где сумма вклада имеет тыины (дробная часть)
   if (/Прием вклада по договору.*в сумме\s\d+\.\d{1,2}\s*KZT/i.test(rawTransaction.description)) {

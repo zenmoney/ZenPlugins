@@ -40,7 +40,6 @@ function parseAccountTitle (text: string): string {
 
 function parseCardNumber (text: string): string {
   // Пример: Номер карты:**1234
-  // Пример: Номер карты: **6218
   return text.match(/Номер карты:\s*\*\*(\d{4})/)?.[1] ?? ''
 }
 
@@ -122,14 +121,13 @@ export async function getMobileExchangeRates (): Promise<Record<string, Exchange
 }
 
 export function parseSinglePdfString (text: string, statementUid?: string): { account: AccountOrCard, transactions: StatementTransaction[] } {
-  const accountType = AccountType.ccard
   const { accountId, balance } = parseAccountIdAndBalance(text)
   const rawAccount: AccountOrCard = {
     balance,
     id: accountId,
     instrument: 'KZT',
     title: parseAccountTitle(text),
-    type: accountType,
+    type: AccountType.ccard,
     savings: false,
     syncIds: [parseCardNumber(text)]
   }
