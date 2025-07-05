@@ -173,14 +173,15 @@ export function convertTransaction (apiTransaction: unknown, product: ConvertedP
   }
 
   const cashAmount = getAmountFromDescription(getString(apiTransaction, 'nomination'))
+  const invoiceNeeded = !!(cashAmount && cashAmount.instrument !== product.account.instrument)
 
   switch (printFormType) {
     case 'UTILITY_PAYMENT':
     case 'PAYMENT': {
       const title: string | undefined = getOptString(apiTransaction, 'merchantNameInt')
       // Bank fees transaction contains original payment info in description, so we shouldn't parse it
-      if (entryGroupDKey !== 'text.entry.group.name.FEE') {
-        transaction.movements[0].invoice = cashAmount ? { sum: cashAmount.sum * getSignByPrintFormType(printFormType), instrument: cashAmount.instrument } : null
+      if (entryGroupDKey !== 'text.entry.group.name.FEE' && invoiceNeeded) {
+        transaction.movements[0].invoice = invoiceNeeded ? { sum: cashAmount.sum * getSignByPrintFormType(printFormType), instrument: cashAmount?.instrument } : null
       }
       if (title !== undefined) {
         transaction.merchant = parseMerchant(title, getString(apiTransaction, 'nominationOriginal'))
@@ -221,7 +222,7 @@ export function convertTransaction (apiTransaction: unknown, product: ConvertedP
       if (title !== undefined) {
         transaction.merchant = parseMerchant(title, getString(apiTransaction, 'nominationOriginal'))
       }
-      transaction.movements[0].invoice = cashAmount ? { sum: cashAmount.sum * getSignByPrintFormType(printFormType), instrument: cashAmount.instrument } : null
+      transaction.movements[0].invoice = invoiceNeeded ? { sum: cashAmount.sum * getSignByPrintFormType(printFormType), instrument: cashAmount.instrument } : null
       transaction.movements.push(
         invertMovement(transaction.movements[0], product.account, { type: AccountType.cash })
       )
@@ -239,7 +240,7 @@ export function convertTransaction (apiTransaction: unknown, product: ConvertedP
         transaction.comment = 'Cash withdrawal comission / ' + getString(apiTransaction, 'nominationOriginal')
       } else {
         transaction.comment = 'Cash withdrawal'
-        transaction.movements[0].invoice = cashAmount ? { sum: cashAmount.sum * getSignByPrintFormType(printFormType), instrument: cashAmount.instrument } : null
+        transaction.movements[0].invoice = invoiceNeeded ? { sum: cashAmount.sum * getSignByPrintFormType(printFormType), instrument: cashAmount.instrument } : null
         transaction.movements.push(
           invertMovement(transaction.movements[0], product.account, { type: AccountType.cash })
         )

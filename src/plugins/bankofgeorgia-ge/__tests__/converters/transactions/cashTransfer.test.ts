@@ -223,7 +223,7 @@ describe('convertTransaction', () => {
             },
             fee: 0,
             id: '30813880631',
-            invoice: { instrument: 'GEL', sum: 200 },
+            invoice: null,
             sum: 200
           },
           {
@@ -589,7 +589,7 @@ describe('convertTransaction', () => {
             account: { id: '1338' },
             fee: 0,
             id: '50125651949',
-            invoice: { instrument: 'USD', sum: -500 },
+            invoice: null,
             sum: -500
           },
           {

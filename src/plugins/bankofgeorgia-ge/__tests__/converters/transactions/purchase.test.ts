@@ -107,7 +107,7 @@ describe('convertTransaction', () => {
             },
             fee: 0,
             id: '28673866172',
-            invoice: { instrument: 'GEL', sum: -11 },
+            invoice: null,
             sum: -11
           }
         ]
@@ -217,7 +217,7 @@ describe('convertTransaction', () => {
             },
             fee: 0,
             id: '28403593963',
-            invoice: { instrument: 'GEL', sum: -23.2 },
+            invoice: null,
             sum: -23.2
           }
         ]
@@ -541,7 +541,7 @@ describe('convertTransaction', () => {
             },
             fee: 0,
             id: '31187576494',
-            invoice: { instrument: 'GEL', sum: -22.82 },
+            invoice: null,
             sum: -22.82
           }
         ]
@@ -860,7 +860,7 @@ describe('convertTransaction', () => {
             account: { id: '1337' },
             fee: 0,
             id: '30286011908',
-            invoice: { instrument: 'GEL', sum: -35 },
+            invoice: null,
             sum: -35
           }
         ],
@@ -1299,7 +1299,7 @@ describe('convertTransaction', () => {
           {
             id: '52795765971',
             account: { id: '1338' },
-            invoice: { instrument: 'USD', sum: -33.88 },
+            invoice: null,
             sum: -33.88,
             fee: 0
           }
@@ -1309,6 +1309,116 @@ describe('convertTransaction', () => {
           city: null,
           title: 'MAILGUN TECHNOLOGIES',
           mcc: 5734,
+          location: null
+        },
+        comment: null
+      }
+    ],
+    [
+      {
+        statmentId: 91447811016,
+        acctKey: 11570661148,
+        entryId: 98526982258,
+        docKey: 28133932926,
+        essId: null,
+        nomination: 'Payment - Amount: USD19.99; Merchant: UBR* PENDING.UBER.COM>London GB, United Kingdom of Great Britain and Northern Ireland; MCC:4121; Date: 04/07/2025 14:08; Card No: ****9759; Payment transaction amount and currency: 19.99 USD; Bank conversion rate (USD-GEL): 3.795',
+        entryGroup: null,
+        merchantId: '50146455',
+        postDate: 1751659200000,
+        authDateStr: '04/07/2025 14:08',
+        inpSysdate: 1751624002000,
+        operationDate: 1751623680000,
+        amount: 6.48,
+        oppositeAmount: null,
+        ccy: 'USD',
+        clientComment: null,
+        canCopy: 'N',
+        status: 'F',
+        groupDescription: null,
+        groupType: null,
+        docNomination: null,
+        beneficiary: null,
+        bonusPoint: null,
+        merchantName: 'UBR* PENDING.UBER.COM>London          GB, გაერთიანებული სამეფო',
+        merchantNameInt: 'UBR* PENDING.UBER.COM>London          GB, United Kingdom of Great Britain and Northern Ireland',
+        amountBase: 24.08,
+        entryGroupDKey: 'text.entry.group.name.Payment',
+        entryGroupDValue: null,
+        entryGroupNameId: 7,
+        bonusInfo: null,
+        essServiceId: null,
+        merchantClientId: null,
+        cashbackAmount: null,
+        groupImageId: 35623083,
+        nominationOriginal: 'Payment - Amount: USD19.99; Merchant: UBR* PENDING.UBER.COM>London          GB, United Kingdom of Great Britain and Northern Ireland; MCC:4121; Date: 04/07/2025 14:08; Card No: ****9759; Payment transaction amount and currency: 19.99 USD; Bank conversion rate (USD-GEL): 3.795',
+        productName: null,
+        prodGroup: 'PLC',
+        entryType: 'GCE',
+        printSwift: 'N',
+        isPrintable: 'Y',
+        printFormType: 'PAYMENT',
+        hasTransferBack: 'N',
+        benefProfileId: null,
+        positiveSum: null,
+        negativeSum: null,
+        isInternalOperation: 'N',
+        transferBankBic: null,
+        deviceType: 'P',
+        swiftGpiFlag: 'N',
+        counterPartyClientKey: null,
+        gifUrl: null,
+        gifId: null,
+        authDate: 1751572800000,
+        bonusPointType: null,
+        attachmentFileBase64: null,
+        isRepeatAllowed: false,
+        isTemplateAllowed: false,
+        isDDSTOAlllowed: false,
+        isStatementAllowed: true,
+        isPrintAllowed: true,
+        isReversalAvailable: false,
+        entryIconBase64: null,
+        merchantIconBase64: null,
+        providerIconUrl: null,
+        groupImageUrl: 'serviceId=COMMON_GET_FILE&channel=MOBILE&id=35623083&hashCode=DD5F6CD11009BB54294BF433E9AEA0C5',
+        imageUrl: 'serviceId=COMMON_GET_FILE&channel=MOBILE&id=35623083&hashCode=DD5F6CD11009BB54294BF433E9AEA0C5',
+        benefProfilePicture: null,
+        operationTitle: 'UBR* PENDING.UBER.COM>London GB, United Kingdom of Great Britain and Northern Ireland',
+        entryDetailType: null,
+        pfmId: 98526982258,
+        pfmForecast: null,
+        pfmCatId: 140,
+        pfmCatName: '#text.pfm.child.category.taxi',
+        pfmParentCatId: 120,
+        pfmParentCatName: null,
+        pfmRecurring: null,
+        pfmSplit: null,
+        pfmParentOpId: null,
+        pfmTagId: null,
+        pfmTagName: null,
+        pfmTags: null,
+        pfmComputable: true,
+        isRuleCreationEnabled: true,
+        canSplit: true,
+        isCarTemplateAllowed: false
+      },
+      {
+        hold: true,
+        date: new Date('2025-07-04T14:08:00+04:00'),
+        movements: [
+          {
+            id: '91447811016',
+            account: { id: '1338' },
+            invoice: null,
+            sum: -6.48,
+            fee: 0
+          }
+        ],
+        merchant: {
+          country: 'United Kingdom of Great Britain and Northern Ireland',
+          city: 'London          GB',
+          title: 'UBR* PENDING.UBER.COM',
+          mcc: 4121,
           location: null
         },
         comment: null
