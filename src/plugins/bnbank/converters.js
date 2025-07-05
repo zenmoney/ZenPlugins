@@ -98,7 +98,7 @@ export function convertTransaction (apiTransaction, accounts, hold = false) {
     instrument: codeToCurrencyLookup[transactionCurrency]
   }
   const transaction = {
-    date: new Date(apiTransaction.operationDate),
+    date: new Date(apiTransaction.operationDate ?? apiTransaction.operationDetail.paymentDate),
     movements: [
       {
         id: apiTransaction.transactionAuthCode ? apiTransaction.transactionAuthCode : null,

@@ -267,9 +267,45 @@ function mockDepositAccountStatement () {
 }
 
 function mockCardLastTransactions () {
-  fetchMock.once('https://mb.bnb.by/services/v2/products/getBlockedAmountStatement', {
+  fetchMock.once('https://mb.bnb.by/services/v2/products/getCardTransactions', {
     status: 200,
-    body: '{"errorInfo":{"error":"0","errorText":"Успешно"}}',
+    body: JSON.stringify({
+      errorInfo:
+    {
+      error: '0',
+      errorText: 'Успешно'
+    },
+      transactions:
+    [
+      {
+        identifier: '_aabb',
+        operations:
+            [
+              {
+                operationSign: '1',
+                operationId: '-',
+                transactionAmount: 0.0,
+                transactionCurrency: '840',
+                operationAmount: 0.0,
+                operationCurrency: '840',
+                operationName: 'Капитализация',
+                transType: '-',
+                operationDetail:
+                    {
+                      source: '5*** **** **** 1111',
+                      authCode: '-',
+                      mccCode: '-',
+                      paymentDate: 1547051340000,
+                      operationDescription: '-',
+                      status: 'DONE',
+                      terminalLocation: '-',
+                      operationName: '-'
+                    }
+              }
+            ]
+      }
+    ]
+    }),
     statusText: 'OK',
     headers: { session_token: '6af71bdf-69f8-4f62-8e59-4c26ce68add1' },
     sendAsJson: false
