@@ -11,6 +11,9 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
   ZenMoney.setData('auth', session.auth)
   ZenMoney.saveData()
 
+  // const clientKey = await getClientKey(session)
+  const clientKey = "60588505"
+
   const accounts: Account[] = []
   const transactions: ExtendedTransaction[] = []
   await Promise.all(convertAccounts(await fetchAccounts(session)).map(async product => {
@@ -18,7 +21,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
     if (ZenMoney.isAccountSkipped(product.account.id)) {
       return
     }
-    const apiTransactions = await fetchTransactions(product, fromDate, toDate!, session)
+    const apiTransactions = await fetchTransactions(clientKey, product, fromDate, toDate!, session)
     for (const apiTransaction of apiTransactions) {
       const transaction = convertTransaction(apiTransaction, product)
       if (transaction != null) {
