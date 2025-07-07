@@ -1,6 +1,7 @@
 import { InvalidLoginOrPasswordError } from '../../errors'
 import {
-  Auth, AuthInitiateResponse, LanguageType,
+  Auth, AuthInitiateResponse,
+  //  LanguageType,
   Preferences, Session, accessTokenPayload, Account as CredoAccount, Transaction as CredoTransaction
 } from './models'
 import {
@@ -8,9 +9,9 @@ import {
   fetchProductTransactions,
   authInitiate,
   initiate2FA,
-  initiateAddBindedDevice,
-  authConfirm,
-  confirmDeviceBinding
+  // initiateAddBindedDevice,
+  authConfirm
+  // confirmDeviceBinding
 } from './fetchApi'
 
 function parseJwt (token: string): accessTokenPayload {
@@ -41,11 +42,12 @@ export async function login (preferences: Preferences, auth?: Auth): Promise<Ses
     const otp1 = await ZenMoney.readLine('Enter OTP from Credo Bank SMS')
     const confirmResponse = await authConfirm(otp1, operationId)
     session.auth.accessToken = confirmResponse.data.operationData.token
-    const addBindedDeviceResponse = await initiateAddBindedDevice(session, LanguageType.english)
-    const deviceBindingOperationId = addBindedDeviceResponse.data.initiateAddBindedDevice.operationId
-    await initiate2FA(deviceBindingOperationId)
-    const otp2 = await ZenMoney.readLine('Enter OTP from Credo Bank SMS')
-    await confirmDeviceBinding(session, deviceBindingOperationId, otp2)
+    /* Credo stopped binding web clients... */
+    // const addBindedDeviceResponse = await initiateAddBindedDevice(session, LanguageType.english)
+    // const deviceBindingOperationId = addBindedDeviceResponse.data.initiateAddBindedDevice.operationId
+    // await initiate2FA(deviceBindingOperationId)
+    // const otp2 = await ZenMoney.readLine('Enter OTP from Credo Bank SMS')
+    // await confirmDeviceBinding(session, deviceBindingOperationId, otp2)
   } else {
     const confirmResponse = await authConfirm(null, operationId)
     session.auth.accessToken = confirmResponse.data.operationData.token
