@@ -244,17 +244,22 @@ export async function fetchTransactions (token, accounts, fromDate, toDate = new
 export async function fetchLastCardTransactions (token, account) {
   console.log('>>> Загрузка списка последних транзакций для карты ' + account.title)
 
-  const response = await fetchApiJson('products/getBlockedAmountStatement', {
+  const response = await fetchApiJson('products/getCardTransactions', {
     method: 'POST',
     headers: { session_token: token },
     body: {
       cards: [
         account.cardHash
       ],
+      reportData: {
+        from: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).getTime(),
+        till: new Date().getTime()
+      },
       internalAccountId: account.id
     }
   }, response => response.body)
-  const operations = response.body.operations ? response.body.operations : []
+  const transactions = response.body.transactions || []
+  const operations = flatMap(transactions, t => t.operations || [])
   for (let i = 0; i < operations.length; i++) {
     operations[i].accountNumber = account.syncID[0]
   }
