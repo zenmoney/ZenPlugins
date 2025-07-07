@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
     <id>bancoguayaquil-ec</id>
-    <company>1111111</company>
+    <company>16133</company>
     <description>
         Synchronization plugin for Banco Guayaquil (Ecuador) https://www.bancoguayaquil.com/.
         Input your login and password from the bank.
