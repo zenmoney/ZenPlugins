@@ -9,6 +9,7 @@ import {
   fetchCards,
   fetchCheckOperation,
   fetchDepositsAndBondsWithDetails,
+  fetchGetClientInfo,
   fetchGetCustomerDeviceInfoQuery,
   fetchGetToken,
   fetchGetUserContacts,
@@ -20,13 +21,14 @@ import {
   fetchRequestOTP,
   fetchSaveUserOnDevice,
   fetchSetupSecurityParameters,
+  fetchStatements,
   fetchTriggerLogin,
   fetchVerifyOTP
 } from './fetchApi'
 import { getNumber, getOptArray } from '../../types/get'
 import { generateDevice, generateECDSAKey } from './utils'
 
-async function askOtpCode (text: string): Promise<string> {
+async function askOtpCode(text: string): Promise<string> {
   const sms = await ZenMoney.readLine(text, { inputType: 'number' })
   if (sms == null) {
     throw new InvalidOtpCodeError()
@@ -34,7 +36,7 @@ async function askOtpCode (text: string): Promise<string> {
   return sms
 }
 
-async function chooseContact (contacts: Contact[]): Promise<Contact> {
+async function chooseContact(contacts: Contact[]): Promise<Contact> {
   if (contacts.length === 1) {
     return contacts[0]
   }
@@ -54,7 +56,7 @@ async function chooseContact (contacts: Contact[]): Promise<Contact> {
   }
 }
 
-export async function login (preferences: Preferences, auth?: Auth): Promise<Session> {
+export async function login(preferences: Preferences, auth?: Auth): Promise<Session> {
   let session: Session
   if (auth?.tmp != null) {
     const { authorizationBearer } = await fetchAuth({ auth })
@@ -93,12 +95,13 @@ export async function login (preferences: Preferences, auth?: Auth): Promise<Ses
       authorizationBearer,
       requestIndex: lightSession2.requestIndex
     }
+    // await fetchGetClientInfo(processReference, session)
   }
 
   return session
 }
 
-export async function fetchAccounts (session: Session): Promise<FetchedAccount[]> {
+export async function fetchAccounts(session: Session): Promise<FetchedAccount[]> {
   const accountsWithDetails = await fetchAccountsWithDetails(session)
   const cards = await fetchCards(session)
   const accounts = accountsWithDetails.map(x => {
@@ -111,13 +114,15 @@ export async function fetchAccounts (session: Session): Promise<FetchedAccount[]
   return [...accounts, ...deposits, ...loans]
 }
 
-export async function fetchTransactions (
+export async function fetchTransactions(
+  clientKey: string,
   product: ConvertedProduct,
   fromDate: Date,
   toDate: Date,
   session: Session
 ): Promise<unknown[]> {
   if (product.tag === 'account' || product.tag === 'deposit' || product.tag === 'loan') { // not yet implemented for loans
+    await fetchStatements(clientKey, fromDate, toDate, session)
     return await fetchAccountOperations(product.acctKey, fromDate, toDate, session)
   }
   return []
