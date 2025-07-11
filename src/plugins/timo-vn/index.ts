@@ -7,7 +7,7 @@ import { generateRandomString } from '../../common/utils'
 export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, toDate, isFirstRun }) => {
   toDate = toDate ?? new Date()
 
-  const appVersion = '268'
+  const appVersion = '274'
 
   if (isFirstRun) {
     const auth: Auth = {
