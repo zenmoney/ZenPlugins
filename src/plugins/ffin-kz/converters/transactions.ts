@@ -2,6 +2,7 @@ import { flatten } from 'lodash'
 import { Movement, AccountType, AccountOrCard } from '../../../types/zenmoney'
 import { ConvertedTransaction, StatementTransaction } from '../models'
 import { ExchangeRate } from '../api'
+import { createHash } from 'crypto'
 
 export const transactionType = {
   INCOME: 'income',
@@ -98,6 +99,12 @@ function isTransactionToSkip (rawTransaction: StatementTransaction): boolean {
   return false
 }
 
+function generateTransactionId (date: string, sum: string | null, description: string | null): string {
+  const hash = createHash('sha1')
+  hash.update(`${date}_${sum}_${description ?? ''}`)
+  return hash.digest('hex').slice(0, 12)
+}
+
 export function convertPdfStatementTransaction (rawTransaction: StatementTransaction, rawAccount: AccountOrCard, currencyRates: Record<string, ExchangeRate>): ConvertedTransaction | null {
   if (isTransactionToSkip(rawTransaction)) {
     return null
@@ -126,7 +133,7 @@ export function convertPdfStatementTransaction (rawTransaction: StatementTransac
   }
 
   const baseMovement: Movement = {
-    id: null,
+    id: generateTransactionId(rawTransaction.date, rawTransaction.originalAmount, rawTransaction.description),
     account: { id: rawAccount.id },
     invoice,
     sum,
