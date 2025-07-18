@@ -28,7 +28,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
 
         page++
 
-        transactions.push(...apiTransactions.map(t => convertTransaction(t, account)))
+        transactions.push(...apiTransactions.map(t => convertTransaction(t, account)).filter((tx): tx is Transaction => tx !== null))
       }
     }
 
@@ -45,7 +45,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
 
         page++
 
-        transactions.push(...apiCardTransactions.map(t => convertTransaction(t, account, true)))
+        transactions.push(...apiCardTransactions.map(t => convertTransaction(t, account, true)).filter((tx): tx is Transaction => tx !== null))
       }
     }
   }))
