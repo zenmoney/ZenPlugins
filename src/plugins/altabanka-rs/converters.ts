@@ -22,7 +22,7 @@ export function convertTransaction (accountTransaction: AccountTransaction, acco
   if (accountTransaction.amount === 0) {
     return null
   }
-  
+
   if (accountTransaction.currency !== account.currency) {
     invoice = {
       sum: accountTransaction.amount,
