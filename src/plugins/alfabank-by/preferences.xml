@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="passportNumber"
+        title="Личный номер"
+        dialogTitle="Личный номер"
+        dialogMessage="Личный номер - для резидентов РБ, номер паспорта - если у вас нет личного номера резидента РБ"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="||{@s}"
+        obligatory="true">
+    </EditTextPreference>
+    <ListPreference
+        key="isResident"
+        title="Резидент РБ"
+        dialogTitle="Резидент РБ"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        entries="Да|Нет"
+        entryValues="true|false"
+        defaultValue="true"
+        summary="||{@s}">
+    </ListPreference>
+    <EditTextPreference
+        key="issueDate"
+        inputType="number"
+        title="Дата выдачи паспорта"
+        dialogTitle="Дата выдачи паспорта"
+        dialogMessage="Формат: ГГГГММДД. Заполните, если у вас нет личного номера паспорта РБ"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|issueDate|{@s}"
+    />
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="С какой даты загружать операции"
+        defaultValue="2019-01-01T00:00:00.000Z"
+        dialogTitle="С какой даты загружать операции"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|startDate|{@s}"
+    />
+</PreferenceScreen>
