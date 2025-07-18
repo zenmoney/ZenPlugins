@@ -17,6 +17,6 @@ export interface AccountTransaction {
   date: Date
   address: string
   amount: number
-  currency: string
+  currency: string | undefined
   description: string
 }
