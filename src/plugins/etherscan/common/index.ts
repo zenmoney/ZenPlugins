@@ -5,13 +5,16 @@ import { Preferences } from '../types'
 
 import type { Response, BlockNoResponse } from './types'
 
-const baseUrl = 'https://api.etherscan.io/api'
+const baseUrl = 'https://api.etherscan.io/v2/api'
 
 const MAX_RPS = 5
 let activeList: Array<Promise<unknown>> = []
 
 async function fetchInner<T extends Response> (params: Record<string, string | number>): Promise<T> {
-  const query = stringify(params)
+  const query = stringify({
+    ...params,
+    chainid: 1
+  })
 
   const response = await fetchJson(`${baseUrl}?${query}`)
 
