@@ -6,7 +6,7 @@ import { card, deposit, checking } from './converters'
 import { TemporaryError } from '../../errors'
 
 const BASE_URL = 'https://mb.bnb.by/services/v2/'
-const APP_VERSION = '1.54'
+const APP_VERSION = '1.55.1'
 
 export function generateDeviceID () {
   return generateRandomString(16)
