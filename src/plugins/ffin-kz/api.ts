@@ -49,7 +49,7 @@ function parseTransactions (text: string, statementUid: string): StatementTransa
 
   const transactionStrings = text.match(baseRegexp)
 
-  if (!transactionStrings || transactionStrings.length === 0) {
+  if ((transactionStrings == null) || transactionStrings.length === 0) {
     return []
   }
 
@@ -166,7 +166,7 @@ async function showHowTo (): Promise<ObjectWithAnyProps> {
 export async function parsePdfStatements (): Promise<null | Array<{ account: AccountOrCard, transactions: StatementTransaction[] }>> {
   await showHowTo()
   const blob = await ZenMoney.pickDocuments(['application/pdf'], true)
-  if (!blob || !blob.length) {
+  if (blob.length === 0) {
     throw new TemporaryError('Выберите один или несколько файлов в формате .pdf')
   }
   for (const { size, type } of blob) {

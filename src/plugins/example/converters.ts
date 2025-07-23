@@ -20,7 +20,7 @@ function convertAccount (apiAccount: unknown, accountsByCba: Record<string, Conv
   const balance = getNumber(apiAccount, 'accountBalance.value')
   let newAccount = false
   let account = accountsByCba[cba]
-  if (!account) {
+  if (account == null) {
     account = {
       products: [],
       account: {

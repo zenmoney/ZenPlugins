@@ -52,7 +52,7 @@ export function parseXlsStatements (
       }
       if (statementDate === '' && /date range/i.test(a)) {
         const m = (r.join(' ')).match(/(\d{2}\.\d{2}\.\d{4})/)
-        if (m) statementDate = parseDateFromPdfText(m[1])
+        if (m != null) statementDate = parseDateFromPdfText(m[1])
       }
     }
 

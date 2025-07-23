@@ -35,7 +35,6 @@ export function handleCardType (rawCard) {
  */
 export function convertCard (rawCard) {
   const ids = []
-  // eslint-disable-next-line github/array-foreach
   rawCard.productAccount.cards.forEach((item) => {
     ids.push(item.number.slice(-4))
   })

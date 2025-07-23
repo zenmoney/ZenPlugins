@@ -7,7 +7,7 @@ import forge from 'node-forge'
 function getPhoneNumber (rawPhoneNumber: string): string | null {
   const normalizedPhoneNumber = /^(?:\+?998)(\d{9})$/.exec(rawPhoneNumber.trim())
 
-  if (normalizedPhoneNumber) {
+  if (normalizedPhoneNumber != null) {
     return '998' + normalizedPhoneNumber[1]
   }
 
@@ -19,7 +19,7 @@ function validatePreferences (rawPreferences: Preferences): Preferences {
   if (phone === null) {
     throw new InvalidPreferencesError('Неверный формат номера телефона')
   }
-  if (!rawPreferences.password.match(/^\d{5}$/)) {
+  if (rawPreferences.password.match(/^\d{5}$/) === null) {
     throw new InvalidPreferencesError('CLICK-PIN должен состоять из 5 цифр')
   }
 
@@ -28,7 +28,7 @@ function validatePreferences (rawPreferences: Preferences): Preferences {
 
 async function askSmsCode (): Promise<string> {
   const sms = await ZenMoney.readLine('Введите код из СМС сообщения', { inputType: 'number' })
-  if (!sms) {
+  if (sms === null || sms === undefined || sms === '') {
     throw new InvalidOtpCodeError()
   }
   return sms
@@ -36,7 +36,7 @@ async function askSmsCode (): Promise<string> {
 
 export async function login (rawPreferences: Preferences, auth?: Auth): Promise<Auth> {
   const { phone, password } = validatePreferences(rawPreferences)
-  if (!auth) {
+  if (auth == null) {
     const imei = forge.md.md5.create().update(`${phone}_imei`, 'utf8').digest().toHex().slice(0, 16)
     const deviceId = await fetchDeviceRegister(phone, imei)
     const smsCode = await askSmsCode()

@@ -14,7 +14,7 @@ const SUPPORTED_MIME_TYPES = [
 export async function pickStatementDocuments (): Promise<Blob[]> {
   const blobs = await ZenMoney.pickDocuments(SUPPORTED_MIME_TYPES, true)
 
-  if (!blobs || blobs.length === 0) {
+  if (blobs.length === 0) {
     throw new TemporaryError('Выберите один или несколько файлов в формате .pdf или .xls/.xlsx')
   }
   return blobs
@@ -102,7 +102,7 @@ export function parseSinglePdfString (text: string, statementUid?: string): { ac
 
 export function extractInstrument (text: string): string {
   const match = text.match(/Account Type\s*:\s*VADESİZ\s+([A-Z]{2,3})\s*Nickname\s*:/)
-  return match ? match[1] : 'TL' // Default to 'TL' if no match found
+  return (match != null) ? match[1] : 'TL' // Default to 'TL' if no match found
 }
 
 function extractAccountId (text: string): string {

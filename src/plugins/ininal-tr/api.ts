@@ -33,8 +33,8 @@ export class IninalApi {
   ): Promise<FetchResponse> {
     const sessionHeaders = {
       Authorization: `Bearer ${
-        (session && 'accessToken' in session)
-        ? session.accessToken
+        ((session !== null && session !== undefined) && 'accessToken' in session)
+        ? (session.accessToken ?? '')
         : this.anonymousToken}`
     }
 
@@ -47,7 +47,7 @@ export class IninalApi {
       sanitizeResponseLog: (obj: unknown) => sanitize(obj, true)
     }
 
-    const mergedOptions = options
+    const mergedOptions = (options != null)
       ? {
           ...sanitizeOptions,
           ...options,
@@ -61,7 +61,7 @@ export class IninalApi {
 
     const response = await fetchJson(this.baseUrl + url, mergedOptions)
 
-    if (predicate) {
+    if (predicate != null) {
       this.validateResponse(response, response => (get(response.body, 'httpCode') === 200) && predicate(response))
     }
 
@@ -69,13 +69,13 @@ export class IninalApi {
   }
 
   private validateResponse (response: FetchResponse, predicate?: (x: FetchResponse) => boolean): void {
-    console.assert(!predicate || predicate(response), 'non-successful response')
+    console.assert((predicate == null) || predicate(response), 'non-successful response')
   }
 
   public async login (preferences: Preferences, isInBackground: boolean, session?: Session): Promise<Session> {
     console.debug('login', sanitize({ session }, true))
 
-    if (!session) {
+    if (session == null) {
       session = {
         deviceId: this.generateDeviceID()
       }
@@ -86,7 +86,7 @@ export class IninalApi {
     if ('accessToken' in session && 'userId' in session) {
       // try to fetch user info to check auth
       const userResponse = await this.fetchApi(
-        `v3.0/users/${session.userId}`,
+        `v3.0/users/${session.userId ?? ''}`,
         session,
         {
           method: 'GET'
@@ -224,9 +224,9 @@ export class IninalApi {
   }
 
   // fetchAccounts returns list of accounts, but also refreshes session token
-  public async fetchAccounts (session: Session): Promise<{session?: Session, accounts: AccountInfo[]}> {
+  public async fetchAccounts (session: Session): Promise<{ session?: Session, accounts: AccountInfo[] }> {
     const rawResponse = await this.fetchApi(
-      `v3.2/users/${session.userId}/cardaccount`,
+      `v3.2/users/${session.userId ?? ''}/cardaccount`,
       session,
       {
         method: 'POST',
@@ -236,7 +236,7 @@ export class IninalApi {
       },
       (res) => {
         const resp = (res.body as { response?: { accountListResponse?: unknown[] } })?.response
-        return !!(resp && 'accountListResponse' in resp)
+        return !!((resp != null) && 'accountListResponse' in resp)
       }
     ) as FetchResponse & {
       body: {
@@ -290,13 +290,13 @@ export class IninalApi {
 
   public async fetchAccountTransactions (session: Session, accountNumber: string, fromDate: Date, toDate?: Date): Promise<AccountTransaction[]> {
     // if toDate is not provided, set it to the end of the current day
-    if (!toDate) {
+    if (toDate == null) {
       toDate = new Date()
       toDate.setHours(23, 59, 59, 999)
     }
 
     const rawResponse = await this.fetchApi(
-      `v3.1/users/${session.userId}/transactions/${accountNumber}`,
+      `v3.1/users/${session.userId ?? ''}/transactions/${accountNumber}`,
       session,
       {
         method: 'POST',
@@ -308,7 +308,7 @@ export class IninalApi {
       },
       (res) => {
         const resp = (res.body as { response?: { transactionList?: unknown[] } })?.response
-        return !!(resp && 'transactionList' in resp)
+        return !!((resp != null) && 'transactionList' in resp)
       }
     ) as FetchResponse & {
       body: {

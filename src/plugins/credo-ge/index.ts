@@ -3,6 +3,7 @@ import { fetchAccounts, fetchTransactions, login } from './api'
 import { fetchCards, fetchDeposits, fetchLoans, fetchBlockedTransactions, getTransactionDetail } from './fetchApi'
 import { convertAccounts, convertTransaction, getAccountNumberToAccountMapping } from './converters'
 import { Auth, Preferences } from './models'
+import { getOptNumber } from '../../types/get'
 
 export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, toDate }) => {
   toDate = toDate ?? new Date()
@@ -26,9 +27,9 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
     const transactionDetail = await getTransactionDetail(session, t.stmtEntryId)
     const accountNumber = transactionDetail.accountNumber + transactionDetail.currency
     const account = numberToAccount.get(accountNumber)
-    if (account) {
+    if (account !== null && account !== undefined) {
       const transactionsList = blockedTransactionsByAccountId.get(account.id)
-      if (transactionsList) {
+      if (transactionsList !== null && transactionsList !== undefined) {
         blockedTransactionsByAccountId.set(account.id, transactionsList.concat(t))
       } else {
         blockedTransactionsByAccountId.set(account.id, [t])
@@ -40,15 +41,15 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
     if (ZenMoney.isAccountSkipped(account.id)) {
       continue
     }
-    console.log('>>> Getting transactions for account: ' + account.id)
+    console.log('>>> Getting transactions for account: ' + (account.id ?? ''))
     const apiTransactions = await fetchTransactions(session, account.id, fromDate)
     for (const apiTransaction of apiTransactions) {
       transactions.push(convertTransaction(apiTransaction, account))
     }
     console.log('>>> converting blocked transactions')
     const transactionsBlockedForAccount = blockedTransactionsByAccountId.get(account.id)
-    if (transactionsBlockedForAccount) {
-      console.log(`>> found ${transactionsBlockedForAccount.length} blocked transactions for account ${account.id}`)
+    if (transactionsBlockedForAccount != null) {
+      console.log(`>> found ${getOptNumber(transactionsBlockedForAccount, 'length') ?? 'undefined'} blocked transactions for account ${account.id}`)
       for (const blockedTransaction of transactionsBlockedForAccount) {
         transactions.push(convertTransaction(blockedTransaction, account))
       }

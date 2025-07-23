@@ -31,7 +31,9 @@ let state = {
   onPersistPluginDataConfirm: null
 }
 
-const updateUI = (Ui) => ReactDOM.render(<Ui {...state} />, rootElement)
+const updateUI = (Ui) => {
+  ReactDOM.render(<Ui {...state} />, rootElement)
+}
 const setState = (transform) => {
   state = transform(state)
   return updateUI(UI)

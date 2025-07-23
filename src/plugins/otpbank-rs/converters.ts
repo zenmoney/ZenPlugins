@@ -20,7 +20,7 @@ function convertAccount (apiAccount: OtpAccount, accountsByCba: Record<string, C
   const balance = apiAccount.balance
   let newAccount = false
   let account = accountsByCba[cba]
-  if (!account) {
+  if (account == null) {
     account = {
       products: [],
       account: {

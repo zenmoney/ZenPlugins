@@ -277,7 +277,7 @@ export interface Deposit {
 }
 
 export interface DepositsResponse {
-  data: { customer: { deposits: Deposit[] }}
+  data: { customer: { deposits: Deposit[] } }
 }
 
 // TODO: Can we get result of LoansResponse and accounts related to loans?

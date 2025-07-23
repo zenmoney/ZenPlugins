@@ -1,5 +1,5 @@
 const { execSync } = require('child_process')
-const os = require('os');
+const os = require('os')
 
 const argv = process.argv
 execSync(argv[2] + argv.slice(3).join(','), {

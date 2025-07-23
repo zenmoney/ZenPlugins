@@ -19,7 +19,7 @@ function checkCommitRules () {
   let isCoreCommitted = false
 
   while ((match = pluginPrefixRegex.exec(commitMessage)) !== null) {
-    let pluginName = match[1]
+    const pluginName = match[1]
     if ([
       'core',
       'dx'

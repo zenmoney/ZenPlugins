@@ -20,7 +20,7 @@ export function convertAccounts (apiAccounts: AccountInfo[]): AccountOrCard[] {
 
 export function convertTransaction (accountTransaction: AccountTransaction, account: Account, cardTransaction?: CardTransaction): Transaction {
   let invoice = null
-  if (cardTransaction && cardTransaction.currency !== accountTransaction.currency) {
+  if ((cardTransaction != null) && cardTransaction.currency !== accountTransaction.currency) {
     invoice = {
       sum: cardTransaction.amount,
       instrument: cardTransaction.currency

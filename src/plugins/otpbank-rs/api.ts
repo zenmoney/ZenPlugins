@@ -15,7 +15,7 @@ export async function login (preferences: Preferences, auth?: Auth): Promise<Ses
     time: 120000
   })
 
-  if (!password) {
+  if (password == null || password === '') {
     throw new InvalidLoginOrPasswordError('Password cannot be empty')
   }
 

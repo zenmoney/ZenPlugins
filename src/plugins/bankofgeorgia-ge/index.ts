@@ -18,7 +18,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
     if (ZenMoney.isAccountSkipped(product.account.id)) {
       return
     }
-    const apiTransactions = await fetchTransactions(product, fromDate, toDate!, session)
+    const apiTransactions = await fetchTransactions(product, fromDate, toDate ?? new Date(), session)
     for (const apiTransaction of apiTransactions) {
       const transaction = convertTransaction(apiTransaction, product)
       if (transaction != null) {

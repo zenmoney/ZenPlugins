@@ -111,7 +111,7 @@ export const newCachedTransactionFetcher = function (fetchFn: TransactionFetcher
 
   return async function fetchTransactionCached (signature: string): Promise<Transaction> {
     if (cache.has(signature)) {
-      return await (cache.get(signature)!)
+      return await (cache.get(signature) as Promise<Transaction>)
     }
 
     const promise = fetchFn(signature)
@@ -152,7 +152,7 @@ export const fetchTransactions = async function (address: string, { fromDate, la
 
     const oldestSignature = response.at(-1)
 
-    if (oldestSignature) {
+    if (oldestSignature != null) {
       if (new Date(oldestSignature.blockTime * 1000) < fromDate) {
         break
       }

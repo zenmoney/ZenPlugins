@@ -36,7 +36,7 @@ export async function fetchAddressTransactions ({
   address,
   fromDate,
   lastSeenTxId
-}: { address: string, fromDate: Date, lastSeenTxId?: string}): Promise<BitcoinTransaction[]> {
+}: { address: string, fromDate: Date, lastSeenTxId?: string }): Promise<BitcoinTransaction[]> {
   const transactions = await fetch<BitcoinTransaction[]>(`/address/${address}/txs${lastSeenTxId !== undefined ? `/chain/${lastSeenTxId}` : ''}`)
   const oldestTransaction = transactions[transactions.length - 1]
 

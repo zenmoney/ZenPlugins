@@ -83,7 +83,7 @@ export class TonscanApi {
   private readonly maxRps: number
   private activeList: Array<Promise<unknown>> = []
 
-  constructor (options: { baseUrl: string, requestsDelay?: number, maxRps?: number}) {
+  constructor (options: { baseUrl: string, requestsDelay?: number, maxRps?: number }) {
     this.baseUrl = options.baseUrl
     this.requestsDelay = options.requestsDelay ?? 1300
     this.maxRps = options.maxRps ?? MAX_RPS
@@ -122,10 +122,10 @@ export class TonscanApi {
   ): Promise<FetchResponse> {
     const response = await fetchJson(this.baseUrl + url, options)
 
-    if (predicate) {
+    if (predicate != null) {
       this.validateResponse(
         response,
-        response => !get(response.body, 'error') && predicate(response)
+        response => !(get(response.body, 'error') != null) && predicate(response)
       )
     }
 
@@ -136,7 +136,7 @@ export class TonscanApi {
     response: FetchResponse,
     predicate?: (x: FetchResponse) => boolean
   ): void {
-    console.assert(!predicate || predicate(response), 'non-successful response')
+    console.assert((predicate == null) || predicate(response), 'non-successful response')
   }
 
   public async fetchJettons (ownerWalletAddress: string): Promise<JettonInfo[]> {

@@ -38,12 +38,12 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
   ZenMoney.saveData()
 
   const cards = await denizBankApi.fetchCards(session)
-  const cardTransactions: Array<CardTransaction & {cardLastFourDigits: string}> = []
+  const cardTransactions: Array<CardTransaction & { cardLastFourDigits: string }> = []
 
   for (const card of cards) {
     const transactions = await denizBankApi.fetchCardTransactions(session, card.guid, fromDate, toDate)
 
-    if (transactions) {
+    if (transactions != null) {
       cardTransactions.push(...transactions.map(t => ({ ...t, cardLastFourDigits: card.maskedCardNumber.slice(-4) })))
     }
   }

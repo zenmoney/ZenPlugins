@@ -3,7 +3,7 @@ import { fetchJson } from '../../../common/network'
 import { delay } from '../../../common/utils'
 import { Preferences } from '../types'
 
-import type { Response, BlockNoResponse } from './types'
+import type { BlockNoResponse, Response } from './types'
 
 const baseUrl = 'https://api.bscscan.com/api'
 
@@ -21,7 +21,7 @@ async function fetchInner<T extends Response> (params: Record<string, string | n
     return data
   }
 
-  throw response
+  throw new Error(`fetch error: ${JSON.stringify(response)}`)
 }
 
 export async function fetch<T extends Response> (params: Record<string, string | number>): Promise<T> {

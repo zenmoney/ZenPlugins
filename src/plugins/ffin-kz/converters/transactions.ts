@@ -101,7 +101,7 @@ function isTransactionToSkip (rawTransaction: StatementTransaction): boolean {
 
 function generateTransactionId (date: string, sum: string | null, description: string | null): string {
   const hash = createHash('sha1')
-  hash.update(`${date}_${sum}_${description ?? ''}`)
+  hash.update(`${date}_${sum ?? ''}_${description ?? ''}`)
   return hash.digest('hex').slice(0, 12)
 }
 
@@ -128,7 +128,7 @@ export function convertPdfStatementTransaction (rawTransaction: StatementTransac
     sum = convertCurrency(currencyRates, sum, invoice.instrument, 'KZT')
   }
 
-  if (invoice && invoice.sum === sum && instrument === rawAccount.instrument) {
+  if ((invoice != null) && invoice.sum === sum && instrument === rawAccount.instrument) {
     invoice = null
   }
 
@@ -154,7 +154,7 @@ export function convertPdfStatementTransaction (rawTransaction: StatementTransac
     } else if (parsedType === transactionType.TRANSFER && rawTransaction.description !== null && rawTransaction.description.includes('KZ')) {
       type = AccountType.deposit
       const syncIdMatch = rawTransaction.description.match(/KZ[A-Z0-9]{15}/)
-      if (syncIdMatch) {
+      if (syncIdMatch != null) {
         syncIds = [syncIdMatch[0]]
       }
     } else {

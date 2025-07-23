@@ -66,11 +66,11 @@ export function convertTokenTransaction (transfer: Transfer, wallet: string, tra
   const operationSign = transfer.from_address === wallet ? -1 : 1
   const tokenTransaction = convertTransaction(transfer, wallet, transaction)
 
-  if (!tokenTransaction) {
+  if (tokenTransaction == null) {
     return null
   }
 
-  if (operationSign === -1 && transaction && transaction.cost.fee !== 0) {
+  if (operationSign === -1 && (transaction != null) && transaction.cost.fee !== 0) {
     return [tokenTransaction, getCostTransaction(transaction)]
   }
 

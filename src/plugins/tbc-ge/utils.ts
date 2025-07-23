@@ -19,24 +19,24 @@ export function validateAuth (auth: AuthV2 | undefined): boolean {
     return false
   }
   if (auth.username == null || typeof auth.username !== 'string') {
-    console.error(`Invalid auth object: username is not a string, ${auth.username}`)
+    console.error(`Invalid auth object: username is not a string, ${auth.username as string}`)
     return false
   }
   if (auth.passcode == null || typeof auth.passcode !== 'string') {
-    console.error(`Invalid auth object: passcode is not a string, ${auth.passcode}`)
+    console.error(`Invalid auth object: passcode is not a string, ${(auth.passcode ?? 'null') as string}`)
     return false
   }
   if (auth.registrationId == null || typeof auth.registrationId !== 'string') {
-    console.error(`Invalid auth object: registrationId is not a string, ${auth.registrationId}`)
+    console.error(`Invalid auth object: registrationId is not a string, ${auth.registrationId as string}`)
     return false
   }
   if (auth.trustedDeviceId != null && typeof auth.trustedDeviceId !== 'string') {
-    console.error(`Invalid auth object: trustedDeviceId is not a string, ${auth.trustedDeviceId}`)
+    console.error(`Invalid auth object: trustedDeviceId is not a string, ${(auth.trustedDeviceId ?? '') as string}`)
     return false
   }
 
   if (auth.deviceId != null && typeof auth.deviceId !== 'string') {
-    console.error(`Invalid auth object: deviceId is not a string, ${auth.deviceId}`)
+    console.error(`Invalid auth object: deviceId is not a string, ${(auth.deviceId ?? '') as string}`)
     return false
   }
   return true

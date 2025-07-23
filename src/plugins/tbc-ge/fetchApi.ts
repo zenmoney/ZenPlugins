@@ -27,12 +27,12 @@ import { getCookies } from './utils'
 
 async function fetchApi (url: string, options: FetchOptions): Promise<FetchResponse | null> {
   let response: FetchResponse | null = null
-  if (!options.sanitizeRequestLog) {
+  if (options.sanitizeRequestLog == null) {
     options.sanitizeRequestLog = {}
   }
   // @ts-expect-error Disallowing cookies in request logs
   options.sanitizeRequestLog.headers = { Cookie: true }
-  if (!options.sanitizeResponseLog) {
+  if (options.sanitizeResponseLog == null) {
     options.sanitizeResponseLog = {}
   }
   // @ts-expect-error Disallowing cookies in response logs
@@ -78,7 +78,7 @@ export async function fetchLoginByPasswordV2 ({ username, password, deviceInfo, 
       sanitizeRequestLog: { body: { username: true, password: true, deviceInfo: true, deviceDate: true, deviceId: true } }
     })
 
-  if (!response) {
+  if (response == null) {
     throw new TemporaryUnavailableError()
   }
 
@@ -125,7 +125,7 @@ export async function fetchLoginByPasscodeV2 (auth: AuthV2, deviceInfo: DeviceIn
     }
   })
 
-  if (!response) {
+  if (response == null) {
     return null
   }
 
@@ -164,7 +164,7 @@ export async function fetchCertifyLoginByOtpDeviceV2 (code: string, transactionI
       }
     }
   })
-  if (!response) {
+  if (response == null) {
     throw new Error('Error in fetchCertifyLoginByOtpDeviceV2: response is null')
   }
   const data = response.body as CertifyLoginResponseV2
@@ -205,7 +205,7 @@ export async function fetchGetSessionIdV2 (cookies: string[]): Promise<string | 
       }
     }
   })
-  if (!user) {
+  if (user == null) {
     return null
   }
   if (user.status === 401) {
@@ -237,7 +237,7 @@ export async function fetchRegisterDeviceV2 (auth: { deviceName: string, passcod
     sanitizeRequestLog: { body: { passcode: true } },
     sanitizeResponseLog: { body: { registrationId: true } }
   })
-  if (!response) {
+  if (response == null) {
     throw new Error('Error in fetchRegisterDeviceV2: response is null')
   }
   const success = getBoolean(response.body, 'success')
@@ -280,7 +280,7 @@ export async function fetchUnTrustDeviceV2 (deviceData: DeviceData, sessionId: s
     }
   })
 
-  if (!response) {
+  if (response == null) {
     throw new Error('Error in fetchUnTrustDeviceV2: response is null')
   }
 
@@ -300,7 +300,7 @@ export async function fetchUnTrustDeviceV2 (deviceData: DeviceData, sessionId: s
     }
   })
 
-  if (!confirmResponse) {
+  if (confirmResponse == null) {
     throw new Error('Error in fetchUnTrustDeviceV2: confirmResponse is null')
   }
 
@@ -349,7 +349,7 @@ export async function fetchTrustDeviceV2 (deviceData: DeviceData, sessionId: str
     parse: JSON.parse,
     sanitizeRequestLog: { body: { sessionId: true } }
   })
-  if (!response) {
+  if (response == null) {
     throw new Error('Error in fetchTrustDeviceV2: response is null')
   }
   return getNumber(response.body, 'orderId')
@@ -381,7 +381,7 @@ export async function fetchConfirmTrustedDeviceV2 (authorizationCode: string, or
     sanitizeResponseLog: { body: { trustId: true } }
   })
 
-  if (!response) {
+  if (response == null) {
     throw new Error('Error in fetchConfirmTrustedDeviceV2: response is null')
   }
 
@@ -412,7 +412,7 @@ export async function fetchDepositDetailsV2 (id: number, session: SessionV2): Pr
     },
     parse: JSON.parse
   })
-  if (!result) {
+  if (result == null) {
     return null
   }
   return result.body as DepositDetailsV2
@@ -429,7 +429,7 @@ export async function fetchApiDepositStatementsV2 (id: number, session: SessionV
     },
     parse: JSON.parse
   })
-  if (!response) {
+  if (response == null) {
     return []
   }
   return response.body as DepositStatementV2[]
@@ -446,7 +446,7 @@ export async function fetchApiDepositsV2 (session: SessionV2): Promise<DepositsV
     },
     parse: JSON.parse
   })
-  if (!response) {
+  if (response == null) {
     return null
   }
 
@@ -466,7 +466,7 @@ export async function fetchApiLoansV2 (session: SessionV2): Promise<LoanProductV
     },
     parse: JSON.parse
   })
-  if (!response) {
+  if (response == null) {
     return []
   }
   return response.body as LoanProductV2[]
@@ -492,7 +492,7 @@ export async function fetchCardsListV2 (session: SessionV2): Promise<CardProduct
       ]
     }
   })
-  if (!response) {
+  if (response == null) {
     return []
   }
   return response.body as CardProductV2[]
@@ -509,7 +509,7 @@ export async function fetchCardAndAccountsDashboardV2 (session: SessionV2): Prom
     },
     parse: JSON.parse
   })
-  if (!response) {
+  if (response == null) {
     return null
   }
   return response.body as CardsAndAccounts
@@ -553,7 +553,7 @@ export async function fetchHistoryV2 (session: SessionV2, fromDate: Date, data: 
       parse: JSON.parse,
       stringify: JSON.stringify
     })
-    if (!response) {
+    if (response == null) {
       break
     }
     const transactionsByDate = response.body as TransactionsByDateV2[]

@@ -8,7 +8,7 @@ import { validateAuth } from './utils'
 export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, toDate, isInBackground }) => {
   ZenMoney.locale = 'en'
   let auth = ZenMoney.getData('auth') as AuthV2 | undefined
-  if (auth && !validateAuth(auth)) {
+  if ((auth != null) && !validateAuth(auth)) {
     auth = undefined
   }
   const session = await loginV2(preferences, auth)
@@ -68,7 +68,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
     const tr = await fetchTransactionsV2(session, fromDate, data)
     const t = convertTransactionsV2(tr, fromDate, data)
     for (const transaction of t) {
-      const transactionId = transaction.movements[0].id!
+      const transactionId = transaction.movements[0].id as string
       transactionsById.set(transactionId, transaction)
     }
   }

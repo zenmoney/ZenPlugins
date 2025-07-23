@@ -10,7 +10,7 @@ async function fetchApi (url: string, options?: FetchOptions): Promise<FetchResp
   return await fetchJson(baseUrl + url, options ?? {})
 }
 
-export async function fetchAuthorization ({ login, password }: Preferences): Promise<{accessToken: string}> {
+export async function fetchAuthorization ({ login, password }: Preferences): Promise<{ accessToken: string }> {
   // It happens on server side
   if (login !== 'example' || password !== 'example') {
     throw new InvalidLoginOrPasswordError()

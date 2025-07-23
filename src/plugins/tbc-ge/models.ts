@@ -1,3 +1,4 @@
+import { getOptString } from '../../types/get'
 import { Account, AccountOrCard, AccountType, Amount, DepositOrLoan, Merchant, Movement, Transaction } from '../../types/zenmoney'
 import { isInvoiceString, isPOSDateCorrect, parsePOSDateString } from './converters'
 export interface Signature {
@@ -232,15 +233,15 @@ export class TransactionBlockedV2 {
       const arr2 = arr[1].split(' ')
       this.city = arr2[0].trim()
       this.countryCode = arr2[1].trim()
-      const idLine = transaction.blockedMovementDate!.toString() +
+      const idLine = (transaction.blockedMovementDate?.toString() ?? 'null') +
         transaction.title +
         transaction.amount.toString() +
-        transaction.blockedMovementCardId!.toString() +
-        transaction.blockedMovementIban!
+        (transaction.blockedMovementCardId?.toString() ?? 'null') +
+        (transaction.blockedMovementIban ?? 'null')
       this.id = Buffer.from(idLine).toString('base64')
-    } catch ({ message }) {
+    } catch (err) {
       console.error(transaction)
-      throw new Error(`Error parsing title "${transaction.title}" in TransactionBlockedV2: ${message}`)
+      throw new Error(`Error parsing title "${transaction.title}" in TransactionBlockedV2: ${getOptString(err, 'message') ?? 'unknown error'}`)
     }
   }
 }
@@ -315,9 +316,9 @@ export class TransactionUtilPayV2 {
         const arr = transaction.title.split(';')
         this.merchant = arr[0]
         this.amount = transaction.amount
-      } catch ({ message }) {
+      } catch (err) {
         console.error(transaction)
-        throw new Error(`Error parsing title "${transaction.title}" in TransactionUtilPayV2: ${message}`)
+        throw new Error(`Error parsing title "${transaction.title}" in TransactionUtilPayV2: ${getOptString(err, 'message') ?? 'unknown error'}`)
       }
     } else if (transaction.subCategoryCode === 'TV_INTERNET') {
       try {
@@ -327,9 +328,9 @@ export class TransactionUtilPayV2 {
         const arr = transaction.title.split(';')
         this.merchant = arr[0]
         this.amount = transaction.amount
-      } catch ({ message }) {
+      } catch (err) {
         console.error(transaction)
-        throw new Error(`Error parsing title "${transaction.title}" in TransactionUtilPayV2: ${message}`)
+        throw new Error(`Error parsing title "${transaction.title}" in TransactionUtilPayV2: ${getOptString(err, 'message') ?? 'unknown error'}`)
       }
     } else {
       // There are might be other util payment subCategories (ex: GAS)
@@ -425,9 +426,9 @@ export class TransactionStandardMovementV2 {
       this.date = isPOSDateCorrect(dateTimeString) ? parsePOSDateString(dateTimeString) : new Date(defaultDate)
       this.cardNum = arr[arr.length - 1].trim().slice(-4)
       this.mcc = arr.length >= 3 ? Number.parseInt(arr[arr.length - 3].replace('MCC:', '').trim()) : null
-    } catch ({ message }) {
+    } catch (err) {
       console.error(transaction)
-      throw new Error(`Error parsing title "${transaction.title}" in TransactionStandardMovementV2: ${message}`)
+      throw new Error(`Error parsing title "${transaction.title}" in TransactionStandardMovementV2: ${getOptString(err, 'message') ?? 'unknown error'}`)
     }
   }
 }

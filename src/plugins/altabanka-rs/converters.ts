@@ -29,7 +29,7 @@ export function convertTransaction (accountTransaction: AccountTransaction, acco
     instrument: accountTransaction.currency
   }
   const match = accountTransaction.description.match(/^([\d.]+)\s(\w{3})/)
-  if (match) {
+  if (match != null) {
     invoice = {
       sum: accountTransaction.amount < 0 ? -parseFloat(match[1]) : parseFloat(match[1]),
       instrument: match[2]
@@ -55,7 +55,7 @@ export function convertTransaction (accountTransaction: AccountTransaction, acco
       }
     ],
     merchant,
-    comment: accountTransaction.description !== '' && !match ? accountTransaction.description : null
+    comment: accountTransaction.description !== '' && (match == null) ? accountTransaction.description : null
   };
   [
     parseCashTransfer
@@ -63,7 +63,7 @@ export function convertTransaction (accountTransaction: AccountTransaction, acco
   return transaction
 }
 
-function parseCashTransfer (transaction: ExtendedTransaction, accountTransaction: AccountTransaction, account: AccountInfo, invoice: {sum: number, instrument: string}): boolean {
+function parseCashTransfer (transaction: ExtendedTransaction, accountTransaction: AccountTransaction, account: AccountInfo, invoice: { sum: number, instrument: string }): boolean {
   if ([
     /ATM/
   ].some(regexp => regexp.test(accountTransaction.address))) {

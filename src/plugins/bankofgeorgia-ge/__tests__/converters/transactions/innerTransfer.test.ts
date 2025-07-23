@@ -211,9 +211,9 @@ describe('convertTransaction', () => {
   ])('converts inner IN OUT transfer (Foreign Exchange)', ({ gelTransaction, usdTransaction }, transactions) => {
     expect(adjustTransactions({
       transactions: [
-        convertTransaction(gelTransaction, accountGel)!,
-        convertTransaction(usdTransaction, accountUsd)!
-      ]
+        convertTransaction(gelTransaction, accountGel),
+        convertTransaction(usdTransaction, accountUsd)
+      ] as ExtendedTransaction[]
     })).toEqual(transactions)
   })
 })
@@ -425,9 +425,9 @@ describe('convertTransaction', () => {
   ])('converts inner OTHER transfer (Foreign Exchange)', ({ gelTransaction, usdTransaction }, transactions) => {
     expect(adjustTransactions({
       transactions: [
-        convertTransaction(gelTransaction, accountGel)!,
-        convertTransaction(usdTransaction, accountUsd)!
-      ]
+        convertTransaction(gelTransaction, accountGel),
+        convertTransaction(usdTransaction, accountUsd)
+      ] as ExtendedTransaction[]
     })).toEqual(transactions)
   })
 })

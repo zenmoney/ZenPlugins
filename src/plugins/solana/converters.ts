@@ -46,11 +46,11 @@ function findTransactionTokenMovement (tokenAccount: TokenAccount, transaction: 
   // if a balance is not found -- it must've been zero
   const postBalances = transaction.meta.postTokenBalances
   const postBalance = postBalances.find(b => b.accountIndex === accountIndex)
-  const postAmount = postBalance ? parseInt(postBalance.uiTokenAmount.amount) : 0
+  const postAmount = (postBalance != null) ? parseInt(postBalance.uiTokenAmount.amount) : 0
 
   const preBalances = transaction.meta.preTokenBalances
   const preBalance = preBalances.find(b => b.accountIndex === accountIndex)
-  const preAmount = preBalance ? parseInt(preBalance.uiTokenAmount.amount) : 0
+  const preAmount = (preBalance != null) ? parseInt(preBalance.uiTokenAmount.amount) : 0
 
   const convertedAmountDiff = convertTokenAmount(postAmount - preAmount)
   if (convertedAmountDiff === 0) {
@@ -105,7 +105,7 @@ function findTransactionMovement (account: string, transaction: Transaction): Mo
 }
 
 const createTransaction = function (transaction: Transaction, movement: Movement | null): ZenTransaction | null {
-  if (!movement) {
+  if (movement == null) {
     return null
   }
 
@@ -136,10 +136,10 @@ export const convertTokenTransaction: TransactionConverter<TokenAccount> = (acco
 
 export function mergeTransferTransactions (transactions: ZenTransaction[]): ZenTransaction[] {
   const list = transactions.reduce<{ [key in string]?: ZenTransaction }>((acc, item) => {
-    const movementId = item.movements[0].id!
+    const movementId = item.movements[0].id ?? ''
     const existingItem = acc[movementId]
 
-    if (!existingItem) {
+    if (existingItem == null) {
       acc[movementId] = item
     } else {
       acc[movementId] = {

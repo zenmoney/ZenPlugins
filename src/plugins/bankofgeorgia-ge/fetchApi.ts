@@ -374,7 +374,7 @@ export async function fetchPasscodeLogin (data: { username: string }, session: {
 }
 
 async function fetchApiConnector (serviceId: string, params: Record<string, unknown>,
-  session: {accessToken: string, requestIndex: number, auth: {device: Device}}): Promise<unknown> {
+  session: { accessToken: string, requestIndex: number, auth: { device: Device } }): Promise<unknown> {
   const query = {
     appVersion: APP_BUILD,
     channel: 'MOBILE',
@@ -403,7 +403,7 @@ async function fetchApiConnector (serviceId: string, params: Record<string, unkn
   return response.body
 }
 
-export async function fetchTriggerLogin (session: {accessToken: string, requestIndex: number, auth: {extCustomerId: string, device: Device}}): Promise<void> {
+export async function fetchTriggerLogin (session: { accessToken: string, requestIndex: number, auth: { extCustomerId: string, device: Device } }): Promise<void> {
   const response = await fetchApiConnector('COMMON_TRIGGER_LOGIN_CHANGES', {
     deviceId: session.auth.extCustomerId,
     extCustomerId: session.auth.extCustomerId

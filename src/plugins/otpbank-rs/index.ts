@@ -18,7 +18,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
       return
     }
     await Promise.all(products.map(async product => {
-      const apiTransactions = await fetchTransactions(session, product.id, account.instrument as keyof typeof Currency, fromDate, toDate!)
+      const apiTransactions = await fetchTransactions(session, product.id, account.instrument as keyof typeof Currency, fromDate, toDate ?? new Date())
       for (const apiTransaction of apiTransactions) {
         transactions.push(convertTransaction(apiTransaction, account))
       }

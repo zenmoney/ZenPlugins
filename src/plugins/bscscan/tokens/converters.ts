@@ -5,7 +5,7 @@ import { TokenAccount, TokenTransaction } from './types'
 function convertAccount (account: TokenAccount): Account | null {
   const token = SUPPORTED_TOKENS.find(token => token.contractAddress === account.contractAddress)
 
-  if (!token) {
+  if (token == null) {
     return null
   }
 
@@ -28,7 +28,7 @@ export function convertAccounts (accounts: TokenAccount[]): Account[] {
 export function convertTransaction (account: TokenAccount, transaction: TokenTransaction): Transaction | null {
   const token = SUPPORTED_TOKENS.find(token => token.contractAddress === account.contractAddress)
 
-  if (!token) {
+  if (token == null) {
     return null
   }
 

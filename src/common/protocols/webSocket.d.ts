@@ -30,6 +30,6 @@ export default class WebSocket {
     log?: boolean
     sanitizeRequestLog?: unknown
     sanitizeResponseLog?: unknown
-  }): Promise<{body: unknown}>
+  }): Promise<{ body: unknown }>
   close (): Promise<void>
 }

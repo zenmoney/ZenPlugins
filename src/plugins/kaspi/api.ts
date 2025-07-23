@@ -327,7 +327,7 @@ async function showHowTo (): Promise<ObjectWithAnyProps> {
 export async function parsePdfStatements (): Promise<null | Array<{ account: StatementAccount, transactions: StatementTransaction[] }>> {
   await showHowTo()
   const blob = await ZenMoney.pickDocuments(['application/pdf'], true)
-  if (!blob || !blob.length) {
+  if (blob.length === 0) {
     throw new TemporaryError('Выберите один или несколько файлов в формате .pdf')
   }
   for (const { size, type } of blob) {

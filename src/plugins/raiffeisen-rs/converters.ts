@@ -113,7 +113,7 @@ function makeInvoice (t: GetAccountTransactionsResponse): Amount | null {
     details?.c_CurrencyCode_tx?.length > 0 &&
     details?.c_CurrencyCode_tx !== details?.s_CurrencyCode
     ? {
-        sum: isRefund ? details.c_Amount_tx! : -details.c_Amount_tx!,
+        sum: isRefund ? (details.c_Amount_tx ?? 0) : -(details.c_Amount_tx ?? 0),
         instrument: details.c_CurrencyCode_tx
       }
     : null

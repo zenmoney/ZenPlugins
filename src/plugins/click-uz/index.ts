@@ -8,7 +8,7 @@ function migrate (): void {
   const sessionKey = ZenMoney.getData('sessionKey')
   const deviceId = ZenMoney.getData('deviceId')
   const deviceRegisterDateTime = ZenMoney.getData('deviceRegisterDateTime')
-  if (sessionKey || deviceId || deviceRegisterDateTime) {
+  if ((sessionKey !== null && sessionKey !== undefined) || (deviceId !== null && deviceId !== undefined) || (deviceRegisterDateTime !== null && deviceRegisterDateTime !== undefined)) {
     ZenMoney.clearData()
   }
 }
@@ -16,7 +16,7 @@ function migrate (): void {
 export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, toDate }) => {
   toDate = toDate ?? new Date()
   const prevAuth = ZenMoney.getData('auth') as Auth | undefined
-  if (!prevAuth) {
+  if (prevAuth === null || prevAuth === undefined) {
     migrate()
   }
   const auth = await login(preferences, prevAuth)
@@ -30,7 +30,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
     if (ZenMoney.isAccountSkipped(account.id)) {
       return
     }
-    const apiTransactions = await fetchTransactions(account.id, fromDate, toDate!, auth)
+    const apiTransactions = await fetchTransactions(account.id, fromDate, toDate ?? new Date(), auth)
     transactions.push(...convertTransactions(apiTransactions, account))
   }))
   return {

@@ -19,6 +19,7 @@ import {
 } from './models'
 import { padStart } from 'lodash'
 import { getIntervalBetweenDates } from '../../common/momentDateUtils'
+import { getOptString } from '../../types/get'
 
 export function convertAccountsV2 (cardsAndAccounts: CardsAndAccounts | null): PreparedAccountV2[] {
   const accounts: PreparedAccountV2[] = []
@@ -176,7 +177,7 @@ export function convertTransactionsV2 (transactionRecordsByDate: TransactionsByD
           }
         } else {
           amount = transactionRecord.amount
-          id = transactionRecord.movementId!
+          id = transactionRecord.movementId as string
           if (TransactionTransferV2.isTransfer(transactionRecord)) {
             const transfer = new TransactionTransferV2(transactionRecord)
             comment = transfer.transaction.title
@@ -187,7 +188,7 @@ export function convertTransactionsV2 (transactionRecordsByDate: TransactionsByD
             ]
           } else if (TransactionUtilPayV2.isUtilPay(transactionRecord)) {
             const utilPayV2 = new TransactionUtilPayV2(transactionRecord)
-            id = transactionRecord.movementId!
+            id = transactionRecord.movementId as string
             amount = utilPayV2.amount
             merchant = {
               city: null,
@@ -198,7 +199,7 @@ export function convertTransactionsV2 (transactionRecordsByDate: TransactionsByD
             }
           } else if (TransactionTaxV2.isTax(transactionRecord)) {
             const tax = new TransactionTaxV2(transactionRecord)
-            id = tax.transaction.movementId!
+            id = tax.transaction.movementId as string
             amount = tax.transaction.amount
             comment = tax.transaction.title
             merchant = tax.merchant
@@ -206,7 +207,7 @@ export function convertTransactionsV2 (transactionRecordsByDate: TransactionsByD
             const movement = new TransactionStandardMovementV2(transactionRecord, transactionRecords.date)
             dateNum = movement.date.getTime()
             if (movement.needInvoice()) {
-              invoice = movement.invoice!
+              invoice = movement.invoice as Amount
             }
             if (movement.isCash()) {
               secondMovement = createCashMovement(movement.transaction.currency, -amount)
@@ -221,11 +222,11 @@ export function convertTransactionsV2 (transactionRecordsByDate: TransactionsByD
             }
           }
         }
-      } catch ({ message }) {
+      } catch (err) {
         // use default values
-        console.error(message)
+        console.error(getOptString(err, 'message') ?? 'unknown error')
         if (id == null) {
-          const idLine = `${transactionRecord.title}${transactionRecord.subTitle}${transactionRecord.amount}${transactionRecord.categoryCode}${transactionRecord.subCategoryCode}`
+          const idLine = `${transactionRecord.title}${transactionRecord.subTitle}${transactionRecord.amount}${transactionRecord.categoryCode ?? 'null'}${transactionRecord.subCategoryCode}`
           id = Buffer.from(idLine).toString('base64')
         }
         if (amount == null) {
@@ -266,7 +267,7 @@ export function convertTransactionsV2 (transactionRecordsByDate: TransactionsByD
         continue
       }
 
-      if (merchant && (merchant.title === undefined || merchant.title === '')) {
+      if ((merchant != null) && (merchant.title === undefined || merchant.title === '')) {
         merchant = null
       }
 

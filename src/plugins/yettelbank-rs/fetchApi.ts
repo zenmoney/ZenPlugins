@@ -248,7 +248,7 @@ async function fetchTransactions (accountId: string, currency: string, status: s
 // #              main functionality              #
 // ################################################
 
-export async function fetchAuthorization ({ login, password }: Preferences): Promise<{cookieHeader: string}> {
+export async function fetchAuthorization ({ login, password }: Preferences): Promise<{ cookieHeader: string }> {
   const workflowId = await initAuthorizationWorkflow('Identity')
 
   await fetchAuth('Identity', workflowId, login)

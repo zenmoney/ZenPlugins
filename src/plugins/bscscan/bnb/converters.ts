@@ -66,7 +66,7 @@ export function convertTransaction (account: string, transaction: BNBTransaction
 export function convertTransactions (account: string, transactions: BNBTransaction[]): Transaction[] {
   const list = transactions
     .map((transaction) => convertTransaction(account, transaction))
-    .filter((transaction): transaction is Transaction => !!transaction)
+    .filter((transaction): transaction is Transaction => !(transaction == null))
 
   return list
 }

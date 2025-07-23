@@ -59,7 +59,7 @@ function getOtpDeviceName (device: OtpDeviceV2): string {
     case OtpDeviceV2.VASCO:
       return 'TBC Pass App'
     default:
-      throw new Error(`Unknown device ${device}`)
+      throw new Error(`Unknown device ${device as string}`)
   }
 }
 

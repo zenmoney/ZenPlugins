@@ -47,7 +47,6 @@ module.exports = class WebsocketServer extends BaseServer {
     )
 
     const interval = setInterval(() => {
-      // eslint-disable-next-line github/array-foreach
       this.clients.forEach(
         (client) => {
           if (client.isAlive === false) {

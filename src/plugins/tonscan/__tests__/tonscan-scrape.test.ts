@@ -8,7 +8,7 @@ describe('scrape', () => {
   }))
 
   it('should hit the mocks and return results', async () => {
-    const { scrape } = require('../index')
+    const { scrape } = await import('../index')
     mockEndPoints()
 
     const result = await scrape(

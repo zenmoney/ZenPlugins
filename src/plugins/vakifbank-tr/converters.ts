@@ -59,7 +59,7 @@ function buildTransaction (accountId: string, transactions: VakifStatementTransa
   const mainTransaction = getMainTransaction(transactions)
   const feeAmount = getFeeAmount(transactions)
   const merchant = extractMerchantInfo(mainTransaction)
-  const comment = merchant ? null : `${mainTransaction.description1 ?? ''}: ${mainTransaction.description2 ?? ''}`
+  const comment = (merchant != null) ? null : `${mainTransaction.description1 ?? ''}: ${mainTransaction.description2 ?? ''}`
 
   const transaction: Transaction = {
     comment,
@@ -84,7 +84,7 @@ function buildTransaction (accountId: string, transactions: VakifStatementTransa
 
 function getMainTransaction (transactions: VakifStatementTransaction[]): VakifStatementTransaction {
   const mainTransaction = maxBy(transactions, x => Math.abs(parseFormattedNumber(x.amount)))
-  if (!mainTransaction) throw new Error('InvalidState')
+  if (mainTransaction == null) throw new Error('InvalidState')
   return mainTransaction
 }
 
@@ -92,7 +92,7 @@ function getFeeAmount (transactions: VakifStatementTransaction[]): number {
   if (transactions.length !== 2) return 0
 
   const feeTransaction = minBy(transactions, x => Math.abs(parseFormattedNumber(x.amount)))
-  return feeTransaction ? parseFormattedNumber(feeTransaction.amount) : 0
+  return (feeTransaction != null) ? parseFormattedNumber(feeTransaction.amount) : 0
 }
 
 function createMainMovement (
@@ -135,7 +135,7 @@ function extractMerchantInfo (transaction: VakifStatementTransaction): NonParsed
     return {
       location: null,
       fullTitle: merchanTitleMatch?.[2] ?? '',
-      mcc: merchantMccMatch ? parseInt(merchantMccMatch[1], 10) : null
+      mcc: (merchantMccMatch != null) ? parseInt(merchantMccMatch[1], 10) : null
     }
   }
   return null

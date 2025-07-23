@@ -80,10 +80,10 @@ export class TronscanApi {
   ): Promise<FetchResponse> {
     const response = await fetchJson(this.baseUrl + url)
 
-    if (predicate) {
+    if (predicate != null) {
       this.validateResponse(
         response,
-        response => !get(response.body, 'error') && predicate(response)
+        response => !(get(response.body, 'error') != null) && predicate(response)
       )
     }
 
@@ -94,7 +94,7 @@ export class TronscanApi {
     response: FetchResponse,
     predicate?: (x: FetchResponse) => boolean
   ): void {
-    console.assert(!predicate || predicate(response), 'non-successful response')
+    console.assert((predicate == null) || predicate(response), 'non-successful response')
   }
 
   public async fetchTokens (wallet: string): Promise<SupportedTokenInfo[]> {

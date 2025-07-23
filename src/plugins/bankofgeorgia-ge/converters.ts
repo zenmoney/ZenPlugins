@@ -173,7 +173,7 @@ export function convertTransaction (apiTransaction: unknown, product: ConvertedP
   }
 
   const cashAmount = getAmountFromDescription(getString(apiTransaction, 'nomination'))
-  const invoiceNeeded = !!(cashAmount && cashAmount.instrument !== product.account.instrument)
+  const invoiceNeeded = !!((cashAmount != null) && cashAmount.instrument !== product.account.instrument)
 
   switch (printFormType) {
     case 'UTILITY_PAYMENT':
@@ -241,7 +241,7 @@ export function convertTransaction (apiTransaction: unknown, product: ConvertedP
       } else {
         transaction.comment = 'Cash withdrawal'
         const txAmount = getNumber(apiTransaction, 'amount')
-        if (cashAmount) {
+        if (cashAmount != null) {
           if (cashAmount.instrument !== product.account.instrument) {
             transaction.movements[0].invoice = { sum: -cashAmount.sum, instrument: cashAmount.instrument }
             transaction.movements[0].sum = -txAmount
@@ -265,7 +265,7 @@ export function convertTransaction (apiTransaction: unknown, product: ConvertedP
             break
           }
           const txAmount = getNumber(apiTransaction, 'amount')
-          if (cashAmount) {
+          if (cashAmount != null) {
             if (cashAmount.instrument !== product.account.instrument) {
               transaction.movements[0].invoice = { sum: -cashAmount.sum, instrument: cashAmount.instrument }
               transaction.movements[0].sum = -txAmount
@@ -367,7 +367,7 @@ function parseMerchant (merchantNameInt: string, nominationOriginal: string): Me
   }
   return {
     country: country !== '' ? country : null,
-    city: city?.match(/\\+/) ? null : city,
+    city: ((city?.match(/\\+/)) != null) ? null : city,
     title,
     mcc: tryParseMcc(nominationOriginal),
     location: null

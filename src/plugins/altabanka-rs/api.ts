@@ -10,7 +10,7 @@ import * as qs from 'querystring-browser'
 export class AltaBankaApi {
   private readonly baseUrl: string
 
-  constructor (options: {baseUrl: string}) {
+  constructor (options: { baseUrl: string }) {
     this.baseUrl = options.baseUrl
   }
 
@@ -32,7 +32,7 @@ export class AltaBankaApi {
         },
         body: qs.stringify(formData),
         sanitizeRequestLog: true
-      }) as FetchResponse & {body: string}
+      }) as FetchResponse & { body: string }
 
     if (!parseLoginResult(response.body)) {
       console.error('login failed')
@@ -46,7 +46,7 @@ export class AltaBankaApi {
     const response = await fetch(
       this.baseUrl + 'Home/Accounts',
       undefined
-    ) as FetchResponse & {body: string}
+    ) as FetchResponse & { body: string }
 
     const accountsInfo = parseAccountInfo(response.body)
 
@@ -59,7 +59,7 @@ export class AltaBankaApi {
     const response = await fetch(
       this.baseUrl + 'AccountData/Transactions/List',
       undefined
-    ) as FetchResponse & {body: string}
+    ) as FetchResponse & { body: string }
 
     const token = parseRequestVerificationToken(response.body)
 
@@ -83,7 +83,7 @@ export class AltaBankaApi {
       PageSize: '100',
       PageNumber: page.toString()
     }
-    if (toDate) {
+    if (toDate != null) {
       formData.DateTo_ID = moment(toDate).format('DD/MM/YYYY')
     }
 
@@ -96,7 +96,7 @@ export class AltaBankaApi {
         },
         body: qs.stringify(formData)
       }
-    ) as FetchResponse & {body: string}
+    ) as FetchResponse & { body: string }
 
     const transactions = parseTransactions(response.body, fromDate)
 
@@ -123,7 +123,7 @@ export class AltaBankaApi {
       Statuses_ID: 'p'
     }
 
-    if (toDate) {
+    if (toDate != null) {
       formData.DateTo_ID = moment(toDate).format('DD/MM/YYYY')
     }
 
@@ -140,7 +140,7 @@ export class AltaBankaApi {
         },
         body: qs.stringify(formData)
       }
-    ) as FetchResponse & {body: string}
+    ) as FetchResponse & { body: string }
 
     const transactions = parseTransactions(response.body, fromDate)
 

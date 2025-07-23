@@ -8,7 +8,7 @@ import { generateRandomString } from '../../common/utils'
 
 export const scrape: ScrapeFunc<Preferences> = async ({ fromDate, isFirstRun }) => {
   let auth = ZenMoney.getData('auth') as Auth | undefined
-  if (!auth || auth.deviceId === '') {
+  if ((auth == null) || auth.deviceId === '') {
     auth = {
       deviceId: generateRandomString(16, '0123456789abcdef')
     }
@@ -39,10 +39,10 @@ export const scrape: ScrapeFunc<Preferences> = async ({ fromDate, isFirstRun }) 
         result.transactions = result.transactions.concat(transactions)
       } else {
         for (const transaction of transactions) {
-          if (!result.transactions.find((item) => {
+          if (result.transactions.find((item) => {
             const omitPaths = ['transaction.merchant', 'transaction.comment', 'statementUid']
             return isEqual(omit(item, omitPaths), omit(transaction, omitPaths)) && transaction.statementUid !== item.statementUid
-          })) {
+          }) == null) {
             result.transactions.push(transaction)
           }
         }

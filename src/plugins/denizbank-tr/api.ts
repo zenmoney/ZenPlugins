@@ -64,7 +64,7 @@ export class DenizBankApi {
   private readonly baseUrl: string
   private readonly encryptionStaticKey: crypto.lib.WordArray
 
-  constructor (options: {baseUrl: string, encryptionStaticKeyBase64: string}) {
+  constructor (options: { baseUrl: string, encryptionStaticKeyBase64: string }) {
     this.baseUrl = options.baseUrl
     this.encryptionStaticKey = crypto.enc.Utf8.parse(Buffer.from(options.encryptionStaticKeyBase64, 'base64').toString('utf8'))
   }
@@ -86,7 +86,7 @@ export class DenizBankApi {
     options?: FetchOptions,
     predicate?: (x: FetchResponse) => boolean
   ): Promise<FetchResponse> {
-    const sessionHeaders = session
+    const sessionHeaders = (session != null)
       ? {
           'X-Client-Id': session.clientId,
           ...('token' in session ? { 'X-Token': session.token } : {})
@@ -98,7 +98,7 @@ export class DenizBankApi {
       sanitizeResponseLog: (obj: unknown) => sanitize(obj, true)
     }
 
-    const mergedOptions = options
+    const mergedOptions = (options != null)
       ? {
           ...sanitizeOptions,
           ...options,
@@ -111,19 +111,19 @@ export class DenizBankApi {
 
     const response = await fetchJson(this.baseUrl + url, mergedOptions)
 
-    if (predicate) {
-      this.validateResponse(response, response => !get(response.body, 'error') && predicate(response))
+    if (predicate !== null && predicate !== undefined) {
+      this.validateResponse(response, response => !(get(response.body, 'error') != null) && predicate(response))
     }
     return response
   }
 
   private validateResponse (response: FetchResponse, predicate?: (x: FetchResponse) => boolean): void {
-    console.assert(!predicate || predicate(response), 'non-successful response')
+    console.assert((predicate == null) || predicate(response), 'non-successful response')
   }
 
   public async login ({ login, password }: Preferences, isInBackground: boolean, session?: Session): Promise<Session> {
     console.debug('login', sanitize({ session }, true))
-    if (session && 'createdDate' in session) {
+    if ((session != null) && 'createdDate' in session) {
       const expirationDate = new Date(session.createdDate.valueOf() + session.timeoutSeconds * 1000)
       console.debug('login', { expirationDate })
 
@@ -212,10 +212,10 @@ export class DenizBankApi {
     return session
   }
 
-  private async getCaptcha (session: Session): Promise<{id: string, captchaByteData: string}> {
+  private async getCaptcha (session: Session): Promise<{ id: string, captchaByteData: string }> {
     const response = await this.fetchApi('auth/captcha-create', session, {
       method: 'GET'
-    }) as FetchResponse & {body: {id: string, captchaByteData: string}}
+    }) as FetchResponse & { body: { id: string, captchaByteData: string } }
 
     console.log('getCaptcha', response.body)
 
@@ -225,13 +225,13 @@ export class DenizBankApi {
   private async askForCaptcha (captchaByteData: string): Promise<string> {
     const image = new Uint8Array(Buffer.from(captchaByteData, 'base64'))
     const code = await ZenMoney.readLine('Введите код с картинки', { image })
-    if (!code) {
+    if (code === null || code === undefined || code === '') {
       throw new InvalidOtpCodeError()
     }
     return code
   }
 
-  private async getInitialToken (session: Session): Promise<{token: string, encryptionKey: string}> {
+  private async getInitialToken (session: Session): Promise<{ token: string, encryptionKey: string }> {
     const response = await this.fetchApi('auth/token', undefined, {
       method: 'POST',
       body: {
@@ -256,14 +256,14 @@ export class DenizBankApi {
       res.body != null &&
       'token' in res.body &&
       'encryptionKey' in res.body
-    }) as {body: {token: string, encryptionKey: string}}
+    }) as { body: { token: string, encryptionKey: string } }
 
     console.debug('getInitialToken', sanitize(response.body, true))
 
     return response.body
   }
 
-  private async sendCredentials (session: Session, loginEncrypted: string, passwordEncrypted: string, captchaIdEncrypted: string, captchaData: string): Promise<{currentTime: Date, sessionTimeout: number}> {
+  private async sendCredentials (session: Session, loginEncrypted: string, passwordEncrypted: string, captchaIdEncrypted: string, captchaData: string): Promise<{ currentTime: Date, sessionTimeout: number }> {
     const response = await this.fetchApi('auth/token', session, {
       method: 'PATCH',
       body: {
@@ -274,7 +274,7 @@ export class DenizBankApi {
         applicationVersion: 'JanusIB-20250527.3652-gD2GnZwbfqRyrb3xeCZ2',
         captchaData
       }
-    }) as FetchResponse & {body: {currentTime: string, sessionTimeout: number, Message?: string | null}}
+    }) as FetchResponse & { body: { currentTime: string, sessionTimeout: number, Message?: string | null } }
 
     console.debug('sendCredentials', sanitize(response.body, true))
 
@@ -300,20 +300,20 @@ export class DenizBankApi {
       res.body != null &&
       'pushSentId' in res.body &&
       'maskedPhoneNumber' in res.body
-    }) as {body: {pushSentId: string, maskedPhoneNumber: string}}
+    }) as { body: { pushSentId: string, maskedPhoneNumber: string } }
 
     console.debug('sendPush', sanitize(response.body, true))
 
     return response.body
   }
 
-  private async verifyPush (session: Session, pushIdEncrypted: string): Promise<{pushVerified: false} | {pushVerified: true, token: string}> {
+  private async verifyPush (session: Session, pushIdEncrypted: string): Promise<{ pushVerified: false } | { pushVerified: true, token: string }> {
     const response = await this.fetchApi('auth/token?validationType=mobileNotification', session, {
       method: 'PATCH',
       body: {
         code: pushIdEncrypted
       }
-    }) as FetchResponse & {body: {isSuccess: boolean}, headers: {'x-token': string}}
+    }) as FetchResponse & { body: { isSuccess: boolean }, headers: { 'x-token': string } }
 
     console.debug('verifyPush', sanitize({ body: response.body, headers: response.headers }, true))
 
@@ -337,7 +337,7 @@ export class DenizBankApi {
       session,
       undefined,
       (res) => typeof res.body === 'object' && res.body != null
-    ) as FetchResponse & {body: Record<string, unknown>}
+    ) as FetchResponse & { body: Record<string, unknown> }
     console.debug('fetchCards', sanitize(response.body, true))
 
     const cardIds = Object.values(response.body).reduce<CardInfo[]>((acc, cardResponse) => {
@@ -403,7 +403,7 @@ export class DenizBankApi {
       session,
       undefined,
       (res) => typeof res.body === 'object' && res.body != null && 'accounts' in res.body
-    ) as FetchResponse & {body: {accounts: Array<Record<string, unknown>>}}
+    ) as FetchResponse & { body: { accounts: Array<Record<string, unknown>> } }
     console.debug('fetchAccounts', sanitize(response.body, true))
     return response.body.accounts.map(a => ({
       id: a.id as string,
@@ -421,7 +421,7 @@ export class DenizBankApi {
       startTime: fromDate.toISOString(),
       endTime: toDate?.toISOString()
     })}`,
-    session) as FetchResponse & {body: {activities: Array<Record<string, unknown>>}}
+    session) as FetchResponse & { body: { activities: Array<Record<string, unknown>> } }
 
     console.debug('fetchTransactions', sanitize(respose.body, true))
 

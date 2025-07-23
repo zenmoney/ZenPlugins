@@ -7,9 +7,9 @@ import { toISODateString } from '../../common/dateUtils'
 function getBalance (apiAccount: unknown, balances: unknown[]): number | null {
   const id = getNumber(apiAccount, 'id')
   const result = find(balances, { account_id: id })
-  if (!result && (getNumber(apiAccount, 'card_status') === -999 || getNumber(apiAccount, 'card_status') === -100 ||
+  if ((result === null || result === undefined) && (getNumber(apiAccount, 'card_status') === -999 || getNumber(apiAccount, 'card_status') === -100 ||
     getNumber(apiAccount, 'card_status') === -99 ||
-    getOptString(apiAccount, 'card_expire_date') === '----' || getOptString(apiAccount, 'card_expire_date') === undefined)) { // getNumber(apiAccount, 'card_status') !== 1 ???
+    getOptString(apiAccount, 'card_expire_date') === '----' || getOptString(apiAccount, 'card_expire_date') === undefined)) {
     return null
   }
   assert(result !== undefined, `cant find balance for id=${id}`, balances)
@@ -37,7 +37,7 @@ export function convertTransactions (apiTransactions: unknown[], account: Accoun
   const transactions: Transaction[] = []
   for (const apiTransaction of apiTransactions) {
     const transaction = convertTransaction(apiTransaction, account)
-    if (transaction) {
+    if (transaction != null) {
       transactions.push(transaction)
     }
   }
@@ -112,12 +112,12 @@ export function convertTransaction (apiTransaction: unknown, account: Account): 
     comment: null
   }
   const date = toISODateString(transaction.date).slice(0, 10)
-  const sum = String(Math.abs(transaction.movements[0].sum!))
+  const sum = String(Math.abs(transaction.movements[0].sum ?? 0))
   transaction.groupKeys = [date + '_' + currency + '_' + sum]
   ;[
     parseInnerAndOuterTransfer,
     outerTransfer
-  ].some(parser => parser(transaction, apiTransaction, account))
+  ].some(parser => Boolean(parser(transaction, apiTransaction, account)))
   return transaction
 }
 
@@ -128,7 +128,7 @@ function outerTransfer (transaction: ExtendedTransaction, apiTransaction: unknow
   transaction.movements.push({
     fee: 0,
     invoice: null,
-    sum: -transaction.movements[0].sum!,
+    sum: -(transaction.movements[0].sum ?? 0),
     id: null,
     account: {
       syncIds: null,
@@ -146,7 +146,7 @@ function parseInnerAndOuterTransfer (transaction: ExtendedTransaction, apiTransa
     /Перевод с карты на карту/i
   ].some(regexp => regexp.test(getString(apiTransaction, 'service_name')))) {
     const data: unknown[] = getArray(apiTransaction, 'data')
-    const syncIdData = find(data, { key: 'Номер карты получателя' }) || find(data, { key: 'Карта получателя' })
+    const syncIdData = find(data, { key: 'Номер карты получателя' }) ?? find(data, { key: 'Карта получателя' })
     const syncIds = syncIdData !== undefined ? getString(syncIdData, 'value') : null
     const merchant = find(data, { key: 'ФИО получателя' })
     if (merchant !== undefined) {
@@ -161,7 +161,7 @@ function parseInnerAndOuterTransfer (transaction: ExtendedTransaction, apiTransa
     transaction.movements.push({
       fee: 0,
       invoice: null,
-      sum: -transaction.movements[0].sum!,
+      sum: -(transaction.movements[0].sum ?? 0),
       id: null,
       account: {
         syncIds: syncIds !== null ? [syncIds] : null,
@@ -172,7 +172,7 @@ function parseInnerAndOuterTransfer (transaction: ExtendedTransaction, apiTransa
     })
     const date = toISODateString(transaction.date).slice(0, 10)
     const currency = getOptString(apiTransaction, 'currency') ?? 'UZS'
-    const sum = String(Math.abs(transaction.movements[0].sum!))
+    const sum = String(Math.abs(transaction.movements[0].sum ?? 0))
     transaction.groupKeys = [date + '_' + currency + '_' + sum]
     return true
   }

@@ -36,9 +36,9 @@ export function convertAccount (account: AccountDetails, data: string): Account 
   return {
     id,
     type: AccountType.ccard,
-    title: description ? description[1] : id,
-    instrument: balance ? balance[1] : 'RSD',
-    balance: balance ? parseSum(balance[2]) : 0,
+    title: (description != null) ? description[1] : id,
+    instrument: (balance != null) ? balance[1] : 'RSD',
+    balance: (balance != null) ? parseSum(balance[2]) : 0,
     creditLimit: 0,
     syncIds: [id]
   }

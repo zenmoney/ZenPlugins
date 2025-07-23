@@ -45,7 +45,7 @@ function addMatchingConversion (record: AccountRecord, transaction: ZenMoneyTran
     r.EntryDate === record.EntryDate &&
     r.DocumentNomination === record.DocumentNomination
   )
-  if (matchingRecord) {
+  if (matchingRecord != null) {
     transaction.movements.push(createMovement(matchingRecord, matchingRecord.EntryAmount))
   }
 }

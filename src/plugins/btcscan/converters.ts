@@ -24,7 +24,7 @@ function findTransactionMovement (account: string, transaction: BitcoinTransacti
   const vout = transaction.vout.find(vout => vout.scriptpubkey_address === account)
   const vin = transaction.vin.find(vin => vin.prevout.scriptpubkey_address === account)
 
-  if (vout) { // PAYMENT
+  if (vout != null) { // PAYMENT
     return {
       id: transaction.txid,
       account: {
@@ -36,7 +36,7 @@ function findTransactionMovement (account: string, transaction: BitcoinTransacti
     }
   }
 
-  if (vin) { // DEPOSIT
+  if (vin != null) { // DEPOSIT
     return {
       id: transaction.txid,
       account: {
@@ -54,7 +54,7 @@ function findTransactionMovement (account: string, transaction: BitcoinTransacti
 export function convertTransaction (account: string, transaction: BitcoinTransaction): Transaction | null {
   const movement = findTransactionMovement(account, transaction)
 
-  if (!movement) {
+  if (movement == null) {
     return null
   }
 
@@ -80,17 +80,17 @@ export function convertTransaction (account: string, transaction: BitcoinTransac
 export function convertTransactions (account: string, transactions: BitcoinTransaction[]): Transaction[] {
   const list = transactions
     .map((transaction) => convertTransaction(account, transaction))
-    .filter((transaction): transaction is Transaction => !!transaction)
+    .filter((transaction): transaction is Transaction => !(transaction == null))
 
   return list
 }
 
 export function mergeTransferTransactions (transactions: Transaction[]): Transaction[] {
   const list = transactions.reduce<{ [key in string]?: Transaction }>((acc, item) => {
-    const movementId = item.movements[0].id!
+    const movementId = item.movements[0].id ?? ''
     const existingItem = acc[movementId]
 
-    if (!existingItem) {
+    if (existingItem == null) {
       acc[movementId] = item
     } else {
       acc[movementId] = {

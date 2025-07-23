@@ -80,7 +80,6 @@ export async function fetch (url, options = {}) {
     if (!('forEach' in headers)) {
       Object.defineProperty(headers, 'forEach', {
         enumerable: false,
-        // eslint-disable-next-line github/array-foreach
         value: (callback, thisArg) => _headers.forEach((value, key) => callback.call(thisArg, value, key, headers))
       })
     }

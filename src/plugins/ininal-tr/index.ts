@@ -35,9 +35,10 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
   const accounts = accountInfos.map(convertAccount)
 
   // refresh saved session if available
-  if (newSession) {
+  if (newSession != null) {
     session = newSession
   }
+  assert(session != null, 'could not get session')
 
   ZenMoney.setData('session', session)
   ZenMoney.saveData()
@@ -47,7 +48,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
       return []
     }
 
-    const accountTransactions = await ininalApi.fetchAccountTransactions(session!, account.id, fromDate, toDate)
+    const accountTransactions = await ininalApi.fetchAccountTransactions(session as Session, account.id, fromDate, toDate as Date)
     return accountTransactions.map(t => convertTransaction(t, account))
   }))
 
