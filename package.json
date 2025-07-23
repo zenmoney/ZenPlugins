@@ -4,14 +4,6 @@
   "private": true,
   "dependencies": {
     "@babel/runtime": "7.17.2",
-    "@types/argon2-browser": "^1.18.4",
-    "@types/cheerio": "0.22.31",
-    "@types/fetch-mock": "^7.3.5",
-    "@types/jsrsasign": "10.5.1",
-    "@types/lodash": "4.14.178",
-    "@types/node-forge": "0.9.1",
-    "@types/set-cookie-parser": "^2.4.7",
-    "@types/uuid": "8.3.2",
     "argon2-browser": "^1.18.0",
     "base64-loader": "^1.0.0",
     "big-integer": "1.6.47",
@@ -59,32 +51,26 @@
   },
   "devDependencies": {
     "@babel/core": "7.18.6",
-    "@babel/eslint-parser": "7.18.2",
     "@babel/plugin-transform-runtime": "7.18.6",
     "@babel/preset-env": "7.18.6",
     "@babel/preset-react": "7.18.6",
     "@babel/preset-typescript": "7.18.6",
-    "@jest/types": "28.1.3",
+    "@types/argon2-browser": "^1.18.4",
+    "@types/cheerio": "0.22.31",
     "@types/crypto-js": "4.1.1",
+    "@types/fetch-mock": "^7.3.5",
     "@types/jest": "28.1.5",
+    "@types/jsrsasign": "10.5.1",
+    "@types/lodash": "4.14.178",
+    "@types/node-forge": "0.9.1",
     "@types/pad-left": "2.1.0",
-    "@typescript-eslint/eslint-plugin": "5.30.6",
-    "@typescript-eslint/parser": "5.30.6",
+    "@types/set-cookie-parser": "^2.4.7",
+    "@types/uuid": "8.3.2",
     "babel-jest": "28.1.3",
     "babel-loader": "8.2.5",
     "babel-plugin-lodash": "3.3.4",
     "case-sensitive-paths-webpack-plugin": "2.4.0",
     "chalk": "1.1.3",
-    "eslint": "8.19.0",
-    "eslint-config-standard": "17.0.0",
-    "eslint-config-standard-with-typescript": "22.0.0",
-    "eslint-import-resolver-typescript": "3.2.5",
-    "eslint-plugin-github": "4.3.6",
-    "eslint-plugin-import": "2.26.0",
-    "eslint-plugin-jest": "26.5.3",
-    "eslint-plugin-n": "15.2.4",
-    "eslint-plugin-promise": "6.0.0",
-    "eslint-webpack-plugin": "3.2.0",
     "exports-loader": "4.0.0",
     "fetch-mock": "5.12.2",
     "fs-extra": "3.0.1",
@@ -99,6 +85,7 @@
     "react-dom": "16.4.2",
     "terser-webpack-plugin": "5.3.3",
     "ts-jest": "28.0.6",
+    "ts-standard": "12.0.2",
     "typescript": "4.7.4",
     "uglify-js": "3.16.2",
     "uuid": "8.3.2",
@@ -112,7 +99,9 @@
     "start": "yarn && node ./scripts/wrapper.js \"webpack serve --config ./scripts/webpack.config.js --env PLUGIN=\"",
     "host": "yarn && node ./scripts/wrapper.js \"webpack serve --config ./scripts/webpack.config.js --mode=production --env PLUGIN=\"",
     "build": "yarn && node ./scripts/wrapper.js \"webpack build --config ./scripts/webpack.config.js --mode=production --env PLUGIN=\"",
-    "test": "eslint ./src && tsc --noEmit && node ./scripts/wrapper.js \"jest \"",
+    "test": "node ./scripts/wrapper.js \"ts-standard\" && tsc --noEmit && node ./scripts/wrapper.js \"jest \"",
+    "lint": "node ./scripts/wrapper.js \"ts-standard \"",
+    "lint:fix": "node ./scripts/wrapper.js \"ts-standard --fix \"",
     "check-commit": "node ./scripts/checkCommit.js"
   },
   "jest": {
@@ -149,6 +138,27 @@
     ],
     "production": [
       "ios_saf 10"
+    ]
+  },
+  "ts-standard": {
+    "env": [
+      "jest"
+    ],
+    "globals": [
+      "InvalidPreferencesError",
+      "TemporaryError",
+      "ZenMoney",
+      "console",
+      "fetch"
+    ],
+    "ignore": [
+      "**/build/**",
+      "**/coverage/**",
+      "**/dist/**",
+      "**/node_modules/**",
+      "/plugins/",
+      "/src/polyfills/",
+      "/src/UI/"
     ]
   }
 }

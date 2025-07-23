@@ -1,6 +1,5 @@
 const { DefinePlugin, optimize: { LimitChunkCountPlugin } } = require('webpack')
 const CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin')
-const ESLintPlugin = require('eslint-webpack-plugin')
 const {
   resolvePlugin,
   resolveFromRoot,
@@ -65,22 +64,22 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
         path: false,
         fs: false,
         Buffer: false,
-        process: false,
+        process: false
       }
     },
     module: {
       noParse: /\.wasm$/,
       rules: [
-          {
-            test: /\.wasm$/,
-            // Tells WebPack that this module should be included as
-            // base64-encoded binary file and not as code
-            loader: 'base64-loader',
-            // Disables WebPack's opinion where WebAssembly should be,
-            // makes it think that it's not WebAssembly
-            //
-            // Error: WebAssembly module is included in initial chunk.
-            type: 'javascript/auto',
+        {
+          test: /\.wasm$/,
+          // Tells WebPack that this module should be included as
+          // base64-encoded binary file and not as code
+          loader: 'base64-loader',
+          // Disables WebPack's opinion where WebAssembly should be,
+          // makes it think that it's not WebAssembly
+          //
+          // Error: WebAssembly module is included in initial chunk.
+          type: 'javascript/auto'
         },
         {
           test: /ZenmoneyManifest.xml$/,
@@ -115,10 +114,6 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
                 template: paths.windowLoaderHtml
               })]
         : [],
-      new ESLintPlugin({
-        context: paths.appSrc,
-        eslintPath: require.resolve('eslint')
-      }),
       new DefinePlugin({
         ...!production && process.env.LOG_PRIVATE_KEY && { LOG_PRIVATE_KEY: readLogPrivateKey() }
       }),
@@ -192,8 +187,8 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
       minimize: false
     },
     experiments: {
-      asyncWebAssembly: true,
-    },
+      asyncWebAssembly: true
+    }
   }
 }
 
