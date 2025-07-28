@@ -6,7 +6,7 @@ const {
   resolveCommonFiles
 } = require('./pathResolvers')
 const fs = require('fs')
-const TerserPlugin = require('terser-webpack-plugin')
+const { EsbuildPlugin } = require('esbuild-loader')
 const WebpackObfuscator = require('webpack-obfuscator')
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
@@ -39,7 +39,10 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
     },
     entry: production
       ? { index: pluginPaths.js }
-      : { windowLoader: [paths.windowLoaderJs] },
+      : {
+          windowLoader: [paths.windowLoaderJs],
+          workerLoader: [paths.workerLoaderJs]
+        },
     output: {
       path: outputPath,
       filename: '[name].js',
@@ -59,7 +62,7 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
         xhrViaZenApi$: resolveFromRoot('src/XMLHttpRequestViaZenAPI'),
         querystring: 'querystring-browser'
       },
-      extensions: ['.js', '.ts', '.json'],
+      extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
       fallback: {
         path: false,
         fs: false,
@@ -87,12 +90,12 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
           loader: resolveFromRoot('scripts/plugin-manifest-loader.js')
         },
         {
-          test: /\.(js|ts)$/,
+          test: /\.[jt]sx?$/,
           include: paths.appSrc,
-          loader: require.resolve('babel-loader'),
-          options: production
-            ? {}
-            : { cacheDirectory: true }
+          loader: require.resolve('esbuild-loader'),
+          options: {
+            target: 'es2015'
+          }
         }
       ],
       parser: {
@@ -123,7 +126,6 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
       new CaseSensitivePathsPlugin(),
       ...production
         ? [
-            new TerserPlugin({}),
             new WebpackObfuscator({
               optionsPreset: 'low-obfuscation',
               seed: 1985603785,
@@ -184,7 +186,14 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
       hints: false
     },
     optimization: {
-      minimize: false
+      minimize: Boolean(production),
+      minimizer: production
+        ? [
+            new EsbuildPlugin({
+              target: 'es2015'
+            })
+          ]
+        : []
     },
     experiments: {
       asyncWebAssembly: true

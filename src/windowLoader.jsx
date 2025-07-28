@@ -101,7 +101,7 @@ async function init () {
 
   try {
     clearCookies()
-    const worker = new Worker(new URL('./workerLoader', import.meta.url))
+    const worker = new Worker('./workerLoader.js')
 
     window.__worker__ = worker // prevents worker GC - allows setting breakpoints after worker ends execution
 

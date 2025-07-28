@@ -9,7 +9,7 @@ function resolveCommonFiles () {
     appPublic: resolveFromRoot('scripts/public'),
     hostedPluginHtml: resolveFromRoot('scripts/public/hostedPlugin.html'),
     windowLoaderHtml: resolveFromRoot('scripts/public/windowLoader.html'),
-    windowLoaderJs: resolveFromRoot('src/windowLoader.js'),
+    windowLoaderJs: resolveFromRoot('src/windowLoader.jsx'),
     workerLoaderJs: resolveFromRoot('src/workerLoader.js'),
     appPackageJson: resolveFromRoot('package.json'),
     yarnLockFile: resolveFromRoot('yarn.lock'),
