@@ -8,7 +8,8 @@ describe('scrape', () => {
   }))
 
   it('should hit the mocks and return results', async () => {
-    const { scrape } = await import('../index')
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { scrape } = require('../index')
     mockEndPoints()
 
     const result = await scrape(
