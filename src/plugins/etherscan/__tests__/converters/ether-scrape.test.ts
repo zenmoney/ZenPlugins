@@ -32,6 +32,14 @@ describe('scrape', () => {
         instrument: 'μETH',
         balance: 10000000,
         syncIds: ['2']
+      },
+      {
+        id: '3',
+        type: AccountType.checking,
+        title: '3',
+        instrument: 'μETH',
+        balance: 0,
+        syncIds: ['3']
       }
     ])
 
