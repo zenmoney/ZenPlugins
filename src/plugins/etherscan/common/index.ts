@@ -24,6 +24,11 @@ async function fetchInner<T extends Response> (params: Record<string, string | n
     return data
   }
 
+  // No transactions found is also a valid response
+  if (data.status === '0' && data.message === 'No transactions found') {
+    return data
+  }
+
   throw new Error(`fetch error: ${JSON.stringify(response)}`)
 }
 
