@@ -60,7 +60,7 @@ export const uA = {
   m: 'ZenMoney',
   os: 'android',
   osV: '11',
-  v: '2.19.1'
+  v: '2.64.24'
 }
 
 /**
