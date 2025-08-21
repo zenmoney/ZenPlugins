@@ -39,6 +39,46 @@ describe('convertTransaction', () => {
         },
         comment: null
       }
+    ],
+    [
+      {
+        id: 'id_%2FwwIaVbmrPoMsBv0ky6QnO9%2FTCLfIPiP%2FFh5hhXFmXqB8PB6wyE6M73xrecLH5QsO%2BkKUUESRLz0WQo0jpSU7%2BOorJfH0%2FYL',
+        date: new Date('2025-08-14T00:00:00+03:00'),
+        address: 'SmartGlocal>Hong Kong HK',
+        amount: -5,
+        currency: 'EUR',
+        description: ''
+      },
+      {
+        accountNumber: '0001000316640',
+        cardNumber: '',
+        id: '0001000316640',
+        name: 'Tekući račun',
+        currency: 'RSD',
+        balance: 23832.94
+      },
+      {
+        hold: false,
+        date: new Date('2025-08-14T00:00:00+03:00'),
+        movements: [
+          {
+            id: 'id_%2FwwIaVbmrPoMsBv0ky6QnO9%2FTCLfIPiP%2FFh5hhXFmXqB8PB6wyE6M73xrecLH5QsO%2BkKUUESRLz0WQo0jpSU7%2BOorJfH0%2FYL',
+            account: { id: '0001000316640' },
+            invoice: {
+              sum: -5,
+              instrument: 'EUR'
+            },
+            sum: null,
+            fee: 0
+          }
+        ],
+        merchant: {
+          fullTitle: 'SmartGlocal>Hong Kong HK',
+          mcc: null,
+          location: null
+        },
+        comment: null
+      }
     ]
   ])('converts expense transaction', (apiTransaction, account, transaction) => {
     expect(convertTransaction(apiTransaction, account)).toEqual(transaction)
@@ -85,7 +125,7 @@ describe('convertTransaction', () => {
               "instrument": "TRY",
               "sum": -40.36,
             },
-            "sum": -40.36,
+            "sum": null,
           },
         ],
       }
@@ -132,7 +172,7 @@ describe('convertTransaction', () => {
               "instrument": "USD",
               "sum": -2,
             },
-            "sum": -2,
+            "sum": null,
           },
         ],
       }
