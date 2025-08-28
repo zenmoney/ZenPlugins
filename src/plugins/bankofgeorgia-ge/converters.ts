@@ -42,14 +42,14 @@ function invertMovement (movement: Movement, account: Account, invertedAccount: 
   return {
     id: null,
     account:
-      invertedAccount.id != null
-        ? { id: invertedAccount.id }
-        : {
-            type: invertedAccount.type ?? null,
-            instrument: movement.invoice != null ? movement.invoice.instrument : account.instrument,
-            company: invertedAccount.companyId != null ? { id: invertedAccount.companyId } : null,
-            syncIds: null
-          },
+    invertedAccount.id != null
+      ? { id: invertedAccount.id }
+      : {
+          type: invertedAccount.type ?? null,
+          instrument: movement.invoice != null ? movement.invoice.instrument : account.instrument,
+          company: invertedAccount.companyId != null ? { id: invertedAccount.companyId } : null,
+          syncIds: null
+        },
     invoice: null,
     sum: sum != null ? -sum : null,
     fee: 0
@@ -380,6 +380,9 @@ export function convertTransaction (apiTransaction: unknown, product: ConvertedP
           transaction.groupKeys = [getNumber(apiTransaction, 'docKey').toString()]
           break
         }
+        case 'text.entry.group.name.Other':
+          transaction.groupKeys = [getNumber(apiTransaction, 'docKey').toString()]
+          break
         default:
           assert(false, 'new other entryGroupDKey found', entryGroupDKey, apiTransaction)
       }

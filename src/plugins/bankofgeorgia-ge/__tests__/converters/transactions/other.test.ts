@@ -846,6 +846,74 @@ describe('convertTransaction', () => {
           }
         ]
       }
+    ],
+    [
+      {
+        accountKey: '12596401624',
+        entryId: '123552312311',
+        docKey: 28943212313,
+        clientKey: '60588505',
+        language: 'EN',
+        sourceEntryGroup: 'OTHER',
+        nomination: ' Credit Funds - Amount: USD12.40; Merchant: Trip.com, United Kingdom of Great Britain and Northern Ireland; MCC:4722; Date: 23/08/2025 05:06; Card No: ****4346; Payment transaction amount and currency: 12.40 USD',
+        postDate: '2025-08-23T00:00:00',
+        authDate: '23/08/2025 05:06',
+        operationDate: '2025-08-23T00:00:00',
+        amount: '-12.4',
+        oppositeAmount: '12.4',
+        ccy: 'GEL',
+        canCopy: 'N',
+        status: 'P',
+        merchantName: 'Trip.com, გაერთიანებული სამეფო',
+        merchantNameInt: 'Trip.com, United Kingdom of Great Britain and Northern Ireland',
+        nominationOriginal: 'Credit Funds - Amount: USD12.40; Merchant: Trip.com, United Kingdom of Great Britain and Northern Ireland; MCC:4722; Date: 23/08/2025 05:06; Card No: ****4346; Payment transaction amount and currency: 12.40 GEL',
+        prodGroup: 'PLC',
+        entryType: 'TRN',
+        printSwift: 'N',
+        isInternalOperation: 'N',
+        entryGroupNameId: '4',
+        groupImageId: '35623082',
+        groupImageIdSolo: '3127030266',
+        groupImageIdWm: '3127057174',
+        hasTransferBack: 'N',
+        printFormType: 'OTHER',
+        printForm: 'Y',
+        entryGroupDValue: 'text.entry.group.name.Other',
+        operationTitle: 'Trip.com, United Kingdom of Great Britain and Northern Ireland',
+        cardLastDigits: '4346',
+        sort: [
+          '1755892800000',
+          '28943212313',
+          '123552312311'
+        ],
+        isStatementAllowed: true,
+        trIdentifierForPostBnpl: '28943212313',
+        isTransactionForPostBnpl: 'N',
+        pfmId: '123552312311',
+        pfmCatId: '900',
+        pfmCatName: 'text.pfm.child.category.transfer.in',
+        pfmParentCatId: '840'
+      },
+      {
+        comment: null,
+        date: new Date('2025-08-23T01:06:00.000Z'),
+        groupKeys: [
+          '28943212313'
+        ],
+        hold: false,
+        merchant: null,
+        movements: [
+          {
+            account: {
+              id: '1337'
+            },
+            fee: 0,
+            id: '123552312311',
+            invoice: null,
+            sum: 12.4
+          }
+        ]
+      }
     ]
   ])('converts other', (apiTransaction, transaction) => {
     expect(convertTransaction(apiTransaction, accountGel)).toEqual(transaction)

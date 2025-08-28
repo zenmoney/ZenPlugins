@@ -492,8 +492,6 @@ export async function fetchAccountOperations (acctKey: string, fromDate: Date, t
   const batchSize = 25
   let searchAndSort = ''
   const result = []
-  let pageCount = 0
-  const maxPages = 10 // Safety limit to prevent infinite loops
 
   const includeFields = [
     'clientKey', 'prodGroup', 'docKey', 'entryId', 'essId', 'operationTitle', 'nominationOriginal',
@@ -509,9 +507,7 @@ export async function fetchAccountOperations (acctKey: string, fromDate: Date, t
   const operationDateTimeLowerBound = fromDate.toISOString()
   const operationDateTimeUpperBound = toDate.toISOString()
 
-  while (pageCount < maxPages) {
-    pageCount++
-
+  while (true) {
     const params: Record<string, unknown> = {
       accountKeys: acctKey, // comma-separated
       amountLowerBound: 'null',
@@ -537,7 +533,7 @@ export async function fetchAccountOperations (acctKey: string, fromDate: Date, t
     try {
       response = await fetchOperationsApi(params, session)
     } catch (error) {
-      console.error('Error fetching operations for account', acctKey, 'page', pageCount, error)
+      console.error('Error fetching operations for account', acctKey, 'page', error)
       throw error
     }
 
@@ -572,10 +568,6 @@ export async function fetchAccountOperations (acctKey: string, fromDate: Date, t
     if (operations.length < batchSize) {
       break
     }
-  }
-
-  if (pageCount >= maxPages) {
-    console.warn(`Reached maximum page limit (${maxPages}) for account ${acctKey}`)
   }
 
   return result
