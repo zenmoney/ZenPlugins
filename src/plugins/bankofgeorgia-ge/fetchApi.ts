@@ -390,7 +390,7 @@ async function fetchApiConnector (serviceId: string, params: Record<string, unkn
     userId: 'MOBILE',
     ...params
   }
-  const response = await fetch(`https://rb-api.bog.ge/rb-middleware-api-connector?${qs.stringify(query)}`, {
+  const response = await fetch(`https://ibank.bog.ge/rest/rb?${qs.stringify(query)}`, {
     method: 'GET',
     headers: {
       'User-Agent': 'okhttp/4.5.0'
@@ -398,6 +398,34 @@ async function fetchApiConnector (serviceId: string, params: Record<string, unkn
     parse: JSON.parse,
     sanitizeRequestLog: { url: { query: { keycloakSessionToken: true } } },
     sanitizeResponseLog: { url: { query: { keycloakSessionToken: true } } }
+  })
+  session.requestIndex++
+  return response.body
+}
+
+async function fetchOperationsApi (params: Record<string, unknown>,
+  session: { accessToken: string, requestIndex: number, auth: { device: Device } }): Promise<unknown> {
+  // Convert params to the correct type for qs.stringify
+  const query: Record<string, string | number | boolean> = {}
+  for (const [key, value] of Object.entries(params)) {
+    if (value != null) {
+      query[key] = String(value)
+    }
+  }
+
+  const response = await fetch(`https://ibank.bog.ge/rest/operations?${qs.stringify(query)}`, {
+    method: 'GET',
+    headers: {
+      'User-Agent': 'okhttp/4.5.0',
+      'Accept-Language': 'EN',
+      Cookie: `access_token=${session.accessToken}; valid_token=1`
+    },
+    parse: JSON.parse,
+    sanitizeRequestLog: {
+      url: { query: true },
+      headers: { Cookie: true }
+    },
+    sanitizeResponseLog: { body: true }
   })
   session.requestIndex++
   return response.body
@@ -461,24 +489,94 @@ export async function fetchLoans (session: Session): Promise<FetchedLoanDeposit[
 }
 
 export async function fetchAccountOperations (acctKey: string, fromDate: Date, toDate: Date, session: Session): Promise<unknown[]> {
-  const batchSize = 20
-  let current = 0
+  const batchSize = 25
+  let searchAndSort = ''
   const result = []
-  while (true) {
-    const response = await fetchApiConnector('ACCOUNTS_GET_MY_OPERATIONS_WITH_DETAILS_AND_PFM', {
-      acctKeys: acctKey,
-      count: batchSize.toString(),
-      startDate: fromDate.getTime().toString(),
-      endDate: toDate.getTime().toString(),
-      from: current.toString(),
-      useLastOperationsMode: '1'
-    }, session)
-    const operations = getArray(response, 'result.myOperations')
+  let pageCount = 0
+  const maxPages = 10 // Safety limit to prevent infinite loops
+
+  const includeFields = [
+    'clientKey', 'prodGroup', 'docKey', 'entryId', 'essId', 'operationTitle', 'nominationOriginal',
+    'beneficiary', 'docNomination', 'nomination', 'merchantId', 'essServiceId', 'groupImageId',
+    'postDate', 'authDate', 'operationDate', 'bonusPoint', 'status', 'canCopy', 'amount', 'ccy',
+    'merchantName', 'entryGroupNameId', 'sourceEntryGroup', 'bonusInfo', 'cashbackAmount',
+    'productName', 'prodGroup', 'entryType', 'printSwift', 'isInternalOperation', 'transferBankBic',
+    'printFormType', 'sourceEntryGroup', 'merchantNameInt', 'counterPartyClient', 'hasTransferBack',
+    'cardLastDigits', 'accountKey', 'pfmId', 'pfmCatId', 'pfmCatName', 'pfmParentCatId',
+    'pfmParentCatName', 'bonusType', 'bonusRate', 'cashback'
+  ].join(',')
+
+  const operationDateTimeLowerBound = fromDate.toISOString()
+  const operationDateTimeUpperBound = toDate.toISOString()
+
+  while (pageCount < maxPages) {
+    pageCount++
+
+    const params: Record<string, unknown> = {
+      accountKeys: acctKey, // comma-separated
+      amountLowerBound: 'null',
+      amountUpperBound: 'null',
+      blocked: 'N',
+      cardIds: '',
+      includeFields,
+      income: 'N',
+      limit: batchSize,
+      nomination: '',
+      operationDateTimeLowerBound,
+      operationDateTimeUpperBound,
+      outcome: 'N',
+      pfmCatIds: '',
+      sortFields: 'operationDate,docKey&order=DESC'
+    }
+
+    if (searchAndSort !== '') {
+      params.searchAndSort = searchAndSort
+    }
+
+    let response
+    try {
+      response = await fetchOperationsApi(params, session)
+    } catch (error) {
+      console.error('Error fetching operations for account', acctKey, 'page', pageCount, error)
+      throw error
+    }
+
+    const operations = getOptArray(response, 'data') ?? []
+
+    if (operations.length === 0) {
+      break
+    }
+
     result.push(...operations)
-    current += batchSize
+
+    // Get pagination info from the last operation for the next request
+    const previousSearchAndSort = searchAndSort
+    if (operations.length > 0) {
+      const lastOperation = operations[operations.length - 1]
+      const sort = getOptArray(lastOperation, 'sort')
+      if ((sort != null) && sort.length >= 3) {
+        searchAndSort = `${String(sort[0])},${String(sort[1])},${String(sort[2])}`
+      } else {
+        // If we can't get proper sort info, stop pagination
+        console.warn('No sort information found in last operation, stopping pagination')
+        break
+      }
+    }
+
+    // Check for infinite loop - if searchAndSort hasn't changed, we're stuck
+    if (previousSearchAndSort !== '' && searchAndSort === previousSearchAndSort) {
+      console.warn('Pagination cursor not advancing, stopping to prevent infinite loop')
+      break
+    }
+
     if (operations.length < batchSize) {
       break
     }
   }
+
+  if (pageCount >= maxPages) {
+    console.warn(`Reached maximum page limit (${maxPages}) for account ${acctKey}`)
+  }
+
   return result
 }
