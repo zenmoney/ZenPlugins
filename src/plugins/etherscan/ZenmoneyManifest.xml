@@ -3,8 +3,8 @@
     <id>etherscan</id>
     <company>15936</company>
     <description>
-        Плагин для синхронизации ETH с помощью etherscan.
-        Для синхронизации укажите ApiKey и адреса кошельков.
+        Плагин для синхронизации ETH и BSC с помощью etherscan V2.
+        Для синхронизации выберите блокчейн, укажите ApiKey etherscan V2 и адреса кошельков.
     </description>
     <version>1.0</version>
     <build>4</build>

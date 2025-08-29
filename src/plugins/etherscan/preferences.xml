@@ -1,10 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen>
+    <ListPreference
+        positiveButtonText="ОК"
+        key="chain"
+        dialogTitle="Блокчейн"
+        negativeButtonText="Отмена"
+        title="Блокчейн"
+        entries="Etherium|BSC" entryValues="1|56"
+        defaultValue="1"
+        summary="|Блокчейн|{@s}"
+        obligatory="true"
+    />
     <EditTextPreference
         key="apiKey"
         obligatory="true"
         title="ApiKey"
-        dialogTitle="ApiKey"
+        dialogTitle="Etherscan V2 API Key"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="|Ключ от API|***********"

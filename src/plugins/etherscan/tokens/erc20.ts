@@ -1,31 +1,42 @@
 import flatten from 'lodash/flatten'
 import { fetch } from '../common'
-import { Preferences } from '../types'
+import { type Preferences } from '../types'
 
-import { AccountResponse, TokenAccount, TokenTransaction, TokenTransactionResponse } from './types'
+import {
+  AccountResponse,
+  TokenAccount,
+  TokenTransaction,
+  TokenTransactionResponse
+} from './types'
 import { SUPPORTED_TOKENS } from './config'
 
-export async function fetchAddressTokens (preferences: Preferences, address: string): Promise<TokenAccount[]> {
-  const result = await Promise.all(SUPPORTED_TOKENS.map(async token => {
-    const response = await fetch<AccountResponse>({
-      module: 'account',
-      action: 'tokenbalance',
-      contractaddress: token.contractAddress,
-      address,
-      tag: 'latest',
-      apiKey: preferences.apiKey
+export async function fetchAddressTokens (
+  preferences: Preferences,
+  address: string
+): Promise<TokenAccount[]> {
+  const result = await Promise.all(
+    SUPPORTED_TOKENS[preferences.chain].map(async (token) => {
+      const response = await fetch<AccountResponse>({
+        chainid: preferences.chain,
+        module: 'account',
+        action: 'tokenbalance',
+        contractaddress: token.contractAddress,
+        address,
+        tag: 'latest',
+        apiKey: preferences.apiKey
+      })
+
+      const balance = Number(response.result)
+
+      const account: TokenAccount = {
+        id: address,
+        balance,
+        contractAddress: token.contractAddress
+      }
+
+      return account
     })
-
-    const balance = Number(response.result)
-
-    const account: TokenAccount = {
-      id: address,
-      balance,
-      contractAddress: token.contractAddress
-    }
-
-    return account
-  }))
+  )
 
   return result
 }
@@ -37,11 +48,13 @@ export async function fetchAccounts (
 ): Promise<TokenAccount[]> {
   const accounts = preferences.account.split(',')
 
-  const result = await Promise.all(accounts.map(async (address: string) => {
-    const tokensAccounts = await fetchAddressTokens(preferences, address)
+  const result = await Promise.all(
+    accounts.map(async (address: string) => {
+      const tokensAccounts = await fetchAddressTokens(preferences, address)
 
-    return tokensAccounts
-  }))
+      return tokensAccounts
+    })
+  )
 
   return flatten(result)
 }
@@ -63,6 +76,7 @@ export async function fetchAccountTransactions (
 
   try {
     const response = await fetch<TokenTransactionResponse>({
+      chainid: preferences.chain,
       module: 'account',
       action: 'tokentx',
       contractaddress: account.contractAddress,
@@ -80,15 +94,16 @@ export async function fetchAccountTransactions (
     if (response.result.length === PAGE_SIZE) {
       return [
         ...transactions,
-        ...await fetchAccountTransactions(preferences, account, {
+        ...(await fetchAccountTransactions(preferences, account, {
           ...options,
           page: page + 1
-        })
+        }))
       ]
     }
 
     return transactions
-  } catch (error: any) { // eslint-disable-line
+  } catch (error: any) {
+    // eslint-disable-line
     if (error?.body?.message === 'No transactions found') {
       return []
     }
