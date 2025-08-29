@@ -10,10 +10,11 @@ const baseUrl = 'https://api.etherscan.io/v2/api'
 const MAX_RPS = 5
 let activeList: Array<Promise<unknown>> = []
 
-async function fetchInner<T extends Response> (params: Record<string, string | number>): Promise<T> {
+async function fetchInner<T extends Response> (
+  params: Record<string, string | number>
+): Promise<T> {
   const query = stringify({
-    ...params,
-    chainid: 1
+    ...params
   })
 
   const response = await fetchJson(`${baseUrl}?${query}`)
@@ -32,15 +33,18 @@ async function fetchInner<T extends Response> (params: Record<string, string | n
   throw new Error(`fetch error: ${JSON.stringify(response)}`)
 }
 
-export async function fetch<T extends Response> (params: Record<string, string | number>): Promise<T> {
+export async function fetch<T extends Response> (
+  params: Record<string, string | number>
+): Promise<T> {
   if (activeList.length < MAX_RPS) {
     const request = fetchInner<T>(params)
 
     const waiter = request
       .then(async () => await delay(1000))
       .catch(async () => await delay(1000))
-      .then(() => { // eslint-disable-line @typescript-eslint/no-floating-promises
-        activeList = activeList.filter(item => item !== waiter)
+      .then(() => {
+        // eslint-disable-line @typescript-eslint/no-floating-promises
+        activeList = activeList.filter((item) => item !== waiter)
       })
     activeList.push(waiter)
 
@@ -58,6 +62,7 @@ export async function fetchBlockNoByTime (
   { timestamp }: { timestamp: number }
 ): Promise<number> {
   const response = await fetch<BlockNoResponse>({
+    chainid: preferences.chain,
     module: 'block',
     action: 'getblocknobytime',
     closest: 'before',

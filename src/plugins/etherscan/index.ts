@@ -1,9 +1,10 @@
-import { ScrapeFunc } from '../../types/zenmoney'
+import type { ScrapeFunc } from '../../types/zenmoney'
 import { fetchBlockNoByTime } from './common'
-import { Preferences } from './types'
+import type { Preferences } from './types'
 
 import { scrape as scrapeEther } from './ether'
 import { scrape as scrapeTokens } from './tokens'
+import { ETHER_MAINNET } from './common/config'
 
 export const scrape: ScrapeFunc<Preferences> = async ({
   fromDate,
@@ -12,6 +13,10 @@ export const scrape: ScrapeFunc<Preferences> = async ({
   isFirstRun,
   isInBackground
 }) => {
+  if (preferences.chain === undefined) {
+    preferences.chain = ETHER_MAINNET
+  }
+
   const [startBlock, endBlock] = await Promise.all([
     fetchBlockNoByTime(preferences, {
       timestamp: Math.floor(fromDate.valueOf() / 1000)

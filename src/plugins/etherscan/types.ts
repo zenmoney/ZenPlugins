@@ -1,6 +1,8 @@
-import { ScrapeFunc } from '../../types/zenmoney'
+import type { ScrapeFunc } from '../../types/zenmoney'
+import type { Chain } from './common/types'
 
 export interface Preferences {
+  chain: Chain
   apiKey: string
   account: string
 }
