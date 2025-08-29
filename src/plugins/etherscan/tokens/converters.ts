@@ -51,7 +51,11 @@ export function convertTransaction (
     return null
   }
 
-  const direction = transaction.from === account.id ? 'PAYMENT' : 'DEPOSIT'
+  const direction =
+    transaction.from.toLocaleLowerCase() === account.id.toLocaleLowerCase()
+      ? 'PAYMENT'
+      : 'DEPOSIT'
+
   const targetAccount =
     direction === 'PAYMENT' ? transaction.to : transaction.from
   const sign = direction === 'PAYMENT' ? -1 : 1
