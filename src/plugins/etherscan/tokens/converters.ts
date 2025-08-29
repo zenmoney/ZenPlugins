@@ -56,19 +56,20 @@ export function convertTransaction (
     direction === 'PAYMENT' ? transaction.to : transaction.from
   const sign = direction === 'PAYMENT' ? -1 : 1
   const operationValue = token.convertBalance(Number(transaction.value))
+  const { gas, gasPrice, hash, timeStamp } = transaction
 
   return {
     hold: null,
-    date: new Date(Number(transaction.timeStamp) * 1000),
+    date: new Date(Number(timeStamp) * 1000),
     movements: [
       {
-        id: transaction.hash,
+        id: hash,
         account: {
           id: generateTokenAddress(account.id, token)
         },
         invoice: null,
         sum: sign * operationValue,
-        fee: 0
+        fee: (Number(gas) * Number(gasPrice)) / 1_000_000_000 / 1_000_000_000
       }
     ],
     merchant: {
