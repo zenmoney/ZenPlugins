@@ -10,7 +10,7 @@ function convertWeiToUETH (value: number): number {
   return Math.round(value / 10 ** 12)
 }
 
-function getTransactionFee (transaction: EthereumTransaction): number {
+export function getTransactionFee (transaction: EthereumTransaction): number {
   const { gasPrice, gasUsed } = transaction
 
   return convertWeiToUETH(Number(gasPrice) * Number(gasUsed))

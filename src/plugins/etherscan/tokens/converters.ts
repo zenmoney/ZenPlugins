@@ -7,6 +7,8 @@ import { generateTokenAddress, SUPPORTED_TOKENS } from './config'
 import type { TokenAccount, TokenTransaction } from './types'
 import type { Chain } from '../common/types'
 import { ETHER_MAINNET } from '../common/config'
+import { getTransactionFee } from '../ether/converters'
+import type { EthereumTransaction } from '../ether/types'
 
 function convertAccount (account: TokenAccount, chain: Chain): Account | null {
   const token = SUPPORTED_TOKENS[chain].find(
@@ -42,7 +44,7 @@ export function convertTransaction (
   account: TokenAccount,
   transaction: TokenTransaction,
   chain: Chain
-): Transaction | null {
+): Transaction[] | null {
   const token = SUPPORTED_TOKENS[chain].find(
     (token) => token.contractAddress === account.contractAddress
   )
@@ -60,9 +62,10 @@ export function convertTransaction (
     direction === 'PAYMENT' ? transaction.to : transaction.from
   const sign = direction === 'PAYMENT' ? -1 : 1
   const operationValue = token.convertBalance(Number(transaction.value))
-  const { gas, gasPrice, hash, timeStamp } = transaction
+  const { gas, hash, timeStamp } = transaction
 
-  return {
+  const transactions = []
+  const TokenTransaction: Transaction = {
     hold: null,
     date: new Date(Number(timeStamp) * 1000),
     movements: [
@@ -73,7 +76,7 @@ export function convertTransaction (
         },
         invoice: null,
         sum: sign * operationValue,
-        fee: (Number(gas) * Number(gasPrice)) / 1_000_000_000 / 1_000_000_000
+        fee: 0
       }
     ],
     merchant: {
@@ -83,6 +86,38 @@ export function convertTransaction (
     },
     comment: null
   }
+
+  transactions.push(TokenTransaction)
+
+  if (direction === 'PAYMENT' && Boolean(gas)) {
+    const feeTransaction: Transaction = {
+      hold: null,
+      date: new Date(Number(timeStamp) * 1000),
+      movements: [
+        {
+          id: hash + '_fee',
+          account: {
+            id: account.id
+          },
+          invoice: null,
+          sum:
+            -1 *
+            getTransactionFee(transaction as unknown as EthereumTransaction),
+          fee: 0
+        }
+      ],
+      merchant: {
+        fullTitle: targetAccount,
+        mcc: null,
+        location: null
+      },
+      comment: null
+    }
+
+    transactions.push(feeTransaction)
+  }
+
+  return transactions
 }
 
 export function convertTransactions (
@@ -91,7 +126,7 @@ export function convertTransactions (
   chain: Chain = ETHER_MAINNET
 ): Transaction[] {
   const list = transactions
-    .map((transaction) => convertTransaction(account, transaction, chain))
+    .flatMap((transaction) => convertTransaction(account, transaction, chain))
     .filter((transaction): transaction is Transaction =>
       Boolean(transaction?.movements.some((movement) => movement.sum !== 0))
     )
