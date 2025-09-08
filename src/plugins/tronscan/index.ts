@@ -11,6 +11,8 @@ export const scrape: ScrapeFunc<Preferences> = async ({
   const accounts: Account[] = []
   const transactions: Transaction[] = []
 
+  tronscanApi.setApiKey(preferences.apiKey)
+
   await Promise.all(
     preferences.wallets
       .split(',')

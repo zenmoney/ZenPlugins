@@ -1,6 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen>
     <EditTextPreference
+        key="apiKey"
+        obligatory="true"
+        title="API Key"
+        dialogTitle="TronScan API Key"
+        dialogMessage="Ваш API ключ для доступа к TronScan API"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="***"
+        inputType="textPassword"
+    />
+    <EditTextPreference
         key="wallets"
         obligatory="true"
         title="Wallets address"
