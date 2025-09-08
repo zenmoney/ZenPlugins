@@ -782,7 +782,7 @@ describe('convertTransaction', () => {
       },
       {
         comment: 'Cash withdrawal',
-        date: new Date('2025-09-05T16:00:00.000Z'),
+        date: new Date('2025-09-06T00:00:00'),
         hold: false,
         merchant: {
           city: null,
