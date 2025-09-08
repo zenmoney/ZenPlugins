@@ -734,6 +734,87 @@ describe('convertTransaction', () => {
         },
         comment: 'Cash withdrawal'
       }
+    ],
+    [
+      {
+        accountKey: '11987107900',
+        entryId: '101979823791',
+        docKey: 29173281923,
+        clientKey: '60588505',
+        language: 'EN',
+        sourceEntryGroup: 'WITHDRAWAL',
+        nomination: ' Cash withdrawal - Amount: EUR10,000.00; Recipient: VLADIMIR SEMENOV; Details: tankhis gatana',
+        postDate: '2025-09-06T00:00:00',
+        operationDate: '2025-09-06T00:00:00',
+        amount: '10000.0',
+        oppositeAmount: '-10000.0',
+        ccy: 'EUR',
+        canCopy: 'N',
+        status: 'P',
+        docNomination: 'tankhis gatana',
+        beneficiary: 'VLADIMIR SEMENOV',
+        nominationOriginal: 'Cash withdrawal - Amount: EUR10,000.00; Recipient: VLADIMIR SEMENOV; Details: tankhis gatana',
+        prodGroup: 'PMC',
+        entryType: 'PMC',
+        printSwift: 'N',
+        isInternalOperation: 'N',
+        entryGroupNameId: '1',
+        groupImageId: '35623075',
+        groupImageIdSolo: '3127030249',
+        groupImageIdWm: '3127057164',
+        hasTransferBack: 'N',
+        printFormType: 'OTHER',
+        printForm: 'Y',
+        entryGroupDValue: 'text.entry.group.name.withdrawal',
+        operationTitle: 'VLADIMIR SEMENOV',
+        sort: [
+          '757103400000',
+          '29173281923',
+          '101979823791'
+        ],
+        isStatementAllowed: true,
+        trIdentifierForPostBnpl: '29173281923',
+        isTransactionForPostBnpl: 'N',
+        pfmId: '101979823791',
+        pfmCatId: '600',
+        pfmCatName: 'text.pfm.child.category.cash.withdrawal',
+        pfmParentCatId: '590'
+      },
+      {
+        comment: 'Cash withdrawal',
+        date: new Date('2025-09-06T00:00:00'),
+        hold: false,
+        merchant: {
+          city: null,
+          country: null,
+          location: null,
+          mcc: null,
+          title: 'VLADIMIR SEMENOV'
+        },
+        movements: [
+          {
+            account: {
+              id: '1339'
+            },
+            fee: 0,
+            id: '101979823791',
+            invoice: null,
+            sum: -10000
+          },
+          {
+            account: {
+              company: null,
+              instrument: 'EUR',
+              syncIds: null,
+              type: 'cash'
+            },
+            fee: 0,
+            id: null,
+            invoice: null,
+            sum: 10000
+          }
+        ]
+      }
     ]
   ])('converts cash transfer accountEur', (apiTransaction, transaction) => {
     expect(convertTransaction(apiTransaction, accountEur)).toEqual(transaction)
