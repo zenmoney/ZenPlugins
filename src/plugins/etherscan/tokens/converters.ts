@@ -1,9 +1,19 @@
-import { Account, AccountType, Transaction } from '../../../types/zenmoney'
+import {
+  type Account,
+  AccountType,
+  type Transaction
+} from '../../../types/zenmoney'
 import { generateTokenAddress, SUPPORTED_TOKENS } from './config'
-import { TokenAccount, TokenTransaction } from './types'
+import type { TokenAccount, TokenTransaction } from './types'
+import type { Chain } from '../common/types'
+import { ETHER_MAINNET } from '../common/config'
+import { getTransactionFee } from '../ether/converters'
+import type { EthereumTransaction } from '../ether/types'
 
-function convertAccount (account: TokenAccount): Account | null {
-  const token = SUPPORTED_TOKENS.find(token => token.contractAddress === account.contractAddress)
+function convertAccount (account: TokenAccount, chain: Chain): Account | null {
+  const token = SUPPORTED_TOKENS[chain].find(
+    (token) => token.contractAddress === account.contractAddress
+  )
 
   if (token == null) {
     return null
@@ -21,28 +31,46 @@ function convertAccount (account: TokenAccount): Account | null {
   }
 }
 
-export function convertAccounts (accounts: TokenAccount[]): Account[] {
-  return accounts.map(convertAccount).filter((account): account is Account => account !== null)
+export function convertAccounts (
+  accounts: TokenAccount[],
+  chain: Chain = ETHER_MAINNET
+): Account[] {
+  return accounts
+    .map((account) => convertAccount(account, chain))
+    .filter((account): account is Account => account !== null)
 }
 
-export function convertTransaction (account: TokenAccount, transaction: TokenTransaction): Transaction | null {
-  const token = SUPPORTED_TOKENS.find(token => token.contractAddress === account.contractAddress)
+export function convertTransaction (
+  account: TokenAccount,
+  transaction: TokenTransaction,
+  chain: Chain
+): Transaction[] | null {
+  const token = SUPPORTED_TOKENS[chain].find(
+    (token) => token.contractAddress === account.contractAddress
+  )
 
   if (token == null) {
     return null
   }
 
-  const direction = transaction.from === account.id ? 'PAYMENT' : 'DEPOSIT'
-  const targetAccount = direction === 'PAYMENT' ? transaction.to : transaction.from
+  const direction =
+    transaction.from.toLocaleLowerCase() === account.id.toLocaleLowerCase()
+      ? 'PAYMENT'
+      : 'DEPOSIT'
+
+  const targetAccount =
+    direction === 'PAYMENT' ? transaction.to : transaction.from
   const sign = direction === 'PAYMENT' ? -1 : 1
   const operationValue = token.convertBalance(Number(transaction.value))
+  const { gas, hash, timeStamp } = transaction
 
-  return {
+  const transactions = []
+  const TokenTransaction: Transaction = {
     hold: null,
-    date: new Date(Number(transaction.timeStamp) * 1000),
+    date: new Date(Number(timeStamp) * 1000),
     movements: [
       {
-        id: transaction.hash,
+        id: hash,
         account: {
           id: generateTokenAddress(account.id, token)
         },
@@ -58,12 +86,50 @@ export function convertTransaction (account: TokenAccount, transaction: TokenTra
     },
     comment: null
   }
+
+  transactions.push(TokenTransaction)
+
+  if (direction === 'PAYMENT' && Boolean(gas)) {
+    const feeTransaction: Transaction = {
+      hold: null,
+      date: new Date(Number(timeStamp) * 1000),
+      movements: [
+        {
+          id: hash + '_fee',
+          account: {
+            id: account.id
+          },
+          invoice: null,
+          sum:
+            -1 *
+            getTransactionFee(transaction as unknown as EthereumTransaction),
+          fee: 0
+        }
+      ],
+      merchant: {
+        fullTitle: targetAccount,
+        mcc: null,
+        location: null
+      },
+      comment: null
+    }
+
+    transactions.push(feeTransaction)
+  }
+
+  return transactions
 }
 
-export function convertTransactions (account: TokenAccount, transactions: TokenTransaction[]): Transaction[] {
+export function convertTransactions (
+  account: TokenAccount,
+  transactions: TokenTransaction[],
+  chain: Chain = ETHER_MAINNET
+): Transaction[] {
   const list = transactions
-    .map((transaction) => convertTransaction(account, transaction))
-    .filter((transaction): transaction is Transaction => transaction !== null)
+    .flatMap((transaction) => convertTransaction(account, transaction, chain))
+    .filter((transaction): transaction is Transaction =>
+      Boolean(transaction?.movements.some((movement) => movement.sum !== 0))
+    )
 
   console.log('LST', list)
 

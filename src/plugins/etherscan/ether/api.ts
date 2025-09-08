@@ -1,11 +1,17 @@
 import { fetch } from '../common'
 import { Preferences } from '../types'
-import { AccountResponse, EthereumAccount, EthereumTransaction, TransactionResponse } from './types'
+import {
+  AccountResponse,
+  EthereumAccount,
+  EthereumTransaction,
+  TransactionResponse
+} from './types'
 
 export async function fetchAccounts (
   preferences: Preferences
 ): Promise<EthereumAccount[]> {
   const response = await fetch<AccountResponse>({
+    chainid: preferences.chain,
     module: 'account',
     action: 'balancemulti',
     address: preferences.account,
@@ -33,6 +39,7 @@ export async function fetchAccountTransactions (
 
   try {
     const response = await fetch<TransactionResponse>({
+      chainid: preferences.chain,
       module: 'account',
       action: 'txlist',
       address: account,
@@ -49,15 +56,16 @@ export async function fetchAccountTransactions (
     if (response.result.length === PAGE_SIZE) {
       return [
         ...transactions,
-        ...await fetchAccountTransactions(preferences, {
+        ...(await fetchAccountTransactions(preferences, {
           ...options,
           page: page + 1
-        })
+        }))
       ]
     }
 
     return transactions
-  } catch (error: any) { // eslint-disable-line
+  } catch (error: any) {
+    // eslint-disable-line
     if (error?.body?.message === 'No transactions found') {
       return []
     }

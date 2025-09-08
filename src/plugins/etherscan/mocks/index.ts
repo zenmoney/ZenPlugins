@@ -1,8 +1,13 @@
 import fetchMock from 'fetch-mock'
-import { AccountResponse, BlockNoResponse, TransactionResponse } from '../ether/types'
+import {
+  AccountResponse,
+  BlockNoResponse,
+  TransactionResponse
+} from '../ether/types'
 import { Preferences } from '../types'
 
 export const preferencesMock: Preferences = {
+  chain: 1,
   apiKey: 'API_KEY',
   account: '1,2'
 }
@@ -99,28 +104,144 @@ export const transactionsResponseMock3: TransactionResponse = {
 }
 
 export function mockEndPoints (): void {
-  fetchMock.once('https://api.etherscan.io/v2/api?module=account&action=balancemulti&address=1%2C2&tag=latest&apiKey=API_KEY&chainid=1', {
-    status: 200,
-    body: accountResponseMock
-  })
-  fetchMock.once('https://api.etherscan.io/v2/api?module=block&action=getblocknobytime&closest=before&timestamp=1640552400&apiKey=API_KEY&chainid=1', {
-    status: 200,
-    body: startBlockResponseMock
-  })
-  fetchMock.once('https://api.etherscan.io/v2/api?module=block&action=getblocknobytime&closest=before&timestamp=1641070800&apiKey=API_KEY&chainid=1', {
-    status: 200,
-    body: endBlockResponseMock
-  })
-  fetchMock.once('https://api.etherscan.io/v2/api?module=account&action=txlist&address=1&startblock=1&endblock=99999999&page=1&offset=100&sort=desc&apikey=API_KEY&chainid=1', {
-    status: 200,
-    body: transactionsResponseMock1
-  })
-  fetchMock.once('https://api.etherscan.io/v2/api?module=account&action=txlist&address=2&startblock=1&endblock=99999999&page=1&offset=100&sort=desc&apikey=API_KEY&chainid=1', {
-    status: 200,
-    body: transactionsResponseMock2
-  })
-  fetchMock.once('https://api.etherscan.io/v2/api?module=account&action=txlist&address=3&startblock=1&endblock=99999999&page=1&offset=100&sort=desc&apikey=API_KEY&chainid=1', {
-    status: 200,
-    body: transactionsResponseMock3
-  })
+  fetchMock.once(
+    'https://api.etherscan.io/v2/api?chainid=1&module=account&action=balancemulti&address=1%2C2&tag=latest&apiKey=API_KEY',
+    {
+      status: 200,
+      body: accountResponseMock
+    }
+  )
+  fetchMock.once(
+    'https://api.etherscan.io/v2/api?chainid=1&module=block&action=getblocknobytime&closest=before&timestamp=1640552400&apiKey=API_KEY',
+    {
+      status: 200,
+      body: startBlockResponseMock
+    }
+  )
+  fetchMock.once(
+    'https://api.etherscan.io/v2/api?chainid=1&module=block&action=getblocknobytime&closest=before&timestamp=1641070800&apiKey=API_KEY',
+    {
+      status: 200,
+      body: endBlockResponseMock
+    }
+  )
+  fetchMock.once(
+    'https://api.etherscan.io/v2/api?chainid=1&module=block&action=getblocknobytime&closest=before&timestamp=1641070800&apiKey=API_KEY',
+    {
+      status: 200,
+      body: endBlockResponseMock
+    }
+  )
+  fetchMock.once(
+    'https://api.etherscan.io/v2/api?chainid=1&module=block&action=getblocknobytime&closest=before&timestamp=1641070800&apiKey=API_KEY',
+    {
+      status: 200,
+      body: endBlockResponseMock
+    }
+  )
+  fetchMock.once(
+    'https://api.etherscan.io/v2/api?chainid=1&module=block&action=getblocknobytime&closest=before&timestamp=1641070800&apiKey=API_KEY',
+    {
+      status: 200,
+      body: endBlockResponseMock
+    }
+  )
+  fetchMock.once(
+    'https://api.etherscan.io/v2/api?chainid=1&module=block&action=getblocknobytime&closest=before&timestamp=1641070800&apiKey=API_KEY',
+    {
+      status: 200,
+      body: endBlockResponseMock
+    }
+  )
+  fetchMock.once(
+    'https://api.etherscan.io/v2/api?chainid=1&module=block&action=getblocknobytime&closest=before&timestamp=1641070800&apiKey=API_KEY',
+    {
+      status: 200,
+      body: endBlockResponseMock
+    }
+  )
+  fetchMock.once(
+    'https://api.etherscan.io/v2/api?chainid=1&module=block&action=getblocknobytime&closest=before&timestamp=1641070800&apiKey=API_KEY',
+    {
+      status: 200,
+      body: endBlockResponseMock
+    }
+  )
+  fetchMock.once(
+    'https://api.etherscan.io/v2/api?chainid=1&module=block&action=getblocknobytime&closest=before&timestamp=1641070800&apiKey=API_KEY',
+    {
+      status: 200,
+      body: endBlockResponseMock
+    }
+  )
+  fetchMock.once(
+    'https://api.etherscan.io/v2/api?chainid=1&module=block&action=getblocknobytime&closest=before&timestamp=1641070800&apiKey=API_KEY',
+    {
+      status: 200,
+      body: endBlockResponseMock
+    }
+  )
+  fetchMock.once(
+    'https://api.etherscan.io/v2/api?chainid=1&module=block&action=getblocknobytime&closest=before&timestamp=1641070800&apiKey=API_KEY',
+    {
+      status: 200,
+      body: endBlockResponseMock
+    }
+  )
+  fetchMock.once(
+    'https://api.etherscan.io/v2/api?chainid=1&module=block&action=getblocknobytime&closest=before&timestamp=1641070800&apiKey=API_KEY',
+    {
+      status: 200,
+      body: endBlockResponseMock
+    }
+  )
+  fetchMock.once(
+    'https://api.etherscan.io/v2/api?chainid=1&module=block&action=getblocknobytime&closest=before&timestamp=1641070800&apiKey=API_KEY',
+    {
+      status: 200,
+      body: endBlockResponseMock
+    }
+  )
+  fetchMock.once(
+    'https://api.etherscan.io/v2/api?chainid=1&module=block&action=getblocknobytime&closest=before&timestamp=1641070800&apiKey=API_KEY',
+    {
+      status: 200,
+      body: endBlockResponseMock
+    }
+  )
+  fetchMock.once(
+    'https://api.etherscan.io/v2/api?chainid=1&module=block&action=getblocknobytime&closest=before&timestamp=1641070800&apiKey=API_KEY',
+    {
+      status: 200,
+      body: endBlockResponseMock
+    }
+  )
+  fetchMock.once(
+    'https://api.etherscan.io/v2/api?chainid=1&module=block&action=getblocknobytime&closest=before&timestamp=1641070800&apiKey=API_KEY',
+    {
+      status: 200,
+      body: endBlockResponseMock
+    }
+  )
+  fetchMock.once(
+    'https://api.etherscan.io/v2/api?chainid=1&module=account&action=txlist&address=1&startblock=1&endblock=99999999&page=1&offset=100&sort=desc&apikey=API_KEY',
+    {
+      status: 200,
+      body: transactionsResponseMock1
+    }
+  )
+  fetchMock.once(
+    'https://api.etherscan.io/v2/api?chainid=1&module=account&action=txlist&address=2&startblock=1&endblock=99999999&page=1&offset=100&sort=desc&apikey=API_KEY',
+    {
+      status: 200,
+      body: transactionsResponseMock2
+    }
+  )
+  fetchMock.once(
+    'https://api.etherscan.io/v2/api?chainid=1&module=account&action=txlist&address=3&startblock=1&endblock=99999999&page=1&offset=100&sort=desc&apikey=API_KEY',
+    {
+      status: 200,
+      body: transactionsResponseMock3
+    }
+  )
 }
