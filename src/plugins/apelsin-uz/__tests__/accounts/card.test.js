@@ -111,4 +111,24 @@ describe('convertAccount', () => {
       balance: 21141190.51
     })
   })
+  it('converts account UZUM VISA', () => {
+    expect(convertCard({
+      id: 48798631,
+      account: '22618000613592339001',
+      state: 'ACTIVE',
+      pan: '491699******0167',
+      currency: { name: 'UZS', scale: 2 },
+      type: 'UZUM_DEBIT_VISA',
+      balance: 998100
+    })).toEqual({
+      id: '48798631',
+      type: 'ccard',
+      title: 'UZUM_DEBIT_VISA *0167',
+      instrument: 'UZS',
+      syncIds: [
+        '491699******0167'
+      ],
+      balance: 9981
+    })
+  })
 })
