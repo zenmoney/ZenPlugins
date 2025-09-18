@@ -236,6 +236,75 @@ function parseInnerTransfer (rawTransaction, transaction, invoice, fee) {
 }
 
 /**
+ * Конвертер транзакции по карте платежной системы Visa от Uzum из формата банка в формат Дзенмани
+ *
+ * @param card карта
+ * @param rawTransaction транзакция в формате банка
+ * @returns транзакция в формате Дзенмани
+ */
+export function convertUzumVisaCardTransaction (card, rawTransaction) {
+  let amount = Number(rawTransaction.amount)
+  let fee = Number(rawTransaction.fee)
+
+  if (amount === 0) {
+    return null
+  }
+
+  /*
+    Если поле `transType` равно `DEBIT`, то это расходная транзакция, и сумма должна быть отрицательной
+    Если поле `transType` равно `CREDIT`, то это доходная транзакция, и сумма должна быть положительной
+  */
+  if (rawTransaction.transType === 'DEBIT') {
+    amount = -Math.abs(amount)
+  } else if (rawTransaction.transType === 'CREDIT') {
+    amount = Math.abs(amount)
+  }
+
+  /*
+    Если сумма `amount` положительная, т.е. доходная, то минусуем комиссию, таким образом сумма пополнения уменьшится
+    Если сумма `amount` отрицательная, т.е. расходная, то тоже минисуем комиссию, таким образом сумма расхода увеличится
+
+    Вообще сумма `fee` возвращается всегда положительной с API, т.е. это точно не кэшбек, а расход, но всё равно на всякий случай берем модуль числа
+  */
+  if (Math.abs(fee) > Math.abs(amount)) {
+    amount -= Math.abs(fee)
+    fee = 0
+  }
+
+  const invoice = {
+    sum: amount,
+    instrument: rawTransaction.currency.name
+  }
+
+  const transaction = {
+    date: new Date(rawTransaction.transDate),
+    hold: false,
+    merchant: {
+      country: null,
+      city: null,
+      title: rawTransaction.merchantName,
+      mcc: null,
+      location: null
+    },
+    movements: [
+      {
+        id: rawTransaction.transactionId,
+        account: { id: card.id },
+        invoice: invoice.instrument === card.instrument ? null : invoice,
+        sum: invoice.instrument === card.instrument ? invoice.sum : null,
+        fee: fee ? -fee : 0
+      }
+    ],
+    comment: null
+  };
+  [
+    parseInnerTransfer
+  ].some(parser => parser(rawTransaction, transaction, invoice, fee))
+
+  return transaction
+}
+
+/**
  * Конвертер транзакции по карте платежной системы Mastercard из формата банка в формат Дзенмани
  *
  * @param cardId идентификатор карты

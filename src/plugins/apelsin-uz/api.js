@@ -6,6 +6,7 @@ import {
   convertHumoCardTransaction,
   convertUzcardCardTransaction,
   convertVisaCardTransaction,
+  convertUzumVisaCardTransaction,
   convertWallet,
   convertWalletTransaction,
   convertMasterCardTransaction
@@ -105,6 +106,32 @@ export async function getVisaCards () {
   console.assert(response.ok, 'unexpected visa response', response)
 
   return response.body.data.map(convertCard).filter(card => card !== null)
+}
+
+/**
+ * Получить список карт платежной системы Visa от Uzum
+ *
+ * @returns массив карт платежной системы Visa от Uzum в формате Дзенмани
+ */
+export async function getUzumVisaCards () {
+  const endpoint = '/dbs/debit'
+  const requestHeaders = {
+    authorization: 'Bearer ' + ZenMoney.getData('apiAccessToken'),
+    'device-id': ZenMoney.getData('deviceId')
+  }
+
+  const response = await fetchJson(baseUrl + endpoint, {
+    method: 'GET',
+    headers: {
+      ...defaultHeaders,
+      ...requestHeaders
+    },
+    sanitizeRequestLog: { headers: { 'device-id': true, authorization: true } }
+  })
+
+  console.assert(response.ok, 'unexpected dbs/debit response', response)
+
+  return response.body.data.map(convertCard).filter((card) => card !== null)
 }
 
 /**
@@ -302,6 +329,47 @@ export async function getVisaCardsTransactions (cards, fromDate, toDate) {
 
       transactions = transactions.concat(response.body.data.map(transaction =>
         convertVisaCardTransaction(card, transaction)).filter(transaction => transaction !== null))
+    }
+  }
+
+  return transactions
+}
+
+/**
+ * Получить список транзакций по картам платежной системы Visa от Uzum
+ *
+ * @param cards массив карт платежной системы Visa от Uzum
+ * @param fromDate дата в формате ISO8601, с которой нужно выгружать транзакции
+ * @param toDate дата в формате ISO8601, по которую нужно выгружать транзакции
+ * @returns массив транзакций в формате Дзенмани
+ */
+export async function getUzumVisaCardsTransactions (cards, fromDate, toDate) {
+  let transactions = []
+  const requestHeaders = {
+    authorization: 'Bearer ' + ZenMoney.getData('apiAccessToken'),
+    'device-id': ZenMoney.getData('deviceId')
+  }
+
+  for (const card of cards) {
+    if (!ZenMoney.isAccountSkipped(card.id)) {
+      const endpoint = '/dbs/debit/history?' +
+        'cardId=' + card.id + '&' +
+        'dateFrom=' + fromDate + '&' +
+        'dateTo=' + toDate
+
+      const response = await fetchJson(baseUrl + endpoint, {
+        method: 'GET',
+        headers: {
+          ...defaultHeaders,
+          ...requestHeaders
+        },
+        sanitizeRequestLog: { headers: { 'device-id': true, authorization: true } }
+      })
+
+      console.assert(response.ok, 'unexpected dbs/debit/history response', response)
+
+      transactions = transactions.concat(response.body.data.map(transaction =>
+        convertUzumVisaCardTransaction(card, transaction)).filter(transaction => transaction !== null))
     }
   }
 

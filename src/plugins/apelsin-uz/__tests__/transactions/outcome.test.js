@@ -2,6 +2,7 @@ import {
   convertUzcardCardTransaction,
   convertHumoCardTransaction,
   convertVisaCardTransaction,
+  convertUzumVisaCardTransaction,
   convertWalletTransaction,
   convertAccountTransaction
 } from '../../converters'
@@ -95,6 +96,56 @@ describe('convertTransaction', () => {
   ])('converts outcome VISA', (rawTransaction, transaction) => {
     const card = { id: 'card', instrument: 'USD' }
     expect(convertVisaCardTransaction(card, rawTransaction)).toEqual(transaction)
+  })
+
+  it.each([
+    [
+      {
+        transactionId: '6f358aef-c368-4044-80a0-2e5d97b123f4',
+        holdId: 'b53c79df-37e2-425c-a416-bd119b2476aa',
+        description: 'ELECTRONIC_PURCHASE',
+        transactionStatus: 'SUCCESS',
+        transAmount: '1700.00',
+        transCurrency: 'UZS',
+        conversionRate: '1.0000000',
+        transDate: 1758091645083,
+        amount: '1700.00',
+        merchantName: 'ATTO>uzumbank.uz/                     UZ',
+        transType: 'DEBIT',
+        fee: '0.00',
+        currency: {
+          uzscurrency: true,
+          name: 'UZS',
+          scale: 2
+        },
+        transCode: '680',
+        reversed: false
+      },
+      {
+        date: new Date('2025-09-17T06:47:25.083Z'),
+        hold: false,
+        comment: null,
+        merchant: {
+          country: null,
+          city: null,
+          title: 'ATTO>uzumbank.uz/                     UZ',
+          mcc: null,
+          location: null
+        },
+        movements: [
+          {
+            id: '6f358aef-c368-4044-80a0-2e5d97b123f4',
+            account: { id: 'card' },
+            invoice: null,
+            sum: -1700,
+            fee: 0
+          }
+        ]
+      }
+    ]
+  ])('converts outcome VISA', (rawTransaction, transaction) => {
+    const card = { id: 'card', instrument: 'UZS' }
+    expect(convertUzumVisaCardTransaction(card, rawTransaction)).toEqual(transaction)
   })
 
   it.each([
