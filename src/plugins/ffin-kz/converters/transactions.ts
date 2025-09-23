@@ -1,5 +1,5 @@
 import { flatten } from 'lodash'
-import { Movement, AccountType, AccountOrCard } from '../../../types/zenmoney'
+import { Movement, AccountType } from '../../../types/zenmoney'
 import { ConvertedTransaction, StatementTransaction } from '../models'
 import { ExchangeRate } from '../api'
 import { createHash } from 'crypto'
@@ -106,11 +106,14 @@ function generateTransactionId (date: string, sum: string | null, description: s
   return hash.digest('hex').slice(0, 12)
 }
 
-export function convertPdfStatementTransaction (rawTransaction: StatementTransaction, rawAccount: AccountOrCard, currencyRates: Record<string, ExchangeRate>): ConvertedTransaction | null {
+export function convertPdfStatementTransaction (rawTransaction: StatementTransaction, rawAccount: { id: string, instrument: string }, currencyRates: Record<string, ExchangeRate>): ConvertedTransaction | null {
   if (isTransactionToSkip(rawTransaction)) {
     return null
   }
   let sum = parseFloat(rawTransaction.amount.replace(',', '.').replace(/[\s+$]/g, ''))
+  if (sum < 0.01) {
+    return null
+  }
   let instrument = 'KZT'
   if (rawTransaction.originalAmount !== null) {
     instrument = rawTransaction.originalAmount?.match(/[A-Z]{3}/)?.[0] ?? 'KZT'
