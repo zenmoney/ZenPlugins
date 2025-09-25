@@ -1,5 +1,9 @@
+import pdfjs from 'pdfjs-dist'
 import pdf from 'pdf-extraction/lib/pdf-extraction'
 import { fetchJson } from './network'
+import { isDebug } from './utils'
+
+pdfjs.GlobalWorkerOptions.workerSrc = 'unexisting'
 
 const PDF_PARSER_URL = ''
 
@@ -57,6 +61,29 @@ async function pdfOrThrow (dataBuffer, options) {
 
 export async function parsePdf (pdfBlob) {
   const arrayBuffer = await pdfBlob.arrayBuffer()
+
+  if (isDebug() && typeof global.WorkerGlobalScope !== 'undefined' && global.self instanceof global.WorkerGlobalScope) {
+    console.log('parsePdf worker thread')
+    return new Promise((resolve, reject) => {
+      const correlationId = Math.random().toString(36)
+      const handleMessage = (event) => {
+        if (event.data.type === ':events/pdf-parsed' && event.data.payload.correlationId === correlationId) {
+          global.removeEventListener('message', handleMessage)
+          if (event.data.payload.error) {
+            reject(new Error(event.data.payload.error))
+          } else {
+            resolve(event.data.payload.result)
+          }
+        }
+      }
+      global.addEventListener('message', handleMessage)
+      global.postMessage({
+        type: ':commands/parse-pdf',
+        payload: { correlationId, arrayBuffer }
+      })
+    })
+  }
+
   try {
     // dirty hack with unhandled rejection handler to make pdf library properly throw errors
     return await pdfOrThrow(arrayBuffer, { pagerender: parsePage })

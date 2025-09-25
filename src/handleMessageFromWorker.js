@@ -86,6 +86,18 @@ const messageHandlers = {
     // eslint-disable-next-line no-undef
     alert(message)
     reply({ type: ':events/alert-closed', payload: { correlationId } })
+  },
+
+  ':commands/parse-pdf': async function ({ payload: { correlationId, arrayBuffer }, reply }) {
+    let result = null
+    let error = null
+    try {
+      const { parsePdf } = require('./common/pdfUtils')
+      result = await parsePdf({ arrayBuffer: () => Promise.resolve(arrayBuffer) })
+    } catch (err) {
+      error = err
+    }
+    reply({ type: ':events/pdf-parsed', payload: { correlationId, result, error } })
   }
 }
 
