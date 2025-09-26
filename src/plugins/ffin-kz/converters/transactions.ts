@@ -192,7 +192,7 @@ export function convertPdfStatementTransaction (rawTransaction: StatementTransac
     }
   }
 
-  let hold = rawTransaction.originString.includes('Сумма в обработке')
+  const hold = rawTransaction.originString.includes('Сумма в обработке')
 
   return {
     statementUid: rawTransaction.statementUid,
