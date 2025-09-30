@@ -2,6 +2,7 @@ import { ScrapeFunc, Account as ZenMoneyAccount, Transaction as ZenMoneyTransact
 import { parseAccounts, fetchTransactions, fetchBalance } from './api'
 import { convertToZenMoneyAccount, convertToZenMoneyTransaction, injectAccountInfo } from './converters'
 import { AccountRecord, Preferences } from './models'
+import { adjustTransactions } from '../../common/transactionGroupHandler'
 
 export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, toDate }) => {
   toDate = toDate ?? new Date()
@@ -32,6 +33,6 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
 
   return {
     accounts: zenAccounts,
-    transactions: zenTransactions
+    transactions: adjustTransactions({ transactions: zenTransactions })
   }
 }

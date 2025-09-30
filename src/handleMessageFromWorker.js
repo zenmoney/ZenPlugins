@@ -116,9 +116,11 @@ function setCookie (cookie) {
 
 export async function handleMessageFromWorker ({ event, ...rest }) {
   const messageHandler = messageHandlers[event.data.type] || (() => console.warn('message', event.data.type, ' from worker was not handled', { event }))
+  // Save reference to currentTarget before async operations to prevent null reference
+  const worker = event.currentTarget
   await messageHandler({
     payload: event.data.payload,
-    reply: (message) => event.currentTarget.postMessage(message),
+    reply: (message) => worker?.postMessage(message),
     ...rest
   })
 }

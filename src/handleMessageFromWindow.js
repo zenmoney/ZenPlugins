@@ -35,8 +35,10 @@ const messageHandlers = {
 
 export async function handleMessageFromWindow ({ event }) {
   const messageHandler = messageHandlers[event.data.type] || (() => console.warn('message', event.data.type, ' from window was not handled', { event }))
+  // Save reference to currentTarget before async operations to prevent null reference
+  const worker = event.currentTarget
   await messageHandler({
     payload: event.data.payload,
-    reply: (message) => event.currentTarget.postMessage(message)
+    reply: (message) => worker?.postMessage(message)
   })
 }
