@@ -343,6 +343,20 @@ export function parseCards (html) {
         }
         account.cards.push(card)
       })
+
+      const hasActiveCards = account.cards.some(card => card.isActive)
+      if (!hasActiveCards) {
+        cardTable.each(function (i, elem) {
+          const card = account.cards[i]
+          if (!card.isActive) {
+            const operations = $(elem).children('td[class="tdCardDropdown"]').find('option')
+            const hasMiniStatement = operations.toArray().some(option => $(option).val().includes('miniStatement'))
+            if (hasMiniStatement) {
+              card.isActive = true
+            }
+          }
+        })
+      }
     } else {
       account.type = 'account'
     }
