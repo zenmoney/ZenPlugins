@@ -341,15 +341,22 @@ export function parseCards (html) {
           id: $(elem).children('td[class="tdId"]').children('div').text()?.trim(),
           isActive: Boolean($(elem).children('td[class="tdNoPadding"]').children('div').attr('class') !== 'cellLable notActiveCard')
         }
-        if (!card.isActive) {
-          const operations = $(elem).children('td[class="tdCardDropdown"]').find('option')
-          const hasMiniStatement = operations.toArray().some(option => $(option).val().includes('miniStatement'))
-          if (hasMiniStatement) {
-            card.isActive = true
-          }
-        }
         account.cards.push(card)
       })
+
+      const hasActiveCards = account.cards.some(card => card.isActive)
+      if (!hasActiveCards) {
+        cardTable.each(function (i, elem) {
+          const card = account.cards[i]
+          if (!card.isActive) {
+            const operations = $(elem).children('td[class="tdCardDropdown"]').find('option')
+            const hasMiniStatement = operations.toArray().some(option => $(option).val().includes('miniStatement'))
+            if (hasMiniStatement) {
+              card.isActive = true
+            }
+          }
+        })
+      }
     } else {
       account.type = 'account'
     }
