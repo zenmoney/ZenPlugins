@@ -199,7 +199,7 @@ export function convertPdfStatementTransaction (rawTransaction: StatementTransac
     transaction: {
       comment,
       movements,
-      hold: hold,
+      hold,
       date: new Date(rawTransaction.date),
       merchant: merchantFullTitle !== null
         ? {
