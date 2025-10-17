@@ -1,10 +1,11 @@
-import { BASE_API_URl } from './models'
+import { BASE_API_URL } from './models'
 import { fetchJson } from '../../common/network'
+import type * as T from './types/fetch'
 
 const makeUrl = (domain: 'auth' | 'core', url: string) =>
-  `${BASE_API_URl}/${domain}/services/v3${url}`
+  `${BASE_API_URL}/${domain}/services/v3${url}`
 
-export const authenticate = async (login: string, password: string) => {
+export const fetchLogin = async ({ login, password }: T.AuthenticateInput): Promise<{ sessionToken: string }> => {
   const { body } = await fetchJson(makeUrl('auth', '/authentication/login'), {
     method: 'POST',
     body: {
@@ -16,12 +17,31 @@ export const authenticate = async (login: string, password: string) => {
       appID: '1.27'
     }
   })
+
+  return body as T.AuthenticateOutput
 }
 
-export const fetchAccounts = async () => {
-  //
+export const fetchAccounts = async ({ sessionToken }: T.FetchAccountsInput): Promise<T.FetchAccountsOutput> => {
+  const { body } = await fetchJson(makeUrl('auth', '/authentication/login'), {
+    headers: {
+      Authorization: `Bearer ${sessionToken}`
+    }
+  })
+
+  return body as T.FetchAccountsOutput
 }
 
-export const fetchTransactions = async () => {
-  //
+export const fetchTransactions = async ({ sessionToken, from, to }: T.FetchTransactionsInput) => {
+  const { body } = await fetchJson(makeUrl('core', '/operation/history/get-operations-history'), {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${sessionToken}`
+    },
+    body: {
+      dateFrom: from,
+      dateTo: to
+    }
+  })
+
+  return body as T.FetchTransactionsOutput
 }

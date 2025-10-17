@@ -1,1 +1,1 @@
-export const BASE_API_URl = 'https://iparitet.by'
+export const BASE_API_URL = 'https://iparitet.by'
