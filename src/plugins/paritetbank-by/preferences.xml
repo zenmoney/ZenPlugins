@@ -24,7 +24,7 @@
         obligatory="true"
         inputType="date"
         title="С какой даты загружать операции"
-        defaultValue="2018-01-01T00:00:00.000Z"
+        defaultValue="2025-01-01T00:00:00.000Z"
         dialogTitle="С какой даты загружать операции"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"

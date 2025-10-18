@@ -21,51 +21,65 @@ export interface AuthenticateOutput {
  *
  * **/
 
-export interface FetchCardAccount {
-  currency: string
-  /** Account open date in Unix-timestamp **/
-  openDate: number
+export interface FetchAccountBase {
   /** IBAN-like account number? **/
   accountNumber: string
+  contractNumber: string
+  contractNumberHash: string
+  /** 1 for card accounts, 5 for standalone **/
+  contractType: 1 | 5
+  currency: string
+  ibanNum: string
+  /** Account open date in Unix-timestamp **/
+  openDate: number
   productCode: number
   /** Marketing product name **/
   productName: string
+}
+
+export interface FetchCard {
+  /** First and last 4 digits **/
+  cardNumberMasked: string
+  cardHash: string
+  /** ACTIVE / ? **/
+  cardStatus: string
+  /** Expiration date in Unix-timestamp  **/
+  expireDate: number
+  /** Name on the card **/
+  owner: string
+  isVirtual: boolean
+  balance: number
+  currency: string
+  /** BETRAY / ? **/
+  stateSignature: string
+  isAdditional: boolean
+  cardId: number
+  paySystemName: string
+  productCode: number
+  /** User-configured card name **/
+  name: string
+  /** 0 / ? **/
+  komplatStatus: string
   contractNumber: string
-  cards: Array<{
-    /** First and last 4 digits **/
-    cardNumberMasked: string
-    cardHash: string
-    /** ACTIVE / ? **/
-    cardStatus: string
-    /** Expiration date in Unix-timestamp  **/
-    expireDate: number
-    /** Name on the card **/
-    owner: string
-    isVirtual: boolean
-    balance: number
-    currency: string
-    /** BETRAY / ? **/
-    stateSignature: string
-    isAdditional: boolean
-    cardId: number
-    paySystemName: string
-    productCode: number
-    /** User-configured card name **/
-    name: string
-    /** 0 / ? **/
-    komplatStatus: string
-    contractNumber: string
-  }>
-  ibanNum: string
-  contractType: number
+}
+
+export interface FetchCardAccount extends FetchAccountBase {
+  cards: FetchCard[]
   isOverdraft: boolean
-  contractNumberHash: string
+}
+
+export interface FetchCurrentAccount extends FetchAccountBase {
+  accruedInterest: number
+  interestRate: number
+  balanceAmount: number
+  contractId: string
 }
 
 export interface FetchAccountsInput extends BaseFetchInput {}
 
 export interface FetchAccountsOutput {
   cardAccount: FetchCardAccount[]
+  currentAccount: FetchCurrentAccount[]
 }
 
 /**
@@ -89,9 +103,9 @@ export interface FetchTransaction {
   mcc?: string
   /** Positive or negative number **/
   amount: number
-  /** Currency code of operation **/
-  currency: string | number
-  /** Geographical location **/
+  /** Currency code/name of operation **/
+  currency: string
+  /** Geolocation **/
   operationLocation?: string
   /** Place of payment **/
   servicePoint?: string
@@ -103,6 +117,14 @@ export interface FetchTransaction {
   diType?: string
   commission?: number
   commissionCurrency?: string
+  /** Masked card number / account contract number, to where transfer was completed **/
+  personalAccount?: string
+  authCode?: string
+  attrRecords?: Array<{
+    code: string
+    name: string
+    value: string
+  }>
 }
 
 export interface FetchTransactionsInput extends BaseFetchInput {
@@ -111,5 +133,5 @@ export interface FetchTransactionsInput extends BaseFetchInput {
 }
 
 export interface FetchTransactionsOutput {
-  operationHistory: Array<FetchTransaction>
+  operationHistory: FetchTransaction[]
 }
