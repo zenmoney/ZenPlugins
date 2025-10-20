@@ -4,7 +4,9 @@ import { convertCardAccount, convertCurrentAccount, convertTransaction } from '.
 
 export const authenticate = async (login: string, password: string): Promise<{ sessionToken: string }> => {
   // device id retrieve logic
-  return await fetchLogin({ login, password })
+  const response = await fetchLogin({ login, password })
+
+  return response
 }
 
 export const getAccounts = async ({ sessionToken }: { sessionToken: string }): Promise<Account[]> => {
@@ -26,4 +28,5 @@ export const getTransactions = async ({ sessionToken, fromDate, toDate }: { sess
   return operationHistory
     .filter((op) => op.amount)
     .map((op) => convertTransaction(op))
+    .filter(Boolean)
 }

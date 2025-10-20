@@ -59,6 +59,9 @@ export const convertCurrentAccount = (fetchAccount: FetchCurrentAccount): Accoun
 export const convertTransaction = (fetchTransaction: FetchTransaction): Transaction => {
   const [country, ...restParts] = (fetchTransaction.operationLocation ?? '').split(' ')
 
+  // @TODO: no ability to match some transactions, consider making transactions request for each account
+  if (!fetchTransaction.contractNumber) return
+
   return {
     hold: null,
     date: new Date(fetchTransaction.paymentDate),
@@ -72,7 +75,7 @@ export const convertTransaction = (fetchTransaction: FetchTransaction): Transact
               type: null,
               company: null,
               instrument: ensureCurrency(fetchTransaction.currency),
-              syncIds: []
+              syncIds: ['111'], // @TODO: make match?
             } as AccountReferenceByData,
         fee: 0, // @TODO: use commission?
         invoice: null, // @TODO: in case transaction currency differs from account currency?

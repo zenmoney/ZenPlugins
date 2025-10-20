@@ -22,7 +22,7 @@ export const fetchLogin = async ({ login, password }: T.AuthenticateInput): Prom
 }
 
 export const fetchAccounts = async ({ sessionToken }: T.FetchAccountsInput): Promise<T.FetchAccountsOutput> => {
-  const { body } = await fetchJson(makeUrl('auth', '/product/get-products?getCreditDetail=false'), {
+  const { body } = await fetchJson(makeUrl('core', '/product/get-products?getCreditDetail=false'), {
     headers: {
       Authorization: `Bearer ${sessionToken}`
     }
