@@ -9,6 +9,7 @@ import type { BaseFetchInput } from './base'
 export interface AuthenticateInput {
   login: string
   password: string
+  deviceId: string
 }
 
 export interface AuthenticateOutput {
@@ -130,6 +131,7 @@ export interface FetchTransaction {
 export interface FetchTransactionsInput extends BaseFetchInput {
   from: number
   to: number
+  account?: string
 }
 
 export interface FetchTransactionsOutput {

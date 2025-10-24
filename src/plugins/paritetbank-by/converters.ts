@@ -13,7 +13,7 @@ import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
  * ensureCurrency("BYN") // → "BYN"
  * ensureCurrency("933") // → "EUR"
  */
-const ensureCurrency = (codeOrName: string): string | undefined =>
+export const ensureCurrency = (codeOrName: string): string | undefined =>
   isNaN(Number(codeOrName))
     ? codeOrName
     : codeToCurrencyLookup[codeOrName]
@@ -56,30 +56,23 @@ export const convertCurrentAccount = (fetchAccount: FetchCurrentAccount): Accoun
   }
 }
 
-export const convertTransaction = (fetchTransaction: FetchTransaction): Transaction => {
+export const convertTransaction = (fetchTransaction: FetchTransaction, account: Account): Transaction => {
   const [country, ...restParts] = (fetchTransaction.operationLocation ?? '').split(' ')
+  const transactionCurrency = ensureCurrency(fetchTransaction.currency)
 
-  // @TODO: no ability to match some transactions, consider making transactions request for each account
-  if (!fetchTransaction.contractNumber) return
+  if (!transactionCurrency) throw new Error(`Unknown currency - ${fetchTransaction.currency}`)
 
   return {
     hold: null,
     date: new Date(fetchTransaction.paymentDate),
-    comment: '',
+    comment: fetchTransaction.payName === fetchTransaction.servicePoint ? '' : (fetchTransaction.payName ?? ''),
     movements: [
       {
         id: fetchTransaction.rrn ?? fetchTransaction.paymentId ?? fetchTransaction.operationId ?? null,
-        account: fetchTransaction.contractNumber
-          ? { id: fetchTransaction.contractNumber } as AccountReferenceById
-          : {
-              type: null,
-              company: null,
-              instrument: ensureCurrency(fetchTransaction.currency),
-              syncIds: ['111'], // @TODO: make match?
-            } as AccountReferenceByData,
+        account: { id: account.id } as AccountReferenceById,
         fee: 0, // @TODO: use commission?
-        invoice: null, // @TODO: in case transaction currency differs from account currency?
-        sum: fetchTransaction.amount
+        invoice: transactionCurrency === account.instrument ? null : { sum: fetchTransaction.amount, instrument: transactionCurrency },
+        sum: transactionCurrency === account.instrument ? fetchTransaction.amount : null
       }
     ],
     merchant: (fetchTransaction.mcc
