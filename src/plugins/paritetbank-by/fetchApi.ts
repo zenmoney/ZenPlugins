@@ -14,7 +14,7 @@ export const fetchLogin = async ({ login, password, deviceId }: T.AuthenticateIn
       password,
       deviceUDID: deviceId,
       clientKind: 'WEB',
-      appID: '1.27',
+      appID: '1.27'
       /**
        * Do not enable until required to name a device
        *

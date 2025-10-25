@@ -194,6 +194,6 @@ export const TEST_TRANSACTIONS = {
       currency: 'BYN',
       operationStatus: 'Исполнен',
       operationId: '1201'
-    },
+    }
   ]
 }

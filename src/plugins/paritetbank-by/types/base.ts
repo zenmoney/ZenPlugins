@@ -15,12 +15,12 @@ export interface FetchError {
 
 export type FetchOutput<TData> =
   | {
-  status: number
-  data: TData
-  error: null
-}
+    status: number
+    data: TData
+    error: null
+  }
   | {
-  status: number
-  data: null
-  error: FetchError
-}
+    status: number
+    data: null
+    error: FetchError
+  }

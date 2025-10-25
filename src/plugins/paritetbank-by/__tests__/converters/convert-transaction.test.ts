@@ -177,7 +177,7 @@ describe('convertTransaction', () => {
             sum: -1
           }
         ] as [Movement],
-        merchant: null,
+        merchant: null
       }
     ],
     [
@@ -195,7 +195,7 @@ describe('convertTransaction', () => {
             sum: null
           }
         ] as [Movement],
-        merchant: null,
+        merchant: null
       }
     ],
     [
@@ -213,7 +213,7 @@ describe('convertTransaction', () => {
             sum: 5
           }
         ] as [Movement],
-        merchant: null,
+        merchant: null
       }
     ]
   ])('converts transactions for current account', (apiTransaction: FetchTransaction, transaction: Transaction) => {

@@ -1,4 +1,4 @@
-import { Account, AccountReferenceByData, AccountReferenceById, AccountType, Merchant, Transaction } from '../../types/zenmoney'
+import { Account, AccountReferenceById, AccountType, Merchant, Transaction } from '../../types/zenmoney'
 import type { FetchCardAccount, FetchCurrentAccount, FetchTransaction } from './types/fetch'
 import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
 
