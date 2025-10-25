@@ -1,7 +1,7 @@
 import { convertCardAccount } from '../../converters'
 import { FetchCardAccount } from '../../types/fetch'
 import { Account } from '../../../../types/zenmoney'
-import { TEST_ACCOUNTS } from '../../__mocks__/accounts.data'
+import { TEST_ACCOUNTS } from '../../__mocks__/accounts.sample'
 
 describe('convertCardAccount', () => {
   it.each([

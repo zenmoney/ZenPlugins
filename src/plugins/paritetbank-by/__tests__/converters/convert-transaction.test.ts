@@ -1,8 +1,8 @@
 import { convertCardAccount, convertCurrentAccount, convertTransaction } from '../../converters'
 import { FetchTransaction } from '../../types/fetch'
 import { Movement, Transaction } from '../../../../types/zenmoney'
-import { TEST_TRANSACTIONS } from '../../__mocks__/transactions.data'
-import { TEST_ACCOUNTS } from '../../__mocks__/accounts.data'
+import { TEST_TRANSACTIONS } from '../../__mocks__/transactions.sample'
+import { TEST_ACCOUNTS } from '../../__mocks__/accounts.sample'
 
 describe('convertTransaction', () => {
   const cardAccount = convertCardAccount(

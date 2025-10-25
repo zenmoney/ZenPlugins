@@ -1,7 +1,7 @@
 import { convertCurrentAccount } from '../../converters'
 import { FetchCurrentAccount } from '../../types/fetch'
 import { Account } from '../../../../types/zenmoney'
-import { TEST_ACCOUNTS } from '../../__mocks__/accounts.data'
+import { TEST_ACCOUNTS } from '../../__mocks__/accounts.sample'
 
 describe('convertCurrentAccount', () => {
   it.each([

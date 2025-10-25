@@ -70,7 +70,7 @@ export const convertTransaction = (fetchTransaction: FetchTransaction, account: 
       {
         id: fetchTransaction.rrn ?? fetchTransaction.paymentId ?? fetchTransaction.operationId ?? null,
         account: { id: account.id } as AccountReferenceById,
-        fee: 0, // @TODO: use commission?
+        fee: 0, // use commission?
         invoice: transactionCurrency === account.instrument ? null : { sum: fetchTransaction.amount, instrument: transactionCurrency },
         sum: transactionCurrency === account.instrument ? fetchTransaction.amount : null
       }
