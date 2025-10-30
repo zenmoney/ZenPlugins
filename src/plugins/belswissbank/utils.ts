@@ -35,7 +35,7 @@ export function generateDevice (): Device {
 }
 
 export function encryptCredentials (value: string, salt: string): string {
-  const toEncode = `${value}${salt}`
+  const toEncode = `${salt}${value}`
   const publicKeyDer = forge.util.decode64(CREDENTIALS_RSA_PUBLIC_KEY)
   const asn1 = forge.asn1.fromDer(publicKeyDer)
   const publicKey = forge.pki.publicKeyFromAsn1(asn1) as forge.pki.rsa.PublicKey
