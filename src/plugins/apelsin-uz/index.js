@@ -8,6 +8,8 @@ import {
   getUzcardCardsTransactions,
   getVisaCards,
   getVisaCardsTransactions,
+  getUzumVisaCards,
+  getUzumVisaCardsTransactions,
   getWallets,
   getWalletsTransactions,
   getMastercardCards,
@@ -50,6 +52,7 @@ export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
   }
   const humoCards = await getHumoCards()
   const visaCards = await getVisaCards()
+  const uzumVisaCards = await getUzumVisaCards()
   const mastercardCards = await getMastercardCards()
   const wallets = await getWallets()
   const accounts = await getAccounts()
@@ -63,6 +66,7 @@ export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
   const uzcardCardsTransactions = await getUzcardCardsTransactions(uzcardCards, from, to)
   const humoCardsTransactions = await getHumoCardsTransactions(humoCards, from, to)
   const visaCardsTransactions = await getVisaCardsTransactions(visaCards, from, to)
+  const uzumVisaCardsTransactions = await getUzumVisaCardsTransactions(uzumVisaCards, from, to)
   const mastercardCardsTransactions = await getMastercardCardsTransactions(mastercardCards, from, to)
   const walletTransactions = await getWalletsTransactions(wallets, from, to)
   const accountTransactions = await getAccountsTransactions(accounts, from, to)
@@ -75,6 +79,7 @@ export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
       ...uzcardCards,
       ...humoCards,
       ...visaCards,
+      ...uzumVisaCards,
       ...mastercardCards,
       ...wallets,
       ...accounts
@@ -83,6 +88,7 @@ export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
       ...uzcardCardsTransactions,
       ...humoCardsTransactions,
       ...visaCardsTransactions,
+      ...uzumVisaCardsTransactions,
       ...mastercardCardsTransactions,
       ...walletTransactions,
       ...accountTransactions

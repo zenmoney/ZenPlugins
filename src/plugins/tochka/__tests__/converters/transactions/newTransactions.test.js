@@ -70,38 +70,34 @@ describe('convertTransaction', () => {
           amountNat: 114600,
           currency: 'RUB'
         },
-        CreditorParty:
-          {
-            inn: '507802686574',
-            name: 'ИП Николаев Николай Николаевич',
-            kpp: '0'
-          },
-        CreditorAccount:
-          {
-            schemeName: 'RU.CBR.PAN',
-            identification: '40802810240000064774'
-          },
-        CreditorAgent:
-          {
-            schemeName: 'RU.CBR.BIK',
-            identification: '044525225',
-            accountIdentification: '30101810400000000225',
-            name: 'ПАО СБЕРБАНК'
-          }
+        CreditorParty: {
+          inn: '507802686574',
+          name: 'ИП Николаев Николай Николаевич',
+          kpp: '0'
+        },
+        CreditorAccount: {
+          schemeName: 'RU.CBR.PAN',
+          identification: '40802810240000064774'
+        },
+        CreditorAgent: {
+          schemeName: 'RU.CBR.BIK',
+          identification: '044525225',
+          accountIdentification: '30101810400000000225',
+          name: 'ПАО СБЕРБАНК'
+        }
       },
       {
         hold: null,
         date: new Date('2022-09-19T00:00:00.000Z'),
-        movements:
-          [
-            {
-              id: '1215586804;1',
-              account: { id: 'account' },
-              invoice: null,
-              sum: -114600,
-              fee: 0
-            }
-          ],
+        movements: [
+          {
+            id: '1215586804;1',
+            account: { id: 'account' },
+            invoice: null,
+            sum: -114600,
+            fee: 0
+          }
+        ],
         merchant: {
           city: null,
           country: null,
@@ -130,32 +126,29 @@ describe('convertTransaction', () => {
           inn: '6685157931',
           name: 'ООО Боксберри СОФТ'
         },
-        DebtorAccount:
-          {
-            schemeName: 'RU.CBR.PAN',
-            identification: '40702810104000022703'
-          },
-        DebtorAgent:
-          {
-            schemeName: 'RU.CBR.BIK',
-            identification: '046577906',
-            accountIdentification: '30101810100000000906',
-            name: 'УРАЛЬСКИЙ ФИЛИАЛ АО "РАЙФФАЙЗЕНБАНК"'
-          }
+        DebtorAccount: {
+          schemeName: 'RU.CBR.PAN',
+          identification: '40702810104000022703'
+        },
+        DebtorAgent: {
+          schemeName: 'RU.CBR.BIK',
+          identification: '046577906',
+          accountIdentification: '30101810100000000906',
+          name: 'УРАЛЬСКИЙ ФИЛИАЛ АО "РАЙФФАЙЗЕНБАНК"'
+        }
       },
       {
         hold: null,
         date: new Date('2022-09-19T00:00:00.000Z'),
-        movements:
-          [
-            {
-              id: '1215706834;1',
-              account: { id: 'account' },
-              invoice: null,
-              sum: 2007.35,
-              fee: 0
-            }
-          ],
+        movements: [
+          {
+            id: '1215706834;1',
+            account: { id: 'account' },
+            invoice: null,
+            sum: 2007.35,
+            fee: 0
+          }
+        ],
         merchant: {
           city: null,
           country: null,
@@ -180,50 +173,46 @@ describe('convertTransaction', () => {
           amountNat: 500,
           currency: 'RUB'
         },
-        CreditorParty:
-          {
-            inn: '7706092528',
-            name: 'Точка ПАО Банка "ФК Открытие"',
-            kpp: '770543002'
-          },
-        CreditorAccount:
-          {
-            schemeName: 'RU.CBR.PAN',
-            identification: '30232810100500005065'
-          },
-        CreditorAgent:
-          {
-            schemeName: 'RU.CBR.BIK',
-            identification: '044525999',
-            accountIdentification: '30101810845250000999',
-            name: 'ТОЧКА ПАО БАНКА "ФК ОТКРЫТИЕ"'
-          }
+        CreditorParty: {
+          inn: '7706092528',
+          name: 'Точка ПАО Банка "ФК Открытие"',
+          kpp: '770543002'
+        },
+        CreditorAccount: {
+          schemeName: 'RU.CBR.PAN',
+          identification: '30232810100500005065'
+        },
+        CreditorAgent: {
+          schemeName: 'RU.CBR.BIK',
+          identification: '044525999',
+          accountIdentification: '30101810845250000999',
+          name: 'ТОЧКА ПАО БАНКА "ФК ОТКРЫТИЕ"'
+        }
       },
       {
         hold: null,
         date: new Date('2022-11-01T00:00:00.000Z'),
-        movements:
-          [
-            {
-              id: '1259627339;1',
-              account: { id: 'account' },
-              invoice: null,
-              sum: -500,
-              fee: 0
+        movements: [
+          {
+            id: '1259627339;1',
+            account: { id: 'account' },
+            invoice: null,
+            sum: -500,
+            fee: 0
+          },
+          {
+            id: null,
+            account: {
+              company: null,
+              instrument: 'RUB',
+              syncIds: null,
+              type: 'cash'
             },
-            {
-              id: null,
-              account: {
-                company: null,
-                instrument: 'RUB',
-                syncIds: null,
-                type: 'cash'
-              },
-              invoice: null,
-              sum: 500,
-              fee: 0
-            }
-          ],
+            invoice: null,
+            sum: 500,
+            fee: 0
+          }
+        ],
         merchant: {
           city: 'NIZHNIJNOVGOR',
           country: 'RU',
@@ -233,10 +222,63 @@ describe('convertTransaction', () => {
         },
         comment: null
       }
+    ],
+    [
+      {
+        transactionId: 'cbs-tb;1299729092;1',
+        paymentId: 'cbs-tb-92-2463574954',
+        creditDebitIndicator: 'Debit',
+        status: 'Booked',
+        documentNumber: '699327',
+        transactionTypeCode: 'Банковский ордер',
+        documentProcessDate: '2025-05-02',
+        description: 'Покупка товара(Терминал:,SMORODINA,,STR LENINSKOGO KOMSOMOLA 75,Abakan,RU,дата операции:30/04/2025 07:09(МСК),на сумму:250 RUB,карта 2204********7125)',
+        Amount: {
+          amount: 250,
+          amountNat: 250,
+          currency: 'RUB'
+        },
+        CreditorParty: {
+          inn: '9721194461',
+          name: 'ООО "Банк Точка"',
+          kpp: '997950001'
+        },
+        CreditorAccount: {
+          schemeName: 'RU.CBR.PAN',
+          identification: '30232810820000003944'
+        },
+        CreditorAgent: {
+          schemeName: 'RU.CBR.BIK',
+          identification: '044525104',
+          accountIdentification: '30101810745374525104',
+          name: 'ООО "Банк Точка"'
+        }
+      },
+      {
+        hold: null,
+        date: new Date('2025-05-02T00:00:00.000Z'),
+        movements: [
+          {
+            id: 'cbs-tb;1299729092;1',
+            account: { id: 'account' },
+            invoice: null,
+            sum: -250,
+            fee: 0
+          }
+        ],
+        merchant: {
+          country: 'RU',
+          city: 'Abakan',
+          title: 'SMORODINA',
+          mcc: null,
+          location: null
+        },
+        comment: null
+      }
     ]
   ]
 
-  it.each(transactions)('converts income transaction', (apiTransaction, transaction) => {
+  it.each(transactions)('converts new transaction', (apiTransaction, transaction) => {
     expect(convertTransactionNew(apiTransaction, {
       id: 'account',
       instrument: 'RUB'

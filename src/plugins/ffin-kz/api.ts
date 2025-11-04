@@ -129,7 +129,7 @@ export function parseSinglePdfString (text: string, statementUid?: string): { ac
     title: parseAccountTitle(text),
     type: AccountType.ccard,
     savings: false,
-    syncIds: [parseCardNumber(text)]
+    syncIds: parseCardNumber(text) !== '' ? [parseCardNumber(text)] : [accountId]
   }
   const rawTransactions = parseTransactions(text, statementUid ?? generateUUID())
   const parsedContent = {
