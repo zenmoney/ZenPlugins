@@ -100,7 +100,7 @@ export function convertCardsV2 (apiAccounts: CardProductV2[]): PreparedCardV2[] 
           account: {
             id: account.id.toString(),
             type: AccountType.checking, // Regular account, not card account
-            title: `${apiAccount.friendlyName || apiAccount.typeText} ${account.currency}`,
+            title: `${apiAccount.friendlyName ?? apiAccount.typeText} ${account.currency}`,
             instrument: account.currency,
             syncIds: [apiAccount.iban],
             balance: account.balance
