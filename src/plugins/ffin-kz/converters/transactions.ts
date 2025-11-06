@@ -83,23 +83,6 @@ function convertCurrency (currencyRates: Record<string, ExchangeRate>, amount: n
   throw new Error(`Нет курса для конвертации из ${fromCurrency} в ${toCurrency}`)
 }
 
-function isTransactionToSkip (rawTransaction: StatementTransaction): boolean {
-  if (rawTransaction.description === null || rawTransaction.description.trim() === '') {
-    return false
-  }
-  // Пропускаем транзакции возврата денег с технического депозита для карт
-  if (/Выплата вклада с депозитного договора/i.test(rawTransaction.description)) {
-    return true
-  }
-
-  // Пропускаем только те "Прием вклада по договору", где сумма вклада имеет тыины (дробная часть)
-  if (/Прием вклада по договору.*в сумме\s\d+\.\d{1,2}\s*KZT/i.test(rawTransaction.description)) {
-    return true // есть тыины, пропускаем
-  }
-
-  return false
-}
-
 function generateTransactionId (date: string, sum: string | null, description: string | null): string {
   const hash = createHash('sha1')
   hash.update(`${date}_${sum ?? ''}_${description ?? ''}`)
@@ -107,11 +90,8 @@ function generateTransactionId (date: string, sum: string | null, description: s
 }
 
 export function convertPdfStatementTransaction (rawTransaction: StatementTransaction, rawAccount: { id: string, instrument: string }, currencyRates: Record<string, ExchangeRate>): ConvertedTransaction | null {
-  if (isTransactionToSkip(rawTransaction)) {
-    return null
-  }
   let sum = parseFloat(rawTransaction.amount.replace(',', '.').replace(/[\s+$]/g, ''))
-  if (sum < 0.01) {
+  if (sum === 0.0) {
     return null
   }
   let instrument = 'KZT'
