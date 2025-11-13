@@ -219,10 +219,16 @@ export function convertTransaction (apiTransaction: unknown, product: ConvertedP
       const title: string | undefined = getOptString(apiTransaction, 'merchantNameInt')
       // Bank fees transaction contains original payment info in description, so we shouldn't parse it
       if (entryGroupDKey !== 'text.entry.group.name.FEE' && invoiceNeeded) {
-        transaction.movements[0].invoice = invoiceNeeded ? { sum: cashAmount.sum * getSignByPrintFormType(printFormType), instrument: cashAmount?.instrument } : null
+        transaction.movements[0].invoice = invoiceNeeded
+          ? {
+              sum: cashAmount.sum * getSignByPrintFormType(printFormType),
+              instrument: cashAmount?.instrument
+            }
+          : null
       }
       if (title !== undefined) {
         transaction.merchant = parseMerchant(title, getString(apiTransaction, 'nominationOriginal'))
+        transaction.comment = transaction.merchant !== null ? null : getOptString(apiTransaction, 'merchantName') ?? null
       } else {
         transaction.comment = getString(apiTransaction, 'nominationOriginal')
       }
@@ -275,7 +281,12 @@ export function convertTransaction (apiTransaction: unknown, product: ConvertedP
       if (title !== undefined) {
         transaction.merchant = parseMerchant(title, getString(apiTransaction, 'nominationOriginal'))
       }
-      transaction.movements[0].invoice = invoiceNeeded ? { sum: cashAmount.sum * getSignByPrintFormType(printFormType), instrument: cashAmount.instrument } : null
+      transaction.movements[0].invoice = invoiceNeeded
+        ? {
+            sum: cashAmount.sum * getSignByPrintFormType(printFormType),
+            instrument: cashAmount.instrument
+          }
+        : null
       transaction.movements.push(
         invertMovement(transaction.movements[0], product.account, { type: AccountType.cash })
       )
@@ -412,7 +423,8 @@ function tryParseMcc (nominationOriginal: string): number | null {
   return parseInt(match[1])
 }
 
-function parseMerchant (merchantNameInt: string, nominationOriginal: string): Merchant {
+function parseMerchant (merchantNameInt: string, nominationOriginal: string): Merchant | null {
+  let merchant: Merchant | null = null
   const merchantTitle = merchantNameInt.split(',')
   let title = merchantTitle[0].trim()
   const country = merchantTitle.length === 1 || merchantTitle.length > 2 ? null : merchantTitle[1]?.trim()
@@ -422,11 +434,14 @@ function parseMerchant (merchantNameInt: string, nominationOriginal: string): Me
     city = titleCity[1] !== '' ? titleCity[1] : null
     title = titleCity[0]
   }
-  return {
-    country: country !== '' ? country : null,
-    city: ((city?.match(/\\+/)) != null) ? null : city,
-    title,
-    mcc: tryParseMcc(nominationOriginal),
-    location: null
+  if (title !== '') {
+    merchant = {
+      country: country !== '' ? country : null,
+      city: ((city?.match(/\\+/)) != null) ? null : city,
+      title,
+      mcc: tryParseMcc(nominationOriginal),
+      location: null
+    }
   }
+  return merchant
 }
