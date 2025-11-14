@@ -37,19 +37,18 @@ describe('convertTransaction', () => {
       ],
       {
         date: new Date('2022-03-01T19:07:00.000Z'),
-        movements:
-          [
-            {
-              id: null,
-              account: { id: '3001779330014439' },
-              invoice: {
-                instrument: 'RUB',
-                sum: 14808
-              },
-              sum: 514.11,
-              fee: 0
-            }
-          ],
+        movements: [
+          {
+            id: null,
+            account: { id: '3001779330014439' },
+            invoice: {
+              instrument: 'RUB',
+              sum: 14808
+            },
+            sum: 514.11,
+            fee: 0
+          }
+        ],
         merchant: {
           mcc: null,
           location: null,
@@ -90,19 +89,72 @@ describe('convertTransaction', () => {
       ],
       {
         date: new Date('2022-11-15T04:05:42.000Z'),
-        movements:
-          [
-            {
-              id: null,
-              account: { id: '1107239780000085' },
-              invoice: null,
-              sum: 20.95,
-              fee: 3.13
-            }
-          ],
+        movements: [
+          {
+            id: null,
+            account: { id: '1107239780000085' },
+            invoice: null,
+            sum: 20.95,
+            fee: 3.13
+          }
+        ],
         merchant: null,
         comment: 'Капитализация',
         hold: false
+      }
+    ],
+    [
+      {
+        operationSign: '1',
+        operationId: '531847681743',
+        accountNumber: '3001779330014439',
+        transactionAmount: 415,
+        transactionCurrency: '840',
+        operationAmount: -1199.35,
+        operationCurrency: '933',
+        operationName: 'MOBILE APP\nMCC 6537, Поступление P2P перевода',
+        transType: 'TO',
+        operationDetail: {
+          source: '5*** **** **** 6953',
+          authCode: '577114',
+          mccCode: '6537 - Денежные переводы P2P',
+          paymentDate: 1763130787000,
+          operationDescription: 'Поступление P2P перевода',
+          status: 'PROCESSING',
+          terminalLocation: 'ALMATY',
+          operationName: 'MOBILE APP\nMCC 6537, Поступление P2P перевода'
+        }
+      },
+      [
+        {
+          id: '3001779330014439',
+          type: 'card',
+          title: 'Цифровая карта 1-2-3, BYN',
+          currencyCode: '933',
+          instrument: 'BYN',
+          balance: 528.44,
+          syncID: ['3001779330014439', '6900'],
+          rkcCode: '5761',
+          cardHash: 'P-KdaFwKcI8_vOG004LaKNy9VnILWSZEnlnXDajOMP3_ThO2Kuwu-g_zvo-wlgxZw4fm7wsNN7muTG9RQfMkoA'
+        }
+      ],
+      {
+        hold: false,
+        date: new Date('2025-11-14T17:33:07.000+03:00'),
+        movements: [
+          {
+            id: null,
+            account: { id: '3001779330014439' },
+            invoice: {
+              sum: 415,
+              instrument: 'USD'
+            },
+            sum: 1199.35,
+            fee: 0
+          }
+        ],
+        merchant: null,
+        comment: 'MOBILE APP\nMCC 6537, Поступление P2P перевода'
       }
     ]
   ])('converts income', (apiTransaction, accounts, transaction) => {
