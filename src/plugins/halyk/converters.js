@@ -67,6 +67,9 @@ export function convertTransaction (apiTransaction, account) {
     sum: parseDecimal(apiTransaction.amount, apiTransaction),
     instrument: apiTransaction.currency
   }
+  if (income === 0 && expense === 0 && fee === 0) {
+    return null
+  }
   if (invoice.instrument === account.instrument && expense < invoice.sum) {
     fee = expense - invoice.sum
     expense = invoice.sum
@@ -76,7 +79,7 @@ export function convertTransaction (apiTransaction, account) {
     fee = 0
   }
   const transaction = {
-    hold: !income && !expense && !fee,
+    hold: false,
     date: parseDate(apiTransaction.date, apiTransaction),
     movements: [
       {
