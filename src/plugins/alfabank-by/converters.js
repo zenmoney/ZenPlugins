@@ -327,5 +327,5 @@ function parsePayee (transaction, apiTransaction, account, invoice) {
 }
 
 function parseComment (transaction, apiTransaction) {
-  transaction.comment = apiTransaction.description || null
+  transaction.comment = apiTransaction.title || apiTransaction.description || null
 }
