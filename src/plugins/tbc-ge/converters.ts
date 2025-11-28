@@ -113,7 +113,7 @@ export function convertCardsV2 (apiAccounts: CardProductV2[]): PreparedCardV2[] 
       }
       continue
     }
-    
+
     const mainCard = apiAccount.cards[0]
     for (const account of apiAccount.accounts) {
       const card: PreparedCardV2 = {
