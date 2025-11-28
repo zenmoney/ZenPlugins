@@ -92,6 +92,28 @@ export function convertDepositV2 (apiAccount: DepositDataV2): Account {
 export function convertCardsV2 (apiAccounts: CardProductV2[]): PreparedCardV2[] {
   const accounts: PreparedCardV2[] = []
   for (const apiAccount of apiAccounts) {
+    // Handle accounts without cards as regular bank accounts
+    if ((apiAccount.cards == null) || apiAccount.cards.length === 0) {
+      // Process as regular bank accounts (savings, current accounts)
+      for (const account of apiAccount.accounts) {
+        const card: PreparedCardV2 = {
+          account: {
+            id: account.id.toString(),
+            type: AccountType.checking, // Regular account, not card account
+            title: `${apiAccount.friendlyName ?? apiAccount.typeText} ${account.currency}`,
+            instrument: account.currency,
+            syncIds: [apiAccount.iban],
+            balance: account.balance
+          },
+          code: '', // No card number
+          id: account.id,
+          iban: apiAccount.iban
+        }
+        accounts.push(card)
+      }
+      continue
+    }
+    
     const mainCard = apiAccount.cards[0]
     for (const account of apiAccount.accounts) {
       const card: PreparedCardV2 = {
