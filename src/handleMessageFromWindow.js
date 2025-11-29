@@ -1,4 +1,3 @@
-import { extractErrorDetails } from './utils'
 import { ZPAPI } from './ZPAPI'
 
 const messageHandlers = {
@@ -17,9 +16,7 @@ const messageHandlers = {
     } catch (error) {
       reply({
         type: ':events/scrape-error',
-        payload: {
-          message: extractErrorDetails(error)
-        }
+        payload: error
       })
     }
   },

@@ -1,8 +1,3 @@
-export const extractErrorDetails = (error) => [
-  error.message,
-  error.stack && error.stack.replace('Error: ' + error.message + '\n', '')
-].filter(Boolean).join('\n')
-
 export const waitForOpenDevtools = () => new Promise(function fn (resolve) {
   const threshold = 200
   const eatenWidth = window.outerWidth - window.innerWidth
