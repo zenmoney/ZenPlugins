@@ -21,7 +21,6 @@ const messageHandlers = {
           message: extractErrorDetails(error)
         }
       })
-      throw error
     }
   },
 
