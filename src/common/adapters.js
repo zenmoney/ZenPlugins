@@ -26,7 +26,6 @@ import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId, trimSyncId } from '
 import { toZenMoneyTransaction } from './converters'
 import { getMidnight, isValidDate, toISODateString } from './dateUtils'
 import { sanitize } from './sanitize'
-import { isDebug } from './utils'
 
 i18n.init({
   resources: _.fromPairs([
@@ -469,30 +468,6 @@ function getPresentationError (error, isFirstRun) {
   return meaningfulError
 }
 
-function augmentErrorWithDevelopmentHints (error) {
-  if (isDebug()) {
-    if (!(error instanceof ZPAPIError)) {
-      error.message += '\n(The message above will never be displayed on production UI; use specific ZPAPIError child class from errors.js if you want to show meaningful message to user)'
-    }
-    if (error.allowRetry || error.allow_retry) {
-      error.message += '\n(logIsNotImportant = true: the message above will be displayed on production UI without [Send log] button)'
-    }
-    if (error.fatal) {
-      error.message += '\n(forcePluginReinstall = true: user will be forced into preferences screen)'
-    }
-    if (!(error instanceof Error)) {
-      const err = new Error()
-      Object.assign(err, error)
-      err.message = error.message
-      err.stack = error.stack
-      err.fatal = error.fatal
-      err.allowRetry = error.allowRetry
-      error = err
-    }
-  }
-  return error
-}
-
 export function adaptScrapeToGlobalApi (scrape) {
   console.assert(typeof scrape === 'function', 'argument must be function')
 
@@ -519,10 +494,10 @@ export function adaptScrapeToGlobalApi (scrape) {
       value
     } = unsealSyncPromise(resultHandled)
     if (state === 'rejected') {
-      ZenMoney.setResult(augmentErrorWithDevelopmentHints(getPresentationError(value, isFirstRun)))
+      ZenMoney.setResult(getPresentationError(value, isFirstRun))
     } else if (state === 'pending') {
       resultHandled.catch((e) => {
-        ZenMoney.setResult(augmentErrorWithDevelopmentHints(getPresentationError(e, isFirstRun)))
+        ZenMoney.setResult(getPresentationError(e, isFirstRun))
       })
     }
   }
