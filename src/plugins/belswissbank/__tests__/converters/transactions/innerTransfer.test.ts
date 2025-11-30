@@ -30,7 +30,7 @@ describe('convertTransactions', () => {
       [
         {
           comment: null,
-          date: new Date('2025-11-28T12:46:47'),
+          date: new Date('2025-11-28T09:46:47Z'),
           hold: false,
           merchant: {
             fullTitle: '9963, MIKITA DUBITSKI',
@@ -43,7 +43,7 @@ describe('convertTransactions', () => {
               fee: 0,
               id: '121291728',
               invoice: null,
-              sum: 6500
+              sum: -6500
             }
           ]
         }

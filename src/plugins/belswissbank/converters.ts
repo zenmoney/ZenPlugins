@@ -258,8 +258,7 @@ export function convertTransactions (apiTransactions: unknown[]): Transaction[] 
     })
 }
 
-function parseDate (dateString: string): Date {
-  // Parse format "05/09/2025 20:34:15" -> MM/DD/YYYY HH:mm:ss
+export function parseDate (dateString: string): Date {
   const [datePart, timePart] = dateString.split(' ')
   const [day, month, year] = datePart.split('/').map(Number)
   const [hours, minutes, seconds] = timePart.split(':').map(Number)
