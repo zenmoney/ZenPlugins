@@ -20,6 +20,13 @@ interface LoginResponse {
   }
 }
 
+function raiseUnhandledResponse (response: FetchResponse):never {
+  const header: string = _.get(response.body, 'header', '')
+  const message: string = _.get(response.body, 'message') || ''
+  const code: string = _.get(response.body, 'code')
+  throw new Error(`${response.status} ${code}: ${header}\n${message}`.trim())
+}
+
 export class Api {
   private readonly preferences: Preferences
   private readonly device: Device
@@ -121,7 +128,8 @@ export class Api {
           userDeviceId: true
         }
       },
-      parse: () => null
+      parse: () => null,
+      isUnhandled: () => false
     })
     if (response.status !== 200) {
       throw new Error(`Unexpected confirm SMS code response status: ${response.status}`)
@@ -182,11 +190,12 @@ export class Api {
             widgetToken: true
           }
         }
-      }
+      },
+      isUnhandled: () => false
     })
     if (response.status === 400) {
       if (_.get(response.body, 'code') !== 'MAS-0007') {
-        throw new Error('Unexpected login response. Bank Message: ' + String(_.get(response.body, 'message', 'no message')))
+        raiseUnhandledResponse(response)
       }
 
       return {
@@ -204,8 +213,9 @@ export class Api {
           widgetToken: _.get(response.body, 'widgetTokenContainer.widgetToken')
         }
       }
+    } else {
+      raiseUnhandledResponse(response)
     }
-    throw new Error(`Unexpected login response status: ${response.status}`)
   }
 
   private async fetchSalt (): Promise<string> {
@@ -220,7 +230,11 @@ export class Api {
     return response.body as string
   }
 
-  private async fetchApi (url: string, options: FetchOptions): Promise<FetchResponse> {
+  private async fetchApi (url: string, {
+    isUnhandled = (response) => response.status !== 200, ...options
+  }: FetchOptions & {
+    isUnhandled?: (res: FetchResponse) => boolean
+  }): Promise<FetchResponse> {
     const response = await fetch(BASE_URL + url, {
       method: options.method,
       headers: {
@@ -242,11 +256,8 @@ export class Api {
       stringify: options.stringify ?? JSON.stringify
     })
 
-    if (response.status === 401) {
-      const header = _.get(response.body, 'header', '') as string
-      const message = _.get(response.body, 'message', '') as string
-      const code = _.get(response.body, 'code') as string
-      throw new Error(`${code}: ${header}. ${message}`.trim())
+    if (isUnhandled(response)) {
+      raiseUnhandledResponse(response)
     }
 
     return response
