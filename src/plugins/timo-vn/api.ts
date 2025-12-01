@@ -5,7 +5,7 @@ import forge from 'node-forge'
 import { TemporaryError, ZPAPIError } from '../../errors'
 
 export async function login (preferences: Preferences, auth: Auth): Promise<Session> {
-  const session: Session = {
+  let session: Session = {
     auth,
     token: '',
     refNo: '',
@@ -36,8 +36,18 @@ export async function login (preferences: Preferences, auth: Auth): Promise<Sess
     case ApiResponseCode.TECHNICAL_DIFFICULT:
       throw new TemporaryError('Connection to bank is temporary unavailable')
 
-    case ApiResponseCode.NEED_UPGRADE_APP_VERSION:
-      throw new TemporaryError('NEED UPGRADE APP VERSION')
+    case ApiResponseCode.NEED_UPGRADE_APP_VERSION: {
+      const manualAppVersion = await ZenMoney.readLine('App version too old. Enter actual version:', { inputType: 'number' })
+      if ((manualAppVersion === null || manualAppVersion === '')) {
+        throw new TemporaryError('NEED UPGRADE APP VERSION')
+      }
+      auth.appVersion = manualAppVersion
+      auth.deviceReg = auth.deviceUUID + ':WEB:WEB:' + auth.appVersion + ':WEB:desktop:zenmoney'
+      ZenMoney.setData('auth', auth)
+      ZenMoney.saveData()
+      session = await login(preferences, auth)
+      break
+    }
 
     default:
       throw new ZPAPIError('Authorization failed', false, false)

@@ -120,7 +120,8 @@ export class Api {
           smsCode: true,
           userDeviceId: true
         }
-      }
+      },
+      parse: () => null
     })
     if (response.status !== 200) {
       throw new Error(`Unexpected confirm SMS code response status: ${response.status}`)
@@ -148,7 +149,8 @@ export class Api {
         body: {
           userLoginId: true
         }
-      }
+      },
+      parse: () => null
     })
   }
 
