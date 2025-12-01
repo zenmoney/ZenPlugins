@@ -1,6 +1,6 @@
 import { generateUUID } from '../../common/utils'
 import { StatementTransaction, ObjectWithAnyProps } from './models'
-import { AccountOrCard, AccountType } from '../../types/zenmoney'
+import { Account, AccountOrCard, AccountType, DepositOrLoan } from '../../types/zenmoney'
 import { openWebViewAndInterceptRequest } from '../../common/network'
 import { TemporaryError } from '../../errors'
 import { parsePdf } from '../../common/pdfUtils'
@@ -31,6 +31,12 @@ function parseDateFromPdfText (text: string): string {
   const match = text.match(/^(\d{2}).(\d{2}).(\d{2,4})/)
   assert(match !== null, 'Can\'t parse date from pdf string', text)
   return `${match[3].length === 2 ? '20' + match[3] : match[3]}-${match[2]}-${match[1]}T00:00:00.000`
+}
+
+function normalizeNumber (value: string | null | undefined): number | null {
+  if (value == null) return null
+  const normalized = value.replace(/\s/g, '').replace(',', '.')
+  return normalized === '' ? null : parseFloat(normalized)
 }
 
 function parseAccountTitle (text: string): string {
@@ -142,6 +148,143 @@ export function parseSinglePdfString (text: string, statementUid?: string): { ac
   return parsedContent
 }
 
+function prepareCardStatementText (text: string): string {
+  // Разделяем на части: Дата Сумма Валюта Операция Детали
+  // Ищем первую строку, где начинается таблица с транзакциями (по заголовку "Дата Сумма Валюта Операция Детали")
+  const splitPoint = text.search(/^Дата\s+Сумма\s+Валюта\s+Операция\s+Детали/m)
+  if (splitPoint === -1) {
+    return text
+  }
+  const header = text.slice(0, splitPoint).trim()
+  const transactions = text.slice(splitPoint).trim()
+
+  // Обработка транзакций
+  // Cначала разбиваем на строки по датам, затем чистим каждую строку отдельно
+  // Удаляем служебный текст и заголовок таблицы
+  const cleanedTransactions = transactions
+    .replace(/Подлинность справки можете проверить\nпросканировав QR-код или перейдите по ссылке:\nhttps:\/\/bankffin\.kz\/ru\/check-receipt.*/g, '')
+    .replace(/^Дата\s+Сумма\s+Валюта\s+Операция\s+Детали\s*/gm, '')
+
+  const transactionLines = cleanedTransactions
+    .split(/(?=\d{2}\.\d{2}\.\d{4}\s*[-+]\s*[\d.,]+\s*[₸$€£¥₺₽]?)/) // Разделяем по дате и сумме
+    .map(line =>
+      line
+        .replace(/([а-яА-Яa-zA-Z.,])\n([а-яА-Яa-zA-Z])/g, '$1 $2') // Удаление переносов строк внутри деталей
+        .replace(/-\n\s*/g, '-') // Удаление переноса строки после дефиса
+        .replace(/\n(?=(Плательщик:|Получатель:|Назначение:|Вкладчик:))/g, ' ') // Объединение строк, если следующая строка начинается с ключевым словом
+        .replace(/\n/g, ' ') // Удаление всех остальных переносов строк
+        .replace(/\s{2,}/g, ' ') // Удаление двойных пробелов
+        .trim()
+    )
+    .filter(line => line.length > 0)
+  const transactionsText = transactionLines.join('\n')
+
+  return `${header}\n\n${transactionsText}`
+}
+
+function calculateEndDateOffset (startDate: Date | null, endDate: Date | null): { interval: 'day' | 'month' | 'year', offset: number } {
+  if (startDate == null || endDate == null) {
+    return { interval: 'month', offset: 12 }
+  }
+  const diffMs = endDate.getTime() - startDate.getTime()
+  const diffDays = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)))
+  const diffMonths = Math.max(1, Math.round(diffDays / 30.44))
+  const diffYears = Math.max(1, Math.round(diffDays / 365.25))
+
+  if (diffYears >= 1 && Math.abs(diffYears - diffDays / 365.25) < 0.2) {
+    return { interval: 'year', offset: diffYears }
+  }
+  if (diffMonths >= 1) {
+    return { interval: 'month', offset: diffMonths }
+  }
+  return { interval: 'day', offset: diffDays }
+}
+
+export function parseDepositPdfString (text: string, statementUid?: string): { account: DepositOrLoan, transactions: StatementTransaction[] } {
+  const uid = statementUid ?? generateUUID()
+  const accountIdMatch = text.match(/Номер счета:\s*([A-Z0-9]+)/i)
+  assert(accountIdMatch?.[1] != null, 'Не удалось найти номер счета во выписке по депозиту')
+  const accountId = accountIdMatch[1]
+
+  const instrumentFromId = accountId.match(/([A-Z]{3})$/)?.[1]
+  const instrumentFromLine = text.match(/Валюта счета:\s*([A-Z]{3})/i)?.[1]
+  const instrument = (instrumentFromId ?? instrumentFromLine ?? 'KZT').toUpperCase()
+
+  const endOfMonthBalance = normalizeNumber(text.match(/Остаток на конец месяца:\s*([\d\s.,]+)/i)?.[1])
+  const currentBalance = normalizeNumber(text.match(/Текущий остаток:\s*([\d\s.,]+)/i)?.[1])
+  const balance = endOfMonthBalance ?? currentBalance ?? null
+  const startBalance = normalizeNumber(text.match(/Остаток на начало периода:\s*([\d\s.,]+)/i)?.[1]) ?? balance ?? 0
+
+  const titleMatch = text.match(/Выписка по депозиту\s+["“]?([^"\n]+)["”]?\s+за период/i)
+  const title = titleMatch?.[1]?.trim() ?? 'Deposit'
+
+  const percent = normalizeNumber(text.match(/Эффективная ставка:\s*([\d.,]+)/i)?.[1])
+
+  const startDateStr = text.match(/Дата открытия:\s*(\d{2}\.\d{2}\.\d{4})/i)?.[1]
+  const endDateStr = text.match(/Дата завершения:\s*(\d{2}\.\d{2}\.\d{4})/i)?.[1]
+  const startDate = startDateStr != null ? new Date(parseDateFromPdfText(startDateStr)) : null
+  const endDate = endDateStr != null ? new Date(parseDateFromPdfText(endDateStr)) : null
+  const { interval: endDateOffsetInterval, offset: endDateOffset } = calculateEndDateOffset(startDate, endDate)
+
+  const depositAccount: DepositOrLoan = {
+    id: accountId,
+    type: AccountType.deposit,
+    title,
+    instrument,
+    syncIds: [accountId],
+    balance,
+    startDate: startDate ?? new Date(),
+    startBalance,
+    capitalization: true,
+    percent,
+    endDateOffsetInterval,
+    endDateOffset,
+    payoffInterval: 'month',
+    payoffStep: 1
+  }
+
+  const tableHeader = /Дата[\s\r\n]+Описание\s+операции[\s\r\n]+Сумма[\s\r\n]+Эквивалент\s+в\s+KZT/i
+  const headerMatch = tableHeader.exec(text)
+  const equivalentHeaderIndex = text.search(/Эквивалент\s+в\s+KZT/i)
+  const tableStartIndex = headerMatch?.index ?? equivalentHeaderIndex
+  const tableText = tableStartIndex >= 0 ? text.slice(tableStartIndex + (headerMatch?.[0].length ?? 0)) : text
+  const transactions: StatementTransaction[] = []
+  const cleanedTableText = tableText
+    .replace(tableHeader, '')
+    .replace(/Дата\s+Описание\s+операции\s+Сумма\s+Эквивалент\s+в\s+KZT/gi, '')
+    .trim()
+  const rowRegexp = /(?:^|\n)(\d{2}\.\d{2}\.\d{4})\s+([\s\S]*?)(?=(?:\n\d{2}\.\d{2}\.\d{4}\b)|$)/g
+  for (const match of cleanedTableText.matchAll(rowRegexp)) {
+    const [, dateStr, body] = match
+    const normalizedBody = body
+      .replace(/Подлинность справки можете проверить.*$/i, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+    const bodyWithoutKzt = normalizedBody.replace(/\s+[+-]?\s*[\d\s.,]+\s*(?:т|₸)\s*$/i, '')
+    const txMatch = bodyWithoutKzt.match(/^([\s\S]+?)\s+([+-]?\s*[\d\s.,]+)\s*(?:[$€₸т]|[A-Z]{3})?$/i)
+    if (txMatch == null) {
+      console.warn('Не удалось распарсить строку депозита', `${dateStr} ${normalizedBody}`)
+      continue
+    }
+    const [, description, amountStr] = txMatch
+    const normalizedAmount = amountStr.replace(/\s/g, '').replace(',', '.')
+    transactions.push({
+      hold: false,
+      date: parseDateFromPdfText(dateStr),
+      originalAmount: `${normalizedAmount} ${instrument}`,
+      amount: normalizedAmount,
+      description: description.trim() === '' ? null : description.trim(),
+      statementUid: uid,
+      originString: `${dateStr} ${normalizedBody}`
+    })
+  }
+
+  return {
+    account: depositAccount,
+    transactions
+  }
+}
+
 async function showHowTo (): Promise<ObjectWithAnyProps> {
   let result
   if (ZenMoney.getData('showHowTo') !== false) {
@@ -163,7 +306,7 @@ async function showHowTo (): Promise<ObjectWithAnyProps> {
   return { shouldPickDocs: result }
 }
 
-export async function parsePdfStatements (): Promise<null | Array<{ account: AccountOrCard, transactions: StatementTransaction[] }>> {
+export async function parsePdfStatements (): Promise<null | Array<{ account: Account, transactions: StatementTransaction[] }>> {
   await showHowTo()
   const blob = await ZenMoney.pickDocuments(['application/pdf'], true)
   if (blob.length === 0) {
@@ -178,42 +321,18 @@ export async function parsePdfStatements (): Promise<null | Array<{ account: Acc
   }
   const pdfStrings = await Promise.all(blob.map(async (blob) => {
     const { text } = await parsePdf(blob)
-
-    // Разделяем на части: Дата Сумма Валюта Операция Детали
-    // Ищем первую строку, где начинается таблица с транзакциями (по заголовку "Дата Сумма Валюта Операция Детали")
-    const splitPoint = text.search(/^Дата\s+Сумма\s+Валюта\s+Операция\s+Детали/m)
-    const header = text.slice(0, splitPoint).trim()
-    const transactions = text.slice(splitPoint).trim()
-
-    // Обработка транзакций
-    // Cначала разбиваем на строки по датам, затем чистим каждую строку отдельно
-    // Удаляем служебный текст и заголовок таблицы
-    const cleanedTransactions = transactions
-      .replace(/Подлинность справки можете проверить\nпросканировав QR-код или перейдите по ссылке:\nhttps:\/\/bankffin\.kz\/ru\/check-receipt.*/g, '')
-      .replace(/^Дата\s+Сумма\s+Валюта\s+Операция\s+Детали\s*/gm, '')
-
-    const transactionLines = cleanedTransactions
-      .split(/(?=\d{2}\.\d{2}\.\d{4}\s*[-+]\s*[\d.,]+\s*[₸$€£¥₺₽]?)/) // Разделяем по дате и сумме
-      .map(line =>
-        line
-          .replace(/([а-яА-Яa-zA-Z.,])\n([а-яА-Яa-zA-Z])/g, '$1 $2') // Удаление переносов строк внутри деталей
-          .replace(/-\n\s*/g, '-') // Удаление переноса строки после дефиса
-          .replace(/\n(?=(Плательщик:|Получатель:|Назначение:|Вкладчик:))/g, ' ') // Объединение строк, если следующая строка начинается с ключевым словом
-          .replace(/\n/g, ' ') // Удаление всех остальных переносов строк
-          .replace(/\s{2,}/g, ' ') // Удаление двойных пробелов
-          .trim()
-      )
-      .filter(line => line.length > 0)
-    const transactionsText = transactionLines.join('\n')
-
-    return `${header}\n\n${transactionsText}`
+    return text
   }))
   const result = []
   for (const textItem of pdfStrings) {
     if (!/Фридом Банк Казахстан/i.test(textItem)) {
       throw new TemporaryError('Похоже, это не выписка Freedom Bank KZ')
     }
-    result.push(parseSinglePdfString(textItem))
+    if (/Выписка по депозиту/i.test(textItem)) {
+      result.push(parseDepositPdfString(textItem))
+      continue
+    }
+    result.push(parseSinglePdfString(prepareCardStatementText(textItem)))
   }
   return result
 }
