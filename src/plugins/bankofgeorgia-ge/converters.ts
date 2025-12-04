@@ -235,7 +235,8 @@ export function convertTransaction (apiTransaction: unknown, product: ConvertedP
       break
     }
     case 'OUT_TRANSFER':
-    case 'IN_TRANSFER': {
+    case 'IN_TRANSFER':
+    case 'OUT_INSTANT_TRANSFER': {
       switch (entryGroupDKey) {
         case 'text.entry.group.name.Currency.Exchange':
         case 'text.entry.group.name.Transfer':
