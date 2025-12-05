@@ -287,20 +287,26 @@ function parseInnerTransfer (transaction, apiTransaction, account, invoice, deta
     return false
   }
   transaction.comment = null
-  if (!details.account && !details.destinationIban) {
+  if (!details || (!details.account && !details.destinationIban)) {
     transaction.groupKeys = [Math.abs(invoice.sum).toString() + '-' + apiTransaction.date.toString().substring(0, 9)]
   }
-  console.log(details.destinationIban)
   transaction.movements.push({
     id: null,
-    account: !details.account
+    account: !details
       ? {
           type: 'ccard',
           instrument: invoice.instrument,
           company: null,
-          syncIds: details.destinationIban ? [details.destinationIban] : null
+          syncIds: null
         }
-      : { id: details.account },
+      : !details.account
+          ? {
+              type: 'ccard',
+              instrument: invoice.instrument,
+              company: null,
+              syncIds: details.destinationIban ? [details.destinationIban] : null
+            }
+          : { id: details.account },
     invoice: null,
     sum: -invoice.sum,
     fee: 0
