@@ -3,8 +3,8 @@
     <EditTextPreference
         key="phone"
         obligatory="true"
-        title="Номер телефона"
-        dialogTitle="Номер телефона"
+        title="Номер телефону"
+        dialogTitle="Номер телефону"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="||{@s}"
