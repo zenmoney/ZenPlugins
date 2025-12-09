@@ -235,7 +235,11 @@ function parseInnerTransfer (rawTransaction, transaction, invoice, accountsById)
         account: {
           type: rawTransaction.info.operationType === 'account_transaction' ? 'checking' : 'ccard',
           instrument: invoice.instrument,
-          syncIds: !account1 ? [rawTransaction.details.payerAccount] : !account2 ? [rawTransaction.details.payeeAccount] : null,
+          syncIds: !account1
+            ? [rawTransaction.details.payerAccount || rawTransaction.details['payer-account']]
+            : !account2
+                ? [rawTransaction.details.payeeAccount || rawTransaction.details['payee-account']]
+                : null,
           company: null
         },
         invoice: null,
