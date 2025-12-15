@@ -1,6 +1,6 @@
 import { convertTransactionInProgress } from '../../../converters'
 
-describe('RSD in progress', () => {
+describe('transactions in progress', () => {
   it('RSD in progress', () => {
     expect(convertTransactionInProgress(
       [
@@ -33,7 +33,39 @@ describe('RSD in progress', () => {
             id: null,
             invoice: null,
             sum: -293.96
-          }]
+          }
+        ]
+      })
+  })
+
+  it('EUR in progress', () => {
+    expect(convertTransactionInProgress(
+      [
+        '',
+        '13.07.2025 17:08:55',
+        '',
+        '1.02',
+        'EUR',
+        '978',
+        '',
+        '',
+        ''
+      ],
+      '265057000005597777')).toEqual(
+      {
+        hold: true,
+        date: new Date('2025-07-13T17:08:55'),
+        movements: [
+          {
+            id: null,
+            account: { id: '265057000005597777EUR' },
+            invoice: null,
+            sum: -1.02,
+            fee: 0
+          }
+        ],
+        merchant: null,
+        comment: null
       })
   })
 })

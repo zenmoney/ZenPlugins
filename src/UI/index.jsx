@@ -1,15 +1,15 @@
-import _ from "lodash";
-import React from "react";
+import _ from 'lodash'
+import React from 'react'
+import { toDate } from '../common/dateUtils'
 import { toAtLeastTwoDigitsString } from '../common/stringUtils'
-import {prettyDeepDiff} from "../diff";
-import {Account} from "./Account";
-import {BreakingPre} from "./BreakingPre";
-import {Bubble} from "./Bubble";
-import {border, fontColor, zenmoneyGreenColor, zenmoneyRedColor} from "./designSystem";
-import {DayTransactions} from "./Transaction";
-import {toDate} from '../common/dateUtils'
+import { prettyDeepDiff } from '../diff'
+import { Account } from './Account'
+import { Bubble } from './Bubble'
+import { border, fontColor, zenmoneyGreenColor, zenmoneyRedColor } from './designSystem'
+import { ScrapeError } from './ScrapeError'
+import { DayTransactions } from './Transaction'
 
-const SidePane = ({children}) => <div style={{borderLeft: border, overflowY: "auto"}}>{children}</div>;
+const SidePane = ({ children }) => <div style={{borderLeft: border, overflowY: "auto"}}>{children}</div>;
 
 class AccountsPane extends React.PureComponent {
     render() {
@@ -143,9 +143,7 @@ export class UI extends React.PureComponent {
                         </React.Fragment>
                     )}
                     {scrapeState === ":scrape-state/success" && !scrapeResult.pluginDataChange && <div>pluginData: no changes</div>}
-                    {scrapeState === ":scrape-state/error" && <div>Scrape error:
-                        <BreakingPre>{scrapeError.message || "n/a"}</BreakingPre>
-                    </div>}
+                    {scrapeState === ":scrape-state/error" && <ScrapeError error={scrapeError} />}
                     {workflowState === ":workflow-state/complete" && <div><br />Cheers!</div>}
                 </SidePane>
                 {scrapeState === ":scrape-state/success" && (

@@ -194,6 +194,7 @@ function cleanLocationPoint (text: string, hasLocation: boolean): string {
   // Cut off bracketed details
   result = result.split('(')[0]
 
+
   const markers = ['ALMATY', 'BAITEREK', 'CHUNJA', 'SHANGHAI', 'MINSK', 'MINSKIY R-N', 'STOCKHOLM', 'TASHKENT', 'TOSHKENT', 'YUNUSOBOD', 'KZKZ', 'KZ', 'NL', 'GB', 'UZ', 'PL', 'SE']
   for (const marker of markers) {
     result = result.replace(new RegExp(`\\b${marker}\\b`, 'ig'), '')

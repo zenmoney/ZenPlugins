@@ -241,3 +241,35 @@ it.each([
     account ?? defaultAccount
   )).toEqual(transaction)
 })
+
+it.each([
+  [
+    {
+      hold: false,
+      date: '2025-07-06T00:00:00.000',
+      originalAmount: null,
+      amount: '+ 0,00 ',
+      description: 'YANDEX.GO',
+      statementUid: 'ba0da886-9d90-47e7-a7dd-c5e54061da63',
+      originString: '06.07.25 + 0,00 ₸ Покупка YANDEX.GO\n'
+    },
+    null,
+    null
+  ]
+])('skips specific transactions', (rawTransaction: StatementTransaction, transaction: unknown, account: ConvertedAccount | null) => {
+  const defaultAccount: ConvertedAccount = {
+    date: new Date(),
+    account: {
+      balance: 80995.97,
+      id: 'KZ11111',
+      instrument: 'KZT',
+      title: 'KASPI GOLD *0111',
+      syncIds: ['KZ11111'],
+      type: AccountType.ccard
+    }
+  }
+  expect(convertPdfStatementTransaction(
+    rawTransaction,
+    account ?? defaultAccount
+  )).toEqual(transaction)
+})

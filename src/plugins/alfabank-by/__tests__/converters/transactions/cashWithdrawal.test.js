@@ -132,6 +132,94 @@ describe('convertTransaction', () => {
         merchant: null,
         comment: null
       }
+    ],
+    [
+      {
+        id: '5070763488046369',
+        title: 'ATMBVB BT01 KUIBYSHEVA',
+        amount: {
+          amount: -410,
+          currIso: 'BYN'
+        },
+        date: '2025-11-05T18:27:54',
+        description: 'BREST BLR (6011)',
+        operationAmount: null,
+        cardMask: '4.6369',
+        status: 'normal',
+        number: 'BY73 ALFA 3014 7106 1900 9027 0000',
+        operationType: null
+      },
+      {
+        hold: false,
+        date: new Date('2025-11-05T18:27:54+03:00'),
+        movements: [
+          {
+            id: '5070763488046369',
+            account: { id: 'account' },
+            invoice: null,
+            sum: -410,
+            fee: 0
+          },
+          {
+            id: null,
+            account: {
+              type: 'cash',
+              instrument: 'BYN',
+              company: null,
+              syncIds: null
+            },
+            invoice: null,
+            sum: 410,
+            fee: 0
+          }
+        ],
+        merchant: null,
+        comment: null
+      }
+    ],
+    [
+      {
+        id: '3994853065045104',
+        title: 'PR-T DZERJINSKOGO, 3B',
+        amount: {
+          amount: 550,
+          currIso: 'BYN'
+        },
+        date: '2025-04-10T22:27:55',
+        description: 'MINSK BLR (6010)',
+        operationAmount: null,
+        cardMask: '4.5104',
+        status: 'normal',
+        number: 'BY73 ALFA 3014 7106 1900 9027 0000',
+        operationType: null
+      },
+      {
+        hold: false,
+        date: new Date('2025-04-10T22:27:55+03:00'),
+        movements: [
+          {
+            id: '3994853065045104',
+            account: { id: 'account' },
+            invoice: null,
+            sum: 550,
+            fee: 0
+          },
+          {
+            id: null,
+            account: {
+              type: 'cash',
+              instrument: 'BYN',
+              company: null,
+              syncIds: null
+            },
+            invoice: null,
+            sum: -550,
+            fee: 0
+          }
+        ],
+        merchant: null,
+        comment: null
+      }
     ]
   ])('converts cash withdrawal', (apiTransaction, transaction) => {
     expect(convertTransaction(apiTransaction, {

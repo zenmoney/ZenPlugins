@@ -164,7 +164,6 @@ async function init () {
       scrapeState: ':scrape-state/error',
       scrapeError: error
     }))
-    throw error
   }
 
   setState((state) => ({ ...state, workflowState: ':workflow-state/complete' }))

@@ -184,7 +184,9 @@ export function convertTransaction (apiTransaction, account) {
 function parseCashTransfer (transaction, apiTransaction, account, invoice) {
   if (![
     /ПОПОЛНЕНИЕ КАРТСЧЕТОВ ТЕРМИНАЛ/,
-    /Получение денег в банкомате/i
+    /Получение денег в банкомате/i,
+    /6011/,
+    /6010/
   ].some(regexp => regexp.test(apiTransaction.description)) && (!apiTransaction.title || ![
     /(?:^|\s)ATM(?:$|\s)/,
     /Снятие\s+наличных/i
@@ -325,5 +327,5 @@ function parsePayee (transaction, apiTransaction, account, invoice) {
 }
 
 function parseComment (transaction, apiTransaction) {
-  transaction.comment = apiTransaction.description || null
+  transaction.comment = apiTransaction.title || apiTransaction.description || null
 }
