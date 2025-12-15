@@ -16,6 +16,7 @@ const messageHandlers = {
     } catch (error) {
       reply({
         type: ':events/scrape-error',
+        payload: error
       })
     }
   },
