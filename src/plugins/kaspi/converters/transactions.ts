@@ -46,7 +46,7 @@ function parseDescription (text: string | null): string | null {
   return description
 }
 
-export function convertPdfStatementTransaction (rawTransaction: StatementTransaction, rawAccount: ConvertedAccount): ConvertedTransaction {
+export function convertPdfStatementTransaction (rawTransaction: StatementTransaction, rawAccount: ConvertedAccount): ConvertedTransaction | null {
   const invoice = rawTransaction.originalAmount !== null
     ? {
         sum: parseFloat(rawTransaction.originalAmount.replace(',', '.').replace(/[^\d.-]/g, '')),
@@ -54,6 +54,9 @@ export function convertPdfStatementTransaction (rawTransaction: StatementTransac
       }
     : null
   const sum = parseFloat(rawTransaction.amount.replace(',', '.').replace(/[\s+$]/g, ''))
+  if (sum === 0 && invoice == null) {
+    return null
+  }
   const movements: [Movement] = [
     {
       id: null,

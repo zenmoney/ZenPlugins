@@ -49,7 +49,7 @@ export function convertTransaction (accountTransaction: AccountTransaction, acco
       {
         id: accountTransaction.id,
         account: { id: account.id },
-        sum: accountTransaction.amount,
+        sum: invoice?.instrument !== account.currency ? null : accountTransaction.amount,
         fee: 0,
         invoice: invoice?.instrument === account.currency ? null : invoice
       }
