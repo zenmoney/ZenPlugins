@@ -1,5 +1,6 @@
 import { AccountOrCard, AccountType, ExtendedTransaction } from '../../types/zenmoney'
 import { AccountInfo, AccountTransaction } from './types'
+import { toISODateString, dateInTimezone } from '../../common/dateUtils'
 
 export function convertAccounts (apiAccounts: AccountInfo[]): AccountOrCard[] {
   return apiAccounts.map(apiAccount => {
@@ -36,12 +37,6 @@ export function convertTransaction (accountTransaction: AccountTransaction, acco
     }
   }
 
-  const merchant = {
-    fullTitle: accountTransaction.address,
-    mcc: null,
-    location: null
-  }
-
   const transaction: ExtendedTransaction = {
     hold,
     date: accountTransaction.date,
@@ -54,18 +49,21 @@ export function convertTransaction (accountTransaction: AccountTransaction, acco
         invoice: invoice?.instrument === account.currency ? null : invoice
       }
     ],
-    merchant,
+    merchant: null,
     comment: accountTransaction.description !== '' && (match == null) ? accountTransaction.description : null
   };
   [
-    parseCashTransfer
+    parseCashTransfer,
+    parseInnerTransfer,
+    parsePayeeAndComment
   ].some(parser => parser(transaction, accountTransaction, account, invoice))
   return transaction
 }
 
 function parseCashTransfer (transaction: ExtendedTransaction, accountTransaction: AccountTransaction, account: AccountInfo, invoice: { sum: number, instrument: string }): boolean {
   if ([
-    /ATM/
+    /ATM/,
+    /Gotovinska/i
   ].some(regexp => regexp.test(accountTransaction.address))) {
     transaction.movements.push({
       id: null,
@@ -79,7 +77,40 @@ function parseCashTransfer (transaction: ExtendedTransaction, accountTransaction
       sum: -invoice.sum,
       fee: 0
     })
+  }
+  return false
+}
+
+function parseInnerTransfer (transaction: ExtendedTransaction, accountTransaction: AccountTransaction, account: AccountInfo, invoice: { sum: number, instrument: string }): boolean {
+  if ([
+    /Interni transfer/i,
+    /Kupovina deviza/i
+  ].some(regex => regex.test(accountTransaction.address))) {
+    const idCurrency = accountTransaction.id.split('%')[0]
+    transaction.groupKeys = [
+      `${toISODateString(dateInTimezone(transaction.date, 180)).slice(0, 10)}_${invoice.instrument}_${Math.abs(invoice.sum)}`,
+      `${idCurrency}`
+    ]
+    transaction.merchant = null
+    transaction.comment = accountTransaction.address
+
     return true
+  }
+  return false
+}
+
+function parsePayeeAndComment (transaction: ExtendedTransaction, accountTransaction: AccountTransaction, account: AccountInfo, invoice: { sum: number, instrument: string }): boolean {
+  transaction.merchant = {
+    fullTitle: accountTransaction.address,
+    mcc: null,
+    location: null
+  }
+  if ([
+    /Uplata/i,
+    /Gotovinska/i
+  ].some(regex => regex.test(accountTransaction.address))) {
+    transaction.merchant = null
+    transaction.comment = accountTransaction.address
   }
   return false
 }
