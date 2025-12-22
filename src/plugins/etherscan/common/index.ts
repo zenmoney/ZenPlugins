@@ -49,7 +49,7 @@ async function fetchInner<T extends Response> (
   }
 
   if (data.message === 'NOTOK') {
-    if (_.get(data, 'result', '') === 'Max rate limit reached') {
+    if (/limit reached/.test(_.get(data, 'result', ''))) {
       throw new TemporaryError('Etherscan RPS reached')
     }
   }
