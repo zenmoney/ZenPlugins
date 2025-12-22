@@ -2,8 +2,10 @@ import { stringify } from 'querystring'
 import { fetchJson } from '../../../common/network'
 import { delay } from '../../../common/utils'
 import { Preferences } from '../types'
+import _ from 'lodash'
 
 import type { BlockNoResponse, Response } from './types'
+import { TemporaryError } from '../../../errors'
 
 const baseUrl = 'https://api.etherscan.io/v2/api'
 
@@ -17,12 +19,39 @@ async function fetchInner<T extends Response> (
     ...params
   })
 
-  const response = await fetchJson(`${baseUrl}?${query}`)
+  const response = await fetchJson(`${baseUrl}?${query}`, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json, text/plain, */*'
+    },
+    sanitizeRequestLog: {
+      url: {
+        query: {
+          apiKey: true,
+          apikey: true
+        }
+      }
+    },
+    sanitizeResponseLog: {
+      url: {
+        query: {
+          apiKey: true,
+          apikey: true
+        }
+      }
+    }
+  })
 
   const data = response.body as T
 
   if (data.message === 'OK') {
     return data
+  }
+
+  if (data.message === 'NOTOK') {
+    if (_.get(data, 'result', '') === 'Max rate limit reached') {
+      throw new TemporaryError('Etherscan RPS reached')
+    }
   }
 
   // No transactions found is also a valid response
