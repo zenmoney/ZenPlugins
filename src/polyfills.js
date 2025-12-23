@@ -12,12 +12,16 @@ require('./polyfills/formData')
 ZenMoney.Blob = global.Blob
 ZenMoney.FormData = global.FormData
 global.fetch = null
-// eslint-disable-next-line import/no-webpack-loader-syntax
-global.fetch = require('imports-loader?type=commonjs&imports=single|xhrViaZenApi|{default:XMLHttpRequest}=XMLHttpRequest' + '&' +
-  'additionalCode=var%20self%20=%20global;%0A' +
-  'var%20Blob%20=%20ZenMoney.Blob;%0A' +
-  'var%20FormData%20=%20ZenMoney.FormData;' + '!' +
-  'exports-loader?type=commonjs&exports=single|self.fetch!whatwg-fetch')
+if (ZenMoney.fetch) {
+  require('./polyfills/fetch')
+} else {
+  // eslint-disable-next-line import/no-webpack-loader-syntax
+  global.fetch = require('imports-loader?type=commonjs&imports=single|xhrViaZenApi|{default:XMLHttpRequest}=XMLHttpRequest' + '&' +
+    'additionalCode=var%20self%20=%20global;%0A' +
+    'var%20Blob%20=%20ZenMoney.Blob;%0A' +
+    'var%20FormData%20=%20ZenMoney.FormData;' + '!' +
+    'exports-loader?type=commonjs&exports=single|self.fetch!whatwg-fetch')
+}
 global.Blob = null
 global.FormData = null
 delete global.Blob
@@ -90,9 +94,8 @@ if (!('clearCookies' in ZenMoney)) {
   }
 }
 
-if (!ZenMoney._isPickDocumentsPolyfilled) {
+if (!ZenMoney.fetch) {
   const pickDocuments = ZenMoney.pickDocuments
-  ZenMoney._isPickDocumentsPolyfilled = true
   ZenMoney.pickDocuments = async (mimeTypes, allowMultipleSelection) => {
     return new Promise((resolve, reject) => {
       if (typeof pickDocuments !== 'function') {
@@ -103,6 +106,22 @@ if (!ZenMoney._isPickDocumentsPolyfilled) {
           reject(err)
         } else {
           resolve(blobs)
+        }
+      })
+    })
+  }
+
+  const takePicture = ZenMoney.takePicture
+  ZenMoney.takePicture = async (format) => {
+    return new Promise((resolve, reject) => {
+      if (typeof takePicture !== 'function') {
+        return reject(new IncompatibleVersionError())
+      }
+      takePicture.call(ZenMoney, format, (err, blob) => {
+        if (err) {
+          reject(err)
+        } else {
+          resolve(blob)
         }
       })
     })
