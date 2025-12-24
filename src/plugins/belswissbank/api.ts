@@ -20,11 +20,16 @@ interface LoginResponse {
   }
 }
 
-function raiseUnhandledResponse (response: FetchResponse):never {
-  const header: string = _.get(response.body, 'header', '')
-  const message: string = _.get(response.body, 'message') || ''
-  const code: string = _.get(response.body, 'code')
-  throw new Error(`${response.status} ${code}: ${header}\n${message}`.trim())
+function raiseUnhandledResponse (response: FetchResponse): never {
+  const header = _.get(response.body, 'header', '') as string
+  const message = _.get(response.body, 'message') as string
+  const code = _.get(response.body, 'code') as string
+  const rest = _.omit(response.body as {}, 'header', 'message', 'code')
+  throw new Error([
+    `${response.status} ${code}: ${header}`,
+    message,
+    Object.keys(rest).length > 0 ? JSON.stringify(rest) : ''
+  ].filter(Boolean).join('\n'))
 }
 
 export class Api {
