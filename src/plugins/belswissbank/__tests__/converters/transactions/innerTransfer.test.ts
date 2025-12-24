@@ -50,6 +50,6 @@ describe('convertTransactions', () => {
       ]
     ]
   ])('converts inner transfer', (apiTransactions, transactions) => {
-    expect(convertTransactions(apiTransactions)).toEqual(transactions)
+    expect(Array.from(convertTransactions(apiTransactions))).toEqual(transactions)
   })
 })
