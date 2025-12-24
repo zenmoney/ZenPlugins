@@ -75,7 +75,7 @@ export class Api {
           pageSize,
           showConsumptions: false,
           showEnrollments: false,
-          showTransfers: true
+          showTransfers: false
         }
       })
 
