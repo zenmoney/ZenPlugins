@@ -148,8 +148,10 @@ export async function openWebViewAndInterceptRequest ({ url, headers, log, sanit
   console.assert(typeof url === 'string', 'url must be string')
   console.assert(typeof intercept === 'function', 'intercept must be a function (request) => result')
   if (ZenMoney && ZenMoney.openWebView) {
+    let close = null
     return new Promise((resolve, reject) => {
       ZenMoney.openWebView(url, headers, (request, callback) => {
+        close = callback
         const id = generateRequestLogId()
         const shouldLog = log !== false
         shouldLog && console.debug('request', sanitizeUrlContainingObject({
@@ -159,7 +161,13 @@ export async function openWebViewAndInterceptRequest ({ url, headers, log, sanit
           headers: request.headers || {},
           ...request.body && { body: request.body }
         }, sanitizeRequestLog || false))
-        const interceptor = {}
+        const interceptor = {
+          close: (error, result) => {
+            if (close) {
+              close(error, result)
+            }
+          }
+        }
         try {
           const result = intercept.call(interceptor, request)
           if (result) {
@@ -171,6 +179,7 @@ export async function openWebViewAndInterceptRequest ({ url, headers, log, sanit
           return RequestInterceptMode.BLOCK
         }
       }, (error, result) => {
+        close = null
         if (error) {
           reject(error)
         } else {
