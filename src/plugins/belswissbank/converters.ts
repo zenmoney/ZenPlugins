@@ -204,6 +204,7 @@ export function convertAccounts (apiAccounts: unknown[]): ConvertResult[] {
       }
     })
 }
+
 /*
   {
             "id": 113710793,
@@ -258,10 +259,12 @@ export function convertTransactions (apiTransactions: unknown[]): Transaction[] 
     })
 }
 
+const TIMEZONE = 3
+
 export function parseDate (dateString: string): Date {
   const [datePart, timePart] = dateString.split(' ')
   const [day, month, year] = datePart.split('/').map(Number)
   const [hours, minutes, seconds] = timePart.split(':').map(Number)
 
-  return new Date(year, month - 1, day, hours, minutes, seconds)
+  return new Date(Date.UTC(year, month - 1, day, hours-TIMEZONE, minutes, seconds))
 }
