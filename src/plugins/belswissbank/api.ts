@@ -247,16 +247,16 @@ export class Api {
         ...(options?.headers as object ?? {})
       },
       body: options.body,
-      sanitizeRequestLog: _.defaultsDeep({}, options.sanitizeRequestLog ?? {
+      sanitizeRequestLog: _.defaultsDeep({
         headers: {
           Authorization: true
         }
-      }),
-      sanitizeResponseLog: _.defaultsDeep({}, options.sanitizeResponseLog ?? {
+      }, options.sanitizeRequestLog),
+      sanitizeResponseLog: _.defaultsDeep({
         headers: {
           'set-cookie': true
         }
-      }),
+      }, options.sanitizeResponseLog),
       parse: options.parse ?? JSON.parse,
       stringify: options.stringify ?? JSON.stringify
     })
