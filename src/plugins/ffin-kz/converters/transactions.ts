@@ -37,6 +37,10 @@ function parseTransactionType (text: string): string | null {
 function cleanMerchantTitle (text: string | null): string | null {
   if (text == null || text.trim() === '') return null
 
+  // Отбрасываем "Банк ожидает подтверждения..." хвосты
+  const awaitingTail = /\.\s*банк\s+ожидает\s+подтверждения.*$/i
+  text = text.replace(awaitingTail, '')
+
   // Удаляем сообщения типа "Другое Плательщик:... Получатель:... Назначение: ..."
   if (/^Другое\s+Плательщик:.*Получатель:.*Назначение:/i.test(text)) {
     return null
@@ -137,7 +141,12 @@ export function detectCityCountryLocation (text: string | null): { city?: string
   const countryByCode: Record<string, string> = {
     KZ: 'Kazakhstan',
     CN: 'China',
-    BY: 'Belarus'
+    BY: 'Belarus',
+    GB: 'United Kingdom',
+    PL: 'Poland',
+    UZ: 'Uzbekistan',
+    NL: 'Netherlands',
+    SE: 'Sweden'
   }
 
   const cityMatchers: Array<{ marker: RegExp, city: string, country?: string }> = [
@@ -145,7 +154,11 @@ export function detectCityCountryLocation (text: string | null): { city?: string
     { marker: /BAITEREK/, city: 'Baiterek', country: 'Kazakhstan' },
     { marker: /CHUNJA/, city: 'Chunja', country: 'Kazakhstan' },
     { marker: /SHANGHAI/, city: 'Shanghai', country: 'China' },
-    { marker: /MINSK/, city: 'Minsk', country: 'Belarus' }
+    { marker: /MINSK(?:IY)?/, city: 'Minsk', country: 'Belarus' },
+    { marker: /STOCKHOLM/, city: 'Stockholm', country: 'Sweden' },
+    { marker: /TAS?HKENT/, city: 'Tashkent', country: 'Uzbekistan' },
+    { marker: /TOSHKENT/, city: 'Tashkent', country: 'Uzbekistan' },
+    { marker: /YUNUSOBOD/, city: 'Tashkent', country: 'Uzbekistan' }
   ]
 
   let country: string | null = null
@@ -181,13 +194,13 @@ function cleanLocationPoint (text: string, hasLocation: boolean): string {
   // Cut off bracketed details
   result = result.split('(')[0]
 
-  const markers = ['ALMATY', 'BAITEREK', 'CHUNJA', 'SHANGHAI', 'MINSK', 'KZKZ']
+  const markers = ['ALMATY', 'BAITEREK', 'CHUNJA', 'SHANGHAI', 'MINSK', 'MINSKIY R-N', 'STOCKHOLM', 'TASHKENT', 'TOSHKENT', 'YUNUSOBOD', 'KZKZ', 'KZ', 'NL', 'GB', 'UZ', 'PL', 'SE']
   for (const marker of markers) {
     result = result.replace(new RegExp(`\\b${marker}\\b`, 'ig'), '')
   }
   if (hasLocation) {
     // remove trailing country codes only when separated by space
-    result = result.replace(/\s+(KZ|CN|BY)\s*$/ig, '')
+    result = result.replace(/\s+(KZ|CN|BY|SE|PL|NL|GB|UZ)\s*$/ig, '')
     result = result.replace(/\bG\.?\b/ig, '')
   }
 

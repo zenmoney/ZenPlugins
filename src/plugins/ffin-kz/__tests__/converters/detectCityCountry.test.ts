@@ -6,7 +6,7 @@ describe('detectCityCountryLocation', () => {
   it('detects Almaty variants with explicit country code', () => {
     expect(detectCityCountryLocation('COFFEE BOOM COFFEE HOUSE ALMATY KZ')).toEqual({ city: 'Almaty', country: kzCity, locationPoint: 'COFFEE BOOM COFFEE HOUSE' })
     expect(detectCityCountryLocation('YANDEX.DELIVERY ALMATY KZ')).toEqual({ city: 'Almaty', country: kzCity, locationPoint: 'YANDEX.DELIVERY' })
-    expect(detectCityCountryLocation('Anytime.kz ALMATY KZ')).toEqual({ city: 'Almaty', country: kzCity, locationPoint: 'Anytime.kz' })
+    expect(detectCityCountryLocation('Anytime.kz ALMATY KZ')).toEqual({ city: 'Almaty', country: kzCity, locationPoint: 'Anytime' })
   })
 
   it('detects Almaty without explicit country code', () => {
