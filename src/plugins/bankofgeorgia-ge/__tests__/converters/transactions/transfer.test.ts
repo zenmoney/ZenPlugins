@@ -614,6 +614,166 @@ describe('convertTransaction', () => {
         merchant: null,
         comment: 'Private Transfer'
       }
+    ],
+    [
+      {
+        accountKey: '11579434338',
+        entryId: '106768577471',
+        docKey: 30607876431,
+        clientKey: '940304410',
+        language: 'EN',
+        sourceEntryGroup: 'OUT_INSTANT_TRANSFER',
+        nomination: ' Payment - Amount GEL400.00; private transfer',
+        postDate: '2025-11-28T00:00:00',
+        operationDate: '2025-11-28T00:00:00',
+        amount: '400.0',
+        oppositeAmount: '-400.0',
+        ccy: 'GEL',
+        canCopy: 'N',
+        status: 'P',
+        docNomination: 'private transfer',
+        beneficiary: 'NIKOLAY NIKOLAEV',
+        nominationOriginal: 'private transfer',
+        prodGroup: 'DPM',
+        entryType: 'NST',
+        printSwift: 'N',
+        transferBankBic: 'JSCRGE22',
+        isInternalOperation: 'N',
+        entryGroupNameId: '6',
+        groupImageId: '35623084',
+        groupImageIdSolo: '3127030271',
+        groupImageIdWm: '3127057179',
+        hasTransferBack: 'N',
+        printFormType: 'OUT_INSTANT_TRANSFER',
+        printForm: 'Y',
+        entryGroupDValue: 'text.entry.group.name.Transfer',
+        operationTitle: 'NIKOLAY NIKOLAEV',
+        sort: ['1764273600000', '30607876431', '106768577471'],
+        isStatementAllowed: true,
+        trIdentifierForPostBnpl: '30607876431',
+        isTransactionForPostBnpl: 'N',
+        pfmId: '106768577471',
+        pfmCatId: '620',
+        pfmCatName: 'text.pfm.child.category.transfer.out',
+        pfmParentCatId: '590'
+      },
+      accountGel,
+      {
+        date: new Date('2025-11-28T00:00:00'),
+        hold: false,
+        merchant: {
+          city: null,
+          country: null,
+          location: null,
+          mcc: null,
+          title: 'NIKOLAY NIKOLAEV'
+        },
+        movements: [
+          {
+            account: { id: '1337' },
+            fee: 0,
+            id: '106768577471',
+            invoice: null,
+            sum: -400
+          },
+          {
+            account: {
+              company: null,
+              instrument: 'GEL',
+              syncIds: null,
+              type: 'ccard'
+            },
+            fee: 0,
+            id: null,
+            invoice: null,
+            sum: 400
+          }
+        ],
+        comment: 'private transfer',
+        groupKeys: [
+          '30607876431'
+        ]
+      }
+    ],
+    [
+      {
+        accountKey: '11600722902',
+        entryId: '107594168351',
+        docKey: 30848108623,
+        clientKey: '61554272',
+        language: 'EN',
+        sourceEntryGroup: 'IN_INSTANT_TRANSFER',
+        nomination: ' Income - Amount GEL46.00; private transfer',
+        postDate: '2025-12-11T00:00:00',
+        operationDate: '2025-12-11T00:00:00',
+        amount: '-46.0',
+        oppositeAmount: '46.0',
+        ccy: 'GEL',
+        canCopy: 'N',
+        status: 'P',
+        docNomination: 'private transfer',
+        beneficiary: 'NIKOLAY NIKOLAEV',
+        nominationOriginal: 'private transfer',
+        prodGroup: 'DPM',
+        entryType: 'NST',
+        printSwift: 'N',
+        transferBankBic: 'JSCRGE22',
+        isInternalOperation: 'N',
+        entryGroupNameId: '5',
+        groupImageId: '35623078',
+        groupImageIdSolo: '3127030256',
+        groupImageIdWm: '3127057168',
+        hasTransferBack: 'N',
+        printFormType: 'IN_INSTANT_TRANSFER',
+        printForm: 'Y',
+        entryGroupDValue: 'text.entry.group.name.Income',
+        operationTitle: 'NIKOLAY NIKOLAEV',
+        sort: ['1765396800000', '30848108623', '107594168351'],
+        isStatementAllowed: true,
+        trIdentifierForPostBnpl: '30848108623',
+        isTransactionForPostBnpl: 'N',
+        pfmId: '107594168351',
+        pfmCatId: '920',
+        pfmCatName: 'text.pfm.child.category.other.income',
+        pfmParentCatId: '840'
+      },
+      accountGel,
+      {
+        date: new Date('2025-12-11T00:00:00.000'),
+        hold: false,
+        merchant: {
+          city: null,
+          country: null,
+          location: null,
+          mcc: null,
+          title: 'NIKOLAY NIKOLAEV'
+        },
+        movements: [
+          {
+            account: { id: '1337' },
+            fee: 0,
+            id: '107594168351',
+            invoice: null,
+            sum: 46
+          },
+          {
+            account: {
+              company: null,
+              instrument: 'GEL',
+              syncIds: null,
+              type: 'ccard'
+            },
+            fee: 0,
+            id: null,
+            invoice: null,
+            sum: -46
+          }
+        ],
+        comment: 'private transfer',
+        groupKeys: [
+          '30848108623'
+        ]
+      }
     ]
   ])('converts transfer', (apiTransaction, account, transaction) => {
     expect(convertTransaction(apiTransaction, account)).toEqual(transaction)
