@@ -58,8 +58,9 @@ export async function fetch (url, options = {}) {
 
   const _headers = response.headers
   const headers = _headers.entries
-    ? _.fromPairs([..._headers.entries()])
+    ? _.fromPairs([..._headers.entries()].map(([key, value]) => [key.toLowerCase(), value]))
     : _headers.map
+
   if (headers) {
     for (const key of [
       'entries',
