@@ -7,7 +7,7 @@ import type { BlockNoResponse, Response } from './types'
 
 const baseUrl = 'https://api.etherscan.io/v2/api'
 
-const MAX_RPS = 5
+const MAX_RPS = 3
 let activeList: Array<Promise<unknown>> = []
 
 async function fetchInner<T extends Response> (
