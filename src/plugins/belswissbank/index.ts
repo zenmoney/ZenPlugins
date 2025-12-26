@@ -32,10 +32,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({
     allAccounts.push(account)
 
     const apiTransactions = await api.fetchTransactions(product.id, fromDate, toDate ?? new Date())
-    const transactions = convertTransactions(apiTransactions)
-    if (transactions.length > 0) {
-      allTransactions.push(...transactions)
-    }
+    allTransactions.push(...convertTransactions(apiTransactions))
   }))
 
   return {

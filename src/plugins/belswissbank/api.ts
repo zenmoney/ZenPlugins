@@ -20,6 +20,18 @@ interface LoginResponse {
   }
 }
 
+function raiseUnhandledResponse (response: FetchResponse): never {
+  const header = _.get(response.body, 'header', '') as string
+  const message = _.get(response.body, 'message') as string
+  const code = _.get(response.body, 'code') as string
+  const rest = _.omit(response.body as {}, 'header', 'message', 'code')
+  throw new Error([
+    `${response.status} ${code}: ${header}`,
+    message,
+    Object.keys(rest).length > 0 ? JSON.stringify(rest) : ''
+  ].filter(Boolean).join('\n'))
+}
+
 export class Api {
   private readonly preferences: Preferences
   private readonly device: Device
@@ -68,7 +80,7 @@ export class Api {
           pageSize,
           showConsumptions: false,
           showEnrollments: false,
-          showTransfers: true
+          showTransfers: false
         }
       })
 
@@ -121,7 +133,8 @@ export class Api {
           userDeviceId: true
         }
       },
-      parse: () => null
+      parse: () => null,
+      isUnhandled: () => false
     })
     if (response.status !== 200) {
       throw new Error(`Unexpected confirm SMS code response status: ${response.status}`)
@@ -182,11 +195,12 @@ export class Api {
             widgetToken: true
           }
         }
-      }
+      },
+      isUnhandled: () => false
     })
     if (response.status === 400) {
       if (_.get(response.body, 'code') !== 'MAS-0007') {
-        throw new Error('Unexpected login response. Bank Message: ' + String(_.get(response.body, 'message', 'no message')))
+        raiseUnhandledResponse(response)
       }
 
       return {
@@ -204,8 +218,9 @@ export class Api {
           widgetToken: _.get(response.body, 'widgetTokenContainer.widgetToken')
         }
       }
+    } else {
+      raiseUnhandledResponse(response)
     }
-    throw new Error(`Unexpected login response status: ${response.status}`)
   }
 
   private async fetchSalt (): Promise<string> {
@@ -220,7 +235,11 @@ export class Api {
     return response.body as string
   }
 
-  private async fetchApi (url: string, options: FetchOptions): Promise<FetchResponse> {
+  private async fetchApi (url: string, {
+    isUnhandled = (response) => response.status !== 200, ...options
+  }: FetchOptions & {
+    isUnhandled?: (res: FetchResponse) => boolean
+  }): Promise<FetchResponse> {
     const response = await fetch(BASE_URL + url, {
       method: options.method,
       headers: {
@@ -228,25 +247,22 @@ export class Api {
         ...(options?.headers as object ?? {})
       },
       body: options.body,
-      sanitizeRequestLog: _.defaultsDeep({}, options.sanitizeRequestLog ?? {
+      sanitizeRequestLog: _.defaultsDeep({
         headers: {
           Authorization: true
         }
-      }),
-      sanitizeResponseLog: _.defaultsDeep({}, options.sanitizeResponseLog ?? {
+      }, options.sanitizeRequestLog),
+      sanitizeResponseLog: _.defaultsDeep({
         headers: {
           'set-cookie': true
         }
-      }),
+      }, options.sanitizeResponseLog),
       parse: options.parse ?? JSON.parse,
       stringify: options.stringify ?? JSON.stringify
     })
 
-    if (response.status === 401) {
-      const header = _.get(response.body, 'header', '') as string
-      const message = _.get(response.body, 'message', '') as string
-      const code = _.get(response.body, 'code') as string
-      throw new Error(`${code}: ${header}. ${message}`.trim())
+    if (isUnhandled(response)) {
+      raiseUnhandledResponse(response)
     }
 
     return response

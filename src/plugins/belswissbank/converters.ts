@@ -204,6 +204,7 @@ export function convertAccounts (apiAccounts: unknown[]): ConvertResult[] {
       }
     })
 }
+
 /*
   {
             "id": 113710793,
@@ -228,41 +229,50 @@ export function convertAccounts (apiAccounts: unknown[]): ConvertResult[] {
             "favoriteId": null
         },
   */
-export function convertTransactions (apiTransactions: unknown[]): Transaction[] {
-  return apiTransactions
-    .map(transaction => {
-      try {
-        return {
-          hold: false,
-          date: parseDate(_.get(transaction, 'paymentDate')),
-          movements: [
-            {
-              id: String(_.get(transaction, 'id')),
-              account: { id: String(_.get(transaction, 'cardId')) },
-              sum: _.get(transaction, 'summa'),
-              fee: 0,
-              invoice: null
-            }
-          ],
-          merchant: {
-            fullTitle: _.get(transaction, 'target'),
-            mcc: null,
-            location: null
-          },
-          comment: _.get(transaction, 'commentText')
-        }
-      } catch (e) {
-        console.error(e, transaction)
-        throw new Error('Failed to convert transaction')
+export function * convertTransactions (apiTransactions: unknown[]): Generator<Transaction> {
+  for (const transaction of apiTransactions) {
+    try {
+      const summa = _.get(transaction, 'summa') as number
+      if (summa === 0) {
+        // e.g. preauthorization
+        continue
       }
-    })
+      const isEnrollment = _.get(transaction, 'isEnrollment') as boolean
+      // isEnrollment: false = outcome (expense), sum should be negative
+      // isEnrollment: true = income, sum should be positive
+      const sum = isEnrollment ? summa : -summa
+      yield {
+        hold: false,
+        date: parseDate(_.get(transaction, 'paymentDate')),
+        movements: [
+          {
+            id: String(_.get(transaction, 'id')),
+            account: { id: String(_.get(transaction, 'cardId')) },
+            sum,
+            fee: 0,
+            invoice: null
+          }
+        ],
+        merchant: {
+          fullTitle: _.get(transaction, 'target'),
+          mcc: null,
+          location: null
+        },
+        comment: _.get(transaction, 'commentText')
+      }
+    } catch (e) {
+      console.error(e, transaction)
+      throw new Error('Failed to convert transaction')
+    }
+  }
 }
 
-function parseDate (dateString: string): Date {
-  // Parse format "05/09/2025 20:34:15" -> MM/DD/YYYY HH:mm:ss
+const TIMEZONE = 3
+
+export function parseDate (dateString: string): Date {
   const [datePart, timePart] = dateString.split(' ')
   const [day, month, year] = datePart.split('/').map(Number)
   const [hours, minutes, seconds] = timePart.split(':').map(Number)
 
-  return new Date(year, month - 1, day, hours, minutes, seconds)
+  return new Date(Date.UTC(year, month - 1, day, hours - TIMEZONE, minutes, seconds))
 }
