@@ -1,0 +1,166 @@
+
+C u r r e n t   A c c o u n t   S t a t e m e n t
+d a t e :   0 9 . 1 2 . 2 0 2 5   1 7 : 4 6 : 2 1
+No   K Z 2 3 9 6 5 0 2 F 0 0 1 8 7 0 5 2 0 4 ,   ( K Z T )
+C u s t o m e r :   T E S T   U S E R   I I N :   9 9 9 9 9 9 9 9 9 9 9 9
+P e r i o d   o f   s t a t e m e n t :   0 9 . 1 1 . 2 0 2 5   -   0 9 . 1 2 . 2 0 2 5
+T o t a l   f o r   t h e   p e r i o d :
+O p e n i n g   b a l a n c e R e c e i p t s E x p e n s e s A v a i l a b l e   b a l a n c e A v a i l a b l e   a m o u n t
+5 6 5   9 4 6 , 5 3 4   6 1 4   4 5 0 , 7 4 5   1 8 0   3 9 6 , 8 1 0 , 4 6 0 , 4 6
+D a t e   o f   t r a n s a c t i o n D e s c r i p t i o n   o f   t r a n s a c t i o n R e c e i p t s E x p e n s e s
+1 0 . 1 1 . 2 0 2 5
+F u l l   n a m e / N a m e :   T E S T   U S E R ,   I I N :
+9 9 9 9 9 9 9 9 9 9 9 9 ,   B a n k :   I R T Y K Z K A   ( А О   " F o r t e B a n k " ) ,   C o r r e s p o n d e n t
+A c c o u n t :   K Z 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9   П е р е в о д   с о б с т в е н н ы х   с р е д с т в
+( К Н П   3 4 2 )
+- 1 0 0   0 0 0 , 0 0
+1 0 . 1 1 . 2 0 2 5
+F u l l   n a m e / N a m e :   T E S T   U S E R ,   I I N :
+9 9 9 9 9 9 9 9 9 9 9 9 ,   B a n k :   I R T Y K Z K A   ( А О   " F o r t e B a n k " ) ,   C o r r e s p o n d e n t
+A c c o u n t :   K Z 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9   П е р е в о д   с о б с т в е н н ы х   с р е д с т в
+( К Н П   3 4 2 )
+1   4 0 0   0 0 0 , 0 0 -
+1 1 . 1 1 . 2 0 2 5
+F u l l   n a m e / N a m e :   ,   I I N :   9 9 9 9 9 9 9 9 9 9 9 9 ,   B a n k :   I R T Y K Z K A   ( А О
+" F o r t e B a n k " ) ,   C o r r e s p o n d e n t   A c c o u n t :   K Z 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9
+О б е с п е ч е н и е   з а я в к и   п о   F o r t e F o r e x
+- 1   0 7 8   3 0 0 , 0 0
+1 1 . 1 1 . 2 0 2 5
+F u l l   n a m e / N a m e :   ,   I I N :   9 9 9 9 9 9 9 9 9 9 9 9 ,   B a n k :   I R T Y K Z K A   ( А О
+" F o r t e B a n k " ) ,   C o r r e s p o n d e n t   A c c o u n t :   K Z 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9
+К о м и с с и я   п о   с д е л к е   F o r t e F o r e x
+- 1   0 7 8 , 3 0
+1 2 . 1 1 . 2 0 2 5
+F u l l   n a m e / N a m e :   T E S T   U S E R ,   I I N :
+9 9 9 9 9 9 9 9 9 9 9 9 ,   B a n k :   I R T Y K Z K A   ( А О   " F o r t e B a n k " ) ,   C o r r e s p o n d e n t
+A c c o u n t :   K Z 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9   П е р е в о д   с о б с т в е н н ы х   с р е д с т в
+( К Н П   3 4 2 )
+- 1 0 0   0 0 0 , 0 0
+1 6 . 1 1 . 2 0 2 5
+F u l l   n a m e / N a m e :   T E S T   U S E R ,   I I N :
+9 9 9 9 9 9 9 9 9 9 9 9 ,   B a n k :   I R T Y K Z K A   ( А О   " F o r t e B a n k " ) ,   C o r r e s p o n d e n t
+A c c o u n t :   K Z 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9   П е р е в о д   с о б с т в е н н ы х   с р е д с т в
+( К Н П   3 4 2 )
+- 1 5 0   0 0 0 , 0 0
+1 7 . 1 1 . 2 0 2 5
+F u l l   n a m e / N a m e :   ,   I I N :   9 9 9 9 9 9 9 9 9 9 9 9 ,   B a n k :   I R T Y K Z K A   ( А О
+" F o r t e B a n k " ) ,   C o r r e s p o n d e n t   A c c o u n t :   K Z 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9
+К о м и с с и я   п о   с д е л к е   F o r t e F o r e x
+- 1 3 0 , 8 5
+1 7 . 1 1 . 2 0 2 5
+F u l l   n a m e / N a m e :   ,   I I N :   9 9 9 9 9 9 9 9 9 9 9 9 ,   B a n k :   I R T Y K Z K A   ( А О
+" F o r t e B a n k " ) ,   C o r r e s p o n d e n t   A c c o u n t :   K Z 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9
+О б е с п е ч е н и е   з а я в к и   п о   F o r t e F o r e x
+- 1 3 0   8 5 0 , 0 0
+1 9 . 1 1 . 2 0 2 5
+F u l l   n a m e / N a m e :   T E S T   U S E R ,   I I N :
+9 9 9 9 9 9 9 9 9 9 9 9 ,   B a n k :   I R T Y K Z K A   ( А О   " F o r t e B a n k " ) ,   C o r r e s p o n d e n t
+A c c o u n t :   K Z 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9   П е р е в о д   с о б с т в е н н ы х   с р е д с т в
+( К Н П   3 4 2 )
+- 1 0 0   0 0 0 , 0 0
+2 2 . 1 1 . 2 0 2 5
+F u l l   n a m e / N a m e :   T E S T   U S E R ,   I I N :
+9 9 9 9 9 9 9 9 9 9 9 9 ,   B a n k :   I R T Y K Z K A   ( А О   " F o r t e B a n k " ) ,   C o r r e s p o n d e n t
+A c c o u n t :   K Z 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9   П е р е в о д   с о б с т в е н н ы х   с р е д с т в
+( К Н П   3 4 2 )
+- 1 0 0   0 0 0 , 0 0
+2 6 . 1 1 . 2 0 2 5
+F u l l   n a m e / N a m e :   T E S T   U S E R ,   I I N :
+9 9 9 9 9 9 9 9 9 9 9 9 ,   B a n k :   I R T Y K Z K A   ( А О   " F o r t e B a n k " ) ,   C o r r e s p o n d e n t
+A c c o u n t :   K Z 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9   П е р е в о д   с о б с т в е н н ы х   с р е д с т в
+( К Н П   3 4 2 )
+1   0 0 0   0 0 0 , 0 0 -
+2 7 . 1 1 . 2 0 2 5
+F u l l   n a m e / N a m e :   ,   I I N :   9 9 9 9 9 9 9 9 9 9 9 9 ,   B a n k :   I R T Y K Z K A   ( А О
+" F o r t e B a n k " ) ,   C o r r e s p o n d e n t   A c c o u n t :   K Z 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9
+О б е с п е ч е н и е   з а я в к и   п о   F o r t e F o r e x
+- 3 9 7   5 0 0 , 0 0
+2 7 . 1 1 . 2 0 2 5
+F u l l   n a m e / N a m e :   ,   I I N :   9 9 9 9 9 9 9 9 9 9 9 9 ,   B a n k :   I R T Y K Z K A   ( А О
+" F o r t e B a n k " ) ,   C o r r e s p o n d e n t   A c c o u n t :   K Z 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9
+К о м и с с и я   п о   с д е л к е   F o r t e F o r e x
+- 3 9 7 , 5 0
+2 7 . 1 1 . 2 0 2 5
+F u l l   n a m e / N a m e :   ,   I I N :   9 9 9 9 9 9 9 9 9 9 9 9 ,   B a n k :   I R T Y K Z K A   ( А О
+" F o r t e B a n k " ) ,   C o r r e s p o n d e n t   A c c o u n t :   K Z 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9
+О б е с п е ч е н и е   з а я в к и   п о   F o r t e F o r e x
+- 6 0 5   6 6 2 , 2 0
+2 7 . 1 1 . 2 0 2 5
+F u l l   n a m e / N a m e :   ,   I I N :   9 9 9 9 9 9 9 9 9 9 9 9 ,   B a n k :   I R T Y K Z K A   ( А О
+" F o r t e B a n k " ) ,   C o r r e s p o n d e n t   A c c o u n t :   K Z 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9
+К о м и с с и я   п о   с д е л к е   F o r t e F o r e x
+- 6 0 5 , 6 6
+2 7 . 1 1 . 2 0 2 5
+F u l l   n a m e / N a m e :   ,   I I N :   9 9 9 9 9 9 9 9 9 9 9 9 ,   B a n k :   I R T Y K Z K A   ( А О
+" F o r t e B a n k " ) ,   C o r r e s p o n d e n t   A c c o u n t :   K Z 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9   С н я т и е
+з а я в к и   п о   F o r t e F o r e x
+6 0 5   6 6 2 , 2 0 -
+2 7 . 1 1 . 2 0 2 5
+F u l l   n a m e / N a m e :   ,   I I N :   9 9 9 9 9 9 9 9 9 9 9 9 ,   B a n k :   I R T Y K Z K A   ( А О
+" F o r t e B a n k " ) ,   C o r r e s p o n d e n t   A c c o u n t :   K Z 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9   О т м е н а
+к о м и с с и и   п о   с д е л к е   F o r t e F o r e x
+6 0 5 , 6 6 -
+2 7 . 1 1 . 2 0 2 5
+F u l l   n a m e / N a m e :   ,   I I N :   9 9 9 9 9 9 9 9 9 9 9 9 ,   B a n k :   I R T Y K Z K A   ( А О
+" F o r t e B a n k " ) ,   C o r r e s p o n d e n t   A c c o u n t :   K Z 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9
+К о м и с с и я   п о   с д е л к е   F o r t e F o r e x
+- 8 8 , 0 3
+2 7 . 1 1 . 2 0 2 5
+F u l l   n a m e / N a m e :   ,   I I N :   9 9 9 9 9 9 9 9 9 9 9 9 ,   B a n k :   I R T Y K Z K A   ( А О
+" F o r t e B a n k " ) ,   C o r r e s p o n d e n t   A c c o u n t :   K Z 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9
+О б е с п е ч е н и е   з а я в к и   п о   F o r t e F o r e x
+- 8 8   0 3 4 , 5 0
+2 9 . 1 1 . 2 0 2 5
+F u l l   n a m e / N a m e :   T E S T   U S E R ,   I I N :
+9 9 9 9 9 9 9 9 9 9 9 9 ,   B a n k :   I R T Y K Z K A   ( А О   " F o r t e B a n k " ) ,   C o r r e s p o n d e n t
+A c c o u n t :   K Z 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9   П е р е в о д   с о б с т в е н н ы х   с р е д с т в
+( К Н П   3 4 2 )
+- 1 1 9   0 0 0 , 0 0
+0 1 . 1 2 . 2 0 2 5
+F u l l   n a m e / N a m e :   T E S T   U S E R ,   I I N :
+9 9 9 9 9 9 9 9 9 9 9 9 ,   B a n k :   I R T Y K Z K A   ( А О   " F o r t e B a n k " ) ,   C o r r e s p o n d e n t
+A c c o u n t :   K Z 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9   П е р е в о д   с о б с т в е н н ы х   с р е д с т в
+( К Н П   3 4 2 )
+- 6 0 0   0 0 0 , 0 0
+0 1 . 1 2 . 2 0 2 5
+F u l l   n a m e / N a m e :   T E S T   U S E R ,   I I N :
+9 9 9 9 9 9 9 9 9 9 9 9 ,   B a n k :   I R T Y K Z K A   ( А О   " F o r t e B a n k " ) ,   C o r r e s p o n d e n t
+A c c o u n t :   K Z 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9   П е р е в о д   с о б с т в е н н ы х   с р е д с т в
+( К Н П   3 4 2 )
+5   8 6 0 , 0 0 -
+0 1 . 1 2 . 2 0 2 5
+F u l l   n a m e / N a m e :   Ф и л и а л   А О   " F o r t e B a n k "   в   г .   А л м а т ы ,   I I N :
+9 8 0 3 4 1 0 0 0 2 8 6 ,   B a n k :   I R T Y K Z K A   ( А О   " F o r t e B a n k " ) ,   C o r r e s p o n d e n t
+A c c o u n t :   K Z 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9   К о м и с с и я   з а   о п е р а ц и ю
+" М е ж д у н а р о д н ы й   п е р е в о д   п о   п о   п о р у ч е н и ю   к л и е н т а "   с о г л а с н о
+т а р и ф а м   б а н к а З а я в к а   н а   М П   No   1 1   о т   0 1 . 1 2 . 2 5   н а   с у м м у   6 0   0 0 0 . 0 0
+R U B ,   Н Д С   н е   о б л а г а е т с я .
+- 4   5 0 0 , 0 0
+0 2 . 1 2 . 2 0 2 5
+F u l l   n a m e / N a m e :   T E S T   U S E R ,   I I N :
+9 9 9 9 9 9 9 9 9 9 9 9 ,   B a n k :   I R T Y K Z K A   ( А О   " F o r t e B a n k " ) ,   C o r r e s p o n d e n t
+A c c o u n t :   K Z 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9   В ы п л а т а   в к л а д а   п о   Д о г о в о р у   No
+0 1 / А Д М / 2 0 2 5 / 2 0 5 2 9 4 N   о т   0 2 . 0 6 . 2 0 2 5 .   В к л а д ч и к :   T E S T
+U S E R
+1   6 0 2   3 2 2 , 8 8 -
+0 2 . 1 2 . 2 0 2 5
+F u l l   n a m e / N a m e :   ,   I I N :   9 9 9 9 9 9 9 9 9 9 9 9 ,   B a n k :   I R T Y K Z K A   ( А О
+" F o r t e B a n k " ) ,   C o r r e s p o n d e n t   A c c o u n t :   K Z 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9
+К о м и с с и я   п о   с д е л к е   F o r t e F o r e x
+- 1   4 4 0 , 6 7
+0 2 . 1 2 . 2 0 2 5
+F u l l   n a m e / N a m e :   ,   I I N :   9 9 9 9 9 9 9 9 9 9 9 9 ,   B a n k :   I R T Y K Z K A   ( А О
+" F o r t e B a n k " ) ,   C o r r e s p o n d e n t   A c c o u n t :   K Z 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9
+О б е с п е ч е н и е   з а я в к и   п о   F o r t e F o r e x
+- 1   4 4 0   6 6 8 , 1 0
+0 5 . 1 2 . 2 0 2 5
+F u l l   n a m e / N a m e :   T E S T   U S E R ,   I I N :
+9 9 9 9 9 9 9 9 9 9 9 9 ,   B a n k :   I R T Y K Z K A   ( А О   " F o r t e B a n k " ) ,   C o r r e s p o n d e n t
+A c c o u n t :   K Z 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9   П е р е в о д   с о б с т в е н н ы х   с р е д с т в
+( К Н П   3 4 2 )
+- 1 6 2   1 4 1 , 0 0
+A r r e s t s / c l a i m s :   0 , 0 0
+F o r m e d   v i a   t h e   O n l i n e   B a n k i n g
+A c c o u n t   d e t a i l s :   F o r t e B a n k   J S C ,   8 / 1 ,   D o s t y k   s t r . ,   A s t a n a   c i t y ,   Z 0 5 P 1 P 0 ,   R e p u b l i c   o f   K a z a k h s t a n ,   B I N :   9 9 0 7 4 0 0 0 0 6 8 3 ,   B I C :   I R T Y K Z K A .
+C o n t a c t   i n f o r m a t i o n :   C o n t a c t   C e n t e r :   + 7   ( 7 2 7 )   2 5 8   7 5   7 5 ,   + 7   ( 7 1 7 2 )   5 8   7 5   7 5 ,   8   8 0 0 0   8 0 0   8 1 9   o r   m o b .   7 5 7 5 ,   w e b s i t e :   w w w . f o r t e b a n k . c o m   e - m a i l :
+i n f o @ f o r t e b a n k . c o m
