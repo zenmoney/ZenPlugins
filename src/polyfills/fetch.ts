@@ -1,4 +1,4 @@
-import { getOptString } from '../types/get'
+import get, { getOptString } from '../types/get'
 import type { FetchFunc } from '../common/network'
 import { makeFetchCookie } from '../common/cookie/fetchCookie'
 import { Cookie, CookieJar } from 'tough-cookie'
@@ -23,17 +23,27 @@ const trustedCertificates: string[] = []
 global.Headers = ZenMoney.Headers
 global.fetch = function (url?: unknown, options?: unknown): any {
   options = typeof url !== 'string' && url != null ? url : options
+  const headers = new ZenMoney.Headers(get(options, 'headers') ?? {})
   options = {
     ...(options as Record<string, unknown> ?? {}),
+    headers,
     tls: {
       ca: [...trustedCertificates],
       pfx: Object.values(clientPfxs)
     }
   }
   url = getOptString(options, 'url') ?? url
+  const cookie = headers.get('cookie')
   const impl: Function = getOptString(options, 'cookies') === 'omit' || getOptString(options, 'credentials') === 'omit'
     ? _fetchWithoutCookies
-    : _fetchCookie
+    : cookie == null
+      ? _fetchCookie
+      : makeFetchCookie(_fetch, {
+        getCookieString: async () => '',
+        setCookie: async function (cookieString: string, currentUrl: string, opts: { ignoreError: boolean }) {
+          return await cookieJar.setCookie(cookieString, currentUrl, opts)
+        }
+      })
   return impl.call(this, url, options)
 }
 
@@ -123,6 +133,7 @@ async function setCookie (
 
 async function setClientPfx (pfx: Uint8Array | null, domain: string): Promise<void> {
   if (pfx == null) {
+    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
     delete clientPfxs[domain]
   } else {
     clientPfxs[domain] = pfx
