@@ -20,6 +20,8 @@ const cookieStore = cookieJar.store
 const clientPfxs: Record<string, Uint8Array> = {}
 const trustedCertificates: string[] = []
 
+delete ZenMoney.Headers.prototype.getAll
+
 global.Headers = ZenMoney.Headers
 global.fetch = function (url?: unknown, options?: unknown): any {
   options = typeof url !== 'string' && url != null ? url : options
