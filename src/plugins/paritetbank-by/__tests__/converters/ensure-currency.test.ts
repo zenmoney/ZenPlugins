@@ -1,4 +1,4 @@
-import { ensureCurrency } from '../../converters'
+import { ensureCurrency } from '../../helpers'
 
 describe('ensureCurrency', () => {
   it('returns currency name as-is if input is not a number', () => {

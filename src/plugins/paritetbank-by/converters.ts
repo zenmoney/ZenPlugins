@@ -1,22 +1,6 @@
-import { Account, AccountReferenceById, AccountType, Merchant, Transaction } from '../../types/zenmoney'
+import { Account, AccountType, Transaction } from '../../types/zenmoney'
 import type { FetchCardAccount, FetchCurrentAccount, FetchTransaction } from './types/fetch'
-import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
-
-/**
- * Ensures that a valid currency name is returned from a given string
- * that may represent either a currency name or a numeric code.
- *
- * @param {string} codeOrName - A currency name (alphabetic code) or a numeric code as a string.
- * @returns {string|undefined} A valid currency code, or `undefined` if no match was found.
- *
- * @example
- * ensureCurrency("BYN") // → "BYN"
- * ensureCurrency("933") // → "EUR"
- */
-export const ensureCurrency = (codeOrName: string): string | undefined =>
-  isNaN(Number(codeOrName))
-    ? codeOrName
-    : codeToCurrencyLookup[codeOrName]
+import { ensureCurrency, isNonEmptyString } from './helpers'
 
 export const convertCardAccount = (fetchAccount: FetchCardAccount): Account => {
   if (fetchAccount.cards.at(0) == null) throw new Error('No card linked to CardAccount')
@@ -25,7 +9,7 @@ export const convertCardAccount = (fetchAccount: FetchCardAccount): Account => {
 
   const currency = ensureCurrency(fetchAccount.currency)
 
-  if (!currency) throw new Error(`Unknown currency - ${fetchAccount.currency}`)
+  if (!isNonEmptyString(currency)) throw new Error(`Unknown currency - ${fetchAccount.currency}`)
 
   return {
     id: fetchAccount.contractNumber,
@@ -44,7 +28,7 @@ export const convertCardAccount = (fetchAccount: FetchCardAccount): Account => {
 export const convertCurrentAccount = (fetchAccount: FetchCurrentAccount): Account => {
   const currency = ensureCurrency(fetchAccount.currency)
 
-  if (!currency) throw new Error(`Unknown currency - ${fetchAccount.currency}`)
+  if (!isNonEmptyString(currency)) throw new Error(`Unknown currency - ${fetchAccount.currency}`)
 
   return {
     id: fetchAccount.contractNumber,
@@ -60,7 +44,7 @@ export const convertTransaction = (fetchTransaction: FetchTransaction, account: 
   const [country, ...restParts] = (fetchTransaction.operationLocation ?? '').split(' ')
   const transactionCurrency = ensureCurrency(fetchTransaction.currency)
 
-  if (!transactionCurrency) throw new Error(`Unknown currency - ${fetchTransaction.currency}`)
+  if (!isNonEmptyString(transactionCurrency)) throw new Error(`Unknown currency - ${fetchTransaction.currency}`)
 
   return {
     hold: null,
@@ -69,13 +53,13 @@ export const convertTransaction = (fetchTransaction: FetchTransaction, account: 
     movements: [
       {
         id: fetchTransaction.rrn ?? fetchTransaction.paymentId ?? fetchTransaction.operationId ?? null,
-        account: { id: account.id } as AccountReferenceById,
+        account: { id: account.id },
         fee: 0, // use commission?
         invoice: transactionCurrency === account.instrument ? null : { sum: fetchTransaction.amount, instrument: transactionCurrency },
         sum: transactionCurrency === account.instrument ? fetchTransaction.amount : null
       }
     ],
-    merchant: (fetchTransaction.mcc
+    merchant: (isNonEmptyString(fetchTransaction.mcc)
       ? {
           country,
           city: restParts.join(' '),
@@ -83,7 +67,7 @@ export const convertTransaction = (fetchTransaction: FetchTransaction, account: 
           title: fetchTransaction.servicePoint ?? '',
           location: null,
           category: ''
-        } as Merchant
+        }
       : null)
   }
 }

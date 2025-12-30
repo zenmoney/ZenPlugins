@@ -2,6 +2,7 @@ import { authenticate, getAccounts, getTransactions } from './api'
 import type { ScrapeFunc } from '../../types/zenmoney'
 import type { PreferenceInput } from './types/base'
 import { generateUUID } from '../../common/utils'
+import { isNonEmptyString } from './helpers'
 
 export const scrape: ScrapeFunc<PreferenceInput> = async ({ preferences, fromDate, toDate }) => {
   console.log('SCRAPE', preferences, fromDate, toDate)
@@ -11,7 +12,7 @@ export const scrape: ScrapeFunc<PreferenceInput> = async ({ preferences, fromDat
     deviceId: ZenMoney.getData('deviceId') as string | undefined
   }
 
-  if (!pluginData.deviceId) {
+  if (!isNonEmptyString(pluginData.deviceId)) {
     pluginData.deviceId = generateUUID()
     ZenMoney.setData('deviceId', pluginData.deviceId)
     ZenMoney.saveData()

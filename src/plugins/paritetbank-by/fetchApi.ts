@@ -2,6 +2,7 @@ import { BASE_API_URL } from './models'
 import { fetchJson } from '../../common/network'
 import type * as T from './types/fetch'
 import { FetchError, FetchOutput } from './types/base'
+import { isNonEmptyString } from './helpers'
 
 const makeUrl = (domain: 'auth' | 'core', url: string): string =>
   `${BASE_API_URL}/${domain}/services/v3${url}`
@@ -58,7 +59,7 @@ export const fetchTransactions = async ({ sessionToken, from, to, account }: T.F
     body: {
       dateFrom: from,
       dateTo: to,
-      ...(account && { contractNumber: account })
+      ...(isNonEmptyString(account) && { contractNumber: account })
     }
   })
 

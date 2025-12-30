@@ -6,7 +6,7 @@ import { BankMessageError, InvalidLoginOrPasswordError, UserInteractionError } f
 export const authenticate = async (login: string, password: string, deviceId: string): Promise<{ sessionToken: string }> => {
   const { data, error } = await fetchLogin({ login, password, deviceId })
 
-  if (error) {
+  if (error != null) {
     // Invalid login/password to the account
     if (error.code === 'UNSUCCESSFUL_ATTEMPT_LOGIN_WEB') {
       throw new InvalidLoginOrPasswordError()
@@ -28,7 +28,7 @@ export const authenticate = async (login: string, password: string, deviceId: st
 export const getAccounts = async ({ sessionToken }: { sessionToken: string }): Promise<Account[]> => {
   const { data, error } = await fetchAccounts({ sessionToken })
 
-  if (error) {
+  if (error != null) {
     console.error('getAccounts', error)
 
     throw new BankMessageError(error.message)
@@ -48,7 +48,7 @@ export const getTransactions = async ({ sessionToken, fromDate, toDate }: { sess
     account: account.id
   })
 
-  if (error) {
+  if (error != null) {
     console.error('getTransactions', error)
 
     throw new BankMessageError(error.message)

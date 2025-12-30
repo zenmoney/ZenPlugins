@@ -5,9 +5,13 @@ import { TEST_TRANSACTIONS } from '../../__mocks__/transactions.sample'
 import { TEST_ACCOUNTS } from '../../__mocks__/accounts.sample'
 
 describe('convertTransaction', () => {
-  const cardAccount = convertCardAccount(
-    TEST_ACCOUNTS.CARD.find(acc => acc.contractNumber === '8479823740280')!
-  )
+  const rawCardAccount = TEST_ACCOUNTS.CARD.find(acc => acc.contractNumber === '8479823740280')
+
+  if (rawCardAccount == null) {
+    throw new Error('Card account not found')
+  }
+
+  const cardAccount = convertCardAccount(rawCardAccount)
 
   it.each([
     [
@@ -157,9 +161,13 @@ describe('convertTransaction', () => {
     expect(convertTransaction(apiTransaction, cardAccount)).toEqual(transaction)
   })
 
-  const currentAccount = convertCurrentAccount(
-    TEST_ACCOUNTS.CURRENT.find(acc => acc.contractNumber === '425367558876986')!
-  )
+  const rawCurrentAccount = TEST_ACCOUNTS.CURRENT.find(acc => acc.contractNumber === '425367558876986')
+
+  if (rawCurrentAccount == null) {
+    throw new Error('Current account not found')
+  }
+
+  const currentAccount = convertCurrentAccount(rawCurrentAccount)
 
   it.each([
     [
