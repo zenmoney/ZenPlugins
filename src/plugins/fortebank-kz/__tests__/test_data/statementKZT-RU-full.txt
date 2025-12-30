@@ -1,0 +1,570 @@
+В ы п и с к а   п о   к а р т о ч н о м у   с ч е т у
+З а   п е р и о д :   с   0 1 . 1 1 . 2 0 2 5   п о   3 0 . 1 1 . 2 0 2 5 г .
+Д а т а   в ы п и с к и :   0 1 . 1 2 . 2 0 2 5   1 6 : 0 5 : 3 9
+И В А Н О В   И В А Н   И В А Н О В И Ч
+И И Н :   0 0 0 0 0 0 0 0 0 0 0 0 Н о м е р   с ч е т а :   K Z 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9
+Д о с т у п н о   н а   3 0 . 1 1 . 2 0 2 5 :   2 0 8 6 0 . 5 2   K Z T В а л ю т а   с ч е т а :   K Z T
+З а д о л ж е н н о с т ь   н а   0 1 . 1 2 . 2 0 2 5   1 6 : 0 5 : 3 9
+С е р в и с н ы е   К о м и с с и и 0 , 0 0
+О в е р д р а ф т 0 , 0 0
+Д е т а л и з а ц и я   в ы п и с к и   п о   Д е б е т о в о й   к а р т е
+Д а т а С у м м а О п и с а н и е Д е т а л и з а ц и я
+3 0 . 1 1 . 2 0 2 5 - 5 5 5 0 . 0 0   K Z T
+П о к у п к а
+I P   Z O K I R O V , A L M A T Y , A L M A T Y , K Z ,   K a s p i   B a n k ,   M C C :   5 4 1 1
+3 0 . 1 1 . 2 0 2 5 - 3 5 1 5 . 0 0   K Z T
+П о к у п к а
+N A U R Y Z   S H A K H R I S T A N   S H O P , A L M A T Y , A L M A T Y , K Z ,   J S C   H a
+l y k   B a n k   o f   K a z a k h s t a n ,   M C C :   5 4 1 1
+3 0 . 1 1 . 2 0 2 5 - 1 1 8 8 0 . 0 0   K Z T
+П о к у п к а
+O K A D Z A K I   R E S T A U R A N T , A L M A T Y , A L M A T Y , K Z ,   J S C   H a l y k   B
+a n k   o f   K a z a k h s t a n ,   M C C :   5 8 1 2
+3 0 . 1 1 . 2 0 2 5 - 9 1 9 0 . 0 0   K Z T
+П о к у п к а
+T O O   " L E   M O N L I D   K A Z A H S T A N , > A L M A T Y , > A L M A T Y , K Z ,   K a s p
+i   B a n k ,   M C C :   5 2 0 0
+3 0 . 1 1 . 2 0 2 5 - 4 0 0 . 0 0   K Z T
+П о к у п к а
+I P   M E I R E M B A Y E V   M . Z H .   5 , A L M A T Y , A L M A T Y , K Z ,   J u s a n   B a n k ,
+M C C :   5 4 9 9
+2 9 . 1 1 . 2 0 2 5 - 4 2 8 5 . 0 0   K Z T
+П о к у п к а
+N A U R Y Z   S H A K H R I S T A N   S H O P , A L M A T Y , A L M A T Y , K Z ,   J S C   H a
+l y k   B a n k   o f   K a z a k h s t a n ,   M C C :   5 4 1 1
+2 9 . 1 1 . 2 0 2 5 - 9 3 8 4 8 . 0 0   K Z T
+П о к у п к а
+O N E   T e c h n o l o g i e s , H T T P S : / / M A R K E T . F O R T E . K Z / , N u r - S u l t a n , K
+Z ,   F o r t e B a n k ,   M C C :   5 2 6 2
+2 9 . 1 1 . 2 0 2 5 1 1 9 0 0 0 . 0 0   K Z T П о п о л н е н и е   с ч е т а П е р е в о д   с о б с т в е н н ы х   с р е д с т в   ( К Н П   3 4 2 )   ; I S F L
+2 8 . 1 1 . 2 0 2 5 - 2 4 0 0 . 0 0   K Z T П о к у п к а
+I P   Z O K I R O V   A L M A T Y   K Z ,   K a s p i   B a n k ,   M C C :   5 4 1 1 ,   G O O G L E   P
+A Y
+2 8 . 1 1 . 2 0 2 5 - 4 0 3 0 . 0 0   K Z T П о к у п к а
+T O O   " T O O   T R A D E   R E T A I L   G R   U P > A L M A T Y   K Z ,   K a s p i   B a n k ,  
+M C C :   5 4 1 1 ,   G O O G L E   P A Y
+2 8 . 1 1 . 2 0 2 5 - 5 5 8 7 . 0 0   K Z T П о к у п к а
+Y A N D E X . E D A   A L M A T Y   K Z ,   J S C   H a l y k   B a n k   o f   K a z a k h s t a n ,   M
+C C :   5 8 1 4
+2 7 . 1 1 . 2 0 2 5 - 6 1 0 . 0 0   K Z T П о к у п к а
+M E G A   P H A R M   D R U G   S T O R E   A L M A T Y   K Z ,   J S C   H a l y k   B a n k   o f
+K a z a k h s t a n ,   M C C :   5 9 1 2 ,   A P P L E   P A Y
+2 7 . 1 1 . 2 0 2 5 - 3 6 8 1 . 0 0   K Z T П о к у п к а
+G A L M A R T   D O S T Y K   S U P E R M A   6   A L M A T Y   K Z ,   J S C   H a l y k   B a n
+k   o f   K a z a k h s t a n ,   M C C :   5 4 1 1 ,   G O O G L E   P A Y
+2 7 . 1 1 . 2 0 2 5 - 8 6 9 2 9 . 7 6   K Z T
+П о к у п к а
+M y P r o t e i n   M a n c h e s t e r   G B ,   Б а н к   н е   о п р е д е л ё н ,   M C C :   5 4 9 9
+2 6 . 1 1 . 2 0 2 5 - 4 2 0 0 . 0 0   K Z T П о к у п к а
+I P   Z O K I R O V   A L M A T Y   K Z ,   K a s p i   B a n k ,   M C C :   5 4 1 1 ,   A P P L E   P A
+Y
+2 6 . 1 1 . 2 0 2 5 - 8 3 2 0 . 0 0   K Z T П о к у п к а
+T O O   " T O O   T R A D E   R E T A I L   G R   U P > A L M A T Y   K Z ,   K a s p i   B a n k ,  
+M C C :   5 4 1 1 ,   A P P L E   P A Y
+2 6 . 1 1 . 2 0 2 5 - 1 0 0 0 0 0 0 . 0 0   K Z T П е р е в о д П о л у ч а т е л ь :
+2 6 . 1 1 . 2 0 2 5
+- 5 0 0 0 0 . 0 0   K Z T
+П е р е в о д П о л у ч а т е л ь :   4 4 0 0 4 3 * * * * * * 8 5 2 4
+2 6 . 1 1 . 2 0 2 5 - 2 5 0 . 0 0   K Z T П о к у п к а
+I P   K A R D A P O L C E V   A L E K S A N D R   N I > A L M A T Y   K Z ,   K a s p i   B a n k ,  
+M C C :   5 1 9 9 ,   A P P L E   P A Y
+2 6 . 1 1 . 2 0 2 5 - 2 2 5 0 . 0 0   K Z T П о к у п к а
+I P   K A R D A P O L C E V   A L E K S A N D R   N I > A L M A T Y   K Z ,   K a s p i   B a n k ,  
+M C C :   5 1 9 9 ,   A P P L E   P A Y
+
+2 6 . 1 1 . 2 0 2 5 - 1 9 7 5 . 0 0   K Z T П о к у п к а
+G A L M A R T   D O S T Y K   S U P E R M A   1   A L M A T Y   K Z ,   J S C   H a l y k   B a n
+k   o f   K a z a k h s t a n ,   M C C :   5 4 1 1 ,   G O O G L E   P A Y
+2 6 . 1 1 . 2 0 2 5 - 2 0 0 0 . 0 0   K Z T П о к у п к а
+I P   A B I L K A L A M O V A   G U L Z H A N   U K > A L M A T Y   K Z ,   K a s p i   B a n k ,  
+M C C :   5 1 9 9 ,   A P P L E   P A Y
+2 6 . 1 1 . 2 0 2 5 - 1 4 0 0 . 0 0   K Z T П о к у п к а
+I P   A B I L K A L A M O V A   G U L Z H A N   U K > A L M A T Y   K Z ,   K a s p i   B a n k ,  
+M C C :   5 1 9 9 ,   A P P L E   P A Y
+2 6 . 1 1 . 2 0 2 5
+- 1 4 7 3 . 4 5   K Z T
+( 2 . 8 2   U S D )
+П о к у п к а a l i e x p r e s s   S i n g a p o r e   S G ,   Б а н к   н е   о п р е д е л ё н ,   M C C :   5 7 3 4
+2 5 . 1 1 . 2 0 2 5 - 1 0 0 0 . 0 0   K Z T
+С п и с а н и е   с р е д с т в   в
+р а м к а х   с е р в и с а
+б ы с т р ы х   п л а т е ж е й
+С п и с а н и е   с р е д с т в   в   р а м к а х   с е р в и с а   б ы с т р ы х   п л а т е ж е й
+2 5 . 1 1 . 2 0 2 5 - 6 3 0 0 0 . 0 0   K Z T
+С н я т и е   н а л и ч н ы х
+д е н е г
+K a s p i   B a n k ,   A T M / P O S :   R C L 0 1 1 1 5 ,   N A U R Y Z   A L M A T Y   K Z
+2 5 . 1 1 . 2 0 2 5 - 1 0 0 0 0 0 . 0 0   K Z T
+С н я т и е   н а л и ч н ы х
+д е н е г
+K a s p i   B a n k ,   A T M / P O S :   R C L 0 1 1 1 5 ,   N A U R Y Z   A L M A T Y   K Z
+2 5 . 1 1 . 2 0 2 5 - 1 0 0 0 0 0 . 0 0   K Z T
+С н я т и е   н а л и ч н ы х
+д е н е г
+K a s p i   B a n k ,   A T M / P O S :   R C L 0 1 1 1 5 ,   N A U R Y Z   A L M A T Y   K Z
+2 5 . 1 1 . 2 0 2 5 - 3 9 8 . 0 0   K Z T П о к у п к а J E T   S H A R I N G   A L M A T Y   K Z ,   J u s a n   B a n k ,   M C C :   7 9 9 9
+2 5 . 1 1 . 2 0 2 5 - 5 0 0 . 0 0   K Z T П о к у п к а J E T   S H A R I N G   A L M A T Y   K Z ,   J u s a n   B a n k ,   M C C :   7 9 9 9
+2 5 . 1 1 . 2 0 2 5 1 3 8 9 2 5 . 0 0   K Z T П о п о л н е н и е   с ч е т а
+З а ч и с л е н и е   п о   п / п No   7 4 6 о т   2 5 . 1 1 . 2 0 2 5   П е р е ч и с л е н и е   ю р и д и ч
+е с к и м   л и ц о м   в   б а н к ,   ф и л и а л   б а н к а - н е р е з и д е н т а   Р е с п у б л и к и  
+К а з а х с т а н   з а р а б о т н о й   п л а т ы ,   о п л а т ы   т р у д о в о г о   о т п у с к а   д л я  
+п о с л е д у ю щ е г о   з а ч и с л е н и я   н а   б а н к о в с к и е   с ч е т а   р а б о т н и к о в  
+д а н н о г о   ю р и ; I S S A L A R Y ; I S J U R
+2 5 . 1 1 . 2 0 2 5 - 1 9 2 2 . 0 0   K Z T П о к у п к а
+R Y A D O M   A L M A T Y   K Z ,   F r e e d o m   B a n k   K a z a k h s t a n   J S C ,   M C C :  
+5 4 1 1 ,   G O O G L E   P A Y
+2 4 . 1 1 . 2 0 2 5 - 1 8 5 5 . 0 0   K Z T П о к у п к а
+I P   Z O K I R O V   A L M A T Y   K Z ,   K a s p i   B a n k ,   M C C :   5 4 1 1 ,   A P P L E   P A
+Y
+2 4 . 1 1 . 2 0 2 5 - 1 7 9 5 . 0 0   K Z T П о к у п к а
+N A U R Y Z   S H A K H R I S T A N   S H O P   A L M A T Y   K Z ,   J S C   H a l y k   B a n k  
+o f   K a z a k h s t a n ,   M C C :   5 4 1 1 ,   A P P L E   P A Y
+2 4 . 1 1 . 2 0 2 5 - 1 6 3 8 . 0 0   K Z T П о к у п к а
+G A L M A R T   D O S T Y K   S U P E R M A   4   A L M A T Y   K Z ,   J S C   H a l y k   B a n
+k   o f   K a z a k h s t a n ,   M C C :   5 4 1 1 ,   G O O G L E   P A Y
+2 4 . 1 1 . 2 0 2 5 - 6 2 . 2 4   K Z T С п и с а н и е
+А в т о п о г а ш е н и е   з а д о л ж е н н о с т и   п о   о в е р д р а ф т у   п о   с ч е т у   * * * * 6
+4 8 8 7 0 ,   в   р а м к а х   д о г о в о р а
+2 3 . 1 1 . 2 0 2 5 - 7 1 6 0 . 0 0   K Z T П о к у п к а
+T O O   " D A   T R A D E   L T D "   A L M A T >   K Z ,   K a s p i   B a n k ,   M C C :   5 4 1 1 ,   A
+P P L E   P A Y
+2 3 . 1 1 . 2 0 2 5 - 5 5 0 0 . 0 0   K Z T П о к у п к а
+I P   H E P P I   D E L I V E R I   A L M A T Y >   K Z ,   K a s p i   B a n k ,   M C C :   5 1 9 9 ,   G
+O O G L E   P A Y
+2 3 . 1 1 . 2 0 2 5 - 7 9 5 . 0 0   K Z T П о к у п к а
+T O O   " T O O   T R A D E   R E T A I L   G R   U P > A L M A T Y   K Z ,   K a s p i   B a n k ,  
+M C C :   5 4 1 1 ,   A P P L E   P A Y
+2 3 . 1 1 . 2 0 2 5 - 7 6 0 0 . 0 0   K Z T П о к у п к а
+J E T P A Y * C H O C O , E U R A S I A N   B A N K , A L M A T Y , K Z ,   E u r a s i a n   B a n
+k ,   M C C :   5 4 1 1
+2 3 . 1 1 . 2 0 2 5 - 1 0 0 0 0 . 0 0   K Z T П е р е в о д П о л у ч а т е л ь :   4 4 0 0 4 3 * * * * * * 8 5 2 4
+2 2 . 1 1 . 2 0 2 5 - 3 0 5 0 . 0 0   K Z T П о к у п к а
+I P   Z O K I R O V   A L M A T Y   K Z ,   K a s p i   B a n k ,   M C C :   5 4 1 1 ,   G O O G L E   P
+A Y
+2 2 . 1 1 . 2 0 2 5 - 1 2 6 9 0 . 0 0   K Z T П о к у п к а
+T O O   T O O   T R A D E   R E T A I L   G R   U P   A L M A T Y   K Z ,   K a s p i   B a n k ,   M
+C C :   5 4 1 1 ,   G O O G L E   P A Y
+2 2 . 1 1 . 2 0 2 5
+1 0 0 0 0 0 . 0 0   K Z T П о п о л н е н и е   с ч е т а П е р е в о д   с о б с т в е н н ы х   с р е д с т в   ( К Н П   3 4 2 )   I S F L
+2 2 . 1 1 . 2 0 2 5 - 1 3 8 9 9 . 0 0   K Z T П о к у п к а
+I P   " M A S H A N L O   C H S H E R B A "   A L M A T Y   ( A L M A   K Z ,   K a s p i   B a n k ,  
+M C C :   5 2 0 0
+2 2 . 1 1 . 2 0 2 5
+- 8 2 4 . 2 5   K Z T
+( 1 . 5 7   U S D )
+П о к у п к а
+a l i e x p r e s s   L u x e m b o u r g   L U ,   A d y e n   N . V . ,   M C C :   5 3 1 0 ,   A L I P A Y . C
+O M   C O . ,   L T D .
+2 2 . 1 1 . 2 0 2 5 - 1 6 5 0 . 0 0   K Z T П о к у п к а
+W I L D B E R R I E S   A L M A T Y   K Z ,   J S C   H a l y k   B a n k   o f   K a z a k h s t a n ,   M
+C C :   5 2 6 2
+2 2 . 1 1 . 2 0 2 5 - 4 9 8 7 . 5 0   K Z T П о к у п к а W o l t   H e l s i n k i   F I ,   A d y e n   N . V . ,   M C C :   5 8 1 2 ,   G O O G L E   P A Y
+2 2 . 1 1 . 2 0 2 5 - 7 4 2 . 0 0   K Z T П о к у п к а I P   M A K I S H E V   O . B   A L M A T Y   K Z ,   K a s p i   B a n k ,   M C C :   5 1 9 9
+Д а т а С у м м а О п и с а н и е Д е т а л и з а ц и я
+
+2 2 . 1 1 . 2 0 2 5 - 8 4 6 . 0 0   K Z T П о к у п к а I P   A S T A M A R K E T   A S T A N A   K Z ,   K a s p i   B a n k ,   M C C :   5 2 0 0
+2 2 . 1 1 . 2 0 2 5 - 1 0 9 0 0 . 0 0   K Z T П о к у п к а I P   K O M U T O V   R . B .   A L M A T Y   K Z ,   K a s p i   B a n k ,   M C C :   5 9 4 1
+2 2 . 1 1 . 2 0 2 5 - 2 3 0 . 0 0   K Z T П о к у п к а I P   E R K E N A Z   S H Y M K E N T   K Z ,   K a s p i   B a n k ,   M C C :   5 6 4 1
+2 2 . 1 1 . 2 0 2 5 - 2 5 . 9 1   K Z T С п и с а н и е
+А в т о п о г а ш е н и е   з а д о л ж е н н о с т и   п о   о в е р д р а ф т у   п о   с ч е т у   * * * * 6
+4 8 8 7 0 ,   в   р а м к а х   д о г о в о р а
+2 2 . 1 1 . 2 0 2 5 3 1 8 2 1 . 0 0   K Z T В о з в р а т   д е н е г
+O Z O N . K Z   A L M A T Y   K Z ,   J S C   H a l y k   B a n k   o f   K a z a k h s t a n ,   2 2 . 1 1 . 2
+5
+2 1 . 1 1 . 2 0 2 5
+- 1 4 1 9 1 . 0 0   K Z T П о к у п к а
+F F P A Y * M A S T E R C O F F E E   A L M A T Y   K Z ,   F r e e d o m   B a n k   K a z a k h
+s t a n   J S C ,   M C C :   5 4 9 9
+2 1 . 1 1 . 2 0 2 5 - 2 6 7 0 . 0 0   K Z T П о к у п к а
+T U M A R   F O O D   S H O P   A L M A T Y   K Z ,   J S C   H a l y k   B a n k   o f   K a z a k h s
+t a n ,   M C C :   5 4 1 1 ,   A P P L E   P A Y
+2 1 . 1 1 . 2 0 2 5
+- 8 3 3 0 . 7 9   K Z T
+( 1 5 . 9 9   U S D )
+П о к у п к а
+w w w . a l i e x p r e s s . c o m   W W W . A L I E X P R E   G B ,   W o r l d P a y   ( U K )   L i m i t
+e d ,   M C C :   5 2 6 2
+2 1 . 1 1 . 2 0 2 5 - 2 9 5 6 5 . 0 0   K Z T П о к у п к а
+G O L D A P P L E . K Z   A L M A T Y   K Z ,   J S C   H a l y k   B a n k   o f   K a z a k h s t a n ,  
+M C C :   5 9 7 7 ,   A P P L E   P A Y
+2 0 . 1 1 . 2 0 2 5 - 4 7 7 0 . 0 0   K Z T П о к у п к а
+I P   Z O K I R O V   A L M A T Y   K Z ,   K a s p i   B a n k ,   M C C :   5 4 1 1 ,   A P P L E   P A
+Y
+2 0 . 1 1 . 2 0 2 5 - 5 3 7 5 . 0 0   K Z T П о к у п к а
+N A U R Y Z   S H A K H R I S T A N   S H O P   A L M A T Y   K Z ,   J S C   H a l y k   B a n k  
+o f   K a z a k h s t a n ,   M C C :   5 4 1 1 ,   A P P L E   P A Y
+2 0 . 1 1 . 2 0 2 5 - 2 0 4 8 . 0 0   K Z T П о к у п к а
+G A L M A R T   D O S T Y K   S U P E R M A   5   A L M A T Y   K Z ,   J S C   H a l y k   B a n
+k   o f   K a z a k h s t a n ,   M C C :   5 4 1 1 ,   G O O G L E   P A Y
+2 0 . 1 1 . 2 0 2 5
+- 5 5 9 5 . 3 8   K Z T
+( 1 0 . 7 5   U S D )
+П о к у п к а a l i e x p r e s s   S i n g a p o r e   S G ,   Б а н к   н е   о п р е д е л ё н ,   M C C :   5 7 3 4
+2 0 . 1 1 . 2 0 2 5 - 2 7 9 0 . 0 0   K Z T П о к у п к а
+W I L D B E R R I E S   A L M A T Y   K Z ,   J S C   H a l y k   B a n k   o f   K a z a k h s t a n ,   M
+C C :   5 2 6 2
+1 9 . 1 1 . 2 0 2 5 - 1 1 9 9 . 0 0   K Z T П о к у п к а W o l t   H e l s i n k i   F I ,   A d y e n   N . V . ,   M C C :   5 8 1 2 ,   G O O G L E   P A Y
+1 9 . 1 1 . 2 0 2 5 1 0 0 0 0 0 . 0 0   K Z T П о п о л н е н и е   с ч е т а П е р е в о д   с о б с т в е н н ы х   с р е д с т в   ( К Н П   3 4 2 )   I S F L
+1 9 . 1 1 . 2 0 2 5 - 1 1 6 5 4 . 0 0   K Z T П о к у п к а
+G A L M A R T   M E G A 1   S U P E R M A   4   A L M A T Y   K Z ,   J S C   H a l y k   B a n k  
+o f   K a z a k h s t a n ,   M C C :   5 4 1 1 ,   A P P L E   P A Y
+1 9 . 1 1 . 2 0 2 5
+- 3 7 0 0 . 0 0   K Z T
+П о к у п к а
+I P   I N Z H E N E R Y   P E L M E N E Y   A l m a t y   K Z ,   J S C   F o r t e B a n k ,   M C C :  
+5 8 1 4 ,   G O O G L E   P A Y
+1 9 . 1 1 . 2 0 2 5
+- 4 3 2 . 8 5   K Z T
+( 3 5 . 3 3   U S D )
+П о к у п к а a l i e x p r e s s   S i n g a p o r e   S G ,   Б а н к   н е   о п р е д е л ё н ,   M C C :   5 7 3 4
+1 8 . 1 1 . 2 0 2 5 - 3 5 9 2 . 0 0   K Z T П о к у п к а K A S P I _ Q R _ R E T A I L E R , A l m a t y , K Z ,   F o r t e B a n k ,   M C C :   5 8 1 2
+1 8 . 1 1 . 2 0 2 5 - 9 0 0 0 . 0 0   K Z T П о к у п к а
+T O O   A L M A T Y   D O K T O R   O S T   A L M A T Y   K Z ,   K a s p i   B a n k ,   M C C :   8
+0 2 1 ,   A P P L E   P A Y
+1 8 . 1 1 . 2 0 2 5 - 2 6 6 0 . 0 0   K Z T П о к у п к а
+Y A N D E X . G O   A L M A T Y   K Z ,   F r e e d o m   B a n k   K a z a k h s t a n   J S C ,   M C
+C :   4 1 2 1 ,   A P P L E   P A Y
+1 7 . 1 1 . 2 0 2 5 - 3 5 7 0 . 0 0   K Z T П о к у п к а
+A P E L S I N O V Y I   G U S   R E S T A U R A   A L M A T Y   K Z ,   J S C   H a l y k   B a n k  
+o f   K a z a k h s t a n ,   M C C :   5 8 1 2 ,   G O O G L E   P A Y
+1 7 . 1 1 . 2 0 2 5 - 1 0 0 0 . 0 0   K Z T П л а т е ж
+K C E L L   N a m e V C = М о б и л ь н а я   с в я з ь   V C = 1   S e r v i c e I d = 1 1 1   P A Y
+M E N T _ I D = 0 6 1 1 5 f b 7   d 4 e 3   4 2 7 0   a 5 0 8   7 4 d 7 a 7 8 d 3 5 e c
+1 6 . 1 1 . 2 0 2 5 - 1 3 5 0 0 0 . 0 0   K Z T П е р е в о д П о л у ч а т е л ь :   4 4 0 0 4 3 * * * * * * 8 5 2 4
+1 6 . 1 1 . 2 0 2 5 1 5 0 0 0 0 . 0 0   K Z T П о п о л н е н и е   с ч е т а П е р е в о д   с о б с т в е н н ы х   с р е д с т в   ( К Н П   3 4 2 )   I S F L
+1 6 . 1 1 . 2 0 2 5 - 1 4 3 0 . 0 0   K Z T П о к у п к а
+I P   Z O K I R O V   A L M A T Y   K Z ,   K a s p i   B a n k ,   M C C :   5 4 1 1 ,   A P P L E   P A
+Y
+1 6 . 1 1 . 2 0 2 5 - 1 5 2 0 . 0 0   K Z T П о к у п к а
+Y A N D E X . G O   A L M A T Y   K Z ,   J S C   H a l y k   B a n k   o f   K a z a k h s t a n ,   M C
+C :   4 1 2 1
+1 6 . 1 1 . 2 0 2 5 - 2 1 0 0 . 0 0   K Z T П о к у п к а
+I P   D E G U S T O   A L M A T Y   K Z ,   K a s p i   B a n k ,   M C C :   5 2 0 0 ,   G O O G L E  
+P A Y
+1 5 . 1 1 . 2 0 2 5 - 3 4 3 0 . 0 0   K Z T П о к у п к а
+I P   Z O K I R O V   A L M A T Y   K Z ,   K a s p i   B a n k ,   M C C :   5 4 1 1 ,   G O O G L E   P
+A Y
+1 5 . 1 1 . 2 0 2 5 - 7 4 7 0 . 0 0   K Z T П о к у п к а
+T O O   T O O   T R A D E   R E T A I L   G R   U P   A L M A T Y   K Z ,   K a s p i   B a n k ,   M
+C C :   5 4 1 1 ,   G O O G L E   P A Y
+Д а т а С у м м а О п и с а н и е Д е т а л и з а ц и я
+
+1 5 . 1 1 . 2 0 2 5 - 1 3 5 3 0 . 0 0   K Z T П о к у п к а
+C O F F E E   B O O M   C O F F E E   H O U S E   A L M A T Y   K Z ,   J S C   H a l y k   B a n
+k   o f   K a z a k h s t a n ,   M C C :   5 8 1 2 ,   G O O G L E   P A Y
+1 3 . 1 1 . 2 0 2 5 - 1 9 6 0 . 0 0   K Z T П о к у п к а
+I P   Z O K I R O V   A L M A T Y   K Z ,   K a s p i   B a n k ,   M C C :   5 4 1 1 ,   A P P L E   P A
+Y
+1 3 . 1 1 . 2 0 2 5 - 6 5 9 2 . 0 0   K Z T П о к у п к а
+M A G N U M . A F 1 0 . K A S S A   5   A L M A T Y   K Z ,   J S C   H a l y k   B a n k   o f   K a z
+a k h s t a n ,   M C C :   5 4 1 1 ,   A P P L E   P A Y
+1 3 . 1 1 . 2 0 2 5
+- 1 6 6 3 7 . 0 5   K Z T
+( 3 1 . 4 5   U S D )
+П о к у п к а
+A L I E X P R E S S   1 9 ,   R U E   D E   B   L U ,   A l l i e d   I r i s h   B a n k s ,   p . l . c . ,   M C C :  
+5 3 1 1
+1 2 . 1 1 . 2 0 2 5
+- 4 4 8 0 . 6 3   K Z T
+( 9 . 0 6   U S D )
+П о к у п к а a l i e x p r e s s   S i n g a p o r e   S G ,   Б а н к   н е   о п р е д е л ё н ,   M C C :   5 7 3 4
+1 2 . 1 1 . 2 0 2 5 - 3 9 2 8 6 . 8 4   K Z T П о к у п к а I H E R B   I H E R B . C O M   i h e r b . c o m   N L ,   A d y e n   N . V . ,   M C C :   5 4 9 9
+1 2 . 1 1 . 2 0 2 5 1 0 0 0 0 0 . 0 0   K Z T П о п о л н е н и е   с ч е т а П е р е в о д   с о б с т в е н н ы х   с р е д с т в   ( К Н П   3 4 2 )   I S F L
+1 2 . 1 1 . 2 0 2 5 - 3 9 0 0 . 0 0   K Z T П о к у п к а
+I P   Z O K I R O V   A L M A T Y   K Z ,   K a s p i   B a n k ,   M C C :   5 4 1 1 ,   A P P L E   P A
+Y
+1 2 . 1 1 . 2 0 2 5 - 3 4 1 5 . 0 0   K Z T П о к у п к а
+T O O   T O O   T R A D E   R E T A I L   G R   U P   A L M A T Y   K Z ,   K a s p i   B a n k ,   M
+C C :   5 4 1 1 ,   A P P L E   P A Y
+1 1 . 1 1 . 2 0 2 5 - 2 4 0 0 0 . 0 0   K Z T П о к у п к а
+T O O   E K S P E R T   D I A G N O S T I K   A L M A T Y   K Z ,   K a s p i   B a n k ,   M C C :  
+8 0 2 1 ,   G O O G L E   P A Y
+1 1 . 1 1 . 2 0 2 5 - 5 0 0 . 0 0   K Z T П о к у п к а K A S P I _ Q R _ R E T A I L E R , A l m a t y , K Z ,   F o r t e B a n k ,   M C C :   5 8 1 2
+1 1 . 1 1 . 2 0 2 5 - 3 3 0 0 . 0 0   K Z T П о к у п к а
+I P   Z O K I R O V   A L M A T Y   K Z ,   K a s p i   B a n k ,   M C C :   5 4 1 1 ,   A P P L E   P A
+Y
+1 1 . 1 1 . 2 0 2 5 - 1 6 1 5 . 0 0   K Z T П о к у п к а
+T O O   T O O   T R A D E   R E T A I L   G R   U P   A L M A T Y   K Z ,   K a s p i   B a n k ,   M
+C C :   5 4 1 1 ,   A P P L E   P A Y
+1 1 . 1 1 . 2 0 2 5 - 1 5 8 4 6 . 0 0   K Z T П о к у п к а
+M A G N U M . A F 1 0 . K A S S A   9   A L M A T Y   K Z ,   J S C   H a l y k   B a n k   o f   K a z
+a k h s t a n ,   M C C :   5 4 1 1 ,   A P P L E   P A Y
+1 0 . 1 1 . 2 0 2 5 - 1 4 0 0 0 0 0 . 0 0   K Z T П е р е в о д П о л у ч а т е л ь :
+1 0 . 1 1 . 2 0 2 5 1 4 0 6 2 5 . 0 0   K Z T П о п о л н е н и е   с ч е т а
+З а ч и с л е н и е   п о   п / п   7 1 0 о т   1 0 . 1 1 . 2 0 2 5   П е р е ч и с л е н и е   ю р и д и ч е с
+к и м   л и ц о м   в   б а н к ,   ф и л и а л   б а н к а
+з а р а б о т н о й   п л а т ы ,   о п л а т ы   т р у д о в о г о   о т п у с к а   д л я   п о
+с л е д у ю щ е г о   з а ч и с л е н и я   н а   б а н к о в с к и е   с ч е т а   р а б о т н и к о в   д а
+н н о г о   ю р и   I S S A L A R Y   I S J U R
+1 0 . 1 1 . 2 0 2 5 - 5 . 2 6   K Z T С п и с а н и е
+А в т о п о г а ш е н и е   з а д о л ж е н н о с т и   п о   о в е р д р а ф т у   п о   с ч е т у   * * * * 6
+4 8 8 7 0 ,   в   р а м к а х   д о г о в о р а
+1 0 . 1 1 . 2 0 2 5 - 8 4 1 5 . 3 1   K Z T П л а т е ж
+А л с е к о   N a m e V C = К о м м у н а л к а   V C = 2   V C 2 = 3   S e r v i c e I d = 1 9 0   P A
+Y M E N T _ I D = 7 8 5 b a 8 3 8   7 6 f 6   4 f e d   b 8 2 7   8 3 7 7 8 3 6 0 3 b 5 9
+1 0 . 1 1 . 2 0 2 5 - 2 3 6 0 . 0 0   K Z T П о к у п к а
+T O O   T O O   T R A D E   R E T A I L   G R   U P   A L M A T Y   K Z ,   K a s p i   B a n k ,   M
+C C :   5 4 1 1 ,   G O O G L E   P A Y
+1 0 . 1 1 . 2 0 2 5 - 8 0 9 3 8 . 0 0   K Z T П о к у п к а
+I N V I T R O   M E D I C I N E   C E N T R E   A L M A T Y   K Z ,   J S C   H a l y k   B a n k   o f  
+K a z a k h s t a n ,   M C C :   8 0 9 9 ,   G O O G L E   P A Y
+1 0 . 1 1 . 2 0 2 5 1 0 0 0 0 0 . 0 0   K Z T П о п о л н е н и е   с ч е т а П е р е в о д   с о б с т в е н н ы х   с р е д с т в   ( К Н П   3 4 2 )   I S F L
+0 9 . 1 1 . 2 0 2 5 - 1 0 6 4 . 0 0   K Z T П о к у п к а
+O Z O N   A L M A T Y   K Z ,   F r e e d o m   B a n k   K a z a k h s t a n   J S C ,   M C C :   5 2 6
+2
+0 9 . 1 1 . 2 0 2 5 - 1 3 5 2 3 . 9 8   K Z T П о к у п к а
+A I R B A P A Y * A I R B A F R E S H   A L M A T Y   K Z ,   J S C   H a l y k   B a n k   o f   K a z
+a k h s t a n ,   M C C :   5 4 1 1
+0 9 . 1 1 . 2 0 2 5 - 9 2 5 . 0 0   K Z T П о к у п к а
+T O O   T O O   T R A D E   R E T A I L   G R   U P   A L M A T Y   K Z ,   K a s p i   B a n k ,   M
+C C :   5 4 1 1 ,   G O O G L E   P A Y
+0 9 . 1 1 . 2 0 2 5 - 3 7 8 0 . 0 0   K Z T П о к у п к а
+I P   Z O K I R O V   A L M A T Y   K Z ,   K a s p i   B a n k ,   M C C :   5 4 1 1 ,   A P P L E   P A
+Y
+0 9 . 1 1 . 2 0 2 5 - 1 0 0 2 9 . 0 0   K Z T П о к у п к а
+N A U R Y Z   S H O P   A L M A T Y   K Z ,   J S C   H a l y k   B a n k   o f   K a z a k h s t a n ,  
+M C C :   5 4 1 1 ,   G O O G L E   P A Y
+0 9 . 1 1 . 2 0 2 5 - 4 3 2 5 . 0 0   K Z T П о к у п к а
+T O O   M A G N U M   C A S H   C A R R Y   L M A T Y   K Z ,   K a s p i   B a n k ,   M C C :   5
+4 1 1 ,   G O O G L E   P A Y
+0 9 . 1 1 . 2 0 2 5 - 6 0 3 6 0 . 0 0   K Z T П о к у п к а K A S P I _ Q R _ R E T A I L E R , A l m a t y , K Z ,   F o r t e B a n k ,   M C C :   5 4 1 1
+0 8 . 1 1 . 2 0 2 5 - 2 4 8 0 . 0 0   K Z T П о к у п к а
+I P   Z O K I R O V   A L M A T Y   K Z ,   K a s p i   B a n k ,   M C C :   5 4 1 1 ,   A P P L E   P A
+Y
+Д а т а С у м м а О п и с а н и е Д е т а л и з а ц и я
+
+0 8 . 1 1 . 2 0 2 5 - 3 0 7 5 . 0 0   K Z T П о к у п к а
+T O O   T O O   T R A D E   R E T A I L   G R   U P   A L M A T Y   K Z ,   K a s p i   B a n k ,   M
+C C :   5 4 1 1 ,   G O O G L E   P A Y
+0 8 . 1 1 . 2 0 2 5 - 1 1 6 0 . 0 0   K Z T П о к у п к а
+I P   Z O K I R O V   A L M A T Y   K Z ,   K a s p i   B a n k ,   M C C :   5 4 1 1 ,   A P P L E   P A
+Y
+0 8 . 1 1 . 2 0 2 5 - 2 1 0 0 . 0 0   K Z T П о к у п к а
+Y A N D E X . G O   A L M A T Y   K Z ,   J S C   H a l y k   B a n k   o f   K a z a k h s t a n ,   M C
+C :   4 1 2 1
+0 8 . 1 1 . 2 0 2 5 - 1 2 0 . 0 0   K Z T П о к у п к а
+R A Y M B E K   S T A T I O N 2   A L M A T Y   K Z ,   J u s a n   B a n k ,   M C C :   4 1 1 1 ,   A
+P P L E   P A Y
+0 8 . 1 1 . 2 0 2 5 - 1 2 0 0 0 . 0 0   K Z T П о к у п к а
+E M I R M E D   M U L T I D I S C I P L I N A R   A L M A T Y   K Z ,   J S C   H a l y k   B a n k  
+o f   K a z a k h s t a n ,   M C C :   8 0 9 9 ,   A P P L E   P A Y
+0 8 . 1 1 . 2 0 2 5 - 1 2 0 . 0 0   K Z T П о к у п к а
+M E T R O P O L I T E N   A L A T A U   1   A L M A T Y   K Z ,   J u s a n   B a n k ,   M C C :   4
+1 1 1 ,   G O O G L E   P A Y
+0 8 . 1 1 . 2 0 2 5 - 1 2 0 . 0 0   K Z T П о к у п к а
+M E T R O P O L I T E N   A L A T A U   1   A L M A T Y   K Z ,   J u s a n   B a n k ,   M C C :   4
+1 1 1 ,   A P P L E   P A Y
+0 8 . 1 1 . 2 0 2 5 - 9 9 9 0 . 0 0   K Z T П о к у п к а G o o g l e   O n e   6 5 0   2 5 3 0 0 0 0   U S ,   A d y e n   N . V . ,   M C C :   5 8 1 6
+0 7 . 1 1 . 2 0 2 5
+- 1 7 7 2 . 1 5   K Z T
+( 3 . 3 5   U S D )
+П о к у п к а
+a l i e x p r e s s   L u x e m b o u r g   L U ,   A d y e n   N . V . ,   M C C :   5 3 1 0 ,   A L I P A Y . C
+O M   C O . ,   L T D .
+0 7 . 1 1 . 2 0 2 5 - 5 4 6 0 . 0 0   K Z T П о к у п к а
+I P   Z O K I R O V   A L M A T Y   K Z ,   K a s p i   B a n k ,   M C C :   5 4 1 1 ,   A P P L E   P A
+Y
+0 7 . 1 1 . 2 0 2 5 - 3 9 1 0 . 0 0   K Z T П о к у п к а
+T O O   T O O   T R A D E   R E T A I L   G R   U P   A L M A T Y   K Z ,   K a s p i   B a n k ,   M
+C C :   5 4 1 1 ,   A P P L E   P A Y
+0 7 . 1 1 . 2 0 2 5 - 3 7 0 0 . 0 0   K Z T П о к у п к а
+I P   K A R D A P O L C E V   A L E K S A N D R   N I   A L M A T Y   K Z ,   K a s p i   B a n k ,  
+M C C :   5 1 9 9 ,   A P P L E   P A Y
+0 7 . 1 1 . 2 0 2 5 - 2 0 0 . 0 0   K Z T П о к у п к а
+I P   A B I L K A L A M O V A   G U L Z H A N   U K   A L M A T Y   K Z ,   K a s p i   B a n k ,   M
+C C :   5 1 9 9 ,   A P P L E   P A Y
+0 7 . 1 1 . 2 0 2 5
+- 6 7 2 7 . 8 1   K Z T
+( 1 2 . 9 3   U S D )
+П о к у п к а a l i e x p r e s s   S i n g a p o r e   S G ,   Б а н к   н е   о п р е д е л ё н ,   M C C :   5 7 3 4
+0 6 . 1 1 . 2 0 2 5 - 5 0 0 0 0 . 0 0   K Z T П е р е в о д П о л у ч а т е л ь :   4 4 0 0 4 3 * * * * * * 5 5 2 9
+0 6 . 1 1 . 2 0 2 5 2 9 5 4 8 . 9 8   K Z T П о к у п к а   б о н у с а м и
+O Z O N . K Z   A L M A T Y   K Z ,   J S C   H a l y k   B a n k   o f   K a z a k h s t a n ,   M C C :   5
+2 6 2
+0 6 . 1 1 . 2 0 2 5 - 3 2 5 6 6 . 0 0   K Z T П о к у п к а
+O Z O N . K Z   A L M A T Y   K Z ,   J S C   H a l y k   B a n k   o f   K a z a k h s t a n ,   M C C :   5
+2 6 2
+0 5 . 1 1 . 2 0 2 5 - 3 0 0 0 0 . 0 0   K Z T
+С н я т и е   н а л и ч н ы х
+д е н е г
+K a s p i   B a n k ,   A T M / P O S :   R C L 0 1 1 1 5 ,   N A U R Y Z   A L M A T Y   K Z
+0 5 . 1 1 . 2 0 2 5 - 1 0 0 0 0 0 . 0 0   K Z T
+С н я т и е   н а л и ч н ы х
+д е н е г
+K a s p i   B a n k ,   A T M / P O S :   R C L 0 1 1 1 5 ,   N A U R Y Z   A L M A T Y   K Z
+0 5 . 1 1 . 2 0 2 5 - 1 0 0 0 0 0 . 0 0   K Z T
+С н я т и е   н а л и ч н ы х
+д е н е г
+K a s p i   B a n k ,   A T M / P O S :   R C L 0 1 1 1 5 ,   N A U R Y Z   A L M A T Y   K Z
+0 5 . 1 1 . 2 0 2 5 5 0 0 0 0 0 . 0 0   K Z T П о п о л н е н и е   с ч е т а П е р е в о д   с о б с т в е н н ы х   с р е д с т в   ( К Н П   3 4 2 )   I S F L
+0 5 . 1 1 . 2 0 2 5 - 5 0 0 0 0 . 0 0   K Z T П е р е в о д П о л у ч а т е л ь :   4 4 0 0 4 3 * * * * * * 5 5 2 9
+0 5 . 1 1 . 2 0 2 5 - 1 4 5 0 . 0 0   K Z T П о к у п к а
+T U M A R   F O O D   S H O P   A L M A T Y   K Z ,   J S C   H a l y k   B a n k   o f   K a z a k h s
+t a n ,   M C C :   5 4 1 1 ,   A P P L E   P A Y
+0 5 . 1 1 . 2 0 2 5 - 3 8 8 0 . 0 0   K Z T П о к у п к а Y A N D E X . G O   h t t p s : / / t a x i   K Z ,   K a z P o s t ,   M C C :   4 1 2 1
+0 4 . 1 1 . 2 0 2 5 - 3 8 4 0 . 0 0   K Z T П о к у п к а
+I P   Z O K I R O V   A L M A T Y   K Z ,   K a s p i   B a n k ,   M C C :   5 4 1 1 ,   A P P L E   P A
+Y
+0 4 . 1 1 . 2 0 2 5 - 5 0 8 8 . 0 0   K Z T П о к у п к а
+T O O   T O O   T R A D E   R E T A I L   G R   U P   A L M A T Y   K Z ,   K a s p i   B a n k ,   M
+C C :   5 4 1 1 ,   A P P L E   P A Y
+0 4 . 1 1 . 2 0 2 5 - 5 0 0 0 . 0 0   K Z T П о к у п к а
+G o o g l e   Y o u T u b e P r e m i u m   6 5 0   2 5 3 0 0 0 0   U S ,   A d y e n   N . V . ,   M C C :  
+5 8 1 5
+0 4 . 1 1 . 2 0 2 5 - 7 0 6 4 7 . 0 0   K Z T П л а т е ж
+a l m a   ( А л м а   Т В )   г .   А л м а т ы   N a m e V C = Т е л е ф о н ,   И н т е р н е т   и   Т В
+V C = 1 5   S e r v i c e I d = 2 2   P A Y M E N T _ I D = a c 8 3 0 e d 1   d 7 b b   4 9 7 8   9 0 6 a  
+2 0 d 4 d 4 a c 8 1 9 1
+0 2 . 1 1 . 2 0 2 5 - 2 2 1 5 . 0 0   K Z T П о к у п к а
+T O O   T O O   T R A D E   R E T A I L   G R   U P   A L M A T Y   K Z ,   K a s p i   B a n k ,   M
+C C :   5 4 1 1 ,   G O O G L E   P A Y
+0 2 . 1 1 . 2 0 2 5
+- 1 6 3 9 9 . 7 9   K Z T
+( 3 0 . 8 0   U S D )
+П о к у п к а a l i e x p r e s s   S i n g a p o r e   S G ,   Б а н к   н е   о п р е д е л ё н ,   M C C :   5 7 3 4
+Д а т а С у м м а О п и с а н и е Д е т а л и з а ц и я
+
+0 2 . 1 1 . 2 0 2 5 - 1 0 2 0 . 0 0   K Z T П о к у п к а
+I P   Z O K I R O V   A L M A T Y   K Z ,   K a s p i   B a n k ,   M C C :   5 4 1 1 ,   G O O G L E   P
+A Y
+0 2 . 1 1 . 2 0 2 5 - 9 3 0 . 0 0   K Z T П о к у п к а
+T O O   T O O   T R A D E   R E T A I L   G R   U P   A L M A T Y   K Z ,   K a s p i   B a n k ,   M
+C C :   5 4 1 1 ,   G O O G L E   P A Y
+0 2 . 1 1 . 2 0 2 5 - 1 4 9 1 9 . 0 0   K Z T П о к у п к а
+W O L T . C O M   A L M A T Y   K Z ,   J S C   H a l y k   B a n k   o f   K a z a k h s t a n ,   M C C
+:   5 8 1 4 ,   A P P L E   P A Y
+0 1 . 1 1 . 2 0 2 5 - 1 9 4 0 . 0 0   K Z T П о к у п к а
+I P   Z O K I R O V   A L M A T Y   K Z ,   K a s p i   B a n k ,   M C C :   5 4 1 1 ,   G O O G L E   P
+A Y
+0 1 . 1 1 . 2 0 2 5 - 4 4 7 0 . 0 0   K Z T П о к у п к а
+T O O   T O O   T R A D E   R E T A I L   G R   U P   A L M A T Y   K Z ,   K a s p i   B a n k ,   M
+C C :   5 4 1 1 ,   G O O G L E   P A Y
+0 1 . 1 1 . 2 0 2 5 - 2 2 7 . 0 0   K Z T П о к у п к а T O O   C R V   I N S T R U M E N T   A L M A T Y   K Z ,   K a s p i   B a n k ,   M C C :   5 0 1 3
+0 1 . 1 1 . 2 0 2 5 - 3 9 3 4 . 0 0   K Z T П о к у п к а I P   F E L K   K A R A G A N D A   K Z ,   K a s p i   B a n k ,   M C C :   5 2 0 0
+0 1 . 1 1 . 2 0 2 5 - 1 4 9 0 . 0 0   K Z T П о к у п к а
+T O O   E C O   G R O U P   K A Z A K H S T A   A L M A T Y   K Z ,   K a s p i   B a n k ,   M C
+C :   5 2 0 0
+0 1 . 1 1 . 2 0 2 5 - 1 5 2 9 1 . 0 0   K Z T П о к у п к а
+F F P A Y * M A S T E R C O F F E E   A L M A T Y   K Z ,   F r e e d o m   B a n k   K a z a k h
+s t a n   J S C ,   M C C :   5 4 9 9 ,   G O O G L E   P A Y
+0 1 . 1 1 . 2 0 2 5 - 3 8 1 3 7 . 7 5   K Z T П л а т е ж
+А л с е к о   N a m e V C = К о м м у н а л к а   V C = 2   V C 2 = 3   S e r v i c e I d = 1 9 0   P A
+Y M E N T _ I D = 6 f 6 0 d c 1 5   f 7 4 f   4 2 0 5   8 2 9 6   8 8 1 a 5 5 4 b f 4 4 e
+0 1 . 1 1 . 2 0 2 5 - 4 0 0 0 0 0 . 0 0   K Z T П е р е в о д П о л у ч а т е л ь :   4 4 0 0 4 3 * * * * * * 8 5 2 4
+0 1 . 1 1 . 2 0 2 5 3 0 0 0 0 . 0 0   K Z T П о п о л н е н и е   с ч е т а П е р е в о д   с о б с т в е н н ы х   с р е д с т в   ( К Н П   3 4 2 )   I S F L
+0 1 . 1 1 . 2 0 2 5 - 1 0 0 0 0 0 . 0 0   K Z T
+С н я т и е   н а л и ч н ы х
+д е н е г
+K a s p i   B a n k ,   A T M / P O S :   R C L 0 1 1 1 5 ,   N A U R Y Z   A L M A T Y   K Z
+0 1 . 1 1 . 2 0 2 5 - 1 0 0 0 0 0 . 0 0   K Z T
+С н я т и е   н а л и ч н ы х
+д е н е г
+K a s p i   B a n k ,   A T M / P O S :   R C L 0 1 1 1 5 ,   N A U R Y Z   A L M A T Y   K Z
+0 1 . 1 1 . 2 0 2 5 5 0 0 0 0 0 . 0 0   K Z T П о п о л н е н и е   с ч е т а П е р е в о д   с о б с т в е н н ы х   с р е д с т в   ( К Н П   3 4 2 )   I S F L
+0 1 . 1 1 . 2 0 2 5 - 7 3 0 . 0 0   K Z T П о к у п к а
+I P   Z O K I R O V   A L M A T Y   K Z ,   K a s p i   B a n k ,   M C C :   5 4 1 1 ,   G O O G L E   P
+A Y
+0 1 . 1 1 . 2 0 2 5 - 3 7 6 0 . 0 0   K Z T П о к у п к а
+T O O   T O O   T R A D E   R E T A I L   G R   U P   A L M A T Y   K Z ,   K a s p i   B a n k ,   M
+C C :   5 4 1 1 ,   G O O G L E   P A Y
+3 1 . 1 0 . 2 0 2 5
+- 1 3 7 5 . 2 9   K Z T
+( 3 1 0 0 0 . 0 0   U Z S )
+П о к у п к а Y a n d e x . G o   Y u n u s o b o d   t u   U Z ,   J S C   O c t o b a n k ,   M C C :   4 7 8 9
+3 1 . 1 0 . 2 0 2 5
+- 7 4 . 4 8   K Z T
+( 1 7 2 5 . 5 0   U Z S )
+П о к у п к а
+O O O   A V T O M A T L A S H T I R I L G A N   T a s h k e n t   U Z ,   Б а н к   н е   о п р е д е
+л ё н ,   M C C :   4 1 3 1 ,   G O O G L E   P A Y
+3 1 . 1 0 . 2 0 2 5
+- 7 4 . 4 8   K Z T
+( 1 7 2 5 . 5 0   U Z S )
+П о к у п к а
+O O O   A V T O M A T L A S H T I R I L G A N   T a s h k e n t   U Z ,   Б а н к   н е   о п р е д е
+л ё н ,   M C C :   4 1 3 1 ,   A P P L E   P A Y
+3 1 . 1 0 . 2 0 2 5
+- 2 0 8 3 8 . 4 4   K Z T
+( 4 6 9 2 0 0 . 0 0   U Z S )
+П о к у п к а
+O O O   W I N S O M E   R E S T O R A N   T a s h k e n t   U Z ,   J S C   B a n k   O r i e n t   F i
+n a n s ,   M C C :   5 8 1 2 ,   G O O G L E   P A Y
+3 1 . 1 0 . 2 0 2 5
+- 1 1 3 5 . 2 9   K Z T
+( 2 5 5 0 0 . 0 0   U Z S )
+П о к у п к а Y a n d e x . G o   Y u n u s o b o d   t u   U Z ,   J S C   O c t o b a n k ,   M C C :   4 7 8 9
+3 1 . 1 0 . 2 0 2 5
+- 7 4 . 7 6   K Z T
+( 1 7 2 5 . 5 0   U Z S )
+П о к у п к а
+O O O   A V T O M A T L A S H T I R I L G A N   T a s h k e n t   U Z ,   Б а н к   н е   о п р е д е
+л ё н ,   M C C :   4 1 3 1 ,   G O O G L E   P A Y
+3 1 . 1 0 . 2 0 2 5
+- 7 4 . 7 6   K Z T
+( 1 7 2 5 . 5 0   U Z S )
+П о к у п к а
+O O O   A V T O M A T L A S H T I R I L G A N   T a s h k e n t   U Z ,   Б а н к   н е   о п р е д е
+л ё н ,   M C C :   4 1 3 1 ,   A P P L E   P A Y
+3 1 . 1 0 . 2 0 2 5
+- 2 2 6 2 5 . 5 8   K Z T
+( 5 0 7 5 0 0 . 0 0   U Z S )
+С н я т и е   н а л и ч н ы х
+д е н е г
+Б а н к   н е   о п р е д е л ё н ,   A T M / P O S :   5 3 4 4 6 ,   s t r e e t   t o s h k e n t   U Z
+3 1 . 1 0 . 2 0 2 5
+- 3 6 2 0 . 5 2   K Z T
+( 8 1 2 0 0 . 0 0   U Z S )
+П о к у п к а
+T E M U R I Y L A R   T A R I X I   D A V L A T   T O S H K E N T   U Z ,   J S C   B a n k   O r i e
+n t   F i n a n s ,   M C C :   7 9 9 1 ,   G O O G L E   P A Y
+3 1 . 1 0 . 2 0 2 5
+- 9 5 9 9 . 6 2   K Z T
+( 2 1 5 1 8 0 . 0 0   U Z S )
+П о к у п к а
+M I R Z O   B O B U R   T O S H K E N T   U Z ,   J S C   B a n k   O r i e n t   F i n a n s ,   M C C
+:   5 8 1 2 ,   G O O G L E   P A Y
+3 1 . 1 0 . 2 0 2 5
+- 7 4 . 8 3   K Z T
+( 1 7 2 5 . 5 0   U Z S )
+П о к у п к а
+O O O   A V T O M A T L A S H T I R I L G A N   T a s h k e n t   U Z ,   Б а н к   н е   о п р е д е
+л ё н ,   M C C :   4 1 3 1 ,   G O O G L E   P A Y
+3 1 . 1 0 . 2 0 2 5
+- 7 4 . 8 3   K Z T
+( 1 7 2 5 . 5 0   U Z S )
+П о к у п к а
+O O O   A V T O M A T L A S H T I R I L G A N   T a s h k e n t   U Z ,   Б а н к   н е   о п р е д е
+л ё н ,   M C C :   4 1 3 1 ,   A P P L E   P A Y
+3 1 . 1 0 . 2 0 2 5
+- 1 1 1 7 . 1 1   K Z T
+( 2 5 0 0 0 . 0 0   U Z S )
+П о к у п к а Y a n d e x . G o   Y u n u s o b o d   t u   U Z ,   J S C   O c t o b a n k ,   M C C :   4 7 8 9
+Д а т а С у м м а О п и с а н и е Д е т а л и з а ц и я
+
+3 0 . 1 0 . 2 0 2 5 - 3 1 8 2 1 . 0 0   K Z T П о к у п к а
+O Z O N . K Z   A L M A T Y   K Z ,   J S C   H a l y k   B a n k   o f   K a z a k h s t a n ,   M C C :   5
+2 6 2
+3 0 . 1 0 . 2 0 2 5
+- 9 9 7 3 . 7 7   K Z T
+( 2 2 3 1 0 0 . 0 0   U Z S )
+П о к у п к а
+C H F   A L   M U K H A M M A D   B u x o r o   s h   U Z ,   J S C   B a n k   O r i e n t   F i n a n s ,
+M C C :   5 9 3 2
+3 0 . 1 0 . 2 0 2 5
+- 3 9 1 7 . 8 9   K Z T
+( 8 7 5 4 3 . 7 5   U Z S )
+П о к у п к а
+B U K H A R A   E C O   T O U R   M C H J   T A S H K E N T   U Z ,   Б а н к   н е   о п р е д е
+л ё н ,   M C C :   5 9 9 8
+3 0 . 1 0 . 2 0 2 5
+- 1 0 3 1 3 . 5 5   K Z T
+( 4 0 6 0 0 0 . 0 0   U Z S )
+С н я т и е   н а л и ч н ы х
+д е н е г
+Б а н к   н е   о п р е д е л ё н ,   A T M / P O S :   2 5 7 8 1 ,   G .   B U H A R A   U L .   M U M I
+N O V   D O   B U H A R A   U Z
+Д а т а С у м м а О п и с а н и е Д е т а л и з а ц и я
+-   з а б л о к и р о в а н н а я   с у м м а
+С ф о р м и р о в а н о   в   И н т е р н е т   Б а н к и н г е
+Р е к в и з и т ы :   А О   « F o r t e B a n k » ,   Р е с п у б л и к а   К а з а х с т а н ,   Z 0 5 P 1 P 0 ,   г .   А с т а н а ,   у л .   Д о с т ы к ,   8 / 1 ,   Б И Н :   9 9 0 7 4 0 0 0 0 6 8 3 ,   Б И К :   I R T Y K Z K A .
+К о н т а к т н ы е   д а н н ы е :   + 7   ( 7 2 7 )   2 5 8   7 5   7 5 ,   + 7   ( 7 1 7 2 )   5 8   7 5   7 5 ,   8   8 0 0 0   8 0 0   8 1 9   и л и   м о б .   7 5 7 5 ,   в е б - с а й т :   f o r t e . k z ,   e - m a i l :   i n f o @ f o r t e b a n k . c o m
