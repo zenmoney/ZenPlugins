@@ -93,7 +93,10 @@ export interface FetchTransaction {
   contractNumber?: string
   /** BPC / ? **/
   payCode: string
-  /** Datetime of payment in Unix-timestamp **/
+  /**
+   * Datetime of payment in Unix-timestamp
+   * NOTE: this has business timezone included
+   * **/
   paymentDate: number
   /** Name of card from card in account **/
   sourceOfPayment?: string

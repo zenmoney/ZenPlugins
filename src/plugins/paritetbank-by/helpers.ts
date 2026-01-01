@@ -1,4 +1,5 @@
 import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
+import { BUSINESS_TIME_OFFSET } from './models'
 
 /**
  * Ensures that a valid currency name is returned from a given string
@@ -18,3 +19,11 @@ export const ensureCurrency = (codeOrName: string): string | undefined =>
 
 export const isNonEmptyString = (v: unknown): v is string =>
   typeof v === 'string' && v.length > 0
+
+/**
+ * Gets valid UNIX timestamp from server date ms timestamp
+ *
+ * @param {string} ts - Server timestamp
+ * @returns {number} Valid UNIX timestamp from corresponding server value
+ */
+export const getUnixTimestamp = (ts: number): number => ts - BUSINESS_TIME_OFFSET

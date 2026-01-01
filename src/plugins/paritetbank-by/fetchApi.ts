@@ -7,6 +7,10 @@ import { isNonEmptyString } from './helpers'
 const makeUrl = (domain: 'auth' | 'core', url: string): string =>
   `${BASE_API_URL}/${domain}/services/v3${url}`
 
+/**
+ * Login using a new deviceId created a device listed in the user's account
+ * Device name is usually `{platform} {browser}`
+ * **/
 export const fetchLogin = async ({ login, password, deviceId }: T.AuthenticateInput): Promise<FetchOutput<T.AuthenticateOutput>> => {
   const { status, body } = await fetchJson(makeUrl('auth', '/authentication/login'), {
     method: 'POST',
@@ -15,17 +19,11 @@ export const fetchLogin = async ({ login, password, deviceId }: T.AuthenticateIn
       password,
       deviceUDID: deviceId,
       clientKind: 'WEB',
-      appID: '1.27'
-      /**
-       * Do not enable until required to name a device
-       *
-       * Device name in the user's account - usually `{platform} {browser}`
-       * Currently is displayed as `null null`
-       * **/
-      // browser: 'Chrome',
-      // browserVersion: '141.0.0.0',
-      // platform: 'Android',
-      // platformVersion: '14',
+      appID: '1.27',
+      browser: 'Chrome',
+      browserVersion: '141.0.0.0',
+      platform: `${ZenMoney.device.manufacturer} ${ZenMoney.device.model}`,
+      platformVersion: ZenMoney.device.os.version
     }
   })
 

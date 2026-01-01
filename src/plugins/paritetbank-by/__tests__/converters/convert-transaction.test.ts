@@ -18,7 +18,7 @@ describe('convertTransaction', () => {
       TEST_TRANSACTIONS['8479823740280'][0],
       {
         hold: null,
-        date: new Date('2025-10-17T20:35:47.000Z'),
+        date: new Date('2025-10-17T17:35:47.000Z'),
         comment: 'Перевод с карты на счет',
         movements: [
           {
@@ -36,7 +36,7 @@ describe('convertTransaction', () => {
       TEST_TRANSACTIONS['8479823740280'][1],
       {
         hold: null,
-        date: new Date('2025-10-16T18:29:13.000Z'),
+        date: new Date('2025-10-16T15:29:13.000Z'),
         comment: '',
         movements: [
           {
@@ -61,7 +61,7 @@ describe('convertTransaction', () => {
       TEST_TRANSACTIONS['8479823740280'][2],
       {
         hold: null,
-        date: new Date('2025-10-16T17:46:42.000Z'),
+        date: new Date('2025-10-16T14:46:42.000Z'),
         comment: '',
         movements: [
           {
@@ -86,7 +86,7 @@ describe('convertTransaction', () => {
       TEST_TRANSACTIONS['8479823740280'][3],
       {
         hold: null,
-        date: new Date('2025-10-16T17:33:17.000Z'),
+        date: new Date('2025-10-16T14:33:17.000Z'),
         comment: '',
         movements: [
           {
@@ -111,7 +111,7 @@ describe('convertTransaction', () => {
       TEST_TRANSACTIONS['8479823740280'][4],
       {
         hold: null,
-        date: new Date('2025-10-16T17:20:29.000Z'),
+        date: new Date('2025-10-16T14:20:29.000Z'),
         comment: '',
         movements: [
           {
@@ -136,7 +136,7 @@ describe('convertTransaction', () => {
       TEST_TRANSACTIONS['8479823740280'][5],
       {
         hold: null,
-        date: new Date('2025-10-16T17:13:26.000Z'),
+        date: new Date('2025-10-16T14:13:26.000Z'),
         comment: '',
         movements: [
           {
@@ -174,7 +174,7 @@ describe('convertTransaction', () => {
       TEST_TRANSACTIONS['425367558876986'][0],
       {
         hold: null,
-        date: new Date('2025-10-23T13:36:43.000Z'),
+        date: new Date('2025-10-23T10:36:43.000Z'),
         comment: 'life:) по № телефона',
         movements: [
           {
@@ -192,7 +192,7 @@ describe('convertTransaction', () => {
       TEST_TRANSACTIONS['425367558876986'][1],
       {
         hold: null,
-        date: new Date('2025-10-17T20:40:02.000Z'),
+        date: new Date('2025-10-17T17:40:02.000Z'),
         comment: 'Перевод со счета на карту',
         movements: [
           {
@@ -210,7 +210,7 @@ describe('convertTransaction', () => {
       TEST_TRANSACTIONS['425367558876986'][2],
       {
         hold: null,
-        date: new Date('2025-10-17T20:35:49.000Z'),
+        date: new Date('2025-10-17T17:35:49.000Z'),
         comment: 'On-line пополнение со списанием со счета в другой валюте',
         movements: [
           {

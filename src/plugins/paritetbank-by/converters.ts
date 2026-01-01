@@ -1,6 +1,6 @@
 import { Account, AccountType, Transaction } from '../../types/zenmoney'
 import type { FetchCardAccount, FetchCurrentAccount, FetchTransaction } from './types/fetch'
-import { ensureCurrency, isNonEmptyString } from './helpers'
+import { ensureCurrency, getUnixTimestamp, isNonEmptyString } from './helpers'
 
 export const convertCardAccount = (fetchAccount: FetchCardAccount): Account => {
   if (fetchAccount.cards.at(0) == null) throw new Error('No card linked to CardAccount')
@@ -48,7 +48,7 @@ export const convertTransaction = (fetchTransaction: FetchTransaction, account: 
 
   return {
     hold: null,
-    date: new Date(fetchTransaction.paymentDate),
+    date: new Date(getUnixTimestamp(fetchTransaction.paymentDate)),
     comment: fetchTransaction.payName === fetchTransaction.servicePoint ? '' : (fetchTransaction.payName ?? ''),
     movements: [
       {
