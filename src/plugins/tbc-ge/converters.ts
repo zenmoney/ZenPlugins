@@ -82,7 +82,7 @@ export function convertDepositV2 (apiAccount: DepositDataV2): PreparedLoanV2 {
       startDate,
       startBalance: apiAccount.details.interestCalculationUponCancellation.amount,
       capitalization: true,
-      percent: apiAccount.details.depositDetails.existingEffectiveInterestRate,
+      percent: apiAccount.details.interestCalculation.interestRate,
       endDateOffsetInterval,
       endDateOffset,
       payoffInterval: 'month',
