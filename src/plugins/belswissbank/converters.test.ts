@@ -9,7 +9,7 @@ describe('parseDate', () => {
 })
 
 describe('convertTransactions', () => {
-  test('skips transactions with summa === 0 (e.g., preauthorizations)', () => {
+  test('skips preauthorization transaction with zero sum', () => {
     const apiTransactions = [
       {
         balanceAfter: 426.35,
@@ -62,7 +62,7 @@ describe('convertTransactions', () => {
     expect(transactions[0].movements[0].id).toBe('111112')
   })
 
-  test('converts outcome transactions correctly (isEnrollment: false)', () => {
+  test('converts outcome transaction (merchant purchase in BYN)', () => {
     const apiTransactions = [
       {
         id: 113710793,
@@ -112,7 +112,7 @@ describe('convertTransactions', () => {
     })
   })
 
-  test('converts income transactions correctly (isEnrollment: true)', () => {
+  test('converts income transaction (salary payment with comment)', () => {
     const apiTransactions = [
       {
         id: 123456789,
@@ -160,5 +160,56 @@ describe('convertTransactions', () => {
       },
       comment: 'Monthly salary'
     })
+  })
+
+  test('converts outgoing transfer to another user card (with currency conversion)', () => {
+    const apiTransactions = [
+      {
+        id: 121291728,
+        userId: 3242906,
+        cardId: 349111,
+        paymentDate: '28/11/2025 12:46:47',
+        last4namePayer: '4468, MIKITA DUBITSKI',
+        currCode: 'BYN',
+        target: '9963, MIKITA DUBITSKI',
+        paymentTypeId: 14,
+        status: 1,
+        paymentName: 'Перевод',
+        paymentType: 'TRANSFER',
+        isEnrollment: false,
+        summa: 6500,
+        balanceBefore: 37000,
+        balanceAfter: 34761.32,
+        currencyTypePayer: 'USD',
+        statusSignature: null,
+        cardRetailIdRecipient: 2743029,
+        commentText: null,
+        favoriteId: null
+      }
+    ]
+
+    const transactions = Array.from(convertTransactions(apiTransactions))
+
+    expect(transactions).toEqual([
+      {
+        comment: null,
+        date: new Date('2025-11-28T12:46:47+0300'),
+        hold: false,
+        merchant: {
+          fullTitle: '9963, MIKITA DUBITSKI',
+          location: null,
+          mcc: null
+        },
+        movements: [
+          {
+            account: { id: '349111' },
+            fee: 0,
+            id: '121291728',
+            invoice: null,
+            sum: -6500
+          }
+        ]
+      }
+    ])
   })
 })
