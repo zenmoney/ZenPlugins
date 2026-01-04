@@ -1,4 +1,4 @@
-import { AccountOrCard, AccountType, Transaction } from '../../types/zenmoney'
+import { AccountOrCard, AccountType, Movement, Transaction } from '../../types/zenmoney'
 import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
 import _ from 'lodash'
 
@@ -238,9 +238,33 @@ export function * convertTransactions (apiTransactions: unknown[]): Generator<Tr
         continue
       }
       const isEnrollment = _.get(transaction, 'isEnrollment') as boolean
-      // isEnrollment: false = outcome (expense), sum should be negative
-      // isEnrollment: true = income, sum should be positive
-      const sum = isEnrollment ? summa : -summa
+      const currCode = _.get(transaction, 'currCode') as string
+      const currencyTypePayer = _.get(transaction, 'currencyTypePayer') as string
+      const balanceBefore = _.get(transaction, 'balanceBefore') as number | null
+      const balanceAfter = _.get(transaction, 'balanceAfter') as number | null
+
+      let sum: Movement['sum']
+      let invoice: Movement['invoice']
+
+      if (currCode === currencyTypePayer) {
+        // No currency conversion - use summa directly
+        // isEnrollment: false = outcome (expense), sum should be negative
+        // isEnrollment: true = income, sum should be positive
+        sum = isEnrollment ? summa : -summa
+        invoice = null
+      } else {
+        // Currency conversion - calculate from balance difference
+        if (balanceBefore != null && balanceAfter != null) {
+          sum = Math.round((balanceAfter - balanceBefore) * 100) / 100
+        } else {
+          sum = null
+        }
+        invoice = {
+          sum: isEnrollment ? summa : -summa,
+          instrument: currCode
+        }
+      }
+
       yield {
         hold: false,
         date: parseDate(_.get(transaction, 'paymentDate')),
@@ -250,7 +274,7 @@ export function * convertTransactions (apiTransactions: unknown[]): Generator<Tr
             account: { id: String(_.get(transaction, 'cardId')) },
             sum,
             fee: 0,
-            invoice: null
+            invoice
           }
         ],
         merchant: {
