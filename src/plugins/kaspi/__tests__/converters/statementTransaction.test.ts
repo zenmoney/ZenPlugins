@@ -28,6 +28,230 @@ it.each([
   [
     {
       hold: false,
+      date: '2024-02-10T00:00:00.000',
+      originalAmount: null,
+      amount: '+ 20 000,00 ',
+      description: 'Пополнение С карты другого банка',
+      statementUid: 'd2d2e0c3-3d16-4c6f-8e3e-ccf7064e7c9c',
+      originString: '10.02.24+ 20 000,00 ₸   Пополнение      С карты другого банка\n'
+    },
+    {
+      statementUid: 'd2d2e0c3-3d16-4c6f-8e3e-ccf7064e7c9c',
+      transaction: {
+        comment: null,
+        movements: [
+          {
+            id: null,
+            account: {
+              id: 'KZ11111'
+            },
+            invoice: null,
+            sum: 20000,
+            fee: 0
+          },
+          {
+            id: null,
+            account: {
+              type: AccountType.ccard,
+              instrument: 'KZT',
+              company: null,
+              syncIds: null
+            },
+            invoice: null,
+            sum: -20000,
+            fee: 0
+          }
+        ],
+        hold: false,
+        date: new Date('2024-02-10T00:00:00.000'),
+        merchant: null
+      }
+    },
+    null
+  ],
+  [
+    {
+      hold: false,
+      date: '2025-04-12T00:00:00.000',
+      originalAmount: null,
+      amount: '- 6 600,00 ',
+      description: 'Перевод На Kaspi Депозит',
+      statementUid: 'b8c0b7e0-9c4a-4a11-bf14-8f2a2f1e4b51',
+      originString: '12.04.25- 6 600,00 ₸ Перевод На Kaspi Депозит\n'
+    },
+    {
+      statementUid: 'b8c0b7e0-9c4a-4a11-bf14-8f2a2f1e4b51',
+      transaction: {
+        comment: null,
+        movements: [
+          {
+            id: null,
+            account: {
+              id: 'KZ11111'
+            },
+            invoice: null,
+            sum: -6600,
+            fee: 0
+          },
+          {
+            id: null,
+            account: {
+              type: AccountType.deposit,
+              instrument: 'KZT',
+              company: null,
+              syncIds: null
+            },
+            invoice: null,
+            sum: 6600,
+            fee: 0
+          }
+        ],
+        hold: false,
+        date: new Date('2025-04-12T00:00:00.000'),
+        merchant: {
+          fullTitle: 'На Kaspi Депозит',
+          mcc: null,
+          location: null
+        }
+      }
+    },
+    null
+  ],
+  [
+    {
+      hold: false,
+      date: '2025-04-13T00:00:00.000',
+      originalAmount: null,
+      amount: '+ 6 600,00 ',
+      description: 'Перевод С Kaspi Депозита',
+      statementUid: 'fa4d1b2f-75c8-4f3f-a6b3-1f9b1b3a1b1a',
+      originString: '13.04.25+ 6 600,00 ₸ Перевод С Kaspi Депозита\n'
+    },
+    {
+      statementUid: 'fa4d1b2f-75c8-4f3f-a6b3-1f9b1b3a1b1a',
+      transaction: {
+        comment: null,
+        movements: [
+          {
+            id: null,
+            account: {
+              id: 'KZ11111'
+            },
+            invoice: null,
+            sum: 6600,
+            fee: 0
+          },
+          {
+            id: null,
+            account: {
+              type: AccountType.deposit,
+              instrument: 'KZT',
+              company: null,
+              syncIds: null
+            },
+            invoice: null,
+            sum: -6600,
+            fee: 0
+          }
+        ],
+        hold: false,
+        date: new Date('2025-04-13T00:00:00.000'),
+        merchant: {
+          fullTitle: 'С Kaspi Депозита',
+          mcc: null,
+          location: null
+        }
+      }
+    },
+    null
+  ],
+  [
+    {
+      hold: false,
+      date: '2025-04-14T00:00:00.000',
+      originalAmount: null,
+      amount: '- 1 200,00 ',
+      description: 'Перевод Тест Т.',
+      statementUid: 'b1f2d3e4-5678-4a9b-8c0d-1e2f3a4b5c6d',
+      originString: '14.04.25- 1 200,00 ₸ Перевод Тест Т.\n'
+    },
+    {
+      statementUid: 'b1f2d3e4-5678-4a9b-8c0d-1e2f3a4b5c6d',
+      transaction: {
+        comment: null,
+        movements: [
+          {
+            id: null,
+            account: {
+              id: 'KZ11111'
+            },
+            invoice: null,
+            sum: -1200,
+            fee: 0
+          }
+        ],
+        hold: false,
+        date: new Date('2025-04-14T00:00:00.000'),
+        merchant: {
+          fullTitle: 'Тест Т.',
+          mcc: null,
+          location: null
+        }
+      }
+    },
+    null
+  ],
+  [
+    {
+      hold: false,
+      date: '2025-12-05T00:00:00.000',
+      originalAmount: null,
+      amount: '+ 12 790,20 ',
+      description: 'Пополнение С Kaspi Gold через kaspi.kz',
+      statementUid: '1c40f18a-93dd-45dd-9f5b-1b8312f6dfaa',
+      originString: '05.12.25+12 790,20 ₸ПополнениеС Kaspi Gold через kaspi.kz13 928,35 ₸'
+    },
+    {
+      statementUid: '1c40f18a-93dd-45dd-9f5b-1b8312f6dfaa',
+      transaction: {
+        comment: null,
+        movements: [
+          {
+            id: null,
+            account: {
+              id: 'KZ2222'
+            },
+            invoice: null,
+            sum: 12790.2,
+            fee: 0
+          },
+          {
+            id: null,
+            account: {
+              type: AccountType.ccard,
+              instrument: 'USD',
+              company: null,
+              syncIds: null
+            },
+            invoice: null,
+            sum: -12790.2,
+            fee: 0
+          }
+        ],
+        hold: false,
+        date: new Date('2025-12-05T00:00:00.000'),
+        merchant: {
+          fullTitle: 'С Kaspi Gold через kaspi.kz',
+          mcc: null,
+          location: null
+        }
+      }
+    },
+    deposit
+  ],
+  [
+    {
+      hold: false,
       date: '2023-01-14T00:00:00.000',
       originalAmount: '(-17 EGP)',
       amount: '- 271,52 ',
