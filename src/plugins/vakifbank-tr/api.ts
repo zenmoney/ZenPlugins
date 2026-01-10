@@ -11,6 +11,42 @@ const SUPPORTED_MIME_TYPES = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 ]
 
+/**
+ * Safely converts Blob to ArrayBuffer with fallback for environments
+ * where Blob.prototype.arrayBuffer() is not available
+ */
+async function blobToArrayBuffer (blob: Blob & { _getBytes?: () => Uint8Array }): Promise<ArrayBuffer> {
+  // Try modern arrayBuffer() method first
+  if (typeof blob.arrayBuffer === 'function') {
+    console.log('[vakifbank-tr] Using blob.arrayBuffer() method')
+    return await blob.arrayBuffer()
+  }
+
+  // Fallback to _getBytes() for ZenMoney.Blob polyfill
+  if (typeof blob._getBytes === 'function') {
+    console.log('[vakifbank-tr] Using blob._getBytes() - blob is already wrapped')
+    const bytes = blob._getBytes()
+    return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)
+  }
+
+  // Fallback: Wrap native Blob with ZenMoney.Blob and use its _getBytes()
+  const ZM = ZenMoney as any
+  if (typeof ZM.Blob !== 'undefined') {
+    console.log('[vakifbank-tr] Wrapping native Blob with ZenMoney.Blob')
+    const wrappedBlob = new ZM.Blob([blob], { type: blob.type })
+    if (typeof wrappedBlob._getBytes === 'function') {
+      console.log('[vakifbank-tr] Successfully using wrappedBlob._getBytes()')
+      const bytes = wrappedBlob._getBytes() as Uint8Array
+      return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)
+    }
+    console.warn('[vakifbank-tr] wrappedBlob._getBytes is not a function')
+  } else {
+    console.warn('[vakifbank-tr] ZenMoney.Blob is undefined')
+  }
+
+  throw new TemporaryError('Blob.arrayBuffer() not supported in this environment')
+}
+
 export async function pickStatementDocuments (): Promise<Blob[]> {
   const blobs = await ZenMoney.pickDocuments(SUPPORTED_MIME_TYPES, true)
 
@@ -44,7 +80,7 @@ export async function parseVakifStatementFromFiles (
   }
 
   if (xlsBlobs.length > 0) {
-    const buffers = await Promise.all(xlsBlobs.map(async b => await b.arrayBuffer()))
+    const buffers = await Promise.all(xlsBlobs.map(async b => await blobToArrayBuffer(b)))
     statements.push(...parseXlsStatements(buffers))
   }
 
