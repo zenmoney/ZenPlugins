@@ -76,6 +76,8 @@ declare namespace ZenMoney {
 
   function pickDocuments (mimeTypes: string[], allowMultipleSelection: boolean): Promise<Blob[]>
 
+  function takePicture (format: string): Promise<Blob | null>
+
   function logEvent (type: string, data?: Record<string, unknown>): void
 }
 

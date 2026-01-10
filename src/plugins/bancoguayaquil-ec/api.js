@@ -64,24 +64,11 @@ async function getToken (preferences) {
 }
 
 async function getPhoto () {
-  if (ZenMoney.takePicture) {
-    return await new Promise((resolve, reject) => {
-      ZenMoney.takePicture('jpeg', (err, picture) => {
-        if (err) {
-          reject(err)
-        } else {
-          resolve(picture)
-        }
-      })
-    })
-  }
-
-  await ZenMoney.alert('chose and upload your selfie for device registration')
-  const blobs = await ZenMoney.pickDocuments(['image/*'], false)
-  if (blobs.length !== 1) {
+  const picture = await ZenMoney.takePicture('jpeg')
+  if (picture == null) {
     throw new Error('at least one photo should be selected')
   }
-  return blobs[0]
+  return picture
 }
 
 async function registerDevice (cedula) {
