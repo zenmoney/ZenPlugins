@@ -60,7 +60,9 @@ async function pdfOrThrow (dataBuffer, options) {
 }
 
 export async function parsePdf (pdfBlob) {
-  const arrayBuffer = await pdfBlob.arrayBuffer()
+  const arrayBuffer = 'arrayBuffer' in pdfBlob
+    ? await pdfBlob.arrayBuffer()
+    : (await (typeof pdfBlob.bytes === 'function' ? pdfBlob.bytes() : pdfBlob.bytes)).buffer
 
   if (isDebug() && typeof global.WorkerGlobalScope !== 'undefined' && global.self instanceof global.WorkerGlobalScope) {
     console.log('parsePdf worker thread')
