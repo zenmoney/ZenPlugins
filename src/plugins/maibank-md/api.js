@@ -14,7 +14,20 @@ function generateDevice () {
 }
 
 export async function apiFetch (url, options) {
-  const body = options.body ? options.requestEntity ? options.requestEntity.encode(options.body).finish() : options.body : null
+  let body = options.body ? options.requestEntity ? options.requestEntity.encode(options.body).finish() : options.body : null
+  // Ensure body is a Uint8Array if it comes from protobuf encoding
+  // Some protobuf implementations return an object with .bytes property instead of Uint8Array directly
+  if (body && options.requestEntity) {
+    // If finish() returns an object with .bytes property, extract it
+    if (body && typeof body === 'object' && 'bytes' in body && !(body instanceof Uint8Array)) {
+      const bytes = body.bytes
+      // Handle Promise case (await if needed) or extract the actual bytes
+      body = bytes instanceof Promise ? await bytes : (bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes))
+    } else if (body && !(body instanceof Uint8Array)) {
+      // Ensure it's a Uint8Array even if finish() returned something else
+      body = new Uint8Array(body)
+    }
+  }
   const headers = {
     'Accept-Language': 'en',
     'User-Agent': `Dalvik/2.1.0 (Linux; U; Android 10; ${ZenMoney.device.model} Build/${ZenMoney.device.id})`,
