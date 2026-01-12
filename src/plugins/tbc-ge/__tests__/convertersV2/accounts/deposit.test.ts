@@ -78,7 +78,7 @@ it.each([
         startDate: new Date('2025-12-18T00:00:00.000+04:00'),
         startBalance: 10000,
         capitalization: true,
-        percent: null,
+        percent: 2.25,
         endDateOffsetInterval: 'month',
         endDateOffset: 3,
         payoffInterval: 'month',
