@@ -110,7 +110,14 @@ if (!ZenMoney.fetch) {
       })
     })
   }
+} else {
+  const pickDocuments = ZenMoney.pickDocuments
+  ZenMoney.pickDocuments = async (mimeTypes, allowMultipleSelection) => {
+    return pickDocuments.call(ZenMoney, { mimeTypes, allowMultipleSelection })
+  }
+}
 
+if (!ZenMoney.fetch) {
   const takePicture = ZenMoney.takePicture
   ZenMoney.takePicture = async (format) => {
     return new Promise((resolve, reject) => {
