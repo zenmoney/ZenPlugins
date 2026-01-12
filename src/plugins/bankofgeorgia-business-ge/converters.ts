@@ -93,7 +93,7 @@ export function convertToZenMoneyTransaction (record: AccountRecord, allRecords:
             company: null,
             syncIds: [record.SenderDetails.AccountNumber]
           },
-          sum: record.DocumentSourceAmount,
+          sum: -record.DocumentSourceAmount,
           fee: 0,
           invoice: null
         }

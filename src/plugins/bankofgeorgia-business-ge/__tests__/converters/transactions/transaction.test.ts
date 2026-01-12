@@ -176,7 +176,7 @@ describe('convertToZenMoneyTransaction', () => {
     ],
 
     [
-      'exchange',
+      'exchange-1',
       {
         Currency: 'GEL',
         AccountID: 'GE00BG0000000000000000GEL',
@@ -245,7 +245,7 @@ describe('convertToZenMoneyTransaction', () => {
               company: null,
               syncIds: ['GE00BG0000000000000000USD']
             },
-            sum: 40,
+            sum: -40,
             fee: 0,
             invoice: null
           }
@@ -257,8 +257,105 @@ describe('convertToZenMoneyTransaction', () => {
           mcc: null,
           location: null
         },
-        comment: 'Curren' +
-          'cy exchange. Rate: 2.500 Counter amount: USD40.00. Conversion'
+        comment: 'Currency exchange. Rate: 2.500 Counter amount: USD40.00. Conversion'
+      }
+    ],
+    [
+      'exchange-2',
+      {
+        Currency: 'EUR',
+        AccountID: 'GE38BG0000000606041770EUR',
+        EntryDate: '2025-09-04T00:00:00',
+        EntryDocumentNumber: '2509043170000528',
+        EntryAccountNumber: '26119783170100000000',
+        EntryAmountDebit: 0,
+        EntryAmountDebitBase: null,
+        EntryAmountCredit: 157.48,
+        EntryAmountCreditBase: 494.44,
+        EntryAmountBase: 494.44,
+        EntryAmount: 157.48,
+        EntryComment: 'ვალუტის გაცვლითი ოპერაცია. კურსი:3.175 კონტრთანხა: GEL500.. Currency Exchange',
+        EntryDepartment: 'CEN217',
+        EntryAccountPoint: 'CENTRAL217',
+        DocumentProductGroup: 'CCO',
+        DocumentValueDate: null,
+        SenderDetails:
+          {
+            Name: 'ინდივიდუალური მეწარმე არტემ ზდასიუკ',
+            Inn: '304757154',
+            AccountNumber: 'GE38BG0000000606041770GEL',
+            BankCode: 'BAGAGE22',
+            BankName: 'სს "საქართველოს ბანკი"'
+          },
+        BeneficiaryDetails:
+          {
+            Name: 'ინდივიდუალური მეწარმე არტემ ზდასიუკ',
+            Inn: '304757154',
+            AccountNumber: 'GE38BG0000000606041770EUR',
+            BankCode: 'BAGAGE22',
+            BankName: 'სს "საქართველოს ბანკი"'
+          },
+        DocumentTreasuryCode: null,
+        DocumentNomination: 'Currency Exchange',
+        DocumentInformation: 'Currency Exchange',
+        DocumentSourceAmount: 157.48,
+        DocumentSourceCurrency: 'EUR',
+        DocumentDestinationAmount: 500,
+        DocumentDestinationCurrency: 'GEL',
+        DocumentReceiveDate: '2025-09-04T00:00:00',
+        DocumentBranch: '502',
+        DocumentDepartment: 'CEN217',
+        DocumentActualDate: '2025-09-04T00:00:00',
+        DocumentExpiryDate: '2025-09-14T00:00:00',
+        DocumentRateLimit: 3.175,
+        DocumentRate: 3.175,
+        DocumentRegistrationRate: 3.175,
+        DocumentSenderInstitution: null,
+        DocumentIntermediaryInstitution: null,
+        DocumentBeneficiaryInstitution: null,
+        DocumentPayee: null,
+        DocumentCorrespondentAccountNumber: 'GE38BG0000000606041770GEL',
+        DocumentCorrespondentBankCode: 'BAGAGE22',
+        DocumentCorrespondentBankName: 'სს "საქართველოს ბანკი"',
+        DocumentKey: 29144301701,
+        EntryId: 101888108777,
+        DocumentPayerName: null,
+        DocumentPayerInn: null,
+        DocComment: null
+      },
+      {
+        hold: false,
+        date: new Date('2025-09-04T00:00:00'),
+        movements: [
+          {
+            id: '101888108777',
+            account: { id: 'GE38BG0000000606041770EUR' },
+            sum: 157.48,
+            fee: 0,
+            invoice: null
+          },
+          {
+            id: null,
+            account:
+              {
+                type: 'checking',
+                instrument: 'EUR',
+                company: null,
+                syncIds: ['GE38BG0000000606041770GEL']
+              },
+            sum: -157.48,
+            fee: 0,
+            invoice: null
+          }
+        ],
+        merchant: {
+          city: null,
+          country: null,
+          mcc: null,
+          title: 'ინდივიდუალური მეწარმე არტემ ზდასიუკ',
+          location: null
+        },
+        comment: 'ვალუტის გაცვლითი ოპერაცია. კურსი:3.175 კონტრთანხა: GEL500.. Currency Exchange'
       }
     ],
 
