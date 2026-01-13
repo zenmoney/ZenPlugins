@@ -2,10 +2,9 @@ import { convertTransactions } from '../../../converters'
 
 describe('payment', () => {
   it('payment', () => {
-    expect(convertTransactions({
-      id: 123456789,
-      type: 5
-    }, '<tr>\n' +
+    expect(convertTransactions(
+      '1234567895',
+      '<tr>\n' +
     '<td align="right" width="80" nowrap>05.12.2023</td>\n' +
    '<td align="left" width="130" nowrap>ISPLATA VISA&nbsp;NICEFOODS</td>\n' +
    '<td align="right" width="100" nowrap>EUR 978</td>\n' +
