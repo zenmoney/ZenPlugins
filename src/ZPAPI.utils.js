@@ -102,7 +102,7 @@ const processBody = (body, type) => {
     return body
   }
   if (body instanceof ZenMoney.Blob) {
-    return body._getBytes()
+    return body
   }
   switch (type) {
     case 'URL_ENCODING':
