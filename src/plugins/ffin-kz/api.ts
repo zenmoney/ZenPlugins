@@ -103,6 +103,27 @@ interface ExchangeRatesResponse {
   status: number
 }
 
+async function parseJsonResponse (response: Response): Promise<ExchangeRatesResponse | null> {
+  try {
+    if (typeof (response as unknown as { json?: unknown }).json === 'function') {
+      return await (response as unknown as { json: () => Promise<ExchangeRatesResponse> }).json()
+    }
+  } catch (e) {}
+  try {
+    const text = typeof (response as unknown as { text?: unknown }).text === 'function'
+      ? await (response as unknown as { text: () => Promise<string> }).text()
+      : (response as unknown as { text?: unknown }).text
+    if (typeof text === 'string' && text.trim() !== '') {
+      return JSON.parse(text) as ExchangeRatesResponse
+    }
+  } catch (e) {}
+  const body = (response as unknown as { body?: unknown }).body
+  if (body !== null && body !== undefined && typeof body === 'object') {
+    return body as ExchangeRatesResponse
+  }
+  return null
+}
+
 export async function getMobileExchangeRates (): Promise<Record<string, ExchangeRate>> {
   const mobileRatesMap: Record<string, ExchangeRate> = {}
 
@@ -110,7 +131,10 @@ export async function getMobileExchangeRates (): Promise<Record<string, Exchange
   if (!response.ok) {
     return mobileRatesMap
   }
-  const json: ExchangeRatesResponse = await response.json()
+  const json = await parseJsonResponse(response)
+  if (json == null) {
+    return mobileRatesMap
+  }
   if (!json.success || !Array.isArray(json.data?.mobile) || json.data.mobile.length === 0) {
     return mobileRatesMap
   }
