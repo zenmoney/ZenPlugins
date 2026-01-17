@@ -7,7 +7,11 @@ global.Symbol = require('es6-symbol')
 
 delete global.Blob
 delete global.FormData
-require('./polyfills/blob')
+if (ZenMoney.fetch && ZenMoney.Blob) {
+  global.Blob = ZenMoney.Blob
+} else {
+  require('./polyfills/blob')
+}
 require('./polyfills/formData')
 ZenMoney.Blob = global.Blob
 ZenMoney.FormData = global.FormData
@@ -110,7 +114,14 @@ if (!ZenMoney.fetch) {
       })
     })
   }
+} else {
+  const pickDocuments = ZenMoney.pickDocuments
+  ZenMoney.pickDocuments = async (mimeTypes, allowMultipleSelection) => {
+    return pickDocuments.call(ZenMoney, { mimeTypes, allowMultipleSelection })
+  }
+}
 
+if (!ZenMoney.fetch) {
   const takePicture = ZenMoney.takePicture
   ZenMoney.takePicture = async (format) => {
     return new Promise((resolve, reject) => {
