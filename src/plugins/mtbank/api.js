@@ -75,7 +75,7 @@ function cookies (response) {
     const cookies = response.headers['set-cookie']
     if (cookies) {
       const requiredValues = /(JSESSIONID=[^;]*;).*(TS[^=]*=[^;]*;)/
-      return requiredValues.exec(cookies).slice(1).join(';')
+      return requiredValues.exec(cookies)?.slice(1).join(';') ?? ''
     } else {
       return cookies
     }
