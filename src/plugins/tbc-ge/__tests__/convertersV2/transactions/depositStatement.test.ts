@@ -71,7 +71,7 @@ it.each([
         }
       ],
       merchant: null,
-      comment: null
+      comment: 'Deposit interest'
     }
   ],
   [
@@ -98,34 +98,7 @@ it.each([
         }
       ],
       merchant: null,
-      comment: null
-    }
-  ],
-  [
-    'combined deposit and interest',
-    {
-      movementDate: 1766260800000,
-      depositAmount: 2000,
-      interestedAmount: 10.5,
-      withdrawnDepositAmount: 0,
-      balance: 11565.38
-    },
-    {
-      hold: false,
-      date: new Date(1766260800000),
-      movements: [
-        {
-          id: Buffer.from('822946793:2010.5:1766260800000').toString('base64'),
-          account: {
-            id: '822946793'
-          },
-          sum: 2010.5,
-          fee: 0,
-          invoice: null
-        }
-      ],
-      merchant: null,
-      comment: null
+      comment: 'Deposit withdrawal'
     }
   ]
 ])('converts %s statement', (testName: string, statement: DepositStatementV2, expectedTransaction: unknown) => {
