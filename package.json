@@ -23,7 +23,7 @@
     "jshashes": "1.0.8",
     "jsrsasign": "10.5.20",
     "ksuid": "1.2.0",
-    "lodash": "4.17.21",
+    "lodash": "4.17.23",
     "moment": "2.24.0",
     "moment-timezone": "0.5.28",
     "node-forge": "0.9.1",
