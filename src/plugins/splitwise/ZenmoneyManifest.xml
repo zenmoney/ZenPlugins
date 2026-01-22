@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>splitwise</id>
+    <company>15881</company>
+    <description>
+        Synchronization plugin for Splitwise (https://splitwise.com).
+        Input your API token from https://secure.splitwise.com/apps.
+
+        This plugin synchronizes your Splitwise expenses with ZenMoney.
+        After first sync update Splitwise Account balances manually.
+
+        ## How it works
+
+        1. The plugin creates separate accounts for each currency used in your Splitwise expenses
+        2. All expenses where you owe money will be imported as transactions with negative amounts
+        3. All expenses where others owe you money will be reflected in the account balance
+
+        ## Transaction handling
+
+        When you pay for a shared expense:
+        1. The original payment will appear in ZenMoney from your payment method (card/cash)
+        2. After syncing with Splitwise, your share of the expense will appear as a transaction
+        3. You should convert the original payment to a transfer:
+           - Source: Your payment account (card/cash)
+           - Destination: The corresponding Splitwise currency account
+
+        This way, your Splitwise balance will accurately reflect what you owe and what others owe you.
+
+        ## Example
+
+        You paid $100 for dinner with a friend (split 50/50):
+        1. Original $100 payment appears from your card
+        2. Splitwise sync adds a -$50 expense (your share)
+        3. Convert the $100 card payment to:
+           - Transfer from: Your card
+           - Transfer to: Splitwise USD account
+
+        Final result:
+        - Your card: -$100
+        - Splitwise USD: +$50 (friend owes you)
+    </description>
+    <version>1.0.0</version>
+    <build>1</build>
+    <modular>true</modular>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+    <codeRequired>false</codeRequired>
+</provider> 
