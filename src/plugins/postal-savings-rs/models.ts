@@ -1,3 +1,5 @@
+import { AccountOrCard, Amount } from '../../types/zenmoney'
+
 // Input preferences from schema in preferences.xml
 export interface Preferences {
   login: string
@@ -15,3 +17,18 @@ export interface AccountDetails {
   id: number
   type: AccountType
 }
+
+export interface PSAccount extends AccountOrCard {
+  cardNumber: string | null
+  rawData: string
+}
+
+export interface CardTransaction {
+  date: Date
+  authorizationDate: Date | null
+  amount: Amount
+  accountSum?: number
+  merchant: string
+}
+
+export type ExchangeRatesMap = Map<string, number>
