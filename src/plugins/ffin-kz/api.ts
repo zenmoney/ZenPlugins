@@ -281,23 +281,42 @@ export function parseDepositPdfString (text: string, statementUid?: string): { a
   for (const match of cleanedTableText.matchAll(rowRegexp)) {
     const [, dateStr, body] = match
     const normalizedBody = body
-      .replace(/Подлинность справки можете проверить.*$/i, '')
+      .replace(/Подлинность справки можете проверить[\s\S]*$/i, '')
       .replace(/\s+/g, ' ')
       .trim()
-    const bodyWithoutKzt = normalizedBody.replace(/\s+[+-]?\s*[\d\s.,]+\s*(?:т|₸)\s*$/i, '')
-    const txMatch = bodyWithoutKzt.match(/^([\s\S]+?)\s+([+-]?\s*[\d\s.,]+)\s*(?:[$€₸т]|[A-Z]{3})?$/i)
-    if (txMatch == null) {
+    const sanitizedBody = normalizedBody
+      .replace(/[−–—]/g, '-')
+      .replace(/[＋]/g, '+')
+    const amountMatches = [...sanitizedBody.matchAll(/(?:^|\s)([+-]?\s*[\d\s.,]+)\s*(\$|€|₸|т|[A-Z]{3})/gi)]
+    if (amountMatches.length === 0) {
       console.warn('Не удалось распарсить строку депозита', `${dateStr} ${normalizedBody}`)
       continue
     }
-    const [, description, amountStr] = txMatch
+    const currencyToInstrument = (currency: string): string => {
+      const upper = currency.toUpperCase()
+      if (upper === '₸' || upper === 'Т' || upper === 'KZT') return 'KZT'
+      if (upper === '$' || upper === 'USD') return 'USD'
+      if (upper === '€' || upper === 'EUR') return 'EUR'
+      return upper
+    }
+    const amountMatch = [...amountMatches].reverse()
+      .find((amountMatch) => currencyToInstrument(amountMatch[2]) === instrument) ??
+      amountMatches[amountMatches.length - 1]
+    const amountStr = amountMatch[1]
     const normalizedAmount = amountStr.replace(/\s/g, '').replace(',', '.')
+    let description = sanitizedBody
+    for (let i = 0; i < 2; i += 1) {
+      const trailingAmount = description.match(/(?:^|\s)([+-]?\s*[\d\s.,]+)\s*(\$|€|₸|т|[A-Z]{3})\s*$/i)
+      if (trailingAmount == null) break
+      description = description.slice(0, trailingAmount.index).trim()
+    }
+    description = description.replace(/\s+/g, ' ').trim()
     transactions.push({
       hold: false,
       date: parseDateFromPdfText(dateStr),
       originalAmount: `${normalizedAmount} ${instrument}`,
       amount: normalizedAmount,
-      description: description.trim() === '' ? null : description.trim(),
+      description: description === '' ? null : description,
       statementUid: uid,
       originString: `${dateStr} ${normalizedBody}`
     })
