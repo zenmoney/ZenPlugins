@@ -1,4 +1,4 @@
-import { mergeSinglesIntoSelfTransfers } from '../../index'
+import { mergeSinglesIntoSelfTransfers } from '../../transferCleanup'
 import { Transaction, Movement } from '../../../../types/zenmoney'
 
 describe('mergeSinglesIntoSelfTransfers', () => {

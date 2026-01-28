@@ -1,4 +1,4 @@
-import { dropOffsettingSinglesSameAccount } from '../../index'
+import { dropOffsettingSinglesSameAccount } from '../../transferCleanup'
 import { Transaction, Movement } from '../../../../types/zenmoney'
 
 describe('dropOffsettingSinglesSameAccount', () => {

@@ -153,4 +153,88 @@ describe('parseDepositPdfString', () => {
       }
     ])
   })
+
+  it('parses deposit rows with unicode minus and qr footer', () => {
+    const statementText = `
+Выписка по депозиту "KOPILKA" за период с 01.12.2025 по 31.12.2025
+Номер счета: KZ987654312KZT
+Валюта счета: KZT
+Эффективная ставка: 1 %
+Дата открытия: 01.02.2025
+Дата завершения: 01.02.2026
+Остаток на конец месяца: 5 802,93 ₸
+
+Дата Описание операции Сумма Эквивалент в KZT
+29.12.2025 Выплата вклада по Договору No KZ987654312KZT от 01.02.2025. Вкладчик: Иван Иванов −80 000,00 ₸ −80 000,00 ₸ Подлинность справки можете проверить просканировав QR-код или перейдите по ссылке: https://bankffin.kz/ru/check-receipt
+`
+
+    const parsed = parseDepositPdfString(statementText, 'statement-id-unicode')
+    expect(parsed.transactions).toEqual([
+      {
+        amount: '-80000.00',
+        date: '2025-12-29T00:00:00.000',
+        description: 'Выплата вклада по Договору No KZ987654312KZT от 01.02.2025. Вкладчик: Иван Иванов',
+        hold: false,
+        originString: '29.12.2025 Выплата вклада по Договору No KZ987654312KZT от 01.02.2025. Вкладчик: Иван Иванов −80 000,00 ₸ −80 000,00 ₸',
+        originalAmount: '-80000.00 KZT',
+        statementUid: 'statement-id-unicode'
+      }
+    ])
+  })
+
+  it('removes qr verification sentence from description', () => {
+    const statementText = `
+Выписка по депозиту "KOPILKA" за период с 01.12.2025 по 31.12.2025
+Номер счета: KZ987654312KZT
+Валюта счета: KZT
+Эффективная ставка: 1 %
+Дата открытия: 01.02.2025
+Дата завершения: 01.02.2026
+Остаток на конец месяца: 5 802,93 ₸
+
+Дата Описание операции Сумма Эквивалент в KZT
+23.12.2025 Выплата вклада по Договору No KZ987654312KZT от 01.02.2025. Вкладчик: Иван Иванов -10 000,00 ₸ -10 000,00 ₸ Подлинность справки можете проверить просканировав QR-код или перейдите по ссылке: https://bankffin.kz/ru/check-receipt
+`
+
+    const parsed = parseDepositPdfString(statementText, 'statement-id-qr')
+    expect(parsed.transactions).toEqual([
+      {
+        amount: '-10000.00',
+        date: '2025-12-23T00:00:00.000',
+        description: 'Выплата вклада по Договору No KZ987654312KZT от 01.02.2025. Вкладчик: Иван Иванов',
+        hold: false,
+        originString: '23.12.2025 Выплата вклада по Договору No KZ987654312KZT от 01.02.2025. Вкладчик: Иван Иванов -10 000,00 ₸ -10 000,00 ₸',
+        originalAmount: '-10000.00 KZT',
+        statementUid: 'statement-id-qr'
+      }
+    ])
+  })
+
+  it('keeps inline amount in description while using trailing column amount', () => {
+    const statementText = `
+Выписка по депозиту "KOPILKA" за период с 01.12.2025 по 31.12.2025
+Номер счета: KZ987654312KZT
+Валюта счета: KZT
+Эффективная ставка: 1 %
+Дата открытия: 01.02.2025
+Дата завершения: 01.02.2026
+Остаток на конец месяца: 5 802,93 ₸
+
+Дата Описание операции Сумма Эквивалент в KZT
+25.12.2025 Прием вклада по договору KZ987654312KZT в сумме 30 000 KZT. Вкладчик: Иван Иванов 30 000,00 ₸ 30 000,00 ₸
+`
+
+    const parsed = parseDepositPdfString(statementText, 'statement-id-inline')
+    expect(parsed.transactions).toEqual([
+      {
+        amount: '30000.00',
+        date: '2025-12-25T00:00:00.000',
+        description: 'Прием вклада по договору KZ987654312KZT в сумме 30 000 KZT. Вкладчик: Иван Иванов',
+        hold: false,
+        originString: '25.12.2025 Прием вклада по договору KZ987654312KZT в сумме 30 000 KZT. Вкладчик: Иван Иванов 30 000,00 ₸ 30 000,00 ₸',
+        originalAmount: '30000.00 KZT',
+        statementUid: 'statement-id-inline'
+      }
+    ])
+  })
 })
