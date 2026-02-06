@@ -41,7 +41,7 @@ export async function login (preferences: Preferences, auth: Auth): Promise<Sess
       if ((manualAppVersion === null || manualAppVersion === '')) {
         throw new TemporaryError('NEED UPGRADE APP VERSION')
       }
-      auth.appVersion = manualAppVersion
+      auth.appVersion = Number(manualAppVersion)
       auth.deviceReg = auth.deviceUUID + ':WEB:WEB:' + auth.appVersion + ':WEB:desktop:zenmoney'
       ZenMoney.setData('auth', auth)
       ZenMoney.saveData()

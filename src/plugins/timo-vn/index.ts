@@ -7,7 +7,7 @@ import { generateRandomString } from '../../common/utils'
 export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, toDate, isFirstRun }) => {
   toDate = toDate ?? new Date()
 
-  const appVersion = '302'
+  const appVersion = 306
 
   if (isFirstRun) {
     const auth: Auth = {
@@ -21,7 +21,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
   }
 
   const auth = ZenMoney.getData('auth') as Auth
-  auth.appVersion = appVersion
+  auth.appVersion = auth.appVersion >= appVersion ? auth.appVersion : appVersion
   auth.deviceReg = auth.deviceUUID + ':WEB:WEB:' + auth.appVersion + ':WEB:desktop:zenmoney'
   ZenMoney.setData('auth', auth)
   ZenMoney.saveData()

@@ -3,7 +3,7 @@ import { AccountOrCard } from '../../types/zenmoney'
 // Stored in persistent storage
 export interface Auth {
   deviceUUID: string
-  appVersion: string
+  appVersion: number
   deviceReg: string
 }
 
