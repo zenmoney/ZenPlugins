@@ -6,12 +6,9 @@ export function convertAccount (ob) {
   }
   const id = ob.Id[0].split('-')[0]
   if (!ZenMoney.isAccountSkipped(id)) {
-    const transactionsAccId = ob.Action.filter((action) => action !== null).filter((action) => action.Type[0] === 'B735:GetOrdering2')[0]
-    const latestTrID = ob.Action.filter((action) => action !== null).filter((action) => action.Type[0] === 'wsig:LastTrx2')[0]
-
     return {
       id,
-      transactionsAccId: transactionsAccId.Id[0],
+      transactionsAccId: ob.statementExecutionId,
       type: 'card',
       title: ob.ProductTypeName[0] + '*' + ob.No[0].slice(-4),
       currencyCode: ob.Currency[0],
@@ -22,7 +19,7 @@ export function convertAccount (ob) {
       productId: ob.Id[0],
       productType: ob.ProductType[0],
       accountID: Number(ob.BankId[0].split('-')[-1]),
-      latestTrID: latestTrID.Id[0]
+      latestTrID: ob.lastTrxExecutionId
     }
   }
   return null

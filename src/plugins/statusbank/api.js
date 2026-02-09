@@ -1,11 +1,16 @@
 import { createDateIntervals as commonCreateDateIntervals } from '../../common/dateUtils'
+import { generateRandomString } from '../../common/utils'
 import { parseXml } from '../../common/xmlUtils'
 import { flatMap } from 'lodash'
 import { fetch } from '../../common/network'
 import cheerio from 'cheerio'
 import xml2js from 'xml2js'
 
-const BASE_URL = 'https://stb24.by/mobile/xml_online'
+const BASE_URL = 'https://stb24.by/api/sou/admin/xml'
+
+export function generateBoundary () {
+  return generateRandomString(8) + '-' + generateRandomString(4) + '-' + generateRandomString(4) + '-' + generateRandomString(4) + '-' + generateRandomString(12)
+}
 
 export function terminalTime () {
   const now = new Date()
@@ -13,15 +18,24 @@ export function terminalTime () {
 }
 
 async function fetchApi (url, xml, options, predicate = () => true, error = (message) => console.assert(false, message), rawResp = false) {
+  const boundary = generateBoundary()
+  const boundaryStart = '--' + boundary + '\r\n'
+  const boundaryLast = '--' + boundary + '--\r\n'
+
   options.method = options.method ? options.method : 'POST'
   options.headers = {
-    'Content-Type': 'multipart/x-www-form-urlencoded',
-    'Accept-Encoding': 'gzip',
-    'User-Agent': 'Dalvik/2.1.0 (Linux; U; Android 12; sdk_gphone64_arm64 Build/SPB5.210812.003)'
+    'User-Agent': 'Dalvik/2.1.0 (Linux; U; Android 12; sdk_gphone64_arm64 Build/SPB5.210812.003)',
+    'Content-Type': 'multipart/form-data; boundary=' + boundary
   }
-  options.body = 'XML=' + xml
+  options.body = boundaryStart +
+    'Content-Disposition: form-data; name="XML"\r\n' +
+    'Content-Transfer-Encoding: binary\r\n' +
+    'Content-Type: application/xml; charset=windows-1251\r\n' +
+    'Content-Length: ' + xml.length + '\r\n\r\n' +
+    xml +
+    boundaryLast
 
-  const response = await fetch(BASE_URL + url, options)
+  const response = await fetch(url, options)
   if (predicate) {
     validateResponse(response, response => predicate(response), error)
   }
@@ -59,7 +73,7 @@ function validateResponse (response, predicate, error = (message) => console.ass
 }
 
 export async function login (login, password) {
-  const res = await fetchApi('.admin',
+  const res = await fetchApi(BASE_URL,
     '<BS_Request>\r\n' +
     '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
     '   <Login Biometric="N" IpAddress="10.0.2.15" Type="PWD">\r\n' +
@@ -68,7 +82,7 @@ export async function login (login, password) {
     '   </Login>\r\n' +
     '   <RequestType>Login</RequestType>\r\n' +
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-    '   <TerminalId Version="1.9.12">Android</TerminalId>\r\n' +
+    '   <TerminalId>stbank.ibank</TerminalId>\r\n' +
     '</BS_Request>\r\n', { sanitizeRequestLog: { body: true } }, response => true, message => new InvalidPreferencesError('Неверный логин или пароль'))
   if (res.BS_Response.Login && res.BS_Response.Login.SID) {
     return res.BS_Response.Login.SID
@@ -79,14 +93,14 @@ export async function login (login, password) {
 
 export async function fetchAccounts (sid) {
   console.log('>>> Загрузка списка счетов...')
-  const rawResponse = await fetchApi('.admin',
+  const rawResponse = await fetchApi(BASE_URL,
     '<BS_Request>\r\n' +
     '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
     '   <GetProducts ProductType="MS" GetActions="Y" GetBalance="Y"/>\r\n' +
     '   <RequestType>GetProducts</RequestType>\r\n' +
     '   <Session SID="' + sid + '"/>\r\n' +
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-    '   <TerminalId Version="1.9.12">Android</TerminalId>\r\n' +
+    '   <TerminalId>stbank.ibank</TerminalId>\r\n' +
     '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'), true)
   let resp = null
   xml2js.parseString(rawResponse, { mergeAttrs: true }, (err, result) => {
@@ -95,7 +109,38 @@ export async function fetchAccounts (sid) {
   const accounts = []
   if (resp) {
     for (const account of resp.BS_Response.GetProducts[0].Product) {
-      accounts.push(account)
+      const accountOperationsExecutionId = account.Action.filter((action) => action !== null).filter((action) => action.Type[0] === 'Group$MS$4')[0].Id[0]
+      const [statementResp, lastTrxResp] = await Promise.all([
+        // To receive transactions as statement for days up to last working day
+        fetchApi(BASE_URL,
+          '<BS_Request>\r\n' +
+          '   <TerminalId>stbank.ibank</TerminalId>\r\n' +
+          '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+          '   <Session SID="' + sid + '" IpAddress="" Prolong="Y"/>\r\n' +
+          '   <Subsystem>ClientAuth</Subsystem>\r\n' +
+          '   <RequestType>ExecuteAction</RequestType>\r\n' +
+          '   <ExecuteAction Id="' + accountOperationsExecutionId + '" Button="Submit" Validate="N">\r\n' +
+          '       <Parameter Id="SubActionId"><![CDATA[13485]]></Parameter>\r\n' +
+          '   </ExecuteAction>\r\n' +
+          '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request')),
+        // To receive latest transactions
+        fetchApi(BASE_URL,
+          '<BS_Request>\r\n' +
+          '   <TerminalId>stbank.ibank</TerminalId>\r\n' +
+          '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+          '   <Session SID="' + sid + '" IpAddress="" Prolong="Y"/>\r\n' +
+          '   <Subsystem>ClientAuth</Subsystem>\r\n' +
+          '   <RequestType>ExecuteAction</RequestType>\r\n' +
+          '   <ExecuteAction Id="' + accountOperationsExecutionId + '" Button="Submit" Validate="N">\r\n' +
+          '       <Parameter Id="SubActionId"><![CDATA[13486]]></Parameter>\r\n' +
+          '   </ExecuteAction>\r\n' +
+          '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
+      ])
+      accounts.push({
+        ...account,
+        statementExecutionId: statementResp.BS_Response.ExecuteAction.Action.Id,
+        lastTrxExecutionId: lastTrxResp.BS_Response.ExecuteAction.Action.Id
+      })
     }
   }
   console.log(`>>> Загружено ${accounts.length} счетов.`)
@@ -118,7 +163,7 @@ function transactionDate (date) {
 }
 
 async function getTransactions (accountId, fromDate, toDate, sid) {
-  return await fetchApi('.admin',
+  return await fetchApi(BASE_URL,
     '<BS_Request>\r\n' +
     '   <ExecuteAction Id="' + accountId + '">\r\n' +
     '      <Parameter Id="DateFrom">' + fromDate + '</Parameter>\r\n' +
@@ -126,7 +171,7 @@ async function getTransactions (accountId, fromDate, toDate, sid) {
     '   </ExecuteAction>\r\n' +
     '   <RequestType>ExecuteAction</RequestType>\r\n' +
     '   <Session SID="' + sid + '"/>\r\n' +
-    '   <TerminalId Version="1.9.12">Android</TerminalId>\r\n' +
+    '   <TerminalId>stbank.ibank</TerminalId>\r\n' +
     '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
     '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
@@ -153,12 +198,12 @@ export async function fetchFullTransactions (sid, account, fromDate, toDate = ne
     return response.BS_Response.ExecuteAction.MailId
   })
   return await Promise.all(flatMap(mailIDs.filter(Boolean), (mailId) => {
-    return fetchApi('.admin',
+    return fetchApi(BASE_URL,
       '<BS_Request>\r\n' +
       '   <MailAttachment Id="' + mailId + '" No="0"/>\r\n' +
       '   <RequestType>MailAttachment</RequestType>\r\n' +
       '   <Session SID="' + sid + '"/>\r\n' +
-      '   <TerminalId Version="1.9.12">Android</TerminalId>\r\n' +
+      '   <TerminalId>stbank.ibank</TerminalId>\r\n' +
       '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
       '   <Subsystem>ClientAuth</Subsystem>\r\n' +
       '   <TerminalCapabilities>\r\n' +
@@ -256,22 +301,22 @@ export function parseFullTransactionsMail (html) {
 
 export async function fetchDeposits (sid, account) {
   console.log('>>> Загрузка списка пополнений...')
-  const response = await fetchApi('.admin',
+  const response = await fetchApi(BASE_URL,
     '<BS_Request>\r\n' +
     '   <ExecuteAction Id="' + account.latestTrID + '"/>\r\n' +
     '   <RequestType>ExecuteAction</RequestType>\r\n' +
     '   <Session SID="' + sid + '"/>\r\n' +
-    '   <TerminalId Version="1.9.12">Android</TerminalId>\r\n' +
+    '   <TerminalId>stbank.ibank</TerminalId>\r\n' +
     '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
     '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
   if (response) {
-    return await fetchApi('.admin',
+    return await fetchApi(BASE_URL,
       '<BS_Request>\r\n' +
       '   <MailAttachment Id="' + response.BS_Response.ExecuteAction.MailId + '" No="0"/>\r\n' +
       '   <RequestType>MailAttachment</RequestType>\r\n' +
       '   <Session SID="' + sid + '"/>\r\n' +
-      '   <TerminalId Version="1.9.12">Android</TerminalId>\r\n' +
+      '   <TerminalId>stbank.ibank</TerminalId>\r\n' +
       '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
       '   <Subsystem>ClientAuth</Subsystem>\r\n' +
       '   <TerminalCapabilities>\r\n' +
