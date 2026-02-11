@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="apiKey"
+        obligatory="true"
+        title="ApiKey"
+        dialogTitle="etherscan.io API v2 Key"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|Ключ от API|***********"
+    />
+    <EditTextPreference
+        key="account"
+        obligatory="true"
+        inputType="textPassword"
+        title="Адрес кошелька"
+        dialogTitle="Адрес кошелька"
+        dialogMessage="В случае нескольких адресов укажите их через запятую"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|Адрес кошелька|{@s}"
+    />
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="С какой даты загружать операции"
+        defaultValue="2024-08-01T00:00:00.000Z"
+        dialogTitle="Дата начала загрузки"
+        dialogMessage="Введите дату, с которой загружать операции"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|startDate|{@s}"
+    />
+</PreferenceScreen>
