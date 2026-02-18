@@ -4,7 +4,7 @@ import { Movement, Transaction } from '../../../../types/zenmoney'
 import { TEST_ACCOUNTS } from '../../__mocks__/accounts.sample'
 import { TEST_CARD_TRANSACTIONS } from '../../__mocks__/transactions.sample'
 
-describe('convertTransaction', () => {
+describe('convertCardTransaction', () => {
   const rawCardAccount1 = TEST_ACCOUNTS.CARD.find(acc => acc.productCardId === 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8')
   const rawCardAccount2 = TEST_ACCOUNTS.CARD.find(acc => acc.productCardId === 'Y2errgEX8HfZ5efNYkj3XzirAqGrN7m523zs53P5')
 

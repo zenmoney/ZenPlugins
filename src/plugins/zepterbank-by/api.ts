@@ -3,6 +3,7 @@ import type { Account, Transaction } from '../../types/zenmoney'
 import { convertCardAccount, convertCurrentAccount, convertCardTransaction, convertStatementTransaction } from './converters'
 import { BankMessageError, InvalidLoginOrPasswordError } from '../../errors'
 import { convertDateToYyyyMmDd } from './helpers'
+import { FetchAccountMeta } from './types/fetch.types'
 
 export const authenticate = async (login: string, password: string): Promise<{ sessionToken: string }> => {
   const { data, error } = await fetchLogin({ login, password })
@@ -21,7 +22,7 @@ export const authenticate = async (login: string, password: string): Promise<{ s
   return data
 }
 
-export const getAccounts = async ({ sessionToken }: { sessionToken: string }): Promise<Account[]> => {
+export const getAccounts = async ({ sessionToken }: { sessionToken: string }): Promise<(Account & FetchAccountMeta)[]> => {
   const { data, error } = await fetchAccounts({ sessionToken })
 
   if (error != null) {
@@ -36,19 +37,19 @@ export const getAccounts = async ({ sessionToken }: { sessionToken: string }): P
   ]
 }
 
-export const getTransactions = async ({ sessionToken, fromDate, toDate }: { sessionToken: string, fromDate: Date, toDate: Date | undefined }, account: Account): Promise<Transaction[]> => {
+export const getTransactions = async ({ sessionToken, fromDate, toDate }: { sessionToken: string, fromDate: Date, toDate: Date | undefined }, account: Account & FetchAccountMeta): Promise<Transaction[]> => {
   const [cardTransactionsResponse, productStatementResponse] = await Promise.all([
     fetchCardTransactions({
       sessionToken,
       from: convertDateToYyyyMmDd(fromDate),
       to: convertDateToYyyyMmDd(toDate ?? new Date()),
-      cardId: account.id
+      cardId: account._meta.cardTransactionsFetchId
     }),
     fetchProductStatement({
       sessionToken,
       from: convertDateToYyyyMmDd(fromDate),
       to: convertDateToYyyyMmDd(toDate ?? new Date()),
-      productId: account.id
+      productId: account._meta.productStatementFetchId
     })
   ])
 

@@ -53,6 +53,13 @@ export interface FetchCardAccount extends FetchAccountBase {
   productCardId: string
 }
 
+export interface FetchCardAccountMeta {
+  _meta: {
+    cardTransactionsFetchId: string
+    productStatementFetchId: string
+  }
+}
+
 export interface FetchCurrentAccount extends FetchAccountBase {
   contractCurrency: number
   contractCurrencyIso: string
@@ -61,6 +68,14 @@ export interface FetchCurrentAccount extends FetchAccountBase {
   /** Balance **/
   contractCurrentRest: string
 }
+
+export interface FetchCurrentAccountMeta {
+  _meta: {
+    productStatementFetchId: string
+  }
+}
+
+export type FetchAccountMeta = FetchCardAccountMeta & FetchCurrentAccountMeta
 
 export interface FetchAccountsInput extends BaseFetchInput {}
 

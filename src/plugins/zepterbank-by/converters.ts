@@ -1,8 +1,15 @@
 import { Account, AccountType, Transaction } from '../../types/zenmoney'
-import type { FetchCardAccount, FetchCurrentAccount, FetchCardTransaction, FetchStatementOperation } from './types/fetch.types'
+import {
+  FetchCardAccount,
+  FetchCurrentAccount,
+  FetchCardTransaction,
+  FetchStatementOperation,
+  FetchCardAccountMeta,
+  FetchCurrentAccountMeta
+} from './types/fetch.types'
 import { convertIsoDateStringToDate } from './helpers'
 
-export const convertCardAccount = (fetchAccount: FetchCardAccount): Account => {
+export const convertCardAccount = (fetchAccount: FetchCardAccount): Account & FetchCardAccountMeta => {
   return {
     id: fetchAccount.productCardId,
     title: fetchAccount.cardProductKindName,
@@ -13,18 +20,25 @@ export const convertCardAccount = (fetchAccount: FetchCardAccount): Account => {
       fetchAccount.contractNumber,
       fetchAccount.cardPAN.slice(-4)
     ],
-    type: AccountType.ccard
+    type: AccountType.ccard,
+    _meta: {
+      cardTransactionsFetchId: fetchAccount.productCardId,
+      productStatementFetchId: fetchAccount.productId
+    }
   }
 }
 
-export const convertCurrentAccount = (fetchAccount: FetchCurrentAccount): Account => {
+export const convertCurrentAccount = (fetchAccount: FetchCurrentAccount): Account & FetchCurrentAccountMeta => {
   return {
     id: fetchAccount.productId,
     title: fetchAccount.contractKindName, // could be the same for some accounts, for check
     balance: Number(fetchAccount.contractCurrentRest),
     instrument: fetchAccount.contractCurrencyIso,
     syncIds: [fetchAccount.ibanNum, fetchAccount.contractNumber],
-    type: AccountType.checking
+    type: AccountType.checking,
+    _meta: {
+      productStatementFetchId: fetchAccount.productId
+    }
   }
 }
 
@@ -59,7 +73,7 @@ export const convertStatementTransaction = (fetchTransaction: FetchStatementOper
   const hasInvoice = fetchTransaction.operationCurrencyIso !== fetchTransaction.transactionCurrencyISO
 
   const payee = fetchTransaction.terminalLocation ?? ''
-  const [country, city] = (fetchTransaction.merchant ?? '').split('')
+  const [country = '', city = ''] = (fetchTransaction.merchant ?? '').split(' ')
   const mcc = fetchTransaction.MCC != null ? Number(fetchTransaction.MCC.replace(/\D/g, '')) : null
 
   return {

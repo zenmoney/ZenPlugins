@@ -233,6 +233,24 @@ export const TEST_STATEMENT_TRANSACTIONS: Record<string, FetchStatementOperation
       terminalLocation: 'PERSON TO PERSON ZEPTER',
       purpose: 'Списание денежных средств по картам <БелКарт> Банка согласно отчетам ОАО <Банковский процессинговый центр> от 13/02/2026',
       MCC: 'MCC 6012'
+    },
+    // [2] - Payment at a shop
+    {
+      transactionDate: '2026-02-13T00:00:00',
+      balanceDate: '2026-02-16',
+      operationName: 'Оплата товаров и услуг в устройствах других банка (конверсия)',
+      operationSum: '0.96',
+      transactionSum: '3.19',
+      transactionCurrency: '933',
+      transactionCurrencyISO: 'BYN',
+      operationSign: -1,
+      operationCurrency: '978',
+      operationCurrencyIso: 'EUR',
+      cardPAN: '0000********2222',
+      merchant: 'BLR MINSK',
+      terminalLocation: 'SHOP KOPEECHKA',
+      purpose: 'Списание денежных средств по картам <БелКарт> Банка согласно отчетам ОАО <Банковский процессинговый центр> от 16/02/2026',
+      MCC: 'MCC 5411'
     }
   ],
   '3p6Kf9JU2RQW4HFE42QGVB556Sv4hgVxg4vZ7ZP2': [
