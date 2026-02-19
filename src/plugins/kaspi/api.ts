@@ -369,14 +369,21 @@ async function showHowTo (): Promise<ObjectWithAnyProps> {
   return { shouldPickDocs: result }
 }
 
-function isKaspiStatement (text: string): boolean {
-  if (/Kaspi Bank/i.test(text)) {
+export function isKaspiStatement (text: string): boolean {
+  const normalized = text.replace(/\s+/g, ' ')
+  const hasStatementMarkers = /(ВЫПИСКА|ҮЗІНДІ КӨШІРМЕ|statement balance for the period|По Депозиту|Kaspi Gold)/i.test(normalized)
+  if (!hasStatementMarkers) {
+    return false
+  }
+  if (/Kaspi Bank|kaspi\.kz/i.test(normalized)) {
     return true
   }
-  if (/kaspi\.kz/i.test(text)) {
-    return /(ВЫПИСКА|ҮЗІНДІ КӨШІРМЕ|statement balance for the period|По Депозиту|Kaspi Gold)/i.test(text)
-  }
-  return false
+
+  // Some Kaspi deposit PDFs do not include bank name or kaspi.kz in extracted text.
+  return /По\s+Депозиту\s+за\s+период/i.test(normalized) &&
+    /Номер\s+договора/i.test(normalized) &&
+    /Номер\s+счета/i.test(normalized) &&
+    /На\s+Депозите/i.test(normalized)
 }
 
 export async function parsePdfStatements (): Promise<null | Array<{ account: StatementAccount, transactions: StatementTransaction[] }>> {
