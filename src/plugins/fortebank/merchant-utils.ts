@@ -24,7 +24,7 @@ const countryByCode: Record<string, string> = {
 }
 
 const cityMatchers: Array<{ marker: RegExp, city: string, country?: string }> = [
-  { marker: /ALMATY/i, city: 'Almaty', country: 'Kazakhstan' },
+  { marker: /AL\s*MATY/i, city: 'Almaty', country: 'Kazakhstan' },
   { marker: /ASTANA/i, city: 'Astana', country: 'Kazakhstan' },
   { marker: /NUR-SULTAN/i, city: 'Astana', country: 'Kazakhstan' },
   { marker: /SHYMKENT/i, city: 'Shymkent', country: 'Kazakhstan' },

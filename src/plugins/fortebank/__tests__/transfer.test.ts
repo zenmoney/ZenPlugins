@@ -1,6 +1,6 @@
 import { parseTransactions } from '../parser'
 import { convertTransaction } from '../converters'
-import { AccountType, AccountReferenceByData, Merchant, Movement } from '../../../types/zenmoney'
+import { AccountType, AccountReferenceByData, Movement } from '../../../types/zenmoney'
 
 describe('Transfer Parsing and Conversion', () => {
   it('should parse and convert IBAN transfer', () => {
@@ -24,9 +24,8 @@ describe('Transfer Parsing and Conversion', () => {
 
     expect(movement2.sum).toBe(1000.00)
 
-    // Merchant should contain the name
-    expect(zenTransaction.merchant).not.toBeNull()
-    expect((zenTransaction.merchant as Merchant).title).toContain('IvanovI.')
+    expect(zenTransaction.merchant).toBeNull()
+    expect(zenTransaction.comment).toBe('Перевод')
   })
 
   it('should parse and convert full card transfer', () => {
@@ -46,7 +45,8 @@ describe('Transfer Parsing and Conversion', () => {
     expect(secondAccount.syncIds).toEqual(['4400111122223333'])
     expect(movement2.sum).toBe(2000.00)
 
-    expect((zenTransaction.merchant as Merchant).title).toContain('PetrovP.')
+    expect(zenTransaction.merchant).toBeNull()
+    expect(zenTransaction.comment).toBe('Transfer')
   })
 
   it('should parse and convert masked card transfer', () => {
@@ -65,7 +65,7 @@ describe('Transfer Parsing and Conversion', () => {
     const secondAccount = movement2.account as AccountReferenceByData
     expect(secondAccount.syncIds).toEqual(['123456******1234'])
 
-    expect((zenTransaction.merchant as Merchant).title).toContain('SidorovS.')
+    expect(zenTransaction.merchant).toBeNull()
   })
 
   it('should parse and convert short masked card transfer', () => {
@@ -98,7 +98,6 @@ describe('Transfer Parsing and Conversion', () => {
     const zenTransaction = convertTransaction(transactions[0], 'my-account-id')
     expect(zenTransaction.movements).toHaveLength(1)
 
-    // Merchant should be created
-    expect((zenTransaction.merchant as any)?.title).toBe('JustNameNoNumber')
+    expect(zenTransaction.merchant).toBeNull()
   })
 })

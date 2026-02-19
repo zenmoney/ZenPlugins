@@ -5,7 +5,7 @@
         obligatory="true"
         inputType="date"
         title="From what date to load transactions"
-        defaultValue="2018-01-01T00:00:00.000Z"
+        defaultValue="2018-01-01"
         dialogTitle="From what date to load transactions"
         positiveButtonText="OK"
         negativeButtonText="Cancel"
