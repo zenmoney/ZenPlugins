@@ -6,6 +6,8 @@ import {
 import { ETHER_MAINNET, Instruments } from '../common/config'
 import type { EthereumAccount, EthereumTransaction } from './types'
 
+const MIN_MOVEMENT_SUM = 0.01
+
 function convertWeiToUETH (value: number): number {
   return Math.round(value / 10 ** 12)
 }
@@ -85,7 +87,11 @@ export function convertTransactions (
   const list = transactions
     .map((transaction) => convertTransaction(account, transaction))
     .filter((transaction): transaction is Transaction =>
-      Boolean(transaction?.movements.some((movement) => movement.sum !== 0))
+      Boolean(
+        transaction?.movements.some((movement) =>
+          movement.sum !== null && Math.abs(movement.sum) >= MIN_MOVEMENT_SUM
+        )
+      )
     )
 
   return list

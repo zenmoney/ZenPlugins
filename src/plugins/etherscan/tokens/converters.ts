@@ -10,6 +10,8 @@ import { ETHER_MAINNET } from '../common/config'
 import { getTransactionFee } from '../ether/converters'
 import type { EthereumTransaction } from '../ether/types'
 
+const MIN_MOVEMENT_SUM = 0.01
+
 function convertAccount (account: TokenAccount, chain: Chain): Account | null {
   const token = SUPPORTED_TOKENS[chain].find(
     (token) => token.contractAddress === account.contractAddress
@@ -128,7 +130,11 @@ export function convertTransactions (
   const list = transactions
     .flatMap((transaction) => convertTransaction(account, transaction, chain))
     .filter((transaction): transaction is Transaction =>
-      Boolean(transaction?.movements.some((movement) => movement.sum !== 0))
+      Boolean(
+        transaction?.movements.some((movement) =>
+          movement.sum !== null && Math.abs(movement.sum) >= MIN_MOVEMENT_SUM
+        )
+      )
     )
 
   return list
