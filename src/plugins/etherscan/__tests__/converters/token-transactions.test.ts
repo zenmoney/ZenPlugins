@@ -41,6 +41,21 @@ describe('token convertTransactions', () => {
     expect(list).toHaveLength(0)
   })
 
+  it('does not leave fee-only transaction when payment amount is below 0.01', () => {
+    const list = convertTransactions(
+      account,
+      [{
+        ...baseTransaction,
+        from: account.id,
+        to: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        value: '1'
+      }],
+      ETHER_MAINNET
+    )
+
+    expect(list).toHaveLength(0)
+  })
+
   it('keeps movements with absolute value at least 0.01', () => {
     const list = convertTransactions(
       account,

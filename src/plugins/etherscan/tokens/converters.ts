@@ -66,6 +66,10 @@ export function convertTransaction (
   const operationValue = token.convertBalance(Number(transaction.value))
   const { gas, hash, timeStamp } = transaction
 
+  if (Math.abs(operationValue) < MIN_MOVEMENT_SUM) {
+    return null
+  }
+
   const transactions = []
   const TokenTransaction: Transaction = {
     hold: null,
