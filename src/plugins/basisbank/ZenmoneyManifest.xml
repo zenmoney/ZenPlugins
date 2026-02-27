@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>basisbank</id>
+    <version>1.0</version>
+    <build>1</build>
+    <company>0</company>
+    <modular>true</modular>
+    <codeRequired>false</codeRequired>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+    <description>
+        BasisBank Internet Banking synchronization plugin (user flow).
+        Uses login/password with OTP and trusted-device session persistence.
+    </description>
+</provider>
