@@ -131,7 +131,5 @@ export function convertTransactions (
       Boolean(transaction?.movements.some((movement) => movement.sum !== 0))
     )
 
-  console.log('LST', list)
-
   return list
 }
