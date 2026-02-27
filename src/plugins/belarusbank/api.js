@@ -1,5 +1,5 @@
 import cheerio from 'cheerio'
-import { chunk, defaultsDeep, isEqual, uniqWith } from 'lodash'
+import { chunk, defaultsDeep } from 'lodash'
 import padLeft from 'pad-left'
 import { stringify } from 'querystring'
 import { fetch } from '../../common/network'
@@ -328,8 +328,9 @@ export function parseCards (html) {
     account.accountId = account.transactionsData.additional[account.transactionsData.additional.length - 1].replace(/('|\\')/g, '')
 
     account.transactionsData.action = $('form[id="' + account.transactionsData.additional[0].replace(/'/g, '') + '"]').attr('action') || $('form').attr('action')
-    account.transactionsData.holdsData = accountTable.children('td[class="tdAccountButton"]').children('a[title="Получить отчёт по заблокированным операциям"]')
-      .attr('onclick').replace('return myfaces.oam.submitForm(', '').replace(');', '').match(/'(.[^']*)'/ig)
+
+    // account.transactionsData.holdsData = accountTable.children('td[class="tdAccountButton"]').children('a[title="Получить отчёт по заблокированным операциям"]')
+    //   .attr('onclick').replace('return myfaces.oam.submitForm(', '').replace(');', '').match(/'(.[^']*)'/ig)
 
     if (cardTable.children('td').length > 1) {
       account.type = 'ccard'
@@ -492,34 +493,34 @@ async function getAccountsListPage (html, viewns) {
   }, response => response.success, message => new Error(''))
 }
 
-async function processHolds (html, viewns, acc) {
-  const $ = cheerio.load(html)
-  viewns = acc.raw.transactionsData.holdsData[0].replace(/'/g, '')
-  let action = $(`form[id="${viewns}"]`).attr('action')
-  if (!action) {
-    viewns = $('form').attr('id')
-    action = $('form').attr('action')
-  }
-  const body = {
-    'javax.faces.encodedURL': $('input[name="javax.faces.encodedURL"]').attr('value'),
-    accountNumber: acc.raw.transactionsData.holdsData[3].replace(/'/g, ''),
-    'javax.faces.ViewState': $('input[name="javax.faces.ViewState"]').attr('value')
-  }
-
-  body[`${viewns}:acctIdSelField`] = acc.raw.accountName.replace('Счёт №', '')
-  body[`${viewns}_SUBMIT`] = 1
-  body[`${viewns}:_idcl`] = acc.raw.transactionsData.holdsData[1].replace(/'/g, '')
-
-  console.log('>>> Загрузка холдов по ' + acc.title)
-  const res = await fetchUrl(action, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
-    },
-    body
-  }, response => response.success, message => new Error(''))
-  return await processPages(viewns, res.body, acc)
-}
+// async function processHolds (html, viewns, acc) {
+//   const $ = cheerio.load(html)
+//   viewns = acc.raw.transactionsData.holdsData[0].replace(/'/g, '')
+//   let action = $(`form[id="${viewns}"]`).attr('action')
+//   if (!action) {
+//     viewns = $('form').attr('id')
+//     action = $('form').attr('action')
+//   }
+//   const body = {
+//     'javax.faces.encodedURL': $('input[name="javax.faces.encodedURL"]').attr('value'),
+//     accountNumber: acc.raw.transactionsData.holdsData[3].replace(/'/g, ''),
+//     'javax.faces.ViewState': $('input[name="javax.faces.ViewState"]').attr('value')
+//   }
+//
+//   body[`${viewns}:acctIdSelField`] = acc.raw.accountName.replace('Счёт №', '')
+//   body[`${viewns}_SUBMIT`] = 1
+//   body[`${viewns}:_idcl`] = acc.raw.transactionsData.holdsData[1].replace(/'/g, '')
+//
+//   console.log('>>> Загрузка холдов по ' + acc.title)
+//   const res = await fetchUrl(action, {
+//     method: 'POST',
+//     headers: {
+//       'Content-Type': 'application/x-www-form-urlencoded'
+//     },
+//     body
+//   }, response => response.success, message => new Error(''))
+//   return await processPages(viewns, res.body, acc)
+// }
 
 export async function fetchCardsTransactions (acc, fromDate, toDate) {
   console.log(`>>> Выбор дат для загрузки транзакций по ${acc.title}`)
@@ -552,9 +553,11 @@ export async function fetchCardsTransactions (acc, fromDate, toDate) {
     res = await getAccountsListPage(transactionsHtml, viewns)
   }
 
-  const transactionsWithHolds = await processHolds(res.body, viewns, acc)
+  // const transactionsWithHolds = await processHolds(res.body, viewns, acc)
+  //
+  // return uniqWith(transactions.concat(transactionsWithHolds), isEqual)
 
-  return uniqWith(transactions.concat(transactionsWithHolds), isEqual)
+  return transactions
 }
 
 async function getNextPage ({ action, encodedUrl, viewState, viewns, idPage }) {
