@@ -103,6 +103,27 @@ interface ExchangeRatesResponse {
   status: number
 }
 
+async function parseJsonResponse (response: Response): Promise<ExchangeRatesResponse | null> {
+  try {
+    if (typeof (response as unknown as { json?: unknown }).json === 'function') {
+      return await (response as unknown as { json: () => Promise<ExchangeRatesResponse> }).json()
+    }
+  } catch (e) {}
+  try {
+    const text = typeof (response as unknown as { text?: unknown }).text === 'function'
+      ? await (response as unknown as { text: () => Promise<string> }).text()
+      : (response as unknown as { text?: unknown }).text
+    if (typeof text === 'string' && text.trim() !== '') {
+      return JSON.parse(text) as ExchangeRatesResponse
+    }
+  } catch (e) {}
+  const body = (response as unknown as { body?: unknown }).body
+  if (body !== null && body !== undefined && typeof body === 'object') {
+    return body as ExchangeRatesResponse
+  }
+  return null
+}
+
 export async function getMobileExchangeRates (): Promise<Record<string, ExchangeRate>> {
   const mobileRatesMap: Record<string, ExchangeRate> = {}
 
@@ -110,7 +131,10 @@ export async function getMobileExchangeRates (): Promise<Record<string, Exchange
   if (!response.ok) {
     return mobileRatesMap
   }
-  const json: ExchangeRatesResponse = await response.json()
+  const json = await parseJsonResponse(response)
+  if (json == null) {
+    return mobileRatesMap
+  }
   if (!json.success || !Array.isArray(json.data?.mobile) || json.data.mobile.length === 0) {
     return mobileRatesMap
   }
@@ -257,23 +281,42 @@ export function parseDepositPdfString (text: string, statementUid?: string): { a
   for (const match of cleanedTableText.matchAll(rowRegexp)) {
     const [, dateStr, body] = match
     const normalizedBody = body
-      .replace(/Подлинность справки можете проверить.*$/i, '')
+      .replace(/Подлинность справки можете проверить[\s\S]*$/i, '')
       .replace(/\s+/g, ' ')
       .trim()
-    const bodyWithoutKzt = normalizedBody.replace(/\s+[+-]?\s*[\d\s.,]+\s*(?:т|₸)\s*$/i, '')
-    const txMatch = bodyWithoutKzt.match(/^([\s\S]+?)\s+([+-]?\s*[\d\s.,]+)\s*(?:[$€₸т]|[A-Z]{3})?$/i)
-    if (txMatch == null) {
+    const sanitizedBody = normalizedBody
+      .replace(/[−–—]/g, '-')
+      .replace(/[＋]/g, '+')
+    const amountMatches = [...sanitizedBody.matchAll(/(?:^|\s)([+-]?\s*[\d\s.,]+)\s*(\$|€|₸|т|[A-Z]{3})/gi)]
+    if (amountMatches.length === 0) {
       console.warn('Не удалось распарсить строку депозита', `${dateStr} ${normalizedBody}`)
       continue
     }
-    const [, description, amountStr] = txMatch
+    const currencyToInstrument = (currency: string): string => {
+      const upper = currency.toUpperCase()
+      if (upper === '₸' || upper === 'Т' || upper === 'KZT') return 'KZT'
+      if (upper === '$' || upper === 'USD') return 'USD'
+      if (upper === '€' || upper === 'EUR') return 'EUR'
+      return upper
+    }
+    const amountMatch = [...amountMatches].reverse()
+      .find((amountMatch) => currencyToInstrument(amountMatch[2]) === instrument) ??
+      amountMatches[amountMatches.length - 1]
+    const amountStr = amountMatch[1]
     const normalizedAmount = amountStr.replace(/\s/g, '').replace(',', '.')
+    let description = sanitizedBody
+    for (let i = 0; i < 2; i += 1) {
+      const trailingAmount = description.match(/(?:^|\s)([+-]?\s*[\d\s.,]+)\s*(\$|€|₸|т|[A-Z]{3})\s*$/i)
+      if (trailingAmount == null) break
+      description = description.slice(0, trailingAmount.index).trim()
+    }
+    description = description.replace(/\s+/g, ' ').trim()
     transactions.push({
       hold: false,
       date: parseDateFromPdfText(dateStr),
       originalAmount: `${normalizedAmount} ${instrument}`,
       amount: normalizedAmount,
-      description: description.trim() === '' ? null : description.trim(),
+      description: description === '' ? null : description,
       statementUid: uid,
       originString: `${dateStr} ${normalizedBody}`
     })

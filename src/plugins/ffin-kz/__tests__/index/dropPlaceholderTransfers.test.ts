@@ -1,4 +1,4 @@
-import { dropPlaceholderTransfers } from '../../index'
+import { dropPlaceholderTransfers } from '../../transferCleanup'
 import { Transaction, AccountType } from '../../../../types/zenmoney'
 
 describe('dropPlaceholderTransfers', () => {
