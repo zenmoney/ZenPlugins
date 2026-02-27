@@ -3,7 +3,7 @@ import { normalizeText, parseNumber, parseDate } from './utils'
 
 export function isDepositStatement (text: string): boolean {
   const normalized = normalizeText(text)
-  return /сберегательному\s*счету|Deposit|Вклад|Savings\s*Account|Жинақ\s*шоты/i.test(normalized)
+  return /(?:Выписка\s*по\s*сберегательному\s*счету|Savings\s*Account\s*Statement|Жинақ\s*шоты\s*бойынша\s*үзінді\s*көшірме)/i.test(normalized)
 }
 
 export function parseDepositHeader (text: string): ParsedHeader {
