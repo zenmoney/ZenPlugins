@@ -20,7 +20,7 @@ describe('convertTransactions', () => {
 
     expect(res).toHaveLength(1)
     const tx = res[0]
-    expect(tx.movements[0].sum).toBe(-1)
+    expect(tx.movements[0].sum).toBe(-1000000)
     expect(tx.movements[0].fee).toBeGreaterThan(0)
     expect(tx.merchant.fullTitle).toBe('0xbbb')
   })
@@ -42,7 +42,7 @@ describe('convertTransactions', () => {
 
     expect(res).toHaveLength(1)
     const tx = res[0]
-    expect(tx.movements[0].sum).toBe(2)
+    expect(tx.movements[0].sum).toBe(2000000)
     expect(tx.movements[0].fee).toBe(0)
     expect(tx.merchant.fullTitle).toBe('0xccc')
   })

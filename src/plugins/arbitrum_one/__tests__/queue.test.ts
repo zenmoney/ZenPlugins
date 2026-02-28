@@ -8,7 +8,7 @@ describe('ArbitrumOneApi очередь', () => {
     const mockFetch = jest.fn() as FetchMock
     global.fetch = mockFetch
 
-    // Первый вызов API
+    // First API call
     mockFetch.mockResolvedValueOnce({
       json: async () => ({
         status: '1',
@@ -16,7 +16,7 @@ describe('ArbitrumOneApi очередь', () => {
       })
     } as any)
 
-    // Второй вызов API
+    // Second API call
     mockFetch.mockResolvedValueOnce({
       json: async () => ({
         status: '1',
@@ -26,7 +26,7 @@ describe('ArbitrumOneApi очередь', () => {
 
     const api = new ArbitrumOneApi('TEST')
 
-    // Запускаем два запроса подряд — они должны выполниться по очереди
+    // Start two requests in a row — they should execute sequentially
     const p1 = api.getBalance('0x111')
     const p2 = api.getBalance('0x222')
 
@@ -36,10 +36,10 @@ describe('ArbitrumOneApi очередь', () => {
     expect(r1.balance).toBe('100')
     expect(r2.balance).toBe('200')
 
-    // Проверяем, что fetch вызван дважды
+    // Check that fetch was called twice
     expect(mockFetch).toHaveBeenCalledTimes(2)
 
-    // Проверяем порядок вызовов
+    // Check order of calls
     expect(mockFetch.mock.calls[0][0]).toContain('0x111')
     expect(mockFetch.mock.calls[1][0]).toContain('0x222')
   })

@@ -11,7 +11,7 @@ export const KNOWN_CONTRACTS: Record<string, string> = {
 
   // Lending / Perps
   '0x5f3b5dfeb7b28cdbd7faba78963ee202a494e2a2': 'Aave Lending Pool',
-  '0x32dF62dc3aEd2cD6224193052Ce665DC18165841': 'Radiant Capital',
+  '0x32df62dc3aed2cd6224193052ce665dc18165841': 'Radiant Capital',
   '0x489ee077994b6658eafa855c308275ead8097c4a': 'GMX Exchange',
 
   // System

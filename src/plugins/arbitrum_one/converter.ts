@@ -10,6 +10,30 @@ import { SUPPORTED_TOKENS } from './supportedTokens'
 // ------
 import { normalizeMerchant } from './merchants'
 
+// Helper to coerce various numeric types (string, number, bigint) to Number safely
+function toNumeric (value: any): number {
+  if (value == null) return 0
+  if (typeof value === 'number') return value
+  if (typeof value === 'string') {
+    const v = value.trim()
+    if (v === '') return 0
+    const n = Number(v)
+    return isFinite(n) ? n : 0
+  }
+  if (typeof value === 'bigint') {
+    try {
+      return Number(value.toString())
+    } catch (err) {
+      return 0
+    }
+  }
+  if (typeof value === 'object' && typeof value.toString === 'function') {
+    const n = Number(value.toString())
+    return isFinite(n) ? n : 0
+  }
+  return 0
+}
+
 // -------------------------
 // ACCOUNTS
 // -------------------------
@@ -17,16 +41,17 @@ import { normalizeMerchant } from './merchants'
 export function convertBalances (native: BalanceResponse, tokenBalances: TokenBalance[]): any[] {
   const result = []
 
-  // ETH → μETH
-  const ethRaw = Number(native.balance)
-  const ethAmount = isFinite(ethRaw) ? ethRaw / 1e18 : 0
+  // ETH → µETH
+  const ethRaw = toNumeric(native.balance)
+  // Convert wei to micro-ETH (µETH): 1 ETH = 1e18 wei = 1e6 µETH => divide wei by 1e12
+  const ethAmount = isFinite(ethRaw) ? ethRaw / 1e12 : 0
 
   result.push({
     id: 'arbitrum-one-main',
     type: 'checking',
     title: 'Arbitrum One (ETH)',
-    instrument: 'μETH',
-    balance: ethAmount, // ZenMoney интерпретирует как μETH
+    instrument: 'µETH',
+    balance: ethAmount, // ZenMoney interprets this as µETH
     syncIds: ['arbitrum-one-main']
   })
 
@@ -38,7 +63,7 @@ export function convertBalances (native: BalanceResponse, tokenBalances: TokenBa
 
     if (token == null) continue
 
-    const raw = Number(tb.balance)
+    const raw = toNumeric(tb.balance)
     const amount = isFinite(raw) ? raw / 10 ** token.decimals : 0
 
     result.push({
@@ -68,10 +93,10 @@ export function convertTransactions (
 
   // ETH transactions
   for (const tx of nativeTxs) {
-    const value = Number(tx.value) / 1e18
-    const fee = (Number(tx.gasUsed) * Number(tx.gasPrice)) / 1e18
+    const value = toNumeric(tx.value) / 1e12
+    const fee = (toNumeric(tx.gasUsed) * toNumeric(tx.gasPrice)) / 1e12
 
-    // пропускаем полностью пустые транзакции (ни value, ни fee)
+    // skip completely empty transactions (neither value nor fee)
     if ((value === 0 || !isFinite(value)) && (fee === 0 || !isFinite(fee))) {
       continue
     }
@@ -109,7 +134,7 @@ export function convertTransactions (
 
     if (token == null) continue
 
-    const value = Number(tx.value) / 10 ** token.decimals
+    const value = toNumeric(tx.value) / (10 ** token.decimals)
     if (value === 0) continue
 
     const from = tx.from.toLowerCase()

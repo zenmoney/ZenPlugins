@@ -10,8 +10,8 @@ describe('convertBalances', () => {
     const res = convertBalances(native as any, tokens)
 
     expect(res[0].id).toBe('arbitrum-one-main')
-    expect(res[0].instrument).toBe('μETH')
-    expect(res[0].balance).toBe(1)
+    expect(res[0].instrument).toBe('µETH')
+    expect(res[0].balance).toBe(1000000)
   })
 
   it('конвертирует поддерживаемый токен', () => {

@@ -79,7 +79,7 @@ export class ArbitrumOneApi {
     })
   }
 
-  // НОРМАЛИЗАЦИЯ ДЛЯ ВСЕХ СЛУЧАЕВ
+  // Normalization for all cases
   async getBalance (address: string): Promise<BalanceResponse> {
     const res = await this.call<any>({
       module: 'account',
@@ -88,7 +88,7 @@ export class ArbitrumOneApi {
       tag: 'latest'
     })
 
-    // Etherscan v2 иногда возвращает строку вместо объекта
+    // Etherscan v2 sometimes returns a string instead of an object
     if (typeof res === 'string') {
       return { balance: res }
     }
@@ -155,7 +155,6 @@ export class ArbitrumOneApi {
     address: string
     fromDate: Date
   }): Promise<T[]> {
-
     let page = 1
     const all: T[] = []
 

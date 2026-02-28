@@ -6,10 +6,10 @@ import type { Preferences } from './types'
 export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate }) => {
   const apiKey = preferences.apiKey
 
-  // Разбиваем строку адресов по запятой
+  // Split the addresses string by comma
   const raw = preferences.account
 
-  // raw может быть string или string[]
+  // raw can be a string or string[]
   const addresses = Array.isArray(raw)
     ? raw
     : raw.split(',').map(a => a.trim())
@@ -23,8 +23,8 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate })
   const allAccounts: any[] = []
   const allTransactions: any[] = []
 
-  for (const address of addresses) {
-    // Балансы
+  for (const address of normalized) {
+    // Balances
     const [nativeBalance, tokenBalances] = await Promise.all([
       api.getBalance(address),
       api.getTokenBalances(address)
@@ -33,7 +33,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate })
     const accounts = convertBalances(nativeBalance, tokenBalances)
     allAccounts.push(...accounts)
 
-    // Транзакции
+    // Transactions
     const [nativeTxs, tokenTxs] = await Promise.all([
       api.getTransactions(address, fromDate),
       api.getTokenTransfers(address, fromDate)
