@@ -62,6 +62,21 @@ describe('Fortebank Converters', () => {
       expect(account.startDate.getMonth()).toBe(0) // Jan is 0
       expect(account.startDate.getDate()).toBe(1)
     })
+
+    it('should set numeric defaults for required deposit fields', () => {
+      const header: ParsedHeader = {
+        accountNumber: 'KZDEPOSITNOINT',
+        currency: 'KZT',
+        isDeposit: true
+      }
+
+      const account = convertDeposit(header) as any
+
+      expect(account.type).toBe(AccountType.deposit)
+      expect(account.percent).toBe(0)
+      expect(account.startBalance).toBe(0)
+      expect(typeof account.percent).toBe('number')
+    })
   })
 
   describe('convertTransaction', () => {
@@ -194,6 +209,162 @@ describe('Fortebank Converters', () => {
         sum: -31000,
         instrument: 'UZS'
       })
+    })
+
+    it('should keep only provider name in payment comment', () => {
+      const pt: ParsedTransaction = {
+        date: '08.02.2026',
+        amount: -50250.49,
+        description: 'Платеж Алсеко;NameVC=Коммуналка;VC=2;VC2=3;ServiceId=190;PAYMENT_ID=test-payment-id-0001',
+        operation: 'Платеж',
+        details: 'Алсеко;NameVC=Коммуналка;VC=2;VC2=3;ServiceId=190;PAYMENT_ID=test-payment-id-0001',
+        parsedDetails: {
+          merchantName: 'Алсеко;NameVC=Коммуналка;VC=2;VC2=3;ServiceId=190;PAYMENT_ID=test-payment-id-0001'
+        },
+        originString: ''
+      }
+
+      const transaction = convertTransaction(pt, 'acc1')
+      expect(transaction.comment).toBe('')
+      expect((transaction.merchant as any)?.title).toBe('Алсеко')
+    })
+
+    it('should keep provider name for payment with OCR-split PYMENT ID marker', () => {
+      const pt: ParsedTransaction = {
+        date: '10.01.2026',
+        amount: -47978.14,
+        description: 'Платеж Алсеко NameVC=Коммуналка VC=2 VC2=3 ServiceId=190 PYMENT ID=test pyment id 0002_',
+        operation: 'Платеж',
+        details: 'Алсеко NameVC=Коммуналка VC=2 VC2=3 ServiceId=190 PYMENT ID=test pyment id 0002_',
+        parsedDetails: {
+          merchantName: 'Алсеко NameVC=Коммуналка VC=2 VC2=3 ServiceId=190 PYMENT ID=test pyment id 0002_'
+        },
+        originString: ''
+      }
+
+      const transaction = convertTransaction(pt, 'acc1')
+      expect(transaction.comment).toBe('')
+      expect((transaction.merchant as any)?.title).toBe('Алсеко')
+    })
+
+    it('should mark account replenishment from another bank as transfer', () => {
+      const pt: ParsedTransaction = {
+        date: '08.02.2026',
+        amount: 21400.00,
+        description: 'Пополнение счета BCC, ATM/POS: 124884, PEREVOD BCC.KZ, Al-Farabi 38, ALMATY, KZ',
+        operation: 'Пополнение счета',
+        details: 'BCC, ATM/POS: 124884, PEREVOD BCC.KZ, Al-Farabi 38, ALMATY, KZ',
+        parsedDetails: {
+          merchantName: 'BCC'
+        },
+        originString: ''
+      }
+
+      const transaction = convertTransaction(pt, 'acc1')
+      expect(transaction.comment).toBe('Перевод с карты BCC')
+      expect(transaction.movements).toHaveLength(2)
+      const secondMovement = transaction.movements[1] as any
+      expect(secondMovement.account.type).toBe(AccountType.ccard)
+      expect(secondMovement.account.syncIds).toBeNull()
+      expect(secondMovement.sum).toBe(-21400)
+      expect(transaction.merchant).toBeNull()
+    })
+
+    it('should parse city and country for BCC replenishment with split AL MATY', () => {
+      const pt: ParsedTransaction = {
+        date: '08.02.2026',
+        amount: 21400.00,
+        description: 'Пополнение счета BCC, ATM/POS: 124884, PEREVOD BCC., Al-Farabi 38, AL MATY',
+        operation: 'Пополнение счета',
+        details: 'BCC, ATM/POS: 124884, PEREVOD BCC., Al-Farabi 38, AL MATY',
+        parsedDetails: {
+          merchantName: 'BCC, ATM/POS: 124884, PEREVOD BCC., Al-Farabi 38, AL MATY'
+        },
+        originString: ''
+      }
+
+      const transaction = convertTransaction(pt, 'acc1')
+      expect(transaction.merchant).toBeNull()
+    })
+
+    it('should strip statement footer from BCC replenishment details', () => {
+      const pt: ParsedTransaction = {
+        date: '10.01.2026',
+        amount: 60000.00,
+        description: 'Пополнение счета BCC, ATM/POS: 124884, PEREVOD BCC., Al Farabi 38, ALMATY, KZ Сформировано в Интернет Банкинге Реквизиты: АО «ForteBank» ... Контактные данные: ...',
+        operation: 'Пополнение счета',
+        details: 'BCC, ATM/POS: 124884, PEREVOD BCC., Al Farabi 38, ALMATY, KZ Сформировано в Интернет Банкинге Реквизиты: АО «ForteBank», Республика Казахстан ... Контактные данные: +7 ...',
+        parsedDetails: {
+          merchantName: 'BCC, ATM/POS: 124884, PEREVOD BCC., Al Farabi 38, ALMATY, KZ Сформировано в Интернет Банкинге Реквизиты: АО «ForteBank», Республика Казахстан ... Контактные данные: +7 ...'
+        },
+        originString: ''
+      }
+
+      const transaction = convertTransaction(pt, 'acc1')
+      expect(transaction.comment).toBe('Перевод с карты BCC')
+      expect(transaction.merchant).toBeNull()
+    })
+
+    it('should mark replenishment from deposit as internal transfer', () => {
+      const pt: ParsedTransaction = {
+        date: '08.02.2026',
+        amount: 23508.71,
+        description: 'Пополнение счета Снятие со вклада (КНП 322) ;ISJUR',
+        operation: 'Пополнение счета',
+        details: 'Снятие со вклада (КНП 322) ;ISJUR',
+        parsedDetails: {
+          merchantName: 'Снятие со вклада'
+        },
+        originString: ''
+      }
+
+      const transaction = convertTransaction(pt, 'acc1')
+      expect(transaction.comment).toBe('')
+      expect(transaction.merchant).toBeNull()
+      expect(transaction.movements).toHaveLength(2)
+      const secondMovement = transaction.movements[1] as any
+      expect(secondMovement.account.type).toBe(AccountType.deposit)
+      expect(secondMovement.sum).toBe(-23508.71)
+    })
+
+    it('should mark payment bonus as replenishment bonus for provider', () => {
+      const pt: ParsedTransaction = {
+        date: '08.02.2026',
+        amount: 5358.58,
+        description: 'Платеж Алсеко;NameVC=Коммуналка;VC=2;VC2=3;ServiceId=190;PAYMENT_ID=test-payment-id-0003;USEBONUS=1;BONUS_AMOUNT=5358.58',
+        operation: 'Платеж',
+        details: 'Алсеко;NameVC=Коммуналка;VC=2;VC2=3;ServiceId=190;PAYMENT_ID=test-payment-id-0003;USEBONUS=1;BONUS_AMOUNT=5358.58',
+        parsedDetails: {
+          merchantName: 'Алсеко;NameVC=Коммуналка;VC=2;VC2=3;ServiceId=190;PAYMENT_ID=test-payment-id-0003;USEBONUS=1;BONUS_AMOUNT=5358.58'
+        },
+        originString: ''
+      }
+
+      const transaction = convertTransaction(pt, 'acc1')
+      expect(transaction.comment).toBe('')
+      expect((transaction.merchant as any)?.title).toBe('Алсеко')
+    })
+
+    it('should hide generic receiver transfer placeholders', () => {
+      const pt: ParsedTransaction = {
+        date: '08.02.2026',
+        amount: -16.8,
+        description: 'Перевод Получатель:',
+        operation: 'Перевод',
+        details: 'Получатель:',
+        parsedDetails: {
+          receiver: 'Получатель:'
+        },
+        originString: ''
+      }
+
+      const transaction = convertTransaction(pt, 'acc1')
+      expect(transaction.comment).toBe('')
+      expect(transaction.merchant).toBeNull()
+      expect(transaction.movements).toHaveLength(2)
+      const secondMovement = transaction.movements[1] as any
+      expect(secondMovement.account.type).toBe(AccountType.deposit)
+      expect(secondMovement.sum).toBe(16.8)
     })
   })
 })

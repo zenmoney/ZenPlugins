@@ -1,5 +1,5 @@
 import { BASE_API_URL } from './models'
-import { fetchJson } from '../../common/network'
+import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
 import type * as T from './types/fetch'
 import { FetchError, FetchOutput } from './types/base'
 import { isNonEmptyString } from './helpers'
@@ -7,12 +7,32 @@ import { isNonEmptyString } from './helpers'
 const makeUrl = (domain: 'auth' | 'core', url: string): string =>
   `${BASE_API_URL}/${domain}/services/v3${url}`
 
+async function fetchApi (url: string, options: FetchOptions): Promise<FetchResponse> {
+  return await fetchJson(url, {
+    ...options,
+    sanitizeRequestLog: {
+      headers: {
+        Authorization: true
+      },
+      body: {
+        login: true,
+        password: true
+      }
+    },
+    sanitizeResponseLog: {
+      body: {
+        sessionToken: true
+      }
+    }
+  })
+}
+
 /**
  * Login using a new deviceId created a device listed in the user's account
  * Device name is usually `{platform} {browser}`
  * **/
 export const fetchLogin = async ({ login, password, deviceId }: T.AuthenticateInput): Promise<FetchOutput<T.AuthenticateOutput>> => {
-  const { status, body } = await fetchJson(makeUrl('auth', '/authentication/login'), {
+  const { status, body } = await fetchApi(makeUrl('auth', '/authentication/login'), {
     method: 'POST',
     body: {
       login,
@@ -35,7 +55,7 @@ export const fetchLogin = async ({ login, password, deviceId }: T.AuthenticateIn
 }
 
 export const fetchAccounts = async ({ sessionToken }: T.FetchAccountsInput): Promise<FetchOutput<T.FetchAccountsOutput>> => {
-  const { status, body } = await fetchJson(makeUrl('core', '/product/get-products?getCreditDetail=false'), {
+  const { status, body } = await fetchApi(makeUrl('core', '/product/get-products?getCreditDetail=false'), {
     headers: {
       Authorization: `Bearer ${sessionToken}`
     }
@@ -49,7 +69,7 @@ export const fetchAccounts = async ({ sessionToken }: T.FetchAccountsInput): Pro
 }
 
 export const fetchTransactions = async ({ sessionToken, from, to, account }: T.FetchTransactionsInput): Promise<FetchOutput<T.FetchTransactionsOutput>> => {
-  const { status, body } = await fetchJson(makeUrl('core', '/operation/history/get-operations-history'), {
+  const { status, body } = await fetchApi(makeUrl('core', '/operation/history/get-operations-history'), {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${sessionToken}`

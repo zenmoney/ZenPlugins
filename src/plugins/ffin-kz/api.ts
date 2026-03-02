@@ -15,9 +15,9 @@ function getRegexpMatch (regExps: RegExp[], text: string, flags?: string): RegEx
 }
 
 function parseAccountIdAndBalance (text: string): { accountId: string, balance: number } {
-  // Валюта счета:KZT, USD, EUR, RUB, CNY, TRY, AED Дата:01.01.2025 Номер счётаВалютаОстаток KZ123456789012345KZTKZT19,455.00 ₸
+  // Валюта счета:KZT, USD, EUR, RUB, CNY, TRY, AED Дата:01.01.2025 Номер счётаВалютаОстаток KZ123456789012345678 KZT 19,455.00 ₸
   const match = getRegexpMatch([
-    /([A-Z]{2}\d{2}[A-Z0-9]{13})KZT\s+KZT\s+([0-9,.\s]+)/
+    /([A-Z]{2}\d{2}[A-Z0-9]{16})\s+KZT\s+([0-9,.\s]+)/
   ], text)
   assert(typeof match?.[1] === 'string', 'Can\'t parse accountId from account statement')
   assert(typeof match?.[2] === 'string', 'Can\'t parse balance from account statement')

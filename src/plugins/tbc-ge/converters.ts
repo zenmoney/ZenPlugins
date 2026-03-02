@@ -47,12 +47,28 @@ export function convertAccountsV2 (cardsAndAccounts: CardsAndAccounts | null): P
 }
 
 export function convertStatementV2 (statement: DepositStatementV2, account: Account): Transaction {
+  // Determine transaction type - based on observed API behavior, only one field
+  // is non-zero at a time (mutually exclusive), but not 100% certain this is always the case
+  let sum: number
+  let comment: string | null = null
+
+  if (statement.interestedAmount > 0) {
+    sum = statement.interestedAmount
+    comment = 'Deposit interest'
+  } else if (statement.withdrawnDepositAmount > 0) {
+    sum = -statement.withdrawnDepositAmount
+    comment = 'Deposit withdrawal'
+  } else {
+    // Regular deposit
+    sum = statement.depositAmount
+  }
+
   const movement: Movement = {
-    id: Buffer.from(`${account.id}:${statement.depositAmount}:${statement.movementDate}`).toString('base64'),
+    id: Buffer.from(`${account.id}:${sum}:${statement.movementDate}`).toString('base64'),
     account: {
       id: account.id
     },
-    sum: statement.depositAmount,
+    sum,
     fee: 0,
     invoice: null
   }
@@ -61,7 +77,7 @@ export function convertStatementV2 (statement: DepositStatementV2, account: Acco
     movements: [movement],
     merchant: null,
     hold: false,
-    comment: null
+    comment
   }
 }
 

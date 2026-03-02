@@ -51,4 +51,14 @@ describe('Deposit Parser', () => {
     expect(header.productName).toContain('Толықтыру')
     expect(header.balance).toBe(1500000)
   })
+
+  it('should not detect card statement as deposit when details mention "вклада"', () => {
+    const cardStatementText = `
+      Выписка по карточному счету
+      Номер счета: KZ000000000000000000
+      08.02.2026 23508.71 KZT Пополнение счета Снятие со вклада (КНП 322)
+    `
+
+    expect(isDepositStatement(cardStatementText)).toBe(false)
+  })
 })

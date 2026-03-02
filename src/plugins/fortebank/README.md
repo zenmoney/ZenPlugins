@@ -36,7 +36,7 @@ The parsing logic relies on specific headers to identify table sections:
 Run unit and E2E tests:
 
 ```bash
-yarn test fortebank-kz
+yarn test fortebank
 ```
 
 Tests cover:
