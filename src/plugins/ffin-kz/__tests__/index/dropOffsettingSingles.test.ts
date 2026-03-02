@@ -6,7 +6,7 @@ describe('dropOffsettingSinglesSameAccount', () => {
     const date = new Date('2025-11-28T10:00:00.000Z')
     const baseMovement = (sum: number): Movement => ({
       id: sum > 0 ? 'plus' : 'minus',
-      account: { id: 'KZ987654312KZT' },
+      account: { id: 'KZ000000000000777KZT' },
       invoice: null,
       sum,
       fee: 0

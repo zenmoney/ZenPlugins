@@ -172,6 +172,25 @@ export function parseSinglePdfString (text: string, statementUid?: string): { ac
   return parsedContent
 }
 
+export function splitCardStatements (text: string): string[] {
+  const starts = [...text.matchAll(/Выписка по карте/gi)].map(match => match.index).filter((x): x is number => x != null)
+  if (starts.length <= 1) {
+    return [text]
+  }
+
+  const statements: string[] = []
+  for (let i = 0; i < starts.length; i += 1) {
+    const start = starts[i]
+    const end = starts[i + 1] ?? text.length
+    const part = text.slice(start, end).trim()
+    if (part !== '') {
+      statements.push(part)
+    }
+  }
+
+  return statements.length > 0 ? statements : [text]
+}
+
 function prepareCardStatementText (text: string): string {
   // Разделяем на части: Дата Сумма Валюта Операция Детали
   // Ищем первую строку, где начинается таблица с транзакциями (по заголовку "Дата Сумма Валюта Операция Детали")
@@ -224,6 +243,10 @@ function calculateEndDateOffset (startDate: Date | null, endDate: Date | null): 
   return { interval: 'day', offset: diffDays }
 }
 
+function getDepositSyncId (accountId: string): string {
+  return accountId.match(/KZ[A-Z0-9]{15}/)?.[0] ?? accountId
+}
+
 export function parseDepositPdfString (text: string, statementUid?: string): { account: DepositOrLoan, transactions: StatementTransaction[] } {
   const uid = statementUid ?? generateUUID()
   const accountIdMatch = text.match(/Номер счета:\s*([A-Z0-9]+)/i)
@@ -255,7 +278,7 @@ export function parseDepositPdfString (text: string, statementUid?: string): { a
     type: AccountType.deposit,
     title,
     instrument,
-    syncIds: [accountId],
+    syncIds: [getDepositSyncId(accountId)],
     balance,
     startDate: startDate ?? new Date(),
     startBalance,
@@ -375,7 +398,10 @@ export async function parsePdfStatements (): Promise<null | Array<{ account: Acc
       result.push(parseDepositPdfString(textItem))
       continue
     }
-    result.push(parseSinglePdfString(prepareCardStatementText(textItem)))
+    const cardStatements = splitCardStatements(textItem)
+    for (const cardStatementText of cardStatements) {
+      result.push(parseSinglePdfString(prepareCardStatementText(cardStatementText)))
+    }
   }
   return result
 }

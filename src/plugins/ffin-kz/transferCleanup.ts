@@ -200,6 +200,18 @@ export function dropPlaceholderTransfers (transactions: Transaction[]): Transact
     if (!oneUnknown) return true
     const sumsMatch = Math.abs(normalizeSum(m1.sum ?? 0) + normalizeSum(m2.sum ?? 0)) < 0.01
     const oppositeSigns = (m1.sum ?? 0) * (m2.sum ?? 0) < 0
+    const knownMovement = key1 === 'unknown' ? m2 : m1
+    const unknownMovement = key1 === 'unknown' ? m1 : m2
+    const knownId = typeof (knownMovement.account as { id?: string })?.id === 'string'
+      ? (knownMovement.account as { id: string }).id
+      : ''
+    const preserveDepositToCardTransfer =
+      /^KZ[A-Z0-9]{15}(KZT|USD|EUR|RUB|CNY|TRY|AED)$/i.test(knownId) &&
+      (unknownMovement.account as { type?: string })?.type === 'ccard'
+
+    if (preserveDepositToCardTransfer && oppositeSigns && sumsMatch) {
+      return true
+    }
     if (oppositeSigns && sumsMatch) {
       return false
     }

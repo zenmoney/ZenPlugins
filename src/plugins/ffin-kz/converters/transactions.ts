@@ -19,6 +19,9 @@ const transactionTypeStrings = {
 }
 
 function parseTransactionType (text: string): string | null {
+  if (/выплата\s+вклада\s+по\s+договору/i.test(text) || /прием\s+вклада\s+по\s+договору/i.test(text)) {
+    return transactionType.TRANSFER
+  }
   if (transactionTypeStrings.OUTCOME.some(str => text.includes(str))) {
     return transactionType.OUTCOME
   }
@@ -32,6 +35,12 @@ function parseTransactionType (text: string): string | null {
     return transactionType.INCOME
   }
   return null
+}
+
+function isDepositContractTransferText (text: string): boolean {
+  return /выплата\s+вклада\s+по\s+договору/i.test(text) ||
+    /прием\s+вклада\s+по\s+договору/i.test(text) ||
+    /KZ[A-Z0-9]{15}(?:[A-Z]{3})?\s+от\s+\d{2}\.\d{2}\.\d{4}.*вкладчик/i.test(text)
 }
 
 function cleanMerchantTitle (text: string | null): string | null {
@@ -58,6 +67,11 @@ function cleanMerchantTitle (text: string | null): string | null {
   const keywordsToRemove = [...flatten(Object.values(transactionTypeStrings)), '₸']
   keywordsToRemove.push('Сумма в обработке')
   let cleanedText = text
+
+  // Удаляем маркеры "Сумма в обработке"/"в обработке"/"обработке" из описания операции
+  cleanedText = cleanedText.replace(/сумма\s+в\s+обработке/gi, ' ')
+  cleanedText = cleanedText.replace(/в\s+обработке/gi, ' ')
+  cleanedText = cleanedText.replace(/обработке/gi, ' ')
 
   for (const keyword of keywordsToRemove) {
     cleanedText = cleanedText.replace(new RegExp(keyword, 'gi'), '')
@@ -97,6 +111,22 @@ function parseNumber (value: string): number {
   return parseFloat(value.replace(',', '.').replace(/[^\d.-]/g, ''))
 }
 
+function normalizeDepositContractTransferSum (sum: number, sourceIsDeposit: boolean, fullText: string, isDepositContractTransfer: boolean): number {
+  if (!isDepositContractTransfer) {
+    return sum
+  }
+  const hasPayout = /выплата\s+вклада/i.test(fullText)
+  const hasAcceptance = /прием\s+вклада/i.test(fullText)
+
+  if (hasPayout) {
+    return sourceIsDeposit ? -Math.abs(sum) : Math.abs(sum)
+  }
+  if (hasAcceptance) {
+    return sourceIsDeposit ? Math.abs(sum) : -Math.abs(sum)
+  }
+  return sum
+}
+
 function detectInstrument (rawTransaction: StatementTransaction, rawAccount: { id: string, instrument: string }): string {
   if (rawTransaction.originalAmount !== null) {
     return rawTransaction.originalAmount.match(/[A-Z]{3}/)?.[0] ?? 'KZT'
@@ -104,18 +134,37 @@ function detectInstrument (rawTransaction: StatementTransaction, rawAccount: { i
   return rawAccount.instrument ?? 'KZT'
 }
 
-function buildCounterMovement (parsedType: string, rawTransaction: StatementTransaction, instrument: string, sum: number): Movement {
+function extractDepositSyncId (rawTransaction: StatementTransaction): string | null {
+  const searchTarget = [rawTransaction.description, rawTransaction.originString]
+    .filter((item): item is string => item != null)
+    .join(' ')
+
+  const syncIdMatch = searchTarget.match(/KZ[A-Z0-9]{15}/)
+  return syncIdMatch?.[0] ?? null
+}
+
+function isDepositSourceAccount (rawAccount: { id: string, type?: string }): boolean {
+  return rawAccount.type === AccountType.deposit
+}
+
+function buildCounterMovement (
+  parsedType: string,
+  rawTransaction: StatementTransaction,
+  instrument: string,
+  sum: number,
+  sourceIsDeposit: boolean
+): Movement {
   let type
   let syncIds = null
+  const depositSyncId = extractDepositSyncId(rawTransaction)
 
   if (parsedType === transactionType.CASH) {
     type = AccountType.cash
-  } else if (parsedType === transactionType.TRANSFER && rawTransaction.description !== null && rawTransaction.description.includes('KZ')) {
+  } else if (parsedType === transactionType.TRANSFER && sourceIsDeposit) {
+    type = AccountType.ccard
+  } else if (parsedType === transactionType.TRANSFER && depositSyncId !== null) {
     type = AccountType.deposit
-    const syncIdMatch = rawTransaction.description.match(/KZ[A-Z0-9]{15}/)
-    if (syncIdMatch != null) {
-      syncIds = [syncIdMatch[0]]
-    }
+    syncIds = [depositSyncId]
   } else {
     type = AccountType.ccard
   }
@@ -242,6 +291,11 @@ export function convertPdfStatementTransaction (rawTransaction: StatementTransac
   }
 
   const merchantFullTitle = cleanMerchantTitle(rawTransaction.description)
+  const sourceIsDeposit = isDepositSourceAccount(rawAccount as { id: string, type?: string })
+  const fullText = `${rawTransaction.description ?? ''} ${rawTransaction.originString}`
+  const isDepositContractTransfer = isDepositContractTransferText(fullText)
+  sum = normalizeDepositContractTransferSum(sum, sourceIsDeposit, fullText, isDepositContractTransfer)
+
   const baseMovement: Movement = {
     id: generateTransactionId(rawTransaction.date, rawTransaction.originalAmount, merchantFullTitle),
     account: { id: rawAccount.id },
@@ -251,21 +305,24 @@ export function convertPdfStatementTransaction (rawTransaction: StatementTransac
   }
   console.log('ID транзакции:', baseMovement.id, 'Исходная сумма:', rawTransaction.originalAmount, 'Описание:', merchantFullTitle)
 
-  const parsedType = parseTransactionType(rawTransaction.originString)
+  let parsedType = parseTransactionType(rawTransaction.originString)
+  if (parsedType === null && isDepositContractTransfer) {
+    parsedType = transactionType.TRANSFER
+  }
   if (parsedType === null) {
     console.warn('Unknown transaction type for', rawTransaction.originString)
   }
   let movements: [Movement] | [Movement, Movement]
 
   if (parsedType !== null && [transactionType.CASH, transactionType.TRANSFER].includes(parsedType)) {
-    movements = [baseMovement, buildCounterMovement(parsedType, rawTransaction, instrument, sum)]
+    movements = [baseMovement, buildCounterMovement(parsedType, rawTransaction, instrument, sum, sourceIsDeposit)]
   } else {
     movements = [baseMovement]
   }
 
   let comment = null
 
-  if (merchantFullTitle !== null) {
+  if (merchantFullTitle !== null && !isDepositContractTransfer) {
     const commentStrs = ['по номеру счета', 'by account number']
     for (const commentStr of commentStrs) {
       if (merchantFullTitle.includes(commentStr)) {
@@ -286,6 +343,8 @@ export function convertPdfStatementTransaction (rawTransaction: StatementTransac
     merchant = null
   } else if (isInterestPayout) {
     comment = 'Выплата процентов по вкладу'
+    merchant = null
+  } else if (isDepositContractTransfer) {
     merchant = null
   } else if (merchantFullTitle !== null) {
     const loc = detectCityCountryLocation(merchantFullTitle)
@@ -324,7 +383,7 @@ export function convertPdfStatementTransaction (rawTransaction: StatementTransac
     }
   } else if (rawTransaction.originString != null) {
     const { location, title, comment: originComment } = parseMerchantFromOrigin(rawTransaction.originString)
-    if (originComment != null) {
+    if (!isDepositContractTransfer && originComment != null) {
       comment = originComment
     }
     merchant = {

@@ -12,7 +12,7 @@ describe('dropPlaceholderTransfers', () => {
       movements: [
         {
           id: 'real',
-          account: { id: 'KZ987654312KZT' },
+          account: { id: 'ACC-DEPOSIT-RAW' },
           invoice: null,
           sum: 40000,
           fee: 0
@@ -54,5 +54,34 @@ describe('dropPlaceholderTransfers', () => {
     expect(kept).toHaveLength(1)
     const merchant = kept[0].merchant as any
     expect(merchant?.title ?? merchant?.fullTitle).toBe('keep')
+  })
+
+  it('keeps valid transfer from deposit statement to ccard placeholder', () => {
+    const date = new Date('2026-02-01T19:00:00.000Z')
+    const depositToCardTransfer: Transaction = {
+      hold: false,
+      date,
+      comment: null,
+      merchant: null,
+      movements: [
+        {
+          id: 'from-deposit',
+          account: { id: 'KZ00000B000000002KZT' },
+          invoice: null,
+          sum: -70000,
+          fee: 0
+        },
+        {
+          id: null,
+          account: { type: AccountType.ccard, instrument: 'KZT', company: null, syncIds: null },
+          invoice: null,
+          sum: 70000,
+          fee: 0
+        }
+      ]
+    }
+
+    const kept = dropPlaceholderTransfers([depositToCardTransfer])
+    expect(kept).toHaveLength(1)
   })
 })
