@@ -5,7 +5,7 @@ import { generateUUID } from '../../common/utils'
 import { isNonEmptyString } from './helpers'
 
 export const scrape: ScrapeFunc<PreferenceInput> = async ({ preferences, fromDate, toDate }) => {
-  console.log('SCRAPE', preferences, fromDate, toDate)
+  // console.log('SCRAPE', preferences, fromDate, toDate)
   const { login, password } = preferences
 
   const pluginData = {
@@ -20,11 +20,11 @@ export const scrape: ScrapeFunc<PreferenceInput> = async ({ preferences, fromDat
 
   const { sessionToken } = await authenticate(login, password, pluginData.deviceId)
 
-  console.log('SUCCESSFUL LOGIN', sessionToken)
+  // console.log('SUCCESSFUL LOGIN', sessionToken)
 
   const accounts = await getAccounts({ sessionToken })
 
-  console.log('SUCCESSFUL ACCOUNTS FETCH', accounts)
+  // console.log('SUCCESSFUL ACCOUNTS FETCH', accounts)
 
   const transactions = []
 
