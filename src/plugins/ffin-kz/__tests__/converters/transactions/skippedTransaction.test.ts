@@ -13,7 +13,7 @@ describe('convertTransaction', () => {
         originString: '09.05.2025 -0.00 ₸ KZT Другое'
       },
       {
-        id: 'KZ60551Z329356713',
+        id: 'KZ00000Z000000003',
         instrument: 'KZT'
       },
       null
