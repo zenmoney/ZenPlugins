@@ -29,9 +29,6 @@ describe('convertTransaction', () => {
       {
         comment: 'Перевод на карту 489993******2773',
         date: new Date('2021-08-23T19:27:00.000+06:00'),
-        groupKeys: [
-          '2372881640'
-        ],
         hold: false,
         merchant: null,
         movements: [
@@ -43,6 +40,18 @@ describe('convertTransaction', () => {
             id: '2372881640-',
             invoice: null,
             sum: -39901
+          },
+          {
+            id: null,
+            account: {
+              type: 'ccard',
+              instrument: 'KZT',
+              company: null,
+              syncIds: ['2773']
+            },
+            invoice: null,
+            sum: 39901,
+            fee: 0
           }
         ]
       }
@@ -74,9 +83,6 @@ describe('convertTransaction', () => {
       {
         comment: 'Перевод c карты 510445******7127',
         date: new Date('2021-08-23T19:27:00.000+06:00'),
-        groupKeys: [
-          '2372881640'
-        ],
         hold: false,
         merchant: null,
         movements: [
@@ -88,6 +94,18 @@ describe('convertTransaction', () => {
             id: '2372881640+',
             invoice: null,
             sum: 39901
+          },
+          {
+            id: null,
+            account: {
+              type: 'ccard',
+              instrument: 'KZT',
+              company: null,
+              syncIds: ['7127']
+            },
+            invoice: null,
+            sum: -39901,
+            fee: 0
           }
         ]
       }
@@ -130,8 +148,7 @@ describe('convertTransaction', () => {
             }
           ],
         merchant: null,
-        comment: 'Перевод на счет KZ068562799116995262',
-        groupKeys: ['3408885048']
+        comment: 'Перевод на счет KZ068562799116995262'
       }
     ],
     [
@@ -169,11 +186,76 @@ describe('convertTransaction', () => {
               invoice: null,
               sum: 43312.84,
               fee: 0
+            },
+            {
+              id: null,
+              account: {
+                type: 'ccard',
+                instrument: 'KZT',
+                company: null,
+                syncIds: ['5191']
+              },
+              invoice: null,
+              sum: -43312.84,
+              fee: 0
             }
           ],
         merchant: null,
-        comment: 'Перевод c карты 489993******5191',
-        groupKeys: ['3408885048']
+        comment: 'Перевод c карты 489993******5191'
+      }
+    ],
+    [
+      {
+        oper_date: '05.03.2026',
+        oper_time: '14:55',
+        is_blocked: false,
+        is_income: true,
+        post_time: '05.03.2026',
+        amount: 90000,
+        cur: 'KZT',
+        fee: 0,
+        cms: 0,
+        title: 'Перевод cо счета KZ000000000000000123',
+        description: 'Перевод cо счета KZ000000000000000123',
+        image: 'transfers/own_transfer.png',
+        rrn: '',
+        trn_id: 16241413088,
+        eci: ''
+      },
+      [
+        {
+          id: '14100085',
+          instrument: 'KZT',
+          syncIds: ['KZ000000000000000505', '5058']
+        },
+        {
+          id: '19826824',
+          instrument: 'KZT',
+          syncIds: ['KZ000000000000000123']
+        }
+      ],
+      {
+        hold: false,
+        date: new Date('2026-03-05T14:55:00.000+06:00'),
+        movements:
+          [
+            {
+              id: '16241413088+',
+              account: { id: '14100085' },
+              invoice: null,
+              sum: 90000,
+              fee: 0
+            },
+            {
+              id: null,
+              account: { id: '19826824' },
+              invoice: null,
+              sum: -90000,
+              fee: 0
+            }
+          ],
+        merchant: null,
+        comment: 'Перевод cо счета KZ000000000000000123'
       }
     ]
   ])('converts innerTransfer', (apiTransaction, account, transaction) => {
