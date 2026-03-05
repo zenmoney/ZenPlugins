@@ -9,7 +9,7 @@ describe('convertAccounts', () => {
           acc_id: 'I/210330/1/988',
           type: 'Visa_Gold_Reward.png',
           account20: 'KZ688562204112187559',
-          card_num: '489993******2773',
+          card_num: '',
           note: '#картакарта',
           module: '10',
           currency: 'KZT',
@@ -109,7 +109,7 @@ describe('convertAccounts', () => {
               savings: false,
               syncIds: [
                 'KZ688562204112187559',
-                '489993******2773'
+                ''
               ],
               title: '#картакарта',
               totalAmountDue: 0,

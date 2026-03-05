@@ -221,7 +221,7 @@ function convertDebitCard (apiAccount) {
     type: 'ccard',
     title: apiAccount.note,
     instrument: apiAccount.currency,
-    syncIds: [apiAccount.account20, apiAccount.card_num],
+    syncIds: [apiAccount.account20, extractCardLast4(apiAccount.card_num)],
     savings: false,
     balance: getBalance(apiAccount),
     ...virtual
@@ -238,7 +238,7 @@ function convertCreditCard (apiAccount) {
     type: 'ccard',
     title: apiAccount.note,
     instrument: apiAccount.currency,
-    syncIds: [apiAccount.account20, apiAccount.card_num],
+    syncIds: [apiAccount.account20, extractCardLast4(apiAccount.card_num)],
     savings: false,
     available: getBalance(apiAccount),
     creditLimit: apiAccount.credit_limit,
@@ -246,6 +246,14 @@ function convertCreditCard (apiAccount) {
     gracePeriodEndDate: apiAccount.paydate ? parseDate(apiAccount.paydate) : null,
     ...virtual
   }
+}
+
+function extractCardLast4 (cardNumber) {
+  const digits = String(cardNumber ?? '').replace(/\D/g, '')
+  if (digits.length >= 4) {
+    return digits.slice(-4)
+  }
+  return String(cardNumber ?? '')
 }
 
 function convertCurrentAccount (apiAccount) {
@@ -293,18 +301,29 @@ export function convertTransaction (apiTransaction, accounts) {
     parseOuterTransfer,
     parseCashTransfer,
     parseMerchant
-  ].some(parser => parser(transaction, apiTransaction, invoice))
+  ].some(parser => parser(transaction, apiTransaction, invoice, accounts))
 
   return transaction
 }
 
-function parseInnerTransfer (transaction, apiTransaction, invoice) {
+function parseInnerTransfer (transaction, apiTransaction, invoice, accounts) {
   if (apiTransaction.image === 'transfers/own_transfer.png' && apiTransaction.rrn === '') {
-    transaction.groupKeys = [apiTransaction.trn_id.toString()]
     transaction.movements[0].id = transaction.movements[0].id + (apiTransaction.is_income ? '+' : '-')
     if (apiTransaction.amount === 0 && apiTransaction.fee === apiTransaction.cms) {
       transaction.movements[0].sum = transaction.movements[0].fee
       transaction.movements[0].fee = 0
+      return true
+    }
+
+    const peerTransferAccount = buildPeerTransferAccount(apiTransaction.title, apiTransaction.cur, accounts)
+    if (peerTransferAccount) {
+      transaction.movements.push({
+        id: null,
+        account: peerTransferAccount,
+        invoice: null,
+        sum: -transaction.movements[0].sum,
+        fee: 0
+      })
     }
 
     return true
@@ -312,15 +331,59 @@ function parseInnerTransfer (transaction, apiTransaction, invoice) {
   return false
 }
 
+function extractPeerCardSyncId (title) {
+  const match = /(?:карту|карты)\s+([0-9*]{4,})/i.exec(String(title ?? ''))
+  if (!match) {
+    return null
+  }
+  const digits = match[1].replace(/\D/g, '')
+  return digits.length >= 4 ? digits.slice(-4) : null
+}
+
+function extractPeerAccountSyncId (title) {
+  const match = /\b(KZ[0-9A-Z]{10,})\b/i.exec(String(title ?? ''))
+  return match ? match[1].toUpperCase() : null
+}
+
+function buildPeerTransferAccount (title, instrument, accounts) {
+  const peerCardSyncId = extractPeerCardSyncId(title)
+  if (peerCardSyncId) {
+    return {
+      type: 'ccard',
+      instrument,
+      company: null,
+      syncIds: [peerCardSyncId]
+    }
+  }
+
+  const peerAccountSyncId = extractPeerAccountSyncId(title)
+  if (!peerAccountSyncId) {
+    return null
+  }
+
+  const peerAccount = accounts.find(account => account.syncIds && account.syncIds.includes(peerAccountSyncId))
+  if (peerAccount) {
+    return { id: peerAccount.id }
+  }
+
+  return {
+    type: 'checking',
+    instrument,
+    company: null,
+    syncIds: [peerAccountSyncId]
+  }
+}
+
 function parseOuterTransfer (transaction, apiTransaction) {
   if (apiTransaction.image === 'transactions/transfer.png') {
+    const peerCardSyncId = extractPeerCardSyncId(apiTransaction.title)
     transaction.movements.push({
       id: null,
       account: {
         type: 'ccard',
         instrument: apiTransaction.cur,
         company: null,
-        syncIds: null
+        syncIds: peerCardSyncId ? [peerCardSyncId] : null
       },
       invoice: null,
       sum: -transaction.movements[0].sum,

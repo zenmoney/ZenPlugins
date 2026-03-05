@@ -39,7 +39,7 @@ describe('convertTransaction', () => {
             account: {
               company: null,
               instrument: 'KZT',
-              syncIds: null,
+              syncIds: ['7127'],
               type: 'ccard'
             },
             fee: 0,
@@ -133,7 +133,7 @@ describe('convertTransaction', () => {
                 type: 'ccard',
                 instrument: 'KZT',
                 company: null,
-                syncIds: null
+                syncIds: ['0080']
               },
               invoice: null,
               sum: 150,

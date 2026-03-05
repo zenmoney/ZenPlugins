@@ -9,7 +9,7 @@ describe('convertAccounts', () => {
           acc_id: 'ALM/19/P/217952-DC/19/302045',
           type: 'MasterCard_World_PayPass.png',
           account20: 'KZ248562204107417115',
-          card_num: '510445******7127',
+          card_num: '',
           note: 'MasterCard World PayPass ЗП',
           module: '10',
           currency: 'KZT',
@@ -66,7 +66,7 @@ describe('convertAccounts', () => {
               savings: false,
               syncIds: [
                 'KZ248562204107417115',
-                '510445******7127'
+                ''
               ],
               title: 'MasterCard World PayPass ЗП',
               type: 'ccard'
@@ -82,7 +82,7 @@ describe('convertAccounts', () => {
           acc_id: 'ALM/20/P/378307-C/20/262206',
           type: 'Visa_Reward_Virtual.png',
           account20: 'KZ348562204109395444',
-          card_num: '489993******6955',
+          card_num: '',
           note: 'Virtual',
           module: '10',
           currency: 'KZT',
@@ -166,7 +166,7 @@ describe('convertAccounts', () => {
               id: '2879843',
               instrument: 'KZT',
               savings: false,
-              syncIds: ['KZ348562204109395444', '489993******6955'],
+              syncIds: ['KZ348562204109395444', ''],
               title: 'Virtual',
               type: 'ccard',
               virtual: true
@@ -182,7 +182,7 @@ describe('convertAccounts', () => {
           acc_id: 'ALM/22/P/251597-C/22/115708',
           type: 'Visa_TravelCard.png',
           account20: 'KZ908562204116516952',
-          card_num: '446375******7973',
+          card_num: '',
           note: '#TravelCard',
           module: '10',
           currency: 'KZT',
@@ -269,7 +269,7 @@ describe('convertAccounts', () => {
               savings: false,
               syncIds: [
                 'KZ908562204116516952',
-                '446375******7973'
+                ''
               ],
               title: '#TravelCard',
               type: 'ccard'
