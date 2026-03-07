@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>interactive-brokers</id>
+    <company>0</company>
+
+    <description>
+    Imports portfolio balances from Interactive Brokers using the Mint‑compatible Flex Query report.
+    The plugin retrieves the latest Equity Summary in the account’s base currency and creates corresponding investment accounts in ZenMoney.
+    Only automated Mint‑style reports are supported at this stage.
+    </description>
+
+    <version>1.0</version>
+    <build>1</build>
+    <modular>true</modular>
+
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+</provider>

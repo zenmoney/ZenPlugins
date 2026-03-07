@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+
+    <EditTextPreference
+        key="flexToken"
+        obligatory="true"
+        title="Flex Web Service Token"
+        dialogTitle="Flex Web Service Token"
+        dialogMessage="Enter the Flex Web Service token from your Interactive Brokers account. You can find it in IBKR Mobile →Trade Reports (&quot;Perfomance &amp; Reports&quot; in Web Client Portal) → Third-Party Reports → \u2699 → \2714 Mint "
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="|flexToken|{@s}"
+    />
+
+    <EditTextPreference
+        key="queryId"
+        obligatory="true"
+        title="Flex Query ID"
+        dialogTitle="Flex Query ID"
+        dialogMessage="Enter the ID of your Mint-compatible Flex Query. This report is used to retrieve your portfolio summary."
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="|queryId|{@s}"
+    />
+    
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="Starting date (not used)"
+        defaultValue="2000-01-01T00:00:00.000Z"
+        dialogTitle="Starting date"
+        dialogMessage="Interactive Brokers does not provide transactions in this report, but ZenMoney requires a starting date to be specified."
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="|startDate|{@s}"
+    />
+
+</PreferenceScreen>
