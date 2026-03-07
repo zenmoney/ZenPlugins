@@ -3,14 +3,14 @@ import * as setCookie from 'set-cookie-parser'
 import { fetch } from '../../common/network'
 
 function arrayBufferToString (buffer) {
+  if (typeof TextDecoder !== 'undefined') {
+    return new TextDecoder('utf-8').decode(buffer)
+  }
+  const bytes = new Uint8Array(buffer)
   let binaryString = ''
-  const bytes = new Uint16Array(buffer)
-  const length = bytes.length
-
-  for (let i = 0; i < length; i++) {
+  for (let i = 0; i < bytes.length; i++) {
     binaryString += String.fromCharCode(bytes[i])
   }
-
   return binaryString
 }
 
@@ -26,7 +26,12 @@ export class Session {
 
   constructor (domain, { headers, cookies, cookieKey } = {}) {
     this._domain = domain
-    this._headers = headers || {}
+    this._headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.9',
+      ...headers
+    }
     this._cookies = cookies || {}
 
     if (cookieKey) {
@@ -97,7 +102,10 @@ export class Session {
   }
 
   async request (url, options = {}) {
-    const response = await fetch(this._url(url), options)
+    const response = await fetch(this._url(url), {
+      ...options,
+      headers: this._prepareHeaders(options.headers)
+    })
 
     this._storeCookies(response)
 
@@ -149,7 +157,10 @@ export class Session {
 
   _returnResponseBody (response) {
     if (response.status >= 300 && response.status < 400) {
-      return this.get(response.headers.location.replace(this._domain, ''))
+      const location = response.headers.location || response.headers.Location
+      if (location) {
+        return this.get(location.replace(this._domain, ''))
+      }
     }
 
     return response.body
