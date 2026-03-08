@@ -16,6 +16,13 @@ function canBeMergedAsTransfer (left: Transaction, right: Transaction): boolean 
     return false
   }
 
+  // Cannot merge into transfer if both movements reference the same account
+  const leftId = 'id' in leftMovement.account ? leftMovement.account.id : null
+  const rightId = 'id' in rightMovement.account ? rightMovement.account.id : null
+  if (leftId != null && rightId != null && leftId === rightId) {
+    return false
+  }
+
   if (leftMovement.sum < 0) {
     return rightMovement.sum > 0
   }
