@@ -1,0 +1,1 @@
+export { scrape } from './plugin'
