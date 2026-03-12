@@ -1,6 +1,7 @@
 import flatten from 'lodash/flatten'
 import { fetch } from '../common'
 import { type Preferences } from '../types'
+import type { Chain } from '../common/types'
 
 import {
   AccountResponse,
@@ -12,12 +13,13 @@ import { SUPPORTED_TOKENS } from './config'
 
 export async function fetchAddressTokens (
   preferences: Preferences,
+  chain: Chain,
   address: string
 ): Promise<TokenAccount[]> {
   const result = await Promise.all(
-    SUPPORTED_TOKENS[preferences.chain].map(async (token) => {
+    SUPPORTED_TOKENS[chain].map(async (token) => {
       const response = await fetch<AccountResponse>({
-        chainid: preferences.chain,
+        chainid: chain,
         module: 'account',
         action: 'tokenbalance',
         contractaddress: token.contractAddress,
@@ -44,13 +46,14 @@ export async function fetchAddressTokens (
 /* Эндпоинт etherscan для получения инфы про все токены — платный.
    Поэтому обходим тут все поддерживаемые токены по каждому адресу отдельно */
 export async function fetchAccounts (
-  preferences: Preferences
+  preferences: Preferences,
+  chain: Chain
 ): Promise<TokenAccount[]> {
   const accounts = preferences.account.split(',')
 
   const result = await Promise.all(
     accounts.map(async (address: string) => {
-      const tokensAccounts = await fetchAddressTokens(preferences, address)
+      const tokensAccounts = await fetchAddressTokens(preferences, chain, address)
 
       return tokensAccounts
     })
@@ -69,6 +72,7 @@ interface AccountTransactionsOptions {
 
 export async function fetchAccountTransactions (
   preferences: Preferences,
+  chain: Chain,
   account: TokenAccount,
   options: AccountTransactionsOptions
 ): Promise<TokenTransaction[]> {
@@ -76,7 +80,7 @@ export async function fetchAccountTransactions (
 
   try {
     const response = await fetch<TokenTransactionResponse>({
-      chainid: preferences.chain,
+      chainid: chain,
       module: 'account',
       action: 'tokentx',
       contractaddress: account.contractAddress,
@@ -94,7 +98,7 @@ export async function fetchAccountTransactions (
     if (response.result.length === PAGE_SIZE) {
       return [
         ...transactions,
-        ...(await fetchAccountTransactions(preferences, account, {
+        ...(await fetchAccountTransactions(preferences, chain, account, {
           ...options,
           page: page + 1
         }))
