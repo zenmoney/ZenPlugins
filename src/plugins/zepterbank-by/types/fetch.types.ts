@@ -71,11 +71,12 @@ export interface FetchCurrentAccount extends FetchAccountBase {
 
 export interface FetchCurrentAccountMeta {
   _meta: {
+    cardTransactionsFetchId: null
     productStatementFetchId: string
   }
 }
 
-export type FetchAccountMeta = FetchCardAccountMeta & FetchCurrentAccountMeta
+export type FetchAccountMeta = FetchCardAccountMeta | FetchCurrentAccountMeta
 
 export interface FetchAccountsInput extends BaseFetchInput {}
 

@@ -37,6 +37,7 @@ export const convertCurrentAccount = (fetchAccount: FetchCurrentAccount): Accoun
     syncIds: [fetchAccount.ibanNum, fetchAccount.contractNumber],
     type: AccountType.checking,
     _meta: {
+      cardTransactionsFetchId: null,
       productStatementFetchId: fetchAccount.productId
     }
   }

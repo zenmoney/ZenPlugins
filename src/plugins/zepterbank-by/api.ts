@@ -22,7 +22,7 @@ export const authenticate = async (login: string, password: string): Promise<{ s
   return data
 }
 
-export const getAccounts = async ({ sessionToken }: { sessionToken: string }): Promise<(Account & FetchAccountMeta)[]> => {
+export const getAccounts = async ({ sessionToken }: { sessionToken: string }): Promise<Array<Account & FetchAccountMeta>> => {
   const { data, error } = await fetchAccounts({ sessionToken })
 
   if (error != null) {
@@ -39,12 +39,12 @@ export const getAccounts = async ({ sessionToken }: { sessionToken: string }): P
 
 export const getTransactions = async ({ sessionToken, fromDate, toDate }: { sessionToken: string, fromDate: Date, toDate: Date | undefined }, account: Account & FetchAccountMeta): Promise<Transaction[]> => {
   const [cardTransactionsResponse, productStatementResponse] = await Promise.all([
-    fetchCardTransactions({
+    (account._meta.cardTransactionsFetchId != null && fetchCardTransactions({
       sessionToken,
       from: convertDateToYyyyMmDd(fromDate),
       to: convertDateToYyyyMmDd(toDate ?? new Date()),
       cardId: account._meta.cardTransactionsFetchId
-    }),
+    })),
     fetchProductStatement({
       sessionToken,
       from: convertDateToYyyyMmDd(fromDate),
