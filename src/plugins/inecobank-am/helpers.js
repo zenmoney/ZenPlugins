@@ -1,5 +1,25 @@
 import cheerio from 'cheerio'
 
+export const BASE_URL = 'https://online.inecobank.am'
+
+export function isCloudflareChallenge (html) {
+  if (!html || typeof html !== 'string') return false
+  return /Just a moment|challenge-platform|cdn-cgi\/challenge-platform/i.test(html)
+}
+
+export function parseCookieHeader (cookieHeader) {
+  if (!cookieHeader || typeof cookieHeader !== 'string') return {}
+  const out = {}
+  for (const part of cookieHeader.split(';')) {
+    const eq = part.trim().indexOf('=')
+    if (eq <= 0) continue
+    const name = part.trim().slice(0, eq).trim()
+    const value = part.trim().slice(eq + 1).trim()
+    if (name) out[name] = value
+  }
+  return out
+}
+
 export class AccountHelper {
   constructor (accounts) {
     this.accounts = accounts
@@ -69,8 +89,8 @@ export function parseCSV (str) {
 
 export const parseFormData = (html, selector) => {
   const $ = cheerio.load(html)
-
-  const form = $('form' + selector ? ` ${selector}` : '')
+  const formSelector = selector ? (selector.trim().startsWith('[') ? 'form' + selector : 'form ' + selector) : 'form'
+  const form = $(formSelector)
 
   if (!form) {
     return null
@@ -78,7 +98,9 @@ export const parseFormData = (html, selector) => {
   const out = { attr: form.attr(), inputs: {} }
 
   $(form).eq(0).find('input').each((i, elm) => {
-    out.inputs[elm.attribs.name] = elm.attribs.value
+    if (elm.attribs.name) {
+      out.inputs[elm.attribs.name] = elm.attribs.value ?? ''
+    }
   })
 
   return out

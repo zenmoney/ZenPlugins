@@ -1,5 +1,5 @@
-import { parseTransactionDate, parseTransactions, processTransactions } from './converters'
-import { AccountHelper } from './helpers'
+import { parseTransactionDate, parseTransactions, processTransactions } from '../converters'
+import { AccountHelper } from '../helpers'
 
 const ACCOUNT1 = '123400001'
 const ACCOUNT2 = '123400701'

@@ -23,7 +23,7 @@
 - ```yarn test [PLUGIN NAME]```
   - Run type-check, linter and tests.
   - Can be used with plugin name to run tests only for this plugin.
-- ```jest [PLUGIN NAME]```
+- ```yarn jest [PLUGIN NAME]```
   - Run tests.
   - Can be used with plugin name to run tests only for this plugin.
 
