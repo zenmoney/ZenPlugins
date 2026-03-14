@@ -79,8 +79,8 @@ export interface FetchCurrentAccount extends FetchAccountBase {
 export interface FetchAccountsInput extends BaseFetchInput {}
 
 export interface FetchAccountsOutput {
-  cardAccount: FetchCardAccount[]
-  currentAccount: FetchCurrentAccount[]
+  cardAccount?: FetchCardAccount[]
+  currentAccount?: FetchCurrentAccount[]
 }
 
 /**
