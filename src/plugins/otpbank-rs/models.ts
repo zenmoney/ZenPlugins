@@ -45,6 +45,8 @@ export interface OtpTransaction {
   currencyCodeNumeric: string
   title: string
   status?: string
+  bookingDate?: string
+  finalFlag?: string
   merchant: string
 }
 

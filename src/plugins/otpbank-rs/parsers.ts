@@ -52,6 +52,8 @@ export function parseTransaction (apiTransaction: string[]): OtpTransaction {
     id: apiTransaction[8],
     date: parseDate(apiTransaction[3]),
     status: apiTransaction[18],
+    bookingDate: apiTransaction[7] ?? '',
+    finalFlag: apiTransaction[45] ?? '',
     title: decode(apiTransaction[4]),
     amount: transactionAmount,
     currencyCode: apiTransaction[2],
