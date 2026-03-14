@@ -18,7 +18,6 @@ describe('parseTransactions', () => {
 })
 
 describe('parseTransaction column semantics (pending vs completed)', () => {
-  // Pending: empty bookingDate [7], empty status [18], finalFlag [45] = "1"
   it('parses pending row: empty bookingDate and status, finalFlag 1', () => {
     const row = new Array(46).fill('')
     row[1] = '978'
@@ -41,7 +40,6 @@ describe('parseTransaction column semantics (pending vs completed)', () => {
     expect(t.amount).toBe(-1.49)
   })
 
-  // Completed: bookingDate [7] set, status [18] = "Izvršen", finalFlag [45] = "0"
   it('parses completed row: bookingDate and status set, finalFlag 0', () => {
     const row = new Array(46).fill('')
     row[1] = '978'

@@ -1,12 +1,6 @@
 import { OtpAccount, OtpTransaction } from './models'
 import { decode } from 'html-entities'
 
-// OTP API row column indices (GetTransactionalAccountTurnover):
-// [3]=transaction date, [4]=description, [7]=booking date (empty if pending),
-// [8]=transaction number (stable id for pending→completed), [9]=debit, [10]=credit,
-// [18]=status (e.g. "Izvršen" when completed), [30]=merchant, [45]=final flag ("0"=completed, "1"=pending).
-// Assumption: same operation keeps the same [8] when it moves from pending to completed.
-
 export function parseAccounts (apiAccounts: string[][]): OtpAccount[] {
   const accounts: OtpAccount[] = []
   for (const apiAccount of apiAccounts) {

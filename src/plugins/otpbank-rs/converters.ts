@@ -125,7 +125,7 @@ function parseMerchant (title: string, merchantTitle: unknown = null): Merchant 
   }
 }
 
-/** Stable movement id so pending and completed with same bank tx id merge in ZenMoney */
+// Stable movement id so pending and completed with same bank tx id merge in ZenMoney
 function movementId (accountId: string, bankTransactionId: string, date: Date): string {
   if (bankTransactionId !== '') {
     return `${accountId}_${bankTransactionId}`

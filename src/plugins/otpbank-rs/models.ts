@@ -45,9 +45,7 @@ export interface OtpTransaction {
   currencyCodeNumeric: string
   title: string
   status?: string
-  /** Booking/clearing date [7]; empty when pending */
   bookingDate?: string
-  /** Final flag [45]: "0" = completed, "1" = pending */
   finalFlag?: string
   merchant: string
 }
