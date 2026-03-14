@@ -125,15 +125,28 @@ function parseMerchant (title: string, merchantTitle: unknown = null): Merchant 
   }
 }
 
+/** Stable movement id so pending and completed with same bank tx id merge in ZenMoney */
+function movementId (accountId: string, bankTransactionId: string, date: Date): string {
+  if (bankTransactionId !== '') {
+    return `${accountId}_${bankTransactionId}`
+  }
+  return `${accountId}_${date.getTime()}`
+}
+
 export function convertTransaction (apiTransaction: OtpTransaction, account: Account): ExtendedTransaction {
   const merchant = parseMerchant(apiTransaction.title, apiTransaction.merchant)
+  const completed = Boolean(
+    (apiTransaction.bookingDate != null && apiTransaction.bookingDate !== '') ||
+    (apiTransaction.status != null && apiTransaction.status !== '') ||
+    apiTransaction.finalFlag === '0'
+  )
 
   const transaction: ExtendedTransaction = {
     date: apiTransaction.date,
-    hold: (apiTransaction.status == null) || apiTransaction.status === '',
+    hold: !completed,
     movements: [
       {
-        id: `${account.id}_${apiTransaction.date.getTime()}`,
+        id: movementId(account.id, apiTransaction.id, apiTransaction.date),
         account: { id: account.id },
         sum: apiTransaction.amount,
         fee: 0,
@@ -145,4 +158,28 @@ export function convertTransaction (apiTransaction: OtpTransaction, account: Acc
   }
 
   return transaction
+}
+
+/**
+ * Merges transactions by movement.id: when both pending and completed exist for the same id,
+ * keeps only the completed one (hold: false) with final sum so ZenMoney sees one updated record.
+ */
+export function mergeTransactionsByMovementId (transactions: ExtendedTransaction[]): ExtendedTransaction[] {
+  const byId = new Map<string, ExtendedTransaction>()
+  for (const tx of transactions) {
+    const id = tx.movements[0]?.id
+    if (id == null) continue
+    const existing = byId.get(id)
+    if (existing == null) {
+      byId.set(id, tx)
+      continue
+    }
+    const preferCompleted = tx.hold === false
+    const existingCompleted = existing.hold === false
+    if (preferCompleted && !existingCompleted) {
+      byId.set(id, tx)
+    }
+    // else keep existing (either both completed or existing is completed)
+  }
+  return Array.from(byId.values())
 }
