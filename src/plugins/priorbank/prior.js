@@ -25,7 +25,7 @@ export function assertResponseSuccess (response) {
 }
 
 const makeApiUrl = (path) => `https://www.prior.by/api3/api${path}`
-const userAgent = 'PriorMobile3/3.44.3 (Android 30; versionCode 136)'
+const userAgent = 'PriorMobile3/3.48.3 (Android 30; versionCode 136)'
 
 export async function getMobileToken () {
   const response = await fetchJson(makeApiUrl('/Authorization/MobileToken'), {
