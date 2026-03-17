@@ -311,7 +311,7 @@ export async function fetchDeposits (sid, account) {
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
     '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
   if (response) {
-    const isMailAttachment = response.BS_Response.ExecuteAction.MailId
+    const isMailAttachment = !!response.BS_Response.ExecuteAction.MailId
     if (isMailAttachment) {
       const mailResponse = await fetchApi(BASE_URL,
         '<BS_Request>\r\n' +
@@ -332,7 +332,7 @@ export async function fetchDeposits (sid, account) {
         '       </InputDataSources>\r\n' +
         '   </TerminalCapabilities>\r\n' +
         '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
-      return response.BS_Response.MailAttachment.Attachment.Body
+      return mailResponse.BS_Response.MailAttachment.Attachment.Body
     } else {
       const urlResponse = await fetch(response.BS_Response.ExecuteAction.URL)
       return urlResponse.body
