@@ -35,8 +35,8 @@ export const getAccounts = async ({ sessionToken }: { sessionToken: string }): P
   }
 
   return [
-    ...data.cardAccount.map((acc) => convertCardAccount(acc)),
-    ...data.currentAccount.map((acc) => convertCurrentAccount(acc))
+    ...(data.cardAccount ?? []).map((acc) => convertCardAccount(acc)),
+    ...(data.currentAccount ?? []).map((acc) => convertCurrentAccount(acc))
   ]
 }
 
