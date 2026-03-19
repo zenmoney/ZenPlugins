@@ -21,7 +21,12 @@ export interface Preferences {
 
 export interface Product {
   id: string
-  transactionNode: string
+  source: 'accountTurnover' | 'cardTurnover'
+  accountNumber?: string
+  currencyCodeNumeric?: string
+  primaryCardId?: string
+  productCodeCore?: string
+  accountType?: 'DIN' | 'DEV'
 }
 
 export interface ConvertResult {
@@ -35,6 +40,20 @@ export interface OtpAccount {
   currencyCode: string
   balance: number
   currencyCodeNumeric: string
+  pan?: string
+  moneyAmount?: { value: number }
+}
+
+export interface OtpCard {
+  primaryCardId: string
+  productCodeCore: string
+  cardTitle: string
+  maskedPan: string
+  currencyCode: string
+  currencyCodeNumeric: string
+  balance: number
+  accountNumber: string
+  isVirtual: boolean
 }
 
 export interface OtpTransaction {

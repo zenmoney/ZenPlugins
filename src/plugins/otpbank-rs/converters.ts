@@ -1,6 +1,6 @@
 import { Account, AccountType, ExtendedTransaction, Merchant, NonParsedMerchant } from '../../types/zenmoney'
 import { getOptNumber, getOptString } from '../../types/get'
-import { ConvertResult, OtpAccount, OtpTransaction } from './models'
+import { ConvertResult, OtpAccount, OtpCard, OtpTransaction } from './models'
 
 export function convertAccounts (apiAccounts: OtpAccount[]): ConvertResult[] {
   const accountsByCba: Record<string, ConvertResult | undefined> = {}
@@ -38,7 +38,9 @@ function convertAccount (apiAccount: OtpAccount, accountsByCba: Record<string, C
   }
   account.products.push({
     id: apiAccount.accountNumber,
-    transactionNode: ''
+    source: 'accountTurnover',
+    accountNumber: apiAccount.accountNumber,
+    currencyCodeNumeric: apiAccount.currencyCodeNumeric
   })
 
   const pan = getOptString(apiAccount, 'pan')
@@ -47,10 +49,35 @@ function convertAccount (apiAccount: OtpAccount, accountsByCba: Record<string, C
   }
 
   const moneyAmount = getOptNumber(apiAccount, 'moneyAmount.value')
-  if (moneyAmount != null) {
+  if (moneyAmount != null && Number.isFinite(moneyAmount)) {
     account.account.creditLimit = moneyAmount - balance
   }
   return newAccount ? account : null
+}
+
+export function convertCards (apiCards: OtpCard[]): ConvertResult[] {
+  return apiCards.map(card => {
+    const accountId = `virtual_${card.primaryCardId}_${card.currencyCode}`
+    return {
+      products: [{
+        id: accountId,
+        source: 'cardTurnover',
+        primaryCardId: card.primaryCardId,
+        productCodeCore: card.productCodeCore,
+        currencyCodeNumeric: card.currencyCodeNumeric,
+        accountType: card.currencyCodeNumeric === '941' ? 'DIN' : 'DEV'
+      }],
+      account: {
+        id: accountId,
+        type: AccountType.ccard,
+        title: `${card.cardTitle} ${card.currencyCode}`,
+        instrument: card.currencyCode,
+        balance: card.balance,
+        creditLimit: 0,
+        syncIds: [accountId, card.primaryCardId, card.maskedPan]
+      }
+    }
+  })
 }
 
 function parseMerchant (title: string, merchantTitle: unknown = null): Merchant | NonParsedMerchant | null {
