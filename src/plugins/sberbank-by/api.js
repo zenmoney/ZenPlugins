@@ -7,7 +7,7 @@ import { fetchJson } from '../../common/network'
 import { generateUUID } from '../../common/utils'
 import { BankMessageError, InvalidLoginOrPasswordError, InvalidOtpCodeError, TemporaryUnavailableError } from '../../errors'
 
-const host = 'digital.bps-sberbank.by'
+const host = 'www.sber-bank.by'
 const defaultKeyValueSeparator = ':'
 
 export class AuthError {}
@@ -104,7 +104,7 @@ async function initiateLoginSequence (auth, device) {
   }
   const newDevice = generateDevice(device)
   let response = await callGate(`https://${host}/SBOLServer/oauth/token`, options)
-  if (response.status === 401 && response.body.error === 'unauthorized') {
+  if ([400, 401].includes(response.status)) {
     if (response.body.error_description) {
       if ([
         'Invalid username or password',
