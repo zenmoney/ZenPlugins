@@ -39,12 +39,14 @@ export const getAccounts = async ({ sessionToken }: { sessionToken: string }): P
 
 export const getTransactions = async ({ sessionToken, fromDate, toDate }: { sessionToken: string, fromDate: Date, toDate: Date | undefined }, account: Account & FetchAccountMeta): Promise<Transaction[]> => {
   const [cardTransactionsResponse, productStatementResponse] = await Promise.all([
-    (account._meta.cardTransactionsFetchId != null && fetchCardTransactions({
-      sessionToken,
-      from: convertDateToYyyyMmDd(fromDate),
-      to: convertDateToYyyyMmDd(toDate ?? new Date()),
-      cardId: account._meta.cardTransactionsFetchId
-    })),
+    (account._meta.cardTransactionsFetchId != null
+      ? fetchCardTransactions({
+        sessionToken,
+        from: convertDateToYyyyMmDd(fromDate),
+        to: convertDateToYyyyMmDd(toDate ?? new Date()),
+        cardId: account._meta.cardTransactionsFetchId
+      })
+      : Promise.resolve(null)),
     fetchProductStatement({
       sessionToken,
       from: convertDateToYyyyMmDd(fromDate),
@@ -53,7 +55,7 @@ export const getTransactions = async ({ sessionToken, fromDate, toDate }: { sess
     })
   ])
 
-  if (cardTransactionsResponse.error != null) {
+  if (cardTransactionsResponse?.error != null) {
     console.error('[GET_TRANSACTIONS] Card transactions error', cardTransactionsResponse.error)
 
     throw new BankMessageError(cardTransactionsResponse.error.errorInfo.errorText)
@@ -66,7 +68,7 @@ export const getTransactions = async ({ sessionToken, fromDate, toDate }: { sess
   }
 
   return [
-    ...cardTransactionsResponse.data
+    ...(cardTransactionsResponse?.data ?? [])
       .filter((op) => op.amount !== '0.00')
       .map((op) => convertCardTransaction(op, account)),
     ...productStatementResponse.data.operations

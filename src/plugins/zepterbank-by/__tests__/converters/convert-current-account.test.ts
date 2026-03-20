@@ -1,10 +1,10 @@
 import { convertCurrentAccount } from '../../converters'
-import { FetchCurrentAccount } from '../../types/fetch.types'
+import { FetchCurrentAccount, FetchCurrentAccountMeta } from '../../types/fetch.types'
 import { Account, AccountType } from '../../../../types/zenmoney'
 import { TEST_ACCOUNTS } from '../../__mocks__/accounts.sample'
 
 describe('convertCurrentAccount', () => {
-  const account0: Account = {
+  const account0: Account & FetchCurrentAccountMeta = {
     id: '3p6Kf9JU2RQW4HFE42QGVB556Sv4hgVxg4vZ7ZP2',
     title: 'Текущий счет в белорусских рублях',
     balance: 1.42,
@@ -13,7 +13,11 @@ describe('convertCurrentAccount', () => {
       'BY11ZEPT00000000000000001111',
       '5050100107306'
     ],
-    type: AccountType.checking
+    type: AccountType.checking,
+    _meta: {
+      cardTransactionsFetchId: null,
+      productStatementFetchId: '3p6Kf9JU2RQW4HFE42QGVB556Sv4hgVxg4vZ7ZP2'
+    }
   }
 
   it.each([
