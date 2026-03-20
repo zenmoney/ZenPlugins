@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="login"
+        obligatory="true"
+        title="קוד משתמש"
+        dialogTitle="קוד משתמש"
+        positiveButtonText="בסדר"
+        negativeButtonText="בטל"
+        summary="||{@s}">
+    </EditTextPreference>
+    <EditTextPreference
+        key="password"
+        obligatory="true"
+        inputType="textPassword"
+        title="סיסמה"
+        dialogTitle="סיסמה"
+        positiveButtonText="בסדר"
+        negativeButtonText="בטל"
+        summary="||***********"
+    />
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="מאיזה תאריך לטעון פעולות"
+        defaultValue="2018-01-01T00:00:00.000Z"
+        dialogTitle="מאיזה תאריך לטעון פעולות"
+        positiveButtonText="בסדר"
+        negativeButtonText="בטל"
+        summary="|startDate|{@s}"
+    />
+</PreferenceScreen>
