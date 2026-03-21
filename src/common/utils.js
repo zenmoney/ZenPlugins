@@ -1,5 +1,4 @@
 import padLeft from 'pad-left'
-import { IncompatibleVersionError } from '../errors'
 
 export function isDebug () {
   return global.ZenMoney && ZenMoney.application && ZenMoney.application.platform === 'browser'
@@ -54,19 +53,4 @@ export function bufferToHex (arrayBuffer) {
 
 export async function delay (ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
-}
-
-export async function takePicture (format) {
-  if (!global.ZenMoney?.takePicture) {
-    throw new IncompatibleVersionError()
-  }
-  return new Promise((resolve, reject) => {
-    ZenMoney.takePicture(format, (err, picture) => {
-      if (err) {
-        reject(err)
-      } else {
-        resolve(picture)
-      }
-    })
-  })
 }

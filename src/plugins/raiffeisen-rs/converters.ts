@@ -178,7 +178,7 @@ export function convertTransactionInProgress (transaction: string[], accountNumb
         fee: 0
       }
     ],
-    merchant: description != null
+    merchant: description != null && description !== ''
       ? {
           fullTitle: description,
           mcc: null,

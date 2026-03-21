@@ -18,6 +18,43 @@ export function generateRequestLogId () {
   return `${++n}`
 }
 
+export function convertHeadersToPlainObject (headers) {
+  const obj = {}
+  if (headers.forEach) {
+    headers.forEach((value, key) => {
+      key = key.toLowerCase()
+      obj[key] = key in obj
+        ? `${obj[key]}, ${value}`
+        : value
+    })
+  } else {
+    Object.assign(obj, headers)
+  }
+  for (const key of [
+    'entries',
+    'get',
+    'has',
+    'keys',
+    'values'
+  ]) {
+    if (!(key in obj)) {
+      Object.defineProperty(obj, key, {
+        enumerable: false,
+        value: function () {
+          return headers[key](...arguments)
+        }
+      })
+    }
+  }
+  if (!('forEach' in obj)) {
+    Object.defineProperty(obj, 'forEach', {
+      enumerable: false,
+      value: (callback, thisArg) => headers.forEach((value, key) => callback.call(thisArg, value, key, obj))
+    })
+  }
+  return obj
+}
+
 export async function fetch (url, options = {}) {
   const init = {
     ..._.omit(options, ['sanitizeRequestLog', 'sanitizeResponseLog', 'log', 'stringify', 'parse']),
@@ -56,38 +93,9 @@ export async function fetch (url, options = {}) {
     throw err
   }
 
-  const _headers = response.headers
-  const headers = _headers.entries
-    ? _.fromPairs([..._headers.entries()])
-    : _headers.map
-  if (headers) {
-    for (const key of [
-      'entries',
-      'get',
-      'has',
-      'keys',
-      'values'
-    ]) {
-      if (!(key in headers)) {
-        Object.defineProperty(headers, key, {
-          enumerable: false,
-          value: function () {
-            return _headers[key](...arguments)
-          }
-        })
-      }
-    }
-    if (!('forEach' in headers)) {
-      Object.defineProperty(headers, 'forEach', {
-        enumerable: false,
-        value: (callback, thisArg) => _headers.forEach((value, key) => callback.call(thisArg, value, key, headers))
-      })
-    }
-  }
-
   response = {
     ..._.pick(response, ['ok', 'status', 'statusText', 'url']),
-    headers,
+    headers: convertHeadersToPlainObject(response.headers),
     body: options.binaryResponse ? await response.arrayBuffer() : await response.text()
   }
 
@@ -148,18 +156,26 @@ export async function openWebViewAndInterceptRequest ({ url, headers, log, sanit
   console.assert(typeof url === 'string', 'url must be string')
   console.assert(typeof intercept === 'function', 'intercept must be a function (request) => result')
   if (ZenMoney && ZenMoney.openWebView) {
+    let close = null
     return new Promise((resolve, reject) => {
       ZenMoney.openWebView(url, headers, (request, callback) => {
+        close = callback
         const id = generateRequestLogId()
         const shouldLog = log !== false
         shouldLog && console.debug('request', sanitizeUrlContainingObject({
           id,
           url: request.url,
           method: request.method || 'GET',
-          headers: request.headers || {},
+          headers: convertHeadersToPlainObject(request.headers),
           ...request.body && { body: request.body }
         }, sanitizeRequestLog || false))
-        const interceptor = {}
+        const interceptor = {
+          close: (error, result) => {
+            if (close) {
+              close(error, result)
+            }
+          }
+        }
         try {
           const result = intercept.call(interceptor, request)
           if (result) {
@@ -171,6 +187,7 @@ export async function openWebViewAndInterceptRequest ({ url, headers, log, sanit
           return RequestInterceptMode.BLOCK
         }
       }, (error, result) => {
+        close = null
         if (error) {
           reject(error)
         } else {

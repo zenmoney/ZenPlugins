@@ -17,6 +17,10 @@ describe('convertTransactions', () => {
     8512: {
       lastFour: '8512',
       account
+    },
+    6488: {
+      lastFour: '8085',
+      account
     }
   }
   const accountsById = {
@@ -181,6 +185,59 @@ describe('convertTransactions', () => {
             }
           ],
           comment: null
+        }
+      ]
+    ],
+    [
+      [
+        {
+          id: '03A909DB-EA44-44FC-AF91-805AD32E75C6',
+          amount: 470.42,
+          date: 1760775126000,
+          cardLast4digits: '6488',
+          ccy: 'MDL',
+          description: 'A2A de iesire pe cardul 524639***6488',
+          type: 1,
+          amountInCardCurrency: 470.42,
+          exchangeRate: 1,
+          origin: {},
+          categoryId: '6',
+          mdlAmountCents: {
+            isPresent: true,
+            value: 47042
+          },
+          chargebackState: 1,
+          status: 2
+        }
+      ],
+      [
+        {
+          comment: null,
+          date: new Date('2025-10-18T08:12:06.000Z'),
+          hold: false,
+          merchant: null,
+          movements: [
+            {
+              account: { id: 'account' },
+              fee: 0,
+              id: '03A909DB-EA44-44FC-AF91-805AD32E75C6',
+              invoice: null,
+              sum: -470.42
+            },
+            {
+              account: {
+                company: null,
+                instrument: 'MDL',
+                syncIds: null,
+                type: 'ccard'
+              },
+              fee: 0,
+              id: null,
+              invoice: null,
+              sum: 470.42
+            }
+          ],
+          groupKeys: ['470.42-176077512']
         }
       ]
     ]

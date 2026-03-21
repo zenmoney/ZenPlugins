@@ -1,4 +1,4 @@
-import { generateRequestLogId } from '../network'
+import { convertHeadersToPlainObject, generateRequestLogId } from '../network'
 import { sanitize } from '../sanitize'
 import { generateUUID } from '../utils'
 
@@ -33,7 +33,7 @@ export default class WebSocket {
           ms: Date.now() - beforeFetchTicks,
           url: response.url,
           status: response.status,
-          headers: response.headers,
+          headers: convertHeadersToPlainObject(response.headers),
           body: response.body
         }, sanitizeResponseLog))
         this.setupSocket()

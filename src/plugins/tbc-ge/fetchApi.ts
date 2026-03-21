@@ -311,7 +311,7 @@ export async function fetchUnTrustDeviceV2 (deviceData: DeviceData, sessionId: s
     throw new Error(`Error in fetchUnTrustDeviceV2\n${JSON.stringify(confirmResponse.body)}`)
   }
 
-  const returnDeviceId = getString(confirmResponse.body, 'deviceId')
+  const returnDeviceId = getOptString(confirmResponse.body, 'deviceId')
   return returnDeviceId === deviceData.deviceId
 }
 

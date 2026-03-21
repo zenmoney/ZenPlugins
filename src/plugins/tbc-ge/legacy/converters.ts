@@ -361,12 +361,18 @@ export function convertTransaction (apiTransaction: unknown, product: ConvertedP
   const movementDate: number | undefined = getOptNumber(apiTransaction, 'movementDate')
   const groupKeys = []
   if (movementDate !== undefined) {
-    if (getNumber(apiTransaction, 'depositAmount') === 0 && getNumber(apiTransaction, 'withdrawnDepositAmount') === 0) {
+    if (getNumber(apiTransaction, 'depositAmount') === 0 &&
+      getNumber(apiTransaction, 'withdrawnDepositAmount') === 0 &&
+      getNumber(apiTransaction, 'interestedAmount') === 0) {
       return null
     }
     const date = new Date(getNumber(apiTransaction, 'movementDate'))
     const instrument = product.account.instrument
-    const sum = getNumber(apiTransaction, 'depositAmount') > 0 ? getNumber(apiTransaction, 'depositAmount') : -getNumber(apiTransaction, 'withdrawnDepositAmount')
+    const sum = getNumber(apiTransaction, 'depositAmount') > 0
+      ? getNumber(apiTransaction, 'depositAmount')
+      : getNumber(apiTransaction, 'withdrawnDepositAmount') > 0
+        ? -getNumber(apiTransaction, 'withdrawnDepositAmount')
+        : -getNumber(apiTransaction, 'interestedAmount')
     groupKeys.push(product.account.id)
     groupKeys.push(`${getNumber(apiTransaction, 'movementDate')}_${instrument}_${Math.abs(sum)}`)
     return {

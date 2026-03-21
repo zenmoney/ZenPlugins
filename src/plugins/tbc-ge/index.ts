@@ -75,7 +75,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
   const transactions = Array.from(transactionsById.values())
   const deposits = await fetchDepositsV2(session)
   for (const deposit of deposits) {
-    const depostitAccount = convertDepositV2(deposit)
+    const depostitAccount = convertDepositV2(deposit).account
     if (ZenMoney.isAccountSkipped(depostitAccount.id)) {
       console.log(`Account ${depostitAccount.id} is skipped`)
       continue

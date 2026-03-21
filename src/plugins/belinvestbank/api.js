@@ -10,7 +10,7 @@ const base64 = new Base64()
 const loginUrl = 'https://login.belinvestbank.by/app_api'
 const dataUrl = 'https://ibank.belinvestbank.by/app_api'
 
-const APP_VERSION = '2.19.0'
+const APP_VERSION = '2.24.0'
 
 export function getDevice () {
   const deviceID = ZenMoney.getData('deviceId', generateRandomString(16))
@@ -67,12 +67,9 @@ function cookies (response) {
     if (cookies) {
       const requiredValues = /(PHPSESSID=[^;]*;)/g
       return cookies.match(requiredValues)[cookies.match(requiredValues).length - 1]
-    } else {
-      return cookies
     }
-  } else {
-    return '' // tests not mocking headers, ignoring
   }
+  return ''
 }
 
 export async function login (login, password) {

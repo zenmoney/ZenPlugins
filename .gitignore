@@ -53,3 +53,20 @@ Thumbs.db
 /yarn-error.log
 /.yarnrc
 /.yarn/
+
+# repository docs/plans
+AGENT.md
+AGENTS.md
+*PLAN*.md
+plans/archive/
+**/plans/archive/
+
+# local AI/context artifacts
+*llm.txt
+review/
+
+# local capture/debug artifacts
+.local/
+.tmp-*/
+.tmp-*
+BASISBANK_LOCAL_TEST_STEPS.md

@@ -29,7 +29,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ fromDate, isFirstRun }) 
       const initialValue: ConvertedTransaction[] = []
       const transactions = rawTransactions.reduce((convertedTransactions, item) => {
         const transaction = convertPdfStatementTransaction(item, account)
-        if (!isFirstRun || (transaction.transaction.date.getTime() - fromDate.getTime() >= 0)) {
+        if (transaction != null && (!isFirstRun || (transaction.transaction.date.getTime() - fromDate.getTime() >= 0))) {
           convertedTransactions.push(transaction)
         }
         return convertedTransactions

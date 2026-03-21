@@ -13,6 +13,10 @@ describe('convertTransactions', () => {
     8085: {
       lastFour: '8085',
       account
+    },
+    4754: {
+      lastFour: '4754',
+      account
     }
   }
   it.each([
@@ -233,6 +237,64 @@ describe('convertTransactions', () => {
         },
         comment: null
       }]
+    ],
+    [
+      [
+        {
+          id: 'FEFC174A-D6F7-4C80-8187-B932CB34B059',
+          amount: 470.42,
+          date: 1760775126000,
+          cardLast4digits: '4754',
+          ccy: 'MDL',
+          description: 'A2A de intrare pe cardul 435696***4754',
+          balanceAfter: 1209.8,
+          amountInCardCurrency: 470.42,
+          exchangeRate: 1,
+          origin: {},
+          categoryId: '6',
+          mdlAmountCents: {
+            isPresent: true,
+            value: 47042
+          },
+          chargebackState: 2,
+          status: 2
+        },
+        {
+          cardLast4digits: '4754',
+          amount: 0,
+          balanceAfter: 739.38
+        }
+      ],
+      [
+        {
+          comment: null,
+          date: new Date('2025-10-18T08:12:06.000Z'),
+          hold: false,
+          merchant: null,
+          movements: [
+            {
+              account: { id: 'account' },
+              fee: 0,
+              id: 'FEFC174A-D6F7-4C80-8187-B932CB34B059',
+              invoice: null,
+              sum: 470.42
+            },
+            {
+              account: {
+                company: null,
+                instrument: 'MDL',
+                syncIds: null,
+                type: 'ccard'
+              },
+              fee: 0,
+              id: null,
+              invoice: null,
+              sum: -470.42
+            }
+          ],
+          groupKeys: ['470.42-176077512']
+        }
+      ]
     ]
   ])('converts outer income transfers', (apiTransactions, transactions) => {
     expect(convertTransactions(apiTransactions, cardsByLastFourDigits)).toEqual(transactions)

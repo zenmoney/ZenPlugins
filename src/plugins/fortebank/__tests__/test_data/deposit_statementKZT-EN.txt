@@ -1,0 +1,24 @@
+
+S a v i n g s   A c c o u n t   S t a t e m e n t
+d a t e :   1 9 . 1 2 . 2 0 2 5   1 6 : 2 5 : 1 2
+No   K Z 6 9 9 6 5 0 2 F 0 0 2 0 9 3 5 4 7 3 ,   ( K Z T )
+C u s t o m e r :   T E S T   U S E R   I I N :   0 0 0 0 0 0 0 0 0 0 0 0
+P e r i o d   o f   s t a t e m e n t :   1 9 . 1 1 . 2 0 2 5   -   1 9 . 1 2 . 2 0 2 5
+P r o d u c t   n a m e :   S a v i n g s   d e p o s i t   w i t h   r e p l e n i s h m e n t ,   R B S S   p a y m e n t   6   m o n t h s
+A g r e e m e n t   N o :   0 1 / А Д М / 2 0 2 5 / 4 9 8 9 6 8 N
+D a t e   o f   t h e   A g r e e m e n t :   1 1 . 1 2 . 2 0 2 5
+D a t e   o f   l a t e s t   e x t e n s i o n :   -
+I n t e r e s t   r a t e :   1 7 , 0 0 %
+T o t a l   f o r   t h e   p e r i o d :
+O p e n i n g   b a l a n c e R e c e i p t s I n t e r e s t   p a i d E x p e n s e s A v a i l a b l e   b a l a n c e A v a i l a b l e   a m o u n t
+0 , 0 0 1   5 0 0   0 0 0 , 0 0 0 , 0 0 0 , 0 0 1   5 0 0   0 0 0 , 0 0 1   4 0 0   0 0 0 , 0 0
+I n t e r e s t   p a y m e n t   d a t e :   3 1 . 1 2 . 2 0 2 5
+M i n i m u m   r e q u i r e d   b a l a n c e :   1 0 0   0 0 0 , 0 0
+D a t e   o f   t r a n s a c t i o n D e s c r i p t i o n   o f   t r a n s a c t i o n R e c e i p t s E x p e n s e s
+1 1 . 1 2 . 2 0 2 5
+F u l l   n a m e / N a m e :   T E S T   U S E R ,   I I N :
+0 0 0 0 0 0 0 0 0 0 0 0 ,   B a n k :   I R T Y K Z K A   ( А О   " F o r t e B a n k " ) ,   C o r r e s p o n d e n t
+A c c o u n t :   K Z 2 3 9 6 5 0 2 F 0 0 1 8 7 0 5 2 0 4   П о п о л н е н и е   с ч ё т а
+1   5 0 0   0 0 0 , 0 0 -
+A r r e s t s / c l a i m s :   0 , 0 0
+F o r m e d   v i a   t h e   O n l i n e   B a n k i n g

@@ -100,7 +100,7 @@ function parsePurchase (transaction, apiTransaction) {
         merchant = {
           country: parts[parts.length - 1].trim() || null,
           city: parts[parts.length - 2].trim() || null,
-          title: parts[0].trim(),
+          title: parts[0].trim() !== '' ? parts[0].trim() : parts[1].trim(),
           mcc: null,
           location: null
         }

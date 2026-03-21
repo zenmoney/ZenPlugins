@@ -4,18 +4,9 @@ describe('convertAccount', () => {
   beforeEach(() => {
     global.ZenMoney = { isAccountSkipped: () => false }
   })
-  const actions = [
-    {
-      Id: ['xxxx'],
-      Type: ['wsig:LastTrx2']
-    },
-    {
-      Id: ['yyyy'],
-      Type: ['B735:GetOrdering2']
-    }
-  ]
   const bankCard = {
-    Action: actions,
+    lastTrxExecutionId: 'xxxx',
+    statementExecutionId: 'yyyy',
     Id: ['11161311-117d11'],
     No: ['529911******1111'],
     ProductType: ['MS'],

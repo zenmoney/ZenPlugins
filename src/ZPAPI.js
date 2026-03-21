@@ -113,11 +113,7 @@ function pickDocuments ({ mimeTypes, allowMultipleSelection }, callback) {
       const blobs = await Promise.all(message.payload.files.map(async (file) => {
         const buffer = await file.arrayBuffer()
         const bytes = new Uint8Array(buffer)
-        file._getId = () => null
-        file._getType = () => file.type
-        file._getSize = () => bytes.length
-        file._getBytes = () => bytes
-        return new ZenMoney.Blob([file], { type: file.type })
+        return new ZenMoney.Blob([bytes], { type: file.type })
       }))
       callback(null, blobs)
     } catch (err) {

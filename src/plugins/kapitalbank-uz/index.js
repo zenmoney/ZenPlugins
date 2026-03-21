@@ -1,5 +1,5 @@
 import { Jimp } from 'jimp'
-import { delay, generateRandomString, takePicture } from '../../common/utils'
+import { delay, generateRandomString } from '../../common/utils'
 import { InvalidLoginOrPasswordError } from '../../errors'
 import {
   authByPhoneNumber,
@@ -14,7 +14,7 @@ import {
 } from './api'
 
 export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
-  const photoFromCamera = await takePicture('jpeg')
+  const photoFromCamera = await ZenMoney.takePicture('jpeg')
   console.log(typeof photoFromCamera)
   console.log(photoFromCamera)
   await blobToBase64WithResolution(photoFromCamera, 480, 640)
@@ -89,7 +89,7 @@ async function updateToken (phone, password, isResident, pinfl, birthDate) {
 }
 
 async function completeIdentificationOrThrow (isResident, pinfl, birthDate) {
-  const photoFromCamera = await takePicture('jpeg')
+  const photoFromCamera = await ZenMoney.takePicture('jpeg')
   const base64Image = await blobToBase64WithResolution(photoFromCamera, 480, 640)
   const jobId = await myIdIdentify(isResident, pinfl, birthDate, base64Image)
   await delay(2000)

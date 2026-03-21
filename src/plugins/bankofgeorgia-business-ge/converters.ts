@@ -93,21 +93,20 @@ export function convertToZenMoneyTransaction (record: AccountRecord, allRecords:
             company: null,
             syncIds: [record.SenderDetails.AccountNumber]
           },
-          sum: record.DocumentSourceAmount,
+          sum: -record.DocumentSourceAmount,
           fee: 0,
           invoice: null
         }
       )
       break
 
-    case 'COM':
-    case 'FEE':
     case 'VE': // Verification Entry - bank fee for document/certificate
-      // commission or fee
       transaction.movements[0].fee = (transaction.movements[0].sum != null) ? -transaction.movements[0].sum : 0
       transaction.movements[0].sum = 0
       break
 
+    case 'COM': // commission or fee
+    case 'FEE': // commission or fee
     case 'TRN': // card payment
       break
 

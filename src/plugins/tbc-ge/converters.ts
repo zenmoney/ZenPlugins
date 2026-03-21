@@ -1,21 +1,21 @@
 import { Account, AccountType, Amount, ExtendedTransaction, Merchant, Movement, Transaction } from '../../types/zenmoney'
 import {
   CardProductV2,
-  LoanProductV2,
   CardsAndAccounts,
   createCashMovement,
+  DepositDataV2,
+  DepositStatementV2,
   FetchHistoryV2Data,
+  LoanProductV2,
   PreparedAccountV2,
   PreparedCardV2,
   PreparedLoanV2,
   TransactionBlockedV2,
-  TransactionUtilPayV2,
   TransactionsByDateV2,
   TransactionStandardMovementV2,
   TransactionTaxV2,
   TransactionTransferV2,
-  DepositDataV2,
-  DepositStatementV2
+  TransactionUtilPayV2
 } from './models'
 import { padStart } from 'lodash'
 import { getIntervalBetweenDates } from '../../common/momentDateUtils'
@@ -47,12 +47,28 @@ export function convertAccountsV2 (cardsAndAccounts: CardsAndAccounts | null): P
 }
 
 export function convertStatementV2 (statement: DepositStatementV2, account: Account): Transaction {
+  // Determine transaction type - based on observed API behavior, only one field
+  // is non-zero at a time (mutually exclusive), but not 100% certain this is always the case
+  let sum: number
+  let comment: string | null = null
+
+  if (statement.interestedAmount > 0) {
+    sum = statement.interestedAmount
+    comment = 'Deposit interest'
+  } else if (statement.withdrawnDepositAmount > 0) {
+    sum = -statement.withdrawnDepositAmount
+    comment = 'Deposit withdrawal'
+  } else {
+    // Regular deposit
+    sum = statement.depositAmount
+  }
+
   const movement: Movement = {
-    id: Buffer.from(`${account.id}:${statement.depositAmount}:${statement.movementDate}`).toString('base64'),
+    id: Buffer.from(`${account.id}:${sum}:${statement.movementDate}`).toString('base64'),
     account: {
       id: account.id
     },
-    sum: statement.depositAmount,
+    sum,
     fee: 0,
     invoice: null
   }
@@ -61,37 +77,62 @@ export function convertStatementV2 (statement: DepositStatementV2, account: Acco
     movements: [movement],
     merchant: null,
     hold: false,
-    comment: null
+    comment
   }
 }
 
-export function convertDepositV2 (apiAccount: DepositDataV2): Account {
-  const coreAccountId = apiAccount.deposit.externalAccountId
+export function convertDepositV2 (apiAccount: DepositDataV2): PreparedLoanV2 {
   const startDate = new Date(apiAccount.details.depositDetails.startDate)
   const endDate = new Date(apiAccount.details.depositDetails.endDate)
   const { interval: endDateOffsetInterval, count: endDateOffset } = getIntervalBetweenDates(startDate, endDate)
-  return {
-    id: coreAccountId.toString(),
-    type: AccountType.deposit,
-    title: apiAccount.deposit.friendlyName,
-    instrument: apiAccount.deposit.currency,
-    syncIds: [
-      apiAccount.deposit.accountNo
-    ],
-    balance: apiAccount.deposit.currentAmount,
-    startDate,
-    startBalance: apiAccount.details.interestCalculationUponCancellation.amount,
-    capitalization: true,
-    percent: apiAccount.details.depositDetails.existingEffectiveInterestRate,
-    endDateOffsetInterval,
-    endDateOffset,
-    payoffInterval: 'month',
-    payoffStep: 1
+  const deposit: PreparedLoanV2 = {
+    account: {
+      id: apiAccount.deposit.externalAccountId.toString(),
+      type: AccountType.deposit,
+      title: apiAccount.deposit.friendlyName,
+      instrument: apiAccount.deposit.currency,
+      syncIds: [
+        apiAccount.deposit.accountNo
+      ],
+      balance: apiAccount.deposit.currentAmount,
+      startDate,
+      startBalance: apiAccount.details.interestCalculationUponCancellation.amount,
+      capitalization: true,
+      percent: apiAccount.details.interestCalculation.interestRate,
+      endDateOffsetInterval,
+      endDateOffset,
+      payoffInterval: 'month',
+      payoffStep: 1
+    }
   }
+  return deposit
 }
+
 export function convertCardsV2 (apiAccounts: CardProductV2[]): PreparedCardV2[] {
   const accounts: PreparedCardV2[] = []
   for (const apiAccount of apiAccounts) {
+    // Handle accounts without cards as regular bank accounts
+    if ((apiAccount.cards == null) || apiAccount.cards.length === 0) {
+      // Process as regular bank accounts (savings, current accounts)
+      for (const account of apiAccount.accounts) {
+        const card: PreparedCardV2 = {
+          account: {
+            id: account.id.toString(),
+            type: AccountType.checking, // Regular account, not card account
+            title: `${apiAccount.friendlyName ?? apiAccount.typeText} ${account.currency}`,
+            instrument: account.currency,
+            syncIds: [apiAccount.iban],
+            balance: account.balance
+          },
+          code: '', // No card number
+          id: account.id,
+          iban: apiAccount.iban
+        }
+        accounts.push(card)
+      }
+      continue
+    }
+
     const mainCard = apiAccount.cards[0]
     for (const account of apiAccount.accounts) {
       const card: PreparedCardV2 = {

@@ -1,9 +1,10 @@
-import { ScrapeFunc, AccountOrCard } from '../../types/zenmoney'
+import { ScrapeFunc, Account } from '../../types/zenmoney'
 import { Auth, Preferences, StatementTransaction, ConvertedTransaction } from './models'
 import { getMobileExchangeRates, parsePdfStatements } from './api'
 import { convertPdfStatementTransaction } from './converters/transactions'
 import { isEqual, omit, groupBy, toPairs } from 'lodash'
 import { generateRandomString } from '../../common/utils'
+import { mergeCounterparts, mergeSinglesIntoSelfTransfers, dedupeSinglesAgainstTransfers, dropPlaceholderTransfers, dropOffsettingSinglesSameAccount } from './transferCleanup'
 
 export const scrape: ScrapeFunc<Preferences> = async ({ fromDate, isFirstRun }) => {
   let auth = ZenMoney.getData('auth') as Auth | undefined
@@ -14,9 +15,9 @@ export const scrape: ScrapeFunc<Preferences> = async ({ fromDate, isFirstRun }) 
   }
   ZenMoney.setData('auth', auth)
   ZenMoney.saveData()
-  const rawAccountsAndTransactions: null | Array<{ account: AccountOrCard, transactions: StatementTransaction[] }> = await parsePdfStatements()
+  const rawAccountsAndTransactions: null | Array<{ account: Account, transactions: StatementTransaction[] }> = await parsePdfStatements()
   const result: {
-    accounts: AccountOrCard[]
+    accounts: Account[]
     transactions: ConvertedTransaction[]
   } = {
     accounts: [],
@@ -57,8 +58,15 @@ export const scrape: ScrapeFunc<Preferences> = async ({ fromDate, isFirstRun }) 
   for (const pair of groupedTransactions) {
     sortedTransactions.push(...pair[1].reverse())
   }
+
+  const mergedTransfers = mergeCounterparts(sortedTransactions)
+  const mergedWithSingles = mergeSinglesIntoSelfTransfers(mergedTransfers)
+  const deduped = dedupeSinglesAgainstTransfers(mergedWithSingles)
+  const withoutPlaceholders = dropPlaceholderTransfers(deduped)
+  const cleaned = dropOffsettingSinglesSameAccount(withoutPlaceholders)
+
   return {
     accounts: result.accounts,
-    transactions: sortedTransactions
+    transactions: cleaned
   }
 }

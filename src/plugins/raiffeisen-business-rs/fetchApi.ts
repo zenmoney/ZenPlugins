@@ -109,7 +109,7 @@ export async function setLegalEntity (legalEntityId: string, lastSuccessfulLogon
       authenticationType: 'UsernamePassword',
       gridName: 'LegalEntityPreviewFlat',
       loginCertificateID: '',
-      multipleUser: true,
+      multipleUser: false,
       lastSuccessfulLogon,
       legalEntityId,
       ticket

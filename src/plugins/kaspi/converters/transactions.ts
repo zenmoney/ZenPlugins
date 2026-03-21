@@ -10,7 +10,15 @@ export const transactionType = {
 }
 
 const transactionTypeStrings = {
-  TRANSFER: ['Перевод', 'Transfers', 'Аударым', 'Со счета другого банка', 'From an account in another bank', 'Басқа банктің шотынан'],
+  TRANSFER: [
+    'Перевод',
+    'Transfers',
+    'Аударым',
+    'Со счета другого банка',
+    'С карты другого банка',
+    'From an account in another bank',
+    'Басқа банктің шотынан'
+  ],
   INCOME: ['Пополнение', 'Вознаграждение', 'Replenishment', 'Толықтыру'],
   OUTCOME: ['Покупка', 'Purchases', 'Зат сатып алу'],
   CASH: ['Снятие', 'Withdrawals', 'Ақша алу']
@@ -46,7 +54,21 @@ function parseDescription (text: string | null): string | null {
   return description
 }
 
-export function convertPdfStatementTransaction (rawTransaction: StatementTransaction, rawAccount: ConvertedAccount): ConvertedTransaction {
+function isKaspiDepositTransfer (text: string | null): boolean {
+  if (text == null) {
+    return false
+  }
+  return /На Kaspi Депозит|С Kaspi Депозита/i.test(text)
+}
+
+function isTransferToPerson (text: string | null): boolean {
+  if (text == null) {
+    return false
+  }
+  return /[A-ZА-ЯЁ][a-zа-яё]+ [A-ZА-ЯЁ]\./.test(text)
+}
+
+export function convertPdfStatementTransaction (rawTransaction: StatementTransaction, rawAccount: ConvertedAccount): ConvertedTransaction | null {
   const invoice = rawTransaction.originalAmount !== null
     ? {
         sum: parseFloat(rawTransaction.originalAmount.replace(',', '.').replace(/[^\d.-]/g, '')),
@@ -54,6 +76,9 @@ export function convertPdfStatementTransaction (rawTransaction: StatementTransac
       }
     : null
   const sum = parseFloat(rawTransaction.amount.replace(',', '.').replace(/[\s+$]/g, ''))
+  if (sum === 0 && invoice == null) {
+    return null
+  }
   const movements: [Movement] = [
     {
       id: null,
@@ -64,11 +89,28 @@ export function convertPdfStatementTransaction (rawTransaction: StatementTransac
     }
   ]
   const parsedType = parseTransactionType(rawTransaction.originString)
-  if ((parsedType != null) && [transactionType.CASH, transactionType.TRANSFER].includes(parsedType)) {
+  const isKaspiGoldTopup = rawAccount.account.type === AccountType.deposit &&
+    rawTransaction.description?.includes('С Kaspi Gold через kaspi.kz') === true
+  const depositTransfer = rawAccount.account.type === AccountType.ccard &&
+    isKaspiDepositTransfer(rawTransaction.description ?? rawTransaction.originString)
+  const transferToPerson = isTransferToPerson(rawTransaction.description ?? rawTransaction.originString)
+  let counterpartType: AccountType | null = null
+  if (parsedType === transactionType.CASH) {
+    counterpartType = AccountType.cash
+  } else if (parsedType === transactionType.TRANSFER) {
+    if (!transferToPerson) {
+      counterpartType = depositTransfer ? AccountType.deposit : AccountType.ccard
+    }
+  } else if (depositTransfer) {
+    counterpartType = AccountType.deposit
+  } else if (isKaspiGoldTopup) {
+    counterpartType = AccountType.ccard
+  }
+  if (counterpartType != null) {
     movements.push({
       id: null,
       account: {
-        type: parsedType === transactionType.CASH ? AccountType.cash : AccountType.ccard,
+        type: counterpartType,
         instrument: rawAccount.account.instrument,
         company: null,
         syncIds: null

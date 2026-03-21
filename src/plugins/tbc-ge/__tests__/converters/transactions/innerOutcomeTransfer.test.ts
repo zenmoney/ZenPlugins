@@ -1,5 +1,5 @@
 import { convertTransaction } from '../../../legacy/converters'
-import { debitCardGEL } from '../../../common-tests/accounts'
+import { debitCardGEL, depositGEL } from '../../../common-tests/accounts'
 
 describe('convertTransaction', () => {
   it.each([
@@ -124,5 +124,38 @@ describe('convertTransaction', () => {
     ]
   ])('convert inner Out transactions debitCardGEL-depositGEL', (apiTransaction: unknown, transaction: unknown) => {
     expect(convertTransaction(apiTransaction, debitCardGEL)).toEqual(transaction)
+  })
+
+  it.each([
+    [
+      {
+        movementDate: 1761336000000,
+        depositAmount: 0,
+        interestedAmount: 400.76,
+        withdrawnDepositAmount: 0,
+        balance: 15000
+      },
+      {
+        date: new Date('2025-10-24T20:00:00.000Z'),
+        hold: false,
+        merchant: null,
+        movements: [
+          {
+            account: { id: '11225773' },
+            fee: 0,
+            id: null,
+            invoice: null,
+            sum: -400.76
+          }
+        ],
+        comment: null,
+        groupKeys: [
+          '11225773',
+          '1761336000000_GEL_400.76'
+        ]
+      }
+    ]
+  ])('convert inner Out transactions depositGEL-debitCardGEL', (apiTransaction: unknown, transaction: unknown) => {
+    expect(convertTransaction(apiTransaction, depositGEL)).toEqual(transaction)
   })
 })

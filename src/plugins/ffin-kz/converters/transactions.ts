@@ -1,5 +1,5 @@
 import { flatten } from 'lodash'
-import { Movement, AccountType, AccountOrCard } from '../../../types/zenmoney'
+import { Movement, AccountType, Merchant, NonParsedMerchant } from '../../../types/zenmoney'
 import { ConvertedTransaction, StatementTransaction } from '../models'
 import { ExchangeRate } from '../api'
 import { createHash } from 'crypto'
@@ -12,13 +12,16 @@ export const transactionType = {
 }
 
 const transactionTypeStrings = {
-  TRANSFER: ['Перевод', 'Между своими счетами', 'С карты другого банка', 'Выплата вклада по Договору', 'Со счета другого банка', 'Прием вклада по договору', 'Басқа банктің шотынан'],
-  INCOME: ['Пополнение', 'Вознаграждение', 'Replenishment', 'Толықтыру'],
-  OUTCOME: ['Покупка', 'Платеж'],
+  TRANSFER: ['Перевод', 'Между своими счетами', 'С карты другого банка', 'Выплата вклада по Договору', 'Со счета другого банка', 'Прием вклада по договору', 'Басқа банктің шотынан', 'Другое Исполнение', 'Другое номер', 'по договору'],
+  INCOME: ['Пополнение', 'Вознаграждение', 'Replenishment', 'Толықтыру', 'Выплата процентов по вкладу'],
+  OUTCOME: ['Покупка', 'Платеж', 'Сумма в обработке'],
   CASH: ['Снятие', 'Withdrawals', 'Ақша алу']
 }
 
 function parseTransactionType (text: string): string | null {
+  if (/выплата\s+вклада\s+по\s+договору/i.test(text) || /прием\s+вклада\s+по\s+договору/i.test(text)) {
+    return transactionType.TRANSFER
+  }
   if (transactionTypeStrings.OUTCOME.some(str => text.includes(str))) {
     return transactionType.OUTCOME
   }
@@ -34,8 +37,18 @@ function parseTransactionType (text: string): string | null {
   return null
 }
 
+function isDepositContractTransferText (text: string): boolean {
+  return /выплата\s+вклада\s+по\s+договору/i.test(text) ||
+    /прием\s+вклада\s+по\s+договору/i.test(text) ||
+    /KZ[A-Z0-9]{15}(?:[A-Z]{3})?\s+от\s+\d{2}\.\d{2}\.\d{4}.*вкладчик/i.test(text)
+}
+
 function cleanMerchantTitle (text: string | null): string | null {
   if (text == null || text.trim() === '') return null
+
+  // Отбрасываем "Банк ожидает подтверждения..." хвосты
+  const awaitingTail = /\.\s*банк\s+ожидает\s+подтверждения.*$/i
+  text = text.replace(awaitingTail, '')
 
   // Удаляем сообщения типа "Другое Плательщик:... Получатель:... Назначение: ..."
   if (/^Другое\s+Плательщик:.*Получатель:.*Назначение:/i.test(text)) {
@@ -54,6 +67,11 @@ function cleanMerchantTitle (text: string | null): string | null {
   const keywordsToRemove = [...flatten(Object.values(transactionTypeStrings)), '₸']
   keywordsToRemove.push('Сумма в обработке')
   let cleanedText = text
+
+  // Удаляем маркеры "Сумма в обработке"/"в обработке"/"обработке" из описания операции
+  cleanedText = cleanedText.replace(/сумма\s+в\s+обработке/gi, ' ')
+  cleanedText = cleanedText.replace(/в\s+обработке/gi, ' ')
+  cleanedText = cleanedText.replace(/обработке/gi, ' ')
 
   for (const keyword of keywordsToRemove) {
     cleanedText = cleanedText.replace(new RegExp(keyword, 'gi'), '')
@@ -83,49 +101,188 @@ function convertCurrency (currencyRates: Record<string, ExchangeRate>, amount: n
   throw new Error(`Нет курса для конвертации из ${fromCurrency} в ${toCurrency}`)
 }
 
-function isTransactionToSkip (rawTransaction: StatementTransaction): boolean {
-  if (rawTransaction.description === null || rawTransaction.description.trim() === '') {
-    return false
-  }
-  // Пропускаем транзакции возврата денег с технического депозита для карт
-  if (/Выплата вклада с депозитного договора/i.test(rawTransaction.description)) {
-    return true
-  }
-
-  // Пропускаем только те "Прием вклада по договору", где сумма вклада имеет тыины (дробная часть)
-  if (/Прием вклада по договору.*в сумме\s\d+\.\d{1,2}\s*KZT/i.test(rawTransaction.description)) {
-    return true // есть тыины, пропускаем
-  }
-
-  return false
-}
-
 function generateTransactionId (date: string, sum: string | null, description: string | null): string {
   const hash = createHash('sha1')
   hash.update(`${date}_${sum ?? ''}_${description ?? ''}`)
   return hash.digest('hex').slice(0, 12)
 }
 
-export function convertPdfStatementTransaction (rawTransaction: StatementTransaction, rawAccount: AccountOrCard, currencyRates: Record<string, ExchangeRate>): ConvertedTransaction | null {
-  if (isTransactionToSkip(rawTransaction)) {
+function parseNumber (value: string): number {
+  return parseFloat(value.replace(',', '.').replace(/[^\d.-]/g, ''))
+}
+
+function normalizeDepositContractTransferSum (sum: number, sourceIsDeposit: boolean, fullText: string, isDepositContractTransfer: boolean): number {
+  if (!isDepositContractTransfer) {
+    return sum
+  }
+  const hasPayout = /выплата\s+вклада/i.test(fullText)
+  const hasAcceptance = /прием\s+вклада/i.test(fullText)
+
+  if (hasPayout) {
+    return sourceIsDeposit ? -Math.abs(sum) : Math.abs(sum)
+  }
+  if (hasAcceptance) {
+    return sourceIsDeposit ? Math.abs(sum) : -Math.abs(sum)
+  }
+  return sum
+}
+
+function detectInstrument (rawTransaction: StatementTransaction, rawAccount: { id: string, instrument: string }): string {
+  if (rawTransaction.originalAmount !== null) {
+    return rawTransaction.originalAmount.match(/[A-Z]{3}/)?.[0] ?? 'KZT'
+  }
+  return rawAccount.instrument ?? 'KZT'
+}
+
+function extractDepositSyncId (rawTransaction: StatementTransaction): string | null {
+  const searchTarget = [rawTransaction.description, rawTransaction.originString]
+    .filter((item): item is string => item != null)
+    .join(' ')
+
+  const syncIdMatch = searchTarget.match(/KZ[A-Z0-9]{15}/)
+  return syncIdMatch?.[0] ?? null
+}
+
+function isDepositSourceAccount (rawAccount: { id: string, type?: string }): boolean {
+  return rawAccount.type === AccountType.deposit
+}
+
+function buildCounterMovement (
+  parsedType: string,
+  rawTransaction: StatementTransaction,
+  instrument: string,
+  sum: number,
+  sourceIsDeposit: boolean
+): Movement {
+  let type
+  let syncIds = null
+  const depositSyncId = extractDepositSyncId(rawTransaction)
+
+  if (parsedType === transactionType.CASH) {
+    type = AccountType.cash
+  } else if (parsedType === transactionType.TRANSFER && sourceIsDeposit) {
+    type = AccountType.ccard
+  } else if (parsedType === transactionType.TRANSFER && depositSyncId !== null) {
+    type = AccountType.deposit
+    syncIds = [depositSyncId]
+  } else {
+    type = AccountType.ccard
+  }
+
+  return {
+    id: null,
+    account: {
+      type,
+      instrument,
+      company: null,
+      syncIds
+    },
+    invoice: null,
+    sum: -sum,
+    fee: 0
+  }
+}
+
+export function detectCityCountryLocation (text: string | null): { city?: string | null, country?: string | null, locationPoint: string } | null {
+  if (text == null) return null
+  const upper = text.toUpperCase()
+
+  const countryByCode: Record<string, string> = {
+    KZ: 'Kazakhstan',
+    CN: 'China',
+    BY: 'Belarus',
+    GB: 'United Kingdom',
+    PL: 'Poland',
+    UZ: 'Uzbekistan',
+    NL: 'Netherlands',
+    SE: 'Sweden'
+  }
+
+  const cityMatchers: Array<{ marker: RegExp, city: string, country?: string }> = [
+    { marker: /ALMATY/, city: 'Almaty', country: 'Kazakhstan' },
+    { marker: /BAITEREK/, city: 'Baiterek', country: 'Kazakhstan' },
+    { marker: /CHUNJA/, city: 'Chunja', country: 'Kazakhstan' },
+    { marker: /SHANGHAI/, city: 'Shanghai', country: 'China' },
+    { marker: /MINSK(?:IY)?/, city: 'Minsk', country: 'Belarus' },
+    { marker: /STOCKHOLM/, city: 'Stockholm', country: 'Sweden' },
+    { marker: /TAS?HKENT/, city: 'Tashkent', country: 'Uzbekistan' },
+    { marker: /TOSHKENT/, city: 'Tashkent', country: 'Uzbekistan' },
+    { marker: /YUNUSOBOD/, city: 'Tashkent', country: 'Uzbekistan' }
+  ]
+
+  let country: string | null = null
+  const codeMatch = upper.match(/([A-Z]{2,3})\s*$/)
+  if (codeMatch?.[1] != null && countryByCode[codeMatch[1]] != null) {
+    country = countryByCode[codeMatch[1]]
+  }
+
+  let city: string | null = null
+  let cityCountry: string | undefined
+  for (const matcher of cityMatchers) {
+    if (matcher.marker.test(upper)) {
+      city = matcher.city
+      cityCountry = matcher.country
+      break
+    }
+  }
+
+  const hasLocation = city !== null || country !== null
+  const locationPoint = cleanLocationPoint(text, hasLocation)
+
+  if (!hasLocation) {
+    return { locationPoint }
+  }
+
+  return { city, country: cityCountry ?? country, locationPoint }
+}
+
+function cleanLocationPoint (text: string, hasLocation: boolean): string {
+  let result = text
+  result = result.replace(/^\s*IP\s+/i, '')
+  result = result.replace(/^YUG\s+/i, 'UG ')
+  // Cut off bracketed details
+  result = result.split('(')[0]
+
+  const markers = ['ALMATY', 'BAITEREK', 'CHUNJA', 'SHANGHAI', 'MINSK', 'MINSKIY R-N', 'STOCKHOLM', 'TASHKENT', 'TOSHKENT', 'YUNUSOBOD', 'KZKZ', 'KZ', 'NL', 'GB', 'UZ', 'PL', 'SE']
+  for (const marker of markers) {
+    result = result.replace(new RegExp(`\\b${marker}\\b`, 'ig'), '')
+  }
+  if (hasLocation) {
+    // remove trailing country codes only when separated by space
+    result = result.replace(/\s+(KZ|CN|BY|SE|PL|NL|GB|UZ)\s*$/ig, '')
+    result = result.replace(/\bG\.?\b/ig, '')
+  }
+
+  const cutKeywords = [/ИСПОЛНЕНИЕ/i, /ЗА ОПЛАТУ/i, /ОТМЕНА/i, /ЗАКАЗ/i, /НОМЕР/i]
+  for (const kw of cutKeywords) {
+    const match = result.search(kw)
+    if (match > -1) {
+      result = result.slice(0, match)
+      break
+    }
+  }
+
+  result = result.replace(/\s{2,}/g, ' ').trim()
+  result = result.replace(/\.+$/, '').trim()
+  return result
+}
+
+export function convertPdfStatementTransaction (rawTransaction: StatementTransaction, rawAccount: { id: string, instrument: string }, currencyRates: Record<string, ExchangeRate>): ConvertedTransaction | null {
+  let sum = parseNumber(rawTransaction.amount)
+  if (sum === 0.0) {
     return null
   }
-  let sum = parseFloat(rawTransaction.amount.replace(',', '.').replace(/[\s+$]/g, ''))
-  let instrument = 'KZT'
-  if (rawTransaction.originalAmount !== null) {
-    instrument = rawTransaction.originalAmount?.match(/[A-Z]{3}/)?.[0] ?? 'KZT'
-  } else if (rawAccount.instrument !== null) {
-    instrument = rawAccount.instrument
-  }
+  const instrument = detectInstrument(rawTransaction, rawAccount)
 
   let invoice = rawTransaction.originalAmount !== null
-    ? {
-        sum: parseFloat(rawTransaction.originalAmount.replace(',', '.').replace(/[^\d.-]/g, '')),
-        instrument
-      }
+    ? { sum: parseNumber(rawTransaction.originalAmount), instrument }
     : null
 
-  if (invoice !== null) {
+  if (invoice !== null && invoice.instrument === rawAccount.instrument) {
+    // Amount already in account currency; keep as-is and drop invoice
+    sum = invoice.sum
+    invoice = null
+  } else if (invoice !== null) {
     sum = convertCurrency(currencyRates, sum, invoice.instrument, 'KZT')
   }
 
@@ -134,6 +291,11 @@ export function convertPdfStatementTransaction (rawTransaction: StatementTransac
   }
 
   const merchantFullTitle = cleanMerchantTitle(rawTransaction.description)
+  const sourceIsDeposit = isDepositSourceAccount(rawAccount as { id: string, type?: string })
+  const fullText = `${rawTransaction.description ?? ''} ${rawTransaction.originString}`
+  const isDepositContractTransfer = isDepositContractTransferText(fullText)
+  sum = normalizeDepositContractTransferSum(sum, sourceIsDeposit, fullText, isDepositContractTransfer)
+
   const baseMovement: Movement = {
     id: generateTransactionId(rawTransaction.date, rawTransaction.originalAmount, merchantFullTitle),
     account: { id: rawAccount.id },
@@ -143,46 +305,24 @@ export function convertPdfStatementTransaction (rawTransaction: StatementTransac
   }
   console.log('ID транзакции:', baseMovement.id, 'Исходная сумма:', rawTransaction.originalAmount, 'Описание:', merchantFullTitle)
 
-  const parsedType = parseTransactionType(rawTransaction.originString)
+  let parsedType = parseTransactionType(rawTransaction.originString)
+  if (parsedType === null && isDepositContractTransfer) {
+    parsedType = transactionType.TRANSFER
+  }
   if (parsedType === null) {
     console.warn('Unknown transaction type for', rawTransaction.originString)
   }
   let movements: [Movement] | [Movement, Movement]
 
   if (parsedType !== null && [transactionType.CASH, transactionType.TRANSFER].includes(parsedType)) {
-    let type
-    let syncIds = null
-    if (parsedType === transactionType.CASH) {
-      type = AccountType.cash
-    } else if (parsedType === transactionType.TRANSFER && rawTransaction.description !== null && rawTransaction.description.includes('KZ')) {
-      type = AccountType.deposit
-      const syncIdMatch = rawTransaction.description.match(/KZ[A-Z0-9]{15}/)
-      if (syncIdMatch != null) {
-        syncIds = [syncIdMatch[0]]
-      }
-    } else {
-      type = AccountType.ccard
-    }
-    const secondMovement: Movement = {
-      id: null,
-      account: {
-        type,
-        instrument,
-        company: null,
-        syncIds
-      },
-      invoice: null,
-      sum: -sum,
-      fee: 0
-    }
-    movements = [baseMovement, secondMovement]
+    movements = [baseMovement, buildCounterMovement(parsedType, rawTransaction, instrument, sum, sourceIsDeposit)]
   } else {
     movements = [baseMovement]
   }
 
   let comment = null
 
-  if (merchantFullTitle !== null) {
+  if (merchantFullTitle !== null && !isDepositContractTransfer) {
     const commentStrs = ['по номеру счета', 'by account number']
     for (const commentStr of commentStrs) {
       if (merchantFullTitle.includes(commentStr)) {
@@ -194,20 +334,97 @@ export function convertPdfStatementTransaction (rawTransaction: StatementTransac
 
   const hold = rawTransaction.originString.includes('Сумма в обработке')
 
+  let merchant: Merchant | NonParsedMerchant | null = null
+  const isCashOperation = parsedType === transactionType.CASH
+  const isInterestPayout = ((rawTransaction.description ?? '').toLowerCase().includes('выплата процентов по вкладу') ||
+    rawTransaction.originString.toLowerCase().includes('выплата процентов по вкладу'))
+
+  if (isCashOperation) {
+    merchant = null
+  } else if (isInterestPayout) {
+    comment = 'Выплата процентов по вкладу'
+    merchant = null
+  } else if (isDepositContractTransfer) {
+    merchant = null
+  } else if (merchantFullTitle !== null) {
+    const loc = detectCityCountryLocation(merchantFullTitle)
+    if (loc != null && (loc.city != null || loc.country != null)) {
+      const titleCandidate = cleanLocationPoint(loc.locationPoint ?? merchantFullTitle, true)
+      const title = (titleCandidate !== '') ? titleCandidate : merchantFullTitle
+      merchant = {
+        title,
+        city: loc.city ?? null,
+        country: loc.country ?? null,
+        mcc: null,
+        location: null,
+        category: null
+      } as unknown as Merchant
+    } else if (loc != null) {
+      const titleCandidate = cleanLocationPoint(loc.locationPoint ?? merchantFullTitle, true)
+      const title = (titleCandidate !== '') ? titleCandidate : merchantFullTitle
+      merchant = {
+        title,
+        city: null,
+        country: null,
+        mcc: null,
+        location: null,
+        category: null
+      } as unknown as Merchant
+    } else {
+      const title = cleanLocationPoint(merchantFullTitle, false)
+      merchant = {
+        title: (title !== null && title !== '') ? title : merchantFullTitle,
+        city: null,
+        country: null,
+        mcc: null,
+        location: null,
+        category: null
+      } as unknown as Merchant
+    }
+  } else if (rawTransaction.originString != null) {
+    const { location, title, comment: originComment } = parseMerchantFromOrigin(rawTransaction.originString)
+    if (!isDepositContractTransfer && originComment != null) {
+      comment = originComment
+    }
+    merchant = {
+      title: title ?? null as unknown as string,
+      city: null,
+      country: null,
+      mcc: null,
+      location: (location ?? null) as unknown as Location | null,
+      category: null
+    } as unknown as Merchant
+  }
+
   return {
     statementUid: rawTransaction.statementUid,
     transaction: {
       comment,
       movements,
-      hold: hold,
+      hold,
       date: new Date(rawTransaction.date),
-      merchant: merchantFullTitle !== null
-        ? {
-            fullTitle: merchantFullTitle,
-            mcc: null,
-            location: null
-          }
-        : null
+      merchant
     }
   }
+}
+
+function parseMerchantFromOrigin (origin: string): { location: string | null, title: string | null, comment: string | null } {
+  let text = origin.replace(/^\d{2}\.\d{2}\.\d{4}\s+/, '').trim()
+
+  text = text.replace(/[-+]?[\s\d.,]+\s*(₸|USD|EUR|\$)\s*$/i, '').trim()
+
+  let title: string | null = null
+  let comment: string | null = null
+  const orderMatch = text.match(/(?:^|\s)заказ\s.+$/i)
+  if (orderMatch != null) {
+    const orderText = orderMatch[0].trim()
+    title = null
+    comment = orderText
+    text = text.replace(orderMatch[0], '').trim()
+  }
+
+  const base = cleanLocationPoint(text, true)
+  title = (title != null) ? title : (base === '' ? null : base)
+
+  return { location: null, title, comment }
 }

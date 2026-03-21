@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="login"
+        obligatory="true"
+        title="Login"
+        dialogTitle="BasisBank login"
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="|Login|{@s}"
+    />
+    <EditTextPreference
+        key="password"
+        obligatory="true"
+        inputType="textPassword"
+        title="Password"
+        dialogTitle="BasisBank password"
+        dialogMessage="Use your BasisBank Internet Banking password."
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="||***********"
+    />
+    <CheckBoxPreference
+        key="requestSmsCode"
+        obligatory="false"
+        inputType="checkbox"
+        title="Request SMS code automatically"
+        dialogTitle="Request SMS code automatically"
+        defaultValue="true"
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="|Request SMS code|{@s}"
+    />
+    <CheckBoxPreference
+        key="trustDevice"
+        obligatory="false"
+        inputType="checkbox"
+        title="Trust this device"
+        dialogTitle="Trust this device"
+        dialogMessage="If enabled, plugin tries to complete trusted-device confirmation when bank asks."
+        defaultValue="true"
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="|Trust device|{@s}"
+    />
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="From what date to load transactions"
+        defaultValue="2018-01-01T00:00:00.000Z"
+        dialogTitle="From what date to load transactions"
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="|startDate|{@s}"
+    />
+</PreferenceScreen>
