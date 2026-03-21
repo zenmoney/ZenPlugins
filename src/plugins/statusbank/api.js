@@ -311,32 +311,38 @@ export async function fetchDeposits (sid, account) {
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
     '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
   if (response) {
-    return await fetchApi(BASE_URL,
-      '<BS_Request>\r\n' +
-      '   <MailAttachment Id="' + response.BS_Response.ExecuteAction.MailId + '" No="0"/>\r\n' +
-      '   <RequestType>MailAttachment</RequestType>\r\n' +
-      '   <Session SID="' + sid + '"/>\r\n' +
-      '   <TerminalId>stbank.ibank</TerminalId>\r\n' +
-      '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
-      '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-      '   <TerminalCapabilities>\r\n' +
-      '       <LongParameter>Y</LongParameter>\r\n' +
-      '       <ScreenWidth>99</ScreenWidth>\r\n' +
-      '       <AnyAmount>Y</AnyAmount>\r\n' +
-      '       <BooleanParameter>Y</BooleanParameter>\r\n' +
-      '       <CheckWidth>39</CheckWidth>\r\n' +
-      '       <InputDataSources>\r\n' +
-      '           <InputDataSource>Lookup</InputDataSource>\r\n' +
-      '       </InputDataSources>\r\n' +
-      '   </TerminalCapabilities>\r\n' +
-      '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
+    const isMailAttachment = !!response.BS_Response.ExecuteAction.MailId
+    if (isMailAttachment) {
+      const mailResponse = await fetchApi(BASE_URL,
+        '<BS_Request>\r\n' +
+        '   <MailAttachment Id="' + response.BS_Response.ExecuteAction.MailId + '" No="0"/>\r\n' +
+        '   <RequestType>MailAttachment</RequestType>\r\n' +
+        '   <Session SID="' + sid + '"/>\r\n' +
+        '   <TerminalId>stbank.ibank</TerminalId>\r\n' +
+        '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+        '   <Subsystem>ClientAuth</Subsystem>\r\n' +
+        '   <TerminalCapabilities>\r\n' +
+        '       <LongParameter>Y</LongParameter>\r\n' +
+        '       <ScreenWidth>99</ScreenWidth>\r\n' +
+        '       <AnyAmount>Y</AnyAmount>\r\n' +
+        '       <BooleanParameter>Y</BooleanParameter>\r\n' +
+        '       <CheckWidth>39</CheckWidth>\r\n' +
+        '       <InputDataSources>\r\n' +
+        '           <InputDataSource>Lookup</InputDataSource>\r\n' +
+        '       </InputDataSources>\r\n' +
+        '   </TerminalCapabilities>\r\n' +
+        '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
+      return mailResponse.BS_Response.MailAttachment.Attachment.Body
+    } else {
+      const urlResponse = await fetch(response.BS_Response.ExecuteAction.URL)
+      return urlResponse.body
+    }
   }
   return null
 }
 
 export function parseDeposits (mail, fromDate) {
-  const data = mail.BS_Response.MailAttachment.Attachment.Body
-  const transactions = parseDepositsMail(data).filter((transaction) => transaction.amountReal > 0).filter((transaction) => {
+  const transactions = parseDepositsMail(mail).filter((transaction) => transaction.amountReal > 0).filter((transaction) => {
     const [day, month, year] = transaction.date.match(/(\d{2}).(\d{2}).(\d{4})/).slice(1)
     return (new Date(`${year}-${month}-${day}`) > fromDate)
   })

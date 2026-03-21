@@ -265,6 +265,16 @@ export function * convertTransactions (apiTransactions: unknown[]): Generator<Tr
         }
       }
 
+      const transactionMerchant = _.get(transaction, 'target')
+      const isValidMerchant = typeof transactionMerchant === 'string' && transactionMerchant.trim() !== ''
+      const merchant = isValidMerchant
+        ? {
+            fullTitle: transactionMerchant,
+            mcc: null,
+            location: null
+          }
+        : null
+
       yield {
         hold: false,
         date: parseDate(_.get(transaction, 'paymentDate')),
@@ -277,11 +287,7 @@ export function * convertTransactions (apiTransactions: unknown[]): Generator<Tr
             invoice
           }
         ],
-        merchant: {
-          fullTitle: _.get(transaction, 'target'),
-          mcc: null,
-          location: null
-        },
+        merchant,
         comment: _.get(transaction, 'commentText')
       }
     } catch (e) {
