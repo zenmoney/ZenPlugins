@@ -1,13 +1,16 @@
+import { Base64 } from 'jshashes'
 import { fetchJson } from '../../common/network'
 import { generateRandomString } from '../../common/utils'
 import { parseXml } from '../../common/xmlUtils'
 import { BankMessageError, InvalidLoginOrPasswordError, InvalidOtpCodeError, TemporaryUnavailableError, UserInteractionError } from '../../errors'
 
+const base64 = new Base64()
 const host = 'ibank.belapb.by:4443'
 
 export function generateAuth () {
   return {
-    deviceUDID: generateRandomString(16)
+    deviceUDID: generateRandomString(16),
+    gibCookie: base64.encode(generateRandomString(123))
   }
 }
 
@@ -40,9 +43,11 @@ async function fetchLogin (login, password, auth, smsCode) {
       login,
       password,
       deviceUDID: auth.deviceUDID,
-      applicID: '3.46',
+      gibCookie: auth.gibCookie,
+      applicID: '4.3.1',
       clientKind: '0',
-      deviceConformationType: '0',
+      deviceConfirmationType: '0',
+      pushId: '',
       platform: ZenMoney.application?.platform || 'Android',
       platformVersion: '11',
       typeOfVersion: 'STANDARD',
@@ -130,7 +135,7 @@ export async function login ({ login, password }, auth) {
 }
 
 export async function fetchAccounts (auth) {
-  const response = await fetchApiJson(`https://${host}/services/v2/products/getUserAccountsOverview`, {
+  const response = await fetchApiJson(`https://${host}/services/v2/products/getOwnProducts`, {
     method: 'POST',
     headers: {
       Session_Token: auth.sessionToken,
@@ -141,12 +146,7 @@ export async function fetchAccounts (auth) {
         : {}
     },
     body: {
-      depositAccount: {},
-      currentAccount: {},
-      creditAccount: {},
-      cardAccount: {
-        withBalance: 'null'
-      }
+      productType: ['CARD_ACCOUNT', 'DEPOSIT', 'CURRENT_ACCOUNT', 'CREDIT_ACCOUNT']
     },
     sanitizeRequestLog: { headers: { session_token: true, extraAuth: true } }
   })
@@ -214,6 +214,8 @@ function generateAccountTransactionBody (mainProduct, fromDate, toDate) {
     bankCode: mainProduct.bankCode,
     currencyCode: mainProduct.currencyCode,
     internalAccountId: mainProduct.internalAccountId,
+    startDate: fromDate.getTime(),
+    endDate: getTillTime(toDate),
     reportData: {
       from: fromDate.getTime(),
       till: getTillTime(toDate)
