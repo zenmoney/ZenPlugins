@@ -1,4 +1,4 @@
-import { parseTransaction, parseTransactions } from '../../parsers'
+import { parseCardTurnover, parseTransaction, parseTransactions } from '../../parsers'
 
 describe('parseTransactions', () => {
   it('should parse API transactions to OtpTransaction', () => {
@@ -60,5 +60,32 @@ describe('parseTransaction column semantics (pending vs completed)', () => {
     expect(t.status).toBe('Izvršen')
     expect(t.finalFlag).toBe('0')
     expect(t.amount).toBe(-40)
+  })
+})
+
+describe('parseCardTurnover', () => {
+  it('should parse card turnover rows with debit and credit', () => {
+    const responseBody: string[][][][] = [[
+      [['', '', '', '978', '1111']],
+      [[
+        '', '', '15.03.2026 00:00:00', 'Virtual - OPENAI OPENAI.COM',
+        '15.03.2026 00:00:00', '1111*****1111', '1234', '13.56', '', '', 'EUR',
+        '', '', '', '', '', '', '', '', '', '', '', '', '1234', '', '', '', '0', '', '0'
+      ], [
+        '', '', '19.03.2026 00:00:00', 'Uplata',
+        '19.03.2026 00:00:00', '1111*****1111', '4321', '', '400', '', 'EUR',
+        '', '', '', '', '', '', '', '', '', '', '', '', '0', '', '', '', '0', '', '0'
+      ]]
+    ]]
+
+    const result = parseCardTurnover(responseBody)
+
+    expect(result).toHaveLength(2)
+    expect(result[0].id).toBe('1234')
+    expect(result[0].amount).toBe(-13.56)
+    expect(result[0].currencyCode).toBe('EUR')
+    expect(result[0].currencyCodeNumeric).toBe('978')
+    expect(result[1].id).toBe('4321')
+    expect(result[1].amount).toBe(400)
   })
 })

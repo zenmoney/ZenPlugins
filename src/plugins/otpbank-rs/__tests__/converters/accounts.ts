@@ -1,5 +1,5 @@
-import { convertAccounts } from '../../converters'
-import { OtpAccount } from '../../models'
+import { convertAccounts, convertCards } from '../../converters'
+import { OtpAccount, OtpCard } from '../../models'
 import { AccountType } from '../../../../types/zenmoney'
 
 describe('convertAccounts', () => {
@@ -47,5 +47,45 @@ describe('convertAccounts', () => {
     expect(result[0].account.balance).toBe(500)
     expect(result[0].account.creditLimit).toBe(0)
     expect(result[0].account.syncIds).toContain('456')
+  })
+})
+
+describe('convertCards', () => {
+  it('should create separate account per card and currency', () => {
+    const cards: OtpCard[] = [
+      {
+        primaryCardId: '1111',
+        productCodeCore: '9',
+        cardTitle: 'Visa Virtual debit',
+        maskedPan: '1111********1111',
+        currencyCode: 'RSD',
+        currencyCodeNumeric: '941',
+        balance: 0,
+        accountNumber: '12345678',
+        isVirtual: true
+      },
+      {
+        primaryCardId: '2222',
+        productCodeCore: '9',
+        cardTitle: 'Visa Virtual debit',
+        maskedPan: '2222********2222',
+        currencyCode: 'EUR',
+        currencyCodeNumeric: '978',
+        balance: 134.78,
+        accountNumber: '87654321',
+        isVirtual: true
+      }
+    ]
+
+    const result = convertCards(cards)
+
+    expect(result).toHaveLength(2)
+    expect(result[0].account.id).toBe('virtual_1111_RSD')
+    expect(result[1].account.id).toBe('virtual_2222_EUR')
+    expect(result[0].account.type).toBe(AccountType.ccard)
+    expect(result[1].account.syncIds).toContain('2222********2222')
+    expect(result[0].products[0].source).toBe('cardTurnover')
+    expect(result[0].products[0].accountType).toBe('DIN')
+    expect(result[1].products[0].accountType).toBe('DEV')
   })
 })
