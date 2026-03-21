@@ -16,12 +16,12 @@ describe('convertTransactions', () => {
           operationName: 'Капитализация (%% тек.периода ко вкладу)',
           transactionDate: 1594587600000,
           operationDate: 1594587600000,
-          operationAmount: 0.01,
+          operationSum: 0.01,
           operationCurrency: '840',
-          operationPercentsAmount: 0.00,
+          operationPercentsSum: 0.00,
           operationPercentsCurrency: '840',
-          amountAfterOperaion: 200.30,
-          percentAmountAfterOperation: 0.00,
+          SumAfterOperaion: 200.30,
+          percentSumAfterOperation: 0.00,
           operationDirection: 0
         },
         {
@@ -31,12 +31,12 @@ describe('convertTransactions', () => {
           operationName: 'On-line открытие договора с использованием сервисов ДБО',
           transactionDate: 1597179600000,
           operationDate: 1597179600000,
-          operationAmount: 0.00,
+          operationSum: 0.00,
           operationCurrency: '840',
-          operationPercentsAmount: 0.00,
+          operationPercentsSum: 0.00,
           operationPercentsCurrency: '840',
-          amountAfterOperaion: 400.00,
-          percentAmountAfterOperation: 0.00,
+          SumAfterOperaion: 400.00,
+          percentSumAfterOperation: 0.00,
           operationDirection: 0
         }
       ],
@@ -67,9 +67,9 @@ describe('convertTransactions', () => {
           operationName: 'Капитализация. Удержано подоходного налога 0.90',
           transactionDate: 1613363520000,
           operationDate: 1613363520000,
-          transactionAmount: 6.96,
+          transactionSum: 6.96,
           transactionCurrency: '840',
-          operationAmount: 6.96,
+          operationSum: 6.96,
           operationCurrency: '840',
           operationSign: '1',
           actionGroup: 19,
@@ -93,6 +93,36 @@ describe('convertTransactions', () => {
           ],
           merchant: null,
           comment: 'Капитализация. Удержано подоходного налога 0.90'
+        }
+      ]
+    ],
+    [
+      [
+        {
+          operationName: 'Капитализация (%% тек.периода ко вкладу)',
+          transactionDate: 1769727031000,
+          transactionSum: 0.0,
+          transactionCurrency: '840',
+          operationSign: '1',
+          operationDate: 1769727031000,
+          operationSum: 0.42
+        }
+      ],
+      [
+        {
+          hold: false,
+          date: new Date(1769727031000),
+          movements: [
+            {
+              id: '1769727031000_0.42',
+              account: { id: 'account' },
+              invoice: null,
+              sum: 0.42,
+              fee: 0
+            }
+          ],
+          merchant: null,
+          comment: 'Капитализация (%% тек.периода ко вкладу)'
         }
       ]
     ]
