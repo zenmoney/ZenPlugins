@@ -86,9 +86,10 @@ const messageHandlers = {
 }
 
 export async function handleMessageFromWindow ({ event }) {
+  const target = event.currentTarget
   const messageHandler = messageHandlers[event.data.type] || (() => console.warn('message', event.data.type, ' from window was not handled', { event }))
   await messageHandler({
     payload: event.data.payload,
-    reply: (message) => event.target.postMessage(message)
+    reply: (message) => target.postMessage(message)
   })
 }
