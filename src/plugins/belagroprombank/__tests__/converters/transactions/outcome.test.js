@@ -14,18 +14,18 @@ describe('convertTransactions', () => {
           operationPlace: 'BLR-MINSK-WWL90002-0900324',
           transactionDate: 1587394694000,
           operationDate: 1587416400000,
-          transactionAmount: -200.00,
+          transactionSum: -200.00,
           transactionCurrency: 'USD',
-          operationAmount: -200.00,
+          operationSum: -200.00,
           operationCurrency: 'USD'
         },
         {
           operationName: 'Другие платежи',
           transactionDate: 1596844800000,
           operationDate: 1596834000000,
-          transactionAmount: 403.16,
+          transactionSum: 403.16,
           transactionCurrency: 'USD',
-          operationAmount: 403.16,
+          operationSum: 403.16,
           operationCurrency: 'USD'
         },
         {
@@ -33,9 +33,9 @@ describe('convertTransactions', () => {
           operationPlace: 'BLR-MINSK-SMS90401-0900324',
           transactionDate: 1587376169000,
           operationDate: 1587416400000,
-          transactionAmount: 495.00,
+          transactionSum: 495.00,
           transactionCurrency: 'BYN',
-          operationAmount: 200.24,
+          operationSum: 200.24,
           operationCurrency: 'USD'
         },
         {
@@ -43,9 +43,9 @@ describe('convertTransactions', () => {
           operationPlace: 'BLR-MINSK-SMS90401-0900324',
           transactionDate: 1589284729000,
           operationDate: 1589317200000,
-          transactionAmount: 500.00,
+          transactionSum: 500.00,
           transactionCurrency: 'BYN',
-          operationAmount: 203.09,
+          operationSum: 203.09,
           operationCurrency: 'USD'
         }
       ],
@@ -153,12 +153,12 @@ describe('convertTransactions', () => {
           accountNumber: '9716114',
           transactionDate: 1602968400000,
           operationDate: 1602968400000,
-          operationAmount: 0.03,
+          operationSum: 0.03,
           operationCurrency: '978',
-          operationPercentsAmount: 0.03,
+          operationPercentsSum: 0.03,
           operationPercentsCurrency: '978',
-          amountAfterOperaion: 500.58,
-          percentAmountAfterOperation: 0.03,
+          SumAfterOperaion: 500.58,
+          percentSumAfterOperation: 0.03,
           operationDirection: 4
         },
         {
@@ -168,12 +168,12 @@ describe('convertTransactions', () => {
           operationName: 'Списание налога с начисленных процентов',
           transactionDate: 1602968400000,
           operationDate: 1602968400000,
-          operationAmount: 0.03,
+          operationSum: 0.03,
           operationCurrency: '978',
-          operationPercentsAmount: 0.03,
+          operationPercentsSum: 0.03,
           operationPercentsCurrency: '978',
-          amountAfterOperaion: 500.58,
-          percentAmountAfterOperation: 0,
+          SumAfterOperaion: 500.58,
+          percentSumAfterOperation: 0,
           operationDirection: 4
         }
       ],
@@ -210,7 +210,7 @@ describe('convertTransactions', () => {
           operationName: 'Ежемесячная плата за предоставление услуги SMS-информирование',
           transactionDate: 1601413200000,
           operationDate: 1601413200000,
-          operationAmount: -1.15,
+          operationSum: -1.15,
           operationCurrency: 'BYN'
         }
       ],
@@ -239,9 +239,9 @@ describe('convertTransactions', () => {
           operationPlace: 'BLR-PINSK-SHE52516-0083152',
           transactionDate: 1605432193000,
           operationDate: 1605474000000,
-          transactionAmount: -42.1,
+          transactionSum: -42.1,
           transactionCurrency: 'BYN',
-          operationAmount: -42.1,
+          operationSum: -42.1,
           operationCurrency: 'BYN'
         }
       ],
@@ -276,9 +276,9 @@ describe('convertTransactions', () => {
           operationPlace: 'BLR-PINSK-SHC02722-0084406',
           transactionDate: 1605622101000,
           operationDate: 1605646800000,
-          transactionAmount: -6.38,
+          transactionSum: -6.38,
           transactionCurrency: 'BYN',
-          operationAmount: -6.38,
+          operationSum: -6.38,
           operationCurrency: 'BYN'
         }
       ],
@@ -313,7 +313,7 @@ describe('convertTransactions', () => {
           concreteType: '3097',
           accountNumber: '4242015000376',
           operationDate: 1609362000000,
-          operationAmount: 5.1,
+          operationSum: 5.1,
           description: 'Начисление процентов по основному долгу'
         }
       ],
@@ -342,9 +342,9 @@ describe('convertTransactions', () => {
           operationPlace: 'BLR-MINSK-INF12744-0002048',
           transactionDate: 1634547807000,
           operationDate: 1634590800000,
-          transactionAmount: -130.59,
+          transactionSum: -130.59,
           transactionCurrency: 'BYN',
-          operationAmount: -130.59,
+          operationSum: -130.59,
           operationCurrency: 'BYN'
         }
       ],
@@ -364,6 +364,37 @@ describe('convertTransactions', () => {
             ],
           merchant: null,
           comment: 'OPLATA USLUG'
+        }
+      ]
+    ],
+    [
+      [
+        {
+          operationName: 'Абонентская плата (Ежемесячная абонентская плата по БПК)',
+          transactionDate: 1767230152000,
+          transactionSum: 0.0,
+          transactionCurrency: '933',
+          operationSign: '-1',
+          operationDate: 1767575752000,
+          operationSum: 0.5
+        }
+      ],
+      [
+        {
+          hold: false,
+          date: new Date(1767230152000),
+          movements:
+            [
+              {
+                id: '1767230152000_-0.5',
+                account: { id: 'account' },
+                invoice: null,
+                sum: -0.5,
+                fee: 0
+              }
+            ],
+          merchant: null,
+          comment: 'Абонентская плата (Ежемесячная абонентская плата по БПК)'
         }
       ]
     ]

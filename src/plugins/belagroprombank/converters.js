@@ -229,25 +229,27 @@ export function convertTransactions (apiTransactions, account) {
 }
 
 function convertTransaction (apiTransaction, account) {
-  if (apiTransaction.transactionAmount === 0 || apiTransaction.operationAmount === 0) {
+  if (apiTransaction.operationSum === 0) {
     return null
   }
 
-  const sign = [
-    /^.*OPLATA USLUG.*$/i,
-    /^.*Списание.*$/i,
-    /^.* плата .*$/i,
-    /^.*Другие платежи.*$/i,
-    /^.*OPLATA USLUG.*$/i,
-    /^.*OPLATA USLUG.*$/i
-  ].some(regexp => regexp.test(apiTransaction.operationName)) ||
-  [
-    /^.*Начисление процентов по.* долгу.*$/i
-  ].some(regexp => regexp.test(apiTransaction.description)) ||
-    (apiTransaction.transactionAmount && apiTransaction.transactionAmount < 0) ||
-    (apiTransaction.operationAmount && apiTransaction.operationAmount < 0)
-    ? -1
-    : 1
+  const sign = apiTransaction.operationSign
+    ? Number(apiTransaction.operationSign)
+    : [
+        /^.*OPLATA USLUG.*$/i,
+        /^.*Списание.*$/i,
+        /^.* плата .*$/i,
+        /^.*Другие платежи.*$/i,
+        /^.*OPLATA USLUG.*$/i,
+        /^.*OPLATA USLUG.*$/i
+      ].some(regexp => regexp.test(apiTransaction.operationName)) ||
+    [
+      /^.*Начисление процентов по.* долгу.*$/i
+    ].some(regexp => regexp.test(apiTransaction.description)) ||
+      (apiTransaction.transactionSum && apiTransaction.transactionSum < 0) ||
+      (apiTransaction.operationSum && apiTransaction.operationSum < 0)
+        ? -1
+        : 1
 
   let instrument = apiTransaction.transactionCurrency ? apiTransaction.transactionCurrency : apiTransaction.operationCurrency ? apiTransaction.operationCurrency : account.instrument
   if (instrument.match(/^\d+$/i)) {
@@ -256,9 +258,9 @@ function convertTransaction (apiTransaction, account) {
 
   const invoice = {
     instrument,
-    sum: Math.abs(apiTransaction.transactionCurrency ? apiTransaction.transactionAmount : apiTransaction.operationAmount) * sign
+    sum: Math.abs(apiTransaction.transactionCurrency && apiTransaction.transactionSum !== 0 ? apiTransaction.transactionSum : apiTransaction.operationSum) * sign
   }
-  const sum = invoice.instrument === account.instrument ? invoice.sum : Math.abs(apiTransaction.operationAmount) * sign
+  const sum = invoice.instrument === account.instrument ? invoice.sum : Math.abs(apiTransaction.operationSum) * sign
   const dateInfo = apiTransaction.transactionDate ? apiTransaction.transactionDate : apiTransaction.operationDate
   const transaction = {
     hold: false,
