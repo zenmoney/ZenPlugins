@@ -4,6 +4,7 @@ import padLeft from 'pad-left'
 import { stringify } from 'querystring'
 import { fetch } from '../../common/network'
 import { retry, RetryError } from '../../common/retry'
+import { parsePdf } from '../../common/pdfUtils'
 import { BankMessageError, InvalidOtpCodeError, InvalidPreferencesError, TemporaryError, TemporaryUnavailableError } from '../../errors'
 
 const baseUrl = 'https://ibank.asb.by'
@@ -375,6 +376,12 @@ export function parseDeposits (response) {
 }
 
 async function processPages (viewns, html, acc) {
+  const pdfBase64Match = html.match(/downloadBase64Pdf\('([A-Za-z0-9+/]+=*)'\)/) ||
+    html.match(/src="data:application\/pdf;base64,([A-Za-z0-9+/]+=*)"/)
+  if (pdfBase64Match) {
+    return parsePdfBase64(pdfBase64Match[1], acc)
+  }
+
   const match = html.match(/Страница \d+ из (\d+)/)
   const pages = match ? parseInt(match[1], 10) : null
   const transactions = /Наименование операции/.test(html) ? parseTransactions(html, acc.id) : []
@@ -400,6 +407,16 @@ async function processPages (viewns, html, acc) {
   }
 
   return transactions
+}
+
+async function parsePdfBase64 (base64, acc) {
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i)
+  }
+  const { text } = await parsePdf(new ZenMoney.Blob([bytes], { type: 'application/pdf' }))
+  return parseTransactionsPdf(text, acc.id, acc.instrument)
 }
 
 function getTransactionsDates (fromDate, toDate) {
@@ -479,6 +496,9 @@ async function getAccountsListPage (html, viewns) {
 }
 
 async function processHolds (html, viewns, acc) {
+  if (!acc.raw.transactionsData.holdsData) {
+    return []
+  }
   const $ = cheerio.load(html)
   viewns = acc.raw.transactionsData.holdsData[0].replace(/'/g, '')
   let action = $(`form[id="${viewns}"]`).attr('action')
@@ -639,5 +659,93 @@ export function parseTransactions (html, accID) {
   })
 
   console.log(`>>> Загружено ${transactions.length} операций`)
+  return transactions
+}
+
+export function parseTransactionsPdf (text, accId, accCurrency = 'BYN') {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
+  const transactions = []
+
+  const DATE_RE = /^\d{2}\.\d{2}\.\d{4}$/
+  const TIME_RE = /^\d{2}:\d{2}:\d{2}$/
+  const CARD_RE = /^\d{4}\*+\d{4}$/
+
+  function groupAmountTokens (tokens) {
+    const groups = []
+    let cur = []
+    for (const t of tokens) {
+      cur.push(t)
+      if (/\d+,\d{2}$/.test(t)) {
+        groups.push(cur.join(' '))
+        cur = []
+      }
+    }
+    return groups
+  }
+
+  let i = 0
+  while (i < lines.length) {
+    if (!DATE_RE.test(lines[i])) { i++; continue }
+    if (i + 1 >= lines.length || !TIME_RE.test(lines[i + 1])) { i++; continue }
+    if (i + 2 >= lines.length) { i++; continue }
+
+    const date = lines[i]
+    const time = lines[i + 1]
+    const dataLine = lines[i + 2]
+
+    const dataTokens = dataLine.split(/\s+/)
+    const currencyIndex = dataTokens.findIndex(t => /^[A-Z]{3}$/.test(t))
+    if (currencyIndex < 2) { i++; continue }
+
+    const opAmountGroups = groupAmountTokens(dataTokens.slice(1, currencyIndex))
+    if (opAmountGroups.length !== 1) { i++; continue }
+
+    const operationCurrency = dataTokens[currencyIndex]
+    const afterCurrencyGroups = groupAmountTokens(dataTokens.slice(currencyIndex + 1))
+    if (afterCurrencyGroups.length < 2) { i++; continue }
+
+    const accountAmountRaw = afterCurrencyGroups[0]
+    const debitFlag = accountAmountRaw.startsWith('+') ? '+' : '-'
+    const operationSum = opAmountGroups[0].replace(',', '.')
+    const inAccountSum = accountAmountRaw.replace(/^\+/, '').replace(',', '.')
+
+    let j = i + 3
+    const descLines = []
+    while (j < lines.length) {
+      if (DATE_RE.test(lines[j]) && j + 1 < lines.length && TIME_RE.test(lines[j + 1])) break
+      if (CARD_RE.test(lines[j])) { j++; break }
+      if (/^Реквизиты банка/i.test(lines[j])) break
+      descLines.push(lines[j])
+      j++
+    }
+
+    let place
+    let comment
+    if (descLines.length > 1) {
+      place = descLines[descLines.length - 1]
+      comment = descLines.slice(0, -1).join(' ').trim()
+    } else {
+      place = undefined
+      comment = descLines.join(' ').trim() || 'Операция'
+    }
+
+    transactions.push({
+      accountID: accId,
+      status: 'operResultOk',
+      date,
+      time,
+      debitFlag,
+      operationSum,
+      operationCurrency,
+      inAccountSum,
+      inAccountCurrency: accCurrency,
+      comment,
+      place,
+      fee: '0.00'
+    })
+    i = j
+  }
+
+  console.log(`>>> Загружено ${transactions.length} операций из PDF`)
   return transactions
 }
