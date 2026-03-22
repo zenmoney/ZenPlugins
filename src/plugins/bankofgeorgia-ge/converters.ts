@@ -65,6 +65,10 @@ export function convertAccounts (apiAccounts: FetchedAccount[]): ConvertedProduc
         converted = convertAccount(apiAccount)
         break
       }
+      case 'creditCard': {
+        converted = [convertCreditCard(apiAccount)]
+        break
+      }
       case 'deposit':
         converted = [convertDeposit(apiAccount)]
         break
@@ -98,6 +102,40 @@ function convertAccount (apiAccount: FetchedAccount): ConvertedAccount[] {
       }
     }
   })
+}
+
+function convertCreditCard (apiAccount: FetchedAccount): ConvertedAccount {
+  assert(apiAccount.tag === 'creditCard')
+  const acctKey = getNumber(apiAccount.product, 'acctKey').toString()
+  const availableAmount = getNumber(apiAccount.product, 'availableAmount')
+  const overdraftLimit = getNumber(apiAccount.details, 'overdraftLimit')
+
+  let title = getOptString(apiAccount.product, 'productDictionaryValue')
+  if (title == null && apiAccount.cards.length > 0) {
+    title = getOptString(apiAccount.cards[0], 'nameDictionaryValue')
+  }
+  if (title == null) {
+    title = getOptString(apiAccount.product, 'cardTypes')
+  }
+  if (title == null) {
+    title = getString(apiAccount.product, 'productDictionaryKey')
+  }
+
+  return {
+    tag: 'creditCard',
+    acctKey,
+    account: {
+      id: acctKey,
+      type: AccountType.ccard,
+      title,
+      instrument: getString(apiAccount.product, 'ccy'),
+      balance: Math.round((availableAmount - overdraftLimit) * 100) / 100,
+      creditLimit: overdraftLimit,
+      syncIds: [
+        getString(apiAccount.product, 'printAcctNo')
+      ]
+    }
+  }
 }
 
 function convertDeposit (apiAccount: FetchedAccount): ConvertedAccount {
