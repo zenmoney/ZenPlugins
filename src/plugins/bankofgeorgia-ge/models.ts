@@ -35,7 +35,7 @@ export interface FetchedLoanDeposit {
 }
 
 export interface FetchedChecking {
-  tag: 'account'
+  tag: 'account' | 'creditCard'
   product: unknown
   details: unknown
   cards: unknown[]
@@ -44,7 +44,7 @@ export interface FetchedChecking {
 export type FetchedAccount = FetchedLoanDeposit | FetchedChecking
 
 export interface ConvertedAccount {
-  tag: 'account' | 'deposit'
+  tag: 'account' | 'deposit' | 'creditCard'
   acctKey: string
   account: Account
 }

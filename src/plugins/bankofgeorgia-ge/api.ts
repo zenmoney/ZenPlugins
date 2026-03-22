@@ -8,6 +8,7 @@ import {
   fetchAuth,
   fetchCards,
   fetchCheckOperation,
+  fetchCreditCards,
   fetchDepositsAndBondsWithDetails,
   fetchGetCustomerDeviceInfoQuery,
   fetchGetToken,
@@ -101,6 +102,12 @@ export async function login (preferences: Preferences, auth?: Auth): Promise<Ses
 export async function fetchAccounts (session: Session): Promise<FetchedAccount[]> {
   const accountsWithDetails = await fetchAccountsWithDetails(session)
   const cards = await fetchCards(session)
+  const creditCards = (await fetchCreditCards(session)).map(x => {
+    const acctKey = getNumber(x.product, 'acctKey')
+    x.cards = getOptArray(cards, acctKey.toString()) ?? []
+    return x
+  })
+
   const accounts = accountsWithDetails.map(x => {
     const acctKey = getNumber(x.product, 'acctKey')
     x.cards = getOptArray(cards, acctKey.toString()) ?? []
@@ -108,7 +115,7 @@ export async function fetchAccounts (session: Session): Promise<FetchedAccount[]
   })
   const deposits = await fetchDepositsAndBondsWithDetails(session)
   const loans = await fetchLoans(session)
-  return [...accounts, ...deposits, ...loans]
+  return [...accounts, ...deposits, ...loans, ...creditCards]
 }
 
 export async function fetchTransactions (
@@ -117,7 +124,7 @@ export async function fetchTransactions (
   toDate: Date,
   session: Session
 ): Promise<unknown[]> {
-  if (product.tag === 'account' || product.tag === 'deposit' || product.tag === 'loan') { // not yet implemented for loans
+  if (product.tag === 'account' || product.tag === 'deposit' || product.tag === 'loan' || product.tag === 'creditCard') { // not yet implemented for loans
     return await fetchAccountOperations(product.acctKey, fromDate, toDate, session)
   }
   return []
