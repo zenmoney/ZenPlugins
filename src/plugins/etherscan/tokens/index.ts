@@ -5,13 +5,14 @@ import { Scrape } from '../types'
 import { convertAccounts, convertTransactions } from './converters'
 import { fetchAccounts, fetchAccountTransactions } from './erc20'
 
-export const scrape: Scrape = async ({ preferences, startBlock, endBlock }) => {
+export const scrape: Scrape = async ({ chain, preferences, startBlock, endBlock }) => {
   const transactions: Transaction[] = []
-  const [accounts] = await Promise.all([fetchAccounts(preferences)])
+  const [accounts] = await Promise.all([fetchAccounts(preferences, chain)])
 
   for (const account of accounts) {
     const accountTransactions = await fetchAccountTransactions(
       preferences,
+      chain,
       account,
       {
         startBlock,
@@ -20,12 +21,12 @@ export const scrape: Scrape = async ({ preferences, startBlock, endBlock }) => {
     )
 
     transactions.push(
-      ...convertTransactions(account, accountTransactions, preferences.chain)
+      ...convertTransactions(account, accountTransactions, chain)
     )
   }
 
   return {
-    accounts: convertAccounts(accounts, preferences.chain),
+    accounts: convertAccounts(accounts, chain),
     transactions: mergeTransferTransactions(transactions)
   }
 }

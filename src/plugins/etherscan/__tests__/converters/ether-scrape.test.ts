@@ -8,6 +8,7 @@ describe('scrape', () => {
 
     const result = await scrape(
       {
+        chain: 1,
         preferences: preferencesMock,
         startBlock: 1,
         endBlock: 99999999,
@@ -18,28 +19,28 @@ describe('scrape', () => {
 
     expect(result.accounts).toEqual([
       {
-        id: '1',
+        id: '1-1',
         type: AccountType.checking,
         title: '1',
         instrument: 'μETH',
         balance: 2000000,
-        syncIds: ['1']
+        syncIds: ['1-1']
       },
       {
-        id: '2',
+        id: '1-2',
         type: AccountType.checking,
         title: '2',
         instrument: 'μETH',
         balance: 10000000,
-        syncIds: ['2']
+        syncIds: ['1-2']
       },
       {
-        id: '3',
+        id: '1-3',
         type: AccountType.checking,
         title: '3',
         instrument: 'μETH',
         balance: 0,
-        syncIds: ['3']
+        syncIds: ['1-3']
       }
     ])
 
@@ -49,7 +50,7 @@ describe('scrape', () => {
         date: new Date('2015-07-30T15:26:28.000Z'),
         movements: [{
           id: '1',
-          account: { id: '1' },
+          account: { id: '1-1' },
           invoice: null,
           sum: -1000000,
           fee: -323
@@ -66,7 +67,7 @@ describe('scrape', () => {
         date: new Date('2015-07-30T15:26:28.000Z'),
         movements: [{
           id: '2',
-          account: { id: '1' },
+          account: { id: '1-1' },
           invoice: null,
           sum: 2000000,
           fee: 0
@@ -84,13 +85,13 @@ describe('scrape', () => {
         movements: [
           {
             id: '3',
-            account: { id: '1' },
+            account: { id: '1-1' },
             invoice: null,
             sum: -1000000,
             fee: -323
           }, {
             id: '3',
-            account: { id: '2' },
+            account: { id: '1-2' },
             invoice: null,
             sum: 1000000,
             fee: 0

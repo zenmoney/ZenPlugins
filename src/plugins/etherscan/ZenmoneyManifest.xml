@@ -3,11 +3,11 @@
     <id>etherscan</id>
     <company>15936</company>
     <description>
-        Плагин для синхронизации ETH и BSC с помощью etherscan V2.
-        Для синхронизации выберите блокчейн, укажите ApiKey etherscan V2 и адреса кошельков.
+        Plugin for syncing Ethereum, BSC and Arbitrum One via Etherscan V2 API.
+        Select blockchains, provide your Etherscan V2 API key and wallet addresses.
     </description>
     <version>1.0</version>
-    <build>4</build>
+    <build>5</build>
     <modular>true</modular>
     <api>public</api>
     <files>
