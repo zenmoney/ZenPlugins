@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
     <id>hapoalim</id>
-    <version>1.0</version>
-    <build>1</build>
+    <version>1.1</version>
+    <build>2</build>
     <company>15700</company>
     <modular>true</modular>
     <codeRequired>false</codeRequired>
@@ -10,5 +10,5 @@
         <js>index.js</js>
         <preferences>preferences.xml</preferences>
     </files>
-    <description></description>
+    <description>Softens LOGONOTP handling, fixes continuation integrity header and hardens optional endpoints.</description>
 </provider>

@@ -1,14 +1,61 @@
 import { flatten } from 'lodash'
 import qs from 'querystring'
+import { InvalidPreferencesError, TemporaryError } from '../../errors'
 import { toISODateString } from '../../common/dateUtils'
-import { fetchJson } from '../../common/network'
+import { fetchJson, ParseError } from '../../common/network'
 import { generateRandomString } from '../../common/utils'
+
+function summarizeResponse (response) {
+  return response
+    ? {
+        status: response.status,
+        url: response.url,
+        contentType: response.headers?.['content-type'],
+        flow: response.body?.flow,
+        state: response.body?.state,
+        errCode: response.body?.error?.errCode,
+        errDesc: response.body?.error?.errDesc
+      }
+    : null
+}
+
+function throwTemporary (message, response) {
+  console.warn(message, summarizeResponse(response))
+  const error = new TemporaryError(message)
+  error.responseSummary = summarizeResponse(response)
+  throw error
+}
+
+function ensure (condition, message, response) {
+  if (!condition) {
+    throwTemporary(message, response)
+  }
+}
+
+async function safeFetch (label, fn) {
+  try {
+    return await fn()
+  } catch (error) {
+    console.warn(`optional account endpoint failed: ${label}`, error?.responseSummary || error?.response || error?.message || error)
+    return []
+  }
+}
 
 export function generateDevice () {
   return {
     id: 'PSR1.180720.061',
     androidId: generateRandomString(16, '0123456789abcdef')
   }
+}
+
+export function isLikelyAuthGateError (error) {
+  const response = error?.responseSummary || error?.response
+  const contentType = String(response?.contentType || response?.headers?.['content-type'] || '')
+
+  return error instanceof ParseError ||
+    response?.status === 401 ||
+    response?.status === 403 ||
+    /text\/html/i.test(contentType)
 }
 
 async function fetchApi (url, options) {
@@ -21,6 +68,11 @@ async function fetchApi (url, options) {
   return fetchJson('https://iphone.bankhapoalim.co.il' + fullUrl, {
     method: 'GET',
     ...options,
+    sanitizeResponseLog: {
+      headers: {
+        'set-cookie': true
+      }
+    },
     headers: {
       mobile: 'ca',
       'x-dynatrace': 'MT_3_1_1842511945_1_BankApp-Android-Gen3_0_1001_130',
@@ -126,12 +178,25 @@ export async function login ({ login, password }, device) {
     stringify: qs.stringify,
     sanitizeRequestLog: { body: { identifier: true, credentials: true } }
   })
+
   if (response.body.error?.errCode === '1.6' && response.body.error?.errDesc === 'Login Failure') {
     throw new InvalidPreferencesError()
   }
-  console.assert(!response.body.error &&
+
+  if (!response.body.error &&
     response.body.flow === 'AUTHENTICATE' &&
-    response.body.state === 'LANDPAGE', 'unexpected login response', response)
+    response.body.state === 'LANDPAGE') {
+    return { state: 'LANDPAGE' }
+  }
+
+  if (!response.body.error &&
+    response.body.flow === 'AUTHENTICATE' &&
+    response.body.state === 'LOGONOTP') {
+    console.warn('login returned LOGONOTP', summarizeResponse(response))
+    return { state: 'LOGONOTP' }
+  }
+
+  throwTemporary('unexpected login response', response)
 }
 
 async function fetchMainAccountDetails (mainAccount, accountId) {
@@ -155,10 +220,13 @@ async function fetchForeignCurrencyAccount (accountId) {
 async function fetchDeposits (url, structType, accountId) {
   const response = await fetchApi(url, { accountId })
   return (response.body?.list || []).map(account => {
-    const result = account.data[0]
+    const result = account.data?.[0]
+    if (!result) {
+      return null
+    }
     result.structType = structType
     return result
-  })
+  }).filter(Boolean)
 }
 
 async function fetchLoans (accountId) {
@@ -183,18 +251,19 @@ async function fetchMortgages (accountId) {
 
 export async function fetchAccounts () {
   const response = await fetchApi('/ServerServices/general/accounts?lang=he')
-  console.assert(Array.isArray(response.body), 'unexpected accounts response', response)
+  ensure(Array.isArray(response.body), 'unexpected accounts response', response)
+
   const accounts = []
   await Promise.all(response.body.map(async mainAccount => {
-    console.assert(mainAccount.accountNumber && mainAccount.branchNumber && mainAccount.bankNumber, 'unexpected account', mainAccount)
+    ensure(mainAccount.accountNumber && mainAccount.branchNumber && mainAccount.bankNumber, 'unexpected account', { body: mainAccount })
     const accountId = `${mainAccount.bankNumber}-${mainAccount.branchNumber}-${mainAccount.accountNumber}`
     accounts.push(...flatten(await Promise.all([
       async () => await fetchMainAccountDetails(mainAccount, accountId),
-      async () => await fetchForeignCurrencyAccount(accountId),
-      async () => await fetchDeposits('/ServerServices/deposits-and-savings/deposits?view=details&lang=he', 'deposit', accountId),
-      async () => await fetchDeposits('/ServerServices/deposits-and-savings/savingsDeposits?view=details&lang=he', 'saving', accountId),
-      async () => await fetchLoans(accountId),
-      async () => await fetchMortgages(accountId)
+      async () => await safeFetch('foreign currency', async () => fetchForeignCurrencyAccount(accountId)),
+      async () => await safeFetch('deposits', async () => fetchDeposits('/ServerServices/deposits-and-savings/deposits?view=details&lang=he', 'deposit', accountId)),
+      async () => await safeFetch('savings', async () => fetchDeposits('/ServerServices/deposits-and-savings/savingsDeposits?view=details&lang=he', 'saving', accountId)),
+      async () => await safeFetch('loans', async () => fetchLoans(accountId)),
+      async () => await safeFetch('mortgages', async () => fetchMortgages(accountId))
     ].map(fn => fn()))))
   }))
   return accounts
@@ -213,9 +282,6 @@ export async function fetchTransactions (product, fromDate, toDate) {
     return response.body.balancesAndLimitsDataList?.transactions || []
   }
 
-  // await fetchApi(`/ServerServices/cards/transactions-totals/non-bank-cards?transactionsType=current&appId=bankApp3Generation&accountId=${id}`)
-  // await fetchApi(`/ServerServices/cards/transactions-totals?transactionsType=currentOnly&appId=bankApp3Generation&accountId=${id}`)
-
   const transactions = []
   const limit = 50
   const query = qs.stringify({
@@ -231,7 +297,7 @@ export async function fetchTransactions (product, fromDate, toDate) {
   })
   while (true) {
     const batch = response.body?.transactions || (response.status === 204 ? [] : null)
-    console.assert(Array.isArray(batch), 'unexpected transactions response', response)
+    ensure(Array.isArray(batch), 'unexpected transactions response', response)
     transactions.push(...batch)
 
     const dataHeader = response.headers['data-header']
@@ -239,12 +305,12 @@ export async function fetchTransactions (product, fromDate, toDate) {
       break
     }
     const integrityHeader = response.headers['integrity-header']
-    console.assert(dataHeader && integrityHeader, 'unexpected transactions response', response)
+    ensure(dataHeader && integrityHeader, 'unexpected transactions continuation response', response)
     response = await fetchApi(`/ServerServices/current-account/transactions/${dataHeader}?${query}`, {
       accountId: product.id,
       headers: {
-        add_integrity_header: true,
-        'integrity-header': true
+        add_integrity_header: 'true',
+        'integrity-header': integrityHeader
       }
     })
   }
