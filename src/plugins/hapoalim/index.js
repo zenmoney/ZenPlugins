@@ -1,5 +1,5 @@
 import { adjustTransactions } from '../../common/transactionGroupHandler'
-import { TemporaryError } from '../../errors'
+import { ZPAPIError } from '../../errors'
 import { fetchAccounts, fetchTransactions, generateDevice, login, isLikelyAuthGateError } from './api'
 import { convertAccounts, convertTransaction } from './converters'
 
@@ -18,9 +18,13 @@ function getFallbackFromDate (preferences, toDate) {
 
 function rethrowAuthGate (error, authState, isInBackground) {
   if (authState?.state === 'LOGONOTP' && isLikelyAuthGateError(error)) {
-    throw new TemporaryError(isInBackground
-      ? 'Bank Hapoalim requested an additional verification step. Open the bank app/site, confirm the device and run sync manually in foreground.'
-      : 'Bank Hapoalim requested an additional verification step. Confirm the device in the official bank app/site and retry sync.')
+    throw new ZPAPIError(
+      isInBackground
+        ? 'Bank Hapoalim requested an additional verification step. Open the bank app/site, confirm the device and run sync manually in foreground.'
+        : 'Bank Hapoalim requested an additional verification step. Confirm the device in the official bank app/site and retry sync.',
+      false,
+      false
+    )
   }
   throw error
 }
