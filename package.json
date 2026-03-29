@@ -21,7 +21,7 @@
     "iconv-lite": "0.4.18",
     "jimp": "^1.6.0",
     "jshashes": "1.0.8",
-    "jsrsasign": "10.5.20",
+    "jsrsasign": "11.1.1",
     "ksuid": "1.2.0",
     "lodash": "4.17.21",
     "moment": "2.24.0",
