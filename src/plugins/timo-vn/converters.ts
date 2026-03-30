@@ -95,6 +95,6 @@ function parseAmount (data: unknown, path: string): Amount {
 function timoDateToIso (timoDate: string): Date {
   const [day, month, year] = timoDate.split(' ')[0].split('/').map(Number)
   const [hours, minutes, seconds] = timoDate.split(' ')[1].split(':').map(Number)
-  const isoDate = new Date(year, month - 1, day, hours, minutes, seconds)
+  const isoDate = new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds))
   return isoDate
 }
