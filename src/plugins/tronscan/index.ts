@@ -1,7 +1,7 @@
 import { Account, ScrapeFunc, Transaction } from '../../types/zenmoney'
 import { Preferences, tronscanApi } from './api'
 import { isSupportedToken } from './config'
-import { convertAccount, convertTransaction, convertTokenTransaction, getCostTransaction } from './converters'
+import { convertAccount, convertTransaction, convertTokenTransaction, convertPlainTransaction, getCostTransaction } from './converters'
 
 export const scrape: ScrapeFunc<Preferences> = async ({
   preferences,
@@ -48,12 +48,20 @@ export const scrape: ScrapeFunc<Preferences> = async ({
             (transaction): transaction is Transaction => transaction !== null
           )
 
-        // This transactions are unknown, but we still can have fee
         for (const transaction of walletTransactions.values()) {
           if (transaction.ownerAddress !== wallet) {
             continue
           }
 
+          if (transaction.contractType === 13) {
+            const rewardTransaction = convertPlainTransaction(transaction, 'Claim Voting Rewards')
+            if (rewardTransaction != null) {
+              transactions.push(rewardTransaction)
+            }
+            continue
+          }
+
+          // Unknown transactions, but we still can have fee
           if (transaction.cost.fee === 0) {
             continue
           }

@@ -30,6 +30,8 @@ export interface TronTransaction {
   ownerAddress: string
   toAddress: null | string
   cost: TransactionCost
+  contractType?: number
+  amount?: string
 }
 
 export interface Transfer {
