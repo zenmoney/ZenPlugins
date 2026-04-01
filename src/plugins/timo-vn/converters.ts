@@ -64,7 +64,7 @@ export function convertTransaction (apiTransaction: unknown, account: Account): 
 
   return {
     hold: getString(apiTransaction, 'txnType') !== 'TRANSACTION',
-    date: timoDateToIso(getString(apiTransaction, 'txnTime')),
+    date: timoDateToIso(getString(apiTransaction, 'transactionTime')),
     movements: [
       {
         id: getOptString(apiTransaction, 'refNo') ?? null,
@@ -93,8 +93,10 @@ function parseAmount (data: unknown, path: string): Amount {
 }
 
 function timoDateToIso (timoDate: string): Date {
-  const [day, month, year] = timoDate.split(' ')[0].split('/').map(Number)
-  const [hours, minutes, seconds] = timoDate.split(' ')[1].split(':').map(Number)
-  const isoDate = new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds))
+  const [day, month, year] = timoDate.split(' ')[0].split('/')
+  const [hours, minutes, seconds] = timoDate.split(' ')[1].split(':')
+  const timeZone = timoDate.split(' ')[2]
+  const formattedStr = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${timeZone}`
+  const isoDate = new Date(formattedStr)
   return isoDate
 }

@@ -8,12 +8,13 @@ describe('convertTransaction', () => {
         txnType: 'OutgoingTransfer',
         txnTime: '02/11/2024 16:27:00',
         txnAmount: -450000,
+        transactionTime: '02/11/2024 16:27:00 +0700',
         timoDesc2: 'Sent from my Timo'
       },
       { id: '9021808997832', instrument: 'VND' },
       {
         hold: true,
-        date: new Date('2024-11-02T16:27:00.000Z'),
+        date: new Date('2024-11-02T16:27:00+0700'),
         movements: [
           {
             id: null,
