@@ -300,7 +300,8 @@ export enum TransactionType {
 export enum OperationType {
   ConversionRu = 'Безналичная конвертация',
   ConversionKa = 'უნაღდო კონვერტაცია',
-  ConversionEn = 'Currency conversion'
+  ConversionEn = 'Currency conversion',
+  ExchangeEn = 'Currency exchange'
 }
 
 // Отображение транзакции для пользователя. Меняется при смене языка

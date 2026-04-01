@@ -1,4 +1,4 @@
-import { Account, AccountType, Amount, ExtendedTransaction } from '../../types/zenmoney'
+import { Account, AccountType, AccountReferenceById, Amount, ExtendedTransaction } from '../../types/zenmoney'
 import { getNumber, getOptString, getString, getBoolean } from '../../types/get'
 import {
   Account as CredoAccount,
@@ -147,7 +147,7 @@ export function convertTransaction (apiTransaction: CredoTransaction, account: A
   const transactionType = getOptString(apiTransaction, 'transactionType')
   const operationDateTime = getString(apiTransaction, 'operationDateTime')
   const operationType = getOptString(apiTransaction, 'operationType') ?? ''
-  const isConversion = operationType === OperationType.ConversionKa || operationType === OperationType.ConversionEn || operationType === OperationType.ConversionRu
+  const isConversion = operationType === OperationType.ConversionKa || operationType === OperationType.ConversionEn || operationType === OperationType.ConversionRu || operationType === OperationType.ExchangeEn
   const isMovement = transactionType === TransactionType.Transferbetweenownaccounts || transactionType === TransactionType.CurrencyExchange || isConversion
   const description = getOptString(apiTransaction, 'description') ?? ''
   const strippedDescription = strippDescription(description)
@@ -232,6 +232,73 @@ export function strippDescription (description: string): string {
     return valuebleDescription.split(' ').slice(0, -3).join(' ')
   }
   return valuebleDescription
+}
+
+const CONVERSION_PATTERNS = [
+  OperationType.ConversionEn,
+  OperationType.ConversionKa,
+  OperationType.ConversionRu,
+  OperationType.ExchangeEn
+] as string[]
+
+const CONVERSION_GROUP_PREFIX = 'conversion_'
+
+function hasTransferGroupKey (t: ExtendedTransaction): boolean {
+  return t.groupKeys?.some(k => k !== null && !k.startsWith(CONVERSION_GROUP_PREFIX)) === true
+}
+
+function isConversionComment (comment: string | null): boolean {
+  if (comment === null) return false
+  return CONVERSION_PATTERNS.some(p => comment.includes(p))
+}
+
+/**
+ * Foreign currency purchases generate two API transactions at the same timestamp:
+ * a currency exchange (credit/debit with no merchant) and the actual card payment
+ * (with merchant info). This creates duplicate entries in the expense list.
+ *
+ * When both exist on the same account at the exact same timestamp, we drop the
+ * conversion and update the payment's sum to reflect the true cost (including
+ * the FX spread). The payment keeps its merchant name and invoice.
+ */
+export function mergeForeignCurrencyPairs (transactions: ExtendedTransaction[]): ExtendedTransaction[] {
+  const groups = new Map<string, ExtendedTransaction[]>()
+
+  for (const t of transactions) {
+    if (hasTransferGroupKey(t)) continue
+    const account = t.movements[0].account as AccountReferenceById
+    const accountId = account.id
+    const holdFlag = t.hold === true ? 'h' : 'p'
+    const key = accountId + '_' + String(t.date.getTime()) + '_' + holdFlag
+    const group = groups.get(key) ?? []
+    group.push(t)
+    groups.set(key, group)
+  }
+
+  const dropped = new Set<ExtendedTransaction>()
+
+  for (const group of groups.values()) {
+    if (group.length !== 2) continue
+
+    const conversions = group.filter(t => t.merchant === null && isConversionComment(t.comment))
+    const payments = group.filter(t => t.merchant !== null)
+
+    if (conversions.length !== 1 || payments.length !== 1) continue
+
+    const conversion = conversions[0]
+    const payment = payments[0]
+    const conversionSum = conversion.movements[0].sum ?? 0
+    const paymentSum = payment.movements[0].sum ?? 0
+
+    // Only merge when the amounts have opposite signs (credit + debit pair)
+    if (Math.sign(conversionSum) === Math.sign(paymentSum)) continue
+
+    // Preserve the payment's original direction, use the conversion's magnitude
+    payment.movements[0].sum = Math.sign(paymentSum) * Math.abs(conversionSum)
+    dropped.add(conversion)
+  }
+
+  return transactions.filter(t => !dropped.has(t))
 }
 
 export function getAmountFromDescription (description: string | undefined, sumSign: number): Amount | null {

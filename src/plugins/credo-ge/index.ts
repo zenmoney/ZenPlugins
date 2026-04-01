@@ -1,7 +1,7 @@
 import { Account, ScrapeFunc, Transaction } from '../../types/zenmoney'
 import { fetchAccounts, fetchTransactions, login } from './api'
 import { fetchCards, fetchDeposits, fetchLoans, fetchBlockedTransactions, getTransactionDetail } from './fetchApi'
-import { convertAccounts, convertTransaction, getAccountNumberToAccountMapping } from './converters'
+import { convertAccounts, convertTransaction, getAccountNumberToAccountMapping, mergeForeignCurrencyPairs } from './converters'
 import { Auth, Preferences } from './models'
 import { getOptNumber } from '../../types/get'
 
@@ -56,5 +56,5 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
     }
   }
 
-  return { accounts, transactions }
+  return { accounts, transactions: mergeForeignCurrencyPairs(transactions) }
 }
