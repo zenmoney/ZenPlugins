@@ -1,9 +1,10 @@
-import { Account, ScrapeFunc, Transaction } from '../../types/zenmoney'
+import { Account, ExtendedTransaction, ScrapeFunc, Transaction } from '../../types/zenmoney'
 import { fetchAccounts, fetchTransactions, login } from './api'
 import { fetchCards, fetchDeposits, fetchLoans, fetchBlockedTransactions, getTransactionDetail } from './fetchApi'
 import { convertAccounts, convertTransaction, getAccountNumberToAccountMapping } from './converters'
-import { Auth, Preferences } from './models'
+import { Auth, Preferences, Transaction as CredoTransaction } from './models'
 import { getOptNumber } from '../../types/get'
+import { deduplicateTransactions } from './deduplicateTransactions'
 
 export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, toDate }) => {
   toDate = toDate ?? new Date()
@@ -11,7 +12,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
   ZenMoney.setData('auth', session.auth)
   ZenMoney.saveData()
 
-  const transactions: Transaction[] = []
+  const transactions: Array<{ apiTransaction: CredoTransaction, transaction: ExtendedTransaction }> = []
 
   const credoAccounts = await fetchAccounts(session)
   const credoCards = await fetchCards(session)
@@ -44,17 +45,25 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
     console.log('>>> Getting transactions for account: ' + (account.id ?? ''))
     const apiTransactions = await fetchTransactions(session, account.id, fromDate)
     for (const apiTransaction of apiTransactions) {
-      transactions.push(convertTransaction(apiTransaction, account))
+      transactions.push({
+        apiTransaction,
+        transaction: convertTransaction(apiTransaction, account)
+      })
     }
     console.log('>>> converting blocked transactions')
     const transactionsBlockedForAccount = blockedTransactionsByAccountId.get(account.id)
     if (transactionsBlockedForAccount != null) {
       console.log(`>> found ${getOptNumber(transactionsBlockedForAccount, 'length') ?? 'undefined'} blocked transactions for account ${account.id}`)
       for (const blockedTransaction of transactionsBlockedForAccount) {
-        transactions.push(convertTransaction(blockedTransaction, account))
+        transactions.push({
+          apiTransaction: blockedTransaction,
+          transaction: convertTransaction(blockedTransaction, account)
+        })
       }
     }
   }
 
-  return { accounts, transactions }
+  const deduplicatedTransactions: Transaction[] = deduplicateTransactions(transactions)
+
+  return { accounts, transactions: deduplicatedTransactions }
 }

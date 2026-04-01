@@ -316,6 +316,7 @@ export enum OperationType {
 export interface Transaction {
   credit: number | null
   currency: string // USD, INR, RUB, EUR, ...
+  operationId?: string | null
   transactionType: TransactionType | null //  can be null on Accrued interest payment
   transactionId: string // on blocked transaction differs from all others
   debit: number | null
