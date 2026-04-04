@@ -12,7 +12,7 @@ import { Auth, GetAccountTransactionsResponse, LegalEntitiesResponse, Preference
 export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, toDate }) => {
   toDate = toDate ?? new Date()
   const authTicket = await getTicket(preferences)
-  const legalEntitiesResponse: LegalEntitiesResponse = await getLegalEntities(authTicket)
+  const legalEntitiesResponse: LegalEntitiesResponse = await getLegalEntities(authTicket, preferences.login)
   const legalEntities = legalEntitiesResponse.PrincipalData
   const activeEntities = legalEntities.filter(legalEntity => legalEntity.IsActive)
 
