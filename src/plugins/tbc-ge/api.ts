@@ -90,6 +90,16 @@ function generateDeviceData (deviceInfo: DeviceInfo): DeviceData {
   return DeviceData.fromDeviceInfo(deviceInfo, ZenMoney.device.os.name, ZenMoney.device.os.version)
 }
 
+function getOtpIdForDevice (loginInfo: LoginResponse, device: OtpDeviceV2): string {
+  if (loginInfo.signatures != null) {
+    const match = loginInfo.signatures.find(s => s.type === device)
+    if (match?.otpId != null && match.otpId !== '') {
+      return match.otpId
+    }
+  }
+  return 'NONE'
+}
+
 function getPrioritizedDevice (devices: OtpDeviceV2[]): OtpDeviceV2 {
   if (devices.includes(OtpDeviceV2.VASCO)) {
     return OtpDeviceV2.VASCO // assume that Vasco is TBC PASS
@@ -215,13 +225,13 @@ WxdnLbK6zKx6+4WL9qWhGu6R+7HNPAaKOb7KXEwjV2ekr6FVZneKRFe/XivMk66O
     loginInfo = await fetchLoginByPasswordV2({ username: login, password, deviceInfo, deviceData })
     if (loginInfo.secondPhaseRequired) {
       otpDevice = getOtpDevice(loginInfo, true)
-      cookies = await fetchCertifyLoginByOtpDeviceV2(await askOtpCodeV2(getOtpLoginCodeTextV2(otpDevice)), loginInfo.transactionId, otpDevice)
+      cookies = await fetchCertifyLoginByOtpDeviceV2(await askOtpCodeV2(getOtpLoginCodeTextV2(otpDevice)), loginInfo.transactionId, otpDevice, getOtpIdForDevice(loginInfo, otpDevice))
     } else {
       otpDevice = getOtpDevice(loginInfo)
       deviceTrusted = true
       cookies = loginInfo.cookies
     }
-    const registrationId = await fetchRegisterDeviceV2({ deviceName: deviceInfo.manufacturer, passcode: PASSCODE, deviceId: deviceInfo.deviceId })
+    const registrationId = await fetchRegisterDeviceV2({ deviceName: deviceInfo.manufacturer, passcode: PASSCODE, deviceId: deviceInfo.deviceId }, cookies)
     session = {
       cookies,
       auth: {
@@ -242,7 +252,7 @@ WxdnLbK6zKx6+4WL9qWhGu6R+7HNPAaKOb7KXEwjV2ekr6FVZneKRFe/XivMk66O
     }
     if (loginInfo.secondPhaseRequired) {
       otpDevice = getOtpDevice(loginInfo, true)
-      cookies = await fetchCertifyLoginByOtpDeviceV2(await askOtpCodeV2(getOtpLoginCodeTextV2(otpDevice)), loginInfo.transactionId, otpDevice)
+      cookies = await fetchCertifyLoginByOtpDeviceV2(await askOtpCodeV2(getOtpLoginCodeTextV2(otpDevice)), loginInfo.transactionId, otpDevice, getOtpIdForDevice(loginInfo, otpDevice))
     } else {
       otpDevice = getOtpDevice(loginInfo)
       deviceTrusted = true

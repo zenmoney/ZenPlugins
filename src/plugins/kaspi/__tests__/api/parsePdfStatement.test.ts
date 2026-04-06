@@ -3392,3 +3392,49 @@ it.each([
 ])('parse pdfString to raw account with transactions', (pdfString: string, result: unknown) => {
   expect(parseSinglePdfString(pdfString, '03474da2-3644-47b2-895a-2384b6c935ad')).toEqual(result)
 })
+
+it('parses foreign purchase with spaced original amount', () => {
+  const pdfString = 'АО «Kaspi Bank», БИК CASPKZKA, www.kaspi.kz\n' +
+    'ВЫПИСКА\n' +
+    'по Kaspi Gold за период с 05.03.26 по 05.04.26\n' +
+    'LastnameНомер карты:*0001\n' +
+    'FirstnameНомер счета:KZ000000000000000001\n' +
+    'Доступно на 05.04.26:0,00 ₸Валюта счета:тенге\n' +
+    'Краткое содержание операций по карте:\n' +
+    'Доступно на 05.03.260,00 ₸\n' +
+    'Пополнения+ 13 950,00 ₸\n' +
+    'Переводы- 0,00 ₸\n' +
+    'Покупки- 13 950,00 ₸\n' +
+    'Снятия- 0,00 ₸\n' +
+    'Разное+ 0,00 ₸\n' +
+    'Доступно на 05.04.260,00 ₸\n' +
+    'ДатаСуммаОперация       Детали\n' +
+    '19.03.26 - 13 950,00 ₸    Покупка       Тест Т.\n' +
+    '(- 2 500,00 KGS)\n'
+
+  expect(parseSinglePdfString(pdfString, 'kgs-invoice-test')).toEqual({
+    account: {
+      balance: 0,
+      id: 'KZ000000000000000001',
+      instrument: 'KZT',
+      title: 'Kaspi Gold *0001',
+      date: '2026-04-05T00:00:00.000',
+      type: 'gold',
+      startDate: null,
+      startBalance: null,
+      capitalization: null,
+      endDate: null
+    },
+    transactions: [
+      {
+        hold: false,
+        date: '2026-03-19T00:00:00.000',
+        originalAmount: '(- 2 500,00 KGS)',
+        amount: '- 13 950,00 ',
+        description: 'Тест Т.',
+        statementUid: 'kgs-invoice-test',
+        originString: '19.03.26 - 13 950,00 ₸    Покупка       Тест Т.\n(- 2 500,00 KGS)'
+      }
+    ]
+  })
+})

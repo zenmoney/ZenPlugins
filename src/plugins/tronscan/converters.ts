@@ -77,6 +77,32 @@ export function convertTokenTransaction (transfer: Transfer, wallet: string, tra
   return tokenTransaction
 }
 
+export function convertPlainTransaction (transaction: TronTransaction, comment: string): Transaction | null {
+  const amount = Number(transaction.amount ?? 0) / (10 ** 6)
+
+  if (amount < 0.01) {
+    return null
+  }
+
+  const accountId = getAccountId(transaction.ownerAddress, '_')
+
+  return {
+    hold: false,
+    date: new Date(transaction.timestamp),
+    movements: [
+      {
+        id: transaction.hash,
+        account: { id: accountId },
+        sum: amount,
+        fee: 0,
+        invoice: null
+      }
+    ],
+    merchant: null,
+    comment
+  }
+}
+
 export function getCostTransaction (transaction: TronTransaction): Transaction {
   const accountId = getAccountId(transaction.ownerAddress, '_')
   const sum = Number(transaction.cost.fee) / (10 ** 6) * -1

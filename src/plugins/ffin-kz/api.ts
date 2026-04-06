@@ -49,6 +49,133 @@ function parseCardNumber (text: string): string {
   return text.match(/Номер карты:\s*\*\*(\d{4})/)?.[1] ?? ''
 }
 
+const cardStatementOperationPrefixes = [
+  'Сумма в обработке',
+  'Между своими счетами',
+  'Вознаграждение',
+  'Replenishment',
+  'Withdrawals',
+  'Пополнение',
+  'Перевод',
+  'Покупка',
+  'Платеж',
+  'Другое',
+  'Снятие',
+  'Возврат',
+  'Толықтыру',
+  'Ақша алу'
+]
+
+const escapedCardStatementOperationPrefixes = [...cardStatementOperationPrefixes]
+  .sort((left, right) => right.length - left.length)
+  .map((prefix) => prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+
+function normalizeStatementArtifacts (text: string): string {
+  return text
+    .replace(/\bNo(?=SRV-)/g, '№')
+    .replace(/\bNo(?=\s+KZ[A-Z0-9]+)/g, '№')
+}
+
+function extractCardTransactionDescription (tail: string): string | null {
+  const normalizedTail = normalizeStatementArtifacts(tail.replace(/\s+/g, ' ').trim())
+  if (normalizedTail === '') {
+    return null
+  }
+
+  const operationPrefix = cardStatementOperationPrefixes.find((prefix) =>
+    new RegExp(`^${prefix}(?:\\s|$)`, 'i').test(normalizedTail)
+  )
+
+  if (operationPrefix == null) {
+    return normalizedTail
+  }
+
+  const description = normalizedTail.slice(operationPrefix.length).trim()
+  const cleanedDescription = description
+    .replace(/\s*Сумма в обработке\.\s*Банк ожидает подтверждения от платежной системы\s*$/i, '')
+    .trim()
+  return cleanedDescription === '' ? operationPrefix : cleanedDescription
+}
+
+function normalizeCardTransactionLine (line: string): string {
+  const normalizedLine = normalizeStatementArtifacts(line
+    .replace(/([а-яА-Яa-zA-Z.,])\n([а-яА-Яa-zA-Z])/g, '$1 $2')
+    .replace(/-\n\s*/g, '-')
+    .replace(/\n(?=(Плательщик:|Получатель:|Назначение:|Вкладчик:))/g, ' ')
+    .replace(/\n/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim())
+
+  const operationPattern = escapedCardStatementOperationPrefixes.join('|')
+  const reversedLineRegexp = new RegExp(
+    `^(\\d{2}\\.\\d{2}\\.\\d{4})\\s+([A-Z]{3})\\s+(${operationPattern})\\s+(.+?)\\s+([+-]\\s*[\\d.,]+)\\s*([₸$€£¥₺₽])\\s*(.*)$`,
+    'i'
+  )
+  const reversedMatch = normalizedLine.match(reversedLineRegexp)
+  if (reversedMatch == null) {
+    return normalizedLine
+  }
+
+  const [, date, currencyCode, operation, beforeAmount, amount, currencySymbol, afterAmount] = reversedMatch
+  const description = `${beforeAmount} ${afterAmount}`.replace(/\s{2,}/g, ' ').trim()
+  return `${date} ${amount} ${currencySymbol} ${currencyCode} ${operation} ${description}`.trim()
+}
+
+function moveMisplacedTailToNextLine (currentLine: string, nextLine: string): { currentLine: string, nextLine: string } {
+  const currentDate = currentLine.match(/^(\d{2}\.\d{2}\.\d{4})/)?.[1]
+  const nextDate = nextLine.match(/^(\d{2}\.\d{2}\.\d{4})/)?.[1]
+  if (currentDate == null || currentDate !== nextDate) {
+    return { currentLine, nextLine }
+  }
+  if (!/^\d{2}\.\d{2}\.\d{4}\s+-/.test(currentLine) || !/^\d{2}\.\d{2}\.\d{4}\s+\+/.test(nextLine)) {
+    return { currentLine, nextLine }
+  }
+
+  const misplacedMarkers = [
+    ' Пополнение. Выплата процентов по вкладу ',
+    ' Плательщик:',
+    ' Выплата вклада по Договору ',
+    ' Прием вклада по договору '
+  ]
+  const misplacedIndex = misplacedMarkers
+    .map((marker) => currentLine.indexOf(marker))
+    .filter((index) => index > -1)
+    .sort((left, right) => left - right)[0]
+
+  if (misplacedIndex == null) {
+    return { currentLine, nextLine }
+  }
+
+  const tail = currentLine.slice(misplacedIndex).trim()
+  const cleanedCurrentLine = currentLine.slice(0, misplacedIndex).trim()
+  const nextLineMatch = nextLine.match(/^(.*?\s[A-Z]{3}\s+(?:Пополнение|Другое|Перевод|Вознаграждение))(?:\s+(.*))?$/)
+  if (nextLineMatch == null) {
+    return { currentLine, nextLine }
+  }
+
+  const nextLineHeader = nextLineMatch[1]
+  const nextLineRest = nextLineMatch[2]?.trim()
+  const rebuiltNextLine = [nextLineHeader, tail, nextLineRest].filter(Boolean).join(' ').replace(/\s{2,}/g, ' ').trim()
+
+  return {
+    currentLine: normalizeStatementArtifacts(cleanedCurrentLine),
+    nextLine: normalizeStatementArtifacts(rebuiltNextLine)
+  }
+}
+
+function normalizePreparedTransactionLines (lines: string[]): string[] {
+  const normalizedLines = [...lines]
+  for (let i = 0; i < normalizedLines.length - 1; i += 1) {
+    const currentLine = normalizedLines[i]
+    const nextLine = normalizedLines[i + 1]
+    if (currentLine == null || nextLine == null) continue
+    const movedLines = moveMisplacedTailToNextLine(currentLine, nextLine)
+    normalizedLines[i] = movedLines.currentLine
+    normalizedLines[i + 1] = movedLines.nextLine
+  }
+  return normalizedLines
+}
+
 function parseTransactions (text: string, statementUid: string): StatementTransaction[] {
   // Регулярка для строк транзакций: дата, сумма (с + или -), валюта (символ и/или код), далее описание
   const baseRegexp = /^(\d{2}\.\d{2}\.\d{4}\s*[+-]\s*[\d.,]+\s*[₸$€£¥₺₽]?\s*[A-Z]{3} .+)$/gm
@@ -60,20 +187,17 @@ function parseTransactions (text: string, statementUid: string): StatementTransa
   }
 
   return transactionStrings.map((str) => {
-    const match = str.match(/^(\d{2}\.\d{2}\.\d{4})\s?([-+]\s?[\d.,]+)\s?([₸$€£¥₺₽])?\s?([A-Z]{3})\s?([а-яА-ЯA-Za-z\s"“”'‘’]+)?\s?(.+)?$/)
-    // const currency = match?.[3] ?? ''
+    const match = str.match(/^(\d{2}\.\d{2}\.\d{4})\s?([-+]\s?[\d.,]+)\s?([₸$€£¥₺₽])?\s?([A-Z]{3})\s?(.+)$/)
     const currencyCode = match?.[4] ?? ''
 
     assert(match !== null, `Can't parse transaction: ${str}`)
 
     const date = parseDateFromPdfText(match[1])
     const amount = match[2] !== undefined ? match[2].replace(/\s/g, '').replace(',', '') : '' // Убираем пробелы и запятые
-    let description = `${match[5] !== undefined ? match[5] : ''}${match[6] !== undefined ? match[6] : ''}`.trim() // Объединение полей для полного описания
+    const rawDescription = extractCardTransactionDescription(match[5])
+    const description = rawDescription?.replace(/["'“”‘’]/g, '').trim() ?? null
 
-    // Удаление ключевых слов, таких как "Покупка", и всех кавычек
-    description = description.replace(/(Покупка|Пополнение|Перевод|Возврат)/gi, '').replace(/["'“”‘’]/g, '').trim()
-
-    const originString = match[0]
+    const originString = normalizeStatementArtifacts(match[0])
 
     return {
       hold: false,
@@ -191,7 +315,7 @@ export function splitCardStatements (text: string): string[] {
   return statements.length > 0 ? statements : [text]
 }
 
-function prepareCardStatementText (text: string): string {
+export function prepareCardStatementText (text: string): string {
   // Разделяем на части: Дата Сумма Валюта Операция Детали
   // Ищем первую строку, где начинается таблица с транзакциями (по заголовку "Дата Сумма Валюта Операция Детали")
   const splitPoint = text.search(/^Дата\s+Сумма\s+Валюта\s+Операция\s+Детали/m)
@@ -208,18 +332,23 @@ function prepareCardStatementText (text: string): string {
     .replace(/Подлинность справки можете проверить\nпросканировав QR-код или перейдите по ссылке:\nhttps:\/\/bankffin\.kz\/ru\/check-receipt.*/g, '')
     .replace(/^Дата\s+Сумма\s+Валюта\s+Операция\s+Детали\s*/gm, '')
 
-  const transactionLines = cleanedTransactions
-    .split(/(?=\d{2}\.\d{2}\.\d{4}\s*[-+]\s*[\d.,]+\s*[₸$€£¥₺₽]?)/) // Разделяем по дате и сумме
-    .map(line =>
-      line
-        .replace(/([а-яА-Яa-zA-Z.,])\n([а-яА-Яa-zA-Z])/g, '$1 $2') // Удаление переносов строк внутри деталей
-        .replace(/-\n\s*/g, '-') // Удаление переноса строки после дефиса
-        .replace(/\n(?=(Плательщик:|Получатель:|Назначение:|Вкладчик:))/g, ' ') // Объединение строк, если следующая строка начинается с ключевым словом
-        .replace(/\n/g, ' ') // Удаление всех остальных переносов строк
-        .replace(/\s{2,}/g, ' ') // Удаление двойных пробелов
-        .trim()
-    )
-    .filter(line => line.length > 0)
+  const flattenedTransactions = cleanedTransactions
+    .replace(/([а-яА-Яa-zA-Z.,])\n([а-яА-Яa-zA-Z])/g, '$1 $2')
+    .replace(/-\n\s*/g, '-')
+    .replace(/\n(?=(Плательщик:|Получатель:|Назначение:|Вкладчик:))/g, ' ')
+    .replace(/\n/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+
+  const operationPattern = escapedCardStatementOperationPrefixes.join('|')
+  const transactionStartRegexp = new RegExp(
+    `(?=\\d{2}\\.\\d{2}\\.\\d{4}\\s*(?:[-+]|[A-Z]{3}\\s+(?:${operationPattern})))`
+  )
+
+  const transactionLines = normalizePreparedTransactionLines(flattenedTransactions
+    .split(transactionStartRegexp)
+    .map(normalizeCardTransactionLine)
+    .filter(line => line.length > 0))
   const transactionsText = transactionLines.join('\n')
 
   return `${header}\n\n${transactionsText}`
@@ -303,10 +432,10 @@ export function parseDepositPdfString (text: string, statementUid?: string): { a
   const rowRegexp = /(?:^|\n)(\d{2}\.\d{2}\.\d{4})\s+([\s\S]*?)(?=(?:\n\d{2}\.\d{2}\.\d{4}\b)|$)/g
   for (const match of cleanedTableText.matchAll(rowRegexp)) {
     const [, dateStr, body] = match
-    const normalizedBody = body
+    const normalizedBody = normalizeStatementArtifacts(body
       .replace(/Подлинность справки можете проверить[\s\S]*$/i, '')
       .replace(/\s+/g, ' ')
-      .trim()
+      .trim())
     const sanitizedBody = normalizedBody
       .replace(/[−–—]/g, '-')
       .replace(/[＋]/g, '+')
@@ -341,7 +470,7 @@ export function parseDepositPdfString (text: string, statementUid?: string): { a
       amount: normalizedAmount,
       description: description === '' ? null : description,
       statementUid: uid,
-      originString: `${dateStr} ${normalizedBody}`
+      originString: normalizeStatementArtifacts(`${dateStr} ${normalizedBody}`)
     })
   }
 
@@ -385,10 +514,7 @@ export async function parsePdfStatements (): Promise<null | Array<{ account: Acc
       throw new TemporaryError('Максимальный размер файла - 1 мб')
     }
   }
-  const pdfStrings = await Promise.all(blob.map(async (blob) => {
-    const { text } = await parsePdf(blob)
-    return text
-  }))
+  const pdfStrings = await readPdfTextsSequentially(blob)
   const result = []
   for (const textItem of pdfStrings) {
     if (!/Фридом Банк Казахстан/i.test(textItem)) {
@@ -404,4 +530,16 @@ export async function parsePdfStatements (): Promise<null | Array<{ account: Acc
     }
   }
   return result
+}
+
+export async function readPdfTextsSequentially (
+  blobs: Array<{ arrayBuffer: () => Promise<ArrayBuffer> }>,
+  parsePdfFn: typeof parsePdf = parsePdf
+): Promise<string[]> {
+  const pdfStrings: string[] = []
+  for (const pdfBlob of blobs) {
+    const { text } = await parsePdfFn(pdfBlob)
+    pdfStrings.push(text)
+  }
+  return pdfStrings
 }

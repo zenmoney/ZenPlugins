@@ -204,6 +204,102 @@ it.each([
   [
     {
       hold: false,
+      date: '2026-03-23T00:00:00.000',
+      originalAmount: null,
+      amount: '- 27 211,00 ',
+      description: 'Перевод Оплата Kaspi Red',
+      statementUid: '71db6492-cf05-4d52-a730-5894a0d89f2f',
+      originString: '23.03.26 - 27 211,00 ₸    Перевод       Оплата Kaspi Red\n'
+    },
+    {
+      statementUid: '71db6492-cf05-4d52-a730-5894a0d89f2f',
+      transaction: {
+        comment: null,
+        movements: [
+          {
+            id: null,
+            account: {
+              id: 'KZ11111'
+            },
+            invoice: null,
+            sum: -27211,
+            fee: 0
+          },
+          {
+            id: null,
+            account: {
+              type: AccountType.ccard,
+              instrument: 'KZT',
+              company: null,
+              syncIds: null
+            },
+            invoice: null,
+            sum: 27211,
+            fee: 0
+          }
+        ],
+        hold: false,
+        date: new Date('2026-03-23T00:00:00.000'),
+        merchant: {
+          fullTitle: 'Оплата Kaspi Red',
+          mcc: null,
+          location: null
+        }
+      }
+    },
+    null
+  ],
+  [
+    {
+      hold: false,
+      date: '2026-03-23T00:00:00.000',
+      originalAmount: null,
+      amount: '- 109 990,00 ',
+      description: 'Перевод Оплата Kaspi Кредита',
+      statementUid: '60e44b42-114c-4ad8-9fd6-df658192e280',
+      originString: '23.03.26 - 109 990,00 ₸    Перевод       Оплата Kaspi Кредита\n'
+    },
+    {
+      statementUid: '60e44b42-114c-4ad8-9fd6-df658192e280',
+      transaction: {
+        comment: null,
+        movements: [
+          {
+            id: null,
+            account: {
+              id: 'KZ11111'
+            },
+            invoice: null,
+            sum: -109990,
+            fee: 0
+          },
+          {
+            id: null,
+            account: {
+              type: AccountType.ccard,
+              instrument: 'KZT',
+              company: null,
+              syncIds: null
+            },
+            invoice: null,
+            sum: 109990,
+            fee: 0
+          }
+        ],
+        hold: false,
+        date: new Date('2026-03-23T00:00:00.000'),
+        merchant: {
+          fullTitle: 'Оплата Kaspi Кредита',
+          mcc: null,
+          location: null
+        }
+      }
+    },
+    null
+  ],
+  [
+    {
+      hold: false,
       date: '2025-12-05T00:00:00.000',
       originalAmount: null,
       amount: '+ 12 790,20 ',
@@ -281,6 +377,45 @@ it.each([
         ],
         merchant: {
           fullTitle: 'UBER *TRIP HELP.UBER.COM',
+          mcc: null,
+          location: null
+        }
+      }
+    },
+    null
+  ],
+  [
+    {
+      hold: false,
+      date: '2026-03-19T00:00:00.000',
+      originalAmount: '(- 2 500,00 KGS)',
+      amount: '- 13 950,00 ',
+      description: 'ДИАНА Ч.',
+      statementUid: 'e94f8927-8059-4a6e-a974-f731446f1307',
+      originString: '19.03.26 - 13 950,00 ₸    Покупка       ДИАНА Ч.\n(- 2 500,00 KGS)'
+    },
+    {
+      statementUid: 'e94f8927-8059-4a6e-a974-f731446f1307',
+      transaction: {
+        hold: false,
+        date: new Date('2026-03-19T00:00:00.000'),
+        comment: null,
+        movements: [
+          {
+            id: null,
+            account: {
+              id: 'KZ11111'
+            },
+            invoice: {
+              sum: -2500,
+              instrument: 'KGS'
+            },
+            sum: -13950,
+            fee: 0
+          }
+        ],
+        merchant: {
+          fullTitle: 'ДИАНА Ч.',
           mcc: null,
           location: null
         }

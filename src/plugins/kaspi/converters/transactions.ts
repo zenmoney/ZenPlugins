@@ -24,9 +24,15 @@ const transactionTypeStrings = {
   CASH: ['Снятие', 'Withdrawals', 'Ақша алу']
 }
 
+function isKaspiCreditTransfer (text: string): boolean {
+  return /Оплата Kaspi (Red|Кредита)/i.test(text)
+}
+
 function parseTransactionType (text: string): string | null {
   let type = null
-  if (transactionTypeStrings.OUTCOME.find(str => text.includes(str)) != null || text.includes('плата')) {
+  if (isKaspiCreditTransfer(text)) {
+    type = transactionType.TRANSFER
+  } else if (transactionTypeStrings.OUTCOME.find(str => text.includes(str)) != null || text.includes('плата')) {
     type = transactionType.OUTCOME
   } else if (transactionTypeStrings.TRANSFER.find(str => text.includes(str) || /(\w|[^\d\s])+\s[^\d\s]\./.test(text)) != null) {
     type = transactionType.TRANSFER
@@ -69,6 +75,9 @@ function isTransferToPerson (text: string | null): boolean {
 }
 
 export function convertPdfStatementTransaction (rawTransaction: StatementTransaction, rawAccount: ConvertedAccount): ConvertedTransaction | null {
+  if (rawTransaction.amount.trim() === '') {
+    return null
+  }
   const invoice = rawTransaction.originalAmount !== null
     ? {
         sum: parseFloat(rawTransaction.originalAmount.replace(',', '.').replace(/[^\d.-]/g, '')),
