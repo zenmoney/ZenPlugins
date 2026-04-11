@@ -1,4 +1,4 @@
-import { Jimp } from 'jimp'
+import { Image } from 'image-js'
 import { delay, generateRandomString } from '../../common/utils'
 import { InvalidLoginOrPasswordError } from '../../errors'
 import {
@@ -56,16 +56,12 @@ async function blobToBase64WithResolution (blob, targetWidth, targetHeight) {
   console.log('Buffer.from begins')
   const buffer = Buffer.from(await blob.arrayBuffer())
   console.log('fromBuffer begin')
-  const image = await Jimp.fromBuffer(buffer)
+  const image = await Image.load(buffer)
   console.log('fromBuffer complete')
-  const resizedImage = image.resize({ w: targetWidth, h: targetHeight })
+  const resizedImage = image.resize({ width: targetWidth, height: targetHeight })
   console.log('resize complete')
-  const base64String = await resizedImage.getBase64('image/jpeg')
+  const base64String = `data:image/jpeg;base64,${resizedImage.toBase64('image/jpeg')}`
   console.log('getBase64 complete')
-  // const image = await Image.load(buffer)
-  // const resizedImage = image.resize({ width: targetWidth, height: targetHeight })
-  // const base64String = `data:image/jpeg;base64,${resizedImage.toBase64('image/jpeg')}`
-  // return base64String
   return base64String
 }
 
