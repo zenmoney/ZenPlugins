@@ -1,6 +1,6 @@
 import { adjustTransactions } from '../../common/transactionGroupHandler'
 import { ZPAPIError } from '../../errors'
-import { fetchAccounts, fetchTransactions, generateDevice, login, isLikelyAuthGateError } from './api'
+import { fetchAccounts, fetchTransactions, generateDevice, login, isLikelyAuthGateError, tryInteractiveWebBootstrap } from './api'
 import { convertAccounts, convertTransaction } from './converters'
 
 function getFallbackFromDate (preferences, toDate) {
@@ -29,6 +29,25 @@ function rethrowAuthGate (error, authState, isInBackground) {
   throw error
 }
 
+async function withInteractiveBootstrapRetry (fn, authState, isInBackground) {
+  try {
+    return await fn()
+  } catch (error) {
+    if (!isInBackground &&
+      authState?.state === 'LOGONOTP' &&
+      isLikelyAuthGateError(error) &&
+      await tryInteractiveWebBootstrap()) {
+      try {
+        return await fn()
+      } catch (retryError) {
+        rethrowAuthGate(retryError, authState, isInBackground)
+      }
+    }
+
+    rethrowAuthGate(error, authState, isInBackground)
+  }
+}
+
 export async function scrape ({ preferences, fromDate, toDate, isInBackground, isFirstRun }) {
   ZenMoney.locale = 'he'
 
@@ -47,12 +66,7 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground, i
   const seenAccountIds = new Set()
   const transactions = []
 
-  let apiAccounts
-  try {
-    apiAccounts = await fetchAccounts()
-  } catch (error) {
-    rethrowAuthGate(error, authState, isInBackground)
-  }
+  const apiAccounts = await withInteractiveBootstrapRetry(async () => await fetchAccounts(), authState, isInBackground)
 
   for (const { mainProduct, account } of convertAccounts(apiAccounts)) {
     if (seenAccountIds.has(account.id)) {
@@ -65,12 +79,11 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground, i
       continue
     }
 
-    let apiTransactions
-    try {
-      apiTransactions = await fetchTransactions(mainProduct, fromDate, toDate)
-    } catch (error) {
-      rethrowAuthGate(error, authState, isInBackground)
-    }
+    const apiTransactions = await withInteractiveBootstrapRetry(
+      async () => await fetchTransactions(mainProduct, fromDate, toDate),
+      authState,
+      isInBackground
+    )
 
     for (const apiTransaction of apiTransactions) {
       const transaction = convertTransaction(apiTransaction, account)

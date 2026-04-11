@@ -2,8 +2,22 @@ import { flatten } from 'lodash'
 import qs from 'querystring'
 import { InvalidPreferencesError, TemporaryError } from '../../errors'
 import { toISODateString } from '../../common/dateUtils'
-import { fetchJson, ParseError } from '../../common/network'
+import { fetchJson, ParseError, openWebViewAndInterceptRequest } from '../../common/network'
 import { generateRandomString } from '../../common/utils'
+
+const WEB_PORTAL_URL = 'https://login.bankhapoalim.co.il/'
+const WEB_SUCCESS_PATTERNS = [
+  /\/ng--portals\/rb\/he\//i,
+  /\/ng-portals\/rb\/he\//i,
+  /\/current-account\/transactions/i,
+  /\/ServerServices\/general\/accounts/i
+]
+const API_BASE_URLS = {
+  mobile: 'https://iphone.bankhapoalim.co.il',
+  official: 'https://login.bankhapoalim.co.il'
+}
+
+let apiHostMode = 'mobile'
 
 function summarizeResponse (response) {
   return response
@@ -58,33 +72,87 @@ export function isLikelyAuthGateError (error) {
     /text\/html/i.test(contentType)
 }
 
+function isUsingOfficialApiHost () {
+  return apiHostMode === 'official'
+}
+
+function resetApiHostMode () {
+  apiHostMode = 'mobile'
+}
+
 async function fetchApi (url, options) {
+  const usingOfficialApiHost = isUsingOfficialApiHost()
   const params = {
-    appId: 'bankApp3Generation',
     ...options?.accountId && { accountId: options.accountId }
   }
-  const fullUrl = url + ((url.indexOf('?') === -1) ? '?' : '&') + qs.stringify(params)
+  if (!usingOfficialApiHost) {
+    params.appId = 'bankApp3Generation'
+  }
+  const query = qs.stringify(params)
+  const fullUrl = query
+    ? url + ((url.indexOf('?') === -1) ? '?' : '&') + query
+    : url
+  const defaultHeaders = usingOfficialApiHost
+    ? {
+        Accept: 'application/json',
+        'Content-Type': 'application/json;charset=UTF-8'
+      }
+    : {
+        mobile: 'ca',
+        'x-dynatrace': 'MT_3_1_1842511945_1_BankApp-Android-Gen3_0_1001_130',
+        Accept: 'application/json',
+        'Content-Type': 'application/json;charset=UTF-8',
+        'User-Agent': 'okhttp/3.12.1'
+      }
 
-  return fetchJson('https://iphone.bankhapoalim.co.il' + fullUrl, {
+  return fetchJson(API_BASE_URLS[apiHostMode] + fullUrl, {
     method: 'GET',
     ...options,
     sanitizeResponseLog: {
+      ...options?.sanitizeResponseLog,
       headers: {
-        'set-cookie': true
+        'set-cookie': true,
+        ...options?.sanitizeResponseLog?.headers
       }
     },
     headers: {
-      mobile: 'ca',
-      'x-dynatrace': 'MT_3_1_1842511945_1_BankApp-Android-Gen3_0_1001_130',
-      Accept: 'application/json',
-      'Content-Type': 'application/json;charset=UTF-8',
-      'User-Agent': 'okhttp/3.12.1',
+      ...defaultHeaders,
       ...options && options.headers
     }
   })
 }
 
+export async function tryInteractiveWebBootstrap () {
+  if (!ZenMoney?.openWebView) {
+    return false
+  }
+
+  try {
+    const result = await openWebViewAndInterceptRequest({
+      url: WEB_PORTAL_URL,
+      log: false,
+      intercept (request) {
+        return WEB_SUCCESS_PATTERNS.some(pattern => pattern.test(request.url))
+          ? { verified: true, url: request.url }
+          : null
+      }
+    })
+
+    const verified = Boolean(result?.verified)
+    if (verified) {
+      apiHostMode = 'official'
+    }
+
+    return verified
+  } catch (error) {
+    console.warn('interactive web bootstrap failed', error?.message || error)
+    return false
+  }
+}
+
 export async function login ({ login, password }, device) {
+  resetApiHostMode()
+
   const response = await fetchApi('/authenticate/verify', {
     method: 'POST',
     headers: {
@@ -176,7 +244,14 @@ export async function login ({ login, password }, device) {
       deviceId: '10010110210310410510610710810910a10b10c10d10e10f'
     },
     stringify: qs.stringify,
-    sanitizeRequestLog: { body: { identifier: true, credentials: true } }
+    sanitizeRequestLog: {
+      body: {
+        identifier: true,
+        credentials: true,
+        mfp: true,
+        deviceId: true
+      }
+    }
   })
 
   if (response.body.error?.errCode === '1.6' && response.body.error?.errDesc === 'Login Failure') {
@@ -200,8 +275,16 @@ export async function login ({ login, password }, device) {
 }
 
 async function fetchMainAccountDetails (mainAccount, accountId) {
-  const response = await fetchApi('/ServerServices/general/accounts/selectedAccount/totalBalances', { accountId })
-  mainAccount.details = response.body
+  const response = isUsingOfficialApiHost()
+    ? await fetchApi('/ServerServices/current-account/composite/balanceAndCreditLimit?view=details&lang=he', { accountId })
+    : await fetchApi('/ServerServices/general/accounts/selectedAccount/totalBalances', { accountId })
+
+  mainAccount.details = isUsingOfficialApiHost()
+    ? {
+        ...response.body,
+        currentAccountCreditFrame: response.body?.creditLimitAmount ?? response.body?.currentAccountCreditFrame ?? 0
+      }
+    : response.body
   mainAccount.structType = 'checking'
   return [mainAccount]
 }
