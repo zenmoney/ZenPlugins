@@ -1,27 +1,58 @@
-import { ScrapeFunc, Transaction, Account } from '../../types/zenmoney'
-import { fetchAllAccounts, fetchAuthorization, fetchAccountData } from './fetchApi'
+import { Account, ScrapeFunc, Transaction } from '../../types/zenmoney'
 import { Preferences } from './models'
-import { convertAccount, convertTransactions } from './converters'
+import { convertAccounts, convertTransaction } from './converters'
+import { fetchAllAccounts, fetchAuthorization, fetchVerificationToken, fetchTransactions, fetchCardTransactions } from './fetchApi'
 
 export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, toDate }) => {
   toDate = toDate ?? new Date()
   await fetchAuthorization(preferences)
 
-  const fetchedAccounts = await fetchAllAccounts()
-
-  const accounts: Account[] = []
+  const apiAccounts = await fetchAllAccounts()
+  const convertedAccounts: Account[] = convertAccounts(apiAccounts.filter(a => a.cardNumber === ''))
   const transactions: Transaction[] = []
 
-  for (const account of fetchedAccounts) {
-    const rawAccountData = await fetchAccountData(account)
-    accounts.push(convertAccount(account, rawAccountData))
-    const filteredTransactions = convertTransactions(account, rawAccountData)
-      .filter(transaction => transaction.date >= fromDate && (toDate == null || transaction.date <= toDate))
-    transactions.push(...filteredTransactions)
+  const token = await fetchVerificationToken()
+
+  for (const account of apiAccounts) {
+    if (ZenMoney.isAccountSkipped(account.id)) {
+      continue
+    }
+
+    let page = 1
+    if (account.cardNumber === '') {
+      while (page < 100) {
+        const apiTransactions = await fetchTransactions(account.id, token, page, fromDate, toDate)
+
+        if (apiTransactions.length === 0) {
+          break
+        }
+
+        page++
+
+        transactions.push(...apiTransactions.map(t => convertTransaction(t, account)).filter((tx): tx is Transaction => tx !== null))
+      }
+    }
+
+    if (account.cardNumber !== '') {
+      account.id = account.accountNumber
+      page = 1
+
+      while (page < 100) {
+        const apiCardTransactions = await fetchCardTransactions(account.accountNumber, account.cardNumber, token, page, fromDate, toDate)
+
+        if (apiCardTransactions.length === 0) {
+          break
+        }
+
+        page++
+
+        transactions.push(...apiCardTransactions.map(t => convertTransaction(t, account, true)).filter((tx): tx is Transaction => tx !== null))
+      }
+    }
   }
 
   return {
-    accounts,
+    accounts: convertedAccounts,
     transactions
   }
 }
