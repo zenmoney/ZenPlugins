@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="apiKey"
+        obligatory="true"
+        title="API Key"
+        dialogTitle="API Key"
+        dialogMessage="Enter your Trading212 API key. You can generate one in Settings -> API → Generate API key. The key must have the &quot;Unrestricted&quot; type and have &quot;Account data&quot; and &quot;History - Transactions&quot; permissions."
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="|apiKey|{@s}"
+    />
+    <EditTextPreference
+        key="apiSecret"
+        obligatory="true"
+        inputType="textPassword"
+        title="API Secret"
+        dialogTitle="API Secret"
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="||***********"
+    />
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="From what date to load transactions"
+        defaultValue="2025-01-01T00:00:00.000Z"
+        dialogTitle="From what date to load transactions"
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="|startDate|{@s}"
+    />
+</PreferenceScreen>
