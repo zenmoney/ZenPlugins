@@ -29,7 +29,7 @@ import {
 } from './models'
 import { isArray } from 'lodash'
 
-const IEBaseUrl = 'https://mycredo.ge:8443'
+const IEBaseUrl = 'https://mobileapp.mycredo.ge'
 const initiatePath = '/api/Auth/Initiate'
 const confirmPath = '/api/Auth/confirm'
 const graphqlPath = '/graphql'
