@@ -54,9 +54,13 @@ const PUSH_LOGIN_SESSION_ID = 1
 
 const connectionData = encodeURIComponent(JSON.stringify([{ name: SIGNALR_HUB_NAME }]))
 
-function signalRUrl (endpoint: string, connectionToken: string, transport: string): string {
+function signalRUrl (endpoint: string, connectionToken: string, transport: string, messageId?: string): string {
   const token = encodeURIComponent(connectionToken)
-  return `${signalRBaseUrl}/${endpoint}?transport=${transport}&clientProtocol=${SIGNALR_CLIENT_PROTOCOL}&connectionToken=${token}&connectionData=${connectionData}&_=${Date.now()}`
+  let url = `${signalRBaseUrl}/${endpoint}?transport=${transport}&clientProtocol=${SIGNALR_CLIENT_PROTOCOL}&connectionToken=${token}&connectionData=${connectionData}&_=${Date.now()}`
+  if (messageId !== undefined) {
+    url += `&messageId=${encodeURIComponent(messageId)}`
+  }
+  return url
 }
 
 // LoginUPPush returns PrincipalData as string[][] (grid format for LegalEntityPreviewFlat).
@@ -143,18 +147,24 @@ async function performPushLogin (firstStepTicket: string, username: string): Pro
 
   const connectionToken = negotiateResponse.body.ConnectionToken
 
-  // Step 2: Establish connection. Long polling is used for connect/poll to receive
-  // push confirmation data. The hub itself requires serverSentEvents for start/send.
-  // The connect request is typically bounded by the server's long poll timeout (observed ~20s).
-  const connectPromise = fetch(signalRUrl('connect', connectionToken, 'longPolling'), {
+  // Step 2: Establish long polling connection and wait for initial response.
+  // The connect request blocks on the server until it has data or times out (~20s).
+  const connectResult = await fetch(signalRUrl('connect', connectionToken, 'longPolling'), {
     method: 'GET',
     parse: parseTrimmedJson,
     log: false
   })
 
+  // Track messageId from the server's response (C field) — required for subsequent polls.
+  const connectBody = connectResult.body as SignalRMessage | null
+  let messageId = connectBody?.C
+
+  // Step 3: Signal the server that the client is ready.
+  // Must be called AFTER connect returns. The bank requires serverSentEvents
+  // transport for start/send, while connect/poll use longPolling.
   await fetchJson(signalRUrl('start', connectionToken, 'serverSentEvents'), { method: 'GET' })
 
-  // Step 3: Request push notification to the user's mobile app
+  // Step 4: Request push notification to the user's mobile app
   const data = JSON.stringify({
     H: SIGNALR_HUB_NAME,
     M: 'CreateLoginPushRequest',
@@ -169,16 +179,21 @@ async function performPushLogin (firstStepTicket: string, username: string): Pro
     log: false
   })
 
-  // Step 4: Wait for push confirmation via long polling.
+  // Step 5: Wait for push confirmation via long polling.
   // Each poll request blocks on the server (~20s) until data arrives or times out.
-  const connectResult = await connectPromise
-  let pushRequestContent = extractPushRequestContent(connectResult.body)
+  // The messageId from the previous response must be included so the server knows
+  // which messages the client has already received.
+  let pushRequestContent: string | null = null
   for (let attempt = 0; pushRequestContent === null && attempt < MAX_PUSH_POLL_ATTEMPTS; attempt++) {
-    const pollResult = await fetch(signalRUrl('poll', connectionToken, 'longPolling'), {
+    const pollResult = await fetch(signalRUrl('poll', connectionToken, 'longPolling', messageId), {
       method: 'GET',
       parse: parseTrimmedJson,
       log: false
     })
+    const pollBody = pollResult.body as SignalRMessage | null
+    if (pollBody?.C !== undefined) {
+      messageId = pollBody.C
+    }
     pushRequestContent = extractPushRequestContent(pollResult.body)
   }
 
@@ -186,7 +201,7 @@ async function performPushLogin (firstStepTicket: string, username: string): Pro
     throw new InvalidLoginOrPasswordError('Push confirmation timeout. Please confirm in your Moja mBanka Biznis app and try again.')
   }
 
-  // Step 5: Complete 2FA with the push confirmation data
+  // Step 6: Complete 2FA with the push confirmation data
   const pushResponse = await fetchApi('CorporateLoginService.svc/LoginUPPush', {
     method: 'POST',
     body: {
