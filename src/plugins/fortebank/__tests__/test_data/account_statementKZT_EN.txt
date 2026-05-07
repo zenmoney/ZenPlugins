@@ -1,7 +1,7 @@
 
 C u r r e n t   A c c o u n t   S t a t e m e n t
 d a t e :   0 9 . 1 2 . 2 0 2 5   1 7 : 4 6 : 2 1
-No   K Z 2 3 9 6 5 0 2 F 0 0 1 8 7 0 5 2 0 4 ,   ( K Z T )
+No   K Z 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 4 ,   ( K Z T )
 C u s t o m e r :   T E S T   U S E R   I I N :   9 9 9 9 9 9 9 9 9 9 9 9
 P e r i o d   o f   s t a t e m e n t :   0 9 . 1 1 . 2 0 2 5   -   0 9 . 1 2 . 2 0 2 5
 T o t a l   f o r   t h e   p e r i o d :

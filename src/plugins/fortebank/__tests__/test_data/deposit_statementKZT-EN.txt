@@ -18,7 +18,7 @@ D a t e   o f   t r a n s a c t i o n D e s c r i p t i o n   o f   t r a n s a 
 1 1 . 1 2 . 2 0 2 5
 F u l l   n a m e / N a m e :   T E S T   U S E R ,   I I N :
 0 0 0 0 0 0 0 0 0 0 0 0 ,   B a n k :   I R T Y K Z K A   ( А О   " F o r t e B a n k " ) ,   C o r r e s p o n d e n t
-A c c o u n t :   K Z 2 3 9 6 5 0 2 F 0 0 1 8 7 0 5 2 0 4   П о п о л н е н и е   с ч ё т а
+A c c o u n t :   K Z 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 4   П о п о л н е н и е   с ч ё т а
 1   5 0 0   0 0 0 , 0 0 -
 A r r e s t s / c l a i m s :   0 , 0 0
 F o r m e d   v i a   t h e   O n l i n e   B a n k i n g

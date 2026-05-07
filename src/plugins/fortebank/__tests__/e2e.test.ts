@@ -156,7 +156,8 @@ describe('Fortebank KZ E2E Parsing', () => {
       const tx1 = transactions.find(t => t.amount === 3600000)
       expect(tx1).toBeDefined()
       expect(tx1?.date).toBe('11.12.2025')
-      expect(tx1?.operation).toBe('Account replenishment')
+      expect(tx1?.operation).toBe('Transfer')
+      expect(tx1?.parsedDetails?.receiverAccount).toBe('KZ000000000000000000')
       // "Пополнение счета" is usually the description in account statements.
       // Let's check test data content:
       // 1 1 . 1 2 . 2 0 2 5
