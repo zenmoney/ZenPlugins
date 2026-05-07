@@ -318,11 +318,7 @@ export function convertTransaction (transaction: ParsedTransaction, accountId: s
     const hasGenericReceiverOnly = isGenericReceiverLabel(receiver)
     const hasCounterpartyMovement = movements.length > 1
     if (hasMeaningfulReceiver || hasCounterpartyMovement) {
-      if (typeof result.comment !== 'string' || result.comment.trim() === '') {
-        result.comment = transaction.operation
-      } else if (!isTransferOperation(result.comment)) {
-        result.comment = `${transaction.operation}, ${result.comment}`
-      }
+      result.comment = ''
       result.merchant = null
     } else if (hasGenericReceiverOnly) {
       movements.push({

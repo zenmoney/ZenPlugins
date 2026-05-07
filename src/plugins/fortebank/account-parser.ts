@@ -4,25 +4,60 @@ import { KNOWN_OPERATIONS } from './constants'
 
 import { normalizeText, parseNumber } from './utils'
 
+function normalizeCompactText (text: string): string {
+  return text
+    .replace(/["']/g, '')
+    .replace(/\u00A0/g, ' ')
+    .replace(/\r\n/g, '\n')
+    .trim()
+}
+
 export function isAccountStatement (text: string): boolean {
+  const compact = normalizeCompactText(text)
+  if (/Выписка\s*по\s*карточному\s*счету|Card\s*account\s*statement|Карточкалық\s*шот\s*бойынша\s*үзінді/i.test(compact)) {
+    return true
+  }
+
   const normalized = normalizeText(text)
   return /Receipts\s*Expenses|Поступления\s*Расходы|Кірістер\s*Шығыстар|Түсімдер\s*Шығындар/i.test(normalized)
 }
 
 export function parseAccountHeader (text: string): ParsedHeader {
-  const normalized = normalizeText(text)
+  const compact = normalizeCompactText(text)
+  const normalized = /Выписка\s*по\s*карточному\s*счету|Card\s*account\s*statement|Карточкалық\s*шот\s*бойынша\s*үзінді/i.test(compact)
+    ? compact
+    : normalizeText(text)
   const res: ParsedHeader = {}
+  const lines = normalized.split('\n')
+  const headerLines: string[] = []
 
-  const ibanMatch = normalized.match(/KZ[0-9A-Z]{18}/)
+  for (const line of lines) {
+    if (/Date\s*of\s*transaction|Дата\s*операции|Операция\s*күні|Дата\s*Сумма\s*Описание\s*Детализация|Date\s*Amount\s*Description\s*Details/i.test(line)) {
+      break
+    }
+    headerLines.push(line)
+  }
+
+  const headerText = headerLines.join('\n')
+
+  const ibanMatch = headerText.match(/KZ[0-9A-Z]{18}/)
   if (ibanMatch != null) res.accountNumber = ibanMatch[0]
 
-  const currencyMatch = normalized.match(/\(([A-Z]{3})\)/)
+  const currencyMatch = headerText.match(/\(([A-Z]{3})\)/)
   if (currencyMatch != null) res.currency = currencyMatch[1]
 
-  const lines = normalized.split('\n')
-  for (const line of lines) {
-    if (/Date\s*of\s*transaction|Дата\s*операции/i.test(line)) break
+  if (res.currency === undefined) {
+    const labeledCurrencyMatch = headerText.match(/(?:Валюта\s*счета|Account\s*currency|Шот\s*валютасы)\s*:\s*([A-Z]{3})/i)
+    if (labeledCurrencyMatch != null) res.currency = labeledCurrencyMatch[1]
+  }
 
+  const availableMatch = headerText.match(/(?:Доступно\s*на|Available\s*as\s*of|Қолжетімді(?:\s*күні)?)(?:\s+\d{2}\.\d{2}\.\d{4})?\s*:?\s*([-+]?(?:\d[\d\s]*)[.,]\d{2})\s*[A-Z]{3}?/i)
+  if (availableMatch != null) {
+    res.balance = parseNumber(availableMatch[1])
+    return res
+  }
+
+  for (const line of headerLines) {
     // Look for lines with multiple numbers (Balance table)
     // Improve pattern to be greedy across spaces
     const numberPattern = /[-+]?(?:\d[\d\s]*)[.,]\d{2}/g
@@ -55,12 +90,16 @@ function parseDetails (text: string): { structured: Record<string, string>, free
   // Use string concatenation to avoid backtick issues
   const keyPattern = new RegExp('(' + keys.join('|') + '):', 'g')
 
-  const matches = [...text.matchAll(keyPattern)]
+  const normalizedText = text
+    .replace(/Сч[её]т-\s*корреспондент/gi, 'Счёт-корреспондент')
+    .replace(/Correspondent\s+Account/gi, 'Correspondent Account')
+
+  const matches = [...normalizedText.matchAll(keyPattern)]
 
   const structured: Record<string, string> = {}
 
   if (matches.length === 0) {
-    return { structured, freeText: text.trim() }
+    return { structured, freeText: normalizedText.trim() }
   }
 
   for (let i = 0; i < matches.length; i++) {
@@ -68,10 +107,10 @@ function parseDetails (text: string): { structured: Record<string, string>, free
     const key = match[1] // The key text
     const startVal = (match.index ?? 0) + match[0].length
 
-    let endVal = text.length
-    endVal = matches[i + 1]?.index ?? text.length
+    let endVal = normalizedText.length
+    endVal = matches[i + 1]?.index ?? normalizedText.length
 
-    let val = text.substring(startVal, endVal).trim()
+    let val = normalizedText.substring(startVal, endVal).trim()
 
     // Remove trailing comma if present (often used as separator)
     if (val.endsWith(',')) {
@@ -101,6 +140,12 @@ function parseDetails (text: string): { structured: Record<string, string>, free
   return { structured, freeText: '' }
 }
 
+function isOwnAccountTransfer (details: string, structured: Record<string, string>): boolean {
+  if (structured.account == null) return false
+
+  return /Пополнение\s+сч[её]та|Списание\s+со\s+сч[её]та|Account\s+replenishment|Debit\s+from\s+account/i.test(details)
+}
+
 function detectAccountOperation (description: string, amount: number): string {
   for (const op of KNOWN_OPERATIONS) {
     if (description.toLowerCase().includes(op.toLowerCase())) {
@@ -116,14 +161,49 @@ function detectAccountOperation (description: string, amount: number): string {
   return amount < 0 ? 'Purchase' : 'Account replenishment'
 }
 
+function splitKnownOperation (text: string, amount: number): { operation: string, details: string } {
+  for (const op of KNOWN_OPERATIONS) {
+    if (text.toLowerCase().startsWith(op.toLowerCase())) {
+      return {
+        operation: detectAccountOperation(op, amount),
+        details: text.substring(op.length).trim()
+      }
+    }
+  }
+
+  return {
+    operation: detectAccountOperation(text, amount),
+    details: text
+  }
+}
+
+function extractTransferAccount (text: string): string | undefined {
+  const ibanMatch = text.match(/\b(KZ[0-9A-Z]{18})\b/)
+  if (ibanMatch != null) return ibanMatch[1]
+
+  const cardMatch = text.match(/\b(\d{16})\b/)
+  if (cardMatch != null) return cardMatch[1]
+
+  const maskedCardMatch = text.match(/\b(\d{6}[*]+\d{4})\b/)
+  if (maskedCardMatch != null) return maskedCardMatch[1]
+
+  const shortMaskedCardMatch = text.match(/(?:^|[^\d])([*]{4}\d{4})\b/)
+  if (shortMaskedCardMatch != null) return shortMaskedCardMatch[1]
+
+  return undefined
+}
+
 export function parseAccountTransactions (text: string): ParsedTransaction[] {
-  const normalized = normalizeText(text)
+  const compact = normalizeCompactText(text)
+  const normalized = /Выписка\s*по\s*карточному\s*счету|Card\s*account\s*statement|Карточкалық\s*шот\s*бойынша\s*үзінді/i.test(compact)
+    ? compact
+    : normalizeText(text)
   const lines = normalized.split('\n')
   const transactions: ParsedTransaction[] = []
 
   let inTransactions = false
   // Allow spaces or no spaces in header
-  const headerRegex = /Date\s*of\s*transaction|Дата\s*операции|Операция\s*күні/i
+  const headerRegex = /Date\s*of\s*transaction|Дата\s*операции|Операция\s*күні|Дата\s*Сумма\s*Описание\s*Детализация|Date\s*Amount\s*Description\s*Details/i
 
   let currentBlock: string[] = []
 
@@ -137,6 +217,43 @@ export function parseAccountTransactions (text: string): ParsedTransaction[] {
     const date = dateMatch[1]
 
     const fullText = block.join(' ')
+    const compactMatch = fullText.match(/^(\d{2}\.\d{2}\.\d{4})\s+([-+]?(?:\d[\d\s]*)[.,]\d{2})\s+([A-Z]{3})\s+(.+)$/)
+    if (compactMatch != null) {
+      const [, compactDate, compactAmount, , compactRest] = compactMatch
+      const { operation, details } = splitKnownOperation(compactRest.trim(), parseNumber(compactAmount))
+      const { structured, freeText } = parseDetails(details)
+      const normalizedOperation = isOwnAccountTransfer(details, structured) ? 'Transfer' : operation
+      const parsedDetails: ParsedTransactionDetails = {}
+
+      if (structured.name !== undefined && structured.name !== '') {
+        parsedDetails.merchantName = structured.name
+      }
+      if (structured.bank !== undefined) {
+        parsedDetails.merchantBank = structured.bank
+      }
+      if (structured.account !== undefined) {
+        parsedDetails.receiverAccount = structured.account
+      }
+      if (normalizedOperation === 'Transfer') {
+        parsedDetails.receiver = details
+        parsedDetails.receiverAccount = parsedDetails.receiverAccount ?? extractTransferAccount(details)
+      }
+      if (parsedDetails.merchantName === undefined && freeText !== '') {
+        parsedDetails.merchantName = freeText
+      }
+
+      transactions.push({
+        date: compactDate,
+        amount: parseNumber(compactAmount),
+        description: freeText !== '' ? freeText : details,
+        operation: normalizedOperation,
+        details,
+        parsedDetails,
+        originString: fullText
+      })
+      return
+    }
+
     // Use double backslash for escaping in string
     // Support trailing minus: 100,00 -
     const amountOrDash = '([-+]?(?:\\d[\\d\\s]*)[.,]\\d{2}(?:\\s*-)?|-)'
@@ -180,7 +297,9 @@ export function parseAccountTransactions (text: string): ParsedTransaction[] {
 
     const { structured, freeText } = parseDetails(description)
 
-    const operation = detectAccountOperation((freeText !== '') ? freeText : description, amount)
+    const operation = isOwnAccountTransfer(description, structured)
+      ? 'Transfer'
+      : detectAccountOperation((freeText !== '') ? freeText : description, amount)
 
     const parsedDetails: ParsedTransactionDetails = {}
 
@@ -194,6 +313,11 @@ export function parseAccountTransactions (text: string): ParsedTransaction[] {
 
     if (structured.account !== undefined) {
       parsedDetails.receiverAccount = structured.account
+    }
+
+    if (operation === 'Transfer') {
+      parsedDetails.receiver = description
+      parsedDetails.receiverAccount = parsedDetails.receiverAccount ?? extractTransferAccount(description)
     }
 
     if (parsedDetails.merchantName === undefined && freeText.includes('ForteForex')) {
