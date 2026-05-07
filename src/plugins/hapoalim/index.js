@@ -1,6 +1,6 @@
 import { adjustTransactions } from '../../common/transactionGroupHandler'
 import { ZPAPIError } from '../../errors'
-import { fetchAccounts, fetchTransactions, generateDevice, login, isLikelyAuthGateError, tryInteractiveWebBootstrap } from './api'
+import { fetchAccounts, fetchTransactions, isLikelyAuthGateError, login, normalizeStoredAuth } from './api'
 import { convertAccounts, convertTransaction } from './converters'
 
 function getFallbackFromDate (preferences, toDate) {
@@ -16,35 +16,88 @@ function getFallbackFromDate (preferences, toDate) {
   return fallbackDate
 }
 
-function rethrowAuthGate (error, authState, isInBackground) {
-  if (authState?.state === 'LOGONOTP' && isLikelyAuthGateError(error)) {
-    throw new ZPAPIError(
-      isInBackground
-        ? 'Bank Hapoalim requested an additional verification step. Open the bank app/site, confirm the device and run sync manually in foreground.'
-        : 'Bank Hapoalim requested an additional verification step. Confirm the device in the official bank app/site and retry sync.',
-      false,
-      false
-    )
+function createForegroundReauthError (isInBackground) {
+  return new ZPAPIError(
+    isInBackground
+      ? 'Bank Hapoalim session expired. Run sync manually in foreground and complete login in the official bank page.'
+      : 'Bank Hapoalim requires login in the official bank page. Complete the opened bank login flow and retry sync.',
+    false,
+    false
+  )
+}
+
+function resetStoredAuth () {
+  ZenMoney.setData('auth', null)
+  ZenMoney.saveData()
+}
+
+function rethrowForegroundReauthIfNeeded (error, isInBackground) {
+  if (isLikelyAuthGateError(error)) {
+    throw createForegroundReauthError(isInBackground)
   }
   throw error
 }
 
-async function withInteractiveBootstrapRetry (fn, authState, isInBackground) {
+async function withForegroundReauthRetry (fn, state) {
   try {
-    return await fn()
+    return await fn(state.auth)
   } catch (error) {
-    if (!isInBackground &&
-      authState?.state === 'LOGONOTP' &&
-      isLikelyAuthGateError(error) &&
-      await tryInteractiveWebBootstrap()) {
-      try {
-        return await fn()
-      } catch (retryError) {
-        rethrowAuthGate(retryError, authState, isInBackground)
-      }
+    if (!isLikelyAuthGateError(error)) {
+      throw error
     }
 
-    rethrowAuthGate(error, authState, isInBackground)
+    resetStoredAuth()
+    if (state.isInBackground) {
+      throw createForegroundReauthError(true)
+    }
+
+    state.auth = await login()
+    ZenMoney.setData('auth', state.auth)
+    ZenMoney.saveData()
+
+    try {
+      return await fn(state.auth)
+    } catch (retryError) {
+      resetStoredAuth()
+      rethrowForegroundReauthIfNeeded(retryError, state.isInBackground)
+    }
+  }
+}
+
+async function getAuthorizedAccounts (isInBackground) {
+  const state = {
+    auth: normalizeStoredAuth(ZenMoney.getData('auth')),
+    isInBackground
+  }
+
+  if (state.auth) {
+    try {
+      const apiAccounts = await fetchAccounts(state.auth)
+      ZenMoney.setData('auth', state.auth)
+      ZenMoney.saveData()
+      return { state, apiAccounts }
+    } catch (error) {
+      if (!isLikelyAuthGateError(error)) {
+        throw error
+      }
+      resetStoredAuth()
+    }
+  }
+
+  if (isInBackground) {
+    throw createForegroundReauthError(true)
+  }
+
+  state.auth = await login()
+  ZenMoney.setData('auth', state.auth)
+  ZenMoney.saveData()
+
+  try {
+    const apiAccounts = await fetchAccounts(state.auth)
+    return { state, apiAccounts }
+  } catch (error) {
+    resetStoredAuth()
+    rethrowForegroundReauthIfNeeded(error, isInBackground)
   }
 }
 
@@ -54,19 +107,10 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground, i
   toDate = toDate || new Date()
   fromDate = fromDate || getFallbackFromDate(preferences, toDate)
 
-  let device = ZenMoney.getData('device')
-  if (!device) {
-    device = generateDevice()
-    ZenMoney.setData('device', device)
-    ZenMoney.saveData()
-  }
-
-  const authState = await login(preferences, device)
+  const { state, apiAccounts } = await getAuthorizedAccounts(isInBackground)
   const accounts = []
   const seenAccountIds = new Set()
   const transactions = []
-
-  const apiAccounts = await withInteractiveBootstrapRetry(async () => await fetchAccounts(), authState, isInBackground)
 
   for (const { mainProduct, account } of convertAccounts(apiAccounts)) {
     if (seenAccountIds.has(account.id)) {
@@ -79,10 +123,9 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground, i
       continue
     }
 
-    const apiTransactions = await withInteractiveBootstrapRetry(
-      async () => await fetchTransactions(mainProduct, fromDate, toDate),
-      authState,
-      isInBackground
+    const apiTransactions = await withForegroundReauthRetry(
+      async auth => await fetchTransactions(auth, mainProduct, fromDate, toDate),
+      state
     )
 
     for (const apiTransaction of apiTransactions) {
@@ -92,6 +135,9 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground, i
       }
     }
   }
+
+  ZenMoney.setData('auth', state.auth)
+  ZenMoney.saveData()
 
   if (isFirstRun && ZenMoney.alert) {
     await ZenMoney.alert('לקבלת תוצאות מיטביות, אנו ממליצים לא לסנכרן כרטיסי כאל, ישראקרט ומקס דרך הבנק אלא ישירות דרך חברות האשראי.')

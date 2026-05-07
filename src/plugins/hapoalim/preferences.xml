@@ -1,25 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen>
     <EditTextPreference
-        key="login"
-        obligatory="true"
-        title="קוד משתמש"
-        dialogTitle="קוד משתמש"
-        positiveButtonText="בסדר"
-        negativeButtonText="בטל"
-        summary="||{@s}">
-    </EditTextPreference>
-    <EditTextPreference
-        key="password"
-        obligatory="true"
-        inputType="textPassword"
-        title="סיסמה"
-        dialogTitle="סיסמה"
-        positiveButtonText="בסדר"
-        negativeButtonText="בטל"
-        summary="||***********"
-    />
-    <EditTextPreference
         key="startDate"
         obligatory="true"
         inputType="date"
