@@ -51,7 +51,7 @@ async function fetchGraphQL (session: Session, body: object, language: LanguageT
 
 export async function fetchAllAccounts (session: Session): Promise<CredoAccount[]> {
   const body = {
-    query: '{accounts {hasActiveWallet  accountId  accountNumber  account  currency  categoryId  category  hasCard  status  type  cssAccountId  availableBalance  currencyPriority  availableBalanceEqu  isDefault  isHidden  rate  activationDate  allowedOperations}}',
+    query: '{accounts {hasActiveWallet  accountId  accountNumber  account  currency  categoryId  category  hasCard  status  type  cssAccountId  availableBalance  currencyPriority  availableBalanceEqu  isDefault  isHidden  rate  activationDate  allowedOperations accountItemId balance}}',
     variables: {}
   }
   const response = await fetchGraphQL(session, body)
@@ -63,7 +63,7 @@ export async function fetchAllAccounts (session: Session): Promise<CredoAccount[
 
 export async function fetchCards (session: Session): Promise<CredoCard[]> {
   const body = {
-    query: '{ cards { cardId cardNumber cardCurrency cardNickName cardImageId cardImageAddress cardStatusId cardProduct cardAvailableAmount cardBlockedAmount cardExpireShortDate cardStatus cardExpireDate accountNumber isDigitalCard }}',
+    query: '{ cards { cardId cardNumber cardCurrency cardNickName cardImageId cardImageAddress cardStatusId cardProduct cardAvailableAmount cardBlockedAmount cardExpireShortDate cardStatus cardExpireDate accountNumber isDigitalCard cardCurrencyId priority applicationId cardSafetyPackageStatus cardImageAddressV2 cardType }}',
     variables: {}
   }
   const response = await fetchGraphQL(session, body)
@@ -122,7 +122,7 @@ export async function fetchBlockedTransactions (session: Session, fromDate: Date
   while (true) {
     body = {
       operationName: 'transactionPagingList',
-      query: 'query transactionPagingList($data: TransactionFilterGType!) {transactionPagingList(data: $data) { pageCount totalItemCount itemList { credit currency operationId transactionType transactionId debit description isCardBlock operationDateTime stmtEntryId canRepeat canReverse amountEquivalent operationType operationTypeId }} }',
+      query: 'query transactionPagingList($data: TransactionFilterGType!) {transactionPagingList(data: $data) { pageCount totalItemCount itemList { credit currency transactionType transactionId debit description isCardBlock operationDateTime stmtEntryId canRepeat canReverse amountEquivalent operationType operationTypeId transactionTypeId transactionTypeName }} }',
       variables: {
         data: {
           onlyCanBeReversedOrRepeated: false,
@@ -167,7 +167,7 @@ export async function fetchProductTransactions (accountId: string, session: Sess
   while (true) {
     body = {
       operationName: 'transactionPagingList',
-      query: 'query transactionPagingList($data: TransactionFilterGType!) {transactionPagingList(data: $data) { pageCount totalItemCount itemList { credit currency operationId transactionType transactionId debit description isCardBlock operationDateTime stmtEntryId canRepeat canReverse amountEquivalent operationType operationTypeId }} }',
+      query: 'query transactionPagingList($data: TransactionFilterGType!) {transactionPagingList(data: $data) { pageCount totalItemCount itemList { credit currency transactionType transactionId debit description isCardBlock operationDateTime stmtEntryId canRepeat canReverse amountEquivalent operationType operationTypeId transactionTypeId transactionTypeName }} }',
       variables: {
         data: {
           accountIdList: [
@@ -202,8 +202,15 @@ export async function authInitiate ({ login, password }: Preferences): Promise<A
     channel: 508,
     deviceId: null,
     refreshToken: null,
-    loggedInWith: 4,
-    deviceName: 'Mozilla Firefox',
+    loggedInWith: '4',
+    deviceName: 'Firefox',
+    deviceOs: 'Linux',
+    deviceOsVersion: 'unknown',
+    deviceScreenSize: '1536X864',
+    userAgent: 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:150.0) Gecko/20100101 Firefox/150.0',
+    deviceType: 'desktop',
+    deviceModel: 'Unknown',
+    deviceLanguage: 'ENGLISH',
     languageType: 'ENGLISH'
   }
   const deviceId = ZenMoney.getData('deviceId', null) as string

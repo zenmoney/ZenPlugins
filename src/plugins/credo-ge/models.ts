@@ -108,10 +108,17 @@ export interface AuthInitiatePayload {
   channel: number
   deviceId: string | null
   refreshToken: string | null
-  loggedInWith: number
+  loggedInWith: number | string
   deviceName: string
   languageType: string // LanguageType capitalized
   WebDevicePublicId?: string
+  deviceOs?: string
+  deviceOsVersion?: string
+  deviceScreenSize?: string
+  userAgent?: string
+  deviceType?: string
+  deviceModel?: string
+  deviceLanguage?: string
 }
 
 export interface AuthResponse {
@@ -330,6 +337,8 @@ export interface Transaction {
   amountEquivalent: number
   operationType: OperationType
   operationTypeId: null
+  transactionTypeId?: number | null
+  transactionTypeName?: string | null
 }
 
 export interface TransactionListResponse {
