@@ -1,40 +1,50 @@
-import { Base64 } from 'jshashes'
 import { defaultsDeep, flatMap } from 'lodash'
 import { stringify } from 'querystring'
 import { createDateIntervals as commonCreateDateIntervals } from '../../common/dateUtils'
 import { fetchJson } from '../../common/network'
-import { generateRandomString } from '../../common/utils'
-import { InvalidOtpCodeError } from '../../errors'
+import { InvalidOtpCodeError, InvalidPreferencesError, TemporaryError } from '../../errors'
+import { APP_VERSION, BANK_CERT, getOrCreateDeviceFingerprint, mobileHeaders } from './fingerprint'
 
-const base64 = new Base64()
-const loginUrl = 'https://login.belinvestbank.by/app_api'
-const dataUrl = 'https://ibank.belinvestbank.by/app_api'
+const LOGIN_API = 'https://login.belinvestbank.by/app_api'
+const IBANK_API = 'https://ibank.belinvestbank.by/app_api'
+const MOBILE_API = 'https://ibank.belinvestbank.by/simple/mobile-api/v1'
+const dataUrl = IBANK_API
 
-const APP_VERSION = '2.24.0'
-
-export function getDevice () {
-  const deviceID = ZenMoney.getData('deviceId', generateRandomString(16))
-  ZenMoney.setData('deviceId', deviceID)
-  const deviceToken = ZenMoney.getData('token', base64.encode(generateRandomString(203)))
-  ZenMoney.setData('token', deviceToken)
-  return {
-    id: deviceID,
-    token: deviceToken
+function extractPhpSessionId (response) {
+  if (!response.headers) return null
+  const setCookie = response.headers['set-cookie']
+  if (!setCookie) return null
+  const matches = setCookie.match(/PHPSESSID=([^;,\s]+)/g)
+  if (!matches) return null
+  for (let i = matches.length - 1; i >= 0; i--) {
+    const val = matches[i].replace('PHPSESSID=', '')
+    if (val !== 'deleted') return val
   }
+  return null
+}
+
+function extractAuthTokenCookies (response) {
+  if (!response.headers) return ''
+  const setCookie = response.headers['set-cookie']
+  if (!setCookie) return ''
+  const parts = []
+  const authMatch = setCookie.match(/auth_token=([^;,\s]+)/)
+  if (authMatch && authMatch[1] !== 'deleted') parts.push(`auth_token=${authMatch[1]}`)
+  const sessionMatch = setCookie.match(/session_type=([^;,\s]+)/)
+  if (sessionMatch && sessionMatch[1] !== 'deleted') parts.push(`session_type=${sessionMatch[1]}`)
+  return parts.length ? parts.join('; ') + ';' : ''
 }
 
 async function fetchApiJson (url, options, predicate = () => true, error = (message) => console.assert(false, message)) {
+  const fp = getOrCreateDeviceFingerprint()
   options = defaultsDeep(
     options,
     {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'Android',
-        DEVICE_TOKEN: 123456,
-        Connection: 'Keep-Alive',
-        'Accept-Encoding': 'gzip'
+      headers: mobileHeaders(fp, options?.headers?.Cookie),
+      sanitizeRequestLog: {
+        headers: { Cookie: true },
+        body: { password: true }
       },
-      sanitizeRequestLog: { headers: { Cookie: true } },
       sanitizeResponseLog: { headers: { 'set-cookie': true } },
       stringify
     }
@@ -45,7 +55,7 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
     validateResponse(response, response => predicate(response), error)
   }
 
-  if (response.body.status && (response.body.status === 'ER' || response.body.status === 'SE') && response.body.message && !response.body.isNeedConfirmSessionKey) {
+  if (response.body && response.body.status && (response.body.status === 'ER' || response.body.status === 'SE') && response.body.message && !response.body.isNeedConfirmSessionKey) {
     const errorDescription = response.body.message
     const errorMessage = 'Ответ банка: ' + errorDescription
     if (errorDescription.indexOf('введены неверно') >= 0) { throw new InvalidPreferencesError(errorMessage) }
@@ -61,142 +71,218 @@ function validateResponse (response, predicate, error) {
   }
 }
 
-function cookies (response) {
-  if (response.headers) {
-    const cookies = response.headers['set-cookie']
-    if (cookies) {
-      const requiredValues = /(PHPSESSID=[^;]*;)/g
-      return cookies.match(requiredValues)[cookies.match(requiredValues).length - 1]
-    }
+async function tryBindDevice (fp, sessionCookies) {
+  try {
+    const statusRes = await fetchJson(MOBILE_API + '/mobile/checkDeviceStatus', {
+      method: 'GET',
+      headers: mobileHeaders(fp, sessionCookies),
+      sanitizeResponseLog: { headers: { 'set-cookie': true } }
+    })
+    if (statusRes.body?.objects?.deviceStatus === 1) return // Already bound
+
+    // Request binding — triggers SMS
+    await fetchJson(MOBILE_API + '/mobile/setDevice', {
+      method: 'POST',
+      headers: mobileHeaders(fp, sessionCookies),
+      body: { deviceId: fp.deviceId },
+      stringify,
+      sanitizeResponseLog: { headers: { 'set-cookie': true } }
+    })
+
+    const bindCode = await ZenMoney.readLine(
+      'Введите код из СМС для привязки устройства (для входа без SMS в будущем)',
+      {
+        time: 120000,
+        inputType: 'number'
+      }
+    )
+    if (!bindCode || !bindCode.trim()) return
+
+    await fetchJson(MOBILE_API + '/mobile/setDevice', {
+      method: 'POST',
+      headers: mobileHeaders(fp, sessionCookies),
+      body: {
+        deviceId: fp.deviceId,
+        code: bindCode.trim()
+      },
+      stringify,
+      sanitizeResponseLog: { headers: { 'set-cookie': true } }
+    })
+    ZenMoney.setData('deviceBound', true)
+    ZenMoney.saveData()
+  } catch (e) {
+    console.log('Device binding skipped:', e.message)
   }
-  return ''
 }
 
 export async function login (login, password) {
   if (ZenMoney.trustCertificates) {
-    ZenMoney.trustCertificates([
-      `-----BEGIN CERTIFICATE-----
-MIIGUzCCBTugAwIBAgIMTGWX/YRoKcy161yWMA0GCSqGSIb3DQEBCwUAMEwxCzAJ
-BgNVBAYTAkJFMRkwFwYDVQQKExBHbG9iYWxTaWduIG52LXNhMSIwIAYDVQQDExlB
-bHBoYVNTTCBDQSAtIFNIQTI1NiAtIEc0MB4XDTIzMDQyNjEyNTYxMloXDTI0MDUy
-NzEyNTYxMVowHTEbMBkGA1UEAwwSKi5iZWxpbnZlc3RiYW5rLmJ5MIIBIjANBgkq
-hkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwyGdRWFd5xeApdnnvHD/jzfCFg0xoHPQ
-jJDQQVrbtvf1QWnl5ZS1aNmMxWHWfUzseJBMVLgpjtHxi5+SGX9M9H/8jbG2rZzU
-Xoy7uae7W+9o9q+gbluY5oMOt0swbH+/bZ/Jatxy6AFWPZzSIIDz6SBGWnzJkh+d
-k0JEIx6trQTdxLZPtOCy173Tqld6gW/iauIfbFbGWO+B/7Pb32kydCwa2xDttDf8
-a/HukSJMSvnBxKdPGHSNgzU/jCfVWtlL8eOpAGfDGYjVTzAMKZ6KToaWwmvlalQ6
-SC06i63dEq0yyc2zHSS7RGY6Sy4L6DA7AULzMYbw/HK+Jd4TAN+o8QIDAQABo4ID
-YjCCA14wDgYDVR0PAQH/BAQDAgWgMIGTBggrBgEFBQcBAQSBhjCBgzBGBggrBgEF
-BQcwAoY6aHR0cDovL3NlY3VyZS5nbG9iYWxzaWduLmNvbS9jYWNlcnQvYWxwaGFz
-c2xjYXNoYTI1Nmc0LmNydDA5BggrBgEFBQcwAYYtaHR0cDovL29jc3AuZ2xvYmFs
-c2lnbi5jb20vYWxwaGFzc2xjYXNoYTI1Nmc0MFcGA1UdIARQME4wCAYGZ4EMAQIB
-MEIGCisGAQQBoDIKAQMwNDAyBggrBgEFBQcCARYmaHR0cHM6Ly93d3cuZ2xvYmFs
-c2lnbi5jb20vcmVwb3NpdG9yeS8wCQYDVR0TBAIwADBBBgNVHR8EOjA4MDagNKAy
-hjBodHRwOi8vY3JsLmdsb2JhbHNpZ24uY29tL2FscGhhc3NsY2FzaGEyNTZnNC5j
-cmwwLwYDVR0RBCgwJoISKi5iZWxpbnZlc3RiYW5rLmJ5ghBiZWxpbnZlc3RiYW5r
-LmJ5MB0GA1UdJQQWMBQGCCsGAQUFBwMBBggrBgEFBQcDAjAfBgNVHSMEGDAWgBRP
-y6yowu+r3YNva7/OmD1cWCV2FTAdBgNVHQ4EFgQUyuef7y3E7vbbty/xDEweQXHb
-1DQwggF9BgorBgEEAdZ5AgQCBIIBbQSCAWkBZwB2AO7N0GTV2xrOxVy3nbTNE6Iy
-h0Z8vOzew1FIWUZxH7WbAAABh72i3ssAAAQDAEcwRQIhAK+urBOo3Cjk7bXaAEX7
-n0LWNkEBUrw2ue1TqN6ipZvFAiB3V49/RH6IbRARfw9NQPqfJQRtJnvkTWN31i22
-06j5qgB2AEiw42vapkc0D+VqAvqdMOscUgHLVt0sgdm7v6s52IRzAAABh72i3toA
-AAQDAEcwRQIgcranm84nePyV4/mgCaseOovjKlulymZtQiNpGtQ/uccCIQCg3uIU
-+HdNmH3qxCFFdbe5mZhh6/O5A2DE5fQyIO+EeAB1ANq2v2s/tbYin5vCu1xr6HCR
-cWy7UYSFNL2kPTBI1/urAAABh72i3wYAAAQDAEYwRAIgDQ7prrMlrHP1qjUfjPKo
-ug1w7k+cwx2qP0CopSjKavACIHM44RlC5Ws+NUjwQKL9YfdAi2fOqIF8tg6pMoth
-AXJmMA0GCSqGSIb3DQEBCwUAA4IBAQBMC+ujGTyasVS/xIDiCzHh18joFVXWeW2x
-oz39/RPrCNStjBLA7HxavytnQmxbT80ezbobzy1ow2Hq5FiVMubmpWiZhhXI+Mx+
-BvQ9erhe96jQG6UWriHYUEbtwy/M3GJYm1gWY1g0Ztci/YAVxkbPRAtdKkzWgij9
-QMfKNrv4JrCCi2DuQs21bKSsYgchAHNxxK68z+itGSEZa7GSd9oG74Cdwvn/Q2YS
-8t1ezDjQwK8w3i/JOiEXqUtt6SdfZm6/uQ2GSHfn0jtVxtjUsYp7xedvprT3ctnL
-6fBvjH54zyqtVIgeyrG3A85Qh5UyxuSvYntxZ2I3k3kIGU63CVr7
------END CERTIFICATE-----`
-    ])
+    ZenMoney.trustCertificates([BANK_CERT])
   }
 
-  const device = getDevice()
-  let res = (await fetchApiJson(loginUrl, {
+  const fp = getOrCreateDeviceFingerprint()
+
+  // Try reusing saved session
+  const savedCookies = ZenMoney.getData('sessionCookies', null)
+  if (savedCookies) {
+    try {
+      const testRes = await fetchApiJson(dataUrl, {
+        method: 'POST',
+        headers: { Cookie: savedCookies },
+        body: {
+          section: 'payments',
+          method: 'index'
+        }
+      }, response => response.ok && response.body?.status === 'OK',
+      () => { throw new Error('Session invalid') })
+      if (testRes.body.status === 'OK') return savedCookies
+    } catch (e) {
+      ZenMoney.setData('sessionCookies', null)
+    }
+  }
+
+  // Step 1: Pre-login to ibank — establish PHPSESSID
+  const preLoginRes = await fetchApiJson(dataUrl, {
     method: 'POST',
+    body: {
+      section: 'info',
+      method: 'isApprovedVersionApp',
+      versionApp: APP_VERSION
+    }
+  }, () => true, () => null)
+  const ibankSessionId = extractPhpSessionId(preLoginRes)
+  if (!ibankSessionId) throw new TemporaryError('Не удалось получить сессию ibank')
+
+  // Step 2: Sign in via mobile API
+  const signinRes = await fetchJson(LOGIN_API, {
+    method: 'POST',
+    headers: mobileHeaders(fp),
     body: {
       section: 'account',
       method: 'signin',
       login,
       password,
-      deviceId: device.id,
+      deviceId: fp.deviceId,
       versionApp: APP_VERSION,
+      deviceName: fp.deviceName,
       os: 'Android',
-      device_token: device.token,
-      device_token_type: 'ANDROID'
+      AndroidVersion: fp.androidVersion,
+      device_token: fp.fcmToken,
+      device_token_type: 'ANDROID',
+      typeSessionKey: '0'
     },
-    sanitizeRequestLog: { body: { login: true, password: true } }
-  }, response => response.success, message => new InvalidPreferencesError('Неверный логин или пароль')))
-  let sessionCookies = cookies(res)
-
-  if (res.body.isNeedConfirmSessionKey) {
-    res = (await fetchApiJson(loginUrl, {
-      method: 'POST',
+    stringify,
+    sanitizeRequestLog: {
+      headers: { Cookie: true },
       body: {
-        section: 'account',
-        method: 'confirmationCloseSession'
+        password: true,
+        login: true
       }
-    }, response => response.success, message => new InvalidPreferencesError('bad request')))
+    },
+    sanitizeResponseLog: { headers: { 'set-cookie': true } }
+  })
+
+  let loginSessionId = extractPhpSessionId(signinRes)
+  let authCode = null
+  let loginCompleted = false
+  let authTokenStr = extractAuthTokenCookies(signinRes)
+  let needSms = false
+
+  if (signinRes.body.status === 'OK') {
+    authCode = signinRes.body.values?.authCode
+    loginCompleted = signinRes.body.values?.loginCompleted === true
+    if (!loginCompleted || !authCode) needSms = true
+  } else if (signinRes.body.status === 'ER' || signinRes.body.status === 'SE') {
+    if (signinRes.body.isNeedConfirmSessionKey === '1') {
+      // Session conflict — close old session and retry
+      const closeRes = await fetchJson(LOGIN_API, {
+        method: 'POST',
+        headers: mobileHeaders(fp, loginSessionId ? `PHPSESSID=${loginSessionId};` : undefined),
+        body: {
+          section: 'account',
+          method: 'confirmationCloseSession'
+        },
+        stringify,
+        sanitizeRequestLog: { headers: { Cookie: true } },
+        sanitizeResponseLog: { headers: { 'set-cookie': true } }
+      })
+      loginSessionId = extractPhpSessionId(closeRes) || loginSessionId
+      authCode = closeRes.body?.values?.authCode
+      loginCompleted = closeRes.body?.values?.loginCompleted === true
+      authTokenStr = extractAuthTokenCookies(closeRes) || authTokenStr
+      if (!loginCompleted || !authCode) needSms = true
+    } else {
+      const msg = signinRes.body.message || 'Ошибка входа'
+      if (msg.indexOf('введены неверно') >= 0) throw new InvalidPreferencesError('Ответ банка: ' + msg)
+      throw new TemporaryError('Ответ банка: ' + msg)
+    }
   }
 
-  let isNeededSaveDevice = false
-  if (res.body.values && !res.body.values.authCode) {
-    // Значит нужно подтверджать смс
-    const code = await ZenMoney.readLine('Введите код из СМС', {
+  // Step 3: SMS verification (only if device is NOT bound)
+  if (needSms) {
+    const otpCode = await ZenMoney.readLine('Введите код из СМС для входа в Белинвестбанк', {
       time: 120000,
       inputType: 'number'
     })
-    if (!code || !code.trim()) {
-      throw new InvalidOtpCodeError()
-    }
+    if (!otpCode || !otpCode.trim()) throw new InvalidOtpCodeError()
 
-    res = (await fetchApiJson(loginUrl, {
+    const signin2Res = await fetchJson(LOGIN_API, {
       method: 'POST',
-      headers: { Cookie: sessionCookies },
+      headers: mobileHeaders(fp, loginSessionId ? `PHPSESSID=${loginSessionId};` : undefined),
       body: {
         section: 'account',
         method: 'signin2',
-        action: 1,
-        key: code,
-        device_token: device.token,
+        action: '1',
+        key: otpCode.trim(),
+        device_token: fp.fcmToken,
         device_token_type: 'ANDROID'
-      }
-    }, response => response.success && response.body.status && response.body.status === 'OK', message => new InvalidPreferencesError('bad request')))
+      },
+      stringify,
+      sanitizeRequestLog: {
+        headers: { Cookie: true },
+        body: { key: true }
+      },
+      sanitizeResponseLog: { headers: { 'set-cookie': true } }
+    })
 
-    isNeededSaveDevice = true
+    if (signin2Res.body.status !== 'OK') {
+      throw new InvalidOtpCodeError()
+    }
+    authCode = signin2Res.body.values?.authCode
+    authTokenStr = extractAuthTokenCookies(signin2Res) || authTokenStr
   }
 
-  res = (await fetchApiJson(dataUrl, {
+  if (!authCode) throw new TemporaryError('Не удалось получить код авторизации')
+
+  // Step 4: Auth callback on ibank — bridge login → ibank session
+  let ibankCookies = `PHPSESSID=${ibankSessionId};`
+  if (authTokenStr) ibankCookies += ' ' + authTokenStr
+
+  const authCallbackRes = await fetchApiJson(dataUrl, {
     method: 'POST',
+    headers: { Cookie: ibankCookies },
     body: {
       section: 'account',
       method: 'authCallback',
-      auth_code: res.body.values.authCode
+      auth_code: authCode
     }
-  }, response => response.success && response.body.status && response.body.status === 'OK', message => new InvalidPreferencesError('bad request')))
-  sessionCookies = cookies(res)
+  }, response => response.body?.status === 'OK',
+  () => { throw new TemporaryError('Ошибка авторизации через authCallback') })
 
-  if (isNeededSaveDevice) {
-    await fetchApiJson(dataUrl, {
-      method: 'POST',
-      headers: { Cookie: sessionCookies },
-      body: {
-        section: 'mobile',
-        method: 'setDeviceId',
-        deviceId: device.id,
-        os: 'Android'
-      }
-    }, response => response.success && response.body.status && response.body.status === 'OK', message => new InvalidPreferencesError('bad request'))
+  const finalSessionId = extractPhpSessionId(authCallbackRes) || ibankSessionId
+  const sessionCookies = `PHPSESSID=${finalSessionId};`
+  ZenMoney.setData('sessionCookies', sessionCookies)
+  ZenMoney.saveData()
+
+  // Step 5: Bind device for future SMS-free logins (only on first SMS login)
+  if (needSms && !ZenMoney.getData('deviceBound')) {
+    await tryBindDevice(fp, sessionCookies)
   }
 
   return sessionCookies
 }
 
 export async function fetchAccounts (sessionCookies) {
-  console.log('>>> Загрузка списка счетов...')
   const accounts = (await fetchApiJson(dataUrl, {
     method: 'POST',
     headers: { Cookie: sessionCookies },
@@ -204,8 +290,8 @@ export async function fetchAccounts (sessionCookies) {
       section: 'payments',
       method: 'index'
     }
-  }, response => response.success && response.body.status && response.body.status === 'OK',
-  message => new InvalidPreferencesError('bad request')))
+  }, response => response.ok && response.body?.status === 'OK',
+  () => { throw new InvalidPreferencesError('bad request') }))
   return accounts.body.values.cards
 }
 
@@ -225,30 +311,48 @@ export function createDateIntervals (fromDate, toDate) {
 }
 
 export async function fetchTransactions (sessionCookies, account, fromDate, toDate = new Date()) {
-  console.log('>>> Загрузка списка транзакций...')
   toDate = toDate || new Date()
 
   const dates = createDateIntervals(fromDate, toDate)
-  const responses = await Promise.all(dates.map(dates => fetchApiJson(dataUrl, {
+  const operations = []
+  let summaryData = null
+  let msCardId = null
+  for (const [dateFrom, dateTo] of dates) {
+    const response = await fetchApiJson(dataUrl, {
+      method: 'POST',
+      headers: { Cookie: sessionCookies },
+      body: {
+        section: 'cards',
+        method: 'history',
+        cardId: account.id,
+        dateFrom: formatDate(dateFrom),
+        dateTo: formatDate(dateTo)
+      }
+    }, () => true, () => null).catch(() => null)
+    const history = response?.body?.values?.history
+    if (response?.body?.values?.summaryData) summaryData = response.body.values.summaryData
+    if (!msCardId) {
+      const cards = response?.body?.values?.cards
+      if (cards && cards.length > 0 && cards[0].msCardId) msCardId = cards[0].msCardId
+    }
+    if (history) operations.push(...flatMap(history, op => op))
+  }
+  return {
+    history: operations,
+    summaryData,
+    msCardId
+  }
+}
+
+export async function fetchCardBalance (sessionCookies, msCardId) {
+  const ibankUrl = 'https://ibank.belinvestbank.by/cards/balance-by-card'
+  const response = await fetchApiJson(ibankUrl, {
     method: 'POST',
     headers: { Cookie: sessionCookies },
-    body: {
-      section: 'cards',
-      method: 'history',
-      cardId: account.id,
-      dateFrom: formatDate(dates[0]),
-      dateTo: formatDate(dates[1])
-    }
-  }, response => response.body && response.body.values && response.body.values.history && response.body.values.history.length > 0,
-  message => new InvalidPreferencesError('bad request'))
-  ))
-
-  const operations = flatMap(responses, response => {
-    return flatMap(response.body.values.history, op => {
-      return op
-    })
-  })
-
-  console.log(`>>> Загружено ${operations.length} операций.`)
-  return operations
+    body: { msCardId }
+  }, () => true, () => null).catch(() => null)
+  if (response?.body?.status === 'OK' && response.body.balance != null) {
+    return response.body.balance
+  }
+  return null
 }
