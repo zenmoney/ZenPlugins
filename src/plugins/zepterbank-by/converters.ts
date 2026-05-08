@@ -9,6 +9,28 @@ import {
 } from './types/fetch.types'
 import { convertIsoDateStringToDate } from './helpers'
 
+const parseMcc = (mcc: string | undefined): number | null => {
+  const digits = mcc?.replace(/\D/g, '') ?? ''
+
+  if (digits === '') {
+    return null
+  }
+
+  const parsedMcc = Number(digits)
+
+  return Number.isInteger(parsedMcc) && parsedMcc > 0
+    ? parsedMcc
+    : null
+}
+
+const normalizeMerchantTitle = (title: string | undefined): string | null => {
+  const normalizedTitle = title?.trim()
+
+  return normalizedTitle != null && normalizedTitle !== ''
+    ? normalizedTitle
+    : null
+}
+
 export const convertCardAccount = (fetchAccount: FetchCardAccount): Account & FetchCardAccountMeta => {
   return {
     id: fetchAccount.productCardId,
@@ -46,6 +68,8 @@ export const convertCurrentAccount = (fetchAccount: FetchCurrentAccount): Accoun
 export const convertCardTransaction = (fetchTransaction: FetchCardTransaction, account: Account): Transaction => {
   const isInDifferentCurrency = fetchTransaction.currencyIso !== account.instrument
   const amount = Number(`${fetchTransaction.transOperType === 'debit' ? '-' : ''}${fetchTransaction.amount}`)
+  const merchantTitle = normalizeMerchantTitle(fetchTransaction.cardAcceptor)
+  const mcc = parseMcc(fetchTransaction.transMcc)
 
   return {
     hold: null,
@@ -60,11 +84,21 @@ export const convertCardTransaction = (fetchTransaction: FetchCardTransaction, a
         sum: isInDifferentCurrency ? null : amount
       }
     ],
-    merchant: {
-      fullTitle: fetchTransaction.cardAcceptor,
-      mcc: Number(fetchTransaction.transMcc.replace(/\D/g, '')),
-      location: null
-    }
+    merchant: merchantTitle !== null
+      ? {
+          fullTitle: merchantTitle,
+          mcc,
+          location: null
+        }
+      : mcc !== null
+        ? {
+            title: '',
+            country: null,
+            city: null,
+            mcc,
+            location: null
+          }
+        : null
   }
 }
 
@@ -75,7 +109,7 @@ export const convertStatementTransaction = (fetchTransaction: FetchStatementOper
 
   const payee = fetchTransaction.terminalLocation ?? ''
   const [country = '', city = ''] = (fetchTransaction.merchant ?? '').split(' ')
-  const mcc = fetchTransaction.MCC != null ? Number(fetchTransaction.MCC.replace(/\D/g, '')) : null
+  const mcc = parseMcc(fetchTransaction.MCC)
 
   return {
     hold: null,

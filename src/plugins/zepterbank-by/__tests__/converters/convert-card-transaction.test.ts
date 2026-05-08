@@ -200,4 +200,31 @@ describe('convertCardTransaction', () => {
   ])('converts transactions for card account 2', (apiTransaction: FetchCardTransaction, transaction: Transaction) => {
     expect(convertCardTransaction(apiTransaction, cardAccount2)).toEqual(transaction)
   })
+
+  it('returns null merchant when card transaction does not provide merchant details', () => {
+    expect(convertCardTransaction({
+      effectiveDate: '2026-05-05T16:48:41',
+      transacName: 'P2P CREDIT',
+      amount: '0.08',
+      currencyIso: 'EUR',
+      repeatable: false,
+      transOperType: 'credit',
+      cardAcceptor: undefined,
+      transMcc: ''
+    }, cardAccount2)).toEqual({
+      hold: null,
+      date: new Date('2026-05-05T13:48:41.000Z'),
+      comment: '',
+      movements: [
+        {
+          id: null,
+          account: { id: 'Y2errgEX8HfZ5efNYkj3XzirAqGrN7m523zs53P5' },
+          fee: 0,
+          invoice: null,
+          sum: 0.08
+        }
+      ],
+      merchant: null
+    })
+  })
 })
