@@ -8180,16 +8180,17 @@ thingies@^1.20.0:
   resolved "https://registry.yarnpkg.com/thingies/-/thingies-1.21.0.tgz#e80fbe58fd6fdaaab8fad9b67bd0a5c943c445c1"
   integrity sha512-hsqsJsFMsV+aD4s3CWKk85ep/3I9XzYV/IXaSouJMYIoDlgyi11cBhsqYe9/geRfB0YIikBQg6raRaM+nIMP9g==
 
-thrift@0.15.0:
-  version "0.15.0"
-  resolved "https://registry.yarnpkg.com/thrift/-/thrift-0.15.0.tgz#9c502ab3763e12b93e33c8b4e5c1e0e12ed864cf"
-  integrity sha512-RvuFCwHD8bAHIh0Evlr+8QJui/zzistIj9k668jX6jGvDF1OyOmI5TvY+YnqI/VQxpiE2OCGucYJs/nz/CfldA==
+thrift@0.23.0:
+  version "0.23.0"
+  resolved "https://registry.yarnpkg.com/thrift/-/thrift-0.23.0.tgz#de1162a3a2355f983eff73161bae57bca3fa5ccf"
+  integrity sha512-j7F1ls8JogClU88Ta/pwD/OzYuiFeD6Z5GoWw7ip+jcDhcNYFKgfXYEsyLXYpiNfJO94fbLnITGxyfZ19YzA6Q==
   dependencies:
     browser-or-node "^1.2.1"
     isomorphic-ws "^4.0.1"
     node-int64 "^0.4.0"
     q "^1.5.0"
-    ws "^5.2.2"
+    uuid "^13.0.0"
+    ws "^5.2.3"
 
 thunky@^1.0.2:
   version "1.1.0"
@@ -8544,6 +8545,11 @@ uuid@8.3.2, uuid@^8.3.2:
   version "8.3.2"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-8.3.2.tgz#80d5b5ced271bb9af6c445f21a1a04c606cefbe2"
   integrity sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==
+
+uuid@^13.0.0:
+  version "13.0.2"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-13.0.2.tgz#41bc9c07b12f665089c205f6507976adbdf84ff8"
+  integrity sha512-vzi9uRZ926x4XV73S/4qQaTwPXM2JBj6/6lI/byHH1jOpCzb0zDbfytgA9LcN/hzb2l7WQSQnxITOVx5un/wGw==
 
 v8-to-istanbul@^9.0.1:
   version "9.0.1"
@@ -8902,10 +8908,10 @@ write-file-atomic@^4.0.1:
     imurmurhash "^0.1.4"
     signal-exit "^3.0.7"
 
-ws@^5.2.2:
-  version "5.2.3"
-  resolved "https://registry.yarnpkg.com/ws/-/ws-5.2.3.tgz#05541053414921bc29c63bee14b8b0dd50b07b3d"
-  integrity sha512-jZArVERrMsKUatIdnLzqvcfydI85dvd/Fp1u/VOpfdDWQ4c9qWXe+VIeAbQ5FrDwciAkr+lzofXLz3Kuf26AOA==
+ws@^5.2.3:
+  version "5.2.4"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-5.2.4.tgz#c7bea9f1cfb5f410de50e70e82662e562113f9a7"
+  integrity sha512-fFCejsuC8f9kOSu9FYaOw8CdO68O3h5v0lg4p74o8JqWpwTf9tniOD+nOB78aWoVSS6WptVUmDrp/KPsMVBWFQ==
   dependencies:
     async-limiter "~1.0.0"
 

@@ -40,7 +40,7 @@
     "set-cookie-parser": "2.2.1",
     "sha3": "2.1.4",
     "strip-bom": "3.0.0",
-    "thrift": "0.15.0",
+    "thrift": "0.23.0",
     "util": "0.10.3",
     "whatwg-fetch": "skvav/fetch#c7664274b2a520f777d2bedc7bbd8f10bef5c5a9",
     "whatwg-url-without-unicode": "8.0.0-3",
