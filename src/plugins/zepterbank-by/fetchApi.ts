@@ -3,7 +3,7 @@ import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
 import type * as T from './types/fetch.types'
 import { FetchError, FetchOutput } from './types/base.types'
 
-const makeUrl = (url: string): string => `${BASE_API_URL}/${url}`
+const makeUrl = (url: string): string => `${BASE_API_URL}${url}`
 
 const fetchApi = async (url: string, options: FetchOptions): Promise<FetchResponse> => {
   return await fetchJson(url, {
