@@ -8,6 +8,7 @@ import {
   FetchCurrentAccountMeta
 } from './types/fetch.types'
 import { convertIsoDateStringToDate } from './helpers'
+import { appendCashbackComment } from './cashback.js'
 
 const parseMcc = (mcc: string | undefined): number | null => {
   const digits = mcc?.replace(/\D/g, '') ?? ''
@@ -74,7 +75,7 @@ export const convertCardTransaction = (fetchTransaction: FetchCardTransaction, a
   return {
     hold: null,
     date: convertIsoDateStringToDate(fetchTransaction.effectiveDate),
-    comment: '',
+    comment: appendCashbackComment(fetchTransaction.transacName, mcc),
     movements: [
       {
         id: null, // no transaction id presented
@@ -90,15 +91,7 @@ export const convertCardTransaction = (fetchTransaction: FetchCardTransaction, a
           mcc,
           location: null
         }
-      : mcc !== null
-        ? {
-            title: '',
-            country: null,
-            city: null,
-            mcc,
-            location: null
-          }
-        : null
+      : null
   }
 }
 
@@ -114,7 +107,7 @@ export const convertStatementTransaction = (fetchTransaction: FetchStatementOper
   return {
     hold: null,
     date: convertIsoDateStringToDate(fetchTransaction.transactionDate),
-    comment: '',
+    comment: appendCashbackComment(fetchTransaction.operationName, mcc),
     movements: [
       {
         id: null, // no transaction id presented
