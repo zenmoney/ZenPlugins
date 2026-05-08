@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
     <id>trading212</id>
-    <company>0</company>
+    <company>16189</company>
     <description>
     Imports account balance and deposit/withdrawal history from Trading212 using the official API.
     </description>
