@@ -3,6 +3,7 @@ import type { Account, Transaction } from '../../types/zenmoney'
 import { convertCardAccount, convertCurrentAccount, convertCardTransaction, convertStatementTransaction } from './converters'
 import { BankMessageError, InvalidLoginOrPasswordError } from '../../errors'
 import { convertDateToYyyyMmDd } from './helpers'
+import { mergeTransactions } from './mergeTransactions'
 import { FetchAccountMeta } from './types/fetch.types'
 
 export const authenticate = async (login: string, password: string): Promise<{ sessionToken: string }> => {
@@ -69,12 +70,13 @@ export const getTransactions = async ({ sessionToken, fromDate, toDate }: { sess
     throw new BankMessageError(productStatementResponse.error.errorInfo.errorText)
   }
 
-  return [
-    ...(cardTransactionsResponse?.data ?? [])
-      .filter((op) => op.amount !== '0.00')
-      .map((op) => convertCardTransaction(op, account)),
-    ...productStatementResponse.data.operations
-      .filter((op) => op.operationSum !== '0.00')
-      .map((op) => convertStatementTransaction(op, account))
-  ]
+  const historyTransactions = (cardTransactionsResponse?.data ?? [])
+    .filter((op) => op.amount !== '0.00')
+    .map((op) => convertCardTransaction(op, account))
+
+  const statementTransactions = productStatementResponse.data.operations
+    .filter((op) => op.operationSum !== '0.00')
+    .map((op) => convertStatementTransaction(op, account))
+
+  return mergeTransactions(historyTransactions, statementTransactions)
 }
