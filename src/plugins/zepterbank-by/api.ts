@@ -31,9 +31,11 @@ export const getAccounts = async ({ sessionToken }: { sessionToken: string }): P
     throw new BankMessageError(error.errorInfo.errorText)
   }
 
+  const { cards = [], accounts = [] } = data.products
+
   return [
-    ...data.products.cards.map((acc) => convertCardAccount(acc)),
-    ...data.products.accounts.map((acc) => convertCurrentAccount(acc))
+    ...cards.map((acc) => convertCardAccount(acc)),
+    ...accounts.map((acc) => convertCurrentAccount(acc))
   ]
 }
 

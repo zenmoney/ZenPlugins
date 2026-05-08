@@ -82,8 +82,8 @@ export interface FetchAccountsInput extends BaseFetchInput {}
 
 export interface FetchAccountsOutput {
   products: {
-    cards: FetchCardAccount[]
-    accounts: FetchCurrentAccount[]
+    cards?: FetchCardAccount[]
+    accounts?: FetchCurrentAccount[]
   }
 }
 
