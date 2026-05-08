@@ -1,3 +1,5 @@
+import { encodeUtf8ToBase64 } from './base64'
+
 // Device profiles, fingerprint generation, and mobileSdkData emulation
 // for Belinvestbank mobile API anti-fraud requirements
 
@@ -100,15 +102,6 @@ RcKU18IVYcmzCkZymo7An3zD68Pq38TGn1QcYieV8vdE18uLGUkRnFN1bqodNFu5
 9FjOp+7y/TY6Iv819Q==
 -----END CERTIFICATE-----`
 
-function utf8ToBase64 (str) {
-  const bytes = new TextEncoder().encode(str)
-  let binary = ''
-  for (const byte of bytes) {
-    binary += String.fromCharCode(byte)
-  }
-  return btoa(binary)
-}
-
 // Seeded PRNG (mulberry32) — deterministic random from login
 function createSeededRandom (seed) {
   let h = 0
@@ -162,7 +155,7 @@ function seededFcmToken (rand) {
   for (let i = 0; i < 22; i++) instanceId += chars[(rand() * chars.length) | 0]
   let token = 'APA91b'
   for (let i = 0; i < 134; i++) token += tokenChars[(rand() * tokenChars.length) | 0]
-  return utf8ToBase64(`${instanceId}:${token}`)
+  return encodeUtf8ToBase64(`${instanceId}:${token}`)
 }
 
 function generateRandomGeo () {
@@ -298,7 +291,7 @@ function generateMobileSdkData (fp) {
     PhoneNumber: '',
     DeviceName: fp.deviceModel
   }
-  return utf8ToBase64(JSON.stringify(sdkData, null, 2))
+  return encodeUtf8ToBase64(JSON.stringify(sdkData, null, 2))
 }
 
 export function mobileHeaders (fp, cookie) {
