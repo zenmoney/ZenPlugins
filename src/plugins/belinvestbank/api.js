@@ -2,7 +2,6 @@ import { defaultsDeep, flatMap } from 'lodash'
 import { stringify } from 'querystring'
 import { createDateIntervals as commonCreateDateIntervals } from '../../common/dateUtils'
 import { fetchJson } from '../../common/network'
-import { isDebug } from '../../common/utils'
 import { InvalidOtpCodeError, InvalidPreferencesError, TemporaryError } from '../../errors'
 import { APP_VERSION, BANK_CERT, getOrCreateDeviceFingerprint, mobileHeaders } from './fingerprint'
 
@@ -157,7 +156,7 @@ export async function login (login, password) {
       versionApp: APP_VERSION
     }
   }, () => true, () => null)
-  const ibankSessionId = extractPhpSessionId(preLoginRes) || (!isDebug() ? recoveredIbankSessionId : null)
+  const ibankSessionId = extractPhpSessionId(preLoginRes) || recoveredIbankSessionId
   if (!ibankSessionId) throw new TemporaryError('Не удалось получить сессию ibank')
 
   // Step 2: Sign in via mobile API

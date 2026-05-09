@@ -54,8 +54,11 @@ describe('scrape', () => {
     ])
   })
 
-  it('should reuse ibank session from expired saved session on phone', async () => {
-    const dataApi = mockZenMoney({ sessionCookies: 'PHPSESSID=expiredsession;' })
+  it.each([
+    ['phone', undefined],
+    ['debug', { platform: 'browser' }]
+  ])('should reuse ibank session from expired saved session on %s', async (_mode, application) => {
+    const dataApi = mockZenMoney({ sessionCookies: 'PHPSESSID=expiredsession;' }, application)
     mockExpiredSavedSession()
     mockPreLogin({ withCookie: false })
     mockSignin()
@@ -336,11 +339,12 @@ function mockFetchTransactions () {
   })
 }
 
-function mockZenMoney (initialData = {}) {
+function mockZenMoney (initialData = {}, application = undefined) {
   const dataApi = makePluginDataApi(initialData)
   global.ZenMoney = {
     ...dataApi.methods,
-    getPreferences: () => ({ login: '123456789', password: 'pass' })
+    getPreferences: () => ({ login: '123456789', password: 'pass' }),
+    ...(application ? { application } : {})
   }
   ZenMoney.readLine = async () => '1234'
   return dataApi
