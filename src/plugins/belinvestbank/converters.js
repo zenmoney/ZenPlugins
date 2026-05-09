@@ -1,3 +1,5 @@
+import { appendCashbackComment } from './cashback'
+
 function parseAmount (str) {
   if (!str && str !== 0) return null
   const s = String(str).replace(/\s/g, '')
@@ -82,11 +84,9 @@ export function convertTransaction (json, account) {
     parsePayee
   ].some(parser => parser(transaction, json))
 
-  if (json.mcc) {
-    transaction.comment = transaction.comment
-      ? `${transaction.comment} | MCC: ${json.mcc}`
-      : `MCC: ${json.mcc}`
-  }
+  transaction.comment = json.mcc
+    ? appendCashbackComment(transaction.comment, json.mcc)
+    : transaction.comment
 
   return transaction
 }

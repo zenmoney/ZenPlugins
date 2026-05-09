@@ -53,16 +53,55 @@ describe('scrape', () => {
       }
     ])
   })
+
+  it('should reuse ibank session from expired saved session on phone', async () => {
+    const dataApi = mockZenMoney({ sessionCookies: 'PHPSESSID=expiredsession;' })
+    mockExpiredSavedSession()
+    mockPreLogin({ withCookie: false })
+    mockSignin()
+    mockAuthCallback({ withCookie: false })
+    mockFetchAccounts()
+    mockFetchTransactions()
+
+    const result = await scrape(
+      {
+        preferences: { login: '123456789', password: 'pass' },
+        fromDate: new Date(2025, 11, 27),
+        toDate: new Date(2026, 0, 2)
+      }
+    )
+
+    expect(result.accounts).toHaveLength(1)
+    expect(dataApi.currentData.sessionCookies).toBe('PHPSESSID=rotatedibanksession;')
+  })
 })
 
-function mockPreLogin () {
+function mockExpiredSavedSession () {
+  fetchMock.once({
+    method: 'POST',
+    matcher: (url, { body, headers }) => url === 'https://ibank.belinvestbank.by/app_api' &&
+      body.includes('section=payments') &&
+      body.includes('method=index') &&
+      headers.Cookie === 'PHPSESSID=expiredsession;',
+    response: {
+      status: 200,
+      headers: { 'set-cookie': 'PHPSESSID=rotatedibanksession;' },
+      body: {
+        status: 'SE',
+        message: 'Время сессии закончилось, пожалуйста, перезайдите в приложение'
+      }
+    }
+  })
+}
+
+function mockPreLogin ({ withCookie = true } = {}) {
   fetchMock.once({
     method: 'POST',
     matcher: (url, { body }) => url === 'https://ibank.belinvestbank.by/app_api' &&
       body.includes('section=info') && body.includes('method=isApprovedVersionApp'),
     response: {
       status: 200,
-      headers: { 'set-cookie': 'PHPSESSID=ibanksession;' },
+      headers: withCookie ? { 'set-cookie': 'PHPSESSID=ibanksession;' } : {},
       body: {
         status: 'OK',
         values: { isApprovedVersionApp: true }
@@ -90,14 +129,14 @@ function mockSignin () {
   })
 }
 
-function mockAuthCallback () {
+function mockAuthCallback ({ withCookie = true } = {}) {
   fetchMock.once({
     method: 'POST',
     matcher: (url, { body }) => url === 'https://ibank.belinvestbank.by/app_api' &&
       body.includes('section=account') && body.includes('method=authCallback') && body.includes('auth_code=testauthcode123'),
     response: {
       status: 200,
-      headers: { 'set-cookie': 'PHPSESSID=ibanksession;' },
+      headers: withCookie ? { 'set-cookie': 'PHPSESSID=ibanksession;' } : {},
       body: {
         status: 'OK',
         values: {
@@ -297,10 +336,12 @@ function mockFetchTransactions () {
   })
 }
 
-function mockZenMoney () {
+function mockZenMoney (initialData = {}) {
+  const dataApi = makePluginDataApi(initialData)
   global.ZenMoney = {
-    ...makePluginDataApi({}).methods,
+    ...dataApi.methods,
     getPreferences: () => ({ login: '123456789', password: 'pass' })
   }
   ZenMoney.readLine = async () => '1234'
+  return dataApi
 }

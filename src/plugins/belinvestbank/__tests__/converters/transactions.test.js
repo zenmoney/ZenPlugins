@@ -231,7 +231,7 @@ describe('convertTransaction', () => {
             }
           ],
         merchant: null,
-        comment: 'MCC: 6012',
+        comment: 'MCC 6012 ❌',
         hold: true
       }
     },
@@ -288,7 +288,7 @@ describe('convertTransaction', () => {
             }
           ],
         merchant: null,
-        comment: 'MCC: 6012',
+        comment: 'MCC 6012 ❌',
         hold: false
       }
     },
@@ -345,7 +345,7 @@ describe('convertTransaction', () => {
             country: null,
             title: 'FOOD.BOLT.EU /C/210525165'
           },
-        comment: 'MCC: 5812',
+        comment: 'MCC 5812 ✅',
         hold: false
       }
     },
@@ -401,7 +401,7 @@ describe('convertTransaction', () => {
           mcc: null,
           location: null
         },
-        comment: 'MCC: 5309',
+        comment: 'MCC 5309 ✅',
         hold: true
       }
     },
@@ -458,7 +458,7 @@ describe('convertTransaction', () => {
             country: 'US',
             title: 'GOOGLE*CLOUDMOSA INC'
           },
-        comment: 'MCC: 7372',
+        comment: 'MCC 7372 ❌',
         hold: false
       }
     }
@@ -525,7 +525,7 @@ describe('convertTransaction', () => {
           mcc: null,
           location: null
         },
-        comment: 'MCC: 4511',
+        comment: 'MCC 4511 ✅',
         hold: false
       }
     ]
