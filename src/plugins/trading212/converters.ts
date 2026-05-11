@@ -25,10 +25,8 @@ function convertTransaction (tr: ApiTransaction, accountId: string): Transaction
     comment = 'Deposit'
   } else if (tr.type === 'FEE') {
     comment = 'Transaction fee'
-    tr.amount = -tr.amount
   } else if (tr.type === 'WITHDRAW') {
     comment = 'Withdrawal'
-    tr.amount = -tr.amount
   }
 
   return {
