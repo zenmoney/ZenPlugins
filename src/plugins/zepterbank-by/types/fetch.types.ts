@@ -82,8 +82,8 @@ export interface FetchAccountsInput extends BaseFetchInput {}
 
 export interface FetchAccountsOutput {
   products: {
-    cards: FetchCardAccount[]
-    accounts: FetchCurrentAccount[]
+    cards?: FetchCardAccount[]
+    accounts?: FetchCurrentAccount[]
   }
 }
 
@@ -101,7 +101,7 @@ export interface FetchCardTransaction {
   'amount': string
   'currencyIso': string
   /** Place of payment **/
-  'cardAcceptor': string
+  'cardAcceptor'?: string
   'repeatable': false
   /** credit - income, debit - outcome **/
   'transOperType': 'debit' | 'credit'
@@ -109,7 +109,7 @@ export interface FetchCardTransaction {
    * MCC code (MCC is cyrillic)
    * @example MCC0000
    * **/
-  'transMcc': string
+  'transMcc'?: string
 }
 
 export interface FetchTransactionsInput extends BaseFetchInput {

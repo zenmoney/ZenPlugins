@@ -21,7 +21,7 @@ describe('convertCardTransaction', () => {
       {
         hold: null,
         date: new Date('2026-02-13T07:21:30.000Z'),
-        comment: '',
+        comment: 'P2P DEBIT\nMCC 6012 ❌',
         movements: [
           {
             id: null,
@@ -43,7 +43,7 @@ describe('convertCardTransaction', () => {
       {
         hold: null,
         date: new Date('2026-02-12T18:46:07.000Z'),
-        comment: '',
+        comment: 'POS PURCHASE\nMCC 6012 ❌',
         movements: [
           {
             id: null,
@@ -65,7 +65,7 @@ describe('convertCardTransaction', () => {
       {
         hold: null,
         date: new Date('2026-02-12T17:58:51.000Z'),
-        comment: '',
+        comment: 'P2P DEBIT\nMCC 6012 ❌',
         movements: [
           {
             id: null,
@@ -87,7 +87,7 @@ describe('convertCardTransaction', () => {
       {
         hold: null,
         date: new Date('2026-02-12T14:53:47.000Z'),
-        comment: '',
+        comment: 'POS PURCHASE\nMCC 5411 ✅',
         movements: [
           {
             id: null,
@@ -109,7 +109,7 @@ describe('convertCardTransaction', () => {
       {
         hold: null,
         date: new Date('2026-02-12T14:31:39.000Z'),
-        comment: '',
+        comment: 'POS CASH DEPOSIT\nMCC 4900 ❌',
         movements: [
           {
             id: null,
@@ -136,7 +136,7 @@ describe('convertCardTransaction', () => {
       {
         hold: null,
         date: new Date('2026-02-13T07:23:28.000Z'),
-        comment: '',
+        comment: 'POS PURCHASE\nMCC 5411 ✅',
         movements: [
           {
             id: null,
@@ -158,7 +158,7 @@ describe('convertCardTransaction', () => {
       {
         hold: null,
         date: new Date('2026-02-13T07:21:30.000Z'),
-        comment: '',
+        comment: 'P2P CREDIT\nMCC 6012 ❌',
         movements: [
           {
             id: null,
@@ -180,7 +180,7 @@ describe('convertCardTransaction', () => {
       {
         hold: null,
         date: new Date('2026-02-12T17:58:52.000Z'),
-        comment: '',
+        comment: 'P2P CREDIT\nMCC 6012 ❌',
         movements: [
           {
             id: null,
@@ -199,5 +199,32 @@ describe('convertCardTransaction', () => {
     ]
   ])('converts transactions for card account 2', (apiTransaction: FetchCardTransaction, transaction: Transaction) => {
     expect(convertCardTransaction(apiTransaction, cardAccount2)).toEqual(transaction)
+  })
+
+  it('returns null merchant when card transaction does not provide merchant details', () => {
+    expect(convertCardTransaction({
+      effectiveDate: '2026-05-05T16:48:41',
+      transacName: 'P2P CREDIT',
+      amount: '0.08',
+      currencyIso: 'EUR',
+      repeatable: false,
+      transOperType: 'credit',
+      cardAcceptor: undefined,
+      transMcc: ''
+    }, cardAccount2)).toEqual({
+      hold: null,
+      date: new Date('2026-05-05T13:48:41.000Z'),
+      comment: 'P2P CREDIT\nMCC не указан ❌',
+      movements: [
+        {
+          id: null,
+          account: { id: 'Y2errgEX8HfZ5efNYkj3XzirAqGrN7m523zs53P5' },
+          fee: 0,
+          invoice: null,
+          sum: 0.08
+        }
+      ],
+      merchant: null
+    })
   })
 })
