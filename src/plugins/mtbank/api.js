@@ -5,7 +5,8 @@ import { BankMessageError, InvalidOtpCodeError, TemporaryError } from '../../err
 import { getDate } from './converters'
 
 const baseUrl = 'https://mybank.by/api/v1/'
-const statementRequestDelayMs = 250
+const statementRequestDelayMs = 50
+const statementParallelWorkerCount = 2
 const statementRetryCount = 2
 const statementRetryDelayMs = 1000
 
@@ -110,6 +111,7 @@ function parseCookies (response) {
 }
 
 const mapToCookieHeader = (map) => [...map.entries()].map(([key, value]) => `${key}=${value}`).join('; ')
+const cloneCookies = (map) => new Map(map)
 
 function updateCookies (sessionCookies, response) {
   if (!response || !response.headers) return
@@ -283,6 +285,68 @@ async function fetchStatementOperations (sessionCookies, account, startDate, end
   return []
 }
 
+async function fetchAccountOperations (sessionCookies, account, intervals) {
+  const operations = []
+
+  for (const [intervalIndex, [startDate, endDate]] of intervals.entries()) {
+    operations.push(...await fetchStatementOperations(sessionCookies, account, startDate, endDate))
+
+    if (statementRequestDelayMs > 0 && intervalIndex < intervals.length - 1) {
+      await delay(statementRequestDelayMs)
+    }
+  }
+
+  return operations
+}
+
+async function fetchTransactionsSequentially (sessionCookies, accounts, intervals) {
+  const operations = []
+
+  for (const account of accounts) {
+    operations.push(...await fetchAccountOperations(sessionCookies, account, intervals))
+  }
+
+  return operations
+}
+
+function shouldUseParallelAccountWorkers (accounts) {
+  return accounts.length > 1
+}
+
+async function fetchTransactionsWithParallelAccountWorkers (sessionCookies, accounts, intervals) {
+  const workerCount = Math.min(statementParallelWorkerCount, accounts.length)
+  let nextAccountIndex = 0
+  let workerError = null
+
+  const workers = Array.from({ length: workerCount }, async () => {
+    const workerCookies = cloneCookies(sessionCookies)
+    const workerOperations = []
+
+    while (!workerError) {
+      const accountIndex = nextAccountIndex++
+      if (accountIndex >= accounts.length) {
+        break
+      }
+
+      try {
+        workerOperations.push(...await fetchAccountOperations(workerCookies, accounts[accountIndex], intervals))
+      } catch (error) {
+        workerError = workerError || error
+      }
+    }
+
+    return workerOperations
+  })
+
+  const workerResults = await Promise.all(workers)
+
+  if (workerError) {
+    throw workerError
+  }
+
+  return flatMap(workerResults, operations => operations)
+}
+
 export function createDateIntervals (fromDate, toDate) {
   const interval = 20 * 24 * 60 * 60 * 1000 // 20-day interval for fetching data
   const gapMs = 1
@@ -298,17 +362,19 @@ export async function fetchTransactions (sessionCookies, accounts, fromDate, toD
   console.log('>>> Загрузка списка транзакций...')
 
   const intervals = createDateIntervals(fromDate, toDate || new Date())
-  const operations = []
+  const sessionCookiesSnapshot = cloneCookies(sessionCookies)
+  let operations
 
-  for (const [accountIndex, account] of accounts.entries()) {
-    for (const [intervalIndex, [startDate, endDate]] of intervals.entries()) {
-      operations.push(...await fetchStatementOperations(sessionCookies, account, startDate, endDate))
-
-      const isLastRequest = accountIndex === accounts.length - 1 && intervalIndex === intervals.length - 1
-      if (!isLastRequest) {
-        await delay(statementRequestDelayMs)
-      }
+  if (shouldUseParallelAccountWorkers(accounts)) {
+    console.log(`>>> Параллельная загрузка операций по счетам (${Math.min(statementParallelWorkerCount, accounts.length)} workers)...`)
+    try {
+      operations = await fetchTransactionsWithParallelAccountWorkers(sessionCookiesSnapshot, accounts, intervals)
+    } catch (error) {
+      console.log(`>>> Параллельная загрузка операций не удалась, повторяем последовательно: ${error.message || error}`)
+      operations = await fetchTransactionsSequentially(cloneCookies(sessionCookiesSnapshot), accounts, intervals)
     }
+  } else {
+    operations = await fetchTransactionsSequentially(sessionCookiesSnapshot, accounts, intervals)
   }
 
   const filteredOperations = operations.filter(function (op) {

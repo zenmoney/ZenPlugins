@@ -531,6 +531,102 @@ describe('scrape', () => {
     expect(error).toBeDefined()
     expect(error.message).toContain('Не удалось загрузить операции (счет 1111111, период')
   })
+
+  it('should load account statements with controlled parallelism', async () => {
+    let activeRequests = 0
+    let maxActiveRequests = 0
+
+    fetchMock.mock({
+      method: 'POST',
+      matcher: (url) => url === 'https://mybank.by/api/v1/product/loadOperationStatements',
+      response: async (url, options) => {
+        const requestBody = JSON.parse(options.body)
+        activeRequests++
+        maxActiveRequests = Math.max(maxActiveRequests, activeRequests)
+        await new Promise(resolve => setTimeout(resolve, 20))
+        activeRequests--
+
+        return {
+          status: 200,
+          body: JSON.stringify({
+            ResponseType: 'ResponseOfListOfTransactionStatement',
+            error: null,
+            sessionId: null,
+            success: true,
+            validateErrors: null,
+            data: [{
+              accountCurr: 'BYN',
+              accountId: requestBody.contractCode,
+              operations: []
+            }]
+          }),
+          statusText: 'OK',
+          sendAsJson: false
+        }
+      }
+    })
+
+    const operations = await fetchTransactions(
+      new Map([['identity-cookie', '1']]),
+      [
+        { id: '1111111', productType: 'PC' },
+        { id: '2222222', productType: 'PC' }
+      ],
+      new Date('2018-12-27T00:00:00.000+03:00'),
+      new Date('2019-01-02T00:00:00.000+03:00')
+    )
+
+    expect(operations).toHaveLength(0)
+    expect(maxActiveRequests).toBeGreaterThan(1)
+  })
+
+  it('should fall back to sequential loading when parallel statement loading fails', async () => {
+    let requestCount = 0
+
+    fetchMock.mock({
+      method: 'POST',
+      matcher: (url) => url === 'https://mybank.by/api/v1/product/loadOperationStatements',
+      response: (url, options) => {
+        requestCount++
+        const requestBody = JSON.parse(options.body)
+
+        if (requestCount === 1) {
+          throw new Error('parallel worker failed')
+        }
+
+        return {
+          status: 200,
+          body: JSON.stringify({
+            ResponseType: 'ResponseOfListOfTransactionStatement',
+            error: null,
+            sessionId: null,
+            success: true,
+            validateErrors: null,
+            data: [{
+              accountCurr: 'BYN',
+              accountId: requestBody.contractCode,
+              operations: []
+            }]
+          }),
+          statusText: 'OK',
+          sendAsJson: false
+        }
+      }
+    })
+
+    const operations = await fetchTransactions(
+      new Map([['identity-cookie', '1']]),
+      [
+        { id: '1111111', productType: 'PC' },
+        { id: '2222222', productType: 'PC' }
+      ],
+      new Date('2018-12-27T00:00:00.000+03:00'),
+      new Date('2019-01-02T00:00:00.000+03:00')
+    )
+
+    expect(operations).toHaveLength(0)
+    expect(requestCount).toBe(4)
+  })
 })
 
 function mockLoadOperationStatements () {
