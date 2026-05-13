@@ -35,9 +35,8 @@ function extractAuthTokenCookies (response) {
   return parts.length ? parts.join('; ') + ';' : ''
 }
 
-async function fetchApiJson (url, options, predicate = () => true, error = (message) => console.assert(false, message)) {
-  const fp = getOrCreateDeviceFingerprint()
-  options = defaultsDeep(
+function buildMobileApiOptions (fp, options) {
+  return defaultsDeep(
     options,
     {
       headers: mobileHeaders(fp, options?.headers?.Cookie),
@@ -49,6 +48,11 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
       stringify
     }
   )
+}
+
+async function fetchApiJson (url, options, predicate = () => true, error = (message) => console.assert(false, message)) {
+  const fp = getOrCreateDeviceFingerprint()
+  options = buildMobileApiOptions(fp, options)
 
   const response = await fetchJson(url, options)
   if (predicate) {
@@ -121,24 +125,26 @@ export async function login (login, password) {
   }
 
   const fp = getOrCreateDeviceFingerprint()
+  let recoveredIbankSessionId = null
 
   // Try reusing saved session
   const savedCookies = ZenMoney.getData('sessionCookies', null)
   if (savedCookies) {
     try {
-      const testRes = await fetchApiJson(dataUrl, {
+      const testRes = await fetchJson(dataUrl, buildMobileApiOptions(fp, {
         method: 'POST',
         headers: { Cookie: savedCookies },
         body: {
           section: 'payments',
           method: 'index'
         }
-      }, response => response.ok && response.body?.status === 'OK',
-      () => { throw new Error('Session invalid') })
+      }))
+      recoveredIbankSessionId = extractPhpSessionId(testRes)
       if (testRes.body.status === 'OK') return savedCookies
     } catch (e) {
       ZenMoney.setData('sessionCookies', null)
     }
+    ZenMoney.setData('sessionCookies', null)
   }
 
   // Step 1: Pre-login to ibank — establish PHPSESSID
@@ -150,7 +156,7 @@ export async function login (login, password) {
       versionApp: APP_VERSION
     }
   }, () => true, () => null)
-  const ibankSessionId = extractPhpSessionId(preLoginRes)
+  const ibankSessionId = extractPhpSessionId(preLoginRes) || recoveredIbankSessionId
   if (!ibankSessionId) throw new TemporaryError('Не удалось получить сессию ibank')
 
   // Step 2: Sign in via mobile API
