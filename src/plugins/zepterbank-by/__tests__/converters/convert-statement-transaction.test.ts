@@ -23,7 +23,7 @@ describe('convertStatementTransaction', () => {
       {
         hold: null,
         date: new Date('2026-02-13T07:21:30.000Z'),
-        comment: 'Списание P2P в устройствах банка\nMCC 6012 ❌',
+        comment: null,
         movements: [{
           id: null,
           account: { id: 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8' },
@@ -39,7 +39,7 @@ describe('convertStatementTransaction', () => {
       {
         hold: null,
         date: new Date('2026-02-12T18:46:07.000Z'),
-        comment: 'Оплата товаров и услуг в устройствах банка\nMCC 6012 ❌',
+        comment: null,
         movements: [{
           id: null,
           account: { id: 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8' },
@@ -55,7 +55,7 @@ describe('convertStatementTransaction', () => {
       {
         hold: null,
         date: new Date('2026-02-12T17:58:51.000Z'),
-        comment: 'Списание P2P в устройствах банка\nMCC 6012 ❌',
+        comment: null,
         movements: [{
           id: null,
           account: { id: 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8' },
@@ -71,7 +71,7 @@ describe('convertStatementTransaction', () => {
       {
         hold: null,
         date: new Date('2026-02-12T14:53:18.000Z'),
-        comment: 'Оплата товаров и услуг в устройствах других банков\nMCC 5411 ✅',
+        comment: null,
         movements: [{
           id: null,
           account: { id: 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8' },
@@ -87,7 +87,7 @@ describe('convertStatementTransaction', () => {
       {
         hold: null,
         date: new Date('2026-02-12T14:31:39.000Z'),
-        comment: 'Пополнение карт-счета по карточке\nMCC 4900 ❌',
+        comment: null,
         movements: [{
           id: null,
           account: { id: 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8' },
@@ -108,7 +108,7 @@ describe('convertStatementTransaction', () => {
       {
         hold: null,
         date: new Date('2026-02-13T07:21:30.000Z'),
-        comment: 'Зачисление P2P в устройствах банка (конверсия)\nMCC 6012 ❌',
+        comment: null,
         movements: [{
           id: null,
           account: { id: 'Y2errgEX8HfZ5efNYkj3XzirAqGrN7m523zs53P5' },
@@ -124,7 +124,7 @@ describe('convertStatementTransaction', () => {
       {
         hold: null,
         date: new Date('2026-02-12T17:58:52.000Z'),
-        comment: 'Зачисление P2P в устройствах банка (конверсия)\nMCC 6012 ❌',
+        comment: null,
         movements: [{
           id: null,
           account: { id: 'Y2errgEX8HfZ5efNYkj3XzirAqGrN7m523zs53P5' },
@@ -140,7 +140,7 @@ describe('convertStatementTransaction', () => {
       {
         hold: null,
         date: new Date('2026-02-12T21:00:00.000Z'),
-        comment: 'Оплата товаров и услуг в устройствах других банка (конверсия)\nMCC 5411 ✅',
+        comment: null,
         movements: [{
           id: null,
           account: { id: 'Y2errgEX8HfZ5efNYkj3XzirAqGrN7m523zs53P5' },
@@ -161,7 +161,7 @@ describe('convertStatementTransaction', () => {
       {
         hold: null,
         date: new Date('2026-02-12T18:46:07.000Z'),
-        comment: 'On-line пополнение вкладного/текущего счета (списание с карты)\nMCC не указан ❌',
+        comment: null,
         movements: [{
           id: null,
           account: { id: '3p6Kf9JU2RQW4HFE42QGVB556Sv4hgVxg4vZ7ZP2' },
