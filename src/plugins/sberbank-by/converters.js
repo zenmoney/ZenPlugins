@@ -1,4 +1,4 @@
-import { keyBy, sortBy, uniqBy } from 'lodash'
+import { keyBy, sortBy } from 'lodash'
 import codeToCurrency from '../../common/codeToCurrencyLookup'
 import { toISODateString } from '../../common/dateUtils'
 import { getIntervalBetweenDates } from '../../common/momentDateUtils'
@@ -101,21 +101,82 @@ function parseMetalInstrument (code) {
   }
 }
 
+function getApiTransactionDedupKey (apiTransaction) {
+  const rrn = apiTransaction.rnnCode || apiTransaction.souRnnCode || ''
+  const authorizationCode = apiTransaction.authorizationCode && apiTransaction.authorizationCode !== '000000'
+    ? apiTransaction.authorizationCode
+    : ''
+  if (rrn || authorizationCode) {
+    return [
+      apiTransaction.contractId,
+      apiTransaction.cardId || apiTransaction.cardPAN || '',
+      toISODateString(new Date(apiTransaction.eventDate)),
+      Math.abs(apiTransaction.transactionSum),
+      apiTransaction.transactionCurrency || '',
+      rrn,
+      authorizationCode
+    ].join('_')
+  }
+  return [
+    apiTransaction.contractId,
+    apiTransaction.eventDate,
+    Math.abs(apiTransaction.transactionSum),
+    rrn,
+    apiTransaction.authorizationCode || ''
+  ].join('_')
+}
+
+function shouldReplaceApiTransaction (currentTransaction, nextTransaction) {
+  if (currentTransaction.eventStatus === 0 && nextTransaction.eventStatus !== 0) {
+    return true
+  }
+  if (!currentTransaction.processingDate && nextTransaction.processingDate) {
+    return true
+  }
+  return false
+}
+
+function deduplicateApiTransactions (apiTransactions) {
+  const uniqueTransactions = []
+  const transactionIndexesByKey = {}
+  for (const apiTransaction of sortBy(apiTransactions, transaction => transaction.transactionName?.match(/Перевод/))) {
+    const key = getApiTransactionDedupKey(apiTransaction)
+    const index = transactionIndexesByKey[key]
+    if (index === undefined) {
+      transactionIndexesByKey[key] = uniqueTransactions.length
+      uniqueTransactions.push(apiTransaction)
+      continue
+    }
+    if (shouldReplaceApiTransaction(uniqueTransactions[index], apiTransaction)) {
+      uniqueTransactions[index] = apiTransaction
+    }
+  }
+  return uniqueTransactions
+}
+
+function getTransactionDedupKey (transaction) {
+  return `${transaction.movements[0].account.id}_${transaction.date.getTime()}_${Math.abs(transaction.movements[0].sum)}`
+}
+
+function shouldReplaceTransaction (currentTransaction, nextTransaction) {
+  return currentTransaction.hold && !nextTransaction.hold
+}
+
 export function convertTransactions (apiTransactions, accountsByContractNumber) {
-  const adjustedApiTransactions = uniqBy(
-    sortBy(apiTransactions, apiTransaction => apiTransaction.transactionName?.match(/Перевод/)),
-    apiTransaction => `${apiTransaction.contractId}_${apiTransaction.eventDate}_${Math.abs(apiTransaction.transactionSum)}_${apiTransaction.rnnCode}_${apiTransaction.authorizationCode}`)
+  const adjustedApiTransactions = deduplicateApiTransactions(apiTransactions)
   const transactions = []
-  const transactionIds = {}
+  const transactionIndexes = {}
   for (const transaction of adjustedApiTransactions) {
     if (accountsByContractNumber[transaction.contractId]) {
       const answer = convertTransaction(transaction, accountsByContractNumber[transaction.contractId])
       if (answer !== null) {
-        const key = answer.movements[0].account.id + '_' + answer.date + '_' + Math.abs(answer.movements[0].sum)
-        if (transactionIds[key]) { //
-        } else {
-          transactionIds[key] = true
+        const key = getTransactionDedupKey(answer)
+        const index = transactionIndexes[key]
+        if (index === undefined) {
+          transactionIndexes[key] = transactions.length
           transactions.push(answer)
+        } else if (shouldReplaceTransaction(transactions[index], answer)) {
+          transactions[index] = answer
         }
       }
     }
