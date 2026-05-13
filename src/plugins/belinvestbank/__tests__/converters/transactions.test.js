@@ -231,7 +231,7 @@ describe('convertTransaction', () => {
             }
           ],
         merchant: null,
-        comment: 'MCC 6012 ❌',
+        comment: null,
         hold: true
       }
     },
@@ -288,7 +288,7 @@ describe('convertTransaction', () => {
             }
           ],
         merchant: null,
-        comment: 'MCC 6012 ❌',
+        comment: null,
         hold: false
       }
     },
@@ -339,13 +339,13 @@ describe('convertTransaction', () => {
           ],
         merchant:
           {
-            mcc: null,
+            mcc: 5812,
             location: null,
             city: 'TALLINN',
             country: null,
             title: 'FOOD.BOLT.EU /C/210525165'
           },
-        comment: 'MCC 5812 ✅',
+        comment: null,
         hold: false
       }
     },
@@ -398,10 +398,10 @@ describe('convertTransaction', () => {
           country: 'TN',
           city: 'ENFIDHA',
           title: 'ATU TUNISIE SARL',
-          mcc: null,
+          mcc: 5309,
           location: null
         },
-        comment: 'MCC 5309 ✅',
+        comment: null,
         hold: true
       }
     },
@@ -452,13 +452,13 @@ describe('convertTransaction', () => {
           ],
         merchant:
           {
-            mcc: null,
+            mcc: 7372,
             location: null,
             city: 'INTERNET',
             country: 'US',
             title: 'GOOGLE*CLOUDMOSA INC'
           },
-        comment: 'MCC 7372 ❌',
+        comment: null,
         hold: false
       }
     }
@@ -522,10 +522,10 @@ describe('convertTransaction', () => {
           country: 'BY',
           city: 'MINSK',
           title: 'SHOP "WWW.BELAVIA.BY" BPSB',
-          mcc: null,
+          mcc: 4511,
           location: null
         },
-        comment: 'MCC 4511 ✅',
+        comment: null,
         hold: false
       }
     ]

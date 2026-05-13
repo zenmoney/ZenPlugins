@@ -140,7 +140,7 @@ function parsePayee (transaction, json) {
   }
 
   transaction.merchant = {
-    mcc: null,
+    mcc: parseInt(json.mcc) || null,
     location: null
   }
   const merchant = json.cardAcceptor.split('>')

@@ -28,6 +28,10 @@ function getCashbackCommentLine (mcc) {
 }
 
 function appendCashbackComment (comment, mcc) {
+  if (!global.ZenMoney?.getPreferences()?.includeMccInComment) {
+    return comment || null
+  }
+
   const normalizedComment = normalizeComment(comment)
   const cashbackCommentLine = getCashbackCommentLine(parseMcc(mcc))
 
