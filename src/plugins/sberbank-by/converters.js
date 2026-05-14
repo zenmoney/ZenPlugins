@@ -106,23 +106,17 @@ function getApiTransactionDedupKey (apiTransaction) {
   const authorizationCode = apiTransaction.authorizationCode && apiTransaction.authorizationCode !== '000000'
     ? apiTransaction.authorizationCode
     : ''
-  if (rrn || authorizationCode) {
-    return [
-      apiTransaction.contractId,
-      apiTransaction.cardId || apiTransaction.cardPAN || '',
-      toISODateString(new Date(apiTransaction.eventDate)),
-      Math.abs(apiTransaction.transactionSum),
-      apiTransaction.transactionCurrency || '',
-      rrn,
-      authorizationCode
-    ].join('_')
-  }
+  const dateKey = rrn || authorizationCode
+    ? toISODateString(new Date(apiTransaction.eventDate))
+    : String(apiTransaction.eventDate)
   return [
     apiTransaction.contractId,
-    apiTransaction.eventDate,
+    apiTransaction.cardId || apiTransaction.cardPAN || '',
+    dateKey,
     Math.abs(apiTransaction.transactionSum),
+    apiTransaction.transactionCurrency || '',
     rrn,
-    apiTransaction.authorizationCode || ''
+    authorizationCode
   ].join('_')
 }
 
@@ -139,7 +133,7 @@ function shouldReplaceApiTransaction (currentTransaction, nextTransaction) {
 function deduplicateApiTransactions (apiTransactions) {
   const uniqueTransactions = []
   const transactionIndexesByKey = {}
-  for (const apiTransaction of sortBy(apiTransactions, transaction => transaction.transactionName?.match(/Перевод/))) {
+  for (const apiTransaction of sortBy(apiTransactions, apiTransaction => apiTransaction.transactionName?.match(/Перевод/))) {
     const key = getApiTransactionDedupKey(apiTransaction)
     const index = transactionIndexesByKey[key]
     if (index === undefined) {
@@ -155,7 +149,11 @@ function deduplicateApiTransactions (apiTransactions) {
 }
 
 function getTransactionDedupKey (transaction) {
-  return `${transaction.movements[0].account.id}_${transaction.date.getTime()}_${Math.abs(transaction.movements[0].sum)}`
+  const movement = transaction.movements?.[0]
+  if (!movement) {
+    return null
+  }
+  return `${movement.account.id}_${transaction.date.getTime()}_${Math.abs(movement.sum)}`
 }
 
 function shouldReplaceTransaction (currentTransaction, nextTransaction) {
@@ -171,6 +169,10 @@ export function convertTransactions (apiTransactions, accountsByContractNumber) 
       const answer = convertTransaction(transaction, accountsByContractNumber[transaction.contractId])
       if (answer !== null) {
         const key = getTransactionDedupKey(answer)
+        if (key === null) {
+          transactions.push(answer)
+          continue
+        }
         const index = transactionIndexes[key]
         if (index === undefined) {
           transactionIndexes[key] = transactions.length
