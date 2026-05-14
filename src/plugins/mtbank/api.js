@@ -5,10 +5,6 @@ import { BankMessageError, InvalidOtpCodeError, TemporaryError } from '../../err
 import { getDate } from './converters'
 
 const baseUrl = 'https://mybank.by/api/v1/'
-const statementRequestDelayMs = 50
-const statementParallelWorkerCount = 2
-const statementRetryCount = 2
-const statementRetryDelayMs = 1000
 
 async function fetchApiJson (url, options, predicate = () => true, error = (message) => console.assert(false, message)) {
   options = defaultsDeep(
@@ -111,7 +107,6 @@ function parseCookies (response) {
 }
 
 const mapToCookieHeader = (map) => [...map.entries()].map(([key, value]) => `${key}=${value}`).join('; ')
-const cloneCookies = (map) => new Map(map)
 
 function updateCookies (sessionCookies, response) {
   if (!response || !response.headers) return
@@ -212,141 +207,6 @@ function formatDate (date) {
   return date.toISOString().replace('T', ' ').split('.')[0]
 }
 
-function delay (ms) {
-  return new Promise(resolve => setTimeout(resolve, ms))
-}
-
-function isRetriableStatementError (error) {
-  const message = String(error && error.message ? error.message : error)
-  return message.includes('[NTI]') ||
-    message.includes('[NER]') ||
-    message.includes('Request timed out')
-}
-
-function getStatementContext (account, startDate, endDate) {
-  return `счет ${account.id}, период ${formatDate(startDate)} - ${formatDate(endDate)}`
-}
-
-function validateStatementResponse (response, account, startDate, endDate) {
-  const context = getStatementContext(account, startDate, endDate)
-
-  if (!response || !response.body || response.body.success !== true || !Array.isArray(response.body.data)) {
-    throw new TemporaryError(`Банк вернул некорректный ответ при загрузке операций (${context})`)
-  }
-
-  for (const statement of response.body.data) {
-    if (!statement || !Array.isArray(statement.operations)) {
-      throw new TemporaryError(`Банк вернул некорректный ответ при загрузке операций (${context})`)
-    }
-  }
-}
-
-async function fetchStatementOperations (sessionCookies, account, startDate, endDate) {
-  const context = getStatementContext(account, startDate, endDate)
-
-  for (let attempt = 0; attempt <= statementRetryCount; attempt++) {
-    try {
-      const response = await fetchApiJsonWithSessionCookies(sessionCookies, 'product/loadOperationStatements', {
-        method: 'POST',
-        body: {
-          contractCode: account.id,
-          accountIdenType: account.productType,
-          startDate: formatDate(startDate),
-          endDate: formatDate(endDate),
-          halva: false
-        }
-      }, response => response.body)
-
-      if (!response) {
-        return []
-      }
-
-      validateStatementResponse(response, account, startDate, endDate)
-
-      return flatMap(response.body.data, statement => statement.operations.map(operation => ({
-        ...operation,
-        accountId: statement.accountId,
-        description: operation.description || ''
-      })))
-    } catch (error) {
-      if (!isRetriableStatementError(error) || attempt === statementRetryCount) {
-        if (error instanceof BankMessageError) {
-          throw error
-        }
-        throw new TemporaryError(`Не удалось загрузить операции (${context}): ${error.message || error}`)
-      }
-
-      const retryDelayMs = statementRetryDelayMs * Math.pow(2, attempt)
-      console.log(`>>> Повтор загрузки операций (${context}), попытка ${attempt + 2}/${statementRetryCount + 1} через ${retryDelayMs} мс...`)
-      await delay(retryDelayMs)
-    }
-  }
-
-  return []
-}
-
-async function fetchAccountOperations (sessionCookies, account, intervals) {
-  const operations = []
-
-  for (const [intervalIndex, [startDate, endDate]] of intervals.entries()) {
-    operations.push(...await fetchStatementOperations(sessionCookies, account, startDate, endDate))
-
-    if (statementRequestDelayMs > 0 && intervalIndex < intervals.length - 1) {
-      await delay(statementRequestDelayMs)
-    }
-  }
-
-  return operations
-}
-
-async function fetchTransactionsSequentially (sessionCookies, accounts, intervals) {
-  const operations = []
-
-  for (const account of accounts) {
-    operations.push(...await fetchAccountOperations(sessionCookies, account, intervals))
-  }
-
-  return operations
-}
-
-function shouldUseParallelAccountWorkers (accounts) {
-  return accounts.length > 1
-}
-
-async function fetchTransactionsWithParallelAccountWorkers (sessionCookies, accounts, intervals) {
-  const workerCount = Math.min(statementParallelWorkerCount, accounts.length)
-  let nextAccountIndex = 0
-  let workerError = null
-
-  const workers = Array.from({ length: workerCount }, async () => {
-    const workerCookies = cloneCookies(sessionCookies)
-    const workerOperations = []
-
-    while (!workerError) {
-      const accountIndex = nextAccountIndex++
-      if (accountIndex >= accounts.length) {
-        break
-      }
-
-      try {
-        workerOperations.push(...await fetchAccountOperations(workerCookies, accounts[accountIndex], intervals))
-      } catch (error) {
-        workerError = workerError || error
-      }
-    }
-
-    return workerOperations
-  })
-
-  const workerResults = await Promise.all(workers)
-
-  if (workerError) {
-    throw workerError
-  }
-
-  return flatMap(workerResults, operations => operations)
-}
-
 export function createDateIntervals (fromDate, toDate) {
   const interval = 20 * 24 * 60 * 60 * 1000 // 20-day interval for fetching data
   const gapMs = 1
@@ -362,19 +222,31 @@ export async function fetchTransactions (sessionCookies, accounts, fromDate, toD
   console.log('>>> Загрузка списка транзакций...')
 
   const intervals = createDateIntervals(fromDate, toDate || new Date())
-  const sessionCookiesSnapshot = cloneCookies(sessionCookies)
-  let operations
+  const operations = []
 
-  if (shouldUseParallelAccountWorkers(accounts)) {
-    console.log(`>>> Параллельная загрузка операций по счетам (${Math.min(statementParallelWorkerCount, accounts.length)} workers)...`)
-    try {
-      operations = await fetchTransactionsWithParallelAccountWorkers(sessionCookiesSnapshot, accounts, intervals)
-    } catch (error) {
-      console.log(`>>> Параллельная загрузка операций не удалась, повторяем последовательно: ${error.message || error}`)
-      operations = await fetchTransactionsSequentially(cloneCookies(sessionCookiesSnapshot), accounts, intervals)
+  for (const account of accounts) {
+    const responses = await Promise.all(intervals.map(([startDate, endDate]) => {
+      return fetchApiJsonWithSessionCookies(sessionCookies, 'product/loadOperationStatements', {
+        method: 'POST',
+        body: {
+          contractCode: account.id,
+          accountIdenType: account.productType,
+          startDate: formatDate(startDate),
+          endDate: formatDate(endDate),
+          halva: false
+        }
+      }, response => response.body)
+    }))
+
+    for (const response of responses) {
+      if (!response) continue
+
+      operations.push(...flatMap(response.body.data, d => d.operations.map(op => ({
+        ...op,
+        accountId: d.accountId,
+        description: op.description || ''
+      }))))
     }
-  } else {
-    operations = await fetchTransactionsSequentially(sessionCookiesSnapshot, accounts, intervals)
   }
 
   const filteredOperations = operations.filter(function (op) {

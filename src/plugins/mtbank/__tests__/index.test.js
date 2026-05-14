@@ -1,6 +1,5 @@
 import fetchMock from 'fetch-mock'
 import { scrape } from '..'
-import { fetchTransactions } from '../api'
 
 describe('scrape', () => {
   afterEach(() => {
@@ -91,7 +90,7 @@ describe('scrape', () => {
     }])
   })
 
-  it('should keep cookies fresh for userRole and sequential statements', async () => {
+  it('should keep cookies fresh for userRole before parallel statements', async () => {
     const seenCookies = {
       checkPassword: [],
       userRole: [],
@@ -423,209 +422,8 @@ describe('scrape', () => {
     expect(seenCookies.loadUser).toEqual(['identity-cookie=1; password-cookie=1; role-cookie=1'])
     expect(seenCookies.statements).toEqual([
       'identity-cookie=1; password-cookie=1; role-cookie=1; load-user-cookie=1',
-      'identity-cookie=1; password-cookie=1; role-cookie=1; load-user-cookie=1; statement-cookie-1=1'
+      'identity-cookie=1; password-cookie=1; role-cookie=1; load-user-cookie=1'
     ])
-  })
-
-  it('should retry timed out statement requests', async () => {
-    let statementAttempts = 0
-
-    fetchMock.mock({
-      method: 'POST',
-      matcher: (url) => url === 'https://mybank.by/api/v1/product/loadOperationStatements',
-      response: () => {
-        statementAttempts++
-        if (statementAttempts === 1) {
-          throw new Error('[NTI] Request timed out')
-        }
-
-        return {
-          status: 200,
-          body: JSON.stringify({
-            ResponseType: 'ResponseOfListOfTransactionStatement',
-            error: null,
-            sessionId: null,
-            success: true,
-            validateErrors: null,
-            data: [{
-              accountCurr: 'BYN',
-              accountId: 'BY36MTBK10110001000001111000',
-              avlBalance: '791.3',
-              client: 'Иванов Иван Иванович',
-              dateFrom: '2018-12-27',
-              dateTo: '2019-01-16',
-              incomingBalance: '999.9',
-              numDateContract: '11111111 от 1111.11.11',
-              operations: [{
-                amount: '29.68',
-                balance: '531.57',
-                cardPan: '111111******1111',
-                curr: 'BYN',
-                debitFlag: '0',
-                description: 'Оплата товаров и услуг',
-                error: '',
-                operationDate: '2019-01-02',
-                orderStatus: '1',
-                place: 'Магазин',
-                status: 'T',
-                transAmount: '29.68',
-                transDate: '2018-12-29 01:07:39',
-                transactionId: '1111112'
-              }],
-              outgoingBalance: '999.9',
-              receivedAmount: '999.9',
-              time: '2019-01-16 17:30:49',
-              writtenOffAmount: '999.9'
-            }]
-          }),
-          statusText: 'OK',
-          headers: { 'set-cookie': 'statement-cookie=1' },
-          sendAsJson: false
-        }
-      }
-    })
-
-    const operations = await fetchTransactions(
-      new Map([['identity-cookie', '1']]),
-      [{ id: '1111111', productType: 'PC' }],
-      new Date('2018-12-27T00:00:00.000+03:00'),
-      new Date('2019-01-02T00:00:00.000+03:00')
-    )
-
-    expect(operations).toHaveLength(1)
-    expect(statementAttempts).toBe(2)
-  })
-
-  it('should fail with a contextual error on malformed statement responses', async () => {
-    fetchMock.once('https://mybank.by/api/v1/product/loadOperationStatements', {
-      status: 200,
-      body: JSON.stringify({
-        ResponseType: 'ResponseOfListOfTransactionStatement',
-        error: null,
-        sessionId: null,
-        success: true,
-        validateErrors: null,
-        data: [{
-          accountCurr: 'BYN',
-          accountId: 'BY36MTBK10110001000001111000',
-          operations: null
-        }]
-      }),
-      statusText: 'OK',
-      sendAsJson: false
-    })
-
-    let error
-
-    try {
-      await fetchTransactions(
-        new Map([['identity-cookie', '1']]),
-        [{ id: '1111111', productType: 'PC' }],
-        new Date('2018-12-27T00:00:00.000+03:00'),
-        new Date('2019-01-02T00:00:00.000+03:00')
-      )
-    } catch (caughtError) {
-      error = caughtError
-    }
-
-    expect(error).toBeDefined()
-    expect(error.message).toContain('Не удалось загрузить операции (счет 1111111, период')
-  })
-
-  it('should load account statements with controlled parallelism', async () => {
-    let activeRequests = 0
-    let maxActiveRequests = 0
-
-    fetchMock.mock({
-      method: 'POST',
-      matcher: (url) => url === 'https://mybank.by/api/v1/product/loadOperationStatements',
-      response: async (url, options) => {
-        const requestBody = JSON.parse(options.body)
-        activeRequests++
-        maxActiveRequests = Math.max(maxActiveRequests, activeRequests)
-        await new Promise(resolve => setTimeout(resolve, 20))
-        activeRequests--
-
-        return {
-          status: 200,
-          body: JSON.stringify({
-            ResponseType: 'ResponseOfListOfTransactionStatement',
-            error: null,
-            sessionId: null,
-            success: true,
-            validateErrors: null,
-            data: [{
-              accountCurr: 'BYN',
-              accountId: requestBody.contractCode,
-              operations: []
-            }]
-          }),
-          statusText: 'OK',
-          sendAsJson: false
-        }
-      }
-    })
-
-    const operations = await fetchTransactions(
-      new Map([['identity-cookie', '1']]),
-      [
-        { id: '1111111', productType: 'PC' },
-        { id: '2222222', productType: 'PC' }
-      ],
-      new Date('2018-12-27T00:00:00.000+03:00'),
-      new Date('2019-01-02T00:00:00.000+03:00')
-    )
-
-    expect(operations).toHaveLength(0)
-    expect(maxActiveRequests).toBeGreaterThan(1)
-  })
-
-  it('should fall back to sequential loading when parallel statement loading fails', async () => {
-    let requestCount = 0
-
-    fetchMock.mock({
-      method: 'POST',
-      matcher: (url) => url === 'https://mybank.by/api/v1/product/loadOperationStatements',
-      response: (url, options) => {
-        requestCount++
-        const requestBody = JSON.parse(options.body)
-
-        if (requestCount === 1) {
-          throw new Error('parallel worker failed')
-        }
-
-        return {
-          status: 200,
-          body: JSON.stringify({
-            ResponseType: 'ResponseOfListOfTransactionStatement',
-            error: null,
-            sessionId: null,
-            success: true,
-            validateErrors: null,
-            data: [{
-              accountCurr: 'BYN',
-              accountId: requestBody.contractCode,
-              operations: []
-            }]
-          }),
-          statusText: 'OK',
-          sendAsJson: false
-        }
-      }
-    })
-
-    const operations = await fetchTransactions(
-      new Map([['identity-cookie', '1']]),
-      [
-        { id: '1111111', productType: 'PC' },
-        { id: '2222222', productType: 'PC' }
-      ],
-      new Date('2018-12-27T00:00:00.000+03:00'),
-      new Date('2019-01-02T00:00:00.000+03:00')
-    )
-
-    expect(operations).toHaveLength(0)
-    expect(requestCount).toBe(4)
   })
 })
 
