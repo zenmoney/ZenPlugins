@@ -54,7 +54,8 @@ describe('hapoalim api login', () => {
 
     global.ZenMoney = {
       openWebView: jest.fn(),
-      getCookies: jest.fn().mockResolvedValue([])
+      getCookies: jest.fn().mockResolvedValue([]),
+      saveCookies: jest.fn().mockResolvedValue(undefined)
     }
 
     jest.doMock('../../../common/network', () => ({
@@ -157,6 +158,34 @@ describe('hapoalim api login', () => {
     expect(auth.cookieHeader).toContain('XSRF-TOKEN=closed-xsrf')
   })
 
+  it('retries cookie-store recovery after WebView close until cookies become visible', async () => {
+    const originalSetTimeout = global.setTimeout
+    global.setTimeout = jest.fn(callback => {
+      callback()
+      return 1
+    })
+
+    global.ZenMoney.getCookies
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        { domain: '.bankhapoalim.co.il', name: 'SMSESSION', value: 'delayed-session' },
+        { domain: '.bankhapoalim.co.il', name: 'XSRF-TOKEN', value: 'delayed-xsrf' }
+      ])
+    openWebViewAndInterceptRequestMock.mockRejectedValueOnce(new Error('WebView closed'))
+
+    try {
+      const auth = await login()
+
+      expect(global.ZenMoney.saveCookies).toHaveBeenCalled()
+      expect(global.ZenMoney.getCookies).toHaveBeenCalledTimes(3)
+      expect(auth.cookieHeader).toContain('SMSESSION=delayed-session')
+      expect(auth.cookieHeader).toContain('XSRF-TOKEN=delayed-xsrf')
+    } finally {
+      global.setTimeout = originalSetTimeout
+    }
+  })
+
   it('closes web login from cookie store polling without a success url', async () => {
     const originalSetTimeout = global.setTimeout
     const originalClearTimeout = global.clearTimeout
@@ -213,6 +242,55 @@ describe('hapoalim api login', () => {
     }
   })
 
+  it('starts cookie-store polling from the first intercepted request even without an official bank url', async () => {
+    const originalSetTimeout = global.setTimeout
+    const originalClearTimeout = global.clearTimeout
+    const scheduledCallbacks = []
+    global.setTimeout = jest.fn((callback) => {
+      scheduledCallbacks.push(callback)
+      return scheduledCallbacks.length
+    })
+    global.clearTimeout = jest.fn()
+
+    global.ZenMoney.getCookies
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        { domain: 'login.bankhapoalim.co.il', name: 'TS', value: 'poll-ts' },
+        { domain: 'login.bankhapoalim.co.il', name: 'XSRF-TOKEN', value: 'poll-xsrf' }
+      ])
+
+    openWebViewAndInterceptRequestMock.mockImplementationOnce(async ({ intercept }) => {
+      return await new Promise((resolve, reject) => {
+        const result = intercept.call({
+          close: (error, closeResult) => error ? reject(error) : resolve(closeResult)
+        }, {
+          url: 'https://static.example.com/challenge',
+          headers: {}
+        })
+
+        if (result) {
+          resolve(result)
+        }
+      })
+    })
+
+    try {
+      const authPromise = login()
+
+      expect(scheduledCallbacks).toHaveLength(1)
+      await scheduledCallbacks.shift()()
+      expect(scheduledCallbacks).toHaveLength(1)
+      await scheduledCallbacks.shift()()
+
+      const auth = await authPromise
+      expect(auth.cookieHeader).toContain('TS=poll-ts')
+      expect(auth.cookieHeader).toContain('XSRF-TOKEN=poll-xsrf')
+    } finally {
+      global.setTimeout = originalSetTimeout
+      global.clearTimeout = originalClearTimeout
+    }
+  })
+
   it('does not recover web login from unauthenticated anti-bot cookies only', async () => {
     global.ZenMoney.getCookies.mockResolvedValue([
       { domain: '.bankhapoalim.co.il', name: 'visid_incap_2405249', value: 'anti-bot' },
@@ -246,8 +324,39 @@ describe('hapoalim api login', () => {
     })
 
     expect(global.ZenMoney.getCookies).toHaveBeenCalled()
-    expect(fetchJsonMock).toHaveBeenCalledTimes(1)
+    expect(fetchJsonMock).toHaveBeenCalled()
     expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('accepts cookie-store auth without SMSESSION when accounts access is verified', async () => {
+    global.ZenMoney.getCookies.mockResolvedValue([
+      { domain: 'login.bankhapoalim.co.il', name: 'TS', value: 'verified-ts' },
+      { domain: 'login.bankhapoalim.co.il', name: 'XSRF-TOKEN', value: 'verified-xsrf' }
+    ])
+    openWebViewAndInterceptRequestMock.mockRejectedValueOnce(new Error('WebView closed'))
+
+    const auth = await login()
+
+    expect(auth.cookieHeader).toContain('TS=verified-ts')
+    expect(auth.cookieHeader).toContain('XSRF-TOKEN=verified-xsrf')
+    expect(auth.cookieHeader).not.toContain('SMSESSION=')
+  })
+
+  it('prefers more specific cookie-store domains when duplicate auth cookies exist', async () => {
+    global.ZenMoney.getCookies.mockResolvedValue([
+      { domain: '.bankhapoalim.co.il', name: 'SMSESSION', value: 'stale-session' },
+      { domain: 'login.bankhapoalim.co.il', name: 'SMSESSION', value: 'fresh-session' },
+      { domain: '.bankhapoalim.co.il', name: 'XSRF-TOKEN', value: 'stale-xsrf' },
+      { domain: 'login.bankhapoalim.co.il', name: 'XSRF-TOKEN', value: 'fresh-xsrf' }
+    ])
+    openWebViewAndInterceptRequestMock.mockRejectedValueOnce(new Error('WebView closed'))
+
+    const auth = await login()
+
+    expect(auth.cookieHeader).toContain('SMSESSION=fresh-session')
+    expect(auth.cookieHeader).toContain('XSRF-TOKEN=fresh-xsrf')
+    expect(auth.cookieHeader).not.toContain('SMSESSION=stale-session')
+    expect(auth.cookieHeader).not.toContain('XSRF-TOKEN=stale-xsrf')
   })
 
   it('does not complete request-cookie login until accounts access is verified', async () => {
@@ -278,7 +387,7 @@ describe('hapoalim api login', () => {
       message: 'Could not complete Bank Hapoalim web login. Finish the bank login in the opened page and retry sync.'
     })
 
-    expect(fetchJsonMock).toHaveBeenCalledTimes(2)
+    expect(fetchJsonMock.mock.calls.length).toBeGreaterThanOrEqual(2)
     expect(fetchMock).not.toHaveBeenCalled()
   })
 })
