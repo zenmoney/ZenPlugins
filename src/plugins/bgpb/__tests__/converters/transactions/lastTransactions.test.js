@@ -197,6 +197,59 @@ describe('convertLastTransaction', () => {
         }
       ],
       null
+    ],
+    [
+      {
+        orderNumber: '3289575665',
+        bankId: '4026868',
+        direction: 'outgoing',
+        date: '2026-05-15T10:55:51+0300',
+        totalAmount: {
+          currency: 933,
+          amount: 25000
+        },
+        currencyAmount: {
+          currency: 933,
+          amount: 25000
+        },
+        status: 'success',
+        terminal: 'ERIP_MOB.APP, EPOS, PEREVOD (SPISANIE)',
+        pan: '518597******1111',
+        transType: 781,
+        transTypeDesc: 'PEREVOD (SPISANIE)',
+        authCode: '185665',
+        mcc: 6012,
+        reversal: 0
+      },
+      [
+        {
+          id: 'account',
+          instrument: 'BYN',
+          bankId: '4026868',
+          syncID: ['1111']
+        }
+      ],
+      {
+        date: new Date('2026-05-15T10:55:51+0300'),
+        movements:
+          [
+            {
+              id: null,
+              account: { id: 'account' },
+              invoice: null,
+              sum: -250,
+              fee: 0
+            }
+          ],
+        merchant:
+          {
+            mcc: 6012,
+            location: null,
+            fullTitle: 'ERIP_MOB.APP, EPOS, PEREVOD (SPISANIE)'
+          },
+        comment: 'PEREVOD (SPISANIE)',
+        hold: false
+      }
     ]
   ])('converts last transactions', (apiTransaction, accounts, transaction) => {
     expect(convertLastTransaction(apiTransaction, accounts)).toEqual(transaction)

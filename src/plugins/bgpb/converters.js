@@ -1,15 +1,148 @@
 import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
 
+function normalizeItems (item) {
+  if (!item) {
+    return []
+  }
+  return Array.isArray(item) ? item.filter(Boolean) : [item]
+}
+
+function findActionId (product, predicate) {
+  for (const group of normalizeItems(product.Group)) {
+    for (const action of normalizeItems(group.Action)) {
+      if (predicate(action)) {
+        return action.Id
+      }
+    }
+  }
+  return null
+}
+
+function parseAmount (amount) {
+  if (amount === null || amount === undefined || amount === '') {
+    return null
+  }
+  const normalized = Number.parseFloat(String(amount).replace(',', '.').replace(/\s/g, ''))
+  return isNaN(normalized) ? null : normalized
+}
+
+function parseBankDate (value) {
+  if (typeof value !== 'string' || !/^\d{8}$/.test(value)) {
+    return null
+  }
+  const year = Number(value.slice(0, 4))
+  const month = Number(value.slice(4, 6)) - 1
+  const day = Number(value.slice(6, 8))
+  return new Date(Date.UTC(year, month, day))
+}
+
+function parsePercent (value) {
+  if (typeof value !== 'string') {
+    return null
+  }
+  const match = value.replace(',', '.').match(/-?\d+(?:\.\d+)?/)
+  return match ? Number(match[0]) : null
+}
+
+function getDateDiffInDays (startDate, endDate) {
+  if (!(startDate instanceof Date) || isNaN(startDate) || !(endDate instanceof Date) || isNaN(endDate)) {
+    return null
+  }
+  return Math.round((endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000))
+}
+
+function parseMinorAmount (amount) {
+  const normalized = Number(amount)
+  return Number.isFinite(normalized) ? normalized / 100 : null
+}
+
+function isHistoryApiTransaction (apiTransaction) {
+  return Boolean(apiTransaction && typeof apiTransaction === 'object' && typeof apiTransaction.date === 'string' && typeof apiTransaction.pan === 'string')
+}
+
+function findHistoryTransactionAccount (apiTransaction, accounts) {
+  const last4 = apiTransaction.pan.slice(-4)
+  return accounts.find(account => {
+    if (apiTransaction.bankId && account.bankId && String(account.bankId) === String(apiTransaction.bankId)) {
+      return true
+    }
+    return account.syncID.indexOf(last4) !== -1
+  }) || null
+}
+
+function createHistoryMerchant (apiTransaction) {
+  const mcc = Number(apiTransaction.mcc)
+  const terminal = typeof apiTransaction.terminal === 'string' ? apiTransaction.terminal.trim() : ''
+  if (!terminal && (isNaN(mcc) || mcc === 0)) {
+    return null
+  }
+
+  const merchant = {
+    mcc: isNaN(mcc) || mcc === 0 ? null : mcc,
+    location: null
+  }
+  const parts = terminal.split(/\s*,\s*/).filter(Boolean)
+  if (parts.length >= 3 && /^[A-Z]{2,3}$/.test(parts[parts.length - 1])) {
+    merchant.title = parts[0]
+    merchant.city = parts[1] || null
+    merchant.country = parts[2] || null
+  } else if (terminal) {
+    merchant.fullTitle = terminal
+  }
+  return merchant
+}
+
+function convertHistoryLastTransaction (apiTransaction, accounts) {
+  const account = findHistoryTransactionAccount(apiTransaction, accounts)
+  if (!account) {
+    return null
+  }
+
+  const totalInstrument = codeToCurrencyLookup[apiTransaction.totalAmount?.currency] || account.instrument
+  const invoiceInstrument = codeToCurrencyLookup[apiTransaction.currencyAmount?.currency] || totalInstrument
+  const sign = apiTransaction.direction === 'incoming' ? 1 : -1
+  const totalAmount = parseMinorAmount(apiTransaction.totalAmount?.amount)
+  const invoiceAmount = parseMinorAmount(apiTransaction.currencyAmount?.amount)
+
+  if (totalAmount === null && invoiceAmount === null) {
+    return null
+  }
+
+  return {
+    date: new Date(apiTransaction.date),
+    movements: [
+      {
+        id: null,
+        account: { id: account.id },
+        invoice: invoiceInstrument !== account.instrument && invoiceAmount !== null
+          ? {
+              instrument: invoiceInstrument,
+              sum: sign * invoiceAmount
+            }
+          : null,
+        sum: totalInstrument === account.instrument && totalAmount !== null ? sign * totalAmount : null,
+        fee: 0
+      }
+    ],
+    merchant: createHistoryMerchant(apiTransaction),
+    comment: apiTransaction.transTypeDesc || null,
+    hold: apiTransaction.status !== 'success'
+  }
+}
+
 export function convertAccount (ob) {
   if ((ob.Enabled && ob.Enabled === 'N') || (ob.Blocked && ob.Blocked === 'Y')) {
     return null
   }
   const id = ob.Id.split('-')[0]
-  if (ob.ProductType !== 'NON_ONUS' && !ZenMoney.isAccountSkipped(id)) {
-    // eslint-disable-next-line no-debugger
+  const transactionsAccId = findActionId(ob, action => /operationtxt/i.test(action.Type || '') || /statement/i.test(action.Type || '') || action.Name === 'Выписка')
+  const conditionsAccId = findActionId(ob, action => /conditions/i.test(action.Type || '') || action.Name === 'Условия обслуживания')
+
+  if (ob.ProductType === 'MS' && !ZenMoney.isAccountSkipped(id)) {
     return {
       id,
-      transactionsAccId: null,
+      transactionsAccId,
+      conditionsAccId,
       type: 'card',
       title: ob.CustomName + '*' + ob.No.slice(-4),
       currencyCode: ob.Currency,
@@ -17,6 +150,36 @@ export function convertAccount (ob) {
       instrument: codeToCurrencyLookup[ob.Currency],
       balance: 0,
       syncID: [ob.No.slice(-4)],
+      bankId: ob.BankId || ob.ExtraData || null,
+      productId: ob.Id,
+      productType: ob.ProductType
+    }
+  }
+  if (ob.ProductType === 'DEPOSIT' && !ZenMoney.isAccountSkipped(id)) {
+    const startDate = parseBankDate(ob.Opened)
+    const endDate = parseBankDate(ob.Expired)
+    const endDateOffset = getDateDiffInDays(startDate, endDate)
+    const percent = parsePercent(ob.Extra?.InterestRate)
+
+    return {
+      id,
+      transactionsAccId,
+      conditionsAccId,
+      type: 'deposit',
+      title: (ob.CustomName || ob.ProductTypeName || 'Вклад') + '*' + ob.No.slice(-4),
+      currencyCode: ob.Currency,
+      cardNumber: ob.No,
+      instrument: codeToCurrencyLookup[ob.Currency],
+      balance: parseAmount(ob.Balance) || 0,
+      syncID: [ob.No],
+      startDate,
+      startBalance: parseAmount(ob.Balance) || 0,
+      percent: percent || 0,
+      capitalization: true,
+      payoffInterval: 'month',
+      payoffStep: 1,
+      endDateOffset,
+      endDateOffsetInterval: 'day',
       productId: ob.Id,
       productType: ob.ProductType
     }
@@ -36,6 +199,9 @@ export function addOverdraftInfo (account, overdraft) {
 }
 
 export function convertTransaction (apiTransaction, account) {
+  if (apiTransaction.statementType === 'deposit') {
+    return convertDepositTransaction(apiTransaction, account)
+  }
   const invoice = {
     sum: getSumAmount(apiTransaction.type, apiTransaction.amountReal),
     instrument: apiTransaction.currencyReal
@@ -65,6 +231,26 @@ export function convertTransaction (apiTransaction, account) {
   return transaction
 }
 
+function convertDepositTransaction (apiTransaction, account) {
+  const income = parseAmount(apiTransaction.income)
+  const outcome = parseAmount(apiTransaction.outcome)
+  return {
+    date: new Date(getDate(apiTransaction.date)),
+    movements: [
+      {
+        id: null,
+        account: { id: account.id },
+        invoice: null,
+        sum: income !== null ? income : -(outcome || 0),
+        fee: 0
+      }
+    ],
+    merchant: null,
+    comment: apiTransaction.description || null,
+    hold: false
+  }
+}
+
 function parseInnerTransfer (transaction, apiTransaction, account, invoice) {
   if (apiTransaction?.description.match('Перевод с карты на карту')) {
     transaction.groupKeys = [`${getDate(apiTransaction.date).slice(0, 16)}_${invoice.instrument}_${Math.abs(invoice.sum).toString()}`]
@@ -85,6 +271,9 @@ export function convertTestLastTransactions (apiTransactions, accounts) {
 }
 
 export function convertLastTransaction (apiTransaction, accounts) {
+  if (isHistoryApiTransaction(apiTransaction)) {
+    return convertHistoryLastTransaction(apiTransaction, accounts)
+  }
   const rawData = apiTransaction.pushMessageText.split('; ')
 
   if (rawData[0].slice(0, 4) !== 'Card' || [
@@ -299,17 +488,18 @@ function getSumAmount (debitFlag, strAmount) {
 }
 
 function getDate (str) {
-  const [day, month, year, hour, minute] = str.match(/(\d{2}).(\d{2}).(\d{4}) (\d{2}):(\d{2})/).slice(1)
+  const match = str.match(/(\d{2})\.(\d{2})\.(\d{4})(?: (\d{2}):(\d{2}))?/)
+  const [day, month, year, hour = '00', minute = '00'] = match.slice(1)
   return `${year}-${month}-${day}T${hour}:${minute}:00+03:00`
 }
 
 function getDateFromJSON (str) {
-  const [day, month, year, hour, minute] = str.match(/(\d{2}).(\d{2}).(\d{2}) (\d{2}):(\d{2}):\d{2}/).slice(1)
+  const [day, month, year, hour, minute] = str.match(/(\d{2})\.(\d{2})\.(\d{2}) (\d{2}):(\d{2}):\d{2}/).slice(1)
   return new Date(`20${year}-${month}-${day}T${hour}:${minute}:00+03:00`)
 }
 
 function getDateJSON (str) {
-  const [day, month, year] = str.match(/(\d{2}).(\d{2}).(\d{2})/).slice(1)
+  const [day, month, year] = str.match(/(\d{2})\.(\d{2})\.(\d{2})/).slice(1)
   return (`20${year}-${month}-${day}`)
 }
 

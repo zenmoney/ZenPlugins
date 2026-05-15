@@ -202,6 +202,35 @@ describe('convertTransaction', () => {
       expect(transaction).toEqual(tc.expectedTransaction)
     })
   }
+
+  it('deposit statement row', () => {
+    expect(convertTransaction({
+      statementType: 'deposit',
+      date: '03.02.2026',
+      description: 'Пополнение вклада',
+      income: '400,00',
+      outcome: '',
+      balance: '900,00',
+      currency: 'BYN'
+    }, {
+      id: 'deposit-account',
+      instrument: 'BYN'
+    })).toEqual({
+      date: new Date('2026-02-02T21:00:00.000Z'),
+      movements: [
+        {
+          id: null,
+          account: { id: 'deposit-account' },
+          invoice: null,
+          sum: 400,
+          fee: 0
+        }
+      ],
+      merchant: null,
+      comment: 'Пополнение вклада',
+      hold: false
+    })
+  })
 })
 
 describe('convertLastTransaction', () => {
