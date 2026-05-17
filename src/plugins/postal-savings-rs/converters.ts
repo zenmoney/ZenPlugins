@@ -1,6 +1,5 @@
 import { AccountOrCard, AccountType, ExtendedTransaction } from '../../types/zenmoney'
 import { AccountInfo, AccountTransaction } from './models'
-import { toISODateString, dateInTimezone } from '../../common/dateUtils'
 
 export function convertAccounts (apiAccounts: AccountInfo[]): AccountOrCard[] {
   return apiAccounts.map(apiAccount => {
