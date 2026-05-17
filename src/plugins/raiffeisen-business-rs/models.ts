@@ -5,6 +5,11 @@ export interface Auth {
   cookie: string
 }
 
+export interface LegalEntitySession {
+  legalEntity: LegalEntity
+  auth: Auth
+}
+
 // Input preferences from schema in preferences.xml
 export interface Preferences {
   login: string
