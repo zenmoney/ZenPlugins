@@ -1,5 +1,6 @@
 import { fetch } from '../common'
 import { Preferences } from '../types'
+import type { Chain } from '../common/types'
 import {
   AccountResponse,
   EthereumAccount,
@@ -8,10 +9,11 @@ import {
 } from './types'
 
 export async function fetchAccounts (
-  preferences: Preferences
+  preferences: Preferences,
+  chain: Chain
 ): Promise<EthereumAccount[]> {
   const response = await fetch<AccountResponse>({
-    chainid: preferences.chain,
+    chainid: chain,
     module: 'account',
     action: 'balancemulti',
     address: preferences.account,
@@ -33,13 +35,14 @@ const PAGE_SIZE = 100
 
 export async function fetchAccountTransactions (
   preferences: Preferences,
+  chain: Chain,
   options: AccountTransactionsOptions
 ): Promise<EthereumTransaction[]> {
   const { account, startBlock, endBlock, page = 1 } = options
 
   try {
     const response = await fetch<TransactionResponse>({
-      chainid: preferences.chain,
+      chainid: chain,
       module: 'account',
       action: 'txlist',
       address: account,
@@ -56,7 +59,7 @@ export async function fetchAccountTransactions (
     if (response.result.length === PAGE_SIZE) {
       return [
         ...transactions,
-        ...(await fetchAccountTransactions(preferences, {
+        ...(await fetchAccountTransactions(preferences, chain, {
           ...options,
           page: page + 1
         }))

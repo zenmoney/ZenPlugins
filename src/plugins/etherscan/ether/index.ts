@@ -5,22 +5,22 @@ import { mergeTransferTransactions } from '../common/converters'
 import { convertAccounts, convertTransactions } from './converters'
 import { Instruments } from '../common/config'
 
-export const scrape: Scrape = async ({ preferences, startBlock, endBlock }) => {
+export const scrape: Scrape = async ({ chain, preferences, startBlock, endBlock }) => {
   const transactions: Transaction[] = []
 
-  const accountsResponse = await fetchAccounts(preferences)
+  const accountsResponse = await fetchAccounts(preferences, chain)
 
-  const instrument = Instruments[preferences.chain]
-  const accounts: Account[] = convertAccounts(accountsResponse, instrument)
+  const instrument = Instruments[chain]
+  const accounts: Account[] = convertAccounts(accountsResponse, instrument, chain)
 
-  for (const account of accounts) {
-    const accountTransactions = await fetchAccountTransactions(preferences, {
-      account: account.id,
+  for (const raw of accountsResponse) {
+    const accountTransactions = await fetchAccountTransactions(preferences, chain, {
+      account: raw.account,
       startBlock,
       endBlock
     })
 
-    transactions.push(...convertTransactions(account.id, accountTransactions))
+    transactions.push(...convertTransactions(raw.account, accountTransactions, chain))
   }
 
   return {
