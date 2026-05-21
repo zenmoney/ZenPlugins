@@ -61,12 +61,13 @@ export function convertTransaction (json, account) {
 
   const sum = getSumAmount(json)
   if (sum === 0) return null
+  const transactionKey = getTransactionKey(json)
 
   const transaction = {
     date: getDate(json.date),
     movements: [
       {
-        id: null,
+        id: getMovementId(account, transactionKey, 'card'),
         account: { id: account.id },
         invoice: null,
         sum,
@@ -118,7 +119,7 @@ function parseCash (transaction, json) {
   if (json.type === 'Выдача наличных') {
     // добавим вторую часть перевода
     transaction.movements.push({
-      id: null,
+      id: getMovementId(transaction.movements[0].account, getTransactionKey(json), 'cash'),
       account: {
         company: null,
         type: 'cash',
@@ -196,7 +197,7 @@ function getSumAmount (json) {
 function makeOuterTransfer (transaction, json) {
   transaction.merchant = null
   transaction.movements.push({
-    id: null,
+    id: getMovementId(transaction.movements[0].account, getTransactionKey(json), 'ccard'),
     account: {
       company: null,
       type: 'ccard',
@@ -212,4 +213,38 @@ function makeOuterTransfer (transaction, json) {
 export function getDate (str) {
   const [year, month, day, hour, minute, second] = str.match(/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})/).slice(1)
   return new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}+03:00`)
+}
+
+function getMovementId (account, transactionKey, movementType) {
+  return ['belinvestbank', account.id, movementType, transactionKey].join(':')
+}
+
+function getTransactionKey (json) {
+  if (json.historyKey !== undefined && json.historyKey !== null && String(json.historyKey).trim() !== '') {
+    return joinIdParts(['history', json.cardNum, json.date, json.historyKey])
+  }
+
+  if (json.appId !== undefined && json.appId !== null && String(json.appId).trim() !== '' && String(json.appId).trim() !== '—') {
+    return joinIdParts(['app', json.appId])
+  }
+
+  return joinIdParts([
+    'fallback',
+    json.cardNum,
+    json.date,
+    json.type,
+    json.sign,
+    json.accountAmt,
+    json.accountAmtCurrency,
+    json.transactionAmt,
+    json.transactionAmtCurrency
+  ])
+}
+
+function joinIdParts (parts) {
+  return parts.map(normalizeIdPart).join(':')
+}
+
+function normalizeIdPart (part) {
+  return String(part ?? '').trim().replace(/\s+/g, ' ')
 }
