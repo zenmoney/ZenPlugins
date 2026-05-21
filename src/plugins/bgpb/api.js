@@ -17,6 +17,17 @@ const EXTRA_AUTH_REQUIRED_ERROR = 'Для выполнения действия 
 
 const SOU_ADMIN_ENDPOINT = 'sou2/xml_online.admin'
 const SOU_REQUEST_ENDPOINT = 'sou2/xml_online.request'
+const TERMINAL_CAPABILITIES_XML =
+  '   <TerminalCapabilities>\r\n' +
+  '       <LongParameter>Y</LongParameter>\r\n' +
+  '       <ScreenWidth>99</ScreenWidth>\r\n' +
+  '       <AnyAmount>Y</AnyAmount>\r\n' +
+  '       <BooleanParameter>Y</BooleanParameter>\r\n' +
+  '       <CheckWidth>39</CheckWidth>\r\n' +
+  '       <InputDataSources>\r\n' +
+  '           <InputDataSource>Lookup</InputDataSource>\r\n' +
+  '       </InputDataSources>\r\n' +
+  '   </TerminalCapabilities>\r\n'
 
 export function generateBoundary () {
   return generateRandomString(8) + '-' + generateRandomString(4) + '-' + generateRandomString(4) + '-' + generateRandomString(4) + '-' + generateRandomString(12)
@@ -25,6 +36,34 @@ export function generateBoundary () {
 export function terminalTime () {
   const now = new Date()
   return String(now.getFullYear()) + ('0' + (now.getMonth() + 1)).slice(-2) + ('0' + now.getDate()).slice(-2) + ('0' + now.getHours()).slice(-2) + ('0' + now.getMinutes()).slice(-2) + ('0' + now.getSeconds()).slice(-2)
+}
+
+function buildTerminalInfoXml () {
+  return `   <TerminalId Version="${APP_VERSION}">${TERMINAL_ID}</TerminalId>\r\n` +
+    '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n'
+}
+
+function buildSessionXml (sid) {
+  return '   <Session IpAddress="10.0.2.15" Prolong="Y" SID="' + sid + '"/>\r\n'
+}
+
+function buildMailAttachmentRequest (sid, mailId) {
+  return '<BS_Request>\r\n' +
+    '   <MailAttachment Id="' + mailId + '" No="0"/>\r\n' +
+    '   <RequestType>MailAttachment</RequestType>\r\n' +
+    buildSessionXml(sid) +
+    buildTerminalInfoXml() +
+    '   <Subsystem>ClientAuth</Subsystem>\r\n' +
+    TERMINAL_CAPABILITIES_XML +
+    '</BS_Request>\r\n'
+}
+
+async function fetchMailAttachment (sid, mailId) {
+  return await fetchApi(SOU_ADMIN_ENDPOINT,
+    buildMailAttachmentRequest(sid, mailId),
+    {},
+    response => true,
+    message => new InvalidPreferencesError(message))
 }
 
 async function fetchApi (url, xml, options, predicate = () => true, error = (message) => console.assert(false, message)) {
@@ -144,9 +183,8 @@ async function fetchProducts (sid, {
     '<BS_Request>\r\n' +
     `   <GetProducts ProductType="${productType}" GetActions="${getActions}" GetBalance="${getBalance}" IncludeHidden="${includeHidden}" GetGroupedActions="${getGroupedActions}" SortByGroups="${sortByGroups}"/>\r\n` +
     '   <RequestType>GetProducts</RequestType>\r\n' +
-    '   <Session IpAddress="10.0.2.15" Prolong="Y" SID="' + sid + '"/>\r\n' +
-    `   <TerminalId Version="${APP_VERSION}">${TERMINAL_ID}</TerminalId>\r\n` +
-    '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+    buildSessionXml(sid) +
+    buildTerminalInfoXml() +
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
     '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError(message))
 }
@@ -320,8 +358,7 @@ export async function login (login, password) {
     '      <Parameter Id="AppVersion">' + APP_VERSION + '</Parameter>\r\n' +
     '   </Login>\r\n' +
     '   <RequestType>Login</RequestType>\r\n' +
-    `   <TerminalId Version="${APP_VERSION}">${TERMINAL_ID}</TerminalId>\r\n` +
-    '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+    buildTerminalInfoXml() +
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
     '</BS_Request>\r\n', { sanitizeRequestLog: { body: true } }, response => true, message => new InvalidPreferencesError('Неверный логин или пароль'))
   if (res.BS_Response.Login && res.BS_Response.Login.SID) {
@@ -363,20 +400,10 @@ export async function fetchBalance (sid, account) {
     '<BS_Request>\r\n' +
     '   <Balance Currency="' + account.currencyCode + '"/>\r\n' +
     '   <RequestType>Balance</RequestType>\r\n' +
-    '   <Session IpAddress="10.0.2.15" Prolong="Y" SID="' + sid + '"/>\r\n' +
-    `   <TerminalId Version="${APP_VERSION}">${TERMINAL_ID}</TerminalId>\r\n` +
-    '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+    buildSessionXml(sid) +
+    buildTerminalInfoXml() +
     '   <ClientId IdType="' + account.productType + '">' + account.cardNumber + '</ClientId>\r\n' +
-    '   <TerminalCapabilities>\r\n' +
-    '      <LongParameter>Y</LongParameter>\r\n' +
-    '      <ScreenWidth>99</ScreenWidth>\r\n' +
-    '      <AnyAmount>Y</AnyAmount>\r\n' +
-    '      <BooleanParameter>Y</BooleanParameter>\r\n' +
-    '      <CheckWidth>39</CheckWidth>\r\n' +
-    '      <InputDataSources>\r\n' +
-    '         <InputDataSource>Lookup</InputDataSource>\r\n' +
-    '      </InputDataSources>\r\n' +
-    '   </TerminalCapabilities>\r\n' +
+    TERMINAL_CAPABILITIES_XML +
     '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
   if (res === null) {
     return null
@@ -401,9 +428,8 @@ export async function fetchTransactionsAccId (sid, account) {
     '<BS_Request>\r\n' +
     '   <GetActions ProductId="' + account.productId + '"/>\r\n' +
     '   <RequestType>GetActions</RequestType>\r\n' +
-    '   <Session IpAddress="10.0.2.15" Prolong="Y" SID="' + sid + '"/>\r\n' +
-    `   <TerminalId Version="${APP_VERSION}">${TERMINAL_ID}</TerminalId>\r\n` +
-    '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+    buildSessionXml(sid) +
+    buildTerminalInfoXml() +
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
     '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
   if (res.BS_Response.GetActions && res.BS_Response.GetActions.Action) {
@@ -431,33 +457,13 @@ export async function fetchAccountConditions (sid, account) {
     '<BS_Request>\r\n' +
     '<ExecuteAction Id="' + account.conditionsAccId + '"/>\r\n' +
     '<RequestType>ExecuteAction</RequestType>\r\n' +
-    '<Session IpAddress="10.0.2.15" Prolong="Y" SID="' + sid + '"/>\r\n' +
-    `<TerminalId Version="${APP_VERSION}">${TERMINAL_ID}</TerminalId>\r\n` +
-    '<TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+    buildSessionXml(sid) +
+    buildTerminalInfoXml() +
     '<Subsystem>ClientAuth</Subsystem>\r\n' +
     '</BS_Request>', {}, response => true, message => new InvalidPreferencesError('bad request'))
   const mailID = response.BS_Response.ExecuteAction.MailId
 
-  const mail = await fetchApi(SOU_ADMIN_ENDPOINT,
-    '<BS_Request>\r\n' +
-    '   <MailAttachment Id="' + mailID + '" No="0"/>\r\n' +
-    '   <RequestType>MailAttachment</RequestType>\r\n' +
-    '   <Session IpAddress="10.0.2.15" Prolong="Y" SID="' + sid + '"/>\r\n' +
-    `   <TerminalId Version="${APP_VERSION}">${TERMINAL_ID}</TerminalId>\r\n` +
-    '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
-    '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-    '   <TerminalCapabilities>\r\n' +
-    '       <LongParameter>Y</LongParameter>\r\n' +
-    '       <ScreenWidth>99</ScreenWidth>\r\n' +
-    '       <AnyAmount>Y</AnyAmount>\r\n' +
-    '       <BooleanParameter>Y</BooleanParameter>\r\n' +
-    '       <CheckWidth>39</CheckWidth>\r\n' +
-    '       <InputDataSources>\r\n' +
-    '           <InputDataSource>Lookup</InputDataSource>\r\n' +
-    '       </InputDataSources>\r\n' +
-    '   </TerminalCapabilities>\r\n' +
-    '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
-
+  const mail = await fetchMailAttachment(sid, mailID)
   const data = mail.BS_Response.MailAttachment.Attachment
   return parseConditionsMail(data)
 }
@@ -570,9 +576,8 @@ export async function fetchFullTransactions (sid, account, fromDate, toDate = ne
         '      <Parameter Id="DateTill">' + transactionDate(date[1]) + '</Parameter>\r\n' +
         '   </ExecuteAction>\r\n' +
         '   <RequestType>ExecuteAction</RequestType>\r\n' +
-        '   <Session IpAddress="10.0.2.15" Prolong="Y" SID="' + sid + '"/>\r\n' +
-        `   <TerminalId Version="${APP_VERSION}">${TERMINAL_ID}</TerminalId>\r\n` +
-        '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+        buildSessionXml(sid) +
+        buildTerminalInfoXml() +
         '   <Subsystem>ClientAuth</Subsystem>\r\n' +
         '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
 
@@ -596,25 +601,7 @@ export async function fetchFullTransactions (sid, account, fromDate, toDate = ne
   const mails = []
   for (const mailId of mailIDs) {
     try {
-      mails.push(await fetchApi(SOU_ADMIN_ENDPOINT,
-        '<BS_Request>\r\n' +
-        '   <MailAttachment Id="' + mailId + '" No="0"/>\r\n' +
-        '   <RequestType>MailAttachment</RequestType>\r\n' +
-        '   <Session IpAddress="10.0.2.15" Prolong="Y" SID="' + sid + '"/>\r\n' +
-        `   <TerminalId Version="${APP_VERSION}">${TERMINAL_ID}</TerminalId>\r\n` +
-        '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
-        '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-        '   <TerminalCapabilities>\r\n' +
-        '       <LongParameter>Y</LongParameter>\r\n' +
-        '       <ScreenWidth>99</ScreenWidth>\r\n' +
-        '       <AnyAmount>Y</AnyAmount>\r\n' +
-        '       <BooleanParameter>Y</BooleanParameter>\r\n' +
-        '       <CheckWidth>39</CheckWidth>\r\n' +
-        '       <InputDataSources>\r\n' +
-        '           <InputDataSource>Lookup</InputDataSource>\r\n' +
-        '       </InputDataSources>\r\n' +
-        '   </TerminalCapabilities>\r\n' +
-        '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request')))
+      mails.push(await fetchMailAttachment(sid, mailId))
     } catch (_error) {
       console.log(`>>> Не удалось загрузить вложение выписки для "${account.title}", пропускаем один интервал.`)
     }
