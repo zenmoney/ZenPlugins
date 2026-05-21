@@ -73,7 +73,7 @@ test('throws credentials mismatch as InvalidPreferencesError', async () => {
   await expect(result).rejects.toBeInstanceOf(InvalidLoginOrPasswordError)
 })
 
-test('throws BankMessageError for unknown maintenance error message', async () => {
+test('throws BankMessageError for maintenance mode error message', async () => {
   const login = 'test(login)'
   const password = 'test(password)'
   const accessToken = 'test(access_token)'
