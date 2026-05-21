@@ -83,11 +83,61 @@ describe('convertMiniCardStatementOperation', () => {
       comment: 'Капитализация',
       movements: [
         {
-          id: 'test-deposit-contract-1:1778389322000:999:13155.4:13155.4',
+          id: 'test-deposit-contract-1:1778389322000:999:1:13155.4:13155.4',
           account: { id: 'test-deposit-contract-1' },
           fee: 0,
           invoice: null,
           sum: 13155.4
+        }
+      ],
+      merchant: null
+    })
+  })
+
+  it('keeps outgoing full statement operations distinct and negative', () => {
+    const operation: FetchCardStatementOperation = {
+      accountNumber: 'deposit-account-1',
+      operationName: 'Списание',
+      transactionDate: 1778389322000,
+      operationDate: 1778389322000,
+      transactionAmount: 1000,
+      transactionCurrency: '643',
+      operationAmount: 1000,
+      operationCurrency: '643',
+      operationSign: '-1',
+      actionGroup: 1,
+      operationClosingBalance: 964877.97,
+      operationCode: 1
+    }
+
+    const account: Account = {
+      id: 'test-deposit-contract-1',
+      type: AccountType.deposit,
+      title: 'Тестовый вклад',
+      balance: 964877.97,
+      instrument: 'RUB',
+      syncIds: ['TEST-IBAN-DEPOSIT-0001'],
+      startDate: new Date(1736283600000),
+      startBalance: 1225.71,
+      capitalization: true,
+      percent: 15.9,
+      endDateOffsetInterval: 'year',
+      endDateOffset: 1,
+      payoffInterval: 'month',
+      payoffStep: 1
+    }
+
+    expect(convertFullStatementOperation(operation, account)).toEqual({
+      hold: null,
+      date: new Date(1778389322000),
+      comment: 'Списание',
+      movements: [
+        {
+          id: 'test-deposit-contract-1:1778389322000:1:-1:-1000:-1000',
+          account: { id: 'test-deposit-contract-1' },
+          fee: 0,
+          invoice: null,
+          sum: -1000
         }
       ],
       merchant: null

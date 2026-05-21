@@ -8,6 +8,17 @@ import type { FetchMiniCardStatementOperation } from './types/fetch'
 
 const INVALID_LOGIN_ERROR_CODES = new Set(['10008', '10812'])
 
+const deduplicateTransactions = (transactions: Transaction[]): Transaction[] => {
+  const seenIds = new Set<string>()
+
+  return transactions.filter((transaction) => {
+    const movementId = transaction.movements[0]?.id
+    if (movementId == null || seenIds.has(movementId)) return false
+    seenIds.add(movementId)
+    return true
+  })
+}
+
 const assertSuccessfulResponse = (response: ResponseWithErrorInfo, context: string): void => {
   if (response.errorInfo.error === '0') return
 
@@ -65,9 +76,7 @@ export const getTransactions = async (
       operations.push(...(response.statement ?? []))
     }
 
-    const seenIds = new Set<string>()
-
-    return operations
+    return deduplicateTransactions(operations
       .filter((operation) => operation.operationAmount !== 0 || operation.transactionAmount !== 0)
       .filter((operation) => isDateInRange(
         new Date(operation.operationDate),
@@ -75,12 +84,7 @@ export const getTransactions = async (
         toDate
       ))
       .map((operation) => convertMiniCardStatementOperation(operation, account))
-      .filter((transaction) => {
-        const movementId = transaction.movements[0]?.id
-        if (movementId == null || seenIds.has(movementId)) return false
-        seenIds.add(movementId)
-        return true
-      })
+    )
   }
 
   if (account._meta.productKind === 'deposit' && account._meta.statementInternalAccountId != null) {
@@ -93,7 +97,7 @@ export const getTransactions = async (
 
     assertSuccessfulResponse(response, 'GET_TRANSACTIONS')
 
-    return response.operations
+    return deduplicateTransactions(response.operations
       .filter((operation) => operation.operationAmount !== 0 || operation.transactionAmount !== 0)
       .filter((operation) => isDateInRange(
         new Date(operation.transactionDate > 0 ? operation.transactionDate : operation.operationDate),
@@ -101,6 +105,7 @@ export const getTransactions = async (
         toDate
       ))
       .map((operation) => convertFullStatementOperation(operation, account))
+    )
   }
 
   return []

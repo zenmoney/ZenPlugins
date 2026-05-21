@@ -128,6 +128,33 @@ const getMiniStatementSign = (fetchTransaction: FetchMiniCardStatementOperation)
   return 1
 }
 
+const getFullStatementSign = (fetchTransaction: FetchCardStatementOperation): number => {
+  const operationSign = Number(fetchTransaction.operationSign)
+
+  if (Number.isFinite(operationSign) && operationSign !== 0) {
+    return Math.sign(operationSign)
+  }
+
+  const amountSigns = [
+    fetchTransaction.transactionAmount,
+    fetchTransaction.operationAmount
+  ]
+    .filter((amount) => amount !== 0)
+    .map((amount) => Math.sign(amount))
+
+  if (amountSigns.includes(-1)) {
+    console.warn('[VTB-BY] Invalid operationSign, using negative amount fallback for operation:', fetchTransaction.operationName)
+    return -1
+  }
+
+  if (amountSigns.length > 0 && amountSigns.every((sign) => sign === 1)) {
+    console.warn('[VTB-BY] Invalid operationSign, using positive amount fallback for operation:', fetchTransaction.operationName)
+    return 1
+  }
+
+  throw new Error(`Unknown operation sign for full statement operation "${fetchTransaction.operationName}"`)
+}
+
 export const convertMiniCardStatementOperation = (fetchTransaction: FetchMiniCardStatementOperation, account: Account): Transaction => {
   const operationCurrency = ensureCurrency(fetchTransaction.operationCurrency) ?? account.instrument
   const transactionCurrency = ensureCurrency(fetchTransaction.transactionCurrency) ?? operationCurrency
@@ -170,12 +197,11 @@ export const convertMiniCardStatementOperation = (fetchTransaction: FetchMiniCar
 }
 
 export const convertFullStatementOperation = (fetchTransaction: FetchCardStatementOperation, account: Account): Transaction => {
-  const sign = Number(fetchTransaction.operationSign)
-  const operationSign = Number.isFinite(sign) && sign !== 0 ? sign : 1
+  const operationSign = getFullStatementSign(fetchTransaction)
   const operationCurrency = ensureCurrency(fetchTransaction.operationCurrency) ?? account.instrument
   const transactionCurrency = ensureCurrency(fetchTransaction.transactionCurrency) ?? operationCurrency
-  const operationAmount = fetchTransaction.operationAmount * operationSign
-  const transactionAmount = fetchTransaction.transactionAmount * operationSign
+  const operationAmount = Math.abs(fetchTransaction.operationAmount) * operationSign
+  const transactionAmount = Math.abs(fetchTransaction.transactionAmount) * operationSign
   const hasInvoice = transactionCurrency !== account.instrument
 
   return {
@@ -188,8 +214,9 @@ export const convertFullStatementOperation = (fetchTransaction: FetchCardStateme
           account.id,
           fetchTransaction.operationDate,
           fetchTransaction.operationCode,
-          fetchTransaction.transactionAmount,
-          fetchTransaction.operationAmount
+          operationSign,
+          transactionAmount,
+          operationAmount
         ].join(':'),
         account: { id: account.id },
         fee: 0,
