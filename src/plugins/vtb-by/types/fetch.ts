@@ -126,6 +126,13 @@ export interface FetchMiniCardStatementInput {
   till: number
 }
 
+export interface FetchDepositAccountStatementInput {
+  sessionToken: string
+  internalAccountId: string
+  from: number
+  till: number
+}
+
 export interface FetchCardAccountFullStatementOutput extends ResponseWithErrorInfo {
   operations: FetchCardStatementOperation[]
   incomingBalance: number
@@ -146,3 +153,5 @@ export interface FetchCardAccountFullStatementOutput extends ResponseWithErrorIn
 export interface FetchMiniCardStatementOutput extends ResponseWithErrorInfo {
   statement: FetchMiniCardStatementOperation[]
 }
+
+export interface FetchDepositAccountStatementOutput extends FetchCardAccountFullStatementOutput {}

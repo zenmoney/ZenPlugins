@@ -1,7 +1,7 @@
 import { BankMessageError, InvalidLoginOrPasswordError } from '../../errors'
 import type { Account, Transaction } from '../../types/zenmoney'
-import { convertCardAccount, convertCurrentAccount, convertDepositAccount, convertMiniCardStatementOperation, shouldSyncCardAccount } from './converters'
-import { fetchAccountsOverview, fetchLogin, fetchMiniCardStatement } from './fetchApi'
+import { convertCardAccount, convertCurrentAccount, convertDepositAccount, convertFullStatementOperation, convertMiniCardStatementOperation, shouldSyncCardAccount } from './converters'
+import { fetchAccountsOverview, fetchDepositAccountStatement, fetchLogin, fetchMiniCardStatement } from './fetchApi'
 import { getMiniStatementIntervals, isDateInRange } from './helpers'
 import type { FetchAccountMeta, ResponseWithErrorInfo } from './types/base'
 import type { FetchMiniCardStatementOperation } from './types/fetch'
@@ -50,38 +50,58 @@ export const getTransactions = async (
   { sessionToken, fromDate, toDate }: { sessionToken: string, fromDate: Date, toDate: Date | undefined },
   account: Account & FetchAccountMeta
 ): Promise<Transaction[]> => {
-  if (account._meta.productKind !== 'card' || account._meta.statementCardHash == null) {
-    return []
+  if (account._meta.productKind === 'card' && account._meta.statementCardHash != null) {
+    const operations: FetchMiniCardStatementOperation[] = []
+
+    for (const interval of getMiniStatementIntervals(fromDate, toDate)) {
+      const response = await fetchMiniCardStatement({
+        sessionToken,
+        cardHash: account._meta.statementCardHash,
+        from: interval.from,
+        till: interval.till
+      })
+
+      assertSuccessfulResponse(response, 'GET_TRANSACTIONS')
+      operations.push(...(response.statement ?? []))
+    }
+
+    const seenIds = new Set<string>()
+
+    return operations
+      .filter((operation) => operation.operationAmount !== 0 || operation.transactionAmount !== 0)
+      .filter((operation) => isDateInRange(
+        new Date(operation.operationDate),
+        fromDate,
+        toDate
+      ))
+      .map((operation) => convertMiniCardStatementOperation(operation, account))
+      .filter((transaction) => {
+        const movementId = transaction.movements[0]?.id
+        if (movementId == null || seenIds.has(movementId)) return false
+        seenIds.add(movementId)
+        return true
+      })
   }
 
-  const operations: FetchMiniCardStatementOperation[] = []
-
-  for (const interval of getMiniStatementIntervals(fromDate, toDate)) {
-    const response = await fetchMiniCardStatement({
+  if (account._meta.productKind === 'deposit' && account._meta.statementInternalAccountId != null) {
+    const response = await fetchDepositAccountStatement({
       sessionToken,
-      cardHash: account._meta.statementCardHash,
-      from: interval.from,
-      till: interval.till
+      internalAccountId: account._meta.statementInternalAccountId,
+      from: fromDate.getTime(),
+      till: (toDate ?? new Date()).getTime()
     })
 
     assertSuccessfulResponse(response, 'GET_TRANSACTIONS')
-    operations.push(...(response.statement ?? []))
+
+    return response.operations
+      .filter((operation) => operation.operationAmount !== 0 || operation.transactionAmount !== 0)
+      .filter((operation) => isDateInRange(
+        new Date(operation.transactionDate > 0 ? operation.transactionDate : operation.operationDate),
+        fromDate,
+        toDate
+      ))
+      .map((operation) => convertFullStatementOperation(operation, account))
   }
 
-  const seenIds = new Set<string>()
-
-  return operations
-    .filter((operation) => operation.operationAmount !== 0 || operation.transactionAmount !== 0)
-    .filter((operation) => isDateInRange(
-      new Date(operation.operationDate),
-      fromDate,
-      toDate
-    ))
-    .map((operation) => convertMiniCardStatementOperation(operation, account))
-    .filter((transaction) => {
-      const movementId = transaction.movements[0]?.id
-      if (movementId == null || seenIds.has(movementId)) return false
-      seenIds.add(movementId)
-      return true
-    })
+  return []
 }

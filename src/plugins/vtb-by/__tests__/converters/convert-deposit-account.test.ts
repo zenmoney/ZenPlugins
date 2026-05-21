@@ -40,7 +40,7 @@ describe('convertDepositAccount', () => {
     expect(converted.archived).toBe(false)
     expect(converted._meta).toEqual({
       productKind: 'deposit',
-      statementInternalAccountId: null,
+      statementInternalAccountId: 'internal-deposit-account-1',
       statementCardHash: null
     })
   })

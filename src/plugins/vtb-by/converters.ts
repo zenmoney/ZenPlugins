@@ -105,7 +105,7 @@ export const convertDepositAccount = (fetchAccount: FetchDepositAccount): Accoun
     archived: fetchAccount.accountStatus !== 'OPEN',
     _meta: {
       productKind: 'deposit',
-      statementInternalAccountId: null,
+      statementInternalAccountId: fetchAccount.internalAccountId,
       statementCardHash: null
     }
   }
@@ -169,7 +169,7 @@ export const convertMiniCardStatementOperation = (fetchTransaction: FetchMiniCar
   }
 }
 
-export const convertCardStatementOperation = (fetchTransaction: FetchCardStatementOperation, account: Account): Transaction => {
+export const convertFullStatementOperation = (fetchTransaction: FetchCardStatementOperation, account: Account): Transaction => {
   const sign = Number(fetchTransaction.operationSign)
   const operationSign = Number.isFinite(sign) && sign !== 0 ? sign : 1
   const operationCurrency = ensureCurrency(fetchTransaction.operationCurrency) ?? account.instrument

@@ -133,3 +133,16 @@ export const fetchMiniCardStatement = async ({ sessionToken, cardHash, from, til
     till
   }, sessionToken) as T.FetchMiniCardStatementOutput
 }
+
+export const fetchDepositAccountStatement = async (
+  { sessionToken, internalAccountId, from, till }: T.FetchDepositAccountStatementInput
+): Promise<T.FetchDepositAccountStatementOutput> => {
+  return await fetchApi('/services/v2/products/getDepositAccountStatement', {
+    accountType: '0',
+    internalAccountId,
+    reportData: {
+      from,
+      till
+    }
+  }, sessionToken) as T.FetchDepositAccountStatementOutput
+}
