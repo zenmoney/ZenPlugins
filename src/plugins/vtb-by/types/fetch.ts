@@ -134,7 +134,7 @@ export interface FetchDepositAccountStatementInput {
 }
 
 export interface FetchCardAccountFullStatementOutput extends ResponseWithErrorInfo {
-  operations: FetchCardStatementOperation[]
+  operations?: FetchCardStatementOperation[]
   incomingBalance: number
   closingBalance: number
   debitAmount: number

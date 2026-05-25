@@ -97,7 +97,7 @@ export const getTransactions = async (
 
     assertSuccessfulResponse(response, 'GET_TRANSACTIONS')
 
-    return deduplicateTransactions(response.operations
+    return deduplicateTransactions((response.operations ?? [])
       .filter((operation) => operation.operationAmount !== 0 || operation.transactionAmount !== 0)
       .filter((operation) => isDateInRange(
         new Date(operation.transactionDate > 0 ? operation.transactionDate : operation.operationDate),
