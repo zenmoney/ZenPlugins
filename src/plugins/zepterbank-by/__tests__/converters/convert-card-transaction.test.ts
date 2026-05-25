@@ -1,8 +1,8 @@
-import { convertCardAccount, convertCardTransaction } from '../../converters'
+import { convertCardAccount, convertCardTransaction, convertStatementTransaction } from '../../converters'
 import { FetchCardTransaction } from '../../types/fetch.types'
 import { Movement, Transaction } from '../../../../types/zenmoney'
 import { TEST_ACCOUNTS } from '../../__mocks__/accounts.sample'
-import { TEST_CARD_TRANSACTIONS } from '../../__mocks__/transactions.sample'
+import { TEST_CARD_TRANSACTIONS, TEST_STATEMENT_TRANSACTIONS } from '../../__mocks__/transactions.sample'
 
 describe('convertCardTransaction', () => {
   const rawCardAccount1 = TEST_ACCOUNTS.CARD.find(acc => acc.productCardId === 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8')
@@ -24,7 +24,7 @@ describe('convertCardTransaction', () => {
         comment: null,
         movements: [
           {
-            id: null,
+            id: expect.any(String),
             account: { id: 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8' },
             fee: 0,
             invoice: null,
@@ -46,7 +46,7 @@ describe('convertCardTransaction', () => {
         comment: null,
         movements: [
           {
-            id: null,
+            id: expect.any(String),
             account: { id: 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8' },
             fee: 0,
             invoice: null,
@@ -68,7 +68,7 @@ describe('convertCardTransaction', () => {
         comment: null,
         movements: [
           {
-            id: null,
+            id: expect.any(String),
             account: { id: 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8' },
             fee: 0,
             invoice: null,
@@ -90,7 +90,7 @@ describe('convertCardTransaction', () => {
         comment: null,
         movements: [
           {
-            id: null,
+            id: expect.any(String),
             account: { id: 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8' },
             fee: 0,
             invoice: null,
@@ -112,7 +112,7 @@ describe('convertCardTransaction', () => {
         comment: null,
         movements: [
           {
-            id: null,
+            id: expect.any(String),
             account: { id: 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8' },
             fee: 0,
             invoice: null,
@@ -139,7 +139,7 @@ describe('convertCardTransaction', () => {
         comment: null,
         movements: [
           {
-            id: null,
+            id: expect.any(String),
             account: { id: 'Y2errgEX8HfZ5efNYkj3XzirAqGrN7m523zs53P5' },
             fee: 0,
             invoice: { sum: -3.19, instrument: 'BYN' },
@@ -161,7 +161,7 @@ describe('convertCardTransaction', () => {
         comment: null,
         movements: [
           {
-            id: null,
+            id: expect.any(String),
             account: { id: 'Y2errgEX8HfZ5efNYkj3XzirAqGrN7m523zs53P5' },
             fee: 0,
             invoice: { sum: 3, instrument: 'BYN' },
@@ -183,7 +183,7 @@ describe('convertCardTransaction', () => {
         comment: null,
         movements: [
           {
-            id: null,
+            id: expect.any(String),
             account: { id: 'Y2errgEX8HfZ5efNYkj3XzirAqGrN7m523zs53P5' },
             fee: 0,
             invoice: { sum: 1, instrument: 'BYN' },
@@ -217,7 +217,7 @@ describe('convertCardTransaction', () => {
       comment: null,
       movements: [
         {
-          id: null,
+          id: expect.any(String),
           account: { id: 'Y2errgEX8HfZ5efNYkj3XzirAqGrN7m523zs53P5' },
           fee: 0,
           invoice: null,
@@ -226,5 +226,17 @@ describe('convertCardTransaction', () => {
       ],
       merchant: null
     })
+  })
+
+  it('uses the same movement id for a matching card and statement transaction', () => {
+    const rawCardTransaction = TEST_CARD_TRANSACTIONS.Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8[0]
+    const rawStatementTransaction = TEST_STATEMENT_TRANSACTIONS.vc5275E7DJRNBWJaN9Ugpc86LZQ4F75Dda7xhb74[0]
+
+    if (rawCardTransaction == null || rawStatementTransaction == null) {
+      throw new Error('Matching transactions not found')
+    }
+
+    expect(convertCardTransaction(rawCardTransaction, cardAccount1).movements[0].id)
+      .toBe(convertStatementTransaction(rawStatementTransaction, cardAccount1).movements[0].id)
   })
 })

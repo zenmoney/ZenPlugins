@@ -32,6 +32,9 @@ const getMovementAccountId = (transaction: Transaction): string => {
   return ''
 }
 
+const getMovementId = (transaction: Transaction): string | null =>
+  transaction.movements[0]?.id ?? null
+
 const getAmountSignature = (transaction: Transaction): string => {
   const movement = transaction.movements[0]
 
@@ -63,8 +66,16 @@ const getDuplicateFingerprint = (transaction: Transaction): string => [
   normalizeText(getMerchantTitle(transaction))
 ].join('|')
 
-const isMatchingDuplicate = (left: Transaction, right: Transaction): boolean =>
-  getDuplicateFingerprint(left) === getDuplicateFingerprint(right)
+const isMatchingDuplicate = (left: Transaction, right: Transaction): boolean => {
+  const leftId = getMovementId(left)
+  const rightId = getMovementId(right)
+
+  if (leftId !== null && rightId !== null) {
+    return leftId === rightId
+  }
+
+  return getDuplicateFingerprint(left) === getDuplicateFingerprint(right)
+}
 
 export const mergeTransactions = (historyTransactions: Transaction[], statementTransactions: Transaction[]): Transaction[] => {
   const mergedTransactions: SourcedTransaction[] = historyTransactions.map((transaction) => ({

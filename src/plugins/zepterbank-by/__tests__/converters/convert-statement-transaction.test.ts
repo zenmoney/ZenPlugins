@@ -25,7 +25,7 @@ describe('convertStatementTransaction', () => {
         date: new Date('2026-02-13T07:21:30.000Z'),
         comment: null,
         movements: [{
-          id: null,
+          id: expect.any(String),
           account: { id: 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8' },
           fee: 0,
           invoice: null,
@@ -41,7 +41,7 @@ describe('convertStatementTransaction', () => {
         date: new Date('2026-02-12T18:46:07.000Z'),
         comment: null,
         movements: [{
-          id: null,
+          id: expect.any(String),
           account: { id: 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8' },
           fee: 0,
           invoice: null,
@@ -57,7 +57,7 @@ describe('convertStatementTransaction', () => {
         date: new Date('2026-02-12T17:58:51.000Z'),
         comment: null,
         movements: [{
-          id: null,
+          id: expect.any(String),
           account: { id: 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8' },
           fee: 0,
           invoice: null,
@@ -73,7 +73,7 @@ describe('convertStatementTransaction', () => {
         date: new Date('2026-02-12T14:53:18.000Z'),
         comment: null,
         movements: [{
-          id: null,
+          id: expect.any(String),
           account: { id: 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8' },
           fee: 0,
           invoice: null,
@@ -89,7 +89,7 @@ describe('convertStatementTransaction', () => {
         date: new Date('2026-02-12T14:31:39.000Z'),
         comment: null,
         movements: [{
-          id: null,
+          id: expect.any(String),
           account: { id: 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8' },
           fee: 0,
           invoice: null,
@@ -110,7 +110,7 @@ describe('convertStatementTransaction', () => {
         date: new Date('2026-02-13T07:21:30.000Z'),
         comment: null,
         movements: [{
-          id: null,
+          id: expect.any(String),
           account: { id: 'Y2errgEX8HfZ5efNYkj3XzirAqGrN7m523zs53P5' },
           fee: 0,
           invoice: { sum: 3, instrument: 'BYN' },
@@ -126,7 +126,7 @@ describe('convertStatementTransaction', () => {
         date: new Date('2026-02-12T17:58:52.000Z'),
         comment: null,
         movements: [{
-          id: null,
+          id: expect.any(String),
           account: { id: 'Y2errgEX8HfZ5efNYkj3XzirAqGrN7m523zs53P5' },
           fee: 0,
           invoice: { sum: 1, instrument: 'BYN' },
@@ -142,7 +142,7 @@ describe('convertStatementTransaction', () => {
         date: new Date('2026-02-12T21:00:00.000Z'),
         comment: null,
         movements: [{
-          id: null,
+          id: expect.any(String),
           account: { id: 'Y2errgEX8HfZ5efNYkj3XzirAqGrN7m523zs53P5' },
           fee: 0,
           invoice: { sum: -3.19, instrument: 'BYN' },
@@ -163,7 +163,7 @@ describe('convertStatementTransaction', () => {
         date: new Date('2026-02-12T18:46:07.000Z'),
         comment: null,
         movements: [{
-          id: null,
+          id: expect.any(String),
           account: { id: '3p6Kf9JU2RQW4HFE42QGVB556Sv4hgVxg4vZ7ZP2' },
           fee: 0,
           invoice: null,
