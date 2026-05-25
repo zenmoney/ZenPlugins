@@ -92,6 +92,61 @@ function createHistoryMerchant (apiTransaction) {
   return merchant
 }
 
+function normalizeIdPart (value) {
+  return String(value ?? '').trim().replace(/\s+/g, ' ')
+}
+
+function joinIdParts (parts) {
+  return parts
+    .map(normalizeIdPart)
+    .filter(part => part !== '')
+    .join(':')
+}
+
+function getMerchantKeyParts (merchant) {
+  if (!merchant) {
+    return []
+  }
+  if (merchant.fullTitle) {
+    const [title = merchant.fullTitle, city = ''] = merchant.fullTitle.split(/\s*,\s*/)
+    return [title, city, merchant.mcc]
+  }
+  return [merchant.title, merchant.city, merchant.mcc]
+}
+
+function createTransactionKey (account, transaction, apiTransaction = {}) {
+  const primaryMovement = transaction.movements[0]
+  const sourceSpecificKey = apiTransaction.authCode
+    ? null
+    : apiTransaction.orderNumber
+      ? `order:${apiTransaction.orderNumber}`
+      : apiTransaction.id && !isHistoryApiTransaction(apiTransaction)
+        ? `event:${apiTransaction.id}`
+        : null
+  return joinIdParts([
+    'bgpb',
+    account.id,
+    apiTransaction.authCode && `auth:${apiTransaction.authCode}`,
+    sourceSpecificKey,
+    transaction.date.toISOString().slice(0, 16),
+    transaction.hold ? 'hold' : 'posted',
+    primaryMovement.sum,
+    primaryMovement.invoice?.instrument,
+    primaryMovement.invoice?.sum,
+    transaction.comment,
+    ...getMerchantKeyParts(transaction.merchant)
+  ])
+}
+
+function assignMovementIds (transaction, account, apiTransaction) {
+  const transactionKey = createTransactionKey(account, transaction, apiTransaction)
+  transaction.movements[0].id = joinIdParts([transactionKey, 'card'])
+  if (transaction.movements[1]) {
+    transaction.movements[1].id = joinIdParts([transactionKey, transaction.movements[1].account?.type || 'transfer'])
+  }
+  return transaction
+}
+
 function convertHistoryLastTransaction (apiTransaction, accounts) {
   const account = findHistoryTransactionAccount(apiTransaction, accounts)
   if (!account) {
@@ -112,7 +167,7 @@ function convertHistoryLastTransaction (apiTransaction, accounts) {
     date: new Date(apiTransaction.date),
     movements: [
       {
-        id: null,
+        id: '',
         account: { id: account.id },
         invoice: invoiceInstrument !== account.instrument && invoiceAmount !== null
           ? {
@@ -128,6 +183,15 @@ function convertHistoryLastTransaction (apiTransaction, accounts) {
     comment: apiTransaction.transTypeDesc || null,
     hold: apiTransaction.status !== 'success'
   }
+}
+
+function convertHistoryLastTransactionWithIds (apiTransaction, accounts) {
+  const transaction = convertHistoryLastTransaction(apiTransaction, accounts)
+  if (!transaction) {
+    return null
+  }
+  const account = findHistoryTransactionAccount(apiTransaction, accounts)
+  return assignMovementIds(transaction, account, apiTransaction)
 }
 
 export function convertAccount (ob) {
@@ -210,7 +274,7 @@ export function convertTransaction (apiTransaction, account) {
     date: new Date(getDate(apiTransaction.date)),
     movements: [
       {
-        id: null,
+        id: '',
         account: { id: account.id },
         invoice: invoice.instrument === account.instrument ? null : invoice,
         sum: invoice.instrument === account.instrument ? invoice.sum : getSumAmount(apiTransaction.type, apiTransaction.amount),
@@ -228,17 +292,17 @@ export function convertTransaction (apiTransaction, account) {
     parseComment
   ].some(parser => parser(transaction, apiTransaction, account, invoice))
 
-  return transaction
+  return assignMovementIds(transaction, account, apiTransaction)
 }
 
 function convertDepositTransaction (apiTransaction, account) {
   const income = parseAmount(apiTransaction.income)
   const outcome = parseAmount(apiTransaction.outcome)
-  return {
+  const transaction = {
     date: new Date(getDate(apiTransaction.date)),
     movements: [
       {
-        id: null,
+        id: '',
         account: { id: account.id },
         invoice: null,
         sum: income !== null ? income : -(outcome || 0),
@@ -249,6 +313,7 @@ function convertDepositTransaction (apiTransaction, account) {
     comment: apiTransaction.description || null,
     hold: false
   }
+  return assignMovementIds(transaction, account, apiTransaction)
 }
 
 function parseInnerTransfer (transaction, apiTransaction, account, invoice) {
@@ -272,7 +337,7 @@ export function convertTestLastTransactions (apiTransactions, accounts) {
 
 export function convertLastTransaction (apiTransaction, accounts) {
   if (isHistoryApiTransaction(apiTransaction)) {
-    return convertHistoryLastTransaction(apiTransaction, accounts)
+    return convertHistoryLastTransactionWithIds(apiTransaction, accounts)
   }
   const rawData = apiTransaction.pushMessageText.split('; ')
 
@@ -327,7 +392,7 @@ export function convertLastTransaction (apiTransaction, accounts) {
     date,
     movements: [
       {
-        id: null,
+        id: '',
         account: { id: account.id },
         invoice: invoice.instrument === account.instrument ? null : invoice,
         sum: invoice.instrument === account.instrument ? invoice.sum : null,
@@ -345,7 +410,7 @@ export function convertLastTransaction (apiTransaction, accounts) {
     parsePayee
   ].some(parser => parser(transaction, apiTransaction))
 
-  return transaction
+  return assignMovementIds(transaction, account, apiTransaction)
 }
 
 function parseCash (transaction, apiTransaction) {
@@ -504,16 +569,29 @@ function getDateJSON (str) {
 }
 
 export function transactionsUnique (array) {
-  const a = array.concat()
-  for (let i = 0; i < a.length; ++i) {
-    for (let j = i + 1; j < a.length; ++j) {
-      if (a[i].date.getTime() === a[j].date.getTime() &&
-        a[i].movements.length === a[j].movements.length &&
-        a[i].movements[0].account.id === a[j].movements[0].account.id &&
-        a[i].movements[0].sum === a[j].movements[0].sum) {
-        a.splice(j--, 1)
-      }
+  const uniqueTransactions = []
+  const seen = new Set()
+  for (const transaction of array) {
+    const firstMovement = transaction.movements[0]
+    const key = firstMovement.id || joinIdParts([
+      transaction.date.getTime(),
+      transaction.movements.length,
+      firstMovement.account.id,
+      firstMovement.sum,
+      firstMovement.invoice?.instrument,
+      firstMovement.invoice?.sum,
+      transaction.comment,
+      transaction.merchant?.fullTitle,
+      transaction.merchant?.title,
+      transaction.merchant?.city,
+      transaction.merchant?.country,
+      transaction.merchant?.mcc
+    ])
+    if (seen.has(key)) {
+      continue
     }
+    seen.add(key)
+    uniqueTransactions.push(transaction)
   }
-  return a
+  return uniqueTransactions
 }

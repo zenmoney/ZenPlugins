@@ -1,5 +1,15 @@
 import { convertTransaction } from '../../../converters'
 
+function withNullMovementIds (transaction) {
+  return {
+    ...transaction,
+    movements: transaction.movements.map(movement => ({
+      ...movement,
+      id: null
+    }))
+  }
+}
+
 describe('convertTransaction', () => {
   it.each([
     [
@@ -81,6 +91,8 @@ describe('convertTransaction', () => {
       }
     ]
   ])('converts inner transfer', (apiTransaction, account, transaction) => {
-    expect(convertTransaction(apiTransaction, account)).toEqual(transaction)
+    const convertedTransaction = convertTransaction(apiTransaction, account)
+    expect(convertedTransaction.movements.every(movement => typeof movement.id === 'string' && movement.id.length > 0)).toBe(true)
+    expect(withNullMovementIds(convertedTransaction)).toEqual(transaction)
   })
 })

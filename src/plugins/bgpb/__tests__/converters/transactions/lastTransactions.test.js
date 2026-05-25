@@ -1,5 +1,18 @@
 import { convertLastTransaction, convertTestLastTransactions } from '../../../converters'
 
+function withNullMovementIds (transaction) {
+  if (!transaction) {
+    return transaction
+  }
+  return {
+    ...transaction,
+    movements: transaction.movements.map(movement => ({
+      ...movement,
+      id: null
+    }))
+  }
+}
+
 describe('convertLastTransaction', () => {
   it.each([
     [
@@ -252,7 +265,11 @@ describe('convertLastTransaction', () => {
       }
     ]
   ])('converts last transactions', (apiTransaction, accounts, transaction) => {
-    expect(convertLastTransaction(apiTransaction, accounts)).toEqual(transaction)
+    const convertedTransaction = convertLastTransaction(apiTransaction, accounts)
+    if (convertedTransaction) {
+      expect(convertedTransaction.movements.every(movement => typeof movement.id === 'string' && movement.id.length > 0)).toBe(true)
+    }
+    expect(withNullMovementIds(convertedTransaction)).toEqual(transaction)
   })
 })
 
@@ -363,12 +380,14 @@ describe('convertLastTransactions', () => {
       []
     ]
   ])('converts last transactions', (apiTransactions, transactions) => {
-    expect(convertTestLastTransactions(apiTransactions, [
+    const convertedTransactions = convertTestLastTransactions(apiTransactions, [
       {
         id: 'account',
         instrument: 'BYN',
         syncID: ['1111']
       }
-    ])).toEqual(transactions)
+    ])
+    expect(convertedTransactions.every(transaction => transaction.movements.every(movement => typeof movement.id === 'string' && movement.id.length > 0))).toBe(true)
+    expect(convertedTransactions.map(withNullMovementIds)).toEqual(transactions)
   })
 })

@@ -1,5 +1,22 @@
 import { convertLastTransaction, convertTransaction } from '../../converters'
 
+function withNullMovementIds (transaction) {
+  if (!transaction) {
+    return transaction
+  }
+  return {
+    ...transaction,
+    movements: transaction.movements.map(movement => ({
+      ...movement,
+      id: null
+    }))
+  }
+}
+
+function expectMovementIds(transaction) {
+  expect(transaction.movements.every(movement => typeof movement.id === 'string' && movement.id.length > 0)).toBe(true)
+}
+
 describe('convertTransaction', () => {
   const account = {
     id: '11161311-117d11',
@@ -199,12 +216,13 @@ describe('convertTransaction', () => {
     it(tc.name, () => {
       const transaction = convertTransaction(tc.transaction, account)
 
-      expect(transaction).toEqual(tc.expectedTransaction)
+      expectMovementIds(transaction)
+      expect(withNullMovementIds(transaction)).toEqual(tc.expectedTransaction)
     })
   }
 
   it('deposit statement row', () => {
-    expect(convertTransaction({
+    const transaction = convertTransaction({
       statementType: 'deposit',
       date: '03.02.2026',
       description: 'Пополнение вклада',
@@ -215,7 +233,10 @@ describe('convertTransaction', () => {
     }, {
       id: 'deposit-account',
       instrument: 'BYN'
-    })).toEqual({
+    })
+
+    expectMovementIds(transaction)
+    expect(withNullMovementIds(transaction)).toEqual({
       date: new Date('2026-02-02T21:00:00.000Z'),
       movements: [
         {
@@ -638,7 +659,57 @@ describe('convertLastTransaction', () => {
     it(tc.name, () => {
       const transaction = convertLastTransaction(tc.transaction, accounts)
 
-      expect(transaction).toEqual(tc.expectedTransaction)
+      if (transaction) {
+        expectMovementIds(transaction)
+      }
+      expect(withNullMovementIds(transaction)).toEqual(tc.expectedTransaction)
     })
   }
+
+  it('uses the same movement id for matching statement and history transactions', () => {
+    const account = {
+      id: 'account',
+      instrument: 'BYN',
+      bankId: '4026868',
+      syncID: ['1111']
+    }
+
+    const statementTransaction = convertTransaction({
+      amount: '250,00',
+      amountReal: '250,00',
+      authCode: '185665',
+      cardNum: '1111',
+      currency: 'BYN',
+      currencyReal: 'BYN',
+      date: '15.05.2026 10:55',
+      description: 'PEREVOD (SPISANIE)',
+      mcc: '6012',
+      place: 'ERIP_MOB.APP, EPOS, PEREVOD (SPISANIE)',
+      type: 'СПИСАНИЕ'
+    }, account)
+    const historyTransaction = convertLastTransaction({
+      orderNumber: '3289575665',
+      bankId: '4026868',
+      direction: 'outgoing',
+      date: '2026-05-15T10:55:51+0300',
+      totalAmount: {
+        currency: 933,
+        amount: 25000
+      },
+      currencyAmount: {
+        currency: 933,
+        amount: 25000
+      },
+      status: 'success',
+      terminal: 'ERIP_MOB.APP, EPOS, PEREVOD (SPISANIE)',
+      pan: '518597******1111',
+      transType: 781,
+      transTypeDesc: 'PEREVOD (SPISANIE)',
+      authCode: '185665',
+      mcc: 6012,
+      reversal: 0
+    }, [account])
+
+    expect(statementTransaction.movements[0].id).toBe(historyTransaction.movements[0].id)
+  })
 })
