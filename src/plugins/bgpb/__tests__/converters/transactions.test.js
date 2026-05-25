@@ -13,7 +13,7 @@ function withNullMovementIds (transaction) {
   }
 }
 
-function expectMovementIds(transaction) {
+function expectMovementIds (transaction) {
   expect(transaction.movements.every(movement => typeof movement.id === 'string' && movement.id.length > 0)).toBe(true)
 }
 
