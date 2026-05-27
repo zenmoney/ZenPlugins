@@ -7,14 +7,11 @@ import {
   FetchCardAccountMeta,
   FetchCurrentAccountMeta
 } from './types/fetch.types'
-import { convertIsoDateStringToDate } from './helpers'
+import { convertIsoDateStringToDate, getBusinessDateIdentityKey } from './helpers'
 import { appendCashbackComment } from './cashback.js'
 
 const normalizeIdPart = (value: string | null | undefined): string =>
   (value ?? '').replace(/\s+/g, ' ').trim().toUpperCase()
-
-const getDateIdentityKey = (date: Date): string =>
-  date.toISOString().slice(0, 10)
 
 const getAmountIdentityKey = ({
   accountInstrument,
@@ -52,7 +49,7 @@ const buildMovementId = ({
   return [
     'zepterbank-by',
     accountId,
-    getDateIdentityKey(date),
+    getBusinessDateIdentityKey(date),
     getAmountIdentityKey({ accountInstrument, sum, invoice }),
     String(mcc ?? ''),
     normalizeIdPart(merchantTitle)

@@ -74,4 +74,68 @@ describe('getTransactions', () => {
       convertCardTransaction(uniqueHistoryTransaction, account)
     ])
   })
+
+  it('deduplicates matching history and statement transactions that land in different UTC days', async () => {
+    const rawCardAccount = TEST_ACCOUNTS.CARD.find((account) => account.productCardId === 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8')
+
+    if (rawCardAccount == null) {
+      throw new Error('Card account not found')
+    }
+
+    const account = convertCardAccount(rawCardAccount)
+    const historyTransaction: FetchCardTransaction = {
+      effectiveDate: '2026-05-24T16:28:45',
+      transacName: 'POS PURCHASE ',
+      amount: '117.28',
+      currencyIso: 'BYN',
+      cardAcceptor: 'I.-SHOP"WWW.PASS.RW.BY"',
+      repeatable: false,
+      transOperType: 'debit',
+      transMcc: 'МСС4112'
+    }
+
+    const statementOperation = {
+      transactionDate: '2026-05-24T00:00:00',
+      balanceDate: '2026-05-26',
+      operationName: 'Оплата товаров и услуг в устройствах других банков',
+      operationSum: '117.28',
+      transactionSum: '117.28',
+      transactionCurrency: '933',
+      transactionCurrencyISO: 'BYN',
+      operationSign: -1 as const,
+      operationCurrency: '933',
+      operationCurrencyIso: 'BYN',
+      cardPAN: '0000********1111',
+      merchant: 'BLR MINSK',
+      terminalLocation: 'I.-SHOP"WWW.PASS.RW.BY"',
+      purpose: 'Regression case for midnight statement entry',
+      MCC: 'MCC 4112'
+    }
+
+    mockFetchCardTransactions.mockResolvedValue({
+      status: 200,
+      data: [historyTransaction],
+      error: null
+    })
+    mockFetchProductStatement.mockResolvedValue({
+      status: 200,
+      data: {
+        incomeForPeriod: '0.00',
+        outcomeForPeriod: '0.00',
+        ibanNum: rawCardAccount.ibanNum,
+        contractCurrency: String(rawCardAccount.currency),
+        contractCurrencyISO: rawCardAccount.currencyIso,
+        operations: [statementOperation]
+      },
+      error: null
+    })
+
+    await expect(getTransactions({
+      sessionToken: 'session-token',
+      fromDate: new Date('2026-05-01T00:00:00.000Z'),
+      toDate: new Date('2026-05-31T23:59:59.000Z')
+    }, account)).resolves.toEqual([
+      convertStatementTransaction(statementOperation, account)
+    ])
+  })
 })

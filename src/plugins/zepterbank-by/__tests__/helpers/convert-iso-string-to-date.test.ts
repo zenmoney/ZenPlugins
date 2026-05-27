@@ -1,4 +1,4 @@
-import { convertIsoDateStringToDate } from '../../helpers'
+import { convertIsoDateStringToDate, getBusinessDateIdentityKey } from '../../helpers'
 
 describe('convertIsoDateStringToDate', () => {
   it('converts +BUSINESS_TIME_OFFSET local time to correct UTC instant', () => {
@@ -43,5 +43,15 @@ describe('convertIsoDateStringToDate', () => {
   it('ignores milliseconds if present (current implementation will make seconds NaN -> invalid)', () => {
     const d = convertIsoDateStringToDate('2026-02-12T20:58:51.123' as any)
     expect(Number.isNaN(d.getTime())).toBe(true)
+  })
+})
+
+describe('getBusinessDateIdentityKey', () => {
+  it('keeps midnight statement records on the same local business day as daytime history records', () => {
+    const statementDate = convertIsoDateStringToDate('2026-05-24T00:00:00')
+    const historyDate = convertIsoDateStringToDate('2026-05-24T16:28:45')
+
+    expect(getBusinessDateIdentityKey(statementDate)).toBe('2026-05-24')
+    expect(getBusinessDateIdentityKey(historyDate)).toBe('2026-05-24')
   })
 })

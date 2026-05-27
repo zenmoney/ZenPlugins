@@ -1,4 +1,5 @@
 import { Transaction } from '../../types/zenmoney'
+import { getBusinessDateIdentityKey } from './helpers'
 
 type TransactionSource = 'history' | 'statement'
 
@@ -56,7 +57,7 @@ const getMccSignature = (transaction: Transaction): string => {
 }
 
 const getDaySignature = (transaction: Transaction): string =>
-  transaction.date.toISOString().slice(0, 10)
+  getBusinessDateIdentityKey(transaction.date)
 
 const getDuplicateFingerprint = (transaction: Transaction): string => [
   getMovementAccountId(transaction),
