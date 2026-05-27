@@ -335,7 +335,7 @@ export interface Transaction {
   canRepeat: boolean
   canReverse: boolean
   amountEquivalent: number
-  operationType: OperationType
+  operationType: OperationType | string
   operationTypeId: null
   transactionTypeId?: number | null
   transactionTypeName?: string | null
