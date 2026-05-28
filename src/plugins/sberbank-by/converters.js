@@ -101,11 +101,23 @@ function parseMetalInstrument (code) {
   }
 }
 
-function getApiTransactionDedupKey (apiTransaction) {
+function getApiTransactionReferenceCodes (apiTransaction) {
   const rrn = apiTransaction.rnnCode || apiTransaction.souRnnCode || ''
   const authorizationCode = apiTransaction.authorizationCode && apiTransaction.authorizationCode !== '000000'
     ? apiTransaction.authorizationCode
     : ''
+  return { rrn, authorizationCode }
+}
+
+function getAccountLevelEventId (apiTransaction, rrn, authorizationCode) {
+  return !rrn && !authorizationCode && !(apiTransaction.cardId || apiTransaction.cardPAN)
+    ? apiTransaction.eventId || ''
+    : ''
+}
+
+function getApiTransactionDedupKey (apiTransaction) {
+  const { rrn, authorizationCode } = getApiTransactionReferenceCodes(apiTransaction)
+  const accountLevelEventId = getAccountLevelEventId(apiTransaction, rrn, authorizationCode)
   const dateKey = rrn || authorizationCode
     ? toISODateString(new Date(apiTransaction.eventDate))
     : String(apiTransaction.eventDate)
@@ -116,7 +128,8 @@ function getApiTransactionDedupKey (apiTransaction) {
     Math.abs(apiTransaction.transactionSum),
     apiTransaction.transactionCurrency || '',
     rrn,
-    authorizationCode
+    authorizationCode,
+    accountLevelEventId
   ].join('_')
 }
 
@@ -152,6 +165,9 @@ function getTransactionDedupKey (transaction) {
   const movement = transaction.movements?.[0]
   if (!movement) {
     return null
+  }
+  if (transaction.dedupIdentity) {
+    return `${movement.account.id}_${transaction.dedupIdentity}`
   }
   return `${movement.account.id}_${transaction.date.getTime()}_${Math.abs(movement.sum)}`
 }
@@ -263,6 +279,7 @@ export function convertTransaction (apiTransaction, account) {
   if (apiTransaction.eventStatus === -1 || apiTransaction.transactionSum === 0) {
     return null
   }
+  const { rrn, authorizationCode } = getApiTransactionReferenceCodes(apiTransaction)
   const currency = apiTransaction.transactionCurrency.length === 3
     ? apiTransaction.transactionCurrency
     : apiTransaction.transactionCurrency.length === 2 ? `0${apiTransaction.transactionCurrency}` : `00${apiTransaction.transactionCurrency}`
@@ -295,6 +312,15 @@ export function convertTransaction (apiTransaction, account) {
     parsePayee
   ]
   parsers.some(parser => parser(transaction, apiTransaction, account, invoice))
+
+  const accountLevelEventId = getAccountLevelEventId(apiTransaction, rrn, authorizationCode)
+  if (accountLevelEventId) {
+    Object.defineProperty(transaction, 'dedupIdentity', {
+      value: accountLevelEventId,
+      enumerable: false,
+      configurable: true
+    })
+  }
 
   return transaction
 }

@@ -182,6 +182,80 @@ describe('filterDuplicates', () => {
           comment: 'Покупка SOU Sber Bank'
         }
       ]
+    ],
+    [
+      [
+        {
+          sourceSystem: 8,
+          eventId: '-696460788586#7#25',
+          contractId: '20301567',
+          contractCurrency: '933',
+          cardPAN: '',
+          eventDate: 1779901343000,
+          processingDate: 1779829200000,
+          transactionType: 1,
+          transactionCode: 'TRAN_ERIP',
+          transactionName: 'Пополнение счета через ЕРИП онлайн',
+          transactionSum: 20,
+          transactionCurrency: '933',
+          eventStatus: 1,
+          payAvailable: false
+        },
+        {
+          sourceSystem: 8,
+          eventId: '-696460788586#7#26',
+          contractId: '20301567',
+          contractCurrency: '933',
+          cardPAN: '',
+          eventDate: 1779901343000,
+          processingDate: 1779829200000,
+          transactionType: 1,
+          transactionCode: 'TRAN_ERIP',
+          transactionName: 'Пополнение счета через ЕРИП онлайн',
+          transactionSum: 20,
+          transactionCurrency: '933',
+          eventStatus: 1,
+          payAvailable: false
+        }
+      ],
+      {
+        20301567: {
+          id: 'account-1',
+          instrument: 'BYN'
+        }
+      },
+      [
+        {
+          hold: false,
+          date: new Date('2026-05-27T17:02:23.000Z'),
+          movements: [
+            {
+              id: '-696460788586#7#25',
+              account: { id: 'account-1' },
+              invoice: null,
+              sum: 20,
+              fee: 0
+            }
+          ],
+          merchant: null,
+          comment: 'Пополнение счета через ЕРИП онлайн'
+        },
+        {
+          hold: false,
+          date: new Date('2026-05-27T17:02:23.000Z'),
+          movements: [
+            {
+              id: '-696460788586#7#26',
+              account: { id: 'account-1' },
+              invoice: null,
+              sum: 20,
+              fee: 0
+            }
+          ],
+          merchant: null,
+          comment: 'Пополнение счета через ЕРИП онлайн'
+        }
+      ]
     ]
   ])('converts filter duplicates transactions', (apiTransactions, accountsByContractNumber, transactions) => {
     expect(convertTransactions(apiTransactions, accountsByContractNumber)).toEqual(transactions)
