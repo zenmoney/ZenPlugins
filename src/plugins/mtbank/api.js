@@ -1,7 +1,7 @@
 import { defaultsDeep, flatMap } from 'lodash'
 import { createDateIntervals as commonCreateDateIntervals } from '../../common/dateUtils'
 import { fetchJson } from '../../common/network'
-import { BankMessageError, InvalidOtpCodeError, TemporaryError } from '../../errors'
+import { BankMessageError, InvalidOtpCodeError, InvalidPreferencesError, TemporaryError } from '../../errors'
 import { getDate } from './converters'
 
 const baseUrl = 'https://mybank.by/api/v1/'
@@ -225,8 +225,9 @@ export async function fetchTransactions (sessionCookies, accounts, fromDate, toD
   const operations = []
 
   for (const account of accounts) {
-    const responses = await Promise.all(intervals.map(([startDate, endDate]) => {
-      return fetchApiJsonWithSessionCookies(sessionCookies, 'product/loadOperationStatements', {
+    const responses = []
+    for (const [startDate, endDate] of intervals) {
+      responses.push(await fetchApiJsonWithSessionCookies(sessionCookies, 'product/loadOperationStatements', {
         method: 'POST',
         body: {
           contractCode: account.id,
@@ -235,8 +236,8 @@ export async function fetchTransactions (sessionCookies, accounts, fromDate, toD
           endDate: formatDate(endDate),
           halva: false
         }
-      }, response => response.body)
-    }))
+      }, response => response.body))
+    }
 
     for (const response of responses) {
       if (!response) continue

@@ -422,7 +422,7 @@ describe('scrape', () => {
     expect(seenCookies.loadUser).toEqual(['identity-cookie=1; password-cookie=1; role-cookie=1'])
     expect(seenCookies.statements).toEqual([
       'identity-cookie=1; password-cookie=1; role-cookie=1; load-user-cookie=1',
-      'identity-cookie=1; password-cookie=1; role-cookie=1; load-user-cookie=1'
+      'identity-cookie=1; password-cookie=1; role-cookie=1; load-user-cookie=1; statement-cookie-1=1'
     ])
   })
 })
