@@ -376,10 +376,14 @@ function parseInnerTransfer (transaction, apiTransaction, account, invoice) {
     return true
   }
   if ([
-    /Дополнительный взнос/i,
-    /P2P SOU Sber/i
+    /Дополнительный взнос/i
   ].some(regexp => regexp.test(apiTransaction.transactionName))) {
     transaction.groupKeys = [toISODateString(transaction.date) + '_' + invoice.instrument + '_' + Math.abs(invoice.sum)]
+    return true
+  }
+  if ([
+    /P2P SOU Sber/i
+  ].some(regexp => regexp.test(apiTransaction.transactionName))) {
     return true
   }
   if ([
