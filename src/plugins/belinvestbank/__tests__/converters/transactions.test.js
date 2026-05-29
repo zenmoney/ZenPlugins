@@ -502,6 +502,62 @@ describe('convertTransaction', () => {
     expect(updatedTransaction.movements[0].id).toBe(transaction.movements[0].id)
   })
 
+  it('keeps movement id stable when bank history key changes for the same app id', () => {
+    const apiTransaction = {
+      date: '2021-07-15 12:35:13',
+      type: 'Оплата',
+      cardAcceptor: 'GOOGLE*CLOUDMOSA INC>INTERNET US',
+      transactionAmt: '1',
+      transactionAmtCurrency: 'USD',
+      accountAmt: '2,57',
+      accountAmtCurrency: 'BYN',
+      status: 'ПРОВЕДЕНО',
+      sign: '-',
+      mcc: '7372',
+      cardNum: '**** 2272',
+      appId: '332785',
+      historyKey: 9
+    }
+
+    const transaction = convertTransaction(apiTransaction, account)
+    const updatedTransaction = convertTransaction({
+      ...apiTransaction,
+      historyKey: 10
+    }, account)
+
+    expect(updatedTransaction.movements[0].id).toBe(transaction.movements[0].id)
+  })
+
+  it('keeps movement id stable when a blocked transaction clears', () => {
+    const apiTransaction = {
+      date: '2021-07-15 12:35:13',
+      type: 'Оплата',
+      cardAcceptor: 'GOOGLE*CLOUDMOSA INC>INTERNET US',
+      transactionAmt: '1',
+      transactionAmtCurrency: 'USD',
+      accountAmt: '2,57',
+      accountAmtCurrency: 'BYN',
+      status: 'ЗАБЛОКИРОВАНО',
+      sign: '-',
+      mcc: '7372',
+      cardNum: '**** 2272',
+      appId: '332785',
+      historyKey: 9
+    }
+
+    const holdTransaction = convertTransaction(apiTransaction, account)
+    const postedTransaction = convertTransaction({
+      ...apiTransaction,
+      status: 'ПРОВЕДЕНО',
+      reflectedAccountAmt: '2,57',
+      historyKey: 10
+    }, account)
+
+    expect(holdTransaction.hold).toBe(true)
+    expect(postedTransaction.hold).toBe(false)
+    expect(postedTransaction.movements[0].id).toBe(holdTransaction.movements[0].id)
+  })
+
   it('uses different movement ids for different bank history keys', () => {
     const apiTransaction = {
       date: '2021-07-15 12:35:13',

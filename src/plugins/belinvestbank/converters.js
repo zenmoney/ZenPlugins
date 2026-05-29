@@ -220,12 +220,12 @@ function getMovementId (account, transactionKey, movementType) {
 }
 
 function getTransactionKey (json) {
-  if (json.historyKey !== undefined && json.historyKey !== null && String(json.historyKey).trim() !== '') {
-    return joinIdParts(['history', json.cardNum, json.date, json.historyKey])
-  }
-
   if (json.appId !== undefined && json.appId !== null && String(json.appId).trim() !== '' && String(json.appId).trim() !== '—') {
     return joinIdParts(['app', json.appId])
+  }
+
+  if (json.historyKey !== undefined && json.historyKey !== null && String(json.historyKey).trim() !== '') {
+    return joinIdParts(['history', json.cardNum, json.date, json.historyKey])
   }
 
   return joinIdParts([
