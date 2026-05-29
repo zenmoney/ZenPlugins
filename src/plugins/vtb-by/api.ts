@@ -23,7 +23,7 @@ const deduplicateTransactions = (transactions: Transaction[]): Transaction[] => 
       continue
     }
 
-    if (uniqueTransactions[existingIndex].hold && !transaction.hold) {
+    if (uniqueTransactions[existingIndex].hold === true && transaction.hold !== true) {
       uniqueTransactions[existingIndex] = transaction
     }
   }
