@@ -409,6 +409,9 @@ function parseInnerTransfer (transaction, apiTransaction, account, invoice) {
 }
 
 function parseOuterTransfer (transaction, apiTransaction, account, invoice) {
+  if (apiTransaction.transactionType > 0) {
+    return false
+  }
   if ([
     /^.*на "чужие" карты.*$/i,
     /^.*Пополнение вклада.*$/i,
