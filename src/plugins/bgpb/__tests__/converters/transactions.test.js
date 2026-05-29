@@ -712,4 +712,126 @@ describe('convertLastTransaction', () => {
 
     expect(statementTransaction.movements[0].id).toBe(historyTransaction.movements[0].id)
   })
+
+  it('keeps movement id stable when matching statement and history text differs', () => {
+    const account = {
+      id: 'account',
+      instrument: 'BYN',
+      bankId: '4026868',
+      syncID: ['1111']
+    }
+
+    const statementTransaction = convertTransaction({
+      amount: '250,00',
+      amountReal: '250,00',
+      authCode: '185665',
+      cardNum: '1111',
+      currency: 'BYN',
+      currencyReal: 'BYN',
+      date: '15.05.2026 10:55',
+      description: 'PEREVOD (SPISANIE)',
+      mcc: '6012',
+      place: 'ERIP_MOB.APP, EPOS, PEREVOD (SPISANIE)',
+      type: 'СПИСАНИЕ'
+    }, account)
+    const historyTransaction = convertLastTransaction({
+      orderNumber: '3289575665',
+      bankId: '4026868',
+      direction: 'outgoing',
+      date: '2026-05-15T10:55:51+0300',
+      totalAmount: {
+        currency: 933,
+        amount: 25000
+      },
+      currencyAmount: {
+        currency: 933,
+        amount: 25000
+      },
+      status: 'success',
+      terminal: 'ERIP MOBILE TRANSFER',
+      pan: '518597******1111',
+      transType: 781,
+      transTypeDesc: 'Card transfer',
+      authCode: '185665',
+      mcc: 6012,
+      reversal: 0
+    }, [account])
+
+    expect(statementTransaction.movements[0].id).toBe(historyTransaction.movements[0].id)
+  })
+
+  it('keeps movement id stable when a history operation clears', () => {
+    const account = {
+      id: 'account',
+      instrument: 'BYN',
+      bankId: '4026868',
+      syncID: ['1111']
+    }
+    const apiTransaction = {
+      orderNumber: '3289575665',
+      bankId: '4026868',
+      direction: 'outgoing',
+      date: '2026-05-15T10:55:51+0300',
+      totalAmount: {
+        currency: 933,
+        amount: 25000
+      },
+      currencyAmount: {
+        currency: 933,
+        amount: 25000
+      },
+      terminal: 'ERIP_MOB.APP, EPOS, PEREVOD (SPISANIE)',
+      pan: '518597******1111',
+      transType: 781,
+      transTypeDesc: 'PEREVOD (SPISANIE)',
+      authCode: '185665',
+      mcc: 6012,
+      reversal: 0
+    }
+
+    const holdTransaction = convertLastTransaction({
+      ...apiTransaction,
+      status: 'pending'
+    }, [account])
+    const postedTransaction = convertLastTransaction({
+      ...apiTransaction,
+      status: 'success'
+    }, [account])
+
+    expect(holdTransaction.hold).toBe(true)
+    expect(postedTransaction.hold).toBe(false)
+    expect(holdTransaction.movements[0].id).toBe(postedTransaction.movements[0].id)
+  })
+
+  it('skips reversed history operations', () => {
+    const transaction = convertLastTransaction({
+      orderNumber: '3289575665',
+      bankId: '4026868',
+      direction: 'outgoing',
+      date: '2026-05-15T10:55:51+0300',
+      totalAmount: {
+        currency: 933,
+        amount: 25000
+      },
+      currencyAmount: {
+        currency: 933,
+        amount: 25000
+      },
+      status: 'success',
+      terminal: 'ERIP_MOB.APP, EPOS, PEREVOD (SPISANIE)',
+      pan: '518597******1111',
+      transType: 781,
+      transTypeDesc: 'PEREVOD (SPISANIE)',
+      authCode: '185665',
+      mcc: 6012,
+      reversal: 1
+    }, [{
+      id: 'account',
+      instrument: 'BYN',
+      bankId: '4026868',
+      syncID: ['1111']
+    }])
+
+    expect(transaction).toBeNull()
+  })
 })

@@ -114,20 +114,34 @@ function getMerchantKeyParts (merchant) {
   return [merchant.title, merchant.city, merchant.mcc]
 }
 
+function createStableSourceKey (apiTransaction) {
+  if (apiTransaction.authCode) {
+    return `auth:${apiTransaction.authCode}`
+  }
+  if (apiTransaction.orderNumber) {
+    return `order:${apiTransaction.orderNumber}`
+  }
+  if (apiTransaction.id && !isHistoryApiTransaction(apiTransaction)) {
+    return `event:${apiTransaction.id}`
+  }
+  return null
+}
+
 function createTransactionKey (account, transaction, apiTransaction = {}) {
   const primaryMovement = transaction.movements[0]
-  const sourceSpecificKey = apiTransaction.authCode
-    ? null
-    : apiTransaction.orderNumber
-      ? `order:${apiTransaction.orderNumber}`
-      : apiTransaction.id && !isHistoryApiTransaction(apiTransaction)
-        ? `event:${apiTransaction.id}`
-        : null
+  const stableSourceKey = createStableSourceKey(apiTransaction)
+  if (stableSourceKey) {
+    return joinIdParts([
+      'bgpb',
+      account.id,
+      stableSourceKey,
+      transaction.date.toISOString().slice(0, 16)
+    ])
+  }
+
   return joinIdParts([
     'bgpb',
     account.id,
-    apiTransaction.authCode && `auth:${apiTransaction.authCode}`,
-    sourceSpecificKey,
     transaction.date.toISOString().slice(0, 16),
     transaction.hold ? 'hold' : 'posted',
     primaryMovement.sum,
@@ -160,6 +174,9 @@ function convertHistoryLastTransaction (apiTransaction, accounts) {
   const invoiceAmount = parseMinorAmount(apiTransaction.currencyAmount?.amount)
 
   if (totalAmount === null && invoiceAmount === null) {
+    return null
+  }
+  if (apiTransaction.reversal === 1 || apiTransaction.reversal === true || apiTransaction.status === 'reversed' || apiTransaction.status === 'declined') {
     return null
   }
 
