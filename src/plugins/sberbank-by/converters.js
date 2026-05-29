@@ -118,17 +118,18 @@ function getAccountLevelEventId (apiTransaction, rrn, authorizationCode) {
 function getApiTransactionDedupKey (apiTransaction) {
   const { rrn, authorizationCode } = getApiTransactionReferenceCodes(apiTransaction)
   const accountLevelEventId = getAccountLevelEventId(apiTransaction, rrn, authorizationCode)
+  const referenceKey = rrn || authorizationCode
+  const cardKey = referenceKey ? '' : apiTransaction.cardId || apiTransaction.cardPAN || ''
   const dateKey = rrn || authorizationCode
     ? toISODateString(new Date(apiTransaction.eventDate))
     : String(apiTransaction.eventDate)
   return [
     apiTransaction.contractId,
-    apiTransaction.cardId || apiTransaction.cardPAN || '',
+    cardKey,
     dateKey,
     Math.abs(apiTransaction.transactionSum),
     apiTransaction.transactionCurrency || '',
-    rrn,
-    authorizationCode,
+    referenceKey,
     accountLevelEventId
   ].join('_')
 }
