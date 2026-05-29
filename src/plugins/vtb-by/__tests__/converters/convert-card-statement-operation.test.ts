@@ -25,12 +25,12 @@ describe('convertMiniCardStatementOperation', () => {
     }
 
     expect(convertMiniCardStatementOperation(operation, account)).toEqual({
-      hold: null,
+      hold: false,
       date: new Date(1777561115000),
       comment: 'Покупка\nSTORE',
       movements: [
         {
-          id: 'test-card-contract-1:1777561115000:999:-10:32:Покупка',
+          id: 'test-card-contract-1:auth:999',
           account: { id: 'test-card-contract-1' },
           fee: 0,
           invoice: {
@@ -42,6 +42,41 @@ describe('convertMiniCardStatementOperation', () => {
       ],
       merchant: null
     })
+  })
+
+  it('keeps mini card movement id stable when a held operation clears', () => {
+    const operation: FetchMiniCardStatementOperation = {
+      operationDate: 1777561115000,
+      operationDescription: 'Авторизация',
+      operationAmount: 32,
+      operationCurrency: '933',
+      operationPlace: 'STORE',
+      operationState: 0,
+      transactionAmount: -10,
+      transactionCurrency: '840',
+      transactionAuthCode: '999'
+    }
+
+    const account: Account = {
+      id: 'test-card-contract-1',
+      type: AccountType.ccard,
+      title: 'Тестовая карта BYN *1111',
+      instrument: 'BYN',
+      syncIds: ['TEST-IBAN-CARD-0001']
+    }
+
+    const holdTransaction = convertMiniCardStatementOperation(operation, account)
+    const postedTransaction = convertMiniCardStatementOperation({
+      ...operation,
+      operationDescription: 'Покупка',
+      operationAmount: 33,
+      transactionAmount: -11,
+      operationState: 1
+    }, account)
+
+    expect(holdTransaction.hold).toBe(true)
+    expect(postedTransaction.hold).toBe(false)
+    expect(postedTransaction.movements[0].id).toBe(holdTransaction.movements[0].id)
   })
 
   it('converts a full statement operation for deposit accounts', () => {
@@ -83,7 +118,7 @@ describe('convertMiniCardStatementOperation', () => {
       comment: 'Капитализация',
       movements: [
         {
-          id: 'test-deposit-contract-1:1778389322000:999:1:13155.4:13155.4',
+          id: 'test-deposit-contract-1:1778389322000:999:19:1:13155.4:13155.4:965877.97:Капитализация',
           account: { id: 'test-deposit-contract-1' },
           fee: 0,
           invoice: null,
@@ -133,7 +168,7 @@ describe('convertMiniCardStatementOperation', () => {
       comment: 'Списание',
       movements: [
         {
-          id: 'test-deposit-contract-1:1778389322000:1:-1:-1000:-1000',
+          id: 'test-deposit-contract-1:1778389322000:1:1:-1:-1000:-1000:964877.97:Списание',
           account: { id: 'test-deposit-contract-1' },
           fee: 0,
           invoice: null,

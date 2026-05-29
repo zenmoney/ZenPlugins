@@ -1,10 +1,12 @@
 import { AccountType } from '../../../../types/zenmoney'
 
 const mockFetchDepositAccountStatement = jest.fn()
+const mockFetchMiniCardStatement = jest.fn()
 
 jest.mock('../../fetchApi', () => ({
   ...jest.requireActual('../../fetchApi'),
-  fetchDepositAccountStatement: mockFetchDepositAccountStatement
+  fetchDepositAccountStatement: mockFetchDepositAccountStatement,
+  fetchMiniCardStatement: mockFetchMiniCardStatement
 }))
 
 describe('getTransactions', () => {
@@ -13,6 +15,7 @@ describe('getTransactions', () => {
 
   afterEach(() => {
     mockFetchDepositAccountStatement.mockReset()
+    mockFetchMiniCardStatement.mockReset()
   })
 
   it('treats missing deposit operations as an empty statement', async () => {
@@ -49,5 +52,68 @@ describe('getTransactions', () => {
         statementCardHash: null
       }
     })).resolves.toEqual([])
+  })
+
+  it('prefers posted mini card operation over matching hold duplicate', async () => {
+    mockFetchMiniCardStatement.mockResolvedValue({
+      errorInfo: {
+        error: '0',
+        errorText: null,
+        errorDescription: null
+      },
+      statement: [
+        {
+          operationDate: new Date('2026-05-10T12:00:00.000Z').getTime(),
+          operationDescription: 'Авторизация',
+          operationAmount: 10,
+          operationCurrency: '933',
+          operationPlace: 'STORE',
+          operationState: 0,
+          transactionAmount: 10,
+          transactionCurrency: '933',
+          transactionAuthCode: '999'
+        },
+        {
+          operationDate: new Date('2026-05-10T12:00:00.000Z').getTime(),
+          operationDescription: 'Покупка',
+          operationAmount: 10,
+          operationCurrency: '933',
+          operationPlace: 'STORE',
+          operationState: 1,
+          transactionAmount: 10,
+          transactionCurrency: '933',
+          transactionAuthCode: '999'
+        }
+      ]
+    })
+
+    await expect(getTransactions({
+      sessionToken: 'session-token',
+      fromDate: new Date('2026-05-01T00:00:00.000Z'),
+      toDate: new Date('2026-05-31T23:59:59.000Z')
+    }, {
+      id: 'card-account',
+      type: AccountType.ccard,
+      title: 'Тестовая карта',
+      balance: 1000,
+      instrument: 'BYN',
+      syncIds: ['TEST-CARD-IBAN'],
+      _meta: {
+        productKind: 'card',
+        statementInternalAccountId: 'account-id',
+        statementCardHash: 'card-hash'
+      }
+    })).resolves.toMatchObject([
+      {
+        hold: false,
+        comment: 'Покупка\nSTORE',
+        movements: [
+          {
+            id: 'card-account:auth:999',
+            sum: 10
+          }
+        ]
+      }
+    ])
   })
 })

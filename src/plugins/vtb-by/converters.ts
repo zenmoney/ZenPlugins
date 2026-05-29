@@ -155,6 +155,25 @@ const getFullStatementSign = (fetchTransaction: FetchCardStatementOperation): nu
   throw new Error(`Unknown operation sign for full statement operation "${fetchTransaction.operationName}"`)
 }
 
+const getMiniCardOperationId = (fetchTransaction: FetchMiniCardStatementOperation, account: Account): string => {
+  if (isNonEmptyString(fetchTransaction.transactionAuthCode)) {
+    return [
+      account.id,
+      'auth',
+      fetchTransaction.transactionAuthCode
+    ].join(':')
+  }
+
+  return [
+    account.id,
+    'details',
+    fetchTransaction.operationDate,
+    fetchTransaction.transactionAmount,
+    fetchTransaction.operationAmount,
+    fetchTransaction.operationDescription
+  ].join(':')
+}
+
 export const convertMiniCardStatementOperation = (fetchTransaction: FetchMiniCardStatementOperation, account: Account): Transaction => {
   const operationCurrency = ensureCurrency(fetchTransaction.operationCurrency) ?? account.instrument
   const transactionCurrency = ensureCurrency(fetchTransaction.transactionCurrency) ?? operationCurrency
@@ -164,21 +183,14 @@ export const convertMiniCardStatementOperation = (fetchTransaction: FetchMiniCar
   const hasInvoice = transactionCurrency !== account.instrument
 
   return {
-    hold: null,
+    hold: fetchTransaction.operationState !== 1,
     date: new Date(fetchTransaction.operationDate),
     comment: [fetchTransaction.operationDescription, fetchTransaction.operationPlace]
       .filter(isNonEmptyString)
       .join('\n'),
     movements: [
       {
-        id: [
-          account.id,
-          fetchTransaction.operationDate,
-          fetchTransaction.transactionAuthCode ?? '',
-          fetchTransaction.transactionAmount,
-          fetchTransaction.operationAmount,
-          fetchTransaction.operationDescription
-        ].join(':'),
+        id: getMiniCardOperationId(fetchTransaction, account),
         account: { id: account.id },
         fee: 0,
         invoice: hasInvoice
@@ -214,9 +226,12 @@ export const convertFullStatementOperation = (fetchTransaction: FetchCardStateme
           account.id,
           fetchTransaction.operationDate,
           fetchTransaction.operationCode,
+          fetchTransaction.actionGroup,
           operationSign,
           transactionAmount,
-          operationAmount
+          operationAmount,
+          fetchTransaction.operationClosingBalance,
+          fetchTransaction.operationName
         ].join(':'),
         account: { id: account.id },
         fee: 0,

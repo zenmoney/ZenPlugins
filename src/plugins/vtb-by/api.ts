@@ -9,14 +9,26 @@ import type { FetchMiniCardStatementOperation } from './types/fetch'
 const INVALID_LOGIN_ERROR_CODES = new Set(['10008', '10812'])
 
 const deduplicateTransactions = (transactions: Transaction[]): Transaction[] => {
-  const seenIds = new Set<string>()
+  const transactionIndexesById = new Map<string, number>()
+  const uniqueTransactions: Transaction[] = []
 
-  return transactions.filter((transaction) => {
+  for (const transaction of transactions) {
     const movementId = transaction.movements[0]?.id
-    if (movementId == null || seenIds.has(movementId)) return false
-    seenIds.add(movementId)
-    return true
-  })
+    if (movementId == null) continue
+
+    const existingIndex = transactionIndexesById.get(movementId)
+    if (existingIndex == null) {
+      transactionIndexesById.set(movementId, uniqueTransactions.length)
+      uniqueTransactions.push(transaction)
+      continue
+    }
+
+    if (uniqueTransactions[existingIndex].hold && !transaction.hold) {
+      uniqueTransactions[existingIndex] = transaction
+    }
+  }
+
+  return uniqueTransactions
 }
 
 const assertSuccessfulResponse = (response: ResponseWithErrorInfo, context: string): void => {
