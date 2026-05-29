@@ -6,6 +6,14 @@ import type { FetchCardTransaction, FetchProductStatementOutput, FetchTransactio
 const mockFetchCardTransactions = jest.fn()
 const mockFetchProductStatement = jest.fn()
 
+const withAnyMovementIds = (transaction: ReturnType<typeof convertCardTransaction>): ReturnType<typeof convertCardTransaction> => ({
+  ...transaction,
+  movements: transaction.movements.map((movement) => ({
+    ...movement,
+    id: expect.any(String) as unknown as string
+  }))
+})
+
 jest.mock('../../fetchApi', () => ({
   ...jest.requireActual('../../fetchApi'),
   fetchCardTransactions: mockFetchCardTransactions,
@@ -70,8 +78,8 @@ describe('getTransactions', () => {
       fromDate: new Date('2026-02-01T00:00:00.000Z'),
       toDate: new Date('2026-02-28T23:59:59.000Z')
     }, account)).resolves.toEqual([
-      ...statementResponse.operations.map((operation) => convertStatementTransaction(operation, account)),
-      convertCardTransaction(uniqueHistoryTransaction, account)
+      ...statementResponse.operations.map((operation) => withAnyMovementIds(convertStatementTransaction(operation, account))),
+      withAnyMovementIds(convertCardTransaction(uniqueHistoryTransaction, account))
     ])
   })
 
@@ -135,7 +143,7 @@ describe('getTransactions', () => {
       fromDate: new Date('2026-05-01T00:00:00.000Z'),
       toDate: new Date('2026-05-31T23:59:59.000Z')
     }, account)).resolves.toEqual([
-      convertStatementTransaction(statementOperation, account)
+      withAnyMovementIds(convertStatementTransaction(statementOperation, account))
     ])
   })
 
@@ -194,7 +202,94 @@ describe('getTransactions', () => {
       fromDate: new Date('2026-05-01T00:00:00.000Z'),
       toDate: new Date('2026-05-31T23:59:59.000Z')
     }, account)).resolves.toEqual([
-      convertStatementTransaction(statementOperation, account)
+      withAnyMovementIds(convertStatementTransaction(statementOperation, account))
     ])
+  })
+
+  it('keeps the same final id when matching history disappears and only statement remains', async () => {
+    const rawCardAccount = TEST_ACCOUNTS.CARD.find((account) => account.productCardId === 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8')
+
+    if (rawCardAccount == null) {
+      throw new Error('Card account not found')
+    }
+
+    const account = convertCardAccount(rawCardAccount)
+    const historyTransaction: FetchCardTransaction = {
+      effectiveDate: '2026-05-25T12:34:56',
+      transacName: 'POS PURCHASE ',
+      amount: '41.71',
+      currencyIso: 'BYN',
+      cardAcceptor: 'EUROOPT',
+      repeatable: false,
+      transOperType: 'debit',
+      transMcc: 'МСС5411'
+    }
+    const statementOperation = {
+      transactionDate: '2026-05-25T00:00:00',
+      balanceDate: '2026-05-25',
+      operationName: 'Оплата товаров и услуг',
+      operationSum: '41.71',
+      transactionSum: '41.71',
+      transactionCurrency: '933',
+      transactionCurrencyISO: 'BYN',
+      operationSign: -1 as const,
+      operationCurrency: '933',
+      operationCurrencyIso: 'BYN',
+      merchant: 'BLR MINSK',
+      terminalLocation: 'EUROOPT',
+      MCC: 'MCC 5411'
+    }
+
+    mockFetchCardTransactions.mockResolvedValueOnce({
+      status: 200,
+      data: [historyTransaction],
+      error: null
+    })
+    mockFetchProductStatement.mockResolvedValueOnce({
+      status: 200,
+      data: {
+        incomeForPeriod: '0.00',
+        outcomeForPeriod: '0.00',
+        ibanNum: rawCardAccount.ibanNum,
+        contractCurrency: String(rawCardAccount.currency),
+        contractCurrencyISO: rawCardAccount.currencyIso,
+        operations: [statementOperation]
+      },
+      error: null
+    })
+
+    const withHistory = await getTransactions({
+      sessionToken: 'session-token',
+      fromDate: new Date('2026-05-01T00:00:00.000Z'),
+      toDate: new Date('2026-05-31T23:59:59.000Z')
+    }, account)
+
+    mockFetchCardTransactions.mockResolvedValueOnce({
+      status: 200,
+      data: [],
+      error: null
+    })
+    mockFetchProductStatement.mockResolvedValueOnce({
+      status: 200,
+      data: {
+        incomeForPeriod: '0.00',
+        outcomeForPeriod: '0.00',
+        ibanNum: rawCardAccount.ibanNum,
+        contractCurrency: String(rawCardAccount.currency),
+        contractCurrencyISO: rawCardAccount.currencyIso,
+        operations: [statementOperation]
+      },
+      error: null
+    })
+
+    const statementOnly = await getTransactions({
+      sessionToken: 'session-token',
+      fromDate: new Date('2026-05-01T00:00:00.000Z'),
+      toDate: new Date('2026-05-31T23:59:59.000Z')
+    }, account)
+
+    expect(statementOnly).toHaveLength(1)
+    expect(withHistory).toHaveLength(1)
+    expect(statementOnly[0].movements[0].id).toBe(withHistory[0].movements[0].id)
   })
 })

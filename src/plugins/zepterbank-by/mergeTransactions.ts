@@ -80,6 +80,26 @@ const isMatchingDuplicate = (left: Transaction, right: Transaction): boolean => 
   return getDuplicateFingerprint(left) === getDuplicateFingerprint(right)
 }
 
+const withStableMovementIds = (transactions: Transaction[]): Transaction[] => {
+  const occurrenceIndexes = new Map<string, number>()
+
+  return transactions.map((transaction) => {
+    const fingerprint = getDuplicateFingerprint(transaction)
+    const occurrenceIndex = occurrenceIndexes.get(fingerprint) ?? 0
+    occurrenceIndexes.set(fingerprint, occurrenceIndex + 1)
+
+    return {
+      ...transaction,
+      movements: transaction.movements.map((movement, index) => index === 0
+        ? {
+            ...movement,
+            id: ['zepterbank-by', fingerprint, occurrenceIndex].join('|')
+          }
+        : movement)
+    }
+  })
+}
+
 export const mergeTransactions = (historyTransactions: Transaction[], statementTransactions: Transaction[]): Transaction[] => {
   const mergedTransactions: SourcedTransaction[] = historyTransactions.map((transaction) => ({
     source: 'history',
@@ -105,5 +125,5 @@ export const mergeTransactions = (historyTransactions: Transaction[], statementT
     })
   }
 
-  return mergedTransactions.map(({ transaction }) => transaction)
+  return withStableMovementIds(mergedTransactions.map(({ transaction }) => transaction))
 }
