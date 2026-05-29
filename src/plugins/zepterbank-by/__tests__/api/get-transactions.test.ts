@@ -292,4 +292,128 @@ describe('getTransactions', () => {
     expect(withHistory).toHaveLength(1)
     expect(statementOnly[0].movements[0].id).toBe(withHistory[0].movements[0].id)
   })
+
+  it('keeps separate same-day same-merchant history transactions distinct', async () => {
+    const rawCardAccount = TEST_ACCOUNTS.CARD.find((account) => account.productCardId === 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8')
+
+    if (rawCardAccount == null) {
+      throw new Error('Card account not found')
+    }
+
+    const account = convertCardAccount(rawCardAccount)
+    mockFetchCardTransactions.mockResolvedValue({
+      status: 200,
+      data: [
+        {
+          effectiveDate: '2026-05-25T10:00:00',
+          transacName: 'POS PURCHASE ',
+          amount: '20.00',
+          currencyIso: 'BYN',
+          cardAcceptor: 'INTERNET-BANKING ZEPTERBANK',
+          repeatable: false,
+          transOperType: 'debit',
+          transMcc: 'МСС4900'
+        },
+        {
+          effectiveDate: '2026-05-25T18:00:00',
+          transacName: 'POS PURCHASE ',
+          amount: '20.00',
+          currencyIso: 'BYN',
+          cardAcceptor: 'INTERNET-BANKING ZEPTERBANK',
+          repeatable: false,
+          transOperType: 'debit',
+          transMcc: 'МСС4900'
+        }
+      ],
+      error: null
+    })
+    mockFetchProductStatement.mockResolvedValue({
+      status: 200,
+      data: {
+        incomeForPeriod: '0.00',
+        outcomeForPeriod: '0.00',
+        ibanNum: rawCardAccount.ibanNum,
+        contractCurrency: String(rawCardAccount.currency),
+        contractCurrencyISO: rawCardAccount.currencyIso,
+        operations: []
+      },
+      error: null
+    })
+
+    const transactions = await getTransactions({
+      sessionToken: 'session-token',
+      fromDate: new Date('2026-05-01T00:00:00.000Z'),
+      toDate: new Date('2026-05-31T23:59:59.000Z')
+    }, account)
+
+    expect(transactions).toHaveLength(2)
+    expect(transactions[0].movements[0].id).not.toBe(transactions[1].movements[0].id)
+  })
+
+  it('keeps separate same-day same-merchant statement transactions distinct', async () => {
+    const rawCardAccount = TEST_ACCOUNTS.CARD.find((account) => account.productCardId === 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8')
+
+    if (rawCardAccount == null) {
+      throw new Error('Card account not found')
+    }
+
+    const account = convertCardAccount(rawCardAccount)
+    mockFetchCardTransactions.mockResolvedValue({
+      status: 200,
+      data: [],
+      error: null
+    })
+    mockFetchProductStatement.mockResolvedValue({
+      status: 200,
+      data: {
+        incomeForPeriod: '0.00',
+        outcomeForPeriod: '0.00',
+        ibanNum: rawCardAccount.ibanNum,
+        contractCurrency: String(rawCardAccount.currency),
+        contractCurrencyISO: rawCardAccount.currencyIso,
+        operations: [
+          {
+            transactionDate: '2026-05-25T00:00:00',
+            balanceDate: '2026-05-25',
+            operationName: 'Оплата в интернет-банке',
+            operationSum: '20.00',
+            transactionSum: '20.00',
+            transactionCurrency: '933',
+            transactionCurrencyISO: 'BYN',
+            operationSign: -1 as const,
+            operationCurrency: '933',
+            operationCurrencyIso: 'BYN',
+            merchant: 'BLR MINSK',
+            terminalLocation: 'INTERNET-BANKING ZEPTERBANK',
+            MCC: 'MCC 4900'
+          },
+          {
+            transactionDate: '2026-05-25T00:00:00',
+            balanceDate: '2026-05-25',
+            operationName: 'Оплата в интернет-банке',
+            operationSum: '20.00',
+            transactionSum: '20.00',
+            transactionCurrency: '933',
+            transactionCurrencyISO: 'BYN',
+            operationSign: -1 as const,
+            operationCurrency: '933',
+            operationCurrencyIso: 'BYN',
+            merchant: 'BLR MINSK',
+            terminalLocation: 'INTERNET-BANKING ZEPTERBANK',
+            MCC: 'MCC 4900'
+          }
+        ]
+      },
+      error: null
+    })
+
+    const transactions = await getTransactions({
+      sessionToken: 'session-token',
+      fromDate: new Date('2026-05-01T00:00:00.000Z'),
+      toDate: new Date('2026-05-31T23:59:59.000Z')
+    }, account)
+
+    expect(transactions).toHaveLength(2)
+    expect(transactions[0].movements[0].id).not.toBe(transactions[1].movements[0].id)
+  })
 })
