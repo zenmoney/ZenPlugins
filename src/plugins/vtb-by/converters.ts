@@ -160,6 +160,7 @@ const getMiniCardOperationId = (fetchTransaction: FetchMiniCardStatementOperatio
     return [
       account.id,
       'auth',
+      fetchTransaction.operationDate,
       fetchTransaction.transactionAuthCode
     ].join(':')
   }
@@ -169,8 +170,12 @@ const getMiniCardOperationId = (fetchTransaction: FetchMiniCardStatementOperatio
     'details',
     fetchTransaction.operationDate,
     fetchTransaction.transactionAmount,
+    fetchTransaction.transactionCurrency,
     fetchTransaction.operationAmount,
-    fetchTransaction.operationDescription
+    fetchTransaction.operationCurrency,
+    fetchTransaction.operationDescription,
+    fetchTransaction.operationPlace ?? '',
+    fetchTransaction.mcc ?? ''
   ].join(':')
 }
 

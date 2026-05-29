@@ -30,7 +30,7 @@ describe('convertMiniCardStatementOperation', () => {
       comment: 'Покупка\nSTORE',
       movements: [
         {
-          id: 'test-card-contract-1:auth:999',
+          id: 'test-card-contract-1:auth:1777561115000:999',
           account: { id: 'test-card-contract-1' },
           fee: 0,
           invoice: {
@@ -77,6 +77,61 @@ describe('convertMiniCardStatementOperation', () => {
     expect(holdTransaction.hold).toBe(true)
     expect(postedTransaction.hold).toBe(false)
     expect(postedTransaction.movements[0].id).toBe(holdTransaction.movements[0].id)
+  })
+
+  it('keeps repeated mini card auth codes distinct across operation dates', () => {
+    const operation: FetchMiniCardStatementOperation = {
+      operationDate: 1777561115000,
+      operationDescription: 'Покупка',
+      operationAmount: 32,
+      operationCurrency: '933',
+      operationPlace: 'STORE',
+      operationState: 1,
+      transactionAmount: -10,
+      transactionCurrency: '840',
+      transactionAuthCode: '999'
+    }
+
+    const account: Account = {
+      id: 'test-card-contract-1',
+      type: AccountType.ccard,
+      title: 'Тестовая карта BYN *1111',
+      instrument: 'BYN',
+      syncIds: ['TEST-IBAN-CARD-0001']
+    }
+
+    const firstTransaction = convertMiniCardStatementOperation(operation, account)
+    const secondTransaction = convertMiniCardStatementOperation({
+      ...operation,
+      operationDate: 1777647515000
+    }, account)
+
+    expect(secondTransaction.movements[0].id).not.toBe(firstTransaction.movements[0].id)
+  })
+
+  it('includes stable fallback details when mini card auth code is missing', () => {
+    const operation: FetchMiniCardStatementOperation = {
+      operationDate: 1777561115000,
+      operationDescription: 'Покупка',
+      operationAmount: 32,
+      operationCurrency: '933',
+      operationPlace: 'STORE',
+      operationState: 1,
+      transactionAmount: -10,
+      transactionCurrency: '840',
+      mcc: 5411
+    }
+
+    const account: Account = {
+      id: 'test-card-contract-1',
+      type: AccountType.ccard,
+      title: 'Тестовая карта BYN *1111',
+      instrument: 'BYN',
+      syncIds: ['TEST-IBAN-CARD-0001']
+    }
+
+    expect(convertMiniCardStatementOperation(operation, account).movements[0].id)
+      .toBe('test-card-contract-1:details:1777561115000:-10:840:32:933:Покупка:STORE:5411')
   })
 
   it('converts a full statement operation for deposit accounts', () => {
