@@ -228,6 +228,31 @@ describe('convertCardTransaction', () => {
     })
   })
 
+  it('uses different movement ids for separate same-day same-merchant purchases', () => {
+    const firstTransaction = convertCardTransaction({
+      effectiveDate: '2026-05-05T10:00:00',
+      transacName: 'POS PURCHASE',
+      amount: '12.34',
+      currencyIso: 'BYN',
+      repeatable: false,
+      transOperType: 'debit',
+      cardAcceptor: 'SHOP KOPEECHKA',
+      transMcc: 'МСС5411'
+    }, cardAccount1)
+    const secondTransaction = convertCardTransaction({
+      effectiveDate: '2026-05-05T11:00:00',
+      transacName: 'POS PURCHASE',
+      amount: '12.34',
+      currencyIso: 'BYN',
+      repeatable: false,
+      transOperType: 'debit',
+      cardAcceptor: 'SHOP KOPEECHKA',
+      transMcc: 'МСС5411'
+    }, cardAccount1)
+
+    expect(firstTransaction.movements[0].id).not.toBe(secondTransaction.movements[0].id)
+  })
+
   it('uses the same movement id for a matching card and statement transaction', () => {
     const rawCardTransaction = TEST_CARD_TRANSACTIONS.Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8[0]
     const rawStatementTransaction = TEST_STATEMENT_TRANSACTIONS.vc5275E7DJRNBWJaN9Ugpc86LZQ4F75Dda7xhb74[0]

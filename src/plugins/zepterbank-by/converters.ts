@@ -50,6 +50,7 @@ const buildMovementId = ({
     'zepterbank-by',
     accountId,
     getBusinessDateIdentityKey(date),
+    date.toISOString(),
     getAmountIdentityKey({ accountInstrument, sum, invoice }),
     String(mcc ?? ''),
     normalizeIdPart(merchantTitle)

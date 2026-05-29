@@ -72,7 +72,7 @@ const isMatchingDuplicate = (left: Transaction, right: Transaction): boolean => 
   const rightId = getMovementId(right)
 
   if (leftId !== null && rightId !== null) {
-    return leftId === rightId
+    return leftId === rightId || getDuplicateFingerprint(left) === getDuplicateFingerprint(right)
   }
 
   return getDuplicateFingerprint(left) === getDuplicateFingerprint(right)
