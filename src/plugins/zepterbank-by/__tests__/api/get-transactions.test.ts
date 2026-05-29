@@ -138,4 +138,63 @@ describe('getTransactions', () => {
       convertStatementTransaction(statementOperation, account)
     ])
   })
+
+  it('deduplicates capitalization rows using statement balance date', async () => {
+    const rawCardAccount = TEST_ACCOUNTS.CARD.find((account) => account.productCardId === 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8')
+
+    if (rawCardAccount == null) {
+      throw new Error('Card account not found')
+    }
+
+    const account = convertCardAccount(rawCardAccount)
+    const historyTransaction: FetchCardTransaction = {
+      effectiveDate: '2026-05-29T18:04:10',
+      transacName: 'CREDIT ACCOUNT',
+      amount: '0.33',
+      currencyIso: 'BYN',
+      repeatable: false,
+      transOperType: 'credit',
+      transMcc: 'МСС0'
+    }
+    const statementOperation = {
+      transactionDate: '2026-05-31T16:39:22',
+      balanceDate: '2026-05-29',
+      operationName: 'Капитализация (%% тек.периода ко вкладу)',
+      operationSum: '0.33',
+      transactionSum: '0.00',
+      transactionCurrency: '933',
+      transactionCurrencyISO: 'BYN',
+      operationSign: 1 as const,
+      operationCurrency: '933',
+      operationCurrencyIso: 'BYN',
+      corrMFO: 'ZEPTBY2X',
+      purpose: 'Начисление процентов на остаток по счету по договору'
+    }
+
+    mockFetchCardTransactions.mockResolvedValue({
+      status: 200,
+      data: [historyTransaction],
+      error: null
+    })
+    mockFetchProductStatement.mockResolvedValue({
+      status: 200,
+      data: {
+        incomeForPeriod: '0.00',
+        outcomeForPeriod: '0.00',
+        ibanNum: rawCardAccount.ibanNum,
+        contractCurrency: String(rawCardAccount.currency),
+        contractCurrencyISO: rawCardAccount.currencyIso,
+        operations: [statementOperation]
+      },
+      error: null
+    })
+
+    await expect(getTransactions({
+      sessionToken: 'session-token',
+      fromDate: new Date('2026-05-01T00:00:00.000Z'),
+      toDate: new Date('2026-05-31T23:59:59.000Z')
+    }, account)).resolves.toEqual([
+      convertStatementTransaction(statementOperation, account)
+    ])
+  })
 })

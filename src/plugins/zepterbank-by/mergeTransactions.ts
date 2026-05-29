@@ -8,6 +8,8 @@ interface SourcedTransaction {
   transaction: Transaction
 }
 
+type TransactionWithDedupDate = Transaction & { dedupDate?: Date }
+
 const normalizeText = (text: string | null | undefined): string =>
   (text ?? '').replace(/\s+/g, ' ').trim()
 
@@ -57,7 +59,7 @@ const getMccSignature = (transaction: Transaction): string => {
 }
 
 const getDaySignature = (transaction: Transaction): string =>
-  getBusinessDateIdentityKey(transaction.date)
+  getBusinessDateIdentityKey((transaction as TransactionWithDedupDate).dedupDate ?? transaction.date)
 
 const getDuplicateFingerprint = (transaction: Transaction): string => [
   getMovementAccountId(transaction),

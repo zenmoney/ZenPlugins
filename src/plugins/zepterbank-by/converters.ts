@@ -79,6 +79,18 @@ const normalizeMerchantTitle = (title: string | undefined): string | null => {
     : null
 }
 
+const getStatementDedupDate = (fetchTransaction: FetchStatementOperation): Date | null => {
+  const isAccountCurrencyOnlyOperation =
+    Number(fetchTransaction.transactionSum) === 0 &&
+    Number(fetchTransaction.operationSum) !== 0
+
+  if (!isAccountCurrencyOnlyOperation || fetchTransaction.balanceDate == null) {
+    return null
+  }
+
+  return convertIsoDateStringToDate(`${fetchTransaction.balanceDate}T00:00:00`)
+}
+
 export const convertCardAccount = (fetchAccount: FetchCardAccount): Account & FetchCardAccountMeta => {
   return {
     id: fetchAccount.productCardId,
@@ -164,6 +176,7 @@ export const convertStatementTransaction = (fetchTransaction: FetchStatementOper
   const mcc = parseMcc(fetchTransaction.MCC)
   const invoice = hasInvoice ? { sum: transactionAmount, instrument: fetchTransaction.transactionCurrencyISO } : null
   const date = convertIsoDateStringToDate(fetchTransaction.transactionDate)
+  const dedupDate = getStatementDedupDate(fetchTransaction)
   const movementId = buildMovementId({
     accountId: account.id,
     accountInstrument: account.instrument,
@@ -174,7 +187,7 @@ export const convertStatementTransaction = (fetchTransaction: FetchStatementOper
     invoice
   })
 
-  return {
+  const transaction = {
     hold: null,
     date,
     comment: appendCashbackComment(fetchTransaction.operationName, mcc),
@@ -197,4 +210,14 @@ export const convertStatementTransaction = (fetchTransaction: FetchStatementOper
         }
       : null
   }
+
+  if (dedupDate !== null) {
+    Object.defineProperty(transaction, 'dedupDate', {
+      value: dedupDate,
+      enumerable: false,
+      configurable: true
+    })
+  }
+
+  return transaction
 }
