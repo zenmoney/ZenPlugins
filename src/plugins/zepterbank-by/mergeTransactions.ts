@@ -87,15 +87,17 @@ const withStableMovementIds = (transactions: Transaction[]): Transaction[] => {
     const fingerprint = getDuplicateFingerprint(transaction)
     const occurrenceIndex = occurrenceIndexes.get(fingerprint) ?? 0
     occurrenceIndexes.set(fingerprint, occurrenceIndex + 1)
+    const [firstMovement, secondMovement] = transaction.movements
+    const firstMovementWithStableId = {
+      ...firstMovement,
+      id: ['zepterbank-by', fingerprint, occurrenceIndex].join('|')
+    }
 
     return {
       ...transaction,
-      movements: transaction.movements.map((movement, index) => index === 0
-        ? {
-            ...movement,
-            id: ['zepterbank-by', fingerprint, occurrenceIndex].join('|')
-          }
-        : movement)
+      movements: secondMovement == null
+        ? [firstMovementWithStableId]
+        : [firstMovementWithStableId, secondMovement]
     }
   })
 }

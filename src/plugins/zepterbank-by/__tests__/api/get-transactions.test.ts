@@ -1,18 +1,32 @@
 import { convertCardAccount, convertCardTransaction, convertStatementTransaction } from '../../converters'
 import { TEST_ACCOUNTS } from '../../__mocks__/accounts.sample'
 import { TEST_CARD_TRANSACTIONS, TEST_STATEMENT_TRANSACTIONS } from '../../__mocks__/transactions.sample'
+import type { Transaction } from '../../../../types/zenmoney'
 import type { FetchCardTransaction, FetchProductStatementOutput, FetchTransactionsOutput } from '../../types/fetch.types'
 
 const mockFetchCardTransactions = jest.fn()
 const mockFetchProductStatement = jest.fn()
 
-const withAnyMovementIds = (transaction: ReturnType<typeof convertCardTransaction>): ReturnType<typeof convertCardTransaction> => ({
-  ...transaction,
-  movements: transaction.movements.map((movement) => ({
-    ...movement,
+const withAnyMovementIds = (transaction: Transaction): Transaction => {
+  const [firstMovement, secondMovement] = transaction.movements
+  const firstMovementWithAnyId = {
+    ...firstMovement,
     id: expect.any(String) as unknown as string
-  }))
-})
+  }
+
+  return {
+    ...transaction,
+    movements: secondMovement == null
+      ? [firstMovementWithAnyId]
+      : [
+          firstMovementWithAnyId,
+          {
+            ...secondMovement,
+            id: expect.any(String) as unknown as string
+          }
+        ]
+  }
+}
 
 jest.mock('../../fetchApi', () => ({
   ...jest.requireActual('../../fetchApi'),

@@ -187,7 +187,7 @@ export const convertStatementTransaction = (fetchTransaction: FetchStatementOper
     invoice
   })
 
-  const transaction = {
+  const transaction: Transaction = {
     hold: null,
     date,
     comment: appendCashbackComment(fetchTransaction.operationName, mcc),
