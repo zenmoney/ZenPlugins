@@ -6,6 +6,13 @@ export async function login (preferences: Preferences, auth?: Auth): Promise<Aut
     return auth
   }
 
+  if (isAccessUrl(preferences.token)) {
+    return {
+      token: preferences.token,
+      accessUrl: preferences.token
+    }
+  }
+
   return {
     token: preferences.token,
     accessUrl: await claimAccessUrl(preferences.token)
@@ -14,4 +21,8 @@ export async function login (preferences: Preferences, auth?: Auth): Promise<Aut
 
 export async function fetchAccounts (auth: Auth, fromDate: Date, toDate: Date): Promise<SimpleFinAccountSet> {
   return await fetchSimpleFinAccounts(auth, fromDate, toDate)
+}
+
+function isAccessUrl (value: string): boolean {
+  return value.trim().startsWith('https://')
 }

@@ -5,6 +5,11 @@ import { Auth, SimpleFinAccount, SimpleFinAccountSet, SimpleFinConnection, Simpl
 
 const protocolVersion = '2'
 
+interface SimpleFinRequest {
+  url: string
+  authorization: string
+}
+
 export async function claimAccessUrl (token: string): Promise<string> {
   const claimUrl = decodeToken(token)
   assertHttpsUrl(claimUrl, 'SimpleFIN Token must decode to an HTTPS claim URL')
@@ -16,7 +21,7 @@ export async function claimAccessUrl (token: string): Promise<string> {
   })
 
   if (response.status === 403) {
-    throw new InvalidPreferencesError('SimpleFIN Token is invalid or has already been claimed')
+    throw new InvalidPreferencesError('SimpleFIN Token is invalid or has already been claimed. Create a fresh token or paste an existing SimpleFIN Access URL.')
   }
   if (response.status !== 200) {
     throw new TemporaryError(`Could not claim SimpleFIN access URL. HTTP ${response.status}`)
@@ -31,7 +36,11 @@ export async function claimAccessUrl (token: string): Promise<string> {
 }
 
 export async function fetchAccounts (auth: Auth, fromDate: Date, toDate: Date): Promise<SimpleFinAccountSet> {
-  const response = await fetchJson(makeAccountsUrl(auth.accessUrl, fromDate, toDate), {
+  const request = makeAccountsRequest(auth.accessUrl, fromDate, toDate)
+  const response = await fetchJson(request.url, {
+    headers: {
+      Authorization: request.authorization
+    },
     sanitizeRequestLog: { url: true },
     sanitizeResponseLog: { body: true }
   })
@@ -67,15 +76,30 @@ function assertHttpsUrl (url: string, message: string): void {
   }
 }
 
-function makeAccountsUrl (accessUrl: string, fromDate: Date, toDate: Date): string {
+function makeAccountsRequest (accessUrl: string, fromDate: Date, toDate: Date): SimpleFinRequest {
   assertHttpsUrl(accessUrl, 'SimpleFIN Access URL must use HTTPS')
   const url = new URL(accessUrl)
+  const authorization = makeAuthorizationHeader(url)
+  url.username = ''
+  url.password = ''
   url.pathname = `${url.pathname.replace(/\/$/, '')}/accounts`
   url.searchParams.set('start-date', timestamp(fromDate).toString())
   url.searchParams.set('end-date', timestamp(toDate).toString())
   url.searchParams.set('pending', '1')
   url.searchParams.set('version', protocolVersion)
-  return url.toString()
+  return {
+    url: url.toString(),
+    authorization
+  }
+}
+
+function makeAuthorizationHeader (url: URL): string {
+  const username = decodeURIComponent(url.username)
+  const password = decodeURIComponent(url.password)
+  if (username.length === 0 || password.length === 0) {
+    throw new InvalidPreferencesError('SimpleFIN Access URL does not contain credentials')
+  }
+  return `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`
 }
 
 function timestamp (date: Date): number {
