@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="token"
+        obligatory="true"
+        inputType="textPassword"
+        title="SimpleFIN Token"
+        dialogTitle="SimpleFIN Token"
+        dialogMessage="Create a token at https://bridge.simplefin.org/simplefin/create and paste it here. The token is claimed once; the resulting access URL is stored locally for future synchronization."
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="||***********"
+    />
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="From what date to load transactions"
+        defaultValue="2020-01-01T00:00:00.000Z"
+        dialogTitle="From what date to load transactions"
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="|startDate|{@s}"
+    />
+</PreferenceScreen>
