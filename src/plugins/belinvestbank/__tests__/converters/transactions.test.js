@@ -339,7 +339,7 @@ describe('convertTransaction', () => {
           ],
         merchant:
           {
-            mcc: null,
+            mcc: 5812,
             location: null,
             city: 'TALLINN',
             country: null,
@@ -398,7 +398,7 @@ describe('convertTransaction', () => {
           country: 'TN',
           city: 'ENFIDHA',
           title: 'ATU TUNISIE SARL',
-          mcc: null,
+          mcc: 5309,
           location: null
         },
         comment: null,
@@ -452,7 +452,7 @@ describe('convertTransaction', () => {
           ],
         merchant:
           {
-            mcc: null,
+            mcc: 7372,
             location: null,
             city: 'INTERNET',
             country: 'US',
@@ -522,7 +522,7 @@ describe('convertTransaction', () => {
           country: 'BY',
           city: 'MINSK',
           title: 'SHOP "WWW.BELAVIA.BY" BPSB',
-          mcc: null,
+          mcc: 4511,
           location: null
         },
         comment: null,

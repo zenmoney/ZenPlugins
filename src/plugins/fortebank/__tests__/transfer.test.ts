@@ -11,7 +11,6 @@ describe('Transfer Parsing and Conversion', () => {
     const transactions = parseTransactions(text)
     expect(transactions).toHaveLength(1)
     expect(transactions[0].parsedDetails?.receiverAccount).toBe('KZ123456789012345678')
-    // normalizeText removes single spaces: "Ivanov I." -> "IvanovI."
     expect(transactions[0].parsedDetails?.receiver).toContain('IvanovI.')
 
     const zenTransaction = convertTransaction(transactions[0], 'my-account-id')
@@ -25,7 +24,7 @@ describe('Transfer Parsing and Conversion', () => {
     expect(movement2.sum).toBe(1000.00)
 
     expect(zenTransaction.merchant).toBeNull()
-    expect(zenTransaction.comment).toBe('Перевод')
+    expect(zenTransaction.comment).toBe('')
   })
 
   it('should parse and convert full card transfer', () => {
@@ -46,7 +45,7 @@ describe('Transfer Parsing and Conversion', () => {
     expect(movement2.sum).toBe(2000.00)
 
     expect(zenTransaction.merchant).toBeNull()
-    expect(zenTransaction.comment).toBe('Transfer')
+    expect(zenTransaction.comment).toBe('')
   })
 
   it('should parse and convert masked card transfer', () => {

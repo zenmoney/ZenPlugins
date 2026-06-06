@@ -25,10 +25,16 @@
         obligatory="true"
         inputType="date"
         title="С какой даты загружать операции"
-        defaultValue="2019-01-01T00:00:00.000Z"
+        defaultValue="2026-01-01T00:00:00.000Z"
         dialogTitle="С какой даты загружать операции"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="|startDate|{@s}"
     />
+    <CheckBoxPreference
+        key="includeMccInComment"
+        title="Включать ли MCC в комментарий"
+        defaultValue="false"
+        summary="||{@s}">
+    </CheckBoxPreference>
 </PreferenceScreen>

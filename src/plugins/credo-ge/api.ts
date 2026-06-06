@@ -14,17 +14,20 @@ import {
   // confirmDeviceBinding
 } from './fetchApi'
 
-function parseJwt (token: string): accessTokenPayload {
+function parseJwt (token: string): accessTokenPayload | null {
+  if (token == null || token === undefined || !token.includes('.')) {
+    return null
+  }
   return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString())
 }
 
 export async function login (preferences: Preferences, auth?: Auth): Promise<Session> {
   console.log('>>> Login')
-  if (auth != null) {
+  if (auth?.accessToken !== undefined && auth.accessToken !== null && auth.accessToken !== '') {
     const tokenPayload = parseJwt(auth.accessToken)
     const nowTimestamp = Math.floor(Date.now() / 1000)
 
-    if (tokenPayload.exp > nowTimestamp) {
+    if (tokenPayload !== null && tokenPayload.exp > nowTimestamp) {
       return { auth }
     }
   }

@@ -145,10 +145,14 @@ function convertAccount (
 export function convertTransaction (apiTransaction: CredoTransaction, account: Account): ExtendedTransaction {
   const transactionId = getOptString(apiTransaction, 'transactionId') ?? null
   const transactionType = getOptString(apiTransaction, 'transactionType')
+  const transactionTypeName = getOptString(apiTransaction, 'transactionTypeName')
   const operationDateTime = getString(apiTransaction, 'operationDateTime')
   const operationType = getOptString(apiTransaction, 'operationType') ?? ''
-  const isConversion = operationType === OperationType.ConversionKa || operationType === OperationType.ConversionEn || operationType === OperationType.ConversionRu || operationType === OperationType.ExchangeEn
-  const isMovement = transactionType === TransactionType.Transferbetweenownaccounts || transactionType === TransactionType.CurrencyExchange || isConversion
+  const contragentFullName = getOptString(apiTransaction, 'contragentFullName')
+
+  const isConversion = operationType === OperationType.ConversionKa || operationType === OperationType.ConversionEn || operationType === OperationType.ConversionRu || operationType === OperationType.ExchangeEn || transactionTypeName === 'Currency_exchange'
+  const isTransfer = transactionType === TransactionType.Transferbetweenownaccounts || transactionTypeName === 'Transfer_to_own_account'
+  const isMovement = isTransfer || transactionType === TransactionType.CurrencyExchange || isConversion
   const description = getOptString(apiTransaction, 'description') ?? ''
   const strippedDescription = strippDescription(description)
   let comment = null
@@ -168,13 +172,16 @@ export function convertTransaction (apiTransaction: CredoTransaction, account: A
     transactionType === null ||
     transactionType === undefined ||
     transactionType === TransactionType.Otherexpenses ||
-    transactionType === TransactionType.Transferbetweenownaccounts ||
+    isTransfer ||
     transactionType === TransactionType.CurrencyExchange
   ) {
-    comment = operationType ?? strippedDescription
+    comment = operationType !== '' ? operationType : (transactionTypeName ?? strippedDescription)
+    if (contragentFullName !== null && contragentFullName !== undefined && contragentFullName !== '') {
+      comment = `${String(comment)} (${contragentFullName})`
+    }
   } else {
     merchant = {
-      fullTitle: strippedDescription,
+      fullTitle: contragentFullName !== null && contragentFullName !== undefined && contragentFullName !== '' ? contragentFullName : strippedDescription,
       mcc: null,
       location: null
     }

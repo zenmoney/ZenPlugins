@@ -10,5 +10,5 @@
         <js>index.js</js>
         <preferences>preferences.xml</preferences>
     </files>
-    <description>Softens LOGONOTP handling, fixes continuation integrity header and hardens optional endpoints.</description>
+    <description>Uses the official Bank Hapoalim web login flow and reuses the authenticated bank session for sync.</description>
 </provider>

@@ -416,7 +416,7 @@ async function fetchOperationsApi (params: Record<string, unknown>,
     }
   }
 
-  const response = await fetch(`https://ibank.bog.ge/rest/operations?${qs.stringify(query)}`, {
+  const response = await fetch(`https://ibank.bog.ge/rest/transactional/statements?${qs.stringify(query)}`, {
     method: 'GET',
     headers: {
       'User-Agent': 'okhttp/4.5.0',
