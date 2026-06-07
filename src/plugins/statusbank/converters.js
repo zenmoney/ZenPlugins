@@ -81,20 +81,6 @@ function parseCash (transaction, apiTransaction) {
       sum: -(apiTransaction.amount || apiTransaction.amountReal),
       fee: 0
     })
-    return false
-  } else if (apiTransaction.type === 'Перевод (зачисление)') {
-    transaction.movements.push({
-      id: null,
-      account: {
-        company: null,
-        type: 'cash',
-        instrument: apiTransaction.currency || apiTransaction.currencyReal,
-        syncIds: null
-      },
-      invoice: null,
-      sum: apiTransaction.amount || apiTransaction.amountReal,
-      fee: 0
-    })
     return true
   }
 }
