@@ -148,13 +148,18 @@ export async function fetchAccounts (sid) {
 }
 
 export function createDateIntervals (fromDate, toDate) {
-  const interval = 31 * 24 * 60 * 60 * 1000 // 31 days interval for fetching data
-  const gapMs = 1
+  const firstDate = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate())
+  const lastDate = new Date(toDate.getFullYear(), toDate.getMonth(), toDate.getDate(), 23, 59, 59, 999)
   return commonCreateDateIntervals({
-    fromDate,
-    toDate,
-    addIntervalToDate: date => new Date(date.getTime() + interval - gapMs),
-    gapMs
+    fromDate: firstDate,
+    toDate: lastDate,
+    addIntervalToDate: date => {
+      const intervalEnd = new Date(date)
+      intervalEnd.setDate(intervalEnd.getDate() + 30)
+      intervalEnd.setHours(23, 59, 59, 999)
+      return intervalEnd
+    },
+    gapMs: 1
   })
 }
 
