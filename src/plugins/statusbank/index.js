@@ -3,8 +3,8 @@ import {
   fetchFullTransactions,
   login,
   parseTransactions,
-  fetchDeposits,
-  parseDeposits
+  fetchLatestOperations,
+  parseLatestOperations
 } from './api'
 import { convertAccount, convertTransaction } from './converters'
 
@@ -34,9 +34,9 @@ export async function scrape ({ preferences, fromDate, toDate }) {
       }
     }
     if (account.latestTrID) {
-      const mails = await fetchDeposits(token, account)
+      const mails = await fetchLatestOperations(token, account)
       if (mails) {
-        const transactions = parseDeposits(mails, fromDate)
+        const transactions = parseLatestOperations(mails, fromDate)
         for (const apiTransaction of transactions) {
           const transaction = convertTransaction(apiTransaction, account)
           if (transaction) {

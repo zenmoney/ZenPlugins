@@ -258,13 +258,13 @@ export async function fetchFullTransactions (sid, account, fromDate, toDate = ne
 export function parseTransactions (mails) {
   const transactions = flatMap(mails, mail => {
     const data = mail.BS_Response.MailAttachment.Attachment.Body
-    return parseFullTransactionsMail(data)
+    return parseFullTransactionsHtml(data)
   })
   console.log(`>>> Загружено ${transactions.length} операций.`)
   return transactions
 }
 
-export function parseFullTransactionsMail (html) {
+export function parseFullTransactionsHtml (html) {
   const $ = cheerio.load(html)
   const tdObjects = $('div[class="head"]').toArray()
   if (tdObjects.length < 2) {
@@ -334,8 +334,8 @@ export function parseFullTransactionsMail (html) {
 
 // Экспорт пополнений карточки
 
-export async function fetchDeposits (sid, account) {
-  console.log('>>> Загрузка списка пополнений...')
+export async function fetchLatestOperations (sid, account) {
+  console.log('>>> Загрузка списка операций...')
   const response = await fetchApi(BASE_URL,
     '<BS_Request>\r\n' +
     '   <ExecuteAction Id="' + account.latestTrID + '"/>\r\n' +
@@ -376,16 +376,31 @@ export async function fetchDeposits (sid, account) {
   return null
 }
 
-export function parseDeposits (mail, fromDate) {
-  const transactions = parseDepositsMail(mail).filter((transaction) => transaction.amountReal > 0).filter((transaction) => {
-    const [day, month, year] = transaction.date.match(/(\d{2}).(\d{2}).(\d{4})/).slice(1)
-    return (new Date(`${year}-${month}-${day}`) > fromDate)
-  })
-  console.log(`>>> Загружено ${transactions.length} пополнений.`)
-  return transactions
+export function parseLatestOperations (mail, fromDate) {
+  const transactions = parseLatestOperationsHtml(mail)
+
+  // Для внутренних переводов возможны дублирующиеся записи про перевод:
+  // Перевод (списание) или Перевод (зачисление) и просто Перевод.
+  const detailedTransfers = new Set(transactions
+    .filter(transaction => transaction.type === 'Перевод (списание)' || transaction.type === 'Перевод (зачисление)')
+    .map(getLatestTransactionKey))
+  const deduplicated = transactions.filter(transaction =>
+    transaction.type !== 'Перевод' ||
+    !detailedTransfers.has(getLatestTransactionKey(transaction))
+  )
+
+  const filtered = deduplicated
+    .filter((transaction) => transaction.amountReal !== 0)
+    .filter((transaction) => {
+      const [day, month, year] = transaction.date.match(/(\d{2}).(\d{2}).(\d{4})/).slice(1)
+      return (new Date(`${year}-${month}-${day}`) > fromDate)
+    })
+
+  console.log(`>>> Загружено ${filtered.length} операций.`)
+  return filtered
 }
 
-export function parseDepositsMail (html) {
+export function parseLatestOperationsHtml (html) {
   const $ = cheerio.load(html)
   const head = $('p[style="margin-right:auto;text-align:center;"]').toArray()[0]
   if (head.children.length < 3) {
@@ -440,5 +455,15 @@ export function parseDepositsMail (html) {
       data.push(dataTran)
     }
   }
+
   return data
+}
+
+function getLatestTransactionKey (transaction) {
+  return [
+    transaction.date,
+    transaction.amountReal,
+    transaction.currencyReal,
+    transaction.authCode
+  ].join('|')
 }
