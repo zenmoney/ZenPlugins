@@ -399,15 +399,28 @@ export function parseDepositsMail (html) {
   const data = []
   const arrTrans = $('table.section_1').toArray()[0].children.filter((tableRow) => { return tableRow.name === 'tbody' })
   for (const arrTran of arrTrans) {
-    const arrTranChildrens = arrTran.children[0].children
+    const row = arrTran.children[0]
+    const arrTranChildrens = row.children
     if (arrTranChildrens.length >= 7) { // Значит это операция, а не просто форматирование
-      const child = arrTranChildrens[0].parent.children.filter((tableRow) => { return tableRow.name === 'td' })
-      const date = child[0].children[0].data
-      const type = child[2].children[0].data
-      const amountRealMatch = child[3].children[0].data.match(/([-\d\s,]*)\s([A-Z]+)/)
+      const child = $(row).find('td').toArray()
+      if ($(child[1]).text().trim()) {
+        continue
+      }
+      const date = $(child[0]).text().trim()
+      const type = $(child[2]).text().trim()
+      const amountText = $(child[3]).text().trim()
+      const amountRealMatch = amountText.match(/^([-\d\s,]+)\s([A-Z]+)$/)
+      if (!amountRealMatch) {
+        // authorization or card checks with empty amount and 0 as the currency
+        if (/^0,00\s+0$/.test(amountText)) {
+          continue
+        }
+        throw new Error(`unexpected receipt amount: ${amountText}`)
+      }
       const amountReal = Number(parseFloat(amountRealMatch[1].replace(/\s/g, '').replace(/,/g, '.')))
       const currencyReal = amountRealMatch[2]
-      const place = child[6].children[0].data
+      const place = $(child[6]).text().trim()
+      const authCode = $(child[4]).text().trim() || null
       if (!date || !type || !currencyReal || !place || isNaN(amountReal)) {
         throw new Error('unexpected receipt')
       }
@@ -421,7 +434,7 @@ export function parseDepositsMail (html) {
         amount: null,
         currency: null,
         place,
-        authCode: null,
+        authCode,
         mcc: null
       }
       data.push(dataTran)
