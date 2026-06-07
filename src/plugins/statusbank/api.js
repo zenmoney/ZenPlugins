@@ -196,16 +196,46 @@ export async function fetchFullTransactions (sid, account, fromDate, toDate = ne
     }
     return response
   }))
-  const mailIDs = responses.map(response => {
-    if (response === null) {
-      return null
+  const sources = []
+  const sourceKeys = new Set()
+  for (const response of responses.filter(Boolean)) {
+    const { MailId: mailId, URL: url, Message: message } = response.BS_Response.ExecuteAction
+    if (message) {
+      if (message.includes('в системе не зарегистрировано операций по карточке')) {
+        continue
+      }
+      throw new Error(`Unexpected statement response: ${message}`)
     }
-    return response.BS_Response.ExecuteAction.MailId
-  })
-  return await Promise.all(flatMap(mailIDs.filter(Boolean), (mailId) => {
-    return fetchApi(BASE_URL,
+    const source = url
+      ? { key: `url:${url}`, url }
+      : mailId
+        ? { key: `mail:${mailId}`, mailId }
+        : null
+    if (source === null) {
+      throw new Error('Statement response contains neither MailId nor URL')
+    }
+    if (!sourceKeys.has(source.key)) {
+      sourceKeys.add(source.key)
+      sources.push(source)
+    }
+  }
+
+  return await Promise.all(sources.map(async source => {
+    if (source.url) {
+      const urlResponse = await fetch(source.url)
+      return {
+        BS_Response: {
+          MailAttachment: {
+            Attachment: {
+              Body: urlResponse.body
+            }
+          }
+        }
+      }
+    }
+    return await fetchApi(BASE_URL,
       '<BS_Request>\r\n' +
-      '   <MailAttachment Id="' + mailId + '" No="0"/>\r\n' +
+      '   <MailAttachment Id="' + source.mailId + '" No="0"/>\r\n' +
       '   <RequestType>MailAttachment</RequestType>\r\n' +
       '   <Session SID="' + sid + '"/>\r\n' +
       '   <TerminalId>stbank.ibank</TerminalId>\r\n' +
