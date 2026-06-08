@@ -35,9 +35,9 @@ export async function scrape ({ preferences, fromDate, toDate }) {
       }
     }
     if (account.latestTrID) {
-      const mails = await fetchLatestOperations(token, account)
-      if (mails) {
-        const transactions = parseLatestOperations(mails, fromDate)
+      const html = await fetchLatestOperations(token, account)
+      if (html) {
+        const transactions = parseLatestOperations(html, fromDate)
         for (const apiTransaction of transactions) {
           const transaction = convertTransaction(apiTransaction, account)
           if (transaction) {

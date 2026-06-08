@@ -314,7 +314,7 @@ export function parseFullTransactionsHtml (html) {
   return data
 }
 
-// Экспорт пополнений карточки
+// Экспорт последних операций по карточке
 
 export async function fetchLatestOperations (sid, account) {
   console.log('>>> Загрузка списка операций...')
@@ -327,39 +327,45 @@ export async function fetchLatestOperations (sid, account) {
     '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
     '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
-  if (response) {
-    const isMailAttachment = !!response.BS_Response.ExecuteAction.MailId
-    if (isMailAttachment) {
-      const mailResponse = await fetchApi(BASE_URL,
-        '<BS_Request>\r\n' +
-        '   <MailAttachment Id="' + response.BS_Response.ExecuteAction.MailId + '" No="0"/>\r\n' +
-        '   <RequestType>MailAttachment</RequestType>\r\n' +
-        '   <Session SID="' + sid + '"/>\r\n' +
-        '   <TerminalId>stbank.ibank</TerminalId>\r\n' +
-        '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
-        '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-        '   <TerminalCapabilities>\r\n' +
-        '       <LongParameter>Y</LongParameter>\r\n' +
-        '       <ScreenWidth>99</ScreenWidth>\r\n' +
-        '       <AnyAmount>Y</AnyAmount>\r\n' +
-        '       <BooleanParameter>Y</BooleanParameter>\r\n' +
-        '       <CheckWidth>39</CheckWidth>\r\n' +
-        '       <InputDataSources>\r\n' +
-        '           <InputDataSource>Lookup</InputDataSource>\r\n' +
-        '       </InputDataSources>\r\n' +
-        '   </TerminalCapabilities>\r\n' +
-        '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
-      return mailResponse.BS_Response.MailAttachment.Attachment.Body
-    } else {
-      const urlResponse = await fetch(response.BS_Response.ExecuteAction.URL)
-      return urlResponse.body
-    }
+  if (!response) {
+    return null
   }
-  return null
+
+  const { MailId: mailId, URL: url, Message: message } = response.BS_Response.ExecuteAction
+  if (message) {
+    throw new Error(`Unexpected latest operations response: ${message}`)
+  }
+  if (url) {
+    const urlResponse = await fetch(url)
+    return urlResponse.body
+  }
+  if (mailId) {
+    const mailResponse = await fetchApi(BASE_URL,
+      '<BS_Request>\r\n' +
+      '   <MailAttachment Id="' + mailId + '" No="0"/>\r\n' +
+      '   <RequestType>MailAttachment</RequestType>\r\n' +
+      '   <Session SID="' + sid + '"/>\r\n' +
+      '   <TerminalId>stbank.ibank</TerminalId>\r\n' +
+      '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+      '   <Subsystem>ClientAuth</Subsystem>\r\n' +
+      '   <TerminalCapabilities>\r\n' +
+      '       <LongParameter>Y</LongParameter>\r\n' +
+      '       <ScreenWidth>99</ScreenWidth>\r\n' +
+      '       <AnyAmount>Y</AnyAmount>\r\n' +
+      '       <BooleanParameter>Y</BooleanParameter>\r\n' +
+      '       <CheckWidth>39</CheckWidth>\r\n' +
+      '       <InputDataSources>\r\n' +
+      '           <InputDataSource>Lookup</InputDataSource>\r\n' +
+      '       </InputDataSources>\r\n' +
+      '   </TerminalCapabilities>\r\n' +
+      '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
+    return mailResponse.BS_Response.MailAttachment.Attachment.Body
+  }
+  throw new Error('Latest operations response contains neither MailId nor URL')
 }
 
-export function parseLatestOperations (mail, fromDate) {
-  const transactions = parseLatestOperationsHtml(mail)
+export function parseLatestOperations (html, fromDate) {
+  const transactions = parseLatestOperationsHtml(html)
 
   // Для внутренних переводов возможны дублирующиеся записи про перевод:
   // Перевод (списание) или Перевод (зачисление) и просто Перевод.

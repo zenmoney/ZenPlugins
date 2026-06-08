@@ -136,7 +136,7 @@ describe('fetchFullTransactions', () => {
   })
 })
 
-describe('deposits parsing', () => {
+describe('latest operations parsing', () => {
   const tt = [
     {
       name: 'deposit',
@@ -606,7 +606,6 @@ describe('deposits parsing', () => {
       })
     ])
   })
-
 })
 
 describe('transactions parsing', () => {
