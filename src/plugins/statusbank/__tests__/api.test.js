@@ -16,12 +16,12 @@ function makeNetworkResponse (body, url = 'https://stb24.by/api/sou/admin/xml') 
 describe('createDateIntervals', () => {
   it('should convert date period', () => {
     expect(
-      createDateIntervals(new Date('2018-01-01T20:45+03:00'), new Date('2018-03-05T09:00+03:00'))
+      createDateIntervals(new Date(2018, 0, 1, 20, 45), new Date(2018, 2, 5, 9))
     ).toEqual(
       [
-        [new Date('2018-01-01T00:00:00+03:00'), new Date('2018-01-31T23:59:59.999+03:00')],
-        [new Date('2018-02-01T00:00:00+03:00'), new Date('2018-03-03T23:59:59.999+03:00')],
-        [new Date('2018-03-04T00:00:00+03:00'), new Date('2018-03-05T23:59:59.999+03:00')]
+        [new Date(2018, 0, 1), new Date(2018, 0, 31, 23, 59, 59, 999)],
+        [new Date(2018, 1, 1), new Date(2018, 2, 3, 23, 59, 59, 999)],
+        [new Date(2018, 2, 4), new Date(2018, 2, 5, 23, 59, 59, 999)]
       ]
     )
   })
@@ -29,8 +29,8 @@ describe('createDateIntervals', () => {
   it('does not overlap formatted calendar dates', () => {
     expect(
       createDateIntervals(
-        new Date('2026-04-04T00:00:00Z'),
-        new Date('2026-06-05T00:00:00Z')
+        new Date(2026, 3, 4),
+        new Date(2026, 5, 5)
       ).map(([from, to]) => [transactionDateForTest(from), transactionDateForTest(to)])
     ).toEqual([
       ['04.04.2026', '04.05.2026'],
