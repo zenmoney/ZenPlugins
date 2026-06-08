@@ -1,4 +1,4 @@
-import { parseFullTransactionsMail, parseDepositsMail } from '../../api'
+import { parseFullTransactionsHtml, parseLatestOperationsHtml } from '../../api'
 
 describe('parseTransactions', () => {
   it.each([
@@ -52,11 +52,11 @@ describe('parseTransactions', () => {
       ]
     ]
   ])('parses transactions xtml', (xtml, apiAccounts) => {
-    expect(parseFullTransactionsMail(xtml)).toEqual(apiAccounts)
+    expect(parseFullTransactionsHtml(xtml)).toEqual(apiAccounts)
   })
 })
 
-describe('parseTransactionsDeposits', () => {
+describe('parseLatestOperationsHtml', () => {
   it.each([
     [
       '<?xml version="1.0" encoding="windows-1251" ?>\n<BS_Response>\n <ServerTime>20230630162426</ServerTime>\n <Session Expired="895"/>\n<MailAttachment>\n<Attachment>\n<Body Mimetype="text/html" xml:space="preserve"><![CDATA[<html>\n<head>\n <meta http-equiv="Content-Type" content="text/html; charset=windows-1251">\n <title>Список операций</title>\n <style>\nbody{padding:5px;margin:0;font-family:Arial,sans-serif;font-size: 10pt;width:22cm;}\ntable{font-family:Arial,sans-serif;font-size: 8pt;border-collapse: collapse;}\nthead{background-color: #F1F5F9;}\ntbody{font-size: 11px;}\n.section_1{width: 100%;margin: 0;padding: 0;color: #333;font: 12px/16px Arial, Helvetica, sans-serif;font-size: 10px;line-height: 10pt;}\n.section_1 th{border-bottom: 1px solid #e4e4e4;height: 1cm;margin: 0 auto;}\n.section_1 td{margin: 0.1cm;padding: 0.1cm;}\n.section_1 td+td{border-left:1px solid #e4e4e4;}\n.section_1 tr{margin: 0;padding: 0;}\n.section_1 tr:last-of-type{border-bottom: 1px solid #e4e4e4;}\n.col2,.col5 {word-break: normal;}\n.col1,.col3, .col4 {width: 3cm;}\n.col2 {width:0.5cm;}\n.col5 {width: 1.4cm;}\n.right {float: right;}\n.summ {text-align: right;}\n.center {text-align: center;}\n.disable {color: lightgray}\n </style>\n</head>\n<body>\n <table style="font-size:10pt; width:100%;">\n <tr>\n <td><b>ОАО "СтатусБанк"</b></td>\n <td style="text-align: right;"><b>30.06.2023 16:24:26</b></td>\n </tr>\n </table>\n <p style="margin-right:auto;text-align:center;">\n <b>Список операций<br>по карточке 521058******2883</b><br>\n </p>\n<table class="section_1" cellspacing="0">\n<thead>\n <tr>\n<th class="col1">Дата <br>операции</th>\n<th class="col2">От-<br>мена</th>\n<th class="col3">Операция</th>\n<th class="col4 summ">Сумма <br>операции</th>\n<th class="col5">Код авто-<br>ризации</th>\n<th class="col6">RRN</th>\n<th class="col7">Место совершения</th>\n </tr>\n</thead><tbody><tr >\n<td class="col1">15.06.2023 08:39:11</td>\n<td class="col2 center"></td>\n<td class="col3">Оплата</td>\n<td class="col4 summ">-300,00 BYN</td>\n<td class="col5 center">792433</td>\n<td class="col6 center">001766790666</td>\n<td class="col7">760900, POS, DBO STATUSBANK</td>\n</tr></tbody><tbody><tr >\n<td class="col1">14.06.2023 20:01:38</td>\n<td class="col2 center"></td>\n<td class="col3">SPISANIE SO SCHETA</td>\n<td class="col4 summ">-700,00 BYN</td>\n<td class="col5 center">362942</td>\n<td class="col6 center">001766361175</td>\n<td class="col7">899997, EPOS, STATUSBANK ABS</td>\n</tr></tbody><tbody><tr >\n<td class="col1">14.06.2023 19:58:32</td>\n<td class="col2 center"></td>\n<td class="col3">ZACHISLENIE NA SCHET</td>\n<td class="col4 summ">1 000,00 BYN</td>\n<td class="col5 center">358497</td>\n<td class="col6 center">001766356730</td>\n<td class="col7">899997, EPOS, STATUSBANK ABS</td>\n</tr></tbody><tbody><tr >\n<td class="col1">03.06.2023 19:10:55</td>\n<td class="col2 center"></td>\n<td class="col3">Оплата</td>\n<td class="col4 summ">-20,00 BYN</td>\n<td class="col5 center">491258</td>\n<td class="col6 center">001751489506</td>\n<td class="col7">760900, POS, DBO STATUSBANK</td>\n</tr></tbody><tbody><tr >\n<td class="col1">01.06.2023 04:50:53</td>\n<td class="col2 center"></td>\n<td class="col3">ZACHISLENIE NA SCHET</td>\n<td class="col4 summ">20,00 BYN</td>\n<td class="col5 center">707450</td>\n<td class="col6 center">001747705702</td>\n<td class="col7">899997, EPOS, STATUSBANK ABS</td>\n</tr></tbody></table>\n <p style="margin-right:auto;text-align:center;">\n <b>По любым вопросам, касающимся операций по карточке,<br>просим обращаться в офис банка.<br>Для экстренной блокировки карточки звоните по телефону 375(17)360-00-44</b>\n</p></body></html>]]>\n</Body>\n</Attachment>\n</MailAttachment>\n</BS_Response>',
@@ -64,7 +64,7 @@ describe('parseTransactionsDeposits', () => {
         {
           amount: null,
           amountReal: -300,
-          authCode: null,
+          authCode: '792433',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -77,7 +77,7 @@ describe('parseTransactionsDeposits', () => {
         {
           amount: null,
           amountReal: -700,
-          authCode: null,
+          authCode: '362942',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -90,7 +90,7 @@ describe('parseTransactionsDeposits', () => {
         {
           amount: null,
           amountReal: 1000,
-          authCode: null,
+          authCode: '358497',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -103,7 +103,7 @@ describe('parseTransactionsDeposits', () => {
         {
           amount: null,
           amountReal: -20,
-          authCode: null,
+          authCode: '491258',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -116,7 +116,7 @@ describe('parseTransactionsDeposits', () => {
         {
           amount: null,
           amountReal: 20,
-          authCode: null,
+          authCode: '707450',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -129,6 +129,6 @@ describe('parseTransactionsDeposits', () => {
       ]
     ]
   ])('parses transactions deposits xtml', (xtml, apiAccounts) => {
-    expect(parseDepositsMail(xtml)).toEqual(apiAccounts)
+    expect(parseLatestOperationsHtml(xtml)).toEqual(apiAccounts)
   })
 })
