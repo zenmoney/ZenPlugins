@@ -6,7 +6,7 @@ import {
   fetchLatestOperations,
   parseLatestOperations
 } from './api'
-import { convertAccount, convertTransaction } from './converters'
+import { convertAccount, convertTransaction, deduplicateTransactions } from './converters'
 import { adjustTransactions } from '../../common/transactionGroupHandler'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
@@ -51,7 +51,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   return {
     accounts,
     transactions: adjustTransactions({
-      transactions: transactionsStatement
+      transactions: deduplicateTransactions(transactionsStatement, accounts)
     })
   }
 }

@@ -47,6 +47,65 @@ export function convertTransaction (apiTransaction, account) {
   }
 }
 
+export function deduplicateTransactions (transactions, accounts) {
+  const accountInstruments = new Map(accounts.map(account => [account.id, account.instrument]))
+  const result = []
+  const indexByKey = new Map()
+  let duplicateCount = 0
+
+  for (const transaction of transactions) {
+    const key = getDeduplicationKey(transaction, accountInstruments)
+    if (key === null) {
+      result.push(transaction)
+      continue
+    }
+
+    const existingIndex = indexByKey.get(key)
+    if (existingIndex === undefined) {
+      indexByKey.set(key, result.length)
+      result.push(transaction)
+    } else {
+      duplicateCount++
+      if (getTransactionRichness(transaction) > getTransactionRichness(result[existingIndex])) {
+        result[existingIndex] = transaction
+      }
+    }
+  }
+
+  if (duplicateCount > 0) {
+    console.log(`>>> Удалено ${duplicateCount} дубликатов операций.`)
+  }
+  return result
+}
+
+function getDeduplicationKey (transaction, accountInstruments) {
+  const movement = transaction.movements.find(movement => movement.account.id)
+  if (!movement?.id) {
+    return null
+  }
+
+  const operationAmount = movement.invoice?.sum ?? movement.sum
+  const operationInstrument = movement.invoice?.instrument ?? accountInstruments.get(movement.account.id)
+  if (typeof operationAmount !== 'number' || !operationInstrument) {
+    return null
+  }
+
+  return [
+    movement.account.id,
+    movement.id,
+    transaction.date.toISOString(),
+    operationInstrument,
+    operationAmount
+  ].join('|')
+}
+
+function getTransactionRichness (transaction) {
+  const movement = transaction.movements.find(movement => movement.account.id)
+  return (movement.sum !== null ? 4 : 0) +
+    (transaction.merchant?.mcc != null ? 2 : 0) +
+    (transaction.merchant?.fullTitle || transaction.merchant?.title ? 1 : 0)
+}
+
 function getMovement (apiTransaction, account) {
   const hasAccountAmount = typeof apiTransaction.amount === 'number'
   const movement = {
