@@ -71,7 +71,7 @@ function getMovement (apiTransaction, account) {
 }
 
 function parseCash (transaction, apiTransaction) {
-  if (apiTransaction.type.includes('POPOLNENIYE') > 0 ||
+  if (apiTransaction.place?.includes('POPOLNENIYE') > 0 ||
     apiTransaction.type === 'Снятие наличных') {
     // добавим вторую часть перевода
     transaction.movements.push({
