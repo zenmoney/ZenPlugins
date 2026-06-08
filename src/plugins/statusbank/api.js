@@ -2,7 +2,7 @@ import { createDateIntervals as commonCreateDateIntervals } from '../../common/d
 import { generateRandomString } from '../../common/utils'
 import { parseXml } from '../../common/xmlUtils'
 import { flatMap } from 'lodash'
-import { fetch } from '../../common/network'
+import { fetchRateLimitedWithRetry as fetch } from './fetch'
 import cheerio from 'cheerio'
 import xml2js from 'xml2js'
 
