@@ -1,4 +1,5 @@
 import { Transaction } from '../../types/zenmoney'
+import { getBusinessDateIdentityKey } from './helpers'
 
 type TransactionSource = 'history' | 'statement'
 
@@ -6,6 +7,8 @@ interface SourcedTransaction {
   source: TransactionSource
   transaction: Transaction
 }
+
+type TransactionWithDedupDate = Transaction & { dedupDate?: Date }
 
 const normalizeText = (text: string | null | undefined): string =>
   (text ?? '').replace(/\s+/g, ' ').trim()
@@ -32,6 +35,9 @@ const getMovementAccountId = (transaction: Transaction): string => {
   return ''
 }
 
+const getMovementId = (transaction: Transaction): string | null =>
+  transaction.movements[0]?.id ?? null
+
 const getAmountSignature = (transaction: Transaction): string => {
   const movement = transaction.movements[0]
 
@@ -53,7 +59,7 @@ const getMccSignature = (transaction: Transaction): string => {
 }
 
 const getDaySignature = (transaction: Transaction): string =>
-  transaction.date.toISOString().slice(0, 10)
+  getBusinessDateIdentityKey((transaction as TransactionWithDedupDate).dedupDate ?? transaction.date)
 
 const getDuplicateFingerprint = (transaction: Transaction): string => [
   getMovementAccountId(transaction),
@@ -63,8 +69,38 @@ const getDuplicateFingerprint = (transaction: Transaction): string => [
   normalizeText(getMerchantTitle(transaction))
 ].join('|')
 
-const isMatchingDuplicate = (left: Transaction, right: Transaction): boolean =>
-  getDuplicateFingerprint(left) === getDuplicateFingerprint(right)
+const isMatchingDuplicate = (left: Transaction, right: Transaction): boolean => {
+  const leftId = getMovementId(left)
+  const rightId = getMovementId(right)
+
+  if (leftId !== null && rightId !== null) {
+    return leftId === rightId || getDuplicateFingerprint(left) === getDuplicateFingerprint(right)
+  }
+
+  return getDuplicateFingerprint(left) === getDuplicateFingerprint(right)
+}
+
+const withStableMovementIds = (transactions: Transaction[]): Transaction[] => {
+  const occurrenceIndexes = new Map<string, number>()
+
+  return transactions.map((transaction) => {
+    const fingerprint = getDuplicateFingerprint(transaction)
+    const occurrenceIndex = occurrenceIndexes.get(fingerprint) ?? 0
+    occurrenceIndexes.set(fingerprint, occurrenceIndex + 1)
+    const [firstMovement, secondMovement] = transaction.movements
+    const firstMovementWithStableId = {
+      ...firstMovement,
+      id: ['zepterbank-by', fingerprint, occurrenceIndex].join('|')
+    }
+
+    return {
+      ...transaction,
+      movements: secondMovement == null
+        ? [firstMovementWithStableId]
+        : [firstMovementWithStableId, secondMovement]
+    }
+  })
+}
 
 export const mergeTransactions = (historyTransactions: Transaction[], statementTransactions: Transaction[]): Transaction[] => {
   const mergedTransactions: SourcedTransaction[] = historyTransactions.map((transaction) => ({
@@ -91,5 +127,5 @@ export const mergeTransactions = (historyTransactions: Transaction[], statementT
     })
   }
 
-  return mergedTransactions.map(({ transaction }) => transaction)
+  return withStableMovementIds(mergedTransactions.map(({ transaction }) => transaction))
 }
