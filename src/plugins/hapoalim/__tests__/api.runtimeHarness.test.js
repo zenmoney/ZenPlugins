@@ -43,10 +43,11 @@ describe('hapoalim api runtime harness', () => {
     }
   })
 
-  it('closes the WebView from cookie-store polling through the actual network helper', async () => {
+  it('closes the configured WebView from cookie-jar polling through the actual network helper', async () => {
     const originalSetTimeout = global.setTimeout
     const originalClearTimeout = global.clearTimeout
     const scheduledCallbacks = []
+    let cookieJarReads = 0
 
     global.setTimeout = jest.fn((callback) => {
       scheduledCallbacks.push(callback)
@@ -55,19 +56,35 @@ describe('hapoalim api runtime harness', () => {
     global.clearTimeout = jest.fn()
 
     global.ZenMoney = {
-      getCookies: jest.fn()
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([
-          { domain: 'login.bankhapoalim.co.il', name: 'TS', value: 'poll-ts' },
-          { domain: 'login.bankhapoalim.co.il', name: 'XSRF-TOKEN', value: 'poll-xsrf' }
-        ]),
+      features: {
+        webViewConfiguration: true
+      },
+      getCookies: jest.fn().mockResolvedValue([]),
       saveCookies: jest.fn().mockResolvedValue(undefined),
-      openWebView: jest.fn((url, headers, onRequest, onComplete) => {
-        const mode = onRequest({
-          url: 'https://static.example.com/challenge',
-          headers: {}
-        }, (error, result) => onComplete(error, result))
-        expect(mode).toBeUndefined()
+      openWebView: jest.fn((url, headers, onRequest, onComplete, options) => {
+        const webView = {
+          cookieJar: {
+            getCookieString: jest.fn(async (cookieUrl) => {
+              if (cookieUrl.includes('/ServerServices/general/accounts')) {
+                cookieJarReads++
+                return cookieJarReads >= 2
+                  ? 'TS=poll-ts; XSRF-TOKEN=poll-xsrf'
+                  : ''
+              }
+              return ''
+            })
+          }
+        }
+
+        Promise.resolve(options.configure(webView))
+          .then(async () => {
+            const mode = await onRequest({
+              url: 'https://static.example.com/challenge',
+              headers: {}
+            }, (error, result) => onComplete(error, result))
+            expect(mode).toBeUndefined()
+          })
+          .catch(error => onComplete(error))
       })
     }
 
@@ -82,9 +99,8 @@ describe('hapoalim api runtime harness', () => {
       await scheduledCallbacks.shift()()
 
       const auth = await authPromise
-      expect(global.ZenMoney.saveCookies).toHaveBeenCalled()
-      expect(global.ZenMoney.getCookies.mock.calls.length).toBeGreaterThanOrEqual(2)
       expect(fetchJsonMock).toHaveBeenCalled()
+      expect(global.ZenMoney.getCookies).not.toHaveBeenCalled()
       expect(auth.cookieHeader).toContain('TS=poll-ts')
       expect(auth.cookieHeader).toContain('XSRF-TOKEN=poll-xsrf')
       expect(auth.restContext).toBe('pib')
@@ -94,7 +110,49 @@ describe('hapoalim api runtime harness', () => {
     }
   })
 
-  it('recovers after native WebView close when cookies appear only after a delayed flush', async () => {
+  it('recovers configured WebView auth after native close when the cookie jar was already captured', async () => {
+    global.ZenMoney = {
+      features: {
+        webViewConfiguration: true
+      },
+      getCookies: jest.fn().mockResolvedValue([]),
+      saveCookies: jest.fn().mockResolvedValue(undefined),
+      openWebView: jest.fn((url, headers, onRequest, onComplete, options) => {
+        const webView = {
+          cookieJar: {
+            getCookieString: jest.fn(async (cookieUrl) => {
+              if (cookieUrl.includes('/portalserver/HomePage')) {
+                return 'TS=jar-ts; XSRF-TOKEN=jar-xsrf'
+              }
+              return ''
+            })
+          }
+        }
+
+        Promise.resolve(options.configure(webView))
+          .then(async () => {
+            await onRequest({
+              url: 'https://login.bankhapoalim.co.il/portalserver/HomePage',
+              headers: {}
+            }, () => {})
+            onComplete(new Error('WebView closed'))
+          })
+          .catch(error => onComplete(error))
+      })
+    }
+
+    login = require('../api').login
+
+    const auth = await login()
+
+    expect(global.ZenMoney.getCookies).not.toHaveBeenCalled()
+    expect(fetchJsonMock).toHaveBeenCalled()
+    expect(auth.cookieHeader).toContain('TS=jar-ts')
+    expect(auth.cookieHeader).toContain('XSRF-TOKEN=jar-xsrf')
+    expect(auth.restContext).toBe('pib')
+  })
+
+  it('keeps the legacy cookie-store recovery path for older app versions', async () => {
     const originalSetTimeout = global.setTimeout
 
     global.setTimeout = jest.fn((callback) => {
@@ -103,6 +161,7 @@ describe('hapoalim api runtime harness', () => {
     })
 
     global.ZenMoney = {
+      features: {},
       getCookies: jest.fn()
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([])
