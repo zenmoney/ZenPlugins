@@ -1,9 +1,10 @@
 import fetchMock from 'fetch-mock'
-import { InvalidLoginOrPasswordError } from '../../../errors'
+import { BankMessageError, InvalidLoginOrPasswordError } from '../../../errors'
 import { installFetchMockDeveloperFriendlyFallback } from '../../../testUtils'
 import { makePluginDataApi } from '../../../ZPAPI.pluginData'
 import { scrape } from '../index'
 import { mockGetSalt, mockLogin, mockMobileToken } from '../mocks'
+import { calculatePasswordHash, calculatePassword2Hash } from '../prior'
 
 installFetchMockDeveloperFriendlyFallback(fetchMock)
 
@@ -70,4 +71,117 @@ test('throws credentials mismatch as InvalidPreferencesError', async () => {
     toDate: new Date('2018-12-07T12:00:00Z')
   })
   await expect(result).rejects.toBeInstanceOf(InvalidLoginOrPasswordError)
+})
+
+test('throws BankMessageError for maintenance mode error message', async () => {
+  const login = 'test(login)'
+  const password = 'test(password)'
+  const accessToken = 'test(access_token)'
+  const tokenType = 'bearer'
+  const clientSecret = 'test(client_secret)'
+  const salt = 'saltsaltsaltsaltsaltsaltsaltsalt'
+
+  global.ZenMoney = {
+    isAccountSkipped: () => false,
+    ...makePluginDataApi({}).methods
+  }
+
+  mockMobileToken({
+    response: {
+      access_token: accessToken,
+      token_type: tokenType,
+      client_secret: clientSecret
+    }
+  })
+
+  mockGetSalt({
+    tokenType,
+    accessToken,
+    clientSecret,
+    login,
+    response: {
+      success: true,
+      errorMessage: '',
+      internalErrorCode: 0,
+      externalErrorCode: '',
+      token: false,
+      tokenFields: null,
+      result: { salt }
+    }
+  })
+
+  const hash = calculatePasswordHash({ loginSalt: salt, password })
+  const hash2 = calculatePassword2Hash({ loginSalt: salt, password })
+
+  mockLogin({
+    tokenType,
+    accessToken,
+    clientSecret,
+    login,
+    hash,
+    hash2,
+    response: {
+      status: 200,
+      body: {
+        success: false,
+        errorMessage: 'Подключение к системе в данный момент запрещено. На сайте ведутся технические работы',
+        internalErrorCode: 0,
+        externalErrorCode: '-20900',
+        token: false,
+        tokenFields: null,
+        result: null
+      }
+    }
+  })
+
+  const result = scrape({
+    preferences: { login, password },
+    fromDate: new Date('2018-12-01T12:00:00Z'),
+    toDate: new Date('2018-12-07T12:00:00Z')
+  })
+  await expect(result).rejects.toBeInstanceOf(BankMessageError)
+})
+
+test('throws BankMessageError when GetSalt returns no salt', async () => {
+  const login = 'test(login)'
+  const password = 'test(password)'
+  const accessToken = 'test(access_token)'
+  const tokenType = 'bearer'
+  const clientSecret = 'test(client_secret)'
+
+  global.ZenMoney = {
+    isAccountSkipped: () => false,
+    ...makePluginDataApi({}).methods
+  }
+
+  mockMobileToken({
+    response: {
+      access_token: accessToken,
+      token_type: tokenType,
+      client_secret: clientSecret
+    }
+  })
+
+  mockGetSalt({
+    tokenType,
+    accessToken,
+    clientSecret,
+    login,
+    response: {
+      success: true,
+      errorMessage: '',
+      internalErrorCode: 0,
+      externalErrorCode: '',
+      token: false,
+      tokenFields: null,
+      result: {}
+    }
+  })
+
+  const result = scrape({
+    preferences: { login, password },
+    fromDate: new Date('2018-12-01T12:00:00Z'),
+    toDate: new Date('2018-12-07T12:00:00Z')
+  })
+  await expect(result).rejects.toBeInstanceOf(BankMessageError)
 })
