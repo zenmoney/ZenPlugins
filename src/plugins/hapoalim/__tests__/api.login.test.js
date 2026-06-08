@@ -307,6 +307,45 @@ describe('hapoalim api login', () => {
     }
   })
 
+  it('keeps configured WebView cookie-jar auth for recovery when first accounts probe is not ready', async () => {
+    fetchJsonMock
+      .mockResolvedValueOnce({
+        status: 403,
+        url: ACCOUNTS_URL,
+        headers: {},
+        body: { error: { errCode: 'STEPUPOTP' } }
+      })
+      .mockResolvedValue({
+        status: 200,
+        url: ACCOUNTS_URL,
+        headers: {},
+        body: [{ accountNumber: '1' }]
+      })
+
+    openWebViewAndInterceptRequestMock.mockImplementationOnce(async ({ configure, intercept }) => {
+      const webView = createWebView({
+        [ACCOUNTS_URL]: 'TS=late-ts; XSRF-TOKEN=late-xsrf'
+      })
+      if (configure) {
+        await configure(webView)
+      }
+
+      await intercept.call({ close: jest.fn() }, {
+        url: STATIC_CHALLENGE_URL,
+        headers: {}
+      }, webView)
+
+      throw new Error('WebView closed')
+    })
+
+    const auth = await login()
+
+    expect(auth.cookieHeader).toContain('TS=late-ts')
+    expect(auth.cookieHeader).toContain('XSRF-TOKEN=late-xsrf')
+    expect(fetchJsonMock).toHaveBeenCalledTimes(2)
+    expect(global.ZenMoney.getCookies).not.toHaveBeenCalled()
+  })
+
   it('does not accept configured WebView cookies until accounts access is verified', async () => {
     fetchJsonMock.mockResolvedValue({
       status: 403,

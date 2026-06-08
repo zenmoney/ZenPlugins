@@ -892,6 +892,9 @@ async function captureOfficialSessionFromConfiguredWebView () {
       logErrors: source !== 'webview-cookie-jar-poll'
     })
     diagnostics.lastCookieJarCookieNames = getCookieHeaderNames(nextAuth.cookieHeader)
+    if (nextAuth.cookieHeader !== '') {
+      auth = nextAuth
+    }
     const isComplete = requireSessionCookie
       ? hasOfficialSessionCookie(nextAuth.cookieHeader)
       : nextAuth.cookieHeader !== ''
