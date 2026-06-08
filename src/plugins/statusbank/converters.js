@@ -47,11 +47,16 @@ export function convertTransaction (apiTransaction, account) {
 }
 
 function getMovement (apiTransaction, account) {
+  const hasAccountAmount = typeof apiTransaction.amount === 'number'
   const movement = {
-    id: null,
+    id: apiTransaction.authCode || null,
     account: { id: account.id },
     invoice: null,
-    sum: apiTransaction.amount || apiTransaction.amountReal,
+    sum: hasAccountAmount
+      ? apiTransaction.amount
+      : apiTransaction.currencyReal === account.instrument
+        ? apiTransaction.amountReal
+        : null,
     fee: 0
   }
 
