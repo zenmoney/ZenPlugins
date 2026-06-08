@@ -37,6 +37,7 @@ export function convertTransaction (apiTransaction, account) {
 
     [
       parseCash,
+      parseInternalTransfer,
       parsePayee
     ].some(parser => parser(transaction, apiTransaction))
 
@@ -88,6 +89,26 @@ function parseCash (transaction, apiTransaction) {
     })
     return true
   }
+}
+
+function parseInternalTransfer (transaction, apiTransaction) {
+  const isLatestOpsP2P = apiTransaction.place?.includes('STATUSBANK SDBO P2P') &&
+    ['Перевод (зачисление)', 'Перевод (списание)'].includes(apiTransaction.type)
+
+  const isStatementP2P = ['Перевод/зачисление средств', 'Перевод/списание средств'].includes(apiTransaction.type) &&
+    (apiTransaction.place?.startsWith('PEREVOD NA ') || apiTransaction.place?.startsWith('PEREVOD S '))
+
+  if (!isLatestOpsP2P && !isStatementP2P) {
+    return false
+  }
+
+  transaction.groupKeys = [[
+    'statusbank-p2p',
+    apiTransaction.date,
+    Math.abs(apiTransaction.amount || apiTransaction.amountReal),
+    apiTransaction.currency || apiTransaction.currencyReal
+  ].join('|')]
+  return true
 }
 
 function parsePayee (transaction, apiTransaction) {
