@@ -263,7 +263,6 @@ export async function fetchAccounts (sessionToken) {
 export async function fetchTransactions (sessionToken, accounts, fromDate) {
   console.log('>>> Загрузка списка транзакций через минивыписку...')
   const responses = await Promise.all(flatMap(accounts, (account) => {
-    // Минивыписки бесплатны на виртуальных карточках, либо на карточках в EUR/USD
     if (!account.cardHash) {
       return []
     }
