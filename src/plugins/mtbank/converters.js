@@ -166,10 +166,12 @@ export function filterDuplicates (transactions) {
   const filtered = []
   for (const transaction of transactions) {
     const key = transaction.movements[0].id + '_' + Math.abs(transaction.movements[0].sum)
-    if (transactionIds[key]) { //
-    } else {
-      transactionIds[key] = true
+    const index = transactionIds[key]
+    if (index === undefined) {
+      transactionIds[key] = filtered.length
       filtered.push(transaction)
+    } else if (filtered[index].hold && !transaction.hold) {
+      filtered[index] = transaction
     }
   }
   return filtered
