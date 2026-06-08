@@ -1,17 +1,22 @@
-// Input preferences from schema in preferences.xml
 export interface Preferences {
   login: string
   password: string
 }
 
-export enum AccountType {
-  Current = 1,
-  Savings = 3,
-  ForeignCurrency = 5,
-  OccasionalPayments = 6
+export interface AccountInfo {
+  id: string
+  cardNumber: string
+  accountNumber: string
+  name: string
+  currency: string
+  balance: number
 }
 
-export interface AccountDetails {
-  id: number
-  type: AccountType
+export interface AccountTransaction {
+  id: string
+  date: Date
+  address: string
+  amount: number
+  currency: string | undefined
+  description: string
 }
