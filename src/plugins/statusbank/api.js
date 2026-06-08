@@ -373,6 +373,8 @@ export function parseLatestOperations (mail, fromDate) {
 
   const filtered = deduplicated
     .filter((transaction) => transaction.amountReal !== 0)
+    // Rows without an authorization code are unsuccessful attempts
+    .filter((transaction) => transaction.authCode !== null)
     .filter((transaction) => {
       const [day, month, year] = transaction.date.match(/(\d{2}).(\d{2}).(\d{4})/).slice(1)
       return (new Date(`${year}-${month}-${day}`) > fromDate)
