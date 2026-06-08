@@ -188,17 +188,19 @@ export async function fetchFullTransactions (sid, account, fromDate, toDate = ne
   toDate.setDate(toDate.getDate())
 
   const dates = createDateIntervals(fromDate, toDate)
-  const responses = await Promise.all(dates.map(async date => {
+  const results = []
+  // Fetch sequentially because the bank may reuse the same statement URL
+  // for different date ranges. Parallel requests would race for the same
+  // file and some intervals would be lost.
+  for (const date of dates) {
     let response = await getTransactions(account.transactionsAccId, transactionDate(date[0]), transactionDate(date[1]), sid)
     // if the response is failed by incorrect toDate we're recalculating it
     if (/\d{2}.\d{2}.\d{4}/.test(response)) {
       response = await getTransactions(account.transactionsAccId, transactionDate(date[0]), response, sid)
     }
-    return response
-  }))
-  const sources = []
-  const sourceKeys = new Set()
-  for (const response of responses.filter(Boolean)) {
+    if (!response) {
+      continue
+    }
     const { MailId: mailId, URL: url, Message: message } = response.BS_Response.ExecuteAction
     if (message) {
       if (message.includes('в системе не зарегистрировано операций по карточке')) {
@@ -206,24 +208,9 @@ export async function fetchFullTransactions (sid, account, fromDate, toDate = ne
       }
       throw new Error(`Unexpected statement response: ${message}`)
     }
-    const source = url
-      ? { key: `url:${url}`, url }
-      : mailId
-        ? { key: `mail:${mailId}`, mailId }
-        : null
-    if (source === null) {
-      throw new Error('Statement response contains neither MailId nor URL')
-    }
-    if (!sourceKeys.has(source.key)) {
-      sourceKeys.add(source.key)
-      sources.push(source)
-    }
-  }
-
-  return await Promise.all(sources.map(async source => {
-    if (source.url) {
-      const urlResponse = await fetch(source.url)
-      return {
+    if (url) {
+      const urlResponse = await fetch(url)
+      results.push({
         BS_Response: {
           MailAttachment: {
             Attachment: {
@@ -231,28 +218,34 @@ export async function fetchFullTransactions (sid, account, fromDate, toDate = ne
             }
           }
         }
-      }
+      })
+    } else if (mailId) {
+      const mailResponse = await fetchApi(BASE_URL,
+        '<BS_Request>\r\n' +
+        '   <MailAttachment Id="' + mailId + '" No="0"/>\r\n' +
+        '   <RequestType>MailAttachment</RequestType>\r\n' +
+        '   <Session SID="' + sid + '"/>\r\n' +
+        '   <TerminalId>stbank.ibank</TerminalId>\r\n' +
+        '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+        '   <Subsystem>ClientAuth</Subsystem>\r\n' +
+        '   <TerminalCapabilities>\r\n' +
+        '       <LongParameter>Y</LongParameter>\r\n' +
+        '       <ScreenWidth>99</ScreenWidth>\r\n' +
+        '       <AnyAmount>Y</AnyAmount>\r\n' +
+        '       <BooleanParameter>Y</BooleanParameter>\r\n' +
+        '       <CheckWidth>39</CheckWidth>\r\n' +
+        '       <InputDataSources>\r\n' +
+        '           <InputDataSource>Lookup</InputDataSource>\r\n' +
+        '       </InputDataSources>\r\n' +
+        '   </TerminalCapabilities>\r\n' +
+        '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
+      results.push(mailResponse)
+    } else {
+      throw new Error('Statement response contains neither MailId nor URL')
     }
-    return await fetchApi(BASE_URL,
-      '<BS_Request>\r\n' +
-      '   <MailAttachment Id="' + source.mailId + '" No="0"/>\r\n' +
-      '   <RequestType>MailAttachment</RequestType>\r\n' +
-      '   <Session SID="' + sid + '"/>\r\n' +
-      '   <TerminalId>stbank.ibank</TerminalId>\r\n' +
-      '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
-      '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-      '   <TerminalCapabilities>\r\n' +
-      '       <LongParameter>Y</LongParameter>\r\n' +
-      '       <ScreenWidth>99</ScreenWidth>\r\n' +
-      '       <AnyAmount>Y</AnyAmount>\r\n' +
-      '       <BooleanParameter>Y</BooleanParameter>\r\n' +
-      '       <CheckWidth>39</CheckWidth>\r\n' +
-      '       <InputDataSources>\r\n' +
-      '           <InputDataSource>Lookup</InputDataSource>\r\n' +
-      '       </InputDataSources>\r\n' +
-      '   </TerminalCapabilities>\r\n' +
-      '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
-  }))
+  }
+
+  return results
 }
 
 export function parseTransactions (mails) {
