@@ -24,8 +24,8 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   const transactionsStatement = []
   accounts = await Promise.all(accounts.map(async account => {
     if (account.transactionsAccId) {
-      const mails = await fetchFullTransactions(token, account, fromDate, toDate)
-      const transactions = parseTransactions(mails)
+      const htmls = await fetchFullTransactions(token, account, fromDate, toDate)
+      const transactions = parseTransactions(htmls)
       for (const apiTransaction of transactions) {
         const transaction = convertTransaction(apiTransaction, account)
         if (transaction) {

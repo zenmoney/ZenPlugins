@@ -210,15 +210,7 @@ export async function fetchFullTransactions (sid, account, fromDate, toDate = ne
     }
     if (url) {
       const urlResponse = await fetch(url)
-      results.push({
-        BS_Response: {
-          MailAttachment: {
-            Attachment: {
-              Body: urlResponse.body
-            }
-          }
-        }
-      })
+      results.push(urlResponse.body)
     } else if (mailId) {
       const mailResponse = await fetchApi(BASE_URL,
         '<BS_Request>\r\n' +
@@ -239,7 +231,7 @@ export async function fetchFullTransactions (sid, account, fromDate, toDate = ne
         '       </InputDataSources>\r\n' +
         '   </TerminalCapabilities>\r\n' +
         '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
-      results.push(mailResponse)
+      results.push(mailResponse.BS_Response.MailAttachment.Attachment.Body)
     } else {
       throw new Error('Statement response contains neither MailId nor URL')
     }
@@ -248,11 +240,8 @@ export async function fetchFullTransactions (sid, account, fromDate, toDate = ne
   return results
 }
 
-export function parseTransactions (mails) {
-  const transactions = flatMap(mails, mail => {
-    const data = mail.BS_Response.MailAttachment.Attachment.Body
-    return parseFullTransactionsHtml(data)
-  })
+export function parseTransactions (htmls) {
+  const transactions = flatMap(htmls, html => parseFullTransactionsHtml(html))
   console.log(`>>> Загружено ${transactions.length} операций.`)
   return transactions
 }
