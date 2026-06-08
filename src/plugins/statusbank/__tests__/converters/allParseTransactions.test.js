@@ -1,4 +1,4 @@
-import { parseFullTransactionsMail, parseDepositsMail } from '../../api'
+import { parseFullTransactionsHtml, parseLatestOperationsHtml } from '../../api'
 
 describe('parseTransactions', () => {
   it.each([
@@ -52,7 +52,7 @@ describe('parseTransactions', () => {
       ]
     ]
   ])('parses transactions xtml', (xtml, apiAccounts) => {
-    expect(parseFullTransactionsMail(xtml)).toEqual(apiAccounts)
+    expect(parseFullTransactionsHtml(xtml)).toEqual(apiAccounts)
   })
 })
 
@@ -64,7 +64,7 @@ describe('parseTransactionsDeposits', () => {
         {
           amount: null,
           amountReal: -300,
-          authCode: null,
+          authCode: '792433',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -77,7 +77,7 @@ describe('parseTransactionsDeposits', () => {
         {
           amount: null,
           amountReal: -700,
-          authCode: null,
+          authCode: '362942',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -90,7 +90,7 @@ describe('parseTransactionsDeposits', () => {
         {
           amount: null,
           amountReal: 1000,
-          authCode: null,
+          authCode: '358497',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -103,7 +103,7 @@ describe('parseTransactionsDeposits', () => {
         {
           amount: null,
           amountReal: -20,
-          authCode: null,
+          authCode: '491258',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -116,7 +116,7 @@ describe('parseTransactionsDeposits', () => {
         {
           amount: null,
           amountReal: 20,
-          authCode: null,
+          authCode: '707450',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -129,6 +129,7 @@ describe('parseTransactionsDeposits', () => {
       ]
     ]
   ])('parses transactions deposits xtml', (xtml, apiAccounts) => {
-    expect(parseDepositsMail(xtml)).toEqual(apiAccounts)
+    expect(parseLatestOperationsHtml(xtml)).toEqual(apiAccounts)
   })
+
 })
