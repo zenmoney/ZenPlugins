@@ -72,21 +72,30 @@ function getMovement (apiTransaction, account) {
 }
 
 function parseCash (transaction, apiTransaction) {
-  if (apiTransaction.place?.includes('POPOLNENIYE') > 0 ||
-    apiTransaction.type === 'Снятие наличных') {
+  const cashTypes = [
+    'Снятие наличных',
+    'Снятие наличных денег',
+    'Получение наличных денег'
+  ]
+  if (apiTransaction.place?.includes('POPOLNENIYE') ||
+    cashTypes.includes(apiTransaction.type)) {
+    const cashAmount = apiTransaction.amountReal ?? apiTransaction.amount
+    const cashInstrument = apiTransaction.currencyReal ?? apiTransaction.currency
+
     // добавим вторую часть перевода
     transaction.movements.push({
       id: null,
       account: {
         company: null,
         type: 'cash',
-        instrument: apiTransaction.currency || apiTransaction.currencyReal,
+        instrument: cashInstrument,
         syncIds: null
       },
       invoice: null,
-      sum: -(apiTransaction.amount || apiTransaction.amountReal),
+      sum: -cashAmount,
       fee: 0
     })
+    transaction.comment = apiTransaction.place || null
     return true
   }
 }
