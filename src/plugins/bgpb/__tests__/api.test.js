@@ -1,5 +1,100 @@
 import { parseXml } from '../../../common/xmlUtils'
-import { createDateIntervals, parseFullTransactionsMail, parseFullTransactionsMailCardLimit } from '../api'
+import {
+  createDateIntervals,
+  fetchBalance,
+  fetchFullTransactions,
+  fetchLastTransactions,
+  login,
+  parseFullTransactionsMail,
+  parseFullTransactionsMailCardLimit
+} from '../api'
+
+function makeNetworkResponse (body, url = 'https://mobapp-frontend.bgpb.by/test') {
+  return {
+    ok: true,
+    status: 200,
+    statusText: 'OK',
+    url,
+    headers: {
+      forEach: () => {}
+    },
+    text: async () => body
+  }
+}
+
+function stringifyDebugCalls (debug) {
+  return JSON.stringify(debug.mock.calls)
+}
+
+describe('request logging', () => {
+  let debug
+
+  beforeEach(() => {
+    debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    debug.mockRestore()
+  })
+
+  it('sanitizes XML request and response bodies', async () => {
+    global.fetch = jest.fn()
+      .mockResolvedValueOnce(makeNetworkResponse('<BS_Response><Login SID="response-secret-sid"/></BS_Response>'))
+      .mockResolvedValueOnce(makeNetworkResponse('<BS_Response><Balance Amount="1,00"/></BS_Response>'))
+
+    await expect(login('login-value', 'password-value')).resolves.toBe('response-secret-sid')
+    await expect(fetchBalance('request-secret-sid', {
+      productType: 'MS',
+      cardNumber: '518597******1111',
+      currencyCode: '933'
+    })).resolves.toBe(1)
+
+    const logs = stringifyDebugCalls(debug)
+    expect(logs).not.toContain('password-value')
+    expect(logs).not.toContain('request-secret-sid')
+    expect(logs).not.toContain('response-secret-sid')
+  })
+
+  it('sanitizes JSON session ids', async () => {
+    global.fetch = jest.fn()
+      .mockResolvedValueOnce(makeNetworkResponse(JSON.stringify({
+        errorCode: 0,
+        config: {
+          pageSize: 20
+        }
+      })))
+      .mockResolvedValueOnce(makeNetworkResponse(JSON.stringify({
+        errorCode: 0,
+        result: {
+          items: []
+        }
+      })))
+
+    await expect(fetchLastTransactions('json-secret-sid', [{
+      id: 'account',
+      type: 'card',
+      bankId: 'bank-id',
+      syncID: ['1111']
+    }], new Date('2026-05-21T00:00:00+0300'), new Date('2026-05-21T23:59:59+0300'))).resolves.toEqual([])
+
+    expect(stringifyDebugCalls(debug)).not.toContain('json-secret-sid')
+  })
+})
+
+describe('fetchFullTransactions', () => {
+  it('skips high-security statement requests', async () => {
+    const log = jest.spyOn(console, 'log').mockImplementation(() => {})
+    global.fetch = jest.fn()
+
+    await expect(fetchFullTransactions('sid', {
+      title: 'Card*1111',
+      transactionsAccId: 'statement-action'
+    }, new Date('2026-05-01T00:00:00+0300'), new Date('2026-05-21T00:00:00+0300'))).resolves.toEqual([])
+
+    expect(global.fetch).not.toHaveBeenCalled()
+    log.mockRestore()
+  })
+})
 
 describe('createDateIntervals', () => {
   it('should convert date period', () => {

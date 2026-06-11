@@ -73,6 +73,9 @@ function findHistoryTransactionAccount (apiTransaction, accounts) {
 function createHistoryMerchant (apiTransaction) {
   const mcc = Number(apiTransaction.mcc)
   const terminal = typeof apiTransaction.terminal === 'string' ? apiTransaction.terminal.trim() : ''
+  if (/^P2P_BGPB_\d+\b/i.test(terminal)) {
+    return null
+  }
   if (!terminal && (isNaN(mcc) || mcc === 0)) {
     return null
   }
@@ -115,6 +118,9 @@ function getMerchantKeyParts (merchant) {
 }
 
 function createStableSourceKey (apiTransaction) {
+  if (isHistoryApiTransaction(apiTransaction) && apiTransaction.orderNumber) {
+    return joinIdParts(['order', apiTransaction.orderNumber, apiTransaction.authCode ? `auth:${apiTransaction.authCode}` : null])
+  }
   if (apiTransaction.authCode) {
     return `auth:${apiTransaction.authCode}`
   }
@@ -172,6 +178,18 @@ function convertHistoryLastTransaction (apiTransaction, accounts) {
   const sign = apiTransaction.direction === 'incoming' ? 1 : -1
   const totalAmount = parseMinorAmount(apiTransaction.totalAmount?.amount)
   const invoiceAmount = parseMinorAmount(apiTransaction.currencyAmount?.amount)
+  const historyAmounts = [
+    {
+      instrument: totalInstrument,
+      amount: totalAmount
+    },
+    {
+      instrument: invoiceInstrument,
+      amount: invoiceAmount
+    }
+  ]
+  const accountAmount = historyAmounts.find(item => item.instrument === account.instrument && item.amount !== null)?.amount ?? null
+  const invoice = historyAmounts.find(item => item.instrument !== account.instrument && item.amount !== null)
 
   if (totalAmount === null && invoiceAmount === null) {
     return null
@@ -186,13 +204,13 @@ function convertHistoryLastTransaction (apiTransaction, accounts) {
       {
         id: '',
         account: { id: account.id },
-        invoice: invoiceInstrument !== account.instrument && invoiceAmount !== null
+        invoice: invoice
           ? {
-              instrument: invoiceInstrument,
-              sum: sign * invoiceAmount
+              instrument: invoice.instrument,
+              sum: sign * invoice.amount
             }
           : null,
-        sum: totalInstrument === account.instrument && totalAmount !== null ? sign * totalAmount : null,
+        sum: accountAmount !== null ? sign * accountAmount : null,
         fee: 0
       }
     ],

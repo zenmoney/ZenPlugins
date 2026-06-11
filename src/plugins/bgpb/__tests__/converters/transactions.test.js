@@ -666,7 +666,7 @@ describe('convertLastTransaction', () => {
     })
   }
 
-  it('uses the same movement id for matching statement and history transactions', () => {
+  it('includes orderNumber in history id for matching statement and history transactions', () => {
     const account = {
       id: 'account',
       instrument: 'BYN',
@@ -710,10 +710,12 @@ describe('convertLastTransaction', () => {
       reversal: 0
     }, [account])
 
-    expect(statementTransaction.movements[0].id).toBe(historyTransaction.movements[0].id)
+    expect(statementTransaction.movements[0].id).toContain('auth:185665')
+    expect(historyTransaction.movements[0].id).toContain('order:3289575665:auth:185665')
+    expect(statementTransaction.movements[0].id).not.toBe(historyTransaction.movements[0].id)
   })
 
-  it('keeps movement id stable when matching statement and history text differs', () => {
+  it('keeps order-based history id stable when matching statement and history text differs', () => {
     const account = {
       id: 'account',
       instrument: 'BYN',
@@ -757,7 +759,9 @@ describe('convertLastTransaction', () => {
       reversal: 0
     }, [account])
 
-    expect(statementTransaction.movements[0].id).toBe(historyTransaction.movements[0].id)
+    expect(statementTransaction.movements[0].id).toContain('auth:185665')
+    expect(historyTransaction.movements[0].id).toContain('order:3289575665:auth:185665')
+    expect(statementTransaction.movements[0].id).not.toBe(historyTransaction.movements[0].id)
   })
 
   it('keeps movement id stable when a history operation clears', () => {
