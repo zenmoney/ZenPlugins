@@ -2,6 +2,7 @@ import cheerio from 'cheerio'
 import { flatMap } from 'lodash'
 import { createDateIntervals as commonCreateDateIntervals } from '../../common/dateUtils'
 import { fetch, fetchJson } from '../../common/network'
+import { sanitize } from '../../common/sanitize'
 import { generateRandomString } from '../../common/utils'
 import { parseXml } from '../../common/xmlUtils'
 
@@ -14,6 +15,7 @@ const HISTORY_BASE_PATH = 'history/client/2/1/'
 const HISTORY_CONFIG_ENDPOINT = `${HISTORY_BASE_PATH}getConfig`
 const HISTORY_EXT_OPERATIONS_ENDPOINT = `${HISTORY_BASE_PATH}ext-operations`
 const EXTRA_AUTH_REQUIRED_ERROR = 'Для выполнения действия требуется дополнительная аутентификация'
+const FULL_STATEMENT_REQUESTS_ENABLED = false
 
 const SOU_ADMIN_ENDPOINT = 'sou2/xml_online.admin'
 const SOU_REQUEST_ENDPOINT = 'sou2/xml_online.request'
@@ -47,6 +49,54 @@ function buildSessionXml (sid) {
   return '   <Session IpAddress="10.0.2.15" Prolong="Y" SID="' + sid + '"/>\r\n'
 }
 
+function sanitizeBgpbRequestLogBody (body) {
+  if (typeof body === 'string') {
+    return body
+      .replace(/\bSID="([^"]*)"/gi, (_match, value) => `SID="${sanitize(value, true)}"`)
+      .replace(/(<Parameter\s+Id="(?:Login|Password)"[^>]*>)([^<]*)(<\/Parameter>)/gi, (_match, openTag, value, closeTag) => {
+        return `${openTag}${sanitize(value, true)}${closeTag}`
+      })
+  }
+  if (Array.isArray(body)) {
+    return body.map(sanitizeBgpbRequestLogBody)
+  }
+  if (body && typeof body === 'object') {
+    return Object.fromEntries(Object.entries(body).map(([key, value]) => [
+      key,
+      /^(sid|sessionId)$/i.test(key) ? sanitize(value, true) : sanitizeBgpbRequestLogBody(value)
+    ]))
+  }
+  return body
+}
+
+function mergeSanitizeLogMask (defaults, mask) {
+  if (mask === undefined) {
+    return defaults
+  }
+  if (mask === true || typeof mask === 'function') {
+    return mask
+  }
+  if (mask && typeof mask === 'object') {
+    return {
+      ...defaults,
+      ...mask
+    }
+  }
+  return mask
+}
+
+function withDefaultSanitizeLogMasks (options) {
+  return {
+    ...options,
+    sanitizeRequestLog: mergeSanitizeLogMask({
+      body: sanitizeBgpbRequestLogBody
+    }, options.sanitizeRequestLog),
+    sanitizeResponseLog: mergeSanitizeLogMask({
+      body: sanitizeBgpbRequestLogBody
+    }, options.sanitizeResponseLog)
+  }
+}
+
 function buildMailAttachmentRequest (sid, mailId) {
   return '<BS_Request>\r\n' +
     '   <MailAttachment Id="' + mailId + '" No="0"/>\r\n' +
@@ -71,6 +121,7 @@ async function fetchApi (url, xml, options, predicate = () => true, error = (mes
   const boundaryStart = '--' + boundary + '\r\n'
   const boundaryLast = '--' + boundary + '--\r\n'
 
+  options = withDefaultSanitizeLogMasks(options)
   options.method = options.method ? options.method : 'POST'
   options.headers = {
     'User-Agent': `BGPB mobile/${APP_VERSION} (Android; unknownAndroidSDKbuiltforx86; ${DEVICE_PLATFORM})`,
@@ -107,6 +158,7 @@ async function fetchApi (url, xml, options, predicate = () => true, error = (mes
 }
 
 async function fetchApiJson (url, options, predicate = () => true, error = (message) => console.assert(false, message)) {
+  options = withDefaultSanitizeLogMasks(options)
   const response = await fetchJson(BASE_URL + url, options)
   if (predicate) {
     validateResponse(response, response => predicate(response), error)
@@ -562,6 +614,11 @@ async function fetchCardLastTransactions (sid, account, fromDate, toDate, histor
 
 export async function fetchFullTransactions (sid, account, fromDate, toDate = new Date()) {
   console.log('>>> Загрузка списка транзакций...')
+  if (!FULL_STATEMENT_REQUESTS_ENABLED) {
+    console.log(`>>> Полная выписка для "${account.title}" требует device-bound аутентификацию приложения, пропускаем.`)
+    return []
+  }
+
   toDate = toDate || new Date()
 
   const dates = createDateIntervals(fromDate, toDate)
