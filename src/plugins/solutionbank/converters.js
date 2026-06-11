@@ -1,6 +1,7 @@
 import { MD5 } from 'jshashes'
 import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
 const BANK_TIMEZONE_OFFSET_MS = 3 * 60 * 60 * 1000
+const MERCHANT_ID_PREFIX_LENGTH = 25
 const md5 = new MD5()
 
 export function convertAccount (json) {
@@ -121,7 +122,13 @@ function getMerchantIdValue (value) {
   if (value === undefined || value === null) {
     return ''
   }
-  return String(value).replace(/&quot;/g, '"').replace(/\s+/g, ' ').trim().toUpperCase()
+  return String(value)
+    .replace(/&quot;/g, '"')
+    .replace(/"/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toUpperCase()
+    .slice(0, MERCHANT_ID_PREFIX_LENGTH)
 }
 
 function getIdValue (value) {

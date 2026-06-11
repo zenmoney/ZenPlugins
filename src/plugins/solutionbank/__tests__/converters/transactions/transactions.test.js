@@ -160,6 +160,90 @@ describe('convertTransaction', () => {
     expect(hold.movements[0].id).toMatch(/^[a-f0-9]{32}$/)
   })
 
+  it('keeps same id when one merchant has a trailing quote trimmed by the bank', () => {
+    const hold = {
+      account_id: 'mock-account-001',
+      accountCurrencyCode: '933',
+      transactionDate: new Date('2026-06-11T10:12:00+03:00'),
+      transactionName: '*Оплата* Безналичная операция',
+      transactionCurrencyCode: '933',
+      transactionAmount: -37.36,
+      merchant: 'APTEKA N1 OOO &quot;FARMPROEKT&quot;',
+      hold: true
+    }
+    const postedOperation = {
+      id: '453991',
+      account_id: 'mock-account-001',
+      operationName: 'Оплата товаров (услуг)',
+      operationDate: new Date('2026-06-12T10:12:00+03:00'),
+      operationCurrencyCode: '933',
+      operationAmount: -37.36,
+      transactionDate: new Date('2026-06-11T00:00:00+03:00'),
+      transactionAmount: -37.36,
+      transactionCurrencyCode: '933',
+      merchant: 'APTEKA N1 OOO "FARMPROEKT',
+      hold: false
+    }
+    const merged = merge([hold], [postedOperation])
+
+    expect(merged).toHaveLength(1)
+    expect(merged[0].hold).toEqual(false)
+    expect(convertTransaction(hold).movements[0].id).toEqual(convertTransaction(postedOperation).movements[0].id)
+  })
+
+  it('keeps same id when one merchant has a short extra suffix after the bank prefix', () => {
+    const hold = {
+      account_id: 'mock-account-001',
+      accountCurrencyCode: '933',
+      transactionDate: new Date('2026-06-11T11:23:00+03:00'),
+      transactionName: '*Оплата* Безналичная операция',
+      transactionCurrencyCode: '933',
+      transactionAmount: -17.52,
+      merchant: 'APTEKA PYaTOI KATEGORII V S',
+      hold: true
+    }
+    const postedOperation = {
+      id: '453992',
+      account_id: 'mock-account-001',
+      operationName: 'Оплата товаров (услуг)',
+      operationDate: new Date('2026-06-12T11:23:00+03:00'),
+      operationCurrencyCode: '933',
+      operationAmount: -17.52,
+      transactionDate: new Date('2026-06-11T00:00:00+03:00'),
+      transactionAmount: -17.52,
+      transactionCurrencyCode: '933',
+      merchant: 'APTEKA PYaTOI KATEGORII V',
+      hold: false
+    }
+    const merged = merge([hold], [postedOperation])
+
+    expect(merged).toHaveLength(1)
+    expect(merged[0].hold).toEqual(false)
+    expect(convertTransaction(hold).movements[0].id).toEqual(convertTransaction(postedOperation).movements[0].id)
+  })
+
+  it('does not merge similar merchants with different amounts', () => {
+    const firstHold = {
+      account_id: 'mock-account-001',
+      accountCurrencyCode: '933',
+      transactionDate: new Date('2026-06-11T11:23:00+03:00'),
+      transactionName: '*Оплата* Безналичная операция',
+      transactionCurrencyCode: '933',
+      transactionAmount: -2.79,
+      merchant: 'MAGAZIN EUROOPT PRIME',
+      hold: true
+    }
+    const secondHold = {
+      ...firstHold,
+      transactionDate: new Date('2026-06-11T11:24:00+03:00'),
+      transactionAmount: -31.37
+    }
+    const transactions = merge([firstHold, secondHold], []).map(transaction => convertTransaction(transaction))
+
+    expect(transactions).toHaveLength(2)
+    expect(transactions[0].movements[0].id).not.toEqual(transactions[1].movements[0].id)
+  })
+
   it('distinguishes repeated holds with same identity', () => {
     const firstHold = {
       account_id: 'mock-account-001',
