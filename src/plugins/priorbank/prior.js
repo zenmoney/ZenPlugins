@@ -55,11 +55,7 @@ export async function getSalt ({ authAccessToken, clientSecret, login }) {
   })
   assertResponseSuccess(response)
 
-  const salt = response.body.result && response.body.result.salt
-  if (!salt) {
-    throw new BankMessageError('GetSalt: salt value not returned by server')
-  }
-  return salt
+  return response.body.result.salt
 }
 
 export const calculatePasswordHash = ({ loginSalt, password }) => {
