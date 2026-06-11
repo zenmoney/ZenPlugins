@@ -332,6 +332,51 @@ describe('filterDuplicates', () => {
     [
       [
         {
+          sourceSystem: 3,
+          eventId: '823438120',
+          contractId: '20301567',
+          contractCurrency: '933',
+          cardPAN: '911238******4370',
+          cardId: 'income-card',
+          eventDate: 1780994156000,
+          transactionType: -1,
+          transactionCode: '5337531',
+          transactionName: 'Пополнение карточки 8190063001187',
+          transactionSum: 20,
+          transactionCurrency: '933',
+          rnnCode: '616017694649',
+          authorizationCode: '906281',
+          eventStatus: 0,
+          payAvailable: false
+        }
+      ],
+      {
+        20301567: {
+          id: 'card-4370',
+          instrument: 'BYN'
+        }
+      },
+      [
+        {
+          hold: true,
+          date: new Date(1780994156000),
+          movements: [
+            {
+              id: '823438120',
+              account: { id: 'card-4370' },
+              invoice: null,
+              sum: -20,
+              fee: 0
+            }
+          ],
+          merchant: null,
+          comment: 'Пополнение карточки 8190063001187'
+        }
+      ]
+    ],
+    [
+      [
+        {
           sourceSystem: 8,
           eventId: '-696460788586#7#25',
           contractId: '20301567',
