@@ -1,5 +1,4 @@
 import { convertTransactions } from '../../../converters'
-import { transactionApiSource } from '../../../models'
 
 describe('filterDuplicates', () => {
   it.each([
@@ -333,28 +332,6 @@ describe('filterDuplicates', () => {
     [
       [
         {
-          apiSource: transactionApiSource.holdEvents,
-          sourceSystem: 4,
-          eventId: '9062812000616071171966',
-          contractId: '20301567',
-          cardPAN: '911238******4370',
-          cardId: 'income-card',
-          eventDate: 1780994155000,
-          transactionCode: '01000R',
-          transactionName: 'SOU Sber Bank > Minsk BLR Терминал: WWL90018 RRN:616071171966 AuthCode:906281',
-          merchantId: '0822061',
-          merchantPlace: 'SOU Sber Bank > Minsk BLR',
-          transactionSum: -20,
-          transactionCurrency: '933',
-          commissionSum: 0,
-          commissionCurrency: '933',
-          rnnCode: '616071171966',
-          authorizationCode: '906281',
-          eventStatus: 0,
-          payAvailable: false
-        },
-        {
-          apiSource: transactionApiSource.events,
           sourceSystem: 3,
           eventId: '823438120',
           contractId: '20301567',

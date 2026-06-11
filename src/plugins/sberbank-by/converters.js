@@ -2,9 +2,6 @@ import { keyBy, sortBy } from 'lodash'
 import codeToCurrency from '../../common/codeToCurrencyLookup'
 import { toISODateString } from '../../common/dateUtils'
 import { getIntervalBetweenDates } from '../../common/momentDateUtils'
-import { transactionApiSource } from './models'
-
-const CROSS_ENDPOINT_MATCH_INTERVAL_MS = 5 * 60 * 1000
 
 function convertProduct (card) {
   return {
@@ -137,69 +134,7 @@ function getApiTransactionDedupKey (apiTransaction) {
   ].join('_')
 }
 
-function getApiTransactionSignedSum (apiTransaction) {
-  return apiTransaction.transactionType
-    ? apiTransaction.transactionType * apiTransaction.transactionSum
-    : apiTransaction.transactionSum
-}
-
-function getApiTransactionCardKey (apiTransaction) {
-  return apiTransaction.cardId || apiTransaction.cardPAN || ''
-}
-
-function getApiTransactionSourcePriority (apiTransaction) {
-  switch (apiTransaction.apiSource) {
-    case transactionApiSource.events:
-      return 2
-    case transactionApiSource.holdEvents:
-      return 1
-    default:
-      return 0
-  }
-}
-
-function getApiTransactionCrossEndpointDedupKey (apiTransaction) {
-  const { authorizationCode } = getApiTransactionReferenceCodes(apiTransaction)
-  const cardKey = getApiTransactionCardKey(apiTransaction)
-  if (!authorizationCode || !cardKey || !apiTransaction.apiSource) {
-    return null
-  }
-  return [
-    apiTransaction.contractId,
-    cardKey,
-    toISODateString(new Date(apiTransaction.eventDate)),
-    getApiTransactionSignedSum(apiTransaction),
-    apiTransaction.transactionCurrency || '',
-    authorizationCode
-  ].join('_')
-}
-
-function arePotentialCrossEndpointDuplicates (currentTransaction, nextTransaction) {
-  if (!currentTransaction.apiSource || !nextTransaction.apiSource || currentTransaction.apiSource === nextTransaction.apiSource) {
-    return false
-  }
-  const currentKey = getApiTransactionCrossEndpointDedupKey(currentTransaction)
-  if (!currentKey || currentKey !== getApiTransactionCrossEndpointDedupKey(nextTransaction)) {
-    return false
-  }
-  return Math.abs(currentTransaction.eventDate - nextTransaction.eventDate) <= CROSS_ENDPOINT_MATCH_INTERVAL_MS
-}
-
-function findCrossEndpointApiTransactionIndex (uniqueTransactions, apiTransaction) {
-  for (let i = uniqueTransactions.length - 1; i >= 0; i--) {
-    if (arePotentialCrossEndpointDuplicates(uniqueTransactions[i], apiTransaction)) {
-      return i
-    }
-  }
-  return undefined
-}
-
 function shouldReplaceApiTransaction (currentTransaction, nextTransaction) {
-  const currentSourcePriority = getApiTransactionSourcePriority(currentTransaction)
-  const nextSourcePriority = getApiTransactionSourcePriority(nextTransaction)
-  if (currentSourcePriority !== nextSourcePriority) {
-    return nextSourcePriority > currentSourcePriority
-  }
   if (currentTransaction.eventStatus === 0 && nextTransaction.eventStatus !== 0) {
     return true
   }
@@ -216,14 +151,6 @@ function deduplicateApiTransactions (apiTransactions) {
     const key = getApiTransactionDedupKey(apiTransaction)
     const index = transactionIndexesByKey[key]
     if (index === undefined) {
-      const crossEndpointIndex = findCrossEndpointApiTransactionIndex(uniqueTransactions, apiTransaction)
-      if (crossEndpointIndex !== undefined) {
-        if (shouldReplaceApiTransaction(uniqueTransactions[crossEndpointIndex], apiTransaction)) {
-          uniqueTransactions[crossEndpointIndex] = apiTransaction
-          transactionIndexesByKey[key] = crossEndpointIndex
-        }
-        continue
-      }
       transactionIndexesByKey[key] = uniqueTransactions.length
       uniqueTransactions.push(apiTransaction)
       continue

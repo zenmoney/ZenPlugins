@@ -6,7 +6,6 @@ import { toISODateString } from '../../common/dateUtils'
 import { fetchJson } from '../../common/network'
 import { generateUUID } from '../../common/utils'
 import { BankMessageError, InvalidLoginOrPasswordError, InvalidOtpCodeError, TemporaryUnavailableError } from '../../errors'
-import { transactionApiSource } from './models'
 
 const host = 'www.sber-bank.by'
 const defaultKeyValueSeparator = ':'
@@ -289,10 +288,6 @@ export function updateAccountBalance (account, response) {
   account.overdraftLimit = response.body.overdraft
 }
 
-function markTransactionApiSource (apiTransaction, apiSource) {
-  return { ...apiTransaction, apiSource }
-}
-
 export async function fetchTransactions (auth, products, fromDate, toDate, contractNumber = []) {
   const transactions = []
   const options = {
@@ -305,23 +300,7 @@ export async function fetchTransactions (auth, products, fromDate, toDate, contr
     device: auth.device,
     stringify: JSON.stringify
   }
-  let response
-  await Promise.all(products.map(async (product) => {
-    response = await callGate(`https://${host}/SBOLServer/rest/client/holdEvents`, {
-      ...options,
-      body: {
-        cardId: product.id
-      }
-    })
-    if (response.body.error === 'invalid_token') {
-      throw new AuthError()
-    }
-    if (response.body.event) {
-      transactions.push(...response.body.event.map(event => markTransactionApiSource(event, transactionApiSource.holdEvents)))
-    }
-  }))
-
-  response = await callGate(`https://${host}/SBOLServer/rest/client/events`, {
+  const response = await callGate(`https://${host}/SBOLServer/rest/client/events`, {
     ...options,
     body: {
       contractNumber,
@@ -333,7 +312,7 @@ export async function fetchTransactions (auth, products, fromDate, toDate, contr
     throw new AuthError()
   }
   if (response.body.event) {
-    transactions.push(...response.body.event.map(event => markTransactionApiSource(event, transactionApiSource.events)))
+    transactions.push(...response.body.event)
     return transactions
   }
   console.assert(false, 'Error fetching transactions,', response)
