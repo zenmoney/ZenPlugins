@@ -1,10 +1,11 @@
 import { Jimp } from 'jimp'
 import { delay, generateRandomString } from '../../common/utils'
-import { InvalidLoginOrPasswordError } from '../../errors'
+import { InvalidLoginOrPasswordError, TemporaryError } from '../../errors'
 import {
   authByPhoneNumber,
   authByPassword,
   verifySmsCode,
+  refreshToken,
   myIdIdentify,
   myIdVerifyResult,
   getCards,
@@ -14,11 +15,6 @@ import {
 } from './api'
 
 export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
-  const photoFromCamera = await ZenMoney.takePicture('jpeg')
-  console.log(typeof photoFromCamera)
-  console.log(photoFromCamera)
-  await blobToBase64WithResolution(photoFromCamera, 480, 640)
-  console.log('toBase64 complete')
   // FIRST RUN STEPS
   if (isFirstRun) {
     const deviceId = generateRandomString(16)
@@ -47,7 +43,11 @@ export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
   try {
     return await doScrape(fromDate, toDate)
   } catch {
-    await updateToken(preferences.phone, preferences.password, preferences.isResident, preferences.pinfl, preferences.bday)
+    try {
+      await refreshToken()
+    } catch {
+      await updateToken(preferences.phone, preferences.password, preferences.isResident, preferences.pinfl, preferences.bday)
+    }
     return await doScrape(fromDate, toDate)
   }
 }
@@ -83,7 +83,7 @@ async function updateToken (phone, password, isResident, pinfl, birthDate) {
       const smsCode = await ZenMoney.readLine('Введите код из СМС сообщения')
       await verifySmsCode(verificationCode, smsCode)
     } else {
-      throw new TemporaryError('Problems with identification')
+      throw e
     }
   }
 }
@@ -91,7 +91,7 @@ async function updateToken (phone, password, isResident, pinfl, birthDate) {
 async function completeIdentificationOrThrow (isResident, pinfl, birthDate) {
   const photoFromCamera = await ZenMoney.takePicture('jpeg')
   const base64Image = await blobToBase64WithResolution(photoFromCamera, 480, 640)
-  const jobId = await myIdIdentify(isResident, pinfl, birthDate, base64Image)
+  const jobId = await myIdIdentify(isResident === 'true' || isResident === true, pinfl, birthDate, base64Image)
   await delay(2000)
   let verifyResult = await myIdVerifyResult(jobId)
   if (!verifyResult.success) {
