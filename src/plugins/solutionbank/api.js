@@ -377,7 +377,10 @@ export async function fetchOperations (sessionToken, accounts, fromDate, toDate)
   })
 
   const filteredOperations = operations.filter(function (op) {
-    return op !== undefined && op.operationAmount !== 0
+    return op !== undefined &&
+      op.transactionDate >= fromDate &&
+      op.transactionDate <= toDate &&
+      op.operationAmount !== 0
   })
 
   console.log(`>>> Загружено ${filteredOperations.length} операций.`)

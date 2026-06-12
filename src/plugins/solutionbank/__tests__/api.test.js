@@ -374,6 +374,77 @@ describe('fetchOperations', () => {
     ])
   })
 
+  it('filters full statement operations by requested transaction date range', async () => {
+    const fromDate = new Date('2026-05-10T00:00:00.000+03:00')
+    const toDate = new Date('2026-05-20T23:59:59.000+03:00')
+    const account = {
+      id: 'account-id',
+      internalAccountId: 'internal-account-id',
+      accountType: '1',
+      bankCode: '288',
+      cardHash: 'card-hash',
+      instrumentCode: '933',
+      rkcCode: '004'
+    }
+
+    fetchMock.once({
+      method: 'POST',
+      matcher: baseUrl + 'products/getCardAccountFullStatement',
+      response: {
+        status: 200,
+        body: {
+          operations: [
+            {
+              operationName: 'Покупка товаров и услуг',
+              transactionAuthCode: 'before-range',
+              transactionDate: new Date('2026-05-12T12:00:00.000+03:00').getTime(),
+              operationDate: new Date('2026-05-09T12:00:00.000+03:00').getTime(),
+              transactionAmount: 10,
+              transactionCurrency: '933',
+              operationAmount: 10,
+              operationCurrency: '933',
+              operationPlace: 'SHOP BEFORE',
+              operationSign: '-1'
+            },
+            {
+              operationName: 'Покупка товаров и услуг',
+              transactionAuthCode: 'inside-range',
+              transactionDate: new Date('2026-05-15T12:00:00.000+03:00').getTime(),
+              operationDate: new Date('2026-05-15T12:00:00.000+03:00').getTime(),
+              transactionAmount: 20,
+              transactionCurrency: '933',
+              operationAmount: 20,
+              operationCurrency: '933',
+              operationPlace: 'SHOP INSIDE',
+              operationSign: '-1'
+            },
+            {
+              operationName: 'Покупка товаров и услуг',
+              transactionAuthCode: 'after-range',
+              transactionDate: new Date('2026-05-18T12:00:00.000+03:00').getTime(),
+              operationDate: new Date('2026-05-21T12:00:00.000+03:00').getTime(),
+              transactionAmount: 30,
+              transactionCurrency: '933',
+              operationAmount: 30,
+              operationCurrency: '933',
+              operationPlace: 'SHOP AFTER',
+              operationSign: '-1'
+            }
+          ]
+        }
+      }
+    })
+
+    await expect(fetchOperations(sessionToken, [account], fromDate, toDate)).resolves.toEqual([
+      expect.objectContaining({
+        id: 'inside-range',
+        transactionDate: new Date('2026-05-15T12:00:00.000+03:00'),
+        transactionAmount: -20,
+        merchant: 'SHOP INSIDE'
+      })
+    ])
+  })
+
   it('loads shared card account statement once and assigns operations by card PAN', async () => {
     let statementRequests = 0
     const fromDate = new Date('2026-05-01T00:00:00.000+03:00')
