@@ -1,15 +1,19 @@
 import { AccountOrCard } from '../../types/zenmoney'
 
-// Persisted between syncs (currently unused — bank refresh-token requires
-// device-bound material that we cannot reproduce, so we re-auth via SMS each sync).
+// Persisted between syncs.
 export interface Auth {
+  // Stable per-install device id sent in the `getuniqueid` header on every request.
+  deviceId: string
+  // Long-lived refresh JWT (~6 months). Used to obtain a fresh access token
+  // without re-running the SMS login flow.
   refresh?: string
 }
 
-// Active session, populated on each sync
+// Active session, populated on each sync.
 export interface Session {
   token: string
   refresh: string
+  // Epoch seconds when the access token expires (taken from JWT `exp`).
   expiresAt: number
 }
 
@@ -20,7 +24,7 @@ export interface Preferences {
 }
 
 export interface Product {
-  // numeric account id used by the operations endpoints
+  // Numeric account id used by the operations endpoints.
   id: number
   // Cifra Bank's subtype: CARD / CURRENT / etc. Selects the operations endpoint.
   subtype: string

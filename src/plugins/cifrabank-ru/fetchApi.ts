@@ -10,13 +10,24 @@ const MOBILE_HOST = 'https://mo.ffinpay.ru'
 const APP_VERSION = '9.3.0'
 const APP_USER_AGENT = 'okhttp/5.3.2'
 
-function defaultHeaders (session?: Session): Record<string, string> {
-  const headers: Record<string, string> = {
+// The bank's authentication backend rejects requests that lack these mobile-app
+// markers, so we replicate the set the official client sends on every call.
+function appHeaders (deviceId: string): Record<string, string> {
+  return {
     Accept: 'application/json, text/plain, */*',
-    'Content-Type': 'application/json; charset=UTF-8',
     'User-Agent': APP_USER_AGENT,
-    'X-App-Version': APP_VERSION,
-    'X-Platform': 'android'
+    channel: 'mapi',
+    'x-version': APP_VERSION,
+    mobileos: 'Android',
+    getuniqueid: deviceId,
+    pushisenable: 'false'
+  }
+}
+
+function defaultHeaders (deviceId: string, session?: Session): Record<string, string> {
+  const headers: Record<string, string> = {
+    ...appHeaders(deviceId),
+    'Content-Type': 'application/json; charset=UTF-8'
   }
   if (session != null) {
     headers.Authorization = `Bearer ${session.token}`
@@ -24,17 +35,22 @@ function defaultHeaders (session?: Session): Record<string, string> {
   return headers
 }
 
-async function callJson (url: string, options: FetchOptions, session?: Session): Promise<FetchResponse> {
+async function callJson (
+  url: string,
+  options: FetchOptions,
+  deviceId: string,
+  session?: Session
+): Promise<FetchResponse> {
   return await fetchJson(url, {
     ...options,
     headers: {
-      ...defaultHeaders(session),
+      ...defaultHeaders(deviceId, session),
       ...(typeof options.headers === 'object' && options.headers !== null ? options.headers : {})
     }
   })
 }
 
-export async function fetchPassRequest (phone: string, cardNumber: string): Promise<number> {
+export async function fetchPassRequest (deviceId: string, phone: string, cardNumber: string): Promise<number> {
   // The bank expects sha256 of the raw card number (no spaces) as the answer to the CARD_NUMBER security question.
   const secAnswer = forge.md.sha256.create().update(cardNumber.replace(/\D/g, ''), 'utf8').digest().toHex()
   const response = await callJson(`${AUTH_HOST}/ncs-mobile/rest/v2/auth/pass-request`, {
@@ -46,7 +62,7 @@ export async function fetchPassRequest (phone: string, cardNumber: string): Prom
       secAnswer
     },
     sanitizeRequestLog: { body: { userId: true, secAnswer: true } }
-  })
+  }, deviceId)
   if (response.status !== 200 || !getBoolean(response.body, 'success')) {
     throw new InvalidLoginOrPasswordError('Не удалось начать вход в Цифра Банк. Проверьте номер телефона и номер карты.')
   }
@@ -54,6 +70,7 @@ export async function fetchPassRequest (phone: string, cardNumber: string): Prom
 }
 
 export async function fetchLogonWithSmsCode (
+  deviceId: string,
   phone: string,
   passRequestId: number,
   smsCode: string
@@ -70,7 +87,7 @@ export async function fetchLogonWithSmsCode (
     },
     sanitizeRequestLog: { body: { userId: true, password: true } },
     sanitizeResponseLog: { body: { token: true, refresh: true } }
-  })
+  }, deviceId)
   if (response.status !== 200 || getOptString(response.body, 'status') !== 'SUCCESS') {
     throw new InvalidLoginOrPasswordError('Не удалось войти: неверный SMS-код или истёк срок ожидания.')
   }
@@ -80,10 +97,28 @@ export async function fetchLogonWithSmsCode (
   }
 }
 
-export async function fetchAccounts (session: Session): Promise<unknown[]> {
+// The endpoint trades a refresh JWT for a fresh access JWT. The refresh token itself
+// stays valid (its TTL is months long, the access token lives ~3 minutes).
+export async function fetchRefreshToken (deviceId: string, refresh: string): Promise<string | null> {
+  const response = await fetchJson(`${AUTH_HOST}/ncs-mobile/rest/v2/auth/refresh-token`, {
+    method: 'GET',
+    headers: {
+      ...appHeaders(deviceId),
+      Authorization: `Bearer ${refresh}`
+    },
+    sanitizeRequestLog: { headers: { Authorization: true } },
+    sanitizeResponseLog: { body: { token: true } }
+  })
+  if (response.status !== 200 || getOptString(response.body, 'status') !== 'SUCCESS') {
+    return null
+  }
+  return getOptString(response.body, 'token') ?? null
+}
+
+export async function fetchAccounts (session: Session, deviceId: string): Promise<unknown[]> {
   const response = await callJson(`${MOBILE_HOST}/ncs-mobile/rest/v1/accounts`, {
     method: 'GET'
-  }, session)
+  }, deviceId, session)
   if (response.status === 401) {
     throw new SessionExpiredError()
   }
@@ -93,26 +128,39 @@ export async function fetchAccounts (session: Session): Promise<unknown[]> {
   return Array.isArray(response.body) ? response.body : []
 }
 
+export async function fetchRelatedCards (session: Session, deviceId: string): Promise<unknown[]> {
+  const response = await callJson(`${MOBILE_HOST}/ncs-mobile/rest/v1/cards/related`, {
+    method: 'GET'
+  }, deviceId, session)
+  if (response.status !== 200) {
+    return []
+  }
+  return Array.isArray(response.body) ? response.body : []
+}
+
 export async function fetchCardOperations (
   session: Session,
+  deviceId: string,
   accountId: number,
   fromDate: Date,
   toDate: Date
 ): Promise<unknown[]> {
-  return await fetchOperations(session, '/ncs-mobile/rest/v1/card/sca-operations/', accountId, fromDate, toDate)
+  return await fetchOperations(session, deviceId, '/ncs-mobile/rest/v1/card/sca-operations/', accountId, fromDate, toDate)
 }
 
 export async function fetchAccountStatement (
   session: Session,
+  deviceId: string,
   accountId: number,
   fromDate: Date,
   toDate: Date
 ): Promise<unknown[]> {
-  return await fetchOperations(session, '/ncs-mobile/rest/v1/accounts/statement/', accountId, fromDate, toDate)
+  return await fetchOperations(session, deviceId, '/ncs-mobile/rest/v1/accounts/statement/', accountId, fromDate, toDate)
 }
 
 async function fetchOperations (
   session: Session,
+  deviceId: string,
   path: string,
   accountId: number,
   fromDate: Date,
@@ -126,7 +174,7 @@ async function fetchOperations (
   ].join('&')
   const response = await callJson(`${MOBILE_HOST}${path}?${params}`, {
     method: 'GET'
-  }, session)
+  }, deviceId, session)
   if (response.status === 401) {
     throw new SessionExpiredError()
   }
