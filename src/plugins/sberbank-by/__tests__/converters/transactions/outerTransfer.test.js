@@ -339,18 +339,6 @@ describe('convertTransaction', () => {
             invoice: null,
             sum: 110,
             fee: 0
-          },
-          {
-            id: null,
-            account: {
-              type: 'ccard',
-              instrument: 'BYN',
-              company: null,
-              syncIds: ['1474']
-            },
-            invoice: null,
-            sum: -110,
-            fee: 0
           }
         ],
         merchant: null,
@@ -407,18 +395,6 @@ describe('convertTransaction', () => {
             account: { id: 'account' },
             invoice: null,
             sum: 79,
-            fee: 0
-          },
-          {
-            id: null,
-            account: {
-              type: 'ccard',
-              instrument: 'BYN',
-              company: null,
-              syncIds: ['6492']
-            },
-            invoice: null,
-            sum: -79,
             fee: 0
           }
         ],

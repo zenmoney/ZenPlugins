@@ -1,14 +1,23 @@
 import cheerio from 'cheerio'
 import { defaultsDeep, flatMap } from 'lodash'
+import { createDateIntervals as commonCreateDateIntervals } from '../../common/dateUtils'
 import { fetchJson } from '../../common/network'
-import { generateRandomString } from '../../common/utils'
+import { generateRandomString, generateUUID } from '../../common/utils'
 import { parseXml } from '../../common/xmlUtils'
-import { BankMessageError, InvalidOtpCodeError } from '../../errors'
+import { BankMessageError, InvalidOtpCodeError, InvalidPreferencesError, TemporaryError } from '../../errors'
 import { getDate } from './converters'
 
 // transaction - операция прошедшая по карте, operation - операция по счёту
 
-const baseUrl = 'https://mbank2.rbank.by/services/v2/'
+const baseUrl = 'https://mbank.rbank.by/services/v2/'
+const appVersion = '1.59.2'
+const androidDeviceProfile = {
+  browser: 'OP516FL1',
+  browserVersion: 'NE2211 (NE2211)',
+  platform: 'Android',
+  platformVersion: '11'
+}
+const statementIntervalMs = 31 * 24 * 60 * 60 * 1000
 
 function generateDeviceID () {
   return generateRandomString(16)
@@ -18,13 +27,31 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
   options = defaultsDeep(
     options,
     {
-      sanitizeRequestLog: { headers: { session_token: true } }
+      sanitizeRequestLog: {
+        headers: {
+          session_token: true,
+          _ac0: true,
+          _ac1: true
+        },
+        body: {
+          login: true,
+          password: true,
+          deviceUDID: true,
+          confirmationData: true,
+          pushId: true
+        }
+      },
+      sanitizeResponseLog: {
+        body: {
+          sessionToken: true
+        }
+      }
     }
   )
   const response = await fetchJson(baseUrl + url, options)
 
   if (predicate) {
-    validateResponse(response, response => predicate(response), error)
+    validateResponse(response, predicate, error)
   }
 
   return response
@@ -32,8 +59,135 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
 
 function validateResponse (response, predicate, error = (message) => console.assert(false, message)) {
   if (!predicate || !predicate(response)) {
-    error('non-successful response')
+    const validationError = error('non-successful response')
+    if (validationError) {
+      throw validationError
+    }
+    throw new TemporaryError('non-successful response')
   }
+}
+
+function getDataOrCreate (key, createValue) {
+  let value = ZenMoney.getData(key)
+  if (!value) {
+    value = createValue()
+    ZenMoney.setData(key, value)
+  }
+  return value
+}
+
+function getDeviceID () {
+  return getDataOrCreate('device_id', generateDeviceID)
+}
+
+function getAntiFraudID () {
+  return getDataOrCreate('anti_fraud_id', generateUUID)
+}
+
+function getAntiFraudSessionID () {
+  return getDataOrCreate('anti_fraud_session_id', generateUUID)
+}
+
+function getPushID () {
+  return ZenMoney.getData('push_id') || ''
+}
+
+function getHeaders (sessionToken = null) {
+  return {
+    language: 'ru',
+    _ac1: getAntiFraudID(),
+    ...(sessionToken && {
+      session_token: sessionToken,
+      _ac0: getAntiFraudSessionID()
+    })
+  }
+}
+
+export function createDateIntervals (fromDate, toDate) {
+  return commonCreateDateIntervals({
+    fromDate,
+    toDate,
+    addIntervalToDate: date => new Date(date.getTime() + statementIntervalMs - 1),
+    gapMs: 1
+  })
+}
+
+function expandCardAccounts (cardAccounts) {
+  return flatMap(cardAccounts, cardAccount => {
+    return (cardAccount.cards || []).map(card => ({
+      ...cardAccount,
+      balance: getOverviewBalance(cardAccount, card),
+      cardHash: card.cardHash,
+      cards: [card]
+    }))
+  })
+}
+
+function getOverviewBalance (cardAccount, card) {
+  return card.balance ?? card.availableAmount ?? card.balanceAmount ??
+    cardAccount.balance ?? cardAccount.availableAmount ?? cardAccount.balanceAmount ?? 0
+}
+
+async function fetchCardBalance (sessionToken, cardAccount) {
+  const card = cardAccount.cards[0]
+  const balanceRes = await fetchApiJson('payment/simpleExcute', {
+    method: 'POST',
+    headers: getHeaders(sessionToken),
+    body: {
+      komplatRequests: [
+        {
+          request: '<BS_Request>' +
+            '<Version>@{version}</Version>' +
+            '<RequestType>Balance</RequestType>' +
+            '<ClientId IdType="MS">#{' + card.cardHash + '@[card_number]}</ClientId>' +
+            '<AuthClientId IdType="MS">#{' + card.cardHash + '@[card_number]}</AuthClientId>' +
+            '<TerminalTime>@{pay_date}</TerminalTime>' +
+            '<TerminalId>@{terminal_id_mb}</TerminalId>' +
+            '<TerminalCapabilities>' +
+            '<BooleanParameter>Y</BooleanParameter>' +
+            '<LongParameter>Y</LongParameter>' +
+            '<AnyAmount>Y</AnyAmount>' +
+            '<ScreenWidth>99</ScreenWidth>' +
+            '<CheckWidth DoubleHeightSymbol="Y" DoubleWidthSymbol="N" InverseSymbol="Y">40</CheckWidth>' +
+            '</TerminalCapabilities>' +
+            '<Balance Currency="' + card.currency + '">' +
+            '<AuthorizationDetails Count="1">' +
+            '<Parameter Idx="1" Name="Срок действия карточки">#{' + card.cardHash + '@[card_expire]}</Parameter>' +
+            '</AuthorizationDetails>' +
+            '</Balance></BS_Request>'
+        }
+      ]
+    }
+  })
+  const balanceXml = parseXml(balanceRes.body.komplatResponse[0].response)
+  return balanceXml.BS_Response.Balance.Amount
+}
+
+function getStatementAccountId (account) {
+  return account.internalAccountId || account.cardAccountNumber || account.id
+}
+
+function getUniqueStatementAccounts (accounts) {
+  const ids = new Set()
+  return accounts.filter(account => {
+    const id = getStatementAccountId(account)
+    if (ids.has(id)) {
+      return false
+    }
+    ids.add(id)
+    return true
+  })
+}
+
+function findOperationAccount (operation, statementAccount, accounts) {
+  const cardLast4 = operation.cardPAN ? String(operation.cardPAN).slice(-4) : null
+  if (!cardLast4) {
+    return statementAccount
+  }
+  return accounts.find(account => {
+    return getStatementAccountId(account) === getStatementAccountId(statementAccount) &&
+      (account.cardLast4 === cardLast4 || (account.syncID || []).includes(cardLast4))
+  }) || statementAccount
 }
 
 export async function login (login, password) {
@@ -62,36 +216,32 @@ export async function login (login, password) {
 }
 
 async function loginReq (login, password, smsCode) {
-  const deviceID = ZenMoney.getData('device_id') ? ZenMoney.getData('device_id') : generateDeviceID()
-  ZenMoney.setData('device_id', deviceID)
-
   const body = {
-    applicID: '1.57.0',
-    browser: 'iPhone',
-    browserVersion: 'Unknown Device',
-    clientKind: '1',
-    deviceUDID: deviceID,
+    applicID: appVersion,
+    ...androidDeviceProfile,
+    clientKind: '0',
+    deviceUDID: getDeviceID(),
     login,
     password,
-    platform: 'iOS',
-    platformVersion: '15.0.2'
+    pushId: getPushID()
   }
-  if (smsCode !== '') {
+  if (smsCode) {
     body.confirmationData = smsCode
   }
   return fetchApiJson('session/login', {
     method: 'POST',
+    headers: getHeaders(),
     body,
-    sanitizeRequestLog: { body: { login: true, password: true, deviceUDID: true, confirmationData: true } },
+    sanitizeRequestLog: { body: { login: true, password: true, deviceUDID: true, confirmationData: true, pushId: true } },
     sanitizeResponseLog: { body: { sessionToken: true } }
-  }, response => response.success, message => new InvalidPreferencesError('bad request'))
+  }, response => response.body && response.body.errorInfo, message => new InvalidPreferencesError('bad request'))
 }
 
 export async function fetchAccounts (sessionToken) {
   console.log('>>> Загрузка списка счетов...')
-  const cardAccounts = (await fetchApiJson('products/getUserAccountsOverview', {
+  const cardAccounts = expandCardAccounts((await fetchApiJson('products/getUserAccountsOverview', {
     method: 'POST',
-    headers: { session_token: sessionToken },
+    headers: getHeaders(sessionToken),
     body: {
       cardAccount: {
         withBalance: 'null'
@@ -101,40 +251,10 @@ export async function fetchAccounts (sessionToken) {
       depositAccount: {}
     }
   }, response => response.body && response.body.overviewResponse && response.body.overviewResponse.cardAccount,
-  message => new TemporaryError(message))).body.overviewResponse.cardAccount.filter(cardAccount => cardAccount.cards)
+  message => new TemporaryError(message))).body.overviewResponse.cardAccount)
 
-  for (let i = 0; i < cardAccounts.length; i++) {
-    const balanceRes = await fetchApiJson('payment/simpleExcute', {
-      method: 'POST',
-      headers: { session_token: sessionToken },
-      body: {
-        komplatRequests: [
-          {
-            request: '<BS_Request>' +
-              '<Version>@{version}</Version>' +
-              '<RequestType>Balance</RequestType>' +
-              '<ClientId IdType="MS">#{' + cardAccounts[i].cards[0].cardHash + '@[card_number]}</ClientId>' +
-              '<AuthClientId IdType="MS">#{' + cardAccounts[i].cards[0].cardHash + '@[card_number]}</AuthClientId>' +
-              '<TerminalTime>@{pay_date}</TerminalTime>' +
-              '<TerminalId>@{terminal_id_mb}</TerminalId>' +
-              '<TerminalCapabilities>' +
-              '<BooleanParameter>Y</BooleanParameter>' +
-              '<LongParameter>Y</LongParameter>' +
-              '<AnyAmount>Y</AnyAmount>' +
-              '<ScreenWidth>99</ScreenWidth>' +
-              '<CheckWidth DoubleHeightSymbol="Y" DoubleWidthSymbol="N" InverseSymbol="Y">40</CheckWidth>' +
-              '</TerminalCapabilities>' +
-              '<Balance Currency="' + cardAccounts[i].cards[0].currency + '">' +
-              '<AuthorizationDetails Count="1">' +
-              '<Parameter Idx="1" Name="Срок действия карточки">#{' + cardAccounts[i].cards[0].cardHash + '@[card_expire]}</Parameter>' +
-              '</AuthorizationDetails>' +
-              '</Balance></BS_Request>'
-          }
-        ]
-      }
-    })
-    const balanceXml = parseXml(balanceRes.body.komplatResponse[0].response)
-    cardAccounts[i].balance = balanceXml.BS_Response.Balance.Amount
+  for (const cardAccount of cardAccounts) {
+    cardAccount.balance = await fetchCardBalance(sessionToken, cardAccount)
   }
 
   return cardAccounts
@@ -143,49 +263,47 @@ export async function fetchAccounts (sessionToken) {
 export async function fetchTransactions (sessionToken, accounts, fromDate) {
   console.log('>>> Загрузка списка транзакций через минивыписку...')
   const responses = await Promise.all(flatMap(accounts, (account) => {
-    // Минивыписки бесплатны на виртуальных карточках, либо на карточках в EUR/USD
-    if (account.productType.indexOf('Virtual') > 0 || account.instrument !== 'BYN') {
-      return fetchApiJson('payment/simpleExcute', {
-        method: 'POST',
-        headers: { session_token: sessionToken },
-        body: {
-          komplatRequests: [
-            {
-              request: '<BS_Request>' +
-                '<Version>@{version}</Version>' +
-                '<RequestType>GetAuthHistory</RequestType>' +
-                '<ClientId IdType="MS">#{' + account.cardHash + '@[card_number]}</ClientId>' +
-                '<AuthClientId IdType="MS">#{' + account.cardHash + '@[card_number]}</AuthClientId>' +
-                '<TerminalTime>@{pay_date}</TerminalTime>' +
-                '<TerminalId>@{terminal_id_mb}</TerminalId>' +
-                '<TerminalCapabilities>' +
-                '<BooleanParameter>Y</BooleanParameter>' +
-                '<AnyAmount>Y</AnyAmount>' +
-                '<LongParameter>Y</LongParameter>' +
-                '<ScreenWidth>99</ScreenWidth>' +
-                '<CheckWidth DoubleHeightSymbol="Y" DoubleWidthSymbol="N" InverseSymbol="Y">40</CheckWidth>' +
-                '</TerminalCapabilities>' +
-                '<GetAuthHistory Currency="' + account.instrumentCode + '">' +
-                '<AuthId IdType="MS">#{' + account.cardHash + '@[card_number]}</AuthId>' +
-                '<AuthorizationDetails Count="1">' +
-                '<Parameter Idx="1" Name="Срок действия карточки">#{' + account.cardHash + '@[card_expire]}</Parameter>' +
-                '</AuthorizationDetails>' +
-                '</GetAuthHistory></BS_Request>'
-            }
-          ]
-        }
-      }, response => true)
+    if (!account.cardHash) {
+      return []
     }
+    return fetchApiJson('payment/simpleExcute', {
+      method: 'POST',
+      headers: getHeaders(sessionToken),
+      body: {
+        komplatRequests: [
+          {
+            request: '<BS_Request>' +
+              '<Version>@{version}</Version>' +
+              '<RequestType>GetAuthHistory</RequestType>' +
+              '<ClientId IdType="MS">#{' + account.cardHash + '@[card_number]}</ClientId>' +
+              '<AuthClientId IdType="MS">#{' + account.cardHash + '@[card_number]}</AuthClientId>' +
+              '<TerminalTime>@{pay_date}</TerminalTime>' +
+              '<TerminalId>@{terminal_id_mb}</TerminalId>' +
+              '<TerminalCapabilities>' +
+              '<BooleanParameter>Y</BooleanParameter>' +
+              '<AnyAmount>Y</AnyAmount>' +
+              '<LongParameter>Y</LongParameter>' +
+              '<ScreenWidth>99</ScreenWidth>' +
+              '<CheckWidth DoubleHeightSymbol="Y" DoubleWidthSymbol="N" InverseSymbol="Y">40</CheckWidth>' +
+              '</TerminalCapabilities>' +
+              '<GetAuthHistory Currency="' + account.instrumentCode + '">' +
+              '<AuthId IdType="MS">#{' + account.cardHash + '@[card_number]}</AuthId>' +
+              '<AuthorizationDetails Count="1">' +
+              '<Parameter Idx="1" Name="Срок действия карточки">#{' + account.cardHash + '@[card_expire]}</Parameter>' +
+              '</AuthorizationDetails>' +
+            '</GetAuthHistory></BS_Request>'
+          }
+        ]
+      }
+    }, response => true).then(response => ({ response, account }))
   }))
 
-  let $, account
-  let i = 0
-  const transactions = flatMap(responses, response => {
-    if (response.body !== undefined) {
+  let $
+  const transactions = flatMap(responses, ({ response, account }) => {
+    if (response && response.body && response.body.komplatResponse && response.body.komplatResponse[0].response) {
       $ = cheerio.load(response.body.komplatResponse[0].response, {
         xmlMode: true
       })
-      account = accounts[i++]
       return flatMap($('Operation'), op => {
         return {
           account_id: account.id,
@@ -212,31 +330,35 @@ export async function fetchOperations (sessionToken, accounts, fromDate, toDate)
   // Этот запрос показывает информацию только по проведенным операциям, т.е. через 2-3 дня
   console.log('>>> Загрузка списка транзакций через полную выписку...')
   toDate = toDate || new Date()
-  const responses = await Promise.all(flatMap(accounts, (account) => {
-    return fetchApiJson('products/getCardAccountFullStatement', {
-      method: 'POST',
-      headers: { session_token: sessionToken },
-      body: {
-        accountType: account.accountType,
-        bankCode: account.bankCode,
-        cardHash: account.cardHash,
-        currencyCode: account.instrumentCode,
-        internalAccountId: account.id,
-        reportData: {
-          from: fromDate.getTime(),
-          till: toDate.getTime()
-        },
-        rkcCode: account.rkcCode
-      }
-    }, response => response.body)
+  const dateIntervals = createDateIntervals(fromDate, toDate)
+  const responses = await Promise.all(flatMap(getUniqueStatementAccounts(accounts), (account) => {
+    return dateIntervals.map(([fromDate, toDate]) => {
+      return fetchApiJson('products/getCardAccountFullStatement', {
+        method: 'POST',
+        headers: getHeaders(sessionToken),
+        body: {
+          accountType: account.accountType,
+          bankCode: account.bankCode,
+          cardHash: account.cardHash,
+          currencyCode: Number.parseInt(account.instrumentCode),
+          internalAccountId: getStatementAccountId(account),
+          reportData: {
+            from: fromDate.getTime(),
+            till: toDate.getTime()
+          },
+          rkcCode: account.rkcCode
+        }
+      }, response => response.body).then(response => ({ response, account }))
+    })
   }))
 
-  const operations = flatMap(responses, response => {
+  const operations = flatMap(responses, ({ response, account }) => {
     return flatMap(response.body.operations, op => {
       const operationSign = Number.parseInt(op.operationSign)
+      const operationAccount = findOperationAccount(op, account, accounts)
       return {
         id: op.transactionAuthCode,
-        account_id: op.accountNumber,
+        account_id: operationAccount.id,
         operationName: op.operationName,
         operationDate: new Date(op.transactionDate),
         operationCurrencyCode: op.operationCurrency,
@@ -245,13 +367,20 @@ export async function fetchOperations (sessionToken, accounts, fromDate, toDate)
         transactionAmount: op.transactionAmount * operationSign,
         transactionCurrencyCode: op.transactionCurrency,
         merchant: op.operationPlace,
-        hold: false
+        hold: false,
+        ...(op.rrn && { rrn: op.rrn }),
+        ...(op.merchantId && { merchantId: op.merchantId }),
+        ...(op.mcc && { mcc: op.mcc }),
+        ...(op.operationCode && { operationCode: op.operationCode })
       }
     })
   })
 
   const filteredOperations = operations.filter(function (op) {
-    return op !== undefined && op.operationAmount !== 0 && op.transactionDate >= fromDate
+    return op !== undefined &&
+      op.transactionDate >= fromDate &&
+      op.transactionDate <= toDate &&
+      op.operationAmount !== 0
   })
 
   console.log(`>>> Загружено ${filteredOperations.length} операций.`)

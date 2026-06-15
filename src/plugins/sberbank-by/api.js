@@ -300,23 +300,7 @@ export async function fetchTransactions (auth, products, fromDate, toDate, contr
     device: auth.device,
     stringify: JSON.stringify
   }
-  let response
-  await Promise.all(products.map(async (product) => {
-    response = await callGate(`https://${host}/SBOLServer/rest/client/holdEvents`, {
-      ...options,
-      body: {
-        cardId: product.id
-      }
-    })
-    if (response.body.error === 'invalid_token') {
-      throw new AuthError()
-    }
-    if (response.body.event) {
-      transactions.push(...response.body.event)
-    }
-  }))
-
-  response = await callGate(`https://${host}/SBOLServer/rest/client/events`, {
+  const response = await callGate(`https://${host}/SBOLServer/rest/client/events`, {
     ...options,
     body: {
       contractNumber,

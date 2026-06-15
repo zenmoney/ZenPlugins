@@ -7,8 +7,55 @@ import {
   FetchCardAccountMeta,
   FetchCurrentAccountMeta
 } from './types/fetch.types'
-import { convertIsoDateStringToDate } from './helpers'
+import { convertIsoDateStringToDate, getBusinessDateIdentityKey } from './helpers'
 import { appendCashbackComment } from './cashback.js'
+
+const normalizeIdPart = (value: string | null | undefined): string =>
+  (value ?? '').replace(/\s+/g, ' ').trim().toUpperCase()
+
+const getAmountIdentityKey = ({
+  accountInstrument,
+  sum,
+  invoice
+}: {
+  accountInstrument: string
+  sum: number | null
+  invoice: { sum: number, instrument: string } | null
+}): string => {
+  if (invoice != null) {
+    return `invoice|${invoice.instrument}|${invoice.sum.toFixed(2)}`
+  }
+
+  return `sum|${accountInstrument}|${(sum ?? 0).toFixed(2)}`
+}
+
+const buildMovementId = ({
+  accountId,
+  accountInstrument,
+  date,
+  merchantTitle,
+  mcc,
+  sum,
+  invoice
+}: {
+  accountId: string
+  accountInstrument: string
+  date: Date
+  merchantTitle: string | null
+  mcc: number | null
+  sum: number | null
+  invoice: { sum: number, instrument: string } | null
+}): string => {
+  return [
+    'zepterbank-by',
+    accountId,
+    getBusinessDateIdentityKey(date),
+    date.toISOString(),
+    getAmountIdentityKey({ accountInstrument, sum, invoice }),
+    String(mcc ?? ''),
+    normalizeIdPart(merchantTitle)
+  ].join('|')
+}
 
 const parseMcc = (mcc: string | undefined): number | null => {
   const digits = mcc?.replace(/\D/g, '') ?? ''
@@ -30,6 +77,18 @@ const normalizeMerchantTitle = (title: string | undefined): string | null => {
   return normalizedTitle != null && normalizedTitle !== ''
     ? normalizedTitle
     : null
+}
+
+const getStatementDedupDate = (fetchTransaction: FetchStatementOperation): Date | null => {
+  const isAccountCurrencyOnlyOperation =
+    Number(fetchTransaction.transactionSum) === 0 &&
+    Number(fetchTransaction.operationSum) !== 0
+
+  if (!isAccountCurrencyOnlyOperation || fetchTransaction.balanceDate == null) {
+    return null
+  }
+
+  return convertIsoDateStringToDate(`${fetchTransaction.balanceDate}T00:00:00`)
 }
 
 export const convertCardAccount = (fetchAccount: FetchCardAccount): Account & FetchCardAccountMeta => {
@@ -71,18 +130,30 @@ export const convertCardTransaction = (fetchTransaction: FetchCardTransaction, a
   const amount = Number(`${fetchTransaction.transOperType === 'debit' ? '-' : ''}${fetchTransaction.amount}`)
   const merchantTitle = normalizeMerchantTitle(fetchTransaction.cardAcceptor)
   const mcc = parseMcc(fetchTransaction.transMcc)
+  const invoice = isInDifferentCurrency ? { sum: amount, instrument: fetchTransaction.currencyIso } : null
+  const sum = isInDifferentCurrency ? null : amount
+  const date = convertIsoDateStringToDate(fetchTransaction.effectiveDate)
+  const movementId = buildMovementId({
+    accountId: account.id,
+    accountInstrument: account.instrument,
+    date,
+    merchantTitle,
+    mcc,
+    sum,
+    invoice
+  })
 
   return {
     hold: null,
-    date: convertIsoDateStringToDate(fetchTransaction.effectiveDate),
+    date,
     comment: appendCashbackComment(fetchTransaction.transacName, mcc),
     movements: [
       {
-        id: null, // no transaction id presented
+        id: movementId,
         account: { id: account.id },
         fee: 0,
-        invoice: isInDifferentCurrency ? { sum: amount, instrument: fetchTransaction.currencyIso } : null,
-        sum: isInDifferentCurrency ? null : amount
+        invoice,
+        sum
       }
     ],
     merchant: merchantTitle !== null
@@ -103,17 +174,29 @@ export const convertStatementTransaction = (fetchTransaction: FetchStatementOper
   const payee = fetchTransaction.terminalLocation ?? ''
   const [country = '', city = ''] = (fetchTransaction.merchant ?? '').split(' ')
   const mcc = parseMcc(fetchTransaction.MCC)
+  const invoice = hasInvoice ? { sum: transactionAmount, instrument: fetchTransaction.transactionCurrencyISO } : null
+  const date = convertIsoDateStringToDate(fetchTransaction.transactionDate)
+  const dedupDate = getStatementDedupDate(fetchTransaction)
+  const movementId = buildMovementId({
+    accountId: account.id,
+    accountInstrument: account.instrument,
+    date,
+    merchantTitle: payee,
+    mcc,
+    sum: operationAmount,
+    invoice
+  })
 
-  return {
+  const transaction: Transaction = {
     hold: null,
-    date: convertIsoDateStringToDate(fetchTransaction.transactionDate),
+    date,
     comment: appendCashbackComment(fetchTransaction.operationName, mcc),
     movements: [
       {
-        id: null, // no transaction id presented
+        id: movementId,
         account: { id: account.id },
         fee: 0,
-        invoice: hasInvoice ? { sum: transactionAmount, instrument: fetchTransaction.transactionCurrencyISO } : null,
+        invoice,
         sum: operationAmount
       }
     ],
@@ -127,4 +210,14 @@ export const convertStatementTransaction = (fetchTransaction: FetchStatementOper
         }
       : null
   }
+
+  if (dedupDate !== null) {
+    Object.defineProperty(transaction, 'dedupDate', {
+      value: dedupDate,
+      enumerable: false,
+      configurable: true
+    })
+  }
+
+  return transaction
 }

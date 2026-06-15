@@ -4,14 +4,16 @@ import { fetchAccount, fetchTransactions } from './api'
 import { Preferences } from './models'
 
 export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, toDate }) => {
-  const account = convertAccount(await fetchAccount(preferences))
+  const { account, card } = convertAccount(await fetchAccount(preferences))
   const transactions = convertTransactions(
     await fetchTransactions(preferences, fromDate, toDate),
-    account.id
+    account.id,
+    card.id,
+    preferences
   )
 
   return {
-    accounts: [account],
+    accounts: [account, card],
     transactions
   }
 }

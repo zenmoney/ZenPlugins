@@ -8,6 +8,69 @@ describe('convertTransaction', () => {
   it.each([
     [
       {
+        sourceSystem: 3,
+        eventId: 'incoming-p2p-event',
+        contractId: 'account-contract',
+        contractCurrency: '933',
+        cardPAN: '111111******2222',
+        cardExpiryDate: null,
+        cardId: 'card-id',
+        eventDate: 1778918001000,
+        processingDate: 1778965200000,
+        transactionType: 1,
+        transactionCode: '206',
+        transactionName: 'Зачисление по услуге Перевод BYN на "чужие" карты в пределах Сбер Банка 111111******2222',
+        operationCode: null,
+        merchantId: '0822061',
+        merchantName: 'P2P SOU Sber Bank',
+        merchantPlace: 'Minsk',
+        transactionSum: 30.0,
+        transactionCurrency: '933',
+        accountSum: 30.0,
+        commissionSum: null,
+        commissionCurrency: '933',
+        rnnCode: '600000000001',
+        authorizationCode: '111111',
+        eventStatus: 1,
+        mccCode: '6012',
+        errorDescription: null,
+        souServiceCode: 656,
+        souServiceType: null,
+        souServiceName: null,
+        souRnnCode: null,
+        souAuthorizationCode: null,
+        souTransactionSum: null,
+        souTransactionCurrency: null,
+        souEventId: 'incoming-sou-event',
+        qrPaymentId: null,
+        fileId: null,
+        printDocs: null,
+        payAvailable: false
+      },
+      {
+        hold: false,
+        date: new Date(1778918001000),
+        movements: [
+          {
+            id: 'incoming-p2p-event',
+            account: { id: 'account' },
+            invoice: null,
+            sum: 30.0,
+            fee: 0
+          }
+        ],
+        merchant: {
+          title: 'P2P SOU Sber Bank',
+          city: null,
+          country: null,
+          location: null,
+          mcc: 6012
+        },
+        comment: 'Зачисление по услуге Перевод BYN на "чужие" карты в пределах Сбер Банка 111111******2222'
+      }
+    ],
+    [
+      {
         sourceSystem: 2,
         eventId: '1842095258',
         contractId: '8013742',

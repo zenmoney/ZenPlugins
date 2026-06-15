@@ -1,3 +1,4 @@
+import { adjustTransactions } from '../../../../../common/transactionGroupHandler.js'
 import { convertTransactions } from '../../../converters.js'
 
 describe('convertTransactions', () => {
@@ -388,8 +389,7 @@ describe('convertTransactions', () => {
               sum: -92.82
             }
           ],
-          comment: null,
-          groupKeys: ['2023-09-12_BYN_92.82']
+          comment: null
         },
         {
           date: new Date('2023-09-12T07:37:13.000Z'),
@@ -410,12 +410,115 @@ describe('convertTransactions', () => {
               sum: 92.82
             }
           ],
-          comment: null,
-          groupKeys: ['2023-09-12_BYN_92.82']
+          comment: null
         }
       ]
     ]
   ])('converts transactions', (apiTransactions, accountsByNumber, transactions) => {
     expect(convertTransactions(apiTransactions, accountsByNumber)).toEqual(transactions)
+  })
+
+  it('does not merge received P2P SOU Sber Bank money with a matching debit', () => {
+    const apiTransactions = [
+      {
+        sourceSystem: 4,
+        eventId: 'debit-event',
+        contractId: 'credit-contract',
+        cardPAN: '111111******1111',
+        cardId: 'credit-card',
+        eventDate: 1770000000000,
+        transactionCode: '01000F',
+        transactionName: 'P2P SOU Sber Bank > Minsk BLR Терминал: W2P90008 RRN:600000000001 AuthCode:111111',
+        merchantId: '0822061',
+        merchantPlace: 'P2P SOU Sber Bank > Minsk BLR',
+        transactionSum: -30,
+        transactionCurrency: '933',
+        commissionSum: 0,
+        commissionCurrency: '933',
+        rnnCode: '600000000001',
+        authorizationCode: '111111',
+        eventStatus: 0,
+        payAvailable: false
+      },
+      {
+        sourceSystem: 4,
+        eventId: 'income-event',
+        contractId: 'income-contract',
+        cardPAN: '222222******4370',
+        cardId: 'income-card',
+        eventDate: 1770000000000,
+        transactionCode: '01000P',
+        transactionName: 'P2P SOU Sber Bank > Minsk BLR Терминал: W2P90008 RRN:600000000002 AuthCode:222222',
+        merchantId: '0822061',
+        merchantPlace: 'P2P SOU Sber Bank > Minsk BLR',
+        transactionSum: 30,
+        transactionCurrency: '933',
+        commissionSum: 0,
+        commissionCurrency: '933',
+        rnnCode: '600000000002',
+        authorizationCode: '222222',
+        eventStatus: 0,
+        payAvailable: false
+      }
+    ]
+    const accountsByNumber = {
+      'credit-contract': {
+        id: 'credit-account',
+        instrument: 'BYN'
+      },
+      'income-contract': {
+        id: 'card-4370',
+        instrument: 'BYN'
+      }
+    }
+
+    const transactions = adjustTransactions({
+      transactions: convertTransactions(apiTransactions, accountsByNumber)
+    })
+
+    expect(transactions).toEqual([
+      {
+        date: new Date(1770000000000),
+        hold: true,
+        merchant: {
+          city: 'Minsk',
+          country: 'BLR',
+          location: null,
+          mcc: null,
+          title: 'P2P SOU Sber Bank'
+        },
+        movements: [
+          {
+            account: { id: 'credit-account' },
+            fee: 0,
+            id: 'debit-event',
+            invoice: null,
+            sum: -30
+          }
+        ],
+        comment: null
+      },
+      {
+        date: new Date(1770000000000),
+        hold: true,
+        merchant: {
+          city: 'Minsk',
+          country: 'BLR',
+          location: null,
+          mcc: null,
+          title: 'P2P SOU Sber Bank'
+        },
+        movements: [
+          {
+            account: { id: 'card-4370' },
+            fee: 0,
+            id: 'income-event',
+            invoice: null,
+            sum: 30
+          }
+        ],
+        comment: null
+      }
+    ])
   })
 })

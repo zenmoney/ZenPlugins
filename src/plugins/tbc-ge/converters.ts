@@ -109,6 +109,9 @@ export function convertDepositV2 (apiAccount: DepositDataV2): PreparedLoanV2 {
 }
 
 export function convertCardsV2 (apiAccounts: CardProductV2[]): PreparedCardV2[] {
+  if (!Array.isArray(apiAccounts)) {
+    return []
+  }
   const accounts: PreparedCardV2[] = []
   for (const apiAccount of apiAccounts) {
     // Handle accounts without cards as regular bank accounts
