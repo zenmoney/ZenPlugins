@@ -48,6 +48,7 @@ export const transactionsResponseMock1: TransactionResponse = {
   message: 'OK',
   result: [
     {
+      blockNumber: '1',
       hash: '1',
       from: '1',
       to: 'OTHER_ACCOUNT',
@@ -58,6 +59,7 @@ export const transactionsResponseMock1: TransactionResponse = {
       gasUsed: '21000'
     },
     {
+      blockNumber: '1',
       hash: '2',
       from: 'OTHER_ACCOUNT',
       to: '1',
@@ -68,6 +70,7 @@ export const transactionsResponseMock1: TransactionResponse = {
       gasUsed: '21000'
     },
     {
+      blockNumber: '1',
       hash: '3',
       from: '1',
       to: '2',
@@ -85,6 +88,7 @@ export const transactionsResponseMock2: TransactionResponse = {
   message: 'OK',
   result: [
     {
+      blockNumber: '1',
       hash: '3',
       from: '1',
       to: '2',
@@ -224,21 +228,21 @@ export function mockEndPoints (): void {
     }
   )
   fetchMock.once(
-    'https://api.etherscan.io/v2/api?chainid=1&module=account&action=txlist&address=1&startblock=1&endblock=99999999&page=1&offset=100&sort=desc&apikey=API_KEY',
+    'https://api.etherscan.io/v2/api?chainid=1&module=account&action=txlist&address=1&startblock=1&endblock=99999999&page=1&offset=1000&sort=desc&apikey=API_KEY',
     {
       status: 200,
       body: transactionsResponseMock1
     }
   )
   fetchMock.once(
-    'https://api.etherscan.io/v2/api?chainid=1&module=account&action=txlist&address=2&startblock=1&endblock=99999999&page=1&offset=100&sort=desc&apikey=API_KEY',
+    'https://api.etherscan.io/v2/api?chainid=1&module=account&action=txlist&address=2&startblock=1&endblock=99999999&page=1&offset=1000&sort=desc&apikey=API_KEY',
     {
       status: 200,
       body: transactionsResponseMock2
     }
   )
   fetchMock.once(
-    'https://api.etherscan.io/v2/api?chainid=1&module=account&action=txlist&address=3&startblock=1&endblock=99999999&page=1&offset=100&sort=desc&apikey=API_KEY',
+    'https://api.etherscan.io/v2/api?chainid=1&module=account&action=txlist&address=3&startblock=1&endblock=99999999&page=1&offset=1000&sort=desc&apikey=API_KEY',
     {
       status: 200,
       body: transactionsResponseMock3

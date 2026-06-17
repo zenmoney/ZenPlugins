@@ -8,6 +8,7 @@ export interface TokenTransaction {
   blockNumber: string
   timeStamp: string
   hash: string
+  logIndex: string
   nonce: string
   blockHash: string
   from: string
