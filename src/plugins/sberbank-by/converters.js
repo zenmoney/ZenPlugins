@@ -109,6 +109,35 @@ function getApiTransactionReferenceCodes (apiTransaction) {
   return { rrn, authorizationCode }
 }
 
+function getApiTransactionCurrency (apiTransaction) {
+  return apiTransaction.transactionCurrency.length === 3
+    ? apiTransaction.transactionCurrency
+    : apiTransaction.transactionCurrency.length === 2 ? `0${apiTransaction.transactionCurrency}` : `00${apiTransaction.transactionCurrency}`
+}
+
+function getApiTransactionSignedSum (apiTransaction) {
+  return apiTransaction.transactionType
+    ? apiTransaction.transactionType * apiTransaction.transactionSum
+    : apiTransaction.transactionSum
+}
+
+function getAmountGroupKey (date, instrument, sum) {
+  return [toISODateString(date), instrument, Math.abs(sum)].join('_')
+}
+
+function getApiTransactionAmountGroupKey (apiTransaction) {
+  return getAmountGroupKey(
+    new Date(apiTransaction.eventDate),
+    codeToCurrency[getApiTransactionCurrency(apiTransaction)],
+    getApiTransactionSignedSum(apiTransaction)
+  )
+}
+
+function isOnlineDepositTargetIncome (apiTransaction) {
+  return /On-line пополнение договора.*Мобильный банкинг/i.test(apiTransaction.transactionName) &&
+    getApiTransactionSignedSum(apiTransaction) > 0
+}
+
 function getAccountLevelEventId (apiTransaction, rrn, authorizationCode) {
   return !rrn && !authorizationCode && !(apiTransaction.cardId || apiTransaction.cardPAN)
     ? apiTransaction.eventId || ''
@@ -179,11 +208,18 @@ function shouldReplaceTransaction (currentTransaction, nextTransaction) {
 
 export function convertTransactions (apiTransactions, accountsByContractNumber) {
   const adjustedApiTransactions = deduplicateApiTransactions(apiTransactions)
+  const onlineDepositTargetGroupKeys = new Set(
+    adjustedApiTransactions
+      .filter(isOnlineDepositTargetIncome)
+      .map(getApiTransactionAmountGroupKey)
+  )
   const transactions = []
   const transactionIndexes = {}
   for (const transaction of adjustedApiTransactions) {
     if (accountsByContractNumber[transaction.contractId]) {
-      const answer = convertTransaction(transaction, accountsByContractNumber[transaction.contractId])
+      const answer = convertTransaction(transaction, accountsByContractNumber[transaction.contractId], {
+        onlineDepositTargetGroupKeys
+      })
       if (answer !== null) {
         const key = getTransactionDedupKey(answer)
         if (key === null) {
@@ -276,17 +312,15 @@ export function convertLoan (apiAccount) {
   }
 }
 
-export function convertTransaction (apiTransaction, account) {
+export function convertTransaction (apiTransaction, account, context = {}) {
   if (apiTransaction.eventStatus === -1 || apiTransaction.transactionSum === 0) {
     return null
   }
   const { rrn, authorizationCode } = getApiTransactionReferenceCodes(apiTransaction)
-  const currency = apiTransaction.transactionCurrency.length === 3
-    ? apiTransaction.transactionCurrency
-    : apiTransaction.transactionCurrency.length === 2 ? `0${apiTransaction.transactionCurrency}` : `00${apiTransaction.transactionCurrency}`
+  const currency = getApiTransactionCurrency(apiTransaction)
   const invoice = {
     instrument: codeToCurrency[currency],
-    sum: apiTransaction.transactionType ? apiTransaction.transactionType * apiTransaction.transactionSum : apiTransaction.transactionSum
+    sum: getApiTransactionSignedSum(apiTransaction)
   }
   const transaction = {
     hold: apiTransaction.eventStatus === 0,
@@ -312,7 +346,7 @@ export function convertTransaction (apiTransaction, account) {
     parseCashTransfer,
     parsePayee
   ]
-  parsers.some(parser => parser(transaction, apiTransaction, account, invoice))
+  parsers.some(parser => parser(transaction, apiTransaction, account, invoice, context))
 
   const accountLevelEventId = getAccountLevelEventId(apiTransaction, rrn, authorizationCode)
   if (accountLevelEventId) {
@@ -368,7 +402,7 @@ function parseComment (transaction, apiTransaction) {
   return false
 }
 
-function parseInnerTransfer (transaction, apiTransaction, account, invoice) {
+function parseInnerTransfer (transaction, apiTransaction, account, invoice, context) {
   if ([
     /^.*на свои карты.*$/i
   ].some(regexp => regexp.test(apiTransaction.transactionName))) {
@@ -387,8 +421,19 @@ function parseInnerTransfer (transaction, apiTransaction, account, invoice) {
     return true
   }
   if ([
+    /On-line пополнение договора.*Мобильный банкинг/i
+  ].some(regexp => regexp.test(apiTransaction.transactionName))) {
+    transaction.groupKeys = [getAmountGroupKey(transaction.date, invoice.instrument, invoice.sum)]
+    return true
+  }
+  if ([
     /Пополнение вклада.*\(on-line\).*/i
   ].some(regexp => regexp.test(apiTransaction.transactionName))) {
+    const groupKey = getAmountGroupKey(transaction.date, invoice.instrument, invoice.sum)
+    if (context.onlineDepositTargetGroupKeys?.has(groupKey)) {
+      transaction.groupKeys = [groupKey]
+      return true
+    }
     const syncIds = apiTransaction.transactionName.match(/\(on-line\) ([\d\w]*)/i)
     transaction.movements.push({
       id: null,
@@ -402,7 +447,7 @@ function parseInnerTransfer (transaction, apiTransaction, account, invoice) {
       sum: -invoice.sum,
       fee: 0
     })
-    transaction.groupKeys = [toISODateString(transaction.date) + '_' + invoice.instrument + '_' + Math.abs(invoice.sum)]
+    transaction.groupKeys = [groupKey]
     return true
   }
   return false
