@@ -364,6 +364,45 @@ describe('getTransactions', () => {
     expect(transactions[0].movements[0].id).not.toBe(transactions[1].movements[0].id)
   })
 
+  it('treats empty-array statement response as no statement transactions', async () => {
+    const rawCardAccount = TEST_ACCOUNTS.CARD.find((account) => account.productCardId === 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8')
+
+    if (rawCardAccount == null) {
+      throw new Error('Card account not found')
+    }
+
+    const account = convertCardAccount(rawCardAccount)
+    const historyTransaction: FetchCardTransaction = {
+      effectiveDate: '2026-05-25T10:00:00',
+      transacName: 'POS PURCHASE ',
+      amount: '20.00',
+      currencyIso: 'BYN',
+      cardAcceptor: 'INTERNET-BANKING ZEPTERBANK',
+      repeatable: false,
+      transOperType: 'debit',
+      transMcc: 'МСС4900'
+    }
+
+    mockFetchCardTransactions.mockResolvedValue({
+      status: 200,
+      data: [historyTransaction],
+      error: null
+    })
+    mockFetchProductStatement.mockResolvedValue({
+      status: 200,
+      data: [],
+      error: null
+    })
+
+    await expect(getTransactions({
+      sessionToken: 'session-token',
+      fromDate: new Date('2026-05-01T00:00:00.000Z'),
+      toDate: new Date('2026-05-31T23:59:59.000Z')
+    }, account)).resolves.toEqual([
+      withAnyMovementIds(convertCardTransaction(historyTransaction, account))
+    ])
+  })
+
   it('keeps separate same-day same-merchant statement transactions distinct', async () => {
     const rawCardAccount = TEST_ACCOUNTS.CARD.find((account) => account.productCardId === 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8')
 

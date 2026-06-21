@@ -4,7 +4,15 @@ import { convertCardAccount, convertCurrentAccount, convertCardTransaction, conv
 import { BankMessageError, InvalidLoginOrPasswordError } from '../../errors'
 import { convertDateToYyyyMmDd } from './helpers'
 import { mergeTransactions } from './mergeTransactions'
-import { FetchAccountMeta } from './types/fetch.types'
+import type { FetchAccountMeta, FetchProductStatementOutput, FetchStatementOperation } from './types/fetch.types'
+
+const getStatementOperations = (statement: FetchProductStatementOutput): FetchStatementOperation[] => {
+  if (Array.isArray(statement)) {
+    return []
+  }
+
+  return statement.operations ?? []
+}
 
 export const authenticate = async (login: string, password: string): Promise<{ sessionToken: string }> => {
   const { data, error } = await fetchLogin({ login, password })
@@ -74,7 +82,7 @@ export const getTransactions = async ({ sessionToken, fromDate, toDate }: { sess
     .filter((op) => op.amount !== '0.00')
     .map((op) => convertCardTransaction(op, account))
 
-  const statementTransactions = productStatementResponse.data.operations
+  const statementTransactions = getStatementOperations(productStatementResponse.data)
     .filter((op) => op.operationSum !== '0.00')
     .map((op) => convertStatementTransaction(op, account))
 
