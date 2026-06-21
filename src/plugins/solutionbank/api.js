@@ -203,16 +203,28 @@ export async function login (login, password) {
         throw new InvalidOtpCodeError()
       }
       res = await loginReq(login, password, code)
+      assertSuccessfulLogin(res)
       break
     case '10004':
       throw new InvalidPreferencesError('Неверный логин или пароль')
     case '0':
+      assertSuccessfulLogin(res)
       break
     default:
       throw new BankMessageError(res.body.errorInfo.errorText)
   }
 
   return res.body.sessionToken
+}
+
+function assertSuccessfulLogin (res) {
+  const errorInfo = res.body && res.body.errorInfo
+  if (!errorInfo || errorInfo.error !== '0') {
+    throw new BankMessageError(errorInfo && errorInfo.errorText ? errorInfo.errorText : 'Ошибка входа')
+  }
+  if (!res.body.sessionToken) {
+    throw new TemporaryError('Сессионный ключ не получен')
+  }
 }
 
 async function loginReq (login, password, smsCode) {

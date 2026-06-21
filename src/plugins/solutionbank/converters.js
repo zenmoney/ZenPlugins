@@ -48,13 +48,12 @@ export function convertTransaction (json) {
   if (!sum) {
     return null
   }
-  const id = getTransactionId(json)
   const transaction = {
     hold: json.hold || false,
     date: json.transactionDate || json.date,
     movements: [
       {
-        id,
+        id: getTransactionId(json),
         account: { id: json.account_id },
         invoice: null,
         sum,
@@ -72,7 +71,7 @@ export function convertTransaction (json) {
 }
 
 function getTransactionId (json) {
-  return md5.hex(getTransactionIdSource(json))
+  return getTransactionIdSource(json)
 }
 
 function getTransactionIdSource (json) {

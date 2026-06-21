@@ -1,4 +1,5 @@
 import fetchMock from 'fetch-mock'
+import { TemporaryError } from '../../../errors'
 import { installFetchMockDeveloperFriendlyFallback } from '../../../testUtils'
 import { makePluginDataApi } from '../../../ZPAPI.pluginData'
 import { fetchAccounts, fetchOperations, fetchTransactions, login } from '../api'
@@ -81,6 +82,45 @@ describe('login', () => {
       time: 120000,
       inputType: 'text'
     })
+  })
+
+  it('fails login when SMS confirmation response returns bank error', async () => {
+    fetchMock.once(baseUrl + 'session/login', {
+      status: 400,
+      body: {
+        errorInfo: {
+          error: '10415',
+          errorText: 'Введите код из СМС'
+        }
+      }
+    }, { method: 'POST' })
+    fetchMock.once(baseUrl + 'session/login', {
+      status: 400,
+      body: {
+        errorInfo: {
+          error: '10003',
+          errorText: 'Сессионный ключ не задан'
+        }
+      }
+    }, { method: 'POST' })
+
+    await expect(login('test-login', 'test-password')).rejects.toMatchObject({
+      bankMessage: 'Сессионный ключ не задан'
+    })
+  })
+
+  it('fails login when successful response has no session token', async () => {
+    fetchMock.once(baseUrl + 'session/login', {
+      status: 200,
+      body: {
+        errorInfo: {
+          error: '0',
+          errorText: 'Успешно'
+        }
+      }
+    }, { method: 'POST' })
+
+    await expect(login('test-login', 'test-password')).rejects.toBeInstanceOf(TemporaryError)
   })
 })
 
