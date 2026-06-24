@@ -1,7 +1,9 @@
+import { MD5 } from 'jshashes'
 import { convertTransaction, merge } from '../../../converters'
 
 describe('convertTransaction', () => {
   let consoleLogSpy
+  const md5 = new MD5()
   const account = {
     id: 'mock-account-001',
     type: 'card',
@@ -12,8 +14,11 @@ describe('convertTransaction', () => {
       '1111'
     ]
   }
-  const transactionId = (date, amount, merchant, duplicateIndex = 1) => {
+  const transactionIdSource = (date, amount, merchant, duplicateIndex = 1) => {
     return `${account.id}|${date}|${amount}|933|${merchant}|${duplicateIndex}`
+  }
+  const transactionId = (date, amount, merchant, duplicateIndex = 1) => {
+    return md5.hex(transactionIdSource(date, amount, merchant, duplicateIndex))
   }
 
   beforeEach(() => {
@@ -58,7 +63,7 @@ describe('convertTransaction', () => {
     })
   })
 
-  it('uses canonical transaction id independent from bank transaction id and without hash', () => {
+  it('uses hashed canonical transaction id independent from bank transaction id', () => {
     const json = {
       id: '123456',
       account_id: 'mock-account-001',
@@ -75,11 +80,11 @@ describe('convertTransaction', () => {
 
     expect(transaction.movements[0].id).toEqual(sameTransactionWithoutBankId.movements[0].id)
     expect(transaction.movements[0].id).toEqual(transactionId('2019-02-14', '-1.00', 'BANK RESHENIE- OPLATA USL'))
-    expect(transaction.movements[0].id).not.toMatch(/^[a-f0-9]{32}$/)
+    expect(transaction.movements[0].id).toMatch(/^[a-f0-9]{32}$/)
     expect(transaction.movements[0].id).not.toEqual('123456')
   })
 
-  it('generates stable readable transaction id when bank id is missing', () => {
+  it('generates stable hashed transaction id when bank id is missing', () => {
     const json = {
       account_id: 'mock-account-001',
       currency: 'BYN',
@@ -539,7 +544,7 @@ describe('convertTransaction', () => {
     ])
   })
 
-  it('does not log transaction identity data for merged transactions', () => {
+  it('logs readable transaction id source for merged transactions', () => {
     const transaction = convertTransaction({
       account_id: 'mock-account-001',
       accountCurrencyCode: '933',
@@ -553,7 +558,10 @@ describe('convertTransaction', () => {
     })
 
     expect(transaction.movements[0].id).toEqual(transactionId('2026-06-05', '-4.00', 'MOCK TRANSFER SERVICE', 2))
-    expect(consoleLogSpy).not.toHaveBeenCalled()
+    expect(consoleLogSpy).toHaveBeenCalledWith(
+      'SolutionBank transaction id source',
+      transactionIdSource('2026-06-05', '-4.00', 'MOCK TRANSFER SERVICE', 2)
+    )
   })
 
   it('zero sum', () => {

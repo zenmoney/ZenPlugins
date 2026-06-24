@@ -73,7 +73,9 @@ export function convertTransaction (json) {
 }
 
 function getTransactionId (json) {
-  return getTransactionIdSource(json)
+  const source = getTransactionIdSource(json)
+  console.log('SolutionBank transaction id source', source)
+  return md5.hex(source)
 }
 
 function getTransactionIdSource (json) {
