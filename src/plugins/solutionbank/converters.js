@@ -2,6 +2,8 @@ import { MD5 } from 'jshashes'
 import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
 const BANK_TIMEZONE_OFFSET_MS = 3 * 60 * 60 * 1000
 const MERCHANT_ID_PREFIX_LENGTH = 25
+const SAFE_MERCHANT_PREFIX_MIN_LENGTH = 16
+const CANONICAL_TRANSACTION_ID_SOURCE_FIELD = 'transactionIdSource'
 const md5 = new MD5()
 
 export function convertAccount (json) {
@@ -75,6 +77,9 @@ function getTransactionId (json) {
 }
 
 function getTransactionIdSource (json) {
+  if (json[CANONICAL_TRANSACTION_ID_SOURCE_FIELD]) {
+    return json[CANONICAL_TRANSACTION_ID_SOURCE_FIELD]
+  }
   return [
     getTransactionIdentitySource(json),
     getDuplicateIndex(json)
@@ -118,6 +123,10 @@ function getAmountIdValue (value) {
 }
 
 function getMerchantIdValue (value) {
+  return normalizeMerchant(value).slice(0, MERCHANT_ID_PREFIX_LENGTH)
+}
+
+function normalizeMerchant (value) {
   if (value === undefined || value === null) {
     return ''
   }
@@ -127,7 +136,6 @@ function getMerchantIdValue (value) {
     .replace(/\s+/g, ' ')
     .trim()
     .toUpperCase()
-    .slice(0, MERCHANT_ID_PREFIX_LENGTH)
 }
 
 function getIdValue (value) {
@@ -195,10 +203,21 @@ export function merge (transactions, operations) {
     ...transaction,
     hold: true
   })))
-  const operationKeys = new Set(indexedOperations.map(getTransactionMatchKey))
+  const unmatchedTransactionIndexes = new Set(indexedTransactions.map((_, index) => index))
+  const matchedOperations = indexedOperations.map(operation => {
+    const matchedTransactionIndex = findMatchingTransactionIndex(operation, indexedTransactions, unmatchedTransactionIndexes)
+    if (matchedTransactionIndex === null) {
+      return operation
+    }
+    unmatchedTransactionIndexes.delete(matchedTransactionIndex)
+    return {
+      ...operation,
+      [CANONICAL_TRANSACTION_ID_SOURCE_FIELD]: getTransactionIdSource(indexedTransactions[matchedTransactionIndex])
+    }
+  })
   return [
-    ...indexedOperations,
-    ...indexedTransactions.filter(transaction => !operationKeys.has(getTransactionMatchKey(transaction)))
+    ...matchedOperations,
+    ...indexedTransactions.filter((_, index) => unmatchedTransactionIndexes.has(index))
   ]
 }
 
@@ -234,4 +253,57 @@ function getDuplicateOrderTime (json) {
 
 function getTransactionMatchKey (json) {
   return `${getTransactionIdentity(json)}|${getDuplicateIndex(json)}`
+}
+
+function findMatchingTransactionIndex (operation, transactions, transactionIndexes) {
+  const candidates = [...transactionIndexes].filter(index => {
+    return areTransactionsCompatible(operation, transactions[index])
+  })
+  const exactMatch = candidates.find(index => getTransactionMatchKey(operation) === getTransactionMatchKey(transactions[index]))
+  return exactMatch === undefined ? candidates[0] ?? null : exactMatch
+}
+
+function areTransactionsCompatible (left, right) {
+  return getTransactionBaseKey(left) === getTransactionBaseKey(right) &&
+    getDuplicateIndex(left) === getDuplicateIndex(right) &&
+    areMerchantValuesCompatible(getTransactionMerchantMatchValue(left), getTransactionMerchantMatchValue(right))
+}
+
+function getTransactionBaseKey (json) {
+  return [
+    json.account_id,
+    getDateIdValue(getFirstPresent(json.transactionDate, json.date, json.operationDate)),
+    getAmountIdValue(getFirstPresent(json.transactionAmount, json.operationAmount, json.sum)),
+    getFirstPresent(json.transactionCurrencyCode, json.operationCurrencyCode, json.accountCurrencyCode, json.currencyCode, json.currency)
+  ].map(getIdValue).join('|')
+}
+
+function getTransactionMerchantMatchValue (json) {
+  const merchant = normalizeMerchant(json.merchant)
+  if (merchant) {
+    return {
+      value: merchant,
+      allowPrefixMatch: true
+    }
+  }
+  return {
+    value: getIdValue(getFirstPresent(json.operationName, json.transactionName)),
+    allowPrefixMatch: false
+  }
+}
+
+function areMerchantValuesCompatible (left, right) {
+  if (left.value === right.value) {
+    return true
+  }
+  if (!left.allowPrefixMatch || !right.allowPrefixMatch || !left.value || !right.value) {
+    return false
+  }
+  const leftPrefix = left.value.slice(0, MERCHANT_ID_PREFIX_LENGTH)
+  const rightPrefix = right.value.slice(0, MERCHANT_ID_PREFIX_LENGTH)
+  if (leftPrefix === rightPrefix) {
+    return true
+  }
+  return Math.min(left.value.length, right.value.length) >= SAFE_MERCHANT_PREFIX_MIN_LENGTH &&
+    (left.value.startsWith(right.value) || right.value.startsWith(left.value))
 }

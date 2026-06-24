@@ -229,6 +229,71 @@ describe('convertTransaction', () => {
     expect(convertTransaction(merged[0]).movements[0].id).toEqual(transactionId('2026-06-11', '-17.52', 'APTEKA PYATOI KATEGORII V'))
   })
 
+  it('matches operation when full statement merchant is a safe shorter prefix', () => {
+    const hold = {
+      account_id: 'mock-account-001',
+      accountCurrencyCode: '933',
+      transactionDate: new Date('2026-06-20T08:05:41+03:00'),
+      transactionName: '*Оплата* Безналичная операция',
+      transactionCurrencyCode: '933',
+      transactionAmount: -19.3,
+      merchant: 'SHOP "KERAMIKA" / STOLITSA',
+      hold: true
+    }
+    const postedOperation = {
+      id: '519980',
+      account_id: 'mock-account-001',
+      operationName: 'Оплата товаров (услуг)',
+      operationDate: new Date('2026-06-23T10:48:17+03:00'),
+      operationCurrencyCode: '933',
+      operationAmount: -19.3,
+      transactionDate: new Date('2026-06-20T00:00:00+03:00'),
+      transactionAmount: -19.3,
+      transactionCurrencyCode: '933',
+      merchant: 'SHOP "KERAMIKA" / STOLITS',
+      hold: false
+    }
+    const merged = merge([hold], [postedOperation])
+
+    expect(merged).toHaveLength(1)
+    expect(merged[0].hold).toEqual(false)
+    expect(convertTransaction(merged[0]).movements[0].id).toEqual(transactionId('2026-06-20', '-19.30', 'SHOP KERAMIKA / STOLITSA'))
+  })
+
+  it('does not merge merchants when the shared prefix is too short', () => {
+    const hold = {
+      account_id: 'mock-account-001',
+      accountCurrencyCode: '933',
+      transactionDate: new Date('2026-06-11T11:23:00+03:00'),
+      transactionName: '*Оплата* Безналичная операция',
+      transactionCurrencyCode: '933',
+      transactionAmount: -9.99,
+      merchant: 'SHORT MERCHANT',
+      hold: true
+    }
+    const postedOperation = {
+      id: '453993',
+      account_id: 'mock-account-001',
+      operationName: 'Оплата товаров (услуг)',
+      operationDate: new Date('2026-06-12T11:23:00+03:00'),
+      operationCurrencyCode: '933',
+      operationAmount: -9.99,
+      transactionDate: new Date('2026-06-11T00:00:00+03:00'),
+      transactionAmount: -9.99,
+      transactionCurrencyCode: '933',
+      merchant: 'SHORT MERCHANT EXTRA',
+      hold: false
+    }
+    const transactions = merge([hold], [postedOperation]).map(transaction => convertTransaction(transaction))
+
+    expect(transactions).toHaveLength(2)
+    expect(transactions.map(transaction => transaction.hold)).toEqual([false, true])
+    expect(transactions.map(transaction => transaction.movements[0].id)).toEqual([
+      transactionId('2026-06-11', '-9.99', 'SHORT MERCHANT EXTRA'),
+      transactionId('2026-06-11', '-9.99', 'SHORT MERCHANT')
+    ])
+  })
+
   it('does not merge similar merchants with different amounts', () => {
     const firstHold = {
       account_id: 'mock-account-001',
