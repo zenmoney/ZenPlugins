@@ -141,7 +141,7 @@ describe('convertTransaction', () => {
       date: new Date(2030, 3, 3),
       movements: [
         {
-          id: 'test-operation-income',
+          id: expect.stringMatching(/^[a-f0-9]{32}$/),
           account: { id: 'test-account-id' },
           invoice: null,
           sum: 250000,
@@ -176,7 +176,7 @@ describe('convertTransaction', () => {
       date: new Date(2030, 3, 4),
       movements: [
         {
-          id: 'test-operation-outcome',
+          id: expect.stringMatching(/^[a-f0-9]{32}$/),
           account: { id: 'test-account-id' },
           invoice: null,
           sum: -1639.34,
@@ -214,7 +214,7 @@ describe('convertTransaction', () => {
         date: new Date(2030, 3, 5),
         movements: [
           {
-            id: 'operation-success',
+            id: expect.stringMatching(/^[a-f0-9]{32}$/),
             account: { id: 'test-account-id' },
             invoice: null,
             sum: -1000,
@@ -265,7 +265,7 @@ describe('convertTransaction', () => {
       date: new Date(2030, 3, 6, 7, 8, 9),
       movements: [
         {
-          id: 'test-operation-credit-debit',
+          id: expect.stringMatching(/^[a-f0-9]{32}$/),
           account: { id: 'test-account-id' },
           invoice: null,
           sum: 1400.25,
@@ -301,7 +301,7 @@ describe('convertTransaction', () => {
         name: 'Test Merchant'
       }
     }, account).movements[0]).toEqual({
-      id: 'test-operation-fx',
+      id: expect.stringMatching(/^[a-f0-9]{32}$/),
       account: { id: 'test-account-id' },
       invoice: {
         sum: -10,
@@ -310,5 +310,86 @@ describe('convertTransaction', () => {
       sum: -950,
       fee: 0
     })
+  })
+
+  it('keeps movement id stable when bank transaction id changes', () => {
+    const first = convertTransaction({
+      id: 'temporary-bank-operation-id',
+      operDate: '08.04.2030 09:10:11',
+      amount: -500,
+      currency: {
+        code: 'RUB'
+      },
+      details: 'Тестовая покупка'
+    }, account)
+    const second = convertTransaction({
+      id: 'posted-bank-operation-id',
+      operDate: '08.04.2030 09:10:11',
+      amount: -500,
+      currency: {
+        code: 'RUB'
+      },
+      details: 'Тестовая покупка'
+    }, account)
+
+    expect(first.movements[0].id).toBe(second.movements[0].id)
+    expect(first.movements[0].id).not.toBe('temporary-bank-operation-id')
+  })
+
+  it('keeps movement id stable when bank enrichment fields change', () => {
+    const first = convertTransaction({
+      operDate: '08.04.2030 09:10:11',
+      amount: -500,
+      currency: {
+        code: 'RUB'
+      },
+      details: 'Тестовая покупка',
+      mcc: 5411,
+      pfmCategoryTO: {
+        enName: 'Groceries'
+      }
+    }, account)
+    const second = convertTransaction({
+      operDate: '08.04.2030 09:10:11',
+      amount: -500,
+      currency: {
+        code: 'RUB'
+      },
+      details: 'Тестовая покупка',
+      mcc: 5999,
+      pfmCategoryTO: {
+        enName: 'Other'
+      }
+    }, account)
+
+    expect(first.movements[0].id).toBe(second.movements[0].id)
+  })
+
+  it('keeps identical transactions from one response separate', () => {
+    const transactions = convertTransactions([
+      {
+        id: 'first-bank-operation-id',
+        operDate: '09.04.2030 10:11:12',
+        amount: -100,
+        currency: {
+          code: 'RUB'
+        },
+        details: 'Одинаковая тестовая покупка'
+      },
+      {
+        id: 'second-bank-operation-id',
+        operDate: '09.04.2030 10:11:12',
+        amount: -100,
+        currency: {
+          code: 'RUB'
+        },
+        details: 'Одинаковая тестовая покупка'
+      }
+    ], account)
+
+    expect(transactions).toHaveLength(2)
+    expect(transactions[0].movements[0].id).toMatch(/^[a-f0-9]{32}$/)
+    expect(transactions[1].movements[0].id).toMatch(/^[a-f0-9]{32}$/)
+    expect(transactions[0].movements[0].id).not.toBe(transactions[1].movements[0].id)
   })
 })

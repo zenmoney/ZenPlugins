@@ -1,4 +1,5 @@
 import get, { getOptBoolean, getOptString } from '../../types/get'
+import md5 from 'crypto-js/md5'
 import { Account, AccountType, Amount, Transaction } from '../../types/zenmoney'
 import { getIntervalBetweenDates } from '../../common/momentDateUtils'
 import { ConvertedAccount, ProductKind } from './models'
@@ -76,13 +77,6 @@ const CURRENCY_PATHS = [
   'accountBalance.currency',
   'accountBalance.currency.code',
   'accountBalance.currency.shortName'
-]
-
-const TRANSACTION_ID_PATHS = [
-  'id',
-  'transactionId',
-  'operationId',
-  'documentId'
 ]
 
 const TRANSACTION_DATE_PATHS = [
@@ -457,8 +451,47 @@ function parseTransactionDate (apiTransaction: unknown): Date {
   return new Date(rawDate ?? '')
 }
 
-function getTransactionId (apiTransaction: unknown): string | null {
-  return pickOptString(apiTransaction, TRANSACTION_ID_PATHS) ?? null
+function getIdPart (value: unknown): string {
+  if (value == null) {
+    return ''
+  }
+  if (typeof value === 'number') {
+    return value.toString()
+  }
+  if (value instanceof Date) {
+    return value.getTime().toString()
+  }
+  return String(value).trim().replace(/\s+/g, ' ').toLowerCase()
+}
+
+function getAmountIdPart (value: number | null | undefined): string {
+  return value == null ? '' : value.toFixed(4).replace(/\.?0+$/, '')
+}
+
+function hashId (source: string): string {
+  return md5(source).toString()
+}
+
+function getTransactionIdentitySource (apiTransaction: unknown, account: Account): string {
+  const date = parseTransactionDate(apiTransaction)
+  const sum = pickTransactionSum(apiTransaction)
+  const invoice = makeInvoice(apiTransaction, account)
+  return [
+    account.id,
+    date,
+    getAmountIdPart(sum),
+    account.instrument,
+    getAmountIdPart(invoice?.sum),
+    invoice?.instrument,
+    pickOptString(apiTransaction, TRANSACTION_DESCRIPTION_PATHS)
+  ].map(getIdPart).join('|')
+}
+
+function getStableTransactionId (apiTransaction: unknown, account: Account, duplicateIndex: number): string {
+  return hashId([
+    getTransactionIdentitySource(apiTransaction, account),
+    duplicateIndex
+  ].join('|'))
 }
 
 function getHoldStatus (apiTransaction: unknown): boolean | null {
@@ -483,23 +516,30 @@ function makeInvoice (apiTransaction: unknown, account: Account): Amount | null 
 }
 
 export function convertTransactions (apiTransactions: unknown[], account: Account): Transaction[] {
+  const identityCounts = new Map<string, number>()
   return apiTransactions
     .filter(apiTransaction => !isFailedTransaction(apiTransaction))
-    .map(apiTransaction => convertTransaction(apiTransaction, account))
+    .map(apiTransaction => {
+      const identitySource = getTransactionIdentitySource(apiTransaction, account)
+      const duplicateIndex = (identityCounts.get(identitySource) ?? 0) + 1
+      identityCounts.set(identitySource, duplicateIndex)
+      return convertTransaction(apiTransaction, account, duplicateIndex)
+    })
 }
 
-export function convertTransaction (apiTransaction: unknown, account: Account): Transaction {
+export function convertTransaction (apiTransaction: unknown, account: Account, duplicateIndex = 1): Transaction {
   const description = pickOptString(apiTransaction, TRANSACTION_DESCRIPTION_PATHS)
   const currency = pickOptString(apiTransaction, TRANSACTION_CURRENCY_PATHS)
   if (currency != null) {
     assert(currency === account.instrument, 'unexpected account transaction currency', apiTransaction)
   }
+  const stableTransactionId = getStableTransactionId(apiTransaction, account, duplicateIndex)
   return {
     hold: getHoldStatus(apiTransaction),
     date: parseTransactionDate(apiTransaction),
     movements: [
       {
-        id: getTransactionId(apiTransaction),
+        id: stableTransactionId,
         account: { id: account.id },
         invoice: makeInvoice(apiTransaction, account),
         sum: pickTransactionSum(apiTransaction),
