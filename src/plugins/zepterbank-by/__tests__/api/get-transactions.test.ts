@@ -7,6 +7,19 @@ import type { FetchCardTransaction, FetchProductStatementOutput, FetchTransactio
 const mockFetchCardTransactions = jest.fn()
 const mockFetchProductStatement = jest.fn()
 
+const usePluginData = (data: Record<string, unknown> = {}): Record<string, unknown> => {
+  const zenMoneyMock = {
+    getData: jest.fn((name: string, defaultValue: unknown) => data[name] ?? defaultValue),
+    setData: jest.fn((name: string, value: unknown) => {
+      data[name] = value
+    }),
+    saveData: jest.fn(),
+    getPreferences: jest.fn(() => ({}))
+  }
+  Object.assign(global, { ZenMoney: zenMoneyMock })
+  return data
+}
+
 const withAnyMovementIds = (transaction: Transaction): Transaction => {
   const [firstMovement, secondMovement] = transaction.movements
   const firstMovementWithAnyId = {
@@ -41,6 +54,7 @@ describe('getTransactions', () => {
   afterEach(() => {
     mockFetchCardTransactions.mockReset()
     mockFetchProductStatement.mockReset()
+    delete (global as any).ZenMoney
   })
 
   it('prefers statement transactions over matching card history duplicates', async () => {
@@ -403,6 +417,72 @@ describe('getTransactions', () => {
     ])
   })
 
+  it('deduplicates completed card purchase and keeps it as an outcome', async () => {
+    const rawCardAccount = TEST_ACCOUNTS.CARD.find((account) => account.productCardId === 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8')
+
+    if (rawCardAccount == null) {
+      throw new Error('Card account not found')
+    }
+
+    const account = convertCardAccount(rawCardAccount)
+    mockFetchCardTransactions.mockResolvedValue({
+      status: 200,
+      data: [
+        {
+          effectiveDate: '2026-06-25T14:58:59',
+          transacName: 'EPOS RETURN OR REFUND',
+          amount: '0.00',
+          currencyIso: 'BYN',
+          cardAcceptor: '21VEK.BY',
+          repeatable: false,
+          transOperType: 'credit',
+          transMcc: 'МСС5300'
+        },
+        {
+          effectiveDate: '2026-06-25T14:37:27',
+          transacName: 'EPOS PURCH COMPL',
+          amount: '1.22',
+          currencyIso: 'BYN',
+          cardAcceptor: '21VEK.BY',
+          repeatable: false,
+          transOperType: 'noop',
+          transMcc: 'МСС5300'
+        },
+        {
+          effectiveDate: '2026-06-25T13:36:15',
+          transacName: 'EPOS PRE-PURCHASE',
+          amount: '1.22',
+          currencyIso: 'BYN',
+          cardAcceptor: '21VEK.BY',
+          repeatable: false,
+          transOperType: 'debit',
+          transMcc: 'МСС5300'
+        }
+      ],
+      error: null
+    })
+    mockFetchProductStatement.mockResolvedValue({
+      status: 200,
+      data: [],
+      error: null
+    })
+
+    const transactions = await getTransactions({
+      sessionToken: 'session-token',
+      fromDate: new Date('2026-06-25T00:00:00.000Z'),
+      toDate: new Date('2026-06-25T23:59:59.000Z')
+    }, account)
+
+    expect(transactions).toHaveLength(1)
+    expect(transactions[0].date).toEqual(new Date('2026-06-25T11:37:27.000Z'))
+    expect(transactions[0].movements[0].sum).toBe(-1.22)
+    expect(transactions[0].merchant).toEqual({
+      fullTitle: '21VEK.BY',
+      mcc: 5300,
+      location: null
+    })
+  })
+
   it('keeps the same final id when bank changes merchant and mcc between syncs', async () => {
     const rawCardAccount = TEST_ACCOUNTS.CARD.find((account) => account.productCardId === 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8')
 
@@ -481,6 +561,153 @@ describe('getTransactions', () => {
     expect(historyOnly).toHaveLength(1)
     expect(statementOnly).toHaveLength(1)
     expect(statementOnly[0].movements[0].id).toBe(historyOnly[0].movements[0].id)
+  })
+
+  it('preserves legacy history id through persisted alias when bank later returns only statement', async () => {
+    usePluginData()
+    const rawCardAccount = TEST_ACCOUNTS.CARD.find((account) => account.productCardId === 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8')
+
+    if (rawCardAccount == null) {
+      throw new Error('Card account not found')
+    }
+
+    const account = convertCardAccount(rawCardAccount)
+    const historyTransaction: FetchCardTransaction = {
+      effectiveDate: '2026-06-24T11:56:00',
+      transacName: 'POS PURCHASE ',
+      amount: '65.84',
+      currencyIso: 'BYN',
+      cardAcceptor: 'st. m. Grushevka',
+      repeatable: false,
+      transOperType: 'debit',
+      transMcc: 'МСС4111'
+    }
+    const statementOperation = {
+      transactionDate: '2026-06-24T00:00:00',
+      balanceDate: '2026-06-25',
+      operationName: 'Оплата товаров и услуг в устройствах других банков',
+      operationSum: '65.84',
+      transactionSum: '65.84',
+      transactionCurrency: '933',
+      transactionCurrencyISO: 'BYN',
+      operationSign: -1 as const,
+      operationCurrency: '933',
+      operationCurrencyIso: 'BYN',
+      merchant: 'BLR MINSK',
+      terminalLocation: 'KIOSK N145',
+      MCC: 'MCC 4131'
+    }
+
+    mockFetchCardTransactions.mockResolvedValueOnce({
+      status: 200,
+      data: [historyTransaction],
+      error: null
+    })
+    mockFetchProductStatement.mockResolvedValueOnce({
+      status: 200,
+      data: [],
+      error: null
+    })
+
+    const historyOnly = await getTransactions({
+      sessionToken: 'session-token',
+      fromDate: new Date('2026-06-24T00:00:00.000Z'),
+      toDate: new Date('2026-06-24T23:59:59.000Z')
+    }, account)
+
+    mockFetchCardTransactions.mockResolvedValueOnce({
+      status: 200,
+      data: [],
+      error: null
+    })
+    mockFetchProductStatement.mockResolvedValueOnce({
+      status: 200,
+      data: {
+        incomeForPeriod: '0.00',
+        outcomeForPeriod: '0.00',
+        ibanNum: rawCardAccount.ibanNum,
+        contractCurrency: String(rawCardAccount.currency),
+        contractCurrencyISO: rawCardAccount.currencyIso,
+        operations: [statementOperation]
+      },
+      error: null
+    })
+
+    const statementOnly = await getTransactions({
+      sessionToken: 'session-token',
+      fromDate: new Date('2026-06-24T00:00:00.000Z'),
+      toDate: new Date('2026-06-25T23:59:59.000Z')
+    }, account)
+
+    expect(historyOnly).toHaveLength(1)
+    expect(historyOnly[0].movements[0].id).toContain('|2026-06-24|sum|-65.84|4111|st. m. Grushevka|0')
+    expect(statementOnly).toHaveLength(1)
+    expect(statementOnly[0].movements[0].id).toBe(historyOnly[0].movements[0].id)
+  })
+
+  it('keeps pending card id stable after the bank returns it as a posted purchase', async () => {
+    usePluginData()
+    const rawCardAccount = TEST_ACCOUNTS.CARD.find((account) => account.productCardId === 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8')
+
+    if (rawCardAccount == null) {
+      throw new Error('Card account not found')
+    }
+
+    const account = convertCardAccount(rawCardAccount)
+    const pendingTransaction: FetchCardTransaction = {
+      effectiveDate: '2026-06-25T13:36:15',
+      transacName: 'EPOS PRE-PURCHASE',
+      amount: '1.22',
+      currencyIso: 'BYN',
+      cardAcceptor: '21VEK.BY',
+      repeatable: false,
+      transOperType: 'debit',
+      transMcc: 'МСС5300'
+    }
+    const postedTransaction: FetchCardTransaction = {
+      ...pendingTransaction,
+      transacName: 'POS PURCHASE '
+    }
+
+    mockFetchCardTransactions.mockResolvedValueOnce({
+      status: 200,
+      data: [pendingTransaction],
+      error: null
+    })
+    mockFetchProductStatement.mockResolvedValueOnce({
+      status: 200,
+      data: [],
+      error: null
+    })
+
+    const pendingOnly = await getTransactions({
+      sessionToken: 'session-token',
+      fromDate: new Date('2026-06-25T00:00:00.000Z'),
+      toDate: new Date('2026-06-25T23:59:59.000Z')
+    }, account)
+
+    mockFetchCardTransactions.mockResolvedValueOnce({
+      status: 200,
+      data: [postedTransaction],
+      error: null
+    })
+    mockFetchProductStatement.mockResolvedValueOnce({
+      status: 200,
+      data: [],
+      error: null
+    })
+
+    const postedOnly = await getTransactions({
+      sessionToken: 'session-token',
+      fromDate: new Date('2026-06-25T00:00:00.000Z'),
+      toDate: new Date('2026-06-25T23:59:59.000Z')
+    }, account)
+
+    expect(pendingOnly).toHaveLength(1)
+    expect(pendingOnly[0].movements[0].id).toContain('|2026-06-25|sum|-1.22|0')
+    expect(pendingOnly[0].movements[0].id).not.toContain('|5300|21VEK.BY|')
+    expect(postedOnly).toHaveLength(1)
+    expect(postedOnly[0].movements[0].id).toBe(pendingOnly[0].movements[0].id)
   })
 
   it('keeps separate same-day same-merchant statement transactions distinct', async () => {

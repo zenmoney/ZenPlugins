@@ -1,4 +1,5 @@
 import { Transaction } from '../../types/zenmoney'
+import type { TransactionWithIdentityStage } from './converters'
 import { getBusinessDateIdentityKey } from './helpers'
 
 type TransactionSource = 'history' | 'statement'
@@ -6,9 +7,13 @@ type TransactionSource = 'history' | 'statement'
 interface SourcedTransaction {
   source: TransactionSource
   transaction: Transaction
+  legacyIdentityTransaction?: Transaction
 }
 
 type TransactionWithDedupDate = Transaction & { dedupDate?: Date }
+
+const STABLE_ID_ALIASES_KEY = 'zepterbank-by/stableMovementIdAliases'
+const STABLE_ID_ALIAS_MAX_COUNT = 1000
 
 const normalizeText = (text: string | null | undefined): string =>
   (text ?? '').replace(/\s+/g, ' ').trim()
@@ -75,6 +80,44 @@ const getStableIdFingerprint = (transaction: Transaction): string => [
   getAmountSignature(transaction)
 ].join('|')
 
+const makeMovementId = (fingerprint: string, occurrenceIndex: number): string =>
+  ['zepterbank-by', fingerprint, occurrenceIndex].join('|')
+
+const canPersistStableIdAliases = (): boolean =>
+  typeof ZenMoney !== 'undefined' &&
+  typeof ZenMoney.getData === 'function' &&
+  typeof ZenMoney.setData === 'function' &&
+  typeof ZenMoney.saveData === 'function'
+
+const getStableIdAliases = (): Record<string, string> => {
+  if (!canPersistStableIdAliases()) {
+    return {}
+  }
+
+  const aliases = ZenMoney.getData(STABLE_ID_ALIASES_KEY, {})
+  return aliases != null && typeof aliases === 'object' && !Array.isArray(aliases)
+    ? aliases as Record<string, string>
+    : {}
+}
+
+const setStableIdAliases = (aliases: Record<string, string>): void => {
+  if (!canPersistStableIdAliases()) {
+    return
+  }
+
+  const prunedAliases = Object.fromEntries(Object.entries(aliases).slice(-STABLE_ID_ALIAS_MAX_COUNT))
+  ZenMoney.setData(STABLE_ID_ALIASES_KEY, prunedAliases)
+  ZenMoney.saveData()
+}
+
+const shouldPreferStableIdentity = ({ source, transaction, legacyIdentityTransaction }: SourcedTransaction): boolean => {
+  if ((transaction as TransactionWithIdentityStage).identityStage === 'pending') {
+    return true
+  }
+
+  return source === 'statement' && legacyIdentityTransaction == null
+}
+
 const isMatchingDuplicate = (left: Transaction, right: Transaction): boolean => {
   const leftId = getMovementId(left)
   const rightId = getMovementId(right)
@@ -86,26 +129,50 @@ const isMatchingDuplicate = (left: Transaction, right: Transaction): boolean => 
   return getDuplicateFingerprint(left) === getDuplicateFingerprint(right)
 }
 
-const withStableMovementIds = (transactions: Transaction[]): Transaction[] => {
-  const occurrenceIndexes = new Map<string, number>()
+const withStableMovementIds = (entries: SourcedTransaction[]): Transaction[] => {
+  const stableOccurrenceIndexes = new Map<string, number>()
+  const legacyOccurrenceIndexes = new Map<string, number>()
+  const shouldPersistStableIdAliases = canPersistStableIdAliases()
+  const stableIdAliases = getStableIdAliases()
+  let stableIdAliasesChanged = false
 
-  return transactions.map((transaction) => {
-    const fingerprint = getStableIdFingerprint(transaction)
-    const occurrenceIndex = occurrenceIndexes.get(fingerprint) ?? 0
-    occurrenceIndexes.set(fingerprint, occurrenceIndex + 1)
+  const transactions = entries.map((entry) => {
+    const { transaction } = entry
+    const stableFingerprint = getStableIdFingerprint(transaction)
+    const stableOccurrenceIndex = stableOccurrenceIndexes.get(stableFingerprint) ?? 0
+    stableOccurrenceIndexes.set(stableFingerprint, stableOccurrenceIndex + 1)
+    const stableMovementId = makeMovementId(stableFingerprint, stableOccurrenceIndex)
+    const legacyFingerprint = getDuplicateFingerprint(entry.legacyIdentityTransaction ?? transaction)
+    const legacyOccurrenceIndex = legacyOccurrenceIndexes.get(legacyFingerprint) ?? 0
+    legacyOccurrenceIndexes.set(legacyFingerprint, legacyOccurrenceIndex + 1)
+    const legacyMovementId = makeMovementId(legacyFingerprint, legacyOccurrenceIndex)
+    const selectedMovementId = shouldPersistStableIdAliases
+      ? stableIdAliases[stableMovementId] ?? (shouldPreferStableIdentity(entry) ? stableMovementId : legacyMovementId)
+      : stableMovementId
+    if (shouldPersistStableIdAliases && stableIdAliases[stableMovementId] !== selectedMovementId) {
+      stableIdAliases[stableMovementId] = selectedMovementId
+      stableIdAliasesChanged = true
+    }
     const [firstMovement, secondMovement] = transaction.movements
     const firstMovementWithStableId = {
       ...firstMovement,
-      id: ['zepterbank-by', fingerprint, occurrenceIndex].join('|')
+      id: selectedMovementId
     }
+    const movements: Transaction['movements'] = secondMovement == null
+      ? [firstMovementWithStableId]
+      : [firstMovementWithStableId, secondMovement]
 
     return {
       ...transaction,
-      movements: secondMovement == null
-        ? [firstMovementWithStableId]
-        : [firstMovementWithStableId, secondMovement]
+      movements
     }
   })
+
+  if (stableIdAliasesChanged) {
+    setStableIdAliases(stableIdAliases)
+  }
+
+  return transactions
 }
 
 export const mergeTransactions = (historyTransactions: Transaction[], statementTransactions: Transaction[]): Transaction[] => {
@@ -120,9 +187,11 @@ export const mergeTransactions = (historyTransactions: Transaction[], statementT
     )
 
     if (duplicateHistoryIndex !== -1) {
+      const legacyIdentityTransaction = mergedTransactions[duplicateHistoryIndex].transaction
       mergedTransactions[duplicateHistoryIndex] = {
         source: 'statement',
-        transaction: statementTransaction
+        transaction: statementTransaction,
+        legacyIdentityTransaction
       }
       continue
     }
@@ -133,5 +202,5 @@ export const mergeTransactions = (historyTransactions: Transaction[], statementT
     })
   }
 
-  return withStableMovementIds(mergedTransactions.map(({ transaction }) => transaction))
+  return withStableMovementIds(mergedTransactions)
 }
