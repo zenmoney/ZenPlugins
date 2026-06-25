@@ -403,6 +403,86 @@ describe('getTransactions', () => {
     ])
   })
 
+  it('keeps the same final id when bank changes merchant and mcc between syncs', async () => {
+    const rawCardAccount = TEST_ACCOUNTS.CARD.find((account) => account.productCardId === 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8')
+
+    if (rawCardAccount == null) {
+      throw new Error('Card account not found')
+    }
+
+    const account = convertCardAccount(rawCardAccount)
+    const historyTransaction: FetchCardTransaction = {
+      effectiveDate: '2026-06-24T11:56:00',
+      transacName: 'POS PURCHASE ',
+      amount: '65.84',
+      currencyIso: 'BYN',
+      cardAcceptor: 'st. m. Grushevka',
+      repeatable: false,
+      transOperType: 'debit',
+      transMcc: 'МСС4111'
+    }
+    const statementOperation = {
+      transactionDate: '2026-06-24T00:00:00',
+      balanceDate: '2026-06-25',
+      operationName: 'Оплата товаров и услуг в устройствах других банков',
+      operationSum: '65.84',
+      transactionSum: '65.84',
+      transactionCurrency: '933',
+      transactionCurrencyISO: 'BYN',
+      operationSign: -1 as const,
+      operationCurrency: '933',
+      operationCurrencyIso: 'BYN',
+      merchant: 'BLR MINSK',
+      terminalLocation: 'KIOSK N145',
+      MCC: 'MCC 4131'
+    }
+
+    mockFetchCardTransactions.mockResolvedValueOnce({
+      status: 200,
+      data: [historyTransaction],
+      error: null
+    })
+    mockFetchProductStatement.mockResolvedValueOnce({
+      status: 200,
+      data: [],
+      error: null
+    })
+
+    const historyOnly = await getTransactions({
+      sessionToken: 'session-token',
+      fromDate: new Date('2026-06-24T00:00:00.000Z'),
+      toDate: new Date('2026-06-24T23:59:59.000Z')
+    }, account)
+
+    mockFetchCardTransactions.mockResolvedValueOnce({
+      status: 200,
+      data: [],
+      error: null
+    })
+    mockFetchProductStatement.mockResolvedValueOnce({
+      status: 200,
+      data: {
+        incomeForPeriod: '0.00',
+        outcomeForPeriod: '0.00',
+        ibanNum: rawCardAccount.ibanNum,
+        contractCurrency: String(rawCardAccount.currency),
+        contractCurrencyISO: rawCardAccount.currencyIso,
+        operations: [statementOperation]
+      },
+      error: null
+    })
+
+    const statementOnly = await getTransactions({
+      sessionToken: 'session-token',
+      fromDate: new Date('2026-06-24T00:00:00.000Z'),
+      toDate: new Date('2026-06-25T23:59:59.000Z')
+    }, account)
+
+    expect(historyOnly).toHaveLength(1)
+    expect(statementOnly).toHaveLength(1)
+    expect(statementOnly[0].movements[0].id).toBe(historyOnly[0].movements[0].id)
+  })
+
   it('keeps separate same-day same-merchant statement transactions distinct', async () => {
     const rawCardAccount = TEST_ACCOUNTS.CARD.find((account) => account.productCardId === 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8')
 

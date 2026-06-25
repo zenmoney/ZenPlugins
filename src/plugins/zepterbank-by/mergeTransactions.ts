@@ -69,6 +69,12 @@ const getDuplicateFingerprint = (transaction: Transaction): string => [
   normalizeText(getMerchantTitle(transaction))
 ].join('|')
 
+const getStableIdFingerprint = (transaction: Transaction): string => [
+  getMovementAccountId(transaction),
+  getDaySignature(transaction),
+  getAmountSignature(transaction)
+].join('|')
+
 const isMatchingDuplicate = (left: Transaction, right: Transaction): boolean => {
   const leftId = getMovementId(left)
   const rightId = getMovementId(right)
@@ -84,7 +90,7 @@ const withStableMovementIds = (transactions: Transaction[]): Transaction[] => {
   const occurrenceIndexes = new Map<string, number>()
 
   return transactions.map((transaction) => {
-    const fingerprint = getDuplicateFingerprint(transaction)
+    const fingerprint = getStableIdFingerprint(transaction)
     const occurrenceIndex = occurrenceIndexes.get(fingerprint) ?? 0
     occurrenceIndexes.set(fingerprint, occurrenceIndex + 1)
     const [firstMovement, secondMovement] = transaction.movements
