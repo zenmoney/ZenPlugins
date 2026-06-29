@@ -116,7 +116,7 @@ export class TronscanApi {
   public async fetchTokens (wallet: string): Promise<SupportedTokenInfo[]> {
     const response = await this.fetchApi<{ data: TokenInfo[] }>('account/tokens', {
       address: wallet,
-      limit: 999
+      limit: 500
     },
     (res) => typeof res.body === 'object' && res.body != null && 'data' in res.body
     )
@@ -124,106 +124,138 @@ export class TronscanApi {
     return response.body.data.filter(isSupportedToken)
   }
 
-  public async fetchTransactions (wallet: string, fromDate: Date, toDate?: Date): Promise<Map<string, TronTransaction>> {
-    const transactions = new Map<string, TronTransaction>()
-    let start = 0
-    const limit = 50
+  // Tronscan returns at most ~2000 records for a single (address, time-range)
+  // query, so we page within a time window and then move the window's upper
+  // bound back in time to reach older records without leaving gaps.
+  private static readonly PAGE_LIMIT = 50
+  private static readonly WINDOW_CAP = 2000
+
+  private async fetchPaginated<Body, Item> (
+    url: string,
+    params: Record<string, string | number | boolean | undefined>,
+    fromDate: Date,
+    toDate: Date | undefined,
+    extract: (body: Body) => { items: Item[], total?: number },
+    getId: (item: Item) => string,
+    getTimestamp: (item: Item) => number
+  ): Promise<Item[]> {
+    const limit = TronscanApi.PAGE_LIMIT
+    const cap = TronscanApi.WINDOW_CAP
+    const collected: Item[] = []
+    const seen = new Set<string>()
+    let windowEnd = toDate?.valueOf()
 
     while (true) {
-      const response = await this.fetchApi<{ data: TronTransaction[], total: number }>('transaction', {
-        address: wallet,
-        start_timestamp: fromDate.valueOf(),
-        end_timestamp: toDate?.valueOf(),
-        limit,
-        start,
-        sort: '-timestamp'
-      })
+      let start = 0
+      let windowCount = 0
+      let oldestTs: number | undefined
 
-      for (const transaction of response.body.data) {
-        transactions.set(transaction.hash, transaction)
+      while (true) {
+        const response = await this.fetchApi<Body>(url, {
+          ...params,
+          start_timestamp: fromDate.valueOf(),
+          end_timestamp: windowEnd,
+          limit,
+          start
+        })
+
+        const { items, total } = extract(response.body)
+
+        if (items.length === 0) {
+          break
+        }
+
+        for (const item of items) {
+          const ts = getTimestamp(item)
+          if (oldestTs === undefined || ts < oldestTs) {
+            oldestTs = ts
+          }
+          const id = getId(item)
+          // De-duplicate: the record on the window boundary is re-fetched
+          // when we narrow the window below.
+          if (!seen.has(id)) {
+            seen.add(id)
+            collected.push(item)
+          }
+        }
+
+        windowCount += items.length
+        // Advance by the number of records actually returned, not by the
+        // requested page size: Tronscan may serve fewer than `limit` per page.
+        start += items.length
+
+        if (total !== undefined && start >= total) {
+          break
+        }
+        if (start >= cap) {
+          break
+        }
       }
 
-      if (start + limit >= response.body.total) {
+      // The window was not capped, so there are no older records to fetch.
+      if (windowCount < cap || oldestTs === undefined) {
         break
       }
+      // Guard against making no progress (e.g. many records share a timestamp).
+      if (windowEnd !== undefined && oldestTs >= windowEnd) {
+        break
+      }
+      windowEnd = oldestTs
+    }
 
-      start += limit
+    return collected
+  }
+
+  public async fetchTransactions (wallet: string, fromDate: Date, toDate?: Date): Promise<Map<string, TronTransaction>> {
+    const items = await this.fetchPaginated<{ data: TronTransaction[], total: number }, TronTransaction>(
+      'transaction',
+      { address: wallet, sort: '-timestamp' },
+      fromDate,
+      toDate,
+      (body) => ({ items: body.data, total: body.total }),
+      (tx) => tx.hash,
+      (tx) => tx.timestamp
+    )
+
+    const transactions = new Map<string, TronTransaction>()
+    for (const transaction of items) {
+      transactions.set(transaction.hash, transaction)
     }
 
     return transactions
   }
 
   public async fetchTokenTransfers (wallet: string, fromDate: Date, toDate?: Date): Promise<Transfer[]> {
-    const transfers: Transfer[] = []
-    let start = 0
-    const limit = 50
-
-    while (true) {
-      const response = await this.fetchApi<{ total: number, token_transfers: Transfer[] }>('token_trc20/transfers', {
-        relatedAddress: wallet,
-        start_timestamp: fromDate.valueOf(),
-        end_timestamp: toDate?.valueOf(),
-        limit,
-        start,
-        sort: '-timestamp'
-      })
-
-      for (const t of response.body.token_transfers) {
-        transfers.push({
-          transaction_id: t.transaction_id,
-          block_ts: t.block_ts,
-          from_address: t.from_address,
-          to_address: t.to_address,
-          quant: t.quant,
-          tokenInfo: t.tokenInfo
-        })
-      }
-
-      if (start + limit >= response.body.total) {
-        break
-      }
-
-      start += limit
-    }
-
-    return transfers
+    return await this.fetchPaginated<{ total: number, token_transfers: Transfer[] }, Transfer>(
+      'token_trc20/transfers',
+      { relatedAddress: wallet, sort: '-timestamp' },
+      fromDate,
+      toDate,
+      (body) => ({ items: body.token_transfers, total: body.total }),
+      (t) => t.transaction_id,
+      (t) => t.block_ts
+    )
   }
 
   public async fetchTronTransfers (wallet: string, fromDate: Date, toDate?: Date): Promise<Transfer[]> {
-    const transfers: Transfer[] = []
-    let start = 0
-    const limit = 50
-
-    while (true) {
-      const response = await this.fetchApi<{ tokenInfo: TokenInfo, page_size: number, data: TronTransfer[] }>(
-        'transfer/trx', {
-          direction: 0,
-          address: wallet,
-          start_timestamp: fromDate.valueOf(),
-          end_timestamp: toDate?.valueOf(),
-          limit,
-          start
-        })
-
-      for (const t of response.body.data) {
-        transfers.push({
+    return await this.fetchPaginated<{ tokenInfo: TokenInfo, page_size: number, data: TronTransfer[] }, Transfer>(
+      'transfer/trx',
+      { direction: 0, address: wallet },
+      fromDate,
+      toDate,
+      (body) => ({
+        items: body.data.map((t) => ({
           transaction_id: t.hash,
           block_ts: t.block_timestamp,
           from_address: t.from,
           to_address: t.to,
           quant: t.amount,
-          tokenInfo: response.body.tokenInfo
-        })
-      }
-
-      if (response.body.page_size < limit) {
-        break
-      }
-
-      start += limit
-    }
-
-    return transfers
+          tokenInfo: body.tokenInfo
+        }))
+      }),
+      (t) => t.transaction_id,
+      (t) => t.block_ts
+    )
   }
 }
 
