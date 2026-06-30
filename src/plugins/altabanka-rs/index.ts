@@ -2,57 +2,31 @@ import { Account, ScrapeFunc, Transaction } from '../../types/zenmoney'
 import { Preferences } from './types'
 import { convertAccounts, convertTransaction } from './converters'
 import { altaBankaApi } from './api'
-import { deduplicateTransactions } from './transactions'
 
-export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, toDate, isInBackground }) => {
-  await altaBankaApi.login(preferences, isInBackground)
+export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, toDate }) => {
+  await altaBankaApi.login(preferences)
 
   const apiAccounts = await altaBankaApi.fetchAccounts()
-  const convertedAccounts: Account[] = convertAccounts(apiAccounts.filter(a => a.cardNumber === ''))
+  const accounts: Account[] = convertAccounts(apiAccounts)
   const transactions: Transaction[] = []
 
-  const token = await altaBankaApi.fetchVerificationToken()
-
   await Promise.all(apiAccounts.map(async (account) => {
-    if (ZenMoney.isAccountSkipped(account.accountNumber)) {
+    if (ZenMoney.isAccountSkipped(account.iban)) {
       return
     }
 
-    let page = 1
-    if (account.cardNumber === '') {
-      while (page < 100) {
-        const apiTransactions = await altaBankaApi.fetchTransactions(account.id, token, page, fromDate, toDate)
+    const apiTransactions = await altaBankaApi.fetchTransactions(
+      account,
+      fromDate,
+      toDate ?? new Date()
+    )
 
-        if (apiTransactions.length === 0) {
-          break
-        }
-
-        page++
-
-        transactions.push(...apiTransactions.map(t => convertTransaction(t, account)).filter((tx): tx is Transaction => tx !== null))
-      }
-    }
-
-    if (account.cardNumber !== '') {
-      account.id = account.accountNumber
-      page = 1
-
-      while (page < 100) {
-        const apiCardTransactions = await altaBankaApi.fetchCardTransactions(account.accountNumber, account.cardNumber, token, page, fromDate, toDate)
-
-        if (apiCardTransactions.length === 0) {
-          break
-        }
-
-        page++
-
-        transactions.push(...apiCardTransactions.map(t => convertTransaction(t, account, true)).filter((tx): tx is Transaction => tx !== null))
-      }
-    }
+    transactions.push(
+      ...apiTransactions
+        .map(t => convertTransaction(t, account))
+        .filter((tx): tx is Transaction => tx !== null)
+    )
   }))
 
-  return {
-    accounts: convertedAccounts,
-    transactions: deduplicateTransactions(transactions)
-  }
+  return { accounts, transactions }
 }
