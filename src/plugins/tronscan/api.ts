@@ -124,11 +124,12 @@ export class TronscanApi {
     return response.body.data.filter(isSupportedToken)
   }
 
-  // Tronscan returns at most ~2000 records for a single (address, time-range)
-  // query, so we page within a time window and then move the window's upper
-  // bound back in time to reach older records without leaving gaps.
+  // Tronscan enforces `start + limit <= 10000` for a single (address,
+  // time-range) query. Once a window reaches that ceiling we move its upper
+  // bound (end_timestamp) back to the oldest record seen and keep going, so
+  // the full history is retrieved without leaving gaps.
   private static readonly PAGE_LIMIT = 50
-  private static readonly WINDOW_CAP = 2000
+  private static readonly WINDOW_CAP = 10000
 
   private async fetchPaginated<Body, Item> (
     url: string,
