@@ -265,6 +265,67 @@ describe('convertTransaction', () => {
     expect(convertTransaction(merged[0]).movements[0].id).toEqual(transactionId('2026-06-20', '-19.30', 'SHOP KERAMIKA / STOLITSA'))
   })
 
+  it('matches account capitalization when mini statement has generic income name', () => {
+    const hold = {
+      account_id: 'mock-account-001',
+      accountCurrencyCode: '933',
+      transactionDate: new Date('2026-06-30T14:42:03+03:00'),
+      transactionName: 'Зачисление на счет',
+      transactionCurrencyCode: '933',
+      transactionAmount: 0.1,
+      hold: true
+    }
+    const postedOperation = {
+      account_id: 'mock-account-001',
+      operationName: 'Капитализация (%% тек.периода ко вкладу)',
+      operationDate: new Date('2026-06-30T14:00:50+03:00'),
+      operationCurrencyCode: '933',
+      operationAmount: 0.1,
+      transactionDate: new Date('2026-06-30T14:00:50+03:00'),
+      transactionAmount: 0,
+      transactionCurrencyCode: '933',
+      hold: false
+    }
+    const merged = merge([hold], [postedOperation])
+    const transaction = convertTransaction(merged[0])
+
+    expect(merged).toHaveLength(1)
+    expect(merged[0].hold).toEqual(false)
+    expect(transaction.movements[0].sum).toEqual(0.1)
+    expect(transaction.movements[0].id).toEqual(transactionId('2026-06-30', '0.10', 'Зачисление на счет'))
+  })
+
+  it('does not merge unrelated no-merchant income operation names', () => {
+    const hold = {
+      account_id: 'mock-account-001',
+      accountCurrencyCode: '933',
+      transactionDate: new Date('2026-06-30T14:42:03+03:00'),
+      transactionName: 'Зачисление на счет',
+      transactionCurrencyCode: '933',
+      transactionAmount: 0.1,
+      hold: true
+    }
+    const postedOperation = {
+      account_id: 'mock-account-001',
+      operationName: 'Пополнение счета',
+      operationDate: new Date('2026-06-30T14:00:50+03:00'),
+      operationCurrencyCode: '933',
+      operationAmount: 0.1,
+      transactionDate: new Date('2026-06-30T14:00:50+03:00'),
+      transactionAmount: 0,
+      transactionCurrencyCode: '933',
+      hold: false
+    }
+    const transactions = merge([hold], [postedOperation]).map(transaction => convertTransaction(transaction))
+
+    expect(transactions).toHaveLength(2)
+    expect(transactions.map(transaction => transaction.hold)).toEqual([false, true])
+    expect(transactions.map(transaction => transaction.movements[0].id)).toEqual([
+      transactionId('2026-06-30', '0.10', 'Пополнение счета'),
+      transactionId('2026-06-30', '0.10', 'Зачисление на счет')
+    ])
+  })
+
   it('does not merge merchants when the shared prefix is too short', () => {
     const hold = {
       account_id: 'mock-account-001',

@@ -4,6 +4,8 @@ const BANK_TIMEZONE_OFFSET_MS = 3 * 60 * 60 * 1000
 const MERCHANT_ID_PREFIX_LENGTH = 25
 const SAFE_MERCHANT_PREFIX_MIN_LENGTH = 16
 const CANONICAL_TRANSACTION_ID_SOURCE_FIELD = 'transactionIdSource'
+const GENERIC_ACCOUNT_INCOME_NAME = 'ЗАЧИСЛЕНИЕ НА СЧЕТ'
+const CAPITALIZATION_OPERATION_NAME_PREFIX = 'КАПИТАЛИЗАЦИЯ '
 const md5 = new MD5()
 
 export function convertAccount (json) {
@@ -96,8 +98,8 @@ function getTransactionIdentitySource (json) {
   return [
     json.account_id,
     getDateIdValue(getFirstPresent(json.transactionDate, json.date, json.operationDate)),
-    getAmountIdValue(getFirstPresent(json.transactionAmount, json.operationAmount, json.sum)),
-    getFirstPresent(json.transactionCurrencyCode, json.operationCurrencyCode, json.accountCurrencyCode, json.currencyCode, json.currency),
+    getAmountIdValue(getTransactionAmountIdValue(json)),
+    getTransactionCurrencyIdValue(json),
     getMerchantIdValue(json.merchant) || getFirstPresent(json.operationName, json.transactionName)
   ].map(getIdValue).join('|')
 }
@@ -122,6 +124,28 @@ function getAmountIdValue (value) {
     return ''
   }
   return parseAmount(value).toFixed(2)
+}
+
+function getTransactionAmountIdValue (json) {
+  const transactionAmount = getFirstPresent(json.transactionAmount)
+  const operationAmount = getFirstPresent(json.operationAmount, json.sum)
+  if (isZeroAmount(transactionAmount) && !isZeroAmount(operationAmount)) {
+    return operationAmount
+  }
+  return getFirstPresent(json.transactionAmount, json.operationAmount, json.sum)
+}
+
+function getTransactionCurrencyIdValue (json) {
+  const transactionAmount = getFirstPresent(json.transactionAmount)
+  const operationAmount = getFirstPresent(json.operationAmount, json.sum)
+  if (isZeroAmount(transactionAmount) && !isZeroAmount(operationAmount)) {
+    return getFirstPresent(json.operationCurrencyCode, json.accountCurrencyCode, json.currencyCode, json.currency, json.transactionCurrencyCode)
+  }
+  return getFirstPresent(json.transactionCurrencyCode, json.operationCurrencyCode, json.accountCurrencyCode, json.currencyCode, json.currency)
+}
+
+function isZeroAmount (value) {
+  return value !== undefined && value !== null && value !== '' && parseAmount(value) === 0
 }
 
 function getMerchantIdValue (value) {
@@ -275,8 +299,8 @@ function getTransactionBaseKey (json) {
   return [
     json.account_id,
     getDateIdValue(getFirstPresent(json.transactionDate, json.date, json.operationDate)),
-    getAmountIdValue(getFirstPresent(json.transactionAmount, json.operationAmount, json.sum)),
-    getFirstPresent(json.transactionCurrencyCode, json.operationCurrencyCode, json.accountCurrencyCode, json.currencyCode, json.currency)
+    getAmountIdValue(getTransactionAmountIdValue(json)),
+    getTransactionCurrencyIdValue(json)
   ].map(getIdValue).join('|')
 }
 
@@ -285,11 +309,13 @@ function getTransactionMerchantMatchValue (json) {
   if (merchant) {
     return {
       value: merchant,
+      type: 'merchant',
       allowPrefixMatch: true
     }
   }
   return {
-    value: getIdValue(getFirstPresent(json.operationName, json.transactionName)),
+    value: normalizeOperationName(getFirstPresent(json.operationName, json.transactionName)),
+    type: 'operationName',
     allowPrefixMatch: false
   }
 }
@@ -297,6 +323,9 @@ function getTransactionMerchantMatchValue (json) {
 function areMerchantValuesCompatible (left, right) {
   if (left.value === right.value) {
     return true
+  }
+  if (left.type === 'operationName' && right.type === 'operationName') {
+    return areOperationNamesCompatible(left.value, right.value)
   }
   if (!left.allowPrefixMatch || !right.allowPrefixMatch || !left.value || !right.value) {
     return false
@@ -308,4 +337,23 @@ function areMerchantValuesCompatible (left, right) {
   }
   return Math.min(left.value.length, right.value.length) >= SAFE_MERCHANT_PREFIX_MIN_LENGTH &&
     (left.value.startsWith(right.value) || right.value.startsWith(left.value))
+}
+
+function normalizeOperationName (value) {
+  return value
+    ? String(value).replace(/\s+/g, ' ').trim().toUpperCase()
+    : ''
+}
+
+function areOperationNamesCompatible (left, right) {
+  return (isGenericAccountIncomeName(left) && isCapitalizationOperationName(right)) ||
+    (isGenericAccountIncomeName(right) && isCapitalizationOperationName(left))
+}
+
+function isGenericAccountIncomeName (value) {
+  return value === GENERIC_ACCOUNT_INCOME_NAME
+}
+
+function isCapitalizationOperationName (value) {
+  return value.indexOf(CAPITALIZATION_OPERATION_NAME_PREFIX) === 0
 }
