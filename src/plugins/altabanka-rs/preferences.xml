@@ -10,15 +10,4 @@
         negativeButtonText="Отмена"
         summary="|ID пользователя|{@s}"
     />
-    <EditTextPreference
-        key="otp"
-        obligatory="true"
-        inputType="textPassword"
-        title="Одноразовый пароль (mToken OTP)"
-        dialogTitle="Одноразовый пароль"
-        dialogMessage="Введите OTP-код из мобильного приложения банка (Unesite OTP kod iz mobilne aplikacije)"
-        positiveButtonText="ОК"
-        negativeButtonText="Отмена"
-        summary="||***"
-    />
 </PreferenceScreen>
