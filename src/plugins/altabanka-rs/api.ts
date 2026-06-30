@@ -1,155 +1,97 @@
 import { fetch, FetchResponse } from '../../common/network'
-import { sanitize } from '../../common/sanitize'
 import { InvalidPreferencesError } from '../../errors'
-import { parseAccountInfo, parseLoginResult, parseRequestVerificationToken, parseTransactions } from './parsers'
+import { parseAccounts, parseTransactions } from './parsers'
 import { AccountInfo, AccountTransaction, Preferences } from './types'
 import moment from 'moment'
-// @ts-expect-error no types for package
-import * as qs from 'querystring-browser'
+
+const BASE_URL = 'https://online.altabanka.rs/Retail/'
 
 export class AltaBankaApi {
-  private readonly baseUrl: string
+  private requestToken: string = ''
 
-  constructor (options: { baseUrl: string }) {
-    this.baseUrl = options.baseUrl
+  private headers (): Record<string, string> {
+    return {
+      'content-type': 'application/json',
+      'x-requested-with': 'XMLHttpRequest',
+      'x-holos-session': '1',
+      'x-holos-requesttoken': this.requestToken
+    }
   }
 
-  public async login ({ login, password }: Preferences, isInBackground: boolean): Promise<void> {
-    const formData = {
-      Username_ID: login,
-      Password_ID: password,
-      ActiveLoginMethod: 'usernamepassword',
-      workitemid: 'v2bdQSMgtKTpqU8qDDR9iQ==',
-      'X-Requested-With': 'XMLHttpRequest'
-    }
+  public async login ({ login, otp }: Preferences): Promise<void> {
+    const loginPage = await fetch(BASE_URL + 'Home/Login', {
+      method: 'GET'
+    }) as FetchResponse & { headers: Record<string, string> }
+
+    const cookies = loginPage.headers['set-cookie'] ?? ''
+    const match = cookies.match(/altaretv4_HolosToken=([^;]+)/)
+    this.requestToken = match?.[1] ?? ''
 
     const response = await fetch(
-      this.baseUrl + 'Identity/Login',
+      BASE_URL + 'Protected/Services/RetailLoginService.svc/LoginUO',
       {
         method: 'POST',
-        headers: {
-          'content-type': 'application/x-www-form-urlencoded'
-        },
-        body: qs.stringify(formData),
+        headers: this.headers(),
+        body: JSON.stringify({
+          username: login,
+          otp: otp,
+          appType: 'AUTH_1',
+          sessionID: 1
+        }),
         sanitizeRequestLog: true
-      }) as FetchResponse & { body: string }
+      }
+    ) as FetchResponse & { body: string }
 
-    if (!parseLoginResult(response.body)) {
-      console.error('login failed')
+    const result = JSON.parse(response.body)
+
+    if (result.LoginError != null) {
       throw new InvalidPreferencesError()
     }
 
-    console.info('login successful')
+    this.requestToken = result.RequestToken
   }
 
   public async fetchAccounts (): Promise<AccountInfo[]> {
     const response = await fetch(
-      this.baseUrl + 'Home/Accounts',
-      undefined
+      BASE_URL + 'Protected/Services/DataService.svc/GetAllAccountBalance',
+      {
+        method: 'POST',
+        headers: this.headers(),
+        body: JSON.stringify({ gridName: 'AccountBalancePreview' })
+      }
     ) as FetchResponse & { body: string }
 
-    const accountsInfo = parseAccountInfo(response.body)
-
-    console.debug('fetchAccounts', sanitize(accountsInfo, false))
-
-    return accountsInfo
-  }
-
-  public async fetchVerificationToken (): Promise<string> {
-    const response = await fetch(
-      this.baseUrl + 'AccountData/Transactions/List',
-      undefined
-    ) as FetchResponse & { body: string }
-
-    const token = parseRequestVerificationToken(response.body)
-
-    console.debug('fetchVerificationToken', sanitize(token, true))
-
-    return token
+    return parseAccounts(JSON.parse(response.body))
   }
 
   public async fetchTransactions (
-    accountId: string,
-    token: string,
-    page: number,
+    account: AccountInfo,
     fromDate: Date,
-    toDate?: Date
+    toDate: Date
   ): Promise<AccountTransaction[]> {
-    const formData: Record<string, string> = {
-      Accounts_ID: accountId,
-      __RequestVerificationToken: token,
-      DateFrom_ID: moment(fromDate).format('DD/MM/YYYY'),
-      SortOrder_ID: 'asc',
-      PageSize: '100',
-      PageNumber: page.toString()
-    }
-    if (toDate != null) {
-      formData.DateTo_ID = moment(toDate).format('DD/MM/YYYY')
-    }
-
     const response = await fetch(
-      this.baseUrl + 'AccountData/Transactions/List',
+      BASE_URL + 'Protected/Services/DataService.svc/GetTransactionalAccountTurnover',
       {
         method: 'POST',
-        headers: {
-          'content-type': 'application/x-www-form-urlencoded'
-        },
-        body: qs.stringify(formData)
+        headers: this.headers(),
+        body: JSON.stringify({
+          accountNumber: account.accountNumber,
+          productCoreID: account.productCoreID,
+          filterParam: {
+            Currency: account.currency,
+            DateFrom: moment(fromDate).format('DD.MM.YYYY'),
+            DateTo: moment(toDate).format('DD.MM.YYYY'),
+            Direction: '',
+            AmountLow: '',
+            AmountHigh: ''
+          },
+          gridName: 'RetailAccountTurnoverTransactionPreviewMasterDetail'
+        })
       }
     ) as FetchResponse & { body: string }
 
-    const transactions = parseTransactions(response.body, fromDate)
-
-    console.debug('fetchTransactions', sanitize(transactions, false))
-
-    return transactions
-  }
-
-  public async fetchCardTransactions (
-    accountId: string,
-    cardNumber: string,
-    token: string,
-    page: number,
-    fromDate: Date,
-    toDate?: Date
-  ): Promise<AccountTransaction[]> {
-    const formData: Record<string, string> = {
-      Accounts_ID: accountId,
-      __RequestVerificationToken: token,
-      DateFrom_ID: moment(fromDate).format('DD/MM/YYYY'),
-      SortOrder_ID: 'asc',
-      PageSize: '100',
-      PageNumber: page.toString(),
-      Statuses_ID: 'p'
-    }
-
-    if (toDate != null) {
-      formData.DateTo_ID = moment(toDate).format('DD/MM/YYYY')
-    }
-
-    if (cardNumber !== '') {
-      formData.Cards_ID = cardNumber
-    }
-
-    const response = await fetch(
-      this.baseUrl + 'AccountData/Transactions/CardTransactionsList',
-      {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/x-www-form-urlencoded'
-        },
-        body: qs.stringify(formData)
-      }
-    ) as FetchResponse & { body: string }
-
-    const transactions = parseTransactions(response.body, fromDate)
-
-    console.debug('fetchCardTransactions', sanitize(transactions, false))
-
-    return transactions
+    return parseTransactions(JSON.parse(response.body))
   }
 }
 
-export const altaBankaApi = new AltaBankaApi({
-  baseUrl: 'https://altabanka.24x7.rs/altaonline/'
-})
+export const altaBankaApi = new AltaBankaApi()
