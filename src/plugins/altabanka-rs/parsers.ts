@@ -1,88 +1,37 @@
-import cheerio from 'cheerio'
 import { AccountInfo, AccountTransaction } from './types'
 import moment from 'moment'
-import { isValidDate } from '../../common/dateUtils'
 
-const exchangeRateRegex = /\d+\.\d+ \w{3} Kurs:.+/
-
-export function parseLoginResult (body: string): boolean {
-  return body.includes('location.href = action;')
+export function parseAccounts (response: string[][]): AccountInfo[] {
+  return response.map(account => ({
+    name: account[1],
+    productCoreID: account[2],
+    accountNumber: account[6],
+    balance: parseFloat(account[7]),
+    currency: account[8],
+    iban: account[15]
+  }))
 }
 
-export function parseAccountInfo (body: string): AccountInfo[] {
-  const html = cheerio.load(body)
-  const accountsHtml = html('#account-slider').find('.slide')
-  const accounts: AccountInfo[] = []
+export function parseTransactions (response: unknown[][][]): AccountTransaction[] {
+  const transactions = response[0][1] as string[][]
+  if (!Array.isArray(transactions)) {
+    return []
+  }
 
-  // eslint-disable-next-line array-callback-return
-  accountsHtml.toArray().map(accountHtml => {
-    const $ = cheerio.load(accountHtml)
+  return transactions
+    .map(tx => {
+      const direction = tx[5] === 'c' ? 1 : -1
+      const amount = direction * parseFloat(tx[27])
+      const date = moment(tx[7], 'DD.MM.YYYY HH:mm:ss').toDate()
 
-    const invoiceAccounts: Array<{ currency: string, balance: string | undefined }> = []
-    $('select[data-utility="customselectMenu"] option').each((index, element) => {
-      const currency = $(element).text().trim() // Валюта
-      const balance = $(element).attr('data-amount') // Баланс
-      invoiceAccounts.push({ currency, balance })
-    })
-
-    for (const invoiceAccount of invoiceAccounts) {
-      const id = (accountHtml as cheerio.TagElement).attribs['data-accountnumber'].trim()
-      const account = {
-        id: invoiceAccounts.length > 1 ? id + invoiceAccount.currency : id,
-        cardNumber: (accountHtml as cheerio.TagElement).attribs['data-cardno'].trim(),
-        accountNumber: (accountHtml as cheerio.TagElement).attribs['data-accno'].trim(),
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        name: $('.acc-name').text().trim() || $('.acc-nr').text().trim(),
-        currency: invoiceAccount.currency,
-        balance: invoiceAccount.balance !== undefined
-          ? parseFloat(invoiceAccount.balance.replace(/\./g, '').replace(',', '.'))
-          : 0
+      return {
+        id: tx[10],
+        date,
+        direction: tx[5],
+        amount,
+        currency: tx[30] !== '' ? tx[30] : undefined,
+        description: tx[15].trim()
       }
-      accounts.push(account)
-    }
-  })
-  return accounts
-}
-
-export function parseRequestVerificationToken (body: string): string {
-  const html = cheerio.load(body)
-  const token = html('input[name="__RequestVerificationToken"]').val()
-
-  return token
-}
-
-export function parseTransactions (body: string, fromDate: Date): AccountTransaction[] {
-  const html = cheerio.load(body)
-  const transactionsHtml = html('#transaction-view-content').find('.pageable-content')
-
-  return transactionsHtml.toArray().map(transactionHtml => {
-    const html = cheerio.load(transactionHtml)
-
-    const transactionHref = (transactionHtml as cheerio.TagElement).attribs['data-href'].trim()
-    const queryParams = transactionHref.split('?')[1]
-    const params = queryParams.split('&').reduce<Record<string, string>>((acc, param) => {
-      const [key, value] = param.split('=')
-      acc[key] = value
-      return acc
-    }, {})
-
-    const [dateHtml, , descriptionHtml, amountHtml] = html('div').children('div').toArray()
-
-    const direction = cheerio.load(dateHtml)('div.tag').hasClass('up') ? -1 : 1
-    const date = moment(cheerio.load(dateHtml)('p').text()?.trim(), 'DD.MM.YYYY').toDate()
-    let address = cheerio.load(descriptionHtml)('span').text()?.trim().replace(/ {2}/g, '').replace('Kartica: ', '')
-    const [amount, currency] = cheerio.load(amountHtml)('p').text().trim().split(' ') ?? []
-
-    const description = address?.match(exchangeRateRegex)?.[0] ?? ''
-    address = address?.replace(description ?? '', '').trim()
-
-    return {
-      id: 'id_' + params.q,
-      date: isValidDate(date) ? date : fromDate,
-      address,
-      amount: direction * Number(amount.replace(/,/g, '')),
-      currency,
-      description
-    }
-  })
+    })
+    .filter(tx => !isNaN(tx.amount) && tx.amount !== 0)
 }
