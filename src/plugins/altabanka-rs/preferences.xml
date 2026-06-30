@@ -3,34 +3,22 @@
     <EditTextPreference
         key="login"
         obligatory="true"
-        title="Логин"
+        title="Логин (Korisničko ime)"
         dialogTitle="Логин"
-        dialogMessage="Введите логин от интернет-банка"
+        dialogMessage="Введите логин от интернет-банка (Unesite korisničko ime)"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="|ID пользователя|{@s}"
     />
     <EditTextPreference
-        key="password"
+        key="otp"
         obligatory="true"
         inputType="textPassword"
-        title="Пароль от интернет-банка"
-        dialogTitle="Пароль от интернет-банка"
-        dialogMessage="Введите пароль от интернет-банка"
+        title="Одноразовый пароль (mToken OTP)"
+        dialogTitle="Одноразовый пароль"
+        dialogMessage="Введите OTP-код из мобильного приложения банка (Unesite OTP kod iz mobilne aplikacije)"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
-        summary="||***********"
-    />
-    <EditTextPreference
-        key="startDate"
-        obligatory="true"
-        inputType="date"
-        title="С какой даты загружать операции"
-        defaultValue="2022-01-01T00:00:00.000Z"
-        dialogTitle="Дата начала загрузки"
-        dialogMessage="Введите дату, с которой загружать операции"
-        positiveButtonText="ОК"
-        negativeButtonText="Отмена"
-        summary="|startDate|{@s}"
+        summary="||***"
     />
 </PreferenceScreen>
