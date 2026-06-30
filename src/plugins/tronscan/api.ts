@@ -116,7 +116,7 @@ export class TronscanApi {
   public async fetchTokens (wallet: string): Promise<SupportedTokenInfo[]> {
     const response = await this.fetchApi<{ data: TokenInfo[] }>('account/tokens', {
       address: wallet,
-      limit: 500
+      limit: 200
     },
     (res) => typeof res.body === 'object' && res.body != null && 'data' in res.body
     )
