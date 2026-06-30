@@ -5,10 +5,10 @@
     <build>1</build>
     <company>15979</company>
     <modular>true</modular>
-    <codeRequired>false</codeRequired>
+    <codeRequired>true</codeRequired>
     <files>
         <js>index.js</js>
         <preferences>preferences.xml</preferences>
     </files>
-    <description></description>
+    <description>Плагин синхронизации для Alta Banka (Сербия). Для входа введите логин и OTP-код из мобильного приложения банка.</description>
 </provider>

@@ -1,6 +1,5 @@
 export interface Preferences {
   login: string
-  otp: string
 }
 
 export interface AccountInfo {

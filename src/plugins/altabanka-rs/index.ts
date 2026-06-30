@@ -4,9 +4,25 @@ import { convertAccounts, convertTransaction } from './converters'
 import { altaBankaApi } from './api'
 
 export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, toDate }) => {
-  await altaBankaApi.login(preferences)
+  // Пробуем восстановить прошлую сессию
+  // Если удалось — OTP не спрашиваем
+  const sessionRestored = await altaBankaApi.restoreSession()
 
-  const apiAccounts = await altaBankaApi.fetchAccounts()
+  let apiAccounts = null
+  if (sessionRestored) {
+    try {
+      apiAccounts = await altaBankaApi.fetchAccounts()
+    } catch {
+      // Сессия протухла — логинимся заново
+      apiAccounts = null
+    }
+  }
+
+  if (apiAccounts === null) {
+    await altaBankaApi.login(preferences.login)
+    apiAccounts = await altaBankaApi.fetchAccounts()
+  }
+
   const accounts: Account[] = convertAccounts(apiAccounts)
   const transactions: Transaction[] = []
 
