@@ -1,21 +1,21 @@
 export interface Preferences {
   login: string
-  password: string
+  otp: string
 }
 
 export interface AccountInfo {
-  id: string
-  cardNumber: string
+  productCoreID: string
   accountNumber: string
   name: string
   currency: string
   balance: number
+  iban: string
 }
 
 export interface AccountTransaction {
   id: string
   date: Date
-  address: string
+  direction: string
   amount: number
   currency: string | undefined
   description: string
