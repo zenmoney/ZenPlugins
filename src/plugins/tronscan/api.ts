@@ -136,7 +136,7 @@ export class TronscanApi {
     params: Record<string, string | number | boolean | undefined>,
     fromDate: Date,
     toDate: Date | undefined,
-    extract: (body: Body) => { items: Item[], total?: number },
+    extract: (body: Body) => Item[],
     getId: (item: Item) => string,
     getTimestamp: (item: Item) => number
   ): Promise<Item[]> {
@@ -148,10 +148,17 @@ export class TronscanApi {
 
     while (true) {
       let start = 0
-      let windowCount = 0
       let oldestTs: number | undefined
+      let reachedCap = false
 
       while (true) {
+        // A page would cross the `start + limit <= 10000` ceiling: older
+        // records remain but are unreachable by offset, so narrow the window.
+        if (start + limit > cap) {
+          reachedCap = true
+          break
+        }
+
         const response = await this.fetchApi<Body>(url, {
           ...params,
           start_timestamp: fromDate.valueOf(),
@@ -160,11 +167,7 @@ export class TronscanApi {
           start
         })
 
-        const { items, total } = extract(response.body)
-
-        if (items.length === 0) {
-          break
-        }
+        const items = extract(response.body)
 
         for (const item of items) {
           const ts = getTimestamp(item)
@@ -172,29 +175,25 @@ export class TronscanApi {
             oldestTs = ts
           }
           const id = getId(item)
-          // De-duplicate: the record on the window boundary is re-fetched
-          // when we narrow the window below.
+          // De-duplicate: the offset is not perfectly stable and the record
+          // on the window boundary is re-fetched when we narrow the window.
           if (!seen.has(id)) {
             seen.add(id)
             collected.push(item)
           }
         }
 
-        windowCount += items.length
-        // Advance by the number of records actually returned, not by the
-        // requested page size: Tronscan may serve fewer than `limit` per page.
-        start += items.length
+        // A non-full page means this window is drained (full pages are served
+        // until the data runs out).
+        if (items.length < limit) {
+          break
+        }
 
-        if (total !== undefined && start >= total) {
-          break
-        }
-        if (start >= cap) {
-          break
-        }
+        start += limit
       }
 
-      // The window was not capped, so there are no older records to fetch.
-      if (windowCount < cap || oldestTs === undefined) {
+      // The window was fully drained, so there is nothing older to fetch.
+      if (!reachedCap || oldestTs === undefined) {
         break
       }
       // Guard against making no progress (e.g. many records share a timestamp).
@@ -208,12 +207,12 @@ export class TronscanApi {
   }
 
   public async fetchTransactions (wallet: string, fromDate: Date, toDate?: Date): Promise<Map<string, TronTransaction>> {
-    const items = await this.fetchPaginated<{ data: TronTransaction[], total: number }, TronTransaction>(
+    const items = await this.fetchPaginated<{ data: TronTransaction[] }, TronTransaction>(
       'transaction',
       { address: wallet, sort: '-timestamp' },
       fromDate,
       toDate,
-      (body) => ({ items: body.data, total: body.total }),
+      (body) => body.data,
       (tx) => tx.hash,
       (tx) => tx.timestamp
     )
@@ -227,12 +226,12 @@ export class TronscanApi {
   }
 
   public async fetchTokenTransfers (wallet: string, fromDate: Date, toDate?: Date): Promise<Transfer[]> {
-    return await this.fetchPaginated<{ total: number, token_transfers: Transfer[] }, Transfer>(
+    return await this.fetchPaginated<{ token_transfers: Transfer[] }, Transfer>(
       'token_trc20/transfers',
       { relatedAddress: wallet, sort: '-timestamp' },
       fromDate,
       toDate,
-      (body) => ({ items: body.token_transfers, total: body.total }),
+      (body) => body.token_transfers,
       (t) => t.transaction_id,
       (t) => t.block_ts
     )
@@ -244,16 +243,14 @@ export class TronscanApi {
       { direction: 0, address: wallet },
       fromDate,
       toDate,
-      (body) => ({
-        items: body.data.map((t) => ({
-          transaction_id: t.hash,
-          block_ts: t.block_timestamp,
-          from_address: t.from,
-          to_address: t.to,
-          quant: t.amount,
-          tokenInfo: body.tokenInfo
-        }))
-      }),
+      (body) => body.data.map((t) => ({
+        transaction_id: t.hash,
+        block_ts: t.block_timestamp,
+        from_address: t.from,
+        to_address: t.to,
+        quant: t.amount,
+        tokenInfo: body.tokenInfo
+      })),
       (t) => t.transaction_id,
       (t) => t.block_ts
     )
