@@ -295,6 +295,103 @@ describe('convertTransaction', () => {
     expect(transaction.movements[0].id).toEqual(transactionId('2026-06-30', '0.10', 'Зачисление на счет'))
   })
 
+  it('matches money-back income when mini statement has generic income name', () => {
+    const hold = {
+      account_id: 'mock-account-001',
+      accountCurrencyCode: '933',
+      transactionDate: new Date('2026-07-01T11:49:43+03:00'),
+      transactionName: 'Зачисление на счет',
+      transactionCurrencyCode: '933',
+      transactionAmount: 4.09,
+      hold: true
+    }
+    const postedOperation = {
+      account_id: 'mock-account-001',
+      operationName: 'Начисление Money-back (R-card)',
+      operationDate: new Date('2026-07-01T10:56:30+03:00'),
+      operationCurrencyCode: '933',
+      operationAmount: 4.09,
+      transactionDate: new Date('2026-07-01T10:56:30+03:00'),
+      transactionAmount: 0,
+      transactionCurrencyCode: '933',
+      hold: false
+    }
+    const merged = merge([hold], [postedOperation])
+    const transaction = convertTransaction(merged[0])
+
+    expect(merged).toHaveLength(1)
+    expect(merged[0].hold).toEqual(false)
+    expect(transaction.movements[0].sum).toEqual(4.09)
+    expect(transaction.movements[0].id).toEqual(transactionId('2026-07-01', '4.09', 'Зачисление на счет'))
+  })
+
+  it('matches posted card operation shifted to the next bank date when merchant is exact', () => {
+    const hold = {
+      account_id: 'mock-account-001',
+      accountCurrencyCode: '933',
+      transactionDate: new Date('2026-06-28T21:28:32+03:00'),
+      transactionName: '*Оплата* Безналичная операция',
+      transactionCurrencyCode: '933',
+      transactionAmount: -11,
+      merchant: 'YANDEX.GO',
+      hold: true
+    }
+    const postedOperation = {
+      id: '338010',
+      account_id: 'mock-account-001',
+      operationName: 'Оплата товаров (услуг)',
+      operationDate: new Date('2026-07-01T13:48:21+03:00'),
+      operationCurrencyCode: '933',
+      operationAmount: -11,
+      transactionDate: new Date('2026-06-29T00:00:00+03:00'),
+      transactionAmount: -11,
+      transactionCurrencyCode: '933',
+      merchant: 'YANDEX.GO',
+      hold: false
+    }
+    const merged = merge([hold], [postedOperation])
+    const transaction = convertTransaction(merged[0])
+
+    expect(merged).toHaveLength(1)
+    expect(merged[0].hold).toEqual(false)
+    expect(transaction.movements[0].sum).toEqual(-11)
+    expect(transaction.movements[0].id).toEqual(transactionId('2026-06-28', '-11.00', 'YANDEX.GO'))
+  })
+
+  it('does not match adjacent bank dates when merchants are only prefix-compatible', () => {
+    const hold = {
+      account_id: 'mock-account-001',
+      accountCurrencyCode: '933',
+      transactionDate: new Date('2026-06-28T21:28:32+03:00'),
+      transactionName: '*Оплата* Безналичная операция',
+      transactionCurrencyCode: '933',
+      transactionAmount: -19.3,
+      merchant: 'SHOP "KERAMIKA" / STOLITSA',
+      hold: true
+    }
+    const postedOperation = {
+      id: '338011',
+      account_id: 'mock-account-001',
+      operationName: 'Оплата товаров (услуг)',
+      operationDate: new Date('2026-07-01T13:48:21+03:00'),
+      operationCurrencyCode: '933',
+      operationAmount: -19.3,
+      transactionDate: new Date('2026-06-29T00:00:00+03:00'),
+      transactionAmount: -19.3,
+      transactionCurrencyCode: '933',
+      merchant: 'SHOP "KERAMIKA" / STOLITS',
+      hold: false
+    }
+    const transactions = merge([hold], [postedOperation]).map(transaction => convertTransaction(transaction))
+
+    expect(transactions).toHaveLength(2)
+    expect(transactions.map(transaction => transaction.hold)).toEqual([false, true])
+    expect(transactions.map(transaction => transaction.movements[0].id)).toEqual([
+      transactionId('2026-06-29', '-19.30', 'SHOP KERAMIKA / STOLITS'),
+      transactionId('2026-06-28', '-19.30', 'SHOP KERAMIKA / STOLITSA')
+    ])
+  })
+
   it('does not merge unrelated no-merchant income operation names', () => {
     const hold = {
       account_id: 'mock-account-001',

@@ -1,11 +1,13 @@
 import { MD5 } from 'jshashes'
 import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
 const BANK_TIMEZONE_OFFSET_MS = 3 * 60 * 60 * 1000
+const MS_PER_DAY = 24 * 60 * 60 * 1000
 const MERCHANT_ID_PREFIX_LENGTH = 25
 const SAFE_MERCHANT_PREFIX_MIN_LENGTH = 16
 const CANONICAL_TRANSACTION_ID_SOURCE_FIELD = 'transactionIdSource'
 const GENERIC_ACCOUNT_INCOME_NAME = 'ЗАЧИСЛЕНИЕ НА СЧЕТ'
 const CAPITALIZATION_OPERATION_NAME_PREFIX = 'КАПИТАЛИЗАЦИЯ '
+const MONEY_BACK_OPERATION_NAME_PREFIX = 'НАЧИСЛЕНИЕ MONEY-BACK'
 const md5 = new MD5()
 
 export function convertAccount (json) {
@@ -290,18 +292,61 @@ function findMatchingTransactionIndex (operation, transactions, transactionIndex
 }
 
 function areTransactionsCompatible (left, right) {
-  return getTransactionBaseKey(left) === getTransactionBaseKey(right) &&
+  const leftBaseValues = getTransactionBaseValues(left)
+  const rightBaseValues = getTransactionBaseValues(right)
+  const leftMerchantValue = getTransactionMerchantMatchValue(left)
+  const rightMerchantValue = getTransactionMerchantMatchValue(right)
+  return leftBaseValues.accountId === rightBaseValues.accountId &&
+    areTransactionDatesCompatible(left, right, leftBaseValues.date, rightBaseValues.date, leftMerchantValue, rightMerchantValue) &&
+    leftBaseValues.amount === rightBaseValues.amount &&
+    leftBaseValues.currency === rightBaseValues.currency &&
     getDuplicateIndex(left) === getDuplicateIndex(right) &&
-    areMerchantValuesCompatible(getTransactionMerchantMatchValue(left), getTransactionMerchantMatchValue(right))
+    areMerchantValuesCompatible(leftMerchantValue, rightMerchantValue)
 }
 
-function getTransactionBaseKey (json) {
-  return [
-    json.account_id,
-    getDateIdValue(getFirstPresent(json.transactionDate, json.date, json.operationDate)),
-    getAmountIdValue(getTransactionAmountIdValue(json)),
-    getTransactionCurrencyIdValue(json)
-  ].map(getIdValue).join('|')
+function getTransactionBaseValues (json) {
+  return {
+    accountId: getIdValue(json.account_id),
+    date: getIdValue(getDateIdValue(getTransactionDateValue(json))),
+    amount: getIdValue(getAmountIdValue(getTransactionAmountIdValue(json))),
+    currency: getIdValue(getTransactionCurrencyIdValue(json))
+  }
+}
+
+function getTransactionDateValue (json) {
+  return getFirstPresent(json.transactionDate, json.date, json.operationDate)
+}
+
+function areTransactionDatesCompatible (left, right, leftDate, rightDate, leftMerchantValue, rightMerchantValue) {
+  if (leftDate === rightDate) {
+    return true
+  }
+  return arePostedHoldAdjacentDatesCompatible(left, right, leftMerchantValue, rightMerchantValue)
+}
+
+function arePostedHoldAdjacentDatesCompatible (left, right, leftMerchantValue, rightMerchantValue) {
+  const posted = left.hold ? right : left
+  const hold = left.hold ? left : right
+  const postedMerchantValue = left.hold ? rightMerchantValue : leftMerchantValue
+  const holdMerchantValue = left.hold ? leftMerchantValue : rightMerchantValue
+  const postedDate = getTransactionDateValue(posted)
+  const holdDate = getTransactionDateValue(hold)
+  if (posted.hold || !hold.hold || !(postedDate instanceof Date) || !(holdDate instanceof Date)) {
+    return false
+  }
+  if (postedMerchantValue.type !== 'merchant' || postedMerchantValue.value !== holdMerchantValue.value) {
+    return false
+  }
+  return isBankLocalMidnight(postedDate) &&
+    getBankLocalDayNumber(postedDate) - getBankLocalDayNumber(holdDate) === 1
+}
+
+function getBankLocalDayNumber (date) {
+  return Math.floor((date.getTime() + BANK_TIMEZONE_OFFSET_MS) / MS_PER_DAY)
+}
+
+function isBankLocalMidnight (date) {
+  return (date.getTime() + BANK_TIMEZONE_OFFSET_MS) % MS_PER_DAY === 0
 }
 
 function getTransactionMerchantMatchValue (json) {
@@ -346,8 +391,8 @@ function normalizeOperationName (value) {
 }
 
 function areOperationNamesCompatible (left, right) {
-  return (isGenericAccountIncomeName(left) && isCapitalizationOperationName(right)) ||
-    (isGenericAccountIncomeName(right) && isCapitalizationOperationName(left))
+  return (isGenericAccountIncomeName(left) && isKnownGenericAccountIncomePeerName(right)) ||
+    (isGenericAccountIncomeName(right) && isKnownGenericAccountIncomePeerName(left))
 }
 
 function isGenericAccountIncomeName (value) {
@@ -356,4 +401,12 @@ function isGenericAccountIncomeName (value) {
 
 function isCapitalizationOperationName (value) {
   return value.indexOf(CAPITALIZATION_OPERATION_NAME_PREFIX) === 0
+}
+
+function isMoneyBackOperationName (value) {
+  return value.indexOf(MONEY_BACK_OPERATION_NAME_PREFIX) === 0
+}
+
+function isKnownGenericAccountIncomePeerName (value) {
+  return isCapitalizationOperationName(value) || isMoneyBackOperationName(value)
 }
