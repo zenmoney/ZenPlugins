@@ -41,14 +41,14 @@ const BY_OPERATORS = [
 
 // Belarus cities for geo emulation (lat, lon in degrees)
 const BY_CITIES = [
-  { city: '\u041c\u0438\u043d\u0441\u043a', lat: 53.9, lon: 27.56 },
-  { city: '\u0413\u043e\u043c\u0435\u043b\u044c', lat: 52.44, lon: 30.98 },
-  { city: '\u0411\u0440\u0435\u0441\u0442', lat: 52.1, lon: 23.7 },
-  { city: '\u0412\u0438\u0442\u0435\u0431\u0441\u043a', lat: 55.19, lon: 30.2 },
-  { city: '\u0413\u0440\u043e\u0434\u043d\u043e', lat: 53.68, lon: 23.83 },
-  { city: '\u041c\u043e\u0433\u0438\u043b\u0435\u0432', lat: 53.9, lon: 30.34 }
+  { city: 'Minsk', lat: 53.9, lon: 27.56 },
+  { city: 'Gomel', lat: 52.44, lon: 30.98 },
+  { city: 'Brest', lat: 52.1, lon: 23.7 },
+  { city: 'Vitebsk', lat: 55.19, lon: 30.2 },
+  { city: 'Grodno', lat: 53.68, lon: 23.83 },
+  { city: 'Mogilev', lat: 53.9, lon: 30.34 }
 ]
-const BY_COUNTRY = '\u0411\u0435\u043b\u0430\u0440\u0443\u0441\u044c'
+const BY_COUNTRY = 'Belarus'
 
 const BANK_CERT = `-----BEGIN CERTIFICATE-----
 MIIJOTCCCCGgAwIBAgIMSqLONbKaZMW658uzMA0GCSqGSIb3DQEBCwUAMGIxCzAJ
@@ -173,8 +173,17 @@ function generateGeo (rand) {
   }
 }
 
+function isHeaderSafe (value) {
+  return typeof value === 'string' && /^[\x20-\x7E]+$/.test(value)
+}
+
 function ensureLocationFields (fp, login) {
-  if (fp.latitude != null && fp.longitude != null && fp.city && fp.country) {
+  if (
+    fp.latitude != null &&
+    fp.longitude != null &&
+    isHeaderSafe(fp.city) &&
+    isHeaderSafe(fp.country)
+  ) {
     return fp
   }
 

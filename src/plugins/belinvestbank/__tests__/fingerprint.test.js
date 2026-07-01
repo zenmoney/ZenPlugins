@@ -31,8 +31,8 @@ describe('mobileHeaders', () => {
         mcc: '257',
         latitude: 53.900601,
         longitude: 27.558972,
-        city: 'Минск',
-        country: 'Беларусь'
+        city: 'Minsk',
+        country: 'Belarus'
       })
 
       const sdkData = JSON.parse(Buffer.from(headers.mobileSdkData, 'base64').toString('utf8'))
@@ -41,8 +41,8 @@ describe('mobileHeaders', () => {
       expect(headers.deviceId).toBe('device-id')
       expect(headers.latitude).toBe('53.900601')
       expect(headers.longitude).toBe('27.558972')
-      expect(headers.city).toBe('Минск')
-      expect(headers.country).toBe('Беларусь')
+      expect(headers.city).toBe('Minsk')
+      expect(headers.country).toBe('Belarus')
       expect(sdkData.Displays[0].name).toBe('Встроенный экран')
       expect(sdkData.DeviceName).toBe('SM-S911B')
       expect(sdkData.GeoLocationInfo.Latitude).toBe(53.900601)
@@ -57,7 +57,9 @@ describe('mobileHeaders', () => {
     const saveData = jest.fn()
     const storage = {
       deviceFingerprint: {
-        deviceId: 'saved-device-id'
+        deviceId: 'saved-device-id',
+        city: 'Минск',
+        country: 'Беларусь'
       }
     }
 
@@ -78,7 +80,7 @@ describe('mobileHeaders', () => {
     expect(fp.longitude).toBeGreaterThanOrEqual(23)
     expect(fp.longitude).toBeLessThanOrEqual(31)
     expect(fp.city).toEqual(expect.any(String))
-    expect(fp.country).toBe('Беларусь')
+    expect(fp.country).toBe('Belarus')
     expect(saveData).toHaveBeenCalled()
   })
 })
