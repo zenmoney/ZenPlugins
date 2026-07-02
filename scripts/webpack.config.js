@@ -94,7 +94,7 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
           include: paths.appSrc,
           loader: require.resolve('esbuild-loader'),
           options: {
-            target: 'es2015'
+            target: 'es2020'
           }
         }
       ],
@@ -190,7 +190,7 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
       minimizer: production
         ? [
             new EsbuildPlugin({
-              target: 'es2015'
+              target: 'es2020'
             })
           ]
         : []
