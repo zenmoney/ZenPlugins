@@ -2,19 +2,13 @@ import { isDebug } from './common/utils'
 import * as consoleAdapter from './consoleAdapter'
 import { IncompatibleVersionError } from './errors'
 
-global.Promise = require('promise/lib/es6-extensions.js')
-global.Symbol = require('es6-symbol')
-
-delete global.Blob
-delete global.FormData
 if (ZenMoney.fetch && ZenMoney.Blob) {
   global.Blob = ZenMoney.Blob
 } else {
+  global.Blob = null
   require('./polyfills/blob')
+  ZenMoney.Blob = global.Blob
 }
-require('./polyfills/formData')
-ZenMoney.Blob = global.Blob
-ZenMoney.FormData = global.FormData
 global.fetch = null
 if (ZenMoney.fetch) {
   require('./polyfills/fetch')
@@ -22,22 +16,15 @@ if (ZenMoney.fetch) {
   // eslint-disable-next-line import/no-webpack-loader-syntax
   global.fetch = require('imports-loader?type=commonjs&imports=single|xhrViaZenApi|{default:XMLHttpRequest}=XMLHttpRequest' + '&' +
     'additionalCode=var%20self%20=%20global;%0A' +
-    'var%20Blob%20=%20ZenMoney.Blob;%0A' +
-    'var%20FormData%20=%20ZenMoney.FormData;' + '!' +
+    'var%20Blob%20=%20ZenMoney.Blob;' + '!' +
     'exports-loader?type=commonjs&exports=single|self.fetch!whatwg-fetch')
 }
-global.Blob = null
-global.FormData = null
-delete global.Blob
-delete global.FormData
+global.Blob = ZenMoney.Blob
 
 if (!('self' in global)) {
   global.self = global
 }
 
-Object.assign = require('object-assign')
-require('./polyfills/array')
-require('./polyfills/math')
 require('./polyfills/crypto')
 
 if (!('device' in ZenMoney)) {

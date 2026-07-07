@@ -54,7 +54,6 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
     },
     resolve: {
       alias: {
-        'asap/raw$': resolveFromRoot('src/asapRawMock'),
         polyfills$: resolveFromRoot('src/polyfills'),
         injectErrorsGlobally$: resolveFromRoot('src/injectErrorsGlobally'),
         adapters$: resolveFromRoot('src/common/adapters'),
