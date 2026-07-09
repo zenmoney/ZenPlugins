@@ -26,6 +26,7 @@ let state = {
   scrapeState: ':scrape-state/none',
   scrapeResult: null,
   scrapeError: null,
+  userInputRequest: null,
   persistPluginDataState: ':persist-plugin-data-state/none',
   persistPluginDataError: null,
   onPersistPluginDataConfirm: null
@@ -130,7 +131,14 @@ async function init () {
         event,
         onSyncStarted: () => setState((state) => ({ ...state, scrapeState: ':scrape-state/started' })),
         onSyncSuccess: resolve,
-        onSyncError: reject
+        onSyncError: reject,
+        onUserInputRequest: ({ message, options }) => new Promise((resolve) => {
+          const submit = (result) => {
+            setState((state) => ({ ...state, userInputRequest: null }))
+            resolve(result)
+          }
+          setState((state) => ({ ...state, userInputRequest: { message, options, submit } }))
+        })
       }))
       worker.postMessage({
         type: ':commands/execute-sync',

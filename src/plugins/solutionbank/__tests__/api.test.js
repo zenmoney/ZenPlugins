@@ -6,8 +6,45 @@ import { fetchAccounts, fetchOperations, fetchTransactions, login } from '../api
 
 installFetchMockDeveloperFriendlyFallback(fetchMock)
 
-const baseUrl = 'https://mbank.rbank.by/services/v2/'
+const baseUrl = 'https://mbank.rbank.by:443/services/v2/'
 const sessionToken = 'test-session-token'
+const expectedDeviceInfo = {
+  parameters: [
+    {
+      device_model: 'ne2211',
+      device_name: 'op516fl1',
+      deviceid: 'test-device-id',
+      geolocationdata: '53.902284, 27.561831',
+      locale: 'ru_by',
+      time_zone: 'europe/minsk',
+      os_name: 'android',
+      os_version: '11',
+      width: '1080',
+      height: '2400',
+      scale: '3',
+      uuid: 'test-device-id',
+      android_specific: {
+        build_bootloader: '',
+        build_display: 'ne2211_11_c.48',
+        build_fingerprint: 'ne2211_11_c.48',
+        build_id: 'rkq1.211119.001',
+        build_manufacturer: 'oneplus',
+        build_radio: '',
+        iccid: '',
+        package_manager_getsystemavailablefeatures: [
+          'android.hardware.camera',
+          'android.hardware.location.gps',
+          'android.hardware.location.network',
+          'android.hardware.nfc',
+          'android.hardware.telephony',
+          'android.hardware.touchscreen',
+          'android.hardware.wifi',
+          'android.software.webview'
+        ]
+      }
+    }
+  ]
+}
 
 let dataApi
 
@@ -15,7 +52,6 @@ beforeEach(() => {
   dataApi = makePluginDataApi({
     device_id: 'test-device-id',
     anti_fraud_id: 'test-anti-fraud-id',
-    anti_fraud_session_id: 'test-anti-fraud-session-id',
     push_id: 'test-push-id'
   })
   global.ZenMoney = {
@@ -42,6 +78,7 @@ describe('login', () => {
           error: '0',
           errorText: 'Успешно'
         },
+        fingerprint: 'test-fingerprint',
         sessionToken
       }
     }, { method: 'POST' })
@@ -53,11 +90,12 @@ describe('login', () => {
 
     const firstRequest = JSON.parse(calls[0][1].body)
     expect(firstRequest).toEqual({
-      applicID: '1.59.2',
+      applicID: '1.60.0',
       browser: 'OP516FL1',
       browserVersion: 'NE2211 (NE2211)',
       clientKind: '0',
       deviceUDID: 'test-device-id',
+      deviceInfo: expectedDeviceInfo,
       login: 'test-login',
       password: 'test-password',
       platform: 'Android',
@@ -82,6 +120,7 @@ describe('login', () => {
       time: 120000,
       inputType: 'text'
     })
+    expect(dataApi.currentData.anti_fraud_id).toBe('test-fingerprint')
   })
 
   it('fails login when SMS confirmation response returns bank error', async () => {
@@ -133,7 +172,7 @@ describe('fetchAccounts', () => {
         const request = JSON.parse(body)
         return url === baseUrl + 'products/getUserAccountsOverview' &&
           headers.session_token === sessionToken &&
-          headers._ac0 === 'test-anti-fraud-session-id' &&
+          headers._ac0 === sessionToken &&
           headers._ac1 === 'test-anti-fraud-id' &&
           headers.language === 'ru' &&
           request.cardAccount &&
@@ -186,7 +225,7 @@ describe('fetchAccounts', () => {
         const request = JSON.parse(body)
         const matched = url === baseUrl + 'payment/simpleExcute' &&
           headers.session_token === sessionToken &&
-          headers._ac0 === 'test-anti-fraud-session-id' &&
+          headers._ac0 === sessionToken &&
           headers._ac1 === 'test-anti-fraud-id' &&
           headers.language === 'ru' &&
           request.komplatRequests[0].request.includes('<RequestType>Balance</RequestType>') &&
@@ -213,7 +252,7 @@ describe('fetchAccounts', () => {
         const request = JSON.parse(body)
         const matched = url === baseUrl + 'payment/simpleExcute' &&
           headers.session_token === sessionToken &&
-          headers._ac0 === 'test-anti-fraud-session-id' &&
+          headers._ac0 === sessionToken &&
           headers._ac1 === 'test-anti-fraud-id' &&
           headers.language === 'ru' &&
           request.komplatRequests[0].request.includes('<RequestType>Balance</RequestType>') &&
@@ -275,7 +314,7 @@ describe('fetchTransactions', () => {
         const request = JSON.parse(body)
         return url === baseUrl + 'payment/simpleExcute' &&
           headers.session_token === sessionToken &&
-          headers._ac0 === 'test-anti-fraud-session-id' &&
+          headers._ac0 === sessionToken &&
           headers._ac1 === 'test-anti-fraud-id' &&
           headers.language === 'ru' &&
           request.komplatRequests[0].request.includes('<RequestType>GetAuthHistory</RequestType>') &&
@@ -298,7 +337,7 @@ describe('fetchTransactions', () => {
         const request = JSON.parse(body)
         return url === baseUrl + 'payment/simpleExcute' &&
           headers.session_token === sessionToken &&
-          headers._ac0 === 'test-anti-fraud-session-id' &&
+          headers._ac0 === sessionToken &&
           headers._ac1 === 'test-anti-fraud-id' &&
           headers.language === 'ru' &&
           request.komplatRequests[0].request.includes('<RequestType>GetAuthHistory</RequestType>') &&
@@ -361,7 +400,7 @@ describe('fetchOperations', () => {
         const request = JSON.parse(body)
         return url === baseUrl + 'products/getCardAccountFullStatement' &&
           headers.session_token === sessionToken &&
-          headers._ac0 === 'test-anti-fraud-session-id' &&
+          headers._ac0 === sessionToken &&
           headers._ac1 === 'test-anti-fraud-id' &&
           headers.language === 'ru' &&
           request.currencyCode === 933 &&
@@ -518,7 +557,7 @@ describe('fetchOperations', () => {
         const request = JSON.parse(body)
         const matched = url === baseUrl + 'products/getCardAccountFullStatement' &&
           headers.session_token === sessionToken &&
-          headers._ac0 === 'test-anti-fraud-session-id' &&
+          headers._ac0 === sessionToken &&
           headers._ac1 === 'test-anti-fraud-id' &&
           headers.language === 'ru' &&
           request.cardHash === 'first-card-hash' &&
