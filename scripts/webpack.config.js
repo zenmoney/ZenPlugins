@@ -32,6 +32,7 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
 
   return {
     mode: production ? 'production' : 'development',
+    target: ['webworker', 'es2020'],
     devtool: production ? false : 'eval',
     cache: {
       type: production ? 'filesystem' : 'memory',
@@ -48,6 +49,9 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
       filename: '[name].js',
       chunkFilename: '[name].chunk.js',
       globalObject: 'this',
+      chunkFormat: false,
+      chunkLoading: false,
+      workerChunkLoading: false,
       ...production && {
         asyncChunks: false
       }
