@@ -18,6 +18,7 @@ export interface EthereumAccount {
 }
 
 export interface EthereumTransaction {
+  blockNumber: string
   gasUsed: string
   hash: string
   from: string
@@ -28,7 +29,6 @@ export interface EthereumTransaction {
   timeStamp: string
 
   // Exists in API, but not used now. Keep for possible future updates
-  // blockNumber: string
   // nonce: string
   // blockHash: string
   // transactionIndex: string
