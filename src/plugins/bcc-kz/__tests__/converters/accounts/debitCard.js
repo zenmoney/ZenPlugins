@@ -259,7 +259,8 @@ describe('convertAccounts', () => {
         {
           product: {
             productId: '5453672',
-            productType: 'ccard'
+            productType: 'ccard',
+            statementAccountIds: ['5453672', '5448109']
           },
           accounts: [
             {
