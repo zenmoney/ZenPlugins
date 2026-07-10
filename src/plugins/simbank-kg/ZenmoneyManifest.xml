@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>simbank-kg</id>
+    <version>1.0</version>
+    <build>1</build>
+    <company>0</company>
+    <modular>true</modular>
+    <codeRequired>false</codeRequired>
+    <api>public</api>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+    <description>Импорт выписки Simbank (Кыргызстан) из файла .pdf. Как получить файл: в мобильном приложении Simbank откройте настройки карты и нажмите «Выписка по карте», сохраните PDF (русский, кыргызский или английский — подойдёт любой) и выберите его здесь. Можно выбрать сразу несколько файлов; они обрабатываются локально на устройстве.</description>
+</provider>
