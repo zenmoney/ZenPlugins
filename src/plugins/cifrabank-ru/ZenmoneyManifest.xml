@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
     <id>cifrabank-ru</id>
-    <company>0</company>
+    <company>15704</company>
     <description>
         Plugin for Cifra Bank (Russia) — synchronizes accounts and operations
         via the mobile API used by com.bankffin.portfolio.
