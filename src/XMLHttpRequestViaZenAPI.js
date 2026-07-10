@@ -91,8 +91,10 @@ function onResponse (err, responseBody, isBinaryBody) {
   }
 
   this.responseURL = ZenMoney.getLastUrl()
-  this.status = ZenMoney.getLastStatusCode();
-  [, this.statusText] = ZenMoney.getLastStatusString().match(/^HTTP\/1.1 \d+ (.*)$/)
+  this.status = ZenMoney.getLastStatusCode()
+  const statusString = ZenMoney.getLastStatusString() || ''
+  const statusMatch = statusString.match(/^HTTP\/\d(?:\.\d)?\s+\d+\s*(.*)$/)
+  this.statusText = statusMatch ? statusMatch[1] : ''
   const zenResponseHeaders = ZenMoney.getLastResponseHeaders()
   const xhrResponseHeaders = zenResponseHeaders
     .map(([key, value]) => `${key}: ${value}`)
