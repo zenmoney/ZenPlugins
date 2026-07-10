@@ -18,7 +18,7 @@ export async function fetchTransactions (preferences: Preferences, fromDate?: Da
     throw new Error('Export took too long, try a shorter period')
   }
   const exportResponse = await fetch(exportData.downloadLink)
-  const csv = XLSX.read(exportResponse.body, { type: 'string' }).Sheets.Sheet1
+  const csv = XLSX.read(exportResponse.body, { type: 'string', raw: true }).Sheets.Sheet1
 
   return XLSX.utils.sheet_to_json<ExportOperation>(csv)
 }
