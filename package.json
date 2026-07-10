@@ -80,7 +80,7 @@
     "uuid": "8.3.2",
     "webpack": "5.108.4",
     "webpack-cli": "7.2.1",
-    "webpack-dev-server": "5.2.2",
+    "webpack-dev-server": "5.2.5",
     "webpack-obfuscator": "3.6.1"
   },
   "scripts": {
