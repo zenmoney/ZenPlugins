@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>altyn-wallet</id>
+    <company>0</company>
+    <description>Синхронизация баланса и истории операций кошелька Altyn Wallet (lk.altyn.one) по токену.</description>
+    <version>1.0</version>
+    <build>1</build>
+    <modular>true</modular>
+    <codeRequired>false</codeRequired>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+</provider>

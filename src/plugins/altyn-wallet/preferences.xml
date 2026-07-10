@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="token"
+        obligatory="true"
+        inputType="textPassword"
+        title="Токен доступа"
+        dialogTitle="Токен доступа"
+        dialogMessage="Введите токен из lk.altyn.one (без слова Bearer).&#10;&#10;Как получить: откройте lk.altyn.one, войдите, откройте DevTools браузера (F12) → Network → найдите запрос к api.lk.altyn.one → скопируйте значение заголовка Authorization (без слова Bearer)."
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="||***********"
+    />
+    <EditTextPreference
+        key="pin"
+        obligatory="true"
+        inputType="number"
+        title="PIN-код"
+        dialogTitle="PIN-код"
+        dialogMessage="PIN-код вашего кошелька Altyn Wallet на lk.altyn.one (используется для подтверждения сессии при каждом запуске)."
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="||****"
+    />
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="С какой даты загружать операции"
+        defaultValue="2026-01-01T00:00:00.000Z"
+        dialogTitle="С какой даты загружать операции"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|startDate|{@s}"
+    />
+</PreferenceScreen>
