@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
     <id>primsocbank-ru</id>
-    <company>0</company>
+    <company>4920</company>
     <description>
         Плагин синхронизации для Примсоцбанка.
         Авторизация выполняется через веб-форму входа банка.
