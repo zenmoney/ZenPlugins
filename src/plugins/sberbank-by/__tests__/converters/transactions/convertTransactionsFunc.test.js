@@ -521,4 +521,110 @@ describe('convertTransactions', () => {
       }
     ])
   })
+
+  it('merges online deposit top-up card outcome with target account income', () => {
+    const apiTransactions = [
+      {
+        sourceSystem: 8,
+        eventId: 'moneybox-income-event',
+        contractId: 'moneybox-contract',
+        eventDate: 1770003603000,
+        processingDate: 1770000000000,
+        transactionType: 1,
+        transactionCode: 'D_ZACH_BEZN',
+        transactionName: 'On-line пополнение договора с использованием сервиса Мобильный банкинг',
+        transactionSum: 75,
+        transactionCurrency: '933',
+        commissionSum: 0,
+        eventStatus: 1
+      },
+      {
+        sourceSystem: 3,
+        eventId: 'card-outcome-event',
+        souEventId: 'card-outcome-event',
+        contractId: 'card-contract',
+        cardPAN: '123456******0001',
+        cardId: 'card-0001',
+        eventDate: 1770003600000,
+        processingDate: null,
+        transactionType: -1,
+        transactionCode: '1455',
+        transactionName: 'Пополнение вклада в BYN (on-line) TESTDEPOSIT001',
+        transactionSum: 75,
+        transactionCurrency: '933',
+        commissionSum: 0,
+        rnnCode: '000000000001',
+        authorizationCode: '123456',
+        eventStatus: 0
+      },
+      {
+        sourceSystem: 8,
+        eventId: 'card-income-event',
+        contractId: 'card-contract',
+        eventDate: 1770000000000,
+        processingDate: 1769996400000,
+        transactionType: 1,
+        transactionCode: 'TRAN_ERIP',
+        transactionName: 'Пополнение счета через ЕРИП онлайн',
+        transactionSum: 75,
+        transactionCurrency: '933',
+        commissionSum: 0,
+        eventStatus: 1
+      }
+    ]
+    const accountsByNumber = {
+      'moneybox-contract': {
+        id: 'moneybox-account',
+        instrument: 'BYN'
+      },
+      'card-contract': {
+        id: 'card-account',
+        instrument: 'BYN'
+      }
+    }
+
+    const transactions = adjustTransactions({
+      transactions: convertTransactions(apiTransactions, accountsByNumber)
+    })
+
+    expect(transactions).toEqual([
+      {
+        movements: [
+          {
+            id: 'card-outcome-event',
+            account: { id: 'card-account' },
+            invoice: null,
+            sum: -75,
+            fee: 0
+          },
+          {
+            id: 'moneybox-income-event',
+            account: { id: 'moneybox-account' },
+            invoice: null,
+            sum: 75,
+            fee: 0
+          }
+        ],
+        date: new Date(1770003600000),
+        hold: null,
+        merchant: null,
+        comment: 'Пополнение вклада в BYN (on-line) TESTDEPOSIT001'
+      },
+      {
+        hold: false,
+        date: new Date(1770000000000),
+        movements: [
+          {
+            id: 'card-income-event',
+            account: { id: 'card-account' },
+            invoice: null,
+            sum: 75,
+            fee: 0
+          }
+        ],
+        merchant: null,
+        comment: 'Пополнение счета через ЕРИП онлайн'
+      }
+    ])
+  })
 })

@@ -20,6 +20,26 @@
         summary="||***********"
     />
     <EditTextPreference
+        key="latitude"
+        obligatory="false"
+        title="Широта для входа"
+        defaultValue="53.908522"
+        dialogTitle="Широта для входа"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|latitude|{@s}"
+    />
+    <EditTextPreference
+        key="longitude"
+        obligatory="false"
+        title="Долгота для входа"
+        defaultValue="27.574821"
+        dialogTitle="Долгота для входа"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|longitude|{@s}"
+    />
+    <EditTextPreference
         key="startDate"
         obligatory="true"
         inputType="date"

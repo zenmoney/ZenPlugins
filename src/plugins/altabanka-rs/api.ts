@@ -1,155 +1,76 @@
-import { fetch, FetchResponse } from '../../common/network'
-import { sanitize } from '../../common/sanitize'
-import { InvalidPreferencesError } from '../../errors'
-import { parseAccountInfo, parseLoginResult, parseRequestVerificationToken, parseTransactions } from './parsers'
-import { AccountInfo, AccountTransaction, Preferences } from './types'
-import moment from 'moment'
-// @ts-expect-error no types for package
-import * as qs from 'querystring-browser'
+import { InvalidOtpCodeError } from '../../errors'
+import {
+  fetchAccountTurnover,
+  fetchAccounts as fetchAccountsApi,
+  fetchCardTurnover,
+  fetchCards as fetchCardsApi,
+  fetchEnvironment,
+  fetchLogin,
+  fetchLoginPage,
+  fetchReservedFunds
+} from './fetchApi'
+import { AccountInfo, AccountTransaction, Card, Preferences, Session } from './models'
 
-export class AltaBankaApi {
-  private readonly baseUrl: string
+export async function login ({ login }: Preferences): Promise<Session> {
+  await fetchLoginPage()
 
-  constructor (options: { baseUrl: string }) {
-    this.baseUrl = options.baseUrl
+  const preLoginEnv = await fetchEnvironment('')
+
+  const otp = await ZenMoney.readLine('Введите одноразовый код из приложения Alta', {
+    inputType: 'number',
+    time: 120000
+  })
+  if (otp === null || otp === '') {
+    throw new InvalidOtpCodeError()
   }
 
-  public async login ({ login, password }: Preferences, isInBackground: boolean): Promise<void> {
-    const formData = {
-      Username_ID: login,
-      Password_ID: password,
-      ActiveLoginMethod: 'usernamepassword',
-      workitemid: 'v2bdQSMgtKTpqU8qDDR9iQ==',
-      'X-Requested-With': 'XMLHttpRequest'
-    }
+  await fetchLogin(preLoginEnv.requestToken, login, otp)
 
-    const response = await fetch(
-      this.baseUrl + 'Identity/Login',
-      {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/x-www-form-urlencoded'
-        },
-        body: qs.stringify(formData),
-        sanitizeRequestLog: true
-      }) as FetchResponse & { body: string }
-
-    if (!parseLoginResult(response.body)) {
-      console.error('login failed')
-      throw new InvalidPreferencesError()
-    }
-
-    console.info('login successful')
+  const postLoginEnv = await fetchEnvironment(preLoginEnv.requestToken)
+  if (postLoginEnv.authenticationType === '' && postLoginEnv.principalId === 0) {
+    console.error('login failed')
+    throw new InvalidOtpCodeError()
   }
 
-  public async fetchAccounts (): Promise<AccountInfo[]> {
-    const response = await fetch(
-      this.baseUrl + 'Home/Accounts',
-      undefined
-    ) as FetchResponse & { body: string }
-
-    const accountsInfo = parseAccountInfo(response.body)
-
-    console.debug('fetchAccounts', sanitize(accountsInfo, false))
-
-    return accountsInfo
-  }
-
-  public async fetchVerificationToken (): Promise<string> {
-    const response = await fetch(
-      this.baseUrl + 'AccountData/Transactions/List',
-      undefined
-    ) as FetchResponse & { body: string }
-
-    const token = parseRequestVerificationToken(response.body)
-
-    console.debug('fetchVerificationToken', sanitize(token, true))
-
-    return token
-  }
-
-  public async fetchTransactions (
-    accountId: string,
-    token: string,
-    page: number,
-    fromDate: Date,
-    toDate?: Date
-  ): Promise<AccountTransaction[]> {
-    const formData: Record<string, string> = {
-      Accounts_ID: accountId,
-      __RequestVerificationToken: token,
-      DateFrom_ID: moment(fromDate).format('DD/MM/YYYY'),
-      SortOrder_ID: 'asc',
-      PageSize: '100',
-      PageNumber: page.toString()
-    }
-    if (toDate != null) {
-      formData.DateTo_ID = moment(toDate).format('DD/MM/YYYY')
-    }
-
-    const response = await fetch(
-      this.baseUrl + 'AccountData/Transactions/List',
-      {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/x-www-form-urlencoded'
-        },
-        body: qs.stringify(formData)
-      }
-    ) as FetchResponse & { body: string }
-
-    const transactions = parseTransactions(response.body, fromDate)
-
-    console.debug('fetchTransactions', sanitize(transactions, false))
-
-    return transactions
-  }
-
-  public async fetchCardTransactions (
-    accountId: string,
-    cardNumber: string,
-    token: string,
-    page: number,
-    fromDate: Date,
-    toDate?: Date
-  ): Promise<AccountTransaction[]> {
-    const formData: Record<string, string> = {
-      Accounts_ID: accountId,
-      __RequestVerificationToken: token,
-      DateFrom_ID: moment(fromDate).format('DD/MM/YYYY'),
-      SortOrder_ID: 'asc',
-      PageSize: '100',
-      PageNumber: page.toString(),
-      Statuses_ID: 'p'
-    }
-
-    if (toDate != null) {
-      formData.DateTo_ID = moment(toDate).format('DD/MM/YYYY')
-    }
-
-    if (cardNumber !== '') {
-      formData.Cards_ID = cardNumber
-    }
-
-    const response = await fetch(
-      this.baseUrl + 'AccountData/Transactions/CardTransactionsList',
-      {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/x-www-form-urlencoded'
-        },
-        body: qs.stringify(formData)
-      }
-    ) as FetchResponse & { body: string }
-
-    const transactions = parseTransactions(response.body, fromDate)
-
-    console.debug('fetchCardTransactions', sanitize(transactions, false))
-
-    return transactions
-  }
+  console.info('login successful')
+  return { requestToken: postLoginEnv.requestToken }
 }
 
-export const altaBankaApi = new AltaBankaApi({
-  baseUrl: 'https://altabanka.24x7.rs/altaonline/'
-})
+export async function fetchAccounts (session: Session): Promise<AccountInfo[]> {
+  return await fetchAccountsApi(session.requestToken)
+}
+
+export async function fetchTransactions (
+  session: Session,
+  account: AccountInfo,
+  fromDate: Date,
+  toDate: Date
+): Promise<AccountTransaction[]> {
+  return await fetchAccountTurnover(session.requestToken, account, fromDate, toDate)
+}
+
+export async function fetchReservedTransactions (
+  session: Session,
+  account: AccountInfo,
+  fromDate: Date
+): Promise<AccountTransaction[]> {
+  return await fetchReservedFunds(session.requestToken, account.accountNumber, fromDate)
+}
+
+export async function fetchCards (session: Session): Promise<Card[]> {
+  return await fetchCardsApi(session.requestToken)
+}
+
+export async function fetchCardTransactions (
+  session: Session,
+  card: Card,
+  currencies: string[],
+  fromDate: Date,
+  toDate: Date
+): Promise<AccountTransaction[]> {
+  // Each currency (AccountType) returns only its own operations, so query them all.
+  const perCurrency = await Promise.all(currencies.map(
+    async currency => await fetchCardTurnover(session.requestToken, card.primaryCardID, currency, fromDate, toDate)
+  ))
+  return perCurrency.flat()
+}

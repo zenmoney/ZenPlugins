@@ -1,544 +1,333 @@
-import fs from 'fs'
-import path from 'path'
-import {
-  parseAccountInfo,
-  parseLoginResult,
-  parseRequestVerificationToken,
-  parseTransactions
-} from '../../parsers'
+import moment from 'moment'
+import { parseAccountInfo, parseCards, parseCardTurnover, parseEnvironment, parseReservedFunds, parseTransactions } from '../../parsers'
 
-describe('parsers', () => {
-  it('should parse login result', async () => {
-    const mockBody = fs.readFileSync(
-      path.resolve(__dirname, './__mocks__/login.html'),
-      'utf8'
-    )
-
-    const response = parseLoginResult(mockBody)
-
-    expect(response).toBe(true)
-    expect(parseLoginResult('some other text')).toBe(false)
-  })
-
-  it('should parse accounts-1', async () => {
-    const mockBody = fs.readFileSync(
-      path.resolve(__dirname, './__mocks__/accounts-1.html'),
-      'utf8'
-    )
-
-    const response = parseAccountInfo(mockBody)
-
-    expect(response).toEqual(
-      [
-        {
-          accountNumber: '0001000512876',
-          balance: 249233.58,
-          cardNumber: '0xC4952DBB2BB24ECAFF9655505605F0F0',
-          currency: 'RSD',
-          id: '0001000512876-0xC4952DBB2BB24ECAFF9655505605F0F0',
-          name: '4242XXXXXXXX4061'
-        },
-        {
-          accountNumber: '0001000512876',
-          balance: 249233.58,
-          cardNumber: '0x3A7A78AB70965C9C2323270A293FA54F',
-          currency: 'RSD',
-          id: '0001000512876-0x3A7A78AB70965C9C2323270A293FA54F',
-          name: '9891XXXXXXXX6625'
-        },
-        {
-          accountNumber: '0001000512876',
-          balance: 249233.58,
-          cardNumber: '',
-          currency: 'RSD',
-          id: '0001000512876',
-          name: 'Tekući račun'
-        },
-        {
-          accountNumber: '0001000512877',
-          balance: 2979.07,
-          cardNumber: '',
-          currency: 'EUR',
-          id: '0001000512877',
-          name: 'Štedni račun'
+describe('parseEnvironment', () => {
+  it('extracts request token and authentication state after login', () => {
+    const body = {
+      d: {
+        User: {
+          PrincipalID: 100001,
+          RequestToken: '6a7786b0638f41a68cbdfa54f266a0a1',
+          IsAuthenticated: true,
+          AuthenticationType: 'UsernameOTP'
         }
-      ]
-    )
+      }
+    }
+
+    expect(parseEnvironment(body)).toEqual({
+      requestToken: '6a7786b0638f41a68cbdfa54f266a0a1',
+      isAuthenticated: true,
+      authenticationType: 'UsernameOTP',
+      principalId: 100001
+    })
   })
 
-  it('should parse accounts-2', async () => {
-    const mockBody = fs.readFileSync(
-      path.resolve(__dirname, './__mocks__/accounts-2.html'),
-      'utf8'
-    )
-
-    const response = parseAccountInfo(mockBody)
-
-    expect(response).toEqual(
-      [
-        {
-          accountNumber: '0001000210460',
-          balance: 450968.42,
-          cardNumber: '0xC4952DBB2BB21FC5D03DD70479E08E9D',
-          currency: 'RSD',
-          id: '0001000210460-0xC4952DBB2BB21FC5D03DD70479E08E9D',
-          name: '4242XXXXXXXX6963'
-        },
-        {
-          accountNumber: '0001000210460',
-          balance: 450968.42,
-          cardNumber: '0x3A7A78AB7096C7A1A4D47503D17609AF',
-          currency: 'RSD',
-          id: '0001000210460-0x3A7A78AB7096C7A1A4D47503D17609AF',
-          name: '9891XXXXXXXX3864'
-        },
-        {
-          accountNumber: '0001000210460',
-          balance: 450968.42,
-          cardNumber: '',
-          currency: 'RSD',
-          id: '0001000210460',
-          name: 'Tekući račun'
-        },
-        {
-          accountNumber: '0031000248471',
-          balance: 0,
-          cardNumber: '',
-          currency: 'RUB',
-          id: '0031000248471RUB',
-          name: 'Štedni račun'
-        },
-        {
-          accountNumber: '0031000248471',
-          balance: 0,
-          cardNumber: '',
-          currency: 'EUR',
-          id: '0031000248471EUR',
-          name: 'Štedni račun'
+  it('tolerates null fields before login', () => {
+    const body = {
+      d: {
+        User: {
+          PrincipalID: 0,
+          RequestToken: '1fb97f8368614581b1690987eebbaf7d',
+          IsAuthenticated: true,
+          AuthenticationType: null
         }
-      ]
-    )
+      }
+    }
+
+    expect(parseEnvironment(body)).toEqual({
+      requestToken: '1fb97f8368614581b1690987eebbaf7d',
+      isAuthenticated: true,
+      authenticationType: '',
+      principalId: 0
+    })
+  })
+})
+
+describe('parseAccountInfo', () => {
+  it('parses the account balance grid', () => {
+    const body = [
+      ['', 'Tekući račun bez red. priliva', 'PUB-RT-8', '191957.92', '0', 'effective', '190000100000000001', '191958.92', 'RSD', '', '0', '', '', '', '0', 'RS35190000100000000001', 'Tekući račun bez red. priliva', '-3919', '23.06.2026 00:00:00', '01.01.0001 00:00:00', ''],
+      ['', 'Devizni račun rezidenti', 'PUB-RT-301', '0', '0', 'effective', '190003100000000002', '0.00', 'USD', '', '0', '', '', '', '0', 'RS35190003100000000002', 'Devizni račun rezidenti', '10700', '15.12.2025 00:00:00', '01.01.0001 00:00:00', ''],
+      ['', 'Devizni račun rezidenti', 'PUB-RT-301', '0', '0', 'effective', '190003100000000002', '0.00', 'EUR', '', '0', '', '', '', '0', 'RS35190003100000000002', 'Devizni račun rezidenti', '-205.6', '24.02.2026 00:00:00', '01.01.0001 00:00:00', '']
+    ]
+
+    expect(parseAccountInfo(body)).toEqual([
+      {
+        id: '190000100000000001',
+        cardNumber: '',
+        accountNumber: '190000100000000001',
+        productCoreID: 'PUB-RT-8',
+        name: 'Tekući račun bez red. priliva',
+        currency: 'RSD',
+        balance: 191957.92
+      },
+      {
+        id: '190003100000000002USD',
+        cardNumber: '',
+        accountNumber: '190003100000000002',
+        productCoreID: 'PUB-RT-301',
+        name: 'Devizni račun rezidenti',
+        currency: 'USD',
+        balance: 0
+      },
+      {
+        id: '190003100000000002EUR',
+        cardNumber: '',
+        accountNumber: '190003100000000002',
+        productCoreID: 'PUB-RT-301',
+        name: 'Devizni račun rezidenti',
+        currency: 'EUR',
+        balance: 0
+      }
+    ])
+  })
+})
+
+describe('parseTransactions', () => {
+  const fromDate = new Date('2026-05-23T00:00:00')
+
+  function txRow (fields: {
+    dc: string
+    date: string
+    id: string
+    text: string
+    amount: string
+    currency: string
+    type: string
+  }): string[] {
+    const row = new Array<string>(65).fill('')
+    row[5] = fields.dc
+    row[7] = fields.date
+    row[10] = fields.id
+    row[15] = fields.text
+    row[27] = fields.amount
+    row[30] = fields.currency
+    row[64] = fields.type
+    return row
+  }
+
+  it('returns empty array for empty turnover', () => {
+    expect(parseTransactions([[['', '', ''], []]], fromDate)).toEqual([])
+    expect(parseTransactions([], fromDate)).toEqual([])
   })
 
-  it('should parse accounts-3', async () => {
-    const mockBody = fs.readFileSync(
-      path.resolve(__dirname, './__mocks__/accounts-3.html'),
-      'utf8'
-    )
-
-    const response = parseAccountInfo(mockBody)
-
-    expect(response).toEqual(
+  it('parses non-card account operations and skips card (crd) rows', () => {
+    const body = [[
+      ['', '', ''],
       [
-        {
-          accountNumber: '0001000105593',
-          balance: 0,
-          cardNumber: '0xC4952DBB2BB2101319F376C48E5602EB',
-          currency: 'RSD',
-          id: '0001000105593-0xC4952DBB2BB2101319F376C48E5602EB',
-          name: '4242XXXXXXXX5934'
-        },
-        {
-          accountNumber: '0001000105593',
-          balance: 0,
-          cardNumber: '0x3A7A78AB70967AB07B514CB30E5FE563',
-          currency: 'RSD',
-          id: '0001000105593-0x3A7A78AB70967AB07B514CB30E5FE563',
-          name: '9891XXXXXXXX6217'
-        },
-        {
-          accountNumber: '0001000105593',
-          balance: 0,
-          cardNumber: '',
-          currency: 'RSD',
-          id: '0001000105593',
-          name: 'Tekući račun'
-        },
-        {
-          accountNumber: '0031000138757',
-          balance: 0,
-          cardNumber: '',
-          currency: 'CNY',
-          id: '0031000138757CNY',
-          name: 'Štedni račun'
-        },
-        {
-          accountNumber: '0031000138757',
-          balance: 0,
-          cardNumber: '',
-          currency: 'RUB',
-          id: '0031000138757RUB',
-          name: 'Štedni račun'
-        },
-        {
-          accountNumber: '0031000138757',
-          balance: 542.80,
-          cardNumber: '',
-          currency: 'EUR',
-          id: '0031000138757EUR',
-          name: 'Štedni račun'
-        }
+        txRow({ dc: 'c', date: '15.06.2026 12:35:36', id: '77700000000001', text: 'Uplata sa racuna PR BEOGRAD', amount: '150000.00', currency: 'RSD', type: 'pmt' }),
+        txRow({ dc: 'd', date: '15.06.2026 12:45:11', id: '77700000000002', text: 'Uplata po računu za el. energiju', amount: '3674.01', currency: 'RSD', type: 'pmt' }),
+        txRow({ dc: 'd', date: '31.05.2026 10:28:26', id: '77700000000003', text: 'Mesecni obracun naknada za TR', amount: '330.00', currency: 'RSD', type: 'brn' }),
+        // Card row must be skipped (fetched from card turnover instead).
+        txRow({ dc: 'd', date: '22.06.2026 15:39:37', id: '77718092174001', text: 'Kartica: GLOBALTEL                   BE', amount: '335.00', currency: 'RSD', type: 'crd' })
       ]
-    )
+    ]]
+
+    expect(parseTransactions(body, fromDate)).toEqual([
+      {
+        id: 'id_77700000000001',
+        date: moment('15.06.2026 12:35:36', 'DD.MM.YYYY HH:mm:ss').toDate(),
+        address: 'Uplata sa racuna PR BEOGRAD',
+        amount: 150000,
+        currency: 'RSD',
+        description: ''
+      },
+      {
+        id: 'id_77700000000002',
+        date: moment('15.06.2026 12:45:11', 'DD.MM.YYYY HH:mm:ss').toDate(),
+        address: 'Uplata po računu za el. energiju',
+        amount: -3674.01,
+        currency: 'RSD',
+        description: ''
+      },
+      {
+        id: 'id_77700000000003',
+        date: moment('31.05.2026 10:28:26', 'DD.MM.YYYY HH:mm:ss').toDate(),
+        address: 'Mesecni obracun naknada za TR',
+        amount: -330,
+        currency: 'RSD',
+        description: ''
+      }
+    ])
   })
+})
 
-  it('should parse accounts-4', async () => {
-    const mockBody = fs.readFileSync(
-      path.resolve(__dirname, './__mocks__/accounts-4.html'),
-      'utf8'
-    )
+describe('parseCards', () => {
+  it('parses the card list with domestic and linked foreign currencies', () => {
+    const body = [
+      // VISA: domestic RSD + linked deviza EUR (index 22).
+      ['', '4242********0001', 'NAME SURNAME', '94130', '0x1111111111111111111111111111AAAA', 'VISA', 'debit-card', 'True', '', '31.01.2029 00:00:00', '0060100341657', '190000100000000003', 'RSD', '0', '601', '77289.36', '', '', '', '0.00', 'RS35190003100000000003', '0', 'EUR', 'Tekući račun', 'Devizni račun'],
+      // DINA: domestic RSD only (index 22 empty).
+      ['', '9891********0002', 'NAME SURNAME', '94130', '0x2222222222222222222222222222BBBB', 'DINA CARD', 'debit-card', 'True', 'valid', '31.01.2029 00:00:00', '0061100410183', '190000100000000003', 'RSD', '0', '611', '77289.36', '', '', '', '', '', '', '', 'Tekući račun', '']
+    ]
 
-    const response = parseAccountInfo(mockBody)
+    expect(parseCards(body)).toEqual([
+      { primaryCardID: '0x1111111111111111111111111111AAAA', accountNumber: '190000100000000003', currency: 'RSD', turnoverCurrencies: ['RSD', 'EUR'] },
+      { primaryCardID: '0x2222222222222222222222222222BBBB', accountNumber: '190000100000000003', currency: 'RSD', turnoverCurrencies: ['RSD'] }
+    ])
+  })
+})
 
-    expect(response).toEqual(
+describe('parseCardTurnover', () => {
+  const fromDate = new Date('2026-05-18T00:00:00')
+
+  function cardRow (fields: {
+    debit: string
+    credit: string
+    originalCurrency: string
+    reference: string
+    description: string
+    transactionDate: string
+    domesticAmount: string
+    accountCurrency: string
+  }): string[] {
+    const row = new Array<string>(29).fill('0')
+    row[9] = fields.debit
+    row[10] = fields.credit
+    row[11] = fields.originalCurrency
+    row[14] = fields.reference
+    row[17] = fields.description
+    row[24] = fields.transactionDate
+    row[25] = fields.domesticAmount
+    row[28] = fields.accountCurrency
+    return row
+  }
+
+  it('parses domestic spend, refund and foreign purchase with real date', () => {
+    const body = [[
+      ['', '', ''],
       [
-        {
-          accountNumber: '0001000328053',
-          balance: 1780241.23,
-          cardNumber: '0x8B6259B7CF1CDD4FDF47D31FD86B3C88',
-          currency: 'RSD',
-          id: '0001000328053-0x8B6259B7CF1CDD4FDF47D31FD86B3C88',
-          name: '4029XXXXXXXX4561'
-        },
-        {
-          accountNumber: '0001000328053',
-          balance: 1780241.23,
-          cardNumber: '0x3A7A78AB70968A5B862BE543D64756ED',
-          currency: 'RSD',
-          id: '0001000328053-0x3A7A78AB70968A5B862BE543D64756ED',
-          name: '9891XXXXXXXX4652'
-        },
-        {
-          accountNumber: '0001000328053',
-          balance: 1780241.23,
-          cardNumber: '',
-          currency: 'RSD',
-          id: '0001000328053',
-          name: 'Tekući račun'
-        },
-        {
-          accountNumber: '0031000384634',
-          balance: 892.43,
-          cardNumber: '',
-          currency: 'EUR',
-          id: '0031000384634',
-          name: 'Štedni račun'
-        }
+        cardRow({ debit: '2380.00', credit: '0', originalCurrency: 'RSD', reference: 'CC-10000001E', description: 'Visa Electron potrošnja - POS druge banke u zemlji Wallet: STUDIO3 - B6                BEOGRAD', transactionDate: '18.06.2026 00:00:00', domesticAmount: '2380.00', accountCurrency: 'RSD' }),
+        cardRow({ debit: '0', credit: '208.99', originalCurrency: 'RSD', reference: 'CC-10000002E', description: 'Dina POS druge banke tax free: DELHAIZE SERBIA DOO BE      BEOGRAD', transactionDate: '20.06.2026 00:00:00', domesticAmount: '208.99', accountCurrency: 'RSD' }),
+        cardRow({ debit: '42.47', credit: '0', originalCurrency: 'EUR', reference: 'CC-10000003E', description: 'Visa Electron potrošnja - POS druge banke INO Wallet: Shell Yverdon               Yverdon-les-B', transactionDate: '03.06.2026 00:00:00', domesticAmount: '4985.39', accountCurrency: 'RSD' })
       ]
-    )
+    ]]
+
+    expect(parseCardTurnover(body, fromDate)).toEqual([
+      {
+        id: 'id_CC-10000001E',
+        date: moment('18.06.2026 00:00:00', 'DD.MM.YYYY HH:mm:ss').toDate(),
+        address: 'STUDIO3 - B6 BEOGRAD',
+        amount: -2380,
+        currency: 'RSD',
+        description: ''
+      },
+      {
+        id: 'id_CC-10000002E',
+        date: moment('20.06.2026 00:00:00', 'DD.MM.YYYY HH:mm:ss').toDate(),
+        address: 'DELHAIZE SERBIA DOO BE BEOGRAD',
+        amount: 208.99,
+        currency: 'RSD',
+        description: ''
+      },
+      {
+        id: 'id_CC-10000003E',
+        date: moment('03.06.2026 00:00:00', 'DD.MM.YYYY HH:mm:ss').toDate(),
+        address: 'Shell Yverdon Yverdon-les-B',
+        amount: -4985.39,
+        currency: 'RSD',
+        description: '',
+        invoice: { sum: -42.47, instrument: 'EUR' }
+      }
+    ])
   })
 
-  it('should parse verification token', async () => {
-    const mockBody = fs.readFileSync(
-      path.resolve(__dirname, './__mocks__/transactions-get.html'),
-      'utf8'
-    )
-
-    const response = parseRequestVerificationToken(mockBody)
-
-    expect(response).toMatchInlineSnapshot(
-      '"gRMs7qlFJfglZXJ6LWt9Rrf7uFmYKVrlUJAw9kZJvP3i_2TyXQT8g09XpquVXaLZEXbWPapfQN8LTUDqEcvgUkBoHok94w-t8dlg88U-nFY1"'
-    )
-  })
-
-  it('should parse card transactions', async () => {
-    const mockBody = fs.readFileSync(
-      path.resolve(__dirname, './__mocks__/transactions-post-1.html'),
-      'utf8'
-    )
-
-    const fromDate: Date = new Date('2025-02-24T00:00:00')
-    const response = parseTransactions(mockBody, fromDate)
-
-    expect(response).toEqual(
+  it('does not build a foreign invoice for a zero original amount (foreign refund edge case)', () => {
+    const body = [[
+      ['', '', ''],
       [
-        {
-          address: 'LP ANDREY SERAPIONOV PR BE',
-          amount: -5000,
-          currency: 'RSD',
-          date: new Date('2024-10-11T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGywu4UtfJ7ROQiAnv9eKjzzUz%2BKkcY17oVfGcac1cpGXH2hbQafqYVaR0zItwhlKuOVk0qzP4RfUc8R0cB5b%2Brb'
-        },
-        {
-          address: 'BLVCK SUGAR DOO BE',
-          amount: -850,
-          currency: 'RSD',
-          date: new Date('2024-10-11T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGywu4UtfJ7ROQiAnv9eKjzzX9TfebVLqb1omJLFzKwNFK63CgLt%2BCwFb6mv2B5sE6ZvvPwhZFnucOH9zKee0pDC'
-        },
-        {
-          address: 'SELECTIVE CENTAR KNEZ BE',
-          amount: -2150,
-          currency: 'RSD',
-          date: new Date('2024-10-11T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGywu4UtfJ7ROQiAnv9eKjzzAwZGs4gh3RVQsAS279lTUOIDuDdF0ZB3O%2FFsxX6VBmGsn%2BxHeaSsNZzqSpOlhn%2FS'
-        },
-        {
-          address: 'PP VIDIN KAPIJA A1 BEOGRAD',
-          amount: -450,
-          currency: 'RSD',
-          date: new Date('2024-10-09T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGywu4UtfJ7ROW%2BDYw0B37YdNg3%2B3cjmm40EKzx4BEDfrMQelRZkazIjUpYF2dR4LyoTrZHdVbqdc8vUq%2BjISqxR'
-        },
-        {
-          address: 'LILLY APOTEKA 269 BE',
-          amount: -1305.95,
-          currency: 'RSD',
-          date: new Date('2024-10-09T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGywu4UtfJ7RORKfHQXYp29vjWAesZBAPA2vq3eEsdM2vDZeC%2BSqNxG%2FKcf5TopUo9Uqi9YNOHp8yE%2BgMPDeOUL1'
-        },
-        {
-          address: 'H&M GALERIJA RS 0520 BEOGRAD',
-          amount: -1117,
-          currency: 'RSD',
-          date: new Date('2024-10-08T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGywu4UtfJ7ROSByFhq1mSAHUCkr8H4Y8NzC7nAThSgF3KfisQBq%2Bhhu%2BBj8Y0KOoXigSWwxeyxN1zkoico0tVDR'
-        },
-        {
-          address: 'H&M GALERIJA RS 0520 BEOGRAD',
-          amount: -6081,
-          currency: 'RSD',
-          date: new Date('2024-10-08T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGywu4UtfJ7ROSByFhq1mSAHmFaIW1okYp15M6gW5mu9%2FuCwDxxqK7K%2Bg4q8MGJen3Diyg98rhcN3OyAdthi7QbW'
-        },
-        {
-          address: 'DON DON LULU 23 BEOGRAD SAVSKI',
-          amount: -393,
-          currency: 'RSD',
-          date: new Date('2024-10-08T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGywu4UtfJ7ROSByFhq1mSAHuzaP7%2BB9LHcKdGwn2lfDqVzZZVr0qPI5lHa5tVIXpnpKbKpix82xRkmcrlxxivnP'
-        },
-        {
-          address: 'PAYSPOT CORNER 12 BEOGRAD SAVSKI',
-          amount: -1999,
-          currency: 'RSD',
-          date: new Date('2024-10-08T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGywu4UtfJ7ROSByFhq1mSAHnhPD4SwQ5%2BdkzpMrXR3Apu2VJrKwBnVSLhz5T4gyYUsq6Il6maqcGyrre7qV0h0P'
-        },
-        {
-          address: 'SUSHIRRITO BW BE',
-          amount: -2230,
-          currency: 'RSD',
-          date: new Date('2024-10-08T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGywu4UtfJ7ROXCpqc%2FgQY3tMC0oRtmp3FZhztLjcXl7DfINqELg3RYn1YqUZvSoj70jtihxumnx74OHMnl%2BUmGr'
-        }
+        cardRow({ debit: '0', credit: '500.00', originalCurrency: 'EUR', reference: 'CC-10000004E', description: 'Visa Electron INO Wallet: REFUND MERCHANT             PARIS', transactionDate: '10.06.2026 00:00:00', domesticAmount: '500.00', accountCurrency: 'RSD' })
       ]
-    )
+    ]]
+
+    expect(parseCardTurnover(body, fromDate)).toEqual([
+      {
+        id: 'id_CC-10000004E',
+        date: moment('10.06.2026 00:00:00', 'DD.MM.YYYY HH:mm:ss').toDate(),
+        address: 'REFUND MERCHANT PARIS',
+        amount: 500,
+        currency: 'RSD',
+        description: ''
+      }
+    ])
   })
 
-  it('should parse account transactions', async () => {
-    const mockBody = fs.readFileSync(
-      path.resolve(__dirname, './__mocks__/transactions-post-2.html'),
-      'utf8'
-    )
+  it('returns empty array when the response is an error object instead of an array', () => {
+    expect(parseCardTurnover({ ErrorCode: 'Err_0', Message: 'error' }, fromDate)).toEqual([])
+  })
+})
 
-    const fromDate: Date = new Date('2025-02-24T00:00:00')
-    const response = parseTransactions(mockBody, fromDate)
+describe('parseReservedFunds', () => {
+  const fromDate = new Date('2026-06-01T00:00:00')
 
-    expect(response).toEqual(
-      [
-        {
-          address: 'K-ETA 0215663441',
-          amount: -7.14,
-          currency: 'EUR',
-          date: new Date('2024-10-21T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGywu4UtfJ7ROexS%2BMuFAgyqGLsF4zn6wmg2%2Bls9%2B8iDIMN9DKrpLesjKGAnTGDgwRa0CmWUudJmfv5%2FFnM8dI9l'
-        },
-        {
-          address: 'MOBILNA APP ONEA PODGORICA',
-          amount: -4,
-          currency: 'EUR',
-          date: new Date('2024-10-21T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGywu4UtfJ7ROexS%2BMuFAgyqD%2BWpkTldkqwcd41njf%2FDJdlqZFMz0HEfwAnn4IB%2BwvQzycvw%2F2jCJBwfJmv9ymvj'
-        },
-        {
-          address: 'VOLI 1 PODGORICA',
-          amount: -8.33,
-          currency: 'EUR',
-          date: new Date('2024-10-18T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGywu4UtfJ7RObwJBTpX2tfccY5WOXPWm5g6XirWQBvUYcxyBq3X9tIh66iV7eS%2Bpk2DCLfxYS%2Bo0cELG8OPzvg%2B'
-        },
-        {
-          address: 'MARIEN PLATZ PODGORICA',
-          amount: -71.62,
-          currency: 'EUR',
-          date: new Date('2024-10-18T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGywu4UtfJ7RObwJBTpX2tfcSXO15NgJyAT4Dd%2BqRWWlV4BYbsQZs1moUnIC%2FOtHwGEri%2Fp3hFnlSvvxPAIiz0xS'
-        },
-        {
-          address: 'THE BRITISH COUNCIL MANCHESTER 23500.00 RSD\nKurs:117.0177',
-          amount: -201.46,
-          currency: 'EUR',
-          date: new Date('2024-10-14T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGywu4UtfJ7ROVItA%2F1GrciWf6yiBQboMNZhIFXhNjwOBNY877Ypq%2BQq6T2grgK7sjST6dR6hDkQI0EEjwe0TTRR'
-        },
-        {
-          address: 'APPLE.COM/BILL ITUNES.COM',
-          amount: -98.99,
-          currency: 'EUR',
-          date: new Date('2024-09-31T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGywu4UtfJ7ROeNQ5v0%2BZB%2FLp92ZxoYpjTWuMELQqBegH1PuKDjHm2e3rwj%2ByG5VDg1OZFrSGlg6t3MXgb5D%2BolT'
-        },
-        {
-          address: 'AIR SERBIA A.D BEOGRAD NOVI BEOGRAD 36992.00\nRSD Kurs:117.0936',
-          amount: -315.92,
-          currency: 'EUR',
-          date: new Date('2024-09-26T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGywu4UtfJ7ROeDyeYpiaLJvewDfWrvlOG64LBWMkfmOlNGcepDegFz3t636MfLGsPS0ErAC54B8idWx8cH7zokZ'
-        },
-        {
-          address: 'CHIP CARD AD BEOGRAD KOPAONIK 600.00 RSD\nKurs:117.0936',
-          amount: -5.12,
-          currency: 'EUR',
-          date: new Date('2024-09-26T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGywu4UtfJ7ROeDyeYpiaLJv%2Fl7BwqxRalCcAa6g2Nv2IYQlD9jr3%2FHvORIjAFf2IjISI8X6jMij7vajo%2Fm8CIvZ'
-        },
-        {
-          address: 'AIR SERBIA A.D BEOGRAD NOVI BEOGRAD 63147.00\nRSD Kurs:117.0936',
-          amount: -539.29,
-          currency: 'EUR',
-          date: new Date('2024-09-26T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGywu4UtfJ7ROeDyeYpiaLJvnp1c2%2FCl5OZ3DPyOExYV3GVElhraeyusFlT8JkDbp7y1NN8JPA2%2Bjc8OONpKh4K6'
-        },
-        {
-          address: 'AIR SERBIA A.D BEOGRAD NOVI BEOGRAD 20455.00\nRSD Kurs:117.0917',
-          amount: -167.16,
-          currency: 'EUR',
-          date: new Date('2024-09-25T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGywu4UtfJ7ROV3Qa3XqC9Rhi5rpkiLRsN0oWg85cW3c%2FD9kPnaO%2FTLMOOBqFL3fy6%2FeIhaFdxeNXotNK41IhZvL'
-        },
-        {
-          address: 'APPLE.COM/US 800-676-2775 99.00 USD\nKurs:1.1195',
-          amount: -89.33,
-          currency: 'EUR',
-          date: new Date('2024-09-25T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGywu4UtfJ7ROV3Qa3XqC9RhUhavsPPoyv9nShr%2Bj7yuZ%2B2P2MRKxi%2FRHsjWSj78bzYS1DZyLjl0EpifURazx0Me'
-        },
-        {
-          address: 'Prodaja deviza',
-          amount: -10,
-          currency: 'EUR',
-          date: new Date('2024-09-05T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGyJ6XvrOBRhDLeeN%2BxJ0%2Fw4XMM8TTJEEZ53CZCjtJj68Ido9BFHwz3TUOdSJ2hA7SM%3D'
-        },
-        {
-          address: 'CC_NEW FITNESS BEOGRAD 3320.00 RSD\nKurs:117.0222',
-          amount: -28.37,
-          currency: 'EUR',
-          date: new Date('2024-08-30T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGywu4UtfJ7ROWW8SMindbi9qyWTYzL6T0%2BiBI2QHnsg8kphdlLWyI599KGB4zJBkqCIlE8Aib%2FR4vGAm63DMjYt'
-        },
-        {
-          address: 'CC_NEW FITNESS BEOGRAD 3320.00 RSD\nKurs:117.0553',
-          amount: -28.36,
-          currency: 'EUR',
-          date: new Date('2024-07-31T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGywu4UtfJ7ROSMX4igovJ%2FmtS2Jk10Pkqrt9MrwJ14QtjyPZld6fvZDhvXC7DqjMPkfMP5I1%2BJMELw7YSv%2B8Nra'
-        },
-        {
-          address: 'CINEPLEXX SRB DO NOVI BEOGRAD 3210.00 RSD\nKurs:117.0680',
-          amount: -19.86,
-          currency: 'EUR',
-          date: new Date('2024-07-25T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGywu4UtfJ7ROT4IailIraT5c5%2FAjyJOcSAH6hRg11RtwQ58MITi7ZmmRSpk02HvNxWLyDmAjwGk8B29oj2UWfNh'
-        },
-        {
-          address: 'Prodaja deviza',
-          amount: -10,
-          currency: 'EUR',
-          date: new Date('2024-05-08T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGyJ6XvrOBRhDLHO4MP7xsK4%2BKHdPBOyRoi8Iavw0zjReAOpKRwd35zVLkElh0b4KVs%3D'
-        },
-        {
-          address: 'ROMAN PAVLOV',
-          amount: 3800,
-          currency: 'EUR',
-          date: new Date('2024-04-14T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGydLNdInhh39gudFQ5POsk76CNhd%2B9wvSjblV5pYsUGEJFr3dEnMpxBfDNIPvv3S7A%3D'
-        },
-        {
-          address: 'FAVORIT CGI 6 PETROVAC NA M 1000.00 RSD\nKurs:117.2024',
-          amount: -8.53,
-          currency: 'EUR',
-          date: new Date('2024-03-25T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGywu4UtfJ7ROSiVJjLYHqrGk4nRX9QuDcJrEiES1A3OI8EyW%2BKToW2JJdZbajx4yTPRCXLQlotlm2%2FP0PBZ8AqL'
-        },
-        {
-          address: 'ROMAN PAVLOV',
-          amount: 500,
-          currency: 'EUR',
-          date: new Date('2024-02-08T00:00:00'),
-          description: '',
-          id: 'id_%2Bh5Bxj5lBGydLNdInhh39oT8MEW0Tovt7fQH97F17VRFy%2Bhp83GjBFWKCZW4nBSOdTuweS8HjHs%3D'
-        }
-      ]
-    )
+  it('parses pending debit/credit authorizations', () => {
+    const body = [
+      {
+        Status: 'p',
+        Category: 'd',
+        AmountTotal: 340.97,
+        DebitAmountDomestic: 340.97,
+        CreditAmountDomestic: null,
+        CurrencyCode: 'RSD',
+        Description: 'KRALJA MILANA 28>BEOGRAD              RS',
+        Reference: '10000001R',
+        ValueDate: '2026-06-23T00:00:00'
+      },
+      {
+        Status: 'p',
+        Category: 'c',
+        AmountTotal: 1500,
+        DebitAmountDomestic: null,
+        CreditAmountDomestic: 1500,
+        CurrencyCode: 'RSD',
+        Description: 'Povracaj>BEOGRAD RS',
+        Reference: '10000002R',
+        ValueDate: '2026-06-24T00:00:00'
+      }
+    ]
+
+    expect(parseReservedFunds(body, fromDate)).toEqual([
+      {
+        id: 'id_10000001R',
+        date: new Date('2026-06-23T00:00:00'),
+        address: 'KRALJA MILANA 28>BEOGRAD RS',
+        amount: -340.97,
+        currency: 'RSD',
+        description: ''
+      },
+      {
+        id: 'id_10000002R',
+        date: new Date('2026-06-24T00:00:00'),
+        address: 'Povracaj>BEOGRAD RS',
+        amount: 1500,
+        currency: 'RSD',
+        description: ''
+      }
+    ])
   })
 
-  it('should parse account transactions', async () => {
-    const mockBody = fs.readFileSync(
-      path.resolve(__dirname, './__mocks__/transactions-post-3.html'),
-      'utf8'
-    )
+  it('keeps zero-amount released holds for the converter to drop', () => {
+    const body = [
+      {
+        Status: 'p',
+        Category: 'd',
+        AmountTotal: 0,
+        CurrencyCode: 'RSD',
+        Description: 'AIRBNB>SAN FRANCISC US',
+        Reference: '17284535R',
+        ValueDate: '2026-04-27T00:00:00'
+      }
+    ]
 
-    const fromDate: Date = new Date('2025-02-24T00:00:00')
-    const response = parseTransactions(mockBody, fromDate)
-
-    expect(response).toEqual(
-      [
-        {
-          address: ';Komunalne usluge',
-          amount: -14662.59,
-          currency: 'RSD',
-          date: new Date('2025-02-24T00:00:00'),
-          description: '',
-          id: 'id_JeQgbNVlylR9evhxQ6bT4S354kfl3Va7ZE5JAFRD3TXy1TOuxC9P9Q%3D%3D'
-        },
-        {
-          address: '- provizija',
-          amount: -20,
-          currency: 'RSD',
-          date: new Date('2025-02-24T00:00:00'),
-          description: '',
-          id: 'id_JeQgbNVlylR9evhxQ6bT4S354kfl3Va7ZE5JAFRD3TXy1TOuxC9P9Q%3D%3D'
-        },
-        {
-          address: 'Uplata sa racuna NIKOLAY NIKOLAEV PR NOVI SAD , GAJEVA 25, Novi Sad',
-          amount: 141871.43,
-          currency: 'RSD',
-          date: new Date('2025-05-28T00:00:00'),
-          description: '',
-          id: 'id_JeQgbNVlylRxBirFVpseyEaLXmInxqJoarpEY6oJ3ZWWfMZvyfnnDdAoIWY3BAMN0X%2BrxL3EZ0s%3D'
-        }
-      ]
-    )
+    expect(parseReservedFunds(body, fromDate)).toEqual([
+      {
+        id: 'id_17284535R',
+        date: new Date('2026-04-27T00:00:00'),
+        address: 'AIRBNB>SAN FRANCISC US',
+        amount: -0,
+        currency: 'RSD',
+        description: ''
+      }
+    ])
   })
 })

@@ -128,6 +128,15 @@ async function fetchApiJsonWithSessionCookies (sessionCookies, url, options, pre
   return response
 }
 
+export function selectDboContract (contracts = []) {
+  const registeredContracts = contracts.filter(contract => contract.status === 'REGISTERED')
+
+  return registeredContracts.find(contract => contract.role === 'F') ||
+    contracts.find(contract => contract.role === 'F') ||
+    registeredContracts[0] ||
+    contracts[0]
+}
+
 export async function login (login, password) {
   const cookies = new Map()
 
@@ -184,7 +193,7 @@ export async function login (login, password) {
     'user/userRole',
     {
       method: 'POST',
-      body: res.body.data.userInfo.dboContracts[0],
+      body: selectDboContract(res.body.data.userInfo.dboContracts),
       sanitizeRequestLog: { body: true }
     },
     (response) => response.body.success,

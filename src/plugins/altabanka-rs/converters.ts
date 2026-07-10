@@ -1,5 +1,5 @@
-import { AccountOrCard, AccountType, ExtendedTransaction } from '../../types/zenmoney'
-import { AccountInfo, AccountTransaction } from './types'
+import { AccountOrCard, AccountType, ExtendedTransaction, Transaction } from '../../types/zenmoney'
+import { AccountInfo, AccountTransaction } from './models'
 import { toISODateString, dateInTimezone } from '../../common/dateUtils'
 
 export function convertAccounts (apiAccounts: AccountInfo[]): AccountOrCard[] {
@@ -18,24 +18,31 @@ export function convertAccounts (apiAccounts: AccountInfo[]): AccountOrCard[] {
 }
 
 export function convertTransaction (accountTransaction: AccountTransaction, account: AccountInfo, hold = false): ExtendedTransaction | null {
-  accountTransaction.currency = accountTransaction.currency === undefined
-    ? 'RSD'
-    : accountTransaction.currency
+  const currency = accountTransaction.currency ?? 'RSD'
 
   if (accountTransaction.amount === 0) {
     return null
   }
+
+  const match = accountTransaction.description.match(/^([\d.]+)\s(\w{3})/)
+
   let invoice = {
     sum: accountTransaction.amount,
-    instrument: accountTransaction.currency
+    instrument: currency
   }
-  const match = accountTransaction.description.match(/^([\d.]+)\s(\w{3})/)
-  if (match != null) {
+  if (accountTransaction.invoice != null) {
+    // Card transaction: domestic `amount` plus the original-currency invoice.
+    invoice = accountTransaction.invoice
+  } else if (match != null) {
     invoice = {
       sum: accountTransaction.amount < 0 ? -parseFloat(match[1]) : parseFloat(match[1]),
       instrument: match[2]
     }
   }
+
+  const foreign = invoice.instrument !== account.currency
+  // Card transactions carry the domestic amount, so we keep `sum` even for foreign currency.
+  const sum = accountTransaction.invoice != null ? accountTransaction.amount : (foreign ? null : accountTransaction.amount)
 
   const transaction: ExtendedTransaction = {
     hold,
@@ -44,9 +51,9 @@ export function convertTransaction (accountTransaction: AccountTransaction, acco
       {
         id: accountTransaction.id,
         account: { id: account.id },
-        sum: invoice?.instrument !== account.currency ? null : accountTransaction.amount,
+        sum,
         fee: 0,
-        invoice: invoice?.instrument === account.currency ? null : invoice
+        invoice: foreign ? invoice : null
       }
     ],
     merchant: null,
@@ -86,10 +93,9 @@ function parseInnerTransfer (transaction: ExtendedTransaction, accountTransactio
     /Interni transfer/i,
     /Kupovina deviza/i
   ].some(regex => regex.test(accountTransaction.address))) {
-    const idCurrency = accountTransaction.id.split('%')[0]
     transaction.groupKeys = [
       `${toISODateString(dateInTimezone(transaction.date, 180)).slice(0, 10)}_${invoice.instrument}_${Math.abs(invoice.sum)}`,
-      `${idCurrency}`
+      accountTransaction.id
     ]
     transaction.merchant = null
     transaction.comment = accountTransaction.address
@@ -113,4 +119,14 @@ function parsePayeeAndComment (transaction: ExtendedTransaction, accountTransact
     transaction.comment = accountTransaction.address
   }
   return false
+}
+
+export function deduplicateTransactions (transactions: Transaction[]): Transaction[] {
+  const seen = new Set<string>()
+  return transactions.filter(tx => {
+    const id = tx.movements[0]?.id
+    if (typeof id !== 'string' || seen.has(id)) return false
+    seen.add(id)
+    return true
+  })
 }

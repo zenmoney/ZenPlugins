@@ -10,10 +10,7 @@ export function convertAccounts (apiAccounts) {
         switch (apiAccount.card_type) {
           case 'debit':
             account.push({
-              product: {
-                productId: apiAccount.id.toString(),
-                productType: 'ccard'
-              },
+              product: buildCardProduct(apiAccount),
               accounts: [convertDebitCard(apiAccount)]
             })
             if (apiAccount.multiaccs) {
@@ -25,10 +22,7 @@ export function convertAccounts (apiAccounts) {
             break
           case 'credit':
             account.push({
-              product: {
-                productId: apiAccount.id.toString(),
-                productType: 'ccard'
-              },
+              product: buildCardProduct(apiAccount),
               accounts: [convertCreditCard(apiAccount)]
             })
             filterDoubleCards(apiAccount, accounts, account)
@@ -85,6 +79,22 @@ export function convertAccounts (apiAccounts) {
     }
   }
   return accounts
+}
+
+function buildCardProduct (apiAccount) {
+  const product = {
+    productId: apiAccount.id.toString(),
+    productType: 'ccard'
+  }
+  // Multi-currency cards keep transactions on per-currency sub-accounts; collect every
+  // account_id that has to be queried for a statement (the card itself + each sub-account).
+  if (Array.isArray(apiAccount.multiaccs) && apiAccount.multiaccs.length > 0) {
+    product.statementAccountIds = [
+      apiAccount.id.toString(),
+      ...apiAccount.multiaccs.map(multiacc => multiacc.id.toString())
+    ]
+  }
+  return product
 }
 
 function filterDoubleCards (apiAccount, accounts, account) {

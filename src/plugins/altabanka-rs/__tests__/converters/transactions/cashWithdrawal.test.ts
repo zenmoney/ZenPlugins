@@ -1,5 +1,5 @@
 import { convertTransaction } from '../../../converters'
-import { AccountInfo } from '../../../types'
+import { AccountInfo } from '../../../models'
 
 describe('convertTransaction', () => {
   const accountRSD: AccountInfo = {

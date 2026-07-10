@@ -1,8 +1,9 @@
-import type { ResponseWithErrorInfo } from './base'
+import type { GeoLocation, ResponseWithErrorInfo } from './base'
 
 export interface AuthenticateInput {
   login: string
   password: string
+  geoLocation: GeoLocation
 }
 
 export interface AuthenticateOutput extends ResponseWithErrorInfo {

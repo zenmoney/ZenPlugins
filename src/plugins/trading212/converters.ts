@@ -43,7 +43,7 @@ function convertTransaction (op: ExportOperation, accountId: string, cardId: str
         id: op.ID,
         account: { id: isCardTransaction ? cardId : accountId },
         invoice: null,
-        sum: op['Gross Total'],
+        sum: +op['Gross Total'],
         fee: 0
       }],
       comment: op.Action,
@@ -59,8 +59,8 @@ function convertTransaction (op: ExportOperation, accountId: string, cardId: str
   ]
 
   if (preferences.roundUpTransactions && isCardDebit) {
-    const roundedSum = Math.ceil(Math.abs(op['Gross Total']))
-    const roundUpAmount = +(roundedSum - Math.abs(op['Gross Total'])).toPrecision(5)
+    const roundedSum = Math.ceil(Math.abs(+op['Gross Total']))
+    const roundUpAmount = +(roundedSum - Math.abs(+op['Gross Total'])).toPrecision(5)
     if (roundUpAmount > 0) {
       transactions.push({
         hold: false,

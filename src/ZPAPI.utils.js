@@ -1,8 +1,6 @@
 /* global XMLHttpRequest */
 
 import _ from 'lodash'
-import { parseHeaderParameters } from './common/network'
-import { generateUUID } from './common/utils'
 import { getTargetUrl, MANUAL_REDIRECT_HEADER, PROXY_TARGET_HEADER, TRANSFERABLE_HEADER_PREFIX } from './shared'
 
 let lastRequest = null
@@ -117,27 +115,6 @@ const processBody = (body, type) => {
   }
 }
 
-function encodeFormData (formData, boundary) {
-  const chunks = []
-  for (const [name, value] of formData) {
-    chunks.push(`--${boundary}\r\n`)
-    if (value instanceof ZenMoney.Blob) {
-      chunks.push(
-        `Content-Disposition: form-data; name="${name}"${value.name === undefined ? '' : `; filename="${value.name}"`}\r\n` +
-        `Content-Type: ${value.type || 'application/octet-stream'}\r\n\r\n`,
-        value,
-        '\r\n'
-      )
-    } else {
-      chunks.push(
-        `Content-Disposition: form-data; name="${name}"\r\n\r\n${value}\r\n`
-      )
-    }
-  }
-  chunks.push(`--${boundary}--`)
-  return new ZenMoney.Blob(chunks)
-}
-
 export const processHeadersAndBody = ({ headers, body }) => {
   let contentType = null
   let type = 'URL_ENCODING'
@@ -148,7 +125,7 @@ export const processHeadersAndBody = ({ headers, body }) => {
         handleException(`[NHE] Wrong header ${JSON.stringify({ key, value: v })}`)
         return null
       }
-      let value = v.toString()
+      const value = v.toString()
       if (body && key.toLowerCase() === 'content-type') {
         contentType = value
         if (typeof body !== 'string') {
@@ -157,13 +134,6 @@ export const processHeadersAndBody = ({ headers, body }) => {
             type = 'JSON'
           } else if (v.indexOf('xml') >= 0) {
             type = 'XML'
-          } else if (v.indexOf('multipart/form-data') >= 0 && body instanceof ZenMoney.FormData) {
-            let boundary = parseHeaderParameters(value).find(parameter => parameter[0].toLowerCase() === 'boundary')?.[1]
-            if (!boundary) {
-              boundary = generateUUID()
-              value = value + '; boundary=' + boundary
-            }
-            body = encodeFormData(body, boundary)
           }
         }
       }

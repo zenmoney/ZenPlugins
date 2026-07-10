@@ -46,7 +46,7 @@ describe('fetchTransactions', () => {
 
     expect(transactions).toEqual(events)
     expect(fetchJson).toHaveBeenCalledTimes(1)
-    expect(fetchJson.mock.calls[0][0]).toBe('https://www.sber-bank.by/SBOLServer/rest/client/events')
+    expect(fetchJson.mock.calls[0][0]).toBe('https://digital.sber-bank.by/SBOLServer/rest/client/events')
     expect(fetchJson.mock.calls[0][1].body).toEqual({
       contractNumber,
       endDate: '2026-06-10',

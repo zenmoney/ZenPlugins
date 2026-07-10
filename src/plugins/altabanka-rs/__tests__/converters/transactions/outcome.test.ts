@@ -1,5 +1,5 @@
 import { convertTransaction } from '../../../converters'
-import { AccountInfo, AccountTransaction } from '../../../types'
+import { AccountInfo, AccountTransaction } from '../../../models'
 
 describe('convertTransaction', () => {
   it.each([

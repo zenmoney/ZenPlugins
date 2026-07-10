@@ -1,88 +1,153 @@
-import cheerio from 'cheerio'
-import { AccountInfo, AccountTransaction } from './types'
 import moment from 'moment'
 import { isValidDate } from '../../common/dateUtils'
+import { getOptBoolean, getOptNumber, getOptString, getString } from '../../types/get'
+import { AccountInfo, AccountTransaction, Card, Environment } from './models'
 
 const exchangeRateRegex = /\d+\.\d+ \w{3} Kurs:.+/
 
-export function parseLoginResult (body: string): boolean {
-  return body.includes('location.href = action;')
+function asArray (value: unknown): unknown[] {
+  // Some endpoints return an error object (e.g. for an unsupported AccountType)
+  // instead of an array, so we tolerate non-arrays instead of throwing.
+  return Array.isArray(value) ? value : []
 }
 
-export function parseAccountInfo (body: string): AccountInfo[] {
-  const html = cheerio.load(body)
-  const accountsHtml = html('#account-slider').find('.slide')
-  const accounts: AccountInfo[] = []
+export function parseEnvironment (body: unknown): Environment {
+  // Before login `AuthenticationType` is null and `IsAuthenticated` is already
+  // `true`, so we use optional getters and rely on `AuthenticationType`/`PrincipalID`
+  // to detect a successful login.
+  return {
+    requestToken: getOptString(body, 'd.User.RequestToken') ?? '',
+    isAuthenticated: getOptBoolean(body, 'd.User.IsAuthenticated') ?? false,
+    authenticationType: getOptString(body, 'd.User.AuthenticationType') ?? '',
+    principalId: getOptNumber(body, 'd.User.PrincipalID') ?? 0
+  }
+}
 
-  // eslint-disable-next-line array-callback-return
-  accountsHtml.toArray().map(accountHtml => {
-    const $ = cheerio.load(accountHtml)
+export function parseAccountInfo (body: unknown): AccountInfo[] {
+  const rows = asArray(body)
 
-    const invoiceAccounts: Array<{ currency: string, balance: string | undefined }> = []
-    $('select[data-utility="customselectMenu"] option').each((index, element) => {
-      const currency = $(element).text().trim() // Валюта
-      const balance = $(element).attr('data-amount') // Баланс
-      invoiceAccounts.push({ currency, balance })
-    })
+  const currencyCountByAccount: Record<string, number> = {}
+  for (const row of rows) {
+    const accountNumber = getString(row, '6')
+    currencyCountByAccount[accountNumber] = (currencyCountByAccount[accountNumber] ?? 0) + 1
+  }
 
-    for (const invoiceAccount of invoiceAccounts) {
-      const id = (accountHtml as cheerio.TagElement).attribs['data-accountnumber'].trim()
-      const account = {
-        id: invoiceAccounts.length > 1 ? id + invoiceAccount.currency : id,
-        cardNumber: (accountHtml as cheerio.TagElement).attribs['data-cardno'].trim(),
-        accountNumber: (accountHtml as cheerio.TagElement).attribs['data-accno'].trim(),
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        name: $('.acc-name').text().trim() || $('.acc-nr').text().trim(),
-        currency: invoiceAccount.currency,
-        balance: invoiceAccount.balance !== undefined
-          ? parseFloat(invoiceAccount.balance.replace(/\./g, '').replace(',', '.'))
-          : 0
-      }
-      accounts.push(account)
+  return rows.map(row => {
+    const accountNumber = getString(row, '6')
+    const currency = getString(row, '8')
+    return {
+      id: currencyCountByAccount[accountNumber] > 1 ? accountNumber + currency : accountNumber,
+      cardNumber: '',
+      accountNumber,
+      productCoreID: getString(row, '2'),
+      name: getString(row, '1'),
+      currency,
+      balance: parseFloat(getString(row, '3'))
     }
   })
-  return accounts
 }
 
-export function parseRequestVerificationToken (body: string): string {
-  const html = cheerio.load(body)
-  const token = html('input[name="__RequestVerificationToken"]').val()
+export function parseTransactions (body: unknown, fromDate: Date): AccountTransaction[] {
+  const outer = asArray(body)
+  if (outer.length === 0) {
+    return []
+  }
 
-  return token
-}
+  const inner = asArray(outer[0])
+  const transactionRows = inner.length > 1 ? asArray(inner[1]) : []
 
-export function parseTransactions (body: string, fromDate: Date): AccountTransaction[] {
-  const html = cheerio.load(body)
-  const transactionsHtml = html('#transaction-view-content').find('.pageable-content')
+  // Card transactions (Source === 'crd') are fetched separately from card turnover
+  // (it provides the real transaction date), so we skip them here to avoid duplicates.
+  return transactionRows.filter(row => getString(row, '64') !== 'crd').map(row => {
+    const direction = getString(row, '5') === 'c' ? 1 : -1
+    const date = moment(getString(row, '7'), 'DD.MM.YYYY HH:mm:ss').toDate()
+    const rawCurrency = getString(row, '30')
 
-  return transactionsHtml.toArray().map(transactionHtml => {
-    const html = cheerio.load(transactionHtml)
-
-    const transactionHref = (transactionHtml as cheerio.TagElement).attribs['data-href'].trim()
-    const queryParams = transactionHref.split('?')[1]
-    const params = queryParams.split('&').reduce<Record<string, string>>((acc, param) => {
-      const [key, value] = param.split('=')
-      acc[key] = value
-      return acc
-    }, {})
-
-    const [dateHtml, , descriptionHtml, amountHtml] = html('div').children('div').toArray()
-
-    const direction = cheerio.load(dateHtml)('div.tag').hasClass('up') ? -1 : 1
-    const date = moment(cheerio.load(dateHtml)('p').text()?.trim(), 'DD.MM.YYYY').toDate()
-    let address = cheerio.load(descriptionHtml)('span').text()?.trim().replace(/ {2}/g, '').replace('Kartica: ', '')
-    const [amount, currency] = cheerio.load(amountHtml)('p').text().trim().split(' ') ?? []
-
-    const description = address?.match(exchangeRateRegex)?.[0] ?? ''
-    address = address?.replace(description ?? '', '').trim()
+    let text = getString(row, '15').replace(/\s+/g, ' ').trim().replace('Kartica: ', '')
+    const description = text.match(exchangeRateRegex)?.[0] ?? ''
+    text = text.replace(description, '').trim()
 
     return {
-      id: 'id_' + params.q,
+      id: 'id_' + getString(row, '10'),
       date: isValidDate(date) ? date : fromDate,
-      address,
-      amount: direction * Number(amount.replace(/,/g, '')),
-      currency,
+      address: text,
+      amount: direction * parseFloat(getString(row, '27')),
+      currency: rawCurrency === '' ? undefined : rawCurrency,
       description
+    }
+  })
+}
+
+export function parseCards (body: unknown): Card[] {
+  return asArray(body).map(row => {
+    const currency = getString(row, '12')
+    const foreignCurrency = getOptString(row, '22') ?? ''
+    const turnoverCurrencies = [currency, foreignCurrency].filter((c, i, arr) => c !== '' && arr.indexOf(c) === i)
+    return {
+      primaryCardID: getString(row, '4'),
+      accountNumber: getString(row, '11'),
+      currency,
+      turnoverCurrencies
+    }
+  })
+}
+
+export function parseCardTurnover (body: unknown, fromDate: Date): AccountTransaction[] {
+  const outer = asArray(body)
+  if (outer.length === 0) {
+    return []
+  }
+
+  const inner = asArray(outer[0])
+  const transactionRows = inner.length > 1 ? asArray(inner[1]) : []
+
+  return transactionRows.map(row => {
+    // Empty columns arrive as '0' (not ''), so detect a debit by a non-zero amount.
+    const debit = getString(row, '9')
+    const sign = debit !== '' && parseFloat(debit) !== 0 ? -1 : 1
+    const domesticAmount = sign * parseFloat(getString(row, '25'))
+    const accountCurrency = getString(row, '28')
+    const originalCurrency = getString(row, '11')
+    const date = moment(getString(row, '24'), 'DD.MM.YYYY HH:mm:ss').toDate()
+
+    const address = getString(row, '17')
+      .split(': ').slice(1).join(': ')
+      .replace(/\s+/g, ' ')
+      .trim()
+
+    const result: AccountTransaction = {
+      id: 'id_' + getString(row, '14'),
+      date: isValidDate(date) ? date : fromDate,
+      address: address === '' ? getString(row, '17').replace(/\s+/g, ' ').trim() : address,
+      amount: domesticAmount,
+      currency: accountCurrency === '' ? undefined : accountCurrency,
+      description: ''
+    }
+
+    const originalAmount = sign * parseFloat(getString(row, '9'))
+    if (originalCurrency !== '' && originalCurrency !== accountCurrency && originalAmount !== 0) {
+      result.invoice = { sum: originalAmount, instrument: originalCurrency }
+    }
+
+    return result
+  })
+}
+
+export function parseReservedFunds (body: unknown, fromDate: Date): AccountTransaction[] {
+  const rows = asArray(body)
+
+  return rows.map(row => {
+    const amount = getOptNumber(row, 'AmountTotal') ?? 0
+    const date = moment(getOptString(row, 'ValueDate') ?? '').toDate()
+    const currency = getOptString(row, 'CurrencyCode') ?? ''
+
+    return {
+      id: 'id_' + (getOptString(row, 'Reference') ?? ''),
+      date: isValidDate(date) ? date : fromDate,
+      address: (getOptString(row, 'Description') ?? '').replace(/\s+/g, ' ').trim(),
+      amount: getOptString(row, 'Category') === 'c' ? amount : -amount,
+      currency: currency === '' ? undefined : currency,
+      description: ''
     }
   })
 }

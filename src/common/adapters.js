@@ -495,10 +495,13 @@ export function adaptScrapeToGlobalApi (scrape) {
     } = unsealSyncPromise(resultHandled)
     if (state === 'rejected') {
       ZenMoney.setResult(getPresentationError(value, isFirstRun))
+      return Promise.resolve()
     } else if (state === 'pending') {
-      resultHandled.catch((e) => {
+      return resultHandled.catch((e) => {
         ZenMoney.setResult(getPresentationError(e, isFirstRun))
       })
+    } else {
+      return resultHandled
     }
   }
 }

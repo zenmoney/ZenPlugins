@@ -44,7 +44,7 @@ export interface ExportOperation {
   ID: string
   Action: string
   Time: string
-  'Gross Total': number
+  'Gross Total': string
   'Currency (Gross Total)': string
   'Merchant name'?: string
   'Merchant category'?: string
