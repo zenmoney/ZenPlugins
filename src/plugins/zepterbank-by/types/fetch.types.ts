@@ -103,8 +103,8 @@ export interface FetchCardTransaction {
   /** Place of payment **/
   'cardAcceptor'?: string
   'repeatable': false
-  /** credit - income, debit - outcome **/
-  'transOperType': 'debit' | 'credit'
+  /** credit - income, debit - outcome, noop - completion/status row **/
+  'transOperType': 'debit' | 'credit' | 'noop'
   /**
    * MCC code (MCC is cyrillic)
    * @example MCC0000

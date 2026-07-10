@@ -10,6 +10,9 @@ import {
 import { convertIsoDateStringToDate, getBusinessDateIdentityKey } from './helpers'
 import { appendCashbackComment } from './cashback.js'
 
+export type TransactionIdentityStage = 'pending' | 'posted'
+export type TransactionWithIdentityStage = Transaction & { identityStage?: TransactionIdentityStage }
+
 const normalizeIdPart = (value: string | null | undefined): string =>
   (value ?? '').replace(/\s+/g, ' ').trim().toUpperCase()
 
@@ -127,7 +130,9 @@ export const convertCurrentAccount = (fetchAccount: FetchCurrentAccount): Accoun
 
 export const convertCardTransaction = (fetchTransaction: FetchCardTransaction, account: Account): Transaction => {
   const isInDifferentCurrency = fetchTransaction.currencyIso !== account.instrument
-  const amount = Number(`${fetchTransaction.transOperType === 'debit' ? '-' : ''}${fetchTransaction.amount}`)
+  const identityStage: TransactionIdentityStage = /\bPRE-PURCHASE\b/i.test(fetchTransaction.transacName) ? 'pending' : 'posted'
+  const isDebit = fetchTransaction.transOperType === 'debit' || /\bPURCH COMPL\b/i.test(fetchTransaction.transacName)
+  const amount = Number(`${isDebit ? '-' : ''}${fetchTransaction.amount}`)
   const merchantTitle = normalizeMerchantTitle(fetchTransaction.cardAcceptor)
   const mcc = parseMcc(fetchTransaction.transMcc)
   const invoice = isInDifferentCurrency ? { sum: amount, instrument: fetchTransaction.currencyIso } : null
@@ -143,7 +148,7 @@ export const convertCardTransaction = (fetchTransaction: FetchCardTransaction, a
     invoice
   })
 
-  return {
+  const transaction: Transaction = {
     hold: null,
     date,
     comment: appendCashbackComment(fetchTransaction.transacName, mcc),
@@ -164,6 +169,14 @@ export const convertCardTransaction = (fetchTransaction: FetchCardTransaction, a
         }
       : null
   }
+
+  Object.defineProperty(transaction, 'identityStage', {
+    value: identityStage,
+    enumerable: false,
+    configurable: true
+  })
+
+  return transaction
 }
 
 export const convertStatementTransaction = (fetchTransaction: FetchStatementOperation, account: Account): Transaction => {
