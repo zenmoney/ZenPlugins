@@ -16,8 +16,10 @@ const messageHandlers = {
     onSyncError(payload)
   },
 
-  ':commands/prompt-user-input': async function ({ payload: { message, options, correlationId }, reply }) {
-    const result = prompt(message)
+  ':commands/prompt-user-input': async function ({ payload: { message, options, correlationId }, reply, onUserInputRequest }) {
+    const result = onUserInputRequest
+      ? await onUserInputRequest({ message, options })
+      : prompt(message)
     reply({ type: ':events/received-user-input', payload: { result, correlationId } })
   },
 

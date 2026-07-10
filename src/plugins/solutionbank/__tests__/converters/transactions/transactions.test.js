@@ -1,7 +1,9 @@
+import { MD5 } from 'jshashes'
 import { convertTransaction, merge } from '../../../converters'
 
 describe('convertTransaction', () => {
   let consoleLogSpy
+  const md5 = new MD5()
   const account = {
     id: 'mock-account-001',
     type: 'card',
@@ -12,7 +14,12 @@ describe('convertTransaction', () => {
       '1111'
     ]
   }
-  const generatedId = expect.stringMatching(/^[a-f0-9]{32}$/)
+  const transactionIdSource = (date, amount, merchant, duplicateIndex = 1) => {
+    return `${account.id}|${date}|${amount}|933|${merchant}|${duplicateIndex}`
+  }
+  const transactionId = (date, amount, merchant, duplicateIndex = 1) => {
+    return md5.hex(transactionIdSource(date, amount, merchant, duplicateIndex))
+  }
 
   beforeEach(() => {
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {})
@@ -38,7 +45,7 @@ describe('convertTransaction', () => {
       date: new Date('2019-02-14T00:00:00+03:00'),
       movements: [
         {
-          id: generatedId,
+          id: transactionId('2019-02-14', '-1.00', 'BANK RESHENIE- OPLATA USL'),
           account: { id: account.id },
           sum: -1,
           invoice: null,
@@ -56,7 +63,7 @@ describe('convertTransaction', () => {
     })
   })
 
-  it('generates canonical id independent from bank transaction id', () => {
+  it('uses hashed canonical transaction id independent from bank transaction id', () => {
     const json = {
       id: '123456',
       account_id: 'mock-account-001',
@@ -72,11 +79,12 @@ describe('convertTransaction', () => {
     const sameTransactionWithoutBankId = convertTransaction({ ...json, id: undefined })
 
     expect(transaction.movements[0].id).toEqual(sameTransactionWithoutBankId.movements[0].id)
+    expect(transaction.movements[0].id).toEqual(transactionId('2019-02-14', '-1.00', 'BANK RESHENIE- OPLATA USL'))
     expect(transaction.movements[0].id).toMatch(/^[a-f0-9]{32}$/)
     expect(transaction.movements[0].id).not.toEqual('123456')
   })
 
-  it('generates stable transaction id when bank id is missing', () => {
+  it('generates stable hashed transaction id when bank id is missing', () => {
     const json = {
       account_id: 'mock-account-001',
       currency: 'BYN',
@@ -92,12 +100,12 @@ describe('convertTransaction', () => {
     const anotherTransaction = convertTransaction({ ...json, merchant: 'mock-food.example' })
 
     expect(transaction.movements[0].id).toEqual(sameTransaction.movements[0].id)
-    expect(transaction.movements[0].id).toMatch(/^[a-f0-9]{32}$/)
+    expect(transaction.movements[0].id).toEqual(transactionId('2019-02-14', '-18.00', 'MOCK POST; TESTCITY; BY'))
     expect(transaction.movements[0].id).not.toEqual(anotherTransaction.movements[0].id)
   })
 
-  it('keeps same id when hold becomes posted operation', () => {
-    const hold = convertTransaction({
+  it('keeps posted operation when hold becomes posted operation', () => {
+    const hold = {
       account_id: 'mock-account-001',
       accountCurrencyCode: '933',
       transactionDate: new Date('2026-06-02T11:30:22+03:00'),
@@ -106,8 +114,8 @@ describe('convertTransaction', () => {
       transactionAmount: -30.5,
       merchant: 'MOCK CAFE',
       hold: true
-    })
-    const postedOperation = convertTransaction({
+    }
+    const postedOperation = {
       id: '222180',
       account_id: 'mock-account-001',
       operationName: 'Оплата товаров (услуг)',
@@ -122,14 +130,16 @@ describe('convertTransaction', () => {
       merchantId: 'ACQ_7CD4ECE',
       mcc: '5422',
       operationCode: 3
-    })
+    }
+    const merged = merge([hold], [postedOperation])
 
-    expect(hold.movements[0].id).toEqual(postedOperation.movements[0].id)
-    expect(hold.movements[0].id).toMatch(/^[a-f0-9]{32}$/)
+    expect(merged).toHaveLength(1)
+    expect(merged[0].hold).toEqual(false)
+    expect(convertTransaction(merged[0]).movements[0].id).toEqual(transactionId('2026-06-02', '-30.50', 'MOCK CAFE'))
   })
 
-  it('normalizes XML escaped merchant in canonical id', () => {
-    const hold = convertTransaction({
+  it('normalizes XML escaped merchant when matching hold with posted operation', () => {
+    const hold = {
       account_id: 'mock-account-001',
       accountCurrencyCode: '933',
       transactionDate: new Date('2026-06-02T17:11:29+03:00'),
@@ -138,8 +148,8 @@ describe('convertTransaction', () => {
       transactionAmount: -13.92,
       merchant: 'MOCK SHOP &quot;ALPHA&quot;',
       hold: true
-    })
-    const postedOperation = convertTransaction({
+    }
+    const postedOperation = {
       id: '453990',
       account_id: 'mock-account-001',
       operationName: 'Оплата товаров (услуг)',
@@ -154,13 +164,15 @@ describe('convertTransaction', () => {
       merchantId: '0978441',
       mcc: '5411',
       operationCode: 3
-    })
+    }
+    const merged = merge([hold], [postedOperation])
 
-    expect(hold.movements[0].id).toEqual(postedOperation.movements[0].id)
-    expect(hold.movements[0].id).toMatch(/^[a-f0-9]{32}$/)
+    expect(merged).toHaveLength(1)
+    expect(merged[0].hold).toEqual(false)
+    expect(convertTransaction(merged[0]).movements[0].id).toEqual(transactionId('2026-06-02', '-13.92', 'MOCK SHOP ALPHA'))
   })
 
-  it('keeps same id when one merchant has a trailing quote trimmed by the bank', () => {
+  it('matches operation when one merchant has a trailing quote trimmed by the bank', () => {
     const hold = {
       account_id: 'mock-account-001',
       accountCurrencyCode: '933',
@@ -188,10 +200,10 @@ describe('convertTransaction', () => {
 
     expect(merged).toHaveLength(1)
     expect(merged[0].hold).toEqual(false)
-    expect(convertTransaction(hold).movements[0].id).toEqual(convertTransaction(postedOperation).movements[0].id)
+    expect(convertTransaction(merged[0]).movements[0].id).toEqual(transactionId('2026-06-11', '-37.36', 'APTEKA N1 OOO FARMPROEKT'))
   })
 
-  it('keeps same id when one merchant has a short extra suffix after the bank prefix', () => {
+  it('matches operation when one merchant has a short extra suffix after the bank prefix', () => {
     const hold = {
       account_id: 'mock-account-001',
       accountCurrencyCode: '933',
@@ -219,7 +231,230 @@ describe('convertTransaction', () => {
 
     expect(merged).toHaveLength(1)
     expect(merged[0].hold).toEqual(false)
-    expect(convertTransaction(hold).movements[0].id).toEqual(convertTransaction(postedOperation).movements[0].id)
+    expect(convertTransaction(merged[0]).movements[0].id).toEqual(transactionId('2026-06-11', '-17.52', 'APTEKA PYATOI KATEGORII V'))
+  })
+
+  it('matches operation when full statement merchant is a safe shorter prefix', () => {
+    const hold = {
+      account_id: 'mock-account-001',
+      accountCurrencyCode: '933',
+      transactionDate: new Date('2026-06-20T08:05:41+03:00'),
+      transactionName: '*Оплата* Безналичная операция',
+      transactionCurrencyCode: '933',
+      transactionAmount: -19.3,
+      merchant: 'SHOP "KERAMIKA" / STOLITSA',
+      hold: true
+    }
+    const postedOperation = {
+      id: '519980',
+      account_id: 'mock-account-001',
+      operationName: 'Оплата товаров (услуг)',
+      operationDate: new Date('2026-06-23T10:48:17+03:00'),
+      operationCurrencyCode: '933',
+      operationAmount: -19.3,
+      transactionDate: new Date('2026-06-20T00:00:00+03:00'),
+      transactionAmount: -19.3,
+      transactionCurrencyCode: '933',
+      merchant: 'SHOP "KERAMIKA" / STOLITS',
+      hold: false
+    }
+    const merged = merge([hold], [postedOperation])
+
+    expect(merged).toHaveLength(1)
+    expect(merged[0].hold).toEqual(false)
+    expect(convertTransaction(merged[0]).movements[0].id).toEqual(transactionId('2026-06-20', '-19.30', 'SHOP KERAMIKA / STOLITSA'))
+  })
+
+  it('matches account capitalization when mini statement has generic income name', () => {
+    const hold = {
+      account_id: 'mock-account-001',
+      accountCurrencyCode: '933',
+      transactionDate: new Date('2026-06-30T14:42:03+03:00'),
+      transactionName: 'Зачисление на счет',
+      transactionCurrencyCode: '933',
+      transactionAmount: 0.1,
+      hold: true
+    }
+    const postedOperation = {
+      account_id: 'mock-account-001',
+      operationName: 'Капитализация (%% тек.периода ко вкладу)',
+      operationDate: new Date('2026-06-30T14:00:50+03:00'),
+      operationCurrencyCode: '933',
+      operationAmount: 0.1,
+      transactionDate: new Date('2026-06-30T14:00:50+03:00'),
+      transactionAmount: 0,
+      transactionCurrencyCode: '933',
+      hold: false
+    }
+    const merged = merge([hold], [postedOperation])
+    const transaction = convertTransaction(merged[0])
+
+    expect(merged).toHaveLength(1)
+    expect(merged[0].hold).toEqual(false)
+    expect(transaction.movements[0].sum).toEqual(0.1)
+    expect(transaction.movements[0].id).toEqual(transactionId('2026-06-30', '0.10', 'Зачисление на счет'))
+  })
+
+  it('matches money-back income when mini statement has generic income name', () => {
+    const hold = {
+      account_id: 'mock-account-001',
+      accountCurrencyCode: '933',
+      transactionDate: new Date('2026-07-01T11:49:43+03:00'),
+      transactionName: 'Зачисление на счет',
+      transactionCurrencyCode: '933',
+      transactionAmount: 4.09,
+      hold: true
+    }
+    const postedOperation = {
+      account_id: 'mock-account-001',
+      operationName: 'Начисление Money-back (R-card)',
+      operationDate: new Date('2026-07-01T10:56:30+03:00'),
+      operationCurrencyCode: '933',
+      operationAmount: 4.09,
+      transactionDate: new Date('2026-07-01T10:56:30+03:00'),
+      transactionAmount: 0,
+      transactionCurrencyCode: '933',
+      hold: false
+    }
+    const merged = merge([hold], [postedOperation])
+    const transaction = convertTransaction(merged[0])
+
+    expect(merged).toHaveLength(1)
+    expect(merged[0].hold).toEqual(false)
+    expect(transaction.movements[0].sum).toEqual(4.09)
+    expect(transaction.movements[0].id).toEqual(transactionId('2026-07-01', '4.09', 'Зачисление на счет'))
+  })
+
+  it('matches posted card operation shifted to the next bank date when merchant is exact', () => {
+    const hold = {
+      account_id: 'mock-account-001',
+      accountCurrencyCode: '933',
+      transactionDate: new Date('2026-06-28T21:28:32+03:00'),
+      transactionName: '*Оплата* Безналичная операция',
+      transactionCurrencyCode: '933',
+      transactionAmount: -11,
+      merchant: 'YANDEX.GO',
+      hold: true
+    }
+    const postedOperation = {
+      id: '338010',
+      account_id: 'mock-account-001',
+      operationName: 'Оплата товаров (услуг)',
+      operationDate: new Date('2026-07-01T13:48:21+03:00'),
+      operationCurrencyCode: '933',
+      operationAmount: -11,
+      transactionDate: new Date('2026-06-29T00:00:00+03:00'),
+      transactionAmount: -11,
+      transactionCurrencyCode: '933',
+      merchant: 'YANDEX.GO',
+      hold: false
+    }
+    const merged = merge([hold], [postedOperation])
+    const transaction = convertTransaction(merged[0])
+
+    expect(merged).toHaveLength(1)
+    expect(merged[0].hold).toEqual(false)
+    expect(transaction.movements[0].sum).toEqual(-11)
+    expect(transaction.movements[0].id).toEqual(transactionId('2026-06-28', '-11.00', 'YANDEX.GO'))
+  })
+
+  it('does not match adjacent bank dates when merchants are only prefix-compatible', () => {
+    const hold = {
+      account_id: 'mock-account-001',
+      accountCurrencyCode: '933',
+      transactionDate: new Date('2026-06-28T21:28:32+03:00'),
+      transactionName: '*Оплата* Безналичная операция',
+      transactionCurrencyCode: '933',
+      transactionAmount: -19.3,
+      merchant: 'SHOP "KERAMIKA" / STOLITSA',
+      hold: true
+    }
+    const postedOperation = {
+      id: '338011',
+      account_id: 'mock-account-001',
+      operationName: 'Оплата товаров (услуг)',
+      operationDate: new Date('2026-07-01T13:48:21+03:00'),
+      operationCurrencyCode: '933',
+      operationAmount: -19.3,
+      transactionDate: new Date('2026-06-29T00:00:00+03:00'),
+      transactionAmount: -19.3,
+      transactionCurrencyCode: '933',
+      merchant: 'SHOP "KERAMIKA" / STOLITS',
+      hold: false
+    }
+    const transactions = merge([hold], [postedOperation]).map(transaction => convertTransaction(transaction))
+
+    expect(transactions).toHaveLength(2)
+    expect(transactions.map(transaction => transaction.hold)).toEqual([false, true])
+    expect(transactions.map(transaction => transaction.movements[0].id)).toEqual([
+      transactionId('2026-06-29', '-19.30', 'SHOP KERAMIKA / STOLITS'),
+      transactionId('2026-06-28', '-19.30', 'SHOP KERAMIKA / STOLITSA')
+    ])
+  })
+
+  it('does not merge unrelated no-merchant income operation names', () => {
+    const hold = {
+      account_id: 'mock-account-001',
+      accountCurrencyCode: '933',
+      transactionDate: new Date('2026-06-30T14:42:03+03:00'),
+      transactionName: 'Зачисление на счет',
+      transactionCurrencyCode: '933',
+      transactionAmount: 0.1,
+      hold: true
+    }
+    const postedOperation = {
+      account_id: 'mock-account-001',
+      operationName: 'Пополнение счета',
+      operationDate: new Date('2026-06-30T14:00:50+03:00'),
+      operationCurrencyCode: '933',
+      operationAmount: 0.1,
+      transactionDate: new Date('2026-06-30T14:00:50+03:00'),
+      transactionAmount: 0,
+      transactionCurrencyCode: '933',
+      hold: false
+    }
+    const transactions = merge([hold], [postedOperation]).map(transaction => convertTransaction(transaction))
+
+    expect(transactions).toHaveLength(2)
+    expect(transactions.map(transaction => transaction.hold)).toEqual([false, true])
+    expect(transactions.map(transaction => transaction.movements[0].id)).toEqual([
+      transactionId('2026-06-30', '0.10', 'Пополнение счета'),
+      transactionId('2026-06-30', '0.10', 'Зачисление на счет')
+    ])
+  })
+
+  it('does not merge merchants when the shared prefix is too short', () => {
+    const hold = {
+      account_id: 'mock-account-001',
+      accountCurrencyCode: '933',
+      transactionDate: new Date('2026-06-11T11:23:00+03:00'),
+      transactionName: '*Оплата* Безналичная операция',
+      transactionCurrencyCode: '933',
+      transactionAmount: -9.99,
+      merchant: 'SHORT MERCHANT',
+      hold: true
+    }
+    const postedOperation = {
+      id: '453993',
+      account_id: 'mock-account-001',
+      operationName: 'Оплата товаров (услуг)',
+      operationDate: new Date('2026-06-12T11:23:00+03:00'),
+      operationCurrencyCode: '933',
+      operationAmount: -9.99,
+      transactionDate: new Date('2026-06-11T00:00:00+03:00'),
+      transactionAmount: -9.99,
+      transactionCurrencyCode: '933',
+      merchant: 'SHORT MERCHANT EXTRA',
+      hold: false
+    }
+    const transactions = merge([hold], [postedOperation]).map(transaction => convertTransaction(transaction))
+
+    expect(transactions).toHaveLength(2)
+    expect(transactions.map(transaction => transaction.hold)).toEqual([false, true])
+    expect(transactions.map(transaction => transaction.movements[0].id)).toEqual([
+      transactionId('2026-06-11', '-9.99', 'SHORT MERCHANT EXTRA'),
+      transactionId('2026-06-11', '-9.99', 'SHORT MERCHANT')
+    ])
   })
 
   it('does not merge similar merchants with different amounts', () => {
@@ -241,7 +476,11 @@ describe('convertTransaction', () => {
     const transactions = merge([firstHold, secondHold], []).map(transaction => convertTransaction(transaction))
 
     expect(transactions).toHaveLength(2)
-    expect(transactions[0].movements[0].id).not.toEqual(transactions[1].movements[0].id)
+    expect(transactions.map(transaction => transaction.movements[0].sum)).toEqual([-2.79, -31.37])
+    expect(transactions.map(transaction => transaction.movements[0].id)).toEqual([
+      transactionId('2026-06-11', '-2.79', 'MAGAZIN EUROOPT PRIME'),
+      transactionId('2026-06-11', '-31.37', 'MAGAZIN EUROOPT PRIME')
+    ])
   })
 
   it('distinguishes repeated holds with same identity', () => {
@@ -260,15 +499,17 @@ describe('convertTransaction', () => {
       transactionDate: new Date('2026-06-05T12:01:00+03:00')
     }
 
-    const transactions = merge([firstHold, secondHold], []).map(transaction => convertTransaction(transaction))
+    const merged = merge([firstHold, secondHold], [])
 
-    expect(transactions).toHaveLength(2)
-    expect(transactions[0].movements[0].id).toMatch(/^[a-f0-9]{32}$/)
-    expect(transactions[1].movements[0].id).toMatch(/^[a-f0-9]{32}$/)
-    expect(transactions[0].movements[0].id).not.toEqual(transactions[1].movements[0].id)
+    expect(merged).toHaveLength(2)
+    expect(merged.map(transaction => transaction.duplicateIndex)).toEqual([1, 2])
+    expect(merged.map(transaction => convertTransaction(transaction).movements[0].id)).toEqual([
+      transactionId('2026-06-05', '-4.00', 'MOCK TRANSFER SERVICE', 1),
+      transactionId('2026-06-05', '-4.00', 'MOCK TRANSFER SERVICE', 2)
+    ])
   })
 
-  it('keeps first repeated hold id stable when another same operation appears later', () => {
+  it('keeps first repeated hold index stable when another same operation appears later', () => {
     const firstHold = {
       account_id: 'mock-account-001',
       accountCurrencyCode: '933',
@@ -284,13 +525,13 @@ describe('convertTransaction', () => {
       transactionDate: new Date('2026-06-05T12:01:00+03:00')
     }
 
-    const firstOnlyId = convertTransaction(merge([firstHold], [])[0]).movements[0].id
-    const firstWithDuplicateId = convertTransaction(merge([firstHold, secondHold], [])[0]).movements[0].id
+    const firstOnlyIndex = merge([firstHold], [])[0].duplicateIndex
+    const firstWithDuplicateIndex = merge([firstHold, secondHold], [])[0].duplicateIndex
 
-    expect(firstOnlyId).toEqual(firstWithDuplicateId)
+    expect(firstOnlyIndex).toEqual(firstWithDuplicateIndex)
   })
 
-  it('keeps repeated ids when holds become posted operations', () => {
+  it('keeps repeated posted operations when holds become posted operations', () => {
     const holds = [
       {
         account_id: 'mock-account-001',
@@ -342,10 +583,15 @@ describe('convertTransaction', () => {
       }
     ]
 
-    const holdIds = merge(holds, []).map(transaction => convertTransaction(transaction).movements[0].id)
-    const postedIds = merge([], postedOperations).map(transaction => convertTransaction(transaction).movements[0].id)
+    const merged = merge(holds, postedOperations)
+    const postedIds = merged.map(transaction => convertTransaction(transaction).movements[0].id)
 
-    expect(postedIds).toEqual(holdIds)
+    expect(merged).toHaveLength(2)
+    expect(merged.map(transaction => transaction.hold)).toEqual([false, false])
+    expect(postedIds).toEqual([
+      transactionId('2026-06-05', '-4.00', 'MOCK TRANSFER SERVICE', 1),
+      transactionId('2026-06-05', '-4.00', 'MOCK TRANSFER SERVICE', 2)
+    ])
   })
 
   it('keeps extra repeated hold when only part of same operations are posted', () => {
@@ -383,10 +629,11 @@ describe('convertTransaction', () => {
     expect(merged).toHaveLength(2)
     expect(merged[0].hold).toEqual(false)
     expect(merged[1].hold).toEqual(true)
-    expect(transactions[0].movements[0].id).not.toEqual(transactions[1].movements[0].id)
+    expect(transactions[0].movements[0].id).toEqual(transactionId('2026-06-05', '-4.00', 'MOCK TRANSFER SERVICE', 1))
+    expect(transactions[1].movements[0].id).toEqual(transactionId('2026-06-05', '-4.00', 'MOCK TRANSFER SERVICE', 2))
   })
 
-  it('keeps repeated ids stable when same operations clear on different days', () => {
+  it('keeps repeated operations matched when same operations clear on different days', () => {
     const holds = [
       {
         account_id: 'mock-account-001',
@@ -436,15 +683,26 @@ describe('convertTransaction', () => {
       hold: false
     }
 
-    const holdIds = merge(holds, []).map(transaction => convertTransaction(transaction).movements[0].id)
-    const partiallyClearedIds = merge(holds, [firstClearedOperation]).map(transaction => convertTransaction(transaction).movements[0].id)
-    const fullyClearedIds = merge([], [firstClearedOperation, secondClearedOperation]).map(transaction => convertTransaction(transaction).movements[0].id)
+    const partiallyCleared = merge(holds, [firstClearedOperation])
+    const partiallyClearedIds = partiallyCleared.map(transaction => convertTransaction(transaction).movements[0].id)
+    const fullyCleared = merge([], [firstClearedOperation, secondClearedOperation])
+    const fullyClearedIds = fullyCleared.map(transaction => convertTransaction(transaction).movements[0].id)
 
-    expect(partiallyClearedIds).toEqual(holdIds)
-    expect(fullyClearedIds).toEqual(holdIds)
+    expect(partiallyCleared).toHaveLength(2)
+    expect(partiallyCleared.map(transaction => transaction.hold)).toEqual([false, true])
+    expect(partiallyClearedIds).toEqual([
+      transactionId('2026-06-05', '-4.00', 'MOCK TRANSFER SERVICE', 1),
+      transactionId('2026-06-05', '-4.00', 'MOCK TRANSFER SERVICE', 2)
+    ])
+    expect(fullyCleared).toHaveLength(2)
+    expect(fullyCleared.map(transaction => transaction.hold)).toEqual([false, false])
+    expect(fullyClearedIds).toEqual([
+      transactionId('2026-06-05', '-4.00', 'MOCK TRANSFER SERVICE', 1),
+      transactionId('2026-06-05', '-4.00', 'MOCK TRANSFER SERVICE', 2)
+    ])
   })
 
-  it('does not log transaction identity data for merged transactions', () => {
+  it('logs readable transaction id source for merged transactions', () => {
     const transaction = convertTransaction({
       account_id: 'mock-account-001',
       accountCurrencyCode: '933',
@@ -457,8 +715,11 @@ describe('convertTransaction', () => {
       duplicateIndex: 2
     })
 
-    expect(transaction.movements[0].id).toMatch(/^[a-f0-9]{32}$/)
-    expect(consoleLogSpy).not.toHaveBeenCalled()
+    expect(transaction.movements[0].id).toEqual(transactionId('2026-06-05', '-4.00', 'MOCK TRANSFER SERVICE', 2))
+    expect(consoleLogSpy).toHaveBeenCalledWith(
+      'SolutionBank transaction id source',
+      transactionIdSource('2026-06-05', '-4.00', 'MOCK TRANSFER SERVICE', 2)
+    )
   })
 
   it('zero sum', () => {
@@ -492,7 +753,7 @@ describe('convertTransaction', () => {
       date: new Date('2019-02-14T00:00:00+03:00'),
       movements: [
         {
-          id: generatedId,
+          id: transactionId('2019-02-14', '-18.00', 'MOCK POST; TESTCITY; BY'),
           account: { id: account.id },
           sum: -18,
           invoice: null,
@@ -526,7 +787,7 @@ describe('convertTransaction', () => {
       date: new Date('2019-02-14T00:00:00+03:00'),
       movements: [
         {
-          id: generatedId,
+          id: transactionId('2019-02-14', '-18.00', 'MOCK ONLINE SHOP; TESTCIT'),
           account: { id: account.id },
           sum: -18,
           invoice: null,
@@ -560,7 +821,7 @@ describe('convertTransaction', () => {
       date: new Date('2019-02-14T00:00:00+03:00'),
       movements: [
         {
-          id: generatedId,
+          id: transactionId('2019-02-14', '-18.00', 'MOCK TOKEN SERVICE; ; BY'),
           account: { id: account.id },
           sum: -18,
           invoice: null,
@@ -594,7 +855,7 @@ describe('convertTransaction', () => {
       date: new Date('2019-02-14T00:00:00+03:00'),
       movements: [
         {
-          id: generatedId,
+          id: transactionId('2019-02-14', '-18.00', 'MOCK ELECTRONICS; TESTCIT'),
           account: { id: account.id },
           sum: -18,
           invoice: null,
@@ -628,7 +889,7 @@ describe('convertTransaction', () => {
       date: new Date('2019-02-14T00:00:00+03:00'),
       movements: [
         {
-          id: generatedId,
+          id: transactionId('2019-02-14', '-18.00', 'MOCK COURSES; ONLINE; TES'),
           account: { id: account.id },
           sum: -18,
           invoice: null,
@@ -662,7 +923,7 @@ describe('convertTransaction', () => {
       date: new Date('2019-02-14T00:00:00+03:00'),
       movements: [
         {
-          id: generatedId,
+          id: transactionId('2019-02-14', '-18.00', 'MOCK-FOOD.EXAMPLE'),
           account: { id: account.id },
           sum: -18,
           invoice: null,

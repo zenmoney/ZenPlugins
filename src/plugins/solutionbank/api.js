@@ -2,25 +2,36 @@ import cheerio from 'cheerio'
 import { defaultsDeep, flatMap } from 'lodash'
 import { createDateIntervals as commonCreateDateIntervals } from '../../common/dateUtils'
 import { fetchJson } from '../../common/network'
-import { generateRandomString, generateUUID } from '../../common/utils'
+import { generateUUID } from '../../common/utils'
 import { parseXml } from '../../common/xmlUtils'
 import { BankMessageError, InvalidOtpCodeError, InvalidPreferencesError, TemporaryError } from '../../errors'
 import { getDate } from './converters'
 
 // transaction - операция прошедшая по карте, operation - операция по счёту
 
-const baseUrl = 'https://mbank.rbank.by/services/v2/'
-const appVersion = '1.59.2'
+const baseUrl = 'https://mbank.rbank.by:443/services/v2/'
+const appVersion = '1.60.0'
 const androidDeviceProfile = {
   browser: 'OP516FL1',
   browserVersion: 'NE2211 (NE2211)',
   platform: 'Android',
   platformVersion: '11'
 }
+const defaultGeolocationData = '53.902284, 27.561831'
+const androidSystemFeatures = [
+  'android.hardware.camera',
+  'android.hardware.location.gps',
+  'android.hardware.location.network',
+  'android.hardware.nfc',
+  'android.hardware.telephony',
+  'android.hardware.touchscreen',
+  'android.hardware.wifi',
+  'android.software.webview'
+]
 const statementIntervalMs = 31 * 24 * 60 * 60 * 1000
 
 function generateDeviceID () {
-  return generateRandomString(16)
+  return 'xxxxxxxxxxxxxxxx'.replace(/x/g, () => Math.floor(Math.random() * 16).toString(16))
 }
 
 async function fetchApiJson (url, options, predicate = () => true, error = (message) => console.assert(false, message)) {
@@ -37,13 +48,15 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
           login: true,
           password: true,
           deviceUDID: true,
+          deviceInfo: true,
           confirmationData: true,
           pushId: true
         }
       },
       sanitizeResponseLog: {
         body: {
-          sessionToken: true
+          sessionToken: true,
+          fingerprint: true
         }
       }
     }
@@ -84,8 +97,10 @@ function getAntiFraudID () {
   return getDataOrCreate('anti_fraud_id', generateUUID)
 }
 
-function getAntiFraudSessionID () {
-  return getDataOrCreate('anti_fraud_session_id', generateUUID)
+function setAntiFraudID (value) {
+  if (value) {
+    ZenMoney.setData('anti_fraud_id', value)
+  }
 }
 
 function getPushID () {
@@ -98,8 +113,44 @@ function getHeaders (sessionToken = null) {
     _ac1: getAntiFraudID(),
     ...(sessionToken && {
       session_token: sessionToken,
-      _ac0: getAntiFraudSessionID()
+      _ac0: sessionToken
     })
+  }
+}
+
+function normalizeDeviceInfoValue (value) {
+  return value === null || value === undefined ? '' : String(value).trim().toLowerCase()
+}
+
+function getDeviceInfo () {
+  const deviceId = getDeviceID()
+  return {
+    parameters: [
+      {
+        device_model: normalizeDeviceInfoValue('NE2211'),
+        device_name: normalizeDeviceInfoValue(androidDeviceProfile.browser),
+        deviceid: normalizeDeviceInfoValue(deviceId),
+        geolocationdata: defaultGeolocationData,
+        locale: normalizeDeviceInfoValue('ru_BY'),
+        time_zone: normalizeDeviceInfoValue('Europe/Minsk'),
+        os_name: normalizeDeviceInfoValue(androidDeviceProfile.platform),
+        os_version: normalizeDeviceInfoValue(androidDeviceProfile.platformVersion),
+        width: normalizeDeviceInfoValue(1080),
+        height: normalizeDeviceInfoValue(2400),
+        scale: normalizeDeviceInfoValue(3),
+        uuid: normalizeDeviceInfoValue(deviceId),
+        android_specific: {
+          build_bootloader: '',
+          build_display: normalizeDeviceInfoValue('NE2211_11_C.48'),
+          build_fingerprint: normalizeDeviceInfoValue('NE2211_11_C.48'),
+          build_id: normalizeDeviceInfoValue('RKQ1.211119.001'),
+          build_manufacturer: normalizeDeviceInfoValue('OnePlus'),
+          build_radio: '',
+          iccid: '',
+          package_manager_getsystemavailablefeatures: androidSystemFeatures
+        }
+      }
+    ]
   }
 }
 
@@ -203,10 +254,12 @@ export async function login (login, password) {
         throw new InvalidOtpCodeError()
       }
       res = await loginReq(login, password, code)
+      assertSuccessfulLogin(res)
       break
     case '10004':
       throw new InvalidPreferencesError('Неверный логин или пароль')
     case '0':
+      assertSuccessfulLogin(res)
       break
     default:
       throw new BankMessageError(res.body.errorInfo.errorText)
@@ -215,12 +268,23 @@ export async function login (login, password) {
   return res.body.sessionToken
 }
 
+function assertSuccessfulLogin (res) {
+  const errorInfo = res.body && res.body.errorInfo
+  if (!errorInfo || errorInfo.error !== '0') {
+    throw new BankMessageError(errorInfo && errorInfo.errorText ? errorInfo.errorText : 'Ошибка входа')
+  }
+  if (!res.body.sessionToken) {
+    throw new TemporaryError('Сессионный ключ не получен')
+  }
+}
+
 async function loginReq (login, password, smsCode) {
   const body = {
     applicID: appVersion,
     ...androidDeviceProfile,
     clientKind: '0',
     deviceUDID: getDeviceID(),
+    deviceInfo: getDeviceInfo(),
     login,
     password,
     pushId: getPushID()
@@ -228,13 +292,15 @@ async function loginReq (login, password, smsCode) {
   if (smsCode) {
     body.confirmationData = smsCode
   }
-  return fetchApiJson('session/login', {
+  const response = await fetchApiJson('session/login', {
     method: 'POST',
     headers: getHeaders(),
     body,
-    sanitizeRequestLog: { body: { login: true, password: true, deviceUDID: true, confirmationData: true, pushId: true } },
-    sanitizeResponseLog: { body: { sessionToken: true } }
+    sanitizeRequestLog: { body: { login: true, password: true, deviceUDID: true, deviceInfo: true, confirmationData: true, pushId: true } },
+    sanitizeResponseLog: { body: { sessionToken: true, fingerprint: true } }
   }, response => response.body && response.body.errorInfo, message => new InvalidPreferencesError('bad request'))
+  setAntiFraudID(response.body && response.body.fingerprint)
+  return response
 }
 
 export async function fetchAccounts (sessionToken) {
