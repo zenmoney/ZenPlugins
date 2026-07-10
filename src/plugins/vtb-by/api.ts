@@ -3,10 +3,10 @@ import type { Account, Transaction } from '../../types/zenmoney'
 import { convertCardAccount, convertCurrentAccount, convertDepositAccount, convertFullStatementOperation, convertMiniCardStatementOperation, shouldSyncCardAccount } from './converters'
 import { fetchAccountsOverview, fetchDepositAccountStatement, fetchLogin, fetchMiniCardStatement } from './fetchApi'
 import { getMiniStatementIntervals, isDateInRange } from './helpers'
-import type { FetchAccountMeta, ResponseWithErrorInfo } from './types/base'
+import type { FetchAccountMeta, GeoLocation, ResponseWithErrorInfo } from './types/base'
 import type { FetchMiniCardStatementOperation } from './types/fetch'
 
-const INVALID_LOGIN_ERROR_CODES = new Set(['10008', '10812'])
+const INVALID_LOGIN_ERROR_CODES = new Set(['10008', '10812', '100362'])
 
 const deduplicateTransactions = (transactions: Transaction[]): Transaction[] => {
   const transactionIndexesById = new Map<string, number>()
@@ -39,8 +39,8 @@ const assertSuccessfulResponse = (response: ResponseWithErrorInfo, context: stri
   throw new BankMessageError(response.errorInfo.errorDescription ?? response.errorInfo.errorText)
 }
 
-export const authenticate = async (login: string, password: string): Promise<{ sessionToken: string }> => {
-  const response = await fetchLogin({ login, password })
+export const authenticate = async (login: string, password: string, geoLocation: GeoLocation): Promise<{ sessionToken: string }> => {
+  const response = await fetchLogin({ login, password, geoLocation })
 
   if (response.errorInfo.error !== '0') {
     if (INVALID_LOGIN_ERROR_CODES.has(response.errorInfo.error)) {

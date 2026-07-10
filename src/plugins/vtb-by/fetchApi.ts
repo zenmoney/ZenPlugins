@@ -2,7 +2,7 @@ import { fetchJson } from '../../common/network'
 import { RetryError, retry, toNodeCallbackArguments } from '../../common/retry'
 import { TemporaryUnavailableError } from '../../errors'
 import type * as T from './types/fetch'
-import { BASE_API_URL, CLIENT_KIND, LOGIN_DEVICE_INFO } from './models'
+import { BASE_API_URL, CLIENT_KIND, GEOLOCATION_PERMISSION_GRANTED, LOGIN_DEVICE_INFO } from './models'
 
 const makeUrl = (path: string): string => `${BASE_API_URL}${path}`
 const NETWORK_ERROR_PATTERN = /\[NER]|\[NTI]|ECONNRESET|ETIMEDOUT|socket hang up/i
@@ -50,7 +50,11 @@ const fetchApi = async (path: string, body: unknown, sessionToken?: string): Pro
           },
           body: {
             login: true,
-            password: true
+            password: true,
+            geoLocation: true,
+            geolocation: true,
+            latitude: true,
+            longitude: true
           }
         },
         sanitizeResponseLog: {
@@ -98,9 +102,13 @@ const fetchApi = async (path: string, body: unknown, sessionToken?: string): Pro
   return responseBody
 }
 
-export const fetchLogin = async ({ login, password }: T.AuthenticateInput): Promise<T.AuthenticateOutput> => {
+export const fetchLogin = async ({ login, password, geoLocation }: T.AuthenticateInput): Promise<T.AuthenticateOutput> => {
   return await fetchApi('/services/v2/session/login', {
     ...LOGIN_DEVICE_INFO,
+    geoLocation,
+    geolocation: GEOLOCATION_PERMISSION_GRANTED,
+    latitude: geoLocation.latitude,
+    longitude: geoLocation.longitude,
     login,
     password
   }) as T.AuthenticateOutput
