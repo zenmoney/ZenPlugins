@@ -5,7 +5,7 @@ import { AltynAccount, AltynTransaction, Preferences } from './models'
 const API_BASE = 'https://api.lk.altyn.one'
 const LK_BASE = 'https://lk.altyn.one'
 
-// Базовый запрос к API Алтын с Bearer-токеном из настроек.
+// Базовый запрос к API Altyn Wallet с Bearer-токеном из настроек.
 async function fetchApi (path: string, preferences: Preferences, options: FetchOptions = {}): Promise<FetchResponse> {
   const response = await fetchJson(API_BASE + path, {
     ...options,
@@ -18,24 +18,24 @@ async function fetchApi (path: string, preferences: Preferences, options: FetchO
   })
   // 401 — неверный/просроченный токен: просим исправить настройки
   if (response.status === 401) {
-    throw new InvalidLoginOrPasswordError('Неверный или просроченный токен Алтын')
+    throw new InvalidLoginOrPasswordError('Неверный или просроченный токен Altyn Wallet')
   }
   // 5xx — временный сбой сервера: предложим повторить синхронизацию
   if (response.status >= 500) {
-    throw new TemporaryError('Сервер Алтын временно недоступен')
+    throw new TemporaryError('Сервер Altyn Wallet временно недоступен')
   }
   return response
 }
 
 // Проверка ответа API на типичную ошибку «недостаточно прав / нужно подтвердить PIN».
-// Банк отдаёт 403 с { detail, need_verify_pin, session_is_closed } вместо списка.
+// Сервис отдаёт 403 с { detail, need_verify_pin, session_is_closed } вместо списка.
 function assertNotBlocked (body: unknown): void {
   const data = body as { detail?: string, need_verify_pin?: boolean, session_is_closed?: boolean }
   if (typeof data.detail === 'string' || data.need_verify_pin === true) {
     throw new InvalidLoginOrPasswordError(
       data.need_verify_pin === true
         ? 'Сессия требует подтверждения PIN. Проверьте PIN-код и токен.'
-        : `Алтын: ${data.detail ?? 'недостаточно прав'}`
+        : `Altyn Wallet: ${data.detail ?? 'недостаточно прав'}`
     )
   }
 }
@@ -46,7 +46,7 @@ export async function fetchAccounts (preferences: Preferences): Promise<AltynAcc
   const body = response.body as { results?: AltynAccount[] }
   assertNotBlocked(response.body)
   if (!Array.isArray(body.results)) {
-    throw new TemporaryError(`Алтын: неожиданный ответ /account/ — ${JSON.stringify(response.body).slice(0, 200)}`)
+    throw new TemporaryError(`Altyn Wallet: неожиданный ответ /account/ — ${JSON.stringify(response.body).slice(0, 200)}`)
   }
   return body.results
 }
@@ -64,7 +64,7 @@ export async function fetchTransactions (
     const body = response.body as { results?: AltynTransaction[], next?: string | null }
     assertNotBlocked(response.body)
     if (!Array.isArray(body.results)) {
-      throw new TemporaryError(`Алтын: неожиданный ответ /transaction/ — ${JSON.stringify(response.body).slice(0, 200)}`)
+      throw new TemporaryError(`Altyn Wallet: неожиданный ответ /transaction/ — ${JSON.stringify(response.body).slice(0, 200)}`)
     }
     let reachedOlder = false
     for (const tx of body.results) {

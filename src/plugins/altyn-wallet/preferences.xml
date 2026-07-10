@@ -17,7 +17,7 @@
         inputType="number"
         title="PIN-код"
         dialogTitle="PIN-код"
-        dialogMessage="PIN-код вашего личного кабинета lk.altyn.one (используется для подтверждения сессии при каждом запуске)."
+        dialogMessage="PIN-код вашего кошелька Altyn Wallet на lk.altyn.one (используется для подтверждения сессии при каждом запуске)."
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="||****"

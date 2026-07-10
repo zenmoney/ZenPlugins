@@ -1,11 +1,11 @@
-import { AccountOrCard } from '../../../types/zenmoney'
+import { AccountOrCard, AccountType, NonParsedMerchant } from '../../../../../types/zenmoney'
 import { AltynTransaction } from '../../../models'
 import { convertTransaction } from '../../../converters'
 
 const account: AccountOrCard = {
   id: 'A-100000000001',
-  type: 'checking',
-  title: 'Алтын A-100000000001',
+  type: AccountType.checking,
+  title: 'Altyn A-100000000001',
   instrument: 'RUB',
   balance: 12345.67,
   syncIds: ['A-100000000001']
@@ -51,7 +51,7 @@ describe('convertTransaction', () => {
     }
     const result = convertTransaction(apiTx, account)
     expect(result?.movements[0].sum).toBe(1000)
-    expect(result?.merchant?.fullTitle).toBe('Перевод')
+    expect((result?.merchant as NonParsedMerchant)?.fullTitle).toBe('Перевод')
   })
 
   it('should use label as merchant title (приоритет над details)', () => {
@@ -66,7 +66,7 @@ describe('convertTransaction', () => {
       details: 'программа лояльности'
     }
     const result = convertTransaction(apiTx, account)
-    expect(result?.merchant?.fullTitle).toBe('Бонус')
+    expect((result?.merchant as NonParsedMerchant)?.fullTitle).toBe('Бонус')
   })
 
   it('should fall back to details when label is null', () => {
@@ -81,7 +81,7 @@ describe('convertTransaction', () => {
       details: 'Карта'
     }
     const result = convertTransaction(apiTx, account)
-    expect(result?.merchant?.fullTitle).toBe('Карта')
+    expect((result?.merchant as NonParsedMerchant)?.fullTitle).toBe('Карта')
   })
 
   it('should return null merchant when both label and details are null', () => {

@@ -3,6 +3,7 @@ import { getString } from '../../types/get'
 import { InvalidLoginOrPasswordError, TemporaryError } from '../../errors'
 import { AltynAccount, AltynTransaction, Preferences } from './models'
 import { fetchAccounts, fetchTransactions, LK_BASE } from './fetchApi'
+// @ts-expect-error нет типов у пакета querystring-browser
 import * as qs from 'querystring-browser'
 
 type CookieMap = Map<string, string>
@@ -77,10 +78,10 @@ export async function authorize (preferences: Preferences): Promise<void> {
   })
   updateCookies(cookies, callbackResponse)
   if (callbackResponse.status === 401 || callbackResponse.status === 403) {
-    throw new InvalidLoginOrPasswordError('Неверный PIN-код или токен Алтын')
+    throw new InvalidLoginOrPasswordError('Неверный PIN-код или токен Altyn Wallet')
   }
   if (callbackResponse.status >= 400) {
-    throw new TemporaryError(`Алтын: не удалось подтвердить сессию (status ${callbackResponse.status})`)
+    throw new TemporaryError(`Altyn Wallet: не удалось подтвердить сессию (status ${callbackResponse.status})`)
   }
 }
 

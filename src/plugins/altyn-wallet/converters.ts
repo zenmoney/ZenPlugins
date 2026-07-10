@@ -1,14 +1,14 @@
 import { AccountOrCard, AccountType, Transaction } from '../../types/zenmoney'
 import { AltynAccount, AltynTransaction, ConvertResult } from './models'
 
-// Конвертация счетов Алтын в домен zenmoney.
+// Конвертация счетов Altyn Wallet в домен zenmoney.
 // Каждый счёт → AccountType.checking, валюта и баланс берутся из API напрямую.
 export function convertAccounts (apiAccounts: AltynAccount[]): ConvertResult[] {
   return apiAccounts.map((apiAccount) => {
     const account: AccountOrCard = {
       id: apiAccount.account_number,
       type: AccountType.checking,
-      title: 'Алтын ' + apiAccount.account_number,
+      title: 'Altyn ' + apiAccount.account_number,
       instrument: apiAccount.currency,
       balance: Number(apiAccount.balance),
       syncIds: [apiAccount.account_number]
@@ -17,7 +17,7 @@ export function convertAccounts (apiAccounts: AltynAccount[]): ConvertResult[] {
   })
 }
 
-// Конвертация операции Алтын в домен zenmoney.
+// Конвертация операции Altyn Wallet в домен zenmoney.
 // Импортируем только успешные операции (status === 2); прочие пропускаем.
 // Знак суммы определяется типом: deposit → приход (+), withdraw → расход (−).
 export function convertTransaction (apiTx: AltynTransaction, account: AccountOrCard): Transaction | null {

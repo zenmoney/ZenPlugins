@@ -3,7 +3,7 @@ import { convertAccounts, convertTransaction } from './converters'
 import { authorize, fetchAllAccounts, fetchAllTransactions } from './api'
 import { Preferences } from './models'
 
-// Точка входа плагина Алтын.
+// Точка входа плагина Altyn Wallet.
 // Токен и PIN берутся из настроек (preferences.token, preferences.pin).
 export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, toDate }) => {
   toDate = toDate ?? new Date()

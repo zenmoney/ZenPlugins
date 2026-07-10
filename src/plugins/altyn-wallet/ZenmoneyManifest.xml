@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
-    <id>altyn</id>
+    <id>altyn-wallet</id>
     <company>0</company>
-    <description>Синхронизация баланса и истории операций Алтын (lk.altyn.one) по токену.</description>
+    <description>Синхронизация баланса и истории операций кошелька Altyn Wallet (lk.altyn.one) по токену.</description>
     <version>1.0</version>
     <build>1</build>
     <modular>true</modular>

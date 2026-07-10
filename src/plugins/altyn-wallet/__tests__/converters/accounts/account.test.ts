@@ -20,7 +20,7 @@ describe('convertAccounts', () => {
         account: {
           id: 'A-100000000001',
           type: 'checking',
-          title: 'Алтын A-100000000001',
+          title: 'Altyn A-100000000001',
           instrument: 'RUB',
           balance: 12345.67,
           syncIds: ['A-100000000001']
@@ -48,7 +48,7 @@ describe('convertAccounts', () => {
         account: {
           id: 'A-200000000002',
           type: 'checking',
-          title: 'Алтын A-200000000002',
+          title: 'Altyn A-200000000002',
           instrument: 'USD',
           balance: 0,
           syncIds: ['A-200000000002']

@@ -33,7 +33,7 @@ export interface AltynTransaction {
   details: string | null
 }
 
-// Результат конвертации счёта банка в домен zenmoney
+// Результат конвертации счёта кошелька в домен zenmoney
 export interface ConvertResult {
   account: AccountOrCard
   accountNumber: string
