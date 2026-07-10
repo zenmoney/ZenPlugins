@@ -29,7 +29,7 @@
     "pad-left": "2.1.0",
     "pdf-extraction": "git+https://gitlab.com/skvav/pdf-extraction#d43fb064a762284cecb14e3238d76966dd90679a",
     "polywasm": "^0.1.4",
-    "protobufjs": "6.11.2",
+    "protobufjs": "7.6.3",
     "punycode": "2.1.1",
     "querystring-browser": "1.0.4",
     "random-js": "2.1.0",
