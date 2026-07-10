@@ -3,7 +3,7 @@ import { encodeUtf8ToBase64 } from './base64'
 // Device profiles, fingerprint generation, and mobileSdkData emulation
 // for Belinvestbank mobile API anti-fraud requirements
 
-const APP_VERSION = '2.25.0'
+const APP_VERSION = '2.26.0'
 
 // Popular Android device profiles for fingerprint randomization
 const DEVICE_PROFILES = [
@@ -39,15 +39,16 @@ const BY_OPERATORS = [
   { mcc: '257', mnc: '04' } // life:)
 ]
 
-// Belarus cities for geo randomization (lat, lon in degrees)
+// Belarus cities for geo emulation (lat, lon in degrees)
 const BY_CITIES = [
-  { lat: 53.9, lon: 27.56 },
-  { lat: 52.44, lon: 30.98 },
-  { lat: 52.1, lon: 23.7 },
-  { lat: 55.19, lon: 30.2 },
-  { lat: 53.68, lon: 23.83 },
-  { lat: 53.9, lon: 30.34 }
+  { city: 'Minsk', lat: 53.9, lon: 27.56 },
+  { city: 'Gomel', lat: 52.44, lon: 30.98 },
+  { city: 'Brest', lat: 52.1, lon: 23.7 },
+  { city: 'Vitebsk', lat: 55.19, lon: 30.2 },
+  { city: 'Grodno', lat: 53.68, lon: 23.83 },
+  { city: 'Mogilev', lat: 53.9, lon: 30.34 }
 ]
+const BY_COUNTRY = 'Belarus'
 
 const BANK_CERT = `-----BEGIN CERTIFICATE-----
 MIIJOTCCCCGgAwIBAgIMSqLONbKaZMW658uzMA0GCSqGSIb3DQEBCwUAMGIxCzAJ
@@ -158,21 +159,49 @@ function seededFcmToken (rand) {
   return encodeUtf8ToBase64(`${instanceId}:${token}`)
 }
 
-function generateRandomGeo () {
-  const city = BY_CITIES[Math.floor(Math.random() * BY_CITIES.length)]
+function roundGeoCoordinate (value) {
+  return Math.round(value * 1000000) / 1000000
+}
+
+function generateGeo (rand) {
+  const city = BY_CITIES[(rand() * BY_CITIES.length) | 0]
   return {
-    lat: Math.round((city.lat + (Math.random() - 0.5) * 0.15) * 1000000) / 1000,
-    lon: Math.round((city.lon + (Math.random() - 0.5) * 0.15) * 1000000) / 1000
+    latitude: roundGeoCoordinate(city.lat + (rand() - 0.5) * 0.15),
+    longitude: roundGeoCoordinate(city.lon + (rand() - 0.5) * 0.15),
+    city: city.city,
+    country: BY_COUNTRY
   }
+}
+
+function isHeaderSafe (value) {
+  return typeof value === 'string' && /^[\x20-\x7E]+$/.test(value)
+}
+
+function ensureLocationFields (fp, login) {
+  if (
+    fp.latitude != null &&
+    fp.longitude != null &&
+    isHeaderSafe(fp.city) &&
+    isHeaderSafe(fp.country)
+  ) {
+    return fp
+  }
+
+  Object.assign(fp, generateGeo(createSeededRandom('belinvest_fp_geo_v1_' + login)))
+  ZenMoney.setData('deviceFingerprint', fp)
+  ZenMoney.saveData()
+  return fp
 }
 
 export function getOrCreateDeviceFingerprint () {
   let fp = ZenMoney.getData('deviceFingerprint')
-  if (fp) return fp
 
   // Deterministic generation based on login — survives failed syncs
   const login = ZenMoney.getData('login') || ZenMoney.getPreferences().login || 'default'
+  if (fp) return ensureLocationFields(fp, login)
+
   const rand = createSeededRandom('belinvest_fp_v3_' + login)
+  const geo = generateGeo(createSeededRandom('belinvest_fp_geo_v1_' + login))
 
   const existingDeviceId = ZenMoney.getData('deviceId')
   const profile = DEVICE_PROFILES[(rand() * DEVICE_PROFILES.length) | 0]
@@ -199,7 +228,8 @@ export function getOrCreateDeviceFingerprint () {
     mcc: operator.mcc,
     mnc: operator.mnc,
     fcmToken: seededFcmToken(rand),
-    ip: `192.168.${(rand() * 255) | 0}.${(rand() * 254 + 1) | 0}`
+    ip: `192.168.${(rand() * 255) | 0}.${(rand() * 254 + 1) | 0}`,
+    ...geo
   }
 
   ZenMoney.setData('deviceId', fp.deviceId)
@@ -210,7 +240,6 @@ export function getOrCreateDeviceFingerprint () {
 
 function generateMobileSdkData (fp) {
   const now = Date.now()
-  const geo = generateRandomGeo()
   const sdkData = {
     AdvertiserProvider: 'GOOGLE',
     Languages: 'ru',
@@ -227,8 +256,8 @@ function generateMobileSdkData (fp) {
       Speed: 0,
       Heading: 0,
       HorizontalAccuracy: 1,
-      Latitude: geo.lat,
-      Longitude: geo.lon,
+      Latitude: fp.latitude,
+      Longitude: fp.longitude,
       AltitudeAccuracy: 0,
       Timestamp: now - Math.floor(Math.random() * 5000000),
       Altitude: 0
@@ -310,6 +339,10 @@ export function mobileHeaders (fp, cookie) {
     ip: fp.ip,
     mobileSdkData: generateMobileSdkData(fp)
   }
+  if (fp.latitude != null) headers.latitude = String(fp.latitude)
+  if (fp.longitude != null) headers.longitude = String(fp.longitude)
+  if (fp.city) headers.city = fp.city
+  if (fp.country) headers.country = fp.country
   if (cookie) {
     headers.Cookie = cookie
     headers['zp-cookie'] = cookie
