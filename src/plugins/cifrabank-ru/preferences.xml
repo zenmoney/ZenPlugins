@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="phone"
+        obligatory="true"
+        inputType="phone"
+        title="Номер телефона"
+        dialogTitle="Номер телефона"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|+7XXXXXXXXXX|{@s}"
+    />
+    <EditTextPreference
+        key="cardNumber"
+        obligatory="true"
+        inputType="number"
+        title="Номер карты"
+        dialogTitle="Номер карты"
+        dialogMessage="Полный номер банковской карты Цифра Банка (16 цифр без пробелов). Используется как ответ на проверочный вопрос при входе."
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="||***********"
+    />
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="С какой даты загружать операции"
+        defaultValue="2024-01-01T00:00:00.000Z"
+        dialogTitle="С какой даты загружать операции"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|гггг-мм-дд|{@s}"
+    />
+</PreferenceScreen>
