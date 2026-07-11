@@ -190,12 +190,12 @@ export async function fetchTransactions (year: number, fromDate: Date): Promise<
       }
     }
 
+    // Every page of the year is walked. Stopping as soon as a page ends older than
+    // fromDate would be faster, but it assumes the API sorts newest-first, and that
+    // ordering is not guaranteed — one out-of-order row on a page boundary would end
+    // the crawl early and silently truncate the history behind it.
     const totalPages = body?.meta?.totalPages
     if (data.length === 0 || (totalPages != null && page >= totalPages)) {
-      break
-    }
-    const last = data[data.length - 1]
-    if (last != null && new Date(last.transactionTimestamp ?? '') < fromDate) {
       break
     }
     page += 1
