@@ -34,7 +34,7 @@ describe('convertTransaction', () => {
       },
       {
         comment: null,
-        date: new Date('2022-07-26T00:00:00.000Z'),
+        date: new Date('2022-07-25T09:43:00+03:00'),
         hold: null,
         merchant: {
           city: 'BLAGOVESHHENS',
@@ -191,7 +191,7 @@ describe('convertTransaction', () => {
       },
       {
         hold: null,
-        date: new Date('2022-11-01T00:00:00.000Z'),
+        date: new Date('2022-10-30T15:10:00+03:00'),
         movements: [
           {
             id: '1259627339;1',
@@ -256,7 +256,7 @@ describe('convertTransaction', () => {
       },
       {
         hold: null,
-        date: new Date('2025-05-02T00:00:00.000Z'),
+        date: new Date('2025-04-30T07:09:00+03:00'),
         movements: [
           {
             id: 'cbs-tb;1299729092;1',
@@ -270,6 +270,115 @@ describe('convertTransaction', () => {
           country: 'RU',
           city: 'Abakan',
           title: 'SMORODINA',
+          mcc: null,
+          location: null
+        },
+        comment: null
+      }
+    ],
+    [
+      {
+        transactionId: 'cbs-tb;1925743082;1',
+        paymentId: 'cbs-tb-92-3815841024',
+        creditDebitIndicator: 'Debit',
+        status: 'Booked',
+        documentNumber: '370170',
+        transactionTypeCode: 'Банковский ордер',
+        documentProcessDate: '2026-01-26',
+        description: 'Покупка товара(Терминал:YANDEX*5814*EDA,49 PROSPEKT ARSHAKUNYAC,EREVAN,AM,дата операции:25/01/2026 20:16(МСК),на сумму:35215.17 AMD,карта 2204********9748)',
+        Amount: {
+          amount: 7194.11,
+          amountNat: 7194.11,
+          currency: 'RUB'
+        },
+        CreditorParty: {
+          inn: '9721194461',
+          name: 'ООО "Банк Точка"',
+          kpp: '997950001'
+        },
+        CreditorAccount: {
+          schemeName: 'RU.CBR.PAN',
+          identification: '30232810820000003944'
+        },
+        CreditorAgent: {
+          schemeName: 'RU.CBR.BIK',
+          identification: '044525104',
+          accountIdentification: '30101810745374525104',
+          name: 'ООО "Банк Точка"'
+        }
+      },
+      {
+        hold: null,
+        date: new Date('2026-01-25T20:16:00+03:00'),
+        movements: [
+          {
+            id: 'cbs-tb;1925743082;1',
+            account: { id: 'account' },
+            invoice: {
+              sum: -35215.17,
+              instrument: 'AMD'
+            },
+            sum: -7194.11,
+            fee: 0
+          }
+        ],
+        merchant: {
+          country: 'AM',
+          city: 'EREVAN',
+          title: 'YANDEX*5814*EDA',
+          mcc: null,
+          location: null
+        },
+        comment: null
+      }
+    ],
+    [
+      {
+        transactionId: 'cbs-tb;1967426709;1',
+        paymentId: 'cbs-tb-92-3902457348',
+        creditDebitIndicator: 'Debit',
+        status: 'Booked',
+        documentNumber: '463475',
+        transactionTypeCode: 'Банковский ордер',
+        documentProcessDate: '2026-02-12',
+        description: 'Покупка товара(Терминал:PYATEROCHKA 16753,PR-T NOVOCHERKASSKIY 12 KORPUS 1,SANKT-PETERBU,RU,дата операции:10/02/2026 19:24(МСК),на сумму:229.97 RUB,карта 2204********6369)',
+        Amount: {
+          amount: 229.97,
+          amountNat: 229.97,
+          currency: 'RUB'
+        },
+        CreditorParty: {
+          inn: '9721194461',
+          name: 'ООО "Банк Точка"',
+          kpp: '997950001'
+        },
+        CreditorAccount: {
+          schemeName: 'RU.CBR.PAN',
+          identification: '30232810820000003944'
+        },
+        CreditorAgent: {
+          schemeName: 'RU.CBR.BIK',
+          identification: '044525104',
+          accountIdentification: '30101810745374525104',
+          name: 'ООО "Банк Точка"'
+        }
+      },
+      {
+        hold: null,
+        date: new Date('2026-02-10T19:24:00.000+03:00'),
+        movements: [
+          {
+            id: 'cbs-tb;1967426709;1',
+            account: { id: 'account' },
+            invoice: null,
+            sum: -229.97,
+            fee: 0
+          }
+        ],
+        merchant: {
+          country: 'RU',
+          city: 'SANKT-PETERBU',
+          title: 'PYATEROCHKA 16753',
           mcc: null,
           location: null
         },
