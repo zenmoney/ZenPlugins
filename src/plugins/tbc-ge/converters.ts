@@ -19,7 +19,7 @@ import {
 } from './models'
 import { padStart } from 'lodash'
 import { getIntervalBetweenDates } from '../../common/momentDateUtils'
-import { getOptString } from '../../types/get'
+import { getNumber, getOptString } from '../../types/get'
 
 export function convertAccountsV2 (cardsAndAccounts: CardsAndAccounts | null): PreparedAccountV2[] {
   const accounts: PreparedAccountV2[] = []
@@ -46,7 +46,12 @@ export function convertAccountsV2 (cardsAndAccounts: CardsAndAccounts | null): P
   return accounts
 }
 
-export function convertStatementV2 (statement: DepositStatementV2, account: Account): Transaction {
+export function convertStatementV2 (statement: DepositStatementV2, account: Account): Transaction | null {
+  if (getNumber(statement, 'depositAmount') === 0 &&
+    getNumber(statement, 'withdrawnDepositAmount') === 0 &&
+    getNumber(statement, 'interestedAmount') === 0) {
+    return null
+  }
   // Determine transaction type - based on observed API behavior, only one field
   // is non-zero at a time (mutually exclusive), but not 100% certain this is always the case
   let sum: number
@@ -207,12 +212,13 @@ export function convertTransactionsV2 (transactionRecordsByDate: TransactionsByD
           const blockedTransaction = new TransactionBlockedV2(transactionRecord, transactionRecords.date)
           id = blockedTransaction.id
           amount = blockedTransaction.amount
+          dateNum = transactionRecord.blockedMovementDate != null ? transactionRecord.blockedMovementDate : transactionRecords.date
           // TODO add invoice
           if (blockedTransaction.isCash()) {
             secondMovement = createCashMovement(blockedTransaction.transaction.currency, -amount)
           } else {
             merchant = {
-              city: blockedTransaction.city,
+              city: blockedTransaction.city !== '' ? blockedTransaction.city : null,
               country: blockedTransaction.countryCode,
               title: blockedTransaction.merchant,
               mcc: null,

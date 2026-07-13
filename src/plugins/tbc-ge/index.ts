@@ -84,7 +84,9 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
     const statements = await fetchDepositStatementsV2(deposit.deposit.id, session)
     for (const statement of statements) {
       const transaction = convertStatementV2(statement, depostitAccount)
-      transactions.push(transaction)
+      if (transaction != null) {
+        transactions.push(transaction)
+      }
     }
   }
   return {
