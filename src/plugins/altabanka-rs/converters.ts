@@ -1,6 +1,7 @@
 import { AccountOrCard, AccountType, ExtendedTransaction, Transaction } from '../../types/zenmoney'
 import { AccountInfo, AccountTransaction } from './models'
 import { toISODateString, dateInTimezone } from '../../common/dateUtils'
+import { getNumber, getString } from '../../types/get'
 
 export function convertAccounts (apiAccounts: AccountInfo[]): AccountOrCard[] {
   return apiAccounts.map(apiAccount => {
@@ -122,11 +123,36 @@ function parsePayeeAndComment (transaction: ExtendedTransaction, accountTransact
 }
 
 export function deduplicateTransactions (transactions: Transaction[]): Transaction[] {
-  const seen = new Set<string>()
-  return transactions.filter(tx => {
-    const id = tx.movements[0]?.id
-    if (typeof id !== 'string' || seen.has(id)) return false
-    seen.add(id)
-    return true
+  const result = transactions.concat()
+  for (let i = 0; i < result.length; ++i) {
+    for (let j = i + 1; j < result.length; ++j) {
+      if (getDeduplicationKey(result[i]) === getDeduplicationKey(result[j])) {
+        result[i].hold = false
+        result.splice(j--, 1)
+      }
+    }
+  }
+  return result
+}
+
+function getDeduplicationKey (transaction: Transaction): string | null {
+  if (transaction.movements.length !== 1) {
+    return null
+  }
+  const movement = transaction.movements[0]
+  const accountId = getString(movement.account, 'id')
+  const sum = getNumber(movement, 'sum')
+  if (accountId === null || sum === null) {
+    return null
+  }
+  return JSON.stringify({
+    year: transaction.date.getFullYear(),
+    month: transaction.date.getMonth(),
+    day: transaction.date.getDate(),
+    hour: transaction.date.getHours(),
+    accountId,
+    sum,
+    merchant: transaction.merchant,
+    comment: transaction.comment
   })
 }
