@@ -164,8 +164,12 @@ function parseInnerTransfer (transaction, apiTransaction, account, invoice) {
 }
 
 function parseOuterTransfer (transaction, apiTransaction, account, invoice) {
-  if (!!apiTransaction.operationPlace && (
-    apiTransaction.operationPlace?.indexOf('POPOLNENIE KARTY') >= 0)) {
+  if ([
+    /POPOLNENIE KARTY/i
+  ].some(regexp => regexp.test(apiTransaction.operationPlace)) ||
+    [
+      /P2P/i
+    ].some(regexp => regexp.test(apiTransaction.operationName))) {
     // добавим вторую часть перевода
     transaction.movements.push({
       id: null,
@@ -183,29 +187,116 @@ function parseOuterTransfer (transaction, apiTransaction, account, invoice) {
   }
 }
 
+function cleanMerchantTitle (title) {
+  if (!title) return null
+  // Remove technical prefixes
+  let cleaned = title
+    .replace(/^(I\.-SHOP|PT|TO OOO)\s*/i, '')
+    .trim()
+
+  // Remove MCC suffix if present (e.g. "SUPERMARKET\nMCC 5411, ...")
+  const mccIndex = cleaned.indexOf('\nMCC ')
+  if (mccIndex > 0) {
+    cleaned = cleaned.substring(0, mccIndex).trim()
+  }
+
+  // Remove surrounding quotes
+  cleaned = cleaned.replace(/^"(.+)"$/, '$1').trim()
+
+  return cleaned || null
+}
+
+function parseMcc (apiTransaction) {
+  const mccCode = apiTransaction.operationDetail?.mccCode
+  if (!mccCode) return null
+  const match = mccCode.match(/^(\d+)/)
+  return match ? parseInt(match[1], 10) : null
+}
+
+function parseLocation (apiTransaction) {
+  const location = apiTransaction.operationDetail?.terminalLocation || ''
+  if (!location || location === '-') return { city: null, country: null }
+  // Format: "BLR MINSK", "BLR G. MINSK", "BLR d.BOLSHOE STI", "G. MINSK"
+  let country = null
+  let city = location
+
+  // Check for country code at the beginning
+  if (/^BLR\s+/i.test(location)) {
+    country = 'BLR'
+    city = location.replace(/^BLR\s+/i, '')
+  }
+
+  // Clean up city prefixes (G. = город, d. = деревня)
+  city = city
+    .replace(/^G\.\s*/i, '')
+    .replace(/^d\.\s*/i, '')
+    .trim()
+
+  return { city: city || null, country }
+}
+
+function getMerchantName (apiTransaction) {
+  // For hold transactions - merchant is in operationDetail.operationName or top-level operationName
+  if (apiTransaction.operationDetail?.operationName && apiTransaction.operationDetail.operationName !== '-') {
+    return cleanMerchantTitle(apiTransaction.operationDetail.operationName)
+  }
+  // For settled transactions - merchant is in operationPlace
+  if (apiTransaction.operationPlace) {
+    return cleanMerchantTitle(apiTransaction.operationPlace)
+  }
+  return null
+}
+
+function isIgnoredMerchant (merchantName) {
+  if (!merchantName) return true
+  const ignored = [
+    'BNB - OPLATA USLUG',
+    'Оплата услуг в интернет(мобильном) банкинге',
+    'OPLATA USLUG - KOMPLAT BNB',
+    'BNB KOMPLAT ERIP OTHER',
+    'BNB KOMPLAT ERIP MB SV',
+    'BNB KOMPLAT ERIP MB',
+    'BNB KOMPLAT SMS',
+    'BNB-BANK ERIP',
+    'BNB-BANK FEE SMS'
+  ]
+  if (ignored.some(i => merchantName.indexOf(i) >= 0)) return true
+  // BLR MINSK / SOA BNB without actual merchant name
+  if (/^BLR\s+(\w+\.?\s*)?(MINSK|SOA\s+BNB)/.test(merchantName)) return true
+  if (/^G\.\s*MINSK$/i.test(merchantName)) return true
+  if (/^SOA\s+BNB$/i.test(merchantName)) return true
+  return false
+}
+
 function parsePayee (transaction, apiTransaction) {
-  // интернет-платежи отображаем без получателя
-  if (!apiTransaction.operationPlace ||
-    apiTransaction.operationPlace.indexOf('BNB - OPLATA USLUG') >= 0 ||
-    apiTransaction.operationPlace.indexOf('Оплата услуг в интернет(мобильном) банкинге') >= 0 ||
-    apiTransaction.operationPlace.indexOf('OPLATA USLUG - KOMPLAT BNB') >= 0 ||
-    /\bBLR\s+MINSK\b/.test(apiTransaction.operationPlace)) {
+  const merchantName = getMerchantName(apiTransaction)
+  if (isIgnoredMerchant(merchantName)) {
     return false
   }
+
+  const mcc = parseMcc(apiTransaction)
+  const { city, country } = parseLocation(apiTransaction)
+
   transaction.merchant = {
-    mcc: null,
+    mcc,
     location: null
   }
-  const merchant = apiTransaction.operationPlace.split('>').map(str => str.trim())
-  if (merchant.length === 1) {
-    transaction.merchant.fullTitle = apiTransaction.operationPlace
-  } else if (merchant.length === 2) {
-    transaction.merchant.title = merchant[0]
+
+  // Try to parse structured merchant (format: "NAME > CITY COUNTRY")
+  const merchant = (apiTransaction.operationPlace || '').split('>').map(str => str.trim())
+  if (merchant.length === 2) {
+    transaction.merchant.title = cleanMerchantTitle(merchant[0])
     const geo = merchant[1].split(' ')
     transaction.merchant.city = merchant[1].replace(' ' + geo[geo.length - 1], '').trim()
     transaction.merchant.country = geo[geo.length - 1]
+  } else if (city) {
+    // Use structured merchant with city (country may be null)
+    transaction.merchant.city = city
+    transaction.merchant.country = country
+    transaction.merchant.title = merchantName
   } else {
-    throw new Error('Ошибка обработки транзакции с получателем: ' + apiTransaction.operationPlace)
+    // Use fullTitle for non-structured merchant without location
+    transaction.merchant.fullTitle = merchantName
   }
 }
 
@@ -220,24 +311,44 @@ function parseComment (transaction, apiTransaction, account) {
     transaction.comment = 'Капитализация'
     return false
   }
-  switch (apiTransaction.operationName) {
-    // переводы между счетами полезной информации не несут, гасим сразу
-    case 'Списание по операции ПЦ "Перечисление с карты на карту" ':
-    case 'On-line пополнение договора (списание с БПК)':
-      return true
 
-    // в покупках комментарии не оставляем
-    case 'Покупки':
-    case 'Покупки(конверсия)':
-    case 'Операция в Интернет-Банк':
-    case 'Покупка товаров и услуг':
-    case 'Списание по операции ПЦ "Оплата услуг в ИБ" ':
-      return false
+  const operationName = apiTransaction.operationName
 
-    default:
-      transaction.comment = apiTransaction.operationName
-      return false
+  // Useless technical comments - don't add to transaction
+  const ignoredComments = [
+    'Списание по операции ПЦ "Перечисление с карты на карту" ',
+    'On-line пополнение договора (списание с БПК)',
+    'Покупки',
+    'Покупки(конверсия)',
+    'Операция в Интернет-Банк',
+    'Покупка товаров и услуг',
+    'Списание по операции ПЦ "Оплата услуг в ИБ" ',
+    // New technical comments to ignore
+    'Оплата товаров, работ или услуг',
+    'Оплата товаров, работ или услуг в устройствах других Банков',
+    'Пополнение карт через ЕРИП в устройствах иных банков',
+    'Оплата услуг в СДБО БНБ-Банк'
+  ]
+
+  // For transfer operations, no need for comment - return true to stop processing
+  if (operationName === 'Списание по операции ПЦ "Перечисление с карты на карту" ' ||
+      operationName === 'On-line пополнение договора (списание с БПК)') {
+    return true
   }
+
+  // Skip useless technical comments
+  if (ignoredComments.includes(operationName)) {
+    return false
+  }
+
+  // Check for comments with MCC info (hold transactions) - extract only useful part if any
+  if (operationName.includes('\nMCC ')) {
+    // The merchant name is before \nMCC - don't duplicate it in comment
+    return false
+  }
+
+  transaction.comment = operationName
+  return false
 }
 
 export function getLastTransactionDate (str) {

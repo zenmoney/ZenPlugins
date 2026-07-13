@@ -6,7 +6,7 @@ describe('convertTransaction', () => {
       {
         accountType: '5',
         concreteType: '5',
-        accountNumber: '3001779330015745',
+        accountNumber: '3000000000000002',
         operationName: 'Выдача части на другой счет',
         transactionDate: 1663922197000,
         operationDate: 1663922197000,
@@ -16,19 +16,19 @@ describe('convertTransaction', () => {
         operationCurrency: '933',
         operationSign: '-1',
         actionGroup: 3,
-        clientName: 'Николаев Николай Николаевич',
+        clientName: 'NIKOLAY NIKOLAEV',
         operationClosingBalance: 0,
         operationCode: 3
       },
       [
         {
-          id: '3001779330015745',
+          id: '3000000000000002',
           type: 'card',
           title: 'Цифровая карта 1-2-3, BYN',
           currencyCode: '933',
           instrument: 'BYN',
           balance: 16.36,
-          syncID: ['3001779330015745', '3209'],
+          syncID: ['3000000000000002', '3209'],
           rkcCode: '5761',
           cardHash: 'KWentZ2gnMJh-X-nu5P0n_pI1NH3yRcQWSIo6L9yosYbPAiEDT7s4Do1WKRhS3qrUqn4Vf2ghhj2LLhW-fA3Fg'
         }
@@ -39,7 +39,7 @@ describe('convertTransaction', () => {
           [
             {
               id: null,
-              account: { id: '3001779330015745' },
+              account: { id: '3000000000000002' },
               invoice: null,
               sum: -214.81,
               fee: 0
