@@ -233,8 +233,12 @@ export function * convertTransactions (apiTransactions: unknown[]): Generator<Tr
   for (const transaction of apiTransactions) {
     try {
       const summa = _.get(transaction, 'summa') as number
+      const otkaz = _.get(transaction, 'transactionType') as string
       if (summa === 0) {
         // e.g. preauthorization
+        continue
+      }
+      if (otkaz?.includes('OTKAZ')) {
         continue
       }
       const isEnrollment = _.get(transaction, 'isEnrollment') as boolean
