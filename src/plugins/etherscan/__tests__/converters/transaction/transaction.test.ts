@@ -53,6 +53,15 @@ describe('convertTransaction', () => {
     expect(result).toBe(null)
   })
 
+  it('should ignore value < 0.01 operations', () => {
+    const result = convertTransaction(OWN_ACCOUNT, {
+      ...baseMock,
+      value: '200'
+    })
+
+    expect(result).toBe(null)
+  })
+
   it('should convert operation amount', () => {
     const result = convertTransaction(OWN_ACCOUNT, {
       ...baseMock,

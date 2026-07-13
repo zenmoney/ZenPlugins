@@ -52,7 +52,7 @@ export function convertTransaction (
   if (transaction.isError === '1') {
     return null
   }
-  if (operationValue === 0) {
+  if (operationValue < 0.01) {
     return null
   }
 
