@@ -214,7 +214,7 @@ export function convertTransaction (apiTransaction: CredoTransaction, account: A
       {
         id: transactionId,
         account: { id: account.id },
-        invoice,
+        invoice: invoice !== null && account.instrument === invoice.instrument ? null : invoice,
         sum: amount,
         fee: 0
       }

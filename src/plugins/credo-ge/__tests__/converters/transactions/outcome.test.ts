@@ -94,6 +94,51 @@ describe('convertTransaction', () => {
         groupKeys: [null]
       }
     ],
+    [
+      {
+        credit: null,
+        currency: 'USD',
+        operationId: null,
+        transactionType: 'AccountWithdrawal',
+        transactionId: 'FT261105N0B8',
+        debit: 10,
+        description: 'Payment - PAYPAL *GITHUB INC 10.00 USD 18.04.2026',
+        isCardBlock: false,
+        operationDateTime: '2026-04-20T13:51:00',
+        stmtEntryId: '212956672149890.000001',
+        canRepeat: false,
+        canReverse: false,
+        amountEquivalent: 26.94,
+        operationType: 'Card payment',
+        operationTypeId: null
+      },
+      {
+        id: '13',
+        type: AccountType.ccard,
+        title: 'Card 13',
+        instrument: 'USD',
+        syncIds: ['13'],
+        savings: false,
+        balance: 10.00,
+        available: 10.00
+      },
+      {
+        hold: false,
+        date: new Date('2026-04-20T13:51:00'),
+        movements: [
+          {
+            id: 'FT261105N0B8',
+            account: { id: '13' },
+            invoice: null,
+            sum: -10,
+            fee: 0
+          }
+        ],
+        merchant: { fullTitle: 'PAYPAL *GITHUB INC', mcc: null, location: null },
+        comment: null,
+        groupKeys: [null]
+      }
+    ],
     // On-hold transaction
     [
       {
