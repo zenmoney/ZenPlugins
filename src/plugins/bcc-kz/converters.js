@@ -280,15 +280,16 @@ function convertCurrentAccount (apiAccount) {
 }
 
 export function convertTransaction (apiTransaction, accounts) {
-  if (apiTransaction.amount === 0 && apiTransaction.image !== 'transfers/own_transfer.png') {
+  if ((apiTransaction.amount === 0 && apiTransaction.image !== 'transfers/own_transfer.png') ||
+    (apiTransaction.image === 'transfers/own_transfer.png' && apiTransaction.amount === 0 && apiTransaction.fee === 0 && apiTransaction.cms === 0)) {
     return null
   }
-  const accountTransaction = accounts.find(item => item.instrument === apiTransaction.cur)
+  const accountTransaction = accounts.find(item => item.instrument === parseMetalInstrument(apiTransaction.cur))
   const account = !accountTransaction ? accounts[0] : accountTransaction
   const sign = apiTransaction.is_income ? 1 : -1
   const invoice = {
     sum: sign * apiTransaction.amount,
-    instrument: apiTransaction.cur
+    instrument: parseMetalInstrument(apiTransaction.cur)
   }
   const transaction = {
     hold: apiTransaction.is_blocked,
@@ -297,8 +298,8 @@ export function convertTransaction (apiTransaction, accounts) {
       {
         id: apiTransaction.trn_id?.toString() || null, // sometimes null
         account: { id: account.id },
-        invoice: apiTransaction.cur === account.instrument ? null : invoice,
-        sum: apiTransaction.cur === account.instrument ? invoice.sum : null,
+        invoice: invoice.instrument === account.instrument ? null : invoice,
+        sum: invoice.instrument === account.instrument ? invoice.sum : null,
         fee: sign === -1 && apiTransaction.fee !== 0 ? -apiTransaction.fee : 0
       }
     ],
@@ -318,6 +319,11 @@ export function convertTransaction (apiTransaction, accounts) {
 
 function parseInnerTransfer (transaction, apiTransaction, invoice, accounts) {
   if (apiTransaction.image === 'transfers/own_transfer.png' && apiTransaction.rrn === '') {
+    transaction.groupKeys = [
+      apiTransaction.trn_id?.toString() || null,
+      apiTransaction.refer || null
+    ]
+
     transaction.movements[0].id = transaction.movements[0].id + (apiTransaction.is_income ? '+' : '-')
     if (apiTransaction.amount === 0 && apiTransaction.fee === apiTransaction.cms) {
       transaction.movements[0].sum = transaction.movements[0].fee
@@ -334,6 +340,7 @@ function parseInnerTransfer (transaction, apiTransaction, invoice, accounts) {
         sum: -transaction.movements[0].sum,
         fee: 0
       })
+      transaction.comment = null
     }
 
     return true
@@ -357,30 +364,26 @@ function extractPeerAccountSyncId (title) {
 
 function buildPeerTransferAccount (title, instrument, accounts) {
   const peerCardSyncId = extractPeerCardSyncId(title)
-  if (peerCardSyncId) {
+  const peerAccountSyncId = extractPeerAccountSyncId(title)
+  const peerAccount = accounts.find(account => account.syncIds && (account.syncIds.includes(peerAccountSyncId) || account.syncIds.includes(peerCardSyncId)))
+  if (peerAccount) {
+    return { id: peerAccount.id }
+  } else if (peerCardSyncId) {
     return {
       type: 'ccard',
       instrument,
       company: null,
       syncIds: [peerCardSyncId]
     }
-  }
-
-  const peerAccountSyncId = extractPeerAccountSyncId(title)
-  if (!peerAccountSyncId) {
+  } else if (peerAccountSyncId) {
+    return {
+      type: 'checking',
+      instrument,
+      company: null,
+      syncIds: [peerAccountSyncId]
+    }
+  } else {
     return null
-  }
-
-  const peerAccount = accounts.find(account => account.syncIds && account.syncIds.includes(peerAccountSyncId))
-  if (peerAccount) {
-    return { id: peerAccount.id }
-  }
-
-  return {
-    type: 'checking',
-    instrument,
-    company: null,
-    syncIds: [peerAccountSyncId]
   }
 }
 
