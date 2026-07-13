@@ -154,18 +154,18 @@ export function groupAccountsById (accounts) {
   }
   return accountsById
 }
-
-export function convertTransactions (apiTransactions, accountsById) {
+/*
+export function convertTransactions (rawTransactions, accountsById) {
   const transactions = []
-  for (const apiTransaction of apiTransactions) {
-    const transaction = convertTransaction(apiTransaction, accountsById)
+  for (const rawTransaction of rawTransactions) {
+    const transaction = convertTransaction(rawTransaction, accountsById)
     if (transaction) {
       transactions.push(transaction)
     }
   }
   return transactions
 }
-
+*/
 export function convertTransaction (rawTransaction, accountsById) {
   if (rawTransaction.view.state === 'rejected' || rawTransaction.info.subType === 'loan-repayment') {
     return null
@@ -176,9 +176,9 @@ export function convertTransaction (rawTransaction, accountsById) {
     instrument: rawTransaction.view.amounts.currency
   }
   let account = accountsById[rawTransaction.view.productAccount] || accountsById[rawTransaction.view.productCardId]
-  if (!account && rawTransaction.info.operationType === 'payment') {
-    account = accountsById[rawTransaction.details['payee-card']]
-  } else if (!account && rawTransaction.view.direction === 'internal') {
+  if (!account && rawTransaction.info.operationType === 'payment' && rawTransaction.details) {
+    account = accountsById[rawTransaction.details['payee-card']] || accountsById[rawTransaction.details['payee-account']]
+  } else if (!account && rawTransaction.view.direction === 'internal' && rawTransaction.details) {
     account = accountsById[rawTransaction.details.payeeAccount]
   }
   if (!account) {

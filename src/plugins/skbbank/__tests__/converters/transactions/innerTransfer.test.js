@@ -868,6 +868,594 @@ describe('convertTransaction', () => {
         ],
         comment: 'Между счетами'
       }
+    ],
+    [
+      {
+        info:
+          {
+            id: 2874512511,
+            operationType: 'payment',
+            skbPaymentOperationType: 'transfer_rub',
+            subType: 'transfer_rub',
+            hasOfdReceipt: false
+          },
+        view:
+          {
+            operationIcon: 'https://ib.delo.ru/json/icon/2040830938v0',
+            descriptions:
+              {
+                operationDescription: 'Между счетами',
+                productDescription: 'Зарплатная карта',
+                productType: 'Со счета карты'
+              },
+            amounts:
+              {
+                amount: 2000000,
+                currency: 'RUB',
+                feeAmount: 0,
+                feeCurrency: 'RUB',
+                bonusAmount: 0,
+                bonusCurrency: null,
+                cashBackAmount: 0,
+                cashBackCurrency: null
+              },
+            mainRequisite: 'На ""Курс на мечту" Накопительный счет"',
+            category: {
+              id: 394010367,
+              internalCode: 'transfer',
+              name: 'Переводы'
+            },
+            state: 'processed',
+            dateCreated: '2025-12-12T14:59:45+05:00',
+            payWallet: false,
+            direction: 'internal',
+            comment: null,
+            productAccount: '40817810000000000001',
+            productCardId: null
+          },
+        details: {
+          actions: ['toFavorite', 'repeatable', 'sendCheck', 'print'],
+          actualPayeeName: null,
+          amount: 2000000,
+          'another-person-payment': null,
+          bankSystemId: '10000000001',
+          bonusAmount: null,
+          category: {
+            id: 394010367,
+            name: 'Переводы'
+          },
+          charge: '2025-12-12T14:59:51+05:00',
+          comment: null,
+          controlValue: null,
+          convAmount: null,
+          convCurrency: null,
+          counterpartyId: null,
+          'create-date': '2025-12-12T14:59:45+05:00',
+          currency: 'RUB',
+          data_contacts: {},
+          dateCreated: '2025-12-12T14:59:45+05:00',
+          'debtor-city': null,
+          'debtor-flat': null,
+          'debtor-house': null,
+          'debtor-inn': null,
+          'debtor-kpp': null,
+          'debtor-lastname': null,
+          'debtor-middlename': null,
+          'debtor-name': null,
+          'debtor-nonResident': null,
+          'debtor-street': null,
+          'debtor-type': null,
+          deliveryDate: null,
+          direction: 'internal',
+          ekassir: false,
+          feeAmount: 0,
+          feeCurrency: 'RUB',
+          fields: {},
+          firstCurrency: null,
+          forThirdPerson: null,
+          icon:
+            {
+              hash: '8a4586eefbeb7b1f5ef9d6ccf41ec134',
+              url: '/imgcache/bankData2040830938_8a4586eefbeb7b1f5ef9d6ccf41ec134.png'
+            },
+          internalCode: null,
+          kvvo: null,
+          limit: null,
+          linked_document_id: null,
+          linked_document_type: null,
+          mainRequisite: 'На ""Курс на мечту" Накопительный счет"',
+          messageId: null,
+          nds: 20,
+          ndsSum: null,
+          ndsType: '3',
+          operationDescription: 'Между счетами',
+          operationIcon: 'https://ib.delo.ru/json/icon/2040830938v0',
+          'order-date': '2025-12-12',
+          orderedRequisites: [],
+          originalRegistry: null,
+          outdated: true,
+          'payee-account': '40817810000000000002',
+          'payee-bank-account': '30101810800000000756',
+          'payee-bank-bic': '046577756',
+          'payee-bank-name': 'АО Банк Синара',
+          'payee-card': null,
+          'payee-card-id': null,
+          'payee-card-mask-pan': null,
+          'payee-inn': '000000000000',
+          'payee-kpp': null,
+          'payee-member-id': null,
+          'payee-name': 'Николаев Николай Николаевич',
+          'payee-phone': null,
+          'payer-account': '40817810000000000001',
+          'payer-bank-account': '30101810800000000756',
+          'payer-bank-bic': '046577756',
+          'payer-bank-name': 'АО Банк Синара',
+          'payer-card': null,
+          'payer-card-mask-pan': null,
+          'payer-inn': '000000000000',
+          'payer-kpp': null,
+          'payment-date': null,
+          'payment-kind': null,
+          'payment-number': '66',
+          'payment-operation-type': 'transfer',
+          'payment-type': null,
+          payout: null,
+          'payout.date': null,
+          'payout.type': null,
+          pointOfInitiationMethod: null,
+          prepaymentReturnDate: null,
+          priority: '5',
+          productAccount: '40817810000000000001',
+          productCardId: null,
+          productDescription: 'Зарплатная карта',
+          productType: 'Со счета карты',
+          profit: false,
+          purpose: 'Перевод между счетами.',
+          purposeCode: null,
+          qrIdentifier: null,
+          rate: null,
+          reason: null,
+          redirectUrl: null,
+          registryPaidAmount: null,
+          registryParentId: null,
+          relatedRegistryPayment: false,
+          repeatable: true,
+          requisites: {},
+          'rest-amount': null,
+          revokeRejectReason: null,
+          sbpOperationId: null,
+          secondCurrency: 'RUB',
+          signature: 'Николаев Николай Николаевич',
+          skbPaymentOperationType: 'transfer_rub',
+          state: 'processed',
+          swiftAmount: null,
+          swiftCurrency: null,
+          swiftPayeeAccount: null,
+          swiftPayeeBankCode: null,
+          swiftPayeeName: null,
+          swiftPurpose: null,
+          'tax-101': null,
+          'tax-104': null,
+          'tax-105': null,
+          'tax-106': null,
+          'tax-107': null,
+          'tax-108': null,
+          'tax-109': null,
+          'tax-110': null,
+          uin: null,
+          'zhkkh.communalPayment': null,
+          'zhkkh.consumerApartment': null,
+          'zhkkh.consumerInn': null,
+          'zhkkh.consumerMName': null,
+          'zhkkh.consumerName': null,
+          'zhkkh.consumerPlacement': null,
+          'zhkkh.consumerSName': null,
+          'zhkkh.documentId': null,
+          'zhkkh.fiasCode': null,
+          'zhkkh.payDate': null,
+          'zhkkh.perfDocNumber': null,
+          'zhkkh.personalAccount': null,
+          'zhkkh.singlePersonalAcc': null,
+          'zhkkh.type': null
+        }
+      },
+      {
+        '40817810000000000001': {
+          id: 'account1',
+          instrument: 'RUB'
+        }
+        /*
+        '40817810000000000002': { // Нет в списке своих аккаунтов
+          id: 'account2',
+          instrument: 'RUB'
+        }
+        */
+      },
+      {
+        comment: 'Между счетами',
+        date: new Date('2025-12-12T09:59:45.000Z'),
+        hold: false,
+        merchant: null,
+        movements: [
+          {
+            account: { id: 'account1' },
+            fee: 0,
+            id: '2874512511',
+            invoice: null,
+            sum: -2000000
+          },
+          {
+            account: {
+              company: null,
+              instrument: 'RUB',
+              syncIds: ['40817810000000000002'],
+              type: 'ccard'
+            },
+            fee: 0,
+            id: null,
+            invoice: null,
+            sum: 2000000
+          }
+        ]
+      }
+    ],
+    [
+      {
+        info:
+          {
+            id: 2984186510,
+            operationType: 'payment',
+            skbPaymentOperationType: 'transfer_rub',
+            subType: 'transfer_rub',
+            hasOfdReceipt: false
+          },
+        view:
+          {
+            operationIcon: 'https://ib.delo.ru/json/icon/2040830938v0',
+            descriptions:
+              {
+                operationDescription: 'Между счетами',
+                productDescription: '"Курс на мечту" Накопительный счет',
+                productType: 'Со счета'
+              },
+            amounts:
+              {
+                amount: 27178.08,
+                currency: 'RUB',
+                feeAmount: 0,
+                feeCurrency: 'RUB',
+                bonusAmount: 0,
+                bonusCurrency: null,
+                cashBackAmount: 0,
+                cashBackCurrency: null
+              },
+            mainRequisite: 'На "Зарплатная карта"',
+            category: {
+              id: 394010367,
+              internalCode: 'transfer',
+              name: 'Переводы'
+            },
+            state: 'processed',
+            dateCreated: '2026-02-01T06:57:01+05:00',
+            payWallet: false,
+            direction: 'internal',
+            comment: null,
+            productAccount: '40817810000000000002',
+            productCardId: null
+          },
+        details:
+          {
+            actions: ['toFavorite', 'repeatable', 'sendCheck', 'print'],
+            actualPayeeName: null,
+            amount: 27178.08,
+            'another-person-payment': null,
+            bankSystemId: '10000000002',
+            bonusAmount: null,
+            category: {
+              id: 394010367,
+              name: 'Переводы'
+            },
+            charge: '2026-02-01T06:57:07+05:00',
+            comment: null,
+            controlValue: null,
+            convAmount: null,
+            convCurrency: null,
+            counterpartyId: null,
+            'create-date': '2026-02-01T06:57:01+05:00',
+            currency: 'RUB',
+            data_contacts: {},
+            dateCreated: '2026-02-01T06:57:01+05:00',
+            'debtor-city': null,
+            'debtor-flat': null,
+            'debtor-house': null,
+            'debtor-inn': null,
+            'debtor-kpp': null,
+            'debtor-lastname': null,
+            'debtor-middlename': null,
+            'debtor-name': null,
+            'debtor-nonResident': null,
+            'debtor-street': null,
+            'debtor-type': null,
+            deliveryDate: null,
+            direction: 'internal',
+            ekassir: false,
+            feeAmount: 0,
+            feeCurrency: 'RUB',
+            fields: {},
+            firstCurrency: null,
+            forThirdPerson: null,
+            icon:
+              {
+                hash: '8a4586eefbeb7b1f5ef9d6ccf41ec134',
+                url: '/imgcache/bankData2040830938_8a4586eefbeb7b1f5ef9d6ccf41ec134.png'
+              },
+            internalCode: null,
+            kvvo: null,
+            limit: null,
+            linked_document_id: null,
+            linked_document_type: null,
+            mainRequisite: 'На "Зарплатная карта"',
+            messageId: null,
+            nds: 20,
+            ndsSum: null,
+            ndsType: '3',
+            operationDescription: 'Между счетами',
+            operationIcon: 'https://ib.delo.ru/json/icon/2040830938v0',
+            'order-date': '2026-02-01',
+            orderedRequisites: [],
+            originalRegistry: null,
+            outdated: false,
+            'payee-account': '40817810000000000001',
+            'payee-bank-account': '30101810800000000756',
+            'payee-bank-bic': '046577756',
+            'payee-bank-name': 'АО Банк Синара',
+            'payee-card': null,
+            'payee-card-id': null,
+            'payee-card-mask-pan': null,
+            'payee-inn': '000000000000',
+            'payee-kpp': null,
+            'payee-member-id': null,
+            'payee-name': 'Николаев Николай Николаевич',
+            'payee-phone': null,
+            'payer-account': '40817810000000000002',
+            'payer-bank-account': '30101810800000000756',
+            'payer-bank-bic': '046577756',
+            'payer-bank-name': 'АО Банк Синара',
+            'payer-card': null,
+            'payer-card-mask-pan': null,
+            'payer-inn': '000000000000',
+            'payer-kpp': null,
+            'payment-date': null,
+            'payment-kind': null,
+            'payment-number': '87',
+            'payment-operation-type': 'transfer',
+            'payment-type': null,
+            payout: null,
+            'payout.date': null,
+            'payout.type': null,
+            pointOfInitiationMethod: null,
+            prepaymentReturnDate: null,
+            priority: '5',
+            productAccount: '40817810000000000002',
+            productCardId: null,
+            productDescription: '"Курс на мечту" Накопительный счет',
+            productType: 'Со счета',
+            profit: false,
+            purpose: 'Перевод между счетами.',
+            purposeCode: null,
+            qrIdentifier: null,
+            rate: null,
+            reason: null,
+            redirectUrl: null,
+            registryPaidAmount: null,
+            registryParentId: null,
+            relatedRegistryPayment: false,
+            repeatable: true,
+            requisites: {},
+            'rest-amount': null,
+            revokeRejectReason: null,
+            sbpOperationId: null,
+            secondCurrency: 'RUB',
+            signature: 'Николаев Николай Николаевич',
+            skbPaymentOperationType: 'transfer_rub',
+            state: 'processed',
+            swiftAmount: null,
+            swiftCurrency: null,
+            swiftPayeeAccount: null,
+            swiftPayeeBankCode: null,
+            swiftPayeeName: null,
+            swiftPurpose: null,
+            'tax-101': null,
+            'tax-104': null,
+            'tax-105': null,
+            'tax-106': null,
+            'tax-107': null,
+            'tax-108': null,
+            'tax-109': null,
+            'tax-110': null,
+            uin: null,
+            'zhkkh.communalPayment': null,
+            'zhkkh.consumerApartment': null,
+            'zhkkh.consumerInn': null,
+            'zhkkh.consumerMName': null,
+            'zhkkh.consumerName': null,
+            'zhkkh.consumerPlacement': null,
+            'zhkkh.consumerSName': null,
+            'zhkkh.documentId': null,
+            'zhkkh.fiasCode': null,
+            'zhkkh.payDate': null,
+            'zhkkh.perfDocNumber': null,
+            'zhkkh.personalAccount': null,
+            'zhkkh.singlePersonalAcc': null,
+            'zhkkh.type': null
+          }
+      },
+      {
+        '40817810000000000001': {
+          id: 'account1',
+          instrument: 'RUB'
+        }
+        /*
+        '40817810000000000002': { // Нет в списке своих аккаунтов
+          id: 'account2',
+          instrument: 'RUB'
+        }
+        */
+      },
+      {
+        comment: 'Между счетами',
+        date: new Date('2026-02-01T01:57:01.000Z'),
+        hold: false,
+        merchant: null,
+        movements: [
+          {
+            account: { id: 'account1' },
+            fee: 0,
+            id: '2984186510',
+            invoice: null,
+            sum: 27178.08
+          },
+          {
+            account: {
+              company: null,
+              instrument: 'RUB',
+              syncIds: ['40817810000000000002'],
+              type: 'ccard'
+            },
+            fee: 0,
+            id: null,
+            invoice: null,
+            sum: -27178.08
+          }
+        ]
+      }
+    ],
+    [
+      {
+        info:
+          {
+            id: 2986280158,
+            operationType: 'account_transaction',
+            skbPaymentOperationType: null,
+            subType: 'transfer-own',
+            hasOfdReceipt: false
+          },
+        view:
+          {
+            operationIcon: 'https://ib.delo.ru/json/icon/394009711v1',
+            descriptions:
+              {
+                operationDescription: 'Между счетами',
+                productDescription: '"Курс на мечту" Накопительный счет',
+                productType: 'Со счета'
+              },
+            amounts:
+              {
+                amount: 2000000,
+                currency: 'RUB',
+                feeAmount: 0,
+                feeCurrency: 'RUB',
+                bonusAmount: null,
+                bonusCurrency: 'RUB',
+                cashBackAmount: 0,
+                cashBackCurrency: 'RUB'
+              },
+            mainRequisite: 'На "Зарплатная карта"',
+            category: {
+              id: 394010367,
+              internalCode: 'transfer',
+              name: 'Переводы'
+            },
+            state: 'processed',
+            dateCreated: '2026-02-01T12:29:40+05:00',
+            payWallet: null,
+            direction: 'internal',
+            comment: null,
+            productAccount: '40817810000000000002',
+            productCardId: null
+          },
+        details:
+          {
+            actions: ['sendCheck', 'print'],
+            amount: 2000000,
+            bankSystemId: '10000000003',
+            category: {
+              id: 394010367,
+              internalCode: 'transfer',
+              name: 'Переводы'
+            },
+            chargeDate: '2026-02-01T12:29:41+05:00',
+            comment: 'Перевод денежных средств при закрытии счета',
+            convAmount: null,
+            convCurrency: null,
+            currency: 'RUB',
+            dateCreated: '2026-02-01T12:29:40+05:00',
+            descriptions:
+              {
+                operationDescription: 'Между счетами',
+                productDescription: '"Курс на мечту" Накопительный счет',
+                productType: 'Со счета'
+              },
+            direction: 'internal',
+            feeAmount: 0,
+            feeCurrency: 'RUB',
+            firstCurrency: null,
+            id: 2986280158,
+            mainRequisite: 'На "Зарплатная карта"',
+            operationIcon: 'https://ib.delo.ru/json/icon/394009711v1',
+            orderedRequisites: [],
+            payeeAccount: '40817810000000000001',
+            payeeBic: '046577756',
+            payerAccount: '40817810000000000002',
+            payerBic: '046577756',
+            productAccount: '40817810000000000002',
+            productCardId: null,
+            rate: null,
+            requisites: {},
+            secondCurrency: null,
+            state: 'processed',
+            transactionType: 'transfer-own'
+          }
+      },
+      {
+        '40817810000000000001': {
+          id: 'account1',
+          instrument: 'RUB'
+        }
+        /*
+        '40817810000000000002': { // Нет в списке своих аккаунтов
+          id: 'account2',
+          instrument: 'RUB'
+        }
+        */
+      },
+      {
+        comment: 'Между счетами',
+        date: new Date('2026-02-01T07:29:40.000Z'),
+        hold: false,
+        merchant: null,
+        movements: [
+          {
+            account: { id: 'account1' },
+            fee: 0,
+            id: '2986280158',
+            invoice: null,
+            sum: 2000000
+          },
+          {
+            account: {
+              company: null,
+              instrument: 'RUB',
+              syncIds: ['40817810000000000002'],
+              type: 'checking'
+            },
+            fee: 0,
+            id: null,
+            invoice: null,
+            sum: -2000000
+          }
+        ]
+      }
     ]
   ])('should convert inner transfer', (rawTransaction, accountsById, transaction) => {
     expect(convertTransaction(rawTransaction, accountsById)).toEqual(transaction)

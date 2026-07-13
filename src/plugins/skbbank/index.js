@@ -10,7 +10,7 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
   const products = await fetchProducts()
   const accounts = convertAccounts(products)
   const accountsById = groupAccountsById(accounts)
-  const operations = await fetchTransactions(fromDate, toDate)
+  const operations = await fetchTransactions(fromDate, toDate, accountsById)
   const transactions = operations.map(transaction => convertTransaction(transaction, accountsById)).filter(x => x)
   return {
     accounts,

@@ -105,16 +105,17 @@ export async function fetchProducts () {
  * Возвращает true для тех операций из листинга, для которых не хватает какой-то информации, и нужно
  * запросить отдельным запросом детали.
  * @param op объект операции из ответа
+ * @param accountsById список аккаунтов
  * @returns {boolean}
  */
-function needOperationDetails (op) {
+function needOperationDetails (op, accountsById) {
   return (
     // Транзакция и сумма в иностранной валюте, нужно узнать сумму списания (пополнения?) в рублях
     op.view.amounts.currency !== 'RUB' ||
 
     // Транзакция без аккаунта (такое бывает при стягивании с других карт),
     // дополнительные идентификаторы будут в деталях.
-    !op.view.productAccount ||
+    !op.view.productAccount || !accountsById[op.view.productAccount] ||
 
     // Переводы между счетами.
     // В краткой сводке не хватает информации о том, на какой счет ушел перевод.
@@ -122,7 +123,7 @@ function needOperationDetails (op) {
   )
 }
 
-export async function fetchTransactions (fromDate, toDate = null) {
+export async function fetchTransactions (fromDate, toDate = null, accountsById) {
   const chunkSize = 50
   const transactions = []
   let offset = 0
@@ -141,7 +142,7 @@ export async function fetchTransactions (fromDate, toDate = null) {
         stopIterate = true
         break
       }
-      if (needOperationDetails(op)) {
+      if (needOperationDetails(op, accountsById)) {
         const detailsResp = await fetchApiJson('operations/' + op.info.operationType + '_details?id=' + op.info.id)
         console.assert(detailsResp.status === 200, 'Не удалось получить транзакцию #' + op.info.id, { detailsResp })
         op.details = detailsResp.body
