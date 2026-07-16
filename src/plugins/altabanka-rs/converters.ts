@@ -1,7 +1,6 @@
 import { AccountOrCard, AccountType, ExtendedTransaction, Transaction } from '../../types/zenmoney'
 import { AccountInfo, AccountTransaction } from './models'
-import { toISODateString, dateInTimezone } from '../../common/dateUtils'
-import { getNumber, getString } from '../../types/get'
+import { getOptNumber, getOptString } from '../../types/get'
 
 export function convertAccounts (apiAccounts: AccountInfo[]): AccountOrCard[] {
   return apiAccounts.map(apiAccount => {
@@ -94,10 +93,6 @@ function parseInnerTransfer (transaction: ExtendedTransaction, accountTransactio
     /Interni transfer/i,
     /Kupovina deviza/i
   ].some(regex => regex.test(accountTransaction.address))) {
-    transaction.groupKeys = [
-      `${toISODateString(dateInTimezone(transaction.date, 180)).slice(0, 10)}_${invoice.instrument}_${Math.abs(invoice.sum)}`,
-      accountTransaction.id
-    ]
     transaction.merchant = null
     transaction.comment = accountTransaction.address
 
@@ -123,10 +118,33 @@ function parsePayeeAndComment (transaction: ExtendedTransaction, accountTransact
 }
 
 export function deduplicateTransactions (transactions: Transaction[]): Transaction[] {
-  const result = transactions.concat()
+  // Prefer posted when hold and posted share the same movement id (canonical card reference).
+  const byId = new Map<string, Transaction>()
+  const withoutId: Transaction[] = []
+
+  for (const transaction of transactions) {
+    const id = transaction.movements[0]?.id
+    if (typeof id !== 'string') {
+      withoutId.push(transaction)
+      continue
+    }
+    const existing = byId.get(id)
+    if (existing == null) {
+      byId.set(id, transaction)
+      continue
+    }
+    if (existing.hold === true && transaction.hold !== true) {
+      byId.set(id, transaction)
+    }
+  }
+
+  const result = [...byId.values(), ...withoutId]
+  // Soft fallback for pairs that still use different movement ids.
   for (let i = 0; i < result.length; ++i) {
     for (let j = i + 1; j < result.length; ++j) {
-      if (getDeduplicationKey(result[i]) === getDeduplicationKey(result[j])) {
+      const leftKey = getDeduplicationKey(result[i])
+      const rightKey = getDeduplicationKey(result[j])
+      if (leftKey !== null && leftKey === rightKey) {
         result[i].hold = false
         result.splice(j--, 1)
       }
@@ -140,9 +158,9 @@ function getDeduplicationKey (transaction: Transaction): string | null {
     return null
   }
   const movement = transaction.movements[0]
-  const accountId = getString(movement.account, 'id')
-  const sum = getNumber(movement, 'sum')
-  if (accountId === null || sum === null) {
+  const accountId = getOptString(movement.account, 'id')
+  const sum = getOptNumber(movement, 'sum')
+  if (accountId === undefined || sum === undefined) {
     return null
   }
   return JSON.stringify({

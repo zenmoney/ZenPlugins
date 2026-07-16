@@ -1,5 +1,12 @@
 import moment from 'moment'
-import { parseAccountInfo, parseCards, parseCardTurnover, parseEnvironment, parseReservedFunds, parseTransactions } from '../../parsers'
+import { canonicalTransactionReference, parseAccountInfo, parseCards, parseCardTurnover, parseEnvironment, parseReservedFunds, parseTransactions } from '../../parsers'
+
+describe('canonicalTransactionReference', () => {
+  it('strips the CC- prefix so reserved and card share one id stem', () => {
+    expect(canonicalTransactionReference('CC-20000001R')).toBe('20000001R')
+    expect(canonicalTransactionReference('20000001R')).toBe('20000001R')
+  })
+})
 
 describe('parseEnvironment', () => {
   it('extracts request token and authentication state after login', () => {
@@ -205,7 +212,7 @@ describe('parseCardTurnover', () => {
 
     expect(parseCardTurnover(body, fromDate)).toEqual([
       {
-        id: 'id_CC-10000001E',
+        id: 'id_10000001E',
         date: moment('18.06.2026 00:00:00', 'DD.MM.YYYY HH:mm:ss').toDate(),
         address: 'STUDIO3 - B6 BEOGRAD',
         amount: -2380,
@@ -213,7 +220,7 @@ describe('parseCardTurnover', () => {
         description: ''
       },
       {
-        id: 'id_CC-10000002E',
+        id: 'id_10000002E',
         date: moment('20.06.2026 00:00:00', 'DD.MM.YYYY HH:mm:ss').toDate(),
         address: 'DELHAIZE SERBIA DOO BE BEOGRAD',
         amount: 208.99,
@@ -221,7 +228,7 @@ describe('parseCardTurnover', () => {
         description: ''
       },
       {
-        id: 'id_CC-10000003E',
+        id: 'id_10000003E',
         date: moment('03.06.2026 00:00:00', 'DD.MM.YYYY HH:mm:ss').toDate(),
         address: 'Shell Yverdon Yverdon-les-B',
         amount: -4985.39,
@@ -230,6 +237,68 @@ describe('parseCardTurnover', () => {
         invoice: { sum: -42.47, instrument: 'EUR' }
       }
     ])
+  })
+
+  it('skips unconfirmed card rows (placeholder date 01.01.0001)', () => {
+    const body = [[
+      ['', '', ''],
+      [
+        cardRow({
+          debit: '340.97',
+          credit: '0',
+          originalCurrency: 'RSD',
+          reference: 'CC-20000001R',
+          description: 'Visa Electron potrošnja Wallet: GALEN PHARM&gt; RS',
+          transactionDate: '01.01.0001 00:00:00',
+          domesticAmount: '340.97',
+          accountCurrency: 'RSD'
+        }),
+        cardRow({
+          debit: '2380.00',
+          credit: '0',
+          originalCurrency: 'RSD',
+          reference: 'CC-10000001E',
+          description: 'Visa Electron potrošnja - POS druge banke u zemlji Wallet: STUDIO3 - B6                BEOGRAD',
+          transactionDate: '18.06.2026 00:00:00',
+          domesticAmount: '2380.00',
+          accountCurrency: 'RSD'
+        })
+      ]
+    ]]
+
+    expect(parseCardTurnover(body, fromDate)).toEqual([
+      {
+        id: 'id_10000001E',
+        date: moment('18.06.2026 00:00:00', 'DD.MM.YYYY HH:mm:ss').toDate(),
+        address: 'STUDIO3 - B6 BEOGRAD',
+        amount: -2380,
+        currency: 'RSD',
+        description: ''
+      }
+    ])
+  })
+
+  it('decodes HTML entities in merchant address', () => {
+    const body = [[
+      ['', '', ''],
+      [
+        cardRow({
+          debit: '100.00',
+          credit: '0',
+          originalCurrency: 'RSD',
+          reference: 'CC-20000001R',
+          description: 'Visa Electron Wallet: GALEN PHARM&gt; RS',
+          transactionDate: '13.07.2026 00:00:00',
+          domesticAmount: '100.00',
+          accountCurrency: 'RSD'
+        })
+      ]
+    ]]
+
+    expect(parseCardTurnover(body, fromDate)[0]).toMatchObject({
+      id: 'id_20000001R',
+      address: 'GALEN PHARM> RS'
+    })
   })
 
   it('does not build a foreign invoice for a zero original amount (foreign refund edge case)', () => {
@@ -242,7 +311,7 @@ describe('parseCardTurnover', () => {
 
     expect(parseCardTurnover(body, fromDate)).toEqual([
       {
-        id: 'id_CC-10000004E',
+        id: 'id_10000004E',
         date: moment('10.06.2026 00:00:00', 'DD.MM.YYYY HH:mm:ss').toDate(),
         address: 'REFUND MERCHANT PARIS',
         amount: 500,
@@ -269,8 +338,8 @@ describe('parseReservedFunds', () => {
         DebitAmountDomestic: 340.97,
         CreditAmountDomestic: null,
         CurrencyCode: 'RSD',
-        Description: 'KRALJA MILANA 28>BEOGRAD              RS',
-        Reference: '10000001R',
+        Description: 'KRALJA MILANA 28&gt;BEOGRAD              RS',
+        Reference: '20000001R',
         ValueDate: '2026-06-23T00:00:00'
       },
       {
@@ -288,7 +357,7 @@ describe('parseReservedFunds', () => {
 
     expect(parseReservedFunds(body, fromDate)).toEqual([
       {
-        id: 'id_10000001R',
+        id: 'id_20000001R',
         date: new Date('2026-06-23T00:00:00'),
         address: 'KRALJA MILANA 28>BEOGRAD RS',
         amount: -340.97,
@@ -304,6 +373,32 @@ describe('parseReservedFunds', () => {
         description: ''
       }
     ])
+  })
+
+  it('uses the same movement id stem as card turnover for a shared reference', () => {
+    const reserved = parseReservedFunds([{
+      Status: 'p',
+      Category: 'd',
+      AmountTotal: 100,
+      CurrencyCode: 'RSD',
+      Description: 'GALEN PHARM> RS',
+      Reference: '20000001R',
+      ValueDate: '2026-07-13T00:00:00'
+    }], fromDate)
+
+    const cardRow = new Array<string>(29).fill('0')
+    cardRow[9] = '100.00'
+    cardRow[11] = 'RSD'
+    cardRow[14] = 'CC-20000001R'
+    cardRow[17] = 'Visa Electron Wallet: OTHER MERCHANT BEOGRAD'
+    cardRow[24] = '14.07.2026 00:00:00'
+    cardRow[25] = '100.00'
+    cardRow[28] = 'RSD'
+
+    const card = parseCardTurnover([[['', '', ''], [cardRow]]], fromDate)
+
+    expect(reserved[0].id).toBe('id_20000001R')
+    expect(card[0].id).toBe('id_20000001R')
   })
 
   it('keeps zero-amount released holds for the converter to drop', () => {
