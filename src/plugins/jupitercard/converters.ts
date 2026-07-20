@@ -58,6 +58,27 @@ export function convertAccounts (cards: JupiterCard[], balance: JupiterBalance):
   })
 }
 
+// Card statuses where money actually moved or is committed: COMPLETED (settled) and
+// AUTHORIZED (a hold that will settle). An allowlist, so an unseen status is treated as a
+// non-charge and skipped rather than booked on a guess.
+const MONEY_MOVED_STATUS = new Set(['COMPLETED', 'AUTHORIZED'])
+
+// True when a card charge was refused and no money moved (e.g. INSUFFICIENT_FUNDS). Booking
+// one puts an expense in the ledger that never happened, and nothing later reverses it.
+// Only CARD rows carry a status; on-chain deposits/withdrawals never do. A card row with no
+// status is treated as not-declined — older records lack the field, and we must not start
+// dropping real history.
+export function isDeclined (tx: JupiterTransaction): boolean {
+  if (tx.type !== 'CARD') {
+    return false
+  }
+  const status = tx.card?.status
+  if (status == null || status === '') {
+    return false
+  }
+  return !MONEY_MOVED_STATUS.has(status.toUpperCase())
+}
+
 function commentFor (tx: JupiterTransaction): string | null {
   const type = typeof tx.type === 'string' ? tx.type : ''
   if (type === 'CARD') {
@@ -73,10 +94,14 @@ function commentFor (tx: JupiterTransaction): string | null {
   return parts.length > 0 ? parts.join(' · ') : null
 }
 
-// Returns null for a record we cannot represent honestly. Emitting one anyway would put
-// a corrupt entry in the ledger: a malformed amount silently becomes 0 and misstates the
-// balance, and a malformed timestamp becomes an Invalid Date.
+// Returns null for a record we must not book. Emitting one anyway would put a corrupt entry
+// in the ledger: a declined charge becomes a phantom expense, a malformed amount silently
+// becomes 0 and misstates the balance, and a malformed timestamp becomes an Invalid Date.
 export function convertTransaction (tx: JupiterTransaction, accountId: string): Transaction | null {
+  // A decline carries a full amount and a valid date; only card.status gives it away.
+  if (isDeclined(tx)) {
+    return null
+  }
   const date = new Date(tx.transactionTimestamp ?? '') // missing → Invalid Date → skipped below
   if (Number.isNaN(date.getTime())) {
     return null

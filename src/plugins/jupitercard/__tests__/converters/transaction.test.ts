@@ -112,4 +112,36 @@ describe('convertTransaction', () => {
       expect(transaction.movements[0].sum).toBe(500)
     })
   })
+
+  describe('declined card charges', () => {
+    const carded = (status: string | null): JupiterTransaction =>
+      tx({ card: { merchantName: 'COFFEE SHOP', merchantCategoryCode: '5814', status, settlementTimestamp: null } })
+
+    it('does NOT book INSUFFICIENT_FUNDS — a decline moved no money', () => {
+      // It has a full amount and a valid date; only card.status reveals it was refused.
+      expect(convertTransaction(carded('INSUFFICIENT_FUNDS'), 'a')).toBeNull()
+    })
+
+    it('books COMPLETED and AUTHORIZED', () => {
+      expect(convertTransaction(carded('COMPLETED'), 'a')).not.toBeNull()
+      const held = convert(carded('AUTHORIZED'), 'a')
+      expect(held.hold).toBe(true) // authorised but unsettled
+    })
+
+    it('skips an UNSEEN status rather than booking it on a guess (allowlist)', () => {
+      for (const s of ['DO_NOT_HONOR', 'EXPIRED', 'REVERSED', 'DECLINED']) {
+        expect(convertTransaction(carded(s), 'a')).toBeNull()
+      }
+    })
+
+    it('books a card row with no status — older records lack the field', () => {
+      expect(convertTransaction(carded(null), 'a')).not.toBeNull()
+      expect(convertTransaction(tx(), 'a')).not.toBeNull() // fixture has no status
+    })
+
+    it('never declines an on-chain movement (deposits/withdrawals carry no status)', () => {
+      const deposit = tx({ type: 'DEPOSIT', direction: 'CREDIT', settlementAmount: '500.00', card: null, onchainSignature: 'sig1' })
+      expect(convertTransaction(deposit, 'a')).not.toBeNull()
+    })
+  })
 })
