@@ -42,8 +42,8 @@ global.fetch = function (url?: unknown, options?: unknown): any {
       ? _fetchCookie
       : makeFetchCookie(_fetch, {
         getCookieString: async () => '',
-        setCookie: async function (cookieString: string, currentUrl: string, opts: { ignoreError: boolean }) {
-          return await cookieJar.setCookie(cookieString, currentUrl, opts)
+        setCookie: async function () {
+          return await cookieJar.setCookie.apply(cookieJar, arguments as any)
         }
       })
   return impl.call(this, url, options)
