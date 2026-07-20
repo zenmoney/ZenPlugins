@@ -1,5 +1,5 @@
 import moment from 'moment'
-import { canonicalTransactionReference, parseAccountInfo, parseCards, parseCardTurnover, parseEnvironment, parseReservedFunds, parseTransactions } from '../../parsers'
+import { canonicalTransactionReference, parseAccountInfo, parseCardReservedFunds, parseCards, parseCardTurnover, parseEnvironment, parseReservedFunds, parseTransactions } from '../../parsers'
 
 describe('canonicalTransactionReference', () => {
   it('strips the CC- prefix so reserved and card share one id stem', () => {
@@ -424,5 +424,147 @@ describe('parseReservedFunds', () => {
         description: ''
       }
     ])
+  })
+
+  it('skips card authorizations (Source === crd) fetched from the card reserved endpoint', () => {
+    const body = [
+      {
+        Status: 'p',
+        Category: 'd',
+        AmountTotal: 340.97,
+        CurrencyCode: 'RSD',
+        Description: 'KRALJA MILANA 28&gt;BEOGRAD RS',
+        Reference: '20000001R',
+        Source: 'crd',
+        ValueDate: '2026-06-23T00:00:00'
+      },
+      {
+        Status: 'p',
+        Category: 'd',
+        AmountTotal: 5000,
+        CurrencyCode: 'RSD',
+        Description: 'Pending transfer',
+        Reference: '20000009P',
+        Source: 'pmt',
+        ValueDate: '2026-06-24T00:00:00'
+      }
+    ]
+
+    expect(parseReservedFunds(body, fromDate)).toEqual([
+      {
+        id: 'id_20000009P',
+        date: new Date('2026-06-24T00:00:00'),
+        address: 'Pending transfer',
+        amount: -5000,
+        currency: 'RSD',
+        description: ''
+      }
+    ])
+  })
+})
+
+describe('parseCardReservedFunds', () => {
+  const fromDate = new Date('2026-07-01T00:00:00')
+
+  function cardReservedRow (fields: {
+    account: string
+    currency: string
+    valueDate: string
+    reference: string
+    description: string
+    originalAmount: string
+    direction: string
+    domesticAmount: string
+  }): string[] {
+    const row = new Array<string>(66).fill('')
+    row[3] = fields.account
+    row[7] = fields.currency
+    row[9] = fields.valueDate
+    row[12] = fields.reference
+    row[13] = fields.description
+    row[17] = fields.originalAmount
+    row[32] = fields.direction
+    row[42] = 'p'
+    row[51] = fields.domesticAmount
+    row[62] = '01.01.0001 00:00:00'
+    row[65] = 'crd'
+    return row
+  }
+
+  it('parses a domestic (RSD) pending card authorization without invoice', () => {
+    const body = [
+      cardReservedRow({
+        account: '0001000000001',
+        currency: 'RSD',
+        valueDate: '19.07.2026 00:00:00',
+        reference: 'CC-20000001R',
+        description: 'KRALJA MILANA 28&gt;BEOGRAD              RS',
+        originalAmount: '573.10',
+        direction: 'd',
+        domesticAmount: '573.10'
+      })
+    ]
+
+    expect(parseCardReservedFunds(body, 'RSD', fromDate)).toEqual([
+      {
+        id: 'id_20000001R',
+        date: moment('19.07.2026 00:00:00', 'DD.MM.YYYY HH:mm:ss').toDate(),
+        address: 'KRALJA MILANA 28>BEOGRAD RS',
+        amount: -573.1,
+        currency: 'RSD',
+        description: ''
+      }
+    ])
+  })
+
+  it('parses a foreign (HUF) pending card authorization with domestic sum and original invoice', () => {
+    const body = [
+      cardReservedRow({
+        account: '0001000000001',
+        currency: 'HUF',
+        valueDate: '19.07.2026 00:00:00',
+        reference: 'CC-20000002R',
+        description: 'AUCHAN SOROKSAR&gt;BUDAPEST              HU',
+        originalAmount: '31874.00',
+        direction: 'd',
+        domesticAmount: '10393.57'
+      })
+    ]
+
+    expect(parseCardReservedFunds(body, 'RSD', fromDate)).toEqual([
+      {
+        id: 'id_20000002R',
+        date: moment('19.07.2026 00:00:00', 'DD.MM.YYYY HH:mm:ss').toDate(),
+        address: 'AUCHAN SOROKSAR>BUDAPEST HU',
+        amount: -10393.57,
+        currency: 'RSD',
+        description: '',
+        invoice: { sum: -31874, instrument: 'HUF' }
+      }
+    ])
+  })
+
+  it('handles a credit (refund) authorization', () => {
+    const body = [
+      cardReservedRow({
+        account: '0001000000001',
+        currency: 'RSD',
+        valueDate: '20.07.2026 00:00:00',
+        reference: 'CC-20000003R',
+        description: 'REFUND MERCHANT&gt;BEOGRAD RS',
+        originalAmount: '500.00',
+        direction: 'c',
+        domesticAmount: '500.00'
+      })
+    ]
+
+    expect(parseCardReservedFunds(body, 'RSD', fromDate)[0]).toMatchObject({
+      id: 'id_20000003R',
+      amount: 500
+    })
+  })
+
+  it('returns empty array when the response is an error object instead of an array', () => {
+    expect(parseCardReservedFunds({ ErrorCode: 'Err_0', Message: 'error' }, 'RSD', fromDate)).toEqual([])
   })
 })

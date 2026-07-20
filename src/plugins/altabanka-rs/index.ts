@@ -2,7 +2,7 @@ import { Account, ScrapeFunc, Transaction } from '../../types/zenmoney'
 import { UserInteractionError } from '../../errors'
 import { AccountInfo, Preferences } from './models'
 import { convertAccounts, convertTransaction, deduplicateTransactions } from './converters'
-import { fetchAccounts, fetchCardTransactions, fetchCards, fetchReservedTransactions, fetchTransactions, login } from './api'
+import { fetchAccounts, fetchCardReservedTransactions, fetchCardTransactions, fetchCards, fetchReservedTransactions, fetchTransactions, login } from './api'
 
 export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, toDate, isInBackground }) => {
   if (isInBackground) {
@@ -51,6 +51,13 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
     const apiTransactions = await fetchCardTransactions(session, card, currencies, fromDate, toDate ?? new Date())
     transactions.push(...apiTransactions
       .map(t => convertTransaction(t, account))
+      .filter((tx): tx is Transaction => tx !== null))
+
+    // Pending card authorizations (all currencies, incl. foreign like HUF) live in a
+    // card-specific reserved funds endpoint.
+    const reservedCardTransactions = await fetchCardReservedTransactions(session, card, fromDate)
+    transactions.push(...reservedCardTransactions
+      .map(t => convertTransaction(t, account, true))
       .filter((tx): tx is Transaction => tx !== null))
   }))
 

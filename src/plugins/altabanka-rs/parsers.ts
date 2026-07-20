@@ -158,18 +158,48 @@ export function parseCardTurnover (body: unknown, fromDate: Date): AccountTransa
 export function parseReservedFunds (body: unknown, fromDate: Date): AccountTransaction[] {
   const rows = asArray(body)
 
-  return rows.map(row => {
-    const amount = getOptNumber(row, 'AmountTotal') ?? 0
-    const date = moment(getOptString(row, 'ValueDate') ?? '').toDate()
-    const currency = getOptString(row, 'CurrencyCode') ?? ''
+  return rows
+    // Card authorizations are fetched per card from GetCardReservedFundsALTA (all currencies);
+    // the account-level endpoint only returns them in the account currency, so skip them here.
+    .filter(row => getOptString(row, 'Source') !== 'crd')
+    .map(row => {
+      const amount = getOptNumber(row, 'AmountTotal') ?? 0
+      const date = moment(getOptString(row, 'ValueDate') ?? '').toDate()
+      const currency = getOptString(row, 'CurrencyCode') ?? ''
 
-    return {
-      id: movementIdFromReference(getOptString(row, 'Reference') ?? ''),
+      return {
+        id: movementIdFromReference(getOptString(row, 'Reference') ?? ''),
+        date: isValidDate(date) ? date : fromDate,
+        address: normalizeAddress(getOptString(row, 'Description') ?? ''),
+        amount: getOptString(row, 'Category') === 'c' ? amount : -amount,
+        currency: currency === '' ? undefined : currency,
+        description: ''
+      }
+    })
+}
+
+export function parseCardReservedFunds (body: unknown, accountCurrency: string, fromDate: Date): AccountTransaction[] {
+  const rows = asArray(body)
+
+  return rows.map(row => {
+    const sign = getString(row, '32') === 'c' ? 1 : -1
+    const originalCurrency = getString(row, '7')
+    const date = moment(getString(row, '9'), 'DD.MM.YYYY HH:mm:ss').toDate()
+
+    const result: AccountTransaction = {
+      id: movementIdFromReference(getString(row, '12')),
       date: isValidDate(date) ? date : fromDate,
-      address: normalizeAddress(getOptString(row, 'Description') ?? ''),
-      amount: getOptString(row, 'Category') === 'c' ? amount : -amount,
-      currency: currency === '' ? undefined : currency,
+      address: normalizeAddress(getString(row, '13')),
+      amount: sign * parseFloat(getString(row, '51')),
+      currency: accountCurrency === '' ? undefined : accountCurrency,
       description: ''
     }
+
+    const originalAmount = sign * parseFloat(getString(row, '17'))
+    if (originalCurrency !== '' && originalCurrency !== accountCurrency && originalAmount !== 0) {
+      result.invoice = { sum: originalAmount, instrument: originalCurrency }
+    }
+
+    return result
   })
 }
