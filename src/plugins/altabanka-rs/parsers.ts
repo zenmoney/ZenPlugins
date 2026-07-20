@@ -1,14 +1,30 @@
 import moment from 'moment'
 import { isValidDate } from '../../common/dateUtils'
+import { decodeHtmlSpecialCharacters } from '../../common/stringUtils'
 import { getOptBoolean, getOptNumber, getOptString, getString } from '../../types/get'
 import { AccountInfo, AccountTransaction, Card, Environment } from './models'
 
 const exchangeRateRegex = /\d+\.\d+ \w{3} Kurs:.+/
+// Card turnover uses this placeholder until the authorization is posted.
+const UNCONFIRMED_CARD_DATE = '01.01.0001'
 
 function asArray (value: unknown): unknown[] {
   // Some endpoints return an error object (e.g. for an unsupported AccountType)
   // instead of an array, so we tolerate non-arrays instead of throwing.
   return Array.isArray(value) ? value : []
+}
+
+// ReservedFunds Reference `19633484R` and CardTurnover `CC-19633484R` are the same auth.
+export function canonicalTransactionReference (reference: string): string {
+  return reference.replace(/^CC-/i, '')
+}
+
+function movementIdFromReference (reference: string): string {
+  return 'id_' + canonicalTransactionReference(reference)
+}
+
+function normalizeAddress (text: string): string {
+  return decodeHtmlSpecialCharacters(text.replace(/\s+/g, ' ').trim())
 }
 
 export function parseEnvironment (body: unknown): Environment {
@@ -63,7 +79,7 @@ export function parseTransactions (body: unknown, fromDate: Date): AccountTransa
     const date = moment(getString(row, '7'), 'DD.MM.YYYY HH:mm:ss').toDate()
     const rawCurrency = getString(row, '30')
 
-    let text = getString(row, '15').replace(/\s+/g, ' ').trim().replace('Kartica: ', '')
+    let text = normalizeAddress(getString(row, '15')).replace('Kartica: ', '')
     const description = text.match(exchangeRateRegex)?.[0] ?? ''
     text = text.replace(description, '').trim()
 
@@ -101,24 +117,30 @@ export function parseCardTurnover (body: unknown, fromDate: Date): AccountTransa
   const inner = asArray(outer[0])
   const transactionRows = inner.length > 1 ? asArray(inner[1]) : []
 
-  return transactionRows.map(row => {
+  return transactionRows.flatMap(row => {
+    const dateRaw = getString(row, '24')
+    // Unconfirmed authorizations duplicate ReservedFunds; import holds from reserved only.
+    if (dateRaw.startsWith(UNCONFIRMED_CARD_DATE)) {
+      return []
+    }
+
     // Empty columns arrive as '0' (not ''), so detect a debit by a non-zero amount.
     const debit = getString(row, '9')
     const sign = debit !== '' && parseFloat(debit) !== 0 ? -1 : 1
     const domesticAmount = sign * parseFloat(getString(row, '25'))
     const accountCurrency = getString(row, '28')
     const originalCurrency = getString(row, '11')
-    const date = moment(getString(row, '24'), 'DD.MM.YYYY HH:mm:ss').toDate()
+    const date = moment(dateRaw, 'DD.MM.YYYY HH:mm:ss').toDate()
 
-    const address = getString(row, '17')
-      .split(': ').slice(1).join(': ')
-      .replace(/\s+/g, ' ')
-      .trim()
+    const address = normalizeAddress(
+      getString(row, '17')
+        .split(': ').slice(1).join(': ')
+    )
 
     const result: AccountTransaction = {
-      id: 'id_' + getString(row, '14'),
+      id: movementIdFromReference(getString(row, '14')),
       date: isValidDate(date) ? date : fromDate,
-      address: address === '' ? getString(row, '17').replace(/\s+/g, ' ').trim() : address,
+      address: address === '' ? normalizeAddress(getString(row, '17')) : address,
       amount: domesticAmount,
       currency: accountCurrency === '' ? undefined : accountCurrency,
       description: ''
@@ -129,25 +151,55 @@ export function parseCardTurnover (body: unknown, fromDate: Date): AccountTransa
       result.invoice = { sum: originalAmount, instrument: originalCurrency }
     }
 
-    return result
+    return [result]
   })
 }
 
 export function parseReservedFunds (body: unknown, fromDate: Date): AccountTransaction[] {
   const rows = asArray(body)
 
-  return rows.map(row => {
-    const amount = getOptNumber(row, 'AmountTotal') ?? 0
-    const date = moment(getOptString(row, 'ValueDate') ?? '').toDate()
-    const currency = getOptString(row, 'CurrencyCode') ?? ''
+  return rows
+    // Card authorizations are fetched per card from GetCardReservedFundsALTA (all currencies);
+    // the account-level endpoint only returns them in the account currency, so skip them here.
+    .filter(row => getOptString(row, 'Source') !== 'crd')
+    .map(row => {
+      const amount = getOptNumber(row, 'AmountTotal') ?? 0
+      const date = moment(getOptString(row, 'ValueDate') ?? '').toDate()
+      const currency = getOptString(row, 'CurrencyCode') ?? ''
 
-    return {
-      id: 'id_' + (getOptString(row, 'Reference') ?? ''),
+      return {
+        id: movementIdFromReference(getOptString(row, 'Reference') ?? ''),
+        date: isValidDate(date) ? date : fromDate,
+        address: normalizeAddress(getOptString(row, 'Description') ?? ''),
+        amount: getOptString(row, 'Category') === 'c' ? amount : -amount,
+        currency: currency === '' ? undefined : currency,
+        description: ''
+      }
+    })
+}
+
+export function parseCardReservedFunds (body: unknown, accountCurrency: string, fromDate: Date): AccountTransaction[] {
+  const rows = asArray(body)
+
+  return rows.map(row => {
+    const sign = getString(row, '32') === 'c' ? 1 : -1
+    const originalCurrency = getString(row, '7')
+    const date = moment(getString(row, '9'), 'DD.MM.YYYY HH:mm:ss').toDate()
+
+    const result: AccountTransaction = {
+      id: movementIdFromReference(getString(row, '12')),
       date: isValidDate(date) ? date : fromDate,
-      address: (getOptString(row, 'Description') ?? '').replace(/\s+/g, ' ').trim(),
-      amount: getOptString(row, 'Category') === 'c' ? amount : -amount,
-      currency: currency === '' ? undefined : currency,
+      address: normalizeAddress(getString(row, '13')),
+      amount: sign * parseFloat(getString(row, '51')),
+      currency: accountCurrency === '' ? undefined : accountCurrency,
       description: ''
     }
+
+    const originalAmount = sign * parseFloat(getString(row, '17'))
+    if (originalCurrency !== '' && originalCurrency !== accountCurrency && originalAmount !== 0) {
+      result.invoice = { sum: originalAmount, instrument: originalCurrency }
+    }
+
+    return result
   })
 }

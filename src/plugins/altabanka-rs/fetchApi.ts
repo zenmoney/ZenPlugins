@@ -1,6 +1,6 @@
 import moment from 'moment'
 import { fetch, fetchJson, FetchOptions, FetchResponse } from '../../common/network'
-import { parseAccountInfo, parseCards, parseCardTurnover, parseEnvironment, parseReservedFunds, parseTransactions } from './parsers'
+import { parseAccountInfo, parseCardReservedFunds, parseCards, parseCardTurnover, parseEnvironment, parseReservedFunds, parseTransactions } from './parsers'
 import { AccountInfo, AccountTransaction, Card, Environment } from './models'
 
 const baseUrl = 'https://online.altabanka.rs/Retail/Protected/Services/'
@@ -115,4 +115,16 @@ export async function fetchReservedFunds (
     body: { accountNumber, gridName: null }
   })
   return parseReservedFunds(response.body, fromDate)
+}
+
+export async function fetchCardReservedFunds (
+  token: string,
+  cardId: string,
+  accountCurrency: string,
+  fromDate: Date
+): Promise<AccountTransaction[]> {
+  const response = await fetchApi('DataService.svc/GetCardReservedFundsALTA', token, {
+    body: { cardId, gridName: 'RetailCardReservedFunds' }
+  })
+  return parseCardReservedFunds(response.body, accountCurrency, fromDate)
 }

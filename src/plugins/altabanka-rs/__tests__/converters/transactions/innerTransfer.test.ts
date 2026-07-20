@@ -32,11 +32,7 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: null,
-        comment: 'Interni transfer - Isplata DS',
-        groupKeys: [
-          '2025-09-15_RSD_40000',
-          'id_wt7rXfmUMmVgroIlNmVEvMfHyEX8Ldq4A6ZxYgnIfCIjdZ8FtfOJSQCtD%2FmrjSgj1zHjx%2Btw4sQ%3D'
-        ]
+        comment: 'Interni transfer - Isplata DS'
       }
     ],
     [
@@ -69,11 +65,7 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: null,
-        comment: 'Interni transfer - Uplata TR',
-        groupKeys: [
-          '2025-09-15_RSD_40000',
-          'id_wt7rXfmUMmVgroIlNmVEvMfHyEX8Ldq41DLFWmga94nrZNHdx0JxXiC5bJi8cVub5jCblKRgIp4%3D'
-        ]
+        comment: 'Interni transfer - Uplata TR'
       }
     ]
   ])('converts inner transfer', (apiTransaction, account, transaction) => {
@@ -111,11 +103,7 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: null,
-        comment: 'Kupovina deviza',
-        groupKeys: [
-          '2025-12-06_RSD_58957',
-          'id_viqYbg6BsBuDFJFg3r77%2ByeZvsYr6X7fmRAo6AuNYQYBfY2cH7MAJ8g8iCUfQ3Yie6bTzJdpehE%3D'
-        ]
+        comment: 'Kupovina deviza'
       }
     ],
     [
@@ -148,11 +136,7 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: null,
-        comment: 'Kupovina deviza',
-        groupKeys: [
-          '2025-12-06_EUR_500',
-          'id_viqYbg6BsBuDFJFg3r77%2ByeZvsYr6X7f4nRf9PIIC9Mess7n7trIZFF4KADMvYR2ivh%2BXrHnFI4%3D'
-        ]
+        comment: 'Kupovina deviza'
       }
     ]
   ])('converts inner currency transfer', (apiTransaction, account, transaction) => {

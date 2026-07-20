@@ -2,6 +2,7 @@ import { InvalidOtpCodeError } from '../../errors'
 import {
   fetchAccountTurnover,
   fetchAccounts as fetchAccountsApi,
+  fetchCardReservedFunds,
   fetchCardTurnover,
   fetchCards as fetchCardsApi,
   fetchEnvironment,
@@ -59,6 +60,14 @@ export async function fetchReservedTransactions (
 
 export async function fetchCards (session: Session): Promise<Card[]> {
   return await fetchCardsApi(session.requestToken)
+}
+
+export async function fetchCardReservedTransactions (
+  session: Session,
+  card: Card,
+  fromDate: Date
+): Promise<AccountTransaction[]> {
+  return await fetchCardReservedFunds(session.requestToken, card.primaryCardID, card.currency, fromDate)
 }
 
 export async function fetchCardTransactions (
