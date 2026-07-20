@@ -6,17 +6,25 @@ function num (value: string | number | null | undefined): number {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
+// USD-pegged stablecoins, folded into USD. ONLY 1:1 dollar stablecoins belong here — each is
+// a dollar by design, so booking it as USD is exact. Real fiat (EUR, GBP…) is deliberately
+// absent: EUR is not a dollar and ZenMoney supports it. Volatile crypto (BTC, ETH, SOL…) is
+// absent for the same reason — it has a price, not a peg.
+const USD_STABLECOINS = new Set([
+  'USDC', 'USDT', 'USDT0', 'PYUSD', 'DAI', 'USDP', 'TUSD', 'FDUSD', 'USDE', 'USDS', 'USDG', 'GUSD', 'BUSD', 'USDD'
+])
+
 // Normalise a currency code for ZenMoney.
 //
-// Two problems come off Jupiter's API: the case is inconsistent ('usdc' and 'USDC' both
-// appear, while ZenMoney's instrument codes are upper-case), and the on-chain rail is USDC,
-// which ZenMoney has no instrument for. The card settles in USD and USDC is its 1:1
-// stablecoin, so it maps to USD. Without this a USDC deposit produces an invoice in an
+// Jupiter's API returns inconsistent case ('usdc' and 'USDC' both appear, while ZenMoney's
+// instrument codes are upper-case), and settles on stablecoin rails ZenMoney has no
+// instrument for (USDC above all). The card is dollar-denominated and these are 1:1 dollar
+// stablecoins, so they map to USD. Without this, a stablecoin leg produces an invoice in an
 // unknown instrument and ZenMoney rejects the whole transaction ("Could not find instrument
-// USDC"), which aborts the sync.
+// USDC"), aborting the sync.
 function normalizeCurrency (code: string | null | undefined): string {
   const c = (typeof code === 'string' ? code : '').toUpperCase()
-  return c === 'USDC' ? 'USD' : c
+  return USD_STABLECOINS.has(c) ? 'USD' : c
 }
 
 // ZenMoney identifies an account by this id forever, so it must be derived from the

@@ -163,9 +163,22 @@ describe('convertTransaction', () => {
     })
 
     it('still records a genuine FX invoice, upper-cased', () => {
-      // A EUR purchase settled in USD keeps its invoice — only USDC is folded into USD.
+      // A EUR purchase settled in USD keeps its invoice — only stablecoins fold into USD.
       const t = convert(tx({ settlementCurrency: 'USD', settlementAmount: '19.71', transactionCurrency: 'eur', transactionAmount: '17.00' }), 'a')
       expect(t.movements[0].invoice).toEqual({ sum: -17, instrument: 'EUR' })
+    })
+
+    it('folds other USD stablecoins into USD too, but never fiat or volatile crypto', () => {
+      // Stablecoins that ZenMoney may lack, all 1:1 dollars → no invoice against a USD settlement.
+      for (const sc of ['USDT0', 'PYUSD', 'DAI', 'FDUSD']) {
+        const dep = usdcDeposit({ transactionCurrency: sc })
+        expect(convert(dep, 'a').movements[0].invoice).toBeNull()
+      }
+      // EUR is real FX and BTC is not a dollar — both keep their own instrument.
+      expect(convert(tx({ settlementCurrency: 'USD', settlementAmount: '19.71', transactionCurrency: 'EUR', transactionAmount: '17' }), 'a').movements[0].invoice)
+        .toEqual({ sum: -17, instrument: 'EUR' })
+      expect(convert(tx({ settlementCurrency: 'USD', settlementAmount: '100', transactionCurrency: 'BTC', transactionAmount: '0.001' }), 'a').movements[0].invoice)
+        .toEqual({ sum: -0.001, instrument: 'BTC' })
     })
   })
 })
