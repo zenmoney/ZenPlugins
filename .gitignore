@@ -46,6 +46,7 @@ Thumbs.db
 # production
 /build
 /dist
+/log
 
 # misc
 /npm-debug.log
