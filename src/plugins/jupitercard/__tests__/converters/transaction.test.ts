@@ -144,4 +144,28 @@ describe('convertTransaction', () => {
       expect(convertTransaction(deposit, 'a')).not.toBeNull()
     })
   })
+
+  describe('currency normalisation (ZenMoney has no USDC instrument)', () => {
+    // The real crash: a USDC deposit produced an invoice in instrument 'USDC', which
+    // ZenMoney cannot resolve, aborting the whole sync.
+    const usdcDeposit = (over = {}): JupiterTransaction =>
+      tx({ type: 'DEPOSIT', direction: 'CREDIT', card: null, onchainSignature: 'sig1', settlementCurrency: 'USD', settlementAmount: '29.40', transactionCurrency: 'USDC', transactionAmount: '29.40', ...over })
+
+    it('does not emit a USDC invoice for a 1:1 USDC→USD deposit', () => {
+      // USDC normalises to USD, so it equals the settlement currency and no invoice is made.
+      const t = convert(usdcDeposit(), 'a')
+      expect(t.movements[0].invoice).toBeNull()
+      expect(t.movements[0].sum).toBe(29.4)
+    })
+
+    it('handles the API\'s inconsistent casing (usdc / USDC)', () => {
+      expect(convert(usdcDeposit({ transactionCurrency: 'usdc', settlementCurrency: 'usd' }), 'a').movements[0].invoice).toBeNull()
+    })
+
+    it('still records a genuine FX invoice, upper-cased', () => {
+      // A EUR purchase settled in USD keeps its invoice — only USDC is folded into USD.
+      const t = convert(tx({ settlementCurrency: 'USD', settlementAmount: '19.71', transactionCurrency: 'eur', transactionAmount: '17.00' }), 'a')
+      expect(t.movements[0].invoice).toEqual({ sum: -17, instrument: 'EUR' })
+    })
+  })
 })

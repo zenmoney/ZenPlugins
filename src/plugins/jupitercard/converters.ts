@@ -6,6 +6,19 @@ function num (value: string | number | null | undefined): number {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
+// Normalise a currency code for ZenMoney.
+//
+// Two problems come off Jupiter's API: the case is inconsistent ('usdc' and 'USDC' both
+// appear, while ZenMoney's instrument codes are upper-case), and the on-chain rail is USDC,
+// which ZenMoney has no instrument for. The card settles in USD and USDC is its 1:1
+// stablecoin, so it maps to USD. Without this a USDC deposit produces an invoice in an
+// unknown instrument and ZenMoney rejects the whole transaction ("Could not find instrument
+// USDC"), which aborts the sync.
+function normalizeCurrency (code: string | null | undefined): string {
+  const c = (typeof code === 'string' ? code : '').toUpperCase()
+  return c === 'USDC' ? 'USD' : c
+}
+
 // ZenMoney identifies an account by this id forever, so it must be derived from the
 // one stable key. Falling back to another field would change the account's identity
 // and leave a duplicate in the ledger permanently.
@@ -37,7 +50,7 @@ export function convertAccounts (cards: JupiterCard[], balance: JupiterBalance):
     return []
   }
 
-  const instrument = balance.currency != null && balance.currency !== '' ? balance.currency : 'USD'
+  const instrument = normalizeCurrency(balance.currency) !== '' ? normalizeCurrency(balance.currency) : 'USD'
   const spendable = typeof balance.spendableBalance === 'number' && Number.isFinite(balance.spendableBalance)
     ? balance.spendableBalance
     : null
@@ -119,12 +132,15 @@ export function convertTransaction (tx: JupiterTransaction, accountId: string): 
   const sign = tx.direction === 'CREDIT' ? 1 : -1
   const sum = sign * settlement
 
+  // The invoice records the original-currency leg only when it genuinely differs from the
+  // settlement currency. Compare NORMALISED codes: a USDC deposit settled in USD is 1:1, so
+  // after normalisation both are USD and no (crashing, pointless) USDC invoice is emitted.
   const original = Number(tx.transactionAmount)
-  const originalCurrency = tx.transactionCurrency
+  const settlementCurrency = normalizeCurrency(tx.settlementCurrency)
+  const originalCurrency = normalizeCurrency(tx.transactionCurrency)
   const invoice: Amount | null =
-    typeof originalCurrency === 'string' &&
     originalCurrency !== '' &&
-    originalCurrency !== tx.settlementCurrency &&
+    originalCurrency !== settlementCurrency &&
     Number.isFinite(original)
       ? { sum: sign * original, instrument: originalCurrency }
       : null
