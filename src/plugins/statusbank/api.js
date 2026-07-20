@@ -173,6 +173,7 @@ async function getTransactions (accountId, fromDate, toDate, sid) {
     '   <ExecuteAction Id="' + accountId + '">\r\n' +
     '      <Parameter Id="DateFrom">' + fromDate + '</Parameter>\r\n' +
     '      <Parameter Id="DateTo">' + toDate + '</Parameter>\r\n' +
+    '      <Parameter Id="B735$OpenNewWindow">N</Parameter>\r\n' +
     '   </ExecuteAction>\r\n' +
     '   <RequestType>ExecuteAction</RequestType>\r\n' +
     '   <Session SID="' + sid + '"/>\r\n' +
@@ -320,7 +321,9 @@ export async function fetchLatestOperations (sid, account) {
   console.log('>>> Загрузка списка операций...')
   const response = await fetchApi(BASE_URL,
     '<BS_Request>\r\n' +
-    '   <ExecuteAction Id="' + account.latestTrID + '"/>\r\n' +
+    '   <ExecuteAction Id="' + account.latestTrID + '">\r\n' +
+    '     <Parameter Id="WSIG:OpenNewWindow">N</Parameter>\r\n' +
+    '   </ExecuteAction>\r\n' +
     '   <RequestType>ExecuteAction</RequestType>\r\n' +
     '   <Session SID="' + sid + '"/>\r\n' +
     '   <TerminalId>stbank.ibank</TerminalId>\r\n' +
