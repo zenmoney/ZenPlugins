@@ -1,4 +1,4 @@
-import { convertTransaction, deduplicateTransactions } from '../../converters'
+import { convertTransaction, deduplicateTransactions, TransactionSource } from '../../converters'
 import { adjustTransactions } from '../../../../common/transactionGroupHandler'
 
 describe('convertTransaction', () => {
@@ -288,6 +288,135 @@ describe('convertTransaction', () => {
     }))
   })
 
+  it('does not group equal card transfers made at different times on the same day', () => {
+    const sourceAccount = { ...account, id: '73120041' }
+    const destinationAccount = { ...account, id: '73120042' }
+    const makeTransfer = (amount, authCode, date, place, type, transferAccount) => convertTransaction({
+      amount,
+      amountReal: amount,
+      authCode,
+      currency: 'USD',
+      currencyReal: 'USD',
+      date,
+      place,
+      type
+    }, transferAccount)
+    const outcome = makeTransfer(-17.25, '731841', '01.02.2035 10:15:00', 'PEREVOD NA 400000******0041', 'Перевод/списание средств', sourceAccount)
+    const incomeAtAnotherTime = makeTransfer(17.25, '731842', '01.02.2035 16:45:00', 'PEREVOD S 400000******0042', 'Перевод/зачисление средств', destinationAccount)
+
+    expect(adjustTransactions({ transactions: [outcome, incomeAtAnotherTime] })).toHaveLength(2)
+  })
+
+  it('merges a standalone-account transfer with the matching hidden card-account movement', () => {
+    const checkingAccount = { ...account, id: '73124567', type: 'checking' }
+    const linkedCardAccount = { ...account, id: '73120042' }
+    const description = 'Перевод денежных средств со счета №BY86IRJS3014ZZ00000012345678.'
+    const accountOutcome = convertTransaction({
+      statementType: 'account',
+      amount: -17.25,
+      amountReal: -17.25,
+      currency: 'USD',
+      currencyReal: 'USD',
+      date: '01.02.2035 10:00:00',
+      reflectedDate: '02.02.2035 12:34:56',
+      description,
+      place: description,
+      type: description,
+      authCode: null,
+      mcc: null
+    }, checkingAccount)
+    const cardIncome = convertTransaction({
+      statementType: 'account',
+      amount: 17.25,
+      amountReal: 17.25,
+      currency: 'USD',
+      currencyReal: 'USD',
+      date: '01.02.2035 10:00:00',
+      reflectedDate: '02.02.2035 12:34:56',
+      description,
+      place: description,
+      type: description,
+      authCode: null,
+      mcc: null
+    }, linkedCardAccount)
+
+    expect(adjustTransactions({ transactions: [accountOutcome, cardIncome] })).toEqual([
+      expect.objectContaining({
+        merchant: null,
+        movements: [
+          expect.objectContaining({ account: { id: checkingAccount.id }, sum: -17.25 }),
+          expect.objectContaining({ account: { id: linkedCardAccount.id }, sum: 17.25 })
+        ]
+      })
+    ])
+  })
+
+  it('does not merge same-day account transfers with different reflected timestamps', () => {
+    const checkingAccount = { ...account, id: '73124567', type: 'checking' }
+    const linkedCardAccount = { ...account, id: '73120042' }
+    const description = 'Перевод денежных средств со счета №BY86IRJS3014ZZ00000012345678.'
+    const makeApiTransaction = (amount, reflectedDate) => ({
+      statementType: 'account',
+      amount,
+      amountReal: amount,
+      currency: 'USD',
+      currencyReal: 'USD',
+      date: '01.02.2035 10:00:00',
+      reflectedDate,
+      description,
+      place: description,
+      type: description,
+      authCode: null,
+      mcc: null
+    })
+    const outcome = convertTransaction(makeApiTransaction(-17.25, '02.02.2035 12:34:56'), checkingAccount)
+    const unrelatedIncome = convertTransaction(makeApiTransaction(17.25, '02.02.2035 12:35:01'), linkedCardAccount)
+
+    expect(adjustTransactions({ transactions: [outcome, unrelatedIncome] })).toHaveLength(2)
+  })
+
+  it('merges both sides of a standalone-account currency exchange', () => {
+    const bynAccount = { ...account, id: '73124567', type: 'checking', instrument: 'BYN' }
+    const usdAccount = { ...account, id: '73124568', type: 'checking', instrument: 'USD' }
+    const description = 'Продажа валюты банком с текущего счета №BY41IRJS3014ZZ00000087654321 с переводом на текущий счет №BY86IRJS3014ZZ00000012345678'
+    const outcome = convertTransaction({
+      statementType: 'account',
+      amount: -42.5,
+      amountReal: -42.5,
+      currency: 'BYN',
+      currencyReal: 'BYN',
+      date: '01.02.2035 11:00:00',
+      description,
+      place: description,
+      type: description,
+      authCode: null,
+      mcc: null
+    }, bynAccount)
+    const income = convertTransaction({
+      statementType: 'account',
+      amount: 13.75,
+      amountReal: 13.75,
+      currency: 'USD',
+      currencyReal: 'USD',
+      date: '01.02.2035 11:00:00',
+      description,
+      place: description,
+      type: description,
+      authCode: null,
+      mcc: null
+    }, usdAccount)
+
+    expect(adjustTransactions({ transactions: [outcome, income] })).toEqual([
+      expect.objectContaining({
+        merchant: null,
+        movements: [
+          expect.objectContaining({ account: { id: bynAccount.id }, sum: -42.5 }),
+          expect.objectContaining({ account: { id: usdAccount.id }, sum: 13.75 })
+        ]
+      })
+    ])
+  })
+
   it('merges statement P2P transfers after deduplication with latest-ops', () => {
     const accountA = { ...account, id: 'aaaaaaaa-aaaaaa' }
     const accountB = { ...account, id: 'bbbbbbbb-bbbbbb' }
@@ -354,7 +483,7 @@ describe('convertTransaction', () => {
     ])
   })
 
-  it('reconciles statement and latest cash withdrawal in the operation currency', () => {
+  it('deduplicates statement and latest cash withdrawal in the operation currency', () => {
     const statement = convertTransaction({
       amount: -60,
       amountReal: -100,
@@ -434,6 +563,27 @@ describe('convertTransaction', () => {
       hold: false
     })
 
+    const makeDedupTransaction = ({
+      source,
+      authCode = null,
+      description = 'Списание согласно реестру карт-чеков №7421'
+    }) => {
+      const isLinkedAccount = source === TransactionSource.cardAccountStatement
+      return convertTransaction({
+        statementType: isLinkedAccount ? 'account' : undefined,
+        amount: -17.25,
+        amountReal: -17.25,
+        authCode,
+        currency: 'USD',
+        currencyReal: 'USD',
+        date: '01.02.2035 10:00:00',
+        reflectedDate: '02.02.2035 12:34:56',
+        description: isLinkedAccount ? description : null,
+        place: isLinkedAccount ? description : 'BY MINSK, MAGAZIN, STATUSBANK',
+        type: isLinkedAccount ? description : 'Оплата'
+      }, account, source)
+    }
+
     it('keeps one rich statement transaction over identical and latest duplicates', () => {
       const statement = makeTransaction()
       const duplicateStatement = makeTransaction()
@@ -461,6 +611,33 @@ describe('convertTransaction', () => {
       const second = makeTransaction({ id: null })
 
       expect(deduplicateTransactions([first, second], [account])).toEqual([first, second])
+    })
+
+    it('deduplicates linked-account rows count-for-count against card sources', () => {
+      const makeCard = authCode => makeDedupTransaction({ source: TransactionSource.cardStatement, authCode })
+      const makeAccount = () => makeDedupTransaction({ source: TransactionSource.cardAccountStatement })
+
+      const transactions = deduplicateTransactions(
+        [makeAccount(), makeCard('731841'), makeAccount(), makeCard('731842'), makeAccount()],
+        [account]
+      )
+
+      expect(transactions).toHaveLength(3)
+      expect(transactions.map(transaction => transaction.movements[0].id)).toEqual([
+        '731841',
+        '731842',
+        null
+      ])
+    })
+
+    it('keeps a same-amount non-register account fee', () => {
+      const cardTransaction = makeDedupTransaction({ source: TransactionSource.cardStatement, authCode: '731843' })
+      const accountFee = makeDedupTransaction({
+        source: TransactionSource.cardAccountStatement,
+        description: 'Взимание комиссии за снятие наличных в АТМ согласно ведомости №3184'
+      })
+
+      expect(deduplicateTransactions([cardTransaction, accountFee], [account])).toHaveLength(2)
     })
   })
 })

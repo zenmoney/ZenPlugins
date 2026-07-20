@@ -1,4 +1,4 @@
-import { createDateIntervals, fetchFullTransactions, parseFullTransactionsHtml, parseLatestOperations, parseLatestOperationsHtml } from '../api'
+import { createDateIntervals, fetchAccounts, fetchFullTransactions, parseAccountTransactionsHtml, parseFullTransactionsHtml, parseLatestOperations, parseLatestOperationsHtml } from '../api'
 
 function makeNetworkResponse (body, url = 'https://stb24.by/api/sou/admin/xml') {
   return {
@@ -47,6 +47,46 @@ function transactionDateForTest (date) {
     date.getFullYear()
   ].join('.')
 }
+
+describe('fetchAccounts', () => {
+  it('loads ACCOUNT products and extracts their statement action', async () => {
+    global.fetch = jest.fn()
+      .mockResolvedValueOnce(makeNetworkResponse('<BS_Response><GetProducts/></BS_Response>'))
+      .mockResolvedValueOnce(makeNetworkResponse(`
+        <BS_Response>
+          <GetProducts>
+            <Product Id="73124567-a1b2c3" ProductType="ACCOUNT" ProductTypeName="Счёт без карты" No="договор N 307451928" Currency="840" Balance="12,34">
+              <Action Id="73129901-a1b2c3-account-2048571-b735-getordering-1" Type="B735:GetOrdering" Name="Выписка по счёту"/>
+            </Product>
+          </GetProducts>
+        </BS_Response>
+      `))
+      .mockResolvedValueOnce(makeNetworkResponse(`
+        <BS_Response>
+          <GetProductTypes>
+            <ProductType Type="MS">
+              <Product Id="73120042-d4e5f6" ProductType="MS" LinkedProductId="73124567-a1b2c3" LinkedProductType="ACCOUNT"/>
+            </ProductType>
+          </GetProductTypes>
+        </BS_Response>
+      `))
+
+    await expect(fetchAccounts('session-id')).resolves.toEqual([
+      expect.objectContaining({
+        Id: ['73124567-a1b2c3'],
+        LinkedProductId: ['73120042-d4e5f6'],
+        LinkedProductType: ['MS'],
+        statementExecutionId: '73129901-a1b2c3-account-2048571-b735-getordering-1',
+        lastTrxExecutionId: null
+      })
+    ])
+
+    expect(global.fetch).toHaveBeenCalledTimes(3)
+    expect(global.fetch.mock.calls[0][1].body).toContain('ProductType="MS"')
+    expect(global.fetch.mock.calls[1][1].body).toContain('ProductType="ACCOUNT"')
+    expect(global.fetch.mock.calls[2][1].body).toContain('<GetProductTypes GetProducts="Y"')
+  })
+})
 
 describe('fetchFullTransactions', () => {
   it('fetches a statement returned as ExecuteAction.URL', async () => {
@@ -133,6 +173,52 @@ describe('fetchFullTransactions', () => {
       new Date('2026-06-05T00:00:00Z'),
       new Date('2026-06-05T00:00:00Z')
     )).rejects.toThrow('Unexpected statement response: Не удалось сформировать выписку')
+  })
+})
+
+describe('account statement parsing', () => {
+  it('parses standalone-account transfers and currency exchanges', () => {
+    const html = `
+      <div class="head"><h3>Выписка по счёту</h3><p>Счёт BY86IRJS3014ZZ00000012345678</p></div>
+      <div class="head"></div>
+      <table class="table-schet">
+        <thead><tr>
+          <th>Дата отражения операции по счёту</th>
+          <th>Дата совершения операции</th>
+          <th>Назначение платежа</th>
+          <th>Валюта счёта</th>
+          <th>Сумма операции в валюте счёта</th>
+          <th>Остаток по счёту</th>
+        </tr></thead>
+        <tbody>
+          <tr><td>02.02.2035 10:00:00</td><td>01.02.2035 10:00:00</td><td>Перевод денежных средств со счета №BY86IRJS3014ZZ00000012345678.</td><td>USD</td><td>-12,34</td><td>50,00</td></tr>
+          <tr><td>02.02.2035 11:00:00</td><td>01.02.2035 11:00:00</td><td>Продажа валюты банком с текущего счета №BY41IRJS3014ZZ00000087654321 с переводом на текущий счет №BY86IRJS3014ZZ00000012345678</td><td>USD</td><td>9,87</td><td>59,87</td></tr>
+        </tbody>
+      </table>
+    `
+
+    expect(parseAccountTransactionsHtml(html)).toEqual([
+      expect.objectContaining({
+        statementType: 'account',
+        date: '01.02.2035 10:00:00',
+        reflectedDate: '02.02.2035 10:00:00',
+        description: 'Перевод денежных средств со счета №BY86IRJS3014ZZ00000012345678.',
+        amount: -12.34,
+        amountReal: -12.34,
+        currency: 'USD',
+        currencyReal: 'USD'
+      }),
+      expect.objectContaining({
+        statementType: 'account',
+        date: '01.02.2035 11:00:00',
+        reflectedDate: '02.02.2035 11:00:00',
+        description: 'Продажа валюты банком с текущего счета №BY41IRJS3014ZZ00000087654321 с переводом на текущий счет №BY86IRJS3014ZZ00000012345678',
+        amount: 9.87,
+        amountReal: 9.87,
+        currency: 'USD',
+        currencyReal: 'USD'
+      })
+    ])
   })
 })
 

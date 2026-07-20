@@ -93,22 +93,17 @@ export async function login (login, password) {
 
 export async function fetchAccounts (sid) {
   console.log('>>> Загрузка списка счетов...')
-  const rawResponse = await fetchApi(BASE_URL,
-    '<BS_Request>\r\n' +
-    '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
-    '   <GetProducts ProductType="MS" GetActions="Y" GetBalance="Y"/>\r\n' +
-    '   <RequestType>GetProducts</RequestType>\r\n' +
-    '   <Session SID="' + sid + '"/>\r\n' +
-    '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-    '   <TerminalId>stbank.ibank</TerminalId>\r\n' +
-    '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'), true)
-  let resp = null
-  xml2js.parseString(rawResponse, { mergeAttrs: true }, (err, result) => {
-    resp = err ? null : result
-  })
+
+  const [cardProducts, accountProducts, productTypes] = await Promise.all([
+    fetchProducts(sid, 'MS'),
+    fetchProducts(sid, 'ACCOUNT'),
+    fetchProductTypes(sid)
+  ])
+  const productTypeProducts = productTypes.flatMap(productType => productType.Product || [])
+  const linkedCardByAccountId = buildLinkedCardByAccountId(productTypeProducts)
   const accounts = []
-  if (resp) {
-    for (const account of resp.BS_Response.GetProducts[0].Product) {
+  if (cardProducts.length > 0) {
+    for (const account of cardProducts) {
       const accountOperationsExecutionId = account.Action.filter((action) => action !== null).filter((action) => action.Type[0] === 'Group$MS$4')[0].Id[0]
       const [statementResp, lastTrxResp] = await Promise.all([
         // To receive transactions as statement for days up to last working day
@@ -143,8 +138,70 @@ export async function fetchAccounts (sid) {
       })
     }
   }
+  for (const account of accountProducts) {
+    const linkedCardId = linkedCardByAccountId.get(account.Id?.[0]) ||
+      (account.LinkedProductType?.[0] === 'MS' ? account.LinkedProductId?.[0] : null)
+    const statementAction = account.Action
+      ?.filter(action => action !== null)
+      .find(action => action.Type?.[0] === 'B735:GetOrdering')
+    accounts.push({
+      ...account,
+      LinkedProductId: linkedCardId ? [linkedCardId] : account.LinkedProductId,
+      LinkedProductType: linkedCardId ? ['MS'] : account.LinkedProductType,
+      statementExecutionId: statementAction?.Id?.[0] || null,
+      lastTrxExecutionId: null
+    })
+  }
   console.log(`>>> Загружено ${accounts.length} счетов.`)
   return accounts
+}
+
+async function fetchProducts (sid, productType) {
+  const rawResponse = await fetchApi(BASE_URL,
+    '<BS_Request>\r\n' +
+    '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+    '   <GetProducts ProductType="' + productType + '" GetActions="Y" GetBalance="Y"/>\r\n' +
+    '   <RequestType>GetProducts</RequestType>\r\n' +
+    '   <Session SID="' + sid + '"/>\r\n' +
+    '   <Subsystem>ClientAuth</Subsystem>\r\n' +
+    '   <TerminalId>stbank.ibank</TerminalId>\r\n' +
+    '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'), true)
+  const response = await xml2js.parseStringPromise(rawResponse, { mergeAttrs: true })
+  return response?.BS_Response?.GetProducts?.[0]?.Product || []
+}
+
+async function fetchProductTypes (sid) {
+  const rawResponse = await fetchApi(BASE_URL,
+    '<BS_Request>\r\n' +
+    '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+    '   <GetProductTypes GetProducts="Y" GetActions="N" GetBalance="N"/>\r\n' +
+    '   <RequestType>GetProductTypes</RequestType>\r\n' +
+    '   <Session SID="' + sid + '"/>\r\n' +
+    '   <Subsystem>ClientAuth</Subsystem>\r\n' +
+    '   <TerminalId>stbank.ibank</TerminalId>\r\n' +
+    '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'), true)
+  const response = await xml2js.parseStringPromise(rawResponse, { mergeAttrs: true })
+  return response?.BS_Response?.GetProductTypes?.[0]?.ProductType || []
+}
+
+function buildLinkedCardByAccountId (products) {
+  const linkedCardByAccountId = new Map()
+  for (const product of products) {
+    if (product.ProductType?.[0] === 'ACCOUNT' && product.LinkedProductType?.[0] === 'MS') {
+      const accountId = product.Id?.[0]
+      const cardId = product.LinkedProductId?.[0]
+      if (accountId && cardId) {
+        linkedCardByAccountId.set(accountId, cardId)
+      }
+    } else if (product.ProductType?.[0] === 'MS' && product.LinkedProductType?.[0] === 'ACCOUNT') {
+      const accountId = product.LinkedProductId?.[0]
+      const cardId = product.Id?.[0]
+      if (accountId && cardId) {
+        linkedCardByAccountId.set(accountId, cardId)
+      }
+    }
+  }
+  return linkedCardByAccountId
 }
 
 export function createDateIntervals (fromDate, toDate) {
@@ -246,13 +303,20 @@ export function parseTransactions (htmls) {
   return transactions
 }
 
+export function parseAccountTransactions (htmls) {
+  const transactions = flatMap(htmls, html => parseAccountTransactionsHtml(html))
+  console.log(`>>> Загружено ${transactions.length} операций.`)
+  return transactions
+}
+
 export function parseFullTransactionsHtml (html) {
   const $ = cheerio.load(html)
   const tdObjects = $('div[class="head"]').toArray()
   if (tdObjects.length < 2) {
     return []
   }
-  const card = tdObjects[0].children[3].children[0].data.split(' ')[1]
+  const productNumber = $(tdObjects[0]).text().match(/(?:\d{4,}\*+\d{4}|\d{8,})/)
+  const card = productNumber ? productNumber[0] : null
   let counter = 0
   let i = 0
   const data = []
@@ -312,6 +376,35 @@ export function parseFullTransactionsHtml (html) {
     }
   })
   return data
+}
+
+export function parseAccountTransactionsHtml (html) {
+  const $ = cheerio.load(html)
+  return $('table[class="table-schet"] tbody tr').toArray().map(row => {
+    const cells = $(row).find('td').toArray().map(cell => $(cell).text().replace(/\s+/g, ' ').trim())
+    if (cells.length < 6) {
+      return null
+    }
+    const amount = Number.parseFloat(cells[4].replace(/\s/g, '').replace(',', '.'))
+    if (!cells[1] || !cells[2] || !cells[3] || isNaN(amount)) {
+      return null
+    }
+    return {
+      cardNum: null,
+      date: cells[1],
+      reflectedDate: cells[0],
+      description: cells[2],
+      type: cells[2],
+      amountReal: amount,
+      currencyReal: cells[3],
+      amount,
+      currency: cells[3],
+      place: cells[2],
+      authCode: null,
+      mcc: null,
+      statementType: 'account'
+    }
+  }).filter(Boolean)
 }
 
 // Экспорт последних операций по карточке
