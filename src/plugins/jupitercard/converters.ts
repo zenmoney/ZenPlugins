@@ -6,6 +6,27 @@ function num (value: string | number | null | undefined): number {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
+// USD-pegged stablecoins, folded into USD. ONLY 1:1 dollar stablecoins belong here — each is
+// a dollar by design, so booking it as USD is exact. Real fiat (EUR, GBP…) is deliberately
+// absent: EUR is not a dollar and ZenMoney supports it. Volatile crypto (BTC, ETH, SOL…) is
+// absent for the same reason — it has a price, not a peg.
+const USD_STABLECOINS = new Set([
+  'USDC', 'USDT', 'USDT0', 'PYUSD', 'DAI', 'USDP', 'TUSD', 'FDUSD', 'USDE', 'USDS', 'USDG', 'GUSD', 'BUSD', 'USDD'
+])
+
+// Normalise a currency code for ZenMoney.
+//
+// Jupiter's API returns inconsistent case ('usdc' and 'USDC' both appear, while ZenMoney's
+// instrument codes are upper-case), and settles on stablecoin rails ZenMoney has no
+// instrument for (USDC above all). The card is dollar-denominated and these are 1:1 dollar
+// stablecoins, so they map to USD. Without this, a stablecoin leg produces an invoice in an
+// unknown instrument and ZenMoney rejects the whole transaction ("Could not find instrument
+// USDC"), aborting the sync.
+function normalizeCurrency (code: string | null | undefined): string {
+  const c = (typeof code === 'string' ? code : '').toUpperCase()
+  return USD_STABLECOINS.has(c) ? 'USD' : c
+}
+
 // ZenMoney identifies an account by this id forever, so it must be derived from the
 // one stable key. Falling back to another field would change the account's identity
 // and leave a duplicate in the ledger permanently.
@@ -37,7 +58,7 @@ export function convertAccounts (cards: JupiterCard[], balance: JupiterBalance):
     return []
   }
 
-  const instrument = balance.currency != null && balance.currency !== '' ? balance.currency : 'USD'
+  const instrument = normalizeCurrency(balance.currency) !== '' ? normalizeCurrency(balance.currency) : 'USD'
   const spendable = typeof balance.spendableBalance === 'number' && Number.isFinite(balance.spendableBalance)
     ? balance.spendableBalance
     : null
@@ -58,6 +79,27 @@ export function convertAccounts (cards: JupiterCard[], balance: JupiterBalance):
   })
 }
 
+// Card statuses where money actually moved or is committed: COMPLETED (settled) and
+// AUTHORIZED (a hold that will settle). An allowlist, so an unseen status is treated as a
+// non-charge and skipped rather than booked on a guess.
+const MONEY_MOVED_STATUS = new Set(['COMPLETED', 'AUTHORIZED'])
+
+// True when a card charge was refused and no money moved (e.g. INSUFFICIENT_FUNDS). Booking
+// one puts an expense in the ledger that never happened, and nothing later reverses it.
+// Only CARD rows carry a status; on-chain deposits/withdrawals never do. A card row with no
+// status is treated as not-declined — older records lack the field, and we must not start
+// dropping real history.
+export function isDeclined (tx: JupiterTransaction): boolean {
+  if (tx.type !== 'CARD') {
+    return false
+  }
+  const status = tx.card?.status
+  if (status == null || status === '') {
+    return false
+  }
+  return !MONEY_MOVED_STATUS.has(status.toUpperCase())
+}
+
 function commentFor (tx: JupiterTransaction): string | null {
   const type = typeof tx.type === 'string' ? tx.type : ''
   if (type === 'CARD') {
@@ -73,10 +115,14 @@ function commentFor (tx: JupiterTransaction): string | null {
   return parts.length > 0 ? parts.join(' · ') : null
 }
 
-// Returns null for a record we cannot represent honestly. Emitting one anyway would put
-// a corrupt entry in the ledger: a malformed amount silently becomes 0 and misstates the
-// balance, and a malformed timestamp becomes an Invalid Date.
+// Returns null for a record we must not book. Emitting one anyway would put a corrupt entry
+// in the ledger: a declined charge becomes a phantom expense, a malformed amount silently
+// becomes 0 and misstates the balance, and a malformed timestamp becomes an Invalid Date.
 export function convertTransaction (tx: JupiterTransaction, accountId: string): Transaction | null {
+  // A decline carries a full amount and a valid date; only card.status gives it away.
+  if (isDeclined(tx)) {
+    return null
+  }
   const date = new Date(tx.transactionTimestamp ?? '') // missing → Invalid Date → skipped below
   if (Number.isNaN(date.getTime())) {
     return null
@@ -94,12 +140,15 @@ export function convertTransaction (tx: JupiterTransaction, accountId: string): 
   const sign = tx.direction === 'CREDIT' ? 1 : -1
   const sum = sign * settlement
 
+  // The invoice records the original-currency leg only when it genuinely differs from the
+  // settlement currency. Compare NORMALISED codes: a USDC deposit settled in USD is 1:1, so
+  // after normalisation both are USD and no (crashing, pointless) USDC invoice is emitted.
   const original = Number(tx.transactionAmount)
-  const originalCurrency = tx.transactionCurrency
+  const settlementCurrency = normalizeCurrency(tx.settlementCurrency)
+  const originalCurrency = normalizeCurrency(tx.transactionCurrency)
   const invoice: Amount | null =
-    typeof originalCurrency === 'string' &&
     originalCurrency !== '' &&
-    originalCurrency !== tx.settlementCurrency &&
+    originalCurrency !== settlementCurrency &&
     Number.isFinite(original)
       ? { sum: sign * original, instrument: originalCurrency }
       : null

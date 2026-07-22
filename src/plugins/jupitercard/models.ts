@@ -56,6 +56,11 @@ export interface JupiterBalance {
 export interface JupiterCardDetail {
   merchantName?: string | null
   merchantCategoryCode?: string | null
+  // Lifecycle status. A decline (e.g. 'INSUFFICIENT_FUNDS') still carries a full amount and
+  // a valid timestamp, so this is the only field that reveals no money moved. Not narrowed
+  // to a union: the converter must handle an unseen status rather than have the types
+  // pretend it cannot appear.
+  status?: string | null
   settlementTimestamp?: string | null
 }
 

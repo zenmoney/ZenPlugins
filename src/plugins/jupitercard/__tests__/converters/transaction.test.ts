@@ -112,4 +112,73 @@ describe('convertTransaction', () => {
       expect(transaction.movements[0].sum).toBe(500)
     })
   })
+
+  describe('declined card charges', () => {
+    const carded = (status: string | null): JupiterTransaction =>
+      tx({ card: { merchantName: 'COFFEE SHOP', merchantCategoryCode: '5814', status, settlementTimestamp: null } })
+
+    it('does NOT book INSUFFICIENT_FUNDS — a decline moved no money', () => {
+      // It has a full amount and a valid date; only card.status reveals it was refused.
+      expect(convertTransaction(carded('INSUFFICIENT_FUNDS'), 'a')).toBeNull()
+    })
+
+    it('books COMPLETED and AUTHORIZED', () => {
+      expect(convertTransaction(carded('COMPLETED'), 'a')).not.toBeNull()
+      const held = convert(carded('AUTHORIZED'), 'a')
+      expect(held.hold).toBe(true) // authorised but unsettled
+    })
+
+    it('skips an UNSEEN status rather than booking it on a guess (allowlist)', () => {
+      for (const s of ['DO_NOT_HONOR', 'EXPIRED', 'REVERSED', 'DECLINED']) {
+        expect(convertTransaction(carded(s), 'a')).toBeNull()
+      }
+    })
+
+    it('books a card row with no status — older records lack the field', () => {
+      expect(convertTransaction(carded(null), 'a')).not.toBeNull()
+      expect(convertTransaction(tx(), 'a')).not.toBeNull() // fixture has no status
+    })
+
+    it('never declines an on-chain movement (deposits/withdrawals carry no status)', () => {
+      const deposit = tx({ type: 'DEPOSIT', direction: 'CREDIT', settlementAmount: '500.00', card: null, onchainSignature: 'sig1' })
+      expect(convertTransaction(deposit, 'a')).not.toBeNull()
+    })
+  })
+
+  describe('currency normalisation (ZenMoney has no USDC instrument)', () => {
+    // The real crash: a USDC deposit produced an invoice in instrument 'USDC', which
+    // ZenMoney cannot resolve, aborting the whole sync.
+    const usdcDeposit = (over = {}): JupiterTransaction =>
+      tx({ type: 'DEPOSIT', direction: 'CREDIT', card: null, onchainSignature: 'sig1', settlementCurrency: 'USD', settlementAmount: '29.40', transactionCurrency: 'USDC', transactionAmount: '29.40', ...over })
+
+    it('does not emit a USDC invoice for a 1:1 USDC→USD deposit', () => {
+      // USDC normalises to USD, so it equals the settlement currency and no invoice is made.
+      const t = convert(usdcDeposit(), 'a')
+      expect(t.movements[0].invoice).toBeNull()
+      expect(t.movements[0].sum).toBe(29.4)
+    })
+
+    it('handles the API\'s inconsistent casing (usdc / USDC)', () => {
+      expect(convert(usdcDeposit({ transactionCurrency: 'usdc', settlementCurrency: 'usd' }), 'a').movements[0].invoice).toBeNull()
+    })
+
+    it('still records a genuine FX invoice, upper-cased', () => {
+      // A EUR purchase settled in USD keeps its invoice — only stablecoins fold into USD.
+      const t = convert(tx({ settlementCurrency: 'USD', settlementAmount: '19.71', transactionCurrency: 'eur', transactionAmount: '17.00' }), 'a')
+      expect(t.movements[0].invoice).toEqual({ sum: -17, instrument: 'EUR' })
+    })
+
+    it('folds other USD stablecoins into USD too, but never fiat or volatile crypto', () => {
+      // Stablecoins that ZenMoney may lack, all 1:1 dollars → no invoice against a USD settlement.
+      for (const sc of ['USDT0', 'PYUSD', 'DAI', 'FDUSD']) {
+        const dep = usdcDeposit({ transactionCurrency: sc })
+        expect(convert(dep, 'a').movements[0].invoice).toBeNull()
+      }
+      // EUR is real FX and BTC is not a dollar — both keep their own instrument.
+      expect(convert(tx({ settlementCurrency: 'USD', settlementAmount: '19.71', transactionCurrency: 'EUR', transactionAmount: '17' }), 'a').movements[0].invoice)
+        .toEqual({ sum: -17, instrument: 'EUR' })
+      expect(convert(tx({ settlementCurrency: 'USD', settlementAmount: '100', transactionCurrency: 'BTC', transactionAmount: '0.001' }), 'a').movements[0].invoice)
+        .toEqual({ sum: -0.001, instrument: 'BTC' })
+    })
+  })
 })
