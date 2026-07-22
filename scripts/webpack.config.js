@@ -13,7 +13,6 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const WebsocketServer = require('./debugServers/wsServer')
 const { setupProxyServer } = require('./debugServers/proxyServer')
 const { setupWebServer } = require('./debugServers/webServer')
-const os = require('os')
 
 const readLogPrivateKey = () => {
   try {
@@ -46,7 +45,7 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
         },
     output: {
       path: outputPath,
-      filename: '[name].js',
+      filename: production && !server ? `${pluginName}.js` : '[name].js',
       chunkFilename: '[name].chunk.js',
       globalObject: 'this',
       chunkFormat: false,
@@ -211,12 +210,11 @@ module.exports = (env, argv) => {
   if (server && pluginsNames.length > 1) {
     throw new Error('Cant debug multiple plugins!')
   }
-  const genPath = (pluginName) => pluginsNames.length === 1 ? resolveFromRoot('build') : resolveFromRoot(`build/${pluginName}`)
+  const genPath = () => resolveFromRoot('build')
 
   const plugins = pluginsNames.map(x => generatePluginConfig(production, server, x, genPath(x)))
   if (plugins.length === 1) {
     return plugins[0]
   }
-  plugins.parallelism = os.cpus().length
   return plugins
 }

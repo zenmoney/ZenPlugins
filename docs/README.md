@@ -18,8 +18,10 @@
 - ```yarn start (PLUGIN NAME)```
   - Start development server with simple UI for plugin.
   So you can debug your code in browser.
-- ```yarn build (PLUGIN NAME)```
+- ```yarn build (PLUGIN NAME) [(PLUGIN NAME) ...]```
   - Build plugin to one file bundle.
+  - The bundle is written to ```build/(PLUGIN NAME).js```.
+  - Multiple plugins can be passed and will be built in parallel.
 - ```yarn test [PLUGIN NAME]```
   - Run type-check, linter and tests.
   - Can be used with plugin name to run tests only for this plugin.
