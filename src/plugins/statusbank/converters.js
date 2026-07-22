@@ -1,11 +1,23 @@
 import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
 
+/** @enum {string} */
+export const TransactionSource = Object.freeze({
+  cardStatement: 'card-statement',
+  cardAccountStatement: 'card-account-statement',
+  currentAccountStatement: 'current-account-statement',
+  latestOperations: 'latest-operations'
+})
+
 export function convertAccount (ob) {
-  if (ob.Enabled && ob.Enabled[0] === 'N') {
+  const productType = ob.ProductType[0]
+  if (productType === 'MS' && ob.Enabled && ob.Enabled[0] === 'N') {
     return null
   }
   const id = ob.Id[0].split('-')[0]
-  if (!ZenMoney.isAccountSkipped(id)) {
+  if (ZenMoney.isAccountSkipped(id)) {
+    return null
+  }
+  if (productType === 'MS') {
     return {
       id,
       transactionsAccId: ob.statementExecutionId,
@@ -18,14 +30,49 @@ export function convertAccount (ob) {
       syncID: [ob.No[0].slice(-4)],
       productId: ob.Id[0],
       productType: ob.ProductType[0],
-      accountID: Number(ob.BankId[0].split('-')[-1]),
       latestTrID: ob.lastTrxExecutionId
+    }
+  }
+  if (productType === 'ACCOUNT' && ob.ProductTypeName[0] === 'Счёт без карты') {
+    const accountNumber = ob.No[0].replace(/^договор N\s*/i, '')
+    return {
+      id,
+      transactionsAccId: ob.statementExecutionId,
+      type: 'checking',
+      title: (ob.CustomName?.[0] || ob.ProductTypeName[0]) + ' ' + accountNumber,
+      currencyCode: ob.Currency[0],
+      instrument: codeToCurrencyLookup[ob.Currency[0]],
+      balance: Number.parseFloat((ob.Balance[0].replace(/,/g, '.') || 0.0)),
+      syncID: [accountNumber],
+      productId: ob.Id[0],
+      productType: ob.ProductType[0],
+      latestTrID: null
     }
   }
   return null
 }
 
-export function convertTransaction (apiTransaction, account) {
+export function convertLinkedAccountSource (ob) {
+  if (ob.ProductType?.[0] !== 'ACCOUNT' ||
+    ob.ProductTypeName?.[0] !== 'Счёт с картой' ||
+    ob.LinkedProductType?.[0] !== 'MS' ||
+    !ob.LinkedProductId?.[0] ||
+    !ob.statementExecutionId) {
+    return null
+  }
+
+  return {
+    id: ob.LinkedProductId[0].split('-')[0],
+    transactionsAccId: ob.statementExecutionId,
+    type: 'card',
+    instrument: codeToCurrencyLookup[ob.Currency[0]],
+    productId: ob.Id[0],
+    productType: ob.ProductType[0],
+    latestTrID: null
+  }
+}
+
+export function convertTransaction (apiTransaction, account, source = null) {
   if ((apiTransaction.amount && apiTransaction.amount !== 0) || (apiTransaction.amountReal && apiTransaction.amountReal !== 0)) {
     const transaction = {
       date: getDate(apiTransaction.date),
@@ -33,10 +80,18 @@ export function convertTransaction (apiTransaction, account) {
       merchant: null,
       comment: null,
       hold: false
-    };
+    }
+
+    if (source) {
+      transaction._statusbank = {
+        source,
+        dedupKey: getLinkedAccountDedupKey(apiTransaction, account, source)
+      }
+    }
 
     [
       parseCash,
+      parseCurrencyExchange,
       parseInternalTransfer,
       parsePayee
     ].some(parser => parser(transaction, apiTransaction))
@@ -72,10 +127,38 @@ export function deduplicateTransactions (transactions, accounts) {
     }
   }
 
+  const cardCounts = new Map()
+  for (const transaction of result) {
+    const metadata = transaction._statusbank
+    if (![TransactionSource.cardStatement, TransactionSource.latestOperations].includes(metadata?.source) || !metadata?.dedupKey) {
+      continue
+    }
+    cardCounts.set(
+      metadata.dedupKey,
+      (cardCounts.get(metadata.dedupKey) || 0) + 1
+    )
+  }
+
+  const deduplicated = []
+  for (const transaction of result) {
+    const metadata = transaction._statusbank
+    const cardCount = metadata?.dedupKey
+      ? cardCounts.get(metadata.dedupKey) || 0
+      : 0
+    if (metadata?.source === TransactionSource.cardAccountStatement && cardCount > 0) {
+      cardCounts.set(metadata.dedupKey, cardCount - 1)
+      duplicateCount++
+      continue
+    }
+    const cleanedTransaction = { ...transaction }
+    delete cleanedTransaction._statusbank
+    deduplicated.push(cleanedTransaction)
+  }
+
   if (duplicateCount > 0) {
     console.log(`>>> Удалено ${duplicateCount} дубликатов операций.`)
   }
-  return result
+  return deduplicated
 }
 
 function getDeduplicationKey (transaction, accountInstruments) {
@@ -104,6 +187,24 @@ function getTransactionRichness (transaction) {
   return (movement.sum !== null ? 4 : 0) +
     (transaction.merchant?.mcc != null ? 2 : 0) +
     (transaction.merchant?.fullTitle || transaction.merchant?.title ? 1 : 0)
+}
+
+function getLinkedAccountDedupKey (apiTransaction, account, source) {
+  const isCardSource = [TransactionSource.cardStatement, TransactionSource.latestOperations].includes(source)
+  const isCardAccountRow = source === TransactionSource.cardAccountStatement &&
+    /^(Списание|Зачисление) согласно реестру карт-чеков №/.test(apiTransaction.description || '')
+  if (!isCardSource && !isCardAccountRow) {
+    return null
+  }
+  if (typeof apiTransaction.amount !== 'number' || !apiTransaction.currency) {
+    return null
+  }
+  return [
+    account.id,
+    getDate(apiTransaction.date).toISOString(),
+    apiTransaction.amount,
+    apiTransaction.currency
+  ].join('|')
 }
 
 function getMovement (apiTransaction, account) {
@@ -166,8 +267,23 @@ function parseInternalTransfer (transaction, apiTransaction) {
   const isStatementP2P = ['Перевод/зачисление средств', 'Перевод/списание средств'].includes(apiTransaction.type) &&
     (apiTransaction.place?.startsWith('PEREVOD NA ') || apiTransaction.place?.startsWith('PEREVOD S '))
 
-  if (!isLatestOpsP2P && !isStatementP2P) {
+  const isAccountTransfer = apiTransaction.statementType === 'account' &&
+    apiTransaction.description?.startsWith('Перевод денежных средств со счета')
+
+  if (!isLatestOpsP2P && !isStatementP2P && !isAccountTransfer) {
     return false
+  }
+
+  if (isAccountTransfer) {
+    const sourceAccount = apiTransaction.description.match(/№\s*([^\s.]+)/i)?.[1] || ''
+    transaction.groupKeys = [[
+      'statusbank-account-transfer',
+      apiTransaction.reflectedDate || apiTransaction.date,
+      Math.abs(apiTransaction.amount || apiTransaction.amountReal),
+      apiTransaction.currency || apiTransaction.currencyReal,
+      sourceAccount
+    ].join('|')]
+    return true
   }
 
   transaction.groupKeys = [[
@@ -175,6 +291,20 @@ function parseInternalTransfer (transaction, apiTransaction) {
     apiTransaction.date,
     Math.abs(apiTransaction.amount || apiTransaction.amountReal),
     apiTransaction.currency || apiTransaction.currencyReal
+  ].join('|')]
+  return true
+}
+
+function parseCurrencyExchange (transaction, apiTransaction) {
+  if (apiTransaction.statementType !== 'account' ||
+    !apiTransaction.description?.startsWith('Продажа валюты банком с текущего счета')) {
+    return false
+  }
+
+  transaction.groupKeys = [[
+    'statusbank-fx',
+    apiTransaction.date,
+    apiTransaction.description.replace(/\s+/g, ' ').trim()
   ].join('|')]
   return true
 }
