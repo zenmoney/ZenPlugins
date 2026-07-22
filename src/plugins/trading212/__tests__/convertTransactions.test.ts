@@ -106,6 +106,17 @@ describe('convertTransactions', () => {
     expect(result[0].movements[0].account).toEqual({ id: 'acc-1' })
   })
 
+  it('converts current export fields for interest on cash', () => {
+    const operations: ExportOperation[] = [
+      { ID: 'interest-001', Action: 'Interest on cash', 'Time (UTC)': '2026-07-18 01:15:00', Total: '2.48', 'Currency (Total)': 'USD' }
+    ]
+    const result = convertTransactions(operations, 'acc-1', 'acc-1-card', defaultPreferences)
+
+    expect(result).toHaveLength(1)
+    expect(result[0].date).toEqual(new Date('2026-07-18T01:15:00Z'))
+    expect(result[0].movements[0].sum).toBe(2.48)
+  })
+
   it('adds round-up transaction for Card debit when roundUpTransactions is enabled', () => {
     const operations: ExportOperation[] = [
       { ID: 'round-001', Action: 'Card debit', Time: '2026-04-01 10:00:00', 'Gross Total': '-12.30', 'Currency (Gross Total)': 'EUR' }

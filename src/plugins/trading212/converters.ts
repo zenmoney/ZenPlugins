@@ -32,18 +32,21 @@ function convertTransaction (op: ExportOperation, accountId: string, cardId: str
   const isCardDebit = op.Action === 'Card debit'
   const isCardCashback = op.Action === 'Spending cashback' && !preferences.investCashback
   const isCardTransaction = isCardDebit || isCardCashback
+  const time = op['Time (UTC)'] ?? op.Time
+  const date = new Date(op['Time (UTC)'] != null && time != null ? `${time.replace(' ', 'T')}Z` : time ?? '')
+  const sum = Number(op.Total ?? op['Gross Total'])
 
   console.log('Converting operation', op)
 
   const transactions: Transaction[] = [
     {
       hold: false,
-      date: new Date(op.Time),
+      date,
       movements: [{
         id: op.ID,
         account: { id: isCardTransaction ? cardId : accountId },
         invoice: null,
-        sum: +op['Gross Total'],
+        sum,
         fee: 0
       }],
       comment: op.Action,
@@ -59,12 +62,12 @@ function convertTransaction (op: ExportOperation, accountId: string, cardId: str
   ]
 
   if (preferences.roundUpTransactions && isCardDebit) {
-    const roundedSum = Math.ceil(Math.abs(+op['Gross Total']))
-    const roundUpAmount = +(roundedSum - Math.abs(+op['Gross Total'])).toPrecision(5)
+    const roundedSum = Math.ceil(Math.abs(sum))
+    const roundUpAmount = +(roundedSum - Math.abs(sum)).toPrecision(5)
     if (roundUpAmount > 0) {
       transactions.push({
         hold: false,
-        date: new Date(op.Time),
+        date,
         movements: [
           {
             id: null,
