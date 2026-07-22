@@ -2,7 +2,7 @@ import * as XLSX from 'xlsx'
 
 import { fetch } from '../../common/network'
 import { fetchAccountSummary, requestExport, listExports } from './fetchApi'
-import { AccountSummary, Preferences, ExportOperation } from './models'
+import { AccountSummary, Preferences, ExportData, ExportOperation } from './models'
 
 export async function fetchAccount (preferences: Preferences): Promise<AccountSummary> {
   return await fetchAccountSummary(preferences)
@@ -11,9 +11,12 @@ export async function fetchAccount (preferences: Preferences): Promise<AccountSu
 export async function fetchTransactions (preferences: Preferences, fromDate?: Date, toDate?: Date): Promise<ExportOperation[]> {
   const { reportId } = await requestExport(preferences, fromDate, toDate)
 
-  await new Promise((resolve) => setTimeout(resolve, 10000))
-  const exports = await listExports(preferences)
-  const exportData = exports.find(e => e.reportId === reportId && e.status === 'Finished' && e.downloadLink)
+  let exportData: ExportData | undefined
+  for (let attempt = 0; attempt < 5 && exportData == null; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, 60000))
+    const exports = await listExports(preferences)
+    exportData = exports.find(e => e.reportId === reportId && e.status === 'Finished' && e.downloadLink)
+  }
   if (exportData == null) {
     throw new Error('Export took too long, try a shorter period')
   }
