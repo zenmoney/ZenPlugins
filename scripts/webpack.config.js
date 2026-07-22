@@ -13,6 +13,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const WebsocketServer = require('./debugServers/wsServer')
 const { setupProxyServer } = require('./debugServers/proxyServer')
 const { setupWebServer } = require('./debugServers/webServer')
+const path = require('path')
 
 const readLogPrivateKey = () => {
   try {
@@ -20,6 +21,12 @@ const readLogPrivateKey = () => {
   } catch (e) {
     throw new Error('Could not read file at LOG_PRIVATE_KEY path')
   }
+}
+
+const resolveWebpackCacheDirectory = () => {
+  return process.env.WEBPACK_CACHE_DIR
+    ? path.resolve(process.env.WEBPACK_CACHE_DIR)
+    : resolveFromRoot('node_modules/.cache/webpack')
 }
 
 function generatePluginConfig (production, server, pluginName, outputPath) {
@@ -35,7 +42,10 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
     devtool: production ? false : 'eval',
     cache: {
       type: production ? 'filesystem' : 'memory',
-      ...production && { name: pluginName }
+      ...production && {
+        name: pluginName,
+        cacheDirectory: resolveWebpackCacheDirectory()
+      }
     },
     entry: production
       ? { index: pluginPaths.js }

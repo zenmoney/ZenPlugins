@@ -1,12 +1,11 @@
 image: node:20
 
-cache:
-  paths:
-    - .yarn/
-    - node_modules/
+variables:
+  SHARED_CACHE_ROOT: /opt/plugins-cache
+  WEBPACK_CACHE_DIR: .webpack-cache
 
 before_script:
-  - yarn --cache-folder .yarn
+  - scripts/setupDependenciesCache.sh
 
 stages:
   - test
@@ -15,7 +14,7 @@ stages:
 test:
   stage: test
   script:
-    - yarn --cache-folder .yarn test
+    - yarn test
 
 build:
   stage: build

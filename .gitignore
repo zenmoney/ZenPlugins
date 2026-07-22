@@ -47,6 +47,7 @@ Thumbs.db
 /build
 /dist
 /log
+/.webpack-cache
 
 # misc
 /npm-debug.log
@@ -54,6 +55,7 @@ Thumbs.db
 /yarn-error.log
 /.yarnrc
 /.yarn/
+/.shared-cache
 
 # repository docs/plans
 AGENT.md
