@@ -1,12 +1,16 @@
 import { parseXml } from '../../../common/xmlUtils'
 import {
+  activateDeviceToken,
   createDateIntervals,
   fetchBalance,
   fetchFullTransactions,
   fetchLastTransactions,
   login,
+  loginDeviceToken,
+  logoff,
   parseFullTransactionsMail,
-  parseFullTransactionsMailCardLimit
+  parseFullTransactionsMailCardLimit,
+  registerDeviceToken
 } from '../api'
 
 function makeNetworkResponse (body, url = 'https://mobapp-frontend.bgpb.by/test') {
@@ -43,6 +47,10 @@ describe('request logging', () => {
       .mockResolvedValueOnce(makeNetworkResponse('<BS_Response><Balance Amount="1,00"/></BS_Response>'))
 
     await expect(login('login-value', 'password-value')).resolves.toBe('response-secret-sid')
+    const loginRequest = global.fetch.mock.calls[0][1]
+    expect(loginRequest.headers['User-Agent']).toBe('BGPB mobile/1.6.2 (Android; unknownAndroidSDKbuiltforx86; Android 11)')
+    expect(loginRequest.body).toContain('<Parameter Id="AppVersion">1.6.2</Parameter>')
+    expect(loginRequest.body).toContain('<TerminalId Version="1.6.2">41742962</TerminalId>')
     await expect(fetchBalance('request-secret-sid', {
       productType: 'MS',
       cardNumber: '518597******1111',
@@ -79,20 +87,68 @@ describe('request logging', () => {
 
     expect(stringifyDebugCalls(debug)).not.toContain('json-secret-sid')
   })
+
+  it('sanitizes device registration and activation secrets', async () => {
+    const xfad = 'xfad-secret'.padEnd(300, 'A')
+    global.fetch = jest.fn()
+      .mockResolvedValueOnce(makeNetworkResponse(`<BS_Response><Registration><Id>123</Id><xfad>${xfad}</xfad><ActivationPwd>code-secret</ActivationPwd></Registration></BS_Response>`))
+      .mockResolvedValueOnce(makeNetworkResponse('<BS_Response><Activation/></BS_Response>'))
+
+    await expect(registerDeviceToken('registration-secret-sid', {
+      registrationModel: 'Test Device',
+      registrationDeviceId: 'test-device-id'
+    }, 'nonce-value')).resolves.toEqual({
+      deviceNo: '123',
+      xfad,
+      activationPassword: 'code-secret'
+    })
+    await expect(activateDeviceToken('activation-secret-sid', '123', 'derivation-secret')).resolves.toBeUndefined()
+
+    const logs = stringifyDebugCalls(debug)
+    expect(logs).not.toContain('registration-secret-sid')
+    expect(logs).not.toContain('activation-secret-sid')
+    expect(logs).not.toContain('xfad-secret')
+    expect(logs).not.toContain('code-secret')
+    expect(logs).not.toContain('derivation-secret')
+  })
+
+  it('opens and closes a DailyFin device-token session', async () => {
+    global.fetch = jest.fn()
+      .mockResolvedValueOnce(makeNetworkResponse('<BS_Response><Login SID="device-secret-sid"/></BS_Response>'))
+      .mockResolvedValueOnce(makeNetworkResponse('<BS_Response><Logoff/></BS_Response>'))
+
+    await expect(loginDeviceToken('123456', '654321')).resolves.toBe('device-secret-sid')
+    await expect(logoff('device-secret-sid')).resolves.toBeUndefined()
+
+    const loginRequest = global.fetch.mock.calls[0][1].body
+    expect(loginRequest).toContain('Type="BS_TOKEN_EMBEDDED"')
+    expect(loginRequest).toContain('<Parameter Id="DeviceNo">123456</Parameter>')
+    expect(loginRequest).toContain('<Parameter Id="Password">654321</Parameter>')
+
+    const logs = stringifyDebugCalls(debug)
+    expect(logs).not.toContain('654321')
+    expect(logs).not.toContain('device-secret-sid')
+  })
 })
 
 describe('fetchFullTransactions', () => {
-  it('skips high-security statement requests', async () => {
-    const log = jest.spyOn(console, 'log').mockImplementation(() => {})
+  it('uses DailyFin device authorization parameters for a protected action', async () => {
     global.fetch = jest.fn()
+      .mockResolvedValueOnce(makeNetworkResponse('<BS_Response><ExecuteAction><MailId>mail-1</MailId></ExecuteAction></BS_Response>'))
+      .mockResolvedValueOnce(makeNetworkResponse('<BS_Response><MailAttachment><Attachment><Body>statement</Body></Attachment></MailAttachment></BS_Response>'))
 
-    await expect(fetchFullTransactions('sid', {
-      title: 'Card*1111',
+    await expect(fetchFullTransactions('statement-secret-sid', {
+      title: 'Deposit',
       transactionsAccId: 'statement-action'
-    }, new Date('2026-05-01T00:00:00+0300'), new Date('2026-05-21T00:00:00+0300'))).resolves.toEqual([])
+    }, new Date('2026-05-01T00:00:00+0300'), new Date('2026-05-21T00:00:00+0300'), () => ({
+      deviceNo: '123456',
+      otp: '654321'
+    }))).resolves.toHaveLength(1)
 
-    expect(global.fetch).not.toHaveBeenCalled()
-    log.mockRestore()
+    const statementRequest = global.fetch.mock.calls[0][1].body
+    expect(statementRequest).toContain('<Session IpAddress="10.0.2.15" Prolong="Y" SID="statement-secret-sid">')
+    expect(statementRequest).toContain('<Parameter Id="DeviceNo">123456</Parameter>')
+    expect(statementRequest).toContain('<Parameter Id="Password">654321</Parameter>')
   })
 })
 

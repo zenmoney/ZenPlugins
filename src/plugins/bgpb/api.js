@@ -8,14 +8,13 @@ import { parseXml } from '../../common/xmlUtils'
 
 const BASE_URL = 'https://mobapp-frontend.bgpb.by/'
 const TERMINAL_ID = 41742962
-const APP_VERSION = '1.5.0'
+const APP_VERSION = '1.6.2'
 const DEVICE_PLATFORM = 'Android 11'
 const PUSH_HISTORY_ENDPOINT = `push-history/api/android_${APP_VERSION}/v2/getHistory`
 const HISTORY_BASE_PATH = 'history/client/2/1/'
 const HISTORY_CONFIG_ENDPOINT = `${HISTORY_BASE_PATH}getConfig`
 const HISTORY_EXT_OPERATIONS_ENDPOINT = `${HISTORY_BASE_PATH}ext-operations`
 const EXTRA_AUTH_REQUIRED_ERROR = 'Для выполнения действия требуется дополнительная аутентификация'
-const FULL_STATEMENT_REQUESTS_ENABLED = false
 
 const SOU_ADMIN_ENDPOINT = 'sou2/xml_online.admin'
 const SOU_REQUEST_ENDPOINT = 'sou2/xml_online.request'
@@ -45,15 +44,34 @@ function buildTerminalInfoXml () {
     '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n'
 }
 
-function buildSessionXml (sid) {
-  return '   <Session IpAddress="10.0.2.15" Prolong="Y" SID="' + sid + '"/>\r\n'
+function escapeXmlValue (value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;')
+}
+
+function buildSessionXml (sid, deviceAuthorization = null) {
+  if (!deviceAuthorization) {
+    return '   <Session IpAddress="10.0.2.15" Prolong="Y" SID="' + escapeXmlValue(sid) + '"/>\r\n'
+  }
+  return '   <Session IpAddress="10.0.2.15" Prolong="Y" SID="' + escapeXmlValue(sid) + '">\r\n' +
+    '      <Parameter Id="DeviceNo">' + escapeXmlValue(deviceAuthorization.deviceNo) + '</Parameter>\r\n' +
+    '      <Parameter Id="Password">' + escapeXmlValue(deviceAuthorization.otp) + '</Parameter>\r\n' +
+    '   </Session>\r\n'
 }
 
 function sanitizeBgpbRequestLogBody (body) {
   if (typeof body === 'string') {
     return body
       .replace(/\bSID="([^"]*)"/gi, (_match, value) => `SID="${sanitize(value, true)}"`)
+      .replace(/\b(xfad|ActivationPwd|DerivationOTP|DerivationSign)="([^"]*)"/gi, (_match, name, value) => `${name}="${sanitize(value, true)}"`)
       .replace(/(<Parameter\s+Id="(?:Login|Password)"[^>]*>)([^<]*)(<\/Parameter>)/gi, (_match, openTag, value, closeTag) => {
+        return `${openTag}${sanitize(value, true)}${closeTag}`
+      })
+      .replace(/(<(?:xfad|ActivationPwd|DerivationOTP|DerivationSign)>)([^<]*)(<\/(?:xfad|ActivationPwd|DerivationOTP|DerivationSign)>)/gi, (_match, openTag, value, closeTag) => {
         return `${openTag}${sanitize(value, true)}${closeTag}`
       })
   }
@@ -420,6 +438,92 @@ export async function login (login, password) {
   return null
 }
 
+/**
+ * Opens the device-bound DailyFin session used by protected account actions.
+ */
+export async function loginDeviceToken (deviceNo, otp) {
+  const res = await fetchApi(SOU_ADMIN_ENDPOINT,
+    '<BS_Request>\r\n' +
+    '   <Login Biometric="N" IpAddress="10.0.2.15" Type="BS_TOKEN_EMBEDDED">\r\n' +
+    '      <Parameter Id="Password">' + escapeXmlValue(otp) + '</Parameter>\r\n' +
+    '      <Parameter Id="DeviceNo">' + escapeXmlValue(deviceNo) + '</Parameter>\r\n' +
+    '      <Parameter Id="DevicePlatform">' + DEVICE_PLATFORM + '</Parameter>\r\n' +
+    '      <Parameter Id="AppVersion">' + APP_VERSION + '</Parameter>\r\n' +
+    '   </Login>\r\n' +
+    '   <RequestType>Login</RequestType>\r\n' +
+    buildTerminalInfoXml() +
+    '   <Subsystem>ClientAuth</Subsystem>\r\n' +
+    '</BS_Request>\r\n', { sanitizeRequestLog: { body: true } }, response => true, message => new InvalidPreferencesError('Банк отклонил PIN-токен BGPB'))
+  if (res.BS_Response.Login && res.BS_Response.Login.SID) {
+    return res.BS_Response.Login.SID
+  }
+  throw new InvalidPreferencesError('Банк не открыл сессию PIN-токена BGPB')
+}
+
+/**
+ * Closes the password session before the app switches to device-token login.
+ */
+export async function logoff (sid) {
+  await fetchApi(SOU_ADMIN_ENDPOINT,
+    '<BS_Request>\r\n' +
+    '   <Logoff>' + escapeXmlValue(sid) + '</Logoff>\r\n' +
+    '   <RequestType>Logoff</RequestType>\r\n' +
+    buildSessionXml(sid) +
+    buildTerminalInfoXml() +
+    '   <Subsystem>ClientAuth</Subsystem>\r\n' +
+    '</BS_Request>\r\n', { sanitizeRequestLog: { body: true } }, response => true, message => new TemporaryError(message))
+}
+
+/**
+ * Registers a DailyFin-compatible device and returns the server activation payload.
+ */
+export async function registerDeviceToken (sid, identity, nonce) {
+  const response = await fetchApi(SOU_ADMIN_ENDPOINT,
+    '<BS_Request>\r\n' +
+    buildTerminalInfoXml() +
+    '   <RequestType>Registration</RequestType>\r\n' +
+    buildSessionXml(sid) +
+    '   <Subsystem>BSToken</Subsystem>\r\n' +
+    '   <Registration>\r\n' +
+    '      <Nonce>' + escapeXmlValue(nonce) + '</Nonce>\r\n' +
+    '      <Model>' + escapeXmlValue(identity.registrationModel) + '</Model>\r\n' +
+    '      <Platform>Android</Platform>\r\n' +
+    '      <Version>' + APP_VERSION + '</Version>\r\n' +
+    '      <DeviceId>' + escapeXmlValue(identity.registrationDeviceId) + '</DeviceId>\r\n' +
+    '   </Registration>\r\n' +
+    '</BS_Request>\r\n', {}, response => true, message => new TemporaryError(message))
+
+  const registration = response?.BS_Response?.Registration
+  const deviceNo = registration?.Id ?? registration?.id
+  const xfad = registration?.xfad ?? registration?.Xfad
+  const activationPassword = registration?.ActivationPwd ?? registration?.activationPwd ?? ''
+  if (deviceNo === null || deviceNo === undefined || !/^\d+$/.test(String(deviceNo)) || typeof xfad !== 'string') {
+    throw new TemporaryError('Ответ банка: не получены данные регистрации устройства')
+  }
+  return {
+    deviceNo: String(deviceNo),
+    xfad,
+    activationPassword: String(activationPassword || '')
+  }
+}
+
+/**
+ * Completes DailyFin-compatible device activation with the locally derived code.
+ */
+export async function activateDeviceToken (sid, deviceNo, derivationOtp) {
+  await fetchApi(SOU_ADMIN_ENDPOINT,
+    '<BS_Request>\r\n' +
+    buildTerminalInfoXml() +
+    '   <RequestType>Activation</RequestType>\r\n' +
+    buildSessionXml(sid) +
+    '   <Subsystem>BSToken</Subsystem>\r\n' +
+    '   <Activation>\r\n' +
+    '      <Id>' + escapeXmlValue(deviceNo) + '</Id>\r\n' +
+    '      <DerivationOTP>' + escapeXmlValue(derivationOtp) + '</DerivationOTP>\r\n' +
+    '   </Activation>\r\n' +
+    '</BS_Request>\r\n', {}, response => true, message => new TemporaryError(message))
+}
+
 export async function fetchAccounts (sid) {
   console.log('>>> Загрузка списка счетов...')
   const [cards, deposits] = await Promise.all([
@@ -612,12 +716,8 @@ async function fetchCardLastTransactions (sid, account, fromDate, toDate, histor
   }))
 }
 
-export async function fetchFullTransactions (sid, account, fromDate, toDate = new Date()) {
+export async function fetchFullTransactions (sid, account, fromDate, toDate = new Date(), getDeviceAuthorization = null) {
   console.log('>>> Загрузка списка транзакций...')
-  if (!FULL_STATEMENT_REQUESTS_ENABLED) {
-    console.log(`>>> Полная выписка для "${account.title}" требует device-bound аутентификацию приложения, пропускаем.`)
-    return []
-  }
 
   toDate = toDate || new Date()
 
@@ -633,7 +733,7 @@ export async function fetchFullTransactions (sid, account, fromDate, toDate = ne
         '      <Parameter Id="DateTill">' + transactionDate(date[1]) + '</Parameter>\r\n' +
         '   </ExecuteAction>\r\n' +
         '   <RequestType>ExecuteAction</RequestType>\r\n' +
-        buildSessionXml(sid) +
+        buildSessionXml(sid, getDeviceAuthorization ? getDeviceAuthorization() : null) +
         buildTerminalInfoXml() +
         '   <Subsystem>ClientAuth</Subsystem>\r\n' +
         '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
@@ -644,8 +744,7 @@ export async function fetchFullTransactions (sid, account, fromDate, toDate = ne
       }
     } catch (error) {
       if (error.message && error.message.includes(EXTRA_AUTH_REQUIRED_ERROR)) {
-        console.log(`>>> Полная выписка для "${account.title}" требует device-bound аутентификацию приложения, пропускаем.`)
-        return []
+        throw new InvalidPreferencesError('Банк запросил дополнительную авторизацию выписки BGPB, но PIN-токен не был принят.')
       }
       if (error instanceof TemporaryError) {
         console.log(`>>> Не удалось запросить выписку для "${account.title}" за ${transactionDate(date[0])}-${transactionDate(date[1])}, пропускаем интервал.`)
