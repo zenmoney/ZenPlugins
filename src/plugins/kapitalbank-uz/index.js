@@ -1,6 +1,6 @@
 import { Jimp } from 'jimp'
 import { delay, generateRandomString } from '../../common/utils'
-import { InvalidLoginOrPasswordError } from '../../errors'
+import { InvalidLoginOrPasswordError, TemporaryError } from '../../errors'
 import {
   authByPhoneNumber,
   authByPassword,
@@ -14,11 +14,6 @@ import {
 } from './api'
 
 export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
-  const photoFromCamera = await ZenMoney.takePicture('jpeg')
-  console.log(typeof photoFromCamera)
-  console.log(photoFromCamera)
-  await blobToBase64WithResolution(photoFromCamera, 480, 640)
-  console.log('toBase64 complete')
   // FIRST RUN STEPS
   if (isFirstRun) {
     const deviceId = generateRandomString(16)
@@ -83,7 +78,7 @@ async function updateToken (phone, password, isResident, pinfl, birthDate) {
       const smsCode = await ZenMoney.readLine('Введите код из СМС сообщения')
       await verifySmsCode(verificationCode, smsCode)
     } else {
-      throw new TemporaryError('Problems with identification')
+      throw e
     }
   }
 }
