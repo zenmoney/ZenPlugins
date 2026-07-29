@@ -5,7 +5,7 @@
         obligatory="true"
         title="Read-only API Key"
         dialogTitle="Read-only API Key"
-        dialogMessage="Create a System-generated, Read-Only API key in Bybit Dashboard → API → Create New Key. Enable permissions: &quot;Bybit Card&quot; (required for the card transaction history endpoint), &quot;Wallet → Account Transfer / Subaccount Transfer&quot; (for the funding wallet balance probe), and &quot;Exchange → Exchange History&quot; (read-only; required by the convert coin-list endpoint that powers the aggregated USD balance). Do NOT enable trading or withdrawal permissions. Paste the API Key here."
+        dialogMessage="Create a System-generated, Read-Only API key in Bybit Dashboard → API → Create New Key. Enable permissions: &quot;Bybit Card&quot; (transaction history), &quot;Earn → Earn&quot; (redeemable Flexible Earn balance), &quot;Wallet → Account Transfer / Subaccount Transfer&quot; (Funding balance), and &quot;Exchange → Exchange History&quot; (Funding coin valuation). Do NOT enable trading or withdrawal permissions. Paste the API Key here."
         positiveButtonText="OK"
         negativeButtonText="Cancel"
         summary="|apiKey|{@s}"
@@ -20,6 +20,17 @@
         positiveButtonText="OK"
         negativeButtonText="Cancel"
         summary="||***********"
+    />
+    <EditTextPreference
+        key="baseUrl"
+        obligatory="true"
+        defaultValue="https://api.bybit.com"
+        title="Bybit API region"
+        dialogTitle="Bybit API base URL"
+        dialogMessage="Use the official API host for your Bybit account region. Examples: https://api.bybit.com, https://api.bybit.kz, https://api.bybit.eu."
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="|baseUrl|{@s}"
     />
     <EditTextPreference
         key="startDate"
@@ -38,7 +49,7 @@
         defaultValue="USDT, USDC"
         title="Card funding coins"
         dialogTitle="Coins that fund the card"
-        dialogMessage="Comma-separated list, e.g. USDT, USDC. The plugin imports one Bybit Card account in USD (bybit_card). The account balance is the Bybit Convert uBalance for these Funding coins plus Funding USD fiat 1:1. Only USDT and USDC are allowed in this list."
+        dialogMessage="Comma-separated list, e.g. USDT, USDC. Include only stablecoins selected in Bybit Card → Paying With with Auto-Deduction enabled. The USD account balance combines their Funding value, redeemable Flexible Earn availableAmount, and Funding USD fiat 1:1. Bybit's public API does not expose the Auto-Deduction switch. Only USDT and USDC are supported."
         positiveButtonText="OK"
         negativeButtonText="Cancel"
         summary="|cardBalanceCoins|{@s}"

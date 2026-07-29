@@ -1,6 +1,7 @@
 export interface Preferences {
   apiKey: string
   apiSecret: string
+  baseUrl?: string
   startDate: string
   cardBalanceCoins: string
 }
@@ -13,6 +14,7 @@ export interface Auth {
 export interface Credentials {
   apiKey: string
   apiSecret: string
+  baseUrl: string
 }
 
 export type CardTransactionQueryType = 'SIDE_QUERY_AUTH' | 'SIDE_QUERY_FINANCIAL_ALL'
@@ -21,6 +23,12 @@ export interface CoinBalance {
   coin: string
   walletBalance: number
   transferBalance: number
+}
+
+export interface FlexibleEarnPosition {
+  coin: string
+  amount: number
+  availableAmount: number
 }
 
 // Subset of /v5/card/transaction/query-asset-records `data[]` items
@@ -47,4 +55,5 @@ export interface CardTransaction {
   merchCategoryDesc: string | null
   pan4: string | null
   declinedReason: string | null
+  totalFees: number
 }
