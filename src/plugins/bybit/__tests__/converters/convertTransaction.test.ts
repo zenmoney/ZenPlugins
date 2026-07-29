@@ -60,7 +60,8 @@ describe('convertTransaction', () => {
       merchCountry: 'US',
       mccCode: 5411,
       merchCategoryDesc: 'Grocery Stores',
-      pan4: '1234'
+      pan4: '1234',
+      totalFees: 1.5
     })
     expect(convertTransaction(entry, bybitCardAccount)).toEqual({
       hold: false,
@@ -69,8 +70,8 @@ describe('convertTransaction', () => {
         id: 'TXN20230101001',
         account: { id: 'bybit_card' },
         invoice: null,
-        sum: -101.5,
-        fee: 0
+        sum: -100,
+        fee: -1.5
       }],
       merchant: {
         title: 'Amazon',
@@ -83,7 +84,7 @@ describe('convertTransaction', () => {
     })
   })
 
-  it('keeps a merchant-currency invoice when it differs from the USD card account currency', () => {
+  it('keeps a paid-currency invoice when it differs from the USD card account currency', () => {
     const entry = baseEntry({
       basicAmount: 108,
       basicCurrency: 'USD',

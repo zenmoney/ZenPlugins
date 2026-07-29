@@ -112,7 +112,9 @@ export function convertTransaction (
 
   const accountCurrency = account.instrument.toUpperCase()
   const transactionCurrency = entry.paidCurrency.toUpperCase()
-  const sum = sign * Math.abs(entry.basicAmount)
+  const totalAmount = Math.abs(entry.basicAmount)
+  const feeAmount = Math.min(totalAmount, Math.abs(entry.totalFees))
+  const sum = sign * (totalAmount - feeAmount)
   const sameCurrency = transactionCurrency === accountCurrency || entry.paidAmount === 0
   const invoice = sameCurrency
     ? null
@@ -130,7 +132,7 @@ export function convertTransaction (
       account: { id: account.id },
       invoice,
       sum,
-      fee: entry.totalFees
+      fee: feeAmount === 0 ? 0 : sign * feeAmount
     }],
     merchant,
     comment: buildComment(entry)

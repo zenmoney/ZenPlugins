@@ -10,16 +10,15 @@ Synchronizes the **Bybit Card** with ZenMoney via the public Bybit V5 REST API, 
   - Balance: the card's estimated spending power:
     - the "one-click" USDT-worth (`uBalance`) returned by the [Convert coin list](https://bybit-exchange.github.io/docs/v5/asset/convert/convert-coin-list) for configured Funding coins (`USDT`, `USDC`);
     - Funding `USD` fiat (added automatically, 1:1);
-    - the redeemable `availableAmount` returned by [Flexible Earn positions](https://bybit-exchange.github.io/docs/v5/finance/earn/easy-onchain/position) for the same configured stablecoins.
+    - the redeemable `availableAmount` returned by [`GET /v5/earn/position`](https://bybit-exchange.github.io/docs/v5/finance/earn/easy-onchain/position) for the same configured stablecoins.
   - Bybit does not expose the card's Auto-Deduction switch through the public API. Configure only coins that are selected for card payment with Auto-Deduction enabled; otherwise the estimate can exceed the actual spending power.
   - Skip in ZenMoney: `bybit_card`.
 - Card transactions from [`POST /v5/card/transaction/query-asset-records`](https://bybit-exchange.github.io/docs/v5/bybit-card/asset-records).
   - `SIDE_QUERY_FINANCIAL_ALL` is used for posted card transactions.
   - `SIDE_QUERY_AUTH` is queried for the requested date range and only in-progress authorizations (`tradeStatus=0`) are imported, so new card payments appear as ZenMoney holds before posting.
-  - Each transaction's movement `sum` is the **total USD amount including fees** (`basicAmount` in `basicCurrency`, expected to be `USD`).
-  - `invoice` is the original fiat transaction amount (`transactionCurrencyAmount` in `transactionCurrency`) only when that currency differs from the USD card account; otherwise it is `null`.
-  - ZenMoney's final plugin API has no separate fee field. Bybit's fees are already included in `basicAmount`, so the exact total balance effect is preserved without a separate fee annotation.
-  - Merchant title and MCC are mapped to ZenMoney's native fields. Category, city, and country are also retained in the comment because ZenMoney's final plugin serializer has no fields for them. Bybit does not provide merchant coordinates.
+  - The movement's `sum` is the pre-fee part of `basicAmount`, and its signed `fee` is populated from `totalFees`; together they preserve the exact total balance effect reported by Bybit.
+  - `invoice` is `paidAmount` in `paidCurrency` only when that currency differs from the USD card account; otherwise it is `null`.
+  - Merchant title and MCC are mapped to ZenMoney's native fields. City and country are retained in the comment because ZenMoney's final plugin serializer has no fields for them. `merchCategoryDesc` is used as a fallback merchant title. Bybit does not provide merchant coordinates.
   - Authorizations (`side=1`) and any in-progress transactions (`tradeStatus=0`) are marked as holds.
   - Declined (`tradeStatus=2`), reversal (`tradeStatus=3`), authorization-reversal (`side=2`), unDeduct-refund (`side=4`), and various `*-reversal` / `*-request` sides are filtered out to avoid double-counting.
 
