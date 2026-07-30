@@ -1,18 +1,13 @@
-import _ from 'lodash'
 import { adjustTransactions } from '../../common/transactionGroupHandler'
-import { fetchAccounts, fetchLastCardTransactions, fetchTransactions, login } from './api'
-import { convertCard, convertDeposit, convertCheckingAccount, convertTransaction, transactionsUnique } from './converters'
+import { fetchAccounts, fetchTransactions, login } from './api'
+import { convertCard, convertDeposit, convertCheckingAccount, convertTransaction } from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
-  const token = await login(preferences.phone, preferences.password)
+  const token = await login(preferences)
   const accounts = (await fetchAccounts(token))
   const cards = accounts.cards
     .map(convertCard)
     .filter(account => account !== null)
-  let lastTransactions = []
-  for (let i = 0; i < cards.length; i++) {
-    lastTransactions = lastTransactions.concat(await fetchLastCardTransactions(token, cards[i]))
-  }
   let preparedAccounts = cards
   if (accounts.deposits) {
     const deposits = accounts.deposits
@@ -27,15 +22,13 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     preparedAccounts = preparedAccounts.concat(checkingAccounts)
   }
 
-  const transactions = (await fetchTransactions(token, preparedAccounts, fromDate, toDate))
+  const accountsForTransactions = preparedAccounts
+    .filter(account => !ZenMoney.isAccountSkipped(account.id))
+  const transactions = (await fetchTransactions(token, accountsForTransactions, fromDate, toDate))
     .map(transaction => convertTransaction(transaction, preparedAccounts))
     .filter(transaction => transaction !== null)
-  lastTransactions = lastTransactions
-    .map(transaction => convertTransaction(transaction, cards, true))
-    .filter(transaction => transaction !== null)
-  const allTransactions = _.sortBy(transactionsUnique(transactions.concat(lastTransactions)), transaction => transaction.date)
   return {
     accounts: preparedAccounts,
-    transactions: adjustTransactions({ transactions: allTransactions })
+    transactions: adjustTransactions({ transactions: transactions.sort((a, b) => a.date - b.date) })
   }
 }

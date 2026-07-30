@@ -235,4 +235,71 @@ describe('convertAccount', () => {
 
     expect(account).toEqual(null)
   })
+
+  it('skips an Iskra product without balance currency', () => {
+    expect(convertCard({ id: 'card-1', name: 'Карта', balance: null })).toBeNull()
+  })
+
+  it('keeps two fractional digits in split Iskra money values', () => {
+    expect(convertCard({
+      id: 'card-1',
+      name: 'Карта',
+      balance: { integerPart: 10, fractionalPart: 5, currency: 'BYN', sign: 'PLUS' }
+    })).toMatchObject({ balance: 10.05 })
+  })
+
+  it('uses split Iskra money when the display amount is hidden', () => {
+    expect(convertCard({
+      id: 'card-1',
+      name: 'Карта',
+      balance: { amount: '*****', integerPart: 10, fractionalPart: 5, currency: 'BYN', sign: 'PLUS' }
+    })).toMatchObject({ balance: 10.05 })
+  })
+
+  it('skips a malformed Iskra deposit instead of treating it as a legacy account', () => {
+    expect(convertDeposit({
+      id: 'deposit-1',
+      balance: { amount: '1000.00', currency: 'BYN', sign: 'PLUS' },
+      contractOpenDate: '2025-06-01',
+      contractEndDate: '2026-06-01'
+    })).toBeNull()
+  })
+
+  it('converts an Iskra deposit list item into a complete ZenMoney deposit', () => {
+    expect(convertDeposit({
+      id: 'deposit-1',
+      name: 'Верное решение',
+      balance: { amount: '1000.00', currency: 'USD', sign: 'PLUS' },
+      contractOpenDate: '2025-06-01',
+      contractEndDate: '2026-06-01',
+      interestRateType: 'FIXED',
+      currentInterestRate: '5,25',
+      maxInterestRate: null,
+      isIrrevocable: false
+    })).toEqual({
+      id: 'deposit-1',
+      type: 'deposit',
+      title: 'Депозит Верное решение',
+      currencyCode: 'USD',
+      instrument: 'USD',
+      balance: 1000,
+      syncID: ['deposit-1'],
+      startDate: new Date('2025-06-01'),
+      startBalance: 1000,
+      capitalization: true,
+      percent: 5.25,
+      endDateOffsetInterval: 'day',
+      endDateOffset: 365,
+      payoffInterval: 'month',
+      payoffStep: 1
+    })
+  })
+
+  it('skips an Iskra deposit without a valid contract period', () => {
+    expect(convertDeposit({
+      id: 'deposit-1',
+      name: 'Верное решение',
+      balance: { amount: '1000.00', currency: 'USD', sign: 'PLUS' }
+    })).toBeNull()
+  })
 })

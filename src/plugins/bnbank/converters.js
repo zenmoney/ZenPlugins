@@ -4,6 +4,7 @@ import { toISODateString } from '../../common/dateUtils'
 export const card = 'card'
 export const deposit = 'deposit'
 export const checking = 'checking'
+const MS_PER_DAY = 24 * 60 * 60 * 1000
 
 export function convertCard (json) {
   return convertAccount(json, card)
@@ -18,6 +19,10 @@ export function convertCheckingAccount (json) {
 }
 
 export function convertAccount (json, accountType) {
+  if (!json || typeof json !== 'object') return null
+  if (Object.prototype.hasOwnProperty.call(json, 'id')) {
+    return convertIskraAccount(json, accountType)
+  }
   switch (accountType) {
     case card:
       if (json.cards && json.cards.length > 0) { // only loading card accounts
@@ -74,7 +79,64 @@ export function convertAccount (json, accountType) {
   }
 }
 
+function getInstrument (currency) {
+  return codeToCurrencyLookup[currency] || currency
+}
+
+function getMoneyAmount (money) {
+  if (!money) return 0
+  const displayAmount = Number.parseFloat(String(money.amount ?? '').replace(',', '.'))
+  const fractionalPart = String(money.fractionalPart ?? 0).padStart(2, '0')
+  const structuredAmount = Number.parseFloat(`${money.integerPart ?? 0}.${fractionalPart}`)
+  const amount = Number.isFinite(displayAmount) ? displayAmount : structuredAmount
+  if (!Number.isFinite(amount)) return 0
+  return money.sign === 'MINUS' ? -Math.abs(amount) : Math.abs(amount)
+}
+
+function convertIskraAccount (json, accountType) {
+  if (typeof json.id !== 'string' || !json.id ||
+    typeof json.name !== 'string' || !json.name ||
+    typeof json.balance?.currency !== 'string' || !json.balance.currency) return null
+  const currency = json.balance.currency
+  const balance = getMoneyAmount(json.balance)
+  const account = {
+    id: json.id,
+    type: accountType,
+    title: accountType === deposit ? `Депозит ${json.name}` : json.name,
+    currencyCode: currency,
+    instrument: getInstrument(currency),
+    balance,
+    syncID: [json.id]
+  }
+
+  if (typeof json.pan === 'string' && json.pan.length >= 4) {
+    account.syncID.push(json.pan.slice(-4))
+  }
+  if (accountType === deposit) {
+    const startDate = new Date(json.contractOpenDate)
+    const endDate = new Date(json.contractEndDate)
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || endDate < startDate) {
+      return null
+    }
+    const rate = Number.parseFloat(String(json.currentInterestRate).replace(',', '.'))
+    Object.assign(account, {
+      startDate,
+      startBalance: balance,
+      capitalization: true,
+      percent: Number.isFinite(rate) ? rate : null,
+      endDateOffsetInterval: 'day',
+      endDateOffset: Math.round((endDate - startDate) / MS_PER_DAY),
+      payoffInterval: 'month',
+      payoffStep: 1
+    })
+  }
+  return account
+}
+
 export function convertTransaction (apiTransaction, accounts, hold = false) {
+  if (apiTransaction.productId && apiTransaction.transactionSum) {
+    return convertIskraTransaction(apiTransaction, accounts)
+  }
   if (apiTransaction.accountNumber.length > 16) {
     apiTransaction.accountNumber = apiTransaction.accountNumber.slice(-16)
   }
@@ -121,6 +183,69 @@ export function convertTransaction (apiTransaction, accounts, hold = false) {
   ].some(parser => parser(transaction, apiTransaction, account, invoice))
 
   return transaction
+}
+
+function convertIskraTransaction (apiTransaction, accounts) {
+  const account = accounts.find(account => account.id === apiTransaction.productId)
+  if (!account) return null
+
+  const detail = apiTransaction.operationDetail || {}
+  const statusCode = apiTransaction.productType === 'CARD' || account.type === card
+    ? detail.statusCode
+    : 'EXECUTED'
+  if (statusCode === 'CANCELLED') return null
+
+  const operationSum = getMoneyAmount(apiTransaction.operationSum)
+  const transactionSum = getMoneyAmount(apiTransaction.transactionSum)
+  if (operationSum === 0 && transactionSum === 0) return null
+
+  const operationInstrument = getInstrument(apiTransaction.operationSum?.currency) || account.instrument
+  const transactionInstrument = getInstrument(apiTransaction.transactionSum?.currency) || operationInstrument
+  const transactionMoney = { sum: transactionSum, instrument: transactionInstrument }
+  const operationMoney = { sum: operationSum, instrument: operationInstrument }
+  const accountMoney = [transactionMoney, operationMoney].find(money => money.instrument === account.instrument) || transactionMoney
+  const invoiceMoney = [transactionMoney, operationMoney]
+    .find(money => money !== accountMoney && money.instrument !== accountMoney.instrument)
+  const date = new Date(detail.operationDate || apiTransaction.paymentDate)
+  if (Number.isNaN(date.getTime())) return null
+  const invoice = invoiceMoney ? { sum: invoiceMoney.sum, instrument: invoiceMoney.instrument } : null
+  const merchantTitle = cleanMerchantTitle(detail.merchantName)
+  const { city, country } = parseLocation(apiTransaction)
+  const mcc = parseMcc(apiTransaction)
+  const transaction = {
+    date,
+    movements: [{
+      id: getIskraOperationId(apiTransaction, detail),
+      account: { id: account.id },
+      invoice,
+      sum: accountMoney.sum,
+      fee: 0
+    }],
+    merchant: null,
+    comment: null,
+    hold: statusCode === 'IN_PROGRESS'
+  }
+
+  if (merchantTitle) {
+    transaction.merchant = {
+      title: merchantTitle,
+      mcc,
+      city,
+      country,
+      location: null
+    }
+  }
+  if (apiTransaction.operationName && apiTransaction.operationName !== merchantTitle) {
+    transaction.comment = apiTransaction.operationName
+  }
+  return transaction
+}
+
+function getIskraOperationId (apiTransaction, detail) {
+  if (apiTransaction.id) {
+    return apiTransaction.idType ? `${apiTransaction.idType}:${apiTransaction.id}` : apiTransaction.id
+  }
+  return detail.authorizationCode || null
 }
 
 function parseCashTransfer (transaction, apiTransaction, account, invoice) {
@@ -377,7 +502,7 @@ export function transactionsUnique (array) {
 export function convertTestTransactions (apiTransactions, accounts, hold = false) {
   const transactions = []
   for (const apiTransaction of apiTransactions) {
-    const transaction = convertTransaction(apiTransaction, accounts, hold = false)
+    const transaction = convertTransaction(apiTransaction, accounts, hold)
     if (transaction) {
       transactions.push(transaction)
     }
