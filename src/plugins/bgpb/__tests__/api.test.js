@@ -1,4 +1,5 @@
 import { parseXml } from '../../../common/xmlUtils'
+import { InvalidLoginOrPasswordError, InvalidPreferencesError } from '../../../errors'
 import {
   activateDeviceToken,
   createDateIntervals,
@@ -128,6 +129,24 @@ describe('request logging', () => {
     const logs = stringifyDebugCalls(debug)
     expect(logs).not.toContain('654321')
     expect(logs).not.toContain('device-secret-sid')
+  })
+
+  it('maps bank password rejections to the login error shown by production UI', async () => {
+    global.fetch = jest.fn()
+      .mockResolvedValueOnce(makeNetworkResponse('<BS_Response><Error><ErrorLine>Ошибка проверки пароля</ErrorLine></Error></BS_Response>'))
+
+    const error = await login('login-value', 'password-value').catch(error => error)
+    expect(error).toBeInstanceOf(InvalidLoginOrPasswordError)
+    expect(error.message).toBe('Неверный логин или пароль')
+  })
+
+  it('maps bank device-token rejections to the saved-token preferences error', async () => {
+    global.fetch = jest.fn()
+      .mockResolvedValueOnce(makeNetworkResponse('<BS_Response><Error><ErrorLine>Ошибка проверки пароля</ErrorLine></Error></BS_Response>'))
+
+    const error = await loginDeviceToken('123456', '654321').catch(error => error)
+    expect(error).toBeInstanceOf(InvalidPreferencesError)
+    expect(error.message).toBe('Банк отклонил PIN-токен BGPB')
   })
 })
 

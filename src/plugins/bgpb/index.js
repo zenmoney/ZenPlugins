@@ -13,7 +13,7 @@ import {
   parseTransactionsAndOverdraft,
   registerDeviceToken
 } from './api'
-import { addOverdraftInfo, convertAccount, convertLastTransaction, convertTransaction, transactionsUnique } from './converters'
+import { addOverdraftInfo, convertAccount, convertLastTransaction, convertTransaction, mergeStatementAndLastTransactions } from './converters'
 import {
   buildActivationDescriptor,
   createDeviceIdentity,
@@ -27,6 +27,14 @@ import {
 
 const DEVICE_TOKEN_DATA_KEY = 'deviceOtp/v1'
 const ACTIVATION_CODE_TIMEOUT_MS = 180000
+
+/**
+ * Full mailbox statements provide complete history when device authorization is
+ * available. History API is merged separately for recent and pending operations.
+ */
+export function shouldFetchFullStatement (account, deviceBound) {
+  return Boolean(deviceBound && account.transactionsAccId)
+}
 
 export async function scrape ({ preferences, fromDate, toDate }) {
   const session = await initializeDeviceSession(preferences)
@@ -43,7 +51,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
 
   const transactionsStatement = []
   accounts = await Promise.all(accounts.map(async account => {
-    if (account.transactionsAccId && session.deviceBound) {
+    if (shouldFetchFullStatement(account, session.deviceBound)) {
       const mails = await fetchFullTransactions(token, account, fromDate, toDate, session.getDeviceAuthorization)
       const { overdraft, transactions } = parseTransactionsAndOverdraft(mails, account)
       account = addOverdraftInfo(account, overdraft)
@@ -69,7 +77,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
       }
       return true
     })
-  const transactions = transactionsUnique(transactionsStatement.concat(transactionsLast))
+  const transactions = mergeStatementAndLastTransactions(transactionsStatement, transactionsLast)
     .filter(transaction => transaction.movements[0].sum !== 0)
   return {
     accounts,

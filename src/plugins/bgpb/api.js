@@ -5,6 +5,7 @@ import { fetch, fetchJson } from '../../common/network'
 import { sanitize } from '../../common/sanitize'
 import { generateRandomString } from '../../common/utils'
 import { parseXml } from '../../common/xmlUtils'
+import { BankMessageError, InvalidLoginOrPasswordError, InvalidPreferencesError, TemporaryError } from '../../errors'
 
 const BASE_URL = 'https://mobapp-frontend.bgpb.by/'
 const TERMINAL_ID = 41742962
@@ -134,7 +135,7 @@ async function fetchMailAttachment (sid, mailId) {
     message => new InvalidPreferencesError(message))
 }
 
-async function fetchApi (url, xml, options, predicate = () => true, error = (message) => console.assert(false, message)) {
+async function fetchApi (url, xml, options, predicate = () => true, errorFactory = message => new BankMessageError(message)) {
   const boundary = generateBoundary()
   const boundaryStart = '--' + boundary + '\r\n'
   const boundaryLast = '--' + boundary + '--\r\n'
@@ -155,7 +156,7 @@ async function fetchApi (url, xml, options, predicate = () => true, error = (mes
 
   const response = await fetch(BASE_URL + url, options)
   if (predicate) {
-    validateResponse(response, response => predicate(response), error)
+    validateResponse(response, response => predicate(response), errorFactory)
   }
   const res = parseXml(response.body)
 
@@ -169,8 +170,7 @@ async function fetchApi (url, xml, options, predicate = () => true, error = (mes
     }
     const errorDescription = res.BS_Response.Error.ErrorLine
     const errorMessage = 'Ответ банка: ' + errorDescription
-    if (errorDescription.indexOf('Неверный логин') >= 0) { throw new InvalidPreferencesError(errorMessage) }
-    throw new Error(errorMessage)
+    throw errorFactory(errorMessage)
   }
   return res
 }
@@ -430,7 +430,7 @@ export async function login (login, password) {
     '   <RequestType>Login</RequestType>\r\n' +
     buildTerminalInfoXml() +
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-    '</BS_Request>\r\n', { sanitizeRequestLog: { body: true } }, response => true, message => new InvalidPreferencesError('Неверный логин или пароль'))
+    '</BS_Request>\r\n', { sanitizeRequestLog: { body: true } }, response => true, message => new InvalidLoginOrPasswordError('Неверный логин или пароль'))
   if (res.BS_Response.Login && res.BS_Response.Login.SID) {
     return res.BS_Response.Login.SID
   }
