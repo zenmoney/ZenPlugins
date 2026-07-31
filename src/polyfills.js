@@ -142,3 +142,25 @@ if (ZenMoney.features?.networkCallbacks && (
   (ZenMoney.application?.platform === 'android' && !(parseInt(ZenMoney.application?.build) >= 875)))) {
   ZenMoney.features.networkCallbacks = false
 }
+
+if (!ZenMoney.trustCertificates) {
+  ZenMoney.trustCertificates = () => {
+    throw new IncompatibleVersionError()
+  }
+} else if (!ZenMoney.features?.webViewCA) {
+  let hasTrustedCertificates = false
+  const trustCertificates = ZenMoney.trustCertificates.bind(ZenMoney)
+  const openWebView = ZenMoney.openWebView.bind(ZenMoney)
+  ZenMoney.trustCertificates = function (certs) {
+    if (certs && certs.length > 0) {
+      hasTrustedCertificates = true
+    }
+    return trustCertificates.apply(ZenMoney, arguments)
+  }
+  ZenMoney.openWebView = function (url, headers, intercept, callback, options) {
+    if (hasTrustedCertificates || options?.tls) {
+      throw new IncompatibleVersionError()
+    }
+    return openWebView.apply(ZenMoney, arguments)
+  }
+}
