@@ -8,6 +8,8 @@ const CANONICAL_TRANSACTION_ID_SOURCE_FIELD = 'transactionIdSource'
 const GENERIC_ACCOUNT_INCOME_NAME = 'ЗАЧИСЛЕНИЕ НА СЧЕТ'
 const CAPITALIZATION_OPERATION_NAME_PREFIX = 'КАПИТАЛИЗАЦИЯ '
 const MONEY_BACK_OPERATION_NAME_PREFIX = 'НАЧИСЛЕНИЕ MONEY-BACK'
+const CARD_SERVICE_FEE_HOLD_NAME = 'ЕЖЕМЕСЯЧНАЯ ПЛАТА ЗА ОБСЛУЖИВАНИЕ КАРТОЧКИ'
+const CARD_SERVICE_FEE_POSTED_NAME = 'АБОНЕНТСКАЯ ПЛАТА'
 const md5 = new MD5()
 
 export function convertAccount (json) {
@@ -392,7 +394,13 @@ function normalizeOperationName (value) {
 
 function areOperationNamesCompatible (left, right) {
   return (isGenericAccountIncomeName(left) && isKnownGenericAccountIncomePeerName(right)) ||
-    (isGenericAccountIncomeName(right) && isKnownGenericAccountIncomePeerName(left))
+    (isGenericAccountIncomeName(right) && isKnownGenericAccountIncomePeerName(left)) ||
+    isCardServiceFeePair(left, right)
+}
+
+function isCardServiceFeePair (left, right) {
+  return (left === CARD_SERVICE_FEE_HOLD_NAME && right === CARD_SERVICE_FEE_POSTED_NAME) ||
+    (left === CARD_SERVICE_FEE_POSTED_NAME && right === CARD_SERVICE_FEE_HOLD_NAME)
 }
 
 function isGenericAccountIncomeName (value) {
