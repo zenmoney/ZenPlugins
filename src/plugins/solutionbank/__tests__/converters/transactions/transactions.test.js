@@ -293,6 +293,7 @@ describe('convertTransaction', () => {
     expect(merged[0].hold).toEqual(false)
     expect(transaction.movements[0].sum).toEqual(0.1)
     expect(transaction.movements[0].id).toEqual(transactionId('2026-06-30', '0.10', 'Зачисление на счет'))
+    expect(convertTransaction(hold).movements[0].id).toEqual(convertTransaction(postedOperation).movements[0].id)
   })
 
   it('matches money-back income when mini statement has generic income name', () => {
@@ -323,6 +324,7 @@ describe('convertTransaction', () => {
     expect(merged[0].hold).toEqual(false)
     expect(transaction.movements[0].sum).toEqual(4.09)
     expect(transaction.movements[0].id).toEqual(transactionId('2026-07-01', '4.09', 'Зачисление на счет'))
+    expect(convertTransaction(hold).movements[0].id).toEqual(convertTransaction(postedOperation).movements[0].id)
   })
 
   it('matches monthly card service fee with posted subscription fee', () => {
@@ -353,6 +355,7 @@ describe('convertTransaction', () => {
     expect(merged[0].hold).toEqual(false)
     expect(transaction.movements[0].sum).toEqual(-7.5)
     expect(transaction.movements[0].id).toEqual(transactionId('2020-01-02', '-7.50', 'Ежемесячная плата за обслуживание карточки'))
+    expect(convertTransaction(hold).movements[0].id).toEqual(convertTransaction(postedOperation).movements[0].id)
   })
 
   it('does not merge unrelated no-merchant expense operation names', () => {
