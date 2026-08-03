@@ -80,4 +80,45 @@ KZ000000000000000001 KZT 19,455.00
       })
     ])
   })
+
+  it('keeps deposit intake on outgoing "Другое", removes repeated table headers and normalizes dotted operation labels', () => {
+    const pdfText = `
+Фридом Банк Казахстан
+Выписка по карте Deposit Card
+Номер карты:**1234
+Номер счётаВалютаОстаток
+KZ000000000000000001 KZT 19,455.00
+
+Дата Сумма Валюта Операция Детали
+23.07.2026 -400,000.00 ₸ KZT Другое Прием вклада по договору KZ00000B000000002KZT в сумме 400000 KZT. Вкладчик:Иван Иванов
+23.07.2026 +400,000.00 ₸ KZT Пополнение Перевод с карты на карту
+22.07.2026 -3.55 $ USD Сумма в обработке HELLO 0 BY Дата Сумма Валюта Операция Детали
+01.07.2026 +0.19 ₸ KZT Пополнение Пополнение.
+    `.trim()
+
+    const parsed = parseSinglePdfString(prepareCardStatementText(pdfText), 'statement-uid')
+
+    expect(parsed.transactions).toEqual([
+      expect.objectContaining({
+        originalAmount: '-400000.00 KZT',
+        description: 'Прием вклада по договору KZ00000B000000002KZT в сумме 400000 KZT. Вкладчик:Иван Иванов',
+        originString: '23.07.2026 -400,000.00 ₸ KZT Другое Прием вклада по договору KZ00000B000000002KZT в сумме 400000 KZT. Вкладчик:Иван Иванов'
+      }),
+      expect.objectContaining({
+        originalAmount: '+400000.00 KZT',
+        description: 'Перевод с карты на карту',
+        originString: '23.07.2026 +400,000.00 ₸ KZT Пополнение Перевод с карты на карту'
+      }),
+      expect.objectContaining({
+        originalAmount: '-3.55 USD',
+        description: 'HELLO 0 BY',
+        originString: '22.07.2026 -3.55 $ USD Сумма в обработке HELLO 0 BY'
+      }),
+      expect.objectContaining({
+        originalAmount: '+0.19 KZT',
+        description: 'Пополнение',
+        originString: '01.07.2026 +0.19 ₸ KZT Пополнение Пополнение.'
+      })
+    ])
+  })
 })
