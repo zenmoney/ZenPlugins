@@ -630,3 +630,82 @@ export function transactionsUnique (array) {
   }
   return uniqueTransactions
 }
+
+function transactionSourceKind (transaction) {
+  const text = [
+    transaction.comment,
+    transaction.merchant?.fullTitle,
+    transaction.merchant?.title
+  ].filter(Boolean).join(' ').toUpperCase()
+  if (/POPOLN|ПОПОЛН|ZACHISL|ЗАЧИСЛ/.test(text)) {
+    return 'topup'
+  }
+  if (/PEREVOD|ПЕРЕВОД|P2P/.test(text)) {
+    return 'transfer'
+  }
+  if (/НАЛИЧ|CASH|ATM/.test(text)) {
+    return 'cash'
+  }
+  if (/EPOS|\bPOS\b|ОПЛАТ|ПОКУПК|PAYMENT/.test(text)) {
+    return 'payment'
+  }
+  return 'other'
+}
+
+function amountsMatch (left, right) {
+  if (!Number.isFinite(left) || !Number.isFinite(right)) {
+    return false
+  }
+  return Math.round(left * 100) === Math.round(right * 100)
+}
+
+function isSamePostedOperation (statement, recent) {
+  if (recent.hold) {
+    return false
+  }
+  const statementMovement = statement.movements[0]
+  const recentMovement = recent.movements[0]
+  if (statementMovement.account.id !== recentMovement.account.id ||
+    !amountsMatch(statementMovement.sum, recentMovement.sum) ||
+    Math.abs(statement.date.getTime() - recent.date.getTime()) > 2 * 60 * 1000) {
+    return false
+  }
+
+  const statementKind = transactionSourceKind(statement)
+  const recentKind = transactionSourceKind(recent)
+  return statementKind === 'other' || recentKind === 'other' || statementKind === recentKind
+}
+
+/**
+ * Reconciles authoritative posted statement rows with recent History API rows.
+ * Matching is one-to-one so repeated same-value operations remain separate.
+ */
+export function mergeStatementAndLastTransactions (statementTransactions, lastTransactions) {
+  const statements = transactionsUnique(statementTransactions)
+  const recent = transactionsUnique(lastTransactions)
+  const availableStatementIndexes = new Set(statements.map((_transaction, index) => index))
+  const unmatchedRecent = []
+
+  for (const transaction of recent) {
+    let bestIndex = null
+    let bestTimeDifference = Infinity
+    for (const index of availableStatementIndexes) {
+      const statement = statements[index]
+      if (!isSamePostedOperation(statement, transaction)) {
+        continue
+      }
+      const timeDifference = Math.abs(statement.date.getTime() - transaction.date.getTime())
+      if (timeDifference < bestTimeDifference) {
+        bestIndex = index
+        bestTimeDifference = timeDifference
+      }
+    }
+    if (bestIndex === null) {
+      unmatchedRecent.push(transaction)
+    } else {
+      availableStatementIndexes.delete(bestIndex)
+    }
+  }
+
+  return transactionsUnique(statements.concat(unmatchedRecent))
+}
