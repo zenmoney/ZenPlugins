@@ -34,6 +34,7 @@ function baseEntry (overrides: Partial<CardTransaction> = {}): CardTransaction {
     merchCategoryDesc: null,
     pan4: null,
     declinedReason: null,
+    totalFees: 0,
     ...overrides
   }
 }
@@ -51,7 +52,7 @@ describe('convertTransaction', () => {
       basicAmount: 101.5,
       basicCurrency: 'USD',
       paidAmount: 101.5,
-      paidCurrency: 'USDT',
+      paidCurrency: 'USD',
       transactionAmount: 100,
       transactionCurrency: 'USD',
       merchName: 'Amazon',
@@ -59,7 +60,8 @@ describe('convertTransaction', () => {
       merchCountry: 'US',
       mccCode: 5411,
       merchCategoryDesc: 'Grocery Stores',
-      pan4: '1234'
+      pan4: '1234',
+      totalFees: 1.5
     })
     expect(convertTransaction(entry, bybitCardAccount)).toEqual({
       hold: false,
@@ -68,8 +70,8 @@ describe('convertTransaction', () => {
         id: 'TXN20230101001',
         account: { id: 'bybit_card' },
         invoice: null,
-        sum: -101.5,
-        fee: 0
+        sum: -100,
+        fee: -1.5
       }],
       merchant: {
         title: 'Amazon',
@@ -78,22 +80,23 @@ describe('convertTransaction', () => {
         mcc: 5411,
         location: null
       },
-      comment: null
+      comment: 'Place: New York, US'
     })
   })
 
-  it('keeps a merchant-currency invoice when it differs from the USD card account currency', () => {
+  it('keeps a paid-currency invoice when it differs from the USD card account currency', () => {
     const entry = baseEntry({
       basicAmount: 108,
       basicCurrency: 'USD',
       transactionAmount: 100,
-      transactionCurrency: 'EUR'
+      paidCurrency: 'EUR',
+      paidAmount: 92.75
     })
     const tx = convertTransaction(entry, bybitCardAccount)
     expect(tx?.movements[0]).toEqual({
       id: 'TXN1',
       account: { id: 'bybit_card' },
-      invoice: { sum: -100, instrument: 'EUR' },
+      invoice: { sum: -92.75, instrument: 'EUR' },
       sum: -108,
       fee: 0
     })
@@ -142,7 +145,7 @@ describe('convertTransaction', () => {
 
   it('omits the invoice when transaction currency equals account currency', () => {
     const entry = baseEntry({
-      transactionCurrency: 'USD',
+      paidCurrency: 'USD',
       transactionAmount: 50,
       basicAmount: 51.25
     })
