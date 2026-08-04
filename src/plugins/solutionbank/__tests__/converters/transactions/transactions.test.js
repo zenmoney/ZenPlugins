@@ -293,6 +293,7 @@ describe('convertTransaction', () => {
     expect(merged[0].hold).toEqual(false)
     expect(transaction.movements[0].sum).toEqual(0.1)
     expect(transaction.movements[0].id).toEqual(transactionId('2026-06-30', '0.10', 'Зачисление на счет'))
+    expect(convertTransaction(hold).movements[0].id).toEqual(convertTransaction(postedOperation).movements[0].id)
   })
 
   it('matches money-back income when mini statement has generic income name', () => {
@@ -323,6 +324,65 @@ describe('convertTransaction', () => {
     expect(merged[0].hold).toEqual(false)
     expect(transaction.movements[0].sum).toEqual(4.09)
     expect(transaction.movements[0].id).toEqual(transactionId('2026-07-01', '4.09', 'Зачисление на счет'))
+    expect(convertTransaction(hold).movements[0].id).toEqual(convertTransaction(postedOperation).movements[0].id)
+  })
+
+  it('matches monthly card service fee with posted subscription fee', () => {
+    const hold = {
+      account_id: 'mock-account-001',
+      accountCurrencyCode: '933',
+      transactionDate: new Date('2020-01-02T12:34:56+03:00'),
+      transactionName: 'Ежемесячная плата за обслуживание карточки',
+      transactionCurrencyCode: '933',
+      transactionAmount: -7.5,
+      hold: true
+    }
+    const postedOperation = {
+      account_id: 'mock-account-001',
+      operationName: 'Абонентская плата',
+      operationDate: new Date('2020-01-02T12:00:00+03:00'),
+      operationCurrencyCode: '933',
+      operationAmount: -7.5,
+      transactionDate: new Date('2020-01-02T12:00:00+03:00'),
+      transactionAmount: 0,
+      transactionCurrencyCode: '933',
+      hold: false
+    }
+    const merged = merge([hold], [postedOperation])
+    const transaction = convertTransaction(merged[0])
+
+    expect(merged).toHaveLength(1)
+    expect(merged[0].hold).toEqual(false)
+    expect(transaction.movements[0].sum).toEqual(-7.5)
+    expect(transaction.movements[0].id).toEqual(transactionId('2020-01-02', '-7.50', 'Ежемесячная плата за обслуживание карточки'))
+    expect(convertTransaction(hold).movements[0].id).toEqual(convertTransaction(postedOperation).movements[0].id)
+  })
+
+  it('does not merge unrelated no-merchant expense operation names', () => {
+    const hold = {
+      account_id: 'mock-account-001',
+      accountCurrencyCode: '933',
+      transactionDate: new Date('2020-01-02T12:34:56+03:00'),
+      transactionName: 'Комиссия за перевод',
+      transactionCurrencyCode: '933',
+      transactionAmount: -7.5,
+      hold: true
+    }
+    const postedOperation = {
+      account_id: 'mock-account-001',
+      operationName: 'Абонентская плата',
+      operationDate: new Date('2020-01-02T12:00:00+03:00'),
+      operationCurrencyCode: '933',
+      operationAmount: -7.5,
+      transactionDate: new Date('2020-01-02T12:00:00+03:00'),
+      transactionAmount: 0,
+      transactionCurrencyCode: '933',
+      hold: false
+    }
+    const transactions = merge([hold], [postedOperation]).map(transaction => convertTransaction(transaction))
+
+    expect(transactions).toHaveLength(2)
+    expect(transactions.map(transaction => transaction.hold)).toEqual([false, true])
   })
 
   it('matches posted card operation shifted to the next bank date when merchant is exact', () => {

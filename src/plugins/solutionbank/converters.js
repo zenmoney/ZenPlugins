@@ -5,9 +5,13 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000
 const MERCHANT_ID_PREFIX_LENGTH = 25
 const SAFE_MERCHANT_PREFIX_MIN_LENGTH = 16
 const CANONICAL_TRANSACTION_ID_SOURCE_FIELD = 'transactionIdSource'
-const GENERIC_ACCOUNT_INCOME_NAME = 'ЗАЧИСЛЕНИЕ НА СЧЕТ'
+const GENERIC_ACCOUNT_INCOME_ID_NAME = 'Зачисление на счет'
+const GENERIC_ACCOUNT_INCOME_NAME = GENERIC_ACCOUNT_INCOME_ID_NAME.toUpperCase()
 const CAPITALIZATION_OPERATION_NAME_PREFIX = 'КАПИТАЛИЗАЦИЯ '
 const MONEY_BACK_OPERATION_NAME_PREFIX = 'НАЧИСЛЕНИЕ MONEY-BACK'
+const CARD_SERVICE_FEE_HOLD_ID_NAME = 'Ежемесячная плата за обслуживание карточки'
+const CARD_SERVICE_FEE_HOLD_NAME = CARD_SERVICE_FEE_HOLD_ID_NAME.toUpperCase()
+const CARD_SERVICE_FEE_POSTED_NAME = 'АБОНЕНТСКАЯ ПЛАТА'
 const md5 = new MD5()
 
 export function convertAccount (json) {
@@ -102,8 +106,20 @@ function getTransactionIdentitySource (json) {
     getDateIdValue(getFirstPresent(json.transactionDate, json.date, json.operationDate)),
     getAmountIdValue(getTransactionAmountIdValue(json)),
     getTransactionCurrencyIdValue(json),
-    getMerchantIdValue(json.merchant) || getFirstPresent(json.operationName, json.transactionName)
+    getMerchantIdValue(json.merchant) || getCanonicalOperationNameIdValue(json)
   ].map(getIdValue).join('|')
+}
+
+function getCanonicalOperationNameIdValue (json) {
+  const value = getFirstPresent(json.operationName, json.transactionName)
+  const normalizedValue = normalizeOperationName(value)
+  if (isGenericAccountIncomeName(normalizedValue) || isKnownGenericAccountIncomePeerName(normalizedValue)) {
+    return GENERIC_ACCOUNT_INCOME_ID_NAME
+  }
+  if (normalizedValue === CARD_SERVICE_FEE_HOLD_NAME || normalizedValue === CARD_SERVICE_FEE_POSTED_NAME) {
+    return CARD_SERVICE_FEE_HOLD_ID_NAME
+  }
+  return value
 }
 
 function getDuplicateIndex (json) {
@@ -392,7 +408,13 @@ function normalizeOperationName (value) {
 
 function areOperationNamesCompatible (left, right) {
   return (isGenericAccountIncomeName(left) && isKnownGenericAccountIncomePeerName(right)) ||
-    (isGenericAccountIncomeName(right) && isKnownGenericAccountIncomePeerName(left))
+    (isGenericAccountIncomeName(right) && isKnownGenericAccountIncomePeerName(left)) ||
+    isCardServiceFeePair(left, right)
+}
+
+function isCardServiceFeePair (left, right) {
+  return (left === CARD_SERVICE_FEE_HOLD_NAME && right === CARD_SERVICE_FEE_POSTED_NAME) ||
+    (left === CARD_SERVICE_FEE_POSTED_NAME && right === CARD_SERVICE_FEE_HOLD_NAME)
 }
 
 function isGenericAccountIncomeName (value) {
