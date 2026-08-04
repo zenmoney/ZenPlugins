@@ -6,9 +6,12 @@ import { bufferToHex, isDebug } from './utils'
 export class ParseError {
   constructor (message, response, cause) {
     this.cause = cause
+    Object.defineProperty(this, 'response', {
+      enumerable: false,
+      value: response
+    })
     this.stack = new Error().stack
     this.message = message
-    this.response = response
   }
 }
 
@@ -85,11 +88,11 @@ export async function fetch (url, options = {}) {
     } else {
       err = e
     }
-    shouldLog && console.debug('response', {
+    shouldLog && console.debug('response', sanitizeUrlContainingObject({
       id,
       ms: Date.now() - beforeFetchTicks,
       url
-    }, 'failed to receive due to error', err)
+    }, options.sanitizeRequestLog || false), 'failed to receive due to error', err)
     throw err
   }
 
