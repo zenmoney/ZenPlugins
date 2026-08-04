@@ -184,9 +184,9 @@ export const fetchRemoteSync = ({ method, url, headers, body, binaryResponse, ma
     const body = binaryResponse
       ? req.response
       : req.responseText
-    if (/"message"/.test(req.responseText) && /"stack"/.test(req.responseText)) {
+    if (/"message"/.test(body) && /"stack"/.test(body)) {
       try {
-        const parsedBody = JSON.parse(req.responseText)
+        const parsedBody = JSON.parse(body)
         if (typeof parsedBody.message === 'string' && typeof parsedBody.stack === 'string') {
           let message = parsedBody.message
           if (/getaddrinfo ENOTFOUND/.test(message)) {
