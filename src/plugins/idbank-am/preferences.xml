@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="phone"
+        summary="||{@s}"
+        title="Номер телефона"
+        dialogTitle="Номер телефона"
+        dialogMessage="Номер телефона, привязанный к аккаунту Idram, с кодом страны. Например: +37412345678"
+        negativeButtonText="Отмена"
+        positiveButtonText="ОК"
+        inputType="phone"
+        obligatory="true"
+    >
+    </EditTextPreference>
+    <EditTextPreference
+        key="password"
+        summary="||***********"
+        title="Пароль от интернет-банка"
+        dialogTitle="Пароль от интернет-банка"
+        dialogMessage="Пароль, с которым вы входите на idbanking.am. При первом подключении банк пришлёт СМС для подтверждения нового устройства. Если банк ответит, что устройство не распознано, позвоните в контактный центр Idram +374 60 700700 и попросите разрешить вход, затем повторите синхронизацию."
+        negativeButtonText="Отмена"
+        positiveButtonText="ОК"
+        inputType="textPassword"
+        obligatory="true"
+    >
+    </EditTextPreference>
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="С какой даты загружать операции"
+        defaultValue="2020-01-01T12:00:00.000Z"
+        dialogTitle="С какой даты загружать операции"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|startDate|{@s}"
+    >
+    </EditTextPreference>
+</PreferenceScreen>
