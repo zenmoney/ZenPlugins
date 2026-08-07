@@ -1,5 +1,5 @@
-import { convertTransactions } from '../../../converters'
-import { Account, AccountType } from '../../../../../types/zenmoney'
+import { convertTransaction, deduplicateTransactions } from '../../../converters'
+import { Account, AccountType, ExtendedTransaction } from '../../../../../types/zenmoney'
 
 describe('convertTransactions', () => {
   it.each([
@@ -176,6 +176,9 @@ describe('convertTransactions', () => {
       title: 'VISA-карта',
       type: AccountType.ccard
     }
-    expect(convertTransactions(apiTransactions, account)).toEqual(transactions)
+    const converted = apiTransactions
+      .map(apiTransaction => convertTransaction(apiTransaction, account))
+      .filter((transaction): transaction is ExtendedTransaction => transaction !== undefined)
+    expect(deduplicateTransactions(converted)).toEqual(transactions)
   })
 })

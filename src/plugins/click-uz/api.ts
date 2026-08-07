@@ -1,8 +1,9 @@
-import { Auth, FetchedAccounts, Preferences } from './models'
-import { fetchConfirmRegister, fetchDeviceRegister, fetchGetBalance, fetchGetCards, fetchHistory, fetchLogin, getAuthToken } from './fetchApi'
-import { InvalidOtpCodeError, InvalidPreferencesError } from '../../errors'
-import { getNumber, getOptString } from '../../types/get'
-import forge from 'node-forge'
+import { Auth, FetchedAccounts, Preferences, Product } from './models'
+import { ClickApiError, fetchConfirmRegister, fetchDeviceRegister, fetchGetBalance, fetchGetCards, fetchHistory, fetchLogin, getAuthToken, SessionExpiredError } from './fetchApi'
+import { InvalidOtpCodeError, InvalidPreferencesError, TemporaryError } from '../../errors'
+import { getNumber } from '../../types/get'
+import { generateRandomString } from '../../common/utils'
+import { ParseError } from '../../common/network'
 
 function getPhoneNumber (rawPhoneNumber: string): string | null {
   const normalizedPhoneNumber = /^(?:\+?998)(\d{9})$/.exec(rawPhoneNumber.trim())
@@ -14,7 +15,7 @@ function getPhoneNumber (rawPhoneNumber: string): string | null {
   return null
 }
 
-function validatePreferences (rawPreferences: Preferences): Preferences {
+export function validatePreferences (rawPreferences: Preferences): Preferences {
   const phone = getPhoneNumber(rawPreferences.phone)
   if (phone === null) {
     throw new InvalidPreferencesError('Неверный формат номера телефона')
@@ -34,35 +35,58 @@ async function askSmsCode (): Promise<string> {
   return sms
 }
 
-export async function login (rawPreferences: Preferences, auth?: Auth): Promise<Auth> {
+function throwUserFacingError (error: unknown): never {
+  if (error instanceof SessionExpiredError || error instanceof InvalidOtpCodeError || error instanceof InvalidPreferencesError) {
+    throw error
+  }
+  if (error instanceof ClickApiError) {
+    throw new TemporaryError(`CLICK временно не выполнил запрос: ${error.message}`)
+  }
+  if (error instanceof ParseError) {
+    throw new TemporaryError('CLICK вернул некорректный ответ. Повторите синхронизацию позже.')
+  }
+  throw error
+}
+
+export async function coldAuth (rawPreferences: Preferences): Promise<Auth> {
   const { phone, password } = validatePreferences(rawPreferences)
-  if (auth == null) {
-    const imei = forge.md.md5.create().update(`${phone}_imei`, 'utf8').digest().toHex().slice(0, 16)
+  try {
+    const imei = generateRandomString(16, '0123456789abcdef')
     const deviceId = await fetchDeviceRegister(phone, imei)
     const smsCode = await askSmsCode()
     await fetchConfirmRegister(phone, smsCode, { deviceId })
     const authToken = getAuthToken(phone, deviceId, smsCode)
     const sessionKey = await fetchLogin(phone, password, { deviceId, authToken })
     return { imei, deviceId, authToken, sessionKey }
+  } catch (error) {
+    throwUserFacingError(error)
   }
+}
 
-  auth.sessionKey = await fetchLogin(phone, password, auth)
-  return auth
+export async function hotAuth (rawPreferences: Preferences, auth: Auth): Promise<Auth> {
+  const { phone, password } = validatePreferences(rawPreferences)
+  try {
+    const sessionKey = await fetchLogin(phone, password, auth)
+    return { ...auth, sessionKey }
+  } catch (error) {
+    throwUserFacingError(error)
+  }
 }
 
 export async function fetchAccounts (auth: Auth): Promise<FetchedAccounts> {
-  const cards = await fetchGetCards(auth)
-  const balances = await fetchGetBalance(cards.map(x => getNumber(x, 'id')), auth)
-  if (balances.some((balance) => [
-    /Ошибка при получении баланса/
-  ].some(regex => regex.test(getOptString(balance, 'error') ?? ''))) || cards.some((card) => [
-    /Доступ ограничен/
-  ].some(regex => regex.test(getOptString(card, 'card_name') ?? '')))) {
-    await ZenMoney.alert('Click блокирует работу синхронизации. Напишите в службу поддержки Click и попросите разблокировать устройство Zenmoney Sync.')
+  try {
+    const cards = await fetchGetCards(auth)
+    const balances = await fetchGetBalance(cards.map(x => getNumber(x, 'id')), auth)
+    return { cards, balances }
+  } catch (error) {
+    throwUserFacingError(error)
   }
-  return { cards, balances }
 }
 
-export async function fetchTransactions (productId: string, fromDate: Date, toDate: Date, auth: Auth): Promise<unknown[]> {
-  return await fetchHistory(productId, fromDate, toDate, auth)
+export async function fetchTransactions (product: Product, fromDate: Date, toDate: Date, auth: Auth): Promise<unknown[]> {
+  try {
+    return await fetchHistory(product, fromDate, toDate, auth)
+  } catch (error) {
+    throwUserFacingError(error)
+  }
 }

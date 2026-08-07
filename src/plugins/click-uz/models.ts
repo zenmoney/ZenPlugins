@@ -1,3 +1,5 @@
+import { AccountOrCard } from '../../types/zenmoney'
+
 export interface Auth {
   imei: string
   deviceId: string
@@ -15,4 +17,14 @@ export interface FetchedAccounts {
   balances: unknown[]
 }
 
-export const APP_VERSION = '7.6.5'
+export interface Product {
+  id: string
+  cardType: string
+}
+
+export interface ConvertResult {
+  account: AccountOrCard
+  products: Product[]
+}
+
+export const APP_VERSION = '8.50.4'
