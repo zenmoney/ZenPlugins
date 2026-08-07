@@ -147,7 +147,8 @@ function ZPAPI ({ manifest, preferences, data }) {
     binaryRequestBody: true,
     binaryResponseBody: true,
     investmentAccount: true,
-    networkCallbacks: true
+    networkCallbacks: true,
+    webViewCA: true
   }
   const knownAccounts = {}
   const addedAccounts = []
@@ -165,6 +166,7 @@ function ZPAPI ({ manifest, preferences, data }) {
   this.setAuthentication = notImplemented
   this.clearAuthentication = notImplemented
   this.getCookie = notImplemented
+  this.trustCertificates = () => {}
 
   const pluginDataApi = makePluginDataApi(data)
   Object.assign(this, pluginDataApi.methods)
