@@ -1,5 +1,5 @@
 import {
-  convertCardOrAccountTransaction
+  convertTransaction
 } from '../../converters'
 
 describe('convertTransaction', () => {
@@ -26,6 +26,9 @@ describe('convertTransaction', () => {
         date: new Date('2025-02-25 03:10:17Z'),
         hold: false,
         comment: 'Исходящий перевод',
+        groupKeys: [
+          '5c0ea9bc-0000-0000-0000-eb5d0560bcfa'
+        ],
         merchant: {
           fullTitle: 'IVAN IVANOV',
           mcc: null,
@@ -35,8 +38,11 @@ describe('convertTransaction', () => {
           {
             id: '5c0ea9bc-0000-0000-0000-eb5d0560bcfa',
             account: { id: 'card' },
-            invoice: null,
-            sum: -170.50,
+            invoice: {
+              sum: -170.50,
+              instrument: 'USD'
+            },
+            sum: null,
             fee: 0
           }
         ]
@@ -44,6 +50,6 @@ describe('convertTransaction', () => {
     ]
   ])('converts transfer to card UZS', (rawTransaction, transaction) => {
     const card = { id: 'card', instrument: 'UZS' }
-    expect(convertCardOrAccountTransaction(card, rawTransaction)).toEqual(transaction)
+    expect(convertTransaction({ type: 'cardOrAccount', data: rawTransaction }, card)).toEqual(transaction)
   })
 })

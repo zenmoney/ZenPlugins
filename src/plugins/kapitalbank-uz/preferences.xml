@@ -22,39 +22,6 @@
         negativeButtonText="Отмена"
         summary="||***********"
     />
-    <CheckBoxPreference
-        key="isResident"
-        obligatory="true"
-        inputType="checkbox"
-        title="являетесь ли вы резидинтом Республики Узбекистан (есть гражданство или вид на жительство)"
-        dialogTitle="являетесь ли вы резидинтом Республики Узбекистан (есть гражданство или вид на жительство)"
-        dialogMessage="Так как банк теперь требует прохождение идентификации через myid.uz на каждом новом устройстве, введите номер паспорта или ПИНФЛ"
-        positiveButtonText="ОК"
-        negativeButtonText="Отмена"
-        summary="||{@s}"
-    />
-    <EditTextPreference
-        key="pinfl"
-        obligatory="true"
-        inputType="text"
-        title="ПИНФЛ"
-        dialogTitle="ПИНФЛ"
-        dialogMessage="Так как банк теперь требует прохождение идентификации через myid.uz на каждом новом устройстве, введите ПИНФЛ"
-        positiveButtonText="ОК"
-        negativeButtonText="Отмена"
-        summary="||{@s}"
-    />
-    <EditTextPreference
-        key="bday"
-        obligatory="true"
-        inputType="date"
-        title="Дата рождения"
-        dialogTitle="Дата рождения"
-        dialogMessage="Формат DDMMYYYY, например 01011990"
-        positiveButtonText="ОК"
-        negativeButtonText="Отмена"
-        summary="||{@s}"
-    />
     <EditTextPreference
         key="startDate"
         obligatory="true"

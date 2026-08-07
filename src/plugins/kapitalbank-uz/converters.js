@@ -1,12 +1,6 @@
-import { getIntervalBetweenDates } from '../../common/momentDateUtils'
 import moment from 'moment'
+import { getIntervalBetweenDates } from '../../common/momentDateUtils'
 
-/**
- * Конвертер счета из формата банка в формат Дзенмани
- *
- * @param account счет в формате банка
- * @returns счет в формате Дзенмани
- */
 export function convertAccount (account) {
   return {
     id: String(account.guid),
@@ -18,13 +12,7 @@ export function convertAccount (account) {
   }
 }
 
-/**
- * Конвертер карты из формата банка в формат Дзенмани
- *
- * @param rawCard карта в формате банка
- * @returns карта в формате Дзенмани
- */
-export function convertCard (rawCard) {
+export function convertCard (rawCard, rawBalance) {
   const card = {
     id: String(rawCard.guid),
     title: rawCard.cardName,
@@ -36,50 +24,62 @@ export function convertCard (rawCard) {
   if (!rawCard.cardName) {
     card.title = rawCard.processingType + ' *' + rawCard.maskedPan.slice(-4)
   }
+  if (rawBalance) {
+    card.balance = rawBalance.balance / Math.pow(10, rawBalance.currency.scale)
+  }
 
   return card
 }
 
-/**
- * Конвертер вклада из формата банка в формат Дзенмани
- *
- * @param deposit вклад в формате банка
- * @returns вклад в формате Дзенмани
- */
 export function convertDeposit (deposit) {
-  try {
-    const closeDate = new Date(deposit.closeDate.replace('+', '') + 'Z')
-    const openDate = moment(closeDate).subtract(deposit.period, 'months').toDate()
-    const endDateInterval = getIntervalBetweenDates(openDate, closeDate)
-    return {
-      id: deposit.guid,
-      type: 'deposit',
-      title: 'Депозит ' + deposit.depositProductName,
-      syncIds: [deposit.guid],
-      instrument: deposit.currency.name,
-      balance: deposit.balance / Math.pow(10, deposit.currency.scale),
-      percent: Number(deposit.interestRate),
-
-      startDate: openDate,
-      endDateOffsetInterval: endDateInterval.interval,
-      endDateOffset: endDateInterval.count,
-
-      payoffStep: 0,
-      payoffInterval: null,
-      capitalization: false
-    }
-  } catch (error) {
-    console.error(error)
+  const closeDate = new Date(deposit.closeDate.replace('+', '') + 'Z')
+  const openDate = moment(closeDate).subtract(deposit.period, 'months').toDate()
+  const endDateInterval = getIntervalBetweenDates(openDate, closeDate)
+  return {
+    id: deposit.guid,
+    type: 'deposit',
+    title: 'Депозит ' + deposit.depositProductName,
+    syncIds: [deposit.guid],
+    instrument: deposit.currency.name,
+    balance: deposit.balance / Math.pow(10, deposit.currency.scale),
+    percent: Number(deposit.interestRate),
+    startDate: openDate,
+    endDateOffsetInterval: endDateInterval.interval,
+    endDateOffset: endDateInterval.count,
+    payoffStep: 0,
+    payoffInterval: null,
+    capitalization: false
   }
 }
 
-/**
- * Конвертер транзакции по счету из формата банка в формат Дзенмани
- *
- * @param accountId идентификатор счета
- * @param rawTransaction транзакция в формате банка
- * @returns транзакция в формате Дзенмани
- */
+export function convertAccounts (apiAccounts) {
+  return apiAccounts.map(apiAccount => {
+    let account
+    switch (apiAccount.type) {
+      case 'card':
+        account = convertCard(apiAccount.data, apiAccount.balance)
+        break
+      case 'account':
+        account = convertAccount(apiAccount.data)
+        break
+      case 'deposit':
+        account = convertDeposit(apiAccount.data)
+        break
+    }
+
+    if (!account) {
+      return null
+    }
+    return {
+      account,
+      products: [{
+        id: account.id,
+        type: apiAccount.type === 'deposit' ? 'deposit' : 'cardOrAccount'
+      }]
+    }
+  }).filter(account => account !== null)
+}
+
 export function convertCardOrAccountTransaction (account, rawTransaction) {
   const sign = rawTransaction.transactionType === 'DEBIT' ? -1 : 1
   const invoice = {
@@ -104,7 +104,7 @@ export function convertCardOrAccountTransaction (account, rawTransaction) {
   }
 
   const transaction = {
-    hold: false, // авторизация средств или подтвержденная транзакция
+    hold: false,
     date: new Date(rawTransaction.transactionDate.replace('+', '') + 'Z'),
     merchant: (rawTransaction.module === 'PROCESSING' || rawTransaction.module === 'P2P')
       ? { fullTitle: rawTransaction.name, mcc: null, location: null }
@@ -113,44 +113,25 @@ export function convertCardOrAccountTransaction (account, rawTransaction) {
       {
         id: rawTransaction.transactionGuid,
         account: { id: account.id },
-        invoice: null,
-        sum: invoice.sum,
+        invoice: account.instrument === invoice.instrument ? null : invoice,
+        sum: account.instrument === invoice.instrument ? invoice.sum : null,
         fee: 0
       }
     ],
-    comment
+    comment,
+    groupKeys: [rawTransaction.transactionGuid]
   }
 
   return transaction
 }
 
-/**
- * Конвертер транзакции по вкладу из формата банка в формат Дзенмани
- *
- * @param accountId идентификатор вкладу
- * @param rawTransaction транзакция в формате банка
- * @returns транзакция в формате Дзенмани
- */
 export function convertDepositTransaction (deposit, rawTransaction) {
   if (rawTransaction.activity.type === 'INTEREST') {
-    return null // не возвращаем транзакции по выплате процентов, т.к. они будут учтены как пополнения карт или счетов
-  }
-
-  let sign = 1
-  let comment = ''
-
-  if (rawTransaction.activity.type === 'PARTIAL_REPLENISHMENT') {
-    sign = 1
-    comment = rawTransaction.activity.description // пополнение вклада
-  }
-
-  if (rawTransaction.activity.type === '????') {
-    sign = -1
-    comment = rawTransaction.activity.description // выплата процентов по вкладу
+    return null
   }
 
   const invoice = {
-    sum: sign * rawTransaction.amount / Math.pow(10, rawTransaction.currency.scale),
+    sum: rawTransaction.amount / Math.pow(10, rawTransaction.currency.scale),
     instrument: rawTransaction.currency.name
   }
 
@@ -163,17 +144,28 @@ export function convertDepositTransaction (deposit, rawTransaction) {
     merchant: null,
     movements: [
       {
-        id: String(hash), // TODO сейчас нет айди в исторической записи, вероятно надо отдельный апи дергать
+        id: String(hash),
         account: { id: deposit.id },
-        invoice: null,
-        sum: invoice.sum,
+        invoice: deposit.instrument === invoice.instrument ? null : invoice,
+        sum: deposit.instrument === invoice.instrument ? invoice.sum : null,
         fee: 0
       }
     ],
-    comment
+    comment: rawTransaction.activity.description || null
   }
 
   return transaction
+}
+
+export function convertTransaction (apiTransaction, account) {
+  switch (apiTransaction.type) {
+    case 'cardOrAccount':
+      return convertCardOrAccountTransaction(account, apiTransaction.data)
+    case 'deposit':
+      return convertDepositTransaction(account, apiTransaction.data)
+    default:
+      return null
+  }
 }
 
 function hashString (str) {
@@ -181,7 +173,7 @@ function hashString (str) {
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i)
     hash = ((hash << 5) - hash) + char
-    hash = hash & hash // Преобразование в 32-битное целое число
+    hash = hash & hash
   }
-  return hash >>> 0 // Положительное 32-битное целое
+  return hash >>> 0
 }
