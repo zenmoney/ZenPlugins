@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>bybit</id>
+    <company>16190</company>
+    <description>
+        Bybit Card synchronization via the public Bybit V5 REST API.
+        Requires a read-only API Key + Secret minted in Bybit Dashboard → API
+        with &quot;Bybit Card&quot;, &quot;Wallet&quot;, and &quot;Exchange History&quot; permissions enabled.
+        Imports one USD Bybit Card account from Funding balances and Convert uBalance,
+        plus card transactions from /v5/card/transaction/query-asset-records.
+    </description>
+
+    <version>1.0</version>
+    <build>1</build>
+    <modular>true</modular>
+
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+</provider>

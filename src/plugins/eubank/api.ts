@@ -72,12 +72,12 @@ function cleanPdfText (text: string): string {
 }
 
 function parseCardNumber (text: string): string | null {
-  const match = text.match(/Номер\s*карты\s*:\s*(\d{6}\*{6}\d{4})/)
+  const match = text.match(/Номер\s*карты\s*:?\s*(\d{6}\*{6}\d{4})/)
   return match?.[1] ?? null
 }
 
 function parseAccountNumber (text: string): string {
-  const match = text.match(/Номер\s*счёта\s*:?\s*(KZ[A-Z0-9]+)/)
+  const match = text.match(/Номер\s*сч[её]та\s*:?\s*(KZ[A-Z0-9]+)/)
   assert(match?.[1] != null, 'Can\'t parse account number')
   return match[1]
 }
@@ -87,7 +87,7 @@ export function parseAccounts (text: string): StatementAccount[] {
   const cardNumber = parseCardNumber(text)
   const accounts: StatementAccount[] = []
 
-  const currencyBlocks = text.split(/Валюта\s*счёта\s*:\s*/)
+  const currencyBlocks = text.split(/Валюта\s*сч[её]та\s*:+\s*/)
   for (let i = 1; i < currencyBlocks.length; i++) {
     const block = currencyBlocks[i]
     const instrumentMatch = block.match(/^([A-Z]{3})/)
@@ -112,19 +112,9 @@ export function parseAccounts (text: string): StatementAccount[] {
 }
 
 function parseStatementEndDate (text: string): string {
-  const match = text.match(/Период\s*:\s*\d{2}\.\d{2}\.\d{4}\s*-\s*(\d{2})\.(\d{2})\.(\d{4})/)
+  const match = text.match(/Период\s*:[\s:]*\d{2}\.\d{2}\.\d{4}\s*-\s*(\d{2})\.(\d{2})\.(\d{4})/)
   assert(match != null, 'Can\'t parse statement end date')
   return `${match[3]}-${match[2]}-${match[1]}T00:00:00.000`
-}
-
-interface RawTransactionLine {
-  date: string
-  time: string
-  category: string
-  details: string
-  amount: string
-  instrument: string
-  source: string
 }
 
 const KNOWN_CATEGORIES = [
@@ -146,7 +136,8 @@ const KNOWN_CATEGORIES = [
   'Связь',
   'Одежда и обувь',
   'Дом и ремонт',
-  'Спорт'
+  'Спорт',
+  'Услуги'
 ]
 
 const CURRENCY_PATTERN = '(KZT|USD|EUR|GBP|RUB|CNY|TRY|AED|GEL|THB|JPY|CHF|CAD|AUD)'
@@ -161,82 +152,10 @@ function splitCategoryAndDetails (text: string): { category: string, details: st
   return { category: '', details: text }
 }
 
-function extractTransactionFromBlock (joined: string): RawTransactionLine | null {
-  const regex = new RegExp(
-    '^(\\d{2}\\.\\d{2}\\.\\d{4})\\s+(\\d{2}:\\d{2}:\\d{2})\\s+' +
-    '(.+?)(\\d[\\d.,]*)' + CURRENCY_PATTERN +
-    '\\s*[+-][\\d.,]+\\s*' +
-    '(Карта|Счёт)\\s*:\\s*\\*\\*\\s*(\\d+)$'
-  )
-  const match = joined.match(regex)
-  if (match == null) return null
-
-  const categoryAndDetails = match[3].trim()
-  const { category, details } = splitCategoryAndDetails(categoryAndDetails)
-
-  return {
-    date: match[1],
-    time: match[2],
-    category,
-    details: details !== '' ? details : categoryAndDetails,
-    amount: match[4],
-    instrument: match[5],
-    source: match[6]
-  }
-}
-
-function extractTransactionFields (joined: string): RawTransactionLine | null {
-  const dateTimeMatch = joined.match(/^(\d{2}\.\d{2}\.\d{4})\s+(\d{2}:\d{2}:\d{2})\s+/)
-  if (dateTimeMatch == null) return null
-
-  let rest = joined.slice(dateTimeMatch[0].length)
-
-  const sourceMatch = rest.match(/\s*(Карта|Счёт)\s*:\s*\*{2}\s*(\d+)$/)
-  if (sourceMatch == null) return null
-  rest = rest.slice(0, rest.length - sourceMatch[0].length)
-
-  const signedAmountMatch = rest.match(/\s+[+-][\d.,]+$/)
-  if (signedAmountMatch == null) return null
-  rest = rest.slice(0, rest.length - signedAmountMatch[0].length)
-
-  const currencyMatch = rest.match(/\s+([A-Z]{3})$/)
-  if (currencyMatch == null) return null
-  rest = rest.slice(0, rest.length - currencyMatch[0].length)
-  const instrument = currencyMatch[1]
-
-  const amountMatch = rest.match(/\s+([\d.,]+)$/)
-  if (amountMatch == null) return null
-  rest = rest.slice(0, rest.length - amountMatch[0].length)
-  const amount = amountMatch[1]
-
-  const categoryAndDetails = rest.trim()
-  const tabParts = categoryAndDetails.split('\t').map(s => s.trim()).filter(s => s !== '')
-  let category = ''
-  let details = ''
-  if (tabParts.length >= 2) {
-    category = tabParts[0]
-    details = tabParts.slice(1).join(' ')
-  } else {
-    const split = splitCategoryAndDetails(categoryAndDetails)
-    category = split.category
-    details = split.details !== '' ? split.details : categoryAndDetails
-  }
-
-  return {
-    date: dateTimeMatch[1],
-    time: dateTimeMatch[2],
-    category,
-    details,
-    amount,
-    instrument,
-    source: sourceMatch[1]
-  }
-}
-
 export function parseTransactions (text: string, statementUid: string): StatementTransaction[] {
   const cleaned = cleanPdfText(text)
 
-  const headerMatch = cleaned.match(/Номер\s*карты\s*\/\s*счёта/)
+  const headerMatch = cleaned.match(/Номер\s*(?:сч[её]та\s*\/\s*карты|карты\s*\/\s*сч[её]та)/)
   if (headerMatch == null) return []
   const headerIndex = cleaned.indexOf(headerMatch[0])
   const afterHeader = cleaned.slice(headerIndex + headerMatch[0].length)
@@ -246,48 +165,52 @@ export function parseTransactions (text: string, statementUid: string): Statemen
     ? afterHeader.slice(0, afterHeader.indexOf(footerMatch[0]))
     : afterHeader
 
-  const lines = transactionsText.split('\n').map(l => l.trim()).filter(l => l !== '')
+  const joinedRegion = transactionsText.replace(/\s+/g, ' ').trim()
 
-  const dateLineRegex = /^\d{2}\.\d{2}\.\d{4}$/
-  const blocks: string[][] = []
-  let currentBlock: string[] = []
-
-  for (const line of lines) {
-    if (dateLineRegex.test(line)) {
-      if (currentBlock.length > 0) {
-        blocks.push(currentBlock)
-      }
-      currentBlock = [line]
-    } else if (currentBlock.length > 0) {
-      currentBlock.push(line)
-    }
-  }
-  if (currentBlock.length > 0) {
-    blocks.push(currentBlock)
-  }
+  // Each record: date, optional time (may be torn off by a page break),
+  // category + details, operation amount, operation currency,
+  // signed settled amount (sum in account currency), source.
+  // Whitespace around amount/currency is optional: after normalizing
+  // per-character-spaced PDFs these fields can become glued together.
+  const txRegex = new RegExp(
+    '(\\d{2}\\.\\d{2}\\.\\d{4})\\s+' +
+    '(?:(\\d{2}:\\d{2}:\\d{2})\\s+)?' +
+    '(.+?)' +
+    '\\d[\\d.,]*\\s*' +
+    CURRENCY_PATTERN + '\\s*' +
+    '([+-][\\d.,]+)\\s*' +
+    '(Карта|Счёт)\\s*:\\s*\\*\\*\\s*(\\d+)',
+    'g'
+  )
 
   const transactions: StatementTransaction[] = []
-  for (const block of blocks) {
-    const joined = block.join(' ').replace(/\s+/g, ' ').trim()
-    const parsed = extractTransactionFromBlock(joined) ?? extractTransactionFields(joined)
-    if (parsed == null) continue
+  let match: RegExpExecArray | null
+  while ((match = txRegex.exec(joinedRegion)) != null) {
+    const dateStr = match[1]
+    const time = match[2] ?? '00:00:00'
+    const categoryAndDetails = match[3].trim()
+    const instrument = match[4]
+    const signedAmount = match[5]
+    const source = match[6]
 
-    const amount = parseFloat(parsed.amount.replace(/\s/g, '').replace(',', '.'))
+    const amount = parseFloat(signedAmount.replace(/\s/g, '').replace(',', '.'))
     if (isNaN(amount)) continue
 
-    const dateMatch = parsed.date.match(/^(\d{2})\.(\d{2})\.(\d{4})$/)
+    const dateMatch = dateStr.match(/^(\d{2})\.(\d{2})\.(\d{4})$/)
     if (dateMatch == null) continue
     const isoDate = `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}T00:00:00.000`
 
+    const { category, details } = splitCategoryAndDetails(categoryAndDetails)
+
     transactions.push({
       date: isoDate,
-      time: parsed.time,
-      category: parsed.category,
-      details: parsed.details,
+      time,
+      category,
+      details: details !== '' ? details : categoryAndDetails,
       amount,
-      instrument: parsed.instrument,
-      isCardOperation: parsed.source === 'Карта',
-      originString: joined,
+      instrument,
+      isCardOperation: source === 'Карта',
+      originString: match[0],
       statementUid
     })
   }

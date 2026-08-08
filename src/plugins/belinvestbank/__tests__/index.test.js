@@ -41,7 +41,7 @@ describe('scrape', () => {
         date: new Date('2026-01-01T10:12:13+03:00'),
         movements: [
           {
-            id: null,
+            id: expect.any(String),
             invoice: null,
             account: { id: '30848200' },
             sum: 10.13,

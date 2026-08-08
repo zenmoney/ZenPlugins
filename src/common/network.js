@@ -152,14 +152,20 @@ export const RequestInterceptMode = {
   OPEN_AS_DEEP_LINK: 2
 }
 
-export async function openWebViewAndInterceptRequest ({ url, headers, log, sanitizeRequestLog, intercept }) {
+export async function openWebViewAndInterceptRequest ({ url, headers, log, sanitizeRequestLog, intercept, configure }) {
   console.assert(typeof url === 'string', 'url must be string')
   console.assert(typeof intercept === 'function', 'intercept must be a function (request) => result')
   if (ZenMoney && ZenMoney.openWebView) {
-    let close = null
+    let webView = {
+      close: null,
+      cookieJar: {
+        getCookieString: async () => { throw new IncompatibleVersionError() },
+        setCookie: async () => { throw new IncompatibleVersionError() }
+      }
+    }
     return new Promise((resolve, reject) => {
       ZenMoney.openWebView(url, headers, (request, callback) => {
-        close = callback
+        webView.close = callback
         const id = generateRequestLogId()
         const shouldLog = log !== false
         shouldLog && console.debug('request', sanitizeUrlContainingObject({
@@ -171,35 +177,78 @@ export async function openWebViewAndInterceptRequest ({ url, headers, log, sanit
         }, sanitizeRequestLog || false))
         const interceptor = {
           close: (error, result) => {
-            if (close) {
-              close(error, result)
+            if (webView?.close) {
+              webView.close(error, result)
             }
           }
         }
+        let result
         try {
-          const result = intercept.call(interceptor, request)
-          if (result) {
-            callback(null, result)
-          }
-          return 'mode' in interceptor ? interceptor.mode : result ? RequestInterceptMode.BLOCK : RequestInterceptMode.LOAD
+          result = intercept.call(interceptor, request, webView)
         } catch (e) {
           callback(e)
           return RequestInterceptMode.BLOCK
         }
+        if (ZenMoney.features?.webViewConfiguration) {
+          return Promise.resolve(result).then(
+            (result) => {
+              if (result) {
+                callback(null, result)
+              }
+              return 'mode' in interceptor ? interceptor.mode : result ? RequestInterceptMode.BLOCK : RequestInterceptMode.LOAD
+            },
+            (e) => {
+              callback(e)
+              return RequestInterceptMode.BLOCK
+            }
+          )
+        } else if (result && typeof result.then === 'function') {
+          callback(new IncompatibleVersionError())
+          return RequestInterceptMode.BLOCK
+        }
+        if (result) {
+          callback(null, result)
+        }
+        return 'mode' in interceptor ? interceptor.mode : result ? RequestInterceptMode.BLOCK : RequestInterceptMode.LOAD
       }, (error, result) => {
-        close = null
+        webView.close = null
+        webView = null
         if (error) {
           reject(error)
         } else {
           resolve(result)
         }
+      }, {
+        configure: async (wv) => {
+          const close = webView.close
+          webView = wv
+          webView.close = close
+          if (configure) {
+            await configure(webView)
+          }
+        }
       })
     })
   } else if (isDebug()) {
     console.log(url)
+    const cookies = []
+    const webView = {
+      cookieJar: {
+        getCookieString: async (url) => {
+          console.log('cookie jar entries:', cookies)
+          return (await ZenMoney.readLine(`Enter cookies for ${url}`)) || ''
+        },
+        setCookie: async (cookieString, url) => {
+          cookies.push([cookieString, url])
+        }
+      }
+    }
+    if (configure) {
+      await configure(webView)
+    }
     const interceptedRequestUrl = await ZenMoney.readLine(url)
     console.assert(interceptedRequestUrl, 'could not get intercepted request url')
-    const result = intercept({ url: interceptedRequestUrl })
+    const result = await intercept({ url: interceptedRequestUrl }, webView)
     console.assert(result, 'intercepted request url doesn\'t match expectations')
     return result
   } else {

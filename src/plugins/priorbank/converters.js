@@ -2,6 +2,7 @@ import _ from 'lodash'
 import { formatCommentFeeLine, joinCommentLines } from '../../common/converters'
 
 export function convertAccounts (apiAccounts, apiAccountDetails) {
+  if (!Array.isArray(apiAccountDetails)) { return [] }
   const accounts = []
   for (const apiAccount of apiAccounts) {
     if (apiAccount.status?.respCode === -9999) { continue } // Card of another bank

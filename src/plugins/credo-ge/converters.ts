@@ -67,7 +67,9 @@ function convertDeposit (deposit: CredoDeposit): Account {
 
 export function convertAccounts (apiAccounts: CredoAccount[], cards: CredoCard[], deposits: CredoDeposit[], loans: CredoLoan[]): Account[] {
   console.log('>>> Converting accounts, cards, deposits, loans')
-  assert(loans.length === 0, 'Loans is not supported yet. Send your log to support, please!', loans) // TODO: must be implemented when loans format will be available
+  if (loans.length > 0) {
+    console.log(`>>> Skipping ${loans.length} unsupported Credo loans`)
+  }
 
   const accounts: Account[] = []
   const accountToCardNumber = getAccountToCardMapping(cards)
@@ -93,8 +95,9 @@ function convertAccount (
   const accountNumber = getString(apiAccount, 'accountNumber')
   const currency = getString(apiAccount, 'currency')
   const accountSyncId = [accountNumber, currency].join('')
+  const stableAccountSyncId = [accountSyncId, accountId].join('-')
   const cardNumber = accountToCardNumber.get(accountNumber)
-  const syncIds = [accountSyncId, accountId]
+  const syncIds = [stableAccountSyncId, accountId, accountSyncId]
   if (cardNumber !== null && cardNumber !== undefined) { syncIds.push(cardNumber) }
   const availableBalance = getNumber(apiAccount, 'availableBalance')
   /* Deposit or loan */
@@ -200,7 +203,8 @@ export function convertTransaction (apiTransaction: CredoTransaction, account: A
     debit = getNumber(apiTransaction, 'debit')
     amount = -1 * debit
   }
-  const invoice = getAmountFromDescription(description, Math.sign(amount)) // TODO: rewrite getAmountFromDescription
+  const rawInvoice = getAmountFromDescription(description, Math.sign(amount)) // TODO: rewrite getAmountFromDescription
+  const invoice = rawInvoice?.instrument === account.instrument ? null : rawInvoice
   const isCardBlock = getBoolean(apiTransaction, 'isCardBlock')
 
   const convertedTransaction: ExtendedTransaction = {

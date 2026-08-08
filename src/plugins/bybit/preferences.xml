@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="apiKey"
+        obligatory="true"
+        title="Read-only API Key"
+        dialogTitle="Read-only API Key"
+        dialogMessage="Create a System-generated, Read-Only API key in Bybit Dashboard → API → Create New Key. Enable permissions: &quot;Bybit Card&quot; (required for the card transaction history endpoint), &quot;Wallet → Account Transfer / Subaccount Transfer&quot; (for the funding wallet balance probe), and &quot;Exchange → Exchange History&quot; (read-only; required by the convert coin-list endpoint that powers the aggregated USD balance). Do NOT enable trading or withdrawal permissions. Paste the API Key here."
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="|apiKey|{@s}"
+    />
+    <EditTextPreference
+        key="apiSecret"
+        obligatory="true"
+        inputType="textPassword"
+        title="Read-only API Secret"
+        dialogTitle="Read-only API Secret"
+        dialogMessage="Paste the API Secret that was shown once when you created the API key. The secret is used to sign requests with HMAC-SHA256 and is never sent to Bybit in plain text."
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="||***********"
+    />
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="From what date to load transactions"
+        defaultValue="2024-01-01T00:00:00.000Z"
+        dialogTitle="From what date to load transactions"
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="|startDate|{@s}"
+    />
+    <EditTextPreference
+        key="cardBalanceCoins"
+        obligatory="true"
+        defaultValue="USDT, USDC"
+        title="Card funding coins"
+        dialogTitle="Coins that fund the card"
+        dialogMessage="Comma-separated list, e.g. USDT, USDC. The plugin imports one Bybit Card account in USD (bybit_card). The account balance is the Bybit Convert uBalance for these Funding coins plus Funding USD fiat 1:1. Only USDT and USDC are allowed in this list."
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="|cardBalanceCoins|{@s}"
+    />
+</PreferenceScreen>

@@ -66,6 +66,7 @@ plans/archive/
 review/
 
 # local capture/debug artifacts
+temp/
 .local/
 .tmp-*/
 .tmp-*

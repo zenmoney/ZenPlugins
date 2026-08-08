@@ -3,10 +3,11 @@ import {
   fetchFullTransactions,
   login,
   parseTransactions,
-  fetchDeposits,
-  parseDeposits
+  fetchLatestOperations,
+  parseLatestOperations
 } from './api'
-import { convertAccount, convertTransaction } from './converters'
+import { convertAccount, convertTransaction, deduplicateTransactions } from './converters'
+import { adjustTransactions } from '../../common/transactionGroupHandler'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
   toDate = toDate || new Date()
@@ -24,8 +25,8 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   const transactionsStatement = []
   accounts = await Promise.all(accounts.map(async account => {
     if (account.transactionsAccId) {
-      const mails = await fetchFullTransactions(token, account, fromDate, toDate)
-      const transactions = parseTransactions(mails)
+      const htmls = await fetchFullTransactions(token, account, fromDate, toDate)
+      const transactions = parseTransactions(htmls)
       for (const apiTransaction of transactions) {
         const transaction = convertTransaction(apiTransaction, account)
         if (transaction) {
@@ -34,9 +35,9 @@ export async function scrape ({ preferences, fromDate, toDate }) {
       }
     }
     if (account.latestTrID) {
-      const mails = await fetchDeposits(token, account)
-      if (mails) {
-        const transactions = parseDeposits(mails, fromDate)
+      const html = await fetchLatestOperations(token, account)
+      if (html) {
+        const transactions = parseLatestOperations(html, fromDate)
         for (const apiTransaction of transactions) {
           const transaction = convertTransaction(apiTransaction, account)
           if (transaction) {
@@ -49,7 +50,9 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   }))
   return {
     accounts,
-    transactions: transactionsStatement
+    transactions: adjustTransactions({
+      transactions: deduplicateTransactions(transactionsStatement, accounts)
+    })
   }
 }
 

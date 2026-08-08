@@ -1,7 +1,6 @@
 import _ from 'lodash'
 import { adjustTransactions } from '../../common/transactionGroupHandler'
 import {
-  fetchAccountConditions,
   fetchAccounts,
   fetchBalance,
   fetchFullTransactions,
@@ -28,7 +27,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   accounts = await Promise.all(accounts.map(async account => {
     if (account.transactionsAccId) {
       const mails = await fetchFullTransactions(token, account, fromDate, toDate)
-      const { overdraft, transactions } = parseTransactionsAndOverdraft(mails)
+      const { overdraft, transactions } = parseTransactionsAndOverdraft(mails, account)
       account = addOverdraftInfo(account, overdraft)
       for (const apiTransaction of transactions) {
         const transaction = convertTransaction(apiTransaction, account)
@@ -40,7 +39,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     return account
   }))
 
-  const transactionsLast = (await fetchLastTransactions(token))
+  const transactionsLast = (await fetchLastTransactions(token, accounts, fromDate, toDate))
     .map(transaction => convertLastTransaction(transaction, accounts))
     .filter(function (op) {
       if (op === null) {
@@ -65,18 +64,16 @@ async function allAccounts (token) {
     .map(convertAccount)
     .filter(account => account !== null)
   for (let i = 0; i < accounts.length; i++) {
-    accounts[i].balance = await fetchBalance(token, accounts[i])
-    if (accounts[i].balance === null) {
-      continue
+    if (accounts[i].productType !== 'DEPOSIT') {
+      accounts[i].balance = await fetchBalance(token, accounts[i])
+      if (accounts[i].balance === null) {
+        continue
+      }
     }
-    const accIDs = await fetchTransactionsAccId(token, accounts[i])
-    accounts[i].transactionsAccId = accIDs.transactionsAccId
-    accounts[i].conditionsAccId = accIDs.conditionsAccId
-  }
-
-  for (let i = 0; i < accounts.length; i++) {
-    if (accounts[i].balance !== null && accounts[i].conditionsAccId !== null) {
-      accounts[i].accountID = await fetchAccountConditions(token, accounts[i])
+    if (!accounts[i].transactionsAccId || !accounts[i].conditionsAccId) {
+      const accIDs = await fetchTransactionsAccId(token, accounts[i])
+      accounts[i].transactionsAccId = accounts[i].transactionsAccId || accIDs.transactionsAccId
+      accounts[i].conditionsAccId = accounts[i].conditionsAccId || accIDs.conditionsAccId
     }
   }
 

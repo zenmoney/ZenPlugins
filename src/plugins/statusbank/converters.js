@@ -37,6 +37,7 @@ export function convertTransaction (apiTransaction, account) {
 
     [
       parseCash,
+      parseInternalTransfer,
       parsePayee
     ].some(parser => parser(transaction, apiTransaction))
 
@@ -46,12 +47,76 @@ export function convertTransaction (apiTransaction, account) {
   }
 }
 
+export function deduplicateTransactions (transactions, accounts) {
+  const accountInstruments = new Map(accounts.map(account => [account.id, account.instrument]))
+  const result = []
+  const indexByKey = new Map()
+  let duplicateCount = 0
+
+  for (const transaction of transactions) {
+    const key = getDeduplicationKey(transaction, accountInstruments)
+    if (key === null) {
+      result.push(transaction)
+      continue
+    }
+
+    const existingIndex = indexByKey.get(key)
+    if (existingIndex === undefined) {
+      indexByKey.set(key, result.length)
+      result.push(transaction)
+    } else {
+      duplicateCount++
+      if (getTransactionRichness(transaction) > getTransactionRichness(result[existingIndex])) {
+        result[existingIndex] = transaction
+      }
+    }
+  }
+
+  if (duplicateCount > 0) {
+    console.log(`>>> Удалено ${duplicateCount} дубликатов операций.`)
+  }
+  return result
+}
+
+function getDeduplicationKey (transaction, accountInstruments) {
+  const movement = transaction.movements.find(movement => movement.account.id)
+  if (!movement?.id) {
+    return null
+  }
+
+  const operationAmount = movement.invoice?.sum ?? movement.sum
+  const operationInstrument = movement.invoice?.instrument ?? accountInstruments.get(movement.account.id)
+  if (typeof operationAmount !== 'number' || !operationInstrument) {
+    return null
+  }
+
+  return [
+    movement.account.id,
+    movement.id,
+    transaction.date.toISOString(),
+    operationInstrument,
+    operationAmount
+  ].join('|')
+}
+
+function getTransactionRichness (transaction) {
+  const movement = transaction.movements.find(movement => movement.account.id)
+  return (movement.sum !== null ? 4 : 0) +
+    (transaction.merchant?.mcc != null ? 2 : 0) +
+    (transaction.merchant?.fullTitle || transaction.merchant?.title ? 1 : 0)
+}
+
 function getMovement (apiTransaction, account) {
+  const hasAccountAmount = typeof apiTransaction.amount === 'number'
   const movement = {
-    id: null,
+    id: apiTransaction.authCode || null,
     account: { id: account.id },
     invoice: null,
-    sum: apiTransaction.amount || apiTransaction.amountReal,
+    sum: hasAccountAmount
+      ? apiTransaction.amount
+      : apiTransaction.currencyReal === account.instrument
+        ? apiTransaction.amountReal
+        : null,
     fee: 0
   }
 
@@ -66,37 +131,52 @@ function getMovement (apiTransaction, account) {
 }
 
 function parseCash (transaction, apiTransaction) {
-  if (apiTransaction.type.includes('POPOLNENIYE') > 0 ||
-    apiTransaction.type === 'Снятие наличных') {
+  const cashTypes = [
+    'Снятие наличных',
+    'Снятие наличных денег',
+    'Получение наличных денег'
+  ]
+  if (apiTransaction.place?.includes('POPOLNENIYE') ||
+    cashTypes.includes(apiTransaction.type)) {
+    const cashAmount = apiTransaction.amountReal ?? apiTransaction.amount
+    const cashInstrument = apiTransaction.currencyReal ?? apiTransaction.currency
+
     // добавим вторую часть перевода
     transaction.movements.push({
       id: null,
       account: {
         company: null,
         type: 'cash',
-        instrument: apiTransaction.currency || apiTransaction.currencyReal,
+        instrument: cashInstrument,
         syncIds: null
       },
       invoice: null,
-      sum: -(apiTransaction.amount || apiTransaction.amountReal),
+      sum: -cashAmount,
       fee: 0
     })
-    return false
-  } else if (apiTransaction.type === 'Перевод (зачисление)') {
-    transaction.movements.push({
-      id: null,
-      account: {
-        company: null,
-        type: 'cash',
-        instrument: apiTransaction.currency || apiTransaction.currencyReal,
-        syncIds: null
-      },
-      invoice: null,
-      sum: apiTransaction.amount || apiTransaction.amountReal,
-      fee: 0
-    })
+    transaction.comment = apiTransaction.place || null
     return true
   }
+}
+
+function parseInternalTransfer (transaction, apiTransaction) {
+  const isLatestOpsP2P = apiTransaction.place?.includes('STATUSBANK SDBO P2P') &&
+    ['Перевод (зачисление)', 'Перевод (списание)'].includes(apiTransaction.type)
+
+  const isStatementP2P = ['Перевод/зачисление средств', 'Перевод/списание средств'].includes(apiTransaction.type) &&
+    (apiTransaction.place?.startsWith('PEREVOD NA ') || apiTransaction.place?.startsWith('PEREVOD S '))
+
+  if (!isLatestOpsP2P && !isStatementP2P) {
+    return false
+  }
+
+  transaction.groupKeys = [[
+    'statusbank-p2p',
+    apiTransaction.date,
+    Math.abs(apiTransaction.amount || apiTransaction.amountReal),
+    apiTransaction.currency || apiTransaction.currencyReal
+  ].join('|')]
+  return true
 }
 
 function parsePayee (transaction, apiTransaction) {

@@ -5,7 +5,7 @@
         obligatory="true"
         title="API Key"
         dialogTitle="API Key"
-        dialogMessage="Enter your Trading212 API key. You can generate one in Settings -> API → Generate API key. The key must have the &quot;Unrestricted&quot; type and have &quot;Account data&quot; and &quot;History - Transactions&quot; permissions."
+        dialogMessage="Enter your Trading212 API key. You can generate one in Settings -> API → Generate API key. The key must have the &quot;Unrestricted&quot; type and have &quot;Account data&quot; and ALL of the &quot;History&quot; permissions. If you use the Trading212 debit card, you will have to manually add deposits to that card, since the API doesn't show them."
         positiveButtonText="OK"
         negativeButtonText="Cancel"
         summary="|apiKey|{@s}"
@@ -30,5 +30,21 @@
         positiveButtonText="OK"
         negativeButtonText="Cancel"
         summary="|startDate|{@s}"
+    />
+    <CheckBoxPreference
+        key="roundUpTransactions"
+        title="&quot;Invest spare change&quot; enabled"
+        dialogTitle="&quot;Invest spare change&quot; enabled"
+        dialogMessage="Trading212 API doesn't return the investments made with the &quot;Invest spare change&quot; feature. If you use the Trading212 debit card with this feature, enable this option to automatically create the rounding transactions."
+        defaultValue="false"
+        summary="||{@s}"
+    />
+    <CheckBoxPreference
+        key="investCashback"
+        title="&quot;Invest cashback&quot; enabled"
+        dialogTitle="&quot;Invest cashback&quot; enabled"
+        dialogMessage="Trading212 API doesn't tell where the cashback is debited. If you use the Trading212 debit card with this feature, enable this option to put cashback into the correct account."
+        defaultValue="false"
+        summary="||{@s}"
     />
 </PreferenceScreen>

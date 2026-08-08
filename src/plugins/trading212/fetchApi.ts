@@ -1,6 +1,6 @@
 import { fetchJson, FetchOptions } from '../../common/network'
 import { InvalidLoginOrPasswordError, TemporaryError } from '../../errors'
-import { AccountSummary, Preferences, TransactionHistoryPage } from './models'
+import { AccountSummary, Preferences, ExportRequest, ExportData } from './models'
 
 const BASE_URL = 'https://live.trading212.com/api/v0/equity'
 
@@ -21,10 +21,32 @@ async function fetchApi<T> (url: string, { apiKey, apiSecret }: Preferences, opt
   return response.body as T
 }
 
-export async function fetchAccountSummary (preferences: Preferences): Promise<AccountSummary> {
-  return await fetchApi('/account/summary', preferences)
+export async function requestExport (preferences: Preferences, fromDate?: Date, toDate?: Date): Promise<ExportRequest> {
+  const now = new Date()
+  const yearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate())
+
+  const timeFrom = ((fromDate != null) && fromDate > yearAgo ? fromDate : yearAgo).toISOString()
+  const timeTo = ((toDate != null) && toDate < now ? toDate : now).toISOString()
+
+  return await fetchApi('/history/exports', preferences, {
+    method: 'POST',
+    body: {
+      dataIncluded: {
+        includeOrders: false,
+        includeDividends: true,
+        includeInterest: true,
+        includeTransactions: true
+      },
+      timeFrom,
+      timeTo
+    }
+  })
 }
 
-export async function fetchTransactionsPage (preferences: Preferences, path?: string): Promise<TransactionHistoryPage> {
-  return await fetchApi(`/history/transactions${path !== undefined ? `?${path}` : ''}`, preferences)
+export async function listExports (preferences: Preferences): Promise<ExportData[]> {
+  return await fetchApi('/history/exports', preferences)
+}
+
+export async function fetchAccountSummary (preferences: Preferences): Promise<AccountSummary> {
+  return await fetchApi('/account/summary', preferences)
 }

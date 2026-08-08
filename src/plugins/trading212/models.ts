@@ -1,22 +1,51 @@
 export interface Preferences {
   apiKey: string
   apiSecret: string
+  roundUpTransactions: boolean
+  investCashback: boolean
 }
 
 export interface AccountSummary {
   id: number
   currency: string
   totalValue: number
+  cash: {
+    availableToTrade: number
+    reservedForOrders: number
+    inPies: number
+  }
+  investments: {
+    currentValue: number
+    totalCost: number
+    realizedProfitLoss: number
+    unrealizedProfitLoss: number
+  }
 }
 
-export interface ApiTransaction {
-  type: 'WITHDRAW' | 'DEPOSIT' | 'FEE' | 'TRANSFER'
-  amount: number
-  reference: string
-  dateTime: string
+export interface ExportRequest {
+  reportId: number
 }
 
-export interface TransactionHistoryPage {
-  items: ApiTransaction[]
-  nextPaghPath: string | null
+export interface ExportData {
+  reportId: number
+  dataIncluded: {
+    includeOrders: boolean
+    includeDividends: boolean
+    includeInterest: boolean
+    incudeTransactions: boolean
+  }
+  timeFrom: string
+  timeTo: string
+  status: 'Queued' | 'Processing' | 'Running' | 'Canceled' | 'Failed' | 'Finished'
+  downloadLink: string
+}
+
+export interface ExportOperation {
+  ID: string
+  Action: string
+  Time: string
+  'Gross Total': number
+  'Currency (Gross Total)': string
+  'Merchant name'?: string
+  'Merchant category'?: string
 }

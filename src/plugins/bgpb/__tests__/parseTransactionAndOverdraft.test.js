@@ -517,4 +517,80 @@ describe('parseTransactionAndOverdraft', () => {
   ])('parses transactions and overdraft', (mails, result) => {
     expect(parseTransactionsAndOverdraft(mails)).toEqual(result)
   })
+
+  it('parses deposit statement rows', () => {
+    const mails = [
+      `<?xml version="1.0" encoding="utf-8" ?>
+<BS_Response>
+  <MailAttachment>
+    <Attachment>
+      <Body Mimetype="text/html" xml:space="preserve"><![CDATA[
+        <html>
+          <head>
+            <title>Выписка по счету за период</title>
+          </head>
+          <body>
+            <table>
+              <tr>
+                <td>Дата</td>
+                <td>Операция</td>
+                <td>Приход</td>
+                <td>Расход</td>
+                <td>Остаток</td>
+                <td>Валюта</td>
+              </tr>
+              <tr>
+                <td align="left" colspan="4">Входящий остаток на 01.01.2026</td>
+                <td align="right">0,00</td>
+                <td align="center">BYN</td>
+              </tr>
+              <tr>
+                <td align="center">03.02.2026</td>
+                <td align="left">Пополнение вклада</td>
+                <td align="right">400,00</td>
+                <td align="right"></td>
+                <td align="right">900,00</td>
+                <td align="center">BYN</td>
+              </tr>
+              <tr>
+                <td align="center">28.02.2026</td>
+                <td align="left">Выплата накопленных процентов</td>
+                <td align="right">19,55</td>
+                <td align="right"></td>
+                <td align="right">919,55</td>
+                <td align="center">BYN</td>
+              </tr>
+            </table>
+          </body>
+        </html>
+      ]]></Body>
+    </Attachment>
+  </MailAttachment>
+</BS_Response>`
+    ]
+
+    expect(parseTransactionsAndOverdraft(mails, { type: 'deposit' })).toEqual({
+      overdraft: null,
+      transactions: [
+        {
+          statementType: 'deposit',
+          date: '03.02.2026',
+          description: 'Пополнение вклада',
+          income: '400,00',
+          outcome: '',
+          balance: '900,00',
+          currency: 'BYN'
+        },
+        {
+          statementType: 'deposit',
+          date: '28.02.2026',
+          description: 'Выплата накопленных процентов',
+          income: '19,55',
+          outcome: '',
+          balance: '919,55',
+          currency: 'BYN'
+        }
+      ]
+    })
+  })
 })

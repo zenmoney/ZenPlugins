@@ -1,45 +1,91 @@
 import { AccountOrCard, AccountType, Transaction } from '../../types/zenmoney'
-import { AccountSummary, ApiTransaction } from './models'
+import { AccountSummary, ExportOperation, Preferences } from './models'
 
-export function convertAccount (accountSummary: AccountSummary): AccountOrCard {
+export function convertAccount (accountSummary: AccountSummary): { account: AccountOrCard, card: AccountOrCard } {
   const id = accountSummary.id.toString()
+  const cardBalance = accountSummary.totalValue - accountSummary.investments.currentValue - accountSummary.cash.availableToTrade
   return {
-    id,
-    type: AccountType.investment,
-    title: 'Trading212',
-    instrument: accountSummary.currency,
-    balance: accountSummary.totalValue,
-    syncIds: [id]
+    account: {
+      id,
+      type: AccountType.investment,
+      title: 'Trading212',
+      instrument: accountSummary.currency,
+      balance: accountSummary.totalValue - cardBalance,
+      syncIds: [id]
+    },
+    card: {
+      id: id + '-card',
+      type: AccountType.ccard,
+      title: 'Trading212 Card',
+      instrument: accountSummary.currency,
+      balance: cardBalance,
+      syncIds: [id + '-card']
+    }
   }
 }
 
-export function convertTransactions (apiTransactions: ApiTransaction[], accountId: string): Transaction[] {
-  return apiTransactions.map(tr => convertTransaction(tr, accountId))
+export function convertTransactions (operations: ExportOperation[], accountId: string, cardId: string, preferences: Preferences): Transaction[] {
+  return operations.flatMap(op => convertTransaction(op, accountId, cardId, preferences))
 }
 
-function convertTransaction (tr: ApiTransaction, accountId: string): Transaction {
-  let comment: string = ''
-  if (tr.type === 'TRANSFER') {
-    comment = 'Internal transfer'
-  } else if (tr.type === 'DEPOSIT') {
-    comment = 'Deposit'
-  } else if (tr.type === 'FEE') {
-    comment = 'Transaction fee'
-  } else if (tr.type === 'WITHDRAW') {
-    comment = 'Withdrawal'
+function convertTransaction (op: ExportOperation, accountId: string, cardId: string, preferences: Preferences): Transaction[] {
+  const isCardDebit = op.Action === 'Card debit'
+  const isCardCashback = op.Action === 'Spending cashback' && !preferences.investCashback
+  const isCardTransaction = isCardDebit || isCardCashback
+
+  console.log('Converting operation', op)
+
+  const transactions: Transaction[] = [
+    {
+      hold: false,
+      date: new Date(op.Time),
+      movements: [{
+        id: op.ID,
+        account: { id: isCardTransaction ? cardId : accountId },
+        invoice: null,
+        sum: op['Gross Total'],
+        fee: 0
+      }],
+      comment: op.Action,
+      merchant: op['Merchant name'] != null
+        ? {
+            fullTitle: op['Merchant name'],
+            category: op['Merchant category'],
+            mcc: null,
+            location: null
+          }
+        : null
+    }
+  ]
+
+  if (preferences.roundUpTransactions && isCardDebit) {
+    const roundedSum = Math.ceil(Math.abs(op['Gross Total']))
+    const roundUpAmount = +(roundedSum - Math.abs(op['Gross Total'])).toPrecision(5)
+    if (roundUpAmount > 0) {
+      transactions.push({
+        hold: false,
+        date: new Date(op.Time),
+        movements: [
+          {
+            id: null,
+            account: { id: cardId },
+            invoice: null,
+            sum: -roundUpAmount,
+            fee: 0
+          },
+          {
+            id: null,
+            account: { id: accountId },
+            invoice: null,
+            sum: roundUpAmount,
+            fee: 0
+          }
+        ],
+        comment: 'Round up',
+        merchant: null
+      })
+    }
   }
 
-  return {
-    hold: false,
-    date: new Date(tr.dateTime),
-    movements: [{
-      id: tr.reference,
-      account: { id: accountId },
-      invoice: null,
-      sum: tr.amount,
-      fee: 0
-    }],
-    comment,
-    merchant: null
-  }
+  return transactions
 }

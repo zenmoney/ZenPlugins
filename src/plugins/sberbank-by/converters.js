@@ -1,4 +1,4 @@
-import { keyBy, sortBy, uniqBy } from 'lodash'
+import { keyBy, sortBy } from 'lodash'
 import codeToCurrency from '../../common/codeToCurrencyLookup'
 import { toISODateString } from '../../common/dateUtils'
 import { getIntervalBetweenDates } from '../../common/momentDateUtils'
@@ -101,21 +101,101 @@ function parseMetalInstrument (code) {
   }
 }
 
+function getApiTransactionReferenceCodes (apiTransaction) {
+  const rrn = apiTransaction.rnnCode || apiTransaction.souRnnCode || ''
+  const authorizationCode = apiTransaction.authorizationCode && apiTransaction.authorizationCode !== '000000'
+    ? apiTransaction.authorizationCode
+    : ''
+  return { rrn, authorizationCode }
+}
+
+function getAccountLevelEventId (apiTransaction, rrn, authorizationCode) {
+  return !rrn && !authorizationCode && !(apiTransaction.cardId || apiTransaction.cardPAN)
+    ? apiTransaction.eventId || ''
+    : ''
+}
+
+function getApiTransactionDedupKey (apiTransaction) {
+  const { rrn, authorizationCode } = getApiTransactionReferenceCodes(apiTransaction)
+  const accountLevelEventId = getAccountLevelEventId(apiTransaction, rrn, authorizationCode)
+  const referenceKey = rrn || authorizationCode
+  const cardKey = referenceKey ? '' : apiTransaction.cardId || apiTransaction.cardPAN || ''
+  const dateKey = rrn || authorizationCode
+    ? toISODateString(new Date(apiTransaction.eventDate))
+    : String(apiTransaction.eventDate)
+  return [
+    apiTransaction.contractId,
+    cardKey,
+    dateKey,
+    Math.abs(apiTransaction.transactionSum),
+    apiTransaction.transactionCurrency || '',
+    referenceKey,
+    accountLevelEventId
+  ].join('_')
+}
+
+function shouldReplaceApiTransaction (currentTransaction, nextTransaction) {
+  if (currentTransaction.eventStatus === 0 && nextTransaction.eventStatus !== 0) {
+    return true
+  }
+  if (!currentTransaction.processingDate && nextTransaction.processingDate) {
+    return true
+  }
+  return false
+}
+
+function deduplicateApiTransactions (apiTransactions) {
+  const uniqueTransactions = []
+  const transactionIndexesByKey = {}
+  for (const apiTransaction of sortBy(apiTransactions, apiTransaction => apiTransaction.transactionName?.match(/Перевод/))) {
+    const key = getApiTransactionDedupKey(apiTransaction)
+    const index = transactionIndexesByKey[key]
+    if (index === undefined) {
+      transactionIndexesByKey[key] = uniqueTransactions.length
+      uniqueTransactions.push(apiTransaction)
+      continue
+    }
+    if (shouldReplaceApiTransaction(uniqueTransactions[index], apiTransaction)) {
+      uniqueTransactions[index] = apiTransaction
+    }
+  }
+  return uniqueTransactions
+}
+
+function getTransactionDedupKey (transaction) {
+  const movement = transaction.movements?.[0]
+  if (!movement) {
+    return null
+  }
+  if (transaction.dedupIdentity) {
+    return `${movement.account.id}_${transaction.dedupIdentity}`
+  }
+  return `${movement.account.id}_${transaction.date.getTime()}_${Math.abs(movement.sum)}`
+}
+
+function shouldReplaceTransaction (currentTransaction, nextTransaction) {
+  return currentTransaction.hold && !nextTransaction.hold
+}
+
 export function convertTransactions (apiTransactions, accountsByContractNumber) {
-  const adjustedApiTransactions = uniqBy(
-    sortBy(apiTransactions, apiTransaction => apiTransaction.transactionName?.match(/Перевод/)),
-    apiTransaction => `${apiTransaction.contractId}_${apiTransaction.eventDate}_${Math.abs(apiTransaction.transactionSum)}_${apiTransaction.rnnCode}_${apiTransaction.authorizationCode}`)
+  const adjustedApiTransactions = deduplicateApiTransactions(apiTransactions)
   const transactions = []
-  const transactionIds = {}
+  const transactionIndexes = {}
   for (const transaction of adjustedApiTransactions) {
     if (accountsByContractNumber[transaction.contractId]) {
       const answer = convertTransaction(transaction, accountsByContractNumber[transaction.contractId])
       if (answer !== null) {
-        const key = answer.movements[0].account.id + '_' + answer.date + '_' + Math.abs(answer.movements[0].sum)
-        if (transactionIds[key]) { //
-        } else {
-          transactionIds[key] = true
+        const key = getTransactionDedupKey(answer)
+        if (key === null) {
           transactions.push(answer)
+          continue
+        }
+        const index = transactionIndexes[key]
+        if (index === undefined) {
+          transactionIndexes[key] = transactions.length
+          transactions.push(answer)
+        } else if (shouldReplaceTransaction(transactions[index], answer)) {
+          transactions[index] = answer
         }
       }
     }
@@ -200,6 +280,7 @@ export function convertTransaction (apiTransaction, account) {
   if (apiTransaction.eventStatus === -1 || apiTransaction.transactionSum === 0) {
     return null
   }
+  const { rrn, authorizationCode } = getApiTransactionReferenceCodes(apiTransaction)
   const currency = apiTransaction.transactionCurrency.length === 3
     ? apiTransaction.transactionCurrency
     : apiTransaction.transactionCurrency.length === 2 ? `0${apiTransaction.transactionCurrency}` : `00${apiTransaction.transactionCurrency}`
@@ -232,6 +313,15 @@ export function convertTransaction (apiTransaction, account) {
     parsePayee
   ]
   parsers.some(parser => parser(transaction, apiTransaction, account, invoice))
+
+  const accountLevelEventId = getAccountLevelEventId(apiTransaction, rrn, authorizationCode)
+  if (accountLevelEventId) {
+    Object.defineProperty(transaction, 'dedupIdentity', {
+      value: accountLevelEventId,
+      enumerable: false,
+      configurable: true
+    })
+  }
 
   return transaction
 }
@@ -286,10 +376,14 @@ function parseInnerTransfer (transaction, apiTransaction, account, invoice) {
     return true
   }
   if ([
-    /Дополнительный взнос/i,
-    /P2P SOU Sber/i
+    /Дополнительный взнос/i
   ].some(regexp => regexp.test(apiTransaction.transactionName))) {
     transaction.groupKeys = [toISODateString(transaction.date) + '_' + invoice.instrument + '_' + Math.abs(invoice.sum)]
+    return true
+  }
+  if ([
+    /P2P SOU Sber/i
+  ].some(regexp => regexp.test(apiTransaction.transactionName))) {
     return true
   }
   if ([
@@ -315,6 +409,9 @@ function parseInnerTransfer (transaction, apiTransaction, account, invoice) {
 }
 
 function parseOuterTransfer (transaction, apiTransaction, account, invoice) {
+  if (apiTransaction.transactionType > 0) {
+    return false
+  }
   if ([
     /^.*на "чужие" карты.*$/i,
     /^.*Пополнение вклада.*$/i,

@@ -305,13 +305,28 @@ function formatDate (date) {
   return ('0' + date.getDate()).slice(-2) + '.' + ('0' + (date.getMonth() + 1)).slice(-2) + '.' + date.getFullYear()
 }
 
+function getStartOfDay (date) {
+  const normalizedDate = new Date(date)
+  normalizedDate.setHours(0, 0, 0, 0)
+  return normalizedDate
+}
+
+function getEndOfDay (date) {
+  const normalizedDate = getStartOfDay(date)
+  normalizedDate.setDate(normalizedDate.getDate() + 1)
+  normalizedDate.setMilliseconds(-1)
+  return normalizedDate
+}
+
 export function createDateIntervals (fromDate, toDate) {
-  const interval = 10 * 24 * 60 * 60 * 1000 // 10 days interval for fetching data
+  const firstDay = getStartOfDay(fromDate)
+  const lastDay = getEndOfDay(toDate)
+  const intervalDays = 10
   const gapMs = 1
   return commonCreateDateIntervals({
-    fromDate,
-    toDate,
-    addIntervalToDate: date => new Date(date.getTime() + interval - gapMs),
+    fromDate: firstDay,
+    toDate: lastDay,
+    addIntervalToDate: date => getEndOfDay(new Date(date.getFullYear(), date.getMonth(), date.getDate() + intervalDays - 1)),
     gapMs
   })
 }

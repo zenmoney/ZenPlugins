@@ -1,5 +1,5 @@
 import { convertTransaction } from '../../../converters'
-import { Transaction as CredoTransaction } from '../../../models'
+import { Transaction as CredoTransaction, TransactionType } from '../../../models'
 import { Account, AccountType } from '../../../../../types/zenmoney'
 
 describe('convertTransaction', () => {
@@ -280,5 +280,39 @@ describe('convertTransaction', () => {
     ]
   ])('converts outcome', (apiTransaction, account, transaction) => {
     expect(convertTransaction(apiTransaction as CredoTransaction, account as Account)).toEqual(transaction)
+  })
+
+  it('does not emit redundant invoice when description amount uses account currency', () => {
+    const apiTransaction: CredoTransaction = {
+      credit: null,
+      currency: 'GEL',
+      transactionType: TransactionType.AccountWithdrawal,
+      transactionId: 'FT261105N0B8',
+      debit: 42.5,
+      description: 'გადახდა - LOCAL MERCHANT 42.50 GEL 20.04.2026',
+      isCardBlock: false,
+      operationDateTime: '2026-04-20 12:07:00',
+      stmtEntryId: '206105000000000.000001',
+      canRepeat: false,
+      canReverse: false,
+      amountEquivalent: 42.5,
+      operationType: 'Card transaction',
+      operationTypeId: null
+    }
+    const account: Account = {
+      id: '13',
+      type: AccountType.ccard,
+      title: 'Card 13',
+      instrument: 'GEL',
+      syncIds: ['13'],
+      savings: false,
+      balance: 10.00,
+      available: 10.00
+    }
+
+    const transaction = convertTransaction(apiTransaction, account)
+
+    expect(transaction.movements[0].invoice).toBeNull()
+    expect(transaction.movements[0].sum).toBe(-42.5)
   })
 })

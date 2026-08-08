@@ -38,12 +38,8 @@ export function convertPdfStatementTransaction (
   const isBonus = isBonusTopup(rawTransaction.category, rawTransaction.details)
   const isFinance = isFinanceTransfer(rawTransaction.category)
 
-  let sum: number
-  if (isIncome || isCash || isBonus) {
-    sum = Math.abs(rawTransaction.amount)
-  } else {
-    sum = -Math.abs(rawTransaction.amount)
-  }
+  // amount already carries the sign from the "Сумма в валюте счёта" column.
+  const sum = rawTransaction.amount
 
   const movements: [Movement] | [Movement, Movement] = [
     {

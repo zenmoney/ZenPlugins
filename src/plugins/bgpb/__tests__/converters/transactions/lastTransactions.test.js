@@ -1,5 +1,18 @@
 import { convertLastTransaction, convertTestLastTransactions } from '../../../converters'
 
+function withNullMovementIds (transaction) {
+  if (!transaction) {
+    return transaction
+  }
+  return {
+    ...transaction,
+    movements: transaction.movements.map(movement => ({
+      ...movement,
+      id: null
+    }))
+  }
+}
+
 describe('convertLastTransaction', () => {
   it.each([
     [
@@ -197,9 +210,193 @@ describe('convertLastTransaction', () => {
         }
       ],
       null
+    ],
+    [
+      {
+        orderNumber: '3289575665',
+        bankId: '4026868',
+        direction: 'outgoing',
+        date: '2026-05-15T10:55:51+0300',
+        totalAmount: {
+          currency: 933,
+          amount: 25000
+        },
+        currencyAmount: {
+          currency: 933,
+          amount: 25000
+        },
+        status: 'success',
+        terminal: 'ERIP_MOB.APP, EPOS, PEREVOD (SPISANIE)',
+        pan: '518597******1111',
+        transType: 781,
+        transTypeDesc: 'PEREVOD (SPISANIE)',
+        authCode: '185665',
+        mcc: 6012,
+        reversal: 0
+      },
+      [
+        {
+          id: 'account',
+          instrument: 'BYN',
+          bankId: '4026868',
+          syncID: ['1111']
+        }
+      ],
+      {
+        date: new Date('2026-05-15T10:55:51+0300'),
+        movements:
+          [
+            {
+              id: null,
+              account: { id: 'account' },
+              invoice: null,
+              sum: -250,
+              fee: 0
+            }
+          ],
+        merchant:
+          {
+            mcc: 6012,
+            location: null,
+            fullTitle: 'ERIP_MOB.APP, EPOS, PEREVOD (SPISANIE)'
+          },
+        comment: 'PEREVOD (SPISANIE)',
+        hold: false
+      }
+    ],
+    [
+      {
+        orderNumber: '392708',
+        bankId: 'bank-id',
+        direction: 'incoming',
+        date: '2026-05-21T11:45:00+0300',
+        currencyAmount: {
+          currency: 933,
+          amount: 12345
+        },
+        status: 'success',
+        terminal: 'P2P_BGPB_4, EPOS, PEREVOD (ZACHISLENIE)',
+        pan: '518597******1111',
+        transType: 781,
+        transTypeDesc: 'PEREVOD (ZACHISLENIE)',
+        authCode: '392708',
+        mcc: 6536,
+        reversal: 0
+      },
+      [
+        {
+          id: 'account',
+          instrument: 'BYN',
+          bankId: 'bank-id',
+          syncID: ['1111']
+        }
+      ],
+      {
+        date: new Date('2026-05-21T11:45:00+0300'),
+        movements:
+          [
+            {
+              id: null,
+              account: { id: 'account' },
+              invoice: null,
+              sum: 123.45,
+              fee: 0
+            }
+          ],
+        merchant: null,
+        comment: 'PEREVOD (ZACHISLENIE)',
+        hold: false
+      }
+    ],
+    [
+      {
+        orderNumber: '3299662709',
+        bankId: 'bank-id',
+        direction: 'incoming',
+        date: '2026-05-21T14:45:26+0300',
+        totalAmount: {
+          currency: 933,
+          amount: 123
+        },
+        currencyAmount: {
+          currency: 978,
+          amount: 123
+        },
+        status: 'success',
+        terminal: 'P2P_BGPB_4, EPOS, PEREVOD (ZACHISLENIE)',
+        pan: '518597******1111',
+        transType: 785,
+        transTypeDesc: 'PEREVOD (ZACHISLENIE)',
+        authCode: '666666',
+        mcc: 6536,
+        reversal: 0
+      },
+      [
+        {
+          id: 'account',
+          instrument: 'EUR',
+          bankId: 'bank-id',
+          syncID: ['1111']
+        }
+      ],
+      {
+        date: new Date('2026-05-21T14:45:26+0300'),
+        movements:
+          [
+            {
+              id: null,
+              account: { id: 'account' },
+              invoice: {
+                instrument: 'BYN',
+                sum: 1.23
+              },
+              sum: 1.23,
+              fee: 0
+            }
+          ],
+        merchant: null,
+        comment: 'PEREVOD (ZACHISLENIE)',
+        hold: false
+      }
     ]
   ])('converts last transactions', (apiTransaction, accounts, transaction) => {
-    expect(convertLastTransaction(apiTransaction, accounts)).toEqual(transaction)
+    const convertedTransaction = convertLastTransaction(apiTransaction, accounts)
+    if (convertedTransaction) {
+      expect(convertedTransaction.movements.every(movement => typeof movement.id === 'string' && movement.id.length > 0)).toBe(true)
+    }
+    expect(withNullMovementIds(convertedTransaction)).toEqual(transaction)
+  })
+
+  it('includes orderNumber in history movement ids', () => {
+    const transaction = convertLastTransaction({
+      orderNumber: '3299662709',
+      bankId: 'bank-id',
+      direction: 'incoming',
+      date: '2026-05-21T14:45:26+0300',
+      totalAmount: {
+        currency: 933,
+        amount: 123
+      },
+      currencyAmount: {
+        currency: 978,
+        amount: 123
+      },
+      status: 'success',
+      terminal: 'P2P_BGPB_4, EPOS, PEREVOD (ZACHISLENIE)',
+      pan: '518597******1111',
+      transType: 785,
+      transTypeDesc: 'PEREVOD (ZACHISLENIE)',
+      authCode: '666666',
+      mcc: 6536,
+      reversal: 0
+    }, [{
+      id: 'account',
+      instrument: 'EUR',
+      bankId: 'bank-id',
+      syncID: ['1111']
+    }])
+
+    expect(transaction.movements[0].id).toContain('order:3299662709')
   })
 })
 
@@ -310,12 +507,14 @@ describe('convertLastTransactions', () => {
       []
     ]
   ])('converts last transactions', (apiTransactions, transactions) => {
-    expect(convertTestLastTransactions(apiTransactions, [
+    const convertedTransactions = convertTestLastTransactions(apiTransactions, [
       {
         id: 'account',
         instrument: 'BYN',
         syncID: ['1111']
       }
-    ])).toEqual(transactions)
+    ])
+    expect(convertedTransactions.every(transaction => transaction.movements.every(movement => typeof movement.id === 'string' && movement.id.length > 0))).toBe(true)
+    expect(convertedTransactions.map(withNullMovementIds)).toEqual(transactions)
   })
 })

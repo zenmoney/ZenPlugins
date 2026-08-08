@@ -63,7 +63,7 @@ describe('convertTransaction', () => {
         date: new Date('2019-01-01T10:12:13+03:00'),
         movements: [
           {
-            id: null,
+            id: expect.any(String),
             invoice: null,
             account: { id: '30848200' },
             sum: -10.13,
@@ -77,7 +77,7 @@ describe('convertTransaction', () => {
               type: 'cash'
             },
             fee: 0,
-            id: null,
+            id: expect.any(String),
             invoice: null,
             sum: 10.13
           }
@@ -120,7 +120,7 @@ describe('convertTransaction', () => {
         date: new Date('2019-01-01T10:12:13+03:00'),
         movements: [
           {
-            id: null,
+            id: expect.any(String),
             invoice: null,
             account: { id: '30848200' },
             sum: -2.8,
@@ -161,7 +161,7 @@ describe('convertTransaction', () => {
         date: new Date('2019-07-19T11:35:17+03:00'),
         movements: [
           {
-            id: null,
+            id: expect.any(String),
             invoice: null,
             account: { id: '30848200' },
             sum: -0.06,
@@ -211,7 +211,7 @@ describe('convertTransaction', () => {
         movements:
           [
             {
-              id: null,
+              id: expect.any(String),
               account: { id: '30848200' },
               invoice: null,
               sum: 50,
@@ -225,7 +225,7 @@ describe('convertTransaction', () => {
                 type: 'ccard'
               },
               fee: 0,
-              id: null,
+              id: expect.any(String),
               invoice: null,
               sum: -50
             }
@@ -268,7 +268,7 @@ describe('convertTransaction', () => {
         movements:
           [
             {
-              id: null,
+              id: expect.any(String),
               account: { id: '30848200' },
               invoice: null,
               sum: -79.23,
@@ -282,7 +282,7 @@ describe('convertTransaction', () => {
                 type: 'ccard'
               },
               fee: 0,
-              id: null,
+              id: expect.any(String),
               invoice: null,
               sum: 79.23
             }
@@ -330,7 +330,7 @@ describe('convertTransaction', () => {
         movements:
           [
             {
-              id: null,
+              id: expect.any(String),
               account: { id: '30848200' },
               invoice: null,
               sum: -15.73,
@@ -387,7 +387,7 @@ describe('convertTransaction', () => {
         movements:
           [
             {
-              id: null,
+              id: expect.any(String),
               account: { id: '30848200' },
               invoice: null,
               sum: -113.7,
@@ -443,7 +443,7 @@ describe('convertTransaction', () => {
         movements:
           [
             {
-              id: null,
+              id: expect.any(String),
               account: { id: '30848200' },
               invoice: null,
               sum: -2.57,
@@ -472,6 +472,116 @@ describe('convertTransaction', () => {
       expect(transaction).toEqual(tc.expectedTransaction)
     })
   }
+
+  it('keeps movement id stable when bank-provided text changes', () => {
+    const apiTransaction = {
+      date: '2021-07-15 12:35:13',
+      type: 'Оплата',
+      cardAcceptor: 'GOOGLE*CLOUDMOSA INC>INTERNET US',
+      transactionAmt: '1',
+      transactionAmtCurrency: 'USD',
+      accountAmt: '0.00',
+      accountAmtCurrency: 'BYN',
+      reflectedAccountAmt: '2,57',
+      status: 'ПРОВЕДЕНО',
+      sign: '-',
+      mcc: '7372',
+      cardNum: '**** 2272',
+      appId: '332785',
+      historyKey: 9
+    }
+
+    const transaction = convertTransaction(apiTransaction, account)
+    const updatedTransaction = convertTransaction({
+      ...apiTransaction,
+      cardAcceptor: 'GOOGLE*UPDATED NAME>INTERNET US',
+      mcc: '5812'
+    }, account)
+
+    expect(updatedTransaction.merchant).not.toEqual(transaction.merchant)
+    expect(updatedTransaction.movements[0].id).toBe(transaction.movements[0].id)
+  })
+
+  it('keeps movement id stable when bank history key changes for the same app id', () => {
+    const apiTransaction = {
+      date: '2021-07-15 12:35:13',
+      type: 'Оплата',
+      cardAcceptor: 'GOOGLE*CLOUDMOSA INC>INTERNET US',
+      transactionAmt: '1',
+      transactionAmtCurrency: 'USD',
+      accountAmt: '2,57',
+      accountAmtCurrency: 'BYN',
+      status: 'ПРОВЕДЕНО',
+      sign: '-',
+      mcc: '7372',
+      cardNum: '**** 2272',
+      appId: '332785',
+      historyKey: 9
+    }
+
+    const transaction = convertTransaction(apiTransaction, account)
+    const updatedTransaction = convertTransaction({
+      ...apiTransaction,
+      historyKey: 10
+    }, account)
+
+    expect(updatedTransaction.movements[0].id).toBe(transaction.movements[0].id)
+  })
+
+  it('keeps movement id stable when a blocked transaction clears', () => {
+    const apiTransaction = {
+      date: '2021-07-15 12:35:13',
+      type: 'Оплата',
+      cardAcceptor: 'GOOGLE*CLOUDMOSA INC>INTERNET US',
+      transactionAmt: '1',
+      transactionAmtCurrency: 'USD',
+      accountAmt: '2,57',
+      accountAmtCurrency: 'BYN',
+      status: 'ЗАБЛОКИРОВАНО',
+      sign: '-',
+      mcc: '7372',
+      cardNum: '**** 2272',
+      appId: '332785',
+      historyKey: 9
+    }
+
+    const holdTransaction = convertTransaction(apiTransaction, account)
+    const postedTransaction = convertTransaction({
+      ...apiTransaction,
+      status: 'ПРОВЕДЕНО',
+      reflectedAccountAmt: '2,57',
+      historyKey: 10
+    }, account)
+
+    expect(holdTransaction.hold).toBe(true)
+    expect(postedTransaction.hold).toBe(false)
+    expect(postedTransaction.movements[0].id).toBe(holdTransaction.movements[0].id)
+  })
+
+  it('uses different movement ids for different bank history keys', () => {
+    const apiTransaction = {
+      date: '2021-07-15 12:35:13',
+      type: 'Оплата',
+      cardAcceptor: 'GOOGLE*CLOUDMOSA INC>INTERNET US',
+      transactionAmt: '1',
+      transactionAmtCurrency: 'USD',
+      accountAmt: '2,57',
+      accountAmtCurrency: 'BYN',
+      status: 'ПРОВЕДЕНО',
+      sign: '-',
+      mcc: '7372',
+      cardNum: '**** 2272',
+      historyKey: 9
+    }
+
+    const transaction = convertTransaction(apiTransaction, account)
+    const anotherTransaction = convertTransaction({
+      ...apiTransaction,
+      historyKey: 10
+    }, account)
+
+    expect(anotherTransaction.movements[0].id).not.toBe(transaction.movements[0].id)
+  })
 
   it.each([
     [
@@ -511,7 +621,7 @@ describe('convertTransaction', () => {
         movements:
           [
             {
-              id: null,
+              id: expect.any(String),
               account: { id: 'account1' },
               invoice: null,
               sum: 288.2,
