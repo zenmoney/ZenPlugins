@@ -516,16 +516,12 @@ async function confirmDeviceFingerprint (accessToken, taskId) {
   }, 'Не удалось зарегистрировать доверенное устройство')
 }
 
-async function ensureDeviceFingerprint (accessToken, { deferEnrollment = false } = {}) {
+async function ensureDeviceFingerprint (accessToken) {
   const fingerprintState = await getDeviceFingerprintState(accessToken)
   if (fingerprintState?.referenceState === 'CONFIRMED') return
   if (fingerprintState?.referenceState !== 'NEED_CREATE_UPDATE' || !fingerprintState.fingerprintId) {
     throw new TemporaryError('Банк вернул неизвестное состояние доверенного устройства. Повторите синхронизацию позже.')
   }
-  // Plugin data is committed only after a successful scrape. Defer the
-  // conditional third OTP once so completed login and phone verification are
-  // not lost when fingerprint SMS delivery is delayed.
-  if (deferEnrollment) return
 
   const verification = await requestDeviceFingerprintVerification(accessToken, fingerprintState.fingerprintId)
   if (!verification?.secret) {
@@ -596,7 +592,7 @@ export async function login ({ phone, identificationNumber, isResident }) {
 
   storeAuth(authResponse.authData)
   await ensureDeviceVerification(authResponse.authData.accessToken, authResponse.authData.deviceTrustStatus)
-  await ensureDeviceFingerprint(authResponse.authData.accessToken, { deferEnrollment: true })
+  await ensureDeviceFingerprint(authResponse.authData.accessToken)
   return authResponse.authData.accessToken
 }
 

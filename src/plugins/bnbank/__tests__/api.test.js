@@ -142,7 +142,7 @@ describe('Iskra API', () => {
     }, { method: 'POST' })
     fetchMock.once(`${BASE_URL}user/v1/fingerprint`, {
       status: 200,
-      body: { referenceState: 'NEED_CREATE_UPDATE', fingerprintId: 'fingerprint-id' }
+      body: { referenceState: 'CONFIRMED', fingerprintId: 'fingerprint-id' }
     }, { method: 'POST' })
 
     await expect(login({
