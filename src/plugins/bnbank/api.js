@@ -8,6 +8,7 @@ const PAGE_SIZE = 20
 const DEVICE_KEY = 'device'
 const AUTH_KEY = 'auth'
 const TRUSTED_DEVICE_STATUS = 'TRUSTED'
+const REFRESH_TOKEN_EXPIRED_STATUS = 498
 const DEVICE_VERIFICATION_POLICY = 'ALL_SUCCESS'
 const DEVICE_VERIFICATION_SUCCESS = 'SUCCESS'
 const REFERENCE_DEVICE = Object.freeze({
@@ -335,10 +336,16 @@ async function refreshAuth (refreshToken) {
     sanitizeRequestLog: { body: { refreshToken: true } },
     sanitizeResponseLog: { body: { accessToken: true, refreshToken: true } }
   })
-  if (!response.ok) {
+  if (response.status === REFRESH_TOKEN_EXPIRED_STATUS) {
     return null
   }
-  return response.body?.accessToken && response.body?.refreshToken ? response.body : null
+  if (!response.ok) {
+    throwApiError(response, 'user/v1/oauth/refresh', 'Не удалось обновить сессию')
+  }
+  if (!response.body?.accessToken || !response.body?.refreshToken) {
+    throw new TemporaryError('Банк вернул неполные данные обновления сессии. Повторите синхронизацию позже.')
+  }
+  return response.body
 }
 
 async function requestOtp (phone) {

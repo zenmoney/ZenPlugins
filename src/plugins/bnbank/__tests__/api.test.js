@@ -85,6 +85,80 @@ describe('Iskra API', () => {
     expect(pluginData.saveDataRequested).toBe(true)
   })
 
+  it('preserves saved authentication when token refresh fails temporarily', async () => {
+    const savedAuth = {
+      accessToken: 'old-access-token',
+      refreshToken: 'old-refresh-token',
+      deviceTrustStatus: 'TRUSTED'
+    }
+    const pluginData = makePluginDataApi({ auth: savedAuth })
+    global.ZenMoney = {
+      device: { manufacturer: 'Zenmoney', model: 'Sync' },
+      readLine: jest.fn(),
+      ...pluginData.methods
+    }
+    fetchMock.once(`${BASE_URL}user/v1/oauth/refresh`, {
+      status: 503,
+      body: { message: 'Service unavailable' }
+    }, { method: 'POST' })
+
+    await expect(login({})).rejects.toBeInstanceOf(TemporaryError)
+    expect(global.ZenMoney.readLine).not.toHaveBeenCalled()
+    expect(fetchMock.calls(`${BASE_URL}user/v1/auth/otp`)).toHaveLength(0)
+    expect(pluginData.currentData.auth).toEqual(savedAuth)
+  })
+
+  it('preserves saved authentication when token refresh response is incomplete', async () => {
+    const savedAuth = {
+      accessToken: 'old-access-token',
+      refreshToken: 'old-refresh-token',
+      deviceTrustStatus: 'TRUSTED'
+    }
+    const pluginData = makePluginDataApi({ auth: savedAuth })
+    global.ZenMoney = {
+      device: { manufacturer: 'Zenmoney', model: 'Sync' },
+      readLine: jest.fn(),
+      ...pluginData.methods
+    }
+    fetchMock.once(`${BASE_URL}user/v1/oauth/refresh`, {
+      status: 200,
+      body: { accessToken: 'new-access-token' }
+    }, { method: 'POST' })
+
+    await expect(login({})).rejects.toBeInstanceOf(TemporaryError)
+    expect(global.ZenMoney.readLine).not.toHaveBeenCalled()
+    expect(fetchMock.calls(`${BASE_URL}user/v1/auth/otp`)).toHaveLength(0)
+    expect(pluginData.currentData.auth).toEqual(savedAuth)
+  })
+
+  it('requests login SMS only when the refresh token has explicitly expired', async () => {
+    const pluginData = makePluginDataApi({
+      auth: { accessToken: 'old-access-token', refreshToken: 'old-refresh-token', deviceTrustStatus: 'TRUSTED' }
+    })
+    global.ZenMoney = {
+      device: { manufacturer: 'Zenmoney', model: 'Sync' },
+      readLine: jest.fn().mockResolvedValueOnce(null),
+      ...pluginData.methods
+    }
+    fetchMock.once(`${BASE_URL}user/v1/oauth/refresh`, {
+      status: 498,
+      body: { code: 'REFRESH_TOKEN_EXPIRED' }
+    }, { method: 'POST' })
+    fetchMock.once(`${BASE_URL}user/v1/auth/otp`, {
+      status: 200,
+      body: { secret: 'login-secret', validationType: 'OTP', expiredTime: 60 }
+    }, { method: 'POST' })
+
+    await expect(login({
+      phone: '+375000000000',
+      identificationNumber: 'TEST123',
+      isResident: true
+    })).rejects.toBeInstanceOf(InvalidOtpCodeError)
+    expect(global.ZenMoney.readLine).toHaveBeenCalledTimes(1)
+    expect(fetchMock.calls(`${BASE_URL}user/v1/auth/otp`)).toHaveLength(1)
+    expect(pluginData.currentData.auth).toBeNull()
+  })
+
   it('completes the captured phone verification before checking the device fingerprint', async () => {
     const pluginData = makePluginDataApi({})
     global.ZenMoney = {
