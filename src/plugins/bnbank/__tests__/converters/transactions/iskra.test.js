@@ -44,6 +44,18 @@ describe('Iskra transactions', () => {
     })
   })
 
+  it('uses paymentDate as the real transaction date instead of the later statement date', () => {
+    const transaction = convertTransaction(makeOperation({
+      paymentDate: '2026-07-27T18:45:00+03:00',
+      operationDetail: {
+        statusCode: 'EXECUTED',
+        operationDate: '2026-07-28T09:00:00+03:00'
+      }
+    }), accounts)
+
+    expect(transaction.date).toEqual(new Date('2026-07-27T15:45:00.000Z'))
+  })
+
   it('uses the API operation type and id instead of a reusable authorization code', () => {
     const transaction = convertTransaction(makeOperation({
       idType: 'CARD_OPERATION',

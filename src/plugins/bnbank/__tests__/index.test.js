@@ -177,7 +177,7 @@ describe('scrape', () => {
       payoffStep: 1
     }])
     expect(result.transactions).toEqual([{
-      date: new Date('2026-07-28T09:29:00Z'),
+      date: new Date('2026-07-28T09:30:00Z'),
       movements: [{
         id: 'OPERATION:operation-1',
         account: { id: 'card-1' },

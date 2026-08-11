@@ -208,7 +208,7 @@ function convertIskraTransaction (apiTransaction, accounts) {
   const accountMoney = [transactionMoney, operationMoney].find(money => money.instrument === account.instrument) || transactionMoney
   const invoiceMoney = [transactionMoney, operationMoney]
     .find(money => money !== accountMoney && money.instrument !== accountMoney.instrument)
-  const date = new Date(detail.operationDate || apiTransaction.paymentDate)
+  const date = new Date(apiTransaction.paymentDate || detail.operationDate)
   if (Number.isNaN(date.getTime())) return null
   const invoice = invoiceMoney ? { sum: invoiceMoney.sum, instrument: invoiceMoney.instrument } : null
   const merchantTitle = cleanMerchantTitle(detail.merchantName)
