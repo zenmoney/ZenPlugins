@@ -92,7 +92,7 @@ describe('Iskra transactions', () => {
       idType: 'actionId'
     }, checkingAccounts)
 
-    expect(first.movements[0].id).toBe('actionId:123456789')
+    expect(first.movements[0].id).toBe('123456789')
     expect(second.movements[0].id).toBe(first.movements[0].id)
   })
 

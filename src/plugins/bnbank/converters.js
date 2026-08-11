@@ -247,7 +247,7 @@ function getIskraOperationId (apiTransaction, detail) {
   if (apiTransaction.productType === 'ACCOUNT') {
     const stableActionId = /^([0-9]+)_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.exec(apiTransaction.id)?.[1]
     if (stableActionId) {
-      return apiTransaction.idType ? `${apiTransaction.idType}:${stableActionId}` : stableActionId
+      return stableActionId
     }
     const identity = [
       apiTransaction.productId,
