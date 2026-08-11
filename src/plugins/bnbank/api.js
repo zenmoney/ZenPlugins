@@ -198,11 +198,6 @@ function createDevice (savedDevice) {
   }
 }
 
-function getDeviceFingerprint () {
-  getDeviceID()
-  return ZenMoney.getData(DEVICE_KEY).fingerprint
-}
-
 function getUserAgent () {
   return `Android/GOOGLE/${getDeviceOsVersion()}/${REFERENCE_DEVICE.brand}/${REFERENCE_DEVICE.model}/${APP_VERSION}`
 }
@@ -218,8 +213,7 @@ function throwApiError (response, url, context) {
 
   if ([
     'user/v1/auth/otp/validation',
-    'user/v1/devices/verification/phone',
-    'user/v1/users/otp/validation'
+    'user/v1/devices/verification/phone'
   ].includes(url) && invalidOtpCodes.has(code)) {
     throw new InvalidOtpCodeError(message)
   }
@@ -478,83 +472,6 @@ async function ensureDeviceVerification (accessToken, deviceTrustStatus) {
   storeDeviceTrustStatus(TRUSTED_DEVICE_STATUS)
 }
 
-async function getDeviceFingerprintState (accessToken) {
-  return fetchApiJson('user/v1/fingerprint', {
-    method: 'POST',
-    headers: authHeaders(accessToken),
-    body: getDeviceFingerprint(),
-    sanitizeRequestLog: {
-      body: {
-        deviceId: true,
-        simInfo: true,
-        adsUUID: true
-      }
-    },
-    sanitizeResponseLog: { body: { fingerprintId: true } }
-  }, 'Не удалось проверить доверенное устройство')
-}
-
-async function requestDeviceFingerprintVerification (accessToken, fingerprintId) {
-  return fetchApiJson('user/v1/fingerprint/reference/verification', {
-    method: 'POST',
-    headers: authHeaders(accessToken),
-    body: { fingerprintId },
-    sanitizeRequestLog: { body: { fingerprintId: true } },
-    sanitizeResponseLog: { body: { secret: true, recipient: true } }
-  }, 'Не удалось запросить подтверждение устройства')
-}
-
-async function validateDeviceOtp (accessToken, secret, otp) {
-  return fetchApiJson('user/v1/users/otp/validation', {
-    method: 'POST',
-    headers: authHeaders(accessToken),
-    body: { secret, otp },
-    sanitizeRequestLog: { body: { secret: true, otp: true } },
-    sanitizeResponseLog: { body: { secret: true } }
-  }, 'Не удалось подтвердить код устройства')
-}
-
-async function confirmDeviceFingerprint (accessToken, taskId) {
-  await fetchApiJson('user/v1/fingerprint/reference', {
-    method: 'POST',
-    headers: authHeaders(accessToken),
-    body: { taskId },
-    sanitizeRequestLog: { body: { taskId: true } }
-  }, 'Не удалось зарегистрировать доверенное устройство')
-}
-
-async function ensureDeviceFingerprint (accessToken) {
-  const fingerprintState = await getDeviceFingerprintState(accessToken)
-  if (fingerprintState?.referenceState === 'CONFIRMED') return
-  if (fingerprintState?.referenceState !== 'NEED_CREATE_UPDATE' || !fingerprintState.fingerprintId) {
-    throw new TemporaryError('Банк вернул неизвестное состояние доверенного устройства. Повторите синхронизацию позже.')
-  }
-
-  const verification = await requestDeviceFingerprintVerification(accessToken, fingerprintState.fingerprintId)
-  if (!verification?.secret) {
-    throw new TemporaryError('Банк вернул неполные данные подтверждения устройства. Повторите синхронизацию позже.')
-  }
-  let taskId = verification.secret
-
-  if (['OTP', 'EMAIL_OTP'].includes(verification.validationType)) {
-    const otp = await ZenMoney.readLine('Введите дополнительный код из SMS от BNB Iskra для регистрации устройства', {
-      time: Math.max(Number(verification.expiredTime || 0) * 1000, 30000)
-    })
-    if (!otp) {
-      throw new InvalidOtpCodeError('Код подтверждения устройства не был введен.')
-    }
-    const otpValidation = await validateDeviceOtp(accessToken, verification.secret, String(otp).trim())
-    if (!otpValidation?.secret) {
-      throw new TemporaryError('Банк не подтвердил код регистрации устройства. Повторите синхронизацию позже.')
-    }
-    taskId = otpValidation.secret
-  } else if (!['LOCAL', 'HIDDEN'].includes(verification.validationType)) {
-    throw new TemporaryError('Банк не поддерживает доступный способ подтверждения устройства.')
-  }
-
-  await confirmDeviceFingerprint(accessToken, taskId)
-}
-
 /**
  * Creates or refreshes an Iskra bearer session.
  */
@@ -566,7 +483,6 @@ export async function login ({ phone, identificationNumber, isResident }) {
       const refreshedSession = mergeRefreshedAuth(savedAuth, refreshedAuth)
       storeAuth(refreshedSession)
       await ensureDeviceVerification(refreshedAuth.accessToken, refreshedSession.deviceTrustStatus)
-      await ensureDeviceFingerprint(refreshedAuth.accessToken)
       return refreshedAuth.accessToken
     }
     clearAuth()
@@ -599,7 +515,6 @@ export async function login ({ phone, identificationNumber, isResident }) {
 
   storeAuth(authResponse.authData)
   await ensureDeviceVerification(authResponse.authData.accessToken, authResponse.authData.deviceTrustStatus)
-  await ensureDeviceFingerprint(authResponse.authData.accessToken)
   return authResponse.authData.accessToken
 }
 

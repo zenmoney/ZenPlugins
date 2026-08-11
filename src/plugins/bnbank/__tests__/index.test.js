@@ -14,8 +14,7 @@ describe('scrape', () => {
       isAccountSkipped: jest.fn().mockReturnValue(false),
       readLine: jest.fn()
         .mockResolvedValueOnce('123456')
-        .mockResolvedValueOnce('112233')
-        .mockResolvedValueOnce('654321'),
+        .mockResolvedValueOnce('112233'),
       ...pluginData.methods
     }
 
@@ -62,26 +61,6 @@ describe('scrape', () => {
         policy: 'ALL_SUCCESS',
         status: 'SUCCESS'
       }
-    }, { method: 'POST' })
-    fetchMock.once(`${BASE_URL}user/v1/fingerprint`, {
-      status: 200,
-      body: { referenceState: 'NEED_CREATE_UPDATE', fingerprintId: 'fingerprint-id' }
-    }, { method: 'POST' })
-    fetchMock.once(`${BASE_URL}user/v1/fingerprint/reference/verification`, {
-      status: 200,
-      body: {
-        secret: 'device-otp-secret',
-        validationType: 'OTP',
-        expiredTime: 60,
-        otpLength: 6
-      }
-    }, { method: 'POST' })
-    fetchMock.once(`${BASE_URL}user/v1/users/otp/validation`, {
-      status: 200,
-      body: { secret: 'device-task-id' }
-    }, { method: 'POST' })
-    fetchMock.once(`${BASE_URL}user/v1/fingerprint/reference`, {
-      status: 204
     }, { method: 'POST' })
     fetchMock.once(`${BASE_URL}product-transaction/v1/operations/products`, {
       status: 200,
@@ -209,9 +188,9 @@ describe('scrape', () => {
         locale: 'ru-RU'
       }
     })
-    expect(global.ZenMoney.readLine).toHaveBeenCalledTimes(3)
-    expect(fetchMock.calls(`${BASE_URL}user/v1/fingerprint`)).toHaveLength(1)
-    expect(fetchMock.calls(`${BASE_URL}user/v1/fingerprint/reference/verification`)).toHaveLength(1)
+    expect(global.ZenMoney.readLine).toHaveBeenCalledTimes(2)
+    expect(fetchMock.calls(`${BASE_URL}user/v1/fingerprint`)).toHaveLength(0)
+    expect(fetchMock.calls(`${BASE_URL}user/v1/fingerprint/reference/verification`)).toHaveLength(0)
     expect(pluginData.saveDataRequested).toBe(true)
   })
 
@@ -233,10 +212,6 @@ describe('scrape', () => {
     fetchMock.once(`${BASE_URL}user/v1/oauth/refresh`, {
       status: 200,
       body: { accessToken: 'access-token', refreshToken: 'refresh-token' }
-    }, { method: 'POST' })
-    fetchMock.once(`${BASE_URL}user/v1/fingerprint`, {
-      status: 200,
-      body: { referenceState: 'CONFIRMED', fingerprintId: 'fingerprint-id' }
     }, { method: 'POST' })
     fetchMock.once(`${BASE_URL}product-transaction/v1/operations/products`, {
       status: 200,
