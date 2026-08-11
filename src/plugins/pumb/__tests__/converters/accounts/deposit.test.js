@@ -1,7 +1,36 @@
-import { parseDateInTimezone } from '../../../../../common/momentTimezoneDateUtils'
 import { convertDeposit } from '../../../converters.js'
 
 describe('convertDeposit', () => {
+  it('converts the current GraphQL camelCase deposit shape', () => {
+    const startDate = new Date('2026-08-11T00:00:00+03:00')
+    expect(convertDeposit({
+      id: 201,
+      programName: 'Дохідний',
+      maturityDate: '2027-08-11',
+      currencyCode: 'USD',
+      balance: 10000,
+      interestRate: 250
+    }, startDate)).toEqual({
+      product: { id: 201, type: 'deposit' },
+      account: {
+        id: '201',
+        type: 'deposit',
+        title: 'Дохідний',
+        instrument: 'USD',
+        syncIds: ['201'],
+        balance: 100,
+        startBalance: 100,
+        capitalization: true,
+        percent: 2.5,
+        startDate,
+        endDateOffsetInterval: 'year',
+        endDateOffset: 1,
+        payoffInterval: 'month',
+        payoffStep: 1
+      }
+    })
+  })
+
   it.each([
     [
       {
@@ -20,20 +49,23 @@ describe('convertDeposit', () => {
         withdrawal_allowed_flag: false
       },
       {
-        id: '39985504',
-        type: 'deposit',
-        title: 'Дохідний',
-        instrument: 'USD',
-        syncID: ['39985504'],
-        balance: 1000.00,
-        startBalance: 1000.00,
-        capitalization: true,
-        percent: 2.20,
-        startDate: parseDateInTimezone('2020-01-01T00:00:00', 'Europe/Kiev'),
-        endDateOffsetInterval: 'day',
-        endDateOffset: 190,
-        payoffInterval: 'month',
-        payoffStep: 1
+        product: { id: 39985504, type: 'deposit' },
+        account: {
+          id: '39985504',
+          type: 'deposit',
+          title: 'Дохідний',
+          instrument: 'USD',
+          syncIds: ['39985504'],
+          balance: 1000.00,
+          startBalance: 1000.00,
+          capitalization: true,
+          percent: 2.20,
+          startDate: new Date('2020-01-01T00:00:00+02:00'),
+          endDateOffsetInterval: 'day',
+          endDateOffset: 190,
+          payoffInterval: 'month',
+          payoffStep: 1
+        }
       }
     ],
     [
@@ -53,20 +85,23 @@ describe('convertDeposit', () => {
         withdrawal_allowed_flag: false
       },
       {
-        id: '39985500',
-        type: 'deposit',
-        title: 'Накопичувальний',
-        instrument: 'USD',
-        syncID: ['39985500'],
-        balance: 1001.67,
-        startBalance: 1001.67,
-        capitalization: true,
-        percent: 1.40,
-        startDate: parseDateInTimezone('2020-01-01T00:00:00', 'Europe/Kiev'),
-        endDateOffsetInterval: 'day',
-        endDateOffset: 97,
-        payoffInterval: 'month',
-        payoffStep: 1
+        product: { id: 39985500, type: 'deposit' },
+        account: {
+          id: '39985500',
+          type: 'deposit',
+          title: 'Накопичувальний',
+          instrument: 'USD',
+          syncIds: ['39985500'],
+          balance: 1001.67,
+          startBalance: 1001.67,
+          capitalization: true,
+          percent: 1.40,
+          startDate: new Date('2020-01-01T00:00:00+02:00'),
+          endDateOffsetInterval: 'day',
+          endDateOffset: 97,
+          payoffInterval: 'month',
+          payoffStep: 1
+        }
       }
     ],
     [
@@ -86,23 +121,26 @@ describe('convertDeposit', () => {
         withdrawal_allowed_flag: false
       },
       {
-        id: '39985504',
-        type: 'deposit',
-        title: 'Дохідний',
-        instrument: 'USD',
-        syncID: ['39985504'],
-        balance: 1000.00,
-        startBalance: 1000.00,
-        capitalization: true,
-        percent: 2.20,
-        startDate: parseDateInTimezone('2020-01-01T00:00:00', 'Europe/Kiev'),
-        endDateOffsetInterval: 'day',
-        endDateOffset: 1,
-        payoffInterval: 'month',
-        payoffStep: 1
+        product: { id: 39985504, type: 'deposit' },
+        account: {
+          id: '39985504',
+          type: 'deposit',
+          title: 'Дохідний',
+          instrument: 'USD',
+          syncIds: ['39985504'],
+          balance: 1000.00,
+          startBalance: 1000.00,
+          capitalization: true,
+          percent: 2.20,
+          startDate: new Date('2020-01-01T00:00:00+02:00'),
+          endDateOffsetInterval: 'day',
+          endDateOffset: 1,
+          payoffInterval: 'month',
+          payoffStep: 1
+        }
       }
     ]
   ])('converts deposit', (apiDeposit, deposit) => {
-    expect(convertDeposit(apiDeposit, parseDateInTimezone('2020-01-01T00:00:00', 'Europe/Kiev'))).toEqual(deposit)
+    expect(convertDeposit(apiDeposit, new Date('2020-01-01T00:00:00+02:00'))).toEqual(deposit)
   })
 })

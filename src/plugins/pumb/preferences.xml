@@ -13,9 +13,9 @@
     </EditTextPreference>
     <EditTextPreference
         key="password"
-        title="Пароль от интернет-банка"
-        dialogTitle="Пароль от интернет-банка"
-        dialogMessage="Пароль от интернет-банка и пин-код от приложения — это разные пароли. Если вы не помните пароль от интернет-банка, восстановите его на сайте банка."
+        title="PIN-код приложения ПУМБ"
+        dialogTitle="PIN-код приложения ПУМБ"
+        dialogMessage="Введите PIN-код, который используется для входа в приложение ПУМБ. Приложение банка для синхронизации не требуется."
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         inputType="textPassword"

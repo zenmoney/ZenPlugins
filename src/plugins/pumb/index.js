@@ -1,54 +1,55 @@
+import { adjustTransactions } from '../../common/transactionGroupHandler'
 import { TemporaryUnavailableError } from '../../errors'
-import { fetchAccounts, fetchTransactionsNew, generateDevice, login, logout } from './api'
+import { fetchProducts, fetchTransactions, login, logout } from './api'
 import { convertAccount, convertDeposit, convertLoan, convertTransaction } from './converters'
+
+function getLinkedAccounts (link) {
+  return Array.isArray(link.accounts) ? link.accounts : [link.account]
+}
 
 export async function scrape ({ preferences, fromDate, toDate, isInBackground }) {
   toDate = toDate || new Date()
-
   const lastSync = ZenMoney.getData('lastSync')
-  if (lastSync && isInBackground && (new Date()).getTime() - lastSync < 3600000) {
-    throw new TemporaryUnavailableError('Last sync was less than in hour ago')
-  }
-  let device = ZenMoney.getData('device')
-  if (!device) {
-    device = generateDevice(preferences.login)
-    ZenMoney.setData('device', device)
+  if (lastSync && isInBackground && Date.now() - lastSync < 3600000) {
+    throw new TemporaryUnavailableError('Last sync was less than an hour ago')
   }
 
-  const accounts = []
-  const transactions = []
-  let auth
+  let session
   try {
-    auth = await login(preferences, device)
-    const accountsInfo = await fetchAccounts(auth)
-    await Promise.all(accountsInfo.accounts.map(convertAccount).map(async ({ account, mainProduct }) => {
-      accounts.push(account)
-      if (ZenMoney.isAccountSkipped(account.id)) {
-        return
+    session = await login(preferences, isInBackground)
+    const apiProducts = await fetchProducts(session)
+    const links = [
+      ...apiProducts.accounts.map(convertAccount),
+      ...apiProducts.deposits.map(deposit => convertDeposit(deposit, toDate)),
+      ...apiProducts.loans.map(convertLoan).filter(Boolean)
+    ]
+    const accounts = links.flatMap(getLinkedAccounts)
+    const transactionBatches = await Promise.all(links.map(async link => {
+      const linkedAccounts = getLinkedAccounts(link)
+      if (link.product.type !== 'account' || linkedAccounts.every(account => ZenMoney.isAccountSkipped(account.id))) {
+        return []
       }
-      for (const apiTransaction of (await fetchTransactionsNew(auth, mainProduct, fromDate, toDate))) {
-        const transaction = convertTransaction(apiTransaction, account)
+      const transactions = []
+      for (const apiTransaction of await fetchTransactions(session, link.product, fromDate, toDate)) {
+        const transaction = convertTransaction(
+          apiTransaction,
+          Array.isArray(link.accounts) ? linkedAccounts : linkedAccounts[0]
+        )
         if (transaction) {
           transactions.push(transaction)
         }
       }
+      return transactions
     }))
-    const startDate = new Date()
-    for (const apiDeposit of accountsInfo.deposits) {
-      const deposit = convertDeposit(apiDeposit, startDate)
-      if (deposit) {
-        accounts.push(deposit)
-      }
-    }
-    accounts.push(...accountsInfo.loans.map(convertLoan))
-  } finally {
-    await logout(auth)
-  }
+    const transactions = transactionBatches.flat()
 
-  ZenMoney.setData('lastSync', (new Date()).getTime())
-  ZenMoney.saveData()
-  return {
-    accounts,
-    transactions
+    ZenMoney.setData('lastSync', Date.now())
+    ZenMoney.saveData()
+    return {
+      accounts,
+      transactions: adjustTransactions({ transactions, accounts })
+    }
+  } finally {
+    await logout(session)
   }
 }
