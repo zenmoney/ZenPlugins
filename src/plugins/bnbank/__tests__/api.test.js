@@ -28,7 +28,11 @@ describe('Iskra API', () => {
     }
     fetchMock.once(`${BASE_URL}user/v1/oauth/refresh`, {
       status: 200,
-      body: { accessToken: 'new-access-token', refreshToken: 'new-refresh-token' }
+      body: {
+        accessToken: 'new-access-token',
+        refreshToken: 'new-refresh-token',
+        deviceTrustStatus: 'NOT_TRUSTED_WITH_OTHER_TRUSTED'
+      }
     }, { method: 'POST' })
     fetchMock.once(`${BASE_URL}user/v1/fingerprint`, {
       status: 200,
@@ -138,7 +142,7 @@ describe('Iskra API', () => {
     }, { method: 'POST' })
     fetchMock.once(`${BASE_URL}user/v1/fingerprint`, {
       status: 200,
-      body: { referenceState: 'CONFIRMED', fingerprintId: 'fingerprint-id' }
+      body: { referenceState: 'NEED_CREATE_UPDATE', fingerprintId: 'fingerprint-id' }
     }, { method: 'POST' })
 
     await expect(login({
@@ -164,6 +168,48 @@ describe('Iskra API', () => {
     ])
     const [, deviceOtpRequest] = fetchMock.lastCall(`${BASE_URL}user/v1/devices/verification/phone`)
     expect(JSON.parse(deviceOtpRequest.body)).toEqual({ secret: 'device-secret', otp: '222222' })
+  })
+
+  it('enrolls the fingerprint with only the conditional third SMS on the next run', async () => {
+    const pluginData = makePluginDataApi({
+      auth: { accessToken: 'old-access-token', refreshToken: 'old-refresh-token', deviceTrustStatus: 'TRUSTED' }
+    })
+    global.ZenMoney = {
+      device: { manufacturer: 'Zenmoney', brand: 'zenmoney', model: 'Sync', os: { version: '15' } },
+      readLine: jest.fn().mockResolvedValueOnce('333333'),
+      ...pluginData.methods
+    }
+    fetchMock.once(`${BASE_URL}user/v1/oauth/refresh`, {
+      status: 200,
+      body: { accessToken: 'new-access-token', refreshToken: 'new-refresh-token' }
+    }, { method: 'POST' })
+    fetchMock.once(`${BASE_URL}user/v1/fingerprint`, {
+      status: 200,
+      body: { referenceState: 'NEED_CREATE_UPDATE', fingerprintId: 'fingerprint-id' }
+    }, { method: 'POST' })
+    fetchMock.once(`${BASE_URL}user/v1/fingerprint/reference/verification`, {
+      status: 200,
+      body: { secret: 'fingerprint-secret', validationType: 'OTP', expiredTime: 60 }
+    }, { method: 'POST' })
+    fetchMock.once(`${BASE_URL}user/v1/users/otp/validation`, {
+      status: 200,
+      body: { secret: 'fingerprint-task-id' }
+    }, { method: 'POST' })
+    fetchMock.once(`${BASE_URL}user/v1/fingerprint/reference`, {
+      status: 200,
+      body: {}
+    }, { method: 'POST' })
+
+    await expect(login({})).resolves.toBe('new-access-token')
+
+    expect(global.ZenMoney.readLine).toHaveBeenCalledTimes(1)
+    expect(fetchMock.calls().matched.map(([url]) => url)).toEqual([
+      `${BASE_URL}user/v1/oauth/refresh`,
+      `${BASE_URL}user/v1/fingerprint`,
+      `${BASE_URL}user/v1/fingerprint/reference/verification`,
+      `${BASE_URL}user/v1/users/otp/validation`,
+      `${BASE_URL}user/v1/fingerprint/reference`
+    ])
   })
 
   it('rejects an unsupported trusted-device verification step', async () => {

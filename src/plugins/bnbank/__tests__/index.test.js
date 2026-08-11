@@ -14,8 +14,7 @@ describe('scrape', () => {
       isAccountSkipped: jest.fn().mockReturnValue(false),
       readLine: jest.fn()
         .mockResolvedValueOnce('123456')
-        .mockResolvedValueOnce('112233')
-        .mockResolvedValueOnce('654321'),
+        .mockResolvedValueOnce('112233'),
       ...pluginData.methods
     }
 
@@ -209,8 +208,9 @@ describe('scrape', () => {
         locale: 'ru-RU'
       }
     })
-    expect(global.ZenMoney.readLine).toHaveBeenCalledTimes(3)
+    expect(global.ZenMoney.readLine).toHaveBeenCalledTimes(2)
     expect(fetchMock.calls(`${BASE_URL}user/v1/fingerprint`)).toHaveLength(1)
+    expect(fetchMock.calls(`${BASE_URL}user/v1/fingerprint/reference/verification`)).toHaveLength(0)
     expect(pluginData.saveDataRequested).toBe(true)
   })
 

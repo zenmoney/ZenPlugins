@@ -1,3 +1,4 @@
+import { MD5 } from 'jshashes'
 import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
 import { toISODateString } from '../../common/dateUtils'
 
@@ -5,6 +6,7 @@ export const card = 'card'
 export const deposit = 'deposit'
 export const checking = 'checking'
 const MS_PER_DAY = 24 * 60 * 60 * 1000
+const md5 = new MD5()
 
 export function convertCard (json) {
   return convertAccount(json, card)
@@ -242,6 +244,23 @@ function convertIskraTransaction (apiTransaction, accounts) {
 }
 
 function getIskraOperationId (apiTransaction, detail) {
+  if (apiTransaction.productType === 'ACCOUNT') {
+    const stableActionId = /^([0-9]+)_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.exec(apiTransaction.id)?.[1]
+    if (stableActionId) {
+      return apiTransaction.idType ? `${apiTransaction.idType}:${stableActionId}` : stableActionId
+    }
+    const identity = [
+      apiTransaction.productId,
+      apiTransaction.productType,
+      apiTransaction.paymentDate,
+      detail.operationDate,
+      detail.source,
+      apiTransaction.operationName,
+      getMoneyAmount(apiTransaction.transactionSum),
+      getInstrument(apiTransaction.transactionSum?.currency)
+    ].map(value => value == null ? '' : String(value)).join('|')
+    return `ACCOUNT_OPERATION:${md5.hex(identity)}`
+  }
   if (apiTransaction.id) {
     return apiTransaction.idType ? `${apiTransaction.idType}:${apiTransaction.id}` : apiTransaction.id
   }
