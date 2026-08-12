@@ -13,6 +13,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const WebsocketServer = require('./debugServers/wsServer')
 const { setupProxyServer } = require('./debugServers/proxyServer')
 const { setupWebServer } = require('./debugServers/webServer')
+const { BOOTLOADER_PORT, setupBootloaderServer } = require('./bootloaderServer')
 const path = require('path')
 
 const readLogPrivateKey = () => {
@@ -35,7 +36,6 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
   if (!pluginPaths) {
     throw new Error(`cant resolve plugin "${pluginName}"`)
   }
-
   return {
     mode: production ? 'production' : 'development',
     target: ['webworker', 'es2020'],
@@ -164,13 +164,22 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
         },
         host: 'localhost',
         ...production && {
-          host: 'local-ip',
+          host: '0.0.0.0',
+          port: BOOTLOADER_PORT,
+          allowedHosts: 'all',
           client: false,
           hot: false,
           liveReload: false
         },
-        port: 'auto',
+        ...!production && { port: 'auto' },
         webSocketServer: WebsocketServer,
+
+        onListening (devServer) {
+          if (production) {
+            const address = devServer.server.address()
+            console.log(`Bootloader UI: http://localhost:${address.port}`)
+          }
+        },
 
         setupMiddlewares (middlewares, devServer) {
           const state = {
@@ -183,6 +192,13 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
           app.disable('x-powered-by')
 
           const proxy = setupProxyServer(state)
+          if (production) {
+            setupBootloaderServer({
+              app,
+              pluginPaths,
+              storageDirectory: resolveFromRoot('.local/bootloader')
+            })
+          }
           setupWebServer({
             state,
             app,

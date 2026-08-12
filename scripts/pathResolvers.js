@@ -30,6 +30,7 @@ function resolvePlugin (pluginName) {
     preferencesSchema: path.join(pluginPath, 'preferences.xml'),
 
     preferences: path.join(pluginPath, 'zp_preferences.json'),
+    debugConfig: path.join(pluginPath, 'bootloader_config.json'),
     data: path.join(pluginPath, 'zp_data.json'),
     code: path.join(pluginPath, 'zp_pipe.txt'),
     cookies: path.join(pluginPath, 'zp_cookies.json')

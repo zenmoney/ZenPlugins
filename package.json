@@ -86,7 +86,7 @@
   },
   "scripts": {
     "start": "yarn && node ./scripts/wrapper.js webpack serve --config ./scripts/webpack.config.js --env PLUGIN=",
-    "host": "yarn && node ./scripts/wrapper.js webpack serve --config ./scripts/webpack.config.js --mode=production --env PLUGIN=",
+    "host": "yarn && node ./scripts/bootloaderServer/portGuard.js && node ./scripts/wrapper.js webpack serve --config ./scripts/webpack.config.js --mode=production --env PLUGIN=",
     "build": "yarn && node ./scripts/wrapper.js webpack build --config ./scripts/webpack.config.js --mode=production --env PLUGIN=",
     "test": "node ./scripts/wrapper.js ts-standard && tsc --noEmit && node ./scripts/wrapper.js jest",
     "jest": "node ./scripts/wrapper.js jest",

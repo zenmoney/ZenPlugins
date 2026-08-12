@@ -4,6 +4,7 @@
 - [preferences.xml details](preferences.xml.md)
 - [ZenmoneyManifest.xml details](ZenmoneyManifest.xml.md)
 - [Useful plugin utils](utils.md)
+- [Bootloader V2](bootloader-v2.md)
 - [Transaction domain examples](transactionsExamples.md)
 
 ## First steps
@@ -18,6 +19,9 @@
 - ```yarn start (PLUGIN NAME)```
   - Start development server with simple UI for plugin.
   So you can debug your code in browser.
+- ```yarn host (PLUGIN NAME)```
+  - Host a production plugin bundle together with the Bootloader V2 API and web UI.
+  - The server listens on port `5050` and is available to devices in the local network.
 - ```yarn build (PLUGIN NAME) [(PLUGIN NAME) ...]```
   - Build plugin to one file bundle.
   - The bundle is written to ```build/(PLUGIN NAME).js```.
