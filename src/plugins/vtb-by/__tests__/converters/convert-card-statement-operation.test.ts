@@ -30,7 +30,7 @@ describe('convertMiniCardStatementOperation', () => {
       comment: 'Покупка\nSTORE',
       movements: [
         {
-          id: 'test-card-contract-1:auth:1777561115000:999',
+          id: '470f17b250bf56e32c63e8767925e05f',
           account: { id: 'test-card-contract-1' },
           fee: 0,
           invoice: {
@@ -131,7 +131,7 @@ describe('convertMiniCardStatementOperation', () => {
     }
 
     expect(convertMiniCardStatementOperation(operation, account).movements[0].id)
-      .toBe('test-card-contract-1:details:1777561115000:-10:840:32:933:Покупка:STORE:5411')
+      .toBe('3ede197e1c640a5a0f227b721b25d842')
   })
 
   it('converts a full statement operation for deposit accounts', () => {
@@ -173,7 +173,7 @@ describe('convertMiniCardStatementOperation', () => {
       comment: 'Капитализация',
       movements: [
         {
-          id: 'test-deposit-contract-1:1778389322000:999:19:1:13155.4:13155.4:965877.97:Капитализация',
+          id: '8327cff1ec0ad829d1182cc3e68c02a8',
           account: { id: 'test-deposit-contract-1' },
           fee: 0,
           invoice: null,
@@ -182,6 +182,10 @@ describe('convertMiniCardStatementOperation', () => {
       ],
       merchant: null
     })
+
+    const repeatedOperation = convertFullStatementOperation({ ...operation }, account)
+    expect(repeatedOperation.movements[0].id).toBe('8327cff1ec0ad829d1182cc3e68c02a8')
+    expect(repeatedOperation.movements[0].id).toHaveLength(32)
   })
 
   it('keeps outgoing full statement operations distinct and negative', () => {
@@ -223,7 +227,7 @@ describe('convertMiniCardStatementOperation', () => {
       comment: 'Списание',
       movements: [
         {
-          id: 'test-deposit-contract-1:1778389322000:1:1:-1:-1000:-1000:964877.97:Списание',
+          id: '5cfbc2511a95ef70afaaa0d74bc484fa',
           account: { id: 'test-deposit-contract-1' },
           fee: 0,
           invoice: null,
