@@ -1,48 +1,60 @@
 import { adjustTransactions } from '../../common/transactionGroupHandler'
 import { TemporaryUnavailableError } from '../../errors'
 import { fetchProducts, fetchTransactions, login, logout } from './api'
-import { convertAccount, convertDeposit, convertLoan, convertTransaction } from './converters'
+import { convertAccounts, convertTransaction } from './converters'
 
 function getLinkedAccounts (link) {
   return Array.isArray(link.accounts) ? link.accounts : [link.account]
 }
 
+function isWithinInterval (date, fromDate, toDate) {
+  return date >= fromDate && date <= toDate
+}
+
+function isTransactionForSkippedAccount (transaction) {
+  const movement = transaction.movements.find(item => typeof item.account?.id === 'string')
+  return movement ? ZenMoney.isAccountSkipped(movement.account.id) : false
+}
+
 export async function scrape ({ preferences, fromDate, toDate, isInBackground }) {
+  ZenMoney.locale = 'uk'
   toDate = toDate || new Date()
-  const lastSync = ZenMoney.getData('lastSync')
+  const lastSync = ZenMoney.getData('lastSync', null)
   if (lastSync && isInBackground && Date.now() - lastSync < 3600000) {
-    throw new TemporaryUnavailableError('Last sync was less than an hour ago')
+    throw new TemporaryUnavailableError('Синхронізацію нещодавно виконано. Спробуйте ще раз пізніше.')
   }
 
+  const persistedState = {
+    auth: ZenMoney.getData('auth', null),
+    legacyDevice: ZenMoney.getData('device', null)
+  }
   let session
   try {
-    session = await login(preferences, isInBackground)
-    const apiProducts = await fetchProducts(session)
-    const links = [
-      ...apiProducts.accounts.map(convertAccount),
-      ...apiProducts.deposits.map(deposit => convertDeposit(deposit, toDate)),
-      ...apiProducts.loans.map(convertLoan).filter(Boolean)
-    ]
+    session = await login(preferences, isInBackground, persistedState)
+    ZenMoney.setData('auth', session.authState)
+    ZenMoney.saveData()
+
+    const links = convertAccounts(await fetchProducts(session))
     const accounts = links.flatMap(getLinkedAccounts)
     const transactionBatches = await Promise.all(links.map(async link => {
       const linkedAccounts = getLinkedAccounts(link)
-      if (link.product.type !== 'account' || linkedAccounts.every(account => ZenMoney.isAccountSkipped(account.id))) {
+      if (linkedAccounts.every(account => ZenMoney.isAccountSkipped(account.id)) || link.fetchParams.sources.length === 0) {
         return []
       }
       const transactions = []
-      for (const apiTransaction of await fetchTransactions(session, link.product, fromDate, toDate)) {
-        const transaction = convertTransaction(
-          apiTransaction,
-          Array.isArray(link.accounts) ? linkedAccounts : linkedAccounts[0]
-        )
-        if (transaction) {
+      const apiTransactions = await fetchTransactions(session, link.fetchParams, fromDate, toDate)
+      for (const apiTransaction of apiTransactions) {
+        const transaction = convertTransaction(apiTransaction, link)
+        if (transaction &&
+          !isTransactionForSkippedAccount(transaction) &&
+          isWithinInterval(transaction.date, fromDate, toDate)) {
           transactions.push(transaction)
         }
       }
       return transactions
     }))
-    const transactions = transactionBatches.flat()
 
+    const transactions = transactionBatches.flat()
     ZenMoney.setData('lastSync', Date.now())
     ZenMoney.saveData()
     return {
@@ -50,6 +62,10 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
       transactions: adjustTransactions({ transactions, accounts })
     }
   } finally {
-    await logout(session)
+    try {
+      await logout(session)
+    } catch (error) {
+      console.warn('Could not close the PUMB session after synchronization', error)
+    }
   }
 }

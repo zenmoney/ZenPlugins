@@ -3,7 +3,7 @@ import { convertTransaction } from '../../../converters'
 
 const accounts = [
   {
-    id: '101',
+    id: 'account:101',
     type: 'ccard',
     title: '*1111',
     instrument: 'UAH',
@@ -11,7 +11,7 @@ const accounts = [
     balance: 900
   },
   {
-    id: '202',
+    id: 'account:202',
     type: 'ccard',
     title: '*2222',
     instrument: 'UAH',
@@ -24,17 +24,17 @@ function makeTransfer (overrides) {
   return {
     account_id: 101,
     source_system_id: 'source-out',
-    transaction_type: 'Transactions',
+    transaction_type: 'OUT',
     description: 'Переказ між своїми рахунками',
     transaction_amount: {
-      value: -10000,
+      value: 10000,
       currency_code: 'UAH'
     },
     transaction_details: {
       transaction_date: '11.08.2026T12:30:00',
       operation_id: 'transfer-42',
       account_amount: {
-        value: -10000,
+        value: 10000,
         currency_code: 'UAH'
       },
       commission_amount: {
@@ -51,10 +51,15 @@ function makeTransfer (overrides) {
 
 describe('convertTransaction: inner transfer', () => {
   it('emits stable same-length groupKeys and lets the common handler join both sides', () => {
-    const outcome = convertTransaction(makeTransfer({}), accounts)
+    const link = {
+      accounts,
+      fetchParams: { sources: [{ type: 'account', accountIds: [101, 202] }] }
+    }
+    const outcome = convertTransaction(makeTransfer({}), link)
     const income = convertTransaction(makeTransfer({
       account_id: 202,
       source_system_id: 'source-in',
+      transaction_type: 'IN',
       transaction_amount: {
         value: 10000,
         currency_code: 'UAH'
@@ -71,14 +76,14 @@ describe('convertTransaction: inner transfer', () => {
           currency_code: 'UAH'
         }
       }
-    }), accounts)
+    }), link)
 
     expect(outcome).toEqual({
       hold: false,
       date: new Date('2026-08-11T12:30:00+03:00'),
       movements: [{
         id: 'source-out',
-        account: { id: '101' },
+        account: { id: 'account:101' },
         invoice: null,
         sum: -100,
         fee: 0
@@ -95,7 +100,7 @@ describe('convertTransaction: inner transfer', () => {
       date: new Date('2026-08-11T12:30:01+03:00'),
       movements: [{
         id: 'source-in',
-        account: { id: '202' },
+        account: { id: 'account:202' },
         invoice: null,
         sum: 100,
         fee: 0
